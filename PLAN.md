@@ -167,7 +167,7 @@ A rule without a check is only a suggestion. Each law below comes with the mecha
 |---|---|---|
 | **L1. Everything is code.** Graphics, animation and sound are written as code or made procedurally. | <ul><li>**No binary asset files tracked anywhere**: png, jpg, jpeg, gif, webp, avif, bmp, tga, ktx2, basis, hdr, exr, glb, gltf, bin, fbx, obj, dae, blend, wav, mp3, ogg, flac, m4a, opus, ttf, otf, woff, woff2, mp4, webm.</li><li>**Readable data counts as code.** Animation clips, catalogs, levels and sound definitions are allowed, as diff-friendly text, each item recording where it came from and its license.</li><li>Every generator is a pure function of `(params, seed)`.</li><li>Source files used by importers (GLB, AMC, BVH) live only in the git-ignored `.cache/`.</li><li>Golden references are numbers and text thumbnails, never committed images.</li><li>Pictures for docs are generated on demand.</li></ul> | `x check`: scans every tracked file by extension and magic bytes. The importers refuse to write outside `.cache/` and `data/`. |
 | **L2. Small and legible.** Agents can hold any part of the engine in their head. | <ul><li>One concept per file.</li><li>Soft cap of 400 lines per file, hard cap 600. Lines up to 140 characters.</li><li>Every module opens with a **manual header**: PURPOSE, API, INVARIANTS, EXAMPLE, SEE ALSO, in 40 lines or fewer.</li><li>TypeScript using only erasable syntax, run with no build step.</li><li>The only runtime dependencies are three.js and Rapier, vendored and pinned.</li><li>Per-module token budgets.</li><li>No minified or generated code outside `vendor/`.</li><li>Docs are generated from the headers, never written twice.</li></ul> | `x check`: header present, file caps, `tsc --noEmit`, `x docs --check`. `x sizes --budget` checks the token budgets. |
-| **L3. AI-native tooling.** Agents drive and question the engine directly. | <ul><li>**One CLI**, `node x <cmd>`. Each command prints at most about 20 lines and writes a `report.json` with a fixed schema; exit codes are 0, 1 or 2.</li><li>`window.__engine` is on every page. The same API works headless in Node, except the rendering members (`render`, `capture`, `camera`, `scene`), which report a coded "no renderer" error there.</li><li>A scaffold for every kind of content, and every scaffold passes every check.</li><li>Registries are discoverable through `x describe`.</li><li>Errors and advice carry stable codes and link to docs.</li><li>Claude Code is wired in: hooks, skills and subagents. An MCP bridge connects agents to the running engine.</li></ul> | <ul><li>CI runs each scaffold and checks the result passes every check.</li><li>Every `x` command has a smoke test.</li><li>The docs check verifies the `help()` text.</li></ul> |
+| **L3. AI-native tooling.** Agents drive and question the engine directly. | <ul><li>**One CLI**, `node x <cmd>`. Each command prints at most about 20 lines and writes a `report.json` with a fixed schema; exit codes are 0, 1 or 2.</li><li>`window.__engine` is on every page. The same API works headless in Node, except the rendering members (`render`, `capture`, `camera`, `scene`), which report a coded "no renderer" error there.</li><li>A scaffold for each kind in §8.13, and every scaffold passes every check.</li><li>Registries are discoverable through `x describe`.</li><li>Errors and advice carry stable codes and link to docs.</li><li>Claude Code is wired in: hooks, skills and subagents. An MCP bridge connects agents to the running engine.</li></ul> | <ul><li>CI runs each scaffold and checks the result passes every check.</li><li>Every `x` command has a smoke test.</li><li>The docs check verifies the `help()` text.</li></ul> |
 | **L4. Inspect and test.** Agents prove their own work. | <ul><li>The sim runs headless in Node and is deterministic: the same inputs give the same state hash.</li><li>Every feature lands with a test at the cheapest level that proves it, in this order: Node unit test, then replay hash, then browser numbers, then image.</li><li>Every visual verdict is available as JSON.</li><li>Animation, geometry, texture, audio and level lints run over everything registered.</li><li>Tests are selected from the import graph.</li></ul> | `x test` tiers with time budgets (§8.2); replay suites; CI required checks. |
 | **L5. The GPU never decides gameplay.** WebGPU-only techniques may improve speed and looks, nothing else. Everything works on WebGL 2. | <ul><li>Simulation-side modules can never import `gfx/`, `three`, the DOM or WebAudio.</li><li>The renderer reads a snapshot of the sim and never writes to it.</li><li>**Baseline tier**: the features that run on every backend (WebGL 2, WebGPU compatibility mode, WebGPU core). It shows everything gameplay needs.</li><li>**Enhanced tier**: optional extras that need WebGPU core. They add speed or visual quality only. Each feature declares its fallback, is gated by a capability check, is switched by the performance governor, and is never chosen silently.</li><li>Nothing is read back from the GPU into the sim.</li><li>Compute shaders, storage buffers, indirect draws and atomics are allowed **only** under `engine/gfx/enhanced/`. The one exception is the "map" kernels listed in `BASELINE_COMPUTE` (`tools/lib/rules.mjs`, Appendix B), which the WebGL backend emulates; each comes with a parity test.</li></ul> | <ul><li>`x check`: import-layer rules; banned-API rules scoped by path.</li><li>`x test --suite parity`: record on each backend, replay headless, same hash; per-object pixel counts from the ID pass agree across backends within tolerance.</li><li>Enhanced features run in the tier test matrix.</li></ul> |
 
@@ -417,8 +417,8 @@ Source paths are relative to `my-3d2dge@e37e4ee`. `ed/` means `src/emberdeep/`. 
 
 | Item | Size | Verdict | Target | WP |
 |---|---|---|---|---|
-| `src/mocap/readable.js` (format 1 codec: text, parse, mirror, fit, encode, decode) | 29 KB | PORT: the decode becomes a typed module that takes its trig from `core/dmath`, matching the source within 0.001 mm. The source decoder is kept unchanged as a test oracle, `tools/anim/legacy-readable.mjs` (tools may use `Math.*`). Becomes a typed module, adds format-2 fields, `bake()`, a validator and a normalized lens | `engine/anim/clip/readable.ts` | 4.2 |
-| `src/mocap/mocap.js` (`load` `clip` `sample` `moveAt` `blend` `text` `replace` `restore` `origin`; `drive`; `Mannequin`) | 20 KB | REWRITE: keep the API and `drive`'s ideas (sole to floor, lift, heading trust ramp, blade along the knuckles and never below the floor, the upper mask). Playback becomes a clip layer on the rotation skeleton. The Mannequin is rebuilt in 3D from `body.segs` | `engine/anim/clip/library.ts`, `engine/anim/character.ts`, `engine/gfx/puppets/mannequin.ts` | 4.4 |
+| `src/mocap/readable.js` (format 1 codec: text, parse, mirror, fit, encode, decode) | 29 KB | PORT: the decode becomes a typed module that takes its trig from `core/dmath`, matching the source within 0.001 mm. The source decoder itself is the test oracle: `tools/anim/legacy-readable.mjs` (about 10 lines) runs it from `$MY3D2DGE_SRC` in a `vm`. Becomes a typed module, adds format-2 fields, a validator and a normalized lens | `engine/anim/clip/readable.ts` | 4.2 |
+| `src/mocap/mocap.js` (`load` `clip` `sample` `moveAt` `blend` `text` `replace` `restore` `origin`; `drive`; `Mannequin`) | 20 KB | REWRITE: keep the API and `drive`'s ideas (sole to floor, lift, heading trust ramp, blade along the knuckles and never below the floor, the upper mask). Playback becomes a clip layer on the rotation skeleton. The Mannequin is rebuilt in 3D from `body.segs` (WP 5.6) | `engine/anim/clip/library.ts`, `engine/anim/clip/layer.ts`; the mannequin is `engine/gfx/puppets/mannequin.ts` | 4.4, 5.6 |
 | Sets `quaternius.js` (88), `mesh2motion.js` (177), `cmu.js` (60) | 387 / 819 / 722 KB | KEEP THE DATA, repackaged one clip per file (deep-equal proof). The 84 Mesh2Motion re-exports are tagged `alt` | `data/anim/sets/<set>/` | 4.3 |
 | `sets/hero.js` (15 clips, Emberdeep's subset) | 75 KB | **DROP** | — | — |
 | Catalogs `quaternius.json`, `mesh2motion.json` | 30 KB | COPY | `data/anim/catalogs/` | 4.1 |
@@ -506,7 +506,7 @@ Source paths are relative to `my-3d2dge@e37e4ee`. `ed/` means `src/emberdeep/`. 
 | Developer sandbox (throwaway save, god mode, freeze AI, step, speed, spawn, travel) | `ed/62-developer.js` | `dev/sandbox`, with `registerDevAction` | 8.4 |
 | Autopilot (a virtual device, a progress watchdog, stuck detection measured along the wanted direction, deterministic runs) | `ed/93-autopilot.js` | `dev/bot` (navigation and watchdogs, no combat tactics) | 8.6 |
 | Gallery of everything registered, with deep links and wrong-name warnings that list the valid names | `ed/92-gallery.js` | `dev/gallery` | 8.5 |
-| Performance governor with hysteresis | `ed/95-perf.js` | `dev/governor`, which owns the Enhanced-tier features and LOD | 8.7 |
+| Performance governor with hysteresis | `ed/95-perf.js` | `dev/governor`, which owns the Enhanced-tier features, presentation LOD and resolution (never sim LOD) | 8.7 |
 | Controls rebinding (conflicts, reserved keys, persistence, any gamepad slot, separate menu actions, a touch layer, safe areas) | `ed/61-controls.js`, `docs/CONTROLS-AUDIT.md` | `input/bindings` | 8.1 |
 | Data-defined layered sound effects, tracker-string songs, stings fired by events | `ed/70-audio.js` | `audio` (the mechanism, not Emberdeep's sounds) | 7.2, 7.3 |
 | Captured clips layered on a procedural rig (masks, crossfades, walk/hold/next flags, cancel rules, landmark times) | `ed/96-hero-clips.js` | `anim` clip-action layer and events | 4.4, 4.8 |
@@ -607,26 +607,31 @@ my-3dge/
   data/
     anim/                   sets/<set>/<Clip>.json, sets/<set>/_set.json, sets/<set>/catalog.tsv,
                             catalogs/*.json, cmu/<category>.tsv, cmu/subjects.tsv, SOURCES.md, LICENSES/
-  fixtures/                 test-only content: mannequin, one rig per building block, dummy, levels, sounds, scenes
+  fixtures/                 test-only content: bodies (mannequin), six fixture rigs and a dummy, levels, sounds, scenes
   labs/                     pages: index (labs.json), hello, sandbox, stress-world, anim, library, materials,
                             props, fx, audio, cameras, physics
   tools/
     cmd/<name>.mjs          one module per `x` command; its header is its help
     lint/<family>.mjs       lint families (anim, geo, tex, audio, level) plugged into `x lint`
     templates/<kind>/       scaffold templates for `x new` (each re-tested in CI)
-    lib/                    args, report, browser (flags, stand-in canvas, readFrame, virtual clock), serve,
+    fixtures/               fixtures for the tools' own tests (e.g. the import-graph tree)
+    lib/                    args, report, browser (flags, stand-in canvas, readFrame, virtual clock), serve, importmap,
                             importgraph, layers.json, rules (banned APIs), png, tokens, hash
     anim/                   GLB reader, rig maps, importer, ASF/AMC, CMU, to-glb.py
     mcp/                    MCP server bridging __engine (WP 11.1)
   tests/
     browser/                Playwright suites (*.spec.ts), run on both backends
     replays/                *.replay.json: inputs and an expected hash timeline
+    pages/                  test pages: replay.html (sim only), scene.html (fixture scene plus gfx)
+    unit/                   unit tests that don't sit beside a module (data checks, hooks, the TypeScript smoke test)
     baselines/              text thumbnails, lint baselines with reasons, perf budgets
   docs/
     INDEX.md  API.md  ERRORS.md          generated by `x docs --write`, checked for drift
+    research/                            the eight studies of my-3d2dge behind this plan (point-in-time; not drift-checked)
     decisions/ADR-0001-*.md …            one per decision in §13
     ANIMATION-LIBRARY.md  ANIMATION-RESEARCH.md  THREE-DELTA.md (r182 → r186 for agents)  TESTING.md
     vendor/                three-0.186.1-llms-full.txt, TSL-Guide.md (version-pinned upstream docs)
+  evals/                    agent-usability tasks with automated acceptance (WP 11.3)
   changes/                  one changelog fragment per change (no shared file to conflict on)
   vendor/
     three-0.186.1/          ESM build (unminified), allowlisted addons, LICENSE, VERSION.json (sha256 + npm integrity)
@@ -729,8 +734,9 @@ frame(now):                                                  // app/loop.ts
   - `get(kind, id)` warns once on a missing id and returns the kind's fallback.
   - `list(kind)` enumerates.
 - **Ask the entry, never the id.** Shared code reads an entry's optional hooks, each with a default. A lint flags string comparisons against registered ids in shared code.
-- **Every kind automatically gets** an `x describe <kind>` listing and its row in `docs/INDEX.md`.
-- **The kinds listed in §8.13 also get** a scaffold template, a gallery reel and an inspector view.
+- **Every kind automatically gets** an `x describe <kind>` listing (in a page, `__engine.describe(kind)`) and its row in
+  `docs/INDEX.md`.
+- **The kinds listed in §8.13 also get** a scaffold template and a `gallery` hook, which WP 8.5 turns into a reel.
 - **Kinds with a lint family (§8.6) get** lint runs. Other kinds get these extras only when a WP shows they pay off.
 - **Initial kinds:** `material`, `texture`, `geometry`, `body` (a puppet body), `skeleton`, `build`, `move`, `pose`, `stance`, `action`, `clipset`, `rig` (custom procedural), `prop`, `glyph` (level legend), `level`, `light`, `sky`, `look` (post preset), `emitter`, `telegraph`, `sfx`, `song`, `actionmap`, `setting`, `scene`, `lab`, `feature` (Enhanced-tier capability), `actor` (an entity template: a body, a controller and a character animator).
 
@@ -767,7 +773,7 @@ frame(now):                                                  // app/loop.ts
 
 - Headers run **40 lines or fewer**.
 - `docs/INDEX.md` (module → purpose → exports → tests) and `docs/API.md` are generated from the headers and the exports.
-- `docs/ERRORS.md` is generated from the advice and error code table.
+- `docs/ERRORS.md` is generated from the codes each module registers (`defineCodes`).
 - **Prose is never duplicated.** README, AGENTS.md and the docs point to these files and never restate them.
 
 ### 6.9 Public API sketch (illustrative; WPs refine it)
@@ -898,7 +904,7 @@ Each improvement is owned by a work package. A WP is not done until the improvem
 | `x help [cmd]` | Generated help |
 | `x check [--files …]` | **T0, under 10 s.** Parse, `tsc`, layer and banned-API rules, asset scan, header and caps checks, docs drift, changelog fragment present |
 | `x unit [pattern…]` | T1 Node unit tests (`node --test`, TypeScript stripped natively). A pattern is a substring of a test file's path, searched in `engine/`, `tools/` and `tests/unit/`. Zero matched files exit 1 |
-| `x test [--changed [--base ref]\|--all\|--suite s\|--grep g] [--backend webgl2\|webgpu\|both] [--workers n] [--repeat n] [--list]` | Test tiers, with the reason each test was selected and a timing table |
+| `x test [--changed [--base ref]\|--all\|--suite s\|--grep g\|--files f…] [--backend webgl2\|webgpu\|both] [--workers n] [--repeat n] [--list]` | Test tiers, with the reason each test was selected and a timing table |
 | `x why <file>` | Which tests cover a file, through the import graph |
 | `x sim <scene> [--steps n] [--seed s] [--script f] [--dump]` | Run a scene headless in Node: hash, trace, state |
 | `x replay <file\|dir> [--update] [--browser webgl2\|webgpu\|both] [--bisect]` | Replay against expected hashes; bisect to the first divergence |
@@ -907,10 +913,10 @@ Each improvement is owned by a work package. A WP is not done until the improvem
 | `x shot <page> [--cam code] [--backend b] [--ids] [--metrics]` | Render; read back a render target; write PNG plus look metrics plus ID-pass stats |
 | `x film <page> --steps "…" [--seed s] [--compare main\|file]` | Filmstrip contact sheet, with a diff against `main` built in a temporary worktree |
 | `x sheet <rig\|move\|clip>` | 3D sheet: states × cameras, plus numeric lints |
-| `x lint <family…> [--only <id…>]` | Numeric lints against per-family baselines. The families are `anim`, `geo`, `tex`, `audio` and `level` |
+| `x lint <family…> [--only <prefix…>]` | Numeric lints against per-family (and per-area) baselines. The families are `anim`, `geo`, `tex`, `audio` and `level` |
 | `x anim find\|show\|cut\|import\|cmu\|bake\|sheet …` | Animation library tools (§10) |
 | `x audio <id> [--wav] [--spectrogram]` | Render a sound; metrics; optional files in `out/` |
-| `x perf <scene> [--budget]` | Counters and timings against budgets |
+| `x perf <scene> [--budget] [--tier baseline\|enhanced]` | Counters and timings against budgets (`--tier` arrives in WP 10.1) |
 | `x describe <kind> [id]` | Registry listing: schema, ids, docs |
 | `x new <kind> <id>` | Scaffold content that already passes every check |
 | `x lab add\|rm\|list` | Temporary labs with a question, an answer and an expiry date |
@@ -937,13 +943,13 @@ Each improvement is owned by a work package. A WP is not done until the improvem
 - A test that waits on wall-clock time is a bug. Tests step the engine (`step(n)`) on a virtual clock.
 - A flaky test is quarantined only through a WP that fixes it. Skipping a test to get green is forbidden.
 
-### 8.3 `window.__engine`: one inspector API, identical headless (`createHeadless`)
+### 8.3 `window.__engine`: one inspector API, also headless (`createHeadless`) minus the rendering members
 
 | Area | API |
 |---|---|
 | Identity and health | `info()` → `{ version, build, backend, tier, compat, features, fallbacks }`, `ready`, `errors[]` (structured records), `advice[]` (warn-once records with codes) |
 | Time | `pause()`, `resume()`, `step(n, intents?)`, `render()`, `timeScale(k)`, `seed(n)` |
-| State | `state(query?)`, `hash()`, `trace()`, `entities(query)`, `get(id)`, `set(path, value)` (settings schema only; validated), `snapshot()`, `restore(s)` |
+| State | `state(query?)`, `hash()`, `trace()`, `entities(query)`, `get(id)`, `set(path, value)` (settings schema only; validated), `snapshot()`, `restore(s)`, `describe(kind?, id?)` (the registries, as `x describe`) |
 | Scene | `scene.dump({ depth, filter })` → a text tree (name, type, visible, position, bounds, material, triangles); `camera.get()`, `camera.set(code)` |
 | Rendering | `stats()` → `{ simMs, physicsMs, animMs, renderMs, gpuMs?, drawCalls, triangles, pipelines, programs, textures, geometries, memory }` |
 | Capture | `capture({ ids, metrics, thumbnail, size })`, via render target and `readRenderTargetPixelsAsync` |
@@ -1009,13 +1015,13 @@ Every page signals `ready` or `error` within a timeout. That turns a startup cra
 
 **Levels:** `validate()` (unknown glyphs, unreachable spawns, unclimbable stairs), nav connectivity.
 
-**Baselines.** Each family has a baseline file, `tests/baselines/lints-<family>.json`, listing accepted exceptions as `{ id, metric, value, reason }`. A new violation fails the test, and so does an accepted one that got worse.
+**Baselines.** Each family (and area) has a baseline file, `tests/baselines/lints-<family>[-<area>].json`, listing accepted exceptions as `{ id, metric, value, reason }`. A new violation fails the test, and so does an accepted one that got worse.
 
 ### 8.7 Performance budgets, as counters (never headless fps)
 
 - **Pipelines** compiled after warm-up must be **0**.
 - **Draw calls, triangles, programs and memory bytes** (`renderer.info`) are capped per lab scene.
-- **Sim time.** `sim.step` in milliseconds at 100, 1,000 and 5,000 bodies, measured in Node with the median of 5 runs, checked against budgets with a tolerance. The prototype's figures: 1, 5.6 and 33 ms. Physics should stay within 1.2× of the prototype under the deterministic build.
+- **Sim time.** `sim.step` in milliseconds at 100, 1,000 and 5,000 bodies, measured in Node with the median of 5 runs, checked against budgets with a tolerance. The prototype's figures: 1, 5.6 and 33 ms. Physics budgets are WP 2.1's measurement of the deterministic build on the same machine (`tests/baselines/perf/physics.json`); the prototype's figures are context only. Budgets live in one file per scene or area under `tests/baselines/perf/`, owned by the WP that records them.
 - **Trends.** The nightly job records a trend file (`out/perf/trend.json`) and flags any regression over 15%.
 
 ### 8.8 The headless browser recipe
@@ -1038,7 +1044,7 @@ Every page signals `ready` or `error` within a timeout. That turns a startup cra
 
 - **`ci.yml`**, required on every PR:
   - runs in the Playwright container pinned by the lockfile;
-  - `npm ci`, then `x vendor --check`, then `x check`, then `x unit`, then `x test --changed --base origin/main` (`--all` while the full T2 set stays within its 6-minute budget);
+  - `npm ci`, then `x src` (the source repository is public), then `x vendor --check`, then `x check`, then `x unit`, then `x test --changed --base origin/main` (`--all` while the full T2 set stays within its 6-minute budget);
   - uploads `out/**` as artifacts;
   - writes a summary to `$GITHUB_STEP_SUMMARY`.
 - **`nightly.yml`:** T3 (§8.2), plus perf trends and the next-three.js canary.
@@ -1051,7 +1057,7 @@ Every page signals `ready` or `error` within a timeout. That turns a startup cra
 
   | Hook or setting | Does |
   |---|---|
-  | SessionStart | `npm ci`, export `CHROMIUM_PATH`, resolve `MY3D2DGE_SRC` (`x src`), `x vendor --check`, warm the TypeScript cache |
+  | SessionStart | `npm ci`, export `CHROMIUM_PATH`, resolve the source (`x src`) and append `MY3D2DGE_SRC=<absolute path>` to `$CLAUDE_ENV_FILE`, so later Bash calls see it; `x vendor --check`; warm the TypeScript cache |
   | PostToolUse on `Edit\|Write` | Fast per-file check (parse, layer and banned-API rules). Exits 2 with the errors so the agent sees them at once |
   | PreToolUse | Deny hand edits to `vendor/`, `out/` and `site/` (`node x vendor` and `node x build` may write them); deny force-pushes to `main` |
   | Stop | Run `x check`. Exit 2 with a short reason if red, honouring `stop_hook_active` to avoid loops |
@@ -1115,7 +1121,7 @@ Upstream docs are pinned in `docs/vendor/`. Version numbers never appear in pros
 `x new <kind> <id>` exists for these kinds, and only these: `material`, `prop`, `body`, `rig --block legGait`, `move`, `action`, `level`, `sfx`, `song`, `lab`, `scene`, `module`, `feature`, plus `game` (WP 9.1). Each writes:
 - a working entry;
 - a test;
-- a gallery entry;
+- a `gallery` hook (WP 8.5 renders it);
 - a docs header.
 
 It then runs the relevant checks and prints the summary. CI runs every template (`x new … --test`), so templates cannot rot.
@@ -1132,9 +1138,9 @@ It then runs the relevant checks and prints the summary. CI runs every template 
 | 1 Core and sim kernel | Deterministic kernel: math, time, registry, world, hash, replay, headless runs | C | **G1** | Sequential |
 | 2 Physics | Rapier adapter, character controller, bodies, queries | P | **G2** | Parallel after G1 |
 | 3 Animation core | Rotation skeleton, the humanoid port, moves, IK, reactions, secondary motion, building blocks, checks | A | **G3** | Parallel after G1 |
-| 4 Animation library | Provenance, codec, sets, baker, clip layer, tools, actions | L | **G4** | Parallel; joins A after WP 3.1 |
+| 4 Animation library | Provenance, codec, sets, baker, clip layer, tools, actions | L | **G4** | Parallel (4.1 after G0, 4.2 after WP 1.1); WPs 4.4, 4.6 and 4.8 wait on lane A |
 | 5 Render core | Renderer, tiers, materials, textures, geometry, instancing, puppets, lights, cameras, post, effects, capture | R | **G5** | Parallel after G1 (WP 5.1 may start after G0) |
-| 6 World | Level compiler, nav, props, gameplay kits, terrain | W | **G6** | After WP 2.1 and WP 5.4 |
+| 6 World | Level compiler, nav, props, gameplay kits, terrain | W | **G6** | After WP 2.2 and WP 5.4 |
 | 7 Audio | DSP, data, runtime, tools | X | **G7** | Parallel after G1 |
 | 8 Input, UI, dev | Devices and intents, overlay, inspector, panel, gallery, bot, governor | I | **G8** | Parallel after G1 |
 | 9 Integration | createEngine, the labs that prove everything together, the benchmark, deploy | all → integrator | **G9** (baseline engine) | After G2–G8 |
@@ -1146,20 +1152,20 @@ It then runs the relevant checks and prints the summary. CI runs every template 
 Each WP below repeats its direct dependencies in a **Needs** line. Edges in brackets cross lanes.
 
 ```
-Phase 0:  0.1 → 0.2 → {0.4, 0.3, 0.6, 0.7, 0.11} ; 0.4 → 0.5 ; {0.3, 0.5, 0.6, 0.7} → 0.8 → 0.9 → 0.10 ⇒ G0
+Phase 0:  0.1 → 0.2 → {0.3, 0.4, 0.11} ; 0.4 → {0.5, 0.6, 0.7} ; {0.3, 0.5, 0.6, 0.7} → 0.8 → 0.9 → 0.10 ; {0.10, 0.11} ⇒ G0
 Phase 1:  G0 → 1.1 → 1.2 → 1.3 → 1.4 → 1.5 → 1.6 ⇒ G1
 After G1, in lanes:
   P: 2.1 → 2.2 → 2.3 → 2.4 ⇒ G2
   A: 3.1 → 3.2 → 3.3 → 3.4 → 3.5 [2.3] → 3.6 → {3.7, 3.8} → 3.9 ⇒ G3
-  L: 4.1 (any time after G0) ; {0.11, 1.1} → 4.2 → 4.3 ; {3.1, 3.6, 4.2} → 4.4 ; {4.1, 4.3, 4.4} → 4.5 ;
-     {3.9, 4.4} → 4.6 ; {3.4, 4.4} → 4.8 ⇒ G4 ; G4 → 4.7
-  R: 5.1 (may start after G0) → 5.2 → {5.3, 5.4, 5.5, 5.7, 5.9} ; {5.4, 5.5} + [3.1, 3.7, 3.8] → 5.6 ;
+  L: 4.1 (any time after G0) ; {0.11, 1.1} → 4.2 → 4.3 ; {3.1, 3.6, 4.3} → 4.4 ; {4.1, 4.3, 4.4} → 4.5 ;
+     {3.9, 4.1, 4.4} → 4.6 ; {3.9, 4.4} → 4.8 ⇒ G4 ; G4 → 4.7
+  R: 5.1 (may start after G0) → 5.2 → {5.3, 5.4, 5.5, 5.7, 5.9} ; {5.4, 5.5} + [3.1, 3.7, 3.8, 4.3] → 5.6 ;
      5.2 + [2.3] → 5.8 ; 5.5 + [3.6] → 5.10 ; 5.6 + [1.5, 2.1] → 5.11 ⇒ G5 (all of 5.1–5.11)
-  W: [2.2] + [5.4] → 6.1 → 6.2 [2.3] → 6.3 [5.3] → 6.4 → 6.5 [3.2] ⇒ G6
+  W: [2.2] + [5.4] → 6.1 ; 6.1 + [2.3] → 6.2 ; 6.1 + [5.3] → 6.3 ; 6.1 + [2.3, 5.10] → 6.4 ; 6.2 + [3.3, 5.3] → 6.5 ⇒ G6
   X: 7.1 → 7.2 → 7.4 ; 7.2 + [2.3, 6.4] → 7.3 ⇒ G7
-  I: 8.1 → 8.2 [5.1] → 8.3 [5.2, 5.8] → 8.4 → {8.6 [6.2], 8.7} ; 8.4 + [G3, G4, G5, G6, G7] → 8.5 ⇒ G8
+  I: 8.1 → 8.2 [5.1] → 8.3 [5.2, 5.8] → 8.4 → {8.6 [6.2, 5.10], 8.7} ; 8.4 + [G3, G4, G5, G6, G7] → 8.5 ⇒ G8
 Phase 9:  {G2 … G8} → 9.1 → {9.2 … 9.6} → 9.7 ⇒ G9
-Phase 10: G9 → 10.1 → {10.3, 10.4, 10.5} ; 10.5 → 10.2 ⇒ G10
+Phase 10: G9 → 10.1 → {10.3, 10.4, 10.5} ; {10.1, 10.5} → 10.2 ⇒ G10
 Phase 11: {8.3, 5.11} → 11.1 ; G9 → {11.2, 11.3, 11.4, 11.5} ⇒ G11
 Upgrades (when due, after G9): U-1 three.js next .1 release ; U-2 Rapier 0.21.x deterministic
 ```
@@ -1169,19 +1175,22 @@ Upgrades (when due, after G9): U-1 three.js next .1 release ; U-2 Rapier 0.21.x 
 A WP is done only when all of these hold:
 1. Its **Verify** commands exit 0, and `x check` and `x unit` are green.
 2. The T2 suites covering what it touched are green on **both** backends.
-3. Every new module has its manual header, and `x docs --check` passes. INDEX, API and ERRORS were regenerated with `x docs --write`. In ultracode lanes (`X_LANE=1`), drift is a warning and the integrator regenerates.
-4. A new kind from §8.13's list has its scaffold template, gallery entry and inspector view. A kind with a lint family has its lints (§6.6).
+3. Every new module has its manual header, and `x docs --check` passes. INDEX, API and ERRORS were regenerated with `x docs --write`. In ultracode lanes (detected automatically, WP 0.4), drift is a warning and the integrator regenerates.
+4. A new kind from §8.13's list has its scaffold template and its `gallery` hook. WP 8.5 renders every hook registered before it. A kind with a lint family has its lints (§6.6).
 5. There is a changelog fragment in `changes/`.
-6. The `verifier` subagent has reviewed the diff against the five laws and the WP's **Done when**, and every finding was fixed or answered. The subagent arrives in WP 0.10, so it reviews WPs 0.1–0.9 at G0.
+6. The `verifier` subagent has reviewed the diff against the five laws and the WP's **Done when**, and every finding was fixed or answered. The subagent arrives in WP 0.10, so it reviews WPs 0.1–0.9 and 0.11 at G0.
 7. No new advice codes appear during tests, unless they are allowlisted with a reason.
 8. The ledger (§14) row is updated: status, commit and notes. In extra-effort mode the agent writes it in the same commit. In ultracode, lanes report and the integrator writes it. Deviations from this plan are recorded as ADR amendments, never silently.
 
+**Phase 0 bootstrap.** Items 1–3, 5 and 7 apply once their tools exist: `x unit` (WP 0.2), `x check` (0.4), the advice trap (0.5), `x docs` (0.6), fragments (0.7) and T2 (0.8).
+
 **Rules about paths and proofs:**
 - **What Owns covers.** A WP's **Owns** also covers, without listing them:
-  - the browser specs its Verify names (`tests/browser/<suite>.spec.ts`);
+  - the browser specs its Verify names (`tests/browser/<suite>.spec.ts`), and the `tests/pages/<suite>.html` pages they load;
   - unit tests beside its modules or under `tests/unit/`;
-  - the scaffold templates, gallery entries and baseline entries for the kinds and lints it introduces;
-  - the fixtures its Done-when names;
+  - the scaffold templates, `gallery` hooks and lint-baseline entries for the kinds and lints it introduces;
+  - the advice and perf baseline files it records (`tests/baselines/advice/<area>.json`, `tests/baselines/perf/<scene>.json`);
+  - the **new** fixtures its Done-when names. Fixtures another WP owns are read-only;
   - one changelog fragment.
 - **Extending earlier work.** A later WP may extend a file an earlier WP created, and says so ("extends …"). Two WPs that may run at the same time (no path between them in §9.2) never own the same path.
 - **Every claim is proved.** Each **Done when** bullet maps to a **Verify** step. Otherwise it is marked *(nightly)* or *(deferred proof: <where it is proven>)*, and the ledger records that.
@@ -1189,9 +1198,9 @@ A WP is done only when all of these hold:
 **Format of each WP below:**
 - **Owns**: the paths it may create or change. Anything else goes through the integrator, or is generated.
 - **Needs**: the WPs that must be done and green first (§9.2).
-- **Carry**: exact source paths at `my-3d2dge@e37e4ee`.
+- **Carry**: exact source paths at `my-3d2dge@e37e4ee`. Omitted when nothing is carried.
 - **Build**: the deliverables.
-- **Improves**: §7 ids.
+- **Improves**: §7 ids. Omitted when none apply.
 - **Done when**: measurable outcomes.
 - **Verify**: commands that must exit 0.
 - **Size**: S (under 300 new lines), M (under 1,000), L (under 2,500). A WP that would exceed L is split.
@@ -1199,7 +1208,7 @@ A WP is done only when all of these hold:
 ### Phase 0: Foundation (lane T)
 
 #### WP-0.1 Repo constitution and the source checkout
-- **Owns:** `AGENTS.md`, `CLAUDE.md`, `README.md`, `LICENSE`, `.gitignore`, `.editorconfig`, `package.json`, `package-lock.json`, `tsconfig.json`, `docs/decisions/`, `changes/`
+- **Owns:** `AGENTS.md`, `CLAUDE.md`, `README.md`, `LICENSE`, `.gitignore`, `.editorconfig`, `package.json`, `package-lock.json`, `tsconfig.json`, `docs/decisions/`, `changes/`, `tests/unit/ts-smoke.test.ts` (the spike's stub, kept as a type smoke test)
 - **Needs:** —
 - **Size:** S
 - **Carry:** the source's `CLAUDE.md`, as input only. MIT `LICENSE`.
@@ -1211,7 +1220,7 @@ A WP is done only when all of these hold:
     - `devDependencies`: `typescript` (as the spike decides), `@types/three@0.186.0`, `@types/node@22.x` (for `node:test`), `playwright@1.64.x`.
   - `package.json` also sets `"type": "module"`, `engines.node >= 22.18`, and scripts that alias `x`.
   - `tsconfig.json`:
-    - `strict`, `noEmit`, `allowImportingTsExtensions`, `erasableSyntaxOnly`, `verbatimModuleSyntax`;
+    - `strict`, `noEmit`, `skipLibCheck`, `allowImportingTsExtensions`, `erasableSyntaxOnly`, `verbatimModuleSyntax`;
     - the DOM libs, and `types: ["node"]`. three's types arrive through its imports;
     - `include`: `engine`, `labs`, `tests`, `fixtures`, `tools`.
   - `.gitignore`: `out/ site/ .cache/ node_modules/`.
@@ -1221,19 +1230,19 @@ A WP is done only when all of these hold:
     2. an existing local clone (in the Claude Code cloud image: `/home/user/michaelcrosato/my-3d2dge`), via `git clone --shared <path> .cache/src-3d2dge`;
     3. `git clone https://github.com/michaelcrosato/my-3d2dge .cache/src-3d2dge`.
 
-    Then run `git -C .cache/src-3d2dge checkout --detach e37e4ee`. Every **Carry** read and `x port refs` go through `$MY3D2DGE_SRC`. AGENTS.md says how to set it.
+    For cases 2 and 3, then run `git -C .cache/src-3d2dge checkout --detach e37e4ee`. Every `x` command that reads the source resolves it the same way (`$MY3D2DGE_SRC`, else `.cache/src-3d2dge`, else the clone above), so no shell state is needed. Every **Carry** read and `x port refs` go through `$MY3D2DGE_SRC`. AGENTS.md says how to set it.
   - **TypeScript spike** (no more than 30 minutes):
-    - Try `typescript@7.0.x` with these flags on a stub module importing `three/webgpu` types, and on a stub test importing `node:test`. If anything blocks, fall back to `6.0.x`, and record the outcome in ADR-0003.
+    - Try `typescript@7.0.x` with these flags on `tests/unit/ts-smoke.test.ts`. It imports `three/webgpu`, `three/tsl`, `@dimforge/rapier3d-deterministic-compat` (constructing a `World`) and `node:test`. `skipLibCheck` is required: Rapier 0.19.3's `raw.d.ts` re-exports `./rapier_wasm3d-deterministic`, which the package does not ship. If anything blocks, fall back to `6.0.x`, and record the outcome in ADR-0003.
     - TypeScript 7 has **no classic JS API** (only `tsc`), so no tool may `import 'typescript'`. Tools read imports and exports by stripping types (WP 0.2).
 - **Improves:** I-01 (recorded as an ADR), I-32.
 - **Done when:**
   - `npm ci` succeeds, and `tsc` runs clean on the stubs.
   - `$MY3D2DGE_SRC` resolves to `e37e4ee`.
   - AGENTS.md is 150 lines or fewer.
-- **Verify:** `npm ci && npx tsc -p . --noEmit && test "$(git -C "$MY3D2DGE_SRC" rev-parse --short=7 HEAD)" = e37e4ee`
+- **Verify:** `npm ci && npx tsc -p . --noEmit && test "$(git -C "${MY3D2DGE_SRC:-$PWD/.cache/src-3d2dge}" rev-parse --short=7 HEAD)" = e37e4ee`
 
 #### WP-0.2 The `x` CLI, the unit runner and `tools/lib`
-- **Owns:** `x.js`, `tools/cmd/{help,serve,unit,src}.mjs`, `tools/lib/{args,report,serve,browser,importgraph,hash,png,tokens}.mjs`
+- **Owns:** `x.js`, `tools/cmd/{help,serve,unit,src}.mjs`, `tools/lib/{args,report,serve,browser,importgraph,hash,png,tokens,source}.mjs`
 - **Needs:** WP 0.1
 - **Size:** M
 - **Carry:**
@@ -1245,7 +1254,7 @@ A WP is done only when all of these hold:
   - **The command registry**, with help generated from the headers.
   - **The `report.json` writer**, and the exit codes (§8.1).
   - **`x unit [pattern…]`.**
-    - It runs `node --test` over `engine/**/*.test.ts`, `tools/**/*.test.mjs` and `tests/unit/**`.
+    - It runs `node --test` over `engine/**/*.test.ts`, `tools/**/*.test.mjs` and `tests/unit/**/*.test.{ts,mjs}`.
     - A pattern is a substring of a test file's path; **zero matched files exit 1**.
   - **The import graph.**
     - Import and export specifiers come from type-stripped `.ts` and `.mjs` files: `module.stripTypeScriptTypes`, then a scanner for top-level `import` and `export` statements.
@@ -1258,6 +1267,9 @@ A WP is done only when all of these hold:
     - **a semaphore that limits concurrent Chromium instances** for the whole machine, so parallel lanes don't time out.
   - **`x serve`:** static files, the import map and routes. TypeScript is stripped on the fly with `module.stripTypeScriptTypes` in whitespace mode, so stack-trace positions match the source.
   - **`x src`:** prints and checks `$MY3D2DGE_SRC`, cloning it as in WP 0.1 when it is missing.
+    Tests that read the source call `requireSource()` (`tools/lib/source.mjs`). When the source cannot be resolved
+    (offline), they skip and the summary reports `deferred: no source`. CI runs `x src` first and fails if it cannot
+    resolve the source, so nothing is deferred there.
   - **Helpers:** a PNG encoder over `node:zlib`, and a token counter.
 - **Improves:** I-26.
 - **Done when:**
@@ -1281,18 +1293,20 @@ A WP is done only when all of these hold:
     - header presence, file caps and the 140-character line limit (L2);
     - import and export statements the scanner cannot read;
     - token budgets, in `x sizes`.
+    - **Scope of the caps.** Line count, line length and the header apply to code: `.ts` and `.mjs` files under `engine/`, `tools/`, `labs/` and `tests/`. `data/`, text fixtures, `docs/vendor/` and `vendor/` are exempt; data is checked by its own validators.
+    - **Bare specifiers.** Engine, lab and test code may import only `three/webgpu`, `three/tsl`, allowlisted `three/addons/*` and `@dimforge/rapier3d-deterministic-compat`. In Node, bare `three` resolves to the WebGL build, which is not vendored, so any other bare specifier fails.
   - **Plugins added later:** docs drift (WP 0.6) and changelog fragments (WP 0.7).
-  - **`X_LANE=1`**, set by the ultracode harness, turns docs drift into a warning (§11.3).
+  - **Lane mode is detected, not configured.** `x check` treats a linked git worktree as an ultracode lane, and reports docs drift there as a warning (§11.3). A linked worktree is one where `git rev-parse --git-dir` differs from `--git-common-dir`. `X_LANE=0|1` overrides the detection.
   - **The `x lint` dispatcher:**
-    - usage: `x lint <family…> [--only <id…>]`;
-    - one baseline file per family, `tests/baselines/lints-<family>.json`, with entries `{ id, metric, value, reason }`;
+    - usage: `x lint <family…> [--only <prefix…>]`. `--only` filters ids by prefix (`clip:`, `action:`, `prop:`);
+    - baseline files `tests/baselines/lints-<family>[-<area>].json`, each owned by the WP that creates it, with entries `{ id, metric, value, reason }`;
     - families are plugged in later: anim (WP 3.9), tex (5.3), geo (5.4), level (6.1), audio (7.4).
 - **Improves:** I-31, I-42.
-- **Done when:** every rule has a failing fixture and a passing fixture, and `x check` on the repo takes under 10 s.
+- **Done when:** every rule has a failing fixture and a passing fixture, and `x check` on the repo takes under 10 s. Tests write failing fixtures to a temporary directory; nothing failing is committed.
 - **Verify:** `node x check && node x unit rules`
 
 #### WP-0.5 Test selection, tiers and the advice trap
-- **Owns:** `tools/cmd/{test,why}.mjs`, `tools/fixtures/importgraph/**`, `tests/baselines/advice.json`
+- **Owns:** `tools/cmd/{test,why}.mjs`, `tools/fixtures/importgraph/**`, `tests/baselines/advice/README.md`
 - **Needs:** WP 0.4
 - **Size:** M
 - **Carry:** the logic of `tools/test-run.mjs`: `--list`, `--files`, reasons, the timing table, the version-only filter.
@@ -1304,7 +1318,7 @@ A WP is done only when all of these hold:
     - `--workers`, `--repeat`, `--backend`, `--suite`, `--grep`.
   - **Budget enforcement:** warn over the budget, fail at 1.5×.
   - **`x why <file>`.**
-  - **The advice trap.** Both harnesses (the Node unit runner and the browser) fail on any engine advice code, `console.warn` or three.js deprecation that is not listed in `tests/baselines/advice.json` (`{ code, reason }`).
+  - **The advice trap.** Both harnesses (the Node unit runner and the browser) fail on any engine advice code, `console.warn` or three.js deprecation that is not listed in a file under `tests/baselines/advice/`. Each area has its own file of `{ code, reason }` entries, owned by the WP that adds them; the trap reads the whole directory.
 - **Improves:** I-27, I-41.
 - **Done when:**
   - In `tools/fixtures/importgraph/`, a change to `engine/core/a.ts` selects every dependent `*.test.ts` and `*.spec.ts`, and a change to `labs/x/main.ts` selects `x.spec.ts`.
@@ -1312,7 +1326,7 @@ A WP is done only when all of these hold:
 - **Verify:** `node x test --list --files tools/fixtures/importgraph/engine/core/a.ts && node x unit tools/`
 
 #### WP-0.3 Vendoring and pinned knowledge
-- **Owns:** `vendor/`, `tools/cmd/vendor.mjs`, `tools/lib/importmap.mjs`, `docs/vendor/`, `docs/THREE-DELTA.md`
+- **Owns:** `vendor/`, `tools/cmd/vendor.mjs`, `tools/lib/importmap.mjs`, `docs/vendor/`, `docs/THREE-DELTA.md`, `tests/baselines/advice/vendor.json`
 - **Needs:** WP 0.2
 - **Size:** M
 - **Carry:** `tools/vendor-3d.mjs` (PORT). The r182 → r186 tables in §4 and Appendix B.
@@ -1330,6 +1344,7 @@ A WP is done only when all of these hold:
     - `three-0.186.1-llms-full.txt`, from `https://raw.githubusercontent.com/mrdoob/three.js/r186/docs/llms-full.txt`;
     - the TSL Guide, at the same tag.
   - **`docs/THREE-DELTA.md`.**
+  - **Rapier's init warning.** Rapier 0.19.3's `init()` prints one `console.warn` (deprecated initialization parameters). Allowlist it in `tests/baselines/advice/vendor.json`, with that reason.
 - **Improves:** I-15, I-42.
 - **Done when:**
   - `x vendor --check` passes offline.
@@ -1339,12 +1354,12 @@ A WP is done only when all of these hold:
 
 #### WP-0.6 Docs system
 - **Owns:** `tools/cmd/{docs,new}.mjs`, `tools/templates/module/`, `docs/{INDEX,API,ERRORS,TESTING}.md`
-- **Needs:** WP 0.2
+- **Needs:** WP 0.4
 - **Size:** M
 - **Carry:** the doctest extraction, path checks and token counting of `tools/agent-test.mjs:27-30, 185-235`.
 - **Build:**
   - A header parser.
-  - **INDEX** (module → purpose → exports → tests), **API** (the real exports, with one line each from the headers) and **ERRORS** (from the `core/log` code table).
+  - **INDEX** (module → purpose → exports → tests), **API** (the real exports, with one line each from the headers) and **ERRORS** (collected from every module's `defineCodes`).
   - **EXAMPLE blocks** executed in Node; browser examples are flagged for T2.
   - **Token budgets and drift checks** (§8.12), registered as an `x check` plugin.
   - **Path checks:**
@@ -1353,12 +1368,12 @@ A WP is done only when all of these hold:
     - Citations of the source repo are written `my-3d2dge:<path>[:line]`, and are checked against `$MY3D2DGE_SRC`.
   - **A skeleton of `x new`:** the `module` template (header plus test stub). Every later WP that adds a scaffolded kind (§8.13) adds its template under `tools/templates/<kind>/`; WP 11.2 completes the coverage.
 - **Improves:** I-30.
-- **Done when:** fixtures with a header/export mismatch, a broken example, or a missing path each fail.
+- **Done when:** fixtures with a header/export mismatch, a broken example, or a missing path each fail. They are written to a temporary directory by the test, never committed.
 - **Verify:** `node x docs --check && node x unit docs`
 
 #### WP-0.7 Versioning, changelog fragments, stamping, the site build
 - **Owns:** `tools/cmd/{version,release,stamp,build}.mjs`, `changes/README.md`
-- **Needs:** WP 0.2
+- **Needs:** WP 0.4
 - **Size:** S
 - **Carry:** `tools/stamp.mjs` (COPY). `tools/version.mjs` (PORT, simplified).
 - **Build:**
@@ -1449,7 +1464,7 @@ A WP is done only when all of these hold:
 
 **Gate G0:**
 - These are green in CI, or in `x ci --local` while the owner setup is pending (§11.5): `x check`, `x unit`, `x test --suite hello --backend both`, `x vendor --check`, `x docs --check` and `x port refs --check`.
-- The `verifier` subagent has reviewed WPs 0.1–0.9 retroactively.
+- The `verifier` subagent has reviewed WPs 0.1–0.9 and 0.11 retroactively.
 
 ### Phase 1: Core and the simulation kernel (lane C)
 
@@ -1489,13 +1504,13 @@ A WP is done only when all of these hold:
   - `ed/01-tune.js`: knobs.
   - `engine:65-66`: warn-once.
 - **Build:**
-  - **A schema mini-language:** type, default, range, unit, doc, enum, required, hooks with defaults, `when` (`now | spawn | scene`).
+  - **A schema mini-language:** type, default, range, unit, doc, enum, required, hooks with defaults, `when` (`now | spawn | scene`), and a `gallery` hook (camera, duration, states) that WP 8.5 later renders.
   - **Registry:** `defineKind`, `def`, `get`, `list`, `describe`. A missing id warns once, suggests the closest names, and returns the fallback.
   - **Events:** scoped listeners (`scope.dispose()`), each listener isolated so its failure is recorded in `errors`, and a trace ring.
-  - **Log:** a code table `{ code, template, fix, doc }`, warn-once, structured errors.
+  - **Log:** warn-once and structured errors. Each module registers its own codes beside its code: `defineCodes('anim', { CODE: { template, fix, doc } })`. `x docs` collects them, and there is no central table.
   - **Settings:** one schema drives URL parameters, a validated `set` and `get`, JSON export and import, and a "differs from default" marker.
 - **Improves:** I-36, I-37, I-41.
-- **Done when:** unit tests cover every behaviour, and `docs/ERRORS.md` is generated from the code table.
+- **Done when:** unit tests cover every behaviour, and `docs/ERRORS.md` is generated from the codes the modules register.
 - **Verify:** `node x unit core && node x docs --check`
 
 #### WP-1.3 Time
@@ -1540,7 +1555,7 @@ A WP is done only when all of these hold:
 - **Verify:** `node x unit sim`
 
 #### WP-1.5 Intents, replays, `x sim`, `x replay`
-- **Owns:** `engine/input/intents.ts`, `engine/sim/replay.ts`, `tools/cmd/{sim,replay,perf}.mjs`, `fixtures/scenes/kernel/`, `tests/replays/`, `.claude/skills/determinism-debugging/`
+- **Owns:** `engine/input/intents.ts`, `engine/sim/replay.ts`, `tools/cmd/{sim,replay,perf}.mjs`, `fixtures/scenes/kernel/`, `tests/replays/`, `tests/pages/replay.html`, `.claude/skills/determinism-debugging/`
 - **Needs:** WP 1.4
 - **Size:** M
 - **Build:**
@@ -1564,7 +1579,7 @@ A WP is done only when all of these hold:
 - **Size:** S
 - **Build:**
   - `createHeadless({ scene, seed })`.
-  - The `__engine` core: `info`, `pause`, `step`, `state`, `hash`, `trace`, `entities`, `get`, `set`, `help`, `errors`, `advice`. In Node, the rendering members throw a coded "no renderer" error.
+  - The `__engine` core: `info`, `pause`, `step`, `state`, `hash`, `trace`, `entities`, `get`, `set`, `describe`, `help`, `errors`, `advice`. In Node, the rendering members throw a coded "no renderer" error.
   - The same shape in the browser; it is wired up in WP 9.1.
 - **Improves:** I-03, I-25.
 - **Done when:**
@@ -1591,8 +1606,7 @@ A WP is done only when all of these hold:
   - Insertion in a deterministic order.
   - Stepping inside the sim, then readback.
   - A hash of the snapshot bytes folded into the sim hash, and restore.
-  - A benchmark of the deterministic build against the SIMD build, both on the same machine, with the prototype's crowd scenario. Both numbers go in the ADR. The deterministic build's numbers become the physics budgets in `tests/baselines/perf.json`.
-  - Rapier's init deprecation notice allowlisted as known benign advice.
+  - A benchmark of the deterministic build against the SIMD build, both on the same machine, with the prototype's crowd scenario. Both numbers go in the ADR. The deterministic build's numbers become the physics budgets in `tests/baselines/perf/physics.json`.
 - **Improves:** I-06.
 - **Done when:** a 40-body replay matches in Node and in Chromium on both backends, and snapshot/restore round-trips equal.
 - **Verify:** `node x unit physics && node x replay tests/replays/physics-40.replay.json --browser both`
@@ -1638,7 +1652,7 @@ A WP is done only when all of these hold:
 - **Verify:** `node x unit physics && node x perf fixtures/scenes/crowd-1000 --budget`
 
 #### WP-2.4 Physics fixtures and replays
-- **Owns:** `fixtures/scenes/physics-*`, `tests/replays/physics-*.replay.json`
+- **Owns:** `fixtures/scenes/physics-{stairs,crowd,topple}/` and their `tests/replays/physics-*.replay.json` (`physics-40` stays WP 2.1's)
 - **Needs:** WP 2.3
 - **Size:** S
 - **Build:**
@@ -1674,7 +1688,7 @@ A WP is done only when all of these hold:
   - The rest pose's FK matches the build proportions.
   - Blending, masks and additive layers are unit-tested.
   - Sheets are deterministic (hashed).
-- **Verify:** `node x unit anim/skeleton`
+- **Verify:** `node x unit anim/skeleton anim/builds anim/pose anim/fk anim/sheet anim/check`
 
 #### WP-3.2 IK
 - **Owns:** `engine/anim/ik.ts`
@@ -1761,7 +1775,7 @@ A WP is done only when all of these hold:
   - Chains are stable at 60 and 120 Hz and collide with body capsules and the floor.
   - A ragdoll hand-off round-trips in Node with Rapier.
   - The correct get-up is chosen.
-- **Verify:** `node x unit anim/secondary anim/reactions`
+- **Verify:** `node x unit anim/secondary anim/reactions anim/ragdoll`
 
 #### WP-3.6 The Character animator and the body-state vocabulary
 - **Owns:** `engine/anim/{character,states,weights}.ts`; extends `engine/sim/actors.ts` (WP 2.2) with the animator
@@ -1782,7 +1796,7 @@ A WP is done only when all of these hold:
   - `inspect()` snapshot tests pass.
   - Unknown body states warn with a suggestion.
   - **The sim hash is identical whether or not poses are evaluated** (the test).
-- **Verify:** `node x unit anim/character`
+- **Verify:** `node x unit anim/character anim/states anim/weights`
 
 #### WP-3.7 Blob rig
 - **Owns:** `engine/anim/blob.ts`
@@ -1798,7 +1812,7 @@ A WP is done only when all of these hold:
 - **Verify:** `node x unit anim/blob`
 
 #### WP-3.8 Procedural building blocks and their fixture rigs
-- **Owns:** `engine/anim/proc/*.ts`, `fixtures/rigs/*`
+- **Owns:** `engine/anim/proc/*.ts`, `fixtures/rigs/{biped,hexapod,serpent,floater,multiarm,tentacle}/`, `fixtures/rigs/README.md`
 - **Needs:** WP 3.6
 - **Size:** L (split into 3.8a, b and c if needed)
 - **Carry:** the techniques of §5.6, as mechanisms only. The game's characters are not ported.
@@ -1850,7 +1864,7 @@ A WP is done only when all of these hold:
 §10 has the detailed specification.
 
 #### WP-4.1 Provenance, catalogs, ledger, docs
-- **Owns:** `data/anim/{SOURCES.md,LICENSES/,catalogs/,cmu/}`, `docs/ANIMATION-LIBRARY.md`, `docs/ANIMATION-RESEARCH.md`, `tests/unit/data/anim/`
+- **Owns:** `data/anim/{SOURCES.md,LICENSES/,catalogs/,cmu/}`, `docs/ANIMATION-LIBRARY.md`, `docs/ANIMATION-RESEARCH.md`, `tests/unit/data/anim/{catalogs,ledger,sources}/`
 - **Needs:** G0
 - **Size:** S
 - **Carry:**
@@ -1858,6 +1872,12 @@ A WP is done only when all of these hold:
   - `cmu.json` (COPY, and FIX the license).
   - `cmu-takes.tsv` (split).
   - `docs/MOCAP.md` and `docs/ANIMATION-RESEARCH.md` (PORT).
+- **Build:**
+  - `data/anim/SOURCES.md`, one section per library (license, URL, file names), and the license texts in `LICENSES/`.
+  - The catalogs, copied into `data/anim/catalogs/`.
+  - The CMU ledger split into `data/anim/cmu/<category>.tsv` and `subjects.tsv` (§10.3), with the category fallback
+    fixed. The 113 takes flagged `fps?` (an assumed 120 fps) keep the flag until WP 4.5 verifies them.
+  - `docs/ANIMATION-LIBRARY.md` (from `docs/MOCAP.md`) and `docs/ANIMATION-RESEARCH.md`, with the coverage map.
 - **Improves:** I-13
 - **Done when:**
   - The split ledger joins back to the original rows.
@@ -1866,13 +1886,13 @@ A WP is done only when all of these hold:
 - **Verify:** `node x unit data/anim`
 
 #### WP-4.2 The readable codec and format 2
-- **Owns:** `engine/anim/clip/{readable,validate,lens,mirror}.ts`
+- **Owns:** `engine/anim/clip/{readable,validate,lens,mirror}.ts`, `tools/anim/legacy-readable.mjs`
 - **Needs:** WP 0.11, WP 1.1
 - **Size:** M
-- **Carry:** `src/mocap/readable.js` (PORT; the core decode stays verbatim).
+- **Carry:** `src/mocap/readable.js` (PORT; the decode takes its trig from `core/dmath`, and the source decoder is the oracle).
 - **Build:**
   - Format 1 decoding through `core/dmath`, within 0.001 mm of the reference vectors.
-  - The source decoder, kept unchanged as an oracle in `tools/anim/legacy-readable.mjs`. Tools may use `Math.*`.
+  - The oracle is the source decoder itself. `tools/anim/legacy-readable.mjs` (about 10 lines) runs `$MY3D2DGE_SRC/src/mocap/readable.js` in a `vm` context, as `tools/mocap-lib.mjs:7-9` does. Nothing is copied. The bit-for-bit check runs wherever the source resolves: locally, and nightly.
   - Format 2's optional fields (§10.2).
   - The validator, the normalized lens and mirroring.
   - Parse errors that name the key, its time and the field.
@@ -1894,9 +1914,9 @@ A WP is done only when all of these hold:
 - **Done when:** the rejoined sets deep-equal the source objects, and `text()` output is unchanged.
 - **Verify:** `node x unit data/anim/sets`
 
-#### WP-4.4 Baker, clip layer, retargeting, mannequin
+#### WP-4.4 Baker, clip layer, retargeting
 - **Owns:** `engine/anim/clip/{bake,library,layer,retarget}.ts`
-- **Needs:** WP 3.1, WP 3.6, WP 4.2
+- **Needs:** WP 3.1, WP 3.6, WP 4.3
 - **Size:** L
 - **Carry:** the API of `src/mocap/mocap.js` and the ideas in its `drive` (§5.3).
 - **Build:**
@@ -1904,7 +1924,7 @@ A WP is done only when all of these hold:
   - **The library API.**
   - **The clip layer:** weight, mask, fade from the current pose, speed, loop, additive, `walk/hold/next/landed` flags, cancel rules, events, root motion.
   - **Retargeting to builds:** a rotation copy, root scaled by the hip-height ratio, and contact IK.
-  - **The mannequin's dimensions**, taken from `body.segs` and handed to WP 5.6, which owns the mannequin body.
+  - **Retargeting onto the mannequin.** The mannequin body is WP 5.6's, built from `body.segs` in `_set.json` (WP 4.3). The clip layer retargets onto it, and differences go in the baseline.
 - **Done when:**
   - Forward-kinematics parity against the format-1 decode has a mean of **1 mm or less** for every set.
   - The worst cases are listed in the baseline.
@@ -1912,7 +1932,7 @@ A WP is done only when all of these hold:
 - **Verify:** `node x unit anim/clip` (the library lints run in WP 4.6)
 
 #### WP-4.5 Tools port
-- **Owns:** `tools/anim/*`, `tools/cmd/anim.mjs`
+- **Owns:** `tools/anim/*`, `tools/cmd/anim.mjs`. It extends `repack.mjs` from WP 4.3 and the `fps?` rows of WP 4.1's `data/anim/cmu/`; `legacy-readable.mjs` stays WP 4.2's
 - **Needs:** WP 4.1, WP 4.3, WP 4.4
 - **Size:** L
 - **Carry:** `anim-import`, `asf-amc`, `cmu`, `anim-set`, `mocap-lib`, `to-glb.py`.
@@ -1923,15 +1943,16 @@ A WP is done only when all of these hold:
   - Frame interpolation, and format-2 output, by default.
   - **`--legacy`:** nearest-frame sampling and format 1, exactly as today.
   - The split ledger; `--json`.
+  - The 113 `fps?` takes verified: each flag is cleared, or the rate corrected, with the evidence in the row.
 - **Improves:** I-13
 - **Done when:**
   - **`x anim import --cmu --legacy` reproduces the CMU set** byte for byte *(nightly: it needs the network)*.
   - `x anim find punch` prints 20 lines or fewer.
-- **Verify:** `node x unit tools/anim`, plus nightly `node x anim import --cmu --check`
+- **Verify:** `node x unit tools/anim`, plus nightly `node x anim import --cmu --legacy --check`
 
 #### WP-4.6 Library tests and lints
 - **Owns:** library tests, `tests/browser/library.spec.ts`, `tests/baselines/lints-anim-library.json`
-- **Needs:** WP 3.9, WP 4.4
+- **Needs:** WP 3.9, WP 4.1, WP 4.4
 - **Size:** M
 - **Build:**
   - Node tests: format, provenance, ledger completeness, picks.
@@ -1952,11 +1973,11 @@ A WP is done only when all of these hold:
   - Swap clips in one at a time, checking parity, marked `via: "source"`.
 - **Improves:** I-14
 - **Done when:** at least 80% of the clips whose sources are available are upgraded with parity (§10.5 step 8). The rest are listed with reasons.
-- **Verify:** `node x lint anim --only library && node x unit anim/clip`
+- **Verify:** `node x lint anim --only clip: && node x unit anim/clip`
 
 #### WP-4.8 The ACTIONS layer
 - **Owns:** `engine/anim/actions.ts`, `data/anim/actions/*`
-- **Needs:** WP 3.4, WP 4.4
+- **Needs:** WP 3.9, WP 4.4
 - **Size:** M
 - **Carry:**
   - The ranked list and build order of `docs/ANIMATION-RESEARCH.md`.
@@ -1965,8 +1986,8 @@ A WP is done only when all of these hold:
   - Multi-beat sequences that combine timelines, clips and effector overrides, with held contact frames, events and cancel windows.
   - A first set: jump phases, hurt and dizzy, the flip layer, death styles (the body only), charge-up, item-get, ledge hang and climb, wall slide, a paired grab, get-ups, idle life.
 - **Improves:** I-11.
-- **Done when:** each action has a check, lints and a gallery entry.
-- **Verify:** `node x unit anim/actions && node x lint anim --only actions`
+- **Done when:** each action has a check, lints and a `gallery` hook (rendered from WP 8.5 on).
+- **Verify:** `node x unit anim/actions && node x lint anim --only action:`
 
 **Gate G4:**
 - The library is intact, with provenance and parity proofs.
@@ -1976,7 +1997,7 @@ A WP is done only when all of these hold:
 ### Phase 5: Render core (lane R)
 
 #### WP-5.1 Renderer, capabilities, tiers, resolution
-- **Owns:** `engine/gfx/{renderer,caps,tiers,resolution}.ts`
+- **Owns:** `engine/gfx/{caps,tiers,resolution}.ts`; extends `engine/gfx/renderer.ts` (from WP 0.8)
 - **Needs:** G0
 - **Size:** M
 - **Build:**
@@ -2006,12 +2027,12 @@ A WP is done only when all of these hold:
   - **Capture and the ID pass:** `capture()` renders into a render target and reads it back with `readRenderTargetPixelsAsync`. It returns `visible: [{ id, name, px, bbox }]`.
   - **`tests/pages/scene.html`:** a page that steps a fixture scene, with gfx wired by hand (before `createEngine` exists), and exposes the `__engine` core plus `capture`. Later render WPs test with it.
   - MRT channels: object mask and ID.
-  - Looks: `toon`, `pixel`, `pbr-lite`.
+  - Material styles: `toon`, `flat`, `pbr-lite`. The `look` kind (a material style plus a filter chain) is WP 5.9's.
   - A warm-up registry: `compileAsync` with `onProgress`, run for each look and re-run on toggles.
   - **One public pipeline counter**, the single place that reads renderer internals, pinned to the three.js version by a test.
 - **Improves:** I-18.
 - **Done when:**
-  - A scripted session that toggles every look builds 0 pipelines after warm-up, on both backends.
+  - A scripted session that toggles every material style builds 0 pipelines after warm-up, on both backends.
   - On instanced box parts, the outline shell's ID-pass bounding box contains the part's, centred within 1 px.
   - The ID pass reports every object of a fixture scene on both backends.
 - **Verify:** `node x test --suite warmup --backend both`
@@ -2070,8 +2091,8 @@ A WP is done only when all of these hold:
 - **Verify:** `node x test --suite instancing --backend both`
 
 #### WP-5.6 Puppets: bodies as data
-- **Owns:** `engine/gfx/puppets/**`, `fixtures/bodies/*`, `fixtures/scenes/sandbox/` (a flat floor, 10 crates and one mannequin actor; WP 6.1 adds the room level)
-- **Needs:** WP 5.4, WP 5.5, WP 3.1, WP 3.7, WP 3.8
+- **Owns:** `engine/gfx/puppets/**`, `fixtures/bodies/*`, `fixtures/scenes/sandbox/` (a flat floor, 10 crates and one mannequin actor)
+- **Needs:** WP 5.4, WP 5.5, WP 3.1, WP 3.7, WP 3.8, WP 4.3
 - **Size:** L
 - **Carry:**
   - The lab3d grammar (`lab3d/40-characters.js:8-48`).
@@ -2086,7 +2107,7 @@ A WP is done only when all of these hold:
     - instanced parts per part type, for crowds;
     - **one rigid-skinned mesh per character**;
     - smooth skinning, optionally.
-  - Bodies: the mannequin, a neutral humanoid, a blob, and the fixture rigs.
+  - Bodies: the mannequin (from `body.segs` in WP 4.3's `_set.json`), a neutral humanoid, a blob, and the fixture rigs.
 - **Improves:** I-21.
 - **Done when:**
   - `fixtures/scenes/sandbox` draws in under 50 draw calls (the prototype's lab used 1,225).
@@ -2122,7 +2143,7 @@ A WP is done only when all of these hold:
   - First person at the head socket, with near-body culling.
   - The side-scrolling depth rail, and fixed cameras.
   - Camera codes.
-  - Camera-relative movement through `intents.fromCamera` (WP 1.5), so W walks away from the camera.
+  - Cameras expose `yaw()`. `input/devices` (WP 8.1) passes it to `intents.fromCamera`, so W walks away from the camera, and `gfx` never imports `input/`.
   - Cutaway, and shake.
 - **Done when:**
   - Each camera has an ID-pass test: the focus is visible and coverage is sane.
@@ -2163,7 +2184,7 @@ A WP is done only when all of these hold:
   - Budgets hold.
 - **Verify:** `node x unit gfx/fx && node x test --suite fx --backend both`
 
-#### WP-5.11 Capture, the ID pass, visual tools, parity
+#### WP-5.11 Visual tools and parity
 - **Owns:** `tools/cmd/film.mjs`, extends `tools/cmd/shot.mjs` (ID-pass stats, thumbnails), `tests/baselines/thumbs/*`, `tests/browser/parity.spec.ts`
 - **Needs:** WP 5.6, WP 1.5, WP 2.1
 - **Size:** M
@@ -2171,8 +2192,7 @@ A WP is done only when all of these hold:
   - The look metrics and notes of `tools/check.mjs:40-50, 96-104`.
   - `tools/filmstrip.mjs` (PORT).
 - **Build:**
-  - Look metrics and text thumbnails on top of WP 5.2's `capture()`.
-  - The ID pass, look metrics and text thumbnails.
+  - Look metrics and text thumbnails on top of WP 5.2's `capture()` and ID pass.
   - `x shot`, and `x film --compare main` (via `git worktree`).
   - **The parity suite:** live play on each backend is recorded, replayed headless, and its hashes compared; the ID pass is compared across backends.
 - **Improves:** I-07, I-28.
@@ -2190,7 +2210,7 @@ A WP is done only when all of these hold:
 ### Phase 6: World (lane W)
 
 #### WP-6.1 The level compiler
-- **Owns:** `engine/world/level/**`, `engine/sim/levelBodies.ts` (a compiled level becomes Rapier colliders and spawns), `fixtures/levels/{hall,room}.txt`, `tools/lint/level.mjs`, `tests/replays/world-*.replay.json`; extends `fixtures/scenes/sandbox` with the room
+- **Owns:** `engine/world/level/**`, `engine/sim/levelBodies.ts` (a compiled level becomes Rapier colliders and spawns), `fixtures/levels/{hall,room}.txt`, `tools/lint/level.mjs`, `tests/replays/world-*.replay.json`, `fixtures/scenes/room/` (the room level as a scene)
 - **Needs:** WP 2.2, WP 5.4
 - **Size:** L
 - **Carry:**
@@ -2225,7 +2245,7 @@ A WP is done only when all of these hold:
 - **Done when:**
   - In a replay, the crowd follows the hero up the stairs.
   - 1,000 agents stay within budget.
-- **Verify:** `node x unit world/nav && node x perf fixtures/scenes/nav-1000 --budget`
+- **Verify:** `node x unit world/nav world/spatial && node x perf fixtures/scenes/nav-1000 --budget`
 
 #### WP-6.3 The props library
 - **Owns:** `engine/world/props/**`
@@ -2242,11 +2262,11 @@ A WP is done only when all of these hold:
 - **Done when:**
   - Every prop passes the geometry and texture lints.
   - Every prop renders in `tests/browser/props.spec.ts`: ID-pass coverage above 0 on both backends.
-- **Verify:** `node x lint geo tex --only props && node x test --suite props --backend both`
+- **Verify:** `node x lint geo tex --only prop: && node x test --suite props --backend both`
 
 #### WP-6.4 Generic gameplay kits
 - **Owns:** `engine/world/{surfaces,things,projectiles,ai}.ts`
-- **Needs:** WP 6.1, WP 2.3
+- **Needs:** WP 6.1, WP 2.3, WP 5.10
 - **Size:** M
 - **Carry:**
   - `Bullets` and `E.pattern` (`engine:3553-3625`), moved to 3D.
@@ -2264,7 +2284,7 @@ A WP is done only when all of these hold:
 
 #### WP-6.5 Terrain (new)
 - **Owns:** `engine/world/terrain.ts`, `engine/physics/heightfield.ts`, `engine/gfx/terrain.ts`
-- **Needs:** WP 6.2, WP 3.2, WP 5.3
+- **Needs:** WP 6.2, WP 3.3, WP 5.3
 - **Size:** M
 - **Build:**
   - A seeded fbm heightfield **descriptor** in `world/`, made into a Rapier heightfield collider by `physics/heightfield.ts`.
@@ -2274,7 +2294,7 @@ A WP is done only when all of these hold:
 - **Done when:**
   - The character walks the terrain with planted feet.
   - Replays match.
-- **Verify:** `node x unit world/terrain && node x test --suite terrain --backend both`
+- **Verify:** `node x unit world/terrain physics/heightfield gfx/terrain && node x test --suite terrain --backend both`
 
 **Gate G6:**
 - Fixture levels compile and validate.
@@ -2379,7 +2399,7 @@ A WP is done only when all of these hold:
 - **Verify:** `node x unit ui && node x test --suite ui --backend both`
 
 #### WP-8.3 Full inspector, overlay, routes
-- **Owns:** `engine/dev/{inspector,overlay}.ts`, `engine/app/routes.ts`, `tools/cmd/{eval,dump}.mjs`; extends `tools/cmd/serve.mjs` with `--inspect` (one persistent headless page)
+- **Owns:** extends `engine/dev/inspector.ts` (from WP 1.6); `engine/dev/overlay.ts`, `engine/app/routes.ts`, `tools/cmd/{eval,dump}.mjs`; extends `tools/cmd/serve.mjs` with `--inspect` (one persistent headless page)
 - **Needs:** WP 8.2, WP 5.2, WP 5.8
 - **Size:** M
 - **Build:**
@@ -2414,7 +2434,7 @@ A WP is done only when all of these hold:
 - **Needs:** WP 8.4, G3, G4, G5, G6, G7
 - **Size:** M
 - **Build:**
-  - Reels driven by the registries: bodies × body states, moves, actions, clips, props, materials, emitters, sounds.
+  - Reels driven by the registries' `gallery` hooks: bodies × body states, moves, actions, clips, props, materials, emitters, sounds.
   - Deep links, slow motion, camera presets, the training-dummy fixture.
   - Wrong names warn with the list of valid ones.
 - **Done when:** every registered entry has a reel that renders on both backends.
@@ -2422,7 +2442,7 @@ A WP is done only when all of these hold:
 
 #### WP-8.6 Bot harness
 - **Owns:** `engine/dev/bot.ts`
-- **Needs:** WP 8.4, WP 6.2
+- **Needs:** WP 8.4, WP 6.2, WP 5.10
 - **Size:** M
 - **Build:**
   - A virtual device and navigation.
@@ -2452,7 +2472,7 @@ A WP is done only when all of these hold:
 ### Phase 9: Integration (the integrator plus each lane)
 
 #### WP-9.1 `createEngine`, the loop, scenes, the store, the game template
-- **Owns:** `engine/app/**`
+- **Owns:** `engine/app/**` (extends `headless.ts` from WP 1.6 and `routes.ts` from WP 8.3)
 - **Needs:** G2, G3, G4, G5, G6, G7, G8
 - **Size:** M
 - **Carry:** the scene and timer patterns; `E.store` (`engine:198-202`), extended with a configurable prefix (replacing the fixed `my3d2dge:`), a memory backend, versioning, and isolation in demo, sandbox and gallery modes.
@@ -2460,12 +2480,13 @@ A WP is done only when all of these hold:
   - `createEngine`, with the loop of §6.4 and the scene lifecycle.
   - `x new scene`.
   - **`x new game <name> [--out dir]`**, the starting point for the future game. It scaffolds a separate package, by default outside this repository, containing:
-    - a `package.json` that pins the engine by git tag (`github:michaelcrosato/my-3dge#v0.x.y`), or by a relative path for local development;
+    - the engine as a git submodule `engine/`, pinned to tag `v0.x.y`, or as a `file:` path that npm symlinks. Never as a package copied into `node_modules`: Node does not strip types there;
+    - an `x` shim that runs the engine's `x.js` on the game's `scenes/` and `data/`;
     - an `index.html` with the import map;
     - one scene and its replay test;
     - the game's own AGENTS.md.
 
-    CI scaffolds it into a temporary directory and runs its test.
+    CI scaffolds it, in the submodule form, into a temporary directory, and runs its test.
 - **Done when:** `fixtures/scenes/sandbox` gives the same hash under `createEngine` and headless, and a scaffolded game passes its own test.
 - **Verify:** `node x unit app && node x test --suite app --backend both`
 
@@ -2529,7 +2550,7 @@ A WP is done only when all of these hold:
 - **Verify:** `node x test --suite labs --backend both`
 
 #### WP-9.7 Labs index, deploy, stamps
-- **Owns:** `labs/index/**`, `labs/labs.json`, `vercel.json`, the site part of `tools/cmd/build.mjs`
+- **Owns:** `labs/index/**`, `labs/labs.json`, `vercel.json`, `tools/cmd/lab.mjs` (`x lab`), the site part of `tools/cmd/build.mjs`
 - **Needs:** WP 9.2, WP 9.3, WP 9.4, WP 9.5, WP 9.6
 - **Size:** S
 - **Carry:** `src/labs.json`, the template and `tools/labs-test.mjs` (PORT, adding `answer` and `expires`).
@@ -2552,7 +2573,7 @@ A WP is done only when all of these hold:
 ### Phase 10: The Enhanced tier (lane R2, WebGPU-only, never gameplay)
 
 #### WP-10.1 Hardening the tier framework
-- **Owns:** `engine/gfx/tiers.ts`, `tests/browser/tiers.spec.ts`
+- **Owns:** extends `engine/gfx/tiers.ts` (from WP 5.1), `tests/browser/tiers.spec.ts`; extends `tools/cmd/perf.mjs` with `--tier`
 - **Needs:** G9
 - **Size:** S
 - **Build:**
@@ -2586,7 +2607,7 @@ A WP is done only when all of these hold:
 - **Verify:** `node x perf labs/stress-world --tier enhanced --budget`
 
 #### WP-10.4 Lighting and shading upgrades
-- **Owns:** `engine/gfx/enhanced/{lighting,ao,ssr,gi,aa,volumetrics}.ts`
+- **Owns:** `engine/gfx/enhanced/{lighting,ao,ssr,gi,aa,volumetrics}.ts`, plus the `ClusteredLighting`, `GTAONode`, `SSRNode` and `TRAANode` addons via `x vendor --addon`
 - **Needs:** WP 10.1
 - **Size:** L
 - **Build:**
@@ -2627,7 +2648,7 @@ A WP is done only when all of these hold:
 - **Needs:** G9
 - **Size:** M
 - **Build:**
-  - `x new` for every registry kind, each with `--test` in CI.
+  - `x new` for every kind in §8.13, each with `--test` in CI.
   - Every skill and subagent listed in §8.10.
 - **Improves:** I-36.
 - **Done when:** every template passes every check in CI.
@@ -2878,19 +2899,19 @@ clip.json ─parse/validate─▶ keys (format 1/2)
 - **Phases 0 and 1 run in sequence**, as a single lane with an implementer and a verifier.
 - **After G1, two waves of parallel lanes**, keeping fewer than 10 agents at once:
   - **Wave A:** lanes P, A, R and X: 4 implementers, a shared verifier queue (1–2 agents) and 1 integrator.
-  - **Wave B**, which starts as Wave A's prerequisites land: lanes L (as soon as 3.1, 3.6 and 0.11 exist), I and W.
+  - **Wave B**, as agents free up and prerequisites land: lane L (WPs 4.1–4.3 can start at once; 4.4 waits for 3.6), lane I (8.2 waits for 5.1) and lane W (after 2.2 and 5.4).
 - **Phase 9 runs on the integrator plus one agent per lab.**
 - **Phase 10** (R2) and **Phase 11** (T) can overlap once G9 is near.
 
 **Isolation.**
 - Each lane runs in its own git worktree (`isolation: "worktree"`). Before its first Verify, the lane:
   - runs `npm ci` in the worktree, or symlinks the main checkout's `node_modules`;
-  - exports `MY3D2DGE_SRC` as an absolute path;
-  - sets `X_LANE=1`.
+  - needs no other shell state. Every `x` command resolves the source itself (`$MY3D2DGE_SRC`, else `.cache/src-3d2dge`, else the WP 0.1 order), and `x check` detects the worktree (WP 0.4).
 - A WP may change only its **Owns** paths, as widened by the rules in §9.3.
 - Generated files (`docs/INDEX.md`, `docs/API.md`, `docs/ERRORS.md`) are never resolved by hand. On a merge conflict, take either side and re-run `x docs --write`.
 - Shared files are owned by the integrator or regenerated:
   - `engine/index.ts`, `tools/lib/layers.json`, `package.json`, `tsconfig.json`, `docs/INDEX.md`, `docs/API.md`, `docs/ERRORS.md`, the ledger.
+  - `vendor/three-0.186.1/addons/ADDONS.json` and `VERSION.json`. They are regenerated by `x vendor`; on a conflict, take either side and re-run it.
 - Lanes request changes to shared files through their final report.
 
 **The integrator:**
@@ -2989,7 +3010,7 @@ The engine is built only by agents, but a few switches belong to the repository'
 | 0009 | **Animation architecture:** effector-space authoring, then IK, then a rotation skeleton (root + 23 joints); an explicit layer stack; two update paths; no Card mode; no camera input to animation |
 | 0010 | **Animation library:** readable key poses (format 1, extended as format 2) are the stored format, baked to rotation tracks; the CMU library comes on demand |
 | 0011 | **Characters as data:** body grammar v2; one rigid-skinned mesh per character by default; instanced crowds; smooth skinning optional |
-| 0012 | **Registries and schemas:** "ask the entry, never the id"; every kind gets a gallery, lints, a scaffold and docs |
+| 0012 | **Registries and schemas:** "ask the entry, never the id"; every kind gets an `x describe` listing (also `__engine.describe()`) and docs; the §8.13 kinds also get a scaffold and a `gallery` hook; kinds with a lint family get lints |
 | 0013 | **Audio:** pure DSP into seeded, hashed `Float32Array`s; Web Audio for playback and spatial sound; `OfflineAudioContext` only for smoke tests |
 | 0014 | **Tooling:** one CLI with `report.json`; test tiers with budgets; tests selected from the import graph; images optional |
 | 0015 | **Docs:** the header is the manual; INDEX, API and ERRORS are generated; prose is never duplicated; upstream docs are vendored |
@@ -3002,7 +3023,7 @@ The engine is built only by agents, but a few switches belong to the repository'
 | Q1 | TypeScript 7 or 6? | 7.0.x, if the WP 0.1 spike passes |
 | Q2 | Site build: rename `.ts` to `.js`, or serve `.ts` as JavaScript? | **Decided in WP 0.7:** rename and rewrite the imports, which works on any host |
 | Q3 | Hosting | Vercel, built from source, with previews; GitHub Pages is an acceptable alternative |
-| Q4 | Where does the future game live? | A separate repository (or `games/<name>` package) scaffolded by `x new game`, importing the engine at a pinned tag |
+| Q4 | Where does the future game live? | A separate repository (or `games/<name>` package) scaffolded by `x new game`, importing the engine as a git submodule at a pinned tag |
 | Q5 | What if the deterministic Rapier build is too slow? | Keep it. Optimize the crowd rather than switching builds: sleeping, and sim LOD (kinematic agents beyond a radius around sim entities). Sim LOD is a scene setting, fixed at load and recorded in replays. The governor never switches it, and neither does frame time |
 | Q6 | Characters: skinned or rigid parts? | One rigid-skinned merged mesh by default; smooth skinning per body, optionally |
 | Q7 | Card mode? | Dropped. If a game ever needs sprite characters, they become a separate optional module |
@@ -3058,7 +3079,7 @@ Status is `todo`, `doing`, `done` or `blocked`. Update the row in the same commi
 | 4.1 | Provenance, catalogs, ledger, docs | L | todo | | |
 | 4.2 | Readable codec and format 2 | L | todo | | |
 | 4.3 | Re-containerize the sets | L | todo | | |
-| 4.4 | Baker, clip layer, retarget, mannequin | L | todo | | |
+| 4.4 | Baker, clip layer, retargeting | L | todo | | |
 | 4.5 | Tools port | L | todo | | |
 | 4.6 | Library tests and lints | L | todo | | |
 | 4.7 | Re-import from sources (after G4) | L | todo | | |
@@ -3074,7 +3095,7 @@ Status is `todo`, `doing`, `done` or `blocked`. Update the row in the same commi
 | 5.8 | Cameras, cutaway, shake | R | todo | | |
 | 5.9 | Post-processing | R | todo | | |
 | 5.10 | Effects | R | todo | | |
-| 5.11 | Capture, ID pass, visual tools, parity | R | todo | | |
+| 5.11 | Visual tools and parity | R | todo | | |
 | **G5** | **Gate: render core** | | todo | | |
 | 6.1 | Level compiler | W | todo | | |
 | 6.2 | Navigation and spatial queries | W | todo | | |
@@ -3382,7 +3403,7 @@ the plan and its ledger are PLAN.md. The game is not here and never will be.
 1. Everything is code: no binary asset files; readable data records its source and license.   → x check (asset scan)
 2. Small and legible: one concept per file, ≤ 400 lines (hard 600), a manual header, TypeScript erasable syntax.
                                                                                            → x check (caps, headers, tsc)
-3. AI-native tooling: drive and question the engine through `node x` and __engine; every kind has a scaffold.
+3. AI-native tooling: drive and question the engine through `node x` and __engine; the kinds in PLAN.md §8.13 have scaffolds.
                                                                                            → scaffold self-tests in CI
 4. Inspect and test: the sim is deterministic and runs headless; add the cheapest test that proves your change.
                                                                                            → x unit, x replay, x test
@@ -3413,7 +3434,7 @@ the plan and its ledger are PLAN.md. The game is not here and never will be.
 
 ## Done means
 Verify commands green; x check and x unit green; T2 green on both backends for what you touched; headers and docs current;
-gallery, lints and scaffold for new kinds; changelog fragment; verifier review clean; no new advice codes; ledger updated.
+scaffold, gallery hook and lints for new §8.13 kinds; changelog fragment; verifier review clean; no new advice codes; ledger updated.
 
 ## Where things are
 engine/ (code + unit tests) · data/ (readable data) · fixtures/ · labs/ · tools/ (x commands) · tests/ (browser,
