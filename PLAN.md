@@ -12,6 +12,7 @@
 |---|---|
 | Source studied | `michaelcrosato/my-3d2dge` v0.14.0, commit `e37e4ee` (2026-10-08) |
 | Plan date | 2026-10-09 |
+| Supporting research | [`docs/research/`](docs/research/): eight studies of the source with `path:line` evidence. This plan is canonical where they differ |
 | Audience | AI coding agents running at **extra-high effort** (one agent, sequential) or as an **ultracode** multi-agent workflow (parallel lanes) |
 | Status | Plan only. Nothing in this repository is built yet. The status ledger is §14 |
 | How to use it | Read §1–§4 once. Before starting a work package (WP), read its entry in §9 and the sections it cites. Tick the ledger in §14 when the package's checks pass |
@@ -204,7 +205,7 @@ Eight parallel deep-dives read the source in full. Where possible they ran it: b
     - particle calls own hit-stop.
   - **The hash is weak.** It covers no velocities, rotations, RNG state, corpses or shots, and there is no golden value.
   - **No shared structure.**
-    - Glyph meanings are hard-coded in about 6 places.
+    - Glyph meanings are hard-coded in about a dozen places across two files.
     - There is one shared scope with 322 top-level declarations.
     - Tuning numbers are scattered through the code.
 - **Bugs:**
@@ -216,20 +217,19 @@ Eight parallel deep-dives read the source in full. Where possible they ran it: b
 - a true fixed 60 Hz loop with a 6-step cap;
 - the 6-line height-boost projection `P·V·S·V⁻¹`;
 - puppet bodies as a data list (`['limb', a, b, ra, rb, color]` and similar);
-- cards drawn from each character's own angle;
-- `?cam=` camera codes.
+- cards drawn from each character's own angle.
 
-Its costs: 1,225 draw calls in Puppet mode, with no instancing.
+Its costs: 1,225 draw calls in Puppet mode (measured: WebGL 2, iso view, shadows on), with no instancing.
 
 **Pick per concern** (§5.1 has the full table):
-- From **lab3d**: units, loop, body grammar, boost, camera codes.
-- From **stress-world**: instancing, warm-up, lights, filters, richer cameras, collision groups, the controller config, richer level text.
+- From **lab3d**: units, loop, body grammar, boost.
+- From **stress-world**: instancing, warm-up, lights, filters, richer cameras and camera links (`?cam=`, `?cam3=`), collision groups, the controller config, richer level text.
 
 **Lessons the labs wrote down** (`docs/LAB-3D.md`):
 - Rules never read the drawing.
 - Warm up every pipeline before play.
 - The r182 instancing bug.
-- **"Card" vs "Puppet": Puppet wins.** Real geometry gets real light, depth and any camera. Cards are flat.
+- **"Card" vs "Puppet": a trade-off, not a verdict** (`docs/LAB-3D.md:57-66`; both labs still default to Card). Card keeps the exact 2D look, but it is flat, sits at one depth and ignores the scene's light. Puppet has real depth, real light and works from any camera, but its look is an approximation. **This plan picks Puppet** (§5.1).
 
 ### 4.2 The animation core
 
@@ -270,9 +270,9 @@ The library lives in `src/mocap/`, with its tools in `tools/anim-*`, `asf-amc`, 
   - **Ledger:** 2,548 CMU takes (262 KB), with category, fit, flags and usage for each.
 - **The format: "readable key poses".** A key holds about 42 integers in named fields: hips height, body/chest/head turn-lean-tilt, and limbs as direction plus bend plus twist. At about 2,100 tokens per clip, agents read and edit it well.
 - **Converting to rotations.** Baking it into local rotations is exact: a mean error of 0.26–0.46 mm, **if the bake works from the format's parameters**. Converting key for key gives outliers up to 0.73 m.
-- **Source fidelity is not in the repo.** Wrists, forearm twist, foot roll, per-bone spine and root yaw were never stored. But re-import is proven: the CMU import regenerates `cmu.js` **byte for byte** from public data in about a minute.
+- **Source fidelity is not in the repo.** Wrists, forearm twist, foot roll, per-bone spine and root yaw were never stored. But re-import is proven: the CMU import regenerates `cmu.js` **byte for byte** from public data in about a minute (verified during this study: `docs/research/D-mocap-library.md` §4).
 - **The 68 MB `examples/cmu-lib/` can be regenerated** and is never committed.
-- **License gap.** The CMU license record omits the no-resale clause and the acknowledgment. Fix it.
+- **License gap.** The CMU license record omits the no-resale clause. It quotes only the NSF funding line, not CMU's full acknowledgment sentence. Fix it.
 
 ### 4.4 The rest of the 2D engine
 
@@ -296,19 +296,21 @@ Notes on these:
 
 ### 4.5 Tooling and workflow
 
-- **35 tools, 26 npm scripts.** Browser-launch code is copied into 19 files, the server 4 times, and there are 14 argument parsers.
+- **35 tools, 26 npm scripts.** Browser-launch code is copied into 19 files and the server 4 times, and about 20 tools parse their own arguments.
 - **Everything runs in Chromium**, although Node does most of the work fast:
-  - the engine loads in 9 ms;
-  - 600 rig steps take 21 ms;
+  - the engine loads in 9–14 ms;
+  - 600 rig steps take 21–30 ms;
   - all motion lints run in 0.28 s;
-  - Rapier initialises in about 100 ms.
+  - Rapier initialises in 84–106 ms.
+
+  These were measured on two runs in the cloud container; they depend on the machine.
 - **Mechanisms that work:**
   - the virtual clock plus seeded randomness (`tools/filmstrip.mjs:39-53`);
   - the headless WebGPU stand-in canvas with readback (`tools/lab3d-test.mjs:70-102`);
   - the banned-API list;
   - "no pipeline compiled mid-fight" as a test;
   - numeric character-sheet lints;
-  - scaffolds tested in CI.
+  - scaffolds that test themselves (`new-character.mjs --test`, a suite of `npm test`; the source has no CI).
 - **Holes:**
   - The hand-written test map skips suites that should run.
   - One global random stream breaks `--compare`.
@@ -370,15 +372,15 @@ Source paths are relative to `my-3d2dge@e37e4ee`. `ed/` means `src/emberdeep/`. 
 | Puppet body grammar | `lab3d/40-characters.js:8-48`: `['limb',a,b,ra,rb,c]`, `['curve',a,b,bow,ra,rb,c]`, `['ball',a,r,c]`, `['eye',a,r,c]`, `['sword']`, `['cape']`; points are a joint name, `[f,r,u]`, `['lerp',p,q,t]` or `['off',p,df,dr,du]` | PORT and EXTEND: bones, sockets, mirrored parts, material slots, metres | `engine/gfx/puppets/` | 5.6 |
 | Instanced puppet batches | `stress-world/30-crowd.js:20-67` (`Batch.tube/ball/box/cone`) | PORT behind an instancing service | `engine/gfx/instancing.ts` | 5.5 |
 | Cards (the engine draws sprites into an atlas) | `stress-world/30-crowd.js`, `lab3d/40-characters.js` | **DROP**. Puppets won; the pixel look becomes a post filter | — | — |
-| Lights | 42 fixed point lights plus a hemisphere light; 2 shadow casters (`stress-world/50-frame.js`) | REWRITE: a light pool on r184's `DynamicLighting` (no recompile when the count changes), a shadow-caster budget, flicker on the visual RNG | `engine/gfx/lights.ts` | 5.7 |
+| Lights | 42 fixed point lights plus a hemisphere light; 2 shadow casters. Built in `stress-world/10-hall.js:435-466`, driven each frame by `50-frame.js:58-63` and `35-effects.js:107-109` | REWRITE: a light pool on r184's `DynamicLighting` (no recompile when the count changes), a shadow-caster budget, flicker on the visual RNG | `engine/gfx/lights.ts` | 5.7 |
 | Fog that starts past the focus | `stress-world/50-frame.js` | PORT, adding height fog | `engine/gfx/atmosphere.ts` | 5.7 |
 | Warm-up (draw everything once before play) | `stress-world/50-frame.js` | REWRITE as a registry using `compileAsync` with progress, and a **public** pipeline counter instead of `renderer._pipelines` | `engine/gfx/warmup.ts` | 5.2 |
-| Cameras | `stress-world/40-cameras.js`: classic views (perspective or ortho), side scrolling with depth, chase with wall avoidance, first person, fly, fixed. `lab3d/50-cameras.js`: orbit, `?cam=` codes | PORT | `engine/gfx/cameras/` | 5.8 |
+| Cameras | `stress-world/40-cameras.js`: classic views (perspective or ortho), side scrolling with depth, chase with wall avoidance, first person, fly, fixed. `lab3d/50-cameras.js`: orbit. Camera links: `stress-world/40-cameras.js:274-337` (`?cam=`, `?cam3=`) and lab3d's `CAMS.code()`/`load()` | PORT | `engine/gfx/cameras/` | 5.8 |
 | Height boost projection `P·V·S·V⁻¹` | `lab3d/50-cameras.js:31-40` | COPY (6 lines) | `engine/gfx/cameras/boost.ts` | 5.8 |
 | Wall and pillar cutaway | `stress-world/10-hall.js`, `40-cameras.js` | PORT | `engine/gfx/cutaway.ts` | 5.8 |
 | Post filters with an MRT mask | `stress-world/45-filters.js`: cel, pixel/Bayer, bloom, FXAA | PORT to `RenderPipeline` (r183+), using allowlisted TSL display addons where they exist | `engine/gfx/post/` | 5.9 |
 | Resolution modes | `stress-world/50-frame.js` `fit()`: engine pixels at 200–330 lines, balanced, full | PORT | `engine/gfx/renderer.ts` | 5.1 |
-| Effects | `stress-world/35-effects.js`: telegraph decal pool, ribbons from `rig.trail`, particle quads, blob shadows | PORT | `engine/gfx/fx/` | 5.10 |
+| Effects | `stress-world/35-effects.js`: telegraph decal pool, ribbons from `rig.trail`, particle quads. Blob shadows: `stress-world/30-crowd.js:334-364` (`shadowAt`) | PORT | `engine/gfx/fx/` | 5.10 |
 | Damage numbers on a pixel-font overlay | `stress-world/35-effects.js:133-149` | PORT | `engine/ui/overlay.ts` | 8.2 |
 | Panel, HUD, page template | `stress-world/60-panel.js`, templates | REWRITE: the dev panel is generated from the settings schema | `engine/dev/panel.ts` | 8.4 |
 | Benchmark (physics, logic and drawing split; copyable report) | `stress-world/60-panel.js` | PORT as `x perf` plus the Stress World lab | `tools/cmd/perf.mjs`, `labs/stress-world/` | 9.3 |
@@ -386,7 +388,7 @@ Source paths are relative to `my-3d2dge@e37e4ee`. `ed/` means `src/emberdeep/`. 
 | Fly renderer (a CPU rasterizer) | `src/free-camera.fly.js` (247 lines) | DROP the code. Keep two ideas: ID/depth edge outlines (WP 5.9), and a Node "agent eye" visibility raster (WP 11.4) | — | — |
 | Free-camera room, perspective lab, shapes comparison | `src/free-camera.game.js`, `src/lab.game.js`, `src/shapes-*` | **DROP**. The shapes data comes from converted CC0 models, which breaks L1 | — | — |
 
-### 5.2 The animation core (`engine/my-3d2dge.js` §1, §8, §10–§12)
+### 5.2 The animation core (`engine/my-3d2dge.js` §1, §10–§12)
 
 | Item | Source | Verdict | Target | WP |
 |---|---|---|---|---|
@@ -400,7 +402,7 @@ Source paths are relative to `my-3d2dge@e37e4ee`. `ed/` means `src/emberdeep/`. 
 | `E.MOVES` (24), `Attack`, `Combo`, `E.move`, `E.knockback` | `engine:2467-2577` | PORT. Fields become self-describing and in metres; `hitAt` belongs to the move; add events, root-motion curves and sweeps | `engine/anim/moves.ts`, `engine/anim/moves-data.ts` | 3.4 |
 | `inArc` and `Attack.hits` | `engine:194`, `engine:2467-2504` | REWRITE: events, weapon sweeps, and a measured `hitShape` cached per move. `inArc` stays as the cheap test | `engine/anim/moves.ts`, `engine/sim/hits.ts` | 3.4 |
 | Knockdown (rigid rotation of every joint) | `engine:1989-1993` | REWRITE: root rotation, a ragdoll hand-off, and get-up timelines chosen by face up or face down | `engine/anim/reactions.ts` | 3.5 |
-| Squash spring `kick(v)` | `engine:1832` | PORT as a root-scale channel that preserves volume | `engine/anim/secondary.ts` | 3.5 |
+| Squash spring `kick(v)` | `engine:1788` (`kick`), `engine:1832` (the spring) | PORT as a root-scale channel that preserves volume | `engine/anim/secondary.ts` | 3.5 |
 | Hair verlet; cape (two verlet edges) | `engine:1900-1916`; `engine:2033-2068` | PORT as one generic `Chain` (a cape is 2 chains plus a width constraint), with bone-capsule colliders | `engine/anim/secondary.ts` | 3.5 |
 | Weapon-trail sampling | `engine:1885-1897` | PORT as socket history | `engine/anim/character.ts` | 3.6 |
 | `die` timeline | `engine:1824-1827` | PORT | `engine/anim/reactions.ts` | 3.5 |
@@ -432,7 +434,7 @@ Source paths are relative to `my-3d2dge@e37e4ee`. `ed/` means `src/emberdeep/`. 
 | `tools/mocap-test.mjs` | 16 KB | REWRITE as Node unit tests (format, provenance, ledger, picks, lints) plus a browser smoke test on both backends | `engine/anim/clip/*.test.ts`, `tests/browser/library.spec.ts` | 4.6 |
 | Mocap Lab (`src/mocap.game.js`, `src/mocap.template.html`) | 43 KB | REWRITE as the 3D Library Lab. Keep the UX: catalog search; the clip as text with Apply, Reset, Mirror and Copy for model; deep links; frame stepping | `labs/library/` | 9.5 |
 | `docs/MOCAP.md` | 44 KB | PORT: keep the library recipe, provenance, source and license table, the CMU workflow and "Looking ahead"; rewrite the format and retargeting sections | `docs/ANIMATION-LIBRARY.md` | 4.1 |
-| `docs/ANIMATION-RESEARCH.md` (40 ranked animations, 22 timing references) | 51 KB | PORT: drop the 2D "Engine" column; add the coverage map against the library | `docs/ANIMATION-RESEARCH.md` | 4.1 |
+| `docs/ANIMATION-RESEARCH.md` (40 ranked animations, 24 timing references) | 51 KB | PORT: drop the 2D "Engine" column; add the coverage map against the library | `docs/ANIMATION-RESEARCH.md` | 4.1 |
 | `tools/ed-clips-test.mjs`, `ed/96-hero-clips.js` | | **DROP**. Its moments table (`HCL_MOVES`) is design input for the clip-action layer | — | 4.8 |
 
 ### 5.4 The 2D engine's other systems
@@ -454,11 +456,11 @@ Source paths are relative to `my-3d2dge@e37e4ee`. `ed/` means `src/emberdeep/`. 
 | `SpatialHash` | `engine:3626-3646` | PORT on typed arrays | `engine/world/spatial.ts` | 6.2 |
 | `Bullets` and `E.pattern` | `engine:3553-3625` | PORT to 3D, with swept hit tests (fast bullets pass through targets today) | `engine/world/projectiles.ts` | 6.4 |
 | Platformer feel: coyote time, jump buffer, variable jump height, wall jump, dash | `engine` §16 | PORT onto the character controller | `engine/physics/character.ts` | 2.2 |
-| Scenes, timers (`after`, `every`, `{cancel}`), `E.store` | `engine` §10 | PORT. Timers run in sim time; the store gains a prefix, a memory backend and versioning | `engine/core/time.ts`, `engine/app/` | 1.3, 9.1 |
+| Scenes, timers (`after`, `every`, `{cancel}`), `E.store` | `engine` §10 (`after`/`every`, `engine:1594-1597`); `E.store` `engine:198-202` (§1) | PORT. Timers run in sim time. The store gains a configurable prefix (today a fixed `my3d2dge:`), a memory backend and versioning | `engine/core/time.ts`, `engine/app/` | 1.3, 9.1 |
 | WebGPU lighting module's habits (detect, validate, fall back, report status, snapshot for tests, URL switch) | `engine:4329-4650` | CONCEPT for the tier system | `engine/gfx/renderer.ts`, `engine/gfx/tiers.ts` | 5.1 |
 | Renderer effect list (outline, flash, afterimages, x-ray, decals, `textAt`), cutaway, wall-foot shadows, the 38-prop catalog with light metadata, view and resolution presets | `engine` §9, §13, §21c | CONCEPT, rebuilt in 3D | `engine/gfx/*`, `engine/world/props/` | 5.x, 6.3 |
 | Pixel primitives, canvas lighting, depth-sort renderer, TileMap and PlatformMap drawing and collision, `Body`, `E.style`, `charView`, `Screen`, the 2D views | `engine` §2–§4, §7, §9, §13, §16, §17 | **DROP** | — | — |
-| The agent edition (`engine/my-3d2dge-agent.js`) | 217 KB, 82% verbatim copy of the engine | **DROP** the copy. Keep its ideas: the header is the manual, doc examples are executed, token counts are reported | `x docs --check` | 0.6 |
+| The agent edition (`engine/my-3d2dge-agent.js`) | 217 KB, about three-quarters a verbatim copy of the engine (75–82%, depending on how lines are matched) | **DROP** the copy. Keep its ideas: the header is the manual, doc examples are executed, token counts are reported | `x docs --check` | 0.6 |
 
 ### 5.5 Tooling and workflow (`tools/`, `.claude/`, `CLAUDE.md`, `package.json`, `vercel.json`)
 
@@ -498,7 +500,7 @@ Source paths are relative to `my-3d2dge@e37e4ee`. `ed/` means `src/emberdeep/`. 
 | Intent vocabulary; body adapters ("what the pattern asks of a Humanoid, spoken to a spider") | `ed/18-characters.js:36-38`, `ed/33-beasts.js:1053-1060` | `anim/intents` | 3.6 |
 | 16 procedural rig building blocks (eased state weights, reverse-knee IK, critically damped springs, angle blending, sway chains, multi-leg planted gait, lagging parts, path-history chains, verlet strands, look-at and blink, floaters, orbiters and detached parts, delayed pose replay, joint-attached extras, tip trails, animation-measured reach) | `ed/22-char-dan.js`, `ed/21-codex.js`, `ed/33-beasts.js` (`BST_Crawler` :85, `BST_Serpent` :602, `BST_Eye` :858), `ed/36-bosses.js:646-660`, `ed/30-monsters-core.js:31-41` | `anim/proc`, with one new fixture rig per block | 3.8 |
 | One attack timeline (wind, active, recover, with progress `u`) shared by the rig, hit windows, telegraphs, AI, the bot and perfect dodges | `ed/25-skills-core.js:69-101`, `ed/93-autopilot.js:62-66` | `anim/moves` `Timeline` | 3.4 |
-| Stacked slow motion with ids (the slowest wins), a leaky hit-stop budget, per-entity clocks | `ed/10-combat.js:45-76` | `core/time` | 1.3 |
+| Stacked slow motion with ids (the slowest wins), a leaky hit-stop budget, per-entity clocks | `ed/00-core.js:146-161` (slow motion), `ed/10-combat.js:45-76` (hit-stop budget), `ed/30-monsters-core.js:300` and `ed/10-combat.js:320` (per-entity clocks) | `core/time` | 1.3 |
 | Telegraph shapes as data with near-miss tests; an attack-token manager | `ed/10-combat.js`, `ed/30-monsters-core.js` | `gfx/fx/telegraph`, `world/ai` | 5.10, 6.4 |
 | Tuning registry: knobs with tier, range, unit, explanation and source file; overrides; JSON export; a TUNED marker | `ed/01-tune.js`, `ed/62-developer.js`, `TUNING.md` | `core/settings`, `dev/tuning` | 1.2, 8.4 |
 | Developer sandbox (throwaway save, god mode, freeze AI, step, speed, spawn, travel) | `ed/62-developer.js` | `dev/sandbox`, with `registerDevAction` | 8.4 |
@@ -844,7 +846,7 @@ Each improvement is owned by a work package. A WP is not done until the improvem
 | I-19 | An instancing service that contains three.js's quirks: uniform-buffer limits, usage set before the first render, colours set before the first render, update ranges | The r182 instancing bug; the r186.1 `setColorAt` bug | 5.5 |
 | I-20 | Procedural material library: seeded tiling generators with albedo, height, roughness and emissive; normals from height; mipmaps; pixel and smooth looks; TSL noise nodes; contact sheets | Seams, shimmer, two duplicated bakers | 5.3 |
 | I-21 | Puppet bodies as data (bones, sockets, mirrored parts, material slots), compiled to instanced parts or one rigid-skinned mesh per character, with optional smooth skinning | 1,225 draw calls; bodies written as code | 5.6 |
-| I-22 | A legend-driven level compiler with `validate()`: heights, stairs, slopes, galleries, a nav grid with climb limits, a Dijkstra flow field | Glyph meanings hard-coded in about 6 places | 6.1, 6.2 |
+| I-22 | A legend-driven level compiler with `validate()`: heights, stairs, slopes, galleries, a nav grid with climb limits, a Dijkstra flow field | Glyph meanings hard-coded in about a dozen places across two files | 6.1, 6.2 |
 | I-23 | Audio: pure-JS DSP (seeded and hashable), spatial audio, procedural reverb impulse responses, adaptive music layers, voice limits, variants, plus spectrograms and metrics for agents | No audio in 3D; non-deterministic synth; untestable output | 7.1–7.4 |
 | I-24 | Input intents: camera-relative movement, pointer lock, axes, rebinding as engine data, a virtual device, recording | Screen-space `move()`; 673 lines of game-side rebinding; tests pressing keys on a wall clock | 8.1 |
 | I-25 | One `window.__engine` API, the same in Node: step, state, hash, trace, entities, a text scene dump, stats, capture with IDs, input injection, `help()` | `__sw` and `__lab3d`, which were inconsistent | 1.6, 8.3 |
@@ -1408,7 +1410,7 @@ A WP is done only when all of these hold:
 - **Carry:**
   - The fixed loop of `lab3d/60-panel.js:143-152`.
   - `Attack.update`'s leftover-time carry (`engine:2467-2504`).
-  - The hit-stop budget of `ed/10-combat.js:45-76` (mechanism only).
+  - The hit-stop budget of `ed/10-combat.js:45-76`, and the slow-motion stack of `ed/00-core.js:146-161`. Mechanism only. The source's slow motion reads the wall clock; the new one must not.
   - The timers of `engine` §10.
 - **Build:**
   - `createClock({ hz: 60, maxSteps: 6, now })`, an accumulator and `alpha`.
@@ -1965,7 +1967,7 @@ A WP is done only when all of these hold:
 - **Carry:**
   - `stress-world/40-cameras.js`.
   - `boost()`, `lab3d/50-cameras.js:31-40` (COPY).
-  - The lab3d orbit and `?cam=` codes.
+  - The lab3d orbit, and both labs' camera links (`?cam=`, `?cam3=`).
 - **Build:**
   - Presets: iso, three-quarter, top-down, brawler, side, and custom; ortho or perspective, with boost.
   - Orbit, fly, and chase. Chase avoids walls with raycasts through the read-only `QueryView` (§6.1).
@@ -2014,7 +2016,7 @@ A WP is done only when all of these hold:
 - **Owns:** `engine/gfx/capture.ts`, `tools/cmd/film.mjs`, extensions to `tools/cmd/shot.mjs` (ID pass, thumbnails), `tests/baselines/thumbs/*`, `tests/browser/parity.spec.ts`
 - **Size:** M
 - **Carry:**
-  - The look notes of `tools/check.mjs:41-50`.
+  - The look metrics and notes of `tools/check.mjs:40-50, 96-104`.
   - `tools/filmstrip.mjs` (PORT).
 - **Build:**
   - `capture()`: render target, then `readRenderTargetPixelsAsync`.
@@ -2283,7 +2285,7 @@ A WP is done only when all of these hold:
 #### WP-9.1 `createEngine`, the loop, scenes, the store, the game template
 - **Owns:** `engine/app/**`
 - **Size:** M
-- **Carry:** the scene and timer patterns; `E.store` (plus a prefix, a memory backend, versioning, and isolation in demo, sandbox and gallery modes).
+- **Carry:** the scene and timer patterns; `E.store` (`engine:198-202`), extended with a configurable prefix (replacing the fixed `my3d2dge:`), a memory backend, versioning, and isolation in demo, sandbox and gallery modes.
 - **Build:**
   - `createEngine`, with the loop of §6.4 and the scene lifecycle.
   - `x new scene`.
@@ -2599,7 +2601,7 @@ clip.json ─parse/validate─▶ keys (format 1/2)
 | 4. Repackage the sets as one file per clip | 4.3 | Rejoined, they deep-equal the source objects, and `text()` output is unchanged |
 | 5. Baker and clip layer | 4.4 | FK parity against the v1 decode at 30 fps and at 60 Hz midpoints: mean ≤ 1 mm per set; worst cases listed |
 | 6. Node contact sheets, tests and the Library Lab | 4.6, 9.5 | Lints pass or are baselined with reasons, on both backends |
-| 7. Port the tools | 4.5 | `x anim import --cmu` reproduces the CMU set exactly (the source repo has done this byte for byte, verified) |
+| 7. Port the tools | 4.5 | `x anim import --cmu` reproduces the CMU set exactly (verified during this study: the source's importer regenerates `cmu.js` byte for byte) |
 | 8. Format-2 re-import from the sources | 4.7 | Per clip, decoded-point parity with v1 within that clip's fit; swapped in one at a time as `via: "source"` |
 | 9. Re-survey CMU; import the `pick` rows as games need them | 4.7 | The ledger's `fit` reflects format 2; the notes are kept |
 
@@ -3026,7 +3028,7 @@ In this table, `engine` §N means section N of `engine/my-3d2dge.js`, not a sect
 | Walk, jump, dash speed | 80, 150, 260 u/s | 5, 9.375, 16.25 m/s |
 | Gravity | −480 u/s² | −30 m/s² (cartoon, about 3 g) |
 | Jump apex | ≈ 23.4 u | ≈ 1.46 m |
-| Launch speed (normal, big kill) | ≥ 70, 170 u/s | 4.375, 10.625 m/s |
+| Launch speed (big hit; kill, big kill) | ≥ 70; ≥ 95, ≥ 170 u/s | 4.375; 5.94, 10.625 m/s |
 | Nav climb limit per sample (`CLIMB`) | 3.5 | 0.219 m |
 | Wall, pillar, low wall, gallery, dais height | 48, 56, 12, 16, 8 | 3.0, 3.5, 0.75, 1.0, 0.5 m |
 | Character mass for push impulses | 2,500 | Re-tune in WP 2.2. Mass doesn't depend on the length unit, but the impulse response does |
@@ -3078,14 +3080,14 @@ In this table, `engine` §N means section N of `engine/my-3d2dge.js`, not a sect
 
 **Source**
 - my-3d2dge v0.14.0, commit `e37e4ee`; 16 releases from 2026-09-27 to 2026-10-09.
-- 301 tracked files, 136 of them build output (81 of 95 MB).
+- 301 tracked files, 136 of them build output (about 84 of 95 MB).
 
 **Size**
 
 | Item | Size |
 |---|---|
 | `engine/my-3d2dge.js` | 4,652 lines, 374 KB, about 107k tokens |
-| Agent edition | 2,866 lines, 217 KB, 82% a verbatim copy |
+| Agent edition | 2,866 lines, 217 KB, about three-quarters a verbatim copy (75–82%) |
 | `src/stress-world/` | 9 files, 2,574 lines, about 55k tokens |
 | `src/lab3d/` | 7 files, 1,030 lines, about 74 KB |
 | Humanoid (`engine` §11) | 77 KB (about 22k tokens) |
@@ -3106,26 +3108,26 @@ In this table, `engine` §N means section N of `engine/my-3d2dge.js`, not a sect
 | Measurement | Value |
 |---|---|
 | stress-world, per step | 1 ms at 100 monsters; 5.6 ms at 1,000 (2.6 physics); 33 ms at 5,000 (21 physics) |
-| lab3d draw calls | 1,225 in Puppet mode, 487 in Card mode; about 120 meshes for the hero alone |
+| lab3d draw calls | 1,225 in Puppet mode, 487 in Card mode; about 120 meshes for the hero alone (measured: WebGL 2, iso view, shadows on) |
 | SwiftShader frame rate | 5–7 fps (lab3d at 1100×700) |
 | stress-world ready | 11.1 s on WebGL, 5.8 s on WebGPU |
-| Proof hashes | `1917b7b9` (lab3d) and `68e1f7d1` (stress-world), the same on both backends |
+| Proof hashes | `1917b7b9` (lab3d) and `68e1f7d1` (stress-world), the same on both backends (measured during this study; not recorded in the source) |
 
-**Node**
+**Node** (two runs in the cloud container; the numbers depend on the machine)
 
 | Measurement | Value |
 |---|---|
-| Engine load | 9 ms |
-| 600 Humanoid steps | 21 ms |
+| Engine load | 9–14 ms |
+| 600 Humanoid steps | 21–30 ms |
 | Lints over 24 moves | 0.28 s |
-| Rapier init | about 100 ms |
+| Rapier init | 84–106 ms |
 | 40 bodies × 600 steps | 78 ms |
 | lab3d proof | 27 ms in Node; 130 ms cold or 35 ms warm in the browser |
 
 **Tests and tools**
 - The full suite took about 25 minutes; the lab3d test 65–81 s.
 - 35 tool files (343 KB) and 26 npm scripts.
-- Browser launch copied 19 times, the server 4 times; 14 argument parsers.
+- Browser launch copied 19 times, the server 4 times; about 20 tools parse their own arguments.
 - About 310 KB of docs prose.
 
 **Libraries**
