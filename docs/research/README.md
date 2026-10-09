@@ -4,6 +4,8 @@ These are eight deep-dives into [my-3d2dge](https://github.com/michaelcrosato/my
 written on 2026-10-09 to plan my-3dge. They are point-in-time notes, not living documentation:
 
 - **`PLAN.md` and its ADRs are canonical.** Where a note and the plan disagree, the plan wins, and the plan records why.
+  The plan was re-based on the Stress Box and `DOCTRINE.md` after these notes were written; for example, it pins
+  three.js r180 rather than the r186 that note H recommends (PLAN.md §4.7, §6.10).
 - **Citations** use the form `path:line` and refer to the source repo at that commit (`ed/` means `src/emberdeep/`).
   Re-check a citation before relying on it.
 - **Measurements** were taken with throwaway probe scripts that are not kept here; the numbers are quoted as measured.
