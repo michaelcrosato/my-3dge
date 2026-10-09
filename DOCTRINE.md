@@ -31,10 +31,17 @@ Analogy: a fully autonomous fighter jet with no cockpit. Removing the pilot remo
 6. Gameplay never depends on the GPU
    WebGPU is the primary renderer. WebGL2 is the fallback, for players without WebGPU and for agents without a GPU. GPU work, including WebGPU compute, may change how the game looks and performs, never how it behaves. Renderers need not look or perform the same, but must play the same.
 
-7. Mastery over novelty
-   Use the newest version that is at least 12 months old, so agents know it deeply. A newer version is acceptable when it is backward compatible with a qualifying version or otherwise works the same way, so agents' existing knowledge still applies. Upgrade as newer versions qualify. It is better to be really good with an older version, knowing all its tricks and optimizations, than to just get by with the newest.
+7. Common ground
+   Build on the most widely used languages, libraries, systems, and patterns, which every agent knows well. Favor flexibility, ease of use, and established approaches over cutting-edge performance and capabilities. Performance matters, but never at the cost of broad usability.
 
-8. Discovery first, hardening later
+   Analogy: build the Sherman, not the Tiger.
+
+   Rationale: lean into what agents already do well rather than trying to change it.
+
+8. Mastery over novelty
+   Use the newest version that is at least 12 months old, so agents know it deeply. A newer version that is backward compatible with a qualifying version, or otherwise works the same way, is adopted immediately, since agents' existing knowledge still applies. Upgrade as newer versions qualify. It is better to be really good with an older version, knowing all its tricks and optimizations, than to just get by with the newest.
+
+9. Discovery first, hardening later
    Development and testing target the platform the development environment runs on. Cross-platform compatibility and hardening happen when a game goes to production.
 
    Rationale: most of the work is finding something worth shipping.
