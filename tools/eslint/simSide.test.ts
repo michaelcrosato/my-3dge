@@ -1,0 +1,128 @@
+/**
+ * @file Proves the reproducibility bans for sim-side code (tools/eslint/simSide.ts) with a failing and a passing
+ * fixture each, linted from a temporary directory: every banned global, property, spelling and import, in every
+ * sim-side directory, with tests and presentation code left free.
+ */
+import { beforeAll, describe, expect, it } from 'vitest';
+import { messagesOf } from './family';
+import { SIM_SIDE, simSideBlocks } from './simSide';
+import { caseProblems, lintCases, uncovered, type Case, type CaseResult } from './testing';
+
+const GLOBALS = [
+  'Date',
+  'setTimeout',
+  'setInterval',
+  'setImmediate',
+  'requestAnimationFrame',
+  'requestIdleCallback',
+  'document',
+  'window',
+  'navigator',
+  'location',
+  'localStorage',
+  'sessionStorage',
+  'AudioContext',
+  'OfflineAudioContext',
+  'webkitAudioContext',
+  'crypto',
+  'process',
+];
+
+/** A sim-side file for each directory pattern in SIM_SIDE. */
+const simFile = (pattern: string) => pattern.replace('/**', '/spawn.ts');
+
+const CASES: Case[] = [
+  ...GLOBALS.map((name) => ({
+    name: `the global ${name}`,
+    file: `engine/sim/${name}.ts`,
+    bad: `export const value = ${name};`,
+    good: 'export const value = Math.sin(0.5) + Math.cos(0.5);',
+    rule: 'sim/no-restricted-globals',
+  })),
+  {
+    name: 'Math.random, against a named stream',
+    file: 'engine/world/spawn.ts',
+    bad: 'export const roll = Math.random();',
+    good: "import { rng } from '../core/rng';\nexport const roll = rng('spawn').next();",
+    rule: 'sim/no-restricted-properties',
+  },
+  {
+    name: 'performance.now, against the step count',
+    file: 'engine/sim/timers.ts',
+    bad: 'export const now = performance.now();',
+    good: 'export const now = (step: number) => step / 60;',
+    rule: 'sim/no-restricted-properties',
+  },
+  {
+    name: 'a banned global through globalThis',
+    file: 'engine/anim/clock.ts',
+    bad: 'export const later = globalThis.setTimeout;',
+    good: 'export const tau = globalThis.Math.PI * 2;',
+    rule: 'sim/no-restricted-syntax',
+  },
+  {
+    name: 'three.js in sim-side code, against core/math',
+    file: 'engine/physics/shapes.ts',
+    bad: "export { Vector3 } from 'three/webgpu';",
+    good: "export { Vector3 } from '../core/math';",
+    rule: 'sim/no-restricted-imports',
+  },
+  {
+    name: 'three.js in core/math.ts, its one importer',
+    file: 'engine/sim/math.ts',
+    bad: "export { Vector3 } from 'three/webgpu';",
+    goodFile: 'engine/core/math.ts',
+    good: "export { Vector3 } from 'three/webgpu';",
+    rule: 'sim/no-restricted-imports',
+  },
+  {
+    name: 'a Node built-in',
+    file: 'engine/world/save.ts',
+    bad: "export { readFileSync } from 'node:fs';",
+    good: "export { hash } from '../core/hash';",
+    rule: 'sim/no-restricted-imports',
+  },
+  ...SIM_SIDE.map((pattern) => ({
+    name: `Date in ${pattern}`,
+    file: simFile(pattern),
+    bad: 'export const stamp = Date.now();',
+    good: 'export const stamp = (step: number) => step;',
+    rule: 'sim/no-restricted-globals',
+  })),
+  {
+    name: 'unit tests are exempt',
+    file: 'engine/sim/world.ts',
+    bad: 'export const stamp = Date.now();',
+    goodFile: 'engine/sim/world.test.ts',
+    good: 'export const stamp = Date.now();',
+    rule: 'sim/no-restricted-globals',
+  },
+  {
+    name: 'presentation code may use the clock',
+    file: 'engine/sim/loop.ts',
+    bad: 'export const frame = requestAnimationFrame(() => performance.now());',
+    goodFile: 'engine/app/loop.ts',
+    good: 'export const frame = requestAnimationFrame(() => performance.now());',
+    rule: 'sim/no-restricted-globals',
+  },
+];
+
+let results: CaseResult[];
+beforeAll(async () => {
+  results = await lintCases(CASES);
+}, 60_000);
+
+describe('the sim-side bans', () => {
+  it.each(CASES.map((item, i) => [item.name, i] as const))('%s', (_name, i) => {
+    expect(caseProblems(results[i])).toEqual([]);
+  });
+
+  it('every configured ban has a failing fixture', () => {
+    expect(uncovered(messagesOf(simSideBlocks()), results)).toEqual([]);
+  });
+
+  it('a fixture is written to every sim-side directory', () => {
+    const files = new Set(CASES.map((item) => item.file));
+    for (const pattern of SIM_SIDE) expect(files.has(simFile(pattern)), pattern).toBe(true);
+  });
+});

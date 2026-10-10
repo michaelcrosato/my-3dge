@@ -12,6 +12,9 @@
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint --cache --cache-location node_modules/.cache/eslint/ .",
+    "format": "prettier --write --cache .",
+    "check": "tsc --noEmit && eslint --cache --cache-location node_modules/.cache/eslint/ . && prettier --check --cache . && node x check",
     "test": "vitest run",
     "e2e": "playwright test"
   },
@@ -26,9 +29,13 @@
     "@playwright/test": "1.64.0",
     "@types/node": "24.19.2",
     "@types/three": "0.182.0",
+    "eslint": "9.39.5",
+    "eslint-plugin-jsdoc": "61.7.1",
+    "globals": "16.5.0",
     "prettier": "3.9.9",
     "tsx": "4.23.15",
     "typescript": "5.9.3",
+    "typescript-eslint": "8.71.1",
     "vite": "7.3.7",
     "vitest": "3.2.7"
   },

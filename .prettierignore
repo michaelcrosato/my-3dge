@@ -1,0 +1,10 @@
+# Prettier checks code, data and the generated docs (ADR-0014, amendment 2). Hand-written prose stays as its author
+# wrote it: Prettier would re-pad its tables and rewrite its emphasis and lists, and DOCTRINE.md and docs/research/
+# are frozen. .gitignore's paths (out/, node_modules/, .cache/…) are skipped too.
+*.md
+!docs/INDEX.md
+!docs/API.md
+!docs/ERRORS.md
+!docs/escalations/README.md
+# Written by npm.
+package-lock.json
