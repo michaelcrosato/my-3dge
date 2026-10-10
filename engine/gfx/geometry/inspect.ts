@@ -7,7 +7,8 @@
  * faces: the face is culled where it should show, or lit from behind), and the bounds.
  *
  * Invariants: reads the geometry and changes nothing; a geometry without an index is read as one triangle per three
- * vertices; numbers are counts, so 0 means clean.
+ * vertices; numbers are counts, so 0 means clean; a triangle with a bad index or a NaN corner is counted there only,
+ * never as degenerate or flipped too.
  *
  * @example
  * import { boxGeometry } from './box';
@@ -87,6 +88,7 @@ export function inspectGeometry(geometry: BufferGeometry): GeometryReport {
     const corners = [indices[t], indices[t + 1], indices[t + 2]];
     if (!corners.every((i) => Number.isInteger(i) && i >= 0 && i < vertices)) continue;
     const [a, b, c] = corners.map((i) => [p.getX(i), p.getY(i), p.getZ(i)]);
+    if (![...a, ...b, ...c].every(Number.isFinite)) continue;
     const [ux, uy, uz] = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
     const [vx, vy, vz] = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
     const face = [uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx];
