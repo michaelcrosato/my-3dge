@@ -1,0 +1,49 @@
+/**
+ * @file The texture generator `texture:{{name}}`: what it draws (replace this text; `x docs` puts the first sentence
+ * in INDEX). It starts as square tiles, a tone each, mottled, with sunk grout.
+ *
+ * Invariants: periodic, so it tiles at any whole number of its tile: it hashes wrapped cells and samples tileNoise,
+ * and its layout is shifted half a tile so the wrap edge runs through tiles, never along the grout (`node x qa tex`
+ * checks it).
+ *
+ * @example
+ * {{name}}.size; // [64, 64]
+ * @see {{id}}.test.ts
+ */
+import { cellHash, defineTexture, palette, pickTone, tileNoise, wrapIndex } from '../../../engine';
+
+/** The generator `texture:{{name}}`: replace this sentence with what it draws. */
+export const {{name}} = defineTexture('texture:{{name}}', {
+  description: 'Square tiles, a tone each, mottled, with sunk grout (replace).',
+  params: {
+    tones: {
+      type: 'array',
+      items: { type: 'string' },
+      default: ['#8a8470', '#77725f', '#9a947e'],
+      description: 'The tile tones, hex; each tile takes one.',
+    },
+    grout: { type: 'string', default: '#3d392f', description: 'The grout, hex.' },
+    tile: { type: 'integer', default: 16, minimum: 4, maximum: 256, unit: 'texels', description: "A tile's side, grout included." },
+  },
+  size: [64, 64],
+  tile: (params) => [params.tile, params.tile],
+  create({ params, seed, width, height }) {
+    const tones = palette(params.tones, 'texture:{{name}} tones');
+    const [grout] = palette([params.grout], 'texture:{{name}} grout');
+    const mottle = tileNoise([width, height], { cells: [width / 8, height / 8], seed });
+    const half = Math.floor(params.tile / 2);
+    return (x, y, texel) => {
+      const xx = wrapIndex(x + half, width);
+      const yy = wrapIndex(y + half, height);
+      const grouted = xx % params.tile === 0 || yy % params.tile === 0;
+      const tone = pickTone(tones, cellHash(Math.floor(xx / params.tile), Math.floor(yy / params.tile), seed));
+      const color = grouted ? grout : tone;
+      const shade = grouted ? 1 : 0.9 + 0.2 * mottle(x, y);
+      texel.color[0] = color[0] * shade;
+      texel.color[1] = color[1] * shade;
+      texel.color[2] = color[2] * shade;
+      texel.height = grouted ? 0 : 1;
+      texel.roughness = grouted ? 0.95 : 0.8;
+    };
+  },
+});
