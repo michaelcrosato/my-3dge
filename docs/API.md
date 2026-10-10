@@ -1633,6 +1633,56 @@ For the agents who maintain the engine.
 - `TrapExpect` (type): The matchers `expectTrapOutcomes` uses, as Vitest's and Playwright's `expect` both provide them.
 - `TrapOutcome` (interface): One fixture test's outcome, read from its harness's JSON report.
 
+### [`tests/unit/data/anim/catalogs/catalogs.ts`](../tests/unit/data/anim/catalogs/catalogs.ts)
+
+- `canonicalSha256` (function): SHA-256 of `value` as `JSON.stringify` writes it (no spaces, keys in their order).
+- `COVERAGE_HEADING` (const): The coverage map's heading in the research document, without its `## `.
+- `CoverageRow` (interface): One row of the coverage map.
+- `differences` (function): The pointers at which `a` and `b` differ, in `a`'s order: a value that differs, a key or index that only one has, or an object whose keys are in another order (reported at the object).
+- `readCoverage` (function): Reads the coverage map out of `text` (the research document).
+- `RESEARCH_FILE` (const): The research document that carries the coverage map.
+- `sourceOrigin` (function): A `my-3d2dge:<path>` or `shardfall:<path>` origin, split; undefined for a URL.
+- `valueAt` (function): The value at `pointer` inside `doc`, or undefined.
+- `Verdict` (type): What a coverage row says of its item.
+- `withValueAt` (function): A copy of `doc` with `value` at `pointer` (whose parent must exist).
+
+### [`tests/unit/data/anim/ledger/ledger.ts`](../tests/unit/data/anim/ledger/ledger.ts)
+
+- `ANIM_DIR` (const): The library's data directory, `data/anim/`.
+- `Category` (interface): One category of `categories.tsv`.
+- `categoryOf` (function): The ledger's rule: a take's category from its own description only (`data/anim/cmu/README.md`).
+- `compareIds` (function): Numeric order of take ids (`2_10` after `2_9`, `10_01` after `9_99`).
+- `fallbackCategoryOf` (function): my-3d2dge's rule (`my-3d2dge:tools/cmu.mjs:122`): the take's description first, then its subject's.
+- `joinBack` (function): The original ledger's header and rows, rebuilt from the split: every take in id order, its subject's description restored and its category given by my-3d2dge's rule.
+- `Ledger` (interface): The whole split ledger, as read.
+- `LEDGER_DIR` (const): The split ledger's directory, `data/anim/cmu/`.
+- `ledgerFiles` (function): The `.tsv` files in `dir`, sorted.
+- `ORIGINAL_COLUMNS` (const): The columns of my-3d2dge's single-file ledger (`my-3d2dge:src/mocap/catalogs/cmu-takes.tsv`), in order.
+- `originalRows` (function): The header and rows of the original ledger's text: its comment and empty lines left out.
+- `parseTsv` (function): Parses tab-separated `text`: `#` lines are comments, the first other line is the header, empty lines are skipped.
+- `readLedger` (function): Reads `categories.tsv`, `subjects.tsv` and every category file under `dir`.
+- `readLedgerFile` (function): Reads a file of the split ledger.
+- `Subject` (interface): One row of `subjects.tsv`.
+- `Take` (type): One take: a row of a category file, with the category its file names.
+- `TAKE_COLUMNS` (const): The columns of each category file, in order.
+- `Tsv` (interface): A tab-separated file: its comment lines, its header and its rows, each padded to the header's length.
+
+### [`tests/unit/data/anim/sources/sources.ts`](../tests/unit/data/anim/sources/sources.ts)
+
+- `Catalog` (interface): A catalog: clip entries `[tags, description, orig?]` by name, plus its `$sources`, `$skip` and `$pick`.
+- `CATALOG_DIR` (const): The catalogs' directory, `data/anim/catalogs/`.
+- `CatalogSource` (interface): A catalog's `"$sources"` record for one library.
+- `CMU_TERMS` (const): CMU's terms, as `data/anim/LICENSES/CMU.txt` quotes them: the sentences every record of them must carry verbatim.
+- `entries` (function): A catalog's clip entries (its keys not starting `$`), by name.
+- `FileRow` (interface): A row of the Where-each-file-came-from table.
+- `readCatalogs` (function): Each catalog in `data/anim/catalogs/`, by file name (`cmu.json`).
+- `readSources` (function): Reads SOURCES.md's two tables.
+- `SourceRow` (interface): A row of the Sources table.
+- `Sources` (interface): Both tables of SOURCES.md, and its text.
+- `SOURCES_FILE` (const): `data/anim/SOURCES.md`.
+- `squash` (function): `text` with every run of white space as one space, for comparing verbatim quotes across line breaks.
+- `tableUnder` (function): The rows of the first table under the `## <heading>` of `text`, as raw cells (the header and rule left out).
+
 ### [`tests/unit/hooks/harness.ts`](../tests/unit/hooks/harness.ts)
 
 - `HookRun` (interface): What a hook run printed and returned.

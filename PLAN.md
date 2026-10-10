@@ -3993,7 +3993,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 7.7 | Gallery | I | on demand | | |
 | 7.8 | Box 6: the Stress Box | B | todo | | |
 | **G7** | **Gate: the Stress Box (foundation)** | | todo | | |
-| 8.1 | Provenance, catalogs, ledger, docs | L | todo | | |
+| 8.1 | Provenance, catalogs, ledger, docs | L | done | 84bf7a2 (#5) | data/anim/{SOURCES.md,LICENSES/,catalogs/,cmu/} (ledger split into 17 categories plus subjects.tsv, fallback fixed), docs/ANIMATION-LIBRARY.md (from MOCAP.md), docs/ANIMATION-RESEARCH.md (Engine column and 2D inventory dropped, coverage map added), tests in tests/unit/data/anim/{catalogs,ledger,sources}; call: kept the research doc's Build/Size columns, labelled as the 2D engine's proposals; INDEX/API regenerated on merge; no escalations, no deferred proofs |
 | 8.2 | Readable codec and format 2 | L | todo | | |
 | 8.3 | Re-containerize the sets | L | todo | | |
 | 8.4 | Baker, clip layer, retargeting, mannequin | L | todo | | |

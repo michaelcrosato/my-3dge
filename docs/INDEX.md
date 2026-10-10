@@ -483,6 +483,24 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`trapOutcomes.ts`](../tests/setup/trapOutcomes.ts): What the advice trap's fixture tests must give in either harness (WP 0.5): every `passes:` test passed, and every `fails:` test failed through the trap, naming what it printed and the allow-list fix.
   - Exports: `expectTrapOutcomes`, `PRINTED`, `TrapExpect`, `TrapOutcome`
 
+## tests/unit/data/anim/catalogs
+
+- [`catalogs.ts`](../tests/unit/data/anim/catalogs/catalogs.ts): Compares the library's catalogs with the files they were copied from, and reads the coverage map of `docs/ANIMATION-RESEARCH.md`, for the library's data tests (PLAN.md §10.5 step 2 and §10.6, WP 8.1).
+  - Exports: `canonicalSha256`, `COVERAGE_HEADING`, `CoverageRow`, `differences`, `readCoverage`, `RESEARCH_FILE`, `sourceOrigin`, `valueAt`, `Verdict`, `withValueAt`
+  - Tests: [`tests/unit/data/anim/catalogs/catalogs.test.ts`](../tests/unit/data/anim/catalogs/catalogs.test.ts), [`tests/unit/data/anim/catalogs/coverage.test.ts`](../tests/unit/data/anim/catalogs/coverage.test.ts)
+
+## tests/unit/data/anim/ledger
+
+- [`ledger.ts`](../tests/unit/data/anim/ledger/ledger.ts): Reads the CMU ledger in `data/anim/cmu/` for the library's data tests (PLAN.md §10.3, WP 8.1): the category index (`categories.tsv`), one file of takes per category and `subjects.tsv`.
+  - Exports: `ANIM_DIR`, `Category`, `categoryOf`, `compareIds`, `fallbackCategoryOf`, `joinBack`, `Ledger`, `LEDGER_DIR`, `ledgerFiles`, `ORIGINAL_COLUMNS`, `originalRows`, `parseTsv`, `readLedger`, `readLedgerFile`, `Subject`, `Take`, `TAKE_COLUMNS`, `Tsv`
+  - Tests: [`tests/unit/data/anim/ledger/ledger.test.ts`](../tests/unit/data/anim/ledger/ledger.test.ts)
+
+## tests/unit/data/anim/sources
+
+- [`sources.ts`](../tests/unit/data/anim/sources/sources.ts): Reads `data/anim/SOURCES.md` and the catalogs in `data/anim/catalogs/` for the library's data tests (PLAN.md §10.1, WP 8.1): the **Sources** table (one row per library a catalog's `"$sources"` names) and the **Where each file came from** table (each data file's origin and the values that differ from it).
+  - Exports: `Catalog`, `CATALOG_DIR`, `CatalogSource`, `CMU_TERMS`, `entries`, `FileRow`, `readCatalogs`, `readSources`, `SourceRow`, `Sources`, `SOURCES_FILE`, `squash`, `tableUnder`
+  - Tests: [`tests/unit/data/anim/sources/sources.test.ts`](../tests/unit/data/anim/sources/sources.test.ts)
+
 ## tests/unit/hooks
 
 - [`harness.ts`](../tests/unit/hooks/harness.ts): Runs the Claude Code hook scripts in `.claude/hooks/` the way Claude Code runs them, for their unit tests (WP 0.10): the input as JSON on stdin, `$CLAUDE_PROJECT_DIR` naming a fixture project in a temporary directory, and the exit code, stdout and stderr handed back.
