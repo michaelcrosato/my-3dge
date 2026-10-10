@@ -14,7 +14,7 @@
  * const keys = { hold: names, left: numbers(2) };
  * parseScript('# walk, then jump\n30 left=0,-1\n1 hold=South', keys);
  * // [{ count: 30, line: 2, values: { left: [0, -1] } }, { count: 1, line: 3, values: { hold: ['South'] } }]
- * @see engine/input/script.test.ts
+ * @see engine/input/devices/virtual.test.ts
  */
 import { codeError, defineCodes, didYouMean } from '../core/log';
 

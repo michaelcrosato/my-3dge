@@ -26,7 +26,7 @@
  * input.axis('move', [0, 1]);
  * input.play('2 tap=jump'); // { steps: 2, tick: 2 }
  * (input.record() as { inputs: unknown[] }).inputs; // [[0, { move: [0, 1], p: ['jump'] }]]
- * @see engine/input/devices/inspector.test.ts
+ * @see engine/input/devices/virtual.test.ts
  */
 import { def } from '../../core/registry';
 import { createVirtualDevice, playScript, type VirtualDevice } from './virtual';

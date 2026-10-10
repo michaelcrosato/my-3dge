@@ -53,3 +53,35 @@ export { palette } from './gfx/textures/tile';
 export { pickTone } from './gfx/textures/tile';
 export { runningBond } from './gfx/textures/tile';
 export { tileNoise } from './gfx/textures/tile';
+
+// Input (WP 3.3): the devices of a page sampled into intents (keys by physical code, mouse with pointer lock and the
+// wheel, gamepads in any slot), action maps and their presets, bindings players change and keep, prompts per device,
+// the virtual device that __engine.input drives, and the scripted gamepad for tests.
+export { createInput } from './input/input';
+export type { Input } from './input/input';
+export type { InputOptions } from './input/input';
+export type { CameraLike } from './input/input';
+export type { CameraInputSample } from './input/input';
+export { defineActionMap } from './input/actionMaps';
+export { getActionMap } from './input/actionMaps';
+export { listActionMaps } from './input/actionMaps';
+export { SYSTEM_ACTIONS } from './input/actionMaps';
+export { RESERVED_CODES } from './input/actionMaps';
+export type { ActionMap } from './input/actionMaps';
+export type { ActionMapSpec } from './input/actionMaps';
+export { createBindings } from './input/bindings';
+export type { Bindings } from './input/bindings';
+export type { BindingsOptions } from './input/bindings';
+export type { BindingsStorage } from './input/bindings';
+export type { BindingsFile } from './input/bindings';
+export type { RebindResult } from './input/bindings';
+export { codeLabel } from './input/codes';
+export { readKeyboardLayout } from './input/codes';
+export { isCode } from './input/codes';
+export type { DeviceKind } from './input/codes';
+export { createVirtualDevice } from './input/devices/virtual';
+export type { VirtualDevice } from './input/devices/virtual';
+export { connectVirtualDevice } from './input/devices/inspector';
+export { createScriptedGamepad } from './input/devices/padScript';
+export type { ScriptedGamepad } from './input/devices/padScript';
+export type { GamepadLike } from './input/devices/gamepad';
