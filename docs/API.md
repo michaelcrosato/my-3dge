@@ -79,6 +79,16 @@ For the agents who maintain the engine.
 - `MAX_COMMENT_LINES` (const): The longest a file comment (PLAN.md §6.8) or `docs/PROGRESS.md` (one screen) may run, in lines.
 - `PROGRESS` (const): The one screen every session reads first: where things stand, what is next, the open issues.
 
+### [`tools/cmd/esc.ts`](../tools/cmd/esc.ts)
+
+- `check` (const): The `esc` plugin of `x check` (T0): well-formed records, none overdue, a current README.
+- `checkEscalations` (function): The `x check` rules: well-formed records with unique ids, no open record overdue, a current README.
+- `createEscCommand` (function): Builds the command; tests inject the clock and the environment.
+- `default` (default): Escalations and the calls made without an answer (DOCTRINE.md, Escalation; PLAN.md §8.14, ADR-0017): writes and lists the records in docs/escalations/ (tools/lib/escalations.ts), and checks them as `x check`'s `esc` plugin.
+- `EscOptions` (interface): What the command reads from outside; tests pass a virtual clock and a fixed environment.
+- `messageFor` (function): The short message `open` prints for the owner: the question, the options and what happens without an answer.
+- `runId` (function): The run a record belongs to: `--run`, else `$X_RUN`, else the Claude Code session, else `local`.
+
 ### [`tools/cmd/help.ts`](../tools/cmd/help.ts)
 
 - `default` (default): Prints the generated help: every command, or one command's file comment and flags.
@@ -308,6 +318,33 @@ For the agents who maintain the engine.
 - `PathOptions` (interface): Options for `checkPaths`.
 - `Planned` (interface): The paths PLAN.md plans: the Owns of WPs not yet done, and §6.2's layout.
 - `readPlanned` (function): Reads the planned paths from PLAN.md under `root` (none when it is missing).
+
+### [`tools/lib/escalations.ts`](../tools/lib/escalations.ts)
+
+- `canonicalPrinciple` (function): The canonical spelling of a `principle` value (comma-separated short names, any case); throws naming the closest.
+- `deadlineFor` (const): The deadline for a record raised at `raised`: 15 minutes later.
+- `DIR` (const): Where the records live, from the repository root.
+- `Escalation` (interface): A record's front matter.
+- `FIELDS` (const): The front-matter fields, in their written order.
+- `generateIndex` (function): The README as `node x esc` writes it: generated from the records under `root`, Prettier-formatted.
+- `INDEX` (const): The generated index of the records.
+- `indexMarkdown` (function): The README's Markdown before formatting: the records by status, the calls awaiting review first.
+- `isoSeconds` (const): A time as the records write it: ISO 8601, UTC, to the second.
+- `isOverdue` (const): Whether a record is open past its deadline with no call, at `now`.
+- `nextId` (function): The next free id: one past the highest number in use, malformed records included.
+- `parseRecord` (function): Splits a record's text into its front matter (unchecked) and body, with the problems found reading it.
+- `PRINCIPLES` (const): The doctrine's short names (PLAN.md §3), plus its framing sections, which `principle` may cite.
+- `readRecords` (function): Reads every file in `docs/escalations/` but the README, each with the problems found; sorted by name.
+- `RecordFile` (interface): A record as read from disk: its file name, its front matter (unchecked) and body, and what is wrong with it.
+- `serializeRecord` (function): The record's text: front matter (`FIELDS` in order) then `body`.
+- `slugOf` (function): A file-name slug for a question: lower case, words joined by `-`, at most 48 characters, cut at a word.
+- `Status` (type): A record's status.
+- `STATUSES` (const): A record's statuses, in the order they are reached.
+- `validateFields` (function): What is wrong with a record's front matter, read from `file` (its name only); empty when it is well-formed.
+- `WAIT_MINUTES` (const): How long the owner has to answer before the agent decides (DOCTRINE.md, Escalation).
+- `wellFormed` (function): The records that are well-formed, as front matter, in id order.
+- `writeIndex` (function): Rewrites the README when it differs from the records; returns whether it wrote.
+- `writeRecord` (function): Writes a record to `docs/escalations/<file>` under `root`.
 
 ### [`tools/lib/hash.ts`](../tools/lib/hash.ts)
 
