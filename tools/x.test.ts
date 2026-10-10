@@ -51,6 +51,7 @@ const commands: Record<string, () => Promise<Command>> = {
     })),
   crash: async () => command(async () => Promise.reject(new Error('unexpected'))),
   broken: () => Promise.reject(new SyntaxError("Unexpected token '}'")),
+  nodefault: () => Promise.resolve(undefined as unknown as Command),
   usage: async () => command(async () => Promise.reject(new UsageError('the target must be a page'))),
   flags: async () =>
     command(async ({ values }) => ({ ok: true, summary: `check=${String(values.check)}` }), {
@@ -108,6 +109,18 @@ describe('the dispatcher', () => {
       message: "x broken crashed: tools/cmd/broken.ts did not load: Unexpected token '}'",
     });
     expect(existsSync(join(root, 'out/broken/all/report.json'))).toBe(true);
+  });
+
+  it('exits 1 when the command module has no default export Command, with a report of its own', async () => {
+    const { code, printed, latest, root } = await run(['nodefault']);
+    expect(code).toBe(1);
+    expect(printed[0]).toBe('x nodefault: FAIL: the command crashed');
+    const [failure] = latest.failures as { id: string; message: string }[];
+    expect(failure).toMatchObject({
+      id: 'X_CRASH',
+      message: 'x nodefault crashed: tools/cmd/nodefault.ts has no default export Command (with run, options, usage)',
+    });
+    expect(existsSync(join(root, 'out/nodefault/all/report.json'))).toBe(true);
   });
 
   it('exits 2 on a usage error, with a report', async () => {

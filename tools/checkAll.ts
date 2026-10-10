@@ -13,6 +13,7 @@
  * @see package.json, docs/TESTING.md
  */
 import { spawn } from 'node:child_process';
+import { mkdirSync } from 'node:fs';
 
 /** One T0 tool: its name and its command line, run from the repository root. */
 export interface CheckTool {
@@ -48,8 +49,15 @@ function run(tool: CheckTool): Promise<ToolResult> {
   });
 }
 
+/**
+ * The cache directories ESLint and Prettier create on a cold run. They are made first, because `x check`'s docs
+ * plugin, running at the same time, checks that the paths the docs cite exist.
+ */
+export const CACHE_DIRS = ['node_modules/.cache/eslint', 'node_modules/.cache/prettier'];
+
 /** Runs every tool in parallel, prints their output in order, and returns the exit code (0 only if all pass). */
 export async function checkAll(tools: CheckTool[] = CHECK_TOOLS): Promise<number> {
+  for (const dir of CACHE_DIRS) mkdirSync(dir, { recursive: true });
   const started = performance.now();
   const results = await Promise.all(tools.map(run));
   for (const { tool, code, output, ms } of results) {

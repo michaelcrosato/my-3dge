@@ -236,6 +236,10 @@ export async function dispatch(argv: readonly string[], options: DispatchOptions
   } catch (error) {
     return crash(error, { argv: [...argv] }, undefined, `tools/cmd/${name}.ts did not load: `);
   }
+  if (typeof command?.run !== 'function') {
+    const error = new Error(`tools/cmd/${name}.ts has no default export Command (with run, options, usage)`);
+    return crash(error, { argv: [...argv] }, undefined);
+  }
   const dashDash = rest.indexOf('--');
   const flagsPart = dashDash < 0 ? rest : rest.slice(0, dashDash);
   if (flagsPart.includes('--help') || flagsPart.includes('-h')) {

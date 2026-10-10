@@ -75,6 +75,7 @@ For the agents who maintain the engine.
 
 ### [`tools/checkAll.ts`](../tools/checkAll.ts)
 
+- `CACHE_DIRS` (const): The cache directories ESLint and Prettier create on a cold run.
 - `CHECK_TOOLS` (const): The T0 tools, in the order their output is printed.
 - `checkAll` (function): Runs every tool in parallel, prints their output in order, and returns the exit code (0 only if all pass).
 - `CheckTool` (interface): One T0 tool: its name and its command line, run from the repository root.
