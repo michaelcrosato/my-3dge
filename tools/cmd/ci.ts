@@ -15,7 +15,8 @@
  *   the step's time. Over a budget warns; at 1.5× it fails the gate (tiers.ts's `checkBudget`).
  * - **`npm ci` reinstalls node_modules under this running process.** That is safe, measured: everything this command
  *   runs is imported before it starts, and every later step is a new process. `node_modules/.cache/` (the ESLint
- *   and Prettier caches) is kept across it, so T0 is timed warm, as its budget means.
+ *   and Prettier caches, and tsc's declarations and build info) is kept across it, so T0 is timed warm, as its
+ *   budget means; tsc rebuilds a project only when its files, its upstream declarations or package-lock.json changed.
  * - `--long` also runs tiers.ts's `LONG_RUNS` after the steps (at each gate).
  *
  * Usage: node x ci --local [--long]. Exit 0 when every step passed within 1.5× its budget; 1 otherwise; 2 on a usage

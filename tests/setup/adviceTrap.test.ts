@@ -1,7 +1,8 @@
 /**
  * @file Unit tests for the advice trap's rules (tests/setup/adviceTrap.ts): what it traps, how an entry lists a
  * warning, how the allow list is read and checked, the message an agent reads, and how it wraps the console.
- * tests/setup/harnesses.test.ts proves it fails and passes real tests in both harnesses.
+ * tests/setup/harnesses.test.ts (Vitest) and tests/e2e/adviceTrap.spec.ts (Playwright) prove it fails and passes real
+ * tests in both harnesses.
  */
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';

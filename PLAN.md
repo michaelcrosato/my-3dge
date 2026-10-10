@@ -839,6 +839,7 @@ my-3dge/
   index.html                the landing page: it opens the box (WP 0.12)
   vercel.json  .vercelignore   the Vercel build: npm ci, npm run build, dist/ (WP 0.12)
   tsconfig.json  vite.config.ts (dev server, build, and Vitest's settings)  playwright.config.ts  eslint.config.js
+  tsconfig.base.json  tsconfig.check.json  tsconfig.{engine,apps,tests}.json   T0's incremental type check (ADR-0014 am. 7)
   .prettierrc.json  x.js (`node x <cmd>`: registers tsx, then runs tools/x.ts)
   engine/                   TypeScript (strict), ES modules, extensionless imports, unit tests beside the code (*.test.ts)
     index.ts                the public API for pages; its file comment is the engine's front page
@@ -1196,7 +1197,7 @@ Each improvement is owned by a work package. A WP is not done until the improvem
 
 | Script | Runs | Tier |
 |---|---|---|
-| `npm run check` | `tsc --noEmit`, `eslint --cache .`, `prettier --check --cache .`, then `node x check` | T0 |
+| `npm run check` | `tsc -b tsconfig.check.json` (`npm run typecheck`), `eslint --cache .`, `prettier --check --cache .`, then `node x check` | T0 |
 | `npm test [-- <path filters>]` | `vitest run`: unit tests, Node replays, content QA. A filter is a substring of a test file's path; one that matches nothing exits 1 | T1 |
 | `npm run e2e [-- <spec files>]` | `playwright test`: the browser suites, on WebGPU | T2 |
 | `npm run dev`, `npm run build` | `vite`, `vite build` | — |
@@ -1265,6 +1266,8 @@ A command arrives with the WP that needs it; on-demand commands do not exist, ev
 - **Selection.** T1 selects through Vite's module graph: `vitest run --changed <base>` while iterating, `vitest related <files>` to see what covers a file. T2 runs in full whenever engine, lab or page code changed, because page code reaches the browser through the dev server rather than through the specs' imports. When only specs or their helpers changed, `--only-changed <base>` is enough.
 - **The base** is the merge-base with `origin/main` once `main` holds a gate, and otherwise the commit recorded in `out/ci/last-green` by the last green `x ci --local`.
 - **Budgets.** `x ci --local` reads the JSON reports, warns when a tier is over its budget, and fails at 1.5×.
+- **T0 costs what a change reaches** (ADR-0014, amendment 7). Its type check is `tsc -b` over three composite projects (`tsconfig.check.json`: the engine, the code that runs on it, the unit tests) that keep their declarations in `node_modules/.cache/tsc/`, so an unchanged project is skipped and a change re-checks only the files it can reach. Together the projects hold exactly `tsconfig.json`'s files, which `tsc --noEmit` still checks as one program.
+- **Browser work is T2.** A test that drives Chromium, even through a child Playwright, is a spec in `tests/e2e/`, never a Vitest test; T1 runs one Vitest worker per core.
 - A test that waits on wall-clock time is a bug. Tests step the engine (`step(n)`) on a virtual clock.
 - A flaky test is quarantined only through a WP that fixes it. Skipping a test to get green is forbidden.
 - Tests run on the development platform only (doctrine: Discovery first): Node 24 and headless Chromium 141, with WebGPU on SwiftShader.
@@ -1656,7 +1659,8 @@ A WP is done only when all of these hold:
     - `target: es2022`, `module: esnext`, `moduleResolution: bundler`;
     - `strict`, `noEmit`, `skipLibCheck`, `erasableSyntaxOnly`, `verbatimModuleSyntax`, `isolatedModules`;
     - `lib: es2022, dom, dom.iterable`, and `types: ["node"]`. three.js's types arrive through its imports;
-    - `include`: `engine`, `labs`, `tests`, `fixtures`, `tools`, and the config files.
+    - `include`: `engine`, `labs`, `tests`, `fixtures`, `tools`, and the config files;
+    - since ADR-0014 amendment 7, the options live in `tsconfig.base.json`, which `tsconfig.json` extends, `include` also names `.claude/hooks`, and T0 checks the same files through `tsconfig.check.json`'s projects.
   - `.gitignore`: `out/ dist/ .cache/ node_modules/ test-results/`.
   - README: what this is, the doctrine, the Stress Box, how to start, links.
   - **The source checkout.** `MY3D2DGE_SRC` (an absolute path) names a read-only checkout of my-3d2dge at `e37e4ee`. Resolve it in this order:
@@ -1727,7 +1731,7 @@ A WP is done only when all of these hold:
     - `jsdoc/require-file-overview`, and `max-lines` (a warning at 400, an error at 600), for code under `engine/`, `tools/`, `labs/` and `tests/`;
     - **the local plugin** (`tools/eslint/`) for what no stock rule expresses, starting with "ask the entry, never the id" (WP 1.2 turns it on).
     - the families are TypeScript modules in `tools/eslint/`, each registering the core rules it uses under its own name (`layer/no-restricted-imports`, `sim/no-restricted-globals`), so no family replaces another's options; `eslint.config.js` assembles them, and holds the switches (ADR-0014, amendment 2).
-  - **`npm run check`:** `tsc --noEmit`, `eslint --cache .`, `prettier --check --cache .` and `node x check`, run in parallel by `tools/checkAll.ts` (ADR-0014, amendment 5). Prettier covers code, data and the generated docs; `.prettierignore` exempts hand-written prose (ADR-0014, amendment 2).
+  - **`npm run check`:** `tsc -b tsconfig.check.json` (incremental, over the projects of ADR-0014 amendment 7; it was `tsc --noEmit`), `eslint --cache .`, `prettier --check --cache .` and `node x check`, run in parallel by `tools/checkAll.ts` (ADR-0014, amendment 5). Prettier covers code, data and the generated docs; `.prettierignore` exempts hand-written prose (ADR-0014, amendment 2).
   - **`x check`**, the repository checks no standard tool covers, built from plugins:
     - **the asset scan** (doctrine: Assets): file extensions, magic bytes, and any base64 run or `data:` URI over 1 KB. A binary file passes only if `data/APPROVED-BINARIES.json` lists it with its escalation record, or if it is a font (WOFF2, TTF, OTF) under `data/fonts/` with a license file beside it. Anything else fails with "needs the owner's approval: `x esc open --principle Assets`";
     - plugins added later: dependency pins (WP 0.3), docs drift (WP 0.6) and escalation records (WP 0.7). Each plugs in by exporting `check` (a `CheckPlugin`) from its command module in `tools/cmd/`, so `check.ts` never changes.
@@ -1749,13 +1753,13 @@ A WP is done only when all of these hold:
   - **The tiers** as npm scripts (§8.1, §8.2): T0 `npm run check`, T1 `npm test`, T2 `npm run e2e`, and the long runs.
   - **Selection** (§8.2): T1 through `vitest run --changed <base>` and `vitest related`. T2 runs in full when engine, lab or page code changed, and otherwise as `playwright test --only-changed <base>`. `tools/lib/tiers.ts` computes the base (the merge-base with `origin/main` once `main` holds a gate, else `out/ci/last-green`) and the T2 decision, for `x ci --local`.
   - **Budget enforcement:** `tools/lib/tiers.ts` reads the JSON reports, warns when a tier is over its budget, and fails at 1.5×.
-  - **The advice trap.** A Vitest setup file and the Playwright fixture both fail on any engine advice code, `console.warn` or three.js deprecation that is not listed in a file under `tests/baselines/advice/`. Each area has its own file of `{ code, reason }` entries, owned by the WP that adds them; the trap reads the whole directory.
+  - **The advice trap.** A Vitest setup file and the Playwright fixture both fail on any engine advice code, `console.warn` or three.js deprecation that is not listed in a file under `tests/baselines/advice/`. Each area has its own file of `{ code, reason }` entries, owned by the WP that adds them; the trap reads the whole directory. Its proof in the Playwright harness drives Chromium, so it runs in T2 (`tests/e2e/adviceTrap.spec.ts`), and its Vitest proof in T1 (`tests/setup/harnesses.test.ts`; ADR-0014, amendment 7).
 - **Improves:** I-27, I-41, I-48.
 - **Done when:**
   - In a temporary git repository the test builds, a change to a fixture `engine/core/a.ts` selects every Vitest test that imports it, directly or not, and a change to page code makes T2 run in full.
   - An unlisted warning fails a fixture test in each harness; a listed one passes.
   - A report over its budget warns, and one at 1.5× fails.
-- **Verify:** `npm test -- tools/lib/tiers tests/setup`
+- **Verify:** `npm test -- tools/lib/tiers tests/setup && npm run e2e -- tests/e2e/adviceTrap.spec.ts`
 
 #### WP-0.3 Dependency qualification and pinned knowledge
 - **Owns:** `tools/cmd/deps.ts`, `tools/lib/deps.ts`, `tools/lib/depsCheck.ts`, `tools/lib/depsUpdate.ts` (ADR-0007, amendment 1), `tools/deps.json`, `docs/THREE-DELTA.md`, `docs/reference/three-tsl-wiki.md`

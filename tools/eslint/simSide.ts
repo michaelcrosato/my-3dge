@@ -23,12 +23,12 @@
  * @see tools/eslint/simSide.test.ts
  */
 import { builtinModules } from 'node:module';
-import type { Linter } from 'eslint';
+import type { ESLint, Linter } from 'eslint';
 import { SIM_MATH_NAMES } from '../../engine/core/simMath';
 import { family } from './family';
 
 /** The plugin the sim-side blocks use: core's restriction rules as `sim/<rule>`. */
-export const simPlugin = family(
+export const simPlugin: ESLint.Plugin = family(
   'sim',
   'no-restricted-globals',
   'no-restricted-properties',
