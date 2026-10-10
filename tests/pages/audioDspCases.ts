@@ -16,7 +16,6 @@
  * @see tests/e2e/audio-dsp.spec.ts
  */
 import { FILTER_TYPES } from '../../engine/audio/dsp/biquad';
-import { TONAL_WAVES } from '../../engine/audio/dsp/osc';
 import { render, soundHash } from '../../engine/audio/dsp/render';
 import { WAVES, type SoundDef, type Voice } from '../../engine/audio/dsp/voice';
 import { Rng } from '../../engine/core/rng';
