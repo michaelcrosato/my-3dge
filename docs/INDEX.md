@@ -153,7 +153,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 - [`adviceTrap.ts`](../tests/setup/adviceTrap.ts): The advice trap (PLAN.md §8.2, WP 0.5): a test fails when it prints an engine advice code, a `console.warn` or a three.js deprecation that no file under `tests/baselines/advice/` lists.
   - Exports: `ADVICE_CODE`, `ADVICE_DIR`, `AllowEntry`, `ConsoleLine`, `describeUnlisted`, `findUnlisted`, `listing`, `loadAllowList`, `THREE_DEPRECATION`, `trap`, `Warning`, `watchConsole`
-  - Tests: [`tests/setup/adviceTrap.test.ts`](../tests/setup/adviceTrap.test.ts), [`tests/setup/harnesses.test.ts`](../tests/setup/harnesses.test.ts)
+  - Tests: [`tests/e2e/adviceTrap.spec.ts`](../tests/e2e/adviceTrap.spec.ts), [`tests/setup/adviceTrap.test.ts`](../tests/setup/adviceTrap.test.ts), [`tests/setup/harnesses.test.ts`](../tests/setup/harnesses.test.ts)
+- [`trapOutcomes.ts`](../tests/setup/trapOutcomes.ts): What the advice trap's fixture tests must give in either harness (WP 0.5): every `passes:` test passed, and every `fails:` test failed through the trap, naming what it printed and the allow-list fix.
+  - Exports: `expectTrapOutcomes`, `PRINTED`, `TrapExpect`, `TrapOutcome`
 
 ## tests/unit/hooks
 

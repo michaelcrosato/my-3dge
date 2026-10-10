@@ -550,6 +550,13 @@ For the agents who maintain the engine.
 - `Warning` (interface): A console message the trap caught.
 - `watchConsole` (function): Wraps `target`'s methods so each trapped message reaches `sink` before it prints; returns the unwrap function.
 
+### [`tests/setup/trapOutcomes.ts`](../tests/setup/trapOutcomes.ts)
+
+- `expectTrapOutcomes` (function): Checks one harness's outcomes: `passes:` tests passed, `fails:` tests (`fails` of them) failed with the trap's message.
+- `PRINTED` (const): What the trap must print for each `fails:` fixture, by test name.
+- `TrapExpect` (type): The matchers `expectTrapOutcomes` uses, as Vitest's and Playwright's `expect` both provide them.
+- `TrapOutcome` (interface): One fixture test's outcome, read from its harness's JSON report.
+
 ### [`tests/unit/hooks/harness.ts`](../tests/unit/hooks/harness.ts)
 
 - `HookRun` (interface): What a hook run printed and returned.
@@ -562,7 +569,7 @@ For the agents who maintain the engine.
 ### [`tools/checkAll.ts`](../tools/checkAll.ts)
 
 - `CACHE_DIRS` (const): The cache directories ESLint and Prettier create on a cold run.
-- `CHECK_TOOLS` (const): The T0 tools, in the order their output is printed.
+- `CHECK_TOOLS` (const): The T0 tools, in the order their output is printed; `tsc` runs package.json's `typecheck` command.
 - `checkAll` (function): Runs every tool in parallel, prints their output in order, and returns the exit code (0 only if all pass).
 - `CheckTool` (interface): One T0 tool: its name and its command line, run from the repository root.
 

@@ -1,5 +1,5 @@
 /**
- * @file The advice trap's fixture specs for the e2e fixture (WP 0.5), run by tests/setup/harnesses.test.ts with
+ * @file The advice trap's fixture specs for the e2e fixture (WP 0.5), run by tests/e2e/adviceTrap.spec.ts with
  * tests/setup/fixtures/playwright.config.ts. Each name says what the trap must do: a `fails:` spec passes on its own
  * and fails only through the fixture's trap.
  */

@@ -1,0 +1,16 @@
+// The compiler options every TypeScript config here shares (PLAN.md §6.10, WP 0.1): tsconfig.json, the whole
+// repository as one program, and the projects T0 checks through tsconfig.check.json (ADR-0014, amendment 7).
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "types": ["node"],
+    "strict": true,
+    "skipLibCheck": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true
+  }
+}

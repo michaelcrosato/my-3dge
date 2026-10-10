@@ -23,7 +23,7 @@
  * @see tools/eslint/publicApi.test.ts
  */
 import { posix } from 'node:path';
-import type { Linter, Rule } from 'eslint';
+import type { ESLint, Linter, Rule } from 'eslint';
 import { family, resolvingImports, shortest } from './family';
 import { THREE_MATH } from './layers';
 
@@ -75,7 +75,7 @@ export const unnamedImports: Rule.RuleModule = {
 };
 
 /** The plugin the public-API blocks use: core's `no-restricted-imports` (resolving) and `no-unnamed-imports`. */
-export const publicApiPlugin = {
+export const publicApiPlugin: ESLint.Plugin = {
   ...resolvingImports(family('public-api', 'no-restricted-imports')),
   rules: {
     ...resolvingImports(family('public-api', 'no-restricted-imports')).rules,

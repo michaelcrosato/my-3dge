@@ -1,0 +1,19 @@
+// T0 project: every unit test (*.test.ts), which may import anything (tsconfig.check.json).
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "emitDeclarationOnly": true,
+    "rootDir": ".",
+    "outDir": "node_modules/.cache/tsc"
+  },
+  "include": [
+    "engine/**/*.test.ts",
+    "labs/**/*.test.ts",
+    "tests/**/*.test.ts",
+    "fixtures/**/*.test.ts",
+    "tools/**/*.test.ts",
+    "package-lock.json"
+  ],
+  "references": [{ "path": "./tsconfig.engine.json" }, { "path": "./tsconfig.apps.json" }]
+}

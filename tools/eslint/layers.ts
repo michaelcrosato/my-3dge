@@ -20,11 +20,11 @@
  * // → layer/no-restricted-imports: engine/core imports nothing from the other layers: …
  * @see tools/eslint/layers.test.ts
  */
-import type { Linter } from 'eslint';
+import type { ESLint, Linter } from 'eslint';
 import { family, resolvingImports } from './family';
 
 /** The plugin the layer blocks use: core's `no-restricted-imports`, resolving, as `layer/no-restricted-imports`. */
-export const layerPlugin = resolvingImports(family('layer', 'no-restricted-imports'));
+export const layerPlugin: ESLint.Plugin = resolvingImports(family('layer', 'no-restricted-imports'));
 
 /**
  * three.js's math classes, the only names `core/math.ts` takes from `three/webgpu` (§6.1); `Color` (from three.js's

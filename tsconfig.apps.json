@@ -1,0 +1,14 @@
+// T0 project: the code that runs on the engine, without its tests: the labs, the fixtures, the tools, the test pages,
+// specs and helpers, the Claude Code hooks and the root configs (tsconfig.check.json).
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "emitDeclarationOnly": true,
+    "rootDir": ".",
+    "outDir": "node_modules/.cache/tsc"
+  },
+  "include": ["labs", "fixtures", "tools", "tests", ".claude/hooks", "*.config.ts", "package-lock.json"],
+  "exclude": ["**/*.test.ts"],
+  "references": [{ "path": "./tsconfig.engine.json" }]
+}

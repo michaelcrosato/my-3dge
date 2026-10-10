@@ -32,7 +32,7 @@ that runs, is measured and is proved. The game that will run on the engine lives
 
 ```sh
 bash scripts/setup.sh           # Node 24.21.0 if missing (SHA-256 checked), the read-only sources, then npm ci
-npm run typecheck               # tsc --noEmit against the pinned three.js and Rapier types
+npm run typecheck               # tsc -b over tsconfig.check.json's projects (incremental), on the pinned types
 npm test                        # vitest run
 node x ci --local               # the merge gate: every tier, summary in out/ci/summary.md
 ```
