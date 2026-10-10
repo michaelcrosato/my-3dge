@@ -15,13 +15,20 @@ game agent's manual.
 - `approach` (function from [`engine/core/math.ts`](../engine/core/math.ts)): `a` moved toward `b` by at most `step` (≥ 0), never past it.
 - `approachAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `a` turned toward `b` by at most `step` (≥ 0) the short way round; exactly `b` once within reach.
 - `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
+- `BoxCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An axis-aligned box collider (Rapier's cuboid: half extents `(max − min)/2`, centred at `(min + max)/2`).
+- `ColliderDescriptor` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A collider descriptor; WP 4.2 adds hull shapes beside the box.
 - `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
+- `CompiledLevel` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A compiled level: the map, its legend, per-tile grids and descriptors; see the file comment.
+- `compileLevel` (function from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): Compiles a level's text against the legend of `options.registry` (the shared one by default) into plain data; see the file comment.
+- `CompileOptions` (interface from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): What `compileLevel` takes beside the text.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
+- `defineGlyph` (function from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): Defines a glyph on `registry` (the shared one by default) and returns it.
 - `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
+- `defineLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): Registers a level on `registry` (the shared one by default) after checking its text compiles against that registry's legend; returns the entry.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
@@ -32,7 +39,12 @@ game agent's manual.
 - `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
+- `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): its tile's floor; 0 outside the map.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
+- `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
+- `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
+- `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
+- `GroundDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The slab under the whole level: the ground's collider, one tile wider than the map all round, 1 m deep.
 - `Headless` (type from [`engine/app/headless.ts`](../engine/app/headless.ts)): A headless engine: `__engine`'s members, over a scene running in this process.
 - `HeadlessOptions` (interface from [`engine/app/headless.ts`](../engine/app/headless.ts)): How a headless engine starts.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
@@ -43,12 +55,20 @@ game agent's manual.
 - `Kind` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): A declared kind, bound: the same as the registry's functions with the kind filled in, typed by its schema.
 - `KindSpec` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): How a kind is declared.
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
+- `LEVEL_FORMAT` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level.
+- `LevelEntry` (type from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): A `level` entry: a level's text and where it came from.
+- `LevelGlyph` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
+- `LevelProblem` (interface from [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
+- `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
+- `LightSpot` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A light spot: a tile's centre, `lightHeight` above its top.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
 - `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
+- `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
 - `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
 - `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
+- `Point3` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A point in metres: `[x, y, z]`.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
@@ -61,11 +81,17 @@ game agent's manual.
 - `SimRng` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
 - `SimSettings` (interface from [`engine/core/settings.ts`](../engine/core/settings.ts)): What sim-side code reads settings through (`w.settings` in a scene): no view settings, no writes.
 - `smoothDamp` (function from [`engine/core/math.ts`](../engine/core/math.ts)): A critically damped spring toward `target` (Game Programming Gems 4's, as Unity's `SmoothDamp`): reaches it in about `smoothTime` seconds without overshoot.
+- `solidAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): Whether (x, z) is in a solid tile (a wall, a pillar, a low wall), or outside the map.
+- `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
+- `tileAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The tile under (x, z) metres, or null outside the map.
+- `TileRect` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A rectangle of tiles, inclusive: `[col0, row0, col1, row1]`.
+- `topHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The top (m) of whatever stands at (x, z): a wall's top over its tiles, the floor on open ones; 0 outside the map.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
+- `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
 - `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
 - `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
 - `World` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
@@ -78,12 +104,19 @@ game agent's manual.
 - `approach` (function from [`engine/core/math.ts`](../engine/core/math.ts)): `a` moved toward `b` by at most `step` (≥ 0), never past it.
 - `approachAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `a` turned toward `b` by at most `step` (≥ 0) the short way round; exactly `b` once within reach.
 - `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
+- `BoxCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An axis-aligned box collider (Rapier's cuboid: half extents `(max − min)/2`, centred at `(min + max)/2`).
+- `ColliderDescriptor` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A collider descriptor; WP 4.2 adds hull shapes beside the box.
 - `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
+- `CompiledLevel` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A compiled level: the map, its legend, per-tile grids and descriptors; see the file comment.
+- `compileLevel` (function from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): Compiles a level's text against the legend of `options.registry` (the shared one by default) into plain data; see the file comment.
+- `CompileOptions` (interface from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): What `compileLevel` takes beside the text.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
+- `defineGlyph` (function from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): Defines a glyph on `registry` (the shared one by default) and returns it.
 - `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
+- `defineLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): Registers a level on `registry` (the shared one by default) after checking its text compiles against that registry's legend; returns the entry.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
@@ -92,7 +125,12 @@ game agent's manual.
 - `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
+- `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): its tile's floor; 0 outside the map.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
+- `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
+- `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
+- `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
+- `GroundDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The slab under the whole level: the ground's collider, one tile wider than the map all round, 1 m deep.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
 - `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
 - `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
@@ -100,12 +138,20 @@ game agent's manual.
 - `Kind` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): A declared kind, bound: the same as the registry's functions with the kind filled in, typed by its schema.
 - `KindSpec` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): How a kind is declared.
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
+- `LEVEL_FORMAT` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level.
+- `LevelEntry` (type from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): A `level` entry: a level's text and where it came from.
+- `LevelGlyph` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
+- `LevelProblem` (interface from [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
+- `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
+- `LightSpot` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A light spot: a tile's centre, `lightHeight` above its top.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
 - `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
+- `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
 - `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
 - `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
+- `Point3` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A point in metres: `[x, y, z]`.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
@@ -118,11 +164,17 @@ game agent's manual.
 - `SimRng` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
 - `SimSettings` (interface from [`engine/core/settings.ts`](../engine/core/settings.ts)): What sim-side code reads settings through (`w.settings` in a scene): no view settings, no writes.
 - `smoothDamp` (function from [`engine/core/math.ts`](../engine/core/math.ts)): A critically damped spring toward `target` (Game Programming Gems 4's, as Unity's `SmoothDamp`): reaches it in about `smoothTime` seconds without overshoot.
+- `solidAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): Whether (x, z) is in a solid tile (a wall, a pillar, a low wall), or outside the map.
+- `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
+- `tileAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The tile under (x, z) metres, or null outside the map.
+- `TileRect` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A rectangle of tiles, inclusive: `[col0, row0, col1, row1]`.
+- `topHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The top (m) of whatever stands at (x, z): a wall's top over its tiles, the floor on open ones; 0 outside the map.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
+- `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
 - `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
 - `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
 - `World` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
@@ -498,6 +550,97 @@ For the agents who maintain the engine.
 - `WorldEvents` (type): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
 - `WorldOptions` (interface): How a world is made.
 - `WorldTimers` (type): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
+
+### [`engine/world/level/colliders.ts`](../engine/world/level/colliders.ts)
+
+- `groundSlab` (function): The slab under the whole level, one tile wider than the map all round, from 1 m down to y 0.
+- `levelColliders` (function): The box colliders of every glyph whose collider recipe is `'box'`: merged boxes from the ground to its top.
+
+### [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)
+
+- `compileLevel` (function): Compiles a level's text against the legend of `options.registry` (the shared one by default) into plain data; see the file comment.
+- `CompileOptions` (interface): What `compileLevel` takes beside the text.
+- `levelName` (function): The name of a level file: `fixtures/levels/room.txt` → `room`.
+
+### [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)
+
+- `defineGlyph` (function): Defines a glyph on `registry` (the shared one by default) and returns it.
+- `Glyph` (type): A `glyph` entry: what one map character means.
+- `GLYPH_FIELDS` (const): The fields of a `glyph` entry.
+- `glyphKind` (function): Declares the kind `glyph` on `registry`, with the engine's v1 glyphs, unless it has it.
+- `GlyphSpec` (type): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
+- `legendOf` (function): Every glyph of `registry` (the shared one by default), keyed by its character, in id order.
+
+### [`engine/world/level/grid.ts`](../engine/world/level/grid.ts)
+
+- `byText` (const): Code-unit order, so sorting never depends on the locale.
+- `glyphsOf` (function): The distinct glyphs of `grid`, by id.
+- `holds` (function): A predicate: whether tile (col, row) of `grid` holds one of `glyphs`.
+- `TileGrid` (interface): A level's grid: its size, its tile size (m) and each tile's glyph, row-major.
+
+### [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)
+
+- `floorHeight` (function): The walkable surface's height (m) at (x, z): its tile's floor; 0 outside the map.
+- `solidAt` (function): Whether (x, z) is in a solid tile (a wall, a pillar, a low wall), or outside the map.
+- `tileAt` (function): The tile under (x, z) metres, or null outside the map.
+- `topHeight` (function): The top (m) of whatever stands at (x, z): a wall's top over its tiles, the floor on open ones; 0 outside the map.
+
+### [`engine/world/level/legend.ts`](../engine/world/level/legend.ts)
+
+- `V1_GLYPHS` (const): The v1 glyphs by id, as `defineGlyph` specs (the kind's defaults fill the rest).
+
+### [`engine/world/level/level.ts`](../engine/world/level/level.ts)
+
+- `defineLevel` (function): Registers a level on `registry` (the shared one by default) after checking its text compiles against that registry's legend; returns the entry.
+- `getLevel` (function): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
+- `LEVEL_FIELDS` (const): The fields of a `level` entry.
+- `LevelEntry` (type): A `level` entry: a level's text and where it came from.
+
+### [`engine/world/level/meshes.ts`](../engine/world/level/meshes.ts)
+
+- `levelMeshes` (function): The mesh descriptors: one per recipe, bottom, top, surface and footprint, for every glyph whose mesh is not 'none'.
+
+### [`engine/world/level/parse.ts`](../engine/world/level/parse.ts)
+
+- `LevelHeader` (interface): The front matter's values, defaults filled.
+- `ParsedLevel` (interface): A level's text, read: header, map rows (each an array of characters), positions and problems.
+- `parseLevel` (function): Reads a level's text: its front matter, its map rows and their positions, and the problems of the text itself.
+
+### [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)
+
+- `LEVEL_CODES` (const): The level codes, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `LevelCode` (type): A level code.
+- `levelProblem` (function): A problem with `code` at `line`:`column`, its message filled from `values` (which name `at`).
+- `LevelProblem` (interface): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
+- `where` (const): `<file>:<line>:<column>`, the `at` of a problem's message.
+
+### [`engine/world/level/rects.ts`](../engine/world/level/rects.ts)
+
+- `findBlocks` (function): The 4-connected blocks of the tiles `inside` accepts, and the block index of every tile (−1 outside any).
+- `mergeRects` (function): Rectangles `[col0, row0, col1, row1]` (inclusive) covering every tile of a cols × rows grid that `inside` accepts.
+- `TileBlock` (interface): A 4-connected block of tiles: its first tile in reading order, its bounding rectangle and its tile count.
+
+### [`engine/world/level/types.ts`](../engine/world/level/types.ts)
+
+- `BoxCollider` (interface): An axis-aligned box collider (Rapier's cuboid: half extents `(max − min)/2`, centred at `(min + max)/2`).
+- `ColliderDescriptor` (type): A collider descriptor; WP 4.2 adds hull shapes beside the box.
+- `CompiledLevel` (interface): A compiled level: the map, its legend, per-tile grids and descriptors; see the file comment.
+- `GroundDescriptor` (interface): The slab under the whole level: the ground's collider, one tile wider than the map all round, 1 m deep.
+- `LEVEL_FORMAT` (const): The format tag of a compiled level.
+- `LevelGlyph` (interface): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
+- `LightSpot` (interface): A light spot: a tile's centre, `lightHeight` above its top.
+- `MeshDescriptor` (interface): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
+- `Point3` (type): A point in metres: `[x, y, z]`.
+- `SpawnPoint` (interface): A spawn point: a tile's centre, on its floor.
+- `TileRect` (type): A rectangle of tiles, inclusive: `[col0, row0, col1, row1]`.
+
+### [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)
+
+- `CheckedLevel` (interface): A level read against its legend: the parsed text, the glyph of every tile, and the structural problems.
+- `checkLevel` (function): The structural problems of a level's text: the text's own, unknown characters and bad footprint blocks.
+- `LevelSource` (interface): Where a level comes from, for messages, and the legend to read it with.
+- `NAV_CLIMB` (const): The default climb limit between neighbouring tiles' floors (m): the prototype's `CLIMB`, 3.5 units.
+- `validateLevel` (function): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
 
 ### [`eslint.config.js`](../eslint.config.js)
 
@@ -1074,6 +1217,13 @@ For the agents who maintain the engine.
 - `DevServer` (interface): A running dev server.
 - `freePort` (function): Asks the system for a free TCP port on 127.0.0.1.
 - `startVite` (function): Starts Vite on the repository at `root` (default: this repository), on `port` (default: any free port).
+
+### [`tools/qa/level.ts`](../tools/qa/level.ts)
+
+- `default` (default): The `level` QA family (PLAN.md §8.6, WP 2.2, I-29): `node x qa level` validates every level file, the box's (`labs/box/levels/*.txt`, ids `level:<name>`) and the fixtures' (`fixtures/levels/*.txt`, ids `level:fixtures/<name>`; the seeded errors under `fixtures/levels/broken/` are the unit tests' business and are skipped), and runs in T1 through `runQa` (tools/qa/level.test.ts).
+- `LEVEL_DIRS` (const): Where level files live, and the id prefix of each place's levels.
+- `LevelFile` (interface): One level file: its QA id and its path from the repository root.
+- `levelFiles` (function): Every level file under `root`, in `LEVEL_DIRS` order, then by name.
 
 ### [`tools/x.ts`](../tools/x.ts)
 

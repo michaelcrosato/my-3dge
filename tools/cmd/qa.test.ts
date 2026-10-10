@@ -161,9 +161,9 @@ describe('families', () => {
     expect(await dispatch(['qa'], { root, commands, print: () => undefined })).toBe(2);
   });
 
-  it('node x qa on the repository lists the families still to come', () => {
+  it('node x qa on the repository lists the families in tools/qa/, level (WP 2.2) among them', () => {
     const run = spawnSync(process.execPath, ['x', 'qa'], { cwd: ROOT, encoding: 'utf8' });
     expect(run.status).toBe(2);
-    expect(run.stdout).toContain('name a QA family (families: none yet; they arrive with their WPs: level (WP 2.2)');
+    expect(run.stdout).toMatch(/name a QA family \(families: ([a-z]+, )*level(, [a-z]+)*\)/);
   });
 });

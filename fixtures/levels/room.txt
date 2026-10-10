@@ -1,0 +1,15 @@
+---
+description: A 16 × 12 m room, the box room's twin (labs/box/levels/room.txt, WP 2.7). Walls, one low wall, a pillar, the hero's spawn and three numbered markers. WP 3.1 checks its level bodies against its solid grid.
+---
+################
+#..............#
+#..@...........#
+#..........PP..#
+#..1.......PP..#
+#..............#
+#...wwwwww.....#
+#..............#
+#..2.......3...#
+#..............#
+#..............#
+################

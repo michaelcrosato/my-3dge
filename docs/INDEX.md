@@ -10,12 +10,14 @@ in [API.md](API.md); error and advice codes are in [ERRORS.md](ERRORS.md).
 
 Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describe <kind>` lists its fields and ids.
 
-| Kind              | What it is                                                                                                                                                               | Declared in                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
-| `component`       | Component kinds: the plain-object data entities hold (e.position), with their fields. The canonical state and the hash read every component's declared fields, in order. | [`engine/sim/state.ts`](../engine/sim/state.ts)         |
-| `inspectorMember` | Members of the inspector (__engine, createHeadless): a call or property with its help line, argument schema and implementation.                                          | [`engine/dev/members.ts`](../engine/dev/members.ts)     |
-| `scene`           | Scenes: a level, settings, a setup and a step, sim-side, so x sim, x replay and createHeadless run them in Node.                                                         | [`engine/sim/scene.ts`](../engine/sim/scene.ts)         |
-| `setting`         | The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set.                                                             | [`engine/core/settings.ts`](../engine/core/settings.ts) |
+| Kind              | What it is                                                                                                                                                               | Declared in                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| `component`       | Component kinds: the plain-object data entities hold (e.position), with their fields. The canonical state and the hash read every component's declared fields, in order. | [`engine/sim/state.ts`](../engine/sim/state.ts)                 |
+| `glyph`           | Level legend glyphs: what one map character means (heights, solid, collider and mesh recipes, nav flags, spawn, light spot, surface, footprint).                         | [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts) |
+| `inspectorMember` | Members of the inspector (__engine, createHeadless): a call or property with its help line, argument schema and implementation.                                          | [`engine/dev/members.ts`](../engine/dev/members.ts)             |
+| `level`           | Levels: a level text (front matter and a map in legend characters) that compileLevel turns into data.                                                                    | [`engine/world/level/level.ts`](../engine/world/level/level.ts) |
+| `scene`           | Scenes: a level, settings, a setup and a step, sim-side, so x sim, x replay and createHeadless run them in Node.                                                         | [`engine/sim/scene.ts`](../engine/sim/scene.ts)                 |
+| `setting`         | The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set.                                                             | [`engine/core/settings.ts`](../engine/core/settings.ts)         |
 
 ## The root
 
@@ -32,7 +34,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`index.ts`](../engine/index.ts): The engine's front page: the public API for pages and tools (PLAN.md §6.1, §6.9, WP 1.6; doctrine: Quality under the hood).
   - Exports: `* from './sim-api'`, `createHeadless`, `EngineInfo`, `EntitySummary`, `Headless`, `HeadlessOptions`, `Inspector`
 - [`sim-api.ts`](../engine/sim-api.ts): The public API for sim-side game code (PLAN.md §6.1, §6.9, WP 1.6; doctrine: Quality under the hood): what a scene, a cast member or a behaviour imports, and all it may import (ESLint's public-API rule), so `x sim` runs it in Node and its play is reproducible.
-  - Exports: `angDiff`, `approach`, `approachAng`, `Box3`, `Color`, `ComponentOf`, `CustomIntentKey`, `def`, `defineComponent`, `defineKind`, `defineScene`, `defineSettings`, `ease`, `Entity`, `Entry`, `Euler`, `EventMap`, `Field`, `fromCamera`, `held`, `INTENT_KEYS`, `Intents`, `IntentValue`, `Kind`, `KindSpec`, `lerpAng`, `Listener`, `MathUtils`, `Matrix4`, `Phase`, `PHASES`, `Plane`, `pressed`, `Quaternion`, `Ray`, `Rng`, `Scene`, `SceneAction`, `SceneSpec`, `Schema`, `SettingValue`, `SimRng`, `SimSettings`, `smoothDamp`, `SpawnSpec`, `Sphere`, `swingTwist`, `SystemFn`, `TraceRecord`, `Vector3`, `With`, `World`, `WorldEvents`, `WorldTimers`
+  - Exports: `angDiff`, `approach`, `approachAng`, `Box3`, `BoxCollider`, `ColliderDescriptor`, `Color`, `CompiledLevel`, `compileLevel`, `CompileOptions`, `ComponentOf`, `CustomIntentKey`, `def`, `defineComponent`, `defineGlyph`, `defineKind`, `defineLevel`, `defineScene`, `defineSettings`, `ease`, `Entity`, `Entry`, `Euler`, `EventMap`, `Field`, `floorHeight`, `fromCamera`, `getLevel`, `Glyph`, `GlyphSpec`, `GroundDescriptor`, `held`, `INTENT_KEYS`, `Intents`, `IntentValue`, `Kind`, `KindSpec`, `lerpAng`, `LEVEL_FORMAT`, `LevelEntry`, `LevelGlyph`, `LevelProblem`, `LevelSource`, `LightSpot`, `Listener`, `MathUtils`, `Matrix4`, `MeshDescriptor`, `Phase`, `PHASES`, `Plane`, `Point3`, `pressed`, `Quaternion`, `Ray`, `Rng`, `Scene`, `SceneAction`, `SceneSpec`, `Schema`, `SettingValue`, `SimRng`, `SimSettings`, `smoothDamp`, `solidAt`, `SpawnPoint`, `SpawnSpec`, `Sphere`, `swingTwist`, `SystemFn`, `tileAt`, `TileRect`, `topHeight`, `TraceRecord`, `validateLevel`, `Vector3`, `With`, `World`, `WorldEvents`, `WorldTimers`
 
 ## engine/app
 
@@ -125,6 +127,48 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`world.ts`](../engine/sim/world.ts): The sim world (PLAN.md §6.4, §6.5, Q13, WP 1.4, I-03; doctrines: Reproducible, Common ground): entities as plain objects with monotonic ids, components as plain-data properties of declared kinds (`e.position`), systems as functions in a fixed order (engine/sim/systems.ts), spawn, despawn and event queues that apply at step boundaries, named seeded RNG streams, sim-time timers, and the state, hash, trace, capture and restore of all of it (engine/sim/state.ts, engine/sim/capture.ts).
   - Exports: `createWorld`, `SimRng`, `World`, `WORLD_CODES`, `WorldEvents`, `WorldOptions`, `WorldTimers`
   - Tests: [`engine/sim/world.test.ts`](../engine/sim/world.test.ts)
+
+## engine/world/level
+
+- [`colliders.ts`](../engine/world/level/colliders.ts): Collider descriptors from a level's tiles (PLAN.md WP 2.2, §5.1 "colliders from text", §6.1 "data descriptors"): plain data saying which boxes the level bodies (WP 3.1, engine/sim/levelBodies.ts) make, with no Rapier here.
+  - Exports: `groundSlab`, `levelColliders`
+  - Tests: [`engine/world/level/compile.test.ts`](../engine/world/level/compile.test.ts)
+- [`compile.ts`](../engine/world/level/compile.ts): The level compiler (PLAN.md WP 2.2, §9.0, I-22; doctrines: Agent-accessible assets, Reproducible): a level's text and the legend (engine/world/level/glyph.ts) in, a `CompiledLevel` out (engine/world/level/types.ts): the map, the glyphs it uses, per-tile solid, walkable, floor and top grids, the ground slab, merged box colliders, mesh descriptors, spawn points and light spots.
+  - Exports: `compileLevel`, `CompileOptions`, `levelName`
+  - Tests: [`engine/world/level/compile.test.ts`](../engine/world/level/compile.test.ts)
+- [`glyph.ts`](../engine/world/level/glyph.ts): The legend registry (PLAN.md WP 2.2, §6.6, I-22): the registry kind `glyph`, one entry per character a level map may hold, saying what that character means: its floor and top heights, whether it is solid, its collider and mesh recipes, nav flags, a spawn point, a light spot, a surface tag and its footprint.
+  - Exports: `defineGlyph`, `Glyph`, `GLYPH_FIELDS`, `glyphKind`, `GlyphSpec`, `legendOf`
+  - Tests: [`engine/world/level/glyph.test.ts`](../engine/world/level/glyph.test.ts)
+- [`grid.ts`](../engine/world/level/grid.ts): A level's tile grid (PLAN.md WP 2.2): its size, its tile size and the glyph of each tile, as compile.ts hands it to the descriptor builders (colliders.ts, meshes.ts), with the two questions both ask: which glyphs it holds, in id order, and whether a tile holds one of some glyphs.
+  - Exports: `byText`, `glyphsOf`, `holds`, `TileGrid`
+  - Tests: [`engine/world/level/compile.test.ts`](../engine/world/level/compile.test.ts)
+- [`heights.ts`](../engine/world/level/heights.ts): Height and solid queries on a compiled level (PLAN.md WP 2.2, §5.1): `floorHeight(level, x, z)`, the walkable surface's height at a point (the prototype's `floorH`: where feet, spawns and nav stand), `topHeight`, the top of whatever stands there (`topH`: a wall's top over its tiles, for shots and particles), `solidAt` and `tileAt`.
+  - Exports: `floorHeight`, `solidAt`, `tileAt`, `topHeight`
+  - Tests: [`engine/world/level/compile.test.ts`](../engine/world/level/compile.test.ts)
+- [`legend.ts`](../engine/world/level/legend.ts): The engine's v1 legend (PLAN.md WP 2.2, I-22): the glyphs every level can use without defining any, as plain specs of the kind `glyph` (engine/world/level/glyph.ts declares the kind and registers these with it).
+  - Exports: `V1_GLYPHS`
+  - Tests: [`engine/world/level/glyph.test.ts`](../engine/world/level/glyph.test.ts)
+- [`level.ts`](../engine/world/level/level.ts): Levels as registry entries (PLAN.md WP 2.2, §6.6, §6.9): the registry kind `level`, so a scene names its level by id (`defineScene('box:room', { level: 'level:room', … })`, engine/sim/scene.ts) and `x describe level` lists them.
+  - Exports: `defineLevel`, `getLevel`, `LEVEL_FIELDS`, `LevelEntry`
+  - Tests: [`engine/world/level/level.test.ts`](../engine/world/level/level.test.ts)
+- [`meshes.ts`](../engine/world/level/meshes.ts): Mesh descriptors from a level's tiles (PLAN.md WP 2.2, §6.1 "data descriptors"): plain data saying which pieces the level meshes (WP 2.4, engine/gfx/level/) draw, with no three.js here.
+  - Exports: `levelMeshes`
+  - Tests: [`engine/world/level/compile.test.ts`](../engine/world/level/compile.test.ts)
+- [`parse.ts`](../engine/world/level/parse.ts): The level text format, read (PLAN.md WP 2.2, §9.0; doctrine: Agent-accessible assets): optional front matter, then the map, one character per tile.
+  - Exports: `LevelHeader`, `ParsedLevel`, `parseLevel`
+  - Tests: [`engine/world/level/parse.test.ts`](../engine/world/level/parse.test.ts)
+- [`problems.ts`](../engine/world/level/problems.ts): What can be wrong with a level, and how it is said (PLAN.md WP 2.2, §6.8; doctrine: Agent-operable): the level codes, each naming its fix in the level's own terms, and `LevelProblem`, one problem at a line and column of the level's text.
+  - Exports: `LEVEL_CODES`, `LevelCode`, `levelProblem`, `LevelProblem`, `where`
+  - Tests: [`engine/world/level/validate.test.ts`](../engine/world/level/validate.test.ts)
+- [`rects.ts`](../engine/world/level/rects.ts): Rectangles and blocks of tiles (PLAN.md WP 2.2).
+  - Exports: `findBlocks`, `mergeRects`, `TileBlock`
+  - Tests: [`engine/world/level/rects.test.ts`](../engine/world/level/rects.test.ts)
+- [`types.ts`](../engine/world/level/types.ts): The compiled level's shape (PLAN.md WP 2.2, §6.1 "data descriptors"): what `compileLevel` returns, plain data that the level meshes (WP 2.4), the level bodies (WP 3.1), navigation (WP 4.3) and scenes read, with no meshes, no Rapier bodies and no functions in it.
+  - Exports: `BoxCollider`, `ColliderDescriptor`, `CompiledLevel`, `GroundDescriptor`, `LEVEL_FORMAT`, `LevelGlyph`, `LightSpot`, `MeshDescriptor`, `Point3`, `SpawnPoint`, `TileRect`
+  - Tests: [`engine/world/level/compile.test.ts`](../engine/world/level/compile.test.ts)
+- [`validate.ts`](../engine/world/level/validate.ts): Level validation (PLAN.md WP 2.2, §8.6, I-22): every problem a level's text has, each at its line and column with its fix in the level's terms.
+  - Exports: `CheckedLevel`, `checkLevel`, `LevelSource`, `NAV_CLIMB`, `validateLevel`
+  - Tests: [`engine/world/level/validate.test.ts`](../engine/world/level/validate.test.ts)
 
 ## labs/hello
 
@@ -303,3 +347,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`vite.ts`](../tools/lib/vite.ts): A Vite dev server through Vite's JavaScript API, for the `x` commands that open pages (PLAN.md §8.1).
   - Exports: `DevServer`, `freePort`, `startVite`
   - Tests: [`tools/lib/vite.test.ts`](../tools/lib/vite.test.ts)
+
+## tools/qa
+
+- [`level.ts`](../tools/qa/level.ts): The `level` QA family (PLAN.md §8.6, WP 2.2, I-29): `node x qa level` validates every level file, the box's (`labs/box/levels/*.txt`, ids `level:<name>`) and the fixtures' (`fixtures/levels/*.txt`, ids `level:fixtures/<name>`; the seeded errors under `fixtures/levels/broken/` are the unit tests' business and are skipped), and runs in T1 through `runQa` (tools/qa/level.test.ts).
+  - Exports: `default`, `LEVEL_DIRS`, `LevelFile`, `levelFiles`
+  - Tests: [`tools/qa/level.test.ts`](../tools/qa/level.test.ts)
