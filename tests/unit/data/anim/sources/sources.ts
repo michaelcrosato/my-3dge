@@ -79,7 +79,11 @@ export function readSources(file: string = SOURCES_FILE): Sources {
   });
   const files = tableUnder(text, 'Where each file came from').map((row): FileRow => {
     const [file = '', from = '', changes = ''] = row;
-    return { file: cell(file), from: cell(from), changed: [...changes.matchAll(/`(\/[^`]+)`/g)].map((m) => m[1] ?? '') };
+    return {
+      file: cell(file),
+      from: cell(from),
+      changed: [...changes.matchAll(/`(\/[^`]+)`/g)].map((m) => m[1] ?? ''),
+    };
   });
   return { text, sources, files };
 }
@@ -110,9 +114,7 @@ export function readCatalogs(dir: string = CATALOG_DIR): Record<string, Catalog>
 
 /** A catalog's clip entries (its keys not starting `$`), by name. */
 export function entries(catalog: Catalog): Record<string, string[]> {
-  return Object.fromEntries(
-    Object.entries(catalog).filter(([name]) => !name.startsWith('$')) as [string, string[]][],
-  );
+  return Object.fromEntries(Object.entries(catalog).filter(([name]) => !name.startsWith('$')) as [string, string[]][]);
 }
 
 /** `text` with every run of white space as one space, for comparing verbatim quotes across line breaks. */
