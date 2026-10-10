@@ -5,9 +5,9 @@
  *
  * Scope: code under `engine/`, `labs/` and `fixtures/`, tests included. A name that is distinctive is banned as an
  * identifier wherever it appears; a common word (`equals`, `label`, `screen`) and `Clock` only as a name imported or
- * re-exported from `three/tsl` (`three/webgpu`), read off the namespace as three.js's docs call it (`TSL.<name>`,
- * `THREE.Clock`), or, for node methods (`.label()`, `.cache()`), inside `engine/gfx/`, the only layer that imports
- * TSL; those names are banned in `tests/` too. Namespace imports (`import * as TSL from 'three/tsl'`) are allowed.
+ * re-exported from `three/tsl` (`three/webgpu`), read off a namespace of it however spelt (`TSL.screen`, `T['screen']`,
+ * `const { screen } = TSL`: namespaceNames.ts), or, for node methods (`.label()`, `.cache()`), inside `engine/gfx/`,
+ * the only layer that imports TSL; those names are banned in `tests/` too. Namespace imports are allowed.
  * Also: no bare `three` import (Node would load the WebGL build; §6.10), and no `eval` or `new Function`.
  *
  * Invariants: path exceptions are zones (family.ts): `mrt()` only in `engine/gfx/post/mrt.ts`, readbacks only in
@@ -19,16 +19,17 @@
  * // → banned/no-restricted-properties: r181 deprecated the async forms: await renderer.init() once, then render() …
  * @see tools/eslint/banned.test.ts
  */
-import type { Linter } from 'eslint';
+import type { ESLint, Linter } from 'eslint';
 import { family, zoned, type Ban } from './family';
+import { namespaceNames, type EntryName } from './namespaceNames';
 
-/** The plugin the banned-API blocks use: core's restriction rules as `banned/<rule>`. */
-export const bannedPlugin = family(
-  'banned',
-  'no-restricted-imports',
-  'no-restricted-syntax',
-  'no-restricted-properties',
-);
+const restrictions = family('banned', 'no-restricted-imports', 'no-restricted-syntax', 'no-restricted-properties');
+
+/** The plugin the banned-API blocks use: core's restriction rules as `banned/<rule>`, and `no-namespace-names`. */
+export const bannedPlugin: ESLint.Plugin = {
+  ...restrictions,
+  rules: { ...restrictions.rules, 'no-namespace-names': namespaceNames },
+};
 
 /** Where the bans apply. */
 export const BANNED_FILES = ['engine/**', 'labs/**', 'fixtures/**'];
@@ -53,16 +54,14 @@ const method = (name: string, message: string, args?: number): Ban => ({
 });
 
 /**
- * `name` imported or re-exported from `source`, or read off its namespace (`<namespace>.<name>`, as a value or a type).
- * A syntax ban, not `no-restricted-imports`' `importNames`: those refuse every namespace import of `source` (`import *
- * as TSL from 'three/tsl'`) with the wrong message.
+ * `name` imported or re-exported from `source` by name (read off a namespace: namespaceNames.ts). A syntax ban, not
+ * `no-restricted-imports`' `importNames`: those refuse every namespace import of `source` (`import * as TSL from
+ * 'three/tsl'`) with the wrong message.
  */
-const exported = (source: string, namespace: string, name: string, message: string): Ban => ({
+const exported = ({ source, name, message }: EntryName): Ban => ({
   selector: [
     `ImportDeclaration[source.value='${source}'] > ImportSpecifier:matches([imported.name='${name}'], [imported.value='${name}'])`,
     `ExportNamedDeclaration[source.value='${source}'] > ExportSpecifier:matches([local.name='${name}'], [local.value='${name}'])`,
-    `MemberExpression[object.name='${namespace}'][property.name='${name}']`,
-    `TSQualifiedName[left.name='${namespace}'][right.name='${name}']`,
   ].join(', '),
   message,
 });
@@ -81,16 +80,19 @@ const TSL_WORDS: Record<string, string> = {
   PI2: r182('PI2', 'TWO_PI'),
 };
 
-/** The names banned from three.js's entry points (`exported`): over the banned files, and over `tests/` too. */
-const NAMES: Ban[] = [
-  exported(
-    'three/webgpu',
-    'THREE',
-    'Clock',
-    'Clock is deprecated from r183: use core/time for sim time, or Timer inside engine/gfx/ only (Appendix B)',
-  ),
-  ...Object.entries(TSL_WORDS).map(([name, message]) => exported('three/tsl', 'TSL', name, message)),
+/** The names banned from three.js's entry points, with the namespace name three.js's docs give each entry. */
+const ENTRY_NAMES: EntryName[] = [
+  {
+    source: 'three/webgpu',
+    namespace: 'THREE',
+    name: 'Clock',
+    message: 'Clock is deprecated from r183: use core/time for sim time, or Timer inside engine/gfx/ only (Appendix B)',
+  },
+  ...Object.entries(TSL_WORDS).map(([name, message]) => ({ source: 'three/tsl', namespace: 'TSL', name, message })),
 ];
+
+/** The names banned by name (`exported`): over the banned files, and over `tests/` too. */
+const NAMES: Ban[] = ENTRY_NAMES.map(exported);
 
 /** `banned/no-restricted-imports`: the bare entry and the WebGL-only paths (banned names are `NAMES`). */
 const IMPORTS = {
@@ -269,6 +271,12 @@ export function bannedBlocks(): Linter.Config[] {
       files: BANNED_IMPORT_FILES,
       plugins: { banned: bannedPlugin },
       rules: { 'banned/no-restricted-imports': ['error', IMPORTS] },
+    },
+    {
+      name: 'banned: names read off a namespace',
+      files: BANNED_IMPORT_FILES,
+      plugins: { banned: bannedPlugin },
+      rules: { 'banned/no-namespace-names': ['error', ...ENTRY_NAMES] },
     },
     ...zoned('banned: syntax', bannedPlugin, 'banned/no-restricted-syntax', [...NAMES, ...SYNTAX], BANNED_FILES),
     ...zoned('banned: names in tests/', bannedPlugin, 'banned/no-restricted-syntax', NAMES, ['tests/**']),

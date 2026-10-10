@@ -5,6 +5,14 @@
 Every code the engine prints, as `[CODE] message`, with its fix. Each module registers its own codes with
 `defineCodes` beside the code that raises them; tools/lib/docs.ts says how they are read.
 
+## app
+
+### APP_NOT_HEADLESS
+
+- Message: `headlessHost was given {value}, not a headless engine`
+- Fix: pass the object createHeadless resolved to
+- Registered in: [`engine/app/headless.ts` line 39](../engine/app/headless.ts)
+
 ## core
 
 ### CORE_BAD_CODE
@@ -172,6 +180,22 @@ Raised by the settings store (engine/core/settings.ts) for an unknown path in `g
 - Message: `sim-side code read the view setting {path}`
 - Fix: read view settings ({path} changes only how the game looks or performs) from presentation code, through the settings store itself; sim-side code reads only settings without view: true, so the hash and replays never depend on them
 - Registered in: [`engine/core/settings.ts` line 65](../engine/core/settings.ts)
+
+## dev
+
+### DEV_BAD_ARGS
+
+- Message: `__engine.{member}: {problems}`
+- Fix: call it as {signature}; __engine.help({name}) lists its arguments
+- Registered in: [`engine/dev/inspector.ts` line 53](../engine/dev/inspector.ts)
+
+Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when an argument does not match the schema its member declares: a wrong type, a value out of range, a missing required argument or one too many. Nothing has happened yet.
+
+### DEV_NO_RENDERER
+
+- Message: `__engine.{member} needs a renderer, and this engine has none ({runtime}, headless)`
+- Fix: call it in a page started with createEngine (WP 2.7); headless, read state(), entities(), get(id) and hash() instead
+- Registered in: [`engine/dev/inspector.ts` line 49](../engine/dev/inspector.ts)
 
 ## gfx
 

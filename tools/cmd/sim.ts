@@ -6,9 +6,10 @@
  * scene id (`kernel`), found among the modules under `fixtures/scenes/` and `labs/<name>/scenes/` that call
  * `defineScene('<id>', …)` with a literal id. A module that defines several scenes needs `--scene <id>`. `--set`
  * changes a setting for the run (validated against the settings schema; an unknown path names the closest), and the
- * values are recorded in the report's `args` and `metrics`. The run steps with no intents, through a recorded session
- * (engine/sim/replay.ts), so `run.replay.json` beside the report replays it, golden hashes for this platform included
- * (`node x replay out/sim/<id>/run.replay.json`; copy it to tests/replays/ to keep it).
+ * values are recorded in the report's `args` and `metrics`. The run goes through `createHeadless`
+ * (engine/app/headless.ts: the inspector's `step`, `hash`, `trace` and `state`) and steps with no intents; its session
+ * records it, so `run.replay.json` beside the report replays it (engine/sim/replay.ts), golden hashes for this
+ * platform included (`node x replay out/sim/<id>/run.replay.json`; copy it to tests/replays/ to keep it).
  *
  * Output, at most about 20 lines: the hash; the entities, systems and events (by type, counted from the trace after
  * every step); the settings changed; the trace's per-part digests; the files written. `state.json` holds the final
@@ -30,7 +31,8 @@ import { EngineError } from '../../engine/core/log';
 import { createSettings, type SettingValue } from '../../engine/core/settings';
 import type { Registry } from '../../engine/core/registry';
 import { checkpointsOf, playReplay, REPLAY_KEYS, type Replay, type StepView } from '../../engine/sim/replay';
-import { createSession, getScene, isScene, type Scene } from '../../engine/sim/scene';
+import { createHeadless, headlessHost } from '../../engine/app/headless';
+import { getScene, isScene, type Scene } from '../../engine/sim/scene';
 import { walk } from '../lib/docs';
 import { UsageError, type Command, type CommandResult } from '../x';
 
@@ -212,24 +214,25 @@ export default {
     const steps = wholeFlag(values.steps, 'steps', 600);
     const seed = wholeFlag(values.seed, 'seed', 1);
     const sets = typedSets((values.set as string[] | undefined) ?? []);
-    const session = createSession(scene, { seed, settings: sets });
+    const engine = await createHeadless({ scene, seed, settings: sets });
+    const { session } = headlessHost(engine);
     const { world } = session;
     const events: Record<string, number> = {};
     let seen = world.events.trace().at(-1)?.seq ?? 0;
     const checkpoints = new Set(checkpointsOf({ steps, hashes: {} }));
-    const hashes: Record<string, string> = { 0: world.hash() };
+    const hashes: Record<string, string> = { 0: engine.hash() };
     const started = performance.now();
     for (let k = 1; k <= steps; k++) {
-      session.step({});
+      engine.step(1);
       for (const record of world.events.trace()) {
         if (record.seq > seen) events[record.type] = (events[record.type] ?? 0) + 1;
       }
       seen = world.events.trace().at(-1)?.seq ?? seen;
-      if (checkpoints.has(k)) hashes[k] = world.hash();
+      if (checkpoints.has(k)) hashes[k] = engine.hash();
     }
     const stepMs = steps ? (performance.now() - started) / steps : 0;
-    const hash = world.hash();
-    const trace = world.trace();
+    const hash = engine.hash();
+    const trace = engine.trace();
     const out = join('out', 'sim', scene.id);
     mkdirSync(join(root, out), { recursive: true });
     const platform = `${process.platform}-${process.arch}`;
@@ -237,7 +240,7 @@ export default {
     writeFileSync(join(root, out, 'run.replay.json'), replayText(replay));
     writeFileSync(
       join(root, out, 'state.json'),
-      `${serialize({ state: world.state(), trace } as unknown as Canonical)}\n`,
+      `${serialize({ state: engine.state(), trace } as unknown as Canonical)}\n`,
     );
     const eventLine = Object.entries(events).sort(([a], [b]) => (a < b ? -1 : 1));
     const setLine = Object.entries(sets).map(([path, value]) => `${path}=${JSON.stringify(value)}`);
@@ -247,7 +250,7 @@ export default {
       summary: `${scene.id}: ${steps} steps, seed ${seed}, hash ${hash}`,
       lines: [
         `module: ${file}`,
-        `entities: ${world.count}; systems: ${world.systems
+        `entities: ${engine.entities().length}; systems: ${world.systems
           .list()
           .map((system) => system.name)
           .join(', ')}`,
@@ -263,7 +266,7 @@ export default {
         hash,
         steps,
         seed,
-        entities: world.count,
+        entities: engine.entities().length,
         stepMs: Math.round(stepMs * 1e4) / 1e4,
         ...Object.fromEntries(eventLine.map(([type, n]) => [`events.${type}`, n])),
         ...Object.fromEntries(

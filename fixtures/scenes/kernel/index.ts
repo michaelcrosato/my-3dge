@@ -7,17 +7,13 @@
  * RNG streams, spawns and despawns, a timer, events (`lap`, `lost`, `pulse`, `spawned`), settings (one `view`) and
  * dev actions (`nudge`, `spawn`).
  *
- * Game-like code: it uses only what a game would. The public API barrels arrive with WP 1.6, so for now it imports
- * the engine modules directly; WP 1.6 switches these imports to engine/sim-api.ts.
+ * Game code: it imports only engine/sim-api.ts, the public API for sim-side code (ESLint's public-API rule), and
+ * `x sim` runs it through `createHeadless` (WP 1.6).
  *
  * Tests: tests/replays/kernel-*.replay.json (`node x replay tests/replays --browser sim`), engine/sim/replay.test.ts.
  * Try it: `node x sim fixtures/scenes/kernel --steps 600 --set kernel.movers=12`.
  */
-import { held, pressed } from '../../../engine/input/intents';
-import { defineSettings } from '../../../engine/core/settings';
-import { defineScene } from '../../../engine/sim/scene';
-import { defineComponent } from '../../../engine/sim/state';
-import type { World } from '../../../engine/sim/world';
+import { defineComponent, defineScene, defineSettings, held, pressed, type World } from '../../../engine/sim-api';
 
 /** The kernel's settings. */
 export const KERNEL_SETTINGS = defineSettings({

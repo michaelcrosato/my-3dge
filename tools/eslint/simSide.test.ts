@@ -28,6 +28,7 @@ const GLOBALS = [
   'webkitAudioContext',
   'crypto',
   'process',
+  'Buffer',
   'performance',
 ];
 
@@ -82,6 +83,13 @@ const CASES: Case[] = [
     file: 'engine/anim/later.ts',
     bad: 'export const later = self[`setTimeout`];',
     good: 'export const tau = self[`Math`].PI * 2;',
+    rule: 'sim/no-restricted-syntax',
+  },
+  {
+    name: "Node's Buffer through globalThis, against a typed array",
+    file: 'engine/sim/bytes.ts',
+    bad: "export const bytes = globalThis.Buffer.from('abc');",
+    good: 'export const bytes = new Uint8Array([97, 98, 99]);',
     rule: 'sim/no-restricted-syntax',
   },
   {

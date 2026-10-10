@@ -9,11 +9,137 @@ Each export with the first sentence of its doc comment; the comment itself, at t
 Game code imports only `engine/index.ts` (pages) and `engine/sim-api.ts` (sim-side code), so this part is the
 game agent's manual.
 
-Neither barrel exists yet.
+### [`engine/index.ts`](../engine/index.ts)
+
+- `angDiff` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The signed angle from `a` to `b` the short way round, in [−π, π).
+- `approach` (function from [`engine/core/math.ts`](../engine/core/math.ts)): `a` moved toward `b` by at most `step` (≥ 0), never past it.
+- `approachAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `a` turned toward `b` by at most `step` (≥ 0) the short way round; exactly `b` once within reach.
+- `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
+- `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
+- `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
+- `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
+- `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
+- `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
+- `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
+- `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
+- `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
+- `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
+- `EngineInfo` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): What `info()` reports: the engine's identity and health, and the run.
+- `Entity` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity: its id and the components it holds, by kind name (`e.position`).
+- `EntitySummary` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): One entity as `entities()` lists it: its id and the components it holds.
+- `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
+- `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
+- `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
+- `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
+- `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
+- `Headless` (type from [`engine/app/headless.ts`](../engine/app/headless.ts)): A headless engine: `__engine`'s members, over a scene running in this process.
+- `HeadlessOptions` (interface from [`engine/app/headless.ts`](../engine/app/headless.ts)): How a headless engine starts.
+- `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
+- `Inspector` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): The inspector, `window.__engine` in a page and what `createHeadless` returns: `help()` lists every member.
+- `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
+- `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
+- `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
+- `Kind` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): A declared kind, bound: the same as the registry's functions with the kind filled in, typed by its schema.
+- `KindSpec` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): How a kind is declared.
+- `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
+- `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
+- `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
+- `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
+- `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
+- `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
+- `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
+- `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
+- `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
+- `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
+- `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
+- `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
+- `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
+- `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
+- `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
+- `SettingValue` (type from [`engine/core/settings.ts`](../engine/core/settings.ts)): A setting's value: plain data.
+- `SimRng` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
+- `SimSettings` (interface from [`engine/core/settings.ts`](../engine/core/settings.ts)): What sim-side code reads settings through (`w.settings` in a scene): no view settings, no writes.
+- `smoothDamp` (function from [`engine/core/math.ts`](../engine/core/math.ts)): A critically damped spring toward `target` (Game Programming Gems 4's, as Unity's `SmoothDamp`): reaches it in about `smoothTime` seconds without overshoot.
+- `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
+- `Sphere` (re-export from `three/webgpu`): three.js's sphere.
+- `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
+- `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
+- `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
+- `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
+- `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
+- `World` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
+- `WorldEvents` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
+- `WorldTimers` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
+
+### [`engine/sim-api.ts`](../engine/sim-api.ts)
+
+- `angDiff` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The signed angle from `a` to `b` the short way round, in [−π, π).
+- `approach` (function from [`engine/core/math.ts`](../engine/core/math.ts)): `a` moved toward `b` by at most `step` (≥ 0), never past it.
+- `approachAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `a` turned toward `b` by at most `step` (≥ 0) the short way round; exactly `b` once within reach.
+- `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
+- `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
+- `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
+- `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
+- `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
+- `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
+- `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
+- `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
+- `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
+- `Entity` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity: its id and the components it holds, by kind name (`e.position`).
+- `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
+- `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
+- `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
+- `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
+- `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
+- `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
+- `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
+- `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
+- `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
+- `Kind` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): A declared kind, bound: the same as the registry's functions with the kind filled in, typed by its schema.
+- `KindSpec` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): How a kind is declared.
+- `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
+- `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
+- `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
+- `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
+- `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
+- `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
+- `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
+- `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
+- `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
+- `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
+- `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
+- `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
+- `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
+- `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
+- `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
+- `SettingValue` (type from [`engine/core/settings.ts`](../engine/core/settings.ts)): A setting's value: plain data.
+- `SimRng` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
+- `SimSettings` (interface from [`engine/core/settings.ts`](../engine/core/settings.ts)): What sim-side code reads settings through (`w.settings` in a scene): no view settings, no writes.
+- `smoothDamp` (function from [`engine/core/math.ts`](../engine/core/math.ts)): A critically damped spring toward `target` (Game Programming Gems 4's, as Unity's `SmoothDamp`): reaches it in about `smoothTime` seconds without overshoot.
+- `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
+- `Sphere` (re-export from `three/webgpu`): three.js's sphere.
+- `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
+- `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
+- `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
+- `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
+- `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
+- `World` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
+- `WorldEvents` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
+- `WorldTimers` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
 
 ## Engine internals and tools
 
 For the agents who maintain the engine.
+
+### [`engine/app/headless.ts`](../engine/app/headless.ts)
+
+- `createHeadless` (function): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
+- `Headless` (type): A headless engine: `__engine`'s members, over a scene running in this process.
+- `HEADLESS_CODES` (const): The codes this module raises, with their fixes.
+- `headlessHost` (function): The run behind a headless engine: its session (world, settings, recording) and clock.
+- `HeadlessOptions` (interface): How a headless engine starts.
 
 ### [`engine/core/color.ts`](../engine/core/color.ts)
 
@@ -210,6 +336,24 @@ For the agents who maintain the engine.
 - `Timers` (interface): Timers in sim time; the world steps them once per sim step.
 - `TimersCapture` (interface): The timers with their callbacks, for `restore` in the same process.
 - `TimersState` (interface): The timers as plain numbers, for the hash: `[id, due tick, period in ticks (0 for one-shot)]` in firing order.
+
+### [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)
+
+- `createInspector` (function): Assembles `__engine` on `host` from the members registered on `host.members` (see the file comment).
+- `EngineInfo` (interface): What `info()` reports: the engine's identity and health, and the run.
+- `EntitySummary` (interface): One entity as `entities()` lists it: its id and the components it holds.
+- `Inspector` (interface): The inspector, `window.__engine` in a page and what `createHeadless` returns: `help()` lists every member.
+- `INSPECTOR_CODES` (const): The codes this module raises, with their fixes.
+
+### [`engine/dev/members.ts`](../engine/dev/members.ts)
+
+- `defineMember` (function): Registers an inspector member on `registry` (the shared one by default).
+- `helpText` (function): `help()`: every member, one line each (signature, then help); with a name, that member and its arguments.
+- `InspectorHost` (interface): What a member works on: the run behind `__engine`, a page's or `createHeadless`'s.
+- `Member` (type): A registered member: its spec with defaults filled, plus `id` (its name) and `kind`.
+- `memberKind` (function): Declares the kind `inspectorMember` on `registry` unless it has it.
+- `MemberSpec` (interface): How a member is written: `defineMember(name, spec)` or `def('inspectorMember', name, spec)`.
+- `signatureOf` (function): How a member is called: `step(n = 1, intents?)`, `get(id)`, or `errors` for a value member.
 
 ### [`engine/gfx/renderer.ts`](../engine/gfx/renderer.ts)
 
@@ -610,7 +754,7 @@ For the agents who maintain the engine.
 - `BANNED_FILES` (const): Where the bans apply.
 - `BANNED_IMPORT_FILES` (const): The import bans also cover tests/: a bare `three` in a test page gets its own pre-bundled copy in Vite (WP 0.8).
 - `bannedBlocks` (function): The banned-API blocks: imports and names over every file in scope, then syntax and properties by zone.
-- `bannedPlugin` (const): The plugin the banned-API blocks use: core's restriction rules as `banned/<rule>`.
+- `bannedPlugin` (const): The plugin the banned-API blocks use: core's restriction rules as `banned/<rule>`, and `no-namespace-names`.
 
 ### [`tools/eslint/family.ts`](../tools/eslint/family.ts)
 
@@ -618,6 +762,7 @@ For the agents who maintain the engine.
 - `family` (function): Returns a plugin named `name` whose rules are the named core rules, unchanged.
 - `messagesOf` (function): Every `message` in a list of blocks' rule options, `no-restricted-imports`'s paths and patterns included.
 - `resolvingImports` (function): `plugin` with its `no-restricted-imports` matching each relative source as resolved from the importing file.
+- `shortest` (function): A relative source's shortest spelling from `dir`: `./a/../b` is `./b`, and `../../engine/sim` from `engine/core` is `../sim`.
 - `zoned` (function): Blocks that apply one aliased rule over `files` so each file gets exactly the bans that apply to it: one block for all `files`, then one per path an `only` or `except` names, the most specific last (flat config's last block wins).
 
 ### [`tools/eslint/index.ts`](../tools/eslint/index.ts)
@@ -627,7 +772,7 @@ For the agents who maintain the engine.
 - `family` (function from [`tools/eslint/family.ts`](../tools/eslint/family.ts)): Returns a plugin named `name` whose rules are the named core rules, unchanged.
 - `layerBlocks` (function from [`tools/eslint/layers.ts`](../tools/eslint/layers.ts)): The layer rules' blocks, in order.
 - `local` (const): The local plugin: rules no stock rule expresses, as `local/<rule>`.
-- `publicApiBlocks` (function from [`tools/eslint/publicApi.ts`](../tools/eslint/publicApi.ts)): The public-API blocks; `on` is `SWITCHES.publicApi` (WP 1.6 turns it on).
+- `publicApiBlocks` (function from [`tools/eslint/publicApi.ts`](../tools/eslint/publicApi.ts)): The public-API blocks; `on` is `SWITCHES.publicApi` (on since WP 1.6).
 - `simSideBlocks` (function from [`tools/eslint/simSide.ts`](../tools/eslint/simSide.ts)): The sim-side blocks: globals, properties and syntax over all sim-side files, then imports (core/math.ts last).
 
 ### [`tools/eslint/layers.ts`](../tools/eslint/layers.ts)
@@ -636,11 +781,17 @@ For the agents who maintain the engine.
 - `layerPlugin` (const): The plugin the layer blocks use: core's `no-restricted-imports`, resolving, as `layer/no-restricted-imports`.
 - `THREE_MATH` (const): three.js's math classes, the only names `core/math.ts` takes from `three/webgpu` (§6.1); `Color` (from three.js's `src/math/`) since WP 1.1, for engine/core/color.ts (ADR-0020 amendment 1).
 
+### [`tools/eslint/namespaceNames.ts`](../tools/eslint/namespaceNames.ts)
+
+- `EntryName` (interface): One banned name of an entry point: its source, the namespace name the docs use, the name, and the fix.
+- `namespaceNames` (const): The rule: options are the banned names (`EntryName`), each reported with its message wherever it is read.
+
 ### [`tools/eslint/publicApi.ts`](../tools/eslint/publicApi.ts)
 
-- `publicApiBlocks` (function): The public-API blocks; `on` is `SWITCHES.publicApi` (WP 1.6 turns it on).
-- `publicApiPlugin` (const): The plugin the public-API blocks use: core's `no-restricted-imports` (resolving) and `no-restricted-syntax`.
+- `publicApiBlocks` (function): The public-API blocks; `on` is `SWITCHES.publicApi` (on since WP 1.6).
+- `publicApiPlugin` (const): The plugin the public-API blocks use: core's `no-restricted-imports` (resolving) and `no-unnamed-imports`.
 - `SIM_SIDE_GAME_CODE` (const): Sim-side game code: the sim barrel only.
+- `unnamedImports` (const): `public-api/no-unnamed-imports`: side-effect imports and dynamic imports with a literal source, matched like `no-restricted-imports` matches named ones (options `{ patterns: [{ regex, message }] }`).
 
 ### [`tools/eslint/simSide.ts`](../tools/eslint/simSide.ts)
 
@@ -786,6 +937,14 @@ For the agents who maintain the engine.
 - `generateDocs` (function): The generated docs' contents, formatted, by repository path.
 - `indexMarkdown` (function): `docs/INDEX.md`, before formatting.
 - `kindRows` (function): The kinds section of `docs/INDEX.md`: one row per kind declared with `defineKind`, sorted by kind.
+
+### [`tools/lib/docsHelp.ts`](../tools/lib/docsHelp.ts)
+
+- `apiOf` (function): The object's members, sorted: calls as `name()`, properties as `name`, namespaces walked with dotted names.
+- `checkHelp` (function): Loads the member modules, starts an empty scene headless and compares `help()` with the object.
+- `helpDrift` (function): Where `help()` and the object part, one sentence each ([] when they agree).
+- `helpNames` (function): The members a `help()` text lists, sorted: each line's signature, `name()` for a call, `name` for a property.
+- `memberModules` (function): The modules under `engine/` and `labs/` (tests aside) that register inspector members, sorted.
 
 ### [`tools/lib/docsKinds.ts`](../tools/lib/docsKinds.ts)
 

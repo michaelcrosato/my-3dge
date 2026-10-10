@@ -87,3 +87,36 @@ after another (`tsc` about 4.3 s, ESLint 1.4 s, Prettier 1.0 s, `x check` 1.9 s;
 when nothing changed). `npm run check` is now `node tools/checkAll.ts`, which starts the four at once on the
 container's 4 cores, prints each tool's output whole in a fixed order, and fails if any fails: 5.8 s. The tools,
 their flags and their caches are unchanged.
+
+## Amendment 6 (2026-10-10, WP-1.6): the inspector and the headless engine
+Calls made where PLAN.md §8.3 and WP 1.6 are silent:
+- **The kind lives in its own module.** `inspectorMember` (fields `help`, `args`, `impl`, `needs`, `value`), its
+  checks, `defineMember`, signatures and `help()` lines are in engine/dev/members.ts; engine/dev/inspector.ts assembles
+  `__engine` and registers the core members. One file would pass the 400-line cap, so WP 1.6's Owns gains
+  engine/dev/members.ts (the WP entry says so).
+- **Arguments are a schema in call order**: `args` is a schema.ts schema whose key order is the position. A call
+  checks every argument before anything runs (`DEV_BAD_ARGS`, naming each problem and the signature) and passes them
+  as given, uncopied: a capture restores its timers only as the object `capture()` returned (ADR-0006).
+- **Calls, properties and namespaces.** `value: true` makes a property read without a call: `errors` and `advice`
+  are arrays, as the page signal (`__engine.errors`, tests/e2e/fixtures.ts) reads them. A dotted name (`scene.dump`)
+  is a call on a namespace object; a name is a member or a namespace, never both. `needs: 'renderer'` members exist
+  headless and throw `DEV_NO_RENDERER`; WP 2.7 adds `view` to that field's values when it builds the view graph.
+- **Members come from the shared registry**; the run's own registry (a test's) is what `describe()` lists. Layers
+  below `dev/` register with `def('inspectorMember', …)` once engine/dev/members.ts has loaded (see the WP 3.3 note in
+  the ledger).
+- **The core members' semantics.** `step(n, intents)` takes one intents object for every step (its pressed buttons
+  on the first only) or a list of one per step, and returns the tick; `seed(n)` starts the scene again with seed n,
+  a new session and clock, keeping every setting that differs from a fresh start; `set` types a text value as `x set`
+  does when the setting is not a string, and goes through the session, so non-view changes are recorded;
+  `entities(query)` lists ids and component names, `get(id)` a copy of one entity (null when gone); `help(name)`
+  gives one member with its arguments.
+- **The headless engine** (`createHeadless`, engine/app/headless.ts) is async (Rapier's start will be, WP 3.1). It has
+  a frame clock over the run's settings and no frames: `step(n)` hands the clock n single steps and runs what
+  `advance` returns at once, inside the session. On a registry without the time settings it declares them (the clock
+  reads them). The inspector holds only its members, so tools reach the run through `headlessHost(h)`: `x sim` reads
+  the event trace and the recording there.
+- **The help() check** (`x docs --check`, tools/lib/docsHelp.ts, §8.12) loads every module that registers a member,
+  starts an empty scene headless and compares the names `help()` lists with the object's own (calls, properties,
+  namespaces walked; getters never read). It runs in `x docs --check` and in T1 (engine/dev/inspector.test.ts), not
+  in `x check`'s docs plugin: loading the modules added about 0.4 s to T0 and pushed `x check`'s own smoke test past
+  its 5 s limit under the full suite's load.

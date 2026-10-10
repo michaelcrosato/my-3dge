@@ -9,12 +9,13 @@
  * `core/math.ts` alone imports three.js, for its math classes (layers.ts limits it to them).
  *
  * Beyond Appendix B's list, the same holes in other spellings are closed too: `setImmediate`,
- * `requestIdleCallback`, `crypto`, `process`, `location` and Web Storage, all of `performance` (`timeOrigin` is a
- * wall-clock timestamp), `globalThis.Date`, `self['Date']` and `const { Date } = globalThis`, and Node built-ins with
- * or without `node:` (sim-side code runs in Chromium as well). Dynamic `import()` is banned outright, whatever its
- * source: it resolves at a wall-clock moment, and no import rule (layer, three.js, Node) sees it. No swap reaches an
- * operator or an alias, so `**` and `**=` are banned (write `Math.pow`), and so are `Math` destructured and a swapped
- * function (engine/core/simMath.ts's `SIM_MATH_NAMES`) held in a variable (ADR-0006 amendment 1).
+ * `requestIdleCallback`, `crypto`, `process`, Node's `Buffer`, `location` and Web Storage, all of `performance`
+ * (`timeOrigin` is a wall-clock timestamp), `globalThis.Date`, `self['Date']` and `const { Date } = globalThis`, and
+ * Node built-ins with or without `node:` (sim-side code runs in Chromium as well). Dynamic `import()` is banned
+ * outright, whatever its source: it resolves at a wall-clock moment, and no import rule (layer, three.js, Node) sees
+ * it. No swap reaches an operator or an alias, so `**` and `**=` are banned (write `Math.pow`), and so are `Math`
+ * destructured and a swapped function (engine/core/simMath.ts's `SIM_MATH_NAMES`) held in a variable (ADR-0006
+ * amendment 1).
  *
  * @example
  * // engine/sim/spawn.ts: const roll = Math.random();
@@ -81,6 +82,7 @@ const GLOBALS: Record<string, string> = {
   webkitAudioContext: AUDIO,
   crypto: RANDOM,
   process: NODE,
+  Buffer: NODE,
   performance: CLOCK,
 };
 

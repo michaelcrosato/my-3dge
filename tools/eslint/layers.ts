@@ -7,8 +7,9 @@
  * shortest spelling from the importing file (`resolvingImports`, family.ts), so `../../../engine/physics/world` and
  * `./../../physics/world` are the same edge. Packages have single owners: only `physics/` imports Rapier, only `gfx/`
  * imports three.js, and `core/math.ts` alone takes three.js's math classes (`allowImportNames`). The sim-side
- * three.js ban itself is in simSide.ts, which also bans dynamic `import()`, a form these rules do not see. Tests
- * (`*.test.ts`) may import anything.
+ * three.js ban itself is in simSide.ts, which also bans dynamic `import()`, a form these rules do not see. No engine
+ * module imports the public barrels (`../index`, `../sim-api`, `..`): they are for game code, and re-export the
+ * engine, so such an import is a cycle (WP 1.6). Tests (`*.test.ts`) may import anything.
  *
  * Invariants: every block lists its layer's whole policy (flat config keeps the last block that matches a file, so
  * the specific blocks, such as `core/math.ts` and `dev/bot.ts`, come after their layer's); the rule id is
@@ -73,6 +74,12 @@ const ENHANCED: Pattern = {
   regex: '(?:^|/)enhanced(?:/|$)',
   message:
     'engine/gfx/enhanced/ is imported only by engine/gfx/features.ts: turn an optional GPU feature on through the feature registry (PLAN.md §6.1, §6.7)',
+};
+/** The public barrels from inside the engine: `../index`, `../sim-api`, or `..` (engine/ itself, its index). */
+const BARRELS: Pattern = {
+  regex: '^(?:(?:\\.\\./)+(?:index|sim-api)(?:\\.ts)?|\\.\\.(?:/\\.\\.)*)$',
+  message:
+    'engine code never imports the public barrels (engine/index.ts, engine/sim-api.ts): they re-export the engine, so the import makes a cycle; import the module that declares the name (PLAN.md §6.1)',
 };
 const SIM_TYPES = (layer: string): Pattern => ({
   regex: climb('sim'),
@@ -256,7 +263,7 @@ export function layerBlocks(): Linter.Config[] {
     const edges: Pattern[] = [];
     if (layer.never?.length) edges.push({ regex: climb(...layer.never), message });
     if (layer.notBeside?.length) edges.push({ regex: beside(...layer.notBeside), message });
-    const patterns = [...edges, ...(layer.patterns ?? []), OUTSIDE].map((pattern) => ({
+    const patterns = [...edges, ...(layer.patterns ?? []), BARRELS, OUTSIDE].map((pattern) => ({
       caseSensitive: true,
       ...pattern,
     }));

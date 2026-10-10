@@ -10,11 +10,12 @@ in [API.md](API.md); error and advice codes are in [ERRORS.md](ERRORS.md).
 
 Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describe <kind>` lists its fields and ids.
 
-| Kind        | What it is                                                                                                                                                               | Declared in                                             |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
-| `component` | Component kinds: the plain-object data entities hold (e.position), with their fields. The canonical state and the hash read every component's declared fields, in order. | [`engine/sim/state.ts`](../engine/sim/state.ts)         |
-| `scene`     | Scenes: a level, settings, a setup and a step, sim-side, so x sim, x replay and createHeadless run them in Node.                                                         | [`engine/sim/scene.ts`](../engine/sim/scene.ts)         |
-| `setting`   | The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set.                                                             | [`engine/core/settings.ts`](../engine/core/settings.ts) |
+| Kind              | What it is                                                                                                                                                               | Declared in                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `component`       | Component kinds: the plain-object data entities hold (e.position), with their fields. The canonical state and the hash read every component's declared fields, in order. | [`engine/sim/state.ts`](../engine/sim/state.ts)         |
+| `inspectorMember` | Members of the inspector (__engine, createHeadless): a call or property with its help line, argument schema and implementation.                                          | [`engine/dev/members.ts`](../engine/dev/members.ts)     |
+| `scene`           | Scenes: a level, settings, a setup and a step, sim-side, so x sim, x replay and createHeadless run them in Node.                                                         | [`engine/sim/scene.ts`](../engine/sim/scene.ts)         |
+| `setting`         | The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set.                                                             | [`engine/core/settings.ts`](../engine/core/settings.ts) |
 
 ## The root
 
@@ -25,6 +26,19 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`vite.config.ts`](../vite.config.ts): Vite's settings (the dev server and the build) and Vitest's (T1), in one file as Vitest expects (PLAN.md §6.10, WPs 0.2 and 0.12).
   - Exports: `default`
   - Tests: [`tools/lib/vite.test.ts`](../tools/lib/vite.test.ts)
+
+## engine
+
+- [`index.ts`](../engine/index.ts): The engine's front page: the public API for pages and tools (PLAN.md §6.1, §6.9, WP 1.6; doctrine: Quality under the hood).
+  - Exports: `* from './sim-api'`, `createHeadless`, `EngineInfo`, `EntitySummary`, `Headless`, `HeadlessOptions`, `Inspector`
+- [`sim-api.ts`](../engine/sim-api.ts): The public API for sim-side game code (PLAN.md §6.1, §6.9, WP 1.6; doctrine: Quality under the hood): what a scene, a cast member or a behaviour imports, and all it may import (ESLint's public-API rule), so `x sim` runs it in Node and its play is reproducible.
+  - Exports: `angDiff`, `approach`, `approachAng`, `Box3`, `Color`, `ComponentOf`, `CustomIntentKey`, `def`, `defineComponent`, `defineKind`, `defineScene`, `defineSettings`, `ease`, `Entity`, `Entry`, `Euler`, `EventMap`, `Field`, `fromCamera`, `held`, `INTENT_KEYS`, `Intents`, `IntentValue`, `Kind`, `KindSpec`, `lerpAng`, `Listener`, `MathUtils`, `Matrix4`, `Phase`, `PHASES`, `Plane`, `pressed`, `Quaternion`, `Ray`, `Rng`, `Scene`, `SceneAction`, `SceneSpec`, `Schema`, `SettingValue`, `SimRng`, `SimSettings`, `smoothDamp`, `SpawnSpec`, `Sphere`, `swingTwist`, `SystemFn`, `TraceRecord`, `Vector3`, `With`, `World`, `WorldEvents`, `WorldTimers`
+
+## engine/app
+
+- [`headless.ts`](../engine/app/headless.ts): The engine without a page (PLAN.md §8.3, §6.9, WP 1.6; doctrine: Verifiable): `createHeadless({ scene, seed, settings })` starts a scene as a recorded session (engine/sim/scene.ts) and returns its inspector, the same object a page publishes as `window.__engine` minus a renderer: members that need one throw `DEV_NO_RENDERER`.
+  - Exports: `createHeadless`, `Headless`, `HEADLESS_CODES`, `headlessHost`, `HeadlessOptions`
+  - Tests: [`engine/app/headless.test.ts`](../engine/app/headless.test.ts)
 
 ## engine/core
 
@@ -67,6 +81,15 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`timers.ts`](../engine/core/timers.ts): Sim time (PLAN.md §6.3, WP 1.3, ADR-0005; doctrine: Reproducible): timers `after` and `every` that count sim ticks and return `{ cancel }`, and per-entity clocks, plain numbers a component holds, that run an entity's time at its own rate (a slowed foe, a time well) or freeze it (the attacker and victim of a hit).
   - Exports: `advanceEntityClock`, `createEntityClock`, `createTimers`, `EntityClock`, `freezeEntityClock`, `Timer`, `TimerCallback`, `Timers`, `TimersCapture`, `TimersState`
   - Tests: [`engine/core/timers.test.ts`](../engine/core/timers.test.ts)
+
+## engine/dev
+
+- [`inspector.ts`](../engine/dev/inspector.ts): The inspector (PLAN.md §8.3, WP 1.6; doctrines: Agent-operable, Verifiable): `window.__engine` in a page and the object `createHeadless` returns in Node are one API, which `createInspector` assembles from the entries of the registry kind `inspectorMember` (engine/dev/members.ts).
+  - Exports: `createInspector`, `EngineInfo`, `EntitySummary`, `Inspector`, `INSPECTOR_CODES`
+  - Tests: [`engine/dev/inspector.test.ts`](../engine/dev/inspector.test.ts)
+- [`members.ts`](../engine/dev/members.ts): The registry kind `inspectorMember` (PLAN.md §8.3, §5.8's one tool table, WP 1.6): what an inspector member is (a help line, its arguments as schema fields, its implementation), the checks each one passes when defined, and the signatures and help lines made from them.
+  - Exports: `defineMember`, `helpText`, `InspectorHost`, `Member`, `memberKind`, `MemberSpec`, `signatureOf`
+  - Tests: [`engine/dev/inspector.test.ts`](../engine/dev/inspector.test.ts)
 
 ## engine/gfx
 
@@ -203,14 +226,17 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `BANNED_FILES`, `BANNED_IMPORT_FILES`, `bannedBlocks`, `bannedPlugin`
   - Tests: [`tools/eslint/banned.test.ts`](../tools/eslint/banned.test.ts)
 - [`family.ts`](../tools/eslint/family.ts): Plumbing for the rule families of eslint.config.js: core rules re-exposed under a family's own name, and per-path zones for bans that have exceptions.
-  - Exports: `Ban`, `family`, `messagesOf`, `resolvingImports`, `zoned`
+  - Exports: `Ban`, `family`, `messagesOf`, `resolvingImports`, `shortest`, `zoned`
 - [`index.ts`](../tools/eslint/index.ts): The local ESLint plugin and the rule families eslint.config.js assembles (PLAN.md §6.1, §6.5, §6.10, Appendix B): one module per family, each exporting its blocks, and `local`, the plugin for what no stock rule expresses.
   - Exports: `askTheEntryBlocks`, `bannedBlocks`, `family`, `layerBlocks`, `local`, `publicApiBlocks`, `simSideBlocks`
 - [`layers.ts`](../tools/eslint/layers.ts): The layer rules (PLAN.md §6.1; doctrines: WebGPU only, Reproducible): one `no-restricted-imports` block per engine layer, naming what the layer may import, so a forbidden edge fails T0 with the rule and the way round it.
   - Exports: `layerBlocks`, `layerPlugin`, `THREE_MATH`
   - Tests: [`tools/eslint/layers.test.ts`](../tools/eslint/layers.test.ts)
+- [`namespaceNames.ts`](../tools/eslint/namespaceNames.ts): `banned/no-namespace-names` (PLAN.md Appendix B, WP 1.6): a banned three.js name read off a namespace of its entry point, however the namespace is named or the name is spelt.
+  - Exports: `EntryName`, `namespaceNames`
+  - Tests: [`tools/eslint/banned.test.ts`](../tools/eslint/banned.test.ts)
 - [`publicApi.ts`](../tools/eslint/publicApi.ts): The public-API rule (PLAN.md §6.1, ADR-0020; doctrine: Quality under the hood): game code imports the engine only through its barrels, `engine/index.ts` (pages) and `engine/sim-api.ts` (sim-side code), and never three.js or Rapier directly, so game agents never depend on, or need to read, the internals.
-  - Exports: `publicApiBlocks`, `publicApiPlugin`, `SIM_SIDE_GAME_CODE`
+  - Exports: `publicApiBlocks`, `publicApiPlugin`, `SIM_SIDE_GAME_CODE`, `unnamedImports`
   - Tests: [`tools/eslint/publicApi.test.ts`](../tools/eslint/publicApi.test.ts)
 - [`simSide.ts`](../tools/eslint/simSide.ts): The reproducibility bans for sim-side code (PLAN.md §6.5, Appendix B; doctrine: Reproducible): no clocks, no unseeded randomness, no DOM, no Web Audio, no three.js, so identical inputs and seeds give identical play in Node and in Chromium.
   - Exports: `SIM_SIDE`, `simPlugin`, `simSideBlocks`
@@ -244,6 +270,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Tests: [`tests/unit/examples.test.ts`](../tests/unit/examples.test.ts), [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
 - [`docsGenerate.ts`](../tools/lib/docsGenerate.ts): Writes the generated docs from what tools/lib/docs.ts reads (PLAN.md §6.8, WP 0.6): `docs/INDEX.md` (a row per registry kind declared with `defineKind`, PLAN.md §6.6, then module → purpose → exports → tests), `docs/API.md` (each export with the first sentence of its doc comment, the public API first) and `docs/ERRORS.md` (every code registered with `defineCodes`, with its message and fix).
   - Exports: `apiMarkdown`, `BARRELS`, `errorsMarkdown`, `formatMarkdown`, `GENERATED`, `generateDocs`, `indexMarkdown`, `kindRows`
+  - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
+- [`docsHelp.ts`](../tools/lib/docsHelp.ts): The `help()` drift check (PLAN.md §8.12, §8.3, WP 1.6; doctrine: Agent-operable): `x docs --check` fails when the inspector's `help()` differs from its real API, the members the object actually has.
+  - Exports: `apiOf`, `checkHelp`, `helpDrift`, `helpNames`, `memberModules`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
 - [`docsKinds.ts`](../tools/lib/docsKinds.ts): Reads the registry kinds a module declares with `defineKind` (PLAN.md §6.6, WP 1.2): `x docs` gives each kind its row in `docs/INDEX.md` (kind, description, declaring module) and fails a declaration it cannot read, so the index of kinds is never written by hand.
   - Exports: `KindDoc`, `kindsOf`

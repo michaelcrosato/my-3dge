@@ -213,6 +213,30 @@ const CASES: Case[] = [
     "export { hash } from './hash';",
   ),
   layer(
+    'core never imports the page barrel',
+    'engine/core/registry.ts',
+    "export { createHeadless } from '../index';",
+    "export { hash } from './hash';",
+  ),
+  layer(
+    'the sim never imports the sim barrel',
+    'engine/sim/world.ts',
+    "import { defineScene } from '../sim-api';\nexport const d = defineScene;",
+    "import { defineScene } from './scene';\nexport const d = defineScene;",
+  ),
+  layer(
+    'nor engine/ itself, however it is spelt',
+    'engine/sim/scene.ts',
+    "export { held } from '../../engine';\nexport { pressed } from '..';\nexport { fromCamera } from '../';",
+    "export { held } from '../input/intents';",
+  ),
+  layer(
+    'nor from deeper in a layer',
+    'engine/gfx/level/mesh.ts',
+    "export { Vector3 } from '../../sim-api.ts';",
+    "export { Vector3 } from '../../core/math';",
+  ),
+  layer(
     'unit tests may import any layer',
     'engine/core/clock.ts',
     "export { draw } from '../gfx/draw';",
@@ -239,6 +263,11 @@ describe('the layer rules', () => {
     const message = results[0].bad.find((item) => item.ruleId === RULE)?.message ?? '';
     expect(message).toContain('engine/core may import only core: keep core self-contained');
     expect(message).toContain('(PLAN.md §6.1)');
+  });
+
+  it('each spelling of engine/ is refused once', () => {
+    const barrels = results.find((result) => result.case.name.startsWith('nor engine/ itself'));
+    expect(barrels?.bad.filter((item) => item.ruleId === RULE)).toHaveLength(3);
   });
 
   it('a path is matched as resolved from the importing file, and quoted as written', () => {

@@ -1,6 +1,7 @@
 /**
  * @file Proves the public-API rule (tools/eslint/publicApi.ts, PLAN.md §6.1, ADR-0020) with failing and passing
- * fixtures linted from a temporary directory, with the rule switched on (as WP 1.6 will) and off (as it is until then).
+ * fixtures linted from a temporary directory, with the rule switched on (since WP 1.6) and off: named, side-effect and
+ * dynamic imports, relative sources matched as resolved.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { messagesOf } from './family';
@@ -8,7 +9,7 @@ import { publicApiBlocks } from './publicApi';
 import { ALL_ON, caseProblems, lintCases, uncovered, type Case, type CaseResult } from './testing';
 
 const RULE = 'public-api/no-restricted-imports';
-const SIDE_EFFECTS = 'public-api/no-restricted-syntax';
+const SIDE_EFFECTS = 'public-api/no-unnamed-imports';
 
 const CASES: Case[] = [
   {
@@ -76,6 +77,27 @@ const CASES: Case[] = [
     rule: SIDE_EFFECTS,
   },
   {
+    name: 'a side-effect import of engine internals is matched as resolved',
+    file: 'labs/box/main.ts',
+    bad: "import './../../engine/core/registry';",
+    good: "import './../../engine/index';",
+    rule: SIDE_EFFECTS,
+  },
+  {
+    name: 'a dynamic import with a template source, matched as resolved',
+    file: 'labs/box/menu.ts',
+    bad: 'export const load = () => import(`./../box/../../engine/gfx/renderer`);',
+    good: 'export const load = () => import(`./../box/../../engine/index`);',
+    rule: SIDE_EFFECTS,
+  },
+  {
+    name: 'the kernel fixture: a fixture scene that imports engine/sim/world is refused',
+    file: 'fixtures/scenes/kernel/index.ts',
+    bad: "import type { World } from '../../../engine/sim/world';\nexport type W = World;",
+    good: "import type { World } from '../../../engine/sim-api';\nexport type W = World;",
+    rule: RULE,
+  },
+  {
     name: 'a detour into engine internals is matched as resolved',
     file: 'labs/box/main.ts',
     bad: "export { createRenderer } from '../box/../../engine/gfx/renderer';",
@@ -114,7 +136,7 @@ describe('the public-API rule, switched on', () => {
   });
 });
 
-describe('the public-API rule, switched off (until WP 1.6)', () => {
+describe('the public-API rule, switched off', () => {
   it('reports nothing', () => {
     expect(off.flatMap((result) => result.bad.filter((item) => item.ruleId?.startsWith('public-api/')))).toEqual([]);
   });
