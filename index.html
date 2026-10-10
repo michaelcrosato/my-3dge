@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>my-3dge</title>
+    <!--
+      The landing page (PLAN.md WP 0.12): it opens the hello page, passing on this URL's query and hash, so
+      /?post=0 reaches the page that reads it. WP 2.7 points it at the box, labs/box/. Routing lives in files, not
+      in vercel.json, so `npx vite preview` serves what Vercel serves.
+    -->
+    <script>
+      location.replace('labs/hello/' + location.search + location.hash);
+    </script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #15171c;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font:
+          18px system-ui,
+          sans-serif;
+        color: #c9ccd4;
+      }
+      a {
+        color: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <p><a href="labs/hello/">Open the hello page</a></p>
+  </body>
+</html>

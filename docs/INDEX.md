@@ -12,7 +12,7 @@ advice codes are in [ERRORS.md](ERRORS.md).
   - Exports: `configure`, `default`, `SWITCHES`
 - [`playwright.config.ts`](../playwright.config.ts): Playwright Test's settings for T2 (PLAN.md §6.10, §8.8): one project, `webgpu`, on the platform's Chromium with shardfall's WebGPU flags, against a Vite dev server it starts itself.
   - Exports: `default`
-- [`vite.config.ts`](../vite.config.ts): Vite's settings (the dev server; WP 0.12 sets what the build takes) and Vitest's (T1), in one file as Vitest expects (PLAN.md §6.10, WP 0.2).
+- [`vite.config.ts`](../vite.config.ts): Vite's settings (the dev server and the build) and Vitest's (T1), in one file as Vitest expects (PLAN.md §6.10, WPs 0.2 and 0.12).
   - Exports: `default`
   - Tests: [`tools/lib/vite.test.ts`](../tools/lib/vite.test.ts)
 

@@ -7,8 +7,9 @@ HTML/CSS. Games see a small public API built on the most widely used web tools (
 ESLint, Prettier), so any agent can work with what it already knows; behind that API, the engine's internals use the
 best approach its builders can execute well.
 
-**Status: Phase 0, the foundation.** The repository's rules, the platform and the source checkouts are in place
-(WP 0.1); no engine code exists yet. The ledger in [`PLAN.md`](PLAN.md) §14 says what is done.
+**Status: Phase 0, the foundation, is in progress.** WPs 0.1–0.8, 0.11 and 0.12 are done: the repository's rules
+and platform, the toolchain and the `node x` command line, a hello page drawn with three.js on WebGPU (`labs/hello/`),
+and the Vercel build. The ledger in [`PLAN.md`](PLAN.md) §14 says what is done and what comes next.
 
 ## The doctrine
 
@@ -34,8 +35,20 @@ npm test                        # vitest run
 
 `scripts/setup.sh` is idempotent and prints the `export` lines for `PATH`, `MY3D2DGE_SRC` and `SHARDFALL_SRC` (it
 appends them to `$CLAUDE_ENV_FILE` in Claude Code). The development platform is Linux x64 with Node 24.21.0 and
-Chromium 141 (WebGPU on SwiftShader). Later work packages add the rest of the toolchain (`npm run check`, `npm run e2e`)
-and the `node x` command line.
+Chromium 141 (WebGPU on SwiftShader). The rest of the toolchain is `npm run check` (types, lint, format and the
+repository checks), `npm run e2e` (the browser suites) and the `node x` command line (`node x help`).
+
+## Deploying
+
+Vercel imports the repository, and [`vercel.json`](vercel.json) does the rest: `npm ci`, then `npm run build` (plain
+`vite build`, on the Node 24 that `package.json`'s `engines` names), then `dist/` served as static files. Every push
+deploys: `main` to production, other branches to previews. The landing page, `index.html`, opens the hello page with
+the URL's query and hash, and opens the box once it exists. Nothing tests the deployment, by the owner's order
+([ADR-0021](docs/decisions/ADR-0021-owner-calls-2026-10-10.md)). To build and serve the same output locally:
+
+```sh
+npm run build && npx vite preview
+```
 
 ## Where things are
 

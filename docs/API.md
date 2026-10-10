@@ -479,4 +479,4 @@ For the agents who maintain the engine.
 
 ### [`vite.config.ts`](../vite.config.ts)
 
-- `default` (default): Vite's settings (the dev server; WP 0.12 sets what the build takes) and Vitest's (T1), in one file as Vitest expects (PLAN.md §6.10, WP 0.2).
+- `default` (default): Vite's settings (the dev server and the build) and Vitest's (T1), in one file as Vitest expects (PLAN.md §6.10, WPs 0.2 and 0.12).
