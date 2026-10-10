@@ -411,7 +411,7 @@ For the agents who maintain the engine.
 ### [`engine/sim/replay.ts`](../engine/sim/replay.ts)
 
 - `CHECKPOINT_STEPS` (const): Steps between checkpoint hashes when a replay names none (§6.5 item 6).
-- `checkpointsOf` (function): The steps a replay hashes: those its goldens name (every platform's), else 0, every 60 and the last.
+- `checkpointsOf` (function): The steps a replay hashes: 0 and the last, plus those its goldens name (every platform's), else every 60.
 - `checkReplay` (function): Checks a replay's whole shape and returns it typed; throws `SIM_BAD_REPLAY` listing the first problems.
 - `firstDifference` (function): The first step at which two runs' hashes differ, over the steps both took; undefined when they agree.
 - `InputChange` (type): One change-point's content: intent keys, setting values and a dev action.
@@ -419,6 +419,7 @@ For the agents who maintain the engine.
 - `judgeRuns` (function): Judges runs (their hashes) of `replay` on `platform` (see `Verdict`).
 - `Parting` (interface): Where two runs part at one step: the parts and entities whose trace digests differ, and the first fields.
 - `partingOf` (function): Compares two runs' views of the same step: `trace()` digests by part and entity, then `diffStates`.
+- `PLATFORM_KEYS` (const): Every golden key a platform may have: `linux-x64`, `darwin-arm64`, …
 - `Playback` (interface): A played replay: its session (at the step it stopped) and the hashes it took, by step.
 - `PlayOptions` (interface): How a replay plays: where its scene is, which steps to hash, and where to stop.
 - `playReplay` (function): Plays a replay (checked first) from step 0 and hashes its checkpoints.
@@ -441,7 +442,7 @@ For the agents who maintain the engine.
 - `SceneOptions` (interface): How a scene starts.
 - `SceneRun` (interface): A started scene: the scene, its world and its settings store.
 - `SceneSpec` (interface): How a scene is written: `defineScene(id, spec)`.
-- `Session` (interface): A started scene that records its inputs from step 0, so `record()` returns it as a replay (see the file comment).
+- `Session` (interface): A started scene that records its inputs from step 0, so `record()` returns it as a replay.
 - `startScene` (function): Starts a scene (an id on the registry, or a scene): a new settings store with the scene's settings and then `options.settings` over the defaults, a world seeded with `options.seed`, the scene's `step` as the system `scene`, then its `setup`.
 
 ### [`engine/sim/state.ts`](../engine/sim/state.ts)
@@ -659,9 +660,9 @@ For the agents who maintain the engine.
 - `default` (default): Sim timings against budgets, in Node (PLAN.md §8.1, §8.7, WP 1.5): `node x perf <scene> [--scene id] [--steps n] [--runs n] [--seed s] [--set k=v…] [--budget]`.
 - `measure` (function): One run's timings: ms per step, per hash and per capture.
 - `median` (function): The middle value (the mean of the two middle ones for an even count).
-- `PerfBudget` (interface): A budget file, `tests/baselines/perf/<scene id>.json`.
+- `PerfBudget` (interface): A budget file, `tests/baselines/perf/<scene id>.json`: the run it was measured on, its budgets, and why.
 - `PerfKey` (type): One measured quantity.
-- `readBudget` (function): Reads and checks a budget file; throws with the problem named.
+- `readBudget` (function): Reads and checks a budget file; throws `UsageError` naming each problem (an unknown key with the closest).
 
 ### [`tools/cmd/port.ts`](../tools/cmd/port.ts)
 
@@ -703,12 +704,14 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/replay.ts`](../tools/cmd/replay.ts)
 
-- `checkFile` (function): Plays one replay file in every runtime and judges it (see the file comment).
-- `default` (default): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WP 1.5): `node x replay <file|dir…> [--update] [--browser sim] [--bisect] [--runs n] [--swap names]`.
+- `Checked` (interface): What `checkFiles` came to: the outcomes' lines, findings and metrics, and each file's verdict.
+- `checkFile` (function): Plays one replay file in every runtime and judges it (see the file comment); writes nothing.
+- `checkFiles` (function): Checks every file, then reads `pageErrors` (Chromium's), and only when nothing failed writes the goldens `--update` recorded.
+- `default` (default): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WP 1.5).
 - `findParting` (function): The first step where any run parts from the first, compared there (`table` reads the components' registry).
-- `Outcome` (interface): What one replay came to: a line, findings and metrics.
+- `Outcome` (interface): What one replay came to: its verdict, lines, bisect details, findings, metrics, and goldens to write.
 - `parseSwap` (function): Parses `--swap`: `none`, or names from the swap (`sin,pow`).
-- `partingLines` (function): The lines that tell a parting.
+- `partingLines` (function): The lines that tell a parting: the step, parts, entities and first field, then every field and the inputs.
 - `PLATFORM` (const): This platform's golden key: `linux-x64`.
 - `replayFiles` (function): The replay files a target names: the file, or every `*.replay.json` under the directory.
 - `ReplayOptions` (interface): How replays are checked.

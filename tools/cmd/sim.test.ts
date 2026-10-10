@@ -65,6 +65,8 @@ describe('x sim', () => {
     expect(setting.lines.join('\n')).toContain('did you mean "kernel.movers"?');
     expect((await sim('kernel', '--set', 'kernel.movers')).lines.join('\n')).toContain('--set takes key=value');
     expect((await sim('kernel', '--steps', 'many')).code).toBe(2);
+    // Seeds are whole numbers from 0, as a replay's seed (engine/sim/replay.ts checkReplay).
+    expect([(await sim('kernel', '--seed', '1.5')).code, (await sim('kernel', '--seed=-1')).code]).toEqual([2, 2]);
     expect((await sim('nowhere')).code).toBe(2);
     expect((await sim('kernel', '--scene', 'kernal')).lines.join('\n')).toContain('kernel');
     expect((await sim('kernel', '--stpes', '3')).lines.join('\n')).toContain('did you mean --steps?');

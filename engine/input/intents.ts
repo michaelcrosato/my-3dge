@@ -80,6 +80,15 @@ export const NO_INTENTS: Intents = Object.freeze({});
 
 /** A namespaced key: a lower-case word, a colon, a name. */
 const CUSTOM = /^[a-z][A-Za-z0-9]*:[A-Za-z0-9_.-]+$/;
+
+/** The namespaced key a bad one most likely means: `'Game:x'` → `'game:x'`, `'charge'` → `'game:charge'`. */
+function customKey(key: string): string {
+  const at = key.indexOf(':');
+  const space = (at < 0 ? '' : key.slice(0, at)).replace(/[^A-Za-z0-9]/g, '').replace(/^[^A-Za-z]+/, '');
+  const name = (at < 0 ? key : key.slice(at + 1)).replace(/[^A-Za-z0-9_.-]/g, '');
+  return `${space ? space[0].toLowerCase() + space.slice(1) : 'game'}:${name || 'key'}`;
+}
+
 /** How many numbers each vector key holds. */
 const VECTORS: Partial<Record<IntentKey, number>> = { move: 2, aim: 3, look: 2 };
 /** Code-unit order, so sorting never depends on the locale. */
@@ -145,7 +154,7 @@ export function normalizeIntents(raw: unknown = {}, previous: Intents = NO_INTEN
     if (CUSTOM.test(key)) custom.push(key);
     else
       problems.push(
-        `unknown key ${show(key)}${didYouMean(key, Object.keys(INTENT_KEYS))} (custom keys are namespaced: "game:${key}")`,
+        `unknown key ${show(key)}${didYouMean(key, Object.keys(INTENT_KEYS))} (custom keys are namespaced: "${customKey(key)}")`,
       );
   }
   for (const key of Object.keys(INTENT_KEYS) as IntentKey[]) {

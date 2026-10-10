@@ -3,13 +3,16 @@
  * its checks, the player that `x replay` and tests/pages/replay.html run, and the comparison of runs that `x replay`
  * judges and bisects with. A replay is text: a scene, its settings and seed, the step rate, the step count, the
  * inputs as change-points, and golden hashes keyed by platform (`linux-x64`), one set valid in Node and in Chromium
- * alike. tests/replays/README.md shows one; a session records one (engine/sim/scene.ts `createSession`).
+ * alike. tests/replays/README.md shows one; a session records one (engine/sim/scene.ts `createSession`). A platform
+ * key is `<os>-<arch>` as Node names them (`process.platform`, `process.arch`); each platform's goldens cover the run:
+ * at least the last step, keyed by whole numbers written plainly (`"60"`, never `"060"`).
  *
  * Change-points: `[k, change]` applies after k steps, before step k + 1: its `set` values first (settings, never
  * `view` ones), then its dev action (`dev`, with plain-data `args`, the scene's `actions`), then its intent keys
  * (engine/input/intents.ts: held keys repeat until changed, `null` clears one, `p` belongs to its step). Several
  * points may share a step; they apply in file order. A hash keyed `"k"` is the state after k steps, before the inputs
- * at k, as a live session hashes at its checkpoints (0, every 60 steps by default, and the last).
+ * at k, as a live session hashes at its checkpoints (0, every 60 steps by default, and the last; 0 and the last
+ * always).
  *
  * `playReplay` drives a session from the change-points, so a played replay records itself again, point for point.
  * Every value is checked first (`SIM_BAD_REPLAY` naming the path and the closest key), unknown keys included.
@@ -23,14 +26,14 @@
  * defineScene('walk', { setup: (w) => w.spawn(), step: (w, i) => void w.rng('walk').next() }, reg);
  * const live = createSession('walk', { seed: 2, registry: reg });
  * live.step({ move: [0, 1] });
- * const replay = { ...live.record(), hashes: { here: { 1: live.world.hash() } } };
+ * const replay = { ...live.record(), hashes: { 'linux-x64': { 1: live.world.hash() } } };
  * const runs = [0, 1, 2].map(() => playReplay(replay, { registry: reg }).hashes);
- * judgeRuns(replay, runs, 'here'); // { golden: 'match' }
- * judgeRuns(replay, runs, 'there'); // { golden: 'other platform', platforms: ['here'] }
+ * judgeRuns(replay, runs, 'linux-x64'); // { golden: 'match' }
+ * judgeRuns(replay, runs, 'darwin-arm64'); // { golden: 'other platform', platforms: ['linux-x64'] }
  * @see engine/sim/replay.test.ts
  */
 import { serialize, type Canonical } from '../core/hash';
-import { codeError, defineCodes, didYouMean } from '../core/log';
+import { closest, codeError, defineCodes, didYouMean } from '../core/log';
 import { registry as sharedRegistry } from '../core/registry';
 import { isPlainObject, show } from '../core/schema';
 import type { SettingValue } from '../core/settings';
@@ -50,7 +53,7 @@ export const REPLAY_CODES = defineCodes('sim', {
   SIM_BAD_REPLAY: {
     template: '{where}: {problem}',
     fix: 'write the replay as tests/replays/README.md shows ({ format, scene, settings, seed, hz, steps, inputs: [[step, change]…], hashes: { platform: { step: hash } } }), or record it from a session; settings marked view never go in a replay',
-    doc: "Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step runs: an unknown key (named with the closest), a wrong format tag, a change-point out of order or at or past `steps`, a bad intent, setting or dev action, a hash that is not 16 hex digits, a step rate other than the world's, or a view setting.",
+    doc: "Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step runs: an unknown key (named with the closest), a wrong format tag, a seed that is not a whole number from 0, a change-point out of order or at or past `steps`, a bad intent, setting or dev action, a platform key that is not `<os>-<arch>` as Node names them (named with the closest), goldens that do not cover the run (none, or none for the last step), a step key not written plainly, a hash that is not 16 hex digits, a step rate other than the world's, or a view setting.",
   },
 });
 
@@ -99,6 +102,13 @@ export const REPLAY_KEYS = 'format description engine three rapier scene setting
 /** The keys of a change-point besides the intents. */
 const CHANGE_KEYS = ['set', 'dev', 'args'];
 const HEX16 = /^[0-9a-f]{16}$/;
+/** A step key: a whole number written plainly. */
+const STEP_KEY = /^(0|[1-9]\d*)$/;
+/** Node's `process.platform` and `process.arch` values: a golden key is `<platform>-<arch>`. */
+const NODE_OS = 'aix android cygwin darwin freebsd haiku linux netbsd openbsd sunos win32'.split(' ');
+const NODE_ARCH = 'arm arm64 ia32 loong64 mips mipsel ppc ppc64 riscv64 s390 s390x x64'.split(' ');
+/** Every golden key a platform may have: `linux-x64`, `darwin-arm64`, … */
+export const PLATFORM_KEYS: readonly string[] = NODE_OS.flatMap((os) => NODE_ARCH.map((arch) => `${os}-${arch}`));
 
 /** The problems of plain data that a text replay cannot hold, as `serialize` reports them. */
 function textProblem(value: unknown, path: string): string | undefined {
@@ -154,7 +164,8 @@ export function checkReplay(value: unknown, where = 'the replay'): Replay {
   if (!isPlainObject(value.settings))
     fail(`settings is ${show(value.settings)}; it holds setting values, path → value`);
   else fail(textProblem(value.settings, 'settings') ?? '');
-  if (typeof value.seed !== 'number' || !Number.isFinite(value.seed)) fail(`seed is ${show(value.seed)}`);
+  if (!Number.isInteger(value.seed) || (value.seed as number) < 0)
+    fail(`seed is ${show(value.seed)}; a whole number, 0 or more`);
   if (!Number.isInteger(value.hz) || (value.hz as number) < 1)
     fail(`hz is ${show(value.hz)}; steps per second, 1 or more`);
   const steps = value.steps as number;
@@ -180,13 +191,22 @@ export function checkReplay(value: unknown, where = 'the replay'): Replay {
   if (!isPlainObject(value.hashes)) fail(`hashes is ${show(value.hashes)}; platform → { step: hash }`);
   else {
     for (const [platform, marks] of Object.entries(value.hashes)) {
+      if (!PLATFORM_KEYS.includes(platform)) {
+        const near = closest(platform, PLATFORM_KEYS, 1).map(show);
+        const hint = near.length ? ` (did you mean ${near[0]}?)` : '';
+        fail(`hashes: unknown platform ${show(platform)}${hint}; a platform is <os>-<arch> as Node names them`);
+      }
       if (!isPlainObject(marks)) {
         fail(`hashes.${platform} is ${show(marks)}; step → hash`);
         continue;
       }
+      if (!Object.keys(marks).length)
+        fail(`hashes.${platform} holds no hash; record them with x replay --browser sim --update`);
+      else if (Number.isInteger(steps) && !Object.hasOwn(marks, String(steps)))
+        fail(`hashes.${platform} has no hash for step ${steps}, the last, so the run is not covered`);
       for (const [step, hash] of Object.entries(marks)) {
-        if (!/^\d+$/.test(step) || Number(step) > steps)
-          fail(`hashes.${platform} has the step ${show(step)}; 0 to ${steps}`);
+        if (!STEP_KEY.test(step) || Number(step) > steps)
+          fail(`hashes.${platform} has the step ${show(step)}; a whole number from 0 to ${steps}, written plainly`);
         if (typeof hash !== 'string' || !HEX16.test(hash))
           fail(`hashes.${platform}.${step} is ${show(hash)}; 16 hex digits`);
       }
@@ -200,13 +220,11 @@ export function checkReplay(value: unknown, where = 'the replay'): Replay {
   return value as unknown as Replay;
 }
 
-/** The steps a replay hashes: those its goldens name (every platform's), else 0, every 60 and the last. */
+/** The steps a replay hashes: 0 and the last, plus those its goldens name (every platform's), else every 60. */
 export function checkpointsOf(replay: Pick<Replay, 'steps' | 'hashes'>): number[] {
   const named = new Set(Object.values(replay.hashes).flatMap((marks) => Object.keys(marks).map(Number)));
-  if (!named.size) {
-    for (let k = 0; k < replay.steps; k += CHECKPOINT_STEPS) named.add(k);
-    named.add(replay.steps);
-  }
+  if (!named.size) for (let k = 0; k < replay.steps; k += CHECKPOINT_STEPS) named.add(k);
+  named.add(0).add(replay.steps);
   return [...named].sort((a, b) => a - b);
 }
 

@@ -27,18 +27,22 @@ are in engine/sim/replay.ts; the inputs' vocabulary is engine/input/intents.ts.
 - `[k, change]` applies after k steps, before the next: its `set` first, then its `dev` action (the scene's
   `actions`), then its intents. Held intents repeat until a later point changes them; `null` clears one; `p`
   (pressed) belongs to its step only. Settings marked `view` never go in a replay.
-- A hash keyed `"k"` is the state after k steps, before the inputs at k.
+- A hash keyed `"k"` is the state after k steps, before the inputs at k. Each platform's goldens (`<os>-<arch>` as
+  Node names them: `linux-x64`, `darwin-arm64`) cover the run: they hold the last step's hash at least, keyed by whole
+  numbers written plainly (`"60"`, never `"060"`). `--update` records 0, every 60 steps and the last.
 - `engine`, `three` and `rapier` are written by `--update`.
+- A session records setting changes made through `session.set` or its own store (`session.settings`), and dev actions
+  (all or nothing: one that throws changes nothing and is not recorded).
 
 ## Working with them
 
 | Task | Command |
 |---|---|
 | Check every replay, in Node and in Chromium (tests/pages/replay.html) | `node x replay tests/replays --browser sim` |
-| Record or re-record the goldens of this platform | `node x replay <file> --update` (say why in the commit) |
+| Record or re-record the goldens of this platform (writes only when every file and the page pass) | `node x replay <file> --browser sim --update` (say why in the commit) |
 | Find the first step, entity and field where runs part | `node x replay <file> --browser sim --bisect` |
 | Show that a replay depends on the fdlibm swap | `node x replay <file> --browser sim --swap none` (must fail) |
-| Make a new one | write it by hand, or copy `out/sim/<scene>/run.replay.json` from `node x sim <scene>`, then `--update` |
+| Make a new one | write it by hand, or copy `out/sim/<scene>/run.replay.json` from `node x sim <scene>`, then `--browser sim --update` |
 
 The kernel replays (`kernel-*.replay.json`) run fixtures/scenes/kernel/index.ts. Without the swap, Node and Chromium
 part at step 0 (kernel-crowd) and by step 60 (kernel-movers), so their one set of goldens proves the swap end to end.

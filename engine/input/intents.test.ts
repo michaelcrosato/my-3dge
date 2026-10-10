@@ -63,6 +63,14 @@ describe('normalizeIntents', () => {
     expect(failure(() => normalizeIntents({ toString: 1 }))).toContain('unknown key "toString"');
   });
 
+  it('suggests the namespaced form a misspelt custom key means', () => {
+    expect(failure(() => normalizeIntents({ 'Game:x': 1 }))).toContain('custom keys are namespaced: "game:x"');
+    expect(failure(() => normalizeIntents({ 'game:': 1 }))).toContain('custom keys are namespaced: "game:key"');
+    expect(failure(() => normalizeIntents({ 'my game:charge up': 1 }))).toContain(
+      'custom keys are namespaced: "mygame:chargeup"',
+    );
+  });
+
   it('presses on the step a button goes down, adds taps, and repeats holds without pressing', () => {
     const one = normalizeIntents({ b: ['jump'] });
     const two = normalizeIntents({ b: ['jump', 'run'] }, one);

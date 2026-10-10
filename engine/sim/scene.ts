@@ -11,11 +11,11 @@
  * setup adds there; `actions` are its dev actions, `(w, args) => void` by name (WP 5.6 adds the engine's own).
  * `level` names the level it loads (WP 2.2 compiles it).
  *
- * A session's `step(intents)` normalizes the intents against the step before and logs what changed, `set` logs a
- * non-view setting, `act` runs a dev action inside `w.run` and logs it with its plain-data args, each at the step it
- * happens (change-points merged in play order: set, then dev, then intents); `record()` returns the replay from step
- * 0, no capture needed. Step and set through the session, never the world or the store, or the recording misses it
- * (`SIM_OFF_RECORD` for steps).
+ * A session logs, each at the step it happens (merged in play order: set, then dev, then intents), what its intents
+ * change, every non-view setting change (through `set` or its own store, `session.settings`), and its dev actions
+ * (`act`, all or nothing: one that throws is rolled back). `record()` returns the replay from step 0, no capture
+ * needed; change-points no step has followed yet wait for it. Step through the session, never the world
+ * (`SIM_OFF_RECORD`); `Session` says how each part is logged.
  *
  * Invariants: a scene's `settings` are checked against the settings schema when it is defined (`CORE_BAD_SPEC`
  * naming each problem), so declare its settings before it; they apply for the run's lifetime, as an override layer
@@ -40,7 +40,7 @@
 import type { EventMap } from '../core/events';
 import { deserialize, serialize, type Canonical } from '../core/hash';
 import { codeError, defineCodes, didYouMean, type Log } from '../core/log';
-import { registry as sharedRegistry, type Entry, type Registry } from '../core/registry';
+import { registry as sharedRegistry, sameValue, type Entry, type Registry } from '../core/registry';
 import { isPlainObject, show, type Schema } from '../core/schema';
 import { createSettings, type SettingChange, type Settings, type SettingValue } from '../core/settings';
 import { diffIntents, INTENT_KEYS, NO_INTENTS, normalizeIntents, type Intents } from '../input/intents';
@@ -51,7 +51,7 @@ import { createWorld, type World } from './world';
 /** The codes this module raises, with their fixes. */
 export const SCENE_CODES = defineCodes('sim', {
   SIM_NO_ACTION: {
-    template: 'the scene {scene} has no dev action {name}{suggestion}',
+    template: 'the scene {scene} has no dev action {name} ({suggestion})',
     fix: "add it to the scene: defineScene('{scene}', { actions: { {name}(w, args) { … } } }), or call one it has",
   },
   SIM_OFF_RECORD: {
@@ -210,7 +210,14 @@ export function startScene<C extends object = AnyComponents, E extends EventMap 
   return { scene: entry, world, settings };
 }
 
-/** A started scene that records its inputs from step 0, so `record()` returns it as a replay (see the file comment). */
+/**
+ * A started scene that records its inputs from step 0, so `record()` returns it as a replay. `step(intents)`
+ * normalizes the intents against the step before and logs what changed. Setting changes through the store
+ * (`settings`: set, setText, load, fromUrl, reset, override) are logged as `set` points: before each `set`, `act` and
+ * `step`, the session compares the store's non-view values with the last ones it saw. `act` captures the world, runs
+ * the action inside `w.run` and, if it throws, restores the capture and logs nothing; else it logs the action with its
+ * plain-data args.
+ */
 export interface Session<C extends object = AnyComponents, E extends EventMap = EventMap> extends SceneRun<C, E> {
   /** Steps taken through the session. */
   readonly steps: number;
@@ -220,11 +227,11 @@ export interface Session<C extends object = AnyComponents, E extends EventMap = 
   readonly inputs: readonly InputEntry[];
   /** One step with these intents (normalized against the step before); returns them. Throws `INPUT_BAD_INTENTS`. */
   step(intents?: unknown): Intents;
-  /** Sets a setting between steps; a non-view change is recorded at this step. */
+  /** Sets a setting between steps; a non-view change is recorded at this step (as is any change through `settings`). */
   set(path: string, value: unknown): SettingChange;
-  /** Runs the scene's dev action `name` between steps, then records it. Throws `SIM_NO_ACTION`. */
+  /** Runs the scene's dev action `name` between steps, all or nothing, then records it. Throws `SIM_NO_ACTION`. */
   act(name: string, args?: unknown): void;
-  /** The replay of everything so far, from step 0, without hashes. Throws `SIM_OFF_RECORD`. */
+  /** The replay of every step so far, from step 0, without hashes. Throws `SIM_OFF_RECORD`. */
   record(): Replay;
 }
 
@@ -241,6 +248,7 @@ export function createSession<C extends object = AnyComponents, E extends EventM
   const inputs: InputEntry[] = [];
   let last: Intents = NO_INTENTS;
   let steps = 0;
+  let seen = settings.sim.values();
   /** The change-point to write a `what` into at this step: the last one when the play order allows, else a new one. */
   const pointFor = (what: 'set' | 'dev' | 'intents'): InputChange => {
     const tail = inputs[inputs.length - 1];
@@ -253,6 +261,17 @@ export function createSession<C extends object = AnyComponents, E extends EventM
     inputs.push([world.tick, change]);
     return change;
   };
+  /** Logs every non-view value the store holds that differs from the last ones seen, as a `set` at this step. */
+  const sync = () => {
+    const now = settings.sim.values();
+    for (const [path, value] of Object.entries(now)) {
+      const before = Object.hasOwn(seen, path) ? seen[path] : registry.get('setting', path).default;
+      if (sameValue(before, value)) continue;
+      const point = pointFor('set');
+      point.set = { ...point.set, [path]: deserialize(serialize(value as Canonical)) as SettingValue };
+    }
+    seen = now;
+  };
   const session: Session<C, E> = {
     ...run,
     get steps() {
@@ -264,6 +283,7 @@ export function createSession<C extends object = AnyComponents, E extends EventM
     inputs,
     step(raw = {}) {
       const next = normalizeIntents(raw, last);
+      sync();
       const change = diffIntents(last, next);
       if (Object.keys(change).length) Object.assign(pointFor('intents'), change);
       world.step(next);
@@ -272,28 +292,36 @@ export function createSession<C extends object = AnyComponents, E extends EventM
       return next;
     },
     set(path, value) {
+      sync();
       const change = settings.set(path, value);
-      if (!change.view) {
-        const point = pointFor('set');
-        point.set = { ...point.set, [path]: deserialize(serialize(change.value as Canonical)) as SettingValue };
-      }
+      sync();
       return change;
     },
     act(name, args) {
       const actions = run.scene.actions as Record<string, (w: unknown, a: unknown) => void>;
       const action = Object.hasOwn(actions, name) ? actions[name] : undefined;
       if (typeof action !== 'function') {
-        const suggestion = didYouMean(name, Object.keys(run.scene.actions));
+        const names = Object.keys(actions).sort();
+        const near = didYouMean(name, names).trim().slice(1, -1);
+        const suggestion = near || (names.length ? `its actions: ${names.map(show).join(', ')}` : 'it has none');
         throw codeError('SIM_NO_ACTION', { scene: run.scene.id, name: show(name), suggestion });
       }
       const text = args === undefined ? undefined : serialize(args as Canonical);
-      world.run((w) => action(w, text === undefined ? undefined : deserialize(text)));
+      sync();
+      const before = world.capture();
+      try {
+        world.run((w) => action(w, text === undefined ? undefined : deserialize(text)));
+      } catch (error) {
+        world.restore(before);
+        throw error;
+      }
       const point = pointFor('dev');
       point.dev = name;
       if (text !== undefined) point.args = deserialize(text);
     },
     record() {
       if (world.tick !== steps) throw codeError('SIM_OFF_RECORD', { count: world.tick - steps });
+      const taken = inputs.filter(([at]) => at < steps);
       return {
         format: 'my3dge-replay/1', // REPLAY_FORMAT, checked by its type (importing it would make the modules circular)
         scene: run.scene.id,
@@ -301,7 +329,7 @@ export function createSession<C extends object = AnyComponents, E extends EventM
         seed: world.seed,
         hz: world.hz,
         steps,
-        inputs: deserialize(serialize(inputs as unknown as Canonical)) as unknown as InputEntry[],
+        inputs: deserialize(serialize(taken as unknown as Canonical)) as unknown as InputEntry[],
         hashes: {},
       };
     },
