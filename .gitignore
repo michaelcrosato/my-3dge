@@ -1,0 +1,8 @@
+out/
+dist/
+.cache/
+node_modules/
+test-results/
+.vercel/
+.env*
+.claude/settings.local.json

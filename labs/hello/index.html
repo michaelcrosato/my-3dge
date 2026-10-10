@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>hello: my-3dge on WebGPU</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #15171c;
+      }
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
+      /* What went wrong, as page text: whoever opens a deployed page sees the page, not its console. */
+      #msg {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        font:
+          18px system-ui,
+          sans-serif;
+        color: #c9ccd4;
+        text-align: center;
+        white-space: pre-line;
+        pointer-events: none;
+      }
+      #msg[hidden] {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="view"></canvas>
+    <div id="msg" role="status" aria-live="polite">Loading…</div>
+    <script type="module" src="./boot.ts"></script>
+  </body>
+</html>

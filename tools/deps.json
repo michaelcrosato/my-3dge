@@ -1,0 +1,532 @@
+{
+  "$comment": "The dependency pins and why each is here (PLAN.md §6.10). Every field and rule: tools/cmd/deps.ts's file comment. Dates are npm's and nodejs.org's, UTC. Change pins through node x deps --update, or an upgrade WP.",
+  "measured": "2026-10-10",
+  "dependencies": {
+    "three": {
+      "qualifying": {
+        "version": "0.180.0",
+        "date": "2025-09-03"
+      },
+      "pin": {
+        "version": "0.182.0",
+        "date": "2025-12-10"
+      },
+      "newest": {
+        "version": "0.182.0",
+        "date": "2025-12-10"
+      },
+      "rule": "internals",
+      "measurement": "PLAN.md §4.7 (2026-10-09), on the platform: the prototype's full stress test passes on r182 (proof hash 68e1f7d1), while r180 draws the WebGPU post filters black and r181.2 fails WebGPU pipeline validation; r186 does not start on Chromium 141. Against r180, r182 changes none of the APIs game code meets (the math classes, the animation classes, material parameters).",
+      "next": {
+        "version": "0.183.0",
+        "date": "2026-02-18",
+        "qualifies": "2027-02-18"
+      },
+      "reason": "The renderer: WebGPU, TSL node materials, the post-processing addons, and the math classes the public API re-exports. The most widely known 3D library on the web (Common ground); only gfx/ sees the renderer."
+    },
+    "@dimforge/rapier3d-simd-compat": {
+      "qualifying": {
+        "version": "0.19.1",
+        "date": "2025-10-03"
+      },
+      "pin": {
+        "version": "0.21.0",
+        "date": "2026-09-25"
+      },
+      "newest": {
+        "version": "0.21.0",
+        "date": "2026-09-25"
+      },
+      "rule": "internals",
+      "measurement": "PLAN.md §4.7 (2026-10-09), on the platform: a restore continues exactly (0 drift, where 0.19.3 drifts 5–13 cm), so captures need no workaround; 4.3 ms a step at 1,000 bodies against 5.1 ms for 0.19.3's SIMD build; the character controller's snap-to-ground fixed. Its API is 0.19's plus optional parameters.",
+      "next": null,
+      "reason": "Physics: rigid bodies, colliders, queries and the character controller, deterministic and restorable (Reproducible). The SIMD build, with its WASM inlined; only engine/physics sees its API."
+    },
+    "@stdlib/math-base-special-cos": {
+      "qualifying": {
+        "version": "0.3.0",
+        "date": "2024-07-28"
+      },
+      "pin": {
+        "version": "0.3.1",
+        "date": "2026-02-08"
+      },
+      "newest": {
+        "version": "0.3.1",
+        "date": "2026-02-08"
+      },
+      "rule": "compatible",
+      "next": null,
+      "reason": "A pure-JS fdlibm cos that the sim swaps into Math while it steps, so Node and Chromium agree bit for bit (§6.5); V8's own cos differs by 1 ulp between them (§4.7)."
+    },
+    "@stdlib/math-base-special-pow": {
+      "qualifying": {
+        "version": "0.3.0",
+        "date": "2024-07-28"
+      },
+      "pin": {
+        "version": "0.3.1",
+        "date": "2026-02-08"
+      },
+      "newest": {
+        "version": "0.3.1",
+        "date": "2026-02-08"
+      },
+      "rule": "compatible",
+      "next": null,
+      "reason": "A pure-JS fdlibm pow that the sim swaps into Math while it steps (§6.5): Node 22's Math.pow differs from Chromium's (§4.7)."
+    },
+    "@stdlib/math-base-special-sin": {
+      "qualifying": {
+        "version": "0.3.0",
+        "date": "2024-07-28"
+      },
+      "pin": {
+        "version": "0.3.1",
+        "date": "2026-02-08"
+      },
+      "newest": {
+        "version": "0.3.1",
+        "date": "2026-02-08"
+      },
+      "rule": "compatible",
+      "next": null,
+      "reason": "A pure-JS fdlibm sin that the sim swaps into Math while it steps, so Node and Chromium agree bit for bit (§6.5); V8's own sin differs by 1 ulp between them (§4.7)."
+    }
+  },
+  "devDependencies": {
+    "@playwright/test": {
+      "qualifying": {
+        "version": "1.56.0",
+        "date": "2025-10-06"
+      },
+      "pin": {
+        "version": "1.64.0",
+        "date": "2026-10-07"
+      },
+      "newest": {
+        "version": "1.64.0",
+        "date": "2026-10-07"
+      },
+      "rule": "compatible",
+      "next": null,
+      "reason": "Browser tests (T2): Playwright Test drives the container's Chromium 141 on WebGPU through executablePath (Verifiable)."
+    },
+    "@types/node": {
+      "qualifying": {
+        "version": "24.7.1",
+        "date": "2025-10-09"
+      },
+      "pin": {
+        "version": "24.19.2",
+        "date": "2026-10-09"
+      },
+      "newest": {
+        "version": "24.19.2",
+        "date": "2026-10-09"
+      },
+      "rule": "compatible",
+      "follows": "node",
+      "next": {
+        "version": "26.0.0",
+        "date": "2026-06-19",
+        "qualifies": "2027-05-05"
+      },
+      "reason": "Types for Node's APIs in the tools and tests. It follows the platform's Node line, so @types/node 25 is skipped with Node 25."
+    },
+    "@types/three": {
+      "qualifying": {
+        "version": "0.180.0",
+        "date": "2025-09-03"
+      },
+      "pin": {
+        "version": "0.182.0",
+        "date": "2025-12-10"
+      },
+      "newest": {
+        "version": "0.182.0",
+        "date": "2025-12-10"
+      },
+      "rule": "internals",
+      "measurement": "Follows three: these are the pinned three.js's own types, admitted by three's measurement (PLAN.md §4.7).",
+      "follows": "three",
+      "next": {
+        "version": "0.183.0",
+        "date": "2026-02-18",
+        "qualifies": "2027-02-18"
+      },
+      "reason": "three.js's types: a name the pinned release lacks is a type error (pinned knowledge, I-42)."
+    },
+    "eslint": {
+      "qualifying": {
+        "version": "9.37.0",
+        "date": "2025-10-03"
+      },
+      "pin": {
+        "version": "9.39.5",
+        "date": "2026-07-10"
+      },
+      "newest": {
+        "version": "9.39.5",
+        "date": "2026-07-10"
+      },
+      "rule": "compatible",
+      "next": {
+        "version": "10.0.0",
+        "date": "2026-02-06",
+        "qualifies": "2027-02-06"
+      },
+      "reason": "Lint (T0), and the doctrine's rule families in tools/eslint/, each message naming the fix."
+    },
+    "eslint-plugin-jsdoc": {
+      "qualifying": {
+        "version": "61.1.0",
+        "date": "2025-10-09"
+      },
+      "pin": {
+        "version": "61.7.1",
+        "date": "2026-01-08"
+      },
+      "newest": {
+        "version": "61.7.1",
+        "date": "2026-01-08"
+      },
+      "rule": "compatible",
+      "next": {
+        "version": "62.0.0",
+        "date": "2026-01-09",
+        "qualifies": "2027-01-09"
+      },
+      "reason": "The file-comment rule (jsdoc/require-file-overview) behind Agent-readable."
+    },
+    "globals": {
+      "qualifying": {
+        "version": "16.4.0",
+        "date": "2025-09-09"
+      },
+      "pin": {
+        "version": "16.5.0",
+        "date": "2025-11-01"
+      },
+      "newest": {
+        "version": "16.5.0",
+        "date": "2025-11-01"
+      },
+      "rule": "compatible",
+      "next": {
+        "version": "17.0.0",
+        "date": "2026-01-01",
+        "qualifies": "2027-01-01"
+      },
+      "reason": "The browser and Node globals for ESLint's configuration."
+    },
+    "prettier": {
+      "qualifying": {
+        "version": "3.6.2",
+        "date": "2025-06-27"
+      },
+      "pin": {
+        "version": "3.9.10",
+        "date": "2026-10-10"
+      },
+      "newest": {
+        "version": "3.9.10",
+        "date": "2026-10-10"
+      },
+      "rule": "compatible",
+      "next": null,
+      "reason": "Formats code, data and the generated docs (print width 120); x deps --update writes this file through it."
+    },
+    "tsx": {
+      "qualifying": {
+        "version": "4.20.6",
+        "date": "2025-09-26"
+      },
+      "pin": {
+        "version": "4.23.15",
+        "date": "2026-09-20"
+      },
+      "newest": {
+        "version": "4.23.15",
+        "date": "2026-09-20"
+      },
+      "rule": "compatible",
+      "next": null,
+      "reason": "Runs the TypeScript tools under plain node: x.js registers it, and eslint.config.js loads the rule families through it."
+    },
+    "typescript": {
+      "qualifying": {
+        "version": "5.9.3",
+        "date": "2025-09-30"
+      },
+      "pin": {
+        "version": "5.9.3",
+        "date": "2025-09-30"
+      },
+      "newest": {
+        "version": "5.9.3",
+        "date": "2025-09-30"
+      },
+      "rule": "qualifies",
+      "next": {
+        "version": "6.0.2",
+        "date": "2026-03-23",
+        "qualifies": "2027-03-23"
+      },
+      "reason": "The language and the type check (npm run typecheck, the first step of T0)."
+    },
+    "typescript-eslint": {
+      "qualifying": {
+        "version": "8.46.0",
+        "date": "2025-10-06"
+      },
+      "pin": {
+        "version": "8.71.1",
+        "date": "2026-10-05"
+      },
+      "newest": {
+        "version": "8.71.1",
+        "date": "2026-10-05"
+      },
+      "rule": "compatible",
+      "next": null,
+      "reason": "ESLint for TypeScript: the parser and the recommended rules, without type information so T0 stays fast."
+    },
+    "vite": {
+      "qualifying": {
+        "version": "7.1.9",
+        "date": "2025-10-03"
+      },
+      "pin": {
+        "version": "7.3.7",
+        "date": "2026-10-06"
+      },
+      "newest": {
+        "version": "7.3.7",
+        "date": "2026-10-06"
+      },
+      "rule": "compatible",
+      "next": {
+        "version": "8.0.0",
+        "date": "2026-03-12",
+        "qualifies": "2027-03-12"
+      },
+      "reason": "The dev server and the build: serves TypeScript and three.js from node_modules to the pages and to Playwright."
+    },
+    "vitest": {
+      "qualifying": {
+        "version": "3.2.4",
+        "date": "2025-06-17"
+      },
+      "pin": {
+        "version": "3.2.7",
+        "date": "2026-07-06"
+      },
+      "newest": {
+        "version": "3.2.7",
+        "date": "2026-07-06"
+      },
+      "rule": "compatible",
+      "next": {
+        "version": "4.0.0",
+        "date": "2025-10-22",
+        "qualifies": "2026-10-22"
+      },
+      "reason": "Unit tests (T1) in Node, selected through Vite's module graph."
+    }
+  },
+  "types": {
+    "@types/chai": {
+      "qualifying": {
+        "version": "5.2.2",
+        "date": "2025-05-05"
+      },
+      "pin": {
+        "version": "5.2.3",
+        "date": "2025-10-20"
+      },
+      "newest": {
+        "version": "5.2.3",
+        "date": "2025-10-20"
+      },
+      "rule": "compatible",
+      "next": null,
+      "reason": "Pulled in by vitest and @vitest/expect (^5.2.2) for expect's types."
+    },
+    "@types/deep-eql": {
+      "qualifying": {
+        "version": "4.0.2",
+        "date": "2023-11-07"
+      },
+      "pin": {
+        "version": "4.0.2",
+        "date": "2023-11-07"
+      },
+      "newest": {
+        "version": "4.0.2",
+        "date": "2023-11-07"
+      },
+      "rule": "qualifies",
+      "next": null,
+      "reason": "Pulled in by @types/chai (*)."
+    },
+    "@types/estree": {
+      "qualifying": {
+        "version": "1.0.8",
+        "date": "2025-06-06"
+      },
+      "pin": {
+        "version": "1.0.9",
+        "date": "2026-05-06"
+      },
+      "newest": {
+        "version": "1.0.9",
+        "date": "2026-05-06"
+      },
+      "rule": "compatible",
+      "next": null,
+      "reason": "Pulled in by rollup (exactly 1.0.9, under vite), eslint and @es-joy/jsdoccomment, for the syntax tree's types."
+    },
+    "@types/json-schema": {
+      "qualifying": {
+        "version": "7.0.15",
+        "date": "2023-11-07"
+      },
+      "pin": {
+        "version": "7.0.15",
+        "date": "2023-11-07"
+      },
+      "newest": {
+        "version": "7.0.15",
+        "date": "2023-11-07"
+      },
+      "rule": "qualifies",
+      "next": null,
+      "reason": "Pulled in by @eslint/core (^7.0.15), for rule schemas."
+    },
+    "@types/stats.js": {
+      "qualifying": {
+        "version": "0.17.4",
+        "date": "2025-05-05"
+      },
+      "pin": {
+        "version": "0.17.4",
+        "date": "2025-05-05"
+      },
+      "newest": {
+        "version": "0.17.4",
+        "date": "2025-05-05"
+      },
+      "rule": "qualifies",
+      "next": null,
+      "reason": "Pulled in by @types/three (*), for its Stats addon's declarations."
+    },
+    "@types/webxr": {
+      "qualifying": {
+        "version": "0.5.24",
+        "date": "2025-09-29"
+      },
+      "pin": {
+        "version": "0.5.24",
+        "date": "2025-09-29"
+      },
+      "newest": {
+        "version": "0.5.24",
+        "date": "2025-09-29"
+      },
+      "rule": "qualifies",
+      "next": null,
+      "reason": "Pulled in by @types/three (>=0.5.17), for the renderers' XR declarations."
+    },
+    "@webgpu/types": {
+      "qualifying": {
+        "version": "0.1.65",
+        "date": "2025-09-15"
+      },
+      "pin": {
+        "version": "0.1.74",
+        "date": "2026-09-19"
+      },
+      "newest": {
+        "version": "0.1.74",
+        "date": "2026-09-19"
+      },
+      "rule": "compatible",
+      "next": null,
+      "reason": "WebGPU's API types (navigator.gpu, GPUDevice, GPUTexture…), pulled in by @types/three (*); gfx/ code type-checks against them."
+    }
+  },
+  "typesDeps": {
+    "@dimforge/rapier3d-compat": {
+      "version": "0.12.0",
+      "via": "@types/three",
+      "reason": "@types/three (~0.12.0) needs it for the declarations of three's RapierPhysics addon only. Never import it: the engine's physics is @dimforge/rapier3d-simd-compat 0.21.0 behind engine/physics, and 0.12 (2024-01-28) is nine lines older."
+    },
+    "@tweenjs/tween.js": {
+      "version": "23.1.3",
+      "via": "@types/three",
+      "reason": "@types/three (~23.1.3) needs it for an addon's declarations only; never imported."
+    },
+    "fflate": {
+      "version": "0.8.3",
+      "via": "@types/three",
+      "reason": "@types/three (~0.8.2) needs it for the loaders' declarations only; never imported."
+    },
+    "meshoptimizer": {
+      "version": "0.22.0",
+      "via": "@types/three",
+      "reason": "@types/three (~0.22.0) needs it for an addon's declarations only; never imported."
+    },
+    "undici-types": {
+      "version": "7.24.6",
+      "via": "@types/node",
+      "reason": "@types/node (>=7.24.0 <7.24.7) needs it for fetch's types."
+    }
+  },
+  "platform": {
+    "node": {
+      "qualifying": {
+        "version": "24.10.0",
+        "date": "2025-10-08"
+      },
+      "pin": {
+        "version": "24.21.0",
+        "date": "2026-09-07"
+      },
+      "newest": {
+        "version": "24.21.0",
+        "date": "2026-09-07"
+      },
+      "rule": "platform",
+      "next": {
+        "version": "26.0.0",
+        "date": "2026-05-05",
+        "qualifies": "2027-05-05"
+      },
+      "reason": "Runs the tools, the tests and the headless sim. .nvmrc names it; scripts/setup.sh installs it while the container ships 22.22.0. Even lines only: odd lines never get LTS, so Node 25 is skipped (§6.10, rule 6)."
+    },
+    "chromium": {
+      "pin": {
+        "version": "141.0.7390.37"
+      },
+      "rule": "platform",
+      "next": null,
+      "reason": "The platform's browser (/opt/pw-browsers/chromium, chromium-1194), WebGPU on SwiftShader; it changes when the environment does (Discovery first). It bounds three.js: r186 needs a WebGPU texture-view feature it lacks (§4.7)."
+    }
+  },
+  "knowledge": {
+    "docs/reference/three-tsl-wiki.md": {
+      "follows": "three",
+      "line": "0.182.x",
+      "source": "https://github.com/mrdoob/three.js.wiki.git",
+      "page": "Three.js-Shading-Language.md",
+      "revision": "6153b396c8f3f20b6ebf9c077ef9be6448bb8801",
+      "date": "2025-12-22",
+      "blob": "45c5fb2d28c1c6b99925dd0aec1ee09705aa0d06"
+    },
+    "docs/THREE-DELTA.md": {
+      "follows": "three",
+      "line": "0.182.x"
+    }
+  }
+}

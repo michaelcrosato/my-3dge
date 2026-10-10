@@ -1,0 +1,89 @@
+# ADR-0014: Tooling: the standard toolchain behind npm scripts, `node x` for the rest
+
+Status: accepted · 2026-10-10 · Records PLAN.md §13.1, §8.1, §8.2, §6.10
+
+## Decision
+- The standard tools run behind the npm scripts every agent expects (§8.1): Vite, Vitest, Playwright Test, ESLint,
+  Prettier, and tsx under `node x`.
+- One CLI, `node x <cmd>`, for what only this engine does: at most about 20 lines of output, a `report.json` with a
+  fixed schema, exit codes 0, 1 and 2.
+- Test tiers with time budgets (T0 < 10 s, T1 < 60 s, T2 < 6 min; §8.2); tests selected through Vite's module graph.
+- Images are optional; numbers come first.
+- Every capability is machine-operable (doctrine: Agent-operable).
+
+## Why
+Doctrine Common ground for the front door, and a bespoke CLI only where no standard tool fits (ADR-0019).
+
+## Enforced by
+The npm scripts and `x` commands themselves; each `x` command's smoke test; the tier budgets.
+
+## Amendment 1 (2026-10-10, WP-0.1)
+- **Scripts arrive with their tools.** WP 0.1 installs only TypeScript and Vitest, so `package.json` gets only
+  `typecheck` (`tsc --noEmit`) and `test` (`vitest run`). A script whose tool is missing would fail, so the rest of
+  §8.1 arrives with the WPs that install their tools: `dev`, `build` and `e2e` with WP 0.2, `lint`, `format` and
+  `check` with WP 0.4. The WP 0.1 entry in PLAN.md says so.
+- **`scripts/setup.sh` resolves the source checkouts.** WP 0.1's Verify reads `.cache/src-3d2dge` and
+  `.cache/src-shardfall` right after `bash scripts/setup.sh`, so the script resolves both (the variable, else
+  `git clone --shared` from the local clone, else GitHub; then `checkout --detach`). When `$CLAUDE_ENV_FILE` is set
+  it appends `export MY3D2DGE_SRC=…` and `export SHARDFALL_SRC=…` along with Node's `PATH`, each line once. `x src`
+  (WP 0.2) resolves the same way, so the SessionStart hook (WP 0.10) may call both.
+
+## Amendment 2 (2026-10-10, WP-0.4)
+- **Prettier checks code, data and the generated docs, not hand-written prose.** §3 said "Prettier formats every
+  file", but DOCTRINE.md and `docs/research/` are frozen, and on PLAN.md, AGENTS.md, README.md and the ADRs Prettier
+  re-pads every table and rewrites emphasis and lists (33 of 36 Markdown files fail `prettier --check` as written).
+  `.prettierignore` therefore skips `*.md` except the generated `docs/INDEX.md`, `docs/API.md`, `docs/ERRORS.md` and
+  `docs/escalations/README.md` (their generators emit Prettier-clean Markdown), and `package-lock.json` (npm's).
+  `.gitignore`'s paths are skipped as well. Prettier's cache is its default, `node_modules/.cache/prettier/`;
+  ESLint's goes to `node_modules/.cache/eslint/`, so neither writes to the repository root.
+- **The ESLint rule families live in `tools/eslint/`, as TypeScript.** `eslint.config.js` stays short: the switches,
+  typescript-eslint's recommended rules, the file-comment and size rules, then one call per family. The families
+  (layers, public API, sim-side bans, banned three.js APIs) and the local rule are modules beside the plugin, checked
+  by `tsc`, and loaded through tsx's `tsImport`, as `x.js` loads the commands.
+- **Each family registers the core rules it uses under its own name** (`layer/no-restricted-imports`,
+  `sim/no-restricted-globals`, `banned/no-restricted-syntax`): flat config keeps only the last options given to a rule
+  for a file, so two families sharing `no-restricted-imports` would silently drop one list. The rule id in a report
+  then names the family. The 600-line hard cap is `max-lines` registered again as `hard-cap/max-lines`.
+- **A few bans beyond Appendix B, the same holes in other spellings:** sim-side, `setImmediate`,
+  `requestIdleCallback`, `crypto`, `process`, `location`, Web Storage, `globalThis.<banned>` and `node:` imports;
+  everywhere in engine, labs and fixtures, a bare `three` import (Node would load the WebGL build, §6.10),
+  `three/examples/jsm/*` (the addons path is `three/addons/*`), and the r182 deprecations its source marks that the
+  appendix leaves out (`PI2`, `fromWorkingColorSpace`, `toWorkingColorSpace`, `parseAnimation`).
+
+## Amendment 3 (2026-10-10, WP-0.11)
+- **Prettier skips the port reference vectors, `tests/baselines/port/`.** They are machine-written baselines that
+  `x port refs` lays out itself, one sample per line with exact numbers, and `checksums.json` pins every byte.
+  Prettier would wrap each sample over several lines, respell numbers (`1e+21` as `1e21`) and so break the checksums,
+  and re-read about 3.5 MB on every changed run of `npm run check`. `.prettierignore` lists the directory; `x port refs
+  --check` and the `port` plugin of `x check` check it instead.
+
+## Amendment 4 (2026-10-10, WP-0.10)
+Calls made where §8.10 is silent, for the Claude Code hooks in `.claude/hooks/`:
+- **The hooks are small scripts that read Claude Code's JSON on stdin**, so tests run them against fixtures
+  (`tests/unit/hooks/`). SessionStart is bash, the port of my-3d2dge's hook; the other three are TypeScript run by
+  Node's built-in type stripping (the container's Node 22.22 and Node 24.21 both run it), with no dependency, so the
+  PreToolUse guard works before `npm ci`. The Stop hook reads the escalation records through tsx (`isOverdue`). The
+  carried hook's `CLAUDE_CODE_REMOTE` guard and `CHROMIUM_PATH` line are dropped: setup.sh is idempotent, and the
+  tools default to the container's Chromium (tools/lib/browser.ts).
+- **SessionStart writes Node 24's `PATH` line itself** whenever Node 24 is active or cached, not only when setup.sh
+  switches Node: the container's login shells put `/opt/node22` first, and Claude Code sources `$CLAUDE_ENV_FILE`
+  after them. setup.sh's output goes to `out/hooks/session-start.log`, and `node_modules/.cache/` waits aside across
+  its `npm ci`, as in `x ci --local` (measured: without that, the first `npm run check` of a session runs cold, and
+  `x docs --check` alone fails on the cache paths the docs name). The hook prints at most 20 lines and always
+  exits 0. After `/clear` or a compaction it skips setup.sh and `x deps --update --dry-run` and repeats `x src` and
+  `x esc list --open`.
+- **PreToolUse** also asks before a Bash command that writes `DOCTRINE.md` (a redirection into it, or a command
+  other than a reader naming it, split as a shell splits it), and denies deleting `main` as well as force-pushing it.
+- **Stop** blocks a red `npm run check` once; when Claude Code reports `stop_hook_active` it lets the turn end with
+  a warning to the owner (`systemMessage`) instead of blocking again. Overdue escalations go into that warning, or
+  into the reason when the check is red.
+- **PostToolUse** returns ESLint warnings as context without failing, and fails (exit 2) when Prettier cannot parse
+  the file. The allow list spells out the read-only git commands and the GitHub server's pull-request tools.
+
+## Amendment 5 (2026-10-10, gate G0): T0's tools run in parallel
+
+Measured at G0: `npm run check` took 10.0 s of its 10 s budget inside `x ci --local`, with its four tools run one
+after another (`tsc` about 4.3 s, ESLint 1.4 s, Prettier 1.0 s, `x check` 1.9 s; incremental `tsc` saves time only
+when nothing changed). `npm run check` is now `node tools/checkAll.ts`, which starts the four at once on the
+container's 4 cores, prints each tool's output whole in a fixed order, and fails if any fails: 5.8 s. The tools,
+their flags and their caches are unchanged.
