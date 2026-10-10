@@ -1,0 +1,392 @@
+# The CMU ledger's takes in category "everyday" (categories.tsv says why; README.md explains the columns).
+id	subject	fps	sec	active	fit	travel	hips	flags	used	note	desc
+02_06	2	120	18.6	0.0-18.0	17/96	2.9	60-105				bend over, scoop up, rise, lift arm
+02_10	2	120	22.0	0.0-21.6	16/130	1.9	81-105	inverted			wash self
+13_07	13	120	12.1	0.0-12.1	11/79	0.2	104-104				unscrew bottlecap, drink soda
+13_08	13	120	13.4	0.0-13.4	13/91	0.3	103-104				unscrew bottlecap, drink soda, screw on bottlecap
+13_09	13	120	9.2	0.0-9.2	18/138	0.2	103-104				drink soda
+13_20	13	120	47.7	0.0-47.7	16/121	9.0	95-106		Wash_Window_Loop		wash windows
+13_21	13	120	45.3	0.0-45.3	15/106	6.1	98-106				wash windows
+13_22	13	120	41.3	0.0-41.3	15/147	6.3	98-110				wash windows
+13_23	13	120	33.5	0.0-33.5	14/104	7.8	100-106		Sweep_Loop		sweep floor
+13_24	13	120	33.6	0.0-33.6	15/98	9.8	99-105				sweep floor
+13_25	13	120	33.4	0.0-33.4	15/96	12.1	98-104				sweep floor
+14_04	14	120	6.3	0.0-6.2	18/95	0.2	104-105				drink soda, screw on bottlecap
+14_05	14	120	7.1	0.0-7.1	18/88	0.1	104-105				unscrew bottlecap, drink soda
+14_10	14	120	35.3	0.0-35.3	21/155	3.6	103-106				wash windows
+14_11	14	120	35.3	0.4-35.3	21/113	5.0	95-103				wash windows
+14_12	14	120	22.9	0.1-22.9	20/132	2.8	98-105				wash windows
+14_13	14	120	27.2	0.3-27.2	22/102	8.1	101-105				mop floor
+14_15	14	120	38.1	0.0-38.1	23/108	11.5	100-106				mop floor
+14_16	14	120	47.9	0.0-47.9	21/108	11.7	100-106				sweep floor
+14_37	14	120	4.3	0.0-4.0	22/97	0.1	104-105				drink soda
+15_06	15	120	30.0	0.6-30.0	24/131	3.9	103-107				lean forward, reach for
+15_07	15	120	45.8	1.0-45.8	23/121	3.0	102-114				lean forward, tiptoe, reach for
+18_03	18	120	4.9	0.0-4.9	22/109	2.5	77-108				A pulls B; B resists (2 subjects - subject A)
+18_04	18	120	3.4	0.0-3.4	21/74	2.1	90-106				A pulls B; B resists (2 subjects - subject A)
+18_05	18	120	3.6	0.0-3.6	18/98	2.8	97-106				A pulls B by the elbow; B resists (2 subjects - subject A)
+18_06	18	120	3.4	0.0-3.4	21/147	1.8	95-109				A pulls B by the elbow; B resists (2 subjects - subject A)
+19_03	19	120	4.9	0.6-4.9	13/76	2.7	82-104				A pulls B; B resists (2 subjects - subject B)
+19_04	19	120	3.4	0.0-3.4	10/43	2.2	97-105				A pulls B; B resists (2 subjects - subject B)
+19_05	19	120	3.6	0.9-3.6	13/49	2.4	99-109				A pulls B by the elbow; B resists (2 subjects - subject B)
+19_06	19	120	3.4	0.9-3.4	12/65	1.9	93-105				A pulls B by the elbow; B resists (2 subjects - subject B)
+22_04	22	120	4.3	0.0-4.3	17/64	1.0	103-106				B comforts A, puts one hand on A's shoulder (2 subjects - subject A)
+22_05	22	120	4.4	0.0-4.4	27/141	1.4	102-106				A comforts B, puts both hands on B's shoulders (2 subjects - subject A)
+22_06	22	120	4.2	0.0-4.2	30/137	0.9	102-106				B comforts A, puts both hands on A's shoulders (2 subjects - subject A)
+22_07	22	120	2.5	0.0-2.5	14/69	0.4	103-106				A comforts B, puts one hand on B's shoulder (2 subjects - subject A)
+22_13	22	120	7.7	0.0-7.7	16/90	0.2	101-102				A passes soda to B; both drink (2 subjects - subject A)
+23_04	23	120	4.3	0.0-4.3	14/58	1.6	102-105				B comforts A, puts one hand on A's shoulder (2 subjects - subject B)
+23_05	23	120	4.4	0.0-4.4	14/62	1.2	99-101				A comforts B, puts both hands on B's shoulders (2 subjects - subject B)
+23_06	23	120	4.2	0.0-4.2	13/57	1.0	102-105				B comforts A, puts both hands on A's shoulders (2 subjects - subject B)
+23_07	23	120	2.5	0.0-2.5	13/50	0.3	103-104				A comforts B, puts one hand on B's shoulder (2 subjects - subject B)
+23_13	23	120	7.7	0.0-7.7	13/68	0.4	106-107				A passes soda to B; both drink (2 subjects - subject B)
+26_09	26	120	6.2	0.2-6.2	13/67	0.4	53-105				bend, pick up
+26_10	26	120	5.8	0.3-5.1	16/122	0.5	64-105				bend, lift
+26_11	26	120	4.6	0.2-4.6	13/90	0.5	94-105	inverted			bend, lift
+29_19	29	120	29.7	0.0-29.7	12/67	3.8	94-106				fish (human subject)
+62_03	62	60	22.9	0.2-22.9	14/84	2.6	103-106				sawing, hand saw
+62_07	62	60	18.6	0.0-18.6	13/62	1.9	103-106				hammering a nail
+62_08	62	60	14.9	0.0-14.9	15/70	2.2	103-107				hammering a nail
+62_09	62	60	19.0	1.5-19.0	14/72	2.1	102-106				pulling a nail
+62_10	62	60	33.7	0.0-33.7	18/76	2.2	102-107				hammering sequence
+62_11	62	60	61.8	0.0-61.8	17/117	12.1	92-110				cleaning up
+62_12	62	60	16.4	0.0-16.4	13/65	2.0	103-108				hard days drink
+62_14	62	60	11.2	0.0-8.9	15/73	0.6	105-107				opening umbrella
+62_15	62	60	11.3	0.0-11.3	14/74	0.9	104-106				opening umbrella
+62_17	62	60	12.0	0.0-12.0	16/67	0.4	105-107				opening and closing umbrella
+62_18	62	60	9.4	0.0-9.4	15/75	1.4	104-107				closing a box
+62_19	62	60	11.0	0.0-11.0	14/74	1.8	103-107				opening a box
+62_20	62	60	16.1	0.0-16.1	15/82	3.0	103-108				closing, moving and opening a box
+62_24	62	60	48.1	0.0-48.1	16/75	2.3	102-106	inverted			bolt tightening, with putting bolt in
+64_11	64	120	4.9	0.0-4.0	16/81	0.1	104-105				Putt
+64_12	64	120	4.2	0.7-4.2	13/57	0.1	103-105				Putt
+64_13	64	120	3.6	0.7-2.8	14/70	0.1	103-105				Putt
+64_14	64	120	4.7	0.2-4.5	13/49	0.1	101-105				Putt
+64_15	64	120	3.5	0.0-2.5	13/47	0.0	103-104				Putt
+69_13	69	120	39.6	0.3-39.6	14/67	24.7	102-106				walk, turn in place (repeated)
+69_14	69	120	41.0	0.0-41.0	13/71	25.3	101-105				walk, turn in place (repeated)
+69_15	69	120	37.5	0.0-37.5	13/65	22.6	101-105				walk, turn in place (repeated)
+69_16	69	120	9.4	0.0-8.9	14/47	1.0	104-107				turn in place
+69_17	69	120	8.3	0.6-7.8	14/58	0.8	104-106				turn in place
+69_18	69	120	8.8	0.5-8.8	15/53	0.8	105-107				turn in place (opposite direction)
+69_19	69	120	9.3	0.5-9.2	14/39	0.9	105-106				turn in place (opposite direction)
+69_39	69	120	37.3	0.0-37.3	14/78	19.2	102-108				walk backward, turn in place
+69_40	69	120	38.7	0.4-38.7	14/78	19.9	101-107				walk backward, turn in place
+69_41	69	120	39.2	0.4-39.2	13/75	18.9	101-108				walk backward, turn in place
+69_68	69	120	6.9	0.0-6.9	14/62	1.9	72-105	inverted			walk forward and pick up object, set down object
+69_69	69	120	6.7	0.0-6.7	16/82	3.3	91-106	inverted			walk forward and pick up object, carry back object
+69_72	69	120	9.4	0.1-9.4	14/81	3.8	90-106	inverted			walk up to object, pick up object, set down in another place
+69_73	69	120	9.1	0.0-9.1	15/76	4.6	100-105	inverted			walk up to object, lean over, pick up object, set down in another place
+69_74	69	120	8.2	0.0-8.2	14/83	3.9	97-106	inverted			walk up to object, lean over, pick up object, set down in another place
+70_01	70	120	6.0	0.4-6.0	16/78	3.2	103-108				carry 5.5lb suitcase
+70_02	70	120	6.3	1.2-6.3	16/85	3.7	102-107				carry 5.5lb suitcase
+70_03	70	120	15.4	0.0-15.4	14/91	1.2	106-108				carry 19.5lb suitcase
+70_04	70	120	13.9	0.0-13.9	20/103	1.2	106-109				carry 19.5lb suitcase
+70_05	70	120	7.5	0.0-7.5	18/90	3.7	103-108				carry 19.5lb suitcase
+70_06	70	120	7.0	0.0-7.0	17/87	3.3	103-108				carry 19.5lb suitcase
+70_07	70	120	13.0	0.0-13.0	15/80	0.8	104-107				carry 19.5lb suitcase
+70_08	70	120	7.1	1.3-7.1	19/87	3.8	103-108				carry 19.5lb suitcase
+70_09	70	120	7.0	0.6-7.0	21/97	4.1	98-108				carry 19.5lb suitcase
+70_10	70	120	6.7	0.9-6.7	22/90	3.9	103-108				carry 12.5lb suitcase
+70_11	70	120	5.2	1.2-5.2	16/85	3.0	104-107				carry 12.5lb suitcase
+70_12	70	120	6.6	1.3-6.6	17/84	3.8	102-108				carry 12.5lb suitcase
+70_13	70	120	5.6	0.0-5.6	18/80	2.6	104-107				carry 12.5lb suitcase
+74_07	74	60	5.2	0.0-3.9	27/96	0.4	60-111				lifting up
+74_08	74	60	2.8	0.1-2.6	29/74	0.4	53-110				lifting up
+77_03	77	60	16.4	0.0-16.4	16/60	2.1	96-104				ready stance
+77_06	77	60	22.5	0.0-22.5	22/126	3.5	68-106				searching ground
+77_07	77	60	8.4	0.0-8.4	17/77	0.7	79-105				poking ground
+77_25	77	60	11.0	0.0-11.0	20/84	1.8	84-104				careful walk and search
+77_26	77	60	10.8	0.0-10.8	20/110	2.9	81-104				careful walk and search
+77_27	77	60	12.1	0.0-12.1	20/116	3.1	82-105				careful walk and search
+78_01	78	120	1.4	0.0-1.4	21/120	3.0	82-102				LeftTightTurn CleanedGRS
+78_02	78	120	2.3	0.3-2.3	20/96	4.8	88-104				RightWideTurn CleanedGRS
+78_03	78	120	1.4	0.0-1.4	18/96	4.2	90-104				LeftWideTurn CleanedGRS
+78_04	78	120	1.3	0.0-1.3	17/147	2.7	82-95				SuperTightLeft CleanedGRS
+78_05	78	120	1.4	0.0-1.4	19/95	2.8	86-101				SuperTightRight CleanedGRS
+78_06	78	120	0.9	0.0-0.9	19/94	3.9	94-103	short			RunningStraight CleanedGRS
+78_07	78	120	1.2	0.0-1.2	20/101	4.7	95-106				RunningWideRight CleanedGRS
+78_08	78	120	0.9	0.0-0.9	19/97	4.0	94-102	short			RunningWideLeft CleanedGRS
+78_09	78	120	1.3	0.0-1.3	19/94	4.6	90-107				RunningTigherLeft CleanedGRS
+78_10	78	120	1.2	0.0-1.2	19/90	4.2	93-107				RunningTighterRight CleanedGRS
+78_12	78	120	0.8	0.0-0.8	17/97	3.6	98-106	short			RunningNoBall CleanedGRS
+78_13	78	120	1.4	0.0-1.4	20/73	3.6	85-99				OffensiveMoveSpinLeft CleanedGRS
+78_14	78	120	1.4	0.0-1.4	15/69	4.4	78-98				OffensiveMoveSpinLeft CleanedGRS
+78_15	78	120	1.3	0.0-1.3	18/97	4.2	85-102				OffensiveMoveGoRight CleanedGRS
+78_16	78	120	1.6	0.0-1.6	17/91	4.8	82-100				OffensiveMoveGoLeft CleanedGRs
+78_17	78	120	1.5	0.0-1.5	18/99	3.9	82-101				OffensiveMoveSpinRight CleanedGRS
+78_18	78	120	1.8	0.0-1.8	17/102	4.8	81-110				WalkEvasiveLeft CleanedGRS
+78_19	78	120	1.5	0.0-1.5	17/88	4.2	80-107				WalkEvasiveRight CleanedGRS
+78_20	78	120	1.9	0.0-1.9	22/111	4.4	84-104				FeintLeftMoveRight CleanedGRS
+78_21	78	120	1.9	0.0-1.9	17/78	4.6	87-102				FeintRightMoveLeft CleanedGRS
+78_22	78	120	5.0	1.4-5.0	19/94	5.1	77-102				FakeShotBreakRight CleanedGRs
+78_23	78	120	4.3	0.4-4.3	18/97	4.6	81-102				FakeShotBreakLeft CleanedGRS
+78_24	78	120	2.0	0.6-2.0	19/82	3.6	83-104				DefensiveStraightNoStop CleanedGRS
+78_25	78	120	3.0	0.3-2.8	18/93	3.9	77-103				DefensiveStraightWithStop CleanedGRS
+78_26	78	120	2.7	0.0-2.7	16/84	3.9	72-98				DefensiveRightStopToStop CleanedGRS
+78_27	78	120	2.5	0.2-2.3	23/100	3.8	78-99				DefensiveLeftStopToStop CleanedGRS
+78_28	78	120	3.7	0.0-3.7	20/89	5.7	75-102				DefensiveMoveZigZag CleanedGRS
+78_29	78	120	1.4	0.0-1.4	23/87	3.1	77-97				DefensiveMoveSideToSide CleanedGRS
+78_30	78	120	5.9	0.0-5.9	23/99	9.0	69-102				DefensiveMoveSideToSide CleanedGRS
+78_31	78	120	6.6	0.1-6.6	22/137	4.3	79-107				Pivoting CleanedGRS
+78_32	78	120	1.8	0.0-1.8	18/87	4.7	88-100				SraightDriveFromStop Cleaned GRS
+78_33	78	120	1.9	0.0-1.9	20/94	4.9	84-99				RightDrive (left then right) Cleaned GRS
+78_34	78	120	2.5	0.3-2.5	17/88	5.1	83-101				LeftDrive (right then left) Cleaned GRS
+78_35	78	120	1.8	0.3-1.8	24/137	3.0	81-102				RightTightTurn CleanedGRS
+79_01	79	60	9.8	0.0-8.8	19/78	0.9	96-103		Chop_Wood		chopping wood
+79_04	79	60	15.1	1.3-14.8	22/106	1.5	104-106		Dig		digging
+79_05	79	60	16.3	1.8-16.3	14/61	0.2	105-105				sewing
+79_09	79	60	14.0	1.3-12.4	11/57	0.2	105-105				slicing bread
+79_10	79	60	11.7	0.7-11.7	11/53	0.3	104-105				chopping onions
+79_12	79	60	17.1	1.2-16.1	12/57	0.2	105-105			pick: Eat_Dinner (the tavern)	eating dinner
+79_13	79	60	11.1	0.9-10.9	12/50	0.3	104-105				mixing batter
+79_14	79	60	12.2	0.0-12.0	13/59	0.5	105-106				making dough
+79_15	79	60	14.6	1.0-14.6	12/60	0.1	105-105				eating a sandwich
+79_16	79	60	12.0	0.1-12.0	11/62	0.3	105-105				buying something
+79_21	79	60	13.6	0.0-13.2	19/102	0.4	104-105				putting on a pull over
+79_23	79	60	12.2	0.0-11.8	18/77	0.4	104-105				putting on a jacket
+79_24	79	60	12.4	1.8-12.3	17/62	0.4	104-105				putting on button up sweater
+79_25	79	60	10.0	1.6-9.9	19/64	0.6	101-105		Carry_Heavy_Box		moving heavy box
+79_26	79	60	17.2	1.6-17.0	17/61	0.7	104-106			pick: Plant_Tree (a farmer)	planting a tree
+79_27	79	60	14.7	1.4-14.7	12/60	0.3	104-105				planting a plant
+79_29	79	60	11.3	0.3-11.3	13/67	0.4	104-105				putting on a dress
+79_30	79	60	13.3	1.8-13.1	17/72	1.4	97-106				pushing a swing
+79_31	79	60	9.6	0.5-9.0	16/68	0.2	104-105			pick: Write_Chalkboard (a teacher)	writing on a chalkboard
+79_32	79	60	16.1	1.0-15.6	17/69	0.3	104-105				writing on a chalkboard
+79_34	79	60	12.5	1.3-12.5	15/71	0.4	101-106		Fishing		fishing
+79_35	79	60	19.9	2.4-19.9	17/74	0.8	98-106				fishing
+79_36	79	60	8.6	1.8-8.6	13/49	0.3	104-106				answering the phone
+79_37	79	60	10.0	1.5-10.0	15/98	0.3	104-105				dialing phone
+79_38	79	60	9.0	0.0-9.0	16/58	0.4	104-105		Drink_Water		drinking water
+79_39	79	60	13.5	0.6-13.4	18/57	0.5	103-105				sipping martinee
+79_40	79	60	14.4	0.0-14.4	15/54	0.5	104-105				drinking a soda
+79_41	79	60	18.5	0.0-18.5	12/49	0.3	104-105				sipping coffee
+79_42	79	60	13.2	0.0-13.2	11/54	0.2	104-105				eating soup
+79_43	79	60	16.4	1.7-16.4	14/58	0.3	104-105				painting
+79_44	79	60	14.2	2.1-13.7	15/48	0.3	105-106				washing a window
+79_55	79	60	10.7	1.8-10.0	14/63	0.9	103-105				sweeping
+79_57	79	60	16.1	1.5-15.8	22/148	0.6	103-106				fish
+79_66	79	60	12.0	2.2-12.0	17/78	1.0	98-102				movie and trial dont match
+79_67	79	60	21.0	0.0-21.0	14/76	2.2	104-106				no movie
+79_77	79	60	19.1	1.1-19.0	17/86	2.1	0-105				vacuuming
+79_78	79	60	21.2	0.9-21.2	18/63	0.6	104-106				taking a movie
+79_79	79	60	14.0	0.0-14.0	15/74	0.6	98-102				putting on headphones
+79_80	79	60	16.4	0.0-16.4	10/58	0.2	101-102				using a palm pilot
+79_82	79	60	12.8	1.2-12.5	13/55	0.4	101-103				putting on deoderant
+79_83	79	60	20.0	0.0-20.0	16/79	0.4	101-103				shaving
+79_85	79	60	17.5	0.9-16.2	11/58	0.3	101-102				typing on a laptop
+79_87	79	60	13.2	1.8-13.2	16/70	0.7	104-106				raking
+79_90	79	60	22.6	0.9-21.7	17/110	0.8	100-103				washing
+79_93	79	60	19.0	0.0-19.0	24/118	0.8	95-102				weight lifting
+80_02	80	60	11.7	1.7-11.7	18/74	0.2	103-103				chopping onions
+80_04	80	60	18.4	0.8-18.4	18/90	0.2	103-103				sewing
+80_05	80	60	19.3	1.6-19.2	26/139	1.5	103-104				digging a hole
+80_06	80	60	16.0	0.0-16.0	19/93	0.3	103-103				paying for something
+80_08	80	60	14.6	0.0-14.6	25/146	0.5	103-105				picking up something
+80_09	80	60	25.3	2.2-24.6	50/212	2.1	96-104	inverted loose			planting a flower
+80_11	80	60	11.7	0.0-10.9	21/173	0.5	103-104				putting on a sweater
+80_12	80	60	26.8	0.0-26.8	19/132	1.5	102-110				fishing
+80_13	80	60	16.9	1.8-16.9	19/124	0.8	103-104				drumming
+80_15	80	60	20.6	0.0-19.8	21/135	0.6	102-104				putting on a coat
+80_16	80	60	21.0	0.0-20.6	19/82	0.5	102-103				mixing batter
+80_17	80	60	24.0	0.0-23.5	18/80	0.6	102-103				hand mixing dough
+80_18	80	60	25.2	0.0-24.9	24/99	1.1	102-104				vacuuming
+80_19	80	60	30.4	3.6-29.9	22/109	1.8	102-103				pushing broom
+80_20	80	60	33.7	0.0-33.5	20/78	0.8	102-103				planting
+80_21	80	60	23.3	1.8-22.9	22/102	1.3	102-106				pushing swing
+80_22	80	60	17.6	0.0-17.5	20/155	0.3	103-103				putting on a hat
+80_23	80	60	17.0	0.0-16.6	19/77	0.6	102-104				putting on a skirt
+80_24	80	60	29.7	0.0-29.7	18/113	0.6	102-103				eating
+80_25	80	60	18.4	0.0-16.9	17/76	0.4	102-104				answering a phone
+80_26	80	60	20.5	0.0-20.5	17/72	0.4	102-103				dialing phone
+80_27	80	60	18.1	0.0-17.8	19/99	0.4	102-103				setting glass of water
+80_28	80	60	20.3	0.0-20.3	20/133	0.5	102-103				drinking and smoking
+80_31	80	60	26.0	0.0-25.4	18/74	0.5	102-103				making coffee
+80_32	80	60	26.9	0.0-26.9	18/82	0.6	102-103				slicing
+80_33	80	60	32.3	0.0-31.7	18/99	0.5	102-103				eating soup
+80_34	80	60	34.8	2.0-33.7	26/114	3.5	102-105		Rake_Leaves		rake leaves
+80_35	80	60	32.4	0.0-32.1	19/132	0.6	102-103				putting on headphones
+80_36	80	60	28.1	0.0-28.1	21/100	0.5	102-103				violin
+80_40	80	60	15.2	1.8-15.2	21/111	0.2	103-104				drinking from bottle
+80_50	80	60	20.9	0.3-20.9	21/73	0.8	103-104				cleaning window
+80_61	80	60	17.6	0.5-16.0	21/76	1.5	102-104				sweeping
+80_65	80	60	30.3	1.7-29.7	20/87	1.2	102-104				fish
+80_69	80	60	71.3	2.6-70.4	34/157	3.8	97-106	inverted loose			painting
+80_70	80	60	30.0	1.6-28.8	19/125	0.8	102-103				piano
+80_71	80	60	18.1	0.0-18.0	24/172	2.2	103-106				chopping wood
+81_05	81	120	11.4	0.3-11.4	16/71	3.7	78-106				push heavy object
+81_06	81	120	10.6	0.0-10.6	15/80	3.7	78-104				push heavy box
+81_07	81	120	10.1	0.0-10.1	15/58	2.7	53-104				pull heavy object
+81_08	81	120	11.5	0.0-11.5	16/84	3.4	54-105				drag heavy object
+81_09	81	120	11.6	0.4-11.6	21/119	3.6	70-105				drag heavy object
+81_10	81	120	14.8	0.0-14.8	11/65	2.7	102-107				push object that is high in air
+81_11	81	120	14.1	0.0-14.1	12/57	3.0	102-107				push object that is high in air
+82_06	82	120	9.1	0.3-9.1	22/104	3.5	78-103	inverted			Pushing on heavy object
+82_07	82	120	10.0	0.3-10.0	20/126	4.4	81-104				Pushing on heavy object
+86_12	86	120	73.8	0.0-73.8	19/384	22.7	79-107	inverted			walking, dragging, sweeping, dustpan, wipe window, and wipe mirror
+90_18	90	120	3.3	0.3-1.9	24/91	0.3	18-122	floats		pick: Rug_Pull_Fall (a slapstick fall)	RugPullFall
+91_01	91	120	22.8	1.4-22.8	17/93	15.8	100-106				Walk digital figure eight
+91_08	91	120	33.1	0.0-33.1	15/94	16.6	99-106				mummyDigital8
+91_25	91	120	26.1	0.0-26.1	27/93	9.6	96-103				DragBadLegWalk
+105_01	105	120	22.8	1.4-22.8	17/93	15.8	100-106				WalkDigital8
+105_04	105	120	18.0	1.3-16.7	18/99	14.8	98-104				Digital8
+105_08	105	120	33.1	0.0-33.1	15/94	16.6	99-106				mummyDigital8
+105_25	105	120	26.1	0.0-26.1	27/93	9.6	96-103				DragBadLegWalk
+106_01	106	120	0.6	0.0-0.6	16/58	3.4	96-109	short			clean
+106_02	106	120	0.9	0.0-0.9	16/79	3.7	94-107	short			clean
+106_03	106	120	1.9	0.6-1.9	16/62	5.1	96-108				clean
+106_04	106	120	4.6	0.2-4.6	17/96	4.3	91-123				clean
+106_05	106	120	1.9	0.3-1.8	15/79	1.3	91-122				clean
+106_06	106	120	5.4	0.4-5.4	15/129	1.5	92-126				clean
+106_07	106	120	2.5	0.0-2.5	20/66	3.1	96-146				clean
+106_08	106	120	2.8	0.0-2.8	24/97	3.6	98-149				clean
+106_09	106	120	1.9	0.0-1.9	20/104	3.6	97-109				clean
+106_10	106	120	4.2	0.0-4.1	14/68	1.6	94-106				clean
+106_11	106	120	5.7	0.0-5.3	15/95	3.4	85-106				clean
+106_12	106	120	4.7	0.0-4.7	21/79	2.8	84-106				clean
+106_13	106	120	3.1	0.0-3.1	13/50	0.5	103-109				clean
+106_14	106	120	4.8	0.0-4.8	25/161	1.8	98-108				clean
+106_16	106	120	2.5	0.0-2.3	13/60	0.6	101-104				clean
+106_17	106	120	4.7	0.0-4.7	30/124	3.2	99-115	loose			clean
+106_18	106	120	3.2	0.0-3.2	15/53	1.0	102-104				clean
+106_19	106	120	9.9	0.0-9.9	21/151	14.2	97-103				clean
+106_20	106	120	6.4	0.0-6.4	17/121	3.4	100-105				clean
+106_22	106	120	1.6	0.0-1.6	15/61	3.1	99-105				clean
+106_23	106	120	2.1	0.0-2.1	15/57	2.5	98-104				clean
+106_24	106	120	2.2	0.0-2.2	16/69	4.1	97-105				clean
+106_25	106	120	5.1	0.3-5.1	23/120	8.9	99-106				clean
+106_26	106	120	3.3	0.0-3.3	18/92	3.3	67-106				clean
+106_27	106	120	4.6	0.0-4.4	16/74	2.7	100-104				clean
+106_28	106	120	3.0	0.0-3.0	18/87	1.6	98-104				clean
+106_29	106	120	9.7	0.0-9.7	27/155	12.5	99-108				clean
+106_30	106	120	6.0	0.0-6.0	25/150	10.6	98-104				clean
+106_31	106	120	5.6	0.0-5.4	23/105	8.8	100-106				clean
+106_32	106	120	7.4	0.6-7.1	13/59	8.6	99-106				clean
+106_33	106	120	8.8	0.0-8.3	14/57	8.5	97-108				clean
+106_34	106	120	2.6	0.6-2.6	22/126	4.8	96-108				clean
+111_14	111	120	10.7	0.0-10.7	19/101	6.9	100-109				Mope
+111_17	111	120	4.7	0.0-4.7	19/125	0.7	94-105				Pick up
+111_18	111	120	4.5	0.0-4.5	16/97	0.6	32-107				Pick up
+111_36	111	120	12.2	0.0-12.2	15/103	7.8	101-110				Walk and carry
+113_05	113	120	22.2	0.1-22.2	21/118	12.9	99-108				Walk digital 8
+113_10	113	120	11.1	0.0-11.1	15/106	6.8	98-108				Walk, mope around
+113_26	113	120	11.0	0.0-11.0	18/95	7.4	99-106				Walk and carry
+115_01	115	120	3.9	0.3-3.6	19/97	0.4	103-105				Pick up box, bend from waist
+115_02	115	120	3.3	0.0-3.1	18/94	0.4	100-105				Pick box up, bend from waist
+115_03	115	120	3.8	0.0-3.3	18/97	0.5	103-106				Pick box up, bend from waist
+115_04	115	120	3.2	0.2-2.9	18/89	0.4	100-105				Pick box up, bend from waist
+115_05	115	120	4.9	0.6-3.8	19/92	0.5	100-104				Pick box up, bend from waist
+115_06	115	120	3.0	0.0-2.8	21/93	0.5	62-104				Picking box up, bending knees
+115_07	115	120	3.5	0.3-3.1	21/88	0.5	57-105				Picking box up, bending knees
+115_08	115	120	4.0	0.3-3.9	20/91	0.7	59-104				Picking box up, bending knees
+115_09	115	120	3.3	0.0-3.3	22/95	0.4	62-104				Picking box up, bending knees
+115_10	115	120	3.0	0.0-2.8	19/95	0.5	100-105				Pick box up, bend from waist
+122_01	122	120	5.3	2.1-4.6	25/71	1.2	94-116				clean
+122_02	122	120	3.0	0.0-2.9	27/77	0.5	104-121				clean
+122_03	122	120	5.6	0.0-5.1	27/77	0.9	97-121				clean
+122_04	122	120	3.9	0.2-3.6	27/80	0.9	96-121				clean
+122_05	122	120	4.0	0.5-4.0	24/88	1.2	87-122				clean
+122_06	122	120	3.3	0.0-3.3	24/69	1.1	97-126				clean
+122_07	122	120	3.5	0.0-3.4	26/75	0.4	109-126				clean
+122_08	122	120	3.8	0.7-3.8	27/73	0.8	108-126				clean
+122_09	122	120	3.8	0.0-3.2	29/83	0.5	109-126				clean
+122_10	122	120	4.0	0.5-4.0	27/70	0.8	108-125				clean
+122_12	122	120	4.2	0.3-4.2	28/87	0.9	105-126				clean
+122_13	122	120	4.2	0.8-3.9	26/68	1.1	97-126				clean
+122_14	122	120	3.6	0.0-3.3	30/91	0.4	110-126				clean
+122_15	122	120	4.3	1.1-3.5	31/80	0.8	106-126	loose			clean
+122_16	122	120	4.2	0.6-3.5	28/80	0.9	105-126				clean
+122_17	122	120	4.4	1.0-3.5	27/73	1.2	96-126				clean
+122_18	122	120	3.9	0.0-3.6	33/83	0.5	114-116	loose			clean
+122_19	122	120	4.2	1.3-3.9	30/78	0.9	104-115				clean
+122_20	122	120	4.4	1.2-3.7	31/87	0.8	107-116	loose			clean
+122_21	122	120	4.3	1.1-3.7	29/75	1.1	95-115				clean
+122_22	122	120	44.8	3.0-44.6	26/91	4.6	44-108				clean
+122_23	122	120	4.5	0.0-3.9	28/77	0.6	105-121				clean
+122_24	122	120	4.4	1.2-4.4	30/82	1.0	98-121				clean
+122_25	122	120	4.5	0.0-4.5	30/82	0.9	100-121				clean
+122_26	122	120	4.3	1.1-3.8	29/88	1.2	89-120				clean
+122_27	122	120	8.2	1.3-7.6	29/78	2.7	102-146				clean
+122_28	122	120	7.8	0.0-7.1	28/69	2.8	101-145				clean
+122_29	122	120	7.9	0.1-7.9	28/71	3.0	102-145				clean
+122_30	122	120	8.4	1.8-7.8	28/71	3.1	101-145				clean
+122_31	122	120	7.8	1.0-7.8	28/78	2.7	101-161				clean
+122_32	122	120	8.7	1.5-8.0	31/96	2.7	101-161	loose			clean
+122_33	122	120	10.8	0.0-10.5	27/78	1.4	114-117				clean
+122_34	122	120	8.1	0.0-7.7	28/72	3.0	101-161				clean
+122_35	122	120	8.7	1.4-7.7	28/75	3.0	102-161				clean
+122_36	122	120	8.8	1.5-8.8	29/86	4.4	99-105				clean
+122_37	122	120	8.0	0.1-8.0	30/120	4.7	98-104	loose			clean
+122_38	122	120	8.4	1.7-8.4	30/123	4.7	98-105	loose			clean
+122_39	122	120	8.1	1.0-8.1	28/74	4.4	97-104				clean
+122_40	122	120	4.4	0.0-4.0	27/81	0.6	94-121				clean
+122_41	122	120	3.9	1.4-3.7	23/62	0.6	92-125				clean
+122_42	122	120	4.5	0.0-3.8	23/68	1.1	85-128				clean
+122_43	122	120	5.0	1.8-4.2	22/72	1.8	74-132				clean
+122_44	122	120	5.5	0.0-5.5	28/76	0.9	107-116				clean
+122_45	122	120	4.1	0.0-3.7	23/76	0.6	83-152				clean
+122_46	122	120	4.2	1.3-3.6	22/66	1.1	79-153				clean
+122_47	122	120	5.2	1.5-4.2	19/74	2.0	59-150				clean
+122_48	122	120	3.7	0.0-3.3	23/61	0.5	95-121				clean
+122_49	122	120	3.8	1.5-3.3	25/91	1.1	86-124				clean
+122_50	122	120	4.4	1.7-3.9	20/66	1.8	58-128				clean
+122_51	122	120	4.9	0.0-4.0	23/66	0.3	93-132				clean
+122_52	122	120	4.2	1.9-3.7	21/77	0.3	82-149				clean
+122_53	122	120	4.5	1.7-4.0	20/68	0.4	74-163				clean
+122_54	122	120	3.5	0.0-3.5	21/60	0.3	85-136				clean
+122_55	122	120	6.1	2.6-5.3	29/79	0.9	107-117				clean
+122_56	122	120	4.2	1.5-3.3	21/54	0.3	80-151				clean
+122_57	122	120	3.4	0.8-3.0	18/70	0.5	73-165				clean
+122_58	122	120	3.0	0.6-2.2	20/60	0.4	85-136				cleaned
+122_59	122	120	5.0	2.3-4.8	22/64	0.6	81-154				clean
+122_60	122	120	3.4	0.3-3.4	19/82	0.6	78-162				clean
+122_61	122	120	4.2	1.2-3.2	18/55	0.8	85-149				clean
+122_62	122	120	3.9	1.0-3.5	20/65	0.8	77-162				clean
+122_63	122	120	5.7	2.4-5.0	26/74	1.2	95-116				clean
+122_64	122	120	4.8	2.0-4.2	20/95	0.8	76-155				clean
+122_65	122	120	3.3	0.7-3.3	19/65	0.8	77-150				clean
+122_66	122	120	5.6	0.0-5.3	28/79	0.6	113-116				clean
+122_67	122	120	5.6	0.0-5.0	28/81	0.9	106-116				clean
+122_68	122	120	5.5	0.0-5.5	27/85	1.1	106-116				clean
+132_35	132	120	10.5	0.0-10.5	17/92	4.1	102-106				Walk Leaning To The Right
+132_36	132	120	32.5	0.0-32.5	23/112	20.3	101-107				Walk Leaning To The Right
+134_03	134	120	3.3	0.0-3.3	20/86	4.0	103-112				Lean Turn Right
+134_06	134	120	2.5	0.0-2.5	15/68	5.6	94-111				Push Turn Left
+134_07	134	120	2.5	0.0-2.5	18/62	5.6	90-113				Push Turn Left
+134_08	134	120	2.2	0.0-2.2	16/67	5.4	89-111				Push Turn Right
+134_09	134	120	1.7	0.0-1.7	16/62	4.2	92-111				Push Turn Right
+134_15	134	120	2.1	0.0-2.1	17/69	4.9	102-114				Lean Turn Left
+135_07	135	120	12.3	0.2-12.3	26/104	5.2	72-114		Roundhouse_Kick		Mawashigeri
+136_17	136	120	17.7	1.7-17.7	13/94	5.5	98-108				Flamingo, lift legs high
+136_18	136	120	12.4	0.6-12.4	12/95	5.5	98-107				Flamingo, lift legs high
+137_17	137	120	16.2	1.2-16.2	20/92	5.3	95-103				Gangly Teen Coffee Mug
+137_18	137	120	11.6	1.3-11.6	15/95	3.8	90-103	inverted			Gangly Teen Pick Up
+137_21	137	120	15.9	1.3-8.9	12/97	4.3	96-103				Graceful Lady Coffee Mug
+137_22	137	120	13.7	1.8-13.7	13/85	3.9	73-103				Graceful Lady Pick Up
+137_26	137	120	13.1	2.0-10.0	13/90	3.7	98-104				Normal Coffee Mug
+137_27	137	120	9.7	2.0-8.4	15/82	2.9	85-103				Normal Pick Up
+137_35	137	120	20.8	0.9-18.5	14/91	4.6	97-101				Sexy Lady Coffee Mug
+137_36	137	120	21.3	0.0-21.3	20/140	3.7	91-104				Sexy Lady Pick Up
+137_39	137	120	24.4	0.7-24.1	16/86	4.8	96-103				Strong Man Coffee Mug
+137_40	137	120	17.0	1.5-17.0	15/98	3.9	75-105				Strong Man Pick Up
+139_05	139	120	4.3	0.0-4.3	13/71	0.4	95-97				Pulling a Gun
+139_06	139	120	11.3	0.0-11.3	22/122	3.4	68-106				Poking Around On The Ground
+139_07	139	120	4.2	0.0-4.2	18/83	0.7	79-105				Poking Around On The Ground
+139_08	139	120	8.4	0.5-8.4	19/114	2.5	55-105				Poking Around On The Ground
+141_27	141	120	4.6	0.0-4.4	16/74	2.7	100-104			pick: Mope (a sad townsperson)	Mope
+143_10	143	120	4.8	0.0-4.3	10/66	4.2	83-101	inverted			Walk And Pick up Tool Box
+143_11	143	120	5.5	0.5-5.1	10/56	4.5	87-101		Pick_Up_Box		Walk And Pick up Box
+143_12	143	120	4.9	0.0-4.4	10/52	3.9	85-101				Walk And Pick up Toolbox
+143_13	143	120	4.8	0.0-4.3	11/101	4.2	74-101				Walk and Pick up Laundry Basket
+143_26	143	120	5.3	0.5-4.9	8/43	0.8	101-102				Washing Window
+143_27	143	120	5.9	0.6-5.4	9/43	0.6	102-102				Washing Window
+143_28	143	120	5.4	0.0-5.1	14/59	2.4	100-102				Sweeping, Push Broom
+143_38	143	120	11.0	0.4-11.0	13/308	16.9	98-102				Walk Digital 8
+144_15	144	120	27.5	0.2-27.5	15/119	4.8	72-106				Left_Spin_reach001
+144_16	144	120	25.7	0.4-25.4	14/109	4.8	71-106				Left_Spin_reach002
+144_22	144	120	27.8	1.2-27.8	18/132	2.2	54-107				Reach_Left001
+144_23	144	120	28.4	0.1-27.9	20/145	2.0	56-107				Reach_Left002
+144_24	144	120	39.2	0.2-39.2	15/136	3.7	55-106				Reach_Right
+144_25	144	120	27.8	0.8-27.8	14/123	2.5	55-108				Reach_Right001
+144_28	144	120	19.0	0.0-18.3	15/116	3.4	71-106				Right_Spin_reach
+144_29	144	120	25.7	2.0-25.7	13/111	5.6	77-106				Right_Spin_reach001

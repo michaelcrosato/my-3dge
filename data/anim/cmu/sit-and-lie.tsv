@@ -1,0 +1,57 @@
+# The CMU ledger's takes in category "sit and lie" (categories.tsv says why; README.md explains the columns).
+id	subject	fps	sec	active	fit	travel	hips	flags	used	note	desc
+13_01	13	120	19.3	0.0-19.3	14/102	3.5	85-104				sit on high stool, stand up
+13_02	13	120	29.0	0.0-29.0	15/103	5.1	85-105				sit on high stool, stand up
+13_03	13	120	31.0	0.0-25.1	15/112	4.4	84-104				sit on high stool, stand up
+13_04	13	120	39.7	0.0-39.7	13/102	6.9	53-105				sit on stepstool, chin in hand
+13_05	13	120	36.7	0.0-36.7	14/114	6.3	53-105				sit on stepstool, hands against chin, fidget, stand up
+13_06	13	120	36.8	0.0-36.8	15/109	5.5	53-106				sit on stepstool, hands against chin, elbow out, stand up
+14_27	14	120	17.9	0.2-17.9	16/88	3.2	91-107				sit on high stool, stand up
+14_28	14	120	17.1	0.0-17.1	16/91	4.1	89-107				sit on high stool, stand up
+14_30	14	120	21.4	0.0-21.4	16/127	5.1	56-104				sit on stepstool, ankle on other knee, hand on chin
+14_31	14	120	17.4	0.0-17.4	17/93	4.4	56-104				sit on stepstool, stand up
+14_32	14	120	22.0	0.0-21.4	17/93	5.2	54-105				sit on stepstool, stand up
+14_36	14	120	17.4	0.0-17.4	17/93	4.4	56-104				sit on stepstool, stand up
+15_10	15	120	23.2	0.8-23.2	20/91	10.1	86-104				sit on high stool, stand up
+22_01	22	120	6.5	0.0-6.5	15/55	3.7	100-107				B sits; A pulls up B (2 subjects - subject A)
+22_02	22	120	3.9	0.0-3.9	15/80	1.6	74-106				A sits; B pulls up A (2 subjects - subject A)
+22_03	22	120	6.8	0.0-6.8	15/83	0.3	74-79				A sits, holds face in hands; B kneels, comforts A (2 subjects - subject A)
+22_09	22	120	4.5	0.0-4.5	16/71	0.6	105-106				A gives B a shoulder rub; B sits, A stands (2 subjects - subject A)
+22_14	22	120	5.9	0.6-5.7	19/90	0.6	37-104				alternating squats (2 subjects - subject A)
+22_18	22	120	4.5	0.0-4.5	22/69	1.2	54-100				A stares down B, leans with hands on high stool (2 subjects - subject A)
+22_19	22	120	4.0	0.0-4.0	15/90	0.1	52-54				B stares down A, leans with hands on high stool (2 subjects - subject A)
+22_21	22	120	3.2	0.0-2.8	17/56	0.1	53-54				conversation - B pounds high stool, points at A (2 subjects - subject A)
+23_01	23	120	6.5	0.0-6.5	16/92	1.7	72-105				B sits; A pulls up B (subjects - subject B)
+23_02	23	120	3.9	0.0-3.9	11/40	2.3	101-106				A sits; B pulls up A (subjects - subject B)
+23_03	23	120	6.8	0.0-6.8	12/57	1.6	60-106				A sits, holds face in hands; B kneels, comforts A (2 subjects - subject B)
+23_09	23	120	4.5	0.0-4.5	14/62	0.2	75-77				A gives B a shoulder rub; B sits, A stands (subjects - subject B)
+23_14	23	120	5.9	0.0-5.9	16/62	0.5	39-106				alternating squats (2 subjects - subject B)
+23_18	23	120	4.5	0.3-4.5	15/61	0.2	56-60				A stares down B, leans with hands on high stool (2 subjects - subject B)
+23_19	23	120	4.0	0.3-4.0	16/61	1.0	59-100				B stares down A, leans with hands on high stool (2 subjects - subject B)
+23_21	23	120	3.2	0.0-2.7	14/45	0.1	59-61				conversation - B pounds high stool, points at A (2 subjects - subject B)
+62_13	62	60	21.1	0.0-21.1	16/88	7.2	96-108	inverted			moving a stool
+69_70	69	120	8.7	0.0-8.7	15/66	3.5	38-106				walk up to object, squat, pick up object, set down in another place.
+69_71	69	120	11.0	0.3-11.0	16/66	4.6	36-106				walk up to object, squat, pick up object, set down in another place
+69_75	69	120	9.2	0.0-9.2	16/81	3.6	37-106				walk up to object, squat, pick up object, set down in another place
+75_17	75	60	5.4	0.3-5.4	15/61	0.9	39-105				medium sit
+75_18	75	60	5.0	0.0-4.4	15/63	0.9	52-105				high sit
+75_19	75	60	12.8	0.9-11.8	14/64	1.7	39-106				medium sit
+75_20	75	60	8.3	1.6-7.7	14/53	1.1	23-105				low sit
+79_17	79	60	13.4	1.2-13.4	14/53	0.2	104-105			pick: Play_Violin (a bard)	playing violin
+79_18	79	60	13.4	1.2-13.2	12/80	0.4	104-105			pick: Play_Drums (a bard)	playing drums
+79_19	79	60	11.5	1.4-11.5	11/46	0.2	104-105				playing piano
+82_05	82	120	18.7	0.0-18.7	19/106	0.4	16-19				sitting on ground relaxing
+86_09	86	120	39.9	0.0-39.9	19/100	11.6	90-107				walking, sitting, looking, stand up
+86_10	86	120	63.2	0.0-63.2	20/102	38.0	89-107				walk around, sit, stand up, and running
+86_15	86	120	59.1	0.0-59.1	16/362	12.4	75-108				walking, sitting, hand motions
+114_05	114	120	22.7	0.0-22.7	27/132	2.2	65-105				Sitting in chair
+114_16	114	120	14.4	0.0-13.0	14/78	2.3	21-106				Sit down and stretch
+136_09	136	120	9.4	0.7-9.4	14/47	6.0	83-104		Crouch_Walk_Loop		Walk Crouched
+136_10	136	120	11.1	1.4-11.1	15/101	7.1	84-105				Walk Crouched
+136_11	136	120	12.0	0.9-12.0	13/67	6.4	83-105				Walk Backwards Crouched
+136_12	136	120	10.9	0.0-10.9	14/42	5.9	83-90				Walk Backwards Crouched
+136_13	136	120	10.4	1.1-10.4	13/99	6.2	90-105				Walk on Toes Crouched
+136_14	136	120	8.9	0.7-8.9	14/65	5.8	89-105				Walk on Toes Crouched
+136_15	136	120	11.2	0.8-11.2	14/61	6.3	90-104				Walk Backwards on Toes Crouched
+136_16	136	120	10.5	1.0-10.5	13/55	6.3	93-101				Walk Backwards on Toes Crouched
+141_17	141	120	4.7	0.0-4.7	30/124	3.2	99-115	loose			Sit on Stool

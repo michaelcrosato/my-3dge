@@ -1,0 +1,89 @@
+# The CMU ledger's takes in category "dance" (categories.tsv says why; README.md explains the columns).
+id	subject	fps	sec	active	fit	travel	hips	flags	used	note	desc
+05_02	5	120	9.4	2.6-9.4	19/104	1.9	92-111				dance - expressive arms, pirouette
+05_03	5	120	3.6	0.0-3.6	16/76	1.5	87-105				dance - sideways arabesque, turn step, folding arms
+05_04	5	120	10.0	0.0-10.0	16/86	2.4	87-103				dance - sideways arabesque, folding arms, bending back
+05_05	5	120	7.6	0.4-7.6	21/121	3.4	85-123				dance - quasi-cou-de-pied, raised leg above hip-height, jete en tourant
+05_07	5	120	9.9	0.0-8.2	13/122	4.2	92-115				dance - small jetes, attitude/arabesque, shifted-axis pirouette, turn
+05_08	5	120	6.0	0.0-4.4	18/133	4.0	92-123				dance - rond de jambe in the air, jete, turn
+05_09	5	120	9.5	4.2-9.5	16/104	1.7	88-117				dance - glissade devant, glissade derriere, attitude/arabesque
+05_10	5	120	6.8	0.2-6.8	20/103	1.5	92-117				dance - glissade devant, glissade derriere, attitude/arabesque
+05_11	5	120	4.9	0.0-4.9	20/126	2.2	87-115				dance - sideways steps, pirouette
+05_12	5	120	11.3	0.0-11.3	13/92	1.4	98-105				dance - arms held high, pointe tendue a terre, upper body rotation
+05_13	5	120	9.1	2.2-9.1	14/81	2.8	95-116				dance - small jetes, pirouette
+05_14	5	120	5.3	0.5-5.3	14/142	4.3	83-116				dance - retire derriere, attitude/arabesque
+05_15	5	120	4.5	0.0-4.4	14/107	3.5	91-116				dance - retire derriere, attitude/arabesque
+05_16	5	120	4.4	0.0-4.4	22/195	4.1	87-135				dance - coupe dessous, jete en tourant
+05_17	5	120	8.7	1.8-8.3	16/120	4.3	87-134				dance - coupe dessous, grand jete en tourant
+05_18	5	120	15.2	0.0-15.2	17/113	4.1	92-144				dance - attitude/arabesque, jete en tourant, bending back
+05_19	5	120	7.2	0.7-7.2	17/102	3.7	92-141				dance - attitude/arabesque, jete en tourant, bending back
+05_20	5	120	9.1	0.6-9.1	18/122	3.9	91-141				dance - attitude/arabesque, jete en tourant, bending back
+15_12	15	120	75.7	0.0-75.7	22/148	7.8	58-105				wash windows; basketball - dribble, lay-up shot, pass; throw ball; dance - Egyptian walk, the Dive, the Twist; strew
+18_15	18	120	12.8	0.0-12.8	20/101	2.1	67-105				chicken dance (2 subjects - subject A)
+19_15	19	120	12.8	0.0-12.8	14/80	1.8	48-109				chicken dance (2 subjects - subject B)
+20_01	20	120	10.7	0.0-10.7	20/95	1.5	83-105				chicken dance (2 subjects - subject A)
+21_01	21	120	10.7	0.0-10.7	13/104	1.7	69-108				chicken dance (2 subjects - subject B)
+49_09	49	120	16.0	0.0-16.0	20/75	0.6	103-105				dance - arms held high, side arabesque
+49_10	49	120	11.9	0.0-11.3	16/72	0.4	92-104				dance - fold in from side arabesque, curl inwards
+49_11	49	120	10.0	0.0-10.0	16/70	0.4	91-104				dance - fold in from side arabesque, curl inwards
+49_12	49	120	9.4	0.0-8.4	11/64	0.3	94-104				dance - lean forward, bring back leg forward, arching arms
+49_13	49	120	4.4	0.0-4.4	17/89	0.2	97-105				dance - fold in from side arabesque, curl inwards
+49_14	49	120	5.2	0.0-5.2	11/58	0.2	93-105				dance - lean forward, bring back leg forward, arching arms
+49_15	49	120	7.9	0.0-7.8	17/39	0.1	99-100				static dance pose - folded in, head lowered, leg bent
+49_16	49	120	9.5	0.0-9.5	12/59	0.3	98-105				dance - fold in from side arabesque, curl inwards
+49_17	49	120	6.2	0.6-5.7	12/70	0.3	92-104				dance - lean forward, bring back leg forward, arching arms
+49_22	49	120	10.7	0.0-10.7	18/54	0.7	90-106				dance - lean back on bent leg, balance, bend elbow by ear
+55_01	55	120	15.0	0.0-15.0	26/118	7.5	93-109				dance, whirl
+55_02	55	120	18.2	0.0-18.2	22/89	4.4	95-103				lambada dance
+55_12	55	120	17.3	0.0-17.3	17/124	4.2	91-105				dancing bear (human subject)
+55_25	55	120	26.6	0.2-26.6	26/129	10.4	78-111				dancing animal (human subject)
+55_27	55	120	41.7	0.0-41.7	18/82	9.0	90-116				dancing ant (human subject)
+60_01	60	60	37.4	0.0-37.4	17/112	14.4	45-106			pick: Salsa_Loop (a town festival)	salsa dance
+60_02	60	60	35.0	0.0-35.0	14/90	14.6	52-106				salsa dance
+60_03	60	60	30.5	0.0-29.9	14/68	11.5	96-106				salsa dance
+60_04	60	60	31.2	0.0-31.2	13/66	13.1	96-106				salsa dance
+60_05	60	60	28.0	0.0-28.0	15/82	11.4	98-107				salsa dance
+60_06	60	60	29.5	0.0-29.5	16/119	13.3	90-105				salsa dance
+60_07	60	60	34.5	0.0-34.5	24/145	14.5	96-105				salsa dance
+60_08	60	60	57.0	2.7-57.0	16/134	22.6	96-105				salsa dance
+60_09	60	60	42.9	0.0-42.2	19/140	18.7	91-110				salsa dance
+60_10	60	60	19.9	0.0-19.9	17/131	6.8	97-107				salsa dance
+60_11	60	60	35.1	0.0-34.7	21/106	13.2	74-106				salsa dance
+60_12	60	60	28.2	0.0-28.2	12/71	11.0	97-105				salsa dance
+60_13	60	60	37.8	0.0-37.8	13/80	14.8	91-106				salsa dance
+60_14	60	60	32.5	1.0-32.5	13/61	13.9	94-106				salsa dance
+60_15	60	60	35.7	0.0-35.7	13/100	14.7	94-105				salsa dance
+61_01	61	60	37.4	0.0-36.5	17/140	19.5	96-107				salsa dance
+61_02	61	60	35.0	2.7-35.0	18/116	20.4	95-107				salsa dance
+61_03	61	60	30.5	0.0-30.5	19/121	15.9	94-107				salsa dance
+61_04	61	60	31.2	2.1-31.2	18/82	17.6	92-108				salsa dance
+61_05	61	60	28.0	1.2-28.0	18/112	15.9	95-107				salsa dance
+61_06	61	60	29.5	0.0-29.5	20/113	16.0	91-105				salsa dance
+61_07	61	60	34.5	0.0-34.5	21/127	17.2	94-107				salsa dance
+61_08	61	60	57.0	2.8-57.0	23/213	30.5	94-104	inverted			salsa dance
+61_09	61	60	42.9	0.0-42.9	22/199	23.6	96-108	inverted			salsa dance
+61_10	61	60	19.9	0.0-19.9	18/169	9.5	92-106				salsa dance
+61_11	61	60	35.1	2.4-33.7	21/118	19.0	32-104				salsa dance
+61_12	61	60	28.2	0.0-28.2	18/99	15.2	96-107				salsa dance
+61_13	61	60	37.8	2.8-37.8	18/96	20.3	72-105				salsa dance
+61_14	61	60	32.5	1.4-32.5	19/156	19.8	74-107	inverted			salsa dance
+61_15	61	60	35.7	3.5-35.7	19/131	19.4	94-105				salsa dance
+90_30	90	120	11.9	2.5-11.9	15/100	3.5	36-108				russian dance
+90_31	90	120	8.2	1.6-8.2	16/94	2.7	36-107				russian dance
+90_32	90	120	6.0	0.0-6.0	18/69	4.2	102-107				moonwalk
+93_03	93	120	3.7	0.1-3.7	13/54	1.2	97-106			pick: Charleston (a town festival)	charleston_01
+93_04	93	120	4.2	0.0-4.2	15/65	1.5	96-106				charleston_side_by_side_female
+93_05	93	120	4.5	0.0-4.5	12/70	1.5	96-103				charleston_side_by_side_male
+93_08	93	120	4.6	0.0-4.6	15/67	2.6	97-105				xtra fancY charleston
+103_03	103	120	3.7	0.1-3.7	13/54	1.2	97-106				charleston_01
+103_04	103	120	4.2	0.0-4.2	15/65	1.5	96-106				charleston_side_by_side_female
+103_05	103	120	4.5	0.0-4.5	12/70	1.5	96-103				charleston_side_by_side_male
+103_08	103	120	4.6	0.0-4.6	15/67	2.6	97-105				xtra fancY charleston
+111_05	111	120	7.7	0.0-7.7	16/101	2.6	96-106				Dance
+113_04	113	120	8.1	0.0-7.8	17/125	3.8	95-106				Dance
+120_05	120	120	11.3	1.5-11.3	20/97	4.3	78-106				Mickey Dance
+120_06	120	120	11.9	0.5-11.9	20/135	6.6	79-106				Mickey Dance
+120_07	120	120	9.3	0.8-8.9	17/84	2.6	89-106				Mickey Dance
+141_12	141	120	4.7	0.0-4.7	21/79	2.8	84-106				Dance, Twist
+143_34	143	120	6.5	0.0-6.5	14/83	1.0	73-103			pick: Chicken_Dance (a town festival)	Chicken Dance
+143_35	143	120	10.7	0.5-10.7	10/73	1.0	92-117				Macarena Dance
