@@ -1,8 +1,12 @@
 {
   "about": "sha256 of each file, by x port refs",
   "files": {
-    "README.md": "b169e928add108ee8b430d70f400267aa71986e53904907d98637ca3b8f32c44",
+    "README.md": "998bd622ebcc32f04194838c3caf0e2f7e331321c1f2ffd7a2261422cd7647de",
     "blob.json": "89510fe15de1c98d65c1b1dc132dc8c1762f800765d59a7041332b9ac552e240",
+    "clips/README.md": "a3cf26aeda7e9b6f64225ef9d476be3bbb9c060f9e9e4576589f5c6ec650ca19",
+    "clips/cmu.json": "be662c79fe0a17dfd9481411cad4cbb25745605f841071bafbeecba6a98af4df",
+    "clips/mesh2motion.json": "b5e8fcfbdc2d1dd4a23d0d4a2f80cb6f3dfba7aa48c730593df58feccf519ccc",
+    "clips/quaternius.json": "e2ce39748b8e1f37c505c6d563b5d856efa31de082775e247977c1dbe42c038b",
     "color.json": "f154a1eb2918d070347ff3a2b69774f7922c7ef890ff1a37ac3112ec08652b6c",
     "core.json": "4a0f7439c61ae259922e10654a2f3a738d488667d3fa9b67ed2d75d6b4d11f3b",
     "humanoid-bulky.json": "7ff8f8230509cf821d6739cb19b55c0cfb1dcd4cae2cbac463298c21c67bbfb7",

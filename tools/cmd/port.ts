@@ -3,7 +3,8 @@
  * engine's own outputs as text JSON in `tests/baselines/port/`, with a generated README that says what each file
  * holds, the source commit, the sampling and the conversion to my-3dge's frame (Appendix C). Consumers: WP 1.1
  * (`rng`, `hash2`, `noise2`, angle and colour helpers), 3.6 (the Humanoid state matrix), 5.3 (Blob updates) and 6.1
- * (`E.move`); WP 8.2 adds the library's clips.
+ * (`E.move`); WP 8.2 adds the library's clips: `--clips` writes only `clips/` (tools/anim/legacy-readable.ts records
+ * them), and every frame to `out/port/clips/`; each run keeps the checksums of the files the other writes.
  *
  * `refs` loads `my-3d2dge:engine/my-3d2dge.js` from `$MY3D2DGE_SRC` (resolved as tools/lib/source.ts does) into a
  * Node `vm` context, as `my-3d2dge:tools/mocap-lib.mjs:7` loads its codec; `console` is the only shim, and any
@@ -14,13 +15,14 @@
  * `-0` kept), keys keep a fixed order. `checksums.json` holds each file's sha256; `--check` (offline, no source) and
  * the `port` plugin of `x check` compare them. A changed vector is a changed baseline: give the reason (AGENTS.md).
  *
- * Usage: node x port refs [--check]. Exit 0; 1 when the source is unresolved, the engine warns or a check fails.
+ * Usage: node x port refs [--clips] [--check]. Exit 0; 1 if the source is unresolved, the engine warns or a check fails.
  * @see tools/cmd/port.test.ts
  */
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join, relative, sep } from 'node:path';
 import vm from 'node:vm';
+import { clipVectorFiles } from '../anim/legacy-readable';
 import { fnv1a } from '../lib/hash';
 import type { Finding } from '../lib/report';
 import { resolveSource, sourceSpecs } from '../lib/source';
@@ -300,12 +302,13 @@ so a diff means the source, the generator or the runtime changed: a baseline cha
   right foot, the rig at the origin facing φ = 0 (world = rig-local (f, r, z), but for \`spin\`'s turn).
 - \`blob.json\` (WP 5.3): scripts on a fresh \`new E.Blob()\`: each segment holds \`input\` for \`steps\` updates of
   1/120 s, after \`kick(v)\` when named; every step is sampled. Body radius R(1 − 0.55 sq), height and centre R(1 + sq).
+- \`clips/\` (WP 8.2): the library's clip decodes, written by \`x port refs --clips\`; its README says what they hold.
 `;
 }
 
 const sha256 = (data: string | Buffer) => createHash('sha256').update(data).digest('hex');
 
-/** Every file of `PORT_DIR` but the checksums, by name, generated from the checkout at `sourcePath`. */
+/** Every file of `PORT_DIR` but the checksums and `clips/`, by name, generated from the checkout at `sourcePath`. */
 export function buildFiles(sourcePath: string, commit: string): { files: Record<string, string>; messages: string[] } {
   const engine = loadEngine(sourcePath);
   const json = (value: object) => `${layout(value)}\n`;
@@ -328,13 +331,16 @@ function readChecksums(dir: string): Record<string, string> | undefined {
   return (JSON.parse(readFileSync(file, 'utf8')) as { files: Record<string, string> }).files;
 }
 
-/** Writes `files` and their checksums into `dir`, and removes the files an earlier run wrote that are gone now. */
-export function writeVectors(dir: string, files: Record<string, string>): void {
-  mkdirSync(dir, { recursive: true });
-  for (const old of Object.keys(readChecksums(dir) ?? {})) if (!(old in files)) rmSync(join(dir, old), { force: true });
+/** Writes `files` (names may hold `/`) and their checksums into `dir`, and removes the files an earlier run wrote that
+ * are gone now; of the files this run does not `own`, it keeps the recorded checksums. */
+export function writeVectors(dir: string, files: Record<string, string>, owns = (_name: string) => true): void {
+  const recorded = Object.entries(readChecksums(dir) ?? {});
+  for (const [old] of recorded) if (owns(old) && !(old in files)) rmSync(join(dir, old), { force: true });
+  const dirs = new Set([dir, ...Object.keys(files).map((name) => dirname(join(dir, name)))]);
+  dirs.forEach((sub) => mkdirSync(sub, { recursive: true }));
   for (const [name, text] of Object.entries(files)) writeFileSync(join(dir, name), text);
-  const names = Object.keys(files).sort();
-  const sums = Object.fromEntries(names.map((name) => [name, sha256(files[name])]));
+  const all = [...recorded.filter(([name]) => !owns(name)), ...Object.entries(files).map(([n, t]) => [n, sha256(t)])];
+  const sums = Object.fromEntries(all.sort(([a], [b]) => (a < b ? -1 : 1)));
   writeFileSync(join(dir, CHECKSUMS), `${layout({ about: 'sha256 of each file, by x port refs', files: sums })}\n`);
 }
 
@@ -350,7 +356,9 @@ export function checkVectors(root: string): { failures: Finding[]; files: number
     return sha256(readFileSync(file)) === sums[name] ? '' : 'CHANGED';
   };
   const fix = 'only node x port refs writes here: regenerate, and give the reason (a baseline changed)';
-  const names = new Set([CHECKSUMS, ...Object.keys(sums), ...(existsSync(dir) ? readdirSync(dir) : [])]);
+  const found = existsSync(dir) ? readdirSync(dir, { recursive: true, withFileTypes: true }) : [];
+  const paths = found.filter((f) => f.isFile()).map((f) => relative(dir, join(f.parentPath, f.name)).split(sep));
+  const names = new Set([CHECKSUMS, ...Object.keys(sums), ...paths.map((parts) => parts.join('/'))]);
   const failures = [...names].sort().flatMap((name) => {
     const [id, file] = [problem(name), `${PORT_DIR}/${name}`];
     return id ? [{ id: `PORT_${id}`, message: `${file} is ${id.toLowerCase()}: ${fix}`, file }] : [];
@@ -358,18 +366,19 @@ export function checkVectors(root: string): { failures: Finding[]; files: number
   return { failures, files: Object.keys(sums).length };
 }
 
-/** Regenerates the vectors from the source; fails without writing when the source is unresolved or the engine speaks. */
-function refs(root: string): CommandResult {
+/** Regenerates the vectors (`clips`: only clips/); fails without writing if the source is unresolved or speaks. */
+function refs(root: string, clips: boolean): CommandResult {
   const spec = sourceSpecs(root).find((candidate) => candidate.name === 'my-3d2dge');
   const source = spec && resolveSource(spec, { root });
   if (!spec || !source?.ok || !source.path) {
     const message = source?.problem ?? 'scripts/setup.sh names no my-3d2dge source';
     return { ok: false, summary: 'the source is unresolved', failures: [{ id: 'SRC_UNRESOLVED', message }] };
   }
-  const { files, messages } = buildFiles(source.path, spec.commit);
+  const built = clips ? clipVectorFiles(source.path, spec.commit, layout, root) : buildFiles(source.path, spec.commit);
+  const { files, messages, artifacts } = { artifacts: [], ...built };
   const failures = messages.map((said) => ({ id: 'PORT_ENGINE_SPOKE', message: `the engine printed "${said}"` }));
   if (failures.length) return { ok: false, summary: 'nothing written: the engine printed messages', failures };
-  writeVectors(join(root, PORT_DIR), files);
+  writeVectors(join(root, PORT_DIR), files, (name) => name.startsWith('clips/') === clips);
   const sizes = Object.entries(files).map(([name, text]) => [name, Buffer.byteLength(text)] as const);
   const bytes = sizes.reduce((sum, [, size]) => sum + size, 0);
   return {
@@ -377,16 +386,17 @@ function refs(root: string): CommandResult {
     summary: `${sizes.length} files, ${(bytes / 1e6).toFixed(2)} MB, from my-3d2dge@${spec.commit.slice(0, 7)} in ${PORT_DIR}`,
     lines: sizes.map(([name, size]) => `${name}: ${size} bytes`),
     metrics: { files: sizes.length, bytes },
+    artifacts,
   };
 }
 
 export default {
-  usage: 'port refs [--check]',
-  options: { check: { type: 'boolean' } },
+  usage: 'port refs [--clips] [--check]',
+  options: { check: { type: 'boolean' }, clips: { type: 'boolean' } },
   maxPositionals: 1,
   async run({ values, positionals: [subject], root }): Promise<CommandResult> {
     if (subject !== 'refs') throw new UsageError(`${subject ? `no "${subject}" to port` : 'name what'}: refs`);
-    if (!values.check) return { ...refs(root), target: 'refs' };
+    if (!values.check) return { ...refs(root, Boolean(values.clips)), target: values.clips ? 'clips' : 'refs' };
     const { failures, files } = checkVectors(root);
     const summary = `${files} files ${failures.length ? 'differ from' : 'match'} ${PORT_DIR}/${CHECKSUMS}`;
     return { ok: !failures.length, summary, failures, target: 'refs', metrics: { files } };
