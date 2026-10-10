@@ -1,0 +1,11 @@
+{
+  "describe": "A geometry: a shape props and levels name by id, built from the kit's builders, with a unit test that checks it by the geo QA family's measures (PLAN.md WP 2.4).",
+  "id": "the module's path, labs/<lab>/geometry/<name> (its id is geometry:<name>): labs/box/geometry/crate",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/geometry|tools/templates/geometry)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/geometry/sampleGeometry",
+  "files": {
+    "geometry.ts.tmpl": "{{id}}.ts",
+    "geometry.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}
