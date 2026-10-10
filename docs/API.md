@@ -107,6 +107,31 @@ For the agents who maintain the engine.
 - `testKind` (function): Writes `kind`'s sample, checks it and removes it again.
 - `writeFiles` (function): Writes rendered files; refuses (throws) when any exists.
 
+### [`tools/cmd/port.ts`](../tools/cmd/port.ts)
+
+- `BLOB_SCRIPTS` (const): The Blob scripts: the stress world's slime hop, kicks to the squash spring, and look turns.
+- `blobScript` (function): One Blob script from a fresh `new E.Blob()`, sampled after every step.
+- `buildFiles` (function): Every file of `PORT_DIR` but the checksums, by name, generated from the checkout at `sourcePath`.
+- `BUILDS` (const): The builds of the humanoid matrix and of the moves.
+- `check` (const): The `port` plugin of `x check`: the committed vectors still match their checksums.
+- `CHECKSUMS` (const): The file in `PORT_DIR` that records every other file's sha256.
+- `checkVectors` (function): Compares the vectors under `root` with their checksums, offline: a changed, missing or unlisted file fails.
+- `colorVectors` (function): `color.json`: the colour helpers over a fixed list of colours, 24 of them drawn from `E.rng(0x5eed)`.
+- `coreVectors` (function): `core.json`: `rng`, `hash2`, `noise2`, and the math helpers WP 1.1 ports.
+- `default` (default): Records the reference vectors the ports from my-3d2dge are tested against (PLAN.md WP 0.11, §9.0): the old engine's own outputs as text JSON in `tests/baselines/port/`, with a generated README that says what each file holds, the source commit, the sampling and the conversion to my-3dge's frame (Appendix C).
+- `everyNth` (const): The steps sampled: every 4th at facing 0, every 40th (among those) at the other seven, which differ only by the turn.
+- `humanoidRun` (function): One run of the humanoid matrix: a fresh rig of `build` in `state`, facing `facing`·π/4, for 120 steps.
+- `humanoidVectors` (function): `humanoid-<build>.json`: every state at every facing.
+- `layout` (function): Writes JSON in a stable layout: a container that fits in 120 columns stays on one line, and so does any array of scalars (one sample per line); the others open one item per line, indented by two spaces.
+- `LoadedEngine` (type): The old engine in its own `vm` context: `E`, what it printed (must stay empty), and `seed(id)` for each record.
+- `loadEngine` (function): Loads `my-3d2dge:engine/my-3d2dge.js` from the checkout at `sourcePath` into a fresh `vm` context.
+- `moveRecord` (function): `E.move(name, u, phase)` for u = i/20 on `build`, each sample on a fresh rig at rest at t = 0 (see the README).
+- `moveVectors` (function): `moves.json`: every move of `E.MOVES`, its spec as `E.move` builds it, in every phase on every build.
+- `PORT_DIR` (const): Where the vectors live, relative to the repository root.
+- `SourceEngine` (type): The parts of the old engine's `E` (`My3D2dge`) the vectors call.
+- `STATES` (const): The humanoid state matrix (WP 0.11): locomotion, every pose, and both stances (while walking).
+- `writeVectors` (function): Writes `files` and their checksums into `dir`, and removes the files an earlier run wrote that are gone now.
+
 ### [`tools/cmd/qa.ts`](../tools/cmd/qa.ts)
 
 - `compareWithBaselines` (function): Compares a family's violations with its baselines: failures for new or worse ones, warnings for slack entries.

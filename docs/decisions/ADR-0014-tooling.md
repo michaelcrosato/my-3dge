@@ -49,3 +49,10 @@ The npm scripts and `x` commands themselves; each `x` command's smoke test; the 
   everywhere in engine, labs and fixtures, a bare `three` import (Node would load the WebGL build, §6.10),
   `three/examples/jsm/*` (the addons path is `three/addons/*`), and the r182 deprecations its source marks that the
   appendix leaves out (`PI2`, `fromWorkingColorSpace`, `toWorkingColorSpace`, `parseAnimation`).
+
+## Amendment 3 (2026-10-10, WP-0.11)
+- **Prettier skips the port reference vectors, `tests/baselines/port/`.** They are machine-written baselines that
+  `x port refs` lays out itself, one sample per line with exact numbers, and `checksums.json` pins every byte.
+  Prettier would wrap each sample over several lines, respell numbers (`1e+21` as `1e21`) and so break the checksums,
+  and re-read about 3.5 MB on every changed run of `npm run check`. `.prettierignore` lists the directory; `x port refs
+  --check` and the `port` plugin of `x check` check it instead.

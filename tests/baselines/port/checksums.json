@@ -1,0 +1,13 @@
+{
+  "about": "sha256 of each file, by x port refs",
+  "files": {
+    "README.md": "b169e928add108ee8b430d70f400267aa71986e53904907d98637ca3b8f32c44",
+    "blob.json": "89510fe15de1c98d65c1b1dc132dc8c1762f800765d59a7041332b9ac552e240",
+    "color.json": "f154a1eb2918d070347ff3a2b69774f7922c7ef890ff1a37ac3112ec08652b6c",
+    "core.json": "4a0f7439c61ae259922e10654a2f3a738d488667d3fa9b67ed2d75d6b4d11f3b",
+    "humanoid-bulky.json": "7ff8f8230509cf821d6739cb19b55c0cfb1dcd4cae2cbac463298c21c67bbfb7",
+    "humanoid-chibi.json": "0694abae1a8ca80dc3061eb397ec45695c3bbc5aae8dd7e8717ae9366a4ad992",
+    "humanoid-heroic.json": "4c93874116200f9444dd0155f19d8442bfd7db46e4f6da8b5bac1e7839ccf068",
+    "moves.json": "cb623bd598aa72ad5d6f37dc409dc47bab50cbcf5fb8ab88c95e3c38a89fe5d5"
+  }
+}

@@ -58,6 +58,9 @@ advice codes are in [ERRORS.md](ERRORS.md).
 - [`new.ts`](../tools/cmd/new.ts): Scaffolds a new entry of a kind from its template (PLAN.md §8.13): `x new <kind> <id>` writes the files of `tools/templates/<kind>/`, filled in for the id, then runs the kind's checks and prints the summary.
   - Exports: `CheckName`, `CHECKS`, `default`, `fill`, `Kind`, `listKinds`, `render`, `runCheck`, `runChecks`, `testKind`, `writeFiles`
   - Tests: [`tools/cmd/new.test.ts`](../tools/cmd/new.test.ts)
+- [`port.ts`](../tools/cmd/port.ts): Records the reference vectors the ports from my-3d2dge are tested against (PLAN.md WP 0.11, §9.0): the old engine's own outputs as text JSON in `tests/baselines/port/`, with a generated README that says what each file holds, the source commit, the sampling and the conversion to my-3dge's frame (Appendix C).
+  - Exports: `BLOB_SCRIPTS`, `blobScript`, `buildFiles`, `BUILDS`, `check`, `CHECKSUMS`, `checkVectors`, `colorVectors`, `coreVectors`, `default`, `everyNth`, `humanoidRun`, `humanoidVectors`, `layout`, `LoadedEngine`, `loadEngine`, `moveRecord`, `moveVectors`, `PORT_DIR`, `SourceEngine`, `STATES`, `writeVectors`
+  - Tests: [`tools/cmd/port.test.ts`](../tools/cmd/port.test.ts)
 - [`qa.ts`](../tools/cmd/qa.ts): Runs content QA for the families named, against their baselines (PLAN.md §8.6).
   - Exports: `compareWithBaselines`, `default`, `loadFamily`, `QaBaseline`, `QaContext`, `qaFamilies`, `QaFamily`, `QaViolation`, `readBaselines`, `runQa`
   - Tests: [`tools/cmd/qa.test.ts`](../tools/cmd/qa.test.ts)
