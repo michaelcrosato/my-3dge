@@ -14,14 +14,15 @@
  * A session logs, each at the step it happens (merged in play order: set, then dev, then intents), what its intents
  * change, every non-view setting change (through `set` or its own store, `session.settings`), and its dev actions
  * (`act`, all or nothing: one that throws is rolled back). `record()` returns the replay from step 0, no capture
- * needed; change-points no step has followed yet wait for it. Step through the session, never the world
- * (`SIM_OFF_RECORD`); `Session` says how each part is logged.
+ * needed; change-points no step has followed yet wait for it. Step, capture and restore through the session, never
+ * the world (`SIM_OFF_RECORD`): `session.restore` takes the recording back to the capture's step with the sim, so
+ * `record()` replays the run as it stands; it refuses a capture it did not take (`SIM_FOREIGN_CAPTURE`) or one
+ * changed since (`SIM_EDITED_CAPTURE`). Seeds are whole numbers from 0 (`SIM_BAD_SEED`). `Session` says the rest.
  *
  * Invariants: a scene's `settings` are checked against the settings schema when it is defined (`CORE_BAD_SPEC`
  * naming each problem), so declare its settings before it; they apply for the run's lifetime, as an override layer
  * (engine/core/settings.ts), and the caller's settings (`--set`, a replay's `settings`) go on top. Each start makes
- * a new settings store and world, so runs share nothing but the registry. A missing scene id is `CORE_NO_ENTRY`,
- * naming the closest ids.
+ * a new settings store and world, so runs share nothing but the registry. A missing scene id is `CORE_NO_ENTRY`.
  *
  * @example
  * import { createRegistry } from '../core/registry';
@@ -38,12 +39,13 @@
  * @see engine/sim/scene.test.ts
  */
 import type { EventMap } from '../core/events';
-import { deserialize, serialize, type Canonical } from '../core/hash';
+import { deserialize, hashValue, serialize, type Canonical } from '../core/hash';
 import { codeError, defineCodes, didYouMean, type Log } from '../core/log';
 import { registry as sharedRegistry, sameValue, type Entry, type Registry } from '../core/registry';
 import { isPlainObject, show, type Schema } from '../core/schema';
 import { createSettings, type SettingChange, type Settings, type SettingValue } from '../core/settings';
 import { diffIntents, INTENT_KEYS, NO_INTENTS, normalizeIntents, type Intents } from '../input/intents';
+import type { WorldCapture } from './capture';
 import type { InputChange, InputEntry, Replay } from './replay';
 import type { AnyComponents, PhysicsHook } from './state';
 import { createWorld, type World } from './world';
@@ -56,9 +58,28 @@ export const SCENE_CODES = defineCodes('sim', {
   },
   SIM_OFF_RECORD: {
     template: 'the world took {count} steps outside its session, so the recording misses their intents',
-    fix: 'step a recorded scene through session.step(intents), never world.step()',
+    fix: 'step a recorded scene through session.step(intents), never world.step(); capture and restore it through session.capture() and session.restore(capture), never the world',
+  },
+  SIM_FOREIGN_CAPTURE: {
+    template: 'restore() was given a capture the session of {scene} did not take',
+    fix: "restore what this session's capture() (__engine.capture()) returned, the object itself: the session knows where its recording stood then; the world's own captures, another session's and copies have no place in it, so reach other state by starting the scene again (__engine.seed(n)) or playing a replay",
+  },
+  SIM_EDITED_CAPTURE: {
+    template: 'the capture the session of {scene} took at step {step} was changed since (it hashes {now}, not {then})',
+    fix: 'restore it unchanged, then make the change through the session so record() replays it: session.set(path, value) (__engine.set) for a setting, a dev action (session.act(name, args)) for components',
+  },
+  SIM_BAD_SEED: {
+    template: '{where} got the seed {value}, which a replay cannot hold',
+    fix: 'pass a whole number, 0 or more (x sim --seed 3, __engine.seed(3)): record() writes the seed into the replay',
   },
 });
+
+/** Returns `seed` (1 when absent); throws `SIM_BAD_SEED` naming `where` unless it is a whole number from 0. */
+export function checkSeed(seed: unknown, where: string): number {
+  if (seed === undefined) return 1;
+  if (Number.isInteger(seed) && (seed as number) >= 0) return seed as number;
+  throw codeError('SIM_BAD_SEED', { where, value: show(seed) });
+}
 
 /** A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays. */
 export type SceneAction<W> = (w: W, args: unknown) => void;
@@ -231,8 +252,27 @@ export interface Session<C extends object = AnyComponents, E extends EventMap = 
   set(path: string, value: unknown): SettingChange;
   /** Runs the scene's dev action `name` between steps, all or nothing, then records it. Throws `SIM_NO_ACTION`. */
   act(name: string, args?: unknown): void;
+  /** The whole sim, copied (`world.capture()`), with where the recording stands: what `restore` takes. */
+  capture(): WorldCapture;
+  /**
+   * Puts back a capture this session took, unchanged, with its recording (change-points, steps, intents) as it stood
+   * then. Throws `SIM_FOREIGN_CAPTURE` or `SIM_EDITED_CAPTURE` (or the world's `SIM_BAD_CAPTURE`), changing nothing.
+   */
+  restore(capture: WorldCapture): void;
   /** The replay of every step so far, from step 0, without hashes. Throws `SIM_OFF_RECORD`. */
   record(): Replay;
+}
+
+/** Where a session's recording stood at a capture (change-points as text: the last may change since) and its digest. */
+type Mark = { steps: number; inputs: string; last: Intents; seen: Record<string, SettingValue>; hash: string };
+
+/** The digest of a capture's data, or a note when it no longer is plain data. */
+function digest(capture: WorldCapture): string {
+  try {
+    return hashValue(capture as unknown as Canonical);
+  } catch {
+    return 'no hash (no longer plain data)';
+  }
 }
 
 /** Starts a scene as a recorded session: `startScene`, plus the recording. */
@@ -240,7 +280,7 @@ export function createSession<C extends object = AnyComponents, E extends EventM
   scene: Parameters<typeof startScene<C, E>>[0],
   options: SceneOptions = {},
 ): Session<C, E> {
-  const run = startScene<C, E>(scene, options);
+  const run = startScene<C, E>(scene, { ...options, seed: checkSeed(options.seed, 'createSession(scene, { seed })') });
   const { world, settings } = run;
   const registry = options.registry ?? sharedRegistry;
   const viewOf = (path: string) => registry.get('setting', path).view === true;
@@ -249,6 +289,7 @@ export function createSession<C extends object = AnyComponents, E extends EventM
   let last: Intents = NO_INTENTS;
   let steps = 0;
   let seen = settings.sim.values();
+  const marks = new WeakMap<WorldCapture, Mark>();
   /** The change-point to write a `what` into at this step: the last one when the play order allows, else a new one. */
   const pointFor = (what: 'set' | 'dev' | 'intents'): InputChange => {
     const tail = inputs[inputs.length - 1];
@@ -318,6 +359,25 @@ export function createSession<C extends object = AnyComponents, E extends EventM
       const point = pointFor('dev');
       point.dev = name;
       if (text !== undefined) point.args = deserialize(text);
+    },
+    capture() {
+      sync();
+      const capture = world.capture();
+      const text = serialize(inputs as unknown as Canonical);
+      marks.set(capture, { steps, inputs: text, last, seen, hash: digest(capture) });
+      return capture;
+    },
+    restore(capture) {
+      const mark = marks.get(capture);
+      if (!mark) throw codeError('SIM_FOREIGN_CAPTURE', { scene: run.scene.id });
+      const now = digest(capture);
+      if (now !== mark.hash) {
+        throw codeError('SIM_EDITED_CAPTURE', { scene: run.scene.id, step: mark.steps, now, then: mark.hash });
+      }
+      world.restore(capture);
+      inputs.length = 0;
+      for (const entry of deserialize(mark.inputs) as unknown as InputEntry[]) inputs.push(entry);
+      ({ steps, last, seen } = mark);
     },
     record() {
       if (world.tick !== steps) throw codeError('SIM_OFF_RECORD', { count: world.tick - steps });

@@ -2,8 +2,8 @@
  * @file Unit tests for engine/app/headless.ts (T1, PLAN.md §8.3, §6.9, WP 1.6): `createHeadless` starts a scene by id
  * or as a scene, seeded, with settings over the scene's; `step(n, intents)` runs n recorded steps, holding one intents
  * object (its presses on the first step only) or following a script; the recording replays to the same hashes; the
- * kernel fixture gives the same hash through it as through a plain session; a test registry gets the clock's
- * settings; `headlessHost` takes only a headless engine.
+ * kernel fixture gives the same hash through it as through a plain session; a seed is a whole number from 0; a test
+ * registry gets the clock's settings; `headlessHost` takes only a headless engine.
  * @see engine/app/headless.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -90,6 +90,15 @@ describe('createHeadless', () => {
     const session = createSession(kernel, { seed: 3, settings: { 'kernel.movers': 4 } });
     for (let k = 0; k < 240; k++) session.step({});
     expect(engine.hash()).toBe(session.world.hash());
+  });
+
+  it('takes only a whole seed from 0, which the recording can replay', async () => {
+    const registry = demo();
+    await expect(createHeadless({ scene: 'walk', seed: 2.5, registry })).rejects.toThrow(
+      /^\[SIM_BAD_SEED\] createHeadless\(\{ seed \}\) got the seed 2\.5, which a replay cannot hold: pass a whole number/,
+    );
+    await expect(createHeadless({ scene: 'walk', seed: -1, registry })).rejects.toThrow(/SIM_BAD_SEED/);
+    expect((await createHeadless({ scene: 'walk', seed: 0, registry })).seed()).toBe(0);
   });
 
   it("gives a test registry the clock's settings, and headlessHost takes only a headless engine", async () => {

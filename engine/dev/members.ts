@@ -14,6 +14,13 @@
  * documented; required arguments come before optional ones; a `value` member (read as a property) takes none; `impl`
  * takes no argument `args` lacks (`impl.length` counts the host).
  *
+ * The rule for members that change the sim: only through the session's recorded operations, so `record()` always
+ * replays what happened (PLAN.md §8.4). The host hands members `recordedRun(session)`: the session's `step` (or
+ * `host.step`, through the clock), `set` and its settings store, `act`, `capture` and `restore`, `record`, and the
+ * world read-only (`WorldReads`: no spawn, add, emit, step, run, capture or restore; its entities typed read-only).
+ * A change no recorded operation can make is refused (a coded error naming the fix), or added to the session first;
+ * presentation that never reaches the sim (the clock's view settings) is free.
+ *
  * @example
  * import { createRegistry } from '../core/registry';
  * const members = createRegistry();
@@ -28,6 +35,73 @@ import { registry as sharedRegistry, type Entry, type Registry } from '../core/r
 import { checkField, show, type Field, type Schema } from '../core/schema';
 import type { Clock } from '../core/time';
 import type { Session } from '../sim/scene';
+import type { EntityData } from '../sim/state';
+import type { World, WorldEvents } from '../sim/world';
+
+/** The world as members read it: its reads, none of its mutators (members change the sim through the session). */
+export type WorldReads = Pick<
+  World,
+  'seed' | 'hz' | 'dt' | 'tick' | 'time' | 'count' | 'has' | 'state' | 'hash' | 'trace'
+> & {
+  /** One live entity, read-only, or undefined. */
+  get(id: number): EntityData | undefined;
+  /** The live entities holding every named component, in id order, read-only. Throws `SIM_UNKNOWN_COMPONENT`. */
+  query(...names: string[]): readonly EntityData[];
+  /** The delivered events' trace; listeners are the scene's. */
+  readonly events: Pick<WorldEvents, 'trace'>;
+  /** The systems in run order; adding or removing them is the scene's. */
+  readonly systems: Pick<World['systems'], 'list'>;
+};
+
+/** The run as members reach it: the session's recorded operations, scene and settings store, and the world read-only. */
+export type RecordedRun = Omit<Session, 'world'> & { readonly world: WorldReads };
+
+/** `session` as members reach it (`InspectorHost.session`): a frozen view that forwards the recorded operations and reads. */
+export function recordedRun(session: Session): RecordedRun {
+  const { world } = session;
+  const reads: WorldReads = {
+    get seed() {
+      return world.seed;
+    },
+    hz: world.hz,
+    dt: world.dt,
+    get tick() {
+      return world.tick;
+    },
+    get time() {
+      return world.time;
+    },
+    get count() {
+      return world.count;
+    },
+    has: (id) => world.has(id),
+    get: (id) => world.get(id),
+    query: (...names) => world.query(...names),
+    state: () => world.state(),
+    hash: () => world.hash(),
+    trace: () => world.trace(),
+    events: Object.freeze({ trace: () => world.events.trace() }),
+    systems: Object.freeze({ list: () => world.systems.list() }),
+  };
+  return Object.freeze({
+    scene: session.scene,
+    settings: session.settings,
+    world: Object.freeze(reads),
+    get steps() {
+      return session.steps;
+    },
+    get intents() {
+      return session.intents;
+    },
+    inputs: session.inputs,
+    step: (intents?: unknown) => session.step(intents),
+    set: (path: string, value: unknown) => session.set(path, value),
+    act: (name: string, args?: unknown) => session.act(name, args),
+    capture: () => session.capture(),
+    restore: (capture: Parameters<Session['restore']>[0]) => session.restore(capture),
+    record: () => session.record(),
+  });
+}
 
 /** What a member works on: the run behind `__engine`, a page's or `createHeadless`'s. */
 export interface InspectorHost {
@@ -39,8 +113,8 @@ export interface InspectorHost {
   readonly log: Log;
   /** The frame clock over the run's settings: `pause`, `resume`, `step` and `timeScale` go through it. */
   readonly clock: Clock;
-  /** The running scene's recorded session: its scene, world and settings store. */
-  readonly session: Session;
+  /** The running scene's recorded session as members reach it (`recordedRun`): see the file comment's rule. */
+  readonly session: RecordedRun;
   /** The JavaScript runtime: `node` or `browser`. */
   readonly runtime: string;
   /** Whether a renderer draws; without one, members that need it throw `DEV_NO_RENDERER`. */

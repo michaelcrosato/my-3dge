@@ -5,7 +5,8 @@
  * scene's `step` first in the phase `intents`, and every start is a fresh world and settings store; an unknown id
  * names the closest. A session records setting changes made through its own store (set, setText, load, fromUrl,
  * reset, override) at their step, merged in play order, so its replay gives the live hashes; what no step has followed
- * yet waits; and a dev action that throws is rolled back and not recorded.
+ * yet waits; a dev action that throws is rolled back and not recorded; the session restores only its own captures,
+ * unchanged, taking the recording back (or forward) with them, so its replay gives the live hash; seeds are whole.
  * @see engine/sim/scene.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -233,5 +234,75 @@ describe('createSession', () => {
     const replay = live.record();
     expect(replay.inputs.some(([, change]) => change.dev !== undefined)).toBe(false);
     expect(playReplay(replay, { registry, checkpoints: 'every' }).hashes[6]).toBe(live.world.hash());
+  });
+});
+
+describe('captures through the session', () => {
+  /** The hash a session's record() replays to at its last step. */
+  const replayed = (live: ReturnType<typeof createSession>, registry: ReturnType<typeof driftRegistry>) => {
+    const replay = live.record();
+    return playReplay(replay, { registry, checkpoints: [replay.steps] }).hashes[replay.steps];
+  };
+
+  it('restores its own captures with the recording, back or forward, so record() replays the run as it stands', () => {
+    const registry = driftRegistry();
+    const live = createSession('drift', { seed: 4, registry });
+    const steps = (n: number, move: [number, number]) => {
+      for (let k = 0; k < n; k++) live.step({ move });
+    };
+    steps(10, [0, 1]);
+    live.set('demo.speed', 3);
+    const at10 = live.capture();
+    live.set('demo.speed', 5); // merged into the change-point at step 10 after the capture: restoring drops it
+    steps(30, [1, 0]);
+    const at40 = live.capture();
+    live.restore(at10); // back to an earlier step
+    expect([live.steps, live.world.tick, live.settings.get('demo.speed')]).toEqual([10, 10, 3]);
+    steps(5, [0, -1]);
+    expect(live.record().inputs).toEqual([
+      [0, { move: [0, 1] }],
+      [10, { set: { 'demo.speed': 3 }, move: [0, -1] }],
+    ]);
+    expect(replayed(live, registry)).toBe(live.world.hash());
+    live.restore(at40); // forward again, to a step the run reached before
+    live.restore(at40); // at the current step: a capture restores any number of times
+    steps(5, [0, 1]);
+    expect(live.record().inputs).toEqual([
+      [0, { move: [0, 1] }],
+      [10, { set: { 'demo.speed': 5 }, move: [1, 0] }],
+      [40, { move: [0, 1] }],
+    ]);
+    expect(replayed(live, registry)).toBe(live.world.hash());
+  });
+
+  it('refuses a capture it did not take, or one changed since, naming the fix; nothing changes', () => {
+    const registry = driftRegistry();
+    const live = createSession('drift', { seed: 4, registry });
+    live.step({ move: [0, 1] });
+    const edited = live.capture() as unknown as { entities: { dot: { x: number } }[] };
+    edited.entities[0].dot.x += 5;
+    const before = live.world.hash();
+    expect(failure(() => live.restore(edited as never))).toMatch(
+      /^SIM_EDITED_CAPTURE .*took at step 1 was changed since.*session\.act/,
+    );
+    const other = createSession('drift', { seed: 4, registry });
+    other.step({ move: [0, 1] });
+    expect(failure(() => live.restore(other.capture()))).toMatch(/^SIM_FOREIGN_CAPTURE .*did not take/);
+    expect(failure(() => live.restore(live.world.capture()))).toMatch(/^SIM_FOREIGN_CAPTURE /);
+    const own = live.capture();
+    expect(failure(() => live.restore(JSON.parse(JSON.stringify(own))))).toMatch(/^SIM_FOREIGN_CAPTURE /);
+    expect([live.world.hash(), live.steps]).toEqual([before, 1]);
+    live.restore(own);
+    live.step({ move: [0, 1] });
+    expect(replayed(live, registry)).toBe(live.world.hash());
+  });
+
+  it('records only whole seeds from 0, which a replay can hold', () => {
+    const registry = driftRegistry();
+    expect(failure(() => createSession('drift', { seed: 2.5, registry }))).toMatch(
+      /^SIM_BAD_SEED .*createSession\(scene, \{ seed \}\) got the seed 2\.5/,
+    );
+    expect(failure(() => createSession('drift', { seed: -1, registry }))).toMatch(/^SIM_BAD_SEED /);
+    expect(createSession('drift', { seed: 0, registry }).record().seed).toBe(0);
   });
 });

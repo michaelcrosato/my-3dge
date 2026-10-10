@@ -11,7 +11,7 @@ Every code the engine prints, as `[CODE] message`, with its fix. Each module reg
 
 - Message: `headlessHost was given {value}, not a headless engine`
 - Fix: pass the object createHeadless resolved to
-- Registered in: [`engine/app/headless.ts` line 39](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 40](../engine/app/headless.ts)
 
 ## core
 
@@ -187,7 +187,7 @@ Raised by the settings store (engine/core/settings.ts) for an unknown path in `g
 
 - Message: `__engine.{member}: {problems}`
 - Fix: call it as {signature}; __engine.help({name}) lists its arguments
-- Registered in: [`engine/dev/inspector.ts` line 53](../engine/dev/inspector.ts)
+- Registered in: [`engine/dev/inspector.ts` line 57](../engine/dev/inspector.ts)
 
 Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when an argument does not match the schema its member declares: a wrong type, a value out of range, a missing required argument or one too many. Nothing has happened yet.
 
@@ -195,7 +195,7 @@ Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when
 
 - Message: `__engine.{member} needs a renderer, and this engine has none ({runtime}, headless)`
 - Fix: call it in a page started with createEngine (WP 2.7); headless, read state(), entities(), get(id) and hash() instead
-- Registered in: [`engine/dev/inspector.ts` line 49](../engine/dev/inspector.ts)
+- Registered in: [`engine/dev/inspector.ts` line 53](../engine/dev/inspector.ts)
 
 ## gfx
 
@@ -249,6 +249,12 @@ Raised by `restore` (engine/sim/capture.ts, engine/sim/world.ts) before anything
 
 Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step runs: an unknown key (named with the closest), a wrong format tag, a seed that is not a whole number from 0, a change-point out of order or at or past `steps`, a bad intent, setting or dev action, a platform key that is not `<os>-<arch>` as Node names them (named with the closest), goldens that do not cover the run (none, or none for the last step), a step key not written plainly, a hash that is not 16 hex digits, a step rate other than the world's, or a view setting.
 
+### SIM_BAD_SEED
+
+- Message: `{where} got the seed {value}, which a replay cannot hold`
+- Fix: pass a whole number, 0 or more (x sim --seed 3, __engine.seed(3)): record() writes the seed into the replay
+- Registered in: [`engine/sim/scene.ts` line 71](../engine/sim/scene.ts)
+
 ### SIM_BAD_SYSTEM
 
 - Message: `system {name}: {problem}`
@@ -263,17 +269,29 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 - Fix: call step(), run(), capture() and restore() between steps; inside a system, change the world directly (spawn, despawn and emit queue to the end of the step)
 - Registered in: [`engine/sim/world.ts` line 61](../engine/sim/world.ts)
 
+### SIM_EDITED_CAPTURE
+
+- Message: `the capture the session of {scene} took at step {step} was changed since (it hashes {now}, not {then})`
+- Fix: restore it unchanged, then make the change through the session so record() replays it: session.set(path, value) (__engine.set) for a setting, a dev action (session.act(name, args)) for components
+- Registered in: [`engine/sim/scene.ts` line 67](../engine/sim/scene.ts)
+
 ### SIM_EVENT_STORM
 
 - Message: `the end of step {tick} was still delivering events and spawns after {rounds} rounds`
 - Fix: break the loop: a listener that emits the event it listens to, or spawns what spawns it again, never settles; act on such chains one step at a time (store a pending flag in a component and let a system handle it next step)
 - Registered in: [`engine/sim/world.ts` line 70](../engine/sim/world.ts)
 
+### SIM_FOREIGN_CAPTURE
+
+- Message: `restore() was given a capture the session of {scene} did not take`
+- Fix: restore what this session's capture() (__engine.capture()) returned, the object itself: the session knows where its recording stood then; the world's own captures, another session's and copies have no place in it, so reach other state by starting the scene again (__engine.seed(n)) or playing a replay
+- Registered in: [`engine/sim/scene.ts` line 63](../engine/sim/scene.ts)
+
 ### SIM_NO_ACTION
 
 - Message: `the scene {scene} has no dev action {name} ({suggestion})`
 - Fix: add it to the scene: defineScene('{scene}', { actions: { {name}(w, args) { … } } }), or call one it has
-- Registered in: [`engine/sim/scene.ts` line 53](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 55](../engine/sim/scene.ts)
 
 ### SIM_NO_CALLBACKS
 
@@ -298,8 +316,8 @@ Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities
 ### SIM_OFF_RECORD
 
 - Message: `the world took {count} steps outside its session, so the recording misses their intents`
-- Fix: step a recorded scene through session.step(intents), never world.step()
-- Registered in: [`engine/sim/scene.ts` line 57](../engine/sim/scene.ts)
+- Fix: step a recorded scene through session.step(intents), never world.step(); capture and restore it through session.capture() and session.restore(capture), never the world
+- Registered in: [`engine/sim/scene.ts` line 59](../engine/sim/scene.ts)
 
 ### SIM_SHARED_DATA
 

@@ -85,10 +85,10 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 ## engine/dev
 
 - [`inspector.ts`](../engine/dev/inspector.ts): The inspector (PLAN.md §8.3, WP 1.6; doctrines: Agent-operable, Verifiable): `window.__engine` in a page and the object `createHeadless` returns in Node are one API, which `createInspector` assembles from the entries of the registry kind `inspectorMember` (engine/dev/members.ts).
-  - Exports: `createInspector`, `EngineInfo`, `EntitySummary`, `Inspector`, `INSPECTOR_CODES`
+  - Exports: `CORE_MEMBERS`, `CoreMembers`, `createInspector`, `EngineInfo`, `EntitySummary`, `Inspector`, `INSPECTOR_CODES`
   - Tests: [`engine/dev/inspector.test.ts`](../engine/dev/inspector.test.ts)
 - [`members.ts`](../engine/dev/members.ts): The registry kind `inspectorMember` (PLAN.md §8.3, §5.8's one tool table, WP 1.6): what an inspector member is (a help line, its arguments as schema fields, its implementation), the checks each one passes when defined, and the signatures and help lines made from them.
-  - Exports: `defineMember`, `helpText`, `InspectorHost`, `Member`, `memberKind`, `MemberSpec`, `signatureOf`
+  - Exports: `defineMember`, `helpText`, `InspectorHost`, `Member`, `memberKind`, `MemberSpec`, `recordedRun`, `RecordedRun`, `signatureOf`, `WorldReads`
   - Tests: [`engine/dev/inspector.test.ts`](../engine/dev/inspector.test.ts)
 
 ## engine/gfx
@@ -114,7 +114,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `CHECKPOINT_STEPS`, `checkpointsOf`, `checkReplay`, `firstDifference`, `InputChange`, `InputEntry`, `judgeRuns`, `Parting`, `partingOf`, `PLATFORM_KEYS`, `Playback`, `PlayOptions`, `playReplay`, `Replay`, `REPLAY_CODES`, `REPLAY_FORMAT`, `REPLAY_KEYS`, `StepView`, `Verdict`
   - Tests: [`engine/sim/replay.test.ts`](../engine/sim/replay.test.ts)
 - [`scene.ts`](../engine/sim/scene.ts): Scenes and sessions, sim-side (PLAN.md §6.9, §9.0, §8.4, WP 1.5; doctrines: Reproducible, Agent-operable): `defineScene(id, { level?, settings, setup, step })` registers a scene as an entry of the registry kind `scene`; `startScene` makes its world (a settings store with the scene's settings over the defaults and the caller's over those, a world seeded from the seed, the scene's `step` as the system `scene`, then its `setup`); `createSession` starts one that records its inputs from step 0, the recorder of PLAN.md §8.4.
-  - Exports: `createSession`, `defineScene`, `getScene`, `isScene`, `Scene`, `SCENE_CODES`, `SceneAction`, `SceneOptions`, `SceneRun`, `SceneSpec`, `Session`, `startScene`
+  - Exports: `checkSeed`, `createSession`, `defineScene`, `getScene`, `isScene`, `Scene`, `SCENE_CODES`, `SceneAction`, `SceneOptions`, `SceneRun`, `SceneSpec`, `Session`, `startScene`
   - Tests: [`engine/sim/scene.test.ts`](../engine/sim/scene.test.ts)
 - [`state.ts`](../engine/sim/state.ts): The canonical state and its hash (PLAN.md §6.5 items 4 and 6, WP 1.4, I-05; doctrine: Reproducible): component kinds declared with their field lists (registry kind `component`), the plain-data form of the sim that `state()` returns, the one 64-bit FNV-1a hash over everything a capture holds (`hash()`), per-entity digests (`trace()`), and `diffStates`, which names the fields where two states part.
   - Exports: `AnyComponents`, `ComponentData`, `ComponentKind`, `ComponentOf`, `componentTable`, `ComponentTable`, `defineComponent`, `diffStates`, `Entity`, `EntityData`, `hashState`, `PhysicsHook`, `SpawnSpec`, `STATE_CODES`, `STATE_FORMAT`, `StateDifference`, `StateView`, `traceState`, `With`, `WorldState`, `WorldTrace`

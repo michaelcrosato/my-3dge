@@ -12,7 +12,8 @@
  *
  * Invariants: everything runs synchronously after the promise resolves (the fdlibm swap holds only through
  * synchronous entry points); runs share nothing but the registry; the inspector holds only its members, so the run
- * behind it is reached through `headlessHost(h)` (tools only).
+ * behind it is reached through `headlessHost(h)` (tools only), whose `session` is what members get: the recorded
+ * operations and the world read-only (engine/dev/members.ts). A seed is a whole number from 0 (`SIM_BAD_SEED`).
  *
  * @example
  * import { createRegistry } from '../core/registry';
@@ -30,8 +31,8 @@ import { isPlainObject } from '../core/schema';
 import { createSettings, defineSettings, type SettingValue } from '../core/settings';
 import { createClock, TIME_SETTINGS, type Clock } from '../core/time';
 import { createInspector, type Inspector } from '../dev/inspector';
-import type { InspectorHost } from '../dev/members';
-import { createSession, getScene, type Scene, type Session } from '../sim/scene';
+import { recordedRun, type InspectorHost, type RecordedRun } from '../dev/members';
+import { checkSeed, createSession, getScene, type Scene, type Session } from '../sim/scene';
 import type { AnyComponents } from '../sim/state';
 
 /** The codes this module raises, with their fixes. */
@@ -74,11 +75,12 @@ function changedSettings(session: Session, registry: Registry): Record<string, S
 /**
  * Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has
  * (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer. Throws `CORE_NO_ENTRY` for an unknown
- * scene id and `CORE_BAD_SETTING` for a bad setting.
+ * scene id, `CORE_BAD_SETTING` for a bad setting and `SIM_BAD_SEED` for a seed a replay cannot hold.
  */
 export async function createHeadless<C extends object = AnyComponents, E extends EventMap = EventMap>(
   options: HeadlessOptions<C, E>,
 ): Promise<Headless> {
+  const firstSeed = checkSeed(options.seed, 'createHeadless({ seed })');
   const registry = options.registry ?? sharedRegistry;
   const scene =
     typeof options.scene === 'string' ? getScene(options.scene, registry) : (options.scene as unknown as Scene);
@@ -86,9 +88,13 @@ export async function createHeadless<C extends object = AnyComponents, E extends
   if (!timed) defineSettings(TIME_SETTINGS, registry); // the clock reads them: a test registry may lack them
   const start = (seed: number, settings: Readonly<Record<string, unknown>> | undefined) => {
     const session = createSession(scene, { seed, settings, registry, log: options.log });
-    return { session, clock: createClock({ settings: session.settings, log: options.log }) };
+    return {
+      session,
+      view: recordedRun(session),
+      clock: createClock({ settings: session.settings, log: options.log }),
+    };
   };
-  let run: { session: Session; clock: Clock } = start(options.seed ?? 1, options.settings);
+  let run: { session: Session; view: RecordedRun; clock: Clock } = start(firstSeed, options.settings);
   const host: InspectorHost = {
     registry,
     members: sharedRegistry,
@@ -97,7 +103,7 @@ export async function createHeadless<C extends object = AnyComponents, E extends
       return run.clock;
     },
     get session() {
-      return run.session;
+      return run.view;
     },
     runtime: typeof window === 'undefined' ? 'node' : 'browser',
     renderer: false,
@@ -111,8 +117,8 @@ export async function createHeadless<C extends object = AnyComponents, E extends
       const later = isPlainObject(intents) ? { ...intents, p: undefined } : intents;
       for (let k = 0; k < steps; k++) run.session.step(script ? (script[k] ?? {}) : k === 0 ? intents : later);
     },
-    restart(seed) {
-      run = start(seed, changedSettings(run.session, registry));
+    restart(next) {
+      run = start(next, changedSettings(run.session, registry));
     },
   };
   const inspector = createInspector(host);

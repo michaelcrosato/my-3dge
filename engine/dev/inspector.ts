@@ -10,12 +10,16 @@
  * with the arguments as given (absent ones as their default). A member that `needs: 'renderer'` throws
  * `DEV_NO_RENDERER` on a host without one, as `createHeadless` is. The core members map onto the kernel: `describe`
  * → the registry; `set` → the settings store through the session (text typed as `x set` types it, non-view changes
- * recorded); `errors` and `advice` → the log; `pause`, `resume`, `step` and `timeScale` → the clock; `state`, `hash`,
- * `trace`, `entities`, `get`, `capture` and `restore` → the world; `seed(n)` starts the scene again.
+ * recorded); `errors` and `advice` → the log; `pause`, `resume`, `step` and `timeScale` → the clock (steps recorded
+ * in the session); `capture` and `restore` → the session (a restore takes the recording back with the sim, and
+ * refuses a capture this run did not take or one changed since: engine/sim/scene.ts); `state`, `hash`, `trace`,
+ * `entities` and `get` → the world, read-only (a query names an undeclared component with the closest); `seed(n)`
+ * starts the scene again. Every member that changes the sim goes through the session (engine/dev/members.ts).
  *
  * Invariants: the object holds its members and nothing else, so `help()` lists exactly what it has (`x docs --check`
- * compares them, tools/lib/docsHelp.ts). Members are read from `host.members` when the inspector is made: register
- * before. Results are plain data, copied (a capture is the world's own object, so it restores in place).
+ * compares them, tools/lib/docsHelp.ts), and the core table is typed against `Inspector`, so tsc refuses a core member
+ * missing, extra or renamed. Members are read from `host.members` when the inspector is made: register before.
+ * Results are plain data, copied (a capture is the session's own object, so it restores in place).
  *
  * @example
  * import { createRegistry } from '../core/registry';
@@ -162,8 +166,14 @@ const QUERY = {
   description: 'A component name, or a list of names an entity must all hold; every entity when absent.',
 } as const;
 
+/** The keys `T` names, without its index signature. */
+type KnownKeys<T> = keyof { [K in keyof T as string extends K ? never : number extends K ? never : K]: T[K] };
+
+/** The core members' table, one spec per member the `Inspector` interface names: tsc refuses one missing or extra. */
+export type CoreMembers = Record<KnownKeys<Inspector>, MemberSpec>;
+
 /** The core members (PLAN.md §8.3, WP 1.6), registered on the shared registry when this module loads. */
-const CORE_MEMBERS: Record<string, MemberSpec> = {
+export const CORE_MEMBERS = {
   info: {
     help: "The engine's identity and health (version, runtime, adapter, features, downgrades, deps) and the run: scene, seed, tick, hz.",
     impl: (h): EngineInfo => ({
@@ -210,7 +220,9 @@ const CORE_MEMBERS: Record<string, MemberSpec> = {
   },
   seed: {
     help: "Starts the scene again with seed n (keeping the settings changed since it started) when n is given; returns the run's seed.",
-    args: { n: { type: 'integer', description: 'The new seed.' } },
+    args: {
+      n: { type: 'integer', minimum: 0, description: 'The new seed: a whole number, 0 or more, as replays hold it.' },
+    },
     impl: (h, n: number | undefined) => {
       if (n !== undefined) h.restart(n);
       return h.session.world.seed;
@@ -220,9 +232,9 @@ const CORE_MEMBERS: Record<string, MemberSpec> = {
     help: 'The sim as plain data, what the hash covers, with the entities the query matches.',
     args: { query: QUERY },
     impl: (h, query: unknown) => {
-      const names = namesOf(query, 'state');
+      const ids = new Set(h.session.world.query(...namesOf(query, 'state')).map((e) => e.id));
       const state = h.session.world.state();
-      return { ...state, entities: state.entities.filter((e) => names.every((name) => Object.hasOwn(e, name))) };
+      return { ...state, entities: state.entities.filter((e) => ids.has(e.id)) };
     },
   },
   hash: { help: 'The state digest: 16 hex digits.', impl: (h) => h.session.world.hash() },
@@ -262,11 +274,11 @@ const CORE_MEMBERS: Record<string, MemberSpec> = {
       return h.session.set(path, typed);
     },
   },
-  capture: { help: 'The whole sim, copied, to restore later.', impl: (h) => h.session.world.capture() },
+  capture: { help: 'The whole sim, copied, to restore later in this run.', impl: (h) => h.session.capture() },
   restore: {
-    help: 'Puts back a capture: the next steps continue exactly like the run it came from.',
-    args: { capture: { type: 'object', required: true, description: 'What capture() returned.' } },
-    impl: (h, capture: WorldCapture) => h.session.world.restore(capture),
+    help: 'Puts back a capture this run took, unchanged, with the recording as it stood then: the next steps continue exactly like the run it came from, and record() replays them.',
+    args: { capture: { type: 'object', required: true, description: 'What capture() returned, the object itself.' } },
+    impl: (h, capture: WorldCapture) => h.session.restore(capture),
   },
   describe: {
     help: 'The registries, as x describe lists them: every kind, one kind with its fields and ids, or one entry.',
@@ -294,5 +306,5 @@ const CORE_MEMBERS: Record<string, MemberSpec> = {
     value: true,
     impl: (h) => copyValue([...h.log.advice]),
   },
-};
+} satisfies CoreMembers;
 for (const [name, spec] of Object.entries(CORE_MEMBERS)) defineMember(name, spec);

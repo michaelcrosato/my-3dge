@@ -7,7 +7,8 @@
  * headless, and compares the names `help()` lists with the object's own: calls as `name()`, properties as `name`,
  * namespaces walked (`scene.dump()`). A member patched onto the object, one missing from it, or a call listed as a
  * property is a failure naming it; a module that cannot load is one too. Before WP 1.6's modules exist it checks
- * nothing.
+ * nothing. `help()` and the object are built from one table, so a core member missing from it, extra or renamed is
+ * tsc's to catch: engine/dev/inspector.ts types that table against the `Inspector` interface (`CoreMembers`).
  *
  * Invariants: getters are never read (only their descriptors), so walking the API runs no member.
  *

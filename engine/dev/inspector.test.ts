@@ -2,7 +2,9 @@
  * @file Unit tests for engine/dev/inspector.ts and engine/dev/members.ts (T1, PLAN.md §8.3, WP 1.6): a member
  * registered from a test file appears in `__engine` and in `help()`; `help()` matches the object; arguments are
  * checked against their schema; members that need a renderer throw `DEV_NO_RENDERER` headless; the kind refuses
- * malformed members; every core member does its job on a headless run; every setting the repository declares is
+ * malformed members; the core table is typed against `Inspector`; every core member does its job on a headless run
+ * (capture and restore through the session, so record() replays a restored run and an edited capture is refused;
+ * members get the world read-only; queries name an unknown component; seeds are whole); every setting declared is
  * reachable through `__engine.set` (§3, Agent-operable); the kernel fixture imports only engine/sim-api.ts, and the
  * public-API rule refuses a fixture scene that imports engine/sim/world (WP 1.6's Done-when).
  * @see engine/dev/inspector.ts
@@ -17,11 +19,13 @@ import { apiOf, checkHelp, helpDrift, helpNames, memberModules } from '../../too
 import { ROOT } from '../../tools/x';
 import { createHeadless, headlessHost } from '../app/headless';
 import { createLog, EngineError } from '../core/log';
-import { createRegistry, registry as sharedRegistry } from '../core/registry';
+import { createRegistry, registry as sharedRegistry, type Registry } from '../core/registry';
 import { defineSettings, type SettingRow } from '../core/settings';
 import { defineScene } from '../sim/scene';
 import { defineComponent } from '../sim/state';
-import { createInspector } from './inspector';
+import kernel from '../../fixtures/scenes/kernel';
+import { playReplay } from '../sim/replay';
+import { CORE_MEMBERS, createInspector, type CoreMembers, type Inspector } from './inspector';
 import { defineMember, helpText, type InspectorHost } from './members';
 
 /** The code and message of the EngineError `fn` throws. */
@@ -69,6 +73,12 @@ function demo() {
 /** A headless run of the demo scene on its own registry and a quiet log. */
 const start = (seed = 1) => createHeadless({ scene: 'demo', seed, registry: demo(), log: quietLog() });
 
+/** The hash the recording of `engine` replays to at its last step. */
+function replayed(engine: Inspector, registry?: Registry): string {
+  const replay = headlessHost(engine).session.record();
+  return playReplay(replay, { registry, checkpoints: [replay.steps] }).hashes[replay.steps];
+}
+
 describe('members registered from anywhere', () => {
   it('a member registered from a test file appears in __engine and in help()', async () => {
     defineMember('testPing', {
@@ -112,6 +122,12 @@ describe('members registered from anywhere', () => {
     expect(failure(() => (engine.get as () => unknown)())).toMatch(/^DEV_BAD_ARGS __engine\.get: id is required/);
     expect(failure(() => (engine.hash as (n: number) => string)(1))).toMatch(/it takes 0 argument\(s\), not 1/);
     expect(failure(() => engine.state(7 as unknown as string))).toMatch(/query is 7; it must be a component name/);
+    expect(failure(() => engine.state('dott'))).toMatch(/^SIM_UNKNOWN_COMPONENT "dott" .*did you mean "dot"/);
+    expect(failure(() => engine.state(['tag', 'dott']))).toMatch(/^SIM_UNKNOWN_COMPONENT "dott"/);
+    expect(failure(() => engine.seed(-1))).toMatch(/^DEV_BAD_ARGS __engine\.seed: n is -1, below its minimum 0/);
+    expect(failure(() => engine.seed(2.5))).toMatch(
+      /^DEV_BAD_ARGS __engine\.seed: n is a number; it must be a whole number/,
+    );
     expect(engine.info().tick).toBe(0);
   });
 
@@ -122,6 +138,19 @@ describe('members registered from anywhere', () => {
       /^DEV_NO_RENDERER __engine\.testShot needs a renderer, and this engine has none \(node, headless\)/,
     );
     expect(engine.help()).toMatch(/^testShot\(\) +Takes a shot\. \(needs a renderer\)$/m);
+  });
+
+  it('types the core table against the Inspector interface: tsc refuses a missing, extra or renamed member', async () => {
+    const { hash, ...lacking } = CORE_MEMBERS;
+    // @ts-expect-error hash is missing
+    const missing: CoreMembers = lacking;
+    // @ts-expect-error ping is no member of the Inspector interface
+    const extra: CoreMembers = { ...CORE_MEMBERS, ping: hash };
+    // @ts-expect-error hash renamed: digest is no member, and hash is missing
+    const renamed: CoreMembers = { ...lacking, digest: hash };
+    expect([missing, extra, renamed].map((table) => Object.keys(table).length)).toEqual([17, 19, 18]);
+    const api = apiOf(await start());
+    expect(Object.keys(CORE_MEMBERS).filter((name) => !api.includes(name) && !api.includes(`${name}()`))).toEqual([]);
   });
 
   it('the kind refuses malformed members, naming each problem', () => {
@@ -225,15 +254,50 @@ describe('the core members', () => {
     expect(headlessHost(engine).session.record().settings).toEqual({ 'demo.count': 4 });
   });
 
-  it('capture and restore: the run goes on exactly as before', async () => {
+  it('capture and restore go through the session: the run goes on exactly, and record() replays it', async () => {
     const engine = await start();
+    const { registry } = headlessHost(engine);
     engine.step(7);
     const saved = engine.capture();
     engine.step(20);
     const later = engine.hash();
-    engine.restore(saved);
+    engine.restore(saved); // to an earlier tick
+    expect(engine.info().tick).toBe(7);
     engine.step(20);
     expect(engine.hash()).toBe(later);
+    expect(replayed(engine, registry)).toBe(later);
+    engine.restore(engine.capture()); // at the current tick
+    engine.step(3);
+    expect(replayed(engine, registry)).toBe(engine.hash());
+    const other = await start();
+    expect(failure(() => engine.restore(other.capture()))).toMatch(/^SIM_FOREIGN_CAPTURE /);
+  });
+
+  it("refuses an edited capture, so record() never hides a change (the G1 verifier's probe)", async () => {
+    const engine = await createHeadless({ scene: kernel, seed: 1, log: quietLog() });
+    engine.step(100);
+    const capture = engine.capture();
+    const edited = structuredClone(capture) as unknown as { entities: { mover: { x: number } }[] };
+    expect(failure(() => engine.restore(edited as never))).toMatch(/^SIM_FOREIGN_CAPTURE /);
+    (capture.entities[0] as unknown as { mover: { x: number } }).mover.x += 5;
+    expect(failure(() => engine.restore(capture))).toMatch(/^SIM_EDITED_CAPTURE .*kernel took at step 100/);
+    engine.step(100);
+    expect(replayed(engine)).toBe(engine.hash());
+  });
+
+  it('hands members the recorded operations and the world read-only, never its mutators', async () => {
+    const engine = await start();
+    const { session } = headlessHost(engine);
+    const world = session.world as unknown as Record<string, unknown>;
+    for (const name of ['spawn', 'despawn', 'add', 'remove', 'emit', 'run', 'step', 'capture', 'restore']) {
+      expect(world[name], name).toBeUndefined();
+    }
+    expect(Object.keys(world.events as object)).toEqual(['trace']);
+    for (const name of ['step', 'set', 'act', 'capture', 'restore', 'record'] as const) {
+      expect(typeof session[name], name).toBe('function');
+    }
+    engine.step(2);
+    expect([session.steps, session.world.tick, session.world.count]).toEqual([2, 2, 3]);
   });
 
   it('describe lists the registries as x describe does; errors and advice show the log', async () => {

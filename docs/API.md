@@ -339,6 +339,8 @@ For the agents who maintain the engine.
 
 ### [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)
 
+- `CORE_MEMBERS` (const): The core members (PLAN.md §8.3, WP 1.6), registered on the shared registry when this module loads.
+- `CoreMembers` (type): The core members' table, one spec per member the `Inspector` interface names: tsc refuses one missing or extra.
 - `createInspector` (function): Assembles `__engine` on `host` from the members registered on `host.members` (see the file comment).
 - `EngineInfo` (interface): What `info()` reports: the engine's identity and health, and the run.
 - `EntitySummary` (interface): One entity as `entities()` lists it: its id and the components it holds.
@@ -353,7 +355,10 @@ For the agents who maintain the engine.
 - `Member` (type): A registered member: its spec with defaults filled, plus `id` (its name) and `kind`.
 - `memberKind` (function): Declares the kind `inspectorMember` on `registry` unless it has it.
 - `MemberSpec` (interface): How a member is written: `defineMember(name, spec)` or `def('inspectorMember', name, spec)`.
+- `recordedRun` (function): `session` as members reach it (`InspectorHost.session`): a frozen view that forwards the recorded operations and reads.
+- `RecordedRun` (type): The run as members reach it: the session's recorded operations, scene and settings store, and the world read-only.
 - `signatureOf` (function): How a member is called: `step(n = 1, intents?)`, `get(id)`, or `errors` for a value member.
+- `WorldReads` (type): The world as members read it: its reads, none of its mutators (members change the sim through the session).
 
 ### [`engine/gfx/renderer.ts`](../engine/gfx/renderer.ts)
 
@@ -432,6 +437,7 @@ For the agents who maintain the engine.
 
 ### [`engine/sim/scene.ts`](../engine/sim/scene.ts)
 
+- `checkSeed` (function): Returns `seed` (1 when absent); throws `SIM_BAD_SEED` naming `where` unless it is a whole number from 0.
 - `createSession` (function): Starts a scene as a recorded session: `startScene`, plus the recording.
 - `defineScene` (function): Registers a scene on `registry` (the shared one by default) and returns it.
 - `getScene` (function): The scene `id` on `registry` (the shared one by default).
