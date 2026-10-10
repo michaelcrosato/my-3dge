@@ -88,9 +88,9 @@ After Box 6 (gate G7, the foundation), the plan brings over the animation librar
 
 The owner's sibling engine, [shardfall](https://github.com/michaelcrosato/shardfall), is written in Rust under the same doctrine (§4.8). Its code cannot be copied, so its designs, tuned numbers, shaders and data come over instead (§5.8):
 - the character controller's fixes and its feel meter, measured here on Rapier 0.21 (WP 3.2);
-- touch controls that phones play today (WP 3.12), and a Vercel deployment (WP 0.12);
+- touch controls, checked there only under phone emulation (WP 3.12), and a Vercel deployment (WP 0.12);
 - one fixed MRT with every filter behind a uniform, its filters, and 73 tuned presets (WP 7.4);
-- 893 more motion clips: 100STYLE's 878 styles of walking, running and standing, and Quaternius' version 2 (WP 8.10);
+- 893 more motion clips: 100STYLE's 878 loops of about 100 styles of walking, running, sidestepping and standing, and Quaternius' version 2 (WP 8.10);
 - lessons from its journal: hash everything a capture holds, record setting changes in replays, reject unknown arguments, keep the startup read to one page.
 
 ### What we will build
@@ -177,11 +177,11 @@ A rule without a check is only a suggestion. Each principle of `DOCTRINE.md` com
 
 | Principle | Rules | Enforced by |
 |---|---|---|
-| **How to read this.** Judgment of a trusted manager; deviations are escalated with their reasoning. | <ul><li>Agents decide what the doctrine and this plan leave open, and record the call as an ADR amendment (§11.4).</li><li>When going against the doctrine looks best, the agent escalates with its reasoning (§8.14) instead of quietly deviating.</li></ul> | The `verifier` checks that every deviation has an escalation record; `docs/escalations/` |
+| **How to read this.** Judgment of a trusted manager; deviations are escalated with their reasoning. | <ul><li>Agents decide what the doctrine and this plan leave open, and record the call as an ADR amendment (§11.4).</li><li>When going against the doctrine looks best, the agent escalates with its reasoning (§8.14) instead of quietly deviating.</li></ul> | The `verifier` checks that every deviation has an escalation record or an owner's call in an ADR (ADR-0021); `docs/escalations/` |
 | **North Star.** The best expected overall output, not flawless software; problems solved when they surface. | <ul><li>The roadmap's core path is what the Stress Box and the doctrine need. Everything else is **on demand**: a WP that starts only when its trigger is measured, and records the measurement (§9.1).</li><li>The plan's answers to problems the prototype already hit or the probes measured (pipeline stalls, the instancing quirks, re-warms after filter toggles, crowd physics cost, `Math` differences between runtimes) are not anticipation; they ship with the stage that meets them.</li><li>Ceremony scales with risk: the `verifier` reviews L-size WPs and every gate; S and M WPs rely on their Verify commands.</li></ul> | The roadmap (§9); the ledger's notes record each trigger |
 | **P1. Agent-readable.** Code, data and structure are optimized for agent comprehension over conventions that serve only humans. | <ul><li>One concept per file, named for what it does. No one-letter names outside tiny scopes.</li><li>Soft cap of 400 lines per file, hard cap 600. Prettier formats every file (print width 120).</li><li>Every module opens with a **JSDoc file comment** (`@file`: purpose, invariants, an example, see also) of 40 lines or fewer, and every export carries its own doc comment (§6.8).</li><li>Strict TypeScript in the style agents know best: ES modules, extensionless imports, no enums or namespaces (`erasableSyntaxOnly`).</li><li>Docs are generated from the comments (INDEX, API, ERRORS) and never written twice.</li><li>No minified or generated code in the repository; dependencies stay in `node_modules`.</li><li>Content is data: levels, materials, props, bodies and clips are readable text.</li></ul> | `npm run check`: `tsc`, ESLint (`jsdoc/require-file-overview`, `max-lines`), Prettier. `node x docs --check` |
 | **P2. Agent-operable.** Every capability has a machine interface; nothing requires a GUI unless there is no other option. | <ul><li>Every capability is reachable through an npm script, a `node x` command or an `__engine` member.</li><li>Every `x` command prints at most about 20 lines, writes a `report.json` with a fixed schema, and exits 0, 1 or 2. The standard tools are configured for short terminal output plus a JSON report under `out/`.</li><li>Every setting comes from one schema: `x set`, URL parameters and `__engine.set` (a panel, if any, is generated from it).</li><li>Registries are discoverable through `x describe` and `__engine.describe()`.</li><li>Errors and advice carry stable codes that name the fix.</li></ul> | <ul><li>Every `x` command has a smoke test.</li><li>`x docs --check` compares `help()` with the real API.</li><li>A test enforces that every setting is reachable through `x set` and `__engine.set`.</li><li>The `verifier` rejects any feature reachable only through a page.</li></ul> |
-| **P3. Verifiable without a display.** | <ul><li>The sim runs headless in Node: Vitest, `x sim`, `x replay`.</li><li>Every visual feature has numeric checks: the ID pass, look metrics and text thumbnails. HTML/CSS UI is checked through DOM queries. Images are optional and made on demand.</li><li>Browser tests run in headless Chromium through Playwright Test, on WebGPU (SwiftShader).</li><li>Each feature lands with the cheapest test that proves it: a Vitest unit test, then a replay hash, then Playwright numbers, then an image.</li><li>Unit tests are selected through Vite's module graph (`vitest --changed`, `vitest related`).</li></ul> | The test tiers with time budgets (§8.2); replay suites; `node x ci --local` |
+| **P3. Verifiable without a display.** | <ul><li>The sim runs headless in Node: Vitest, `x sim`, `x replay`.</li><li>Every visual feature has numeric checks: the ID pass, look metrics and text thumbnails. HTML/CSS UI is checked through DOM queries. Images are optional and made on demand.</li><li>Browser tests run in headless Chromium through Playwright Test, on WebGPU (SwiftShader).</li><li>Each feature lands with the cheapest test that proves it: a Vitest unit test, then a replay hash, then Playwright numbers, then an image.</li><li>**The owner's exceptions** (ADR-0021): the touch controls (WP 3.12) and the Vercel deployment (WP 0.12) are not tested.</li><li>Unit tests are selected through Vite's module graph (`vitest --changed`, `vitest related`).</li></ul> | The test tiers with time budgets (§8.2); replay suites; `node x ci --local` |
 | **P4. Agent-accessible assets.** Procedural first, then text and data, then binary with approval. | <ul><li>Generators are pure functions of `(params, seed)`.</li><li>Text and data (clips, catalogs, levels, sound definitions) record their source and license.</li><li>**Binary files only with the owner's approval**, each listed in `data/APPROVED-BINARIES.json` with its escalation record. Fonts (WOFF2, TTF, OTF) are pre-approved under `data/fonts/`, each with its license.</li><li>Importer inputs (GLB, AMC, BVH) live only in the git-ignored `.cache/`.</li><li>Golden references are numbers and text thumbnails, never committed images, so Playwright's screenshot snapshots are not used.</li><li>Dependencies in `node_modules`, Rapier's inlined WASM included, are code, not source assets (ADR-0019).</li></ul> | `node x check`, the asset scan: extensions, magic bytes, and base64 runs or `data:` URIs over 1 KB, outside the approved list. The importers refuse to write outside `.cache/` and `data/` |
 | **P5. Reproducible on the development platform.** | <ul><li>A fixed 60 Hz step; everything from outside arrives as recorded intents.</li><li>Seeded, named RNG streams; an ordered world.</li><li>**Deterministic math under the hood:** while the sim steps, the engine swaps in fdlibm ports of the transcendental `Math` functions, so Node and Chromium agree bit for bit. Game code still writes `Math.sin` (§6.5).</li><li>**One golden hash per replay**, valid in Node and in the browser.</li><li>Capture and restore cover the whole sim, Rapier and the RNG streams included, and a restore continues exactly like the uninterrupted run (Rapier 0.21, §4.7).</li><li>Replays with bisection.</li></ul> | ESLint's sim-side bans (Appendix B); replay suites in Node and in Chromium; capture and restore tests (§6.5) |
 | **P6. WebGPU only.** WebGPU is the only renderer; gameplay runs only on the CPU; game UI in HTML/CSS is allowed. | <ul><li>The engine requires WebGPU and refuses to start without it, with a coded error. three.js's automatic WebGL 2 fallback is switched off.</li><li>Rendering may use everything WebGPU offers, compute and storage included, for looks and speed. Optional adapter features (`timestamp-query`, `float32-filterable`…) are checked, and every downgrade logs an advice code.</li><li>Sim-side code never imports `gfx/`, three.js's renderer or scene classes, the DOM or Web Audio. Nothing is read back from the GPU into the sim.</li><li>Game UI is HTML/CSS over the canvas (§6.7).</li><li>The browser is the target now; a native WebGPU implementation (Dawn or wgpu on Vulkan) waits for Phase H.</li></ul> | <ul><li>ESLint's layer rules (`no-restricted-imports`, one block per layer).</li><li>`tests/e2e/parity.spec.ts`: a replay gives its golden hashes while the page renders; live play recorded in the page replays in Node to the same hashes.</li><li>Toggling any visual feature never changes the hash.</li><li>The startup test: no WebGPU, no engine.</li></ul> |
@@ -189,7 +189,7 @@ A rule without a check is only a suggestion. Each principle of `DOCTRINE.md` com
 | **P8. Quality under the hood.** Internals use the highest-quality approach their builder can execute well; the complexity stays behind the API. | <ul><li>**Internals** are code whose API does not appear in game code: the renderer's passes and materials, the instancing service, the physics adapter, the animation solver, deterministic math, capture, the tools' insides. They use what works best: TSL and compute where they look or run better, Rapier's SIMD build, newer releases where they measurably help (doctrine: Mastery).</li><li>**The public API is a boundary.** Game code (the box's scenes and cast, fixtures, future games) imports only the barrels `engine/index.ts` (pages) and `engine/sim-api.ts` (sim-side code).</li><li>**Game agents never need to read the internals,** even when something goes wrong: every error and advice code names the fix in API terms, `docs/API.md` is complete, and the inspector and `x` commands explain state without opening engine code. Internals stay agent-readable (doctrine: Agent-readable) for the agents who maintain the engine.</li><li>Reuse what others built well (three.js, Rapier, stdlib's math), and invest in what is ours.</li></ul> | ESLint's public-API rule for game code; `x docs --check` (every public export documented, every error code with a fix); the `verifier` |
 | **P9. Mastery over novelty.** | <ul><li>Each dependency is pinned to the newest release that is backward compatible with its newest **qualifying** release (one at least 12 months old), and that release is **adopted immediately** (§6.10). A line that is not backward compatible waits until it qualifies, then arrives as an upgrade work package.</li><li>**Internals may go newer** when a newer release measurably raises quality and the builder can use it well: today three.js r182 and Rapier 0.21 (§4.7). `tools/deps.json` records the measurement.</li><li>Game-facing code writes the qualifying releases' idioms; features newer than that wait until they qualify, unless an ADR says otherwise.</li><li>The platform follows the same rule: Node's newest qualifying LTS line (24) is installed for each session until the environment provides it (§6.10).</li><li>Pinned knowledge: the pinned packages' own sources and types in `node_modules`, `docs/THREE-DELTA.md`, and the TSL guide as it stood for the pinned three.js.</li></ul> | `node x deps --check` (offline: the pins match `tools/deps.json`, each with its rule and reason); `node x deps --update` at the start of every WP adopts compatible releases; `node x deps --qualify` at every gate lists upgrades that qualify |
 | **P10. Discovery first, hardening later.** One target platform: the development environment's. | <ul><li>Development and tests target the development platform: the Linux cloud container, Node 24, and the container's headless Chromium 141 with WebGPU on SwiftShader, driven by Playwright Test.</li><li>Prefer the smallest change that proves an idea in the box. Tuning and polish wait.</li><li>Phase H (other browsers, testing on phones, a native build, releases, cross-platform determinism) is not scheduled until a game goes to production.</li><li>**The owner's exceptions** (ADR-0021): touch controls (WP 3.12) and a Vercel deployment of every push (WP 0.12) exist now, and are never tested. A failed Vercel build is fixed when it shows; anything else about them, only when the owner reports it.</li></ul> | The roadmap (§9); the `verifier` flags production-hardening work outside Phase H, except ADR-0021's |
-| **Escalation.** | <ul><li>Escalate when an action needs the owner's approval (a binary asset other than a font; a new runtime dependency, or any dependency outside the rule of §6.10; a repository setting, secret, deploy or other outward action; rewriting published history), when a principle cannot be satisfied, or when going against the doctrine looks best.</li><li>Wait up to 15 minutes. With no answer: commit the current work, make the call, continue. For the rest of that run, or until the owner answers, report further conflicts without stopping.</li><li>**Never perform the action while waiting.** Take the doctrine's preferred alternative meanwhile (procedural or text instead of binary; a stub behind the API).</li><li>Record every escalation, every later conflict, and every call made without an answer.</li></ul> | `node x esc` and `docs/escalations/` (§8.14); the Stop hook warns about an open escalation past its deadline with no recorded call; the ledger links each escalation |
+| **Escalation.** | <ul><li>Escalate when an action needs the owner's approval (a binary asset other than a font; a new runtime dependency, or any dependency outside the rule of §6.10; a repository setting, secret, deploy or other outward action, apart from the pushes, stage PRs, merges, branch deletions and Vercel deployments that ADR-0021 pre-approves; rewriting published history), when a principle cannot be satisfied, or when going against the doctrine looks best.</li><li>Wait up to 15 minutes. With no answer: commit the current work, make the call, continue. For the rest of that run, or until the owner answers, report further conflicts without stopping.</li><li>**Never perform the action while waiting.** Take the doctrine's preferred alternative meanwhile (procedural or text instead of binary; a stub behind the API).</li><li>Record every escalation, every later conflict, and every call made without an answer.</li></ul> | `node x esc` and `docs/escalations/` (§8.14); the Stop hook warns about an open escalation past its deadline with no recorded call; the ledger links each escalation |
 
 **Terms used throughout:**
 - **Sim-side** means reproducible and renderer-free: `core`, `sim`, `physics`, `anim`, `world` (logic), input intents and replay, the audio DSP, the bot (`engine/dev/bot.ts`), the box's scenes and cast (`labs/box/scenes/`, `labs/box/cast/`) and the fixture scenes (`fixtures/scenes/`).
@@ -236,7 +236,7 @@ Eight parallel deep-dives read the source in full. Where possible they ran it: b
   - A probable instancing bug in the `'center'` outline mode: the push direction comes from `positionLocal`, which already holds the instance-transformed position. r180 does the same as r182 (verified in its `InstanceNode`).
   - The height "boost" of the classic views was dropped.
 
-**What the Stress Box takes from it.** The techniques: the level-as-text compiler, the crowd-on-bodies pattern, the controller config, instanced batches with their workarounds, the warm-up discipline, the light budget idea, the filters, the cameras and camera links, and the test harness (SwiftShader flags, the stand-in canvas, readback). It rewrites the structure: real modules, a sim that runs in Node, a true fixed step, data instead of code for levels and bodies, and one inspector API.
+**What the Stress Box takes from it.** The techniques: the level-as-text compiler, the crowd-on-bodies pattern, the controller config, instanced batches with their workarounds, the warm-up discipline, the light budget idea, the filters, the cameras and camera links, and the test harness's checks (shardfall's flags replace its SwiftShader flags, stand-in canvas and readback, §8.8). It rewrites the structure: real modules, a sim that runs in Node, a true fixed step, data instead of code for levels and bodies, and one inspector API.
 
 **`src/lab3d/`**: 7 files, 1,030 lines. It does several things better than stress-world:
 - metres with y up;
@@ -416,7 +416,7 @@ The gameplay hash is `68e1f7d1` on every release that runs, as it should be: the
 | 0.21.0 SIMD | **4.3 ms** | **22.1 ms** | **0** |
 
 - **0.21 restores exactly**, in Node and in Chromium: 40 stacked crates restored at step 1 continue identically too (0.19.3 SIMD drifted 4.1 cm there), and two runtimes give the same hash (`8942d209`). So a capture needs no workaround (§6.5).
-- Its API is 0.19's, plus optional `target` parameters and joint motors. It removes `IntegrationParameters.minIslandSize`, reports the character controller's collision points in world space, fixes the controller's snap-to-ground, and speeds up the 3D solver. The package doubles in size: 4.62 MB (1.66 MB gzipped).
+- Its API is 0.19's, plus optional `target` parameters and joint motors. It removes `IntegrationParameters.minIslandSize`, fixes the controller's snap-to-ground, and speeds up the 3D solver. Its controller reports world-space contact points and normals, as 0.19.3's does (§4.8). The package doubles in size: 4.62 MB (1.66 MB gzipped).
 
 **Deterministic math, measured.** stdlib's pure-JS fdlibm ports (`sin`, `cos`, `pow`) hash identically on 200,000 seeded inputs in Node 22, Node 24 and Chromium 141, at about twice the cost of V8's native `Math.sin` (28 ns against 14 ns per call). Two test sims, each run on all three runtimes:
 - a JavaScript sim keeping float64 state (1,000 phases fed back through `sin` and `cos` for 600 steps) ends with **different hashes in Node and Chromium** under native `Math` (`8f73787d` against `e6e972cf`), and the **same hash everywhere** (`604db7be`) when the fdlibm ports are swapped into `Math` only while the sim steps;
@@ -454,7 +454,7 @@ So the engine swaps the ports in while the sim steps (§6.5): gameplay state is 
 
 ### 4.8 What shardfall offers (2026-10-10)
 
-**What it is.** [`michaelcrosato/shardfall`](https://github.com/michaelcrosato/shardfall) (commit `fa2dab6`, 2026-10-09) is the owner's sibling project: an engine written in Rust on wgpu, a hack-and-slash game built on it, and a pavilion of demo rooms. It follows the identical doctrine, adopted partway through, so some older code doesn't fit. It has about 61,000 lines of Rust in six crates, rooms and game data in TOML, and a motion library in my-3d2dge's readable format. It deploys to Vercel as WebAssembly on the browser's WebGPU, and phones play it by touch. Five reviewers read it for this plan, and §5.8 lists what comes over and how. Its code is Rust, so what comes over is designs, tuned numbers, WGSL shaders (usable from TSL through `wgslFn`) and data.
+**What it is.** [`michaelcrosato/shardfall`](https://github.com/michaelcrosato/shardfall) (commit `fa2dab6`, 2026-10-09) is the owner's sibling project: an engine written in Rust on wgpu, a hack-and-slash game built on it, and a pavilion of demo rooms. It follows the identical doctrine, adopted partway through, so some older code doesn't fit. It has about 61,000 lines of Rust in six crates, rooms and game data in TOML, and a motion library in my-3d2dge's readable format. It deploys to Vercel as WebAssembly on the browser's WebGPU, and it has touch controls, checked only under phone emulation at device-pixel ratio 1, never on a real phone. Five reviewers read it for this plan, and §5.8 lists what comes over and how. Its code is Rust, so what comes over is designs, tuned numbers, WGSL shaders (usable from TSL through `wgslFn`) and data.
 
 **Measured here because of it** (Node 24, Chromium 141, three.js r182, Rapier 0.21; throwaway probes):
 - **Headless WebGPU can present to a real canvas.**
@@ -471,10 +471,10 @@ So the engine swaps the ports in while the sim steps (§6.5): gameplay state is 
 
   So `scene.dump()` and view logic can be tested in T1 (§8.3).
 - **Rapier, as agents write it.**
-  - Typical Rapier code written from memory fails type-checking in the same four places on 0.19.3 and on 0.21.0: `toi` for `timeOfImpact`, `castShape`'s `targetDistance` argument, and `time_of_impact` on shape casts. It runs once the compiler's hints are applied.
+  - Typical Rapier code written from memory fails type-checking in the same four places on 0.19.3 and on 0.21.0: `toi` where ray hits name it `timeOfImpact` (twice), `castShape`'s `targetDistance` argument, and `toi` where shape-cast hits name it `time_of_impact`. Controller collisions do call it `toi`. It runs once the compiler's hints are applied.
   - The controller reports identical, world-space contact points and normals in both versions.
-  - 0.21 adds no trap of its own for agents.
-- **The controller drops sideways motion at floor seams.**
+  - 0.21 adds no API trap of its own; losing all sideways motion, below, is new in 0.21.
+- **The controller drops sideways motion on level ground.** Shardfall found it on a one-block floor, not at seams (`docs/HISTORY.md:279-286`; `crates/pav_core/src/character.rs:1000-1003`).
   - Walking across a floor made of several boxes, 0.21's controller loses all horizontal motion on 1–8 of 600 ticks for normal downward pushes. 0.19.3 never loses all of it; its worst tick keeps 81%.
   - Shardfall hit the same bug in Rust Rapier, and moves across first, then down. With that split, walking with the usual small downward push (0.01 m per tick) keeps at least 95% of its motion on every tick, against 5 lost ticks without it. WP 3.2 builds the split in.
 - **Autostep climbs about 5 cm above its setting.** With a 0.281 m capsule:
@@ -488,17 +488,17 @@ So the engine swaps the ports in while the sim steps (§6.5): gameplay state is 
 - **Reproducibility.** Shardfall promises matching replays only on the machine that recorded them (Rapier's enhanced determinism off, native maths). This plan's sim runs the same Rapier WASM in Node and Chromium with the fdlibm swap, so one golden holds in both (§6.5).
 - **Hit-stop.** Shardfall shrinks the physics step to 6%. This plan slows the clock and keeps the step fixed, so the integration parameters stay pinned (WP 1.3).
 - **UI.** Shardfall's egui HUD and windows stayed invisible to its tools. This plan's HTML/CSS UI is read through the DOM (§6.7).
-- **Crowds.** Shardfall runs the full character controller on every monster, with no collision groups, for about 600 bodies. This plan's crowd is dynamic bodies with collision groups, for 5,000 (WP 5.1).
+- **Crowds.** Shardfall runs the full character controller on every monster and uses no collision groups; its stress room holds about 600 dynamic bodies at about 600 ticks a second (`docs/HISTORY.md:837-838`). This plan's crowd is dynamic bodies with collision groups, for 5,000 (WP 5.1).
 - **Visual checks.** Shardfall judged captures by eye. This plan's are numbers: the ID pass, look metrics and thumbnails (§8.5).
 
 **Lessons from its journal** (`docs/HISTORY.md`) that this plan takes:
 - **Hash what you capture.** A hash of positions alone let a replay "match" while the gold and the RNG had diverged (§6.5).
-- **Record settings changed mid-run.** Shardfall's replays don't, and they break (§8.4).
-- **Fresh-agent dry runs found the most friction.** A 25-minute run listed 13 friction points, and a smaller model's bot could not finish its own level (G7).
-- **Unknown arguments must fail.** Shardfall's tools ignore them silently (§8.1).
+- **Record settings changed mid-run.** Shardfall's replays keep settings only as they stand at save time, or none, so a mid-run change does not replay (§8.4).
+- **Fresh-agent dry runs found friction the authors had missed.** A 25-minute run listed 13 friction points, and a smaller model's bot could not finish its own level (G3, G7).
+- **Unknown arguments must fail.** Shardfall's main tools ignore them silently (§8.1).
 - **Keep the startup read small.** A one-page `PROGRESS.md` and a journal that is searched rather than read cut each session's reading from 150 KB to 40 KB (WP 0.6).
 - **Content as data lets helper agents extend the engine.** Helpers built 27 rooms from briefs, each checked by a headless run (§11.3).
-- **What the owner sees gets fixed.** Shardfall's owner ruled that a problem the user can see is fixed at once, and that is how it got touch controls. Here the owner asked for them directly, without tests: a problem with them is fixed when the owner reports it (ADR-0021).
+- **What the owner sees gets fixed.** Shardfall's owner ruled that a problem the user can see is fixed at once (`AGENTS.md:15-17`). Its touch controls came earlier, when its browser build did not respond on a phone (`docs/HISTORY.md:48-51`). Here the owner asked for them directly, without tests: a problem with them is fixed when the owner reports it (ADR-0021).
 
 ---
 
@@ -540,7 +540,7 @@ Source paths are relative to `my-3d2dge@e37e4ee`. `ed/` means `src/emberdeep/`. 
 | Cameras | `stress-world/40-cameras.js`: classic views (perspective or ortho), side scrolling with depth, chase with wall avoidance, first person, fly, fixed. `lab3d/50-cameras.js`: orbit. Camera links: `stress-world/40-cameras.js:274-337` (`?cam=`, `?cam3=`) and lab3d's `CAMS.code()`/`load()` | PORT | `engine/gfx/cameras/` | 2.5, 3.9 |
 | Height boost projection `P·V·S·V⁻¹` | `lab3d/50-cameras.js:31-40` | COPY (6 lines) | `engine/gfx/cameras/boost.ts` | 2.5 |
 | Wall and pillar cutaway | `stress-world/10-hall.js`, `40-cameras.js` | PORT | `engine/gfx/cutaway.ts` | 4.4 |
-| Post filters with an MRT mask | `stress-world/45-filters.js`: cel, pixel/Bayer, bloom, FXAA | PORT the filters to `PostProcessing` (r182), with three.js's TSL display addons where they exist. The object mask comes from a separate mask pass, not MRT (§4.7) | `engine/gfx/post/` | 7.4 |
+| Post filters with an MRT mask | `stress-world/45-filters.js`: cel, pixel/Bayer, bloom, FXAA | PORT the filters to `PostProcessing` (r182), with three.js's TSL display addons where they exist. The object mask comes from the one fixed MRT set up at startup, with every filter gated by a uniform in one composite (§6.7, §4.8) | `engine/gfx/post/` | 7.4 |
 | Resolution modes | `stress-world/50-frame.js` `fit()`: engine pixels at 200–330 lines, balanced, full | PORT | `engine/gfx/resolution.ts` | 2.1 |
 | Effects | `stress-world/35-effects.js`: telegraph decal pool, ribbons from `rig.trail`, particle quads. Blob shadows: `stress-world/30-crowd.js:334-364` (`shadowAt`) | PORT | `engine/gfx/fx/`, `engine/gfx/puppets/blobShadow.ts` | 6.4, 3.8 |
 | Damage numbers on a pixel-font overlay | `stress-world/35-effects.js:133-149` | REWRITE as HTML/CSS: DOM numbers that follow projected positions (doctrine: WebGPU only allows HTML/CSS UI) | `engine/ui/overlay.ts` | 6.5 |
@@ -634,8 +634,8 @@ Where a widely used tool does the job, it replaces the prototype's own (doctrine
 | `tools/stamp.mjs` (writes the commit into the build at deploy) | Later: release tooling waits for production | — | H |
 | `tools/vendor-3d.mjs` (pinned `npm pack`, sha256, `--check`) | **DROP** the vendoring: npm with a lockfile, plus Vite, replace the vendored copies and the import map. Keep its idea of checked pins | `x deps`, `tools/deps.json` | 0.3 |
 | `.claude/hooks/session-start.sh` (`npm install`, `CHROMIUM_PATH`) | PORT: run `scripts/setup.sh` (Node 24, then `npm ci`), `x src`, and list open escalations | `.claude/hooks/`, `scripts/setup.sh` | 0.1, 0.10 |
-| Virtual clock plus seeded `Math.random`, injected before page scripts run (`tools/filmstrip.mjs:39-53`) | COPY, as a Playwright fixture | `tests/e2e/fixtures.ts`, `tools/lib/browser.ts` | 0.2 |
-| Headless WebGPU: flags, a stand-in `getContext('webgpu')`, `__readFrame` readback (`tools/lab3d-test.mjs:70-102`) | COPY the readback, as a Playwright fixture. Take shardfall's flags instead, which make the stand-in unnecessary (§4.8) | `tests/e2e/fixtures.ts`, `tools/lib/browser.ts` | 0.2 |
+| Virtual clock plus seeded `Math.random`, injected before page scripts run (`tools/filmstrip.mjs:39-53`) | COPY, as a Playwright fixture, without lines 48-49, which hide `navigator.gpu` and Web Audio | `tests/e2e/fixtures.ts`, `tools/lib/browser.ts` | 0.2 |
+| Headless WebGPU: flags, a stand-in `getContext('webgpu')`, `__readFrame` readback (`tools/lab3d-test.mjs:70-102`) | **DROP**: shardfall's flags make the page present to its real canvas (§4.8), so neither the stand-in nor its readback, which reads the stand-in's texture, is needed. The fixture's `readFrame` takes a Playwright screenshot of the canvas element. Both stay in the source checkout as the fallback (§8.8) | `tests/e2e/fixtures.ts`, `tools/lib/browser.ts` | 0.2 |
 | Banned-API list (`tools/lab3d-test.mjs:28-43`) | PORT into ESLint's stock rules: extend it with r182's deprecations and the newer names r182 lacks, each naming its replacement; scope by path | `eslint.config.js` | 0.4 |
 | Static server that emulates the deploy's routes (copied 4 times) | **DROP**: Vite's dev server replaces it | `vite.config.ts` | 0.2 |
 | `tools/test-run.mjs` (path-prefix suite map; list, files, reasons, timing; filters out version-only changes) | **DROP** the runner: Vitest (`--changed`, `related`) and Playwright Test (`--only-changed`, `--list`, `--repeat-each`) select and run the tests; their reporters give the timing | npm scripts `test` and `e2e` | 0.5 |
@@ -672,7 +672,7 @@ Where a widely used tool does the job, it replaces the prototype's own (doctrine
 | Autopilot (a virtual device, a progress watchdog, stuck detection measured along the wanted direction, reproducible runs) | `ed/93-autopilot.js` | `dev/bot` (navigation and watchdogs, no combat tactics) | 5.6 |
 | Gallery of everything registered, with deep links and wrong-name warnings that list the valid names | `ed/92-gallery.js` | `dev/gallery` and `x gallery` | 7.7 |
 | Performance governor with hysteresis | `ed/95-perf.js` | `dev/governor`, which owns the WebGPU features, presentation LOD and resolution (never sim LOD) | 7.5 |
-| Controls rebinding (conflicts, reserved keys, persistence, any gamepad slot, separate menu actions, a touch layer, safe areas) | `ed/61-controls.js`, `docs/CONTROLS-AUDIT.md` | `input/bindings`; the touch layer and safe areas follow shardfall's design (§5.8) | 3.3, 3.12 |
+| Controls rebinding (conflicts, reserved keys, persistence, any gamepad slot, separate menu actions, a touch layer, safe areas) | `ed/61-controls.js`, `docs/CONTROLS-AUDIT.md` | `input/bindings`; the touch layer follows shardfall's design (§5.8), which needs no safe-area margins | 3.3, 3.12 |
 | Data-defined layered sound effects, tracker-string songs, stings fired by events | `ed/70-audio.js` | `audio` (the mechanism, not Emberdeep's sounds) | 9.2, 9.3 |
 | Captured clips layered on a procedural rig (masks, crossfades, walk/hold/next flags, cancel rules, landmark times) | `ed/96-hero-clips.js` | `anim` clip-action layer and events | 8.4, 8.7 |
 | Deep links, a debug handle, a step-script DSL | `ed/99-start.js`, `tools/ed-play.mjs` | `app/routes`, `dev/inspector`, `x film --steps` | 2.7, 3.11 |
@@ -718,13 +718,13 @@ Shardfall is Rust (§4.8), so its code is ported, not copied. Paths are relative
 |---|---|---|---|---|
 | One tool table (name, help, typed arguments, a function returning JSON or an image) that feeds the CLI, a REPL, an MCP server with generated schemas, and a live bridge | `crates/pav_tools/src/tools.rs:15-43, 660-676`; `mcp.rs:29-122` | Inspector members declare their arguments in the schema language, so `help()`, argument checks and a later MCP server come from one table | CONCEPT | 1.6, 7.6 |
 | `see`: a screenshot with numbered marks and a legend of what each mark is | `crates/pav_tools/src/agent_tools.rs:26-224` | `x shot --marks`, marking only what the ID pass sees (shardfall's marks show through walls) | PORT | 2.6 |
-| Text maps: `ascii` from raycasts; `levelmap nav=true` with blocked cells and the route | `pavilion-lite/src/tools.rs:743-866`; `crates/pav_tools/src/game_tools.rs:1296-1325` | `x sim --map`; the agent eye's ASCII thumbnails | PORT | 4.3, 12.3 |
+| Maps: `ascii`, a text map from raycasts; `levelmap nav=true`, a picture with blocked cells and the route | `pavilion-lite/src/tools.rs:743-866`; `crates/pav_tools/src/game_tools.rs:1296-1325` | `x sim --map`; the agent eye's ASCII thumbnails | PORT | 4.3, 12.3 |
 | Turntable framing: box every pose, then back the camera off until all eight corners fit (it was fixed after a 5.26 m boss lost its head) | `crates/pav_tools/src/game_tools.rs:921-952` | The sheet cameras of `x sheet` | PORT | 6.6 |
 | A bot campaign: one report row per level, seed sweeps, a stop condition, a sampled trace | `crates/pav_tools/src/agent_tools.rs:226-307`; `pavilion-lite/src/tools.rs:1076-1185` | The bot's report and sweeps | PORT | 5.6 |
 | Readback without the 256-byte row padding | `crates/pav_render/src/capture.rs:31-71` | `shot()` | PORT | 2.6 |
-| A test that every saved field changes the hash | `crates/pav_core/tests/arpg.rs:144-169` | The capture-coverage test | PORT | 1.4 |
+| A test that gold, potions and the RNG each change the hash (this plan extends it to every captured field) | `crates/pav_core/tests/arpg.rs:144-169` | The capture-coverage test | PORT | 1.4 |
 | The feel meter: response ticks, acceleration, stop and turn times, apex, air time, jump reach | `crates/pav_core/src/feel.rs` | `engine/physics/feel.ts`, for tuning by numbers and for level reach checks | PORT | 3.2 |
-| The character controller's wiring and fixes: the across-then-down move, snap only when grounded, autostep over dynamic bodies, a 1 mm nudge so moving floors carry, pushing as a 70 kg mass that shares momentum, weight on dynamic floors, post-move velocity fixes, a one-way-platform predicate, skipping idle characters | `pavilion-lite/src/character.rs:179-399`; `crates/pav_core/src/character.rs:959-1089`; `tests/movement.rs` (13 tests) | `engine/physics/character.ts` | PORT | 3.2 |
+| The character controller's wiring and fixes: the across-then-down move, snap only when grounded, autostep over dynamic bodies, a 1 mm nudge so moving floors carry, pushing as a 70 kg mass that shares momentum, weight on dynamic floors, post-move velocity fixes, a one-way-platform predicate, skipping idle characters | `pavilion-lite/src/character.rs:179-399`; `crates/pav_core/src/character.rs:959-1089`; `crates/pav_core/tests/movement.rs` (13 tests) | `engine/physics/character.ts` | PORT | 3.2 |
 | Movement maths and tuned defaults: coyote 0.10 s, jump buffer 0.12 s, jump cut 0.45, apex 1.35 m, fall speed capped at 26 m/s, acceleration 45, deceleration 32 and skid 90 m/s² | `crates/pav_core/src/character.rs:124-162, 770-925` | The hero's starting feel. Shardfall uses the same axes and units, so its numbers need no conversion | PORT; DATA | 3.2, 3.10 |
 | Character gravity separate from world gravity (32 m/s² against 9.81 m/s², "for game feel") | `crates/pav_core/src/sim.rs:64`; `character.rs:139` | The scene settings `gravity` and `characterGravity` | CONCEPT | 3.1, 3.2 |
 | Movers: the pose is a function of the tick, applied through kinematic velocities | `crates/pav_core/src/behaviors.rs:14-75` | Box movers that carry riders and restore exactly | PORT | 4.1 |
@@ -734,14 +734,14 @@ Shardfall is Rust (§4.8), so its code is ported, not copied. Paths are relative
 | Rooms as data, with a validator, hot reload that keeps the last good version, and per-room guides that a test holds to the code | `crates/pav_core/src/room.rs:420-547`; `rooms/_template.toml`; `crates/pav_view/tests/learn.rs` | The box README's claims, checked by a test | CONCEPT | 2.7 |
 | Settings declared once: the panel, presets (path → value JSON that reports unknown keys) and scoped overrides that are restored on exit | `crates/pav_core/src/params.rs:63-259`; `world.rs:1052-1116` | The settings schema's presets and scoped overrides | CONCEPT | 1.2 |
 | Terrain: fbm plus ridges, terraces, flattened footprints, stateless placement, trimesh chunks with internal-edge fixes | `crates/pav_core/src/terrain.rs:93-230` | Terrain | CONCEPT | 10.5 |
-| Projectile emitters: aimed, forward, ring, spiral and random; bursts, delay, range, gravity | `crates/pav_core/src/behaviors.rs:190-250` | Projectile patterns | PORT | 10.4 |
+| Projectile emitters: aimed, forward, ring, spiral and random; bursts, delay, range, gravity | `crates/pav_core/src/behaviors.rs:77-92, 189-241` | Projectile patterns | PORT | 10.4 |
 | Clip `speed`: the playback rate is ground speed divided by capture speed; a walk–run switch with hysteresis | `crates/pav_core/src/clips.rs:137-140, 441-476` | Format 2 carries `speed`, so clips round-trip with shardfall | PORT | 8.2, 8.4 |
 | Strike time: the hand, blade tip or foot furthest ahead, so attacks are timed to their hits | `crates/pav_core/src/clips.rs:478-550` | `hit` events derived from clips | PORT | 8.4 |
 | A two-slot crossfade with flags; an upper-body blend that re-solves IK | `crates/pav_core/src/puppet.rs:582-615, 653-698`; `clips.rs:656-735` | The clip layer's blending | CONCEPT | 8.4 |
 | BVH rig maps for five rig families; the rest pose from the frame where the body stands straightest; units from leg length | `crates/pav_tools/src/mocap/bvh.rs:235-605` | The re-import's rig handling, parsed with three.js's `BVHLoader` | PORT | 8.8 |
 | Loop finders (straight, going, still) with a turn penalty | `crates/pav_tools/src/mocap/takes.rs:53-243` | Cutting loops from long takes | PORT | 8.8 |
 | One file read out of a remote zip by HTTP ranges | `crates/pav_tools/src/mocap/fetch.rs:49-161` | `x anim cmu` without downloading whole archives | PORT | 8.5 |
-| 100STYLE (CC BY 4.0) and Quaternius v2 (CC0) clips, in format 1 plus `speed` | `anim/style100.json`, `anim/100style/`, `anim/quaternius.json`, `anim/catalogs/` | New library sets, approved by the owner (ADR-0021) | DATA | 8.10 |
+| 100STYLE (CC BY 4.0) and Quaternius v2 (CC0) clips, in format 1 plus `speed` | `anim/style100.json`, `anim/100style/`, `anim/quaternius.json`, `anim/catalogs/` | New library sets: 100STYLE, approved by the owner (ADR-0021), and Quaternius v2, which is CC0, needs no approval and replaces v1's set (WP 8.10) | DATA | 8.10 |
 | A planted gait for N legs (neighbours never lift together), body tilt from the feet, and verlet chains | `crates/pav_core/src/rig.rs:24-60, 295-450` | `LegGait` and `VerletStrand` | PORT | 10.1 |
 | A directional flinch spring | `crates/pav_core/src/puppet.rs:568-573, 700-710` | Reactions | PORT | 6.2 |
 | Generators that keep old seeds stable when genes are added (each addition draws from its own RNG stream) | `crates/pav_core/src/arpg/genome.rs:334-346` | Procedural creature blocks | CONCEPT | 10.1 |
@@ -751,9 +751,9 @@ Shardfall is Rust (§4.8), so its code is ported, not copied. Paths are relative
 | Smoothed toon bands and a gated rim; the style as a per-instance id | `crates/pav_render/src/shaders/scene.wgsl:200-257`; `renderer.rs:1052-1056` | Toon materials | CONCEPT | 7.2 |
 | Light shafts through haze, and lamp halos: a 32-step march with a sun-shadow compare and a Henyey–Greenstein phase | `crates/pav_render/src/shaders/post.wgsl:153-255` | God rays and halos | PORT | 11.5 |
 | A cheap GI and AO tier: a 12-tap spiral | `crates/pav_render/src/shaders/post.wgsl:110-151` | A tier below `SSGINode` | PORT | 11.5 |
-| GPU particles: CPU births into a 65,536-slot ring, compute integration, one premultiplied blend | `crates/pav_render/src/shaders/particle_*.wgsl`; `fx.rs:425-658` | GPU particles | PORT | 11.3 |
+| GPU particles: CPU births into a 65,536-slot ring, compute integration, one premultiplied blend | `crates/pav_render/src/shaders/particle_*.wgsl`; `crates/pav_render/src/fx.rs:425-658` | GPU particles | PORT | 11.3 |
 | Emitter presets (13), event bursts, flicker | `crates/pav_view/src/fx.rs:13-229, 264-276, 290-480` | The effects' starting data | DATA | 6.4, 7.1 |
-| Quality tiers with hysteresis, and dynamic resolution | `crates/pav_app/src/quality.rs:37-115` | The governor's tiers; the touch-screen defaults | CONCEPT | 3.12, 7.5 |
+| Quality tiers, and dynamic resolution with hysteresis | `crates/pav_app/src/quality.rs:29-115` | The governor's tiers; the touch-screen defaults | CONCEPT | 3.12, 7.5 |
 | Touch controls: finger routing, a floating stick, a fan of round buttons, taps and holds timed in seconds with a one-frame guard, a tap that closes the top panel, swipe to dismiss, and the page set up for phones (no zoom, full screen, landscape) | `crates/pav_app/src/touch.rs`; `crates/pav_app/src/app.rs:275-331, 799-808`; `web/index.html:5-58` | `engine/input/devices/touch.ts` and HTML/CSS buttons, the same design (ADR-0021) | PORT | 3.12 |
 | Bindings by physical key; a system layer that is never rebound; taps shorter than a frame kept; prompts that follow the last-used device; scripted gamepad input | `crates/pav_app/src/input.rs:131-161, 299-380, 590-610` | Input devices | CONCEPT | 3.3 |
 | Gamepad menus through a virtual cursor; menu actions sent as input, so they replay | `crates/pav_app/src/app.rs:438-530` | UI widgets | CONCEPT | 10.6 |
@@ -959,7 +959,7 @@ frame(now):                                                  // app/loop.ts
    - Game code sees none of it. Unit tests that call sim functions directly run under native `Math` in Node, and compare only with Node.
 3. **Fixed step, explicit inputs.**
    - Everything the sim reads from outside arrives in the per-step intents, and is recorded. That includes the camera heading and any presentation fact gameplay chooses to use.
-   - Setting changes and dev actions made during play are recorded at the step they happen, like intents (§8.4).
+   - Setting changes (except `view` settings, WP 1.2) and dev actions made during play are recorded at the step they happen, like intents (§8.4).
 4. **Ordered world.**
    - Entities iterate in id order.
    - Spawns and despawns queue up and apply at step boundaries.
@@ -969,14 +969,14 @@ frame(now):                                                  // app/loop.ts
    - Integration parameters are pinned in one table.
    - The build and version are recorded in replays, because snapshots are version-locked.
 6. **The hash.**
-   - It is FNV-1a over the float64 bits of everything `capture()` holds except Rapier's snapshot bytes: the canonical state, the timers, the scene's settings, the state of every **sim** RNG stream (those made by `rng()` or `rng.entity()`), and every Rapier body's translation, rotation, linear velocity and angular velocity, in handle order. Snapshot bytes are never hashed: at 5,000 bodies they are 5.7 MB.
+   - It is FNV-1a over the float64 bits of everything `capture()` holds except Rapier's snapshot bytes: the canonical state, the timers, the scene's settings (except those marked `view`, WP 1.2), the state of every **sim** RNG stream (those made by `rng()` or `rng.entity()`), and every Rapier body's translation, rotation, linear velocity and angular velocity, in handle order. Snapshot bytes are never hashed: at 5,000 bodies they are 5.7 MB.
    - A test changes each captured field in turn and expects a new hash. In shardfall, a hash of positions alone let a replay "match" while the game state had diverged (§4.8).
    - Visual streams (`fxRng`) belong to presentation and are never hashed.
    - The canonical state is the components each kind registers, with their fields in order.
    - It is computed at checkpoints during play (every 60 steps by default), and every step in tests.
    - `trace()` gives per-entity hashes, so a mismatch names the first step, entity and field that diverged.
 7. **Capture, restore, replay.**
-   - `capture()` covers the whole sim: entities, components, timers, settings, RNG states and the Rapier world. `restore()` continues exactly like the uninterrupted run, in either runtime.
+   - `capture()` covers the whole sim: entities, components, timers, settings (except those marked `view`), RNG states and the Rapier world. `restore()` continues exactly like the uninterrupted run, in either runtime.
    - Any live session can be recorded and replayed, and any captured state restored.
 8. **Golden hashes are keyed by platform** (`linux-x64`), one per replay checkpoint, and hold in Node and in Chromium alike. On another platform, tests run each replay twice and compare the runs, and report "golden: other platform".
 9. **The proof matrix**, on the development platform:
@@ -1017,7 +1017,7 @@ frame(now):                                                  // app/loop.ts
   4. The gameplay entities in view appear in the ID pass.
 - **Inside the renderer, quality comes first** (doctrine: Quality under the hood). Materials, passes and effects use whatever the builder can do best: TSL node materials, compute, three.js's addons. What game code sees stays common ground (doctrine: Common ground): a material is data with the parameters agents know from three.js's classic materials (`color`, `map`, `roughness`, `emissive`…), and the engine decides how to draw it. Textures are `DataTexture`s from CPU generators, which Node tests can hash.
 - **Game UI is HTML/CSS** over the canvas: the HUD, menus, dialogs and damage numbers. World-anchored labels follow projected positions (three.js's `CSS2DRenderer` pattern). Tests read the UI through DOM queries (text, visibility, bounding boxes), not pixels.
-- **Post-processing uses one fixed MRT**: colour, plus view normals carrying per-object flags (the characters, the objects or the environment), set up once at startup. Every filter is a uniform, so toggling one never recompiles a material, and r182's addons that need normals (`PixelationPassNode`, `SSRNode`) can use it. r180 drew MRT post filters black and r181 failed validation, but r182 runs the prototype's MRT path (§4.7), and shardfall uses this design (§4.8).
+- **Post-processing uses one fixed MRT**: colour, plus view normals carrying an outline group and per-object flags (the characters, the objects or the environment), set up once at startup. Every filter is a uniform, so toggling one never recompiles a material, and r182's `SSRNode`, which needs a normals texture, can use it (`PixelationPassNode` renders the scene again with its own MRT, so the pixel filter stays in the composite). r180 drew MRT post filters black and r181 failed validation, but r182 runs the prototype's MRT path (§4.7), and shardfall uses this design (§4.8).
 - **Version quirks are contained** in one module each (Appendix B): the instancing service (`InstanceNode`'s 1,000-instance uniform path; `StaticDrawUsage` with update ranges), the pipeline counter (the one reader of renderer internals), and the outline's `positionGeometry`.
 
 ### 6.8 File and export comments (JSDoc: the comment is the manual)
@@ -1144,7 +1144,7 @@ Each improvement is owned by a work package. A WP is not done until the improvem
 | I-12 | 16 procedural creature building blocks, exercised by six fixture rigs (each block used by at least one) that pass their checks | Techniques trapped inside game characters | 10.1 |
 | I-13 | Library format 2: a superset with events, contacts, props, hands, foot roll and root yaw. Clips baked to rotation tracks. A validator and a normalized lens. One file per clip. A split ledger. `x anim find`. Corrected licenses. CMU on demand (68 MB → 0 committed) | Point blending that shortened bones; pops `fit` cannot see; the license gap; 68 MB of churn | 8.1–8.6 |
 | I-14 | Re-import from the original sources for the missing degrees of freedom: hands, forearm twist, foot roll, spine, root yaw | Fidelity never stored | 8.8 |
-| I-15 | three.js r182, measured on the platform, with its quirks contained in one place each: the 1,000-instance uniform path and its buffer usage, the post masks, `positionLocal` after instancing | Workarounds scattered through the page; a pin chosen without measuring | 0.3, 2.1, 3.8 |
+| I-15 | three.js r182, measured on the platform, with its quirks contained in one place each: the 1,000-instance uniform path and its buffer usage, and `positionLocal` after instancing | Workarounds scattered through the page; a pin chosen without measuring | 0.3, 2.1, 3.8 |
 | I-16 | WebGPU required and checked at startup, with optional adapter features detected and every downgrade reported; no silent fallback to WebGL 2 | A blanket ban on compute, or silent fallbacks | 2.1, 11.1 |
 | I-17 | A fixed light pool with a budget manager (the count never changes, so shaders never rebuild) plus a shadow-caster budget; tiled lighting on demand when the pool is not enough | 42 fixed lights in every lit shader | 7.1, 11.5 |
 | I-18 | A warm-up registry using `compileAsync` with progress, plus a public pipeline counter. "Zero pipelines compiled after warm-up" becomes a test | Reading the private `renderer._pipelines`; stalls after filter toggles | 2.1 |
@@ -1181,7 +1181,7 @@ Each improvement is owned by a work package. A WP is not done until the improvem
 | I-49 | Common ground outside, quality inside: game code meets familiar types and data (three.js's math, material and clip parameters agents know, `AnimationClip`s), while the internals use TSL, compute and custom systems wherever they measure better | Tuple math of our own; a private clip runtime; one quality bar for everything | 1.1, 2.3, 3.4, 3.8, 8.4 |
 | I-50 | Game UI in HTML/CSS: the HUD, damage numbers and menus are DOM elements that tests read as text and boxes | A canvas overlay with a pixel font, checked by pixel | 6.5, 10.6 |
 | I-51 | A public API boundary: game code imports only `engine/index.ts` and `engine/sim-api.ts`, every public export is documented, and every error names its fix in API terms | One shared scope; game code reaching into engine internals | 0.4, 1.6 |
-| I-52 | Touch controls modelled on shardfall's, which phones play today: a floating stick, a fan of HTML/CSS buttons, taps, holds and swipes, safe areas, and lighter defaults on phones. Touch intents are recorded like any other. Built without tests, at the owner's order (ADR-0021) | The 2D engine's touch layer: a stick on one half of the screen (`engine:644-647`) and `Act:` buttons; nothing in 3D | 3.12 |
+| I-52 | Touch controls modelled on shardfall's (checked there only under phone emulation): a floating stick, a fan of HTML/CSS buttons, taps, holds and swipes, and lighter defaults on phones. Touch intents are recorded like any other. Built without tests, at the owner's order (ADR-0021) | The 2D engine's touch layer: a stick on one half of the screen (`engine:644-647`) and `Act:` buttons; nothing in 3D | 3.12 |
 | I-53 | Every push deployed by Vercel, built from source, with a landing page that opens the box; no test or CI step of its own, at the owner's order (ADR-0021) | `vercel.json` serving committed build output | 0.12 |
 | I-54 | A larger library from shardfall: 100STYLE's 878 stylized loops (CC BY 4.0, credited) and Quaternius' version 2, with each loop's capture `speed`, so it plays at the character's ground speed and switches between walk and run without flicker | 325 clips with few walking styles, and no record of how fast a loop travels | 8.4, 8.10 |
 
@@ -1217,7 +1217,7 @@ Vitest prints its `dot` reporter and writes `out/test/report.json`; Playwright p
   ```
 - Also update `out/latest.json`.
 - Exit codes: **0** pass, **1** fail, **2** usage error.
-- **Unknown flags and keys are errors.** An `x` command rejects an unknown flag with exit 2 and names the closest valid one (`parseArgs` in strict mode). Data files, URL parameters and `set` paths reject unknown keys the same way. Shardfall's tools ignore them silently, which was the top friction point in its fresh-agent dry runs (§4.8).
+- **Unknown flags and keys are errors.** An `x` command rejects an unknown flag with exit 2 and names the closest valid one (`parseArgs` in strict mode). Data files, URL parameters and `set` paths reject unknown keys the same way. Shardfall's main tools ignore them silently (`crates/pav_tools/src/tools.rs:664-667`); its first fresh-agent dry run listed them among 13 friction points (§4.8).
 
 **Quick iteration.** Every command that runs a scene takes `--scene <name>` and `--set key=value` (validated against the settings schema), so an agent changes a tunable, runs, and reads numbers, without editing code: `x sim`, `x shot`, `x film` and `x perf`.
 
@@ -1225,12 +1225,12 @@ Vitest prints its `dot` reporter and writes `out/test/report.json`; Playwright p
 |---|---|
 | `x help [cmd]` | Generated help |
 | `x check` | The repository checks no standard tool covers, run inside `npm run check`: the asset scan, docs drift (`x docs --check`), escalation records, dependency pins (`x deps --check`) |
-| `x sim <scene> [--steps n] [--seed s] [--set k=v…] [--script f] [--dump]` | Run a scene headless in Node: hash, trace, state, event summary |
+| `x sim <scene> [--steps n] [--seed s] [--set k=v…] [--script f] [--dump] [--feel] [--map]` | Run a scene headless in Node: hash, trace, state, event summary; the feel meter's report (WP 3.2); a text map of the nav grid (WP 4.3) |
 | `x replay <file\|dir…> [--update] [--browser sim\|page] [--bisect]` | Replay in Node against the golden hashes; `--browser` also replays in Chromium against the same goldens: `sim` in the sim-only page, `page` in the scene's own page while it renders (WP 2.7). `--bisect` finds the first divergence |
 | `x inspect [--page p]` | Keep one headless page open over the Vite dev server, for `x eval`, `x dump` and `x set` (and the MCP server, once WP 7.6 is built). `x shot` and `x film` reuse it when it runs. It reloads when Vite reports a change, and says so in its next reply |
 | `x eval "<js>"` / `x dump [--step n]` | Talk to the inspect session: evaluate, or dump the scene and state as text |
 | `x set <key> <value> [--scene s]` | Validate a setting against the schema; print it as a URL parameter and apply it to the inspect session |
-| `x shot <page> [--scene s] [--cam code] [--set k=v…] [--ids] [--metrics]` | Render; read back a render target; write PNG plus look metrics plus ID-pass stats |
+| `x shot <page> [--scene s] [--cam code] [--set k=v…] [--ids] [--metrics] [--marks]` | Render; read back a render target; write PNG plus look metrics plus ID-pass stats; `--marks` numbers what the ID pass sees, with a legend |
 | `x film <page> --steps "…" [--scene s] [--seed s] [--compare <ref>]` | Filmstrip contact sheet, with a diff against `<ref>` (default `HEAD`) built in a temporary worktree |
 | `x sheet <rig\|move\|clip>` | 3D sheet: states × cameras, plus numeric checks |
 | `x gallery <kind> [id]` | Contact sheets and JSON from the registries' `gallery` hooks (WP 7.7, on demand) |
@@ -1282,7 +1282,7 @@ A command arrives with the WP that needs it; on-demand commands do not exist, ev
 | Dev actions | `actions.list()`, `actions.run(id, args)`: god mode, freeze AI, spawn, travel (WP 5.6, on demand) |
 | Help | `help()`: every member, one line each (checked against the API by `x docs --check`) |
 
-**Members are registered, never edited in.** `engine/dev/inspector.ts` assembles `__engine` from the members registered with `def('inspectorMember', name, impl)` through `core/registry`. Each WP registers its own members from its own files (`input` in WP 3.3, `stats` in WP 5.5, `actions` in WP 5.6), so no two WPs edit the inspector, and no layer imports `dev/`.
+**Members are registered, never edited in.** `engine/dev/inspector.ts` assembles `__engine` from the members registered with `def('inspectorMember', name, { args, help, impl })` through `core/registry`. Each WP registers its own members from its own files (`input` in WP 3.3, `stats` in WP 5.5, `actions` in WP 5.6), so no two WPs edit the inspector, and no layer imports `dev/`.
 
 **Headless.** In Node, `createHeadless` returns the same object. With `view: true` it also builds the presentation scene graph, which needs no GPU (§4.8), so `scene.dump()` and `camera` work in Node and view logic is tested in T1. Only `render` and `shot` throw a coded "no renderer" error.
 
@@ -1301,7 +1301,7 @@ Every page signals `ready` or `error` within a timeout. That turns a startup cra
 - **Golden hashes are keyed by platform** (§6.5): one set per replay, valid in Node and in Chromium alike.
 - **Bisect.** `x replay --bisect` reruns with per-step traces until the first divergence, then prints the step, the entity and the component fields that differ.
 - **Recording live play.** The engine keeps every step's intents from the start of the scene (change-points only, so a long session stays small), and `__engine.input.record()` saves them as a replay from step 0. The file is text, and no capture is needed. Every bug report about behaviour becomes a replay test.
-- **Setting changes and dev actions are recorded too**, as change-points at their step (`[240, { "set": { "crowd.speed": 4 } }]`), so a session in which an agent tuned a value mid-run still replays exactly. Shardfall's replays record no settings, and break (§4.8).
+- **Setting changes and dev actions are recorded too**, as change-points at their step (`[240, { "set": { "crowd.speed": 4 } }]`), so a session in which an agent tuned a value mid-run still replays exactly. Shardfall's tool replays store the settings only as they stand when saved (`crates/pav_tools/src/tools.rs:1030`), and its game's replays store none, so a value changed mid-run does not replay (§4.8). Settings marked `view` (WP 1.2) are not recorded: they never change play.
 
 ### 8.5 Visual verification without committed images or a display
 
@@ -1379,7 +1379,7 @@ ESLint checks code. `x qa` checks content: motion, meshes, textures, sounds and 
 - **`x ci --local` is the merge gate** from day one: `npm ci`, `x src`, `npm run check` (which includes `x deps --check` and `x docs --check`), `npm test`, `x port refs --check`, `x new --test-all` (§8.13), and `npm run e2e` (in full while the T2 set stays within its 6-minute budget, otherwise selected as in §8.2). It writes a summary to `out/ci/summary.md` and records the commit in `out/ci/last-green`.
 - **GitHub Actions waits for the owner.** Without the token's `workflow` scope, GitHub rejects every push that contains a file under `.github/workflows/`, so nothing is written for it in advance (doctrine: North Star). Once the owner enables Actions and grants the scope (an escalation, §11.5), the workflow is written (WP 0.9): the same steps as `x ci --local` in the Playwright container of §8.8, uploading `out/**` as artifacts and writing `$GITHUB_STEP_SUMMARY`, with a unit test that keeps its steps equal to `x ci --local`'s.
 - **Long runs** (§8.2) run at each gate.
-- **Vercel builds every push** (WP 0.12). It is not a test, and nothing in `x ci --local` checks it (the owner's order, ADR-0021). A failed Vercel check on a stage PR, or a failed build the owner reports, is reproduced with `npm ci && npm run build` on Node 24, fixed and pushed, and the fix commit's status is read once. Problems on phones or in the deployed pages are fixed when the owner reports them.
+- **Vercel builds every push** (WP 0.12). It is not a test, and nothing in `x ci --local` checks it (the owner's order, ADR-0021). A failed Vercel build seen on a stage PR (§11.1), or one the owner reports, is reproduced in a clean checkout of the pushed commit with `npm ci && npm run build` on Node 24 (Vercel builds only what git holds), fixed and pushed; the local build is the proof, and the next stage PR's one look shows Vercel's result. If it does not fail there, the agent asks the owner for Vercel's build log (an escalation, §8.14), since reading it needs a Vercel login. Problems on phones or in the deployed pages are fixed when the owner reports them.
 
 ### 8.10 Claude Code integration
 
@@ -1392,7 +1392,7 @@ ESLint checks code. `x qa` checks content: motion, meshes, textures, sounds and 
   | PostToolUse on `Edit\|Write` | `prettier --write`, then `eslint --cache`, on the edited file. Exits 2 with the errors so the agent sees them at once |
   | PreToolUse | Asks the owner before any edit to `DOCTRINE.md` (`permissionDecision: "ask"`), so the doctrine changes only on the owner's word. Denies hand edits to `out/` and `node_modules/`, and force-pushes to `main` |
   | Stop | Runs `npm run check`. Exit 2 with a short reason if red, honouring `stop_hook_active` to avoid loops. Warns about an open escalation past its deadline with no recorded call |
-  | `permissions.allow` | `Bash(node x *)`, `Bash(npm run *)`, `Bash(npm test*)`, `Bash(npm ci)`, `Bash(npx vitest *)`, `Bash(npx playwright test*)`, read-only git |
+  | `permissions.allow` | `Bash(node x *)`, `Bash(npm run *)`, `Bash(npm test*)`, `Bash(npm ci)`, `Bash(npx vitest *)`, `Bash(npx playwright test*)`, read-only git, and, since ADR-0021 needs no approval for them, `Bash(git add *)`, `Bash(git commit *)`, `Bash(git push *)`, `Bash(gh pr *)` and the GitHub MCP server's pull-request tools. The PreToolUse hook still denies force-pushes to `main` |
 
 - **Skills** (`.claude/skills/`, loaded on demand; names never carry a version, so an upgrade renames nothing):
 
@@ -1466,7 +1466,7 @@ The engine's own version lives in `package.json` only, and prose never repeats i
 **When to escalate.** An action needs the owner's approval, or a principle cannot be satisfied:
 - adding a binary file other than a font (doctrine: Assets);
 - a new runtime dependency, or any dependency outside the rule of §6.10 (doctrines: Common ground, Mastery);
-- a repository setting, secret, token, deploy, publication or other outward action; rewriting published history. **Pre-approved by the owner (ADR-0021):** pushing at milestones, opening and merging pull requests, deleting their branches after the merge, and the Vercel deployments that pushes trigger;
+- a repository setting, secret, token, deploy, publication or other outward action; rewriting published history. **Pre-approved by the owner (ADR-0021):** pushing (at each milestone, and the session's branch whenever that protects work), opening and merging pull requests, deleting their branches after the merge, and the Vercel deployments that pushes trigger;
 - spending money (a paid service, API or plan);
 - any case where following a principle would break another, or cannot be done (for example, a GPU effect that would change play);
 - any case where going against the doctrine or this plan looks best (doctrine: How to read this): escalate with the reasoning, and keep to the doctrine while waiting.
@@ -1576,10 +1576,10 @@ Phase 1:  G0 → 1.1 → 1.2 → 1.3 → 1.4 → 1.5 → 1.6 ⇒ G1
 Box 1:    G1 → 2.1 → {2.3, 2.5, 2.6} ; G1 → 2.2 ; {2.2, 2.3} → 2.4 ; {2.4, 2.5, 2.6} → 2.7 ⇒ G2
 Box 2:    [2.2] → 3.1 → 3.2 ; [1.5, 2.5] → 3.3 ; G1 → 3.4 → 3.5 → 3.6 ; {3.2, 3.6} → 3.7 ; [2.4, 2.6] + 3.4 → 3.8 ;
           [2.5] + {3.1, 3.4} → 3.9 ; [2.7] + 3.3 → {3.11, 3.12} ; [2.7] + {3.3, 3.7, 3.8, 3.9, 3.11, 3.12} → 3.10 ⇒ G3
-Box 3:    [3.2] → 4.1 ; [3.1] → 4.2 → 4.3 ; [2.4] + 4.2 → 4.4 ; [3.8] + 4.1 → 4.5 ; [3.10] + {4.3, 4.4, 4.5} → 4.6 ⇒ G4
+Box 3:    [3.2] → 4.1 ; [3.1] → 4.2 ; [3.2] + 4.2 → 4.3 ; [2.4] + 4.2 → 4.4 ; [3.8] + 4.1 → 4.5 ; [3.10] + {4.3, 4.4, 4.5} → 4.6 ⇒ G4
 Box 4:    [4.1] → 5.1 ; [4.3] + 5.1 → 5.2 ; [3.7] → 5.3 ; [3.8] + 5.3 → 5.4 ; [2.7] + 5.1 → 5.5 ;
           [4.6] + {5.2, 5.4, 5.5} → 5.7 ⇒ G5
-Box 5:    [3.7] → 6.1 → 6.2 ; [5.1] + 6.1 → 6.3 ; [3.8] + 6.1 → 6.4 ; [2.7] → 6.5 ; [5.3] + 6.2 → 6.6 ;
+Box 5:    [3.7] → 6.1 → 6.2 ; [5.1] + 6.1 → 6.3 ; [3.8] + 6.1 → 6.4 ; [2.7, 3.12] → 6.5 ; [5.3] + 6.2 → 6.6 ;
           [5.7] + {6.3, 6.4, 6.5, 6.6} → 6.7 ⇒ G6
 Box 6:    [2.3, 3.12, 4.2] → 7.1 ; [3.8] → 7.2 ; [2.3, 4.2] → 7.3 ; [2.6, 3.12] + 7.2 → 7.4 ;
           [6.7] + {7.1, 7.2, 7.3, 7.4} → 7.8 ⇒ G7 (the Stress Box)
@@ -1678,8 +1678,8 @@ A WP is done only when all of these hold:
 - **Needs:** WP 0.1
 - **Size:** M
 - **Carry:**
-  - The virtual clock plus seeded `Math.random` from `tools/filmstrip.mjs:39-53` (COPY).
-  - `__readFrame` from `tools/lab3d-test.mjs:70-102` (COPY). The headless WebGPU flags come from shardfall (§8.8), so the stand-in canvas is not needed.
+  - The virtual clock plus seeded `Math.random` from `tools/filmstrip.mjs:39-53` (COPY, without lines 48-49, which hide `navigator.gpu` and Web Audio).
+  - The headless WebGPU flags come from shardfall (§8.8), so the page presents to its real canvas. Neither the stand-in canvas nor `__readFrame` (`tools/lab3d-test.mjs:70-102`) is copied: `__readFrame` reads the stand-in's texture (`:80-84`). The fixture's `readFrame` takes a Playwright screenshot of the canvas element, the read §4.8 measured.
 - **Build:**
   - **The standard tools** of §6.10, pinned in `package.json`: Vite, Playwright Test, Prettier and tsx (Vitest arrived in WP 0.1).
   - **`vite.config.ts`:**
@@ -1699,7 +1699,7 @@ A WP is done only when all of these hold:
     - page errors mapped to `.ts` files and lines through Vite's source maps.
   - **`x.js` and `tools/x.ts`:** tsx's `register()`, then the dispatcher: `parseArgs`, help generated from file comments, the `report.json` writer and the exit codes (§8.1). Every report records the runtime.
   - **`tools/lib/vite.ts` and `tools/lib/browser.ts`:** a Vite dev server through its JavaScript API, and Chromium through Playwright's library with the options of `playwright.config.ts`, for the `x` commands that open pages.
-  - **`x src`:** prints and checks `$MY3D2DGE_SRC` and `$SHARDFALL_SRC`, cloning each as in WP 0.1 when it is missing.
+  - **`x src`:** prints and checks `$MY3D2DGE_SRC` and `$SHARDFALL_SRC`, cloning each as in WP 0.1 when it is missing. Shardfall is private: when a source cannot be reached, `x src` names the repository the session must include, and the agent escalates once (§11.5).
     Tests that read the source call `requireSource()` (`tools/lib/source.ts`). When the source cannot be resolved
     (offline), they skip and the summary reports `deferred: no source`. `x ci --local` runs `x src` first and fails if
     it cannot resolve the source, so nothing is deferred there.
@@ -1861,11 +1861,11 @@ A WP is done only when all of these hold:
 - **Size:** S
 - **Carry:** from shardfall (§5.8), which deploys to Vercel today: explicit commands in `vercel.json` (`vercel.json:1-13`), an outputs-only `.vercelignore` (`.vercelignore:1-3`), `.vercel` and `.env*` ignored (`.gitignore:4-5`), and the README's section on deploying (`README.md:108-131`). Its Rust build script does not apply: Vercel's build image has Node, which is all this build needs.
 - **Build:**
-  - **`vercel.json`:** `{"$schema":"https://openapi.vercel.sh/vercel.json","framework":"vite","installCommand":"npm ci","buildCommand":"npm run build","outputDirectory":"dist"}`. No headers, rewrites or redirects. Rapier inlines its WASM in its JavaScript, so the build emits no `.wasm` file and needs no MIME header (measured, §4.8). Vercel's defaults deploy every push: `main` to production, other branches to previews.
+  - **`vercel.json`:** `{"$schema":"https://openapi.vercel.sh/vercel.json","framework":"vite","installCommand":"npm ci","buildCommand":"npm run build","outputDirectory":"dist"}`. No headers, rewrites or redirects. Rapier inlines its WASM in its JavaScript, so the build emits no `.wasm` file and needs no MIME header (measured, §4.8). Vercel's defaults deploy every push: `main` to production, other branches to previews. Vercel builds of pushes made before this WP lands may fail or serve nothing useful (no `vercel.json` and no landing page yet); nobody acts on them.
   - **The landing page**, `index.html` at the root: `location.replace('labs/box/' + location.search + location.hash)`, plus a plain link, so `/?scene=crowd-1000` opens that scene. It points at `labs/hello/` until WP 2.7 points it at the box. Routing lives in files, not in `vercel.json`, so `npx vite preview` serves what Vercel serves.
   - **`vite.config.ts`:** the build's inputs are `index.html` and every `labs/*/index.html` (`globSync` from `node:fs`). `tests/pages/*.html` never ship; `harness.html` throws on purpose. `build.chunkSizeWarningLimit` is 8,000 KB, with a comment: Rapier's inlined WASM makes one large chunk.
   - `.vercelignore`: `out/`, `dist/`, `test-results/`. `.gitignore` adds `.vercel/` and `.env*`.
-  - **Node on Vercel** is 24.x, taken from `package.json`'s `engines.node` (Vercel does not read `.nvmrc`). `npm run build` stays plain `vite build`: no prebuild step, no `x` command, no source checkout, no browser and no network.
+  - **Node on Vercel** is 24.x, taken from `package.json`'s `engines.node` (Vercel does not read `.nvmrc`). `npm run build` stays plain `vite build`: no prebuild step, no `x` command, no source checkout, no browser and no network. `vite.config.ts`, which Vitest also reads, imports nothing that needs them either.
   - **README:** the play link, once the URL exists; and "Deploying": Vercel imports the repository and `vercel.json` does the rest; locally, `npm run build && npx vite preview`.
 - **Improves:** I-53.
 - **Done when:** `npm run build` writes `dist/index.html` and `dist/labs/hello/index.html`, with no `.wasm` file and nothing from `tests/`. Nothing else is tested, by the owner's order (ADR-0021): no deployment, preview, URL or browser check, and the build does not join `x ci --local`.
@@ -1948,7 +1948,7 @@ A WP is done only when all of these hold:
   - `ed/01-tune.js`: knobs.
   - `engine:65-66`: warn-once.
 - **Build:**
-  - **A schema mini-language:** type, default, range, unit, doc, enum, required, hooks with defaults, and `when` (`now | spawn | scene`). The gallery (WP 7.7, on demand) adds a `gallery` hook when it is built.
+  - **A schema mini-language:** type, default, range, unit, doc, enum, required, hooks with defaults, `when` (`now | spawn | scene`), and `view: true` for a setting that changes only how the game looks or performs (a resolution mode, a camera, a look, WP 3.12's `quality` and `touch`). `x set`, URL parameters and `__engine.set` reach a `view` setting like any other, but the hash, captures and replays leave it out, and sim-side code cannot read it. The gallery (WP 7.7, on demand) adds a `gallery` hook when it is built.
   - **Registry:** `defineKind`, `def`, `get`, `list`, `describe`. A missing id warns once, suggests the closest names, and returns the fallback. The local ESLint rule "ask the entry, never the id" (WP 0.4) is turned on here.
   - **Events:** scoped listeners (`scope.dispose()`), each listener isolated so its failure is recorded in `errors`, and a trace ring.
   - **Log:** warn-once and structured errors. Each module registers its own codes beside its code: `defineCodes('anim', { CODE: { template, fix, doc } })`. `x docs` collects them, and there is no central table.
@@ -1995,7 +1995,7 @@ A WP is done only when all of these hold:
   - **Every sim entry point runs inside `withSimMath`** (§6.5): `setup`, `step`, spawns, captures and restores.
 - **Improves:** I-03, I-05, I-06.
 - **Done when:**
-  - Changing any captured field (components, timers, settings, RNG states) changes the hash, field by field (§6.5).
+  - Changing any captured field (components, timers, settings other than `view` ones, RNG states) changes the hash, field by field (§6.5), and changing a `view` setting does not.
   - Drawing from an `fxRng` stream never changes `hash()`.
   - capture → restore → step equals an uninterrupted step (no physics yet, so the round trip is exact).
   - The hash is stable across runs.
@@ -2010,7 +2010,7 @@ A WP is done only when all of these hold:
   - The intents vocabulary: move `[x, z]` in world space, camera heading, aim point, look, buttons pressed and held, and custom namespaced keys.
   - `intents.fromCamera(yaw, axes)`: pure math that turns stick or keys into a world-space move, so W walks away from the camera. WPs 3.3 and 3.10 use it.
   - **Scenes, sim-side:** `defineScene(id, { level?, settings, setup, step })` and the scene registry, in `engine/sim/scene.ts`. The `kernel` fixture, the box's scenes and `createHeadless` all use it, so no scene imports `app/`.
-  - The replay format (§8.4), with a recorder and a player, and golden hashes keyed by platform: one set per replay, valid in Node and in Chromium (§6.5). The recorder keeps every step's intents from step 0, and every setting change and dev action at its step (§8.4).
+  - The replay format (§8.4), with a recorder and a player, and golden hashes keyed by platform: one set per replay, valid in Node and in Chromium (§6.5). The recorder keeps every step's intents from step 0, and every setting change (except `view` settings) and dev action at its step (§8.4).
   - `x sim`, with `--set` and `--scene`.
   - `x replay` with `--update` and `--bisect`.
   - `x replay --browser sim` runs the replay inside `tests/pages/replay.html`: the sim in a page, no renderer, against the same goldens. WP 2.7 adds `--browser page`: the scene's own page, rendering.
@@ -2030,7 +2030,7 @@ A WP is done only when all of these hold:
 - **Build:**
   - `createHeadless({ scene, seed, settings })`, over the scene registry of WP 1.5.
   - **The inspector as a registry kind:** `def('inspectorMember', name, { args, help, impl })`, each member declaring its arguments in WP 1.2's schema language, so `help()`, argument checks and a later MCP server are generated from one table (shardfall's tool table, §5.8). `engine/dev/inspector.ts` assembles `__engine` from the registered members, so later WPs add members from their own files and no layer imports `dev/` (§8.3).
-  - The core members: `info`, `pause`, `resume`, `step`, `timeScale`, `seed`, `state`, `hash`, `trace`, `entities`, `get`, `set`, `capture`, `restore`, `describe`, `help`, `errors`, `advice`. In Node, the rendering members throw a coded "no renderer" error.
+  - The core members: `info`, `pause`, `resume`, `step`, `timeScale`, `seed`, `state`, `hash`, `trace`, `entities`, `get`, `set`, `capture`, `restore`, `describe`, `help`, `errors`, `advice`. In Node, the rendering members throw a coded "no renderer" error; WP 2.7 adds `view: true`, after which only `render` and `shot` throw.
   - The same shape in the browser; WP 2.7 wires it into pages.
   - **The public API** (§6.1, doctrine: Quality under the hood): `engine/sim-api.ts` exports what sim-side game code needs (`defineScene`, `defineKind` and `def`, the intents vocabulary, `core/math`, `rng`, events); `engine/index.ts` re-exports it and adds `createHeadless` (and `createEngine`, WP 2.7). Each export carries its doc comment. Each later WP appends its public names, one export per line, so parallel lanes merge cleanly (§11.3). This WP moves WP 1.5's kernel fixture onto `engine/sim-api.ts` and turns on the public-API rule (WP 0.4).
 - **Improves:** I-03, I-25, I-51.
@@ -2168,18 +2168,20 @@ A WP is done only when all of these hold:
 - **Verify:** `npm run e2e -- tests/e2e/shot.spec.ts && npm test -- engine/gfx/shot`
 
 #### WP-2.7 Box 1: the box app
-- **Owns:** `engine/app/{engine,loop,routes}.ts`; `engine/dev/overlay.ts` (the error overlay); `labs/box/{index.html,main.ts,README.md}`, `labs/box/levels/room.txt`, `labs/box/scenes/room.ts`; `tools/cmd/{set,eval,dump,inspect}.ts`; `tools/templates/scene/`; extends `tools/cmd/replay.ts` (from WP 1.5) with `--browser page`; `tests/e2e/parity.spec.ts`; `.claude/skills/stress-box/`; `tests/replays/box-1-*.replay.json`; extends `index.html` (from WP 0.12)
+- **Owns:** `engine/app/{engine,loop,routes}.ts`; `engine/dev/overlay.ts` (the error overlay); `labs/box/{index.html,main.ts,README.md}`, `labs/box/levels/room.txt`, `labs/box/scenes/room.ts`; `tools/cmd/{set,eval,dump,inspect}.ts`; `tools/templates/scene/`; extends `tools/cmd/replay.ts` (from WP 1.5) with `--browser page`; `tests/e2e/parity.spec.ts`; `.claude/skills/stress-box/`; `tests/replays/box-1-*.replay.json`; `tests/unit/box-readme.test.ts`; extends `index.html` (from WP 0.12), `engine/app/headless.ts` (from WP 1.6) with `view: true`, and `tools/cmd/shot.ts` (from WP 0.8) so `x shot` reuses a running `x inspect` (§8.1)
 - **Needs:** WP 2.4, WP 2.5, WP 2.6
 - **Size:** L
 - **Carry:** the scene and timer patterns of `engine` §10. The stress-world page structure, as a reference only.
 - **Build:**
   - **`createEngine`** with the loop of §6.4 (fixed step plus interpolation), and routes that map `?scene` to the scenes registered with `engine/sim/scene.ts` (WP 1.5): `?scene ?cam ?seed ?set ?replay`.
   - **The rendering members of `__engine`** (§8.3), registered from `engine/app/engine.ts`: `render`, `shot`, `camera`, `scene.dump` (`stats` arrives with WP 5.5).
+  - **`createHeadless({ …, view: true })`** also builds the scene's presentation graph in Node, so `scene.dump()` and `camera` work headless (§8.3).
   - **The error overlay**, and `ready || error`.
   - **`x set`** (schema-validated; prints the URL parameter and applies it to the inspect session), **`x eval`** and **`x dump`**, over **`x inspect`**.
   - **The CPU-only gameplay contract** (§6.7, doctrine: WebGPU only): `x replay --browser page` runs a replay in the scene's own page, rendering as it steps, against the golden hashes. `tests/e2e/parity.spec.ts` starts here with the box-1 replays and the contract's checks; each later stage adds its scenes.
   - **The box, stage 1:** the page, which the landing page (`index.html`, WP 0.12) now opens; `levels/room.txt` (16 × 12 m: walls, one low wall, a pillar, spawn markers); `scenes/room.ts`, with three scripted movers (boxes on fixed paths, no physics yet) so that stepping changes state; `README.md`; the first box suite.
   - The `stress-box` skill: the box's layout, how to add a scene or variant, the quick loop (§9.0).
+  - **The README check** (shardfall's station guides, §5.8): `tests/unit/box-readme.test.ts` fails when `labs/box/README.md` names a setting, file or `x` command that does not exist.
   - **The `scene` template** for `x new scene` (§8.13): a box scene with its replay test.
 - **Improves:** I-07, I-25, I-26, I-37, I-43.
 - **Done when:**
@@ -2190,7 +2192,9 @@ A WP is done only when all of these hold:
   - Cycling every camera preset builds 0 pipelines after warm-up.
   - Every inspector member is tested in the browser and headless, and `help()` matches the API.
   - Every setting is reachable through `x set` and `__engine.set` (the Agent-operable test of §3).
-- **Verify:** `node x replay tests/replays/box-1-*.replay.json --browser page && npm run e2e -- tests/e2e/box.spec.ts tests/e2e/parity.spec.ts && node x docs --check && node x new scene --test`
+  - In Node, `createHeadless({ scene: 'box:room', view: true })` dumps the room's scene graph, and `render` and `shot` throw `no renderer`.
+  - The README check passes, and fails on a fixture README that names a missing setting.
+- **Verify:** `node x replay tests/replays/box-1-*.replay.json --browser page && npm run e2e -- tests/e2e/box.spec.ts tests/e2e/parity.spec.ts && node x docs --check && node x new scene --test && npm test -- engine/app tests/unit/box-readme`
 
 **Gate G2, Box 1:** the box room steps headless with golden hashes that hold in Node and in Chromium, renders on WebGPU with every object in the ID pass and its hashes unchanged while it renders, builds 0 pipelines after warm-up, and every inspector member and setting is reachable from `x` and `__engine`.
 
@@ -2222,26 +2226,26 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/physics engine/sim/levelBodies && node x replay tests/replays/physics-40.replay.json --browser sim`
 
 #### WP-3.2 Character controller
-- **Owns:** `engine/physics/{character,feel}.ts`, `engine/sim/actors.ts` (spawns an actor with its controller; WP 3.7 extends it with the animator), `fixtures/scenes/steps/` (steps, slopes and a floor of merged boxes, built by a scene script, because the level's stairs arrive in WP 4.2)
+- **Owns:** `engine/physics/{character,feel}.ts`, `engine/sim/actors.ts` (spawns an actor with its controller; WP 3.7 extends it with the animator), `fixtures/scenes/steps/` (steps, slopes, a one-box floor and a floor of merged boxes, built by a scene script, because the level's stairs arrive in WP 4.2); extends `tools/cmd/sim.ts` (from WP 1.5) with `--feel`
 - **Needs:** WP 3.1
 - **Size:** M
 - **Carry:**
   - The stress-world controller config (converted; Appendix C), as starting values.
   - The Platformer feel settings (`engine` §16).
   - **From shardfall** (§5.8), whose axes and units are ours, so nothing needs converting:
-    - the controller wiring and its fixes (`pavilion-lite/src/character.rs:179-399`; `crates/pav_core/src/character.rs:959-1089`; 13 tests in `tests/movement.rs`): the across-then-down move, snap only when grounded, autostep over dynamic bodies, a 1 mm nudge so moving floors carry, pushing as a 70 kg mass that shares momentum, weight on dynamic floors, post-move velocity fixes, a one-way-platform predicate, and skipping idle characters;
+    - the controller wiring and its fixes (`pavilion-lite/src/character.rs:179-399`; `crates/pav_core/src/character.rs:959-1089`; 13 tests in `crates/pav_core/tests/movement.rs`): the across-then-down move, snap only when grounded, autostep over dynamic bodies, a 1 mm nudge so moving floors carry, pushing as a 70 kg mass that shares momentum, weight on dynamic floors, post-move velocity fixes, a one-way-platform predicate, and skipping idle characters;
     - its movement maths and defaults (`crates/pav_core/src/character.rs:124-162, 770-925`): coyote 0.10 s, jump buffer 0.12 s, jump cut 0.45, apex 1.35 m, fall speed capped at 26 m/s, acceleration 45, deceleration 32 and skid 90 m/s²;
     - the feel meter (`crates/pav_core/src/feel.rs`).
 - **Build:**
   - `createCharacter({ capsule, offset, snap, autostep, maxSlope, slide, push, characterGravity, feel: { coyote, buffer, variableJump, wallJump, dash, airControl } })`.
-  - **Intents → velocity → two moves: across, then down.** One combined `computeColliderMovement` loses all sideways motion on some ticks at floor seams, and the split fixes it (measured on Rapier 0.21, §4.8).
+  - **Intents → velocity → two moves: across, then down.** One combined `computeColliderMovement` loses all sideways motion on some ticks on level ground, and the split fixes it (measured on Rapier 0.21, §4.8).
   - **Order within a step:** movers set their velocities, then characters move, then the world steps. Characters spawn 0.025 m above the floor, just outside the 0.02 m skin, so they don't stick at seams (shardfall's lessons).
   - Jump, dash, a ground probe, and pushing dynamic bodies. Rapier 0.21 reports the controller's contacts in world space, as 0.19.3 does (§4.8).
   - **`characterGravity`** is the controller's own, separate from the world's (WP 3.1).
-  - **The feel meter** (`engine/physics/feel.ts`): response ticks, acceleration, stop and turn times, jump apex, air time and reach. It is an inspector member and an `x sim --feel` report, so agents tune feel by numbers, and WP 4.2's validator uses the reach.
+  - **The feel meter** (`engine/physics/feel.ts`): response ticks, acceleration, stop and turn times, jump apex, air time and reach. It is an inspector member and an `x sim --feel` report, so agents tune feel by numbers, and WP 4.3's walkable grid takes the reach as a climb limit.
   - The prototype's grounded-flicker workaround for Rapier 0.19.3 (a small downward component each step) only if the Done-when test still needs it.
 - **Done when** (Node tests):
-  - Walking across a floor of merged boxes with the usual downward push, no tick moves less than 95% of the intended distance.
+  - Walking across a one-box floor and a floor of merged boxes with the usual downward push, no tick moves less than 95% of the intended distance.
   - It climbs a step 0.05 m below the height it is configured to climb, and refuses one 0.05 m above it. With a 0.281 m capsule, an autostep of 0.25 m climbs 0.30 m and refuses 0.35 m (§4.8), so the configured height is the measured one, not the raw setting.
   - Slopes up to 50° are climbable.
   - The jump apex equals v²/2g for the configured jump speed and `characterGravity`, ± 2 cm.
@@ -2411,68 +2415,72 @@ A WP is done only when all of these hold:
 - **Done when:** `x film` on the box room writes a sheet and JSON; `--compare HEAD` reports no difference on an unchanged tree and attributes an injected change to the right object; a scene missing from the base reports "no baseline".
 - **Verify:** `npm test -- tools/cmd/film && node x film labs/box --scene room --steps "step 60" --compare HEAD`
 
-#### WP-3.12 Touch controls (built, never tested)
-- **Owns:** `engine/input/devices/touch.ts`, `engine/ui/{touch,swipe,chrome}.ts`, `engine/ui/{touch.css,manifest.webmanifest}`, `engine/gfx/quality.ts`; extends `engine/gfx/resolution.ts` (from WP 2.1), and `engine/app/loop.ts` and `labs/box/index.html` (from WP 2.7)
+#### WP-3.12 Touch controls (built, not tested)
+- **Owns:** `engine/input/devices/touch.ts`, `engine/ui/{touch,swipe,chrome}.ts`, `engine/ui/{touch.css,manifest.webmanifest}`, `engine/gfx/quality.ts`; extends `engine/input/**` (from WP 3.3: the `touch:<action>` codes, and the stick merged with keys and pads), `engine/gfx/resolution.ts` (from WP 2.1), and `engine/app/{engine,loop}.ts` and `labs/box/index.html` (from WP 2.7: the touch layer's wiring, `createEngine`'s `touchLayout` and `onMenu` options, and the 60 fps cap)
 - **Needs:** WP 2.7, WP 3.3
 - **Size:** M
 - **Carry:**
-  - **From shardfall** (§5.8), the design of the touch controls its players use on phones today, which the owner asked this engine to mimic (ADR-0021):
+  - **From shardfall** (§5.8), the design of the touch controls it ships for phones and tablets, which the owner asked this engine to mimic (ADR-0021). Shardfall checked it only under phone emulation, never on a real phone (`docs/HISTORY.md:99-105`):
     - `crates/pav_app/src/touch.rs`: finger routing, the floating stick, the button fan, taps, holds and swipes;
     - `crates/pav_app/src/quality.rs:29-115`: the quality tiers and what each turns off;
     - `crates/pav_app/src/app.rs:275-331, 799-808, 1015-1019, 1650-1653, 1724-1726`: touch mode, closing panels with a tap, the 60 fps cap, the stick into intents, clearing on blur, and switching back to the mouse;
     - `web/index.html:5-58` and `web/manifest.webmanifest`: the page.
-  - The safe-area margins of `ed/61-controls.js:623-631`, as a mechanism (§5.6).
 - **Build:**
-  - **Touch mode** starts when `matchMedia('(pointer: coarse)')` matches or at the first touch, and ends when the mouse moves more than 2 px. It sets the `touch` class on the page.
+  - **Layers** (§6.1): `input/devices/touch.ts` reads pointer events and writes intents; `ui/touch.ts` and `ui/swipe.ts` draw HTML/CSS and import no input device; `gfx/quality.ts` gets the touch mode from `app`, which wires the three. The modules' file comments carry no runnable `@example`, which would amount to a touch test (ADR-0021).
+  - **Touch mode** starts when `matchMedia('(pointer: coarse)')` matches or at the first touch, and ends when a `pointermove` whose `pointerType` is `mouse` moves more than 2 px (a tap also fires emulated mouse events, which must not count). It sets the `touch` class on the page.
+    - The setting `touch` (`auto`, `on` or `off`; a `view` setting, WP 1.2) forces it either way through `x set`, the URL and `__engine.set`, so an agent can open the touch layer headlessly and read it through DOM queries (doctrine: Agent-operable).
+    - It is a machine interface, not a test: no touch spec uses it (ADR-0021).
   - **Fingers are routed by the DOM,** from the top: the menu button, open panels, the action buttons, swipeable notices, then the canvas. Layers take `pointer-events: none` and controls `auto`. On the canvas, the first finger is the stick. Pointer capture keeps each finger on what it first touched.
   - **A floating stick** wherever the thumb lands:
-    - a radius of 56 CSS px; a dead zone of 0.12, and full speed at 0.82 (`v/|v| · min((|v| − 0.12)/0.7, 1)`);
+    - a radius of 56 CSS px; a dead zone of 0.12, and full speed at 0.82 (`v/|v| · min((|v| − 0.12)/0.7, 1)`, with v = (dx, −dy)/56, so pushing up the screen is forward; `touch.rs:266-272`);
     - a thumb that runs past the rim drags the centre along;
     - while it is held, a faint 112 px ring and a 44 px knob show where it is (`touch.rs:443-450`).
   - **Into intents:** `move = intents.fromCamera(camera.yaw(), stick)`, added to keys and pads and clamped to length 1. Buttons carry `data-action`, and every action also binds the code `touch:<action>` in WP 3.3's action maps. Touch intents are recorded like any other, so touch play replays.
   - **Taps and holds** are timed in seconds, with a one-frame guard so a slow frame never turns a tap into a hold (`touch.rs:48-58, 76-97`):
-    - a tap is shorter than 0.30 s, or seen for a single frame, and moves less than 14 px (28 px on a button);
+    - a tap on the game is shorter than 0.30 s, or seen for a single frame, and moves less than 14 px;
+    - on a button, a release that moved less than 28 px is a tap however long it was down, except after a hold on a button that acts while held, as shardfall's skills do (`touch.rs:225-238`);
     - a hold lasts at least 0.32 s and two frames;
     - a tap on the open game closes the top panel;
     - `pointercancel` never taps, and blur clears every finger.
-  - **Buttons** (`engine/ui/touch.ts`), from a `touchlayout` entry: `{ buttons: [{ action, label? }], menu: true }`. A scene names its layout (`touch: 'touchlayout:box'`).
-    - Slots fill in order: the main button (68k px across) in the bottom-right corner; then an inner ring of 48k px buttons, 92k px from it, at 180°, 225° and 270°; then an outer ring at 158k px, at 205° and 245°.
-    - A 38k px menu button at the top right pauses, then calls the page's `onMenu`.
-    - `k = clamp(min(width, height)/390, 0.8, 1.25)`, set as the CSS variable `--touch-k`. Margins are `max(14k px, env(safe-area-inset-*))`.
+  - **Buttons** (`engine/ui/touch.ts`), from a `touchlayout` entry: `{ buttons: [{ action, label? }], menu: true }`. The page names its layout (`createEngine({ touchLayout: 'touchlayout:box' })`); scenes stay sim-side and name none. Without a layout, only the stick shows.
+    - Slots fill in order: the main button (68k px across), centred 40k px in from the right and bottom margins; then an inner ring of 48k px buttons, 92k px from its centre, at 180°, 225° and 270°; then an outer ring at 158k px, at 205° and 245°.
+    - Angles are in screen space with y down, as in shardfall's `Fan` (`touch.rs:590-595`): 180° is straight left of the main button and 270° straight above it. Round buttons take touches up to 8 px outside their rim (`touch.rs:114`).
+    - A 38k px menu button at the top right pauses, then calls `onMenu`, which the page passes to `createEngine`.
+    - `k = clamp(min(width, height)/390, 0.8, 1.25)`, set as the CSS variable `--touch-k`. Margins are 14k px.
     - Pressed buttons shrink to 94% and darken. Buttons hide under open panels; the menu button never does.
   - **Swipe to dismiss** (`engine/ui/swipe.ts`), for elements marked `data-swipe` (notices, banners, cards): they follow the finger and fade. Past 72 px, or flicked 26 px within 0.3 s, they fly off; otherwise they spring back. A dismissed element stays gone until its `data-swipe-key` changes.
-  - **Defaults for phones** (`engine/gfx/quality.ts`): the setting `quality` is `auto`, `low`, `medium` or `high`, presentation only and never in the hash. `auto` means `medium` on touch screens and `high` elsewhere.
+  - **Defaults for phones** (`engine/gfx/quality.ts`): the setting `quality` is `auto`, `low`, `medium` or `high`, presentation only and never in the hash. It is a `view` setting (WP 1.2), which `capture()`, the hash and sim-side code never see. `auto` means `medium` on touch screens and `high` elsewhere.
     - `medium`: at most 1 megapixel, one shadow caster, GI and god rays off.
     - `low`: at most 0.5 megapixel, no shadow casters, and bloom and halos off as well.
     - `high` on a touch screen: at most 2 device pixels per CSS pixel.
 
-    `resolution.ts` applies the pixel caps now; WPs 7.1, 7.4 and 11.5 apply the rest as their features arrive. Touch screens also draw at most 60 frames a second: `app/loop.ts` skips an animation frame that comes early.
-  - **The page** (`engine/ui/chrome.ts`, `touch.css`, and `manifest.webmanifest`, which the box page links):
-    - a viewport that does not zoom, with `viewport-fit=cover`; a manifest asking for full screen and landscape, with no icon (an icon would be a binary file);
-    - no scrolling, overscroll, text selection or tap highlight; the canvas at `100dvh`;
-    - the first tap asks for full screen and a landscape lock, and ignores a refusal (iPhones keep their bars);
+    `resolution.ts` applies the pixel caps now; WPs 7.1, 7.4 and 11.5 apply the rest as their features arrive. Touch screens also draw at most 60 frames a second: `app/loop.ts` skips an animation frame that arrives more than 2.5 ms before the next 16.667 ms slot, and resets the slot when it falls behind (`app.rs:799-808`).
+  - **The page** (`engine/ui/chrome.ts`, plus `touch.css` and `manifest.webmanifest`, which `labs/box/index.html` links with `<link>` tags; no engine module imports a `.css` file, since tsx, which runs every `x` command, cannot load one):
+    - a viewport that does not zoom, as shardfall's (`width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no`, without `viewport-fit=cover`, so the browser keeps the page clear of notches);
+    - a manifest asking for full screen and landscape, with no icon, as in shardfall, and with `start_url` and `scope` set to `/`: Vite emits a linked manifest as `/assets/manifest-<hash>.webmanifest`, where shardfall's `./` would open `/assets/`, a 404 (measured);
+    - no scrolling, overscroll, text selection or tap highlight; the canvas at `100dvh`; open panels start below the menu button, are at most `calc(100dvh - 66px)` tall, and scroll (`overflow: auto; touch-action: pan-y`);
+    - the first `pointerup` (once, in the capture phase) asks for full screen and a landscape lock, and ignores a refusal (iPhones keep their bars);
     - in portrait, a "turn sideways" hint fades after 5 s, and `resolution.ts` widens the vertical field of view so the horizontal one is kept (`2·atan(tan(fov/2)/aspect)`, at most 150°; `crates/pav_view/src/camera.rs:168-173`);
     - on touch screens, key hints, the keyboard guide and the dev stats are hidden, HUD text scales with `--touch-k`, and touch targets are at least 44 × 34 px.
-  - **Left out,** as in shardfall or by choice: camera rotation by touch, pinching in the world, drag-to-aim, haptics and the gyroscope. Shardfall's players never press attack (the nearest foe is struck automatically); that is game logic, which a game builds from recorded settings, so the engine adds nothing for it.
+  - **Left out,** as in shardfall or by choice: camera rotation by touch, pinching in the world, drag-to-aim, haptics and the gyroscope. Shardfall's players need not press attack: by default the nearest foe is struck automatically (a setting; with it off, attack takes the corner button). That is game logic, which a game builds from recorded settings, so the engine adds nothing for it.
 - **Improves:** I-52.
 - **Done when:**
   - On the desktop nothing changes: `npm run check`, the input unit tests and the input and box suites stay green, with no new advice.
-  - The box uses it from WP 3.10, through its touch layout.
-  - The touch layer itself is never tested, by the owner's order (ADR-0021): no touch specs, device emulation or phones *(deferred proof: the owner's reports; a reported problem is reproduced, fixed and noted in the ledger)*.
+  - The box uses it from WP 3.10, through its touch layout *(deferred proof: WP 3.10 adds the layout; like the rest of the touch layer, only the owner's reports check it, ADR-0021)*.
+  - The touch layer itself is not tested, by the owner's order (ADR-0021): no touch specs, device emulation or phones *(deferred proof: the owner's reports. A reported problem is then reproduced by whatever it needs, the `touch` setting or Playwright's touch emulation included, fixed and noted in the ledger; no standing touch suite is added)*.
 - **Verify:** `npm run check && npm test -- engine/input && npm run e2e -- tests/e2e/input.spec.ts tests/e2e/box.spec.ts`
-
 #### WP-3.10 Box 2: a hero in the box
 - **Owns:** `labs/box/scenes/room-hero.ts`, `labs/box/cast/hero.ts`, `labs/box/touch.ts`; extends `labs/box/{README.md,main.ts}` and `tests/e2e/parity.spec.ts` (from WP 2.7); `tests/replays/box-2-*.replay.json`, `tests/e2e/box-hero.spec.ts`
 - **Needs:** WP 2.7, WP 3.3, WP 3.7, WP 3.8, WP 3.9, WP 3.11, WP 3.12
 - **Size:** M
-- **Carry:** the hero's speeds and timings (`stress-world/20-sim.js:108-114, 242-301`) as starting values (Appendix C).
+- **Carry:** the hero's speeds and timings (`stress-world/20-sim.js:108-114, 242-301`) as starting values (Appendix C). They override WP 3.2's defaults (shardfall's) where both set a value.
 - **Build:**
   - **The hero actor:** the controller, the animator and the neutral humanoid body, walking, dashing and jumping onto the low wall.
   - **Scripted replays:** walk a square, dash, jump onto the low wall.
   - **The CPU-only gameplay contract** (`parity.spec.ts`, §6.7): the box-2 replays give their goldens while the page renders; live play in the page, recorded with `__engine.input.record()`, replays in Node to the same hashes; switching cameras and resolution modes never changes them.
   - **The camera suite:** every camera (the presets, chase, fly, fixed) passes an ID-pass check: the hero is visible, and coverage is sane. First person passes the inverse check: the hero's body is culled (only the hands and the weapon socket may cover pixels), and no wall covers more than 70% of the frame.
   - W walks away from the camera in every camera mode.
-  - **The box's touch layout** (`labs/box/touch.ts`, WP 3.12): jump as the main button, then dash. The box's scenes name it. Like the rest of the touch layer, it is not tested (ADR-0021).
+  - **The box's touch layout** (`labs/box/touch.ts`, WP 3.12): jump as the main button, then dash. The box page names it, for every scene. Like the rest of the touch layer, it is not tested (ADR-0021).
 - **Improves:** I-07, I-43.
 - **Done when:**
   - The replays give their golden hashes in Node and in the rendering page.
@@ -2481,7 +2489,7 @@ A WP is done only when all of these hold:
   - The humanoid's differential tests are green.
 - **Verify:** `node x replay tests/replays/box-2-*.replay.json --browser page && npm run e2e -- tests/e2e/parity.spec.ts tests/e2e/box-hero.spec.ts`
 
-**Gate G3, Box 2:** the hero walks, dashes and jumps in replays that give their golden hashes in Node and in the rendering page; live play in the page replays in Node; every camera passes its ID-pass check; the animation port is within tolerance; `x film` compares the box with `HEAD`.
+**Gate G3, Box 2:** the hero walks, dashes and jumps in replays that give their golden hashes in Node and in the rendering page; live play in the page replays in Node; every camera passes its ID-pass check; the animation port is within tolerance; `x film` compares the box with `HEAD`; and a fresh-agent dry run (a subagent given only AGENTS.md and the generated docs adds a box variant with `x new scene` and records a replay) has its friction list fixed or answered in the gate note.
 
 ### Phase 4: Box 3, the hall (lanes P, W, R, B)
 
@@ -2519,21 +2527,22 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/world/level engine/sim/levelBodies && node x qa level`
 
 #### WP-4.3 Navigation and spatial queries
-- **Owns:** `engine/world/{nav,spatial}.ts`, `fixtures/scenes/nav-1000/`
-- **Needs:** WP 4.2
+- **Owns:** `engine/world/{nav,spatial}.ts`, `fixtures/scenes/nav-1000/`; extends `tools/cmd/sim.ts` (from WP 1.5) with `--map`
+- **Needs:** WP 3.2, WP 4.2
 - **Size:** M
 - **Carry:**
   - `PASS`, `CLIMB` and the Dijkstra `FLOW` (`stress-world/10-hall.js:129-178`).
   - `SpatialHash` (`engine:3626-3646`).
 - **Build:**
-  - The walkable grid with climb limits and one-way ledges.
+  - The walkable grid with climb limits and one-way ledges. A climb limit is data: the crowd's, or the hero's jump reach from the feel meter (WP 3.2), since `world` cannot import `physics`.
   - Multi-target, cached flow fields on a typed-array heap, with reach and a field cached per goal cell.
   - A* on the grid with line-of-sight smoothing; ties broken by index; no corner cutting; a look-ahead direction (shardfall's `nav.rs`, §5.8). Navigation is derived data: it is never saved, and rebuilding it after a restore gives the same grid.
-  - A text map of the grid with blocked cells and a route, in `x sim --map` (shardfall's `levelmap nav=true`).
+  - A text map of the grid with blocked cells and a route, in `x sim --map` (a text form of shardfall's `levelmap nav=true` picture).
   - A spatial hash on typed arrays, with no allocation per step.
 - **Improves:** I-22.
 - **Done when:**
   - In the hall, the flow field reaches every walkable tile from the spawn, and one-way ledges are respected.
+  - With the hero's jump reach as the climb limit, the hall's grid reaches every gallery from the spawn, and a test ledge above the reach is not walkable.
   - 1,000 agents' queries stay within the budget recorded here.
 - **Verify:** `npm test -- engine/world/nav engine/world/spatial && node x perf fixtures/scenes/nav-1000 --budget`
 
@@ -2673,7 +2682,7 @@ A WP is done only when all of these hold:
 - **Trigger:** a test needs play longer or more varied than a scripted replay can express (soak runs, navigation smoke over many levels), or reaching a state by replay costs more than a dev action would (§9.1).
 - **Carry:** the autopilot (`ed/93-autopilot.js`) and the developer sandbox (`ed/62-developer.js`), mechanisms only.
 - **Build:**
-  - **The bot:** a virtual device, navigation over the flow field, a watchdog, and stuck detection measured along the wanted direction. Its runs are reproducible.
+  - **The bot:** a virtual device, navigation over the flow field, a watchdog, and stuck detection measured along the wanted direction. Its runs are reproducible. Its report has one row per level or scene, and it takes seed sweeps, a stop condition and a sampled trace (shardfall's `crates/pav_tools/src/agent_tools.rs:226-307` and `pavilion-lite/src/tools.rs:1076-1185`, §5.8).
   - **Dev actions** (kind `devAction`): god mode, freeze AI, spawn N, travel, time scale. Each is reachable from `__engine.actions` (registered from `engine/dev/actions.ts`, §8.3), `x eval` and MCP, if it is built.
   - The bot is sim-side (§3): it reads the sim and writes intents, under the reproducibility bans.
 - **Improves:** I-38.
@@ -2787,7 +2796,7 @@ A WP is done only when all of these hold:
 
 #### WP-6.5 The HTML/CSS overlay and damage numbers
 - **Owns:** `engine/ui/{overlay,labels,state}.ts`
-- **Needs:** WP 2.7
+- **Needs:** WP 2.7, WP 3.12
 - **Size:** S
 - **Carry:** the damage numbers (`stress-world/35-effects.js:133-149`), with stacking (`20-sim.js:320-323`), as behaviour only.
 - **Build:**
@@ -2892,10 +2901,10 @@ A WP is done only when all of these hold:
   - `stress-world/45-filters.js`: cel, pixel and Bayer dither, bloom, FXAA, and the `keep(m)` scope.
   - **From shardfall** (§5.8):
     - the design: one composite in which every filter is gated by a uniform, in a fixed order (`crates/pav_render/src/shaders/post.wgsl:731-860`; `crates/pav_render/src/renderer.rs:851-877, 1309-1358`);
-    - its filter functions, as WGSL through TSL's `wgslFn` or ported to TSL (`post.wgsl:337-409, 741-760, 810-848`: Bayer, five palettes, levels, grade, scanlines, CRT, vignette, grain, chroma; `:761-804`: pixel art on marked objects with a one-block rim; `:72-101`: the edge outline from depth, crease and ID);
+    - its filter functions, as WGSL through TSL's `wgslFn` or ported to TSL (`post.wgsl:337-409, 741-760, 810-848`: Bayer, five palettes, levels, grade, scanlines, CRT, vignette, grain, chroma; `:761-804`: pixel art on marked objects with a one-block rim; `:72-101`: the edge outline from depth, crease and ID; `:431-697`: the painterly and print styles (oil paint with brush strokes, CMYK halftone, ASCII and pencil), which 12 of the 73 presets and 7 of the 21 looks use);
     - its tuned presets, as data with the keys renamed (`crates/pav_view/src/looks.toml`: 73 presets and 21 looks).
 - **Build:**
-  - **One fixed MRT, set up once at startup** (`engine/gfx/post/mrt.ts`): colour, plus view normals whose spare channel carries the per-object flags (characters, objects, environment), as shardfall packs them (`scene.wgsl:267-277`). It never changes at run time, so no filter toggle recompiles a material. r182's `PixelationPassNode` and `SSRNode`, which need normals, can use it (§4.8).
+  - **One fixed MRT, set up once at startup** (`engine/gfx/post/mrt.ts`): colour, plus view normals whose spare channel carries an outline group and the per-object flags, packed as shardfall packs them (`scene.wgsl:267-277`: the group folded into 1..1023, +1024 on characters and objects, negative for pixel art). The packed value stays within ±2,047, the integers a half-float target holds exactly (r182's `pass()` targets are `HalfFloatType`). Telling characters from objects takes a group bit (groups 1..511) or a float32 normal target. It never changes at run time, so no filter toggle recompiles a material. r182's `SSRNode`, which needs normals, can use it (§4.8); `PixelationPassNode` makes its own MRT and is not used.
   - A `PostProcessing` chain (r182) from three.js's TSL display nodes where they exist: `BloomNode`, and `FXAANode` or `SMAANode`, whichever measures better. Bloom is off at the `low` quality tier (WP 3.12).
   - **One composite pass** after them, with every filter gated by a uniform, in a fixed order: cel, pixel (palette and dither), the edge outline, grading and the screen effects above. Each filter can be scoped to the characters, the objects or the environment.
   - **Shardfall's lessons, kept:**
@@ -2917,9 +2926,9 @@ A WP is done only when all of these hold:
 - **Trigger:** a scene must hold a frame budget on hardware that varies (Phase H), a measured scene misses its GPU budget and a quality tier would fix it, or the owner reports a scene running slowly on a phone (§9.1).
 - **Carry:** the mechanism of `ed/95-perf.js`.
 - **Build:**
-  - Adaptive quality with hysteresis, moving between WP 3.12's `quality` tiers, plus dynamic resolution on phones (shardfall's `crates/pav_app/src/quality.rs:89-113`).
+  - Adaptive quality with hysteresis, moving between WP 3.12's `quality` tiers, plus dynamic resolution on phones, both only while `quality` is `auto`, so a tier set by hand is kept (shardfall's `crates/pav_app/src/quality.rs:89-113`).
   - It owns the optional GPU features, presentation LOD (pose LOD, draw distance, light and shadow budgets, effect density) and resolution.
-  - It **never** changes sim state or sim settings; sim LOD is a scene setting recorded in replays.
+  - It **never** changes sim state or any setting not marked `view` (WP 1.2); sim LOD is a scene setting recorded in replays.
   - It is frozen in reproducible runs, and every change it makes is logged as advice.
 - **Done when:** a simulated sequence of frame times produces the expected demotions and promotions with no flicker, and no governor action changes the hash.
 - **Verify:** `npm test -- engine/dev/governor`
@@ -2964,9 +2973,9 @@ A WP is done only when all of these hold:
 **Gate G7, the Stress Box (the foundation is set):**
 - Gates G0–G6 still hold.
 - The box does the stress test's job: the hall, the hero, a crowd up to 5,000, props, combat, effects, cameras and looks, on WebGPU, with the CPU-only gameplay contract green.
-- Every capability built so far is reachable from `x` or `__engine`, and is proved without a display.
+- Every capability built so far is reachable from `x` or `__engine`, and is proved without a display, except what ADR-0021 leaves untested by the owner's order: the touch controls and phone defaults (WP 3.12) and the Vercel deployment (WP 0.12).
 - Every on-demand WP's ledger row is still `on demand`, or records the measurement that triggered it.
-- **A fresh-agent dry run:** a subagent given only AGENTS.md and the generated docs adds a prop and a box variant. Its friction list is fixed or answered in the gate note. Shardfall found more friction this way than any other (§4.8).
+- **A fresh-agent dry run:** a subagent given only AGENTS.md and the generated docs adds a prop and a box variant. Its friction list is fixed or answered in the gate note. Shardfall's first dry run found 13 friction points this way (§4.8).
 - The benchmark is within budget, and `x deps --qualify` has been run, its upgrades scheduled.
 - The `verifier` has reviewed the stage against `DOCTRINE.md`.
 
@@ -3002,7 +3011,7 @@ A WP is done only when all of these hold:
 - **Size:** M
 - **Carry:** `src/mocap/readable.js` (PORT, with the standard `Math` the source uses; the source decoder is the oracle).
 - **Build:**
-  - Format 1 decoding, within 0.001 mm of the reference vectors.
+  - Format 1 decoding, within 0.001 mm of the reference vectors. The reference decodes read the source's own sets (`$MY3D2DGE_SRC/src/mocap/sets/`), never `data/anim/sets/`, which WP 8.10 changes.
   - **`x port refs --clips`:** `MR.pose` decodes of all 325 curated clips at 30 fps. That set is large: commit a sampled subset with checksums, and keep the full set regenerable.
   - The oracle is the source decoder itself. `tools/anim/legacy-readable.ts` (about 10 lines) runs `$MY3D2DGE_SRC/src/mocap/readable.js` in a `vm` context, as `tools/mocap-lib.mjs:7-9` does. Nothing is copied. The bit-for-bit check runs wherever the source resolves.
   - Format 2's optional fields (§10.2), including shardfall's clip `speed` and set `title` and `legend`, so its sets parse unchanged (WP 8.10).
@@ -3034,25 +3043,26 @@ A WP is done only when all of these hold:
 - **Size:** L
 - **Carry:**
   - The API of `src/mocap/mocap.js` and the ideas in its `drive` (§5.3).
-  - **From shardfall** (§5.8): playing a loop at the character's ground speed, and the walk–run switch (`crates/pav_core/src/clips.rs:441-476`), with their tests (`crates/pav_core/tests/motion.rs:214-231`).
+  - **From shardfall** (§5.8): playing a loop at the character's ground speed, and the walk–run switch (`crates/pav_core/src/clips.rs:441-476`), with the rate's test (`crates/pav_core/tests/motion.rs:214-231`); shardfall tests the switch only through its monsters' chase (`crates/pav_core/tests/monsters.rs:231-256`), which is game content.
 - **Build:**
   - **A baker** that works from format-1 **parameters** (direction, bend, twist, hints), handles singular poses, and produces 30 fps rotation tracks on the canonical skeleton.
   - **Standard clips too** (doctrine: Common ground): each baked clip is also a three.js `AnimationClip` (`QuaternionKeyframeTrack`s on the canonical bone names), so pages can play it with three.js's `AnimationMixer`, which `engine/index.ts` re-exports (§6.1), for presentation only (the Library Lab, props). The sim's clip layer samples the same tracks on the CPU.
   - **The library API.**
   - **The clip layer**, in the animator's clip slot (WP 3.7): weight, mask, fade from the current pose, speed, loop, additive, `walk/hold/next/landed` flags, cancel rules, events, root motion.
   - **Ground speed** (shardfall's): a loop with a `speed` plays at rate = clamp(ground speed / pace, 0.4, 2.5), where pace = `speed`/100 × the build's hip height, in m/s. A walk and a run switch to the run above √(w·r) × 1.15 and back below √(w·r) × 0.87, where w and r are their paces (1.4 and 4.0 hip heights a second when a clip has none), so a speed near the line never flickers. Below 0.1 m/s the character idles.
+  - **Strike time** (shardfall's `crates/pav_core/src/clips.rs:478-550`, §5.8): the moment a clip's hand reaches furthest ahead of the hips (the blade's tip for a clip that holds one, a foot for a clip tagged `kick`), sampled at 60 Hz and measured once per clip. A move that plays a clip as its attack lands its hit there when the clip has no `hit` event.
   - **Retargeting to builds:** a rotation copy, root scaled by the hip-height ratio, and contact IK.
-  - **The mannequin body**, built with the body grammar (WP 3.8) from `body.segs` in `_set.json` (WP 8.3). The clip layer retargets onto it, and differences go in the baseline.
+  - **The mannequin body**, built with the body grammar (WP 3.8) from the `body` (height, 22 segments and 24 bands) in `data/anim/sets/quaternius/_set.json`, the only set with one, which WP 8.10 restores from v1. The clip layer retargets onto it, and differences go in the baseline.
 - **Improves:** I-13, I-49, I-54.
 - **Done when:**
   - Forward-kinematics parity against the format-1 decode has a mean of **1 mm or less** for every set, WP 8.10's included.
-  - The ground-speed rate and the walk–run switch pass shardfall's cases.
+  - The ground-speed rate passes shardfall's case: three walkers, each played at ground speed over its own pace. A new unit test drives the walk–run switch just above and just below √(w·r) × 1.15 and × 0.87, with and without the run playing, and sees one change each way.
   - The worst cases are listed in the baseline.
   - The clip layer is unit-tested, and a baked `AnimationClip` played by an `AnimationMixer` matches the clip layer's pose within 0.1 mm.
 - **Verify:** `npm test -- engine/anim/clip` (the library QA runs in WP 8.6)
 
 #### WP-8.5 Tools port
-- **Owns:** `tools/anim/*`, `tools/cmd/anim.ts`. It extends `repack.ts` from WP 8.3 and the `fps?` rows of WP 8.1's `data/anim/cmu/`; `legacy-readable.ts` stays WP 8.2's
+- **Owns:** `tools/anim/*`, `tools/cmd/anim.ts`. It extends `repack.ts` from WP 8.3 and the `fps?` rows of WP 8.1's `data/anim/cmu/`; `legacy-readable.ts` stays WP 8.2's, and `shardfall.ts` stays WP 8.10's
 - **Needs:** WP 8.1, WP 8.3, WP 8.4
 - **Size:** L
 - **Carry:** `anim-import`, `asf-amc`, `cmu`, `anim-set`, `mocap-lib`, `to-glb.py`.
@@ -3060,7 +3070,8 @@ A WP is done only when all of these hold:
   - `x anim find|show|cut|import|cmu|bake|sheet`.
   - The `.cache/anim/` layout.
   - Guards in the GLB reader, each tested on small GLBs that the tests build in memory (CUBICSPLINE, signed and quantized accessors). No binary fixtures are committed.
-  - Frame interpolation, and format-2 output, by default.
+  - Frame interpolation, and format-2 output, by default. Each loop gets its `speed` as shardfall's importer computes it: round(stride / H0 × 100 / dur), left out below 10 (`crates/pav_tools/src/mocap/mod.rs:308-316`). A library that ships root-motion twins (Quaternius' `_RM` files) gives each in-place loop its twin's root travel as the stride, and adds each one-shot that travels more than 50 mm as `<clip>_RM` (`mod.rs:326-366`).
+  - `x anim cmu` reads one take out of the site's 1.08 GB `allasfamc.zip` by HTTP ranges, without downloading the archive (shardfall's `crates/pav_tools/src/mocap/fetch.rs:49-161`; the server accepts ranges).
   - **`--legacy`:** nearest-frame sampling and format 1, exactly as today.
   - The split ledger; `--json`.
   - The 113 `fps?` takes verified: each flag is cleared, or the rate corrected, with the evidence in the row.
@@ -3080,7 +3091,7 @@ A WP is done only when all of these hold:
   - The `anim` QA family over all 1,218 clips, with a baseline. The baseline starts with WP 8.10's known cases, each with its reason: the four 100STYLE clips over the fit limits (§10.1); five whose angles pass ±540° (`BouncyRight_Idle`, `WhirlArms_Run`, `WildArms_Run`, `OnPhoneRight_SideRight`, `SwingArmsRound_SideLeft`); and the two Quaternius swims, whose hips go below the floor.
   - A browser smoke test.
 - **Improves:** I-13, I-29.
-- **Done when:** everything is green, and the Node part runs in under 30 s.
+- **Done when:** everything is green, and the Node part runs in under 30 s. If the 1,218 clips push it past that, T1 keeps a sample with every set in it, and the full sweep joins the gate's long runs (§8.2).
 - **Verify:** `npm test -- engine/anim/clip tests/unit/data/anim && npm run e2e -- tests/e2e/library.spec.ts`
 
 #### WP-8.7 The ACTIONS layer
@@ -3105,24 +3116,26 @@ A WP is done only when all of these hold:
 - **Build:**
   - Fetch the sources into `.cache/`: Mesh2Motion via git, CMU over HTTP, and 100STYLE's takes by HTTP range requests from its Zenodo archive (1.47 GB, never committed), as shardfall's importer reads them.
   - The owner supplies the four GLBs of the Quaternius Universal Animation Library's version 2 once (`UAL1_Standard.glb`, `UAL1_Standard_RM.glb`, `UAL2_Standard.glb`, `UAL2_Standard_RM.glb`): an escalation (§11.5). Until then, Quaternius clips stay as WP 8.10 brought them and are listed as blocked. Their parity reference is v2's format-1 decode.
-  - Re-import with hands, foot roll, root yaw, spine, contacts and events.
+  - Re-import with hands, foot roll, root yaw, spine, contacts and events, and each loop's `speed` by WP 8.5's rule. 100STYLE's BVH takes use shardfall's rig maps, rest pose (the frame where the body stands straightest) and units from leg length (`crates/pav_tools/src/mocap/bvh.rs:235-605`, parsed with three.js's `BVHLoader`), and its loop finders (`mocap/takes.rs:53-243`).
   - Swap clips in one at a time, checking parity, marked `via: "source"`.
 - **Improves:** I-14.
 - **Done when:** in every set, at least 80% of the clips whose sources are available are upgraded with parity (§10.5 step 9); a unit test counts the `via: "source"` clips against those whose sources are available, per set, and fails below 80%. The 100STYLE sets are left out of the count until a defect touches them. The rest are listed with reasons.
 - **Verify:** `node x qa anim --only clip: && npm test -- engine/anim/clip tests/unit/data/anim/upgrade`
 
 #### WP-8.9 Clip mode in the box
-- **Owns:** `labs/box/scenes/clips.ts`
+- **Owns:** `labs/box/scenes/clips.ts`; extends `labs/box/index.html` (from WP 2.7) with 100STYLE's credit
 - **Needs:** WP 7.8, WP 8.5, WP 8.6
 - **Size:** M
 - **Carry:** the Mocap Lab's clip mode (`src/mocap.game.js`): catalog search and frame stepping, as `x anim` commands and box settings.
 - **Build:**
   - **Clip mode in the box:** the mannequin and the hero play any clip, with the clip layer over the procedural rig. Its machine interface is `x anim show`, `__engine.describe('clipset')` and the inspector.
   - The Library Lab, a page for people watching, is an optional view built on demand (WP 10.8).
+  - **100STYLE's credit** (WP 8.10) on the box page, which now ships the clips and which Vercel publishes: "Motion: 100STYLE, by Mason, Starke and Komura (2022), CC BY 4.0; converted to key poses, one loop per style and gait", with links to https://creativecommons.org/licenses/by/4.0/ and https://zenodo.org/records/8127870.
 - **Done when:**
-  - The mannequin plays every clip in the box, headless and in the page.
+  - The mannequin plays every clip in the box headless. In the page, the box suite plays one clip from each set, and the gate's long runs play them all (§8.2).
+  - The box page shows 100STYLE's credit (a DOM query).
   - `x anim show <clip>` and the box's clip setting select the same clip, frame for frame.
-- **Verify:** `npm run e2e -- tests/e2e/box-clips.spec.ts && npm test -- tools/anim`
+- **Verify:** `npm run e2e -- tests/e2e/box-clips.spec.ts && npm test -- tools/anim labs/box/scenes/clips`
 
 #### WP-8.10 100STYLE and Quaternius v2, from shardfall
 - **Owns:** `data/anim/sets/{style100,style100_back,style100_backrun,style100_idle,style100_run,style100_side,style100_siderun}/**`, `data/anim/catalogs/100style*.json`, `data/anim/LICENSES/CC-BY-4.0.txt`, `tools/anim/shardfall.ts`, `tests/unit/data/anim/shardfall.test.ts`; replaces `data/anim/sets/quaternius/**` (from WP 8.3) and `data/anim/catalogs/quaternius.json` (from WP 8.1); extends `data/anim/SOURCES.md` and `docs/ANIMATION-LIBRARY.md` (from WP 8.1), and `tests/unit/data/anim/sets/` (from WP 8.3)
@@ -3136,16 +3149,16 @@ A WP is done only when all of these hold:
   - **`tools/anim/shardfall.ts`** reads the sets from `$SHARDFALL_SRC` (plain JSON) and writes them through WP 8.3's repacker, one file per clip, each clip marked `via: "shardfall"`.
   - **100STYLE becomes seven sets:** `style100` (forward), and `style100_back`, `_backrun`, `_idle`, `_run`, `_side` and `_siderun`. Their `_set.json` files keep shardfall's credit and sources verbatim, with `body: null`.
   - **Quaternius v2 replaces v1's set:** 102 clips, 15 of them new (`ClimbUp_1m`, `Shield_Dash`, `Sword_Dash`, `Sword_Heavy_Combo` and root-motion twins). `Punch_Enter`, which v2 dropped, stays from v1, marked `via: "v1"`. v1's `body` (the mannequin's segments and bands, 2,238 bytes) is restored into `_set.json`: WP 8.4's mannequin needs it, and shardfall's files leave it out.
-  - WP 8.3's round-trip test compares `quaternius` with shardfall's file from now on, not with v1's.
+  - WP 8.3's round-trip test compares `quaternius` with shardfall's file from now on, not with v1's, with the exceptions below (`body`, the `via` marks and `Punch_Enter`).
   - **The credit CC BY 4.0 requires:**
     - a 100STYLE section in `SOURCES.md`: the dataset's title, its authors (Mason, Starke and Komura), 2022, https://zenodo.org/records/8127870, DOI 10.1145/3522618, the license with its link, and the changes made (one loop per style and gait, converted by shardfall's importer at `fa2dab6`);
     - the license's text in `LICENSES/CC-BY-4.0.txt`;
-    - the rule, in SOURCES.md and `docs/ANIMATION-LIBRARY.md`, that a game shipping a `style100*` clip shows the credit.
+    - the rule, in SOURCES.md and `docs/ANIMATION-LIBRARY.md`, that any page or game that ships a `style100*` clip shows the credit on screen: the title, the authors, the license with its link, a link to the dataset, and a note that the clips were changed. The box counts from WP 8.9, since Vercel publishes it (WP 0.12).
   - **Catalogs:** shardfall's seven `100style*.json`, and its `quaternius.json` in place of v1's.
 - **Improves:** I-54.
 - **Done when:**
-  - Rejoined, every set deep-equals shardfall's file, apart from the restored `body` and the `via` marks.
-  - The source decoder (WP 8.2's oracle) decodes all 980 clips with no NaN, and the Quaternius parity against v1 is §10.5's step 5: 79 of the 87 shared clips within v1's fit, and the other 8 listed with their reasons.
+  - Rejoined, every set deep-equals shardfall's file, apart from `body`, the `via` marks and v1's `Punch_Enter` (its clip and its `fit` entry); `quaternius` holds 103 clips, v2's 102 and `Punch_Enter`.
+  - The source decoder (WP 8.2's oracle) decodes all 980 clips with no NaN, and the Quaternius parity against v1 is §10.5's step 5: with both versions decoded by the oracle on v1's rest bodies at 30 fps, 79 of the 87 shared clips are within v1's fit (mean and worst), and the other 8 are listed with their reasons. Decoded each on its own set's rest bodies, only 54 pass, because v2's rests differ from v1's in UAL1's `bt` and `spineW` and in UAL2's `neckW`.
   - Every `style100*` set carries its credit, SOURCES.md has its section, and the license text is in place.
 - **Verify:** `npm test -- tests/unit/data/anim`
 
@@ -3192,7 +3205,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Needs:** WP 9.2, WP 3.1, WP 4.2
 - **Size:** M
 - **Build:**
-  - **Context:** resumed on a user gesture.
+  - **Context:** resumed on a user gesture: a key, a click or the end of a touch (`pointerup`; a touch's `pointerdown` is not a gesture).
   - **Mixing:** buses for effects, music, UI and ambience; ducking; voice limits.
   - **Playback:** buffer playback, or streaming through an `AudioWorklet`.
   - **Spatial:** `PannerNode` positioning, with the listener following the camera.
@@ -3331,11 +3344,11 @@ The stress test had no sound. The engine's sound data and synth design come over
     - the engine as a git submodule `engine/`, pinned to a commit of this repository (tags wait for Phase H), or as a `file:` dependency. Vite and tsx compile its TypeScript wherever it lives, so the engine needs no build step;
     - the same toolchain and pins (§6.10), and an `x` shim that runs the engine's `x.js` on the game's `scenes/` and `data/`;
     - a `vite.config.ts` and an `index.html`;
-    - one scene and its replay test;
+    - one scene and its replay test, and a bot of its own for that scene (game code that writes intents), as shardfall's 90-line template has (`pavilion-lite/src/games/template.rs`);
     - the game's own AGENTS.md, and a copy of `DOCTRINE.md`.
 
     `x ci --local` scaffolds it, in the submodule form, into a temporary directory, and runs its test.
-- **Done when:** the store is unit-tested, and a scaffolded game passes its own test.
+- **Done when:** the store is unit-tested, and a scaffolded game passes its own test, which replays its scene to golden hashes, continues exactly after a capture and restore, and has the template's bot win the scene on 10 seeds (shardfall's game tests, §5.8).
 - **Verify:** `npm test -- engine/app/store && node x new game demo --test`
 
 #### WP-10.8 Lab pages (optional views)
@@ -3514,20 +3527,20 @@ It is done when everything is green.
 
 | Set | Clips | Keys | Seconds | Text (gzip) | Fit, average / worst | Sources | License |
 |---|---|---|---|---|---|---|---|
-| QUATERNIUS v2, which replaces v1's 88 (`Punch_Enter` stays from v1) | 102 (32 loops, 10 with `speed`, 17 with root motion, 20 sword) | 1,763 | 161 | 527 KB (85 KB) | 14.5 / 222 mm | Universal Animation Library 1 and 2, version 2 (June 2026) | CC0 1.0 |
+| QUATERNIUS v2, which replaces v1's 88 (`Punch_Enter` stays from v1) | 102 (32 loops, 10 with `speed`, 17 with root motion, 20 sword), plus `Punch_Enter` from v1: 103 in the set | 1,763 | 161 | 527 KB (85 KB) | 14.5 / 222 mm | Universal Animation Library 1 and 2, version 2 (June 2026) | CC0 1.0 |
 | STYLE100, seven sets (forward, back, back run, idle, run, side, side run) | 878 (all loops; 775 with `speed`) | 11,329 | 1,132 | 3.33 MB (693 KB) | 10.6 / 546 mm | 100STYLE: about 100 styles of walking, running and standing (Mason, Starke and Komura, 2022) | CC BY 4.0 |
 
 - **After WP 8.10** the library holds 1,218 clips: 5.40 MB of text, 1.10 MB gzipped. Four 100STYLE clips exceed a clip's fit limits, and WP 8.6 baselines them: `HandsBetweenLegs_Walk` (73 / 292 mm), `WildLegs_Walk` (71 / 546), `SwingArmsRound_Walk` (40 / 395) and `Elated_SideRunRight` (30 / 435).
 
 - **Also kept:**
-  - three hand-written catalogs (39 KB of tags, descriptions, sources, skips and picks);
+  - three hand-written catalogs (39 KB of tags, descriptions, sources, skips and picks); WP 8.10 replaces the Quaternius one with shardfall's and adds 100STYLE's seven;
   - the ledger of **all 2,548 CMU takes** (113 subjects, 10.75 h; per-take category, fit, flags and usage; 30 rows marked `pick`).
 - **Dropped:** HERO (Emberdeep's subset) and the 68 MB `examples/cmu-lib/`, which can be regenerated.
 - **CMU terms, recorded verbatim in `data/anim/SOURCES.md`:**
   - The data may be copied, modified and redistributed, and used in commercial products.
   - It **may not be resold directly, even in converted form**.
   - Credit it as: *"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217."*
-- **100STYLE's terms (CC BY 4.0), recorded in `data/anim/SOURCES.md` with the license text:** the clips may be shared and adapted, commercially too, with credit, a link to the license and a note of the changes. Each `style100*` set carries the credit, and a game that ships one of its clips shows it.
+- **100STYLE's terms (CC BY 4.0), recorded in `data/anim/SOURCES.md` with the license text:** the clips may be shared and adapted, commercially too, with credit, a link to the license and a note of the changes. Each `style100*` set carries the credit, and any page or game that ships one of its clips shows it, the box's published page included (WP 8.9).
 - **Doctrine: Assets.** The clips are text data that agents read and edit, the doctrine's second preference. The binary sources (GLB, AMC) stay in the git-ignored `.cache/`.
 
 ### 10.2 The stored format: readable key poses (format 1, extended as format 2)
@@ -3583,7 +3596,7 @@ data/anim/
   catalogs/*.json                     catalogs, input to the importers (mesh2motion and cmu from my-3d2dge;
                                       quaternius and 100style* from shardfall, WP 8.10)
   sets/<set>/_set.json                sources (rest bodies, licenses), body (mannequin segments), credit
-  sets/<set>/<Clip_Slug>.json         one clip per file (1–10 KB, ~2,100 tokens), real name inside
+  sets/<set>/<Clip_Slug>.json         one clip per file (0.7–14 KB, ~2,100 tokens), real name inside
   sets/<set>/catalog.tsv              generated: name | sec | loop | speed | tags | desc | src | orig | take | fit (~30 tokens a row)
   cmu/<category>.tsv, cmu/subjects.tsv   the ledger, split into 17 categories (the subject descriptions move to subjects.tsv)
   actions/*.json                      multi-beat ACTIONS (WP 8.7)
@@ -3622,11 +3635,11 @@ clip.json ─parse/validate─▶ keys (format 1/2)
 | 2. Catalogs and ledger copied verbatim, then split | 8.1 | The split rows join back to the original exactly |
 | 3. Port `readable.js` with no change in behaviour | 8.2 | Every clip sampled at 30 fps decodes within 0.001 mm of the reference vectors. The legacy oracle reproduces them bit for bit |
 | 4. Repackage the sets as one file per clip | 8.3 | Rejoined, they deep-equal the source objects, and `text()` output is unchanged |
-| 5. Adopt 100STYLE and Quaternius v2 from shardfall | 8.10 | Rejoined, each set deep-equals shardfall's file, apart from the restored `body`. The source decoder decodes all 980 clips with no NaN. Quaternius v2 against v1: 79 of 87 shared clips within v1's fit. Of the other 8, `Swim_Idle_Loop` and `Swim_Fwd_Loop` sit lower (their hips 36% and 8% lower), and `Death01`, `Sword_Attack` and its `_RM` twin, `Walk_Formal_Loop`, `Zombie_Walk_Fwd_Loop` and `Walk_Loop` miss on their worst frame |
-| 6. Baker and clip layer | 8.4 | FK parity against the v1 decode at 30 fps and at 60 Hz midpoints: mean ≤ 1 mm per set; worst cases listed |
+| 5. Adopt 100STYLE and Quaternius v2 from shardfall | 8.10 | Rejoined, each set deep-equals shardfall's file, apart from `body`, the `via` marks and v1's `Punch_Enter` in `quaternius`. The source decoder decodes all 980 clips with no NaN. Quaternius v2 against v1, both decoded on v1's rest bodies at 30 fps: 79 of 87 shared clips within v1's fit (mean and worst). Of the other 8, `Swim_Idle_Loop` and `Swim_Fwd_Loop` sit about 1.24 m and 1.07 m lower (their hips at −36% to −47% and −7% to −9% of standing hip height, below the floor) and are within fit once that drop is removed; `Death01` misses on its mean and its worst frame; and `Sword_Attack` and its `_RM` twin, `Walk_Formal_Loop`, `Zombie_Walk_Fwd_Loop` and `Walk_Loop` miss on their worst frame |
+| 6. Baker and clip layer | 8.4 | FK parity against the format-1 decode at 30 fps and at 60 Hz midpoints: mean ≤ 1 mm per set; worst cases listed |
 | 7. Node contact sheets, tests and clip mode | 8.6, 8.9 | Lints pass or are baselined with reasons |
 | 8. Port the tools | 8.5 | `x anim import --cmu --legacy` reproduces the CMU set byte for byte. This study verified that the source's importer does so today |
-| 9. Format-2 re-import from the sources | 8.8 | Per clip, decoded-point parity with v1 within that clip's fit; swapped in one at a time as `via: "source"` |
+| 9. Format-2 re-import from the sources | 8.8 | Per clip, decoded-point parity with the clip's current format-1 decode (v2's for Quaternius, shardfall's for 100STYLE) within that clip's fit; swapped in one at a time as `via: "source"` |
 | 10. Re-survey CMU; import the `pick` rows as games need them | 8.8 | The ledger's `fit` reflects format 2; the notes are kept |
 
 ### 10.6 What the library does not cover, and how the engine fills it
@@ -3664,7 +3677,7 @@ clip.json ─parse/validate─▶ keys (format 1/2)
   - Never weaken a gate to pass it.
 - **The box comes first.** Until G7, a WP that does not serve the current box stage waits, unless an agent is idle and its Needs are green (lanes L and X, §9.1). On-demand WPs wait for their triggers (§9.1).
 - **Commits.** One commit per WP (more is fine), with the message `<area>: <what> (WP-x.y)`. Compatible releases adopted at the WP's start go first, in a `deps:` commit of their own (§6.10).
-- **Pushes and pull requests** (the owner's standing policy, ADR-0021). Push after every major milestone (each gate), open one PR per stage, merge it once `x ci --local` is green (GitHub Actions too, once enabled), and delete its branch. None of this needs the owner's approval. Merge with a merge commit, never a squash, so the ledger's commits stay on `main`; start the next stage from the updated `main`. Push the session's branch more often when that protects work. Work on the branch your session designates. Vercel builds each push (WP 0.12): read the stage PR's Vercel check once before merging, and fix a failed build first; nothing else is checked there (ADR-0021).
+- **Pushes and pull requests** (the owner's standing policy, ADR-0021). Push after every major milestone (each gate), open one PR per stage, merge it once `x ci --local` is green (GitHub Actions too, once enabled), and delete its branch. None of this needs the owner's approval. Merge with a merge commit, never a squash, so the ledger's commits stay on `main`; start the next stage from the updated `main`. Push the session's branch more often when that protects work. Work on the branch your session designates. Vercel builds each push (WP 0.12). Before merging a stage PR, look once at its Vercel status, without waiting for it: if the build failed, reproduce it in a clean checkout of the pushed commit with `npm ci && npm run build` on Node 24 and fix it before merging; if it is still pending, or there is none yet (before the owner's Vercel imports the repository), merge; if it failed but does not fail in the clean checkout, merge and ask the owner for Vercel's build log, which agents cannot read. Nothing else is checked there, and nobody polls it (ADR-0021).
 - **The ledger.** In extra-effort mode, update §14 in the same commit as the work: status, commit and a one-line note. In ultracode, lanes report and the integrator writes the ledger. At each gate, rewrite `docs/PROGRESS.md`: one screen on where things stand, what is next and the open issues, which every session reads first (shardfall's lesson, §4.8).
 - **Deviations** become ADR amendments in `docs/decisions/`. **Blockers** go in the WP's ledger note, together with the smallest core change that would unblock it. Then move on to the next independent WP.
 - **Escalations** follow §8.14: ask, wait up to 15 minutes, then commit, decide and record. Never stall.
@@ -3706,7 +3719,7 @@ A range such as `2.1 → 2.7` means every WP of the stage in numeric order. On-d
 - T2 and the long runs as background tasks;
 - an Explore agent for wide searches of the source.
 
-**Checkpoints.** At each gate: run `x deps --qualify`, push, open the PR, wait for a green `x ci --local` (and Actions, once enabled), merge, then write a gate note in the ledger (what is proven, measured numbers, open risks, escalations and the calls made). Post the box's film of the stage for the owner (§11.5).
+**Checkpoints.** At each gate: run `x deps --qualify`, push, open the PR, wait for a green `x ci --local` (and Actions, once enabled), look once at the PR's Vercel status (§11.1), merge, delete the branch, then write a gate note in the ledger (what is proven, measured numbers, open risks, escalations and the calls made). Post the box's film of the stage for the owner (§11.5).
 
 ### 11.3 Ultracode: a multi-agent workflow
 
@@ -3719,7 +3732,7 @@ A range such as `2.1 → 2.7` means every WP of the stage in numeric order. On-d
 
 **Isolation.**
 - Each lane runs in its own git worktree (`isolation: "worktree"`). Before its first Verify, the lane:
-  - runs `npm ci` in the worktree, or symlinks the main checkout's `node_modules`;
+  - runs `npm ci` in the worktree. It never symlinks the main checkout's `node_modules`: `npm ci`, which `x ci --local` runs first, empties a symlinked `node_modules` through the link, so the main checkout and every lane that shares it lose their packages (measured on npm 11.19);
   - sets its own `PORT`, so its Vite server and Playwright runs never collide with another lane's;
   - needs no other shell state. Every `x` command resolves the source itself (`$MY3D2DGE_SRC`, else `.cache/src-3d2dge`, else the WP 0.1 order), and `x check` detects the worktree (WP 0.4).
 - A WP may change only its **Owns** paths, as widened by the rules in §9.3.
@@ -3770,7 +3783,8 @@ engine/sim-api.ts, public exports without docs or errors without a fix, GPU work
 downgrades, files outside Owns, missing or weak tests (would a plausible bug pass? ADR-0021 orders none for the
 touch controls and the Vercel deployment), docs drift, unbaselined QA
 changes, game content (§5.7), box sample content leaking into engine/, work built ahead of its trigger (North Star),
-production-hardening work outside Phase H (ADR-0021's exceptions aside), deviations from the doctrine without an escalation.
+production-hardening work outside Phase H (ADR-0021's exceptions aside), deviations from the doctrine without an escalation
+or an owner's call recorded in an ADR (ADR-0021).
 Return JSON: { "pass": bool, "failures": [{ "what", "where", "fix" }], "notes" }.
 ```
 
@@ -3802,6 +3816,7 @@ Humans give direction remotely; agents fly the plane. The owner's part is small,
 | Branch protection that makes `ci.yml` a required check | I-33 | Agents run `x ci --local` before every merge |
 | Vercel imports the repository (the owner's Vercel does it automatically; `vercel.json` sets the build) | WP 0.12 | Films and pictures in the PR or chat; `npm run build` plus `npx vite preview` locally |
 | Report problems seen on a phone or in the deployed pages: nothing tests them (ADR-0021) | WPs 0.12, 3.12 | Nothing is fixed there until reported, except a failed Vercel build |
+| Sessions that run this plan include `michaelcrosato/my-3d2dge` and `michaelcrosato/shardfall` (shardfall is private and cannot be cloned otherwise) | WP 0.1 | `x src` fails, and with it `x ci --local`, so nothing merges; the agent escalates at once |
 | The four GLBs of the Quaternius Universal Animation Library's version 2 (`UAL1_Standard.glb`, `UAL1_Standard_RM.glb`, `UAL2_Standard.glb`, `UAL2_Standard_RM.glb`): a download link or a private repository | WP 8.8 (on demand) | Quaternius clips stay as WP 8.10 brought them (format 1), listed as blocked |
 | Model access for agent-usability evals (headless Claude Code or an API key) | WP 12.2 (on demand) | `x evals --dry-run` checks the tasks and their acceptance tests only |
 | Any binary asset other than a font (doctrine: Assets) | As needed | A procedural or text version, or the feature waits |
@@ -3828,7 +3843,7 @@ Humans give direction remotely; agents fly the plane. The owner's part is small,
 | R13 | Tools that need the network (CMU over HTTP; GitHub 403s for `curl` in the sandbox, while `git clone` works) | M | H for the source checkout, L otherwise | `$MY3D2DGE_SRC` resolution order (WP 0.1); committed reference vectors checked by checksum; network tests at gates or on demand; caching | T, L |
 | R14 | Agents report success falsely or skip tests | M | H | The `verifier` on L-size WPs and every gate; `x ci --local` as the gate; the "never skip a test" rule; mutation testing on demand (WP 12.2) | T |
 | R15 | Visual regressions go unnoticed | M | M | The ID pass, thumbnails, `x film --compare <ref>` from Box 2, and the `visual-reviewer` subagent on demand | R |
-| R16 | Audio unlock rules in browsers | M | L | Resume on a gesture; an in-game mute; iOS waits for Phase H | X |
+| R16 | Audio unlock rules in browsers | M | L | Resume on a gesture, a first touch included; an in-game mute; a problem on a phone, iOS included, is fixed when the owner reports it (ADR-0021) | X |
 | R17 | Churn from adopting compatible releases at once: a patch changes formatting, warnings or sim results in the middle of a stage | M | M | `deps:` commits of their own at a WP's start, passing T0–T2; exact pins and the lockfile; goldens re-recorded with reasons; a one-commit rollback | T |
 | R18 | Game content creeps into the engine, or the box becomes a game | M | M | The exclusion list (§5.7); box content stays in `labs/box/`; stages are defined by engine capabilities, not game design; the verifier checks both | All |
 | R19 | Escalations stall work or get lost | M | M | The 15-minute rule; `x esc` records; `x check` fails on an overdue open escalation; SessionStart lists open ones; gate notes list the calls made | T, Integrator |
@@ -3836,7 +3851,7 @@ Humans give direction remotely; agents fly the plane. The owner's part is small,
 | R21 | Playwright 1.64 drives the container's older Chromium 141 through `executablePath`, a pairing Playwright does not promise | M | M | Measured working (§4.7); the harness spec (WP 0.2) catches a regression at once; on a failure, pin the newest 1.x that works and record the call, or the owner updates the environment's browser | T |
 | R22 | Newer three.js releases need WebGPU features the platform's Chromium 141 lacks (r186 fails at startup), so three.js upgrades stall until the environment's browser changes | H | L | r182 does what the box needs; U-7 waits for U-8; a newer internal is adopted only after it is measured on the platform | R |
 | R23 | On demand goes wrong both ways: work built ahead of need, or a needed tool never built because nobody measured its trigger (doctrine: North Star) | M | M | Concrete triggers in §9.1; the ledger records each trigger's measurement; each gate note lists the on-demand WPs that came close to triggering | All |
-| R24 | The touch controls and the Vercel deployment are untested by design (ADR-0021), so a problem on phones or in the deployed pages goes unseen until the owner reports it | M | L | The desktop suites keep the shared code green; WP 3.12 copies a design that phones play today; errors show as page text (WP 0.8); a failed Vercel check on a stage PR is fixed before merging; a reported problem is reproduced first (`npm ci && npm run build` for the build) | I, T |
+| R24 | The touch controls and the Vercel deployment are untested by design (ADR-0021), so a problem on phones or in the deployed pages goes unseen until the owner reports it | M | L | The desktop suites keep the shared code green; WP 3.12 copies shardfall's design, which was checked only under phone emulation (its `docs/HISTORY.md:99-105`); errors show as page text (WP 0.8); a failed Vercel build seen in the one look before a stage PR's merge is fixed first, when it reproduces in a clean checkout; a reported problem is reproduced first (`npm ci && npm run build` for the build) | I, T |
 
 ---
 
@@ -3866,7 +3881,7 @@ Humans give direction remotely; agents fly the plane. The owner's part is small,
 | 0018 | **The roadmap:** box first, in six stages; then the animation library and audio; everything else on demand, each WP when its trigger is measured (§9.1, doctrine: North Star); production hardening only when a game goes to production (doctrine: Discovery first) |
 | 0019 | **Common ground** (doctrine: Common ground): what game agents touch (the toolchain, the public API, the data formats, the `x` commands) uses established tools, libraries and patterns. The bespoke game-facing parts, each because nothing established does the job: the `x` commands (engine operations), the escalation log, the ID pass and look metrics, replays and hashing, content QA, the animation system being ported, and the local ESLint rules. Internals follow ADR-0020. Dependencies in `node_modules`, Rapier's inlined WASM included, are code, not source assets (doctrine: Assets) |
 | 0020 | **Quality under the hood, behind a public API** (doctrines: Quality under the hood, Common ground): game code imports only `engine/index.ts` and `engine/sim-api.ts`, enforced by ESLint; every public export is documented and every error names its fix in API terms, so game agents never need to read the internals; behind that boundary, the internals use the highest-quality approach their builder can execute well, newer releases included when measured (§6.10, rule 7) |
-| 0021 | **The owner's calls of 2026-10-10:** (1) touch controls modelled on shardfall's (WP 3.12) and a Vercel deployment of every push (WP 0.12) are built now, ahead of Phase H, and **never tested**: no specs, device emulation, phones, deployment checks or CI steps for them. A failed Vercel build is fixed when it shows; any other problem with them, only when the owner reports it. The `verifier` does not flag their missing tests (an exception to the doctrines Verifiable and Discovery first, made by the owner). (2) 100STYLE (CC BY 4.0) is adopted, with its credit (WP 8.10). (3) Pushes at milestones, stage PRs merged with merge commits, their branches deleted, and the Vercel deployments that pushes trigger need no approval (§8.14, §11.1) |
+| 0021 | **The owner's calls of 2026-10-10:** (1) mobile support modelled on shardfall's (WP 3.12: its touch controls, its page set up for phones, and its lighter defaults on phones) and a Vercel deployment of every push (WP 0.12) are built now, ahead of Phase H, and **not tested**: no specs, device emulation, phones, deployment tests or CI steps for them. The one exception is a single look at a stage PR's Vercel status before merging, so a failed build is fixed when it shows (§11.1). Any other problem with them is fixed only when the owner reports it, and may then be reproduced by whatever it needs (touch emulation included), without adding a standing suite. The `verifier` does not flag their missing tests (an exception to the doctrines Verifiable and Discovery first, made by the owner). (2) 100STYLE (CC BY 4.0) is adopted, with its credit (WP 8.10). (3) Pushes at milestones, stage PRs merged with merge commits, their branches deleted, and the Vercel deployments that pushes trigger need no approval (§8.14, §11.1) |
 
 ### 13.2 Open questions, each with a default (proceed with the default; revisit only through an ADR amendment)
 
@@ -3909,7 +3924,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 0.9 | CI (`x ci --local`, Actions when enabled) | T | todo | | |
 | 0.10 | Claude Code integration | T | todo | | |
 | 0.11 | Port reference vectors | T | todo | | |
-| 0.12 | Deploy on Vercel (untested, ADR-0021) | T | todo | | |
+| 0.12 | Deploy on Vercel (not tested, ADR-0021) | T | todo | | |
 | **G0** | **Gate: foundation** | | todo | | |
 | 1.1 | Math, rng, noise, hash, color | C | todo | | |
 | 1.2 | Registry, events, log, settings, schema | C | todo | | |
@@ -3937,7 +3952,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 3.9 | Cameras (v2): chase, first person, rail | R | todo | | |
 | 3.10 | Box 2: a hero in the box | B | todo | | |
 | 3.11 | Film and visual comparison | T | todo | | |
-| 3.12 | Touch controls (untested, ADR-0021) | I | todo | | |
+| 3.12 | Touch controls (not tested, ADR-0021) | I | todo | | |
 | **G3** | **Gate: Box 2** | | todo | | |
 | 4.1 | Bodies and props physics | P | todo | | |
 | 4.2 | Level compiler (v2): the hall | W | todo | | |
@@ -4333,11 +4348,11 @@ anticipation. On-demand work packages wait for their measured trigger (PLAN.md �
    internals may go newer when measured. Write the pinned release's idioms (docs/THREE-DELTA.md).
                                                             → x deps --check, x deps --update, banned names
 10. Discovery first: target this container (Node 24 through scripts/setup.sh; its Chromium 141, WebGPU on
-    SwiftShader); no production hardening outside Phase H.
+    SwiftShader); no production hardening outside Phase H, except ADR-0021's touch controls and Vercel deployment.
 
 ## Escalate, don't stall
 Owner approval needed (a binary asset, a new dependency, spending money, a repo setting, any other outward action;
-pushes, stage PRs and their merges, and the Vercel deploys they trigger are pre-approved), a principle can't be
+pushes, stage PRs, merges, branch deletions and the Vercel deploys they trigger are pre-approved), a principle can't be
 met, or going against the doctrine looks best: node x esc open … → post it → wait up to 15 minutes, doing the
 preferred alternative, never the action itself → answered: act on it. No answer: commit, decide, node x esc
 decide …, continue. For the rest of the run, or until the owner answers, report further conflicts without
@@ -4359,6 +4374,8 @@ stopping. Record every escalation, every later conflict and every call.
 - DOCTRINE.md changes only when the owner asks. Never edit out/ or node_modules/ by hand.
 - Versions: only the pins in package.json, as tools/deps.json records them. Upgrades are their own work packages.
 - Never skip, disable or loosen a test to get green. Baselines change only with a written reason.
+- At each gate: push, open the stage's PR, merge it with a merge commit once x ci --local is green, then delete
+  its branch (PLAN.md §11.1). None of this needs the owner's approval (ADR-0021).
 - Touch controls and the Vercel deployment have no tests, by the owner's order (ADR-0021): fix a failed Vercel
   build; fix anything else about them only when the owner reports it.
 - Never downgrade silently: every downgrade emits an advice code.
