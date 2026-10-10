@@ -26,6 +26,7 @@ describe('scene modules', () => {
     for (const target of ['fixtures/scenes/kernel', 'fixtures/scenes/kernel/index.ts', 'kernel']) {
       expect(resolveSceneModule(ROOT, target)).toBe('fixtures/scenes/kernel/index.ts');
     }
+    expect(resolveSceneModule(ROOT, 'labs/box/scenes/room')).toBe('labs/box/scenes/room.ts');
     expect(() => resolveSceneModule(ROOT, 'kernal')).toThrow(
       /neither a scene module .* nor a scene id \(scenes: .*kernel/,
     );
