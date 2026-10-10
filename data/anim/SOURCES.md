@@ -54,9 +54,9 @@ ledger and the license texts.
     data, converted or not.
 - **Credit**, the acknowledgment the database asks for, verbatim: "The data used in this project was obtained from
   mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217."
-- **Files:** `http://mocap.cs.cmu.edu/allasfamc.zip` (every ASF and AMC file, 1.08 GB), or one take at a time:
-  `subjects/<NN>/<NN>.asf` (the subject's skeleton) and `subjects/<NN>/<NN>_<MM>.amc` (take `<MM>`, 120 frames a
-  second, a few at 60).
+- **Files:** `http://mocap.cs.cmu.edu/allasfamc.zip` (1.08 GB: the ASF and AMC files of 2,514 takes; subject 144's
+  34, added later, are fetched one by one), or one take at a time: `subjects/<NN>/<NN>.asf` (the subject's skeleton)
+  and `subjects/<NN>/<NN>_<MM>.amc` (take `<MM>`, at 120 frames a second, or 60 for some subjects).
 
 ## Where each file came from
 
