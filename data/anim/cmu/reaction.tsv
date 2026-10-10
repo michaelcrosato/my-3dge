@@ -1,0 +1,48 @@
+# The CMU ledger's takes in category "reaction" (categories.tsv says why; README.md explains the columns).
+id	subject	fps	sec	active	fit	travel	hips	flags	used	note	desc
+77_16	77	60	10.9	1.6-10.9	18/109	2.0	10-97				laying down, getting up, careful ready pose
+77_17	77	60	12.0	1.5-12.0	23/103	2.4	9-100				laying down, getting up, careful ready pose
+77_18	77	60	14.2	0.0-14.2	22/118	2.6	12-104	inverted			laying down on back, getting up, careful ready pose
+77_19	77	60	16.6	0.0-16.6	18/105	5.9	79-104				limping, hurt right leg
+77_20	77	60	26.2	0.0-26.2	19/93	11.1	77-104				limping, hurt right leg
+77_22	77	60	23.7	0.0-23.7	18/96	10.5	86-106				limping, hurt right leg
+77_23	77	60	26.5	0.0-26.5	17/120	10.0	88-103				limping, hurt right leg
+77_24	77	60	11.9	0.0-11.9	18/84	2.9	89-104				limping, hurt right leg
+77_33	77	60	49.9	1.4-49.9	16/78	16.2	91-104				creeping with limp
+90_12	90	120	6.9	2.3-5.4	16/103	1.3	19-157	inverted floats			bck flp twst fall
+90_13	90	120	7.7	2.3-7.7	15/100	1.6	19-153	inverted floats			bck flp twst fall
+90_16	90	120	6.0	1.9-4.1	15/92	1.1	24-183	floats	Fall_On_Face		fall on face
+91_16	91	120	15.8	2.4-15.8	18/86	9.6	92-102				Limp
+91_24	91	120	31.7	0.9-31.7	24/94	9.9	95-106				HurtLegWalk
+91_26	91	120	17.3	2.4-17.2	19/82	9.3	97-103		Hurt_Stomach_Walk_Loop		HurtStomachWalk
+105_16	105	120	15.8	2.4-15.8	18/86	9.6	92-102				Limp
+105_24	105	120	31.7	0.9-31.7	24/94	9.9	95-106				HurtLegWalk
+105_26	105	120	17.3	2.4-17.2	19/82	9.3	97-103				HurtStomachWalk
+111_06	111	120	12.7	0.0-11.6	30/185	2.0	10-105	inverted			Get up from floor
+111_07	111	120	16.4	0.0-16.4	19/117	1.4	6-105				Get up from floor
+111_08	111	120	12.8	0.0-12.1	26/147	1.8	5-105				Get up from floor
+111_09	111	120	6.5	0.0-6.5	24/152	0.9	60-106				Get up from chair
+111_10	111	120	3.7	0.0-3.7	21/128	1.1	61-107				get up from chair
+111_11	111	120	4.8	0.0-4.8	19/118	0.7	67-108				get up from chair
+113_08	113	120	15.4	0.4-15.4	28/173	1.8	7-104				Lay down and get up
+113_15	113	120	7.9	0.0-7.9	23/141	2.0	58-105				Sit in chair and get up
+114_02	114	120	14.5	3.9-14.5	16/85	1.4	14-106				Getting up from laying down
+114_04	114	120	7.5	0.1-7.5	14/90	1.9	58-107				Getting up from chair
+114_06	114	120	8.5	2.1-8.5	16/81	1.7	63-107				Getting up from chair
+114_11	114	120	29.0	0.0-29.0	15/102	6.2	8-105				Laying down and getting up
+139_16	139	120	5.4	0.8-5.4	19/111	2.0	10-97				Get Up From Ground
+139_17	139	120	6.0	0.7-6.0	23/103	2.3	9-100				Get Up From Ground
+139_18	139	120	7.1	0.0-7.1	22/117	2.5	12-104	inverted			Get Up From Ground Laying on Back
+139_19	139	120	8.3	0.0-8.3	18/105	5.9	79-103		Wounded_Walk_Loop		Walk Wounded Leg
+139_20	139	120	13.1	0.0-13.1	19/95	11.0	77-104				Walk Wounded Leg
+139_22	139	120	11.9	0.0-11.9	18/101	10.5	86-106				Walk Wounded Leg
+139_23	139	120	13.3	0.0-13.3	17/119	10.0	88-103				Walk Wounded Leg
+139_24	139	120	6.0	0.0-6.0	18/72	2.9	89-104				Walk Wounded Leg
+140_01	140	120	6.9	0.8-6.9	22/128	1.7	15-98		Get_Up_Face_Down		Get Up Face Down
+140_02	140	120	7.8	0.1-7.8	19/108	1.9	15-103				Get Up Face Down
+140_03	140	120	8.5	0.0-8.5	18/92	1.4	11-102		Get_Up_From_Side		Get Up Laying on Side
+140_04	140	120	9.2	0.6-9.2	20/98	1.5	10-98				Get Up Laying on Side
+140_08	140	120	7.5	0.4-7.5	18/79	1.3	9-100		Get_Up_From_Back		Get Up From Ground Laying on Back
+140_09	140	120	6.8	0.2-6.0	18/75	1.3	11-100				Get Up From Ground Laying on Back
+143_18	143	120	6.3	0.3-6.3	11/70	1.6	60-104		Sit_Down_Get_Up		Sit Down And Get Up
+143_19	143	120	7.0	0.4-7.0	12/64	2.1	94-105				Sit On Stool And Get Up

@@ -1,0 +1,21 @@
+# The CMU ledger's categories, in the order they are tried: a take belongs to the first whose pattern (a JavaScript
+# regular expression) matches its description, lower-cased. A take with no description is "undescribed", and one that
+# no pattern matches is "other": the subject's description is never consulted (README.md). file: where its takes are.
+category	file	takes	pattern
+calibration	calibration.tsv	45	motorcycle|range of motion|t-pose|tpose|calibration|lost marker
+acrobatics	acrobatics.tsv	49	cartwheel|flip|handspring|somersault|breakdanc|acrobat|gymnast|handstand|tumbl|backbend|\broll
+combat	combat.tsv	82	punch|kick|box(ing|er)|fight|martial|karate|sword|stab|\bjab|uppercut|strike|slash|attack|block|dodge|duck\b|ducking|wrestl|swat
+reaction	reaction.tsv	46	\bfall|stumbl|\btrip|injur|wound|limp|hurt|\bdie\b|dead|collaps|faint|get(ting)? up|stand up from|getup
+climb	climb.tsv	53	climb|ladder|ledge|\bscal|hang|monkey ?bar|swing on|swings?[ ]
+jump	jump.tsv	177	jump|\bhop|leap|hopscotch|vault
+sit and lie	sit-and-lie.tsv	55	\bsit|stool|chair|\blie\b|laying|lying|sleep|kneel|crouch|squat|bench
+dance	dance.tsv	87	danc|salsa|charleston|ballet|arabesque|waltz|tango|michael jackson|pirouette|twist\b|moonwalk|lambada
+sports	sports.tsv	81	basketball|soccer|football|golf|tennis|baseball|swim|skate|bowl|volleyball|frisbee|throw|catch|dribbl|shoot|\bball|sport|bicycle|row(ing)?\b
+animal and character	animal-and-character.tsv	167	chicken|monkey|\bdog|\bcat\b|bear|elephant|animal|\bduck|frog|snake|horse|bird|dinosaur|robot|zombie|mickey|mime|pantomime|penguin|crab|kangaroo|gorilla|ape\b|t-rex|teapot|alien|monster|old man|drunk|baby|tiger|panther|lion|ghost|dragon|devil|genie|superhero
+gesture and talk	gesture-and-talk.tsv	138	wave|waving|clap|point|cheer|salute|\bbow\b|bowing|shrug|signal|\btalk|laugh|\bcry|yawn|nod|beckon|story|rhyme|express|emotion|greet|shak(e|ing) hands|hand ?shake|celebrat|conversation|argue|gestur|happy|\bsad\b|upset|scared|angry|freez|shiver|teach|curtsey|high five|peek
+everyday	everyday.tsv	390	pick|carry|lift|push|pull|open|close|reach|wash|sweep|drink|\beat|mug|coffee|window|\bbox|suitcase|\bplace|put|grab|wipe|mop|construction|hammer|saw|shovel|drag|\bload|stack|lean|bend|cook|clean|phone|read|writ|door|table|step ?stool|stepstool|bucket|broom|fish|sew|plant|rak(e|ing)|paint|pay|buy|vacuum|typ(e|ing)|laptop|palm pilot|movie|shav|slic|chop|dig|dough|batter|mix|search|pok(e|ing)|violin|piano|drum|guitar|sipping|martini|smok|setting|dial
+exercise	exercise.tsv	38	stretch|exercise|jacks|squats|yoga|tai ?chi|push ?up|sit ?up|lunge|range of motion|warm|balanc|toe touch
+locomotion	locomotion.tsv	696	walk|\brun|jog|sprint|march|sneak|stride|\bstep|turn|veer|sidestep|stairs|navigate|backward|strafe|skip|stroll|shuffle|creep|crawl|wander|pace|obstacle|avoid|start|stop|\b(90|180|360)\b
+idle	idle.tsv	14	idle|standing|wait|stand\b|shift
+other	other.tsv	227
+undescribed	undescribed.tsv	203
