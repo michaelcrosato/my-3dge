@@ -596,6 +596,7 @@ For the agents who maintain the engine.
 - `createCiCommand` (function): Builds the `x ci` command; the tests pass fakes for the step runner, git, the selections and the clock.
 - `default` (default): The merge gate (PLAN.md §8.9, WP 0.9): `x ci --local` runs `CI_STEPS` in order on this machine, holds the tiers to their budgets (tools/lib/tiers.ts), writes `out/ci/summary.md` and, when everything passed, records HEAD in `out/ci/last-green`, the base of the selections until main holds a gate.
 - `Head` (interface): HEAD's commit and branch, and the uncommitted changes (`git status --porcelain` lines).
+- `KEPT_CACHES` (const): What `npm ci` must not wipe, relative to the root: the tools' caches, and Vitest's record of each file's duration, from which it starts the longest files first (without it, T1 took 39 s instead of 36 s).
 - `readHead` (function): Reads `Head` with git.
 - `readT2Full` (function): The duration of the last full T2 run that passed, if one was recorded.
 - `renderSummary` (function): The run as Markdown, for `out/ci/summary.md` (and the GitHub workflow's step summary).

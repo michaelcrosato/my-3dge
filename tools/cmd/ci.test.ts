@@ -168,15 +168,21 @@ describe('runCi', () => {
     ).toBe(true);
   });
 
-  it('keeps node_modules/.cache/ across npm ci', async () => {
-    const root = sandbox({ 'node_modules/.cache/eslint/state': 'warm', 'node_modules/old/index.js': '' });
+  it("keeps node_modules/.cache/ and Vitest's durations across npm ci", async () => {
+    const root = sandbox({
+      'node_modules/.cache/eslint/state': 'warm',
+      'node_modules/.vite/vitest/x/results.json': '{}',
+      'node_modules/old/index.js': '',
+    });
     const reinstall = (at: string) => {
       expect(existsSync(join(at, 'node_modules', '.cache'))).toBe(false);
+      expect(existsSync(join(at, 'node_modules', '.vite', 'vitest'))).toBe(false);
       rmSync(join(at, 'node_modules'), { recursive: true });
       mkdirSync(join(at, 'node_modules', 'new'), { recursive: true });
     };
     await runCi(root, fakeDeps({ 'npm ci': { effect: reinstall } }).deps);
     expect(read(root, 'node_modules/.cache/eslint/state')).toBe('warm');
+    expect(read(root, 'node_modules/.vite/vitest/x/results.json')).toBe('{}');
     expect(existsSync(join(root, 'node_modules', 'old'))).toBe(false);
     expect(existsSync(join(root, CI_OUT.keptCache))).toBe(false);
   });

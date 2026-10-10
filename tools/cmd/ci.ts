@@ -14,9 +14,9 @@
  * - **Budgets:** T0 is timed; T1 and T2 take the duration their JSON report records when the step rewrote it, else
  *   the step's time. Over a budget warns; at 1.5× it fails the gate (tiers.ts's `checkBudget`).
  * - **`npm ci` reinstalls node_modules under this running process.** That is safe, measured: everything this command
- *   runs is imported before it starts, and every later step is a new process. `node_modules/.cache/` (the ESLint
- *   and Prettier caches, and tsc's declarations and build info) is kept across it, so T0 is timed warm, as its
- *   budget means; tsc rebuilds a project only when its files, its upstream declarations or package-lock.json changed.
+ *   runs is imported before it starts, and every later step is a new process. `KEPT_CACHES` survive it:
+ *   `node_modules/.cache/` (the ESLint and Prettier caches, and tsc's declarations and build info), so T0 is timed
+ *   warm, as its budget means, and Vitest's file durations, so T1 starts its longest files first.
  * - `--long` also runs tiers.ts's `LONG_RUNS` after the steps (at each gate).
  *
  * Usage: node x ci --local [--long]. Exit 0 when every step passed within 1.5× its budget; 1 otherwise; 2 on a usage
@@ -28,7 +28,7 @@
  */
 import { execFileSync, spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { runtime, type Artifact, type Finding } from '../lib/report';
 import {
   checkBudget,
@@ -176,18 +176,30 @@ export function readT2Full(root: string): number | undefined {
   }
 }
 
-/** Moves `node_modules/.cache/` aside while `npm ci` replaces node_modules; the returned function puts it back. */
+/**
+ * What `npm ci` must not wipe, relative to the root: the tools' caches, and Vitest's record of each file's duration,
+ * from which it starts the longest files first (without it, T1 took 39 s instead of 36 s).
+ */
+export const KEPT_CACHES = ['node_modules/.cache', 'node_modules/.vite/vitest'];
+
+/** Moves `KEPT_CACHES` aside while `npm ci` replaces node_modules; the returned function puts them back. */
 function keepCache(root: string): () => void {
-  const cache = join(root, 'node_modules', '.cache');
   const kept = join(root, CI_OUT.keptCache);
-  if (existsSync(cache)) {
-    rmSync(kept, { recursive: true, force: true });
-    renameSync(cache, kept);
-  }
+  rmSync(kept, { recursive: true, force: true });
+  const moved = KEPT_CACHES.map((dir, i) => [join(root, dir), join(kept, String(i))] as const).filter(([from]) =>
+    existsSync(from),
+  );
+  mkdirSync(kept, { recursive: true });
+  for (const [from, aside] of moved) renameSync(from, aside);
   return () => {
-    if (!existsSync(kept) || !existsSync(join(root, 'node_modules'))) return;
-    rmSync(cache, { recursive: true, force: true });
-    renameSync(kept, cache);
+    if (existsSync(join(root, 'node_modules'))) {
+      for (const [home, aside] of moved) {
+        rmSync(home, { recursive: true, force: true });
+        mkdirSync(dirname(home), { recursive: true });
+        renameSync(aside, home);
+      }
+    }
+    rmSync(kept, { recursive: true, force: true });
   };
 }
 
