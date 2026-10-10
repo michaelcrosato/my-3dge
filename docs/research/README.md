@@ -5,10 +5,11 @@ written on 2026-10-09 to plan my-3dge. They are point-in-time notes, not living 
 
 - **`PLAN.md` and its ADRs are canonical.** Where a note and the plan disagree, the plan wins, and the plan records why.
   The plan was re-based on the Stress Box and `DOCTRINE.md` after these notes were written. For example, it pins
-  three.js r180 rather than the r186 that note H recommends, and uses Rapier's standard `compat` build rather than the
-  deterministic build note H suggests (PLAN.md §4.7, §6.10). Under the doctrine's Common ground principle it also
-  uses the standard toolchain (npm, Vite, Vitest, Playwright Test, ESLint) where notes B and F describe home-grown
-  vendoring, servers and runners.
+  three.js r182 rather than the r186 that note H recommends (r186 does not start on the platform's Chromium 141), and
+  Rapier's SIMD build 0.21.0 rather than the deterministic build note H suggests, because 0.21's restores continue
+  exactly (PLAN.md §4.7, §6.10). It drops WebGL 2: WebGPU is the only renderer. Under the doctrine's Common ground
+  principle it also uses the standard toolchain (npm, Vite, Vitest, Playwright Test, ESLint) where notes B and F
+  describe home-grown vendoring, servers and runners.
 - **Citations** use the form `path:line` and refer to the source repo at that commit (`ed/` means `src/emberdeep/`).
   Re-check a citation before relying on it.
 - **Measurements** were taken with throwaway probe scripts that are not kept here; the numbers are quoted as measured.

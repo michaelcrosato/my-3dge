@@ -1,10 +1,11 @@
 # my-3dge
 
 A fully 3D web game engine written and maintained only by AI coding agents. Everything it draws, animates and plays is
-made by code or readable data. It runs on three.js `WebGPURenderer` (WebGPU first, with a WebGL 2 fallback) and Rapier
-physics. Gameplay is reproducible and runs headless in Node. WebGPU-only techniques may improve speed and looks, never
-gameplay. It is built with the most widely used web tools (TypeScript, Vite, Vitest, Playwright, ESLint, Prettier), so
-any agent can work on it with what it already knows.
+made by code or readable data. It renders with three.js on WebGPU only, and simulates with Rapier physics. Gameplay runs
+only on the CPU: it is reproducible, runs headless in Node, and the GPU improves speed and looks, never play. Game UI is
+HTML/CSS. Games see a small public API built on the most widely used web tools (TypeScript, Vite, Vitest, Playwright,
+ESLint, Prettier), so any agent can work with what it already knows; behind that API, the engine's internals use the
+best approach its builders can execute well.
 
 **Status: planning.** Nothing is built yet.
 
