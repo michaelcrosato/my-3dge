@@ -2288,7 +2288,7 @@ A WP is done only when all of these hold:
 - **Needs:** G1
 - **Size:** M
 - **Carry:**
-  - The builds (`chibi heroic bulky skeleton`, `size`) from `engine` §11, in metres.
+  - The builds (`chibi heroic bulky skeleton`, `size`) from `engine` §11, in metres (`hipZ` → `hipHeight`, `headR` → `headRadius`; new `ankleHeight`, `footLength`, `handLength`, `chestDepth`; ADR-0009 amendment 1).
   - Joint naming aligned with `rig.J` and the 36 mocap points (Appendix C).
 - **Build:**
   - **Skeleton:** root plus 23 joints:
@@ -2299,8 +2299,8 @@ A WP is done only when all of these hold:
   - **FK** to matrices and positions.
   - **Blending:** slerp/nlerp, bone masks (upper, arms, legs, lists), additive layers.
   - **A pose hash.**
-  - **`anim.sheet()`:** SVG skeleton contact sheets in Node. `x sheet` (WP 6.6) turns them into PNG through the browser, on demand.
-  - **The core of `anim.check(def)`:** finite values, bone lengths and declared rigid pairs, feet at or above the floor, sockets reachable. WP 6.6 adds the state matrix, the QA family and sheets.
+  - **`anim.sheet()`** (public name `animSheet`, ADR-0009 amendment 1): SVG skeleton contact sheets in Node. `x sheet` (WP 6.6) turns them into PNG through the browser, on demand.
+  - **The core of `anim.check(def)`** (public name `animCheck`): finite values, bone lengths and declared rigid pairs, feet at or above the floor, sockets reachable. WP 6.6 adds the state matrix, the QA family and sheets.
 - **Improves:** I-01, I-08, I-49.
 - **Done when:**
   - The rest pose's FK matches the build proportions.
@@ -2340,7 +2340,7 @@ A WP is done only when all of these hold:
   - An effector stage, then a solve stage:
     - the spine from lean and twist;
     - limbs through `twoBoneRot`, using the old hints as poles;
-    - feet and hands.
+    - feet and hands. The old `footL`/`footR` is the sole, not the ankle: compare it with the sole point under the ankle (contact height), not with the `foot` joint, which is `ankleHeight` above it (ADR-0009 amendment 1).
   - A fixed dt, and seeded per-entity streams.
 - **Improves:** I-09.
 - **Done when:** the differential tests against `tests/baselines/port/humanoid-*.json`, converted to SI, pass:
@@ -3951,7 +3951,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 3.1 | Rapier adapter and queries | P | todo | | |
 | 3.2 | Character controller | P | todo | | |
 | 3.3 | Input devices, bindings, intents | I | todo | | |
-| 3.4 | Skeleton, builds, pose, FK, sheets | A | todo | | |
+| 3.4 | Skeleton, builds, pose, FK, sheets | A | done | 043b1b7 (#5) | engine/anim/{skeleton,builds,pose,fk,sheet,check}.ts (root plus 23 joints, 8 sockets, a T-pose rest; registry kind `build`; Pose with flat float32 storage; slerp/nlerp, bone masks, additive layers; FK in doubles; SVG sheets, rest-sheet golden 8f7539de0bbc1301; animCheck), the scaffold tools/templates/build, an Animation area in sim-api.ts; calls in ADR-0009 amendment 1: animSheet/animCheck as flat names, old footL = the sole (foot joint `ankleHeight` above it; WP 3.6 compares at contact height), hipZ → hipHeight, headR → headRadius, builds carry the stance and gait fields for WP 3.6, new fields ankleHeight, footLength, handLength, chestDepth with chosen defaults (review in WP 3.8), no `skeleton` kind until a second skeleton exists; codes ANIM_UNKNOWN_JOINT, ANIM_BAD_MASK, ANIM_UNKNOWN_POINT; no escalations; deferred proof: in the box, WP 3.10 |
 | 3.5 | IK | A | todo | | |
 | 3.6 | Humanoid procedural port | A | todo | | |
 | 3.7 | Character animator and body states | A | todo | | |
@@ -4204,7 +4204,7 @@ In this table, `engine` §N means section N of `engine/my-3d2dge.js`, not a sect
 | hand L/R | forearm | `handL`/`handR` | `wrist` (+`index`, `knuck`, `pinky`, `fist`) |
 | thigh L/R | pelvis | `hipL`/`hipR` | `hip` |
 | shin L/R | thigh | `kneeL`/`kneeR` | `knee` |
-| foot L/R | shin | `footL`/`footR` | `ankle` |
+| foot L/R | shin | `footL`/`footR` (the sole; the ankle joint is `ankleHeight` above it) | `ankle` |
 | toe L/R | foot | — | `ball` → `toe` |
 
 - **Sockets:** `weaponR` and `weaponL` (from the hand, plus the grip; the blade direction comes from `J.bladeDir` or the knuckle line), `headTop`, `eyeL`, `eyeR`, `contactL` and `contactR` (the soles), `back` (the cape anchor).

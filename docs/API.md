@@ -11,12 +11,24 @@ game agent's manual.
 
 ### [`engine/index.ts`](../engine/index.ts)
 
+- `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `angDiff` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The signed angle from `a` to `b` the short way round, in [−π, π).
+- `animCheck` (function from [`engine/anim/check.ts`](../engine/anim/check.ts)): Checks every pose of `spec` against the skeleton's contract: finite values, bone lengths, declared rigid pairs, feet at or above the floor, sockets in reach.
+- `AnimCheckReport` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheck` found.
+- `AnimCheckSpec` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheck` checks.
+- `AnimProblem` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): One problem: the check, the point, the first frame that has it, how many frames do, and a plain sentence.
+- `animSheet` (function from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): Draws `frames` (poses, or `{ pose, label }`) as an SVG contact sheet: one card per frame, holding one panel per view, all at one scale.
 - `approach` (function from [`engine/core/math.ts`](../engine/core/math.ts)): `a` moved toward `b` by at most `step` (≥ 0), never past it.
 - `approachAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `a` turned toward `b` by at most `step` (≥ 0) the short way round; exactly `b` once within reach.
 - `bakeTexture` (function from [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)): Bakes `ref` on `registry` (the shared one by default).
+- `BlendOptions` (interface from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): How `blendPoses` blends.
+- `blendPoses` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), each joint's share scaled by `options.mask`, written into `out` (a new pose by default; `a` or `b` may be `out`).
+- `boneMask` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A bone mask: a preset (`'upper'`: spine0 and everything above it; `'lower'`: the pelvis, the legs and the root; `'arms'`, `'legs'`, one limb, `'head'`, `'full'`), a list of joints and presets (each listed joint alone; `'root'` for the root's channels), or weights by joint (`{ chest: 0.5, root: 1 }`).
+- `BoneMask` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): How much of a blend or layer reaches each joint (0–1, in `JOINTS` order) and the root's channels.
 - `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
 - `BoxCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An axis-aligned box collider (Rapier's cuboid: half extents `(max − min)/2`, centred at `(min + max)/2`).
+- `Build` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): A `build` entry: one body's proportions, in metres before `size`.
+- `BuildSpec` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): What `defineBuild` takes: any field; the others keep `build:chibi`'s values.
 - `cellHash` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A seeded value in [0, 1) for the integer point (x, y), with `salt` telling apart uses of one seed (a stone's tone, its crack).
 - `ColliderDescriptor` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A collider descriptor; WP 4.2 adds hull shapes beside the box.
 - `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
@@ -26,8 +38,11 @@ game agent's manual.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
 - `createMaterialLibrary` (function from [`engine/gfx/materials/library.ts`](../engine/gfx/materials/library.ts)): Makes a material library over `registry` (the shared one by default).
+- `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
+- `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
+- `defineBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
 - `defineGlyph` (function from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): Defines a glyph on `registry` (the shared one by default) and returns it.
 - `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
@@ -45,12 +60,15 @@ game agent's manual.
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): its tile's floor; 0 outside the map.
+- `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
+- `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
 - `getMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): The material `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `material:default`.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `GroundDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The slab under the whole level: the ground's collider, one tile wider than the map all round, 1 m deep.
+- `hashPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose's 64-bit FNV-1a digest (16 hex digits) over the numbers `toArray` gives: equal numbers, equal hash.
 - `Headless` (type from [`engine/app/headless.ts`](../engine/app/headless.ts)): A headless engine: `__engine`'s members, over a scene running in this process.
 - `HeadlessOptions` (interface from [`engine/app/headless.ts`](../engine/app/headless.ts)): How a headless engine starts.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
@@ -58,6 +76,13 @@ game agent's manual.
 - `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
 - `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
 - `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
+- `jointMatrix` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world matrix of `joint` in `world`.
+- `JointName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A joint's name.
+- `jointPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of `joint` (a name or an index) in `world`.
+- `JointRef` (type from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): A joint, by name or by index in `JOINTS`.
+- `jointRotation` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world rotation of `joint` in `world`.
+- `JOINTS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The 23 joints, parents before children.
+- `jointToWorld` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): A point given in `joint`'s own frame, in world space (`localToWorld` for a joint).
 - `Kind` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): A declared kind, bound: the same as the registry's functions with the kind filled in, typed by its schema.
 - `KindSpec` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): How a kind is declared.
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
@@ -68,6 +93,9 @@ game agent's manual.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
 - `LightSpot` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A light spot: a tile's centre, `lightHeight` above its top.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
+- `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
+- `MaskName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A preset bone mask's name.
+- `MASKS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The preset bone masks.
 - `MaterialEntry` (type from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): A `material` entry.
 - `MaterialLibrary` (interface from [`engine/gfx/materials/library.ts`](../engine/gfx/materials/library.ts)): A page's compiled materials and baked maps.
 - `MaterialSpec` (type from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): What `defineMaterial` takes: any of the fields, each with its default.
@@ -80,9 +108,12 @@ game agent's manual.
 - `pickTone` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): One of `colors`, picked by `value` in [0, 1).
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `Point3` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A point in metres: `[x, y, z]`.
+- `PointName` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): A point a rigid pair can name: a joint, a socket, or the root.
+- `Pose` (class from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): A skeleton pose: the root transform plus each joint's local rotation.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
+- `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
 - `runningBond` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): Where texel (x, y) falls in a running bond of `cell` = [width, height] texels over a texture of `size`: courses (rows) of cells, odd courses shifted half a cell, the whole layout moved by `phase` texels.
 - `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
@@ -90,9 +121,17 @@ game agent's manual.
 - `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
 - `SettingValue` (type from [`engine/core/settings.ts`](../engine/core/settings.ts)): A setting's value: plain data.
+- `Sheet` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A drawn sheet: the SVG text, its hash, and its size in pixels.
+- `SheetFrame` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): One frame of a sheet: a pose, and its label (`#<index>` when absent).
+- `SheetOptions` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): What a sheet draws, and how.
+- `SheetView` (type from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A view's name.
 - `SimRng` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
 - `SimSettings` (interface from [`engine/core/settings.ts`](../engine/core/settings.ts)): What sim-side code reads settings through (`w.settings` in a scene): no view settings, no writes.
+- `Skeleton` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A humanoid skeleton made from a build: rest offsets, bone lengths, leaf tips and sockets, in metres.
 - `smoothDamp` (function from [`engine/core/math.ts`](../engine/core/math.ts)): A critically damped spring toward `target` (Game Programming Gems 4's, as Unity's `SmoothDamp`): reaches it in about `smoothTime` seconds without overshoot.
+- `SocketName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A socket's name.
+- `socketPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of `socket`: it rides its joint, so it turns with it.
+- `SOCKETS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The sockets: attachment points that turn with their joint (`SOCKET_JOINTS`).
 - `solidAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): Whether (x, z) is in a solid tile (a wall, a pillar, a low wall), or outside the map.
 - `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
@@ -109,6 +148,7 @@ game agent's manual.
 - `tileAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The tile under (x, z) metres, or null outside the map.
 - `tileNoise` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): Value noise in [0, 1] over a texture of `size` texels, repeating exactly every `size`: lattice values from `cellHash`, blended with smoothstep, `cells` lattice cells across on each axis (stretched when they differ), summed over octaves and divided by the total weight.
 - `TileRect` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A rectangle of tiles, inclusive: `[col0, row0, col1, row1]`.
+- `tipPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
 - `topHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The top (m) of whatever stands at (x, z): a wall's top over its tiles, the floor on open ones; 0 outside the map.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
 - `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
@@ -116,24 +156,40 @@ game agent's manual.
 - `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
 - `World` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
 - `WorldEvents` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
+- `WorldPose` (interface from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): A pose in world space: each joint's matrix (16 numbers), position (3) and rotation (4), in `JOINTS` order.
 - `WorldTimers` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
 - `wrapIndex` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): `i` folded into [0, n) (n a positive integer): -1 → n − 1.
 
 ### [`engine/sim-api.ts`](../engine/sim-api.ts)
 
+- `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `angDiff` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The signed angle from `a` to `b` the short way round, in [−π, π).
+- `animCheck` (function from [`engine/anim/check.ts`](../engine/anim/check.ts)): Checks every pose of `spec` against the skeleton's contract: finite values, bone lengths, declared rigid pairs, feet at or above the floor, sockets in reach.
+- `AnimCheckReport` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheck` found.
+- `AnimCheckSpec` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheck` checks.
+- `AnimProblem` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): One problem: the check, the point, the first frame that has it, how many frames do, and a plain sentence.
+- `animSheet` (function from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): Draws `frames` (poses, or `{ pose, label }`) as an SVG contact sheet: one card per frame, holding one panel per view, all at one scale.
 - `approach` (function from [`engine/core/math.ts`](../engine/core/math.ts)): `a` moved toward `b` by at most `step` (≥ 0), never past it.
 - `approachAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `a` turned toward `b` by at most `step` (≥ 0) the short way round; exactly `b` once within reach.
+- `BlendOptions` (interface from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): How `blendPoses` blends.
+- `blendPoses` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), each joint's share scaled by `options.mask`, written into `out` (a new pose by default; `a` or `b` may be `out`).
+- `boneMask` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A bone mask: a preset (`'upper'`: spine0 and everything above it; `'lower'`: the pelvis, the legs and the root; `'arms'`, `'legs'`, one limb, `'head'`, `'full'`), a list of joints and presets (each listed joint alone; `'root'` for the root's channels), or weights by joint (`{ chest: 0.5, root: 1 }`).
+- `BoneMask` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): How much of a blend or layer reaches each joint (0–1, in `JOINTS` order) and the root's channels.
 - `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
 - `BoxCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An axis-aligned box collider (Rapier's cuboid: half extents `(max − min)/2`, centred at `(min + max)/2`).
+- `Build` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): A `build` entry: one body's proportions, in metres before `size`.
+- `BuildSpec` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): What `defineBuild` takes: any field; the others keep `build:chibi`'s values.
 - `ColliderDescriptor` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A collider descriptor; WP 4.2 adds hull shapes beside the box.
 - `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
 - `CompiledLevel` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A compiled level: the map, its legend, per-tile grids and descriptors; see the file comment.
 - `compileLevel` (function from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): Compiles a level's text against the legend of `options.registry` (the shared one by default) into plain data; see the file comment.
 - `CompileOptions` (interface from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): What `compileLevel` takes beside the text.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
+- `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
+- `defineBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
 - `defineGlyph` (function from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): Defines a glyph on `registry` (the shared one by default) and returns it.
 - `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
@@ -147,15 +203,25 @@ game agent's manual.
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): its tile's floor; 0 outside the map.
+- `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
+- `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `GroundDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The slab under the whole level: the ground's collider, one tile wider than the map all round, 1 m deep.
+- `hashPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose's 64-bit FNV-1a digest (16 hex digits) over the numbers `toArray` gives: equal numbers, equal hash.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
 - `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
 - `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
 - `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
+- `jointMatrix` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world matrix of `joint` in `world`.
+- `JointName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A joint's name.
+- `jointPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of `joint` (a name or an index) in `world`.
+- `JointRef` (type from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): A joint, by name or by index in `JOINTS`.
+- `jointRotation` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world rotation of `joint` in `world`.
+- `JOINTS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The 23 joints, parents before children.
+- `jointToWorld` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): A point given in `joint`'s own frame, in world space (`localToWorld` for a joint).
 - `Kind` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): A declared kind, bound: the same as the registry's functions with the kind filled in, typed by its schema.
 - `KindSpec` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): How a kind is declared.
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
@@ -166,6 +232,9 @@ game agent's manual.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
 - `LightSpot` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A light spot: a tile's centre, `lightHeight` above its top.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
+- `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
+- `MaskName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A preset bone mask's name.
+- `MASKS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The preset bone masks.
 - `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
 - `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
@@ -173,18 +242,29 @@ game agent's manual.
 - `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `Point3` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A point in metres: `[x, y, z]`.
+- `PointName` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): A point a rigid pair can name: a joint, a socket, or the root.
+- `Pose` (class from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): A skeleton pose: the root transform plus each joint's local rotation.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
+- `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
 - `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
 - `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
 - `SettingValue` (type from [`engine/core/settings.ts`](../engine/core/settings.ts)): A setting's value: plain data.
+- `Sheet` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A drawn sheet: the SVG text, its hash, and its size in pixels.
+- `SheetFrame` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): One frame of a sheet: a pose, and its label (`#<index>` when absent).
+- `SheetOptions` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): What a sheet draws, and how.
+- `SheetView` (type from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A view's name.
 - `SimRng` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
 - `SimSettings` (interface from [`engine/core/settings.ts`](../engine/core/settings.ts)): What sim-side code reads settings through (`w.settings` in a scene): no view settings, no writes.
+- `Skeleton` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A humanoid skeleton made from a build: rest offsets, bone lengths, leaf tips and sockets, in metres.
 - `smoothDamp` (function from [`engine/core/math.ts`](../engine/core/math.ts)): A critically damped spring toward `target` (Game Programming Gems 4's, as Unity's `SmoothDamp`): reaches it in about `smoothTime` seconds without overshoot.
+- `SocketName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A socket's name.
+- `socketPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of `socket`: it rides its joint, so it turns with it.
+- `SOCKETS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The sockets: attachment points that turn with their joint (`SOCKET_JOINTS`).
 - `solidAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): Whether (x, z) is in a solid tile (a wall, a pillar, a low wall), or outside the map.
 - `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
@@ -193,6 +273,7 @@ game agent's manual.
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
 - `tileAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The tile under (x, z) metres, or null outside the map.
 - `TileRect` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A rectangle of tiles, inclusive: `[col0, row0, col1, row1]`.
+- `tipPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
 - `topHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The top (m) of whatever stands at (x, z): a wall's top over its tiles, the floor on open ones; 0 outside the map.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
 - `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
@@ -200,11 +281,86 @@ game agent's manual.
 - `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
 - `World` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
 - `WorldEvents` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
+- `WorldPose` (interface from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): A pose in world space: each joint's matrix (16 numbers), position (3) and rotation (4), in `JOINTS` order.
 - `WorldTimers` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
 
 ## Engine internals and tools
 
 For the agents who maintain the engine.
+
+### [`engine/anim/builds.ts`](../engine/anim/builds.ts)
+
+- `Build` (type): A `build` entry: one body's proportions, in metres before `size`.
+- `BUILD_FIELDS` (const): The fields of a `build` entry.
+- `buildKind` (function): Declares the kind `build` on `registry`, with the engine's builds, unless it has it.
+- `BuildSpec` (type): What `defineBuild` takes: any field; the others keep `build:chibi`'s values.
+- `defineBuild` (function): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
+- `getBuild` (function): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
+
+### [`engine/anim/check.ts`](../engine/anim/check.ts)
+
+- `animCheck` (function): Checks every pose of `spec` against the skeleton's contract: finite values, bone lengths, declared rigid pairs, feet at or above the floor, sockets in reach.
+- `AnimCheckName` (type): One kind of problem: which check found it.
+- `AnimCheckReport` (interface): What `animCheck` found.
+- `AnimCheckSpec` (interface): What `animCheck` checks.
+- `AnimProblem` (interface): One problem: the check, the point, the first frame that has it, how many frames do, and a plain sentence.
+- `CHECK_CODES` (const): The codes this module raises, with their fixes.
+- `PointName` (type): A point a rigid pair can name: a joint, a socket, or the root.
+- `RigidPair` (type): Two points whose distance must not change: from the first frame, or the distance given third (metres).
+
+### [`engine/anim/fk.ts`](../engine/anim/fk.ts)
+
+- `createWorldPose` (function): An empty `WorldPose` for `forwardKinematics` to fill.
+- `forwardKinematics` (function): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
+- `jointMatrix` (function): The world matrix of `joint` in `world`.
+- `jointPosition` (function): The world position of `joint` (a name or an index) in `world`.
+- `jointRotation` (function): The world rotation of `joint` in `world`.
+- `jointToWorld` (function): A point given in `joint`'s own frame, in world space (`localToWorld` for a joint).
+- `socketPosition` (function): The world position of `socket`: it rides its joint, so it turns with it.
+- `tipPosition` (function): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
+- `WorldPose` (interface): A pose in world space: each joint's matrix (16 numbers), position (3) and rotation (4), in `JOINTS` order.
+
+### [`engine/anim/pose.ts`](../engine/anim/pose.ts)
+
+- `addPose` (function): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
+- `BlendOptions` (interface): How `blendPoses` blends.
+- `blendPoses` (function): The pose `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), each joint's share scaled by `options.mask`, written into `out` (a new pose by default; `a` or `b` may be `out`).
+- `hashPose` (function): The pose's 64-bit FNV-1a digest (16 hex digits) over the numbers `toArray` gives: equal numbers, equal hash.
+- `JointRef` (type): A joint, by name or by index in `JOINTS`.
+- `makeAdditive` (function): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
+- `Pose` (class): A skeleton pose: the root transform plus each joint's local rotation.
+- `POSE_LENGTH` (const): How many numbers `toArray` writes: root position (3), rotation (4), scale (3), then 23 × 4 local rotations.
+
+### [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)
+
+- `animSheet` (function): Draws `frames` (poses, or `{ pose, label }`) as an SVG contact sheet: one card per frame, holding one panel per view, all at one scale.
+- `Sheet` (interface): A drawn sheet: the SVG text, its hash, and its size in pixels.
+- `SHEET_VIEWS` (const): The views a sheet can draw: a camera yaw about +Y (0 in front of the character) and a pitch above the ground.
+- `SheetFrame` (interface): One frame of a sheet: a pose, and its label (`#<index>` when absent).
+- `SheetOptions` (interface): What a sheet draws, and how.
+- `SheetView` (type): A view's name.
+
+### [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)
+
+- `boneMask` (function): A bone mask: a preset (`'upper'`: spine0 and everything above it; `'lower'`: the pelvis, the legs and the root; `'arms'`, `'legs'`, one limb, `'head'`, `'full'`), a list of joints and presets (each listed joint alone; `'root'` for the root's channels), or weights by joint (`{ chest: 0.5, root: 1 }`).
+- `BoneMask` (interface): How much of a blend or layer reaches each joint (0–1, in `JOINTS` order) and the root's channels.
+- `createSkeleton` (function): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
+- `JOINT_COUNT` (const): How many joints a pose holds: 23.
+- `JOINT_INFO` (const): Appendix C's table.
+- `jointIndex` (function): The index of joint `joint` (a name, or an index checked to be 0–22).
+- `JointInfo` (interface): What Appendix C says of a joint: its parent, the old rig's `rig.J` key, and the mocap points it stands for.
+- `JointName` (type): A joint's name.
+- `JOINTS` (const): The 23 joints, parents before children.
+- `MaskName` (type): A preset bone mask's name.
+- `MASKS` (const): The preset bone masks.
+- `PARENTS` (const): Each joint's parent index, −1 for the root.
+- `PROPORTIONS` (const): The shares that place what the old rig lacked (chosen here; the build's lengths carry the source's proportions).
+- `Skeleton` (interface): A humanoid skeleton made from a build: rest offsets, bone lengths, leaf tips and sockets, in metres.
+- `SKELETON_CODES` (const): The codes this module raises, with their fixes.
+- `SOCKET_JOINTS` (const): The joint each socket rides on.
+- `socketIndex` (function): The index of socket `socket` in `SOCKETS`.
+- `SocketName` (type): A socket's name.
+- `SOCKETS` (const): The sockets: attachment points that turn with their joint (`SOCKET_JOINTS`).
 
 ### [`engine/app/headless.ts`](../engine/app/headless.ts)
 

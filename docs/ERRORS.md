@@ -5,6 +5,32 @@
 Every code the engine prints, as `[CODE] message`, with its fix. Each module registers its own codes with
 `defineCodes` beside the code that raises them; tools/lib/docs.ts says how they are read.
 
+## anim
+
+### ANIM_BAD_MASK
+
+- Message: `the bone mask weight of {name} is {value}`
+- Fix: give each weight a number from 0 to 1
+- Registered in: [`engine/anim/skeleton.ts` line 37](../engine/anim/skeleton.ts)
+
+Raised by `boneMask` (engine/anim/skeleton.ts) for a weight that is not a number from 0 to 1.
+
+### ANIM_UNKNOWN_JOINT
+
+- Message: `{name} is not a {what} of the humanoid skeleton{suggestion}`
+- Fix: use one of: {names}
+- Registered in: [`engine/anim/skeleton.ts` line 32](../engine/anim/skeleton.ts)
+
+Raised by `jointIndex`, `socketIndex`, `boneMask` and the pose functions that take a joint (engine/anim/) for a name the skeleton lacks, or a joint index outside 0–22. The message names the closest names; `JOINTS`, `SOCKETS` and `MASKS` list them all.
+
+### ANIM_UNKNOWN_POINT
+
+- Message: `the rigid pair names {name}, which is not a joint, a socket or the root{suggestion}`
+- Fix: name joints (JOINTS), sockets (SOCKETS) or "root" in rigid pairs
+- Registered in: [`engine/anim/check.ts` line 44](../engine/anim/check.ts)
+
+Raised by `animCheck` (engine/anim/check.ts) for a rigid pair naming a point the skeleton lacks.
+
 ## app
 
 ### APP_NOT_HEADLESS

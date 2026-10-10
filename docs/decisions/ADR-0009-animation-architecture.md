@@ -18,3 +18,18 @@ set drove animation (doctrine: Reproducible).
 
 ## Enforced by
 Differential tests against the ported reference vectors (WP 0.11); the animation QA checks and sheets (WP 6.6).
+
+## Amendment 1 (2026-10-10, WP-3.4)
+- **The old rig's `footL`/`footR` is the sole, not the ankle.** Its drawing puts the ankle 62% of the way from the
+  knee to the foot point. So build `legLower` is knee to sole, the `foot` joint (the ankle) sits `ankleHeight` above
+  the sole, and the rest pose stands the soles at y = 0. WP 3.6 compares the old `footL` with the point on the sole
+  under the ankle (contact height), not with the `foot` joint. Appendix C's joint table notes it.
+- **Public names.** `anim.sheet()` and `anim.check()` are exported as `animSheet` and `animCheck`: sim-api takes flat
+  names.
+- **Build fields.** Builds hold `hipHeight` (was `hipZ`) and `headRadius` (was `headR`), since Z is no longer up, plus
+  the stance and gait fields, so locomotion (WP 3.6) reads them from the entry. Four fields are new, with chosen
+  defaults rather than source values (the old rig had no ankles, hands or back): `ankleHeight`, `footLength`,
+  `handLength`, `chestDepth`; WP 3.8 should review them once bodies are drawn.
+- **No `skeleton` registry kind** until a second skeleton exists; builds are registry kind `build`.
+- Evidence: `engine/anim/fk.test.ts` (4 builds at sizes 1 and 0.5, soles at y = 0, three.js `Bone` hierarchy within
+  1e-9 m).
