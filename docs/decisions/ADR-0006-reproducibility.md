@@ -62,3 +62,41 @@ Calls made where the plan is silent (engine/sim/{world,systems,state,capture}.ts
   is made, so another rate is refused). Saves that must survive text keep delays in component fields.
 - **A despawned entity's `rng.entity` streams are dropped** (ids are never reused, so they would only grow the hash).
   Visual streams (`fxRng`) derive from `derive(seed, 'fx')` and are never hashed or captured.
+
+## Amendment 3 (2026-10-10, WP-1.4 review fixes)
+Calls made on the verifier's findings (engine/sim/{world,systems,state,capture,entities}.ts, engine/core/{rng,events}.ts):
+- **Components are plain data.** A field holds null, booleans, numbers, strings, arrays and plain objects, never a
+  class instance (a three.js `Vector3`) or typed array: `defineComponent` refuses such a default (`CORE_BAD_SPEC`),
+  and spawn, `add`, the hash and captures refuse such a value (`SIM_NOT_DATA`, naming the entity, field and fix:
+  store numbers or a list, build the Vector3 in the system). The other choice, cloning class instances per entity and
+  reviving their types on restore, was rejected: captures and replays are text, a type tag per value is format an
+  agent must learn, and a shared default would still need per-type cloning. Spawn and `add` copy their values.
+- **Entities have one shape, kept everywhere** (engine/sim/entities.ts, split from state.ts to stay under 400 lines):
+  components in name order, every declared field present (so every component field has a default or is required) in
+  declared order. Spawn, `add` and restores build that order, the live hash checks it (`SIM_BAD_COMPONENT` for a
+  field missing, undefined or out of order, or a component assigned out of name order), and a stored state (text, a
+  copy) hashes in that order whatever its key order. So a serialized capture restores an entity that iterates
+  (`Object.values`) exactly like the live one. The keys inside a field's object value are a dictionary (the hash and
+  text read them sorted). A capture refuses an object held in two places (`SIM_SHARED_DATA`): it would come back as two.
+- **The step rate is the world's**, fixed when it is made (the `time.hz` setting then, or `createWorld({ hz })`): the
+  hash's world part feeds it (format `my3dge-state/2`; the demo golden moves from `00e4f01b787914db` to
+  `fdae537c20bfa5c0` with the state itself unchanged), captures store it (`capture.hz`, format `my3dge-capture/2`)
+  and a restore compares it with the world's. `time.hz` is then only a setting (`when: scene`), restored like any.
+- **Listeners and systems are world state.** A capture holds the emitter's registrations and scopes
+  (engine/core/events.ts `snapshot()`, functions included) and the systems list beside its timer callbacks; restored
+  into its own world it puts them back (a used-up `once` returns, a listener, scope or system added since leaves). A
+  capture restored elsewhere cannot move code, so it records the schedule as data (`schedule`: systems as
+  `phase:name`, listeners by type and `once`) and requires the target's to match (`SIM_BAD_CAPTURE` naming the first
+  difference). Gameplay state lives in components, settings, timers or RNG streams, never in closure or module
+  variables (world.ts, systems.ts); one-time triggers that must survive text are component flags.
+- **A capture must match the world exactly**: the same non-view setting paths, each component's exact declared
+  fields (both named on refusal), and seeds compared with `Object.is` (`-0` is another seed).
+- **RNG streams** (engine/core/rng.ts): a stream's name is JSON's text where it equals the canonical text (strings,
+  finite numbers but -0); entity streams are indexed by id (one id's drop alone; `rng.entity(id, name)` has a
+  per-entity fast path), so a despawn no longer walks every stream. A stream at its derived seed is the same as no
+  stream: `state()` leaves it out, so making a handle changes no hash, and `setState` puts every unlisted stream back
+  at its seed instead of dropping it, so a handle made at any time, even after a capture, survives restores and
+  reseeds. `rng.entity` for an entity that is gone is `SIM_NO_ENTITY` (a death listener cannot resurrect a stream).
+- **The world surface**: `w.events` is `{ on, once, off, scope, trace }` (no `emit`: events go through the queue and
+  the fdlibm swap); a step's intents are a frozen copy. Ids from a timeline a restore abandoned (entities, timers) may
+  name new objects of the restored one; hold them only within one timeline.

@@ -55,6 +55,12 @@ Raised by `defineSchema` and `defineKind` (engine/core/schema.ts, engine/core/re
 
 Raised by `set`, `setText`, `load`, `fromUrl` and `override` (engine/core/settings.ts). A preset or a URL with any problem applies nothing, and every problem is listed at once.
 
+### CORE_BAD_SNAPSHOT
+
+- Message: `restore() got {what}, not a snapshot of this emitter`
+- Fix: pass restore() what snapshot() of the same emitter returned: listeners are functions, which never move between emitters
+- Registered in: [`engine/core/events.ts` line 44](../engine/core/events.ts)
+
 ### CORE_BAD_SPEC
 
 - Message: `{where}: {problems}`
@@ -91,7 +97,7 @@ Raised by `def` (engine/core/registry.ts). The last definition never silently wi
 
 - Message: `a listener of {type} threw: {error}`
 - Fix: fix the listener (the stack is in the error record); the other listeners of {type} still ran
-- Registered in: [`engine/core/events.ts` line 33](../engine/core/events.ts)
+- Registered in: [`engine/core/events.ts` line 39](../engine/core/events.ts)
 
 Recorded by `emit` (engine/core/events.ts) in the log's errors (`__engine.errors`), with the thrown error as its cause. Each listener runs isolated, so one failing system never stops the others.
 
@@ -121,7 +127,7 @@ Raised by `Fnv64.value`, `hashValue` and `serialize` (engine/core/hash.ts) for `
 
 - Message: `the scope {label} is disposed; it takes no new listeners`
 - Fix: make a new scope (events.scope('…')) for what starts next, instead of reusing one whose lifetime ended
-- Registered in: [`engine/core/events.ts` line 38](../engine/core/events.ts)
+- Registered in: [`engine/core/events.ts` line 48](../engine/core/events.ts)
 
 ### CORE_SIM_ASYNC
 
@@ -183,23 +189,29 @@ Raised at startup, before anything touches the GPU, when the browser has no `nav
 
 - Message: `{where} got {value}`
 - Fix: pass {expected}
-- Registered in: [`engine/sim/world.ts` line 63](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 64](../engine/sim/world.ts)
 
 Raised by the world (engine/sim/world.ts) for a seed or step rate that is not a number of the right kind, a spawn that is not a plain object of components, or an `id` given among the components.
 
 ### SIM_BAD_CAPTURE
 
 - Message: `the capture cannot be restored: {problem}`
-- Fix: pass restore() what capture() returned (or its serialize/deserialize round trip), unchanged, to a world with the same component kinds, step rate (time.hz), settings and physics
-- Registered in: [`engine/sim/capture.ts` line 41](../engine/sim/capture.ts)
+- Fix: pass restore() what capture() returned (or its serialize/deserialize round trip), unchanged, to a world with the same step rate, component kinds, settings, physics and schedule (systems and listeners)
+- Registered in: [`engine/sim/capture.ts` line 50](../engine/sim/capture.ts)
 
-Raised by `restore` (engine/sim/capture.ts, engine/sim/world.ts) before anything changes, for a value that is not a capture of this format: a wrong format tag, a malformed part, entities out of id order or at or above `nextId`, a `time.hz` other than the world step rate, or a physics part where the world has no physics hook (or the reverse).
+Raised by `restore` (engine/sim/capture.ts, engine/sim/world.ts) before anything changes, for a value that is not a capture of this format: a wrong format tag, a malformed part, entities out of id order or at or above `nextId`, a component whose fields are not exactly its declared ones, a step rate (`hz`) other than the world's, setting paths other than the world's, a physics part where the world has no physics hook (or the reverse), or, restoring into a world that did not make it, systems or listeners other than the world's.
+
+### SIM_BAD_COMPONENT
+
+- Message: `entity {id}{problem}`
+- Fix: give components with spawn() or w.add(id, '<name>', values), which keep them in name order with every declared field in declared order, then write fields one by one (e.mods.z = 1); never delete a field or assign undefined, and take a component away with w.remove: a restore rebuilds entities in that order, so code iterating one sees the same order
+- Registered in: [`engine/sim/entities.ts` line 44](../engine/sim/entities.ts)
 
 ### SIM_BAD_SYSTEM
 
 - Message: `system {name}: {problem}`
 - Fix: add each system once, by a unique name: w.systems.add('<name>', (w, intents) => { … }, { phase }), the phase one of intents, ai, anim, physics, readback, rules
-- Registered in: [`engine/sim/systems.ts` line 28](../engine/sim/systems.ts)
+- Registered in: [`engine/sim/systems.ts` line 34](../engine/sim/systems.ts)
 
 Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empty or duplicate name, a run that is not a function, an unknown phase (named with the closest one), or removing a system that was never added.
 
@@ -207,36 +219,50 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `{what} was called during a step`
 - Fix: call step(), run(), capture() and restore() between steps; inside a system, change the world directly (spawn, despawn and emit queue to the end of the step)
-- Registered in: [`engine/sim/world.ts` line 59](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 60](../engine/sim/world.ts)
 
 ### SIM_EVENT_STORM
 
 - Message: `the end of step {tick} was still delivering events and spawns after {rounds} rounds`
 - Fix: break the loop: a listener that emits the event it listens to, or spawns what spawns it again, never settles; act on such chains one step at a time (store a pending flag in a component and let a system handle it next step)
-- Registered in: [`engine/sim/world.ts` line 68](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 69](../engine/sim/world.ts)
 
 ### SIM_NO_CALLBACKS
 
 - Message: `the capture has {count} pending timers, whose callbacks {why}`
 - Fix: restore a capture with pending timers from the object capture() returned, into the world that made it: callbacks are functions, which never survive serialization or move between worlds; to save play as text, keep delays in component fields (a tick count a system checks)
-- Registered in: [`engine/sim/capture.ts` line 46](../engine/sim/capture.ts)
+- Registered in: [`engine/sim/capture.ts` line 55](../engine/sim/capture.ts)
 
 ### SIM_NO_ENTITY
 
 - Message: `there is no entity {id}{why}`
 - Fix: use an id spawn() returned while its entity lives (w.has(id) tells): a spawned entity joins the world at the end of the step that spawned it, so give it its components in spawn(); a despawned one leaves at the end of its step
-- Registered in: [`engine/sim/world.ts` line 55](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 56](../engine/sim/world.ts)
+
+### SIM_NOT_DATA
+
+- Message: `{path} is {what}; component fields hold plain data`
+- Fix: store numbers, strings, booleans, null, arrays or plain objects (a direction as x, y, z numbers or an [x, y, z] list) and build the Vector3 or typed array inside the system that uses it; hold another entity by its id, never the object
+- Registered in: [`engine/sim/entities.ts` line 39](../engine/sim/entities.ts)
+
+Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities.ts, engine/sim/state.ts, engine/sim/capture.ts) for a component field holding a class instance (a three.js `Vector3`, a `Map`), a typed array, a function, `undefined` or a cycle: captures copy plain data and text restores it, so such a value would come back changed or shared (ADR-0006 amendment 3). `defineComponent` refuses such a default as `CORE_BAD_SPEC`.
+
+### SIM_SHARED_DATA
+
+- Message: `{path} is the same object as {other}`
+- Fix: give each place its own data: copy it ({ ...values }, [...list]) or hold the other entity by its id and read it through w.get(id); a capture copies each place separately, so a shared object would come back as two
+- Registered in: [`engine/sim/entities.ts` line 48](../engine/sim/entities.ts)
 
 ### SIM_UNDECLARED_FIELD
 
 - Message: `entity {id} has {name}.{field}, a field the component kind {name} does not declare{suggestion}`
 - Fix: declare the field in defineComponent({name}, { fields }) or stop writing it: the hash and captures read the declared fields only, so an undeclared one would let two different states match
-- Registered in: [`engine/sim/state.ts` line 47](../engine/sim/state.ts)
+- Registered in: [`engine/sim/state.ts` line 52](../engine/sim/state.ts)
 
 ### SIM_UNKNOWN_COMPONENT
 
 - Message: `{name} is not a component kind{suggestion}`
 - Fix: declare it with defineComponent('{name}', { description, fields }) before an entity holds it (node x describe component lists the declared kinds)
-- Registered in: [`engine/sim/state.ts` line 42](../engine/sim/state.ts)
+- Registered in: [`engine/sim/state.ts` line 47](../engine/sim/state.ts)
 
 Raised by the world (engine/sim/world.ts) and the hash (engine/sim/state.ts) for an entity property, a `spawn`, `add`, `remove` or `query` name, or a captured component that no `defineComponent` declared: the hash covers declared components only, so an undeclared one is refused rather than skipped.

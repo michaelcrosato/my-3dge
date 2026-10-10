@@ -1985,7 +1985,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/core/time`
 
 #### WP-1.4 Sim world and canonical state
-- **Owns:** `engine/sim/{world,systems,state,capture}.ts`
+- **Owns:** `engine/sim/{world,systems,state,capture,entities}.ts`; extends `engine/core/{rng,events}.ts` (review fixes, ADR-0006 amendment 3)
 - **Needs:** WP 1.3
 - **Size:** M
 - **Build:**
