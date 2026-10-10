@@ -7,19 +7,19 @@ Every escalation, every later conflict and every call made without the owner's a
 PLAN.md §8.14), one record per file, written by `node x esc`. `node x esc list --open` lists what still needs
 review; the owner closes a record with `node x esc close ESC-NNNN`, keeping or reversing its call.
 
-## Calls awaiting the owner's review (0)
+## Calls awaiting the owner's review (1)
 
 Made without an answer after the deadline: keep or reverse each, then `node x esc close ESC-NNNN`.
 
-None.
+| Record                                                                   | Principle  | Raised               | Question                                                                                                                                     | Call                                                                                                                                                                                                                                      | Commit  |
+| ------------------------------------------------------------------------ | ---------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| [ESC-0001](ESC-0001-enable-github-actions-for-michaelcrosato-my-3dge.md) | Escalation | 2026-10-10T08:59:31Z | Enable GitHub Actions for michaelcrosato/my-3dge and grant the agent token the workflow scope, so WP 0.9 can write .github/workflows/ci.yml? | No answer in 15 minutes: Actions stays off, nothing is written under .github/workflows/, and node x ci --local remains the merge gate; the workflow and its unit test follow once the owner enables Actions and grants the workflow scope | a8970b0 |
 
-## Open (1)
+## Open (0)
 
 Waiting for an answer until the deadline; then the agent decides and records the call.
 
-| Record                                                                   | Principle  | Raised               | Question                                                                                                                                     | Deadline             | Recommended                                                                                    |
-| ------------------------------------------------------------------------ | ---------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------- |
-| [ESC-0001](ESC-0001-enable-github-actions-for-michaelcrosato-my-3dge.md) | Escalation | 2026-10-10T08:59:31Z | Enable GitHub Actions for michaelcrosato/my-3dge and grant the agent token the workflow scope, so WP 0.9 can write .github/workflows/ci.yml? | 2026-10-10T09:14:31Z | Enable Actions and grant the workflow scope; the agent writes ci.yml running node x ci --local |
+None.
 
 ## Answered (0)
 
