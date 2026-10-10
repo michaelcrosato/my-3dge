@@ -199,13 +199,137 @@ Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when
 
 ## gfx
 
+### GFX_BAD_ALPHA
+
+- Message: `the frame alpha must be a number from 0 to 1, not {alpha}`
+- Fix: pass the clock's interpolation alpha (clock.advance(now).alpha), which is always from 0 to 1
+- Registered in: [`engine/gfx/renderer.ts` line 72](../engine/gfx/renderer.ts)
+
+### GFX_BAD_CAMERA
+
+- Message: `{where}: {problems}`
+- Fix: give finite numbers within the ranges named (angles in radians, lengths in metres, fov in degrees as PerspectiveCamera.fov), and a positive aspect (width / height)
+- Registered in: [`engine/gfx/cameras/codes.ts` line 52](../engine/gfx/cameras/codes.ts)
+
+Raised by the camera factories, `makePose` and `placeCamera` (engine/gfx/cameras/) for a missing or non-finite number, a value out of its range, or a pose put on a three.js camera of the other projection.
+
+### GFX_BAD_CAMERA_CODE
+
+- Message: `"{code}" is not a camera code: {problems}`
+- Fix: write cam=<view>[,<turn>,<zoom>[,<x>,<y>,<z>]] (views: iso, threequarter, topdown, brawler, side), cam=<azimuth>,<elevation>,<zoom>,<height>,<boost>[,<x>,<z>] (a custom view), either with ,persp at the end for a perspective lens, or cam3=orbit[,<azimuth>,<elevation>,<distance>[,<x>,<y>,<z>]], cam3=fly or cam3=fixed[,<x>,<y>,<z>,<yaw>,<pitch>[,<fov>]]; angles in degrees, lengths in metres
+- Registered in: [`engine/gfx/cameras/codes.ts` line 42](../engine/gfx/cameras/codes.ts)
+
+Raised by `parseCameraCode` (engine/gfx/cameras/codes.ts) for an empty part, a word where a number belongs, the wrong count of numbers, or a number out of its range (each range is named). Every problem is listed at once.
+
+### GFX_BAD_SHOT_SIZE
+
+- Message: `a shot must be at least 1 × 1 whole pixels, not {width} × {height}`
+- Fix: pass size: { width, height } in whole pixels of at least 1, or leave it out to shoot at the drawing buffer's size
+- Registered in: [`engine/gfx/shot.ts` line 49](../engine/gfx/shot.ts)
+
+### GFX_COLD_PIPELINE
+
+- Message: `{count} GPU pipeline(s) were built while drawing frame {frame}, after the warm-up: the frame stalled`
+- Fix: register what the frame drew for the first time with gfx.warmup.register(id, { objects }), or add what changed to the shader key with gfx.warmup.keyPart(name, part), so the warm-up builds it first
+- Registered in: [`engine/gfx/renderer.ts` line 63](../engine/gfx/renderer.ts)
+
+Advice from `frame()` (engine/gfx/renderer.ts): the pipeline counter (engine/gfx/pipelines.ts) saw a pipeline built during a drawn frame after the first warm-up, the stall PLAN.md §8.7 budgets at 0.
+
+### GFX_DEFAULT_LIMITS
+
+- Message: `the adapter refused a device with its own limits ({reason}), so the device has WebGPU's default limits`
+- Fix: nothing to do for play; for larger buffers and textures, update the browser or GPU driver (node x describe feature lists what each feature needs)
+- Registered in: [`engine/gfx/caps.ts` line 25](../engine/gfx/caps.ts)
+
+Advice from `requestDevice` (engine/gfx/caps.ts): the device is made with every adapter feature but WebGPU's default limits. Features that need larger limits are then off, each with its own advice (engine/gfx/features.ts).
+
+### GFX_DEVICE_LOST
+
+- Message: `the GPU device was lost ({reason}): {message}`
+- Fix: reload the page; the sim runs on the CPU and is intact (capture it first with __engine.capture()), but nothing draws until the renderer starts again
+- Registered in: [`engine/gfx/renderer.ts` line 59](../engine/gfx/renderer.ts)
+
+### GFX_DUPLICATE_WARMUP
+
+- Message: `the warm-up already has an entry {id}`
+- Fix: dispose the first registration (register returns { dispose }), or register the second under another id
+- Registered in: [`engine/gfx/warmup.ts` line 50](../engine/gfx/warmup.ts)
+
+### GFX_EMPTY_PALETTE
+
+- Message: `{what} lists no colours`
+- Fix: give it at least one hex colour ('#6b6f5a')
+- Registered in: [`engine/gfx/textures/codes.ts` line 21](../engine/gfx/textures/codes.ts)
+
+### GFX_GPU_ERROR
+
+- Message: `WebGPU refused a call ({kind}): {message}`
+- Fix: fix the resource or pipeline the message names; GPU errors never change play, but what that call draws is missing or wrong
+- Registered in: [`engine/gfx/renderer.ts` line 54](../engine/gfx/renderer.ts)
+
+Recorded from the device's `uncapturederror` event (engine/gfx/renderer.ts): a validation, out-of-memory or internal error nothing caught.
+
+### GFX_NO_FLOAT32_FILTERING
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; give data textures that must look smooth HalfFloatType, or use a GPU with float32-filterable, and take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/features.ts` line 46](../engine/gfx/features.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when the device has no `float32-filterable`: three.js r182 then samples 32-bit float textures unfiltered.
+
+### GFX_NO_TIMESTAMPS
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; for GPU timings use a browser and GPU with timestamp queries, and take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/features.ts` line 41](../engine/gfx/features.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when the device has no `timestamp-query`: stats report no GPU time per frame.
+
 ### GFX_NO_WEBGPU
 
 - Message: `WebGPU is unavailable: {reason}`
 - Fix: open the page in a browser with WebGPU and hardware acceleration on (Chrome or Edge 113+, Safari 26+); headless, launch Chromium with WEBGPU_FLAGS from tools/lib/browser.ts (PLAN.md §8.8)
-- Registered in: [`engine/gfx/renderer.ts` line 27](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 45](../engine/gfx/renderer.ts)
 
 Raised at startup, before anything touches the GPU, when the browser has no `navigator.gpu`, gives no adapter or device, or three.js starts another backend than WebGPU. WebGPU is the only renderer: there is no WebGL fallback (PLAN.md §6.7), so nothing starts, and a page shows this message with its fix.
+
+### GFX_PIPELINES_UNPINNED
+
+- Message: `three.js r{revision}'s renderer internals differ from r182's: {problems}`
+- Fix: re-pin engine/gfx/pipelines.ts to the new release's internals (its pin test names what changed); the device's pipeline counts stay exact meanwhile
+- Registered in: [`engine/gfx/pipelines.ts` line 36](../engine/gfx/pipelines.ts)
+
+Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipelines` no longer has r182's shape, usually after a three.js upgrade: the count of pipelines three.js keeps cached is then unknown (null). Builds are counted at the device and stay exact.
+
+### GFX_SMALL_BUFFERS
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; a GPU or browser with larger storage-buffer limits turns it on, and take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/features.ts` line 51](../engine/gfx/features.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when the device cannot bind storage buffers of 256 MB: GPU techniques with large buffers run smaller or stay off.
+
+### GFX_TEXTURE_SIZE
+
+- Message: `texture {id} cannot bake at {width} × {height}: {reason}`
+- Fix: bake at a whole multiple of its tile, {tile} texels with these parameters (size: [{suggest}] fits), or change the parameters that set the tile
+- Registered in: [`engine/gfx/textures/codes.ts` line 16](../engine/gfx/textures/codes.ts)
+
+Raised by `bakeTexture` (engine/gfx/textures/bake.ts) and by `defineTexture` for a default size that is not a whole number of pattern tiles (a running bond needs whole cells across and an even number of courses), or is not 2 to 4096 texels on a side: such a texture would show a seam where it repeats.
+
+### GFX_UNKNOWN_CAMERA
+
+- Message: `{name} is not a camera{suggestion}`
+- Fix: use one of {names}: the classic views in cam=, the 3D cameras in cam3= (engine/gfx/cameras/codes.ts gives the grammar)
+- Registered in: [`engine/gfx/cameras/codes.ts` line 47](../engine/gfx/cameras/codes.ts)
+
+Raised by `parseCameraCode` and the camera factories (engine/gfx/cameras/) for a view or camera name they do not know, with the closest names.
+
+### GFX_WARMUP_FAILED
+
+- Message: `the warm-up failed: {message}`
+- Fix: the cause is recorded with this error; frames draw without a warm-up meanwhile, building pipelines as they meet them
+- Registered in: [`engine/gfx/renderer.ts` line 68](../engine/gfx/renderer.ts)
 
 ## input
 
@@ -216,6 +340,70 @@ Raised at startup, before anything touches the GPU, when the browser has no `nav
 - Registered in: [`engine/input/intents.ts` line 33](../engine/input/intents.ts)
 
 Raised by `normalizeIntents`, `applyIntents` and the replay checks (engine/input/intents.ts, engine/sim/replay.ts) for an unknown key (named with the closest), a non-finite or misshapen number, a button that is not a non-empty string, or a custom value that is not plain data. Every problem is listed at once.
+
+## level
+
+### LEVEL_BAD_BLOCK
+
+- Message: `{at}: this {char} block {shape}, but {glyph} stands in whole {n} × {n} squares`
+- Fix: redraw the block as a filled rectangle whose sides are multiples of {n} tiles (a pillar is PP over PP)
+- Registered in: [`engine/world/level/problems.ts` line 41](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts) for a glyph with a footprint above 1 whose touching tiles do not make a filled rectangle of whole footprint squares.
+
+### LEVEL_BAD_HEADER
+
+- Message: `{at}: {problem}`
+- Fix: write the front matter as key: value lines between two lines holding only ---, before the map; its keys are description (text) and tile (metres per character, above 0)
+- Registered in: [`engine/world/level/problems.ts` line 22](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/parse.ts) for an unknown or repeated key, a bad value, a line that is not `key: value`, or front matter that is never closed.
+
+### LEVEL_EMPTY
+
+- Message: `{at}: the level has no map`
+- Fix: write the map after the front matter: one row of legend characters per line, the first row the north edge
+- Registered in: [`engine/world/level/problems.ts` line 27](../engine/world/level/problems.ts)
+
+### LEVEL_INVALID
+
+- Message: `{where} has {count}: {list}`
+- Fix: fix each at the line and column it names (validateLevel(text) lists them; node x qa level checks every level file)
+- Registered in: [`engine/world/level/problems.ts` line 56](../engine/world/level/problems.ts)
+
+Thrown by `compileLevel` and `defineLevel` (engine/world/level/compile.ts) for a level with structural problems; the error carries them as `values.problems`.
+
+### LEVEL_RAGGED_ROW
+
+- Message: `{at}: the map is {width} characters wide, but this row is {length}`
+- Fix: {change} so every row is {width} characters wide: the map is a rectangle (close its edges with walls, #)
+- Registered in: [`engine/world/level/problems.ts` line 31](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/parse.ts). The map is as wide as most of its rows are; each other row is named at the column where it stops matching.
+
+### LEVEL_UNKNOWN_GLYPH
+
+- Message: `{at}: {shown} is not in the legend ({count})`
+- Fix: write one of the legend's characters instead{suggestion} (the legend: {chars}), or define it before compiling: defineGlyph('glyph:<name>', { char: {quoted}, description: '…' })
+- Registered in: [`engine/world/level/problems.ts` line 36](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts), once per unknown character, at its first tile, with the number of tiles that use it. `node x describe glyph` lists the legend.
+
+### LEVEL_UNREACHABLE_AREA
+
+- Message: `{at}: the walkable area from here ({count}) is cut off from the main floor ({main})`
+- Fix: open a gap to it, or fill it with a solid glyph (#) if nobody should stand there
+- Registered in: [`engine/world/level/problems.ts` line 51](../engine/world/level/problems.ts)
+
+Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`, once per cut-off area without a spawn, at its first tile in reading order.
+
+### LEVEL_UNREACHABLE_SPAWN
+
+- Message: `{at}: the spawn {spawn} ({char}) {why}`
+- Fix: open a gap in the walls round it, or move the {char} onto the main floor
+- Registered in: [`engine/world/level/problems.ts` line 46](../engine/world/level/problems.ts)
+
+Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`: the spawn stands on a tile nobody walks on, or in an area cut off from the main floor (the largest area bodies can walk across, stepping between tiles at most the climb limit apart).
 
 ## sim
 

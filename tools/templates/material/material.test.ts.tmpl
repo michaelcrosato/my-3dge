@@ -1,0 +1,19 @@
+/**
+ * @file Unit tests for the material `material:{{name}}` ({{id}}.ts): it is defined with its parameters and compiles to
+ * a three.js material with its map.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { createMaterialLibrary } from '../../../engine';
+import { {{name}} } from './{{name}}';
+
+describe('material:{{name}}', () => {
+  it('is defined, and compiles to a three.js material with its map', () => {
+    expect({{name}}.id).toBe('material:{{name}}');
+    const library = createMaterialLibrary();
+    const material = library.get({{name}}.id) as unknown as { name: string; map: unknown };
+    expect(material.name).toBe('material:{{name}}');
+    expect(material.map).toBeTruthy();
+    library.dispose();
+  });
+});

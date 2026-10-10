@@ -1,83 +1,14 @@
 /**
- * @file Unit tests for `x shot`'s Node half (`tools/cmd/shot.ts`): the look metrics of synthetic frames, the verdict
- * (a blank frame fails, an almost empty one warns), and how a page argument becomes a URL. The browser half is
- * proven by `node x shot labs/hello` (WP 0.8's Verify) and tests/e2e/hello.spec.ts, which measures with the same
- * `frameMetrics`.
+ * @file Unit tests for `x shot`'s Node half (`tools/cmd/shot.ts`): how a page argument and the `--scene`, `--cam`
+ * and `--set` flags become a URL, the verdict on look notes, the PNG encoder (round trip through tools/lib/png.ts),
+ * and the flat report metrics of a shot (look metrics, the ID-pass list, repeated names, the marks' legend). The
+ * metrics themselves are tested in engine/gfx/lookMetrics.test.ts; the browser half by tests/e2e/shot.spec.ts.
  */
 import { describe, expect, it } from 'vitest';
-import { frameMetrics, judgeFrame, resolvePage } from './shot';
+import { decodePng } from '../lib/png';
+import { encodePng, frameMetrics, judgeFrame, pageUrl, resolvePage, shotMetrics } from './shot';
 
-/** A width × height frame filled with `fill`, then `paint(x, y)` where it returns a colour. */
-function frame(
-  width: number,
-  height: number,
-  fill: number[],
-  paint: (x: number, y: number) => number[] | undefined = () => undefined,
-): Uint8Array {
-  const rgba = new Uint8Array(width * height * 4);
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) rgba.set([...(paint(x, y) ?? fill), 255].slice(0, 4), (y * width + x) * 4);
-  }
-  return rgba;
-}
-
-describe('frameMetrics', () => {
-  it('measures a blank frame: one colour, no coverage', () => {
-    const metrics = frameMetrics(frame(4, 2, [29, 36, 48]), 4, 2);
-    expect(metrics).toMatchObject({ width: 4, height: 2, colors: 1, blank: true, background: '#1d2430', coverage: 0 });
-    expect(metrics.meanColor).toBe('#1d2430');
-    expect(metrics.histogram).toBe('#103030 100.0%');
-  });
-
-  it('takes the commonest colour as the background and counts the rest as coverage', () => {
-    // 10 × 10, a 4 × 5 white block on black: 20% coverage.
-    const rgba = frame(10, 10, [0, 0, 0], (x, y) => (x < 4 && y < 5 ? [255, 255, 255] : undefined));
-    const metrics = frameMetrics(rgba, 10, 10);
-    expect(metrics).toMatchObject({ colors: 2, blank: false, background: '#000000', coverage: 0.2 });
-    expect(metrics).toMatchObject({ lumaMean: 0.2, lumaP5: 0, lumaP95: 1, dark: 0.8, blown: 0.2 });
-    expect(metrics.histogram).toBe('#101010 80.0%, #f0f0f0 20.0%');
-  });
-
-  it('ignores differences within the tolerance of 6 per channel', () => {
-    const rgba = frame(10, 1, [100, 100, 100], (x) =>
-      x === 0 ? [106, 94, 100] : x === 1 ? [107, 100, 100] : undefined,
-    );
-    expect(frameMetrics(rgba, 10, 1)).toMatchObject({ colors: 3, coverage: 0.1 });
-  });
-
-  it('reads luma percentiles with Rec. 709 weights', () => {
-    // Pure green has luma 0.7152: P5 is the black half, P95 the green half.
-    const rgba = frame(2, 1, [0, 0, 0], (x) => (x === 1 ? [0, 255, 0] : undefined));
-    const metrics = frameMetrics(rgba, 2, 1);
-    expect(metrics.lumaP5).toBe(0);
-    expect(metrics.lumaP95).toBeCloseTo(182 / 255, 4);
-    expect(metrics.lumaMean).toBeCloseTo(0.3576, 4);
-  });
-
-  it('refuses a buffer too small for its size', () => {
-    expect(() => frameMetrics(new Uint8Array(4), 2, 1)).toThrow('4 bytes for 2×1');
-  });
-});
-
-describe('judgeFrame', () => {
-  it('fails a blank frame, naming the colour and the fix', () => {
-    const { failures } = judgeFrame(frameMetrics(frame(2, 2, [1, 2, 3]), 2, 2), 'labs/x');
-    expect(failures).toEqual([{ id: 'SHOT_BLANK', message: expect.stringContaining('all 2×2 pixels are #010203') }]);
-    expect(failures[0].message).toContain('Draw before signalling ready');
-  });
-
-  it('warns about an almost empty frame and passes a drawn one', () => {
-    const speck = frame(100, 100, [0, 0, 0], (x, y) => (x + y === 0 ? [255, 0, 0] : undefined));
-    expect(judgeFrame(frameMetrics(speck, 100, 100), 'labs/x')).toEqual({
-      failures: [],
-      warnings: [{ id: 'SHOT_EMPTY', message: expect.stringContaining('0.01% of 100×100') }],
-    });
-    const drawn = frame(10, 10, [0, 0, 0], (x) => (x < 5 ? [255, 0, 0] : undefined));
-    expect(judgeFrame(frameMetrics(drawn, 10, 10), 'labs/x')).toEqual({ failures: [], warnings: [] });
-  });
-});
-
-describe('resolvePage', () => {
+describe('resolvePage and pageUrl', () => {
   it('opens a lab by its directory and an .html file as is, keeping the query', () => {
     expect(resolvePage('labs/hello')).toEqual({ path: 'labs/hello/', file: 'labs/hello/index.html' });
     expect(resolvePage('./labs/hello/?post=0')).toEqual({ path: 'labs/hello/?post=0', file: 'labs/hello/index.html' });
@@ -85,5 +16,71 @@ describe('resolvePage', () => {
       path: 'tests/pages/harness.html?throw',
       file: 'tests/pages/harness.html',
     });
+  });
+
+  it('adds the scene, the camera and each setting as URL parameters', () => {
+    expect(pageUrl('labs/box', { scene: 'room', cam: 'iso', set: ['gfx.resolution=full', 'crowd=a=b'] })).toBe(
+      'labs/box/?scene=room&cam=iso&gfx.resolution=full&crowd=a%3Db',
+    );
+    expect(pageUrl('labs/hello/?post=0', { cam: 'top' })).toBe('labs/hello/?post=0&cam=top');
+    expect(pageUrl('tests/pages/shot.html')).toBe('tests/pages/shot.html');
+    expect(() => pageUrl('labs/box', { set: ['gfx.resolution'] })).toThrow('--set takes key=value');
+  });
+});
+
+describe('judgeFrame and frameMetrics', () => {
+  it('turns failing notes into failures and the rest into warnings', () => {
+    const blank = frameMetrics(new Uint8Array(16).fill(9), 2, 2);
+    expect(blank.blank).toBe(true);
+    const verdict = judgeFrame([
+      { id: 'LOOK_BLANK', level: 'fail', value: 0, limit: 0, message: 'blank' },
+      { id: 'LOOK_FLAT', level: 'warn', value: 0.5, limit: 0.4, message: 'flat' },
+    ]);
+    expect(verdict).toEqual({
+      failures: [{ id: 'LOOK_BLANK', message: 'blank' }],
+      warnings: [{ id: 'LOOK_FLAT', message: 'flat' }],
+    });
+  });
+});
+
+describe('encodePng', () => {
+  it('writes an RGBA PNG that decodes to the same pixels', () => {
+    const rgba = new Uint8Array(5 * 3 * 4).map((_, i) => (i * 37) % 256);
+    const decoded = decodePng(encodePng(5, 3, rgba));
+    expect(decoded).toEqual({ width: 5, height: 3, rgba });
+  });
+});
+
+describe('shotMetrics', () => {
+  it('flattens the look metrics, the ID-pass list and the marks for report.json', () => {
+    const entry = (id: number, name: string, px: number) => ({
+      id,
+      name,
+      px,
+      share: px / 100,
+      bbox: [0, 0, 9, 9] as [number, number, number, number],
+      centre: [4, 4] as [number, number],
+    });
+    const metrics = shotMetrics({
+      width: 10,
+      height: 10,
+      metrics: { ...frameMetrics(new Uint8Array(400), 10, 10), largest: 'floor', largestShare: 0.6 },
+      ids: {
+        width: 10,
+        height: 10,
+        objects: 4,
+        visible: [entry(1, 'floor', 60), entry(2, 'post', 10), entry(3, 'post', 5)],
+        unseen: [{ id: 4, name: 'hero', reason: 'covered', protagonist: true }],
+        empty: 25,
+        stray: 0,
+        protagonist: { name: 'hero', px: 0 },
+      },
+      marks: [{ n: 1, id: 1, name: 'floor', px: 60, at: [4, 4] }],
+    });
+    expect(metrics).toMatchObject({ width: 10, height: 10, coverage: 0, largest: 'floor', largestShare: 0.6 });
+    expect(metrics).toMatchObject({ objects: 4, visible: 3, empty: 25, stray: 0, protagonist: false });
+    expect(metrics).toMatchObject({ 'px.floor': 60, 'share.floor': 0.6, 'bbox.floor': '0,0,9,9', 'mark.1': 'floor' });
+    expect(metrics).toMatchObject({ 'px.post#2': 10, 'px.post#3': 5, 'unseen.hero': 'covered' });
+    expect(Object.values(metrics).every((value) => ['number', 'string', 'boolean'].includes(typeof value))).toBe(true);
   });
 });

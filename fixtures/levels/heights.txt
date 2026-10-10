@@ -1,0 +1,12 @@
+---
+description: Half-metre tiles (5 × 4 m) for the compiler's hand-computed numbers. Two pillars side by side (one merged box, two pieces) and low walls in an L (two boxes).
+tile: 0.5
+---
+##########
+#........#
+#.PPPP...#
+#.PPPP.w.#
+#......w.#
+#..www.w.#
+#@.......#
+##########

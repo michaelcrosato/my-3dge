@@ -1,0 +1,11 @@
+{
+  "describe": "A material: three.js's classic parameters as data (color, map, roughness, emissive, flags), drawn by the engine, with a unit test that compiles it (PLAN.md WP 2.3).",
+  "id": "the module's path, labs/<lab>/materials/<name> (its id is material:<name>): labs/box/materials/mossyBrick",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/materials|tools/templates/material)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/material/sampleMaterial",
+  "files": {
+    "material.ts.tmpl": "{{id}}.ts",
+    "material.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}

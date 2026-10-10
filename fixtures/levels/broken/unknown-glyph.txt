@@ -1,0 +1,8 @@
+---
+description: Seeded errors. Characters the legend lacks: X (twice), a lower-case p, a tab.
+---
+########
+#..X...#
+#..p.X.#
+#.	....#
+########

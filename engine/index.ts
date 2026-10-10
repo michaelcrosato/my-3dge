@@ -29,3 +29,27 @@ export type { HeadlessOptions } from './app/headless';
 export type { Inspector } from './dev/inspector';
 export type { EngineInfo } from './dev/inspector';
 export type { EntitySummary } from './dev/inspector';
+
+// Materials and procedural textures (WP 2.3): materials as data with three.js's classic parameters, seeded tiling
+// texture generators and their helpers, the CPU bake, and the page's material library.
+export { defineMaterial } from './gfx/materials/material';
+export { getMaterial } from './gfx/materials/material';
+export type { MaterialEntry } from './gfx/materials/material';
+export type { MaterialSpec } from './gfx/materials/material';
+export { createMaterialLibrary } from './gfx/materials/library';
+export type { MaterialLibrary } from './gfx/materials/library';
+export { defineTexture } from './gfx/textures/texture';
+export type { TextureEntry } from './gfx/textures/texture';
+export type { Texel } from './gfx/textures/types';
+export type { TextureContext } from './gfx/textures/types';
+export type { TextureSpec } from './gfx/textures/types';
+export type { TextureLook } from './gfx/textures/types';
+export { bakeTexture } from './gfx/textures/bake';
+export type { TextureBake } from './gfx/textures/bake';
+export type { TextureRef } from './gfx/textures/bake';
+export { cellHash } from './gfx/textures/tile';
+export { wrapIndex } from './gfx/textures/tile';
+export { palette } from './gfx/textures/tile';
+export { pickTone } from './gfx/textures/tile';
+export { runningBond } from './gfx/textures/tile';
+export { tileNoise } from './gfx/textures/tile';

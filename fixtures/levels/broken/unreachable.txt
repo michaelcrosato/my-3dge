@@ -1,0 +1,13 @@
+---
+description: Seeded errors. The hero's spawn walled into a corner, marker 2 inside a ring of wall, and a 2-tile pocket of floor nobody can reach.
+---
+############
+#@.#.......#
+#..#..####.#
+####..#..#.#
+#.....####.#
+#......###.#
+#......#2#.#
+#......###.#
+#..........#
+############
