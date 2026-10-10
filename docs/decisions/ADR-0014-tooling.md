@@ -168,3 +168,15 @@ took 14.5 s, so T0 would have failed (15 s) by the end of the box stages. Calls:
   false` (a quarter less CPU, 29 s, but test files then share module state, the shared registry among it, and a
   timing test failed). It is the lever to take when T1 nears 45 s, with a check that no test file leaves shared state
   behind.
+
+## Amendment 8 (2026-10-10, WP-0.1 platform, U-8 not triggered): the platform's Chromium outside the cloud container
+
+- **What changed.** Sessions now also run on the owner's workstation (Ubuntu on WSL2, x64), which has no
+  `/opt/pw-browsers/chromium`. The platform's browser stays the same release, Chromium 141.0.7390.37 (tools/deps.json),
+  so every recorded golden, thumbnail and perf baseline keeps its meaning: U-8 (a new platform Chromium) does not fire.
+- **How.** scripts/setup.sh fetches Chrome for Testing 141.0.7390.37 from Google's official bucket into
+  `~/.cache/my3dge/` when neither `$CHROMIUM_PATH` nor the container's path exists, and tools/lib/browser.ts's
+  `chromiumPath` resolves `$CHROMIUM_PATH`, else the container's path, else that cache. No shell state is needed, so
+  ultracode lanes in their own worktrees resolve the same browser.
+- **Measured.** WebGPU runs on SwiftShader there with shardfall's flags (`tests/e2e/harness.spec.ts`: adapter, exact
+  pixels), and `x ci --local` on 652ea6b passed all seven steps in 31.4 s (T0 1.7 s, T1 11.9 s, T2 9.5 s).

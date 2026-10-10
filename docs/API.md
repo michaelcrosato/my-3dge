@@ -1372,7 +1372,9 @@ For the agents who maintain the engine.
 
 - `AdapterRecord` (interface): One adapter WebGPU returned: its identity and features.
 - `browserRuntime` (function): The browser part of a report's runtime: `141.0.7390.37` → `chromium141`.
-- `chromiumPath` (function): The Chromium executable: `$CHROMIUM_PATH`, else `DEFAULT_CHROMIUM`.
+- `cachedChromium` (function): Where scripts/setup.sh keeps Chrome for Testing `CHROMIUM_VERSION` on a machine without `DEFAULT_CHROMIUM`.
+- `CHROMIUM_VERSION` (const): The platform's Chromium release (tools/deps.json), which scripts/setup.sh fetches where the container's is absent.
+- `chromiumPath` (function): The Chromium executable: `$CHROMIUM_PATH`; else `DEFAULT_CHROMIUM` when it exists; else `cachedChromium()` when it exists (a machine outside the container, after scripts/setup.sh); else `DEFAULT_CHROMIUM`, so the launch error names the platform's path.
 - `ConsoleRecord` (interface): One console message the page printed.
 - `DEFAULT_CHROMIUM` (const): The container's Chromium 141; `$CHROMIUM_PATH` overrides it.
 - `describePageError` (function): One line for a page error: its message and where it was thrown (`tests/pages/harness.ts:12:9`).

@@ -8,6 +8,7 @@ import { transformWithEsbuild } from 'vite';
 import { describe, expect, it } from 'vitest';
 import {
   browserRuntime,
+  cachedChromium,
   chromiumPath,
   DEFAULT_CHROMIUM,
   initScript,
@@ -40,9 +41,19 @@ describe('the launch options', () => {
       '--use-vulkan=swiftshader',
       '--use-angle=swiftshader',
     ]);
-    expect(chromiumPath({})).toBe(DEFAULT_CHROMIUM);
-    expect(chromiumPath({ CHROMIUM_PATH: '/x/chrome' })).toBe('/x/chrome');
-    expect(launchOptions({})).toEqual({ executablePath: '/opt/pw-browsers/chromium', args: [...WEBGPU_FLAGS] });
+    const none = (): boolean => false;
+    const only = (path: string) => (p: string) => p === path;
+    expect(chromiumPath({}, none)).toBe(DEFAULT_CHROMIUM);
+    expect(chromiumPath({ CHROMIUM_PATH: '/x/chrome' }, none)).toBe('/x/chrome');
+    expect(chromiumPath({ HOME: '/h' }, only(DEFAULT_CHROMIUM))).toBe(DEFAULT_CHROMIUM);
+    const cached = '/h/.cache/my3dge/chrome-141.0.7390.37/chrome-linux64/chrome';
+    expect(cachedChromium({ HOME: '/h' })).toBe(cached);
+    expect(chromiumPath({ HOME: '/h' }, only(cached))).toBe(cached);
+    expect(chromiumPath({ HOME: '/h', CHROMIUM_PATH: '/x/chrome' }, only(cached))).toBe('/x/chrome');
+    expect(launchOptions({ CHROMIUM_PATH: '/x/chrome' })).toEqual({
+      executablePath: '/x/chrome',
+      args: [...WEBGPU_FLAGS],
+    });
     expect(browserRuntime('141.0.7390.37')).toBe('chromium141');
   });
 });
