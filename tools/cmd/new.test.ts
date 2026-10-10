@@ -87,7 +87,7 @@ describe('writing an entry', () => {
 
   it('lists the kinds when given none', async () => {
     const result = await command.run({ values: {}, positionals: [], root: ROOT });
-    expect(result.lines?.[0]).toMatch(/^module: /);
+    expect(result.lines).toContainEqual(expect.stringMatching(/^module: /));
   });
 
   it('rejects an id that does not match the pattern', async () => {

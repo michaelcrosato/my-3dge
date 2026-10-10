@@ -1,0 +1,20 @@
+/**
+ * @file The material `material:{{name}}`: what it looks like and where it is used (replace this text; `x docs` puts
+ * the first sentence in INDEX).
+ *
+ * Invariants: data only, three.js's classic parameters (node x describe material lists them); its map names a texture
+ * defined before it (node x describe texture lists them, with their parameters).
+ *
+ * @example
+ * {{name}}.id; // 'material:{{name}}'
+ * @see {{id}}.test.ts
+ */
+import { defineMaterial } from '../../../engine';
+
+/** The material `material:{{name}}`: replace this sentence with what it is. */
+export const {{name}} = defineMaterial('material:{{name}}', {
+  description: 'What it is for, in plain sentences (replace).',
+  color: '#ffffff',
+  map: { texture: 'texture:stone', seed: 1, params: { wear: 0.3 } },
+  roughness: 0.8,
+});
