@@ -7,9 +7,12 @@ HTML/CSS. Games see a small public API built on the most widely used web tools (
 ESLint, Prettier), so any agent can work with what it already knows; behind that API, the engine's internals use the
 best approach its builders can execute well.
 
-**Status: Phase 0, the foundation, is in progress.** WPs 0.1–0.8, 0.11 and 0.12 are done: the repository's rules
-and platform, the toolchain and the `node x` command line, a hello page drawn with three.js on WebGPU (`labs/hello/`),
-and the Vercel build. The ledger in [`PLAN.md`](PLAN.md) §14 says what is done and what comes next.
+**Status: Phase 0, the foundation, is done (gate G0); Phase 1, the kernel, is next.** The repository has its rules
+and platform, the toolchain and the `node x` command line, the checks every change passes (`npm run check`, `npm test`,
+`npm run e2e`), docs generated from code comments, escalation records, reference vectors from my-3d2dge, a hello page
+drawn with three.js on WebGPU (`labs/hello/`), the Vercel build, and the merge gate `node x ci --local`. No engine
+systems exist yet. [`docs/PROGRESS.md`](docs/PROGRESS.md) is the one-screen status; the ledger in
+[`PLAN.md`](PLAN.md) §14 has every work package.
 
 ## The doctrine
 
@@ -31,6 +34,7 @@ that runs, is measured and is proved. The game that will run on the engine lives
 bash scripts/setup.sh           # Node 24.21.0 if missing (SHA-256 checked), the read-only sources, then npm ci
 npm run typecheck               # tsc --noEmit against the pinned three.js and Rapier types
 npm test                        # vitest run
+node x ci --local               # the merge gate: every tier, summary in out/ci/summary.md
 ```
 
 `scripts/setup.sh` is idempotent and prints the `export` lines for `PATH`, `MY3D2DGE_SRC` and `SHARDFALL_SRC` (it
