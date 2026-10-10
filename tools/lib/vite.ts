@@ -11,6 +11,7 @@
  * await server.close();
  * @see tools/lib/vite.test.ts
  */
+import { createServer as createNetServer } from 'node:net';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
@@ -33,7 +34,7 @@ export async function startVite(options: { root?: string; port?: number } = {}):
     configFile: join(root, 'vite.config.ts'),
     logLevel: 'warn',
     clearScreen: false,
-    server: { host: '127.0.0.1', port: options.port ?? 0, strictPort: true },
+    server: { host: '127.0.0.1', port: options.port ?? (await freePort()), strictPort: true },
   });
   await server.listen();
   const address = server.httpServer?.address();
@@ -42,4 +43,17 @@ export async function startVite(options: { root?: string; port?: number } = {}):
     throw new Error('startVite: the dev server reported no TCP address');
   }
   return { url: `http://127.0.0.1:${address.port}/`, port: address.port, close: () => server.close() };
+}
+
+/** Asks the system for a free TCP port on 127.0.0.1. Vite reads `port: 0` as "use 5173", so it is probed here. */
+export async function freePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const probe = createNetServer();
+    probe.once('error', reject);
+    probe.listen(0, '127.0.0.1', () => {
+      const address = probe.address();
+      const port = address && typeof address === 'object' ? address.port : 0;
+      probe.close(() => (port ? resolve(port) : reject(new Error('freePort: no port assigned'))));
+    });
+  });
 }

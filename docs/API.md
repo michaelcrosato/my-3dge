@@ -42,7 +42,7 @@ For the agents who maintain the engine.
 
 ### [`tests/e2e/fixtures.ts`](../tests/e2e/fixtures.ts)
 
-- `decodePng` (function): Decodes a non-interlaced 8-bit RGB or RGBA PNG (what Chromium's screenshots are) into RGBA bytes.
+- `decodePng` (re-export): (undocumented)
 - `expect` (re-export): Playwright's `expect`, re-exported so a suite imports everything from this file.
 - `Frame` (interface): A frame read from the page: decoded RGBA pixels plus the PNG.
 - `Harness` (interface): What each test gets as `harness`.
@@ -181,6 +181,7 @@ For the agents who maintain the engine.
 ### [`tools/eslint/banned.ts`](../tools/eslint/banned.ts)
 
 - `BANNED_FILES` (const): Where the bans apply.
+- `BANNED_IMPORT_FILES` (const): The import bans also cover tests/: a bare `three` in a test page gets its own pre-bundled copy in Vite (WP 0.8).
 - `bannedBlocks` (function): The banned-API blocks: imports over every file in scope, then syntax and properties by zone.
 - `bannedPlugin` (const): The plugin the banned-API blocks use: core's restriction rules as `banned/<rule>`.
 
@@ -400,6 +401,10 @@ For the agents who maintain the engine.
 - `fnv1a` (function): Hashes a string (as UTF-8) or bytes with 32-bit FNV-1a, continuing from `seed` (the FNV offset basis by default).
 - `fnv1aHex` (function): `fnv1a` as eight lowercase hex digits, the form reports and logs print.
 
+### [`tools/lib/png.ts`](../tools/lib/png.ts)
+
+- `decodePng` (function): Decodes a non-interlaced 8-bit RGB or RGBA PNG (what Chromium's screenshots are) into RGBA bytes.
+
 ### [`tools/lib/report.ts`](../tools/lib/report.ts)
 
 - `Artifact` (interface): A file a command wrote, for example a PNG, with what it shows.
@@ -457,6 +462,7 @@ For the agents who maintain the engine.
 ### [`tools/lib/vite.ts`](../tools/lib/vite.ts)
 
 - `DevServer` (interface): A running dev server.
+- `freePort` (function): Asks the system for a free TCP port on 127.0.0.1.
 - `startVite` (function): Starts Vite on the repository at `root` (default: this repository), on `port` (default: any free port).
 
 ### [`tools/x.ts`](../tools/x.ts)

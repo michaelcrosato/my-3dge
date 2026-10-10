@@ -30,6 +30,8 @@ export const bannedPlugin = family(
 
 /** Where the bans apply. */
 export const BANNED_FILES = ['engine/**', 'labs/**', 'fixtures/**'];
+/** The import bans also cover tests/: a bare `three` in a test page gets its own pre-bundled copy in Vite (WP 0.8). */
+export const BANNED_IMPORT_FILES = [...BANNED_FILES, 'tests/**'];
 
 const GFX = 'engine/gfx/';
 const READBACK_FILES = ['engine/gfx/shot.ts', 'engine/gfx/enhanced/timing.ts'];
@@ -249,7 +251,7 @@ export function bannedBlocks(): Linter.Config[] {
   return [
     {
       name: 'banned: imports',
-      files: BANNED_FILES,
+      files: BANNED_IMPORT_FILES,
       plugins: { banned: bannedPlugin },
       rules: { 'banned/no-restricted-imports': ['error', IMPORTS] },
     },

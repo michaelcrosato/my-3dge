@@ -21,8 +21,8 @@
  * @see tools/cmd/shot.test.ts
  */
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
-import { createServer, type AddressInfo } from 'node:net';
 import { join } from 'node:path';
+import { decodePng } from '../lib/png';
 import { browserRuntime, describePageError, launchBrowser, preparePage, VIEWPORT } from '../lib/browser';
 import type { Finding } from '../lib/report';
 import { targetSlug } from '../lib/report';
@@ -168,21 +168,6 @@ function labPages(root: string): string[] {
     .map((name) => `labs/${name}`);
 }
 
-/**
- * A port the system reports free on 127.0.0.1. `startVite()` without a port falls back to Vite's 5173 (strict), which
- * another server may hold; asking the system first keeps shots clear of every lane's `$PORT`.
- */
-function freePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const probe = createServer();
-    probe.once('error', reject);
-    probe.listen(0, '127.0.0.1', () => {
-      const { port } = probe.address() as AddressInfo;
-      probe.close(() => resolve(port));
-    });
-  });
-}
-
 /** The page's signal (PLAN.md §8.3), read once: ready, its errors as lines, and its info. */
 interface Signals {
   ready: boolean;
@@ -216,7 +201,7 @@ export default {
       );
     }
     const out = join('out', 'shot', targetSlug(page));
-    const server = await startVite({ root, port: await freePort() });
+    const server = await startVite({ root });
     const browser = await launchBrowser();
     try {
       const tab = await browser.newPage({ viewport: VIEWPORT });
@@ -261,7 +246,6 @@ export default {
       const png = await tab.locator('canvas').first().screenshot();
       mkdirSync(join(root, out), { recursive: true });
       writeFileSync(join(root, out, 'frame.png'), png);
-      const { decodePng } = await import('../../tests/e2e/fixtures');
       const { width, height, rgba } = decodePng(png);
       const metrics = frameMetrics(rgba, width, height);
       const verdict = judgeFrame(metrics, page);

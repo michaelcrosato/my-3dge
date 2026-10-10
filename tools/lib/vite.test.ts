@@ -10,7 +10,7 @@ import { dirname, join } from 'node:path';
 import { createServer } from 'vite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import config from '../../vite.config';
-import { startVite, type DevServer } from './vite';
+import { freePort, startVite, type DevServer } from './vite';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 const VITEST = join(ROOT, 'node_modules', 'vitest', 'vitest.mjs');
@@ -28,6 +28,12 @@ describe('startVite', () => {
     const response = await fetch(`${server.url}tests/pages/harness.html`);
     expect(response.status).toBe(200);
     expect(await response.text()).toContain('<script type="module" src="./harness.ts"></script>');
+  });
+
+  it('asks the system for the port, so a busy 5173 is no obstacle (Vite reads port 0 as 5173)', async () => {
+    const ports = await Promise.all([freePort(), freePort()]);
+    expect(ports.every((port) => port > 0 && port !== 5173)).toBe(true);
+    expect(server.port).not.toBe(5173);
   });
 
   it('answers a missing page with 404, not the root page', async () => {

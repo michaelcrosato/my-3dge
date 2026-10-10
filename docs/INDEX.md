@@ -90,7 +90,7 @@ advice codes are in [ERRORS.md](ERRORS.md).
   - Exports: `default`, `ID_SHAPE`
   - Tests: [`tools/eslint/askTheEntry.test.ts`](../tools/eslint/askTheEntry.test.ts)
 - [`banned.ts`](../tools/eslint/banned.ts): The banned and renamed three.js APIs (PLAN.md Appendix B; doctrine: Mastery), scoped by path, each message naming the replacement: legacy and fragile APIs, names from releases newer than the pinned r182, r182's deprecations (any deprecation warning fails a test anyway), and GPU readbacks outside the two files allowed them.
-  - Exports: `BANNED_FILES`, `bannedBlocks`, `bannedPlugin`
+  - Exports: `BANNED_FILES`, `BANNED_IMPORT_FILES`, `bannedBlocks`, `bannedPlugin`
   - Tests: [`tools/eslint/banned.test.ts`](../tools/eslint/banned.test.ts)
 - [`family.ts`](../tools/eslint/family.ts): Plumbing for the rule families of eslint.config.js: core rules re-exposed under a family's own name, and per-path zones for bans that have exceptions.
   - Exports: `Ban`, `family`, `messagesOf`, `zoned`
@@ -144,6 +144,9 @@ advice codes are in [ERRORS.md](ERRORS.md).
 - [`hash.ts`](../tools/lib/hash.ts): The FNV-1a hash (32-bit), shared by the tools: report ids, the e2e fixture's named random streams, and the proof hashes later WPs print.
   - Exports: `fnv1a`, `fnv1aHex`
   - Tests: [`tools/lib/hash.test.ts`](../tools/lib/hash.test.ts)
+- [`png.ts`](../tools/lib/png.ts): Decodes the PNGs Chromium's screenshots produce (non-interlaced, 8-bit RGB or RGBA) into RGBA bytes, for the frame reads of the e2e fixture (tests/e2e/fixtures.ts) and `x shot` (tools/cmd/shot.ts).
+  - Exports: `decodePng`
+  - Tests: [`tools/lib/png.test.ts`](../tools/lib/png.test.ts)
 - [`report.ts`](../tools/lib/report.ts): The `report.json` every `x` command writes (PLAN.md §8.1): its schema, its validation, and the writer that also updates `out/latest.json`.
   - Exports: `Artifact`, `Finding`, `makeReport`, `packageVersion`, `Report`, `reportPath`, `runtime`, `targetSlug`, `validateReport`, `writeReport`
   - Tests: [`tools/lib/report.test.ts`](../tools/lib/report.test.ts)
@@ -154,5 +157,5 @@ advice codes are in [ERRORS.md](ERRORS.md).
   - Exports: `Base`, `BudgetCheck`, `changedFiles`, `Changes`, `checkBudget`, `checkReports`, `duration`, `FAIL_FACTOR`, `findBase`, `isVersionOnly`, `LAST_GREEN`, `LONG_RUNS`, `plan`, `recordGreen`, `reportMs`, `Selection`, `selectT1`, `selectT2`, `T1_FULL`, `T2_FULL`, `Tier`, `TierId`, `TIERS`, `Timing`, `timingTable`, `Trigger`, `vitestRerunTriggers`
   - Tests: [`tools/lib/tiers.test.ts`](../tools/lib/tiers.test.ts)
 - [`vite.ts`](../tools/lib/vite.ts): A Vite dev server through Vite's JavaScript API, for the `x` commands that open pages (PLAN.md §8.1).
-  - Exports: `DevServer`, `startVite`
+  - Exports: `DevServer`, `freePort`, `startVite`
   - Tests: [`tools/lib/vite.test.ts`](../tools/lib/vite.test.ts)
