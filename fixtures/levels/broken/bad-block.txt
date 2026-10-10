@@ -1,0 +1,11 @@
+---
+description: Seeded errors. Pillar blocks that are not whole 2 × 2 squares - a 3 × 2 block, a lone P and an L of three.
+---
+##########
+#........#
+#.PPP....#
+#.PPP..P.#
+#........#
+#..PP....#
+#..P.....#
+##########

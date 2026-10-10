@@ -217,6 +217,70 @@ Raised at startup, before anything touches the GPU, when the browser has no `nav
 
 Raised by `normalizeIntents`, `applyIntents` and the replay checks (engine/input/intents.ts, engine/sim/replay.ts) for an unknown key (named with the closest), a non-finite or misshapen number, a button that is not a non-empty string, or a custom value that is not plain data. Every problem is listed at once.
 
+## level
+
+### LEVEL_BAD_BLOCK
+
+- Message: `{at}: this {char} block {shape}, but {glyph} stands in whole {n} × {n} squares`
+- Fix: redraw the block as a filled rectangle whose sides are multiples of {n} tiles (a pillar is PP over PP)
+- Registered in: [`engine/world/level/problems.ts` line 41](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts) for a glyph with a footprint above 1 whose touching tiles do not make a filled rectangle of whole footprint squares.
+
+### LEVEL_BAD_HEADER
+
+- Message: `{at}: {problem}`
+- Fix: write the front matter as key: value lines between two lines holding only ---, before the map; its keys are description (text) and tile (metres per character, above 0)
+- Registered in: [`engine/world/level/problems.ts` line 22](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/parse.ts) for an unknown or repeated key, a bad value, a line that is not `key: value`, or front matter that is never closed.
+
+### LEVEL_EMPTY
+
+- Message: `{at}: the level has no map`
+- Fix: write the map after the front matter: one row of legend characters per line, the first row the north edge
+- Registered in: [`engine/world/level/problems.ts` line 27](../engine/world/level/problems.ts)
+
+### LEVEL_INVALID
+
+- Message: `{where} has {count}: {list}`
+- Fix: fix each at the line and column it names (validateLevel(text) lists them; node x qa level checks every level file)
+- Registered in: [`engine/world/level/problems.ts` line 56](../engine/world/level/problems.ts)
+
+Thrown by `compileLevel` and `defineLevel` (engine/world/level/compile.ts) for a level with structural problems; the error carries them as `values.problems`.
+
+### LEVEL_RAGGED_ROW
+
+- Message: `{at}: the map is {width} characters wide, but this row is {length}`
+- Fix: {change} so every row is {width} characters wide: the map is a rectangle (close its edges with walls, #)
+- Registered in: [`engine/world/level/problems.ts` line 31](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/parse.ts). The map is as wide as most of its rows are; each other row is named at the column where it stops matching.
+
+### LEVEL_UNKNOWN_GLYPH
+
+- Message: `{at}: {shown} is not in the legend ({count})`
+- Fix: write one of the legend's characters instead{suggestion} (the legend: {chars}), or define it before compiling: defineGlyph('glyph:<name>', { char: {quoted}, description: '…' })
+- Registered in: [`engine/world/level/problems.ts` line 36](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts), once per unknown character, at its first tile, with the number of tiles that use it. `node x describe glyph` lists the legend.
+
+### LEVEL_UNREACHABLE_AREA
+
+- Message: `{at}: the walkable area from here ({count}) is cut off from the main floor ({main})`
+- Fix: open a gap to it, or fill it with a solid glyph (#) if nobody should stand there
+- Registered in: [`engine/world/level/problems.ts` line 51](../engine/world/level/problems.ts)
+
+Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`, once per cut-off area without a spawn, at its first tile in reading order.
+
+### LEVEL_UNREACHABLE_SPAWN
+
+- Message: `{at}: the spawn {spawn} ({char}) {why}`
+- Fix: open a gap in the walls round it, or move the {char} onto the main floor
+- Registered in: [`engine/world/level/problems.ts` line 46](../engine/world/level/problems.ts)
+
+Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`: the spawn stands on a tile nobody walks on, or in an area cut off from the main floor (the largest area bodies can walk across, stepping between tiles at most the climb limit apart).
+
 ## sim
 
 ### SIM_BAD_ARGUMENT
