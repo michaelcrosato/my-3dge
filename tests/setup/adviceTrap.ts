@@ -27,6 +27,7 @@
  * const why = describeUnlisted(caught); // names GFX_NO_TIMESTAMP and where to list it; the trap throws this
  * @see tests/setup/adviceTrap.test.ts
  * @see tests/setup/harnesses.test.ts
+ * @see tests/e2e/adviceTrap.spec.ts
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';

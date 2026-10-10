@@ -821,7 +821,7 @@ Shardfall is Rust (§4.8), so its code is ported, not copied. Paths are relative
 
 **Single owners:**
 - Only `physics/` imports Rapier.
-- Only `gfx/` imports three.js's renderer, scene, material and TSL classes. Every other layer gets three.js's math classes (`Vector3`, `Quaternion`, `Matrix4`, `Euler`, `Box3`, `Sphere`, `Ray`, `Plane`, `MathUtils`) through `core/math`, so all layers share one set of math types and `three/webgpu` is the one entry point.
+- Only `gfx/` imports three.js's renderer, scene, material and TSL classes. Every other layer gets three.js's math classes (`Vector3`, `Quaternion`, `Matrix4`, `Euler`, `Box3`, `Sphere`, `Ray`, `Plane`, `MathUtils`, and `Color` since WP 1.1, ADR-0020 amendment 1) through `core/math`, so all layers share one set of math types and `three/webgpu` is the one entry point.
 - Only `audio/runtime/` touches Web Audio.
 - Only presentation code (`gfx`, `audio/runtime`, `ui`, `input/devices`), `dev` and `app` touch browser APIs (DOM, canvas, URL, Web Audio). URL parameters are parsed once, in `app/routes`, and passed down.
 - Tests and tools may import anything.
@@ -839,6 +839,7 @@ my-3dge/
   index.html                the landing page: it opens the box (WP 0.12)
   vercel.json  .vercelignore   the Vercel build: npm ci, npm run build, dist/ (WP 0.12)
   tsconfig.json  vite.config.ts (dev server, build, and Vitest's settings)  playwright.config.ts  eslint.config.js
+  tsconfig.base.json  tsconfig.check.json  tsconfig.{engine,apps,tests}.json   T0's incremental type check (ADR-0014 am. 7)
   .prettierrc.json  x.js (`node x <cmd>`: registers tsx, then runs tools/x.ts)
   engine/                   TypeScript (strict), ES modules, extensionless imports, unit tests beside the code (*.test.ts)
     index.ts                the public API for pages; its file comment is the engine's front page
@@ -951,6 +952,7 @@ frame(now):                                                  // app/loop.ts
 
 1. **Sim-side code never uses** `Math.random`, `Date.now`, `performance.now`, `setTimeout`/`setInterval`/`requestAnimationFrame`, the DOM, three.js's renderer or scene classes, or Web Audio. ESLint enforces it (Appendix B).
    - **It uses the standard `Math`** and three.js's math classes (through `core/math`), as agents write them everywhere else (doctrine: Common ground).
+   - **It calls `Math.pow`, `Math.sin` and `Math.cos` by name where it uses them:** no swap (item 2) reaches an operator or an alias, so `**` and `**=` are banned (write `Math.pow`), and so are names destructured from `Math` (`const { sin } = Math`) and a swapped function held in a variable (`const pw = Math.pow`), which keep the native function (ADR-0006 amendment 1).
 2. **Deterministic math under the hood** (doctrine: Quality under the hood).
    - V8's `Math.sin` and `Math.cos` differ by 1 ulp between Node and Chromium on the platform, and `pow` between Node releases (§4.7). Float64 state fed back through them drifts apart within a few hundred steps.
    - So `core/simMath.ts` swaps fdlibm ports (stdlib's, pure JavaScript) into `Math` while the sim runs, and restores the native functions afterwards. Every sim entry point runs inside it: `setup`, `step`, spawns, captures, restores. three.js's math classes, called by the sim, get the same results too.
@@ -1195,7 +1197,7 @@ Each improvement is owned by a work package. A WP is not done until the improvem
 
 | Script | Runs | Tier |
 |---|---|---|
-| `npm run check` | `tsc --noEmit`, `eslint --cache .`, `prettier --check --cache .`, then `node x check` | T0 |
+| `npm run check` | `tsc -b tsconfig.check.json` (`npm run typecheck`), `eslint --cache .`, `prettier --check --cache .`, then `node x check` | T0 |
 | `npm test [-- <path filters>]` | `vitest run`: unit tests, Node replays, content QA. A filter is a substring of a test file's path; one that matches nothing exits 1 | T1 |
 | `npm run e2e [-- <spec files>]` | `playwright test`: the browser suites, on WebGPU | T2 |
 | `npm run dev`, `npm run build` | `vite`, `vite build` | — |
@@ -1264,6 +1266,8 @@ A command arrives with the WP that needs it; on-demand commands do not exist, ev
 - **Selection.** T1 selects through Vite's module graph: `vitest run --changed <base>` while iterating, `vitest related <files>` to see what covers a file. T2 runs in full whenever engine, lab or page code changed, because page code reaches the browser through the dev server rather than through the specs' imports. When only specs or their helpers changed, `--only-changed <base>` is enough.
 - **The base** is the merge-base with `origin/main` once `main` holds a gate, and otherwise the commit recorded in `out/ci/last-green` by the last green `x ci --local`.
 - **Budgets.** `x ci --local` reads the JSON reports, warns when a tier is over its budget, and fails at 1.5×.
+- **T0 costs what a change reaches** (ADR-0014, amendment 7). Its type check is `tsc -b` over three composite projects (`tsconfig.check.json`: the engine, the code that runs on it, the unit tests) that keep their declarations in `node_modules/.cache/tsc/`, so an unchanged project is skipped and a change re-checks only the files it can reach. Together the projects hold exactly `tsconfig.json`'s files, which `tsc --noEmit` still checks as one program.
+- **Browser work is T2.** A test that drives Chromium, even through a child Playwright, is a spec in `tests/e2e/`, never a Vitest test; T1 runs one Vitest worker per core.
 - A test that waits on wall-clock time is a bug. Tests step the engine (`step(n)`) on a virtual clock.
 - A flaky test is quarantined only through a WP that fixes it. Skipping a test to get green is forbidden.
 - Tests run on the development platform only (doctrine: Discovery first): Node 24 and headless Chromium 141, with WebGPU on SwiftShader.
@@ -1655,7 +1659,8 @@ A WP is done only when all of these hold:
     - `target: es2022`, `module: esnext`, `moduleResolution: bundler`;
     - `strict`, `noEmit`, `skipLibCheck`, `erasableSyntaxOnly`, `verbatimModuleSyntax`, `isolatedModules`;
     - `lib: es2022, dom, dom.iterable`, and `types: ["node"]`. three.js's types arrive through its imports;
-    - `include`: `engine`, `labs`, `tests`, `fixtures`, `tools`, and the config files.
+    - `include`: `engine`, `labs`, `tests`, `fixtures`, `tools`, and the config files;
+    - since ADR-0014 amendment 7, the options live in `tsconfig.base.json`, which `tsconfig.json` extends, `include` also names `.claude/hooks`, and T0 checks the same files through `tsconfig.check.json`'s projects.
   - `.gitignore`: `out/ dist/ .cache/ node_modules/ test-results/`.
   - README: what this is, the doctrine, the Stress Box, how to start, links.
   - **The source checkout.** `MY3D2DGE_SRC` (an absolute path) names a read-only checkout of my-3d2dge at `e37e4ee`. Resolve it in this order:
@@ -1726,7 +1731,7 @@ A WP is done only when all of these hold:
     - `jsdoc/require-file-overview`, and `max-lines` (a warning at 400, an error at 600), for code under `engine/`, `tools/`, `labs/` and `tests/`;
     - **the local plugin** (`tools/eslint/`) for what no stock rule expresses, starting with "ask the entry, never the id" (WP 1.2 turns it on).
     - the families are TypeScript modules in `tools/eslint/`, each registering the core rules it uses under its own name (`layer/no-restricted-imports`, `sim/no-restricted-globals`), so no family replaces another's options; `eslint.config.js` assembles them, and holds the switches (ADR-0014, amendment 2).
-  - **`npm run check`:** `tsc --noEmit`, `eslint --cache .`, `prettier --check --cache .` and `node x check`, run in parallel by `tools/checkAll.ts` (ADR-0014, amendment 5). Prettier covers code, data and the generated docs; `.prettierignore` exempts hand-written prose (ADR-0014, amendment 2).
+  - **`npm run check`:** `tsc -b tsconfig.check.json` (incremental, over the projects of ADR-0014 amendment 7; it was `tsc --noEmit`), `eslint --cache .`, `prettier --check --cache .` and `node x check`, run in parallel by `tools/checkAll.ts` (ADR-0014, amendment 5). Prettier covers code, data and the generated docs; `.prettierignore` exempts hand-written prose (ADR-0014, amendment 2).
   - **`x check`**, the repository checks no standard tool covers, built from plugins:
     - **the asset scan** (doctrine: Assets): file extensions, magic bytes, and any base64 run or `data:` URI over 1 KB. A binary file passes only if `data/APPROVED-BINARIES.json` lists it with its escalation record, or if it is a font (WOFF2, TTF, OTF) under `data/fonts/` with a license file beside it. Anything else fails with "needs the owner's approval: `x esc open --principle Assets`";
     - plugins added later: dependency pins (WP 0.3), docs drift (WP 0.6) and escalation records (WP 0.7). Each plugs in by exporting `check` (a `CheckPlugin`) from its command module in `tools/cmd/`, so `check.ts` never changes.
@@ -1748,13 +1753,13 @@ A WP is done only when all of these hold:
   - **The tiers** as npm scripts (§8.1, §8.2): T0 `npm run check`, T1 `npm test`, T2 `npm run e2e`, and the long runs.
   - **Selection** (§8.2): T1 through `vitest run --changed <base>` and `vitest related`. T2 runs in full when engine, lab or page code changed, and otherwise as `playwright test --only-changed <base>`. `tools/lib/tiers.ts` computes the base (the merge-base with `origin/main` once `main` holds a gate, else `out/ci/last-green`) and the T2 decision, for `x ci --local`.
   - **Budget enforcement:** `tools/lib/tiers.ts` reads the JSON reports, warns when a tier is over its budget, and fails at 1.5×.
-  - **The advice trap.** A Vitest setup file and the Playwright fixture both fail on any engine advice code, `console.warn` or three.js deprecation that is not listed in a file under `tests/baselines/advice/`. Each area has its own file of `{ code, reason }` entries, owned by the WP that adds them; the trap reads the whole directory.
+  - **The advice trap.** A Vitest setup file and the Playwright fixture both fail on any engine advice code, `console.warn` or three.js deprecation that is not listed in a file under `tests/baselines/advice/`. Each area has its own file of `{ code, reason }` entries, owned by the WP that adds them; the trap reads the whole directory. Its proof in the Playwright harness drives Chromium, so it runs in T2 (`tests/e2e/adviceTrap.spec.ts`), and its Vitest proof in T1 (`tests/setup/harnesses.test.ts`; ADR-0014, amendment 7).
 - **Improves:** I-27, I-41, I-48.
 - **Done when:**
   - In a temporary git repository the test builds, a change to a fixture `engine/core/a.ts` selects every Vitest test that imports it, directly or not, and a change to page code makes T2 run in full.
   - An unlisted warning fails a fixture test in each harness; a listed one passes.
   - A report over its budget warns, and one at 1.5× fails.
-- **Verify:** `npm test -- tools/lib/tiers tests/setup`
+- **Verify:** `npm test -- tools/lib/tiers tests/setup && npm run e2e -- tests/e2e/adviceTrap.spec.ts`
 
 #### WP-0.3 Dependency qualification and pinned knowledge
 - **Owns:** `tools/cmd/deps.ts`, `tools/lib/deps.ts`, `tools/lib/depsCheck.ts`, `tools/lib/depsUpdate.ts` (ADR-0007, amendment 1), `tools/deps.json`, `docs/THREE-DELTA.md`, `docs/reference/three-tsl-wiki.md`
@@ -1921,8 +1926,8 @@ A WP is done only when all of these hold:
   - The colour helpers.
   - `hashNumbers` (`stress-world/00-setup.js:59`).
 - **Build:**
-  - **`math`:** re-exports three.js's math classes (`Vector3`, `Quaternion`, `Matrix4`, `Euler`, `Box3`, `Sphere`, `Ray`, `Plane`, `MathUtils`) from `three/webgpu`, so every layer shares one set of math types (doctrine: Common ground). It adds only what three.js lacks: the source's angle helpers (`angDiff`, `lerpAng`, `approach`, `approachAng`, `smoothDamp`), swing-twist decomposition, and easing. `MathUtils` already covers `clamp`, `lerp`, `damp` and `smoothstep`.
-  - **`simMath`** (§6.5, doctrine: Quality under the hood): `withSimMath(fn)` swaps stdlib's fdlibm ports of `sin`, `cos` and `pow` into `Math` while `fn` runs, and restores the native functions afterwards, also after a throw; nested calls are safe. Game code never sees it.
+  - **`math`:** re-exports three.js's math classes (`Vector3`, `Quaternion`, `Matrix4`, `Euler`, `Box3`, `Sphere`, `Ray`, `Plane`, `MathUtils`, and `Color` for `color`, ADR-0020 amendment 1) from `three/webgpu`, so every layer shares one set of math types (doctrine: Common ground). It adds only what three.js lacks: the source's angle helpers (`angDiff`, `lerpAng`, `approach`, `approachAng`, `smoothDamp`), swing-twist decomposition, and easing. `MathUtils` already covers `clamp`, `lerp`, `damp` and `smoothstep`.
+  - **`simMath`** (§6.5, doctrine: Quality under the hood): `withSimMath(fn)` swaps stdlib's fdlibm ports of `sin`, `cos` and `pow` into `Math` while `fn` runs, and restores the native functions afterwards, also after a throw; nested calls are safe. Game code never sees it. No swap reaches `**` or an alias of a `Math` function, so ESLint bans both sim-side (Appendix B, ADR-0006 amendment 1).
   - **The drift test** (`tests/e2e/drift.spec.ts`, with a Node half): every `Math` function hashed on 200,000 seeded inputs in Node and in Chromium, natively and under the swap. It fails when a swapped function differs, or when a native one starts to differ outside the swap, naming the stdlib package that would cover it.
   - **`rng`:** named streams, `derive(seed, …keys)`, getting and setting state.
   - **`noise`:**
@@ -1950,8 +1955,8 @@ A WP is done only when all of these hold:
   - `ed/01-tune.js`: knobs.
   - `engine:65-66`: warn-once.
 - **Build:**
-  - **A schema mini-language:** type, default, range, unit, doc, enum, required, hooks with defaults, `when` (`now | spawn | scene`), and `view: true` for a setting that changes only how the game looks or performs (a resolution mode, a camera, a look, WP 3.12's `quality` and `touch`). `x set`, URL parameters and `__engine.set` reach a `view` setting like any other, but the hash, captures and replays leave it out, and sim-side code cannot read it. The gallery (WP 7.7, on demand) adds a `gallery` hook when it is built.
-  - **Registry:** `defineKind`, `def`, `get`, `list`, `describe`. A missing id warns once, suggests the closest names, and returns the fallback. The local ESLint rule "ask the entry, never the id" (WP 0.4) is turned on here.
+  - **A schema mini-language** in JSON Schema's words (ADR-0012 amendment 1): type, default, range (`minimum`, `maximum`), unit, doc (`description`), enum, required, hooks with defaults, `when` (`now | spawn | scene`), and `view: true` for a setting that changes only how the game looks or performs (a resolution mode, a camera, a look, WP 3.12's `quality` and `touch`). `x set`, URL parameters and `__engine.set` reach a `view` setting like any other, but the hash, captures and replays leave it out, and sim-side code cannot read it. The gallery (WP 7.7, on demand) adds a `gallery` hook when it is built.
+  - **Registry:** `defineKind`, `def`, `get`, `list`, `describe`. A missing id warns once, suggests the closest names, and returns the kind's fallback; a kind declared without one throws `CORE_NO_ENTRY`, naming the closest names (ADR-0012 amendment 1). The local ESLint rule "ask the entry, never the id" (WP 0.4) is turned on here.
   - **Events:** scoped listeners (`scope.dispose()`), each listener isolated so its failure is recorded in `errors`, and a trace ring.
   - **Log:** warn-once and structured errors. Each module registers its own codes beside its code: `defineCodes('anim', { CODE: { template, fix, doc } })`. `x docs` collects them, and there is no central table.
   - **Settings:** one schema drives URL parameters, a validated `set` and `get`, JSON export and import, and a "differs from default" marker. `x set` arrives in WP 2.7.
@@ -1962,7 +1967,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/core && node x docs --check`
 
 #### WP-1.3 Time
-- **Owns:** `engine/core/time.ts`
+- **Owns:** `engine/core/{time,timers}.ts` (two concepts: the frame clock, and timers with per-entity clocks; ADR-0005 amendment 1)
 - **Needs:** WP 1.2
 - **Size:** M
 - **Carry:**
@@ -1984,7 +1989,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/core/time`
 
 #### WP-1.4 Sim world and canonical state
-- **Owns:** `engine/sim/{world,systems,state,capture}.ts`
+- **Owns:** `engine/sim/{world,systems,state,capture,entities}.ts`; extends `engine/core/{rng,events}.ts` (review fixes, ADR-0006 amendment 3)
 - **Needs:** WP 1.3
 - **Size:** M
 - **Build:**
@@ -2026,7 +2031,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/sim && node x replay tests/replays --browser sim`
 
 #### WP-1.6 Headless app and the inspector core
-- **Owns:** `engine/app/headless.ts`, `engine/dev/inspector.ts`, `engine/index.ts`, `engine/sim-api.ts`; extends `fixtures/scenes/kernel/` (from WP 1.5)
+- **Owns:** `engine/app/headless.ts`, `engine/dev/inspector.ts`, `engine/dev/members.ts` (the kind, ADR-0014 amendment 6), `engine/index.ts`, `engine/sim-api.ts`, `tools/lib/docsHelp.ts` (§8.12's help() check); extends `fixtures/scenes/kernel/` and `tools/cmd/sim.ts` (from WP 1.5), `tools/cmd/docs.ts` (from WP 0.6) and `tools/eslint/` (from WP 0.4: the public-API rule's G0 follow-ups, ADR-0020 amendment 2)
 - **Needs:** WP 1.5
 - **Size:** S
 - **Build:**
@@ -3928,13 +3933,13 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 0.11 | Port reference vectors | T | done | eafdf7a (#2) | `x port refs` (tools/cmd/port.ts) writes 8 text files, 3.55 MB, to tests/baselines/port/ from my-3d2dge@e37e4ee in a `vm` (only `console` shimmed; any message fails): core.json, color.json, humanoid-{chibi,heroic,bulky}.json (18 states × 8 facings, 120 steps of 1/120 s, `t0` per run), moves.json (24 moves × 3 phases × u = i/20 × the 3 builds, plus the right foot), blob.json (3 scripts), a generated README and checksums.json (sha256), checked offline by `--check` and a new `port` plugin of `x check`; calls: numbers exact (shortest round-trip, `-0` kept); sampling reduced to every 4th step at facing 0 and every 40th at the other facings, which share facing 0's seed and so differ only by the turn (≤ 4e-14 units); `Math.random` = `E.rng(fnv1a(record id))`, throwing until seeded; the move preview is the rest pose at t = 0, then one update of dt = 1 (saturates the smoothing); walk 40, run 80, dash 260 u/s, air at z = 12, climb at 32 u/s, stances while walking; Prettier skips the directory (one line in .prettierignore, ADR-0014 amendment 3); size M (≈400 code + 150 test lines); no escalations |
 | 0.12 | Deploy on Vercel (not tested, ADR-0021) | T | done | 3c7aa94 (#2) | vercel.json, .vercelignore and .gitignore as planned; landing page `index.html` → `labs/hello/` + query + hash, plus a plain link (WP 2.7 retargets it); build entries `index` and `labs/<name>` (`globSync`), `chunkSizeWarningLimit` 8000; the build writes dist/index.html, dist/labs/hello/index.html and 2 scripts (three.js 784 KB), no .wasm, nothing from tests/; nothing else checked (ADR-0021); README: Deploying, Status and toolchain lines current; `x deps --update --dry-run` found prettier 3.9.10 (2026-10-10), left to the integrator; no escalations |
 | **G0** | **Gate: foundation** | | done | 4660edd (#2) | x ci --local green at 4660edd (54 s: check 6.3 s of 10, test 30.7 s of 60, 499 tests, e2e 6.6 s of 6 min with harness, hello and the startup test; x port refs --check, x new --test-all); verifier reviewed Phase 0 (5 failures: namespace-import bans, bare Node built-ins sim-side, x crash reports, ledger, docs) and re-reviewed the fixes (3 more: cold-cache check, missing default export, checkAll tests), all fixed in 4aa836a, 01631e8, 4660edd; T0 now runs its tools in parallel (ADR-0014 amendment 5); no escalation open past its deadline (ESC-0001 decided in absence, awaiting the owner's review); x deps --qualify: nothing qualified; Vercel can import the repository (WP 0.12); deferred: a fresh cloud session with both subagents (the verifier ran as a general-purpose agent following .claude/agents/verifier.md, since agent types load at session start) |
-| 1.1 | Math, rng, noise, hash, color | C | todo | | |
-| 1.2 | Registry, events, log, settings, schema | C | todo | | |
-| 1.3 | Time | C | todo | | |
-| 1.4 | Sim world and canonical state | C | todo | | |
-| 1.5 | Intents, scenes, replays, `x sim`, `x replay` | C | todo | | |
-| 1.6 | Headless app and inspector core | C | todo | | |
-| **G1** | **Gate: kernel** | | todo | | |
+| 1.1 | Math, rng, noise, hash, color | C | done | 680f2af (#3) | engine/core/{math,simMath,rng,noise,hash,color}.ts match the reference vectors bit for bit (rng's 11 seeds × 64, hash2, noise2, every colour helper, and the angle helpers, smoothDamp and ease exactly, stricter than the 1e-12 allowed); drift.spec.ts runs tests/pages/driftProbe.ts in its own Node process and in tests/pages/drift.html: all 35 `Math` functions and `**` on 200,000 seeded inputs each plus edge values, three.js's math classes and a feedback sim, natively and swapped, and the swapped sin/cos/pow result by result (natively sin and cos differ on ≈2.9% of inputs, pow agrees); the fixture without cos fails naming @stdlib/math-base-special-cos; calls: `Color` joins `THREE_MATH` (ADR-0020 amendment 1), `hex` throws CORE_BAD_COLOR where the source drew magenta, codes CORE_NOT_CANONICAL, CORE_BAD_NOISE and CORE_BAD_COLOR through local `defineCodes` stand-ins (WP 1.2 replaces them), the hash is byte-wise FNV-1a 64 (published vectors) with a sorted-key canonical form that takes `toArray()` values, `withSimMath(fn, names)` narrows the swap for the fixture, cell noise searches exactly (5×5 with pruning), fbm octaves get their own seed and offset; size came out L (≈1,110 engine + 310 drift page and probe + 1,000 test lines); no escalations; review fixes (680f2af): the swapped pow defers to the native one on NaN/±0/±Infinity arguments and computes negative bases with |y| ≥ 2^53 as pow(-x, y); `**`/`**=`, destructured Math and aliased swapped functions banned sim-side (ADR-0006 amendment 1); withSimMath throws CORE_SIM_ASYNC on a thenable; rng helpers pinned with uniformity checks; noise digests recorded for 3 kinds × 2D/3D × plain/period/fbm |
+| 1.2 | Registry, events, log, settings, schema | C | done | 31848c1 (#3) | engine/core/{log,schema,registry,events,settings}.ts and `x describe`, 62 unit tests plus 8 for the command; calls in ADR-0012 amendment 1: the schema in JSON Schema's words (`description`, `minimum`/`maximum`, per-field `required`, types `function` for hooks and `any`), fallbacks optional (`CORE_NO_ENTRY` without one), duplicate ids are errors, settings are `setting` entries by dotted path with layered scoped overrides and all-or-nothing presets/URLs, sim-side reads through `settings.sim.get` (view settings refused), `x describe` imports the modules that call `def`/`define…` under engine/, labs/, fixtures/; the defineCodes stand-ins of hash, noise, color and gfx/renderer replaced; `SWITCHES.askTheEntry` on, repo passes; ERRORS.md lists 18 codes; size ≈1,730 source lines with comments (over M); not built: §6.6's INDEX row per kind (needs tools/lib/docsGenerate.ts to read `defineKind` statically); no escalations; review fixes (31848c1): warn-once keyed by code + subject (`warnOnce(code, values, subject?)`), advice capped (`maxAdvice` 200); entries stored as deep-frozen copies, `any` objects copied, so setting defaults are frozen; `x describe` finds registrations from syntax and loads them in a child process (60 s limit, DESCRIBE_HUNG); §6.6 kind rows built (tools/lib/docsKinds.ts); generated and cache dirs pass the docs path checks; ADR-0012 amendment 2, ADR-0015 amendment 2 |
+| 1.3 | Time | C | done | cd40396 (#3) | engine/core/time.ts (the frame clock: `createClock`, slowdown stack, leaky hit-stop budget, pause and single steps, `createVirtualClock`) and engine/core/timers.ts (`createTimers` with `after`/`every`, per-entity clocks as plain numbers), 34 unit tests; calls in ADR-0005 amendment 1: the module split (deviation), slowdowns and hit-stop shape the step rate and count real seconds from the given timestamps (outside the hash), an integer nanosecond × hz accumulator (random frames at 30/60/75/120/144 Hz give the fixed-step state exactly, step count and alpha checked every frame), the backlog dropped after `time.maxSteps` with `CORE_CLOCK_BEHIND` after 10 such frames, settings `time.hz` (sim) and `time.maxSteps`, `time.scale`, `time.paused`, `time.hitStop.*` (view); codes CORE_NO_TIME, CORE_BAD_TIME, CORE_CLOCK_BEHIND; no escalations; G1 fixes (8995169): Timers tick()/fire() split, so a timer made in any phase fires next step; every() exact in whole millionths of a tick; no golden change; G1 re-review fixes (cd40396): every by firing count (start + n periods, rounded once; 1/7, 1/9, 1/13 s exact), Timers.untick for a step thrown before its timers stage; timer state gains start and firings (my3dge-state/3, my3dge-capture/3, ADR-0006 amendment 5); kernel goldens re-recorded |
+| 1.4 | Sim world and canonical state | C | done | ad4d440 (#3) | engine/sim/{world,systems,state,capture}.ts, 35 unit tests; calls in ADR-0006 amendment 2: entities and components as plain objects (registry kind `component`), systems in phases with the WP 1.3 timers' stage before `rules`, spawn/despawn/event queues applied at the boundary (at once between steps), tick constant within a step, hash over a format tag, seed, next id, entities (components by name, fields in declared order), timers, non-view settings, sim RNG states and the physics hook's `state()`; captures are plain data with timer callbacks held beside them (same world only when timers are pending: `SIM_NO_CALLBACKS`), other `time.hz` refused; golden `00e4f01b787914db` (demo, step 300); 5,000 entities: step ≈1 ms, hash ≈10 ms, capture ≈3 ms, restore ≈15 ms (Node); 8 codes SIM_*; size ≈1,150 source lines with comments (M/L border); no escalations; review fixes (ad4d440): plain-data components with defaults required, name/declared order kept and checked (entities.ts), hz hashed and captured (golden fdae537c20bfa5c0), listeners and systems captured, foreign restores must match schedule/settings/fields, Object.is seeds, RNG fast names and entity index (step 30→3 ms, despawn 6.6→0.4 ms at 5,000), events without emit, frozen intents; ADR-0006 amendment 3; core events.ts and rng.ts extended |
+| 1.5 | Intents, scenes, replays, `x sim`, `x replay` | C | done | 1115f46 (#3) | engine/input/intents.ts (move, cam, aim, look, b, p, `game:key` custom keys; `fromCamera`; the change-point encoding), engine/sim/scene.ts (kind `scene`, `startScene`, and the recorder `createSession`), engine/sim/replay.ts (format, checks, player, `judgeRuns`, `firstDifference`, `partingOf`), `x sim`, `x replay` (`--update`, `--browser sim`, `--bisect`, plus `--runs` and `--swap`), `x perf` (Node medians, tests/baselines/perf/kernel.json), fixtures/scenes/kernel/, tests/replays/kernel-{movers,crowd}.replay.json (goldens in Node ×3 and Chromium ×3; with `--swap none` Node and Chromium part at step 0 and after step 6), tests/pages/replay.{html,ts}, the determinism-debugging skill; calls in ADR-0006 amendment 4 (scene `description` and `actions`, the session in scene.ts, hashes before the inputs of their step, `--bisect` names only a checkpoint window when every run agrees but the goldens differ); shared edit: tests/unit/hooks/settings.test.ts lists the new skill; kernel fixture imports engine modules until WP 1.6; size came out L (≈1,950 code + 920 test lines); no escalations; review fixes (1115f46): setting changes made through the session's store recorded, all-or-nothing dev actions, goldens must cover steps 0 and the last with checked platform keys, `--update` needs `--browser sim` and writes only when every file and the page pass, bisect inside each failure, perf budgets keyed to scene and steps |
+| 1.6 | Headless app and inspector core | C | done | 48b5ad6 (#3) | engine/app/headless.ts (`createHeadless`, async; `headlessHost` for tools), engine/dev/{inspector,members}.ts (kind `inspectorMember`: help, args as a schema in call order, impl, `needs`, `value`; 18 core members; codes DEV_BAD_ARGS, DEV_NO_RENDERER, APP_NOT_HEADLESS), engine/{index,sim-api}.ts, `x sim` through `createHeadless` (kernel hash unchanged, 9bfff513ce92f0ec), the help() check in `x docs --check` and T1 (not in `x check`: +0.4 s pushed its smoke test past 5 s), every setting set typed and as text through `__engine.set` (test); public-API rule on plus G0's follow-ups (barrel layer edges, resolving `public-api/no-unnamed-imports`, `banned/no-namespace-names`, sim-side `Buffer`); calls in ADR-0014 amendment 6 and ADR-0020 amendment 2; Owns gained engine/dev/members.ts (400-line cap); note for WP 3.3: `def('inspectorMember', …)` from engine/input/devices/ needs engine/dev/members.ts loaded first (app imports it first), else move `memberKind` into core; size came out M–L, not S (≈1,110 code lines with comments + 520 test lines); no escalations; G1 fixes (8e0e1f2, 48b5ad6): recorded Session.capture/restore (SIM_FOREIGN_CAPTURE, SIM_EDITED_CAPTURE), members get recordedRun (a read-only world), help() typed as CoreMembers, state() names an unknown component, SIM_BAD_SEED, public-API rule allows the page barrel by its folder and catches TS import types; G1 re-review fixes (cd40396): recordedRun hands frozen copies (get/query, systems.list, inputs); the session records a step only once the world counts it; checkSeed reads -0 as 0 |
+| **G1** | **Gate: kernel** | | done | 653dbe6 (#3) | x ci --local green at 653dbe6 (1 min 22 s: check 10.5 s cold after the merge, 3.5 s warm; test 41.1 s of 60, 904 tests; e2e 19.6 s); kernel replays identical ×3 in Node and ×3 in Chromium against one golden set (crowd e82d3715dd7ebf60, movers 123e33f07be4148e); drift test green; x docs --check green; verifier reviews of WPs 1.1, 1.2, 1.4, 1.5 (L) and of the gate (WPs 1.3, 1.6 and the whole), each finding fixed with a failing test first, plus a re-review of the gate fixes; T0/T1 recovered by tool/budgets (9e77042: TypeScript project references with cached builds, browser-driving tests moved to T2; ADR-0014); no escalations; x deps --qualify: nothing new |
 | 2.1 | Renderer, capabilities, features, resolution, warm-up | R | todo | | |
 | 2.2 | Level compiler (v1) | W | todo | | |
 | 2.3 | Materials and procedural textures (v1) | R | todo | | |
@@ -4146,8 +4151,9 @@ In this table, `engine` §N means section N of `engine/my-3d2dge.js`, not a sect
   - `setTimeout`, `setInterval`, `requestAnimationFrame`;
   - `document`, `window`, `navigator`;
   - any import of `three`, `three/webgpu`, `three/tsl` or `three/addons/*`, except in `core/math.ts`, which re-exports the math classes;
-  - `AudioContext`.
-- **Allowed, and expected:** the standard `Math`, `Math.sin` and `Math.cos` included, and three.js's math classes through `core/math`. The sim swaps in fdlibm ports while it steps, so one golden per replay holds in Node and in Chromium (§6.5).
+  - `AudioContext`;
+  - `**` and `**=` (write `Math.pow`), names destructured from `Math`, and a swapped `Math` function held in a variable (`const pw = Math.pow`): no swap reaches an operator or an alias (§6.5, ADR-0006 amendment 1).
+- **Allowed, and expected:** the standard `Math`, `Math.sin` and `Math.cos` included (called by name), and three.js's math classes through `core/math`. The sim swaps in fdlibm ports while it steps, so one golden per replay holds in Node and in Chromium (§6.5).
 
 **Everywhere:**
 - no binary files, except the owner-approved ones in `data/APPROVED-BINARIES.json` and fonts under `data/fonts/` (doctrine: Assets);

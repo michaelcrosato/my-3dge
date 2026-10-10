@@ -1,7 +1,8 @@
 /**
  * @file Proves the banned and renamed three.js APIs (tools/eslint/banned.ts, PLAN.md Appendix B) with a failing and a
  * passing fixture per ban, linted from a temporary directory, including the path exceptions (mrt.ts, shot.ts,
- * timing.ts, pipelines.ts, the outline material) and the common words left alone outside TSL.
+ * timing.ts, pipelines.ts, the outline material), the common words left alone outside TSL, and the names read off a
+ * namespace however it is named or the name spelt (tools/eslint/namespaceNames.ts).
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { bannedBlocks } from './banned';
@@ -11,6 +12,7 @@ import { caseProblems, lintCases, uncovered, type Case, type CaseResult } from '
 const SYNTAX = 'banned/no-restricted-syntax';
 const PROPERTIES = 'banned/no-restricted-properties';
 const IMPORTS = 'banned/no-restricted-imports';
+const NAMESPACE = 'banned/no-namespace-names';
 let count = 0;
 /** A case in its own file (the name is the file's), so cases never collide. */
 const ban = (rule: string, name: string, bad: string, good: string, dir = 'engine/gfx'): Case => ({
@@ -40,7 +42,7 @@ const CASES: Case[] = [
     "import * as THREE from 'three/webgpu';\nexport const t = new THREE.Timer();",
   ),
   ban(
-    SYNTAX,
+    NAMESPACE,
     'THREE.Clock through the namespace, as a value and as a type',
     "import * as THREE from 'three/webgpu';\nexport const c: THREE.Clock = new THREE.Clock();",
     "import * as THREE from 'three/webgpu';\nexport const t: THREE.Timer = new THREE.Timer();",
@@ -147,10 +149,40 @@ const CASES: Case[] = [
     'export const s = storage(a, t, 4).setPBO(true);',
   ),
   ban(
-    SYNTAX,
+    NAMESPACE,
     'TSL.atan2 through the namespace',
     "import * as TSL from 'three/tsl';\nexport const a = TSL.atan2(y, x);",
     "import * as TSL from 'three/tsl';\nexport const a = TSL.atan(y, x);",
+  ),
+  ban(
+    NAMESPACE,
+    'a banned name off a namespace of any name',
+    "import * as T from 'three/tsl';\nexport const s = T.screen;",
+    "import * as T from 'three/tsl';\nexport const s = T.blendScreen;",
+  ),
+  ban(
+    NAMESPACE,
+    'a banned name read as a computed member, quoted or templated',
+    "import * as TSL from 'three/tsl';\nexport const s = [TSL['screen'], TSL[`overlay`]];",
+    "import * as TSL from 'three/tsl';\nexport const s = [TSL['blendScreen'], TSL[name]];",
+  ),
+  ban(
+    NAMESPACE,
+    'a banned name destructured from a namespace, in a declaration or an assignment',
+    "import * as TSL from 'three/tsl';\nexport const { screen } = TSL;\nlet burn;\n({ burn } = TSL);",
+    "import * as TSL from 'three/tsl';\nexport const { blendScreen } = TSL;",
+  ),
+  ban(
+    NAMESPACE,
+    "three.js's TSL object, imported or read off three/webgpu",
+    "import * as THREE from 'three/webgpu';\nimport { TSL } from 'three/webgpu';\nexport const a = [TSL.equals, THREE.TSL.dodge];\nexport const { TSL: { PI2 } } = THREE;",
+    "import * as THREE from 'three/webgpu';\nimport { TSL } from 'three/webgpu';\nexport const a = [TSL.equal, THREE.TSL.blendDodge];",
+  ),
+  ban(
+    NAMESPACE,
+    'the namespace names of the docs, unbound',
+    'export const c = new THREE.Clock();',
+    'export const t = new THREE.Timer();',
   ),
   ban(
     SYNTAX,
@@ -269,6 +301,23 @@ beforeAll(async () => {
 describe('the banned three.js APIs', () => {
   it.each(CASES.map((item, i) => [item.name, i] as const))('%s', (_name, i) => {
     expect(caseProblems(results[i])).toEqual([]);
+  });
+
+  it('reports each spelling of a name read off a namespace once', () => {
+    const counts = Object.fromEntries(
+      results
+        .filter((result) => result.case.rule === NAMESPACE)
+        .map((result) => [result.case.name, result.bad.filter((item) => item.ruleId === NAMESPACE).length]),
+    );
+    expect(counts).toEqual({
+      'THREE.Clock through the namespace, as a value and as a type': 2,
+      'TSL.atan2 through the namespace': 1,
+      'a banned name off a namespace of any name': 1,
+      'a banned name read as a computed member, quoted or templated': 2,
+      'a banned name destructured from a namespace, in a declaration or an assignment': 2,
+      "three.js's TSL object, imported or read off three/webgpu": 3,
+      'the namespace names of the docs, unbound': 1,
+    });
   });
 
   it('every configured ban has a failing fixture', () => {

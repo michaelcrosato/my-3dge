@@ -2,9 +2,20 @@
 
 # Index of modules
 
-Every module of the engine and its tools: what it is for (its file comment's first sentence), what it exports and
-the tests that cover it. Each export, with the first sentence of its doc comment, is in [API.md](API.md); error and
-advice codes are in [ERRORS.md](ERRORS.md).
+Every registry kind, then every module of the engine and its tools: what it is for (its file comment's first
+sentence), what it exports and the tests that cover it. Each export, with the first sentence of its doc comment, is
+in [API.md](API.md); error and advice codes are in [ERRORS.md](ERRORS.md).
+
+## Kinds
+
+Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describe <kind>` lists its fields and ids.
+
+| Kind              | What it is                                                                                                                                                               | Declared in                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `component`       | Component kinds: the plain-object data entities hold (e.position), with their fields. The canonical state and the hash read every component's declared fields, in order. | [`engine/sim/state.ts`](../engine/sim/state.ts)         |
+| `inspectorMember` | Members of the inspector (__engine, createHeadless): a call or property with its help line, argument schema and implementation.                                          | [`engine/dev/members.ts`](../engine/dev/members.ts)     |
+| `scene`           | Scenes: a level, settings, a setup and a step, sim-side, so x sim, x replay and createHeadless run them in Node.                                                         | [`engine/sim/scene.ts`](../engine/sim/scene.ts)         |
+| `setting`         | The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set.                                                             | [`engine/core/settings.ts`](../engine/core/settings.ts) |
 
 ## The root
 
@@ -16,11 +27,104 @@ advice codes are in [ERRORS.md](ERRORS.md).
   - Exports: `default`
   - Tests: [`tools/lib/vite.test.ts`](../tools/lib/vite.test.ts)
 
+## engine
+
+- [`index.ts`](../engine/index.ts): The engine's front page: the public API for pages and tools (PLAN.md §6.1, §6.9, WP 1.6; doctrine: Quality under the hood).
+  - Exports: `* from './sim-api'`, `createHeadless`, `EngineInfo`, `EntitySummary`, `Headless`, `HeadlessOptions`, `Inspector`
+- [`sim-api.ts`](../engine/sim-api.ts): The public API for sim-side game code (PLAN.md §6.1, §6.9, WP 1.6; doctrine: Quality under the hood): what a scene, a cast member or a behaviour imports, and all it may import (ESLint's public-API rule), so `x sim` runs it in Node and its play is reproducible.
+  - Exports: `angDiff`, `approach`, `approachAng`, `Box3`, `Color`, `ComponentOf`, `CustomIntentKey`, `def`, `defineComponent`, `defineKind`, `defineScene`, `defineSettings`, `ease`, `Entity`, `Entry`, `Euler`, `EventMap`, `Field`, `fromCamera`, `held`, `INTENT_KEYS`, `Intents`, `IntentValue`, `Kind`, `KindSpec`, `lerpAng`, `Listener`, `MathUtils`, `Matrix4`, `Phase`, `PHASES`, `Plane`, `pressed`, `Quaternion`, `Ray`, `Rng`, `Scene`, `SceneAction`, `SceneSpec`, `Schema`, `SettingValue`, `SimRng`, `SimSettings`, `smoothDamp`, `SpawnSpec`, `Sphere`, `swingTwist`, `SystemFn`, `TraceRecord`, `Vector3`, `With`, `World`, `WorldEvents`, `WorldTimers`
+
+## engine/app
+
+- [`headless.ts`](../engine/app/headless.ts): The engine without a page (PLAN.md §8.3, §6.9, WP 1.6; doctrine: Verifiable): `createHeadless({ scene, seed, settings })` starts a scene as a recorded session (engine/sim/scene.ts) and returns its inspector, the same object a page publishes as `window.__engine` minus a renderer: members that need one throw `DEV_NO_RENDERER`.
+  - Exports: `createHeadless`, `Headless`, `HEADLESS_CODES`, `headlessHost`, `HeadlessOptions`
+  - Tests: [`engine/app/headless.test.ts`](../engine/app/headless.test.ts)
+
+## engine/core
+
+- [`color.ts`](../engine/core/color.ts): Colours as data (PLAN.md §6.3): hex strings in data, linear floats for shaders and instance colours, sRGB on output.
+  - Exports: `COLOR_CODES`, `ColorInput`, `fromLinear`, `hex`, `hsl`, `mix`, `ramp`, `Rgb`, `shade`, `toHex`, `toHsl`, `toLinear`, `tones`, `Tones`
+  - Tests: [`engine/core/color.test.ts`](../engine/core/color.test.ts)
+- [`events.ts`](../engine/core/events.ts): Events (PLAN.md WP 1.2): a typed emitter in mitt's and Node's shape, `on`, `once`, `off` and `emit`, plus scoped listeners that leave together (`scope.dispose()`), each listener isolated so its failure is recorded, and a trace ring of the latest emits for `trace()` and debugging.
+  - Exports: `createEvents`, `EVENT_CODES`, `EventMap`, `Events`, `EventsOptions`, `EventsSnapshot`, `Listener`, `RegistrationInfo`, `Scope`, `TraceRecord`
+  - Tests: [`engine/core/events.test.ts`](../engine/core/events.test.ts)
+- [`hash.ts`](../engine/core/hash.ts): The state hash (PLAN.md §6.5, I-05): 64-bit FNV-1a over the float64 bits of numbers, and the canonical form that turns structured state into one exact byte stream and one exact text.
+  - Exports: `Canonical`, `deserialize`, `Fnv64`, `HASH_CODES`, `hashNumbers`, `hashValue`, `MAX_DEPTH`, `mix32`, `serialize`
+  - Tests: [`engine/core/hash.test.ts`](../engine/core/hash.test.ts)
+- [`log.ts`](../engine/core/log.ts): Error and advice codes, warn-once advice and structured errors (PLAN.md WP 1.2, §6.8; doctrine: Agent-operable): every message the engine prints carries a stable code and names its fix in public-API terms.
+  - Exports: `AdviceRecord`, `closest`, `codeError`, `codeInfo`, `CodeInfo`, `CodeText`, `CodeValues`, `createLog`, `defineCodes`, `didYouMean`, `EngineError`, `ErrorRecord`, `fill`, `listCodes`, `log`, `Log`, `LOG_CODES`, `LogConsole`, `LogOptions`
+  - Tests: [`engine/core/log.test.ts`](../engine/core/log.test.ts)
+- [`math.ts`](../engine/core/math.ts): The math every layer shares (PLAN.md §6.1; doctrine: Common ground): three.js's math classes, re-exported from `three/webgpu` so there is one set of math types and one entry point, plus what three.js lacks: my-3d2dge's angle helpers (`angDiff`, `lerpAng`, `approach`, `approachAng`), `smoothDamp`, the easing curves (`ease`) and the swing-twist decomposition.
+  - Exports: `angDiff`, `approach`, `approachAng`, `Box3`, `Color`, `ease`, `Euler`, `lerpAng`, `MathUtils`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `smoothDamp`, `Sphere`, `swingTwist`, `Vector3`
+  - Tests: [`engine/core/math.test.ts`](../engine/core/math.test.ts)
+- [`noise.ts`](../engine/core/noise.ts): Seeded noise for the sim and for procedural content (PLAN.md WP 1.1): my-3d2dge's `hash2` and `noise2`, bit-exact, and value, gradient and cell noise in 2D and 3D, each optionally tiling and summed in fbm octaves.
+  - Exports: `createNoise2D`, `createNoise3D`, `hash2`, `NOISE_CODES`, `noise2`, `Noise2D`, `Noise3D`, `NoiseKind`, `NoiseOptions`
+  - Tests: [`engine/core/noise.test.ts`](../engine/core/noise.test.ts)
+- [`registry.ts`](../engine/core/registry.ts): Data-first registries (PLAN.md §6.6, WP 1.2): `defineKind` declares a kind of content with its schema, `def` validates and stores one entry, `get`, `has` and `list` read them, and `describe` lists kinds, fields and ids for `x describe` and `__engine.describe()`.
+  - Exports: `createRegistry`, `def`, `defineKind`, `Entry`, `EntryDescription`, `get`, `has`, `Kind`, `KindDescription`, `KindsDescription`, `KindSpec`, `list`, `registry`, `Registry`, `REGISTRY_CODES`, `sameValue`
+  - Tests: [`engine/core/registry.test.ts`](../engine/core/registry.test.ts)
+- [`rng.ts`](../engine/core/rng.ts): Seeded randomness for the sim (PLAN.md §6.3, §6.5; doctrine: Reproducible): Mulberry32 streams, bit-exact with my-3d2dge's `E.rng`, seeds derived from a seed and keys, and named streams whose states are plain numbers that captures store and the hash covers.
+  - Exports: `derive`, `Rng`, `RngStreams`
+  - Tests: [`engine/core/rng.test.ts`](../engine/core/rng.test.ts)
+- [`schema.ts`](../engine/core/schema.ts): The schema mini-language (PLAN.md WP 1.2, §6.6): one plain object per field, saying its type, default, range, unit, docs, allowed values and whether it is required, so registries, settings and inspector arguments are validated, filled and described from one table.
+  - Exports: `checkField`, `checkValue`, `copyValue`, `defineSchema`, `describeSchema`, `EntryOf`, `Field`, `FIELD_TYPES`, `FieldRow`, `FieldType`, `freezeValue`, `isPlainObject`, `listProblems`, `parse`, `Problem`, `Schema`, `SCHEMA_CODES`, `show`, `SpecOf`, `suggestKey`, `validate`, `ValueOf`, `When`
+  - Tests: [`engine/core/schema.test.ts`](../engine/core/schema.test.ts)
+- [`settings.ts`](../engine/core/settings.ts): Settings from one schema (PLAN.md WP 1.2, I-37; doctrine: Agent-operable): `defineSettings` declares each setting as an entry of the registry kind `setting` (a schema.ts field keyed by its dotted path, `hero.runSpeed`), and `createSettings` makes a store with a validated `get` and `set`, URL parameters, JSON export (`toJSON`, a preset) and import (`load`), a "differs from default" marker, and scoped overrides.
+  - Exports: `createSettings`, `defineSettings`, `SettingChange`, `SettingRow`, `Settings`, `SETTINGS_CODES`, `SettingsOptions`, `SettingValue`, `SimSettings`
+  - Tests: [`engine/core/settings.test.ts`](../engine/core/settings.test.ts)
+- [`simMath.ts`](../engine/core/simMath.ts): Deterministic `Math` while the sim runs (PLAN.md §6.5; doctrines: Reproducible, Quality under the hood): `withSimMath(fn)` swaps stdlib's fdlibm ports of `sin`, `cos` and `pow` into `Math` while `fn` runs and puts the native functions back afterwards.
+  - Exports: `inSimMath`, `SIM_MATH`, `SIM_MATH_CODES`, `SIM_MATH_NAMES`, `SimMathEntry`, `SimMathName`, `withSimMath`
+  - Tests: [`engine/core/simMath.test.ts`](../engine/core/simMath.test.ts), [`tests/e2e/drift.spec.ts`](../tests/e2e/drift.spec.ts)
+- [`time.ts`](../engine/core/time.ts): The frame clock (PLAN.md §6.3, §6.4, WP 1.3, ADR-0005; doctrine: Reproducible): it turns real time into fixed 60 Hz sim steps plus an interpolation `alpha`, under a time scale, a stack of slowdowns, a hit-stop with a leaky budget and pause; plus a virtual clock for tests.
+  - Exports: `Clock`, `ClockOptions`, `ClockState`, `createClock`, `createVirtualClock`, `Frame`, `SIM_DT`, `SIM_HZ`, `TIME_CODES`, `TIME_SETTINGS`, `VirtualClock`
+  - Tests: [`engine/core/time.test.ts`](../engine/core/time.test.ts)
+- [`timers.ts`](../engine/core/timers.ts): Sim time (PLAN.md §6.3, WP 1.3, ADR-0005; doctrine: Reproducible): timers `after` and `every` that count sim ticks and return `{ cancel }`, and per-entity clocks, plain numbers a component holds, that run an entity's time at its own rate (a slowed foe, a time well) or freeze it (the attacker and victim of a hit).
+  - Exports: `advanceEntityClock`, `createEntityClock`, `createTimers`, `EntityClock`, `freezeEntityClock`, `Timer`, `TimerCallback`, `Timers`, `TimersCapture`, `TimersState`
+  - Tests: [`engine/core/timers.test.ts`](../engine/core/timers.test.ts)
+
+## engine/dev
+
+- [`inspector.ts`](../engine/dev/inspector.ts): The inspector (PLAN.md §8.3, WP 1.6; doctrines: Agent-operable, Verifiable): `window.__engine` in a page and the object `createHeadless` returns in Node are one API, which `createInspector` assembles from the entries of the registry kind `inspectorMember` (engine/dev/members.ts).
+  - Exports: `CORE_MEMBERS`, `CoreMembers`, `createInspector`, `EngineInfo`, `EntitySummary`, `Inspector`, `INSPECTOR_CODES`
+  - Tests: [`engine/dev/inspector.test.ts`](../engine/dev/inspector.test.ts)
+- [`members.ts`](../engine/dev/members.ts): The registry kind `inspectorMember` (PLAN.md §8.3, §5.8's one tool table, WP 1.6): what an inspector member is (a help line, its arguments as schema fields, its implementation), the checks each one passes when defined, and the signatures and help lines made from them.
+  - Exports: `defineMember`, `helpText`, `InspectorHost`, `Member`, `memberKind`, `MemberSpec`, `recordedRun`, `RecordedRun`, `signatureOf`, `WorldReads`
+  - Tests: [`engine/dev/inspector.test.ts`](../engine/dev/inspector.test.ts)
+
 ## engine/gfx
 
 - [`renderer.ts`](../engine/gfx/renderer.ts): The WebGPU renderer's bootstrap (PLAN.md §6.7): WebGPU or nothing.
   - Exports: `createRenderer`, `Gfx`, `GFX_CODES`, `GfxCode`, `GfxError`, `GfxInfo`, `requestWebGPU`
   - Tests: [`engine/gfx/renderer.test.ts`](../engine/gfx/renderer.test.ts), [`tests/e2e/hello.spec.ts`](../tests/e2e/hello.spec.ts)
+
+## engine/input
+
+- [`intents.ts`](../engine/input/intents.ts): The intents vocabulary (PLAN.md §6.4, §6.5 item 3, §8.4, WP 1.5; doctrine: Reproducible): everything the sim reads from outside arrives once per step as plain data, recorded by replays.
+  - Exports: `applyIntents`, `CustomIntentKey`, `diffIntents`, `fromCamera`, `held`, `INTENT_CODES`, `INTENT_KEYS`, `IntentChanges`, `IntentKey`, `Intents`, `IntentValue`, `NO_INTENTS`, `normalizeIntents`, `pressed`
+  - Tests: [`engine/input/intents.test.ts`](../engine/input/intents.test.ts)
+
+## engine/sim
+
+- [`capture.ts`](../engine/sim/capture.ts): Capture and restore (PLAN.md §6.5 item 7, WP 1.4; doctrine: Reproducible): `capture()` copies the whole sim at a step boundary, entities, components, timers, settings except `view` ones, the seed, the step rate and every sim RNG state, plus the physics hook's part (Rapier's snapshot, WP 3.1), and `restore()` puts it back so the next steps continue exactly like the uninterrupted run.
+  - Exports: `CAPTURE_CODES`, `CAPTURE_FORMAT`, `CaptureSource`, `cloneData`, `makeCapture`, `readCapture`, `Restoration`, `RestoreTarget`, `ScheduleData`, `scheduleOf`, `WorldCapture`
+  - Tests: [`engine/sim/capture.test.ts`](../engine/sim/capture.test.ts)
+- [`entities.ts`](../engine/sim/entities.ts): The shape of an entity's data (PLAN.md §6.5 items 4, 6 and 7, WP 1.4; doctrine: Reproducible): the rules the hash (engine/sim/state.ts), captures and restores (engine/sim/capture.ts) and the world (engine/sim/world.ts) share, so a restored entity is the live one, field for field and in the same order (ADR-0006 amendment 3).
+  - Exports: `capturable`, `componentNames`, `eachField`, `ENTITY_CODES`, `LiveEntity`, `makeEntity`, `notData`, `NotData`, `placeComponent`
+- [`replay.ts`](../engine/sim/replay.ts): Replays (PLAN.md §8.4, §6.5 items 3 and 6–9, WP 1.5; doctrine: Reproducible): the readable replay format and its checks, the player that `x replay` and tests/pages/replay.html run, and the comparison of runs that `x replay` judges and bisects with.
+  - Exports: `CHECKPOINT_STEPS`, `checkpointsOf`, `checkReplay`, `firstDifference`, `InputChange`, `InputEntry`, `judgeRuns`, `Parting`, `partingOf`, `PLATFORM_KEYS`, `Playback`, `PlayOptions`, `playReplay`, `Replay`, `REPLAY_CODES`, `REPLAY_FORMAT`, `REPLAY_KEYS`, `StepView`, `Verdict`
+  - Tests: [`engine/sim/replay.test.ts`](../engine/sim/replay.test.ts)
+- [`scene.ts`](../engine/sim/scene.ts): Scenes and sessions, sim-side (PLAN.md §6.9, §9.0, §8.4, WP 1.5; doctrines: Reproducible, Agent-operable): `defineScene(id, { level?, settings, setup, step })` registers a scene as an entry of the registry kind `scene`; `startScene` makes its world (a settings store with the scene's settings over the defaults and the caller's over those, a world seeded from the seed, the scene's `step` as the system `scene`, then its `setup`); `createSession` starts one that records its inputs from step 0, the recorder of PLAN.md §8.4.
+  - Exports: `checkSeed`, `createSession`, `defineScene`, `getScene`, `isScene`, `Scene`, `SCENE_CODES`, `SceneAction`, `SceneOptions`, `SceneRun`, `SceneSpec`, `Session`, `startScene`
+  - Tests: [`engine/sim/scene.test.ts`](../engine/sim/scene.test.ts)
+- [`state.ts`](../engine/sim/state.ts): The canonical state and its hash (PLAN.md §6.5 items 4 and 6, WP 1.4, I-05; doctrine: Reproducible): component kinds declared with their field lists (registry kind `component`), the plain-data form of the sim that `state()` returns, the one 64-bit FNV-1a hash over everything a capture holds (`hash()`), per-entity digests (`trace()`), and `diffStates`, which names the fields where two states part.
+  - Exports: `AnyComponents`, `ComponentData`, `ComponentKind`, `ComponentOf`, `componentTable`, `ComponentTable`, `defineComponent`, `diffStates`, `Entity`, `EntityData`, `hashState`, `PhysicsHook`, `SpawnSpec`, `STATE_CODES`, `STATE_FORMAT`, `StateDifference`, `StateView`, `traceState`, `With`, `WorldState`, `WorldTrace`
+  - Tests: [`engine/sim/state.test.ts`](../engine/sim/state.test.ts)
+- [`systems.ts`](../engine/sim/systems.ts): The step's systems (PLAN.md §6.4, Q13; doctrine: Common ground): plain functions `(w, intents) => void` that the world runs once per sim step in a fixed, documented order.
+  - Exports: `createSystems`, `Intents`, `Phase`, `phaseIndex`, `PHASES`, `STEP_ORDER`, `System`, `SYSTEM_CODES`, `SystemFn`, `Systems`, `SystemSpec`
+  - Tests: [`engine/sim/systems.test.ts`](../engine/sim/systems.test.ts)
+- [`world.ts`](../engine/sim/world.ts): The sim world (PLAN.md §6.4, §6.5, Q13, WP 1.4, I-03; doctrines: Reproducible, Common ground): entities as plain objects with monotonic ids, components as plain-data properties of declared kinds (`e.position`), systems as functions in a fixed order (engine/sim/systems.ts), spawn, despawn and event queues that apply at step boundaries, named seeded RNG streams, sim-time timers, and the state, hash, trace, capture and restore of all of it (engine/sim/state.ts, engine/sim/capture.ts).
+  - Exports: `createWorld`, `SimRng`, `World`, `WORLD_CODES`, `WorldEvents`, `WorldOptions`, `WorldTimers`
+  - Tests: [`engine/sim/world.test.ts`](../engine/sim/world.test.ts)
 
 ## labs/hello
 
@@ -38,13 +142,20 @@ advice codes are in [ERRORS.md](ERRORS.md).
 
 ## tests/pages
 
+- [`drift.ts`](../tests/pages/drift.ts): The drift page's module (`tests/pages/drift.html`), Chromium's half of tests/e2e/drift.spec.ts: it publishes the drift probe (tests/pages/driftProbe.ts) and `withSimMath` as `window.__drift`, then signals ready through `window.__engine`.
+- [`driftProbe.ts`](../tests/pages/driftProbe.ts): The drift probe (PLAN.md §6.5, WP 1.1): every `Math` function, the `**` operator, three.js's math classes and a small feedback sim, each run on seeded inputs natively and inside `withSimMath`, and hashed bit for bit.
+  - Exports: `bitDiff`, `compareDrift`, `DRIFT_FUNCTIONS`, `DRIFT_INPUTS`, `DriftFunction`, `inputsOf`, `ProbeResult`, `resultsOf`, `runProbe`
+  - Tests: [`tests/e2e/drift.spec.ts`](../tests/e2e/drift.spec.ts)
 - [`harness.ts`](../tests/pages/harness.ts): The harness page's module (`tests/pages/harness.html`), the page `tests/e2e/harness.spec.ts` checks the e2e fixture on: it draws with raw WebGPU, signals ready through `window.__engine`, and with `?throw` throws on purpose from `explode` below.
+- [`replay.ts`](../tests/pages/replay.ts): The replay page's module (`tests/pages/replay.html`), Chromium's half of `node x replay --browser sim` (PLAN.md §6.5 item 9, WP 1.5): the sim in a page with no renderer.
 
 ## tests/setup
 
 - [`adviceTrap.ts`](../tests/setup/adviceTrap.ts): The advice trap (PLAN.md §8.2, WP 0.5): a test fails when it prints an engine advice code, a `console.warn` or a three.js deprecation that no file under `tests/baselines/advice/` lists.
   - Exports: `ADVICE_CODE`, `ADVICE_DIR`, `AllowEntry`, `ConsoleLine`, `describeUnlisted`, `findUnlisted`, `listing`, `loadAllowList`, `THREE_DEPRECATION`, `trap`, `Warning`, `watchConsole`
-  - Tests: [`tests/setup/adviceTrap.test.ts`](../tests/setup/adviceTrap.test.ts), [`tests/setup/harnesses.test.ts`](../tests/setup/harnesses.test.ts)
+  - Tests: [`tests/e2e/adviceTrap.spec.ts`](../tests/e2e/adviceTrap.spec.ts), [`tests/setup/adviceTrap.test.ts`](../tests/setup/adviceTrap.test.ts), [`tests/setup/harnesses.test.ts`](../tests/setup/harnesses.test.ts)
+- [`trapOutcomes.ts`](../tests/setup/trapOutcomes.ts): What the advice trap's fixture tests must give in either harness (WP 0.5): every `passes:` test passed, and every `fails:` test failed through the trap, naming what it printed and the allow-list fix.
+  - Exports: `expectTrapOutcomes`, `PRINTED`, `TrapExpect`, `TrapOutcome`
 
 ## tests/unit/hooks
 
@@ -72,6 +183,9 @@ advice codes are in [ERRORS.md](ERRORS.md).
 - [`deps.ts`](../tools/cmd/deps.ts): Checks the dependency pins against `tools/deps.json` (offline), and asks the registry for compatible releases to adopt and for lines that have qualified (PLAN.md §6.10; doctrine: Mastery, Common ground).
   - Exports: `check`, `createDepsCommand`, `default`
   - Tests: [`tools/cmd/deps.test.ts`](../tools/cmd/deps.test.ts)
+- [`describe.ts`](../tools/cmd/describe.ts): Lists the registries from their schemas (PLAN.md §8.1, §6.6): `x describe` names every kind with its entry count, `x describe <kind>` gives its fields (type, default, range, unit, docs) and ids, and `x describe <kind> <id>` one entry's values, `*` marking those that differ from the default.
+  - Exports: `createDescribeCommand`, `default`, `describeInWorker`, `fieldLine`, `listing`, `Listing`, `loadRegistrations`, `registersContent`, `REGISTRATION_ROOTS`, `registrationModules`, `WORKER_TIMEOUT_MS`, `WorkerDone`, `WorkerMessage`
+  - Tests: [`tools/cmd/describe.test.ts`](../tools/cmd/describe.test.ts)
 - [`docs.ts`](../tools/cmd/docs.ts): Generates and checks the docs that come from the code (PLAN.md §6.8, §8.12): `docs/INDEX.md`, `docs/API.md` and `docs/ERRORS.md`, the `@example` blocks, the paths the docs mention, and `docs/PROGRESS.md`'s length.
   - Exports: `check`, `checkComments`, `createDocsCommand`, `default`, `DocsOptions`, `driftChecks`, `MAX_COMMENT_LINES`, `PROGRESS`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
@@ -84,15 +198,24 @@ advice codes are in [ERRORS.md](ERRORS.md).
 - [`new.ts`](../tools/cmd/new.ts): Scaffolds a new entry of a kind from its template (PLAN.md §8.13): `x new <kind> <id>` writes the files of `tools/templates/<kind>/`, filled in for the id, then runs the kind's checks and prints the summary.
   - Exports: `CheckName`, `CHECKS`, `default`, `fill`, `Kind`, `listKinds`, `render`, `runCheck`, `runChecks`, `testKind`, `writeFiles`
   - Tests: [`tools/cmd/new.test.ts`](../tools/cmd/new.test.ts)
+- [`perf.ts`](../tools/cmd/perf.ts): Sim timings against budgets, in Node (PLAN.md §8.1, §8.7, WP 1.5): `node x perf <scene> [--scene id] [--steps n] [--runs n] [--seed s] [--set k=v…] [--budget]`.
+  - Exports: `BUDGET_KEYS`, `default`, `measure`, `median`, `PerfBudget`, `PerfKey`, `readBudget`
+  - Tests: [`tools/cmd/perf.test.ts`](../tools/cmd/perf.test.ts)
 - [`port.ts`](../tools/cmd/port.ts): Records the reference vectors the ports from my-3d2dge are tested against (PLAN.md WP 0.11, §9.0): the old engine's own outputs as text JSON in `tests/baselines/port/`, with a generated README that says what each file holds, the source commit, the sampling and the conversion to my-3dge's frame (Appendix C).
   - Exports: `BLOB_SCRIPTS`, `blobScript`, `buildFiles`, `BUILDS`, `check`, `CHECKSUMS`, `checkVectors`, `colorVectors`, `coreVectors`, `default`, `everyNth`, `humanoidRun`, `humanoidVectors`, `layout`, `LoadedEngine`, `loadEngine`, `moveRecord`, `moveVectors`, `PORT_DIR`, `SourceEngine`, `STATES`, `writeVectors`
   - Tests: [`tools/cmd/port.test.ts`](../tools/cmd/port.test.ts)
 - [`qa.ts`](../tools/cmd/qa.ts): Runs content QA for the families named, against their baselines (PLAN.md §8.6).
   - Exports: `compareWithBaselines`, `default`, `loadFamily`, `QaBaseline`, `QaContext`, `qaFamilies`, `QaFamily`, `QaViolation`, `readBaselines`, `runQa`
   - Tests: [`tools/cmd/qa.test.ts`](../tools/cmd/qa.test.ts)
+- [`replay.ts`](../tools/cmd/replay.ts): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WP 1.5).
+  - Exports: `Checked`, `checkFile`, `checkFiles`, `default`, `findParting`, `Outcome`, `parseSwap`, `partingLines`, `PLATFORM`, `replayFiles`, `ReplayOptions`, `Run`, `RunParting`
+  - Tests: [`tools/cmd/replay.test.ts`](../tools/cmd/replay.test.ts)
 - [`shot.ts`](../tools/cmd/shot.ts): Renders a page on WebGPU in the platform's Chromium and writes what it drew: a PNG and its look metrics.
   - Exports: `default`, `frameMetrics`, `FrameMetrics`, `judgeFrame`, `READY_TIMEOUT_MS`, `resolvePage`
   - Tests: [`tools/cmd/shot.test.ts`](../tools/cmd/shot.test.ts)
+- [`sim.ts`](../tools/cmd/sim.ts): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene> [--scene id] [--steps n] [--seed s] [--set key=value…]`.
+  - Exports: `default`, `HashedView`, `loadScene`, `nodeRuntime`, `parseSets`, `replayText`, `resolveSceneModule`, `Runtime`, `sceneModules`, `sceneRoots`, `typedSets`, `wholeFlag`, `writeReplay`
+  - Tests: [`tools/cmd/sim.test.ts`](../tools/cmd/sim.test.ts)
 - [`src.ts`](../tools/cmd/src.ts): Prints and checks the read-only source checkouts, `$MY3D2DGE_SRC` and `$SHARDFALL_SRC`, at their pins.
   - Exports: `default`
 
@@ -105,14 +228,17 @@ advice codes are in [ERRORS.md](ERRORS.md).
   - Exports: `BANNED_FILES`, `BANNED_IMPORT_FILES`, `bannedBlocks`, `bannedPlugin`
   - Tests: [`tools/eslint/banned.test.ts`](../tools/eslint/banned.test.ts)
 - [`family.ts`](../tools/eslint/family.ts): Plumbing for the rule families of eslint.config.js: core rules re-exposed under a family's own name, and per-path zones for bans that have exceptions.
-  - Exports: `Ban`, `family`, `messagesOf`, `resolvingImports`, `zoned`
+  - Exports: `Ban`, `family`, `messagesOf`, `resolvingImports`, `shortest`, `zoned`
 - [`index.ts`](../tools/eslint/index.ts): The local ESLint plugin and the rule families eslint.config.js assembles (PLAN.md §6.1, §6.5, §6.10, Appendix B): one module per family, each exporting its blocks, and `local`, the plugin for what no stock rule expresses.
   - Exports: `askTheEntryBlocks`, `bannedBlocks`, `family`, `layerBlocks`, `local`, `publicApiBlocks`, `simSideBlocks`
 - [`layers.ts`](../tools/eslint/layers.ts): The layer rules (PLAN.md §6.1; doctrines: WebGPU only, Reproducible): one `no-restricted-imports` block per engine layer, naming what the layer may import, so a forbidden edge fails T0 with the rule and the way round it.
   - Exports: `layerBlocks`, `layerPlugin`, `THREE_MATH`
   - Tests: [`tools/eslint/layers.test.ts`](../tools/eslint/layers.test.ts)
+- [`namespaceNames.ts`](../tools/eslint/namespaceNames.ts): `banned/no-namespace-names` (PLAN.md Appendix B, WP 1.6): a banned three.js name read off a namespace of its entry point, however the namespace is named or the name is spelt.
+  - Exports: `EntryName`, `namespaceNames`
+  - Tests: [`tools/eslint/banned.test.ts`](../tools/eslint/banned.test.ts)
 - [`publicApi.ts`](../tools/eslint/publicApi.ts): The public-API rule (PLAN.md §6.1, ADR-0020; doctrine: Quality under the hood): game code imports the engine only through its barrels, `engine/index.ts` (pages) and `engine/sim-api.ts` (sim-side code), and never three.js or Rapier directly, so game agents never depend on, or need to read, the internals.
-  - Exports: `publicApiBlocks`, `publicApiPlugin`, `SIM_SIDE_GAME_CODE`
+  - Exports: `publicApiBlocks`, `publicApiPlugin`, `SIM_SIDE_GAME_CODE`, `unnamedImports`
   - Tests: [`tools/eslint/publicApi.test.ts`](../tools/eslint/publicApi.test.ts)
 - [`simSide.ts`](../tools/eslint/simSide.ts): The reproducibility bans for sim-side code (PLAN.md §6.5, Appendix B; doctrine: Reproducible): no clocks, no unseeded randomness, no DOM, no Web Audio, no three.js, so identical inputs and seeds give identical play in Node and in Chromium.
   - Exports: `SIM_SIDE`, `simPlugin`, `simSideBlocks`
@@ -135,7 +261,7 @@ advice codes are in [ERRORS.md](ERRORS.md).
 - [`depsUpdate.ts`](../tools/lib/depsUpdate.ts): The network half of `x deps` (PLAN.md §6.10): `--update` adopts each pin's newest compatible release and rewrites `tools/deps.json`; `--qualify` lists the lines that have qualified beyond the pins, as upgrade WPs.
   - Exports: `Adoption`, `NETWORK`, `NetworkOptions`, `planUpdate`, `Qualified`, `qualify`, `Registry`, `Runner`, `SPAWN`, `update`
   - Tests: [`tools/cmd/deps.test.ts`](../tools/cmd/deps.test.ts)
-- [`docs.ts`](../tools/lib/docs.ts): Reads the manual out of the code (PLAN.md §6.8, WP 0.6): each module's file comment, its exports with their doc comments, its `@example` blocks, its tests and the codes it registers, through the TypeScript compiler API.
+- [`docs.ts`](../tools/lib/docs.ts): Reads the manual out of the code (PLAN.md §6.8, WP 0.6): each module's file comment, its exports with their doc comments, its `@example` blocks, its tests, the codes it registers and the registry kinds it declares, through the TypeScript compiler API.
   - Exports: `directoryOf`, `DocComment`, `DocTag`, `Example`, `ExportDoc`, `isModulePath`, `lineOf`, `listModules`, `MODULE_ROOTS`, `ModuleDoc`, `parse`, `parseDocComment`, `readModule`, `readModules`, `ResolvedExport`, `resolveExports`, `resolveSpecifier`, `walk`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
 - [`docsCodes.ts`](../tools/lib/docsCodes.ts): Reads the error and advice codes a module registers with `defineCodes` (PLAN.md WP 1.2, §6.8): `x docs` collects them into `docs/ERRORS.md` and fails a code without its fix.
@@ -144,11 +270,17 @@ advice codes are in [ERRORS.md](ERRORS.md).
 - [`docsExamples.ts`](../tools/lib/docsExamples.ts): Runs the `@example` blocks of file and export comments in Node (PLAN.md §8.12, WP 0.6): `x docs --check` runs them, and so does `tests/unit/examples.test.ts` in T1.
   - Exports: `collectExamples`, `compileExample`, `EXAMPLE_TIMEOUT_MS`, `ExampleOutcome`, `rewriteImports`, `runExample`, `runExamples`
   - Tests: [`tests/unit/examples.test.ts`](../tests/unit/examples.test.ts), [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
-- [`docsGenerate.ts`](../tools/lib/docsGenerate.ts): Writes the generated docs from what tools/lib/docs.ts reads (PLAN.md §6.8, WP 0.6): `docs/INDEX.md` (module → purpose → exports → tests), `docs/API.md` (each export with the first sentence of its doc comment, the public API first) and `docs/ERRORS.md` (every code registered with `defineCodes`, with its message and fix).
-  - Exports: `apiMarkdown`, `BARRELS`, `errorsMarkdown`, `formatMarkdown`, `GENERATED`, `generateDocs`, `indexMarkdown`
+- [`docsGenerate.ts`](../tools/lib/docsGenerate.ts): Writes the generated docs from what tools/lib/docs.ts reads (PLAN.md §6.8, WP 0.6): `docs/INDEX.md` (a row per registry kind declared with `defineKind`, PLAN.md §6.6, then module → purpose → exports → tests), `docs/API.md` (each export with the first sentence of its doc comment, the public API first) and `docs/ERRORS.md` (every code registered with `defineCodes`, with its message and fix).
+  - Exports: `apiMarkdown`, `BARRELS`, `errorsMarkdown`, `formatMarkdown`, `GENERATED`, `generateDocs`, `indexMarkdown`, `kindRows`
+  - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
+- [`docsHelp.ts`](../tools/lib/docsHelp.ts): The `help()` drift check (PLAN.md §8.12, §8.3, WP 1.6; doctrine: Agent-operable): `x docs --check` fails when the inspector's `help()` differs from its real API, the members the object actually has.
+  - Exports: `apiOf`, `checkHelp`, `helpDrift`, `helpNames`, `memberModules`
+  - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
+- [`docsKinds.ts`](../tools/lib/docsKinds.ts): Reads the registry kinds a module declares with `defineKind` (PLAN.md §6.6, WP 1.2): `x docs` gives each kind its row in `docs/INDEX.md` (kind, description, declaring module) and fails a declaration it cannot read, so the index of kinds is never written by hand.
+  - Exports: `KindDoc`, `kindsOf`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
 - [`docsPaths.ts`](../tools/lib/docsPaths.ts): The path checks of `x docs` (PLAN.md §8.12, WP 0.6): every path, source citation and name that the file and export comments, AGENTS.md, README.md and the Markdown under `docs/` mention must exist.
-  - Exports: `checkable`, `checkPaths`, `coveredDocs`, `expand`, `isPlanned`, `PathOptions`, `Planned`, `readPlanned`
+  - Exports: `checkable`, `checkPaths`, `coveredDocs`, `expand`, `GENERATED_DIRS`, `isPlanned`, `PathOptions`, `Planned`, `readPlanned`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
 - [`escalations.ts`](../tools/lib/escalations.ts): Escalation records (DOCTRINE.md, Escalation; PLAN.md §8.14, ADR-0017): `docs/escalations/ESC-NNNN-<slug>.md`, front matter then a short body.
   - Exports: `canonicalPrinciple`, `deadlineFor`, `DIR`, `Escalation`, `FIELDS`, `generateIndex`, `INDEX`, `indexMarkdown`, `isoSeconds`, `isOverdue`, `nextId`, `parseRecord`, `PRINCIPLES`, `readRecords`, `RecordFile`, `serializeRecord`, `slugOf`, `Status`, `STATUSES`, `validateFields`, `WAIT_MINUTES`, `wellFormed`, `writeIndex`, `writeRecord`

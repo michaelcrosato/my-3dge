@@ -16,7 +16,8 @@
  *
  * A path or command that does not exist yet passes while a work package still to come plans it: PLAN.md §9 names it
  * in the **Owns** of a WP whose §14 status is not `done` (or it sits inside a directory one owns), or §6.2's layout
- * lists it. Once that WP is done, the path must exist.
+ * lists it. Once that WP is done, the path must exist. Paths inside the git-ignored directories that tools generate
+ * (`GENERATED_DIRS`: caches, reports, builds) always pass, since a fresh checkout has none of them yet.
  *
  * Not checked: `DOCTRINE.md`, `docs/research/`, `docs/reference/`, `docs/escalations/` (point-in-time records), the
  * generated INDEX, API and ERRORS (checked through the comments they come from), and `@example` blocks, which are
@@ -123,11 +124,16 @@ export function readPlanned(root: string): Planned {
   return { owned, layout };
 }
 
+/** The git-ignored directories tools generate (caches, reports, builds): a fresh checkout lacks them, so they pass. */
+export const GENERATED_DIRS = ['node_modules/.cache/', 'out/', '.cache/', 'dist/'];
+
 /**
  * Whether `planned` covers `path` (a file, or a directory ending in `/`): an entry names it or lies inside it, or,
  * for an owned directory (`labs/hello/`, `engine/world/level/**`, `tests/replays/box-1-*.json`), it lies inside one.
+ * A path inside one of `GENERATED_DIRS` is always covered.
  */
 export function isPlanned(path: string, planned: Planned): boolean {
+  if (GENERATED_DIRS.some((generated) => path.startsWith(generated) || `${path}/` === generated)) return true;
   const dir = path.endsWith('/') ? path : `${path}/`;
   const names = (entry: string) => entry === path || entry.startsWith(dir);
   const holds = (entry: string) => checkable(entry).endsWith('/') && path.startsWith(checkable(entry));

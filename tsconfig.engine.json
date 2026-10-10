@@ -1,0 +1,12 @@
+// T0 project: the engine, without its tests (tsconfig.check.json).
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "emitDeclarationOnly": true,
+    "rootDir": ".",
+    "outDir": "node_modules/.cache/tsc"
+  },
+  "include": ["engine", "package.json", "package-lock.json"],
+  "exclude": ["**/*.test.ts"]
+}

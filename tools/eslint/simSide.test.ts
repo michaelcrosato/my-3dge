@@ -1,9 +1,11 @@
 /**
  * @file Proves the reproducibility bans for sim-side code (tools/eslint/simSide.ts) with a failing and a passing
  * fixture each, linted from a temporary directory: every banned global, property, spelling and import, in every
- * sim-side directory, with tests and presentation code left free.
+ * sim-side directory, with tests and presentation code left free; `Math` destructured, and every function in
+ * engine/core/simMath.ts's `SIM_MATH_NAMES` aliased, so a newly swapped function is covered too.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
+import { SIM_MATH_NAMES } from '../../engine/core/simMath';
 import { messagesOf } from './family';
 import { SIM_SIDE, simSideBlocks } from './simSide';
 import { caseProblems, lintCases, uncovered, type Case, type CaseResult } from './testing';
@@ -26,6 +28,7 @@ const GLOBALS = [
   'webkitAudioContext',
   'crypto',
   'process',
+  'Buffer',
   'performance',
 ];
 
@@ -83,6 +86,13 @@ const CASES: Case[] = [
     rule: 'sim/no-restricted-syntax',
   },
   {
+    name: "Node's Buffer through globalThis, against a typed array",
+    file: 'engine/sim/bytes.ts',
+    bad: "export const bytes = globalThis.Buffer.from('abc');",
+    good: 'export const bytes = new Uint8Array([97, 98, 99]);',
+    rule: 'sim/no-restricted-syntax',
+  },
+  {
     name: 'a banned global destructured from globalThis',
     file: 'engine/anim/now.ts',
     bad: 'const { performance: p } = globalThis;\nexport const now = p.now();',
@@ -94,6 +104,48 @@ const CASES: Case[] = [
     file: 'engine/sim/lazy.ts',
     bad: "export const gfx = import('three/webgpu');",
     good: "export { Vector3 } from '../core/math';",
+    rule: 'sim/no-restricted-syntax',
+  },
+  {
+    name: 'the ** operator, which the fdlibm swap cannot reach',
+    file: 'engine/sim/falloff.ts',
+    bad: 'export const falloff = (d: number) => d ** 2.2;',
+    good: 'export const falloff = (d: number) => Math.pow(d, 2.2);',
+    rule: 'sim/no-restricted-syntax',
+  },
+  {
+    name: 'compound **=',
+    file: 'engine/anim/ease.ts',
+    bad: 'export function grow(x: number) {\n  x **= 2;\n  return x;\n}',
+    good: 'export function grow(x: number) {\n  x = Math.pow(x, 2);\n  return x;\n}',
+    rule: 'sim/no-restricted-syntax',
+  },
+  {
+    name: 'Math destructured, whose names hold the native functions',
+    file: 'engine/sim/wave.ts',
+    bad: 'const { sin, cos } = Math;\nexport const wave = (t: number) => sin(t) * cos(t);',
+    good: 'export const wave = (t: number) => Math.sin(t) * Math.cos(t);',
+    rule: 'sim/no-restricted-syntax',
+  },
+  {
+    name: 'Math destructured in an assignment, inside a function',
+    file: 'engine/anim/sway.ts',
+    bad: 'export function sway(t: number) {\n  let pow;\n  ({ pow } = Math);\n  return pow(t, 3);\n}',
+    good: 'export function sway(t: number) {\n  return Math.pow(t, 3);\n}',
+    rule: 'sim/no-restricted-syntax',
+  },
+  ...SIM_MATH_NAMES.map((name) => ({
+    name: `Math.${name} aliased at module level, against calling it where it is used`,
+    file: `engine/world/${name}.ts`,
+    bad: `const alias = Math.${name};\nexport const f = (t: number) => alias(${name === 'pow' ? 't, 2' : 't'});`,
+    good: `export const f = (t: number) => Math.${name}(${name === 'pow' ? 't, 2' : 't'});`,
+    rule: 'sim/no-restricted-syntax',
+  })),
+  {
+    name: 'a swapped Math function assigned to a variable inside a function, by any spelling',
+    file: 'engine/physics/orbit.ts',
+    bad: "export function orbit(t: number) {\n  let f = Math.abs;\n  f = Math['cos'];\n  return f(t);\n}",
+    good: 'export function orbit(t: number) {\n  const f = Math.abs;\n  return f(Math.cos(t));\n}',
     rule: 'sim/no-restricted-syntax',
   },
   {

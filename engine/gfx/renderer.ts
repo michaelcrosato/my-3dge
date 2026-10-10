@@ -7,8 +7,8 @@
  *
  * Minimal on purpose (WP 0.8). WP 2.1 grows this file into the full renderer: the capability report with the adapter's
  * limits, the feature registry (optional features checked at startup, an advice code on every downgrade),
- * resolution modes, the warm-up, and `renderer.onError` routed to the log. `defineCodes` below is a local stand-in for
- * engine/core/log.ts's (WP 1.2), which replaces it; the call keeps the literal form `x docs` reads.
+ * resolution modes, the warm-up, and `renderer.onError` routed to the log. Its codes are registered with
+ * engine/core/log.ts's `defineCodes`, in the literal form `x docs` reads.
  *
  * Invariants: a `Gfx` exists only on the WebGPU backend; every failure to get there is a `GfxError` with its code and
  * fix, and nothing is drawn, configured or allocated on the GPU before the adapter check passes.
@@ -20,18 +20,7 @@
  */
 /// <reference types="@webgpu/types" />
 import { REVISION, WebGPURenderer } from 'three/webgpu';
-
-/** One code's text: the message (`{name}` marks a value), what to do about it, and more detail for docs/ERRORS.md. */
-interface CodeText {
-  template: string;
-  fix: string;
-  doc?: string;
-}
-
-/** Stand-in for engine/core/log.ts's `defineCodes` (WP 1.2 replaces it): returns the table as given, typed. */
-function defineCodes<const T extends Record<string, CodeText>>(_area: string, codes: T): T {
-  return codes;
-}
+import { defineCodes } from '../core/log';
 
 /** The codes the renderer raises, with their fixes (collected into docs/ERRORS.md by `x docs`). */
 export const GFX_CODES = defineCodes('gfx', {

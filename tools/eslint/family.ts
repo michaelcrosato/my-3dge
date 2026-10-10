@@ -40,7 +40,7 @@ export function family(name: string, ...rules: string[]): ESLint.Plugin {
  * A relative source's shortest spelling from `dir`: `./a/../b` is `./b`, and `../../engine/sim` from `engine/core` is
  * `../sim`.
  */
-function shortest(dir: string, source: string): string {
+export function shortest(dir: string, source: string): string {
   const path = posix.relative(dir, posix.resolve(dir, source));
   if (path === '') return '.';
   return path === '..' || path.startsWith('../') ? path : `./${path}`;

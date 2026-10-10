@@ -1,0 +1,20 @@
+// T0's type check (`npm run typecheck`, inside `npm run check`): `tsc -b` over three composite projects that emit
+// declarations only, into node_modules/.cache/tsc/. A run skips a project whose own files and upstream declarations
+// did not change, and re-checks only what a change can reach (ADR-0014, amendment 7). Together the projects hold
+// exactly tsconfig.json's files, each once (tools/checkAll.test.ts checks it):
+// - tsconfig.engine.json: engine/, without its tests. The engine imports nothing outside it (PLAN.md §6.1).
+// - tsconfig.apps.json: the code that runs on the engine, without its tests: labs/, fixtures/, tools/, tests/ (pages,
+//   specs, setup, helpers), .claude/hooks/ and the root *.config.ts.
+// - tsconfig.tests.json: every *.test.ts, which may import anything.
+// A new directory under those roots joins its project by itself; a new root directory joins tsconfig.json's
+// "include" and one project's. A project reaches another's files only through "references" (tsc's TS6307 names a
+// file outside them): add the reference, never the file to a second project. Each project lists package-lock.json,
+// because tsc -b skips a project by its own files alone: a dependency change must rebuild it.
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.engine.json" },
+    { "path": "./tsconfig.apps.json" },
+    { "path": "./tsconfig.tests.json" }
+  ]
+}

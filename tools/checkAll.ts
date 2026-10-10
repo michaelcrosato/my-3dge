@@ -4,9 +4,14 @@
  * parallel T0 takes as long as the slowest. Node runs this file directly (type stripping, as the hooks do; ADR-0014
  * amendment 4), so it needs nothing installed beyond the tools it starts.
  *
+ * `tsc` is `npm run typecheck`'s command: `tsc -b` over the projects of tsconfig.check.json, which together hold
+ * tsconfig.json's files. It reuses what the last run checked (node_modules/.cache/tsc/), so it costs what a change
+ * reaches: measured 0.2 s unchanged, 1.5–3 s after a typical edit, about 6 s when an export of a module every file
+ * reaches changes, against 6 s every time for `tsc --noEmit` (ADR-0014 amendment 7).
+ *
  * Invariants: every tool runs to the end, so one run names every failure; each tool's output is printed whole, in
  * the fixed order below, after all have finished (never interleaved); the exit code is 0 only when all four pass,
- * else 1. Caches live under node_modules/.cache/.
+ * else 1. Caches live under node_modules/.cache/, which `x ci --local` keeps across `npm ci`.
  *
  * Usage: `npm run check` (package.json: `"check": "node tools/checkAll.ts"`). Importing the module runs nothing.
  *
@@ -21,9 +26,9 @@ export interface CheckTool {
   command: string;
 }
 
-/** The T0 tools, in the order their output is printed. */
+/** The T0 tools, in the order their output is printed; `tsc` runs package.json's `typecheck` command. */
 export const CHECK_TOOLS: CheckTool[] = [
-  { name: 'tsc', command: 'npx tsc --noEmit' },
+  { name: 'tsc', command: 'npx tsc -b tsconfig.check.json' },
   { name: 'eslint', command: 'npx eslint --cache --cache-location node_modules/.cache/eslint/ .' },
   { name: 'prettier', command: 'npx prettier --check --cache .' },
   { name: 'x check', command: 'node x check' },

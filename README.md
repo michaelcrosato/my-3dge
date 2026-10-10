@@ -7,12 +7,12 @@ HTML/CSS. Games see a small public API built on the most widely used web tools (
 ESLint, Prettier), so any agent can work with what it already knows; behind that API, the engine's internals use the
 best approach its builders can execute well.
 
-**Status: Phase 0, the foundation, is done (gate G0); Phase 1, the kernel, is next.** The repository has its rules
-and platform, the toolchain and the `node x` command line, the checks every change passes (`npm run check`, `npm test`,
-`npm run e2e`), docs generated from code comments, escalation records, reference vectors from my-3d2dge, a hello page
-drawn with three.js on WebGPU (`labs/hello/`), the Vercel build, and the merge gate `node x ci --local`. No engine
-systems exist yet. [`docs/PROGRESS.md`](docs/PROGRESS.md) is the one-screen status; the ledger in
-[`PLAN.md`](PLAN.md) §14 has every work package.
+**Status: Phases 0 and 1 are done (gates G0 and G1); Box 1, the first Stress Box stage, is next.** The repository
+has its rules, toolchain and checks, and the reproducible kernel: deterministic math shared by Node and Chromium,
+registries and settings, the world with its hash, capture and restore, scenes, sessions and replays that give one
+golden hash in both runtimes, a headless app and the inspector (`__engine`). Rendering arrives with Box 1.
+[`docs/PROGRESS.md`](docs/PROGRESS.md) is the one-screen status; the ledger in [`PLAN.md`](PLAN.md) §14 has every
+work package.
 
 ## The doctrine
 
@@ -32,7 +32,7 @@ that runs, is measured and is proved. The game that will run on the engine lives
 
 ```sh
 bash scripts/setup.sh           # Node 24.21.0 if missing (SHA-256 checked), the read-only sources, then npm ci
-npm run typecheck               # tsc --noEmit against the pinned three.js and Rapier types
+npm run typecheck               # tsc -b over tsconfig.check.json's projects (incremental), on the pinned types
 npm test                        # vitest run
 node x ci --local               # the merge gate: every tier, summary in out/ci/summary.md
 ```

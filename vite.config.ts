@@ -18,6 +18,7 @@
  */
 /// <reference types="vitest/config" />
 import { globSync } from 'node:fs';
+import { availableParallelism } from 'node:os';
 import { dirname, join } from 'node:path';
 import { defineConfig } from 'vite';
 import { vitestRerunTriggers } from './tools/lib/tiers';
@@ -73,6 +74,14 @@ export default defineConfig({
     reporters: ['dot', 'json'],
     outputFile: { json: 'out/test/report.json' },
     setupFiles: ['tests/setup/adviceTrap.ts'],
+    // Many tool tests spawn node, tsx, git or Chromium; on the 4-core platform with parallel lanes a 5 s default
+    // times out under load while the test itself is sound. Timeouts bound hangs; they assert nothing.
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
+    // One worker per core, not Vitest's default of one fewer: the tool tests wait on the children they spawn, and the
+    // spare core went idle. Measured on the 4-core platform: npm test 41 s with 3 workers, 36 s with 4, 36 s with 5
+    // (ADR-0014 amendment 7).
+    maxWorkers: availableParallelism(),
     forceRerunTriggers: vitestRerunTriggers(),
   },
 });

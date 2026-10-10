@@ -1,16 +1,10 @@
+// The whole repository as one TypeScript program: what `npx tsc --noEmit`, editors, Vite, Vitest, tsx and `x new`
+// read. T0 (`npm run check`, `npm run typecheck`) checks the same files through the projects of tsconfig.check.json,
+// incrementally; tools/checkAll.test.ts keeps the two file lists equal (ADR-0014, amendment 7).
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "es2022",
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "lib": ["es2022", "dom", "dom.iterable"],
-    "types": ["node"],
-    "strict": true,
-    "noEmit": true,
-    "skipLibCheck": true,
-    "erasableSyntaxOnly": true,
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true
+    "noEmit": true
   },
-  "include": ["engine", "labs", "tests", "fixtures", "tools", "*.config.ts"]
+  "include": ["engine", "labs", "tests", "fixtures", "tools", ".claude/hooks", "*.config.ts"]
 }

@@ -229,6 +229,8 @@ describe('selections without git', () => {
       'fixtures/scenes/a.ts',
       'data/x.json',
       'playwright.config.ts',
+      'tests/setup/fixtures/advice.pw.ts',
+      'tsconfig.base.json',
     ]) {
       expect(selectT2(changes(file)).mode).toBe('all');
     }

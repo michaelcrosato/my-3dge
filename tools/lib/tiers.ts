@@ -61,7 +61,7 @@ export const TIERS: Readonly<Record<TierId, Tier>> = {
     command: ['npm', 'test'],
     budgetMs: 60_000,
     report: 'out/test/report.json',
-    fix: 'find the slowest files in out/test/report.json and speed them up, or move what is long to the long runs',
+    fix: 'find the slowest files in out/test/report.json and speed them up; a test that drives a browser belongs in T2 (tests/e2e/), one that is long in the long runs',
   },
   T2: {
     id: 'T2',
@@ -90,6 +90,7 @@ export const T1_FULL: readonly Trigger[] = [
   { path: 'package-lock.json', why: 'the installed dependencies' },
   { path: '.nvmrc', why: 'the Node version' },
   { path: 'tsconfig.json', why: 'how TypeScript compiles' },
+  { path: 'tsconfig.base.json', why: 'how TypeScript compiles' },
   { path: 'vite.config.ts', why: "Vitest's settings" },
   { path: 'tests/setup/', why: 'the setup every test file runs' },
   { path: 'tests/baselines/', why: 'baselines, which tests read from disk, outside their imports' },
@@ -106,10 +107,15 @@ export const T2_FULL: readonly Trigger[] = [
   { path: 'data/', why: 'data, which pages import' },
   { path: 'public/', why: 'files the dev server serves' },
   { path: 'tests/baselines/', why: 'baselines, which specs read from disk, outside their imports' },
+  {
+    path: 'tests/setup/fixtures/',
+    why: "the advice trap's fixture specs, which tests/e2e/adviceTrap.spec.ts runs in a child Playwright, outside its imports",
+  },
   { path: 'package.json', why: 'the dependencies' },
   { path: 'package-lock.json', why: 'the installed dependencies' },
   { path: '.nvmrc', why: 'the Node version' },
   { path: 'tsconfig.json', why: 'how Vite compiles TypeScript' },
+  { path: 'tsconfig.base.json', why: 'how Vite compiles TypeScript' },
   { path: 'vite.config.ts', why: 'the dev server' },
   { path: 'playwright.config.ts', why: "Playwright's settings" },
 ];

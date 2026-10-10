@@ -1,0 +1,39 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "The kernel's movers for 10 s: the pilot walks away from a camera that turns twice, boosts, presses spawn; kernel.speed changes at step 240 and two dev actions run (nudge, spawn).",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "kernel",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [
+    [0, { "cam": 0.785, "move": [0.7071067811865475, 0.7071067811865476] }],
+    [90, { "b": ["boost"] }],
+    [150, { "b": null, "cam": 2.356, "move": [0.7071067811865476, -0.7071067811865475] }],
+    [200, { "b": ["spawn"] }],
+    [201, { "b": null }],
+    [240, { "set": { "kernel.speed": 2 } }],
+    [300, { "args": { "dx": 0.5, "dz": -0.25, "id": 3 }, "dev": "nudge" }],
+    [360, { "cam": null, "move": null, "p": ["spawn"] }],
+    [420, { "dev": "spawn" }],
+    [480, { "aim": [1, 0, 2], "game:mode": "calm", "look": [0.1, -0.2] }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "6ca8f72925828edd",
+      "60": "146243d17de73eff",
+      "120": "9246d153a9e73e98",
+      "180": "3fbda39922164cd4",
+      "240": "819497209745ddb5",
+      "300": "852c89620c9101d8",
+      "360": "0992bfa60efd0611",
+      "420": "506be3d5c26f3886",
+      "480": "1642fe12c26a068d",
+      "540": "5b39e99234d07bbd",
+      "600": "123e33f07be4148e"
+    }
+  }
+}

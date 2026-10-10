@@ -5,12 +5,336 @@
 Every code the engine prints, as `[CODE] message`, with its fix. Each module registers its own codes with
 `defineCodes` beside the code that raises them; tools/lib/docs.ts says how they are read.
 
+## app
+
+### APP_NOT_HEADLESS
+
+- Message: `headlessHost was given {value}, not a headless engine`
+- Fix: pass the object createHeadless resolved to
+- Registered in: [`engine/app/headless.ts` line 40](../engine/app/headless.ts)
+
+## core
+
+### CORE_BAD_CODE
+
+- Message: `{problem}`
+- Fix: register each code once, beside the code that raises it: defineCodes('<area>', { AREA_NAME: { template, fix, doc } }), the name in upper-case words starting with the area's
+- Registered in: [`engine/core/log.ts` line 55](../engine/core/log.ts)
+
+Raised by `defineCodes` (engine/core/log.ts) for an area that is not one lower-case word, a code that does not start with its area, a template or fix that is empty, or a code registered again with other text. `x docs --check` reports the same problems statically.
+
+### CORE_BAD_COLOR
+
+- Message: `color {color} is not a hex color`
+- Fix: write colours as hex strings: '#rrggbb' (or '#rgb', '#rgba', '#rrggbbaa')
+- Registered in: [`engine/core/color.ts` line 28](../engine/core/color.ts)
+
+Raised by the colour helpers (engine/core/color.ts) for a string that is not hex. Colours are hex strings in data (PLAN.md §6.3); names such as `red` and `rgb()` forms are not accepted, so a typo fails where it is read instead of drawing the wrong colour.
+
+### CORE_BAD_KIND
+
+- Message: `kind {kind}: {problem}`
+- Fix: declare each kind once, as defineKind('<kind>', { description, fields, fallback?, check?, defineWith? }), the name a lower-case word (camelCase allowed)
+- Registered in: [`engine/core/registry.ts` line 53](../engine/core/registry.ts)
+
+Raised by `defineKind` (engine/core/registry.ts) for a malformed name, a kind declared twice, a missing description, or a key the declaration does not take. Problems inside `fields` raise `CORE_BAD_SCHEMA`.
+
+### CORE_BAD_NOISE
+
+- Message: `noise option {option} must be {rule}, got {value}`
+- Fix: pass createNoise2D/createNoise3D a kind of value, gradient or cell, octaves from 1 to 16, a finite gain, a positive lacunarity (an integer when period is set) and a period that is a positive integer, or none
+- Registered in: [`engine/core/noise.ts` line 35](../engine/core/noise.ts)
+
+Raised when a noise is created (engine/core/noise.ts), never while it is sampled, so a bad option fails at once instead of giving a noise that silently stops tiling.
+
+### CORE_BAD_SCHEMA
+
+- Message: `{where}: {problems}`
+- Fix: write each field as { type, description, default?, required?, minimum?, maximum?, enum?, unit?, items?, properties?, when?, view? } (engine/core/schema.ts), with a default that passes its own checks, and a default for every hook that is not required
+- Registered in: [`engine/core/schema.ts` line 35](../engine/core/schema.ts)
+
+Raised by `defineSchema` and `defineKind` (engine/core/schema.ts, engine/core/registry.ts) when a field is malformed: an unknown keyword (named with the closest one), an unknown type, a missing description, a default outside its own range or values, a minimum above the maximum, an empty enum, or a hook with neither a default nor `required: true`. `defineSettings` reports the same problems in a setting as `CORE_BAD_SPEC`.
+
+### CORE_BAD_SETTING
+
+- Message: `{problems}`
+- Fix: give each setting a value of its type inside its range and values (node x describe setting <path> shows them); in a URL or with x set, write numbers plainly, booleans as true or false, and arrays or objects as JSON
+- Registered in: [`engine/core/settings.ts` line 60](../engine/core/settings.ts)
+
+Raised by `set`, `setText`, `load`, `fromUrl` and `override` (engine/core/settings.ts). A preset or a URL with any problem applies nothing, and every problem is listed at once.
+
+### CORE_BAD_SNAPSHOT
+
+- Message: `restore() got {what}, not a snapshot of this emitter`
+- Fix: pass restore() what snapshot() of the same emitter returned: listeners are functions, which never move between emitters
+- Registered in: [`engine/core/events.ts` line 44](../engine/core/events.ts)
+
+### CORE_BAD_SPEC
+
+- Message: `{where}: {problems}`
+- Fix: give each field a value of its type inside its range and values, every required field, and no key the schema lacks (node x describe <kind> lists the fields)
+- Registered in: [`engine/core/schema.ts` line 40](../engine/core/schema.ts)
+
+Raised by `parse` and `def` (engine/core/schema.ts, engine/core/registry.ts) when a spec does not match its schema. Every problem is listed at once, each naming its key, and an unknown key names the closest valid one: nothing is dropped or clamped silently.
+
+### CORE_BAD_TIME
+
+- Message: `{where} got {value}`
+- Fix: pass {expected}
+- Registered in: [`engine/core/time.ts` line 51](../engine/core/time.ts)
+
+Raised by engine/core/time.ts and engine/core/timers.ts for a timestamp that is not a finite number, a negative or infinite duration, a slowdown `k` outside 0..1 (speed-ups go through the `time.scale` setting), an empty slowdown id, an `every` shorter than one tick, a step count that is not a whole number, or an entity clock rate below 0.
+
+### CORE_CLOCK_BEHIND
+
+- Message: `the sim is falling behind real time: {frames} frames in a row each needed more than time.maxSteps = {maxSteps} steps, and the rest were dropped`
+- Fix: make each step cheaper (__engine.stats() shows where the time goes) or lighten the scene; raise time.maxSteps only when frames are long and steps cheap
+- Registered in: [`engine/core/time.ts` line 56](../engine/core/time.ts)
+
+Advice from `clock.advance` (engine/core/time.ts): the game runs slower than real time. A single stall (a tab coming back, a debugger pause) drops its backlog without advice.
+
+### CORE_DUPLICATE_ID
+
+- Message: `{kind} {id} is already defined`
+- Fix: give the new entry another id, or remove one of the two def calls for it
+- Registered in: [`engine/core/registry.ts` line 62](../engine/core/registry.ts)
+
+Raised by `def` (engine/core/registry.ts). The last definition never silently wins: two entries with one id usually mean a copied file whose id was not changed.
+
+### CORE_LISTENER_FAILED
+
+- Message: `a listener of {type} threw: {error}`
+- Fix: fix the listener (the stack is in the error record); the other listeners of {type} still ran
+- Registered in: [`engine/core/events.ts` line 39](../engine/core/events.ts)
+
+Recorded by `emit` (engine/core/events.ts) in the log's errors (`__engine.errors`), with the thrown error as its cause. Each listener runs isolated, so one failing system never stops the others.
+
+### CORE_NO_ENTRY
+
+- Message: `there is no {kind} {id}{suggestion}`
+- Fix: fix the id (node x describe {kind} lists the defined ones), or define it with {define}; a kind declared with a fallback returns that entry instead
+- Registered in: [`engine/core/registry.ts` line 72](../engine/core/registry.ts)
+
+Raised by `get` and `describe` (engine/core/registry.ts) for an id the kind lacks when there is nothing to stand in: the kind has no fallback, or its fallback is not defined either.
+
+### CORE_NO_TIME
+
+- Message: `clock.advance() got no timestamp, and the clock has no now()`
+- Fix: pass the frame's time in milliseconds, clock.advance(timestamp) with requestAnimationFrame's argument, or create the clock with createClock({ now }) (createVirtualClock().now in tests): sim-side code never reads a wall clock
+- Registered in: [`engine/core/time.ts` line 47](../engine/core/time.ts)
+
+### CORE_NOT_CANONICAL
+
+- Message: `{path} is {what}, which the canonical form cannot hold`
+- Fix: keep hashed and captured state to null, booleans, finite numbers, strings, arrays, typed arrays, plain objects and three.js math classes; store an id instead of an object reference
+- Registered in: [`engine/core/hash.ts` line 32](../engine/core/hash.ts)
+
+Raised by `Fnv64.value`, `hashValue` and `serialize` (engine/core/hash.ts) for `undefined`, functions, symbols, bigints, Maps, Sets, class instances without `toArray()`, nesting deeper than 100 levels (usually a cycle), and, in `serialize` only, NaN or ±Infinity. Nothing is skipped silently, so two states that differ always hash differently.
+
+### CORE_SCOPE_DISPOSED
+
+- Message: `the scope {label} is disposed; it takes no new listeners`
+- Fix: make a new scope (events.scope('…')) for what starts next, instead of reusing one whose lifetime ended
+- Registered in: [`engine/core/events.ts` line 48](../engine/core/events.ts)
+
+### CORE_SIM_ASYNC
+
+- Message: `withSimMath ran a function that returned a promise`
+- Fix: keep sim entry points synchronous: the fdlibm swap ends when withSimMath returns, so code after an await would run on the native Math; do the async work outside the sim and pass its result in as an intent
+- Registered in: [`engine/core/simMath.ts` line 33](../engine/core/simMath.ts)
+
+Raised by withSimMath (engine/core/simMath.ts) when its function returns a promise or another thenable: only the part before the first await would run under the swap, and replays would drift between Node and Chromium.
+
+### CORE_UNKNOWN_CODE
+
+- Message: `no module registered the code {code}{suggestion}`
+- Fix: register it with defineCodes('<area>', { … }) in the module that raises it, or use the code docs/ERRORS.md lists
+- Registered in: [`engine/core/log.ts` line 60](../engine/core/log.ts)
+
+Raised by `codeError`, `warnOnce` and `error` (engine/core/log.ts) when the code was never registered, usually a typo or a module that raises a code before its `defineCodes` call ran.
+
+### CORE_UNKNOWN_ID
+
+- Message: `there is no {kind} {id}{suggestion}; {kind} {fallback} stands in for it`
+- Fix: fix the id (node x describe {kind} lists the defined ones), or define it with {define}
+- Registered in: [`engine/core/registry.ts` line 67](../engine/core/registry.ts)
+
+Advice from `get` (engine/core/registry.ts), printed once per missing id, when the kind has a fallback: play goes on with the fallback entry, so a typo shows as the fallback (a crate, a default material) instead of a crash.
+
+### CORE_UNKNOWN_KIND
+
+- Message: `there is no kind {kind}{suggestion}`
+- Fix: name a declared kind (node x describe lists them), or import the module that declares it before using it
+- Registered in: [`engine/core/registry.ts` line 58](../engine/core/registry.ts)
+
+### CORE_UNKNOWN_SETTING
+
+- Message: `there is no setting {path}{suggestion}`
+- Fix: use a declared setting (node x describe setting lists them), or declare it with defineSettings({ … })
+- Registered in: [`engine/core/settings.ts` line 55](../engine/core/settings.ts)
+
+Raised by the settings store (engine/core/settings.ts) for an unknown path in `get`, `set`, `setText`, `reset` or `sim.get`. Presets, URL parameters and overrides report unknown paths through `CORE_BAD_SETTING`, with every other problem.
+
+### CORE_VIEW_SETTING
+
+- Message: `sim-side code read the view setting {path}`
+- Fix: read view settings ({path} changes only how the game looks or performs) from presentation code, through the settings store itself; sim-side code reads only settings without view: true, so the hash and replays never depend on them
+- Registered in: [`engine/core/settings.ts` line 65](../engine/core/settings.ts)
+
+## dev
+
+### DEV_BAD_ARGS
+
+- Message: `__engine.{member}: {problems}`
+- Fix: call it as {signature}; __engine.help({name}) lists its arguments
+- Registered in: [`engine/dev/inspector.ts` line 57](../engine/dev/inspector.ts)
+
+Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when an argument does not match the schema its member declares: a wrong type, a value out of range, a missing required argument or one too many. Nothing has happened yet.
+
+### DEV_NO_RENDERER
+
+- Message: `__engine.{member} needs a renderer, and this engine has none ({runtime}, headless)`
+- Fix: call it in a page started with createEngine (WP 2.7); headless, read state(), entities(), get(id) and hash() instead
+- Registered in: [`engine/dev/inspector.ts` line 53](../engine/dev/inspector.ts)
+
 ## gfx
 
 ### GFX_NO_WEBGPU
 
 - Message: `WebGPU is unavailable: {reason}`
 - Fix: open the page in a browser with WebGPU and hardware acceleration on (Chrome or Edge 113+, Safari 26+); headless, launch Chromium with WEBGPU_FLAGS from tools/lib/browser.ts (PLAN.md §8.8)
-- Registered in: [`engine/gfx/renderer.ts` line 38](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 27](../engine/gfx/renderer.ts)
 
 Raised at startup, before anything touches the GPU, when the browser has no `navigator.gpu`, gives no adapter or device, or three.js starts another backend than WebGPU. WebGPU is the only renderer: there is no WebGL fallback (PLAN.md §6.7), so nothing starts, and a page shows this message with its fix.
+
+## input
+
+### INPUT_BAD_INTENTS
+
+- Message: `{where}: {problems}`
+- Fix: give intents as { move: [x, z], cam, aim: [x, y, z], look: [yaw, pitch], b: [held buttons], p: [pressed buttons] } with finite numbers, plus custom keys namespaced "game:key" holding plain data (engine/input/intents.ts); null or a missing key means not given
+- Registered in: [`engine/input/intents.ts` line 33](../engine/input/intents.ts)
+
+Raised by `normalizeIntents`, `applyIntents` and the replay checks (engine/input/intents.ts, engine/sim/replay.ts) for an unknown key (named with the closest), a non-finite or misshapen number, a button that is not a non-empty string, or a custom value that is not plain data. Every problem is listed at once.
+
+## sim
+
+### SIM_BAD_ARGUMENT
+
+- Message: `{where} got {value}`
+- Fix: pass {expected}
+- Registered in: [`engine/sim/world.ts` line 66](../engine/sim/world.ts)
+
+Raised by the world (engine/sim/world.ts) for a seed or step rate that is not a number of the right kind, a spawn that is not a plain object of components, or an `id` given among the components.
+
+### SIM_BAD_CAPTURE
+
+- Message: `the capture cannot be restored: {problem}`
+- Fix: pass restore() what capture() returned (or its serialize/deserialize round trip), unchanged, to a world with the same step rate, component kinds, settings, physics and schedule (systems and listeners)
+- Registered in: [`engine/sim/capture.ts` line 50](../engine/sim/capture.ts)
+
+Raised by `restore` (engine/sim/capture.ts, engine/sim/world.ts) before anything changes, for a value that is not a capture of this format: a wrong format tag, a malformed part, entities out of id order or at or above `nextId`, a component whose fields are not exactly its declared ones, a step rate (`hz`) other than the world's, setting paths other than the world's, a physics part where the world has no physics hook (or the reverse), or, restoring into a world that did not make it, systems or listeners other than the world's.
+
+### SIM_BAD_COMPONENT
+
+- Message: `entity {id}{problem}`
+- Fix: give components with spawn() or w.add(id, '<name>', values), which keep them in name order with every declared field in declared order, then write fields one by one (e.mods.z = 1); never delete a field or assign undefined, and take a component away with w.remove: a restore rebuilds entities in that order, so code iterating one sees the same order
+- Registered in: [`engine/sim/entities.ts` line 44](../engine/sim/entities.ts)
+
+### SIM_BAD_REPLAY
+
+- Message: `{where}: {problem}`
+- Fix: write the replay as tests/replays/README.md shows ({ format, scene, settings, seed, hz, steps, inputs: [[step, change]…], hashes: { platform: { step: hash } } }), or record it from a session; settings marked view never go in a replay
+- Registered in: [`engine/sim/replay.ts` line 53](../engine/sim/replay.ts)
+
+Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step runs: an unknown key (named with the closest), a wrong format tag, a seed that is not a whole number from 0, a change-point out of order or at or past `steps`, a bad intent, setting or dev action, a platform key that is not `<os>-<arch>` as Node names them (named with the closest), goldens that do not cover the run (none, or none for the last step), a step key not written plainly, a hash that is not 16 hex digits, a step rate other than the world's, or a view setting.
+
+### SIM_BAD_SEED
+
+- Message: `{where} got the seed {value}, which a replay cannot hold`
+- Fix: pass a whole number, 0 or more (x sim --seed 3, __engine.seed(3)): record() writes the seed into the replay
+- Registered in: [`engine/sim/scene.ts` line 71](../engine/sim/scene.ts)
+
+### SIM_BAD_SYSTEM
+
+- Message: `system {name}: {problem}`
+- Fix: add each system once, by a unique name: w.systems.add('<name>', (w, intents) => { … }, { phase }), the phase one of intents, ai, anim, physics, readback, rules
+- Registered in: [`engine/sim/systems.ts` line 35](../engine/sim/systems.ts)
+
+Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empty or duplicate name, a run that is not a function, an unknown phase (named with the closest one), or removing a system that was never added.
+
+### SIM_BUSY
+
+- Message: `{what} was called during a step`
+- Fix: call step(), run(), capture() and restore() between steps; inside a system, change the world directly (spawn, despawn and emit queue to the end of the step)
+- Registered in: [`engine/sim/world.ts` line 62](../engine/sim/world.ts)
+
+### SIM_EDITED_CAPTURE
+
+- Message: `the capture the session of {scene} took at step {step} was changed since (it hashes {now}, not {then})`
+- Fix: restore it unchanged, then make the change through the session so record() replays it: session.set(path, value) (__engine.set) for a setting, a dev action (session.act(name, args)) for components
+- Registered in: [`engine/sim/scene.ts` line 67](../engine/sim/scene.ts)
+
+### SIM_EVENT_STORM
+
+- Message: `the end of step {tick} was still delivering events and spawns after {rounds} rounds`
+- Fix: break the loop: a listener that emits the event it listens to, or spawns what spawns it again, never settles; act on such chains one step at a time (store a pending flag in a component and let a system handle it next step)
+- Registered in: [`engine/sim/world.ts` line 71](../engine/sim/world.ts)
+
+### SIM_FOREIGN_CAPTURE
+
+- Message: `restore() was given a capture the session of {scene} did not take`
+- Fix: restore what this session's capture() (__engine.capture()) returned, the object itself: the session knows where its recording stood then; the world's own captures, another session's and copies have no place in it, so reach other state by starting the scene again (__engine.seed(n)) or playing a replay
+- Registered in: [`engine/sim/scene.ts` line 63](../engine/sim/scene.ts)
+
+### SIM_NO_ACTION
+
+- Message: `the scene {scene} has no dev action {name} ({suggestion})`
+- Fix: add it to the scene: defineScene('{scene}', { actions: { {name}(w, args) { … } } }), or call one it has
+- Registered in: [`engine/sim/scene.ts` line 55](../engine/sim/scene.ts)
+
+### SIM_NO_CALLBACKS
+
+- Message: `the capture has {count} pending timers, whose callbacks {why}`
+- Fix: restore a capture with pending timers from the object capture() returned, into the world that made it: callbacks are functions, which never survive serialization or move between worlds; to save play as text, keep delays in component fields (a tick count a system checks)
+- Registered in: [`engine/sim/capture.ts` line 55](../engine/sim/capture.ts)
+
+### SIM_NO_ENTITY
+
+- Message: `there is no entity {id}{why}`
+- Fix: use an id spawn() returned while its entity lives (w.has(id) tells): a spawned entity joins the world at the end of the step that spawned it, so give it its components in spawn(); a despawned one leaves at the end of its step
+- Registered in: [`engine/sim/world.ts` line 58](../engine/sim/world.ts)
+
+### SIM_NOT_DATA
+
+- Message: `{path} is {what}; component fields hold plain data`
+- Fix: store numbers, strings, booleans, null, arrays or plain objects (a direction as x, y, z numbers or an [x, y, z] list) and build the Vector3 or typed array inside the system that uses it; hold another entity by its id, never the object
+- Registered in: [`engine/sim/entities.ts` line 39](../engine/sim/entities.ts)
+
+Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities.ts, engine/sim/state.ts, engine/sim/capture.ts) for a component field holding a class instance (a three.js `Vector3`, a `Map`), a typed array, a function, `undefined` or a cycle: captures copy plain data and text restores it, so such a value would come back changed or shared (ADR-0006 amendment 3). `defineComponent` refuses such a default as `CORE_BAD_SPEC`.
+
+### SIM_OFF_RECORD
+
+- Message: `the world took {count} steps outside its session, so the recording misses their intents`
+- Fix: step a recorded scene through session.step(intents), never world.step(); capture and restore it through session.capture() and session.restore(capture), never the world
+- Registered in: [`engine/sim/scene.ts` line 59](../engine/sim/scene.ts)
+
+### SIM_SHARED_DATA
+
+- Message: `{path} is the same object as {other}`
+- Fix: give each place its own data: copy it ({ ...values }, [...list]) or hold the other entity by its id and read it through w.get(id); a capture copies each place separately, so a shared object would come back as two
+- Registered in: [`engine/sim/entities.ts` line 48](../engine/sim/entities.ts)
+
+### SIM_UNDECLARED_FIELD
+
+- Message: `entity {id} has {name}.{field}, a field the component kind {name} does not declare{suggestion}`
+- Fix: declare the field in defineComponent({name}, { fields }) or stop writing it: the hash and captures read the declared fields only, so an undeclared one would let two different states match
+- Registered in: [`engine/sim/state.ts` line 52](../engine/sim/state.ts)
+
+### SIM_UNKNOWN_COMPONENT
+
+- Message: `{name} is not a component kind{suggestion}`
+- Fix: declare it with defineComponent({name}, { description, fields }) before an entity holds it (node x describe component lists the declared kinds)
+- Registered in: [`engine/sim/state.ts` line 47](../engine/sim/state.ts)
+
+Raised by the world (engine/sim/world.ts) and the hash (engine/sim/state.ts) for an entity property, a `spawn`, `add`, `remove` or `query` name, or a captured component that no `defineComponent` declared: the hash covers declared components only, so an undeclared one is refused rather than skipped.

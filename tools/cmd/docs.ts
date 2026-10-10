@@ -8,15 +8,18 @@
  *   (tools/lib/docsPaths.ts says what counts);
  * - a module has no file comment, or one over 40 lines; an export has no doc comment (a default export is
  *   documented by the file comment); a public export (anything `engine/index.ts` or `engine/sim-api.ts` exports,
- *   followed to its declaration) has none; or a code registered with `defineCodes` lacks its template or fix, or is
- *   registered twice (tools/lib/docs.ts gives the form);
+ *   followed to its declaration) has none; a code registered with `defineCodes` lacks its template or fix, or is
+ *   registered twice; or a kind declared with `defineKind` cannot be read, or is declared twice (tools/lib/docs.ts
+ *   gives the forms);
  * - INDEX, API or ERRORS differ from what `--write` would write;
+ * - `__engine.help()` differs from the inspector's real members (tools/lib/docsHelp.ts);
  * - `docs/PROGRESS.md` is missing or longer than 40 lines (it is one screen, read first by every session).
  *
- * `--write` regenerates INDEX, API and ERRORS, then runs the same checks except the examples.
+ * `--write` regenerates INDEX, API and ERRORS, then runs the same checks except the examples and `help()`.
  *
- * `x check` runs everything but the examples as its `docs` plugin (T0 stays fast); in an ultracode lane its
- * failures are warnings, since the integrator regenerates (§11.3). T1 runs the examples (tests/unit/examples.test.ts).
+ * `x check` runs everything but the examples and `help()` as its `docs` plugin (T0 stays fast: both load modules); in
+ * an ultracode lane its failures are warnings, since the integrator regenerates (§11.3). T1 runs the examples
+ * (tests/unit/examples.test.ts) and the `help()` check (engine/dev/inspector.test.ts).
  *
  * Usage: node x docs [--check | --write]. Exit 0 when every check passes, 1 otherwise.
  * @see tools/cmd/docs.test.ts
@@ -26,6 +29,7 @@ import { join } from 'node:path';
 import { readModules, resolveExports, type ModuleDoc } from '../lib/docs';
 import { runExamples } from '../lib/docsExamples';
 import { BARRELS, GENERATED, generateDocs } from '../lib/docsGenerate';
+import { checkHelp } from '../lib/docsHelp';
 import { checkPaths, type PathOptions } from '../lib/docsPaths';
 import type { Finding } from '../lib/report';
 import { UsageError, type Command, type CommandResult } from '../x';
@@ -82,6 +86,24 @@ export function checkComments(root: string, modules: readonly ModuleDoc[]): Find
     }
     seen.set(entry.code, first ?? at);
   }
+  const declared = new Map<string, string>();
+  for (const entry of modules.flatMap((module) => module.kinds)) {
+    const at = `${entry.module}:${entry.line}`;
+    for (const problem of entry.problems) {
+      failures.push({
+        id: 'DOCS_KIND',
+        message: `kind ${entry.kind}: ${problem}`,
+        file: entry.module,
+        line: entry.line,
+      });
+    }
+    const first = declared.get(entry.kind);
+    if (first) {
+      const message = `kind ${entry.kind} is declared twice, at ${first} and ${at}: declare each kind once`;
+      failures.push({ id: 'DOCS_KIND_DUPLICATE', message, file: entry.module, line: entry.line });
+    }
+    declared.set(entry.kind, first ?? at);
+  }
   return failures;
 }
 
@@ -127,7 +149,13 @@ export async function driftChecks(
     failures,
     warnings: paths.warnings,
     summary: `${modules.length} modules, ${exports} exports, ${codes} codes, ${paths.checked} paths; ${stale.length ? `${stale.length} stale` : 'generated docs current'}`,
-    metrics: { modules: modules.length, exports, codes, paths: paths.checked, stale: stale.length },
+    metrics: {
+      modules: modules.length,
+      exports,
+      codes,
+      paths: paths.checked,
+      stale: stale.length,
+    },
   };
 }
 
@@ -183,6 +211,12 @@ export function createDocsCommand(options: DocsOptions = {}): Command {
         });
         lines.push(
           `examples: ${ran.length} ran in Node${browser.length ? `; ${browser.length} flagged for T2: ${browser.join(', ')}` : ''}`,
+        );
+        const help = await checkHelp(root);
+        failures.push(...help.failures);
+        Object.assign(metrics, { 'help.members': help.members });
+        lines.push(
+          `help(): ${help.members} inspector members, ${help.failures.length ? 'drift' : 'matching the object'}`,
         );
       }
       return {

@@ -6,11 +6,14 @@ it cannot drift from them (PLAN.md §8.2, §8.8).
 ## The tiers
 
 - **T0, `npm run check`**: types, ESLint, Prettier and `node x check`, in parallel (`tools/checkAll.ts`) (the asset scan, the pins, docs drift). Run
-  it after every edit.
-- **T1, `npm test`**: Vitest in Node. Unit tests sit beside their modules (`name.test.ts`); the tools' tests, the
-  advice trap's harness tests and the `@example` blocks (tests/unit/examples.test.ts) run here too. Run it before
-  every commit, and `npm test -- <path>` while iterating.
-- **T2, `npm run e2e`**: Playwright Test suites in tests/e2e/, on the platform's Chromium with WebGPU on SwiftShader.
+  it after every edit. Its types are `npm run typecheck`: `tsc -b` over the projects tsconfig.check.json lists, which
+  reuses node_modules/.cache/tsc/ and so re-checks only what a change reaches; that file's comment says which project
+  a new file or directory joins. `npx tsc --noEmit` still checks the same files as one program, from scratch.
+- **T1, `npm test`**: Vitest in Node, one worker per core. Unit tests sit beside their modules (`name.test.ts`); the
+  tools' tests, the advice trap's Vitest harness test and the `@example` blocks (tests/unit/examples.test.ts) run
+  here too. Run it before every commit, and `npm test -- <path>` while iterating. Nothing in T1 drives a browser.
+- **T2, `npm run e2e`**: Playwright Test suites in tests/e2e/, on the platform's Chromium with WebGPU on SwiftShader,
+  and every other test that needs Chromium (the advice trap's Playwright harness test, tests/e2e/adviceTrap.spec.ts).
   Run it before every push.
 - **Long runs**: long replays, the crowd ladder, flake hunting; at each gate.
 
@@ -44,5 +47,6 @@ to.
   `tests/pages/<suite>.html` (vite.config.ts serves it). Set `PORT` when another dev server is running.
 - **A test that reads the sources** calls `requireSource()` (tools/lib/source.ts); offline it is skipped and reported
   as `deferred: no source`.
-- **A test that spawns Vitest or Playwright** removes the `VITEST*` variables from the child's environment.
+- **A test that spawns Vitest or Playwright** removes the `VITEST*` variables (and, in a spec, Playwright's worker
+  variables) from the child's environment. One that drives Chromium is a spec in tests/e2e/, not a Vitest test.
 - Tests step a virtual clock and never wait on wall-clock time. Never skip, disable or loosen a test to get green.

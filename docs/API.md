@@ -9,11 +9,356 @@ Each export with the first sentence of its doc comment; the comment itself, at t
 Game code imports only `engine/index.ts` (pages) and `engine/sim-api.ts` (sim-side code), so this part is the
 game agent's manual.
 
-Neither barrel exists yet.
+### [`engine/index.ts`](../engine/index.ts)
+
+- `angDiff` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The signed angle from `a` to `b` the short way round, in [−π, π).
+- `approach` (function from [`engine/core/math.ts`](../engine/core/math.ts)): `a` moved toward `b` by at most `step` (≥ 0), never past it.
+- `approachAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `a` turned toward `b` by at most `step` (≥ 0) the short way round; exactly `b` once within reach.
+- `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
+- `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
+- `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
+- `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
+- `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
+- `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
+- `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
+- `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
+- `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
+- `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
+- `EngineInfo` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): What `info()` reports: the engine's identity and health, and the run.
+- `Entity` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity: its id and the components it holds, by kind name (`e.position`).
+- `EntitySummary` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): One entity as `entities()` lists it: its id and the components it holds.
+- `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
+- `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
+- `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
+- `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
+- `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
+- `Headless` (type from [`engine/app/headless.ts`](../engine/app/headless.ts)): A headless engine: `__engine`'s members, over a scene running in this process.
+- `HeadlessOptions` (interface from [`engine/app/headless.ts`](../engine/app/headless.ts)): How a headless engine starts.
+- `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
+- `Inspector` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): The inspector, `window.__engine` in a page and what `createHeadless` returns: `help()` lists every member.
+- `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
+- `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
+- `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
+- `Kind` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): A declared kind, bound: the same as the registry's functions with the kind filled in, typed by its schema.
+- `KindSpec` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): How a kind is declared.
+- `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
+- `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
+- `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
+- `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
+- `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
+- `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
+- `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
+- `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
+- `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
+- `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
+- `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
+- `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
+- `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
+- `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
+- `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
+- `SettingValue` (type from [`engine/core/settings.ts`](../engine/core/settings.ts)): A setting's value: plain data.
+- `SimRng` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
+- `SimSettings` (interface from [`engine/core/settings.ts`](../engine/core/settings.ts)): What sim-side code reads settings through (`w.settings` in a scene): no view settings, no writes.
+- `smoothDamp` (function from [`engine/core/math.ts`](../engine/core/math.ts)): A critically damped spring toward `target` (Game Programming Gems 4's, as Unity's `SmoothDamp`): reaches it in about `smoothTime` seconds without overshoot.
+- `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
+- `Sphere` (re-export from `three/webgpu`): three.js's sphere.
+- `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
+- `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
+- `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
+- `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
+- `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
+- `World` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
+- `WorldEvents` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
+- `WorldTimers` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
+
+### [`engine/sim-api.ts`](../engine/sim-api.ts)
+
+- `angDiff` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The signed angle from `a` to `b` the short way round, in [−π, π).
+- `approach` (function from [`engine/core/math.ts`](../engine/core/math.ts)): `a` moved toward `b` by at most `step` (≥ 0), never past it.
+- `approachAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `a` turned toward `b` by at most `step` (≥ 0) the short way round; exactly `b` once within reach.
+- `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
+- `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
+- `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
+- `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
+- `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
+- `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
+- `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
+- `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
+- `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
+- `Entity` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity: its id and the components it holds, by kind name (`e.position`).
+- `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
+- `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
+- `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
+- `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
+- `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
+- `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
+- `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
+- `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
+- `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
+- `Kind` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): A declared kind, bound: the same as the registry's functions with the kind filled in, typed by its schema.
+- `KindSpec` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): How a kind is declared.
+- `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
+- `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
+- `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
+- `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
+- `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
+- `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
+- `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
+- `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
+- `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
+- `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
+- `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
+- `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
+- `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
+- `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
+- `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
+- `SettingValue` (type from [`engine/core/settings.ts`](../engine/core/settings.ts)): A setting's value: plain data.
+- `SimRng` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
+- `SimSettings` (interface from [`engine/core/settings.ts`](../engine/core/settings.ts)): What sim-side code reads settings through (`w.settings` in a scene): no view settings, no writes.
+- `smoothDamp` (function from [`engine/core/math.ts`](../engine/core/math.ts)): A critically damped spring toward `target` (Game Programming Gems 4's, as Unity's `SmoothDamp`): reaches it in about `smoothTime` seconds without overshoot.
+- `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
+- `Sphere` (re-export from `three/webgpu`): three.js's sphere.
+- `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
+- `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
+- `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
+- `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
+- `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
+- `World` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
+- `WorldEvents` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
+- `WorldTimers` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
 
 ## Engine internals and tools
 
 For the agents who maintain the engine.
+
+### [`engine/app/headless.ts`](../engine/app/headless.ts)
+
+- `createHeadless` (function): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
+- `Headless` (type): A headless engine: `__engine`'s members, over a scene running in this process.
+- `HEADLESS_CODES` (const): The codes this module raises, with their fixes.
+- `headlessHost` (function): The run behind a headless engine: its session (world, settings, recording) and clock.
+- `HeadlessOptions` (interface): How a headless engine starts.
+
+### [`engine/core/color.ts`](../engine/core/color.ts)
+
+- `COLOR_CODES` (const): The codes this module raises, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `ColorInput` (type): A colour as given to the helpers: a hex string, or bytes.
+- `fromLinear` (function): Linear RGB floats as `#rrggbb` (sRGB, rounded and clamped), as three.js's `Color.getHexString` writes them.
+- `hex` (function): A hex colour (or bytes, of which the first three are kept) as bytes.
+- `hsl` (function): Hue (degrees, any value), saturation and lightness (clamped to 0–1) as `#rrggbb`.
+- `mix` (function): The colour `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), mixed per byte.
+- `ramp` (function): `n` colours from dark to light around a colour (hue-shifted like `tones`), for palettes and gradients.
+- `Rgb` (type): A colour as three bytes, 0–255 (fractions allowed): red, green, blue.
+- `shade` (function): A darker (`amount` < 0, down to −1) or lighter (> 0, up to 1) version of a colour, hue-shifted as painted pixel art is: darker drifts toward blue-violet, lighter toward warm yellow; greys only darken or lighten.
+- `toHex` (function): Bytes as `#rrggbb`, each rounded and clamped to 0–255.
+- `toHsl` (function): A colour as `[hue in degrees 0–360, saturation 0–1, lightness 0–1]`.
+- `toLinear` (function): A colour as linear RGB floats (0–1), as three.js's `Color` holds a hex given to it: for shaders and instances.
+- `tones` (function): Five shades of a colour for painted-looking art: shadows drift toward blue-violet, highlights toward warm yellow, by `strength` (0–2, default 1).
+- `Tones` (interface): The five shades of `tones`: deep shadow, shadow, the base itself, light and highlight.
+
+### [`engine/core/events.ts`](../engine/core/events.ts)
+
+- `createEvents` (function): Makes an emitter.
+- `EVENT_CODES` (const): The codes this module raises, with their fixes.
+- `EventMap` (type): Event type → payload type.
+- `Events` (interface): A typed emitter: `on`, `once`, `off`, `emit`, scopes and the trace.
+- `EventsOptions` (interface): How an emitter is made: the log its failures go to (the shared one) and how many emits it traces (256).
+- `EventsSnapshot` (interface): The listeners and scopes of an emitter at one moment: `restore` puts them back (see the file comment).
+- `Listener` (type): A listener of one event type.
+- `RegistrationInfo` (interface): One registration as a snapshot lists it: its event type, whether it runs once, and its scope's label.
+- `Scope` (interface): Listeners that leave together: `dispose()` removes every one added through this scope or its children.
+- `TraceRecord` (interface): One traced emit.
+
+### [`engine/core/hash.ts`](../engine/core/hash.ts)
+
+- `Canonical` (type): A value the canonical form holds; see the file comment.
+- `deserialize` (function): Reads text written by `serialize` back into plain data (arrays for typed arrays and math classes).
+- `Fnv64` (class): The 64-bit FNV-1a hash, fed piece by piece: `new Fnv64().number(x).string(id).hex()`.
+- `HASH_CODES` (const): The codes this module raises, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `hashNumbers` (function): The 64-bit FNV-1a digest of numbers by their float64 bits, as 16 hex digits: equal state, equal hash.
+- `hashValue` (function): The 64-bit FNV-1a digest of a canonical value (plain data, keys in any order), as 16 hex digits.
+- `MAX_DEPTH` (const): How deep the canonical form nests before it is refused as a cycle.
+- `mix32` (function): murmur3's 32-bit finaliser: spreads every bit of an int over every bit of the unsigned result.
+- `serialize` (function): The canonical text of a value: JSON with object keys sorted, no spaces, numbers exact (the shortest round-trip form, `-0` kept), typed arrays and `toArray()` values as arrays.
+
+### [`engine/core/log.ts`](../engine/core/log.ts)
+
+- `AdviceRecord` (interface): One piece of advice the log printed: its code, what it is about, its first message and fix, and how often.
+- `closest` (function): The candidates closest to `wanted`, best first, at most `count`: a case-insensitive match, then names one starts with the other or ending in `.wanted` (`runSpeed` finds `hero.runSpeed`), then those a few edits away (one per three letters, at least one; a swap of neighbours is one edit).
+- `codeError` (function): An `EngineError` for `code`, to throw: `throw codeError('CORE_NO_ENTRY', { kind, id })`.
+- `codeInfo` (function): The registered code `code`, or undefined.
+- `CodeInfo` (interface): A registered code: its text, its name and its area.
+- `CodeText` (interface): One code's text: the message (`{name}` marks a value), what to do about it, and more detail for docs/ERRORS.md.
+- `CodeValues` (type): The values a template's `{name}` markers are filled with.
+- `createLog` (function): Makes a log; `log` is the engine's shared one.
+- `defineCodes` (function): Registers a module's codes and returns the table as given, typed.
+- `didYouMean` (function): ` (did you mean "a" or "b"?)` for the names closest to `wanted`, or `''` when none is close.
+- `EngineError` (class): A thrown engine error: its code, the filled message, the code's fix and the values that filled it.
+- `ErrorRecord` (interface): One structured error: its code, message, fix and values, how often it happened, and its cause when there was one.
+- `fill` (function): `template` with each `{name}` replaced by `values.name` (a marker without a value stays as written).
+- `listCodes` (function): Every registered code, sorted by name.
+- `log` (const): The engine's shared log: registry, events and settings report through it unless given another.
+- `Log` (interface): Warn-once advice and structured errors, with what was raised kept for `__engine.advice` and `__engine.errors`.
+- `LOG_CODES` (const): The codes this module raises, with their fixes.
+- `LogConsole` (interface): Where a log prints; tests pass their own to keep the console quiet.
+- `LogOptions` (interface): How a log is made: where it prints (the console by default) and how many errors and advice records it keeps.
+
+### [`engine/core/math.ts`](../engine/core/math.ts)
+
+- `angDiff` (function): The signed angle from `a` to `b` the short way round, in [−π, π).
+- `approach` (function): `a` moved toward `b` by at most `step` (≥ 0), never past it.
+- `approachAng` (function): The angle `a` turned toward `b` by at most `step` (≥ 0) the short way round; exactly `b` once within reach.
+- `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
+- `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
+- `ease` (const): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
+- `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
+- `lerpAng` (function): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
+- `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
+- `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
+- `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
+- `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
+- `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
+- `smoothDamp` (function): A critically damped spring toward `target` (Game Programming Gems 4's, as Unity's `SmoothDamp`): reaches it in about `smoothTime` seconds without overshoot.
+- `Sphere` (re-export from `three/webgpu`): three.js's sphere.
+- `swingTwist` (function): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
+- `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
+
+### [`engine/core/noise.ts`](../engine/core/noise.ts)
+
+- `createNoise2D` (function): A seeded 2D noise of `kind` (gradient by default); see the file comment for ranges, tiling and octaves.
+- `createNoise3D` (function): A seeded 3D noise of `kind` (gradient by default); see the file comment for ranges, tiling and octaves.
+- `hash2` (function): my-3d2dge's integer hash of a lattice point: a number in [0, 1), bit-exact.
+- `NOISE_CODES` (const): The codes this module raises, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `noise2` (function): my-3d2dge's value noise: smoothstep between `hash2` lattice values, in [0, 1], bit-exact.
+- `Noise2D` (type): A 2D noise: a pure function of the point.
+- `Noise3D` (type): A 3D noise: a pure function of the point.
+- `NoiseKind` (type): The kinds of noise: value (lattice values), gradient (Perlin's) and cell (Worley's F1 distance).
+- `NoiseOptions` (interface): How a noise is made; every field is optional.
+
+### [`engine/core/registry.ts`](../engine/core/registry.ts)
+
+- `createRegistry` (function): Makes an empty registry; `registry` is the engine's shared one.
+- `def` (function): Defines an entry on the shared registry (`Registry.def`).
+- `defineKind` (function): Declares a kind on the shared registry (`Registry.defineKind`).
+- `Entry` (type): A registry entry: the parsed spec plus its `id` and `kind`.
+- `EntryDescription` (interface): What `describe(kind, id)` returns: each field's value, marked where it differs from the default.
+- `get` (function): Reads an entry from the shared registry (`Registry.get`).
+- `has` (function): Whether the shared registry's kind has the id (`Registry.has`).
+- `Kind` (interface): A declared kind, bound: the same as the registry's functions with the kind filled in, typed by its schema.
+- `KindDescription` (interface): What `describe(kind)` returns: the kind's fields and ids.
+- `KindsDescription` (interface): What `describe()` returns: every kind, with its entry count.
+- `KindSpec` (interface): How a kind is declared.
+- `list` (function): The shared registry's entries of a kind, sorted by id (`Registry.list`).
+- `registry` (const): The engine's shared registry: what `x describe` and `__engine.describe()` list.
+- `Registry` (interface): A set of kinds and their entries.
+- `REGISTRY_CODES` (const): The codes this module raises, with their fixes.
+- `sameValue` (function): Deep equality of plain data (arrays, plain objects, numbers by `Object.is`).
+
+### [`engine/core/rng.ts`](../engine/core/rng.ts)
+
+- `derive` (function): A seed derived from `seed` and `keys` (strings or numbers), as an unsigned 32-bit integer: the 64-bit FNV-1a hash of `[seed, …keys]` in canonical form, folded and mixed.
+- `Rng` (class): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
+- `RngStreams` (class): Named streams from one seed (the scene's): `stream('ai')`, `entity(7, 'anim')`.
+
+### [`engine/core/schema.ts`](../engine/core/schema.ts)
+
+- `checkField` (function): The problems of one field definition (not of a value): the checks `defineSchema` runs on each field.
+- `checkValue` (function): Checks one value against its field, pushing each problem onto `problems`; returns the value with the defaults of nested objects filled (a copy when it is an array or a plain object, for any type, `any` included).
+- `copyValue` (function): A copy of arrays and plain objects (functions and other values as they are), so defaults are never shared.
+- `defineSchema` (function): Checks a schema's fields and returns it unchanged; throws `CORE_BAD_SCHEMA` naming every problem.
+- `describeSchema` (function): A schema as plain, JSON-ready rows, in its own key order (for `x describe` and `__engine.describe`).
+- `EntryOf` (type): What `parse` returns for schema `S`: required fields and fields with a default are always present.
+- `Field` (interface): One field: what its values are, documented.
+- `FIELD_TYPES` (const): Every `FieldType`, in documentation order.
+- `FieldRow` (type): One field as `describe` lists it: its keywords, with a function default shown as `'function'`.
+- `FieldType` (type): The value types: JSON's, plus `integer`, `function` (a hook) and `any`.
+- `freezeValue` (function): Freezes arrays and plain objects all the way down (other values as they are) and returns `value`: stored data.
+- `isPlainObject` (function): True for `{}` literals and `Object.create(null)`.
+- `listProblems` (function): Joins problems into one sentence list for an error message.
+- `parse` (function): `validate`, throwing `CORE_BAD_SPEC` with every problem when there is one; `where` names the spec in the message.
+- `Problem` (interface): One thing wrong with a spec or a schema: where (`roughness`, `layers[2].color`) and a plain sentence.
+- `Schema` (type): A schema: field name → field.
+- `SCHEMA_CODES` (const): The codes this module raises, with their fixes.
+- `show` (function): How a value reads in a message: strings quoted, other values as JSON would write them.
+- `SpecOf` (type): What `parse` and `def` accept for schema `S`: the required fields, and any of the others.
+- `suggestKey` (function): ` (write minimum)` for a word the language spells differently, else the closest of `keys`, else `''`.
+- `validate` (function): Checks `input` against `schema`: the filled value (every given key plus absent defaults) and every problem found.
+- `ValueOf` (type): The TypeScript type of a field's values.
+- `When` (type): When a change takes effect: at once, for what spawns next, or when the scene next starts.
+
+### [`engine/core/settings.ts`](../engine/core/settings.ts)
+
+- `createSettings` (function): Makes a settings store over `registry`'s settings, each at its default.
+- `defineSettings` (function): Declares settings, path → field, on `registry` (the shared one by default).
+- `SettingChange` (interface): What `set` reports: the new and previous values, and when the change takes effect.
+- `SettingRow` (interface): One setting as `describe` lists it.
+- `Settings` (interface): A settings store over the `setting` entries of a registry.
+- `SETTINGS_CODES` (const): The codes this module raises, with their fixes.
+- `SettingsOptions` (interface): How a store is made: the registry whose `setting` entries it serves (the shared one by default).
+- `SettingValue` (type): A setting's value: plain data.
+- `SimSettings` (interface): What sim-side code reads settings through (`w.settings` in a scene): no view settings, no writes.
+
+### [`engine/core/simMath.ts`](../engine/core/simMath.ts)
+
+- `inSimMath` (function): True while a `withSimMath` call is running.
+- `SIM_MATH` (const): What the swap puts into `Math`, by function name (PLAN.md §6.5): the functions that differ between runtimes.
+- `SIM_MATH_CODES` (const): The codes this module raises, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `SIM_MATH_NAMES` (const): Every swapped name, in `SIM_MATH`'s order.
+- `SimMathEntry` (interface): A `Math` function the sim swaps: its pure-JavaScript port, the npm package it comes from, and the native one.
+- `SimMathName` (type): The names of the swapped `Math` functions.
+- `withSimMath` (function): Runs `fn` with the fdlibm ports in `Math` and returns its result; the previous functions are back afterwards, whether `fn` returns or throws; a `fn` that returns a promise throws `CORE_SIM_ASYNC`.
+
+### [`engine/core/time.ts`](../engine/core/time.ts)
+
+- `Clock` (interface): Turns frame timestamps into fixed steps: the accumulator, the time scale, slowdowns, hit-stop and pause.
+- `ClockOptions` (interface): How a clock is made.
+- `ClockState` (interface): The clock's state as plain data, for the inspector and tests (never hashed: it changes no step).
+- `createClock` (function): Makes a frame clock; it reads `time.*` from its settings store on every frame.
+- `createVirtualClock` (function): Makes a virtual clock starting at `start` milliseconds.
+- `Frame` (interface): What one `advance` hands out.
+- `SIM_DT` (const): One sim step in seconds, 1/60.
+- `SIM_HZ` (const): The sim's steps per second: gameplay time is counted in 60 Hz ticks (ADR-0005).
+- `TIME_CODES` (const): The codes this module raises, with their fixes.
+- `TIME_SETTINGS` (const): The time settings, path → field; `defineSettings(TIME_SETTINGS, registry)` declares them on another registry.
+- `VirtualClock` (interface): A clock for tests that moves only when told: `now()` in milliseconds, as a page's timestamps are.
+
+### [`engine/core/timers.ts`](../engine/core/timers.ts)
+
+- `advanceEntityClock` (function): Advances `clock` by the world's (or its owner's) `dt` seconds and returns the entity's own dt for this step.
+- `createEntityClock` (function): Makes an entity clock running at `rate`.
+- `createTimers` (function): Makes timers counting ticks at `hz` steps per second (`time.hz`, 60 by default).
+- `EntityClock` (interface): A per-entity clock: plain numbers a component holds, so captures and the hash take it as data.
+- `freezeEntityClock` (function): Freezes `clock` for `seconds` of world time; a longer freeze already running is kept.
+- `Timer` (interface): A timer's handle.
+- `TimerCallback` (type): What a timer calls: it gets its own handle, so `every` can cancel itself.
+- `Timers` (interface): Timers in sim time; the world steps them once per sim step.
+- `TimersCapture` (interface): The timers with their callbacks, for `restore` in the same process.
+- `TimersState` (interface): The timers as plain numbers, for the hash, in firing order: `[id, due tick, period in ticks (0 for one-shot), start tick, firings so far]`.
+
+### [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)
+
+- `CORE_MEMBERS` (const): The core members (PLAN.md §8.3, WP 1.6), registered on the shared registry when this module loads.
+- `CoreMembers` (type): The core members' table, one spec per member the `Inspector` interface names: tsc refuses one missing or extra.
+- `createInspector` (function): Assembles `__engine` on `host` from the members registered on `host.members` (see the file comment).
+- `EngineInfo` (interface): What `info()` reports: the engine's identity and health, and the run.
+- `EntitySummary` (interface): One entity as `entities()` lists it: its id and the components it holds.
+- `Inspector` (interface): The inspector, `window.__engine` in a page and what `createHeadless` returns: `help()` lists every member.
+- `INSPECTOR_CODES` (const): The codes this module raises, with their fixes.
+
+### [`engine/dev/members.ts`](../engine/dev/members.ts)
+
+- `defineMember` (function): Registers an inspector member on `registry` (the shared one by default).
+- `helpText` (function): `help()`: every member, one line each (signature, then help); with a name, that member and its arguments.
+- `InspectorHost` (interface): What a member works on: the run behind `__engine`, a page's or `createHeadless`'s.
+- `Member` (type): A registered member: its spec with defaults filled, plus `id` (its name) and `kind`.
+- `memberKind` (function): Declares the kind `inspectorMember` on `registry` unless it has it.
+- `MemberSpec` (interface): How a member is written: `defineMember(name, spec)` or `def('inspectorMember', name, spec)`.
+- `recordedRun` (function): `session` as members reach it (`InspectorHost.session`): a frozen view that forwards the recorded operations and reads.
+- `RecordedRun` (type): The run as members reach it: the session's recorded operations, scene and settings store, and the world read-only.
+- `signatureOf` (function): How a member is called: `step(n = 1, intents?)`, `get(id)`, or `errors` for a value member.
+- `WorldReads` (type): The world as members read it: its reads, none of its mutators (members change the sim through the session).
 
 ### [`engine/gfx/renderer.ts`](../engine/gfx/renderer.ts)
 
@@ -24,6 +369,135 @@ For the agents who maintain the engine.
 - `GfxError` (class): A renderer failure: its code, the message from the code's template, and the code's fix.
 - `GfxInfo` (interface): What the renderer reports about itself (the start of `__engine.info()`, PLAN.md §8.3).
 - `requestWebGPU` (function): Asks `gpu` (by default the browser's `navigator.gpu`) for an adapter; rejects with `GfxError` `GFX_NO_WEBGPU` when there is no WebGPU or no adapter.
+
+### [`engine/input/intents.ts`](../engine/input/intents.ts)
+
+- `applyIntents` (function): The next step's intents: `prev`'s held keys with `change` applied (`null` clears a key), then normalized with `prev` as the step before, so `p` is the change's presses plus the new edges of `b`.
+- `CustomIntentKey` (type): A namespaced key for game code's own intents: `'game:charge'`.
+- `diffIntents` (function): The change-point from `prev` to `next` (both normalized, `prev` the step before): each held key whose value changed, `null` for one that went away, and `p` only for presses the edges of `b` do not explain.
+- `fromCamera` (function): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
+- `held` (function): Whether `button` is held this step.
+- `INTENT_CODES` (const): The codes this module raises, with their fixes.
+- `INTENT_KEYS` (const): The built-in keys, in the order a normalized object holds them, each with what it means.
+- `IntentChanges` (type): A replay change-point's intent part: the keys that changed, `null` for a key cleared, `p` for unexplained presses.
+- `IntentKey` (type): A built-in key.
+- `Intents` (type): One step's intents, as the sim reads them (systems get them as their second argument).
+- `IntentValue` (type): A custom intent's value: plain data, as a replay file holds it.
+- `NO_INTENTS` (const): No intents: what a step gets when nothing is given.
+- `normalizeIntents` (function): Checks `raw` and returns the step's intents: frozen, keys in order (built-ins, then custom keys sorted), buttons sorted, `p` widened by the edges of `b` since `previous` (the step before; none at the start).
+- `pressed` (function): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
+
+### [`engine/sim/capture.ts`](../engine/sim/capture.ts)
+
+- `CAPTURE_CODES` (const): The codes this module raises, with their fixes.
+- `CAPTURE_FORMAT` (const): The capture format tag; a change to what captures hold changes it.
+- `CaptureSource` (interface): What a capture is made from: the world's parts, read between steps.
+- `cloneData` (function): A deep copy of plain data: arrays, plain objects (undefined values left out), typed arrays and values with `clone()` (three.js's math classes); anything else throws `CORE_NOT_CANONICAL`.
+- `makeCapture` (function): Makes a capture from a world's parts: copies of everything, the code held aside.
+- `readCapture` (function): Checks `capture` for the world `target` and returns a copy ready to apply.
+- `Restoration` (interface): A checked capture, copied, ready for the world to apply; `systems` and `listeners` only for its own world.
+- `RestoreTarget` (interface): The world a capture is read for: itself, its component kinds, physics, step rate, setting paths and schedule.
+- `ScheduleData` (interface): The world's code as data: systems as `phase:name` in run order, listeners as `type` or `type (once)`.
+- `scheduleOf` (function): The schedule of `systems` and a listener snapshot, as data.
+- `WorldCapture` (interface): The whole sim at a step boundary, as plain data (code held aside; see the file comment).
+
+### [`engine/sim/entities.ts`](../engine/sim/entities.ts)
+
+- `capturable` (function): The entities copied for a capture: plain data only (`SIM_NOT_DATA`) and no object in two places (`SIM_SHARED_DATA`): a capture copies each place separately, so a shared object would come back as two.
+- `componentNames` (function): The component names of an entity, in name order, after checking each is a declared kind (`SIM_UNKNOWN_COMPONENT`) holding a plain object (`SIM_NOT_DATA`).
+- `eachField` (function): Calls `visit(key, value)` for each field of the entity's component `name`, in declared order, after checking it holds exactly the declared `fields`, each defined (`SIM_UNDECLARED_FIELD`, `SIM_BAD_COMPONENT`); a `live` component must also hold them in declared order, while a stored one is read in that order whatever its key order.
+- `ENTITY_CODES` (const): The codes this module raises, with their fixes.
+- `LiveEntity` (type): A live entity: its id fixed, its components writable.
+- `makeEntity` (function): A live entity with `id` (read-only) and the components of `data` (all but its id), in `data`'s order.
+- `notData` (function): Checks that `value` is plain data (null, booleans, numbers, strings, arrays and plain objects all the way down) and says where it is not; the path is built only for a refusal.
+- `NotData` (interface): Where a value stops being plain data, and what is there; undefined when it is all plain data.
+- `placeComponent` (function): Puts `component` on a live `entity` as `name`, keeping components in name order (later ones are put back after).
+
+### [`engine/sim/replay.ts`](../engine/sim/replay.ts)
+
+- `CHECKPOINT_STEPS` (const): Steps between checkpoint hashes when a replay names none (§6.5 item 6).
+- `checkpointsOf` (function): The steps a replay hashes: 0 and the last, plus those its goldens name (every platform's), else every 60.
+- `checkReplay` (function): Checks a replay's whole shape and returns it typed; throws `SIM_BAD_REPLAY` listing the first problems.
+- `firstDifference` (function): The first step at which two runs' hashes differ, over the steps both took; undefined when they agree.
+- `InputChange` (type): One change-point's content: intent keys, setting values and a dev action.
+- `InputEntry` (type): A change-point: after `step` steps, before the next.
+- `judgeRuns` (function): Judges runs (their hashes) of `replay` on `platform` (see `Verdict`).
+- `Parting` (interface): Where two runs part at one step: the parts and entities whose trace digests differ, and the first fields.
+- `partingOf` (function): Compares two runs' views of the same step: `trace()` digests by part and entity, then `diffStates`.
+- `PLATFORM_KEYS` (const): Every golden key a platform may have: `linux-x64`, `darwin-arm64`, …
+- `Playback` (interface): A played replay: its session (at the step it stopped) and the hashes it took, by step.
+- `PlayOptions` (interface): How a replay plays: where its scene is, which steps to hash, and where to stop.
+- `playReplay` (function): Plays a replay (checked first) from step 0 and hashes its checkpoints.
+- `Replay` (interface): A replay, as its file holds it (PLAN.md §8.4).
+- `REPLAY_CODES` (const): The codes this module raises, with their fixes.
+- `REPLAY_FORMAT` (const): The replay format tag; a change to what replays hold changes it.
+- `REPLAY_KEYS` (const): The keys a replay has, in file order.
+- `StepView` (interface): One run's view of a step, as `x replay --bisect` compares two.
+- `Verdict` (type): The verdict on runs of a replay (§6.5 item 8): against this platform's goldens when it has them (`mismatch` names the first run and step that miss), else, when another platform recorded it, the runs against each other (`other platform`, or `unstable` naming the first run that parts from run 0), else `none`.
+
+### [`engine/sim/scene.ts`](../engine/sim/scene.ts)
+
+- `checkSeed` (function): Returns `seed` (1 when absent; -0 as 0); throws `SIM_BAD_SEED` naming `where` unless it is a whole number from 0.
+- `createSession` (function): Starts a scene as a recorded session: `startScene`, plus the recording.
+- `defineScene` (function): Registers a scene on `registry` (the shared one by default) and returns it.
+- `getScene` (function): The scene `id` on `registry` (the shared one by default).
+- `isScene` (function): Whether `value` is a defined scene (an entry of kind `scene`), as a module exports it.
+- `Scene` (type): A defined scene: its spec with defaults filled, plus `id` and `kind`.
+- `SCENE_CODES` (const): The codes this module raises, with their fixes.
+- `SceneAction` (type): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
+- `SceneOptions` (interface): How a scene starts.
+- `SceneRun` (interface): A started scene: the scene, its world and its settings store.
+- `SceneSpec` (interface): How a scene is written: `defineScene(id, spec)`.
+- `Session` (interface): A started scene that records its inputs from step 0, so `record()` returns it as a replay.
+- `startScene` (function): Starts a scene (an id on the registry, or a scene): a new settings store with the scene's settings and then `options.settings` over the defaults, a world seeded with `options.seed`, the scene's `step` as the system `scene`, then its `setup`.
+
+### [`engine/sim/state.ts`](../engine/sim/state.ts)
+
+- `AnyComponents` (type): The components of an untyped world: any declared kind, by name.
+- `ComponentData` (type): One component's data: its fields by name, plain data (numbers, strings, booleans, null, arrays, plain objects).
+- `ComponentKind` (interface): A component kind as `defineComponent` stores it in the registry.
+- `ComponentOf` (type): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `componentTable` (function): The component table of `registry` (the shared one by default).
+- `ComponentTable` (interface): A registry's component kinds, read once each: their field lists and validated new values.
+- `defineComponent` (function): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
+- `diffStates` (function): Where two states part, field by field, at most `limit` differences: entities are matched by id (`entities.7` for an entity on one side only, `entities.7.position.x` for a field), the rest by key and index.
+- `Entity` (type): An entity: its id and the components it holds, by kind name (`e.position`).
+- `EntityData` (interface): An entity as plain data: its id and its components by kind name.
+- `hashState` (function): The digest of a state as 16 hex digits: what `world.hash()` returns.
+- `PhysicsHook` (interface): The physics part of the world's state, hashed and captured with the rest (WP 3.1 plugs Rapier in; §6.5 items 5–7).
+- `SpawnSpec` (type): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
+- `STATE_CODES` (const): The codes this module raises, with their fixes.
+- `STATE_FORMAT` (const): The hash format; changing what the hash reads changes this tag, and with it every golden.
+- `StateDifference` (interface): Where two states part: the path (`entities.7.position.x`) and each side's value (undefined when absent).
+- `StateView` (interface): What the hash reads, live or stored: the ids, entities (in id order), timers, settings, RNG states and the physics hook's state.
+- `traceState` (function): The per-part and per-entity digests of a state (the `hash` field is `hashState`'s; `live` as there).
+- `With` (type): An entity known to hold the components `K` (what `query` returns).
+- `WorldState` (interface): The sim as plain data: what `world.state()` returns and the hash covers.
+- `WorldTrace` (interface): Per-part and per-entity digests, so a mismatch names the part and the entity (PLAN.md §6.5 item 6).
+
+### [`engine/sim/systems.ts`](../engine/sim/systems.ts)
+
+- `createSystems` (function): Makes an empty schedule.
+- `Intents` (re-export): What the sim reads from outside in one step, recorded by replays (the vocabulary: engine/input/intents.ts).
+- `Phase` (type): A phase of the step.
+- `phaseIndex` (function): The place of `phase` in the step (`timers` sits just before `rules`).
+- `PHASES` (const): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
+- `STEP_ORDER` (const): One step, in order: the phases, the engine's stages (`timers`, `spawns`, `despawns`, `events`) among them.
+- `System` (interface): A system in the schedule.
+- `SYSTEM_CODES` (const): The codes this module raises, with their fixes.
+- `SystemFn` (type): A system: called once per step with the world and the step's intents.
+- `Systems` (interface): A world's systems, in run order.
+- `SystemSpec` (interface): A system as `createWorld({ systems })` takes it: the phase is `rules` when left out.
+
+### [`engine/sim/world.ts`](../engine/sim/world.ts)
+
+- `createWorld` (function): Makes a world.
+- `SimRng` (interface): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
+- `World` (interface): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
+- `WORLD_CODES` (const): The codes this module raises, with their fixes.
+- `WorldEvents` (type): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
+- `WorldOptions` (interface): How a world is made.
+- `WorldTimers` (type): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
 
 ### [`eslint.config.js`](../eslint.config.js)
 
@@ -49,6 +523,18 @@ For the agents who maintain the engine.
 - `test` (const): Playwright's `test` with the `seed` option (default 1) and the `harness` fixture, set up for every test.
 - `WebGPUProof` (interface): What WebGPU did in the page, as `assertWebGPU` measured it.
 
+### [`tests/pages/driftProbe.ts`](../tests/pages/driftProbe.ts)
+
+- `bitDiff` (function): How two result arrays differ, bit for bit: the count of differing entries and the index of the first.
+- `compareDrift` (function): Compares Node's result with Chromium's, given the swap both ran under: a swapped function or a composite must give the same bits inside `withSimMath`, every other function natively; every `Math` function must be probed.
+- `DRIFT_FUNCTIONS` (const): Every `Math` function but `random`, and the `**` operator.
+- `DRIFT_INPUTS` (const): Seeded inputs per function, as PLAN.md WP 1.1 asks.
+- `DriftFunction` (interface): One probed function: its `Math` name (or the operator), its argument domains, and the port that would cover it.
+- `inputsOf` (function): The arguments `fn` is probed with, one array per argument: `count` seeded tuples, then the edge values.
+- `ProbeResult` (interface): What one runtime gave.
+- `resultsOf` (function): `fn`'s results on `inputs`, natively or inside `withSimMath` (narrowed to `swap`).
+- `runProbe` (function): Runs every probe natively and inside `withSimMath` (narrowed to `swap`), on `inputs` seeded inputs a function.
+
 ### [`tests/setup/adviceTrap.ts`](../tests/setup/adviceTrap.ts)
 
 - `ADVICE_CODE` (const): An engine advice line: `[AREA_WORDS] message`; group 1 is the code.
@@ -64,6 +550,13 @@ For the agents who maintain the engine.
 - `Warning` (interface): A console message the trap caught.
 - `watchConsole` (function): Wraps `target`'s methods so each trapped message reaches `sink` before it prints; returns the unwrap function.
 
+### [`tests/setup/trapOutcomes.ts`](../tests/setup/trapOutcomes.ts)
+
+- `expectTrapOutcomes` (function): Checks one harness's outcomes: `passes:` tests passed, `fails:` tests (`fails` of them) failed with the trap's message.
+- `PRINTED` (const): What the trap must print for each `fails:` fixture, by test name.
+- `TrapExpect` (type): The matchers `expectTrapOutcomes` uses, as Vitest's and Playwright's `expect` both provide them.
+- `TrapOutcome` (interface): One fixture test's outcome, read from its harness's JSON report.
+
 ### [`tests/unit/hooks/harness.ts`](../tests/unit/hooks/harness.ts)
 
 - `HookRun` (interface): What a hook run printed and returned.
@@ -76,7 +569,7 @@ For the agents who maintain the engine.
 ### [`tools/checkAll.ts`](../tools/checkAll.ts)
 
 - `CACHE_DIRS` (const): The cache directories ESLint and Prettier create on a cold run.
-- `CHECK_TOOLS` (const): The T0 tools, in the order their output is printed.
+- `CHECK_TOOLS` (const): The T0 tools, in the order their output is printed; `tsc` runs package.json's `typecheck` command.
 - `checkAll` (function): Runs every tool in parallel, prints their output in order, and returns the exit code (0 only if all pass).
 - `CheckTool` (interface): One T0 tool: its name and its command line, run from the repository root.
 
@@ -119,6 +612,22 @@ For the agents who maintain the engine.
 - `createDepsCommand` (function): Builds the command; tests inject the day, the active node, a fixture registry and a recording runner.
 - `default` (default): Checks the dependency pins against `tools/deps.json` (offline), and asks the registry for compatible releases to adopt and for lines that have qualified (PLAN.md §6.10; doctrine: Mastery, Common ground).
 
+### [`tools/cmd/describe.ts`](../tools/cmd/describe.ts)
+
+- `createDescribeCommand` (function): Builds the command; tests shorten the child process's time limit.
+- `default` (default): Lists the registries from their schemas (PLAN.md §8.1, §6.6): `x describe` names every kind with its entry count, `x describe <kind>` gives its fields (type, default, range, unit, docs) and ids, and `x describe <kind> <id>` one entry's values, `*` marking those that differ from the default.
+- `describeInWorker` (function): Runs the listing in a child Node process over `root`'s registrations; resolves to what it sent, or to the failure when it hung (stopped after `timeoutMs`) or ended without a listing, naming the module it was loading.
+- `fieldLine` (function): One line for a field: name, type, default, range, unit, values, flags, then its description.
+- `listing` (function): What one listing prints, from the shared registry; throws the registry's error for an unknown kind or id.
+- `Listing` (interface): What one listing prints, besides the verdict, and the data `describe.json` holds.
+- `loadRegistrations` (function): Imports each module that registers content, telling `loading` first; a module that fails becomes a warning.
+- `registersContent` (function): Whether a parsed module calls something that registers content (comments, strings and declarations aside).
+- `REGISTRATION_ROOTS` (const): Where modules that register content live.
+- `registrationModules` (function): The modules under `root` that register content, repository-relative and sorted.
+- `WORKER_TIMEOUT_MS` (const): How long the child process may take before it is stopped and the module it was loading named (ms).
+- `WorkerDone` (interface): What the child process reports when it is done: what loaded, and the listing or the usage problem.
+- `WorkerMessage` (type): One message from the child process: the module it starts loading, or the end.
+
 ### [`tools/cmd/docs.ts`](../tools/cmd/docs.ts)
 
 - `check` (const): The `x check` plugin: the drift checks without the examples (they run in T1 and in `x docs --check`).
@@ -158,6 +667,16 @@ For the agents who maintain the engine.
 - `testKind` (function): Writes `kind`'s sample, checks it and removes it again.
 - `writeFiles` (function): Writes rendered files; refuses (throws) when any exists.
 
+### [`tools/cmd/perf.ts`](../tools/cmd/perf.ts)
+
+- `BUDGET_KEYS` (const): What a budget file may hold: milliseconds per step, per hash and per capture.
+- `default` (default): Sim timings against budgets, in Node (PLAN.md §8.1, §8.7, WP 1.5): `node x perf <scene> [--scene id] [--steps n] [--runs n] [--seed s] [--set k=v…] [--budget]`.
+- `measure` (function): One run's timings: ms per step, per hash and per capture.
+- `median` (function): The middle value (the mean of the two middle ones for an even count).
+- `PerfBudget` (interface): A budget file, `tests/baselines/perf/<scene id>.json`: the run it was measured on, its budgets, and why.
+- `PerfKey` (type): One measured quantity.
+- `readBudget` (function): Reads and checks a budget file; throws `UsageError` naming each problem (an unknown key with the closest).
+
 ### [`tools/cmd/port.ts`](../tools/cmd/port.ts)
 
 - `BLOB_SCRIPTS` (const): The Blob scripts: the stress world's slime hop, kicks to the squash spring, and look turns.
@@ -196,6 +715,22 @@ For the agents who maintain the engine.
 - `readBaselines` (function): Reads every baseline file of `family`, with a failure per malformed file or entry.
 - `runQa` (function): Runs one family against its baselines; T1 tests call this (`expect((await runQa(ROOT, 'level')).failures)…`).
 
+### [`tools/cmd/replay.ts`](../tools/cmd/replay.ts)
+
+- `Checked` (interface): What `checkFiles` came to: the outcomes' lines, findings and metrics, and each file's verdict.
+- `checkFile` (function): Plays one replay file in every runtime and judges it (see the file comment); writes nothing.
+- `checkFiles` (function): Checks every file, then reads `pageErrors` (Chromium's), and only when nothing failed writes the goldens `--update` recorded.
+- `default` (default): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WP 1.5).
+- `findParting` (function): The first step where any run parts from the first, compared there (`table` reads the components' registry).
+- `Outcome` (interface): What one replay came to: its verdict, lines, bisect details, findings, metrics, and goldens to write.
+- `parseSwap` (function): Parses `--swap`: `none`, or names from the swap (`sin,pow`).
+- `partingLines` (function): The lines that tell a parting: the step, parts, entities and first field, then every field and the inputs.
+- `PLATFORM` (const): This platform's golden key: `linux-x64`.
+- `replayFiles` (function): The replay files a target names: the file, or every `*.replay.json` under the directory.
+- `ReplayOptions` (interface): How replays are checked.
+- `Run` (interface): A run of a replay: which runtime, and the hashes it took.
+- `RunParting` (interface): Where two runs part: the step, the runs, and what differs there (engine/sim/replay.ts `partingOf`).
+
 ### [`tools/cmd/shot.ts`](../tools/cmd/shot.ts)
 
 - `default` (default): Renders a page on WebGPU in the platform's Chromium and writes what it drew: a PNG and its look metrics.
@@ -204,6 +739,22 @@ For the agents who maintain the engine.
 - `judgeFrame` (function): The verdict on a frame's metrics: a blank frame fails; an almost empty one (coverage under 0.5%) warns.
 - `READY_TIMEOUT_MS` (const): How long a page may take to signal ready or an error, in milliseconds.
 - `resolvePage` (function): Turns a page argument into the URL path to open (relative to the server) and the file that must exist for it.
+
+### [`tools/cmd/sim.ts`](../tools/cmd/sim.ts)
+
+- `default` (default): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene> [--scene id] [--steps n] [--seed s] [--set key=value…]`.
+- `HashedView` (interface): One run's view of a step, with the hash its runtime gave.
+- `loadScene` (function): Imports a scene module and picks its scene: `id`, else the one scene it exports.
+- `nodeRuntime` (function): Replays in Node, in this process, on `registry` (the shared one by default): `x replay`'s first runtime.
+- `parseSets` (function): `key=value` pairs as path → text; throws `UsageError` for a pair without `=`.
+- `replayText` (function): A replay as readable text: its keys in file order, one change-point per line, each platform's hashes one step per line, numbers exact (`-0` kept, engine/core/hash.ts `serialize`).
+- `resolveSceneModule` (function): The module a target names: a `.ts` file, a directory's `index.ts`, or the module that defines a scene id.
+- `Runtime` (interface): Where replays play: Node in this process, or Chromium in tests/pages/replay.html.
+- `sceneModules` (function): Scene id → the module that defines it, from the modules' text (tests aside).
+- `sceneRoots` (function): Where scene modules live: `fixtures/scenes/` and every `labs/<name>/scenes/` (tests/pages/replay.ts globs the same).
+- `typedSets` (function): `--set` values typed and checked against the settings schema (after the scene module declared its settings).
+- `wholeFlag` (function): A whole number from a flag, at least `min`, or `fallback` when the flag is absent.
+- `writeReplay` (function): Writes a replay through Prettier with the repository's settings (wherever the file is); true when it changed.
 
 ### [`tools/cmd/src.ts`](../tools/cmd/src.ts)
 
@@ -219,7 +770,7 @@ For the agents who maintain the engine.
 - `BANNED_FILES` (const): Where the bans apply.
 - `BANNED_IMPORT_FILES` (const): The import bans also cover tests/: a bare `three` in a test page gets its own pre-bundled copy in Vite (WP 0.8).
 - `bannedBlocks` (function): The banned-API blocks: imports and names over every file in scope, then syntax and properties by zone.
-- `bannedPlugin` (const): The plugin the banned-API blocks use: core's restriction rules as `banned/<rule>`.
+- `bannedPlugin` (const): The plugin the banned-API blocks use: core's restriction rules as `banned/<rule>`, and `no-namespace-names`.
 
 ### [`tools/eslint/family.ts`](../tools/eslint/family.ts)
 
@@ -227,6 +778,7 @@ For the agents who maintain the engine.
 - `family` (function): Returns a plugin named `name` whose rules are the named core rules, unchanged.
 - `messagesOf` (function): Every `message` in a list of blocks' rule options, `no-restricted-imports`'s paths and patterns included.
 - `resolvingImports` (function): `plugin` with its `no-restricted-imports` matching each relative source as resolved from the importing file.
+- `shortest` (function): A relative source's shortest spelling from `dir`: `./a/../b` is `./b`, and `../../engine/sim` from `engine/core` is `../sim`.
 - `zoned` (function): Blocks that apply one aliased rule over `files` so each file gets exactly the bans that apply to it: one block for all `files`, then one per path an `only` or `except` names, the most specific last (flat config's last block wins).
 
 ### [`tools/eslint/index.ts`](../tools/eslint/index.ts)
@@ -236,20 +788,26 @@ For the agents who maintain the engine.
 - `family` (function from [`tools/eslint/family.ts`](../tools/eslint/family.ts)): Returns a plugin named `name` whose rules are the named core rules, unchanged.
 - `layerBlocks` (function from [`tools/eslint/layers.ts`](../tools/eslint/layers.ts)): The layer rules' blocks, in order.
 - `local` (const): The local plugin: rules no stock rule expresses, as `local/<rule>`.
-- `publicApiBlocks` (function from [`tools/eslint/publicApi.ts`](../tools/eslint/publicApi.ts)): The public-API blocks; `on` is `SWITCHES.publicApi` (WP 1.6 turns it on).
+- `publicApiBlocks` (function from [`tools/eslint/publicApi.ts`](../tools/eslint/publicApi.ts)): The public-API blocks; `on` is `SWITCHES.publicApi` (on since WP 1.6).
 - `simSideBlocks` (function from [`tools/eslint/simSide.ts`](../tools/eslint/simSide.ts)): The sim-side blocks: globals, properties and syntax over all sim-side files, then imports (core/math.ts last).
 
 ### [`tools/eslint/layers.ts`](../tools/eslint/layers.ts)
 
 - `layerBlocks` (function): The layer rules' blocks, in order.
 - `layerPlugin` (const): The plugin the layer blocks use: core's `no-restricted-imports`, resolving, as `layer/no-restricted-imports`.
-- `THREE_MATH` (const): three.js's math classes, the only names `core/math.ts` takes from `three/webgpu` (§6.1).
+- `THREE_MATH` (const): three.js's math classes, the only names `core/math.ts` takes from `three/webgpu` (§6.1); `Color` (from three.js's `src/math/`) since WP 1.1, for engine/core/color.ts (ADR-0020 amendment 1).
+
+### [`tools/eslint/namespaceNames.ts`](../tools/eslint/namespaceNames.ts)
+
+- `EntryName` (interface): One banned name of an entry point: its source, the namespace name the docs use, the name, and the fix.
+- `namespaceNames` (const): The rule: options are the banned names (`EntryName`), each reported with its message wherever it is read.
 
 ### [`tools/eslint/publicApi.ts`](../tools/eslint/publicApi.ts)
 
-- `publicApiBlocks` (function): The public-API blocks; `on` is `SWITCHES.publicApi` (WP 1.6 turns it on).
-- `publicApiPlugin` (const): The plugin the public-API blocks use: core's `no-restricted-imports` (resolving) and `no-restricted-syntax`.
+- `publicApiBlocks` (function): The public-API blocks; `on` is `SWITCHES.publicApi` (on since WP 1.6).
+- `publicApiPlugin` (const): The plugin the public-API blocks use: core's `no-restricted-imports` (resolving) and `no-unnamed-imports`.
 - `SIM_SIDE_GAME_CODE` (const): Sim-side game code: the sim barrel only.
+- `unnamedImports` (const): `public-api/no-unnamed-imports`: side-effect imports, dynamic imports with a literal source and TS import types, matched like `no-restricted-imports` matches named ones (options `{ patterns: [{ regex, message }] }`).
 
 ### [`tools/eslint/simSide.ts`](../tools/eslint/simSide.ts)
 
@@ -394,6 +952,20 @@ For the agents who maintain the engine.
 - `GENERATED` (const): The generated files, by repository path.
 - `generateDocs` (function): The generated docs' contents, formatted, by repository path.
 - `indexMarkdown` (function): `docs/INDEX.md`, before formatting.
+- `kindRows` (function): The kinds section of `docs/INDEX.md`: one row per kind declared with `defineKind`, sorted by kind.
+
+### [`tools/lib/docsHelp.ts`](../tools/lib/docsHelp.ts)
+
+- `apiOf` (function): The object's members, sorted: calls as `name()`, properties as `name`, namespaces walked with dotted names.
+- `checkHelp` (function): Loads the member modules, starts an empty scene headless and compares `help()` with the object.
+- `helpDrift` (function): Where `help()` and the object part, one sentence each ([] when they agree).
+- `helpNames` (function): The members a `help()` text lists, sorted: each line's signature, `name()` for a call, `name` for a property.
+- `memberModules` (function): The modules under `engine/` and `labs/` (tests aside) that register inspector members, sorted.
+
+### [`tools/lib/docsKinds.ts`](../tools/lib/docsKinds.ts)
+
+- `KindDoc` (interface): One kind declared with `defineKind`.
+- `kindsOf` (function): The kinds declared by the `defineKind(…)` calls in a parsed module.
 
 ### [`tools/lib/docsPaths.ts`](../tools/lib/docsPaths.ts)
 
@@ -401,6 +973,7 @@ For the agents who maintain the engine.
 - `checkPaths` (function): Checks every path, citation and name the comments of `modules` and the covered docs mention.
 - `coveredDocs` (function): The documents the path checks read besides the code comments.
 - `expand` (function): Expands `{a,b}` and `<a|b>` into every alternative.
+- `GENERATED_DIRS` (const): The git-ignored directories tools generate (caches, reports, builds): a fresh checkout lacks them, so they pass.
 - `isPlanned` (function): Whether `planned` covers `path` (a file, or a directory ending in `/`): an entry names it or lies inside it, or, for an owned directory (`labs/hello/`, `engine/world/level/**`, `tests/replays/box-1-*.json`), it lies inside one.
 - `PathOptions` (interface): Options for `checkPaths`.
 - `Planned` (interface): The paths PLAN.md plans: the Owns of WPs not yet done, and §6.2's layout.

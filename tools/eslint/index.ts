@@ -4,8 +4,9 @@
  * expresses.
  *
  * Families: layers.ts (the layer rules), publicApi.ts (game code sees only the barrels), simSide.ts (the
- * reproducibility bans), banned.ts (Appendix B's three.js bans), and the local rule askTheEntry.ts. family.ts holds
- * the plumbing: core rules aliased under each family's name, so no family replaces another's options.
+ * reproducibility bans), banned.ts (Appendix B's three.js bans, with namespaceNames.ts for names read off a
+ * namespace), and the local rule askTheEntry.ts. family.ts holds the plumbing: core rules aliased under each
+ * family's name, so no family replaces another's options.
  *
  * Invariants: eslint.config.js loads this module through tsx (as x.js loads the `x` commands), so these files are
  * TypeScript checked by tsc; a rule written ahead of its code is switched in eslint.config.js's `SWITCHES` only.
