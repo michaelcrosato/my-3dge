@@ -33,3 +33,16 @@ Differential tests against the ported reference vectors (WP 0.11); the animation
 - **No `skeleton` registry kind** until a second skeleton exists; builds are registry kind `build`.
 - Evidence: `engine/anim/fk.test.ts` (4 builds at sizes 1 and 0.5, soles at y = 0, three.js `Bone` hierarchy within
   1e-9 m).
+
+## Amendment 2 (2026-10-10, WP-3.5)
+- **`twoBone` is `ik3` verbatim, with one fix.** When the pole lies along the limb, `ik3`'s unnormalised fallback
+  (n_y, -n_x, 0) shortened the bones; `twoBone` falls back to a unit horizontal instead, and to +Z for a vertical
+  limb. Otherwise it matches `ik3` bit for bit (in metres, after the /16 axis swap).
+- **`twoBoneRot`'s pole is a world direction**, so the old hints work as poles; it defaults to the current bend.
+- **Hinges.** Knees bend about +X and elbows about -Y (left) or +Y (right) in the upper joint's frame.
+- **Target.** The solve targets the end joint (the ankle), or `options.offset` in its frame. WP 3.6 can pass the
+  contact socket's offset to target the sole.
+- **No per-solver weight.** Solvers have no weight option; `blendPoses` fades them. A non-limb joint raises the
+  existing `ANIM_UNKNOWN_JOINT`; one new code, `ANIM_BAD_TARGET`.
+- Evidence: `engine/anim/ik.test.ts` (2000 random cases bit-exact against `ik3`; soles within 5 mm on a 10° slope and
+  a 0.2 m step on 3 builds, worst gap 2.3e-8 m).

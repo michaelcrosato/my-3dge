@@ -14,6 +14,10 @@ game agent's manual.
 - `ActionMap` (type from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): An action map entry.
 - `ActionMapSpec` (interface from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): How an action map is written.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
+- `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
+- `AIM_CHAIN` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The default chain, from the body up: about 103° of yaw and 69° of pitch in all.
+- `AimLink` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): One joint of an aim chain: the `joint`, its `share` of the turn (a chain's shares need not add up to 1), and the most it turns the gaze left or right (`yaw`) and up or down (`pitch`), in radians.
+- `AimOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `aim` turns.
 - `angDiff` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The signed angle from `a` to `b` the short way round, in [−π, π).
 - `animCheck` (function from [`engine/anim/check.ts`](../engine/anim/check.ts)): Checks every pose of `spec` against the skeleton's contract: finite values, bone lengths, declared rigid pairs, feet at or above the floor, sockets in reach.
 - `AnimCheckReport` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheck` found.
@@ -54,6 +58,7 @@ game agent's manual.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
 - `createBindings` (function from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Makes the bindings of the action map `map` (an id or an entry), loading saved changes from `options.storage`.
+- `createFootPlantState` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A new, unlocked `FootPlantState`.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
 - `createInput` (function from [`engine/input/input.ts`](../engine/input/input.ts)): Makes the page's input.
 - `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
@@ -88,6 +93,11 @@ game agent's manual.
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): its tile's floor; 0 outside the map.
+- `FOOT_PLANT` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `footPlant`'s tuning, in metres and seconds.
+- `FootLock` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
+- `footPlant` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
+- `FootPlantOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `footPlant` plants.
+- `FootPlantState` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
 - `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
 - `frustumGeometry` (function from [`engine/gfx/geometry/frustum.ts`](../engine/gfx/geometry/frustum.ts)): A frustum standing on the ground (see the file comment).
@@ -107,6 +117,9 @@ game agent's manual.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `GroundDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The slab under the whole level: the ground's collider, one tile wider than the map all round, 1 m deep.
+- `GroundHit` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Where a ground probe hit, in world space: the `point`, and the surface's unit `normal` there.
+- `GroundProbe` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Casts a ray straight down from `origin`, at most `distance` metres; on a hit it fills `hit` and returns true.
+- `handTo` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `twoBoneRot` for the arm of `hand`, bringing its weapon socket (`weaponL`, `weaponR`) to `grip`: returns how far the socket stays from it (0 in reach).
 - `hashPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose's 64-bit FNV-1a digest (16 hex digits) over the numbers `toArray` gives: equal numbers, equal hash.
 - `Headless` (type from [`engine/app/headless.ts`](../engine/app/headless.ts)): A headless engine: `__engine`'s members, over a scene running in this process.
 - `HeadlessOptions` (interface from [`engine/app/headless.ts`](../engine/app/headless.ts)): How a headless engine starts.
@@ -143,8 +156,11 @@ game agent's manual.
 - `LevelShape` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): How a recipe draws its pieces: see the file comment.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
 - `LightSpot` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A light spot: a tile's centre, `lightHeight` above its top.
+- `Limb` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A two-bone limb: the joint it hangs from (`upper`: hip or shoulder), its hinge (`middle`: knee or elbow), and the hinge's axis in the upper joint's frame (`hinge`; a positive turn bends the shin back and the forearm forward).
+- `LimbEnd` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A joint that ends a two-bone limb: an ankle or a wrist.
 - `limbGeometry` (function from [`engine/gfx/geometry/limb.ts`](../engine/gfx/geometry/limb.ts)): A tapered limb from the origin up +Y (see the file comment).
 - `LimbOptions` (interface from [`engine/gfx/geometry/limb.ts`](../engine/gfx/geometry/limb.ts)): A tapered limb's sizes in metres and its tessellation.
+- `LIMBS` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The skeleton's four limbs, by their end joint.
 - `listActionMaps` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Every action map, sorted by id.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
@@ -242,6 +258,9 @@ game agent's manual.
 - `tipPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
 - `topHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The top (m) of whatever stands at (x, z): a wall's top over its tiles, the floor on open ones; 0 outside the map.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
+- `twoBone` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Two-bone IK on positions (`ik3`): the middle joint (knee, elbow) and the end of a limb of bone lengths `upper` and `lower` from `root` toward `target`, bent toward the direction `pole`; out of reach, the end stops on the line to the target.
+- `TwoBoneOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `twoBoneRot` and `handTo` solve.
+- `twoBoneRot` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the limb ending at `end` (an ankle or a wrist) through its three joints' local rotations so the end reaches `target`, then runs FK.
 - `updateInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Records one step's intents in `buffer` (changed in place, and returned): call it once per step, with the world's `tick`, before reading `released`, `buffered` or `repeated`.
 - `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
 - `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
@@ -257,6 +276,10 @@ game agent's manual.
 ### [`engine/sim-api.ts`](../engine/sim-api.ts)
 
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
+- `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
+- `AIM_CHAIN` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The default chain, from the body up: about 103° of yaw and 69° of pitch in all.
+- `AimLink` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): One joint of an aim chain: the `joint`, its `share` of the turn (a chain's shares need not add up to 1), and the most it turns the gaze left or right (`yaw`) and up or down (`pitch`), in radians.
+- `AimOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `aim` turns.
 - `angDiff` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The signed angle from `a` to `b` the short way round, in [−π, π).
 - `animCheck` (function from [`engine/anim/check.ts`](../engine/anim/check.ts)): Checks every pose of `spec` against the skeleton's contract: finite values, bone lengths, declared rigid pairs, feet at or above the floor, sockets in reach.
 - `AnimCheckReport` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheck` found.
@@ -283,6 +306,7 @@ game agent's manual.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
+- `createFootPlantState` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A new, unlocked `FootPlantState`.
 - `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
@@ -302,6 +326,11 @@ game agent's manual.
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): its tile's floor; 0 outside the map.
+- `FOOT_PLANT` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `footPlant`'s tuning, in metres and seconds.
+- `FootLock` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
+- `footPlant` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
+- `FootPlantOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `footPlant` plants.
+- `FootPlantState` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
 - `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
 - `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
@@ -309,6 +338,9 @@ game agent's manual.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `GroundDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The slab under the whole level: the ground's collider, one tile wider than the map all round, 1 m deep.
+- `GroundHit` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Where a ground probe hit, in world space: the `point`, and the surface's unit `normal` there.
+- `GroundProbe` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Casts a ray straight down from `origin`, at most `distance` metres; on a hit it fills `hit` and returns true.
+- `handTo` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `twoBoneRot` for the arm of `hand`, bringing its weapon socket (`weaponL`, `weaponR`) to `grip`: returns how far the socket stays from it (0 in reach).
 - `hashPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose's 64-bit FNV-1a digest (16 hex digits) over the numbers `toArray` gives: equal numbers, equal hash.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
 - `InputBuffer` (interface from [`engine/input/intents.ts`](../engine/input/intents.ts)): What a body remembers of its buttons across steps: plain data for a component field (`type: 'object'`, default `createInputBuffer()`), so it is hashed, captured and restored.
@@ -331,6 +363,9 @@ game agent's manual.
 - `LevelProblem` (interface from [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
 - `LightSpot` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A light spot: a tile's centre, `lightHeight` above its top.
+- `Limb` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A two-bone limb: the joint it hangs from (`upper`: hip or shoulder), its hinge (`middle`: knee or elbow), and the hinge's axis in the upper joint's frame (`hinge`; a positive turn bends the shin back and the forearm forward).
+- `LimbEnd` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A joint that ends a two-bone limb: an ankle or a wrist.
+- `LIMBS` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The skeleton's four limbs, by their end joint.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
 - `MaskName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A preset bone mask's name.
@@ -380,6 +415,9 @@ game agent's manual.
 - `tipPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
 - `topHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The top (m) of whatever stands at (x, z): a wall's top over its tiles, the floor on open ones; 0 outside the map.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
+- `twoBone` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Two-bone IK on positions (`ik3`): the middle joint (knee, elbow) and the end of a limb of bone lengths `upper` and `lower` from `root` toward `target`, bent toward the direction `pole`; out of reach, the end stops on the line to the target.
+- `TwoBoneOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `twoBoneRot` and `handTo` solve.
+- `twoBoneRot` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the limb ending at `end` (an ankle or a wrist) through its three joints' local rotations so the end reaches `target`, then runs FK.
 - `updateInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Records one step's intents in `buffer` (changed in place, and returned): call it once per step, with the world's `tick`, before reading `released`, `buffered` or `repeated`.
 - `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
 - `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
@@ -424,6 +462,29 @@ For the agents who maintain the engine.
 - `socketPosition` (function): The world position of `socket`: it rides its joint, so it turns with it.
 - `tipPosition` (function): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
 - `WorldPose` (interface): A pose in world space: each joint's matrix (16 numbers), position (3) and rotation (4), in `JOINTS` order.
+
+### [`engine/anim/ik.ts`](../engine/anim/ik.ts)
+
+- `aim` (function): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
+- `AIM_CHAIN` (const): The default chain, from the body up: about 103° of yaw and 69° of pitch in all.
+- `AimLink` (type): One joint of an aim chain: the `joint`, its `share` of the turn (a chain's shares need not add up to 1), and the most it turns the gaze left or right (`yaw`) and up or down (`pitch`), in radians.
+- `AimOptions` (interface): How `aim` turns.
+- `createFootPlantState` (function): A new, unlocked `FootPlantState`.
+- `FOOT_PLANT` (const): `footPlant`'s tuning, in metres and seconds.
+- `FootLock` (type): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
+- `footPlant` (function): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
+- `FootPlantOptions` (interface): How `footPlant` plants.
+- `FootPlantState` (type): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
+- `GroundHit` (type): Where a ground probe hit, in world space: the `point`, and the surface's unit `normal` there.
+- `GroundProbe` (type): Casts a ray straight down from `origin`, at most `distance` metres; on a hit it fills `hit` and returns true.
+- `handTo` (function): `twoBoneRot` for the arm of `hand`, bringing its weapon socket (`weaponL`, `weaponR`) to `grip`: returns how far the socket stays from it (0 in reach).
+- `IK_CODES` (const): The codes this module raises, with their fixes.
+- `Limb` (type): A two-bone limb: the joint it hangs from (`upper`: hip or shoulder), its hinge (`middle`: knee or elbow), and the hinge's axis in the upper joint's frame (`hinge`; a positive turn bends the shin back and the forearm forward).
+- `LimbEnd` (type): A joint that ends a two-bone limb: an ankle or a wrist.
+- `LIMBS` (const): The skeleton's four limbs, by their end joint.
+- `twoBone` (function): Two-bone IK on positions (`ik3`): the middle joint (knee, elbow) and the end of a limb of bone lengths `upper` and `lower` from `root` toward `target`, bent toward the direction `pole`; out of reach, the end stops on the line to the target.
+- `TwoBoneOptions` (interface): How `twoBoneRot` and `handTo` solve.
+- `twoBoneRot` (function): Turns the limb ending at `end` (an ankle or a wrist) through its three joints' local rotations so the end reaches `target`, then runs FK.
 
 ### [`engine/anim/pose.ts`](../engine/anim/pose.ts)
 

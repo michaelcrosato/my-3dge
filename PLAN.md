@@ -2314,11 +2314,12 @@ A WP is done only when all of these hold:
 - **Size:** S
 - **Carry:** `ik3`, `engine:129-140` (COPY).
 - **Build:**
-  - `twoBone`, verbatim.
-  - `twoBoneRot`: local quaternions with an explicit pole.
+  - `twoBone`, verbatim, except a unit fallback when the pole lies along the limb (ADR-0009 amendment 2).
+  - `twoBoneRot`: local quaternions with an explicit pole (a world direction; hinge knees and elbows).
   - `aim`: a chain spread over chest, neck and head, with limits.
   - `footPlant(probe)`: drop the pelvis, align the foot to the normal, lock it during stance.
   - `handTo`: hand IK to a grip (the weapon socket).
+  - No per-solver weight: a solve is faded with `blendPoses` (ADR-0009 amendment 2).
 - **Improves:** I-11.
 - **Done when:**
   - Reach, limits and poles are tested.
@@ -3952,7 +3953,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 3.2 | Character controller | P | todo | | |
 | 3.3 | Input devices, bindings, intents | I | done | 2f683a4 (#5) | engine/input/{codes,actionMaps,bindings,script,input}.ts and devices/{keyboard,mouse,gamepad,padScript,virtual,inspector}.ts; intents.ts gained InputBuffer (released, buffered, consume, consumeAll, repeated; 9/18/5 steps); kind actionMap with 4 presets; system layer and RESERVED_CODES; `__engine.input` press, hold, axis, play, record, state (ADR-0014 amendment 9; §8.3 row edited); barrels appended; calls: the system layer and the move actions kept out of b/p, mouse and pad codes named (MouseLeft, PadSouth, PadLeftStickUp), stick directions bound like keys get the radial deadzone; size came out L, not M (≈1,870 code + 1,210 test lines); no escalations; open: headless step(n) should take the virtual device's intents (core proposal), WP 2.7 createEngine must load engine/dev/members before devices/inspector.ts, call connectVirtualDevice and sample once per frame (p on the first step only), WP 10.6 system-layer actions never enter intents; not verified: physical pads, non-standard mappings, non-Chromium pointer lock; deferred proof: in the box, WP 3.10 |
 | 3.4 | Skeleton, builds, pose, FK, sheets | A | done | 043b1b7 (#5) | engine/anim/{skeleton,builds,pose,fk,sheet,check}.ts (root plus 23 joints, 8 sockets, a T-pose rest; registry kind `build`; Pose with flat float32 storage; slerp/nlerp, bone masks, additive layers; FK in doubles; SVG sheets, rest-sheet golden 8f7539de0bbc1301; animCheck), the scaffold tools/templates/build, an Animation area in sim-api.ts; calls in ADR-0009 amendment 1: animSheet/animCheck as flat names, old footL = the sole (foot joint `ankleHeight` above it; WP 3.6 compares at contact height), hipZ → hipHeight, headR → headRadius, builds carry the stance and gait fields for WP 3.6, new fields ankleHeight, footLength, handLength, chestDepth with chosen defaults (review in WP 3.8), no `skeleton` kind until a second skeleton exists; codes ANIM_UNKNOWN_JOINT, ANIM_BAD_MASK, ANIM_UNKNOWN_POINT; no escalations; deferred proof: in the box, WP 3.10 |
-| 3.5 | IK | A | todo | | |
+| 3.5 | IK | A | done | 5f656de (#5) | engine/anim/ik.ts (twoBone = ik3 bit-exact in metres, with a unit fallback for a pole along the limb; twoBoneRot in model space with hinge knees/elbows, a world-direction pole defaulting to the current bend, offset/rotation options; aim over chest/neck/head with limits; footPlant with downward-ray probe, pelvis drop, normal alignment, stance lock; handTo to the weapon socket), 19 sim-api exports; calls in ADR-0009 amendment 2: no per-solver weight (fade with blendPoses), a non-limb joint raises ANIM_UNKNOWN_JOINT, new code ANIM_BAD_TARGET; no escalations; open: footPlant probes only under the contact point (heel/toe probes a follow-up), assumes uniform root scale, ik.ts at the 400-line cap (split footPlant.ts needs an Owns change); deferred proof: in the box, WP 3.10 |
 | 3.6 | Humanoid procedural port | A | todo | | |
 | 3.7 | Character animator and body states | A | todo | | |
 | 3.8 | Instancing service and puppets | R | todo | | |

@@ -15,6 +15,14 @@ Every code the engine prints, as `[CODE] message`, with its fix. Each module reg
 
 Raised by `boneMask` (engine/anim/skeleton.ts) for a weight that is not a number from 0 to 1.
 
+### ANIM_BAD_TARGET
+
+- Message: `the {what} given to {solver} is ({x}, {y}, {z})`
+- Fix: pass finite world coordinates in metres
+- Registered in: [`engine/anim/ik.ts` line 41](../engine/anim/ik.ts)
+
+Raised by the IK solvers (engine/anim/ik.ts) for a target, pole or grip with a coordinate that is NaN or infinite, which would spread NaN through the pose.
+
 ### ANIM_UNKNOWN_JOINT
 
 - Message: `{name} is not a {what} of the humanoid skeleton{suggestion}`
