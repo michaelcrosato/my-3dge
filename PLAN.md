@@ -3944,7 +3944,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 2.2 | Level compiler (v1) | W | done | e44f5fb | `glyph` kind (legend `. # w P`, spawns `@`, `1`–`9`) and `level` kind; level text = front matter + map; compiled format my3dge-level/1 (ground, colliders with min/max, meshes: pieces and merged rects, spawns, floorHeight/topHeight); golden hashes per fixture; QA family `level` (tools/cmd/qa.test.ts expectation updated); hall 64×44 compiles in ≈2.1 ms; size M–L, covered by the G2 review; no escalations |
 | 2.3 | Materials and procedural textures (v1) | R | todo | | |
 | 2.4 | Geometry kit and level meshes (v1) | W | todo | | |
-| 2.5 | Cameras (v1) | R | todo | | |
+| 2.5 | Cameras (v1) | R | done | 1d08d4d | cameras v1: plain-data poses named as three.js names them, classic views (orthographic by default, 330 lines) with the height boost (within 1% of the 2D engine in all 5 views), orbit, fly, fixed, cam=/cam3= codes that round-trip, createCamera(code, {from}); GFX_BAD_CAMERA_CODE, GFX_UNKNOWN_CAMERA, GFX_BAD_CAMERA; box proof (switching, 0 pipelines) in WP 2.7; no escalations |
 | 2.6 | Shots, ID pass, `x shot` | T | todo | | |
 | 2.7 | Box 1: the box app | B | todo | | |
 | **G2** | **Gate: Box 1** | | todo | | |
