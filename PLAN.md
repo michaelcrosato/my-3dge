@@ -3945,7 +3945,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 2.3 | Materials and procedural textures (v1) | R | todo | | |
 | 2.4 | Geometry kit and level meshes (v1) | W | todo | | |
 | 2.5 | Cameras (v1) | R | done | 1d08d4d | cameras v1: plain-data poses named as three.js names them, classic views (orthographic by default, 330 lines) with the height boost (within 1% of the 2D engine in all 5 views), orbit, fly, fixed, cam=/cam3= codes that round-trip, createCamera(code, {from}); GFX_BAD_CAMERA_CODE, GFX_UNKNOWN_CAMERA, GFX_BAD_CAMERA; box proof (switching, 0 pipelines) in WP 2.7; no escalations |
-| 2.6 | Shots, ID pass, `x shot` | T | todo | | |
+| 2.6 | Shots, ID pass, `x shot` | T | done | 08b2d95 | engine/gfx/{shot,idpass,lookMetrics,thumbnail}.ts and x shot (--scene, --cam, --set, --ids, --metrics, --marks, --png, --thumb case [--update]); the ID pass reports every drawable (visible, or unseen: hidden/outside/covered) with 0 stray pixels; thumbnails and metrics identical over 3 loads; 48×27 readback exact (padding stripped); a shot builds its own pipelines once (ShotResult.built); r182's output pass target restored after a shot; baseline thumbs/shot-objects.json; size M–L, covered by the G2 review; no escalations |
 | 2.7 | Box 1: the box app | B | todo | | |
 | **G2** | **Gate: Box 1** | | todo | | |
 | 3.1 | Rapier adapter and queries | P | todo | | |

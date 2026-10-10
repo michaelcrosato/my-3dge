@@ -221,6 +221,12 @@ Raised by the camera factories, `makePose` and `placeCamera` (engine/gfx/cameras
 
 Raised by `parseCameraCode` (engine/gfx/cameras/codes.ts) for an empty part, a word where a number belongs, the wrong count of numbers, or a number out of its range (each range is named). Every problem is listed at once.
 
+### GFX_BAD_SHOT_SIZE
+
+- Message: `a shot must be at least 1 × 1 whole pixels, not {width} × {height}`
+- Fix: pass size: { width, height } in whole pixels of at least 1, or leave it out to shoot at the drawing buffer's size
+- Registered in: [`engine/gfx/shot.ts` line 49](../engine/gfx/shot.ts)
+
 ### GFX_COLD_PIPELINE
 
 - Message: `{count} GPU pipeline(s) were built while drawing frame {frame}, after the warm-up: the frame stalled`

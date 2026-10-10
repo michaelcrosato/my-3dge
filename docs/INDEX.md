@@ -102,6 +102,12 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`features.ts`](../engine/gfx/features.ts): The feature registry (PLAN.md §6.7, I-16; doctrine: WebGPU only): optional adapter features and GPU techniques as entries of the registry kind `feature`, each saying what it needs (adapter features, least device limits), what is lost without it and which advice code says so.
   - Exports: `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `resolveFeatures`
   - Tests: [`engine/gfx/features.test.ts`](../engine/gfx/features.test.ts)
+- [`idpass.ts`](../engine/gfx/idpass.ts): The ID pass (PLAN.md §8.5, I-28): every drawable object in a flat colour of its own, unlit, without antialiasing, so a readback says which object covers each pixel and an agent reads "the hero covers 0 px" or "one object covers 71%: the camera is inside a wall" as text.
+  - Exports: `decodeIds`, `Drawable`, `drawMarks`, `idColour`, `IdEntry`, `IdPass`, `IdTable`, `IdUnseen`, `listDrawables`, `Mark`, `marksOf`, `UnseenReason`, `withIdScene`
+  - Tests: [`engine/gfx/idpass.test.ts`](../engine/gfx/idpass.test.ts), [`tests/e2e/shot.spec.ts`](../tests/e2e/shot.spec.ts)
+- [`lookMetrics.ts`](../engine/gfx/lookMetrics.ts): Look metrics (PLAN.md §8.5): how a frame looks, as numbers an agent reads without seeing it, and the notes they raise, each a number plus a suggested fix.
+  - Exports: `judgeLook`, `LOOK_LIMITS`, `LookIds`, `lookMetrics`, `LookMetrics`, `LookNote`
+  - Tests: [`engine/gfx/lookMetrics.test.ts`](../engine/gfx/lookMetrics.test.ts)
 - [`pipelines.ts`](../engine/gfx/pipelines.ts): The public pipeline counter (PLAN.md §6.7, §8.7, I-18, Appendix B): how many GPU pipelines and shader modules the renderer has built, so "0 pipelines built after warm-up" is a number tests assert, never a hope.
   - Exports: `advanceFrame`, `checkPinned`, `countPipelines`, `PINNED_REVISION`, `PipelineCount`, `PipelineCounter`, `PIPELINES_CODES`
   - Tests: [`engine/gfx/pipelines.test.ts`](../engine/gfx/pipelines.test.ts), [`tests/e2e/renderer.spec.ts`](../tests/e2e/renderer.spec.ts)
@@ -111,6 +117,12 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`resolution.ts`](../engine/gfx/resolution.ts): Resolution modes (PLAN.md WP 2.1): how many pixels the renderer draws for the canvas's size on screen, from the view setting `gfx.resolution`.
   - Exports: `createResolution`, `Fit`, `fitResolution`, `MAX_PIXEL_RATIO`, `PIXEL_LINES`, `Resolution`, `RESOLUTION_MODES`, `RESOLUTION_SETTINGS`, `ResolutionMode`, `ResolutionOptions`, `Size`
   - Tests: [`engine/gfx/resolution.test.ts`](../engine/gfx/resolution.test.ts)
+- [`shot.ts`](../engine/gfx/shot.ts): Shots (PLAN.md §8.5, §8.3's `shot`): what the frame draws, read back from the GPU as numbers and text, never as a committed image.
+  - Exports: `Readback`, `readPixels`, `rowBytes`, `shot`, `SHOT_CODES`, `shotForJson`, `ShotGfx`, `ShotJson`, `ShotOptions`, `ShotResult`, `stripRowPadding`, `toBase64`
+  - Tests: [`engine/gfx/shot.test.ts`](../engine/gfx/shot.test.ts), [`tests/e2e/shot.spec.ts`](../tests/e2e/shot.spec.ts)
+- [`thumbnail.ts`](../engine/gfx/thumbnail.ts): Text thumbnails (PLAN.md §8.5): a frame as a 48 × 27 grid of hex colours, kept as JSON (tests/baselines/thumbs/<case>.json) instead of an image (doctrine: Assets), compared per cell with a tolerance, and read as a coarse map.
+  - Exports: `compareThumbnails`, `MAP_SYMBOLS`, `STRAY`, `THUMB_HEIGHT`, `THUMB_WIDTH`, `thumbnail`, `Thumbnail`, `ThumbnailDiff`, `ThumbnailIds`
+  - Tests: [`engine/gfx/thumbnail.test.ts`](../engine/gfx/thumbnail.test.ts)
 - [`warmup.ts`](../engine/gfx/warmup.ts): The warm-up registry (PLAN.md §8.7, I-18): every GPU pipeline is built before play needs it, so no frame stalls on one.
   - Exports: `createWarmup`, `Warmup`, `WARMUP_CODES`, `WarmupEntry`, `WarmupProgress`, `WarmupReport`, `WarmupView`
   - Tests: [`engine/gfx/warmup.test.ts`](../engine/gfx/warmup.test.ts), [`tests/e2e/renderer.spec.ts`](../tests/e2e/renderer.spec.ts)
@@ -239,6 +251,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Tests: [`tests/e2e/renderer.spec.ts`](../tests/e2e/renderer.spec.ts)
 - [`sceneFixture.ts`](../tests/pages/sceneFixture.ts): The scene page's fixture (tests/pages/scene.html): a small scene as plain data, and `buildScene`, which turns a description into three.js objects.
   - Exports: `buildScene`, `BuiltScene`, `FIXTURE`, `LightSpec`, `MaterialSpec`, `MeshSpec`, `PoolSpec`, `SceneDescription`, `ShapeSpec`
+- [`shot.ts`](../tests/pages/shot.ts): The shot page's module (tests/pages/shot.html): a fixture scene made for the ID pass and the look metrics, drawn by the engine's renderer (engine/gfx/renderer.ts), and `window.__engine` with `ready`, `errors`, `info()` and `shot(options)`: engine/gfx/shot.ts's `shot`, returned as JSON through `shotForJson`, the member `x shot` calls (WP 2.7 registers the engine's own, §8.3).
+  - Tests: [`tests/e2e/shot.spec.ts`](../tests/e2e/shot.spec.ts)
 
 ## tests/setup
 
@@ -301,9 +315,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`replay.ts`](../tools/cmd/replay.ts): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WP 1.5).
   - Exports: `Checked`, `checkFile`, `checkFiles`, `default`, `findParting`, `Outcome`, `parseSwap`, `partingLines`, `PLATFORM`, `replayFiles`, `ReplayOptions`, `Run`, `RunParting`
   - Tests: [`tools/cmd/replay.test.ts`](../tools/cmd/replay.test.ts)
-- [`shot.ts`](../tools/cmd/shot.ts): Renders a page on WebGPU in the platform's Chromium and writes what it drew: a PNG and its look metrics.
-  - Exports: `default`, `frameMetrics`, `FrameMetrics`, `judgeFrame`, `READY_TIMEOUT_MS`, `resolvePage`
-  - Tests: [`tools/cmd/shot.test.ts`](../tools/cmd/shot.test.ts)
+- [`shot.ts`](../tools/cmd/shot.ts): Renders a page on WebGPU in the platform's Chromium and reports what it drew as numbers and text: the look metrics, the ID pass (which object covers which pixels) and a 48 × 27 text thumbnail; images only on demand.
+  - Exports: `default`, `encodePng`, `frameMetrics`, `judgeFrame`, `pageUrl`, `READY_TIMEOUT_MS`, `resolvePage`, `shotMetrics`
+  - Tests: [`tests/e2e/shot.spec.ts`](../tests/e2e/shot.spec.ts), [`tools/cmd/shot.test.ts`](../tools/cmd/shot.test.ts)
 - [`sim.ts`](../tools/cmd/sim.ts): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene> [--scene id] [--steps n] [--seed s] [--set key=value…]`.
   - Exports: `default`, `HashedView`, `loadScene`, `nodeRuntime`, `parseSets`, `replayText`, `resolveSceneModule`, `Runtime`, `sceneModules`, `sceneRoots`, `typedSets`, `wholeFlag`, `writeReplay`
   - Tests: [`tools/cmd/sim.test.ts`](../tools/cmd/sim.test.ts)
