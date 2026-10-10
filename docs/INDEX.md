@@ -68,6 +68,21 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `boneMask`, `BoneMask`, `createSkeleton`, `JOINT_COUNT`, `JOINT_INFO`, `jointIndex`, `JointInfo`, `JointName`, `JOINTS`, `MaskName`, `MASKS`, `PARENTS`, `PROPORTIONS`, `Skeleton`, `SKELETON_CODES`, `SOCKET_JOINTS`, `socketIndex`, `SocketName`, `SOCKETS`
   - Tests: [`engine/anim/skeleton.test.ts`](../engine/anim/skeleton.test.ts)
 
+## engine/anim/clip
+
+- [`lens.ts`](../engine/anim/clip/lens.ts): How a clip reads (PLAN.md §10.2, WP 8.2): `LEGEND`, what every key field means, and each field's shape (`KEY_ARRAYS`, `KEY_NUMBERS`, `ANGLE_ENTRIES`), which parsing, in-betweening and the validator read; `clipText`, the text an agent reads and edits, ported from `my-3d2dge:src/mocap/readable.js`'s `text` with no change in its output; and the normalized lens, every angle folded to (−180°, 180°] for reading, without changing the stored data.
+  - Exports: `ANGLE_ENTRIES`, `clipText`, `foldAngle`, `KEY_ARRAYS`, `KEY_FIELDS`, `KEY_NUMBERS`, `LEGEND`, `normalizedLens`, `REQUIRED`
+  - Tests: [`engine/anim/clip/lens.test.ts`](../engine/anim/clip/lens.test.ts)
+- [`mirror.ts`](../engine/anim/clip/mirror.ts): Mirroring a clip (PLAN.md §10.2, WP 8.2): the same motion on the other side.
+  - Exports: `mirrorClip`
+  - Tests: [`engine/anim/clip/mirror.test.ts`](../engine/anim/clip/mirror.test.ts)
+- [`readable.ts`](../engine/anim/clip/readable.ts): Readable key poses, the stored clip format (PLAN.md §10.2, WP 8.2; ADR-0010): its types, format 1 and the fields format 2 adds, and the decode that rebuilds 36 body points from a key pose on a measured rest body.
+  - Exports: `Clip`, `ClipContact`, `ClipEvent`, `ClipKey`, `decodePose`, `keyAt`, `KeyPose`, `LimbPose`, `moveAt`, `POINT_COUNT`, `POINT_INDEX`, `PointArray`, `POSE_POINTS`, `samplePose`, `Triple`
+  - Tests: [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts)
+- [`validate.ts`](../engine/anim/clip/validate.ts): Reading clips in, and checking them (PLAN.md §10.2, WP 8.2): `parseClip` and `parseClipSet` turn text or objects into clips and sets of format 1 or 2, refusing a broken one with an error that names the clip, the key, its time and the field, and the fix; `validateClip` then warns about poses that read but play badly.
+  - Exports: `CLIP_CODES`, `ClipCode`, `ClipSet`, `ClipSource`, `ClipWarning`, `parseClip`, `parseClipSet`, `poseError`, `poseMeanError`, `RestBody`, `validateClip`
+  - Tests: [`engine/anim/clip/validate.test.ts`](../engine/anim/clip/validate.test.ts)
+
 ## engine/app
 
 - [`headless.ts`](../engine/app/headless.ts): The engine without a page (PLAN.md §8.3, §6.9, WP 1.6; doctrine: Verifiable): `createHeadless({ scene, seed, settings })` starts a scene as a recorded session (engine/sim/scene.ts) and returns its inspector, the same object a page publishes as `window.__engine` minus a renderer: members that need one throw `DEV_NO_RENDERER`.
@@ -506,6 +521,12 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`trapOutcomes.ts`](../tests/setup/trapOutcomes.ts): What the advice trap's fixture tests must give in either harness (WP 0.5): every `passes:` test passed, and every `fails:` test failed through the trap, naming what it printed and the allow-list fix.
   - Exports: `expectTrapOutcomes`, `PRINTED`, `TrapExpect`, `TrapOutcome`
 
+## tests/unit/anim
+
+- [`clip-fixtures.ts`](../tests/unit/anim/clip-fixtures.ts): Shared fixtures for the clip codec's tests (engine/anim/clip/*.test.ts, WP 8.2): a measured rest body, a standing key pose and a clip builder for the offline tests, and, for those that need the my-3d2dge checkout, the source's codec (the oracle) with its curated sets, loaded once per test file.
+  - Exports: `busy`, `clipOf`, `curatedClips`, `legacy`, `REST`, `standing`
+  - Tests: [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts)
+
 ## tests/unit/data/anim/catalogs
 
 - [`catalogs.ts`](../tests/unit/data/anim/catalogs/catalogs.ts): Compares the library's catalogs with the files they were copied from, and reads the coverage map of `docs/ANIMATION-RESEARCH.md`, for the library's data tests (PLAN.md §10.5 step 2 and §10.6, WP 8.1).
@@ -538,6 +559,12 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`x.ts`](../tools/x.ts): The `node x <cmd>` dispatcher (PLAN.md §8.1): finds `tools/cmd/<cmd>.ts`, parses its arguments with `node:util`'s `parseArgs` in strict mode, runs it, prints at most about 20 lines (the verdict first), writes `out/<cmd>/<target>/report.json` plus `out/latest.json`, and returns the exit code.
   - Exports: `closest`, `Command`, `CommandContext`, `commandHelp`, `commandNames`, `CommandOptions`, `CommandResult`, `dispatch`, `DispatchOptions`, `fileComment`, `firstSentence`, `loadCommand`, `MAX_LINES`, `ROOT`, `UsageError`
   - Tests: [`tools/x.test.ts`](../tools/x.test.ts)
+
+## tools/anim
+
+- [`legacy-readable.ts`](../tools/anim/legacy-readable.ts): The legacy oracle (PLAN.md WP 8.2, §10.5 step 3): my-3d2dge's own readable codec, `src/mocap/readable.js`, run from the checkout at `$MY3D2DGE_SRC` in a fresh Node `vm` context, as `my-3d2dge:tools/mocap-lib.mjs:7-9` does, and its animation sets read the same way.
+  - Exports: `CLIP_FPS`, `clipVectorFiles`, `clipVectorsReadme`, `CURATED_SETS`, `decodeLegacyClip`, `float32Number`, `frameCount`, `framesSha256`, `LEGACY_CODEC`, `legacyClipVectors`, `LegacyReadable`, `LegacySet`, `loadLegacyReadable`, `readLegacySet`, `sampledFrames`
+  - Tests: [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts), [`tools/anim/legacy-readable.test.ts`](../tools/anim/legacy-readable.test.ts)
 
 ## tools/cmd
 

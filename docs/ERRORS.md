@@ -23,6 +23,96 @@ Raised by `boneMask` (engine/anim/skeleton.ts) for a weight that is not a number
 
 Raised by the IK solvers (engine/anim/ik.ts) for a target, pole or grip with a coordinate that is NaN or infinite, which would spread NaN through the pose.
 
+### ANIM_CLIP_ANGLE_RANGE
+
+- Message: `{where}: key {key} (t {t}): "{field}" holds {value}°, past ±540°`
+- Fix: take whole turns (360) off it, keeping it near the keys round it; normalizedLens(clip) shows every angle folded to ±180°
+- Registered in: [`engine/anim/clip/validate.ts` line 126](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_BAD_FIELD
+
+- Message: `{where}: key {key} (t {t}): "{field}" is {value}`
+- Fix: make "{field}" {shape}
+- Registered in: [`engine/anim/clip/validate.ts` line 94](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_BAD_HEADER
+
+- Message: `{where}: "{field}" is {value}`
+- Fix: make "{field}" {shape}
+- Registered in: [`engine/anim/clip/validate.ts` line 102](../engine/anim/clip/validate.ts)
+
+Raised by `parseClip` and `parseClipSet` (engine/anim/clip/validate.ts) for a clip or set header field of the wrong type or shape, and for a clip whose `src` is not one of its set’s sources.
+
+### ANIM_CLIP_BAD_KEY
+
+- Message: `{where}: key {key} is {value}, not a key pose`
+- Fix: write each key as an object holding "t" (seconds) and the fields LEGEND lists (engine/anim/clip/lens.ts)
+- Registered in: [`engine/anim/clip/validate.ts` line 82](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_BELOW_FLOOR
+
+- Message: `{where}: key {key} (t {t}): the hips are at {value}% of standing hip height, below the floor`
+- Fix: raise hips[2] to 0 or more (100 is standing, 55 sitting on a chair)
+- Registered in: [`engine/anim/clip/validate.ts` line 130](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_KNEE_RANGE
+
+- Message: `{where}: key {key} (t {t}): "{field}" {problem}`
+- Fix: keep the knee bend from 0 to 165 and, while it bends more than 30, its twist within 120 of forward
+- Registered in: [`engine/anim/clip/validate.ts` line 122](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_LIMB_COLLAPSE
+
+- Message: `{where}: "{field}" turns {angle}° between key {key} (t {t}) and key {next} (t {nextT})`
+- Fix: add a key between them pointing the way the limb should swing: in-betweens of opposite directions pass through the joint
+- Registered in: [`engine/anim/clip/validate.ts` line 111](../engine/anim/clip/validate.ts)
+
+Reported by `validateClip` (engine/anim/clip/validate.ts) when a limb direction turns more than 150° from one key to the next: keys in-between every number linearly, so the direction nearly vanishes on the way and the limb snaps round.
+
+### ANIM_CLIP_MISSING_FIELD
+
+- Message: `{where}: key {key} (t {t}) has no "{field}"`
+- Fix: add "{field}": {shape}; every key needs hips, body, chest, head, armL, armR, legL and legR
+- Registered in: [`engine/anim/clip/validate.ts` line 90](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_NO_KEYS
+
+- Message: `{where} has no key poses`
+- Fix: give it "keys": [ … ] with at least one key pose, each { "t": seconds, "hips": [0, 0, 100], … }
+- Registered in: [`engine/anim/clip/validate.ts` line 78](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_NO_TIME
+
+- Message: `{where}: key {key} has no time "t"`
+- Fix: give every key its time in seconds from the start of the clip, such as "t": 0.5
+- Registered in: [`engine/anim/clip/validate.ts` line 86](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_NOT_JSON
+
+- Message: `{where} is not JSON: {problem}`
+- Fix: write the clip as JSON (lines starting with // are comments): { "dur": seconds, "loop": false, "keys": [ … ] }
+- Registered in: [`engine/anim/clip/validate.ts` line 74](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_TWIST_POP
+
+- Message: `{where}: "{field}" twist jumps {jump}° between key {key} (t {t}) and key {next} (t {nextT}) while bent {bend}°`
+- Fix: add or subtract 360 so the twist continues from the key before, or add a key between them
+- Registered in: [`engine/anim/clip/validate.ts` line 116](../engine/anim/clip/validate.ts)
+
+Reported by `validateClip` (engine/anim/clip/validate.ts) for a twist that changes more than 120° between keys while either key bends the limb more than 140°: the elbow or knee spins round the limb (the v1 pop pattern).
+
+### ANIM_CLIP_UNKNOWN_FIELD
+
+- Message: `{where}: key {key} (t {t}) has no field "{field}"{suggestion}`
+- Fix: use only the key fields {fields} (LEGEND, in engine/anim/clip/lens.ts, says what each means)
+- Registered in: [`engine/anim/clip/validate.ts` line 98](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_UNKNOWN_HEADER
+
+- Message: `{where} has no field "{field}"{suggestion}`
+- Fix: use only the fields {fields}
+- Registered in: [`engine/anim/clip/validate.ts` line 107](../engine/anim/clip/validate.ts)
+
 ### ANIM_UNKNOWN_JOINT
 
 - Message: `{name} is not a {what} of the humanoid skeleton{suggestion}`

@@ -451,6 +451,54 @@ For the agents who maintain the engine.
 - `PointName` (type): A point a rigid pair can name: a joint, a socket, or the root.
 - `RigidPair` (type): Two points whose distance must not change: from the first frame, or the distance given third (metres).
 
+### [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)
+
+- `ANGLE_ENTRIES` (const): Which entries of each key field are angles in degrees, by field (a single-number field lists entry 0): what the lens folds and `validateClip` bounds.
+- `clipText` (function): The text an agent reads and edits: the clip's header on one line, then each key as three short lines.
+- `foldAngle` (function): An angle in degrees folded to (−180°, 180°]: 190 → −170, 540 → 180, −180 → 180.
+- `KEY_ARRAYS` (const): Each array field of a key: its length and its shape, as an error names it.
+- `KEY_FIELDS` (const): Every key field's name, `t` first.
+- `KEY_NUMBERS` (const): Format 2's single-number key fields: their range and shape.
+- `LEGEND` (const): What each field means, one line each, as a set file or a reader shows it (shardfall's legend, format 2 added).
+- `normalizedLens` (function): `clip` with every angle of every key folded to (−180°, 180°], for reading (see the file comment).
+- `REQUIRED` (const): The fields every key has.
+
+### [`engine/anim/clip/mirror.ts`](../engine/anim/clip/mirror.ts)
+
+- `mirrorClip` (function): The same clip on the other side, named `<clip>_Mirror` (see the file comment).
+
+### [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)
+
+- `Clip` (interface): One clip: its header, then its keys in time order.
+- `ClipContact` (interface): Format 2: when a foot or hand holds the ground or a surface, from `from` to `to` seconds (detected at import).
+- `ClipEvent` (interface): Format 2: a moment in a clip, such as `{ t: 0.42, name: 'land' }` or `{ t: 0.8, name: 'step', side: 'L' }`.
+- `ClipKey` (interface): One key pose.
+- `decodePose` (function): Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it.
+- `keyAt` (function): The key pose at time `t` (seconds): every number in-betweened from the keys either side; loops wrap.
+- `KeyPose` (type): The pose between keys, as `keyAt` in-betweens it: every field of the key before, without its time.
+- `LimbPose` (type): A limb: `[forward, out, up]` as percentages (need not add up), then the bend and twist in degrees.
+- `moveAt` (function): How far a travelling clip has carried the body at time `t`, `[forward, right]` in mm; null when it does not.
+- `POINT_COUNT` (const): The number of body points, 36.
+- `POINT_INDEX` (const): Each point's position in `POSE_POINTS`.
+- `PointArray` (type): A decoded pose: 36 points × `[f, r, z]` in mm, in `POSE_POINTS` order.
+- `POSE_POINTS` (const): The 36 body points a pose rebuilds, in order: three numbers each (f, r, z) in the decoded array.
+- `samplePose` (function): The 36 body points at time `t` on rest body `R`, written into `out` (a new Float32Array, as the source's, unless given; pass a Float64Array for full precision).
+- `Triple` (type): Three numbers: a point or direction `[f, r, z]`, or `[turn, lean, tilt]` in degrees.
+
+### [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)
+
+- `CLIP_CODES` (const): The clip codes, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `ClipCode` (type): A clip code.
+- `ClipSet` (interface): A set of clips: the header, then the clips by name.
+- `ClipSource` (interface): A library a set's clips came from: its provenance and the rest body they were measured on.
+- `ClipWarning` (interface): One warning about a clip: the code, the key (from 1) and its time, the field, and the sentence naming the fix.
+- `parseClip` (function): Reads a clip of format 1 or 2 from its text (`//` comment lines allowed) or an object, which is not changed: the result is a copy, its keys sorted by time and `dur` filled in.
+- `parseClipSet` (function): Reads a set of clips (a set file's text or object): its header, then every clip by `parseClip`.
+- `poseError` (function): The largest distance (mm) between matching body points of two decoded poses, the finger helpers left out.
+- `poseMeanError` (function): The average distance (mm) between matching body points of two decoded poses, the finger helpers left out.
+- `RestBody` (type): A body's rest measurements (mm and degrees), measured by the importer from the library's own clips: `H0`, the standing pelvis height (the unit of `hips` and `root`); `Pr`, `Cr` and `Hr`, the rest frames of the pelvis, chest and head (`[forward, right, up]` axes); the four `spine` bones from the pelvis to the neck, and `spineW`, how much of the pelvis-to-chest turn each takes (the library's own), as `neckW` is the neck's share of the chest-to-head turn; `cv`, each collarbone from its pivot to the shoulder; and the segments' lengths (`up`, `fore`, `thigh`, `shin`…).
+- `validateClip` (function): Warns about poses that parse but play badly (see the file comment), in key order.
+
 ### [`engine/anim/fk.ts`](../engine/anim/fk.ts)
 
 - `createWorldPose` (function): An empty `WorldPose` for `forwardKinematics` to fill.
@@ -1764,6 +1812,15 @@ For the agents who maintain the engine.
 - `TrapExpect` (type): The matchers `expectTrapOutcomes` uses, as Vitest's and Playwright's `expect` both provide them.
 - `TrapOutcome` (interface): One fixture test's outcome, read from its harness's JSON report.
 
+### [`tests/unit/anim/clip-fixtures.ts`](../tests/unit/anim/clip-fixtures.ts)
+
+- `busy` (const): A key that exercises most of format 1: a lean, a turn, a punch, a bent knee, pointed feet and a blade.
+- `clipOf` (const): A clip of `keys`, its length the last key's time unless `header` says otherwise.
+- `curatedClips` (function): Every curated clip as `[set, name, clip, rest]`, for loops over the library.
+- `legacy` (function): The oracle and the curated sets from the my-3d2dge checkout; the test is deferred (skipped) without it.
+- `REST` (const): The source's `QUATERNIUS` `UAL1` rest body (mm, degrees).
+- `standing` (const): A standing key at `t`: hips at standing height, everything upright, arms and legs hanging straight down.
+
 ### [`tests/unit/data/anim/catalogs/catalogs.ts`](../tests/unit/data/anim/catalogs/catalogs.ts)
 
 - `canonicalSha256` (function): SHA-256 of `value` as `JSON.stringify` writes it (no spaces, keys in their order).
@@ -1822,6 +1879,24 @@ For the agents who maintain the engine.
 - `RunOptions` (interface): How to run a hook.
 - `tempDir` (function): A new temporary directory, as a real path.
 - `writeFiles` (function): Writes each file (path relative to `root` → content), creating directories; `mode` applies to all of them.
+
+### [`tools/anim/legacy-readable.ts`](../tools/anim/legacy-readable.ts)
+
+- `CLIP_FPS` (const): The rate the clips are decoded at, frames per second.
+- `clipVectorFiles` (function): The files `x port refs --clips` writes, from the checkout at `sourcePath`: `clips/` (the README, and each set's samples and checksums), returned in `files`, which tools/cmd/port.ts writes and checksums; and every frame of each set, written here to `out/port/clips/<set>.json` under `root` and listed in `artifacts`.
+- `clipVectorsReadme` (function): The README written beside the clip vectors, naming the source commit and the files decoded.
+- `CURATED_SETS` (const): The curated sets, 325 clips (HERO, Emberdeep's subset, is dropped: PLAN.md §10.1).
+- `decodeLegacyClip` (function): Every frame of a clip decoded by the oracle at 30 fps on its own source's rest body: frames × 108 float32s.
+- `float32Number` (function): A float32 as the double of its shortest decimal that reads back to it through `Math.fround`, `-0` kept.
+- `frameCount` (const): How many frames a clip of `dur` seconds has at 30 fps (`my-3d2dge:src/mocap/mocap.js`'s count).
+- `framesSha256` (const): The sha256 of decoded frames: their float32 bytes, little-endian, frame after frame.
+- `LEGACY_CODEC` (const): The codec's file in the source checkout.
+- `legacyClipVectors` (function): One set's clip vectors, `file` naming it: each clip's `sha256` of every frame and its sampled frames, as committed; with `every`, each clip's every frame instead (the full set, for out/port/clips/).
+- `LegacyReadable` (interface): The parts of the source's `MocapReadable` the tests and `x port` call (its own names; see the source).
+- `LegacySet` (interface): A source set file's object (`window.MOCAP[name]`), as the tests read it.
+- `loadLegacyReadable` (function): The source's `MocapReadable`, loaded from the checkout at `sourcePath`.
+- `readLegacySet` (function): The source's set `name` (`quaternius`, `mesh2motion`, `cmu`, `hero`), read from `src/mocap/sets/<name>.js`.
+- `sampledFrames` (const): The frames committed for a clip of `n` frames: the first, and those a third and two thirds of the way in.
 
 ### [`tools/checkAll.ts`](../tools/checkAll.ts)
 
@@ -1939,7 +2014,7 @@ For the agents who maintain the engine.
 
 - `BLOB_SCRIPTS` (const): The Blob scripts: the stress world's slime hop, kicks to the squash spring, and look turns.
 - `blobScript` (function): One Blob script from a fresh `new E.Blob()`, sampled after every step.
-- `buildFiles` (function): Every file of `PORT_DIR` but the checksums, by name, generated from the checkout at `sourcePath`.
+- `buildFiles` (function): Every file of `PORT_DIR` but the checksums and `clips/`, by name, generated from the checkout at `sourcePath`.
 - `BUILDS` (const): The builds of the humanoid matrix and of the moves.
 - `check` (const): The `port` plugin of `x check`: the committed vectors still match their checksums.
 - `CHECKSUMS` (const): The file in `PORT_DIR` that records every other file's sha256.
@@ -1958,7 +2033,7 @@ For the agents who maintain the engine.
 - `PORT_DIR` (const): Where the vectors live, relative to the repository root.
 - `SourceEngine` (type): The parts of the old engine's `E` (`My3D2dge`) the vectors call.
 - `STATES` (const): The humanoid state matrix (WP 0.11): locomotion, every pose, and both stances (while walking).
-- `writeVectors` (function): Writes `files` and their checksums into `dir`, and removes the files an earlier run wrote that are gone now.
+- `writeVectors` (function): Writes `files` (names may hold `/`) and their checksums into `dir`, and removes the files an earlier run wrote that are gone now; of the files this run does not `own`, it keeps the recorded checksums.
 
 ### [`tools/cmd/qa.ts`](../tools/cmd/qa.ts)
 

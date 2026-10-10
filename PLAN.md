@@ -3023,6 +3023,7 @@ A WP is done only when all of these hold:
   - **`x port refs --clips`:** `MR.pose` decodes of all 325 curated clips at 30 fps. That set is large: commit a sampled subset with checksums, and keep the full set regenerable.
   - The oracle is the source decoder itself. `tools/anim/legacy-readable.ts` (about 10 lines) runs `$MY3D2DGE_SRC/src/mocap/readable.js` in a `vm` context, as `tools/mocap-lib.mjs:7-9` does. Nothing is copied. The bit-for-bit check runs wherever the source resolves.
   - Format 2's optional fields (§10.2), including shardfall's clip `speed` and set `title` and `legend`, so its sets parse unchanged (WP 8.10).
+  - Format 2's key fields (`hand`, `roll`, `yaw`, `spine`, `grip`) are parsed, in-betweened, mirrored, lensed and printed; the decode reads format-1 fields only (WP 8.8 defines theirs; ADR-0010 amendment 1). Reference decodes use each clip's own source rest body.
   - The validator, the normalized lens and mirroring.
   - Parse errors that name the key, its time and the field.
 - **Improves:** I-13.
@@ -3055,7 +3056,7 @@ A WP is done only when all of these hold:
 - **Build:**
   - **A baker** that works from format-1 **parameters** (direction, bend, twist, hints), handles singular poses, and produces 30 fps rotation tracks on the canonical skeleton.
   - **Standard clips too** (doctrine: Common ground): each baked clip is also a three.js `AnimationClip` (`QuaternionKeyframeTrack`s on the canonical bone names), so pages can play it with three.js's `AnimationMixer`, which `engine/index.ts` re-exports (§6.1), for presentation only (the Library Lab, props). The sim's clip layer samples the same tracks on the CPU.
-  - **The library API.**
+  - **The library API**, which also exports WP 8.2's codec (parse, text, validate, lens, mirror, decode) from `engine/index.ts` and `engine/sim-api.ts`.
   - **The clip layer**, in the animator's clip slot (WP 3.7): weight, mask, fade from the current pose, speed, loop, additive, `walk/hold/next/landed` flags, cancel rules, events, root motion.
   - **Ground speed** (shardfall's): a loop with a `speed` plays at rate = clamp(ground speed / pace, 0.4, 2.5), where pace = `speed`/100 × the build's hip height, in m/s. A walk and a run switch to the run above √(w·r) × 1.15 and back below √(w·r) × 0.87, where w and r are their paces (1.4 and 4.0 hip heights a second when a clip has none), so a speed near the line never flickers. Below 0.1 m/s the character idles.
   - **Strike time** (shardfall's `crates/pav_core/src/clips.rs:478-550`, §5.8): the moment a clip's hand reaches furthest ahead of the hips (the blade's tip for a clip that holds one, a foot for a clip tagged `kick`), sampled at 60 Hz and measured once per clip. A move that plays a clip as its attack lands its hit there when the clip has no `hit` event.
@@ -3070,7 +3071,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/anim/clip` (the library QA runs in WP 8.6)
 
 #### WP-8.5 Tools port
-- **Owns:** `tools/anim/*`, `tools/cmd/anim.ts`. It extends `repack.ts` from WP 8.3 and the `fps?` rows of WP 8.1's `data/anim/cmu/`; `legacy-readable.ts` stays WP 8.2's, and `shardfall.ts` stays WP 8.10's
+- **Owns:** `tools/anim/*`, `tools/cmd/anim.ts`, `engine/anim/clip/encode.ts` (the importer half of `readable.js`: `measure`, `encode`, `fit`, `capSample`, `reduce`; ADR-0010 amendment 1). It extends `repack.ts` from WP 8.3 and the `fps?` rows of WP 8.1's `data/anim/cmu/`; `legacy-readable.ts` stays WP 8.2's, and `shardfall.ts` stays WP 8.10's
 - **Needs:** WP 8.1, WP 8.3, WP 8.4
 - **Size:** L
 - **Carry:** `anim-import`, `asf-amc`, `cmu`, `anim-set`, `mocap-lib`, `to-glb.py`.
@@ -3126,6 +3127,7 @@ A WP is done only when all of these hold:
   - The owner supplies the four GLBs of the Quaternius Universal Animation Library's version 2 once (`UAL1_Standard.glb`, `UAL1_Standard_RM.glb`, `UAL2_Standard.glb`, `UAL2_Standard_RM.glb`): an escalation (§11.5). Until then, Quaternius clips stay as WP 8.10 brought them and are listed as blocked. Their parity reference is v2's format-1 decode.
   - Re-import with hands, foot roll, root yaw, spine, contacts and events, and each loop's `speed` by WP 8.5's rule. 100STYLE's BVH takes use shardfall's rig maps, rest pose (the frame where the body stands straightest) and units from leg length (`crates/pav_tools/src/mocap/bvh.rs:235-605`, parsed with three.js's `BVHLoader`), and its loop finders (`mocap/takes.rs:53-243`).
   - Swap clips in one at a time, checking parity, marked `via: "source"`.
+  - The decode of format 2's key fields (`hand`, `roll`, `yaw`, `spine`, `grip`) in `engine/anim/clip/readable.ts`, defined together with WP 8.5's encode that writes them (ADR-0010 amendment 1).
 - **Improves:** I-14.
 - **Done when:** in every set, at least 80% of the clips whose sources are available are upgraded with parity (§10.5 step 9); a unit test counts the `via: "source"` clips against those whose sources are available, per set, and fails below 80%. The 100STYLE sets are left out of the count until a defect touches them. The rest are listed with reasons.
 - **Verify:** `node x qa anim --only clip: && npm test -- engine/anim/clip tests/unit/data/anim/upgrade`
@@ -3995,7 +3997,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 7.8 | Box 6: the Stress Box | B | todo | | |
 | **G7** | **Gate: the Stress Box (foundation)** | | todo | | |
 | 8.1 | Provenance, catalogs, ledger, docs | L | done | 84bf7a2 (#5) | data/anim/{SOURCES.md,LICENSES/,catalogs/,cmu/} (ledger split into 17 categories plus subjects.tsv, fallback fixed), docs/ANIMATION-LIBRARY.md (from MOCAP.md), docs/ANIMATION-RESEARCH.md (Engine column and 2D inventory dropped, coverage map added), tests in tests/unit/data/anim/{catalogs,ledger,sources}; call: kept the research doc's Build/Size columns, labelled as the 2D engine's proposals; INDEX/API regenerated on merge; no escalations, no deferred proofs |
-| 8.2 | Readable codec and format 2 | L | todo | | |
+| 8.2 | Readable codec and format 2 | L | done | d570025 (#5) | Readable codec port (bit-identical to the source), format-2 types and parse, validator, lens, mirror; `x port refs --clips` commits 3 float32 samples per clip plus a sha256 over every frame; calls: decode on each clip's own source rest, format-2 key fields carried but not decoded (WP 8.8), unknown fields refused (ADR-0010 amendment 1); open: port.ts at 408 lines (soft cap) |
 | 8.3 | Re-containerize the sets | L | todo | | |
 | 8.4 | Baker, clip layer, retargeting, mannequin | L | todo | | |
 | 8.5 | Tools port | L | todo | | |
