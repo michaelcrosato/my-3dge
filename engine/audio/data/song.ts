@@ -131,6 +131,9 @@ export const SONG_FIELDS = {
 /** A drum track's gain that plays the kit as written (the source's default track gain). */
 const KIT_LEVEL = 0.18;
 
+/** voice.ts's default gain, for a drum voice that leaves it out. */
+const VOICE_VOL = 0.3;
+
 /** The tokens that are not notes. */
 const HOLD = '-';
 const REST = '.';
@@ -274,6 +277,7 @@ export function songVoices(song: string | Song, options: SongRenderOptions = {})
   const { intensity = 1, registry = sharedRegistry } = options;
   const entry = typeof song === 'string' ? getSong(song, registry) : song;
   const { stepSeconds, steps } = songTiming(entry);
+  const kit = new Map<string, Voice[]>(); // each drum's voices, looked up once
   const voices: Voice[] = [];
   for (const track of entry.tracks) {
     if (track.intensity > intensity) continue;
@@ -286,8 +290,9 @@ export function songVoices(song: string | Song, options: SongRenderOptions = {})
       const token = tokens[index];
       if (token === REST || token === HOLD) continue;
       if (track.wave === 'drums') {
-        for (const voice of sfxVoices(entry.kit[token], registry)) {
-          voices.push({ ...voice, at: (voice.at ?? 0) + at, vol: (voice.vol ?? 0.3) * (track.vol / KIT_LEVEL) });
+        if (!kit.has(token)) kit.set(token, sfxVoices(entry.kit[token], registry));
+        for (const voice of kit.get(token) as Voice[]) {
+          voices.push({ ...voice, at: (voice.at ?? 0) + at, vol: (voice.vol ?? VOICE_VOL) * (track.vol / KIT_LEVEL) });
         }
         continue;
       }
