@@ -2,10 +2,12 @@
  * @file The shared e2e fixture (PLAN.md §8.8): every suite imports `test` and `expect` from here. Before any page
  * script runs, each page gets the virtual clock, seeded `Math.random` and named streams, and the WebGPU probe
  * (`tools/lib/browser.ts`). Each test gets a `harness`: the `ready || error` wait, `assertWebGPU`, `readFrame`,
- * `tick`, the console it captured (for WP 0.5's advice trap) and its page errors, mapped to `.ts` files and lines.
+ * `tick`, the console it captured, its page errors (mapped to `.ts` files and lines) and the advice trap's catch.
  *
- * Invariants: a page error the test never read fails the test, naming its file and line; `ready()` turns a startup
- * crash into one line instead of a hang; `readFrame` is a Playwright screenshot of the canvas element (§4.8). The
+ * Invariants: a page error the test never read fails the test, naming its file and line; so does an advice code,
+ * `console.warn` or three.js deprecation that no file under tests/baselines/advice/ lists and the test never read
+ * through `harness.advice()` (the advice trap, tests/setup/adviceTrap.ts); `ready()` turns a startup crash into one
+ * line instead of a hang; `readFrame` is a Playwright screenshot of the canvas element (§4.8). The
  * seed is 1 unless a suite sets `test.use({ seed })`.
  *
  * @example
@@ -26,6 +28,7 @@ import {
   type ConsoleRecord,
   type PageError,
 } from '../../tools/lib/browser';
+import { describeUnlisted, findUnlisted, loadAllowList, type Warning } from '../setup/adviceTrap';
 
 /** Playwright's `expect`, re-exported so a suite imports everything from this file. */
 export { expect };
@@ -76,7 +79,15 @@ export interface Harness {
   console: ConsoleRecord[];
   /** Every page error so far, mapped to sources; reading them means the test handles them. */
   errors(): Promise<PageError[]>;
+  /**
+   * The advice codes, warnings and three.js deprecations so far that no file under tests/baselines/advice/ lists;
+   * reading them means the test handles them (a test that provokes advice on purpose asserts on these).
+   */
+  advice(): Warning[];
 }
+
+/** The advice trap's allow list, read once per worker. */
+const ALLOWED = loadAllowList();
 
 /** The ready-or-error signal a page publishes as `window.__engine` (PLAN.md §8.3); only these members are read. */
 interface PageSignals {
@@ -151,6 +162,7 @@ export const test = base.extend<{ seed: number; harness: Harness }>({
     async ({ page, seed }, use) => {
       const watch = await preparePage(page, { seed });
       let read = 0;
+      let adviceRead = 0;
       let count = 0;
       page.on('pageerror', () => count++);
       const harness: Harness = {
@@ -158,6 +170,11 @@ export const test = base.extend<{ seed: number; harness: Harness }>({
         async errors() {
           const all = await watch.errors();
           read = all.length;
+          return all;
+        },
+        advice() {
+          const all = findUnlisted(watch.console, ALLOWED);
+          adviceRead = all.length;
           return all;
         },
         async ready({ timeout = 15_000 } = {}) {
@@ -229,6 +246,8 @@ export const test = base.extend<{ seed: number; harness: Harness }>({
           `unhandled page error${unread.length > 1 ? 's' : ''}: ${unread.map(describePageError).join('; ')}`,
         );
       }
+      const advice = findUnlisted(watch.console, ALLOWED).slice(adviceRead);
+      if (advice.length > 0) throw new Error(describeUnlisted(advice, ` in ${page.url()}`));
     },
     { auto: true },
   ],

@@ -6,12 +6,15 @@
  * own page, and a missing page is a 404 (`appType: 'mpa'`). A bare `three` resolves to `three/webgpu`, as three.js's
  * WebGPU examples map it. The runtime dependencies are pre-bundled at startup, so a first page load never
  * re-optimizes and reloads (§4.7). The server listens on 127.0.0.1 and `$PORT` (default 5173). Nothing here needs
- * the network, a browser or the source checkouts (Vercel's build reads this file too).
+ * the network, a browser or the source checkouts (Vercel's build reads this file too). Every test file runs the
+ * advice trap first (tests/setup/adviceTrap.ts), and `vitest --changed` reruns everything on the files that
+ * tools/lib/tiers.ts's `T1_FULL` names.
  *
  * @see tools/lib/vite.test.ts
  */
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
+import { vitestRerunTriggers } from './tools/lib/tiers';
 
 /** The dev server's port: `$PORT` (each ultracode lane sets its own), else 5173. */
 const PORT = Number(process.env.PORT) || 5173;
@@ -46,5 +49,7 @@ export default defineConfig({
     exclude: ['**/node_modules/**', '.cache/**', 'out/**', 'dist/**', 'test-results/**', 'tests/e2e/**'],
     reporters: ['dot', 'json'],
     outputFile: { json: 'out/test/report.json' },
+    setupFiles: ['tests/setup/adviceTrap.ts'],
+    forceRerunTriggers: vitestRerunTriggers(),
   },
 });

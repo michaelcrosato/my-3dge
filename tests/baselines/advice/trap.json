@@ -1,0 +1,6 @@
+[
+  {
+    "code": "TRAP_LISTED",
+    "reason": "The advice trap's own fixture tests (tests/setup/fixtures/) print it to prove that a listed code passes in both harnesses (WP 0.5)."
+  }
+]
