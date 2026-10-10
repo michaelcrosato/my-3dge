@@ -1,0 +1,18 @@
+/**
+ * @file Unit tests for the build `build:{{name}}` ({{id}}.ts): it is defined, its rest pose stands on the floor, and
+ * anim.check passes it.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { animCheck, createSkeleton, forwardKinematics, jointPosition, Pose } from '../../../engine/sim-api';
+import { {{name}} } from './{{name}}';
+
+describe('build:{{name}}', () => {
+  it('is defined, stands on the floor at rest, and passes anim.check', () => {
+    expect({{name}}.id).toBe('build:{{name}}');
+    const skeleton = createSkeleton({{name}});
+    const world = forwardKinematics(skeleton, new Pose());
+    expect(jointPosition(world, 'pelvis').y).toBeCloseTo(({{name}}.legUpper + {{name}}.legLower) * {{name}}.size, 9);
+    expect(animCheck({ poses: [new Pose()], skeleton }).problems).toEqual([]);
+  });
+});
