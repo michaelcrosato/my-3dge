@@ -97,6 +97,20 @@ const CASES: Case[] = [
     rule: 'sim/no-restricted-syntax',
   },
   {
+    name: 'the ** operator, which the fdlibm swap cannot reach',
+    file: 'engine/sim/falloff.ts',
+    bad: 'export const falloff = (d: number) => d ** 2.2;',
+    good: 'export const falloff = (d: number) => Math.pow(d, 2.2);',
+    rule: 'sim/no-restricted-syntax',
+  },
+  {
+    name: 'compound **=',
+    file: 'engine/anim/ease.ts',
+    bad: 'export function grow(x: number) {\n  x **= 2;\n  return x;\n}',
+    good: 'export function grow(x: number) {\n  x = Math.pow(x, 2);\n  return x;\n}',
+    rule: 'sim/no-restricted-syntax',
+  },
+  {
     name: 'a dynamic import of another layer',
     file: 'engine/world/lazy.ts',
     bad: "export const draw = () => import('../gfx/draw');",

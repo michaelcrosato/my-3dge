@@ -136,6 +136,11 @@ export function simSideBlocks(): Linter.Config[] {
               "a banned global reached through globalThis, self or global is still banned: sim-side code reads no clock, schedules nothing by wall time, touches no DOM or Web Audio, and draws randomness only from named streams, rng('<stream>') (PLAN.md §6.5)",
           },
           { selector: 'ImportExpression', message: DYNAMIC },
+          {
+            selector: "BinaryExpression[operator='**'], AssignmentExpression[operator='**=']",
+            message:
+              'write Math.pow in sim-side code: the sim swaps an fdlibm pow into Math while it steps, and ** escapes it (PLAN.md §6.5)',
+          },
         ],
       },
     },
