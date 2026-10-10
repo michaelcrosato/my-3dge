@@ -7,12 +7,13 @@
  * the voice and the field.
  *
  * Defaults (the source's): wave `square`, freq 440 Hz, dur 0.15 s (at least 0.012 s), vol 0.3, attack 0.004 s, step
- * 0.06 s, q 1.1. A noise voice without `filter` goes through a bandpass that follows its pitch, as in the source. A
- * frequency is a number in Hz or a note name (`noteFreq`), and pitches below 20 Hz are raised to 20 Hz, as in the
- * source. A filter given by its type alone (`filter: 'lowpass'`) follows the voice's pitch; an object gives it its own
- * `freq` (and `to`, a sweep). `pluck` voices keep one pitch: `to`, `arp`, `vib` and `fm` are refused on them, and `fm`
- * on noise. The source's `delay` (a start offset) is `at` here, because `delay` is the echo. Unknown fields and waves
- * are refused with the closest name, never ignored.
+ * 0.06 s, q 1.1. The envelope falls away unless `hold` or an ADSR field is given; a pluck holds by default (`hold:
+ * false` makes it fall), because a string fades by itself. A noise voice without `filter` goes through a bandpass that
+ * follows its pitch, as in the source. A frequency is a number in Hz or a note name (`noteFreq`), and pitches below
+ * 20 Hz are raised to 20 Hz, as in the source. A filter given by its type alone (`filter: 'lowpass'`) follows the
+ * voice's pitch; an object gives it its own `freq` (and `to`, a sweep). `pluck` voices keep one pitch: `to`, `arp`,
+ * `vib` and `fm` are refused on them, and `fm` on noise. The source's `delay` (a start offset) is `at` here, because
+ * `delay` is the echo. Unknown fields and waves are refused with the closest name, never ignored.
  *
  * @example
  * const [voice] = normalizeSound({ wave: 'pulse', freq: 'A4', to: 880, dur: 0.14 }, 44100);
@@ -117,7 +118,7 @@ export interface Voice {
   at?: number;
   /** Seconds from silence to full volume; 0.004 by default. */
   attack?: number;
-  /** Sustains full volume and releases over the last 30 ms, instead of falling away. */
+  /** Sustains full volume and releases over the last 30 ms, instead of falling away; a pluck's default. */
   hold?: boolean;
   /** ADSR: seconds from full volume to `sustain`; 0 by default. Any of decay, sustain, release makes the envelope ADSR. */
   decay?: number;
@@ -235,16 +236,16 @@ function num(
   return value;
 }
 
-/** `value` checked to be a plain object with only `fields`. */
+/** `value` checked to be a plain object with only `fields`: the voice itself when `field` is `''`. */
 function record(where: string, field: string, value: unknown, fields: readonly string[]): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return bad(where, field, value, `an object with the fields ${fields.join(', ')}`);
+    return bad(where, field || 'the voice', value, `an object with the fields ${fields.join(', ')}`);
   }
   for (const key of Object.keys(value)) {
     if (fields.includes(key)) continue;
     const suggestion = didYouMean(key, fields);
     throw codeError('AUDIO_UNKNOWN_FIELD', {
-      where: `${where} ${field}`,
+      where: field ? `${where} ${field}` : where,
       field: key,
       suggestion,
       fields: fields.join(', '),
@@ -258,12 +259,12 @@ function pitch(where: string, value: unknown): number {
   return Math.max(20, noteFreq(value as Pitch, where));
 }
 
-/** The envelope a voice asks for. */
+/** The envelope a voice asks for (a pluck holds unless told not to). */
 function envelope(where: string, v: Record<string, unknown>, dur: number): Envelope {
   const attack = Math.min(dur, num(where, 'attack', v.attack, 0.004, 0, MAX_SECONDS));
   if (v.hold !== undefined && typeof v.hold !== 'boolean') bad(where, 'hold', v.hold, 'true or false');
   if (v.decay === undefined && v.sustain === undefined && v.release === undefined) {
-    return v.hold ? holdEnvelope(attack, dur) : { kind: 'fall', attack };
+    return (v.hold ?? v.wave === 'pluck') ? holdEnvelope(attack, dur) : { kind: 'fall', attack };
   }
   return {
     kind: 'adsr',
@@ -305,7 +306,7 @@ function pluckSpec(where: string, p: Record<string, unknown>): NonNullable<Norma
 /** One voice checked and filled. */
 function voice(value: unknown, index: number, rate: number): NormalVoice {
   const where = `voice ${index}`;
-  const v = record(where, 'definition', value, VOICE_FIELDS);
+  const v = record(where, '', value, VOICE_FIELDS);
   const wave = (v.wave ?? 'square') as Wave;
   if (!WAVES.includes(wave)) {
     const suggestion = didYouMean(String(wave), WAVES);

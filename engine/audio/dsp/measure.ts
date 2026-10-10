@@ -8,6 +8,7 @@
  * range), measured with a Hann window, so energy at frequencies a few bins away barely leaks in.
  *
  * @example
+ * import { render } from './render';
  * const tone = render({ wave: 'sine', freq: 441, dur: 1, attack: 0, hold: true, vol: 1, release: 0 });
  * toneAmplitude(tone, 441, 44100); // ≈ 1
  * peak(tone); // ≈ 1

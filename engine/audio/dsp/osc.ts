@@ -1,8 +1,10 @@
 /**
  * @file The tonal oscillators of the DSP core (PLAN.md WP 9.1; doctrine: Quality under the hood): square, pulse 25%,
- * pulse 12.5%, triangle, sine and saw, each a function of a phase. Square, pulse and saw are band-limited with PolyBLEP
- * corrections at their steps, the triangle with PolyBLAMP corrections at its corners, so a 3 kHz saw aliases about
- * ten times less than a naive one (osc.test.ts measures it). White noise and the Karplus–Strong pluck are made in
+ * pulse 12.5%, triangle, sine and saw, each a function of a phase. Square, pulse and saw are band-limited with
+ * two-sample PolyBLEP corrections at their steps, the triangle with PolyBLAMP corrections at its corners: from 1 to
+ * 5 kHz, what they fold back below Nyquist is at least 4.5 times weaker than a naive wave's (a 3 kHz saw's about 6
+ * times, 15 dB; the triangle's, small to begin with, at least 3.5 times), at the cost of a sinc² droop of the top
+ * harmonics (4% at 5 kHz); osc.test.ts measures both. White noise and the Karplus–Strong pluck are made in
  * engine/audio/dsp/synth.ts and engine/audio/dsp/pluck.ts.
  *
  * Invariants: `oscillate(wave, phase, dt)` is a pure function: `phase` in [0, 1), `dt` the phase step per sample

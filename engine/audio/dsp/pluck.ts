@@ -1,16 +1,18 @@
 /**
  * @file The Karplus–Strong pluck of the DSP core (PLAN.md WP 9.1): a burst of seeded noise circulating in a delay
  * line whose loop averages neighbouring samples, so it rings like a plucked string and darkens as it decays. The
- * extended form of Jaffe and Smith: a first-order allpass tunes the loop's fractional delay, so the pitch is right
- * to well under a cent instead of jumping between whole-sample periods.
+ * extended form of Jaffe and Smith: a first-order allpass tunes the loop's fractional delay, so the pitch is right to
+ * a tenth of a cent up to 1 kHz and half a cent up to 4 kHz (pluck.test.ts measures it) instead of jumping between
+ * whole-sample periods.
  *
  * Invariants: the loop delay is rate / freq samples: the whole-sample line, plus half a sample for the two-point
  * average, plus the allpass's fraction in [0.1, 1.1). `decay` scales the loop once a period (1 rings forever, 0.99
  * fades over a few hundred periods); `brightness` low-passes the burst (1: white noise, lower: darker). The burst is
- * drawn from the `Rng` handed in and has no DC. The pitch is fixed: the line is at least two samples long, so the
- * highest playable pitch is about rate / 3. Arithmetic only: the same bits in Node and Chromium.
+ * drawn from the `Rng` handed in and has no DC. The pitch is fixed. The line is at least two samples long, so a pitch
+ * above rate / 2.6 (17 kHz at 44.1 kHz) plays at rate / 2.6. Arithmetic only: the same bits in Node and Chromium.
  *
  * @example
+ * import { Rng } from '../../core/rng';
  * const string = new Pluck(220, 44100, new Rng(1));
  * const first = string.next(); // the first sample of the burst
  * @see engine/audio/dsp/pluck.test.ts
