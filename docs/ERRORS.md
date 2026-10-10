@@ -176,3 +176,67 @@ Raised by the settings store (engine/core/settings.ts) for an unknown path in `g
 - Registered in: [`engine/gfx/renderer.ts` line 27](../engine/gfx/renderer.ts)
 
 Raised at startup, before anything touches the GPU, when the browser has no `navigator.gpu`, gives no adapter or device, or three.js starts another backend than WebGPU. WebGPU is the only renderer: there is no WebGL fallback (PLAN.md §6.7), so nothing starts, and a page shows this message with its fix.
+
+## sim
+
+### SIM_BAD_ARGUMENT
+
+- Message: `{where} got {value}`
+- Fix: pass {expected}
+- Registered in: [`engine/sim/world.ts` line 63](../engine/sim/world.ts)
+
+Raised by the world (engine/sim/world.ts) for a seed or step rate that is not a number of the right kind, a spawn that is not a plain object of components, or an `id` given among the components.
+
+### SIM_BAD_CAPTURE
+
+- Message: `the capture cannot be restored: {problem}`
+- Fix: pass restore() what capture() returned (or its serialize/deserialize round trip), unchanged, to a world with the same component kinds, step rate (time.hz), settings and physics
+- Registered in: [`engine/sim/capture.ts` line 41](../engine/sim/capture.ts)
+
+Raised by `restore` (engine/sim/capture.ts, engine/sim/world.ts) before anything changes, for a value that is not a capture of this format: a wrong format tag, a malformed part, entities out of id order or at or above `nextId`, a `time.hz` other than the world step rate, or a physics part where the world has no physics hook (or the reverse).
+
+### SIM_BAD_SYSTEM
+
+- Message: `system {name}: {problem}`
+- Fix: add each system once, by a unique name: w.systems.add('<name>', (w, intents) => { … }, { phase }), the phase one of intents, ai, anim, physics, readback, rules
+- Registered in: [`engine/sim/systems.ts` line 28](../engine/sim/systems.ts)
+
+Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empty or duplicate name, a run that is not a function, an unknown phase (named with the closest one), or removing a system that was never added.
+
+### SIM_BUSY
+
+- Message: `{what} was called during a step`
+- Fix: call step(), run(), capture() and restore() between steps; inside a system, change the world directly (spawn, despawn and emit queue to the end of the step)
+- Registered in: [`engine/sim/world.ts` line 59](../engine/sim/world.ts)
+
+### SIM_EVENT_STORM
+
+- Message: `the end of step {tick} was still delivering events and spawns after {rounds} rounds`
+- Fix: break the loop: a listener that emits the event it listens to, or spawns what spawns it again, never settles; act on such chains one step at a time (store a pending flag in a component and let a system handle it next step)
+- Registered in: [`engine/sim/world.ts` line 68](../engine/sim/world.ts)
+
+### SIM_NO_CALLBACKS
+
+- Message: `the capture has {count} pending timers, whose callbacks {why}`
+- Fix: restore a capture with pending timers from the object capture() returned, into the world that made it: callbacks are functions, which never survive serialization or move between worlds; to save play as text, keep delays in component fields (a tick count a system checks)
+- Registered in: [`engine/sim/capture.ts` line 46](../engine/sim/capture.ts)
+
+### SIM_NO_ENTITY
+
+- Message: `there is no entity {id}{why}`
+- Fix: use an id spawn() returned while its entity lives (w.has(id) tells): a spawned entity joins the world at the end of the step that spawned it, so give it its components in spawn(); a despawned one leaves at the end of its step
+- Registered in: [`engine/sim/world.ts` line 55](../engine/sim/world.ts)
+
+### SIM_UNDECLARED_FIELD
+
+- Message: `entity {id} has {name}.{field}, a field the component kind {name} does not declare{suggestion}`
+- Fix: declare the field in defineComponent({name}, { fields }) or stop writing it: the hash and captures read the declared fields only, so an undeclared one would let two different states match
+- Registered in: [`engine/sim/state.ts` line 47](../engine/sim/state.ts)
+
+### SIM_UNKNOWN_COMPONENT
+
+- Message: `{name} is not a component kind{suggestion}`
+- Fix: declare it with defineComponent('{name}', { description, fields }) before an entity holds it (node x describe component lists the declared kinds)
+- Registered in: [`engine/sim/state.ts` line 42](../engine/sim/state.ts)
+
+Raised by the world (engine/sim/world.ts) and the hash (engine/sim/state.ts) for an entity property, a `spawn`, `add`, `remove` or `query` name, or a captured component that no `defineComponent` declared: the hash covers declared components only, so an undeclared one is refused rather than skipped.

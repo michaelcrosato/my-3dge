@@ -218,6 +218,65 @@ For the agents who maintain the engine.
 - `GfxInfo` (interface): What the renderer reports about itself (the start of `__engine.info()`, PLAN.md §8.3).
 - `requestWebGPU` (function): Asks `gpu` (by default the browser's `navigator.gpu`) for an adapter; rejects with `GfxError` `GFX_NO_WEBGPU` when there is no WebGPU or no adapter.
 
+### [`engine/sim/capture.ts`](../engine/sim/capture.ts)
+
+- `CAPTURE_CODES` (const): The codes this module raises, with their fixes.
+- `CAPTURE_FORMAT` (const): The capture format tag; a change to what captures hold changes it.
+- `CaptureSource` (interface): What a capture is made from: the world's parts, read between steps.
+- `cloneData` (function): A deep copy of plain data: arrays, plain objects (undefined values left out), typed arrays and values with `clone()` (three.js's math classes); anything else throws `CORE_NOT_CANONICAL`.
+- `makeCapture` (function): Makes a capture from a world's parts: copies of everything, the callbacks held aside.
+- `readCapture` (function): Checks `capture` for the world `target` and returns a copy ready to apply.
+- `Restoration` (interface): A checked capture, copied, ready for the world to apply.
+- `RestoreTarget` (interface): The world a capture is read for: itself, its component kinds, whether it has physics, and its step rate.
+- `WorldCapture` (interface): The whole sim at a step boundary, as plain data (callbacks held aside; see the file comment).
+
+### [`engine/sim/state.ts`](../engine/sim/state.ts)
+
+- `AnyComponents` (type): The components of an untyped world: any declared kind, by name.
+- `ComponentData` (type): One component's data: its fields by name, plain data (numbers, strings, booleans, arrays, plain objects).
+- `ComponentKind` (interface): A component kind as `defineComponent` stores it in the registry.
+- `ComponentOf` (type): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `componentTable` (function): The component table of `registry` (the shared one by default).
+- `ComponentTable` (interface): A registry's component kinds, read once each: their field lists and validated new values.
+- `defineComponent` (function): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
+- `diffStates` (function): Where two states part, field by field, at most `limit` differences: entities are matched by id (`entities.7` for an entity on one side only, `entities.7.position.x` for a field), the rest by key and index.
+- `Entity` (type): An entity: its id and the components it holds, by kind name (`e.position`).
+- `EntityData` (interface): An entity as plain data: its id and its components by kind name.
+- `hashState` (function): The digest of a state, live or stored, as 16 hex digits: what `world.hash()` returns.
+- `PhysicsHook` (interface): The physics part of the world's state, hashed and captured with the rest (WP 3.1 plugs Rapier in; §6.5 items 5–7).
+- `SpawnSpec` (type): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
+- `STATE_CODES` (const): The codes this module raises, with their fixes.
+- `STATE_FORMAT` (const): The hash format; changing what the hash reads changes this tag, and with it every golden.
+- `StateDifference` (interface): Where two states part: the path (`entities.7.position.x`) and each side's value (undefined when absent).
+- `StateView` (interface): What the hash reads, live or stored: the ids, entities (in id order), timers, settings, RNG states and the physics hook's state.
+- `traceState` (function): The per-part and per-entity digests of a state (the `hash` field is `hashState`'s).
+- `With` (type): An entity known to hold the components `K` (what `query` returns).
+- `WorldState` (interface): The sim as plain data: what `world.state()` returns and the hash covers.
+- `WorldTrace` (interface): Per-part and per-entity digests, so a mismatch names the part and the entity (PLAN.md §6.5 item 6).
+
+### [`engine/sim/systems.ts`](../engine/sim/systems.ts)
+
+- `createSystems` (function): Makes an empty schedule.
+- `Intents` (type): What the sim reads from outside in one step, recorded by replays (the vocabulary arrives in WP 1.5).
+- `Phase` (type): A phase of the step.
+- `phaseIndex` (function): The place of `phase` in the step (`timers` sits just before `rules`).
+- `PHASES` (const): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
+- `STEP_ORDER` (const): One step, in order: the phases, the engine's stages (`timers`, `spawns`, `despawns`, `events`) among them.
+- `System` (interface): A system in the schedule.
+- `SYSTEM_CODES` (const): The codes this module raises, with their fixes.
+- `SystemFn` (type): A system: called once per step with the world and the step's intents.
+- `Systems` (interface): A world's systems, in run order.
+- `SystemSpec` (interface): A system as `createWorld({ systems })` takes it: the phase is `rules` when left out.
+
+### [`engine/sim/world.ts`](../engine/sim/world.ts)
+
+- `createWorld` (function): Makes a world.
+- `SimRng` (interface): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
+- `World` (interface): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
+- `WORLD_CODES` (const): The codes this module raises, with their fixes.
+- `WorldOptions` (interface): How a world is made.
+- `WorldTimers` (type): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
+
 ### [`eslint.config.js`](../eslint.config.js)
 
 - `configure` (function): Builds the whole config; `switches` defaults to `SWITCHES` (tests turn every switch on).

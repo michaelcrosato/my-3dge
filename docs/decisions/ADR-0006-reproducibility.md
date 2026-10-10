@@ -35,3 +35,30 @@ it in every runtime, so the guard defers to it (stdlib gives NaN for `pow(NaN, 0
 negative base with |y| ≥ 2^53, always an even power, is computed as `pow(-x, y)`, since stdlib's odd test fails there.
 engine/core/simMath.test.ts checks both on the drift probe's edge pairs. PLAN.md §6.5 item 1, Appendix B and WP 1.1
 say so.
+
+## Amendment 2 (2026-10-10, WP-1.4)
+Calls made where the plan is silent (engine/sim/{world,systems,state,capture}.ts); no deviation:
+- **Entities and components are plain objects** (Q13): an entity is `{ id, position: {…}, … }` with a read-only id;
+  a component kind is a registry entry of kind `component` (`defineComponent(name, { description, fields })`,
+  schema.ts fields, never hooks), and its name is the entity's property. Systems are named functions
+  `(w, intents) => void` in phases `intents`, `ai`, `anim`, `physics`, `readback`, `rules` (default `rules`), run by
+  phase, then in the order added.
+- **One step** (§6.4, made concrete): the phases up to `readback`, the timers' stage (WP 1.3's `timers.step()`), the
+  `rules` phase, then the boundary: queued spawns join in id order, queued despawns leave, queued events reach their
+  listeners in emit order, repeated while listeners queue more (1,000 rounds at most, `SIM_EVENT_STORM`). Outside a
+  step, `spawn`, `despawn` and `emit` act at once, each as an entry point inside `withSimMath`; `run(fn)` is the entry
+  point for setup and dev actions. During step k every phase, timer and listener sees `tick` k. Pending entities are
+  invisible (`get`, `add`, `query`) until the boundary.
+- **The hash**: FNV-1a 64 over a format tag (`my3dge-state/1`), then tagged parts: seed and next id; each entity in id
+  order with its components sorted by name and each component's fields in declared order (an absent field has its
+  own marker; an undeclared component or field throws instead of being skipped); `timers.state()`; the non-view
+  settings; the sim RNG states; the physics hook's `state()`. The seed and next id are hashed because they decide
+  future streams and ids. Numbers and component names take a fast path that feeds exactly `Fnv64.value`'s bytes
+  (pinned by a test): 5,000 entities with 8 numbers each hash in about 10 ms in Node.
+- **Captures are plain data** (canonical, so `serialize` writes them); timer callbacks, being functions, are held
+  beside the capture with the world that made it. A capture with pending timers restores only from the object
+  `capture()` returned, into that world (`SIM_NO_CALLBACKS` otherwise, since a callback closes over its world); one
+  without pending timers restores anywhere with the same component kinds, settings and `time.hz` (fixed when a world
+  is made, so another rate is refused). Saves that must survive text keep delays in component fields.
+- **A despawned entity's `rng.entity` streams are dropped** (ids are never reused, so they would only grow the hash).
+  Visual streams (`fxRng`) derive from `derive(seed, 'fx')` and are never hashed or captured.

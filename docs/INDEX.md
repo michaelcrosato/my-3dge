@@ -64,6 +64,21 @@ advice codes are in [ERRORS.md](ERRORS.md).
   - Exports: `createRenderer`, `Gfx`, `GFX_CODES`, `GfxCode`, `GfxError`, `GfxInfo`, `requestWebGPU`
   - Tests: [`engine/gfx/renderer.test.ts`](../engine/gfx/renderer.test.ts), [`tests/e2e/hello.spec.ts`](../tests/e2e/hello.spec.ts)
 
+## engine/sim
+
+- [`capture.ts`](../engine/sim/capture.ts): Capture and restore (PLAN.md §6.5 item 7, WP 1.4; doctrine: Reproducible): `capture()` copies the whole sim at a step boundary, entities, components, timers, settings except `view` ones, the seed and every sim RNG state, plus the physics hook's part (Rapier's snapshot, WP 3.1), and `restore()` puts it back so the next steps continue exactly like the uninterrupted run.
+  - Exports: `CAPTURE_CODES`, `CAPTURE_FORMAT`, `CaptureSource`, `cloneData`, `makeCapture`, `readCapture`, `Restoration`, `RestoreTarget`, `WorldCapture`
+  - Tests: [`engine/sim/capture.test.ts`](../engine/sim/capture.test.ts)
+- [`state.ts`](../engine/sim/state.ts): The canonical state and its hash (PLAN.md §6.5 items 4 and 6, WP 1.4, I-05; doctrine: Reproducible): component kinds declared with their field lists (registry kind `component`), the plain-data form of the sim that `state()` returns, the one 64-bit FNV-1a hash over everything a capture holds (`hash()`), per-entity digests (`trace()`), and `diffStates`, which names the fields where two states part.
+  - Exports: `AnyComponents`, `ComponentData`, `ComponentKind`, `ComponentOf`, `componentTable`, `ComponentTable`, `defineComponent`, `diffStates`, `Entity`, `EntityData`, `hashState`, `PhysicsHook`, `SpawnSpec`, `STATE_CODES`, `STATE_FORMAT`, `StateDifference`, `StateView`, `traceState`, `With`, `WorldState`, `WorldTrace`
+  - Tests: [`engine/sim/state.test.ts`](../engine/sim/state.test.ts)
+- [`systems.ts`](../engine/sim/systems.ts): The step's systems (PLAN.md §6.4, Q13; doctrine: Common ground): plain functions `(w, intents) => void` that the world runs once per sim step in a fixed, documented order.
+  - Exports: `createSystems`, `Intents`, `Phase`, `phaseIndex`, `PHASES`, `STEP_ORDER`, `System`, `SYSTEM_CODES`, `SystemFn`, `Systems`, `SystemSpec`
+  - Tests: [`engine/sim/systems.test.ts`](../engine/sim/systems.test.ts)
+- [`world.ts`](../engine/sim/world.ts): The sim world (PLAN.md §6.4, §6.5, Q13, WP 1.4, I-03; doctrines: Reproducible, Common ground): entities as plain objects with monotonic ids, components as plain-object properties of declared kinds (`e.position`), systems as functions in a fixed order (engine/sim/systems.ts), spawn, despawn and event queues that apply at step boundaries, named seeded RNG streams, sim-time timers, and the state, hash, trace, capture and restore of all of it (engine/sim/state.ts, engine/sim/capture.ts).
+  - Exports: `createWorld`, `SimRng`, `World`, `WORLD_CODES`, `WorldOptions`, `WorldTimers`
+  - Tests: [`engine/sim/world.test.ts`](../engine/sim/world.test.ts)
+
 ## labs/hello
 
 - [`boot.ts`](../labs/hello/boot.ts): The hello page's entry (labs/hello/index.html), a harness page proving that three.js r182 draws on WebGPU here: it publishes `window.__engine` with `ready`, `errors` and a minimal `info()` (PLAN.md §8.3), then loads the scene (labs/hello/hello.ts) by dynamic import and draws it on every animation frame.
