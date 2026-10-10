@@ -56,3 +56,26 @@ The npm scripts and `x` commands themselves; each `x` command's smoke test; the 
   Prettier would wrap each sample over several lines, respell numbers (`1e+21` as `1e21`) and so break the checksums,
   and re-read about 3.5 MB on every changed run of `npm run check`. `.prettierignore` lists the directory; `x port refs
   --check` and the `port` plugin of `x check` check it instead.
+
+## Amendment 4 (2026-10-10, WP-0.10)
+Calls made where §8.10 is silent, for the Claude Code hooks in `.claude/hooks/`:
+- **The hooks are small scripts that read Claude Code's JSON on stdin**, so tests run them against fixtures
+  (`tests/unit/hooks/`). SessionStart is bash, the port of my-3d2dge's hook; the other three are TypeScript run by
+  Node's built-in type stripping (the container's Node 22.22 and Node 24.21 both run it), with no dependency, so the
+  PreToolUse guard works before `npm ci`. The Stop hook reads the escalation records through tsx (`isOverdue`). The
+  carried hook's `CLAUDE_CODE_REMOTE` guard and `CHROMIUM_PATH` line are dropped: setup.sh is idempotent, and the
+  tools default to the container's Chromium (tools/lib/browser.ts).
+- **SessionStart writes Node 24's `PATH` line itself** whenever Node 24 is active or cached, not only when setup.sh
+  switches Node: the container's login shells put `/opt/node22` first, and Claude Code sources `$CLAUDE_ENV_FILE`
+  after them. setup.sh's output goes to `out/hooks/session-start.log`, and `node_modules/.cache/` waits aside across
+  its `npm ci`, as in `x ci --local` (measured: without that, the first `npm run check` of a session runs cold, and
+  `x docs --check` alone fails on the cache paths the docs name). The hook prints at most 20 lines and always
+  exits 0. After `/clear` or a compaction it skips setup.sh and `x deps --update --dry-run` and repeats `x src` and
+  `x esc list --open`.
+- **PreToolUse** also asks before a Bash command that writes `DOCTRINE.md` (a redirection into it, or a command
+  other than a reader naming it, split as a shell splits it), and denies deleting `main` as well as force-pushing it.
+- **Stop** blocks a red `npm run check` once; when Claude Code reports `stop_hook_active` it lets the turn end with
+  a warning to the owner (`systemMessage`) instead of blocking again. Overdue escalations go into that warning, or
+  into the reason when the check is red.
+- **PostToolUse** returns ESLint warnings as context without failing, and fails (exit 2) when Prettier cannot parse
+  the file. The allow list spells out the read-only git commands and the GitHub server's pull-request tools.

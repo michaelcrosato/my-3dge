@@ -64,6 +64,15 @@ For the agents who maintain the engine.
 - `Warning` (interface): A console message the trap caught.
 - `watchConsole` (function): Wraps `target`'s methods so each trapped message reaches `sink` before it prints; returns the unwrap function.
 
+### [`tests/unit/hooks/harness.ts`](../tests/unit/hooks/harness.ts)
+
+- `HookRun` (interface): What a hook run printed and returned.
+- `HOOKS` (const): The hook scripts' directory.
+- `runHook` (function): Runs `.claude/hooks/<script>` (`.ts` with this Node, `.sh` with bash), `input` as JSON on stdin.
+- `RunOptions` (interface): How to run a hook.
+- `tempDir` (function): A new temporary directory, as a real path.
+- `writeFiles` (function): Writes each file (path relative to `root` → content), creating directories; `mode` applies to all of them.
+
 ### [`tools/cmd/check.ts`](../tools/cmd/check.ts)
 
 - `assetScan` (const): The asset scan (doctrine: Assets).

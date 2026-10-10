@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(node x *)",
+      "Bash(npm run *)",
+      "Bash(npm test*)",
+      "Bash(npm ci)",
+      "Bash(npx vitest *)",
+      "Bash(npx playwright test*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git blame*)",
+      "Bash(git grep*)",
+      "Bash(git ls-files*)",
+      "Bash(git rev-parse*)",
+      "Bash(git merge-base*)",
+      "Bash(git describe*)",
+      "Bash(git branch --show-current)",
+      "Bash(git worktree list*)",
+      "Bash(git fetch*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(gh pr *)",
+      "mcp__github__create_pull_request",
+      "mcp__github__update_pull_request",
+      "mcp__github__update_pull_request_branch",
+      "mcp__github__merge_pull_request",
+      "mcp__github__pull_request_read",
+      "mcp__github__list_pull_requests",
+      "mcp__github__search_pull_requests",
+      "mcp__github__pull_request_review_write",
+      "mcp__github__add_comment_to_pending_review",
+      "mcp__github__add_reply_to_pull_request_comment"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh\"",
+            "timeout": 900
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-tool-use.ts\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-tool-use.ts\"",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop.ts\"",
+            "timeout": 180
+          }
+        ]
+      }
+    ]
+  }
+}

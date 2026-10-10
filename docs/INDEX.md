@@ -46,6 +46,12 @@ advice codes are in [ERRORS.md](ERRORS.md).
   - Exports: `ADVICE_CODE`, `ADVICE_DIR`, `AllowEntry`, `ConsoleLine`, `describeUnlisted`, `findUnlisted`, `listing`, `loadAllowList`, `THREE_DEPRECATION`, `trap`, `Warning`, `watchConsole`
   - Tests: [`tests/setup/adviceTrap.test.ts`](../tests/setup/adviceTrap.test.ts), [`tests/setup/harnesses.test.ts`](../tests/setup/harnesses.test.ts)
 
+## tests/unit/hooks
+
+- [`harness.ts`](../tests/unit/hooks/harness.ts): Runs the Claude Code hook scripts in `.claude/hooks/` the way Claude Code runs them, for their unit tests (WP 0.10): the input as JSON on stdin, `$CLAUDE_PROJECT_DIR` naming a fixture project in a temporary directory, and the exit code, stdout and stderr handed back.
+  - Exports: `HookRun`, `HOOKS`, `runHook`, `RunOptions`, `tempDir`, `writeFiles`
+  - Tests: [`tests/unit/hooks/session-start.test.ts`](../tests/unit/hooks/session-start.test.ts)
+
 ## tools
 
 - [`x.ts`](../tools/x.ts): The `node x <cmd>` dispatcher (PLAN.md §8.1): finds `tools/cmd/<cmd>.ts`, parses its arguments with `node:util`'s `parseArgs` in strict mode, runs it, prints at most about 20 lines (the verdict first), writes `out/<cmd>/<target>/report.json` plus `out/latest.json`, and returns the exit code.
