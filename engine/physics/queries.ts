@@ -20,7 +20,11 @@
  * and `castShape`'s `targetDistance` (here `margin`). This module is the only place that meets them.
  *
  * @example
- * // a physics world `p` (engine/physics/world.ts) with a floor at y 0, after a step:
+ * import { createSettings } from '../core/settings';
+ * import { createPhysics } from './world';
+ * const p = createPhysics();
+ * p.addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size: [10, 1, 10] }, position: [0, -0.5, 0] }] });
+ * p.step({ dt: 1 / 60, settings: createSettings().sim }); // queries see the floor from this step on
  * p.raycast([0, 5, 0], [0, -1, 0]); // { body: 0, distance: 5, point: Vector3(0, 0, 0), normal: Vector3(0, 1, 0) }
  * p.probe(0, 0); // { y: 0, normal: Vector3(0, 1, 0), body: 0 }
  * p.overlap({ type: 'ball', radius: 0.5 }, [0, 0.2, 0]); // [0]
