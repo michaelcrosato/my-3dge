@@ -41,7 +41,18 @@ const CASES: Case[] = [
   ban(IMPORTS, 'screen', "export { screen } from 'three/tsl';", "export { blendScreen } from 'three/tsl';"),
   ban(IMPORTS, 'append', "export { append } from 'three/tsl';", "export { Stack } from 'three/tsl';"),
   ban(IMPORTS, 'label', "export { label } from 'three/tsl';", "export { uniform } from 'three/tsl';"),
-  ban(IMPORTS, 'cache', "export { cache } from 'three/tsl';", "export { isolate } from 'three/tsl';"),
+  ban(
+    IMPORTS,
+    'cache',
+    "export { cache } from 'three/tsl';",
+    "import { float } from 'three/tsl'; export const f = float(1).isolate();",
+  ),
+  ban(
+    IMPORTS,
+    'rapier3d-compat',
+    "export { World } from '@dimforge/rapier3d-compat';",
+    "export { Vector3 } from 'three/webgpu';",
+  ),
   ban(IMPORTS, 'PI2', "export { PI2 } from 'three/tsl';", "export { TWO_PI } from 'three/tsl';"),
   ban(
     IMPORTS,

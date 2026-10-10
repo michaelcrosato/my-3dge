@@ -58,7 +58,7 @@ const TSL_WORDS: Record<string, string> = {
   screen: r182('screen', 'blendScreen'),
   append: r182('append', 'Stack, or .toStack()'),
   label: r182('label()', 'setName()'),
-  cache: r182('cache()', 'isolate()'),
+  cache: r182('cache()', '.isolate() (r182: three/tsl exports no named isolate)'),
   PI2: r182('PI2', 'TWO_PI'),
 };
 
@@ -77,6 +77,11 @@ const IMPORTS = {
         'Clock is deprecated from r183: use core/time for sim time, or Timer inside engine/gfx/ only (Appendix B)',
     },
     ...Object.entries(TSL_WORDS).map(([name, message]) => ({ name: 'three/tsl', importNames: [name], message })),
+    {
+      name: '@dimforge/rapier3d-compat',
+      message:
+        'use engine/physics (@dimforge/rapier3d-simd-compat 0.21); rapier3d-compat 0.12 is only in the lockfile because @types/three pulls it in (tools/deps.json)',
+    },
   ],
   patterns: [
     {
