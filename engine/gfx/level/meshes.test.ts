@@ -258,6 +258,14 @@ describe('the recipes', () => {
       'material:moss',
       'material:leaves',
     ]);
+    expect(own.drawCalls()).toBe(1 + 1 + 2 + 2);
+    // A block with one material draws the whole box at once.
+    const plain = createLevelMeshes(level, {
+      materials: materials(),
+      recipes: { hedge: { ...hedge, materials: ['material:moss'] }, gallery },
+    });
+    expect((plain.parts[2].mesh.material as Material).name).toBe('material:moss');
+    expect(plain.drawCalls()).toBe(1 + 1 + 1 + 2);
   });
 });
 

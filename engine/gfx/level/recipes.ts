@@ -14,8 +14,9 @@
  * stone). WP 4.4 adds stairs, galleries, the dais and pillars with plinths and capitals. A game's own glyph meshes
  * come as recipes passed to `createLevelMeshes` (`recipes`), never edits here.
  *
- * Invariants: plain data; `materials` holds one id for a surface and two (sides, then tops) for a block; a recipe
- * nobody defined draws as `FALLBACK_RECIPE`, with advice (`GFX_LEVEL_RECIPE`).
+ * Invariants: plain data; `materials` holds one id for a surface, and two (sides, then tops: two draw calls) or one
+ * (the whole box: one draw call) for a block; a recipe nobody defined draws as `FALLBACK_RECIPE`, with advice
+ * (`GFX_LEVEL_RECIPE`).
  *
  * @example
  * LEVEL_RECIPES.wall.materials; // ['material:brick', 'material:stone']
@@ -29,7 +30,7 @@ export type LevelShape = 'surface' | 'block';
 /** A level mesh recipe: its shape, materials and shadows. */
 export interface LevelRecipe {
   shape: LevelShape;
-  /** Material ids: [the surface's] for a surface, [the sides', the tops'] for a block. */
+  /** Material ids: [the surface's] for a surface; [the sides', the tops'] for a block, or one for the whole box. */
   materials: readonly string[];
   castShadow: boolean;
   receiveShadow: boolean;

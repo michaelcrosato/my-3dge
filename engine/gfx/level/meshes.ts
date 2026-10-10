@@ -8,6 +8,11 @@
  * before the first frame shows them; `cells` gives each block piece's tiles and the way it faces out (the cutaway's
  * input, WP 4.4); `drawCalls(shadowMaps)` says what a frame costs.
  *
+ * A block's UVs are in metres from each piece's own corner (one geometry serves every instance), so a texture whose
+ * pattern repeats a whole number of times across a piece (on 1 m tiles, the v1 brick every 0.5 m, the dressed stone
+ * every 1 m) runs on from piece to piece, while its tones repeat with each piece, as the prototype's per-tile wall
+ * textures did; the floor's UVs run on across the whole level.
+ *
  * Everything sits under one group, `root`, named `level:<name>`; a mesh is named `level:<name>/<recipe>` (with `#2`…
  * after a second descriptor of the same recipe), and carries `userData.level`, `userData.recipe` and
  * `userData.glyphs`, which the ID pass and the inspector show. Coordinates are the compiled level's: metres, the map's
@@ -18,7 +23,8 @@
  * leaves the parent and unregisters; nothing reaches the sim.
  *
  * Carried from the meshes of `my-3d2dge:src/stress-world/10-hall.js:264-332`: the floor, the instanced walls and low
- * walls (`inst`, one instance per tile, `sidesThenTops`) and the pillars, built from WP 2.2's descriptors.
+ * walls (`inst`, one instance per tile, `sidesThenTops`) and the pillars (plain blocks in v1: WP 4.4 stands them on
+ * plinths under capitals, engine/gfx/geometry/pillar.ts), built from WP 2.2's descriptors.
  *
  * @example
  * // const meshes = createLevelMeshes(getLevel('level:room'), { materials: createMaterialLibrary() });
@@ -85,7 +91,11 @@ export interface LevelMeshes {
 }
 
 /** One instance per cell, standing at the cell's centre. */
-function instanced(geometry: BufferGeometry, materials: Material[], cells: readonly LevelCell[]): InstancedMesh {
+function instanced(
+  geometry: BufferGeometry,
+  materials: Material | Material[],
+  cells: readonly LevelCell[],
+): InstancedMesh {
   const mesh = new InstancedMesh(geometry, materials, cells.length);
   const matrix = new Matrix4();
   cells.forEach((cell, i) => mesh.setMatrixAt(i, matrix.makeTranslation(...cell.centre)));
@@ -106,7 +116,9 @@ function build(level: CompiledLevel, descriptor: MeshDescriptor, recipe: LevelRe
   }
   const box = boxGeometry({ width: (c1 - c0 + 1) * level.tile, height, depth: (r1 - r0 + 1) * level.tile });
   const cells = levelCells(level, descriptor.pieces, descriptor.bottom);
-  return { mesh: instanced(sidesThenTops(box), materials, cells), cells };
+  // One material draws the whole box at once; two draw its sides, then its tops.
+  const drawn = materials.length > 1 ? materials.slice(0, 2) : materials[0];
+  return { mesh: instanced(sidesThenTops(box), drawn, cells), cells };
 }
 
 /** Draws `level`'s mesh descriptors (see the file comment). */
