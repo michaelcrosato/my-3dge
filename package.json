@@ -1,0 +1,31 @@
+{
+  "name": "my-3dge",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A fully 3D web game engine written and maintained only by AI coding agents: three.js on WebGPU, Rapier physics, gameplay reproducible on the CPU.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24.10 <25"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-simd-compat": "0.21.0",
+    "@stdlib/math-base-special-cos": "0.3.1",
+    "@stdlib/math-base-special-pow": "0.3.1",
+    "@stdlib/math-base-special-sin": "0.3.1",
+    "three": "0.182.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/three": "0.182.0",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  },
+  "allowScripts": {
+    "esbuild": false
+  }
+}

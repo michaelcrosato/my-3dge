@@ -1650,7 +1650,7 @@ A WP is done only when all of these hold:
   - **Exact pins** in `package.json`, with the lockfile (§6.10, §4.7):
     - `dependencies`: `three@0.182.0`, `@dimforge/rapier3d-simd-compat@0.21.0`, and stdlib's `@stdlib/math-base-special-sin`, `-cos` and `-pow` at `0.3.1`;
     - `devDependencies`: `typescript@5.9.3`, `vitest@3.2.7` (for the type smoke test), `@types/three@0.182.0` and `@types/node@24.19.2`. WPs 0.2 and 0.4 add the rest of the toolchain.
-  - `package.json` also sets `"type": "module"`, `engines.node` to `>=24.10 <25` (a warning, not `engine-strict`), `allowScripts` denying esbuild's postinstall, and the scripts of §8.1.
+  - `package.json` also sets `"type": "module"`, `engines.node` to `>=24.10 <25` (a warning, not `engine-strict`), `allowScripts` denying esbuild's postinstall, and the scripts of §8.1 whose tools it installs: `typecheck` and `test`. The others arrive with their tools: `dev`, `build` and `e2e` in WP 0.2, `lint`, `format` and `check` in WP 0.4 (ADR-0014, amendment 1).
   - `tsconfig.json`:
     - `target: es2022`, `module: esnext`, `moduleResolution: bundler`;
     - `strict`, `noEmit`, `skipLibCheck`, `erasableSyntaxOnly`, `verbatimModuleSyntax`, `isolatedModules`;
@@ -1663,7 +1663,7 @@ A WP is done only when all of these hold:
     2. an existing local clone (in the Claude Code cloud image: `/home/user/michaelcrosato/my-3d2dge`), via `git clone --shared <path> .cache/src-3d2dge`;
     3. `git clone https://github.com/michaelcrosato/my-3d2dge .cache/src-3d2dge`.
 
-    For cases 2 and 3, then run `git -C .cache/src-3d2dge checkout --detach e37e4ee`. Every `x` command that reads the source resolves it the same way (`$MY3D2DGE_SRC`, else `.cache/src-3d2dge`, else the clone above), so no shell state is needed. Every **Carry** read and `x port refs` go through `$MY3D2DGE_SRC`. AGENTS.md says how to set it.
+    For cases 2 and 3, then run `git -C .cache/src-3d2dge checkout --detach e37e4ee`. Every `x` command that reads the source resolves it the same way (`$MY3D2DGE_SRC`, else `.cache/src-3d2dge`, else the clone above), so no shell state is needed. Every **Carry** read and `x port refs` go through `$MY3D2DGE_SRC`. AGENTS.md says how to set it. `scripts/setup.sh` performs this resolution for both sources and, when `$CLAUDE_ENV_FILE` is set, appends their `export` lines next to Node's `PATH`, each once (ADR-0014, amendment 1).
   - **The sibling's checkout.** `SHARDFALL_SRC` names a read-only checkout of shardfall at `fa2dab6` (§4.8), resolved the same way: the environment variable; an existing clone (in the Claude Code cloud image, `/home/user/michaelcrosato/shardfall`); else `GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/michaelcrosato/shardfall .cache/src-shardfall`, then `checkout --detach fa2dab6`. **Carry** lines that cite shardfall, and WP 8.10's data, read it.
   - **The type smoke test** `tests/unit/ts-smoke.test.ts` (Vitest) imports `three/webgpu`, `three/tsl` and `@dimforge/rapier3d-simd-compat`, and constructs and steps a `World`. A `// @ts-expect-error` above `world.createRigidBody(123)` makes `tsc` fail if Rapier's types ever degrade to `any` (§4.7). `skipLibCheck` stays, to keep T0 fast: the pinned packages' types also check clean without it, in three times the time (§4.7).
 - **Improves:** I-01 (recorded as an ADR), I-31, I-32.
@@ -3913,7 +3913,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 
 | WP | Title | Lane | Status | Commit | Notes |
 |---|---|---|---|---|---|
-| 0.1 | Repo constitution, platform, source checkout | T | todo | | |
+| 0.1 | Repo constitution, platform, source checkout | T | done | | Pins as planned (vite 7.3.7 and esbuild 0.28.2 arrive through vitest; esbuild's postinstall denied); setup.sh also resolves both sources; scripts `typecheck` and `test` only (ADR-0014 amendment 1); deferred proof: later shells on Node 24 (WP 0.10) |
 | 0.2 | Toolchain, e2e fixture, `x` CLI | T | todo | | |
 | 0.3 | Dependency qualification, pinned knowledge | T | todo | | |
 | 0.4 | ESLint rules, `npm run check` (T0) | T | todo | | |
