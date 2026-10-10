@@ -2065,7 +2065,7 @@ A WP is done only when all of these hold:
   - `fit()`, the resolution modes (`stress-world/50-frame.js:18-28`).
   - `warmUp()` (`stress-world/50-frame.js:29-47`), as the idea for a registry.
 - **Build:**
-  - **WebGPU required** (§6.7), extending WP 0.8's bootstrap: the adapter check and `GFX_NO_WEBGPU`, `await renderer.init()`, the backend assertion, then `render()`. A report of the adapter, its features and its limits; `renderer.onError` routed to the log.
+  - **WebGPU required** (§6.7), extending WP 0.8's bootstrap: the adapter check and `GFX_NO_WEBGPU`, `await renderer.init()`, the backend assertion, then `render()`. A report of the adapter, its features and its limits; WebGPU's errors routed to the log (the device's `uncapturederror` and `renderer.onDeviceLost`: r182 has no `renderer.onError`; ADR-0008 amendment 1).
   - **The feature registry** of §6.7: `def('feature', …)` for optional adapter features and GPU techniques, capability checks, and an advice code on every downgrade.
   - Resolution modes: pixels (200–330 lines, whole-pixel scaling), balanced, full; DPR handling and resize.
   - Interpolation alpha; stats from `renderer.info`.

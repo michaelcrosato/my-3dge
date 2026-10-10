@@ -13,6 +13,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 | Kind              | What it is                                                                                                                                                               | Declared in                                             |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
 | `component`       | Component kinds: the plain-object data entities hold (e.position), with their fields. The canonical state and the hash read every component's declared fields, in order. | [`engine/sim/state.ts`](../engine/sim/state.ts)         |
+| `feature`         | Optional GPU features and techniques: what each needs, what is lost without it, and its advice code.                                                                     | [`engine/gfx/features.ts`](../engine/gfx/features.ts)   |
 | `inspectorMember` | Members of the inspector (__engine, createHeadless): a call or property with its help line, argument schema and implementation.                                          | [`engine/dev/members.ts`](../engine/dev/members.ts)     |
 | `scene`           | Scenes: a level, settings, a setup and a step, sim-side, so x sim, x replay and createHeadless run them in Node.                                                         | [`engine/sim/scene.ts`](../engine/sim/scene.ts)         |
 | `setting`         | The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set.                                                             | [`engine/core/settings.ts`](../engine/core/settings.ts) |
@@ -93,9 +94,24 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/gfx
 
-- [`renderer.ts`](../engine/gfx/renderer.ts): The WebGPU renderer's bootstrap (PLAN.md §6.7): WebGPU or nothing.
-  - Exports: `createRenderer`, `Gfx`, `GFX_CODES`, `GfxCode`, `GfxError`, `GfxInfo`, `requestWebGPU`
-  - Tests: [`engine/gfx/renderer.test.ts`](../engine/gfx/renderer.test.ts), [`tests/e2e/hello.spec.ts`](../tests/e2e/hello.spec.ts)
+- [`caps.ts`](../engine/gfx/caps.ts): What the GPU offers (PLAN.md §6.7, WP 2.1): `requestDevice` asks the adapter for a device with every optional feature it has and its best limits, since everything WebGPU offers is available to rendering (doctrine: Quality under the hood); `readCaps` reports the adapter's identity and the device's features and limits as plain data, for `__engine.info()` and the feature registry (engine/gfx/features.ts).
+  - Exports: `adapterLimits`, `CAPS_CODES`, `GfxCaps`, `readCaps`, `requestDevice`
+  - Tests: [`engine/gfx/caps.test.ts`](../engine/gfx/caps.test.ts)
+- [`features.ts`](../engine/gfx/features.ts): The feature registry (PLAN.md §6.7, I-16; doctrine: WebGPU only): optional adapter features and GPU techniques as entries of the registry kind `feature`, each saying what it needs (adapter features, least device limits), what is lost without it and which advice code says so.
+  - Exports: `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `resolveFeatures`
+  - Tests: [`engine/gfx/features.test.ts`](../engine/gfx/features.test.ts)
+- [`pipelines.ts`](../engine/gfx/pipelines.ts): The public pipeline counter (PLAN.md §6.7, §8.7, I-18, Appendix B): how many GPU pipelines and shader modules the renderer has built, so "0 pipelines built after warm-up" is a number tests assert, never a hope.
+  - Exports: `advanceFrame`, `checkPinned`, `countPipelines`, `PINNED_REVISION`, `PipelineCount`, `PipelineCounter`, `PIPELINES_CODES`
+  - Tests: [`engine/gfx/pipelines.test.ts`](../engine/gfx/pipelines.test.ts), [`tests/e2e/renderer.spec.ts`](../tests/e2e/renderer.spec.ts)
+- [`renderer.ts`](../engine/gfx/renderer.ts): The renderer (PLAN.md §6.7, WP 0.8 then WP 2.1): WebGPU or nothing, then everything WebGPU offers.
+  - Exports: `createRenderer`, `FRAME_CODES`, `FrameReport`, `FrameView`, `Gfx`, `GFX_CODES`, `GfxCode`, `GfxError`, `GfxInfo`, `GfxOptions`, `GfxStats`, `requestWebGPU`
+  - Tests: [`engine/gfx/renderer.test.ts`](../engine/gfx/renderer.test.ts), [`tests/e2e/hello.spec.ts`](../tests/e2e/hello.spec.ts), [`tests/e2e/renderer.spec.ts`](../tests/e2e/renderer.spec.ts)
+- [`resolution.ts`](../engine/gfx/resolution.ts): Resolution modes (PLAN.md WP 2.1): how many pixels the renderer draws for the canvas's size on screen, from the view setting `gfx.resolution`.
+  - Exports: `createResolution`, `Fit`, `fitResolution`, `MAX_PIXEL_RATIO`, `PIXEL_LINES`, `Resolution`, `RESOLUTION_MODES`, `RESOLUTION_SETTINGS`, `ResolutionMode`, `ResolutionOptions`, `Size`
+  - Tests: [`engine/gfx/resolution.test.ts`](../engine/gfx/resolution.test.ts)
+- [`warmup.ts`](../engine/gfx/warmup.ts): The warm-up registry (PLAN.md §8.7, I-18): every GPU pipeline is built before play needs it, so no frame stalls on one.
+  - Exports: `createWarmup`, `Warmup`, `WARMUP_CODES`, `WarmupEntry`, `WarmupProgress`, `WarmupReport`, `WarmupView`
+  - Tests: [`engine/gfx/warmup.test.ts`](../engine/gfx/warmup.test.ts), [`tests/e2e/renderer.spec.ts`](../tests/e2e/renderer.spec.ts)
 
 ## engine/input
 
@@ -148,6 +164,10 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Tests: [`tests/e2e/drift.spec.ts`](../tests/e2e/drift.spec.ts)
 - [`harness.ts`](../tests/pages/harness.ts): The harness page's module (`tests/pages/harness.html`), the page `tests/e2e/harness.spec.ts` checks the e2e fixture on: it draws with raw WebGPU, signals ready through `window.__engine`, and with `?throw` throws on purpose from `explode` below.
 - [`replay.ts`](../tests/pages/replay.ts): The replay page's module (`tests/pages/replay.html`), Chromium's half of `node x replay --browser sim` (PLAN.md §6.5 item 9, WP 1.5): the sim in a page with no renderer.
+- [`scene.ts`](../tests/pages/scene.ts): The scene page's module (tests/pages/scene.html): the fixture scene (tests/pages/sceneFixture.ts) drawn by the engine's renderer (engine/gfx/renderer.ts) for the render tests, which drive it through `window.__scene` and import the modules they test into the page (`await import('/engine/gfx/pipelines.ts')`): the same module instances the page runs.
+  - Tests: [`tests/e2e/renderer.spec.ts`](../tests/e2e/renderer.spec.ts)
+- [`sceneFixture.ts`](../tests/pages/sceneFixture.ts): The scene page's fixture (tests/pages/scene.html): a small scene as plain data, and `buildScene`, which turns a description into three.js objects.
+  - Exports: `buildScene`, `BuiltScene`, `FIXTURE`, `LightSpec`, `MaterialSpec`, `MeshSpec`, `PoolSpec`, `SceneDescription`, `ShapeSpec`
 
 ## tests/setup
 
