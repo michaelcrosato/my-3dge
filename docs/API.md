@@ -412,15 +412,73 @@ For the agents who maintain the engine.
 - `signatureOf` (function): How a member is called: `step(n = 1, intents?)`, `get(id)`, or `errors` for a value member.
 - `WorldReads` (type): The world as members read it: its reads, none of its mutators (members change the sim through the session).
 
+### [`engine/gfx/caps.ts`](../engine/gfx/caps.ts)
+
+- `adapterLimits` (function): The adapter's limits, by name: what `requestDevice` asks for.
+- `CAPS_CODES` (const): The codes this module raises, with their fixes.
+- `GfxCaps` (interface): The GPU as the engine reports it: the adapter's identity, the device's features and limits.
+- `readCaps` (function): The report of `device` made from `adapter`: identity, features, limits.
+- `requestDevice` (function): A device with every feature `adapter` offers and its best limits; when the adapter refuses those limits, one with the default limits, after advice `GFX_DEFAULT_LIMITS`.
+
+### [`engine/gfx/features.ts`](../engine/gfx/features.ts)
+
+- `defineFeatures` (function): Declares the kind `feature`, the built-in features and `gfx.featuresOff` on `registry`, unless it has them.
+- `FEATURE_FIELDS` (const): The fields of a `feature` entry.
+- `FEATURE_SETTINGS` (const): The gfx settings this module reads; all are view settings, never in the hash.
+- `FeatureEntry` (type): A `feature` entry.
+- `FeatureOff` (interface): One feature that is off: its id, the advice raised and why.
+- `FeatureReport` (interface): What `resolveFeatures` found: the features on, those off and why, and the downgrades as advice codes.
+- `FEATURES_CODES` (const): The advice codes of the built-in features, with their fixes.
+- `resolveFeatures` (function): Checks every `feature` entry against `caps` and `gfx.featuresOff`, raises each off feature's advice once, and reports what is on and off.
+
+### [`engine/gfx/pipelines.ts`](../engine/gfx/pipelines.ts)
+
+- `advanceFrame` (function): Starts a new frame for three.js's nodes, so a post pass and every other node updated once per frame draws afresh, also off r182's own animation-frame loop.
+- `checkPinned` (function): What no longer matches the r182 internals this module reads: another three.js revision, `renderer._pipelines` without its `caches` and `programs` maps, or no `renderer._nodes.nodeFrame.update`.
+- `countPipelines` (function): The counter of `device`, made on first call: wraps the device's pipeline and shader-module methods with counting forwarders.
+- `PINNED_REVISION` (const): The three.js release whose internals this module reads.
+- `PipelineCount` (interface): What the counter reports.
+- `PipelineCounter` (interface): The counter of one device.
+- `PIPELINES_CODES` (const): The codes this module raises, with their fixes.
+
 ### [`engine/gfx/renderer.ts`](../engine/gfx/renderer.ts)
 
-- `createRenderer` (function): Starts three.js's `WebGPURenderer` on `canvas`, on WebGPU only: the adapter check, a device with every feature the adapter offers, `await renderer.init()`, then the backend assertion.
-- `Gfx` (interface): A started renderer: three.js's `WebGPURenderer`, the device it draws with, and its report.
-- `GFX_CODES` (const): The codes the renderer raises, with their fixes (collected into docs/ERRORS.md by `x docs`).
-- `GfxCode` (type): A code the renderer raises: a key of `GFX_CODES`.
+- `createRenderer` (function): Starts three.js's `WebGPURenderer` on `canvas`, on WebGPU only: the adapter check, a device with every feature and limit the adapter offers, `await renderer.init()`, the backend assertion, then the report, the feature registry and the error routes.
+- `FRAME_CODES` (const): The codes a running renderer raises through the log.
+- `FrameReport` (interface): What `frame()` did.
+- `FrameView` (interface): One frame to draw: the warm-up's view, plus the clock's interpolation alpha (1, the latest state, by default).
+- `Gfx` (interface): A started renderer: three.js's `WebGPURenderer`, its device, its report, and what draws a frame.
+- `GFX_CODES` (const): The codes the renderer raises at startup, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `GfxCode` (type): A code the renderer raises at startup: a key of `GFX_CODES`.
 - `GfxError` (class): A renderer failure: its code, the message from the code's template, and the code's fix.
-- `GfxInfo` (interface): What the renderer reports about itself (the start of `__engine.info()`, PLAN.md §8.3).
+- `GfxInfo` (interface): What the renderer reports about itself (the GPU half of `__engine.info()`, PLAN.md §8.3).
+- `GfxOptions` (interface): How `createRenderer` is made: antialiasing, and the settings, registry and log it reads and reports to.
+- `GfxStats` (interface): The renderer's counts: the last frame's from `renderer.info`, the pipelines' since startup.
 - `requestWebGPU` (function): Asks `gpu` (by default the browser's `navigator.gpu`) for an adapter; rejects with `GfxError` `GFX_NO_WEBGPU` when there is no WebGPU or no adapter.
+
+### [`engine/gfx/resolution.ts`](../engine/gfx/resolution.ts)
+
+- `createResolution` (function): Keeps `renderer`'s drawing buffer fitted to `canvas` and the `gfx.resolution` setting.
+- `Fit` (interface): What a mode gives for a canvas: the drawing buffer's size and how it maps to the screen.
+- `fitResolution` (function): The drawing buffer `mode` gives a canvas of `css` size at `devicePixelRatio`.
+- `MAX_PIXEL_RATIO` (const): The highest device pixel ratio drawn at: beyond it, pixels are too small to see and cost the same.
+- `PIXEL_LINES` (const): The most lines the `pixels` mode draws.
+- `Resolution` (interface): A renderer's resolution, kept to its canvas and the setting.
+- `RESOLUTION_MODES` (const): The resolution modes, chunkiest first.
+- `RESOLUTION_SETTINGS` (const): The resolution settings: view settings, never in the hash.
+- `ResolutionMode` (type): A resolution mode: the engine's pixels, half the screen's, or all of it.
+- `ResolutionOptions` (interface): How `createResolution` measures: the canvas's CSS size and the device pixel ratio (the browser's by default).
+- `Size` (interface): A size in CSS or device pixels.
+
+### [`engine/gfx/warmup.ts`](../engine/gfx/warmup.ts)
+
+- `createWarmup` (function): Makes the warm-up registry of `renderer`, counting builds with `counter`.
+- `Warmup` (interface): A renderer's warm-up registry.
+- `WARMUP_CODES` (const): The codes this module raises, with their fixes.
+- `WarmupEntry` (interface): What a pool or batch registers: the objects it may show, each made drawable for the warm-up.
+- `WarmupProgress` (interface): Progress, after each step: steps done of the total, and the step just done.
+- `WarmupReport` (interface): What one warm-up did.
+- `WarmupView` (interface): What a warm-up draws: the scene, its camera, how the frame draws it, and what it draws the scene into.
 
 ### [`engine/input/intents.ts`](../engine/input/intents.ts)
 
@@ -677,6 +735,18 @@ For the agents who maintain the engine.
 - `ProbeResult` (interface): What one runtime gave.
 - `resultsOf` (function): `fn`'s results on `inputs`, natively or inside `withSimMath` (narrowed to `swap`).
 - `runProbe` (function): Runs every probe natively and inside `withSimMath` (narrowed to `swap`), on `inputs` seeded inputs a function.
+
+### [`tests/pages/sceneFixture.ts`](../tests/pages/sceneFixture.ts)
+
+- `buildScene` (function): Builds `description` into three.js objects.
+- `BuiltScene` (interface): A built scene: the scene, its camera, the meshes by name, and each pool's mesh and the object that hides it.
+- `FIXTURE` (const): The fixture scene.
+- `LightSpec` (type): A light: the sky's and ground's colours, or a directional key light.
+- `MaterialSpec` (interface): A material as data: its kind and the classic parameters.
+- `MeshSpec` (interface): One mesh in the scene.
+- `PoolSpec` (interface): A pool: hidden until shown.
+- `SceneDescription` (interface): A scene as data.
+- `ShapeSpec` (interface): A shape: a box of `size`, a sphere of radius `size[0]`, or a plane of `size[0]` × `size[1]`.
 
 ### [`tests/setup/adviceTrap.ts`](../tests/setup/adviceTrap.ts)
 

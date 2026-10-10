@@ -199,13 +199,93 @@ Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when
 
 ## gfx
 
+### GFX_BAD_ALPHA
+
+- Message: `the frame alpha must be a number from 0 to 1, not {alpha}`
+- Fix: pass the clock's interpolation alpha (clock.advance(now).alpha), which is always from 0 to 1
+- Registered in: [`engine/gfx/renderer.ts` line 72](../engine/gfx/renderer.ts)
+
+### GFX_COLD_PIPELINE
+
+- Message: `{count} GPU pipeline(s) were built while drawing frame {frame}, after the warm-up: the frame stalled`
+- Fix: register what the frame drew for the first time with gfx.warmup.register(id, { objects }), or add what changed to the shader key with gfx.warmup.keyPart(name, part), so the warm-up builds it first
+- Registered in: [`engine/gfx/renderer.ts` line 63](../engine/gfx/renderer.ts)
+
+Advice from `frame()` (engine/gfx/renderer.ts): the pipeline counter (engine/gfx/pipelines.ts) saw a pipeline built during a drawn frame after the first warm-up, the stall PLAN.md §8.7 budgets at 0.
+
+### GFX_DEFAULT_LIMITS
+
+- Message: `the adapter refused a device with its own limits ({reason}), so the device has WebGPU's default limits`
+- Fix: nothing to do for play; for larger buffers and textures, update the browser or GPU driver (node x describe feature lists what each feature needs)
+- Registered in: [`engine/gfx/caps.ts` line 25](../engine/gfx/caps.ts)
+
+Advice from `requestDevice` (engine/gfx/caps.ts): the device is made with every adapter feature but WebGPU's default limits. Features that need larger limits are then off, each with its own advice (engine/gfx/features.ts).
+
+### GFX_DEVICE_LOST
+
+- Message: `the GPU device was lost ({reason}): {message}`
+- Fix: reload the page; the sim runs on the CPU and is intact (capture it first with __engine.capture()), but nothing draws until the renderer starts again
+- Registered in: [`engine/gfx/renderer.ts` line 59](../engine/gfx/renderer.ts)
+
+### GFX_DUPLICATE_WARMUP
+
+- Message: `the warm-up already has an entry {id}`
+- Fix: dispose the first registration (register returns { dispose }), or register the second under another id
+- Registered in: [`engine/gfx/warmup.ts` line 50](../engine/gfx/warmup.ts)
+
+### GFX_GPU_ERROR
+
+- Message: `WebGPU refused a call ({kind}): {message}`
+- Fix: fix the resource or pipeline the message names; GPU errors never change play, but what that call draws is missing or wrong
+- Registered in: [`engine/gfx/renderer.ts` line 54](../engine/gfx/renderer.ts)
+
+Recorded from the device's `uncapturederror` event (engine/gfx/renderer.ts): a validation, out-of-memory or internal error nothing caught.
+
+### GFX_NO_FLOAT32_FILTERING
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; give data textures that must look smooth HalfFloatType, or use a GPU with float32-filterable, and take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/features.ts` line 46](../engine/gfx/features.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when the device has no `float32-filterable`: three.js r182 then samples 32-bit float textures unfiltered.
+
+### GFX_NO_TIMESTAMPS
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; for GPU timings use a browser and GPU with timestamp queries, and take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/features.ts` line 41](../engine/gfx/features.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when the device has no `timestamp-query`: stats report no GPU time per frame.
+
 ### GFX_NO_WEBGPU
 
 - Message: `WebGPU is unavailable: {reason}`
 - Fix: open the page in a browser with WebGPU and hardware acceleration on (Chrome or Edge 113+, Safari 26+); headless, launch Chromium with WEBGPU_FLAGS from tools/lib/browser.ts (PLAN.md §8.8)
-- Registered in: [`engine/gfx/renderer.ts` line 27](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 45](../engine/gfx/renderer.ts)
 
 Raised at startup, before anything touches the GPU, when the browser has no `navigator.gpu`, gives no adapter or device, or three.js starts another backend than WebGPU. WebGPU is the only renderer: there is no WebGL fallback (PLAN.md §6.7), so nothing starts, and a page shows this message with its fix.
+
+### GFX_PIPELINES_UNPINNED
+
+- Message: `three.js r{revision}'s renderer internals differ from r182's: {problems}`
+- Fix: re-pin engine/gfx/pipelines.ts to the new release's internals (its pin test names what changed); the device's pipeline counts stay exact meanwhile
+- Registered in: [`engine/gfx/pipelines.ts` line 36](../engine/gfx/pipelines.ts)
+
+Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipelines` no longer has r182's shape, usually after a three.js upgrade: the count of pipelines three.js keeps cached is then unknown (null). Builds are counted at the device and stay exact.
+
+### GFX_SMALL_BUFFERS
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; a GPU or browser with larger storage-buffer limits turns it on, and take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/features.ts` line 51](../engine/gfx/features.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when the device cannot bind storage buffers of 256 MB: GPU techniques with large buffers run smaller or stay off.
+
+### GFX_WARMUP_FAILED
+
+- Message: `the warm-up failed: {message}`
+- Fix: the cause is recorded with this error; frames draw without a warm-up meanwhile, building pipelines as they meet them
+- Registered in: [`engine/gfx/renderer.ts` line 68](../engine/gfx/renderer.ts)
 
 ## input
 
