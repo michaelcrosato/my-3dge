@@ -14,7 +14,8 @@
  *
  * Invariants: unknown keys are errors, in schemas and in specs, each naming the closest valid key. A field has a
  * description; a hook has a default unless it is required; a default passes its own field's checks. `parse` returns a
- * new object holding every given key plus the defaults of absent ones (arrays and plain objects copied), never
+ * new object holding every given key plus the defaults of absent ones (arrays and plain objects copied, whatever the
+ * field's type, so the result shares nothing with its input or the schema; `freezeValue` makes it stored data), never
  * changing its input. Numbers are finite; `integer` is a whole number. Problems are plain sentences naming the key.
  *
  * @example
@@ -226,13 +227,22 @@ export function copyValue<T>(value: T): T {
   return value;
 }
 
+/** Freezes arrays and plain objects all the way down (other values as they are) and returns `value`: stored data. */
+export function freezeValue<T>(value: T): T {
+  if (Array.isArray(value) || isPlainObject(value)) {
+    for (const item of Object.values(value)) freezeValue(item);
+    Object.freeze(value);
+  }
+  return value;
+}
+
 /** Joins a path and a key: `a` + `b` → `a.b`; an index is written `[2]`. */
 const join = (path: string, key: string | number) =>
   typeof key === 'number' ? `${path}[${key}]` : path ? `${path}.${key}` : key;
 
 /**
  * Checks one value against its field, pushing each problem onto `problems`; returns the value with the defaults of
- * nested objects filled (a copy when it is an array or object).
+ * nested objects filled (a copy when it is an array or a plain object, for any type, `any` included).
  */
 export function checkValue(field: Field, value: unknown, path: string, problems: Problem[] = []): unknown {
   const name = path || 'the value';
@@ -256,7 +266,7 @@ export function checkValue(field: Field, value: unknown, path: string, problems:
     const items = field.items;
     return items ? value.map((item, i) => checkValue(items, item, join(path, i), problems)) : copyValue(value);
   }
-  if (field.type === 'object' && isPlainObject(value)) {
+  if (isPlainObject(value)) {
     return field.properties ? fillObject(field.properties, value, path, problems) : copyValue(value);
   }
   return value;

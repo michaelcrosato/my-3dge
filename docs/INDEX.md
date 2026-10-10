@@ -2,9 +2,17 @@
 
 # Index of modules
 
-Every module of the engine and its tools: what it is for (its file comment's first sentence), what it exports and
-the tests that cover it. Each export, with the first sentence of its doc comment, is in [API.md](API.md); error and
-advice codes are in [ERRORS.md](ERRORS.md).
+Every registry kind, then every module of the engine and its tools: what it is for (its file comment's first
+sentence), what it exports and the tests that cover it. Each export, with the first sentence of its doc comment, is
+in [API.md](API.md); error and advice codes are in [ERRORS.md](ERRORS.md).
+
+## Kinds
+
+Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describe <kind>` lists its fields and ids.
+
+| Kind      | What it is                                                                                                   | Declared in                                             |
+| --------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `setting` | The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set. | [`engine/core/settings.ts`](../engine/core/settings.ts) |
 
 ## The root
 
@@ -43,7 +51,7 @@ advice codes are in [ERRORS.md](ERRORS.md).
   - Exports: `derive`, `Rng`, `RngStreams`
   - Tests: [`engine/core/rng.test.ts`](../engine/core/rng.test.ts)
 - [`schema.ts`](../engine/core/schema.ts): The schema mini-language (PLAN.md WP 1.2, §6.6): one plain object per field, saying its type, default, range, unit, docs, allowed values and whether it is required, so registries, settings and inspector arguments are validated, filled and described from one table.
-  - Exports: `checkField`, `checkValue`, `copyValue`, `defineSchema`, `describeSchema`, `EntryOf`, `Field`, `FIELD_TYPES`, `FieldRow`, `FieldType`, `isPlainObject`, `listProblems`, `parse`, `Problem`, `Schema`, `SCHEMA_CODES`, `show`, `SpecOf`, `suggestKey`, `validate`, `ValueOf`, `When`
+  - Exports: `checkField`, `checkValue`, `copyValue`, `defineSchema`, `describeSchema`, `EntryOf`, `Field`, `FIELD_TYPES`, `FieldRow`, `FieldType`, `freezeValue`, `isPlainObject`, `listProblems`, `parse`, `Problem`, `Schema`, `SCHEMA_CODES`, `show`, `SpecOf`, `suggestKey`, `validate`, `ValueOf`, `When`
   - Tests: [`engine/core/schema.test.ts`](../engine/core/schema.test.ts)
 - [`settings.ts`](../engine/core/settings.ts): Settings from one schema (PLAN.md WP 1.2, I-37; doctrine: Agent-operable): `defineSettings` declares each setting as an entry of the registry kind `setting` (a schema.ts field keyed by its dotted path, `hero.runSpeed`), and `createSettings` makes a store with a validated `get` and `set`, URL parameters, JSON export (`toJSON`, a preset) and import (`load`), a "differs from default" marker, and scoped overrides.
   - Exports: `createSettings`, `defineSettings`, `SettingChange`, `SettingRow`, `Settings`, `SETTINGS_CODES`, `SettingsOptions`, `SettingValue`, `SimSettings`
@@ -134,7 +142,7 @@ advice codes are in [ERRORS.md](ERRORS.md).
   - Exports: `check`, `createDepsCommand`, `default`
   - Tests: [`tools/cmd/deps.test.ts`](../tools/cmd/deps.test.ts)
 - [`describe.ts`](../tools/cmd/describe.ts): Lists the registries from their schemas (PLAN.md §8.1, §6.6): `x describe` names every kind with its entry count, `x describe <kind>` gives its fields (type, default, range, unit, docs) and ids, and `x describe <kind> <id>` one entry's values, `*` marking those that differ from the default.
-  - Exports: `default`, `fieldLine`, `loadRegistrations`, `REGISTRATION_ROOTS`, `registrationModules`
+  - Exports: `createDescribeCommand`, `default`, `describeInWorker`, `fieldLine`, `listing`, `Listing`, `loadRegistrations`, `registersContent`, `REGISTRATION_ROOTS`, `registrationModules`, `WORKER_TIMEOUT_MS`, `WorkerDone`, `WorkerMessage`
   - Tests: [`tools/cmd/describe.test.ts`](../tools/cmd/describe.test.ts)
 - [`docs.ts`](../tools/cmd/docs.ts): Generates and checks the docs that come from the code (PLAN.md §6.8, §8.12): `docs/INDEX.md`, `docs/API.md` and `docs/ERRORS.md`, the `@example` blocks, the paths the docs mention, and `docs/PROGRESS.md`'s length.
   - Exports: `check`, `checkComments`, `createDocsCommand`, `default`, `DocsOptions`, `driftChecks`, `MAX_COMMENT_LINES`, `PROGRESS`
@@ -199,7 +207,7 @@ advice codes are in [ERRORS.md](ERRORS.md).
 - [`depsUpdate.ts`](../tools/lib/depsUpdate.ts): The network half of `x deps` (PLAN.md §6.10): `--update` adopts each pin's newest compatible release and rewrites `tools/deps.json`; `--qualify` lists the lines that have qualified beyond the pins, as upgrade WPs.
   - Exports: `Adoption`, `NETWORK`, `NetworkOptions`, `planUpdate`, `Qualified`, `qualify`, `Registry`, `Runner`, `SPAWN`, `update`
   - Tests: [`tools/cmd/deps.test.ts`](../tools/cmd/deps.test.ts)
-- [`docs.ts`](../tools/lib/docs.ts): Reads the manual out of the code (PLAN.md §6.8, WP 0.6): each module's file comment, its exports with their doc comments, its `@example` blocks, its tests and the codes it registers, through the TypeScript compiler API.
+- [`docs.ts`](../tools/lib/docs.ts): Reads the manual out of the code (PLAN.md §6.8, WP 0.6): each module's file comment, its exports with their doc comments, its `@example` blocks, its tests, the codes it registers and the registry kinds it declares, through the TypeScript compiler API.
   - Exports: `directoryOf`, `DocComment`, `DocTag`, `Example`, `ExportDoc`, `isModulePath`, `lineOf`, `listModules`, `MODULE_ROOTS`, `ModuleDoc`, `parse`, `parseDocComment`, `readModule`, `readModules`, `ResolvedExport`, `resolveExports`, `resolveSpecifier`, `walk`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
 - [`docsCodes.ts`](../tools/lib/docsCodes.ts): Reads the error and advice codes a module registers with `defineCodes` (PLAN.md WP 1.2, §6.8): `x docs` collects them into `docs/ERRORS.md` and fails a code without its fix.
@@ -208,11 +216,14 @@ advice codes are in [ERRORS.md](ERRORS.md).
 - [`docsExamples.ts`](../tools/lib/docsExamples.ts): Runs the `@example` blocks of file and export comments in Node (PLAN.md §8.12, WP 0.6): `x docs --check` runs them, and so does `tests/unit/examples.test.ts` in T1.
   - Exports: `collectExamples`, `compileExample`, `EXAMPLE_TIMEOUT_MS`, `ExampleOutcome`, `rewriteImports`, `runExample`, `runExamples`
   - Tests: [`tests/unit/examples.test.ts`](../tests/unit/examples.test.ts), [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
-- [`docsGenerate.ts`](../tools/lib/docsGenerate.ts): Writes the generated docs from what tools/lib/docs.ts reads (PLAN.md §6.8, WP 0.6): `docs/INDEX.md` (module → purpose → exports → tests), `docs/API.md` (each export with the first sentence of its doc comment, the public API first) and `docs/ERRORS.md` (every code registered with `defineCodes`, with its message and fix).
-  - Exports: `apiMarkdown`, `BARRELS`, `errorsMarkdown`, `formatMarkdown`, `GENERATED`, `generateDocs`, `indexMarkdown`
+- [`docsGenerate.ts`](../tools/lib/docsGenerate.ts): Writes the generated docs from what tools/lib/docs.ts reads (PLAN.md §6.8, WP 0.6): `docs/INDEX.md` (a row per registry kind declared with `defineKind`, PLAN.md §6.6, then module → purpose → exports → tests), `docs/API.md` (each export with the first sentence of its doc comment, the public API first) and `docs/ERRORS.md` (every code registered with `defineCodes`, with its message and fix).
+  - Exports: `apiMarkdown`, `BARRELS`, `errorsMarkdown`, `formatMarkdown`, `GENERATED`, `generateDocs`, `indexMarkdown`, `kindRows`
+  - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
+- [`docsKinds.ts`](../tools/lib/docsKinds.ts): Reads the registry kinds a module declares with `defineKind` (PLAN.md §6.6, WP 1.2): `x docs` gives each kind its row in `docs/INDEX.md` (kind, description, declaring module) and fails a declaration it cannot read, so the index of kinds is never written by hand.
+  - Exports: `KindDoc`, `kindsOf`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
 - [`docsPaths.ts`](../tools/lib/docsPaths.ts): The path checks of `x docs` (PLAN.md §8.12, WP 0.6): every path, source citation and name that the file and export comments, AGENTS.md, README.md and the Markdown under `docs/` mention must exist.
-  - Exports: `checkable`, `checkPaths`, `coveredDocs`, `expand`, `isPlanned`, `PathOptions`, `Planned`, `readPlanned`
+  - Exports: `checkable`, `checkPaths`, `coveredDocs`, `expand`, `GENERATED_DIRS`, `isPlanned`, `PathOptions`, `Planned`, `readPlanned`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
 - [`escalations.ts`](../tools/lib/escalations.ts): Escalation records (DOCTRINE.md, Escalation; PLAN.md §8.14, ADR-0017): `docs/escalations/ESC-NNNN-<slug>.md`, front matter then a short body.
   - Exports: `canonicalPrinciple`, `deadlineFor`, `DIR`, `Escalation`, `FIELDS`, `generateIndex`, `INDEX`, `indexMarkdown`, `isoSeconds`, `isOverdue`, `nextId`, `parseRecord`, `PRINCIPLES`, `readRecords`, `RecordFile`, `serializeRecord`, `slugOf`, `Status`, `STATUSES`, `validateFields`, `WAIT_MINUTES`, `wellFormed`, `writeIndex`, `writeRecord`

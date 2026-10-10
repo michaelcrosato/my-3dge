@@ -11,10 +11,11 @@
  *
  * Invariants: an unknown path is an error naming the closest: `CORE_UNKNOWN_SETTING` from `get`, `set` and `reset`,
  * and one of the problems of `CORE_BAD_SETTING` (a bad value) from presets, URL parameters and overrides, which apply
- * nothing when anything is wrong. Values are plain data, stored frozen. `view: true` settings (looks, cameras,
- * quality) are reachable like any other, but `values({ view: false })`, which the hash, captures and replays use,
- * leaves them out, and `sim.get`, the reader sim-side code gets, refuses them (`CORE_VIEW_SETTING`). `when` says
- * when a change takes effect; `set` reports it.
+ * nothing when anything is wrong. Values are plain data, stored frozen all the way down, defaults included (each a
+ * copy in its frozen `setting` entry, registry.ts), so no reader changes them for everyone. `view: true` settings
+ * (looks, cameras, quality) are reachable like any other, but `values({ view: false })`, which the hash, captures and
+ * replays use, leaves them out, and `sim.get`, the reader sim-side code gets, refuses them (`CORE_VIEW_SETTING`).
+ * `when` says when a change takes effect; `set` reports it.
  *
  * Carried from `my-3d2dge:src/emberdeep/01-tune.js` (knobs with range, unit and docs; overrides; JSON export) and
  * shardfall's presets and scoped overrides (`shardfall:crates/pav_core/src/params.rs:63-259`).
@@ -39,6 +40,7 @@ import {
   FIELD_TYPES,
   checkField,
   checkValue,
+  freezeValue,
   isPlainObject,
   listProblems,
   show,
@@ -170,6 +172,7 @@ function settingKind(registry: Registry): void {
     description:
       "The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set.",
     fields: SETTING_FIELDS,
+    defineWith: "defineSettings({ '<path>': { type, default, description } })",
     check: (entry) => {
       const { id: _id, kind: _kind, ...field } = entry;
       return checkField(field, entry.id).map((problem) => problem.message);
@@ -188,15 +191,6 @@ export function defineSettings(fields: Record<string, Field>, registry: Registry
     }
     return registry.def('setting', path, field as unknown as Record<string, unknown>);
   });
-}
-
-/** Freezes plain data all the way down, so a stored value cannot change behind the store. */
-function freeze<T>(value: T): T {
-  if (Array.isArray(value) || isPlainObject(value)) {
-    for (const item of Object.values(value)) freeze(item);
-    Object.freeze(value);
-  }
-  return value;
 }
 
 /** Text from a URL or the command line as a value of `field`'s type; undefined when it cannot be. */
@@ -251,7 +245,7 @@ export function createSettings(options: SettingsOptions = {}): Settings {
         continue;
       }
       const checked = checkValue(fieldOf(path), value, path, problems);
-      parsed.set(path, freeze(checked) as SettingValue);
+      parsed.set(path, freezeValue(checked) as SettingValue);
     }
     return { parsed, problems };
   };

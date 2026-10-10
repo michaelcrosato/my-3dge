@@ -1,7 +1,8 @@
 /**
- * @file Writes the generated docs from what tools/lib/docs.ts reads (PLAN.md §6.8, WP 0.6): `docs/INDEX.md` (module
- * → purpose → exports → tests), `docs/API.md` (each export with the first sentence of its doc comment, the public
- * API first) and `docs/ERRORS.md` (every code registered with `defineCodes`, with its message and fix).
+ * @file Writes the generated docs from what tools/lib/docs.ts reads (PLAN.md §6.8, WP 0.6): `docs/INDEX.md` (a row per
+ * registry kind declared with `defineKind`, PLAN.md §6.6, then module → purpose → exports → tests), `docs/API.md`
+ * (each export with the first sentence of its doc comment, the public API first) and `docs/ERRORS.md` (every code
+ * registered with `defineCodes`, with its message and fix).
  *
  * Invariants: the output depends only on the code, never on the clock or the machine, and is Prettier-formatted
  * with the repository's settings, so `prettier --check` passes on it and a stale file shows as a difference. Links
@@ -48,6 +49,29 @@ function byDirectory(modules: readonly ModuleDoc[]): [string, ModuleDoc[]][] {
   return [...groups].sort(([a], [b]) => (a === '' ? -1 : b === '' ? 1 : a.localeCompare(b, 'en')));
 }
 
+/** A table cell's text: one line, its pipes escaped. */
+const cell = (text: string) => text.replace(/\s+/g, ' ').replace(/\|/g, '\\|');
+
+/** The kinds section of `docs/INDEX.md`: one row per kind declared with `defineKind`, sorted by kind. */
+export function kindRows(modules: readonly ModuleDoc[]): string[] {
+  const kinds = modules
+    .flatMap((module) => module.kinds)
+    .filter((entry) => entry.description !== undefined)
+    .sort((a, b) => a.kind.localeCompare(b.kind, 'en') || a.module.localeCompare(b.module, 'en'));
+  const out = [
+    '',
+    '## Kinds',
+    '',
+    'Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describe <kind>` lists its fields and ids.',
+  ];
+  if (kinds.length === 0) return [...out, '', 'No module declares a kind yet.'];
+  out.push('', '| Kind | What it is | Declared in |', '| --- | --- | --- |');
+  for (const entry of kinds) {
+    out.push(`| ${code(entry.kind)} | ${cell(entry.description ?? '')} | ${link(entry.module, code(entry.module))} |`);
+  }
+  return out;
+}
+
 /** `docs/INDEX.md`, before formatting. */
 export function indexMarkdown(modules: readonly ModuleDoc[]): string {
   const out = [
@@ -55,9 +79,10 @@ export function indexMarkdown(modules: readonly ModuleDoc[]): string {
     '',
     '# Index of modules',
     '',
-    "Every module of the engine and its tools: what it is for (its file comment's first sentence), what it exports and",
-    'the tests that cover it. Each export, with the first sentence of its doc comment, is in [API.md](API.md); error and',
-    'advice codes are in [ERRORS.md](ERRORS.md).',
+    "Every registry kind, then every module of the engine and its tools: what it is for (its file comment's first",
+    'sentence), what it exports and the tests that cover it. Each export, with the first sentence of its doc comment, is',
+    'in [API.md](API.md); error and advice codes are in [ERRORS.md](ERRORS.md).',
+    ...kindRows(modules),
   ];
   for (const [dir, group] of byDirectory(modules)) {
     out.push('', `## ${dir || 'The root'}`, '');

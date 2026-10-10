@@ -45,3 +45,12 @@ Calls made where the plan is silent, and WP 0.6's paths widened:
 - **`x new`.** A kind's manifest is `tools/templates/<kind>/template.json` (`describe`, `id`, `pattern`, `sample`,
   `files`, `checks`: `types`, `lint`, `test`, `docs`). Template files are `.tmpl` text, so tsc, ESLint and Vitest never
   read their placeholders; `--test` writes the sample into the repository, checks it and removes it.
+
+## Amendment 2 (2026-10-10, WP-1.2 review fixes)
+- **Kinds.** `defineKind('<kind>', { description: '…', … })` is read statically by `tools/lib/docsKinds.ts`, as
+  `defineCodes` is, and `docs/INDEX.md` opens with a table of kinds (kind, description, declaring module), PLAN.md
+  §6.6's row per kind. A declaration with a literal kind but no literal description fails (`DOCS_KIND`), and so does
+  a kind declared twice; a call whose kind is not a literal (the registry's forwarding functions) is skipped.
+- **Generated paths.** A path inside a git-ignored directory that tools generate (`node_modules/.cache/`, `out/`,
+  `.cache/`, `dist/`) always passes the path checks: a fresh checkout has none of them, and `x docs --check` failed
+  there on the caches that eslint.config.js and tools/checkAll.ts cite.

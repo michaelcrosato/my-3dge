@@ -1,7 +1,8 @@
 /**
  * @file Unit tests for engine/core/log.ts (T1): codes registered by `defineCodes` (and refused when malformed or
  * registered again with other text), templates filled, `EngineError`'s `[CODE] message: fix` form, the closest-name
- * suggestions, warn-once advice in the advice trap's format, and structured error records.
+ * suggestions, warn-once advice in the advice trap's format (once per code and subject, capped), and structured
+ * error records.
  * @see engine/core/log.ts
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -106,21 +107,48 @@ describe('closest and didYouMean', () => {
 });
 
 describe('createLog', () => {
-  it('prints advice once per distinct message, in the trap format, and counts the repeats', () => {
+  it('prints advice once per code and subject, in the trap format, and counts the repeats', () => {
     const out = recorder();
     const quiet = createLog({ console: out });
-    expect(quiet.warnOnce('TEST_SLOW', { what: 'a', ms: 1 })).toBe(true);
-    expect(quiet.warnOnce('TEST_SLOW', { what: 'a', ms: 1 })).toBe(false);
-    expect(quiet.warnOnce('TEST_SLOW', { what: 'b', ms: 1 })).toBe(true);
+    expect(quiet.warnOnce('TEST_SLOW', { what: 'a', ms: 1 }, 'a')).toBe(true);
+    expect(quiet.warnOnce('TEST_SLOW', { what: 'a', ms: 1 }, 'a')).toBe(false);
+    expect(quiet.warnOnce('TEST_SLOW', { what: 'b', ms: 1 }, 'b')).toBe(true);
     expect(out.warned).toEqual(['[TEST_SLOW] a took 1 ms: cache a', '[TEST_SLOW] b took 1 ms: cache b']);
     expect(out.warned.map((line) => ADVICE_CODE.exec(line)?.[1])).toEqual(['TEST_SLOW', 'TEST_SLOW']);
     expect(quiet.advice).toEqual([
-      { code: 'TEST_SLOW', message: 'a took 1 ms', fix: 'cache a', count: 2 },
-      { code: 'TEST_SLOW', message: 'b took 1 ms', fix: 'cache b', count: 1 },
+      { code: 'TEST_SLOW', subject: 'a', message: 'a took 1 ms', fix: 'cache a', count: 2 },
+      { code: 'TEST_SLOW', subject: 'b', message: 'b took 1 ms', fix: 'cache b', count: 1 },
     ]);
     quiet.clear();
     expect(quiet.advice).toEqual([]);
-    expect(quiet.warnOnce('TEST_SLOW', { what: 'a', ms: 1 })).toBe(true);
+    expect(quiet.warnOnce('TEST_SLOW', { what: 'a', ms: 1 }, 'a')).toBe(true);
+  });
+
+  it('prints advice whose message carries a measured value once, however the value varies', () => {
+    const out = recorder();
+    const quiet = createLog({ console: out });
+    for (const ms of [40, 41, 57, 40]) quiet.warnOnce('TEST_SLOW', { what: 'the bake', ms });
+    expect(out.warned).toEqual(['[TEST_SLOW] the bake took 40 ms: cache the bake']);
+    expect(quiet.advice).toEqual([
+      { code: 'TEST_SLOW', subject: 'TEST_SLOW', message: 'the bake took 40 ms', fix: 'cache the bake', count: 4 },
+    ]);
+    for (const ms of [3, 4]) quiet.warnOnce('TEST_SLOW', { what: 'the bake', ms }, 'material:stone');
+    expect(out.warned).toHaveLength(2);
+    expect(quiet.advice.map((record) => [record.subject, record.count])).toEqual([
+      ['TEST_SLOW', 4],
+      ['material:stone', 2],
+    ]);
+  });
+
+  it('keeps the latest maxAdvice records, and advice evicted and raised again prints at most once', () => {
+    const out = recorder();
+    const quiet = createLog({ console: out, maxAdvice: 2 });
+    for (const what of ['a', 'b', 'c']) quiet.warnOnce('TEST_SLOW', { what, ms: 1 }, what);
+    expect(quiet.advice.map((record) => record.subject)).toEqual(['b', 'c']);
+    expect(quiet.warnOnce('TEST_SLOW', { what: 'a', ms: 2 }, 'a')).toBe(false);
+    expect(quiet.advice.map((record) => record.subject)).toEqual(['c', 'a']);
+    expect(out.warned).toHaveLength(3);
+    expect(createLog().advice).toEqual([]);
   });
 
   it('records every error, prints each distinct one once, keeps its cause, and caps the records', () => {
@@ -136,6 +164,20 @@ describe('createLog', () => {
     quiet.error('TEST_GONE', { thing: 'map' });
     expect(quiet.errors.map((record) => record.message)).toEqual(['the key is gone', 'the map is gone']);
     expect(quiet.error('TEST_GONE', {}, 'a string').cause).toEqual({ name: 'string', message: 'a string' });
+  });
+
+  it('prints an error evicted under maxErrors and raised again at most once', () => {
+    const out = recorder();
+    const quiet = createLog({ console: out, maxErrors: 1 });
+    quiet.error('TEST_GONE', { thing: 'door' });
+    quiet.error('TEST_GONE', { thing: 'key' });
+    const again = quiet.error('TEST_GONE', { thing: 'door' });
+    expect(out.errored.map(([line]) => line)).toEqual([
+      '[TEST_GONE] the door is gone: make another door',
+      '[TEST_GONE] the key is gone: make another key',
+    ]);
+    expect(quiet.errors).toEqual([again]);
+    expect(again.count).toBe(1);
   });
 
   it('refuses an unregistered code', () => {

@@ -2,7 +2,8 @@
  * @file Unit tests for engine/core/settings.ts (T1): settings declared as `setting` entries (bad paths and fields
  * refused), validated `get` and `set` with the closest path for a typo, text from URLs and `x set`, the "differs from
  * default" marker and reset, JSON export and import all or nothing, URL parameters both ways, scoped overrides undone
- * in any order, view settings kept from the hash and from sim-side reads, frozen values, and `describe`.
+ * in any order (a set landing in the newest layer, a reset clearing every layer), view settings kept from the hash and
+ * from sim-side reads, frozen values and defaults independent of the caller's objects, and `describe`.
  * @see engine/core/settings.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -113,6 +114,18 @@ describe('get and set', () => {
     expect(() => settings.setText('spawnPoints', '[2,')).toThrow(/CORE_BAD_SETTING/);
   });
 
+  it('reads 1 and 0 as booleans, from x set and from URLs', () => {
+    const settings = setup();
+    settings.setText('debug', '1');
+    expect(settings.get('debug')).toBe(true);
+    settings.setText('debug', '0');
+    expect(settings.get('debug')).toBe(false);
+    settings.fromUrl('debug=1');
+    expect(settings.get('debug')).toBe(true);
+    settings.fromUrl('debug=0');
+    expect(settings.get('debug')).toBe(false);
+  });
+
   it('stores values frozen and independent of the array it was given', () => {
     const settings = setup();
     const points = [4, 5];
@@ -121,6 +134,32 @@ describe('get and set', () => {
     const stored = settings.get<number[]>('spawnPoints');
     expect(stored).toEqual([4, 5]);
     expect(Object.isFrozen(stored)).toBe(true);
+  });
+
+  it('returns defaults frozen, so no reader can change them for everyone', () => {
+    const settings = setup();
+    const points = settings.sim.get<number[]>('spawnPoints');
+    expect(Object.isFrozen(points)).toBe(true);
+    expect(() => (points as number[]).push(9)).toThrow(TypeError);
+    expect(Object.isFrozen(settings.get('spawnPoints'))).toBe(true);
+    expect(settings.get('spawnPoints')).toEqual([0, 1]);
+    expect(Object.isFrozen(settings.describe().find((row) => row.path === 'spawnPoints')?.default)).toBe(true);
+  });
+
+  it("keeps a default independent of the caller's object, and copies objects given to set", () => {
+    const reg = createRegistry();
+    const view = { at: [0, 5, 10], fov: 50 };
+    defineSettings({ 'camera.view': { type: 'any', default: view, description: 'Camera view.' } }, reg);
+    const settings = createSettings({ registry: reg });
+    view.at.push(99);
+    view.fov = 90;
+    expect(settings.get('camera.view')).toEqual({ at: [0, 5, 10], fov: 50 });
+    expect(Object.isFrozen(view)).toBe(false);
+    const next = { at: [1], fov: 60 };
+    settings.set('camera.view', next);
+    next.at.push(2);
+    expect(settings.get('camera.view')).toEqual({ at: [1], fov: 60 });
+    expect(Object.isFrozen(next)).toBe(false);
   });
 
   it('sees settings declared after the store was made', () => {
@@ -146,6 +185,21 @@ describe('the marker, reset, values and describe', () => {
     settings.reset();
     expect(settings.toJSON()).toEqual({});
     expect(() => settings.reset('nope')).toThrow(/CORE_UNKNOWN_SETTING/);
+  });
+
+  it('resets to the defaults inside an active override, the override included', () => {
+    const settings = setup();
+    settings.set('crowd', 7);
+    const scene = settings.override({ crowd: 1000, mix: 'wild' });
+    settings.reset();
+    expect([settings.get('crowd'), settings.get('mix')]).toEqual([100, 'balanced']);
+    settings.set('crowd', 3);
+    scene.dispose();
+    expect(settings.get('crowd')).toBe(3);
+    const variant = settings.override({ crowd: 2000 });
+    settings.reset('crowd');
+    expect(settings.get('crowd')).toBe(100);
+    variant.dispose();
   });
 
   it('lists values sorted by path, all, without view settings, or only them', () => {
@@ -248,6 +302,19 @@ describe('scoped overrides', () => {
     expect(settings.get('crowd')).toBe(5);
     scene.dispose();
     expect([settings.get('crowd'), settings.get('debug')]).toEqual([100, true]);
+  });
+
+  it('writes a set to the newest of two layers holding the path, undone with that layer', () => {
+    const settings = setup();
+    settings.set('crowd', 10);
+    const scene = settings.override({ crowd: 1000 }, 'scene');
+    const variant = settings.override({ crowd: 2000 }, 'variant');
+    expect(settings.set('crowd', 5)).toMatchObject({ value: 5, previous: 2000 });
+    expect(settings.get('crowd')).toBe(5);
+    variant.dispose();
+    expect(settings.get('crowd')).toBe(1000);
+    scene.dispose();
+    expect(settings.get('crowd')).toBe(10);
   });
 
   it('refuses bad overrides whole', () => {
