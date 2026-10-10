@@ -181,6 +181,33 @@ For the agents who maintain the engine.
 - `SimMathName` (type): The names of the swapped `Math` functions.
 - `withSimMath` (function): Runs `fn` with the fdlibm ports in `Math` and returns its result; the previous functions are back afterwards, whether `fn` returns or throws; a `fn` that returns a promise throws `CORE_SIM_ASYNC`.
 
+### [`engine/core/time.ts`](../engine/core/time.ts)
+
+- `Clock` (interface): Turns frame timestamps into fixed steps: the accumulator, the time scale, slowdowns, hit-stop and pause.
+- `ClockOptions` (interface): How a clock is made.
+- `ClockState` (interface): The clock's state as plain data, for the inspector and tests (never hashed: it changes no step).
+- `createClock` (function): Makes a frame clock; it reads `time.*` from its settings store on every frame.
+- `createVirtualClock` (function): Makes a virtual clock starting at `start` milliseconds.
+- `Frame` (interface): What one `advance` hands out.
+- `SIM_DT` (const): One sim step in seconds, 1/60.
+- `SIM_HZ` (const): The sim's steps per second: gameplay time is counted in 60 Hz ticks (ADR-0005).
+- `TIME_CODES` (const): The codes this module raises, with their fixes.
+- `TIME_SETTINGS` (const): The time settings, path → field; `defineSettings(TIME_SETTINGS, registry)` declares them on another registry.
+- `VirtualClock` (interface): A clock for tests that moves only when told: `now()` in milliseconds, as a page's timestamps are.
+
+### [`engine/core/timers.ts`](../engine/core/timers.ts)
+
+- `advanceEntityClock` (function): Advances `clock` by the world's (or its owner's) `dt` seconds and returns the entity's own dt for this step.
+- `createEntityClock` (function): Makes an entity clock running at `rate`.
+- `createTimers` (function): Makes timers counting ticks at `hz` steps per second (`time.hz`, 60 by default).
+- `EntityClock` (interface): A per-entity clock: plain numbers a component holds, so captures and the hash take it as data.
+- `freezeEntityClock` (function): Freezes `clock` for `seconds` of world time; a longer freeze already running is kept.
+- `Timer` (interface): A timer's handle.
+- `TimerCallback` (type): What a timer calls: it gets its own handle, so `every` can cancel itself.
+- `Timers` (interface): Timers in sim time; the world steps them once per sim step.
+- `TimersCapture` (interface): The timers with their callbacks, for `restore` in the same process.
+- `TimersState` (interface): The timers as plain numbers, for the hash: `[id, due tick, period in ticks (0 for one-shot)]` in firing order.
+
 ### [`engine/gfx/renderer.ts`](../engine/gfx/renderer.ts)
 
 - `createRenderer` (function): Starts three.js's `WebGPURenderer` on `canvas`, on WebGPU only: the adapter check, a device with every feature the adapter offers, `await renderer.init()`, then the backend assertion.

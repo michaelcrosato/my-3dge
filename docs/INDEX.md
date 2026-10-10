@@ -51,6 +51,12 @@ advice codes are in [ERRORS.md](ERRORS.md).
 - [`simMath.ts`](../engine/core/simMath.ts): Deterministic `Math` while the sim runs (PLAN.md §6.5; doctrines: Reproducible, Quality under the hood): `withSimMath(fn)` swaps stdlib's fdlibm ports of `sin`, `cos` and `pow` into `Math` while `fn` runs and puts the native functions back afterwards.
   - Exports: `inSimMath`, `SIM_MATH`, `SIM_MATH_CODES`, `SIM_MATH_NAMES`, `SimMathEntry`, `SimMathName`, `withSimMath`
   - Tests: [`engine/core/simMath.test.ts`](../engine/core/simMath.test.ts), [`tests/e2e/drift.spec.ts`](../tests/e2e/drift.spec.ts)
+- [`time.ts`](../engine/core/time.ts): The frame clock (PLAN.md §6.3, §6.4, WP 1.3, ADR-0005; doctrine: Reproducible): it turns real time into fixed 60 Hz sim steps plus an interpolation `alpha`, under a time scale, a stack of slowdowns, a hit-stop with a leaky budget and pause; plus a virtual clock for tests.
+  - Exports: `Clock`, `ClockOptions`, `ClockState`, `createClock`, `createVirtualClock`, `Frame`, `SIM_DT`, `SIM_HZ`, `TIME_CODES`, `TIME_SETTINGS`, `VirtualClock`
+  - Tests: [`engine/core/time.test.ts`](../engine/core/time.test.ts)
+- [`timers.ts`](../engine/core/timers.ts): Sim time (PLAN.md §6.3, WP 1.3, ADR-0005; doctrine: Reproducible): timers `after` and `every` that count sim ticks and return `{ cancel }`, and per-entity clocks, plain numbers a component holds, that run an entity's time at its own rate (a slowed foe, a time well) or freeze it (the attacker and victim of a hit).
+  - Exports: `advanceEntityClock`, `createEntityClock`, `createTimers`, `EntityClock`, `freezeEntityClock`, `Timer`, `TimerCallback`, `Timers`, `TimersCapture`, `TimersState`
+  - Tests: [`engine/core/timers.test.ts`](../engine/core/timers.test.ts)
 
 ## engine/gfx
 

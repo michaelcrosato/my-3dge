@@ -63,6 +63,22 @@ Raised by `set`, `setText`, `load`, `fromUrl` and `override` (engine/core/settin
 
 Raised by `parse` and `def` (engine/core/schema.ts, engine/core/registry.ts) when a spec does not match its schema. Every problem is listed at once, each naming its key, and an unknown key names the closest valid one: nothing is dropped or clamped silently.
 
+### CORE_BAD_TIME
+
+- Message: `{where} got {value}`
+- Fix: pass {expected}
+- Registered in: [`engine/core/time.ts` line 51](../engine/core/time.ts)
+
+Raised by engine/core/time.ts and engine/core/timers.ts for a timestamp that is not a finite number, a negative or infinite duration, a slowdown `k` outside 0..1 (speed-ups go through the `time.scale` setting), an empty slowdown id, an `every` shorter than one tick, a step count that is not a whole number, or an entity clock rate below 0.
+
+### CORE_CLOCK_BEHIND
+
+- Message: `the sim is falling behind real time: {frames} frames in a row each needed more than time.maxSteps = {maxSteps} steps, and the rest were dropped`
+- Fix: make each step cheaper (__engine.stats() shows where the time goes) or lighten the scene; raise time.maxSteps only when frames are long and steps cheap
+- Registered in: [`engine/core/time.ts` line 56](../engine/core/time.ts)
+
+Advice from `clock.advance` (engine/core/time.ts): the game runs slower than real time. A single stall (a tab coming back, a debugger pause) drops its backlog without advice.
+
 ### CORE_DUPLICATE_ID
 
 - Message: `{kind} {id} is already defined`
@@ -86,6 +102,12 @@ Recorded by `emit` (engine/core/events.ts) in the log's errors (`__engine.errors
 - Registered in: [`engine/core/registry.ts` line 69](../engine/core/registry.ts)
 
 Raised by `get` and `describe` (engine/core/registry.ts) for an id the kind lacks when there is nothing to stand in: the kind has no fallback, or its fallback is not defined either.
+
+### CORE_NO_TIME
+
+- Message: `clock.advance() got no timestamp, and the clock has no now()`
+- Fix: pass the frame's time in milliseconds, clock.advance(timestamp) with requestAnimationFrame's argument, or create the clock with createClock({ now }) (createVirtualClock().now in tests): sim-side code never reads a wall clock
+- Registered in: [`engine/core/time.ts` line 47](../engine/core/time.ts)
 
 ### CORE_NOT_CANONICAL
 
