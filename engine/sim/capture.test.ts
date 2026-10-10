@@ -224,7 +224,7 @@ describe('the hash covers every captured field', () => {
   it('holds its golden value and is the same on every run', () => {
     const runs = [demo().w, demo().w].map((w) => hashes(w, 300).at(-1));
     expect(runs[0]).toBe(runs[1]);
-    expect(runs[0]).toBe('fdae537c20bfa5c0'); // my3dge-state/2: the world part holds hz (the state matches /1's 00e4f01b787914db)
+    expect(runs[0]).toBe('505bcec7400b4883'); // my3dge-state/3: timers hold start and firings (else as /2's fdae537c20bfa5c0)
   });
 });
 

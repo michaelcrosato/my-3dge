@@ -134,3 +134,18 @@ fixtures/scenes/kernel/, tests/pages/replay.html); no deviation from a Done-when
   `labs/<name>/scenes/`, the roots tests/pages/replay.ts globs), steps with no intents through a session, and writes
   `state.json` and `run.replay.json` (this platform's hashes included). **`x perf`** reports Node medians per step,
   hash and capture over `--runs` (5); `--budget` enforces `tests/baselines/perf/<scene>.json`.
+
+## Amendment 5 (2026-10-10, G1 re-review fixes)
+Calls made on the re-review's findings (engine/core/timers.ts, engine/sim/{world,scene,capture,state}.ts,
+engine/dev/members.ts); no deviation from a Done-when:
+- **Firing n of `every` is due at start + n periods**, rounded once to a millionth of a tick, never a rounded period
+  added up (`every(1/7)` at 60 Hz fires on tick 60, not 61, at its 7th firing); an `every` still fires at most once a
+  step. Each timer's state is `[id, due, period in ticks, start tick, firings so far]`, so the hash covers what decides
+  its next firings: the hash format becomes `my3dge-state/3` and captures `my3dge-capture/3` (the demo golden moves
+  from `fdae537c20bfa5c0` to `505bcec7400b4883`, the kernel goldens likewise, with every state otherwise unchanged).
+- **A step that throws before its timers stage does not count**: the world takes its tick back (`timers.untick()`),
+  so `tick` and the timers stay as they were and the next step runs as that step again; a throw at or after the
+  timers stage counts the step. The session records a step's intents only once the world counts it, so `record()`
+  replays the run either way. A seed of -0 is read as 0, which is what a replay written as JSON holds.
+- **Members get frozen copies** (`recordedRun`): entities from `get` and `query`, the systems list and the
+  change-points, so a write through them throws instead of changing the run off the record.

@@ -223,7 +223,7 @@ Raised by `normalizeIntents`, `applyIntents` and the replay checks (engine/input
 
 - Message: `{where} got {value}`
 - Fix: pass {expected}
-- Registered in: [`engine/sim/world.ts` line 65](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 66](../engine/sim/world.ts)
 
 Raised by the world (engine/sim/world.ts) for a seed or step rate that is not a number of the right kind, a spawn that is not a plain object of components, or an `id` given among the components.
 
@@ -267,7 +267,7 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `{what} was called during a step`
 - Fix: call step(), run(), capture() and restore() between steps; inside a system, change the world directly (spawn, despawn and emit queue to the end of the step)
-- Registered in: [`engine/sim/world.ts` line 61](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 62](../engine/sim/world.ts)
 
 ### SIM_EDITED_CAPTURE
 
@@ -279,7 +279,7 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `the end of step {tick} was still delivering events and spawns after {rounds} rounds`
 - Fix: break the loop: a listener that emits the event it listens to, or spawns what spawns it again, never settles; act on such chains one step at a time (store a pending flag in a component and let a system handle it next step)
-- Registered in: [`engine/sim/world.ts` line 70](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 71](../engine/sim/world.ts)
 
 ### SIM_FOREIGN_CAPTURE
 
@@ -303,7 +303,7 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `there is no entity {id}{why}`
 - Fix: use an id spawn() returned while its entity lives (w.has(id) tells): a spawned entity joins the world at the end of the step that spawned it, so give it its components in spawn(); a despawned one leaves at the end of its step
-- Registered in: [`engine/sim/world.ts` line 57](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 58](../engine/sim/world.ts)
 
 ### SIM_NOT_DATA
 
@@ -334,7 +334,7 @@ Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities
 ### SIM_UNKNOWN_COMPONENT
 
 - Message: `{name} is not a component kind{suggestion}`
-- Fix: declare it with defineComponent('{name}', { description, fields }) before an entity holds it (node x describe component lists the declared kinds)
+- Fix: declare it with defineComponent({name}, { description, fields }) before an entity holds it (node x describe component lists the declared kinds)
 - Registered in: [`engine/sim/state.ts` line 47](../engine/sim/state.ts)
 
 Raised by the world (engine/sim/world.ts) and the hash (engine/sim/state.ts) for an entity property, a `spawn`, `add`, `remove` or `query` name, or a captured component that no `defineComponent` declared: the hash covers declared components only, so an undeclared one is refused rather than skipped.

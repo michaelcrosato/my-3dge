@@ -6,7 +6,8 @@
  * names the closest. A session records setting changes made through its own store (set, setText, load, fromUrl,
  * reset, override) at their step, merged in play order, so its replay gives the live hashes; what no step has followed
  * yet waits; a dev action that throws is rolled back and not recorded; the session restores only its own captures,
- * unchanged, taking the recording back (or forward) with them, so its replay gives the live hash; seeds are whole.
+ * unchanged, taking the recording back (or forward) with them, so its replay gives the live hash; seeds are whole
+ * (-0 read as 0, as JSON writes it).
  * @see engine/sim/scene.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -14,8 +15,8 @@ import { EngineError } from '../core/log';
 import { createRegistry } from '../core/registry';
 import { defineSettings } from '../core/settings';
 import { inSimMath } from '../core/simMath';
-import { checkReplay, playReplay } from './replay';
-import { createSession, defineScene, getScene, isScene, startScene } from './scene';
+import { checkReplay, playReplay, type Replay } from './replay';
+import { checkSeed, createSession, defineScene, getScene, isScene, startScene } from './scene';
 import { defineComponent } from './state';
 
 /** The message of the EngineError `fn` throws, after its code. */
@@ -304,5 +305,10 @@ describe('captures through the session', () => {
     );
     expect(failure(() => createSession('drift', { seed: -1, registry }))).toMatch(/^SIM_BAD_SEED /);
     expect(createSession('drift', { seed: 0, registry }).record().seed).toBe(0);
+    const zero = createSession('drift', { seed: -0, registry }); // JSON writes -0 as 0: the run must be 0's
+    for (let k = 0; k < 3; k++) zero.step({ move: [0, 1] });
+    expect([Object.is(zero.world.seed, 0), Object.is(checkSeed(-0, 'here'), 0)]).toEqual([true, true]);
+    const text = JSON.parse(JSON.stringify(zero.record())) as Replay;
+    expect(playReplay(text, { registry, checkpoints: [3] }).hashes[3]).toBe(zero.world.hash());
   });
 });

@@ -19,7 +19,8 @@
  * During step k (from 1) every phase, timer and listener sees `tick` k, and a timer made in any of them is due from
  * step k + 1. `hz` is fixed when the world is made (the `time.hz` setting then). A despawned entity's `rng.entity`
  * streams are dropped (asking again is `SIM_NO_ENTITY`); `fxRng` streams are never hashed or captured. A system that
- * throws stops the step (counted) and drops what it queued.
+ * throws stops the step, which drops what it queued and counts only if its timers stage has run (a throw before it
+ * leaves `tick` as it was and fires no timer).
  *
  * Gameplay state lives in components, settings, timers or RNG streams, never in closure or module variables: those
  * are neither hashed nor captured, so a restore would leave them behind. Hold ids, not entity objects, across steps:
@@ -339,15 +340,16 @@ export function createWorld<C extends object = AnyComponents, E extends EventMap
       const intents = given === NO_INTENTS ? given : freezeValue(copyValue(given));
       enter('step()', () => {
         timers.tick(); // the step's number from its first phase, so a timer made in any phase waits a step
-        let fired = false;
-        for (const system of systems.list()) {
-          if (!fired && phaseIndex(system.phase) >= RULES) {
-            fired = true;
-            timers.fire();
-          }
-          system.run(world, intents);
+        const list = systems.list();
+        let at = 0;
+        try {
+          for (; at < list.length && phaseIndex(list[at].phase) < RULES; at++) list[at].run(world, intents);
+        } catch (error) {
+          timers.untick(); // thrown before the timers stage: the step does not count
+          throw error;
         }
-        if (!fired) timers.fire();
+        timers.fire();
+        for (; at < list.length; at++) list[at].run(world, intents);
       });
     },
     state: () => withSimMath(() => cloneData(view() as WorldState, 'the state')),

@@ -1,10 +1,10 @@
 /**
  * @file Unit tests for engine/core/timers.ts (T1): timers in sim time (first step at or after their time, the tick
- * counted as a step begins so a timer made before its timers stage waits a step, `every` exact past 130,000 periods
- * of 0.07 s, phase kept for fractional periods, due then creation order, a timer made while firing waits a step,
- * cancel from outside and inside, bad durations refused, plain state, capture and restore continuing exactly, a throw
- * leaving the list sound) and per-entity clocks (rate, nesting, freezes in world seconds, the longest winning,
- * leftovers carried).
+ * counted as a step begins so a timer made before its timers stage waits a step, `every` exact past 130,000 periods of
+ * 0.07 s, firing n of `every` on its own exact tick (1/7, 1/9, 1/13 s), phase kept for fractional periods, at most one
+ * firing a step, due then creation order, a timer made while firing waits a step, cancel from outside and inside, bad
+ * durations refused, plain state, capture and restore continuing exactly with the firing count, a throw leaving the
+ * list sound) and per-entity clocks (rate, nesting, freezes in world seconds, the longest winning, leftovers carried).
  * @see engine/core/timers.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -60,6 +60,22 @@ describe('timers in sim time', () => {
     for (let i = 0; i < 548_100; i++) timers.step(); // 130,500 periods of 4.2 ticks
     expect(off).toEqual([]);
     expect(n).toBe(130_500);
+  });
+
+  it('puts firing n of every on its own exact tick: never a rounded period added up (1/7, 1/9, 1/13 s at 60 Hz)', () => {
+    const timers = createTimers();
+    const at: Record<string, number[]> = { '1/7': [], '1/9': [], '1/13': [] };
+    timers.every(1 / 7, () => at['1/7'].push(timers.ticks)); // 8.571428… ticks
+    timers.every(1 / 9, () => at['1/9'].push(timers.ticks)); // 6.666… ticks
+    timers.every(1 / 13, () => at['1/13'].push(timers.ticks)); // 4.615… ticks
+    for (let i = 0; i < 6000; i++) timers.step();
+    expect([at['1/7'][6], at['1/9'][2], at['1/13'][12]]).toEqual([60, 20, 60]);
+    const exact = (k: number, n: number) => Math.ceil((60 * n) / k - 1e-9); // ceil(60 n / k), a whole when k divides
+    for (const [k, ticks] of [7, 9, 13].map((k) => [k, at[`1/${k}`]] as const)) {
+      expect(ticks.length, `1/${k}`).toBe((6000 * k) / 60);
+      const off = ticks.map((tick, i) => [i + 1, tick]).filter(([n, tick]) => tick !== exact(k, n));
+      expect(off.slice(0, 3), `1/${k}`).toEqual([]);
+    }
   });
 
   it('keeps the phase of every, so a fractional period keeps its average rate exactly', () => {
@@ -122,8 +138,8 @@ describe('timers in sim time', () => {
       ticks: 10,
       nextId: 3,
       timers: [
-        [1, 30, 30],
-        [2, 60, 0],
+        [1, 30, 30, 0, 0],
+        [2, 60, 0, 0, 0],
       ],
     });
     const saved = timers.capture();
@@ -137,6 +153,56 @@ describe('timers in sim time', () => {
     timers.after(1, () => {});
     timers.clear();
     expect(timers.size).toBe(0);
+  });
+
+  it('keeps the firing count and phase of every through capture and restore, and through its plain numbers alone', () => {
+    const timers = createTimers();
+    const log: number[] = [];
+    const record = () => log.push(timers.ticks);
+    timers.every(1 / 7, record);
+    for (let i = 0; i < 50; i++) timers.step(); // fired 5 times: 9, 18, 26, 35, 43
+    expect(log.splice(0)).toEqual([9, 18, 26, 35, 43]);
+    const numbers = JSON.stringify(timers.state()); // [id, due, period, start, fired]: due 51.428571 (6 × 8.571428…)
+    expect(JSON.parse(numbers)).toEqual({ ticks: 50, nextId: 2, timers: [[1, 51.428571, (1 / 7) * 60, 0, 5]] });
+    const saved = timers.capture();
+    for (let i = 0; i < 70; i++) timers.step();
+    const first = log.splice(0);
+    expect(first).toEqual([52, 60, 69, 78, 86, 95, 103, 112, 120]); // firing n on ceil(60 n / 7)
+    timers.restore(saved);
+    for (let i = 0; i < 70; i++) timers.step();
+    expect(log.splice(0)).toEqual(first);
+    const copy = createTimers(); // the state's numbers alone carry the phase: one callback handed back
+    const { ticks, nextId, timers: list } = JSON.parse(numbers) as ReturnType<typeof timers.state>;
+    copy.restore({
+      ticks,
+      nextId,
+      timers: list.map(([id, due, period, start, fired]) => ({
+        id,
+        due,
+        period,
+        start,
+        fired,
+        fn: () => log.push(copy.ticks),
+      })),
+    });
+    for (let i = 0; i < 70; i++) copy.step();
+    expect(log).toEqual(first);
+  });
+
+  it('fires every at most once a step, even where rounding would put two firings of a near-tick period in one', () => {
+    const timers = createTimers();
+    const fired = 2_499_950; // a period of 0.9999996 ticks rounds to one tick; firing 2,499,999 meets 2,499,998's tick
+    const due = Math.round((fired + 1) * 0.9999996 * 1e6) / 1e6;
+    const at: number[] = [];
+    const fn = () => at.push(timers.ticks);
+    timers.restore({
+      ticks: Math.ceil(due) - 1,
+      nextId: 2,
+      timers: [{ id: 1, due, period: 0.9999996, start: 0, fired, fn }],
+    });
+    for (let i = 0; i < 100; i++) timers.step();
+    expect(at).toHaveLength(100);
+    expect(new Set(at).size).toBe(100);
   });
 
   it('removes a one-shot timer before calling it, so a throw leaves the list sound', () => {

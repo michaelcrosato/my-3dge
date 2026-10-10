@@ -30,7 +30,7 @@
  * import { serialize, deserialize, type Canonical } from '../core/hash';
  * const w = createWorld({ seed: 7 });
  * w.rng('loot').next();
- * const saved = w.capture(); // { format: 'my3dge-capture/2', seed: 7, hz: 60, nextId: 1, entities: [], … }
+ * const saved = w.capture(); // { format: 'my3dge-capture/3', seed: 7, hz: 60, nextId: 1, entities: [], … }
  * const text = serialize(saved as unknown as Canonical); // no pending timers, so the text restores anywhere
  * w.rng('loot').next();
  * w.restore(deserialize(text) as unknown as WorldCapture);
@@ -59,7 +59,7 @@ export const CAPTURE_CODES = defineCodes('sim', {
 });
 
 /** The capture format tag; a change to what captures hold changes it. */
-export const CAPTURE_FORMAT = 'my3dge-capture/2';
+export const CAPTURE_FORMAT = 'my3dge-capture/3';
 
 /** The world's code as data: systems as `phase:name` in run order, listeners as `type` or `type (once)`. */
 export interface ScheduleData {
@@ -183,7 +183,7 @@ export function makeCapture(source: CaptureSource): WorldCapture {
     timers: {
       ticks: source.timers.ticks,
       nextId: source.timers.nextId,
-      timers: source.timers.timers.map((timer) => [timer.id, timer.due, timer.period]),
+      timers: source.timers.timers.map((timer) => [timer.id, timer.due, timer.period, timer.start, timer.fired]),
     },
     settings: cloneData(source.settings, 'settings'),
     rng: source.rng,
@@ -302,7 +302,7 @@ export function readCapture(capture: unknown, target: RestoreTarget): Restoratio
   const list = timers.timers;
   need(whole(timers.ticks, 0) && whole(timers.nextId, 1) && Array.isArray(list), 'its timers are malformed');
   for (const timer of list as unknown[]) {
-    need(Array.isArray(timer) && timer.length === 3 && timer.every(Number.isFinite), () => `a timer is ${show(timer)}`);
+    need(Array.isArray(timer) && timer.length === 5 && timer.every(Number.isFinite), () => `a timer is ${show(timer)}`);
   }
   need(isPlainObject(settings), () => `its settings are ${show(settings)}`);
   const paths = Object.keys(settings).sort(byText);
@@ -323,7 +323,7 @@ export function readCapture(capture: unknown, target: RestoreTarget): Restoratio
     isPlainObject(schedule) && strings(schedule.systems) && strings(schedule.listeners),
     () => `its schedule is ${show(schedule)}`,
   );
-  const timerList = list as [number, number, number][];
+  const timerList = list as TimersState['timers'];
   const side = held.get(capture);
   const own = side !== undefined && side.origin === origin;
   if (timerList.length > 0) {
@@ -348,7 +348,14 @@ export function readCapture(capture: unknown, target: RestoreTarget): Restoratio
     timers: {
       ticks: timers.ticks as number,
       nextId: timers.nextId as number,
-      timers: timerList.map(([id, due, period], i) => ({ id, due, period, fn: callbacks[i] })),
+      timers: timerList.map(([id, due, period, start, fired], i) => ({
+        id,
+        due,
+        period,
+        start,
+        fired,
+        fn: callbacks[i],
+      })),
     },
     settings: cloneData(settings as Record<string, SettingValue>, 'settings'),
     rng: states,

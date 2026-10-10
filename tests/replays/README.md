@@ -55,3 +55,9 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   `my3dge-state/2` (the WP-1.4 review fixes, ADR-0006 amendment 3: the world's step rate is hashed). The runs
   themselves did not change: each replay's final state, step rate and format tag aside, is the same field for field
   as under `my3dge-state/1`; only the hashes moved.
+- The kernel goldens were re-recorded (`--update`, Node ×3 and Chromium ×3 agreeing) when the hash format became
+  `my3dge-state/3` (the G1 re-review fixes, ADR-0006 amendment 5: firing n of `every` is due at its start plus n
+  periods, so each timer's state holds its start tick and firing count; finals now `e82d3715dd7ebf60` for
+  kernel-crowd and `123e33f07be4148e` for kernel-movers). The runs themselves did not change: the kernel's
+  `every(2.5)` is a whole 150 ticks, and each replay's final state, timer tuples and format tag aside, is the same
+  field for field as under `my3dge-state/2`; only the hashes moved.

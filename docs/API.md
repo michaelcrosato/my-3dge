@@ -335,7 +335,7 @@ For the agents who maintain the engine.
 - `TimerCallback` (type): What a timer calls: it gets its own handle, so `every` can cancel itself.
 - `Timers` (interface): Timers in sim time; the world steps them once per sim step.
 - `TimersCapture` (interface): The timers with their callbacks, for `restore` in the same process.
-- `TimersState` (interface): The timers as plain numbers, for the hash: `[id, due tick, period in ticks (0 for one-shot)]` in firing order.
+- `TimersState` (interface): The timers as plain numbers, for the hash, in firing order: `[id, due tick, period in ticks (0 for one-shot), start tick, firings so far]`.
 
 ### [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)
 
@@ -437,7 +437,7 @@ For the agents who maintain the engine.
 
 ### [`engine/sim/scene.ts`](../engine/sim/scene.ts)
 
-- `checkSeed` (function): Returns `seed` (1 when absent); throws `SIM_BAD_SEED` naming `where` unless it is a whole number from 0.
+- `checkSeed` (function): Returns `seed` (1 when absent; -0 as 0); throws `SIM_BAD_SEED` naming `where` unless it is a whole number from 0.
 - `createSession` (function): Starts a scene as a recorded session: `startScene`, plus the recording.
 - `defineScene` (function): Registers a scene on `registry` (the shared one by default) and returns it.
 - `getScene` (function): The scene `id` on `registry` (the shared one by default).

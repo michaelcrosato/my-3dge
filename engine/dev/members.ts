@@ -17,7 +17,8 @@
  * The rule for members that change the sim: only through the session's recorded operations, so `record()` always
  * replays what happened (PLAN.md §8.4). The host hands members `recordedRun(session)`: the session's `step` (or
  * `host.step`, through the clock), `set` and its settings store, `act`, `capture` and `restore`, `record`, and the
- * world read-only (`WorldReads`: no spawn, add, emit, step, run, capture or restore; its entities typed read-only).
+ * world read-only (`WorldReads`: no spawn, add, emit, step, run, capture or restore; entities, the systems list and
+ * the change-points as frozen copies, so a write through them throws instead of changing the run off the record).
  * A change no recorded operation can make is refused (a coded error naming the fix), or added to the session first;
  * presentation that never reaches the sim (the clock's view settings) is free.
  *
@@ -32,7 +33,7 @@
  */
 import type { Log } from '../core/log';
 import { registry as sharedRegistry, type Entry, type Registry } from '../core/registry';
-import { checkField, show, type Field, type Schema } from '../core/schema';
+import { checkField, copyValue, freezeValue, show, type Field, type Schema } from '../core/schema';
 import type { Clock } from '../core/time';
 import type { Session } from '../sim/scene';
 import type { EntityData } from '../sim/state';
@@ -43,22 +44,26 @@ export type WorldReads = Pick<
   World,
   'seed' | 'hz' | 'dt' | 'tick' | 'time' | 'count' | 'has' | 'state' | 'hash' | 'trace'
 > & {
-  /** One live entity, read-only, or undefined. */
+  /** A frozen copy of one live entity, or undefined. */
   get(id: number): EntityData | undefined;
-  /** The live entities holding every named component, in id order, read-only. Throws `SIM_UNKNOWN_COMPONENT`. */
+  /** Frozen copies of the live entities holding every named component, in id order. Throws `SIM_UNKNOWN_COMPONENT`. */
   query(...names: string[]): readonly EntityData[];
   /** The delivered events' trace; listeners are the scene's. */
   readonly events: Pick<WorldEvents, 'trace'>;
-  /** The systems in run order; adding or removing them is the scene's. */
+  /** The systems in run order, a frozen list; adding or removing them is the scene's. */
   readonly systems: Pick<World['systems'], 'list'>;
 };
 
 /** The run as members reach it: the session's recorded operations, scene and settings store, and the world read-only. */
 export type RecordedRun = Omit<Session, 'world'> & { readonly world: WorldReads };
 
-/** `session` as members reach it (`InspectorHost.session`): a frozen view that forwards the recorded operations and reads. */
+/**
+ * `session` as members reach it (`InspectorHost.session`): a frozen view that forwards the recorded operations and
+ * reads. Entities, the systems list and the change-points come as frozen copies, so writing through them throws.
+ */
 export function recordedRun(session: Session): RecordedRun {
   const { world } = session;
+  const frozen = <T>(value: T): T => freezeValue(copyValue(value));
   const reads: WorldReads = {
     get seed() {
       return world.seed;
@@ -75,13 +80,13 @@ export function recordedRun(session: Session): RecordedRun {
       return world.count;
     },
     has: (id) => world.has(id),
-    get: (id) => world.get(id),
-    query: (...names) => world.query(...names),
+    get: (id) => frozen(world.get(id)),
+    query: (...names) => frozen(world.query(...names)),
     state: () => world.state(),
     hash: () => world.hash(),
     trace: () => world.trace(),
     events: Object.freeze({ trace: () => world.events.trace() }),
-    systems: Object.freeze({ list: () => world.systems.list() }),
+    systems: Object.freeze({ list: () => Object.freeze([...world.systems.list()]) }),
   };
   return Object.freeze({
     scene: session.scene,
@@ -93,7 +98,9 @@ export function recordedRun(session: Session): RecordedRun {
     get intents() {
       return session.intents;
     },
-    inputs: session.inputs,
+    get inputs() {
+      return frozen(session.inputs);
+    },
     step: (intents?: unknown) => session.step(intents),
     set: (path: string, value: unknown) => session.set(path, value),
     act: (name: string, args?: unknown) => session.act(name, args),

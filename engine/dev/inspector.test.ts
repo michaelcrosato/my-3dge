@@ -1,12 +1,13 @@
 /**
  * @file Unit tests for engine/dev/inspector.ts and engine/dev/members.ts (T1, PLAN.md §8.3, WP 1.6): a member
- * registered from a test file appears in `__engine` and in `help()`; `help()` matches the object; arguments are
- * checked against their schema; members that need a renderer throw `DEV_NO_RENDERER` headless; the kind refuses
- * malformed members; the core table is typed against `Inspector`; every core member does its job on a headless run
- * (capture and restore through the session, so record() replays a restored run and an edited capture is refused;
- * members get the world read-only; queries name an unknown component; seeds are whole); every setting declared is
- * reachable through `__engine.set` (§3, Agent-operable); the kernel fixture imports only engine/sim-api.ts, and the
- * public-API rule refuses a fixture scene that imports engine/sim/world (WP 1.6's Done-when).
+ * registered from a test file appears in `__engine` and in `help()`; `help()` matches the object; arguments are checked
+ * against their schema; members that need a renderer throw `DEV_NO_RENDERER` headless; the kind refuses malformed
+ * members; the core table is typed against `Inspector`; every core member does its job on a headless run (capture and
+ * restore through the session, so record() replays a restored run and an edited capture is refused; members get the
+ * world read-only, its entities, systems and inputs as frozen copies; queries name an unknown component; seeds are
+ * whole); every setting declared is reachable through `__engine.set` (§3, Agent-operable); the kernel fixture imports
+ * only engine/sim-api.ts, and the public-API rule refuses a fixture scene that imports engine/sim/world (WP 1.6's
+ * Done-when).
  * @see engine/dev/inspector.ts
  */
 import { readFileSync } from 'node:fs';
@@ -298,6 +299,32 @@ describe('the core members', () => {
     }
     engine.step(2);
     expect([session.steps, session.world.tick, session.world.count]).toEqual([2, 2, 3]);
+  });
+
+  it('hands members frozen copies of entities, systems and inputs: writing through one throws, the run untouched', async () => {
+    const engine = await start();
+    const { session, registry } = headlessHost(engine);
+    engine.step(1, { move: [0, 1] });
+    engine.step(2);
+    const hash = engine.hash();
+    type Dot = { id: number; dot: { x: number } };
+    const one = session.world.get(1) as unknown as Dot;
+    const [first] = session.world.query('dot') as unknown as Dot[];
+    expect(() => (one.dot.x = 99)).toThrow(TypeError);
+    expect(() => (first.dot.x = 99)).toThrow(TypeError);
+    expect(() => delete (first as Partial<Dot>).dot).toThrow(TypeError);
+    const systems = session.world.systems.list() as unknown as unknown[];
+    expect(() => systems.splice(0)).toThrow(TypeError);
+    const inputs = session.inputs as unknown as [number, { move?: number[] }][];
+    expect(inputs).toEqual([
+      [0, { move: [0, 1] }],
+      [1, { move: null }],
+    ]);
+    expect(() => inputs.push([5, {}])).toThrow(TypeError);
+    expect(() => (inputs[0][1].move![1] = 0.5)).toThrow(TypeError);
+    expect([engine.hash(), session.world.systems.list().length, session.inputs.length]).toEqual([hash, 2, 2]);
+    expect(session.world.get(1)).not.toBe(session.world.get(1)); // a copy each time, never the live entity
+    expect(replayed(engine, registry)).toBe(hash);
   });
 
   it('describe lists the registries as x describe does; errors and advice show the log', async () => {

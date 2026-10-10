@@ -12,12 +12,12 @@
  * `level` names the level it loads (WP 2.2 compiles it).
  *
  * A session logs, each at the step it happens (merged in play order: set, then dev, then intents), what its intents
- * change, every non-view setting change (through `set` or its own store, `session.settings`), and its dev actions
- * (`act`, all or nothing: one that throws is rolled back). `record()` returns the replay from step 0, no capture
- * needed; change-points no step has followed yet wait for it. Step, capture and restore through the session, never
- * the world (`SIM_OFF_RECORD`): `session.restore` takes the recording back to the capture's step with the sim, so
- * `record()` replays the run as it stands; it refuses a capture it did not take (`SIM_FOREIGN_CAPTURE`) or one
- * changed since (`SIM_EDITED_CAPTURE`). Seeds are whole numbers from 0 (`SIM_BAD_SEED`). `Session` says the rest.
+ * change (a step the world does not count logs nothing), every non-view setting change (through `set` or its own store,
+ * `session.settings`), and its dev actions (`act`, all or nothing: one that throws is rolled back). `record()` returns
+ * the replay from step 0; change-points no step has followed yet wait for it. Step, capture and restore through the
+ * session, never the world (`SIM_OFF_RECORD`): `session.restore` takes the recording back to the capture's step with
+ * the sim, so `record()` replays the run as it stands; it refuses a capture it did not take (`SIM_FOREIGN_CAPTURE`) or
+ * one changed since (`SIM_EDITED_CAPTURE`). Seeds are whole numbers from 0 (`SIM_BAD_SEED`). `Session` says the rest.
  *
  * Invariants: a scene's `settings` are checked against the settings schema when it is defined (`CORE_BAD_SPEC`
  * naming each problem), so declare its settings before it; they apply for the run's lifetime, as an override layer
@@ -74,10 +74,10 @@ export const SCENE_CODES = defineCodes('sim', {
   },
 });
 
-/** Returns `seed` (1 when absent); throws `SIM_BAD_SEED` naming `where` unless it is a whole number from 0. */
+/** Returns `seed` (1 when absent; -0 as 0); throws `SIM_BAD_SEED` naming `where` unless it is a whole number from 0. */
 export function checkSeed(seed: unknown, where: string): number {
   if (seed === undefined) return 1;
-  if (Number.isInteger(seed) && (seed as number) >= 0) return seed as number;
+  if (Number.isInteger(seed) && (seed as number) >= 0) return (seed as number) + 0; // -0 + 0 is 0
   throw codeError('SIM_BAD_SEED', { where, value: show(seed) });
 }
 
@@ -236,8 +236,7 @@ export function startScene<C extends object = AnyComponents, E extends EventMap 
  * normalizes the intents against the step before and logs what changed. Setting changes through the store
  * (`settings`: set, setText, load, fromUrl, reset, override) are logged as `set` points: before each `set`, `act` and
  * `step`, the session compares the store's non-view values with the last ones it saw. `act` captures the world, runs
- * the action inside `w.run` and, if it throws, restores the capture and logs nothing; else it logs the action with its
- * plain-data args.
+ * the action inside `w.run` and, if it throws, restores the capture and logs nothing; else it logs it with its args.
  */
 export interface Session<C extends object = AnyComponents, E extends EventMap = EventMap> extends SceneRun<C, E> {
   /** Steps taken through the session. */
@@ -246,7 +245,7 @@ export interface Session<C extends object = AnyComponents, E extends EventMap = 
   readonly intents: Intents;
   /** The change-points so far. */
   readonly inputs: readonly InputEntry[];
-  /** One step with these intents (normalized against the step before); returns them. Throws `INPUT_BAD_INTENTS`. */
+  /** One step with these intents, normalized; recorded once the world counts it. Throws `INPUT_BAD_INTENTS`. */
   step(intents?: unknown): Intents;
   /** Sets a setting between steps; a non-view change is recorded at this step (as is any change through `settings`). */
   set(path: string, value: unknown): SettingChange;
@@ -290,16 +289,16 @@ export function createSession<C extends object = AnyComponents, E extends EventM
   let steps = 0;
   let seen = settings.sim.values();
   const marks = new WeakMap<WorldCapture, Mark>();
-  /** The change-point to write a `what` into at this step: the last one when the play order allows, else a new one. */
-  const pointFor = (what: 'set' | 'dev' | 'intents'): InputChange => {
+  /** The change-point to write a `what` into at step `at`: the last one when the play order allows, else a new one. */
+  const pointFor = (what: 'set' | 'dev' | 'intents', at = world.tick): InputChange => {
     const tail = inputs[inputs.length - 1];
-    if (tail && tail[0] === world.tick) {
+    if (tail && tail[0] === at) {
       const change = tail[1];
       const intents = Object.keys(change).some((key) => Object.hasOwn(INTENT_KEYS, key) || key.includes(':'));
       if (!intents && (what === 'intents' || change.dev === undefined)) return change;
     }
     const change: InputChange = {};
-    inputs.push([world.tick, change]);
+    inputs.push([at, change]);
     return change;
   };
   /** Logs every non-view value the store holds that differs from the last ones seen, as a `set` at this step. */
@@ -325,11 +324,16 @@ export function createSession<C extends object = AnyComponents, E extends EventM
     step(raw = {}) {
       const next = normalizeIntents(raw, last);
       sync();
-      const change = diffIntents(last, next);
-      if (Object.keys(change).length) Object.assign(pointFor('intents'), change);
-      world.step(next);
-      last = next;
-      steps++;
+      const at = world.tick;
+      try {
+        world.step(next);
+      } finally {
+        if (world.tick !== at) {
+          const change = diffIntents(last, next);
+          if (Object.keys(change).length) Object.assign(pointFor('intents', at), change);
+          [last, steps] = [next, steps + 1];
+        }
+      }
       return next;
     },
     set(path, value) {
@@ -356,9 +360,7 @@ export function createSession<C extends object = AnyComponents, E extends EventM
         world.restore(before);
         throw error;
       }
-      const point = pointFor('dev');
-      point.dev = name;
-      if (text !== undefined) point.args = deserialize(text);
+      Object.assign(pointFor('dev'), { dev: name }, text === undefined ? {} : { args: deserialize(text) });
     },
     capture() {
       sync();

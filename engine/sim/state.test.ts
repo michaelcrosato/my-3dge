@@ -122,7 +122,7 @@ describe('the hash', () => {
       ...makeWorld(registry).w.state(),
       entities: [{ id: 1, body: { mass: 2, speed: -0, note: 'é', dir: [1, 2] } }],
     };
-    const slow = new Fnv64().value('my3dge-state/2').value('world').number(view.seed).number(view.nextId);
+    const slow = new Fnv64().value('my3dge-state/3').value('world').number(view.seed).number(view.nextId);
     slow.number(view.hz);
     slow.value('entities').uint32(1).number(1).uint32(1).value('body');
     for (const value of [2, -0, 'é', [1, 2]]) slow.value(value);
@@ -160,6 +160,15 @@ describe('the hash', () => {
     w.hash();
     entity.armor = { plates: 2 };
     expect(codeOf(() => w.hash())).toBe('SIM_UNKNOWN_COMPONENT');
+    const unknown = (() => {
+      try {
+        return void componentTable(makeRegistry()).fields('bodi');
+      } catch (error) {
+        return error as EngineError;
+      }
+    })();
+    expect(unknown?.message).toMatch(/"bodi" is not a component kind \(did you mean "body"\?\)/);
+    expect(unknown?.fix).toMatch(/^declare it with defineComponent\("bodi", \{ description, fields \}\)/); // quoted once
   });
 
   it('covers the step rate in its world part', () => {
@@ -200,7 +209,7 @@ describe('the hash', () => {
     expect(hashState(sorted, componentTable(registry))).toBe(w.hash());
     (state.entities[0].body as { dir: number[] }).dir[0] = 9;
     expect(w.get(1)!.body!.dir).toEqual([1, 0, 0]);
-    expect(state.timers).toEqual({ ticks: 0, nextId: 2, timers: [[1, 60, 0]] });
+    expect(state.timers).toEqual({ ticks: 0, nextId: 2, timers: [[1, 60, 0, 0, 0]] });
   });
 });
 
@@ -228,11 +237,11 @@ describe('trace and diff', () => {
       nextId: 1,
       hz: 60,
       entities: [],
-      timers: { ticks: 0, nextId: 1, timers: [] as [number, number, number][] },
+      timers: { ticks: 0, nextId: 1, timers: [] as [number, number, number, number, number][] },
       settings: { 'time.hz': 60 },
       rng: {},
     };
-    const other = { ...view, settings: { 'time.hz': 30 }, timers: { ticks: 0, nextId: 2, timers: [[1, 5, 0]] } };
+    const other = { ...view, settings: { 'time.hz': 30 }, timers: { ticks: 0, nextId: 2, timers: [[1, 5, 0, 0, 0]] } };
     expect(diffStates(view, other as typeof view).map((d) => d.path)).toEqual([
       'timers.nextId',
       'timers.timers[0]',

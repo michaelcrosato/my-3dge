@@ -46,7 +46,7 @@ import { componentNames, eachField, notData } from './entities';
 export const STATE_CODES = defineCodes('sim', {
   SIM_UNKNOWN_COMPONENT: {
     template: '{name} is not a component kind{suggestion}',
-    fix: "declare it with defineComponent('{name}', { description, fields }) before an entity holds it (node x describe component lists the declared kinds)",
+    fix: 'declare it with defineComponent({name}, { description, fields }) before an entity holds it (node x describe component lists the declared kinds)',
     doc: 'Raised by the world (engine/sim/world.ts) and the hash (engine/sim/state.ts) for an entity property, a `spawn`, `add`, `remove` or `query` name, or a captured component that no `defineComponent` declared: the hash covers declared components only, so an undeclared one is refused rather than skipped.',
   },
   SIM_UNDECLARED_FIELD: {
@@ -140,7 +140,7 @@ export interface StateDifference {
 }
 
 /** The hash format; changing what the hash reads changes this tag, and with it every golden. */
-export const STATE_FORMAT = 'my3dge-state/2';
+export const STATE_FORMAT = 'my3dge-state/3';
 /** Code-unit order, so sorting never depends on the locale. */
 const byText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 /** A component kind's name: the entity property that holds it. */
