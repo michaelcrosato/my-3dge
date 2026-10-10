@@ -15,6 +15,7 @@
  * - `out` may be one of the inputs. Nothing reads a clock or a random stream, so the same inputs give the same bits.
  *
  * @example
+ * import { Quaternion, Vector3 } from '../core/math';
  * import { boneMask } from './skeleton';
  * const a = new Pose();
  * const b = new Pose().setRotation('chest', new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), 1));

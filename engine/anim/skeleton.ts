@@ -18,7 +18,7 @@
  *
  * @example
  * const skeleton = createSkeleton('build:heroic');
- * skeleton.height; // 2.00125: legs 0.925 + torso 0.6 + neck 0.09375 + head 2 × 0.190625
+ * skeleton.height; // 2: legs 0.925 + torso 0.6 + neck 0.09375 + head 2 × 0.190625
  * PARENTS[jointIndex('forearmL')] === jointIndex('upperArmL'); // true
  * boneMask('upper').weights[jointIndex('head')]; // 1
  * boneMask(['handL', 'root']).root; // 1

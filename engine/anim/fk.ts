@@ -17,7 +17,7 @@
  * const skeleton = createSkeleton('build:chibi');
  * const world = forwardKinematics(skeleton, new Pose());
  * jointPosition(world, 'pelvis').y; // 0.75: chibi's legs, 0.375 + 0.375
- * socketPosition(skeleton, world, 'contactL').y; // 0: the soles on the floor
+ * socketPosition(skeleton, world, 'contactL').y; // ≈ 0 (1e-17): the soles on the floor
  * @see engine/anim/fk.test.ts
  */
 import { Matrix4, Quaternion, Vector3 } from '../core/math';
