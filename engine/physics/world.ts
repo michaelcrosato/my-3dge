@@ -22,8 +22,8 @@
  * them, so the same calls give the same handles and ids; `bodies()` and the hashed state go in id order. The physics
  * world holds no state of its own beside Rapier's, so a restore (Rapier's snapshot, engine/physics/capture.ts) brings
  * everything back. A body's id stays its own until it is removed; a later body may reuse its slot under another id.
- * An unknown id throws `PHYSICS_NO_BODY`. `physicsOf(w)` returns the physics bound to a sim world (`bindPhysics`), or
- * throws `PHYSICS_NONE` naming the fix.
+ * An unknown id throws `PHYSICS_NO_BODY`. A scene with `physics: true` gets one (`scenePhysics`, then `attachPhysics`
+ * binds it to the sim world and adds the system); `physicsOf(w)` returns it, or throws `PHYSICS_NONE` naming the fix.
  *
  * @example
  * import { createSettings } from '../core/settings';
@@ -38,8 +38,10 @@
  */
 import RAPIER from '@dimforge/rapier3d-simd-compat';
 import { codeError, defineCodes } from '../core/log';
+import type { Registry } from '../core/registry';
 import { Quaternion, Vector3 } from '../core/math';
 import { isPlainObject, show } from '../core/schema';
+import { defineSettings } from '../core/settings';
 import {
   bodyId,
   bodyIds,
@@ -50,7 +52,7 @@ import {
   type PhysicsCapture,
 } from './capture';
 import { groupBits, type GroupName } from './groups';
-import { INTEGRATION_PARAMETERS } from './params';
+import { INTEGRATION_PARAMETERS, PHYSICS_SETTINGS } from './params';
 import {
   check,
   overlap,
@@ -375,4 +377,23 @@ export function physicsOf(w: object): Physics {
   const physics = bound.get(w);
   if (!physics) throw codeError('PHYSICS_NONE', { what: 'this world' });
   return physics;
+}
+
+/** For a scene that asks for physics: a new physics world, with `physics.gravity` declared on `registry` if it lacks it. */
+export function scenePhysics(wanted: boolean, registry: Registry): Physics | undefined {
+  if (!wanted) return undefined;
+  const declared = registry.kinds().includes('setting') && registry.has('setting', 'physics.gravity');
+  if (!declared) defineSettings(PHYSICS_SETTINGS, registry);
+  return createPhysics();
+}
+
+/** A sim world as `attachPhysics` sees it: one that takes systems. */
+interface SimWorld {
+  readonly systems: { add(name: string, run: (w: PhysicsStepper) => void, options: { phase: 'physics' }): unknown };
+}
+
+/** Binds `physics` to a sim world and steps it there: the system `physics`, in the phase of that name. */
+export function attachPhysics(w: SimWorld, physics: Physics): void {
+  bindPhysics(w, physics);
+  w.systems.add('physics', (sim) => physics.step(sim), { phase: 'physics' });
 }

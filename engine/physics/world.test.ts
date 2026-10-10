@@ -7,9 +7,10 @@
 import { describe, expect, it } from 'vitest';
 import { createRegistry } from '../core/registry';
 import { createSettings, defineSettings } from '../core/settings';
+import { createWorld } from '../sim/world';
 import { restorePhysics } from './capture';
 import { INTEGRATION_PARAMETERS, PHYSICS_SETTINGS } from './params';
-import { bindPhysics, createPhysics, physicsOf, type Physics } from './world';
+import { attachPhysics, bindPhysics, createPhysics, physicsOf, scenePhysics, type Physics } from './world';
 
 /** A sim stand-in for `step`: 60 Hz under `gravity`. */
 function sim(gravity = 9.81) {
@@ -154,6 +155,24 @@ describe('the physics world', () => {
     expect(p.count).toBe(0); // nothing half-made
     expect(() => p.applyImpulse(0, [1, 0, 0])).toThrow(/PHYSICS_NO_BODY/);
     p.dispose();
+  });
+
+  it('makes a scene its physics world, declaring the gravity setting, and steps it as the system physics', () => {
+    const registry = createRegistry();
+    expect(scenePhysics(false, registry)).toBeUndefined();
+    const physics = scenePhysics(true, registry)!;
+    expect(registry.has('setting', 'physics.gravity')).toBe(true);
+    expect(scenePhysics(true, registry)).not.toBe(physics); // a new world each time, the setting declared once
+    const w = createWorld({ registry, physics });
+    const id = physics.addBody(crate(5));
+    attachPhysics(w, physics);
+    expect([w.systems.list().map((system) => `${system.phase}:${system.name}`), physicsOf(w)]).toEqual([
+      ['physics:physics'],
+      physics,
+    ]);
+    w.step({});
+    expect(physics.readBody(id).velocity.y).toBeCloseTo(-9.81 / 60, 5); // the system stepped it once
+    physics.dispose();
   });
 
   it('finds the physics bound to a sim world, and names the fix when there is none', () => {
