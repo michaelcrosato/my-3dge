@@ -3914,7 +3914,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | WP | Title | Lane | Status | Commit | Notes |
 |---|---|---|---|---|---|
 | 0.1 | Repo constitution, platform, source checkout | T | done | | Pins as planned (vite 7.3.7 and esbuild 0.28.2 arrive through vitest; esbuild's postinstall denied); setup.sh also resolves both sources; scripts `typecheck` and `test` only (ADR-0014 amendment 1); deferred proof: later shells on Node 24 (WP 0.10) |
-| 0.2 | Toolchain, e2e fixture, `x` CLI | T | todo | | |
+| 0.2 | Toolchain, e2e fixture, `x` CLI | T | done | | Pins as planned (vite 7.3.7, @playwright/test 1.64.0, prettier 3.9.9, tsx 4.23.15); scripts `dev`, `build`, `e2e` (`build` has no input until WP 0.8/0.12); harness proves WebGPU on SwiftShader (adapter google/swiftshader, exact pixels; no adapter without the flags), the virtual clock, and source-mapped page errors; `x src` parses setup.sh's constants; clock global renamed `__film` → `__clock`, plus named streams; size came out L (≈1,600 code + 730 test lines) |
 | 0.3 | Dependency qualification, pinned knowledge | T | todo | | |
 | 0.4 | ESLint rules, `npm run check` (T0) | T | todo | | |
 | 0.5 | Test tiers, selection, advice trap | T | todo | | |

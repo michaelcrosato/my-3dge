@@ -9,8 +9,11 @@
     "node": ">=24.10 <25"
   },
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@dimforge/rapier3d-simd-compat": "0.21.0",
@@ -20,9 +23,13 @@
     "three": "0.182.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.0",
     "@types/node": "24.19.2",
     "@types/three": "0.182.0",
+    "prettier": "3.9.9",
+    "tsx": "4.23.15",
     "typescript": "5.9.3",
+    "vite": "7.3.7",
     "vitest": "3.2.7"
   },
   "allowScripts": {
