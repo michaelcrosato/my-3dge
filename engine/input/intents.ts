@@ -17,13 +17,24 @@
  * `cam` is the yaw of the camera's horizontal view direction, forward(ψ) = (sin ψ, 0, cos ψ) (§6.3), not three.js's
  * `camera.rotation.y`, which is ψ − π since a camera looks down its −Z.
  *
+ * Edges, buffering and `consume` in sim time (WP 3.3): an `InputBuffer` is what a body remembers of its buttons across
+ * steps, plain data in a component field, so the world hashes, captures and restores it. `updateInputBuffer(buffer,
+ * intents, w.tick)` runs once per step (a system in the phase `intents`); then `released` says a button went up this
+ * step (a tap shorter than a step is pressed and released on the same one), `buffered` that it was pressed within the
+ * last `BUFFER_STEPS` steps and not yet used up by `consume` (a jump pressed just before landing still jumps), and
+ * `repeated` that a held button repeats, as a menu cursor does. Carried from `my-3d2dge:engine/my-3d2dge.js:564-583`
+ * (`released`, `repeat`, `buffered`, `consume`, `consumeAll`), counted in steps instead of seconds.
+ *
  * @example
  * const step1 = normalizeIntents({ move: fromCamera(Math.PI / 2, [0, 1]), b: ['jump'] }); // move ≈ [1, 0]: +X
  * pressed(step1, 'jump'); // true: an edge of b
  * const step2 = normalizeIntents({ move: step1.move, b: ['jump'] }, step1);
  * [held(step2, 'jump'), pressed(step2, 'jump')]; // [true, false]
  * diffIntents(step1, normalizeIntents({}, step1)); // { b: null, move: null }
+ * const buffer = updateInputBuffer(createInputBuffer(), step1, 1);
+ * buffered(buffer, 'jump'); // true for 9 steps, or until consume(buffer, 'jump')
  * @see engine/input/intents.test.ts
+ * @see engine/input/buffer.test.ts
  */
 import { codeError, defineCodes, didYouMean } from '../core/log';
 import { isPlainObject, show } from '../core/schema';
@@ -244,4 +255,88 @@ export function applyIntents(prev: Intents, change: IntentChanges, where = 'inte
   const raw: Record<string, unknown> = { ...prev, p: undefined };
   for (const [key, value] of Object.entries(change)) raw[key] = value;
   return normalizeIntents(raw, prev, where);
+}
+
+/** How long a press stays buffered by default, in steps: 9, the prototype's 0.15 s at 60 Hz. */
+export const BUFFER_STEPS = 9;
+/** Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz. */
+export const REPEAT_DELAY = 18;
+/** Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded. */
+export const REPEAT_RATE = 5;
+
+/**
+ * What a body remembers of its buttons across steps: plain data for a component field (`type: 'object'`, default
+ * `createInputBuffer()`), so it is hashed, captured and restored. `updateInputBuffer` writes it once per step.
+ */
+export interface InputBuffer {
+  /** The step the buffer was last updated on (`w.tick`). */
+  tick: number;
+  /** The buttons held on that step, as `b` gave them. */
+  held: string[];
+  /** The buttons released on that step, sorted: held the step before and not now, or tapped within the step. */
+  released: string[];
+  /** Per button, the step it was last pressed on. */
+  pressedAt: Record<string, number>;
+  /** Per button, the press `consume` used up (its `pressedAt`): `buffered` is false until the next press. */
+  consumed: Record<string, number>;
+}
+
+/** A fresh input buffer: nothing held, pressed or consumed. */
+export function createInputBuffer(): InputBuffer {
+  return { tick: 0, held: [], released: [], pressedAt: {}, consumed: {} };
+}
+
+/**
+ * Records one step's intents in `buffer` (changed in place, and returned): call it once per step, with the world's
+ * `tick`, before reading `released`, `buffered` or `repeated`. Presses are `p` plus the edges of `b`, so intents the
+ * world gets unnormalized count too.
+ */
+export function updateInputBuffer(buffer: InputBuffer, intents: Intents, tick: number): InputBuffer {
+  const now = [...(intents.b ?? [])];
+  const before = new Set(buffer.held);
+  const holding = new Set(now);
+  const up = new Set(buffer.held.filter((name) => !holding.has(name)));
+  for (const name of now) if (!before.has(name)) buffer.pressedAt[name] = tick;
+  for (const name of intents.p ?? []) {
+    buffer.pressedAt[name] = tick;
+    if (!holding.has(name)) up.add(name);
+  }
+  buffer.tick = tick;
+  buffer.held = now;
+  buffer.released = [...up].sort(byText);
+  return buffer;
+}
+
+/** Whether `button` went up on the buffer's step (a tap shorter than a step included). */
+export function released(buffer: InputBuffer, button: string): boolean {
+  return buffer.released.includes(button);
+}
+
+/** Whether `button` was pressed within the last `steps` steps (its press step counts as 0) and not consumed since. */
+export function buffered(buffer: InputBuffer, button: string, steps = BUFFER_STEPS): boolean {
+  const at = buffer.pressedAt[button];
+  return at !== undefined && buffer.tick - at <= steps && buffer.consumed[button] !== at;
+}
+
+/** Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say). */
+export function consume(buffer: InputBuffer, button: string): void {
+  const at = buffer.pressedAt[button];
+  if (at !== undefined) buffer.consumed[button] = at;
+}
+
+/** Uses up every pending press, so closing a menu does not also attack with the press that closed it. */
+export function consumeAll(buffer: InputBuffer): void {
+  for (const button of Object.keys(buffer.pressedAt)) consume(buffer, button);
+}
+
+/**
+ * Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held,
+ * then every `rate` steps (menu cursors, puzzle pieces).
+ */
+export function repeated(buffer: InputBuffer, button: string, delay = REPEAT_DELAY, rate = REPEAT_RATE): boolean {
+  const at = buffer.pressedAt[button];
+  if (at === undefined) return false;
+  const t = buffer.tick - at;
+  if (t === 0) return true;
+  return buffer.held.includes(button) && t >= delay && (t - delay) % Math.max(1, rate) === 0;
 }

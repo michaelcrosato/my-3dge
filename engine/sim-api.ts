@@ -59,6 +59,17 @@ export { INTENT_KEYS } from './input/intents';
 export type { Intents } from './input/intents';
 export type { IntentValue } from './input/intents';
 export type { CustomIntentKey } from './input/intents';
+export { createInputBuffer } from './input/intents';
+export { updateInputBuffer } from './input/intents';
+export { released } from './input/intents';
+export { buffered } from './input/intents';
+export { consume } from './input/intents';
+export { consumeAll } from './input/intents';
+export { repeated } from './input/intents';
+export { BUFFER_STEPS } from './input/intents';
+export { REPEAT_DELAY } from './input/intents';
+export { REPEAT_RATE } from './input/intents';
+export type { InputBuffer } from './input/intents';
 
 // Math: three.js's math classes and the engine's helpers (MathUtils covers clamp, lerp, damp, smoothstep).
 export { Vector3 } from './core/math';

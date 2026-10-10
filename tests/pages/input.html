@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="data:," />
+    <title>input</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 200%;
+        background: #15171c;
+        color: #c9ccd4;
+        font:
+          16px system-ui,
+          sans-serif;
+      }
+      canvas {
+        display: block;
+        width: 640px;
+        height: 360px;
+        background: #22252c;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="view" width="640" height="360"></canvas>
+    <label>Name <input id="name" type="text" /></label>
+    <script type="module" src="./input.ts"></script>
+  </body>
+</html>
