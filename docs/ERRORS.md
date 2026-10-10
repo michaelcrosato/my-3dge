@@ -5,6 +5,32 @@
 Every code the engine prints, as `[CODE] message`, with its fix. Each module registers its own codes with
 `defineCodes` beside the code that raises them; tools/lib/docs.ts says how they are read.
 
+## core
+
+### CORE_BAD_COLOR
+
+- Message: `color {color} is not a hex color`
+- Fix: write colours as hex strings: '#rrggbb' (or '#rgb', '#rgba', '#rrggbbaa')
+- Registered in: [`engine/core/color.ts` line 39](../engine/core/color.ts)
+
+Raised by the colour helpers (engine/core/color.ts) for a string that is not hex. Colours are hex strings in data (PLAN.md §6.3); names such as `red` and `rgb()` forms are not accepted, so a typo fails where it is read instead of drawing the wrong colour.
+
+### CORE_BAD_NOISE
+
+- Message: `noise option {option} must be {rule}, got {value}`
+- Fix: pass createNoise2D/createNoise3D a kind of value, gradient or cell, octaves from 1 to 16, a finite gain, a positive lacunarity (an integer when period is set) and a period that is a positive integer, or none
+- Registered in: [`engine/core/noise.ts` line 46](../engine/core/noise.ts)
+
+Raised when a noise is created (engine/core/noise.ts), never while it is sampled, so a bad option fails at once instead of giving a noise that silently stops tiling.
+
+### CORE_NOT_CANONICAL
+
+- Message: `{path} is {what}, which the canonical form cannot hold`
+- Fix: keep hashed and captured state to null, booleans, finite numbers, strings, arrays, typed arrays, plain objects and three.js math classes; store an id instead of an object reference
+- Registered in: [`engine/core/hash.ts` line 43](../engine/core/hash.ts)
+
+Raised by `Fnv64.value`, `hashValue` and `serialize` (engine/core/hash.ts) for `undefined`, functions, symbols, bigints, Maps, Sets, class instances without `toArray()`, nesting deeper than 100 levels (usually a cycle), and, in `serialize` only, NaN or ±Infinity. Nothing is skipped silently, so two states that differ always hash differently.
+
 ## gfx
 
 ### GFX_NO_WEBGPU

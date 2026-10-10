@@ -15,6 +15,82 @@ Neither barrel exists yet.
 
 For the agents who maintain the engine.
 
+### [`engine/core/color.ts`](../engine/core/color.ts)
+
+- `COLOR_CODES` (const): The codes this module raises, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `ColorInput` (type): A colour as given to the helpers: a hex string, or bytes.
+- `fromLinear` (function): Linear RGB floats as `#rrggbb` (sRGB, rounded and clamped), as three.js's `Color.getHexString` writes them.
+- `hex` (function): A hex colour (or bytes, of which the first three are kept) as bytes.
+- `hsl` (function): Hue (degrees, any value), saturation and lightness (clamped to 0–1) as `#rrggbb`.
+- `mix` (function): The colour `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), mixed per byte.
+- `ramp` (function): `n` colours from dark to light around a colour (hue-shifted like `tones`), for palettes and gradients.
+- `Rgb` (type): A colour as three bytes, 0–255 (fractions allowed): red, green, blue.
+- `shade` (function): A darker (`amount` < 0, down to −1) or lighter (> 0, up to 1) version of a colour, hue-shifted as painted pixel art is: darker drifts toward blue-violet, lighter toward warm yellow; greys only darken or lighten.
+- `toHex` (function): Bytes as `#rrggbb`, each rounded and clamped to 0–255.
+- `toHsl` (function): A colour as `[hue in degrees 0–360, saturation 0–1, lightness 0–1]`.
+- `toLinear` (function): A colour as linear RGB floats (0–1), as three.js's `Color` holds a hex given to it: for shaders and instances.
+- `tones` (function): Five shades of a colour for painted-looking art: shadows drift toward blue-violet, highlights toward warm yellow, by `strength` (0–2, default 1).
+- `Tones` (interface): The five shades of `tones`: deep shadow, shadow, the base itself, light and highlight.
+
+### [`engine/core/hash.ts`](../engine/core/hash.ts)
+
+- `Canonical` (type): A value the canonical form holds; see the file comment.
+- `deserialize` (function): Reads text written by `serialize` back into plain data (arrays for typed arrays and math classes).
+- `Fnv64` (class): The 64-bit FNV-1a hash, fed piece by piece: `new Fnv64().number(x).string(id).hex()`.
+- `HASH_CODES` (const): The codes this module raises, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `hashNumbers` (function): The 64-bit FNV-1a digest of numbers by their float64 bits, as 16 hex digits: equal state, equal hash.
+- `hashValue` (function): The 64-bit FNV-1a digest of a canonical value (plain data, keys in any order), as 16 hex digits.
+- `MAX_DEPTH` (const): How deep the canonical form nests before it is refused as a cycle.
+- `mix32` (function): murmur3's 32-bit finaliser: spreads every bit of an int over every bit of the unsigned result.
+- `serialize` (function): The canonical text of a value: JSON with object keys sorted, no spaces, numbers exact (the shortest round-trip form, `-0` kept), typed arrays and `toArray()` values as arrays.
+
+### [`engine/core/math.ts`](../engine/core/math.ts)
+
+- `angDiff` (function): The signed angle from `a` to `b` the short way round, in [−π, π).
+- `approach` (function): `a` moved toward `b` by at most `step` (≥ 0), never past it.
+- `approachAng` (function): The angle `a` turned toward `b` by at most `step` (≥ 0) the short way round; exactly `b` once within reach.
+- `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
+- `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
+- `ease` (const): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
+- `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
+- `lerpAng` (function): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
+- `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
+- `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
+- `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
+- `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
+- `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
+- `smoothDamp` (function): A critically damped spring toward `target` (Game Programming Gems 4's, as Unity's `SmoothDamp`): reaches it in about `smoothTime` seconds without overshoot.
+- `Sphere` (re-export from `three/webgpu`): three.js's sphere.
+- `swingTwist` (function): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
+- `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
+
+### [`engine/core/noise.ts`](../engine/core/noise.ts)
+
+- `createNoise2D` (function): A seeded 2D noise of `kind` (gradient by default); see the file comment for ranges, tiling and octaves.
+- `createNoise3D` (function): A seeded 3D noise of `kind` (gradient by default); see the file comment for ranges, tiling and octaves.
+- `hash2` (function): my-3d2dge's integer hash of a lattice point: a number in [0, 1), bit-exact.
+- `NOISE_CODES` (const): The codes this module raises, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `noise2` (function): my-3d2dge's value noise: smoothstep between `hash2` lattice values, in [0, 1], bit-exact.
+- `Noise2D` (type): A 2D noise: a pure function of the point.
+- `Noise3D` (type): A 3D noise: a pure function of the point.
+- `NoiseKind` (type): The kinds of noise: value (lattice values), gradient (Perlin's) and cell (Worley's F1 distance).
+- `NoiseOptions` (interface): How a noise is made; every field is optional.
+
+### [`engine/core/rng.ts`](../engine/core/rng.ts)
+
+- `derive` (function): A seed derived from `seed` and `keys` (strings or numbers), as an unsigned 32-bit integer: the 64-bit FNV-1a hash of `[seed, …keys]` in canonical form, folded and mixed.
+- `Rng` (class): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
+- `RngStreams` (class): Named streams from one seed (the scene's): `stream('ai')`, `stream('entity', 7, 'anim')`.
+
+### [`engine/core/simMath.ts`](../engine/core/simMath.ts)
+
+- `inSimMath` (function): True while a `withSimMath` call is running.
+- `SIM_MATH` (const): What the swap puts into `Math`, by function name (PLAN.md §6.5): the functions that differ between runtimes.
+- `SIM_MATH_NAMES` (const): Every swapped name, in `SIM_MATH`'s order.
+- `SimMathEntry` (interface): A `Math` function the sim swaps: its pure-JavaScript port, the npm package it comes from, and the native one.
+- `SimMathName` (type): The names of the swapped `Math` functions.
+- `withSimMath` (function): Runs `fn` with the fdlibm ports in `Math` and returns its result; the previous functions are back afterwards, whether `fn` returns or throws.
+
 ### [`engine/gfx/renderer.ts`](../engine/gfx/renderer.ts)
 
 - `createRenderer` (function): Starts three.js's `WebGPURenderer` on `canvas`, on WebGPU only: the adapter check, a device with every feature the adapter offers, `await renderer.init()`, then the backend assertion.
@@ -48,6 +124,18 @@ For the agents who maintain the engine.
 - `Harness` (interface): What each test gets as `harness`.
 - `test` (const): Playwright's `test` with the `seed` option (default 1) and the `harness` fixture, set up for every test.
 - `WebGPUProof` (interface): What WebGPU did in the page, as `assertWebGPU` measured it.
+
+### [`tests/pages/driftProbe.ts`](../tests/pages/driftProbe.ts)
+
+- `bitDiff` (function): How two result arrays differ, bit for bit: the count of differing entries and the index of the first.
+- `compareDrift` (function): Compares Node's result with Chromium's, given the swap both ran under: a swapped function or a composite must give the same bits inside `withSimMath`, every other function natively; every `Math` function must be probed.
+- `DRIFT_FUNCTIONS` (const): Every `Math` function but `random`, and the `**` operator.
+- `DRIFT_INPUTS` (const): Seeded inputs per function, as PLAN.md WP 1.1 asks.
+- `DriftFunction` (interface): One probed function: its `Math` name (or the operator), its argument domains, and the port that would cover it.
+- `inputsOf` (function): The arguments `fn` is probed with, one array per argument: `count` seeded tuples, then the edge values.
+- `ProbeResult` (interface): What one runtime gave.
+- `resultsOf` (function): `fn`'s results on `inputs`, natively or inside `withSimMath` (narrowed to `swap`).
+- `runProbe` (function): Runs every probe natively and inside `withSimMath` (narrowed to `swap`), on `inputs` seeded inputs a function.
 
 ### [`tests/setup/adviceTrap.ts`](../tests/setup/adviceTrap.ts)
 
@@ -243,7 +331,7 @@ For the agents who maintain the engine.
 
 - `layerBlocks` (function): The layer rules' blocks, in order.
 - `layerPlugin` (const): The plugin the layer blocks use: core's `no-restricted-imports`, resolving, as `layer/no-restricted-imports`.
-- `THREE_MATH` (const): three.js's math classes, the only names `core/math.ts` takes from `three/webgpu` (§6.1).
+- `THREE_MATH` (const): three.js's math classes, the only names `core/math.ts` takes from `three/webgpu` (§6.1); `Color` (from three.js's `src/math/`) since WP 1.1, for engine/core/color.ts (ADR-0020 amendment 1).
 
 ### [`tools/eslint/publicApi.ts`](../tools/eslint/publicApi.ts)
 

@@ -25,8 +25,22 @@ import { family, resolvingImports } from './family';
 /** The plugin the layer blocks use: core's `no-restricted-imports`, resolving, as `layer/no-restricted-imports`. */
 export const layerPlugin = resolvingImports(family('layer', 'no-restricted-imports'));
 
-/** three.js's math classes, the only names `core/math.ts` takes from `three/webgpu` (§6.1). */
-export const THREE_MATH = ['Vector3', 'Quaternion', 'Matrix4', 'Euler', 'Box3', 'Sphere', 'Ray', 'Plane', 'MathUtils'];
+/**
+ * three.js's math classes, the only names `core/math.ts` takes from `three/webgpu` (§6.1); `Color` (from three.js's
+ * `src/math/`) since WP 1.1, for engine/core/color.ts (ADR-0020 amendment 1).
+ */
+export const THREE_MATH = [
+  'Vector3',
+  'Quaternion',
+  'Matrix4',
+  'Euler',
+  'Box3',
+  'Sphere',
+  'Ray',
+  'Plane',
+  'MathUtils',
+  'Color',
+];
 
 /** A relative import that climbs one or more levels into one of `targets` (regular-expression fragments). */
 const climb = (...targets: string[]) => `^(?:\\.\\./)+(?:${targets.join('|')})(?:/|$)`;

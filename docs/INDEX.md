@@ -16,6 +16,27 @@ advice codes are in [ERRORS.md](ERRORS.md).
   - Exports: `default`
   - Tests: [`tools/lib/vite.test.ts`](../tools/lib/vite.test.ts)
 
+## engine/core
+
+- [`color.ts`](../engine/core/color.ts): Colours as data (PLAN.md §6.3): hex strings in data, linear floats for shaders and instance colours, sRGB on output.
+  - Exports: `COLOR_CODES`, `ColorInput`, `fromLinear`, `hex`, `hsl`, `mix`, `ramp`, `Rgb`, `shade`, `toHex`, `toHsl`, `toLinear`, `tones`, `Tones`
+  - Tests: [`engine/core/color.test.ts`](../engine/core/color.test.ts)
+- [`hash.ts`](../engine/core/hash.ts): The state hash (PLAN.md §6.5, I-05): 64-bit FNV-1a over the float64 bits of numbers, and the canonical form that turns structured state into one exact byte stream and one exact text.
+  - Exports: `Canonical`, `deserialize`, `Fnv64`, `HASH_CODES`, `hashNumbers`, `hashValue`, `MAX_DEPTH`, `mix32`, `serialize`
+  - Tests: [`engine/core/hash.test.ts`](../engine/core/hash.test.ts)
+- [`math.ts`](../engine/core/math.ts): The math every layer shares (PLAN.md §6.1; doctrine: Common ground): three.js's math classes, re-exported from `three/webgpu` so there is one set of math types and one entry point, plus what three.js lacks: my-3d2dge's angle helpers (`angDiff`, `lerpAng`, `approach`, `approachAng`), `smoothDamp`, the easing curves (`ease`) and the swing-twist decomposition.
+  - Exports: `angDiff`, `approach`, `approachAng`, `Box3`, `Color`, `ease`, `Euler`, `lerpAng`, `MathUtils`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `smoothDamp`, `Sphere`, `swingTwist`, `Vector3`
+  - Tests: [`engine/core/math.test.ts`](../engine/core/math.test.ts)
+- [`noise.ts`](../engine/core/noise.ts): Seeded noise for the sim and for procedural content (PLAN.md WP 1.1): my-3d2dge's `hash2` and `noise2`, bit-exact, and value, gradient and cell noise in 2D and 3D, each optionally tiling and summed in fbm octaves.
+  - Exports: `createNoise2D`, `createNoise3D`, `hash2`, `NOISE_CODES`, `noise2`, `Noise2D`, `Noise3D`, `NoiseKind`, `NoiseOptions`
+  - Tests: [`engine/core/noise.test.ts`](../engine/core/noise.test.ts)
+- [`rng.ts`](../engine/core/rng.ts): Seeded randomness for the sim (PLAN.md §6.3, §6.5; doctrine: Reproducible): Mulberry32 streams, bit-exact with my-3d2dge's `E.rng`, seeds derived from a seed and keys, and named streams whose states are plain numbers that captures store and the hash covers.
+  - Exports: `derive`, `Rng`, `RngStreams`
+  - Tests: [`engine/core/rng.test.ts`](../engine/core/rng.test.ts)
+- [`simMath.ts`](../engine/core/simMath.ts): Deterministic `Math` while the sim runs (PLAN.md §6.5; doctrines: Reproducible, Quality under the hood): `withSimMath(fn)` swaps stdlib's fdlibm ports of `sin`, `cos` and `pow` into `Math` while `fn` runs and puts the native functions back afterwards.
+  - Exports: `inSimMath`, `SIM_MATH`, `SIM_MATH_NAMES`, `SimMathEntry`, `SimMathName`, `withSimMath`
+  - Tests: [`engine/core/simMath.test.ts`](../engine/core/simMath.test.ts), [`tests/e2e/drift.spec.ts`](../tests/e2e/drift.spec.ts)
+
 ## engine/gfx
 
 - [`renderer.ts`](../engine/gfx/renderer.ts): The WebGPU renderer's bootstrap (PLAN.md §6.7): WebGPU or nothing.
@@ -38,6 +59,10 @@ advice codes are in [ERRORS.md](ERRORS.md).
 
 ## tests/pages
 
+- [`drift.ts`](../tests/pages/drift.ts): The drift page's module (`tests/pages/drift.html`), Chromium's half of tests/e2e/drift.spec.ts: it publishes the drift probe (tests/pages/driftProbe.ts) and `withSimMath` as `window.__drift`, then signals ready through `window.__engine`.
+- [`driftProbe.ts`](../tests/pages/driftProbe.ts): The drift probe (PLAN.md §6.5, WP 1.1): every `Math` function, the `**` operator, three.js's math classes and a small feedback sim, each run on seeded inputs natively and inside `withSimMath`, and hashed bit for bit.
+  - Exports: `bitDiff`, `compareDrift`, `DRIFT_FUNCTIONS`, `DRIFT_INPUTS`, `DriftFunction`, `inputsOf`, `ProbeResult`, `resultsOf`, `runProbe`
+  - Tests: [`tests/e2e/drift.spec.ts`](../tests/e2e/drift.spec.ts)
 - [`harness.ts`](../tests/pages/harness.ts): The harness page's module (`tests/pages/harness.html`), the page `tests/e2e/harness.spec.ts` checks the e2e fixture on: it draws with raw WebGPU, signals ready through `window.__engine`, and with `?throw` throws on purpose from `explode` below.
 
 ## tests/setup

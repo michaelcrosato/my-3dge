@@ -16,3 +16,12 @@ stays behind a familiar API.
 ## Enforced by
 ESLint's public-API rule for game code (WP 0.4); `x docs --check` (every export documented, every error code with a
 fix); the `verifier`.
+
+## Amendment 1 (2026-10-10, WP-1.1)
+three.js's `Color` joins the math classes `core/math` re-exports (§6.1's list; `THREE_MATH` in
+tools/eslint/layers.ts, with a layer test). WP 1.1 asks for `color`'s sRGB ↔ linear conversion "over three.js's
+`Color` where it fits", and `core/math.ts` is the one file outside `gfx/` that may import three.js, so the plan needs
+`Color` there to be consistent. It lives in three.js's `src/math/`, agents know it, and going through it makes
+`toLinear('#808080')` equal what a material holds for the same hex (engine/core/color.test.ts checks every reference
+colour against `Color.set`). Nothing else from three.js's colour management (`ColorManagement`, the colour-space
+constants) is allowed.

@@ -56,6 +56,12 @@ const CASES: Case[] = [
     "export { Vector3, Quaternion, MathUtils } from 'three/webgpu';",
   ),
   layer(
+    "core/math takes three.js's Color, but not its colour management",
+    'engine/core/math.ts',
+    "export { ColorManagement } from 'three/webgpu';",
+    "export { Color } from 'three/webgpu';",
+  ),
+  layer(
     'core/math takes nothing from three/tsl',
     'engine/core/math.ts',
     "export { uniform } from 'three/tsl';",
