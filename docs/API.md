@@ -86,10 +86,11 @@ For the agents who maintain the engine.
 
 - `inSimMath` (function): True while a `withSimMath` call is running.
 - `SIM_MATH` (const): What the swap puts into `Math`, by function name (PLAN.md §6.5): the functions that differ between runtimes.
+- `SIM_MATH_CODES` (const): The codes this module raises, with their fixes (collected into docs/ERRORS.md by `x docs`).
 - `SIM_MATH_NAMES` (const): Every swapped name, in `SIM_MATH`'s order.
 - `SimMathEntry` (interface): A `Math` function the sim swaps: its pure-JavaScript port, the npm package it comes from, and the native one.
 - `SimMathName` (type): The names of the swapped `Math` functions.
-- `withSimMath` (function): Runs `fn` with the fdlibm ports in `Math` and returns its result; the previous functions are back afterwards, whether `fn` returns or throws.
+- `withSimMath` (function): Runs `fn` with the fdlibm ports in `Math` and returns its result; the previous functions are back afterwards, whether `fn` returns or throws; a `fn` that returns a promise throws `CORE_SIM_ASYNC`.
 
 ### [`engine/gfx/renderer.ts`](../engine/gfx/renderer.ts)
 

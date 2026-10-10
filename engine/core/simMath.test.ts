@@ -3,10 +3,13 @@
  * stdlib's ports (three.js's math classes use them too); outside, `Math` holds what it held before, also after a
  * throw and after nested calls; a narrowed swap leaves the rest native; and the ports' results over 300,000 seeded
  * inputs hash to the recorded digest, so a stdlib update that changes a bit (and with it every replay golden) fails
- * here first. tests/e2e/drift.spec.ts proves that Chromium gives the same bits.
+ * here first. The swapped `pow` gives ECMAScript's results wherever the spec fixes them exactly (the drift probe's
+ * edge pairs and more), and the right sign for negative bases with |y| ≥ 2^53. tests/e2e/drift.spec.ts proves that
+ * Chromium gives the same bits.
  * @see engine/core/simMath.ts
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { DRIFT_FUNCTIONS, inputsOf, type DriftFunction } from '../../tests/pages/driftProbe';
 import { Fnv64 } from './hash';
 import { Euler, Quaternion } from './math';
 import { Rng } from './rng';
@@ -76,6 +79,15 @@ describe('withSimMath', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
+  it('refuses an async fn with CORE_SIM_ASYNC, since the swap would end at its first await', () => {
+    const pending = Promise.resolve(1);
+    expect(() => withSimMath(() => pending)).toThrow(/^\[CORE_SIM_ASYNC\]/);
+    expectNative();
+    expect(() => withSimMath(() => withSimMath(async () => Math.sin(1)))).toThrow(/^\[CORE_SIM_ASYNC\]/);
+    expectNative();
+    expect(() => withSimMath(() => ({ then: 1 }))).not.toThrow();
+  });
+
   it('swaps only the names it is given, as the drift fixture that leaves cos out does', () => {
     withSimMath(
       () => {
@@ -120,5 +132,40 @@ describe('the ports', () => {
       expect(SIM_MATH[name].port).not.toBe(SIM_MATH[name].native);
       expect(SIM_MATH[name].package).toBe(`@stdlib/math-base-special-${name}`);
     }
+  });
+});
+
+/** `x` as text, `-0` included. */
+const show = (x: number) => (Object.is(x, -0) ? '-0' : String(x));
+
+/** True where ECMAScript's Number::exponentiate fixes `x ** y` exactly (its steps 1–12); elsewhere it approximates. */
+const specExact = (x: number, y: number) =>
+  [x, y].some((v) => v === 0 || !Number.isFinite(v)) || (x < 0 && !Number.isInteger(y));
+
+describe('the swapped pow', () => {
+  const port = SIM_MATH.pow.port;
+
+  it("agrees with the native pow wherever ECMAScript defines the result exactly, on the drift probe's edge pairs", () => {
+    const [xs, ys] = inputsOf(DRIFT_FUNCTIONS.find((fn) => fn.name === 'pow') as DriftFunction, 0);
+    const pairs = [...xs].map((x, i) => [x, ys[i]]);
+    for (const x of [0, -0, Infinity, -Infinity]) for (const y of [1e-310, -1e-310, 3, -3, 2 ** 60]) pairs.push([x, y]);
+    const exact = pairs.filter(([x, y]) => specExact(x, y));
+    expect(exact.length).toBeGreaterThan(120);
+    const misses = exact
+      .filter(([x, y]) => !Object.is(port(x, y), NATIVE.pow(x, y)))
+      .map(([x, y]) => `pow(${show(x)}, ${show(y)}) = ${show(port(x, y))}, not ${show(NATIVE.pow(x, y))}`);
+    expect(misses).toEqual([]);
+  });
+
+  it('gives negative bases the sign of an even power when |y| ≥ 2^53, where every double is an even integer', () => {
+    expect(port(-1, 2 ** 60)).toBe(1);
+    expect(port(-1, -(2 ** 53))).toBe(1);
+    expect(port(-2, 2 ** 60)).toBe(Infinity);
+    expect(port(-3, 2 ** 53 + 2)).toBe(Infinity);
+    expect(Object.is(port(-2, -(2 ** 60)), 0)).toBe(true);
+    expect(Object.is(port(-0.5, 2 ** 60), 0)).toBe(true);
+    expect(port(-(1 + 2 ** -52), 2 ** 53)).toBe(port(1 + 2 ** -52, 2 ** 53));
+    expect(port(-1, 2 ** 53 - 1)).toBe(-1); // the largest odd double keeps its sign
+    expect(port(-2, 3)).toBe(-8);
   });
 });

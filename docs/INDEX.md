@@ -34,7 +34,7 @@ advice codes are in [ERRORS.md](ERRORS.md).
   - Exports: `derive`, `Rng`, `RngStreams`
   - Tests: [`engine/core/rng.test.ts`](../engine/core/rng.test.ts)
 - [`simMath.ts`](../engine/core/simMath.ts): Deterministic `Math` while the sim runs (PLAN.md §6.5; doctrines: Reproducible, Quality under the hood): `withSimMath(fn)` swaps stdlib's fdlibm ports of `sin`, `cos` and `pow` into `Math` while `fn` runs and puts the native functions back afterwards.
-  - Exports: `inSimMath`, `SIM_MATH`, `SIM_MATH_NAMES`, `SimMathEntry`, `SimMathName`, `withSimMath`
+  - Exports: `inSimMath`, `SIM_MATH`, `SIM_MATH_CODES`, `SIM_MATH_NAMES`, `SimMathEntry`, `SimMathName`, `withSimMath`
   - Tests: [`engine/core/simMath.test.ts`](../engine/core/simMath.test.ts), [`tests/e2e/drift.spec.ts`](../tests/e2e/drift.spec.ts)
 
 ## engine/gfx

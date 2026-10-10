@@ -951,6 +951,7 @@ frame(now):                                                  // app/loop.ts
 
 1. **Sim-side code never uses** `Math.random`, `Date.now`, `performance.now`, `setTimeout`/`setInterval`/`requestAnimationFrame`, the DOM, three.js's renderer or scene classes, or Web Audio. ESLint enforces it (Appendix B).
    - **It uses the standard `Math`** and three.js's math classes (through `core/math`), as agents write them everywhere else (doctrine: Common ground).
+   - **It calls `Math.pow`, `Math.sin` and `Math.cos` by name where it uses them:** no swap (item 2) reaches an operator or an alias, so `**` and `**=` are banned (write `Math.pow`), and so are names destructured from `Math` (`const { sin } = Math`) and a swapped function held in a variable (`const pw = Math.pow`), which keep the native function (ADR-0006 amendment 1).
 2. **Deterministic math under the hood** (doctrine: Quality under the hood).
    - V8's `Math.sin` and `Math.cos` differ by 1 ulp between Node and Chromium on the platform, and `pow` between Node releases (§4.7). Float64 state fed back through them drifts apart within a few hundred steps.
    - So `core/simMath.ts` swaps fdlibm ports (stdlib's, pure JavaScript) into `Math` while the sim runs, and restores the native functions afterwards. Every sim entry point runs inside it: `setup`, `step`, spawns, captures, restores. three.js's math classes, called by the sim, get the same results too.
@@ -1922,7 +1923,7 @@ A WP is done only when all of these hold:
   - `hashNumbers` (`stress-world/00-setup.js:59`).
 - **Build:**
   - **`math`:** re-exports three.js's math classes (`Vector3`, `Quaternion`, `Matrix4`, `Euler`, `Box3`, `Sphere`, `Ray`, `Plane`, `MathUtils`, and `Color` for `color`, ADR-0020 amendment 1) from `three/webgpu`, so every layer shares one set of math types (doctrine: Common ground). It adds only what three.js lacks: the source's angle helpers (`angDiff`, `lerpAng`, `approach`, `approachAng`, `smoothDamp`), swing-twist decomposition, and easing. `MathUtils` already covers `clamp`, `lerp`, `damp` and `smoothstep`.
-  - **`simMath`** (§6.5, doctrine: Quality under the hood): `withSimMath(fn)` swaps stdlib's fdlibm ports of `sin`, `cos` and `pow` into `Math` while `fn` runs, and restores the native functions afterwards, also after a throw; nested calls are safe. Game code never sees it.
+  - **`simMath`** (§6.5, doctrine: Quality under the hood): `withSimMath(fn)` swaps stdlib's fdlibm ports of `sin`, `cos` and `pow` into `Math` while `fn` runs, and restores the native functions afterwards, also after a throw; nested calls are safe. Game code never sees it. No swap reaches `**` or an alias of a `Math` function, so ESLint bans both sim-side (Appendix B, ADR-0006 amendment 1).
   - **The drift test** (`tests/e2e/drift.spec.ts`, with a Node half): every `Math` function hashed on 200,000 seeded inputs in Node and in Chromium, natively and under the swap. It fails when a swapped function differs, or when a native one starts to differ outside the swap, naming the stdlib package that would cover it.
   - **`rng`:** named streams, `derive(seed, …keys)`, getting and setting state.
   - **`noise`:**
@@ -4146,8 +4147,9 @@ In this table, `engine` §N means section N of `engine/my-3d2dge.js`, not a sect
   - `setTimeout`, `setInterval`, `requestAnimationFrame`;
   - `document`, `window`, `navigator`;
   - any import of `three`, `three/webgpu`, `three/tsl` or `three/addons/*`, except in `core/math.ts`, which re-exports the math classes;
-  - `AudioContext`.
-- **Allowed, and expected:** the standard `Math`, `Math.sin` and `Math.cos` included, and three.js's math classes through `core/math`. The sim swaps in fdlibm ports while it steps, so one golden per replay holds in Node and in Chromium (§6.5).
+  - `AudioContext`;
+  - `**` and `**=` (write `Math.pow`), names destructured from `Math`, and a swapped `Math` function held in a variable (`const pw = Math.pow`): no swap reaches an operator or an alias (§6.5, ADR-0006 amendment 1).
+- **Allowed, and expected:** the standard `Math`, `Math.sin` and `Math.cos` included (called by name), and three.js's math classes through `core/math`. The sim swaps in fdlibm ports while it steps, so one golden per replay holds in Node and in Chromium (§6.5).
 
 **Everywhere:**
 - no binary files, except the owner-approved ones in `data/APPROVED-BINARIES.json` and fonts under `data/fonts/` (doctrine: Assets);

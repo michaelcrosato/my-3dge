@@ -1,7 +1,9 @@
 /**
  * @file Unit tests for engine/core/rng.ts (T1): Mulberry32 bit for bit against my-3d2dge's `E.rng` (the reference
- * vectors of tests/baselines/port/core.json, every seed form included), state round trips, the helpers' ranges,
- * `derive`'s independence and its pinned values, and named streams that never depend on each other.
+ * vectors of tests/baselines/port/core.json, every seed form included), state round trips, the helpers' ranges, their
+ * pinned first outputs and draw counts (replay goldens depend on both), uniform `shuffle` and `pick` (frequencies
+ * within 5 binomial σ, on fixed seeds), `derive`'s independence and its pinned values, and named streams that never
+ * depend on each other.
  * @see engine/core/rng.ts
  */
 import { readFileSync } from 'node:fs';
@@ -64,6 +66,50 @@ describe('Rng', () => {
     expect(rng.chance(0)).toBe(false);
     expect(rng.chance(1)).toBe(true);
     expect(rng.pick([])).toBeUndefined();
+  });
+
+  it('gives the pinned first outputs of int, range, chance, pick and shuffle, one draw each (n - 1 per shuffle)', () => {
+    const rng = new Rng(2026);
+    expect(Array.from({ length: 6 }, () => rng.int(1, 6))).toEqual([3, 2, 4, 4, 1, 2]);
+    expect(Array.from({ length: 3 }, () => rng.range(-2, 3))).toEqual([
+      1.41429955791682, 2.007043495075777, -0.5326561494730413,
+    ]);
+    expect(Array.from({ length: 6 }, () => rng.chance(0.5))).toEqual([true, true, false, true, true, true]);
+    expect(Array.from({ length: 6 }, () => rng.pick(['a', 'b', 'c', 'd', 'e']))).toEqual([
+      'b',
+      'c',
+      'e',
+      'c',
+      'a',
+      'b',
+    ]);
+    expect(rng.shuffle(Array.from({ length: 10 }, (_, i) => i))).toEqual([9, 0, 3, 5, 1, 4, 6, 8, 7, 2]);
+    const reference = new Rng(2026);
+    for (let i = 0; i < 6 + 3 + 6 + 6 + 9; i++) reference.next();
+    expect(rng.state).toBe(reference.state);
+    expect(rng.state).toBe(-887598432);
+  });
+
+  it('shuffles uniformly: over 20,000 shuffles of [0..4], each element lands at each index about 1/5 of the time', () => {
+    const [runs, n] = [20_000, 5];
+    const tolerance = 5 * Math.sqrt(runs * (1 / n) * (1 - 1 / n)); // 5 binomial σ, about 283
+    const counts = Array.from({ length: n }, () => new Array<number>(n).fill(0));
+    const rng = new Rng(31);
+    for (let r = 0; r < runs; r++) rng.shuffle([0, 1, 2, 3, 4]).forEach((element, index) => counts[element][index]++);
+    expect(Math.abs(counts[0][0] - runs / n)).toBeLessThan(tolerance); // a Sattolo shuffle leaves it at 0, never
+    for (const row of counts) for (const count of row) expect(Math.abs(count - runs / n)).toBeLessThan(tolerance);
+  });
+
+  it('picks uniformly: over 20,000 picks from 5 elements, the first and last each come up about 1/5 of the time', () => {
+    const [runs, n] = [20_000, 5];
+    const tolerance = 5 * Math.sqrt(runs * (1 / n) * (1 - 1 / n));
+    const counts = new Array<number>(n).fill(0);
+    const rng = new Rng(32);
+    const list = [0, 1, 2, 3, 4];
+    for (let r = 0; r < runs; r++) counts[rng.pick(list)]++;
+    expect(Math.abs(counts[0] - runs / n)).toBeLessThan(tolerance); // Math.round would give the ends 1/8 each
+    expect(Math.abs(counts[n - 1] - runs / n)).toBeLessThan(tolerance);
+    for (const count of counts) expect(Math.abs(count - runs / n)).toBeLessThan(tolerance);
   });
 
   it('shuffles in place into a permutation, the same one for the same seed', () => {

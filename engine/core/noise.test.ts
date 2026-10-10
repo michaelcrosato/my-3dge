@@ -2,13 +2,13 @@
  * @file Unit tests for engine/core/noise.ts (T1): `hash2` and `noise2` bit for bit against my-3d2dge (the reference
  * vectors of tests/baselines/port/core.json), seed-0 value noise equal to `noise2`, each kind's range, exact tiling
  * on dyadic points, cell noise against a brute-force search (the feature points rebuilt from noise.ts's documented
- * hashing), seeds, fbm, option checks, and independence from
- * `withSimMath`.
+ * hashing), seeds, fbm, option checks, independence from `withSimMath`, and the recorded digests of every kind in 2D
+ * and 3D, plain, tiling and in fbm octaves (a changed bit changes every texture and every replay golden that reads it).
  * @see engine/core/noise.ts
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { mix32 } from './hash';
+import { Fnv64, mix32 } from './hash';
 import { createNoise2D, createNoise3D, hash2, noise2, type NoiseKind } from './noise';
 import { Rng } from './rng';
 import { withSimMath } from './simMath';
@@ -217,5 +217,44 @@ describe('createNoise2D and createNoise3D', () => {
       const inside = withSimMath(() => pts.map(sampler(kind, 3, { seed: 8, octaves: 3, lacunarity: 2.2, gain: 0.6 })));
       expect(inside).toEqual(outside);
     }
+  });
+});
+
+/** The digest of each kind × dimension × variant on 2,000 seeded points, recorded from the reviewed implementation. */
+const DIGESTS: Record<string, string> = {
+  'value 2D plain': '2b7a32b72f626662',
+  'value 2D period 4': '9a0f63c09b96da17',
+  'value 2D fbm': '9e54cf723dac183a',
+  'value 3D plain': '57f4e029afd12896',
+  'value 3D period 4': 'cdf849b1a768d11c',
+  'value 3D fbm': 'a8bbd6a3382f37cf',
+  'gradient 2D plain': '10dbb88bff1cee7c',
+  'gradient 2D period 4': '03845f3d2375d525',
+  'gradient 2D fbm': '367aa4772b41c01c',
+  'gradient 3D plain': 'f0d164fd684c51d8',
+  'gradient 3D period 4': 'ddc409f0fbca773a',
+  'gradient 3D fbm': 'c6b2471ddc10f855',
+  'cell 2D plain': '93d967dd396a7f78',
+  'cell 2D period 4': 'c4f812407f625f55',
+  'cell 2D fbm': 'd323054d2ec05542',
+  'cell 3D plain': '427e8b43b2cbde85',
+  'cell 3D period 4': 'fad15c96c17b43d7',
+  'cell 3D fbm': '50cd146f1fe71990',
+};
+
+describe('the recorded outputs', () => {
+  it('give the recorded digests for every kind in 2D and 3D: plain, period 4, and fbm (4 octaves, ×2.2, gain 0.6)', () => {
+    const variants = { plain: {}, 'period 4': { period: 4 }, fbm: { octaves: 4, lacunarity: 2.2, gain: 0.6 } };
+    const digests: Record<string, string> = {};
+    for (const kind of KINDS) {
+      for (const dims of [2, 3] as const) {
+        const pts = points(2000, dims, 40, 0xd1 + dims);
+        for (const [variant, options] of Object.entries(variants)) {
+          const noise = sampler(kind, dims, { seed: 13, ...options });
+          digests[`${kind} ${dims}D ${variant}`] = new Fnv64().numbers(pts.map(noise)).hex();
+        }
+      }
+    }
+    expect(digests).toEqual(DIGESTS);
   });
 });
