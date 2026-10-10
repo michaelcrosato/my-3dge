@@ -1,0 +1,28 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "24 kernel movers that turn fast, with no input: the steering's sin, cos and pow on float64 state, fed back for 10 s.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "kernel",
+  "settings": { "kernel.movers": 24, "kernel.turn": 4 },
+  "seed": 7,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [],
+  "hashes": {
+    "linux-x64": {
+      "0": "5b7f3073e1a6753d",
+      "60": "9b3745d0b07747f7",
+      "120": "27f8d035345be2e7",
+      "180": "05c03ae30b5ac6f5",
+      "240": "aefc85fbf5f6ed30",
+      "300": "1290774865277425",
+      "360": "b3cedd01223875b4",
+      "420": "fae85db0da6b7795",
+      "480": "a15672cc56bade65",
+      "540": "9cc7d9502efe3853",
+      "600": "ed756f9289d9c884"
+    }
+  }
+}

@@ -177,6 +177,16 @@ Raised by the settings store (engine/core/settings.ts) for an unknown path in `g
 
 Raised at startup, before anything touches the GPU, when the browser has no `navigator.gpu`, gives no adapter or device, or three.js starts another backend than WebGPU. WebGPU is the only renderer: there is no WebGL fallback (PLAN.md §6.7), so nothing starts, and a page shows this message with its fix.
 
+## input
+
+### INPUT_BAD_INTENTS
+
+- Message: `{where}: {problems}`
+- Fix: give intents as { move: [x, z], cam, aim: [x, y, z], look: [yaw, pitch], b: [held buttons], p: [pressed buttons] } with finite numbers, plus custom keys namespaced "game:key" holding plain data (engine/input/intents.ts); null or a missing key means not given
+- Registered in: [`engine/input/intents.ts` line 33](../engine/input/intents.ts)
+
+Raised by `normalizeIntents`, `applyIntents` and the replay checks (engine/input/intents.ts, engine/sim/replay.ts) for an unknown key (named with the closest), a non-finite or misshapen number, a button that is not a non-empty string, or a custom value that is not plain data. Every problem is listed at once.
+
 ## sim
 
 ### SIM_BAD_ARGUMENT
@@ -194,6 +204,14 @@ Raised by the world (engine/sim/world.ts) for a seed or step rate that is not a 
 - Registered in: [`engine/sim/capture.ts` line 41](../engine/sim/capture.ts)
 
 Raised by `restore` (engine/sim/capture.ts, engine/sim/world.ts) before anything changes, for a value that is not a capture of this format: a wrong format tag, a malformed part, entities out of id order or at or above `nextId`, a `time.hz` other than the world step rate, or a physics part where the world has no physics hook (or the reverse).
+
+### SIM_BAD_REPLAY
+
+- Message: `{where}: {problem}`
+- Fix: write the replay as tests/replays/README.md shows ({ format, scene, settings, seed, hz, steps, inputs: [[step, change]…], hashes: { platform: { step: hash } } }), or record it from a session; settings marked view never go in a replay
+- Registered in: [`engine/sim/replay.ts` line 50](../engine/sim/replay.ts)
+
+Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step runs: an unknown key (named with the closest), a wrong format tag, a change-point out of order or at or past `steps`, a bad intent, setting or dev action, a hash that is not 16 hex digits, a step rate other than the world's, or a view setting.
 
 ### SIM_BAD_SYSTEM
 
@@ -215,6 +233,12 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 - Fix: break the loop: a listener that emits the event it listens to, or spawns what spawns it again, never settles; act on such chains one step at a time (store a pending flag in a component and let a system handle it next step)
 - Registered in: [`engine/sim/world.ts` line 68](../engine/sim/world.ts)
 
+### SIM_NO_ACTION
+
+- Message: `the scene {scene} has no dev action {name}{suggestion}`
+- Fix: add it to the scene: defineScene('{scene}', { actions: { {name}(w, args) { … } } }), or call one it has
+- Registered in: [`engine/sim/scene.ts` line 53](../engine/sim/scene.ts)
+
 ### SIM_NO_CALLBACKS
 
 - Message: `the capture has {count} pending timers, whose callbacks {why}`
@@ -226,6 +250,12 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 - Message: `there is no entity {id}{why}`
 - Fix: use an id spawn() returned while its entity lives (w.has(id) tells): a spawned entity joins the world at the end of the step that spawned it, so give it its components in spawn(); a despawned one leaves at the end of its step
 - Registered in: [`engine/sim/world.ts` line 55](../engine/sim/world.ts)
+
+### SIM_OFF_RECORD
+
+- Message: `the world took {count} steps outside its session, so the recording misses their intents`
+- Fix: step a recorded scene through session.step(intents), never world.step()
+- Registered in: [`engine/sim/scene.ts` line 57](../engine/sim/scene.ts)
 
 ### SIM_UNDECLARED_FIELD
 

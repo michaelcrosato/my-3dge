@@ -36,7 +36,7 @@ function frontmatter(path: string): { fields: Record<string, string>; body: stri
   return { fields, body: match[2] };
 }
 
-const SKILLS = ['x-loop', 'three-webgpu', 'escalation'];
+const SKILLS = ['x-loop', 'three-webgpu', 'escalation', 'determinism-debugging'];
 const AGENTS = ['verifier', 'visual-reviewer'];
 
 describe('.claude/settings.json', () => {

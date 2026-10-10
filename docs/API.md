@@ -219,6 +219,23 @@ For the agents who maintain the engine.
 - `GfxInfo` (interface): What the renderer reports about itself (the start of `__engine.info()`, PLAN.md §8.3).
 - `requestWebGPU` (function): Asks `gpu` (by default the browser's `navigator.gpu`) for an adapter; rejects with `GfxError` `GFX_NO_WEBGPU` when there is no WebGPU or no adapter.
 
+### [`engine/input/intents.ts`](../engine/input/intents.ts)
+
+- `applyIntents` (function): The next step's intents: `prev`'s held keys with `change` applied (`null` clears a key), then normalized with `prev` as the step before, so `p` is the change's presses plus the new edges of `b`.
+- `CustomIntentKey` (type): A namespaced key for game code's own intents: `'game:charge'`.
+- `diffIntents` (function): The change-point from `prev` to `next` (both normalized, `prev` the step before): each held key whose value changed, `null` for one that went away, and `p` only for presses the edges of `b` do not explain.
+- `fromCamera` (function): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
+- `held` (function): Whether `button` is held this step.
+- `INTENT_CODES` (const): The codes this module raises, with their fixes.
+- `INTENT_KEYS` (const): The built-in keys, in the order a normalized object holds them, each with what it means.
+- `IntentChanges` (type): A replay change-point's intent part: the keys that changed, `null` for a key cleared, `p` for unexplained presses.
+- `IntentKey` (type): A built-in key.
+- `Intents` (type): One step's intents, as the sim reads them (systems get them as their second argument).
+- `IntentValue` (type): A custom intent's value: plain data, as a replay file holds it.
+- `NO_INTENTS` (const): No intents: what a step gets when nothing is given.
+- `normalizeIntents` (function): Checks `raw` and returns the step's intents: frozen, keys in order (built-ins, then custom keys sorted), buttons sorted, `p` widened by the edges of `b` since `previous` (the step before; none at the start).
+- `pressed` (function): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
+
 ### [`engine/sim/capture.ts`](../engine/sim/capture.ts)
 
 - `CAPTURE_CODES` (const): The codes this module raises, with their fixes.
@@ -230,6 +247,42 @@ For the agents who maintain the engine.
 - `Restoration` (interface): A checked capture, copied, ready for the world to apply.
 - `RestoreTarget` (interface): The world a capture is read for: itself, its component kinds, whether it has physics, and its step rate.
 - `WorldCapture` (interface): The whole sim at a step boundary, as plain data (callbacks held aside; see the file comment).
+
+### [`engine/sim/replay.ts`](../engine/sim/replay.ts)
+
+- `CHECKPOINT_STEPS` (const): Steps between checkpoint hashes when a replay names none (§6.5 item 6).
+- `checkpointsOf` (function): The steps a replay hashes: those its goldens name (every platform's), else 0, every 60 and the last.
+- `checkReplay` (function): Checks a replay's whole shape and returns it typed; throws `SIM_BAD_REPLAY` listing the first problems.
+- `firstDifference` (function): The first step at which two runs' hashes differ, over the steps both took; undefined when they agree.
+- `InputChange` (type): One change-point's content: intent keys, setting values and a dev action.
+- `InputEntry` (type): A change-point: after `step` steps, before the next.
+- `judgeRuns` (function): Judges runs (their hashes) of `replay` on `platform` (see `Verdict`).
+- `Parting` (interface): Where two runs part at one step: the parts and entities whose trace digests differ, and the first fields.
+- `partingOf` (function): Compares two runs' views of the same step: `trace()` digests by part and entity, then `diffStates`.
+- `Playback` (interface): A played replay: its session (at the step it stopped) and the hashes it took, by step.
+- `PlayOptions` (interface): How a replay plays: where its scene is, which steps to hash, and where to stop.
+- `playReplay` (function): Plays a replay (checked first) from step 0 and hashes its checkpoints.
+- `Replay` (interface): A replay, as its file holds it (PLAN.md §8.4).
+- `REPLAY_CODES` (const): The codes this module raises, with their fixes.
+- `REPLAY_FORMAT` (const): The replay format tag; a change to what replays hold changes it.
+- `REPLAY_KEYS` (const): The keys a replay has, in file order.
+- `StepView` (interface): One run's view of a step, as `x replay --bisect` compares two.
+- `Verdict` (type): The verdict on runs of a replay (§6.5 item 8): against this platform's goldens when it has them (`mismatch` names the first run and step that miss), else, when another platform recorded it, the runs against each other (`other platform`, or `unstable` naming the first run that parts from run 0), else `none`.
+
+### [`engine/sim/scene.ts`](../engine/sim/scene.ts)
+
+- `createSession` (function): Starts a scene as a recorded session: `startScene`, plus the recording.
+- `defineScene` (function): Registers a scene on `registry` (the shared one by default) and returns it.
+- `getScene` (function): The scene `id` on `registry` (the shared one by default).
+- `isScene` (function): Whether `value` is a defined scene (an entry of kind `scene`), as a module exports it.
+- `Scene` (type): A defined scene: its spec with defaults filled, plus `id` and `kind`.
+- `SCENE_CODES` (const): The codes this module raises, with their fixes.
+- `SceneAction` (type): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
+- `SceneOptions` (interface): How a scene starts.
+- `SceneRun` (interface): A started scene: the scene, its world and its settings store.
+- `SceneSpec` (interface): How a scene is written: `defineScene(id, spec)`.
+- `Session` (interface): A started scene that records its inputs from step 0, so `record()` returns it as a replay (see the file comment).
+- `startScene` (function): Starts a scene (an id on the registry, or a scene): a new settings store with the scene's settings and then `options.settings` over the defaults, a world seeded with `options.seed`, the scene's `step` as the system `scene`, then its `setup`.
 
 ### [`engine/sim/state.ts`](../engine/sim/state.ts)
 
@@ -439,6 +492,16 @@ For the agents who maintain the engine.
 - `testKind` (function): Writes `kind`'s sample, checks it and removes it again.
 - `writeFiles` (function): Writes rendered files; refuses (throws) when any exists.
 
+### [`tools/cmd/perf.ts`](../tools/cmd/perf.ts)
+
+- `BUDGET_KEYS` (const): What a budget file may hold: milliseconds per step, per hash and per capture.
+- `default` (default): Sim timings against budgets, in Node (PLAN.md §8.1, §8.7, WP 1.5): `node x perf <scene> [--scene id] [--steps n] [--runs n] [--seed s] [--set k=v…] [--budget]`.
+- `measure` (function): One run's timings: ms per step, per hash and per capture.
+- `median` (function): The middle value (the mean of the two middle ones for an even count).
+- `PerfBudget` (interface): A budget file, `tests/baselines/perf/<scene id>.json`.
+- `PerfKey` (type): One measured quantity.
+- `readBudget` (function): Reads and checks a budget file; throws with the problem named.
+
 ### [`tools/cmd/port.ts`](../tools/cmd/port.ts)
 
 - `BLOB_SCRIPTS` (const): The Blob scripts: the stress world's slime hop, kicks to the squash spring, and look turns.
@@ -477,6 +540,20 @@ For the agents who maintain the engine.
 - `readBaselines` (function): Reads every baseline file of `family`, with a failure per malformed file or entry.
 - `runQa` (function): Runs one family against its baselines; T1 tests call this (`expect((await runQa(ROOT, 'level')).failures)…`).
 
+### [`tools/cmd/replay.ts`](../tools/cmd/replay.ts)
+
+- `checkFile` (function): Plays one replay file in every runtime and judges it (see the file comment).
+- `default` (default): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WP 1.5): `node x replay <file|dir…> [--update] [--browser sim] [--bisect] [--runs n] [--swap names]`.
+- `findParting` (function): The first step where any run parts from the first, compared there (`table` reads the components' registry).
+- `Outcome` (interface): What one replay came to: a line, findings and metrics.
+- `parseSwap` (function): Parses `--swap`: `none`, or names from the swap (`sin,pow`).
+- `partingLines` (function): The lines that tell a parting.
+- `PLATFORM` (const): This platform's golden key: `linux-x64`.
+- `replayFiles` (function): The replay files a target names: the file, or every `*.replay.json` under the directory.
+- `ReplayOptions` (interface): How replays are checked.
+- `Run` (interface): A run of a replay: which runtime, and the hashes it took.
+- `RunParting` (interface): Where two runs part: the step, the runs, and what differs there (engine/sim/replay.ts `partingOf`).
+
 ### [`tools/cmd/shot.ts`](../tools/cmd/shot.ts)
 
 - `default` (default): Renders a page on WebGPU in the platform's Chromium and writes what it drew: a PNG and its look metrics.
@@ -485,6 +562,22 @@ For the agents who maintain the engine.
 - `judgeFrame` (function): The verdict on a frame's metrics: a blank frame fails; an almost empty one (coverage under 0.5%) warns.
 - `READY_TIMEOUT_MS` (const): How long a page may take to signal ready or an error, in milliseconds.
 - `resolvePage` (function): Turns a page argument into the URL path to open (relative to the server) and the file that must exist for it.
+
+### [`tools/cmd/sim.ts`](../tools/cmd/sim.ts)
+
+- `default` (default): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene> [--scene id] [--steps n] [--seed s] [--set key=value…]`.
+- `HashedView` (interface): One run's view of a step, with the hash its runtime gave.
+- `loadScene` (function): Imports a scene module and picks its scene: `id`, else the one scene it exports.
+- `nodeRuntime` (function): Replays in Node, in this process, on `registry` (the shared one by default): `x replay`'s first runtime.
+- `parseSets` (function): `key=value` pairs as path → text; throws `UsageError` for a pair without `=`.
+- `replayText` (function): A replay as readable text: its keys in file order, one change-point per line, each platform's hashes one step per line, numbers exact (`-0` kept, engine/core/hash.ts `serialize`).
+- `resolveSceneModule` (function): The module a target names: a `.ts` file, a directory's `index.ts`, or the module that defines a scene id.
+- `Runtime` (interface): Where replays play: Node in this process, or Chromium in tests/pages/replay.html.
+- `sceneModules` (function): Scene id → the module that defines it, from the modules' text (tests aside).
+- `sceneRoots` (function): Where scene modules live: `fixtures/scenes/` and every `labs/<name>/scenes/` (tests/pages/replay.ts globs the same).
+- `typedSets` (function): `--set` values typed and checked against the settings schema (after the scene module declared its settings).
+- `wholeFlag` (function): A whole number from a flag, at least `min`, or `fallback` when the flag is absent.
+- `writeReplay` (function): Writes a replay through Prettier with the repository's settings (wherever the file is); true when it changed.
 
 ### [`tools/cmd/src.ts`](../tools/cmd/src.ts)
 

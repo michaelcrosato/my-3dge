@@ -62,3 +62,37 @@ Calls made where the plan is silent (engine/sim/{world,systems,state,capture}.ts
   is made, so another rate is refused). Saves that must survive text keep delays in component fields.
 - **A despawned entity's `rng.entity` streams are dropped** (ids are never reused, so they would only grow the hash).
   Visual streams (`fxRng`) derive from `derive(seed, 'fx')` and are never hashed or captured.
+
+## Amendment 3 (2026-10-10, WP-1.5)
+Calls made where the plan is silent (engine/input/intents.ts, engine/sim/{scene,replay}.ts, tools/cmd/{sim,replay,perf}.ts,
+fixtures/scenes/kernel/, tests/pages/replay.html); no deviation from a Done-when:
+- **The intents vocabulary**: `move` `[x, z]`, `cam` (the yaw of the camera's horizontal view direction, forward(ψ) =
+  (sin ψ, 0, cos ψ); a three.js camera's `rotation.y` is ψ − π), `aim` `[x, y, z]`, `look` `[yaw, pitch]`, `b` (held,
+  sorted) and `p` (pressed), plus custom keys namespaced `game:key` holding plain data. Unknown keys and non-finite
+  numbers throw `INPUT_BAD_INTENTS`. `p` is the given taps plus the edges of `b`, so a hold presses once and a tap
+  released within a step still presses. `fromCamera(yaw, [right, forward])` scales two keys at once to length 1 and
+  uses right(ψ) = forward × up = (−cos ψ, 0, sin ψ).
+- **Scenes** are entries of the kind `scene` with `description`, `level`, `settings`, `setup`, `step` and `actions`
+  (the scene's dev actions, `(w, args) => void`, until WP 5.6's own kind). `settings` are checked when the scene is
+  defined; the caller's settings (`--set`, a replay's) layer over the scene's. The scene's `step` runs as the system
+  `scene`, first in the phase `intents`. The default seed is 1.
+- **The recorder is the session** (`createSession`, in engine/sim/scene.ts beside `startScene`, so replay.ts imports
+  scenes and never the reverse): `step` logs the intents as diffs, `set` logs non-view settings, `act` runs a dev
+  action and logs `{ dev, args }`, each at the step it happens, merged in play order (set, then dev, then intents;
+  a point that cannot merge starts a new one at the same step). `record()` returns the replay from step 0.
+- **Replay semantics**: `[k, change]` applies after k steps, before step k + 1; a hash keyed `"k"` is the state after
+  k steps, before the inputs at k (as a live session hashes); default checkpoints are 0, every 60 steps and the last.
+  The format adds an optional `description`; `engine`, `three` and `rapier` are written by `--update` (a later
+  mismatch of the latter two warns). Unknown keys, view settings and another step rate are refused (`SIM_BAD_REPLAY`).
+  Files are written through Prettier with numbers exact (`-0` kept).
+- **`x replay`** runs each replay `--runs` times (3) per runtime, and adds `--swap` (Chromium with fewer fdlibm
+  ports, `none` for native `Math`): without the swap the kernel replays part from Node at step 0 and after step 6,
+  so their goldens prove the swap. `--bisect` hashes every step of a Node run, a second Node run and the Chromium run
+  and compares the first pair that parts (`trace()` parts and entities, then `diffStates`). When every run agrees
+  but the goldens differ, there is no reference state to compare fields with, so it names the checkpoints between
+  which the behaviour changed; comparing with the commit that recorded the goldens in a temporary worktree (as
+  `x film --compare` will) waits until that need surfaces.
+- **`x sim`** takes a scene module or a scene id (found from `defineScene('<id>'` under `fixtures/scenes/` and
+  `labs/<name>/scenes/`, the roots tests/pages/replay.ts globs), steps with no intents through a session, and writes
+  `state.json` and `run.replay.json` (this platform's hashes included). **`x perf`** reports Node medians per step,
+  hash and capture over `--runs` (5); `--budget` enforces `tests/baselines/perf/<scene>.json`.

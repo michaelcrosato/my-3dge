@@ -13,6 +13,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 | Kind        | What it is                                                                                                                                                               | Declared in                                             |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
 | `component` | Component kinds: the plain-object data entities hold (e.position), with their fields. The canonical state and the hash read every component's declared fields, in order. | [`engine/sim/state.ts`](../engine/sim/state.ts)         |
+| `scene`     | Scenes: a level, settings, a setup and a step, sim-side, so x sim, x replay and createHeadless run them in Node.                                                         | [`engine/sim/scene.ts`](../engine/sim/scene.ts)         |
 | `setting`   | The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set.                                                             | [`engine/core/settings.ts`](../engine/core/settings.ts) |
 
 ## The root
@@ -73,11 +74,23 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createRenderer`, `Gfx`, `GFX_CODES`, `GfxCode`, `GfxError`, `GfxInfo`, `requestWebGPU`
   - Tests: [`engine/gfx/renderer.test.ts`](../engine/gfx/renderer.test.ts), [`tests/e2e/hello.spec.ts`](../tests/e2e/hello.spec.ts)
 
+## engine/input
+
+- [`intents.ts`](../engine/input/intents.ts): The intents vocabulary (PLAN.md §6.4, §6.5 item 3, §8.4, WP 1.5; doctrine: Reproducible): everything the sim reads from outside arrives once per step as plain data, recorded by replays.
+  - Exports: `applyIntents`, `CustomIntentKey`, `diffIntents`, `fromCamera`, `held`, `INTENT_CODES`, `INTENT_KEYS`, `IntentChanges`, `IntentKey`, `Intents`, `IntentValue`, `NO_INTENTS`, `normalizeIntents`, `pressed`
+  - Tests: [`engine/input/intents.test.ts`](../engine/input/intents.test.ts)
+
 ## engine/sim
 
 - [`capture.ts`](../engine/sim/capture.ts): Capture and restore (PLAN.md §6.5 item 7, WP 1.4; doctrine: Reproducible): `capture()` copies the whole sim at a step boundary, entities, components, timers, settings except `view` ones, the seed and every sim RNG state, plus the physics hook's part (Rapier's snapshot, WP 3.1), and `restore()` puts it back so the next steps continue exactly like the uninterrupted run.
   - Exports: `CAPTURE_CODES`, `CAPTURE_FORMAT`, `CaptureSource`, `cloneData`, `makeCapture`, `readCapture`, `Restoration`, `RestoreTarget`, `WorldCapture`
   - Tests: [`engine/sim/capture.test.ts`](../engine/sim/capture.test.ts)
+- [`replay.ts`](../engine/sim/replay.ts): Replays (PLAN.md §8.4, §6.5 items 3 and 6–9, WP 1.5; doctrine: Reproducible): the readable replay format and its checks, the player that `x replay` and tests/pages/replay.html run, and the comparison of runs that `x replay` judges and bisects with.
+  - Exports: `CHECKPOINT_STEPS`, `checkpointsOf`, `checkReplay`, `firstDifference`, `InputChange`, `InputEntry`, `judgeRuns`, `Parting`, `partingOf`, `Playback`, `PlayOptions`, `playReplay`, `Replay`, `REPLAY_CODES`, `REPLAY_FORMAT`, `REPLAY_KEYS`, `StepView`, `Verdict`
+  - Tests: [`engine/sim/replay.test.ts`](../engine/sim/replay.test.ts)
+- [`scene.ts`](../engine/sim/scene.ts): Scenes and sessions, sim-side (PLAN.md §6.9, §9.0, §8.4, WP 1.5; doctrines: Reproducible, Agent-operable): `defineScene(id, { level?, settings, setup, step })` registers a scene as an entry of the registry kind `scene`; `startScene` makes its world (a settings store with the scene's settings over the defaults and the caller's over those, a world seeded from the seed, the scene's `step` as the system `scene`, then its `setup`); `createSession` starts one that records its inputs from step 0, the recorder of PLAN.md §8.4.
+  - Exports: `createSession`, `defineScene`, `getScene`, `isScene`, `Scene`, `SCENE_CODES`, `SceneAction`, `SceneOptions`, `SceneRun`, `SceneSpec`, `Session`, `startScene`
+  - Tests: [`engine/sim/scene.test.ts`](../engine/sim/scene.test.ts)
 - [`state.ts`](../engine/sim/state.ts): The canonical state and its hash (PLAN.md §6.5 items 4 and 6, WP 1.4, I-05; doctrine: Reproducible): component kinds declared with their field lists (registry kind `component`), the plain-data form of the sim that `state()` returns, the one 64-bit FNV-1a hash over everything a capture holds (`hash()`), per-entity digests (`trace()`), and `diffStates`, which names the fields where two states part.
   - Exports: `AnyComponents`, `ComponentData`, `ComponentKind`, `ComponentOf`, `componentTable`, `ComponentTable`, `defineComponent`, `diffStates`, `Entity`, `EntityData`, `hashState`, `PhysicsHook`, `SpawnSpec`, `STATE_CODES`, `STATE_FORMAT`, `StateDifference`, `StateView`, `traceState`, `With`, `WorldState`, `WorldTrace`
   - Tests: [`engine/sim/state.test.ts`](../engine/sim/state.test.ts)
@@ -109,6 +122,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `bitDiff`, `compareDrift`, `DRIFT_FUNCTIONS`, `DRIFT_INPUTS`, `DriftFunction`, `inputsOf`, `ProbeResult`, `resultsOf`, `runProbe`
   - Tests: [`tests/e2e/drift.spec.ts`](../tests/e2e/drift.spec.ts)
 - [`harness.ts`](../tests/pages/harness.ts): The harness page's module (`tests/pages/harness.html`), the page `tests/e2e/harness.spec.ts` checks the e2e fixture on: it draws with raw WebGPU, signals ready through `window.__engine`, and with `?throw` throws on purpose from `explode` below.
+- [`replay.ts`](../tests/pages/replay.ts): The replay page's module (`tests/pages/replay.html`), Chromium's half of `node x replay --browser sim` (PLAN.md §6.5 item 9, WP 1.5): the sim in a page with no renderer.
 
 ## tests/setup
 
@@ -157,15 +171,24 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`new.ts`](../tools/cmd/new.ts): Scaffolds a new entry of a kind from its template (PLAN.md §8.13): `x new <kind> <id>` writes the files of `tools/templates/<kind>/`, filled in for the id, then runs the kind's checks and prints the summary.
   - Exports: `CheckName`, `CHECKS`, `default`, `fill`, `Kind`, `listKinds`, `render`, `runCheck`, `runChecks`, `testKind`, `writeFiles`
   - Tests: [`tools/cmd/new.test.ts`](../tools/cmd/new.test.ts)
+- [`perf.ts`](../tools/cmd/perf.ts): Sim timings against budgets, in Node (PLAN.md §8.1, §8.7, WP 1.5): `node x perf <scene> [--scene id] [--steps n] [--runs n] [--seed s] [--set k=v…] [--budget]`.
+  - Exports: `BUDGET_KEYS`, `default`, `measure`, `median`, `PerfBudget`, `PerfKey`, `readBudget`
+  - Tests: [`tools/cmd/perf.test.ts`](../tools/cmd/perf.test.ts)
 - [`port.ts`](../tools/cmd/port.ts): Records the reference vectors the ports from my-3d2dge are tested against (PLAN.md WP 0.11, §9.0): the old engine's own outputs as text JSON in `tests/baselines/port/`, with a generated README that says what each file holds, the source commit, the sampling and the conversion to my-3dge's frame (Appendix C).
   - Exports: `BLOB_SCRIPTS`, `blobScript`, `buildFiles`, `BUILDS`, `check`, `CHECKSUMS`, `checkVectors`, `colorVectors`, `coreVectors`, `default`, `everyNth`, `humanoidRun`, `humanoidVectors`, `layout`, `LoadedEngine`, `loadEngine`, `moveRecord`, `moveVectors`, `PORT_DIR`, `SourceEngine`, `STATES`, `writeVectors`
   - Tests: [`tools/cmd/port.test.ts`](../tools/cmd/port.test.ts)
 - [`qa.ts`](../tools/cmd/qa.ts): Runs content QA for the families named, against their baselines (PLAN.md §8.6).
   - Exports: `compareWithBaselines`, `default`, `loadFamily`, `QaBaseline`, `QaContext`, `qaFamilies`, `QaFamily`, `QaViolation`, `readBaselines`, `runQa`
   - Tests: [`tools/cmd/qa.test.ts`](../tools/cmd/qa.test.ts)
+- [`replay.ts`](../tools/cmd/replay.ts): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WP 1.5): `node x replay <file|dir…> [--update] [--browser sim] [--bisect] [--runs n] [--swap names]`.
+  - Exports: `checkFile`, `default`, `findParting`, `Outcome`, `parseSwap`, `partingLines`, `PLATFORM`, `replayFiles`, `ReplayOptions`, `Run`, `RunParting`
+  - Tests: [`tools/cmd/replay.test.ts`](../tools/cmd/replay.test.ts)
 - [`shot.ts`](../tools/cmd/shot.ts): Renders a page on WebGPU in the platform's Chromium and writes what it drew: a PNG and its look metrics.
   - Exports: `default`, `frameMetrics`, `FrameMetrics`, `judgeFrame`, `READY_TIMEOUT_MS`, `resolvePage`
   - Tests: [`tools/cmd/shot.test.ts`](../tools/cmd/shot.test.ts)
+- [`sim.ts`](../tools/cmd/sim.ts): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene> [--scene id] [--steps n] [--seed s] [--set key=value…]`.
+  - Exports: `default`, `HashedView`, `loadScene`, `nodeRuntime`, `parseSets`, `replayText`, `resolveSceneModule`, `Runtime`, `sceneModules`, `sceneRoots`, `typedSets`, `wholeFlag`, `writeReplay`
+  - Tests: [`tools/cmd/sim.test.ts`](../tools/cmd/sim.test.ts)
 - [`src.ts`](../tools/cmd/src.ts): Prints and checks the read-only source checkouts, `$MY3D2DGE_SRC` and `$SHARDFALL_SRC`, at their pins.
   - Exports: `default`
 

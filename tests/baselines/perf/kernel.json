@@ -1,0 +1,6 @@
+{
+  "scene": "kernel",
+  "steps": 600,
+  "budgets": { "stepMs": 0.2, "hashMs": 1, "captureMs": 0.25 },
+  "reason": "WP 1.5, measured with node x perf fixtures/scenes/kernel on the development platform (Node 24, 4 cores): 6 movers step in about 0.016 ms, hash in 0.10 ms and capture in 0.02 ms (medians of 5 runs); the budgets leave about 10× for a loaded machine, so only a real regression fails."
+}
