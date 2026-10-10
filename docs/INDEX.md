@@ -115,6 +115,33 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createWarmup`, `Warmup`, `WARMUP_CODES`, `WarmupEntry`, `WarmupProgress`, `WarmupReport`, `WarmupView`
   - Tests: [`engine/gfx/warmup.test.ts`](../engine/gfx/warmup.test.ts), [`tests/e2e/renderer.spec.ts`](../tests/e2e/renderer.spec.ts)
 
+## engine/gfx/cameras
+
+- [`boost.ts`](../engine/gfx/cameras/boost.ts): The height boost (PLAN.md WP 2.5; doctrine: Quality under the hood): the 2D engine's `zBoost`, the classic pixel-art cheat that draws heights taller than they are so walls and characters read, done in the projection matrix only.
+  - Exports: `applyBoost`, `boost`, `Boosted`, `BoostedOrthographicCamera`, `BoostedPerspectiveCamera`, `isBoosted`
+  - Tests: [`engine/gfx/cameras/boost.test.ts`](../engine/gfx/cameras/boost.test.ts)
+- [`codes.ts`](../engine/gfx/cameras/codes.ts): Camera codes (PLAN.md WP 2.5, §8.3; doctrine: Agent-operable): a camera as one short text that a link, a command (`x shot --cam`) or `__engine.camera.set(code)` carries, and the words that say what a camera shows.
+  - Exports: `CAMERA_3D`, `CAMERA_CODES`, `CameraSpec`, `CameraType`, `describeCamera`, `formatCameraCode`, `FreeSpec`, `OrbitSpec`, `parseCameraCode`, `VIEW_LABELS`, `VIEW_NAMES`, `ViewName`, `ViewSpec`
+  - Tests: [`engine/gfx/cameras/codes.test.ts`](../engine/gfx/cameras/codes.test.ts)
+- [`fixed.ts`](../engine/gfx/cameras/fixed.ts): The fixed camera (PLAN.md WP 2.5): a perspective camera that stays where it is put, the prototype's "Fix" (F): the hero is the devices' again while the camera watches.
+  - Exports: `createFixedCamera`, `FixedOptions`, `fixedPose`, `fixedSpec`, `fixedState`, `FixedState`, `stepFixed`
+  - Tests: [`engine/gfx/cameras/fixed.test.ts`](../engine/gfx/cameras/fixed.test.ts)
+- [`fly.ts`](../engine/gfx/cameras/fly.ts): The fly camera (PLAN.md WP 2.5; doctrine: Agent-operable): a free perspective camera that flies where it looks, the prototype's free camera.
+  - Exports: `createFlyCamera`, `FLY_FAST_SPEED`, `FLY_FOV`, `FLY_FOV_RANGE`, `FLY_MAX_PITCH`, `FLY_SPEED`, `FLY_TURN_SPEED`, `FlyBounds`, `FlyOptions`, `flyPose`, `flySpec`, `flyState`, `FlyState`, `stepFly`
+  - Tests: [`engine/gfx/cameras/fly.test.ts`](../engine/gfx/cameras/fly.test.ts)
+- [`orbit.ts`](../engine/gfx/cameras/orbit.ts): The orbit camera (PLAN.md WP 2.5; doctrine: Common ground): a perspective camera on a sphere round a target, turned, tilted and pulled in by the devices, as three.js's OrbitControls does, and following a point unless fixed.
+  - Exports: `createOrbitCamera`, `ORBIT_DEFAULTS`, `ORBIT_FOV`, `ORBIT_LAG`, `ORBIT_LIFT`, `ORBIT_LIMITS`, `ORBIT_TURN_SPEED`, `ORBIT_ZOOM_STEP`, `OrbitOptions`, `orbitPose`, `orbitSpec`, `orbitState`, `OrbitState`, `stepOrbit`
+  - Tests: [`engine/gfx/cameras/orbit.test.ts`](../engine/gfx/cameras/orbit.test.ts)
+- [`place.ts`](../engine/gfx/cameras/place.ts): Cameras into three.js (PLAN.md WP 2.5, §8.3): `createCamera` makes the camera a code names (engine/gfx/cameras/codes.ts) from the camera before it, and `placeCamera` puts a pose on a three.js camera each frame, so the renderer draws it (`gfx.frame({ scene, camera })`, engine/gfx/renderer.ts).
+  - Exports: `CameraPair`, `createCamera`, `CreateCameraOptions`, `createCameraPair`, `placeCamera`
+  - Tests: [`engine/gfx/cameras/place.test.ts`](../engine/gfx/cameras/place.test.ts)
+- [`pose.ts`](../engine/gfx/cameras/pose.ts): Camera poses (PLAN.md WP 2.5, §6.3; doctrine: Common ground): what every camera computes each frame, as plain data in three.js's camera words, and the pure math over it.
+  - Exports: `approach`, `Camera`, `cameraFrom`, `CameraInput`, `CameraPose`, `CameraSteps`, `frameSize`, `headingOf`, `lookAt`, `makePose`, `orbitPoint`, `perspectiveFrom`, `pointProblems`, `POSE_DEFAULTS`, `poseForward`, `poseRight`, `poseTarget`, `poseUp`, `Projection`, `rangeProblems`, `refuse`, `Vec3`, `wrapAngle`
+  - Tests: [`engine/gfx/cameras/pose.test.ts`](../engine/gfx/cameras/pose.test.ts)
+- [`presets.ts`](../engine/gfx/cameras/presets.ts): The classic views (PLAN.md WP 2.5; doctrine: Common ground): the 2D engine's isometric, three-quarter, top-down, brawler and side views, and custom ones, as 3D cameras that follow a point with the 2D camera's lag.
+  - Exports: `createViewCamera`, `ORTHO_DISTANCE`, `ORTHO_FAR`, `stepView`, `stepZoom`, `VIEW_FOV`, `VIEW_LAG`, `VIEW_LIFT`, `VIEW_PRESETS`, `VIEW_ZOOMS`, `ViewOptions`, `viewPose`, `ViewPreset`, `viewSpec`, `viewState`, `ViewState`
+  - Tests: [`engine/gfx/cameras/presets.test.ts`](../engine/gfx/cameras/presets.test.ts)
+
 ## engine/input
 
 - [`intents.ts`](../engine/input/intents.ts): The intents vocabulary (PLAN.md §6.4, §6.5 item 3, §8.4, WP 1.5; doctrine: Reproducible): everything the sim reads from outside arrives once per step as plain data, recorded by replays.
