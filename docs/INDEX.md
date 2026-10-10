@@ -16,6 +16,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 | `build`           | Body proportions for the humanoid skeleton, in metres before size (limbs, torso, head, stance, gait).                                                                    | [`engine/anim/builds.ts`](../engine/anim/builds.ts)                       |
 | `component`       | Component kinds: the plain-object data entities hold (e.position), with their fields. The canonical state and the hash read every component's declared fields, in order. | [`engine/sim/state.ts`](../engine/sim/state.ts)                           |
 | `feature`         | Optional GPU features and techniques: what each needs, what is lost without it, and its advice code.                                                                     | [`engine/gfx/features.ts`](../engine/gfx/features.ts)                     |
+| `geometry`        | Shapes props, levels and bodies name by id: a builder of a three.js BufferGeometry with its parameters and a vertex budget.                                              | [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)   |
 | `glyph`           | Level legend glyphs: what one map character means (heights, solid, collider and mesh recipes, nav flags, spawn, light spot, surface, footprint).                         | [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)           |
 | `inspectorMember` | Members of the inspector (__engine, createHeadless): a call or property with its help line, argument schema and implementation.                                          | [`engine/dev/members.ts`](../engine/dev/members.ts)                       |
 | `level`           | Levels: a level text (front matter and a map in legend characters) that compileLevel turns into data.                                                                    | [`engine/world/level/level.ts`](../engine/world/level/level.ts)           |
@@ -37,7 +38,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 ## engine
 
 - [`index.ts`](../engine/index.ts): The engine's front page: the public API for pages and tools (PLAN.md §6.1, §6.9, WP 1.6; doctrine: Quality under the hood).
-  - Exports: `* from './sim-api'`, `ActionMap`, `ActionMapSpec`, `bakeTexture`, `Bindings`, `BindingsFile`, `BindingsOptions`, `BindingsStorage`, `CameraInputSample`, `CameraLike`, `cellHash`, `codeLabel`, `connectVirtualDevice`, `createBindings`, `createHeadless`, `createInput`, `createMaterialLibrary`, `createScriptedGamepad`, `createVirtualDevice`, `defineActionMap`, `defineMaterial`, `defineTexture`, `DeviceKind`, `EngineInfo`, `EntitySummary`, `GamepadLike`, `getActionMap`, `getMaterial`, `Headless`, `HeadlessOptions`, `Input`, `InputOptions`, `Inspector`, `isCode`, `listActionMaps`, `MaterialEntry`, `MaterialLibrary`, `MaterialSpec`, `palette`, `pickTone`, `readKeyboardLayout`, `RebindResult`, `RESERVED_CODES`, `runningBond`, `ScriptedGamepad`, `SYSTEM_ACTIONS`, `Texel`, `TextureBake`, `TextureContext`, `TextureEntry`, `TextureLook`, `TextureRef`, `TextureSpec`, `tileNoise`, `VirtualDevice`, `wrapIndex`
+  - Exports: `* from './sim-api'`, `ActionMap`, `ActionMapSpec`, `bakeTexture`, `Bindings`, `BindingsFile`, `BindingsOptions`, `BindingsStorage`, `boxGeometry`, `BoxOptions`, `buildGeometry`, `CameraInputSample`, `CameraLike`, `cellHash`, `codeLabel`, `connectVirtualDevice`, `createBindings`, `createHeadless`, `createInput`, `createLevelMeshes`, `createMaterialLibrary`, `createScriptedGamepad`, `createVirtualDevice`, `defineActionMap`, `defineGeometry`, `defineMaterial`, `defineTexture`, `DeviceKind`, `EngineInfo`, `EntitySummary`, `frustumGeometry`, `FrustumOptions`, `GamepadLike`, `GeometryEntry`, `GeometryRef`, `GeometryReport`, `GeometrySpec`, `getActionMap`, `getGeometry`, `getMaterial`, `Headless`, `HeadlessOptions`, `Input`, `InputOptions`, `inspectGeometry`, `Inspector`, `isCode`, `LEVEL_RECIPES`, `LevelCell`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `LevelRecipe`, `LevelShape`, `limbGeometry`, `LimbOptions`, `listActionMaps`, `MaterialEntry`, `MaterialLibrary`, `MaterialSpec`, `mergeGeometries`, `palette`, `pickTone`, `pillarGeometry`, `PillarOptions`, `PillarPart`, `pillarParts`, `rampGeometry`, `RampOptions`, `readKeyboardLayout`, `RebindResult`, `RESERVED_CODES`, `ringGeometry`, `RingOptions`, `roundedBoxGeometry`, `RoundedBoxOptions`, `runningBond`, `ScriptedGamepad`, `sidesThenTops`, `SYSTEM_ACTIONS`, `Texel`, `TextureBake`, `TextureContext`, `TextureEntry`, `TextureLook`, `TextureRef`, `TextureSpec`, `tileNoise`, `VirtualDevice`, `wrapIndex`
 - [`sim-api.ts`](../engine/sim-api.ts): The public API for sim-side game code (PLAN.md §6.1, §6.9, WP 1.6; doctrine: Quality under the hood): what a scene, a cast member or a behaviour imports, and all it may import (ESLint's public-API rule), so `x sim` runs it in Node and its play is reproducible.
   - Exports: `addPose`, `angDiff`, `animCheck`, `AnimCheckReport`, `AnimCheckSpec`, `AnimProblem`, `animSheet`, `approach`, `approachAng`, `BlendOptions`, `blendPoses`, `boneMask`, `BoneMask`, `Box3`, `BoxCollider`, `BUFFER_STEPS`, `buffered`, `Build`, `BuildSpec`, `ColliderDescriptor`, `Color`, `CompiledLevel`, `compileLevel`, `CompileOptions`, `ComponentOf`, `consume`, `consumeAll`, `createInputBuffer`, `createSkeleton`, `createWorldPose`, `CustomIntentKey`, `def`, `defineBuild`, `defineComponent`, `defineGlyph`, `defineKind`, `defineLevel`, `defineScene`, `defineSettings`, `ease`, `Entity`, `Entry`, `Euler`, `EventMap`, `Field`, `floorHeight`, `forwardKinematics`, `fromCamera`, `getBuild`, `getLevel`, `Glyph`, `GlyphSpec`, `GroundDescriptor`, `hashPose`, `held`, `InputBuffer`, `INTENT_KEYS`, `Intents`, `IntentValue`, `jointMatrix`, `JointName`, `jointPosition`, `JointRef`, `jointRotation`, `JOINTS`, `jointToWorld`, `Kind`, `KindSpec`, `lerpAng`, `LEVEL_FORMAT`, `LevelEntry`, `LevelGlyph`, `LevelProblem`, `LevelSource`, `LightSpot`, `Listener`, `makeAdditive`, `MaskName`, `MASKS`, `MathUtils`, `Matrix4`, `MeshDescriptor`, `Phase`, `PHASES`, `Plane`, `Point3`, `PointName`, `Pose`, `pressed`, `Quaternion`, `Ray`, `released`, `REPEAT_DELAY`, `REPEAT_RATE`, `repeated`, `RigidPair`, `Rng`, `Scene`, `SceneAction`, `SceneSpec`, `Schema`, `SettingValue`, `Sheet`, `SheetFrame`, `SheetOptions`, `SheetView`, `SimRng`, `SimSettings`, `Skeleton`, `smoothDamp`, `SocketName`, `socketPosition`, `SOCKETS`, `solidAt`, `SpawnPoint`, `SpawnSpec`, `Sphere`, `swingTwist`, `SystemFn`, `tileAt`, `TileRect`, `tipPosition`, `topHeight`, `TraceRecord`, `updateInputBuffer`, `validateLevel`, `Vector3`, `With`, `World`, `WorldEvents`, `WorldPose`, `WorldTimers`
 
@@ -208,6 +209,63 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`presets.ts`](../engine/gfx/cameras/presets.ts): The classic views (PLAN.md WP 2.5; doctrine: Common ground): the 2D engine's isometric, three-quarter, top-down, brawler and side views, and custom ones, as 3D cameras that follow a point with the 2D camera's lag.
   - Exports: `createViewCamera`, `ORTHO_DISTANCE`, `ORTHO_FAR`, `stepView`, `stepZoom`, `VIEW_FOV`, `VIEW_LAG`, `VIEW_LIFT`, `VIEW_PRESETS`, `VIEW_ZOOMS`, `ViewOptions`, `viewPose`, `ViewPreset`, `viewSpec`, `viewState`, `ViewState`
   - Tests: [`engine/gfx/cameras/presets.test.ts`](../engine/gfx/cameras/presets.test.ts)
+
+## engine/gfx/geometry
+
+- [`box.ts`](../engine/gfx/geometry/box.ts): Boxes (PLAN.md WP 2.4): `boxGeometry({ width, height, depth })`, three.js's `BoxGeometry` with two changes the level meshes and props need: it stands on the ground (its bottom at y 0, centred in X and Z), and its UVs are in metres, so a texture keeps its density (16 texels per metre for the v1 textures) on every face whatever the box's size, instead of being stretched over each face.
+  - Exports: `boxGeometry`, `BoxOptions`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`builtins.ts`](../engine/gfx/geometry/builtins.ts): The geometry kit's built-in entries (PLAN.md WP 2.4): one `geometry` entry per builder of engine/gfx/geometry/, its parameters the builder's options as schema fields with the builder's defaults, and a vertex budget a little above what the defaults build.
+  - Exports: `BUILT_IN_GEOMETRY`
+  - Tests: [`engine/gfx/geometry/geometry.test.ts`](../engine/gfx/geometry/geometry.test.ts)
+- [`checks.ts`](../engine/gfx/geometry/checks.ts): The geometry kit's codes and argument checks (PLAN.md WP 2.4): a builder given sizes it cannot build (a size of 0, a limb shorter than the difference of its radii, a ring whose inner radius is not below its outer) throws `GFX_BAD_GEOMETRY`, naming the shape, the problem and what to pass, before it writes a vertex.
+  - Exports: `assertSegments`, `assertSizes`, `badGeometry`, `GEOMETRY_CODES`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`frustum.ts`](../engine/gfx/geometry/frustum.ts): Frustums, prisms and cylinders (PLAN.md WP 2.4): `frustumGeometry({ radiusBottom, radiusTop, height, radialSegments, smooth })`, three.js's `CylinderGeometry` standing on the ground, with UVs in metres: an octagonal dais, a brazier's bowl, a barrel, a cone (`radiusTop` 0), a well.
+  - Exports: `frustumGeometry`, `FrustumOptions`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`geometry.ts`](../engine/gfx/geometry/geometry.ts): The geometry registry (PLAN.md WP 2.4, §6.6, I-29): the registry kind `geometry`, one entry per shape a prop, a level or a body names by id (§6.1: `world` names geometry by id, `gfx` builds it).
+  - Exports: `buildGeometry`, `defineGeometry`, `GEOMETRY_FIELDS`, `GeometryEntry`, `geometryKind`, `GeometryRef`, `GeometrySpec`, `getGeometry`
+  - Tests: [`engine/gfx/geometry/geometry.test.ts`](../engine/gfx/geometry/geometry.test.ts)
+- [`groups.ts`](../engine/gfx/geometry/groups.ts): Draw groups and merging (PLAN.md WP 2.4): `sidesThenTops(geometry)` sorts a geometry's triangles into two draw groups, its sides (material 0) then its tops and bottoms (material 1), so a box, a pillar or a wall drawn with a face material and a top material costs two draw calls instead of one per face; `mergeGeometries` joins indexed geometries with the same attributes into one.
+  - Exports: `mergeGeometries`, `sidesThenTops`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`inspect.ts`](../engine/gfx/geometry/inspect.ts): Geometry measured as numbers (PLAN.md WP 2.4, §8.6, I-29): `inspectGeometry(geometry)` counts what the `geo` QA family (tools/qa/geo.ts) and the kit's tests check, in Node: vertices and triangles, missing attributes (`position`, `normal`, `uv`), index entries out of range, NaN or infinite numbers, degenerate triangles (an area below 1e-10 m²: a sliver no pixel shows, which breaks normals and physics hulls), normals that are not of length 1 (within 1e-3), triangles wound against their own normals (a corner's normal pointing away from the side the winding faces: the face is culled where it should show, or lit from behind), and the bounds.
+  - Exports: `DEGENERATE_AREA`, `GeometryReport`, `inspectGeometry`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`limb.ts`](../engine/gfx/geometry/limb.ts): Tapered limbs (PLAN.md WP 2.4): `limbGeometry({ length, radiusStart, radiusEnd })`, the smooth hull of two spheres, one of `radiusStart` at the origin (the joint) and one of `radiusEnd` at `length` up +Y (the next joint): an upper arm, a thigh, a finger, a tail segment.
+  - Exports: `limbGeometry`, `LimbOptions`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`pillar.ts`](../engine/gfx/geometry/pillar.ts): Pillar parts (PLAN.md WP 2.4): the prototype's pillar, a plinth, a shaft of dressed stone and a capital of two slabs, as sizes (`pillarParts`) and as one geometry (`pillarGeometry`: the parts' boxes merged, sides then tops, so a pillar is two draw calls however many stand).
+  - Exports: `pillarGeometry`, `PillarOptions`, `PillarPart`, `pillarParts`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`ramp.ts`](../engine/gfx/geometry/ramp.ts): Ramps and wedges (PLAN.md WP 2.4): `rampGeometry({ width, depth, low, high })`, a block standing on the ground whose top slopes from `low` at its -Z end up to `high` at its +Z end, so walking forward (+Z, the way characters face) climbs it.
+  - Exports: `rampGeometry`, `RampOptions`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`ring.ts`](../engine/gfx/geometry/ring.ts): Rings (PLAN.md WP 2.4): `ringGeometry({ innerRadius, outerRadius, height, radialSegments })`, a ring lying on the ground around the Y axis.
+  - Exports: `ringGeometry`, `RingOptions`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`roundedBox.ts`](../engine/gfx/geometry/roundedBox.ts): Rounded boxes (PLAN.md WP 2.4): `roundedBoxGeometry({ width, height, depth, radius, segments })`, a box whose edges and corners are rounded with `radius`, as three.js's `RoundedBoxGeometry` addon draws one, standing on the ground like every shape of the kit (its bottom at y 0, centred in X and Z), with UVs in metres and smooth normals.
+  - Exports: `roundedBoxGeometry`, `RoundedBoxOptions`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`writer.ts`](../engine/gfx/geometry/writer.ts): The geometry writer (PLAN.md WP 2.4): the one place the kit's builders (engine/gfx/geometry/) turn vertices and triangles into a three.js `BufferGeometry` with `position`, `normal` and `uv` and an index.
+  - Exports: `createWriter`, `cross`, `dot`, `normalize`, `ProfilePoint`, `Vec3`, `Writer`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+
+## engine/gfx/level
+
+- [`cells.ts`](../engine/gfx/level/cells.ts): Level cells and the way they face out (PLAN.md WP 2.4): one cell per piece of a block mesh (a wall tile, a pillar's footprint), with its tiles, its centre and its outward direction, the way it faces out of the room, away from the open floor beside it.
+  - Exports: `LevelCell`, `levelCells`
+  - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts)
+- [`meshes.ts`](../engine/gfx/level/meshes.ts): The level meshes (PLAN.md WP 2.4, §6.1 "data descriptors"): `createLevelMeshes(level, { materials })` draws a compiled level (engine/world/level/compile.ts) from its mesh descriptors: one mesh per descriptor, built by the recipe its glyphs name (engine/gfx/level/recipes.ts).
+  - Exports: `createLevelMeshes`, `LEVEL_MESH_CODES`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`
+  - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`tests/e2e/level-meshes.spec.ts`](../tests/e2e/level-meshes.spec.ts)
+- [`recipes.ts`](../engine/gfx/level/recipes.ts): Level mesh recipes (PLAN.md WP 2.4): how the level meshes (engine/gfx/level/meshes.ts) draw the tiles of a glyph whose `mesh` names a recipe (engine/world/level/legend.ts).
+  - Exports: `FALLBACK_RECIPE`, `LEVEL_RECIPES`, `LevelRecipe`, `LevelShape`
+  - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts)
+- [`surface.ts`](../engine/gfx/level/surface.ts): Level surfaces (PLAN.md WP 2.4): `surfaceGeometry(tile, pieces, y)` lays one flat surface over a level's pieces at height `y`, facing up: the floor.
+  - Exports: `surfaceGeometry`
+  - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts)
 
 ## engine/gfx/materials
 
@@ -406,6 +464,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Tests: [`tests/e2e/drift.spec.ts`](../tests/e2e/drift.spec.ts)
 - [`harness.ts`](../tests/pages/harness.ts): The harness page's module (`tests/pages/harness.html`), the page `tests/e2e/harness.spec.ts` checks the e2e fixture on: it draws with raw WebGPU, signals ready through `window.__engine`, and with `?throw` throws on purpose from `explode` below.
 - [`input.ts`](../tests/pages/input.ts): The input page's module (tests/pages/input.html), the browser half of tests/e2e/input.spec.ts (PLAN.md WP 3.3): the engine's input (engine/input/input.ts) over the page's real window, document and canvas, with its bindings saved in `localStorage`, gamepads coming through a stubbed `navigator.getGamepads` whose slots the tests fill with scripted pads (engine/input/devices/padScript.ts), and a headless engine whose `__engine.input` members drive the page input's virtual device (`connectVirtualDevice`).
+- [`level-meshes.ts`](../tests/pages/level-meshes.ts): The level-meshes page's module (tests/pages/level-meshes.html, PLAN.md WP 2.4): the engine's renderer (engine/gfx/renderer.ts) with a lit, shadowed, empty scene, and `window.__levelPage.show(text, file)`, which compiles a level's text (engine/world/level/compile.ts), draws it with the level meshes (engine/gfx/level/meshes.ts) and the material library (engine/gfx/materials/library.ts), registers them with the warm-up, warms up, draws a frame and reports what it cost: the frame (pipelines built), the renderer's draw calls and triangles, those of the empty scene (the renderer's own output pass), the meshes' own count of their draw calls, and their names.
+  - Exports: `Shown`
+  - Tests: [`tests/e2e/level-meshes.spec.ts`](../tests/e2e/level-meshes.spec.ts)
 - [`replay.ts`](../tests/pages/replay.ts): The replay page's module (`tests/pages/replay.html`), Chromium's half of `node x replay --browser sim` (PLAN.md §6.5 item 9, WP 1.5): the sim in a page with no renderer.
 - [`scene.ts`](../tests/pages/scene.ts): The scene page's module (tests/pages/scene.html): the fixture scene (tests/pages/sceneFixture.ts) drawn by the engine's renderer (engine/gfx/renderer.ts) for the render tests, which drive it through `window.__scene` and import the modules they test into the page (`await import('/engine/gfx/pipelines.ts')`): the same module instances the page runs.
   - Tests: [`tests/e2e/renderer.spec.ts`](../tests/e2e/renderer.spec.ts)
@@ -571,6 +632,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## tools/qa
 
+- [`geo.ts`](../tools/qa/geo.ts): The `geo` QA family (PLAN.md §8.6, WP 2.4, I-29): `node x qa geo` checks every `geometry` entry the shared registry has (the kit's, engine/gfx/geometry/builtins.ts, and a game's: each `*.ts` module under `labs/<name>/geometry/` imported first), built at its defaults, and the level meshes (engine/gfx/level/meshes.ts) of every level file the `level` family reads (tools/qa/level.ts: `labs/box/levels/`, `fixtures/levels/`; a level that does not compile is the `level` family's to report).
+  - Exports: `checkGeometries`, `checkLevelMeshes`, `default`, `geometryModules`, `LEVEL_DRAW_CALLS`, `LEVEL_VERTICES_PER_TILE`, `MAX_SIZE`
+  - Tests: [`tools/qa/geo.test.ts`](../tools/qa/geo.test.ts)
 - [`level.ts`](../tools/qa/level.ts): The `level` QA family (PLAN.md §8.6, WP 2.2, I-29): `node x qa level` validates every level file, the box's (`labs/box/levels/*.txt`, ids `level:<name>`) and the fixtures' (`fixtures/levels/*.txt`, ids `level:fixtures/<name>`; the seeded errors under `fixtures/levels/broken/` are the unit tests' business and are skipped), and runs in T1 through `runQa` (tools/qa/level.test.ts).
   - Exports: `default`, `LEVEL_DIRS`, `LevelFile`, `levelFiles`
   - Tests: [`tools/qa/level.test.ts`](../tools/qa/level.test.ts)

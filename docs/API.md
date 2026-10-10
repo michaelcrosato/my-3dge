@@ -33,9 +33,12 @@ game agent's manual.
 - `BoneMask` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): How much of a blend or layer reaches each joint (0–1, in `JOINTS` order) and the root's channels.
 - `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
 - `BoxCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An axis-aligned box collider (Rapier's cuboid: half extents `(max − min)/2`, centred at `(min + max)/2`).
+- `boxGeometry` (function from [`engine/gfx/geometry/box.ts`](../engine/gfx/geometry/box.ts)): A box standing on the ground, UVs in metres (see the file comment).
+- `BoxOptions` (interface from [`engine/gfx/geometry/box.ts`](../engine/gfx/geometry/box.ts)): A box's size in metres.
 - `BUFFER_STEPS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): How long a press stays buffered by default, in steps: 9, the prototype's 0.15 s at 60 Hz.
 - `buffered` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed within the last `steps` steps (its press step counts as 0) and not consumed since.
 - `Build` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): A `build` entry: one body's proportions, in metres before `size`.
+- `buildGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): Builds geometry `ref` (an id, or `{ geometry, params }`) from `registry` (the shared one by default): a new `BufferGeometry` the caller owns and disposes.
 - `BuildSpec` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): What `defineBuild` takes: any field; the others keep `build:chibi`'s values.
 - `CameraInputSample` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): What the camera takes each frame: mouse look `[right, up]` rad, the right stick `[right, up]`, wheel notches.
 - `CameraLike` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A camera as the input reads it (engine/gfx/cameras/pose.ts `Camera`): its heading, and its pitch for first person.
@@ -54,6 +57,7 @@ game agent's manual.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
 - `createInput` (function from [`engine/input/input.ts`](../engine/input/input.ts)): Makes the page's input.
 - `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
+- `createLevelMeshes` (function from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): Draws `level`'s mesh descriptors (see the file comment).
 - `createMaterialLibrary` (function from [`engine/gfx/materials/library.ts`](../engine/gfx/materials/library.ts)): Makes a material library over `registry` (the shared one by default).
 - `createScriptedGamepad` (function from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
@@ -64,6 +68,7 @@ game agent's manual.
 - `defineActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Registers an action map (on the shared registry by default).
 - `defineBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
+- `defineGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): Defines a geometry on `registry` (the shared one by default) and returns it.
 - `defineGlyph` (function from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): Defines a glyph on `registry` (the shared one by default) and returns it.
 - `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
 - `defineLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): Registers a level on `registry` (the shared one by default) after checking its text compiles against that registry's legend; returns the entry.
@@ -83,9 +88,16 @@ game agent's manual.
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): its tile's floor; 0 outside the map.
 - `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
+- `frustumGeometry` (function from [`engine/gfx/geometry/frustum.ts`](../engine/gfx/geometry/frustum.ts)): A frustum standing on the ground (see the file comment).
+- `FrustumOptions` (interface from [`engine/gfx/geometry/frustum.ts`](../engine/gfx/geometry/frustum.ts)): A frustum's sizes in metres and its tessellation.
 - `GamepadLike` (interface from [`engine/input/devices/gamepad.ts`](../engine/input/devices/gamepad.ts)): The Gamepad API's `Gamepad`, as far as the device reads it (a test stub gives just this).
+- `GeometryEntry` (type from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): A `geometry` entry: one builder.
+- `GeometryRef` (interface from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): A geometry by id with parameters: what a prop's or a level's `geometry` field may hold beside a bare id.
+- `GeometryReport` (interface from [`engine/gfx/geometry/inspect.ts`](../engine/gfx/geometry/inspect.ts)): What `inspectGeometry` measured.
+- `GeometrySpec` (interface from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): What `defineGeometry` takes: the entry's fields (`params` and `budget` have defaults), `create` typed by `params`.
 - `getActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The action map `id`.
 - `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
+- `getGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): The geometry `id` of `registry` (the shared one by default); a missing id gives `geometry:box`, with a warning.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
 - `getMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): The material `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `material:default`.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
@@ -98,6 +110,7 @@ game agent's manual.
 - `Input` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A page's input.
 - `InputBuffer` (interface from [`engine/input/intents.ts`](../engine/input/intents.ts)): What a body remembers of its buttons across steps: plain data for a component field (`type: 'object'`, default `createInputBuffer()`), so it is hashed, captured and restored.
 - `InputOptions` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): How an input is made; in a page every field has its default.
+- `inspectGeometry` (function from [`engine/gfx/geometry/inspect.ts`](../engine/gfx/geometry/inspect.ts)): Measures `geometry` (see the file comment).
 - `Inspector` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): The inspector, `window.__engine` in a page and what `createHeadless` returns: `help()` lists every member.
 - `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
 - `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
@@ -114,11 +127,20 @@ game agent's manual.
 - `KindSpec` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): How a kind is declared.
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
 - `LEVEL_FORMAT` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level.
+- `LEVEL_RECIPES` (const from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): The engine's v1 recipes, by the name a glyph's `mesh` gives.
+- `LevelCell` (interface from [`engine/gfx/level/cells.ts`](../engine/gfx/level/cells.ts)): One piece of a block mesh: its tiles, its centre on the ground (m), and the way it faces out ([x, z], length 1).
 - `LevelEntry` (type from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): A `level` entry: a level's text and where it came from.
 - `LevelGlyph` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
+- `LevelMeshes` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): A level's meshes (see the file comment).
+- `LevelMeshesOptions` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): What `createLevelMeshes` needs: where materials come from, and optionally more recipes and a log.
+- `LevelMeshPart` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): One level mesh: its descriptor's recipe and glyphs, the mesh, and for a block one cell per instance.
 - `LevelProblem` (interface from [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
+- `LevelRecipe` (interface from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): A level mesh recipe: its shape, materials and shadows.
+- `LevelShape` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): How a recipe draws its pieces: see the file comment.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
 - `LightSpot` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A light spot: a tile's centre, `lightHeight` above its top.
+- `limbGeometry` (function from [`engine/gfx/geometry/limb.ts`](../engine/gfx/geometry/limb.ts)): A tapered limb from the origin up +Y (see the file comment).
+- `LimbOptions` (interface from [`engine/gfx/geometry/limb.ts`](../engine/gfx/geometry/limb.ts)): A tapered limb's sizes in metres and its tessellation.
 - `listActionMaps` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Every action map, sorted by id.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
@@ -129,17 +151,24 @@ game agent's manual.
 - `MaterialSpec` (type from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): What `defineMaterial` takes: any of the fields, each with its default.
 - `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
+- `mergeGeometries` (function from [`engine/gfx/geometry/groups.ts`](../engine/gfx/geometry/groups.ts)): Joins `geometries` into one, in order: their attributes end to end, their indices offset.
 - `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
 - `palette` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A palette's hex colours as sRGB bytes; throws `GFX_EMPTY_PALETTE` naming `what` when it has none.
 - `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
 - `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
 - `pickTone` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): One of `colors`, picked by `value` in [0, 1).
+- `pillarGeometry` (function from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar as one geometry standing on the ground: its parts' boxes, sides then tops.
+- `PillarOptions` (interface from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's footprint and height in metres.
+- `PillarPart` (interface from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): One part of a pillar: a square slab `width` across, from height `from` to `to` (m).
+- `pillarParts` (function from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's parts, bottom to top (see the file comment).
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `Point3` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A point in metres: `[x, y, z]`.
 - `PointName` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): A point a rigid pair can name: a joint, a socket, or the root.
 - `Pose` (class from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): A skeleton pose: the root transform plus each joint's local rotation.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
+- `rampGeometry` (function from [`engine/gfx/geometry/ramp.ts`](../engine/gfx/geometry/ramp.ts)): A ramp or wedge standing on the ground, rising towards +Z (see the file comment).
+- `RampOptions` (interface from [`engine/gfx/geometry/ramp.ts`](../engine/gfx/geometry/ramp.ts)): A ramp's sizes in metres.
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
 - `readKeyboardLayout` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The page's keyboard layout (`navigator.keyboard.getLayoutMap()`, Chromium), or undefined where it is missing.
 - `RebindResult` (type from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): What `rebind` did: the action's codes now, or why it refused and which action holds the code.
@@ -149,7 +178,11 @@ game agent's manual.
 - `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
 - `RESERVED_CODES` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Codes no action map binds: the pause buttons, and keys the browser or the system keeps.
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
+- `ringGeometry` (function from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring lying on the ground (see the file comment).
+- `RingOptions` (interface from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring's radii and height in metres, and its tessellation.
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
+- `roundedBoxGeometry` (function from [`engine/gfx/geometry/roundedBox.ts`](../engine/gfx/geometry/roundedBox.ts)): A rounded box standing on the ground (see the file comment).
+- `RoundedBoxOptions` (interface from [`engine/gfx/geometry/roundedBox.ts`](../engine/gfx/geometry/roundedBox.ts)): A rounded box's size and rounding, in metres.
 - `runningBond` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): Where texel (x, y) falls in a running bond of `cell` = [width, height] texels over a texture of `size`: courses (rows) of cells, odd courses shifted half a cell, the whole layout moved by `phase` texels.
 - `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
@@ -161,6 +194,7 @@ game agent's manual.
 - `SheetFrame` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): One frame of a sheet: a pose, and its label (`#<index>` when absent).
 - `SheetOptions` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): What a sheet draws, and how.
 - `SheetView` (type from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A view's name.
+- `sidesThenTops` (function from [`engine/gfx/geometry/groups.ts`](../engine/gfx/geometry/groups.ts)): Sorts the triangles of `geometry` into its sides (group 0, material 0) then its tops and bottoms (group 1, material 1), and returns it (changed in place).
 - `SimRng` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
 - `SimSettings` (interface from [`engine/core/settings.ts`](../engine/core/settings.ts)): What sim-side code reads settings through (`w.settings` in a scene): no view settings, no writes.
 - `Skeleton` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A humanoid skeleton made from a build: rest offsets, bone lengths, leaf tips and sockets, in metres.
@@ -855,6 +889,86 @@ For the agents who maintain the engine.
 - `FEATURES_CODES` (const): The advice codes of the built-in features, with their fixes.
 - `resolveFeatures` (function): Checks every `feature` entry against `caps` and `gfx.featuresOff`, raises each off feature's advice once, and reports what is on and off.
 
+### [`engine/gfx/geometry/box.ts`](../engine/gfx/geometry/box.ts)
+
+- `boxGeometry` (function): A box standing on the ground, UVs in metres (see the file comment).
+- `BoxOptions` (interface): A box's size in metres.
+
+### [`engine/gfx/geometry/builtins.ts`](../engine/gfx/geometry/builtins.ts)
+
+- `BUILT_IN_GEOMETRY` (const): The kit's entries by id, as `defineGeometry` specs.
+
+### [`engine/gfx/geometry/checks.ts`](../engine/gfx/geometry/checks.ts)
+
+- `assertSegments` (function): Throws `GFX_BAD_GEOMETRY` unless `value` is a whole number of segments of at least `min`.
+- `assertSizes` (function): Throws `GFX_BAD_GEOMETRY` unless every size is a finite number above 0 (or, with `orZero`, at least 0).
+- `badGeometry` (function): Throws `GFX_BAD_GEOMETRY` for `shape` with `problem`, naming what to pass.
+- `GEOMETRY_CODES` (const): The codes the geometry kit raises, with their fixes.
+
+### [`engine/gfx/geometry/frustum.ts`](../engine/gfx/geometry/frustum.ts)
+
+- `frustumGeometry` (function): A frustum standing on the ground (see the file comment).
+- `FrustumOptions` (interface): A frustum's sizes in metres and its tessellation.
+
+### [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)
+
+- `buildGeometry` (function): Builds geometry `ref` (an id, or `{ geometry, params }`) from `registry` (the shared one by default): a new `BufferGeometry` the caller owns and disposes.
+- `defineGeometry` (function): Defines a geometry on `registry` (the shared one by default) and returns it.
+- `GEOMETRY_FIELDS` (const): The fields of a `geometry` entry.
+- `GeometryEntry` (type): A `geometry` entry: one builder.
+- `geometryKind` (function): Declares the kind `geometry` on `registry`, with the kit's built-in shapes, unless it has it.
+- `GeometryRef` (interface): A geometry by id with parameters: what a prop's or a level's `geometry` field may hold beside a bare id.
+- `GeometrySpec` (interface): What `defineGeometry` takes: the entry's fields (`params` and `budget` have defaults), `create` typed by `params`.
+- `getGeometry` (function): The geometry `id` of `registry` (the shared one by default); a missing id gives `geometry:box`, with a warning.
+
+### [`engine/gfx/geometry/groups.ts`](../engine/gfx/geometry/groups.ts)
+
+- `mergeGeometries` (function): Joins `geometries` into one, in order: their attributes end to end, their indices offset.
+- `sidesThenTops` (function): Sorts the triangles of `geometry` into its sides (group 0, material 0) then its tops and bottoms (group 1, material 1), and returns it (changed in place).
+
+### [`engine/gfx/geometry/inspect.ts`](../engine/gfx/geometry/inspect.ts)
+
+- `DEGENERATE_AREA` (const): A triangle smaller than this (m²) is degenerate.
+- `GeometryReport` (interface): What `inspectGeometry` measured.
+- `inspectGeometry` (function): Measures `geometry` (see the file comment).
+
+### [`engine/gfx/geometry/limb.ts`](../engine/gfx/geometry/limb.ts)
+
+- `limbGeometry` (function): A tapered limb from the origin up +Y (see the file comment).
+- `LimbOptions` (interface): A tapered limb's sizes in metres and its tessellation.
+
+### [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)
+
+- `pillarGeometry` (function): A pillar as one geometry standing on the ground: its parts' boxes, sides then tops.
+- `PillarOptions` (interface): A pillar's footprint and height in metres.
+- `PillarPart` (interface): One part of a pillar: a square slab `width` across, from height `from` to `to` (m).
+- `pillarParts` (function): A pillar's parts, bottom to top (see the file comment).
+
+### [`engine/gfx/geometry/ramp.ts`](../engine/gfx/geometry/ramp.ts)
+
+- `rampGeometry` (function): A ramp or wedge standing on the ground, rising towards +Z (see the file comment).
+- `RampOptions` (interface): A ramp's sizes in metres.
+
+### [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)
+
+- `ringGeometry` (function): A ring lying on the ground (see the file comment).
+- `RingOptions` (interface): A ring's radii and height in metres, and its tessellation.
+
+### [`engine/gfx/geometry/roundedBox.ts`](../engine/gfx/geometry/roundedBox.ts)
+
+- `roundedBoxGeometry` (function): A rounded box standing on the ground (see the file comment).
+- `RoundedBoxOptions` (interface): A rounded box's size and rounding, in metres.
+
+### [`engine/gfx/geometry/writer.ts`](../engine/gfx/geometry/writer.ts)
+
+- `createWriter` (function): Makes an empty writer.
+- `cross` (function): `a × b`.
+- `dot` (function): `a · b`.
+- `normalize` (function): `a` scaled to length 1 (the zero vector stays zero).
+- `ProfilePoint` (interface): One ring of a lathe's profile: its radius and height, its normal in the (radial, y) plane, and its v (m).
+- `Vec3` (type): A point or direction in metres: `[x, y, z]`.
+- `Writer` (interface): What the builders write with.
+
 ### [`engine/gfx/idpass.ts`](../engine/gfx/idpass.ts)
 
 - `decodeIds` (function): Decodes an ID-pass readback (RGBA, top row first) into the result, and each pixel's visible object (1-based).
@@ -870,6 +984,30 @@ For the agents who maintain the engine.
 - `marksOf` (function): Numbers the visible objects, largest first: at most `max` (40), each covering at least `minPx` (4) pixels.
 - `UnseenReason` (type): Why a drawable object covers no pixel.
 - `withIdScene` (function): Runs `draw(root)` with `root` a stand-in for `scene` that draws the ID pass: it shares the scene's children, has no background, and overrides every material with the ID material reading `table`; the clear colour is transparent black meanwhile.
+
+### [`engine/gfx/level/cells.ts`](../engine/gfx/level/cells.ts)
+
+- `LevelCell` (interface): One piece of a block mesh: its tiles, its centre on the ground (m), and the way it faces out ([x, z], length 1).
+- `levelCells` (function): The cells of `pieces` in `level`, standing at height `bottom` (see the file comment).
+
+### [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)
+
+- `createLevelMeshes` (function): Draws `level`'s mesh descriptors (see the file comment).
+- `LEVEL_MESH_CODES` (const): The codes the level meshes raise, with their fixes.
+- `LevelMeshes` (interface): A level's meshes (see the file comment).
+- `LevelMeshesOptions` (interface): What `createLevelMeshes` needs: where materials come from, and optionally more recipes and a log.
+- `LevelMeshPart` (interface): One level mesh: its descriptor's recipe and glyphs, the mesh, and for a block one cell per instance.
+
+### [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)
+
+- `FALLBACK_RECIPE` (const): What a recipe nobody defined draws: grey blocks (`material:default`), casting and receiving shadows.
+- `LEVEL_RECIPES` (const): The engine's v1 recipes, by the name a glyph's `mesh` gives.
+- `LevelRecipe` (interface): A level mesh recipe: its shape, materials and shadows.
+- `LevelShape` (type): How a recipe draws its pieces: see the file comment.
+
+### [`engine/gfx/level/surface.ts`](../engine/gfx/level/surface.ts)
+
+- `surfaceGeometry` (function): A flat surface at height `y` over every tile of `pieces`, tiles `tile` metres wide (see the file comment).
 
 ### [`engine/gfx/lookMetrics.ts`](../engine/gfx/lookMetrics.ts)
 
@@ -1457,6 +1595,10 @@ For the agents who maintain the engine.
 - `resultsOf` (function): `fn`'s results on `inputs`, natively or inside `withSimMath` (narrowed to `swap`).
 - `runProbe` (function): Runs every probe natively and inside `withSimMath` (narrowed to `swap`), on `inputs` seeded inputs a function.
 
+### [`tests/pages/level-meshes.ts`](../tests/pages/level-meshes.ts)
+
+- `Shown` (interface): What `show` reports.
+
 ### [`tests/pages/sceneFixture.ts`](../tests/pages/sceneFixture.ts)
 
 - `buildScene` (function): Builds `description` into three.js objects.
@@ -2013,6 +2155,16 @@ For the agents who maintain the engine.
 - `DevServer` (interface): A running dev server.
 - `freePort` (function): Asks the system for a free TCP port on 127.0.0.1.
 - `startVite` (function): Starts Vite on the repository at `root` (default: this repository), on `port` (default: any free port).
+
+### [`tools/qa/geo.ts`](../tools/qa/geo.ts)
+
+- `checkGeometries` (function): The violations of every geometry on `registry` (or those of `ids`), in id order.
+- `checkLevelMeshes` (function): The violations of `level`'s meshes, as item `id`.
+- `default` (default): The `geo` QA family (PLAN.md §8.6, WP 2.4, I-29): `node x qa geo` checks every `geometry` entry the shared registry has (the kit's, engine/gfx/geometry/builtins.ts, and a game's: each `*.ts` module under `labs/<name>/geometry/` imported first), built at its defaults, and the level meshes (engine/gfx/level/meshes.ts) of every level file the `level` family reads (tools/qa/level.ts: `labs/box/levels/`, `fixtures/levels/`; a level that does not compile is the `level` family's to report).
+- `geometryModules` (function): A game's geometry modules, `labs/<name>/geometry/*.ts` (tests excluded), labs and files in name order.
+- `LEVEL_DRAW_CALLS` (const): Draw calls a level's meshes may cost with one shadow map.
+- `LEVEL_VERTICES_PER_TILE` (const): Drawn vertices a level may have per map tile.
+- `MAX_SIZE` (const): The longest a geometry may be on any axis (m).
 
 ### [`tools/qa/level.ts`](../tools/qa/level.ts)
 

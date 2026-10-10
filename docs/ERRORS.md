@@ -305,6 +305,14 @@ Raised by the camera factories, `makePose` and `placeCamera` (engine/gfx/cameras
 
 Raised by `parseCameraCode` (engine/gfx/cameras/codes.ts) for an empty part, a word where a number belongs, the wrong count of numbers, or a number out of its range (each range is named). Every problem is listed at once.
 
+### GFX_BAD_GEOMETRY
+
+- Message: `cannot build the {shape}: {problem}`
+- Fix: pass {expected}
+- Registered in: [`engine/gfx/geometry/checks.ts` line 18](../engine/gfx/geometry/checks.ts)
+
+Raised by the geometry kit (engine/gfx/geometry/) when a builder gets sizes it cannot build: a size of 0 or less, NaN, a limb no longer than the difference of its radii, a ring whose inner radius is not below its outer, fewer segments than the shape needs.
+
 ### GFX_BAD_SHOT_SIZE
 
 - Message: `a shot must be at least 1 × 1 whole pixels, not {width} × {height}`
@@ -352,6 +360,14 @@ Advice from `requestDevice` (engine/gfx/caps.ts): the device is made with every 
 - Registered in: [`engine/gfx/renderer.ts` line 54](../engine/gfx/renderer.ts)
 
 Recorded from the device's `uncapturederror` event (engine/gfx/renderer.ts): a validation, out-of-memory or internal error nothing caught.
+
+### GFX_LEVEL_RECIPE
+
+- Message: `level {level} uses the mesh recipe {recipe}, which no level recipe defines: its tiles are grey blocks`
+- Fix: pass createLevelMeshes a recipe named {recipe} in its recipes option (shape, materials, castShadow and receiveShadow, as engine/gfx/level/recipes.ts writes them), or give the glyph a recipe the engine has: {known}
+- Registered in: [`engine/gfx/level/meshes.ts` line 49](../engine/gfx/level/meshes.ts)
+
+Advice from `createLevelMeshes` (engine/gfx/level/meshes.ts) when a glyph names a mesh recipe that neither the engine (engine/gfx/level/recipes.ts) nor the `recipes` option defines: its tiles are drawn as grey boxes from their floor to their top, so the level still shows where they are.
 
 ### GFX_NO_FLOAT32_FILTERING
 
