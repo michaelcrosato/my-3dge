@@ -277,12 +277,12 @@ describe('the world surface', () => {
 
   it("freezes the intents a step hands its systems, and leaves the caller's object alone", () => {
     const { w } = makeWorld();
-    const intents = { fire: true, move: [1, 0] };
+    const intents: { 'game:fire': boolean; move: [number, number] } = { 'game:fire': true, move: [1, 0] };
     w.systems.add('consume', (_w, given) => {
-      (given as { fire: boolean }).fire = false;
+      (given as { 'game:fire': boolean })['game:fire'] = false;
     });
     expect(() => w.step(intents)).toThrow(TypeError);
-    expect(intents.fire).toBe(true);
+    expect(intents['game:fire']).toBe(true);
   });
 });
 

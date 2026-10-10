@@ -229,7 +229,7 @@ Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step ru
 
 - Message: `system {name}: {problem}`
 - Fix: add each system once, by a unique name: w.systems.add('<name>', (w, intents) => { … }, { phase }), the phase one of intents, ai, anim, physics, readback, rules
-- Registered in: [`engine/sim/systems.ts` line 34](../engine/sim/systems.ts)
+- Registered in: [`engine/sim/systems.ts` line 35](../engine/sim/systems.ts)
 
 Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empty or duplicate name, a run that is not a function, an unknown phase (named with the closest one), or removing a system that was never added.
 

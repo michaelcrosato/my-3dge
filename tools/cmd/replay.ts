@@ -99,7 +99,8 @@ export async function findParting(
   if (!first) return undefined;
   const a = await runs[0].runtime.stateAt(text, first.step);
   const b = await first.other.runtime.stateAt(text, first.step);
-  const garbled = [a, b].some((view) => hashState(view.state, table) !== view.hash);
+  // Stored states (sent from the page, key order not guaranteed): hash them as stored, not live.
+  const garbled = [a, b].some((view) => hashState(view.state, table, false) !== view.hash);
   return { step: first.step, a: runs[0].label, b: first.other.label, ...partingOf(a, b), garbled };
 }
 

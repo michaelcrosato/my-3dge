@@ -327,7 +327,7 @@ For the agents who maintain the engine.
 ### [`engine/sim/systems.ts`](../engine/sim/systems.ts)
 
 - `createSystems` (function): Makes an empty schedule.
-- `Intents` (type): What the sim reads from outside in one step, recorded by replays (the vocabulary arrives in WP 1.5).
+- `Intents` (re-export): What the sim reads from outside in one step, recorded by replays (the vocabulary: engine/input/intents.ts).
 - `Phase` (type): A phase of the step.
 - `phaseIndex` (function): The place of `phase` in the step (`timers` sits just before `rules`).
 - `PHASES` (const): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.

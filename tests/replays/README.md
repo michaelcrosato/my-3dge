@@ -44,3 +44,10 @@ The kernel replays (`kernel-*.replay.json`) run fixtures/scenes/kernel/index.ts.
 part at step 0 (kernel-crowd) and by step 60 (kernel-movers), so their one set of goldens proves the swap end to end.
 On another platform a replay runs twice, compares the runs, and reports "golden: other platform". The
 `determinism-debugging` skill (.claude/skills/determinism-debugging/SKILL.md) says what to check when runs part.
+
+## History
+
+- The kernel goldens were re-recorded (`--update`, Node ×3 and Chromium ×3 agreeing) when the hash format became
+  `my3dge-state/2` (the WP-1.4 review fixes, ADR-0006 amendment 3: the world's step rate is hashed). The runs
+  themselves did not change: each replay's final state, step rate and format tag aside, is the same field for field
+  as under `my3dge-state/1`; only the hashes moved.

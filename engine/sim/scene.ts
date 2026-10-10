@@ -205,7 +205,7 @@ export function startScene<C extends object = AnyComponents, E extends EventMap 
     log: options.log,
     physics: options.physics,
   });
-  world.systems.add('scene', (w, intents) => entry.step(w, intents as Intents), { phase: 'intents' });
+  world.systems.add('scene', (w, intents) => entry.step(w, intents), { phase: 'intents' });
   world.run((w) => entry.setup(w));
   return { scene: entry, world, settings };
 }

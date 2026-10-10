@@ -28,6 +28,7 @@
  */
 import { codeError, defineCodes, didYouMean } from '../core/log';
 import { show } from '../core/schema';
+import type { Intents } from '../input/intents';
 
 /** The codes this module raises, with their fixes. */
 export const SYSTEM_CODES = defineCodes('sim', {
@@ -58,8 +59,8 @@ export const STEP_ORDER = [
   'events',
 ] as const;
 
-/** What the sim reads from outside in one step, recorded by replays (the vocabulary arrives in WP 1.5). */
-export type Intents = Readonly<Record<string, unknown>>;
+/** What the sim reads from outside in one step, recorded by replays (the vocabulary: engine/input/intents.ts). */
+export type { Intents };
 
 /** A system: called once per step with the world and the step's intents. */
 export type SystemFn<W> = (w: W, intents: Intents) => void;
