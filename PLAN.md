@@ -1232,7 +1232,7 @@ Vitest prints its `dot` reporter and writes `out/test/report.json`; Playwright p
 | `x inspect [--page p]` | Keep one headless page open over the Vite dev server, for `x eval`, `x dump` and `x set` (and the MCP server, once WP 7.6 is built). `x shot` and `x film` reuse it when it runs. It reloads when Vite reports a change, and says so in its next reply |
 | `x eval "<js>"` / `x dump [--step n]` | Talk to the inspect session: evaluate, or dump the scene and state as text |
 | `x set <key> <value> [--scene s]` | Validate a setting against the schema; print it as a URL parameter and apply it to the inspect session |
-| `x shot <page> [--scene s] [--cam code] [--set k=v…] [--ids] [--metrics] [--marks]` | Render; read back a render target; write PNG plus look metrics plus ID-pass stats; `--marks` numbers what the ID pass sees, with a legend |
+| `x shot <page> [--scene s] [--cam code] [--set k=v…] [--ids] [--metrics] [--marks] [--png] [--thumb case [--update]]` | Render; read back a render target; write look metrics plus ID-pass stats (a PNG only with `--png` or `--marks`); `--marks` numbers what the ID pass sees, with a legend; `--thumb` compares a text thumbnail with its baseline and `--update` records it |
 | `x film <page> --steps "…" [--scene s] [--seed s] [--compare <ref>]` | Filmstrip contact sheet, with a diff against `<ref>` (default `HEAD`) built in a temporary worktree |
 | `x sheet <rig\|move\|clip>` | 3D sheet: states × cameras, plus numeric checks |
 | `x gallery <kind> [id]` | Contact sheets and JSON from the registries' `gallery` hooks (WP 7.7, on demand) |
