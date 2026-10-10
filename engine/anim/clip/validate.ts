@@ -11,12 +11,16 @@
  * The validator warns when a limb direction collapses between opposite keys, when a twist jumps more than 120° while
  * the bend is over 140° (the v1 pop: HERO `Victory`, 1.2–1.27 s), when a knee bends out of range, when an angle goes
  * past ±540°, and when the hips go below the floor. Warnings are data (`ClipWarning`); WP 8.6's QA family reports
- * them, with a baseline.
+ * them, with a baseline. `poseError` and `poseMeanError` measure how far two decoded poses differ (the source's
+ * `error` and `meanError`: a fit, a round trip).
  *
  * @example
- * const clip = parseClip('{"dur": 1, "keys": [{"t": 0, "hips": [0, 0, 100], …}]}', 'Idle');
- * validateClip(clip).map((w) => w.message); // [] for a clean clip
- * parseClip('{"keys": [{"t": 0.5}]}'); // throws [ANIM_CLIP_MISSING_FIELD] the clip: key 1 (t 0.5) has no "hips": …
+ * import { standing } from '../../../tests/unit/anim/clip-fixtures';
+ * const clip = parseClip(JSON.stringify({ dur: 1, keys: [standing(1), standing(0)] }), 'Idle');
+ * clip.keys.map((key) => key.t); // [0, 1]: sorted by time
+ * validateClip(clip); // []: nothing that plays badly
+ * try { parseClip('{"keys": [{"t": 0.5}]}'); } catch (error) { console.log(error.message); }
+ * // [ANIM_CLIP_MISSING_FIELD] the clip: key 1 (t 0.5) has no "hips": add "hips": [forward, right, up] …
  * @see engine/anim/clip/validate.test.ts
  */
 import { codeError, codeInfo, defineCodes, didYouMean, fill, type CodeValues } from '../../core/log';
@@ -77,7 +81,7 @@ export const CLIP_CODES = defineCodes('anim', {
   },
   ANIM_CLIP_BAD_KEY: {
     template: '{where}: key {key} is {value}, not a key pose',
-    fix: 'write each key as an object holding "t" (seconds) and the fields LEGEND lists',
+    fix: 'write each key as an object holding "t" (seconds) and the fields LEGEND lists (engine/anim/clip/lens.ts)',
   },
   ANIM_CLIP_NO_TIME: {
     template: '{where}: key {key} has no time "t"',
@@ -93,11 +97,11 @@ export const CLIP_CODES = defineCodes('anim', {
   },
   ANIM_CLIP_UNKNOWN_FIELD: {
     template: '{where}: key {key} (t {t}) has no field "{field}"{suggestion}',
-    fix: 'use only the key fields {fields} (LEGEND in engine/anim/clip/readable.ts says what each means)',
+    fix: 'use only the key fields {fields} (LEGEND, in engine/anim/clip/lens.ts, says what each means)',
   },
   ANIM_CLIP_BAD_HEADER: {
     template: '{where}: "{field}" is {value}',
-    fix: 'make "{field}" {shape}, or leave it out',
+    fix: 'make "{field}" {shape}',
     doc: 'Raised by `parseClip` and `parseClipSet` (engine/anim/clip/validate.ts) for a clip or set header field of the wrong type or shape, and for a clip whose `src` is not one of its set’s sources.',
   },
   ANIM_CLIP_UNKNOWN_HEADER: {
@@ -250,6 +254,16 @@ function parseKey(key: unknown, index: number, where: string): ClipKey {
   return { ...key } as unknown as ClipKey;
 }
 
+/** Text read as JSON with `//` comment lines skipped, or an object as it is. */
+function readJson(input: string | object, where: string): unknown {
+  if (typeof input !== 'string') return input;
+  try {
+    return JSON.parse(input.replace(/^\s*\/\/.*$/gm, ''));
+  } catch (error) {
+    throw codeError('ANIM_CLIP_NOT_JSON', { where, problem: (error as Error).message }, error);
+  }
+}
+
 /** `clip "<name>"`, or `the clip`, as messages name it. */
 const clipWhere = (name: unknown) => (typeof name === 'string' && name ? `clip "${name}"` : 'the clip');
 
@@ -259,15 +273,8 @@ const clipWhere = (name: unknown) => (typeof name === 'string' && name ? `clip "
  * Throws an `ANIM_CLIP_*` error naming the key, its time and the field, with the fix.
  */
 export function parseClip(input: string | object, name?: string): Clip {
-  let raw: unknown = input;
   const where = clipWhere(name ?? (isObject(input) ? input.clip : undefined));
-  if (typeof input === 'string') {
-    try {
-      raw = JSON.parse(input.replace(/^\s*\/\/.*$/gm, ''));
-    } catch (error) {
-      throw codeError('ANIM_CLIP_NOT_JSON', { where, problem: (error as Error).message }, error);
-    }
-  }
+  const raw = readJson(input, where);
   if (!isObject(raw)) throw codeError('ANIM_CLIP_NO_KEYS', { where });
   const label = name === undefined ? clipWhere(raw.clip) : where;
   if (!Array.isArray(raw.keys) || !raw.keys.length) throw codeError('ANIM_CLIP_NO_KEYS', { where: label });
@@ -281,14 +288,7 @@ export function parseClip(input: string | object, name?: string): Clip {
  * must name one of the set's `sources` when it has them. Format-1 sets and shardfall's parse unchanged.
  */
 export function parseClipSet(input: string | object): ClipSet {
-  let raw: unknown = input;
-  if (typeof input === 'string') {
-    try {
-      raw = JSON.parse(input.replace(/^\s*\/\/.*$/gm, ''));
-    } catch (error) {
-      throw codeError('ANIM_CLIP_NOT_JSON', { where: 'the set', problem: (error as Error).message }, error);
-    }
-  }
+  const raw = readJson(input, 'the set');
   const header = isObject(raw) ? raw : {};
   const where = `set "${String(header.set ?? '')}"`;
   if (!isText(header.set) || !isObject(header.clips)) {
@@ -371,7 +371,7 @@ export function validateClip(clip: Clip, name = clip.clip): ClipWarning[] {
   return found;
 }
 
-/** Body points shown in errors: all but the finger helpers, which only aim a blade. */
+/** The body points the error metrics compare: all but the finger helpers, which only aim a blade. */
 const SHOWN = POSE_POINTS.map((p, i) => (/^(index|pinky)/.test(p) ? -1 : i * 3)).filter((i) => i >= 0);
 
 /** The largest distance (mm) between matching body points of two decoded poses, the finger helpers left out. */

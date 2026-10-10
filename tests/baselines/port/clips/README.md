@@ -3,8 +3,8 @@
 Written by `node x port refs --clips` (tools/cmd/port.ts, tools/anim/legacy-readable.ts, PLAN.md WP 8.2), which needs
 the source (`node x src`); never by hand. `--check` and `x check` compare them with `../checksums.json`, offline.
 
-- **Source:** my-3d2dge@e37e4eedcd23326f3734188b9574a4aa635fcbd3. The oracle is its own codec, run in a Node 24 `vm` context; the
-  clips are its own sets, never data/anim/sets/:
+- **Source:** my-3d2dge@e37e4eedcd23326f3734188b9574a4aa635fcbd3. The oracle is its own codec, run in a Node
+  24 `vm` context; the clips are its own sets, never data/anim/sets/:
   - `src/mocap/readable.js`: sha256 627ab2b65c6a4c88fd326c1f5039aba50afabc4a79875085e1d7c54fcc72144e
   - `src/mocap/sets/quaternius.js`: sha256 c5ea4a45f039cb8676fafaa26f26041a0a34d527ba1d18e13e9fce1dfad5afc1
   - `src/mocap/sets/mesh2motion.js`: sha256 a1f90daff84348244e85743ac4668a49644901d1c907a46374ee3d6419e2f091

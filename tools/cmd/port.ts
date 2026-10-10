@@ -3,8 +3,7 @@
  * engine's own outputs as text JSON in `tests/baselines/port/`, with a generated README that says what each file
  * holds, the source commit, the sampling and the conversion to my-3dge's frame (Appendix C). Consumers: WP 1.1
  * (`rng`, `hash2`, `noise2`, angle and colour helpers), 3.6 (the Humanoid state matrix), 5.3 (Blob updates) and 6.1
- * (`E.move`); WP 8.2 adds the library's clips: `--clips` writes only `clips/` (tools/anim/legacy-readable.ts records
- * them), and every frame to `out/port/clips/`; each run keeps the checksums of the files the other writes.
+ * (`E.move`); WP 8.2 adds the library's clips: `--clips` (tools/anim/legacy-readable.ts) writes only `clips/`.
  *
  * `refs` loads `my-3d2dge:engine/my-3d2dge.js` from `$MY3D2DGE_SRC` (resolved as tools/lib/source.ts does) into a
  * Node `vm` context, as `my-3d2dge:tools/mocap-lib.mjs:7` loads its codec; `console` is the only shim, and any
@@ -15,12 +14,12 @@
  * `-0` kept), keys keep a fixed order. `checksums.json` holds each file's sha256; `--check` (offline, no source) and
  * the `port` plugin of `x check` compare them. A changed vector is a changed baseline: give the reason (AGENTS.md).
  *
- * Usage: node x port refs [--clips] [--check]. Exit 0; 1 if the source is unresolved, the engine warns or a check fails.
+ * Usage: node x port refs [--clips] [--check]. Exit 1 if the source is unresolved, the engine speaks or a check fails.
  * @see tools/cmd/port.test.ts
  */
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative, sep } from 'node:path';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import vm from 'node:vm';
 import { clipVectorFiles } from '../anim/legacy-readable';
 import { fnv1a } from '../lib/hash';
@@ -356,9 +355,8 @@ export function checkVectors(root: string): { failures: Finding[]; files: number
     return sha256(readFileSync(file)) === sums[name] ? '' : 'CHANGED';
   };
   const fix = 'only node x port refs writes here: regenerate, and give the reason (a baseline changed)';
-  const found = existsSync(dir) ? readdirSync(dir, { recursive: true, withFileTypes: true }) : [];
-  const paths = found.filter((f) => f.isFile()).map((f) => relative(dir, join(f.parentPath, f.name)).split(sep));
-  const names = new Set([CHECKSUMS, ...Object.keys(sums), ...paths.map((parts) => parts.join('/'))]);
+  const listed = existsSync(dir) ? readdirSync(dir, { recursive: true, encoding: 'utf8' }) : [];
+  const names = new Set([CHECKSUMS, ...Object.keys(sums), ...listed.filter((n) => statSync(join(dir, n)).isFile())]);
   const failures = [...names].sort().flatMap((name) => {
     const [id, file] = [problem(name), `${PORT_DIR}/${name}`];
     return id ? [{ id: `PORT_${id}`, message: `${file} is ${id.toLowerCase()}: ${fix}`, file }] : [];

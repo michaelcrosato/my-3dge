@@ -10,9 +10,10 @@
  * (little-endian float32 bytes) and regenerable. The decodes read the source's sets, never data/anim/sets/.
  *
  * @example
- * const MR = loadLegacyReadable(source);
- * const set = readLegacySet(source, 'quaternius');
- * MR.pose(set.sources.UAL1.rest, set.clips.Idle_Loop, 0.5, new Float64Array(MR.P * 3));
+ * frameCount(2.5); // 76 frames at 30 fps
+ * sampledFrames(76); // [0, 25, 50]: the frames committed
+ * float32Number(Math.fround(0.1)); // 0.1, not 0.10000000149011612
+ * // with the checkout: loadLegacyReadable(source).pose(set.sources[clip.src].rest, clip, t, out)
  * @see engine/anim/clip/readable.test.ts
  */
 import { createHash } from 'node:crypto';
@@ -130,8 +131,8 @@ export function clipVectorsReadme(sourcePath: string, commit: string): string {
 Written by \`node x port refs --clips\` (tools/cmd/port.ts, tools/anim/legacy-readable.ts, PLAN.md WP 8.2), which needs
 the source (\`node x src\`); never by hand. \`--check\` and \`x check\` compare them with \`../checksums.json\`, offline.
 
-- **Source:** my-3d2dge@${commit}. The oracle is its own codec, run in a Node ${process.versions.node.split('.')[0]} \`vm\` context; the
-  clips are its own sets, never data/anim/sets/:
+- **Source:** my-3d2dge@${commit}. The oracle is its own codec, run in a Node
+  ${process.versions.node.split('.')[0]} \`vm\` context; the clips are its own sets, never data/anim/sets/:
 ${shas}
 - **Decodes:** \`MR.pose(rest, clip, frame / ${CLIP_FPS})\` for every frame of every clip, \`frames\` = round(dur × ${CLIP_FPS}) + 1,
   on the clip's own source's rest body (\`set.sources[clip.src].rest\`), as the source's Float32Array holds them: the

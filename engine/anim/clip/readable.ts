@@ -5,19 +5,22 @@
  * curated clip decodes within 0.001 mm of the source decoder (tools/anim/legacy-readable.ts, the oracle).
  *
  * A key names what an animator would: where the hips are, how the body, chest and head turn, lean and tilt, how the
- * shoulders reach and shrug, which way each limb points with its bend and twist, and how the feet point (`LEGEND`
- * in lens.ts). Limbs are a direction plus a bend, so the same clip fits any build and mirrors by swapping L and R. Between keys
- * every stored number is in-betweened linearly; loops wrap, one-shots hold their last pose (`keyAt`).
+ * shoulders reach and shrug, which way each limb points with its bend and twist, and how the feet point (lens.ts's
+ * `LEGEND`). Limbs are a direction plus a bend, so the same clip fits any build and mirrors by swapping L and R.
+ * Between keys every stored number is in-betweened linearly; loops wrap, one-shots hold their last pose (`keyAt`).
  *
  * Invariants: the decode reads format-1 fields only; format 2's key fields (hands, foot roll, root yaw, the spine
  * override, grips) are carried, in-betweened, mirrored and printed, and WP 8.8's importer, which first writes them,
  * adds their decode with their encode (as the source shares `torso` between the two). Points are millimetres in the
- * rig frame: f forward, r right, z up. engine/anim/clip/validate.ts reads clips in; mirror.ts and lens.ts derive them.
+ * rig frame: f forward, r right, z up. validate.ts reads clips and sets in (and types the `RestBody` their sources
+ * measured); lens.ts prints them; mirror.ts mirrors them.
  *
  * @example
- * const rest = set.sources[clip.src].rest; // a RestBody, measured by the importer
- * const points = samplePose(rest, clip, 0.5); // a Float32Array: 36 points × [f, r, z], mm
- * const fistHeight = points[POINT_INDEX.fistR * 3 + 2];
+ * import { REST, standing } from '../../../tests/unit/anim/clip-fixtures'; // a measured rest body, a standing key
+ * const clip = { dur: 1, keys: [standing(0), { ...standing(1), hips: [0, 0, 80] }] };
+ * keyAt(clip, 0.5).hips; // [0, 0, 90]: every number in-betweened
+ * const points = samplePose(REST, clip, 0.5); // a Float32Array: 36 points × [f, r, z], mm
+ * points[POINT_INDEX.pelvis * 3 + 2]; // 825.03: 90% of the standing pelvis height, REST.H0
  * @see engine/anim/clip/readable.test.ts
  */
 import { KEY_ARRAYS, KEY_NUMBERS } from './lens';

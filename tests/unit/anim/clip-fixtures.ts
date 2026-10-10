@@ -7,8 +7,9 @@
  * mirror each other), so the offline tests decode on a real body without the source.
  *
  * @example
+ * import { samplePose } from '../../../engine/anim/clip/readable';
  * const clip = clipOf([standing(0), { ...standing(1), hips: [0, 0, 80] }]);
- * samplePose(REST, clip, 0.5); // the pelvis at 90% of REST.H0
+ * samplePose(REST, clip, 0.5)[2]; // 825.03: the pelvis at 90% of REST.H0
  * @see engine/anim/clip/readable.test.ts
  */
 import type { Clip, ClipKey } from '../../../engine/anim/clip/readable';

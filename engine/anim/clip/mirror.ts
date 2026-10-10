@@ -12,8 +12,10 @@
  * (a missing bend or twist becomes 0, and a zero twist −0, as in the source), so it decodes within 0.5 mm of it.
  *
  * @example
- * const left = mirrorClip(clip); // `Punch_R` → `Punch_R_Mirror`, the punch thrown with the left arm
- * left.keys[0].armL; // clip.keys[0].armR with its twist negated
+ * import { busy } from '../../../tests/unit/anim/clip-fixtures';
+ * const punch = { clip: 'Punch_R', dur: 0, keys: [busy(0)] };
+ * const left = mirrorClip(punch); // 'Punch_R_Mirror': the same motion, led by the left arm
+ * left.keys[0].armL; // [100, -10, 20, 15, 45]: the right arm's, its twist negated
  * @see engine/anim/clip/mirror.test.ts
  */
 import type { Clip, ClipContact, ClipEvent, ClipKey, LimbPose, Triple } from './readable';

@@ -1,7 +1,8 @@
 /**
- * @file How a clip reads (PLAN.md §10.2, WP 8.2): `LEGEND`, what every field means; `clipText`, the text an agent
- * reads and edits, ported from `my-3d2dge:src/mocap/readable.js`'s `text` with no change in its output; and the
- * normalized lens, every angle folded to (−180°, 180°] for reading, without changing the stored data.
+ * @file How a clip reads (PLAN.md §10.2, WP 8.2): `LEGEND`, what every key field means, and each field's shape
+ * (`KEY_ARRAYS`, `KEY_NUMBERS`, `ANGLE_ENTRIES`), which parsing, in-betweening and the validator read; `clipText`, the
+ * text an agent reads and edits, ported from `my-3d2dge:src/mocap/readable.js`'s `text` with no change in its output;
+ * and the normalized lens, every angle folded to (−180°, 180°] for reading, without changing the stored data.
  *
  * Importers unwrap angles so each key continues from the one before (a spin keeps counting past 360°), which keeps
  * the in-betweens right but makes a single key hard to read; the lens shows the same pose at every key.
@@ -13,9 +14,11 @@
  * read unchanged.
  *
  * @example
- * const spun = { ...clip, keys: [{ ...clip.keys[0], body: [450, 10, -370] }] };
- * normalizedLens(spun).keys[0].body; // [90, 10, -10]
- * clipText(normalizedLens(clip)); // the text `x anim show --lens` prints
+ * import { standing } from '../../../tests/unit/anim/clip-fixtures';
+ * const clip = { dur: 0, keys: [{ ...standing(0), body: [450, 10, -370] }] };
+ * normalizedLens(clip).keys[0].body; // [90, 10, -10]: the same pose, read at a glance
+ * foldAngle(190); // -170
+ * clipText(clip).split('\n')[2]; // '   "hips":[0,0,100], "body":[450,10,-370], …': the stored numbers
  * @see engine/anim/clip/lens.test.ts
  */
 import type { Clip, ClipKey } from './readable';

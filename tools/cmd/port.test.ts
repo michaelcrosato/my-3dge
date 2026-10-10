@@ -3,12 +3,15 @@
  * on a temporary directory (a changed, missing or unlisted file fails; a rewrite drops only the files it wrote), the
  * usage errors, and `--check` plus the `x check` plugin on the committed vectors. With the my-3d2dge checkout (else
  * deferred: no source): a smoke run and the determinism of a small subset, regenerated in two fresh `vm` contexts
- * and compared with each other and with the committed records, byte for byte.
+ * and compared with each other and with the committed records, byte for byte. WP 8.2's `--clips`: a run keeps the
+ * checksums of the files the other writes, files in `clips/` are checked like the rest, and, with the checkout, the
+ * clip vectors regenerate byte for byte as committed.
  */
 import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
+import { CURATED_SETS, legacyClipVectors, loadLegacyReadable, readLegacySet } from '../anim/legacy-readable';
 import { requireSource } from '../lib/source';
 import { dispatch, ROOT } from '../x';
 import port, {
@@ -109,6 +112,41 @@ describe('node x port', () => {
     expect(await dispatch(['port'], { root, commands, print })).toBe(2);
     expect(await dispatch(['port', 'clips'], { root, commands, print })).toBe(2);
     expect(await dispatch(['port', 'refs', '--chek'], { root, commands, print })).toBe(2);
+  });
+
+  it('takes --clips', async () => {
+    expect(await dispatch(['port', 'refs', '--clips', '--check'], { print })).toBe(0);
+    expect(committed(CHECKSUMS).files).toHaveProperty(['clips/quaternius.json']);
+  });
+});
+
+describe('the clip vectors (WP 8.2)', () => {
+  it('keep the other run’s checksums, and are checked in their subdirectory like the rest', () => {
+    const root = sandbox({ 'a.json': '[1]\n', 'README.md': '# r\n' });
+    const [dir, clips] = [join(root, PORT_DIR), (name: string) => name.startsWith('clips/')];
+    writeVectors(dir, { 'clips/one.json': '[2]\n', 'clips/README.md': '# c\n' }, clips);
+    expect(checkVectors(root)).toEqual({ failures: [], files: 4 });
+    writeVectors(dir, { 'a.json': '[1.5]\n' }, (name) => !clips(name));
+    const sums = () => Object.keys(JSON.parse(readFileSync(join(dir, CHECKSUMS), 'utf8')).files);
+    expect(sums()).toEqual(['a.json', 'clips/README.md', 'clips/one.json']);
+    writeVectors(dir, { 'clips/two.json': '[3]\n' }, clips);
+    expect(sums()).toEqual(['a.json', 'clips/two.json']);
+    expect(checkVectors(root)).toEqual({ failures: [], files: 2 });
+    writeFileSync(join(dir, 'clips/two.json'), '[4]\n');
+    writeFileSync(join(dir, 'clips/stray.json'), '[]\n');
+    expect(checkVectors(root).failures.map((f) => [f.id, f.file])).toEqual([
+      ['PORT_UNLISTED', `${PORT_DIR}/clips/stray.json`],
+      ['PORT_CHANGED', `${PORT_DIR}/clips/two.json`],
+    ]);
+  });
+
+  it('regenerate byte for byte from the source, as committed', (context) => {
+    const source = requireSource('my-3d2dge', context);
+    const MR = loadLegacyReadable(source);
+    for (const name of CURATED_SETS) {
+      const vectors = legacyClipVectors(MR, readLegacySet(source, name), `src/mocap/sets/${name}.js`);
+      expect(`${layout(vectors)}\n`).toBe(readFileSync(join(ROOT, PORT_DIR, 'clips', `${name}.json`), 'utf8'));
+    }
   });
 });
 
