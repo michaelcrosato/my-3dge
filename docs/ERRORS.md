@@ -5,4 +5,12 @@
 Every code the engine prints, as `[CODE] message`, with its fix. Each module registers its own codes with
 `defineCodes` beside the code that raises them; tools/lib/docs.ts says how they are read.
 
-No module registers a code yet.
+## gfx
+
+### GFX_NO_WEBGPU
+
+- Message: `WebGPU is unavailable: {reason}`
+- Fix: open the page in a browser with WebGPU and hardware acceleration on (Chrome or Edge 113+, Safari 26+); headless, launch Chromium with WEBGPU_FLAGS from tools/lib/browser.ts (PLAN.md §8.8)
+- Registered in: [`engine/gfx/renderer.ts` line 38](../engine/gfx/renderer.ts)
+
+Raised at startup, before anything touches the GPU, when the browser has no `navigator.gpu`, gives no adapter or device, or three.js starts another backend than WebGPU. WebGPU is the only renderer: there is no WebGL fallback (PLAN.md §6.7), so nothing starts, and a page shows this message with its fix.

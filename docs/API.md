@@ -15,11 +15,26 @@ Neither barrel exists yet.
 
 For the agents who maintain the engine.
 
+### [`engine/gfx/renderer.ts`](../engine/gfx/renderer.ts)
+
+- `createRenderer` (function): Starts three.js's `WebGPURenderer` on `canvas`, on WebGPU only: the adapter check, a device with every feature the adapter offers, `await renderer.init()`, then the backend assertion.
+- `Gfx` (interface): A started renderer: three.js's `WebGPURenderer`, the device it draws with, and its report.
+- `GFX_CODES` (const): The codes the renderer raises, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `GfxCode` (type): A code the renderer raises: a key of `GFX_CODES`.
+- `GfxError` (class): A renderer failure: its code, the message from the code's template, and the code's fix.
+- `GfxInfo` (interface): What the renderer reports about itself (the start of `__engine.info()`, PLAN.md §8.3).
+- `requestWebGPU` (function): Asks `gpu` (by default the browser's `navigator.gpu`) for an adapter; rejects with `GfxError` `GFX_NO_WEBGPU` when there is no WebGPU or no adapter.
+
 ### [`eslint.config.js`](../eslint.config.js)
 
 - `configure` (function): Builds the whole config; `switches` defaults to `SWITCHES` (tests turn every switch on).
 - `default` (default): ESLint's settings for T0 (PLAN.md §6.10; `npm run lint`, inside `npm run check`): typescript-eslint's recommended rules without type information (so T0 stays fast), the file-comment and size rules, then the doctrine's rule families from tools/eslint/, one block per family, each message naming the fix.
 - `SWITCHES` (const): Rules written ahead of the code they guard.
+
+### [`labs/hello/hello.ts`](../labs/hello/hello.ts)
+
+- `HelloView` (interface): A started hello scene.
+- `startHello` (function): Starts the renderer on `canvas` (rejecting with `GfxError` `GFX_NO_WEBGPU` without WebGPU), builds the scene, and draws the first frame, directly or through the post pass; resolves once the GPU has finished it.
 
 ### [`playwright.config.ts`](../playwright.config.ts)
 
@@ -144,6 +159,15 @@ For the agents who maintain the engine.
 - `QaViolation` (interface): One violation a family found; a larger `value` is worse.
 - `readBaselines` (function): Reads every baseline file of `family`, with a failure per malformed file or entry.
 - `runQa` (function): Runs one family against its baselines; T1 tests call this (`expect((await runQa(ROOT, 'level')).failures)…`).
+
+### [`tools/cmd/shot.ts`](../tools/cmd/shot.ts)
+
+- `default` (default): Renders a page on WebGPU in the platform's Chromium and writes what it drew: a PNG and its look metrics.
+- `frameMetrics` (function): Measures a frame of row-major RGBA bytes (4 a pixel).
+- `FrameMetrics` (interface): The look metrics of one RGBA frame (PLAN.md §8.5; WP 2.6 adds the ID pass's and edge density).
+- `judgeFrame` (function): The verdict on a frame's metrics: a blank frame fails; an almost empty one (coverage under 0.5%) warns.
+- `READY_TIMEOUT_MS` (const): How long a page may take to signal ready or an error, in milliseconds.
+- `resolvePage` (function): Turns a page argument into the URL path to open (relative to the server) and the file that must exist for it.
 
 ### [`tools/cmd/src.ts`](../tools/cmd/src.ts)
 

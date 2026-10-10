@@ -16,6 +16,20 @@ advice codes are in [ERRORS.md](ERRORS.md).
   - Exports: `default`
   - Tests: [`tools/lib/vite.test.ts`](../tools/lib/vite.test.ts)
 
+## engine/gfx
+
+- [`renderer.ts`](../engine/gfx/renderer.ts): The WebGPU renderer's bootstrap (PLAN.md §6.7): WebGPU or nothing.
+  - Exports: `createRenderer`, `Gfx`, `GFX_CODES`, `GfxCode`, `GfxError`, `GfxInfo`, `requestWebGPU`
+  - Tests: [`engine/gfx/renderer.test.ts`](../engine/gfx/renderer.test.ts), [`tests/e2e/hello.spec.ts`](../tests/e2e/hello.spec.ts)
+
+## labs/hello
+
+- [`boot.ts`](../labs/hello/boot.ts): The hello page's entry (labs/hello/index.html), a harness page proving that three.js r182 draws on WebGPU here: it publishes `window.__engine` with `ready`, `errors` and a minimal `info()` (PLAN.md §8.3), then loads the scene (labs/hello/hello.ts) by dynamic import and draws it on every animation frame.
+  - Tests: [`tests/e2e/hello.spec.ts`](../tests/e2e/hello.spec.ts)
+- [`hello.ts`](../labs/hello/hello.ts): The hello page's scene (labs/hello/): a lit procedural cube with a `MeshStandardMaterial`, drawn on WebGPU through engine/gfx/renderer.ts, either directly or through one `PostProcessing` pass whose output is a TSL colour grade (no MRT).
+  - Exports: `HelloView`, `startHello`
+  - Tests: [`tests/e2e/hello.spec.ts`](../tests/e2e/hello.spec.ts)
+
 ## tests/e2e
 
 - [`fixtures.ts`](../tests/e2e/fixtures.ts): The shared e2e fixture (PLAN.md §8.8): every suite imports `test` and `expect` from here.
@@ -64,6 +78,9 @@ advice codes are in [ERRORS.md](ERRORS.md).
 - [`qa.ts`](../tools/cmd/qa.ts): Runs content QA for the families named, against their baselines (PLAN.md §8.6).
   - Exports: `compareWithBaselines`, `default`, `loadFamily`, `QaBaseline`, `QaContext`, `qaFamilies`, `QaFamily`, `QaViolation`, `readBaselines`, `runQa`
   - Tests: [`tools/cmd/qa.test.ts`](../tools/cmd/qa.test.ts)
+- [`shot.ts`](../tools/cmd/shot.ts): Renders a page on WebGPU in the platform's Chromium and writes what it drew: a PNG and its look metrics.
+  - Exports: `default`, `frameMetrics`, `FrameMetrics`, `judgeFrame`, `READY_TIMEOUT_MS`, `resolvePage`
+  - Tests: [`tools/cmd/shot.test.ts`](../tools/cmd/shot.test.ts)
 - [`src.ts`](../tools/cmd/src.ts): Prints and checks the read-only source checkouts, `$MY3D2DGE_SRC` and `$SHARDFALL_SRC`, at their pins.
   - Exports: `default`
 
