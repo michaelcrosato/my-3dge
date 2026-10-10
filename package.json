@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache --cache-location node_modules/.cache/eslint/ .",
     "format": "prettier --write --cache .",
-    "check": "tsc --noEmit && eslint --cache --cache-location node_modules/.cache/eslint/ . && prettier --check --cache . && node x check",
+    "check": "node tools/checkAll.ts",
     "test": "vitest run",
     "e2e": "playwright test"
   },

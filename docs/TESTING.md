@@ -5,7 +5,7 @@ it cannot drift from them (PLAN.md §8.2, §8.8).
 
 ## The tiers
 
-- **T0, `npm run check`**: types, ESLint, Prettier, then `node x check` (the asset scan, the pins, docs drift). Run
+- **T0, `npm run check`**: types, ESLint, Prettier and `node x check`, in parallel (`tools/checkAll.ts`) (the asset scan, the pins, docs drift). Run
   it after every edit.
 - **T1, `npm test`**: Vitest in Node. Unit tests sit beside their modules (`name.test.ts`); the tools' tests, the
   advice trap's harness tests and the `@example` blocks (tests/unit/examples.test.ts) run here too. Run it before

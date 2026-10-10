@@ -54,6 +54,8 @@ advice codes are in [ERRORS.md](ERRORS.md).
 
 ## tools
 
+- [`checkAll.ts`](../tools/checkAll.ts): `npm run check` (T0, PLAN.md §8.1–§8.2): runs `tsc`, ESLint, Prettier and `node x check` at the same time and fails if any fails.
+  - Exports: `CHECK_TOOLS`, `checkAll`, `CheckTool`
 - [`x.ts`](../tools/x.ts): The `node x <cmd>` dispatcher (PLAN.md §8.1): finds `tools/cmd/<cmd>.ts`, parses its arguments with `node:util`'s `parseArgs` in strict mode, runs it, prints at most about 20 lines (the verdict first), writes `out/<cmd>/<target>/report.json` plus `out/latest.json`, and returns the exit code.
   - Exports: `closest`, `Command`, `CommandContext`, `commandHelp`, `commandNames`, `CommandOptions`, `CommandResult`, `dispatch`, `DispatchOptions`, `fileComment`, `firstSentence`, `loadCommand`, `MAX_LINES`, `ROOT`, `UsageError`
   - Tests: [`tools/x.test.ts`](../tools/x.test.ts)

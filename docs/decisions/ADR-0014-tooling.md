@@ -79,3 +79,11 @@ Calls made where §8.10 is silent, for the Claude Code hooks in `.claude/hooks/`
   into the reason when the check is red.
 - **PostToolUse** returns ESLint warnings as context without failing, and fails (exit 2) when Prettier cannot parse
   the file. The allow list spells out the read-only git commands and the GitHub server's pull-request tools.
+
+## Amendment 5 (2026-10-10, gate G0): T0's tools run in parallel
+
+Measured at G0: `npm run check` took 10.0 s of its 10 s budget inside `x ci --local`, with its four tools run one
+after another (`tsc` about 4.3 s, ESLint 1.4 s, Prettier 1.0 s, `x check` 1.9 s; incremental `tsc` saves time only
+when nothing changed). `npm run check` is now `node tools/checkAll.ts`, which starts the four at once on the
+container's 4 cores, prints each tool's output whole in a fixed order, and fails if any fails: 5.8 s. The tools,
+their flags and their caches are unchanged.

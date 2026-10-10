@@ -73,6 +73,12 @@ For the agents who maintain the engine.
 - `tempDir` (function): A new temporary directory, as a real path.
 - `writeFiles` (function): Writes each file (path relative to `root` → content), creating directories; `mode` applies to all of them.
 
+### [`tools/checkAll.ts`](../tools/checkAll.ts)
+
+- `CHECK_TOOLS` (const): The T0 tools, in the order their output is printed.
+- `checkAll` (function): Runs every tool in parallel, prints their output in order, and returns the exit code (0 only if all pass).
+- `CheckTool` (interface): One T0 tool: its name and its command line, run from the repository root.
+
 ### [`tools/cmd/check.ts`](../tools/cmd/check.ts)
 
 - `assetScan` (const): The asset scan (doctrine: Assets).
