@@ -1,7 +1,8 @@
 /**
  * @file Proves the public-API rule (tools/eslint/publicApi.ts, PLAN.md §6.1, ADR-0020) with failing and passing
- * fixtures linted from a temporary directory, with the rule switched on (since WP 1.6) and off: named, side-effect and
- * dynamic imports, relative sources matched as resolved.
+ * fixtures linted from a temporary directory, with the rule switched on (since WP 1.6) and off: named, side-effect,
+ * dynamic and TS-import-type imports, relative sources matched as resolved, and the page barrel by its folder
+ * (`'../../engine'`) allowed in pages, refused sim-side.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { messagesOf } from './family';
@@ -105,6 +106,34 @@ const CASES: Case[] = [
     rule: RULE,
   },
   {
+    name: 'a page may import the page barrel by its folder, engine/index.ts',
+    file: 'labs/box/main.ts',
+    bad: "export { createRenderer } from '../../engine/gfx/renderer';",
+    good: "export { createEngine } from '../../engine';\nexport { createHeadless } from '../box/../../engine/';",
+    rule: RULE,
+  },
+  {
+    name: 'sim-side game code never imports the page barrel by its folder',
+    file: 'fixtures/scenes/drop.ts',
+    bad: "export { defineScene } from '../../engine';",
+    good: "export { defineScene } from '../../engine/sim-api';",
+    rule: RULE,
+  },
+  {
+    name: 'a TS import type of engine internals in a fixture scene, matched as resolved',
+    file: 'fixtures/scenes/kernel/index.ts',
+    bad: "export type W = import('../../../engine/sim/world').World;\nexport type R = typeof import('./../../../engine/core/rng');",
+    good: "export type W = import('../../../engine/sim-api').World;",
+    rule: SIDE_EFFECTS,
+  },
+  {
+    name: 'a TS import type of three.js in game code',
+    file: 'labs/box/main.ts',
+    bad: "export type M = import('three/webgpu').Mesh;",
+    good: "export type E = import('../../engine/index').Headless;",
+    rule: SIDE_EFFECTS,
+  },
+  {
     name: "a game's unit test may import anything",
     file: 'labs/box/scenes/arena.ts',
     bad: "export { stepWorld } from '../../../engine/sim/world';",
@@ -133,6 +162,13 @@ describe('the public-API rule, switched on', () => {
     const [message] = results[0].bad.map((item) => item.message);
     expect(message).toContain("'createRenderer' import from '../../engine/gfx/renderer'");
     expect(message).toContain('engine/index.ts (pages) or engine/sim-api.ts (sim-side code) under the same name');
+    const bare = results[CASES.findIndex((item) => item.name.startsWith('sim-side game code never'))].bad;
+    expect(bare.map((item) => item.message)).toEqual([expect.stringContaining('import it from engine/sim-api.ts')]);
+    const typed = results[CASES.findIndex((item) => item.name.startsWith('a TS import type of engine'))].bad;
+    expect(typed.map((item) => item.message)).toEqual([
+      expect.stringMatching(/^'\.\.\/\.\.\/\.\.\/engine\/sim\/world' is an import type: .*engine\/sim-api\.ts/),
+      expect.stringMatching(/^'\.\/\.\.\/\.\.\/\.\.\/engine\/core\/rng' is an import type: /),
+    ]);
   });
 });
 

@@ -800,7 +800,7 @@ For the agents who maintain the engine.
 - `publicApiBlocks` (function): The public-API blocks; `on` is `SWITCHES.publicApi` (on since WP 1.6).
 - `publicApiPlugin` (const): The plugin the public-API blocks use: core's `no-restricted-imports` (resolving) and `no-unnamed-imports`.
 - `SIM_SIDE_GAME_CODE` (const): Sim-side game code: the sim barrel only.
-- `unnamedImports` (const): `public-api/no-unnamed-imports`: side-effect imports and dynamic imports with a literal source, matched like `no-restricted-imports` matches named ones (options `{ patterns: [{ regex, message }] }`).
+- `unnamedImports` (const): `public-api/no-unnamed-imports`: side-effect imports, dynamic imports with a literal source and TS import types, matched like `no-restricted-imports` matches named ones (options `{ patterns: [{ regex, message }] }`).
 
 ### [`tools/eslint/simSide.ts`](../tools/eslint/simSide.ts)
 

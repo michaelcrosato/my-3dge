@@ -8,9 +8,11 @@
  * `fixtures/scenes/`) takes only `engine/sim-api.ts`, so `x sim` runs it in Node. Each report names the import it
  * refused: the barrel re-exports it under the same name, and when it does not, the barrel gains the re-export with its
  * doc comment. Relative sources are matched as resolved from the importing file (`resolvingImports`, family.ts).
- * Side-effect imports (`import 'three/webgpu'`) and dynamic ones (`import('…')` with a literal source) import no name
- * for `no-restricted-imports` to name, so `public-api/no-unnamed-imports` refuses them with the same messages, its
- * relative sources resolved the same way (`./../../engine/core/x` is `../../engine/core/x`).
+ * Side-effect imports (`import 'three/webgpu'`), dynamic ones (`import('…')` with a literal source) and TS import
+ * types (`type W = import('…').World`, `typeof import('…')`) never reach `no-restricted-imports`, so
+ * `public-api/no-unnamed-imports` refuses them with the same messages, its relative sources resolved the same way
+ * (`./../../engine/core/x` is `../../engine/core/x`). Pages may name the page barrel by its folder (`'../../engine'`
+ * is engine/index.ts); sim-side game code may not.
  *
  * Invariants: switched on by WP 1.6 with the barrels (`SWITCHES.publicApi` in eslint.config.js); switched off, the
  * blocks stay in place with both rules off.
@@ -32,24 +34,26 @@ interface SourcePattern {
 }
 
 /**
- * `public-api/no-unnamed-imports`: side-effect imports and dynamic imports with a literal source, matched like
- * `no-restricted-imports` matches named ones (options `{ patterns: [{ regex, message }] }`).
+ * `public-api/no-unnamed-imports`: side-effect imports, dynamic imports with a literal source and TS import types,
+ * matched like `no-restricted-imports` matches named ones (options `{ patterns: [{ regex, message }] }`).
  */
 export const unnamedImports: Rule.RuleModule = {
   meta: {
     type: 'problem',
-    docs: { description: 'Side-effect and dynamic imports of what game code may not import (PLAN.md §6.1)' },
+    docs: {
+      description: 'Side-effect, dynamic and TS-import-type imports of what game code may not import (PLAN.md §6.1)',
+    },
     schema: [{ type: 'object', properties: { patterns: { type: 'array' } }, additionalProperties: false }],
   },
   create(context) {
     const { patterns = [] } = (context.options[0] ?? {}) as { patterns?: SourcePattern[] };
     const compiled = patterns.map(({ regex, message }) => ({ regex: new RegExp(regex, 'u'), message }));
     const dir = posix.dirname(context.filename);
-    const check = (node: Rule.Node, source: unknown) => {
+    const check = (node: Rule.Node, source: unknown, how = 'imports no name') => {
       if (typeof source !== 'string') return;
       const spelled = /^\.\.?(?:\/|$)/.test(source) ? shortest(dir, source) : source;
       const hit = compiled.find((pattern) => pattern.regex.test(spelled));
-      if (hit) context.report({ node, message: `'${source}' imports no name: ${hit.message}` });
+      if (hit) context.report({ node, message: `'${source}' ${how}: ${hit.message}` });
     };
     return {
       ImportDeclaration(node) {
@@ -62,7 +66,11 @@ export const unnamedImports: Rule.RuleModule = {
           check(node, source.quasis[0].value.cooked);
         }
       },
-    };
+      // typescript-eslint's node: `source` is the literal (`argument.literal`, deprecated, warns when read).
+      TSImportType(node: Rule.Node) {
+        check(node, (node as unknown as { source?: { value?: unknown } }).source?.value, 'is an import type');
+      },
+    } as Rule.RuleListener;
   },
 };
 
@@ -95,9 +103,11 @@ const RAPIER = {
 export function publicApiBlocks(on: boolean): Linter.Config[] {
   const severity = on ? 'error' : 'off';
   const block = (name: string, files: string[], ignores: string[], allowed: string, where: string): Linter.Config => {
+    const internal = `(?:/(?!(?:${allowed})(?:\\.ts)?$).*)`; // a path under engine/ other than an allowed barrel
+    const folder = allowed.split('|').includes('index'); // `engine` alone is engine/index.ts: refused unless allowed
     const patterns = [
       {
-        regex: `^(?:\\.\\./)+engine(?:/(?!(?:${allowed})(?:\\.ts)?$).*)?$`,
+        regex: `^(?:\\.\\./)+engine${internal}${folder ? '' : '?'}$`,
         importNamePattern: EVERY_NAME,
         caseSensitive: true,
         message: `${where}: import it from ${allowed === 'sim-api' ? 'engine/sim-api.ts' : 'engine/index.ts (pages) or engine/sim-api.ts (sim-side code)'} under the same name; if the barrel lacks it, add the re-export there with its doc comment (PLAN.md §6.1, ADR-0020)`,
