@@ -431,6 +431,31 @@ For the agents who maintain the engine.
 - `FEATURES_CODES` (const): The advice codes of the built-in features, with their fixes.
 - `resolveFeatures` (function): Checks every `feature` entry against `caps` and `gfx.featuresOff`, raises each off feature's advice once, and reports what is on and off.
 
+### [`engine/gfx/idpass.ts`](../engine/gfx/idpass.ts)
+
+- `decodeIds` (function): Decodes an ID-pass readback (RGBA, top row first) into the result, and each pixel's visible object (1-based).
+- `Drawable` (interface): A drawable object of the scene, as the ID pass knows it.
+- `drawMarks` (function): Draws each mark onto a frame of RGBA bytes (top row first): a ring around `at` and the number in a dark box above it (below it at the top edge), at 2 × scale.
+- `idColour` (function): The ID colour of the `n`-th drawable (1-based): an odd multiple modulo 2^24, so distinct and never 0.
+- `IdEntry` (interface): One visible object: its pixels, share of the frame, bounding box `[x0, y0, x1, y1]` (inclusive, from the top left).
+- `IdPass` (interface): The ID pass's result: every drawable object, visible or not.
+- `IdTable` (interface): The drawables of a scene, with their colours.
+- `IdUnseen` (interface): One object drawn in no pixel, and why.
+- `listDrawables` (function): Lists the scene's drawable objects with their colours, and why the hidden and out-of-view ones cannot be seen.
+- `Mark` (interface): A numbered mark on what the ID pass sees, for the legend.
+- `marksOf` (function): Numbers the visible objects, largest first: at most `max` (40), each covering at least `minPx` (4) pixels.
+- `UnseenReason` (type): Why a drawable object covers no pixel.
+- `withIdScene` (function): Runs `draw(root)` with `root` a stand-in for `scene` that draws the ID pass: it shares the scene's children, has no background, and overrides every material with the ID material reading `table`; the clear colour is transparent black meanwhile.
+
+### [`engine/gfx/lookMetrics.ts`](../engine/gfx/lookMetrics.ts)
+
+- `judgeLook` (function): The notes on `metrics`, `where` naming the frame in each sentence (`tests/pages/shot.html from cam iso`), and the ID pass's objects, when measured, naming the protagonist: a blank frame fails (and is the only note); the others warn, each with its number, its limit and a fix.
+- `LOOK_LIMITS` (const): The limits the notes use (shares in [0, 1], luma spread in [0, 1], the palette in colours).
+- `LookIds` (interface): What the ID pass tells the metrics: the visible objects with their shares, and the protagonist, if any.
+- `lookMetrics` (function): Measures a frame of row-major RGBA bytes (4 a pixel), with the ID pass's objects when given.
+- `LookMetrics` (interface): The look metrics of one frame.
+- `LookNote` (interface): A note on a frame: its id, whether it fails, the number and its limit, and the sentence with the fix.
+
 ### [`engine/gfx/pipelines.ts`](../engine/gfx/pipelines.ts)
 
 - `advanceFrame` (function): Starts a new frame for three.js's nodes, so a post pass and every other node updated once per frame draws afresh, also off r182's own animation-frame loop.
@@ -469,6 +494,33 @@ For the agents who maintain the engine.
 - `ResolutionMode` (type): A resolution mode: the engine's pixels, half the screen's, or all of it.
 - `ResolutionOptions` (interface): How `createResolution` measures: the canvas's CSS size and the device pixel ratio (the browser's by default).
 - `Size` (interface): A size in CSS or device pixels.
+
+### [`engine/gfx/shot.ts`](../engine/gfx/shot.ts)
+
+- `Readback` (interface): The readback's padded layout: bytes per row as WebGPU copied them, and the buffer's length.
+- `readPixels` (function): Reads an RGBA8 render target back: its pixels, top row first, without the padding, and the layout read.
+- `rowBytes` (function): Bytes per row WebGPU copies for `width` pixels: aligned up to 256 (`copyTextureToBuffer`'s rule).
+- `shot` (function): Shoots `view`: draws it as the frame does into a render target, draws the ID pass, reads both back, and returns what `options` asks for (see the file comment).
+- `SHOT_CODES` (const): The codes this module raises, with their fixes.
+- `shotForJson` (function): The result as plain JSON, for `__engine.shot` and `x shot`: the pixels as base64.
+- `ShotGfx` (interface): What a shot needs of the renderer (engine/gfx/renderer.ts's `Gfx`).
+- `ShotJson` (type): A shot as plain JSON: `pixels` and `marked` as base64 RGBA.
+- `ShotOptions` (interface): What to shoot and what to return.
+- `ShotResult` (interface): What a shot returns: its size, the readback's layout, what was asked, pipelines built, and how long it took.
+- `stripRowPadding` (function): Drops the row padding of a readback: `height` rows of `width` pixels from rows of `rowBytes(width)` bytes.
+- `toBase64` (function): Base64 of bytes, in the browser and in Node.
+
+### [`engine/gfx/thumbnail.ts`](../engine/gfx/thumbnail.ts)
+
+- `compareThumbnails` (function): Compares two thumbnails cell by cell: a cell differs when one of its channels moved by more than `tolerance` (default 24 of 255).
+- `MAP_SYMBOLS` (const): The symbols of the map, for the visible objects in order (largest first).
+- `STRAY` (const): The per-pixel value of a pixel no object claims (an ID colour the pass did not assign).
+- `THUMB_HEIGHT` (const): The grid's height.
+- `THUMB_WIDTH` (const): The grid's size: 48 × 27 cells (16:9).
+- `thumbnail` (function): Builds the 48 × 27 thumbnail of a frame of row-major RGBA bytes, with the map when the ID pass is given.
+- `Thumbnail` (interface): A text thumbnail.
+- `ThumbnailDiff` (interface): How two thumbnails differ.
+- `ThumbnailIds` (interface): The ID pass's objects per pixel: 0 empty space, k the k-th name of `names` (1-based), `STRAY` unclaimed.
 
 ### [`engine/gfx/warmup.ts`](../engine/gfx/warmup.ts)
 
@@ -947,12 +999,14 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/shot.ts`](../tools/cmd/shot.ts)
 
-- `default` (default): Renders a page on WebGPU in the platform's Chromium and writes what it drew: a PNG and its look metrics.
-- `frameMetrics` (function): Measures a frame of row-major RGBA bytes (4 a pixel).
-- `FrameMetrics` (interface): The look metrics of one RGBA frame (PLAN.md §8.5; WP 2.6 adds the ID pass's and edge density).
-- `judgeFrame` (function): The verdict on a frame's metrics: a blank frame fails; an almost empty one (coverage under 0.5%) warns.
+- `default` (default): Renders a page on WebGPU in the platform's Chromium and reports what it drew as numbers and text: the look metrics, the ID pass (which object covers which pixels) and a 48 × 27 text thumbnail; images only on demand.
+- `encodePng` (function): Encodes RGBA bytes as an 8-bit RGBA PNG (Node's zlib; no image dependency).
+- `frameMetrics` (const): The look metrics of a frame of RGBA bytes (engine/gfx/lookMetrics.ts), as the e2e suites import them from here.
+- `judgeFrame` (function): The verdict on a frame's look notes: notes that fail are failures, the others warnings.
+- `pageUrl` (function): The page's URL path with `scene`, `cam` and each `key=value` of `set` added as URL parameters.
 - `READY_TIMEOUT_MS` (const): How long a page may take to signal ready or an error, in milliseconds.
 - `resolvePage` (function): Turns a page argument into the URL path to open (relative to the server) and the file that must exist for it.
+- `shotMetrics` (function): A shot's numbers for report.json: the look metrics, the ID-pass list and the marks' legend, flat.
 
 ### [`tools/cmd/sim.ts`](../tools/cmd/sim.ts)
 

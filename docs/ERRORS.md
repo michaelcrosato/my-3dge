@@ -205,6 +205,12 @@ Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when
 - Fix: pass the clock's interpolation alpha (clock.advance(now).alpha), which is always from 0 to 1
 - Registered in: [`engine/gfx/renderer.ts` line 72](../engine/gfx/renderer.ts)
 
+### GFX_BAD_SHOT_SIZE
+
+- Message: `a shot must be at least 1 × 1 whole pixels, not {width} × {height}`
+- Fix: pass size: { width, height } in whole pixels of at least 1, or leave it out to shoot at the drawing buffer's size
+- Registered in: [`engine/gfx/shot.ts` line 49](../engine/gfx/shot.ts)
+
 ### GFX_COLD_PIPELINE
 
 - Message: `{count} GPU pipeline(s) were built while drawing frame {frame}, after the warm-up: the frame stalled`
