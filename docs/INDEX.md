@@ -10,15 +10,17 @@ in [API.md](API.md); error and advice codes are in [ERRORS.md](ERRORS.md).
 
 Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describe <kind>` lists its fields and ids.
 
-| Kind              | What it is                                                                                                                                                               | Declared in                                                     |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
-| `component`       | Component kinds: the plain-object data entities hold (e.position), with their fields. The canonical state and the hash read every component's declared fields, in order. | [`engine/sim/state.ts`](../engine/sim/state.ts)                 |
-| `feature`         | Optional GPU features and techniques: what each needs, what is lost without it, and its advice code.                                                                     | [`engine/gfx/features.ts`](../engine/gfx/features.ts)           |
-| `glyph`           | Level legend glyphs: what one map character means (heights, solid, collider and mesh recipes, nav flags, spawn, light spot, surface, footprint).                         | [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts) |
-| `inspectorMember` | Members of the inspector (__engine, createHeadless): a call or property with its help line, argument schema and implementation.                                          | [`engine/dev/members.ts`](../engine/dev/members.ts)             |
-| `level`           | Levels: a level text (front matter and a map in legend characters) that compileLevel turns into data.                                                                    | [`engine/world/level/level.ts`](../engine/world/level/level.ts) |
-| `scene`           | Scenes: a level, settings, a setup and a step, sim-side, so x sim, x replay and createHeadless run them in Node.                                                         | [`engine/sim/scene.ts`](../engine/sim/scene.ts)                 |
-| `setting`         | The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set.                                                             | [`engine/core/settings.ts`](../engine/core/settings.ts)         |
+| Kind              | What it is                                                                                                                                                               | Declared in                                                               |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `component`       | Component kinds: the plain-object data entities hold (e.position), with their fields. The canonical state and the hash read every component's declared fields, in order. | [`engine/sim/state.ts`](../engine/sim/state.ts)                           |
+| `feature`         | Optional GPU features and techniques: what each needs, what is lost without it, and its advice code.                                                                     | [`engine/gfx/features.ts`](../engine/gfx/features.ts)                     |
+| `glyph`           | Level legend glyphs: what one map character means (heights, solid, collider and mesh recipes, nav flags, spawn, light spot, surface, footprint).                         | [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)           |
+| `inspectorMember` | Members of the inspector (__engine, createHeadless): a call or property with its help line, argument schema and implementation.                                          | [`engine/dev/members.ts`](../engine/dev/members.ts)                       |
+| `level`           | Levels: a level text (front matter and a map in legend characters) that compileLevel turns into data.                                                                    | [`engine/world/level/level.ts`](../engine/world/level/level.ts)           |
+| `material`        | Materials as data with three.js's classic parameters (color, map, roughness, emissive, flags); the engine decides how to draw them.                                      | [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts) |
+| `scene`           | Scenes: a level, settings, a setup and a step, sim-side, so x sim, x replay and createHeadless run them in Node.                                                         | [`engine/sim/scene.ts`](../engine/sim/scene.ts)                           |
+| `setting`         | The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set.                                                             | [`engine/core/settings.ts`](../engine/core/settings.ts)                   |
+| `texture`         | Seeded, periodic texture generators: colour, height, roughness and emissive per texel, with their parameters, size, tile, density and look.                              | [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)     |
 
 ## The root
 
@@ -33,7 +35,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 ## engine
 
 - [`index.ts`](../engine/index.ts): The engine's front page: the public API for pages and tools (PLAN.md §6.1, §6.9, WP 1.6; doctrine: Quality under the hood).
-  - Exports: `* from './sim-api'`, `createHeadless`, `EngineInfo`, `EntitySummary`, `Headless`, `HeadlessOptions`, `Inspector`
+  - Exports: `* from './sim-api'`, `bakeTexture`, `cellHash`, `createHeadless`, `createMaterialLibrary`, `defineMaterial`, `defineTexture`, `EngineInfo`, `EntitySummary`, `getMaterial`, `Headless`, `HeadlessOptions`, `Inspector`, `MaterialEntry`, `MaterialLibrary`, `MaterialSpec`, `palette`, `pickTone`, `runningBond`, `Texel`, `TextureBake`, `TextureContext`, `TextureEntry`, `TextureLook`, `TextureRef`, `TextureSpec`, `tileNoise`, `wrapIndex`
 - [`sim-api.ts`](../engine/sim-api.ts): The public API for sim-side game code (PLAN.md §6.1, §6.9, WP 1.6; doctrine: Quality under the hood): what a scene, a cast member or a behaviour imports, and all it may import (ESLint's public-API rule), so `x sim` runs it in Node and its play is reproducible.
   - Exports: `angDiff`, `approach`, `approachAng`, `Box3`, `BoxCollider`, `ColliderDescriptor`, `Color`, `CompiledLevel`, `compileLevel`, `CompileOptions`, `ComponentOf`, `CustomIntentKey`, `def`, `defineComponent`, `defineGlyph`, `defineKind`, `defineLevel`, `defineScene`, `defineSettings`, `ease`, `Entity`, `Entry`, `Euler`, `EventMap`, `Field`, `floorHeight`, `fromCamera`, `getLevel`, `Glyph`, `GlyphSpec`, `GroundDescriptor`, `held`, `INTENT_KEYS`, `Intents`, `IntentValue`, `Kind`, `KindSpec`, `lerpAng`, `LEVEL_FORMAT`, `LevelEntry`, `LevelGlyph`, `LevelProblem`, `LevelSource`, `LightSpot`, `Listener`, `MathUtils`, `Matrix4`, `MeshDescriptor`, `Phase`, `PHASES`, `Plane`, `Point3`, `pressed`, `Quaternion`, `Ray`, `Rng`, `Scene`, `SceneAction`, `SceneSpec`, `Schema`, `SettingValue`, `SimRng`, `SimSettings`, `smoothDamp`, `solidAt`, `SpawnPoint`, `SpawnSpec`, `Sphere`, `swingTwist`, `SystemFn`, `tileAt`, `TileRect`, `topHeight`, `TraceRecord`, `validateLevel`, `Vector3`, `With`, `World`, `WorldEvents`, `WorldTimers`
 
@@ -153,6 +155,70 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`presets.ts`](../engine/gfx/cameras/presets.ts): The classic views (PLAN.md WP 2.5; doctrine: Common ground): the 2D engine's isometric, three-quarter, top-down, brawler and side views, and custom ones, as 3D cameras that follow a point with the 2D camera's lag.
   - Exports: `createViewCamera`, `ORTHO_DISTANCE`, `ORTHO_FAR`, `stepView`, `stepZoom`, `VIEW_FOV`, `VIEW_LAG`, `VIEW_LIFT`, `VIEW_PRESETS`, `VIEW_ZOOMS`, `ViewOptions`, `viewPose`, `ViewPreset`, `viewSpec`, `viewState`, `ViewState`
   - Tests: [`engine/gfx/cameras/presets.test.ts`](../engine/gfx/cameras/presets.test.ts)
+
+## engine/gfx/materials
+
+- [`builtins.ts`](../engine/gfx/materials/builtins.ts): The engine's built-in materials (PLAN.md WP 2.3): `material:default`, the neutral grey that stands in for a missing id; one textured material per v1 generator (flagstone, brick, dressed stone, planks, a barrel's staves, checker) with the prototype's palettes; and `material:glow`, an unlit colour for flames, markers and lit windows.
+  - Exports: `BUILT_IN_MATERIALS`
+  - Tests: [`engine/gfx/materials/material.test.ts`](../engine/gfx/materials/material.test.ts)
+- [`compile.ts`](../engine/gfx/materials/compile.ts): How a material is drawn (PLAN.md WP 2.3, §6.7): `compileMaterial` turns a `material` entry (engine/gfx/materials/material.ts) and its baked maps into a three.js material.
+  - Exports: `compileMaterial`, `drawnAs`, `DrawnAs`
+  - Tests: [`engine/gfx/materials/compile.test.ts`](../engine/gfx/materials/compile.test.ts)
+- [`library.ts`](../engine/gfx/materials/library.ts): The material library (PLAN.md WP 2.3, §6.7, §8.7): what a page draws materials with.
+  - Exports: `createMaterialLibrary`, `MaterialLibrary`
+  - Tests: [`engine/gfx/materials/library.test.ts`](../engine/gfx/materials/library.test.ts), [`tests/e2e/materials.spec.ts`](../tests/e2e/materials.spec.ts)
+- [`material.ts`](../engine/gfx/materials/material.ts): The material registry (PLAN.md WP 2.3, §6.6, §6.7, I-49): the registry kind `material`, one entry per material, as data with the parameters agents know from three.js's classic materials: `color`, `map`, `roughness`, `metalness`, `emissive`, `emissiveIntensity`, `normalScale`, `opacity`, `transparent`, `alphaTest`, `side`, `flatShading`, `vertexColors`, `fog`, `depthWrite`, plus `unlit` (glTF's word: drawn without lights).
+  - Exports: `bakeRefOf`, `defineMaterial`, `getMaterial`, `mapProblems`, `MapRef`, `MATERIAL_FIELDS`, `MaterialEntry`, `materialKind`, `MaterialSpec`, `textureRefOf`
+  - Tests: [`engine/gfx/materials/material.test.ts`](../engine/gfx/materials/material.test.ts)
+
+## engine/gfx/textures
+
+- [`bake.ts`](../engine/gfx/textures/bake.ts): The CPU bake (PLAN.md WP 2.3, §6.7, I-20): runs a texture generator (engine/gfx/textures/texture.ts) over every texel and returns its maps as plain typed arrays, named as three.js's material slots name them: `map` (the colour, sRGB RGBA bytes), `heightMap` and `roughnessMap` (floats 0–1), `emissiveMap` (sRGB RGBA bytes, or null when nothing glows) and `normalMap` (tangent-space RGBA bytes, from the height).
+  - Exports: `bakeKey`, `BakeSource`, `bakeTexture`, `newTexel`, `normalsFromHeight`, `TextureBake`, `TextureRef`, `textureSampler`, `TextureSampler`
+  - Tests: [`engine/gfx/textures/bake.test.ts`](../engine/gfx/textures/bake.test.ts)
+- [`codes.ts`](../engine/gfx/textures/codes.ts): The texture codes (PLAN.md WP 2.3): the errors a bake raises for a size its pattern cannot tile at or a palette with no colours, each naming its fix (collected into docs/ERRORS.md by `x docs`).
+  - Exports: `TEXTURE_CODES`
+- [`dataTexture.ts`](../engine/gfx/textures/dataTexture.ts): A bake as three.js textures (PLAN.md WP 2.3, §6.7): `toDataTextures` turns a CPU bake (engine/gfx/textures/bake.ts) into `DataTexture`s for a material's slots, `map`, `normalMap`, `roughnessMap` and `emissiveMap`, each with its full mip chain computed on the CPU (engine/gfx/textures/mips.ts), repeating, and filtered for the look: `pixel` magnifies with nearest (crisp texels) and minifies with nearest texels blended between levels (no shimmer at a distance), `smooth` filters linearly on both, with 4× anisotropy for floors seen at a grazing angle.
+  - Exports: `DataTextureOptions`, `TextureMaps`, `toDataTextures`
+  - Tests: [`engine/gfx/textures/dataTexture.test.ts`](../engine/gfx/textures/dataTexture.test.ts)
+- [`mips.ts`](../engine/gfx/textures/mips.ts): Mipmaps on the CPU (PLAN.md WP 2.3, I-20): the full chain of a baked map down to 1 × 1, each level an area-weighted box filter of the one above, computed in the right space for what the map holds.
+  - Exports: `linearToSrgbByte`, `mipChain`, `mipCount`, `MipEncoding`, `MipLevel`, `SRGB_TO_LINEAR`
+  - Tests: [`engine/gfx/textures/mips.test.ts`](../engine/gfx/textures/mips.test.ts)
+- [`seams.ts`](../engine/gfx/textures/seams.ts): Texture quality measures (PLAN.md WP 2.3, §8.6, I-20): what the `tex` QA family (tools/qa/tex.ts) and the unit tests check a bake against.
+  - Exports: `measureSeam`, `mipProblems`, `periodMismatch`, `rangeProblems`, `RangeReport`, `SEAM_LIMIT`, `SeamReport`
+  - Tests: [`engine/gfx/textures/seams.test.ts`](../engine/gfx/textures/seams.test.ts)
+- [`texture.ts`](../engine/gfx/textures/texture.ts): The generator registry (PLAN.md WP 2.3, §6.6, §6.7, I-20): the registry kind `texture`, one entry per seeded, periodic generator (engine/gfx/textures/types.ts says what a generator is), with its parameters as schema fields, the size it bakes at, the tile its pattern repeats at, its density in texels per metre and its look.
+  - Exports: `assertSize`, `defineTexture`, `getTexture`, `sizeProblem`, `TEXTURE_FIELDS`, `TextureEntry`, `textureKind`, `textureParams`
+  - Tests: [`engine/gfx/textures/texture.test.ts`](../engine/gfx/textures/texture.test.ts)
+- [`tile.ts`](../engine/gfx/textures/tile.ts): Tiling helpers for texture generators (PLAN.md WP 2.3, I-20): what a generator uses so its texels are a periodic function of the integer texel position, and its texture tiles without a seam.
+  - Exports: `BondCell`, `cellHash`, `palette`, `pickTone`, `runningBond`, `tileNoise`, `TileNoiseOptions`, `wrapIndex`
+  - Tests: [`engine/gfx/textures/tile.test.ts`](../engine/gfx/textures/tile.test.ts)
+- [`types.ts`](../engine/gfx/textures/types.ts): What a texture generator is (PLAN.md WP 2.3, §6.7, I-20): a seeded, periodic function that writes four values per texel, its colour (albedo), its height (relief, from which the bake derives the normal map), its roughness and its emissive colour, so one generator gives every map a material needs.
+  - Exports: `Texel`, `TexelFn`, `TextureContext`, `TextureLook`, `textureSpec`, `TextureSpec`
+- [`v1.ts`](../engine/gfx/textures/v1.ts): The engine's v1 texture generators (PLAN.md WP 2.3): flagstone, brick courses, dressed stone, planks, barrel staves and checker, by id.
+  - Exports: `V1_TEXTURES`
+  - Tests: [`engine/gfx/textures/generators.test.ts`](../engine/gfx/textures/generators.test.ts)
+
+## engine/gfx/textures/generators
+
+- [`brick.ts`](../engine/gfx/textures/generators/brick.ts): The brick generator (`texture:brick`, PLAN.md WP 2.3): brick courses in running bond, each brick its own tone, a mortar joint along each course's bottom and each brick's right, a lit top row on every brick, and dark specks.
+  - Exports: `BRICK`
+  - Tests: [`engine/gfx/textures/generators.test.ts`](../engine/gfx/textures/generators.test.ts)
+- [`checker.ts`](../engine/gfx/textures/generators/checker.ts): The checker generator (`texture:checker`, PLAN.md WP 2.3): square tiles of two colours, alternating (castle floors, bonus rooms, and a test pattern that shows how a surface is mapped).
+  - Exports: `CHECKER`
+  - Tests: [`engine/gfx/textures/generators.test.ts`](../engine/gfx/textures/generators.test.ts)
+- [`flagstone.ts`](../engine/gfx/textures/generators/flagstone.ts): The flagstone generator (`texture:flagstone`, PLAN.md WP 2.3): square stones in running-bond rows, each its own tone from the palette, with a one-texel joint along its left and top, a lit bevel inside the joint and a shaded one along its bottom and right (light from the top left, as pixel art paints it), specks of grit, and a crack across some stones.
+  - Exports: `FLAGSTONE`
+  - Tests: [`engine/gfx/textures/generators.test.ts`](../engine/gfx/textures/generators.test.ts)
+- [`planks.ts`](../engine/gfx/textures/generators/planks.ts): The plank generator (`texture:planks`, PLAN.md WP 2.3): floor boards running along x, a dark gap along the bottom of each board and at each board's end (the ends staggered per row), each board its own tone, and grain: streaks long along the board and short across it.
+  - Exports: `PLANKS`
+  - Tests: [`engine/gfx/textures/generators.test.ts`](../engine/gfx/textures/generators.test.ts)
+- [`staves.ts`](../engine/gfx/textures/generators/staves.ts): The barrel-stave generator (`texture:staves`, PLAN.md WP 2.3): staves running up, each its own tone and a dark gap along its right edge, the odd knot, and iron hoops across them (a lit top row, a shaded one under it), for a barrel's side wrapped round a cylinder (x round, y up).
+  - Exports: `STAVES`
+  - Tests: [`engine/gfx/textures/generators.test.ts`](../engine/gfx/textures/generators.test.ts)
+- [`stone.ts`](../engine/gfx/textures/generators/stone.ts): The dressed-stone generator (`texture:stone`, PLAN.md WP 2.3): big blocks in running bond, bevelled (lit top and left, dark bottom and right) with a joint along the bottom and right, each block its own tone, worn patches from noise.
+  - Exports: `STONE`
+  - Tests: [`engine/gfx/textures/generators.test.ts`](../engine/gfx/textures/generators.test.ts)
 
 ## engine/input
 
@@ -414,3 +480,6 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`level.ts`](../tools/qa/level.ts): The `level` QA family (PLAN.md §8.6, WP 2.2, I-29): `node x qa level` validates every level file, the box's (`labs/box/levels/*.txt`, ids `level:<name>`) and the fixtures' (`fixtures/levels/*.txt`, ids `level:fixtures/<name>`; the seeded errors under `fixtures/levels/broken/` are the unit tests' business and are skipped), and runs in T1 through `runQa` (tools/qa/level.test.ts).
   - Exports: `default`, `LEVEL_DIRS`, `LevelFile`, `levelFiles`
   - Tests: [`tools/qa/level.test.ts`](../tools/qa/level.test.ts)
+- [`tex.ts`](../tools/qa/tex.ts): The `tex` QA family (PLAN.md §8.6, WP 2.3, I-20): `node x qa tex` bakes every texture generator the shared registry has, the engine's (engine/gfx/textures/v1.ts) and a game's (each `*.ts` module under `labs/<name>/textures/` imported first), at its default size and at twice it, with seeds 1 and 2, and checks every bake.
+  - Exports: `checkTextures`, `default`, `textureModules`
+  - Tests: [`tools/qa/tex.test.ts`](../tools/qa/tex.test.ts)

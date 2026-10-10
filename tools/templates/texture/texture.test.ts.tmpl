@@ -1,0 +1,23 @@
+/**
+ * @file Unit tests for the texture generator `texture:{{name}}` ({{id}}.ts): it tiles (its seam at most 2% of the
+ * value range), repeats exactly one period over and writes values in range, for several seeds and two sizes.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { bakeTexture, textureSampler } from '../../../engine/gfx/textures/bake';
+import { measureSeam, periodMismatch, rangeProblems, SEAM_LIMIT } from '../../../engine/gfx/textures/seams';
+import { {{name}} } from './{{name}}';
+
+describe('texture:{{name}}', () => {
+  it('tiles, repeats exactly and writes values in range', () => {
+    const [width, height] = {{name}}.size;
+    for (const seed of [1, 2, 3]) {
+      for (const size of [{{name}}.size, [2 * width, 2 * height]]) {
+        const ref = { texture: {{name}}.id, seed, size };
+        expect(measureSeam(bakeTexture(ref)).delta).toBeLessThanOrEqual(SEAM_LIMIT);
+        expect(periodMismatch(textureSampler(ref))).toBe(0);
+        expect(rangeProblems(textureSampler(ref)).count).toBe(0);
+      }
+    }
+  });
+});

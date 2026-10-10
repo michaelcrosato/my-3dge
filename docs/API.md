@@ -14,8 +14,10 @@ game agent's manual.
 - `angDiff` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The signed angle from `a` to `b` the short way round, in [−π, π).
 - `approach` (function from [`engine/core/math.ts`](../engine/core/math.ts)): `a` moved toward `b` by at most `step` (≥ 0), never past it.
 - `approachAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `a` turned toward `b` by at most `step` (≥ 0) the short way round; exactly `b` once within reach.
+- `bakeTexture` (function from [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)): Bakes `ref` on `registry` (the shared one by default).
 - `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
 - `BoxCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An axis-aligned box collider (Rapier's cuboid: half extents `(max − min)/2`, centred at `(min + max)/2`).
+- `cellHash` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A seeded value in [0, 1) for the integer point (x, y), with `salt` telling apart uses of one seed (a stone's tone, its crack).
 - `ColliderDescriptor` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A collider descriptor; WP 4.2 adds hull shapes beside the box.
 - `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
 - `CompiledLevel` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A compiled level: the map, its legend, per-tile grids and descriptors; see the file comment.
@@ -23,14 +25,17 @@ game agent's manual.
 - `CompileOptions` (interface from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): What `compileLevel` takes beside the text.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
+- `createMaterialLibrary` (function from [`engine/gfx/materials/library.ts`](../engine/gfx/materials/library.ts)): Makes a material library over `registry` (the shared one by default).
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
 - `defineGlyph` (function from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): Defines a glyph on `registry` (the shared one by default) and returns it.
 - `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
 - `defineLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): Registers a level on `registry` (the shared one by default) after checking its text compiles against that registry's legend; returns the entry.
+- `defineMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): Defines a material on `registry` (the shared one by default) and returns it.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
+- `defineTexture` (function from [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)): Defines a texture generator on `registry` (the shared one by default) and returns it.
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
 - `EngineInfo` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): What `info()` reports: the engine's identity and health, and the run.
 - `Entity` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity: its id and the components it holds, by kind name (`e.position`).
@@ -42,6 +47,7 @@ game agent's manual.
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): its tile's floor; 0 outside the map.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
+- `getMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): The material `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `material:default`.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `GroundDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The slab under the whole level: the ground's collider, one tile wider than the map all round, 1 m deep.
@@ -62,17 +68,23 @@ game agent's manual.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
 - `LightSpot` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A light spot: a tile's centre, `lightHeight` above its top.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
+- `MaterialEntry` (type from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): A `material` entry.
+- `MaterialLibrary` (interface from [`engine/gfx/materials/library.ts`](../engine/gfx/materials/library.ts)): A page's compiled materials and baked maps.
+- `MaterialSpec` (type from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): What `defineMaterial` takes: any of the fields, each with its default.
 - `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
 - `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
+- `palette` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A palette's hex colours as sRGB bytes; throws `GFX_EMPTY_PALETTE` naming `what` when it has none.
 - `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
 - `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
+- `pickTone` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): One of `colors`, picked by `value` in [0, 1).
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `Point3` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A point in metres: `[x, y, z]`.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
+- `runningBond` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): Where texel (x, y) falls in a running bond of `cell` = [width, height] texels over a texture of `size`: courses (rows) of cells, odd courses shifted half a cell, the whole layout moved by `phase` texels.
 - `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
 - `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
@@ -87,7 +99,15 @@ game agent's manual.
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
+- `Texel` (interface from [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)): One texel as a generator writes it.
+- `TextureBake` (interface from [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)): A baked texture: its source, its maps and its hash.
+- `TextureContext` (interface from [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)): What `create` is given: the parameters (defaults filled), the seed, and the size the texture bakes at.
+- `TextureEntry` (type from [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)): A `texture` entry: one generator.
+- `TextureLook` (type from [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)): How a texture is magnified: `pixel` keeps texels crisp (nearest), `smooth` blends them (linear).
+- `TextureRef` (type from [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)): A texture by id, or by id with its seed, parameters and size.
+- `TextureSpec` (interface from [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)): A generator: its parameters, the size and look it bakes at, and the function that writes its texels.
 - `tileAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The tile under (x, z) metres, or null outside the map.
+- `tileNoise` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): Value noise in [0, 1] over a texture of `size` texels, repeating exactly every `size`: lattice values from `cellHash`, blended with smoothstep, `cells` lattice cells across on each axis (stretched when they differ), summed over octaves and divided by the total weight.
 - `TileRect` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A rectangle of tiles, inclusive: `[col0, row0, col1, row1]`.
 - `topHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The top (m) of whatever stands at (x, z): a wall's top over its tiles, the floor on open ones; 0 outside the map.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
@@ -97,6 +117,7 @@ game agent's manual.
 - `World` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
 - `WorldEvents` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
 - `WorldTimers` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
+- `wrapIndex` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): `i` folded into [0, n) (n a positive integer): -1 → n − 1.
 
 ### [`engine/sim-api.ts`](../engine/sim-api.ts)
 
@@ -578,6 +599,34 @@ For the agents who maintain the engine.
 - `LookMetrics` (interface): The look metrics of one frame.
 - `LookNote` (interface): A note on a frame: its id, whether it fails, the number and its limit, and the sentence with the fix.
 
+### [`engine/gfx/materials/builtins.ts`](../engine/gfx/materials/builtins.ts)
+
+- `BUILT_IN_MATERIALS` (const): The built-in materials, by id.
+
+### [`engine/gfx/materials/compile.ts`](../engine/gfx/materials/compile.ts)
+
+- `compileMaterial` (function): The three.js material of `entry`, with `maps` baked from its map (null when it has none).
+- `drawnAs` (function): How `entry` is drawn in v1: `basic` when unlit, else `lambert`.
+- `DrawnAs` (type): The three.js material class a v1 material compiles to.
+
+### [`engine/gfx/materials/library.ts`](../engine/gfx/materials/library.ts)
+
+- `createMaterialLibrary` (function): Makes a material library over `registry` (the shared one by default).
+- `MaterialLibrary` (interface): A page's compiled materials and baked maps.
+
+### [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)
+
+- `bakeRefOf` (function): The bake source of a map (what `bakeTexture` takes).
+- `defineMaterial` (function): Defines a material on `registry` (the shared one by default) and returns it.
+- `getMaterial` (function): The material `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `material:default`.
+- `mapProblems` (function): The problems of a `map` value against `registry`'s textures, one sentence each.
+- `MapRef` (interface): A material's map, filled: the texture and how it is baked and shown.
+- `MATERIAL_FIELDS` (const): The fields of a `material` entry: three.js's classic material parameters, as data.
+- `MaterialEntry` (type): A `material` entry.
+- `materialKind` (function): Declares the kind `material` (and `texture`, which maps need) on `registry`, with the built-ins, unless it has it.
+- `MaterialSpec` (type): What `defineMaterial` takes: any of the fields, each with its default.
+- `textureRefOf` (function): A material's `map` filled (null for none).
+
 ### [`engine/gfx/pipelines.ts`](../engine/gfx/pipelines.ts)
 
 - `advanceFrame` (function): Starts a new frame for three.js's nodes, so a post pass and every other node updated once per frame draws afresh, also off r182's own animation-frame loop.
@@ -631,6 +680,106 @@ For the agents who maintain the engine.
 - `ShotResult` (interface): What a shot returns: its size, the readback's layout, what was asked, pipelines built, and how long it took.
 - `stripRowPadding` (function): Drops the row padding of a readback: `height` rows of `width` pixels from rows of `rowBytes(width)` bytes.
 - `toBase64` (function): Base64 of bytes, in the browser and in Node.
+
+### [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)
+
+- `bakeKey` (function): The key of a bake from `source`: the canonical hash of its texture, seed, parameters and size.
+- `BakeSource` (interface): What a texture was baked from: everything filled.
+- `bakeTexture` (function): Bakes `ref` on `registry` (the shared one by default).
+- `newTexel` (function): A fresh texel.
+- `normalsFromHeight` (function): Tangent-space normals of a tiling height field (`width` × `height` floats, row 0 at the bottom): Sobel gradients with wrap-around, z out of the surface, scaled by `depth` (a height step of 1 slopes 45° at 2), as RGBA bytes.
+- `TextureBake` (interface): A baked texture: its source, its maps and its hash.
+- `TextureRef` (type): A texture by id, or by id with its seed, parameters and size.
+- `textureSampler` (function): The filled source of `ref` on `registry`.
+- `TextureSampler` (interface): A generator ready to sample: its filled source and the function writing texel (x, y) at any integer point.
+
+### [`engine/gfx/textures/codes.ts`](../engine/gfx/textures/codes.ts)
+
+- `TEXTURE_CODES` (const): The codes of the texture bake, with their fixes.
+
+### [`engine/gfx/textures/dataTexture.ts`](../engine/gfx/textures/dataTexture.ts)
+
+- `DataTextureOptions` (interface): How the textures are made: the look (the bake's own by default) and a repeat overriding the density.
+- `TextureMaps` (interface): A bake's textures, by the material slot each fills.
+- `toDataTextures` (function): The textures of `bake` for a material's slots (see the file comment).
+
+### [`engine/gfx/textures/generators/brick.ts`](../engine/gfx/textures/generators/brick.ts)
+
+- `BRICK` (const): The brick generator's spec.
+
+### [`engine/gfx/textures/generators/checker.ts`](../engine/gfx/textures/generators/checker.ts)
+
+- `CHECKER` (const): The checker generator's spec.
+
+### [`engine/gfx/textures/generators/flagstone.ts`](../engine/gfx/textures/generators/flagstone.ts)
+
+- `FLAGSTONE` (const): The flagstone generator's spec.
+
+### [`engine/gfx/textures/generators/planks.ts`](../engine/gfx/textures/generators/planks.ts)
+
+- `PLANKS` (const): The plank generator's spec.
+
+### [`engine/gfx/textures/generators/staves.ts`](../engine/gfx/textures/generators/staves.ts)
+
+- `STAVES` (const): The barrel-stave generator's spec.
+
+### [`engine/gfx/textures/generators/stone.ts`](../engine/gfx/textures/generators/stone.ts)
+
+- `STONE` (const): The dressed-stone generator's spec.
+
+### [`engine/gfx/textures/mips.ts`](../engine/gfx/textures/mips.ts)
+
+- `linearToSrgbByte` (function): A linear value as the nearest sRGB byte.
+- `mipChain` (function): The full mip chain of an RGBA map, level 0 (`data` itself) first, down to 1 × 1: each level the area-weighted box filter of the float level above, averaged as `encoding` says (see the file comment).
+- `mipCount` (function): The number of levels of a `width` × `height` texture's full chain.
+- `MipEncoding` (type): What a map holds, which says how its levels are averaged.
+- `MipLevel` (interface): One level: RGBA bytes, row 0 at the bottom.
+- `SRGB_TO_LINEAR` (const): Each sRGB byte's linear value.
+
+### [`engine/gfx/textures/seams.ts`](../engine/gfx/textures/seams.ts)
+
+- `measureSeam` (function): The worst seam of `bake` over its channels and both axes (see the file comment).
+- `mipProblems` (function): The problems of a mip chain for a `width` × `height` map, one sentence each: the wrong number of levels, a level of the wrong size or data length, the last level not 1 × 1, a colour or roughness level whose mean drifts from level 0's by more than `tolerance` (in linear units), or a normal more than 3% off unit length.
+- `periodMismatch` (function): The share of texels (0–1) the sampler writes differently one period away: at (x + width, y), (x, y + height) and (x − width, y − height).
+- `rangeProblems` (function): Every value the sampler writes checked against its range (see `RangeReport`).
+- `RangeReport` (interface): What `rangeProblems` counts.
+- `SEAM_LIMIT` (const): The largest seam delta a tiling texture may have: 2% of the value range.
+- `SeamReport` (interface): The worst seam of a bake: where, by how much, and the numbers behind it.
+
+### [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)
+
+- `assertSize` (function): Throws `GFX_TEXTURE_SIZE` when `entry` cannot bake at `size` with `params`.
+- `defineTexture` (function): Defines a texture generator on `registry` (the shared one by default) and returns it.
+- `getTexture` (function): The texture `id` of `registry` (the shared one by default); throws `CORE_NO_ENTRY` naming the closest ids.
+- `sizeProblem` (function): Why `entry` cannot bake at `size` with `params` (a sentence), or '' when it can.
+- `TEXTURE_FIELDS` (const): The fields of a `texture` entry.
+- `TextureEntry` (type): A `texture` entry: one generator.
+- `textureKind` (function): Declares the kind `texture` on `registry`, with the engine's v1 generators, unless it has it.
+- `textureParams` (function): The parameters of `entry` with `given` set: every parameter filled; throws `CORE_BAD_SPEC` naming each problem.
+
+### [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)
+
+- `BondCell` (interface): One texel's place in a running bond: its cell's column and row (wrapped) and its position inside the cell.
+- `cellHash` (function): A seeded value in [0, 1) for the integer point (x, y), with `salt` telling apart uses of one seed (a stone's tone, its crack).
+- `palette` (function): A palette's hex colours as sRGB bytes; throws `GFX_EMPTY_PALETTE` naming `what` when it has none.
+- `pickTone` (function): One of `colors`, picked by `value` in [0, 1).
+- `runningBond` (function): Where texel (x, y) falls in a running bond of `cell` = [width, height] texels over a texture of `size`: courses (rows) of cells, odd courses shifted half a cell, the whole layout moved by `phase` texels.
+- `tileNoise` (function): Value noise in [0, 1] over a texture of `size` texels, repeating exactly every `size`: lattice values from `cellHash`, blended with smoothstep, `cells` lattice cells across on each axis (stretched when they differ), summed over octaves and divided by the total weight.
+- `TileNoiseOptions` (interface): How `tileNoise` is made.
+- `wrapIndex` (function): `i` folded into [0, n) (n a positive integer): -1 → n − 1.
+
+### [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)
+
+- `Texel` (interface): One texel as a generator writes it.
+- `TexelFn` (type): Writes texel (x, y).
+- `TextureContext` (interface): What `create` is given: the parameters (defaults filled), the seed, and the size the texture bakes at.
+- `TextureLook` (type): How a texture is magnified: `pixel` keeps texels crisp (nearest), `smooth` blends them (linear).
+- `textureSpec` (function): Returns `spec` unchanged, typed: `create` sees the parameters as the schema `params` declares them.
+- `TextureSpec` (interface): A generator: its parameters, the size and look it bakes at, and the function that writes its texels.
+
+### [`engine/gfx/textures/v1.ts`](../engine/gfx/textures/v1.ts)
+
+- `V1_TEXTURES` (const): The v1 generators, by id.
 
 ### [`engine/gfx/thumbnail.ts`](../engine/gfx/thumbnail.ts)
 
@@ -1471,6 +1620,12 @@ For the agents who maintain the engine.
 - `LEVEL_DIRS` (const): Where level files live, and the id prefix of each place's levels.
 - `LevelFile` (interface): One level file: its QA id and its path from the repository root.
 - `levelFiles` (function): Every level file under `root`, in `LEVEL_DIRS` order, then by name.
+
+### [`tools/qa/tex.ts`](../tools/qa/tex.ts)
+
+- `checkTextures` (function): The violations of every texture on `registry` (or those of `ids`), in id order.
+- `default` (default): The `tex` QA family (PLAN.md §8.6, WP 2.3, I-20): `node x qa tex` bakes every texture generator the shared registry has, the engine's (engine/gfx/textures/v1.ts) and a game's (each `*.ts` module under `labs/<name>/textures/` imported first), at its default size and at twice it, with seeds 1 and 2, and checks every bake.
+- `textureModules` (function): A game's texture modules, `labs/<name>/textures/*.ts` (tests excluded), labs and files in name order.
 
 ### [`tools/x.ts`](../tools/x.ts)
 

@@ -255,6 +255,12 @@ Advice from `requestDevice` (engine/gfx/caps.ts): the device is made with every 
 - Fix: dispose the first registration (register returns { dispose }), or register the second under another id
 - Registered in: [`engine/gfx/warmup.ts` line 50](../engine/gfx/warmup.ts)
 
+### GFX_EMPTY_PALETTE
+
+- Message: `{what} lists no colours`
+- Fix: give it at least one hex colour ('#6b6f5a')
+- Registered in: [`engine/gfx/textures/codes.ts` line 21](../engine/gfx/textures/codes.ts)
+
 ### GFX_GPU_ERROR
 
 - Message: `WebGPU refused a call ({kind}): {message}`
@@ -302,6 +308,14 @@ Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipel
 - Registered in: [`engine/gfx/features.ts` line 51](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device cannot bind storage buffers of 256 MB: GPU techniques with large buffers run smaller or stay off.
+
+### GFX_TEXTURE_SIZE
+
+- Message: `texture {id} cannot bake at {width} × {height}: {reason}`
+- Fix: bake at a whole multiple of its tile, {tile} texels with these parameters (size: [{suggest}] fits), or change the parameters that set the tile
+- Registered in: [`engine/gfx/textures/codes.ts` line 16](../engine/gfx/textures/codes.ts)
+
+Raised by `bakeTexture` (engine/gfx/textures/bake.ts) and by `defineTexture` for a default size that is not a whole number of pattern tiles (a running bond needs whole cells across and an even number of courses), or is not 2 to 4096 texels on a side: such a texture would show a seam where it repeats.
 
 ### GFX_UNKNOWN_CAMERA
 

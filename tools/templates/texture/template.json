@@ -1,0 +1,11 @@
+{
+  "describe": "A texture generator: seeded and periodic, writing colour, height, roughness and emissive per texel, with a unit test that checks it tiles (PLAN.md WP 2.3).",
+  "id": "the module's path, labs/<lab>/textures/<name> (its id is texture:<name>): labs/box/textures/mosaic",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/textures|tools/templates/texture)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/texture/sampleTexture",
+  "files": {
+    "texture.ts.tmpl": "{{id}}.ts",
+    "texture.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}
