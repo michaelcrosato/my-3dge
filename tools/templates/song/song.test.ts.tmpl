@@ -1,0 +1,19 @@
+/**
+ * @file Unit tests for the song `song:{{name}}` ({{id}}.ts): it is defined, and one pass renders at least its length,
+ * audible and below full scale.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { renderSong, songTiming } from '../../../engine';
+import { peak } from '../../../engine/audio/dsp/measure';
+import { {{name}} } from './{{name}}';
+
+describe('song:{{name}}', () => {
+  it('renders a pass, audible and below full scale', () => {
+    expect({{name}}.id).toBe('song:{{name}}');
+    const samples = renderSong({{name}});
+    expect(samples.length).toBeGreaterThanOrEqual(Math.floor(songTiming({{name}}).seconds * 44100));
+    expect(peak(samples)).toBeGreaterThan(0.01);
+    expect(peak(samples)).toBeLessThan(1);
+  });
+});

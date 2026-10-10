@@ -1,0 +1,20 @@
+/**
+ * @file Unit tests for the effect `sfx:{{name}}` ({{id}}.ts): it is defined, and every variant renders audible and
+ * below full scale.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { renderSfx } from '../../../engine';
+import { peak } from '../../../engine/audio/dsp/measure';
+import { {{name}} } from './{{name}}';
+
+describe('sfx:{{name}}', () => {
+  it('renders every variant, audible and below full scale', () => {
+    expect({{name}}.id).toBe('sfx:{{name}}');
+    for (let variant = 0; variant < {{name}}.variants; variant++) {
+      const samples = renderSfx({{name}}, { variant });
+      expect(peak(samples)).toBeGreaterThan(0.01);
+      expect(peak(samples)).toBeLessThan(1);
+    }
+  });
+});

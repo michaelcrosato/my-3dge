@@ -121,3 +121,26 @@ export type { LevelCell } from './gfx/level/cells';
 export { LEVEL_RECIPES } from './gfx/level/recipes';
 export type { LevelRecipe } from './gfx/level/recipes';
 export type { LevelShape } from './gfx/level/recipes';
+// Sound data (WP 9.2): effects and songs as registry entries (voices, layers, variants; tracker-notation tracks),
+// rendered offline by the DSP core into reproducible samples.
+export { defineSfx } from './audio/data/sfx';
+export { getSfx } from './audio/data/sfx';
+export { renderSfx } from './audio/data/sfx';
+export { sfxVoices } from './audio/data/sfx';
+export type { Sfx } from './audio/data/sfx';
+export type { SfxSpec } from './audio/data/sfx';
+export type { SfxLayer } from './audio/data/sfx';
+export type { SfxBus } from './audio/data/sfx';
+export type { SfxRenderOptions } from './audio/data/sfx';
+export { defineSong } from './audio/data/song';
+export { getSong } from './audio/data/song';
+export { renderSong } from './audio/data/song';
+export { songVoices } from './audio/data/song';
+export { songTiming } from './audio/data/song';
+export type { Song } from './audio/data/song';
+export type { SongSpec } from './audio/data/song';
+export type { SongTrack } from './audio/data/song';
+export type { SongTiming } from './audio/data/song';
+export type { SongRenderOptions } from './audio/data/song';
+export type { Voice } from './audio/dsp/voice';
+export type { SoundDef } from './audio/dsp/voice';
