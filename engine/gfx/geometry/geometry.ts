@@ -22,7 +22,7 @@
  */
 import type { BufferGeometry } from 'three/webgpu';
 import { registry as sharedRegistry, type Entry, type Registry } from '../../core/registry';
-import { checkField, isPlainObject, parse, type Schema } from '../../core/schema';
+import { checkField, isPlainObject, parse, type EntryOf, type Schema } from '../../core/schema';
 import { BUILT_IN_GEOMETRY } from './builtins';
 
 /** The fields of a `geometry` entry. */
@@ -60,12 +60,16 @@ export interface GeometryRef {
   params?: Record<string, unknown>;
 }
 
-/** What `defineGeometry` takes: the entry's fields (`params` and `budget` have defaults). */
-export interface GeometrySpec {
+/** What `defineGeometry` takes: the entry's fields (`params` and `budget` have defaults), `create` typed by `params`. */
+export interface GeometrySpec<S extends Schema = Schema> {
+  /** What it is, in plain sentences. */
   description: string;
-  params?: Schema;
+  /** Its parameters, as schema fields (engine/core/schema.ts), each with its default. */
+  params?: S;
+  /** The most vertices it may have at its defaults; 4096 by default. */
   budget?: number;
-  create: (params: Record<string, unknown>) => BufferGeometry;
+  /** The builder: every parameter filled, as `params` declares them. */
+  create: (params: EntryOf<S>) => BufferGeometry;
 }
 
 /** The problems of a geometry beyond its fields: its parameter schema. */
@@ -102,7 +106,11 @@ geometryKind(sharedRegistry);
  * Defines a geometry on `registry` (the shared one by default) and returns it. Throws `CORE_BAD_SPEC` naming each
  * problem (a parameter without a description or default…), `CORE_DUPLICATE_ID` when defined twice.
  */
-export function defineGeometry(id: string, spec: GeometrySpec, registry: Registry = sharedRegistry): GeometryEntry {
+export function defineGeometry<const S extends Schema>(
+  id: string,
+  spec: GeometrySpec<S>,
+  registry: Registry = sharedRegistry,
+): GeometryEntry {
   geometryKind(registry);
   return registry.def('geometry', id, spec as unknown as Record<string, unknown>) as unknown as GeometryEntry;
 }

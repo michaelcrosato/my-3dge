@@ -51,8 +51,7 @@ describe('the geometry kind', () => {
         description: 'A crate: a rounded box.',
         params: { size: { type: 'number', default: 0.8, minimum: 0.1, unit: 'm', description: 'Its side.' } },
         budget: 300,
-        create: ({ size }) =>
-          roundedBoxGeometry({ width: size as number, height: size as number, depth: size as number, radius: 0.04 }),
+        create: ({ size }) => roundedBoxGeometry({ width: size, height: size, depth: size, radius: 0.04 }),
       },
       reg,
     );

@@ -1,0 +1,32 @@
+/**
+ * @file The geometry `geometry:{{name}}`: what it is (replace this text; `x docs` puts the first sentence in INDEX).
+ * It starts as a crate: a rounded box standing on the ground, sized and rounded by its parameters.
+ *
+ * Invariants: built from the engine's geometry kit (boxGeometry, roundedBoxGeometry, rampGeometry, frustumGeometry,
+ * ringGeometry, limbGeometry, mergeGeometries, sidesThenTops), so it stands on the ground, in metres, with normals
+ * and UVs in metres; within its vertex budget at its defaults (`node x qa geo` checks it).
+ *
+ * @example
+ * {{name}}.budget; // 300
+ * @see {{id}}.test.ts
+ */
+import { defineGeometry, roundedBoxGeometry } from '../../../engine';
+
+/** The geometry `geometry:{{name}}`: replace this sentence with what it is. */
+export const {{name}} = defineGeometry('geometry:{{name}}', {
+  description: 'A crate: a rounded box standing on the ground (replace).',
+  params: {
+    size: { type: 'number', default: 0.8, minimum: 0.1, maximum: 10, unit: 'm', description: 'Its side.' },
+    radius: {
+      type: 'number',
+      default: 0.04,
+      minimum: 0,
+      maximum: 0.5,
+      unit: 'm',
+      description: 'The rounding of its edges, at most half its side.',
+    },
+  },
+  budget: 300,
+  create: ({ size, radius }) =>
+    roundedBoxGeometry({ width: size, height: size, depth: size, radius: Math.min(radius, size / 2), segments: 2 }),
+});
