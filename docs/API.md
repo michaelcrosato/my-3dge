@@ -32,6 +32,17 @@ For the agents who maintain the engine.
 - `tones` (function): Five shades of a colour for painted-looking art: shadows drift toward blue-violet, highlights toward warm yellow, by `strength` (0–2, default 1).
 - `Tones` (interface): The five shades of `tones`: deep shadow, shadow, the base itself, light and highlight.
 
+### [`engine/core/events.ts`](../engine/core/events.ts)
+
+- `createEvents` (function): Makes an emitter.
+- `EVENT_CODES` (const): The codes this module raises, with their fixes.
+- `EventMap` (type): Event type → payload type.
+- `Events` (interface): A typed emitter: `on`, `once`, `off`, `emit`, scopes and the trace.
+- `EventsOptions` (interface): How an emitter is made: the log its failures go to (the shared one) and how many emits it traces (256).
+- `Listener` (type): A listener of one event type.
+- `Scope` (interface): Listeners that leave together: `dispose()` removes every one added through this scope or its children.
+- `TraceRecord` (interface): One traced emit.
+
 ### [`engine/core/hash.ts`](../engine/core/hash.ts)
 
 - `Canonical` (type): A value the canonical form holds; see the file comment.
@@ -43,6 +54,28 @@ For the agents who maintain the engine.
 - `MAX_DEPTH` (const): How deep the canonical form nests before it is refused as a cycle.
 - `mix32` (function): murmur3's 32-bit finaliser: spreads every bit of an int over every bit of the unsigned result.
 - `serialize` (function): The canonical text of a value: JSON with object keys sorted, no spaces, numbers exact (the shortest round-trip form, `-0` kept), typed arrays and `toArray()` values as arrays.
+
+### [`engine/core/log.ts`](../engine/core/log.ts)
+
+- `AdviceRecord` (interface): One piece of advice the log printed: its code, message and fix, and how often it was raised.
+- `closest` (function): The candidates closest to `wanted`, best first, at most `count`: a case-insensitive match, then names one starts with the other or ending in `.wanted` (`runSpeed` finds `hero.runSpeed`), then those a few edits away (one per three letters, at least one; a swap of neighbours is one edit).
+- `codeError` (function): An `EngineError` for `code`, to throw: `throw codeError('CORE_NO_ENTRY', { kind, id })`.
+- `codeInfo` (function): The registered code `code`, or undefined.
+- `CodeInfo` (interface): A registered code: its text, its name and its area.
+- `CodeText` (interface): One code's text: the message (`{name}` marks a value), what to do about it, and more detail for docs/ERRORS.md.
+- `CodeValues` (type): The values a template's `{name}` markers are filled with.
+- `createLog` (function): Makes a log; `log` is the engine's shared one.
+- `defineCodes` (function): Registers a module's codes and returns the table as given, typed.
+- `didYouMean` (function): ` (did you mean "a" or "b"?)` for the names closest to `wanted`, or `''` when none is close.
+- `EngineError` (class): A thrown engine error: its code, the filled message, the code's fix and the values that filled it.
+- `ErrorRecord` (interface): One structured error: its code, message, fix and values, how often it happened, and its cause when there was one.
+- `fill` (function): `template` with each `{name}` replaced by `values.name` (a marker without a value stays as written).
+- `listCodes` (function): Every registered code, sorted by name.
+- `log` (const): The engine's shared log: registry, events and settings report through it unless given another.
+- `Log` (interface): Warn-once advice and structured errors, with what was raised kept for `__engine.advice` and `__engine.errors`.
+- `LOG_CODES` (const): The codes this module raises, with their fixes.
+- `LogConsole` (interface): Where a log prints; tests pass their own to keep the console quiet.
+- `LogOptions` (interface): How a log is made: where it prints (the console by default) and how many errors it keeps (200).
 
 ### [`engine/core/math.ts`](../engine/core/math.ts)
 
@@ -76,11 +109,67 @@ For the agents who maintain the engine.
 - `NoiseKind` (type): The kinds of noise: value (lattice values), gradient (Perlin's) and cell (Worley's F1 distance).
 - `NoiseOptions` (interface): How a noise is made; every field is optional.
 
+### [`engine/core/registry.ts`](../engine/core/registry.ts)
+
+- `createRegistry` (function): Makes an empty registry; `registry` is the engine's shared one.
+- `def` (function): Defines an entry on the shared registry (`Registry.def`).
+- `defineKind` (function): Declares a kind on the shared registry (`Registry.defineKind`).
+- `Entry` (type): A registry entry: the parsed spec plus its `id` and `kind`.
+- `EntryDescription` (interface): What `describe(kind, id)` returns: each field's value, marked where it differs from the default.
+- `get` (function): Reads an entry from the shared registry (`Registry.get`).
+- `has` (function): Whether the shared registry's kind has the id (`Registry.has`).
+- `Kind` (interface): A declared kind, bound: the same as the registry's functions with the kind filled in, typed by its schema.
+- `KindDescription` (interface): What `describe(kind)` returns: the kind's fields and ids.
+- `KindsDescription` (interface): What `describe()` returns: every kind, with its entry count.
+- `KindSpec` (interface): How a kind is declared.
+- `list` (function): The shared registry's entries of a kind, sorted by id (`Registry.list`).
+- `registry` (const): The engine's shared registry: what `x describe` and `__engine.describe()` list.
+- `Registry` (interface): A set of kinds and their entries.
+- `REGISTRY_CODES` (const): The codes this module raises, with their fixes.
+- `sameValue` (function): Deep equality of plain data (arrays, plain objects, numbers by `Object.is`).
+
 ### [`engine/core/rng.ts`](../engine/core/rng.ts)
 
 - `derive` (function): A seed derived from `seed` and `keys` (strings or numbers), as an unsigned 32-bit integer: the 64-bit FNV-1a hash of `[seed, …keys]` in canonical form, folded and mixed.
 - `Rng` (class): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
 - `RngStreams` (class): Named streams from one seed (the scene's): `stream('ai')`, `stream('entity', 7, 'anim')`.
+
+### [`engine/core/schema.ts`](../engine/core/schema.ts)
+
+- `checkField` (function): The problems of one field definition (not of a value): the checks `defineSchema` runs on each field.
+- `checkValue` (function): Checks one value against its field, pushing each problem onto `problems`; returns the value with the defaults of nested objects filled (a copy when it is an array or object).
+- `copyValue` (function): A copy of arrays and plain objects (functions and other values as they are), so defaults are never shared.
+- `defineSchema` (function): Checks a schema's fields and returns it unchanged; throws `CORE_BAD_SCHEMA` naming every problem.
+- `describeSchema` (function): A schema as plain, JSON-ready rows, in its own key order (for `x describe` and `__engine.describe`).
+- `EntryOf` (type): What `parse` returns for schema `S`: required fields and fields with a default are always present.
+- `Field` (interface): One field: what its values are, documented.
+- `FIELD_TYPES` (const): Every `FieldType`, in documentation order.
+- `FieldRow` (type): One field as `describe` lists it: its keywords, with a function default shown as `'function'`.
+- `FieldType` (type): The value types: JSON's, plus `integer`, `function` (a hook) and `any`.
+- `isPlainObject` (function): True for `{}` literals and `Object.create(null)`.
+- `listProblems` (function): Joins problems into one sentence list for an error message.
+- `parse` (function): `validate`, throwing `CORE_BAD_SPEC` with every problem when there is one; `where` names the spec in the message.
+- `Problem` (interface): One thing wrong with a spec or a schema: where (`roughness`, `layers[2].color`) and a plain sentence.
+- `Schema` (type): A schema: field name → field.
+- `SCHEMA_CODES` (const): The codes this module raises, with their fixes.
+- `show` (function): How a value reads in a message: strings quoted, other values as JSON would write them.
+- `SpecOf` (type): What `parse` and `def` accept for schema `S`: the required fields, and any of the others.
+- `suggestKey` (function): ` (write minimum)` for a word the language spells differently, else the closest of `keys`, else `''`.
+- `validate` (function): Checks `input` against `schema`: the filled value (every given key plus absent defaults) and every problem found.
+- `ValueOf` (type): The TypeScript type of a field's values.
+- `When` (type): When a change takes effect: at once, for what spawns next, or when the scene next starts.
+
+### [`engine/core/settings.ts`](../engine/core/settings.ts)
+
+- `createSettings` (function): Makes a settings store over `registry`'s settings, each at its default.
+- `defineSettings` (function): Declares settings, path → field, on `registry` (the shared one by default).
+- `SettingChange` (interface): What `set` reports: the new and previous values, and when the change takes effect.
+- `SettingRow` (interface): One setting as `describe` lists it.
+- `Settings` (interface): A settings store over the `setting` entries of a registry.
+- `SETTINGS_CODES` (const): The codes this module raises, with their fixes.
+- `SettingsOptions` (interface): How a store is made: the registry whose `setting` entries it serves (the shared one by default).
+- `SettingValue` (type): A setting's value: plain data.
+- `SimSettings` (interface): What sim-side code reads settings through (`w.settings` in a scene): no view settings, no writes.
 
 ### [`engine/core/simMath.ts`](../engine/core/simMath.ts)
 
@@ -206,6 +295,14 @@ For the agents who maintain the engine.
 - `check` (const): The `deps` plugin of `x check` (T0): the offline check.
 - `createDepsCommand` (function): Builds the command; tests inject the day, the active node, a fixture registry and a recording runner.
 - `default` (default): Checks the dependency pins against `tools/deps.json` (offline), and asks the registry for compatible releases to adopt and for lines that have qualified (PLAN.md §6.10; doctrine: Mastery, Common ground).
+
+### [`tools/cmd/describe.ts`](../tools/cmd/describe.ts)
+
+- `default` (default): Lists the registries from their schemas (PLAN.md §8.1, §6.6): `x describe` names every kind with its entry count, `x describe <kind>` gives its fields (type, default, range, unit, docs) and ids, and `x describe <kind> <id>` one entry's values, `*` marking those that differ from the default.
+- `fieldLine` (function): One line for a field: name, type, default, range, unit, values, flags, then its description.
+- `loadRegistrations` (function): Imports each module that registers content; a module that fails becomes a warning.
+- `REGISTRATION_ROOTS` (const): Where modules that register content live.
+- `registrationModules` (function): The modules under `root` that register content, repository-relative and sorted.
 
 ### [`tools/cmd/docs.ts`](../tools/cmd/docs.ts)
 

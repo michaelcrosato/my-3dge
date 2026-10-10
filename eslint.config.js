@@ -28,8 +28,8 @@ const families = await tsImport('./tools/eslint/index.ts', import.meta.url);
 export const SWITCHES = {
   /** Game code imports only engine/index.ts and engine/sim-api.ts (tools/eslint/publicApi.ts). WP 1.6 turns it on. */
   publicApi: false,
-  /** "Ask the entry, never the id" (tools/eslint/askTheEntry.ts). WP 1.2 turns it on, with the registry. */
-  askTheEntry: false,
+  /** "Ask the entry, never the id" (tools/eslint/askTheEntry.ts): on since WP 1.2, with the registry. */
+  askTheEntry: true,
 };
 
 /** Code under these directories opens with a `@file` comment and stays under 400 lines (hard cap 600). */

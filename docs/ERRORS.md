@@ -7,29 +7,135 @@ Every code the engine prints, as `[CODE] message`, with its fix. Each module reg
 
 ## core
 
+### CORE_BAD_CODE
+
+- Message: `{problem}`
+- Fix: register each code once, beside the code that raises it: defineCodes('<area>', { AREA_NAME: { template, fix, doc } }), the name in upper-case words starting with the area's
+- Registered in: [`engine/core/log.ts` line 52](../engine/core/log.ts)
+
+Raised by `defineCodes` (engine/core/log.ts) for an area that is not one lower-case word, a code that does not start with its area, a template or fix that is empty, or a code registered again with other text. `x docs --check` reports the same problems statically.
+
 ### CORE_BAD_COLOR
 
 - Message: `color {color} is not a hex color`
 - Fix: write colours as hex strings: '#rrggbb' (or '#rgb', '#rgba', '#rrggbbaa')
-- Registered in: [`engine/core/color.ts` line 39](../engine/core/color.ts)
+- Registered in: [`engine/core/color.ts` line 28](../engine/core/color.ts)
 
 Raised by the colour helpers (engine/core/color.ts) for a string that is not hex. Colours are hex strings in data (PLAN.md §6.3); names such as `red` and `rgb()` forms are not accepted, so a typo fails where it is read instead of drawing the wrong colour.
+
+### CORE_BAD_KIND
+
+- Message: `kind {kind}: {problem}`
+- Fix: declare each kind once, as defineKind('<kind>', { description, fields, fallback?, check? }), the name a lower-case word (camelCase allowed)
+- Registered in: [`engine/core/registry.ts` line 50](../engine/core/registry.ts)
+
+Raised by `defineKind` (engine/core/registry.ts) for a malformed name, a kind declared twice, a missing description, or a key the declaration does not take. Problems inside `fields` raise `CORE_BAD_SCHEMA`.
 
 ### CORE_BAD_NOISE
 
 - Message: `noise option {option} must be {rule}, got {value}`
 - Fix: pass createNoise2D/createNoise3D a kind of value, gradient or cell, octaves from 1 to 16, a finite gain, a positive lacunarity (an integer when period is set) and a period that is a positive integer, or none
-- Registered in: [`engine/core/noise.ts` line 46](../engine/core/noise.ts)
+- Registered in: [`engine/core/noise.ts` line 35](../engine/core/noise.ts)
 
 Raised when a noise is created (engine/core/noise.ts), never while it is sampled, so a bad option fails at once instead of giving a noise that silently stops tiling.
+
+### CORE_BAD_SCHEMA
+
+- Message: `{where}: {problems}`
+- Fix: write each field as { type, description, default?, required?, minimum?, maximum?, enum?, unit?, items?, properties?, when?, view? } (engine/core/schema.ts), with a default that passes its own checks, and a default for every hook that is not required
+- Registered in: [`engine/core/schema.ts` line 34](../engine/core/schema.ts)
+
+Raised by `defineSchema` and `defineKind` (engine/core/schema.ts, engine/core/registry.ts) when a field is malformed: an unknown keyword (named with the closest one), an unknown type, a missing description, a default outside its own range or values, a minimum above the maximum, an empty enum, or a hook with neither a default nor `required: true`. `defineSettings` reports the same problems in a setting as `CORE_BAD_SPEC`.
+
+### CORE_BAD_SETTING
+
+- Message: `{problems}`
+- Fix: give each setting a value of its type inside its range and values (node x describe setting <path> shows them); in a URL or with x set, write numbers plainly, booleans as true or false, and arrays or objects as JSON
+- Registered in: [`engine/core/settings.ts` line 58](../engine/core/settings.ts)
+
+Raised by `set`, `setText`, `load`, `fromUrl` and `override` (engine/core/settings.ts). A preset or a URL with any problem applies nothing, and every problem is listed at once.
+
+### CORE_BAD_SPEC
+
+- Message: `{where}: {problems}`
+- Fix: give each field a value of its type inside its range and values, every required field, and no key the schema lacks (node x describe <kind> lists the fields)
+- Registered in: [`engine/core/schema.ts` line 39](../engine/core/schema.ts)
+
+Raised by `parse` and `def` (engine/core/schema.ts, engine/core/registry.ts) when a spec does not match its schema. Every problem is listed at once, each naming its key, and an unknown key names the closest valid one: nothing is dropped or clamped silently.
+
+### CORE_DUPLICATE_ID
+
+- Message: `{kind} {id} is already defined`
+- Fix: give the new entry another id, or remove one of the two def calls for it
+- Registered in: [`engine/core/registry.ts` line 59](../engine/core/registry.ts)
+
+Raised by `def` (engine/core/registry.ts). The last definition never silently wins: two entries with one id usually mean a copied file whose id was not changed.
+
+### CORE_LISTENER_FAILED
+
+- Message: `a listener of {type} threw: {error}`
+- Fix: fix the listener (the stack is in the error record); the other listeners of {type} still ran
+- Registered in: [`engine/core/events.ts` line 33](../engine/core/events.ts)
+
+Recorded by `emit` (engine/core/events.ts) in the log's errors (`__engine.errors`), with the thrown error as its cause. Each listener runs isolated, so one failing system never stops the others.
+
+### CORE_NO_ENTRY
+
+- Message: `there is no {kind} {id}{suggestion}`
+- Fix: fix the id (node x describe {kind} lists the defined ones), or define it with def('{kind}', {id}, { … }); a kind declared with a fallback returns that entry instead
+- Registered in: [`engine/core/registry.ts` line 69](../engine/core/registry.ts)
+
+Raised by `get` and `describe` (engine/core/registry.ts) for an id the kind lacks when there is nothing to stand in: the kind has no fallback, or its fallback is not defined either.
 
 ### CORE_NOT_CANONICAL
 
 - Message: `{path} is {what}, which the canonical form cannot hold`
 - Fix: keep hashed and captured state to null, booleans, finite numbers, strings, arrays, typed arrays, plain objects and three.js math classes; store an id instead of an object reference
-- Registered in: [`engine/core/hash.ts` line 43](../engine/core/hash.ts)
+- Registered in: [`engine/core/hash.ts` line 32](../engine/core/hash.ts)
 
 Raised by `Fnv64.value`, `hashValue` and `serialize` (engine/core/hash.ts) for `undefined`, functions, symbols, bigints, Maps, Sets, class instances without `toArray()`, nesting deeper than 100 levels (usually a cycle), and, in `serialize` only, NaN or ±Infinity. Nothing is skipped silently, so two states that differ always hash differently.
+
+### CORE_SCOPE_DISPOSED
+
+- Message: `the scope {label} is disposed; it takes no new listeners`
+- Fix: make a new scope (events.scope('…')) for what starts next, instead of reusing one whose lifetime ended
+- Registered in: [`engine/core/events.ts` line 38](../engine/core/events.ts)
+
+### CORE_UNKNOWN_CODE
+
+- Message: `no module registered the code {code}{suggestion}`
+- Fix: register it with defineCodes('<area>', { … }) in the module that raises it, or use the code docs/ERRORS.md lists
+- Registered in: [`engine/core/log.ts` line 57](../engine/core/log.ts)
+
+Raised by `codeError`, `warnOnce` and `error` (engine/core/log.ts) when the code was never registered, usually a typo or a module that raises a code before its `defineCodes` call ran.
+
+### CORE_UNKNOWN_ID
+
+- Message: `there is no {kind} {id}{suggestion}; {kind} {fallback} stands in for it`
+- Fix: fix the id (node x describe {kind} lists the defined ones), or define it with def('{kind}', {id}, { … })
+- Registered in: [`engine/core/registry.ts` line 64](../engine/core/registry.ts)
+
+Advice from `get` (engine/core/registry.ts), printed once per missing id, when the kind has a fallback: play goes on with the fallback entry, so a typo shows as the fallback (a crate, a default material) instead of a crash.
+
+### CORE_UNKNOWN_KIND
+
+- Message: `there is no kind {kind}{suggestion}`
+- Fix: name a declared kind (node x describe lists them), or import the module that declares it before using it
+- Registered in: [`engine/core/registry.ts` line 55](../engine/core/registry.ts)
+
+### CORE_UNKNOWN_SETTING
+
+- Message: `there is no setting {path}{suggestion}`
+- Fix: use a declared setting (node x describe setting lists them), or declare it with defineSettings({ … })
+- Registered in: [`engine/core/settings.ts` line 53](../engine/core/settings.ts)
+
+Raised by the settings store (engine/core/settings.ts) for an unknown path in `get`, `set`, `setText`, `reset` or `sim.get`. Presets, URL parameters and overrides report unknown paths through `CORE_BAD_SETTING`, with every other problem.
+
+### CORE_VIEW_SETTING
+
+- Message: `sim-side code read the view setting {path}`
+- Fix: read view settings ({path} changes only how the game looks or performs) from presentation code, through the settings store itself; sim-side code reads only settings without view: true, so the hash and replays never depend on them
+- Registered in: [`engine/core/settings.ts` line 63](../engine/core/settings.ts)
 
 ## gfx
 
@@ -37,6 +143,6 @@ Raised by `Fnv64.value`, `hashValue` and `serialize` (engine/core/hash.ts) for `
 
 - Message: `WebGPU is unavailable: {reason}`
 - Fix: open the page in a browser with WebGPU and hardware acceleration on (Chrome or Edge 113+, Safari 26+); headless, launch Chromium with WEBGPU_FLAGS from tools/lib/browser.ts (PLAN.md §8.8)
-- Registered in: [`engine/gfx/renderer.ts` line 38](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 27](../engine/gfx/renderer.ts)
 
 Raised at startup, before anything touches the GPU, when the browser has no `navigator.gpu`, gives no adapter or device, or three.js starts another backend than WebGPU. WebGPU is the only renderer: there is no WebGL fallback (PLAN.md §6.7), so nothing starts, and a page shows this message with its fix.

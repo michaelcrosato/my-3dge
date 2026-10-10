@@ -27,19 +27,8 @@
  * @see engine/core/noise.test.ts
  */
 import { mix32 } from './hash';
+import { defineCodes } from './log';
 import { derive, Rng } from './rng';
-
-/** One code's text: the message (`{name}` marks a value), what to do, and more detail for docs/ERRORS.md. */
-interface CodeText {
-  template: string;
-  fix: string;
-  doc?: string;
-}
-
-/** Stand-in for engine/core/log.ts's `defineCodes` (WP 1.2 replaces it): returns the table as given, typed. */
-function defineCodes<const T extends Record<string, CodeText>>(_area: string, codes: T): T {
-  return codes;
-}
 
 /** The codes this module raises, with their fixes (collected into docs/ERRORS.md by `x docs`). */
 export const NOISE_CODES = defineCodes('core', {

@@ -25,18 +25,7 @@
  * serialize({ b: [1, -0], a: 'x' }); // '{"a":"x","b":[1,-0]}'
  * @see engine/core/hash.test.ts
  */
-
-/** One code's text: the message (`{name}` marks a value), what to do, and more detail for docs/ERRORS.md. */
-interface CodeText {
-  template: string;
-  fix: string;
-  doc?: string;
-}
-
-/** Stand-in for engine/core/log.ts's `defineCodes` (WP 1.2 replaces it): returns the table as given, typed. */
-function defineCodes<const T extends Record<string, CodeText>>(_area: string, codes: T): T {
-  return codes;
-}
+import { defineCodes } from './log';
 
 /** The codes this module raises, with their fixes (collected into docs/ERRORS.md by `x docs`). */
 export const HASH_CODES = defineCodes('core', {

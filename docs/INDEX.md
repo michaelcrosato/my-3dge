@@ -21,18 +21,33 @@ advice codes are in [ERRORS.md](ERRORS.md).
 - [`color.ts`](../engine/core/color.ts): Colours as data (PLAN.md §6.3): hex strings in data, linear floats for shaders and instance colours, sRGB on output.
   - Exports: `COLOR_CODES`, `ColorInput`, `fromLinear`, `hex`, `hsl`, `mix`, `ramp`, `Rgb`, `shade`, `toHex`, `toHsl`, `toLinear`, `tones`, `Tones`
   - Tests: [`engine/core/color.test.ts`](../engine/core/color.test.ts)
+- [`events.ts`](../engine/core/events.ts): Events (PLAN.md WP 1.2): a typed emitter in mitt's and Node's shape, `on`, `once`, `off` and `emit`, plus scoped listeners that leave together (`scope.dispose()`), each listener isolated so its failure is recorded, and a trace ring of the latest emits for `trace()` and debugging.
+  - Exports: `createEvents`, `EVENT_CODES`, `EventMap`, `Events`, `EventsOptions`, `Listener`, `Scope`, `TraceRecord`
+  - Tests: [`engine/core/events.test.ts`](../engine/core/events.test.ts)
 - [`hash.ts`](../engine/core/hash.ts): The state hash (PLAN.md §6.5, I-05): 64-bit FNV-1a over the float64 bits of numbers, and the canonical form that turns structured state into one exact byte stream and one exact text.
   - Exports: `Canonical`, `deserialize`, `Fnv64`, `HASH_CODES`, `hashNumbers`, `hashValue`, `MAX_DEPTH`, `mix32`, `serialize`
   - Tests: [`engine/core/hash.test.ts`](../engine/core/hash.test.ts)
+- [`log.ts`](../engine/core/log.ts): Error and advice codes, warn-once advice and structured errors (PLAN.md WP 1.2, §6.8; doctrine: Agent-operable): every message the engine prints carries a stable code and names its fix in public-API terms.
+  - Exports: `AdviceRecord`, `closest`, `codeError`, `codeInfo`, `CodeInfo`, `CodeText`, `CodeValues`, `createLog`, `defineCodes`, `didYouMean`, `EngineError`, `ErrorRecord`, `fill`, `listCodes`, `log`, `Log`, `LOG_CODES`, `LogConsole`, `LogOptions`
+  - Tests: [`engine/core/log.test.ts`](../engine/core/log.test.ts)
 - [`math.ts`](../engine/core/math.ts): The math every layer shares (PLAN.md §6.1; doctrine: Common ground): three.js's math classes, re-exported from `three/webgpu` so there is one set of math types and one entry point, plus what three.js lacks: my-3d2dge's angle helpers (`angDiff`, `lerpAng`, `approach`, `approachAng`), `smoothDamp`, the easing curves (`ease`) and the swing-twist decomposition.
   - Exports: `angDiff`, `approach`, `approachAng`, `Box3`, `Color`, `ease`, `Euler`, `lerpAng`, `MathUtils`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `smoothDamp`, `Sphere`, `swingTwist`, `Vector3`
   - Tests: [`engine/core/math.test.ts`](../engine/core/math.test.ts)
 - [`noise.ts`](../engine/core/noise.ts): Seeded noise for the sim and for procedural content (PLAN.md WP 1.1): my-3d2dge's `hash2` and `noise2`, bit-exact, and value, gradient and cell noise in 2D and 3D, each optionally tiling and summed in fbm octaves.
   - Exports: `createNoise2D`, `createNoise3D`, `hash2`, `NOISE_CODES`, `noise2`, `Noise2D`, `Noise3D`, `NoiseKind`, `NoiseOptions`
   - Tests: [`engine/core/noise.test.ts`](../engine/core/noise.test.ts)
+- [`registry.ts`](../engine/core/registry.ts): Data-first registries (PLAN.md §6.6, WP 1.2): `defineKind` declares a kind of content with its schema, `def` validates and stores one entry, `get`, `has` and `list` read them, and `describe` lists kinds, fields and ids for `x describe` and `__engine.describe()`.
+  - Exports: `createRegistry`, `def`, `defineKind`, `Entry`, `EntryDescription`, `get`, `has`, `Kind`, `KindDescription`, `KindsDescription`, `KindSpec`, `list`, `registry`, `Registry`, `REGISTRY_CODES`, `sameValue`
+  - Tests: [`engine/core/registry.test.ts`](../engine/core/registry.test.ts)
 - [`rng.ts`](../engine/core/rng.ts): Seeded randomness for the sim (PLAN.md §6.3, §6.5; doctrine: Reproducible): Mulberry32 streams, bit-exact with my-3d2dge's `E.rng`, seeds derived from a seed and keys, and named streams whose states are plain numbers that captures store and the hash covers.
   - Exports: `derive`, `Rng`, `RngStreams`
   - Tests: [`engine/core/rng.test.ts`](../engine/core/rng.test.ts)
+- [`schema.ts`](../engine/core/schema.ts): The schema mini-language (PLAN.md WP 1.2, §6.6): one plain object per field, saying its type, default, range, unit, docs, allowed values and whether it is required, so registries, settings and inspector arguments are validated, filled and described from one table.
+  - Exports: `checkField`, `checkValue`, `copyValue`, `defineSchema`, `describeSchema`, `EntryOf`, `Field`, `FIELD_TYPES`, `FieldRow`, `FieldType`, `isPlainObject`, `listProblems`, `parse`, `Problem`, `Schema`, `SCHEMA_CODES`, `show`, `SpecOf`, `suggestKey`, `validate`, `ValueOf`, `When`
+  - Tests: [`engine/core/schema.test.ts`](../engine/core/schema.test.ts)
+- [`settings.ts`](../engine/core/settings.ts): Settings from one schema (PLAN.md WP 1.2, I-37; doctrine: Agent-operable): `defineSettings` declares each setting as an entry of the registry kind `setting` (a schema.ts field keyed by its dotted path, `hero.runSpeed`), and `createSettings` makes a store with a validated `get` and `set`, URL parameters, JSON export (`toJSON`, a preset) and import (`load`), a "differs from default" marker, and scoped overrides.
+  - Exports: `createSettings`, `defineSettings`, `SettingChange`, `SettingRow`, `Settings`, `SETTINGS_CODES`, `SettingsOptions`, `SettingValue`, `SimSettings`
+  - Tests: [`engine/core/settings.test.ts`](../engine/core/settings.test.ts)
 - [`simMath.ts`](../engine/core/simMath.ts): Deterministic `Math` while the sim runs (PLAN.md §6.5; doctrines: Reproducible, Quality under the hood): `withSimMath(fn)` swaps stdlib's fdlibm ports of `sin`, `cos` and `pow` into `Math` while `fn` runs and puts the native functions back afterwards.
   - Exports: `inSimMath`, `SIM_MATH`, `SIM_MATH_NAMES`, `SimMathEntry`, `SimMathName`, `withSimMath`
   - Tests: [`engine/core/simMath.test.ts`](../engine/core/simMath.test.ts), [`tests/e2e/drift.spec.ts`](../tests/e2e/drift.spec.ts)
@@ -97,6 +112,9 @@ advice codes are in [ERRORS.md](ERRORS.md).
 - [`deps.ts`](../tools/cmd/deps.ts): Checks the dependency pins against `tools/deps.json` (offline), and asks the registry for compatible releases to adopt and for lines that have qualified (PLAN.md §6.10; doctrine: Mastery, Common ground).
   - Exports: `check`, `createDepsCommand`, `default`
   - Tests: [`tools/cmd/deps.test.ts`](../tools/cmd/deps.test.ts)
+- [`describe.ts`](../tools/cmd/describe.ts): Lists the registries from their schemas (PLAN.md §8.1, §6.6): `x describe` names every kind with its entry count, `x describe <kind>` gives its fields (type, default, range, unit, docs) and ids, and `x describe <kind> <id>` one entry's values, `*` marking those that differ from the default.
+  - Exports: `default`, `fieldLine`, `loadRegistrations`, `REGISTRATION_ROOTS`, `registrationModules`
+  - Tests: [`tools/cmd/describe.test.ts`](../tools/cmd/describe.test.ts)
 - [`docs.ts`](../tools/cmd/docs.ts): Generates and checks the docs that come from the code (PLAN.md §6.8, §8.12): `docs/INDEX.md`, `docs/API.md` and `docs/ERRORS.md`, the `@example` blocks, the paths the docs mention, and `docs/PROGRESS.md`'s length.
   - Exports: `check`, `checkComments`, `createDocsCommand`, `default`, `DocsOptions`, `driftChecks`, `MAX_COMMENT_LINES`, `PROGRESS`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
