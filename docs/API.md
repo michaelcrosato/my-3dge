@@ -75,6 +75,8 @@ game agent's manual.
 - `defineMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): Defines a material on `registry` (the shared one by default) and returns it.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
+- `defineSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): Defines an effect on `registry` (the shared one by default) and returns it.
+- `defineSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): Defines a song on `registry` (the shared one by default) and returns it.
 - `defineTexture` (function from [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)): Defines a texture generator on `registry` (the shared one by default) and returns it.
 - `DeviceKind` (type from [`engine/input/codes.ts`](../engine/input/codes.ts)): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
@@ -100,6 +102,8 @@ game agent's manual.
 - `getGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): The geometry `id` of `registry` (the shared one by default); a missing id gives `geometry:box`, with a warning.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
 - `getMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): The material `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `material:default`.
+- `getSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
+- `getSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): The song `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `GroundDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The slab under the whole level: the ground's collider, one tile wider than the map all round, 1 m deep.
@@ -173,6 +177,8 @@ game agent's manual.
 - `readKeyboardLayout` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The page's keyboard layout (`navigator.keyboard.getLayoutMap()`, Chromium), or undefined where it is missing.
 - `RebindResult` (type from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): What `rebind` did: the action's codes now, or why it refused and which action holds the code.
 - `released` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` went up on the buffer's step (a tap shorter than a step included).
+- `renderSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect as mono samples (engine/audio/dsp/render.ts): one variant, its layers mixed in.
+- `renderSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One pass of the song as mono samples (engine/audio/dsp/render.ts): at least the pass's length, so passes played back to back every `songTiming(song).seconds` keep time, plus the last notes' tails; silence when no track plays at the intensity asked for.
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
 - `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
 - `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
@@ -190,6 +196,12 @@ game agent's manual.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
 - `ScriptedGamepad` (interface from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): A pad that a script moves frame by frame.
 - `SettingValue` (type from [`engine/core/settings.ts`](../engine/core/settings.ts)): A setting's value: plain data.
+- `Sfx` (interface from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): An `sfx` entry: the spec with its defaults filled, frozen.
+- `SfxBus` (type from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): One of the buses.
+- `SfxLayer` (interface from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): Another effect mixed into this one.
+- `SfxRenderOptions` (interface from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): How `renderSfx` renders: which variant, from which seed, at which rate, from which registry.
+- `SfxSpec` (interface from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): What `defineSfx` takes: voices, layers or both, and every other field optional.
+- `sfxVoices` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect as one flat voice list, its layers resolved and placed: what `renderSfx` renders for variant 0.
 - `Sheet` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A drawn sheet: the SVG text, its hash, and its size in pixels.
 - `SheetFrame` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): One frame of a sheet: a pose, and its label (`#<index>` when absent).
 - `SheetOptions` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): What a sheet draws, and how.
@@ -203,6 +215,14 @@ game agent's manual.
 - `socketPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of `socket`: it rides its joint, so it turns with it.
 - `SOCKETS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The sockets: attachment points that turn with their joint (`SOCKET_JOINTS`).
 - `solidAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): Whether (x, z) is in a solid tile (a wall, a pillar, a low wall), or outside the map.
+- `Song` (interface from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): A `song` entry: the spec with its defaults filled, frozen.
+- `SongRenderOptions` (interface from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): How `songVoices` and `renderSong` play a song.
+- `SongSpec` (interface from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): What `defineSong` takes: the tracks, and every other field optional.
+- `songTiming` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): The song's step and bar lengths, and one pass's.
+- `SongTiming` (interface from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): How long a step and a bar are, and how long one pass of the song is.
+- `SongTrack` (interface from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One track of a song.
+- `songVoices` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One pass of the song as a voice list, track by track: what `renderSong` renders.
+- `SoundDef` (type from [`engine/audio/dsp/voice.ts`](../engine/audio/dsp/voice.ts)): A sound: one voice, or several played together.
 - `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
@@ -226,6 +246,7 @@ game agent's manual.
 - `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
 - `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
 - `VirtualDevice` (interface from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): The virtual device.
+- `Voice` (interface from [`engine/audio/dsp/voice.ts`](../engine/audio/dsp/voice.ts)): One voice of a sound: every field is optional.
 - `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
 - `World` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
 - `WorldEvents` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
@@ -453,6 +474,55 @@ For the agents who maintain the engine.
 - `HEADLESS_CODES` (const): The codes this module raises, with their fixes.
 - `headlessHost` (function): The run behind a headless engine: its session (world, settings, recording) and clock.
 - `HeadlessOptions` (interface): How a headless engine starts.
+
+### [`engine/audio/data/drums.ts`](../engine/audio/data/drums.ts)
+
+- `DRUM_KIT` (const): The drum kit: a `drums` track's tokens (kick, snare, hat, open hat, crash, tom) and the drums they play.
+- `DRUMS` (const): The engine's drums by id.
+
+### [`engine/audio/data/effects.ts`](../engine/audio/data/effects.ts)
+
+- `EFFECTS` (const): The engine's effects by id.
+
+### [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)
+
+- `defineSfx` (function): Defines an effect on `registry` (the shared one by default) and returns it.
+- `getSfx` (function): The effect `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
+- `renderSfx` (function): The effect as mono samples (engine/audio/dsp/render.ts): one variant, its layers mixed in.
+- `Sfx` (interface): An `sfx` entry: the spec with its defaults filled, frozen.
+- `SFX_BUSES` (const): The mixer buses an effect may play on.
+- `SFX_CODES` (const): The codes the effects raise beyond the DSP's own, with their fixes.
+- `SFX_FIELDS` (const): The kind's fields.
+- `SfxBus` (type): One of the buses.
+- `sfxKind` (function): Declares the `sfx` kind on `registry` with the engine's effects and drums (once).
+- `SfxLayer` (interface): Another effect mixed into this one.
+- `sfxProblems` (function): The problems of an effect beyond its fields' own: voices `render` refuses, or nothing to play ([] when fine).
+- `SfxRenderOptions` (interface): How `renderSfx` renders: which variant, from which seed, at which rate, from which registry.
+- `SfxSpec` (interface): What `defineSfx` takes: voices, layers or both, and every other field optional.
+- `sfxVoices` (function): The effect as one flat voice list, its layers resolved and placed: what `renderSfx` renders for variant 0.
+- `variantPitch` (function): The pitch ratio of variant `variant` of `sfx` from `seed`: 1 for variant 0, else within 1 ± `vary`.
+
+### [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)
+
+- `defineSong` (function): Defines a song on `registry` (the shared one by default) and returns it.
+- `getSong` (function): The song `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
+- `renderSong` (function): One pass of the song as mono samples (engine/audio/dsp/render.ts): at least the pass's length, so passes played back to back every `songTiming(song).seconds` keep time, plus the last notes' tails; silence when no track plays at the intensity asked for.
+- `Song` (interface): A `song` entry: the spec with its defaults filled, frozen.
+- `SONG_FIELDS` (const): The kind's fields.
+- `songKind` (function): Declares the `song` kind on `registry` with the engine's songs (once).
+- `songProblems` (function): The problems of a song beyond its fields' own ([] when fine): tokens, bar lines, track lengths against the bar and the song, a voice `render` refuses, a kit token that is not one word, and a pass past the DSP's length limit.
+- `SongRenderOptions` (interface): How `songVoices` and `renderSong` play a song.
+- `SongSpec` (interface): What `defineSong` takes: the tracks, and every other field optional.
+- `songTiming` (function): The song's step and bar lengths, and one pass's.
+- `SongTiming` (interface): How long a step and a bar are, and how long one pass of the song is.
+- `SongTrack` (interface): One track of a song.
+- `songVoices` (function): One pass of the song as a voice list, track by track: what `renderSong` renders.
+- `TRACK_WAVES` (const): The waves a track plays: the tonal ones, the pluck, and `drums` (kit tokens).
+- `TrackWave` (type): One of the track waves.
+
+### [`engine/audio/data/songs.ts`](../engine/audio/data/songs.ts)
+
+- `SONGS` (const): The engine's songs by id.
 
 ### [`engine/audio/dsp/biquad.ts`](../engine/audio/dsp/biquad.ts)
 

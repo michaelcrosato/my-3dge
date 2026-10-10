@@ -3,7 +3,7 @@
  * unseeded randomness, no DOM, no Web Audio, no three.js, so identical inputs and seeds give identical play in Node
  * and in Chromium.
  *
- * Sim-side means `engine/{core,sim,physics,anim,world}`, `engine/input/intents.ts`, `engine/audio/dsp`,
+ * Sim-side means `engine/{core,sim,physics,anim,world}`, `engine/input/intents.ts`, `engine/audio/{dsp,data}`,
  * `engine/dev/bot.ts`, the box's scenes and cast, and the fixture scenes; `*.test.ts` files are exempt. The standard
  * `Math` stays allowed, `Math.sin` and `Math.cos` included: the sim swaps in fdlibm ports while it steps (§6.5).
  * `core/math.ts` alone imports three.js, for its math classes (layers.ts limits it to them).
@@ -45,6 +45,7 @@ export const SIM_SIDE = [
   'engine/world/**',
   'engine/input/intents.ts',
   'engine/audio/dsp/**',
+  'engine/audio/data/**',
   'engine/dev/bot.ts',
   'labs/box/scenes/**',
   'labs/box/cast/**',

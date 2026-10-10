@@ -73,6 +73,22 @@ Raised by `render` (engine/audio/dsp/render.ts): seeds name random streams exact
 
 Raised by `render` (engine/audio/dsp/render.ts) for a value of the wrong type or outside its range, and for fields that do not apply to the voice (a pitch change on a pluck, fm on noise).
 
+### AUDIO_BAD_VARIANT
+
+- Message: `{id} has variants 0 to {last}; {variant} is not one of them`
+- Fix: ask for a whole number from 0 to {last}, or give the effect more variants
+- Registered in: [`engine/audio/data/sfx.ts` line 51](../engine/audio/data/sfx.ts)
+
+Raised by `renderSfx` (engine/audio/data/sfx.ts).
+
+### AUDIO_LAYER_CYCLE
+
+- Message: `{id} contains itself through its layers: {path}`
+- Fix: remove one layer of the cycle: a layer mixes another effect in, which cannot contain the first
+- Registered in: [`engine/audio/data/sfx.ts` line 46](../engine/audio/data/sfx.ts)
+
+Raised by `sfxVoices` and `renderSfx` (engine/audio/data/sfx.ts) when following layers leads back to an effect already on the path.
+
 ### AUDIO_TOO_LONG
 
 - Message: `the sound lasts {seconds} s, past the {max} s limit`

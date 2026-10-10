@@ -282,7 +282,7 @@ export function songVoices(song: string | Song, options: SongRenderOptions = {})
   for (const track of entry.tracks) {
     if (track.intensity > intensity) continue;
     const tokens = tokensOf(track.notes);
-    const scale = 2 ** track.octave;
+    const scale = Math.pow(2, track.octave);
     const template = noteVoice(track);
     for (let step = 0; step < steps; step++) {
       const at = step * stepSeconds;

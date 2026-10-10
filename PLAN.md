@@ -3197,12 +3197,12 @@ The stress test had no sound. The engine's sound data and synth design come over
 #### WP-9.2 Sound data
 - **Owns:** `engine/audio/data/**`, `fixtures/sounds/` (a small neutral sound set and one demo song, for tests)
 - **Needs:** WP 9.1
-- **Size:** S
+- **Size:** M (ADR-0013 amendment 1)
 - **Carry:** the engine's 33 effects, 6 drums and 5 songs (COPY the data).
 - **Build:**
-  - The data as typed modules (kinds `sfx` and `song`, with their scaffold templates).
-  - Validators (track length must divide the bar; value ranges).
-  - Variants, and layered effects.
+  - The data as typed modules (kinds `sfx` and `song`, with their scaffold templates); drums are `sfx` entries.
+  - Validators (track length must fill whole bars or divide a bar, and divide the song length; value ranges).
+  - Variants (4 rendered per effect, replacing the source's per-play detune), and layered effects.
 - **Improves:** I-23.
 - **Done when:** every sound renders, and its validators pass. The clipping, DC and duration checks (the `audio` QA family) run over them from WP 9.4 on.
 - **Verify:** `npm test -- engine/audio`
@@ -4005,7 +4005,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 8.10 | 100STYLE and Quaternius v2 from shardfall | L | todo | | |
 | **G8** | **Gate: animation library** | | todo | | |
 | 9.1 | DSP core | X | done | 4d59721 (#5) | engine/audio/dsp: PolyBLEP oscillators, noise, ADSR and the source's fall/hold envelopes, sweep, arpeggio, vibrato, 8 cookbook biquads, echo, 2-operator FM, tuned Karplus-Strong pluck; render(def, seed, rate) → Float32Array under withSimMath, hashed by soundHash, same hashes in Node and Chromium (20 reference + 200 random sounds); calls: goldens in tests/pages/audioDspCases.ts, plucks hold by default, aliasing claim corrected to the measured ~6x (15 dB), linear cookbook Q for every filter; engine/index.ts exports left to WP 9.2/9.3; no escalations, no deferred proofs |
-| 9.2 | Sound data | X | todo | | |
+| 9.2 | Sound data | X | done | da451ce (#5) | engine/audio/data/{sfx,song,effects,drums,songs}.ts: kinds sfx and song; 33 effects, 6 drums and 5 songs copied from my-3d2dge; validators (tokens, bar lines, track length fills/divides bars and divides the song, ranges, voices via normalizeSound), layers, stratified pitch variants, fixtures/sounds, templates sfx and song, 44 goldens (linux-x64); calls (ADR-0013 amendment 1): 4 variants per effect replace ±3% per-play detune, added fields bus/intensity/kit/beats, drums are sfx, noise tracks refused, public names in engine/index.ts, audio/data a sim-side layer, size M; no escalations; deferred proof: audio QA (clipping/DC/duration) to WP 9.4; integrator: song.ts 2 ** octave → Math.pow (sim-side lint), audio/data layer fixture |
 | 9.3 | Runtime, spatial audio, music | X | todo | | |
 | 9.4 | Audio tools | X | todo | | |
 | 9.5 | Sound in the box | X | todo | | |

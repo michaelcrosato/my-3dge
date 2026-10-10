@@ -167,6 +167,14 @@ const LAYERS: Layer[] = [
     patterns: [RAPIER],
   },
   {
+    name: 'audio/data',
+    files: ['engine/audio/data/**'],
+    may: 'core and audio/dsp',
+    fix: 'sound data is sim-side and pure: the runtime plays it, never the reverse',
+    never: ['sim', 'physics', 'anim', 'world', 'input', 'gfx', 'ui', 'dev', 'app', 'runtime', AUDIO_RUNTIME],
+    patterns: [RAPIER],
+  },
+  {
     name: 'audio/runtime',
     files: ['engine/audio/runtime/**'],
     may: 'audio/dsp, core, and sim snapshot types and the QueryView',
