@@ -223,7 +223,7 @@ Raised by `normalizeIntents`, `applyIntents` and the replay checks (engine/input
 
 - Message: `{where} got {value}`
 - Fix: pass {expected}
-- Registered in: [`engine/sim/world.ts` line 64](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 65](../engine/sim/world.ts)
 
 Raised by the world (engine/sim/world.ts) for a seed or step rate that is not a number of the right kind, a spawn that is not a plain object of components, or an `id` given among the components.
 
@@ -261,13 +261,13 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `{what} was called during a step`
 - Fix: call step(), run(), capture() and restore() between steps; inside a system, change the world directly (spawn, despawn and emit queue to the end of the step)
-- Registered in: [`engine/sim/world.ts` line 60](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 61](../engine/sim/world.ts)
 
 ### SIM_EVENT_STORM
 
 - Message: `the end of step {tick} was still delivering events and spawns after {rounds} rounds`
 - Fix: break the loop: a listener that emits the event it listens to, or spawns what spawns it again, never settles; act on such chains one step at a time (store a pending flag in a component and let a system handle it next step)
-- Registered in: [`engine/sim/world.ts` line 69](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 70](../engine/sim/world.ts)
 
 ### SIM_NO_ACTION
 
@@ -285,7 +285,7 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `there is no entity {id}{why}`
 - Fix: use an id spawn() returned while its entity lives (w.has(id) tells): a spawned entity joins the world at the end of the step that spawned it, so give it its components in spawn(); a despawned one leaves at the end of its step
-- Registered in: [`engine/sim/world.ts` line 56](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 57](../engine/sim/world.ts)
 
 ### SIM_NOT_DATA
 

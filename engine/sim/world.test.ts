@@ -1,11 +1,12 @@
 /**
  * @file Unit tests for engine/sim/world.ts (T1): monotonic ids, iteration in id order, spawn, despawn and event
  * queues applied at the boundary (spawns, then despawns, then events in emit order), `add`/`remove`/`query`, the
- * systems' order with the timers before `rules`, sim and visual RNG streams, every entry point inside the fdlibm swap
- * (native `Math` again afterwards), entity streams dropped on despawn (and refused afterwards), components as plain
- * data (class instances and typed arrays refused, values copied on entry, kept in name and declared order), `events`
- * without `emit`, frozen intents, the coded errors, and the cost of per-entity streams at 5,000 entities (measured
- * against the same world without them, so the bounds hold on a loaded machine).
+ * systems' order with the timers before `rules` (a timer made in any phase fires in the next step), sim and visual RNG
+ * streams, every entry point inside the fdlibm swap (native `Math` again afterwards), entity streams dropped on
+ * despawn (and refused afterwards), components as plain data (class instances and typed arrays refused, values copied
+ * on entry, kept in name and declared order), `events` without `emit`, frozen intents, the coded errors, and the cost
+ * of per-entity streams at 5,000 entities (measured against the same world without them, so the bounds hold on a
+ * loaded machine).
  * @see engine/sim/world.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -199,6 +200,27 @@ describe('the step', () => {
       'listener 2 2',
     ]);
     expect(w.tick).toBe(2);
+  });
+
+  it('fires a timer made during a step in the next one, whichever phase made it, never in the same one', () => {
+    const { w } = makeWorld();
+    const fired: string[] = [];
+    const PHASES = ['intents', 'ai', 'anim', 'physics', 'readback', 'rules'] as const;
+    for (const phase of PHASES) {
+      w.systems.add(
+        `make-${phase}`,
+        (w) => {
+          if (w.tick !== 3) return;
+          w.timers.after(0, () => fired.push(`${phase} after(0) at ${w.tick}`));
+          w.timers.after(1 / 60, () => fired.push(`${phase} after(1/60) at ${w.tick}`));
+        },
+        { phase },
+      );
+    }
+    for (let k = 0; k < 3; k++) w.step();
+    expect(fired).toEqual([]);
+    w.step();
+    expect(fired).toEqual(PHASES.flatMap((phase) => [`${phase} after(0) at 4`, `${phase} after(1/60) at 4`]));
   });
 
   it('applies spawn, despawn and emit at once between steps', () => {

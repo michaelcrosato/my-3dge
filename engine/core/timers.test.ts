@@ -1,8 +1,10 @@
 /**
- * @file Unit tests for engine/core/timers.ts (T1): timers in sim time (first step at or after their time, phase kept
- * for fractional periods, due then creation order, a timer made while firing waits a step, cancel from outside and
- * inside, bad durations refused, plain state, capture and restore continuing exactly, a throw leaving the list
- * sound) and per-entity clocks (rate, nesting, freezes in world seconds, the longest winning, leftovers carried).
+ * @file Unit tests for engine/core/timers.ts (T1): timers in sim time (first step at or after their time, the tick
+ * counted as a step begins so a timer made before its timers stage waits a step, `every` exact past 130,000 periods
+ * of 0.07 s, phase kept for fractional periods, due then creation order, a timer made while firing waits a step,
+ * cancel from outside and inside, bad durations refused, plain state, capture and restore continuing exactly, a throw
+ * leaving the list sound) and per-entity clocks (rate, nesting, freezes in world seconds, the longest winning,
+ * leftovers carried).
  * @see engine/core/timers.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -29,6 +31,35 @@ describe('timers in sim time', () => {
     timers.after(0, () => fired.push(timers.ticks));
     for (let i = 0; i < 40; i++) timers.step();
     expect(fired).toEqual([1, 30]);
+  });
+
+  it('counts the tick as a step begins and fires at the timers stage: a timer made between them waits a step', () => {
+    const timers = createTimers();
+    const fired: string[] = [];
+    timers.step();
+    timers.step();
+    timers.tick(); // step 3 begins: systems ahead of the timers stage run now
+    expect(timers.ticks).toBe(3);
+    timers.after(0, () => fired.push(`after(0) at ${timers.ticks}`));
+    timers.after(1 / 60, () => fired.push(`after(1/60) at ${timers.ticks}`));
+    timers.fire(); // the timers stage of step 3
+    expect(fired).toEqual([]);
+    timers.step();
+    expect(fired).toEqual(['after(0) at 4', 'after(1/60) at 4']);
+  });
+
+  it('keeps every exact over many periods: firing n of every(0.07) lands on tick ceil(4.2 n), past 130,000', () => {
+    const timers = createTimers();
+    const off: string[] = [];
+    let n = 0;
+    timers.every(0.07, () => {
+      n++;
+      const exact = Math.floor((21 * n + 4) / 5); // ceil(21 n / 5) in integers
+      if (timers.ticks !== exact && off.length < 3) off.push(`#${n} at ${timers.ticks}, not ${exact}`);
+    });
+    for (let i = 0; i < 548_100; i++) timers.step(); // 130,500 periods of 4.2 ticks
+    expect(off).toEqual([]);
+    expect(n).toBe(130_500);
   });
 
   it('keeps the phase of every, so a fractional period keeps its average rate exactly', () => {
