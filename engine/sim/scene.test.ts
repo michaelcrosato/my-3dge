@@ -3,7 +3,9 @@
  * their settings are schema-checked when defined and their actions must be functions; `startScene` layers the
  * caller's settings over the scene's over the defaults, seeds the world, runs `setup` under the fdlibm swap and the
  * scene's `step` first in the phase `intents`, and every start is a fresh world and settings store; an unknown id
- * names the closest.
+ * names the closest. A session records setting changes made through its own store (set, setText, load, fromUrl,
+ * reset, override) at their step, merged in play order, so its replay gives the live hashes; what no step has followed
+ * yet waits; and a dev action that throws is rolled back and not recorded.
  * @see engine/sim/scene.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -11,7 +13,8 @@ import { EngineError } from '../core/log';
 import { createRegistry } from '../core/registry';
 import { defineSettings } from '../core/settings';
 import { inSimMath } from '../core/simMath';
-import { defineScene, getScene, isScene, startScene } from './scene';
+import { checkReplay, playReplay } from './replay';
+import { createSession, defineScene, getScene, isScene, startScene } from './scene';
 import { defineComponent } from './state';
 
 /** The message of the EngineError `fn` throws, after its code. */
@@ -128,5 +131,107 @@ describe('startScene', () => {
     const registry = setupRegistry();
     defineScene('kernel', { setup: () => {} }, registry);
     expect(failure(() => startScene('kernal', { registry }))).toMatch(/^CORE_NO_ENTRY.*kernel/);
+  });
+});
+
+type Dots = { dot: { x: number } };
+
+/** A registry with a scene `drift`: three dots drift by `demo.speed` and `move`, with sin; dev actions shove and botch. */
+function driftRegistry() {
+  const registry = setupRegistry();
+  defineScene<Dots>(
+    'drift',
+    {
+      setup: (w) => [0, 1, 2].forEach((x) => w.spawn({ dot: { x } })),
+      step(w, intents) {
+        const speed = w.settings.get<number>('demo.speed') + (intents.move?.[1] ?? 0);
+        for (const e of w.query('dot')) e.dot.x += (speed + 0.1 * Math.sin(e.dot.x)) * w.dt;
+      },
+      actions: {
+        shove: (w, args) => void (w.get((args as { id: number }).id)!.dot!.x += 1),
+        botch(w) {
+          w.get(1)!.dot!.x = 99;
+          w.spawn({ dot: {} });
+          w.rng('spawn').next();
+          throw new Error('botched halfway');
+        },
+      },
+    },
+    registry,
+  );
+  return registry;
+}
+
+describe('createSession', () => {
+  it('records setting changes made through its own store: set, setText, load, fromUrl, reset, override', () => {
+    const registry = driftRegistry();
+    const live = createSession('drift', { seed: 4, registry, settings: { 'demo.speed': 2 } });
+    const hashes: Record<string, string> = { 0: live.world.hash() };
+    let layer: { dispose(): void } | undefined;
+    for (let k = 0; k < 120; k++) {
+      if (k === 30) live.settings.set('demo.speed', 3);
+      if (k === 30) live.settings.set('demo.look', 7);
+      if (k === 45) live.settings.setText('demo.speed', '5');
+      if (k === 50) live.settings.load({ 'demo.speed': 2.5 });
+      if (k === 60) live.settings.fromUrl('?demo.speed=4');
+      if (k === 70) live.settings.reset();
+      if (k === 80) layer = live.settings.override({ 'demo.speed': 6 });
+      if (k === 90) layer?.dispose();
+      if (k === 100) live.settings.set('demo.speed', 9);
+      if (k === 100) live.settings.set('demo.speed', 1);
+      live.step({ move: [0, 1] });
+      hashes[k + 1] = live.world.hash();
+    }
+    const replay = live.record();
+    const speed = (value: number) => ({ set: { 'demo.speed': value } });
+    expect(replay.settings).toEqual({ 'demo.speed': 2 });
+    expect(replay.inputs).toEqual([
+      [0, { move: [0, 1] }],
+      [30, speed(3)],
+      [45, speed(5)],
+      [50, speed(2.5)],
+      [60, speed(4)],
+      [70, speed(1)],
+      [80, speed(6)],
+      [90, speed(1)],
+    ]);
+    const played = playReplay(JSON.parse(JSON.stringify(replay)), { registry, checkpoints: 'every' });
+    expect(played.hashes).toEqual(hashes);
+    expect(played.session.record()).toEqual(replay);
+  });
+
+  it("merges its store's changes in play order, and leaves out what no step has followed yet", () => {
+    const live = createSession('drift', { registry: driftRegistry() });
+    live.settings.set('demo.speed', 2);
+    live.act('shove', { id: 1 });
+    live.settings.set('demo.speed', 4);
+    live.step({ move: [0, 1] });
+    live.step({ move: [0, 1] });
+    live.settings.set('demo.speed', 7);
+    live.set('demo.speed', 8);
+    live.act('shove', { id: 2 });
+    const replay = live.record();
+    expect(replay.inputs).toEqual([
+      [0, { set: { 'demo.speed': 2 }, dev: 'shove', args: { id: 1 } }],
+      [0, { set: { 'demo.speed': 4 }, move: [0, 1] }],
+    ]);
+    expect(checkReplay(replay)).toBe(replay);
+    live.step({ move: [0, 1] });
+    expect(live.record().inputs.slice(2)).toEqual([[2, { set: { 'demo.speed': 8 }, dev: 'shove', args: { id: 2 } }]]);
+  });
+
+  it('runs a dev action all or nothing: one that throws leaves the world as it was and records nothing', () => {
+    const registry = driftRegistry();
+    const live = createSession('drift', { seed: 4, registry });
+    for (let k = 0; k < 5; k++) live.step({ move: [0, 1] });
+    const before = live.world.hash();
+    expect(() => live.act('botch')).toThrow('botched halfway');
+    expect([live.world.hash(), live.world.count]).toEqual([before, 3]);
+    expect(failure(() => live.act('shvoe'))).toMatch(/^SIM_NO_ACTION.*"shvoe" \(did you mean "shove"\?\)/);
+    expect(failure(() => live.act('poke'))).toMatch(/"poke" \(its actions: "botch", "shove"\)/);
+    live.step({ move: [0, 1] });
+    const replay = live.record();
+    expect(replay.inputs.some(([, change]) => change.dev !== undefined)).toBe(false);
+    expect(playReplay(replay, { registry, checkpoints: 'every' }).hashes[6]).toBe(live.world.hash());
   });
 });

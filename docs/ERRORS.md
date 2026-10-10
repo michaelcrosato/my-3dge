@@ -221,9 +221,9 @@ Raised by `restore` (engine/sim/capture.ts, engine/sim/world.ts) before anything
 
 - Message: `{where}: {problem}`
 - Fix: write the replay as tests/replays/README.md shows ({ format, scene, settings, seed, hz, steps, inputs: [[step, change]…], hashes: { platform: { step: hash } } }), or record it from a session; settings marked view never go in a replay
-- Registered in: [`engine/sim/replay.ts` line 50](../engine/sim/replay.ts)
+- Registered in: [`engine/sim/replay.ts` line 53](../engine/sim/replay.ts)
 
-Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step runs: an unknown key (named with the closest), a wrong format tag, a change-point out of order or at or past `steps`, a bad intent, setting or dev action, a hash that is not 16 hex digits, a step rate other than the world's, or a view setting.
+Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step runs: an unknown key (named with the closest), a wrong format tag, a seed that is not a whole number from 0, a change-point out of order or at or past `steps`, a bad intent, setting or dev action, a platform key that is not `<os>-<arch>` as Node names them (named with the closest), goldens that do not cover the run (none, or none for the last step), a step key not written plainly, a hash that is not 16 hex digits, a step rate other than the world's, or a view setting.
 
 ### SIM_BAD_SYSTEM
 
@@ -247,7 +247,7 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 ### SIM_NO_ACTION
 
-- Message: `the scene {scene} has no dev action {name}{suggestion}`
+- Message: `the scene {scene} has no dev action {name} ({suggestion})`
 - Fix: add it to the scene: defineScene('{scene}', { actions: { {name}(w, args) { … } } }), or call one it has
 - Registered in: [`engine/sim/scene.ts` line 53](../engine/sim/scene.ts)
 

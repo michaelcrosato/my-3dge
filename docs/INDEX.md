@@ -88,7 +88,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`entities.ts`](../engine/sim/entities.ts): The shape of an entity's data (PLAN.md §6.5 items 4, 6 and 7, WP 1.4; doctrine: Reproducible): the rules the hash (engine/sim/state.ts), captures and restores (engine/sim/capture.ts) and the world (engine/sim/world.ts) share, so a restored entity is the live one, field for field and in the same order (ADR-0006 amendment 3).
   - Exports: `capturable`, `componentNames`, `eachField`, `ENTITY_CODES`, `LiveEntity`, `makeEntity`, `notData`, `NotData`, `placeComponent`
 - [`replay.ts`](../engine/sim/replay.ts): Replays (PLAN.md §8.4, §6.5 items 3 and 6–9, WP 1.5; doctrine: Reproducible): the readable replay format and its checks, the player that `x replay` and tests/pages/replay.html run, and the comparison of runs that `x replay` judges and bisects with.
-  - Exports: `CHECKPOINT_STEPS`, `checkpointsOf`, `checkReplay`, `firstDifference`, `InputChange`, `InputEntry`, `judgeRuns`, `Parting`, `partingOf`, `Playback`, `PlayOptions`, `playReplay`, `Replay`, `REPLAY_CODES`, `REPLAY_FORMAT`, `REPLAY_KEYS`, `StepView`, `Verdict`
+  - Exports: `CHECKPOINT_STEPS`, `checkpointsOf`, `checkReplay`, `firstDifference`, `InputChange`, `InputEntry`, `judgeRuns`, `Parting`, `partingOf`, `PLATFORM_KEYS`, `Playback`, `PlayOptions`, `playReplay`, `Replay`, `REPLAY_CODES`, `REPLAY_FORMAT`, `REPLAY_KEYS`, `StepView`, `Verdict`
   - Tests: [`engine/sim/replay.test.ts`](../engine/sim/replay.test.ts)
 - [`scene.ts`](../engine/sim/scene.ts): Scenes and sessions, sim-side (PLAN.md §6.9, §9.0, §8.4, WP 1.5; doctrines: Reproducible, Agent-operable): `defineScene(id, { level?, settings, setup, step })` registers a scene as an entry of the registry kind `scene`; `startScene` makes its world (a settings store with the scene's settings over the defaults and the caller's over those, a world seeded from the seed, the scene's `step` as the system `scene`, then its `setup`); `createSession` starts one that records its inputs from step 0, the recorder of PLAN.md §8.4.
   - Exports: `createSession`, `defineScene`, `getScene`, `isScene`, `Scene`, `SCENE_CODES`, `SceneAction`, `SceneOptions`, `SceneRun`, `SceneSpec`, `Session`, `startScene`
@@ -182,8 +182,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`qa.ts`](../tools/cmd/qa.ts): Runs content QA for the families named, against their baselines (PLAN.md §8.6).
   - Exports: `compareWithBaselines`, `default`, `loadFamily`, `QaBaseline`, `QaContext`, `qaFamilies`, `QaFamily`, `QaViolation`, `readBaselines`, `runQa`
   - Tests: [`tools/cmd/qa.test.ts`](../tools/cmd/qa.test.ts)
-- [`replay.ts`](../tools/cmd/replay.ts): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WP 1.5): `node x replay <file|dir…> [--update] [--browser sim] [--bisect] [--runs n] [--swap names]`.
-  - Exports: `checkFile`, `default`, `findParting`, `Outcome`, `parseSwap`, `partingLines`, `PLATFORM`, `replayFiles`, `ReplayOptions`, `Run`, `RunParting`
+- [`replay.ts`](../tools/cmd/replay.ts): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WP 1.5).
+  - Exports: `Checked`, `checkFile`, `checkFiles`, `default`, `findParting`, `Outcome`, `parseSwap`, `partingLines`, `PLATFORM`, `replayFiles`, `ReplayOptions`, `Run`, `RunParting`
   - Tests: [`tools/cmd/replay.test.ts`](../tools/cmd/replay.test.ts)
 - [`shot.ts`](../tools/cmd/shot.ts): Renders a page on WebGPU in the platform's Chromium and writes what it drew: a PNG and its look metrics.
   - Exports: `default`, `frameMetrics`, `FrameMetrics`, `judgeFrame`, `READY_TIMEOUT_MS`, `resolvePage`

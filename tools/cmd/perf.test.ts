@@ -1,7 +1,8 @@
 /**
- * @file Tests for `x perf` (tools/cmd/perf.ts): medians, the budget file's shape, a measured run of the kernel within
- * its recorded budget, and `--budget` failing over a budget and without a budget file, on a scene in a temporary
- * repository.
+ * @file Tests for `x perf` (tools/cmd/perf.ts): medians, the budget file's shape (unknown keys named with the closest),
+ * a measured run of the kernel within its recorded budget, and, on a scene in a temporary repository, `--budget`
+ * failing over a budget and without a budget file, measuring at the file's steps, and refusing a run that is not the
+ * one the budget was measured on (other steps, another scene, `--set`).
  * @see tools/cmd/perf.ts
  */
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
@@ -25,8 +26,8 @@ async function perf(root: string, ...args: string[]) {
   return { code, lines, report: JSON.parse(readFileSync(join(root, path), 'utf8')) };
 }
 
-/** A temporary repository holding one scene module, `fixtures/scenes/tiny/index.ts`, and a package.json. */
-function tinyRepository(): string {
+/** A temporary repository holding one scene module, `fixtures/scenes/tiny/index.ts` (scene `id`), and a package.json. */
+function tinyRepository(id = 'perfTiny'): string {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'x-perf-')));
   temporary.push(root);
   writeFileSync(join(root, 'package.json'), JSON.stringify({ version: '0.0.0', type: 'module' }));
@@ -34,7 +35,7 @@ function tinyRepository(): string {
   const scene = JSON.stringify(join(realpathSync(ROOT), 'engine/sim/scene.ts'));
   writeFileSync(
     join(root, 'fixtures/scenes/tiny/index.ts'),
-    `/** @file A scene for x perf's tests. */\nimport { defineScene } from ${scene};\nexport default defineScene('perfTiny', { setup: () => {} });\n`,
+    `/** @file A scene for x perf's tests. */\nimport { defineScene } from ${scene};\nexport default defineScene('${id}', { setup: () => {} });\n`,
   );
   return root;
 }
@@ -44,8 +45,23 @@ describe('median and budgets', () => {
     expect([median([3, 1, 2]), median([4, 1, 3, 2])]).toEqual([2, 2.5]);
     expect(readBudget(join(ROOT, 'tests/baselines/perf/kernel.json')).budgets.stepMs).toBeGreaterThan(0);
     const root = tinyRepository();
-    writeFileSync(join(root, 'bad.json'), JSON.stringify({ scene: 'x', budgets: { fps: 60 }, reason: 'r' }));
-    expect(() => readBudget(join(root, 'bad.json'))).toThrow(/budgets: \{ stepMs, hashMs, captureMs \}/);
+    const write = (budget: object) => (
+      writeFileSync(join(root, 'bad.json'), JSON.stringify(budget)),
+      join(root, 'bad.json')
+    );
+    const good = { scene: 'x', steps: 10, budgets: { stepMs: 1 }, reason: 'r' };
+    expect(readBudget(write(good))).toEqual(good);
+    expect(() => readBudget(write({ ...good, budgets: { fps: 60 } }))).toThrow(
+      /budgets: \{ stepMs, hashMs, captureMs \}/,
+    );
+    expect(() => readBudget(write({ ...good, stpes: 10 }))).toThrow(/unknown key "stpes" \(did you mean "steps"\?\)/);
+    expect(() => readBudget(write({ ...good, budgets: { stpeMs: 1 } }))).toThrow(
+      /budgets: unknown key "stpeMs" \(did you mean "stepMs"\?\)/,
+    );
+    expect(() => readBudget(write({ ...good, steps: undefined }))).toThrow(
+      /steps is absent; the steps it was measured over/,
+    );
+    expect(() => readBudget(write({ ...good, scene: '' }))).toThrow(/scene is ""/);
   });
 });
 
@@ -64,12 +80,39 @@ describe('x perf', () => {
     const missing = await perf(root, 'fixtures/scenes/tiny', '--runs', '1', '--steps', '10', '--budget');
     expect([missing.code, missing.report.failures[0].id]).toEqual([1, 'PERF_NO_BUDGET']);
     mkdirSync(join(root, 'tests/baselines/perf'), { recursive: true });
-    const budget = { scene: 'perfTiny', budgets: { stepMs: 0 }, reason: 'a test budget nothing meets' };
+    const budget = { scene: 'perfTiny', steps: 10, budgets: { stepMs: 0 }, reason: 'a test budget nothing meets' };
     writeFileSync(join(root, 'tests/baselines/perf/perfTiny.json'), JSON.stringify(budget));
     const over = await perf(root, 'fixtures/scenes/tiny', '--runs', '1', '--steps', '10', '--budget');
     expect([over.code, over.report.failures[0].id]).toEqual([1, 'PERF_OVER_BUDGET']);
     const shown = await perf(root, 'fixtures/scenes/tiny', '--runs', '1', '--steps', '10');
     expect(shown.code).toBe(0);
     expect(shown.lines.some((line) => line.includes('OVER 0'))).toBe(true);
+  });
+
+  it("measures at the budget file's steps, and refuses a run the budget does not describe", async () => {
+    const root = tinyRepository('perfSteps');
+    mkdirSync(join(root, 'tests/baselines/perf'), { recursive: true });
+    const path = join(root, 'tests/baselines/perf/perfSteps.json');
+    const budget = { scene: 'perfSteps', steps: 12, budgets: { stepMs: 1000 }, reason: 'a test budget all meet' };
+    writeFileSync(path, JSON.stringify(budget));
+    const atFile = await perf(root, 'fixtures/scenes/tiny', '--runs', '1', '--budget');
+    expect(atFile.code).toBe(0);
+    expect(atFile.lines[0]).toContain('perfSteps: 12 steps × 1 runs');
+    const steps = await perf(root, 'fixtures/scenes/tiny', '--runs', '1', '--steps', '10', '--budget');
+    expect(steps.code).toBe(2);
+    expect(steps.lines.join('\n')).toMatch(/measured over 12 steps.*drop --steps/);
+    const set = await perf(root, 'fixtures/scenes/tiny', '--runs', '1', '--set', 'time.hz=30', '--budget');
+    expect(set.code).toBe(2);
+    expect(set.lines.join('\n')).toContain('--set');
+    writeFileSync(path, JSON.stringify({ ...budget, scene: 'perfStpes' }));
+    const scene = await perf(root, 'fixtures/scenes/tiny', '--runs', '1', '--budget');
+    expect(scene.code).toBe(2);
+    expect(scene.lines.join('\n')).toContain('perfStpes');
+    writeFileSync(path, JSON.stringify({ ...budget, extra: 1 }));
+    expect((await perf(root, 'fixtures/scenes/tiny', '--runs', '1')).code).toBe(2);
+    writeFileSync(path, JSON.stringify(budget));
+    const shown = await perf(root, 'fixtures/scenes/tiny', '--runs', '1', '--steps', '10');
+    expect(shown.code).toBe(0);
+    expect(shown.lines.join('\n')).toContain('measured over 12 steps; this run took 10, so they are not compared');
   });
 });

@@ -1,9 +1,11 @@
 /**
  * @file Unit tests for engine/sim/replay.ts (T1): a session records change-points (intents as diffs, `set` for
- * non-view settings, `dev` with args, merged in play order), a recorded replay plays back to the live hashes at every
- * step and records itself again point for point, settings changed mid-run replay exactly, a checkpoint is the state
- * before its step's inputs, malformed replays are refused naming the path and the closest key, view settings and
- * another step rate are refused, and the kernel fixture's replays give their golden hashes three times in Node. The
+ * non-view settings, `dev` with args, merged in play order; engine/sim/scene.test.ts covers changes through its own
+ * store and dev actions that throw), a recorded replay plays back to the live hashes at every step and records itself
+ * again point for point, settings changed mid-run replay exactly, a checkpoint is the state before its step's inputs,
+ * malformed replays are refused naming the path and the closest key (goldens that do not cover the run and misspelt
+ * platforms included), view settings and another step rate are refused, and the kernel fixture's replays give their
+ * golden hashes three times in Node. The
  * bisection's comparison finds an injected divergence at its step, entity and field (inside a step, and through a dev
  * action added to a kernel replay), and the verdict on runs reports "golden: other platform" when another platform
  * recorded the goldens and the runs agree.
@@ -124,6 +126,7 @@ describe('the session', () => {
   it('names a missing dev action and a step taken around the session', () => {
     const live = createSession('walk', { registry: walkRegistry() });
     expect(failure(() => live.act('teleprt'))).toMatch(/^SIM_NO_ACTION.*did you mean "teleport"/);
+    expect(failure(() => createSession('kernel').act('nudj'))).toMatch(/^SIM_NO_ACTION.*"nudj".*"nudge"/);
     live.world.step({});
     expect(failure(() => live.record())).toMatch(/^SIM_OFF_RECORD.*1 steps outside/);
   });
@@ -155,9 +158,8 @@ describe('playReplay', () => {
     const { live, registry } = liveWalk();
     const replay = live.record();
     expect(checkpointsOf(replay)).toEqual([0, 60, 120]);
-    expect(checkpointsOf({ steps: 130, hashes: { a: { 5: '0'.repeat(16) }, b: { 7: '1'.repeat(16) } } })).toEqual([
-      5, 7,
-    ]);
+    const named = { 'linux-x64': { 5: '0'.repeat(16) }, 'darwin-arm64': { 7: '1'.repeat(16) } };
+    expect(checkpointsOf({ steps: 130, hashes: named })).toEqual([0, 5, 7, 130]);
     const half = playReplay(replay, { registry, until: 50 });
     expect([half.session.steps, Object.keys(half.hashes)]).toEqual([50, ['0']]);
   });
@@ -172,6 +174,7 @@ describe('playReplay', () => {
 });
 
 describe('checkReplay', () => {
+  const H = '0123456789abcdef';
   const good: Replay = {
     format: 'my3dge-replay/1',
     scene: 'walk',
@@ -202,9 +205,22 @@ describe('checkReplay', () => {
       [{ ...good, inputs: [[0, { cam: 'n' }]] }, /cam is "n"; it must be a finite number/],
       [{ ...good, inputs: [[0, { args: 1 }]] }, /args has no dev action/],
       [{ ...good, inputs: [[0, { set: {} }]] }, /set is \{\}/],
-      [{ ...good, hashes: { 'linux-x64': { 11: '0123456789abcdef' } } }, /has the step "11"; 0 to 10/],
+      [
+        { ...good, hashes: { 'linux-x64': { 11: '0123456789abcdef' } } },
+        /has the step "11"; a whole number from 0 to 10/,
+      ],
       [{ ...good, hashes: { 'linux-x64': { 10: 'xyz' } } }, /hashes.linux-x64.10 is "xyz"; 16 hex digits/],
       [[], /it is \[\], not an object/],
+      [{ ...good, seed: 1.5 }, /seed is 1.5; a whole number, 0 or more/],
+      [{ ...good, seed: -1 }, /seed is -1; a whole number, 0 or more/],
+      [
+        { ...good, hashes: { 'linux-x64': {} } },
+        /hashes.linux-x64 holds no hash; record them with x replay --browser sim --update/,
+      ],
+      [{ ...good, steps: 20 }, /hashes.linux-x64 has no hash for step 20, the last/],
+      [{ ...good, hashes: { 'linux-x64': { 10: H, '05': H } } }, /has the step "05"; a whole number from 0 to 10/],
+      [{ ...good, hashes: { 'linux-x46': { 10: H } } }, /unknown platform "linux-x46" \(did you mean "linux-x64"\?\)/],
+      [{ ...good, hashes: { here: { 10: H } } }, /unknown platform "here"; a platform is <os>-<arch> as Node names/],
     ];
     for (const [value, pattern] of cases) expect(failure(() => checkReplay(value))).toMatch(pattern);
     expect(checkReplay(good)).toBe(good);
