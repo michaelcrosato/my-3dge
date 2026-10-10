@@ -412,6 +412,128 @@ For the agents who maintain the engine.
 - `signatureOf` (function): How a member is called: `step(n = 1, intents?)`, `get(id)`, or `errors` for a value member.
 - `WorldReads` (type): The world as members read it: its reads, none of its mutators (members change the sim through the session).
 
+### [`engine/gfx/cameras/boost.ts`](../engine/gfx/cameras/boost.ts)
+
+- `applyBoost` (function): Multiplies `camera`'s projection by V·S·V⁻¹ (S: world y × `k`), with its current matrices.
+- `boost` (function): The prototype's `boost()`: updates `camera`'s world and projection matrices, then stretches heights by `k` in the projection.
+- `Boosted` (interface): A camera that keeps a height boost through `updateProjectionMatrix()`.
+- `BoostedOrthographicCamera` (class): three.js's `OrthographicCamera` with a height `boost` its projection keeps (see the file comment).
+- `BoostedPerspectiveCamera` (class): three.js's `PerspectiveCamera` with a height `boost` its projection keeps (see the file comment).
+- `isBoosted` (function): Whether `camera` keeps its own boost (one of this module's camera classes).
+
+### [`engine/gfx/cameras/codes.ts`](../engine/gfx/cameras/codes.ts)
+
+- `CAMERA_3D` (const): The 3D cameras of `cam3=`.
+- `CAMERA_CODES` (const): The codes the cameras raise, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `CameraSpec` (type): A camera code as data.
+- `CameraType` (type): The kinds of camera: a classic view, an orbit round a target, a free fly camera, a fixed one.
+- `describeCamera` (function): `spec` in words, as the prototype's `camDesc`: `Isometric view, orthographic, zoom 1x, following`.
+- `formatCameraCode` (function): The canonical code of `spec`: `cam=…` or `cam3=…`, numbers rounded (0.001 m, 0.01°), defaults left out.
+- `FreeSpec` (interface): A fly or fixed camera's code as data: without a position it starts from the camera before it.
+- `OrbitSpec` (interface): An orbit camera's code as data.
+- `parseCameraCode` (function): Reads a camera code (see the file comment for the grammar): `cam=…`, `cam3=…`, with or without a leading `?`, or a bare value (`iso`, `orbit`, `30,40,1,0.5,1`).
+- `VIEW_LABELS` (const): Each view's name in words.
+- `VIEW_NAMES` (const): Every view name, in the order the 2D engine cycles them (`custom` last).
+- `ViewName` (type): The classic views (engine/gfx/cameras/presets.ts has their numbers), and `custom` (any azimuth and elevation).
+- `ViewSpec` (interface): A classic view's code as data: missing fields take the camera's defaults.
+
+### [`engine/gfx/cameras/fixed.ts`](../engine/gfx/cameras/fixed.ts)
+
+- `createFixedCamera` (function): A fixed camera: at `position`, else where `from` (the camera on screen) is, else at eye height over the origin.
+- `FixedOptions` (interface): Options for a fixed camera: its code's data, and the pose to fix when the code has no position.
+- `fixedPose` (function): The fixed camera's pose.
+- `fixedSpec` (function): The fixed camera's code data.
+- `fixedState` (function): A checked fixed state for `options`: the code's place, else `from`'s, else the origin at eye height.
+- `FixedState` (interface): A fixed camera's state: plain data.
+- `stepFixed` (function): Steps a fixed camera: only `input.zoom` changes it (its lens).
+
+### [`engine/gfx/cameras/fly.ts`](../engine/gfx/cameras/fly.ts)
+
+- `createFlyCamera` (function): A fly camera: at `position`, else where `from` (the camera before it) was, else at eye height over the origin.
+- `FLY_FAST_SPEED` (const): Flying speed with `input.fast`, m/s (the prototype's 170 units/s).
+- `FLY_FOV` (const): The fly camera's lens, degrees (`PerspectiveCamera.fov`).
+- `FLY_FOV_RANGE` (const): The lens range of zoom steps, degrees.
+- `FLY_MAX_PITCH` (const): How far up or down the fly camera looks, rad.
+- `FLY_SPEED` (const): Flying speed, m/s (the prototype's 64 units/s).
+- `FLY_TURN_SPEED` (const): Turn rates at full `input.turn`, rad/s: `[right, up]`.
+- `FlyBounds` (interface): An axis-aligned box the camera stays in, m (`Box3`'s min and max, as plain points).
+- `FlyOptions` (interface): Options for a fly camera: its code's data, a pose to start from when the code has no position, and bounds.
+- `flyPose` (function): The fly camera's pose.
+- `flySpec` (function): The fly camera's code data.
+- `flyState` (function): A checked fly state for `options`.
+- `FlyState` (interface): A fly camera's state: plain data, replaced by each step.
+- `stepFly` (function): Steps a fly camera by one rendered frame: turned by `look` and `turn`, moved by `move`, its lens by `zoom`.
+
+### [`engine/gfx/cameras/orbit.ts`](../engine/gfx/cameras/orbit.ts)
+
+- `createOrbitCamera` (function): An orbit camera (a target given makes it fixed there; without one it follows `input.follow`).
+- `ORBIT_DEFAULTS` (const): The orbit's starting place (lab3d's): azimuth and elevation in rad, distance in m.
+- `ORBIT_FOV` (const): The orbit's lens, degrees (`PerspectiveCamera.fov`).
+- `ORBIT_LAG` (const): The time constant of the orbit's follow, real seconds.
+- `ORBIT_LIFT` (const): How high above the followed point the orbit looks, m.
+- `ORBIT_LIMITS` (const): The range of the elevation (rad) and the distance (m).
+- `ORBIT_TURN_SPEED` (const): Turn rates at full `input.turn`, rad/s: `[right, up]`.
+- `ORBIT_ZOOM_STEP` (const): How much one zoom step brings the camera in (the distance is divided by it).
+- `OrbitOptions` (interface): Options for an orbit beyond its code: the lens.
+- `orbitPose` (function): The orbit's pose: on its sphere round the target, looking at it.
+- `orbitSpec` (function): The orbit's code data.
+- `orbitState` (function): A checked orbit state for `options`.
+- `OrbitState` (interface): An orbit camera's state: plain data, replaced by each step.
+- `stepOrbit` (function): Steps an orbit by one rendered frame: turned and tilted by `look` and `turn`, pulled in by `zoom`, following.
+
+### [`engine/gfx/cameras/place.ts`](../engine/gfx/cameras/place.ts)
+
+- `CameraPair` (interface): One three.js camera per projection, and `place`, which aims the one a pose needs.
+- `createCamera` (function): The camera `code` names (a code, or its data from `parseCameraCode`): `cam=iso`, `cam3=orbit,…`.
+- `CreateCameraOptions` (interface): What `createCamera` may start from beyond the code.
+- `createCameraPair` (function): A perspective and an orthographic camera, made once (see the file comment).
+- `placeCamera` (function): Puts `pose` on `camera` for a picture `aspect` (width / height) wide, boost included (see the file comment).
+
+### [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)
+
+- `approach` (function): Exponential smoothing toward `to`: `k` = 1 − e^(−dt/τ) moves the same share per second at any frame rate.
+- `Camera` (interface): A camera: its state, stepped once per rendered frame, and its pose.
+- `cameraFrom` (function): Wraps a camera's pure steps and its first state in a `Camera` (the factories use it).
+- `CameraInput` (interface): What the devices give a camera in a frame; every field is optional (orbit and fly turn, fly moves, views zoom).
+- `CameraPose` (interface): Where a camera is, where it looks and its lens, in a frame: plain, frozen data (see the file comment).
+- `CameraSteps` (interface): The steps a camera type supplies to `cameraFrom`.
+- `frameSize` (function): The picture's size at the camera's target, m: the frustum (orthographic), or the lens's frame at `distance`.
+- `headingOf` (function): The heading of a camera that stands at `azimuth` round its target and looks at it: azimuth + π, wrapped.
+- `lookAt` (function): The yaw, pitch and distance that look from `from` at `to` (as `Object3D.lookAt`); straight up or down keeps yaw 0.
+- `makePose` (function): A checked, frozen pose: `fields` over `POSE_DEFAULTS`.
+- `orbitPoint` (function): The point at `distance` from `target`, at `azimuth` round it (from +Z toward +X) and `elevation` above its horizon: three.js's `Vector3.setFromSphericalCoords(distance, π/2 − elevation, azimuth)`, added to the target.
+- `perspectiveFrom` (function): A perspective framing of `pose` with a `fov` lens: an orthographic pose becomes a camera on the same line of sight to the same target, as far from it as frames the same picture height; a perspective pose keeps its place.
+- `pointProblems` (function): A finite point, or a problem.
+- `POSE_DEFAULTS` (const): Defaults for the fields `makePose` is not given (the lens is three.js's `PerspectiveCamera` default).
+- `poseForward` (function): The unit view direction (three.js's `camera.getWorldDirection()`).
+- `poseRight` (function): The unit right direction on screen: forward × up, level whatever the pitch.
+- `poseTarget` (function): The point the camera looks at: `distance` along its view direction.
+- `poseUp` (function): The unit up direction on screen: right × forward (the heading when the camera looks straight down).
+- `Projection` (type): The two projections three.js has: `PerspectiveCamera` and `OrthographicCamera`.
+- `rangeProblems` (function): A problem for each value that is missing, not finite, or outside `[min, max]`.
+- `refuse` (function): Throws `GFX_BAD_CAMERA` for `where` when `problems` is not empty.
+- `Vec3` (type): A point or direction, world space, m: `[x, y, z]`.
+- `wrapAngle` (function): `angle` wrapped into (−π, π].
+
+### [`engine/gfx/cameras/presets.ts`](../engine/gfx/cameras/presets.ts)
+
+- `createViewCamera` (function): A classic view as a `Camera` (`options.view` names it; codes.ts's `VIEW_LABELS` has the names in words).
+- `ORTHO_DISTANCE` (const): How far back an orthographic view stands from its target, m, and how far it sees.
+- `ORTHO_FAR` (const): An orthographic view's far plane, m.
+- `stepView` (function): Steps a view by one rendered frame: zoom steps, 45° turns, and the target following `input.follow`.
+- `stepZoom` (function): The next zoom step from `zoom`, `steps` up (+) or down (−) `VIEW_ZOOMS`.
+- `VIEW_FOV` (const): A view's perspective lens, degrees (`PerspectiveCamera.fov`).
+- `VIEW_LAG` (const): The time constant of a view's follow, real seconds (the 2D camera's lag).
+- `VIEW_LIFT` (const): How high above the followed point a view looks, m.
+- `VIEW_PRESETS` (const): The classic views, from the 2D engine's `E.VIEWS`; `custom` holds a custom view's defaults.
+- `VIEW_ZOOMS` (const): The zoom steps `input.zoom` moves through.
+- `ViewOptions` (interface): Options for a view beyond its code: the lens and the frame.
+- `viewPose` (function): A view's pose (see the file comment for the framing).
+- `ViewPreset` (interface): One classic view: where it stands, how many pixels a metre takes in its picture, and its height boost.
+- `viewSpec` (function): A view's code data: a custom view's angles and boost, or a preset's name and turn.
+- `viewState` (function): A checked view state for `options` (a view's code data, plus the lens and frame).
+- `ViewState` (interface): A view camera's state: plain data, replaced (never changed) by each step.
+
 ### [`engine/gfx/caps.ts`](../engine/gfx/caps.ts)
 
 - `adapterLimits` (function): The adapter's limits, by name: what `requestDevice` asks for.

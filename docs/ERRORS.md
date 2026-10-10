@@ -205,6 +205,22 @@ Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when
 - Fix: pass the clock's interpolation alpha (clock.advance(now).alpha), which is always from 0 to 1
 - Registered in: [`engine/gfx/renderer.ts` line 72](../engine/gfx/renderer.ts)
 
+### GFX_BAD_CAMERA
+
+- Message: `{where}: {problems}`
+- Fix: give finite numbers within the ranges named (angles in radians, lengths in metres, fov in degrees as PerspectiveCamera.fov), and a positive aspect (width / height)
+- Registered in: [`engine/gfx/cameras/codes.ts` line 52](../engine/gfx/cameras/codes.ts)
+
+Raised by the camera factories, `makePose` and `placeCamera` (engine/gfx/cameras/) for a missing or non-finite number, a value out of its range, or a pose put on a three.js camera of the other projection.
+
+### GFX_BAD_CAMERA_CODE
+
+- Message: `"{code}" is not a camera code: {problems}`
+- Fix: write cam=<view>[,<turn>,<zoom>[,<x>,<y>,<z>]] (views: iso, threequarter, topdown, brawler, side), cam=<azimuth>,<elevation>,<zoom>,<height>,<boost>[,<x>,<z>] (a custom view), either with ,persp at the end for a perspective lens, or cam3=orbit[,<azimuth>,<elevation>,<distance>[,<x>,<y>,<z>]], cam3=fly or cam3=fixed[,<x>,<y>,<z>,<yaw>,<pitch>[,<fov>]]; angles in degrees, lengths in metres
+- Registered in: [`engine/gfx/cameras/codes.ts` line 42](../engine/gfx/cameras/codes.ts)
+
+Raised by `parseCameraCode` (engine/gfx/cameras/codes.ts) for an empty part, a word where a number belongs, the wrong count of numbers, or a number out of its range (each range is named). Every problem is listed at once.
+
 ### GFX_COLD_PIPELINE
 
 - Message: `{count} GPU pipeline(s) were built while drawing frame {frame}, after the warm-up: the frame stalled`
@@ -280,6 +296,14 @@ Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipel
 - Registered in: [`engine/gfx/features.ts` line 51](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device cannot bind storage buffers of 256 MB: GPU techniques with large buffers run smaller or stay off.
+
+### GFX_UNKNOWN_CAMERA
+
+- Message: `{name} is not a camera{suggestion}`
+- Fix: use one of {names}: the classic views in cam=, the 3D cameras in cam3= (engine/gfx/cameras/codes.ts gives the grammar)
+- Registered in: [`engine/gfx/cameras/codes.ts` line 47](../engine/gfx/cameras/codes.ts)
+
+Raised by `parseCameraCode` and the camera factories (engine/gfx/cameras/) for a view or camera name they do not know, with the closest names.
 
 ### GFX_WARMUP_FAILED
 
