@@ -13,11 +13,13 @@ Made without an answer after the deadline: keep or reverse each, then `node x es
 
 None.
 
-## Open (0)
+## Open (1)
 
 Waiting for an answer until the deadline; then the agent decides and records the call.
 
-None.
+| Record                                                                   | Principle  | Raised               | Question                                                                                                                                     | Deadline             | Recommended                                                                                    |
+| ------------------------------------------------------------------------ | ---------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------- |
+| [ESC-0001](ESC-0001-enable-github-actions-for-michaelcrosato-my-3dge.md) | Escalation | 2026-10-10T08:59:31Z | Enable GitHub Actions for michaelcrosato/my-3dge and grant the agent token the workflow scope, so WP 0.9 can write .github/workflows/ci.yml? | 2026-10-10T09:14:31Z | Enable Actions and grant the workflow scope; the agent writes ci.yml running node x ci --local |
 
 ## Answered (0)
 

@@ -77,6 +77,26 @@ For the agents who maintain the engine.
 - `repositoryFiles` (function): The files git tracks or would track under `root`: tracked plus untracked, ignored ones left out.
 - `runChecks` (function): Runs `plugins` side by side and merges what they found; in a lane, `warnInLane` plugins only warn.
 
+### [`tools/cmd/ci.ts`](../tools/cmd/ci.ts)
+
+- `CI_OUT` (const): Where `x ci --local` writes, relative to the root.
+- `CI_STEPS` (const): The steps of `x ci --local`, in order (PLAN.md §8.9).
+- `CiDeps` (interface): What `x ci` reaches outside itself; the tests replace each part.
+- `CiRun` (interface): A whole run of the gate.
+- `CiStep` (interface): One step of the gate.
+- `createCiCommand` (function): Builds the `x ci` command; the tests pass fakes for the step runner, git, the selections and the clock.
+- `default` (default): The merge gate (PLAN.md §8.9, WP 0.9): `x ci --local` runs `CI_STEPS` in order on this machine, holds the tiers to their budgets (tools/lib/tiers.ts), writes `out/ci/summary.md` and, when everything passed, records HEAD in `out/ci/last-green`, the base of the selections until main holds a gate.
+- `Head` (interface): HEAD's commit and branch, and the uncommitted changes (`git status --porcelain` lines).
+- `readHead` (function): Reads `Head` with git.
+- `readT2Full` (function): The duration of the last full T2 run that passed, if one was recorded.
+- `renderSummary` (function): The run as Markdown, for `out/ci/summary.md` (and the GitHub workflow's step summary).
+- `runCi` (function): Runs the gate in `root`: every step, the budgets, the summary and, when green, `out/ci/last-green`.
+- `spawnStep` (const): Runs `command` as a child process, stdout and stderr captured together, colours off.
+- `StepOutcome` (interface): What running one command gave: its exit code (1 when it could not start), its wall time and its output.
+- `StepResult` (interface): One step's result.
+- `StepRunner` (type): Runs one command from `cwd`; the tests inject a fake.
+- `toResult` (function): The run as the dispatcher's result: the timing table, the T2 selection and one finding per problem.
+
 ### [`tools/cmd/deps.ts`](../tools/cmd/deps.ts)
 
 - `check` (const): The `deps` plugin of `x check` (T0): the offline check.

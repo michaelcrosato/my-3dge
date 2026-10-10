@@ -57,6 +57,9 @@ advice codes are in [ERRORS.md](ERRORS.md).
 - [`check.ts`](../tools/cmd/check.ts): Runs the repository checks no standard tool covers, last in `npm run check` (PLAN.md §8.1).
   - Exports: `assetScan`, `binaryKind`, `CheckContext`, `CheckOutcome`, `CheckPlugin`, `default`, `discoverPlugins`, `isLane`, `repositoryFiles`, `runChecks`
   - Tests: [`tools/cmd/check.test.ts`](../tools/cmd/check.test.ts)
+- [`ci.ts`](../tools/cmd/ci.ts): The merge gate (PLAN.md §8.9, WP 0.9): `x ci --local` runs `CI_STEPS` in order on this machine, holds the tiers to their budgets (tools/lib/tiers.ts), writes `out/ci/summary.md` and, when everything passed, records HEAD in `out/ci/last-green`, the base of the selections until main holds a gate.
+  - Exports: `CI_OUT`, `CI_STEPS`, `CiDeps`, `CiRun`, `CiStep`, `createCiCommand`, `default`, `Head`, `readHead`, `readT2Full`, `renderSummary`, `runCi`, `spawnStep`, `StepOutcome`, `StepResult`, `StepRunner`, `toResult`
+  - Tests: [`tools/cmd/ci.test.ts`](../tools/cmd/ci.test.ts)
 - [`deps.ts`](../tools/cmd/deps.ts): Checks the dependency pins against `tools/deps.json` (offline), and asks the registry for compatible releases to adopt and for lines that have qualified (PLAN.md §6.10; doctrine: Mastery, Common ground).
   - Exports: `check`, `createDepsCommand`, `default`
   - Tests: [`tools/cmd/deps.test.ts`](../tools/cmd/deps.test.ts)
