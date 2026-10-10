@@ -24,7 +24,7 @@
  * @example
  * const allowed = loadAllowList(); // every entry of tests/baselines/advice/*.json
  * const caught = findUnlisted([{ type: 'warning', text: '[GFX_NO_TIMESTAMP] timestamp-query is missing' }], allowed);
- * if (caught.length) throw new Error(describeUnlisted(caught));
+ * const why = describeUnlisted(caught); // names GFX_NO_TIMESTAMP and where to list it; the trap throws this
  * @see tests/setup/adviceTrap.test.ts
  * @see tests/setup/harnesses.test.ts
  */

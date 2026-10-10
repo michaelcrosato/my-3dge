@@ -12,7 +12,7 @@
  * node are injectable so fixture repositories give the same verdict on any day.
  *
  * @example
- * const { failures, warnings } = checkDeps(root, { today: '2026-10-10', nodeVersion: 'v24.21.0' });
+ * const { failures, warnings } = checkDeps(process.cwd(), { today: '2026-10-10', nodeVersion: 'v24.21.0' });
  * @see tools/cmd/deps.ts (the rules, per field)
  * @see tools/cmd/deps.test.ts
  */

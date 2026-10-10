@@ -1,0 +1,11 @@
+{
+  "describe": "A TypeScript module: its file comment, one documented export and a unit test beside it (PLAN.md §6.8).",
+  "id": "the module's repository path without .ts, its name in camelCase: engine/core/clock",
+  "pattern": "^(engine|tools|labs|tests)(/[a-z][a-z0-9-]*)*/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/module/sampleModule",
+  "files": {
+    "module.ts.tmpl": "{{id}}.ts",
+    "module.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}

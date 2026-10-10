@@ -11,8 +11,9 @@
  * never installed. The record is written only when something changed, Prettier-formatted, and then T0 and T1 run.
  *
  * @example
- * const plan = await planUpdate(root, { registry: fixture, today: '2026-10-10' });
- * plan.adoptions; // [] right after the pins are set
+ * const offline = { npm: async () => ({ time: {} }), node: async () => ({ time: {} }) }; // a fixture registry
+ * const plan = await planUpdate(process.cwd(), { registry: offline, today: '2026-10-10' });
+ * plan.adoptions; // [] here, and against npm's registry right after the pins are set
  * @see tools/cmd/deps.ts
  * @see tools/cmd/deps.test.ts
  */
