@@ -205,6 +205,8 @@ describe('the core members', () => {
     expect(engine.set('demo.look', 0.5)).toMatchObject({ value: 0.5, view: true });
     expect(engine.set('demo.name', '7')).toMatchObject({ value: '7' });
     expect(engine.set('time.paused', 'true')).toMatchObject({ value: true, view: true });
+    // A point is recorded once a step follows it (WP-1.5 review: record() never writes a point at `steps`).
+    engine.step(1);
     expect(headlessHost(engine).session.record().inputs).toEqual([[0, { set: { 'demo.count': 5, 'demo.name': '7' } }]]);
     expect(failure(() => engine.set('demo.cuont', 1))).toMatch(/^CORE_UNKNOWN_SETTING .*did you mean "demo\.count"/);
     expect(failure(() => engine.set('demo.count', -1))).toMatch(/^CORE_BAD_SETTING /);

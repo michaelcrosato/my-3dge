@@ -73,11 +73,15 @@ describe('createHeadless', () => {
   it('records the run, which replays to the same hashes', async () => {
     const registry = demo();
     const engine = await createHeadless({ scene: 'walk', seed: 2, registry });
+    const start = engine.hash();
     engine.step(30, { move: [0.5, 0] });
     engine.set('demo.step', 3);
     engine.step(30, [{ b: ['jump'] }]);
-    const replay = { ...headlessHost(engine).session.record(), hashes: { here: { 60: engine.hash() } } };
-    expect(playReplay(replay, { registry }).hashes).toEqual({ 60: engine.hash() });
+    const replay = {
+      ...headlessHost(engine).session.record(),
+      hashes: { [`${process.platform}-${process.arch}`]: { 0: start, 60: engine.hash() } },
+    };
+    expect(playReplay(replay, { registry }).hashes).toEqual({ 0: start, 60: engine.hash() });
   });
 
   it('runs the kernel fixture to the hash a plain session gives (x sim runs through it)', async () => {
