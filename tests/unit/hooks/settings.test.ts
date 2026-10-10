@@ -115,7 +115,17 @@ describe('.claude/ skills and subagents', () => {
     const modules: ModuleDoc[] = files.map((path) => {
       const raw = readFileSync(join(ROOT, path), 'utf8');
       const fileComment = { description: '', tags: [], line: 1, lines: raw.split('\n').length, raw };
-      return { path, fileComment, purpose: '', exports: [], examples: [], tests: [], codes: [], imports: [] };
+      return {
+        path,
+        fileComment,
+        purpose: '',
+        exports: [],
+        examples: [],
+        tests: [],
+        codes: [],
+        kinds: [],
+        imports: [],
+      };
     });
     const { failures } = checkPaths(ROOT, modules, { sources: {} });
     expect(failures.filter((failure) => failure.file?.startsWith('.claude/'))).toEqual([]);

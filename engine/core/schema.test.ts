@@ -2,7 +2,8 @@
  * @file Unit tests for engine/core/schema.ts (T1): schemas checked (unknown keywords named with the right spelling,
  * defaults that fail their own field, hooks without defaults, every problem at once), specs validated and filled
  * (types, ranges, values, required fields, unknown keys with the closest, nested objects and arrays, copies of
- * defaults, inputs left unchanged), the rows `describe` prints, and the TypeScript types of parsed entries.
+ * defaults and of plain objects given to `any`, inputs left unchanged), deep freezing, the rows `describe` prints,
+ * and the TypeScript types of parsed entries.
  * @see engine/core/schema.ts
  */
 import { describe, expect, expectTypeOf, it } from 'vitest';
@@ -11,6 +12,7 @@ import {
   copyValue,
   defineSchema,
   describeSchema,
+  freezeValue,
   parse,
   show,
   suggestKey,
@@ -146,6 +148,17 @@ describe('validate and parse', () => {
     expect(parse(anything, { v: [1, 'a'] }).v).toEqual([1, 'a']);
     expect(validate(anything, { v: null }).problems).toEqual([]);
   });
+
+  it('copies plain objects given to a field of type any, so the caller keeps its own', () => {
+    const anything = defineSchema({ v: { type: 'any', description: 'Anything.' } });
+    const given = { size: [1, 2], nested: { a: 1 } };
+    const parsed = parse(anything, { v: given }).v as typeof given;
+    expect(parsed).toEqual(given);
+    expect(parsed).not.toBe(given);
+    expect(parsed.nested).not.toBe(given.nested);
+    const thing = new Map([[1, 2]]);
+    expect(parse(anything, { v: thing }).v).toBe(thing);
+  });
 });
 
 describe('describeSchema and helpers', () => {
@@ -174,6 +187,14 @@ describe('describeSchema and helpers', () => {
     const copy = copyValue(data);
     expect(copy).toEqual(data);
     expect(copy.a).not.toBe(data.a);
+  });
+
+  it('freezes plain data all the way down, and leaves other objects as they are', () => {
+    const data = { a: [1, { b: 2 }], at: new Map<number, number>() };
+    expect(freezeValue(data)).toBe(data);
+    expect([Object.isFrozen(data), Object.isFrozen(data.a), Object.isFrozen(data.a[1])]).toEqual([true, true, true]);
+    expect(Object.isFrozen(data.at)).toBe(false);
+    expect(freezeValue(3)).toBe(3);
   });
 });
 

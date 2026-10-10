@@ -8,8 +8,9 @@
  *   (tools/lib/docsPaths.ts says what counts);
  * - a module has no file comment, or one over 40 lines; an export has no doc comment (a default export is
  *   documented by the file comment); a public export (anything `engine/index.ts` or `engine/sim-api.ts` exports,
- *   followed to its declaration) has none; or a code registered with `defineCodes` lacks its template or fix, or is
- *   registered twice (tools/lib/docs.ts gives the form);
+ *   followed to its declaration) has none; a code registered with `defineCodes` lacks its template or fix, or is
+ *   registered twice; or a kind declared with `defineKind` cannot be read, or is declared twice (tools/lib/docs.ts
+ *   gives the forms);
  * - INDEX, API or ERRORS differ from what `--write` would write;
  * - `docs/PROGRESS.md` is missing or longer than 40 lines (it is one screen, read first by every session).
  *
@@ -81,6 +82,24 @@ export function checkComments(root: string, modules: readonly ModuleDoc[]): Find
       failures.push({ id: 'DOCS_CODE_DUPLICATE', message, file: entry.module, line: entry.line });
     }
     seen.set(entry.code, first ?? at);
+  }
+  const declared = new Map<string, string>();
+  for (const entry of modules.flatMap((module) => module.kinds)) {
+    const at = `${entry.module}:${entry.line}`;
+    for (const problem of entry.problems) {
+      failures.push({
+        id: 'DOCS_KIND',
+        message: `kind ${entry.kind}: ${problem}`,
+        file: entry.module,
+        line: entry.line,
+      });
+    }
+    const first = declared.get(entry.kind);
+    if (first) {
+      const message = `kind ${entry.kind} is declared twice, at ${first} and ${at}: declare each kind once`;
+      failures.push({ id: 'DOCS_KIND_DUPLICATE', message, file: entry.module, line: entry.line });
+    }
+    declared.set(entry.kind, first ?? at);
   }
   return failures;
 }

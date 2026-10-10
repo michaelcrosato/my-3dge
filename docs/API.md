@@ -57,7 +57,7 @@ For the agents who maintain the engine.
 
 ### [`engine/core/log.ts`](../engine/core/log.ts)
 
-- `AdviceRecord` (interface): One piece of advice the log printed: its code, message and fix, and how often it was raised.
+- `AdviceRecord` (interface): One piece of advice the log printed: its code, what it is about, its first message and fix, and how often.
 - `closest` (function): The candidates closest to `wanted`, best first, at most `count`: a case-insensitive match, then names one starts with the other or ending in `.wanted` (`runSpeed` finds `hero.runSpeed`), then those a few edits away (one per three letters, at least one; a swap of neighbours is one edit).
 - `codeError` (function): An `EngineError` for `code`, to throw: `throw codeError('CORE_NO_ENTRY', { kind, id })`.
 - `codeInfo` (function): The registered code `code`, or undefined.
@@ -75,7 +75,7 @@ For the agents who maintain the engine.
 - `Log` (interface): Warn-once advice and structured errors, with what was raised kept for `__engine.advice` and `__engine.errors`.
 - `LOG_CODES` (const): The codes this module raises, with their fixes.
 - `LogConsole` (interface): Where a log prints; tests pass their own to keep the console quiet.
-- `LogOptions` (interface): How a log is made: where it prints (the console by default) and how many errors it keeps (200).
+- `LogOptions` (interface): How a log is made: where it prints (the console by default) and how many errors and advice records it keeps.
 
 ### [`engine/core/math.ts`](../engine/core/math.ts)
 
@@ -137,7 +137,7 @@ For the agents who maintain the engine.
 ### [`engine/core/schema.ts`](../engine/core/schema.ts)
 
 - `checkField` (function): The problems of one field definition (not of a value): the checks `defineSchema` runs on each field.
-- `checkValue` (function): Checks one value against its field, pushing each problem onto `problems`; returns the value with the defaults of nested objects filled (a copy when it is an array or object).
+- `checkValue` (function): Checks one value against its field, pushing each problem onto `problems`; returns the value with the defaults of nested objects filled (a copy when it is an array or a plain object, for any type, `any` included).
 - `copyValue` (function): A copy of arrays and plain objects (functions and other values as they are), so defaults are never shared.
 - `defineSchema` (function): Checks a schema's fields and returns it unchanged; throws `CORE_BAD_SCHEMA` naming every problem.
 - `describeSchema` (function): A schema as plain, JSON-ready rows, in its own key order (for `x describe` and `__engine.describe`).
@@ -146,6 +146,7 @@ For the agents who maintain the engine.
 - `FIELD_TYPES` (const): Every `FieldType`, in documentation order.
 - `FieldRow` (type): One field as `describe` lists it: its keywords, with a function default shown as `'function'`.
 - `FieldType` (type): The value types: JSON's, plus `integer`, `function` (a hook) and `any`.
+- `freezeValue` (function): Freezes arrays and plain objects all the way down (other values as they are) and returns `value`: stored data.
 - `isPlainObject` (function): True for `{}` literals and `Object.create(null)`.
 - `listProblems` (function): Joins problems into one sentence list for an error message.
 - `parse` (function): `validate`, throwing `CORE_BAD_SPEC` with every problem when there is one; `where` names the spec in the message.
@@ -299,11 +300,19 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/describe.ts`](../tools/cmd/describe.ts)
 
+- `createDescribeCommand` (function): Builds the command; tests shorten the child process's time limit.
 - `default` (default): Lists the registries from their schemas (PLAN.md §8.1, §6.6): `x describe` names every kind with its entry count, `x describe <kind>` gives its fields (type, default, range, unit, docs) and ids, and `x describe <kind> <id>` one entry's values, `*` marking those that differ from the default.
+- `describeInWorker` (function): Runs the listing in a child Node process over `root`'s registrations; resolves to what it sent, or to the failure when it hung (stopped after `timeoutMs`) or ended without a listing, naming the module it was loading.
 - `fieldLine` (function): One line for a field: name, type, default, range, unit, values, flags, then its description.
-- `loadRegistrations` (function): Imports each module that registers content; a module that fails becomes a warning.
+- `listing` (function): What one listing prints, from the shared registry; throws the registry's error for an unknown kind or id.
+- `Listing` (interface): What one listing prints, besides the verdict, and the data `describe.json` holds.
+- `loadRegistrations` (function): Imports each module that registers content, telling `loading` first; a module that fails becomes a warning.
+- `registersContent` (function): Whether a parsed module calls something that registers content (comments, strings and declarations aside).
 - `REGISTRATION_ROOTS` (const): Where modules that register content live.
 - `registrationModules` (function): The modules under `root` that register content, repository-relative and sorted.
+- `WORKER_TIMEOUT_MS` (const): How long the child process may take before it is stopped and the module it was loading named (ms).
+- `WorkerDone` (interface): What the child process reports when it is done: what loaded, and the listing or the usage problem.
+- `WorkerMessage` (type): One message from the child process: the module it starts loading, or the end.
 
 ### [`tools/cmd/docs.ts`](../tools/cmd/docs.ts)
 
@@ -580,6 +589,12 @@ For the agents who maintain the engine.
 - `GENERATED` (const): The generated files, by repository path.
 - `generateDocs` (function): The generated docs' contents, formatted, by repository path.
 - `indexMarkdown` (function): `docs/INDEX.md`, before formatting.
+- `kindRows` (function): The kinds section of `docs/INDEX.md`: one row per kind declared with `defineKind`, sorted by kind.
+
+### [`tools/lib/docsKinds.ts`](../tools/lib/docsKinds.ts)
+
+- `KindDoc` (interface): One kind declared with `defineKind`.
+- `kindsOf` (function): The kinds declared by the `defineKind(…)` calls in a parsed module.
 
 ### [`tools/lib/docsPaths.ts`](../tools/lib/docsPaths.ts)
 
@@ -587,6 +602,7 @@ For the agents who maintain the engine.
 - `checkPaths` (function): Checks every path, citation and name the comments of `modules` and the covered docs mention.
 - `coveredDocs` (function): The documents the path checks read besides the code comments.
 - `expand` (function): Expands `{a,b}` and `<a|b>` into every alternative.
+- `GENERATED_DIRS` (const): The git-ignored directories tools generate (caches, reports, builds): a fresh checkout lacks them, so they pass.
 - `isPlanned` (function): Whether `planned` covers `path` (a file, or a directory ending in `/`): an entry names it or lies inside it, or, for an owned directory (`labs/hello/`, `engine/world/level/**`, `tests/replays/box-1-*.json`), it lies inside one.
 - `PathOptions` (interface): Options for `checkPaths`.
 - `Planned` (interface): The paths PLAN.md plans: the Owns of WPs not yet done, and §6.2's layout.

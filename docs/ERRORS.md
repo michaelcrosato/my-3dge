@@ -11,7 +11,7 @@ Every code the engine prints, as `[CODE] message`, with its fix. Each module reg
 
 - Message: `{problem}`
 - Fix: register each code once, beside the code that raises it: defineCodes('<area>', { AREA_NAME: { template, fix, doc } }), the name in upper-case words starting with the area's
-- Registered in: [`engine/core/log.ts` line 52](../engine/core/log.ts)
+- Registered in: [`engine/core/log.ts` line 55](../engine/core/log.ts)
 
 Raised by `defineCodes` (engine/core/log.ts) for an area that is not one lower-case word, a code that does not start with its area, a template or fix that is empty, or a code registered again with other text. `x docs --check` reports the same problems statically.
 
@@ -26,8 +26,8 @@ Raised by the colour helpers (engine/core/color.ts) for a string that is not hex
 ### CORE_BAD_KIND
 
 - Message: `kind {kind}: {problem}`
-- Fix: declare each kind once, as defineKind('<kind>', { description, fields, fallback?, check? }), the name a lower-case word (camelCase allowed)
-- Registered in: [`engine/core/registry.ts` line 50](../engine/core/registry.ts)
+- Fix: declare each kind once, as defineKind('<kind>', { description, fields, fallback?, check?, defineWith? }), the name a lower-case word (camelCase allowed)
+- Registered in: [`engine/core/registry.ts` line 53](../engine/core/registry.ts)
 
 Raised by `defineKind` (engine/core/registry.ts) for a malformed name, a kind declared twice, a missing description, or a key the declaration does not take. Problems inside `fields` raise `CORE_BAD_SCHEMA`.
 
@@ -43,7 +43,7 @@ Raised when a noise is created (engine/core/noise.ts), never while it is sampled
 
 - Message: `{where}: {problems}`
 - Fix: write each field as { type, description, default?, required?, minimum?, maximum?, enum?, unit?, items?, properties?, when?, view? } (engine/core/schema.ts), with a default that passes its own checks, and a default for every hook that is not required
-- Registered in: [`engine/core/schema.ts` line 34](../engine/core/schema.ts)
+- Registered in: [`engine/core/schema.ts` line 35](../engine/core/schema.ts)
 
 Raised by `defineSchema` and `defineKind` (engine/core/schema.ts, engine/core/registry.ts) when a field is malformed: an unknown keyword (named with the closest one), an unknown type, a missing description, a default outside its own range or values, a minimum above the maximum, an empty enum, or a hook with neither a default nor `required: true`. `defineSettings` reports the same problems in a setting as `CORE_BAD_SPEC`.
 
@@ -51,7 +51,7 @@ Raised by `defineSchema` and `defineKind` (engine/core/schema.ts, engine/core/re
 
 - Message: `{problems}`
 - Fix: give each setting a value of its type inside its range and values (node x describe setting <path> shows them); in a URL or with x set, write numbers plainly, booleans as true or false, and arrays or objects as JSON
-- Registered in: [`engine/core/settings.ts` line 58](../engine/core/settings.ts)
+- Registered in: [`engine/core/settings.ts` line 60](../engine/core/settings.ts)
 
 Raised by `set`, `setText`, `load`, `fromUrl` and `override` (engine/core/settings.ts). A preset or a URL with any problem applies nothing, and every problem is listed at once.
 
@@ -59,7 +59,7 @@ Raised by `set`, `setText`, `load`, `fromUrl` and `override` (engine/core/settin
 
 - Message: `{where}: {problems}`
 - Fix: give each field a value of its type inside its range and values, every required field, and no key the schema lacks (node x describe <kind> lists the fields)
-- Registered in: [`engine/core/schema.ts` line 39](../engine/core/schema.ts)
+- Registered in: [`engine/core/schema.ts` line 40](../engine/core/schema.ts)
 
 Raised by `parse` and `def` (engine/core/schema.ts, engine/core/registry.ts) when a spec does not match its schema. Every problem is listed at once, each naming its key, and an unknown key names the closest valid one: nothing is dropped or clamped silently.
 
@@ -67,7 +67,7 @@ Raised by `parse` and `def` (engine/core/schema.ts, engine/core/registry.ts) whe
 
 - Message: `{kind} {id} is already defined`
 - Fix: give the new entry another id, or remove one of the two def calls for it
-- Registered in: [`engine/core/registry.ts` line 59](../engine/core/registry.ts)
+- Registered in: [`engine/core/registry.ts` line 62](../engine/core/registry.ts)
 
 Raised by `def` (engine/core/registry.ts). The last definition never silently wins: two entries with one id usually mean a copied file whose id was not changed.
 
@@ -82,8 +82,8 @@ Recorded by `emit` (engine/core/events.ts) in the log's errors (`__engine.errors
 ### CORE_NO_ENTRY
 
 - Message: `there is no {kind} {id}{suggestion}`
-- Fix: fix the id (node x describe {kind} lists the defined ones), or define it with def('{kind}', {id}, { … }); a kind declared with a fallback returns that entry instead
-- Registered in: [`engine/core/registry.ts` line 69](../engine/core/registry.ts)
+- Fix: fix the id (node x describe {kind} lists the defined ones), or define it with {define}; a kind declared with a fallback returns that entry instead
+- Registered in: [`engine/core/registry.ts` line 72](../engine/core/registry.ts)
 
 Raised by `get` and `describe` (engine/core/registry.ts) for an id the kind lacks when there is nothing to stand in: the kind has no fallback, or its fallback is not defined either.
 
@@ -113,15 +113,15 @@ Raised by withSimMath (engine/core/simMath.ts) when its function returns a promi
 
 - Message: `no module registered the code {code}{suggestion}`
 - Fix: register it with defineCodes('<area>', { … }) in the module that raises it, or use the code docs/ERRORS.md lists
-- Registered in: [`engine/core/log.ts` line 57](../engine/core/log.ts)
+- Registered in: [`engine/core/log.ts` line 60](../engine/core/log.ts)
 
 Raised by `codeError`, `warnOnce` and `error` (engine/core/log.ts) when the code was never registered, usually a typo or a module that raises a code before its `defineCodes` call ran.
 
 ### CORE_UNKNOWN_ID
 
 - Message: `there is no {kind} {id}{suggestion}; {kind} {fallback} stands in for it`
-- Fix: fix the id (node x describe {kind} lists the defined ones), or define it with def('{kind}', {id}, { … })
-- Registered in: [`engine/core/registry.ts` line 64](../engine/core/registry.ts)
+- Fix: fix the id (node x describe {kind} lists the defined ones), or define it with {define}
+- Registered in: [`engine/core/registry.ts` line 67](../engine/core/registry.ts)
 
 Advice from `get` (engine/core/registry.ts), printed once per missing id, when the kind has a fallback: play goes on with the fallback entry, so a typo shows as the fallback (a crate, a default material) instead of a crash.
 
@@ -129,13 +129,13 @@ Advice from `get` (engine/core/registry.ts), printed once per missing id, when t
 
 - Message: `there is no kind {kind}{suggestion}`
 - Fix: name a declared kind (node x describe lists them), or import the module that declares it before using it
-- Registered in: [`engine/core/registry.ts` line 55](../engine/core/registry.ts)
+- Registered in: [`engine/core/registry.ts` line 58](../engine/core/registry.ts)
 
 ### CORE_UNKNOWN_SETTING
 
 - Message: `there is no setting {path}{suggestion}`
 - Fix: use a declared setting (node x describe setting lists them), or declare it with defineSettings({ … })
-- Registered in: [`engine/core/settings.ts` line 53](../engine/core/settings.ts)
+- Registered in: [`engine/core/settings.ts` line 55](../engine/core/settings.ts)
 
 Raised by the settings store (engine/core/settings.ts) for an unknown path in `get`, `set`, `setText`, `reset` or `sim.get`. Presets, URL parameters and overrides report unknown paths through `CORE_BAD_SETTING`, with every other problem.
 
@@ -143,7 +143,7 @@ Raised by the settings store (engine/core/settings.ts) for an unknown path in `g
 
 - Message: `sim-side code read the view setting {path}`
 - Fix: read view settings ({path} changes only how the game looks or performs) from presentation code, through the settings store itself; sim-side code reads only settings without view: true, so the hash and replays never depend on them
-- Registered in: [`engine/core/settings.ts` line 63](../engine/core/settings.ts)
+- Registered in: [`engine/core/settings.ts` line 65](../engine/core/settings.ts)
 
 ## gfx
 

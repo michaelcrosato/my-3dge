@@ -1,7 +1,7 @@
 /**
  * @file Tests `x docs` (WP 0.6) on fixture repositories written to temporary directories, never committed: a broken
- * example, a stale INDEX and a missing path each fail; so do undocumented exports, a long PROGRESS.md, bad codes and
- * bad citations. The last tests cover the `x check` plugin: drift checks without the examples, a warning in lanes.
+ * example, a stale INDEX and a missing path each fail (generated and cache paths aside); so do undocumented exports, a
+ * long PROGRESS.md, bad codes, unreadable kinds and bad citations; each kind gets its row in INDEX. The last tests cover the `x check` plugin: drift checks without the examples, a warning in lanes.
  * @see tools/cmd/docs.ts
  */
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
@@ -197,6 +197,62 @@ describe('x docs on fixture repositories', () => {
     expect(errors).toMatch(
       /## gfx[\s\S]*### GFX_NO_WEBGPU\n\n- Message: `no WebGPU adapter`\n- Fix: run in Chromium with WebGPU on/,
     );
+  });
+
+  it('gives each kind declared with defineKind its row in INDEX, and fails one it cannot read', async () => {
+    const declare = 'declare const registry: { defineKind(kind: string, spec: object): object };\n';
+    const head = (what: string) => `/**\n * @file ${what}\n */\n`;
+    const props = `${head('Declares props.')}/** Props. */\nexport const props = registry.defineKind('prop', {\n  description: 'A movable | object.',\n  fields: {},\n});\n${declare}`;
+    const knobs = `${head('Declares knobs and forwards.')}/** Knobs. */\nexport const knobs = defineKind('knob', { description: \`A tuning knob.\`, fields: {} });\n/** Forwards. */\nexport function defineKind(kind: string, spec: object) {\n  return registry.defineKind(kind, spec);\n}\n${declare}`;
+    const bad = `${head('Declares badly.')}const MOVE = { description: 'x', fields: {} };\n/** Moves. */\nexport const moves = registry.defineKind('move', MOVE);\n/** Again. */\nexport const again = registry.defineKind('prop', { description: 'Twice.', fields: {} });\n${declare}`;
+    const root = repo({ 'engine/world/props.ts': props, 'engine/core/knobs.ts': knobs, 'labs/box/bad.ts': bad });
+    await docs(root, 'write');
+    const failures = (await docs(root, 'check')).failures ?? [];
+    expect(failures.map((f) => [f.id, f.file, f.line])).toEqual([
+      ['DOCS_KIND', 'labs/box/bad.ts', 6],
+      ['DOCS_KIND_DUPLICATE', 'labs/box/bad.ts', 8],
+    ]);
+    expect(failures[0].message).toBe(
+      "kind move: write defineKind('move', { description: '…', fields, … }) with literals, so x docs can list the kind",
+    );
+    const index = readFileSync(join(root, 'docs/INDEX.md'), 'utf8');
+    const rows = index.split('\n').filter((line) => line.startsWith('| `'));
+    expect(rows.map((row) => row.replace(/\s+/g, ' '))).toEqual([
+      '| `knob` | A tuning knob. | [`engine/core/knobs.ts`](../engine/core/knobs.ts) |',
+      '| `prop` | A movable \\| object. | [`engine/world/props.ts`](../engine/world/props.ts) |',
+      '| `prop` | Twice. | [`labs/box/bad.ts`](../labs/box/bad.ts) |',
+    ]);
+    expect(index.indexOf('## Kinds')).toBeLessThan(index.indexOf('## engine/core'));
+    const plain = repo();
+    await docs(plain, 'write');
+    expect(readFileSync(join(plain, 'docs/INDEX.md'), 'utf8')).toContain('No module declares a kind yet.');
+  });
+
+  it('accepts generated and cache paths a fresh checkout lacks, and still fails other missing paths', async () => {
+    const root = repo({
+      'engine/core/add.ts': MODULE.replace(
+        'for the docs fixtures.',
+        'for the docs fixtures (cache in node_modules/.cache/add/).',
+      ),
+      'docs/GUIDE.md':
+        'Lint caches in node_modules/.cache/eslint/; node_modules/.cache/ holds all; node_modules/gone/x.js does not.\n',
+    });
+    await docs(root, 'write');
+    const failures = (await docs(root, 'check')).failures ?? [];
+    expect(failures.map((f) => [f.id, f.file, f.message])).toEqual([
+      [
+        'DOCS_PATH',
+        'docs/GUIDE.md',
+        'node_modules/gone/x.js does not exist, and no WP still to come plans it: fix the path or remove it',
+      ],
+    ]);
+    const generated = ['node_modules/.cache/eslint/', 'out/docs/report.json', '.cache/src-3d2dge/', 'dist/index.html'];
+    expect(generated.map((path) => isPlanned(path, NO_PLAN))).toEqual([true, true, true, true]);
+    expect(['node_modules/', 'node_modules/three/x.js', 'outside/x'].map((path) => isPlanned(path, NO_PLAN))).toEqual([
+      false,
+      false,
+      false,
+    ]);
   });
 
   it('flags browser examples for T2 instead of running them', async () => {

@@ -8,20 +8,23 @@
  * typed, and records each code, so `codeError`, `warnOnce` and `error` can fill its template (`{name}` marks a value).
  *
  * Invariants: a printed or thrown message is `[CODE] message: fix`, the form the advice trap reads
- * (tests/setup/adviceTrap.ts). Advice prints through `console.warn` once per distinct message and counts the
- * repeats; errors print through `console.error` once per distinct message and are all recorded, up to `maxErrors`.
+ * (tests/setup/adviceTrap.ts). Advice is "the same advice about the same thing": it prints through `console.warn`
+ * once per code and subject (the code itself unless the caller names what the advice is about, an id or a path,
+ * never the filled message, so a measured value in it does not print it again) and counts the repeats. Errors
+ * print through `console.error` once per distinct message and are all recorded. Both keep their latest records,
+ * up to `maxAdvice` and `maxErrors`; a record pushed out and raised again is recorded again, not printed again.
  * `advice` and `errors` are what `__engine.advice` and `__engine.errors` show (PLAN.md §8.3). A code is upper-case
  * words starting with its area's (`CORE_` in area `core`), registered once; registering it again with other text,
  * or using a code nobody registered, throws.
  *
- * Carried from `my-3d2dge:engine/my-3d2dge.js:65` (warn-once), with codes, fixes and records added.
+ * Carried from `my-3d2dge:engine/my-3d2dge.js:65-66` (warn-once by key), with codes, fixes and records added.
  *
  * @example
  * const codes = defineCodes('demo', { DEMO_SLOW: { template: '{what} took {ms} ms', fix: 'cache {what}' } });
  * const printed: string[] = [];
  * const quiet = createLog({ console: { warn: (line) => printed.push(line), error: () => {} } });
- * quiet.warnOnce('DEMO_SLOW', { what: 'the bake', ms: 40 });
- * quiet.warnOnce('DEMO_SLOW', { what: 'the bake', ms: 40 }); // counted, not printed again
+ * quiet.warnOnce('DEMO_SLOW', { what: 'the bake', ms: 40 }, 'the bake');
+ * quiet.warnOnce('DEMO_SLOW', { what: 'the bake', ms: 52 }, 'the bake'); // counted, not printed again
  * printed; // ['[DEMO_SLOW] the bake took 40 ms: cache the bake']
  * codeError('DEMO_SLOW', { what: 'x', ms: 1 }).code; // 'DEMO_SLOW'
  * codes.DEMO_SLOW.fix; // 'cache {what}'
@@ -179,9 +182,11 @@ export function didYouMean(wanted: string, candidates: Iterable<string>): string
   return ` (did you mean ${near.length === 1 ? near[0] : `${near.slice(0, -1).join(', ')} or ${near.at(-1)}`}?)`;
 }
 
-/** One piece of advice the log printed: its code, message and fix, and how often it was raised. */
+/** One piece of advice the log printed: its code, what it is about, its first message and fix, and how often. */
 export interface AdviceRecord {
   code: string;
+  /** What the advice is about (an id, a path); the code itself when the caller named nothing. */
+  subject: string;
   message: string;
   fix: string;
   count: number;
@@ -205,22 +210,28 @@ export interface LogConsole {
 
 /** Warn-once advice and structured errors, with what was raised kept for `__engine.advice` and `__engine.errors`. */
 export interface Log {
-  /** The advice raised so far, one record per distinct message, in order. */
+  /** The advice raised so far, one record per code and subject, the latest `maxAdvice`, in order. */
   readonly advice: readonly AdviceRecord[];
   /** The errors recorded so far, one record per distinct message, the latest `maxErrors`, in order. */
   readonly errors: readonly ErrorRecord[];
-  /** Raises advice: prints `[CODE] message: fix` once per distinct message and counts repeats; true when it printed. */
-  warnOnce(code: string, values?: CodeValues): boolean;
+  /**
+   * Raises advice: prints `[CODE] message: fix` once per code and `subject` (what it is about: an id, a path; the
+   * code itself by default) and counts repeats, whatever values fill the message; true when it printed.
+   */
+  warnOnce(code: string, values?: CodeValues, subject?: string): boolean;
   /** Records an error, printing it the first time its message occurs; `cause` is the thrown value behind it. */
   error(code: string, values?: CodeValues, cause?: unknown): ErrorRecord;
   /** Forgets the advice and errors, so each prints again. */
   clear(): void;
 }
 
-/** How a log is made: where it prints (the console by default) and how many errors it keeps (200). */
+/** How a log is made: where it prints (the console by default) and how many errors and advice records it keeps. */
 export interface LogOptions {
   console?: LogConsole;
+  /** The most error records kept, the latest (200). */
   maxErrors?: number;
+  /** The most advice records kept, the latest (200). */
+  maxAdvice?: number;
 }
 
 /** A thrown value as plain data. */
@@ -229,54 +240,68 @@ function causeOf(cause: unknown): ErrorRecord['cause'] {
   return { name: typeof cause, message: String(cause) };
 }
 
+/**
+ * The latest `max` records, one per key: `raise` counts a repeat of a kept record, or keeps a new one and returns
+ * whether its key is new (a key whose record was pushed out is kept again but is not new, so it never prints twice).
+ */
+function keptRecords<R extends { count: number }>(max: number) {
+  const records: R[] = [];
+  const byKey = new Map<string, R>();
+  return {
+    records,
+    raise(key: string, make: () => R): { record: R; fresh: boolean } {
+      const seen = byKey.get(key);
+      if (seen && records.includes(seen)) {
+        seen.count++;
+        return { record: seen, fresh: false };
+      }
+      const record = make();
+      byKey.set(key, record);
+      records.push(record);
+      if (records.length > max) records.splice(0, records.length - max);
+      return { record, fresh: !seen };
+    },
+    clear() {
+      records.length = 0;
+      byKey.clear();
+    },
+  };
+}
+
 /** Makes a log; `log` is the engine's shared one. */
 export function createLog(options: LogOptions = {}): Log {
   const out = options.console ?? console;
-  const maxErrors = options.maxErrors ?? 200;
-  const advice: AdviceRecord[] = [];
-  const errors: ErrorRecord[] = [];
-  const adviceSeen = new Map<string, AdviceRecord>();
-  const errorSeen = new Map<string, ErrorRecord>();
+  const advice = keptRecords<AdviceRecord>(options.maxAdvice ?? 200);
+  const errors = keptRecords<ErrorRecord>(options.maxErrors ?? 200);
   return {
-    advice,
-    errors,
-    warnOnce(code, values = {}) {
+    advice: advice.records,
+    errors: errors.records,
+    warnOnce(code, values = {}, subject = code) {
       const info = lookup(code);
-      const message = fill(info.template, values);
-      const key = `${code}\0${message}`;
-      const seen = adviceSeen.get(key);
-      if (seen) {
-        seen.count++;
-        return false;
-      }
-      const record: AdviceRecord = { code, message, fix: fill(info.fix, values), count: 1 };
-      adviceSeen.set(key, record);
-      advice.push(record);
-      out.warn(`[${code}] ${message}: ${record.fix}`);
-      return true;
+      const { record, fresh } = advice.raise(`${code}\0${subject}`, () => ({
+        code,
+        subject,
+        message: fill(info.template, values),
+        fix: fill(info.fix, values),
+        count: 1,
+      }));
+      if (fresh) out.warn(`[${code}] ${record.message}: ${record.fix}`);
+      return fresh;
     },
     error(code, values = {}, cause) {
       const info = lookup(code);
       const message = fill(info.template, values);
-      const key = `${code}\0${message}`;
-      const seen = errorSeen.get(key);
-      if (seen && errors.includes(seen)) {
-        seen.count++;
-        return seen;
-      }
-      const record: ErrorRecord = { code, message, fix: fill(info.fix, values), values, count: 1 };
-      if (cause !== undefined) record.cause = causeOf(cause);
-      errorSeen.set(key, record);
-      errors.push(record);
-      if (errors.length > maxErrors) errors.splice(0, errors.length - maxErrors);
-      if (!seen) out.error(`[${code}] ${message}: ${record.fix}`, ...(cause === undefined ? [] : [cause]));
+      const { record, fresh } = errors.raise(`${code}\0${message}`, () => {
+        const made: ErrorRecord = { code, message, fix: fill(info.fix, values), values, count: 1 };
+        if (cause !== undefined) made.cause = causeOf(cause);
+        return made;
+      });
+      if (fresh) out.error(`[${code}] ${message}: ${record.fix}`, ...(cause === undefined ? [] : [cause]));
       return record;
     },
     clear() {
-      advice.length = 0;
-      errors.length = 0;
-      adviceSeen.clear();
-      errorSeen.clear();
+      advice.clear();
+      errors.clear();
     },
   };
 }

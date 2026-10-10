@@ -45,6 +45,18 @@ describe('on, once, off and emit', () => {
     expect(seen).toEqual([1, 10, 100]);
   });
 
+  it('removes every registration of a listener added twice with one off', () => {
+    const events = createEvents<Demo>();
+    const seen: number[] = [];
+    const a = (hit: { damage: number }) => seen.push(hit.damage);
+    events.on('hit', a);
+    events.on('hit', a);
+    events.emit('hit', { damage: 1 });
+    events.off('hit', a);
+    expect(events.emit('hit', { damage: 2 })).toBe(0);
+    expect(seen).toEqual([1, 1]);
+  });
+
   it('runs a listener added during an emit from the next emit, and skips one removed during it', () => {
     const events = createEvents<Demo>();
     const seen: string[] = [];

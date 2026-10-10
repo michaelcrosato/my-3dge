@@ -8,9 +8,11 @@
  * schema, and never compares ids (ESLint's `local/ask-the-entry`), so new content works without editing the code that
  * uses it. Ids are strings namespaced by convention (`move:slash`, `prop:crate`; PLAN.md §6.3).
  *
- * Invariants: an entry is the parsed spec (defaults filled, schema.ts) plus `id` and `kind`, frozen at the top level.
- * An id is defined once per kind. A missing id is an error unless the kind names a `fallback` entry: then `get` warns
- * once (`CORE_UNKNOWN_ID`, naming the closest ids) and returns the fallback. `list` and `describe` sort by id, so
+ * Invariants: an entry is the parsed spec (defaults filled, schema.ts) plus `id` and `kind`, a copy frozen all the way
+ * down, so neither the spec, the schema's defaults nor a reader can change it. An id is defined once per kind, and
+ * stored only once the kind's check passes. A missing id is an error unless the kind names a `fallback` entry: then
+ * `get` warns once per id (`CORE_UNKNOWN_ID`, naming the closest ids) and returns the fallback. Both messages name
+ * the kind's `defineWith` (`def('<kind>', id, { … })` by default). `list` and `describe` sort by id, so
  * order never depends on import order. A kind's optional `check` adds whole-entry rules beyond its fields.
  * `registry` is the engine's one shared registry (what `x describe` lists); tests make their own with
  * `createRegistry`.
@@ -35,6 +37,7 @@ import { codeError, defineCodes, didYouMean, log as sharedLog, type Log } from '
 import {
   defineSchema,
   describeSchema,
+  freezeValue,
   isPlainObject,
   listProblems,
   parse,
@@ -49,7 +52,7 @@ import {
 export const REGISTRY_CODES = defineCodes('core', {
   CORE_BAD_KIND: {
     template: 'kind {kind}: {problem}',
-    fix: "declare each kind once, as defineKind('<kind>', { description, fields, fallback?, check? }), the name a lower-case word (camelCase allowed)",
+    fix: "declare each kind once, as defineKind('<kind>', { description, fields, fallback?, check?, defineWith? }), the name a lower-case word (camelCase allowed)",
     doc: 'Raised by `defineKind` (engine/core/registry.ts) for a malformed name, a kind declared twice, a missing description, or a key the declaration does not take. Problems inside `fields` raise `CORE_BAD_SCHEMA`.',
   },
   CORE_UNKNOWN_KIND: {
@@ -63,12 +66,12 @@ export const REGISTRY_CODES = defineCodes('core', {
   },
   CORE_UNKNOWN_ID: {
     template: 'there is no {kind} {id}{suggestion}; {kind} {fallback} stands in for it',
-    fix: "fix the id (node x describe {kind} lists the defined ones), or define it with def('{kind}', {id}, { … })",
+    fix: 'fix the id (node x describe {kind} lists the defined ones), or define it with {define}',
     doc: 'Advice from `get` (engine/core/registry.ts), printed once per missing id, when the kind has a fallback: play goes on with the fallback entry, so a typo shows as the fallback (a crate, a default material) instead of a crash.',
   },
   CORE_NO_ENTRY: {
     template: 'there is no {kind} {id}{suggestion}',
-    fix: "fix the id (node x describe {kind} lists the defined ones), or define it with def('{kind}', {id}, { … }); a kind declared with a fallback returns that entry instead",
+    fix: 'fix the id (node x describe {kind} lists the defined ones), or define it with {define}; a kind declared with a fallback returns that entry instead',
     doc: 'Raised by `get` and `describe` (engine/core/registry.ts) for an id the kind lacks when there is nothing to stand in: the kind has no fallback, or its fallback is not defined either.',
   },
 });
@@ -86,6 +89,8 @@ export interface KindSpec<S extends Schema = Schema> {
   fallback?: string;
   /** Whole-entry rules beyond the fields: the problems of a parsed entry, as plain sentences ([] when fine). */
   check?: (entry: Entry<S>) => string[];
+  /** How a new entry is written, for the missing-id messages: `def('<kind>', '<id>', { … })` when absent. */
+  defineWith?: string;
 }
 
 /** A declared kind, bound: the same as the registry's functions with the kind filled in, typed by its schema. */
@@ -148,7 +153,7 @@ interface KindState {
 const byText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
 /** The keys `defineKind` takes. */
-const KIND_KEYS = ['description', 'fields', 'fallback', 'check'];
+const KIND_KEYS = ['description', 'fields', 'fallback', 'check', 'defineWith'];
 
 /** Makes an empty registry; `registry` is the engine's shared one. Missing-id advice goes to `options.log`. */
 export function createRegistry(options: { log?: Log } = {}): Registry {
@@ -166,6 +171,7 @@ export function createRegistry(options: { log?: Log } = {}): Registry {
     kind,
     id: show(id),
     suggestion: didYouMean(id, state.entries.keys()),
+    define: state.spec.defineWith ?? `def('${kind}', ${show(id)}, { … })`,
   });
 
   function describe(): KindsDescription;
@@ -208,13 +214,17 @@ export function createRegistry(options: { log?: Log } = {}): Registry {
         throw bad('the name must be a lower-case word (camelCase allowed)');
       }
       if (kinds.has(kind)) throw bad('it is already declared; declare each kind once');
-      if (!isPlainObject(spec)) throw bad('the declaration must be { description, fields, fallback?, check? }');
+      if (!isPlainObject(spec))
+        throw bad('the declaration must be { description, fields, fallback?, check?, defineWith? }');
       for (const key of Object.keys(spec)) {
         if (!KIND_KEYS.includes(key)) throw bad(`unknown key ${show(key)}${didYouMean(key, KIND_KEYS)}`);
       }
       if (typeof spec.description !== 'string' || !spec.description.trim()) throw bad('it needs a description');
       if (spec.fallback !== undefined && typeof spec.fallback !== 'string') throw bad('fallback must be an id');
       if (spec.check !== undefined && typeof spec.check !== 'function') throw bad('check must be a function');
+      if (spec.defineWith !== undefined && (typeof spec.defineWith !== 'string' || !spec.defineWith.trim())) {
+        throw bad("defineWith must be a sentence, such as 'defineSettings({ … })'");
+      }
       defineSchema(spec.fields, `kind ${show(kind)}`);
       for (const reserved of ['id', 'kind']) {
         if (Object.hasOwn(spec.fields, reserved)) throw bad(`"${reserved}" is added to every entry; rename that field`);
@@ -236,7 +246,7 @@ export function createRegistry(options: { log?: Log } = {}): Registry {
         throw codeError('CORE_BAD_SPEC', { where: kind, problems: `the id ${show(id)} must be a non-empty string` });
       }
       if (state.entries.has(id)) throw codeError('CORE_DUPLICATE_ID', { kind, id: show(id) });
-      const entry = Object.freeze({ id, kind, ...parse(state.spec.fields, spec, where) }) as Entry;
+      const entry = freezeValue({ id, kind, ...parse(state.spec.fields, spec, where) }) as Entry;
       const problems = state.spec.check?.(entry) ?? [];
       if (problems.length) {
         throw codeError('CORE_BAD_SPEC', {
@@ -255,10 +265,10 @@ export function createRegistry(options: { log?: Log } = {}): Registry {
       const fallback = state.spec.fallback;
       const standIn = fallback === undefined ? undefined : state.entries.get(fallback);
       if (!standIn) throw codeError('CORE_NO_ENTRY', missing(kind, id, state));
-      const key = `${kind}\0${id}`;
-      let values = standIns.get(key);
-      if (!values) standIns.set(key, (values = { ...missing(kind, id, state), fallback: show(fallback) }));
-      log.warnOnce('CORE_UNKNOWN_ID', values);
+      const subject = `${kind} ${id}`;
+      let values = standIns.get(subject);
+      if (!values) standIns.set(subject, (values = { ...missing(kind, id, state), fallback: show(fallback) }));
+      log.warnOnce('CORE_UNKNOWN_ID', values, subject);
       return standIn;
     },
 

@@ -1,14 +1,15 @@
 /**
  * @file Reads the manual out of the code (PLAN.md §6.8, WP 0.6): each module's file comment, its exports with their
- * doc comments, its `@example` blocks, its tests and the codes it registers, through the TypeScript compiler API.
- * `x docs` builds INDEX, API and ERRORS from this, and checks it for drift.
+ * doc comments, its `@example` blocks, its tests, the codes it registers and the registry kinds it declares, through
+ * the TypeScript compiler API. `x docs` builds INDEX, API and ERRORS from this, and checks it for drift.
  *
  * Modules are the `.ts`, `.js` and `.mjs` files under `engine/`, `tools/`, `labs/` and `tests/` (where ESLint
  * requires file comments), plus the root's `*.config.{ts,js}`; tests (`*.test.ts`, `*.spec.ts`), any `fixtures/`
  * directory (test-only content) and `tools/templates/` are left out. A module's tests are the ones beside it
  * (`name.test.ts`, `name.spec.ts`) and the test files its file comment names with `@see`.
  *
- * Codes are read by tools/lib/docsCodes.ts, whose file comment gives the form `defineCodes` calls are written in.
+ * Codes are read by tools/lib/docsCodes.ts and kinds by tools/lib/docsKinds.ts, whose file comments give the forms
+ * `defineCodes` and `defineKind` calls are written in.
  *
  * Invariants: reading never runs a module (examples run in tools/lib/docsExamples.ts). Paths are repository-relative
  * with `/`. Lists come out sorted, so generated docs are stable.
@@ -24,6 +25,7 @@ import { dirname, join, posix } from 'node:path';
 import ts from 'typescript';
 import { firstSentence } from '../x';
 import { codesOf, type CodeDoc } from './docsCodes';
+import { kindsOf, type KindDoc } from './docsKinds';
 
 /** One `@tag` of a doc comment, its text as written (indentation kept), and its 1-based line in the file. */
 export interface DocTag {
@@ -79,6 +81,8 @@ export interface ModuleDoc {
   examples: Example[];
   tests: string[];
   codes: CodeDoc[];
+  /** The registry kinds it declares with `defineKind`. */
+  kinds: KindDoc[];
   /** The module specifiers it imports or re-exports from. */
   imports: string[];
 }
@@ -270,6 +274,7 @@ export function readModule(root: string, path: string): ModuleDoc {
     examples: examples.filter((example, i) => examples.findIndex((other) => other.line === example.line) === i),
     tests: [...new Set([...beside, ...seen])].sort(),
     codes: codesOf(source, path),
+    kinds: kindsOf(source, path),
     imports,
   };
 }

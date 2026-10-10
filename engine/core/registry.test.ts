@@ -1,7 +1,8 @@
 /**
- * @file Unit tests for engine/core/registry.ts (T1): kinds declared and refused, entries validated, filled, frozen and
- * defined once, missing ids (warn once and the fallback, or an error naming the closest), sorted listings, the three
- * forms of `describe`, typed kind handles, hooks asked instead of ids, and the shared registry's functions.
+ * @file Unit tests for engine/core/registry.ts (T1): kinds declared and refused, entries validated, filled, frozen all
+ * the way down and defined once (nothing stored when the kind's check fails), missing ids (warn once and the fallback,
+ * or an error naming the closest and the kind's way to define one), sorted listings, the three forms of `describe`,
+ * typed kind handles, hooks asked instead of ids, and the shared registry's functions.
  * @see engine/core/registry.ts
  */
 import { describe, expect, expectTypeOf, it } from 'vitest';
@@ -92,6 +93,30 @@ describe('def', () => {
     expect(() => reg.def('range', 'range:bad', { from: 3 })).toThrow(
       '[CORE_BAD_SPEC] range "range:bad": from 3 is after to 1',
     );
+    expect(reg.has('range', 'range:bad')).toBe(false);
+    expect(reg.def('range', 'range:bad', { from: 0 }).from).toBe(0);
+  });
+
+  it('stores entries frozen all the way down, independent of the spec and the defaults they came from', () => {
+    const { reg } = setup();
+    reg.defineKind('prop', PROP);
+    reg.defineKind('blob', {
+      description: 'Free-form data.',
+      fields: { data: { type: 'any', default: { at: [0, 0] }, description: 'Anything.' } },
+    });
+    const crate = reg.def('prop', 'prop:crate', {});
+    expect(Object.isFrozen(crate.tags)).toBe(true);
+    expect(() => (crate.tags as unknown[]).push('x')).toThrow(TypeError);
+    expect(reg.def('prop', 'prop:barrel', {}).tags).toEqual([]);
+    const given = { at: [1, 2], name: 'b' };
+    const blob = reg.def('blob', 'blob:b', { data: given });
+    given.at.push(3);
+    given.name = 'changed';
+    expect(blob.data).toEqual({ at: [1, 2], name: 'b' });
+    expect(Object.isFrozen((blob.data as { at: number[] }).at)).toBe(true);
+    const plain = reg.def('blob', 'blob:plain', {});
+    expect(Object.isFrozen(plain.data)).toBe(true);
+    expect(reg.def('blob', 'blob:other', {}).data).not.toBe(plain.data);
   });
 });
 
@@ -120,6 +145,15 @@ describe('get', () => {
     reg.defineKind('prop', PROP);
     expect(() => reg.get('prop', 'prop:x')).toThrow(/CORE_NO_ENTRY/);
     expect(warned).toEqual([]);
+  });
+
+  it("names the kind's own way of defining an entry in the missing-id messages", () => {
+    const { reg } = setup();
+    reg.defineKind('knob', { description: 'A knob.', fields: {}, defineWith: 'defineKnobs({ … })' });
+    expect(() => reg.get('knob', 'knob:a')).toThrow(/or define it with defineKnobs\(\{ … \}\);/);
+    expect(() => reg.defineKind('dial', { description: 'A dial.', fields: {}, defineWith: 3 } as never)).toThrow(
+      /defineWith must be a sentence/,
+    );
   });
 });
 
