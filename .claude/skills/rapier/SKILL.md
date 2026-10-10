@@ -11,7 +11,9 @@ imports it (ESLint's layer rule); everything else meets plain data, body ids and
 
 ## The API, in plain terms
 
-- `createPhysics()` (engine/physics/world.ts) makes a world; Rapier is initialized once when the module loads (a
+- A scene asks for one: `defineScene(id, { physics: true, setup(w) { physicsOf(w).addBody(…) } })` (game code
+  imports `physicsOf` from engine/sim-api.ts); fixtures/scenes/physics-40/ is a worked example. Underneath,
+  `createPhysics()` (engine/physics/world.ts) makes the world; Rapier is initialized once when that module loads (a
   top-level `await`, about 50 ms in Node), so every call after is synchronous.
 - Bodies: `addBody({ type, position, rotation, velocity, angularVelocity, colliders: [{ shape, position, density,
   friction, restitution, group, sensor }], group, ccd, canSleep, gravityScale })` returns an id; `readBody(id)`

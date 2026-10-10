@@ -114,3 +114,30 @@ export type { SpawnPoint } from './world/level/types';
 export type { LightSpot } from './world/level/types';
 export type { TileRect } from './world/level/types';
 export type { Point3 } from './world/level/types';
+
+// Physics (WP 3.1): Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id,
+// raycasts, shape casts, overlaps and ground probes, collision groups by name, a level's bodies; presentation reads
+// it through the read-only QueryView.
+export { physicsOf } from './physics/world';
+export type { Physics } from './physics/world';
+export type { BodySpec } from './physics/world';
+export type { ColliderSpec } from './physics/world';
+export type { BodyState } from './physics/world';
+export type { BodyChange } from './physics/world';
+export type { BodyType } from './physics/world';
+export type { Shape } from './physics/queries';
+export type { Vec3Like } from './physics/queries';
+export type { QuatLike } from './physics/queries';
+export type { Hit } from './physics/queries';
+export type { Ground } from './physics/queries';
+export type { QueryOptions } from './physics/queries';
+export type { RayOptions } from './physics/queries';
+export type { ShapeCastOptions } from './physics/queries';
+export type { OverlapOptions } from './physics/queries';
+export type { ProbeOptions } from './physics/queries';
+export { COLLISION_GROUPS } from './physics/groups';
+export type { GroupName } from './physics/groups';
+export { PHYSICS_SETTINGS } from './physics/params';
+export { addLevelBodies } from './sim/levelBodies';
+export { queryViewOf } from './sim/queryView';
+export type { QueryView } from './sim/queryView';
