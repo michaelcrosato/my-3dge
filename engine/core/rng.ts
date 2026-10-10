@@ -9,6 +9,14 @@
  * keys (canonically, with engine/core/hash.ts), so adding a stream never shifts another, and `RngStreams` creates
  * each stream on first use. Pure int32 arithmetic: the same in Node and Chromium.
  *
+ * Named streams: a stream's name is the canonical text of its keys (`["entity",7,"anim"]`), JSON's own text for
+ * strings and finite numbers other than -0 (the same text, made fast), the canonical walk for the rest. A stream still
+ * at its derived seed is the same as no stream, so `state()` leaves it out: making a handle without drawing changes
+ * no hash. `setState` sets the streams it lists and puts every other one back at its derived seed, so a handle,
+ * whenever it was made, keeps reaching its stream across restores and reseeds. Entity streams
+ * (`entity(id, …)`, the keys `'entity', id, …`) are indexed by id, so `dropEntity(id)` removes one entity's streams
+ * without a walk over the rest; a dropped stream's old handle reaches nothing any more.
+ *
  * Carried from `my-3d2dge:engine/my-3d2dge.js:84` (`rng`, seeds normalised by `| 0` as there), with the stream
  * helpers of `my-3d2dge:src/emberdeep/00-core.js:104` rebuilt generically.
  *
@@ -16,6 +24,7 @@
  * const streams = new RngStreams(1234);
  * const roll = streams.stream('loot').int(1, 6); // 1..6, the same every run
  * const saved = streams.state(); // { '["loot"]': … }
+ * streams.entity(7, 'anim').next(); // the stream ["entity",7,"anim"]; streams.dropEntity(7) removes it
  * new Rng(42).next(); // 0.6011037519201636
  * @see engine/core/rng.test.ts
  */
@@ -90,48 +99,159 @@ export function derive(seed: number, ...keys: readonly (string | number)[]): num
   return mix32(hash.hi ^ hash.lo);
 }
 
+/** The name of a stream: JSON's text when it equals the canonical text (strings, finite numbers but -0), else that. */
+function keyText(keys: readonly (string | number)[]): string {
+  for (const key of keys) {
+    if (typeof key === 'string' || (Number.isFinite(key) && !Object.is(key, -0))) continue;
+    return serialize(keys); // -0, NaN, ±Infinity and other values: the canonical walk (which refuses what it cannot hold)
+  }
+  return JSON.stringify(keys);
+}
+
+/** The prefix of every entity stream's name. */
+const ENTITY = '["entity",';
+
+/** One named stream and the int32 it starts from (worked out when first needed for a restored stream). */
+interface Slot {
+  readonly rng: Rng;
+  start?: number;
+}
+
 /**
- * Named streams from one seed (the scene's): `stream('ai')`, `stream('entity', 7, 'anim')`. Each is created on first
- * use from `derive(seed, …keys)`, so the streams never depend on each other or on the order they were first used.
+ * Named streams from one seed (the scene's): `stream('ai')`, `entity(7, 'anim')`. Each is created on first use from
+ * `derive(seed, …keys)`, so the streams never depend on each other or on the order they were first used in.
  */
 export class RngStreams {
   /** The seed every stream derives from. */
-  readonly seed: number;
-  /** Streams by their canonical key text (`["entity",7,"anim"]`). */
-  readonly #streams = new Map<string, Rng>();
+  #seed: number;
+  /** Streams by name. */
+  readonly #slots = new Map<string, Slot>();
+  /** Every name, sorted (code-unit order), kept up to date as streams come and go. */
+  #sorted: string[] = [];
+  /** The names of each entity's streams, by entity id. */
+  readonly #byEntity = new Map<number, string[]>();
+  /** Each entity's streams named by one string (`entity(7, 'anim')`), by id then that string: the fast path. */
+  readonly #named = new Map<number, Map<string, Rng>>();
 
   /** Streams derived from `seed`. */
   constructor(seed: number) {
-    this.seed = seed;
+    this.#seed = seed;
+  }
+
+  /** The seed every stream derives from. */
+  get seed(): number {
+    return this.#seed;
   }
 
   /** The stream named by `keys`, created from `derive(seed, …keys)` on first use. */
   stream(...keys: readonly (string | number)[]): Rng {
-    const key = serialize(keys);
-    let stream = this.#streams.get(key);
-    if (!stream) {
-      stream = new Rng(derive(this.seed, ...keys));
-      this.#streams.set(key, stream);
-    }
-    return stream;
+    const name = keyText(keys);
+    return (this.#slots.get(name) ?? this.#add(name, keys)).rng;
   }
 
-  /** Every stream used so far, by its canonical key text, with its state; keys sorted, so the record is canonical. */
+  /** The entity's stream named by `keys` (the stream `'entity', id, …keys`). */
+  entity(id: number, ...keys: readonly (string | number)[]): Rng {
+    if (!(id > 0) || keys.length !== 1 || typeof keys[0] !== 'string') return this.stream('entity', id, ...keys);
+    let own = this.#named.get(id);
+    let rng = own?.get(keys[0]);
+    if (rng) return rng;
+    rng = this.stream('entity', id, keys[0]);
+    if (!own) this.#named.set(id, (own = new Map()));
+    own.set(keys[0], rng);
+    return rng;
+  }
+
+  /** Removes every stream of entity `id`; their old handles reach nothing any more. */
+  dropEntity(id: number): void {
+    const names = this.#byEntity.get(id);
+    this.#named.delete(id);
+    if (!names) return;
+    this.#byEntity.delete(id);
+    for (const name of names) {
+      this.#slots.delete(name);
+      this.#sorted.splice(this.#place(name), 1);
+    }
+  }
+
+  /** Removes the streams of every entity for which `alive(id)` is false. */
+  keepEntities(alive: (id: number) => boolean): void {
+    for (const id of [...this.#byEntity.keys()]) if (!alive(id)) this.dropEntity(id);
+  }
+
+  /** Every stream away from its derived seed, by name, with its state; names sorted, so the record is canonical. */
   state(): Record<string, number> {
-    const keys = [...this.#streams.keys()].sort();
-    return Object.fromEntries(keys.map((key) => [key, (this.#streams.get(key) as Rng).state]));
+    const out: Record<string, number> = {};
+    for (const name of this.#sorted) {
+      const slot = this.#slots.get(name) as Slot;
+      if (slot.rng.state !== slot.start) out[name] = slot.rng.state;
+    }
+    return out;
   }
 
   /**
-   * Restores streams from a `state()` record. A stream the record lacks is dropped, so its next use starts it from
-   * its derived seed, exactly as in the run the record came from.
+   * Sets the streams `states` lists (a `state()` record) and puts every other stream back at its derived seed, so
+   * each continues exactly as in the run the record came from; with `seed`, the streams derive from it from now on.
+   * Handles stay valid.
    */
-  setState(states: Readonly<Record<string, number>>): void {
-    for (const key of [...this.#streams.keys()]) if (!(key in states)) this.#streams.delete(key);
-    for (const [key, value] of Object.entries(states)) {
-      const stream = this.#streams.get(key) ?? new Rng(0);
-      stream.state = value;
-      this.#streams.set(key, stream);
+  setState(states: Readonly<Record<string, number>>, seed = this.#seed): void {
+    if (!Object.is(seed, this.#seed)) {
+      this.#seed = seed;
+      for (const slot of this.#slots.values()) slot.start = undefined;
     }
+    for (const [name, slot] of this.#slots) {
+      if (Object.hasOwn(states, name)) continue;
+      slot.start ??= startOf(this.#seed, JSON.parse(name) as (string | number)[]);
+      slot.rng.state = slot.start;
+    }
+    let added = false;
+    for (const [name, value] of Object.entries(states)) {
+      const slot = this.#slots.get(name);
+      if (slot) slot.rng.state = value;
+      else {
+        this.#index(name, () => JSON.parse(name) as (string | number)[]);
+        const rng = new Rng(value);
+        this.#slots.set(name, { rng });
+        added = true;
+      }
+    }
+    if (added) this.#sorted = [...this.#slots.keys()].sort();
   }
+
+  /** Makes the stream `name` (from `keys`) and files it. */
+  #add(name: string, keys: readonly (string | number)[]): Slot {
+    const start = startOf(this.#seed, keys);
+    const slot: Slot = { rng: new Rng(start), start };
+    this.#slots.set(name, slot);
+    this.#sorted.splice(this.#place(name), 0, name);
+    this.#index(name, () => keys);
+    return slot;
+  }
+
+  /** Files an entity stream's name under its id. */
+  #index(name: string, keys: () => readonly (string | number)[]): void {
+    if (!name.startsWith(ENTITY)) return;
+    const id = keys()[1];
+    if (typeof id !== 'number') return;
+    const names = this.#byEntity.get(id);
+    if (names) names.push(name);
+    else this.#byEntity.set(id, [name]);
+  }
+
+  /** Where `name` sits, or would sit, in the sorted names (binary search, code-unit order). */
+  #place(name: string): number {
+    const sorted = this.#sorted;
+    let lo = 0;
+    let hi = sorted.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (sorted[mid] < name) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  }
+}
+
+/** The int32 state a stream of `keys` starts from. */
+function startOf(seed: number, keys: readonly (string | number)[]): number {
+  return derive(seed, ...keys) | 0;
 }

@@ -1,12 +1,13 @@
 /**
  * @file Unit tests for engine/sim/state.ts (T1): component kinds validated on declaration, the hash independent of
- * key and spawn-call order but not of ids, fields read in declared order, undeclared components and fields and
- * non-canonical values refused with the entity named, view settings and visual streams left out, `hashState` of
- * `state()` equal to `hash()`, `trace()` naming the entity, and `diffStates` naming the field.
+ * the order spawn is given components in, but not of ids, fields read in declared order, undeclared components and
+ * fields, missing fields and values that are not plain data refused with the entity named, the world's step rate
+ * hashed, view settings and visual streams left out, `hashState` of `state()` equal to `hash()`, `trace()` naming the
+ * entity, and `diffStates` naming the field.
  * @see engine/sim/state.ts
  */
 import { describe, expect, it } from 'vitest';
-import { Fnv64 } from '../core/hash';
+import { deserialize, Fnv64, serialize } from '../core/hash';
 import { Vector3 } from '../core/math';
 import { createLog, EngineError } from '../core/log';
 import { createRegistry } from '../core/registry';
@@ -25,7 +26,7 @@ function codeOf(fn: () => unknown): string {
   throw new Error('expected an EngineError');
 }
 
-/** A registry with `body` (two numbers, an optional note) and `team`, plus one sim and one view setting. */
+/** A registry with `body` (two numbers, a note, a direction) and `team`, plus one sim and one view setting. */
 function makeRegistry() {
   const registry = createRegistry();
   defineComponent(
@@ -35,7 +36,7 @@ function makeRegistry() {
       fields: {
         mass: { type: 'number', default: 1, description: 'Kilograms.' },
         speed: { type: 'number', default: 0, description: 'Metres per second.' },
-        note: { type: 'string', description: 'Optional.' },
+        note: { type: 'string', default: '', description: 'A note.' },
         dir: { type: 'any', default: [0, 0, 1], description: 'A direction.' },
       },
     },
@@ -87,7 +88,7 @@ describe('component kinds', () => {
 });
 
 describe('the hash', () => {
-  it('ignores key order and Map order, but not ids, values, -0 or an absent field', () => {
+  it('ignores the order spawn gets components in, but not ids, values, -0 or a missing field', () => {
     const one = makeWorld().w;
     one.spawn({ body: { speed: 2, mass: 3 }, team: { side: 1 } });
     one.spawn({ team: { side: 2 } });
@@ -107,6 +108,8 @@ describe('the hash', () => {
     expect(new Set([base, negativeZero, one.hash()]).size).toBe(3);
     one.get(1)!.body!.note = 'hi';
     expect(one.hash()).not.toBe(base);
+    delete (one.get(1)!.body as { note?: string }).note;
+    expect(() => one.hash()).toThrow(/entity 1's body lacks its field note/);
   });
 
   it("feeds numbers and component names with exactly the bytes of Fnv64.value (the fast path's assumption)", () => {
@@ -119,7 +122,8 @@ describe('the hash', () => {
       ...makeWorld(registry).w.state(),
       entities: [{ id: 1, body: { mass: 2, speed: -0, note: 'é', dir: [1, 2] } }],
     };
-    const slow = new Fnv64().value('my3dge-state/1').value('world').number(view.seed).number(view.nextId);
+    const slow = new Fnv64().value('my3dge-state/2').value('world').number(view.seed).number(view.nextId);
+    slow.number(view.hz);
     slow.value('entities').uint32(1).number(1).uint32(1).value('body');
     for (const value of [2, -0, 'é', [1, 2]]) slow.value(value);
     slow
@@ -139,7 +143,7 @@ describe('the hash', () => {
     expect(w.hash()).not.toBe(before);
   });
 
-  it('refuses undeclared components and fields and non-canonical values, naming the entity', () => {
+  it('refuses undeclared components and fields and values that are not plain data, naming the entity', () => {
     const { w } = makeWorld();
     w.spawn({ body: {} });
     const entity = w.get(1)! as unknown as Record<string, unknown> & { body: Record<string, unknown> };
@@ -148,12 +152,25 @@ describe('the hash', () => {
     delete entity.body.sped;
     entity.body.dir = new Map();
     expect(() => w.hash()).toThrow(/entity 1's body\.dir is a Map/);
-    entity.body.dir = new Vector3(0, 1, 0); // three.js math classes are canonical
-    const withVector = w.hash();
+    entity.body.dir = new Vector3(0, 1, 0); // a capture would bring it back as an array
+    expect(codeOf(() => w.hash())).toBe('SIM_NOT_DATA');
+    entity.body.dir = [0, new Float32Array(1)];
+    expect(() => w.hash()).toThrow(/entity 1's body\.dir\[1\] is a Float32Array; component fields hold plain data/);
     entity.body.dir = [0, 1, 0];
-    expect(w.hash()).toBe(withVector);
+    w.hash();
     entity.armor = { plates: 2 };
     expect(codeOf(() => w.hash())).toBe('SIM_UNKNOWN_COMPONENT');
+  });
+
+  it('covers the step rate in its world part', () => {
+    const registry = makeRegistry();
+    const log = createLog({ console: { warn: () => {}, error: () => {} } });
+    const at = (hz: number) => createWorld({ seed: 5, registry, log, hz }).trace();
+    const [slow, fast] = [at(30), at(60)];
+    expect(Object.keys(slow.parts).filter((part) => slow.parts[part] !== fast.parts[part])).toEqual(['world']);
+    expect(diffStates(createWorld({ registry, hz: 30 }).state(), createWorld({ registry }).state())).toEqual([
+      { path: 'hz', a: 30, b: 60 },
+    ]);
   });
 
   it('leaves out view settings and visual streams, and covers sim settings and sim streams', () => {
@@ -178,6 +195,9 @@ describe('the hash', () => {
     w.timers.after(1, () => {});
     const state = w.state();
     expect(hashState(state, componentTable(registry))).toBe(w.hash());
+    const sorted = deserialize(serialize(state as never)) as unknown as typeof state; // keys sorted, not declared
+    expect(Object.keys(sorted.entities[0].body as object)).toEqual(['dir', 'mass', 'note', 'speed']);
+    expect(hashState(sorted, componentTable(registry))).toBe(w.hash());
     (state.entities[0].body as { dir: number[] }).dir[0] = 9;
     expect(w.get(1)!.body!.dir).toEqual([1, 0, 0]);
     expect(state.timers).toEqual({ ticks: 0, nextId: 2, timers: [[1, 60, 0]] });
@@ -206,6 +226,7 @@ describe('trace and diff', () => {
     const view = {
       seed: 1,
       nextId: 1,
+      hz: 60,
       entities: [],
       timers: { ticks: 0, nextId: 1, timers: [] as [number, number, number][] },
       settings: { 'time.hz': 60 },

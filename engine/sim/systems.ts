@@ -12,6 +12,12 @@
  * Invariants: systems run by phase, and within a phase in the order they were added, never by name or import order.
  * Names are unique per world. `list()` returns a snapshot: a system added or removed during a step takes effect from
  * the next step. Systems run synchronously inside the step's `withSimMath`, so `Math.sin` there is the fdlibm port.
+ * The schedule is world state: a capture holds `list()` beside its data and `restore` puts it back, so systems added
+ * or removed after a capture are undone by restoring it (engine/sim/capture.ts).
+ *
+ * Gameplay state lives in components, settings, timers or RNG streams, never in closure or module variables: a
+ * system's closures are neither hashed nor captured, so a restore would leave such state behind. A system reads the
+ * world and writes components; anything it must remember between steps goes in a component field.
  *
  * @example
  * const systems = createSystems<{ log: string[] }>();
@@ -82,6 +88,8 @@ export interface Systems<W> {
   has(name: string): boolean;
   /** The systems in run order: a snapshot, unchanged by later adds and removes. */
   list(): readonly System<W>[];
+  /** Puts back a schedule `list()` returned (a capture's), dropping systems added since. */
+  restore(list: readonly System<W>[]): void;
 }
 
 /** Each phase's place in the order. */
@@ -128,5 +136,8 @@ export function createSystems<W>(): Systems<W> {
     },
     has: (name) => list.some((system) => system.name === name),
     list: () => list,
+    restore(saved) {
+      list = saved;
+    },
   };
 }

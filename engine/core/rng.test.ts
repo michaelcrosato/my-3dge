@@ -3,11 +3,13 @@
  * vectors of tests/baselines/port/core.json, every seed form included), state round trips, the helpers' ranges, their
  * pinned first outputs and draw counts (replay goldens depend on both), uniform `shuffle` and `pick` (frequencies
  * within 5 binomial σ, on fixed seeds), `derive`'s independence and its pinned values, and named streams that never
- * depend on each other.
+ * depend on each other: their key texts (JSON's for strings and plain numbers, the canonical text otherwise), the
+ * entity index, states that leave out streams at their start, and restores and reseeds that keep every handle.
  * @see engine/core/rng.ts
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { serialize } from './hash';
 import { derive, Rng, RngStreams } from './rng';
 
 const CORE = JSON.parse(readFileSync('tests/baselines/port/core.json', 'utf8')) as {
@@ -176,13 +178,62 @@ describe('RngStreams', () => {
     expect([fresh.stream('ai').next(), fresh.stream('spawn').next()]).toEqual(ahead);
   });
 
-  it('drops a stream the restored state lacks, so its next use starts from its derived seed', () => {
+  it('resets a stream the restored state lacks to its derived seed, and keeps its handle working', () => {
     const streams = new RngStreams(3);
     const saved = streams.state();
-    const first = streams.stream('late').next();
-    streams.stream('late').next();
+    const late = streams.stream('late');
+    const first = late.next();
+    late.next();
     streams.setState(saved);
     expect(streams.state()).toEqual({});
-    expect(streams.stream('late').next()).toBe(first);
+    expect(late.next()).toBe(first);
+    expect(streams.stream('late')).toBe(late);
+  });
+
+  it('leaves a stream out of state() while it is at its start: making a handle changes nothing', () => {
+    const streams = new RngStreams(5);
+    const ai = streams.stream('ai');
+    expect(streams.state()).toEqual({});
+    ai.next();
+    expect(Object.keys(streams.state())).toEqual(['["ai"]']);
+    ai.state = derive(5, 'ai');
+    expect(streams.state()).toEqual({});
+  });
+
+  it('names streams by the canonical text of their keys: JSON for strings and plain numbers, the walk otherwise', () => {
+    const streams = new RngStreams(1);
+    const keys: (string | number)[][] = [['ai'], ['entity', 7, 'anim'], ['a"b\\c', 1.5, -2e-7], ['\u00e9\u2028', 1e21]];
+    for (const key of keys) streams.stream(...key).next();
+    expect(Object.keys(streams.state())).toEqual(keys.map((key) => serialize(key)).sort());
+    streams.stream('x', -0).next();
+    expect(Object.keys(streams.state())).toContain('["x",-0]');
+    expect(streams.stream('x', 0)).not.toBe(streams.stream('x', -0));
+    expect(() => streams.stream('x', Number.NaN)).toThrow(/CORE_NOT_CANONICAL/);
+  });
+
+  it("indexes entity streams by id, so one id's streams drop alone, restored ones included", () => {
+    const streams = new RngStreams(1);
+    streams.entity(3, 'anim').next();
+    streams.stream('entity', 3).next();
+    streams.entity(4).next();
+    streams.stream('ai').next();
+    expect(streams.entity(3, 'anim')).toBe(streams.stream('entity', 3, 'anim'));
+    streams.dropEntity(3);
+    expect(Object.keys(streams.state())).toEqual(['["ai"]', '["entity",4]']);
+    const fresh = new RngStreams(1);
+    fresh.setState({ '["ai"]': 3, '["entity",5,"x"]': 7, '["entity",6]': 8 });
+    fresh.dropEntity(5);
+    expect(Object.keys(fresh.state())).toEqual(['["ai"]', '["entity",6]']);
+    fresh.keepEntities((id) => id !== 6);
+    expect(Object.keys(fresh.state())).toEqual(['["ai"]']);
+  });
+
+  it('reseeds in setState(states, seed), keeping every handle', () => {
+    const streams = new RngStreams(1);
+    const ai = streams.stream('ai');
+    ai.next();
+    streams.setState({}, 2);
+    expect(streams.seed).toBe(2);
+    expect(ai.next()).toBe(new RngStreams(2).stream('ai').next());
   });
 });

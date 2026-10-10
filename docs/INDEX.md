@@ -32,7 +32,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `COLOR_CODES`, `ColorInput`, `fromLinear`, `hex`, `hsl`, `mix`, `ramp`, `Rgb`, `shade`, `toHex`, `toHsl`, `toLinear`, `tones`, `Tones`
   - Tests: [`engine/core/color.test.ts`](../engine/core/color.test.ts)
 - [`events.ts`](../engine/core/events.ts): Events (PLAN.md WP 1.2): a typed emitter in mitt's and Node's shape, `on`, `once`, `off` and `emit`, plus scoped listeners that leave together (`scope.dispose()`), each listener isolated so its failure is recorded, and a trace ring of the latest emits for `trace()` and debugging.
-  - Exports: `createEvents`, `EVENT_CODES`, `EventMap`, `Events`, `EventsOptions`, `Listener`, `Scope`, `TraceRecord`
+  - Exports: `createEvents`, `EVENT_CODES`, `EventMap`, `Events`, `EventsOptions`, `EventsSnapshot`, `Listener`, `RegistrationInfo`, `Scope`, `TraceRecord`
   - Tests: [`engine/core/events.test.ts`](../engine/core/events.test.ts)
 - [`hash.ts`](../engine/core/hash.ts): The state hash (PLAN.md §6.5, I-05): 64-bit FNV-1a over the float64 bits of numbers, and the canonical form that turns structured state into one exact byte stream and one exact text.
   - Exports: `Canonical`, `deserialize`, `Fnv64`, `HASH_CODES`, `hashNumbers`, `hashValue`, `MAX_DEPTH`, `mix32`, `serialize`
@@ -82,9 +82,11 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/sim
 
-- [`capture.ts`](../engine/sim/capture.ts): Capture and restore (PLAN.md §6.5 item 7, WP 1.4; doctrine: Reproducible): `capture()` copies the whole sim at a step boundary, entities, components, timers, settings except `view` ones, the seed and every sim RNG state, plus the physics hook's part (Rapier's snapshot, WP 3.1), and `restore()` puts it back so the next steps continue exactly like the uninterrupted run.
-  - Exports: `CAPTURE_CODES`, `CAPTURE_FORMAT`, `CaptureSource`, `cloneData`, `makeCapture`, `readCapture`, `Restoration`, `RestoreTarget`, `WorldCapture`
+- [`capture.ts`](../engine/sim/capture.ts): Capture and restore (PLAN.md §6.5 item 7, WP 1.4; doctrine: Reproducible): `capture()` copies the whole sim at a step boundary, entities, components, timers, settings except `view` ones, the seed, the step rate and every sim RNG state, plus the physics hook's part (Rapier's snapshot, WP 3.1), and `restore()` puts it back so the next steps continue exactly like the uninterrupted run.
+  - Exports: `CAPTURE_CODES`, `CAPTURE_FORMAT`, `CaptureSource`, `cloneData`, `makeCapture`, `readCapture`, `Restoration`, `RestoreTarget`, `ScheduleData`, `scheduleOf`, `WorldCapture`
   - Tests: [`engine/sim/capture.test.ts`](../engine/sim/capture.test.ts)
+- [`entities.ts`](../engine/sim/entities.ts): The shape of an entity's data (PLAN.md §6.5 items 4, 6 and 7, WP 1.4; doctrine: Reproducible): the rules the hash (engine/sim/state.ts), captures and restores (engine/sim/capture.ts) and the world (engine/sim/world.ts) share, so a restored entity is the live one, field for field and in the same order (ADR-0006 amendment 3).
+  - Exports: `capturable`, `componentNames`, `eachField`, `ENTITY_CODES`, `LiveEntity`, `makeEntity`, `notData`, `NotData`, `placeComponent`
 - [`replay.ts`](../engine/sim/replay.ts): Replays (PLAN.md §8.4, §6.5 items 3 and 6–9, WP 1.5; doctrine: Reproducible): the readable replay format and its checks, the player that `x replay` and tests/pages/replay.html run, and the comparison of runs that `x replay` judges and bisects with.
   - Exports: `CHECKPOINT_STEPS`, `checkpointsOf`, `checkReplay`, `firstDifference`, `InputChange`, `InputEntry`, `judgeRuns`, `Parting`, `partingOf`, `Playback`, `PlayOptions`, `playReplay`, `Replay`, `REPLAY_CODES`, `REPLAY_FORMAT`, `REPLAY_KEYS`, `StepView`, `Verdict`
   - Tests: [`engine/sim/replay.test.ts`](../engine/sim/replay.test.ts)
@@ -97,8 +99,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`systems.ts`](../engine/sim/systems.ts): The step's systems (PLAN.md §6.4, Q13; doctrine: Common ground): plain functions `(w, intents) => void` that the world runs once per sim step in a fixed, documented order.
   - Exports: `createSystems`, `Intents`, `Phase`, `phaseIndex`, `PHASES`, `STEP_ORDER`, `System`, `SYSTEM_CODES`, `SystemFn`, `Systems`, `SystemSpec`
   - Tests: [`engine/sim/systems.test.ts`](../engine/sim/systems.test.ts)
-- [`world.ts`](../engine/sim/world.ts): The sim world (PLAN.md §6.4, §6.5, Q13, WP 1.4, I-03; doctrines: Reproducible, Common ground): entities as plain objects with monotonic ids, components as plain-object properties of declared kinds (`e.position`), systems as functions in a fixed order (engine/sim/systems.ts), spawn, despawn and event queues that apply at step boundaries, named seeded RNG streams, sim-time timers, and the state, hash, trace, capture and restore of all of it (engine/sim/state.ts, engine/sim/capture.ts).
-  - Exports: `createWorld`, `SimRng`, `World`, `WORLD_CODES`, `WorldOptions`, `WorldTimers`
+- [`world.ts`](../engine/sim/world.ts): The sim world (PLAN.md §6.4, §6.5, Q13, WP 1.4, I-03; doctrines: Reproducible, Common ground): entities as plain objects with monotonic ids, components as plain-data properties of declared kinds (`e.position`), systems as functions in a fixed order (engine/sim/systems.ts), spawn, despawn and event queues that apply at step boundaries, named seeded RNG streams, sim-time timers, and the state, hash, trace, capture and restore of all of it (engine/sim/state.ts, engine/sim/capture.ts).
+  - Exports: `createWorld`, `SimRng`, `World`, `WORLD_CODES`, `WorldEvents`, `WorldOptions`, `WorldTimers`
   - Tests: [`engine/sim/world.test.ts`](../engine/sim/world.test.ts)
 
 ## labs/hello

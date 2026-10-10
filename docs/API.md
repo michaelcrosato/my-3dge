@@ -39,7 +39,9 @@ For the agents who maintain the engine.
 - `EventMap` (type): Event type → payload type.
 - `Events` (interface): A typed emitter: `on`, `once`, `off`, `emit`, scopes and the trace.
 - `EventsOptions` (interface): How an emitter is made: the log its failures go to (the shared one) and how many emits it traces (256).
+- `EventsSnapshot` (interface): The listeners and scopes of an emitter at one moment: `restore` puts them back (see the file comment).
 - `Listener` (type): A listener of one event type.
+- `RegistrationInfo` (interface): One registration as a snapshot lists it: its event type, whether it runs once, and its scope's label.
 - `Scope` (interface): Listeners that leave together: `dispose()` removes every one added through this scope or its children.
 - `TraceRecord` (interface): One traced emit.
 
@@ -132,7 +134,7 @@ For the agents who maintain the engine.
 
 - `derive` (function): A seed derived from `seed` and `keys` (strings or numbers), as an unsigned 32-bit integer: the 64-bit FNV-1a hash of `[seed, …keys]` in canonical form, folded and mixed.
 - `Rng` (class): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
-- `RngStreams` (class): Named streams from one seed (the scene's): `stream('ai')`, `stream('entity', 7, 'anim')`.
+- `RngStreams` (class): Named streams from one seed (the scene's): `stream('ai')`, `entity(7, 'anim')`.
 
 ### [`engine/core/schema.ts`](../engine/core/schema.ts)
 
@@ -242,11 +244,25 @@ For the agents who maintain the engine.
 - `CAPTURE_FORMAT` (const): The capture format tag; a change to what captures hold changes it.
 - `CaptureSource` (interface): What a capture is made from: the world's parts, read between steps.
 - `cloneData` (function): A deep copy of plain data: arrays, plain objects (undefined values left out), typed arrays and values with `clone()` (three.js's math classes); anything else throws `CORE_NOT_CANONICAL`.
-- `makeCapture` (function): Makes a capture from a world's parts: copies of everything, the callbacks held aside.
+- `makeCapture` (function): Makes a capture from a world's parts: copies of everything, the code held aside.
 - `readCapture` (function): Checks `capture` for the world `target` and returns a copy ready to apply.
-- `Restoration` (interface): A checked capture, copied, ready for the world to apply.
-- `RestoreTarget` (interface): The world a capture is read for: itself, its component kinds, whether it has physics, and its step rate.
-- `WorldCapture` (interface): The whole sim at a step boundary, as plain data (callbacks held aside; see the file comment).
+- `Restoration` (interface): A checked capture, copied, ready for the world to apply; `systems` and `listeners` only for its own world.
+- `RestoreTarget` (interface): The world a capture is read for: itself, its component kinds, physics, step rate, setting paths and schedule.
+- `ScheduleData` (interface): The world's code as data: systems as `phase:name` in run order, listeners as `type` or `type (once)`.
+- `scheduleOf` (function): The schedule of `systems` and a listener snapshot, as data.
+- `WorldCapture` (interface): The whole sim at a step boundary, as plain data (code held aside; see the file comment).
+
+### [`engine/sim/entities.ts`](../engine/sim/entities.ts)
+
+- `capturable` (function): The entities copied for a capture: plain data only (`SIM_NOT_DATA`) and no object in two places (`SIM_SHARED_DATA`): a capture copies each place separately, so a shared object would come back as two.
+- `componentNames` (function): The component names of an entity, in name order, after checking each is a declared kind (`SIM_UNKNOWN_COMPONENT`) holding a plain object (`SIM_NOT_DATA`).
+- `eachField` (function): Calls `visit(key, value)` for each field of the entity's component `name`, in declared order, after checking it holds exactly the declared `fields`, each defined (`SIM_UNDECLARED_FIELD`, `SIM_BAD_COMPONENT`); a `live` component must also hold them in declared order, while a stored one is read in that order whatever its key order.
+- `ENTITY_CODES` (const): The codes this module raises, with their fixes.
+- `LiveEntity` (type): A live entity: its id fixed, its components writable.
+- `makeEntity` (function): A live entity with `id` (read-only) and the components of `data` (all but its id), in `data`'s order.
+- `notData` (function): Checks that `value` is plain data (null, booleans, numbers, strings, arrays and plain objects all the way down) and says where it is not; the path is built only for a refusal.
+- `NotData` (interface): Where a value stops being plain data, and what is there; undefined when it is all plain data.
+- `placeComponent` (function): Puts `component` on a live `entity` as `name`, keeping components in name order (later ones are put back after).
 
 ### [`engine/sim/replay.ts`](../engine/sim/replay.ts)
 
@@ -287,7 +303,7 @@ For the agents who maintain the engine.
 ### [`engine/sim/state.ts`](../engine/sim/state.ts)
 
 - `AnyComponents` (type): The components of an untyped world: any declared kind, by name.
-- `ComponentData` (type): One component's data: its fields by name, plain data (numbers, strings, booleans, arrays, plain objects).
+- `ComponentData` (type): One component's data: its fields by name, plain data (numbers, strings, booleans, null, arrays, plain objects).
 - `ComponentKind` (interface): A component kind as `defineComponent` stores it in the registry.
 - `ComponentOf` (type): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
 - `componentTable` (function): The component table of `registry` (the shared one by default).
@@ -296,14 +312,14 @@ For the agents who maintain the engine.
 - `diffStates` (function): Where two states part, field by field, at most `limit` differences: entities are matched by id (`entities.7` for an entity on one side only, `entities.7.position.x` for a field), the rest by key and index.
 - `Entity` (type): An entity: its id and the components it holds, by kind name (`e.position`).
 - `EntityData` (interface): An entity as plain data: its id and its components by kind name.
-- `hashState` (function): The digest of a state, live or stored, as 16 hex digits: what `world.hash()` returns.
+- `hashState` (function): The digest of a state as 16 hex digits: what `world.hash()` returns.
 - `PhysicsHook` (interface): The physics part of the world's state, hashed and captured with the rest (WP 3.1 plugs Rapier in; §6.5 items 5–7).
 - `SpawnSpec` (type): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `STATE_CODES` (const): The codes this module raises, with their fixes.
 - `STATE_FORMAT` (const): The hash format; changing what the hash reads changes this tag, and with it every golden.
 - `StateDifference` (interface): Where two states part: the path (`entities.7.position.x`) and each side's value (undefined when absent).
 - `StateView` (interface): What the hash reads, live or stored: the ids, entities (in id order), timers, settings, RNG states and the physics hook's state.
-- `traceState` (function): The per-part and per-entity digests of a state (the `hash` field is `hashState`'s).
+- `traceState` (function): The per-part and per-entity digests of a state (the `hash` field is `hashState`'s; `live` as there).
 - `With` (type): An entity known to hold the components `K` (what `query` returns).
 - `WorldState` (interface): The sim as plain data: what `world.state()` returns and the hash covers.
 - `WorldTrace` (interface): Per-part and per-entity digests, so a mismatch names the part and the entity (PLAN.md §6.5 item 6).
@@ -328,6 +344,7 @@ For the agents who maintain the engine.
 - `SimRng` (interface): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
 - `World` (interface): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
 - `WORLD_CODES` (const): The codes this module raises, with their fixes.
+- `WorldEvents` (type): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
 - `WorldOptions` (interface): How a world is made.
 - `WorldTimers` (type): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
 

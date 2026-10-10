@@ -4,19 +4,23 @@
  * `state()` returns, the one 64-bit FNV-1a hash over everything a capture holds (`hash()`), per-entity digests
  * (`trace()`), and `diffStates`, which names the fields where two states part.
  *
- * What the hash covers, after the format tag (`STATE_FORMAT`), in this order, each part tagged: the seed and the next
- * entity id; every entity in id order, its components sorted by name, each component's fields in the order its kind
- * declares them (an absent field feeds its own marker); the timers' tick count and timers (engine/core/timers.ts
+ * What the hash covers, after the format tag (`STATE_FORMAT`), in this order, each part tagged: the seed, the next
+ * entity id and the world's step rate (hz); every entity in id order, its components in name order, each
+ * component's fields in the order its kind declares them; the timers' tick count and timers (engine/core/timers.ts
  * `state()`); the settings except `view` ones (`settings.values({ view: false })`); the state of every sim RNG stream
- * (`rng()`, `rng.entity()`); and the physics hook's state (WP 3.1: every body's translation, rotation and velocities
- * in handle order, never Rapier's snapshot bytes). Visual streams (`fxRng`), event listeners, systems and view
- * settings are never hashed.
+ * away from its derived seed (`rng()`, `rng.entity()`); and the physics hook's state (WP 3.1: every body's
+ * translation, rotation and velocities in handle order, never Rapier's snapshot bytes). Visual streams (`fxRng`),
+ * event listeners, systems and view settings are never hashed (captures hold listeners and systems beside the data).
  *
- * Invariants: the hash reads no `Map` or `Set` iteration order; entities, components, settings and RNG keys come in
+ * Components are plain data (ADR-0006 amendment 3; the rules in engine/sim/entities.ts): no class instance or typed
+ * array in a field (`SIM_NOT_DATA`, a declared default included), and every field has a default (or is required), so
+ * every entity holding a kind holds all its fields, in declared order; the hash checks that shape as it reads.
+ *
+ * Invariants: the hash reads no `Map` or `Set` iteration order; entities, components, settings and RNG names come in
  * sorted order, and fields in declared order. Nothing is skipped silently: a component nobody declared
- * (`SIM_UNKNOWN_COMPONENT`), a field its kind does not declare (`SIM_UNDECLARED_FIELD`) or a value the canonical form
- * cannot hold (`CORE_NOT_CANONICAL`, naming the entity and field) throws. A component kind's name is the entity's
- * property (`e.position`), a lower-case word; its fields are schema.ts fields holding data, never hooks.
+ * (`SIM_UNKNOWN_COMPONENT`), a field its kind does not declare (`SIM_UNDECLARED_FIELD`) or a value that is not plain
+ * data (`SIM_NOT_DATA`, naming the entity and field) throws. A component kind's name is the entity's property
+ * (`e.position`), a lower-case word; its fields are schema.ts fields holding data, never hooks.
  * `hashState(w.state())` equals `w.hash()`.
  *
  * @example
@@ -25,7 +29,7 @@
  * defineComponent('health', { description: 'Hit points.', fields: { hp: { type: 'number', default: 10, description: 'Left.' } } }, reg);
  * const table = componentTable(reg);
  * table.make('health', { hp: 7 }, 'a test'); // { hp: 7 }
- * const view = { seed: 1, nextId: 2, entities: [{ id: 1, health: { hp: 7 } }], timers: { ticks: 0, nextId: 1, timers: [] }, settings: {}, rng: {} };
+ * const view = { seed: 1, nextId: 2, hz: 60, entities: [{ id: 1, health: { hp: 7 } }], timers: { ticks: 0, nextId: 1, timers: [] }, settings: {}, rng: {} };
  * hashState(view, table) === hashState(structuredClone(view), table); // true
  * diffStates(view, { ...view, nextId: 3 }); // [{ path: 'nextId', a: 2, b: 3 }]
  * @see engine/sim/state.test.ts
@@ -36,6 +40,7 @@ import { registry as sharedRegistry, type Registry } from '../core/registry';
 import { checkField, isPlainObject, parse, show, type EntryOf, type Schema } from '../core/schema';
 import type { SettingValue } from '../core/settings';
 import type { TimersState } from '../core/timers';
+import { componentNames, eachField, notData } from './entities';
 
 /** The codes this module raises, with their fixes. */
 export const STATE_CODES = defineCodes('sim', {
@@ -50,7 +55,7 @@ export const STATE_CODES = defineCodes('sim', {
   },
 });
 
-/** One component's data: its fields by name, plain data (numbers, strings, booleans, arrays, plain objects). */
+/** One component's data: its fields by name, plain data (numbers, strings, booleans, null, arrays, plain objects). */
 export type ComponentData = Record<string, unknown>;
 
 /** An entity as plain data: its id and its components by kind name. */
@@ -101,6 +106,8 @@ export type ComponentOf<S extends Schema> = { -readonly [K in keyof EntryOf<S>]:
 export interface StateView {
   readonly seed: number;
   readonly nextId: number;
+  /** The world's step rate, fixed when it is made. */
+  readonly hz: number;
   readonly entities: readonly EntityData[];
   readonly timers: TimersState;
   readonly settings: Readonly<Record<string, SettingValue>>;
@@ -119,7 +126,7 @@ export interface WorldTrace {
   tick: number;
   /** The same digest as `hash()`. */
   hash: string;
-  /** One digest per part: `world` (seed and next id), `entities`, `timers`, `settings`, `rng`, `physics`. */
+  /** One digest per part: `world` (seed, next id, hz), `entities`, `timers`, `settings`, `rng`, `physics`. */
   parts: Record<string, string>;
   /** One digest per entity, by id. */
   entities: Record<number, string>;
@@ -133,9 +140,7 @@ export interface StateDifference {
 }
 
 /** The hash format; changing what the hash reads changes this tag, and with it every golden. */
-export const STATE_FORMAT = 'my3dge-state/1';
-/** The byte fed for a declared field an entity's component leaves absent (the canonical tags are 0–6). */
-const ABSENT = 0xff;
+export const STATE_FORMAT = 'my3dge-state/2';
 /** Code-unit order, so sorting never depends on the locale. */
 const byText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 /** A component kind's name: the entity property that holds it. */
@@ -161,6 +166,19 @@ function kindProblems(name: string, fields: unknown): string[] {
   for (const [key, field] of Object.entries(fields)) {
     problems.push(...checkField(field, key).map((problem) => problem.message));
     hooks(field, key);
+    if (!isPlainObject(field)) continue;
+    if (field.default === undefined && field.required !== true) {
+      problems.push(
+        `${key} needs a default (or required: true): every entity holding a component holds all its fields, in declared order`,
+      );
+    }
+    const bad = field.type === 'function' ? undefined : notData(field.default);
+    if (bad) {
+      const at = bad.path ? ` at ${bad.path}` : '';
+      problems.push(
+        `${key}'s default holds ${bad.what}${at}: component fields hold plain data (numbers, strings, booleans, null, arrays, plain objects); store numbers or a list and build the object in the system that uses it`,
+      );
+    }
   }
   return problems;
 }
@@ -201,7 +219,10 @@ export function defineComponent<const S extends Schema>(
 export interface ComponentTable {
   /** The declared field names of a kind, in order; throws `SIM_UNKNOWN_COMPONENT`. */
   fields(name: string): readonly string[];
-  /** A new component: `values` checked against the kind's schema, defaults filled; throws `CORE_BAD_SPEC`. */
+  /**
+   * A new component: `values` checked against the kind's schema and copied, defaults filled, fields in declared
+   * order; throws `CORE_BAD_SPEC`, or `SIM_NOT_DATA` for a value that is not plain data.
+   */
   make(name: string, values: unknown, where: string): ComponentData;
 }
 
@@ -223,15 +244,17 @@ export function componentTable(registry: Registry = sharedRegistry): ComponentTa
   };
   return {
     fields: (name) => kindOf(name).names,
-    make: (name, values, where) => parse(kindOf(name).schema, values, `${where}: component ${show(name)}`),
+    make(name, values, where) {
+      const kind = kindOf(name);
+      const label = `${where}: component ${show(name)}`;
+      const made = parse(kind.schema, values, label) as ComponentData;
+      for (const key of kind.names) {
+        const bad = notData(made[key]);
+        if (bad) throw codeError('SIM_NOT_DATA', { path: `${label}: ${key}${bad.path}`, what: bad.what });
+      }
+      return made;
+    },
   };
-}
-
-/** What a value is, for a refusal: its constructor's name, or its type. */
-function whatOf(value: unknown): string {
-  if (typeof value !== 'object' || value === null) return `a ${typeof value}`;
-  if (Array.isArray(value) || isPlainObject(value)) return 'data holding a value the canonical form cannot hold';
-  return `a ${(value as object).constructor?.name ?? 'object without a prototype'}`;
 }
 
 /** The canonical tag `Fnv64.value` feeds before a number (engine/core/hash.ts), for the number fast path. */
@@ -253,55 +276,36 @@ function feedName(h: Fnv64, name: string): void {
   h.bytes(record);
 }
 
-/** Feeds one entity: its id, then its components sorted by name, each with its declared fields in order. */
-function feedEntity(h: Fnv64, entity: EntityData, table: ComponentTable): void {
-  const names: string[] = [];
-  for (const key in entity) if (key !== 'id' && entity[key] !== undefined) names.push(key);
-  names.sort(byText);
+/** Feeds one entity: its id, then its components in name order, each with its declared fields in order. */
+function feedEntity(h: Fnv64, entity: EntityData, table: ComponentTable, live: boolean): void {
+  const names = componentNames(entity, table, live);
   h.number(entity.id).uint32(names.length);
   for (const name of names) {
-    const fields = table.fields(name);
-    const component = entity[name];
-    if (!isPlainObject(component)) {
-      throw codeError('CORE_NOT_CANONICAL', { path: `entity ${entity.id}'s ${name}`, what: whatOf(component) });
-    }
     feedName(h, name);
-    let present = 0;
-    for (const field of fields) {
-      const value = component[field];
-      if (value === undefined) {
-        h.byte(ABSENT);
-        continue;
-      }
-      present++;
-      if (typeof value === 'number') {
-        h.byte(NUMBER_TAG).number(value); // the bytes h.value(value) feeds, without its walk
-        continue;
-      }
-      try {
+    eachField(
+      entity,
+      name,
+      table.fields(name),
+      (key, value) => {
+        if (typeof value === 'number') {
+          h.byte(NUMBER_TAG).number(value); // the bytes h.value(value) feeds, without its walk
+          return;
+        }
+        const bad = notData(value);
+        if (bad)
+          throw codeError('SIM_NOT_DATA', { path: `entity ${entity.id}'s ${name}.${key}${bad.path}`, what: bad.what });
         h.value(value as Canonical);
-      } catch (error) {
-        throw codeError(
-          'CORE_NOT_CANONICAL',
-          { path: `entity ${entity.id}'s ${name}.${field}`, what: whatOf(value) },
-          error,
-        );
-      }
-    }
-    let held = 0;
-    for (const key in component) if (component[key] !== undefined) held++;
-    if (held !== present) {
-      const field = Object.keys(component).find((key) => component[key] !== undefined && !fields.includes(key)) ?? '';
-      throw codeError('SIM_UNDECLARED_FIELD', { id: entity.id, name, field, suggestion: didYouMean(field, fields) });
-    }
+      },
+      live,
+    );
   }
 }
 
 /** Feeds each part of `view`, tagged, into `h` (or into one hasher per part through `part`). */
-function feedParts(view: StateView, table: ComponentTable, part: (name: string) => Fnv64): void {
-  part('world').value('world').number(view.seed).number(view.nextId);
+function feedParts(view: StateView, table: ComponentTable, live: boolean, part: (name: string) => Fnv64): void {
+  part('world').value('world').number(view.seed).number(view.nextId).number(view.hz);
   const entities = part('entities').value('entities').uint32(view.entities.length);
-  for (const entity of view.entities) feedEntity(entities, entity, table);
+  for (const entity of view.entities) feedEntity(entities, entity, table, live);
   part('timers')
     .value('timers')
     .value(view.timers as unknown as Canonical);
@@ -312,25 +316,29 @@ function feedParts(view: StateView, table: ComponentTable, part: (name: string) 
   if (view.physics !== undefined) part('physics').value('physics').value(view.physics);
 }
 
-/** The digest of a state, live or stored, as 16 hex digits: what `world.hash()` returns. */
-export function hashState(view: StateView, table: ComponentTable = componentTable()): string {
+/**
+ * The digest of a state as 16 hex digits: what `world.hash()` returns. A stored view (`state()`, text) is read in
+ * name and declared order whatever its key order; `live` (the world's own entities) also checks that order
+ * (engine/sim/entities.ts), so a live entity a restore would rebuild differently is refused, not hashed.
+ */
+export function hashState(view: StateView, table: ComponentTable = componentTable(), live = false): string {
   const h = new Fnv64().value(STATE_FORMAT);
-  feedParts(view, table, () => h);
+  feedParts(view, table, live, () => h);
   return h.hex();
 }
 
-/** The per-part and per-entity digests of a state (the `hash` field is `hashState`'s). */
-export function traceState(view: StateView, tick: number, table: ComponentTable = componentTable()): WorldTrace {
+/** The per-part and per-entity digests of a state (the `hash` field is `hashState`'s; `live` as there). */
+export function traceState(view: StateView, tick: number, table = componentTable(), live = false): WorldTrace {
   const parts: Record<string, Fnv64> = {};
-  feedParts(view, table, (name) => (parts[name] ??= new Fnv64()));
+  feedParts(view, table, live, (name) => (parts[name] ??= new Fnv64()));
   const entities: Record<number, string> = {};
   for (const entity of view.entities) {
     const h = new Fnv64();
-    feedEntity(h, entity, table);
+    feedEntity(h, entity, table, live);
     entities[entity.id] = h.hex();
   }
   const digests = Object.fromEntries(Object.entries(parts).map(([name, h]) => [name, h.hex()]));
-  return { tick, hash: hashState(view, table), parts: digests, entities };
+  return { tick, hash: hashState(view, table, live), parts: digests, entities };
 }
 
 /** `path` joined with a key: `.name`, `[2]`, or `["time.hz"]` for a key that is not a plain name. */
@@ -365,7 +373,7 @@ function diffValues(a: unknown, b: unknown, path: string, out: StateDifference[]
  */
 export function diffStates(a: StateView, b: StateView, limit = 10): StateDifference[] {
   const out: StateDifference[] = [];
-  for (const key of ['seed', 'nextId'] as const) diffValues(a[key], b[key], key, out, limit);
+  for (const key of ['seed', 'nextId', 'hz'] as const) diffValues(a[key], b[key], key, out, limit);
   const byId = (list: readonly EntityData[]) => new Map(list.map((entity) => [entity.id, entity]));
   const left = byId(a.entities);
   const right = byId(b.entities);

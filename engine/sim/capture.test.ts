@@ -2,10 +2,11 @@
  * @file Unit tests for engine/sim/capture.ts and the world's capture, restore and hash (T1), on a demo world whose
  * systems steer with `Math.sin`, `Math.cos` and `Math.pow`, spawn and despawn from seeded streams, and run timers and
  * events: every captured field changes the hash when changed alone (components, timers, settings except view ones,
- * RNG states, seed, next id); capture → restore → steps equal the uninterrupted steps, hash by hash; a capture without
- * timers survives `serialize` into a fresh world; callbacks never travel (`SIM_NO_CALLBACKS`); malformed captures are
- * refused before anything changes; the physics hook is hashed, captured and restored; the golden hash holds; and
- * `cloneData` copies plain data, typed arrays and math classes, refusing the rest.
+ * RNG states, seed, next id), and a changed step rate or schedule is refused; capture → restore → steps equal the
+ * uninterrupted steps, hash by hash; a capture without timers survives `serialize` into a fresh world; callbacks
+ * never travel (`SIM_NO_CALLBACKS`); malformed captures are refused before anything changes; the physics hook is
+ * hashed, captured and restored; the golden hash holds; and `cloneData` copies plain data, typed arrays and math
+ * classes, refusing the rest. engine/sim/restore.test.ts covers listeners, systems and the checks against the world.
  * @see engine/sim/capture.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -166,16 +167,26 @@ describe('the hash covers every captured field', () => {
     for (const { parent, key, path } of tested) {
       const original = parent[key];
       parent[key] = changed(original);
-      if (path === '.settings.time.hz')
-        refused.push(codeOf(() => w.restore(capture))); // the step rate is fixed
-      else w.restore(capture);
-      if (w.hash() === base && path !== '.settings.time.hz') unchanged.push(path);
+      if (path === '.hz' || path.startsWith('.schedule.')) {
+        expect(codeOf(() => w.restore(capture))).toBe('SIM_BAD_CAPTURE'); // the world's own rate and code
+        refused.push(path);
+      } else {
+        w.restore(capture);
+        if (w.hash() === base) unchanged.push(path);
+      }
       parent[key] = original;
     }
     expect(unchanged).toEqual([]);
-    expect(refused).toEqual(['SIM_BAD_CAPTURE']);
+    expect(refused).toEqual([
+      '.hz',
+      '.schedule.systems[0]',
+      '.schedule.systems[1]',
+      '.schedule.systems[2]',
+      '.schedule.listeners[0]',
+    ]);
+    expect(capture.schedule).toEqual({ systems: ['ai:steer', 'rules:age', 'rules:spawner'], listeners: ['pulse'] });
     const parts = new Set(tested.map((leaf) => leaf.path.split(/[.[]/)[1]));
-    expect([...parts].sort()).toEqual(['entities', 'nextId', 'rng', 'seed', 'settings', 'timers']);
+    expect([...parts].sort()).toEqual(['entities', 'hz', 'nextId', 'rng', 'schedule', 'seed', 'settings', 'timers']);
     expect(tested.length).toBeGreaterThan(100);
     w.restore(capture);
     expect(w.hash()).toBe(base);
@@ -213,7 +224,7 @@ describe('the hash covers every captured field', () => {
   it('holds its golden value and is the same on every run', () => {
     const runs = [demo().w, demo().w].map((w) => hashes(w, 300).at(-1));
     expect(runs[0]).toBe(runs[1]);
-    expect(runs[0]).toBe('00e4f01b787914db');
+    expect(runs[0]).toBe('fdae537c20bfa5c0'); // my3dge-state/2: the world part holds hz (the state matches /1's 00e4f01b787914db)
   });
 });
 

@@ -1,7 +1,7 @@
 /**
  * @file Unit tests for engine/core/events.ts (T1): listeners in order, `off`, `once` and the remover, changes during an
- * emit, a throwing listener isolated and recorded in the log's errors, scopes and child scopes disposed together, and
- * the trace ring.
+ * emit, a throwing listener isolated and recorded in the log's errors, scopes and child scopes disposed together, the
+ * trace ring, and snapshots that put back listeners and scopes exactly (the world's captures hold one).
  * @see engine/core/events.ts
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -152,6 +152,63 @@ describe('scopes', () => {
     );
     level.dispose();
     expect(() => level.scope()).toThrow(/CORE_SCOPE_DISPOSED/);
+  });
+});
+
+describe('snapshot and restore', () => {
+  it('put back used-up, removed and added listeners, in their order', () => {
+    const events = createEvents<Demo>();
+    const seen: string[] = [];
+    const a = () => seen.push('a');
+    events.on('hit', a);
+    events.once('hit', () => seen.push('once'));
+    const removeC = events.on('hit', () => seen.push('c'));
+    const snapshot = events.snapshot();
+    expect(snapshot.registrations).toEqual([
+      { type: 'hit', once: false, scope: undefined },
+      { type: 'hit', once: true, scope: undefined },
+      { type: 'hit', once: false, scope: undefined },
+    ]);
+    events.emit('hit', { damage: 0 });
+    events.off('hit', a);
+    removeC();
+    events.on('hit', () => seen.push('late'));
+    events.on('end', () => seen.push('late end'));
+    events.restore(snapshot);
+    seen.length = 0;
+    events.emit('hit', { damage: 0 });
+    events.emit('end', 'x');
+    expect(seen).toEqual(['a', 'once', 'c']);
+    removeC();
+    events.restore(snapshot); // a snapshot restores any number of times
+    seen.length = 0;
+    events.emit('hit', { damage: 0 });
+    expect(seen).toEqual(['a', 'once', 'c']);
+  });
+
+  it('put back scopes: disposed ones reopen with their listeners and children, later ones are disposed', () => {
+    const events = createEvents<Demo>();
+    const seen: string[] = [];
+    const level = events.scope('level');
+    level.on('hit', () => seen.push('level'));
+    const room = level.scope('room');
+    room.on('hit', () => seen.push('room'));
+    const snapshot = events.snapshot();
+    expect(snapshot.registrations.map((item) => item.scope)).toEqual(['level', 'room']);
+    level.dispose();
+    const late = events.scope('late');
+    events.restore(snapshot);
+    expect([level.disposed, room.disposed, late.disposed]).toEqual([false, false, true]);
+    events.emit('hit', { damage: 0 });
+    level.dispose();
+    events.emit('hit', { damage: 0 });
+    expect(seen).toEqual(['level', 'room']);
+    expect(room.disposed).toBe(true);
+  });
+
+  it('refuse a snapshot of another emitter', () => {
+    const snapshot = createEvents<Demo>().snapshot();
+    expect(() => createEvents<Demo>().restore(snapshot)).toThrow(/CORE_BAD_SNAPSHOT/);
   });
 });
 
