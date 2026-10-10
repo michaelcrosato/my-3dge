@@ -10,9 +10,10 @@ in [API.md](API.md); error and advice codes are in [ERRORS.md](ERRORS.md).
 
 Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describe <kind>` lists its fields and ids.
 
-| Kind      | What it is                                                                                                   | Declared in                                             |
-| --------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
-| `setting` | The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set. | [`engine/core/settings.ts`](../engine/core/settings.ts) |
+| Kind        | What it is                                                                                                                                                               | Declared in                                             |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `component` | Component kinds: the plain-object data entities hold (e.position), with their fields. The canonical state and the hash read every component's declared fields, in order. | [`engine/sim/state.ts`](../engine/sim/state.ts)         |
+| `setting`   | The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set.                                                             | [`engine/core/settings.ts`](../engine/core/settings.ts) |
 
 ## The root
 
