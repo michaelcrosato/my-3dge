@@ -417,13 +417,37 @@ Raised by `parseCameraCode` and the camera factories (engine/gfx/cameras/) for a
 
 ## input
 
+### INPUT_BAD_BINDINGS
+
+- Message: `saved bindings {key}: {problems}`
+- Fix: the rest loaded; rebind those actions, or reset() them to the map, which saves a clean file
+- Registered in: [`engine/input/bindings.ts` line 40](../engine/input/bindings.ts)
+
+Advice from `createBindings` (engine/input/bindings.ts) when saved bindings name an unknown action, a bad, reserved or taken code, or are not a bindings file: those entries are skipped, the others load.
+
 ### INPUT_BAD_INTENTS
 
 - Message: `{where}: {problems}`
 - Fix: give intents as { move: [x, z], cam, aim: [x, y, z], look: [yaw, pitch], b: [held buttons], p: [pressed buttons] } with finite numbers, plus custom keys namespaced "game:key" holding plain data (engine/input/intents.ts); null or a missing key means not given
-- Registered in: [`engine/input/intents.ts` line 33](../engine/input/intents.ts)
+- Registered in: [`engine/input/intents.ts` line 44](../engine/input/intents.ts)
 
 Raised by `normalizeIntents`, `applyIntents` and the replay checks (engine/input/intents.ts, engine/sim/replay.ts) for an unknown key (named with the closest), a non-finite or misshapen number, a button that is not a non-empty string, or a custom value that is not plain data. Every problem is listed at once.
+
+### INPUT_BAD_SCRIPT
+
+- Message: `{where}: {problems}`
+- Fix: write one line per stretch: "<count> key=value …" (a whole count from 1, keys as listed, "#" starts a comment), e.g. "30 move=0,1 hold=sprint tap=jump"
+- Registered in: [`engine/input/script.ts` line 23](../engine/input/script.ts)
+
+Raised by the input scripts (engine/input/script.ts): the scripted gamepad of the tests and `__engine.input.play`. Every bad line is named with its problem.
+
+### INPUT_BAD_VIRTUAL
+
+- Message: `{what}: {problem}`
+- Fix: press(action) and hold(action) take an action's name; axis takes 'move' or 'look' [x, y], 'aim' [x, y, z], 'cam' (rad) or a 'game:key' with plain data, and null to let go
+- Registered in: [`engine/input/devices/virtual.ts` line 34](../engine/input/devices/virtual.ts)
+
+Raised by the virtual device (engine/input/devices/virtual.ts) and `__engine.input` for an empty action name, an unknown axis, or a value of the wrong shape.
 
 ## level
 

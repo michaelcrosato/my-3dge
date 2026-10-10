@@ -180,3 +180,12 @@ took 14.5 s, so T0 would have failed (15 s) by the end of the box stages. Calls:
   ultracode lanes in their own worktrees resolve the same browser.
 - **Measured.** WebGPU runs on SwiftShader there with shardfall's flags (`tests/e2e/harness.spec.ts`: adapter, exact
   pixels), and `x ci --local` on 652ea6b passed all seven steps in 31.4 s (T0 1.7 s, T1 11.9 s, T2 9.5 s).
+
+## Amendment 9 (2026-10-10, WP-3.3): `__engine.input` gains `hold` and `state`
+
+- **What changed.** `__engine.input` adds `hold(action, down)` and `state()` to the four members PLAN.md §8.3 lists
+  (`press`, `axis`, `play`, `record`). Without `hold`, a button can be held only inside a script; `state()` lets an
+  agent read what the virtual device holds. §8.3's Input row and WP 3.3's entry say so.
+- **Headless.** `step(n)` does not read the virtual device: `input.play('N')` steps with it. The lane proposes that
+  `step(n)` with no intents take the virtual device's intents (engine/app/headless.ts and the core `step` member), so
+  `press('jump'); step(1)` works headless; left open for the core owner (ledger, WP 3.3).

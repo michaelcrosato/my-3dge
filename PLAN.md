@@ -1282,7 +1282,7 @@ A command arrives with the WP that needs it; on-demand commands do not exist, ev
 | Scene | `scene.dump({ depth, filter })` → a text tree (name, type, visible, position, bounds, material, triangles); `camera.get()`, `camera.set(code)` |
 | Rendering | `stats()` → `{ simMs, physicsMs, animMs, renderMs, gpuMs?, drawCalls, triangles, computeCalls, pipelines, textures, geometries }` |
 | Shots | `shot({ ids, metrics, thumbnail, size })`, through a render target and `readRenderTargetPixelsAsync` |
-| Input | `input.press(action)`, `input.axis(name, value)`, `input.play(script)`, `input.record()` |
+| Input | `input.press(action)`, `input.hold(action, down)`, `input.axis(name, value)`, `input.play(script)`, `input.record()`, `input.state()` |
 | Dev actions | `actions.list()`, `actions.run(id, args)`: god mode, freeze AI, spawn, travel (WP 5.6, on demand) |
 | Help | `help()`: every member, one line each (checked against the API by `x docs --check`) |
 
@@ -2278,7 +2278,7 @@ A WP is done only when all of these hold:
   - **Edges, buffering and `consume`** in sim time.
   - **Clear on blur, visibility change and disconnect.**
   - **Camera-relative intents**, through `intents.fromCamera` and the camera's `yaw()`.
-  - **A virtual device, and a recorder.** `__engine.input` (§8.3) drives the virtual device; this WP registers that member from its own file, `engine/input/devices/inspector.ts`.
+  - **A virtual device, and a recorder.** `__engine.input` (§8.3) drives the virtual device; this WP registers that member from its own file, `engine/input/devices/inspector.ts`. It adds `hold(action, down)` and `state()` to §8.3's four members (ADR-0014 amendment 9).
 - **Improves:** I-24.
 - **Done when:** browser tests pass with injected keyboard and gamepad-stub events, and the intents are unit-tested in Node.
 - **Verify:** `npm test -- engine/input && npm run e2e -- tests/e2e/input.spec.ts`
@@ -3950,7 +3950,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | **G2** | **Gate: Box 1** | | todo | | |
 | 3.1 | Rapier adapter and queries | P | todo | | |
 | 3.2 | Character controller | P | todo | | |
-| 3.3 | Input devices, bindings, intents | I | todo | | |
+| 3.3 | Input devices, bindings, intents | I | done | 2f683a4 (#5) | engine/input/{codes,actionMaps,bindings,script,input}.ts and devices/{keyboard,mouse,gamepad,padScript,virtual,inspector}.ts; intents.ts gained InputBuffer (released, buffered, consume, consumeAll, repeated; 9/18/5 steps); kind actionMap with 4 presets; system layer and RESERVED_CODES; `__engine.input` press, hold, axis, play, record, state (ADR-0014 amendment 9; §8.3 row edited); barrels appended; calls: the system layer and the move actions kept out of b/p, mouse and pad codes named (MouseLeft, PadSouth, PadLeftStickUp), stick directions bound like keys get the radial deadzone; size came out L, not M (≈1,870 code + 1,210 test lines); no escalations; open: headless step(n) should take the virtual device's intents (core proposal), WP 2.7 createEngine must load engine/dev/members before devices/inspector.ts, call connectVirtualDevice and sample once per frame (p on the first step only), WP 10.6 system-layer actions never enter intents; not verified: physical pads, non-standard mappings, non-Chromium pointer lock; deferred proof: in the box, WP 3.10 |
 | 3.4 | Skeleton, builds, pose, FK, sheets | A | done | 043b1b7 (#5) | engine/anim/{skeleton,builds,pose,fk,sheet,check}.ts (root plus 23 joints, 8 sockets, a T-pose rest; registry kind `build`; Pose with flat float32 storage; slerp/nlerp, bone masks, additive layers; FK in doubles; SVG sheets, rest-sheet golden 8f7539de0bbc1301; animCheck), the scaffold tools/templates/build, an Animation area in sim-api.ts; calls in ADR-0009 amendment 1: animSheet/animCheck as flat names, old footL = the sole (foot joint `ankleHeight` above it; WP 3.6 compares at contact height), hipZ → hipHeight, headR → headRadius, builds carry the stance and gait fields for WP 3.6, new fields ankleHeight, footLength, handLength, chestDepth with chosen defaults (review in WP 3.8), no `skeleton` kind until a second skeleton exists; codes ANIM_UNKNOWN_JOINT, ANIM_BAD_MASK, ANIM_UNKNOWN_POINT; no escalations; deferred proof: in the box, WP 3.10 |
 | 3.5 | IK | A | todo | | |
 | 3.6 | Humanoid procedural port | A | todo | | |

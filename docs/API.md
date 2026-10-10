@@ -11,6 +11,8 @@ game agent's manual.
 
 ### [`engine/index.ts`](../engine/index.ts)
 
+- `ActionMap` (type from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): An action map entry.
+- `ActionMapSpec` (interface from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): How an action map is written.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `angDiff` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The signed angle from `a` to `b` the short way round, in [−π, π).
 - `animCheck` (function from [`engine/anim/check.ts`](../engine/anim/check.ts)): Checks every pose of `spec` against the skeleton's contract: finite values, bone lengths, declared rigid pairs, feet at or above the floor, sockets in reach.
@@ -21,27 +23,45 @@ game agent's manual.
 - `approach` (function from [`engine/core/math.ts`](../engine/core/math.ts)): `a` moved toward `b` by at most `step` (≥ 0), never past it.
 - `approachAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `a` turned toward `b` by at most `step` (≥ 0) the short way round; exactly `b` once within reach.
 - `bakeTexture` (function from [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)): Bakes `ref` on `registry` (the shared one by default).
+- `Bindings` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): An action map with the player's changes.
+- `BindingsFile` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): A saved bindings file.
+- `BindingsOptions` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): How bindings are made.
+- `BindingsStorage` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Where bindings are saved: the `localStorage` shape.
 - `BlendOptions` (interface from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): How `blendPoses` blends.
 - `blendPoses` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), each joint's share scaled by `options.mask`, written into `out` (a new pose by default; `a` or `b` may be `out`).
 - `boneMask` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A bone mask: a preset (`'upper'`: spine0 and everything above it; `'lower'`: the pelvis, the legs and the root; `'arms'`, `'legs'`, one limb, `'head'`, `'full'`), a list of joints and presets (each listed joint alone; `'root'` for the root's channels), or weights by joint (`{ chest: 0.5, root: 1 }`).
 - `BoneMask` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): How much of a blend or layer reaches each joint (0–1, in `JOINTS` order) and the root's channels.
 - `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
 - `BoxCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An axis-aligned box collider (Rapier's cuboid: half extents `(max − min)/2`, centred at `(min + max)/2`).
+- `BUFFER_STEPS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): How long a press stays buffered by default, in steps: 9, the prototype's 0.15 s at 60 Hz.
+- `buffered` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed within the last `steps` steps (its press step counts as 0) and not consumed since.
 - `Build` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): A `build` entry: one body's proportions, in metres before `size`.
 - `BuildSpec` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): What `defineBuild` takes: any field; the others keep `build:chibi`'s values.
+- `CameraInputSample` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): What the camera takes each frame: mouse look `[right, up]` rad, the right stick `[right, up]`, wheel notches.
+- `CameraLike` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A camera as the input reads it (engine/gfx/cameras/pose.ts `Camera`): its heading, and its pitch for first person.
 - `cellHash` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A seeded value in [0, 1) for the integer point (x, y), with `salt` telling apart uses of one seed (a stone's tone, its crack).
+- `codeLabel` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): What a prompt shows for `code`: `W`, `Space`, `LMB`, `A` / `Cross`, `L Stick Up`.
 - `ColliderDescriptor` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A collider descriptor; WP 4.2 adds hull shapes beside the box.
 - `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
 - `CompiledLevel` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A compiled level: the map, its legend, per-tile grids and descriptors; see the file comment.
 - `compileLevel` (function from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): Compiles a level's text against the legend of `options.registry` (the shared one by default) into plain data; see the file comment.
 - `CompileOptions` (interface from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): What `compileLevel` takes beside the text.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `connectVirtualDevice` (function from [`engine/input/devices/inspector.ts`](../engine/input/devices/inspector.ts)): Gives `host` (the app's inspector host) the page input's virtual device, so `__engine.input` drives the page.
+- `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
+- `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
+- `createBindings` (function from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Makes the bindings of the action map `map` (an id or an entry), loading saved changes from `options.storage`.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
+- `createInput` (function from [`engine/input/input.ts`](../engine/input/input.ts)): Makes the page's input.
+- `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
 - `createMaterialLibrary` (function from [`engine/gfx/materials/library.ts`](../engine/gfx/materials/library.ts)): Makes a material library over `registry` (the shared one by default).
+- `createScriptedGamepad` (function from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
+- `createVirtualDevice` (function from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): Makes a virtual device, holding nothing.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
+- `defineActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Registers an action map (on the shared registry by default).
 - `defineBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
 - `defineGlyph` (function from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): Defines a glyph on `registry` (the shared one by default) and returns it.
@@ -51,6 +71,7 @@ game agent's manual.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
 - `defineTexture` (function from [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)): Defines a texture generator on `registry` (the shared one by default) and returns it.
+- `DeviceKind` (type from [`engine/input/codes.ts`](../engine/input/codes.ts)): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
 - `EngineInfo` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): What `info()` reports: the engine's identity and health, and the run.
 - `Entity` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity: its id and the components it holds, by kind name (`e.position`).
@@ -62,6 +83,8 @@ game agent's manual.
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): its tile's floor; 0 outside the map.
 - `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
+- `GamepadLike` (interface from [`engine/input/devices/gamepad.ts`](../engine/input/devices/gamepad.ts)): The Gamepad API's `Gamepad`, as far as the device reads it (a test stub gives just this).
+- `getActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The action map `id`.
 - `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
 - `getMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): The material `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `material:default`.
@@ -72,10 +95,14 @@ game agent's manual.
 - `Headless` (type from [`engine/app/headless.ts`](../engine/app/headless.ts)): A headless engine: `__engine`'s members, over a scene running in this process.
 - `HeadlessOptions` (interface from [`engine/app/headless.ts`](../engine/app/headless.ts)): How a headless engine starts.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
+- `Input` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A page's input.
+- `InputBuffer` (interface from [`engine/input/intents.ts`](../engine/input/intents.ts)): What a body remembers of its buttons across steps: plain data for a component field (`type: 'object'`, default `createInputBuffer()`), so it is hashed, captured and restored.
+- `InputOptions` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): How an input is made; in a page every field has its default.
 - `Inspector` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): The inspector, `window.__engine` in a page and what `createHeadless` returns: `help()` lists every member.
 - `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
 - `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
 - `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
+- `isCode` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): Whether `code` is one a binding may name.
 - `jointMatrix` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world matrix of `joint` in `world`.
 - `JointName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A joint's name.
 - `jointPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of `joint` (a name or an index) in `world`.
@@ -92,6 +119,7 @@ game agent's manual.
 - `LevelProblem` (interface from [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
 - `LightSpot` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A light spot: a tile's centre, `lightHeight` above its top.
+- `listActionMaps` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Every action map, sorted by id.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
 - `MaskName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A preset bone mask's name.
@@ -113,6 +141,13 @@ game agent's manual.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
+- `readKeyboardLayout` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The page's keyboard layout (`navigator.keyboard.getLayoutMap()`, Chromium), or undefined where it is missing.
+- `RebindResult` (type from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): What `rebind` did: the action's codes now, or why it refused and which action holds the code.
+- `released` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` went up on the buffer's step (a tap shorter than a step included).
+- `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
+- `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
+- `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
+- `RESERVED_CODES` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Codes no action map binds: the pause buttons, and keys the browser or the system keeps.
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
 - `runningBond` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): Where texel (x, y) falls in a running bond of `cell` = [width, height] texels over a texture of `size`: courses (rows) of cells, odd courses shifted half a cell, the whole layout moved by `phase` texels.
@@ -120,6 +155,7 @@ game agent's manual.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
 - `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
+- `ScriptedGamepad` (interface from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): A pad that a script moves frame by frame.
 - `SettingValue` (type from [`engine/core/settings.ts`](../engine/core/settings.ts)): A setting's value: plain data.
 - `Sheet` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A drawn sheet: the SVG text, its hash, and its size in pixels.
 - `SheetFrame` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): One frame of a sheet: a pose, and its label (`#<index>` when absent).
@@ -137,6 +173,7 @@ game agent's manual.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
+- `SYSTEM_ACTIONS` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The system layer: action → codes.
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
 - `Texel` (interface from [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)): One texel as a generator writes it.
 - `TextureBake` (interface from [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)): A baked texture: its source, its maps and its hash.
@@ -151,8 +188,10 @@ game agent's manual.
 - `tipPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
 - `topHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The top (m) of whatever stands at (x, z): a wall's top over its tiles, the floor on open ones; 0 outside the map.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
+- `updateInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Records one step's intents in `buffer` (changed in place, and returned): call it once per step, with the world's `tick`, before reading `released`, `buffered` or `repeated`.
 - `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
 - `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
+- `VirtualDevice` (interface from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): The virtual device.
 - `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
 - `World` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
 - `WorldEvents` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
@@ -177,6 +216,8 @@ game agent's manual.
 - `BoneMask` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): How much of a blend or layer reaches each joint (0–1, in `JOINTS` order) and the root's channels.
 - `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
 - `BoxCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An axis-aligned box collider (Rapier's cuboid: half extents `(max − min)/2`, centred at `(min + max)/2`).
+- `BUFFER_STEPS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): How long a press stays buffered by default, in steps: 9, the prototype's 0.15 s at 60 Hz.
+- `buffered` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed within the last `steps` steps (its press step counts as 0) and not consumed since.
 - `Build` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): A `build` entry: one body's proportions, in metres before `size`.
 - `BuildSpec` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): What `defineBuild` takes: any field; the others keep `build:chibi`'s values.
 - `ColliderDescriptor` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A collider descriptor; WP 4.2 adds hull shapes beside the box.
@@ -185,6 +226,9 @@ game agent's manual.
 - `compileLevel` (function from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): Compiles a level's text against the legend of `options.registry` (the shared one by default) into plain data; see the file comment.
 - `CompileOptions` (interface from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): What `compileLevel` takes beside the text.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
+- `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
+- `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
@@ -212,6 +256,7 @@ game agent's manual.
 - `GroundDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The slab under the whole level: the ground's collider, one tile wider than the map all round, 1 m deep.
 - `hashPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose's 64-bit FNV-1a digest (16 hex digits) over the numbers `toArray` gives: equal numbers, equal hash.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
+- `InputBuffer` (interface from [`engine/input/intents.ts`](../engine/input/intents.ts)): What a body remembers of its buttons across steps: plain data for a component field (`type: 'object'`, default `createInputBuffer()`), so it is hashed, captured and restored.
 - `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
 - `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
 - `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
@@ -247,6 +292,10 @@ game agent's manual.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
+- `released` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` went up on the buffer's step (a tap shorter than a step included).
+- `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
+- `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
+- `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
 - `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
@@ -276,6 +325,7 @@ game agent's manual.
 - `tipPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
 - `topHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The top (m) of whatever stands at (x, z): a wall's top over its tiles, the floor on open ones; 0 outside the map.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
+- `updateInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Records one step's intents in `buffer` (changed in place, and returned): call it once per step, with the world's `tick`, before reading `released`, `buffered` or `repeated`.
 - `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
 - `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
 - `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
@@ -1034,13 +1084,108 @@ For the agents who maintain the engine.
 - `WarmupReport` (interface): What one warm-up did.
 - `WarmupView` (interface): What a warm-up draws: the scene, its camera, how the frame draws it, and what it draws the scene into.
 
+### [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)
+
+- `ActionMap` (type): An action map entry.
+- `actionMapKind` (function): Declares the kind `actionMap` on `registry` unless it has it.
+- `ActionMapSpec` (interface): How an action map is written.
+- `defineActionMap` (function): Registers an action map (on the shared registry by default).
+- `getActionMap` (function): The action map `id`.
+- `listActionMaps` (function): Every action map, sorted by id.
+- `PRESETS` (const): The presets, by id.
+- `RESERVED_CODES` (const): Codes no action map binds: the pause buttons, and keys the browser or the system keeps.
+- `SYSTEM_ACTIONS` (const): The system layer: action → codes.
+
+### [`engine/input/bindings.ts`](../engine/input/bindings.ts)
+
+- `Bindings` (interface): An action map with the player's changes.
+- `BINDINGS_CODES` (const): The codes this module raises, with their fixes.
+- `BINDINGS_FORMAT` (const): The format tag of a saved bindings file.
+- `BindingsFile` (interface): A saved bindings file.
+- `BindingsOptions` (interface): How bindings are made.
+- `BindingsStorage` (interface): Where bindings are saved: the `localStorage` shape.
+- `createBindings` (function): Makes the bindings of the action map `map` (an id or an entry), loading saved changes from `options.storage`.
+- `pickLabel` (function): What a prompt shows for an action bound to `codes` on `device`: its first code of that device, labelled (the gamepad's only; the mouse's, then the keyboard's; the keyboard's, then the mouse's), or `—` when none is bound.
+- `RebindResult` (type): What `rebind` did: the action's codes now, or why it refused and which action holds the code.
+
+### [`engine/input/codes.ts`](../engine/input/codes.ts)
+
+- `codeLabel` (function): What a prompt shows for `code`: `W`, `Space`, `LMB`, `A` / `Cross`, `L Stick Up`.
+- `DeviceKind` (type): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
+- `deviceOf` (function): The device a code belongs to.
+- `InputSink` (interface): Where the devices write (engine/input/input.ts keeps it): codes going down and up, analog strengths, use.
+- `isCode` (function): Whether `code` is one a binding may name.
+- `LabelOptions` (interface): How labels are made: the keyboard layout's characters by code, and the pad family.
+- `MOUSE_BUTTONS` (const): Mouse buttons by `MouseEvent.button` (0 left, 1 middle, 2 right, 3 back, 4 forward).
+- `PAD_BUTTONS` (const): The W3C standard gamepad buttons by index, named by position.
+- `PAD_STICKS` (const): The stick directions, each a code whose strength is how far the stick leans that way (after the deadzone).
+- `padStyle` (function): The family of a gamepad, from its `Gamepad.id` (vendor 054c is Sony, 057e Nintendo).
+- `PadStyle` (type): A gamepad family, for labels.
+- `readKeyboardLayout` (function): The page's keyboard layout (`navigator.keyboard.getLayoutMap()`, Chromium), or undefined where it is missing.
+- `WHEEL_CODES` (const): The wheel's codes: a notch is a tap, never held.
+
+### [`engine/input/devices/gamepad.ts`](../engine/input/devices/gamepad.ts)
+
+- `createGamepadDevice` (function): Makes the gamepad device over `source`, writing to `sink`.
+- `DEADZONE` (const): The stick deadzone by default (the prototype's).
+- `GamepadDevice` (interface): The gamepad device: `poll()` once per sample; the right stick and the family for the camera and prompts.
+- `GamepadLike` (interface): The Gamepad API's `Gamepad`, as far as the device reads it (a test stub gives just this).
+- `GamepadSource` (type): Where pads come from: `navigator.getGamepads`, or a test's slots.
+- `radialDeadzone` (function): A stick reading with a radial deadzone `d`, rescaled so the edge still reaches 1.
+
+### [`engine/input/devices/inspector.ts`](../engine/input/devices/inspector.ts)
+
+- `connectVirtualDevice` (function): Gives `host` (the app's inspector host) the page input's virtual device, so `__engine.input` drives the page.
+- `virtualDeviceOf` (function): The virtual device of `host`, made on first use.
+
+### [`engine/input/devices/keyboard.ts`](../engine/input/devices/keyboard.ts)
+
+- `attachKeyboard` (function): Listens for keys on `target` (the window) and writes them to `sink`; returns the detach function.
+- `isTyping` (function): Whether a key event's target is somewhere the player types.
+
+### [`engine/input/devices/mouse.ts`](../engine/input/devices/mouse.ts)
+
+- `attachMouse` (function): Listens to the mouse over `targets.element`; `lookSpeed` rad/px, `invertY` for flight-style look.
+- `LOOK_SPEED` (const): Mouse look speed by default, radians per pixel (about 0.14° a pixel).
+- `MouseDevice` (interface): The mouse device.
+- `MouseTargets` (interface): Where the mouse device listens.
+
+### [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)
+
+- `createScriptedGamepad` (function): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
+- `parsePadScript` (function): Parses a pad script; throws `INPUT_BAD_SCRIPT` naming each problem.
+- `ScriptedGamepad` (interface): A pad that a script moves frame by frame.
+
+### [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)
+
+- `createVirtualDevice` (function): Makes a virtual device, holding nothing.
+- `playScript` (function): Plays `script` through `device`, calling `step(intents)` once per sim step; returns how many steps ran.
+- `VIRTUAL_CODES` (const): The codes this module raises, with their fixes.
+- `VirtualDevice` (interface): The virtual device.
+- `virtualIntents` (function): One step's intents from a virtual sample: `move` turned by the heading `yaw` (the `cam` axis when it holds one).
+- `VirtualSample` (interface): What the device holds for one step: actions held and tapped, and its axes by name.
+
+### [`engine/input/input.ts`](../engine/input/input.ts)
+
+- `CameraInputSample` (interface): What the camera takes each frame: mouse look `[right, up]` rad, the right stick `[right, up]`, wheel notches.
+- `CameraLike` (interface): A camera as the input reads it (engine/gfx/cameras/pose.ts `Camera`): its heading, and its pitch for first person.
+- `createInput` (function): Makes the page's input.
+- `Input` (interface): A page's input.
+- `InputOptions` (interface): How an input is made; in a page every field has its default.
+
 ### [`engine/input/intents.ts`](../engine/input/intents.ts)
 
 - `applyIntents` (function): The next step's intents: `prev`'s held keys with `change` applied (`null` clears a key), then normalized with `prev` as the step before, so `p` is the change's presses plus the new edges of `b`.
+- `BUFFER_STEPS` (const): How long a press stays buffered by default, in steps: 9, the prototype's 0.15 s at 60 Hz.
+- `buffered` (function): Whether `button` was pressed within the last `steps` steps (its press step counts as 0) and not consumed since.
+- `consume` (function): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
+- `consumeAll` (function): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
+- `createInputBuffer` (function): A fresh input buffer: nothing held, pressed or consumed.
 - `CustomIntentKey` (type): A namespaced key for game code's own intents: `'game:charge'`.
 - `diffIntents` (function): The change-point from `prev` to `next` (both normalized, `prev` the step before): each held key whose value changed, `null` for one that went away, and `p` only for presses the edges of `b` do not explain.
 - `fromCamera` (function): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
 - `held` (function): Whether `button` is held this step.
+- `InputBuffer` (interface): What a body remembers of its buttons across steps: plain data for a component field (`type: 'object'`, default `createInputBuffer()`), so it is hashed, captured and restored.
 - `INTENT_CODES` (const): The codes this module raises, with their fixes.
 - `INTENT_KEYS` (const): The built-in keys, in the order a normalized object holds them, each with what it means.
 - `IntentChanges` (type): A replay change-point's intent part: the keys that changed, `null` for a key cleared, `p` for unexplained presses.
@@ -1050,6 +1195,20 @@ For the agents who maintain the engine.
 - `NO_INTENTS` (const): No intents: what a step gets when nothing is given.
 - `normalizeIntents` (function): Checks `raw` and returns the step's intents: frozen, keys in order (built-ins, then custom keys sorted), buttons sorted, `p` widened by the edges of `b` since `previous` (the step before; none at the start).
 - `pressed` (function): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
+- `released` (function): Whether `button` went up on the buffer's step (a tap shorter than a step included).
+- `REPEAT_DELAY` (const): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
+- `REPEAT_RATE` (const): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
+- `repeated` (function): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
+- `updateInputBuffer` (function): Records one step's intents in `buffer` (changed in place, and returned): call it once per step, with the world's `tick`, before reading `released`, `buffered` or `repeated`.
+
+### [`engine/input/script.ts`](../engine/input/script.ts)
+
+- `names` (const): Reads a comma-separated list of names: `South,North`.
+- `numbers` (function): Reads `n` comma-separated finite numbers: `0,-1`.
+- `parseScript` (function): Parses `text` with `keys` (key → reader); `match` admits extra keys by pattern (`game:charge`).
+- `SCRIPT_CODES` (const): The codes this module raises, with their fixes.
+- `ScriptLine` (interface): One line of a script: how many frames or steps it lasts, its values by key, and its line number (from 1).
+- `ValueReader` (type): Reads one value, or returns a problem as a string.
 
 ### [`engine/sim/capture.ts`](../engine/sim/capture.ts)
 
