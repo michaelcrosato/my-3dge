@@ -50,6 +50,7 @@ const commands: Record<string, () => Promise<Command>> = {
       failures: [{ id: 'T1', message: 'it broke', file: 'a.ts', line: 3 }],
     })),
   crash: async () => command(async () => Promise.reject(new Error('unexpected'))),
+  broken: () => Promise.reject(new SyntaxError("Unexpected token '}'")),
   usage: async () => command(async () => Promise.reject(new UsageError('the target must be a page'))),
   flags: async () =>
     command(async ({ values }) => ({ ok: true, summary: `check=${String(values.check)}` }), {
@@ -94,6 +95,19 @@ describe('the dispatcher', () => {
     const [failure] = latest.failures as { id: string; message: string; file?: string; line?: number }[];
     expect(failure).toMatchObject({ id: 'X_CRASH', message: 'x crash crashed: unexpected', file: 'tools/x.test.ts' });
     expect(failure.line).toBeGreaterThan(0);
+  });
+
+  it('exits 1 when the command module throws on import, with a report of its own', async () => {
+    const { code, printed, latest, root } = await run(['broken', 'labs/box']);
+    expect(code).toBe(1);
+    expect(printed[0]).toBe('x broken: FAIL: the command crashed');
+    expect(latest).toMatchObject({ report: 'out/broken/all/report.json', tool: 'x broken', ok: false });
+    const [failure] = latest.failures as { id: string; message: string }[];
+    expect(failure).toMatchObject({
+      id: 'X_CRASH',
+      message: "x broken crashed: tools/cmd/broken.ts did not load: Unexpected token '}'",
+    });
+    expect(existsSync(join(root, 'out/broken/all/report.json'))).toBe(true);
   });
 
   it('exits 2 on a usage error, with a report', async () => {

@@ -211,7 +211,7 @@ For the agents who maintain the engine.
 
 - `BANNED_FILES` (const): Where the bans apply.
 - `BANNED_IMPORT_FILES` (const): The import bans also cover tests/: a bare `three` in a test page gets its own pre-bundled copy in Vite (WP 0.8).
-- `bannedBlocks` (function): The banned-API blocks: imports over every file in scope, then syntax and properties by zone.
+- `bannedBlocks` (function): The banned-API blocks: imports and names over every file in scope, then syntax and properties by zone.
 - `bannedPlugin` (const): The plugin the banned-API blocks use: core's restriction rules as `banned/<rule>`.
 
 ### [`tools/eslint/family.ts`](../tools/eslint/family.ts)
@@ -219,35 +219,36 @@ For the agents who maintain the engine.
 - `Ban` (type): One entry of a restriction rule's options (`{ selector, message }`, `{ property, message }`…), plus its scope.
 - `family` (function): Returns a plugin named `name` whose rules are the named core rules, unchanged.
 - `messagesOf` (function): Every `message` in a list of blocks' rule options, `no-restricted-imports`'s paths and patterns included.
+- `resolvingImports` (function): `plugin` with its `no-restricted-imports` matching each relative source as resolved from the importing file.
 - `zoned` (function): Blocks that apply one aliased rule over `files` so each file gets exactly the bans that apply to it: one block for all `files`, then one per path an `only` or `except` names, the most specific last (flat config's last block wins).
 
 ### [`tools/eslint/index.ts`](../tools/eslint/index.ts)
 
 - `askTheEntryBlocks` (function): The "ask the entry, never the id" block over shared code; `on` is `SWITCHES.askTheEntry` (WP 1.2 turns it on).
-- `bannedBlocks` (function from [`tools/eslint/banned.ts`](../tools/eslint/banned.ts)): The banned-API blocks: imports over every file in scope, then syntax and properties by zone.
+- `bannedBlocks` (function from [`tools/eslint/banned.ts`](../tools/eslint/banned.ts)): The banned-API blocks: imports and names over every file in scope, then syntax and properties by zone.
 - `family` (function from [`tools/eslint/family.ts`](../tools/eslint/family.ts)): Returns a plugin named `name` whose rules are the named core rules, unchanged.
 - `layerBlocks` (function from [`tools/eslint/layers.ts`](../tools/eslint/layers.ts)): The layer rules' blocks, in order.
 - `local` (const): The local plugin: rules no stock rule expresses, as `local/<rule>`.
 - `publicApiBlocks` (function from [`tools/eslint/publicApi.ts`](../tools/eslint/publicApi.ts)): The public-API blocks; `on` is `SWITCHES.publicApi` (WP 1.6 turns it on).
-- `simSideBlocks` (function from [`tools/eslint/simSide.ts`](../tools/eslint/simSide.ts)): The sim-side blocks: globals, properties and syntax over all sim-side files, then imports (core/math.ts aside).
+- `simSideBlocks` (function from [`tools/eslint/simSide.ts`](../tools/eslint/simSide.ts)): The sim-side blocks: globals, properties and syntax over all sim-side files, then imports (core/math.ts last).
 
 ### [`tools/eslint/layers.ts`](../tools/eslint/layers.ts)
 
 - `layerBlocks` (function): The layer rules' blocks, in order.
-- `layerPlugin` (const): The plugin the layer blocks use: core's `no-restricted-imports` as `layer/no-restricted-imports`.
+- `layerPlugin` (const): The plugin the layer blocks use: core's `no-restricted-imports`, resolving, as `layer/no-restricted-imports`.
 - `THREE_MATH` (const): three.js's math classes, the only names `core/math.ts` takes from `three/webgpu` (§6.1).
 
 ### [`tools/eslint/publicApi.ts`](../tools/eslint/publicApi.ts)
 
 - `publicApiBlocks` (function): The public-API blocks; `on` is `SWITCHES.publicApi` (WP 1.6 turns it on).
-- `publicApiPlugin` (const): The plugin the public-API blocks use: core's `no-restricted-imports` as `public-api/no-restricted-imports`.
+- `publicApiPlugin` (const): The plugin the public-API blocks use: core's `no-restricted-imports` (resolving) and `no-restricted-syntax`.
 - `SIM_SIDE_GAME_CODE` (const): Sim-side game code: the sim barrel only.
 
 ### [`tools/eslint/simSide.ts`](../tools/eslint/simSide.ts)
 
 - `SIM_SIDE` (const): Sim-side code: reproducible and renderer-free (PLAN.md §3, "Terms used throughout").
 - `simPlugin` (const): The plugin the sim-side blocks use: core's restriction rules as `sim/<rule>`.
-- `simSideBlocks` (function): The sim-side blocks: globals, properties and syntax over all sim-side files, then imports (core/math.ts aside).
+- `simSideBlocks` (function): The sim-side blocks: globals, properties and syntax over all sim-side files, then imports (core/math.ts last).
 
 ### [`tools/eslint/testing.ts`](../tools/eslint/testing.ts)
 

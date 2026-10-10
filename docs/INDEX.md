@@ -102,7 +102,7 @@ advice codes are in [ERRORS.md](ERRORS.md).
   - Exports: `BANNED_FILES`, `BANNED_IMPORT_FILES`, `bannedBlocks`, `bannedPlugin`
   - Tests: [`tools/eslint/banned.test.ts`](../tools/eslint/banned.test.ts)
 - [`family.ts`](../tools/eslint/family.ts): Plumbing for the rule families of eslint.config.js: core rules re-exposed under a family's own name, and per-path zones for bans that have exceptions.
-  - Exports: `Ban`, `family`, `messagesOf`, `zoned`
+  - Exports: `Ban`, `family`, `messagesOf`, `resolvingImports`, `zoned`
 - [`index.ts`](../tools/eslint/index.ts): The local ESLint plugin and the rule families eslint.config.js assembles (PLAN.md §6.1, §6.5, §6.10, Appendix B): one module per family, each exporting its blocks, and `local`, the plugin for what no stock rule expresses.
   - Exports: `askTheEntryBlocks`, `bannedBlocks`, `family`, `layerBlocks`, `local`, `publicApiBlocks`, `simSideBlocks`
 - [`layers.ts`](../tools/eslint/layers.ts): The layer rules (PLAN.md §6.1; doctrines: WebGPU only, Reproducible): one `no-restricted-imports` block per engine layer, naming what the layer may import, so a forbidden edge fails T0 with the rule and the way round it.

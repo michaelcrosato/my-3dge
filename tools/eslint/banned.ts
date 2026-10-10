@@ -4,8 +4,10 @@
  * deprecations (any deprecation warning fails a test anyway), and GPU readbacks outside the two files allowed them.
  *
  * Scope: code under `engine/`, `labs/` and `fixtures/`, tests included. A name that is distinctive is banned as an
- * identifier wherever it appears; a common word (`equals`, `label`, `screen`) only as an import from `three/tsl`, as
- * `TSL.<name>`, or, for node methods (`.label()`, `.cache()`), inside `engine/gfx/`, the only layer that imports TSL.
+ * identifier wherever it appears; a common word (`equals`, `label`, `screen`) and `Clock` only as a name imported or
+ * re-exported from `three/tsl` (`three/webgpu`), read off the namespace as three.js's docs call it (`TSL.<name>`,
+ * `THREE.Clock`), or, for node methods (`.label()`, `.cache()`), inside `engine/gfx/`, the only layer that imports
+ * TSL; those names are banned in `tests/` too. Namespace imports (`import * as TSL from 'three/tsl'`) are allowed.
  * Also: no bare `three` import (Node would load the WebGL build; §6.10), and no `eval` or `new Function`.
  *
  * Invariants: path exceptions are zones (family.ts): `mrt()` only in `engine/gfx/post/mrt.ts`, readbacks only in
@@ -50,7 +52,22 @@ const method = (name: string, message: string, args?: number): Ban => ({
   only: [GFX],
 });
 
-/** TSL functions whose names are common words: banned as imports from `three/tsl` and as `TSL.<name>`. */
+/**
+ * `name` imported or re-exported from `source`, or read off its namespace (`<namespace>.<name>`, as a value or a type).
+ * A syntax ban, not `no-restricted-imports`' `importNames`: those refuse every namespace import of `source` (`import *
+ * as TSL from 'three/tsl'`) with the wrong message.
+ */
+const exported = (source: string, namespace: string, name: string, message: string): Ban => ({
+  selector: [
+    `ImportDeclaration[source.value='${source}'] > ImportSpecifier:matches([imported.name='${name}'], [imported.value='${name}'])`,
+    `ExportNamedDeclaration[source.value='${source}'] > ExportSpecifier:matches([local.name='${name}'], [local.value='${name}'])`,
+    `MemberExpression[object.name='${namespace}'][property.name='${name}']`,
+    `TSQualifiedName[left.name='${namespace}'][right.name='${name}']`,
+  ].join(', '),
+  message,
+});
+
+/** TSL functions whose names are common words: banned only as names from `three/tsl` (`exported`). */
 const TSL_WORDS: Record<string, string> = {
   atan2: r182('atan2(y, x)', 'atan(y, x)'),
   equals: r182('equals', 'equal (inside a vector: bvec*(equal(…)))'),
@@ -64,7 +81,18 @@ const TSL_WORDS: Record<string, string> = {
   PI2: r182('PI2', 'TWO_PI'),
 };
 
-/** `banned/no-restricted-imports`: the bare entry, the import names and the WebGL-only paths. */
+/** The names banned from three.js's entry points (`exported`): over the banned files, and over `tests/` too. */
+const NAMES: Ban[] = [
+  exported(
+    'three/webgpu',
+    'THREE',
+    'Clock',
+    'Clock is deprecated from r183: use core/time for sim time, or Timer inside engine/gfx/ only (Appendix B)',
+  ),
+  ...Object.entries(TSL_WORDS).map(([name, message]) => exported('three/tsl', 'TSL', name, message)),
+];
+
+/** `banned/no-restricted-imports`: the bare entry and the WebGL-only paths (banned names are `NAMES`). */
 const IMPORTS = {
   paths: [
     {
@@ -72,13 +100,6 @@ const IMPORTS = {
       message:
         "import three.js as 'three/webgpu' (or 'three/tsl', 'three/addons/*'): Vite maps a bare 'three' to three/webgpu, but Node loads the WebGL build (PLAN.md §6.10)",
     },
-    {
-      name: 'three/webgpu',
-      importNames: ['Clock'],
-      message:
-        'Clock is deprecated from r183: use core/time for sim time, or Timer inside engine/gfx/ only (Appendix B)',
-    },
-    ...Object.entries(TSL_WORDS).map(([name, message]) => ({ name: 'three/tsl', importNames: [name], message })),
     {
       name: '@dimforge/rapier3d-compat',
       message:
@@ -139,12 +160,6 @@ const SYNTAX: Ban[] = [
   identifier(['transformedNormalWorld'], r182('transformedNormalWorld', 'normalWorld')),
   identifier(['transformedClearcoatNormalView'], r182('transformedClearcoatNormalView', 'clearcoatNormalView')),
   identifier(['storageObject'], r182('storageObject', 'storage().setPBO(true)')),
-  {
-    selector: `MemberExpression[object.name='TSL'][property.name=/^(${Object.keys(TSL_WORDS).join('|')})$/]`,
-    message: `a TSL function deprecated in r182: ${Object.entries(TSL_WORDS)
-      .map(([name, message]) => `${name} → ${message.split(': use ')[1].replace(' (Appendix B)', '')}`)
-      .join('; ')} (Appendix B)`,
-  },
   {
     selector: `${INSTANCE_USAGE}:matches([arguments.0.name='DynamicDrawUsage'], [arguments.0.property.name='DynamicDrawUsage'])`,
     message:
@@ -246,7 +261,7 @@ const PROPERTIES: Ban[] = [
   },
 ];
 
-/** The banned-API blocks: imports over every file in scope, then syntax and properties by zone. */
+/** The banned-API blocks: imports and names over every file in scope, then syntax and properties by zone. */
 export function bannedBlocks(): Linter.Config[] {
   return [
     {
@@ -255,7 +270,8 @@ export function bannedBlocks(): Linter.Config[] {
       plugins: { banned: bannedPlugin },
       rules: { 'banned/no-restricted-imports': ['error', IMPORTS] },
     },
-    ...zoned('banned: syntax', bannedPlugin, 'banned/no-restricted-syntax', SYNTAX, BANNED_FILES),
+    ...zoned('banned: syntax', bannedPlugin, 'banned/no-restricted-syntax', [...NAMES, ...SYNTAX], BANNED_FILES),
+    ...zoned('banned: names in tests/', bannedPlugin, 'banned/no-restricted-syntax', NAMES, ['tests/**']),
     ...zoned('banned: properties', bannedPlugin, 'banned/no-restricted-properties', PROPERTIES, BANNED_FILES),
   ];
 }

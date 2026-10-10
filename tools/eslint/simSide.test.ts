@@ -26,6 +26,7 @@ const GLOBALS = [
   'webkitAudioContext',
   'crypto',
   'process',
+  'performance',
 ];
 
 /** A sim-side file for each directory pattern in SIM_SIDE. */
@@ -51,13 +52,55 @@ const CASES: Case[] = [
     file: 'engine/sim/timers.ts',
     bad: 'export const now = performance.now();',
     good: 'export const now = (step: number) => step / 60;',
-    rule: 'sim/no-restricted-properties',
+    rule: 'sim/no-restricted-globals',
+  },
+  {
+    name: 'performance.timeOrigin, a wall-clock timestamp',
+    file: 'engine/core/time.ts',
+    bad: 'export const origin = performance.timeOrigin;',
+    good: 'export const origin = 0;',
+    rule: 'sim/no-restricted-globals',
   },
   {
     name: 'a banned global through globalThis',
     file: 'engine/anim/clock.ts',
     bad: 'export const later = globalThis.setTimeout;',
     good: 'export const tau = globalThis.Math.PI * 2;',
+    rule: 'sim/no-restricted-syntax',
+  },
+  {
+    name: "a banned global through globalThis['…']",
+    file: 'engine/anim/stamp.ts',
+    bad: "export const D = globalThis['Date'];",
+    good: "export const tau = globalThis['Math'].PI * 2;",
+    rule: 'sim/no-restricted-syntax',
+  },
+  {
+    name: 'a banned global through self[`…`]',
+    file: 'engine/anim/later.ts',
+    bad: 'export const later = self[`setTimeout`];',
+    good: 'export const tau = self[`Math`].PI * 2;',
+    rule: 'sim/no-restricted-syntax',
+  },
+  {
+    name: 'a banned global destructured from globalThis',
+    file: 'engine/anim/now.ts',
+    bad: 'const { performance: p } = globalThis;\nexport const now = p.now();',
+    good: 'const { Math: M } = globalThis;\nexport const tau = M.PI * 2;',
+    rule: 'sim/no-restricted-syntax',
+  },
+  {
+    name: 'a dynamic import, of three.js or anything else',
+    file: 'engine/sim/lazy.ts',
+    bad: "export const gfx = import('three/webgpu');",
+    good: "export { Vector3 } from '../core/math';",
+    rule: 'sim/no-restricted-syntax',
+  },
+  {
+    name: 'a dynamic import of another layer',
+    file: 'engine/world/lazy.ts',
+    bad: "export const draw = () => import('../gfx/draw');",
+    good: "export { rng } from '../core/rng';",
     rule: 'sim/no-restricted-syntax',
   },
   {
@@ -80,6 +123,27 @@ const CASES: Case[] = [
     file: 'engine/world/save.ts',
     bad: "export { readFileSync } from 'node:fs';",
     good: "export { hash } from '../core/hash';",
+    rule: 'sim/no-restricted-imports',
+  },
+  {
+    name: 'a Node built-in in core/math.ts, which may take three.js',
+    file: 'engine/core/math.ts',
+    bad: "export { Vector3 } from 'three/webgpu';\nexport { readFileSync } from 'fs';",
+    good: "export { Vector3 } from 'three/webgpu';",
+    rule: 'sim/no-restricted-imports',
+  },
+  {
+    name: 'a Node built-in without the node: prefix',
+    file: 'engine/core/id.ts',
+    bad: "import { randomUUID } from 'crypto';\nexport const id = randomUUID();",
+    good: "import { rng } from './rng';\nexport const id = rng('ids').next();",
+    rule: 'sim/no-restricted-imports',
+  },
+  {
+    name: 'a Node built-in subpath without the prefix',
+    file: 'engine/world/load.ts',
+    bad: "export { readFile } from 'fs/promises';",
+    good: "export { parseLevel } from './level';",
     rule: 'sim/no-restricted-imports',
   },
   ...SIM_SIDE.map((pattern) => ({

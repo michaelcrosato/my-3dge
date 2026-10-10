@@ -9,14 +9,17 @@
  * `core/math.ts` alone imports three.js, for its math classes (layers.ts limits it to them).
  *
  * Beyond Appendix B's list, the same holes in other spellings are closed too: `setImmediate`,
- * `requestIdleCallback`, `crypto`, `process`, `location` and Web Storage, `globalThis.Date` and the like, and Node
- * built-ins (sim-side code runs in Chromium as well).
+ * `requestIdleCallback`, `crypto`, `process`, `location` and Web Storage, all of `performance` (`timeOrigin` is a
+ * wall-clock timestamp), `globalThis.Date`, `self['Date']` and `const { Date } = globalThis`, and Node built-ins with
+ * or without `node:` (sim-side code runs in Chromium as well). Dynamic `import()` is banned outright, whatever its
+ * source: it resolves at a wall-clock moment, and no import rule (layer, three.js, Node) sees it.
  *
  * @example
  * // engine/sim/spawn.ts: const roll = Math.random();
  * // → sim/no-restricted-properties: use a named seeded stream: rng('<stream>') …
  * @see tools/eslint/simSide.test.ts
  */
+import { builtinModules } from 'node:module';
 import type { Linter } from 'eslint';
 import { family } from './family';
 
@@ -75,15 +78,44 @@ const GLOBALS: Record<string, string> = {
   webkitAudioContext: AUDIO,
   crypto: RANDOM,
   process: NODE,
+  performance: CLOCK,
 };
+
+/** Where code reaches a global by name: `globalThis.Date`, `self['Date']`, `const { Date } = globalThis`. */
+const HOSTS = '/^(globalThis|self|global)$/';
+const DYNAMIC =
+  'sim-side code imports statically: a dynamic import() resolves at a wall-clock moment and escapes the layer, three.js and Node import rules; import the module at the top of the file, or load it outside the sim and pass it in (PLAN.md §6.5)';
 
 /** The three.js entry points, banned sim-side (core/math.ts aside). */
 const THREE =
   "sim-side code never imports three.js: take its math classes from engine/core/math (engine code) or engine/sim-api (game code); drawing is gfx/'s (PLAN.md §6.5)";
 
-/** The sim-side blocks: globals, properties and syntax over all sim-side files, then imports (core/math.ts aside). */
+const THREE_ENTRY = { regex: '^three(?:/|$)', caseSensitive: true, message: THREE };
+const NODE_PREFIX = { regex: '^node:', caseSensitive: true, message: NODE };
+
+/** A `sim/no-restricted-imports` block: every Node built-in by its bare name, then `patterns`. */
+function imports(name: string, files: string[], patterns: object[]): Linter.Config {
+  const paths = builtinModules
+    .filter((module) => !module.startsWith('node:'))
+    .map((module) => ({ name: module, message: NODE }));
+  return {
+    name,
+    files,
+    ignores: ['**/*.test.ts'],
+    plugins: { sim: simPlugin },
+    rules: { 'sim/no-restricted-imports': ['error', { paths, patterns }] },
+  };
+}
+
+/** The sim-side blocks: globals, properties and syntax over all sim-side files, then imports (core/math.ts last). */
 export function simSideBlocks(): Linter.Config[] {
-  const names = [...Object.keys(GLOBALS), 'performance'].join('|');
+  const banned = `/^(${Object.keys(GLOBALS).join('|')})$/`;
+  const named = (node: string) => `:matches([${node}.name=${banned}], [${node}.value=${banned}])`;
+  const viaHost = [
+    `MemberExpression[object.name=${HOSTS}]${named('property')}`,
+    `MemberExpression[object.name=${HOSTS}] > TemplateLiteral.property[expressions.length=0][quasis.0.value.cooked=${banned}]`,
+    `:matches(VariableDeclarator[init.name=${HOSTS}], AssignmentExpression[right.name=${HOSTS}]) > ObjectPattern > Property${named('key')}`,
+  ].join(', ');
   return [
     {
       name: 'sim: clocks, randomness, DOM, Web Audio',
@@ -95,37 +127,19 @@ export function simSideBlocks(): Linter.Config[] {
           'error',
           ...Object.entries(GLOBALS).map(([name, message]) => ({ name, message })),
         ],
-        'sim/no-restricted-properties': [
-          'error',
-          { object: 'Math', property: 'random', message: RANDOM },
-          { object: 'performance', property: 'now', message: CLOCK },
-        ],
+        'sim/no-restricted-properties': ['error', { object: 'Math', property: 'random', message: RANDOM }],
         'sim/no-restricted-syntax': [
           'error',
           {
-            selector: `MemberExpression[object.name=/^(globalThis|self|global)$/][property.name=/^(${names})$/]`,
+            selector: viaHost,
             message:
               "a banned global reached through globalThis, self or global is still banned: sim-side code reads no clock, schedules nothing by wall time, touches no DOM or Web Audio, and draws randomness only from named streams, rng('<stream>') (PLAN.md §6.5)",
           },
+          { selector: 'ImportExpression', message: DYNAMIC },
         ],
       },
     },
-    {
-      name: 'sim: three.js and Node built-ins',
-      files: SIM_SIDE,
-      ignores: ['**/*.test.ts', 'engine/core/math.ts'],
-      plugins: { sim: simPlugin },
-      rules: {
-        'sim/no-restricted-imports': [
-          'error',
-          {
-            patterns: [
-              { regex: '^three(?:/|$)', caseSensitive: true, message: THREE },
-              { regex: '^node:', caseSensitive: true, message: NODE },
-            ],
-          },
-        ],
-      },
-    },
+    imports('sim: three.js and Node built-ins', SIM_SIDE, [THREE_ENTRY, NODE_PREFIX]),
+    imports('sim: Node built-ins in core/math.ts, which takes three.js', ['engine/core/math.ts'], [NODE_PREFIX]),
   ];
 }

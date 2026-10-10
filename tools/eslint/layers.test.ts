@@ -26,6 +26,30 @@ const CASES: Case[] = [
     "export { hash } from './hash';",
   ),
   layer(
+    'a climb through engine/ is the same edge',
+    'engine/core/registry.ts',
+    "export { World } from '../../engine/sim/world';",
+    "export { hash } from '../../engine/core/hash';",
+  ),
+  layer(
+    'a detour is the same edge',
+    'engine/core/registry.ts',
+    "import { World } from './../core/../sim/world';\nexport const w = new World();",
+    "import { hash } from './../core/hash';\nexport const h = hash;",
+  ),
+  layer(
+    'a file at the engine root climbing back into engine/',
+    'engine/sim-api.ts',
+    "export { draw } from '../engine/gfx/draw';",
+    "export { stepWorld } from '../engine/sim/world';",
+  ),
+  layer(
+    'gfx climbing through engine/ into physics',
+    'engine/gfx/level/mesh.ts',
+    "export { body } from '../../../engine/physics/bodies';",
+    "export { pose } from '../../../engine/anim/pose';",
+  ),
+  layer(
     'core/math takes only the math classes',
     'engine/core/math.ts',
     "export { Mesh } from 'three/webgpu';",
@@ -209,5 +233,10 @@ describe('the layer rules', () => {
     const message = results[0].bad.find((item) => item.ruleId === RULE)?.message ?? '';
     expect(message).toContain('engine/core may import only core: keep core self-contained');
     expect(message).toContain('(PLAN.md §6.1)');
+  });
+
+  it('a path is matched as resolved from the importing file, and quoted as written', () => {
+    const message = results[1].bad.find((item) => item.ruleId === RULE)?.message ?? '';
+    expect(message).toMatch(/^'\.\.\/\.\.\/engine\/sim\/world' import is restricted/);
   });
 });

@@ -5,17 +5,21 @@
  * Flat config keeps only the last options given to a rule for a file, so two families that both used
  * `no-restricted-imports` on one file would silently lose one family's list. Each family therefore registers the core
  * rules it uses under its own plugin name (`layer/no-restricted-imports`, `sim/no-restricted-globals`): families never
- * replace each other's options, and the rule id in a report names the family. An alias is the core rule itself.
+ * replace each other's options, and the rule id in a report names the family. An alias is the core rule itself,
+ * except where `resolvingImports` wraps it: `no-restricted-imports` matches the raw source text, so the families
+ * whose patterns describe relative paths (layers, public API) see each relative source in its shortest spelling from
+ * the importing file, and `../../engine/sim/x` from `engine/core/` is matched as `../sim/x`.
  *
  * Invariants: `zoned` gives every file the union of the bans that apply to it; a path in `only` or `except` that ends
- * in `/` is a directory, any other path is one file.
+ * in `/` is a directory, any other path is one file. A resolved report still quotes the source as written.
  *
  * @example
  * const sim = family('sim', 'no-restricted-globals');
  * // a block: { plugins: { sim }, rules: { 'sim/no-restricted-globals': ['error', { name: 'Date', message: '…' }] } }
  * @see tools/eslint/banned.ts
  */
-import type { ESLint, Linter } from 'eslint';
+import { posix } from 'node:path';
+import type { ESLint, Linter, Rule } from 'eslint';
 import { builtinRules } from 'eslint/use-at-your-own-risk';
 
 /** Returns a plugin named `name` whose rules are the named core rules, unchanged. */
@@ -30,6 +34,53 @@ export function family(name: string, ...rules: string[]): ESLint.Plugin {
       }),
     ),
   };
+}
+
+/**
+ * A relative source's shortest spelling from `dir`: `./a/../b` is `./b`, and `../../engine/sim` from `engine/core` is
+ * `../sim`.
+ */
+function shortest(dir: string, source: string): string {
+  const path = posix.relative(dir, posix.resolve(dir, source));
+  if (path === '') return '.';
+  return path === '..' || path.startsWith('../') ? path : `./${path}`;
+}
+
+/** `plugin` with its `no-restricted-imports` matching each relative source as resolved from the importing file. */
+export function resolvingImports(plugin: ESLint.Plugin): ESLint.Plugin {
+  const rule = plugin.rules?.['no-restricted-imports'] as Rule.RuleModule | undefined;
+  if (!rule) throw new Error(`${plugin.meta?.name} has no no-restricted-imports to resolve`);
+  const resolving: Rule.RuleModule = {
+    meta: rule.meta,
+    create(context) {
+      const dir = posix.dirname(context.filename);
+      const written = new WeakMap<object, string>();
+      // The rule reports the node it was given: put the source back as written.
+      const report = (descriptor: Rule.ReportDescriptor) => {
+        const source = 'node' in descriptor ? written.get(descriptor.node) : undefined;
+        context.report(
+          source === undefined ? descriptor : { ...descriptor, data: { ...descriptor.data, importSource: source } },
+        );
+      };
+      const listeners = rule.create(Object.create(context, { report: { value: report } }) as Rule.RuleContext);
+      const resolved = (node: Rule.Node): Rule.Node => {
+        const source = (node as { source?: { value?: unknown } }).source;
+        if (typeof source?.value !== 'string' || !/^\.\.?(?:\/|$)/.test(source.value)) return node;
+        const spelled = shortest(dir, source.value);
+        if (spelled === source.value) return node;
+        const copy = { ...node, source: { ...source, value: spelled } } as Rule.Node;
+        written.set(copy, source.value);
+        return copy;
+      };
+      return Object.fromEntries(
+        Object.entries(listeners).map(([selector, listener]) => [
+          selector,
+          (node: Rule.Node, ...rest: unknown[]) => (listener as (...args: unknown[]) => void)(resolved(node), ...rest),
+        ]),
+      );
+    },
+  };
+  return { ...plugin, rules: { ...plugin.rules, 'no-restricted-imports': resolving } };
 }
 
 /** One entry of a restriction rule's options (`{ selector, message }`, `{ property, message }`…), plus its scope. */

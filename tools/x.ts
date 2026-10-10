@@ -3,9 +3,9 @@
  * `node:util`'s `parseArgs` in strict mode, runs it, prints at most about 20 lines (the verdict first), writes
  * `out/<cmd>/<target>/report.json` plus `out/latest.json`, and returns the exit code.
  *
- * Invariants: exit 0 when the command passes, 1 when it fails (a crash included), 2 on a usage error (unknown
- * command, unknown flag, bad argument), each naming the closest valid choice. Every run writes a report, a usage
- * error included. A command's help is its file comment, so `x help` cannot go stale.
+ * Invariants: exit 0 when the command passes, 1 when it fails (a crash included, the import of its module too), 2 on
+ * a usage error (unknown command, unknown flag, bad argument), each naming the closest valid choice. Every run writes
+ * a report, a usage error and a crash included. A command's help is its file comment, so `x help` cannot go stale.
  *
  * @example
  * // node x help         → exit 0, lists every command
@@ -198,6 +198,18 @@ export async function dispatch(argv: readonly string[], options: DispatchOptions
     print(`report: ${path}`);
     return code;
   };
+  /** A crash, of the command or of its module's import: exit 1 with X_CRASH, naming where it threw. */
+  const crash = (error: unknown, args: Record<string, unknown>, target?: string, context = '') => {
+    const message = error instanceof Error ? error.message : String(error);
+    const failure: Finding = { id: 'X_CRASH', message: `x ${name} crashed: ${context}${message}`, ...crashSite(error) };
+    return finish(
+      name,
+      `x ${name}`,
+      args,
+      { ok: false, summary: 'the command crashed', failures: [failure], target },
+      1,
+    );
+  };
   const usage = (cmd: string, tool: string, finding: Finding, lines: string[] = []) =>
     finish(
       cmd,
@@ -218,7 +230,12 @@ export async function dispatch(argv: readonly string[], options: DispatchOptions
     return usage('x', 'x', { id: 'X_UNKNOWN_COMMAND', message: `there is no command "${name}": ${hint}` });
   }
   const tool = `x ${name}`;
-  const command = await load();
+  let command: Command;
+  try {
+    command = await load();
+  } catch (error) {
+    return crash(error, { argv: [...argv] }, undefined, `tools/cmd/${name}.ts did not load: `);
+  }
   const dashDash = rest.indexOf('--');
   const flagsPart = dashDash < 0 ? rest : rest.slice(0, dashDash);
   if (flagsPart.includes('--help') || flagsPart.includes('-h')) {
@@ -247,10 +264,7 @@ export async function dispatch(argv: readonly string[], options: DispatchOptions
     if (error instanceof UsageError) {
       return usage(name, tool, { id: 'X_USAGE', message: `${error.message} (usage: node x ${command.usage})` });
     }
-    const message = error instanceof Error ? error.message : String(error);
-    const failure: Finding = { id: 'X_CRASH', message: `x ${name} crashed: ${message}`, ...crashSite(error) };
-    result = { ok: false, summary: 'the command crashed', failures: [failure], target: parsed.positionals[0] };
-    return finish(name, tool, args, result, 1);
+    return crash(error, args, parsed.positionals[0]);
   }
   return finish(name, tool, args, { target: parsed.positionals[0], ...result }, result.ok ? 0 : 1);
 }

@@ -3,9 +3,12 @@
  * engine layer, naming what the layer may import, so a forbidden edge fails T0 with the rule and the way round it.
  *
  * Imports inside the engine are relative, so each pattern matches where an import climbs to: from
- * `engine/gfx/level/mesh.ts`, `../../physics/world` climbs into `physics`. Packages have single owners: only
- * `physics/` imports Rapier, only `gfx/` imports three.js, and `core/math.ts` alone takes three.js's math classes
- * (`allowImportNames`). The sim-side three.js ban itself is in simSide.ts. Tests (`*.test.ts`) may import anything.
+ * `engine/gfx/level/mesh.ts`, `../../physics/world` climbs into `physics`. The rule sees each relative source in its
+ * shortest spelling from the importing file (`resolvingImports`, family.ts), so `../../../engine/physics/world` and
+ * `./../../physics/world` are the same edge. Packages have single owners: only `physics/` imports Rapier, only `gfx/`
+ * imports three.js, and `core/math.ts` alone takes three.js's math classes (`allowImportNames`). The sim-side
+ * three.js ban itself is in simSide.ts, which also bans dynamic `import()`, a form these rules do not see. Tests
+ * (`*.test.ts`) may import anything.
  *
  * Invariants: every block lists its layer's whole policy (flat config keeps the last block that matches a file, so
  * the specific blocks, such as `core/math.ts` and `dev/bot.ts`, come after their layer's); the rule id is
@@ -17,10 +20,10 @@
  * @see tools/eslint/layers.test.ts
  */
 import type { Linter } from 'eslint';
-import { family } from './family';
+import { family, resolvingImports } from './family';
 
-/** The plugin the layer blocks use: core's `no-restricted-imports` as `layer/no-restricted-imports`. */
-export const layerPlugin = family('layer', 'no-restricted-imports');
+/** The plugin the layer blocks use: core's `no-restricted-imports`, resolving, as `layer/no-restricted-imports`. */
+export const layerPlugin = resolvingImports(family('layer', 'no-restricted-imports'));
 
 /** three.js's math classes, the only names `core/math.ts` takes from `three/webgpu` (§6.1). */
 export const THREE_MATH = ['Vector3', 'Quaternion', 'Matrix4', 'Euler', 'Box3', 'Sphere', 'Ray', 'Plane', 'MathUtils'];

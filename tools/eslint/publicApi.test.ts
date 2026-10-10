@@ -8,6 +8,7 @@ import { publicApiBlocks } from './publicApi';
 import { ALL_ON, caseProblems, lintCases, uncovered, type Case, type CaseResult } from './testing';
 
 const RULE = 'public-api/no-restricted-imports';
+const SIDE_EFFECTS = 'public-api/no-restricted-syntax';
 
 const CASES: Case[] = [
   {
@@ -47,6 +48,41 @@ const CASES: Case[] = [
     rule: RULE,
   },
   {
+    name: 'a side-effect import of three.js',
+    file: 'labs/box/main.ts',
+    bad: "import 'three/webgpu';",
+    good: "import '../../engine/index';",
+    rule: SIDE_EFFECTS,
+  },
+  {
+    name: 'a side-effect import of engine internals',
+    file: 'labs/box/main.ts',
+    bad: "import '../../engine/gfx/renderer';",
+    good: "import '../../engine/index';",
+    rule: SIDE_EFFECTS,
+  },
+  {
+    name: 'a dynamic import of engine internals, or of Rapier',
+    file: 'labs/box/menu.ts',
+    bad: "export const load = () => [import('../../engine/gfx/renderer'), import('@dimforge/rapier3d-simd-compat')];",
+    good: "export const load = () => import('../../engine/index');",
+    rule: SIDE_EFFECTS,
+  },
+  {
+    name: 'a side-effect import of the page barrel in sim-side game code',
+    file: 'fixtures/scenes/drop.ts',
+    bad: "import '../../engine/index';",
+    good: "import '../../engine/sim-api';",
+    rule: SIDE_EFFECTS,
+  },
+  {
+    name: 'a detour into engine internals is matched as resolved',
+    file: 'labs/box/main.ts',
+    bad: "export { createRenderer } from '../box/../../engine/gfx/renderer';",
+    good: "export { createEngine } from '../box/../../engine/index';",
+    rule: RULE,
+  },
+  {
     name: "a game's unit test may import anything",
     file: 'labs/box/scenes/arena.ts',
     bad: "export { stepWorld } from '../../../engine/sim/world';",
@@ -80,6 +116,6 @@ describe('the public-API rule, switched on', () => {
 
 describe('the public-API rule, switched off (until WP 1.6)', () => {
   it('reports nothing', () => {
-    expect(off.flatMap((result) => result.bad.filter((item) => item.ruleId === RULE))).toEqual([]);
+    expect(off.flatMap((result) => result.bad.filter((item) => item.ruleId?.startsWith('public-api/')))).toEqual([]);
   });
 });
