@@ -42,7 +42,7 @@ import { surfaceGeometry } from './surface';
 export const LEVEL_MESH_CODES = defineCodes('gfx', {
   GFX_LEVEL_RECIPE: {
     template: 'level {level} uses the mesh recipe {recipe}, which no level recipe defines: its tiles are grey blocks',
-    fix: "pass createLevelMeshes a recipe for it ({ recipes: { {recipe}: { shape: 'block', materials: [sides, tops], castShadow: true, receiveShadow: true } } }), or give the glyph a recipe the engine has: {known}",
+    fix: 'pass createLevelMeshes a recipe named {recipe} in its recipes option (shape, materials, castShadow and receiveShadow, as engine/gfx/level/recipes.ts writes them), or give the glyph a recipe the engine has: {known}',
     doc: 'Advice from `createLevelMeshes` (engine/gfx/level/meshes.ts) when a glyph names a mesh recipe that neither the engine (engine/gfx/level/recipes.ts) nor the `recipes` option defines: its tiles are drawn as grey boxes from their floor to their top, so the level still shows where they are.',
   },
 });
