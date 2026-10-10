@@ -38,6 +38,7 @@ const AGENT_READABLE = [
   'tools/**/*.{ts,js,mjs}',
   'labs/**/*.{ts,js,mjs}',
   'tests/**/*.{ts,js,mjs}',
+  '.claude/hooks/**/*.ts',
 ];
 
 /** Builds the whole config; `switches` defaults to `SWITCHES` (tests turn every switch on). */
