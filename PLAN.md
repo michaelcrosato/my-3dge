@@ -4004,7 +4004,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 8.9 | Clip mode in the box | L | todo | | |
 | 8.10 | 100STYLE and Quaternius v2 from shardfall | L | todo | | |
 | **G8** | **Gate: animation library** | | todo | | |
-| 9.1 | DSP core | X | todo | | |
+| 9.1 | DSP core | X | done | 4d59721 (#5) | engine/audio/dsp: PolyBLEP oscillators, noise, ADSR and the source's fall/hold envelopes, sweep, arpeggio, vibrato, 8 cookbook biquads, echo, 2-operator FM, tuned Karplus-Strong pluck; render(def, seed, rate) → Float32Array under withSimMath, hashed by soundHash, same hashes in Node and Chromium (20 reference + 200 random sounds); calls: goldens in tests/pages/audioDspCases.ts, plucks hold by default, aliasing claim corrected to the measured ~6x (15 dB), linear cookbook Q for every filter; engine/index.ts exports left to WP 9.2/9.3; no escalations, no deferred proofs |
 | 9.2 | Sound data | X | todo | | |
 | 9.3 | Runtime, spatial audio, music | X | todo | | |
 | 9.4 | Audio tools | X | todo | | |

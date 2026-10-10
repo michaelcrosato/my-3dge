@@ -13,6 +13,64 @@ Every code the engine prints, as `[CODE] message`, with its fix. Each module reg
 - Fix: pass the object createHeadless resolved to
 - Registered in: [`engine/app/headless.ts` line 40](../engine/app/headless.ts)
 
+## audio
+
+### AUDIO_BAD_NOTE
+
+- Message: `{where}: "{note}" is not a note`
+- Fix: write a frequency in Hz or a note name: a letter A–G, then # or b, then the octave (A4 = 440 Hz, C#5, Bb2)
+- Registered in: [`engine/audio/dsp/voice.ts` line 47](../engine/audio/dsp/voice.ts)
+
+Raised by `noteFreq` and `render` (engine/audio/dsp/voice.ts, render.ts) for a pitch that is neither a positive number nor a note name.
+
+### AUDIO_BAD_RATE
+
+- Message: `the sample rate {rate} is not a whole number from 8000 to 192000`
+- Fix: render at a whole number of samples per second from 8000 to 192000, usually 44100 or 48000
+- Registered in: [`engine/audio/dsp/render.ts` line 38](../engine/audio/dsp/render.ts)
+
+Raised by `render` (engine/audio/dsp/render.ts).
+
+### AUDIO_BAD_SEED
+
+- Message: `the seed {seed} is not a whole number`
+- Fix: pass a whole number as the seed, such as one drawn with rng.int
+- Registered in: [`engine/audio/dsp/render.ts` line 43](../engine/audio/dsp/render.ts)
+
+Raised by `render` (engine/audio/dsp/render.ts): seeds name random streams exactly, so 1.5 is refused rather than silently rounded.
+
+### AUDIO_BAD_VALUE
+
+- Message: `{where}: {field} is {value}`
+- Fix: make {field} {rule}
+- Registered in: [`engine/audio/dsp/voice.ts` line 42](../engine/audio/dsp/voice.ts)
+
+Raised by `render` (engine/audio/dsp/render.ts) for a value of the wrong type or outside its range, and for fields that do not apply to the voice (a pitch change on a pluck, fm on noise).
+
+### AUDIO_TOO_LONG
+
+- Message: `the sound lasts {seconds} s, past the {max} s limit`
+- Fix: shorten its voices (at, dur) or its echo (delay.time, delay.feedback); a song renders section by section
+- Registered in: [`engine/audio/dsp/render.ts` line 48](../engine/audio/dsp/render.ts)
+
+Raised by `render` (engine/audio/dsp/render.ts) before it allocates the buffer.
+
+### AUDIO_UNKNOWN_FIELD
+
+- Message: `{where} has no field "{field}"{suggestion}`
+- Fix: use only the fields {fields}
+- Registered in: [`engine/audio/dsp/voice.ts` line 37](../engine/audio/dsp/voice.ts)
+
+Raised by `render` (engine/audio/dsp/render.ts) for a field a voice, filter, fm, pluck or delay does not have: usually a typo, which would otherwise be silently ignored.
+
+### AUDIO_UNKNOWN_WAVE
+
+- Message: `{where}: there is no wave "{wave}"{suggestion}`
+- Fix: use one of {waves}
+- Registered in: [`engine/audio/dsp/voice.ts` line 32](../engine/audio/dsp/voice.ts)
+
+Raised by `render` (engine/audio/dsp/render.ts) when a voice names a wave the DSP does not make.
+
 ## core
 
 ### CORE_BAD_CODE

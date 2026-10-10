@@ -45,6 +45,36 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createHeadless`, `Headless`, `HEADLESS_CODES`, `headlessHost`, `HeadlessOptions`
   - Tests: [`engine/app/headless.test.ts`](../engine/app/headless.test.ts)
 
+## engine/audio/dsp
+
+- [`biquad.ts`](../engine/audio/dsp/biquad.ts): Biquad filters of the DSP core (PLAN.md WP 9.1): the eight types of Web Audio's `BiquadFilterNode` (lowpass, highpass, bandpass, notch, allpass, peaking, lowshelf, highshelf), with the coefficients of Robert Bristow-Johnson's Audio EQ Cookbook, which Web Audio's own formulas come from.
+  - Exports: `Biquad`, `FILTER_TYPES`, `FilterType`
+  - Tests: [`engine/audio/dsp/biquad.test.ts`](../engine/audio/dsp/biquad.test.ts)
+- [`delay.ts`](../engine/audio/dsp/delay.ts): The delay (echo) effect of the DSP core (PLAN.md WP 9.1): a feedback delay line, as a `DelayNode` looped through a feedback `GainNode` and mixed back with the dry signal is in Web Audio.
+  - Exports: `echo`, `ECHO_FLOOR`, `echoCount`, `echoSpacing`, `EchoSpec`, `MAX_ECHOES`
+  - Tests: [`engine/audio/dsp/delay.test.ts`](../engine/audio/dsp/delay.test.ts)
+- [`envelope.ts`](../engine/audio/dsp/envelope.ts): Volume envelopes of the DSP core (PLAN.md WP 9.1): the source's percussive envelope (a linear attack, then an exponential fall to 0.0005 at the end, as Web Audio's `exponentialRampToValueAtTime` gives it) and ADSR (attack, decay, sustain, release), which also covers the source's `hold` (sustain at full volume, a 30 ms release).
+  - Exports: `AdsrEnvelope`, `Envelope`, `envelopeCurve`, `FALL_FLOOR`, `FallEnvelope`, `holdEnvelope`
+  - Tests: [`engine/audio/dsp/envelope.test.ts`](../engine/audio/dsp/envelope.test.ts)
+- [`measure.ts`](../engine/audio/dsp/measure.ts): Numbers about rendered samples (PLAN.md WP 9.1, §8.5; doctrine: Verifiable without a display): peak, RMS, DC offset and the amplitude of one frequency (Goertzel's algorithm), so tests and tools judge a sound by numbers instead of by ear.
+  - Exports: `dcOffset`, `peak`, `rms`, `toneAmplitude`
+  - Tests: [`engine/audio/dsp/measure.test.ts`](../engine/audio/dsp/measure.test.ts)
+- [`osc.ts`](../engine/audio/dsp/osc.ts): The tonal oscillators of the DSP core (PLAN.md WP 9.1; doctrine: Quality under the hood): square, pulse 25%, pulse 12.5%, triangle, sine and saw, each a function of a phase.
+  - Exports: `blamp`, `blep`, `DUTY`, `oscillate`, `TONAL_WAVES`, `TonalWave`, `wrap`
+  - Tests: [`engine/audio/dsp/osc.test.ts`](../engine/audio/dsp/osc.test.ts)
+- [`pluck.ts`](../engine/audio/dsp/pluck.ts): The Karplus–Strong pluck of the DSP core (PLAN.md WP 9.1): a burst of seeded noise circulating in a delay line whose loop averages neighbouring samples, so it rings like a plucked string and darkens as it decays.
+  - Exports: `Pluck`
+  - Tests: [`engine/audio/dsp/pluck.test.ts`](../engine/audio/dsp/pluck.test.ts)
+- [`render.ts`](../engine/audio/dsp/render.ts): The DSP core's entry point (PLAN.md WP 9.1, §6.5, ADR-0013; doctrines: Assets, Reproducible, Verifiable): `render(def, seed, rate)` turns a sound definition (engine/audio/dsp/voice.ts) into a `Float32Array` of mono samples, and `soundHash` digests one, so every sound is code, renders in Node, and checks by its hash.
+  - Exports: `DEFAULT_RATE`, `render`, `RENDER_CODES`, `soundHash`
+  - Tests: [`engine/audio/dsp/render.test.ts`](../engine/audio/dsp/render.test.ts), [`tests/e2e/audio-dsp.spec.ts`](../tests/e2e/audio-dsp.spec.ts)
+- [`synth.ts`](../engine/audio/dsp/synth.ts): One voice rendered into samples (PLAN.md WP 9.1): the pitch path (an exponential sweep, the arpeggio's steps, vibrato), the source (a tonal oscillator with optional FM, seeded white noise, or a Karplus–Strong pluck), the filter, the envelope and the echo, in that order, added into the sound's buffer at the voice's start.
+  - Exports: `renderVoice`, `voiceEnd`, `voiceSamples`
+  - Tests: [`engine/audio/dsp/render.test.ts`](../engine/audio/dsp/render.test.ts)
+- [`voice.ts`](../engine/audio/dsp/voice.ts): A sound definition and its checks (PLAN.md WP 9.1; doctrines: Assets, Agent-operable): a sound is plain data, one voice or a list of voices played together, in the source chip synth's words (`wave`, `freq`, `to`, `dur`, `vol`, `attack`, `hold`, `arp`, `step`, `loop`, `vib`, `filter`, `q`), so its effects, drums and songs copy over as they are (WP 9.2), plus ADSR (`decay`, `sustain`, `release`), a start time `at`, an explicit filter, `fm`, `pluck` and a `delay` echo.
+  - Exports: `DelaySpec`, `FilterSpec`, `FmSpec`, `MAX_SECONDS`, `normalizeSound`, `NormalVoice`, `noteFreq`, `Pitch`, `PluckSpec`, `SoundDef`, `Voice`, `VOICE_CODES`, `Wave`, `WAVES`
+  - Tests: [`engine/audio/dsp/render.test.ts`](../engine/audio/dsp/render.test.ts)
+
 ## engine/core
 
 - [`color.ts`](../engine/core/color.ts): Colours as data (PLAN.md §6.3): hex strings in data, linear floats for shaders and instance colours, sRGB on output.
@@ -307,6 +337,10 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## tests/pages
 
+- [`audio-dsp.ts`](../tests/pages/audio-dsp.ts): The audio-dsp page's module (`tests/pages/audio-dsp.html`), Chromium's half of tests/e2e/audio-dsp.spec.ts: it publishes the DSP core's `render` over the reference sounds and the seeded random ones of tests/pages/audioDspCases.ts as `window.__audioDsp`, then signals ready through `window.__engine`.
+- [`audioDspCases.ts`](../tests/pages/audioDspCases.ts): The DSP core's reference sounds and their golden hashes (PLAN.md WP 9.1, §6.5; doctrine: Reproducible): the sounds engine/audio/dsp/render.test.ts renders in Node and tests/e2e/audio-dsp.spec.ts renders in Node and in Chromium (tests/pages/audio-dsp.html), so one golden per sound holds in both.
+  - Exports: `caseHashes`, `GOLDEN`, `randomSound`, `SOUND_CASES`, `SoundCase`
+  - Tests: [`engine/audio/dsp/render.test.ts`](../engine/audio/dsp/render.test.ts), [`tests/e2e/audio-dsp.spec.ts`](../tests/e2e/audio-dsp.spec.ts)
 - [`drift.ts`](../tests/pages/drift.ts): The drift page's module (`tests/pages/drift.html`), Chromium's half of tests/e2e/drift.spec.ts: it publishes the drift probe (tests/pages/driftProbe.ts) and `withSimMath` as `window.__drift`, then signals ready through `window.__engine`.
 - [`driftProbe.ts`](../tests/pages/driftProbe.ts): The drift probe (PLAN.md §6.5, WP 1.1): every `Math` function, the `**` operator, three.js's math classes and a small feedback sim, each run on seeded inputs natively and inside `withSimMath`, and hashed bit for bit.
   - Exports: `bitDiff`, `compareDrift`, `DRIFT_FUNCTIONS`, `DRIFT_INPUTS`, `DriftFunction`, `inputsOf`, `ProbeResult`, `resultsOf`, `runProbe`

@@ -214,6 +214,81 @@ For the agents who maintain the engine.
 - `headlessHost` (function): The run behind a headless engine: its session (world, settings, recording) and clock.
 - `HeadlessOptions` (interface): How a headless engine starts.
 
+### [`engine/audio/dsp/biquad.ts`](../engine/audio/dsp/biquad.ts)
+
+- `Biquad` (class): A biquad filter with its state: `set` its parameters, then `process` one sample at a time.
+- `FILTER_TYPES` (const): The filter types, Web Audio's names.
+- `FilterType` (type): One of the filter types.
+
+### [`engine/audio/dsp/delay.ts`](../engine/audio/dsp/delay.ts)
+
+- `echo` (function): `dry` with its echoes, lengthened by the tail.
+- `ECHO_FLOOR` (const): A repeat quieter than this gain ends the tail.
+- `echoCount` (function): How many repeats `spec` keeps before they fall below `ECHO_FLOOR`.
+- `echoSpacing` (function): The time between repeats in whole samples.
+- `EchoSpec` (interface): The echo's settings, all required here (engine/audio/dsp/voice.ts fills the defaults).
+- `MAX_ECHOES` (const): The most repeats a tail holds.
+
+### [`engine/audio/dsp/envelope.ts`](../engine/audio/dsp/envelope.ts)
+
+- `AdsrEnvelope` (interface): Attack, decay, sustain and release; the release ends at the voice's end.
+- `Envelope` (type): A volume envelope.
+- `envelopeCurve` (function): `n` gains, one per sample at `rate`, for `env` at volume `vol`.
+- `FALL_FLOOR` (const): Where the source's exponential fall ends, as a gain: Web Audio cannot ramp exponentially to 0.
+- `FallEnvelope` (interface): The source's percussive envelope: a linear attack to full volume, then an exponential fall to `FALL_FLOOR`.
+- `holdEnvelope` (function): The source's `hold`: an ADSR sustaining full volume, with a 30 ms release (shorter when the attack leaves less).
+
+### [`engine/audio/dsp/measure.ts`](../engine/audio/dsp/measure.ts)
+
+- `dcOffset` (function): The mean of `[from, to)`: the DC offset.
+- `peak` (function): The largest absolute sample in `[from, to)`.
+- `rms` (function): The root mean square of `[from, to)`.
+- `toneAmplitude` (function): The amplitude of the sinusoid at `freq` Hz in `[from, to)` at `rate` samples per second (Goertzel, Hann window).
+
+### [`engine/audio/dsp/osc.ts`](../engine/audio/dsp/osc.ts)
+
+- `blamp` (function): The PolyBLAMP residual of a unit rise in slope (per sample) at phase 0, the integral of `blep`.
+- `blep` (function): The PolyBLEP residual of a rising unit step at phase 0: what a band-limited step adds to a naive one, for a sample at phase `x` in [0, 1) (just after the step when `x < dt`, just before it when `x > 1 - dt`).
+- `DUTY` (const): The duty cycle of each pulse-like wave: the share of a period spent high.
+- `oscillate` (function): One sample of `wave` at `phase` (in [0, 1)), band-limited for a phase step of `dt` per sample (|frequency| / rate; clamped to 0.5).
+- `TONAL_WAVES` (const): The tonal waves: square, pulse (25% duty), pulse12 (12.5% duty), triangle, sine and saw.
+- `TonalWave` (type): One of the tonal waves.
+- `wrap` (function): `x` wrapped into [0, 1).
+
+### [`engine/audio/dsp/pluck.ts`](../engine/audio/dsp/pluck.ts)
+
+- `Pluck` (class): A plucked string: `next()` gives one sample at a time.
+
+### [`engine/audio/dsp/render.ts`](../engine/audio/dsp/render.ts)
+
+- `DEFAULT_RATE` (const): The sample rate `render` uses when none is given.
+- `render` (function): The sound `def` as mono samples at `rate` per second, its random draws seeded by `seed`: the same bits in Node and Chromium (see the file comment for the contract).
+- `RENDER_CODES` (const): The codes `render` raises beyond a definition's own (engine/audio/dsp/voice.ts), with their fixes.
+- `soundHash` (function): The 64-bit FNV-1a hex digest of `samples` (engine/core/hash.ts's `hashNumbers`): one golden per sound.
+
+### [`engine/audio/dsp/synth.ts`](../engine/audio/dsp/synth.ts)
+
+- `renderVoice` (function): Renders `voice` and adds it into `out` at its start; `streams` gives its noise.
+- `voiceEnd` (function): Where the voice ends in the sound, in samples, its echo included.
+- `voiceSamples` (function): The voice's length in samples, without its echo.
+
+### [`engine/audio/dsp/voice.ts`](../engine/audio/dsp/voice.ts)
+
+- `DelaySpec` (interface): A feedback echo after the voice.
+- `FilterSpec` (interface): A filter with its own settings.
+- `FmSpec` (interface): Simple two-operator FM: a sine modulator at `ratio` times the pitch modulates the voice's phase.
+- `MAX_SECONDS` (const): The longest a sound may last, in seconds.
+- `normalizeSound` (function): A definition checked and filled: one normal voice per voice, at `rate` samples per second.
+- `NormalVoice` (interface): A checked voice with every default filled, as engine/audio/dsp/synth.ts renders it.
+- `noteFreq` (function): A frequency in Hz from a pitch: numbers pass through, `noteFreq('A4')` is 440 (equal temperament).
+- `Pitch` (type): A pitch: a frequency in Hz, or a note name such as `'A4'`, `'C#5'` or `'Bb2'`.
+- `PluckSpec` (interface): The Karplus–Strong string's settings.
+- `SoundDef` (type): A sound: one voice, or several played together.
+- `Voice` (interface): One voice of a sound: every field is optional.
+- `VOICE_CODES` (const): The codes a definition's checks raise, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `Wave` (type): One of the waves.
+- `WAVES` (const): Every wave: the tonal ones, white noise, and a Karplus–Strong pluck.
+
 ### [`engine/core/color.ts`](../engine/core/color.ts)
 
 - `COLOR_CODES` (const): The codes this module raises, with their fixes (collected into docs/ERRORS.md by `x docs`).
@@ -1046,6 +1121,14 @@ For the agents who maintain the engine.
 - `Harness` (interface): What each test gets as `harness`.
 - `test` (const): Playwright's `test` with the `seed` option (default 1) and the `harness` fixture, set up for every test.
 - `WebGPUProof` (interface): What WebGPU did in the page, as `assertWebGPU` measured it.
+
+### [`tests/pages/audioDspCases.ts`](../tests/pages/audioDspCases.ts)
+
+- `caseHashes` (function): Each reference sound's hash, by name, rendered here.
+- `GOLDEN` (const): The golden hash of each reference sound (`soundHash` of `render(def, seed, rate)`), by platform.
+- `randomSound` (function): A seeded random sound of one to three voices; with its seed and rate, it is one case of the spec's sweep.
+- `SOUND_CASES` (const): The reference sounds.
+- `SoundCase` (interface): One reference sound: a definition rendered with a seed at a rate.
 
 ### [`tests/pages/driftProbe.ts`](../tests/pages/driftProbe.ts)
 
