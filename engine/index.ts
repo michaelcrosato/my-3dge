@@ -304,3 +304,5 @@ export { BLOB_BODY } from './gfx/puppets/bodies/blob';
 export { blobBody } from './gfx/puppets/bodies/blob';
 export type { BlobFeatures } from './gfx/puppets/bodies/blob';
 export { FLOATER_BODY } from './gfx/puppets/bodies/floater';
+// Performance counters (WP 5.5): what `__engine.stats()` returns, means in ms and the renderer's counts, never fps.
+export type { EngineStats } from './dev/stats';
