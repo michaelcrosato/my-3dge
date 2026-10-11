@@ -229,3 +229,10 @@ export type { PuppetBatches } from './gfx/puppets/draw';
 export { createBlobShadows } from './gfx/puppets/blobShadow';
 export { blobScale } from './gfx/puppets/blobShadow';
 export type { BlobShadows } from './gfx/puppets/blobShadow';
+// The texture library (v2, WP 7.3): a level's whole floor as a texture generator (define it under a game's id), with
+// moss at the walls' feet, a rune circle on each dais and contact shadows along every block's foot.
+export { levelFloorTexture } from './gfx/textures/contactShadow';
+export type { LevelFloorOptions } from './gfx/textures/contactShadow';
+export type { ContactShadowOptions } from './gfx/textures/contactShadow';
+export type { FloorMossOptions } from './gfx/textures/contactShadow';
+export type { FloorRuneOptions } from './gfx/textures/contactShadow';
