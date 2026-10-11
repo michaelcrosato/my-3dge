@@ -2,10 +2,11 @@
  * @file The engine in a page (PLAN.md §6.4, §6.9, §8.3, WP 2.7): `createEngine({ canvas, scenes, levels })` registers
  * the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay`
  * and settings by path), starts the scene as a recorded run with its view (engine/app/headless.ts,
- * engine/app/view.ts), publishes the run's inspector as `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts), warms up every pipeline the
- * view needs through both cameras (perspective and orthographic), draws the first frame, and then runs the frame
- * loop (engine/app/loop.ts): the devices sampled into intents (engine/input/input.ts; `__engine.input` drives the
- * same session), fixed steps from the clock, the view drawn at the clock's alpha.
+ * engine/app/view.ts), publishes the run's inspector as `window.__engine`, starts the renderer (WebGPU or nothing,
+ * engine/gfx/renderer.ts), warms up every pipeline the view needs through both cameras (perspective and
+ * orthographic), draws the first frame, and then runs the frame loop (engine/app/loop.ts): the devices sampled into
+ * intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from the clock, the view
+ * drawn at the clock's alpha.
  *
  * Ready or error (§8.3): `__engine.ready` turns true once the first frame is done on the GPU, and never after a
  * startup error; every failure is one record in `__engine.errors` (the log's) and shown as page text by the error
@@ -16,7 +17,9 @@
  * The rendering members (engine/app/viewMembers.ts) get their drawing here: `render(n)` draws frames now, `shot`
  * shoots the view (engine/gfx/shot.ts), and `replay(text)` plays a replay drawing a frame after every step (the
  * CPU-only contract's proof, §6.7: `x replay --browser page`, tests/e2e/parity.spec.ts). `?replay=<name>` plays one
- * of `options.replays` in real time instead, from step 0, then hands back to the devices.
+ * of `options.replays` in real time instead, from step 0, then hands back to the devices; without `?scene`, the page
+ * starts the replay's own scene (when it is one of the page's), since a page draws one scene and plays only its
+ * replays.
  *
  * Invariants: rendering never writes the sim (doctrine: WebGPU only): the loop steps the session only with intents
  * and recorded settings; cameras and view settings never reach the hash. Nothing reads a wall clock: time comes from
@@ -109,6 +112,26 @@ export interface Engine {
 const DRAIN_EVERY = 10;
 /** Frames tried before a warm-up counts as stuck. */
 const TRIES = 10;
+
+/** What `?replay=<name>` asked for: the replay, ready to play, or why there is none (raised once the page is up). */
+interface Asked {
+  playback?: Playback;
+  error?: unknown;
+}
+
+/** Reads the replay `name` of `replays` before the run starts, so its scene can start (see the file comment). */
+async function readReplay(name: string, replays: EngineOptions['replays']): Promise<Asked> {
+  const load = replays?.[name];
+  if (!load) {
+    const names = Object.keys(replays ?? {}).sort();
+    return { error: codeError('APP_NO_REPLAY', { name, names: names.join(', ') || 'none' }) };
+  }
+  try {
+    return { playback: createPlayback(JSON.parse(await load())) };
+  } catch (error) {
+    return { error };
+  }
+}
 
 /** A store that reads and writes whichever run's settings are current, for the renderer made once. */
 function currentSettings(run: () => AppRun): Settings {
@@ -209,6 +232,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     throw codeError('APP_NO_FRAME', { tries: TRIES });
   };
   let warming: Promise<void> | null = null;
+  let asked: Asked | null = null;
   const drawing: Drawing = {
     active: () => gfx !== null,
     get adapter() {
@@ -244,7 +268,15 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     for (const [id, level] of Object.entries(options.levels ?? {})) {
       if (!registry.has('level', id)) defineLevel(id, level, registry);
     }
-    routes = parseRoutes(options.search ?? location.search, { scenes: options.scenes, registry });
+    const search = options.search ?? location.search;
+    routes = parseRoutes(search, { scenes: options.scenes, registry });
+    if (routes.replay !== undefined) {
+      asked = await readReplay(routes.replay, options.replays);
+      const scene = asked.playback?.replay.scene;
+      if (scene && !new URLSearchParams(search).has('scene') && options.scenes.includes(scene)) {
+        routes = { ...routes, scene };
+      }
+    }
     const materials = createMaterialLibrary({ registry });
     const { scene, seed, settings, cam } = routes;
     run = createAppHost({ scene, seed, settings, cam, registry, log, drawing, materials });
@@ -295,18 +327,13 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   ready = true;
   overlay.hide();
   loop.start();
-  if (routes.replay !== undefined) {
-    const load = options.replays?.[routes.replay];
-    if (!load) {
-      const names = Object.keys(options.replays ?? {}).sort();
-      fail(codeError('APP_NO_REPLAY', { name: routes.replay, names: names.join(', ') || 'none' }));
-      return engine;
-    }
+  const replay = asked?.playback;
+  if (asked && !replay) fail(asked.error);
+  else if (replay) {
     try {
-      playback = createPlayback(JSON.parse(await load()));
-      started.begin(playback.replay);
+      started.begin(replay.replay);
+      playback = replay;
     } catch (error) {
-      playback = null;
       fail(error);
     }
   }

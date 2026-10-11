@@ -10,9 +10,11 @@
  * `--stop` ends it. When Vite reloads the page after a file changes, the next reply says so first.
  *
  * The session answers on 127.0.0.1 with JSON (`callSession`): `status`, `eval` (an expression, awaited, its value as
- * JSON), `dump` (`__engine.scene.dump` and the state), `set` (`__engine.set`), `goto` and `shot` (`__engine.shot` on
- * the open page when it shows the URL asked, else in a new tab of the same browser), and `stop`. `shootInSession` and
- * `pageFailures` are `x shot`'s; tools/lib/page.ts has the page helpers.
+ * JSON), `dump` (`__engine.scene.dump` and the state), `set` (`__engine.set`), `goto` (which rewrites session.json)
+ * and `shot` (`__engine.shot` on the open page when it shows the URL asked, else in a new tab of the same browser),
+ * and `stop`. Every reply names the page open now (`page`): `x eval`, `x set` and `x dump` report it, and `x inspect`
+ * compares it with the page asked for. `shootInSession` and `pageFailures` are `x shot`'s; tools/lib/page.ts has the
+ * page helpers.
  *
  * Usage: node x inspect [--page p] [--scene s] [--cam code] [--set k=v…] [--stop] [--serve]. Exit 0 when the session
  * is up (or stopped), 1 when the page failed to start, 2 on a usage error.
@@ -201,7 +203,11 @@ async function serve(root: string, page: string): Promise<void> {
   };
   const ops: Record<string, (body: Record<string, unknown>) => Promise<Record<string, unknown>>> = {
     status: async () => ({ page: current, signals: await readSignals(tab) }),
-    goto: async (body) => ({ page: body.page, signals: await open(String(body.page)) }),
+    goto: async (body) => {
+      const signals = await open(String(body.page));
+      write(true); // session.json names the page open now, for x eval, x set and x dump
+      return { signals };
+    },
     eval: async (body) => ({
       value: await tab
         .evaluate(`(async () => (${String(body.js)}))()`)
@@ -245,7 +251,8 @@ async function serve(root: string, page: string): Promise<void> {
       const op = ops[(req.url ?? '/').slice(1)];
       try {
         if (!op) throw new Error(`the inspect session has no ${req.url}: ${Object.keys(ops).join(', ')}`);
-        const reply = { ...(await op(JSON.parse(text || '{}'))), reloaded };
+        const result = await op(JSON.parse(text || '{}'));
+        const reply = { page: current, ...result, reloaded };
         reloaded = undefined;
         res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify(reply));
       } catch (error) {
@@ -316,7 +323,11 @@ export default {
     let session = findSession(root);
     const lines: string[] = [];
     if (!session) session = await startSession(root, page);
-    else if (asked && session.page !== page) await callSession(session, 'goto', { page });
+    else if (asked) {
+      const open = await callSession<{ page: string; reloaded?: string }>(session, 'status');
+      lines.push(...reloadLines(open));
+      if (open.page !== page) await callSession(session, 'goto', { page });
+    }
     const reply = await callSession<{
       page: string;
       reloaded?: string;

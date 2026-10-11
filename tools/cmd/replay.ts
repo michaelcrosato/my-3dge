@@ -9,7 +9,7 @@
  * same player (engine/sim/replay.ts). Every run must give the goldens of this platform (`linux-x64`): one set, valid
  * in Node and in Chromium alike (`judgeRuns`). A replay recorded on another platform only runs at least twice and
  * compares the runs ("golden: other platform"). Its scene module is found from its `scene` id, as `x sim` finds it.
- * `--browser page` plays each replay in its scene's own page instead (`labs/<name>/` for a module under
+ * `--browser page` plays each replay in its scene's own page instead (`labs/<name>/?scene=<scene>` for a module under
  * `labs/<name>/scenes/`, through `__engine.replay`, engine/app/playback.ts), drawing a frame after every step: the
  * CPU-only gameplay contract's proof that rendering never changes play (§6.7). Fixture scenes have no page.
  *

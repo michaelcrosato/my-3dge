@@ -6,7 +6,8 @@
  * - `?seed=<n>`: the seed, a whole number from 0 (1 when absent).
  * - `?cam=<code>` or `?cam3=<code>`: the camera, as a camera code without its key (`?cam=iso,45,2`, `?cam3=orbit`;
  *   engine/gfx/cameras/codes.ts).
- * - `?replay=<name>`: a replay the page offers, played from step 0 in real time once the page is up.
+ * - `?replay=<name>`: a replay the page offers, played from step 0 in real time once the page is up; without
+ *   `?scene`, the page starts the replay's own scene (engine/app/engine.ts).
  * - every other key is a setting, by its path, with its value as `x set` types it (`?box.room.speed=3`,
  *   `?gfx.resolution=full`): the settings schema checks each (engine/core/settings.ts), so `x set`, URL parameters
  *   and `__engine.set` reach the same settings the same way. `routeQuery` writes a query back.

@@ -6,7 +6,8 @@
  * builds 0 pipelines after the warm-up; every inspector member works in the page and `help()` matches the object;
  * every setting the page knows is reachable through `__engine.set`; the routes reach the run (`?seed`, settings,
  * `?replay` in real time) and a bad one is one error record on the page; and `x inspect` keeps the page open for
- * `x eval`, `x set`, `x dump` and `x shot`. The CPU-only contract is tests/e2e/parity.spec.ts.
+ * `x eval`, `x set`, `x dump` and `x shot`, and opens another page and goes back to the first. The CPU-only contract
+ * is tests/e2e/parity.spec.ts.
  *
  * Invariants: the page is driven only through `window.__engine` and the virtual clock (tools/lib/browser.ts), as an
  * agent drives it; frames are drawn by `__engine.render()` or `__clock.tick()`.
@@ -273,6 +274,15 @@ test.describe('the box, stage 1', () => {
       expect(dump.output).toMatch(/pathMover#1 Mesh at 6\.5,0,4\.5/); // 3 m/s for 1 s along the line east
       const shot = x('shot', 'labs/box', '--scene', 'room');
       expect([shot.code, shot.output]).toEqual([0, expect.stringContaining('reused the inspect session')]);
+      // another page, then back: session.json and x eval follow the page open now
+      const topdown = 'labs/box/?scene=room&cam=topdown';
+      expect(x('inspect', '--scene', 'room', '--cam', 'topdown').output).toContain(`on ${topdown}: ready`);
+      expect(JSON.parse(readFileSync(join(ROOT, 'out/inspect/session.json'), 'utf8'))).toMatchObject({ page: topdown });
+      expect(x('eval', '__engine.camera.get().code').output).toContain(`${topdown}: "cam=topdown"`);
+      expect(x('inspect', '--scene', 'room').output).toContain('on labs/box/?scene=room: ready');
+      const camera = x('eval', '__engine.camera.get().code').output;
+      expect(camera).toContain('labs/box/?scene=room: "');
+      expect(camera).not.toContain('topdown');
     } finally {
       x('inspect', '--stop');
     }

@@ -35,14 +35,15 @@ export default {
     const depth = values.depth === undefined ? undefined : wholeFlag(values.depth, 'depth', 0);
     const session = findSession(root);
     if (!session) throw new UsageError('no inspect session is running: start one with node x inspect');
-    let reply: { scene: string; hash: string; tick: number; entities: unknown[]; reloaded?: string };
+    let reply: { scene: string; hash: string; tick: number; entities: unknown[]; page?: string; reloaded?: string };
     try {
       reply = await callSession(session, 'dump', { step, depth, filter: values.filter });
     } catch (error) {
       const message = `${session.page} could not dump: ${error instanceof Error ? error.message : String(error)}`;
       return { ok: false, summary: 'no dump', failures: [{ id: 'DUMP_FAILED', message }] };
     }
-    const out = join('out', 'dump', targetSlug(session.page));
+    const page = reply.page ?? session.page;
+    const out = join('out', 'dump', targetSlug(page));
     mkdirSync(join(root, out), { recursive: true });
     writeFileSync(join(root, out, 'scene.txt'), `${reply.scene}\n`);
     const state = { tick: reply.tick, hash: reply.hash, entities: reply.entities };
@@ -50,8 +51,8 @@ export default {
     const tree = reply.scene.split('\n');
     return {
       ok: true,
-      target: session.page,
-      summary: `${session.page}: tick ${reply.tick}, hash ${reply.hash}, ${reply.entities.length} entities, ${tree.length} objects`,
+      target: page,
+      summary: `${page}: tick ${reply.tick}, hash ${reply.hash}, ${reply.entities.length} entities, ${tree.length} objects`,
       lines: [
         ...reloadLines(reply),
         ...tree.slice(0, SHOWN),
@@ -59,7 +60,7 @@ export default {
       ],
       metrics: { tick: reply.tick, hash: reply.hash, entities: reply.entities.length, objects: tree.length },
       artifacts: [
-        { path: `${out}/scene.txt`, kind: 'text', describes: `the scene of ${session.page}, one object a line` },
+        { path: `${out}/scene.txt`, kind: 'text', describes: `the scene of ${page}, one object a line` },
         { path: `${out}/state.json`, kind: 'json', describes: 'the tick, hash and entities' },
       ],
     };

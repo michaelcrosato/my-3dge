@@ -6,13 +6,18 @@
  * 2. live play recorded in the page (devices, a setting changed mid-run) replays in Node to the same hashes, so the
  *    renderer never wrote the sim;
  * 3. turning every optional GPU feature off never changes the hash;
- * 4. the gameplay entities in view appear in the ID pass.
+ * 4. the gameplay entities in view appear in the ID pass;
+ * 5. a second box scene, made and recorded as the scene template and the stress-box skill say (in a scratch copy of
+ *    the repository, so this one's page never changes), gives its goldens through `x replay --browser page`, which
+ *    opens the page on each replay's scene, and `?replay=<name>` alone starts the replay's scene.
  *
  * Invariants: goldens come from the replay files (one set per platform, recorded in Node and the sim-only page), so
  * these tests compare the rendering page with them, never with themselves.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { copyFileSync, cpSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, relative, sep } from 'node:path';
 import type { Page } from '@playwright/test';
 import '../../labs/box/scenes/room';
 import { playReplay, type Replay } from '../../engine/sim/replay';
@@ -26,6 +31,25 @@ const REPLAYS = ['box-1-room', 'box-1-tuned'].map((name) => ({
   text: readFileSync(join(ROOT, `tests/replays/${name}.replay.json`), 'utf8'),
 }));
 const goldens = (text: string) => (JSON.parse(text) as Replay).hashes['linux-x64'];
+/** Variables a test runner sets for its own workers; the `x` children start without them. */
+const RUNNER_VARIABLE = /^(VITEST|TEST_WORKER_INDEX$|TEST_PARALLEL_INDEX$|PW_TS_ESM|PW_TEST_SOURCE_TRANSFORM)/;
+/** What a scratch copy of the repository leaves out: it links node_modules, and makes its own out/. */
+const NOT_COPIED = new Set(['.git', '.cache', 'node_modules', 'out', 'dist', 'test-results', '.vercel']);
+
+/** Runs `node x <args>` in `root`; returns its exit code and printed text. */
+function x(root: string, ...args: string[]) {
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !RUNNER_VARIABLE.test(key)));
+  const run = spawnSync(process.execPath, ['x', ...args], { cwd: root, encoding: 'utf8', env, timeout: 180_000 });
+  return { code: run.status, output: `${run.stdout}${run.stderr}` };
+}
+
+/** A scratch copy of the repository (its own pages, scenes and replays), sharing node_modules; remove it after. */
+function scratchCopy(): string {
+  const root = mkdtempSync(join(tmpdir(), 'parity-'));
+  cpSync(ROOT, root, { recursive: true, filter: (path) => !NOT_COPIED.has(relative(ROOT, path).split(sep)[0]) });
+  symlinkSync(join(ROOT, 'node_modules'), join(root, 'node_modules'), 'dir');
+  return root;
+}
 
 /** Every camera preset: each classic view in both projections, then each 3D camera (engine/gfx/cameras/codes.ts). */
 const CAMERA_PRESETS = [
@@ -132,5 +156,33 @@ test.describe('the CPU-only gameplay contract, Box 1', () => {
     });
     expect(seen.entities).toEqual([1, 2, 3]);
     expect(seen.visible.sort()).toEqual(seen.entities);
+  });
+
+  test("a second box scene's replay gives its goldens in the page, which ?replay alone opens on that scene", async () => {
+    test.setTimeout(300_000);
+    const root = scratchCopy();
+    try {
+      const made = x(root, 'new', 'scene', 'labs/box/scenes/spinners');
+      expect(made.code, made.output).toBe(0);
+      const ran = x(root, 'sim', 'labs/box/scenes/spinners', '--steps', '600');
+      expect(ran.code, ran.output).toBe(0);
+      const file = 'tests/replays/box-1-spinners.replay.json';
+      copyFileSync(join(root, 'out', 'sim', 'box:spinners', 'run.replay.json'), join(root, file));
+      const recorded = x(root, 'replay', file, '--browser', 'sim', '--update');
+      expect(recorded.code, recorded.output).toBe(0);
+      // the room's replay after it: the page opens again on the room
+      const both = [file, 'tests/replays/box-1-room.replay.json'];
+      const played = x(root, 'replay', ...both, '--browser', 'page', '--runs', '1');
+      expect(played.code, played.output).toBe(0);
+      expect(played.output).toMatch(/box-1-spinners: 600 steps, .*Chromium page ×1, all match/);
+      expect(played.output).toMatch(/box-1-room: 600 steps, .*Chromium page ×1, all match/);
+      const shot = x(root, 'shot', 'labs/box/?replay=box-1-spinners');
+      expect(shot.code, shot.output).toBe(0);
+      const shotFile = join(root, 'out', 'shot', 'labs-box-replay-box-1-spinners', 'shot.json');
+      const { ids } = JSON.parse(readFileSync(shotFile, 'utf8')) as { ids: { visible: { name: string }[] } };
+      expect(ids.visible.map((object) => object.name)).toContain('spinnersCrate#1');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

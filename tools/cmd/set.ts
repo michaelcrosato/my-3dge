@@ -101,14 +101,14 @@ export default {
     if (!session) lines.push('no inspect session: start one with node x inspect, or open the page above');
     else {
       try {
-        const reply = await callSession<{ change: SettingChange; reloaded?: string }>(session, 'set', {
+        const reply = await callSession<{ change: SettingChange; page?: string; reloaded?: string }>(session, 'set', {
           path,
           value: text,
         });
         lines.unshift(...reloadLines(reply));
         const recorded = reply.change.view ? 'a view setting, never recorded' : 'recorded at this step';
         lines.push(
-          `applied in ${session.page}: ${JSON.stringify(reply.change.previous)} → ${JSON.stringify(reply.change.value)} (${recorded})`,
+          `applied in ${reply.page ?? session.page}: ${JSON.stringify(reply.change.previous)} → ${JSON.stringify(reply.change.value)} (${recorded})`,
         );
       } catch (error) {
         const message = `${session.page} refused ${path}=${text}: ${error instanceof Error ? error.message : String(error)}`;

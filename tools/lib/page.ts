@@ -1,9 +1,9 @@
 /**
  * @file Pages for the `x` commands (PLAN.md §8.1, §8.3, WP 2.7): reading a page's ready-or-error signal
  * (`window.__engine`), waiting for it, finding the page that draws a scene module's scenes, and playing replays in
- * that page for `x replay --browser page` (`pageRuntime`: `__engine.replay`, engine/app/playback.ts, which draws a
- * frame after every step), or in tests/pages/replay.html for `--browser sim` (`replayBrowser`). `x inspect`, `x shot`
- * and `x replay` share them.
+ * that page, opened on each replay's scene, for `x replay --browser page` (`pageRuntime`: `__engine.replay`,
+ * engine/app/playback.ts, which draws a frame after every step), or in tests/pages/replay.html for `--browser sim`
+ * (`replayBrowser`). `x inspect`, `x shot` and `x replay` share them.
  *
  * Invariants: they only read pages and call `__engine`'s members; waiting polls (never the page's animation frames,
  * which the virtual clock holds, tools/lib/browser.ts), and ends at ready, an error signal, a thrown error or the
@@ -11,6 +11,7 @@
  *
  * @example
  * labPageOf(process.cwd(), 'labs/box/scenes/room.ts'); // 'labs/box/'
+ * scenePath('labs/box/', 'box:room'); // 'labs/box/?scene=room'
  * @see tools/cmd/inspect.test.ts
  */
 import { existsSync } from 'node:fs';
@@ -72,20 +73,37 @@ export function labPageOf(root: string, file: string): string {
   return `labs/${lab}/`;
 }
 
-/** `x replay --browser page`'s runtime: each replay in its scene's page (`labPageOf`), drawn after every step. */
+/** The path of the page that draws a replay's scene: `labs/box/` and `box:spinners` give `labs/box/?scene=spinners`. */
+export function scenePath(lab: string, scene: string): string {
+  return `${lab}?scene=${encodeURIComponent(scene.slice(scene.indexOf(':') + 1))}`;
+}
+
+/**
+ * `x replay --browser page`'s runtime: each replay in its scene's page (`labPageOf`), opened on the replay's own scene
+ * (`scenePath`, since a page draws one scene and plays only its replays), drawn after every step. A page stays open
+ * while the replays it plays are of its scene.
+ */
 export function pageRuntime(page: Page, url: string, root: string, watch: PageWatch): Runtime {
+  let lab = '';
   let open = '';
-  const play = (text: string, options: Record<string, unknown>) =>
-    page.evaluate(([t, o]) => __engine.replay(t, o) as Promise<Record<string, unknown>>, [text, options] as const);
+  const show = async (text: string) => {
+    const path = scenePath(lab, String((JSON.parse(text) as { scene?: unknown }).scene));
+    if (path === open) return;
+    open = '';
+    await page.goto(`${url}${path}`);
+    const signals = await waitReady(page, watch);
+    if (!signals?.ready) throw new Error(`${path} did not start: ${signals?.errors.join('; ') || 'no ready signal'}`);
+    open = path;
+  };
+  const play = async (text: string, options: Record<string, unknown>) => {
+    await show(text);
+    const args = [text, options] as const;
+    return page.evaluate(([t, o]) => __engine.replay(t, o) as Promise<Record<string, unknown>>, args);
+  };
   return {
     name: 'Chromium page',
     async load(file) {
-      const lab = labPageOf(root, file);
-      if (lab === open) return;
-      await page.goto(`${url}${lab}`);
-      const signals = await waitReady(page, watch);
-      if (!signals?.ready) throw new Error(`${lab} did not start: ${signals?.errors.join('; ') || 'no ready signal'}`);
-      open = lab;
+      lab = labPageOf(root, file);
     },
     play: async (text, every) => (await play(text, { every: every === true })).hashes as Record<string, string>,
     stateAt: async (text, step) => (await play(text, { until: step })) as unknown as HashedView,

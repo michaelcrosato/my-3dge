@@ -29,7 +29,7 @@ export default {
     if (!js?.trim()) throw new UsageError('give an expression to evaluate in the page: node x eval "__engine.hash()"');
     const session = findSession(root);
     if (!session) throw new UsageError('no inspect session is running: start one with node x inspect');
-    let reply: { value: unknown; reloaded?: string };
+    let reply: { value: unknown; page?: string; reloaded?: string };
     try {
       reply = await callSession(session, 'eval', { js });
     } catch (error) {
@@ -41,10 +41,11 @@ export default {
     mkdirSync(join(root, out), { recursive: true });
     writeFileSync(join(root, out, 'result.json'), `${text}\n`);
     const lines = text.split('\n');
+    const page = reply.page ?? session.page;
     return {
       ok: true,
       target: 'all',
-      summary: `${session.page}: ${lines.length === 1 ? text.slice(0, 160) : `${lines.length} lines`}`,
+      summary: `${page}: ${lines.length === 1 ? text.slice(0, 160) : `${lines.length} lines`}`,
       lines: [...reloadLines(reply), ...(lines.length > 1 ? lines : [])],
       artifacts: [{ path: `${out}/result.json`, kind: 'json', describes: `the value of ${js.slice(0, 80)}` }],
     };
