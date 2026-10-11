@@ -29,3 +29,17 @@ The library's tests and QA (WP 8.6); the asset scan in `x check`.
 - **Not ported yet:** the importer half of `readable.js` (`measure`, `encode`, `fit`, `capSample`, `reduce`) moves
   to `engine/anim/clip/encode.ts` in WP 8.5, which needs it; `readable.ts` exports `torso()` for it. The codec is
   exported publicly by WP 8.4's library API, not by WP 8.2.
+
+## Amendment 2 (2026-10-10, WP-8.3)
+- **Layout:** `data/anim/sets/<set>/` holds one `<clipSlug(name)>.json` per clip, which is exactly the clip's `text()`
+  (three lines a key), plus `_set.json` (the set minus its clips, in its own key order) and `catalog.tsv` (generated:
+  3 `#` lines, then `name sec loop speed tags desc src orig take fit`; fit is mean/worst; trailing empty fields
+  trimmed).
+- **Each set's `fit` map stays in `_set.json`**, not per clip, and its order is the clip order that `joinSet`
+  restores.
+- **Slugging** turns each run of characters other than `[A-Za-z0-9_-]` into `_` and trims `_` and `-` at the ends;
+  names that collide, even in case only, are refused.
+- **Clips with an `orig` get `alt` as their last tag** (the 84 Mesh2Motion re-exports).
+- **Prettier skips `data/anim/sets/`**, like ADR-0014 amendment 3: it would spread each key over 13 lines (4x the
+  lines, 1.43x the bytes), and the tests pin every byte.
+- Until WP 8.5's `anim` command, the repacker runs as `npx tsx tools/anim/repack.ts [--check] [set.json…]`.

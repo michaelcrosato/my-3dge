@@ -3037,8 +3037,8 @@ A WP is done only when all of these hold:
 - **Needs:** WP 8.2
 - **Size:** S
 - **Build:**
-  - One JSON file per clip: slugged file names, with the real name kept in `clip`.
-  - `_set.json`, and a generated `catalog.tsv`.
+  - One JSON file per clip, exactly its `text()`: slugged file names, with the real name kept in `clip` (ADR-0010 amendment 2).
+  - `_set.json` (keeping the set's `fit` map, whose order is the clip order), and a generated `catalog.tsv`. Prettier skips `data/anim/sets/`.
   - `alt` tags on the 84 Mesh2Motion re-exports.
   - The repacker also reads plain JSON sets, as shardfall writes them (for WP 8.10), and `catalog.tsv` gains a `speed` column.
   - HERO dropped.
@@ -3998,7 +3998,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | **G7** | **Gate: the Stress Box (foundation)** | | todo | | |
 | 8.1 | Provenance, catalogs, ledger, docs | L | done | 84bf7a2 (#5) | data/anim/{SOURCES.md,LICENSES/,catalogs/,cmu/} (ledger split into 17 categories plus subjects.tsv, fallback fixed), docs/ANIMATION-LIBRARY.md (from MOCAP.md), docs/ANIMATION-RESEARCH.md (Engine column and 2D inventory dropped, coverage map added), tests in tests/unit/data/anim/{catalogs,ledger,sources}; call: kept the research doc's Build/Size columns, labelled as the 2D engine's proposals; INDEX/API regenerated on merge; no escalations, no deferred proofs |
 | 8.2 | Readable codec and format 2 | L | done | d570025 (#5) | Readable codec port (bit-identical to the source), format-2 types and parse, validator, lens, mirror; `x port refs --clips` commits 3 float32 samples per clip plus a sha256 over every frame; calls: decode on each clip's own source rest, format-2 key fields carried but not decoded (WP 8.8), unknown fields refused (ADR-0010 amendment 1); open: port.ts at 408 lines (soft cap) |
-| 8.3 | Re-containerize the sets | L | todo | | |
+| 8.3 | Re-containerize the sets | L | done | c9fdfa1 (#5) | tools/anim/repack.ts (split/join, clipSlug, catalog.tsv, tagAlternates, readPlainSet) and data/anim/sets/{quaternius,mesh2motion,cmu} as 325 text() files plus _set.json and catalog.tsv; calls: fit stays in _set.json and sets the clip order, alt is the last tag, the sets kept out of Prettier (ADR-0010 amendment 2); no escalations; no deferred proofs |
 | 8.4 | Baker, clip layer, retargeting, mannequin | L | todo | | |
 | 8.5 | Tools port | L | todo | | |
 | 8.6 | Library tests and QA | L | todo | | |

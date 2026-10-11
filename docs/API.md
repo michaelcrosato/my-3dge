@@ -1898,6 +1898,27 @@ For the agents who maintain the engine.
 - `readLegacySet` (function): The source's set `name` (`quaternius`, `mesh2motion`, `cmu`, `hero`), read from `src/mocap/sets/<name>.js`.
 - `sampledFrames` (const): The frames committed for a clip of `n` frames: the first, and those a third and two thirds of the way in.
 
+### [`tools/anim/repack.ts`](../tools/anim/repack.ts)
+
+- `ALT_TAG` (const): The tag of a clip that is another set's clip again (it has an `orig`): finders rank it after the original.
+- `CATALOG_COLUMNS` (const): The columns of `catalog.tsv`: a clip's name, length, loop, speed, tags, description, origins and fit.
+- `CATALOG_FILE` (const): The generated index of a set's clips.
+- `catalogTsv` (function): The set's `catalog.tsv`: three `#` comment lines, the columns, then one row per clip in the set's order, each stopping at its last field (`.editorconfig` trims trailing tabs).
+- `clipSlug` (function): The file name of a clip, without `.json`: its name with each run of characters other than letters, digits, `_` and `-` made one `_`, and `_` and `-` trimmed from the ends.
+- `joinSet` (function): Reads a set's directory files back into the set it was split from (`where` names it in errors): the clips in the order `_set.json`'s `fit` lists them, then any others by file name.
+- `legacySetFiles` (function): The files of my-3d2dge's three curated sets (HERO dropped), from the checkout at `sourcePath`, by directory.
+- `main` (function): The command line (see the file comment).
+- `readPlainSet` (function): A plain JSON set, as shardfall writes it (text, or an object), read through the codec's parser.
+- `readSet` (function): The set stored in `data/anim/sets/<dir>/` (or under `root`), rejoined.
+- `readSetDir` (function): Reads a set's directory: every file in it, by name.
+- `SET_FILE` (const): The file that holds a set's header: everything but its clips.
+- `setDirName` (const): A set's directory name: its name, slugged, in lower case (`STYLE100_BACK` → `style100_back`).
+- `SetFiles` (type): A set's directory as text: file name → contents.
+- `SETS_DIR` (const): The sets' directory, `data/anim/sets/`: one directory per set, named by `setDirName`.
+- `splitSet` (function): Writes a set as its directory's files: one `text()` per clip, `_set.json` and `catalog.tsv` (the file comment).
+- `tagAlternates` (function): The set with `alt` added last to the tags of each clip made from another set's clip (one with an `orig`).
+- `writeSetDir` (function): Writes a set's files into `dir`, made if missing, and removes the files it no longer has; lists what changed.
+
 ### [`tools/checkAll.ts`](../tools/checkAll.ts)
 
 - `CACHE_DIRS` (const): The cache directories ESLint and Prettier create on a cold run.

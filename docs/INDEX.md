@@ -565,6 +565,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`legacy-readable.ts`](../tools/anim/legacy-readable.ts): The legacy oracle (PLAN.md WP 8.2, §10.5 step 3): my-3d2dge's own readable codec, `src/mocap/readable.js`, run from the checkout at `$MY3D2DGE_SRC` in a fresh Node `vm` context, as `my-3d2dge:tools/mocap-lib.mjs:7-9` does, and its animation sets read the same way.
   - Exports: `CLIP_FPS`, `clipVectorFiles`, `clipVectorsReadme`, `CURATED_SETS`, `decodeLegacyClip`, `float32Number`, `frameCount`, `framesSha256`, `LEGACY_CODEC`, `legacyClipVectors`, `LegacyReadable`, `LegacySet`, `loadLegacyReadable`, `readLegacySet`, `sampledFrames`
   - Tests: [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts), [`tools/anim/legacy-readable.test.ts`](../tools/anim/legacy-readable.test.ts)
+- [`repack.ts`](../tools/anim/repack.ts): The repacker (PLAN.md §10.3 and §10.5 step 4, WP 8.3): a set of clips stored as a directory, `data/anim/sets/<set>/`, one file per clip, so an agent opens only the clips it uses.
+  - Exports: `ALT_TAG`, `CATALOG_COLUMNS`, `CATALOG_FILE`, `catalogTsv`, `clipSlug`, `joinSet`, `legacySetFiles`, `main`, `readPlainSet`, `readSet`, `readSetDir`, `SET_FILE`, `setDirName`, `SetFiles`, `SETS_DIR`, `splitSet`, `tagAlternates`, `writeSetDir`
+  - Tests: [`tests/unit/data/anim/sets/sets.test.ts`](../tests/unit/data/anim/sets/sets.test.ts), [`tools/anim/repack.test.ts`](../tools/anim/repack.test.ts)
 
 ## tools/cmd
 
