@@ -112,8 +112,9 @@ function cell(value: unknown): string {
 }
 
 /**
- * The set's `catalog.tsv`: three `#` comment lines, the columns, then one row per clip in the set's order, each stopping at its
- * last field (`.editorconfig` trims trailing tabs). `fit` is `mean/worst` in mm, from the clip or the set.
+ * The set's `catalog.tsv`: three `#` comment lines, the columns, then one row per clip in the set's order, each
+ * stopping at its last field (`.editorconfig` trims trailing tabs). `fit` is `mean/worst` in mm, from the clip or the
+ * set.
  */
 export function catalogTsv(set: ClipSet): string {
   const about = [
@@ -229,9 +230,8 @@ export function main(args: string[], root: string = SETS_DIR): number {
       const on = existsSync(path) ? readSetDir(path) : {};
       const changed = [...new Set([...Object.keys(on), ...Object.keys(files)])].filter((f) => on[f] !== files[f]);
       differ += changed.length;
-      console.log(
-        `${dir}: ${changed.length ? `${changed.length} files differ: ${changed.slice(0, 5).join(', ')}` : 'ok'}`,
-      );
+      const count = `${changed.length} file${changed.length === 1 ? ' differs' : 's differ'}`;
+      console.log(`${dir}: ${changed.length ? `${count}: ${changed.slice(0, 5).join(', ')}` : 'ok'}`);
     } else {
       const { written, removed } = writeSetDir(path, files);
       console.log(`${dir}: ${Object.keys(files).length} files, ${written.length} written, ${removed.length} removed`);
@@ -240,4 +240,11 @@ export function main(args: string[], root: string = SETS_DIR): number {
   return differ ? 1 : 0;
 }
 
-if (import.meta.main) process.exitCode = main(process.argv.slice(2));
+if (import.meta.main) {
+  try {
+    process.exitCode = main(process.argv.slice(2));
+  } catch (error) {
+    console.error(`repack: FAIL: ${(error as Error).message}`);
+    process.exitCode = 1;
+  }
+}

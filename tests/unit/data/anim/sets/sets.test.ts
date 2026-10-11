@@ -64,6 +64,9 @@ function withoutAltTags(set: ClipSet): ClipSet {
 
 const sets = Object.fromEntries(Object.keys(SOURCE_SETS).map((dir) => [dir, readSet(dir)]));
 const read = (dir: string, file: string) => readFileSync(join(SETS_DIR, dir, file), 'utf8');
+/** What the repacker writes from the my-3d2dge checkout at `source`, by directory: made once. */
+let repackedFromSource: ReturnType<typeof legacySetFiles> | undefined;
+const fromSource = (source: string) => (repackedFromSource ??= legacySetFiles(source));
 
 describe('data/anim/sets/', () => {
   it('holds the three curated sets, 325 clips, one directory each: HERO is dropped', () => {
@@ -144,7 +147,7 @@ describe('data/anim/sets/', () => {
           expect(MR.text(restored.clips[name] as Clip), `${dir}/${name}`).toBe(MR.text(clip));
           expect(MR.text(set.clips[name] as Clip), `${dir}/${name}`).toBe(clipText(set.clips[name] as Clip));
         }
-        expect(legacySetFiles(source)[dir]).toEqual(files);
+        expect(fromSource(source)[dir]).toEqual(files);
       });
     });
   }

@@ -209,7 +209,7 @@ describe('the command line', () => {
     } finally {
       log.mockRestore();
     }
-    expect(printed).toEqual(['demo: 5 files, 5 written, 0 removed', 'demo: ok', 'demo: 1 files differ: Still.json']);
+    expect(printed).toEqual(['demo: 5 files, 5 written, 0 removed', 'demo: ok', 'demo: 1 file differs: Still.json']);
   });
 });
 
