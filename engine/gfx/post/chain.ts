@@ -15,9 +15,10 @@
  * every filter is off, the chain shows the picture and the materials are in the style the chain was made with
  * (`isPlain`: `look:clean`), a frame skips the chain and draws the scene straight, as the renderer does without one
  * (`plain`): the chain would leave the picture as it is, at the cost of the MRT's second target and three full-screen
- * passes. Measured on SwiftShader, at a load average of 36 to 41:
- * tests/e2e/parity.spec.ts's Box 4 replays, a frame drawn after each of 1,500 steps, took 118 s drawn straight and
- * 193 s through the chain. The warm-up's frame draws both ways, so switching between them builds nothing.
+ * passes. Measured on SwiftShader through `createEngine` (WP 7.4's core proposal): tests/e2e/parity.spec.ts's Box 4
+ * replays, a frame drawn after each of 1,500 steps, took 193 s through the chain against 118 s without it (at a load
+ * average of 36 to 41), and 108 to 110 s with plain frames drawn straight against 119 s without it (at 5 to 22). The
+ * warm-up's frame draws both ways, so switching between them builds nothing.
  *
  * What it draws comes from three view settings, `post.look`, `post.filters` and `post.show` (`POST_SETTINGS`), which
  * act on the frames drawn through `post.view`: `createEngine` (engine/app/engine.ts) draws every frame and shot of its
