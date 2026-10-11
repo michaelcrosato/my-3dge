@@ -9,24 +9,24 @@
  * wall run on its own (`level:room/wall@0,0-15,0`: tiles from column 0, row 0 to column 15, row 0); a run costs its
  * two draw groups, in colour and in each shadow map. The floor stays one surface.
  *
- * Actors with an animator draw themselves as puppets (engine/gfx/puppets/actors.ts, WP 3.10: `actors`), posed by
- * their animators where their feet are at the frame's alpha. Stand-ins: until props draw themselves (WP 4.5), any
- * other entity is drawn as a box when one of its components declares `x` and `z` as numbers in metres
+ * Actors with an animator draw themselves as puppets (engine/gfx/puppets/actors.ts, WP 3.10: `actors`), and props
+ * standing in the scene (`sceneProp`, engine/sim/props.ts) as their props (engine/gfx/stageProps.ts, WP 4.6: `props`).
+ * Stand-ins: any other entity is drawn as a box when one of its components declares `x` and `z` as numbers in metres
  * (`placeableKinds`: asked of the component entries, never of a name). The first such component in registry order
  * places it: `x`, `y` (the box's bottom, 0 by default) and `z`, `yaw` (rad), `size` (the box's side, m; 0.5 by
  * default) and `material` (an id from the material library; `material:default` otherwise). A stand-in is named
  * `<component>#<id>` and carries `userData.entity`, so the ID pass and the inspector say which entity it is.
  * `capture(entities, dt)` after each sim step (of `dt` seconds) keeps the last two places; `draw(alpha)` puts every
- * stand-in and puppet `alpha` of the way from the one before to the last (the frame's interpolation, §6.4; the
+ * stand-in, puppet and prop `alpha` of the way from the one before to the last (the frame's interpolation, §6.4; the
  * shorter way round for yaw).
  *
  * The level's cutaway (engine/gfx/cutaway.ts, `cutaway`) is made when a player actor first stands on it, and the view
  * runs it while it follows him (engine/app/view.ts), so walls facing the camera and pillars before the hero cut away
  * and every view sees him; a stage with no player never has one, and its level stands whole.
  *
- * Warm-up: `register(warmup)` registers the ground, the level meshes, the cutaway's twins, the puppets and the
- * stand-ins, and adds the stand-ins' looks (side and material), the puppets' builds and whether there is a cutaway to
- * the shader key, so a new look makes the next frame warm up first instead of stalling.
+ * Warm-up: `register(warmup)` registers the ground, the level meshes, the cutaway's twins, the puppets, the props'
+ * batches and the stand-ins, and adds the stand-ins' looks (side and material), the puppets' builds and whether there
+ * are a cutaway and props to the shader key, so a new look makes the next frame warm up first instead of stalling.
  *
  * Invariants: presentation only: it reads sim data and never writes it (doctrine: WebGPU only); every object it
  * makes is under `scene`; equal inputs make equal graphs; materials belong to the library and are never disposed here.
@@ -59,6 +59,7 @@ import { createCutaway, type Cutaway } from './cutaway';
 import { boxGeometry } from './geometry/box';
 import { createLevelMeshes, type LevelMeshes } from './level/meshes';
 import { createActorPuppets, type ActorPuppets } from './puppets/actors';
+import { createStageProps, type StageProps } from './stageProps';
 import type { Warmup } from './warmup';
 
 /** What a stage is made of: the level (none for an empty stage), where materials come from, and its registry. */
@@ -99,6 +100,8 @@ export interface Stage {
   readonly standIns: ReadonlyMap<number, Mesh>;
   /** The actors drawn as puppets, and the player among them. */
   readonly actors: ActorPuppets;
+  /** The props standing in the scene, drawn as their props. */
+  readonly props: StageProps;
   /** Reads where the entities are after a sim step of `dt` s (keeps the place before for `draw`); adds and removes. */
   capture(entities: Iterable<EntityData>, dt?: number): void;
   /** Puts every stand-in and puppet `alpha` (0 to 1) of the way from its place a step ago to its last. */
@@ -247,6 +250,7 @@ export function createStage(options: StageOptions): Stage {
   boxes.name = 'stand-ins';
   const actors = createActorPuppets({ materials: options.materials, registry: options.registry });
   scene.add(boxes, actors.root);
+  const props = createStageProps({ scene, materials: options.materials, registry: options.registry });
 
   const kinds = placeableKinds(options.registry);
   const geometries = new Map<number, BufferGeometry>();
@@ -269,14 +273,16 @@ export function createStage(options: StageOptions): Stage {
     kinds,
     standIns,
     actors,
+    props,
     capture(entities, dt) {
       const list = [...entities];
       const seen = new Set<number>();
       const puppets = actors.capture(list, dt);
+      const drawn = props.capture(list, dt);
       if (meshes && !cutaway && actors.hasPlayer()) cutaway = createCutaway(meshes);
       for (const entity of list) {
         const placed = placeOf(entity, kinds);
-        if (!placed || seen.has(entity.id) || puppets.has(entity.id)) continue;
+        if (!placed || seen.has(entity.id) || puppets.has(entity.id) || drawn.has(entity.id)) continue;
         seen.add(entity.id);
         const { kind, place } = placed;
         const last = places.get(entity.id);
@@ -311,6 +317,7 @@ export function createStage(options: StageOptions): Stage {
       }
       boxes.updateMatrixWorld(true);
       actors.draw(alpha);
+      props.draw(alpha);
     },
     register(warmup) {
       const registrations = [
@@ -321,6 +328,7 @@ export function createStage(options: StageOptions): Stage {
         warmup.register('stage:stand-ins', { objects: (): Object3D[] => [...standIns.values()] }),
         warmup.keyPart('stage:stand-ins', () => [...looks].sort().join(';')),
         actors.register(warmup),
+        props.register(warmup),
       ];
       return { dispose: () => registrations.forEach((registration) => registration.dispose()) };
     },
@@ -329,6 +337,7 @@ export function createStage(options: StageOptions): Stage {
       cutaway = null;
       meshes?.dispose();
       actors.dispose();
+      props.dispose();
       ground.geometry.dispose();
       for (const geometry of geometries.values()) geometry.dispose();
       geometries.clear();
