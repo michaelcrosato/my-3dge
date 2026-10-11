@@ -5,15 +5,15 @@
     "budgets": {
       "simMs": 1,
       "renderMs": 12,
-      "drawCalls": 35,
-      "triangles": 1825,
+      "drawCalls": 33,
+      "triangles": 1823,
       "computeCalls": 0,
-      "textures": 28,
+      "textures": 30,
       "geometries": 10,
-      "pipelines": 51,
+      "pipelines": 66,
       "pipelinesAfterWarmUp": 0
     }
   },
   "tolerance": 0.15,
-  "reason": "WP 5.5, measured with node x perf labs/box --scene room on the development platform (Chromium 141 on SwiftShader at 960 x 540, 20 cores at a load average of 35 to 42 from up to 6 lanes): 120 steps, then 60 frames drawn. The counts were the same in three runs and are the budgets, so with the 15% tolerance a room that draws 5 more calls, adds 3 textures or builds one pipeline after the warm-up fails, and its WP records the new counts with its reason. The means of the last 60 steps and frames were 0.013 to 0.14 ms a step (0.003 to 0.105 of them physics, no anim) and 2.1 to 3.1 ms of CPU a frame; their budgets leave about 7x and 4x over the loaded means, so only a real regression fails. Re-recorded by WP 7.4 (ADR-0008 amendment 7): createEngine now draws every frame through the post chain (engine/gfx/post/chain.ts), whose targets and passes are fixed and always there, so a filter or look switch builds nothing. On the default look (look:clean), the same command without the chain and with it, three runs each at a load average of 3 to 8, gave the same counts in every run: draw calls 33 then 35 and triangles 1,823 then 1,825 (two full-screen passes, one triangle each); textures 14 then 28 (the scene pass's MRT colour, normal and depth targets, bloom's bright and blur mip targets, the display and FXAA targets); pipelines 22 then 51 (the scene's materials built for the MRT's targets and every pass of the chain, bloom's included, all in the warm-up's frame); 0 pipelines after the warm-up both ways. These counts are the new budgets. The frame's CPU time went from 1.13 to 1.66 ms to 1.86 to 2.61 ms, still far inside the 12 ms budget, which is kept."
+  "reason": "WP 5.5, measured with node x perf labs/box --scene room on the development platform (Chromium 141 on SwiftShader at 960 x 540, 20 cores at a load average of 35 to 42 from up to 6 lanes): 120 steps, then 60 frames drawn. The counts were the same in three runs and are the budgets, so with the 15% tolerance a room that draws 5 more calls, adds 3 textures or builds one pipeline after the warm-up fails, and its WP records the new counts with its reason. The means of the last 60 steps and frames were 0.013 to 0.14 ms a step (0.003 to 0.105 of them physics, no anim) and 2.1 to 3.1 ms of CPU a frame; their budgets leave about 7x and 4x over the loaded means, so only a real regression fails. Re-recorded by WP 7.4 (ADR-0008 amendment 7): createEngine now draws every frame through the post chain (engine/gfx/post/chain.ts), which makes its targets and builds every pass's pipelines in the warm-up, so a filter or look switch builds nothing; on the default look (look:clean) a frame is plain and draws the scene straight, skipping the chain's passes. The same command, three runs each and the same counts in every run: without the chain, 33 draw calls, 1,823 triangles, 14 textures and 22 pipelines; with it, 33, 1,823, 30 and 66 (16 textures: the scene pass's MRT colour, normal and depth targets, bloom's bright and blur mip targets, the display and FXAA targets; 44 pipelines: the scene's materials for the MRT's targets and every pass of the chain, bloom's included, all in the warm-up); 0 pipelines after the warm-up both ways. These counts are the new budgets. The frame's CPU time was 1.13 to 1.66 ms without the chain (load average 3 to 4) and 0.9 to 1.06 ms with it (load average 6 to 17); the 12 ms budget is kept."
 }
