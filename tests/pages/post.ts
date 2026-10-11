@@ -13,11 +13,13 @@
  *
  * `window.__postPage`:
  * - `setLook(id, filters)` sets `post.look` and `post.filters`, draws a frame and reports it: the pipelines it built,
- *   the chain's build count, and how many of the scene's materials changed version since the warm-up;
+ *   the chain's build count, how many of the scene's materials changed version since the warm-up, the renderer's
+ *   stats, and `during`: the warm-ups run, pipelines built and idle frames drawn while it switched, so a re-warm
+ *   (the warm-up key changing with the look) shows even though the frame drawn after it builds nothing;
  * - `shoot({ ids, pixels })` shoots the frame as drawn (engine/gfx/shot.ts: pixels as base64, the ID pass);
  * - `parts()` shoots `post.show=parts` (characters red, objects green, the environment blue) and puts it back;
  * - `run(steps, every, looks)` steps the session, drawing after each step and switching to the next look every
- *   `every` steps; returns the hashes every 60 steps and the pipelines each frame built;
+ *   `every` steps; returns the hashes every 60 steps, the pipelines each frame built, and `during` for the whole run;
  * - `shootPlain()` shoots the frame drawn plainly, without the chain;
  * - `pixelArt(on)` tags every mesh drawn as a character (the capsules and the room's own stand-ins, which are
  *   characters through `userData`) as pixel art with `setPart(…, { pixelArt: true })`, keeping its group, or puts
@@ -152,6 +154,8 @@ async function start(): Promise<void> {
   /** The meshes `pixelArt(true)` tagged, each with the tag it had. */
   let artTags: [THREE.Object3D, unknown][] = [];
 
+  /** Frames that came back idle, a warm-up running or due (the warm-up key changed), since the page started. */
+  let idle = 0;
   /** Draws until a frame is drawn, waiting out any warm-up; resolves once the GPU has finished it. */
   const settle = async (through: Post = post): Promise<FrameReport> => {
     for (let tries = 0; tries < 10; tries++) {
@@ -162,9 +166,20 @@ async function start(): Promise<void> {
         await gfx.device.queue.onSubmittedWorkDone();
         return report;
       }
+      idle++;
       if (gfx.warmup.running) await gfx.warmup.run(frameView).catch(() => undefined);
     }
     throw new Error('post page: no frame was drawn in 10 tries');
+  };
+  /** The warm-ups run, the pipelines built since startup, and the idle frames, now. */
+  const counts = () => {
+    const { warmUps, pipelines } = gfx.stats();
+    return { warmUps, pipelines, idle };
+  };
+  /** What happened since `before` (a `counts()`): a re-warm shows as warm-ups, pipelines and idle frames. */
+  const since = (before: ReturnType<typeof counts>) => {
+    const now = counts();
+    return { warmUps: now.warmUps - before.warmUps, pipelines: now.pipelines - before.pipelines, idle: now.idle - before.idle }; // prettier-ignore
   };
   /** How many materials changed version since the warm-up (a recompile bumps it). */
   const recompiled = () => {
@@ -183,10 +198,12 @@ async function start(): Promise<void> {
     looks: () => registry.list('look').map((look) => look.id),
     /** Draws look `id` with `filters` laid over it (see the file comment). */
     async setLook(id: string, filters: FilterSpec = {}) {
+      const before = counts();
       settings.set('post.look', id);
       settings.set('post.filters', filters);
       const frame = await settle();
-      return { frame, builds: post.builds, recompiled: recompiled(), style: styles.style, stats: gfx.stats() };
+      const during = since(before);
+      return { frame, builds: post.builds, recompiled: recompiled(), style: styles.style, stats: gfx.stats(), during };
     },
     /** Shoots the frame as the chain draws it now. */
     async shoot(options: { ids?: boolean; pixels?: boolean } = {}): Promise<ShotJson> {
@@ -212,6 +229,7 @@ async function start(): Promise<void> {
     async run(steps: number, every: number, looks: string[]) {
       const hashes: Record<string, string> = { 0: session.world.hash() };
       const built: number[] = [];
+      const before = counts();
       let turn = 0;
       for (let k = 1; k <= steps; k++) {
         if (k % every === 0) settings.set('post.look', looks[turn++ % looks.length]);
@@ -220,7 +238,7 @@ async function start(): Promise<void> {
         built.push((await settle()).built);
         if (k % 60 === 0) hashes[k] = session.world.hash();
       }
-      return { hashes, built, switched: turn };
+      return { hashes, built, switched: turn, during: since(before) };
     },
     /** Tags every character as pixel art, or puts their own tags back (see the file comment). */
     pixelArt(on: boolean) {

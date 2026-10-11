@@ -1,7 +1,8 @@
 /**
  * @file Pixel arithmetic for the post-processing T2 (tests/e2e/post.spec.ts): shots as RGBA bytes, which pixels
  * changed, the parts view read back as a part per pixel, the pixels near a part or another part, the ID pass as
- * compared, and the edge error that chose the edge smoothing. Pure functions of their arguments, no page.
+ * compared, the edge error that chose the edge smoothing and the reference it is measured against. Pure functions
+ * of their arguments, no page.
  *
  * Invariants: colours compare by channel, a pixel "changed" when a channel moved by more than `DIFF` levels; parts
  * are 0 a character, 1 an object, 2 the environment (the background included).
@@ -94,4 +95,20 @@ export function edgeError(shot: Uint8Array, none: Uint8Array, reference: Uint8Ar
     n++;
   }
   return sum / Math.max(1, n);
+}
+
+/** `big`, drawn at `by` × `by` the size of a `width` × `height` shot, averaged down to that size. */
+export function averageDown(big: Uint8Array, width: number, height: number, by: number): Uint8Array {
+  const out = new Uint8Array(width * height * 4);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      for (let c = 0; c < 4; c++) {
+        let sum = 0;
+        for (let dy = 0; dy < by; dy++)
+          for (let dx = 0; dx < by; dx++) sum += big[((y * by + dy) * width * by + x * by + dx) * 4 + c];
+        out[(y * width + x) * 4 + c] = Math.round(sum / (by * by));
+      }
+    }
+  }
+  return out;
 }

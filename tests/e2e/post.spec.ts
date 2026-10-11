@@ -12,7 +12,8 @@
  *    `GFX_POST_NO_STYLES`;
  * 3. switching to every look builds 0 pipelines after the warm-up and recompiles no material, the ID pass staying the
  *    clean frame's, and switching looks every 20 steps while the room's session steps leaves its hashes those of the
- *    same session stepped in Node;
+ *    same session stepped in Node; no switch, in any test, runs a warm-up (the re-warm I-46 removes) or builds a
+ *    pipeline, which `during` counts round each switch (tests/pages/post.ts);
  * 4. pixel art snaps the camera to its block grid: sliding the camera by fractions of a block changes the picture
  *    only when it crosses half a block, then by a whole block; without the snap every slide shimmers;
  * 5. bloom is off at the `low` quality tier, with advice `GFX_POST_NO_BLOOM`;
@@ -30,7 +31,9 @@ import '../../labs/box/scenes/room';
 import { AA_CHOICE } from '../../engine/gfx/post/aa';
 import { createSession } from '../../engine/sim/scene';
 import { expect, test, type Harness } from './fixtures';
+import { SCOPED, SCOPES, SCREEN } from './post-cases';
 import {
+  averageDown,
   borderOf,
   changedShare,
   DIFF,
@@ -44,12 +47,32 @@ import {
   type Shot,
 } from './post-pixels';
 
-/** What a look switch reports. */
+/** Warm-ups run, pipelines built and frames that came back idle: a re-warm adds to all three. */
+interface Counts {
+  warmUps: number;
+  pipelines: number;
+  idle: number;
+}
+
+/** What a look switch reports: `stats` after it, `during` it. */
 interface Shown {
   frame: { drawn: boolean; built: number };
   builds: number;
   recompiled: number;
   style: string;
+  stats: { warmUps: number; pipelines: number };
+  during: Counts;
+}
+
+/** What a switch may do: nothing that warms up or builds. */
+const STILL: Counts = { warmUps: 0, pipelines: 0, idle: 0 };
+
+/** Expects `shown` to have drawn with no warm-up and no pipeline built, the renderer's counts still `first`'s. */
+function expectStill(shown: Shown, first: Shown, where: string): void {
+  expect(shown.frame, where).toMatchObject({ drawn: true, built: 0 });
+  expect(shown.during, `${where}: warm-ups, pipelines and idle frames while switching`).toEqual(STILL);
+  const counts = [shown.stats.warmUps, shown.stats.pipelines];
+  expect(counts, `${where}: warm-ups and pipelines since the first switch`).toEqual([first.stats.warmUps, first.stats.pipelines]); // prettier-ignore
 }
 
 /** What the page publishes as `window.__postPage` (tests/pages/post.ts), as far as this suite uses it. */
@@ -63,7 +86,11 @@ interface PostPage {
   pixelArt(on: boolean): number;
   withoutStyles(id: string): Promise<{ drawn: boolean; built: number }>;
   parts(): Promise<Shot>;
-  run(steps: number, every: number, looks: string[]): Promise<{ hashes: Record<string, string>; built: number[] }>;
+  run(
+    steps: number,
+    every: number,
+    looks: string[],
+  ): Promise<{ hashes: Record<string, string>; built: number[]; during: Counts }>;
   slide(fractions: number[], snap: boolean): Promise<string[]>;
   measureAa(): Promise<Record<'none' | 'fxaa' | 'smaa' | 'reference', Shot>>;
 }
@@ -84,50 +111,6 @@ async function open(page: Page, harness: Harness, query = ''): Promise<void> {
   await harness.assertWebGPU();
 }
 
-/**
- * The scoped filters, each with numbers that change what they touch plainly, the share each must change and, for some,
- * the colour every changed pixel takes (`to`, sRGB): every palette, the levels alone (palette `none`), every style, and
- * the outline's own colour (with `darken: 1` only the colour can change a pixel). The shares are about half those
- * measured on the least covered part (WP 7.4's review).
- */
-const SCOPED: { name: string; filters: Record<string, unknown>; inside: number; to?: [number, number, number] }[] = [
-  { name: 'cel', filters: { bands: 3, punch: 1.8, ink: 1 }, inside: 0.25 },
-  { name: 'pixel', filters: { size: 6, levels: 8, outline: false, snap: false }, inside: 0.2 },
-  { name: 'palette', filters: { palette: 'gameboy', dither: 0.6 }, inside: 0.6 },
-  { name: 'palette', filters: { palette: 'pico8', dither: 0.6 }, inside: 0.5 },
-  { name: 'palette', filters: { palette: 'cga', dither: 0.6 }, inside: 0.5 },
-  { name: 'palette', filters: { palette: '1bit', dither: 0.6 }, inside: 0.5 },
-  { name: 'palette', filters: { palette: 'amber', dither: 0.6 }, inside: 0.5 },
-  { name: 'palette', filters: { palette: 'none', levels: 8, dither: 0 }, inside: 0.4 },
-  { name: 'outline', filters: { width: 2, darken: 0 }, inside: 0.02 },
-  { name: 'outline', filters: { width: 2, darken: 1, color: '#ff0000' }, inside: 0.02, to: [255, 0, 0] },
-  { name: 'stylize', filters: { style: 'paint', size: 4, color: 1 }, inside: 0.15 },
-  { name: 'stylize', filters: { style: 'halftone', size: 4, color: 1 }, inside: 0.5 },
-  { name: 'stylize', filters: { style: 'ascii', size: 6, color: 1 }, inside: 0.5 },
-  { name: 'stylize', filters: { style: 'sketch', size: 4, color: 1 }, inside: 0.4 },
-  { name: 'grade', filters: { temperature: 1, brightness: 1.6, saturation: 0 }, inside: 0.5 },
-  { name: 'scanlines', filters: { strength: 1, period: 2 }, inside: 0.25 },
-  { name: 'grain', filters: { amount: 1 }, inside: 0.3 },
-  { name: 'chroma', filters: { amount: 1 }, inside: 0.01 },
-];
-
-/** The scopes tried, each with the parts (0 characters, 1 objects, 2 environment) it covers. */
-const SCOPES: [string, number[]][] = [
-  ['all', [0, 1, 2]],
-  ['characters', [0]],
-  ['objects', [1]],
-  ['environment', [2]],
-];
-
-/** The whole-screen filters, each with the share of the picture it must change. */
-const SCREEN: { filters: Record<string, unknown>; changed: number }[] = [
-  { filters: { bloom: { scope: 'all', strength: 1.5, threshold: 0.1 } }, changed: 0.05 },
-  { filters: { aa: { scope: 'all' } }, changed: 0.01 },
-  { filters: { screen: { scope: 'all', curvature: 0.2 } }, changed: 0.3 },
-  { filters: { screen: { scope: 'all', vignette: 1 } }, changed: 0.2 },
-  { filters: { screen: { scope: 'all', pixelate: 4 } }, changed: 0.3 },
-];
-
 test('every filter and scope works, a clean look is the plain frame, and the ID pass is unchanged by filters', async ({
   page,
   harness,
@@ -147,12 +130,14 @@ test('every filter and scope works, a clean look is the plain frame, and the ID 
   const ids = idsOf(base);
   expect(ids.length, 'objects the ID pass sees').toBeGreaterThan(10);
   const before = rgba(base);
+  // Every switch below leaves the renderer's counts as this one, after the shots' own first builds, left them.
+  const first = await page.evaluate(() => __postPage.setLook('look:clean'));
 
   for (const { name, filters, inside, to } of SCOPED) {
     for (const [scope, covered] of SCOPES) {
       const spec = { [name]: { ...filters, scope } };
       const shown = await page.evaluate((f) => __postPage.setLook('look:clean', f), spec);
-      expect(shown.frame, `${name} ${JSON.stringify(filters)} on ${scope}`).toMatchObject({ drawn: true, built: 0 });
+      expectStill(shown, first, `${name} ${JSON.stringify(filters)} on ${scope}`);
       const shot = await page.evaluate(() => __postPage.shoot({ ids: true }));
       expect(idsOf(shot), `the ID pass with ${name} ${JSON.stringify(filters)} on ${scope}`).toEqual(ids);
       const after = rgba(shot);
@@ -177,7 +162,7 @@ test('every filter and scope works, a clean look is the plain frame, and the ID 
 
   for (const { filters, changed } of SCREEN) {
     const shown = await page.evaluate((f) => __postPage.setLook('look:clean', f), filters);
-    expect(shown.frame, JSON.stringify(filters)).toMatchObject({ drawn: true, built: 0 });
+    expectStill(shown, first, JSON.stringify(filters));
     const shot = await page.evaluate(() => __postPage.shoot({ ids: true }));
     expect(idsOf(shot), `the ID pass with ${JSON.stringify(filters)}`).toEqual(ids);
     const share = changedShare(before, rgba(shot));
@@ -198,7 +183,8 @@ test('objects tagged pixel art are pixel art whatever the scope, and pixel art h
   const nearCharacter = nearPart(parts, width, height, 0, BORDER);
   const pixel = { size: 6, levels: 0, outline: false, snap: false };
   const shoot = async (filters: object) => {
-    await page.evaluate((f) => __postPage.setLook('look:clean', f), filters);
+    const shown = await page.evaluate((f) => __postPage.setLook('look:clean', f), filters);
+    expect(shown.during, `switching to ${JSON.stringify(filters)}`).toEqual(STILL);
     return rgba(await page.evaluate(() => __postPage.shoot()));
   };
 
@@ -272,10 +258,11 @@ test('every look builds 0 pipelines after the warm-up and recompiles nothing, an
   expect(looks.length).toBe(86);
   await page.evaluate(() => __postPage.setLook('look:clean'));
   const ids = idsOf(await page.evaluate(() => __postPage.shoot({ ids: true, pixels: false })));
+  const first = await page.evaluate(() => __postPage.setLook('look:clean'));
   const styles = new Set<string>();
   for (const id of [...looks, 'look:clean']) {
     const shown = await page.evaluate((look) => __postPage.setLook(look), id);
-    expect(shown.frame, id).toMatchObject({ drawn: true, built: 0 });
+    expectStill(shown, first, id);
     expect(shown.recompiled, `materials ${id} recompiled`).toBe(0);
     expect(shown.builds, `${id}: the chain's output graph builds`).toBe(1);
     styles.add(shown.style);
@@ -290,6 +277,7 @@ test('every look builds 0 pipelines after the warm-up and recompiles nothing, an
   );
   expect(played.built.length).toBe(240);
   expect(Math.max(...played.built), 'pipelines built by any frame of the run').toBe(0);
+  expect(played.during, 'warm-ups, pipelines and idle frames over the run').toEqual(STILL);
   const session = createSession('box:room', { seed: 1 });
   const node: Record<string, string> = { 0: session.world.hash() };
   for (let k = 1; k <= 240; k++) {
@@ -335,12 +323,13 @@ test('bloom is off at the low quality tier, with advice', async ({ page, harness
   const glow = { bloom: { scope: 'all', strength: 1.5, threshold: 0.1 } };
   await page.evaluate(() => __postPage.setLook('look:clean'));
   const off = rgba(await page.evaluate(() => __postPage.shoot()));
-  await page.evaluate((f) => __postPage.setLook('look:clean', f), glow);
+  const first = await page.evaluate((f) => __postPage.setLook('look:clean', f), glow);
+  expect(first.during, 'switching bloom on').toEqual(STILL);
   const high = rgba(await page.evaluate(() => __postPage.shoot()));
   expect(changedShare(off, high), 'bloom at the high tier').toBeGreaterThan(0.05);
   await page.evaluate(() => __postPage.settings.set('quality', 'low'));
   const shown = await page.evaluate((f) => __postPage.setLook('look:clean', f), glow);
-  expect(shown.frame).toMatchObject({ drawn: true, built: 0 });
+  expectStill(shown, first, 'bloom at the low tier');
   const low = rgba(await page.evaluate(() => __postPage.shoot()));
   expect(changedShare(off, low), 'bloom at the low tier').toBe(0);
   expect(harness.advice().map((advice) => advice.code)).toContain('GFX_POST_NO_BLOOM');
@@ -351,18 +340,7 @@ test('the edge smoothing that measures better is the one the chain uses', async 
   await open(page, harness);
   const shots = await page.evaluate(() => __postPage.measureAa());
   const { width, height } = shots.none;
-  const big = rgba(shots.reference);
-  const reference = new Uint8Array(width * height * 4);
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      for (let c = 0; c < 4; c++) {
-        let sum = 0;
-        for (let dy = 0; dy < 4; dy++)
-          for (let dx = 0; dx < 4; dx++) sum += big[((y * 4 + dy) * width * 4 + x * 4 + dx) * 4 + c];
-        reference[(y * width + x) * 4 + c] = Math.round(sum / 16);
-      }
-    }
-  }
+  const reference = averageDown(rgba(shots.reference), width, height, 4);
   const none = rgba(shots.none);
   const errors = {
     none: edgeError(none, none, reference),
