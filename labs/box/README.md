@@ -12,10 +12,11 @@ by `tests/unit/box-readme.test.ts`: a setting, file or command named here that d
 | Scene | What it shows | Covered by |
 |---|---|---|
 | `box:room` (`labs/box/scenes/room.ts`) | The room, `labs/box/levels/room.txt`: 16 × 12 m of flagstones in brick walls 3 m high, one low wall (0.75 m), a 2 × 2 m pillar, the hero's spawn and three numbered markers. Three crates move on fixed paths from the markers, no physics yet: along the low wall, round a circle, round the pillar. | `tests/e2e/box.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-1-room.replay.json`, `tests/replays/box-1-tuned.replay.json`, `labs/box/scenes/room.test.ts`, `tests/baselines/thumbs/box-room-iso.json` |
-| `box:room-hero` (`labs/box/scenes/room-hero.ts`) | The same room as a physics level, and the hero (`labs/box/cast/hero.ts`: the stress test's speeds and timings, 5 m/s, a 1.46 m jump, a 3.25 m dash) at the spawn, the player: he walks (WASD, a stick), jumps (Space) onto the low wall but not the walls, and dashes (Shift); his animator steps his body with the sim. | `tests/e2e/parity.spec.ts`, `tests/replays/box-2-walk.replay.json`, `tests/replays/box-2-dash.replay.json`, `tests/replays/box-2-jump.replay.json`, `labs/box/scenes/room-hero.test.ts`, `labs/box/cast/hero.test.ts` |
+| `box:room-hero` (`labs/box/scenes/room-hero.ts`) | The same room as a physics level, and the hero (`labs/box/cast/hero.ts`: the stress test's speeds and timings, 5 m/s, a 1.46 m jump, a 3.25 m dash) at the spawn, the player: he walks (WASD, a stick), jumps (Space) onto the low wall but not the walls, and dashes (Shift); his animator steps his body with the sim, drawn as the neutral humanoid. Every camera follows him, and the walls and the pillar before him cut away; first person hides his body but his hands. | `tests/e2e/box-hero.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-2-walk.replay.json`, `tests/replays/box-2-dash.replay.json`, `tests/replays/box-2-jump.replay.json`, `labs/box/scenes/room-hero.test.ts`, `labs/box/cast/hero.test.ts` |
 
 The page draws each mover as a crate: an entity is drawn as a stand-in box when one of its components declares `x`
-and `z` in metres (engine/gfx/stage.ts), until actors and props draw themselves (Box 2 and Box 3).
+and `z` in metres (engine/gfx/stage.ts), until it draws itself: actors with an animator are puppets from Box 2
+(engine/gfx/puppets/actors.ts), props arrive with Box 3.
 
 ## Settings
 
@@ -36,7 +37,8 @@ Set one with `node x set box.room.speed 3`, as a URL parameter (`labs/box/?box.r
 ## The page
 
 `labs/box/` opens the room; the landing page (`index.html`) opens the box. Its routes: `?scene=room`, `?seed=4`,
-`?cam=iso` (a camera code: `cam=topdown`, `cam=iso,45,2,persp`, `cam3=orbit`, `cam3=fly`), any setting by its path,
+`?cam=iso` (a camera code: `cam=topdown`, `cam=iso,45,2,persp`, `cam3=orbit`, `cam3=fly`; with the hero also
+`cam3=chase`, `cam3=first` and `cam3=rail`, which follow him), any setting by its path,
 and `?replay=box-1-room` (a replay played in real time; `?replay=box-2-jump` opens the hero's room). In the page,
 `window.__engine.help()` lists every member.
 

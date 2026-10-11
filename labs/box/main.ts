@@ -13,7 +13,7 @@
  *
  * @example
  * // http://127.0.0.1:5173/labs/box/?scene=room&cam=topdown&box.room.speed=3
- * // http://127.0.0.1:5173/labs/box/?scene=room-hero&cam=threequarter
+ * // http://127.0.0.1:5173/labs/box/?scene=room-hero&cam3=chase
  * // node x shot labs/box --scene room --cam iso
  */
 /// <reference types="vite/client" />

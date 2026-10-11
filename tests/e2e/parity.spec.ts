@@ -24,6 +24,7 @@ import '../../labs/box/scenes/room';
 import '../../labs/box/scenes/room-hero';
 import { playReplay, type Replay } from '../../engine/sim/replay';
 import { CAMERA_3D, VIEW_NAMES } from '../../engine/gfx/cameras/codes';
+import { FOLLOW_CAMERAS } from '../../engine/gfx/cameras/place';
 import { RESOLUTION_MODES } from '../../engine/gfx/resolution';
 import { expect, test, type Harness } from './fixtures';
 
@@ -78,12 +79,12 @@ const STAGES: Stage[] = [
       tick(30);
       __engine.input.press('dash');
       tick(20);
-      __engine.camera.set('cam=topdown');
+      __engine.camera.set('cam3=chase');
       __engine.input.axis('move', [0, 1]);
       tick(25);
       __engine.input.hold('jump');
       tick(15);
-      __engine.camera.set('cam3=orbit');
+      __engine.camera.set('cam3=first');
       __engine.input.hold('jump', false);
       tick(20);
       __engine.input.axis('move', [-1, 0]);
@@ -128,10 +129,14 @@ function scratchCopy(): string {
   return root;
 }
 
-/** Every camera preset: each classic view in both projections, then each 3D camera (engine/gfx/cameras/codes.ts). */
+/**
+ * Every camera preset: each classic view in both projections, then each 3D camera (engine/gfx/cameras/codes.ts), then
+ * the cameras that follow the hero (chase, first person, the depth rail; engine/gfx/cameras/place.ts).
+ */
 const CAMERA_PRESETS = [
   ...VIEW_NAMES.flatMap((view) => [`cam=${view}`, `cam=${view},persp`]),
   ...CAMERA_3D.map((type) => `cam3=${type}`),
+  ...FOLLOW_CAMERAS.map((type) => `cam3=${type}`),
 ];
 
 /** The page's engine, inside `evaluate`. */
