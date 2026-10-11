@@ -45,6 +45,11 @@ export const TIMELINE_CODES = defineCodes('anim', {
     fix: 'give each target a numeric id field, or pass hits a fourth argument that returns one: (t) => t.entity',
     doc: 'Thrown by `Attack.hits` and `Combo.hits` (engine/anim/timeline.ts), which hit each target once per swing by its key: its `id` field, or what the keying function given returns. Targets without one would all share the key `undefined`, so only the first would ever be hit.',
   },
+  ANIM_EMPTY_COMBO: {
+    template: 'a Combo was made from no moves, so it has no hit to play',
+    fix: 'pass Combo at least one move (an id such as "jab", a Move, a spec or an Attack); check a list read from data before making the combo',
+    doc: 'Thrown by `new Combo(moves)` (engine/anim/timeline.ts) when `moves` is empty: `press`, `current`, `save` and `load` all play or read one of its hits.',
+  },
 });
 
 /** Seconds within which a phase counts as finished: far below a tick, far above a float sum's error. */
@@ -234,7 +239,7 @@ export class Attack {
   readonly move: Move;
   /** Its timeline. */
   readonly timeline: Timeline;
-  /** The events of the last `start` or `update`. */
+  /** The events of the last `start` or `update`, refilled by the next one (`update`'s own array is never refilled). */
   readonly events: TimelineEvent[] = [];
   /** How far the root moved forward in the last step, metres before the build's size (`rootMotion: 'apply'`). */
   rootDelta = 0;
@@ -289,17 +294,21 @@ export class Attack {
     return true;
   }
 
-  /** One fixed step of `dt` seconds: returns the events fired, in order (also kept in `events`). */
+  /**
+   * One fixed step of `dt` seconds: returns the events fired, in order, in a new array that a later `start` or
+   * `update` leaves as it is (they are also copied into `events`).
+   */
   update(dt: number): TimelineEvent[] {
     if (!this.busy) {
       [this.rootDelta, this.events.length, this.#open] = [0, 0, false];
-      return this.events;
+      return [];
     }
     const before = rootTravel(this.move, this.phase, this.u);
-    this.#record(this.timeline.advance(dt));
-    const ended = this.events.some((e) => e.type === 'end');
+    const events = this.timeline.advance(dt);
+    this.#record(events);
+    const ended = events.some((e) => e.type === 'end');
     this.rootDelta = (ended ? rootTravel(this.move, 'recover', 1) : rootTravel(this.move, this.phase, this.u)) - before;
-    return this.events;
+    return events;
   }
 
   /** The part that leaves a trail now (the animator's `trail`): while striking and just after, as my-3d2dge drew it. */
@@ -413,8 +422,12 @@ export class Combo {
   /** Seconds since the current hit ended (0 while it plays). */
   idle = LONG_AGO;
 
-  /** A chain of `moves` (ids, moves, specs or attacks); `options.window` is 0.3 s by default. */
+  /**
+   * A chain of `moves` (ids, moves, specs or attacks; at least one, else `ANIM_EMPTY_COMBO`); `options.window` is
+   * 0.3 s by default.
+   */
   constructor(moves: readonly (string | Move | MoveSpec | Attack)[], options: { window?: number } = {}) {
+    if (moves.length === 0) throw codeError('ANIM_EMPTY_COMBO');
     this.attacks = moves.map((m) => (m instanceof Attack ? m : new Attack(m)));
     this.window = options.window ?? 0.3;
   }
@@ -445,7 +458,7 @@ export class Combo {
     return this.attacks[next].start();
   }
 
-  /** One fixed step of the hit playing: returns its events. */
+  /** One fixed step of the hit playing: returns its events, in a new array a later `press` leaves as it is. */
   update(dt: number): TimelineEvent[] {
     if (this.step < 0) return [];
     const cur = this.current;

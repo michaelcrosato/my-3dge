@@ -3,7 +3,8 @@
  * differential tests against my-3d2dge's reference vectors (tests/baselines/port/moves.json, converted to SI), the
  * hands' and the blade tip's paths over u within 1 cm on average and 3 cm at worst, each exception listed with its
  * reason. Also: a humanoid and an animator playing moves (bone lengths, a solve from the state alone, a spin's turn,
- * the sim's state the same whether or not it was posed, a precise trail), `moveAt`, `measureMove` and its cache,
+ * the body's lunge only with root motion `'visual'`, the sim's state the same whether or not it was posed, a precise
+ * trail), `moveAt`, `measureMove` and its cache,
  * `inArc`, `inHitShape`, `knockback` and the strike's span, read from an animator only with `preciseHits`.
  */
 import { readFileSync } from 'node:fs';
@@ -167,6 +168,22 @@ describe('a humanoid and an animator playing moves', () => {
     const angle = Math.atan2(turned.x, turned.z) - Math.atan2(facing.x, facing.z);
     expect(angle).toBeCloseTo(0.875 * 2 * Math.PI - 2 * Math.PI, 9);
     expect(rig.pose.rootPos.distanceTo(new Vector3(2, rig.pose.rootPos.y, 3))).toBeLessThan(0.1);
+  });
+
+  it('lunge the body with rootMotion visual, and leave the lunge to the root with apply (never both)', () => {
+    /** The body's largest lunge, metres either way, through one swing of `attack`. */
+    const peakLunge = (attack: Attack) => {
+      const rig = new Humanoid({ build: 'build:heroic', weapon: 'sword', clock: 0 });
+      let peak = 0;
+      attack.start();
+      while (attack.busy) {
+        attack.update(rig.dt);
+        peak = Math.max(peak, Math.abs(rig.step({ body: attack.body }).state.body.lunge));
+      }
+      return peak;
+    };
+    expect(peakLunge(new Attack('thrust', { rootMotion: 'apply' }))).toBe(0);
+    expect(peakLunge(new Attack('thrust'))).toBeGreaterThan(0.1);
   });
 
   it('leave the sim state as it is whether or not the animator was posed (WP 3.7, with moves)', () => {

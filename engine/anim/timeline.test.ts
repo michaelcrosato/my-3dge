@@ -2,7 +2,8 @@
  * @file Unit tests for timelines, attacks and combos (engine/anim/timeline.ts), PLAN.md WP 6.1's Done when: combo
  * chaining windows are exact in ticks. Also: phases end on exact ticks, leftover time carries across phases and fires
  * every event in order, the hit window connects once per target per swing (also when shorter than a tick), sweeps,
- * root motion, trails, and save/load continuing exactly.
+ * root motion, trails, each step's events in an array a later start or press leaves alone, an empty combo's error,
+ * and save/load continuing exactly.
  */
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../core/math';
@@ -255,6 +256,25 @@ describe('Attack', () => {
     expect(b.save()).toEqual(a.save());
   });
 
+  it('returns each step’s events in an array of their own, which a start in the same step leaves as it is', () => {
+    const jab = new Attack('jab');
+    jab.start();
+    let held = jab.update(SIM_DT);
+    while (!types(held).includes('recover')) held = jab.update(SIM_DT);
+    const recover = [...held];
+    expect(jab.start(true)).toBe(true); // cancels the recover into a new swing
+    expect(held).toEqual(recover);
+    expect(types(jab.events)).toEqual(['wind']);
+    while (jab.busy) held = jab.update(SIM_DT);
+    expect(types(held)).toEqual(['end']);
+    expect(jab.start()).toBe(true);
+    expect(types(held)).toEqual(['end']);
+    jab.cancel();
+    const idle = jab.update(SIM_DT);
+    expect(jab.start()).toBe(true);
+    expect(idle).toEqual([]);
+  });
+
   it('tells the body the move, phase and share while it plays', () => {
     const a = new Attack('overhead');
     expect(a.body).toBeUndefined();
@@ -302,6 +322,21 @@ describe('Combo: chaining windows exact in ticks (WP 6.1 Done when)', () => {
     expect([combo.press(), combo.step]).toEqual([true, 0]);
     combo.cancel();
     expect([combo.busy, combo.body, combo.press(), combo.step]).toEqual([false, undefined, true, 0]);
+  });
+
+  it('returns each step’s events in an array of their own, which a press in the same step leaves as it is', () => {
+    const combo = new Combo(['jab']);
+    combo.press();
+    let held = combo.update(SIM_DT);
+    while (!types(held).includes('recover')) held = combo.update(SIM_DT);
+    const recover = [...held];
+    expect(combo.press()).toBe(true); // the one hit again, from its recover
+    expect(held).toEqual(recover);
+    expect(types(combo.current.events)).toEqual(['wind']);
+  });
+
+  it('refuses to be made from no moves, naming the fix (ANIM_EMPTY_COMBO)', () => {
+    expect(() => new Combo([])).toThrow('[ANIM_EMPTY_COMBO] a Combo was made from no moves');
   });
 
   it('continues exactly after save and load', () => {
