@@ -1,7 +1,8 @@
 /**
  * @file Tests for the level bodies (engine/sim/levelBodies.ts): fixtures/levels/room.txt's bodies are solid exactly
  * on its solid grid (at each tile's centre and near its corners), stand as high as each tile's top, rest on a ground
- * slab one tile wider than the map, and enter Rapier the same way every time.
+ * slab one tile wider than the map, and enter Rapier the same way every time; a brazier is a cylinder as high and as
+ * wide as its glyph says; a hull (stairs) is refused, naming the missing shape.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -81,5 +82,29 @@ describe("fixtures/levels/room.txt's level bodies", () => {
       return state;
     });
     expect(states[0]).toBe(states[1]);
+  });
+});
+
+describe('cylinders and hulls', () => {
+  it("stand a brazier as an upright cylinder, as high and as wide as its glyph's top and radius", () => {
+    const level = compileLevel('#####\n#.t.#\n#####\n', { file: 'brazier.txt' });
+    const physics = createPhysics();
+    addLevelBodies(physics, level);
+    physics.step({ dt: 1 / 60, settings: createSettings().sim });
+    const [x, z] = [2.5, 1.5];
+    expect(physics.probe(x, z)?.y).toBeCloseTo(0.75, 5);
+    expect(physics.probe(x + 0.3, z)?.y).toBeCloseTo(0.75, 5); // within its 0.3125 m radius
+    expect(physics.probe(x + 0.33, z)?.y).toBeCloseTo(0, 5); // just past it: the floor
+    expect(physics.probe(x, z - 0.3)?.y).toBeCloseTo(0.75, 5);
+    physics.dispose();
+  });
+
+  it("refuses a hull collider, naming the shape engine/physics lacks (the WP 4.2 core proposal's)", () => {
+    const level = compileLevel('#####\n#=..#\n#^..#\n#...#\n#####\n', { file: 'stairs.txt' });
+    const physics = createPhysics();
+    expect(() => addLevelBodies(physics, level)).toThrow(
+      /^\[PHYSICS_BAD_ARGUMENT\] addLevelBodies\(level\)\.colliders\[1\] \(glyph:stairs\) got a hull collider/,
+    );
+    physics.dispose();
   });
 });
