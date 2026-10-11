@@ -1,8 +1,10 @@
 /**
  * @file The steps fixture scene (PLAN.md WP 3.2): a course for the character controller, built by a scene script
- * because the level's stairs arrive in WP 4.2. Lanes run east (+X), each starting at `x0` on the ground at its `z`:
+ * because the level's stairs arrive in WP 4.2. Lanes run east (+X) on an 80 m wide floor (x 0 to 80, z 0 to 100,
+ * no gaps), each starting at `x0` on the ground at its `z`:
  *
- * - `oneBox`: a floor that is one box; `merged`: a floor of 1 m tiles, 320 boxes in one body (as level bodies are);
+ * - `oneBox`: a floor that is one box (z 0 to 4); `merged`: 1 m tiles (z 4 to 8), 320 boxes in one body as level
+ *   bodies are, the lane on a seam; beyond z 8, one slab under the rest;
  * - `steps`: one step per height in `STEP_HEIGHTS` (5 cm to 40 cm), its face at x 6;
  * - `slopes`: one ramp per angle in `SLOPE_ANGLES` (20° to 60°), from x 6 up to a plateau 2 m on;
  * - `ledge`: a platform 1.5 m high to walk off (coyote time), its edge at x 8;
@@ -84,9 +86,9 @@ export function buildCourse(physics: Physics): Course {
   const lane = (z: number, x0 = 2, y0 = 0): Lane => ({ x0, y0, z });
   physics.addBody({ type: 'fixed', colliders: [box([80, 1, 4], [40, -0.5, 2])] });
   const tiles = [];
-  for (let i = 0; i < 80; i++) for (let j = 0; j < 4; j++) tiles.push(box([1, 1, 1], [i + 0.5, -0.5, 5.5 + j]));
+  for (let i = 0; i < 80; i++) for (let j = 0; j < 4; j++) tiles.push(box([1, 1, 1], [i + 0.5, -0.5, 4.5 + j]));
   physics.addBody({ type: 'fixed', colliders: tiles });
-  const ground = [box([80, 1, 90], [40, -0.5, 55])];
+  const ground = [box([80, 1, 92], [40, -0.5, 54])];
   const steps = STEP_HEIGHTS.map((h, i) => {
     ground.push(box([4, h, 2], [8, h / 2, 12 + 3 * i]));
     return lane(12 + 3 * i);
@@ -119,7 +121,7 @@ export function buildCourse(physics: Physics): Course {
   });
   return {
     oneBox: lane(2),
-    merged: lane(7),
+    merged: lane(6),
     steps,
     slopes,
     ledge: lane(66, 3, 1.5),

@@ -60,7 +60,7 @@ describe('walking across level ground', () => {
         [2, 1],
         [78, -1],
       ] as const) {
-        const c = rig(createCharacter(), [x0, 0, lane === 'oneBox' ? 2 : 7]);
+        const c = rig(createCharacter(), [x0, 0, lane === 'oneBox' ? 2 : 6]);
         const walk = c.run(600, { move: [dir, 0] });
         const turn = [...c.run(30, { move: [-dir, 0] }), ...c.run(30), ...c.run(30, { move: [dir, 0.3] })];
         expect(Math.abs(walk.at(-1)!.x - x0), `${lane} ${dir}`).toBeGreaterThan(59);
@@ -74,7 +74,7 @@ describe('walking across level ground', () => {
 
   it('keeps at least 95% under the usual downward pushes, 1 mm to 2 cm a tick, moved directly', () => {
     for (const push of [0.001, 0.0044, 0.01, 0.02]) {
-      for (const z of [2, 7]) {
+      for (const z of [2, 6]) {
         const c = rig(createCharacter(), [2, 0, z]);
         let worst = 1;
         for (let i = 0; i < 400; i++) {
@@ -237,7 +237,7 @@ describe('the dash', () => {
 });
 
 describe('pushing', () => {
-  it('pushes a 20 kg crate, which moves off with the momentum they share', () => {
+  it('pushes a 20 kg crate, which moves off with the momentum they share and slides along', () => {
     const c = rig(createCharacter(), [2, 0, 76]);
     const crate = () => c.physics.readBody(c.course.crate.body);
     expect(crate().mass).toBeCloseTo(20, 4);
@@ -249,6 +249,7 @@ describe('pushing', () => {
     const x0 = crate().position.x;
     c.run(60, { move: [1, 0] });
     expect(crate().position.x - x0).toBeGreaterThan(4);
+    expect(crate().position.y).toBeCloseTo(0.3, 2); // pushed level with its centre: it slides, never tips
     expect(crate().position.x - c.log.at(-1)!.x).toBeLessThan(0.3 + 0.28125 + 0.02 + 0.15);
   });
 });

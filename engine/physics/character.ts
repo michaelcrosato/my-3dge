@@ -499,7 +499,8 @@ function afterMove(
       if (mine > theirs) {
         const shared = (character.push * mine + mass * theirs) / (character.push + mass);
         const impulse = mass * (shared - theirs);
-        physics.applyImpulse(hit, [dx * impulse, 0, dz * impulse], point);
+        const at: Vec3Like = [point.x, other.worldCom().y, point.z]; // level with its centre: turns it, never tips it
+        physics.applyImpulse(hit, [dx * impulse, 0, dz * impulse], at);
         [state.vx, state.vz] = [state.vx - (mine - shared) * dx, state.vz - (mine - shared) * dz];
       }
     } else if (!other?.isDynamic() && Math.abs(normal.y) < 0.3) {
