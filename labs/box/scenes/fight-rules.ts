@@ -13,8 +13,8 @@
  * - **Events**, for the page's effects (engine/gfx/fx: emitters answer them by type): `hit` where a blow lands,
  *   `slain` where a body falls, `shot` where a bolt leaves, `slam` where a pounce lands, each with its `position`
  *   and `size`. They change nothing in the sim.
- * - **The setting** `box.fight.god` (true, read when the scene starts, as the prototype's proof ran): foes' blows
- *   still flinch and push the hero, but take no hit points. Off, they do; at none he falls (`slain`) and is up again
+ * - **The setting** `box.fight.god` (fight.ts; true, read when the scene starts, as the prototype's proof ran): foes'
+ *   blows still flinch and push the hero, but take no hit points. Off, they do; at none he falls (`slain`) and is up again
  *   at once with all of them: the box has no end to its fight.
  *
  * A blow on a foe breaks its attack off (`breakAttack`: its token back, its telegraph gone) and stuns it for
@@ -34,7 +34,6 @@ import {
   SpatialHash,
   damage,
   defineComponent,
-  defineSettings,
   releaseToken,
   type ActorComponent,
   type AnimatorComponent,
@@ -49,16 +48,6 @@ import {
 } from '../../../engine/sim-api';
 import { HERO, HERO_FIGHT, type HeroHit } from '../cast/hero';
 import type { CrowdComponents } from './crowd-1000';
-
-/** The fight's setting: whether the hero's hit points hold. */
-export const FIGHT_SETTINGS = defineSettings({
-  'box.fight.god': {
-    type: 'boolean',
-    default: true,
-    when: 'scene',
-    description: 'Foes’ blows flinch and push the hero but take no hit points (off: they do, and he rallies at none).',
-  },
-});
 
 /** How long a blow stuns a foe (s): it steers and attacks again after. The prototype's. */
 export const STUN = 0.22;

@@ -21,7 +21,7 @@
  * first cool-down drawn from the stream `fight`: up to 1 s, a wisp's first shot later) and `fightTelegraph`.
  *
  * Settings: the crowd's (`box.crowd.count`, 36 here; `box.crowd.mix`), the hall's for the hero (`box.hall.*`), and
- * `box.fight.god` (fight-rules.ts).
+ * `box.fight.god` (`FIGHT_SETTINGS`: what it does is fight-rules.ts's `hurtHero`).
  *
  * Game code, sim-side: it imports only engine/sim-api.ts and the box's own files.
  *
@@ -32,7 +32,7 @@
  * // node x sim labs/box/scenes/fight --steps 600
  * // http://127.0.0.1:5173/labs/box/?scene=fight&cam3=chase (J attacks, L fires a bolt)
  */
-import { defineScene, type Intents, type World } from '../../../engine/sim-api';
+import { defineScene, defineSettings, type Intents, type World } from '../../../engine/sim-api';
 import { HERO_FIGHT } from '../cast/hero';
 import { SLIME_ATTACK } from '../cast/slime';
 import { WALKER_ATTACK } from '../cast/walker';
@@ -41,6 +41,16 @@ import { setupCrowd, type CrowdComponents } from './crowd-1000';
 import { fightRigs, flyShots, steerFoes } from './fight-foes';
 import { heroFight } from './fight-hero';
 import { type FightComponents, type FightEvents, type FightWorld } from './fight-rules';
+
+/** The fight's setting: whether the hero's hit points hold. */
+export const FIGHT_SETTINGS = defineSettings({
+  'box.fight.god': {
+    type: 'boolean',
+    default: true,
+    when: 'scene',
+    description: 'Foes’ blows flinch and push the hero but take no hit points (off: they do, and he rallies at none).',
+  },
+});
 
 /** The fight's setup: the crowd's, and the fight's systems (see the file comment); returns the hero's id. */
 export function setupFight(w: FightWorld): number {
