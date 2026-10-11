@@ -610,6 +610,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`repack.ts`](../tools/anim/repack.ts): The repacker (PLAN.md §10.3 and §10.5 step 4, WP 8.3): a set of clips stored as a directory, `data/anim/sets/<set>/`, one file per clip, so an agent opens only the clips it uses.
   - Exports: `ALT_TAG`, `CATALOG_COLUMNS`, `CATALOG_FILE`, `catalogTsv`, `clipSlug`, `joinSet`, `legacySetFiles`, `main`, `readPlainSet`, `readSet`, `readSetDir`, `SET_FILE`, `setDirName`, `SetFiles`, `SETS_DIR`, `splitSet`, `tagAlternates`, `writeSetDir`
   - Tests: [`tests/unit/data/anim/sets/sets.test.ts`](../tests/unit/data/anim/sets/sets.test.ts), [`tools/anim/repack.test.ts`](../tools/anim/repack.test.ts)
+- [`shardfall.ts`](../tools/anim/shardfall.ts): Adopts the sets and catalogs shardfall converted (PLAN.md §5.8 and §10.5 step 5, WP 8.10): 100STYLE's 878 loops as seven sets, `style100` (forward walks) and `style100_back`, `_backrun`, `_idle`, `_run`, `_side` and `_siderun`, and version 2 of Quaternius' Universal Animation Library (102 clips) in place of v1's `quaternius`, with their eight catalogs.
+  - Exports: `adoptSet`, `CATALOGS_DIR`, `main`, `markVia`, `readShardfallSet`, `readV1Set`, `SHARDFALL_CATALOGS`, `SHARDFALL_SETS`, `shardfallCatalogFiles`, `shardfallSet`, `shardfallSetFiles`, `V1_KEPT`, `V1_SETS`
+  - Tests: [`tests/unit/data/anim/sets/sets.test.ts`](../tests/unit/data/anim/sets/sets.test.ts), [`tests/unit/data/anim/shardfall.test.ts`](../tests/unit/data/anim/shardfall.test.ts)
 
 ## tools/cmd
 

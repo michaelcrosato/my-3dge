@@ -2187,6 +2187,22 @@ For the agents who maintain the engine.
 - `tagAlternates` (function): The set with `alt` added last to the tags of each clip made from another set's clip (one with an `orig`).
 - `writeSetDir` (function): Writes a set's files into `dir`, made if missing, and removes the files it no longer has; lists what changed.
 
+### [`tools/anim/shardfall.ts`](../tools/anim/shardfall.ts)
+
+- `adoptSet` (function): A set of shardfall's as this library keeps it (the file comment): each clip marked `via: "shardfall"`, a `body` after its `sources` (v1's, or `null` without `v1`), and the clips named in `keep` taken from `v1`, marked `via: "v1"`, each after the clip it followed in v1, with its `fit` entry.
+- `CATALOGS_DIR` (const): The catalogs' directory, `data/anim/catalogs/`.
+- `main` (function): The command line (see the file comment), writing under `sets` and `catalogs`.
+- `markVia` (function): The clip, marked as having come `via` that route (`shardfall`, `v1`): `via` last in its header, before its keys.
+- `readShardfallSet` (function): The set of shardfall's in `dir` (a key of `SHARDFALL_SETS`), read from the checkout at `shardfallPath`, as is.
+- `readV1Set` (const): my-3d2dge's set `name` from the checkout at `my3d2dgePath`, read through the codec's parser.
+- `SHARDFALL_CATALOGS` (const): The catalogs that come from shardfall (its `anim/catalogs/`), by file name: 100STYLE's seven and Quaternius v2's.
+- `SHARDFALL_SETS` (const): The sets that come from shardfall, by directory: each one's file in shardfall at `fa2dab6`.
+- `shardfallCatalogFiles` (function): The catalogs in `SHARDFALL_CATALOGS`, by file name: shardfall's, formatted by Prettier as the repository is.
+- `shardfallSet` (function): The set in `dir` as this library keeps it, from the shardfall checkout and, for a set in `V1_SETS`, the my-3d2dge checkout (throws without it, naming the fix).
+- `shardfallSetFiles` (function): The files of every set in `SHARDFALL_SETS`, by directory, as the repacker writes them.
+- `V1_KEPT` (const): The clips a set keeps from my-3d2dge's v1 of it, by directory: those shardfall's version dropped.
+- `V1_SETS` (const): The set of my-3d2dge whose `body` and `V1_KEPT` clips a shardfall set takes, by directory.
+
 ### [`tools/checkAll.ts`](../tools/checkAll.ts)
 
 - `CACHE_DIRS` (const): The cache directories ESLint and Prettier create on a cold run.
