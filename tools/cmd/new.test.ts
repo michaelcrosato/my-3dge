@@ -1,12 +1,13 @@
 /**
- * @file Tests `x new` (WP 0.6): kinds are discovered and their manifests validated, templates fill and never
- * overwrite, the module template passes its own checks (`x new module --test`), and a broken template fails them.
+ * @file Tests `x new` (WP 0.6): kinds are discovered and their manifests validated, templates fill, never overwrite
+ * and keep every line within 120 columns, the module template passes its own checks (`x new module --test`), and a
+ * broken template fails them.
  * Fixture templates live in temporary directories; `--test` writes its sample into this repository and removes it.
  * @see tools/cmd/new.ts
  */
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, posix } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { ROOT, UsageError } from '../x';
 import command, { CHECKS, fill, listKinds, NEXT, render, testKind, type Kind } from './new';
@@ -97,6 +98,75 @@ describe('writing an entry', () => {
     for (const step of ['x sim', '--browser sim --update', '--browser page', 'labs/box/README.md', 'STAGES']) {
       expect(scene?.next).toContain(step); // the scene's own steps: its replay, the README entry, the stage
     }
+  });
+
+  it('rewraps a doc comment the id pushes past 120 columns, and keeps every line that fits', async () => {
+    const template = [
+      '/**',
+      ' * @file The thing `{{name}}` ({{id}}.ts): what it is, in one or two sentences that fill this line up to its end.',
+      ' * It fits.',
+      ' *',
+      ' * Kept as it is: it fits',
+      ' * on short lines.',
+      ' *',
+      ' * 1. `node x sim {{id}} --steps 600` runs it, then a few words more.',
+      ' * 2. A short item.',
+      ' *',
+      ' * @example',
+      ' * {{name}}; // 1, and this example line runs on past the limit when the id is filled in: {{id}}',
+      ' */',
+      '/** The {{name}} export: its one-line comment opens into a block when the id makes it too long. */',
+      'export const {{name}} = 1;',
+      '',
+    ].join('\n');
+    const root = tree({
+      '.prettierrc.json': readFileSync(join(ROOT, '.prettierrc.json'), 'utf8'),
+      'tools/templates/thing/template.json': manifest({
+        pattern: '^things/[a-zA-Z]+$',
+        files: { 'thing.ts.tmpl': '{{id}}.ts' },
+      }),
+      'tools/templates/thing/thing.ts.tmpl': template,
+    });
+    const [kind] = listKinds(root);
+    expect(await render(root, kind, 'things/lamp')).toEqual({ 'things/lamp.ts': fill(template, 'things/lamp', '') });
+    const name = 'aLampWithAVeryLongNameThatPushesTheLinesPastTheLimit';
+    const text = (await render(root, kind, `things/${name}`))[`things/${name}.ts`];
+    expect(text.split('\n')).toEqual([
+      '/**',
+      ` * @file The thing \`${name}\``,
+      ` * (things/${name}.ts): what it is, in one or two sentences that fill this`,
+      ' * line up to its end. It fits.',
+      ' *',
+      ' * Kept as it is: it fits',
+      ' * on short lines.',
+      ' *',
+      ` * 1. \`node x sim things/${name} --steps 600\` runs it, then a few words`,
+      ' *    more.',
+      ' * 2. A short item.',
+      ' *',
+      ' * @example',
+      ` * ${name}; // 1, and this example line runs on past the limit when the id is filled in: things/${name}`,
+      ' */',
+      '/**',
+      ` * The ${name} export: its one-line comment opens into a block when the id`,
+      ' * makes it too long.',
+      ' */',
+      `export const ${name} = 1;`,
+      '',
+    ]);
+  });
+
+  it('writes no line over 120 columns in any template, for its sample, a one-letter name or a long one', async () => {
+    const long: string[] = [];
+    for (const kind of listKinds(ROOT)) {
+      for (const name of ['', 'a', `${posix.basename(kind.sample)}WithAMuchLongerNameThanUsual`]) {
+        const id = name ? posix.join(posix.dirname(kind.sample), name) : kind.sample; // '' is what --test-all writes
+        for (const [path, text] of Object.entries(await render(ROOT, kind, id))) {
+          text.split('\n').forEach((line, k) => line.length > 120 && long.push(`${path}:${k + 1}: ${line.length}`));
+        }
+      }
+    }
+    expect(long).toEqual([]);
   });
 
   it('lists the kinds when given none', async () => {
