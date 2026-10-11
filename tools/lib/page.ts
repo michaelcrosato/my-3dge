@@ -2,7 +2,8 @@
  * @file Pages for the `x` commands (PLAN.md §8.1, §8.3, WP 2.7): reading a page's ready-or-error signal
  * (`window.__engine`), waiting for it, finding the page that draws a scene module's scenes, and playing replays in
  * that page for `x replay --browser page` (`pageRuntime`: `__engine.replay`, engine/app/playback.ts, which draws a
- * frame after every step), or in tests/pages/replay.html for `--browser sim` (`replayBrowser`). `x inspect`, `x shot` and `x replay` share them.
+ * frame after every step), or in tests/pages/replay.html for `--browser sim` (`replayBrowser`). `x inspect`, `x shot`
+ * and `x replay` share them.
  *
  * Invariants: they only read pages and call `__engine`'s members; waiting polls (never the page's animation frames,
  * which the virtual clock holds, tools/lib/browser.ts), and ends at ready, an error signal, a thrown error or the

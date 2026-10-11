@@ -2,7 +2,8 @@
  * @file The stage (PLAN.md §6.4's view, §9.0, WP 2.7): a running scene's presentation graph, built from plain data
  * with no GPU, so a page draws it and a headless engine dumps it (`createHeadless({ view: true })`). `createStage`
  * makes a three.js `Scene` with a sky colour, the stage's ground (a textured plane under the level reaching well past
- * it, `stage/ground`), a hemisphere light and one shadow-casting sun fitted to the level, the level's meshes (engine/gfx/level/meshes.ts) and one stand-in per placeable entity.
+ * it, `stage/ground`), a hemisphere light and one shadow-casting sun fitted to the level, the level's meshes
+ * (engine/gfx/level/meshes.ts) and one stand-in per placeable entity.
  *
  * Level meshes: each block descriptor is split into its runs (its merged rectangles), so the ID pass names every
  * wall run on its own (`level:room/wall@0,0-15,0`: tiles from column 0, row 0 to column 15, row 0); a run costs its
@@ -17,8 +18,9 @@
  * `draw(alpha)` puts every stand-in `alpha` of the way from the one before to the last (the frame's interpolation,
  * §6.4; the shorter way round for yaw).
  *
- * Warm-up: `register(warmup)` registers the ground, the level meshes and the stand-ins, and adds the stand-ins' looks (side and
- * material) to the shader key, so a stand-in in a new look makes the next frame warm up first instead of stalling.
+ * Warm-up: `register(warmup)` registers the ground, the level meshes and the stand-ins, and adds the stand-ins'
+ * looks (side and material) to the shader key, so a stand-in in a new look makes the next frame warm up first
+ * instead of stalling.
  *
  * Invariants: presentation only: it reads sim data and never writes it (doctrine: WebGPU only); every object it
  * makes is under `scene`; equal inputs make equal graphs; materials belong to the library and are never disposed here.

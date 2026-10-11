@@ -3,11 +3,11 @@
  * walls, one low wall, a pillar, spawn markers) with three scripted movers, crates on fixed paths with no physics yet,
  * so that stepping changes state. Mover 1 runs back and forth from marker 1 along the low wall's north side, mover 2
  * circles south of the low wall from marker 2 (with `Math.sin` and `Math.cos`, so the fdlibm swap is exercised), and
- * mover 3 goes round the pillar from marker 3. Each step a mover goes `box.room.speed` × dt further along its path and faces the way it
- * goes; a mover that finishes a lap emits `lap`.
+ * mover 3 goes round the pillar from marker 3. Each step a mover goes `box.room.speed` × dt further along its path
+ * and faces the way it goes; a mover that finishes a lap emits `lap`.
  *
- * The page draws each mover as a crate where its `pathMover` component says (x, y, z, yaw, size, material): the engine's
- * stand-in for entities that declare a place (engine/gfx/stage.ts), until actors and props draw themselves.
+ * The page draws each mover as a crate where its `pathMover` component says (x, y, z, yaw, size, material): the
+ * engine's stand-in for entities that declare a place (engine/gfx/stage.ts), until actors and props draw themselves.
  *
  * Game code, sim-side: it imports only engine/sim-api.ts, so `x sim` runs it in Node. The level's text is registered
  * by whoever draws it (the page, labs/box/main.ts; a Node test reads the file), since the sim of Box 1 never reads it.

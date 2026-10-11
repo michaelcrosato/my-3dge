@@ -1,8 +1,8 @@
 /**
  * @file The engine in a page (PLAN.md §6.4, §6.9, §8.3, WP 2.7): `createEngine({ canvas, scenes, levels })` registers
- * the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay` and settings by path), starts the scene as a recorded
- * run with its view (engine/app/headless.ts, engine/app/view.ts), publishes the run's inspector as
- * `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts), warms up every pipeline the
+ * the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay`
+ * and settings by path), starts the scene as a recorded run with its view (engine/app/headless.ts,
+ * engine/app/view.ts), publishes the run's inspector as `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts), warms up every pipeline the
  * view needs through both cameras (perspective and orthographic), draws the first frame, and then runs the frame
  * loop (engine/app/loop.ts): the devices sampled into intents (engine/input/input.ts; `__engine.input` drives the
  * same session), fixed steps from the clock, the view drawn at the clock's alpha.
