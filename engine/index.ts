@@ -156,3 +156,13 @@ export type { CameraInfo } from './app/view';
 export type { PlayResult } from './app/playback';
 export type { PlayIntoOptions } from './app/playback';
 export type { ViewChange } from './app/playback';
+// Level meshes v2 and the cutaway (WP 4.4): galleries, stairs, the dais, pillars with plinths and capitals and
+// brazier stands as recipe shapes; walls facing an outside camera cut low and pillars before the hero as stumps.
+export { createCutaway } from './gfx/cutaway';
+export { planCutaway } from './gfx/cutaway';
+export type { Cutaway } from './gfx/cutaway';
+export type { CutawayReport } from './gfx/cutaway';
+export type { CutTarget } from './gfx/cutaway';
+export type { LevelCut } from './gfx/level/recipes';
+export type { CutWhen } from './gfx/level/recipes';
+export type { PartCut } from './gfx/level/shapes';
