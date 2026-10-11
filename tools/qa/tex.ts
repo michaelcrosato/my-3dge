@@ -2,7 +2,9 @@
  * @file The `tex` QA family (PLAN.md §8.6, WP 2.3, I-20): `node x qa tex` bakes every texture generator the shared
  * registry has, the engine's (engine/gfx/textures/v1.ts) and a game's (each `*.ts` module under `labs/<name>/textures/`
  * imported first), at its default size and at twice it, with seeds 1 and 2, and checks every
- * bake. It runs in T1 through `runQa` (tools/qa/tex.test.ts).
+ * bake; then, under each `prop` entry's id (WP 4.5; a game's props under `labs/<name>/props/` imported first), the
+ * textures its parts' materials name, baked as each material bakes them (its parameters and size), and a `reference`
+ * violation for a part naming a material no entry defines. It runs in T1 through `runQa` (tools/qa/tex.test.ts).
  *
  * Metrics, one violation per texture and metric, valued by the worst bake (larger is worse): `seamDelta`, the
  * tileability check (engine/gfx/textures/seams.ts: the mean difference across the wrap edge above that of the
@@ -30,7 +32,11 @@ import { bakeTexture, textureSampler, type TextureBake } from '../../engine/gfx/
 import { mipChain } from '../../engine/gfx/textures/mips';
 import { measureSeam, mipProblems, periodMismatch, rangeProblems, SEAM_LIMIT } from '../../engine/gfx/textures/seams';
 import { textureKind, type TextureEntry } from '../../engine/gfx/textures/texture';
+import { materialKind, textureRefOf, type MapRef } from '../../engine/gfx/materials/material';
+import { propLooks } from '../../engine/gfx/props';
+import { propKind, type Prop } from '../../engine/world/props/prop';
 import type { QaFamily, QaViolation } from '../cmd/qa';
+import { labModules } from './geo';
 
 /** A game's texture modules, `labs/<name>/textures/*.ts` (tests excluded), labs and files in name order. */
 export function textureModules(root: string): string[] {
@@ -49,9 +55,9 @@ export function textureModules(root: string): string[] {
   );
 }
 
-/** The bakes each texture is checked at: seeds 1 and 2, its size and twice it. */
-function variants(entry: TextureEntry): { seed: number; size: [number, number] }[] {
-  const [w, h] = entry.size;
+/** The bakes each texture is checked at: seeds 1 and 2, its size (or `size`) and twice it. */
+function variants(entry: TextureEntry, size?: readonly number[] | null): { seed: number; size: [number, number] }[] {
+  const [w, h] = size ?? entry.size;
   const sizes: [number, number][] = [[w, h]];
   if (w * 2 <= 4096 && h * 2 <= 4096) sizes.push([w * 2, h * 2]);
   return [1, 2].flatMap((seed) => sizes.map((size) => ({ seed, size })));
@@ -67,9 +73,16 @@ function record(worst: Worst, metric: string, value: number, message: () => stri
   if (!known || value > known.value) worst.set(metric, { value, message: message() });
 }
 
-/** Checks one bake of `entry`, recording its violations. */
-function checkBake(registry: Registry, entry: TextureEntry, seed: number, size: [number, number], worst: Worst): void {
-  const ref = { texture: entry.id, seed, size };
+/** Checks one bake of `entry` (with `params`), recording its violations. */
+function checkBake(
+  registry: Registry,
+  entry: TextureEntry,
+  seed: number,
+  size: [number, number],
+  worst: Worst,
+  params: Record<string, unknown> = {},
+): void {
+  const ref = { texture: entry.id, seed, size, params };
   const at = `seed ${seed} at ${size[0]} × ${size[1]}`;
   const bake: TextureBake = bakeTexture(ref, registry);
   const seam = measureSeam(bake);
@@ -122,13 +135,60 @@ export function checkTextures(registry: Registry = sharedRegistry, ids?: readonl
   return violations;
 }
 
-/** The family: every texture of the shared registry, after importing the games' texture modules. */
+/** The violations of the textures a prop's parts' materials name, baked as they bake them, as the prop's id. */
+function checkProp(registry: Registry, prop: Prop): QaViolation[] {
+  const worst: Worst = new Map();
+  const maps = new Map<string, { ref: MapRef; where: string }>();
+  for (const part of prop.parts) {
+    for (const material of [part.material, part.top].filter(Boolean)) {
+      const where = `part ${part.name}'s ${material}`;
+      if (!registry.has('material', material)) {
+        const message = `${where} is not defined, so it draws as material:default: define it, or name one of node x describe material`;
+        record(worst, 'reference', (worst.get('reference')?.value ?? 0) + 1, () => message);
+        continue;
+      }
+      const ref = textureRefOf(registry.get('material', material).map);
+      if (ref) maps.set(JSON.stringify([ref.texture, ref.params, ref.size]), { ref, where });
+    }
+  }
+  for (const { ref, where } of maps.values()) {
+    const entry = registry.get('texture', ref.texture) as unknown as TextureEntry;
+    const found: Worst = new Map();
+    try {
+      for (const { seed, size } of variants(entry, ref.size)) checkBake(registry, entry, seed, size, found, ref.params);
+    } catch (error) {
+      found.set('bake', { value: 1, message: `baking it threw: ${(error as Error).message}` });
+    }
+    for (const [metric, { value, message }] of found)
+      record(worst, metric, value, () => `${where} (${ref.texture}), ${message}`);
+  }
+  return [...worst].map(([metric, { value, message }]) => ({ id: prop.id, metric, value, message }));
+}
+
+/** The violations of the textures of every prop on `registry` (or those of `ids`), in id order, as the props' ids. */
+export function checkPropTextures(registry: Registry = sharedRegistry, ids?: readonly string[]): QaViolation[] {
+  propKind(registry);
+  materialKind(registry);
+  propLooks(registry);
+  return (registry.list('prop') as unknown as Prop[])
+    .filter((prop) => !ids || ids.includes(prop.id))
+    .flatMap((prop) => checkProp(registry, prop));
+}
+
+/** The family: every texture of the shared registry, then every prop's, after importing a game's modules. */
 const family: QaFamily = {
   async run({ root, only }) {
-    for (const module of textureModules(root)) await import(pathToFileURL(join(root, module)).href);
+    for (const module of [...textureModules(root), ...labModules(root, 'props')]) {
+      await import(pathToFileURL(join(root, module)).href);
+    }
+    const keep = (id: string) => !only.length || only.some((prefix) => id.startsWith(prefix));
     const ids = sharedRegistry.list('texture').map((entry) => entry.id);
-    const kept = only.length ? ids.filter((id) => only.some((prefix) => id.startsWith(prefix))) : ids;
-    return checkTextures(sharedRegistry, kept);
+    propKind(sharedRegistry);
+    const props = sharedRegistry.list('prop').map((entry) => entry.id);
+    return [
+      ...checkTextures(sharedRegistry, ids.filter(keep)),
+      ...checkPropTextures(sharedRegistry, props.filter(keep)),
+    ];
   },
 };
 

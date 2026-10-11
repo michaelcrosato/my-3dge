@@ -4,7 +4,9 @@
  * geometry (missing attributes, NaN, degenerate triangles, flipped normals, bounds in centimetres or collapsed to a
  * line, a blown vertex budget, a builder that throws, one that differs between builds); a level's meshes report an
  * undefined recipe, too many draw calls and meshes outside its bounds; a game's geometry modules are found under
- * `labs/<name>/geometry/`; `--only` and a baseline entry accepting a known problem work through `runQa`.
+ * `labs/<name>/geometry/`; every prop's parts are checked as the prop draws them, under its id, with a part naming
+ * no geometry and parts floating over their body's base reported too (WP 4.5); `--only` and a baseline entry
+ * accepting a known problem work through `runQa`.
  * @see tools/qa/geo.ts
  */
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
@@ -16,10 +18,11 @@ import { createRegistry } from '../../engine/core/registry';
 import { boxGeometry } from '../../engine/gfx/geometry/box';
 import { defineGeometry } from '../../engine/gfx/geometry/geometry';
 import { compileLevel } from '../../engine/world/level/compile';
+import { defineProp } from '../../engine/world/props/prop';
 import { defineGlyph } from '../../engine/world/level/glyph';
 import { runQa, type QaFamily } from '../cmd/qa';
 import { ROOT } from '../x';
-import family, { checkGeometries, checkLevelMeshes, geometryModules } from './geo';
+import family, { checkGeometries, checkLevelMeshes, checkProps, geometryModules, labModules } from './geo';
 
 const temporary: string[] = [];
 afterEach(() => {
@@ -133,6 +136,43 @@ describe('the geo QA family', () => {
     const outside = checkLevelMeshes('level:room', shrunk);
     expect(outside.map((v) => [v.metric, v.value])).toEqual([['bounds', 0.5]]);
     expect(outside[0].message).toMatch(/reach 0\.500 m outside the level's bounds/);
+  });
+
+  it("checks every prop's parts as the prop draws them, under the prop's id", async () => {
+    const reg = faulty();
+    expect(checkProps(reg)).toEqual([]);
+    const part = { geometry: 'geometry:box', params: { width: 0.5, height: 0.5, depth: 0.5 } };
+    defineProp('prop:floating', { parts: [{ ...part, position: [0, 0.2, 0] }], body: { type: 'fixed' } }, reg);
+    defineProp('prop:sunk', { parts: [{ ...part, position: [0, -0.05, 0] }], body: { type: 'dynamic' } }, reg);
+    defineProp('prop:lost', { parts: [{ name: 'body', geometry: 'geometry:nowhere' }] }, reg);
+    defineProp('prop:huge', { parts: [part, { name: 'slab', params: { width: 500 } }] }, reg);
+    defineProp(
+      'prop:dense',
+      { parts: [{ geometry: 'geometry:test-heavy' }, { geometry: 'geometry:test-nan', name: 'b' }] },
+      reg,
+    );
+    const violations = checkProps(reg);
+    expect(violations.map((v) => [v.id, v.metric, +v.value.toFixed(3)])).toEqual([
+      ['prop:dense', 'vertices', 24],
+      ['prop:dense', 'nonFinite', 1],
+      ['prop:floating', 'float', 0.2],
+      ['prop:huge', 'bounds', 1],
+      ['prop:lost', 'reference', 1],
+      ['prop:sunk', 'float', 0.05],
+    ]);
+    const message = (id: string) => violations.find((v) => v.id === id)!.message;
+    expect(message('prop:dense')).toMatch(/^24 vertices in part mesh \(geometry:test-heavy\), above its budget of 12/);
+    expect(message('prop:floating')).toMatch(
+      /lowest point is 0\.200 m above its base, where its box body stands, so the prop floats/,
+    );
+    expect(message('prop:huge')).toMatch(/^part slab \(geometry:box\): its bounds are 500 × 1 × 1 m/);
+    expect(message('prop:lost')).toMatch(/^part body \(geometry:nowhere\) names a geometry no entry defines/);
+    expect(checkProps(reg, ['prop:crate', 'prop:sunk']).map((v) => v.id)).toEqual(['prop:sunk']);
+    const result = await runQa(ROOT, 'geo', ['prop:']);
+    expect([result.failures, result.violations]).toEqual([[], 0]);
+    expect(
+      labModules(repository({ 'labs/box/props/chest.ts': '', 'labs/box/props/chest.test.ts': '' }), 'props'),
+    ).toEqual(['labs/box/props/chest.ts']);
   });
 
   it("finds a game's geometry modules and honours --only", async () => {
