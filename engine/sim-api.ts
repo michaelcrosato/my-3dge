@@ -208,6 +208,33 @@ export { turnRight } from './anim/authoring';
 export type { FRU } from './anim/authoring';
 export type { LimbSide } from './anim/authoring';
 export type { Sided } from './anim/authoring';
+// The character animator (WP 3.7): a body driven through an explicit layer stack (weights, base, override, solve,
+// then layers in clips, additive, post, physics and secondary), told its body states each step (unknown words warn
+// with the closest), with footsteps, sockets, a trail and detail levels; step runs in the sim, pose in the view.
+export { Animator } from './anim/character';
+export type { AnimatorOptions } from './anim/character';
+export type { PoseOptions } from './anim/character';
+export type { AnimatorReport } from './anim/character';
+export type { AnimEvent } from './anim/character';
+export type { TrailSample } from './anim/character';
+export { BODY_STATES } from './anim/states';
+export type { BodyStateName } from './anim/states';
+export type { AnimatorInput } from './anim/states';
+export { checkBodyStates } from './anim/states';
+export { TRAILS } from './anim/states';
+export type { TrailName } from './anim/states';
+export { SAMPLE_STATES } from './anim/states';
+export type { SampleState } from './anim/states';
+export { SLOTS } from './anim/weights';
+export type { SlotName } from './anim/weights';
+export { LAYER_SLOTS } from './anim/weights';
+export type { LayerSlot } from './anim/weights';
+export type { AnimLayer } from './anim/weights';
+export { LOD } from './anim/weights';
+export { easeWeight } from './anim/weights';
+export type { WeightRates } from './anim/weights';
+export { HUMANOID_WEIGHTS } from './anim/weights';
+export type { WeightInfo } from './anim/weights';
 
 // Physics (WP 3.1): Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id,
 // raycasts, shape casts, overlaps and ground probes, collision groups by name, a level's bodies; presentation reads
@@ -252,6 +279,7 @@ export type { ActorComponents } from './sim/actors';
 export { measureFeel } from './sim/actors';
 export type { FeelReport } from './physics/feel';
 export type { FeelOptions } from './sim/actors';
+export type { AnimatorComponent } from './sim/actors';
 
 // Levels v2 (WP 4.2): the hall's glyphs (gallery =, stairs ^, dais o, brazier t), ramps and daises, hull and cylinder
 // colliders, and the surface tag underfoot.
