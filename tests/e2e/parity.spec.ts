@@ -288,8 +288,12 @@ for (const { stage, scene, component, replays, swept, live } of [...STAGES].reve
       cameras: swept?.cameras.map(replay) ?? replays,
       featuresOff: swept?.featuresOff.map(replay) ?? replays,
     };
+    /** Annotates the running test with the replays it plays, so out/e2e/report.json says which replays T2 played. */
+    const playing = (played: { name: string }[]) =>
+      test.info().annotations.push({ type: 'replays', description: played.map(({ name }) => name).join(', ') });
 
     test('each replay gives its golden hashes while the scene renders as it steps', async ({ page, harness }) => {
+      playing(replays);
       await open(page, harness, `?scene=${scene}`);
       for (const { name, text } of replays) {
         const run = await play(page, text);
@@ -303,6 +307,7 @@ for (const { stage, scene, component, replays, swept, live } of [...STAGES].reve
       page,
       harness,
     }) => {
+      playing(sweep.cameras);
       await open(page, harness, `?scene=${scene}`);
       const views: [number, { cam?: string; set?: Record<string, unknown> }][] = [];
       const every = Math.floor(560 / CAMERA_PRESETS.length);
@@ -320,6 +325,7 @@ for (const { stage, scene, component, replays, swept, live } of [...STAGES].reve
       const off = encodeURIComponent(
         JSON.stringify(['feature:timestamps', 'feature:float32Filtering', 'feature:largeBuffers']),
       );
+      playing(sweep.featuresOff);
       await open(page, harness, `?scene=${scene}&gfx.featuresOff=${off}`);
       const downgrades = await page.evaluate(() => (__engine.info() as { downgrades: string[] }).downgrades);
       expect(downgrades.length).toBeGreaterThan(0);

@@ -9,7 +9,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync,
 import { tmpdir } from 'node:os';
 import { dirname, join, posix } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { ROOT, UsageError } from '../x';
+import { CHILD_TIMEOUT_MS, ROOT, UsageError } from '../x';
 import command, { CHECKS, fill, listKinds, NEXT, render, testKind, type Kind } from './new';
 
 const made: string[] = [];
@@ -181,7 +181,7 @@ describe('writing an entry', () => {
 });
 
 describe('testing templates (x new … --test)', () => {
-  it('passes the module template and leaves nothing behind', { timeout: 60_000 }, async () => {
+  it('passes the module template and leaves nothing behind', { timeout: CHILD_TIMEOUT_MS }, async () => {
     const result = await command.run({ values: { test: true }, positionals: ['module'], root: ROOT });
     expect(result.failures).toEqual([]);
     expect(result.lines).toEqual(['types: ok', 'lint: ok', 'test: ok', 'docs: ok']);
@@ -189,7 +189,7 @@ describe('testing templates (x new … --test)', () => {
     expect(existsSync(join(ROOT, 'tools/templates/module/sampleModule.test.ts'))).toBe(false);
   });
 
-  it('fails a broken template on every check', { timeout: 60_000 }, async () => {
+  it('fails a broken template on every check', { timeout: CHILD_TIMEOUT_MS }, async () => {
     const dir = tree({
       'broken.ts.tmpl': "export const {{name}}: number = 'text';\n",
       'broken.test.ts.tmpl':

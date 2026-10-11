@@ -73,6 +73,14 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** The most lines a command prints, the report path included (PLAN.md §8.1: "at most about 20"). */
 export const MAX_LINES = 20;
 
+/**
+ * How long a test waits on a whole command it runs as a child process (`node x <cmd>`, Vitest, `npx`), in ms: the
+ * test's timeout and the child's, killed then, so only a hang trips it. Such a run starts Node, compiles TypeScript
+ * and does all its work, which a loaded machine stretches far more than Vitest's 30 s default allows for in-process
+ * work (vite.config.ts): `node x check` took 4.3 s idle and over 30 s with six lanes testing at once (gate G3).
+ */
+export const CHILD_TIMEOUT_MS = 120_000;
+
 /** Lists the command names found in `tools/cmd/` (every `<name>.ts` that is not a test). */
 export function commandNames(root: string = ROOT): string[] {
   return readdirSync(join(root, 'tools', 'cmd'))

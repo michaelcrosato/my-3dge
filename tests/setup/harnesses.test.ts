@@ -9,6 +9,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { CHILD_TIMEOUT_MS } from '../../tools/x';
 import config from '../../vite.config';
 import { expectTrapOutcomes } from './trapOutcomes';
 
@@ -20,7 +21,7 @@ describe('the advice trap', () => {
     expect(config.test?.setupFiles).toEqual(['tests/setup/adviceTrap.ts']);
   });
 
-  it('fails a Vitest test on an unlisted warning and passes it on a listed one', () => {
+  it('fails a Vitest test on an unlisted warning and passes it on a listed one', { timeout: CHILD_TIMEOUT_MS }, () => {
     const dir = mkdtempSync(join(tmpdir(), 'x-trap-vitest-'));
     try {
       const report = join(dir, 'report.json');
@@ -28,7 +29,7 @@ describe('the advice trap', () => {
       const run = spawnSync(
         process.execPath,
         [vitest, 'run', '--config', `${FIXTURES}/vitest.config.ts`, `--outputFile.json=${report}`],
-        { cwd: ROOT, encoding: 'utf8' },
+        { cwd: ROOT, encoding: 'utf8', timeout: CHILD_TIMEOUT_MS },
       );
       expect(run.status, run.stdout + run.stderr).toBe(1);
       const files = (

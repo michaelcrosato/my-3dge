@@ -1,11 +1,12 @@
 /**
  * @file Tests for `x perf` (tools/cmd/perf.ts): medians, budgets with a tolerance, the budget file's shape and
  * sections (unknown keys named with the closest), the trend file and its 15% warning, a measured run of the kernel
- * within its recorded budget, and, on a scene in a temporary repository, `--budget` failing over a budget and without
- * a budget file, measuring at the file's steps, refusing a run that is not the one the budget was measured on (other
- * steps, another scene, `--set`, another `--agents`), the crowd ladder at 100, 1,000 and 5,000 agents against its
- * section, and the page way's usage errors (its browser run is the WP's Verify: `node x perf labs/box --scene room
- * --budget`).
+ * shown against its recorded budget, and, on a scene in a temporary repository, `--budget` failing over a budget and
+ * without a budget file, measuring at the file's steps, refusing a run that is not the one the budget was measured on
+ * (other steps, another scene, `--set`, another `--agents`), the crowd ladder at 100, 1,000 and 5,000 agents against
+ * its section, and the page way's usage errors (its browser run is the WP's Verify: `node x perf labs/box --scene room
+ * --budget`). No test here depends on how fast this machine runs: the verdicts are proven on budgets every run meets
+ * (1000 ms) or misses (0), and the kernel is held to its own budget by `x ci --long` (tools/lib/tiers.ts's LONG_RUNS).
  * @see tools/cmd/perf.ts
  */
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
@@ -13,7 +14,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { dispatch, loadCommand, ROOT } from '../x';
-import { budgetPath, LADDER, median, readBudget, recordTrend, regressions, TREND_FILE, withinBudget } from './perf';
+import {
+  BUDGET_KEYS,
+  budgetPath,
+  LADDER,
+  median,
+  readBudget,
+  recordTrend,
+  regressions,
+  TREND_FILE,
+  withinBudget,
+} from './perf';
 
 const temporary: string[] = [];
 afterEach(() => {
@@ -31,7 +42,8 @@ async function perf(root: string, ...args: string[]) {
 
 /**
  * A temporary repository holding one scene module, `fixtures/scenes/tiny/index.ts` (scene `id`, with the setting
- * `<id in lower case>.agents` that spawns that many entities when it starts), and a package.json.
+ * `<id in lower case>.agents` that spawns that many entities when it starts, each start's count pushed to
+ * `globalThis[<id>]`), and a package.json.
  */
 function tinyRepository(id = 'perfTiny'): string {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'x-perf-')));
@@ -46,7 +58,11 @@ function tinyRepository(id = 'perfTiny'): string {
       `import { defineScene, defineSettings } from ${scene.replace('sim/scene.ts', 'sim-api.ts')};`,
       `const agents = { type: 'integer', default: 1, minimum: 0, maximum: 5000, when: 'scene', description: 'Agents.' };`,
       `defineSettings({ '${id.toLowerCase()}.agents': agents });`,
-      `const setup = (w) => { for (let n = w.settings.get('${id.toLowerCase()}.agents'), i = 0; i < n; i++) w.spawn(); };`,
+      `const setup = (w) => {`,
+      `  const n = w.settings.get('${id.toLowerCase()}.agents');`,
+      `  (globalThis.${id} ??= []).push(n);`,
+      `  for (let i = 0; i < n; i++) w.spawn();`,
+      `};`,
       `export default defineScene('${id}', { setup });`,
     ].join('\n'),
   );
@@ -129,13 +145,24 @@ describe('tolerance, sections and trends', () => {
 });
 
 describe('x perf', () => {
-  it('measures the kernel: median milliseconds per step, hash and capture, within its budget', async () => {
-    const { code, lines, report } = await perf(ROOT, 'fixtures/scenes/kernel', '--runs', '2', '--budget');
+  it('measures the kernel: median milliseconds per step, hash and capture, each shown against its budget', async () => {
+    // Shown, not enforced: whether the kernel keeps within its budget is wall-clock time, which a loaded machine
+    // stretches (hashMs 1.43 against 1 at load 47, gate G3), so `x ci --long` enforces it (LONG_RUNS in
+    // tools/lib/tiers.ts), and --budget's verdicts are proven below on budgets every run meets or misses.
+    const { code, lines, report } = await perf(ROOT, 'fixtures/scenes/kernel', '--runs', '2');
+    const { budgets = {} } = readBudget(join(ROOT, budgetPath('kernel')));
     expect(code).toBe(0);
     expect(lines[0]).toMatch(/^x perf: ok: kernel: 600 steps × 2 runs, [\d.]+ ms per step \(median, Node\)$/);
-    expect(lines.some((line) => /^stepMs: [\d.]+ \([\d.]+–[\d.]+\), within [\d.]+$/.test(line))).toBe(true);
-    expect(report.metrics.stepMs).toBeGreaterThan(0);
-    expect(report.metrics.hashMs).toBeGreaterThan(0);
+    for (const key of BUDGET_KEYS) {
+      const limit = String(budgets[key]).replace('.', '\\.');
+      const shown = new RegExp(`^${key}: [\\d.]+ \\([\\d.]+–[\\d.]+\\), (within|OVER) ${limit}$`);
+      expect(
+        lines.some((line) => shown.test(line)),
+        key,
+      ).toBe(true);
+      expect(report.metrics[key], key).toBeGreaterThan(0);
+    }
+    expect(lines).toContain(`budgets: ${budgetPath('kernel')} (shown; --budget enforces them)`);
   });
 
   it('fails --budget without a budget file, and over a budget', async () => {
@@ -184,14 +211,15 @@ describe('x perf', () => {
     const run = (...args: string[]) => perf(root, 'fixtures/scenes/tiny', '--ladder', '--runs', '1', ...args);
     const unnamed = await run('--steps', '2');
     expect([unnamed.code, unnamed.lines.join('\n')]).toEqual([2, expect.stringContaining('name it with --agents')]);
+    const started = ((globalThis as { perfLadder?: number[] }).perfLadder = []);
     const ladder = await run('--steps', '2', '--agents', 'perfladder.agents');
     expect(ladder.code).toBe(0);
+    expect(started).toEqual([LADDER[0], ...LADDER]); // the untimed warm-up, then each rung's run at its agents
     expect(ladder.lines[0]).toMatch(/perfLadder: 2 steps × 1 runs a rung, perfladder\.agents at 100, 1000, 5000/);
     for (const agents of LADDER) {
       expect(ladder.lines.some((line) => line.startsWith(`${agents} agents: stepMs `))).toBe(true);
       expect(ladder.report.metrics[`${agents}.stepMs`]).toBeGreaterThan(0);
     }
-    expect(ladder.report.metrics['5000.hashMs']).toBeGreaterThan(ladder.report.metrics['100.hashMs']);
     const missing = await run('--steps', '2', '--agents', 'perfladder.agents', '--budget');
     expect([missing.code, missing.report.failures[0].id]).toEqual([1, 'PERF_NO_BUDGET']);
     mkdirSync(join(root, 'tests/baselines/perf'), { recursive: true });
