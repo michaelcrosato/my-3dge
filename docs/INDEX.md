@@ -40,7 +40,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 ## engine
 
 - [`index.ts`](../engine/index.ts): The engine's front page: the public API for pages and tools (PLAN.md §6.1, §6.9, WP 1.6; doctrine: Quality under the hood).
-  - Exports: `* from './sim-api'`, `ActionMap`, `ActionMapSpec`, `bakeTexture`, `Bindings`, `BindingsFile`, `BindingsOptions`, `BindingsStorage`, `boxGeometry`, `BoxOptions`, `buildGeometry`, `CameraInputSample`, `CameraLike`, `cellHash`, `codeLabel`, `connectVirtualDevice`, `createBindings`, `createHeadless`, `createInput`, `createLevelMeshes`, `createMaterialLibrary`, `createScriptedGamepad`, `createVirtualDevice`, `defineActionMap`, `defineGeometry`, `defineMaterial`, `defineSfx`, `defineSong`, `defineTexture`, `DeviceKind`, `EngineInfo`, `EntitySummary`, `frustumGeometry`, `FrustumOptions`, `GamepadLike`, `GeometryEntry`, `GeometryRef`, `GeometryReport`, `GeometrySpec`, `getActionMap`, `getGeometry`, `getMaterial`, `getSfx`, `getSong`, `Headless`, `HeadlessOptions`, `Input`, `InputOptions`, `inspectGeometry`, `Inspector`, `isCode`, `LEVEL_RECIPES`, `LevelCell`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `LevelRecipe`, `LevelShape`, `limbGeometry`, `LimbOptions`, `listActionMaps`, `MaterialEntry`, `MaterialLibrary`, `MaterialSpec`, `mergeGeometries`, `palette`, `pickTone`, `pillarGeometry`, `PillarOptions`, `PillarPart`, `pillarParts`, `rampGeometry`, `RampOptions`, `readKeyboardLayout`, `RebindResult`, `renderSfx`, `renderSong`, `RESERVED_CODES`, `ringGeometry`, `RingOptions`, `roundedBoxGeometry`, `RoundedBoxOptions`, `runningBond`, `ScriptedGamepad`, `Sfx`, `SfxBus`, `SfxLayer`, `SfxRenderOptions`, `SfxSpec`, `sfxVoices`, `sidesThenTops`, `Song`, `SongRenderOptions`, `SongSpec`, `songTiming`, `SongTiming`, `SongTrack`, `songVoices`, `SoundDef`, `SYSTEM_ACTIONS`, `Texel`, `TextureBake`, `TextureContext`, `TextureEntry`, `TextureLook`, `TextureRef`, `TextureSpec`, `tileNoise`, `VirtualDevice`, `Voice`, `wrapIndex`
+  - Exports: `* from './sim-api'`, `ActionMap`, `ActionMapSpec`, `bakeTexture`, `Bindings`, `BindingsFile`, `BindingsOptions`, `BindingsStorage`, `boxGeometry`, `BoxOptions`, `buildGeometry`, `CameraInfo`, `CameraInputSample`, `CameraLike`, `cellHash`, `codeLabel`, `connectVirtualDevice`, `createBindings`, `createEngine`, `createHeadless`, `createInput`, `createLevelMeshes`, `createMaterialLibrary`, `createScriptedGamepad`, `createVirtualDevice`, `defineActionMap`, `defineGeometry`, `defineMaterial`, `defineSfx`, `defineSong`, `defineTexture`, `DeviceKind`, `Engine`, `EngineInfo`, `EngineOptions`, `EntitySummary`, `frustumGeometry`, `FrustumOptions`, `GamepadLike`, `GeometryEntry`, `GeometryRef`, `GeometryReport`, `GeometrySpec`, `getActionMap`, `getGeometry`, `getMaterial`, `getSfx`, `getSong`, `Headless`, `HeadlessOptions`, `Input`, `InputOptions`, `inspectGeometry`, `Inspector`, `isCode`, `LEVEL_RECIPES`, `LevelCell`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `LevelRecipe`, `LevelShape`, `limbGeometry`, `LimbOptions`, `listActionMaps`, `MaterialEntry`, `MaterialLibrary`, `MaterialSpec`, `mergeGeometries`, `palette`, `parseRoutes`, `pickTone`, `pillarGeometry`, `PillarOptions`, `PillarPart`, `pillarParts`, `PlayIntoOptions`, `PlayResult`, `rampGeometry`, `RampOptions`, `readKeyboardLayout`, `RebindResult`, `renderSfx`, `renderSong`, `RESERVED_CODES`, `ringGeometry`, `RingOptions`, `roundedBoxGeometry`, `RoundedBoxOptions`, `routeQuery`, `Routes`, `runningBond`, `ScriptedGamepad`, `Sfx`, `SfxBus`, `SfxLayer`, `SfxRenderOptions`, `SfxSpec`, `sfxVoices`, `sidesThenTops`, `Song`, `SongRenderOptions`, `SongSpec`, `songTiming`, `SongTiming`, `SongTrack`, `songVoices`, `SoundDef`, `SYSTEM_ACTIONS`, `Texel`, `TextureBake`, `TextureContext`, `TextureEntry`, `TextureLook`, `TextureRef`, `TextureSpec`, `tileNoise`, `ViewChange`, `VirtualDevice`, `Voice`, `wrapIndex`
 - [`sim-api.ts`](../engine/sim-api.ts): The public API for sim-side game code (PLAN.md §6.1, §6.9, WP 1.6; doctrine: Quality under the hood): what a scene, a cast member or a behaviour imports, and all it may import (ESLint's public-API rule), so `x sim` runs it in Node and its play is reproducible.
   - Exports: `ActorComponent`, `ActorComponents`, `ActorSpec`, `addLevelBodies`, `addPose`, `aim`, `AIM_CHAIN`, `AimLink`, `AimOptions`, `angDiff`, `animCheck`, `AnimCheckReport`, `AnimCheckSpec`, `AnimProblem`, `animSheet`, `approach`, `approachAng`, `BlendOptions`, `blendPoses`, `BodyChange`, `BodySpec`, `BodyState`, `BodyType`, `boneMask`, `BoneMask`, `Box3`, `BoxCollider`, `BUFFER_STEPS`, `buffered`, `Build`, `BuildSpec`, `Character`, `CHARACTER_FIELDS`, `CHARACTER_STATE_FIELDS`, `CharacterState`, `ColliderDescriptor`, `ColliderSpec`, `COLLISION_GROUPS`, `Color`, `CompiledLevel`, `compileLevel`, `CompileOptions`, `ComponentOf`, `consume`, `consumeAll`, `createCharacter`, `createFootPlantState`, `createInputBuffer`, `createSkeleton`, `createWorldPose`, `CustomIntentKey`, `def`, `defineBuild`, `defineComponent`, `defineGlyph`, `defineKind`, `defineLevel`, `defineScene`, `defineSettings`, `ease`, `Entity`, `Entry`, `Euler`, `EventMap`, `FeelOptions`, `FeelReport`, `Field`, `floorHeight`, `FOOT_PLANT`, `FootLock`, `footPlant`, `FootPlantOptions`, `FootPlantState`, `forwardKinematics`, `fromCamera`, `getBuild`, `getLevel`, `Glyph`, `GlyphSpec`, `Ground`, `GroundDescriptor`, `GroundHit`, `GroundProbe`, `GroupName`, `handTo`, `hashPose`, `held`, `Hit`, `InputBuffer`, `INTENT_KEYS`, `Intents`, `IntentValue`, `jointMatrix`, `JointName`, `jointPosition`, `JointRef`, `jointRotation`, `JOINTS`, `jointToWorld`, `Kind`, `KindSpec`, `lerpAng`, `LEVEL_FORMAT`, `LevelEntry`, `LevelGlyph`, `LevelProblem`, `LevelSource`, `LightSpot`, `Limb`, `LimbEnd`, `LIMBS`, `Listener`, `makeAdditive`, `MaskName`, `MASKS`, `MathUtils`, `Matrix4`, `measureFeel`, `MeshDescriptor`, `OverlapOptions`, `Phase`, `PHASES`, `Physics`, `PHYSICS_SETTINGS`, `physicsOf`, `Plane`, `Point3`, `PointName`, `Pose`, `pressed`, `ProbeOptions`, `Quaternion`, `QuatLike`, `QueryOptions`, `QueryView`, `queryViewOf`, `Ray`, `RayOptions`, `released`, `removeActor`, `REPEAT_DELAY`, `REPEAT_RATE`, `repeated`, `RigidPair`, `Rng`, `Scene`, `SceneAction`, `SceneSpec`, `Schema`, `SettingValue`, `Shape`, `ShapeCastOptions`, `Sheet`, `SheetFrame`, `SheetOptions`, `SheetView`, `SimRng`, `SimSettings`, `Skeleton`, `smoothDamp`, `SocketName`, `socketPosition`, `SOCKETS`, `solidAt`, `spawnActor`, `SpawnPoint`, `SpawnSpec`, `Sphere`, `swingTwist`, `SystemFn`, `tileAt`, `TileRect`, `tipPosition`, `topHeight`, `TraceRecord`, `twoBone`, `TwoBoneOptions`, `twoBoneRot`, `updateInputBuffer`, `validateLevel`, `Vec3Like`, `Vector3`, `With`, `World`, `WorldEvents`, `WorldPose`, `WorldTimers`
 
@@ -85,9 +85,27 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/app
 
-- [`headless.ts`](../engine/app/headless.ts): The engine without a page (PLAN.md §8.3, §6.9, WP 1.6; doctrine: Verifiable): `createHeadless({ scene, seed, settings })` starts a scene as a recorded session (engine/sim/scene.ts) and returns its inspector, the same object a page publishes as `window.__engine` minus a renderer: members that need one throw `DEV_NO_RENDERER`.
-  - Exports: `createHeadless`, `Headless`, `HEADLESS_CODES`, `headlessHost`, `HeadlessOptions`
+- [`engine.ts`](../engine/app/engine.ts): The engine in a page (PLAN.md §6.4, §6.9, §8.3, WP 2.7): `createEngine({ canvas, scenes, levels })` registers the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay` and settings by path), starts the scene as a recorded run with its view (engine/app/headless.ts, engine/app/view.ts), publishes the run's inspector as `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts), warms up every pipeline the view needs through both cameras (perspective and orthographic), draws the first frame, and then runs the frame loop (engine/app/loop.ts): the devices sampled into intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from the clock, the view drawn at the clock's alpha.
+  - Exports: `createEngine`, `Engine`, `ENGINE_CODES`, `EngineOptions`, `recordOf`
+  - Tests: [`engine/app/engine.test.ts`](../engine/app/engine.test.ts), [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts)
+- [`headless.ts`](../engine/app/headless.ts): The engine without a page (PLAN.md §8.3, §6.9, WPs 1.6 and 2.7; doctrine: Verifiable): `createHeadless({ scene, seed, settings, view })` starts a scene as a recorded session (engine/sim/scene.ts) and returns its inspector, the same object a page publishes as `window.__engine` minus a renderer: `render` and `shot` throw `DEV_NO_RENDERER`.
+  - Exports: `AppHostOptions`, `AppRun`, `createAppHost`, `createHeadless`, `Drawing`, `Headless`, `HEADLESS_CODES`, `headlessHost`, `HeadlessOptions`
   - Tests: [`engine/app/headless.test.ts`](../engine/app/headless.test.ts)
+- [`loop.ts`](../engine/app/loop.ts): The frame loop (PLAN.md §6.4, WP 2.7; doctrine: Reproducible): fixed sim steps plus interpolation, once per animation frame.
+  - Exports: `createLoop`, `Loop`, `LoopOptions`
+  - Tests: [`engine/app/loop.test.ts`](../engine/app/loop.test.ts)
+- [`playback.ts`](../engine/app/playback.ts): Replays one step at a time (PLAN.md §6.5 item 9, §6.7's CPU-only contract, WP 2.7): what lets a page render between the steps of a replay, so `x replay --browser page` and tests/e2e/parity.spec.ts prove that rendering never changes play, and `?replay=<name>` plays one in real time.
+  - Exports: `createPlayback`, `Playback`, `PLAYBACK_CODES`, `playInto`, `PlayIntoOptions`, `PlayResult`, `PlayTarget`, `ViewChange`
+  - Tests: [`engine/app/playback.test.ts`](../engine/app/playback.test.ts)
+- [`routes.ts`](../engine/app/routes.ts): Routes and deep links (PLAN.md §6.1: URL parameters are parsed once, here, and passed down; §8.1; WP 2.7): what a page's query asks for.
+  - Exports: `parseRoutes`, `ROUTE_CODES`, `ROUTE_KEYS`, `RouteOptions`, `routeQuery`, `Routes`
+  - Tests: [`engine/app/routes.test.ts`](../engine/app/routes.test.ts)
+- [`view.ts`](../engine/app/view.ts): The view of a run (PLAN.md §6.4's `view.update`, §8.3, WP 2.7): what a running scene looks like, built without a GPU, so a page draws it and `createHeadless({ view: true })` dumps it in Node.
+  - Exports: `CameraInfo`, `createRunView`, `DEFAULT_CAMERA`, `HEADLESS_ASPECT`, `RunView`, `RunViewOptions`, `VIEW_CODES`, `ViewFrame`
+  - Tests: [`engine/app/view.test.ts`](../engine/app/view.test.ts)
+- [`viewMembers.ts`](../engine/app/viewMembers.ts): The view's inspector members (PLAN.md §8.3, WP 2.7): `ready`, `render`, `shot`, `camera.get`, `camera.set`, `scene.dump` and `replay`, registered from here as entries of the registry kind `inspectorMember` (engine/dev/members.ts), so `window.__engine` in a page and `createHeadless` in Node list the same members.
+  - Exports: `AppHost`
+  - Tests: [`engine/app/viewMembers.test.ts`](../engine/app/viewMembers.test.ts)
 
 ## engine/audio/data
 
@@ -187,6 +205,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`members.ts`](../engine/dev/members.ts): The registry kind `inspectorMember` (PLAN.md §8.3, §5.8's one tool table, WP 1.6): what an inspector member is (a help line, its arguments as schema fields, its implementation), the checks each one passes when defined, and the signatures and help lines made from them.
   - Exports: `defineMember`, `helpText`, `InspectorHost`, `Member`, `memberKind`, `MemberSpec`, `recordedRun`, `RecordedRun`, `signatureOf`, `WorldReads`
   - Tests: [`engine/dev/inspector.test.ts`](../engine/dev/inspector.test.ts)
+- [`overlay.ts`](../engine/dev/overlay.ts): The error overlay (PLAN.md §8.3's "ready or error", WP 2.7): what a page shows while it starts and when it fails, as page text over the canvas, since whoever opens a deployed page sees the page, not its console (shardfall:web/index.html:34-40, 62-65).
+  - Exports: `createOverlay`, `Overlay`, `OverlayRecord`
+  - Tests: [`engine/dev/overlay.test.ts`](../engine/dev/overlay.test.ts)
 
 ## engine/gfx
 
@@ -211,9 +232,15 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`resolution.ts`](../engine/gfx/resolution.ts): Resolution modes (PLAN.md WP 2.1): how many pixels the renderer draws for the canvas's size on screen, from the view setting `gfx.resolution`.
   - Exports: `createResolution`, `Fit`, `fitResolution`, `MAX_PIXEL_RATIO`, `PIXEL_LINES`, `Resolution`, `RESOLUTION_MODES`, `RESOLUTION_SETTINGS`, `ResolutionMode`, `ResolutionOptions`, `Size`
   - Tests: [`engine/gfx/resolution.test.ts`](../engine/gfx/resolution.test.ts)
+- [`sceneDump.ts`](../engine/gfx/sceneDump.ts): The scene as text (PLAN.md §8.3's `scene.dump`; doctrines: Agent-operable, Verifiable): `dumpScene(root, { depth, filter })` writes a three.js object tree one object a line, indented by depth, so an agent reads what a page draws without seeing it, in Node as in a page (the stage needs no GPU, engine/gfx/stage.ts).
+  - Exports: `DumpOptions`, `dumpScene`
+  - Tests: [`engine/gfx/sceneDump.test.ts`](../engine/gfx/sceneDump.test.ts)
 - [`shot.ts`](../engine/gfx/shot.ts): Shots (PLAN.md §8.5, §8.3's `shot`): what the frame draws, read back from the GPU as numbers and text, never as a committed image.
   - Exports: `Readback`, `readPixels`, `rowBytes`, `shot`, `SHOT_CODES`, `shotForJson`, `ShotGfx`, `ShotJson`, `ShotOptions`, `ShotResult`, `stripRowPadding`, `toBase64`
   - Tests: [`engine/gfx/shot.test.ts`](../engine/gfx/shot.test.ts), [`tests/e2e/shot.spec.ts`](../tests/e2e/shot.spec.ts)
+- [`stage.ts`](../engine/gfx/stage.ts): The stage (PLAN.md §6.4's view, §9.0, WP 2.7): a running scene's presentation graph, built from plain data with no GPU, so a page draws it and a headless engine dumps it (`createHeadless({ view: true })`).
+  - Exports: `createStage`, `placeableKinds`, `placeOf`, `splitRuns`, `Stage`, `StageOptions`, `StandInPlace`
+  - Tests: [`engine/gfx/stage.test.ts`](../engine/gfx/stage.test.ts)
 - [`thumbnail.ts`](../engine/gfx/thumbnail.ts): Text thumbnails (PLAN.md §8.5): a frame as a 48 × 27 grid of hex colours, kept as JSON (tests/baselines/thumbs/<case>.json) instead of an image (doctrine: Assets), compared per cell with a tolerance, and read as a coarse map.
   - Exports: `compareThumbnails`, `MAP_SYMBOLS`, `STRAY`, `THUMB_HEIGHT`, `THUMB_WIDTH`, `thumbnail`, `Thumbnail`, `ThumbnailDiff`, `ThumbnailIds`
   - Tests: [`engine/gfx/thumbnail.test.ts`](../engine/gfx/thumbnail.test.ts)
@@ -518,6 +545,16 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `CheckedLevel`, `checkLevel`, `LevelSource`, `NAV_CLIMB`, `validateLevel`
   - Tests: [`engine/world/level/validate.test.ts`](../engine/world/level/validate.test.ts)
 
+## labs/box
+
+- [`main.ts`](../labs/box/main.ts): The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports the box's scenes and levels, then starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays offered to `?replay=<name>`.
+
+## labs/box/scenes
+
+- [`room.ts`](../labs/box/scenes/room.ts): The box room, Box 1 (PLAN.md §9.0, WP 2.7): the level `level:room` (labs/box/levels/room.txt: 16 × 12 m, walls, one low wall, a pillar, spawn markers) with three scripted movers, crates on fixed paths with no physics yet, so that stepping changes state.
+  - Exports: `default`, `lapLength`, `MOVER`, `pathPoint`, `room`, `ROOM_PATHS`, `ROOM_SETTINGS`
+  - Tests: [`labs/box/scenes/room.test.ts`](../labs/box/scenes/room.test.ts)
+
 ## labs/hello
 
 - [`boot.ts`](../labs/hello/boot.ts): The hello page's entry (labs/hello/index.html), a harness page proving that three.js r182 draws on WebGPU here: it publishes `window.__engine` with `ready`, `errors` and a minimal `info()` (PLAN.md §8.3), then loads the scene (labs/hello/hello.ts) by dynamic import and draws it on every animation frame.
@@ -631,12 +668,21 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`docs.ts`](../tools/cmd/docs.ts): Generates and checks the docs that come from the code (PLAN.md §6.8, §8.12): `docs/INDEX.md`, `docs/API.md` and `docs/ERRORS.md`, the `@example` blocks, the paths the docs mention, and `docs/PROGRESS.md`'s length.
   - Exports: `check`, `checkComments`, `createDocsCommand`, `default`, `DocsOptions`, `driftChecks`, `MAX_COMMENT_LINES`, `PROGRESS`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
+- [`dump.ts`](../tools/cmd/dump.ts): Dumps the scene and the state of the page `x inspect` keeps open, as text (PLAN.md §8.1, §8.3, WP 2.7): `__engine.scene.dump()`, one object a line (name, type, position, size, material, triangles, entity), then the run's tick, hash and entities.
+  - Exports: `default`
+  - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
 - [`esc.ts`](../tools/cmd/esc.ts): Escalations and the calls made without an answer (DOCTRINE.md, Escalation; PLAN.md §8.14, ADR-0017): writes and lists the records in docs/escalations/ (tools/lib/escalations.ts), and checks them as `x check`'s `esc` plugin.
   - Exports: `check`, `checkEscalations`, `createEscCommand`, `default`, `EscOptions`, `messageFor`, `runId`
   - Tests: [`tools/cmd/esc.test.ts`](../tools/cmd/esc.test.ts)
+- [`eval.ts`](../tools/cmd/eval.ts): Evaluates JavaScript in the page `x inspect` keeps open, and prints its value as JSON (PLAN.md §8.1, WP 2.7): `node x eval "__engine.hash()"`.
+  - Exports: `default`
+  - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
 - [`help.ts`](../tools/cmd/help.ts): Prints the generated help: every command, or one command's file comment and flags.
   - Exports: `default`
   - Tests: [`tools/x.test.ts`](../tools/x.test.ts)
+- [`inspect.ts`](../tools/cmd/inspect.ts): Keeps one headless page open over the Vite dev server, for `x eval`, `x dump` and `x set`, which `x shot` reuses while it runs (PLAN.md §8.1, WP 2.7; doctrine: Agent-operable).
+  - Exports: `callSession`, `default`, `findSession`, `Opened`, `pageErrorFinding`, `pageFailures`, `reloadLines`, `SESSION_FILE`, `SessionInfo`, `sessionShot`, `SessionTab`, `shootInSession`
+  - Tests: [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts), [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
 - [`new.ts`](../tools/cmd/new.ts): Scaffolds a new entry of a kind from its template (PLAN.md §8.13): `x new <kind> <id>` writes the files of `tools/templates/<kind>/`, filled in for the id, then runs the kind's checks and prints the summary.
   - Exports: `CheckName`, `CHECKS`, `default`, `fill`, `Kind`, `listKinds`, `render`, `runCheck`, `runChecks`, `testKind`, `writeFiles`
   - Tests: [`tools/cmd/new.test.ts`](../tools/cmd/new.test.ts)
@@ -649,9 +695,12 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`qa.ts`](../tools/cmd/qa.ts): Runs content QA for the families named, against their baselines (PLAN.md §8.6).
   - Exports: `compareWithBaselines`, `default`, `loadFamily`, `QaBaseline`, `QaContext`, `qaFamilies`, `QaFamily`, `QaViolation`, `readBaselines`, `runQa`
   - Tests: [`tools/cmd/qa.test.ts`](../tools/cmd/qa.test.ts)
-- [`replay.ts`](../tools/cmd/replay.ts): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WP 1.5).
+- [`replay.ts`](../tools/cmd/replay.ts): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WPs 1.5 and 2.7).
   - Exports: `Checked`, `checkFile`, `checkFiles`, `default`, `findParting`, `Outcome`, `parseSwap`, `partingLines`, `PLATFORM`, `replayFiles`, `ReplayOptions`, `Run`, `RunParting`
   - Tests: [`tools/cmd/replay.test.ts`](../tools/cmd/replay.test.ts)
+- [`set.ts`](../tools/cmd/set.ts): Checks a setting against the settings schema, prints it as a URL parameter, and applies it to the page `x inspect` keeps open (PLAN.md §8.1, §3's Agent-operable, I-37, WP 2.7): `node x set box.room.speed 3`.
+  - Exports: `checkSetting`, `default`, `loadSettings`, `sceneModuleOf`, `settingModules`, `settingParam`
+  - Tests: [`tools/cmd/set.test.ts`](../tools/cmd/set.test.ts)
 - [`shot.ts`](../tools/cmd/shot.ts): Renders a page on WebGPU in the platform's Chromium and reports what it drew as numbers and text: the look metrics, the ID pass (which object covers which pixels) and a 48 × 27 text thumbnail; images only on demand.
   - Exports: `default`, `encodePng`, `frameMetrics`, `judgeFrame`, `pageUrl`, `READY_TIMEOUT_MS`, `resolvePage`, `shotMetrics`
   - Tests: [`tests/e2e/shot.spec.ts`](../tests/e2e/shot.spec.ts), [`tools/cmd/shot.test.ts`](../tools/cmd/shot.test.ts)
@@ -730,6 +779,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`hash.ts`](../tools/lib/hash.ts): The FNV-1a hash (32-bit), shared by the tools: report ids, the e2e fixture's named random streams, and the proof hashes later WPs print.
   - Exports: `fnv1a`, `fnv1aHex`
   - Tests: [`tools/lib/hash.test.ts`](../tools/lib/hash.test.ts)
+- [`page.ts`](../tools/lib/page.ts): Pages for the `x` commands (PLAN.md §8.1, §8.3, WP 2.7): reading a page's ready-or-error signal (`window.__engine`), waiting for it, finding the page that draws a scene module's scenes, and playing replays in that page, opened on each replay's scene, for `x replay --browser page` (`pageRuntime`: `__engine.replay`, engine/app/playback.ts, which draws a frame after every step), or in tests/pages/replay.html for `--browser sim` (`replayBrowser`).
+  - Exports: `BrowserMode`, `labPageOf`, `PageEngine`, `pageRuntime`, `readSignals`, `READY_MS`, `replayBrowser`, `scenePath`, `Signals`, `waitReady`
+  - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
 - [`png.ts`](../tools/lib/png.ts): Decodes the PNGs Chromium's screenshots produce (non-interlaced, 8-bit RGB or RGBA) into RGBA bytes, for the frame reads of the e2e fixture (tests/e2e/fixtures.ts) and `x shot` (tools/cmd/shot.ts).
   - Exports: `decodePng`
   - Tests: [`tools/lib/png.test.ts`](../tools/lib/png.test.ts)

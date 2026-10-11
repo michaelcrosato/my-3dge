@@ -52,6 +52,7 @@ game agent's manual.
 - `Build` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): A `build` entry: one body's proportions, in metres before `size`.
 - `buildGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): Builds geometry `ref` (an id, or `{ geometry, params }`) from `registry` (the shared one by default): a new `BufferGeometry` the caller owns and disposes.
 - `BuildSpec` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): What `defineBuild` takes: any field; the others keep `build:chibi`'s values.
+- `CameraInfo` (interface from [`engine/app/view.ts`](../engine/app/view.ts)): What `camera.get()` and `camera.set(code)` return: the camera as a code, in words, and its pose.
 - `CameraInputSample` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): What the camera takes each frame: mouse look `[right, up]` rad, the right stick `[right, up]`, wheel notches.
 - `CameraLike` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A camera as the input reads it (engine/gfx/cameras/pose.ts `Camera`): its heading, and its pitch for first person.
 - `cellHash` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A seeded value in [0, 1) for the integer point (x, y), with `salt` telling apart uses of one seed (a stone's tone, its crack).
@@ -73,6 +74,7 @@ game agent's manual.
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
 - `createBindings` (function from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Makes the bindings of the action map `map` (an id or an entry), loading saved changes from `options.storage`.
 - `createCharacter` (function from [`engine/physics/character.ts`](../engine/physics/character.ts)): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
+- `createEngine` (function from [`engine/app/engine.ts`](../engine/app/engine.ts)): Starts the engine in a page (see the file comment); resolves once it is up or has failed.
 - `createFootPlantState` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A new, unlocked `FootPlantState`.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
 - `createInput` (function from [`engine/input/input.ts`](../engine/input/input.ts)): Makes the page's input.
@@ -100,7 +102,9 @@ game agent's manual.
 - `defineTexture` (function from [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)): Defines a texture generator on `registry` (the shared one by default) and returns it.
 - `DeviceKind` (type from [`engine/input/codes.ts`](../engine/input/codes.ts)): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
+- `Engine` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): A started engine.
 - `EngineInfo` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): What `info()` reports: the engine's identity and health, and the run.
+- `EngineOptions` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): How a page starts the engine.
 - `Entity` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity: its id and the components it holds, by kind name (`e.position`).
 - `EntitySummary` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): One entity as `entities()` lists it: its id and the components it holds.
 - `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
@@ -196,6 +200,7 @@ game agent's manual.
 - `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
 - `OverlapOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): An overlap's options.
 - `palette` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A palette's hex colours as sRGB bytes; throws `GFX_EMPTY_PALETTE` naming `what` when it has none.
+- `parseRoutes` (function from [`engine/app/routes.ts`](../engine/app/routes.ts)): Reads a page's query (see the file comment).
 - `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
 - `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
 - `Physics` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A physics world: bodies, stepping, queries, and the sim's physics hook (`state`, `capture`, `restore`).
@@ -207,6 +212,8 @@ game agent's manual.
 - `PillarPart` (interface from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): One part of a pillar: a square slab `width` across, from height `from` to `to` (m).
 - `pillarParts` (function from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's parts, bottom to top (see the file comment).
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
+- `PlayIntoOptions` (interface from [`engine/app/playback.ts`](../engine/app/playback.ts)): How `playInto` plays.
+- `PlayResult` (interface from [`engine/app/playback.ts`](../engine/app/playback.ts)): What a played replay gave.
 - `Point3` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A point in metres: `[x, y, z]`.
 - `PointName` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): A point a rigid pair can name: a joint, a socket, or the root.
 - `Pose` (class from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): A skeleton pose: the root transform plus each joint's local rotation.
@@ -237,6 +244,8 @@ game agent's manual.
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
 - `roundedBoxGeometry` (function from [`engine/gfx/geometry/roundedBox.ts`](../engine/gfx/geometry/roundedBox.ts)): A rounded box standing on the ground (see the file comment).
 - `RoundedBoxOptions` (interface from [`engine/gfx/geometry/roundedBox.ts`](../engine/gfx/geometry/roundedBox.ts)): A rounded box's size and rounding, in metres.
+- `routeQuery` (function from [`engine/app/routes.ts`](../engine/app/routes.ts)): A query for these routes: `?scene=room&cam=iso&time.scale=0.5` (keys in this order, settings last).
+- `Routes` (interface from [`engine/app/routes.ts`](../engine/app/routes.ts)): What a page's query asks for.
 - `runningBond` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): Where texel (x, y) falls in a running bond of `cell` = [width, height] texels over a texture of `size`: courses (rows) of cells, odd courses shifted half a cell, the whole layout moved by `phase` texels.
 - `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
@@ -300,6 +309,7 @@ game agent's manual.
 - `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
 - `Vec3Like` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A vector: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`.
 - `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
+- `ViewChange` (interface from [`engine/app/playback.ts`](../engine/app/playback.ts)): A view change during a replay: a camera code, and view settings by path.
 - `VirtualDevice` (interface from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): The virtual device.
 - `Voice` (interface from [`engine/audio/dsp/voice.ts`](../engine/audio/dsp/voice.ts)): One voice of a sound: every field is optional.
 - `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
@@ -648,13 +658,66 @@ For the agents who maintain the engine.
 - `SocketName` (type): A socket's name.
 - `SOCKETS` (const): The sockets: attachment points that turn with their joint (`SOCKET_JOINTS`).
 
+### [`engine/app/engine.ts`](../engine/app/engine.ts)
+
+- `createEngine` (function): Starts the engine in a page (see the file comment); resolves once it is up or has failed.
+- `Engine` (interface): A started engine.
+- `ENGINE_CODES` (const): The codes this module raises, with their fixes.
+- `EngineOptions` (interface): How a page starts the engine.
+- `recordOf` (function): The log record for a thrown value: its own code and values when it is a coded error (a `GfxError` carries only its message, so the values are read back from it through the code's template), else `code` with the message.
+
 ### [`engine/app/headless.ts`](../engine/app/headless.ts)
 
+- `AppHostOptions` (interface): How `createAppHost` makes a run: `createHeadless`'s options, plus a page's drawing and material library.
+- `AppRun` (interface): The run behind an engine: the inspector, its host, and the live session (app code only, never members).
+- `createAppHost` (function): Makes the run behind an engine (see the file comment).
 - `createHeadless` (function): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
+- `Drawing` (interface): What a page adds to the run's host (engine/app/engine.ts): its GPU and how it draws.
 - `Headless` (type): A headless engine: `__engine`'s members, over a scene running in this process.
 - `HEADLESS_CODES` (const): The codes this module raises, with their fixes.
 - `headlessHost` (function): The run behind a headless engine: its session (world, settings, recording) and clock.
 - `HeadlessOptions` (interface): How a headless engine starts.
+
+### [`engine/app/loop.ts`](../engine/app/loop.ts)
+
+- `createLoop` (function): Makes a frame loop (see the file comment).
+- `Loop` (interface): A running frame loop.
+- `LoopOptions` (interface): What the loop drives.
+
+### [`engine/app/playback.ts`](../engine/app/playback.ts)
+
+- `createPlayback` (function): Plays `value` (a replay, checked first: `SIM_BAD_REPLAY`) into a session, one `step` at a time.
+- `Playback` (interface): A replay being played into a session, one step at a time.
+- `PLAYBACK_CODES` (const): The codes this module raises, with their fixes.
+- `playInto` (function): Plays a replay's text from step 0 in `target` (see the file comment).
+- `PlayIntoOptions` (interface): How `playInto` plays.
+- `PlayResult` (interface): What a played replay gave.
+- `PlayTarget` (interface): What a replay plays into: an engine that can start a run, step it, and draw it.
+- `ViewChange` (interface): A view change during a replay: a camera code, and view settings by path.
+
+### [`engine/app/routes.ts`](../engine/app/routes.ts)
+
+- `parseRoutes` (function): Reads a page's query (see the file comment).
+- `ROUTE_CODES` (const): The codes this module raises, with their fixes.
+- `ROUTE_KEYS` (const): The keys that are routes, not settings.
+- `RouteOptions` (interface): What the routes are checked against: the page's scenes and the registry that declares them and the settings.
+- `routeQuery` (function): A query for these routes: `?scene=room&cam=iso&time.scale=0.5` (keys in this order, settings last).
+- `Routes` (interface): What a page's query asks for.
+
+### [`engine/app/view.ts`](../engine/app/view.ts)
+
+- `CameraInfo` (interface): What `camera.get()` and `camera.set(code)` return: the camera as a code, in words, and its pose.
+- `createRunView` (function): Builds the view of a run (see the file comment).
+- `DEFAULT_CAMERA` (const): The camera code a view starts with when none is given.
+- `HEADLESS_ASPECT` (const): The aspect a view frames for when nothing draws it (headless): 16:9, the e2e viewport's.
+- `RunView` (interface): The view of a run (see the file comment).
+- `RunViewOptions` (interface): What a view is made from.
+- `VIEW_CODES` (const): The codes this module raises, with their fixes.
+- `ViewFrame` (interface): One rendered frame's view inputs: the clock's alpha, real seconds since the last frame, the picture's aspect.
+
+### [`engine/app/viewMembers.ts`](../engine/app/viewMembers.ts)
+
+- `AppHost` (interface): What the view's members work on: the inspector's host, plus the view and the drawing.
 
 ### [`engine/audio/data/drums.ts`](../engine/audio/data/drums.ts)
 
@@ -998,6 +1061,12 @@ For the agents who maintain the engine.
 - `RecordedRun` (type): The run as members reach it: the session's recorded operations, scene and settings store, and the world read-only.
 - `signatureOf` (function): How a member is called: `step(n = 1, intents?)`, `get(id)`, or `errors` for a value member.
 - `WorldReads` (type): The world as members read it: its reads, none of its mutators (members change the sim through the session).
+
+### [`engine/dev/overlay.ts`](../engine/dev/overlay.ts)
+
+- `createOverlay` (function): The overlay over `document`'s `#msg` element, made when the page has none.
+- `Overlay` (interface): The page's message line over the canvas.
+- `OverlayRecord` (interface): What the overlay shows for an error: a code, what happened, and the fix.
 
 ### [`engine/gfx/cameras/boost.ts`](../engine/gfx/cameras/boost.ts)
 
@@ -1410,6 +1479,11 @@ For the agents who maintain the engine.
 - `ResolutionOptions` (interface): How `createResolution` measures: the canvas's CSS size and the device pixel ratio (the browser's by default).
 - `Size` (interface): A size in CSS or device pixels.
 
+### [`engine/gfx/sceneDump.ts`](../engine/gfx/sceneDump.ts)
+
+- `DumpOptions` (interface): What `dumpScene` writes.
+- `dumpScene` (function): The tree under `root` as text, one object a line (see the file comment).
+
 ### [`engine/gfx/shot.ts`](../engine/gfx/shot.ts)
 
 - `Readback` (interface): The readback's padded layout: bytes per row as WebGPU copied them, and the buffer's length.
@@ -1424,6 +1498,16 @@ For the agents who maintain the engine.
 - `ShotResult` (interface): What a shot returns: its size, the readback's layout, what was asked, pipelines built, and how long it took.
 - `stripRowPadding` (function): Drops the row padding of a readback: `height` rows of `width` pixels from rows of `rowBytes(width)` bytes.
 - `toBase64` (function): Base64 of bytes, in the browser and in Node.
+
+### [`engine/gfx/stage.ts`](../engine/gfx/stage.ts)
+
+- `createStage` (function): Builds a stage (see the file comment).
+- `placeableKinds` (function): The component kinds whose entities stand somewhere: they declare `x` and `z` as numbers in metres.
+- `placeOf` (function): Where `entity` stands, from the first of `kinds` it holds; undefined when it holds none.
+- `splitRuns` (function): The level with each block descriptor split into one descriptor per run (merged rectangle), surfaces whole, and for each descriptor the run it draws (null for one that was not split).
+- `Stage` (interface): A running scene's presentation graph (see the file comment).
+- `StageOptions` (interface): What a stage is made of: the level (none for an empty stage), where materials come from, and its registry.
+- `StandInPlace` (interface): Where a stand-in stands and how it looks, read from its entity's placing component.
 
 ### [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)
 
@@ -2004,6 +2088,16 @@ For the agents who maintain the engine.
 - `default` (default): ESLint's settings for T0 (PLAN.md §6.10; `npm run lint`, inside `npm run check`): typescript-eslint's recommended rules without type information (so T0 stays fast), the file-comment and size rules, then the doctrine's rule families from tools/eslint/, one block per family, each message naming the fix.
 - `SWITCHES` (const): Rules written ahead of the code they guard.
 
+### [`labs/box/scenes/room.ts`](../labs/box/scenes/room.ts)
+
+- `default` (default): The box room, Box 1 (PLAN.md §9.0, WP 2.7): the level `level:room` (labs/box/levels/room.txt: 16 × 12 m, walls, one low wall, a pillar, spawn markers) with three scripted movers, crates on fixed paths with no physics yet, so that stepping changes state.
+- `lapLength` (function): How long a path's lap is, m: a line there and back, a loop's perimeter, a circle's circumference.
+- `MOVER` (const): A mover's component: where it stands (its feet), which way it faces, how far along its path it is, how it looks.
+- `pathPoint` (function): Where a mover `s` metres along `path` stands, and the heading it faces: `[x, z, yaw]`.
+- `room` (const): The box room.
+- `ROOM_PATHS` (const): The movers' paths, in mover order, in the level's metres (x east, z south; a tile is 1 m).
+- `ROOM_SETTINGS` (const): The room's settings.
+
 ### [`labs/hello/hello.ts`](../labs/hello/hello.ts)
 
 - `HelloView` (interface): A started hello scene.
@@ -2277,6 +2371,10 @@ For the agents who maintain the engine.
 - `MAX_COMMENT_LINES` (const): The longest a file comment (PLAN.md §6.8) or `docs/PROGRESS.md` (one screen) may run, in lines.
 - `PROGRESS` (const): The one screen every session reads first: where things stand, what is next, the open issues.
 
+### [`tools/cmd/dump.ts`](../tools/cmd/dump.ts)
+
+- `default` (default): Dumps the scene and the state of the page `x inspect` keeps open, as text (PLAN.md §8.1, §8.3, WP 2.7): `__engine.scene.dump()`, one object a line (name, type, position, size, material, triangles, entity), then the run's tick, hash and entities.
+
 ### [`tools/cmd/esc.ts`](../tools/cmd/esc.ts)
 
 - `check` (const): The `esc` plugin of `x check` (T0): well-formed records, none overdue, a current README.
@@ -2287,9 +2385,28 @@ For the agents who maintain the engine.
 - `messageFor` (function): The short message `open` prints for the owner: the question, the options and what happens without an answer.
 - `runId` (function): The run a record belongs to: `--run`, else `$X_RUN`, else the Claude Code session, else `local`.
 
+### [`tools/cmd/eval.ts`](../tools/cmd/eval.ts)
+
+- `default` (default): Evaluates JavaScript in the page `x inspect` keeps open, and prints its value as JSON (PLAN.md §8.1, WP 2.7): `node x eval "__engine.hash()"`.
+
 ### [`tools/cmd/help.ts`](../tools/cmd/help.ts)
 
 - `default` (default): Prints the generated help: every command, or one command's file comment and flags.
+
+### [`tools/cmd/inspect.ts`](../tools/cmd/inspect.ts)
+
+- `callSession` (function): Sends `op` with `body` to the session; resolves with its JSON reply, or rejects with its error's message.
+- `default` (default): Keeps one headless page open over the Vite dev server, for `x eval`, `x dump` and `x set`, which `x shot` reuses while it runs (PLAN.md §8.1, WP 2.7; doctrine: Agent-operable).
+- `findSession` (function): The running session's info, or null; a session whose process is gone is cleared.
+- `Opened` (interface): A shot taken (for `x shot`), with what the page said: its signal, its failures so far and its console.
+- `pageErrorFinding` (const): A page error as a failure.
+- `pageFailures` (function): The failures of a page that should be ready: its thrown errors, its error signals, no signal, another backend.
+- `reloadLines` (const): The line every reply starts with when Vite reloaded the page since the last one, else nothing.
+- `SESSION_FILE` (const): Where a running session says where it listens.
+- `SessionInfo` (interface): What `session.json` holds.
+- `sessionShot` (function): The session's `shot` op: the open tab when it shows `path`, else a new tab of the browser opened on `path`.
+- `SessionTab` (interface): What the session's `shot` op works with: its tab, the page open in it, its browser, Vite's URL and the root.
+- `shootInSession` (function): Shoots `path` through the running inspect session (tools/cmd/inspect.ts): its page when it shows `path`, else a new tab of its browser; null when the page has no `__engine.shot` (then `x shot` screenshots it itself).
 
 ### [`tools/cmd/new.ts`](../tools/cmd/new.ts)
 
@@ -2358,7 +2475,7 @@ For the agents who maintain the engine.
 - `Checked` (interface): What `checkFiles` came to: the outcomes' lines, findings and metrics, and each file's verdict.
 - `checkFile` (function): Plays one replay file in every runtime and judges it (see the file comment); writes nothing.
 - `checkFiles` (function): Checks every file, then reads `pageErrors` (Chromium's), and only when nothing failed writes the goldens `--update` recorded.
-- `default` (default): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WP 1.5).
+- `default` (default): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WPs 1.5 and 2.7).
 - `findParting` (function): The first step where any run parts from the first, compared there (`table` reads the components' registry).
 - `Outcome` (interface): What one replay came to: its verdict, lines, bisect details, findings, metrics, and goldens to write.
 - `parseSwap` (function): Parses `--swap`: `none`, or names from the swap (`sin,pow`).
@@ -2368,6 +2485,15 @@ For the agents who maintain the engine.
 - `ReplayOptions` (interface): How replays are checked.
 - `Run` (interface): A run of a replay: which runtime, and the hashes it took.
 - `RunParting` (interface): Where two runs part: the step, the runs, and what differs there (engine/sim/replay.ts `partingOf`).
+
+### [`tools/cmd/set.ts`](../tools/cmd/set.ts)
+
+- `checkSetting` (function): Types `text` for the setting `path` on a fresh store; throws `UsageError` naming the closest path or the rule.
+- `default` (default): Checks a setting against the settings schema, prints it as a URL parameter, and applies it to the page `x inspect` keeps open (PLAN.md §8.1, §3's Agent-operable, I-37, WP 2.7): `node x set box.room.speed 3`.
+- `loadSettings` (function): Imports the modules that declare settings, so the shared registry knows them; returns them.
+- `sceneModuleOf` (function): The module of `scene`: a module path, a scene id, or the name after an id's colon (`room` for `box:room`).
+- `settingModules` (function): The modules that declare settings (`defineSettings(` in their text), tests aside; with `scene`, only its own.
+- `settingParam` (function): A setting as a URL parameter: `path=value`, a string as it is, anything else as JSON.
 
 ### [`tools/cmd/shot.ts`](../tools/cmd/shot.ts)
 
@@ -2390,7 +2516,7 @@ For the agents who maintain the engine.
 - `nodeRuntime` (function): Replays in Node, in this process, on `registry` (the shared one by default): `x replay`'s first runtime.
 - `parseSets` (function): `key=value` pairs as path → text; throws `UsageError` for a pair without `=`.
 - `replayText` (function): A replay as readable text: its keys in file order, one change-point per line, each platform's hashes one step per line, numbers exact (`-0` kept, engine/core/hash.ts `serialize`).
-- `resolveSceneModule` (function): The module a target names: a `.ts` file, a directory's `index.ts`, or the module that defines a scene id.
+- `resolveSceneModule` (function): The module a target names: a `.ts` file (its extension optional), a directory's `index.ts`, or a scene id's module.
 - `Runtime` (interface): Where replays play: Node in this process, or Chromium in tests/pages/replay.html.
 - `sceneModules` (function): Scene id → the module that defines it, from the modules' text (tests aside).
 - `sceneRoots` (function): Where scene modules live: `fixtures/scenes/` and every `labs/<name>/scenes/` (tests/pages/replay.ts globs the same).
@@ -2654,6 +2780,19 @@ For the agents who maintain the engine.
 
 - `fnv1a` (function): Hashes a string (as UTF-8) or bytes with 32-bit FNV-1a, continuing from `seed` (the FNV offset basis by default).
 - `fnv1aHex` (function): `fnv1a` as eight lowercase hex digits, the form reports and logs print.
+
+### [`tools/lib/page.ts`](../tools/lib/page.ts)
+
+- `BrowserMode` (type): How `--browser` plays in Chromium: the sim-only page, or the scene's own page while it renders.
+- `labPageOf` (function): The page that draws the scenes of a module under `labs/<name>/scenes/`: `labs/<name>/`; throws for other modules.
+- `PageEngine` (type): `window.__engine` as the tools call it in a page.
+- `pageRuntime` (function): `x replay --browser page`'s runtime: each replay in its scene's page (`labPageOf`), opened on the replay's own scene (`scenePath`, since a page draws one scene and plays only its replays), drawn after every step.
+- `readSignals` (function): Reads `window.__engine`'s signal in `tab`; undefined before the page publishes one.
+- `READY_MS` (const): How long a page may take to signal ready or an error, ms.
+- `replayBrowser` (function): Chromium with its own Vite server for `x replay --browser`: tests/pages/replay.html (`window.__replay`) under the swap `swap` names, or the scenes' own pages (`pageRuntime`).
+- `scenePath` (function): The path of the page that draws a replay's scene: `labs/box/` and `box:spinners` give `labs/box/?scene=spinners`.
+- `Signals` (interface): A page's ready-or-error signal (PLAN.md §8.3), read once.
+- `waitReady` (function): Waits until `tab` signals ready or an error, or throws an uncaught error, or `ms` pass; returns the last signal.
 
 ### [`tools/lib/png.ts`](../tools/lib/png.ts)
 
