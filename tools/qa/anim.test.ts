@@ -15,7 +15,16 @@ import { createSkeleton } from '../../engine/anim/skeleton';
 import { SAMPLE_STATES } from '../../engine/anim/states';
 import { readBaselines, runQa } from '../cmd/qa';
 import { ROOT } from '../x';
-import family, { animViolations, closure, footSlide, humanoidStates, limbs, motionTrack, pops } from './anim';
+import family, {
+  animViolations,
+  closure,
+  footSlide,
+  humanoidPrefixes,
+  humanoidStates,
+  limbs,
+  motionTrack,
+  pops,
+} from './anim';
 
 /** A track of one point, at `ys` heights and `xs` along X, the body standing at the origin. */
 const line = (xs: number[], ys: number[] = xs.map(() => 0)) =>
@@ -44,8 +53,7 @@ const turn = (x: number, y: number, z: number, angle: number) =>
 describe('the anim QA family', () => {
   it('passes every move and pose, the humanoid, the blob and the floater against their baseline', async () => {
     // the bodies' ids only: the library's clips are tests/unit/data/anim/qa.test.ts's (a sample in T1)
-    const kinds = [...Object.keys(humanoidStates()), 'blob:', 'floater:'].map((id) => id.slice(0, id.indexOf(':') + 1));
-    const bodies = [...new Set(kinds)];
+    const bodies = [...humanoidPrefixes(), 'blob:', 'floater:'];
     const result = await runQa(ROOT, 'anim', bodies);
     expect(result.failures).toEqual([]);
     expect(result.warnings).toEqual([]);

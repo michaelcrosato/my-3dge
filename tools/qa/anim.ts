@@ -6,7 +6,7 @@
  * rest and back to rest; the blob (`blob:<state>`) and the floater (`floater:<state>`) hold theirs. The first build
  * also runs its matrix twice and at half the step, and so do the blob and the floater. Then every clip of the library
  * (`clip:<SET>/<Clip>`, `set:<SET>`), as data and played on every build (tools/qa/anim/clips.ts, WP 8.6; its own
- * metrics there, its baseline tests/baselines/qa-anim-library.json): about 45 s, so T1 plays a sample.
+ * metrics there, its baseline tests/baselines/qa-anim-library.json): about 40 s, so T1 plays a sample.
  *
  * Metrics, one violation per id and metric, valued by the worst case (larger is worse) and naming where it happened:
  * - `nan` (1), `stretch`, `underFloor`, `reach` (metres): `animCheck`'s finite values, bone lengths, feet at or
@@ -153,6 +153,11 @@ export function humanoidStates(): Record<string, MatrixState> {
   states['reaction:fallFront'] = reaction(1.8, (r, f) => r.knockDown(facingTurn(AHEAD, f), f));
   states['reaction:die'] = reaction(2.6, (r) => r.die(), [1.8, (r) => r.getUp()]);
   return states;
+}
+
+/** The kinds of the humanoid's QA ids (`state:`, `pose:`, …), from its matrix: as `only`, the humanoid without clips. */
+export function humanoidPrefixes(): string[] {
+  return [...new Set(Object.keys(humanoidStates()).map((id) => id.slice(0, id.indexOf(':') + 1)))];
 }
 
 /** One run as the metrics read it: points per step, world and measured from the body, and what they need besides. */

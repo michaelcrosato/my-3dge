@@ -2,7 +2,7 @@
  * @file The `anim` QA family over the library in T1 (tools/qa/anim/clips.ts, PLAN.md §8.6, WP 8.6): every clip's data
  * checks, and the play checks of a sample with every set in it (each set's every 20th clip, and each clip the baseline
  * accepts a played metric for), pass against tests/baselines/qa-anim-library.json with no slack. The full sweep plays
- * every clip on every build in about 45 s, past the WP's 30 s for its Node tests, so it is a gate's long run (`node x
+ * every clip on every build in about 40 s, past the WP's 30 s for its Node tests, so it is a gate's long run (`node x
  * qa anim --only clip:,set:`, tools/lib/tiers.ts `LONG_RUNS`). Each data metric catches a seeded fault, and the family
  * reaches the clips through `node x qa anim`'s own path (`runQa`).
  *
