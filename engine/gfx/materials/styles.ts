@@ -4,7 +4,8 @@
  * compile.ts: `MeshLambertMaterial`); `toon` is banded light with a rim (engine/gfx/materials/toon.ts); `flat` is
  * the colour as it is, darkened only by shadow and distance, as shardfall's flat style (`MeshFlatStyleNodeMaterial`:
  * no N·L); `pbr` is three.js's `MeshStandardMaterial`, the one that reads `roughness`, `metalness` and the roughness
- * map. An unlit material stays unlit in every style.
+ * map. An unlit material stays unlit in every style. Toon and flat leave the normal map out: their light follows the
+ * forms, not the texture's relief (in the box room, the flagstones' relief speckled the toon bands' edges).
  *
  * `createStyleSet({ library })` compiles each material once per style (`get(id, style)`), sharing the library's baked
  * maps and, for `lambert` and unlit ones, its very materials; the toon look is one set of uniforms (`toon`). A style
@@ -143,7 +144,7 @@ export function compileStyled(
   const lit = litParameters(entry, maps);
   const material =
     style === 'toon'
-      ? new MeshBandedToonNodeMaterial(lit, toon)
+      ? new MeshBandedToonNodeMaterial({ ...lit, normalMap: null }, toon)
       : style === 'flat'
         ? new MeshFlatStyleNodeMaterial({ ...lit, normalMap: null })
         : new MeshStandardNodeMaterial({

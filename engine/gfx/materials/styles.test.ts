@@ -1,8 +1,8 @@
 /**
  * @file Unit tests for material styles (engine/gfx/materials/styles.ts), in Node: each style compiles the same entry
- * to its three.js material once (pbr with roughness, metalness and the roughness map; flat without the normal map;
- * toon sharing the set's uniforms), `lambert` and unlit entries are the library's own materials, an unknown style is
- * `GFX_UNKNOWN_STYLE`; `setStyle` and `apply` re-point visible meshes (arrays too) and leave hidden ones and other
+ * to its three.js material once (pbr with roughness, metalness, the roughness and normal maps; toon and flat without
+ * the normal map; toon sharing the set's uniforms), `lambert` and unlit entries are the library's own materials, an
+ * unknown style is `GFX_UNKNOWN_STYLE`; `setStyle` and `apply` re-point visible meshes (arrays too) and leave hidden ones and other
  * materials alone; the warm-up entries sort after every other, swap every drawn mesh to each style in turn and put
  * each material back, and the shader key names what was compiled; `dispose` frees what the set made. That switching
  * styles builds no pipeline on the GPU is tests/e2e/materials-v2.spec.ts.
@@ -65,7 +65,7 @@ describe('style sets', () => {
     const toon = styles.get('material:test-metal', 'toon') as MeshBandedToonNodeMaterial;
     expect(toon).toBeInstanceOf(MeshBandedToonNodeMaterial);
     expect(toon.toon).toBe(styles.toon);
-    expect(toon.normalMap).not.toBeNull();
+    expect(toon.normalMap).toBeNull();
     expect(toon.userData).toEqual({ material: 'material:test-metal', style: 'toon' });
     expect(styles.get('material:test-metal', 'toon')).toBe(toon);
     const flat = styles.get('material:test-metal', 'flat') as MeshStandardNodeMaterial;
@@ -77,7 +77,7 @@ describe('style sets', () => {
       library.maps({ texture: 'texture:stone', seed: 1, params: {}, size: null, look: null, repeat: null })
         .roughnessMap,
     );
-    expect(pbr.normalScale.x).toBe(2);
+    expect([pbr.normalScale.x, pbr.normalMap === null]).toEqual([2, false]);
     for (const style of MATERIAL_STYLES) {
       expect(styles.get('material:test-sign', style)).toBe(library.get('material:test-sign'));
     }
