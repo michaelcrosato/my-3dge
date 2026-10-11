@@ -220,6 +220,7 @@ game agent's manual.
 - `Engine` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): A started engine.
 - `EngineInfo` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): What `info()` reports: the engine's identity and health, and the run.
 - `EngineOptions` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): How a page starts the engine.
+- `EngineStats` (interface from [`engine/dev/stats.ts`](../engine/dev/stats.ts)): What `__engine.stats()` returns: means in milliseconds, then the renderer's counts (null when not measured).
 - `Entity` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity: its id and the components it holds, by kind name (`e.position`).
 - `EntitySummary` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): One entity as `entities()` lists it: its id and the components it holds.
 - `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
@@ -1317,7 +1318,7 @@ For the agents who maintain the engine.
 
 ### [`engine/app/viewMembers.ts`](../engine/app/viewMembers.ts)
 
-- `AppHost` (interface): What the view's members work on: the inspector's host, plus the view and the drawing.
+- `AppHost` (interface): What the view's members work on: the inspector's host, plus the view, the drawing and the stats meter.
 
 ### [`engine/audio/data/drums.ts`](../engine/audio/data/drums.ts)
 
@@ -1756,6 +1757,22 @@ For the agents who maintain the engine.
 - `createOverlay` (function): The overlay over `document`'s `#msg` element, made when the page has none.
 - `Overlay` (interface): The page's message line over the canvas.
 - `OverlayRecord` (interface): What the overlay shows for an error: a code, what happened, and the fix.
+
+### [`engine/dev/stats.ts`](../engine/dev/stats.ts)
+
+- `COUNT_KEYS` (const): The count fields of `EngineStats`, in report order.
+- `createStatsMeter` (function): Makes a meter (see the file comment).
+- `EngineStats` (interface): What `__engine.stats()` returns: means in milliseconds, then the renderer's counts (null when not measured).
+- `meterOf` (function): The meter `host` carries; throws `DEV_NO_METER` without one.
+- `ProbedSystem` (interface): A system as the probe sees it: its phase, of engine/sim/systems.ts's `PHASES`.
+- `RenderCounts` (type): The renderer's counts the meter reports (engine/gfx/renderer.ts `GfxStats`).
+- `STATS_CODES` (const): The codes this module raises, with their fixes.
+- `STATS_WINDOW` (const): How many steps or frames the means cover: the last second at 60 Hz.
+- `StatsHost` (interface): An inspector host that carries a meter (engine/app/headless.ts gives every engine's host one).
+- `StatsMeter` (interface): The meter: times steps, phases and frames, and reads them back as `EngineStats`.
+- `StatsMeterOptions` (interface): How a meter is made: its clock (ms), its window, and the renderer's counts (absent headless).
+- `TIMED_PARTS` (const): What the meter times: the whole sim step, its `physics` and `anim` phases, and a drawn frame's CPU side.
+- `TimedPart` (type): One timed part.
 
 ### [`engine/gfx/atmosphere.ts`](../engine/gfx/atmosphere.ts)
 
@@ -3043,6 +3060,7 @@ For the agents who maintain the engine.
 
 - `createWorld` (function): Makes a world.
 - `SimRng` (interface): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
+- `SystemProbe` (type): A probe around each system's run (the stats meter's, engine/dev/stats.ts): the system's name and phase, and its run, to call once.
 - `World` (interface): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
 - `WORLD_CODES` (const): The codes this module raises, with their fixes.
 - `WorldEvents` (type): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
@@ -3783,13 +3801,25 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/perf.ts`](../tools/cmd/perf.ts)
 
-- `BUDGET_KEYS` (const): What a budget file may hold: milliseconds per step, per hash and per capture.
-- `default` (default): Sim timings against budgets, in Node (PLAN.md §8.1, §8.7, WP 1.5): `node x perf <scene> [--scene id] [--steps n] [--runs n] [--seed s] [--set k=v…] [--budget]`.
-- `measure` (function): One run's timings: ms per step, per hash and per capture.
+- `agentsSetting` (function): The setting `asked` (`--agents`, else the budget's): an integer setting that allows the top rung's agents.
+- `BUDGET_KEYS` (const): What a Node run and a ladder rung measure: milliseconds per step, per hash and per capture.
+- `budgetPath` (function): A scene's budget file, repository-relative: `:` in the id becomes `-`.
+- `default` (default): Performance as counters against budgets, never frames per second (PLAN.md §8.1, §8.7, WPs 1.5 and 5.5).
+- `DEFAULT_STEPS` (const): The steps each way takes unless its budget section or `--steps` says otherwise.
+- `LADDER` (const): The crowd ladder's rungs, in agents.
+- `measure` (function): One run's timings: ms per step, then per hash and per capture of the state it reached (10 of each).
 - `median` (function): The middle value (the mean of the two middle ones for an even count).
-- `PerfBudget` (interface): A budget file, `tests/baselines/perf/<scene id>.json`: the run it was measured on, its budgets, and why.
-- `PerfKey` (type): One measured quantity.
+- `PAGE_KEYS` (const): What a page measures: `__engine.stats()`'s means, then its counts.
+- `PageKey` (type): One quantity a page measures.
+- `PerfBudget` (interface): A budget file, `tests/baselines/perf/<scene id>.json` (see the file comment).
+- `PerfKey` (type): One quantity a Node run measures.
 - `readBudget` (function): Reads and checks a budget file; throws `UsageError` naming each problem (an unknown key with the closest).
+- `recordTrend` (function): Appends `measured` under `key` to the trend file (the last 20 kept); warns for each regression since the last.
+- `regressions` (function): The metrics that grew over `limit` (a fraction) from `before` to `after`, as text.
+- `TREND_FILE` (const): The trend file, under the repository.
+- `TREND_LIMIT` (const): Growth since the run before that `PERF_TREND` warns about: 15%.
+- `Way` (type): A way of measuring (see the file comment).
+- `withinBudget` (function): Whether `value` is within `limit`, `tolerance` (a fraction) over it allowed.
 
 ### [`tools/cmd/port.ts`](../tools/cmd/port.ts)
 

@@ -1280,7 +1280,7 @@ A command arrives with the WP that needs it; on-demand commands do not exist, ev
 | Time | `pause()`, `resume()`, `step(n, intents?)`, `render()`, `timeScale(k)`, `seed(n)` |
 | State | `state(query?)`, `hash()`, `trace()`, `entities(query)`, `get(id)`, `set(path, value)` (settings schema only; validated), `capture()` and `restore(c)` (the whole sim, §6.5), `describe(kind?, id?)` (the registries, as `x describe`) |
 | Scene | `scene.dump({ depth, filter })` → a text tree (name, type, visible, position, bounds, material, triangles); `camera.get()`, `camera.set(code)` |
-| Rendering | `stats()` → `{ simMs, physicsMs, animMs, renderMs, gpuMs?, drawCalls, triangles, computeCalls, pipelines, textures, geometries }` |
+| Rendering | `stats()` → `{ simMs, physicsMs, animMs, renderMs, steps, frames, drawCalls, triangles, computeCalls, textures, geometries, pipelines, pipelinesAfterWarmUp, gpuMs? }` (means of the last 60 steps or frames; `gpuMs` arrives with the timestamp-query WP) |
 | Shots | `shot({ ids, metrics, thumbnail, size })`, through a render target and `readRenderTargetPixelsAsync` |
 | Input | `input.press(action)`, `input.hold(action, down)`, `input.axis(name, value)`, `input.play(script)`, `input.record()`, `input.state()` |
 | Feel | `feel(id?)` → an actor's feel meter report (WP 3.2) |
@@ -2673,7 +2673,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm run e2e -- tests/e2e/crowd-render.spec.ts`
 
 #### WP-5.5 Performance counters and the crowd ladder
-- **Owns:** `engine/dev/stats.ts`; extends `tools/cmd/perf.ts` (from WP 1.5) with browser counters and `--ladder`
+- **Owns:** `engine/dev/stats.ts`; extends `tools/cmd/perf.ts` (from WP 1.5) with browser counters and `--ladder`; with ADR amendment (ADR-0014, amendment 12): `engine/sim/{world,scene}.ts` (the system probe), `engine/app/{headless,engine}.ts` (the meter's wiring)
 - **Needs:** WP 2.7, WP 5.1
 - **Size:** S
 - **Carry:** the benchmark's split into physics, logic and drawing (`stress-world/60-panel.js:205-263`).
@@ -2703,7 +2703,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/dev/bot engine/dev/actions`
 
 #### WP-5.7 Box 4: a crowd
-- **Owns:** `labs/box/scenes/crowd-*.ts`, `labs/box/cast/{walker,slime,wisp}.ts`; extends `labs/box/{README.md,main.ts}` and `tests/e2e/parity.spec.ts` (with this stage's scenes); `tests/replays/box-4-*.replay.json`, `tests/e2e/box-crowd.spec.ts`, `tests/baselines/perf/box-crowd.json`
+- **Owns:** `labs/box/scenes/crowd-*.ts`, `labs/box/cast/{walker,slime,wisp}.ts`; extends `labs/box/{README.md,main.ts}` and `tests/e2e/parity.spec.ts` (with this stage's scenes); `tests/replays/box-4-*.replay.json`, `tests/e2e/box-crowd.spec.ts`, `tests/baselines/perf/box-crowd-1000.json` (its ladder section names `setting`, ADR-0014 amendment 12)
 - **Needs:** WP 4.6, WP 5.2, WP 5.4, WP 5.5
 - **Size:** M
 - **Carry:** the cast's sizes and speeds (`stress-world/20-sim.js:57-102, 174-222`) as starting values.
@@ -3978,7 +3978,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 5.2 | Steering kit | W | done | 128b159 (#6) | engine/world/steer.ts (seek/arrive, followFlow, approachRing, hover, airTime, hop) and engine/world/ai.ts (attack tokens in a component, ATTACK_TOKENS_FIELDS, take/release/keep/holds with one draw per grant; awareness: canSee, clearSight over the tiles' tops), exports appended to sim-api.ts; fixtures in the tests (the hall, Rapier); calls: sight is a 3D line over level.top, not NavGrid's walk line; lowering the cap takes back the newest grants at the next call; finding for WP 4.3/5.1/5.7: NAV_CLIMB 0.219 m but Rapier crowd bodies step only 7–8.5 cm, so the hall Rapier fixture uses climb 0.06 (WP 5.7 needs a lower crowd climb or a step-up); open: engine/sim-api.ts 425 lines (over 400, under 600); not verified: steering in the box (WP 5.7), Chromium runs of the helpers; no escalations; no deferred proofs |
 | 5.3 | Blob and floater rigs | A | done | a6da2bc (#6) | engine/anim/{blob,floater}.ts plus tests and 24 sim-api exports; blob: source update ported exactly, width R/sqrt(1+sq) so volume is kept (det = R^3 to 1e-12), minimal skeleton (root, body, eyeL/R, mouth, wingL/R as Matrix4), BLOB_MOVES bite/leap/pounce/spit on BlobLeap plus blobMove and blobMoveTimes; floater: wisp hover, new bank, motes; differential vs WP 0.11 mean 3.7 mm, worst 3.66 cm, 9 EXCEPTIONS from the volume fix; calls: move timings from the lab's jab/slash/overhead/cast, blob reads its own words (body-state mapping left to WP 5.7), slimeParts placement now joints, source `walk` dropped and beat wraps at 2π, floater heading/bank (atan(a/15), max 0.6 rad, smoothDamp 0.2 s)/mote frame new; not verified: crowd-scale performance, Node vs Chromium bit equality (atan2/hypot not swapped); deferred: shown in the box WP 5.7, drawn WP 5.4; no escalations |
 | 5.4 | Crowd rendering and pose LOD | R | done | 1b5e7fe (#6) | engine/gfx/puppets/{crowd,lod}.ts and bodies/{blob,floater}.ts with tests, the crowd-render page, scene module and spec, 21 index exports; 5,000 agents (walkers, slimes, wisps) drawn with 0 pipelines built while growing, ball pages 1 to 11, 16/20/46 draw calls at 100/1,000/5,000 against a budget of 64 (33.8M triangles at 5,000), sim hash identical with LOD on/off/undrawn and in Node, all 11 batches seen by the ID pass; humanoids through createPuppetBatches, capes dropped by sharing pieces without strips, LOD bands at 15/30/60/200 m set animator pose level 0-3 and capes, culling by frustum and near; calls: RigBody/RigPart a data format of its own, not a registry kind; halo drawn see-through at 35 % instead of additive; pages of 8,192 instances; draw-call budget 64; rigs draw the same in every band; new codes GFX_CROWD_LOD, GFX_RIG_BODY; not verified: look quality beyond three self-reviewed screenshots, real-GPU performance; deferred: shown in the box WP 5.7, dropping limb end balls far away; no escalations |
-| 5.5 | Performance counters and crowd ladder | T | todo | | |
+| 5.5 | Performance counters and crowd ladder | T | partial | dff959a (#6) | engine/dev/stats.ts (stats meter, __engine.stats(): means of the last 60 steps or frames plus the renderer's counts); x perf extended (browser counters, --ladder in Node: 0.51/4.9/22.7 ms per step at 100/1,000/5,000 agents, budget sections with tolerance, out/perf/trend.json); tests/baselines/perf/box-room.json; core proposal accepted (6ccfa51, ADR-0014 amendment 12): world/scene system probe, app meter wiring; calls: means not medians, explicit --agents, budget file named after the scene id; no escalations; not measured: gpuMs (renderMs CPU only); WP 1.5 kernel budget test flaky under load (0.209 ms vs 0.2) |
 | 5.6 | Bot and dev actions | I | on demand | | |
 | 5.7 | Box 4: a crowd | B | todo | | |
 | **G5** | **Gate: Box 4** | | todo | | |

@@ -173,13 +173,13 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `a frame threw, so the loop stopped: {message}`
 - Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
-- Registered in: [`engine/app/engine.ts` line 77](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 78](../engine/app/engine.ts)
 
 ### APP_NO_FRAME
 
 - Message: `no frame was drawn in {tries} tries: the warm-up never finished`
 - Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 85](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 86](../engine/app/engine.ts)
 
 ### APP_NO_LEVEL
 
@@ -191,7 +191,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the page has no replay {name}`
 - Fix: use one of: {names}
-- Registered in: [`engine/app/engine.ts` line 81](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 82](../engine/app/engine.ts)
 
 ### APP_NO_VIEW
 
@@ -203,13 +203,13 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `headlessHost was given {value}, not a headless engine`
 - Fix: pass the object createHeadless resolved to
-- Registered in: [`engine/app/headless.ts` line 54](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 57](../engine/app/headless.ts)
 
 ### APP_OTHER_SCENE
 
 - Message: `this engine draws {shown}, so it cannot start {scene}`
 - Fix: play {scene} in its own page (labs/<name>/?scene=<name>), or headless: createHeadless({ scene: '{scene}' })
-- Registered in: [`engine/app/headless.ts` line 58](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 61](../engine/app/headless.ts)
 
 ### APP_PLAY_SETTING
 
@@ -221,7 +221,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 73](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 74](../engine/app/engine.ts)
 
 ## audio
 
@@ -498,6 +498,14 @@ Raised by the settings store (engine/core/settings.ts) for an unknown path in `g
 - Registered in: [`engine/dev/inspector.ts` line 57](../engine/dev/inspector.ts)
 
 Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when an argument does not match the schema its member declares: a wrong type, a value out of range, a missing required argument or one too many. Nothing has happened yet.
+
+### DEV_NO_METER
+
+- Message: `__engine.stats() has no meter to read on this host ({runtime})`
+- Fix: start the engine with createEngine or createHeadless (engine/app), which time its steps and frames; a host made by hand carries a meter from createStatsMeter() as `meter`
+- Registered in: [`engine/dev/stats.ts` line 35](../engine/dev/stats.ts)
+
+Raised by `__engine.stats()` (engine/dev/stats.ts) on an inspector whose host was made without a stats meter, such as a test host built by hand.
 
 ### DEV_NO_RENDERER
 
