@@ -1,8 +1,8 @@
 /**
  * @file Retargeting (PLAN.md §10.4, WP 8.4): a baked clip (bake.ts) played on a skeleton. `retargetPose` copies the
- * rotations, scales the pelvis by the hip-height ratio and plants the feet with contact IK (ik.ts `twoBoneRot`), then
- * lifts a pose that dips below the floor; `clipJSON` makes the same tracks three.js's `AnimationClip` JSON for one
- * skeleton (`AnimationClip.parse`), so a page can play them with an `AnimationMixer`, for presentation only.
+ * rotations, stands the hip joints where the clip's are by the hip-height ratio, plants the feet with contact IK
+ * (ik.ts `twoBoneRot`) and lifts a pose that dips below the floor; `clipJSON` makes the same tracks three.js's
+ * `AnimationClip` JSON for one skeleton, so a page can play them with an `AnimationMixer`, for presentation only.
  *
  * The rest body's own skeleton (`restSkeleton`) has the humanoid topology with the library's measured bones and rest
  * curve, so FK of a baked pose on it rebuilds the decode's body points (`restPoints`): the parity proof. `restBuild`
@@ -10,19 +10,23 @@
  * skeleton the copy is aligned at rest: each spine bone, the neck, the head and each foot and toe turns so its bone
  * points where the rest body's does (a build's straight spine takes the library's curve); the limbs' bones run the
  * same way on both, so their rotations copy unchanged. What a build's layout still moves (shoulders in line with the
- * neck, hips beside the pelvis) is measured on the mannequin in tests/baselines/anim-clips.json.
+ * neck; hips level with the pelvis, so its spine stands on its hips, 10 cm under CMU's pelvis and 5 cm ahead of
+ * Quaternius') is measured on the mannequin in tests/baselines/anim-clips.json.
  *
- * From my-3d2dge's `drive` (`my-3d2dge:src/mocap/mocap.js`), its ideas on the rotation skeleton: the sole, not the
- * ankle, goes to the floor (the sole target fades out as the ankle rises 0.3 m); a clip that dips below the ground is
- * lifted by its lowest point; the blade runs along the knuckles (bake.ts turns the hand's +Z to it), and a held blade
- * (`blade`, its length) never goes below the floor: the hand turns its tip up until the blade lies along the floor,
- * keeping its heading (`mocap.js:251-257`). The heading trust ramp is not needed: the pelvis carries its whole turn.
+ * From my-3d2dge's `drive` (`my-3d2dge:src/mocap/mocap.js`), its ideas on the rotation skeleton: the legs hang from
+ * the hip joints' centre, scaled (`hipC`, `mocap.js:200`); the sole, not the ankle, goes to the floor; a clip that
+ * dips below the ground is lifted by its lowest point; the blade runs along the knuckles (bake.ts turns the hand's +Z
+ * to it), and a held blade (`blade`, its length) never goes below the floor: the hand turns its tip up until the
+ * blade lies along the floor, keeping its heading (`mocap.js:251-257`). The heading trust ramp is not needed: the
+ * pelvis carries its whole turn.
  *
  * Invariants: a skeleton's standing hip height is its hip joints' rest height (straight legs: `legUpper + legLower`
  * times `size` for a build); the hip-height ratio is the target's over the rest body's, and every place of the clip
- * scales by it. Feet: the ankle aims where the source's sole is, scaled, plus the target's own ankle height; the foot
- * keeps the clip's turn. Hands reach only inside a format-2 `contacts` interval (a loop's on every lap). Places are
- * metres in the character's frame, the root on the ground at the origin.
+ * scales by it: the hip joints' centre, the feet, the hands, the travel. Feet: each ankle aims where the source's is,
+ * at the height that puts the foot's lowest point (sole, ball or toe tip) where the source's is, never below the
+ * floor, and keeps the clip's turn; the pelvis drops as far as the lower foot needs to reach with a straight leg
+ * (ik.ts `footPlant`'s rule), fully for a foot on the floor, not at all `soleFade` up. Hands reach only inside a
+ * format-2 `contacts` interval (a loop's on every lap). Places are metres in the character's frame, root at the origin.
  *
  * @example
  * import { createSkeleton } from '../skeleton';
@@ -31,41 +35,26 @@
  * const baked = bakeClip(clipOf([standing(0), standing(1)]), REST);
  * const heroic = createSkeleton('build:heroic');
  * hipRatio(baked, heroic); // 0.9924: heroic's straight legs, 0.925 m, over REST's hip joints, 0.9321 m
- * retargetPose(baked, 0.5, heroic).rootPos.y; // -0.0153: REST's pelvis sits under its hip joints, so heroic's does
+ * retargetPose(baked, 0.5, heroic).rootPos; // ≈ (0, -0.0027, 0.0511): its hips on REST's, 5 cm ahead of REST's pelvis
  * @see engine/anim/clip/retarget.test.ts
  */
 import { createRegistry } from '../../core/registry';
-import { Quaternion, Vector3 } from '../../core/math';
+import { MathUtils, Quaternion, Vector3 } from '../../core/math';
 import { holdAlong } from '../authoring';
 import { defineBuild, type BuildSpec } from '../builds';
-import {
-  createWorldPose,
-  forwardKinematics,
-  jointPosition,
-  jointRotation,
-  socketPosition,
-  tipPosition,
-  type WorldPose,
-} from '../fk';
+import { createWorldPose, forwardKinematics, jointPosition, jointRotation, socketPosition, tipPosition } from '../fk';
+import type { WorldPose } from '../fk';
 import { twoBoneRot, type LimbEnd } from '../ik';
 import { Pose } from '../pose';
-import {
-  JOINT_COUNT,
-  JOINTS,
-  jointIndex,
-  PARENTS,
-  SOCKET_JOINTS,
-  SOCKETS,
-  type JointName,
-  type Skeleton,
-} from '../skeleton';
-import { frameQuaternion, rigToEngine, sampleBaked, travelAt, type BakedClip } from './bake';
+import { JOINT_COUNT, JOINTS, jointIndex, PARENTS, SOCKET_JOINTS, SOCKETS } from '../skeleton';
+import type { JointName, Skeleton } from '../skeleton';
+import { frameAt, frameQuaternion, rigToEngine, sampleBaked, travelAt, type BakedClip } from './bake';
 import { POSE_POINTS, POINT_COUNT } from './readable';
 import type { RestBody } from './validate';
 
 /**
- * Contact IK's tuning: the rise (m) of the source's ankle over its standing height at which its sole stops counting;
- * the height (m) a held blade's tip keeps over the floor (drive's 0.3 units).
+ * Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis
+ * down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units).
  */
 export const RETARGET = { soleFade: 0.3, bladeFloor: 0.3 / 16 } as const;
 
@@ -81,14 +70,9 @@ function restGeometry(R: RestBody) {
   const headOf = (v: Vector3) => torso(v.applyQuaternion(Hr));
   const pitched = (length: number, deg: number) =>
     new Vector3(0, -Math.sin((deg * Math.PI) / 180), Math.cos((deg * Math.PI) / 180)).multiplyScalar(length / 1000);
-  const off: Partial<Record<JointName, Vector3>> = {
-    pelvis: new Vector3(0, R.H0 / 1000, 0),
-    spine1: torso(mm(R.spine[0])),
-    spine2: torso(mm(R.spine[1])),
-    chest: torso(mm(R.spine[2])),
-    neck: torso(mm(R.spine[3])),
-    head: torso(mm(R.neckSeg)),
-  };
+  const off: Partial<Record<JointName, Vector3>> = { pelvis: new Vector3(0, R.H0 / 1000, 0) };
+  const up = [...R.spine, R.neckSeg]; // each bone of the spine and the neck, from the pelvis up
+  (['spine1', 'spine2', 'chest', 'neck', 'head'] as const).forEach((joint, i) => (off[joint] = torso(mm(up[i]))));
   for (const s of ['L', 'R'] as const) {
     off[`clavicle${s}`] = torso(mm(R.clav[s]).applyQuaternion(Cr).add(mm(R.spine[3])));
     off[`upperArm${s}`] = chestOf(mm(R.cv[s]));
@@ -199,14 +183,16 @@ export function restPoints<T extends { [i: number]: number }>(R: RestBody, world
   return out;
 }
 
+const HIPS = [jointIndex('thighL') * 3, jointIndex('thighR') * 3] as const;
+/** The centre of a skeleton's hip joints, in the pelvis's frame. */
+const hipCentre = (k: Skeleton) =>
+  new Vector3().fromArray(k.offsets, HIPS[0]).lerp(at.fromArray(k.offsets, HIPS[1]), 0.5);
+
 /**
  * A skeleton's standing hip height, metres: its hip joints' rest height (straight legs; for a build, its pelvis's,
  * `legUpper + legLower` times `size`).
  */
-export function standingHipHeight(skeleton: Skeleton): number {
-  const [l, r] = [jointIndex('thighL'), jointIndex('thighR')];
-  return skeleton.offsets[1] + (skeleton.offsets[l * 3 + 1] + skeleton.offsets[r * 3 + 1]) / 2;
-}
+export const standingHipHeight = (skeleton: Skeleton) => skeleton.offsets[1] + hipCentre(skeleton).y;
 
 /** The bones aligned at rest: each joint and the child (or its own tip) its bone runs to. */
 // prettier-ignore
@@ -215,12 +201,12 @@ const ALIGNED = [
   ['footL', 'toeL'], ['footR', 'toeR'], ['toeL', 'toeL'], ['toeR', 'toeR'],
 ] as const;
 
-/** How a source rest body maps onto a skeleton: each joint's rest alignment, the hip-height ratio, the pelvis. */
-interface Mapping {
-  readonly align: Quaternion[];
-  readonly ratio: number;
-  readonly pelvis: Vector3;
-}
+/**
+ * How a source rest body maps onto a skeleton: each joint's rest alignment, the hip-height ratio, the pelvis's offset,
+ * and the `shift` from the source's pelvis, scaled, to the skeleton's that puts their hip joints' centres (`hipCentre`)
+ * together, in the pelvis's frame.
+ */
+type Mapping = Readonly<{ align: Quaternion[]; ratio: number; pelvis: Vector3; shift: Vector3 }>;
 const mappings = new WeakMap<Skeleton, WeakMap<RestBody, Mapping>>();
 
 /** The mapping of rest body `R` onto `skeleton`, made once a pair. */
@@ -238,24 +224,24 @@ function mappingOf(R: RestBody, skeleton: Skeleton): Mapping {
     if (from.lengthSq() > 0.5 && to.lengthSq() > 0.5) align[jointIndex(joint)].setFromUnitVectors(from, to);
   }
   const ratio = standingHipHeight(skeleton) / standingHipHeight(rest);
-  const mapping = { align, ratio, pelvis: new Vector3().fromArray(skeleton.offsets, 0) };
+  const shift = hipCentre(rest).multiplyScalar(ratio).sub(hipCentre(skeleton).applyQuaternion(align[0]));
+  const mapping = { align, ratio, pelvis: new Vector3().fromArray(skeleton.offsets, 0), shift };
   held.set(R, mapping);
   return mapping;
 }
 
 /**
  * The hip-height ratio of `skeleton` to the rest body `baked` was measured on (their standing hip joints): the clip's
- * places scale by it on that skeleton (the pelvis, the feet's targets, the travel).
+ * places scale by it on that skeleton (the hip joints, the feet's goals, the travel).
  */
 export const hipRatio = (baked: BakedClip, skeleton: Skeleton) => mappingOf(baked.rest, skeleton).ratio;
 
-const [mq, pq] = [new Quaternion(), new Quaternion()];
+const [mq, pq, own] = [new Quaternion(), new Quaternion(), new Vector3()];
 /**
- * `source` (a pose on the rest skeleton, its root unturned) as a pose on another skeleton, into `out`: each joint's
- * rotation copied, turned by its rest alignment (a bone of the spine, neck, head or foot points where the source's
- * does), and the pelvis at the source's `hips` times the ratio.
+ * `source`'s local rotations (a pose on the rest skeleton) as another skeleton's, into `out`, its root unturned: each
+ * copied, turned by its rest alignment (a bone of the spine, neck, head or foot points where the source's does).
  */
-function mapPose(m: Mapping, source: Pose, hips: Vector3, out: Pose): Pose {
+function mapPose(m: Mapping, source: Pose, out: Pose): Pose {
   for (let j = 0; j < JOINT_COUNT; j++) {
     mq.fromArray(source.local, j * 4);
     if (PARENTS[j] >= 0) mq.premultiply(pq.copy(m.align[PARENTS[j]]).invert());
@@ -263,8 +249,17 @@ function mapPose(m: Mapping, source: Pose, hips: Vector3, out: Pose): Pose {
   }
   out.rootRot.identity();
   out.rootScale.set(1, 1, 1);
-  out.rootPos.copy(hips).multiplyScalar(m.ratio).sub(m.pelvis);
   return out;
+}
+
+/**
+ * Frame `k`'s root on the mapped skeleton: its hip joints' centre where the source's is, times the ratio, so the legs
+ * stand where the source's do whether the hips sit level with the pelvis (a build's) or under it (CMU's, by 10 cm).
+ * Between frames the root moves straight, as three.js's mixer plays `clipJSON`'s `root.position`.
+ */
+function rootAt(m: Mapping, baked: BakedClip, k: number, out: Vector3): Vector3 {
+  out.copy(m.shift).applyQuaternion(mq.fromArray(baked.rotations, k * JOINT_COUNT * 4)); // the pelvis's turn (joint 0)
+  return out.add(own.fromArray(baked.hips, k * 3).multiplyScalar(m.ratio)).sub(m.pelvis);
 }
 
 /** What `retargetPose` does beyond the rotation copy. */
@@ -281,9 +276,36 @@ export interface RetargetOptions {
   world?: WorldPose;
 }
 
-const [hips, target, source] = [new Vector3(), new Vector3(), new Vector3()];
+const [hips, target, hip, goals] = [new Vector3(), new Vector3(), new Vector3(), [new Vector3(), new Vector3()]];
 const [sourcePose, sourceWorld, scratchWorld] = [new Pose(), createWorldPose(), createWorldPose()];
-const LOWEST = ['contactL', 'contactR'] as const;
+const LEGS = (['L', 'R'] as const).map((s) => [`foot${s}`, `contact${s}`, `toe${s}`, `thigh${s}`, `shin${s}`] as const);
+/** The height of a foot's lowest point (its sole, its ball, its toe's tip), metres. */
+const footLow = (k: Skeleton, world: WorldPose, [, contact, toe]: (typeof LEGS)[number]) =>
+  Math.min(socketPosition(k, world, contact, at).y, jointPosition(world, toe, at).y, tipPosition(k, world, toe, at).y);
+
+/**
+ * Contact IK's feet (see the file comment): each ankle's goal, the pelvis dropped as far as the lower planted foot
+ * needs to reach its goal (ik.ts `footPlant`'s rule, with straight legs, faded as the foot rises), then each leg
+ * turned to its goal. `sourceWorld` holds the source's FK. Runs FK.
+ */
+function plantFeet(rest: Skeleton, m: Mapping, skeleton: Skeleton, pose: Pose, world: WorldPose): void {
+  let drop = 0;
+  LEGS.forEach((leg, i) => {
+    const [end, , , thigh, shin] = leg;
+    const low = footLow(rest, sourceWorld, leg);
+    const fade = MathUtils.clamp(1 - low / RETARGET.soleFade, 0, 1);
+    const goal = jointPosition(sourceWorld, end, goals[i]).multiplyScalar(m.ratio);
+    goal.y = jointPosition(world, end, target).y - footLow(skeleton, world, leg) + Math.max(0, low * m.ratio);
+    jointPosition(world, thigh, hip);
+    // a hair short of straight, so twoBone reaches (ik.ts: twice its slack)
+    const reach = skeleton.lengths[jointIndex(shin)] + skeleton.lengths[jointIndex(end)] - 0.01 / 8;
+    const [across, below] = [Math.hypot(goal.x - hip.x, goal.z - hip.z), hip.y - goal.y];
+    drop = Math.max(drop, fade * (across < reach ? below - Math.sqrt(reach * reach - across * across) : below));
+  });
+  pose.rootPos.y -= drop;
+  if (drop > 0) forwardKinematics(skeleton, pose, world);
+  for (let i = 0; i < 2; i++) twoBoneRot(skeleton, pose, world, LEGS[i][0], goals[i]);
+}
 
 const [dir, want] = [new Vector3(), new Vector3()];
 /**
@@ -307,8 +329,8 @@ function keepBladeUp(skeleton: Skeleton, pose: Pose, world: WorldPose, length: n
 
 /**
  * `baked` at `t` seconds on `skeleton`, written into `out` (a new pose by default): the rotations copied and aligned
- * at rest, the pelvis at the clip's hips times the hip-height ratio, the root at the origin unturned; then the feet
- * planted, the pose lifted and a held blade kept above the floor (`options`). FK is left in `options.world`.
+ * at rest, the hip joints where the clip's are times the hip-height ratio, the root at the origin unturned; then the
+ * feet planted, the pose lifted and a held blade kept above the floor (`options`). FK is left in `options.world`.
  */
 export function retargetPose(
   baked: BakedClip,
@@ -318,22 +340,14 @@ export function retargetPose(
   options: RetargetOptions = {},
 ): Pose {
   const world = options.world ?? scratchWorld;
-  const m = mappingOf(baked.rest, skeleton);
-  const rest = restSkeleton(baked.rest);
+  const [m, rest, [i, u]] = [mappingOf(baked.rest, skeleton), restSkeleton(baked.rest), frameAt(baked, t)];
   sampleBaked(baked, t, sourcePose.local, hips);
   sourcePose.rootPos.copy(hips).sub(target.fromArray(rest.offsets, 0));
-  forwardKinematics(skeleton, mapPose(m, sourcePose, hips, out), world);
+  rootAt(m, baked, i, mapPose(m, sourcePose, out).rootPos).lerp(rootAt(m, baked, i + 1, target), u);
+  forwardKinematics(skeleton, out, world);
   if (options.ik ?? true) {
     forwardKinematics(rest, sourcePose, sourceWorld);
-    const ankle = baked.rest.ankleZ / 1000;
-    for (const end of ['footL', 'footR'] as const) {
-      jointPosition(sourceWorld, end, source);
-      const fade = Math.min(1, Math.max(0, 1 - (source.y - ankle) / RETARGET.soleFade));
-      const own = -skeleton.socketOffsets[SOCKETS.indexOf(end === 'footL' ? 'contactL' : 'contactR') * 3 + 1];
-      target.copy(source).setY(source.y - ankle * fade).multiplyScalar(m.ratio); // prettier-ignore
-      target.y = Math.max(0, target.y) + own * fade;
-      twoBoneRot(skeleton, out, world, end, target);
-    }
+    plantFeet(rest, m, skeleton, out, world);
     const d = baked.duration;
     const lap = baked.loop && d > 0 ? ((t % d) + d) % d : t;
     for (const c of options.contacts ?? baked.contacts) {
@@ -344,14 +358,10 @@ export function retargetPose(
   if (options.lift ?? true) {
     let low = 0;
     for (let j = 0; j < JOINT_COUNT; j++) low = Math.min(low, world.positions[j * 3 + 1]);
-    for (const s of LOWEST) low = Math.min(low, socketPosition(skeleton, world, s, target).y);
-    for (const j of ['toeL', 'toeR', 'handL', 'handR', 'head'] as const) {
-      low = Math.min(low, tipPosition(skeleton, world, j, target).y);
-    }
-    if (low < 0) {
-      out.rootPos.y -= low;
-      forwardKinematics(skeleton, out, world);
-    }
+    for (const leg of LEGS) low = Math.min(low, footLow(skeleton, world, leg));
+    for (const j of ['handL', 'handR', 'head'] as const) low = Math.min(low, tipPosition(skeleton, world, j, target).y);
+    out.rootPos.y -= low;
+    if (low < 0) forwardKinematics(skeleton, out, world);
   }
   if (options.blade) keepBladeUp(skeleton, out, world, options.blade);
   return out;
@@ -369,24 +379,19 @@ export interface AnimationClipJSON {
 
 /**
  * `baked` as three.js `AnimationClip` JSON for `skeleton`: a `<joint>.quaternion` track per joint (the rotation copy)
- * and `root.position` (the pelvis by the hip-height ratio; with `travel`, plus the clip's travel), keyed on bones
+ * and `root.position` (the hip joints by the hip-height ratio; with `travel`, plus the clip's travel), keyed on bones
  * named as the puppets' are (`root` and the joints). `AnimationClip.parse(json)` makes the clip; no contact IK.
  */
 export function clipJSON(baked: BakedClip, skeleton: Skeleton, options: { travel?: boolean } = {}): AnimationClipJSON {
-  const { frames } = baked;
-  const m = mappingOf(baked.rest, skeleton);
-  const values = JOINTS.map(() => new Array<number>(frames * 4));
-  const root = new Array<number>(frames * 3);
-  const pose = new Pose();
-  const times = Array.from(baked.times);
+  const [frames, m, pose, times] = [baked.frames, mappingOf(baked.rest, skeleton), new Pose(), Array.from(baked.times)];
+  const [values, root] = [JOINTS.map(() => new Array<number>(frames * 4)), new Array<number>(frames * 3)];
   for (let i = 0; i < frames; i++) {
     sourcePose.local.set(baked.rotations.subarray(i * JOINT_COUNT * 4, (i + 1) * JOINT_COUNT * 4));
-    hips.fromArray(baked.hips, i * 3);
-    if (options.travel) hips.add(travelAt(baked, times[i], target));
-    mapPose(m, sourcePose, hips, pose).rootPos.toArray(root, i * 3);
-    values.forEach((track, j) => {
-      for (let c = 0; c < 4; c++) track[i * 4 + c] = pose.local[j * 4 + c];
-    });
+    mapPose(m, sourcePose, pose);
+    values.forEach((track, j) => track.splice(i * 4, 4, ...pose.local.subarray(j * 4, j * 4 + 4)));
+    rootAt(m, baked, i, hips);
+    if (options.travel) hips.add(travelAt(baked, times[i], target).multiplyScalar(m.ratio));
+    hips.toArray(root, i * 3);
   }
   const quaternions = JOINTS.map((joint, j) => ({ name: `${joint}.quaternion`, type: 'quaternion' as const, times, values: values[j] })); // prettier-ignore
   const tracks = [...quaternions, { name: 'root.position', type: 'vector' as const, times, values: root }];

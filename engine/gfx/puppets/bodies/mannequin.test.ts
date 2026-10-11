@@ -1,10 +1,14 @@
 /**
  * @file Tests for the mannequin (WP 8.4): the quaternius set's measured body as a body of the grammar, its build from
- * the set's rest body, both registered once, drawn in two draw calls, and what the clip layer's retargeting onto it
- * moves, every set, against tests/baselines/anim-clips.json ("the differences go in the baseline").
+ * the set's rest body, both registered once, drawn in two draw calls, the libraries' clips standing on the floor on
+ * it, and what the clip layer's retargeting onto it moves, every set, against tests/baselines/anim-clips.json ("the
+ * differences go in the baseline").
  */
 import { describe, expect, it } from 'vitest';
-import { restBuild } from '../../../anim/clip/retarget';
+import { loadClipLibrary } from '../../../anim/clip/library';
+import { restBuild, retargetPose } from '../../../anim/clip/retarget';
+import { createWorldPose, jointPosition, socketPosition, tipPosition } from '../../../anim/fk';
+import { Pose } from '../../../anim/pose';
 import { createSkeleton, jointIndex, JOINTS } from '../../../anim/skeleton';
 import { createRegistry } from '../../../core/registry';
 import { buildParity, readBaseline, SET_DIRS, setOf, WRITING, writeBaseline } from '../../../../tests/unit/anim/clip-parity'; // prettier-ignore
@@ -47,6 +51,30 @@ describe('the mannequin', () => {
   });
 });
 
+describe('the libraries’ clips on the mannequin', () => {
+  it('stand and walk on the floor: CMU’s Walk_Loop kept its soles 114 mm up when the pelvis, not the hips, was scaled', () => {
+    const skeleton = createSkeleton(build);
+    const [pose, world] = [new Pose(), createWorldPose()];
+    const low = (s: 'L' | 'R') =>
+      Math.min(socketPosition(skeleton, world, `contact${s}`).y, tipPosition(skeleton, world, `toe${s}`).y, jointPosition(world, `toe${s}`).y); // prettier-ignore
+    for (const [dir, name] of [
+      ['cmu', 'Walk_Loop'],
+      ['cmu', 'Shrug'],
+      ['mesh2motion', 'Idle_A'],
+      ['quaternius', 'Walk_Loop'],
+    ]) {
+      const baked = loadClipLibrary(setOf(dir)).bake(name);
+      let lowest = Infinity;
+      for (let k = 0; k <= baked.duration * 60; k++) {
+        retargetPose(baked, k / 60, skeleton, pose, { world });
+        lowest = Math.min(lowest, low('L'), low('R'));
+      }
+      expect(lowest, `${dir}/${name}`).toBeLessThan(0.001);
+      expect(lowest, `${dir}/${name}`).toBeGreaterThan(-1e-6);
+    }
+  });
+});
+
 describe('what retargeting onto the mannequin moves, every set (the baseline)', () => {
   const skeleton = createSkeleton(build);
   const recorded = readBaseline().mannequin?.sets ?? {};
@@ -55,7 +83,7 @@ describe('what retargeting onto the mannequin moves, every set (the baseline)', 
     writeBaseline(
       'mannequin',
       measured,
-      'The clip layer’s pose on build:mannequin (rotation copy aligned at rest, the hip-height ratio, contact IK, the lift) against the format-1 decode scaled by the same ratio, over the 20 points its joints stand for, at 30 fps and the 60 Hz midpoints. A build lays its bones out straight: its shoulders sit level with the neck, where the libraries’ sit 4–6 cm lower and behind it, and its hips beside the pelvis, where Quaternius’ sit 5 cm ahead of it; the other sets’ bodies have other proportions than the mannequin’s. The worst cases are clips that lie on the floor or dip below it (the lift raises them) and the parity’s own fast pole swings.',
+      'The clip layer’s pose on build:mannequin (rotation copy aligned at rest, the hip joints placed by the hip-height ratio, contact IK, the lift) against the format-1 decode scaled by the same ratio, over the 22 points its joints stand for, at 30 fps and the 60 Hz midpoints. A build lays its bones out straight: its hip joints sit level with its pelvis and its spine stands on them, and its shoulders sit level with the neck, where the libraries’ sit 4–6 cm lower and behind it. Retargeting puts the hip joints where the source’s are (as my-3d2dge’s drive did), so the legs follow the source’s and the torso moves by the source’s own hip layout: on Quaternius’ clips (its lifted swims and jumps left out) the hips match to 0 mm and the knees and ankles to 6–7 mm on average, while the pelvis and spine stand 4 cm ahead, since its hips sit 5 cm ahead of its pelvis point (mesh2motion’s too); on CMU’s, whose hips sit 10 cm under the pelvis point, the pelvis stands 13 cm lower than the decode’s on average. The other sets’ bodies have other proportions than the mannequin’s. The worst cases are clips that lie on the floor or dip below it (the lift raises them) and the parity’s own fast pole swings.',
     );
   }
   it.each(SET_DIRS)('%s', (dir) => {

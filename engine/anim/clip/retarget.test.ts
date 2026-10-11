@@ -1,16 +1,18 @@
 /**
  * @file Tests for retargeting (WP 8.4): the rest body's own skeleton and build, the rotation copy aligned at rest, the
- * pelvis by the hip-height ratio, contact IK for feet and hands, the lift, the held blade kept above the floor, and
- * three.js's `AnimationClip` played by an `AnimationMixer` matching the clip layer's pose within 0.1 mm (Done when).
+ * hip joints by the hip-height ratio, contact IK for feet and hands, the lift, the held blade kept above the floor,
+ * the libraries' clips standing on the floor on builds whatever their hips' layout (CMU's, mesh2motion's,
+ * Quaternius'), and three.js's `AnimationClip` played by an `AnimationMixer` matching the clip layer's pose within
+ * 0.1 mm (Done when).
  */
 import { AnimationClip, AnimationMixer, Bone, Object3D, Vector3 as ThreeVector3 } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { createRegistry } from '../../core/registry';
 import { Vector3 } from '../../core/math';
 import { defineBuild } from '../builds';
-import { createWorldPose, jointPosition, jointRotation, socketPosition, tipPosition } from '../fk';
+import { createWorldPose, jointPosition, jointRotation, socketPosition, tipPosition, type WorldPose } from '../fk';
 import { Pose } from '../pose';
-import { createSkeleton, JOINTS, PARENTS } from '../skeleton';
+import { createSkeleton, JOINTS, PARENTS, type Skeleton } from '../skeleton';
 import { busy, clipOf, REST, standing } from '../../../tests/unit/anim/clip-fixtures';
 import { setOf } from '../../../tests/unit/anim/clip-parity';
 import { Animator } from '../character';
@@ -22,6 +24,9 @@ import { clipJSON, hipRatio, RETARGET, restBuild, restSkeleton, retargetPose, st
 
 const heroic = createSkeleton('build:heroic');
 const stand = bakeClip(clipOf([standing(0), standing(1)]), REST);
+/** The height of a foot's lowest point: its sole, its ball or its toe's tip. */
+const footLow = (k: Skeleton, w: WorldPose, s: 'L' | 'R') =>
+  Math.min(socketPosition(k, w, `contact${s}`).y, jointPosition(w, `toe${s}`).y, tipPosition(k, w, `toe${s}`).y);
 
 describe('restSkeleton and restBuild', () => {
   it('measures the rest body’s bones, stands its pelvis at H0, and is made once', () => {
@@ -43,19 +48,25 @@ describe('restSkeleton and restBuild', () => {
 });
 
 describe('retargetPose', () => {
-  it('stands a build on its own hips: the pelvis by the hip-height ratio, the soles on the floor', () => {
-    const world = createWorldPose();
+  it('stands a build on its hip joints, where the source’s are by the hip-height ratio, its feet on the floor', () => {
+    const [world, free, source] = [createWorldPose(), createWorldPose(), createWorldPose()];
     const pose = retargetPose(stand, 0.5, heroic, new Pose(), { world });
+    retargetPose(stand, 0.5, heroic, new Pose(), { world: free, ik: false, lift: false });
+    retargetPose(stand, 0.5, restSkeleton(REST), new Pose(), { world: source, ik: false, lift: false });
     const ratio = 0.925 / ((REST.H0 + REST.hip.L[2]) / 1000); // standing hip joints: the heroic legs over REST's
     expect(hipRatio(stand, heroic)).toBeCloseTo(ratio, 9);
-    expect(jointPosition(world, 'pelvis').y).toBeCloseTo((REST.H0 / 1000) * ratio, 6);
+    const hips = (w: WorldPose) => jointPosition(w, 'thighL').lerp(jointPosition(w, 'thighR'), 0.5);
+    expect(hips(free).distanceTo(hips(source).multiplyScalar(ratio))).toBeLessThan(1e-6);
+    // REST's hip joints sit 15 mm over its pelvis and 51.5 mm ahead of it; heroic's level with its pelvis
+    expect(jointPosition(free, 'pelvis').y).toBeCloseTo(((REST.H0 + REST.hip.L[2]) / 1000) * ratio, 6);
+    expect(jointPosition(free, 'pelvis').z).toBeCloseTo((REST.hip.L[0] / 1000) * ratio, 6);
     expect(pose.rootRot.w).toBe(1);
-    // the ankle its own height over the floor, so the sole under it stands on it; the contact points, ahead on a sole
-    // turned as the clip turns it, within 2 mm
-    for (const s of ['L', 'R'] as const) {
-      expect(jointPosition(world, `foot${s}`).y).toBeCloseTo(0.085, 6);
-      expect(Math.abs(socketPosition(heroic, world, `contact${s}`).y)).toBeLessThan(0.002);
-    }
+    // each foot's lowest point on the floor; REST stands narrower than heroic's hips, so the pelvis drops just enough
+    // for the legs to reach in to it, straight (3 mm)
+    for (const s of ['L', 'R'] as const) expect(Math.abs(footLow(heroic, world, s))).toBeLessThan(1e-6);
+    const leg = (s: 'L' | 'R') => jointPosition(world, `thigh${s}`).distanceTo(jointPosition(world, `foot${s}`));
+    expect(Math.max(leg('L'), leg('R'))).toBeCloseTo(0.925 - 0.085 - 0.01 / 8, 6);
+    expect(pose.rootPos.y).toBeCloseTo(-0.0027, 4);
   });
 
   it('copies the rotations: limbs as they are, the spine, neck, head and feet aligned to the rest body’s bones', () => {
@@ -75,21 +86,23 @@ describe('retargetPose', () => {
     }
   });
 
-  it('plants the feet with IK where the source’s soles are, scaled, on a build with other leg shares', () => {
+  it('plants each foot where the source’s is, scaled, on a build with other leg shares: its lowest point at its height', () => {
     const chibi = createSkeleton('build:chibi');
     const baked = bakeClip(clipOf([{ ...busy(0), hips: [5, -3, 96] }]), REST);
-    const [world, free] = [createWorldPose(), createWorldPose()];
+    const [world, free, source] = [createWorldPose(), createWorldPose(), createWorldPose()];
     retargetPose(baked, 0, chibi, new Pose(), { world, lift: false });
     retargetPose(baked, 0, chibi, new Pose(), { world: free, ik: false, lift: false });
-    const source = createWorldPose();
     retargetPose(baked, 0, restSkeleton(REST), new Pose(), { world: source, ik: false, lift: false });
     const ratio = hipRatio(baked, chibi);
-    const want = jointPosition(source, 'footR').multiplyScalar(ratio);
-    const fade = Math.min(1, Math.max(0, 1 - (jointPosition(source, 'footR').y - REST.ankleZ / 1000) / 0.3));
-    want.y = want.y - (REST.ankleZ / 1000) * fade * ratio + 0.08 * fade;
-    expect(jointPosition(world, 'footR').distanceTo(want)).toBeLessThan(1e-6);
-    expect(jointPosition(free, 'footR').distanceTo(want)).toBeGreaterThan(0.005);
-    expect(jointRotation(world, 'footR').angleTo(jointRotation(free, 'footR'))).toBeLessThan(1e-6);
+    for (const s of ['L', 'R'] as const) {
+      // the ankle over the source's, scaled; the foot keeps the clip's turn, its lowest point at the source's height
+      const [want, got] = [jointPosition(source, `foot${s}`).multiplyScalar(ratio), jointPosition(world, `foot${s}`)];
+      expect(Math.hypot(got.x - want.x, got.z - want.z)).toBeLessThan(1e-6);
+      expect(footLow(chibi, world, s)).toBeCloseTo(Math.max(0, footLow(restSkeleton(REST), source, s) * ratio), 6);
+      expect(jointRotation(world, `foot${s}`).angleTo(jointRotation(free, `foot${s}`))).toBeLessThan(1e-6);
+    }
+    expect(footLow(restSkeleton(REST), source, 'R')).toBeGreaterThan(0.01); // a raised foot goes where it is raised to
+    expect(jointPosition(free, 'footR').distanceTo(jointPosition(world, 'footR'))).toBeGreaterThan(0.005);
   });
 
   it('reaches with a hand inside a contacts interval, and lifts a pose that dips below the floor', () => {
@@ -136,6 +149,61 @@ describe('retargetPose', () => {
       expect(Math.abs(b.tip.y - RETARGET.bladeFloor)).toBeLessThan(1e-4); // its own margin over the floor
       expect(b.heading).toBeCloseTo(a.heading, 5);
       expect(b.wrist.distanceTo(a.wrist)).toBeLessThan(1e-9);
+    }
+  });
+});
+
+describe('the libraries’ clips on builds: the feet on the floor, whatever the source’s hips', () => {
+  // CMU's hip joints sit 10 cm under its pelvis, Quaternius' and mesh2motion's 1.5 cm over it and 5 cm ahead; a build's
+  // level with it. The hip joints go where the source's are, so the legs reach the floor the source stands on.
+  const builds = { heroic, chibi: createSkeleton('build:chibi') };
+  const SETS = ['cmu', 'mesh2motion', 'quaternius'] as const;
+
+  it('puts every foot the source stands on (within 1 mm of the floor) on it, scaled, at every 60 Hz tick', () => {
+    const [pose, world, source] = [new Pose(), createWorldPose(), createWorldPose()];
+    for (const dir of SETS) {
+      const set = setOf(dir);
+      let [planted, worst] = [0, 0];
+      for (const [name, clip] of Object.entries(set.clips)) {
+        const R = set.sources![clip.src!].rest;
+        const [baked, rest] = [bakeClip(clip, R, name), restSkeleton(R)];
+        for (let k = 0; k <= clip.dur * 60 + 1e-9; k++) {
+          retargetPose(baked, k / 60, rest, pose, { world: source, ik: false, lift: false });
+          const on = (['L', 'R'] as const).filter((s) => Math.abs(footLow(rest, source, s)) <= 0.001);
+          for (const skeleton of on.length ? Object.values(builds) : []) {
+            retargetPose(baked, k / 60, skeleton, pose, { world, lift: false });
+            const ratio = hipRatio(baked, skeleton);
+            for (const s of on) {
+              const want = Math.max(0, footLow(rest, source, s) * ratio);
+              [planted, worst] = [planted + 1, Math.max(worst, Math.abs(footLow(skeleton, world, s) - want))];
+            }
+          }
+        }
+      }
+      expect(planted, dir).toBeGreaterThan(1000);
+      expect(worst, dir).toBeLessThan(1e-5);
+    }
+  });
+
+  it('stands and walks them on the floor through the clip layer: CMU’s Shrug was 197 mm up on heroic', () => {
+    const named = { cmu: ['Shrug', 'Walk_Loop', 'Wave_Hello'], mesh2motion: ['Idle_A', 'Idle_Rail'], quaternius: ['Idle_Loop', 'Walk_Loop'] }; // prettier-ignore
+    for (const [dir, clips] of Object.entries(named)) {
+      const library = loadClipLibrary(setOf(dir));
+      for (const [build, skeleton] of Object.entries(builds)) {
+        for (const name of clips) {
+          const layer = new ClipLayer({ library, build: `build:${build}` });
+          const hero = new Animator({ build: `build:${build}`, clock: 0 }).use('clips', layer);
+          layer.play(name, { fade: 0 });
+          let low = Infinity;
+          for (let k = 0; k < library.bake(name).duration * 60; k++) {
+            hero.step().pose();
+            low = Math.min(low, footLow(skeleton, hero.body.world, 'L'), footLow(skeleton, hero.body.world, 'R'));
+            layer.step();
+          }
+          expect(low, `${dir}/${name} on ${build}`).toBeLessThan(0.001);
+          expect(low, `${dir}/${name} on ${build}`).toBeGreaterThan(-1e-6);
+        }
+      }
     }
   });
 });

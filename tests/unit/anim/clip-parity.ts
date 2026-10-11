@@ -9,7 +9,7 @@
  * decode, over 34 points; index and pinky are left out, since the decode places them 2 cm either side of the fist
  * along the chest's right axis or the blade whatever way the hand points, so no rotation of the hand can hold them
  * (the hand's roll is checked instead, as the across direction made perpendicular to the forearm). `buildParity`: the
- * clip layer's pose on a build (the mannequin's) against the decode scaled by the hip-height ratio, over the 20
+ * clip layer's pose on a build (the mannequin's) against the decode scaled by the hip-height ratio, over the 22
  * points a build's joints stand for.
  *
  * @example

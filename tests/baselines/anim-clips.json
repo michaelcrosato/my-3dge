@@ -135,136 +135,136 @@
     }
   },
   "mannequin": {
-    "reason": "The clip layer’s pose on build:mannequin (rotation copy aligned at rest, the hip-height ratio, contact IK, the lift) against the format-1 decode scaled by the same ratio, over the 20 points its joints stand for, at 30 fps and the 60 Hz midpoints. A build lays its bones out straight: its shoulders sit level with the neck, where the libraries’ sit 4–6 cm lower and behind it, and its hips beside the pelvis, where Quaternius’ sit 5 cm ahead of it; the other sets’ bodies have other proportions than the mannequin’s. The worst cases are clips that lie on the floor or dip below it (the lift raises them) and the parity’s own fast pole swings.",
+    "reason": "The clip layer’s pose on build:mannequin (rotation copy aligned at rest, the hip joints placed by the hip-height ratio, contact IK, the lift) against the format-1 decode scaled by the same ratio, over the 22 points its joints stand for, at 30 fps and the 60 Hz midpoints. A build lays its bones out straight: its hip joints sit level with its pelvis and its spine stands on them, and its shoulders sit level with the neck, where the libraries’ sit 4–6 cm lower and behind it. Retargeting puts the hip joints where the source’s are (as my-3d2dge’s drive did), so the legs follow the source’s and the torso moves by the source’s own hip layout: on Quaternius’ clips (its lifted swims and jumps left out) the hips match to 0 mm and the knees and ankles to 6–7 mm on average, while the pelvis and spine stand 4 cm ahead, since its hips sit 5 cm ahead of its pelvis point (mesh2motion’s too); on CMU’s, whose hips sit 10 cm under the pelvis point, the pelvis stands 13 cm lower than the decode’s on average. The other sets’ bodies have other proportions than the mannequin’s. The worst cases are clips that lie on the floor or dip below it (the lift raises them) and the parity’s own fast pole swings.",
     "sets": {
       "cmu": {
         "clips": 60,
         "samples": 312554,
-        "mean": 116.573,
-        "worst": { "clip": "Get_Up_From_Side", "t": 5.083, "point": "kneeL", "mm": 709.9 },
+        "mean": 92.72,
+        "worst": { "clip": "Get_Up_From_Side", "t": 5.283, "point": "kneeL", "mm": 815.3 },
         "worstClips": [
-          { "clip": "Get_Up_From_Side", "t": 5.083, "point": "kneeL", "mm": 709.9 },
-          { "clip": "Get_Up_From_Back", "t": 4.117, "point": "kneeR", "mm": 700 },
-          { "clip": "Front_Kick", "t": 4.4, "point": "kneeL", "mm": 378.2 },
-          { "clip": "Cartwheel", "t": 1.333, "point": "kneeR", "mm": 346.2 },
-          { "clip": "Run_Jump_Over", "t": 0.65, "point": "kneeL", "mm": 346.1 }
+          { "clip": "Get_Up_From_Side", "t": 5.283, "point": "kneeL", "mm": 815.3 },
+          { "clip": "Fall_On_Face", "t": 1.333, "point": "kneeR", "mm": 650 },
+          { "clip": "Get_Up_From_Back", "t": 4.1, "point": "kneeR", "mm": 592.6 },
+          { "clip": "Breakdance_Helicopter", "t": 4.8, "point": "ankleL", "mm": 365.7 },
+          { "clip": "Cartwheel", "t": 1.533, "point": "kneeR", "mm": 306.6 }
         ]
       },
       "mesh2motion": {
         "clips": 177,
         "samples": 427526,
-        "mean": 49.468,
-        "worst": { "clip": "Zombie_Rise", "t": 1.067, "point": "ballR", "mm": 1050.1 },
+        "mean": 59.911,
+        "worst": { "clip": "Zombie_Rise", "t": 1.067, "point": "ankleL", "mm": 968.6 },
         "worstClips": [
-          { "clip": "Zombie_Rise", "t": 1.067, "point": "ballR", "mm": 1050.1 },
-          { "clip": "NinjaJump_Idle", "t": 0, "point": "kneeL", "mm": 854.8 },
-          { "clip": "NinjaJump_Land", "t": 0, "point": "kneeL", "mm": 854.8 },
-          { "clip": "NinjaJump_Start", "t": 0.95, "point": "kneeL", "mm": 854.6 },
-          { "clip": "Hit_Knockback", "t": 0.8, "point": "ballL", "mm": 441.9 }
+          { "clip": "Zombie_Rise", "t": 1.067, "point": "ankleL", "mm": 968.6 },
+          { "clip": "NinjaJump_Land", "t": 0.017, "point": "kneeL", "mm": 749.5 },
+          { "clip": "NinjaJump_Idle", "t": 0.067, "point": "kneeL", "mm": 634.6 },
+          { "clip": "NinjaJump_Start", "t": 0.9, "point": "kneeL", "mm": 632.2 },
+          { "clip": "Hit_Knockback", "t": 0.767, "point": "kneeL", "mm": 451 }
         ]
       },
       "quaternius": {
         "clips": 103,
         "samples": 214566,
-        "mean": 58.075,
-        "worst": { "clip": "Swim_Idle_Loop", "t": 1.533, "point": "ballR", "mm": 1740.3 },
+        "mean": 72.449,
+        "worst": { "clip": "Swim_Idle_Loop", "t": 1.533, "point": "ballL", "mm": 1813.3 },
         "worstClips": [
-          { "clip": "Swim_Idle_Loop", "t": 1.533, "point": "ballR", "mm": 1740.3 },
-          { "clip": "Swim_Fwd_Loop", "t": 1.117, "point": "kneeL", "mm": 1067.7 },
-          { "clip": "Punch_Cross", "t": 0.183, "point": "wristR", "mm": 297.2 },
-          { "clip": "Punch_Jab", "t": 0.15, "point": "wristL", "mm": 296.8 },
-          { "clip": "Roll", "t": 0.417, "point": "wristL", "mm": 284.1 }
+          { "clip": "Swim_Idle_Loop", "t": 1.533, "point": "ballL", "mm": 1813.3 },
+          { "clip": "Swim_Fwd_Loop", "t": 1.117, "point": "kneeL", "mm": 1086.9 },
+          { "clip": "Punch_Cross", "t": 0.183, "point": "wristR", "mm": 280.4 },
+          { "clip": "Punch_Jab", "t": 0.15, "point": "wristL", "mm": 266.5 },
+          { "clip": "Roll", "t": 0.683, "point": "wristL", "mm": 264.2 }
         ]
       },
       "style100": {
         "clips": 98,
         "samples": 182050,
-        "mean": 53.148,
-        "worst": { "clip": "BeatChest_Walk", "t": 1.117, "point": "wristL", "mm": 280.9 },
+        "mean": 53.053,
+        "worst": { "clip": "BeatChest_Walk", "t": 0.983, "point": "wristL", "mm": 269.3 },
         "worstClips": [
-          { "clip": "BeatChest_Walk", "t": 1.117, "point": "wristL", "mm": 280.9 },
-          { "clip": "Swat_Walk", "t": 0.95, "point": "wristR", "mm": 265.6 },
-          { "clip": "Rushed_Walk", "t": 1.9, "point": "elbowR", "mm": 227.9 },
-          { "clip": "Roadrunner_Walk", "t": 1.017, "point": "elbowR", "mm": 177.4 },
-          { "clip": "LeanBack_Walk", "t": 0.533, "point": "elbowR", "mm": 170.7 }
+          { "clip": "BeatChest_Walk", "t": 0.983, "point": "wristL", "mm": 269.3 },
+          { "clip": "Swat_Walk", "t": 0.95, "point": "wristR", "mm": 266.9 },
+          { "clip": "Rushed_Walk", "t": 2.033, "point": "kneeL", "mm": 197 },
+          { "clip": "OnPhoneRight_Walk", "t": 0.5, "point": "wristR", "mm": 147.7 },
+          { "clip": "OnPhoneLeft_Walk", "t": 1.3, "point": "wristL", "mm": 146.6 }
         ]
       },
       "style100_back": {
         "clips": 98,
         "samples": 175802,
-        "mean": 51.976,
-        "worst": { "clip": "BeatChest_WalkBack", "t": 0.283, "point": "wristR", "mm": 253.3 },
+        "mean": 53.011,
+        "worst": { "clip": "BeatChest_WalkBack", "t": 0.283, "point": "wristR", "mm": 251.8 },
         "worstClips": [
-          { "clip": "BeatChest_WalkBack", "t": 0.283, "point": "wristR", "mm": 253.3 },
-          { "clip": "KarateChop_WalkBack", "t": 0.4, "point": "wristL", "mm": 149.6 },
-          { "clip": "Swimming_WalkBack", "t": 2.2, "point": "wristR", "mm": 147.5 },
-          { "clip": "OnPhoneRight_WalkBack", "t": 1.133, "point": "wristR", "mm": 145.1 },
-          { "clip": "Punch_WalkBack", "t": 0.4, "point": "wristL", "mm": 142.2 }
+          { "clip": "BeatChest_WalkBack", "t": 0.283, "point": "wristR", "mm": 251.8 },
+          { "clip": "KarateChop_WalkBack", "t": 0.4, "point": "wristL", "mm": 150.9 },
+          { "clip": "OnPhoneRight_WalkBack", "t": 1.133, "point": "wristR", "mm": 146.4 },
+          { "clip": "OnPhoneLeft_WalkBack", "t": 0.567, "point": "wristL", "mm": 142.9 },
+          { "clip": "Punch_WalkBack", "t": 0.683, "point": "wristL", "mm": 142.7 }
         ]
       },
       "style100_backrun": {
         "clips": 98,
         "samples": 107294,
-        "mean": 52.446,
-        "worst": { "clip": "March_RunBack", "t": 0.65, "point": "wristR", "mm": 272.1 },
+        "mean": 53.376,
+        "worst": { "clip": "March_RunBack", "t": 0.65, "point": "wristR", "mm": 273.2 },
         "worstClips": [
-          { "clip": "March_RunBack", "t": 0.65, "point": "wristR", "mm": 272.1 },
-          { "clip": "BeatChest_RunBack", "t": 0.117, "point": "wristR", "mm": 264.8 },
-          { "clip": "KarateChop_RunBack", "t": 0.017, "point": "wristR", "mm": 244.4 },
-          { "clip": "OnPhoneLeft_RunBack", "t": 0.083, "point": "wristL", "mm": 188.5 },
-          { "clip": "Punch_RunBack", "t": 0.483, "point": "wristR", "mm": 154.3 }
+          { "clip": "March_RunBack", "t": 0.65, "point": "wristR", "mm": 273.2 },
+          { "clip": "BeatChest_RunBack", "t": 0.117, "point": "wristR", "mm": 266 },
+          { "clip": "KarateChop_RunBack", "t": 0.017, "point": "wristR", "mm": 244.1 },
+          { "clip": "OnPhoneLeft_RunBack", "t": 0.083, "point": "wristL", "mm": 188.2 },
+          { "clip": "OnPhoneRight_RunBack", "t": 0.533, "point": "wristR", "mm": 147.4 }
         ]
       },
       "style100_idle": {
         "clips": 98,
         "samples": 345268,
-        "mean": 51.867,
-        "worst": { "clip": "BeatChest_Idle", "t": 1.617, "point": "wristL", "mm": 254.5 },
+        "mean": 51.35,
+        "worst": { "clip": "BeatChest_Idle", "t": 1.617, "point": "wristL", "mm": 255.6 },
         "worstClips": [
-          { "clip": "BeatChest_Idle", "t": 1.617, "point": "wristL", "mm": 254.5 },
-          { "clip": "OnPhoneRight_Idle", "t": 0, "point": "wristR", "mm": 144.8 },
-          { "clip": "Punch_Idle", "t": 0, "point": "wristR", "mm": 144.5 },
-          { "clip": "Dinosaur_Idle", "t": 0, "point": "wristR", "mm": 143.6 },
-          { "clip": "Waving_Idle", "t": 1.45, "point": "wristR", "mm": 141.2 }
+          { "clip": "BeatChest_Idle", "t": 1.617, "point": "wristL", "mm": 255.6 },
+          { "clip": "Dinosaur_Idle", "t": 0, "point": "wristR", "mm": 144.9 },
+          { "clip": "Waving_Idle", "t": 1.367, "point": "wristR", "mm": 142.4 },
+          { "clip": "Morris_Idle", "t": 2.667, "point": "wristR", "mm": 141.4 },
+          { "clip": "Punch_Idle", "t": 0, "point": "wristR", "mm": 141.3 }
         ]
       },
       "style100_run": {
         "clips": 98,
         "samples": 121792,
-        "mean": 53.179,
-        "worst": { "clip": "March_Run", "t": 0.583, "point": "wristR", "mm": 273.8 },
+        "mean": 53.38,
+        "worst": { "clip": "March_Run", "t": 0.583, "point": "wristR", "mm": 274.9 },
         "worstClips": [
-          { "clip": "March_Run", "t": 0.583, "point": "wristR", "mm": 273.8 },
-          { "clip": "LeftHop_Run", "t": 0.083, "point": "wristR", "mm": 271.8 },
-          { "clip": "BeatChest_Run", "t": 0.45, "point": "wristR", "mm": 263.3 },
-          { "clip": "KarateChop_Run", "t": 1.117, "point": "wristR", "mm": 251.1 },
-          { "clip": "OnPhoneLeft_Run", "t": 0.017, "point": "wristL", "mm": 180.8 }
+          { "clip": "March_Run", "t": 0.583, "point": "wristR", "mm": 274.9 },
+          { "clip": "LeftHop_Run", "t": 0.083, "point": "wristR", "mm": 273 },
+          { "clip": "BeatChest_Run", "t": 0.45, "point": "wristR", "mm": 264.5 },
+          { "clip": "KarateChop_Run", "t": 1.117, "point": "wristR", "mm": 252.3 },
+          { "clip": "OnPhoneLeft_Run", "t": 0.017, "point": "wristL", "mm": 181.2 }
         ]
       },
       "style100_side": {
         "clips": 194,
         "samples": 356510,
-        "mean": 51.91,
-        "worst": { "clip": "March_SideRight", "t": 0.483, "point": "wristR", "mm": 266.9 },
+        "mean": 52.642,
+        "worst": { "clip": "March_SideRight", "t": 0.483, "point": "wristR", "mm": 265.3 },
         "worstClips": [
-          { "clip": "March_SideRight", "t": 0.483, "point": "wristR", "mm": 266.9 },
-          { "clip": "BeatChest_SideRight", "t": 0.283, "point": "wristR", "mm": 257.7 },
-          { "clip": "BeatChest_SideLeft", "t": 1.083, "point": "wristR", "mm": 255 },
-          { "clip": "KarateChop_SideLeft", "t": 0.667, "point": "wristL", "mm": 148.6 },
-          { "clip": "OnPhoneRight_SideRight", "t": 0.2, "point": "wristR", "mm": 148.4 }
+          { "clip": "March_SideRight", "t": 0.483, "point": "wristR", "mm": 265.3 },
+          { "clip": "BeatChest_SideRight", "t": 0.283, "point": "wristR", "mm": 258.9 },
+          { "clip": "BeatChest_SideLeft", "t": 1.083, "point": "wristR", "mm": 256.1 },
+          { "clip": "KarateChop_SideLeft", "t": 0.667, "point": "wristL", "mm": 149.9 },
+          { "clip": "OnPhoneRight_SideRight", "t": 0.233, "point": "wristR", "mm": 149.4 }
         ]
       },
       "style100_siderun": {
         "clips": 194,
         "samples": 219758,
-        "mean": 52.176,
-        "worst": { "clip": "BeatChest_SideRunLeft", "t": 0.117, "point": "wristR", "mm": 258.9 },
+        "mean": 52.857,
+        "worst": { "clip": "BeatChest_SideRunLeft", "t": 0.117, "point": "wristR", "mm": 260.1 },
         "worstClips": [
-          { "clip": "BeatChest_SideRunLeft", "t": 0.117, "point": "wristR", "mm": 258.9 },
-          { "clip": "March_SideRunLeft", "t": 1.117, "point": "wristL", "mm": 254.8 },
-          { "clip": "BeatChest_SideRunRight", "t": 0.117, "point": "wristR", "mm": 253.8 },
-          { "clip": "OnPhoneRight_SideRunLeft", "t": 1.283, "point": "wristR", "mm": 202.4 },
-          { "clip": "OnPhoneRight_SideRunRight", "t": 1, "point": "wristR", "mm": 146.8 }
+          { "clip": "BeatChest_SideRunLeft", "t": 0.117, "point": "wristR", "mm": 260.1 },
+          { "clip": "March_SideRunLeft", "t": 1.117, "point": "wristL", "mm": 256 },
+          { "clip": "BeatChest_SideRunRight", "t": 0.117, "point": "wristR", "mm": 254.9 },
+          { "clip": "OnPhoneRight_SideRunLeft", "t": 1.283, "point": "wristR", "mm": 198.1 },
+          { "clip": "OnPhoneRight_SideRunRight", "t": 1.133, "point": "wristR", "mm": 148.1 }
         ]
       }
     }
