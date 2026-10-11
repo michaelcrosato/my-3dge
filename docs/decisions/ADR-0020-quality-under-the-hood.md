@@ -78,3 +78,25 @@ need a core change.
   as a block), and the glyph's floor otherwise.
 - **Reachability:** areas are strongly connected. Each step is sampled 8 times between centres and climbs at most
   `NAV_CLIMB`; steps down are always allowed.
+
+## Amendment 5 (2026-10-10, WP-4.1, revised after the core review 2026-10-11): kinematic floors carry riders by their own step
+Why: Rapier 0.21's kinematic friction acts on each leg of moveCharacter's lift/across/down move that ends within the
+floor's prediction distance, so it carried a rider 0, 1 or 2 times a tick. Measured on integration c4ac26e:
+- On 6 m rides a rider slipped 0.10 to 0.17 m, and 0.75 m near the leading edge of a 4 s ride.
+- With two riders, one was lost (the reviewer measured 0.44 m on another layout).
+- On 3 m lifts going down it lost the ground for 47 to 184 ticks of 480.
+- A floor sinking as it moved across left the rider 3.6 m behind.
+- Turning floors at 1 and 3 rad/s threw it 1.3 and 2.0 m.
+
+**Core change accepted:** WP 4.1's Owns widens to engine/physics/character{,.test}.ts. When the character was
+grounded on a kinematic body, stepCharacter computes that body's step at the feet: moved by its linear velocity,
+turned about its centre of mass by its angular velocity, as Rapier integrates it. The body's velocities are held at
+zero during the move. The horizontal part goes through moveCharacter. The vertical part is added after the move,
+because moving up or down through the controller ends on the floor where it is now: the snap leg cancelled a rise, so
+riders on lifts from 1.5 m/s peak lost the ground while rising. A rise lifts the rider unchecked; a ceiling over a
+lift crushes it, as the rising floor would anyway. A sink takes it down by a controller move that leaves the floor
+out, so a ledge the rider overhangs holds it up instead of taking it into the pit.
+
+Measured: riders keep their place within 0.3 mm and stay grounded every tick across, up and down at up to 5 m/s and
+turning at up to 3 rad/s. Movers (bodies.ts) are velocity-driven kinematic bodies, so the carry keeps no state and
+restores exactly.

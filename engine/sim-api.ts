@@ -306,3 +306,30 @@ export { NAV_CLIMB } from './world/level/validate';
 export { SpatialHash } from './world/spatial';
 export { SPATIAL_HASH_FIELDS } from './world/spatial';
 export type { SpatialHashOptions } from './world/spatial';
+
+// Bodies and props (WP 4.1): props of one shape in the prototype's material, torque impulses and the knock; movers,
+// kinematic bodies whose pose is a function of time, carrying riders; sensors and triggers; the lost-body rescue.
+export { PROP_MATERIAL } from './physics/bodies';
+export type { PropSpec } from './physics/bodies';
+export { addProp } from './physics/bodies';
+export { addBox } from './physics/bodies';
+export { addBall } from './physics/bodies';
+export { addCapsule } from './physics/bodies';
+export { addCylinder } from './physics/bodies';
+export { applyTorqueImpulse } from './physics/bodies';
+export { knock } from './physics/bodies';
+export type { KnockOptions } from './physics/bodies';
+export { MOVER_FIELDS } from './physics/bodies';
+export { MOVER } from './physics/bodies';
+export type { Mover } from './physics/bodies';
+export { moverPose } from './physics/bodies';
+export { driveBody } from './physics/bodies';
+export { driveMover } from './physics/bodies';
+export { addSensor } from './physics/bodies';
+export type { SensorSpec } from './physics/bodies';
+export { sensorHits } from './physics/bodies';
+export { TRIGGER_FIELDS } from './physics/bodies';
+export type { Trigger } from './physics/bodies';
+export { updateTrigger } from './physics/bodies';
+export { rescueLost } from './physics/bodies';
+export type { RescueLevel } from './physics/bodies';
