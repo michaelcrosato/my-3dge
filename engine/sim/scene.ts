@@ -49,7 +49,7 @@ import { attachPhysics, scenePhysics } from '../physics/world';
 import type { WorldCapture } from './capture';
 import type { InputChange, InputEntry, Replay } from './replay';
 import type { AnyComponents, PhysicsHook } from './state';
-import { createWorld, type World } from './world';
+import { createWorld, type SystemProbe, type World } from './world';
 
 /** The codes this module raises, with their fixes. */
 export const SCENE_CODES = defineCodes('sim', {
@@ -199,6 +199,8 @@ export interface SceneOptions {
   log?: Log;
   /** The physics hook (WP 3.1). */
   physics?: PhysicsHook;
+  /** The world's system probe (engine/sim/world.ts; the stats meter, WP 5.5). */
+  probe?: SystemProbe;
 }
 
 /** A started scene: the scene, its world and its settings store. */
@@ -230,6 +232,7 @@ export function startScene<C extends object = AnyComponents, E extends EventMap 
     settings,
     log: options.log,
     physics: options.physics ?? physics,
+    probe: options.probe,
   });
   world.systems.add('scene', (w, intents) => entry.step(w, intents), { phase: 'intents' });
   if (physics) attachPhysics(world, physics);

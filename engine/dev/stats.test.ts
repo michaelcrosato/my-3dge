@@ -1,17 +1,24 @@
 /**
  * @file Unit tests for engine/dev/stats.ts (T1, PLAN.md §8.3, §8.7, WP 5.5): on a clock the test moves, the meter's
- * means cover the last 60 steps or frames, readings in coarse steps included; the probe adds each `physics` and `anim` system's time to its phase for
- * the step under way and passes the other phases through, each system run once; phases timed outside a step are not
- * counted; the renderer's counts are read live, and are null headless with `renderMs`; `reset` forgets the samples;
- * and the `stats` member reads its host's meter, or throws `DEV_NO_METER` naming the fix.
+ * means cover the last 60 steps or frames, readings in coarse steps included; the probe adds each `physics` and
+ * `anim` system's time to its phase for the step under way and passes the other phases through, each system run once;
+ * phases timed outside a step are not counted; the renderer's counts are read live, and are null headless with
+ * `renderMs`; `reset` forgets the samples; the `stats` member reads its host's meter, or throws `DEV_NO_METER` naming
+ * the fix; and in an engine
+ * (`createHeadless`), the world's probe runs each system once in order, every step is timed with its physics phase,
+ * nothing is counted headless, and the hash is the same as a run without the meter.
  * @see engine/dev/stats.ts
  */
 import { describe, expect, it } from 'vitest';
+import physics40 from '../../fixtures/scenes/physics-40';
+import { createHeadless } from '../app/headless';
 import { EngineError } from '../core/log';
-import { registry as sharedRegistry } from '../core/registry';
+import { createRegistry, registry as sharedRegistry } from '../core/registry';
+import { createSession } from '../sim/scene';
+import { createWorld } from '../sim/world';
 import { createInspector } from './inspector';
 import type { InspectorHost } from './members';
-import { createStatsMeter, STATS_WINDOW, type RenderCounts, type StatsMeter } from './stats';
+import { createStatsMeter, STATS_WINDOW, type EngineStats, type RenderCounts, type StatsMeter } from './stats';
 
 /** A meter on a clock the test moves; `step(ms)` times a step whose phases take `ms.physics`, `ms.anim` and `ms.logic`. */
 function clocked(counts?: () => RenderCounts | null) {
@@ -121,5 +128,33 @@ describe('__engine.stats()', () => {
       expect((error as EngineError).code).toBe('DEV_NO_METER');
       expect((error as EngineError).message).toContain('createEngine or createHeadless');
     }
+  });
+});
+
+describe('the meter in an engine', () => {
+  it("runs each system once, in the world's order, through the probe", () => {
+    const seen: string[] = [];
+    const w = createWorld({ registry: createRegistry(), probe: (system, run) => (seen.push(system.phase), run()) });
+    const ran: string[] = [];
+    w.systems.add('rule', () => void ran.push('rule'));
+    w.systems.add('push', () => void ran.push('push'), { phase: 'physics' });
+    w.systems.add('think', () => void ran.push('think'), { phase: 'ai' });
+    w.step({});
+    expect([ran, seen]).toEqual([
+      ['think', 'push', 'rule'],
+      ['ai', 'physics', 'rules'],
+    ]);
+  });
+
+  it('times every step of createHeadless with its physics phase, counts nothing headless, and keeps the hash', async () => {
+    const engine = await createHeadless({ scene: physics40, seed: 1 });
+    engine.step(30);
+    const stats = (engine.stats as () => EngineStats)();
+    expect(stats).toMatchObject({ steps: 30, frames: 0, renderMs: null, drawCalls: null, pipelines: null });
+    expect(stats.simMs).toBeGreaterThan(0);
+    expect(stats.physicsMs).toBeGreaterThan(0);
+    const plain = createSession(physics40, { seed: 1 });
+    for (let k = 0; k < 30; k++) plain.step();
+    expect(engine.hash()).toBe(plain.world.hash());
   });
 });

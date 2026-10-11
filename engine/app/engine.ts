@@ -14,12 +14,13 @@
  * sim still runs, and `__engine` still steps it; only `render` and `shot` throw. A frame that throws stops the loop
  * and becomes an error record too.
  *
- * The rendering members (engine/app/viewMembers.ts) get their drawing here: `render(n)` draws frames now, `shot`
- * shoots the view (engine/gfx/shot.ts), and `replay(text)` plays a replay drawing a frame after every step (the
- * CPU-only contract's proof, §6.7: `x replay --browser page`, tests/e2e/parity.spec.ts). `?replay=<name>` plays one
- * of `options.replays` in real time instead, from step 0, then hands back to the devices; without `?scene`, the page
- * starts the replay's own scene (when it is one of the page's), since a page draws one scene and plays only its
- * replays.
+ * Every frame drawn is timed by the run's stats meter, which reads the renderer's counts (`__engine.stats()`,
+ * engine/dev/stats.ts). The rendering members (engine/app/viewMembers.ts) get their drawing here: `render(n)` draws
+ * frames now, `shot` shoots the view (engine/gfx/shot.ts), and `replay(text)` plays a replay drawing a frame after
+ * every step (the CPU-only contract's proof, §6.7: `x replay --browser page`, tests/e2e/parity.spec.ts).
+ * `?replay=<name>` plays one of `options.replays` in real time instead, from step 0, then hands back to the devices;
+ * without `?scene`, the page starts the replay's own scene (when it is one of the page's), since a page draws one
+ * scene and plays only its replays.
  *
  * Touch (WP 3.12, ADR-0021: built, not tested): the app wires the touch device (engine/input/devices/touch.ts), the
  * page's chrome, the touch layer from `touchLayout` and swiping (engine/ui/), the quality budget's pixel caps
@@ -243,14 +244,15 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     const view = viewNow();
     for (const camera of view.cameras) await gfx!.warmup.run({ scene: view.stage.scene, camera });
   };
-  const frameNow = (alpha: number, dt: number): FrameReport => {
-    touchFrame();
-    gfx!.resolution.update();
-    const cameraInput = input?.camera();
-    const view = viewNow().frame({ alpha, dt, aspect: aspect(), input: cameraInput });
-    keepWidth(view.camera, aspect());
-    return gfx!.frame(view);
-  };
+  const frameNow = (alpha: number, dt: number): FrameReport =>
+    run!.meter.time('render', () => {
+      touchFrame();
+      gfx!.resolution.update();
+      const cameraInput = input?.camera();
+      const view = viewNow().frame({ alpha, dt, aspect: aspect(), input: cameraInput });
+      keepWidth(view.camera, aspect());
+      return gfx!.frame(view);
+    });
   const settle = async (alpha: number, dt: number): Promise<FrameReport> => {
     for (let tries = 0; tries < TRIES; tries++) {
       const report = frameNow(alpha, dt);
@@ -294,6 +296,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     setView(path: string, value: SettingValue) {
       run!.session.set(path, value);
     },
+    counts: () => gfx?.stats() ?? null,
   };
 
   try {
