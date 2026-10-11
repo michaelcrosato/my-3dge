@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="data:," />
+    <title>overlay</title>
+    <!--
+      The overlay page (tests/pages/overlay.ts, PLAN.md WP 6.5): the box room drawn on WebGPU in a canvas that does not
+      fill the page (offset and sized by CSS, which a test may change), with the HTML/CSS overlay over it.
+    -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #15171c;
+      }
+      canvas {
+        display: block;
+        position: absolute;
+        left: 37px;
+        top: 21px;
+        width: 800px;
+        height: 450px;
+      }
+      #msg {
+        position: fixed;
+        inset: 0;
+        padding: 24px;
+        font:
+          16px system-ui,
+          sans-serif;
+        color: #c9ccd4;
+        white-space: pre-line;
+      }
+      #msg[hidden] {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="view"></canvas>
+    <div id="msg">Loading…</div>
+    <script type="module" src="./overlay.ts"></script>
+  </body>
+</html>
