@@ -1,0 +1,12 @@
+{
+  "describe": "A look: a material style plus a filter chain (post-processing), as data, with a unit test that it parses, posterizes with 0 or 8 and more levels, and that node x set post.look switches to it (PLAN.md WP 7.4).",
+  "id": "the module's path, labs/<lab>/looks/<name> (its id is look:<name>; kebab-case, as the engine's looks are): labs/box/looks/ink-wash",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/looks|tools/templates/look)/[a-z][A-Za-z0-9-]*$",
+  "sample": "tools/templates/look/sample-look",
+  "files": {
+    "look.ts.tmpl": "{{id}}.ts",
+    "look.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"],
+  "next": "make it look as its file comment says; import {{id}}.ts where the page loads its looks (the box: labs/box/main.ts); see it with node x shot labs/box --set post.look=look:{{name}}, or node x set post.look look:{{name}} in an inspect session; then node x docs --write"
+}

@@ -3,10 +3,11 @@
  * the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay`
  * and settings by path), starts the scene as a recorded run with its view (engine/app/headless.ts,
  * engine/app/view.ts), publishes the run's inspector as `window.__engine`, starts the renderer (WebGPU or nothing,
- * engine/gfx/renderer.ts), warms up every pipeline the view needs through both cameras (perspective and
- * orthographic), draws the first frame, and then runs the frame loop (engine/app/loop.ts): the devices sampled into
- * intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from the clock, the view
- * drawn at the clock's alpha.
+ * engine/gfx/renderer.ts) and the post-processing chain every frame and shot is drawn through
+ * (engine/gfx/post/chain.ts: the view settings `post.look`, `post.filters` and `post.show`), warms up every pipeline
+ * the view needs through both cameras (perspective and orthographic), draws the first frame, and then runs the frame
+ * loop (engine/app/loop.ts): the devices sampled into intents (engine/input/input.ts; `__engine.input` drives the same
+ * session), fixed steps from the clock, the view drawn at the clock's alpha.
  *
  * Ready or error (§8.3): `__engine.ready` turns true once the first frame is done on the GPU, and never after a
  * startup error; every failure is one record in `__engine.errors` (the log's) and shown as page text by the error
@@ -53,7 +54,8 @@ import { createOverlay } from '../dev/overlay';
 import { createMaterialLibrary } from '../gfx/materials/library';
 import { qualityBudget, type QualitySetting } from '../gfx/quality';
 import { keepWidth } from '../gfx/resolution';
-import { createRenderer, type FrameReport, type Gfx } from '../gfx/renderer';
+import { createPost, definePostSettings, type Post } from '../gfx/post/chain';
+import { createRenderer, type FrameReport, type FrameView, type Gfx } from '../gfx/renderer';
 import { shot, shotForJson } from '../gfx/shot';
 import { connectVirtualDevice } from '../input/devices/inspector';
 import { createInput, type Input } from '../input/input';
@@ -188,6 +190,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   let routes: Routes | null = null;
   let run: AppRun | null = null;
   let gfx: Gfx | null = null;
+  let post: Post | null = null;
   let loop: Loop | null = null;
   const fail = (error: unknown, code = 'APP_START'): ErrorRecord => {
     const record = log.error(...recordOf(error, code), error);
@@ -239,10 +242,12 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     layer?.update({ on, stick: touch?.stickView() ?? null, down: touch?.down() ?? [], covered, width, height });
     gfx!.resolution.cap(qualityBudget(settingsNow.get<QualitySetting>('quality'), on));
   };
+  /** `view` drawn through the post chain, once there is one. */
+  const through = (view: FrameView): FrameView => (post ? post.view(view) : view);
   /** Warms up through both cameras, so switching projection later builds nothing. */
   const warmBoth = async () => {
     const view = viewNow();
-    for (const camera of view.cameras) await gfx!.warmup.run({ scene: view.stage.scene, camera });
+    for (const camera of view.cameras) await gfx!.warmup.run(through({ scene: view.stage.scene, camera }));
   };
   const frameNow = (alpha: number, dt: number): FrameReport =>
     run!.meter.time('render', () => {
@@ -251,7 +256,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
       const cameraInput = input?.camera();
       const view = viewNow().frame({ alpha, dt, aspect: aspect(), input: cameraInput });
       keepWidth(view.camera, aspect());
-      return gfx!.frame(view);
+      return gfx!.frame(through(view));
     });
   const settle = async (alpha: number, dt: number): Promise<FrameReport> => {
     for (let tries = 0; tries < TRIES; tries++) {
@@ -286,7 +291,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     async shot(shotOptions) {
       const view = viewNow().frame({ alpha: 1, dt: 0, aspect: aspect() });
       keepWidth(view.camera, aspect());
-      return shotForJson(await shot(gfx!, view, shotOptions));
+      return shotForJson(await shot(gfx!, through(view), shotOptions));
     },
     async draw() {
       if (!gfx) return;
@@ -300,6 +305,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   };
 
   try {
+    definePostSettings(registry);
     for (const [id, level] of Object.entries(options.levels ?? {})) {
       if (!registry.has('level', id)) defineLevel(id, level, registry);
     }
@@ -341,6 +347,8 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   }
   try {
     gfx.renderer.shadowMap.enabled = true;
+    post = createPost(gfx, { settings: currentSettings(() => started), registry, log });
+    post.attach(gfx.warmup);
     viewNow().stage.register(gfx.warmup);
     await warmBoth();
     await settle(1, 0);

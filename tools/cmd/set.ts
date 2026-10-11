@@ -94,7 +94,9 @@ export default {
     const session = findSession(root);
     const name = scene?.includes(':') ? scene.slice(scene.indexOf(':') + 1) : scene;
     const page = session?.page ?? 'labs/box';
-    const url = pageUrl(page, { scene: name, set: [param.replace(/%3D/g, '=')] });
+    // pageUrl encodes the pair itself: the parameter above, already encoded, would come out encoded twice.
+    const raw = typeof change.value === 'string' ? change.value : JSON.stringify(change.value);
+    const url = pageUrl(page, { scene: name, set: [`${path}=${raw}`] });
     const facts = [entry.unit, `default ${JSON.stringify(entry.default)}`, `takes effect ${change.when}`];
     const lines = [`URL parameter: ?${param}`, `page: ${url}`];
     const failures = [];

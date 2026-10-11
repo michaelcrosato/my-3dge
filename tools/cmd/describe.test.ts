@@ -120,7 +120,12 @@ describe('x describe', { timeout: CHILD_TIMEOUT_MS }, () => {
     const { code, lines } = await run(ROOT);
     expect(code).toBe(0);
     expect(lines[0]).toMatch(/^x describe: ok: \d+ kinds, \d+ entries$/);
-    expect(lines.some((line) => line.startsWith('setting ('))).toBe(true);
+    // Past about 20 lines the printed listing is cut (kinds go in name order, `setting` near the end); the cut line
+    // names output.txt, which holds every line.
+    const cut = lines.find((line) => line.startsWith('… '));
+    const listed = cut ? readFileSync(join(ROOT, 'out/describe/all/output.txt'), 'utf8').split('\n') : lines;
+    expect(cut === undefined || cut.endsWith('out/describe/all/output.txt')).toBe(true);
+    expect(listed.some((line) => line.startsWith('setting ('))).toBe(true);
     const data = JSON.parse(readFileSync(join(ROOT, 'out/describe/all/describe.json'), 'utf8'));
     expect(data.kinds.map((row: { kind: string }) => row.kind)).toContain('setting');
   });

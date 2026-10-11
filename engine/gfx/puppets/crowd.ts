@@ -13,7 +13,8 @@
  * - with `floor` (the floor's height under it, which the caller knows), a blob shadow (blobShadow.ts).
  *
  * A rig body (`RigBody`) is data: its slots, and its parts, each a unit shape on one joint of the rig's pose
- * (`RigPart` says how it is placed and sized).
+ * (`RigPart` says how it is placed and sized). Post-processing sees the bodies' batches as characters, in one
+ * outline group (`setPart`, engine/gfx/post/mrt.ts), and the blob shadows as the environment.
  *
  * The cost: a draw call per shown page of each batch (a shape and a material: the puppets' `crowd/puppets/<shape>`,
  * the rigs' `crowd/rigs/<shape>`, and `crowd/shadows`), again per shadow map for lit ones. Pages hold
@@ -43,6 +44,7 @@ import type { Pose } from '../../anim/pose';
 import { toLinear, type Rgb } from '../../core/color';
 import { codeError, defineCodes } from '../../core/log';
 import { createInstancedBatch, type InstancedBatch } from '../instancing';
+import { setPart } from '../post/mrt';
 import type { Warmup } from '../warmup';
 import { BLOB_BODY, BLOB_BODY_RADIUS } from './bodies/blob';
 import { FLOATER_BODY } from './bodies/floater';
@@ -204,6 +206,9 @@ export function createCrowd(options: {
   root.name = name;
   const lod = createCrowdLod(options.lod);
   const puppets = createPuppetBatches({ materials: options.materials, name: `${name}/puppets`, pageSlots });
+  /** The bodies' part for post-processing: characters, one outline group, so no line falls between a body's batches. */
+  const character = (object: Group) => setPart(object, 'character', { group: root.id });
+  character(puppets.root);
   const shadows =
     options.shadows === false
       ? null
@@ -230,6 +235,7 @@ export function createCrowd(options: {
         receiveShadow: lit,
       });
       rigs.set(key, batch);
+      character(batch.root);
       root.add(batch.root);
     }
     return batch;
