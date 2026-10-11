@@ -1,14 +1,15 @@
 /**
- * @file Unit tests for `x sheet` (tools/cmd/sheet.ts): the subjects a QA id or prefix names, the frames a sheet of
- * one state or of many draws, the usage errors, and a run with `--svg`, which writes the sheet without a browser and
- * reports its hash and the subject's `anim` QA (the PNG through Chromium is the command's own run, not T1's).
+ * @file Unit tests for `x sheet` (tools/cmd/sheet.ts): the subjects a QA id or prefix names, the ids its QA keeps
+ * (`humanoid` never plays the library's clips), the frames a sheet of one state or of many draws, the usage errors,
+ * and a run with `--svg`, which writes the sheet without a browser and reports its hash and the subject's `anim` QA
+ * (the PNG through Chromium is the command's own run, not T1's).
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ENGINE_MOVES } from '../../engine/anim/moves-data';
 import { dispatch, loadCommand, ROOT } from '../x';
-import { sheetFrames, subjectIds } from './sheet';
+import { qaPrefixes, sheetFrames, subjectIds } from './sheet';
 
 const commands = { sheet: () => loadCommand(ROOT, 'sheet') };
 
@@ -18,6 +19,16 @@ describe('subjectIds', () => {
     expect(subjectIds('move:')).toEqual(Object.keys(ENGINE_MOVES));
     expect(subjectIds('humanoid').length).toBeGreaterThan(40);
     expect(subjectIds('move:slsh')).toEqual([]);
+  });
+});
+
+describe('qaPrefixes', () => {
+  it("keeps the subject's own QA ids: for humanoid every state of its matrix, never the blob, floater or a clip", () => {
+    const keeps = (id: string) => qaPrefixes('humanoid').some((prefix) => id.startsWith(prefix));
+    expect(subjectIds('humanoid').every(keeps)).toBe(true);
+    for (const id of ['clip:QUATERNIUS/Swim_Idle_Loop', 'set:CMU', 'blob:bite', 'floater:rest'])
+      expect(keeps(id), id).toBe(false);
+    expect(qaPrefixes('move:slash')).toEqual(['move:slash']);
   });
 });
 

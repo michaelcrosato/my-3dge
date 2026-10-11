@@ -3,7 +3,9 @@
  * or as a scene, seeded, with settings over the scene's; `step(n, intents)` runs n recorded steps, holding one intents
  * object (its presses on the first step only) or following a script; the recording replays to the same hashes; the
  * kernel fixture gives the same hash through it as through a plain session; a seed is a whole number from 0; a test
- * registry gets the clock's settings; `headlessHost` takes only a headless engine.
+ * registry gets the clock's settings; `headlessHost` takes only a headless engine; the hit-stop a step's rules ask
+ * reaches the run's clock once per step, through its budget, and never the hash; a replay's stops are dropped, a
+ * real-time playback's reach the clock (`stepped`), and a dev action's goes with the next step.
  * @see engine/app/headless.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -12,10 +14,12 @@ import { EngineError } from '../core/log';
 import { createRegistry } from '../core/registry';
 import { defineSettings } from '../core/settings';
 import { held, pressed } from '../input/intents';
+import { damage, requestHitStop } from '../sim/damage';
 import { playReplay } from '../sim/replay';
 import { createSession, defineScene } from '../sim/scene';
 import { defineComponent } from '../sim/state';
-import { createHeadless, headlessHost } from './headless';
+import { createAppHost, createHeadless, headlessHost } from './headless';
+import { createPlayback } from './playback';
 
 /** A registry with a `walker` component, a setting and a scene that counts held and pressed `jump`s. */
 function demo() {
@@ -110,4 +114,74 @@ describe('createHeadless', () => {
     expect(() => headlessHost({} as typeof engine)).toThrow(EngineError);
     expect(() => headlessHost({} as typeof engine)).toThrow(/APP_NOT_HEADLESS/);
   });
+
+  it('hands the hit-stop a step asked for to its clock, once per step, through the budget', async () => {
+    const { scene, registry } = strike();
+    const engine = await createHeadless({ scene, registry });
+    const { clock } = headlessHost(engine);
+    engine.step(1);
+    expect(clock.state().hitStop).toEqual({ seconds: 0, debt: 0 });
+    engine.step(1);
+    expect(clock.state().hitStop).toEqual({ seconds: 0.06, debt: 0.06 }); // 12 hits: one full stop, counted once
+    engine.step(1);
+    expect(clock.state().hitStop).toEqual({ seconds: 0.06, debt: 0.06 }); // the next at once: shrunk inside it
+  });
+
+  it('drops the stops a replay asks for, so none freezes the first live step after it', async () => {
+    const { scene, registry } = strike();
+    const run = createAppHost({ scene, registry });
+    run.host.step(10, {});
+    await run.host.replay(JSON.stringify(run.session.record()), {}); // __engine.replay(text)
+    expect(run.clock.state().hitStop).toEqual({ seconds: 0, debt: 0 }); // the loop was held
+    run.host.step(1, {}); // no hit
+    expect(run.clock.state().hitStop).toEqual({ seconds: 0, debt: 0 });
+  });
+
+  it("hands a real-time playback's stops to the clock after each step (stepped), as live play does", () => {
+    const { scene, registry } = strike();
+    const run = createAppHost({ scene, registry });
+    const live: unknown[] = [];
+    for (let k = 0; k < 3; k++) {
+      run.stepOnce({});
+      live.push(run.clock.state().hitStop);
+    }
+    expect(live[1]).toEqual({ seconds: 0.06, debt: 0.06 }); // the second step's 12 hits: one full stop
+    const playback = createPlayback(run.session.record());
+    run.begin(playback.replay); // a new session and clock, as `?replay=` starts
+    const played: unknown[] = [];
+    for (let k = 0; k < 3; k++) {
+      playback.step(run.session);
+      run.stepped();
+      played.push(run.clock.state().hitStop);
+    }
+    expect(played).toEqual(live);
+  });
+
+  it("hands a dev action's stop over with the next step, as a playback does (the action runs just before it)", async () => {
+    const { scene, registry } = strike();
+    const engine = await createHeadless({ scene, registry });
+    const { session, clock } = headlessHost(engine);
+    session.act('stun');
+    expect(clock.state().hitStop).toEqual({ seconds: 0, debt: 0 });
+    engine.step(1);
+    expect(clock.state().hitStop).toEqual({ seconds: 0.05, debt: 0.05 });
+  });
 });
+
+/** A registry and a scene whose rules strike 12 foes at step 2 and ask for one stop more at step 3; `stun` asks one. */
+function strike() {
+  const registry = createRegistry();
+  const scene = defineScene(
+    'strike',
+    {
+      setup: () => {},
+      step(w) {
+        if (w.tick === 2) for (let id = 1; id <= 12; id++) damage(w, { id }, { from: [0, 0, 0], stop: 0.06 });
+        if (w.tick === 3) requestHitStop(w, 0.06);
+      },
+      actions: { stun: (w) => requestHitStop(w, 0.05) },
+    },
+    registry,
+  );
+  return { scene, registry };
+}

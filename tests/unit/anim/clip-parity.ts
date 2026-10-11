@@ -13,8 +13,8 @@
  * points a build's joints stand for.
  *
  * @example
- * const stats = restParity('quaternius'); // { clips: 103, samples: …, mean: 0.366, worst: { clip, t, point, mm } … }
- * restParity('mesh2motion', 'keys').mean; // 0.172 (mm)
+ * const stats = restParity('quaternius'); // { clips: 103, samples: …, mean: 0.315, worst: { clip, t, point, mm } … }
+ * restParity('mesh2motion', 'keys').mean; // 0.155 (mm)
  * @see engine/anim/clip/bake.test.ts
  */
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';

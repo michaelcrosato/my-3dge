@@ -17,8 +17,9 @@
  *   measured once a clip. A clip played as an attack lands its hit there unless it has a `hit` event (layer.ts).
  *
  * Invariants: a clip is decoded and baked on its own source's rest body (`set.sources[clip.src].rest`), as the
- * reference decodes are (ADR-0010 amendment 1). `replace` keeps the original for `restore`, and forgets the bakes.
- * Names are the set's own; an unknown one throws `ANIM_UNKNOWN_CLIP` with the closest names.
+ * reference decodes are (ADR-0010 amendment 1). `replace` keeps the original for `restore`, and forgets the bakes;
+ * an edit it refuses changes nothing. Names are the set's own; an unknown one throws `ANIM_UNKNOWN_CLIP` with the
+ * closest names.
  *
  * @example
  * import { REST, standing } from '../../../tests/unit/anim/clip-fixtures';
@@ -211,8 +212,8 @@ export function loadClipLibrary(input: ClipSet | string | object): ClipLibrary {
     },
     text: (name) => clipText(clip(name)),
     replace(name, edited) {
+      const parsed = parseClip(edited, `${set.set}/${name}`); // a refused edit leaves the clip as it was
       const original = (originals[name] ??= clip(name));
-      const parsed = parseClip(edited, `${set.set}/${name}`);
       forget(name);
       return (clips[name] = { ...original, ...parsed, keys: parsed.keys });
     },

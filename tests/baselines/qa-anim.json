@@ -31,12 +31,6 @@
   },
   {
     "id": "action:deathBlown",
-    "metric": "jointLimit",
-    "value": 2.4956,
-    "reason": "Mesh2Motion's Death_B on build:skeleton: the clip layer's rotation copy (WP 8.4, retarget.ts) carries the clip's elbow without the hinge's limit, and the skeleton's short forearm folds it past straight as the body is thrown back"
-  },
-  {
-    "id": "action:deathBlown",
     "metric": "underFloor",
     "value": 0.0154,
     "reason": "Death_B fading in: the clip layer (WP 8.4, retarget.ts) lifts a pose by its soles, balls and ankles, not its toe tips, and its fade blends the clip with the body under it, so a toe or a sole dips a few centimetres as the clip lands or fades"

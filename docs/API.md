@@ -146,6 +146,7 @@ game agent's manual.
 - `Cape` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape: two chains, its left and right edges, held `width` apart (wider toward the hem by `flare`).
 - `CAPE` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
 - `CapeOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What a cape is made of: its edges' chain options, `width` metres apart at the top, and `CAPE`'s flare and flutter.
+- `capsuleCast` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Where a ball of `radius` moving from `from` by `delta` (m) first touches `target`: the share of the move, 0 to 1 (0 when it touches already), or −1 when it never does.
 - `cellHash` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A seeded value in [0, 1) for the integer point (x, y), with `salt` telling apart uses of one seed (a stone's tone, its crack).
 - `Chain` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): One verlet strand.
 - `CHAIN` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The chains' shared tuning.
@@ -191,6 +192,7 @@ game agent's manual.
 - `compileLevel` (function from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): Compiles a level's text against the legend of `options.registry` (the shared one by default) into plain data; see the file comment.
 - `CompileOptions` (interface from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): What `compileLevel` takes beside the text.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `coneHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets in the hit cone (`inCone`), by id, ascending: those the hash holds near enough, then the exact test.
 - `coneOf` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A cone's fields from a measured hit shape (engine/anim/moves.ts `measureMove`): its range, angle and heights.
 - `connectVirtualDevice` (function from [`engine/input/devices/inspector.ts`](../engine/input/devices/inspector.ts)): Gives `host` (the app's inspector host) the page input's virtual device, so `__engine.input` drives the page.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
@@ -254,8 +256,12 @@ game agent's manual.
 - `CutWhen` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars).
 - `CylinderCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An upright cylinder collider (Rapier's cylinder, three.js's CylinderGeometry): one per tile, at its centre.
 - `DaisDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A dais: an octagonal frustum (faces toward the axes and the diagonals) standing on a block of a dais glyph's tiles.
+- `damage` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Lands a hit on `target`: takes `hit.amount` from its health, and on its crowd body (in the scene's physics world) adds the knockback away from `hit.from`, the launch, and when the hit kills, the switch to the corpse group and the kill launch; asks for `hit.stop` of hit-stop; emits `damage` and returns the event.
 - `DAMAGE_NUMBERS` (const from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): The damage numbers' behaviour (see the file comment); seconds and metres.
+- `DamageEvent` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The event `damage`: a hit landed.
+- `DamageEvents` (type from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The events this module emits, for a world's event map: `World<Components, DamageEvents & MyEvents>`.
 - `DamageOptions` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): How a damage number is shown.
+- `DamageTarget` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): What a hit lands on: the entity (named in the events), its health and its crowd body, either optional.
 - `decodePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
 - `defineAction` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Defines an action on `registry` (the shared one).
@@ -371,11 +377,15 @@ game agent's manual.
 - `hashPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose's 64-bit FNV-1a digest (16 hex digits) over the numbers `toArray` gives: equal numbers, equal hash.
 - `Headless` (type from [`engine/app/headless.ts`](../engine/app/headless.ts)): A headless engine: `__engine`'s members, over a scene running in this process.
 - `HeadlessOptions` (interface from [`engine/app/headless.ts`](../engine/app/headless.ts)): How a headless engine starts.
+- `Health` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health (`HEALTH_FIELDS` says what each field means).
+- `HEALTH` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Health with every field at its default: 1 hit point, never hit.
+- `HEALTH_FIELDS` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health, for a scene's component: `defineComponent('health', { description, fields: HEALTH_FIELDS })`.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
 - `hipRatio` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The hip-height ratio of `skeleton` to the rest body `baked` was measured on (their standing hip joints): the clip's places scale by it on that skeleton (the hip joints, the feet's goals, the travel).
 - `Hit` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What a raycast or shape cast struck.
 - `hitProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Hits the prop `id` from `from` (m): calls its `hit` hook, whose `knock(more)` knocks its body away from `from` with `strength` under `more` (engine/physics/bodies.ts's `knock`: 4.6875 m/s across, 2.5 m/s up, no twist by default).
 - `HitShape` (interface from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Where a strike can connect, around its body, which faces +Z standing at the origin: metres and radians.
+- `HitSpec` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A hit as the rules decided it.
 - `holdsToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Whether `id` holds a token: one of the oldest `cap` grants.
 - `hop` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The launch velocity (m/s) that carries a body thrown up at `up` m/s from `from` to land on `to` under `gravity` (m/s²): `up` vertically and the ground distance over `airTime` across, so a jumper hops onto a crate as well as across the floor.
 - `HOP` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): The prototype slime's jumps: `up` (m/s) for a hop of at most `reach` metres, `pounce` (m/s) for its lower, flatter leap at a target.
@@ -391,7 +401,10 @@ game agent's manual.
 - `HumanoidOptions` (interface from [`engine/anim/humanoid.ts`](../engine/anim/humanoid.ts)): What a humanoid is made from.
 - `HumanoidState` (interface from [`engine/anim/humanoid.ts`](../engine/anim/humanoid.ts)): The humanoid's state: plain numbers, what the sim keeps of it.
 - `HumanoidWeights` (interface from [`engine/anim/locomotion.ts`](../engine/anim/locomotion.ts)): The weights the effector stage reads: each 0 (off) to 1 (full), eased toward its input by the humanoid.
+- `HurtCapsule` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A target's hurt volume: an upright capsule standing on its feet at `x`, `y`, `z` (m), `radius` wide, its straight middle `height` long (CapsuleGeometry's sizes; 2 × radius + height tall), or a ball (`shape: 'ball'`, or height 0).
+- `HurtSet` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Targets for hit tests: a spatial hash of their feet by id (filled this step, engine/world/spatial.ts) and their hurt capsules.
 - `inArc` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Whether `target` (plus `radius`) is within `range` of `from` on the ground plane and within `halfAngle` of the facing `yaw` (forward is (sin yaw, 0, cos yaw)).
+- `inCone` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether `target` is in the hit cone of `shape` (scaled by `size`) from the feet `from`, facing `yaw` (forward is (sin yaw, 0, cos yaw)): its footprint (a disc of its radius) meets the ground sector the strike reaches, and its height overlaps the strike's height window above the feet.
 - `inHitShape` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): `inArc` with `shape`'s range and half angle, scaled by `size`, and its height window (± `radius`) above `from`.
 - `Input` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A page's input.
 - `InputBuffer` (interface from [`engine/input/intents.ts`](../engine/input/intents.ts)): What a body remembers of its buttons across steps: plain data for a component field (`type: 'object'`, default `createInputBuffer()`), so it is hashed, captured and restored.
@@ -529,6 +542,7 @@ game agent's manual.
 - `Physics` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A physics world: bodies, stepping, queries, and the sim's physics hook (`state`, `capture`, `restore`).
 - `PHYSICS_SETTINGS` (const from [`engine/physics/params.ts`](../engine/physics/params.ts)): The physics settings, path → field; `defineSettings(PHYSICS_SETTINGS, registry)` declares them on another registry.
 - `physicsOf` (function from [`engine/physics/world.ts`](../engine/physics/world.ts)): The physics world of a sim world: its bodies and queries.
+- `physicsWalls` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
 - `pickTone` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): One of `colors`, picked by `value` in [0, 1).
 - `PieceShape` (type from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): A unit shape a piece draws (see the file comment).
 - `pillarGeometry` (function from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar as one geometry standing on the ground: its parts' boxes, sides then tops.
@@ -553,6 +567,12 @@ game agent's manual.
 - `POSES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The held poses, each with what it shows.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `ProbeOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A probe's options: where the downward ray starts, and the groups that count as ground.
+- `Projectile` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot: what it is, where it flies and what it hit (`PROJECTILE_FIELDS` says what each means).
+- `PROJECTILE` (const from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot with every field at its default: a 5 cm ball at the origin, at rest, flying for 3 s.
+- `PROJECTILE_FIELDS` (const from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot's fields, for a scene's component: `defineComponent('bolt', { description, fields: PROJECTILE_FIELDS })`.
+- `ProjectileHit` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot's hit this step: a target or a wall, where along the move and where the shot's centre was then.
+- `ProjectileState` (type from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Where a shot is in its flight: see `PROJECTILE_FIELDS.state`.
+- `ProjectileStep` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): How `stepProjectiles` steps.
 - `Prop` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): A `prop` entry: see the file comment.
 - `PROP_MATERIAL` (const from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): The props' material: a hollow wooden crate's (24 kg at 0.75 m), Coulomb friction, a little bounce, and damping that lets a knocked prop slide and roll to rest.
 - `propBody` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): The body `physics.addBody` takes for `placement`, or `null` when its prop has none; see the file comment.
@@ -604,6 +624,7 @@ game agent's manual.
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
 - `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
 - `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
+- `requestHitStop` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Asks the frame clock for a hit-stop of `seconds` (real seconds, before its budget): kept until the run's host takes it after the step (`takeHitStop`), the longest of the step winning.
 - `RescueLevel` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
 - `rescueLost` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
 - `RESERVED_CODES` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Codes no action map binds: the pause buttons, and keys the browser or the system keeps.
@@ -711,6 +732,7 @@ game agent's manual.
 - `StateMatrixOptions` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `stateMatrix` runs.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
+- `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
 - `StickView` (interface from [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)): Where the stick is drawn, in client CSS px: its centre and its knob.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
 - `StrikeAnimator` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of an animator: its body, which the sim poses only with `preciseHits`.
@@ -722,6 +744,8 @@ game agent's manual.
 - `StyleSetOptions` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): How `createStyleSet` makes a set.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
 - `Sweep` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
+- `sweepHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets the swept quad touches (`sweepTouches`), by id, ascending.
+- `sweepTouches` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
 - `SYSTEM_ACTIONS` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The system layer: action → codes.
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
@@ -789,6 +813,8 @@ game agent's manual.
 - `VOICE_LIMITS` (const from [`engine/audio/runtime/voices.ts`](../engine/audio/runtime/voices.ts)): The default limits.
 - `VoiceLimits` (interface from [`engine/audio/runtime/voices.ts`](../engine/audio/runtime/voices.ts)): How many voices may play.
 - `walkRate` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): The rate that plays a loop of `pace` m/s at `groundSpeed` m/s: within 0.4–2.5; 1 without a pace.
+- `WallContact` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall a shot struck: the share of its move where it touched, the body (−1: none) and the surface's normal.
+- `WallTest` (type from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall test: the first wall a ball of `radius` meets moving from `from` by `delta` (m), or null.
 - `Weapon` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A weapon's name.
 - `WEAPONS` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): What the right hand holds, by the direction its blade rests in: `[forward, right, up]`, normalised when used.
 - `WeightInfo` (interface from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): What drives a weight and how it eases.
@@ -903,6 +929,7 @@ game agent's manual.
 - `Cape` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape: two chains, its left and right edges, held `width` apart (wider toward the hem by `flare`).
 - `CAPE` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
 - `CapeOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What a cape is made of: its edges' chain options, `width` metres apart at the top, and `CAPE`'s flare and flutter.
+- `capsuleCast` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Where a ball of `radius` moving from `from` by `delta` (m) first touches `target`: the share of the move, 0 to 1 (0 when it touches already), or −1 when it never does.
 - `Chain` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): One verlet strand.
 - `CHAIN` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The chains' shared tuning.
 - `ChainOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What a chain is made of: `n` points (2 or more, the anchor first) `seg` metres apart, and its tuning.
@@ -944,6 +971,7 @@ game agent's manual.
 - `compileLevel` (function from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): Compiles a level's text against the legend of `options.registry` (the shared one by default) into plain data; see the file comment.
 - `CompileOptions` (interface from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): What `compileLevel` takes beside the text.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `coneHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets in the hit cone (`inCone`), by id, ascending: those the hash holds near enough, then the exact test.
 - `coneOf` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A cone's fields from a measured hit shape (engine/anim/moves.ts `measureMove`): its range, angle and heights.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
@@ -969,6 +997,10 @@ game agent's manual.
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
 - `CylinderCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An upright cylinder collider (Rapier's cylinder, three.js's CylinderGeometry): one per tile, at its centre.
 - `DaisDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A dais: an octagonal frustum (faces toward the axes and the diagonals) standing on a block of a dais glyph's tiles.
+- `damage` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Lands a hit on `target`: takes `hit.amount` from its health, and on its crowd body (in the scene's physics world) adds the knockback away from `hit.from`, the launch, and when the hit kills, the switch to the corpse group and the kill launch; asks for `hit.stop` of hit-stop; emits `damage` and returns the event.
+- `DamageEvent` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The event `damage`: a hit landed.
+- `DamageEvents` (type from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The events this module emits, for a world's event map: `World<Components, DamageEvents & MyEvents>`.
+- `DamageTarget` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): What a hit lands on: the entity (named in the events), its health and its crowd body, either optional.
 - `decodePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
 - `defineAction` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Defines an action on `registry` (the shared one).
@@ -1035,11 +1067,15 @@ game agent's manual.
 - `HAIR` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): Hair from behind the head (`behind` and `lift` head radii from its centre), the source's numbers.
 - `handTo` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `twoBoneRot` for the arm of `hand`, bringing its weapon socket (`weaponL`, `weaponR`) to `grip`: returns how far the socket stays from it (0 in reach).
 - `hashPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose's 64-bit FNV-1a digest (16 hex digits) over the numbers `toArray` gives: equal numbers, equal hash.
+- `Health` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health (`HEALTH_FIELDS` says what each field means).
+- `HEALTH` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Health with every field at its default: 1 hit point, never hit.
+- `HEALTH_FIELDS` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health, for a scene's component: `defineComponent('health', { description, fields: HEALTH_FIELDS })`.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
 - `hipRatio` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The hip-height ratio of `skeleton` to the rest body `baked` was measured on (their standing hip joints): the clip's places scale by it on that skeleton (the hip joints, the feet's goals, the travel).
 - `Hit` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What a raycast or shape cast struck.
 - `hitProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Hits the prop `id` from `from` (m): calls its `hit` hook, whose `knock(more)` knocks its body away from `from` with `strength` under `more` (engine/physics/bodies.ts's `knock`: 4.6875 m/s across, 2.5 m/s up, no twist by default).
 - `HitShape` (interface from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Where a strike can connect, around its body, which faces +Z standing at the origin: metres and radians.
+- `HitSpec` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A hit as the rules decided it.
 - `holdsToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Whether `id` holds a token: one of the oldest `cap` grants.
 - `hop` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The launch velocity (m/s) that carries a body thrown up at `up` m/s from `from` to land on `to` under `gravity` (m/s²): `up` vertically and the ground distance over `airTime` across, so a jumper hops onto a crate as well as across the floor.
 - `HOP` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): The prototype slime's jumps: `up` (m/s) for a hop of at most `reach` metres, `pounce` (m/s) for its lower, flatter leap at a target.
@@ -1053,7 +1089,10 @@ game agent's manual.
 - `HumanoidOptions` (interface from [`engine/anim/humanoid.ts`](../engine/anim/humanoid.ts)): What a humanoid is made from.
 - `HumanoidState` (interface from [`engine/anim/humanoid.ts`](../engine/anim/humanoid.ts)): The humanoid's state: plain numbers, what the sim keeps of it.
 - `HumanoidWeights` (interface from [`engine/anim/locomotion.ts`](../engine/anim/locomotion.ts)): The weights the effector stage reads: each 0 (off) to 1 (full), eased toward its input by the humanoid.
+- `HurtCapsule` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A target's hurt volume: an upright capsule standing on its feet at `x`, `y`, `z` (m), `radius` wide, its straight middle `height` long (CapsuleGeometry's sizes; 2 × radius + height tall), or a ball (`shape: 'ball'`, or height 0).
+- `HurtSet` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Targets for hit tests: a spatial hash of their feet by id (filled this step, engine/world/spatial.ts) and their hurt capsules.
 - `inArc` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Whether `target` (plus `radius`) is within `range` of `from` on the ground plane and within `halfAngle` of the facing `yaw` (forward is (sin yaw, 0, cos yaw)).
+- `inCone` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether `target` is in the hit cone of `shape` (scaled by `size`) from the feet `from`, facing `yaw` (forward is (sin yaw, 0, cos yaw)): its footprint (a disc of its radius) meets the ground sector the strike reaches, and its height overlaps the strike's height window above the feet.
 - `inHitShape` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): `inArc` with `shape`'s range and half angle, scaled by `size`, and its height window (± `radius`) above `from`.
 - `InputBuffer` (interface from [`engine/input/intents.ts`](../engine/input/intents.ts)): What a body remembers of its buttons across steps: plain data for a component field (`type: 'object'`, default `createInputBuffer()`), so it is hashed, captured and restored.
 - `inTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` overlaps telegraph `t` placed at `place`: what it hits as it goes off.
@@ -1138,6 +1177,7 @@ game agent's manual.
 - `Physics` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A physics world: bodies, stepping, queries, and the sim's physics hook (`state`, `capture`, `restore`).
 - `PHYSICS_SETTINGS` (const from [`engine/physics/params.ts`](../engine/physics/params.ts)): The physics settings, path → field; `defineSettings(PHYSICS_SETTINGS, registry)` declares them on another registry.
 - `physicsOf` (function from [`engine/physics/world.ts`](../engine/physics/world.ts)): The physics world of a sim world: its bodies and queries.
+- `physicsWalls` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `POINT_INDEX` (const from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Each point's position in `POSE_POINTS`.
 - `Point3` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A point in metres: `[x, y, z]`.
@@ -1152,6 +1192,12 @@ game agent's manual.
 - `POSES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The held poses, each with what it shows.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `ProbeOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A probe's options: where the downward ray starts, and the groups that count as ground.
+- `Projectile` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot: what it is, where it flies and what it hit (`PROJECTILE_FIELDS` says what each means).
+- `PROJECTILE` (const from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot with every field at its default: a 5 cm ball at the origin, at rest, flying for 3 s.
+- `PROJECTILE_FIELDS` (const from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot's fields, for a scene's component: `defineComponent('bolt', { description, fields: PROJECTILE_FIELDS })`.
+- `ProjectileHit` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot's hit this step: a target or a wall, where along the move and where the shot's centre was then.
+- `ProjectileState` (type from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Where a shot is in its flight: see `PROJECTILE_FIELDS.state`.
+- `ProjectileStep` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): How `stepProjectiles` steps.
 - `Prop` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): A `prop` entry: see the file comment.
 - `PROP_MATERIAL` (const from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): The props' material: a hollow wooden crate's (24 kg at 0.75 m), Coulomb friction, a little bounce, and damping that lets a knocked prop slide and roll to rest.
 - `propBody` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): The body `physics.addBody` takes for `placement`, or `null` when its prop has none; see the file comment.
@@ -1188,6 +1234,7 @@ game agent's manual.
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
 - `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
 - `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
+- `requestHitStop` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Asks the frame clock for a hit-stop of `seconds` (real seconds, before its budget): kept until the run's host takes it after the step (`takeHitStop`), the longest of the step winning.
 - `RescueLevel` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
 - `rescueLost` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
 - `resolveMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `move` names, with `over` laid on it (`time` and `body` field by field): an id (a bare name gets the `move:` prefix), a `Move` entry, or a spec, parsed once and frozen.
@@ -1258,6 +1305,7 @@ game agent's manual.
 - `StateMatrixOptions` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `stateMatrix` runs.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
+- `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
 - `StrikeAnimator` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of an animator: its body, which the sim poses only with `preciseHits`.
 - `StrikeBody` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of a body.
@@ -1266,6 +1314,8 @@ game agent's manual.
 - `strikeTime` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): When `clip`'s strike lands, seconds from its start, decoded on rest body `R` (see the file comment).
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
 - `Sweep` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
+- `sweepHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets the swept quad touches (`sweepTouches`), by id, ascending.
+- `sweepTouches` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
 - `TAIL` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A tail from the back of the pelvis, holding its curve back and up (chosen here: the source had none).
@@ -1305,6 +1355,8 @@ game agent's manual.
 - `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
 - `VelocityOptions` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): How `setVelocity` steers.
 - `walkRate` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): The rate that plays a loop of `pace` m/s at `groundSpeed` m/s: within 0.4–2.5; 1 without a pace.
+- `WallContact` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall a shot struck: the share of its move where it touched, the body (−1: none) and the surface's normal.
+- `WallTest` (type from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall test: the first wall a ball of `radius` meets moving from `from` by `delta` (m), or null.
 - `Weapon` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A weapon's name.
 - `WEAPONS` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): What the right hand holds, by the direction its blade rests in: `[forward, right, up]`, normalised when used.
 - `WeightInfo` (interface from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): What drives a weight and how it eases.
@@ -1702,6 +1754,43 @@ For the agents who maintain the engine.
 - `rigToEngine` (function): A rig vector `[forward, right, up]` (times `scale`) in engine axes: x left, y up, z forward.
 - `sampleBaked` (function): Samples `baked` at `t` seconds: its 23 local rotations into `rotations` (slerped between frames, as three.js's mixer does) and its pelvis into `hips` (lerped).
 - `travelAt` (function): How far `baked` has carried the root by `t` seconds, `(x, z)` metres on the source body (a loop's laps added).
+
+### [`engine/anim/clip/encode.ts`](../engine/anim/clip/encode.ts)
+
+- `capSample` (function): The capture's 36 points at `t` seconds, in-betweened between its frames (loops wrap), written into `out`.
+- `Capture` (interface): A captured clip, the importer's input: `n` frames at `fps` of the 36 body points (mm, rig frame).
+- `encodeClip` (function): A readable clip from a capture, keeping frames `kf` as its keys; `extra` adds the catalog's words and a blade.
+- `EncodeExtra` (interface): What `encodeClip` adds besides the keys: the catalog's words, and whether to aim a blade from the right fist.
+- `encodePose` (function): One key pose from captured body points `X`; `prev`, the key before, lets angles continue without jumps.
+- `fitClip` (function): A readable clip within `tol` mm of the capture: it starts from `reduce`'s key frames and adds the frame the in-betweening misses most, until every frame is within `tol` of what the format can hold at all there (that frame encoded as its own key): keys past the format's own limits are not worth their tokens.
+- `Fitted` (interface): A fitted clip, with its worst and average body-point error against the capture (mm, over every frame).
+- `measure` (function): A body's rest measurements (plain, rounded data, saved in the set) from its own captures: proportions and rest offsets from the T-pose clip `tposeName` (else the first clip's first frame), and how much of the hips-to-chest turn each spine bone takes (and the neck of the chest-to-head turn), fitted from about six frames of every clip.
+- `reduce` (function): The key frames (Ramer–Douglas–Peucker over whole poses): in-betweening the rest stays within `tol` mm.
+
+### [`engine/anim/clip/frames.ts`](../engine/anim/clip/frames.ts)
+
+- `add` (const): `a + b`.
+- `compose` (const): Parent frame, then a frame relative to it: the child in the grandparent's coordinates.
+- `cross` (const): The cross product `a × b`.
+- `DG` (const): Radians in a degree.
+- `dot` (const): The dot product of `a` and `b`.
+- `Frame` (type): A frame: its forward, right and up axes `[F, R, U]`, each in the parent's coordinates.
+- `fromEuler` (function): The frame of `[turn, lean, tilt]` degrees: yaw about up, then pitch about right, then roll.
+- `hintFor` (function): The direction limb `limb` of side `s` (−1 left, 1 right) bends toward at twist 0, pointing `dLocal` in `M`.
+- `len` (const): The length of `a`.
+- `Limb` (type): A limb kind: an arm (shoulder, elbow, fist) or a leg (hip, knee, ankle).
+- `limbEnd` (const): Where a limb from `root` ends: direction `v` in frame `M` (mirrored for side `s`) at distance `l`.
+- `mul` (const): `a` scaled by `k`.
+- `norm` (function): `a` at length 1 (a zero vector stays zero).
+- `qFromTo` (const): The rotation that takes rest frame A to frame B, as a quaternion.
+- `qrot` (const): `v` turned by quaternion `q`.
+- `qslerp` (function): The quaternion a fraction `t` of the shortest way from `a` to `b`.
+- `reachOf` (const): A two-bone limb's root-to-end distance for a bend (degrees, 0 = straight).
+- `SG` (const): Each side's sign across the body: left −1, right 1.
+- `sub` (const): `a − b`.
+- `torso` (function): The torso and head frames of key pose `k` on rest body `R`, and the joints placed from them.
+- `V` (type): A vector `[f, r, z]` (mm, or a direction), or a quaternion `[x, y, z, w]`.
+- `wld` (const): A local vector `l` of frame `M` (axes F, R, U as columns) in the parent's coordinates.
 
 ### [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)
 
@@ -3910,6 +3999,19 @@ For the agents who maintain the engine.
 - `CrowdRig` (type): The rigs a crowd body can have.
 - `stepCrowdBody` (function): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 
+### [`engine/sim/damage.ts`](../engine/sim/damage.ts)
+
+- `damage` (function): Lands a hit on `target`: takes `hit.amount` from its health, and on its crowd body (in the scene's physics world) adds the knockback away from `hit.from`, the launch, and when the hit kills, the switch to the corpse group and the kill launch; asks for `hit.stop` of hit-stop; emits `damage` and returns the event.
+- `DamageEvent` (interface): The event `damage`: a hit landed.
+- `DamageEvents` (type): The events this module emits, for a world's event map: `World<Components, DamageEvents & MyEvents>`.
+- `DamageTarget` (interface): What a hit lands on: the entity (named in the events), its health and its crowd body, either optional.
+- `Health` (interface): A target's health (`HEALTH_FIELDS` says what each field means).
+- `HEALTH` (const): Health with every field at its default: 1 hit point, never hit.
+- `HEALTH_FIELDS` (const): A target's health, for a scene's component: `defineComponent('health', { description, fields: HEALTH_FIELDS })`.
+- `HitSpec` (interface): A hit as the rules decided it.
+- `requestHitStop` (function): Asks the frame clock for a hit-stop of `seconds` (real seconds, before its budget): kept until the run's host takes it after the step (`takeHitStop`), the longest of the step winning.
+- `takeHitStop` (function): For the run's host (the page's or a headless run's step, never sim code, so not in engine/sim-api.ts): the longest hit-stop asked since the last take (s; 0 for none), forgotten once taken.
+
 ### [`engine/sim/entities.ts`](../engine/sim/entities.ts)
 
 - `capturable` (function): The entities copied for a capture: plain data only (`SIM_NOT_DATA`) and no object in two places (`SIM_SHARED_DATA`): a capture copies each place separately, so a shared object would come back as two.
@@ -3921,6 +4023,14 @@ For the agents who maintain the engine.
 - `notData` (function): Checks that `value` is plain data (null, booleans, numbers, strings, arrays and plain objects all the way down) and says where it is not; the path is built only for a refusal.
 - `NotData` (interface): Where a value stops being plain data, and what is there; undefined when it is all plain data.
 - `placeComponent` (function): Puts `component` on a live `entity` as `name`, keeping components in name order (later ones are put back after).
+
+### [`engine/sim/hits.ts`](../engine/sim/hits.ts)
+
+- `coneHits` (function): The targets in the hit cone (`inCone`), by id, ascending: those the hash holds near enough, then the exact test.
+- `inCone` (function): Whether `target` is in the hit cone of `shape` (scaled by `size`) from the feet `from`, facing `yaw` (forward is (sin yaw, 0, cos yaw)): its footprint (a disc of its radius) meets the ground sector the strike reaches, and its height overlaps the strike's height window above the feet.
+- `physicsWalls` (function): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
+- `sweepHits` (function): The targets the swept quad touches (`sweepTouches`), by id, ascending.
+- `sweepTouches` (function): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
 
 ### [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)
 
@@ -4240,6 +4350,23 @@ For the agents who maintain the engine.
 - `NavGridOptions` (type): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
 - `NEAREST_RINGS` (const): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
 
+### [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)
+
+- `capsuleCast` (function): Where a ball of `radius` moving from `from` by `delta` (m) first touches `target`: the share of the move, 0 to 1 (0 when it touches already), or −1 when it never does.
+- `HurtCapsule` (interface): A target's hurt volume: an upright capsule standing on its feet at `x`, `y`, `z` (m), `radius` wide, its straight middle `height` long (CapsuleGeometry's sizes; 2 × radius + height tall), or a ball (`shape: 'ball'`, or height 0).
+- `hurtLength` (const): The length of a hurt capsule's straight middle: 0 for a ball.
+- `hurtNear` (function): The ids within `reach` (plus the set's margin) of (x, z) on the ground, in the hash's fixed order.
+- `HurtSet` (interface): Targets for hit tests: a spatial hash of their feet by id (filled this step, engine/world/spatial.ts) and their hurt capsules.
+- `Projectile` (interface): A shot: what it is, where it flies and what it hit (`PROJECTILE_FIELDS` says what each means).
+- `PROJECTILE` (const): A shot with every field at its default: a 5 cm ball at the origin, at rest, flying for 3 s.
+- `PROJECTILE_FIELDS` (const): A shot's fields, for a scene's component: `defineComponent('bolt', { description, fields: PROJECTILE_FIELDS })`.
+- `ProjectileHit` (interface): A shot's hit this step: a target or a wall, where along the move and where the shot's centre was then.
+- `ProjectileState` (type): Where a shot is in its flight: see `PROJECTILE_FIELDS.state`.
+- `ProjectileStep` (interface): How `stepProjectiles` steps.
+- `stepProjectiles` (function): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
+- `WallContact` (interface): A wall a shot struck: the share of its move where it touched, the body (−1: none) and the surface's normal.
+- `WallTest` (type): A wall test: the first wall a ball of `radius` meets moving from `from` by `delta` (m), or null.
+
 ### [`engine/world/props/catalog.ts`](../engine/world/props/catalog.ts)
 
 - `BUILT_IN_PROPS` (const): The engine's props, by id.
@@ -4505,6 +4632,13 @@ For the agents who maintain the engine.
 
 - `Shown` (interface): What `show` reports.
 
+### [`tests/pages/library.ts`](../tests/pages/library.ts)
+
+- `ClipRef` (interface): A clip of the library: its set's directory under `data/anim/sets/` and its name, which is its file's.
+- `MixerShown` (interface): What `mixer` reports.
+- `Moment` (interface): One moment `play` drew.
+- `PlayShown` (interface): What `play` reports.
+
 ### [`tests/pages/lights.ts`](../tests/pages/lights.ts)
 
 - `HashRunOptions` (interface): How `hashRun` interleaves presentation with the steps.
@@ -4663,6 +4797,124 @@ For the agents who maintain the engine.
 - `FakeElement` (class): A fake element (see the file comment).
 - `fakePage` (function): A fake page and a canvas (not yet in it) whose client rect is `rect`, which a test may change.
 
+### [`tools/anim/asf-amc-fixture.ts`](../tools/anim/asf-amc-fixture.ts)
+
+- `testAmc` (function): A take of `n` frames at 120 a second: a walk forward at `travel` units a second (0: in place), as `.amc` text.
+- `testAsf` (function): The skeleton, as an `.asf` file's text.
+
+### [`tools/anim/asf-amc.ts`](../tools/anim/asf-amc.ts)
+
+- `AmcFrame` (type): One frame of a take: each bone's channel values.
+- `AsfBone` (interface): A bone: its rest direction (unit, world), length (file units), axis frame C and its inverse, and channels.
+- `mm` (const): The product `a · b` of two 3 × 3 matrices.
+- `mv` (const): Vector `v` turned by matrix `m`.
+- `pose` (function): Every bone's world rotation and end (metres) in one frame (none: the rest pose, the root at the origin).
+- `readAmc` (function): Reads an `.amc` take: one `{ bone: values }` per frame.
+- `readAsf` (function): Reads an `.asf` skeleton.
+- `Skeleton` (interface): A skeleton: metres per file unit, its bones, their order (parents first) and each one's parent.
+- `tr` (const): The transpose of `m` (its inverse, for a rotation).
+- `V` (type): A vector, or a 3 × 3 matrix (row major).
+
+### [`tools/anim/cmu-capture.ts`](../tools/anim/cmu-capture.ts)
+
+- `CmuCapture` (type): A capture read from a take, with each bone's rotation from rest per frame (`bones` order), quaternions.
+- `CmuOptions` (interface): How `readCmu` samples: the output rate, nearest frames (legacy) or in-betweened ones, and where notes go.
+- `Pick` (interface): A picked stretch of a take: seconds `from`–`to` (to the end when absent), its rate, and whether it loops.
+- `readCmu` (function): One subject's picked stretches as captures, plus `_rest` (see the file comment); `asfFile` is the skeleton.
+
+### [`tools/anim/cmu-cli.ts`](../tools/anim/cmu-cli.ts)
+
+- `CMU_SUBCOMMANDS` (const): The `cmu` subcommands.
+- `CmuRequest` (interface): What `runCmu` needs: the words after `cmu`, the flags, and the repository root (for paths it prints).
+- `cmuTargets` (const): The report target of `x anim cmu …`.
+- `runCmu` (function): Runs `x anim cmu <sub> …`; throws plain errors for bad arguments (the caller makes them usage errors).
+
+### [`tools/anim/cmu.ts`](../tools/anim/cmu.ts)
+
+- `ANIM_CACHE` (const): The cache's root, `.cache/anim/`.
+- `ARCHIVE` (const): Every subject's skeleton and takes, 1.08 GB, read by ranges.
+- `asfOf` (const): The skeleton file of subject `s` in `dir`: `02.asf`.
+- `CMU_CACHE` (const): Where takes go: `.cache/anim/cmu/`.
+- `cmuAll` (function): Every take: the archive's, read in a few dozen ranged requests, and the motion list's that it lacks.
+- `cmuArchive` (const): The archive, its directory read (two small requests); entries are read only when asked for.
+- `cmuGet` (function): The cached paths of takes `ids` (`02_01`), each with its subject's skeleton, fetching what is missing.
+- `cmuIndex` (function): The site's motion list, from `index.tsv` in `dir` (fetched and written there once).
+- `IndexedTake` (interface): A take on the site's motion list.
+- `parseMotionList` (function): The takes on the site's full motion list (`search.php?subjectnumber=%&motion=%`), from its HTML.
+- `SITE` (const): The site; it serves plain HTTP.
+
+### [`tools/anim/cut.ts`](../tools/anim/cut.ts)
+
+- `cutSet` (function): Cuts the clips `picks` out of `sets` into a new set named `name` (see the file comment).
+
+### [`tools/anim/cycle.ts`](../tools/anim/cycle.ts)
+
+- `bestCycle` (function): The best cycle in seconds `from`–`to` of a take of `count` frames at `src` a second: `[start, end, seam]`, in seconds, `seam` the cost that remained.
+
+### [`tools/anim/find.ts`](../tools/anim/find.ts)
+
+- `catalogRows` (function): Every set's catalog rows, in set and clip order.
+- `ClipHit` (interface): One clip a search found: its `set/clip`, its catalog row and its score.
+- `findClips` (function): Searches the sets, then the ledger, for `words` (see the file comment).
+- `Found` (interface): What a search found: every hit, a count, and the lines that show the best.
+- `TakeHit` (interface): One CMU take a search found, not yet in a set.
+
+### [`tools/anim/glb-fixture.ts`](../tools/anim/glb-fixture.ts)
+
+- `FixtureTrack` (interface): One animation track: a bone, a path, key times and flat values, optionally quantized or splined.
+- `GlbBuilder` (class): Packs elements into one binary buffer, one buffer view and accessor each.
+- `riggedGlb` (function): A T-posed Unreal-named humanoid with `clips` (by name, each a list of tracks) as a `.glb`.
+- `turn` (function): A rotation of `deg` degrees about `axis` as `[x, y, z, w]`.
+
+### [`tools/anim/glb-library.ts`](../tools/anim/glb-library.ts)
+
+- `GlbCapture` (type): A captured clip and the rate its keys were exported at.
+- `GlbLibrary` (interface): A library read from a `.glb`: its rig, its clips as body points, its mannequin's look, and what is worth noting.
+- `listGlb` (function): What a `.glb` holds, for `x anim import --list`: its rig (or none), its clips and its bones.
+- `MannequinBody` (interface): The mannequin's look, measured from a Rigify mesh: height (mm), segment radii and joint-ring bands.
+- `readGlbLibrary` (function): Reads a library from a `.glb`'s bytes (`file` names it), sampling every clip at `fps` (see the file comment).
+
+### [`tools/anim/glb.ts`](../tools/anim/glb.ts)
+
+- `Glb` (interface): A parsed `.glb`: its JSON, the whole file and where the binary chunk's data starts.
+- `glbBytes` (function): A `.glb` file's bytes from a document and its binary data (for tests and tools that write one).
+- `GltfAccessor` (interface): An accessor: how to read typed elements out of a buffer view.
+- `GltfAnimation` (interface): An animation: channels targeting node paths, through samplers.
+- `GltfJson` (interface): The parts of a glTF document the importer reads (anything else is ignored).
+- `GltfNode` (interface): A node: its name, children, and rest transform.
+- `mat` (function): A transform matrix from a translation, a rotation and a scale.
+- `mul` (function): The product `a · b`.
+- `nodeTree` (function): The document's node tree.
+- `NodeTree` (interface): A node tree: each node's parent (−1 for a root), the order that visits parents first, and names by any case.
+- `parseGlb` (function): Splits a `.glb` into its JSON and the binary chunk's start; `file` names it in errors.
+- `readAccessor` (function): An accessor's elements: numbers for SCALAR, else arrays of its components, normalized when it says so.
+- `sampleTrack` (function): A track's value at `time`: held before its first key and after its last, in-betweened as it says between.
+- `slerp` (function): The shortest rotation from `a` toward `b`, a share `t` of the way (normalized-linear when they nearly agree).
+- `Track` (interface): One animation channel: the node and path it moves, its key times and values, and how it in-betweens.
+- `tracksOf` (function): An animation's tracks (channels with no node, or moving weights, are left out).
+- `xf` (const): Point `p` transformed by `m`.
+
+### [`tools/anim/import.ts`](../tools/anim/import.ts)
+
+- `Catalog` (type): A catalog: each clip's `[tags, desc, orig?]`, plus `$sources`, `$skip` and (CMU) `$pick`.
+- `ImportOptions` (interface): What to import and how (see the file comment).
+- `importSet` (function): Imports a set (see the file comment); `notes` says what was left out, warned of or measured.
+
+### [`tools/anim/ledger.ts`](../tools/anim/ledger.ts)
+
+- `Category` (interface): One category: its name, its file, its number of takes and its pattern (none for `other` and `undescribed`).
+- `categoryOf` (function): A take's category: the first whose pattern matches its description, lower-cased; `undescribed` or `other` else.
+- `compareIds` (function): Numeric order of take ids (`2_10` after `2_9`).
+- `Ledger` (interface): The whole ledger, and each file's comment lines (kept on writing).
+- `LEDGER_DIR` (const): The split ledger's directory, `data/anim/cmu/`.
+- `ledgerFiles` (function): The ledger's files as text, by name: each category's rows, the index with their counts, and the subjects.
+- `queryLedger` (function): The takes matching every word (a category's name, or text in the id, description, flags, note or clips used).
+- `readLedger` (function): Reads the ledger in `dir`.
+- `Subject` (interface): One subject: its number, its number of takes and its description on the site's motion list.
+- `Take` (type): One take's row, with the category its file names.
+- `TAKE_COLUMNS` (const): The columns of each category file, in order.
+- `writeLedger` (function): Writes the ledger into `dir`; returns the files whose text changed.
+
 ### [`tools/anim/legacy-readable.ts`](../tools/anim/legacy-readable.ts)
 
 - `CLIP_FPS` (const): The rate the clips are decoded at, frames per second.
@@ -4681,6 +4933,16 @@ For the agents who maintain the engine.
 - `readLegacySet` (function): The source's set `name` (`quaternius`, `mesh2motion`, `cmu`, `hero`), read from `src/mocap/sets/<name>.js`.
 - `sampledFrames` (const): The frames committed for a clip of `n` frames: the first, and those a third and two thirds of the way in.
 
+### [`tools/anim/rates.ts`](../tools/anim/rates.ts)
+
+- `amcFrames` (const): How many frames an `.amc` take has.
+- `applyRates` (function): Writes the evidence into the ledger's rows: the rate, and the evidence in place of `fps?`.
+- `c3dEvidence` (function): The rate in a take's C3D file on the site, when it has one there and its frames agree with the `.amc`'s.
+- `c3dHeader` (function): A C3D header's point frame rate and number of frames (an Intel-format file; another is refused).
+- `RateEvidence` (interface): What settles a take's rate.
+- `twinCandidates` (function): Listed takes the ledger measured the same as `id` (length, stretch, fit, travel, hips): its possible twins.
+- `verifyRates` (function): Verifies the rate of each take in `ids` (default: every `fps?` take), downloading what it compares into `dir`; `readC3d` reads the first kilobyte of a C3D file's URL (by default, by an HTTP range).
+
 ### [`tools/anim/repack.ts`](../tools/anim/repack.ts)
 
 - `ALT_TAG` (const): The tag of a clip that is another set's clip again (it has an `orig`): finders rank it after the original.
@@ -4692,15 +4954,27 @@ For the agents who maintain the engine.
 - `legacySetFiles` (function): The files of my-3d2dge's three curated sets (HERO dropped), from the checkout at `sourcePath`, by directory.
 - `main` (function): The command line (see the file comment).
 - `readPlainSet` (function): A plain JSON set, as shardfall writes it (text, or an object), read through the codec's parser.
-- `readSet` (function): The set stored in `data/anim/sets/<dir>/` (or under `root`), rejoined.
+- `readSet` (function): The set stored in `data/anim/sets/<dir>/` (or under `root`, or at `dir` when absolute), rejoined.
 - `readSetDir` (function): Reads a set's directory: every file in it, by name.
+- `repackSets` (function): Repacks sets into `root` (see the file comment): plain JSON sets from `paths`, else the curated sets the my-3d2dge checkout still provides (mesh2motion and cmu; WP 8.10 replaced quaternius); with `check` it only compares.
 - `SET_FILE` (const): The file that holds a set's header: everything but its clips.
 - `setDirName` (const): A set's directory name: its name, slugged, in lower case (`STYLE100_BACK` → `style100_back`).
 - `SetFiles` (type): A set's directory as text: file name → contents.
 - `SETS_DIR` (const): The sets' directory, `data/anim/sets/`: one directory per set, named by `setDirName`.
 - `splitSet` (function): Writes a set as its directory's files: one `text()` per clip, `_set.json` and `catalog.tsv` (the file comment).
 - `tagAlternates` (function): The set with `alt` added last to the tags of each clip made from another set's clip (one with an `orig`).
+- `withCmuTerms` (function): The CMU set with CMU's terms in each of its source records, as the CMU catalog states them: my-3d2dge's set said "free for all uses"; WP 8.1 corrected the catalog, and the importer (`x anim import --cmu`) writes what it says.
 - `writeSetDir` (function): Writes a set's files into `dir`, made if missing, and removes the files it no longer has; lists what changed.
+
+### [`tools/anim/rigs.ts`](../tools/anim/rigs.ts)
+
+- `bonesFor` (function): Each of the 36 body points with the bone (and the spot on it) that gives it, in `POSE_POINTS` order.
+- `BoneSpot` (type): Where on a bone a point sits: its head (absent), its far end, or 12 cm in front of it.
+- `PointBone` (type): One body point's bone: `[point, bone, where]`.
+- `recogniseRig` (const): The rig whose `test` bone the file has (`has` matches names whatever their case), or undefined.
+- `Rig` (interface): A rig: the bone that identifies it, its root, its limb and core bones, and its measured segments.
+- `RIGS` (const): The rigs the importer knows, by name.
+- `Segment` (type): A segment whose thickness the mesh gives: `[from point, to point, bone that owns its vertices]`.
 
 ### [`tools/anim/shardfall.ts`](../tools/anim/shardfall.ts)
 
@@ -4718,12 +4992,50 @@ For the agents who maintain the engine.
 - `V1_KEPT` (const): The clips a set keeps from my-3d2dge's v1 of it, by directory: those shardfall's version dropped.
 - `V1_SETS` (const): The set of my-3d2dge whose `body` and `V1_KEPT` clips a shardfall set takes, by directory.
 
+### [`tools/anim/survey.ts`](../tools/anim/survey.ts)
+
+- `CMU_CATALOG` (const): The CMU catalog, whose `$pick` names the take each clip of the CMU set was cut from.
+- `CMU_CREDIT` (const): The credit every CMU set carries (data/anim/SOURCES.md has the terms).
+- `flagsOf` (function): The flags a take's measurements earn: upside down (over 2 frames), feet off the floor (60%), short, loose.
+- `LIBRARY_DIR` (const): The converted library's directory, `.cache/anim/cmu-lib/`.
+- `surveyCmu` (function): Surveys the downloaded takes (see the file comment); returns how many it converted and the seconds of motion.
+- `SurveyOptions` (interface): What the survey does: which subjects, legacy reading, the ledger and library tolerances, and where things go.
+- `usedBy` (function): Which clips of the CMU set each take feeds: `{ '13_17': ['Boxing_Guard_Loop', 'Boxing_Jab'] }`.
+
+### [`tools/anim/view.ts`](../tools/anim/view.ts)
+
+- `bakedPoints` (function): The 36 decode points of `baked` at `t`, by FK on its rest body's own skeleton (mm, rig frame).
+- `bakeReport` (function): A baked clip, its tracks' size in bytes and its FK parity with the decode (mean and worst, mm).
+- `ClipRef` (interface): A clip found in the library: its set's directory and header, its name, the clip and its rest body.
+- `clipSheet` (function): The clip as a contact sheet: `frames` poses spread over it, each from `views`, on its rest body's skeleton.
+- `resolveClip` (function): Finds `<set>/<clip>` in `setsDir`, or a clip name only one set has; errors name the closest choices.
+- `shownDir` (function): A directory as an error names it: from the repository root when it is inside it, else as given.
+
+### [`tools/anim/zip.ts`](../tools/anim/zip.ts)
+
+- `ByteSource` (interface): Where bytes come from: `bytes(from, to)` gives bytes `from`–`to` inclusive, or with `from` < 0 the last `-from`.
+- `fetchBytes` (const): A whole file on the web (`curl` follows redirects and the proxy settings).
+- `fileSource` (function): A file on disk, read by ranges.
+- `MAX_GAP` (const): The most unwanted bytes `readMany` fetches between two wanted entries rather than start a new request.
+- `MAX_RANGE` (const): The most bytes `readMany` asks for at once.
+- `openZip` (function): Opens an archive: reads its end record and central directory (two reads), not its entries.
+- `urlSource` (function): A file on the web, read by ranges.
+- `Zip` (interface): An archive's entries, and a reader for them.
+- `zipBytes` (function): A zip archive of `files` (name → text), deflated, for tests and tools that write one.
+- `ZipEntry` (interface): One file in an archive: its name, compression, packed and unpacked sizes, and where its local header is.
+
 ### [`tools/checkAll.ts`](../tools/checkAll.ts)
 
 - `CACHE_DIRS` (const): The cache directories ESLint and Prettier create on a cold run.
 - `CHECK_TOOLS` (const): The T0 tools, in the order their output is printed; `tsc` runs package.json's `typecheck` command.
 - `checkAll` (function): Runs every tool in parallel, prints their output in order, and returns the exit code (0 only if all pass).
 - `CheckTool` (interface): One T0 tool: its name and its command line, run from the repository root.
+
+### [`tools/cmd/anim.ts`](../tools/cmd/anim.ts)
+
+- `default` (default): The animation library's tools (PLAN.md §10, WP 8.5): find a clip, show it, bake it, draw it, cut a smaller set, import libraries and fetch CMU takes, all from the command line, with no browser.
+- `subcommandOf` (function): The subcommand named first, or a usage error naming the closest.
+- `targetOf` (const): The report's target: the subcommand and its first arguments.
 
 ### [`tools/cmd/audio.ts`](../tools/cmd/audio.ts)
 
@@ -4961,6 +5273,7 @@ For the agents who maintain the engine.
 
 - `default` (default): Draws a body's state matrix as a contact sheet, plus its numeric checks (PLAN.md WP 6.6, §8.5): `node x sheet <subject>` runs the humanoid through the states a QA id or prefix names, as the `anim` QA family does (tools/qa/anim.ts `humanoidStates`), draws them with `anim.sheet()` (engine/anim/sheet.ts) from the cameras of a `SHEET_CAMERAS` preset (engine/anim/check.ts), and turns the SVG into a PNG in the platform's Chromium.
 - `MAX_WIDTH` (const): The widest sheet, pixels (§8.5: contact sheets are capped at 1,600 px).
+- `qaPrefixes` (function): The `only` prefixes of `subject`'s `anim` QA: itself, or for `humanoid` its kinds (never the library's clips).
 - `sheetFrames` (function): The frames a sheet of `subject` draws, and whether they are moves (for the cameras).
 - `SheetFramesOptions` (interface): What `sheetFrames` draws.
 - `subjectIds` (function): The QA ids `subject` names: itself, or every id it prefixes (`humanoid`: all of them).
@@ -5371,6 +5684,7 @@ For the agents who maintain the engine.
 - `default` (default): The `anim` QA family (PLAN.md §8.6, WP 6.6, I-29): `node x qa anim` drives every body the engine animates through its state matrix and measures the motion, in Node.
 - `footSlide` (function): Foot slide: a sole on the floor moving over the ground, the most in one contact.
 - `Found` (type): What a metric found: the worst value and its sentence.
+- `humanoidPrefixes` (function): The kinds of the humanoid's QA ids (`state:`, `pose:`, …), from its matrix: as `only`, the humanoid without clips.
 - `HUMANOIDS` (const): The humanoid bodies the family drives through the whole matrix; the first also runs it twice and at half the step.
 - `humanoidStates` (function): The humanoid's matrix: every sample state, pose, stance, move, reaction and action, by QA id.
 - `limbs` (function): Joint limits and twist jumps of the limbs (ik.ts `LIMBS`): hinges kept, folded bones never flipping about themselves.
@@ -5378,6 +5692,19 @@ For the agents who maintain the engine.
 - `motionTrack` (function): A track from its points (world metres) and the body's position at each step.
 - `pops` (function): Pops: a point that jumps in one step while the steps either side are much shorter (ed-sheet.mjs:122-125).
 - `Track` (interface): One run as the metrics read it: points per step, world and measured from the body, and what they need besides.
+
+### [`tools/qa/anim/clips.ts`](../tools/qa/anim/clips.ts)
+
+- `CLIP_DATA_METRICS` (const): The metrics measured on the data, every clip's in T1.
+- `CLIP_PLAY_METRICS` (const): The metrics measured by playing a clip.
+- `CLIP_QA` (const): The limits: a clip's fit (mean and worst) and a set's mean fit, mm; the seconds a loop plays past its seam.
+- `clipBuilds` (function): The builds every clip plays on: each of `HUMANOIDS`, and the mannequin, registered from `quaternius` once.
+- `clipDataFindings` (function): The data checks of every clip of `set` that `keep` keeps, and of the set itself (see the file comment).
+- `clipPlayFindings` (function): The played checks of clip `name` on each build, the first also run again and at half the step.
+- `ClipReport` (type): Adds a finding to the violations, keeping the worst per id and metric.
+- `clipState` (function): Clip `name` of `library` as a state of the matrix: played at once, a one-shot held at its end.
+- `clipViolations` (function): Every violation of the library's clips and sets whose ids `keep` keeps, the worst per id and metric, in id order; only the clips `play` picks are played (see the file comment).
+- `librarySets` (function): The sets under `<root>/data/anim/sets/`, in directory order.
 
 ### [`tools/qa/audio.ts`](../tools/qa/audio.ts)
 
