@@ -20,6 +20,8 @@ import {
   type CharacterInput,
   type CharacterStep,
 } from './character';
+import { Vector3 } from '../core/math';
+import { driveMover, MOVER } from './bodies';
 import { createPhysics, rapierOf } from './world';
 
 const DT = 1 / 60;
@@ -261,6 +263,51 @@ describe('the rest of the wiring', () => {
     const ride = c.run(60);
     expect(ride.at(-1)!.x - from.x).toBeCloseTo(2, 1);
     expect(ride.every((t) => t.grounded && Math.abs(t.y - 0.4) < 0.01)).toBe(true);
+  });
+
+  it('rides a mover, keeping its place within 2 cm wherever it runs: across, up, down and turning (WP 4.1)', () => {
+    type V3 = [number, number, number];
+    const rides: { origin: V3; offset: V3; spin?: number; at?: [number, number] }[] = [
+      { origin: [0, 0.2, 0], offset: [6, 0, 0] },
+      { origin: [5, 0.2, 2], offset: [6, 0, 0] },
+      { origin: [0, 0.2, 0], offset: [0, 1.5, 0] },
+      { origin: [0, 0.2, 0], offset: [3, 1, 2] },
+      { origin: [0, 0.2, 0], offset: [0, 0, 0], spin: 1, at: [0.9, 0] },
+      { origin: [2, 0.2, 1], offset: [3, 0.5, 0], spin: -0.6, at: [-0.5, 0.7] },
+    ];
+    for (const { origin, offset, spin = 0, at = [0, 0] } of rides) {
+      const physics = createPhysics();
+      physics.addBody({
+        type: 'fixed',
+        colliders: [{ shape: { type: 'box', size: [40, 1, 40] }, position: [0, -0.5, 0] }],
+      });
+      const mover = { ...MOVER, origin, offset, period: 8, hold: 0.25, spin };
+      mover.body = physics.addBody({
+        type: 'kinematic',
+        position: origin,
+        colliders: [{ shape: { type: 'box', size: [3, 0.4, 3] } }],
+      });
+      const [hero, state] = [createCharacter(), createCharacterState()];
+      const body = addCharacter(physics, hero, [origin[0] + at[0], 0.4, origin[2] + at[1]]);
+      const step = (k: number) => {
+        if (k > 0) driveMover(physics, mover, { time: k * DT, dt: DT });
+        stepCharacter(physics, body, hero, state, {}, { dt: DT, gravity: 32 });
+        physics.step({ dt: DT, settings: SETTINGS });
+      };
+      for (let k = 0; k < 10; k++) step(0); // stands on it, still
+      const place = new Vector3(at[0], 0.2, at[1]); // on the platform, in its frame
+      let [worst, air] = [0, 0];
+      for (let k = 1; k <= 480; k++) {
+        step(k);
+        const { position, rotation } = physics.readBody(mover.body);
+        const there = place.clone().applyQuaternion(rotation).add(position);
+        worst = Math.max(worst, feetOf(physics, body, hero).distanceTo(there));
+        if (!state.grounded) air++;
+      }
+      expect(worst, `${offset} from ${origin}, turning at ${spin}`).toBeLessThan(0.02);
+      expect(air, `${offset} from ${origin}: steps off the ground`).toBe(0);
+      physics.dispose();
+    }
   });
 
   it('jumps up through a one-way platform and stands on it; a solid one bumps its head', () => {

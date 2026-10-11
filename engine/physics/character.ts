@@ -16,7 +16,7 @@
  *   `autostep.height` is exactly what `moveCharacter` climbs. Grounded means standing on walkable ground (Rapier alone
  *   also says so against a wall at a jump's apex).
  * - **Pushing shares momentum** (an inelastic collision of a `push`-kg mass); walls stop the velocity going into them,
- *   slopes do not; moving floors carry it; idle on fixed ground it skips the controller.
+ *   slopes do not; kinematic floors carry it exactly (`carried`); idle on fixed ground it skips the controller.
  *
  * Invariants: Rapier's controller (one per Rapier world and skin) keeps nothing between moves, so after a restore (a
  * new Rapier world) a new one takes over. Same state, input and world: same move, in Node and Chromium.
@@ -426,9 +426,9 @@ const PROBE_DEPTH = 0.15;
  * One sim tick of a character: `steer` turns its intents into a velocity and a move (engine/physics/feel.ts), the
  * controller makes the move (`moveCharacter`), `settle` fixes the velocity from what happened, walls stop the velocity
  * going into them, it pushes what it walked into (both leave at (push·v + m·u)/(push + m)), probes the ground under it
- * and presses a dynamic floor with push × world gravity. Moving floors carry it (Rapier's kinematic friction: a still
- * character moves 1 mm down to keep it checking); idle on fixed ground it skips the controller. Changes `state` and
- * sets the body's velocity, so the body gets there when the world steps: call it before (actors.ts: the phase `anim`).
+ * and presses a dynamic floor with push × world gravity. A kinematic floor it stands on carries it (`carried`); idle on
+ * fixed ground it skips the controller. Changes `state` and sets the body's velocity, so the body gets there when the
+ * world steps: call it before (actors.ts: the phase `anim`).
  */
 export function stepCharacter(
   physics: Physics,
@@ -449,12 +449,12 @@ export function stepCharacter(
   const plan = steer(character, state, input, dt, g);
   const still = Math.hypot(state.vx, state.vz) < 1e-3 && state.vy <= 0 && state.vy > -g * dt * 1.5;
   const idle = wasGrounded && still && !plan.jumped && !plan.dashing && fixedBody(world, state.ground);
+  const grounded = wasGrounded && !plan.jumped && state.vy <= 0;
   const move = idle
     ? { moved: new Vector3(), grounded: true, across: [], vertical: [] }
-    : moveCharacter(physics, body, character, plan.desired, {
-        grounded: wasGrounded && !plan.jumped && state.vy <= 0,
-        oneWay: options.oneWay,
-      });
+    : carried(physics, body, character, grounded ? state.ground : -1, dt, (carry) =>
+        moveCharacter(physics, body, character, carry.add(plan.desired), { grounded, oneWay: options.oneWay }),
+      );
   const landed = settle(character, state, plan, move.moved, move.grounded);
   for (const hit of [...move.across, ...move.vertical]) {
     if (!isWall(character, hit.normal) || world.bodies.get(handleOf(hit.body))?.isDynamic()) continue;
@@ -467,6 +467,42 @@ export function stepCharacter(
   const { moved } = move;
   rigid.setLinvel({ x: moved.x / dt, y: moved.y / dt, z: moved.z / dt }, true);
   return { desired: plan.desired, moved, jumped: plan.jumped, landed, dashed: plan.dashed, moving: !idle };
+}
+
+/**
+ * Runs `move` with the carry of the kinematic body `floor` (where the step takes the point under the feet: turned
+ * about its centre of mass and moved, as Rapier integrates it; zero for any other floor or none), that body's
+ * velocities held at zero meanwhile, so Rapier's kinematic friction adds nothing. Rapier's friction alone acts on each
+ * leg of a move that ends within its prediction distance of the floor, so it carried 0, 1 or 2 times a tick by where
+ * the floor was: a rider slipped 0.2 to 0.4 m over a 6 m ride, and fell behind a floor that sank as it went (WP 4.1,
+ * measured on Rapier 0.21). Carried this way, it keeps its place within 2 cm (over a sinking floor, one tick's sink).
+ */
+function carried<T>(
+  physics: Physics,
+  body: number,
+  character: Character,
+  floor: number,
+  dt: number,
+  move: (carry: Vector3) => T,
+): T {
+  const rigid = floor >= 0 ? rapierOf(physics).bodies.get(handleOf(floor)) : null;
+  if (!rigid?.isKinematic()) return move(new Vector3());
+  const [linear, angular, com] = [rigid.linvel(), rigid.angvel(), rigid.worldCom()];
+  const carry = new Vector3(linear.x, linear.y, linear.z).multiplyScalar(dt);
+  const turn = new Vector3(angular.x, angular.y, angular.z).multiplyScalar(dt);
+  const angle = turn.length();
+  if (angle > 0) {
+    const arm = feetOf(physics, body, character).sub(com);
+    carry.add(arm.clone().applyAxisAngle(turn.divideScalar(angle), angle).sub(arm));
+  }
+  rigid.setLinvel({ x: 0, y: 0, z: 0 }, false);
+  rigid.setAngvel({ x: 0, y: 0, z: 0 }, false);
+  try {
+    return move(carry);
+  } finally {
+    rigid.setLinvel(linear, false);
+    rigid.setAngvel(angular, false);
+  }
 }
 
 /** Whether `id` names a fixed body of `world`. */
