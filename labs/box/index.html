@@ -2,14 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="theme-color" content="#15171c" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="../../engine/ui/manifest.webmanifest" />
+    <link rel="stylesheet" href="../../engine/ui/touch.css" />
     <link rel="icon" href="data:," />
     <title>The Stress Box: my-3dge</title>
     <!--
       The Stress Box (PLAN.md §9.0): labs/box/main.ts starts the engine on the scene ?scene names (room by default);
       labs/box/README.md says what each scene shows and how to tune it. Ready or error (§8.3): until the engine
       publishes window.__engine, the inline script below records a script that fails to load or throws, and shows
-      it in #msg, so a broken page is one line of text, never a blank one.
+      it in #msg, so a broken page is one line of text, never a blank one. On phones (WP 3.12, built, not tested):
+      a viewport that does not zoom, the engine's manifest (full screen, landscape) and engine/ui/touch.css, which
+      styles the touch controls and the page in touch mode; the canvas follows the visible height (100dvh).
     -->
     <style>
       html,
@@ -23,6 +31,9 @@
         display: block;
         width: 100vw;
         height: 100vh;
+        height: 100dvh;
+        outline: none;
+        touch-action: none;
         image-rendering: pixelated;
       }
       #msg {
