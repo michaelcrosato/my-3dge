@@ -1,12 +1,14 @@
 /**
  * @file The CPU-only gameplay contract (PLAN.md §6.7, §6.5 item 9, I-07; doctrine: WebGPU only), from Box 1 on: each
  * stage adds its scenes (`STAGES`: Box 1's room and its movers, Box 2's room with the hero, Box 3's hall with the hero
- * and the hall with its props). In the scene's own page (labs/box), rendering as it steps:
+ * and the hall with its props, Box 4's hall with a crowd of 100, drawn through the crowd's level of detail). In the
+ * scene's own page (labs/box), rendering as it steps:
  * 1. every replay of the stage gives its golden hashes, a frame drawn after each step (`__engine.replay`, the same
- *    player as `x replay --browser page`), and so it does while every camera preset and resolution mode is switched;
+ *    player as `x replay --browser page`), and so do its swept replays (`swept`: all of them, or for Box 4 the chase,
+ *    its mixed crowd) while every camera preset and resolution mode is switched (the crowd's bands and culling too);
  * 2. live play recorded in the page (devices, a setting changed mid-run, the camera switched) replays in Node to the
  *    same hashes, so the renderer never wrote the sim;
- * 3. turning every optional GPU feature off never changes the hash;
+ * 3. turning every optional GPU feature off never changes the hashes of its swept replays (all, or Box 4's hop);
  * 4. the gameplay entities in view appear in the ID pass;
  * 5. a second box scene, made and recorded as the scene template and the stress-box skill say (in a scratch copy of
  *    the repository, so this one's page never changes), gives its goldens through `x replay --browser page`, which
@@ -14,7 +16,11 @@
  *
  * Invariants: goldens come from the replay files (one set per platform, recorded in Node and the sim-only page), so
  * these tests compare the rendering page with them, never with themselves. Each test opens its own page and shares
- * nothing, so they run in parallel: in order, on one worker, this file alone held T2 past its 6-minute budget.
+ * nothing, so they run in parallel: in order, on one worker, this file alone held T2 past its 6-minute budget. For the
+ * same budget, the longest tests are queued first, so none starts late and ends T2 alone: test 5, then the stages
+ * newest first (at G5, in file order, Box 4's began 4 minutes into T2 and ended it); and Box 4 sweeps each replay
+ * once: each draws a crowd for 720–780 steps, both give their goldens drawn in test 1 and `x replay --browser page`,
+ * and the chase, the costlier to draw (74 s in the page against the hop's 32 s at G5), is swept by test 2 alone.
  */
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
@@ -25,6 +31,7 @@ import '../../labs/box/scenes/room';
 import '../../labs/box/scenes/room-hero';
 import '../../labs/box/scenes/hall';
 import '../../labs/box/scenes/hall-props';
+import '../../labs/box/scenes/crowd-100';
 import { playReplay, type Replay } from '../../engine/sim/replay';
 import { CAMERA_3D, VIEW_NAMES } from '../../engine/gfx/cameras/codes';
 import { FOLLOW_CAMERAS } from '../../engine/gfx/cameras/place';
@@ -47,6 +54,8 @@ interface Stage {
   /** The component its gameplay entities hold. */
   component: string;
   replays: { name: string; text: string }[];
+  /** The replays, by name, the camera-switching and GPU-features-off tests play: all of `replays` when absent. */
+  swept?: { cameras: string[]; featuresOff: string[] };
   /** Plays live in the page through the devices and `__engine`, from the first frame. */
   live: () => void;
 }
@@ -148,6 +157,29 @@ const STAGES: Stage[] = [
       tick(30);
     },
   },
+  {
+    stage: 'Box 4',
+    scene: 'crowd-100',
+    component: 'actor',
+    replays: ['box-4-chase', 'box-4-hop'].map(replay),
+    swept: { cameras: ['box-4-chase'], featuresOff: ['box-4-hop'] },
+    live: () => {
+      const tick = (frames: number) => window.__clock.tick(frames);
+      tick(1);
+      __engine.input.axis('move', [-0.8, -0.6]);
+      tick(50); // off the dais, the crowd entering round him
+      __engine.camera.set('cam3=chase');
+      tick(30);
+      __engine.input.press('dash');
+      __engine.camera.set('cam3=orbit');
+      tick(20);
+      __engine.input.axis('move', [1, 0]);
+      __engine.camera.set('cam=topdown');
+      tick(30);
+      __engine.input.axis('move', null);
+      tick(20);
+    },
+  },
 ];
 const goldens = (text: string) => (JSON.parse(text) as Replay).hashes['linux-x64'];
 /** Variables a test runner sets for its own workers; the `x` children start without them. */
@@ -218,16 +250,52 @@ async function open(page: Page, harness: Harness, query = '?scene=room') {
   await harness.assertWebGPU();
 }
 
-for (const { stage, scene, component, replays, live } of STAGES) {
+test.describe('the CPU-only gameplay contract, a new box scene', () => {
+  test("a second box scene's replay gives its goldens in the page, which ?replay alone opens on that scene", async () => {
+    test.setTimeout(300_000);
+    const root = scratchCopy();
+    try {
+      const made = x(root, 'new', 'scene', 'labs/box/scenes/spinners');
+      expect(made.code, made.output).toBe(0);
+      const ran = x(root, 'sim', 'labs/box/scenes/spinners', '--steps', '600');
+      expect(ran.code, ran.output).toBe(0);
+      const file = 'tests/replays/box-1-spinners.replay.json';
+      copyFileSync(join(root, 'out', 'sim', 'box-spinners', 'run.replay.json'), join(root, file));
+      const recorded = x(root, 'replay', file, '--browser', 'sim', '--update');
+      expect(recorded.code, recorded.output).toBe(0);
+      // the room's replay after it: the page opens again on the room
+      const both = [file, 'tests/replays/box-1-room.replay.json'];
+      const played = x(root, 'replay', ...both, '--browser', 'page', '--runs', '1');
+      expect(played.code, played.output).toBe(0);
+      expect(played.output).toMatch(/box-1-spinners: 600 steps, .*Chromium page ×1, all match/);
+      expect(played.output).toMatch(/box-1-room: 600 steps, .*Chromium page ×1, all match/);
+      const shot = x(root, 'shot', 'labs/box/?replay=box-1-spinners');
+      expect(shot.code, shot.output).toBe(0);
+      const shotFile = join(root, 'out', 'shot', 'labs-box-replay-box-1-spinners', 'shot.json');
+      const { ids } = JSON.parse(readFileSync(shotFile, 'utf8')) as { ids: { visible: { name: string }[] } };
+      expect(ids.visible.map((object) => object.name)).toContain('spinnersCrate#1');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+// The newest stage first (see the file comment).
+for (const { stage, scene, component, replays, swept, live } of [...STAGES].reverse()) {
   test.describe(`the CPU-only gameplay contract, ${stage}`, () => {
     test.setTimeout(240_000);
+    const sweep = {
+      cameras: swept?.cameras.map(replay) ?? replays,
+      featuresOff: swept?.featuresOff.map(replay) ?? replays,
+    };
 
     test('each replay gives its golden hashes while the scene renders as it steps', async ({ page, harness }) => {
       await open(page, harness, `?scene=${scene}`);
       for (const { name, text } of replays) {
         const run = await play(page, text);
         expect(run.hashes, name).toEqual(goldens(text));
-        expect([run.steps, run.frames], name).toEqual([600, 600]);
+        const { steps } = JSON.parse(text) as Replay;
+        expect([run.steps, run.frames], name).toEqual([steps, steps]);
       }
     });
 
@@ -240,7 +308,7 @@ for (const { stage, scene, component, replays, live } of STAGES) {
       const every = Math.floor(560 / CAMERA_PRESETS.length);
       CAMERA_PRESETS.forEach((cam, i) => views.push([10 + i * every, { cam }]));
       RESOLUTION_MODES.forEach((mode, i) => views.push([25 + i * 170, { set: { 'gfx.resolution': mode } }]));
-      for (const { name, text } of replays) {
+      for (const { name, text } of sweep.cameras) {
         const run = await play(page, text, { views });
         expect(run.hashes, name).toEqual(goldens(text));
       }
@@ -255,7 +323,9 @@ for (const { stage, scene, component, replays, live } of STAGES) {
       await open(page, harness, `?scene=${scene}&gfx.featuresOff=${off}`);
       const downgrades = await page.evaluate(() => (__engine.info() as { downgrades: string[] }).downgrades);
       expect(downgrades.length).toBeGreaterThan(0);
-      for (const { name, text } of replays) expect((await play(page, text)).hashes, name).toEqual(goldens(text));
+      for (const { name, text } of sweep.featuresOff) {
+        expect((await play(page, text)).hashes, name).toEqual(goldens(text));
+      }
       harness.advice(); // the downgrades' advice is the point of this test
     });
 
@@ -292,33 +362,3 @@ for (const { stage, scene, component, replays, live } of STAGES) {
     });
   });
 }
-
-test.describe('the CPU-only gameplay contract, a new box scene', () => {
-  test("a second box scene's replay gives its goldens in the page, which ?replay alone opens on that scene", async () => {
-    test.setTimeout(300_000);
-    const root = scratchCopy();
-    try {
-      const made = x(root, 'new', 'scene', 'labs/box/scenes/spinners');
-      expect(made.code, made.output).toBe(0);
-      const ran = x(root, 'sim', 'labs/box/scenes/spinners', '--steps', '600');
-      expect(ran.code, ran.output).toBe(0);
-      const file = 'tests/replays/box-1-spinners.replay.json';
-      copyFileSync(join(root, 'out', 'sim', 'box-spinners', 'run.replay.json'), join(root, file));
-      const recorded = x(root, 'replay', file, '--browser', 'sim', '--update');
-      expect(recorded.code, recorded.output).toBe(0);
-      // the room's replay after it: the page opens again on the room
-      const both = [file, 'tests/replays/box-1-room.replay.json'];
-      const played = x(root, 'replay', ...both, '--browser', 'page', '--runs', '1');
-      expect(played.code, played.output).toBe(0);
-      expect(played.output).toMatch(/box-1-spinners: 600 steps, .*Chromium page ×1, all match/);
-      expect(played.output).toMatch(/box-1-room: 600 steps, .*Chromium page ×1, all match/);
-      const shot = x(root, 'shot', 'labs/box/?replay=box-1-spinners');
-      expect(shot.code, shot.output).toBe(0);
-      const shotFile = join(root, 'out', 'shot', 'labs-box-replay-box-1-spinners', 'shot.json');
-      const { ids } = JSON.parse(readFileSync(shotFile, 'utf8')) as { ids: { visible: { name: string }[] } };
-      expect(ids.visible.map((object) => object.name)).toContain('spinnersCrate#1');
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-});

@@ -4,15 +4,16 @@
  * dais, pillars and brazier stands, and the hero as the protagonist; the thumbnail matches its baseline (`x shot
  * labs/box --scene hall --cam iso --thumb box-hall-iso`), and the look's one note is the known low contrast (the hall's
  * stone under the stage's sun alone; its torches' lights arrive with the light pool, WP 7.1). The climb replay played
- * in the page, rendering as it steps, gives its goldens and ends with the hero on the west gallery, more than 0.9 m
- * above the floor (Done-when 2), where every camera sees him in the ID pass with the gallery and the stairs, the walls
- * and pillars before him cut away. The hall with its props (labs/box/?scene=hall-props) draws its 100 crates and
+ * in the page gives its goldens and ends with the hero on the west gallery, more than 0.9 m above the floor
+ * (Done-when 2), where every camera sees him in the ID pass with the gallery and the stairs, the walls and pillars
+ * before him cut away. The hall with its props (labs/box/?scene=hall-props) draws its 100 crates and
  * barrels and its 30 fires through one instanced batch per prop part, each seen by the ID pass; its knock replay,
  * played in the page, gives its goldens, and the crate the hero shoves moves more than 0.25 m there (Done-when 3): read
  * once the replay has played to the shove's press, then again once the page has stepped on with that press to the
  * checkpoint after it, drawing after every step, where the hash is the replay's golden. In both scenes, cycling every
  * camera and resolution mode while he walks builds 0 pipelines after the warm-up (Done-when 4). The CPU-only contract
- * for the hall is tests/e2e/parity.spec.ts.
+ * for the hall is tests/e2e/parity.spec.ts: there both replays give the same goldens drawing a frame after every step,
+ * so the end states hold while it renders, and this file plays them without drawing (T2's 6-minute budget).
  *
  * Invariants: the page is driven through `window.__engine` and the virtual clock, as an agent drives it; goldens come
  * from the replay files, never from the page itself. Each test opens its own page and shares nothing, so they run in
@@ -90,6 +91,13 @@ async function feet(page: Page): Promise<[number, number, number]> {
   return [actor.x, actor.y, actor.z];
 }
 
+/** What `__engine.replay` resolves with: the hashes at the checkpoints, the steps played and the frames drawn. */
+interface Played {
+  hashes: Record<string, string>;
+  steps: number;
+  frames: number;
+}
+
 /** The golden hashes of a replay's text. */
 const goldensOf = (text: string) =>
   (JSON.parse(text) as { hashes: Record<string, Record<string, string>> }).hashes['linux-x64'];
@@ -146,9 +154,9 @@ test.describe('the box, stage 3: the hall', () => {
     harness,
   }) => {
     await open(page, harness);
-    const run = await call<{ hashes: Record<string, string>; frames: number }>(page, 'replay', CLIMB);
+    const run = await call<Played>(page, 'replay', CLIMB, { draw: 0 });
     expect(run.hashes).toEqual(goldensOf(CLIMB));
-    expect(run.frames).toBe(600);
+    expect([run.steps, run.frames]).toEqual([600, 0]);
     const [x0, y, z0] = await feet(page);
     expect(y).toBeGreaterThan(0.9);
     expect(y).toBeCloseTo(GALLERY.top, 3);
@@ -183,16 +191,16 @@ test.describe('the box, stage 3: the hall', () => {
     expect(dump).toMatch(/prop:crate\/mesh\/page0 InstancedMesh .* ×70\n/);
     expect(dump).toMatch(/prop:barrel\/mesh\/page0 InstancedMesh .* ×30\n/);
     expect(dump).toMatch(/prop:brazier\/flames\/page0 InstancedMesh .* ×180\n/);
-    const run = await call<{ hashes: Record<string, string>; frames: number }>(page, 'replay', KNOCK);
+    const run = await call<Played>(page, 'replay', KNOCK, { draw: 0 });
     expect(run.hashes).toEqual(goldensOf(KNOCK));
-    expect(run.frames).toBe(600);
+    expect([run.steps, run.frames]).toEqual([600, 0]);
     /** The shoved crate now. */
     const crate = async () => {
       const id = (await call<{ id: number }[]>(page, 'entities', 'sceneProp'))[SHOVE.prop].id;
       return (await call<{ sceneProp: { prop: string; x: number; z: number } }>(page, 'get', id)).sceneProp;
     };
-    // One more play, to the shove's press, then on to the checkpoint after it, a frame drawn after every step.
-    await call(page, 'replay', KNOCK, { until: SHOVE.at });
+    // One more play, undrawn to the shove's press, then on to the checkpoint after it, a frame drawn after every step.
+    await call(page, 'replay', KNOCK, { until: SHOVE.at, draw: 0 });
     const before = await crate();
     const changes = (JSON.parse(KNOCK) as { inputs: [number, object][] }).inputs.filter(
       ([at]) => at >= SHOVE.at && at < SHOVE.after,

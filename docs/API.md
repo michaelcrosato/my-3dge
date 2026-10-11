@@ -167,6 +167,8 @@ game agent's manual.
 - `Crowd` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A crowd's batches and level of detail (see the file comment).
 - `CROWD_AGENT` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): An agent with every field at its default: queued, a walker's capsule at the origin.
 - `CROWD_AGENT_FIELDS` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): A crowd agent's fields, for a scene's component: `defineComponent('pusher', { description, fields: … })`.
+- `CROWD_BODY` (const from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The component `crowdBody`: an entity the stage draws through a crowd.
+- `CROWD_BODY_FIELDS` (const from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): A crowd body's fields, for the component `crowdBody`: its rig and look, where it stands, its rig's state.
 - `CROWD_GROUNDED` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): The grounded heuristic's thresholds (m/s, m): the prototype's 6 units/s, 2 units and 1 unit/s.
 - `CROWD_LIMITS` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What `updateCrowd` does at most each step by default: bodies added (shardfall's load ramps), corpses kept.
 - `CROWD_LOD` (const from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): The default bands (see the file comment).
@@ -174,12 +176,15 @@ game agent's manual.
 - `CrowdAgent` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): A crowd agent: its body, its make and what the last readback saw (`CROWD_AGENT_FIELDS` says what each means).
 - `CrowdBand` (interface from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): One band of detail: the bodies whose distance is under its `upTo` and at least the band before's.
 - `CrowdBandSpec` (type from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): A band as written: without its index.
+- `CrowdBody` (interface from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): A crowd body: what `CROWD_BODY_FIELDS` holds.
+- `CrowdBodyInput` (interface from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): What a crowd body's rig is told each step (see the file comment).
 - `CrowdChanges` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What one `updateCrowd` changed: indices into the list it was given, in order.
 - `CrowdDraw` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): How a body is drawn: its band (full detail when absent) and the floor under it, for a blob shadow.
 - `CrowdLod` (interface from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): A crowd's level of detail (see the file comment).
 - `CrowdLodCounts` (interface from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): A frame's counts so far: bodies drawn in each band, and those culled by the view, the distance and `near`.
 - `CrowdLodOptions` (interface from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): How a crowd's level of detail is made.
 - `CrowdOptions` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): How `updateCrowd` runs.
+- `CrowdRig` (type from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rigs a crowd body can have.
 - `CrowdRigDraw` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): How a rig is drawn: also its flags (`when`, `unless`) and its scale against its body.
 - `CrowdStats` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A frame's counts: the bands and culling (lod.ts), bodies drawn, and each batch's instances and shown pages.
 - `CrowdStepper` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What the crowd's calls read from the sim: the step length (s).
@@ -551,6 +556,7 @@ game agent's manual.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
 - `STANCES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The stances, held while moving.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
+- `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `StickView` (interface from [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)): Where the stick is drawn, in client CSS px: its centre and its knob.
 - `StyleSet` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): A page's materials in every style (see the file comment).
 - `StyleSetOptions` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): How `createStyleSet` makes a set.
@@ -717,12 +723,17 @@ game agent's manual.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
 - `CROWD_AGENT` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): An agent with every field at its default: queued, a walker's capsule at the origin.
 - `CROWD_AGENT_FIELDS` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): A crowd agent's fields, for a scene's component: `defineComponent('pusher', { description, fields: … })`.
+- `CROWD_BODY` (const from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The component `crowdBody`: an entity the stage draws through a crowd.
+- `CROWD_BODY_FIELDS` (const from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): A crowd body's fields, for the component `crowdBody`: its rig and look, where it stands, its rig's state.
 - `CROWD_GROUNDED` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): The grounded heuristic's thresholds (m/s, m): the prototype's 6 units/s, 2 units and 1 unit/s.
 - `CROWD_LIMITS` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What `updateCrowd` does at most each step by default: bodies added (shardfall's load ramps), corpses kept.
 - `CROWD_MATERIAL` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): The crowd's material: the prototype's density (1 a cubic unit: a walker weighs about 50 kg), no friction under the min rule (an agent slides on everything), no bounce; a corpse's friction, averaged, so it slides to a stop.
 - `CrowdAgent` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): A crowd agent: its body, its make and what the last readback saw (`CROWD_AGENT_FIELDS` says what each means).
+- `CrowdBody` (interface from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): A crowd body: what `CROWD_BODY_FIELDS` holds.
+- `CrowdBodyInput` (interface from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): What a crowd body's rig is told each step (see the file comment).
 - `CrowdChanges` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What one `updateCrowd` changed: indices into the list it was given, in order.
 - `CrowdOptions` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): How `updateCrowd` runs.
+- `CrowdRig` (type from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rigs a crowd body can have.
 - `CrowdStepper` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What the crowd's calls read from the sim: the step length (s).
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
 - `CylinderCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An upright cylinder collider (Rapier's cylinder, three.js's CylinderGeometry): one per tile, at its centre.
@@ -943,6 +954,7 @@ game agent's manual.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
 - `STANCES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The stances, held while moving.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
+- `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
@@ -2523,6 +2535,12 @@ For the agents who maintain the engine.
 - `StageOptions` (interface): What a stage is made of: the level (none for an empty stage), where materials come from, and its registry.
 - `StandInPlace` (interface): Where a stand-in stands and how it looks, read from its entity's placing component.
 
+### [`engine/gfx/stageCrowd.ts`](../engine/gfx/stageCrowd.ts)
+
+- `createStageCrowd` (function): Builds the crowd bodies of a stage (see the file comment).
+- `StageCrowd` (interface): The crowd bodies on a stage (see the file comment).
+- `StageCrowdOptions` (interface): What the stage's crowd is made from: where it goes, the materials, the level for the shadows' floor, a registry.
+
 ### [`engine/gfx/stageProps.ts`](../engine/gfx/stageProps.ts)
 
 - `createStageProps` (function): Draws the scene's props (see the file comment).
@@ -2980,6 +2998,15 @@ For the agents who maintain the engine.
 - `scheduleOf` (function): The schedule of `systems` and a listener snapshot, as data.
 - `WorldCapture` (interface): The whole sim at a step boundary, as plain data (code held aside; see the file comment).
 
+### [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)
+
+- `CROWD_BODY` (const): The component `crowdBody`: an entity the stage draws through a crowd.
+- `CROWD_BODY_FIELDS` (const): A crowd body's fields, for the component `crowdBody`: its rig and look, where it stands, its rig's state.
+- `CrowdBody` (interface): A crowd body: what `CROWD_BODY_FIELDS` holds.
+- `CrowdBodyInput` (interface): What a crowd body's rig is told each step (see the file comment).
+- `CrowdRig` (type): The rigs a crowd body can have.
+- `stepCrowdBody` (function): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
+
 ### [`engine/sim/entities.ts`](../engine/sim/entities.ts)
 
 - `capturable` (function): The entities copied for a capture: plain data only (`SIM_NOT_DATA`) and no object in two places (`SIM_SHARED_DATA`): a capture copies each place separately, so a shared object would come back as two.
@@ -3376,6 +3403,56 @@ For the agents who maintain the engine.
 - `HeroTuning` (interface): What a scene may tune of the hero: his walk, take-off and dash speeds, m/s.
 - `PROTOTYPE` (const): The hero's numbers as the prototype wrote them, in its units and seconds (see the file comment).
 - `spawnHero` (function): Spawns the hero, the player, with his feet at `at` facing `yaw` (rad); returns his id.
+
+### [`labs/box/cast/slime.ts`](../labs/box/cast/slime.ts)
+
+- `CROWD_SLIME` (const): The slime's component: where it is in its hop, and the time left in that part (or spent in the air).
+- `makeSlime` (function): A new slime's own state: resting, its first rest drawn from `rng`, up to 1 s.
+- `SLIME` (const): The slime's numbers (see the file comment).
+- `SlimeData` (interface): The slime's own state, beside its crowd agent.
+- `SlimeHop` (type): Where a slime is in its hop.
+- `steerSlime` (function): Moves a living slime one step (see the file comment): in the air until it lands, else braking on the floor while it rests and crouches, then a leap by `knockback` and `launch` (engine/physics/crowd.ts).
+
+### [`labs/box/cast/walker.ts`](../labs/box/cast/walker.ts)
+
+- `Chase` (interface): What every member of the cast steers by, each step.
+- `CROWD_WALKER` (const): The walker's component: its speed, heading and sway phase.
+- `levelWith` (const): Whether a point at height `y` (m) is level with the hero.
+- `makeWalker` (function): A new walker's own state, its speed and sway's phase drawn from `rng`, facing `yaw`.
+- `steerWalker` (function): The velocity (m/s) the walker wants this step, into `out`, turning it toward where it goes (see the file comment).
+- `WALKER` (const): The walker's numbers (see the file comment).
+- `WalkerData` (interface): The walker's own state, beside its crowd agent.
+
+### [`labs/box/cast/wisp.ts`](../labs/box/cast/wisp.ts)
+
+- `CROWD_WISP` (const): The wisp's component: which way it circles, and its hover's clock.
+- `makeWisp` (function): A new wisp's own state: its way round and its clock (up to 9 s) drawn from `rng`.
+- `steerWisp` (function): The velocity (m/s) the wisp wants this step, into `out`, its clock advanced (see the file comment).
+- `WISP` (const): The wisp's numbers (see the file comment).
+- `WispData` (interface): The wisp's own state, beside its crowd agent.
+
+### [`labs/box/scenes/crowd-100.ts`](../labs/box/scenes/crowd-100.ts)
+
+- `crowd100` (const): The crowd at 100.
+- `default` (default): The crowd at 100, Box 4 (PLAN.md §9.0, WP 5.7): the crowd scene (labs/box/scenes/crowd-1000.ts) with 100 walkers, slimes and wisps, in four steps of the queue: few enough to follow one by one, and the scene the Box 4 replays play (tests/replays/box-4-*.replay.json), so they run quickly in the rendering page too.
+
+### [`labs/box/scenes/crowd-1000.ts`](../labs/box/scenes/crowd-1000.ts)
+
+- `CROWD_GRID` (const): The crowd's walkable grid: the hall under a climb of 6 cm, what a crowd body manages (Rapier 0.21 steps a capsule up 7 cm and a ball 8.5 cm, measured in WP 5.2), so the stairs' gentle rise is walkable and their sides are not.
+- `CROWD_MEMBER` (const): A member's crowd agent (engine/physics/crowd.ts): its body, its make and what the last readback saw.
+- `CROWD_SETTINGS` (const): The crowd's settings: how many, and the mix.
+- `CROWD_TILES` (const): The tiles a member may start on: the hall's open floor, at height 0 (no dais, stairs or gallery).
+- `crowd1000` (const): The crowd at 1,000.
+- `CrowdComponents` (type): The scene's components.
+- `default` (default): The crowd, Box 4 (PLAN.md §9.0, WP 5.7): the hall with a hero (labs/box/scenes/hall.ts) filling with `box.crowd.count` walkers, slimes and wisps (labs/box/cast/{walker,slime,wisp}.ts) that chase him, round the walls and pillars and up the stairs after him.
+- `MIXES` (const): A crowd mix: the share of walkers, and of walkers and slimes together; the rest are wisps.
+- `setupCrowd` (function): The crowd's setup: the hall and its hero, `box.crowd.count` members queued, the crowd's systems; the hero's id.
+- `SPAWN` (const): Where members start: at least `away` m from the hero (the prototype's 80 units), `tries` draws, `jitter` in a tile.
+
+### [`labs/box/scenes/crowd-5000.ts`](../labs/box/scenes/crowd-5000.ts)
+
+- `crowd5000` (const): The crowd at 5,000.
+- `default` (default): The crowd at 5,000, Box 4 (PLAN.md §9.0, WP 5.7): the crowd scene (labs/box/scenes/crowd-1000.ts) with 5,000 walkers, slimes and wisps, 25 entering a step, so the hall fills over 200 steps: the top of the perf ladder, and the page that shows the crowd grows to 5,000 with no pipeline built (tests/e2e/box-crowd.spec.ts).
 
 ### [`labs/box/scenes/hall-props.ts`](../labs/box/scenes/hall-props.ts)
 
@@ -4301,7 +4378,7 @@ For the agents who maintain the engine.
 - `findBase` (function): The base for selections in `root` (see the file comment).
 - `isVersionOnly` (function): True when every changed line of a unified diff is a `"version": "…"` line, as many removed as added.
 - `LAST_GREEN` (const): Where the last green `x ci --local` records its commit, relative to the root.
-- `LONG_RUNS` (const): The long runs: no budget, run at each gate.
+- `LONG_RUNS` (const): The long runs (PLAN.md §8.2): no budget, run at each gate.
 - `plan` (function): The base, the changes and both selections for `root`: what `x ci --local` and an iterating agent run.
 - `recordGreen` (function): Records `sha` as the last green `x ci --local`, the base until main holds a gate.
 - `reportMs` (function): The wall-clock duration a Vitest or Playwright JSON report records; throws on anything else.

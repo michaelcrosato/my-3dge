@@ -185,7 +185,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the scene {scene} loads the level {level}, which is not registered, so its view cannot be built`
 - Fix: register the level's text before the view starts: in a page, import text from './levels/<name>.txt?raw' and call defineLevel('{level}', { text, file }); in Node, read the file and do the same
-- Registered in: [`engine/app/view.ts` line 49](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 50](../engine/app/view.ts)
 
 ### APP_NO_REPLAY
 
@@ -197,7 +197,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `{member} needs the scene drawn as a view, and this engine has none`
 - Fix: start it with createHeadless({ scene, view: true }) in Node; a page always has one
-- Registered in: [`engine/app/view.ts` line 53](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 54](../engine/app/view.ts)
 
 ### APP_NOT_HEADLESS
 

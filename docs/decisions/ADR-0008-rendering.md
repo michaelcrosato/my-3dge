@@ -98,3 +98,18 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
   They are registered with the warm-up, with the key part `stage:props`, and get no stand-in.
 - Plan edit: WP-4.6's Owns adds the core proposal `engine/sim/props{,.test}.ts` and `engine/gfx/stageProps{,.test}.ts`,
   and extends `engine/gfx/stage.ts` and `engine/sim-api.ts` (accepted).
+
+## Amendment 6 (2026-10-11, WP-5.7): crowd bodies draw themselves
+
+- **Core change, sim:** `engine/sim/crowdBodies.ts` adds the engine component `crowdBody` (`CROWD_BODY_FIELDS`: rig
+  humanoid|blob|floater, look as a build id or blob features, size, x/y/z, yaw, state) and
+  `stepCrowdBody(w, id, body, input)`. This is the rig's sim step under ADR-0009 (an animator, blob or floater), pooled
+  per world and loaded from and saved to state. It emits no footsteps.
+- **Core change, gfx:** `engine/gfx/stageCrowd.ts` draws `crowdBody` entities through `createCrowd` (WP 5.4) with its
+  LOD. A body never stepped is not drawn. Looks are prepared on arrival and warmed up under the key part `stage:crowd`.
+  Crowd bodies get no stand-in.
+- `engine/gfx/stage.ts` gains `crowd`. `engine/app/view.ts` draws it after placing the frame camera, and before a dump
+  that follows steps with no frame. `engine/sim-api.ts` appends the exports.
+- `tests/e2e/parity.spec.ts`: replays may run longer than 600 steps.
+- Plan edit: WP-5.7's Owns adds `engine/sim/crowdBodies{,.test}.ts` and `engine/gfx/stageCrowd{,.test}.ts`, and
+  extends `engine/gfx/stage.ts`, `engine/app/view.ts` and `engine/sim-api.ts` (accepted).
