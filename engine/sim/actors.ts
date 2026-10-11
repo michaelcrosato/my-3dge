@@ -10,17 +10,18 @@
  * the intents its AI writes into `actor.intents`, its presses taken from the edges of `b`. Events: `jump` `{ id }`,
  * `land` `{ id, speed }`, `dash` `{ id }`. Gravity: `physics.characterGravity` unless the settings name one; the weight
  * on dynamic floors uses `physics.gravity`. Entities with the component `oneWay` make their body a one-way platform.
+ * WP 3.7: `anim` adds the component `animator`, stepped by the system `actors.anim` after `actors` and, with
+ * `preciseHits`, posed by `actors.pose` after `actors.readback`. Event: `footstep` `{ id, side, speed }`.
  *
  * `measureFeel(character)` drives a character over a flat course in a world of its own through the feel meter
  * (engine/physics/feel.ts) and adds the reach (the highest ledge it jumps onto, WP 4.3's climb limit) and the dash's
  * distance; it runs under the sim's maths, so the numbers match in Node and Chromium. `__engine.feel(id?)` (registered
  * here) reports it for an actor, the first player by default; `node x sim <scene> --feel` prints it.
  *
- * Invariants: the systems are added once per world, on the first spawn; everything an actor remembers is in its
- * component. Despawning an actor leaves its body; `removeActor` removes both.
+ * Invariants: systems are added once per world, on the first (animated) spawn; all an actor remembers is in its
+ * components (the sim's animators are loaded from them). Despawning leaves the body; `removeActor` removes both.
  *
  * Carried from shardfall@fa2dab6 (`pavilion-lite/src/character.rs:179-399`: the order of a step, the events).
- *
  * @example
  * import { createCharacter } from '../physics/character';
  * import { physicsOf } from '../physics/world';
@@ -37,7 +38,11 @@
  * world.query('actor')[0].actor.x; // 4.69: a second's walk east at 5 m/s, from standing
  * @see engine/sim/actors.test.ts
  */
+import { AnimatorPool, ANIMATOR_FIELDS, type AnimatorData, type AnimatorOptions } from '../anim/character';
+import { STEP } from '../anim/humanoid';
+import type { AnimatorInput } from '../anim/states';
 import { codeError } from '../core/log';
+import { Vector3 } from '../core/math';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
 import { defineSettings } from '../core/settings';
 import { withSimMath } from '../core/simMath';
@@ -84,15 +89,26 @@ export interface ActorComponent extends CharacterState {
   z: number;
 }
 
-/** The components this module reads: `actor`, and `oneWay` for one-way platforms. */
-export type ActorComponents = { actor: ActorComponent; oneWay: { body: number } };
+/** The component `animator`: an actor's character animator as plain data, and what its game code tells its body. */
+export interface AnimatorComponent extends AnimatorData {
+  /** The body states its game code holds on (a pose, a stance, a flinch…); the controller's join them each step. */
+  states: Partial<AnimatorInput>;
+}
 
-/** Declares the components `actor` and `oneWay` and the setting `physics.characterGravity` on `registry`. */
+/** The components this module reads: `actor`, `animator`, and `oneWay` for one-way platforms. */
+export type ActorComponents = { actor: ActorComponent; animator: AnimatorComponent; oneWay: { body: number } };
+
+/** Declares the components `actor`, `animator` and `oneWay` and the setting `physics.characterGravity` on `registry`. */
 export function defineActorKinds(registry: Registry = sharedRegistry): void {
   if (!registry.kinds().includes('setting') || !registry.has('setting', 'physics.characterGravity')) {
     defineSettings(CHARACTER_SETTINGS, registry);
   }
-  if (registry.kinds().includes('component') && registry.has('component', 'actor')) return;
+  if (!registry.kinds().includes('component') || !registry.has('component', 'animator')) {
+    const states = { type: 'object', default: {}, description: 'The body states its game code holds on.' } as const;
+    const description = 'A character animator (engine/anim/character.ts): what it keeps, and what its body is told.';
+    defineComponent('animator', { description, fields: { ...ANIMATOR_FIELDS, states } }, registry);
+  }
+  if (registry.has('component', 'actor')) return;
   defineComponent(
     'actor',
     {
@@ -122,6 +138,8 @@ export interface ActorSpec {
   player?: boolean;
   /** Where it faces (rad; forward = (sin yaw, 0, cos yaw)). */
   yaw?: number;
+  /** Its character animator's make (engine/anim/character.ts); none when absent. */
+  anim?: Pick<AnimatorOptions, 'build' | 'weapon' | 'preciseHits'>;
 }
 
 /** Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`. Returns the id. */
@@ -136,7 +154,14 @@ export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): 
     w.systems.add('actors.readback', readActors, { phase: 'readback' });
   }
   registerFeel();
-  return w.spawn({ actor: { body, player: spec.player ?? true, character: spec.character, x, y, z, ...state } });
+  const actor = { body, player: spec.player ?? true, character: spec.character, x, y, z, ...state };
+  if (!spec.anim) return w.spawn({ actor });
+  if (!w.systems.has('actors.anim')) {
+    w.systems.add('actors.anim', stepAnimators, { phase: 'anim' });
+    w.systems.add('actors.pose', poseAnimators, { phase: 'readback' });
+  }
+  const { build = 'build:chibi', weapon = 'none', preciseHits = false } = spec.anim;
+  return w.spawn({ actor, animator: { build: typeof build === 'string' ? build : build.id, weapon, preciseHits } });
 }
 
 /** Removes an actor and its body. */
@@ -182,6 +207,44 @@ function moveActors(w: World, intents: Intents): void {
     if (step.jumped) w.emit('jump', { id: e.id });
     if (step.landed) w.emit('land', { id: e.id, speed: step.landed });
     if (step.dashed) w.emit('dash', { id: e.id });
+  }
+}
+
+/** The sim's animators, a pool per world: loaded from the components at every step, so they keep no state of their own. */
+const pools = new WeakMap<World, AnimatorPool>();
+const [velocity, feet] = [new Vector3(), new Vector3()];
+
+/** The animated actors of `w`, and its pool (pruned of the despawned). */
+function animated(w: World) {
+  const pool = pools.get(w) ?? new AnimatorPool();
+  pools.set(w, pool);
+  pool.prune((id) => w.has(id));
+  return [w.query('actor', 'animator') as unknown as (ActorComponents & { id: number })[], pool] as const;
+}
+
+/**
+ * The system `actors.anim`: each animator's step in id order, told its `states` and the controller's (`velocity`, `yaw`,
+ * `air`, `dash`), its breathing phase drawn from `rng.entity(id, 'anim')` at its first step; emits its events.
+ */
+function stepAnimators(w: World): void {
+  const [actors, pool] = animated(w);
+  for (const { id, actor, animator: data } of actors) {
+    const rng = w.rng.entity(id, 'anim');
+    if (!data.started) [data.state.clock, data.started] = [rng.next() * STEP.clockSpread, true]; // as a humanoid does
+    const animator = pool.get(id, data, { rng, dt: w.dt });
+    velocity.set(actor.vx, actor.vy, actor.vz);
+    animator.step({ ...data.states, velocity, yaw: actor.yaw, air: !actor.grounded, dash: actor.dash > 0 }).save(data);
+    for (const { type, ...event } of animator.events) w.emit(type, { id, ...event });
+  }
+}
+
+/** The system `actors.pose`: the `preciseHits` animators posed where their feet are now, so their trail is sim data. */
+function poseAnimators(w: World): void {
+  const [actors, pool] = animated(w);
+  for (const { id, actor, animator: data } of actors) {
+    if (!data.preciseHits) continue;
+    const animator = pool.get(id, data, { rng: w.rng.entity(id, 'anim'), dt: w.dt });
+    animator.pose({ at: feet.set(actor.x, actor.y, actor.z), yaw: actor.yaw }).save(data);
   }
 }
 
