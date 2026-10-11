@@ -1,0 +1,11 @@
+{
+  "describe": "A puppet body: parts on the humanoid skeleton's bones, one line each, with material slots and mirrored parts, with a unit test that compiles it for every build and draws it within 10 draw calls (PLAN.md WP 3.8).",
+  "id": "the module's path, labs/<lab>/bodies/<name> (its id is body:<name>): labs/box/bodies/knight",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/bodies|tools/templates/body)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/body/sampleBody",
+  "files": {
+    "body.ts.tmpl": "{{id}}.ts",
+    "body.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}
