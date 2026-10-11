@@ -6,8 +6,11 @@
  * stone under the stage's sun alone; its torches' lights arrive with the light pool, WP 7.1). The climb replay played
  * in the page, rendering as it steps, gives its goldens and ends with the hero on the west gallery, more than 0.9 m
  * above the floor (Done-when 2), where every camera sees him in the ID pass with the gallery and the stairs, the walls
- * and pillars before him cut away. Cycling every camera and resolution mode while he walks builds 0 pipelines after
- * the warm-up (Done-when 4). The CPU-only contract for the hall is tests/e2e/parity.spec.ts.
+ * and pillars before him cut away. The hall with its props (labs/box/?scene=hall-props) draws its 100 crates and
+ * barrels and its 30 fires through one instanced batch per prop part, each seen by the ID pass; its knock replay,
+ * played in the page, gives its goldens, and the crate the hero shoves moves more than 0.25 m there (Done-when 3).
+ * In both scenes, cycling every camera and resolution mode while he walks builds 0 pipelines after the warm-up
+ * (Done-when 4). The CPU-only contract for the hall is tests/e2e/parity.spec.ts.
  *
  * Invariants: the page is driven through `window.__engine` and the virtual clock, as an agent drives it; goldens come
  * from the replay files, never from the page itself.
@@ -25,6 +28,9 @@ const ROOT = join(import.meta.dirname, '..', '..');
 /** Variables a test runner sets for its own workers; the `x` children start without them. */
 const RUNNER_VARIABLE = /^(VITEST|TEST_WORKER_INDEX$|TEST_PARALLEL_INDEX$|PW_TS_ESM|PW_TEST_SOURCE_TRANSFORM)/;
 const CLIMB = readFileSync(join(ROOT, 'tests/replays/box-3-climb.replay.json'), 'utf8');
+const KNOCK = readFileSync(join(ROOT, 'tests/replays/box-3-knock.replay.json'), 'utf8');
+/** The knock replay's first shove: the step it comes at, and the crate it knocks (its spot, after the level's 30 fires). */
+const SHOVE = { at: 190, after: 240, prop: 30 + 40 };
 /** Every camera but first person: each classic view in both projections, then each 3D camera, then chase and rail. */
 const CAMERAS = [
   ...VIEW_NAMES.flatMap((view) => [`cam=${view}`, `cam=${view},persp`]),
@@ -76,9 +82,13 @@ async function feet(page: Page): Promise<[number, number, number]> {
   return [actor.x, actor.y, actor.z];
 }
 
-/** Opens the hall with `query`, ready on WebGPU. */
-async function open(page: Page, harness: Harness, query = '') {
-  await page.goto(`labs/box/?scene=hall${query}`);
+/** The golden hashes of a replay's text. */
+const goldensOf = (text: string) =>
+  (JSON.parse(text) as { hashes: Record<string, Record<string, string>> }).hashes['linux-x64'];
+
+/** Opens `scene` (the hall by default) with `query`, ready on WebGPU. */
+async function open(page: Page, harness: Harness, query = '', scene = 'hall') {
+  await page.goto(`labs/box/?scene=${scene}${query}`);
   await harness.ready({ timeout: 60_000 });
   await harness.assertWebGPU();
 }
@@ -128,9 +138,8 @@ test.describe('the box, stage 3: the hall', () => {
     harness,
   }) => {
     await open(page, harness);
-    const goldens = (JSON.parse(CLIMB) as { hashes: Record<string, Record<string, string>> }).hashes['linux-x64'];
     const run = await call<{ hashes: Record<string, string>; frames: number }>(page, 'replay', CLIMB);
-    expect(run.hashes).toEqual(goldens);
+    expect(run.hashes).toEqual(goldensOf(CLIMB));
     expect(run.frames).toBe(600);
     const [x0, y, z0] = await feet(page);
     expect(y).toBeGreaterThan(0.9);
@@ -152,22 +161,54 @@ test.describe('the box, stage 3: the hall', () => {
     expect(names.some((name) => name.startsWith('level:hall/stairs'))).toBe(true);
   });
 
-  test('cycling every camera and resolution mode while he walks builds 0 pipelines after the warm-up', async ({
+  test('the hall with its props draws them in batches, and a shoved crate moves more than 0.25 m in the page', async ({
     page,
     harness,
   }) => {
-    await open(page, harness);
-    for (const code of [...CAMERAS, 'cam3=first']) {
-      await call(page, 'camera.set', code);
-      for (const mode of RESOLUTION_MODES) {
-        await call(page, 'set', 'gfx.resolution', mode);
-        await call(page, 'step', 6, { move: [-0.3, 0.2] });
-        const frame = await call<{ drawn: boolean; built: number }>(page, 'render', 2);
-        expect(frame, `${code}, ${mode}`).toMatchObject({ drawn: true, built: 0 });
-      }
+    await open(page, harness, '&cam=iso', 'hall-props');
+    const visible = await seen(page);
+    for (const batch of ['prop:crate/mesh', 'prop:barrel/mesh', 'prop:brazier/flames']) {
+      expect(visible.find((object) => object.name === `${batch}/page0`)?.px ?? 0, batch).toBeGreaterThan(50);
     }
-    const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
-    expect(advice).not.toContain('GFX_COLD_PIPELINE');
-    expect(harness.advice()).toEqual([]);
+    // One batch per prop part: 70 crates, 30 barrels, and 30 fires of three tongues round three cores.
+    const dump = await call<string>(page, 'scene.dump', { filter: 'prop:' });
+    expect(dump).toMatch(/prop:crate\/mesh\/page0 InstancedMesh .* ×70\n/);
+    expect(dump).toMatch(/prop:barrel\/mesh\/page0 InstancedMesh .* ×30\n/);
+    expect(dump).toMatch(/prop:brazier\/flames\/page0 InstancedMesh .* ×180\n/);
+    const run = await call<{ hashes: Record<string, string>; frames: number }>(page, 'replay', KNOCK);
+    expect(run.hashes).toEqual(goldensOf(KNOCK));
+    expect(run.frames).toBe(600);
+    /** The shoved crate after `until` steps of the knock replay, drawn after each step. */
+    const crate = async (until: number) => {
+      await call(page, 'replay', KNOCK, { until });
+      const id = (await call<{ id: number }[]>(page, 'entities', 'sceneProp'))[SHOVE.prop].id;
+      return (await call<{ sceneProp: { prop: string; x: number; z: number } }>(page, 'get', id)).sceneProp;
+    };
+    const [before, after] = [await crate(SHOVE.at), await crate(SHOVE.after)];
+    expect(before.prop).toBe('prop:crate');
+    expect(Math.hypot(after.x - before.x, after.z - before.z)).toBeGreaterThan(0.25);
+    const frame = await call<{ drawn: boolean; built: number }>(page, 'render', 2);
+    expect(frame).toMatchObject({ drawn: true, built: 0 });
   });
+
+  for (const scene of ['hall', 'hall-props']) {
+    test(`${scene}: cycling every camera and resolution mode while he walks builds 0 pipelines after the warm-up`, async ({
+      page,
+      harness,
+    }) => {
+      await open(page, harness, '', scene);
+      for (const code of [...CAMERAS, 'cam3=first']) {
+        await call(page, 'camera.set', code);
+        for (const mode of RESOLUTION_MODES) {
+          await call(page, 'set', 'gfx.resolution', mode);
+          await call(page, 'step', 6, { move: [-0.3, 0.2] });
+          const frame = await call<{ drawn: boolean; built: number }>(page, 'render', 2);
+          expect(frame, `${code}, ${mode}`).toMatchObject({ drawn: true, built: 0 });
+        }
+      }
+      const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
+      expect(advice).not.toContain('GFX_COLD_PIPELINE');
+      expect(harness.advice()).toEqual([]);
+    });
+  }
 });
