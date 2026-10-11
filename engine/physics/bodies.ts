@@ -73,8 +73,9 @@ export interface PropSpec extends Omit<BodySpec, 'type' | 'colliders'> {
 /** The Rapier body of `id`, or throws `PHYSICS_NO_BODY`. */
 function rigid(physics: Physics, id: number): RAPIER.RigidBody {
   const found = Number.isInteger(id) && id >= 0 ? rapierOf(physics).bodies.get(handleOf(id)) : null;
-  if (!found) throw codeError('PHYSICS_NO_BODY', { id: show(id), why: '' });
-  return found;
+  if (found) return found;
+  const why = Number.isInteger(id) && id >= 0 ? ': it was removed, or never added' : ': ids are whole numbers from 0';
+  throw codeError('PHYSICS_NO_BODY', { id: show(id), why });
 }
 
 /** A finite number, or the fallback; throws `PHYSICS_BAD_ARGUMENT`. */
