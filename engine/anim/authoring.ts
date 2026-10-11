@@ -31,19 +31,19 @@ import type { Pose } from './pose';
 import { jointIndex, socketIndex, type Skeleton } from './skeleton';
 
 /** A side of the body. */
-export type Side = 'L' | 'R';
+export type LimbSide = 'L' | 'R';
 
 /** Both sides, left first (my-3d2dge's loops ran `s` over −1, then 1). */
-export const SIDES: readonly Side[] = ['L', 'R'];
+export const SIDES: readonly LimbSide[] = ['L', 'R'];
 
 /** One value for each side. */
-export type Sided<T> = Readonly<Record<Side, T>>;
+export type Sided<T> = Readonly<Record<LimbSide, T>>;
 
 /** A rig-local point or direction: metres (or a direction's parts) forward, right and up. */
 export type FRU = readonly [f: number, r: number, u: number];
 
 /** +1 for the right side, −1 for the left: the sign of `r` on that side (my-3d2dge's `s`). */
-export function sideSign(side: Side): 1 | -1 {
+export function sideSign(side: LimbSide): 1 | -1 {
   return side === 'R' ? 1 : -1;
 }
 
@@ -168,7 +168,7 @@ export function solveSpine(rig: Rig, to: SpineTargets, hips: number, twist: numb
 }
 
 /** One arm: the wrist onto `hand` (rig-local, before `size`), the elbow bent toward `SOLVE.armPole`. Runs FK. */
-export function solveArm(rig: Rig, side: Side, hand: Vector3): void {
+export function solveArm(rig: Rig, side: LimbSide, hand: Vector3): void {
   const a = SOLVE.armPole;
   const pole = B(a[0], sideSign(side) * a[1], a[2], v[0]).applyQuaternion(rig.pose.rootRot);
   twoBoneRot(rig.skeleton, rig.pose, rig.world, `hand${side}`, rigToWorld(rig, hand, v[1]), { pole });
@@ -180,7 +180,7 @@ export function solveArm(rig: Rig, side: Side, hand: Vector3): void {
  * `plantarflexion`) and tips with the shin past that, pivoting on its contact socket, and a lifted one follows the
  * shin; the toes bend up so their tips rest on the floor, as far as the ball's height allows. Runs FK.
  */
-export function solveLeg(rig: Rig, side: Side, sole: Vector3): void {
+export function solveLeg(rig: Rig, side: LimbSide, sole: Vector3): void {
   const { pose: P, world: W, skeleton } = rig;
   const b = skeleton.build;
   const s = b.size;

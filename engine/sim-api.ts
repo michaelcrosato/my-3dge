@@ -206,7 +206,7 @@ export type { Effectors } from './anim/poses';
 export { B } from './anim/authoring';
 export { turnRight } from './anim/authoring';
 export type { FRU } from './anim/authoring';
-export type { Side } from './anim/authoring';
+export type { LimbSide } from './anim/authoring';
 export type { Sided } from './anim/authoring';
 
 // Physics (WP 3.1): Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id,

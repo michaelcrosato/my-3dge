@@ -42,7 +42,7 @@ import { log as engineLog, type Log } from '../core/log';
 import { approach, MathUtils, Quaternion, Vector3 } from '../core/math';
 import { Rng } from '../core/rng';
 import { SIM_DT } from '../core/time';
-import { B, holdAlong, SIDES, sideSign, solveArm, solveLeg, solveSpine, type Rig, type Side } from './authoring';
+import { B, holdAlong, SIDES, sideSign, solveArm, solveLeg, solveSpine, type Rig, type LimbSide } from './authoring';
 import { getBuild, type Build } from './builds';
 import { createWorldPose, forwardKinematics, type WorldPose } from './fk';
 import { crouchShare, GAIT, type BodyMotion, type EffectorContext, type HumanoidWeights } from './locomotion';
@@ -153,7 +153,7 @@ export interface HumanoidInput {
   /** 0–1: knocked flat, overriding the `die` and `down` poses. */
   down?: number;
   /** A move's body motion while it plays (moves fill it, WP 6.1): its targets, and the foot that leads a lunge. */
-  body?: Partial<BodyMotion> & { lead?: Side };
+  body?: Partial<BodyMotion> & { lead?: LimbSide };
 }
 
 /** The humanoid's state: plain numbers, what the sim keeps of it. */

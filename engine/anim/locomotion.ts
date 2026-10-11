@@ -25,7 +25,7 @@
  * @see engine/anim/poses.test.ts
  */
 import { MathUtils, Quaternion, Vector3 } from '../core/math';
-import { B, sideSign, turnRight, type Side, type Sided } from './authoring';
+import { B, sideSign, turnRight, type LimbSide, type Sided } from './authoring';
 import type { Build } from './builds';
 
 /** Every constant of the gait, idle, lean and arm swing; lengths in metres (the source's units ÷ 16). */
@@ -169,7 +169,7 @@ export interface EffectorContext {
   /** A move's body motion. */
   readonly body: Readonly<BodyMotion>;
   /** The foot that steps into a lunge. */
-  readonly lead: Side;
+  readonly lead: LimbSide;
   /** The speed share, capped at 1 (my-3d2dge's `sp`). */
   readonly sp: number;
   /** The crouch now: the held pose, a move's, or the knees buckling as the body falls. */
@@ -207,7 +207,7 @@ export function pelvisTarget(ctx: EffectorContext, out: Vector3): Vector3 {
 }
 
 /** The hip joint of `side`: the pelvis plus `hipHalf` sideways, turned with the hips' share of the twist. */
-export function hipTarget(ctx: EffectorContext, side: Side, out: Vector3): Vector3 {
+export function hipTarget(ctx: EffectorContext, side: LimbSide, out: Vector3): Vector3 {
   const turn = turnRight(ctx.body.twist * GAIT.hipTwist, q);
   return B(0, sideSign(side) * ctx.build.hipHalf, 0, out)
     .applyQuaternion(turn)
@@ -215,7 +215,7 @@ export function hipTarget(ctx: EffectorContext, side: Side, out: Vector3): Vecto
 }
 
 /** The sole of the foot on `side` in the gait: a stride along the movement and a lift, or the standing spread. */
-export function gaitFoot(ctx: EffectorContext, side: Side, out: Vector3): Vector3 {
+export function gaitFoot(ctx: EffectorContext, side: LimbSide, out: Vector3): Vector3 {
   const { build: b, sp } = ctx;
   const s = sideSign(side);
   const p = ctx.phase + (s > 0 ? Math.PI : 0);
@@ -253,7 +253,7 @@ export function headDirection(ctx: EffectorContext, spine: Vector3, out: Vector3
 }
 
 /** The shoulder joint of `side`: `shoulderHalf` out from the shoulder centre, turned by the twist, level. */
-export function shoulderTarget(ctx: EffectorContext, side: Side, out: Vector3): Vector3 {
+export function shoulderTarget(ctx: EffectorContext, side: LimbSide, out: Vector3): Vector3 {
   const turn = turnRight(ctx.body.twist, q);
   return B(0, sideSign(side) * ctx.build.shoulderHalf, 0, out)
     .applyQuaternion(turn)
@@ -261,7 +261,7 @@ export function shoulderTarget(ctx: EffectorContext, side: Side, out: Vector3): 
 }
 
 /** The hand on `side` in the gait: hanging by the shoulder, swinging against its foot, lifting at each end. */
-export function gaitHand(ctx: EffectorContext, side: Side, out: Vector3): Vector3 {
+export function gaitHand(ctx: EffectorContext, side: LimbSide, out: Vector3): Vector3 {
   const { build: b, sp } = ctx;
   const G = GAIT;
   const s = sideSign(side);
@@ -287,7 +287,7 @@ export function restContext(build: Build): EffectorContext {
     aim: 0,
     w: { ...w, crouch: 0, wave: 0, hips: 0, block: 0 },
     body: { lunge: 0, hop: 0, crouch: 0, lean: 0, twist: 0 },
-    lead: 'L' as Side,
+    lead: 'L' as LimbSide,
     sp: 0,
     crouch: 0,
     armLength: build.armUpper + build.armLower,

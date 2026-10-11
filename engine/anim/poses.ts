@@ -28,7 +28,7 @@
  */
 import { defineCodes, didYouMean, log, type Log } from '../core/log';
 import { Vector3 } from '../core/math';
-import { B, fromFRU, SIDES, sideSign, type FRU, type Side, type Sided } from './authoring';
+import { B, fromFRU, SIDES, sideSign, type FRU, type LimbSide, type Sided } from './authoring';
 import {
   gaitFoot,
   gaitHand,
@@ -115,14 +115,14 @@ export function weaponName(name: string | undefined, to: Log = log): Weapon | un
 }
 
 /** Places a layer's target for `side` (rig-local, model frame), given the target so far; an `add` layer's offset. */
-export type Placement = (ctx: EffectorContext, side: Side, current: Vector3, out: Vector3) => Vector3;
+export type Placement = (ctx: EffectorContext, side: LimbSide, current: Vector3, out: Vector3) => Vector3;
 
 /** One layer of an effector table. */
 export interface EffectorLayer {
   /** The pose, stance or state it shows. */
   readonly name: string;
   /** Its weight now on `side`, 0 to 1. */
-  readonly weight: (ctx: EffectorContext, side: Side) => number;
+  readonly weight: (ctx: EffectorContext, side: LimbSide) => number;
   /** Where it puts the target. */
   readonly at: Placement;
   /** `blend` (the default) moves the target toward `at` by the weight; `add` adds `at` times the weight. */
@@ -308,7 +308,7 @@ const target = new Vector3();
 export function applyLayers(
   layers: readonly EffectorLayer[],
   ctx: EffectorContext,
-  side: Side,
+  side: LimbSide,
   current: Vector3,
 ): Vector3 {
   for (const layer of layers) {

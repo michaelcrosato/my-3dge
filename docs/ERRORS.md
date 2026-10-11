@@ -129,6 +129,14 @@ Raised by `jointIndex`, `socketIndex`, `boneMask` and the pose functions that ta
 
 Raised by `animCheck` (engine/anim/check.ts) for a rigid pair naming a point the skeleton lacks.
 
+### ANIM_UNKNOWN_POSE
+
+- Message: `{name} is not a humanoid {what}{suggestion}; it is ignored`
+- Fix: use one of: {names}
+- Registered in: [`engine/anim/poses.ts` line 45](../engine/anim/poses.ts)
+
+Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `stance` or `weapon` it does not know. The message names the closest names; `POSES`, `STANCES` and `WEAPONS` (engine/anim/poses.ts) list them all. An unknown weapon holds nothing.
+
 ## app
 
 ### APP_BAD_ROUTE

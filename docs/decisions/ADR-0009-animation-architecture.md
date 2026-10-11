@@ -46,3 +46,17 @@ Differential tests against the ported reference vectors (WP 0.11); the animation
   existing `ANIM_UNKNOWN_JOINT`; one new code, `ANIM_BAD_TARGET`.
 - Evidence: `engine/anim/ik.test.ts` (2000 random cases bit-exact against `ik3`; soles within 5 mm on a 10° slope and
   a 0.2 m step on 3 builds, worst gap 2.3e-8 m).
+
+## Amendment 3 (2026-10-10, WP-3.6)
+- **Scope of the state update.** WP 3.6 ports the gait, idle, lean, arm swing, poses, stances and knockdown (as a root
+  turn) from `engine:1803` onward. The moves' arm and kick paths go to WP 6.1, and the squash, hair and cape to WP 6.2
+  (secondary motion); the humanoid leaves them an `input.body` slot, matching WP 3.7's layer stack.
+- **Known floor sinks.** The old leg had no ankle, so the back foot's ball sinks below the floor when kneeling (up to
+  11.5 cm), crouching (5 cm), dashing (7 cm) and in guard (8 mm). They are listed with reasons in
+  `engine/anim/authoring.test.ts` (KNOWN); WP 3.7's post-IK foot plant and the WP 6.6 motion QA close them.
+- **No differential exceptions.** The reference vectors were recorded with no view hacks, so EXCEPTIONS is empty.
+- **New code** `ANIM_UNKNOWN_POSE`, with the closest names as suggestions.
+- **`LimbSide`.** The body side `'L' | 'R'` is exported as `LimbSide`, since WP 4.2 already exports a level `Side`
+  (integration call).
+- Evidence: `engine/anim/humanoid.test.ts` (3 builds, 14,688 points each; mean 0.70-0.78 mm, worst 1.56-2.04 cm, joints
+  above the knees within 2e-6 m).
