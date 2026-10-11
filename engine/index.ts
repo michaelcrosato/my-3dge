@@ -229,3 +229,20 @@ export type { PuppetBatches } from './gfx/puppets/draw';
 export { createBlobShadows } from './gfx/puppets/blobShadow';
 export { blobScale } from './gfx/puppets/blobShadow';
 export type { BlobShadows } from './gfx/puppets/blobShadow';
+// The HTML/CSS overlay (WP 6.5): world-anchored labels and damage numbers placed from projected coordinates each
+// frame (three.js's CSS2DRenderer pattern), HUD lines and a crosshair over the canvas; ui.state() for tests.
+export { createOverlay } from './ui/overlay';
+export type { Overlay } from './ui/overlay';
+export type { OverlayOptions } from './ui/overlay';
+export type { HudOptions } from './ui/overlay';
+export type { HudPlace } from './ui/overlay';
+export type { Label } from './ui/labels';
+export type { LabelOptions } from './ui/labels';
+export type { DamageOptions } from './ui/labels';
+export type { WorldPoint } from './ui/labels';
+export type { Anchor } from './ui/labels';
+export type { OverlayCamera } from './ui/labels';
+export { DAMAGE_NUMBERS } from './ui/labels';
+export { uiState } from './ui/state';
+export type { UiState } from './ui/state';
+export type { UiElementState } from './ui/state';
