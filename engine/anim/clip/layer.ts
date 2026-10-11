@@ -183,19 +183,28 @@ export class ClipLayer implements AnimLayer {
     const [set, name] = cut >= 0 ? [clip.slice(0, cut), clip.slice(cut + 1)] : ['', clip];
     const found = this.#libraries.find((l) => (!set || l.name.toLowerCase() === set.toLowerCase()) && l.has(name));
     if (found) return [found, name];
-    const all = this.#libraries.flatMap((l) => l.names.map((n) => `${l.name}/${n}`));
+    // the closest names: `SET/Clip` for a name given with its set, bare names for a bare one
+    const all = this.#libraries.flatMap((l) => l.names.map((n) => (set ? `${l.name}/${n}` : n)));
     const where = set || this.#libraries.map((l) => l.name).join(', ');
     throw codeError('ANIM_UNKNOWN_CLIP', { set: where, name: JSON.stringify(clip), suggestion: didYouMean(clip, all) });
   }
 
-  /** Plays `clip`, crossfading from what plays now; the same clip already playing only takes the new `play`. */
+  /**
+   * Plays `clip`, crossfading from what plays now; the same clip already playing only takes the new `play`. Its mask
+   * and `next` are checked now, so a step never throws: `ANIM_UNKNOWN_CLIP`, `ANIM_UNKNOWN_JOINT`, `ANIM_BAD_MASK`.
+   */
   play(clip: string, play: ClipPlay = {}): this {
     const [library, name] = this.resolve(clip);
+    if (play.mask) boneMask(play.mask);
+    if (play.next) this.resolve(play.next);
     this.#start(`${library.name}/${name}`, play, false);
     return this;
   }
 
-  /** Fades the clip out over `fade` seconds (its `out`); the body's own animation, or `locomote`'s, takes over. */
+  /**
+   * Fades the clip out over `fade` seconds (its `out`): `locomote`'s loops take over, or the body's own animation.
+   * Stopping one of `locomote`'s loops ends `locomote`.
+   */
   stop(fade?: number): this {
     const c = this.state.current;
     if (c?.loco) this.state.moving = null;
@@ -340,14 +349,17 @@ export class ClipLayer implements AnimLayer {
     if (slot.stopping) slot.w = slot.w - step > 1e-9 ? slot.w - step : 0;
     else if (current) slot.w = slot.w + step < 1 - 1e-9 ? slot.w + step : 1;
     if (current && slot.w <= 0 && slot.stopping) this.state.current = null;
-    if (current && !slot.loco) this.#travel(library.bake(name, slot.play.mirror), t0, Math.min(slot.t, loop ? Infinity : clip.dur)); // prettier-ignore
+    const baked = () => this.#bakedFor(library.bake(name, slot.play.mirror), slot);
+    if (current && !slot.loco) this.#travel(baked(), t0, Math.min(slot.t, loop ? Infinity : clip.dur));
   }
 
   /** The events of `slot` crossed from `t0` to its time now (a loop's on every lap). */
   #events(slot: ClipSlot, library: ClipLibrary, name: string, t0: number, loop: boolean): void {
     const clip = library.clip(name);
     if (!loop && t0 >= clip.dur) return;
-    const marks: [number, ClipLayerEvent][] = (clip.events ?? []).map((e) => [e.t, { type: 'event', clip: slot.clip, name: e.name, ...(e.side && { side: e.side }) }]); // prettier-ignore
+    // a mirrored clip's events happen on the other side
+    const side = (s?: 'L' | 'R') => (s && slot.play.mirror ? ({ L: 'R', R: 'L' } as const)[s] : s);
+    const marks: [number, ClipLayerEvent][] = (clip.events ?? []).map((e) => [e.t, { type: 'event', clip: slot.clip, name: e.name, ...(e.side && { side: side(e.side) }) }]); // prettier-ignore
     if (slot.play.attack) {
       const hit = clip.events?.find((e) => e.name === 'hit')?.t ?? library.strikeTime(name);
       marks.push([hit, { type: 'hit', clip: slot.clip }]);

@@ -168,7 +168,7 @@ function restMarkers(R: RestBody): { joints: number[]; offsets: Vector3[] } {
   };
 }
 const markers = new WeakMap<RestBody, ReturnType<typeof restMarkers>>();
-const [pt, rot] = [new Vector3(), new Quaternion()];
+const [pt, at, rot] = [new Vector3(), new Vector3(), new Quaternion()];
 
 /**
  * The 36 decode points of `world` (FK on `restSkeleton(R)`), written into `out` as the decode writes them: mm in the
@@ -180,7 +180,7 @@ export function restPoints<T extends { [i: number]: number }>(R: RestBody, world
   for (let i = 0; i < POINT_COUNT; i++) {
     const j = m.joints[i];
     pt.copy(m.offsets[i]).applyQuaternion(rot.fromArray(world.rotations, j * 4));
-    pt.add(jointPosition(world, j, new Vector3()));
+    pt.add(jointPosition(world, j, at));
     [out[i * 3], out[i * 3 + 1], out[i * 3 + 2]] = [pt.z * 1000, -pt.x * 1000, pt.y * 1000];
   }
   return out;
@@ -190,26 +190,16 @@ export function restPoints<T extends { [i: number]: number }>(R: RestBody, world
  * A skeleton's standing hip height, metres: its hip joints' rest height (straight legs; for a build, its pelvis's,
  * `legUpper + legLower` times `size`).
  */
-export const standingHipHeight = (skeleton: Skeleton) =>
-  skeleton.offsets[1] + (skeleton.offsets[THIGH_L * 3 + 1] + skeleton.offsets[THIGH_R * 3 + 1]) / 2;
-const [THIGH_L, THIGH_R] = [jointIndex('thighL'), jointIndex('thighR')];
+export function standingHipHeight(skeleton: Skeleton): number {
+  const [l, r] = [jointIndex('thighL'), jointIndex('thighR')];
+  return skeleton.offsets[1] + (skeleton.offsets[l * 3 + 1] + skeleton.offsets[r * 3 + 1]) / 2;
+}
 
 /** The bones aligned at rest: each joint and the child (or its own tip) its bone runs to. */
+// prettier-ignore
 const ALIGNED = [
-  ...[
-    ['spine0', 'spine1'],
-    ['spine1', 'spine2'],
-    ['spine2', 'chest'],
-    ['chest', 'neck'],
-    ['neck', 'head'],
-  ],
-  ...[
-    ['head', 'head'],
-    ['footL', 'toeL'],
-    ['footR', 'toeR'],
-    ['toeL', 'toeL'],
-    ['toeR', 'toeR'],
-  ],
+  ['spine0', 'spine1'], ['spine1', 'spine2'], ['spine2', 'chest'], ['chest', 'neck'], ['neck', 'head'], ['head', 'head'],
+  ['footL', 'toeL'], ['footR', 'toeR'], ['toeL', 'toeL'], ['toeR', 'toeR'],
 ] as const;
 
 /** How a source rest body maps onto a skeleton: each joint's rest alignment, the hip-height ratio, the pelvis. */

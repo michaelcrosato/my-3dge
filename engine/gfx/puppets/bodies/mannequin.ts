@@ -17,9 +17,13 @@
  * body measurement (`my-3d2dge:tools/anim-import.mjs:193-205`), drawn in 3D instead of as 2D capsules.
  *
  * @example
- * // import quaternius from the joined set `data/anim/sets/quaternius/` (tools/anim/repack.ts readSet)
- * // const { build, body } = defineMannequin(quaternius); // build:mannequin, body:mannequin
- * // createPuppet(compileBody(body, build), { materials }); // two draw calls
+ * import { readSet } from '../../../../tools/anim/repack';
+ * import { createRegistry } from '../../../core/registry';
+ * import { compileBody } from '../compile';
+ * const registry = createRegistry();
+ * const { build, body } = defineMannequin(readSet('quaternius'), { registry }); // build:mannequin, body:mannequin
+ * compileBody(body, build, { registry }).pieces.length; // 67: the 22 segments in 43 limbs, and 24 rings
+ * build.legUpper; // 0.40031: the rest body's thigh, in metres
  * @see engine/gfx/puppets/bodies/mannequin.test.ts
  */
 import { buildKind, defineBuild, getBuild, type Build } from '../../../anim/builds';

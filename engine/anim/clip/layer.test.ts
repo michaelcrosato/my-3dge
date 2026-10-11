@@ -123,6 +123,8 @@ describe('flags and events', () => {
     expect(run(layer, 160)).toEqual([0, 1, 2].map(() => ({ type: 'event', clip: 'TEST/Listen', name: 'blink' })));
     layer.play('Wave', { fade: 0 });
     expect(run(layer, 13)).toEqual([{ type: 'event', clip: 'TEST/Wave', name: 'step', side: 'L' }]);
+    layer.play('Nod', { fade: 0 }).play('Wave', { fade: 0, mirror: true });
+    expect(run(layer, 13)).toEqual([{ type: 'event', clip: 'TEST/Wave', name: 'step', side: 'R' }]);
     layer.play('Punch', { fade: 0, attack: true });
     const strike = library.strikeTime('Punch');
     let at = -1;
@@ -229,5 +231,17 @@ describe('save and load', () => {
     }
     expect([b.save(), c.save()]).toEqual([a.save(), a.save()]);
     expect(a.inspect()).toMatchObject({ current: { clip: expect.stringMatching(/^TEST\//) } });
+  });
+});
+
+describe('errors', () => {
+  it('refuses an unknown clip, mask or next when played, never in a step', () => {
+    const layer = layerOf();
+    expect(() => layer.play('Wav')).toThrow(/ANIM_UNKNOWN_CLIP.*"Wave"/s);
+    expect(() => layer.play('TEST/Wav')).toThrow(/ANIM_UNKNOWN_CLIP.*"TEST\/Wave"/s);
+    expect(() => layer.play('Wave', { mask: ['armz' as 'armL'] })).toThrow(/ANIM_UNKNOWN_JOINT/);
+    expect(() => layer.play('Wave', { next: 'Nodd' })).toThrow(/ANIM_UNKNOWN_CLIP/);
+    expect(layer.state.current).toBeNull();
+    expect(layer.play('test/Nod').state.current?.clip).toBe('TEST/Nod'); // a set's name in any case
   });
 });

@@ -6,9 +6,10 @@
  *
  * The baker works from the key's parameters, as the decode (readable.ts) does, not from decoded points: the frames
  * of the pelvis, chest and head from their turn, lean and tilt; each limb from its direction, bend and twist through
- * the decode's own hint and two-bone solve; the feet from down, out and toes. So a straight arm keeps its twist (its
- * pole comes from the hint, not from an elbow that no longer bends), and the singular poses are handled: a hint along
- * the limb takes the parent's pole, a hand whose across direction runs along the forearm keeps the forearm's roll.
+ * the decode's own hint and two-bone solve (rewritten here to give frames, not points); the feet from down, out and
+ * toes. So a straight arm keeps its twist (its pole comes from the hint, not from an elbow that no longer bends), and
+ * the singular poses are handled: a limb with no direction keeps its parent's frame, a hint along the limb takes the
+ * parent's pole, and a hand whose across direction nears the forearm's line eases back to the forearm's roll.
  *
  * What a rotation means (identity is the skeleton's T-pose, every frame the character's: +Y up, +Z forward, left +X):
  * - the pelvis turns from the T-pose to the key's pelvis frame; the spine, chest, neck and head take the decode's own
@@ -17,8 +18,8 @@
  *   key's reach and shrug;
  * - an upper arm takes its bone (+X left, −X right) to the shoulder-to-elbow direction and −Z to the elbow's pole; a
  *   thigh takes −Y to hip-to-knee and +Z to the knee's pole; elbows and knees turn about their hinges only (ik.ts
- *   `LIMBS`); a hand turns the forearm's bone to the knuckles and +Z (the weapon socket's blade side) to the
- *   decode's across direction (the blade, or the chest's right);
+ *   `LIMBS`); a hand runs on along the forearm (the decode keeps it straight) and turns +Z (the weapon socket's
+ *   blade side) to the decode's across direction (the blade, or the chest's right);
  * - a foot turns +Z to where the key points it, by the pelvis frame, its out and its down; a toe adds its bend.
  *
  * Invariants: rotations are unit quaternions, in Float32 as stored, each frame's sign kept on the side of the last.
@@ -123,11 +124,10 @@ function solveLimb(M: Frame, s: Side, kind: 'arm' | 'leg', v: V, L1: number, L2:
   const dist = Math.max(Math.min(dl, max), 0.01);
   const n = mul(d, (dl > max ? max / dl : 1) / dist);
   const h0 = sub(hint, mul(n, dot(hint, n)));
-  const singular = len(h0) < 1e-4;
-  const h = singular ? [n[1], -n[0], 0] : norm(h0);
+  const h = len(h0) < 1e-4 ? [n[1], -n[0], 0] : norm(h0);
   const x = (L1 * L1 - L2 * L2 + dist * dist) / (2 * dist);
   const upper = add(mul(n, x), mul(h, Math.sqrt(Math.max(0, L1 * L1 - x * x))));
-  return { d1: norm(upper), d2: norm(sub(mul(n, dist), upper)), h, singular };
+  return { d1: norm(upper), d2: norm(sub(mul(n, dist), upper)), h };
 }
 
 /* ---- engine space ---- */
@@ -176,7 +176,7 @@ function limbFrames(M: Frame, s: Side, kind: 'arm' | 'leg', v: V, R: RestBody, a
   rigToEngine(h, vb).addScaledVector(va, -vb.dot(va));
   // a hint along the limb (the decode's fallback): the parent's pole instead
   if (vb.lengthSq() < 1e-12) vb.copy(pole).applyQuaternion(parent).addScaledVector(va, -vb.dot(va));
-  if (vb.lengthSq() < 1e-12) vb.set(va.y, va.z, va.x).addScaledVector(va, -vb.dot(va));
+  if (vb.lengthSq() < 1e-12) vb.crossVectors(va, Math.abs(va.y) < 0.9 ? Y_AXIS : X_AXIS);
   const wu = turnPair(bone, pole, va, vb.normalize(), W[index[upper as JointName]]);
   const axis = vc.crossVectors(va, vb);
   if (rigToEngine(d2, vd).lengthSq() < 1e-12) vd.copy(va);
