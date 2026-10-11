@@ -215,3 +215,20 @@ export { PHYSICS_SETTINGS } from './physics/params';
 export { addLevelBodies } from './sim/levelBodies';
 export { queryViewOf } from './sim/queryView';
 export type { QueryView } from './sim/queryView';
+
+// Characters (WP 3.2): actors moved by the character controller (Rapier's, moved across then down), with an action
+// game's feel: acceleration and skid, coyote time, a jump buffer, a variable jump, a wall jump, a dash, pushing props;
+// the feel meter measures how one handles.
+export { createCharacter } from './physics/character';
+export type { Character } from './physics/character';
+export { CHARACTER_FIELDS } from './physics/character';
+export { CHARACTER_STATE_FIELDS } from './physics/character';
+export type { CharacterState } from './physics/character';
+export { spawnActor } from './sim/actors';
+export { removeActor } from './sim/actors';
+export type { ActorSpec } from './sim/actors';
+export type { ActorComponent } from './sim/actors';
+export type { ActorComponents } from './sim/actors';
+export { measureFeel } from './sim/actors';
+export type { FeelReport } from './physics/feel';
+export type { FeelOptions } from './sim/actors';

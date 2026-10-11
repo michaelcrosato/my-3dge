@@ -1,8 +1,9 @@
 /**
  * @file Tests for `x sim` and its scene helpers (tools/cmd/sim.ts): scene modules are found by path or by id, the
  * command prints the hash and events within 20 lines, records `--set` values in its report, writes a replay of the
- * run that plays back to the same hash, gives the same hash on every run, and refuses unknown settings, scenes and
- * flags with exit 2 naming the closest; `replayText` writes readable, exact text.
+ * run that plays back to the same hash, gives the same hash on every run, adds the feel meter's report with `--feel`,
+ * and refuses unknown settings, scenes and flags with exit 2 naming the closest; `replayText` writes readable, exact
+ * text.
  * @see tools/cmd/sim.ts
  */
 import { readFileSync } from 'node:fs';
@@ -49,6 +50,19 @@ describe('x sim', () => {
     expect(playReplay(replay).hashes['240']).toBe(hash);
     const again = await sim('kernel', '--steps', '240', '--set', 'kernel.movers=4');
     expect(again.lines[0]).toBe(lines[0]);
+  });
+
+  it('adds the feel meter’s report with --feel (WP 3.2), and refuses it for a scene without an actor', async () => {
+    const { code, lines } = await sim('fixtures/scenes/steps', '--steps', '30', '--feel');
+    expect(code).toBe(0);
+    expect(lines.length).toBeLessThanOrEqual(20);
+    expect(lines.filter((line) => line.startsWith('feel: '))).toHaveLength(2);
+    const report = JSON.parse(readFileSync(join(ROOT, 'out/sim/steps/report.json'), 'utf8'));
+    expect(report.metrics['feel.topSpeed']).toBe(5);
+    expect(Math.abs(report.metrics['feel.dashDistance'] - 3.25)).toBeLessThan(0.02);
+    const none = await sim('kernel', '--steps', '1', '--feel');
+    expect(none.code).toBe(2);
+    expect(none.lines.join('\n')).toMatch(/--feel: the scene kernel has no actor/);
   });
 
   it('leaves view settings out of the hash', async () => {

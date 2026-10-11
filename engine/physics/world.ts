@@ -2,7 +2,7 @@
  * @file The physics world (PLAN.md WP 3.1, §6.1, §6.5 items 4–7; doctrines: Reproducible, Quality under the hood):
  * Rapier behind plain terms. `createPhysics()` makes a world that holds rigid bodies, steps inside the sim, answers
  * queries and is the sim world's physics hook: its state is hashed with the rest of the sim, and its capture restores
- * exactly. This module and its siblings are the only ones that import Rapier (ESLint's layer rule).
+ * exactly. This module and its siblings (`rapierOf`) are the only ones that import Rapier (ESLint's layer rule).
  *
  * Rapier is `@dimforge/rapier3d-simd-compat` 0.21.0 (§4.7): the SIMD build, its WebAssembly inlined, the same state
  * run to run and in Node and Chromium, and restores that continue exactly. This module initializes it once, when it is
@@ -361,7 +361,18 @@ export function createPhysics(): Physics {
     },
     dispose: () => world.free(),
   };
+  rapierWorlds.set(physics, () => world);
   return physics;
+}
+
+/** The Rapier world behind each physics world, for `rapierOf`. */
+const rapierWorlds = new WeakMap<Physics, () => RAPIER.World>();
+
+/** The Rapier world behind `physics` now (a restore replaces it): for the modules beside this one only. */
+export function rapierOf(physics: Physics): RAPIER.World {
+  const world = rapierWorlds.get(physics);
+  if (!world) throw codeError('PHYSICS_NONE', { what: 'this object' });
+  return world();
 }
 
 /** The physics world each sim world was given, by the sim world. */
