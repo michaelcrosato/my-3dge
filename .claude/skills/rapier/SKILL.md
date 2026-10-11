@@ -63,10 +63,9 @@ imports it (ESLint's layer rule); everything else meets plain data, body ids and
 - **`World.restoreSnapshot` returns null** for bytes it cannot read; the engine turns that into `PHYSICS_BAD_CAPTURE`.
 - **Rays starting inside a solid** strike it at distance 0 (`solid: true`, the default); pass `solid: false` for the
   far side.
-- **The character controller** (WP 3.2) loses all sideways motion on some ticks on level ground when one move carries
-  both the walk and the downward push: move across, then down. Autostep climbs about 5 cm above its setting with a
-  0.281 m capsule (0.25 m climbs 0.30 m, refuses 0.35 m): state the measured height, not the raw setting. Its
-  contacts are world space.
+- **The character controller** (engine/physics/character.ts) does its own steps, snap and pushes; Rapier's autostep,
+  snap and impulses are off. Never call a Rapier method inside a query or controller filter: the reentrant call
+  throws, and the collider silently counts as solid.
 - **Free what you make in tests:** `physics.dispose()` releases Rapier's memory; a world is unusable after it.
 
 ## Debugging a physics mismatch

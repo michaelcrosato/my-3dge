@@ -13,6 +13,9 @@ game agent's manual.
 
 - `ActionMap` (type from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): An action map entry.
 - `ActionMapSpec` (interface from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): How an action map is written.
+- `ActorComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `actor`: an entity the character controller moves.
+- `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, and `oneWay` for one-way platforms.
+- `ActorSpec` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): What `spawnActor` takes.
 - `addLevelBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a level's bodies (one fixed body: the ground slab and its merged boxes) and returns the body's id.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
@@ -52,6 +55,10 @@ game agent's manual.
 - `CameraInputSample` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): What the camera takes each frame: mouse look `[right, up]` rad, the right stick `[right, up]`, wheel notches.
 - `CameraLike` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A camera as the input reads it (engine/gfx/cameras/pose.ts `Camera`): its heading, and its pitch for first person.
 - `cellHash` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A seeded value in [0, 1) for the integer point (x, y), with `salt` telling apart uses of one seed (a stone's tone, its crack).
+- `Character` (type from [`engine/physics/character.ts`](../engine/physics/character.ts)): A character's settings, filled: what `createCharacter` returns and an actor's component holds.
+- `CHARACTER_FIELDS` (const from [`engine/physics/character.ts`](../engine/physics/character.ts)): A character's settings: `createCharacter` checks a spec against these and fills the defaults.
+- `CHARACTER_STATE_FIELDS` (const from [`engine/physics/character.ts`](../engine/physics/character.ts)): What a character remembers between ticks: plain data in its actor's component, hashed and captured with the sim.
+- `CharacterState` (type from [`engine/physics/character.ts`](../engine/physics/character.ts)): A character's own state, as `stepCharacter` reads and writes it (`CHARACTER_STATE_FIELDS` documents each field).
 - `codeLabel` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): What a prompt shows for `code`: `W`, `Space`, `LMB`, `A` / `Cross`, `L Stick Up`.
 - `ColliderDescriptor` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A collider descriptor; WP 4.2 adds hull shapes beside the box.
 - `ColliderSpec` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): One collider of a body: a shape where the body puts it, and its material.
@@ -65,6 +72,7 @@ game agent's manual.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
 - `createBindings` (function from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Makes the bindings of the action map `map` (an id or an entry), loading saved changes from `options.storage`.
+- `createCharacter` (function from [`engine/physics/character.ts`](../engine/physics/character.ts)): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
 - `createFootPlantState` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A new, unlocked `FootPlantState`.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
 - `createInput` (function from [`engine/input/input.ts`](../engine/input/input.ts)): Makes the page's input.
@@ -98,6 +106,8 @@ game agent's manual.
 - `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
 - `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
+- `FeelOptions` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
+- `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): its tile's floor; 0 outside the map.
 - `FOOT_PLANT` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `footPlant`'s tuning, in metres and seconds.
@@ -181,6 +191,7 @@ game agent's manual.
 - `MaterialSpec` (type from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): What `defineMaterial` takes: any of the fields, each with its default.
 - `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
+- `measureFeel` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `mergeGeometries` (function from [`engine/gfx/geometry/groups.ts`](../engine/gfx/geometry/groups.ts)): Joins `geometries` into one, in order: their attributes end to end, their indices offset.
 - `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
 - `OverlapOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): An overlap's options.
@@ -213,6 +224,7 @@ game agent's manual.
 - `readKeyboardLayout` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The page's keyboard layout (`navigator.keyboard.getLayoutMap()`, Chromium), or undefined where it is missing.
 - `RebindResult` (type from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): What `rebind` did: the action's codes now, or why it refused and which action holds the code.
 - `released` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` went up on the buffer's step (a tap shorter than a step included).
+- `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body.
 - `renderSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect as mono samples (engine/audio/dsp/render.ts): one variant, its layers mixed in.
 - `renderSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One pass of the song as mono samples (engine/audio/dsp/render.ts): at least the pass's length, so passes played back to back every `songTiming(song).seconds` keep time, plus the last notes' tails; silence when no track plays at the intensity asked for.
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
@@ -261,6 +273,7 @@ game agent's manual.
 - `SongTrack` (interface from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One track of a song.
 - `songVoices` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One pass of the song as a voice list, track by track: what `renderSong` renders.
 - `SoundDef` (type from [`engine/audio/dsp/voice.ts`](../engine/audio/dsp/voice.ts)): A sound: one voice, or several played together.
+- `spawnActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
 - `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
@@ -298,6 +311,9 @@ game agent's manual.
 
 ### [`engine/sim-api.ts`](../engine/sim-api.ts)
 
+- `ActorComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `actor`: an entity the character controller moves.
+- `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, and `oneWay` for one-way platforms.
+- `ActorSpec` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): What `spawnActor` takes.
 - `addLevelBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a level's bodies (one fixed body: the ground slab and its merged boxes) and returns the body's id.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
@@ -326,6 +342,10 @@ game agent's manual.
 - `buffered` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed within the last `steps` steps (its press step counts as 0) and not consumed since.
 - `Build` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): A `build` entry: one body's proportions, in metres before `size`.
 - `BuildSpec` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): What `defineBuild` takes: any field; the others keep `build:chibi`'s values.
+- `Character` (type from [`engine/physics/character.ts`](../engine/physics/character.ts)): A character's settings, filled: what `createCharacter` returns and an actor's component holds.
+- `CHARACTER_FIELDS` (const from [`engine/physics/character.ts`](../engine/physics/character.ts)): A character's settings: `createCharacter` checks a spec against these and fills the defaults.
+- `CHARACTER_STATE_FIELDS` (const from [`engine/physics/character.ts`](../engine/physics/character.ts)): What a character remembers between ticks: plain data in its actor's component, hashed and captured with the sim.
+- `CharacterState` (type from [`engine/physics/character.ts`](../engine/physics/character.ts)): A character's own state, as `stepCharacter` reads and writes it (`CHARACTER_STATE_FIELDS` documents each field).
 - `ColliderDescriptor` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A collider descriptor; WP 4.2 adds hull shapes beside the box.
 - `ColliderSpec` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): One collider of a body: a shape where the body puts it, and its material.
 - `COLLISION_GROUPS` (const from [`engine/physics/groups.ts`](../engine/physics/groups.ts)): The collision groups: each one's membership bit and the groups it touches.
@@ -336,6 +356,7 @@ game agent's manual.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
+- `createCharacter` (function from [`engine/physics/character.ts`](../engine/physics/character.ts)): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
 - `createFootPlantState` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A new, unlocked `FootPlantState`.
 - `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
@@ -354,6 +375,8 @@ game agent's manual.
 - `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
 - `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
+- `FeelOptions` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
+- `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): its tile's floor; 0 outside the map.
 - `FOOT_PLANT` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `footPlant`'s tuning, in metres and seconds.
@@ -405,6 +428,7 @@ game agent's manual.
 - `MASKS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The preset bone masks.
 - `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
+- `measureFeel` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
 - `OverlapOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): An overlap's options.
 - `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
@@ -426,6 +450,7 @@ game agent's manual.
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
 - `RayOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A raycast's options.
 - `released` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` went up on the buffer's step (a tap shorter than a step included).
+- `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body.
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
 - `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
 - `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
@@ -450,6 +475,7 @@ game agent's manual.
 - `socketPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of `socket`: it rides its joint, so it turns with it.
 - `SOCKETS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The sockets: attachment points that turn with their joint (`SOCKET_JOINTS`).
 - `solidAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): Whether (x, z) is in a solid tile (a wall, a pillar, a low wall), or outside the map.
+- `spawnActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
 - `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
@@ -1660,6 +1686,39 @@ For the agents who maintain the engine.
 - `restorePhysics` (function): A new world from a capture (checked first: `PHYSICS_BAD_CAPTURE`); the capture is left as it was.
 - `STATE_STRIDE` (const): Numbers a body takes in the hashed state: id, translation (3), rotation (4), linear and angular velocity (3 each).
 
+### [`engine/physics/character.ts`](../engine/physics/character.ts)
+
+- `addCharacter` (function): Adds a character's body (a kinematic capsule, group `actor`), its bottom just outside the skin above `feet`.
+- `Character` (type): A character's settings, filled: what `createCharacter` returns and an actor's component holds.
+- `CHARACTER_FIELDS` (const): A character's settings: `createCharacter` checks a spec against these and fills the defaults.
+- `CHARACTER_SETTINGS` (const): The character's settings (the setting `physics.characterGravity`).
+- `CHARACTER_STATE_FIELDS` (const): What a character remembers between ticks: plain data in its actor's component, hashed and captured with the sim.
+- `CharacterHit` (interface): One obstacle the controller met: the body, the point it touched and that surface's outward normal.
+- `CharacterInput` (interface): What a character wants this tick: from the intents (engine/sim/actors.ts) or from its AI.
+- `CharacterMove` (interface): What `moveCharacter` did: the translation it made, whether it ended grounded, and what it hit.
+- `CharacterState` (type): A character's own state, as `stepCharacter` reads and writes it (`CHARACTER_STATE_FIELDS` documents each field).
+- `CharacterStep` (interface): What one tick did.
+- `createCharacter` (function): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
+- `createCharacterState` (function): A character's state at rest, every field at its default.
+- `feetOf` (function): Where a character's feet are: the bottom of its capsule, less the skin (on flat ground, the ground's height).
+- `isWalkable` (function): Whether `character` can stand on a surface: no steeper than it climbs.
+- `isWall` (function): Whether a surface is a wall to `character`: steeper than it climbs, not a ceiling.
+- `moveCharacter` (function): Moves a character's capsule by `desired` as far as it can: across first (sliding along walls, up slopes it climbs, pushing props), then down or up alone.
+- `MoveOptions` (interface): How `moveCharacter` moves: whether it stands on the ground (and is not rising), and the one-way platforms.
+- `stepCharacter` (function): One sim tick of a character: `steer` turns its intents into a velocity and a move (engine/physics/feel.ts), the controller makes the move (`moveCharacter`), `settle` fixes the velocity from what happened, walls stop the velocity going into them, it pushes what it walked into (both leave at (push·v + m·u)/(push + m)), probes the ground under it and presses a dynamic floor with push × world gravity.
+- `StepOptions` (interface): What `stepCharacter` needs beside the character: the step length, the gravities and the one-way platforms.
+
+### [`engine/physics/feel.ts`](../engine/physics/feel.ts)
+
+- `createFeelMeter` (function): A new meter for ticks of `dt` seconds.
+- `FeelMeter` (interface): A meter: the report so far and what it is in the middle of measuring.
+- `FeelReport` (interface): What `measureFeel` reports.
+- `FeelSample` (interface): One tick of a character, as the meter reads it.
+- `settle` (function): The feel of one tick, after the move: landing ends a fall (returns the landing speed when above 2 m/s, else 0), a head bump ends a rise, a dash's last tick leaves at most the run speed, and it faces where it dashes or is told to go.
+- `steer` (function): The feel of one tick, before the move: timers count, a dash starts, the velocity across the ground follows the momentum model (acceleration, deceleration when let go, skid against its motion, `airControl` in the air), jumps start (coyote time, buffer, wall jump), letting go cuts a rise (`variableJump`), and gravity acts, integrated exactly.
+- `Steering` (interface): What `steer` decided for a tick: the move it asks for, and what it started.
+- `updateFeelMeter` (function): Reads one tick into the meter (the file comment gives the rules).
+
 ### [`engine/physics/groups.ts`](../engine/physics/groups.ts)
 
 - `COLLISION_GROUPS` (const): The collision groups: each one's membership bit and the groups it touches.
@@ -1710,8 +1769,20 @@ For the agents who maintain the engine.
 - `Physics` (interface): A physics world: bodies, stepping, queries, and the sim's physics hook (`state`, `capture`, `restore`).
 - `physicsOf` (function): The physics world of a sim world: its bodies and queries.
 - `PhysicsStepper` (interface): What `step` reads from the sim: the step length and the settings (`physics.gravity`).
+- `rapierOf` (function): The Rapier world behind `physics` now (a restore replaces it): for the modules beside this one only.
 - `scenePhysics` (function): For a scene that asks for physics: a new physics world, with `physics.gravity` declared on `registry` if it lacks it.
 - `WORLD_CODES` (const): The codes this module raises, with their fixes.
+
+### [`engine/sim/actors.ts`](../engine/sim/actors.ts)
+
+- `ActorComponent` (interface): The component `actor`: an entity the character controller moves.
+- `ActorComponents` (type): The components this module reads: `actor`, and `oneWay` for one-way platforms.
+- `ActorSpec` (interface): What `spawnActor` takes.
+- `defineActorKinds` (function): Declares the components `actor` and `oneWay` and the setting `physics.characterGravity` on `registry`.
+- `FeelOptions` (interface): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
+- `measureFeel` (function): Measures a character's feel on the standard course (the file comment says what each number is).
+- `removeActor` (function): Removes an actor and its body.
+- `spawnActor` (function): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
 
 ### [`engine/sim/capture.ts`](../engine/sim/capture.ts)
 
@@ -2295,7 +2366,9 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/sim.ts`](../tools/cmd/sim.ts)
 
-- `default` (default): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene> [--scene id] [--steps n] [--seed s] [--set key=value…]`.
+- `default` (default): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene> [--scene id] [--steps n] [--seed s] [--set key=value…] [--feel]`.
+- `feelLines` (function): The feel report as two lines of text, rounded for reading (the metrics keep every digit).
+- `feelOf` (function): The feel meter's report for a run's first player actor (the inspector member `feel`); a usage error without one.
 - `HashedView` (interface): One run's view of a step, with the hash its runtime gave.
 - `loadScene` (function): Imports a scene module and picks its scene: `id`, else the one scene it exports.
 - `nodeRuntime` (function): Replays in Node, in this process, on `registry` (the shared one by default): `x replay`'s first runtime.

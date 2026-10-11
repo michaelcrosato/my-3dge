@@ -47,3 +47,21 @@ constants) is allowed.
     `THREE.TSL.x`), and the docs' names unbound; a namespace passed through another variable is not followed. The
     syntax selectors keep the names imported or re-exported by name;
   - Node's `Buffer` global is banned sim-side, with the other Node globals.
+
+## Amendment 3 (2026-10-10, WP-3.2): the character controller does its own steps, snap and pushes
+engine/physics/character.ts drives Rapier's `KinematicCharacterController` but does its own steps, snap-to-ground
+and pushes, because Rapier 0.21 was measured to fail at each: its autostep misses steps while sliding is on and
+creeps about 5 cm above its setting; `computedGrounded` is true against a wall at a jump's apex; its impulses treat a
+translation as a velocity. Rapier's autostep, snap and impulses are off.
+- **Steps:** a grounded move that a wall stops is retried up by `autostep.height`, then across by at least enough to
+  stand, then down. It is kept when it lands on walkable ground no higher than that height, so the configured height
+  is exactly the height climbed.
+- **Grounded** means a walkable contact on the down leg.
+- **Pushing** is an inelastic collision of a push-kg mass, applied level with the centre of mass. This replaces
+  shardfall's push_mass/(push_mass+load) scaling.
+- **A grounded move goes up by the skin first**, which avoids phantom contacts while skimming the floor. The
+  prototype's grounded-flicker workaround was not needed.
+- **Files:** the movement maths sit with the meter in engine/physics/feel.ts, and `measureFeel`'s course is in
+  engine/sim/actors.ts, to avoid an import cycle.
+- **Core change accepted:** engine/physics/world.ts gains `rapierOf(physics)` (a WeakMap and one export, for the
+  modules beside it only; not in the barrels), so the controller reaches the Rapier world, including after a restore.
