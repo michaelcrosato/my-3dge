@@ -235,6 +235,31 @@ export { easeWeight } from './anim/weights';
 export type { WeightRates } from './anim/weights';
 export { HUMANOID_WEIGHTS } from './anim/weights';
 export type { WeightInfo } from './anim/weights';
+// Blob and floater rigs (WP 5.3): my-3d2dge's squash-and-stretch blob on a minimal skeleton (a volume-preserving
+// squash spring, a smoothed look, wings, its moves as data: bite, leap, pounce, spit) and a floater that hovers over
+// the floor, banks into turns and carries orbiting motes; step runs in the sim, pose in the view.
+export { Blob } from './anim/blob';
+export type { BlobOptions } from './anim/blob';
+export type { BlobInput } from './anim/blob';
+export type { BlobState } from './anim/blob';
+export { BLOB } from './anim/blob';
+export { BLOB_JOINTS } from './anim/blob';
+export type { BlobJoint } from './anim/blob';
+export type { BlobPose } from './anim/blob';
+export { BLOB_LEAP } from './anim/blob';
+export type { BlobLeap } from './anim/blob';
+export { BLOB_MOVES } from './anim/blob';
+export type { BlobMove } from './anim/blob';
+export type { BlobMoveName } from './anim/blob';
+export type { BlobMoveFrame } from './anim/blob';
+export { blobMove } from './anim/blob';
+export { blobMoveTimes } from './anim/blob';
+export { Floater } from './anim/floater';
+export type { FloaterOptions } from './anim/floater';
+export type { FloaterInput } from './anim/floater';
+export type { FloaterState } from './anim/floater';
+export type { FloaterPose } from './anim/floater';
+export { FLOATER } from './anim/floater';
 
 // Physics (WP 3.1): Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id,
 // raycasts, shape casts, overlaps and ground probes, collision groups by name, a level's bodies; presentation reads
