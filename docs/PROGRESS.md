@@ -28,7 +28,7 @@ Phases 0–5 are done: the foundation, the kernel, Box 1 (PR #2, #3, #5), Box 2 
 - T2 took 6 min 28 s, over its 6 min budget (fails at 9 min) under load 36–46: parity.spec.ts's render tests
   (133–146 s each) are the longest, so the gate keeps running T2 in full. T0 passed 10 s at G3 under heavy load.
 - Over the 400-line warning (cap 600): engine/sim-api.ts 443, physics/world.ts 419, tools/cmd/perf.ts 414,
-  sim/world.ts 410, sim/scene.ts 409, tools/cmd/port.ts 408, tools/cmd/ci.ts 404, tools/lib/tiers.ts 403.
+  sim/world.ts 410, sim/scene.ts 409, tools/cmd/port.ts 408, tools/cmd/ci.ts 404, tools/lib/tiers.ts 405.
 - At 1,000 agents the crowd blocks the hero at the stairs' foot; the state hash dominates the step at 5,000.
 - The post-IK foot plant (WP 6.2) and preciseHits Node/Chromium parity (WP 6.1) are open.
 - ESC-0001 (GitHub Actions) was decided in the owner's absence: Actions off, `x ci --local` is the gate.

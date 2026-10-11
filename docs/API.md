@@ -4513,6 +4513,7 @@ For the agents who maintain the engine.
 
 ### [`tools/x.ts`](../tools/x.ts)
 
+- `CHILD_TIMEOUT_MS` (const): How long a test waits on a whole command it runs as a child process (`node x <cmd>`, Vitest, `npx`), in ms: the test's timeout and the child's, killed then, so only a hang trips it.
 - `closest` (function): The candidate closest to `wanted`, or undefined when nothing is close (more than half the letters differ).
 - `Command` (interface): The shape of a `tools/cmd/<name>.ts` module's default export.
 - `CommandContext` (interface): What a command receives: its parsed flags and positionals, and the repository root.
