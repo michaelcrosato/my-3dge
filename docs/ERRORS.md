@@ -149,13 +149,13 @@ Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `st
 
 - Message: `a frame threw, so the loop stopped: {message}`
 - Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
-- Registered in: [`engine/app/engine.ts` line 67](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 77](../engine/app/engine.ts)
 
 ### APP_NO_FRAME
 
 - Message: `no frame was drawn in {tries} tries: the warm-up never finished`
 - Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 75](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 85](../engine/app/engine.ts)
 
 ### APP_NO_LEVEL
 
@@ -167,7 +167,7 @@ Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `st
 
 - Message: `the page has no replay {name}`
 - Fix: use one of: {names}
-- Registered in: [`engine/app/engine.ts` line 71](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 81](../engine/app/engine.ts)
 
 ### APP_NO_VIEW
 
@@ -197,7 +197,7 @@ Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `st
 
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 63](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 73](../engine/app/engine.ts)
 
 ## audio
 

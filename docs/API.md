@@ -104,6 +104,7 @@ game agent's manual.
 - `defineSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): Defines an effect on `registry` (the shared one by default) and returns it.
 - `defineSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): Defines a song on `registry` (the shared one by default) and returns it.
 - `defineTexture` (function from [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)): Defines a texture generator on `registry` (the shared one by default) and returns it.
+- `defineTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): Registers a touch layout (on the shared registry by default).
 - `DeviceKind` (type from [`engine/input/codes.ts`](../engine/input/codes.ts)): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
 - `Effectors` (interface from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The effector stage's targets: rig-local metres before `size`, in the model frame (+Z forward, +Y up).
@@ -141,6 +142,7 @@ game agent's manual.
 - `getMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): The material `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `material:default`.
 - `getSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
 - `getSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): The song `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
+- `getTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): The touch layout `id`.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `Ground` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): The ground under a point: its height, its normal and the body it belongs to.
@@ -306,6 +308,7 @@ game agent's manual.
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
 - `STANCES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The stances, held while moving.
+- `StickView` (interface from [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)): Where the stick is drawn, in client CSS px: its centre and its knob.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
 - `SYSTEM_ACTIONS` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The system layer: action → codes.
@@ -322,6 +325,12 @@ game agent's manual.
 - `TileRect` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A rectangle of tiles, inclusive: `[col0, row0, col1, row1]`.
 - `tipPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
 - `topHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The top (m) of whatever stands at (x, z): a wall's top over its tiles, a brazier's within its radius, the floor elsewhere; 0 outside the map.
+- `TouchButtonSpec` (interface from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): One button of a touch layout.
+- `touchCode` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The code a touch button for `action` writes; every action binds its own (engine/input/input.ts).
+- `TouchDevice` (interface from [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)): The touch device.
+- `TouchLayout` (type from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): A touch layout entry.
+- `TouchLayoutSpec` (interface from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): How a touch layout is written.
+- `TouchSetting` (type from [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)): The `touch` setting: touch mode as detected (`auto`), or forced `on` or `off`.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
 - `turnRight` (function from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A turn of `angle` radians about the up axis toward the right hand (my-3d2dge's `rz`), written into `out`.
 - `twoBone` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Two-bone IK on positions (`ik3`): the middle joint (knee, elbow) and the end of a limb of bone lengths `upper` and `lower` from `root` toward `target`, bent toward the direction `pole`; out of reach, the end stops on the line to the target.
@@ -799,6 +808,8 @@ For the agents who maintain the engine.
 ### [`engine/app/loop.ts`](../engine/app/loop.ts)
 
 - `createLoop` (function): Makes a frame loop (see the file comment).
+- `FRAME_SLACK_MS` (const): How early a capped frame may come before its slot and still run, in ms.
+- `FRAME_SLOT_MS` (const): The capped frame rate's slot, in ms: 60 frames a second.
 - `Loop` (interface): A running frame loop.
 - `LoopOptions` (interface): What the loop drives.
 
@@ -1568,6 +1579,16 @@ For the agents who maintain the engine.
 - `PipelineCounter` (interface): The counter of one device.
 - `PIPELINES_CODES` (const): The codes this module raises, with their fixes.
 
+### [`engine/gfx/quality.ts`](../engine/gfx/quality.ts)
+
+- `QUALITY_SETTING_VALUES` (const): The `quality` setting's values.
+- `QUALITY_SETTINGS` (const): The quality settings: view settings, never in the hash.
+- `qualityBudget` (function): What `setting` affords on a touch screen (`touch`) or elsewhere (see the file comment).
+- `QualityBudget` (interface): What a tier affords; `null` caps nothing.
+- `QualitySetting` (type): The `quality` setting: a tier, or `auto`.
+- `QualityTier` (type): A quality tier, as `auto` resolves.
+- `resolveQuality` (function): The tier `setting` means on a touch screen (`touch`) or elsewhere.
+
 ### [`engine/gfx/renderer.ts`](../engine/gfx/renderer.ts)
 
 - `createRenderer` (function): Starts three.js's `WebGPURenderer` on `canvas`, on WebGPU only: the adapter check, a device with every feature and limit the adapter offers, `await renderer.init()`, the backend assertion, then the report, the feature registry and the error routes.
@@ -1587,9 +1608,13 @@ For the agents who maintain the engine.
 
 - `createResolution` (function): Keeps `renderer`'s drawing buffer fitted to `canvas` and the `gfx.resolution` setting.
 - `Fit` (interface): What a mode gives for a canvas: the drawing buffer's size and how it maps to the screen.
-- `fitResolution` (function): The drawing buffer `mode` gives a canvas of `css` size at `devicePixelRatio`.
+- `fitResolution` (function): The drawing buffer `mode` gives a canvas of `css` size at `devicePixelRatio`, within `cap` (none by default).
+- `keepWidth` (function): Widens a perspective camera placed for this frame when the picture is portrait (`portraitFov`); else no change.
 - `MAX_PIXEL_RATIO` (const): The highest device pixel ratio drawn at: beyond it, pixels are too small to see and cost the same.
+- `MAX_PORTRAIT_FOV` (const): The widest vertical field of view a portrait picture gets, in degrees.
 - `PIXEL_LINES` (const): The most lines the `pixels` mode draws.
+- `PixelCap` (interface): A cap on the drawing buffer (engine/gfx/quality.ts's budget); a null or absent field caps nothing.
+- `portraitFov` (function): The vertical field of view (deg) that keeps `fov`'s width on a picture `aspect` (width / height) wide, below 1.
 - `Resolution` (interface): A renderer's resolution, kept to its canvas and the setting.
 - `RESOLUTION_MODES` (const): The resolution modes, chunkiest first.
 - `RESOLUTION_SETTINGS` (const): The resolution settings: view settings, never in the hash.
@@ -1787,6 +1812,8 @@ For the agents who maintain the engine.
 - `padStyle` (function): The family of a gamepad, from its `Gamepad.id` (vendor 054c is Sony, 057e Nintendo).
 - `PadStyle` (type): A gamepad family, for labels.
 - `readKeyboardLayout` (function): The page's keyboard layout (`navigator.keyboard.getLayoutMap()`, Chromium), or undefined where it is missing.
+- `TOUCH_PREFIX` (const): The prefix of the codes touch buttons write: `touch:jump` is the jump button (`touchCode`).
+- `touchCode` (function): The code a touch button for `action` writes; every action binds its own (engine/input/input.ts).
 - `WHEEL_CODES` (const): The wheel's codes: a notch is a tap, never held.
 
 ### [`engine/input/devices/gamepad.ts`](../engine/input/devices/gamepad.ts)
@@ -1820,6 +1847,26 @@ For the agents who maintain the engine.
 - `createScriptedGamepad` (function): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
 - `parsePadScript` (function): Parses a pad script; throws `INPUT_BAD_SCRIPT` naming each problem.
 - `ScriptedGamepad` (interface): A pad that a script moves frame by frame.
+
+### [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)
+
+- `attachTouch` (function): Listens to fingers over the page (see the file comment).
+- `BUTTON_SLOP` (const): A release on a button or tap control that moved less than this (CSS px) is a tap, however long it was down.
+- `HOLD_FRAMES` (const): … and is seen by at least this many frames, so a slow frame never turns a tap into a hold.
+- `HOLD_TIME` (const): A hold lasts at least this long (s) …
+- `MOUSE_SLOP` (const): The mouse ends touch mode once it moves more than this (CSS px) from the last pointer.
+- `STICK_DEAD` (const): The stick's dead zone, as a fraction of its reach.
+- `STICK_FULL` (const): Where the stick reaches full speed, as a fraction of its reach.
+- `STICK_RADIUS` (const): The stick's reach in CSS px: full speed at its rim.
+- `stickAxis` (function): The stick's `[right, forward]` for a thumb `dx`, `dy` CSS px from the centre (`touch.rs:266-272`).
+- `StickView` (interface): Where the stick is drawn, in client CSS px: its centre and its knob.
+- `TAP_SLOP` (const): A tap on the game moves less than this (CSS px).
+- `TAP_TIME` (const): A tap on the game is shorter than this (s), or seen by a single frame.
+- `TOUCH_SETTINGS` (const): The touch settings: view settings, never in the hash.
+- `TouchDevice` (interface): The touch device.
+- `TouchOptions` (interface): How the device behaves beyond its targets.
+- `TouchSetting` (type): The `touch` setting: touch mode as detected (`auto`), or forced `on` or `off`.
+- `TouchTargets` (interface): Where the touch device listens.
 
 ### [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)
 
@@ -2110,6 +2157,37 @@ For the agents who maintain the engine.
 - `WorldEvents` (type): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
 - `WorldOptions` (interface): How a world is made.
 - `WorldTimers` (type): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
+
+### [`engine/ui/chrome.ts`](../engine/ui/chrome.ts)
+
+- `Chrome` (interface): The page's touch-mode chrome.
+- `createChrome` (function): Makes the touch-mode chrome of `document` (off until `setTouch(true)`).
+- `TURN_HINT` (const): The hint shown to a phone held upright.
+
+### [`engine/ui/swipe.ts`](../engine/ui/swipe.ts)
+
+- `attachSwipes` (function): Lets fingers swipe away the `[data-swipe]` elements of `document` (see the file comment).
+- `SWIPE_DISTANCE` (const): A swipe this far (CSS px) dismisses.
+- `SWIPE_FLICK` (const): A flick this far (CSS px) …
+- `SWIPE_FLICK_TIME` (const): … within this long (s) dismisses too.
+- `SWIPE_FLY` (const): A dismissed element flies this much further (CSS px) …
+- `SWIPE_FLY_TIME` (const): … over this long (s).
+- `Swipes` (interface): Swiping on a page.
+
+### [`engine/ui/touch.ts`](../engine/ui/touch.ts)
+
+- `createTouchLayer` (function): Builds the layer for `layout` (null: only the stick) and appends it to `document.body`.
+- `defineTouchLayout` (function): Registers a touch layout (on the shared registry by default).
+- `getTouchLayout` (function): The touch layout `id`.
+- `TOUCH_SLOTS` (const): The button slots, in fill order (see the file comment).
+- `TouchButtonSpec` (interface): One button of a touch layout.
+- `TouchLayer` (interface): The touch controls' layer in a page.
+- `TouchLayerState` (interface): What the layer shows this frame.
+- `TouchLayout` (type): A touch layout entry.
+- `touchLayoutKind` (function): Declares the kind `touchlayout` on `registry` unless it has it.
+- `TouchLayoutSpec` (interface): How a touch layout is written.
+- `touchScale` (function): The scale of the touch controls for a screen `width` × `height` CSS px: `--touch-k`.
+- `TouchSlot` (interface): Where a button sits: its centre's distance from the right and bottom edges, and its diameter, in k CSS px.
 
 ### [`engine/world/level/colliders.ts`](../engine/world/level/colliders.ts)
 
