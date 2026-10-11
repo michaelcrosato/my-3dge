@@ -1,7 +1,7 @@
 /**
- * @file The `anim` QA family in T1 (tools/qa/anim.ts, PLAN.md §8.6, WP 6.6): every move and pose, the humanoid, the
- * blob and the floater pass against tests/baselines/qa-anim.json with no slack; the matrix holds every state the
- * engine names; and each motion metric catches a seeded fault and passes the sound case.
+ * @file The `anim` QA family in T1 (tools/qa/anim.ts, PLAN.md §8.6, WP 6.6, WP 8.7): every move, pose and action, the
+ * humanoid, the blob and the floater pass against tests/baselines/qa-anim.json with no slack; the matrix holds every
+ * state and action the engine names; and each motion metric catches a seeded fault and passes the sound case.
  * @see tools/qa/anim.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -14,7 +14,16 @@ import { createSkeleton } from '../../engine/anim/skeleton';
 import { SAMPLE_STATES } from '../../engine/anim/states';
 import { readBaselines, runQa } from '../cmd/qa';
 import { ROOT } from '../x';
-import family, { animViolations, closure, footSlide, humanoidStates, limbs, motionTrack, pops } from './anim';
+import family, {
+  actionStates,
+  animViolations,
+  closure,
+  footSlide,
+  humanoidStates,
+  limbs,
+  motionTrack,
+  pops,
+} from './anim';
 
 /** A track of one point, at `ys` heights and `xs` along X, the body standing at the origin. */
 const line = (xs: number[], ys: number[] = xs.map(() => 0)) =>
@@ -50,8 +59,10 @@ describe('the anim QA family', () => {
     expect(result.accepted).toBe(entries.length);
   });
 
-  it('holds every sample state, pose, stance, move and reaction the engine names', () => {
+  it('holds every sample state, pose, stance, move, reaction and action the engine names', () => {
     const ids = Object.keys(humanoidStates());
+    expect(ids.filter((id) => id.startsWith('action:'))).toEqual(Object.keys(actionStates())); // data/anim/actions/
+    expect(ids).toEqual(expect.arrayContaining(['action:jump', 'action:grab', 'action:deathSink']));
     const poses = Object.keys(POSES).map((pose) => `pose:${pose}`);
     expect(ids).toEqual(expect.arrayContaining([...Object.keys(ENGINE_MOVES), ...poses, 'reaction:die']));
     expect(ids).toEqual(expect.arrayContaining(Object.keys(STANCES).map((stance) => `stance:${stance}`)));
