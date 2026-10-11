@@ -3,7 +3,8 @@
  * <subject>` runs the humanoid through the states a QA id or prefix names, as the `anim` QA family does
  * (tools/qa/anim.ts `humanoidStates`), draws them with `anim.sheet()` (engine/anim/sheet.ts) from the cameras of a
  * `SHEET_CAMERAS` preset (engine/anim/check.ts), and turns the SVG into a PNG in the platform's Chromium. It prints
- * the subject's `anim` QA violations against tests/baselines/qa-anim.json beside it.
+ * the subject's `anim` QA violations against tests/baselines/qa-anim.json beside it (`humanoid`: every kind of the
+ * humanoid's ids, `qaPrefixes`; the library's clips are `node x qa anim --only clip:`'s).
  *
  * Frames: one state (`move:slash`, `pose:kneel`, `reaction:fallBack`) gives `--frames` steps spread over its hold,
  * then the last step, back at rest, each labelled with its time; a prefix (`move:`, `pose:`, `state:`) or `humanoid`
@@ -29,7 +30,7 @@ import { SHEET_CAMERAS, stateMatrix } from '../../engine/anim/check';
 import { animSheet, type SheetFrame } from '../../engine/anim/sheet';
 import { browserRuntime, launchBrowser } from '../lib/browser';
 import { targetSlug, type Artifact } from '../lib/report';
-import { HUMANOIDS, humanoidStates, makeHumanoid } from '../qa/anim';
+import { HUMANOIDS, humanoidPrefixes, humanoidStates, makeHumanoid } from '../qa/anim';
 import { closest, UsageError, type Command, type CommandResult } from '../x';
 import { runQa } from './qa';
 
@@ -50,6 +51,11 @@ export function subjectIds(subject: string): string[] {
   if (subject === 'humanoid') return ids;
   if (ids.includes(subject)) return [subject];
   return ids.filter((id) => id.startsWith(subject));
+}
+
+/** The `only` prefixes of `subject`'s `anim` QA: itself, or for `humanoid` its kinds (never the library's clips). */
+export function qaPrefixes(subject: string): string[] {
+  return subject === 'humanoid' ? humanoidPrefixes() : [subject];
 }
 
 /** The frames a sheet of `subject` draws, and whether they are moves (for the cameras). */
@@ -148,7 +154,7 @@ export default {
       });
       browser = runtime;
     }
-    const qa = await runQa(root, 'anim', subject === 'humanoid' ? [] : [subject]);
+    const qa = await runQa(root, 'anim', qaPrefixes(subject));
     const lines = [
       `${frames.length} frames × ${views.length} cameras, ${sheet.width} × ${sheet.height} px, hash ${sheet.hash}`,
       `anim QA: ${qa.violations} violations, ${qa.accepted} accepted by tests/baselines/qa-anim.json`,

@@ -74,8 +74,8 @@ export const TIERS: Readonly<Record<TierId, Tier>> = {
 
 /**
  * The long runs (PLAN.md §8.2): no budget, run at each gate. The flake hunt, the kernel's perf budget (WP 1.5; T1
- * never asserts timing) and the crowd ladder's (WPs 5.5, 5.7: tests/baselines/perf/box-crowd-1000.json). Long
- * replays (WP 1.5) join them.
+ * never asserts timing), the crowd ladder's (WPs 5.5, 5.7: tests/baselines/perf/box-crowd-1000.json) and the clip
+ * library's QA, every clip played on every build (WP 8.6: T1 plays a sample). Long replays (WP 1.5) join them.
  */
 export const LONG_RUNS: readonly { name: string; command: readonly string[] }[] = [
   { name: 'flake hunt', command: ['npm', 'run', 'e2e', '--', '--repeat-each', '3'] },
@@ -84,6 +84,7 @@ export const LONG_RUNS: readonly { name: string; command: readonly string[] }[] 
     name: 'crowd ladder',
     command: ['node', 'x', 'perf', 'labs/box', '--scene', 'crowd-1000', '--ladder', '--budget'],
   },
+  { name: 'clip QA', command: ['node', 'x', 'qa', 'anim', '--only', 'clip:,set:'] },
 ];
 
 /** A path whose change runs a whole tier: a file, or a directory when it ends in `/`. */
