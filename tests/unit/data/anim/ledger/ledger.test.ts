@@ -116,9 +116,8 @@ describe('the join-back', () => {
     expect(first === -1 ? null : { line: first, original: original[first], rebuilt: rebuilt[first] }).toBeNull();
     expect(rebuilt).toHaveLength(original.length);
     const before = new Map(text.split('\n').map((line) => [line.split('\t')[0], line.split('\t')]));
-    const kept = ['id', 'subject', 'category', 'used', 'note', 'desc', 'about'].map((key) =>
-      ORIGINAL_COLUMNS.indexOf(key),
-    );
+    const unchanged = ['id', 'subject', 'category', 'used', 'note', 'desc', 'about'] as const;
+    const kept = unchanged.map((key) => ORIGINAL_COLUMNS.indexOf(key));
     for (const line of joinBack(ledger)
       .split('\n')
       .filter((l) => verified.has(l.split('\t')[0] ?? ''))) {
