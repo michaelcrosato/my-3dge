@@ -3,15 +3,16 @@
  * placed at rest where its points resolve (a limb from joint to joint, an eye on its socket), every frame right-handed,
  * mirrored parts the reflection of their left side, sizes in head, limb and torso radii and a build's own drawing
  * fields, a build's size scaling every length, the fixture body's every part type (a curve as 4 limbs, hair as cones,
- * a part riding the root, `on`), `GFX_BAD_BODY` for what a definition cannot see, and `recolor`. That `reach` bounds
- * every posed vertex is tested with the drawing (draw.test.ts).
+ * a part riding the root, `on`), `GFX_BAD_BODY` for what a definition cannot see, and `recolor`; and the review of
+ * the builds' four chosen fields against the drawn humanoid (ADR-0009 amendment 1: kept). That `reach` bounds every
+ * posed vertex is tested with the drawing (draw.test.ts).
  * @see engine/gfx/puppets/compile.ts
  */
 import { Matrix4, Vector3 } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { defineEveryPart } from '../../../fixtures/bodies/everyPart';
 import { defineBuild } from '../../anim/builds';
-import { createSkeleton, jointIndex, SOCKETS, type JointName, type SocketName } from '../../anim/skeleton';
+import { createSkeleton, jointIndex, PROPORTIONS, SOCKETS, type JointName, type SocketName } from '../../anim/skeleton';
 import { toLinear } from '../../core/color';
 import { createRegistry } from '../../core/registry';
 import { compileBody, recolor, restPositions, type BodyPiece, type CompiledBody } from './compile';
@@ -153,6 +154,90 @@ describe('the humanoid', () => {
     const rest = restPositions(humanoid.skeleton);
     expect(rest).toEqual(humanoid.rest);
     expect(new Vector3().fromArray(rest, jointIndex('pelvis') * 3).y).toBeCloseTo(humanoid.skeleton.offsets[1], 12);
+  });
+});
+
+/**
+ * ADR-0009 amendment 1 left WP 3.8 to review the four build fields WP 3.4 chose without source values once bodies
+ * were drawn: `ankleHeight`, `footLength`, `handLength` and `chestDepth`. Reviewed against the drawn humanoid on every
+ * engine build, all four are kept; these are the fits they were kept for. A limb is the hull of its two end spheres,
+ * so its extremes are exact here.
+ */
+describe('the builds’ new fields on the drawn humanoid (reviewed in WP 3.8: kept)', () => {
+  /** A limb piece's end spheres in the rest frame: at a with `radiusStart`, at b with `radiusEnd`. */
+  const ends = (compiled: CompiledBody, piece: BodyPiece) => {
+    const m = restMatrix(compiled, piece);
+    return [
+      { at: new Vector3(0, 0, 0).applyMatrix4(m), r: piece.radiusStart },
+      { at: new Vector3(0, piece.length, 0).applyMatrix4(m), r: piece.radiusEnd },
+    ];
+  };
+  /** The end spheres of the limb pieces from `parts` (every part when left out). */
+  const spheres = (compiled: CompiledBody, parts?: readonly string[]) =>
+    compiled.pieces
+      .filter((piece) => piece.shape === 'limb' && (!parts || parts.includes(piece.part)))
+      .flatMap((piece) => ends(compiled, piece));
+
+  /**
+   * How far each build's drawing may fall short, in metres: of the heel and the toe tip (the boot's ends), and of the
+   * wrist (the fist's gap to the forearm's cap). `build:skeleton` is drawn thin (the HD floor of 0.55 units for a
+   * limb), and its caps reach neither end of its foot at any `footLength` nor its wrist at its `handLength`.
+   */
+  const SHORT: [string, { heel: number; toe: number; wrist: number }][] = [
+    ['build:chibi', { heel: 0, toe: 0.01, wrist: 0 }],
+    ['build:heroic', { heel: 0, toe: 0.01, wrist: 0 }],
+    ['build:bulky', { heel: 0, toe: 0.01, wrist: 0 }],
+    ['build:skeleton', { heel: 0.01, toe: 0.03, wrist: 0.006 }],
+  ];
+
+  it.each(SHORT)('fits %s', (id, short) => {
+    const compiled = compileBody('body:humanoid', id);
+    const { build, tips } = compiled.skeleton;
+    const s = build.size;
+    const limbRadius = (compiled.body.builds[id]?.limbRadius ?? compiled.body.limbRadius) * s;
+    const ankle = restOf(compiled, 'footL');
+    const boot = spheres(compiled, ['mirror[2]', 'mirror[3]']);
+
+    // ankleHeight: the boot's caps on the ankle clear the sole. Only the toe's cap dips below it (0.85 limb radii
+    // around a toe joint 0.3 ankleHeight up: no ankle below the knee lifts it), by less than the source's boot, which
+    // sank a whole limb radius below its foot point on the floor. The floor hides it.
+    const atAnkle = boot.filter((sphere) => sphere.at.distanceTo(ankle) < 1e-9);
+    expect(atAnkle).toHaveLength(2);
+    for (const sphere of atAnkle) expect(sphere.at.y - sphere.r, 'an ankle cap').toBeGreaterThan(0);
+    const lowest = spheres(compiled).reduce((low, sphere) =>
+      sphere.at.y - sphere.r < low.at.y - low.r ? sphere : low,
+    );
+    expect(lowest.at.distanceTo(restOf(compiled, 'toeL')), 'the lowest point is under a toe').toBeLessThan(1e-9);
+    expect(lowest.at.y - lowest.r, 'less deep than the source').toBeGreaterThan(-limbRadius);
+
+    // footLength: the boot runs from the heel (0.25 footLength behind the ankle) to the toe tip.
+    const heel = ankle.z - PROPORTIONS.heel * build.footLength * s;
+    const toeTip = restOf(compiled, 'toeL').z + tips[jointIndex('toeL') * 3 + 2];
+    const [back, front] = [Math.min(...boot.map((e) => e.at.z - e.r)), Math.max(...boot.map((e) => e.at.z + e.r))];
+    expect(back - heel, 'the heel').toBeLessThanOrEqual(short.heel);
+    expect(Math.abs(front - toeTip), 'the toe tip').toBeLessThan(short.toe);
+
+    // handLength: the fist (a ball on the grip, 0.4 handLength out) stays within the hand's length and meets the
+    // forearm's cap on the wrist.
+    const [fist] = from(compiled, 'mirror[6]');
+    const fistRadius = new Vector3().setFromMatrixColumn(new Matrix4().fromArray(fist.matrix), 0).length();
+    const [grip, wrist] = [socketRest(compiled, 'weaponL').x, restOf(compiled, 'handL').x];
+    const wristCap = spheres(compiled, ['mirror[5]']).find((sphere) => Math.abs(sphere.at.x - wrist) < 1e-9)!;
+    expect(grip + fistRadius - wrist, 'the fist within the hand').toBeLessThan(build.handLength * s);
+    expect(grip - fistRadius - (wrist + wristCap.r), 'the fist on the wrist').toBeLessThanOrEqual(short.wrist);
+
+    // chestDepth: the back socket sits behind the spine, inside the drawn back by under 4 cm: closer to it than the
+    // source's cape anchor (1.3 units behind the shoulders, 4.6 cm inside its own drawn back), so a cape hung there
+    // hides its top edge in the torso, as the source's did, and a prop that must sit on the surface offsets from it.
+    const socket = socketRest(compiled, 'back');
+    const [upper] = from(compiled, 'parts[3]');
+    const [a, b] = ends(compiled, upper);
+    const t = (socket.y - a.at.y) / (b.at.y - a.at.y);
+    expect(t >= 0 && t <= 1, 'the upper torso spans the socket').toBe(true);
+    const surface = -(a.r + (b.r - a.r) * t);
+    expect(socket.z, 'behind the spine').toBeLessThan(0);
+    expect(socket.z - surface, 'inside the drawn back').toBeGreaterThan(0);
+    expect(socket.z - surface, 'within 4 cm of it').toBeLessThan(0.04);
   });
 });
 

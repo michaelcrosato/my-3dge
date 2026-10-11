@@ -3,7 +3,8 @@
  * uniform path (a smaller page size refused), paging as instances are added (2,000 instances on two pages of 1,024),
  * colours and per-instance attributes present on every page before it is ever drawn, `StaticDrawUsage` kept, update
  * ranges only on the pages that changed and always over their used slots, r182's instance sync moved before the
- * upload (and left alone on another release), slot access, the draw-call count, the warm-up registration and
+ * upload (left alone on another release, where a fresh import with `three/webgpu` mocked to r185 advises
+ * `GFX_INSTANCING_UNPINNED` once for two batches), slot access, the draw-call count, the warm-up registration and
  * `dispose`. The GPU half (the ID pass following moved instances, no pipeline per page) is
  * tests/e2e/instancing.spec.ts.
  * @see engine/gfx/instancing.ts
@@ -21,7 +22,7 @@ import {
   Vector3,
   type InstancedMesh,
 } from 'three/webgpu';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createLog } from '../core/log';
 import {
   createInstancedBatch,
@@ -132,7 +133,7 @@ describe('the sync before the upload', () => {
     expect(syncBeforeUpload(), 'a second call changes nothing').toEqual({ patched: true, problems: [] });
   });
 
-  it('changes nothing on another release or node class, and the batch advises it once', () => {
+  it('changes nothing on another release or node class, and a batch on the patched release gives no advice', () => {
     class Bare {}
     expect(syncBeforeUpload(Bare, '182')).toEqual({
       patched: false,
@@ -144,6 +145,31 @@ describe('the sync before the upload', () => {
     const quiet = createLog({ console: { warn: () => {}, error: () => {} } });
     make({ log: quiet });
     expect(quiet.advice, 'patched here: no advice').toEqual([]);
+  });
+
+  it('advises GFX_INSTANCING_UNPINNED once, naming the release, when imported on another release', async () => {
+    vi.resetModules();
+    vi.doMock('three/webgpu', async (original) => ({ ...(await original<object>()), REVISION: '185' }));
+    try {
+      const fresh = await import('./instancing');
+      const { createLog: freshLog } = await import('../core/log');
+      expect(fresh.INSTANCE_SYNC).toEqual({
+        patched: false,
+        problems: ["three.js is r185, the fix wraps r182's InstanceNode"],
+      });
+      const printed: string[] = [];
+      const own = freshLog({ console: { warn: (line) => void printed.push(line), error: () => {} } });
+      fresh.createInstancedBatch({ name: 'crowd:a', geometry, material, log: own });
+      fresh.createInstancedBatch({ name: 'crowd:b', geometry, material, log: own });
+      const unpinned = own.advice.filter((record) => record.code === 'GFX_INSTANCING_UNPINNED');
+      expect(unpinned, 'one record for every batch').toHaveLength(1);
+      expect(unpinned[0].message).toContain('three.js is r185');
+      expect(printed, 'printed once').toHaveLength(1);
+      expect(printed[0]).toMatch(/^\[GFX_INSTANCING_UNPINNED\] .*three\.js is r185/);
+    } finally {
+      vi.doUnmock('three/webgpu');
+      vi.resetModules();
+    }
   });
 });
 

@@ -4,15 +4,17 @@
  * per vertex at weight 1, the slots' colours, the `geo` QA family's checks), the bones bound at rest, every socket
  * where FK puts it in posed, moved and scaled poses (the bones, and the skinned centres of the pieces on sockets),
  * the bounding sphere holding every posed vertex, the draw-call count, and the instanced crowd: its batches per shape,
- * its instance matrices where FK puts the pieces, its colours and draw calls, and the warm-up registration. The GPU half
- * (pixels where FK says, draw calls counted by the renderer) is tests/e2e/puppets.spec.ts.
+ * its instance matrices where FK puts the pieces (every limb of the humanoid and the fixture body: its frustum from
+ * the wide end to the narrow one, flipped when the end is the wider, its taper in eighths and its batch, its two end
+ * balls), its colours and draw calls, and the warm-up registration. The GPU half (pixels where FK says, draw calls
+ * counted by the renderer) is tests/e2e/puppets.spec.ts.
  * @see engine/gfx/puppets/draw.ts
  */
 import { Matrix4, Quaternion, Vector3, type BufferAttribute, type SkinnedMesh } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { defineEveryPart } from '../../../fixtures/bodies/everyPart';
 import { defineSocketMarks } from '../../../fixtures/bodies/socketMarks';
-import { forwardKinematics, jointPosition, socketPosition } from '../../anim/fk';
+import { forwardKinematics, jointMatrix, jointPosition, socketPosition } from '../../anim/fk';
 import { Pose } from '../../anim/pose';
 import { JOINTS, SOCKETS, type SocketName } from '../../anim/skeleton';
 import { createRegistry } from '../../core/registry';
@@ -222,6 +224,77 @@ describe('instanced puppets', () => {
     const ends = [jointPosition(world, 'thighL'), jointPosition(world, 'thighR')];
     expect(bar.part).toBe('parts[0]');
     expect(start.distanceTo(ends[0]) + end.distanceTo(ends[1])).toBeLessThan(1e-5);
+  });
+
+  it('draws every limb as a frustum from its wide end to its narrow one, tapered in eighths, with a ball on each', () => {
+    const pose = randomPose(3);
+    const s = pose.rootScale.x;
+    const batches = createPuppetBatches({ materials: library });
+    const [bone, m] = [new Matrix4(), new Matrix4()];
+    const columns = (matrix: Matrix4) => [0, 1, 2].map((c) => new Vector3().setFromMatrixColumn(matrix, c));
+    const seen = { limbs: 0, flipped: 0, tapered: 0 };
+    for (const compiled of [humanoid, everyPart]) {
+      const world = forwardKinematics(compiled.skeleton, pose);
+      for (const piece of compiled.pieces.filter((p) => p.shape === 'limb')) {
+        const label = `${compiled.body.id} ${piece.part}`;
+        // Where FK puts the limb's ends a (y = 0) and b (y = length), and its radii there, in the posed world.
+        if (piece.bone < 0) bone.compose(pose.rootPos, pose.rootRot, pose.rootScale);
+        else jointMatrix(world, piece.bone, bone);
+        const placed = bone.clone().multiply(new Matrix4().fromArray(piece.matrix));
+        const [a, b] = [0, piece.length].map((y) => new Vector3(0, y, 0).applyMatrix4(placed));
+        const { radiusStart: ra, radiusEnd: rb } = piece;
+        const flipped = rb > ra;
+        const [wide, narrow] = flipped ? [b, a] : [a, b];
+        const [r0, rMin] = [Math.max(ra, rb) * s, Math.min(ra, rb) * s];
+
+        batches.begin();
+        batches.draw({ ...compiled, pieces: [piece] }, pose);
+        batches.end();
+        const shown = [...batches.batches].filter(([, batch]) => batch.count > 0);
+        const counts = shown.map(([key, batch]) => [key.startsWith('limb@') ? 'limb@k' : key, batch.count]);
+        expect(Object.fromEntries(counts), `${label}: a frustum and two balls`).toEqual({ 'limb@k': 1, ball: 2 });
+        const [key, frustum] = shown.find(([name]) => name.startsWith('limb@'))!;
+        const k = Number(key.slice('limb@'.length));
+        expect(Number.isInteger(k * 8) && k >= 1 / 8 && k <= 1, `${label}: ${key} is in eighths`).toBe(true);
+
+        // (1) The unit frustum's y = 0 (radius 1) lands on the wide end, its y = 1 (radius k) on the narrow one.
+        frustum.getMatrixAt(0, m);
+        expect(new Vector3(0, 0, 0).applyMatrix4(m).distanceTo(wide), `${label}: the wide end`).toBeLessThan(1e-5);
+        expect(new Vector3(0, 1, 0).applyMatrix4(m).distanceTo(narrow), `${label}: the narrow end`).toBeLessThan(1e-5);
+        // (2) Its radius at the wide end is the larger radius, round (x and z alike), unsheared and not mirrored.
+        const [x, y, z] = columns(m);
+        expect(Math.abs(x.length() - r0), `${label}: the wide radius`).toBeLessThan(1e-5);
+        expect(Math.abs(z.length() - r0), `${label}: the wide radius`).toBeLessThan(1e-5);
+        const [ux, uy, uz] = [x, y, z].map((v) => v.clone().normalize());
+        const skew = Math.max(...[ux.dot(uy), uy.dot(uz), ux.dot(uz)].map(Math.abs));
+        expect(skew, `${label}: unsheared`).toBeLessThan(1e-5);
+        expect(m.determinant(), `${label}: not mirrored`).toBeGreaterThan(0);
+        // (3) Its radius at the narrow end is the smaller radius, to within half an eighth of the larger.
+        expect(Math.abs(k * x.length() - rMin), `${label}: the narrow radius (k = ${k})`).toBeLessThanOrEqual(
+          r0 / 16 + 1e-6,
+        );
+
+        // (4) A ball of radius r0 on the wide end and one of k · r0 on the narrow end, in either order.
+        const balls = shown.find(([name]) => name.startsWith('ball'))![1];
+        const drawn = [0, 1].map((slot) => {
+          const [bx, by, bz] = columns(balls.getMatrixAt(slot, m));
+          expect(Math.abs(bx.length() - by.length()) + Math.abs(bx.length() - bz.length()), label).toBeLessThan(1e-6);
+          return { at: new Vector3().setFromMatrixPosition(m), radius: bx.length() };
+        });
+        const near = (ball: (typeof drawn)[number], at: Vector3, radius: number) =>
+          ball.at.distanceTo(at) < 1e-5 && Math.abs(ball.radius - radius) < 1e-5;
+        const fits = (first: number) => near(drawn[first], wide, r0) && near(drawn[1 - first], narrow, k * r0);
+        expect(fits(0) || fits(1), `${label}: the balls ${JSON.stringify(drawn)}`).toBe(true);
+
+        seen.limbs++;
+        if (flipped) seen.flipped++;
+        if (k < 1) seen.tapered++;
+      }
+    }
+    const limbs = (compiled: CompiledBody) => compiled.pieces.filter((p) => p.shape === 'limb').length;
+    expect(seen.limbs).toBe(limbs(humanoid) + limbs(everyPart));
+    expect(seen.flipped, 'the flipped branch (radiusEnd > radiusStart) is covered').toBeGreaterThan(0);
+    expect(seen.tapered, 'tapers below 1 are covered').toBeGreaterThan(0);
   });
 
   it('colours each instance by its slot', () => {
