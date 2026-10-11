@@ -1,6 +1,6 @@
 /**
  * @file Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene>
- * [--scene id] [--steps n] [--seed s] [--set key=value…]`.
+ * [--scene id] [--steps n] [--seed s] [--set key=value…] [--feel]`.
  *
  * `<scene>` is a scene module (a `.ts` file, or a directory with `index.ts`, such as `fixtures/scenes/kernel`) or a
  * scene id (`kernel`), found among the modules under `fixtures/scenes/` and `labs/<name>/scenes/` that call
@@ -13,10 +13,11 @@
  *
  * Output, at most about 20 lines: the hash; the entities, systems and events (by type, counted from the trace after
  * every step); the settings changed; the trace's per-part digests; the files written. `state.json` holds the final
- * state and trace.
+ * state and trace. `--feel` adds the feel meter's report for the scene's first player actor (`__engine.feel()`,
+ * engine/sim/actors.ts; WP 3.2): two lines, and every number as a `feel.<name>` metric.
  *
- * Usage: node x sim <scene> [--scene id] [--steps n] [--seed s] [--set k=v…]. Exit 0 when the scene ran, 1 when it
- * threw, 2 on a usage error (no such module or scene, a bad flag or setting).
+ * Usage: node x sim <scene> [--scene id] [--steps n] [--seed s] [--set k=v…] [--feel]. Exit 0 when the scene ran, 1
+ * when it threw, 2 on a usage error (no such module or scene, a bad flag or setting, `--feel` without an actor).
  *
  * @example
  * parseSets(['kernel.speed=2', 'kernel.movers=3']); // { 'kernel.speed': '2', 'kernel.movers': '3' }
@@ -33,6 +34,7 @@ import type { Registry } from '../../engine/core/registry';
 import { checkpointsOf, playReplay, REPLAY_KEYS, type Replay, type StepView } from '../../engine/sim/replay';
 import { createHeadless, headlessHost } from '../../engine/app/headless';
 import { getScene, isScene, type Scene } from '../../engine/sim/scene';
+import type { FeelReport } from '../../engine/physics/feel';
 import { walk } from '../lib/docs';
 import { UsageError, type Command, type CommandResult } from '../x';
 
@@ -199,12 +201,13 @@ export async function writeReplay(root: string, path: string, replay: Replay): P
 }
 
 export default {
-  usage: 'sim <scene> [--scene id] [--steps n] [--seed s] [--set k=v…]',
+  usage: 'sim <scene> [--scene id] [--steps n] [--seed s] [--set k=v…] [--feel]',
   options: {
     scene: { type: 'string' },
     steps: { type: 'string' },
     seed: { type: 'string' },
     set: { type: 'string', multiple: true },
+    feel: { type: 'boolean' },
   },
   maxPositionals: 1,
   async run({ values, positionals, root }): Promise<CommandResult> {
@@ -244,6 +247,7 @@ export default {
     );
     const eventLine = Object.entries(events).sort(([a], [b]) => (a < b ? -1 : 1));
     const setLine = Object.entries(sets).map(([path, value]) => `${path}=${JSON.stringify(value)}`);
+    const feel = values.feel ? feelOf(engine as unknown as Record<string, unknown>, scene.id) : undefined;
     return {
       ok: true,
       target: scene.id,
@@ -261,6 +265,7 @@ export default {
           .map(([part, digest]) => `${part} ${digest}`)
           .join(', ')}`,
         `files: ${out}/state.json, ${out}/run.replay.json`,
+        ...(feel ? feelLines(feel) : []),
       ],
       metrics: {
         hash,
@@ -272,6 +277,7 @@ export default {
         ...Object.fromEntries(
           Object.entries(sets).map(([path, value]) => [`set.${path}`, serialize(value as Canonical)]),
         ),
+        ...Object.fromEntries(Object.entries(feel ?? {}).map(([name, value]) => [`feel.${name}`, value])),
       },
       artifacts: [
         {
@@ -288,3 +294,22 @@ export default {
     };
   },
 } satisfies Command;
+
+/** The feel meter's report for a run's first player actor (the inspector member `feel`); a usage error without one. */
+export function feelOf(engine: Record<string, unknown>, scene: string): FeelReport {
+  const feel = engine.feel as ((id?: number) => FeelReport) | undefined;
+  const actors = (engine.entities as (query: string) => unknown[])('actor');
+  if (!feel || !actors.length) throw new UsageError(`--feel: the scene ${scene} has no actor (spawnActor) to measure`);
+  return feel();
+}
+
+/** The feel report as two lines of text, rounded for reading (the metrics keep every digit). */
+export function feelLines(feel: FeelReport): string[] {
+  const n = (value: number, digits = 2) => value.toFixed(digits);
+  return [
+    `feel: responds in ${feel.responseTicks} ticks; ${n(feel.topSpeed)} m/s in ${n(feel.accelerationTime)} s; ` +
+      `stops in ${n(feel.stopTime)} s over ${n(feel.stopDistance)} m; turns in ${n(feel.turnTime)} s`,
+    `feel: jumps ${n(feel.apex, 3)} m, ${n(feel.airTime)} s in the air, ${n(feel.jumpDistance)} m running; ` +
+      `reaches ${n(feel.reach, 3)} m; dashes ${n(feel.dashDistance)} m`,
+  ];
+}
