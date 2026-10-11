@@ -1,0 +1,69 @@
+/**
+ * @file The box scene `box:{{name}}`: what it shows (replace this text; `x docs` puts the first sentence in INDEX).
+ * It starts as one crate circling the box room's middle at `box.{{name}}.speed`: the room's level (labs/box/levels/
+ * room.txt, drawn by the page), a setting, and an entity whose component declares where it stands (x, y, z in
+ * metres, yaw, size, material), which the page draws as a crate until actors and props draw themselves.
+ *
+ * Game code, sim-side: it imports only engine/sim-api.ts, so `node x sim {{id}}` runs it in Node, and the page opens
+ * it as `labs/box/?scene={{name}}`. Add it to labs/box/README.md's scenes with what it shows and its settings.
+ *
+ * @example
+ * {{name}}.id; // 'box:{{name}}'
+ * @see {{id}}.test.ts
+ */
+import { defineComponent, defineScene, defineSettings, type World } from '../../../engine/sim-api';
+
+/** The scene's settings: each is reachable through `x set`, URL parameters and `__engine.set`. */
+export const SETTINGS = defineSettings({
+  'box.{{name}}.speed': {
+    type: 'number',
+    default: 1,
+    minimum: 0,
+    maximum: 10,
+    unit: 'm/s',
+    description: 'How fast the crate circles.',
+  },
+});
+
+/** The crate: where it stands and how it looks (the page draws a component that declares x and z in metres). */
+export const CRATE = defineComponent('{{name}}Crate', {
+  description: 'The crate of box:{{name}}: its place, facing and how far round it has gone.',
+  fields: {
+    x: { type: 'number', default: 8, unit: 'm', description: 'East.' },
+    y: { type: 'number', default: 0, unit: 'm', description: 'Up: the bottom of the crate.' },
+    z: { type: 'number', default: 6, unit: 'm', description: 'South.' },
+    yaw: { type: 'number', default: 0, unit: 'rad', description: 'The heading it faces.' },
+    angle: { type: 'number', default: 0, unit: 'rad', description: 'How far round the circle it has gone.' },
+    size: { type: 'number', default: 0.8, unit: 'm', description: 'The side of its crate.' },
+    material: { type: 'string', default: 'material:planks', description: 'What it is drawn with.' },
+  },
+});
+
+/** The scene's components, typed. */
+type Components = {
+  {{name}}Crate: { x: number; y: number; z: number; yaw: number; angle: number; size: number; material: string };
+};
+
+/** Circles each crate round the room's middle, 2.5 m out. */
+function circle(w: World<Components>): void {
+  const speed = w.settings.get<number>('box.{{name}}.speed');
+  for (const e of w.query('{{name}}Crate')) {
+    const c = e.{{name}}Crate;
+    c.angle += (speed / 2.5) * w.dt;
+    c.x = 8 + 2.5 * Math.sin(c.angle);
+    c.z = 6 + 2.5 * Math.cos(c.angle);
+    c.yaw = c.angle + Math.PI / 2;
+  }
+}
+
+/** The box scene `box:{{name}}`. */
+export const {{name}} = defineScene<Components>('box:{{name}}', {
+  description: 'One crate circling the box room (replace).',
+  level: 'level:room',
+  setup(w) {
+    w.spawn({ {{name}}Crate: { z: 8.5 } });
+    w.systems.add('circle', circle, { phase: 'physics' });
+  },
+});
+
+export default {{name}};

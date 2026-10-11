@@ -1,0 +1,11 @@
+{
+  "describe": "A box scene (PLAN.md §9.0, §8.13): a sim-side scene module on the box room's level with a setting and an entity the page draws, and its replay test: the same hash three times, and its recording replays to the same hashes.",
+  "id": "the module's path, labs/box/scenes/<name> (its scene id is box:<name>, its URL ?scene=<name>): labs/box/scenes/spinners",
+  "pattern": "^(labs/box/scenes|tools/templates/scene)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/scene/sampleScene",
+  "files": {
+    "scene.ts.tmpl": "{{id}}.ts",
+    "scene.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}
