@@ -4378,7 +4378,7 @@ For the agents who maintain the engine.
 - `findBase` (function): The base for selections in `root` (see the file comment).
 - `isVersionOnly` (function): True when every changed line of a unified diff is a `"version": "…"` line, as many removed as added.
 - `LAST_GREEN` (const): Where the last green `x ci --local` records its commit, relative to the root.
-- `LONG_RUNS` (const): The long runs: no budget, run at each gate.
+- `LONG_RUNS` (const): The long runs (PLAN.md §8.2): no budget, run at each gate.
 - `plan` (function): The base, the changes and both selections for `root`: what `x ci --local` and an iterating agent run.
 - `recordGreen` (function): Records `sha` as the last green `x ci --local`, the base until main holds a gate.
 - `reportMs` (function): The wall-clock duration a Vitest or Playwright JSON report records; throws on anything else.

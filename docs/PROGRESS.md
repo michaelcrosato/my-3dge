@@ -12,7 +12,7 @@ Phases 0–4 are done: the foundation, the kernel, Box 1 (PR #2, #3, #5), and Bo
   with cutaway twins); bodies and props, navigation reaching every walkable tile; the hero climbs to a gallery, laps
   the dais and knocks crates (box-3-climb, box-3-dais, box-3-knock: Node and page give the same goldens).
 - Already in from later phases: 5.1–5.4 (crowd bodies, steering, blob and floater rigs, crowd rendering at 5,000),
-  5.5 partial (gpuMs not measured), 6.5 overlay, 7.1 lights and sky, 7.2 toon styles; lane L 8.1–8.3, 8.10; lane X
+  5.5 (gpuMs: WP 11.2, on demand), 6.5 overlay, 7.1 lights and sky, 7.2 toon styles; lane L 8.1–8.3, 8.10; lane X
   9.1–9.4 (audio runtime).
 - Gate: `node x ci --local` green in 6 min 57 s at load 32–42 (check 6.2 s, test 23.8 s with 2,530 tests,
   e2e 5 min 38 s of 6 min with 114 tests).
@@ -20,13 +20,13 @@ Phases 0–4 are done: the foundation, the kernel, Box 1 (PR #2, #3, #5), and Bo
 ## What is next
 
 - Box 4 (Phase 5, gate G5): B 5.7, a crowd in the box (walker, slime and wisp casts with their steering, box-4
-  replays and the box-crowd-1000 perf baseline), and finishing 5.5 (gpuMs). 5.6 bot and dev actions stays on demand.
+  replays and the box-crowd-1000 perf baseline). 5.6 bot and dev actions stays on demand.
 - Then Box 5 (Phase 6, G6): 6.1 moves and hits, 6.2 reactions, 6.3 combat helpers, 6.4 effects, 6.6 checks, 6.7.
 - Background: lane L (8.4 baker and retargeting, then 8.5–8.7, 8.9) and lane X (9.5 sound in the box).
 
 ## Open issues
 
-- T2 runs 5 min 38 s of its 6 min under load (parity and box-hall specs now parallel); T0 passed 10 s at G3 under
+- T2 5 min 54 s of its 6 min at load 5–43 (WP-G5-fix-r1); T0 passed 10 s at G3 under
   load average 26–35 (recorded, not fixed).
 - Over the 400-line warning (cap 600): engine/sim-api.ts 434, physics/world.ts 419, tools/cmd/perf.ts 414,
   sim/world.ts 410, sim/scene.ts 409, tools/cmd/port.ts 408, tools/cmd/ci.ts 404.

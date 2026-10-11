@@ -808,6 +808,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Tests: [`labs/box/cast/crowd.test.ts`](../labs/box/cast/crowd.test.ts)
 - [`walker.ts`](../labs/box/cast/walker.ts): The box's walker (PLAN.md §9.0, WP 5.7): the crowd's foot soldier from Box 4 on, a capsule that walks after the hero.
   - Exports: `Chase`, `CROWD_WALKER`, `levelWith`, `makeWalker`, `steerWalker`, `WALKER`, `WalkerData`
+  - Tests: [`labs/box/cast/crowd.test.ts`](../labs/box/cast/crowd.test.ts)
 - [`wisp.ts`](../labs/box/cast/wisp.ts): The box's wisp (PLAN.md §9.0, WP 5.7): a floater that hovers after the hero and circles him, from Box 4 on.
   - Exports: `CROWD_WISP`, `makeWisp`, `steerWisp`, `WISP`, `WispData`
   - Tests: [`labs/box/cast/crowd.test.ts`](../labs/box/cast/crowd.test.ts)
