@@ -2,8 +2,9 @@
  * @file Tests for the clip layer (WP 8.4): fades and crossfades, stop and the cancel rules, no joint jumping in a
  * tick when a crossfade is stopped, cancelled or cut short, the `hold`, `next` and `landed` flags, events (a clip's
  * own, a lap's, an attack's hit at its strike time), root motion, masks and additive clips in the animator's pose and
- * over another clip, a mirrored clip's hand contacts, the walk–run switch on either side of its lines (Done when),
- * shardfall's three walkers played at their ground speed (Done when), and save and load.
+ * over another clip, a mirrored clip's hand contacts, the walk–run switch on either side of both its lines with the
+ * walk and with the run playing, each change at the drive that makes it (Done when), shardfall's three walkers played
+ * at their ground speed (Done when), and save and load.
  */
 import { describe, expect, it } from 'vitest';
 import { Quaternion, Vector3 } from '../../core/math';
@@ -272,22 +273,36 @@ describe('locomotion: idle, walk and run by ground speed', () => {
     const layer = layerOf().locomote({ idle: 'Idle', walk: 'Walk', run: 'Run' });
     const h = layer.hipHeight;
     const [w, r] = [clipPace(library.clip('Walk'), h)!, clipPace(library.clip('Run'), h)!];
-    const mid = Math.sqrt(w * r);
-    const changes: string[] = [];
+    const [up, down, e] = [Math.sqrt(w * r) * 1.15, Math.sqrt(w * r) * 0.87, 1e-6];
+    // each change, with the drive and the tick within it where it happened
+    const changes: [string, number, string][] = [];
     let last = '';
-    const drive = (speed: number, n = 30) => {
+    const drive = (label: string, speed: number, n = 30) => {
       for (let i = 0; i < n; i++) {
         layer.step({ groundSpeed: speed });
-        if (layer.current!.clip !== last) changes.push((last = layer.current!.clip));
+        expect(layer.state.running, `${label} at ${i}`).toBe(layer.current!.clip === 'TEST/Run');
+        if (layer.current!.clip !== last) changes.push([label, i, (last = layer.current!.clip)]);
       }
     };
-    drive(0.05);
-    drive(mid * 1.15 - 1e-6); // just below the line up, walking
-    drive(mid * 1.15 + 1e-6); // just above it: the run
-    drive(mid * 0.87 + 1e-6); // running, just above the line down
-    drive(mid * 0.87 - 1e-6); // just below it: the walk again
-    expect(changes).toEqual(['TEST/Idle', 'TEST/Walk', 'TEST/Run', 'TEST/Walk']);
-    expect(layer.current!.rate).toBeCloseTo((mid * 0.87 - 1e-6) / w, 9);
+    drive('idle', 0.05);
+    drive('walk at its pace', w);
+    drive('walking, just below the line down', down - e); // both lines with the walk playing
+    drive('walking, just above the line down', down + e);
+    drive('walking, just below the line up', up - e);
+    drive('walking, just above the line up', up + e); // the run
+    drive('running, just above the line up', up + e); // both lines with the run playing
+    drive('running, just below the line up', up - e);
+    drive('running, just above the line down', down + e);
+    drive('running, just below the line down', down - e); // the walk again
+    drive('walking again, just above the line down', down + e);
+    drive('walking again, just below the line up', up - e);
+    expect(changes).toEqual([
+      ['idle', 0, 'TEST/Idle'],
+      ['walk at its pace', 0, 'TEST/Walk'],
+      ['walking, just above the line up', 0, 'TEST/Run'],
+      ['running, just below the line down', 0, 'TEST/Walk'],
+    ]);
+    expect(layer.current!.rate).toBeCloseTo((up - e) / w, 9);
     expect(GROUND_SPEED.idle).toBe(0.1);
   });
 
