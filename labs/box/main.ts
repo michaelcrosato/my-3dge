@@ -14,16 +14,21 @@
  * @example
  * // http://127.0.0.1:5173/labs/box/?scene=room&cam=topdown&box.room.speed=3
  * // http://127.0.0.1:5173/labs/box/?scene=room-hero&cam3=chase
+ * // http://127.0.0.1:5173/labs/box/?scene=hall&cam3=chase
  * // node x shot labs/box --scene room --cam iso
  */
 /// <reference types="vite/client" />
 import { createEngine } from '../../engine';
+import hallLevel from './levels/hall.txt?raw';
 import roomLevel from './levels/room.txt?raw';
 import { room } from './scenes/room';
 import { BOX_TOUCH } from './touch';
 
 /** The box's levels, by id, as text: the engine registers them. */
-const levels = { 'level:room': { text: roomLevel, file: 'labs/box/levels/room.txt' } };
+const levels = {
+  'level:room': { text: roomLevel, file: 'labs/box/levels/room.txt' },
+  'level:hall': { text: hallLevel, file: 'labs/box/levels/hall.txt' },
+};
 
 /** Every box scene module, imported now so each registers its scene; the room comes first, the default. */
 const modules = import.meta.glob<Record<string, unknown>>(['./scenes/*.ts', '!./scenes/*.test.ts'], { eager: true });
