@@ -229,3 +229,80 @@ export type { PuppetBatches } from './gfx/puppets/draw';
 export { createBlobShadows } from './gfx/puppets/blobShadow';
 export { blobScale } from './gfx/puppets/blobShadow';
 export type { BlobShadows } from './gfx/puppets/blobShadow';
+// The HTML/CSS overlay (WP 6.5): world-anchored labels and damage numbers placed from projected coordinates each
+// frame (three.js's CSS2DRenderer pattern), HUD lines and a crosshair over the canvas; ui.state() for tests.
+export { createOverlay } from './ui/overlay';
+export type { Overlay } from './ui/overlay';
+export type { OverlayOptions } from './ui/overlay';
+export type { HudOptions } from './ui/overlay';
+export type { HudPlace } from './ui/overlay';
+export type { Label } from './ui/labels';
+export type { LabelOptions } from './ui/labels';
+export type { DamageOptions } from './ui/labels';
+export type { WorldPoint } from './ui/labels';
+export type { Anchor } from './ui/labels';
+export type { OverlayCamera } from './ui/labels';
+export { DAMAGE_NUMBERS } from './ui/labels';
+export { uiState } from './ui/state';
+export type { UiState } from './ui/state';
+export type { UiElementState } from './ui/state';
+// Lights, shadows, atmosphere and sky (WP 7.1): light kinds for a level's light spots, a fixed pool of point lights
+// near the focus with a shadow budget by quality tier, and sky presets (background, dome, backdrop, sun, ambient
+// light, fog) that a sky puts on a scene.
+export { defineLight } from './gfx/lights';
+export type { LightEntry } from './gfx/lights';
+export type { LightSource } from './gfx/lights';
+export { defineSky } from './gfx/sky';
+export type { SkyEntry } from './gfx/sky';
+export type { SkySpec } from './gfx/sky';
+export { createSky } from './gfx/sky';
+export type { Sky } from './gfx/sky';
+// Materials v2 (WP 7.2): the same material data drawn in four styles (lambert, toon, flat, pbr), switched at run time
+// with every style warmed; the toon look (bands and rim) as uniforms; outline shells for meshes and instanced batches.
+export { createStyleSet } from './gfx/materials/styles';
+export { MATERIAL_STYLES } from './gfx/materials/styles';
+export type { MaterialStyle } from './gfx/materials/styles';
+export type { StyleSet } from './gfx/materials/styles';
+export type { StyleSetOptions } from './gfx/materials/styles';
+export { TOON_LOOK } from './gfx/materials/toon';
+export type { ToonLook } from './gfx/materials/toon';
+export type { ToonUniforms } from './gfx/materials/toon';
+export { createOutline } from './gfx/materials/outline';
+export { OUTLINE_MODES } from './gfx/materials/outline';
+export type { Outline } from './gfx/materials/outline';
+export type { OutlineMode } from './gfx/materials/outline';
+export type { OutlineOptions } from './gfx/materials/outline';
+export type { OutlineShells } from './gfx/materials/outline';
+// Props drawn (WP 4.5): every prop part a batch of the instancing service, posed by its body, the flames dancing on
+// the visual streams, the light spots flickering, for the light pool.
+export { createPropMeshes } from './gfx/props';
+export type { PropMeshes } from './gfx/props';
+export type { PropMeshesOptions } from './gfx/props';
+export type { PropMeshPose } from './gfx/props';
+export type { PropLight } from './gfx/props';
+export { FLICKER } from './gfx/props';
+// Crowd rendering and pose LOD (WP 5.4): thousands of humanoids, blobs and floaters in a few dozen draw calls over the
+// instancing service, each body seen through bands of detail by its distance (the animator's pose level, capes),
+// culled by the view; the blob and floater bodies as data.
+export { createCrowd } from './gfx/puppets/crowd';
+export type { Crowd } from './gfx/puppets/crowd';
+export type { CrowdDraw } from './gfx/puppets/crowd';
+export type { CrowdRigDraw } from './gfx/puppets/crowd';
+export type { CrowdStats } from './gfx/puppets/crowd';
+export type { RigBody } from './gfx/puppets/crowd';
+export type { RigPart } from './gfx/puppets/crowd';
+export type { RigJoints } from './gfx/puppets/crowd';
+export type { RigShape } from './gfx/puppets/crowd';
+export { createCrowdLod } from './gfx/puppets/lod';
+export { CROWD_LOD } from './gfx/puppets/lod';
+export type { CrowdLod } from './gfx/puppets/lod';
+export type { CrowdLodOptions } from './gfx/puppets/lod';
+export type { CrowdLodCounts } from './gfx/puppets/lod';
+export type { CrowdBand } from './gfx/puppets/lod';
+export type { CrowdBandSpec } from './gfx/puppets/lod';
+export { BLOB_BODY } from './gfx/puppets/bodies/blob';
+export { blobBody } from './gfx/puppets/bodies/blob';
+export type { BlobFeatures } from './gfx/puppets/bodies/blob';
+export { FLOATER_BODY } from './gfx/puppets/bodies/floater';
+// Performance counters (WP 5.5): what `__engine.stats()` returns, means in ms and the renderer's counts, never fps.
+export type { EngineStats } from './dev/stats';

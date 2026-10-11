@@ -1,0 +1,33 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Props, movers, triggers and the rescue (WP 4.1): the hero rides a platform east and back; a swing at step 60 topples two stacks of crates into the pit zone; at step 90, mid-ride with the crates in the air, the physics world is captured and restored in place from its text form (the goldens are those of the run without it); at step 300 the barrel is dropped through the floor and the rescue puts it back on its tile.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "physics-props",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [
+    [60, { "b": ["knock"] }],
+    [61, { "b": null }],
+    [90, { "dev": "roundtrip" }],
+    [300, { "dev": "sink" }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "001682f428e235b6",
+      "60": "9ecb5f14992c4dc6",
+      "120": "83d60244900c3496",
+      "180": "d3381a805807032e",
+      "240": "ad00cc968370ebf9",
+      "300": "4184d0dbc3eea102",
+      "360": "975c61cb5b846c22",
+      "420": "acd7728ab07c3e2b",
+      "480": "ed483844d8266307",
+      "540": "a90c69953e318d14",
+      "600": "be7ab86b94f5c40f"
+    }
+  }
+}

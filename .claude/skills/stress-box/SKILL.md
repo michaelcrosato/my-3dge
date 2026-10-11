@@ -21,9 +21,11 @@ the settings that tune it; a test (tests/unit/box-readme.test.ts) fails when it 
 
 The engine does the rest: routes (`?scene ?seed ?cam ?replay`, settings by path), the renderer and warm-up, the frame
 loop, `window.__engine`, the error overlay (engine/app/engine.ts). The view is built from data: the level's meshes
-(each wall run its own mesh, so the ID pass names it) and a stand-in box for every entity whose component declares
-`x` and `z` in metres, until actors and props draw themselves (engine/gfx/stage.ts). `createHeadless({ scene, view:
-true })` builds the same view in Node, for `scene.dump()` and `camera`.
+(each wall run its own mesh, so the ID pass names it, with the cutaway the view runs while it follows a player),
+actors with an animator as puppets (engine/gfx/puppets/actors.ts), and a stand-in box for every other entity whose
+component declares `x` and `z` in metres, until props draw themselves (engine/gfx/stage.ts). The camera follows the
+first player actor. `createHeadless({ scene, view: true })` builds the same view in Node, for `scene.dump()` and
+`camera`.
 
 Rules: the box's cast, numbers and behaviour stay in labs/box/ (never the engine); a component name is global, so
 prefix a scene's own (`pathMover`, `spinnersCrate`); a scene's settings are `box.<scene>.<name>`.
@@ -34,10 +36,11 @@ prefix a scene's own (`pathMover`, `spinnersCrate`); a scene's settings are `box
    `labs/box/?scene=<name>` (main.ts imports every scene module).
 2. Make it show what the stage needs. A variant is a new file or a settings preset, never a change of meaning in a
    passing scene.
-3. Record a replay: `node x sim labs/box/scenes/<name> --steps 600`, copy `out/sim/box:<name>/run.replay.json` to
+3. Record a replay: `node x sim labs/box/scenes/<name> --steps 600`, copy `out/sim/box-<name>/run.replay.json` to
    `tests/replays/box-<stage>-<name>.replay.json`, then `node x replay <file> --browser sim --update` (goldens hold in
    Node and Chromium) and `node x replay <file> --browser page` (and while the page renders).
-4. List it in labs/box/README.md (scene, what it shows, covered by, its settings) and extend the box suite.
+4. List it in labs/box/README.md (scene, what it shows, covered by, its settings) and extend the box suite. When it
+   belongs to a stage, add it to `STAGES` in tests/e2e/parity.spec.ts: T2's rendering-page check plays only those.
 
 ## The quick loop
 

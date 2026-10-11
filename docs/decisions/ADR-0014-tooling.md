@@ -206,3 +206,31 @@ Calls made where PLAN.md §9 WP 2.7 and amendment 6 did not fit what the work ne
   - tests/unit/hooks/settings.test.ts (WP 0.10): its skills list names stress-box, which WP 0.10's entry says WP 2.7 adds.
 - **`APP_NO_VIEW` instead of `needs: 'view'`.** Amendment 6 said WP 2.7 would add `view` to the values of `needs`. That field and its check belong to WP 1.6 (engine/dev/members.ts, engine/dev/inspector.ts), and the check decides from a host flag (`host.renderer`). A view is `host.view`, which only the app's host (`AppHost`, engine/app/viewMembers.ts) has. So `camera.get`, `camera.set` and `scene.dump` throw `APP_NO_VIEW` themselves through one helper (`viewOf`), naming the member and the fix (`createHeadless({ scene, view: true })`), and the dev layer is left unchanged. For an agent the behaviour is the same: `help()` lists the members everywhere, and a call without a view is a coded error that names the fix. The cost is that `help()` does not add "(needs a view)" the way it adds "(needs a renderer)". A `needs: 'view'` value replaces the helper once a second module's members need a view.
 - **A restore or a dev action snaps the view** (review round 3). createAppHost hands members `recordedRun(session)` with `restore` and `act` followed by `view.restarted()`, so the stand-ins snap to the world, with no interpolation from the places they had, as after a restart. engine/dev/members.ts is unchanged. engine/app/view.test.ts proves it.
+
+## Amendment 11 (2026-10-11, WP-3.11): x film
+Calls made where PLAN.md §9 WP 3.11 did not fit what the work needed:
+- **WP 3.11 edits tests/unit/box-readme.test.ts (WP 2.7).** Its fixture used `node x film labs/box` as the example of a command that does not exist. Now that x film exists, the fixture misspells it as flim, a command that still does not exist. This is the smallest change that keeps the test's intent.
+- **The step DSL works on sim steps through `__engine`** (step, shot, rec, press, hold, release, axis, cam, set) rather than filmstrip's wall-clock wait, keys and eval. The virtual clock holds the page still, so frames repeat exactly.
+- **An empty `--compare` means `HEAD`.** parseArgs needs a value for `--compare`, so `--compare ''` films the base at `HEAD`.
+
+## Amendment 12 (2026-10-11, WP-5.5): the stats meter's wiring and budget files
+Core proposal accepted at integration. Calls made where PLAN.md §9 WP 5.5 and §8.3 did not fit what the work needed:
+- **Registering `stats()` from engine/dev/stats.ts is not enough on its own.** The host had no step, phase or frame timings and no renderer counts, and nothing in a page loads dev/. WP 5.5 therefore also changes engine/sim/world.ts and engine/sim/scene.ts: createWorld and startScene take a `probe` that runs each system once, so the physics and anim phases can be timed. The probe never touches the sim, and the hash is unchanged. It also changes engine/app/headless.ts and engine/app/engine.ts: the run's meter times stepOnce and frameNow and reads gfx.stats() through Drawing.counts. The member checks in engine/app/viewMembers.test.ts and tests/e2e/box.spec.ts gain `stats()`, and the box-readme fixture's missing member becomes `fps()`.
+- **Means, not medians.** Chromium's clock reads in 0.1 ms steps, so medians collapse onto that grid. `stats()` also adds `steps`, `frames` and `pipelinesAfterWarmUp`; it has no `gpuMs` yet (the timestamp-query WP adds it). `renderMs` is CPU time only.
+- **Budget files** are named tests/baselines/perf/<scene id, ':' as '-'>.json, one per scene, with sections `node`, `page` and `ladder`. A value passes up to budget × (1 + tolerance). WP 5.7's budget file is therefore tests/baselines/perf/box-crowd-1000.json.
+- **The ladder names its agent setting** (`--agents` or the budget's `ladder.setting`) instead of guessing it from the scene.
+
+## Amendment 13 (2026-10-11, gate G3's review): cut output, x sim's directory, template next steps, x film's modules, __engine.anim
+- When the dispatcher cuts a command's output, it writes every line to out/<cmd>/<target>/output.txt, names that file
+  in the "… N more in" line and lists it in the report's artifacts. The report schema is unchanged. `x describe <kind>`
+  prints the ids before the fields, and a list of ids too long for its line names describe.json.
+- `x sim` writes run.replay.json, state.json and map.txt beside its report, in out/sim/<slug>/ (the scene id as a
+  directory name: box:room → box-room), no longer in out/sim/<scene id>/.
+- A template manifest may hold `next`, which `x new` prints after writing an entry, filled like the targets. The
+  scene's names the replay steps, the README entry and parity.spec.ts's STAGES.
+- x film's frame comparison and thumbnail baselines move to tools/lib/filmCompare.ts, and its contact sheet and font to
+  tools/lib/filmSheet.ts (film.ts 588 → 351 lines, WP 3.11's recorded follow-up).
+- `__engine.anim(id?)` (engine/app/animMember.ts) is WP 3.7's deferred member. It returns the actor's
+  Animator.inspect() from an animator pool of its own, posed where the actor stands, and never touches the sim's
+  animators.
+(The lane proposed this as amendment 12; WP 5.5 had already taken that number, so it is 13.)

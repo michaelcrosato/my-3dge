@@ -1,8 +1,15 @@
 /**
  * @file The replay test of the box scene `box:{{name}}` ({{id}}.ts): 600 steps give the same hash three times, the
  * run's recording replays to the same hashes at every checkpoint (as `x replay` checks a replay file), and its
- * setting changes the run. Keep a replay with its goldens too: `node x sim {{id}} --steps 600`, copy
- * out/sim/box:{{name}}/run.replay.json to tests/replays/, then `node x replay <file> --browser page`.
+ * setting changes the run.
+ *
+ * Keep a replay with its goldens too (labs/box/README.md, "Adding a scene or a variant"):
+ * 1. `node x sim {{id}} --steps 600`;
+ * 2. copy out/sim/box-{{name}}/run.replay.json to tests/replays/box-<stage>-{{name}}.replay.json;
+ * 3. `node x replay <file> --browser sim --update` records its goldens, in Node and Chromium;
+ * 4. `node x replay <file> --browser page` checks them while the page renders;
+ * 5. list the scene and its replay in labs/box/README.md;
+ * 6. when it belongs to a stage, add it to `STAGES` in tests/e2e/parity.spec.ts: T2 plays only the replays named there.
  * @see {{id}}.ts
  */
 import { describe, expect, it } from 'vitest';

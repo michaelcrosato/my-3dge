@@ -13,7 +13,7 @@ import { describe, expect, it } from 'vitest';
 import { createHeadless } from '../../engine';
 import { ROUTE_KEYS } from '../../engine/app/routes';
 import { registry } from '../../engine/core/registry';
-import { parseCameraCode } from '../../engine/gfx/cameras/codes';
+import { readCameraCode } from '../../engine/gfx/cameras/place';
 import { loadSettings } from '../../tools/cmd/set';
 import { commandNames, loadCommand, ROOT } from '../../tools/x';
 import '../../labs/box/scenes/room';
@@ -84,7 +84,7 @@ async function readmeProblems(text: string): Promise<string[]> {
       if (!registry.has('scene', span)) problems.push(`${where} names a scene nobody registers`);
     } else if (/^cam3?=/.test(span)) {
       try {
-        parseCameraCode(span);
+        readCameraCode(span);
       } catch (error) {
         problems.push(`${where} is no camera code: ${(error as Error).message}`);
       }
@@ -100,18 +100,18 @@ describe('labs/box/README.md', () => {
 
   it('fails a fixture README that names a missing setting, file, command, flag or member', async () => {
     const fixture = [
-      'Tune `box.room.sped` (a typo), read `labs/box/levels/crypt.txt`, run `node x film labs/box` and',
-      '`node x shot labs/box --angle 3 --set box.room.slow=1`, open `labs/box/?box.room.fast=2`, call `__engine.stats()`,',
+      'Tune `box.room.sped` (a typo), read `labs/box/levels/crypt.txt`, run `node x flim labs/box` (a typo) and',
+      '`node x shot labs/box --angle 3 --set box.room.slow=1`, open `labs/box/?box.room.fast=2`, call `__engine.fps()`,',
       'set one with `node x set box.room.sped 3`.',
     ].join('\n');
     expect(await readmeProblems(fixture)).toEqual([
       '`box.room.sped` names the setting box.room.sped, which nobody declares',
       '`labs/box/levels/crypt.txt` names labs/box/levels/crypt.txt, which does not exist',
-      '`node x film labs/box` runs x film, which is no command',
+      '`node x flim labs/box` runs x flim, which is no command',
       '`node x shot labs/box --angle 3 --set box.room.slow=1` gives x shot the flag --angle, which it does not take',
       '`node x shot labs/box --angle 3 --set box.room.slow=1` names the setting box.room.slow, which nobody declares',
       '`labs/box/?box.room.fast=2` names the setting box.room.fast, which nobody declares',
-      '`__engine.stats()` calls __engine.stats, which help() does not list',
+      '`__engine.fps()` calls __engine.fps, which help() does not list',
       '`node x set box.room.sped 3` names the setting box.room.sped, which nobody declares',
     ]);
   });

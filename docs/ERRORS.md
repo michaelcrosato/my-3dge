@@ -173,43 +173,43 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `a frame threw, so the loop stopped: {message}`
 - Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
-- Registered in: [`engine/app/engine.ts` line 77](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 78](../engine/app/engine.ts)
 
 ### APP_NO_FRAME
 
 - Message: `no frame was drawn in {tries} tries: the warm-up never finished`
 - Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 85](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 86](../engine/app/engine.ts)
 
 ### APP_NO_LEVEL
 
 - Message: `the scene {scene} loads the level {level}, which is not registered, so its view cannot be built`
 - Fix: register the level's text before the view starts: in a page, import text from './levels/<name>.txt?raw' and call defineLevel('{level}', { text, file }); in Node, read the file and do the same
-- Registered in: [`engine/app/view.ts` line 41](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 50](../engine/app/view.ts)
 
 ### APP_NO_REPLAY
 
 - Message: `the page has no replay {name}`
 - Fix: use one of: {names}
-- Registered in: [`engine/app/engine.ts` line 81](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 82](../engine/app/engine.ts)
 
 ### APP_NO_VIEW
 
 - Message: `{member} needs the scene drawn as a view, and this engine has none`
 - Fix: start it with createHeadless({ scene, view: true }) in Node; a page always has one
-- Registered in: [`engine/app/view.ts` line 45](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 54](../engine/app/view.ts)
 
 ### APP_NOT_HEADLESS
 
 - Message: `headlessHost was given {value}, not a headless engine`
 - Fix: pass the object createHeadless resolved to
-- Registered in: [`engine/app/headless.ts` line 54](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 58](../engine/app/headless.ts)
 
 ### APP_OTHER_SCENE
 
 - Message: `this engine draws {shown}, so it cannot start {scene}`
 - Fix: play {scene} in its own page (labs/<name>/?scene=<name>), or headless: createHeadless({ scene: '{scene}' })
-- Registered in: [`engine/app/headless.ts` line 58](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 62](../engine/app/headless.ts)
 
 ### APP_PLAY_SETTING
 
@@ -221,7 +221,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 73](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 74](../engine/app/engine.ts)
 
 ## audio
 
@@ -499,6 +499,14 @@ Raised by the settings store (engine/core/settings.ts) for an unknown path in `g
 
 Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when an argument does not match the schema its member declares: a wrong type, a value out of range, a missing required argument or one too many. Nothing has happened yet.
 
+### DEV_NO_METER
+
+- Message: `__engine.stats() has no meter to read on this host ({runtime})`
+- Fix: start the engine with createEngine or createHeadless (engine/app), which time its steps and frames; a host made by hand carries a meter from createStatsMeter() as `meter`
+- Registered in: [`engine/dev/stats.ts` line 35](../engine/dev/stats.ts)
+
+Raised by `__engine.stats()` (engine/dev/stats.ts) on an inspector whose host was made without a stats meter, such as a test host built by hand.
+
 ### DEV_NO_RENDERER
 
 - Message: `__engine.{member} needs a renderer, and this engine has none ({runtime}, headless)`
@@ -545,6 +553,12 @@ Raised by `parseCameraCode` (engine/gfx/cameras/codes.ts) for an empty part, a w
 
 Raised by the geometry kit (engine/gfx/geometry/) when a builder gets sizes it cannot build: a size of 0 or less, NaN, a limb no longer than the difference of its radii, a ring whose inner radius is not below its outer, fewer segments than the shape needs.
 
+### GFX_BAD_LIGHT_POOL
+
+- Message: `a light pool of {size} lights: it holds {min} to {max}`
+- Fix: give createLightPool a whole size from 8 to 16 (12 by default); more lights than that need tiled lighting (WP 11.5)
+- Registered in: [`engine/gfx/lights.ts` line 46](../engine/gfx/lights.ts)
+
 ### GFX_BAD_SHOT_SIZE
 
 - Message: `a shot must be at least 1 × 1 whole pixels, not {width} × {height}`
@@ -558,6 +572,14 @@ Raised by the geometry kit (engine/gfx/geometry/) when a builder gets sizes it c
 - Registered in: [`engine/gfx/renderer.ts` line 63](../engine/gfx/renderer.ts)
 
 Advice from `frame()` (engine/gfx/renderer.ts): the pipeline counter (engine/gfx/pipelines.ts) saw a pipeline built during a drawn frame after the first warm-up, the stall PLAN.md §8.7 budgets at 0.
+
+### GFX_CROWD_LOD
+
+- Message: `crowd LOD band {index} {problem}`
+- Fix: give each band an upTo in metres above the last one and a pose level from 0 to {last} (engine/anim/weights.ts LOD)
+- Registered in: [`engine/gfx/puppets/lod.ts` line 41](../engine/gfx/puppets/lod.ts)
+
+Raised by `createCrowdLod` (engine/gfx/puppets/lod.ts) for bands that are not in increasing distance, or whose pose level is not one of the animator’s detail levels.
 
 ### GFX_DEFAULT_LIMITS
 
@@ -657,6 +679,22 @@ Advice from the feature registry (engine/gfx/features.ts) when the device has no
 
 Raised at startup, before anything touches the GPU, when the browser has no `navigator.gpu`, gives no adapter or device, or three.js starts another backend than WebGPU. WebGPU is the only renderer: there is no WebGL fallback (PLAN.md §6.7), so nothing starts, and a page shows this message with its fix.
 
+### GFX_OUTLINE_TARGET
+
+- Message: `outline shells cannot outline {object}: {problem}`
+- Fix: give shells to meshes and instanced batches; outline a skinned mesh with the edge outline filter (WP 7.4) instead
+- Registered in: [`engine/gfx/materials/outline.ts` line 74](../engine/gfx/materials/outline.ts)
+
+Raised by `outline.shell` (engine/gfx/materials/outline.ts) for an object that is not a mesh, or a skinned mesh: the shell's push reads the vertex before skinning.
+
+### GFX_OUTLINE_UNPINNED
+
+- Message: `outline shells cannot find the instance matrix of {object}`
+- Fix: instanced shells are pushed as if their instances stood unturned at the origin; check the new release's InstanceNode (instanceMatrixNode, and whether it still moves positionNode's result) and update instanceMatrixOf and pushNode in engine/gfx/materials/outline.ts
+- Registered in: [`engine/gfx/materials/outline.ts` line 69](../engine/gfx/materials/outline.ts)
+
+Advice from an outline shell's push (engine/gfx/materials/outline.ts), once, when an instanced mesh's vertex stage holds no r182 `InstanceNode` with an `instanceMatrixNode`: the push reads the instance's matrix there, so on another three.js release instanced shells are pushed the wrong way.
+
 ### GFX_PIPELINES_UNPINNED
 
 - Message: `three.js r{revision}'s renderer internals differ from r182's: {problems}`
@@ -664,6 +702,14 @@ Raised at startup, before anything touches the GPU, when the browser has no `nav
 - Registered in: [`engine/gfx/pipelines.ts` line 36](../engine/gfx/pipelines.ts)
 
 Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipelines` no longer has r182's shape, usually after a three.js upgrade: the count of pipelines three.js keeps cached is then unknown (null). Builds are counted at the device and stay exact.
+
+### GFX_RIG_BODY
+
+- Message: `rig body {body}, part {part}: {problem}`
+- Fix: {fix}
+- Registered in: [`engine/gfx/puppets/crowd.ts` line 56](../engine/gfx/puppets/crowd.ts)
+
+Raised by `createCrowd` (engine/gfx/puppets/crowd.ts) for a rig body whose part has an unknown shape, a slot the body lacks, a size that is not positive, or a joint the rig’s pose lacks.
 
 ### GFX_SMALL_BUFFERS
 
@@ -688,6 +734,14 @@ Raised by `bakeTexture` (engine/gfx/textures/bake.ts) and by `defineTexture` for
 - Registered in: [`engine/gfx/cameras/codes.ts` line 47](../engine/gfx/cameras/codes.ts)
 
 Raised by `parseCameraCode` and the camera factories (engine/gfx/cameras/) for a view or camera name they do not know, with the closest names.
+
+### GFX_UNKNOWN_STYLE
+
+- Message: `there is no material style {style}`
+- Fix: use one of {styles}
+- Registered in: [`engine/gfx/materials/styles.ts` line 67](../engine/gfx/materials/styles.ts)
+
+Raised by a style set (engine/gfx/materials/styles.ts) for a style name it does not have.
 
 ### GFX_WARMUP_FAILED
 
@@ -964,3 +1018,23 @@ Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities
 - Registered in: [`engine/sim/state.ts` line 48](../engine/sim/state.ts)
 
 Raised by the world (engine/sim/world.ts) and the hash (engine/sim/state.ts) for an entity property, a `spawn`, `add`, `remove` or `query` name, or a captured component that no `defineComponent` declared: the hash covers declared components only, so an undeclared one is refused rather than skipped.
+
+## ui
+
+### UI_BAD_DT
+
+- Message: `update(camera, dt) got dt {dt}`
+- Fix: pass the seconds since the last frame, 0 or more (the frame loop's dt)
+- Registered in: [`engine/ui/overlay.ts` line 56](../engine/ui/overlay.ts)
+
+### UI_BAD_PLACE
+
+- Message: `hud "{id}" asks for the place {got}`
+- Fix: use one of top-left, top, top-right, bottom-left, bottom, bottom-right
+- Registered in: [`engine/ui/overlay.ts` line 52](../engine/ui/overlay.ts)
+
+### UI_BAD_POINT
+
+- Message: `{what} is {got}, not a point in the world`
+- Fix: pass [x, y, z] in metres, a Vector3 or { x, y, z }, or a function returning one
+- Registered in: [`engine/ui/labels.ts` line 39](../engine/ui/labels.ts)

@@ -13,8 +13,9 @@
  * the command running, and one that never finishes loading is stopped after a minute and named. A module that
  * cannot load in Node is a warning naming it, and the listing goes on without it.
  *
- * Output: at most about 20 lines; the whole description is in `describe.json` beside the report. An unknown kind
- * or id is a usage error (exit 2) naming the closest.
+ * Output: at most about 20 lines, a kind's ids before its fields so a cut output still shows them (a list too long for
+ * its line ends naming `describe.json`); the whole description is in `describe.json` beside the report. An unknown
+ * kind or id is a usage error (exit 2) naming the closest.
  *
  * Usage: node x describe [kind [id]]. Exit 0 when the listing is complete or only warned about modules, 1 when the
  * child process hung or crashed.
@@ -110,6 +111,25 @@ export function fieldLine(field: FieldRow): string {
   return line.length > 140 ? `${line.slice(0, 137)}...` : line;
 }
 
+/** The longest line of ids a kind's listing prints; a longer list is cut, naming `describe.json`. */
+const IDS_LINE = 400;
+
+/** Where `x describe [kind [id]]` writes the whole description: `describe.json` beside its report. */
+export function describeFile(kind?: string, id?: string): string {
+  return `out/describe/${targetSlug([kind, id].filter(Boolean).join(' ') || undefined)}/describe.json`;
+}
+
+/** A kind's ids as one line of at most `IDS_LINE` characters; a cut list says how many there are and where. */
+export function idsLine(kind: string, ids: readonly string[]): string {
+  if (ids.length === 0) return 'ids: none yet';
+  const all = `ids: ${ids.join(', ')}`;
+  if (all.length <= IDS_LINE) return all;
+  const rest = (shown: number) => `, … (${ids.length - shown} more; all ${ids.length} in ${describeFile(kind)})`;
+  let shown = 0;
+  while (`ids: ${ids.slice(0, shown + 1).join(', ')}${rest(shown + 1)}`.length <= IDS_LINE) shown++;
+  return `ids: ${ids.slice(0, shown).join(', ')}${rest(shown)}`;
+}
+
 /** What one listing prints, besides the verdict, and the data `describe.json` holds. */
 export interface Listing {
   summary: string;
@@ -130,12 +150,11 @@ export function listing(kind: string | undefined, id: string | undefined): Listi
   }
   if (id === undefined) {
     const data: KindDescription = registry.describe(kind);
-    const ids = data.ids.length ? `ids: ${data.ids.join(', ')}` : 'ids: none yet';
     const lines = [
       data.description,
       ...(data.fallback ? [`fallback: ${data.fallback}`] : []),
+      idsLine(kind, data.ids),
       ...data.fields.map(fieldLine),
-      ids.length > 400 ? `${ids.slice(0, 397)}...` : ids,
     ];
     return { summary: `${kind}: ${data.fields.length} fields, ${data.ids.length} entries`, lines, data };
   }
@@ -259,9 +278,9 @@ export function createDescribeCommand(options: { timeoutMs?: number } = {}): Com
       const { loaded, warnings, kinds, listing: result, usage, crash } = outcome.done;
       if (usage) throw new UsageError(usage);
       if (!result) throw new Error(crash ?? 'the listing process sent no listing');
-      const dir = join('out', 'describe', targetSlug(target));
-      mkdirSync(join(root, dir), { recursive: true });
-      writeFileSync(join(root, dir, 'describe.json'), `${JSON.stringify(result.data, null, 2)}\n`);
+      const file = describeFile(kind, id);
+      mkdirSync(join(root, file, '..'), { recursive: true });
+      writeFileSync(join(root, file), `${JSON.stringify(result.data, null, 2)}\n`);
       return {
         ok: true,
         summary: result.summary,
@@ -271,7 +290,7 @@ export function createDescribeCommand(options: { timeoutMs?: number } = {}): Com
         metrics: { modules: loaded.length, kinds },
         artifacts: [
           {
-            path: `${dir}/describe.json`,
+            path: file,
             kind: 'json',
             describes: 'the whole description, as registry.describe returns it',
           },

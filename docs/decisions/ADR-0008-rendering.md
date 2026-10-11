@@ -55,3 +55,61 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
   Pillars become stumps when a sight line to the hero's head, feet or the floor around him passes through them,
   measured in boosted picture heights. The rule applies to any camera.
 - **Pages that switch between projections warm up through both cameras.**
+
+## Amendment 3 (2026-10-11, WP-7.2): material styles, toon and outlines
+
+- **Styles are view state.** Material styles (lambert, toon, flat, pbr) are view state held by a style set
+  (`createStyleSet`). The material registry gets no style or bands fields. The toon look (bands, rim) is a set of
+  shared uniforms, and WP 7.4's looks pick the style and the look. Lambert stays as a fourth style.
+- **Each warm-up compiles every style.** Entries `~styles/<style>` point the drawn meshes at that style and `~styles~`
+  restores them. Probes per material cannot stand in, because r182 compiles a shader per instanced mesh of 1,000 slots
+  or fewer (the level's walls).
+- **Toon is a TSL lighting model** (smoothed bands, gated rim), chosen over `MeshToonMaterial` with a gradient map:
+  r182's ToonLightingModel uses `normalGeometry` against a view-space light. The comparison is in `toon.ts`'s file
+  comment and asserted by tests/e2e/materials-v2.spec.ts. Toon and flat draw no normal map.
+- **Outline push.** r182's InstanceNode transforms `positionNode`'s result afterwards, so the push returns
+  `positionGeometry` plus the offset taken back through the instance's turn. It reads the instance matrix from the
+  vertex-stage InstanceNode (advice `GFX_OUTLINE_UNPINNED` otherwise). Skinned meshes are refused
+  (`GFX_OUTLINE_TARGET`); WP 7.4's edge filter covers them.
+
+## Amendment 4 (2026-10-11, WP-3.10): actors on the stage, the view follows the player
+
+- **Core change:** `engine/gfx/puppets/actors.ts` draws every actor with an animator as a `body:humanoid` puppet in
+  its build. Each frame a view-side AnimatorPool poses it at the interpolated feet, and the stage skips its stand-in.
+  `Puppet.hide(joints)` zeroes those joints' skin weights for first-person culling (an attribute upload, never a
+  pipeline; hidden parts cast no shadow).
+- `engine/app/view.ts` follows the first player actor, else the level's middle. In physics scenes chase gets the
+  sim's QueryView; first person gets the player's eye, and `camera.get()` reports `culled`.
+- `place.ts`: `readCameraCode` and `createCamera` read WP 3.9's chase, first and rail codes (`FOLLOW_CAMERAS`) without
+  touching codes.ts. `createCamera` returns `AnyCamera`, and routes validate with `readCameraCode`.
+- The level's cutaway is made when a player first stands on it and runs while the view follows him, so side and
+  brawler views see the hero. A level with no player (Box 1) never has one.
+- Plan edit: WP-3.10's Owns names the core proposal's files (accepted).
+
+## Amendment 5 (2026-10-11, WP-4.6): props stand in a running scene and draw themselves
+
+- **Core change:** `engine/sim/props.ts`: `spawnProp(w, placement)` adds the `propBody` and an entity with the engine
+  component `sceneProp` (prop, body, x/y/z centre, q turn). The system `props.readback` (phase readback) copies each
+  body's pose into that component. `hitProp` calls the prop's `hit` hook with `knock` wired to `bodies.ts` on its
+  body, plus the caller's strength; `removeProp` removes both. The name is `sceneProp` because
+  `fixtures/scenes/physics-props` declares `prop`.
+- `engine/gfx/stageProps.ts`: the stage draws `sceneProp` entities through `createPropMeshes`, lerping position and
+  slerping turn between steps. The meshes are made with the first prop, so stages without props keep their graph.
+  They are registered with the warm-up, with the key part `stage:props`, and get no stand-in.
+- Plan edit: WP-4.6's Owns adds the core proposal `engine/sim/props{,.test}.ts` and `engine/gfx/stageProps{,.test}.ts`,
+  and extends `engine/gfx/stage.ts` and `engine/sim-api.ts` (accepted).
+
+## Amendment 6 (2026-10-11, WP-5.7): crowd bodies draw themselves
+
+- **Core change, sim:** `engine/sim/crowdBodies.ts` adds the engine component `crowdBody` (`CROWD_BODY_FIELDS`: rig
+  humanoid|blob|floater, look as a build id or blob features, size, x/y/z, yaw, state) and
+  `stepCrowdBody(w, id, body, input)`. This is the rig's sim step under ADR-0009 (an animator, blob or floater), pooled
+  per world and loaded from and saved to state. It emits no footsteps.
+- **Core change, gfx:** `engine/gfx/stageCrowd.ts` draws `crowdBody` entities through `createCrowd` (WP 5.4) with its
+  LOD. A body never stepped is not drawn. Looks are prepared on arrival and warmed up under the key part `stage:crowd`.
+  Crowd bodies get no stand-in.
+- `engine/gfx/stage.ts` gains `crowd`. `engine/app/view.ts` draws it after placing the frame camera, and before a dump
+  that follows steps with no frame. `engine/sim-api.ts` appends the exports.
+- `tests/e2e/parity.spec.ts`: replays may run longer than 600 steps.
+- Plan edit: WP-5.7's Owns adds `engine/sim/crowdBodies{,.test}.ts` and `engine/gfx/stageCrowd{,.test}.ts`, and
+  extends `engine/gfx/stage.ts`, `engine/app/view.ts` and `engine/sim-api.ts` (accepted).
