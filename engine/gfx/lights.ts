@@ -111,6 +111,9 @@ export interface PoolSlot {
 /** The pool's sizes: the fewest and most lights, and the default. */
 export const POOL_SIZES = { min: 8, max: 16, default: 12 } as const;
 
+/** Phases (s) without a stream: the golden angle's step, so neighbouring sources never flicker in step. */
+const GOLDEN = 2.399963229728653;
+
 /** The share of the cut-off rank over which the last lights chosen fade out. */
 export const FADE = 0.15;
 
@@ -205,7 +208,7 @@ export interface LightPool {
   scale: number;
   /** How many slots cast shadows (the shadow budget's share, 0 to `MAX_SHADOW_CASTERS`); changes the shader key. */
   casters: number;
-  /** The sources it chooses from, each given a flicker phase from `rng` (a visual stream, `world.fxRng`). */
+  /** The sources it chooses from, each given a flicker phase from `rng` (a visual stream, `world.fxRng`), else spread. */
   setSources(sources: readonly LightSource[], rng?: Rng): void;
   readonly sources: readonly LightSource[];
   /** Gives the slots to the sources that matter most at `focus` (m), flickering at `time` (s); returns the slots. */
@@ -252,7 +255,7 @@ export function createLightPool(options: { size?: number; registry?: Registry } 
     setSources(given, rng) {
       sources = given.map((source) => ({ light: source.light, position: [...source.position] as const }));
       entries = sources.map((source) => registry.get('light', source.light) as LightEntry);
-      phases = sources.map(() => (rng ? rng.range(0, 64) : 0));
+      phases = sources.map((_, i) => (rng ? rng.range(0, 64) : (i * GOLDEN) % 64));
     },
     get sources() {
       return sources;
