@@ -194,7 +194,8 @@ function actionProblems(a: Action): string[] {
 export function actionKind(registry: Registry): void {
   if (registry.kinds().includes('action')) return;
   registry.defineKind('action', {
-    description: 'A multi-beat sequence played on a body: beats of body states, clips, IK targets, flips and events.',
+    description:
+      "A multi-beat sequence played on a body: beats of body states, clips, IK targets, flips and events. The engine's set is data/anim/actions/, one file each (loadActions).",
     fields: ACTION_FIELDS,
     defineWith: "defineAction('<id>', { desc, beats: [{ name, seconds, … }] })",
     check: (entry) => actionProblems(entry as Action),
@@ -327,7 +328,7 @@ export class Actions implements AnimLayer {
 
   /**
    * Plays the action `id` (`action:jump`, or `jump`) from its first beat, over whatever played; and its `pair` on
-   * `partner` (a grab's victim), which then steps in lockstep with it.
+   * `partner` (a grab's victim), which then steps in lockstep with it (tell both `next()` and `go()`).
    */
   play(id: string | Action, partner?: Actions): this {
     const action = typeof id === 'string' ? getAction(id, this.#registry) : id;

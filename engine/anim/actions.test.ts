@@ -1,8 +1,9 @@
 /**
  * @file Unit tests for ACTIONS (engine/anim/actions.ts), PLAN.md WP 8.7's Done when: every action of
- * data/anim/actions/ has a check that plays each of its beats to the end, and passes `animCheckBody` (finite values,
- * bone lengths, feet on the floor, sockets in reach, the same hash twice, 1/60 s against 1/120 s) on a heroic body
- * with a sword; the motion metrics run in the `anim` QA (`node x qa anim --only action:`). Also the player: beats exact
+ * data/anim/actions/ has a check that plays each of its beats to the end and passes `animCheckBody` on a heroic body
+ * with a sword (finite values, bone lengths, sockets in reach, the same hash twice; the floor and the rate are the
+ * `anim` QA's, against its baseline: `node x qa anim --only action:`), and a few do, measured, what they say (the box
+ * rule's fixture test: an item held over the head, a hang, a roll, a crush, a wall slide). Also the player: beats exact
  * in ticks with the leftover carried, events in order, holds, `go`, loops, `finish`, cancel windows, flags, the clip
  * calls, a pair in lockstep, channels that never pop, save and load mid-beat, and a view that leaves the sim's state
  * alone; and the kind's checks.
@@ -82,6 +83,35 @@ describe('the first set (data/anim/actions/)', () => {
   it.each(ACTIONS.map((a) => a.id))('%s: passes animCheckBody on a heroic body with a sword', (id) => {
     const report = animCheckBody(hero, { states: { [id]: actionCheck(id, { libraries: LIBRARIES }) } });
     expect(report.problems.filter((p) => p.check !== 'floor' && p.check !== 'rate').map((p) => p.message)).toEqual([]);
+  });
+
+  it('does what each says, on a heroic body: measured mid-beat', () => {
+    /** Plays `id`'s check on a heroic body and returns its posed body the first tick `beat` passes half its seconds. */
+    const at = (id: string, beat: string) => {
+      const animator = hero();
+      const play = actionCheck(id, { libraries: LIBRARIES }).script!(animator, 0);
+      for (let i = 0; i < 600; i++) {
+        animator.update(play(SIM_DT));
+        const acts = animator.layer('actions') as Actions;
+        if (acts.beat === beat && acts.u >= 0.5) return animator;
+      }
+      throw new Error(`${id} never reached ${beat}`);
+    };
+    const y = (a: Animator, socket: 'weaponL' | 'weaponR' | 'headTop' | 'contactL' | 'contactR') =>
+      socketPosition(a.body.skeleton, a.body.world, socket).y - a.body.position.y;
+    const item = at('itemGet', 'hold'); // both grips above the head: the item rides them
+    expect(Math.min(y(item, 'weaponL'), y(item, 'weaponR'))).toBeGreaterThan(y(item, 'headTop'));
+    const hang = at('ledgeHang', 'hang'); // hanging from both grips, the soles off the floor
+    expect(Math.min(y(hang, 'weaponL'), y(hang, 'weaponR'))).toBeGreaterThan(y(hang, 'headTop'));
+    expect(socketPosition(hang.body.skeleton, hang.body.world, 'contactL').y).toBeGreaterThan(0.3);
+    const roll = at('roll', 'roll'); // halfway through the somersault, upside down
+    expect(y(roll, 'headTop')).toBeLessThan(y(roll, 'contactL'));
+    const flat = at('deathCrush', 'flat'); // squashed to a fifth of its height, its soles still on the floor
+    expect(y(flat, 'headTop') / y(hero().pose(), 'headTop')).toBeLessThan(0.2);
+    expect(Math.abs(y(flat, 'contactL'))).toBeLessThan(0.01);
+    const wall = at('wallSlide', 'slide'); // the right grip ahead on the wall, the left hand free
+    const grip = socketPosition(wall.body.skeleton, wall.body.world, 'weaponR').sub(wall.body.position);
+    expect(grip.z).toBeGreaterThan(0.25); // facing +Z (yaw 0)
   });
 
   it('a pair has the same beats as its partner, so they step in lockstep', () => {
