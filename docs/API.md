@@ -16,6 +16,7 @@ game agent's manual.
 - `ActorComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `actor`: an entity the character controller moves.
 - `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, `animator`, and `oneWay` for one-way platforms.
 - `ActorSpec` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): What `spawnActor` takes.
+- `addAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds a queued agent's body now (`updateCrowd` does it through the queue), its feet at `x`, `y`, `z`, moving at `vx`, `vy`, `vz`; returns its id.
 - `addBall` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a ball prop; returns its id.
 - `addBox` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a box prop, sized as BoxGeometry (full width, height, depth); returns its id.
 - `addCapsule` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a capsule prop, standing up (`height` is its straight middle, as CapsuleGeometry's); returns its id.
@@ -24,6 +25,7 @@ game agent's manual.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `addProp` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a dynamic body of one `shape` (a hull too: a rock), of `PROP_MATERIAL` unless `spec` says otherwise; its id.
 - `addSensor` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a body whose one collider is a sensor of `shape`: it blocks nothing and detects bodies.
+- `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
 - `AIM_CHAIN` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The default chain, from the body up: about 103° of yaw and 69° of pitch in all.
 - `AimLink` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): One joint of an aim chain: the `joint`, its `share` of the turn (a chain's shares need not add up to 1), and the most it turns the gaze left or right (`yaw`) and up or down (`pitch`), in radians.
@@ -148,6 +150,15 @@ game agent's manual.
 - `createStyleSet` (function from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): Makes a style set (see the file comment).
 - `createVirtualDevice` (function from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): Makes a virtual device, holding nothing.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
+- `CROWD_AGENT` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): An agent with every field at its default: queued, a walker's capsule at the origin.
+- `CROWD_AGENT_FIELDS` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): A crowd agent's fields, for a scene's component: `defineComponent('pusher', { description, fields: … })`.
+- `CROWD_GROUNDED` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): The grounded heuristic's thresholds (m/s, m): the prototype's 6 units/s, 2 units and 1 unit/s.
+- `CROWD_LIMITS` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What `updateCrowd` does at most each step by default: bodies added (shardfall's load ramps), corpses kept.
+- `CROWD_MATERIAL` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): The crowd's material: the prototype's density (1 a cubic unit: a walker weighs about 50 kg), no friction under the min rule (an agent slides on everything), no bounce; a corpse's friction, averaged, so it slides to a stop.
+- `CrowdAgent` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): A crowd agent: its body, its make and what the last readback saw (`CROWD_AGENT_FIELDS` says what each means).
+- `CrowdChanges` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What one `updateCrowd` changed: indices into the list it was given, in order.
+- `CrowdOptions` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): How `updateCrowd` runs.
+- `CrowdStepper` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What the crowd's calls read from the sim: the step length (s).
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
 - `Cutaway` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): A level's cutaway (see the file comment).
 - `CutawayReport` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): How many of each cutting part's pieces are cut, after an `update`.
@@ -272,12 +283,15 @@ game agent's manual.
 - `jointRotation` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world rotation of `joint` in `world`.
 - `JOINTS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The 23 joints, parents before children.
 - `jointToWorld` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): A point given in `joint`'s own frame, in world space (`localToWorld` for a joint).
+- `killAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Kills an agent: its body joins the group `corpse` (the world and props still stop it; the crowd walks through it) with `CROWD_MATERIAL.corpseFriction`, and a flyer falls.
 - `Kind` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): A declared kind, bound: the same as the registry's functions with the kind filled in, typed by its schema.
 - `KindSpec` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): How a kind is declared.
 - `knock` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Knocks a body away from `from`: a push across the ground and up, a tip toward the push and a twist (`knockProp`).
+- `knockback` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds `velocity` (m/s) to an agent or corpse in the world, the same for every mass, waking it.
 - `KnockOptions` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): How hard `knock` hits: speeds, the same for every mass.
 - `Label` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): A world-anchored label: change its text, anchor or visibility at any time; it shows them at the next frame.
 - `LabelOptions` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): How a label is made.
+- `launch` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Throws an agent or corpse up: its upward speed becomes at least `up` (m/s) and its speed across the ground is multiplied by `carry` (1; the prototype's kill launch: 1.3).
 - `LAYER_SLOTS` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The slots that take layers: those after the solve, each changing the solved pose.
 - `LayerSlot` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A slot that takes layers.
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
@@ -408,6 +422,7 @@ game agent's manual.
 - `recolor` (function from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): `compiled` with its slots' colours replaced by `palette`'s (hex), the pieces shared.
 - `released` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` went up on the buffer's step (a tap shorter than a step included).
 - `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body.
+- `removeAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Removes an agent's body now (`updateCrowd` does it for `leaving` agents and old corpses): it is `gone`.
 - `renderSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect as mono samples (engine/audio/dsp/render.ts): one variant, its layers mixed in.
 - `renderSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One pass of the song as mono samples (engine/audio/dsp/render.ts): at least the pass's length, so passes played back to back every `songTiming(song).seconds` keep time, plus the last notes' tails; silence when no track plays at the intensity asked for.
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
@@ -438,6 +453,7 @@ game agent's manual.
 - `sensorHits` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): The dynamic and kinematic bodies a body's sensors overlapped at the last step, in id order.
 - `SensorSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Where a sensor goes and how it moves.
 - `SettingValue` (type from [`engine/core/settings.ts`](../engine/core/settings.ts)): A setting's value: plain data.
+- `setVelocity` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Moves a living agent's velocity toward `want` by at most `acceleration × dt` this step: across the ground (a flyer: up and down too), keeping the vertical speed gravity and the solver gave it.
 - `Sfx` (interface from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): An `sfx` entry: the spec with its defaults filled, frozen.
 - `SfxBus` (type from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): One of the buses.
 - `SfxLayer` (interface from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): Another effect mixed into this one.
@@ -525,11 +541,13 @@ game agent's manual.
 - `UiElementState` (interface from [`engine/ui/state.ts`](../engine/ui/state.ts)): One overlay element (see the file comment).
 - `uiState` (function from [`engine/ui/state.ts`](../engine/ui/state.ts)): The overlay under `root` as plain data (see the file comment).
 - `UiState` (interface from [`engine/ui/state.ts`](../engine/ui/state.ts)): The overlay as plain data (see the file comment).
+- `updateCrowd` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): The crowd's step, after the physics step (the phase `readback`), over every agent in id order: reads each body back (feet, velocity, `grounded`); brakes grounded corpses and removes those `corpseTime` old, then the oldest beyond `corpseCap`; removes `leaving` agents; adds the bodies of up to `spawnLimit` queued agents.
 - `updateInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Records one step's intents in `buffer` (changed in place, and returned): call it once per step, with the world's `tick`, before reading `released`, `buffered` or `repeated`.
 - `updateTrigger` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Brings `trigger.inside` up to date with its sensor and returns the bodies that entered and left, in id order.
 - `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
 - `Vec3Like` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A vector: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`.
 - `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
+- `VelocityOptions` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): How `setVelocity` steers.
 - `ViewChange` (interface from [`engine/app/playback.ts`](../engine/app/playback.ts)): A view change during a replay: a camera code, and view settings by path.
 - `VirtualDevice` (interface from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): The virtual device.
 - `Voice` (interface from [`engine/audio/dsp/voice.ts`](../engine/audio/dsp/voice.ts)): One voice of a sound: every field is optional.
@@ -552,6 +570,7 @@ game agent's manual.
 - `ActorComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `actor`: an entity the character controller moves.
 - `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, `animator`, and `oneWay` for one-way platforms.
 - `ActorSpec` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): What `spawnActor` takes.
+- `addAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds a queued agent's body now (`updateCrowd` does it through the queue), its feet at `x`, `y`, `z`, moving at `vx`, `vy`, `vz`; returns its id.
 - `addBall` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a ball prop; returns its id.
 - `addBox` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a box prop, sized as BoxGeometry (full width, height, depth); returns its id.
 - `addCapsule` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a capsule prop, standing up (`height` is its straight middle, as CapsuleGeometry's); returns its id.
@@ -560,6 +579,7 @@ game agent's manual.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `addProp` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a dynamic body of one `shape` (a hull too: a rock), of `PROP_MATERIAL` unless `spec` says otherwise; its id.
 - `addSensor` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a body whose one collider is a sensor of `shape`: it blocks nothing and detects bodies.
+- `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
 - `AIM_CHAIN` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The default chain, from the body up: about 103° of yaw and 69° of pitch in all.
 - `AimLink` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): One joint of an aim chain: the `joint`, its `share` of the turn (a chain's shares need not add up to 1), and the most it turns the gaze left or right (`yaw`) and up or down (`pitch`), in radians.
@@ -634,6 +654,15 @@ game agent's manual.
 - `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
+- `CROWD_AGENT` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): An agent with every field at its default: queued, a walker's capsule at the origin.
+- `CROWD_AGENT_FIELDS` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): A crowd agent's fields, for a scene's component: `defineComponent('pusher', { description, fields: … })`.
+- `CROWD_GROUNDED` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): The grounded heuristic's thresholds (m/s, m): the prototype's 6 units/s, 2 units and 1 unit/s.
+- `CROWD_LIMITS` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What `updateCrowd` does at most each step by default: bodies added (shardfall's load ramps), corpses kept.
+- `CROWD_MATERIAL` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): The crowd's material: the prototype's density (1 a cubic unit: a walker weighs about 50 kg), no friction under the min rule (an agent slides on everything), no bounce; a corpse's friction, averaged, so it slides to a stop.
+- `CrowdAgent` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): A crowd agent: its body, its make and what the last readback saw (`CROWD_AGENT_FIELDS` says what each means).
+- `CrowdChanges` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What one `updateCrowd` changed: indices into the list it was given, in order.
+- `CrowdOptions` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): How `updateCrowd` runs.
+- `CrowdStepper` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What the crowd's calls read from the sim: the step length (s).
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
 - `CylinderCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An upright cylinder collider (Rapier's cylinder, three.js's CylinderGeometry): one per tile, at its centre.
 - `DaisDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A dais: an octagonal frustum (faces toward the axes and the diagonals) standing on a block of a dais glyph's tiles.
@@ -708,10 +737,13 @@ game agent's manual.
 - `jointRotation` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world rotation of `joint` in `world`.
 - `JOINTS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The 23 joints, parents before children.
 - `jointToWorld` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): A point given in `joint`'s own frame, in world space (`localToWorld` for a joint).
+- `killAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Kills an agent: its body joins the group `corpse` (the world and props still stop it; the crowd walks through it) with `CROWD_MATERIAL.corpseFriction`, and a flyer falls.
 - `Kind` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): A declared kind, bound: the same as the registry's functions with the kind filled in, typed by its schema.
 - `KindSpec` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): How a kind is declared.
 - `knock` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Knocks a body away from `from`: a push across the ground and up, a tip toward the push and a twist (`knockProp`).
+- `knockback` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds `velocity` (m/s) to an agent or corpse in the world, the same for every mass, waking it.
 - `KnockOptions` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): How hard `knock` hits: speeds, the same for every mass.
+- `launch` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Throws an agent or corpse up: its upward speed becomes at least `up` (m/s) and its speed across the ground is multiplied by `carry` (1; the prototype's kill launch: 1.3).
 - `LAYER_SLOTS` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The slots that take layers: those after the solve, each changing the solved pose.
 - `LayerSlot` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A slot that takes layers.
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
@@ -784,6 +816,7 @@ game agent's manual.
 - `RayOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A raycast's options.
 - `released` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` went up on the buffer's step (a tap shorter than a step included).
 - `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body.
+- `removeAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Removes an agent's body now (`updateCrowd` does it for `leaving` agents and old corpses): it is `gone`.
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
 - `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
 - `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
@@ -800,6 +833,7 @@ game agent's manual.
 - `sensorHits` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): The dynamic and kinematic bodies a body's sensors overlapped at the last step, in id order.
 - `SensorSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Where a sensor goes and how it moves.
 - `SettingValue` (type from [`engine/core/settings.ts`](../engine/core/settings.ts)): A setting's value: plain data.
+- `setVelocity` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Moves a living agent's velocity toward `want` by at most `acceleration × dt` this step: across the ground (a flyer: up and down too), keeping the vertical speed gravity and the solver gave it.
 - `Shape` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A shape, sized like three.js's geometries (see the file comment).
 - `ShapeCastOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A shape cast's options.
 - `Sheet` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A drawn sheet: the SVG text, its hash, and its size in pixels.
@@ -844,11 +878,13 @@ game agent's manual.
 - `twoBone` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Two-bone IK on positions (`ik3`): the middle joint (knee, elbow) and the end of a limb of bone lengths `upper` and `lower` from `root` toward `target`, bent toward the direction `pole`; out of reach, the end stops on the line to the target.
 - `TwoBoneOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `twoBoneRot` and `handTo` solve.
 - `twoBoneRot` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the limb ending at `end` (an ankle or a wrist) through its three joints' local rotations so the end reaches `target`, then runs FK.
+- `updateCrowd` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): The crowd's step, after the physics step (the phase `readback`), over every agent in id order: reads each body back (feet, velocity, `grounded`); brakes grounded corpses and removes those `corpseTime` old, then the oldest beyond `corpseCap`; removes `leaving` agents; adds the bodies of up to `spawnLimit` queued agents.
 - `updateInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Records one step's intents in `buffer` (changed in place, and returned): call it once per step, with the world's `tick`, before reading `released`, `buffered` or `repeated`.
 - `updateTrigger` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Brings `trigger.inside` up to date with its sensor and returns the bodies that entered and left, in id order.
 - `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
 - `Vec3Like` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A vector: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`.
 - `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
+- `VelocityOptions` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): How `setVelocity` steers.
 - `Weapon` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A weapon's name.
 - `WEAPONS` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): What the right hand holds, by the direction its blade rests in: `[forward, right, up]`, normalised when used.
 - `WeightInfo` (interface from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): What drives a weight and how it eases.
@@ -2669,6 +2705,27 @@ For the agents who maintain the engine.
 - `MoveOptions` (interface): How `moveCharacter` moves: whether it stands on the ground (and is not rising), and the one-way platforms.
 - `stepCharacter` (function): One sim tick of a character: `steer` turns its intents into a velocity and a move (engine/physics/feel.ts), the controller makes the move (`moveCharacter`), `settle` fixes the velocity from what happened, walls stop the velocity going into them, it pushes what it walked into (both leave at (push·v + m·u)/(push + m)), probes the ground under it and presses a dynamic floor with push × world gravity.
 - `StepOptions` (interface): What `stepCharacter` needs beside the character: the step length, the gravities and the one-way platforms.
+
+### [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)
+
+- `addAgent` (function): Adds a queued agent's body now (`updateCrowd` does it through the queue), its feet at `x`, `y`, `z`, moving at `vx`, `vy`, `vz`; returns its id.
+- `AgentState` (type): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
+- `CROWD_AGENT` (const): An agent with every field at its default: queued, a walker's capsule at the origin.
+- `CROWD_AGENT_FIELDS` (const): A crowd agent's fields, for a scene's component: `defineComponent('pusher', { description, fields: … })`.
+- `CROWD_GROUNDED` (const): The grounded heuristic's thresholds (m/s, m): the prototype's 6 units/s, 2 units and 1 unit/s.
+- `CROWD_LIMITS` (const): What `updateCrowd` does at most each step by default: bodies added (shardfall's load ramps), corpses kept.
+- `CROWD_MATERIAL` (const): The crowd's material: the prototype's density (1 a cubic unit: a walker weighs about 50 kg), no friction under the min rule (an agent slides on everything), no bounce; a corpse's friction, averaged, so it slides to a stop.
+- `CrowdAgent` (interface): A crowd agent: its body, its make and what the last readback saw (`CROWD_AGENT_FIELDS` says what each means).
+- `CrowdChanges` (interface): What one `updateCrowd` changed: indices into the list it was given, in order.
+- `CrowdOptions` (interface): How `updateCrowd` runs.
+- `CrowdStepper` (interface): What the crowd's calls read from the sim: the step length (s).
+- `killAgent` (function): Kills an agent: its body joins the group `corpse` (the world and props still stop it; the crowd walks through it) with `CROWD_MATERIAL.corpseFriction`, and a flyer falls.
+- `knockback` (function): Adds `velocity` (m/s) to an agent or corpse in the world, the same for every mass, waking it.
+- `launch` (function): Throws an agent or corpse up: its upward speed becomes at least `up` (m/s) and its speed across the ground is multiplied by `carry` (1; the prototype's kill launch: 1.3).
+- `removeAgent` (function): Removes an agent's body now (`updateCrowd` does it for `leaving` agents and old corpses): it is `gone`.
+- `setVelocity` (function): Moves a living agent's velocity toward `want` by at most `acceleration × dt` this step: across the ground (a flyer: up and down too), keeping the vertical speed gravity and the solver gave it.
+- `updateCrowd` (function): The crowd's step, after the physics step (the phase `readback`), over every agent in id order: reads each body back (feet, velocity, `grounded`); brakes grounded corpses and removes those `corpseTime` old, then the oldest beyond `corpseCap`; removes `leaving` agents; adds the bodies of up to `spawnLimit` queued agents.
+- `VelocityOptions` (interface): How `setVelocity` steers.
 
 ### [`engine/physics/feel.ts`](../engine/physics/feel.ts)
 
