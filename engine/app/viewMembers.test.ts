@@ -29,11 +29,14 @@ const CALLS: Record<string, Call> = {
   advice: (e) => expect(Array.isArray(e.advice)).toBe(true),
   'camera.get()': (_e, call) => expect(call('camera.get')).toMatchObject({ code: 'cam=iso' }),
   'camera.set()': (_e, call) => expect(call('camera.set', 'cam=brawler')).toMatchObject({ code: 'cam=brawler' }),
-  'capture()': (e) => {
+  'capture()': (e, call) => {
     const capture = e.capture();
+    const at = call('scene.dump', { filter: 'pathMover#1' });
     e.step(5);
+    expect(call('scene.dump', { filter: 'pathMover#1' })).not.toBe(at);
     e.restore(capture);
     expect(e.info().tick).toBe(0);
+    expect(call('scene.dump', { filter: 'pathMover#1' })).toBe(at); // the view follows the restore
   },
   'describe()': (e) => expect(e.describe('setting', 'box.room.speed')).toMatchObject({ id: 'box.room.speed' }),
   'entities()': (e) => expect(e.entities('pathMover').map((entity) => entity.id)).toEqual([1, 2, 3]),

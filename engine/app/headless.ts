@@ -17,7 +17,8 @@
  * everything runs synchronously after the promise resolves (the fdlibm swap holds only through synchronous entry
  * points); runs share nothing but the registry; the inspector holds only its members, so the run behind it is reached
  * through `headlessHost(h)` (tools only), whose `session` is what members get: the recorded operations and the world
- * read-only (engine/dev/members.ts). A seed is a whole number from 0 (`SIM_BAD_SEED`).
+ * read-only (engine/dev/members.ts). Its `restore` and `act` move entities between steps, so they snap the view to the
+ * world (no interpolation from stale places), as a restart does. A seed is a whole number from 0 (`SIM_BAD_SEED`).
  *
  * @example
  * import { createRegistry } from '../core/registry';
@@ -147,10 +148,32 @@ export function createAppHost<C extends object = AnyComponents, E extends EventM
   const timed = registry.kinds().includes('setting') && registry.has('setting', 'time.hz');
   if (!timed) defineSettings(TIME_SETTINGS, registry); // the clock reads them: a test registry may lack them
   const { drawing } = options;
+  // Members get `recordedRun(session)`, except that a restore or a dev action moves entities between steps, so the
+  // view then snaps to the world as it is (no interpolation from the places it had), as it does after a restart.
+  const followed = (session: Session): RecordedRun => {
+    const recorded = recordedRun(session);
+    const snapping = <A extends unknown[]>(change: (...args: A) => void) => ({
+      enumerable: true,
+      value: (...args: A) => {
+        change(...args);
+        view?.restarted();
+      },
+    });
+    return Object.freeze(
+      Object.defineProperties(
+        {},
+        {
+          ...Object.getOwnPropertyDescriptors(recorded),
+          restore: snapping(recorded.restore),
+          act: snapping(recorded.act),
+        },
+      ),
+    ) as RecordedRun;
+  };
   const start = (scene: Scene, seed: number, settings: Readonly<Record<string, unknown>> | undefined) => {
     const session = createSession(scene, { seed, settings, registry, log: options.log });
     const clock = createClock({ settings: session.settings, log: options.log });
-    return { session, recorded: recordedRun(session), clock };
+    return { session, recorded: followed(session), clock };
   };
   let run: { session: Session; recorded: RecordedRun; clock: Clock } = start(firstScene, firstSeed, options.settings);
   let playing = false;

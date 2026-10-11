@@ -248,9 +248,11 @@ test.describe('the box, stage 1', () => {
       out.set = e.set('box.room.speed', '2').value;
       const capture = e.capture();
       out.capture = capture.nextId;
+      const at = e.scene.dump({ filter: 'pathMover#1' });
       e.step(5);
+      const moved = e.scene.dump({ filter: 'pathMover#1' }) !== at;
       e.restore(capture);
-      out.restore = e.info().tick;
+      out.restore = { tick: e.info().tick, moved, view: e.scene.dump({ filter: 'pathMover#1' }) === at };
       out['input.press'] = JSON.stringify(e.input.press('jump')).includes('jump');
       out['input.hold'] = JSON.stringify(e.input.hold('jump', false)).includes('held');
       out['input.axis'] = e.input.axis('move', [0, 1]).axes.move;
@@ -284,7 +286,7 @@ test.describe('the box, stage 1', () => {
       state: 3,
       set: 2,
       capture: 4,
-      restore: 10,
+      restore: { tick: 10, moved: true, view: true }, // the view follows the restore
       'input.press': true,
       'input.hold': true,
       'input.axis': [0, 1],

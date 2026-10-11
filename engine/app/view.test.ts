@@ -2,7 +2,8 @@
  * @file Unit tests for engine/app/view.ts through `createHeadless({ view: true })` (T1, PLAN.md §8.3, WP 2.7): in
  * Node, the box room's view is built without a GPU: `scene.dump()` lists the floor, every wall run, the low wall, the
  * pillar and the three movers, which move as the sim steps; `render` and `shot` throw `DEV_NO_RENDERER`; cameras
- * switch by code and never change the hash; a restart reads the new run; an engine without a view refuses
+ * switch by code and never change the hash; a restart reads the new run, and a restore or a dev action snaps the view
+ * to the world (the dump and the next frame, at any alpha, show no place from before); an engine without a view refuses
  * `scene.dump` (`APP_NO_VIEW`), and one whose level is not registered refuses to start (`APP_NO_LEVEL`); `replay`
  * plays the box's replays to their goldens headless.
  * @see engine/app/view.ts
@@ -13,7 +14,8 @@ import { ROOM_PATHS } from '../../labs/box/scenes/room';
 import { createRegistry, registry } from '../core/registry';
 import { defineScene } from '../sim/scene';
 import { defineLevel } from '../world/level/level';
-import { createHeadless } from './headless';
+import { createHeadless, headlessHost } from './headless';
+import type { AppHost } from './viewMembers';
 
 const ROOM = 'labs/box/levels/room.txt';
 if (!registry.has('level', 'level:room')) defineLevel('level:room', { text: readFileSync(ROOM, 'utf8'), file: ROOM });
@@ -67,6 +69,38 @@ describe('createHeadless({ view: true })', () => {
     expect(engine.seed(4)).toBe(4);
     expect((engine.scene as Dumps).dump({ filter: 'pathMover' })).not.toBe(before); // the new run, from step 0
     expect((engine.scene as Dumps).dump({ filter: 'pathMover#1' })).toContain('at 3.5,0,4.5');
+  });
+
+  it('snaps the view to the world after a restore or a dev action: the dump and every alpha of the next frame', async () => {
+    const engine = await createHeadless({ scene: 'box:room', view: true });
+    const { view } = headlessHost(engine) as AppHost;
+    const mover = () => (engine.scene as Dumps).dump({ filter: 'pathMover#1' });
+    const capture = engine.capture();
+    engine.step(60);
+    expect(mover()).toContain('at 5,0,4.5');
+    engine.restore(capture);
+    expect(engine.get(1)).toMatchObject({ pathMover: { x: 3.5, z: 4.5 } });
+    expect(mover()).toContain('at 3.5,0,4.5');
+    for (const alpha of [0, 0.5, 1]) {
+      view!.frame({ alpha, dt: 0, aspect: 16 / 9 });
+      expect(mover(), `alpha ${alpha}`).toContain('at 3.5,0,4.5'); // nothing between the old place and the restored one
+    }
+    engine.step(1);
+    view!.frame({ alpha: 0, dt: 0, aspect: 16 / 9 });
+    expect(mover()).toContain('at 3.5,0,4.5'); // the step after interpolates from the restored place
+
+    if (!registry.has('scene', 'view:nudge')) {
+      defineScene<{ pathMover: { x: number; z: number } }>('view:nudge', {
+        setup: (w) => void w.spawn({ pathMover: { x: 1, z: 2 } }),
+        actions: { nudge: (w, args) => void (w.get(1)!.pathMover!.x = (args as { x: number }).x) },
+      });
+    }
+    const nudged = await createHeadless({ scene: 'view:nudge', view: true });
+    headlessHost(nudged).session.act('nudge', { x: 4 });
+    const dump = (nudged.scene as Dumps).dump({ filter: 'pathMover#1' });
+    expect(dump).toContain('at 4,0,2');
+    (headlessHost(nudged) as AppHost).view!.frame({ alpha: 0, dt: 0, aspect: 16 / 9 });
+    expect((nudged.scene as Dumps).dump({ filter: 'pathMover#1' })).toBe(dump);
   });
 
   it('plays the box replays to their goldens headless, the view following', async () => {

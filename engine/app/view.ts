@@ -6,7 +6,8 @@
  * with the run: `stepped()` after every sim step reads where the entities are, `frame({ alpha, dt, aspect })` moves
  * the camera by a rendered frame and puts every stand-in `alpha` of the way between its last two steps, returning
  * what to draw (`{ scene, camera, alpha }`, engine/gfx/renderer.ts's `FrameView`). `restarted()` after the run
- * starts again (a new seed, a replay) reads the new run's entities afresh.
+ * starts again (a new seed, a replay) or its world changes between steps (a restore, a dev action) reads the entities
+ * afresh: the stand-ins snap to them, so no dump, shot or frame shows the places they had before.
  *
  * The level comes from the scene's `level` id (engine/world/level/level.ts): its text must be registered before the
  * view starts (`APP_NO_LEVEL`), by the page (`import text from './levels/room.txt?raw'`) or a Node test (read the
@@ -96,7 +97,7 @@ export interface RunView {
   readonly drawn: BoostedPerspectiveCamera | BoostedOrthographicCamera;
   /** Reads where the entities are after a sim step. */
   stepped(): void;
-  /** The run started again: forget the old entities' places and read the new ones. */
+  /** The run started again, or its world changed between steps: forget the old places and snap to the new ones. */
   restarted(): void;
   /** Moves the camera by one rendered frame and the stand-ins to `alpha`; returns what to draw. */
   frame(frame: ViewFrame): FrameView;
