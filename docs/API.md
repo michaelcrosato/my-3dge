@@ -112,6 +112,7 @@ game agent's manual.
 - `BodyState` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A body's state, copied: changing it changes nothing.
 - `BodyStateName` (type from [`engine/anim/states.ts`](../engine/anim/states.ts)): A body state's name.
 - `BodyType` (type from [`engine/physics/world.ts`](../engine/physics/world.ts)): How a body moves: pushed by forces and contacts, never, or by the velocity code gives it.
+- `BOLT` (const from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): How a bolt looks: the Stress test's hero bolt by default.
 - `BoneCapsule` (type from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A bone capsule: the segment `a`–`b` with a `radius`, world metres (a sphere when `a` equals `b`).
 - `boneMask` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A bone mask: a preset (`'upper'`: spine0 and everything above it; `'lower'`: the pelvis, the legs and the root; `'arms'`, `'legs'`, one limb, `'head'`, `'full'`), a list of joints and presets (each listed joint alone; `'root'` for the root's channels), or weights by joint (`{ chest: 0.5, root: 1 }`).
 - `BoneMask` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): How much of a blend or layer reaches each joint (0–1, in `JOINTS` order) and the root's channels.
@@ -124,6 +125,7 @@ game agent's manual.
 - `Build` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): A `build` entry: one body's proportions, in metres before `size`.
 - `buildGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): Builds geometry `ref` (an id, or `{ geometry, params }`) from `registry` (the shared one by default): a new `BufferGeometry` the caller owns and disposes.
 - `BuildSpec` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): What `defineBuild` takes: any field; the others keep `build:chibi`'s values.
+- `BurstOptions` (interface from [`engine/gfx/fx/particles.ts`](../engine/gfx/fx/particles.ts)): How a burst differs from its spec.
 - `BUS_VOLUMES` (const from [`engine/audio/runtime/mixer.ts`](../engine/audio/runtime/mixer.ts)): The starting volumes, the master's included.
 - `CameraInfo` (interface from [`engine/app/view.ts`](../engine/app/view.ts)): What `camera.get()` and `camera.set(code)` return: the camera as a code, in words, and its pose.
 - `CameraInputSample` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): What the camera takes each frame: mouse look `[right, up]` rad, the right stick `[right, up]`, wheel notches.
@@ -176,6 +178,7 @@ game agent's manual.
 - `compileLevel` (function from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): Compiles a level's text against the legend of `options.registry` (the shared one by default) into plain data; see the file comment.
 - `CompileOptions` (interface from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): What `compileLevel` takes beside the text.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `coneOf` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A cone's fields from a measured hit shape (engine/anim/moves.ts `measureMove`): its range, angle and heights.
 - `connectVirtualDevice` (function from [`engine/input/devices/inspector.ts`](../engine/input/devices/inspector.ts)): Gives `host` (the app's inspector host) the page input's virtual device, so `__engine.input` drives the page.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
@@ -187,6 +190,7 @@ game agent's manual.
 - `createCrowd` (function from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): Makes a crowd's batches and level of detail (see the file comment).
 - `createCrowdLod` (function from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): Makes a crowd's level of detail (see the file comment).
 - `createCutaway` (function from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): Gives `meshes`' cutting parts their twins (see the file comment).
+- `createEffects` (function from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): Makes the effects; see the file comment.
 - `createEngine` (function from [`engine/app/engine.ts`](../engine/app/engine.ts)): Starts the engine in a page (see the file comment); resolves once it is up or has failed.
 - `createFootPlantState` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A new, unlocked `FootPlantState`.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
@@ -245,6 +249,7 @@ game agent's manual.
 - `defineBody` (function from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): Defines a body on `registry` (the shared one by default).
 - `defineBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
+- `defineEmitter` (function from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): Defines an emitter on `registry` (the shared one by default) and returns it.
 - `defineGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): Defines a geometry on `registry` (the shared one by default) and returns it.
 - `defineGlyph` (function from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): Defines a glyph on `registry` (the shared one by default) and returns it.
 - `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
@@ -259,6 +264,7 @@ game agent's manual.
 - `defineSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): Defines an effect on `registry` (the shared one by default) and returns it.
 - `defineSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`.
 - `defineSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): Defines a song on `registry` (the shared one by default) and returns it.
+- `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
 - `defineTexture` (function from [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)): Defines a texture generator on `registry` (the shared one by default) and returns it.
 - `defineTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): Registers a touch layout (on the shared registry by default).
 - `DeviceKind` (type from [`engine/input/codes.ts`](../engine/input/codes.ts)): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
@@ -267,6 +273,11 @@ game agent's manual.
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
 - `easeWeight` (function from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): One fixed step of easing: `value` moves toward `target` at `rates[0]` (+ `gain` × value) rising, `rates[1]` falling.
 - `Effectors` (interface from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The effector stage's targets: rig-local metres before `size`, in the model frame (+Z forward, +Y up).
+- `Effects` (interface from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): The effects of a view: see the file comment.
+- `EffectsOptions` (interface from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): What `createEffects` takes.
+- `Emitter` (type from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): An `emitter` entry: see the file comment.
+- `EmitterLayer` (interface from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): One layer of an emitter, filled.
+- `EmitterSpec` (type from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): What `defineEmitter` takes: any field; of `ring` and `light`, any key.
 - `Engine` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): A started engine.
 - `EngineInfo` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): What `info()` reports: the engine's identity and health, and the run.
 - `EngineOptions` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): How a page starts the engine.
@@ -306,6 +317,10 @@ game agent's manual.
 - `FRU` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A rig-local point or direction: metres (or a direction's parts) forward, right and up.
 - `frustumGeometry` (function from [`engine/gfx/geometry/frustum.ts`](../engine/gfx/geometry/frustum.ts)): A frustum standing on the ground (see the file comment).
 - `FrustumOptions` (interface from [`engine/gfx/geometry/frustum.ts`](../engine/gfx/geometry/frustum.ts)): A frustum's sizes in metres and its tessellation.
+- `FX_BUDGET` (const from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): The pools' sizes: see the file comment.
+- `FxEventPayload` (interface from [`engine/gfx/fx/payload.ts`](../engine/gfx/fx/payload.ts)): What an event carries for its effects (any other keys are left alone).
+- `FxLight` (interface from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): A light of the frame, as three.js's `PointLight` takes it.
+- `FxStats` (interface from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): What `stats()` reports.
 - `GamepadLike` (interface from [`engine/input/devices/gamepad.ts`](../engine/input/devices/gamepad.ts)): The Gamepad API's `Gamepad`, as far as the device reads it (a test stub gives just this).
 - `GeometryEntry` (type from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): A `geometry` entry: one builder.
 - `GeometryRef` (interface from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): A geometry by id with parameters: what a prop's or a level's `geometry` field may hold beside a bare id.
@@ -315,6 +330,7 @@ game agent's manual.
 - `getActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The action map `id`.
 - `getBody` (function from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): The body `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `body:humanoid`.
 - `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
+- `getEmitter` (function from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): The emitter `id` of `registry` (the shared one by default); a missing id gives `emitter:sparks`, with a warning.
 - `getGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): The geometry `id` of `registry` (the shared one by default); a missing id gives `geometry:box`, with a warning.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
 - `getMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): The material `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `material:default`.
@@ -322,6 +338,7 @@ game agent's manual.
 - `getProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): The prop `id` of `registry` (the shared one by default); a missing id gives `prop:crate`, with a warning.
 - `getSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
 - `getSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): The song `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
+- `getTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The telegraph `id` of `registry` (the shared one by default); a missing id gives `telegraph:arc`, with a warning.
 - `getTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): The touch layout `id`.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
@@ -368,6 +385,7 @@ game agent's manual.
 - `InstancedBatch` (interface from [`engine/gfx/instancing.ts`](../engine/gfx/instancing.ts)): An instanced batch (see the file comment).
 - `InstancedBatchOptions` (interface from [`engine/gfx/instancing.ts`](../engine/gfx/instancing.ts)): How `createInstancedBatch` makes a batch.
 - `InstancedBatchStats` (type from [`engine/gfx/instancing.ts`](../engine/gfx/instancing.ts)): A batch's pages, slots and instances, and the pages and bytes its last `end()` uploaded.
+- `inTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` overlaps telegraph `t` placed at `place`: what it hits as it goes off.
 - `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
 - `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
 - `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
@@ -467,6 +485,7 @@ game agent's manual.
 - `NavGrid` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): The walkable grid of a compiled level, and the searches over it (see the file comment).
 - `NavGridOptions` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
 - `NEAREST_RINGS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
+- `nearMiss` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` stands outside telegraph `t` but within its `near` metres (scaled).
 - `normalizedLens` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): `clip` with every angle of every key folded to (−180°, 180°], for reading (see the file comment).
 - `Outline` (interface from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): An outline: its material and the shells it gives (see the file comment).
 - `OUTLINE_MODES` (const from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): How a shell's vertices are pushed: along their normals, or away from the part's centre.
@@ -482,6 +501,8 @@ game agent's manual.
 - `parseClipSet` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Reads a set of clips (a set file's text or object): its header, then every clip by `parseClip`.
 - `parseRoutes` (function from [`engine/app/routes.ts`](../engine/app/routes.ts)): Reads a page's query (see the file comment).
 - `PartCut` (interface from [`engine/gfx/level/shapes.ts`](../engine/gfx/level/shapes.ts)): How the cutaway cuts a part: its recipe's cut, and the geometry of its twin (a new one each call).
+- `ParticleFields` (type from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): The particle fields as an emitter entry holds them.
+- `ParticleStats` (interface from [`engine/gfx/fx/particles.ts`](../engine/gfx/fx/particles.ts)): What a pool did.
 - `PartOptions` (interface from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): A part's options: the bone it rides (a joint, or `'root'`).
 - `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
 - `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
@@ -501,6 +522,7 @@ game agent's manual.
 - `PlayResult` (interface from [`engine/app/playback.ts`](../engine/app/playback.ts)): What a played replay gave.
 - `POINT_INDEX` (const from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Each point's position in `POSE_POINTS`.
 - `Point3` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A point in metres: `[x, y, z]`.
+- `PointLike` (type from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A point: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`, metres.
 - `PointName` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): A point a rigid pair can name: a joint, a socket, or the root.
 - `Pose` (class from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): A skeleton pose: the root transform plus each joint's local rotation.
 - `POSE_POINTS` (const from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): The 36 body points a pose rebuilds, in order: three numbers each (f, r, z) in the decoded array.
@@ -601,6 +623,7 @@ game agent's manual.
 - `ScenePropComponents` (type from [`engine/sim/props.ts`](../engine/sim/props.ts)): The components this module reads.
 - `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
+- `ScreenShake` (class from [`engine/gfx/fx/shake.ts`](../engine/gfx/fx/shake.ts)): Camera shake: see the file comment.
 - `ScriptedGamepad` (interface from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): A pad that a script moves frame by frame.
 - `Secondary` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The secondary-motion layer: squash, hair, cape and tail on a humanoid.
 - `SecondaryOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What `Secondary` runs: each part is off unless given (the squash is on unless `false`).
@@ -615,6 +638,7 @@ game agent's manual.
 - `SfxRenderOptions` (interface from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): How `renderSfx` renders: which variant, from which seed, at which rate, from which registry.
 - `SfxSpec` (interface from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): What `defineSfx` takes: voices, layers or both, and every other field optional.
 - `sfxVoices` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect as one flat voice list, its layers resolved and placed: what `renderSfx` renders for variant 0.
+- `SHAKE` (const from [`engine/gfx/fx/shake.ts`](../engine/gfx/fx/shake.ts)): The shake's tuning: the 2D engine's, in metres.
 - `Shape` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A shape, sized like three.js's geometries (see the file comment).
 - `ShapeCastOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A shape cast's options.
 - `Sheet` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A drawn sheet: the SVG text, its hash, and its size in pixels.
@@ -679,6 +703,12 @@ game agent's manual.
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
 - `TAIL` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A tail from the back of the pelvis, holding its curve back and up (chosen here: the source had none).
 - `takeToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Asks for a token for `id` at sim time `time` (s): true when it holds one now.
+- `Telegraph` (type from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A `telegraph` entry: see the file comment.
+- `TELEGRAPH_SHAPES` (const from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The shapes a telegraph has.
+- `telegraphFill` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): How far `t`'s drawn fill reaches at wind-up share `u` (clamped 0 to 1), metres before scaling (file comment).
+- `telegraphGap` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): How far a body at `point` (its feet, metres) with `radius` stands outside telegraph `t` placed at `place`, minus the radius: between its heights, the signed distance to its shape on the floor (below 0 inside); above or below them, the distance to the extruded shape.
+- `TelegraphPlace` (interface from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A telegraph where it stands: plain data, as a component or a frame's list holds it.
+- `TelegraphSpec` (type from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): What `defineTelegraph` takes: any field.
 - `Texel` (interface from [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)): One texel as a generator writes it.
 - `TextureBake` (interface from [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)): A baked texture: its source, its maps and its hash.
 - `TextureContext` (interface from [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)): What `create` is given: the parameters (defaults filled), the seed, and the size the texture bakes at.
@@ -706,9 +736,11 @@ game agent's manual.
 - `TouchLayoutSpec` (interface from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): How a touch layout is written.
 - `TouchSetting` (type from [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)): The `touch` setting: touch mode as detected (`auto`), or forced `on` or `off`.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
+- `TRAIL_TINTS` (const from [`engine/gfx/fx/ribbons.ts`](../engine/gfx/fx/ribbons.ts)): The tints of the Stress test's trails: the hero's blade and the monsters' claws.
 - `TrailName` (type from [`engine/anim/states.ts`](../engine/anim/states.ts)): A part that leaves a trail.
 - `TRAILS` (const from [`engine/anim/states.ts`](../engine/anim/states.ts)): The parts that leave a trail, each with the span its ribbon covers.
 - `TrailSample` (type from [`engine/anim/character.ts`](../engine/anim/character.ts)): One trail sample: the part's base and tip, world metres, at the body's `clock`, and its ribbon's weight.
+- `TrailSampleLike` (interface from [`engine/gfx/fx/ribbons.ts`](../engine/gfx/fx/ribbons.ts)): One sample of a trail: where the part's base and tip were, and its ribbon's weight (1).
 - `travelAt` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): How far `baked` has carried the root by `t` seconds, `(x, z)` metres on the source body (a loop's laps added).
 - `Trigger` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A trigger: its sensor body and the bodies inside it.
 - `TRIGGER_FIELDS` (const from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A trigger's fields, for a scene's component: `defineComponent('zone', { description, fields: TRIGGER_FIELDS })`.
@@ -875,6 +907,7 @@ game agent's manual.
 - `compileLevel` (function from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): Compiles a level's text against the legend of `options.registry` (the shared one by default) into plain data; see the file comment.
 - `CompileOptions` (interface from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): What `compileLevel` takes beside the text.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `coneOf` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A cone's fields from a measured hit shape (engine/anim/moves.ts `measureMove`): its range, angle and heights.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
 - `createCharacter` (function from [`engine/physics/character.ts`](../engine/physics/character.ts)): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
@@ -910,6 +943,7 @@ game agent's manual.
 - `defineProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): Defines a prop on `registry` (the shared one by default) and returns it.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
+- `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
 - `driveMover` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Drives a mover's body toward its pose at `sim.time` (the end of the step being run): `driveMover(physics, m, w)`.
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
@@ -947,6 +981,7 @@ game agent's manual.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
 - `getMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`, naming the closest) and gives `move:slash`.
 - `getProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): The prop `id` of `registry` (the shared one by default); a missing id gives `prop:crate`, with a warning.
+- `getTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The telegraph `id` of `registry` (the shared one by default); a missing id gives `telegraph:arc`, with a warning.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `Ground` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): The ground under a point: its height, its normal and the body it belongs to.
@@ -980,6 +1015,7 @@ game agent's manual.
 - `inArc` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Whether `target` (plus `radius`) is within `range` of `from` on the ground plane and within `halfAngle` of the facing `yaw` (forward is (sin yaw, 0, cos yaw)).
 - `inHitShape` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): `inArc` with `shape`'s range and half angle, scaled by `size`, and its height window (± `radius`) above `from`.
 - `InputBuffer` (interface from [`engine/input/intents.ts`](../engine/input/intents.ts)): What a body remembers of its buttons across steps: plain data for a component field (`type: 'object'`, default `createInputBuffer()`), so it is hashed, captured and restored.
+- `inTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` overlaps telegraph `t` placed at `place`: what it hits as it goes off.
 - `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
 - `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
 - `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
@@ -1048,6 +1084,7 @@ game agent's manual.
 - `NavGrid` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): The walkable grid of a compiled level, and the searches over it (see the file comment).
 - `NavGridOptions` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
 - `NEAREST_RINGS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
+- `nearMiss` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` stands outside telegraph `t` but within its `near` metres (scaled).
 - `normalizedLens` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): `clip` with every angle of every key folded to (−180°, 180°], for reading (see the file comment).
 - `OverlapOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): An overlap's options.
 - `parseClip` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Reads a clip of format 1 or 2 from its text (`//` comment lines allowed) or an object, which is not changed: the result is a copy, its keys sorted by time and `dur` filled in.
@@ -1060,6 +1097,7 @@ game agent's manual.
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `POINT_INDEX` (const from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Each point's position in `POSE_POINTS`.
 - `Point3` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A point in metres: `[x, y, z]`.
+- `PointLike` (type from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A point: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`, metres.
 - `PointName` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): A point a rigid pair can name: a joint, a socket, or the root.
 - `Pose` (class from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): A skeleton pose: the root transform plus each joint's local rotation.
 - `POSE_POINTS` (const from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): The 36 body points a pose rebuilds, in order: three numbers each (f, r, z) in the decoded array.
@@ -1184,6 +1222,12 @@ game agent's manual.
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
 - `TAIL` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A tail from the back of the pelvis, holding its curve back and up (chosen here: the source had none).
 - `takeToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Asks for a token for `id` at sim time `time` (s): true when it holds one now.
+- `Telegraph` (type from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A `telegraph` entry: see the file comment.
+- `TELEGRAPH_SHAPES` (const from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The shapes a telegraph has.
+- `telegraphFill` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): How far `t`'s drawn fill reaches at wind-up share `u` (clamped 0 to 1), metres before scaling (file comment).
+- `telegraphGap` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): How far a body at `point` (its feet, metres) with `radius` stands outside telegraph `t` placed at `place`, minus the radius: between its heights, the signed distance to its shape on the floor (below 0 inside); above or below them, the distance to the extruded shape.
+- `TelegraphPlace` (interface from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A telegraph where it stands: plain data, as a component or a frame's list holds it.
+- `TelegraphSpec` (type from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): What `defineTelegraph` takes: any field.
 - `tileAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The tile under (x, z) metres, or null outside the map.
 - `TileRect` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A rectangle of tiles, inclusive: `[col0, row0, col1, row1]`.
 - `Timeline` (class from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): Phases played in order, one fixed step at a time.
@@ -2418,6 +2462,77 @@ For the agents who maintain the engine.
 - `FeatureReport` (interface): What `resolveFeatures` found: the features on, those off and why, and the downgrades as advice codes.
 - `FEATURES_CODES` (const): The advice codes of the built-in features, with their fixes.
 - `resolveFeatures` (function): Checks every `feature` entry against `caps` and `gfx.featuresOff`, raises each off feature's advice once, and reports what is on and off.
+
+### [`engine/gfx/fx/decals.ts`](../engine/gfx/fx/decals.ts)
+
+- `createDecals` (function): Makes the decals; see the file comment.
+- `DECAL` (const): How far above the floor a decal lies (m), and how wide its rim is (m).
+- `decalMaterial` (function): The decals' material: see the file comment.
+- `Decals` (interface): The decals of a frame: see the file comment.
+- `DecalsOptions` (interface): What `createDecals` takes.
+
+### [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)
+
+- `BOLT` (const): How a bolt looks: the Stress test's hero bolt by default.
+- `createEffects` (function): Makes the effects; see the file comment.
+- `Effects` (interface): The effects of a view: see the file comment.
+- `EffectsOptions` (interface): What `createEffects` takes.
+- `FX_BUDGET` (const): The pools' sizes: see the file comment.
+- `FxStats` (interface): What `stats()` reports.
+
+### [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)
+
+- `defineEmitter` (function): Defines an emitter on `registry` (the shared one by default) and returns it.
+- `Emitter` (type): An `emitter` entry: see the file comment.
+- `EMITTER_FIELDS` (const): The fields of an `emitter` entry.
+- `emitterKind` (function): Declares the kind `emitter` on `registry`, with the engine's emitters, unless it has it.
+- `EmitterLayer` (interface): One layer of an emitter, filled.
+- `EmitterSpec` (type): What `defineEmitter` takes: any field; of `ring` and `light`, any key.
+- `FxLight` (interface): A light of the frame, as three.js's `PointLight` takes it.
+- `getEmitter` (function): The emitter `id` of `registry` (the shared one by default); a missing id gives `emitter:sparks`, with a warning.
+- `lightLevel` (function): Shardfall's flicker and pulse of an object light at time `t` from `seed`, times `intensity`.
+- `PARTICLE_FIELDS` (const): How particles start, move and look: an emitter's own fields, and what a layer may change (`set`).
+- `ParticleFields` (type): The particle fields as an emitter entry holds them.
+- `particleSpec` (function): `entry`'s particle fields with `set`'s changes, as the pool takes them; cached per entry and `set` object.
+- `ParticleSpec` (interface): What the particle pool takes: an emitter's particle fields as numbers, colours linear (see the file comment).
+
+### [`engine/gfx/fx/particles.ts`](../engine/gfx/fx/particles.ts)
+
+- `BurstOptions` (interface): How a burst differs from its spec.
+- `PARTICLE_STRIDE` (const): Floats per particle.
+- `ParticlePool` (class): The CPU particle pool: see the file comment.
+- `ParticleStats` (interface): What a pool did.
+- `ParticleView` (interface): A particle as the drawing reads it.
+
+### [`engine/gfx/fx/payload.ts`](../engine/gfx/fx/payload.ts)
+
+- `eventOptions` (function): The burst options an event's payload asks for (see the file comment).
+- `eventPosition` (function): Where an event happens (see the file comment), or null.
+- `FxEventPayload` (interface): What an event carries for its effects (any other keys are left alone).
+
+### [`engine/gfx/fx/presets.ts`](../engine/gfx/fx/presets.ts)
+
+- `BUILT_IN_EMITTERS` (const): The engine's emitters, by id.
+
+### [`engine/gfx/fx/ribbons.ts`](../engine/gfx/fx/ribbons.ts)
+
+- `createRibbons` (function): Makes the ribbons; see the file comment.
+- `Ribbons` (interface): The ribbons of a frame: see the file comment.
+- `RibbonsOptions` (interface): What `createRibbons` takes.
+- `TRAIL_TINTS` (const): The tints of the Stress test's trails: the hero's blade and the monsters' claws.
+- `TrailSampleLike` (interface): One sample of a trail: where the part's base and tip were, and its ribbon's weight (1).
+
+### [`engine/gfx/fx/shake.ts`](../engine/gfx/fx/shake.ts)
+
+- `ScreenShake` (class): Camera shake: see the file comment.
+- `SHAKE` (const): The shake's tuning: the 2D engine's, in metres.
+
+### [`engine/gfx/fx/sprites.ts`](../engine/gfx/fx/sprites.ts)
+
+- `createSprites` (function): Makes the sprites; see the file comment.
+- `spriteMaterial` (function): The sprites' material: see the file comment.
+- `Sprites` (interface): The sprites of a frame: see the file comment.
+- `SpritesOptions` (interface): What `createSprites` takes.
 
 ### [`engine/gfx/geometry/box.ts`](../engine/gfx/geometry/box.ts)
 
@@ -3833,6 +3948,25 @@ For the agents who maintain the engine.
 - `seek` (function): The way from `from` to `to` on the ground: a unit vector, zero within a millimetre.
 - `SteerPoint` (type): A point in the world (m): x east, y up, z south.
 
+### [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)
+
+- `coneOf` (function): A cone's fields from a measured hit shape (engine/anim/moves.ts `measureMove`): its range, angle and heights.
+- `defineTelegraph` (function): Defines a telegraph on `registry` (the shared one by default) and returns it.
+- `floorGap` (function): The signed distance on the floor from (`f`, `s`) to `t`'s shape scaled by `size`: below 0 inside.
+- `getTelegraph` (function): The telegraph `id` of `registry` (the shared one by default); a missing id gives `telegraph:arc`, with a warning.
+- `inTelegraph` (function): Whether a body at `point` with `radius` overlaps telegraph `t` placed at `place`: what it hits as it goes off.
+- `nearMiss` (function): Whether a body at `point` with `radius` stands outside telegraph `t` but within its `near` metres (scaled).
+- `PointLike` (type): A point: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`, metres.
+- `pointOf` (function): The coordinates of a `PointLike`.
+- `Telegraph` (type): A `telegraph` entry: see the file comment.
+- `TELEGRAPH_FIELDS` (const): The fields of a `telegraph` entry.
+- `TELEGRAPH_SHAPES` (const): The shapes a telegraph has.
+- `telegraphFill` (function): How far `t`'s drawn fill reaches at wind-up share `u` (clamped 0 to 1), metres before scaling (file comment).
+- `telegraphGap` (function): How far a body at `point` (its feet, metres) with `radius` stands outside telegraph `t` placed at `place`, minus the radius: between its heights, the signed distance to its shape on the floor (below 0 inside); above or below them, the distance to the extruded shape.
+- `telegraphKind` (function): Declares the kind `telegraph` on `registry`, with its four shapes, unless it has it.
+- `TelegraphPlace` (interface): A telegraph where it stands: plain data, as a component or a frame's list holds it.
+- `TelegraphSpec` (type): What `defineTelegraph` takes: any field.
+
 ### [`eslint.config.js`](../eslint.config.js)
 
 - `configure` (function): Builds the whole config; `switches` defaults to `SWITCHES` (tests turn every switch on).
@@ -3996,6 +4130,21 @@ For the agents who maintain the engine.
 - `ProbeResult` (interface): What one runtime gave.
 - `resultsOf` (function): `fn`'s results on `inputs`, natively or inside `withSimMath` (narrowed to `swap`).
 - `runProbe` (function): Runs every probe natively and inside `withSimMath` (narrowed to `swap`), on `inputs` seeded inputs a function.
+
+### [`tests/pages/fx.ts`](../tests/pages/fx.ts)
+
+- `Flooded` (interface): What `flood` reports.
+- `Ran` (interface): What `run` reports.
+- `SEED` (const): The fight's seed.
+- `Seen` (type): What the ID pass sees of one object.
+- `Shown` (interface): What `show` reports.
+
+### [`tests/pages/fxScene.ts`](../tests/pages/fxScene.ts)
+
+- `createFxScene` (function): The fx scene with `seed`.
+- `FX_SCENE` (const): The scene's numbers: see the file comment.
+- `FxScene` (interface): What the fx scene offers the page and the tests.
+- `FxWorld` (type): The scene's world.
 
 ### [`tests/pages/hall.ts`](../tests/pages/hall.ts)
 
