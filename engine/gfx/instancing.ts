@@ -23,11 +23,6 @@
  *   reallocated (the node keeps the arrays it saw first), only added, and live until `dispose()`.
  * - The instance-transformed position is `positionLocal` (Appendix B): outline pushes read `positionGeometry`.
  *
- * Writing: `begin()`, `add(matrix, colour)` per instance (or `setMatrixAt`/`setColorAt`/`setAttributeAt` by slot and
- * `count`), then `end()`. Slot `s` lives on page `floor(s / pageSlots)`. Per-instance attributes (`attributes: { tint:
- * 3 }`) are instanced vertex attributes a node material reads by name (`attribute('tint')`): palette rows, tints.
- * Matrices are column-major (`Matrix4.elements`); colours linear RGB (three.js's `Color`).
- *
  * Invariants: every page shares the batch's geometry (a page with per-instance attributes wraps its attributes and
  * index) and material, has the same slot count and is hidden while empty; `end()` leaves untouched pages untouched;
  * nothing here reaches the sim. `dispose()` frees the pages; the geometry and material stay the caller's.
@@ -38,7 +33,6 @@
  * @example
  * instancePath(1000); // 'uniform': a mesh this size compiles a shader of its own
  * instancePath(PAGE_SLOTS); // 'attribute': one shader for every size above 1,000
- * INSTANCE_SYNC.patched; // true on r182: instance changes show in the render after them
  * // const crowd = createInstancedBatch({ name: 'crowd:balls', geometry: new SphereGeometry(1), material });
  * // crowd.begin(); crowd.add(matrix.elements, [1, 0.2, 0.1]); crowd.end(); scene.add(crowd.root);
  * @see engine/gfx/instancing.test.ts
@@ -131,7 +125,7 @@ export function syncBeforeUpload(
   return { patched: true, problems };
 }
 
-/** What importing this module did to r182's `InstanceNode` (see `syncBeforeUpload`). */
+/** What importing this module did to r182's `InstanceNode` (see `syncBeforeUpload`): `patched` is true on r182. */
 export const INSTANCE_SYNC = syncBeforeUpload();
 
 /** A colour: three.js's `Color` (linear `r`, `g`, `b`) or linear `[r, g, b]`. */
@@ -161,7 +155,12 @@ export interface InstancedBatchOptions {
 /** A batch's pages, slots and instances, and the pages and bytes its last `end()` uploaded. */
 export type InstancedBatchStats = Record<'pages' | 'capacity' | 'count' | 'uploadedPages' | 'uploadedBytes', number>;
 
-/** An instanced batch (see the file comment). */
+/**
+ * An instanced batch (see the file comment). Writing: `begin()`, `add(matrix, colour)` per instance (or `setMatrixAt`,
+ * `setColorAt`, `setAttributeAt` by slot, and `count`), then `end()`. Slot `s` lives on page `floor(s / pageSlots)`.
+ * Per-instance attributes (`attributes: { tint: 3 }`) are instanced vertex attributes a node material reads by name
+ * (`attribute('tint')`): palette rows, tints. Matrices are column-major (`Matrix4.elements`); colours linear RGB.
+ */
 export interface InstancedBatch {
   readonly name: string;
   /** The group holding the pages: add it to the scene. */

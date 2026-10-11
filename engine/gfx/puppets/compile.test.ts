@@ -1,0 +1,235 @@
+/**
+ * @file Unit tests for compiling bodies (engine/gfx/puppets/compile.ts), in Node: the humanoid's pieces, each part
+ * placed at rest where its points resolve (a limb from joint to joint, an eye on its socket), every frame right-handed,
+ * mirrored parts the reflection of their left side, sizes in head, limb and torso radii and a build's own drawing
+ * fields, a build's size scaling every length, the fixture body's every part type (a curve as 4 limbs, hair as cones,
+ * a part riding the root, `on`), `GFX_BAD_BODY` for what a definition cannot see, and `recolor`. That `reach` bounds
+ * every posed vertex is tested with the drawing (draw.test.ts).
+ * @see engine/gfx/puppets/compile.ts
+ */
+import { Matrix4, Vector3 } from 'three/webgpu';
+import { describe, expect, it } from 'vitest';
+import { defineEveryPart } from '../../../fixtures/bodies/everyPart';
+import { defineBuild } from '../../anim/builds';
+import { createSkeleton, jointIndex, SOCKETS, type JointName, type SocketName } from '../../anim/skeleton';
+import { toLinear } from '../../core/color';
+import { createRegistry } from '../../core/registry';
+import { compileBody, recolor, restPositions, type BodyPiece, type CompiledBody } from './compile';
+import { defineBody, getBody } from './grammar';
+
+const humanoid = compileBody('body:humanoid', 'build:chibi');
+
+/** A joint's rest position on `compiled`'s skeleton. */
+const restOf = (compiled: CompiledBody, joint: JointName) =>
+  new Vector3().fromArray(compiled.rest, jointIndex(joint) * 3);
+
+/** A socket's rest position: its joint's, plus its offset (rest frames are the character's). */
+function socketRest(compiled: CompiledBody, socket: SocketName): Vector3 {
+  const s = SOCKETS.indexOf(socket);
+  const { skeleton } = compiled;
+  return new Vector3()
+    .fromArray(compiled.rest, skeleton.socketJoints[s] * 3)
+    .add(new Vector3().fromArray(skeleton.socketOffsets, s * 3));
+}
+
+/** A piece's matrix in the character's rest frame: its bone's rest position, then its own matrix. */
+function restMatrix(compiled: CompiledBody, piece: BodyPiece): Matrix4 {
+  const at = piece.bone < 0 ? new Vector3() : new Vector3().fromArray(compiled.rest, piece.bone * 3);
+  return new Matrix4().fromArray(piece.matrix).premultiply(new Matrix4().makeTranslation(at.x, at.y, at.z));
+}
+
+/** The pieces that came from `part` (`mirror[0]`, `mirror[0] (right)`, `parts[3]`). */
+const from = (compiled: CompiledBody, part: string) => compiled.pieces.filter((piece) => piece.part === part);
+
+/** The origin and y axis of a piece in the rest frame. */
+function axes(compiled: CompiledBody, piece: BodyPiece) {
+  const m = restMatrix(compiled, piece);
+  const origin = new Vector3().setFromMatrixPosition(m);
+  const y = new Vector3().setFromMatrixColumn(m, 1);
+  return { origin, y };
+}
+
+describe('the humanoid', () => {
+  it('compiles to 26 pieces: 10 parts and 8 on each side, the eyes glowing', () => {
+    expect(humanoid.pieces).toHaveLength(26);
+    expect(humanoid.pieces.filter((piece) => piece.glow).map((piece) => piece.part)).toEqual([
+      'mirror[7]',
+      'mirror[7] (right)',
+    ]);
+    expect(new Set(humanoid.pieces.map((piece) => piece.shape))).toEqual(new Set(['limb', 'ball', 'eye']));
+  });
+
+  it('is pure: the same body and build give the same pieces', () => {
+    const again = compileBody('body:humanoid', 'build:chibi');
+    expect(again.pieces.map((piece) => [...piece.matrix])).toEqual(humanoid.pieces.map((piece) => [...piece.matrix]));
+    expect(again.reach).toBe(humanoid.reach);
+  });
+
+  it('places a limb from joint to joint, riding the first joint', () => {
+    const [thigh] = from(humanoid, 'mirror[0]');
+    expect(thigh.bone).toBe(jointIndex('thighL'));
+    const { origin, y } = axes(humanoid, thigh);
+    expect(origin.distanceTo(restOf(humanoid, 'thighL'))).toBeLessThan(1e-12);
+    const down = restOf(humanoid, 'shinL').sub(restOf(humanoid, 'thighL'));
+    expect(thigh.length).toBeCloseTo(down.length(), 12);
+    expect(y.distanceTo(down.normalize())).toBeLessThan(1e-12);
+  });
+
+  it('places the eyes on their sockets and the hands on the grips, riding their joints', () => {
+    for (const [part, socket, joint] of [
+      ['mirror[7]', 'eyeL', 'head'],
+      ['mirror[7] (right)', 'eyeR', 'head'],
+      ['mirror[6]', 'weaponL', 'handL'],
+      ['mirror[6] (right)', 'weaponR', 'handR'],
+    ] as const) {
+      const [piece] = from(humanoid, part);
+      expect(piece.bone, part).toBe(jointIndex(joint));
+      expect(axes(humanoid, piece).origin.distanceTo(socketRest(humanoid, socket)), part).toBeLessThan(1e-12);
+    }
+  });
+
+  it('gives every piece a right-handed frame, so no instance is mirrored by its matrix', () => {
+    for (const piece of [...humanoid.pieces, ...compileBody(defineEveryPart(createRegistry())).pieces]) {
+      expect(new Matrix4().fromArray(piece.matrix).determinant(), piece.part).toBeGreaterThan(0);
+    }
+  });
+
+  it('draws the right side as the reflection of the left', () => {
+    const reflect = new Matrix4().makeScale(-1, 1, 1);
+    for (const left of humanoid.pieces.filter((piece) => /^mirror\[\d+\]$/.test(piece.part))) {
+      const [right] = from(humanoid, `${left.part} (right)`);
+      expect([right.shape, right.slot, right.length, right.radiusStart, right.radiusEnd]).toEqual([
+        left.shape,
+        left.slot,
+        left.length,
+        left.radiusStart,
+        left.radiusEnd,
+      ]);
+      const l = axes(humanoid, left);
+      const r = axes(humanoid, right);
+      expect(r.origin.distanceTo(l.origin.clone().applyMatrix4(reflect)), left.part).toBeLessThan(1e-12);
+      expect(r.y.distanceTo(l.y.clone().applyMatrix4(reflect)), left.part).toBeLessThan(1e-12);
+    }
+  });
+
+  it('sizes parts in head, limb and torso radii, and in a build’s own drawing fields', () => {
+    const skeleton = createSkeleton('build:chibi');
+    const [face] = from(humanoid, 'parts[6]');
+    expect(new Vector3().setFromMatrixColumn(new Matrix4().fromArray(face.matrix), 0).length()).toBeCloseTo(
+      0.9 * skeleton.headRadius,
+      12,
+    );
+    const [thigh] = from(humanoid, 'mirror[0]');
+    expect(thigh.radiusStart).toBeCloseTo(1.45 * 0.0625, 12);
+    const bulky = compileBody('body:humanoid', 'build:bulky');
+    const [wide] = from(bulky, 'mirror[0]');
+    expect(wide.radiusStart / bulky.skeleton.build.size).toBeCloseTo(1.45 * 0.08125, 12);
+  });
+
+  it('scales every length with the build’s size', () => {
+    const giant = defineBuild('build:giant', { size: 2 }, createRegistry());
+    const big = compileBody('body:humanoid', giant);
+    humanoid.pieces.forEach((piece, i) => {
+      const twice = big.pieces[i];
+      expect([twice.length, twice.radiusStart, twice.radiusEnd]).toEqual([
+        piece.length * 2,
+        piece.radiusStart * 2,
+        piece.radiusEnd * 2,
+      ]);
+      for (const k of [12, 13, 14]) expect(twice.matrix[k]).toBeCloseTo(piece.matrix[k] * 2, 12);
+    });
+    expect(big.reach).toBeCloseTo(humanoid.reach * 2, 12);
+  });
+
+  it('takes the slots’ colours in linear RGB, and recolors without recompiling', () => {
+    expect(humanoid.colors.skin).toEqual(toLinear('#f1c7a0'));
+    const red = recolor(humanoid, { cloth: '#ff0000' });
+    expect(red.colors.cloth).toEqual([1, 0, 0]);
+    expect(red.colors.skin).toEqual(humanoid.colors.skin);
+    expect(red.pieces).toBe(humanoid.pieces);
+  });
+
+  it('rests each joint at its parent’s rest position plus its offset', () => {
+    const rest = restPositions(humanoid.skeleton);
+    expect(rest).toEqual(humanoid.rest);
+    expect(new Vector3().fromArray(rest, jointIndex('pelvis') * 3).y).toBeCloseTo(humanoid.skeleton.offsets[1], 12);
+  });
+});
+
+describe('every part type', () => {
+  const body = defineEveryPart(createRegistry());
+  const every = compileBody(body);
+
+  it('compiles every shape, a curve to 4 limbs and hair to a cone per strand', () => {
+    expect(new Set(every.pieces.map((piece) => piece.shape))).toEqual(
+      new Set(['limb', 'ball', 'eye', 'box', 'cone', 'blade', 'strip']),
+    );
+    expect(from(every, 'mirror[5]').map((piece) => piece.shape)).toEqual(['limb', 'limb', 'limb', 'limb']);
+    expect(from(every, 'parts[8]').map((piece) => piece.shape)).toEqual(Array(12).fill('cone'));
+  });
+
+  it('joins a curve’s limbs end to end, from its first point to its last, bowed away from the body', () => {
+    const claw = from(every, 'mirror[5]');
+    const ends = claw.map((piece) => {
+      const { origin, y } = axes(every, piece);
+      return [origin, origin.clone().addScaledVector(y, piece.length)];
+    });
+    for (let k = 1; k < 4; k++) expect(ends[k][0].distanceTo(ends[k - 1][1])).toBeLessThan(1e-12);
+    const hand = restOf(every, 'handL');
+    expect(ends[0][0].distanceTo(hand)).toBeLessThan(1e-12);
+    const tip = hand.clone().add(new Vector3(0.3, 0, 0.05));
+    expect(ends[3][1].distanceTo(tip)).toBeLessThan(1e-12);
+    // Halfway along, a quadratic Bézier lies half its bow off the chord's middle: 0.5 × 0.3 × the chord.
+    const chord = tip.distanceTo(hand);
+    expect(ends[1][1].distanceTo(hand.clone().lerp(tip, 0.5))).toBeCloseTo(0.5 * 0.3 * chord, 12);
+  });
+
+  it('roots hair over the back and top of the head, never over the face', () => {
+    const centre = new Vector3(0, 0, 0).add(restOf(every, 'head')).add(new Vector3(0, every.skeleton.headRadius, 0));
+    for (const strand of from(every, 'parts[8]')) {
+      const root = axes(every, strand).origin.sub(centre);
+      expect(root.length()).toBeCloseTo(0.95 * 0.9 * every.skeleton.headRadius, 12);
+      expect(root.z / root.length()).toBeLessThanOrEqual(0.25 + 1e-12);
+    }
+  });
+
+  it('rides the root for a part on no joint, and the joint `on` names', () => {
+    const [disc] = from(every, 'parts[9]');
+    expect(disc.bone).toBe(-1);
+    expect(Array.from(disc.matrix.slice(12, 15), (v) => v + 0)).toEqual([0, 0.01, 0]);
+    expect(from(every, 'parts[0]')[0].bone).toBe(jointIndex('spine1'));
+    expect(from(every, 'parts[2]')[0].bone).toBe(jointIndex('chest'));
+  });
+
+  it('hangs the cape from the back socket, flaring down', () => {
+    const [cape] = from(every, 'parts[7]');
+    expect(cape.shape).toBe('strip');
+    expect(cape.bone).toBe(jointIndex('chest'));
+    const { origin, y } = axes(every, cape);
+    expect(origin.distanceTo(socketRest(every, 'back'))).toBeLessThan(1e-12);
+    expect(y.y).toBeLessThan(-0.5);
+  });
+});
+
+describe('problems a definition cannot see', () => {
+  const reg = createRegistry();
+  const slots = { skin: '#ffffff' };
+
+  it('names a part from a point to itself', () => {
+    defineBody('body:same', { slots, parts: [['box', 'handL', 'handL', 0.02, 0.02, 'skin']] }, reg);
+    expect(() => compileBody('body:same', 'build:chibi', { registry: reg })).toThrow(
+      /GFX_BAD_BODY.*body:same for build:chibi: parts\[0\] runs from a point to itself/,
+    );
+  });
+
+  it('names a limb no longer than its radii differ', () => {
+    defineBody(
+      'body:stub',
+      { slots, parts: [['limb', 'handL', ['off', 'handL', 0, 0, 0.01], 0.2, 0.05, 'skin']] },
+      reg,
+    );
+    expect(() => compileBody(getBody('body:stub', reg))).toThrow(
+      /GFX_BAD_BODY.*parts\[0\] is 0\.0100 m long, no more than its radii differ.*make it longer or its radii closer/,
+    );
+  });
+});

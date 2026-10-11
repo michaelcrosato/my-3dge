@@ -156,3 +156,32 @@ export type { CameraInfo } from './app/view';
 export type { PlayResult } from './app/playback';
 export type { PlayIntoOptions } from './app/playback';
 export type { ViewChange } from './app/playback';
+// Instancing and puppets (WP 3.8): batches of instanced copies in pages above r182's 1,000-slot uniform path; puppet
+// bodies as data (one line per part on the humanoid skeleton's bones, mirrored parts, material slots), compiled per
+// build and drawn as one rigid-skinned mesh per character or as instanced parts for crowds; blob shadows.
+export { createInstancedBatch } from './gfx/instancing';
+export type { InstancedBatch } from './gfx/instancing';
+export type { InstancedBatchOptions } from './gfx/instancing';
+export type { InstancedBatchStats } from './gfx/instancing';
+export type { InstanceColor } from './gfx/instancing';
+export { defineBody } from './gfx/puppets/grammar';
+export { getBody } from './gfx/puppets/grammar';
+export type { Body } from './gfx/puppets/grammar';
+export type { BodySpec } from './gfx/puppets/grammar';
+export type { BodyPart } from './gfx/puppets/grammar';
+export type { BodyPoint } from './gfx/puppets/grammar';
+export type { BodyLength } from './gfx/puppets/grammar';
+export type { PartOptions } from './gfx/puppets/grammar';
+export { compileBody } from './gfx/puppets/compile';
+export { recolor } from './gfx/puppets/compile';
+export type { CompiledBody } from './gfx/puppets/compile';
+export type { BodyPiece } from './gfx/puppets/compile';
+export type { PieceShape } from './gfx/puppets/compile';
+export { createPuppet } from './gfx/puppets/draw';
+export type { Puppet } from './gfx/puppets/draw';
+export type { PuppetMaterials } from './gfx/puppets/draw';
+export { createPuppetBatches } from './gfx/puppets/draw';
+export type { PuppetBatches } from './gfx/puppets/draw';
+export { createBlobShadows } from './gfx/puppets/blobShadow';
+export { blobScale } from './gfx/puppets/blobShadow';
+export type { BlobShadows } from './gfx/puppets/blobShadow';
