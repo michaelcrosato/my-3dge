@@ -1,0 +1,10 @@
+{
+  "scene": "crowd-1000",
+  "steps": 600,
+  "budgets": {
+    "stepMs": 12,
+    "hashMs": 36,
+    "captureMs": 16
+  },
+  "reason": "WP 5.1, measured with node x perf fixtures/scenes/crowd-1000 on the development platform (Node 24, 20 cores shared by up to 6 lanes, Rapier 0.21 SIMD): 1,000 crowd agents entering 25 a step and pushing toward the arena's centre (contacts everywhere) step in 4.6 ms idle and 5.8 to 6.4 ms at a load average of 27 to 30, hash in 14.7 to 18.5 ms (about 11 ms of it the agents' two string and two boolean fields, which the state hash feeds through its general path) and capture in 6.4 to 8.4 ms (Rapier's 2.7 MB snapshot; medians of 5 runs); the budgets leave about 2x over the loaded medians, so only a real regression fails."
+}

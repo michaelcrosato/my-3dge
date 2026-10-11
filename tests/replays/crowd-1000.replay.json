@@ -1,0 +1,35 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Crowd bodies (WP 5.1): 1,000 agents enter 25 a step and push toward the arena's centre; a blast at step 180 kills and throws the middle and knocks the ring back; at step 200, corpses in the air, the physics world is captured and restored in place from its text form (the goldens are those of the run without it); at step 330 every tenth living agent leaves; a second blast at step 420. Corpses are removed 1.6 s after their deaths and every agent removed is replaced at the edge.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "crowd-1000",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [
+    [180, { "b": ["blast"] }],
+    [181, { "b": null }],
+    [200, { "dev": "roundtrip" }],
+    [330, { "dev": "thin" }],
+    [420, { "b": ["blast"] }],
+    [421, { "b": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "41842355cc3c86c2",
+      "60": "a48a1b7804d78a92",
+      "120": "af8ca987782e75e9",
+      "180": "a7b93dc5ea225594",
+      "240": "ee8319ff56ac0fbf",
+      "300": "9f724edb65d54f42",
+      "360": "cf149439397d06ec",
+      "420": "94c19af0b97d9fa6",
+      "480": "aa5b4a1d1763d556",
+      "540": "242573dcc1cf45b5",
+      "600": "0117b7db034b098d"
+    }
+  }
+}
