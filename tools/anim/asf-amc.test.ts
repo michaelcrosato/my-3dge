@@ -11,7 +11,8 @@ import { pathToFileURL } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import { POINT_INDEX } from '../../engine/anim/clip/readable';
 import { requireSource } from '../lib/source';
-import { pose, readAmc, readAsf, readCmu, type Pick } from './asf-amc';
+import { pose, readAmc, readAsf } from './asf-amc';
+import { readCmu, type Pick } from './cmu-capture';
 import { testAmc, testAsf } from './asf-amc-fixture';
 import { bestCycle } from './cycle';
 
