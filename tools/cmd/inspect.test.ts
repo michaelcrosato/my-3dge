@@ -4,8 +4,9 @@
  * replay's scene (a stand-in tab); a session whose process has gone is cleared; with no session, `x eval` and `x dump`
  * say how to start one (exit 2) and `x inspect --stop` has nothing to stop; against a stand-in session (the same JSON
  * over HTTP), `x eval` prints the value and `x dump` the tree, each saying first that the page reloaded, a page error
- * is a failure, and `x inspect` goes back to a page it left while `x eval` names the page open now.
- * tests/e2e/box.spec.ts runs a real session.
+ * is a failure, and `x inspect` goes back to a page it left while `x eval` names the page open now. The session's
+ * `shot` op (stand-in tabs) shoots the open page in place, and gives no shot for a page without `__engine.shot`
+ * (labs/hello) or not ready, so `x shot` takes its own. tests/e2e/box.spec.ts runs a real session.
  * @see tools/cmd/inspect.ts
  */
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
@@ -17,7 +18,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { PageWatch } from '../lib/browser';
 import { labPageOf, pageRuntime, scenePath } from '../lib/page';
 import { dispatch, loadCommand, ROOT } from '../x';
-import { findSession, reloadLines, SESSION_FILE } from './inspect';
+import { findSession, reloadLines, SESSION_FILE, sessionShot, shootInSession, type SessionTab } from './inspect';
 
 const temporary: string[] = [];
 const servers: { close(): void }[] = [];
@@ -184,5 +185,45 @@ describe('against a session', () => {
     const again = await x(root, 'inspect', '--scene', 'room');
     expect([again.code, again.lines[0]]).toEqual(on(first));
     expect(gotos).toHaveLength(2); // the page asked for is open: no goto
+  });
+});
+
+describe("the session's shot op", () => {
+  /** A stand-in tab: `readSignals` (no argument) gets `signals`, `__engine.shot` (the options) gets `shoot()`. */
+  const tabOf = (signals: object, shoot: () => unknown) =>
+    ({
+      evaluate: async (_: unknown, args?: unknown) => (args === undefined ? signals : shoot()),
+    }) as unknown as Page;
+  const session = (tab: Page): SessionTab => ({
+    tab,
+    current: 'labs/hello/',
+    browser: { newPage: () => Promise.reject(new Error('the page asked for is the open one')) },
+    url: 'http://127.0.0.1:1/',
+    root: ROOT,
+  });
+  const noShot = () => {
+    throw new TypeError('__engine.shot is not a function');
+  };
+
+  it('gives no shot for the open page when it has no __engine.shot (labs/hello), so x shot takes its own', async () => {
+    const signals = { ready: true, errors: [], info: { page: 'hello', post: true }, shoots: false };
+    const reply = await sessionShot(session(tabOf(signals, noShot)), 'labs/hello/', { ids: true });
+    expect(reply).toEqual({ shot: null, signals, reused: 'page' });
+    const root = sandbox();
+    await standIn(root, { shot: { page: 'labs/hello/', ...reply } }, 'labs/hello/');
+    const options = { ids: true, metrics: true };
+    expect(await shootInSession(findSession(root)!, 'labs/hello/', options, 'labs/hello')).toBeNull();
+  });
+
+  it('shoots the open page in place when it is ready and has __engine.shot, and not before it is ready', async () => {
+    const shot = { ids: { visible: [] } };
+    const ready = { ready: true, errors: [], shoots: true };
+    expect(await sessionShot(session(tabOf(ready, () => shot)), 'labs/hello/', {})).toEqual({
+      shot,
+      signals: ready,
+      reused: 'page',
+    });
+    const starting = { ...ready, ready: false };
+    expect(await sessionShot(session(tabOf(starting, noShot)), 'labs/hello/', {})).toMatchObject({ shot: null });
   });
 });

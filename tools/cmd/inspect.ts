@@ -11,8 +11,9 @@
  *
  * The session answers on 127.0.0.1 with JSON (`callSession`): `status`, `eval` (an expression, awaited, its value as
  * JSON), `dump` (`__engine.scene.dump` and the state), `set` (`__engine.set`), `goto` (which rewrites session.json)
- * and `shot` (`__engine.shot` on the open page when it shows the URL asked, else in a new tab of the same browser),
- * and `stop`. Every reply names the page open now (`page`): `x eval`, `x set` and `x dump` report it, and `x inspect`
+ * and `shot` (`sessionShot`: `__engine.shot` on the open page when it shows the URL asked, else in a new tab of the
+ * same browser; no shot when that page is not ready or has no `__engine.shot`, and `x shot` then takes its own), and
+ * `stop`. Every reply names the page open now (`page`): `x eval`, `x set` and `x dump` report it, and `x inspect`
  * compares it with the page asked for. `shootInSession` and `pageFailures` are `x shot`'s; tools/lib/page.ts has the
  * page helpers.
  *
@@ -28,7 +29,7 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer, request } from 'node:http';
 import { join } from 'node:path';
-import type { Page } from '@playwright/test';
+import type { Browser, Page } from '@playwright/test';
 import {
   describePageError,
   launchBrowser,
@@ -171,6 +172,44 @@ export async function shootInSession(
   };
 }
 
+/** `__engine.shot(options)` in `tab` when its signal says ready and it has a `shot`, else null. */
+async function shootIfAble(tab: Page, signals: Signals | undefined, options: unknown): Promise<ShotJson | null> {
+  if (!signals?.ready || !signals.shoots) return null;
+  return (await tab.evaluate((o) => __engine.shot(o), options)) as ShotJson;
+}
+
+/** What the session's `shot` op works with: its tab, the page open in it, its browser, Vite's URL and the root. */
+export interface SessionTab {
+  tab: Page;
+  current: string;
+  browser: Pick<Browser, 'newPage'>;
+  url: string;
+  root: string;
+}
+
+/**
+ * The session's `shot` op: the open tab when it shows `path`, else a new tab of the browser opened on `path`. The
+ * shot is null when that page is not ready or has no `__engine.shot` (labs/hello), never a throw, so `shootInSession`
+ * gives null and `x shot` screenshots the page in its own browser.
+ */
+export async function sessionShot(session: SessionTab, path: string, options: unknown) {
+  if (path === session.current) {
+    const signals = await readSignals(session.tab);
+    return { shot: await shootIfAble(session.tab, signals, options), signals, reused: 'page' };
+  }
+  const other = await session.browser.newPage({ viewport: VIEWPORT });
+  try {
+    const watch = await preparePage(other, { seed: 1, root: session.root });
+    await other.goto(`${session.url}${path}`);
+    const signals = await waitReady(other, watch);
+    const thrown = (await watch.errors()).map(describePageError);
+    const shot = await shootIfAble(other, signals, options);
+    return { shot, signals, thrown, console: watch.console, reused: 'browser' };
+  } finally {
+    await other.close();
+  }
+}
+
 /** Runs the session in this process until `stop` (see the file comment). */
 async function serve(root: string, page: string): Promise<void> {
   const server = await startVite({ root });
@@ -225,23 +264,7 @@ async function serve(root: string, page: string): Promise<void> {
         },
         [Number(body.step ?? 0), { depth: body.depth, filter: body.filter }] as const,
       ),
-    shot: async (body) => {
-      const path = String(body.path);
-      const shoot = (target: Page, options: unknown) => target.evaluate((o) => __engine.shot(o), options);
-      if (path === current)
-        return { shot: await shoot(tab, body.options), signals: await readSignals(tab), reused: 'page' };
-      const other = await browser.newPage({ viewport: VIEWPORT });
-      try {
-        const otherWatch = await preparePage(other, { seed: 1, root });
-        await other.goto(`${server.url}${path}`);
-        const signals = await waitReady(other, otherWatch);
-        const thrown = (await otherWatch.errors()).map(describePageError);
-        const shot = signals?.ready && signals.shoots ? await shoot(other, body.options) : null;
-        return { shot, signals, thrown, console: otherWatch.console, reused: 'browser' };
-      } finally {
-        await other.close();
-      }
-    },
+    shot: (body) => sessionShot({ tab, current, browser, url: server.url, root }, String(body.path), body.options),
     stop: async () => (setTimeout(() => void stop(), 50), { stopped: true }),
   };
   createServer((req, res) => {

@@ -1,23 +1,28 @@
 /**
  * @file T2 for the Stress Box, stage 1 (PLAN.md §9.0, WP 2.7): the box page (labs/box) on WebGPU. The room starts
- * ready on WebGPU from the landing page; from cam iso the ID pass lists the floor, every wall run, the low wall, the
- * pillar and the three movers, the look metrics raise no note, and the thumbnail matches its baseline
- * (`x shot labs/box --scene room --cam iso --thumb box-room-iso`); cycling every camera preset and resolution mode
- * builds 0 pipelines after the warm-up; every inspector member works in the page and `help()` matches the object;
- * every setting the page knows is reachable through `__engine.set`; the routes reach the run (`?seed`, settings,
- * `?replay` in real time) and a bad one is one error record on the page; and `x inspect` keeps the page open for
- * `x eval`, `x set`, `x dump` and `x shot`, and opens another page and goes back to the first. The CPU-only contract
- * is tests/e2e/parity.spec.ts.
+ * ready on WebGPU from the landing page; without WebGPU it shows `GFX_NO_WEBGPU` on the page as its one error record,
+ * never turns ready and still steps through `__engine`, while `render` and `shot` throw; from cam iso the ID pass lists
+ * the floor, every wall run, the low wall, the pillar and the three movers, the look metrics raise no note, and the
+ * thumbnail matches its baseline (`x shot labs/box --scene room --cam iso --thumb box-room-iso`); cycling every camera
+ * preset and resolution mode builds 0 pipelines after the warm-up; every inspector member works in the page and
+ * `help()` matches the object; every setting the page knows is reachable through `__engine.set`; the routes reach the
+ * run (`?seed`, settings, `?replay` in real time) and a bad one is one error record on the page; and `x inspect` keeps
+ * the page open for `x eval`, `x set`, `x dump` and `x shot`, opens another page and goes back to the first, and with
+ * a page open that has no `__engine.shot` (labs/hello), `x shot` takes its own. The CPU-only contract is
+ * tests/e2e/parity.spec.ts.
  *
  * Invariants: the page is driven only through `window.__engine` and the virtual clock (tools/lib/browser.ts), as an
- * agent drives it; frames are drawn by `__engine.render()` or `__clock.tick()`.
+ * agent drives it; frames are drawn by `__engine.render()` or `__clock.tick()`. The startup test launches its own
+ * Chromium without `WEBGPU_FLAGS`; everything else uses the project's browser.
  */
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Page } from '@playwright/test';
+import { chromium, type Page } from '@playwright/test';
 import { CAMERA_3D, VIEW_NAMES } from '../../engine/gfx/cameras/codes';
 import { RESOLUTION_MODES } from '../../engine/gfx/resolution';
+import { chromiumPath, preparePage, VIEWPORT, type GpuLog } from '../../tools/lib/browser';
+import { findUnlisted, loadAllowList } from '../setup/adviceTrap';
 import { expect, test, type Harness } from './fixtures';
 
 const ROOT = join(import.meta.dirname, '..', '..');
@@ -72,6 +77,81 @@ test.describe('the box, stage 1', () => {
     expect(new URL(page.url()).pathname).toBe('/labs/box/');
     expect(await call(page, 'info')).toMatchObject({ scene: 'box:room', seed: 2, headless: false, runtime: 'browser' });
     expect(await page.locator('#msg').isHidden()).toBe(true);
+  });
+
+  test('the startup test: without WebGPU the box shows GFX_NO_WEBGPU, never turns ready, and still steps', async ({
+    baseURL,
+  }) => {
+    // An explicit empty args: Playwright Test merges the project's launch options (WEBGPU_FLAGS) into a launch without.
+    const browser = await chromium.launch({ executablePath: chromiumPath(), args: [] });
+    try {
+      const page = await browser.newPage({ viewport: VIEWPORT });
+      const watch = await preparePage(page);
+      await page.goto(new URL('labs/box/?scene=room', baseURL).href);
+      const state = () =>
+        page.evaluate(() => {
+          const message = document.querySelector<HTMLElement>('#msg');
+          return {
+            ready: __engine.ready as unknown as boolean,
+            errors: __engine.errors as unknown as { code: string; message: string; fix: string; values: object }[],
+            text: message?.hidden ? '' : (message?.textContent ?? ''),
+            gpu: window.__gpu,
+          };
+        });
+      await expect.poll(async () => (await state()).errors.length, { timeout: 60_000 }).toBe(1);
+      const started = await state();
+      const reason = 'navigator.gpu.requestAdapter() gave no adapter';
+      expect(started.errors).toEqual([
+        expect.objectContaining({
+          code: 'GFX_NO_WEBGPU',
+          message: `WebGPU is unavailable: ${reason}`,
+          fix: expect.stringContaining('WEBGPU_FLAGS'),
+          values: { reason }, // read back from the GfxError's message through the code's template
+        }),
+      ]);
+      const [error] = started.errors;
+      expect(started.text).toBe(`GFX_NO_WEBGPU: ${error.message}\nFix: ${error.fix}`);
+      expect(started.ready).toBe(false);
+      const nothing: GpuLog = { adapters: [null], devices: 0, contexts: 0, submits: 0, lost: [] };
+      expect(started.gpu).toEqual(nothing);
+
+      // The sim still runs through __engine; only the members that draw throw.
+      const members = await page.evaluate(async () => {
+        const thrown = async (run: () => unknown) => {
+          try {
+            await run();
+            return 'no throw';
+          } catch (caught) {
+            return String((caught as Error).message);
+          }
+        };
+        const tick = __engine.step(5);
+        return {
+          tick,
+          info: __engine.info(),
+          render: await thrown(() => __engine.render()),
+          shot: await thrown(() => __engine.shot()),
+        };
+      });
+      expect(members).toMatchObject({ tick: 5, info: { tick: 5, scene: 'box:room' } });
+      expect(members.render).toMatch(/^\[DEV_NO_RENDERER\] __engine\.render needs a renderer/);
+      expect(members.shot).toMatch(/^\[DEV_NO_RENDERER\] __engine\.shot needs a renderer/);
+      await page.evaluate(() => window.__clock.tick(10)); // animation frames come and go; nothing draws or steps
+      expect(await state()).toEqual(started);
+      expect(await page.evaluate(() => (__engine.info() as { tick: number }).tick)).toBe(5);
+      expect(await watch.errors()).toEqual([]);
+      // The page prints one line, the log's (engine/core/log.ts: the code, the message, the fix, then the cause).
+      // Chromium itself says WebGPU is missing in lines without a source URL, and Vite's client logs its connection:
+      // neither is the page's doing.
+      const pageLines = watch.console.filter((line) => line.url && !line.url.endsWith('/@vite/client'));
+      expect(pageLines.map(({ type, text }) => ({ type, text }))).toEqual([
+        { type: 'error', text: expect.stringMatching(/^\[GFX_NO_WEBGPU\] /) },
+      ]);
+      expect(pageLines[0].text.startsWith(`[GFX_NO_WEBGPU] ${error.message}: ${error.fix}`)).toBe(true);
+      expect(findUnlisted(pageLines, loadAllowList()).map((warning) => warning.code)).toEqual(['GFX_NO_WEBGPU']);
+    } finally {
+      await browser.close();
+    }
   });
 
   test('from cam iso the ID pass lists the floor, every wall run, the low wall, the pillar and the movers', async ({
@@ -283,6 +363,11 @@ test.describe('the box, stage 1', () => {
       const camera = x('eval', '__engine.camera.get().code').output;
       expect(camera).toContain('labs/box/?scene=room: "');
       expect(camera).not.toContain('topdown');
+      // a page without __engine.shot open in the session (labs/hello): x shot screenshots it in its own browser
+      expect(x('inspect', '--page', 'labs/hello').output).toContain('on labs/hello/: ready');
+      const hello = x('shot', 'labs/hello');
+      expect([hello.code, hello.output]).toEqual([0, expect.stringContaining('SHOT_NO_ID_PASS')]);
+      expect(hello.output).not.toContain('reused the inspect session');
     } finally {
       x('inspect', '--stop');
     }

@@ -12,7 +12,8 @@
  * Game code, sim-side: it imports only engine/sim-api.ts, so `x sim` runs it in Node. The level's text is registered
  * by whoever draws it (the page, labs/box/main.ts; a Node test reads the file), since the sim of Box 1 never reads it.
  *
- * Tests: tests/replays/box-1-*.replay.json (`node x replay tests/replays --browser page`), tests/e2e/box.spec.ts.
+ * Tests: tests/replays/box-1-*.replay.json (`node x replay tests/replays/box-1-*.replay.json --browser page`),
+ * tests/e2e/box.spec.ts.
  *
  * @example
  * // node x sim labs/box/scenes/room --steps 600

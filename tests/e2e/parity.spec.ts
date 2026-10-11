@@ -15,7 +15,7 @@
  * these tests compare the rendering page with them, never with themselves.
  */
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, cpSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
+import { copyFileSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
 import type { Page } from '@playwright/test';
@@ -33,8 +33,14 @@ const REPLAYS = ['box-1-room', 'box-1-tuned'].map((name) => ({
 const goldens = (text: string) => (JSON.parse(text) as Replay).hashes['linux-x64'];
 /** Variables a test runner sets for its own workers; the `x` children start without them. */
 const RUNNER_VARIABLE = /^(VITEST|TEST_WORKER_INDEX$|TEST_PARALLEL_INDEX$|PW_TS_ESM|PW_TEST_SOURCE_TRANSFORM)/;
-/** What a scratch copy of the repository leaves out: it links node_modules, and makes its own out/. */
+/** What a scratch copy of the repository leaves out: it links node_modules' entries, and makes its own out/. */
 const NOT_COPIED = new Set(['.git', '.cache', 'node_modules', 'out', 'dist', 'test-results', '.vercel']);
+/**
+ * The entries of node_modules a scratch copy does not link: Vite's caches. Vite's dependency hash includes the root,
+ * so a shared node_modules/.vite would be re-optimized and swapped by every Vite the copy starts, under this
+ * repository's servers.
+ */
+const OWN_CACHES = new Set(['.vite', '.vite-temp']);
 
 /** Runs `node x <args>` in `root`; returns its exit code and printed text. */
 function x(root: string, ...args: string[]) {
@@ -43,11 +49,18 @@ function x(root: string, ...args: string[]) {
   return { code: run.status, output: `${run.stdout}${run.stderr}` };
 }
 
-/** A scratch copy of the repository (its own pages, scenes and replays), sharing node_modules; remove it after. */
+/**
+ * A scratch copy of the repository (its own pages, scenes and replays), sharing the packages: its node_modules is a
+ * directory of links to this one's entries, without Vite's caches (`OWN_CACHES`), which the copy writes for itself.
+ * Remove it after.
+ */
 function scratchCopy(): string {
   const root = mkdtempSync(join(tmpdir(), 'parity-'));
   cpSync(ROOT, root, { recursive: true, filter: (path) => !NOT_COPIED.has(relative(ROOT, path).split(sep)[0]) });
-  symlinkSync(join(ROOT, 'node_modules'), join(root, 'node_modules'), 'dir');
+  mkdirSync(join(root, 'node_modules'));
+  for (const entry of readdirSync(join(ROOT, 'node_modules'))) {
+    if (!OWN_CACHES.has(entry)) symlinkSync(join(ROOT, 'node_modules', entry), join(root, 'node_modules', entry));
+  }
   return root;
 }
 

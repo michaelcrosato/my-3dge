@@ -1,10 +1,10 @@
 /**
  * @file The README check (PLAN.md §9.0, §5.8: shardfall's station guides held to the code; WP 2.7): every claim
  * labs/box/README.md makes in code spans must hold. A setting path names a declared setting; a file or directory
- * exists; `node x <cmd>` names a command, flags it takes and settings for `--set`, `npm run <script>` a script of
- * package.json and files that exist; a URL's parameters are routes or
- * settings; `box:<name>` is a registered scene; `cam=…` is a camera code; `__engine.<member>` is a member `help()`
- * lists. A fixture README that names a missing setting, file, command, flag or member fails with one line each.
+ * exists; `node x <cmd>` names a command, flags it takes and settings for `--set` and `node x set <path> <value>`,
+ * `npm run <script>` a script of package.json and files that exist; a URL's parameters are routes or settings;
+ * `box:<name>` is a registered scene; `cam=…` is a camera code; `__engine.<member>` is a member `help()` lists. A
+ * fixture README that names a missing setting, file, command, flag or member fails with one line each.
  * @see labs/box/README.md
  */
 import { existsSync, globSync, readFileSync } from 'node:fs';
@@ -53,6 +53,8 @@ async function readmeProblems(text: string): Promise<string[]> {
     const [name, ...rest] = words;
     if (!commands.includes(name)) return void problems.push(`${where} runs x ${name}, which is no command`);
     const { options } = await loadCommand(ROOT, name);
+    const [first] = rest.filter((word, i) => !word.startsWith('-') && rest[i - 1]?.startsWith('--') !== true);
+    if (name === 'set' && first !== undefined && !first.includes('<')) setting(first, where); // x set <path> <value>
     rest.forEach((word, i) => {
       if (word.startsWith('--') && !Object.hasOwn(options, word.slice(2))) {
         problems.push(`${where} gives x ${name} the flag ${word}, which it does not take`);
@@ -99,7 +101,8 @@ describe('labs/box/README.md', () => {
   it('fails a fixture README that names a missing setting, file, command, flag or member', async () => {
     const fixture = [
       'Tune `box.room.sped` (a typo), read `labs/box/levels/hall.txt`, run `node x film labs/box` and',
-      '`node x shot labs/box --angle 3 --set box.room.slow=1`, open `labs/box/?box.room.fast=2`, call `__engine.stats()`.',
+      '`node x shot labs/box --angle 3 --set box.room.slow=1`, open `labs/box/?box.room.fast=2`, call `__engine.stats()`,',
+      'set one with `node x set box.room.sped 3`.',
     ].join('\n');
     expect(await readmeProblems(fixture)).toEqual([
       '`box.room.sped` names the setting box.room.sped, which nobody declares',
@@ -109,6 +112,7 @@ describe('labs/box/README.md', () => {
       '`node x shot labs/box --angle 3 --set box.room.slow=1` names the setting box.room.slow, which nobody declares',
       '`labs/box/?box.room.fast=2` names the setting box.room.fast, which nobody declares',
       '`__engine.stats()` calls __engine.stats, which help() does not list',
+      '`node x set box.room.sped 3` names the setting box.room.sped, which nobody declares',
     ]);
   });
 });
