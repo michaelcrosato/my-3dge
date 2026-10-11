@@ -4,7 +4,9 @@
  * `animCheckBody`, engine/anim/check.ts) holds every sample state (`state:<name>`), pose (`pose:<name>`), stance
  * (`stance:<name>`), move (`move:<name>`, played by an `Attack`) and reaction (`reaction:<name>`) at both facings, from
  * rest and back to rest; the blob (`blob:<state>`) and the floater (`floater:<state>`) hold theirs. The first build
- * also runs its matrix twice and at half the step, and so do the blob and the floater.
+ * also runs its matrix twice and at half the step, and so do the blob and the floater. Then every clip of the library
+ * (`clip:<SET>/<Clip>`, `set:<SET>`), as data and played on every build (tools/qa/anim/clips.ts, WP 8.6; its own
+ * metrics there, its baseline tests/baselines/qa-anim-library.json): about 45 s, so T1 plays a sample.
  *
  * Metrics, one violation per id and metric, valued by the worst case (larger is worse) and naming where it happened:
  * - `nan` (1), `stretch`, `underFloor`, `reach` (metres): `animCheck`'s finite values, bone lengths, feet at or
@@ -492,9 +494,13 @@ export function animViolations(keep: (id: string) => boolean = () => true): QaVi
   return [...found.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : a.metric < b.metric ? -1 : 1));
 }
 
-/** The family: every body's motion through its state matrix. */
+/** The family: every body's motion through its state matrix, then every clip of the library (anim/clips.ts). */
 const family: QaFamily = {
-  run: ({ only }) => animViolations((id) => only.length === 0 || only.some((prefix) => id.startsWith(prefix))),
+  async run({ root, only }) {
+    const keep = (id: string) => only.length === 0 || only.some((prefix) => id.startsWith(prefix));
+    const { clipViolations } = await import('./anim/clips'); // loaded here: it measures with this file's metrics
+    return [...animViolations(keep), ...clipViolations(root, keep)];
+  },
 };
 
 export default family;

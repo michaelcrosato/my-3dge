@@ -1,7 +1,8 @@
 /**
  * @file The `anim` QA family in T1 (tools/qa/anim.ts, PLAN.md §8.6, WP 6.6): every move and pose, the humanoid, the
- * blob and the floater pass against tests/baselines/qa-anim.json with no slack; the matrix holds every state the
- * engine names; and each motion metric catches a seeded fault and passes the sound case.
+ * blob and the floater pass against tests/baselines/qa-anim.json with no slack (the library's clips are WP 8.6's
+ * tests/unit/data/anim/qa.test.ts's); the matrix holds every state the engine names; and each motion metric catches a
+ * seeded fault and passes the sound case.
  * @see tools/qa/anim.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -42,12 +43,15 @@ const turn = (x: number, y: number, z: number, angle: number) =>
 
 describe('the anim QA family', () => {
   it('passes every move and pose, the humanoid, the blob and the floater against their baseline', async () => {
-    const result = await runQa(ROOT, 'anim');
+    // the bodies' ids only: the library's clips are tests/unit/data/anim/qa.test.ts's (a sample in T1)
+    const kinds = [...Object.keys(humanoidStates()), 'blob:', 'floater:'].map((id) => id.slice(0, id.indexOf(':') + 1));
+    const bodies = [...new Set(kinds)];
+    const result = await runQa(ROOT, 'anim', bodies);
     expect(result.failures).toEqual([]);
     expect(result.warnings).toEqual([]);
     const { entries, failures } = readBaselines(ROOT, 'anim');
     expect(failures).toEqual([]);
-    expect(result.accepted).toBe(entries.length);
+    expect(result.accepted).toBe(entries.filter((entry) => bodies.some((kind) => entry.id.startsWith(kind))).length);
   });
 
   it('holds every sample state, pose, stance, move and reaction the engine names', () => {
