@@ -2,13 +2,15 @@
  * @file Unit tests for the crowd, Box 4 (labs/box/scenes/crowd-1000.ts and its presets crowd-100.ts and crowd-5000.ts,
  * PLAN.md WP 5.7): the queue lets 25 members in a step (1,000 are in after 40 steps); the mix is drawn as asked;
  * every member starts on an open tile of the hall's floor, nearly all at least 5 m from the hero; the presets differ
- * only in their count; and, driven as the climb replay drives the hero (off the dais, up the west stairs, along the
- * west gallery), the crowd follows him up the stairs: walkers and slimes stand on the west gallery, 1 m up, at the end
- * (Done-when 1), in the same run each time.
+ * only in their count; and the Box 4 replays do what their descriptions say, to their goldens: in box-4-chase
+ * (tests/replays/box-4-chase.replay.json) the hero walks off the dais, up the west stairs and along the west gallery,
+ * and the crowd follows him up the stairs, walkers walking their rise and standing on the gallery, 1 m up, at the end
+ * (Done-when 1); in box-4-hop a crowd of slimes hops up after him.
  * @see labs/box/scenes/crowd-1000.ts
  */
 import { describe, expect, it } from 'vitest';
-import { createHeadless, floorHeight, tileAt, type Intents } from '../../../engine';
+import { readFileSync } from 'node:fs';
+import { createHeadless, floorHeight, tileAt } from '../../../engine';
 import { HALL_LEVEL, HALL_START } from './hall';
 import { CROWD_TILES, crowd1000 } from './crowd-1000';
 import { crowd100 } from './crowd-100';
@@ -32,14 +34,25 @@ function glyphAt(x: number, z: number): string {
   return HALL_LEVEL.legend[HALL_LEVEL.tiles[row * HALL_LEVEL.cols + col]].id;
 }
 
-/** The climb replay's inputs (tests/replays/box-3-climb.replay.json): off the dais, up the west stairs, west. */
-const CLIMB: [number, Partial<Intents>][] = [
-  [20, {}],
-  [300, { move: [-0.8, -0.6] }],
-  [84, { move: [0, -1] }],
-  [36, {}],
-  [60, { move: [-1, 0] }],
-];
+/** The replay `name` (tests/replays/<name>.replay.json), its text and its final golden hash. */
+const text = (name: string) => readFileSync(`tests/replays/${name}.replay.json`, 'utf8');
+function goldenOf(name: string): string {
+  const { steps, hashes } = JSON.parse(text(name)) as { steps: number; hashes: Record<string, Record<string, string>> };
+  return hashes[`${process.platform}-${process.arch}`][steps];
+}
+
+/** The engine after `until` steps of the replay `name` (all of it by default), and its hash. */
+async function play(name: string, until?: number) {
+  const scene = (JSON.parse(text(name)) as { scene: string }).scene;
+  const engine = await createHeadless({ scene: scene === crowd100.id ? crowd100 : crowd1000 });
+  const replay = engine.replay as (text: string, options: { until?: number }) => Promise<{ hash: string }>;
+  const run = await replay(text(name), { until });
+  return { engine, hash: run.hash };
+}
+
+/** The members standing on a gallery, 1 m up. */
+const onGallery = (engine: Engine) =>
+  members(engine).filter(({ crowdMember: a }) => glyphAt(a.x, a.z) === 'glyph:gallery' && Math.abs(a.y - 1) < 0.02);
 
 describe('the crowd', () => {
   it('queues every member at the start and lets 25 in a step: 1,000 after 40 steps, all alive', async () => {
@@ -98,22 +111,26 @@ describe('the crowd', () => {
     expect(members(await createHeadless({ scene: crowd5000, settings: { 'box.crowd.count': 7 } }))).toHaveLength(7);
   });
 
-  it('follows the hero up the west stairs: walkers and slimes stand on the west gallery at the end', async () => {
-    const run = async () => {
-      const engine = await createHeadless({ scene: crowd100 });
-      for (const [steps, intents] of CLIMB) engine.step(steps, intents);
-      engine.step(400);
-      return engine;
-    };
-    const [engine, again] = [await run(), await run()];
-    const hero = engine.get(1)?.actor as { x: number; y: number; z: number };
-    expect(glyphAt(hero.x, hero.z)).toBe('glyph:gallery');
-    const up = members(engine).filter(
-      ({ crowdMember: a }) => glyphAt(a.x, a.z) === 'glyph:gallery' && Math.abs(a.y - 1) < 0.02,
+  it('follows the hero up the west stairs in box-4-chase: walkers climb them and stand on the west gallery', async () => {
+    const climbing = await play('box-4-chase', 600);
+    const onStairs = members(climbing.engine).filter(
+      ({ crowdMember: a }) => glyphAt(a.x, a.z) === 'glyph:stairs' && a.y > 0.2 && a.y < 0.9,
     );
-    const kinds = new Set(up.map(kind));
-    expect(up.length).toBeGreaterThanOrEqual(5);
-    expect([kinds.has('walker'), kinds.has('wisp')]).toEqual([true, false]); // on their feet, by the stairs
-    expect(again.hash()).toBe(engine.hash());
-  }, 60_000);
+    expect(onStairs.length).toBeGreaterThan(0); // on the way up, walking the stairs' rise
+    const [end, again] = [await play('box-4-chase'), await play('box-4-chase')];
+    expect(end.hash).toBe(goldenOf('box-4-chase'));
+    expect(again.hash).toBe(end.hash);
+    const hero = end.engine.get(1)?.actor as { x: number; y: number; z: number };
+    expect(glyphAt(hero.x, hero.z)).toBe('glyph:gallery');
+    const kinds = onGallery(end.engine).map(kind);
+    expect(kinds.filter((k) => k === 'walker').length).toBeGreaterThanOrEqual(3); // Done-when 1: at least one
+    expect(kinds).not.toContain('wisp'); // the flyers hover; those on it walked or hopped up the stairs
+  }, 120_000);
+
+  it('hops up the west stairs after him in box-4-hop: slimes stand on the west gallery at the end', async () => {
+    const end = await play('box-4-hop');
+    expect(end.hash).toBe(goldenOf('box-4-hop'));
+    expect(members(end.engine).every((m) => kind(m) === 'slime')).toBe(true);
+    expect(onGallery(end.engine).length).toBeGreaterThanOrEqual(1);
+  }, 120_000);
 });
