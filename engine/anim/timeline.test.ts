@@ -3,7 +3,7 @@
  * chaining windows are exact in ticks. Also: phases end on exact ticks, leftover time carries across phases and fires
  * every event in order, the hit window connects once per target per swing (also when shorter than a tick), sweeps,
  * root motion, trails, each step's events in an array a later start or press leaves alone, an empty combo's error,
- * and save/load continuing exactly.
+ * and save/load continuing exactly (a save from a longer combo loads as idle).
  */
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../core/math';
@@ -352,5 +352,23 @@ describe('Combo: chaining windows exact in ticks (WP 6.1 Done when)', () => {
       if (i === 15) expect(b.press()).toBe(a.press());
     }
     expect(b.save()).toEqual(a.save());
+  });
+
+  it('loads a save from a longer combo as idle, as a timeline does an index out of range', () => {
+    const three = new Combo(['jab', 'cross', 'hook']);
+    three.press();
+    for (let i = 0; i < 10; i++) three.update(SIM_DT);
+    three.press();
+    for (let i = 0; i < 12; i++) three.update(SIM_DT);
+    expect(three.press()).toBe(true);
+    const saved = structuredClone(three.save());
+    expect(saved.step).toBe(2);
+    const two = new Combo(['jab', 'cross']);
+    two.press();
+    expect(two.load(saved)).toBe(two);
+    expect([two.step, two.busy, two.body, two.update(SIM_DT)]).toEqual([-1, false, undefined, []]);
+    expect(two.attacks.map((a) => a.busy)).toEqual([false, false]);
+    expect([two.press(), two.step]).toEqual([true, 0]);
+    for (const step of [-2, 0.5, Number.NaN]) expect(new Combo(['jab']).load({ ...saved, step }).step).toBe(-1);
   });
 });

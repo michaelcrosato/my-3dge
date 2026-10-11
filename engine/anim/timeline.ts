@@ -486,10 +486,18 @@ export class Combo {
     return { step: this.step, idle: this.idle, attack: this.current.save() };
   }
 
-  /** Reads a state `save` wrote; the other hits are idle. */
+  /**
+   * Reads a state `save` wrote; the other hits are idle. A step outside the attacks (a save from a longer combo)
+   * leaves the chain idle, as `cancel` does.
+   */
   load(state: Readonly<ComboState>): this {
     for (const attack of this.attacks) attack.cancel();
-    [this.step, this.idle] = [state.step, state.idle];
+    const { step } = state;
+    if (!Number.isInteger(step) || step < -1 || step >= this.attacks.length) {
+      this.cancel();
+      return this;
+    }
+    [this.step, this.idle] = [step, state.idle];
     this.current.load(state.attack);
     return this;
   }
