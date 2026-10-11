@@ -4505,6 +4505,13 @@ For the agents who maintain the engine.
 
 - `Shown` (interface): What `show` reports.
 
+### [`tests/pages/library.ts`](../tests/pages/library.ts)
+
+- `ClipRef` (interface): A clip of the library: its set's directory under `data/anim/sets/` and its name, which is its file's.
+- `MixerShown` (interface): What `mixer` reports.
+- `Moment` (interface): One moment `play` drew.
+- `PlayShown` (interface): What `play` reports.
+
 ### [`tests/pages/lights.ts`](../tests/pages/lights.ts)
 
 - `HashRunOptions` (interface): How `hashRun` interleaves presentation with the steps.
@@ -4961,6 +4968,7 @@ For the agents who maintain the engine.
 
 - `default` (default): Draws a body's state matrix as a contact sheet, plus its numeric checks (PLAN.md WP 6.6, §8.5): `node x sheet <subject>` runs the humanoid through the states a QA id or prefix names, as the `anim` QA family does (tools/qa/anim.ts `humanoidStates`), draws them with `anim.sheet()` (engine/anim/sheet.ts) from the cameras of a `SHEET_CAMERAS` preset (engine/anim/check.ts), and turns the SVG into a PNG in the platform's Chromium.
 - `MAX_WIDTH` (const): The widest sheet, pixels (§8.5: contact sheets are capped at 1,600 px).
+- `qaPrefixes` (function): The `only` prefixes of `subject`'s `anim` QA: itself, or for `humanoid` its kinds (never the library's clips).
 - `sheetFrames` (function): The frames a sheet of `subject` draws, and whether they are moves (for the cameras).
 - `SheetFramesOptions` (interface): What `sheetFrames` draws.
 - `subjectIds` (function): The QA ids `subject` names: itself, or every id it prefixes (`humanoid`: all of them).
@@ -5371,6 +5379,7 @@ For the agents who maintain the engine.
 - `default` (default): The `anim` QA family (PLAN.md §8.6, WP 6.6, I-29): `node x qa anim` drives every body the engine animates through its state matrix and measures the motion, in Node.
 - `footSlide` (function): Foot slide: a sole on the floor moving over the ground, the most in one contact.
 - `Found` (type): What a metric found: the worst value and its sentence.
+- `humanoidPrefixes` (function): The kinds of the humanoid's QA ids (`state:`, `pose:`, …), from its matrix: as `only`, the humanoid without clips.
 - `HUMANOIDS` (const): The humanoid bodies the family drives through the whole matrix; the first also runs it twice and at half the step.
 - `humanoidStates` (function): The humanoid's matrix: every sample state, pose, stance, move, reaction and action, by QA id.
 - `limbs` (function): Joint limits and twist jumps of the limbs (ik.ts `LIMBS`): hinges kept, folded bones never flipping about themselves.
@@ -5378,6 +5387,19 @@ For the agents who maintain the engine.
 - `motionTrack` (function): A track from its points (world metres) and the body's position at each step.
 - `pops` (function): Pops: a point that jumps in one step while the steps either side are much shorter (ed-sheet.mjs:122-125).
 - `Track` (interface): One run as the metrics read it: points per step, world and measured from the body, and what they need besides.
+
+### [`tools/qa/anim/clips.ts`](../tools/qa/anim/clips.ts)
+
+- `CLIP_DATA_METRICS` (const): The metrics measured on the data, every clip's in T1.
+- `CLIP_PLAY_METRICS` (const): The metrics measured by playing a clip.
+- `CLIP_QA` (const): The limits: a clip's fit (mean and worst) and a set's mean fit, mm; the seconds a loop plays past its seam.
+- `clipBuilds` (function): The builds every clip plays on: each of `HUMANOIDS`, and the mannequin, registered from `quaternius` once.
+- `clipDataFindings` (function): The data checks of every clip of `set` that `keep` keeps, and of the set itself (see the file comment).
+- `clipPlayFindings` (function): The played checks of clip `name` on each build, the first also run again and at half the step.
+- `ClipReport` (type): Adds a finding to the violations, keeping the worst per id and metric.
+- `clipState` (function): Clip `name` of `library` as a state of the matrix: played at once, a one-shot held at its end.
+- `clipViolations` (function): Every violation of the library's clips and sets whose ids `keep` keeps, the worst per id and metric, in id order; only the clips `play` picks are played (see the file comment).
+- `librarySets` (function): The sets under `<root>/data/anim/sets/`, in directory order.
 
 ### [`tools/qa/audio.ts`](../tools/qa/audio.ts)
 

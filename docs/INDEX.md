@@ -991,6 +991,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`level-meshes.ts`](../tests/pages/level-meshes.ts): The level-meshes page's module (tests/pages/level-meshes.html, PLAN.md WP 2.4): the engine's renderer (engine/gfx/renderer.ts) with a lit, shadowed, empty scene, and `window.__levelPage.show(text, file)`, which compiles a level's text (engine/world/level/compile.ts), draws it with the level meshes (engine/gfx/level/meshes.ts) and the material library (engine/gfx/materials/library.ts), registers them with the warm-up, warms up, draws a frame and reports what it cost: the frame (pipelines built), the renderer's draw calls and triangles, those of the empty scene (the renderer's own output pass), the meshes' own count of their draw calls, and their names.
   - Exports: `Shown`
   - Tests: [`tests/e2e/level-meshes.spec.ts`](../tests/e2e/level-meshes.spec.ts)
+- [`library.ts`](../tests/pages/library.ts): The library page's module (tests/pages/library.html, PLAN.md WP 8.6): the clip library in the browser, the Mocap Lab check (`my-3d2dge:tools/mocap-test.mjs`) rewritten as a smoke test.
+  - Exports: `ClipRef`, `MixerShown`, `Moment`, `PlayShown`
+  - Tests: [`tests/e2e/library.spec.ts`](../tests/e2e/library.spec.ts)
 - [`lights.ts`](../tests/pages/lights.ts): The lights page's module (tests/pages/lights.html, PLAN.md WP 7.1): the engine's renderer (engine/gfx/renderer.ts) with the hall (engine/gfx/level/meshes.ts) under a sky (engine/gfx/sky.ts): the light pool lit from the hall's 30 torch spots, the shadow budget, the atmosphere, the dome and the backdrop.
   - Exports: `HashRunOptions`, `Looked`, `LookOptions`
   - Tests: [`tests/e2e/lights.spec.ts`](../tests/e2e/lights.spec.ts)
@@ -1137,7 +1140,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `checkSetting`, `default`, `loadSettings`, `sceneModuleOf`, `settingModules`, `settingParam`
   - Tests: [`tools/cmd/set.test.ts`](../tools/cmd/set.test.ts)
 - [`sheet.ts`](../tools/cmd/sheet.ts): Draws a body's state matrix as a contact sheet, plus its numeric checks (PLAN.md WP 6.6, §8.5): `node x sheet <subject>` runs the humanoid through the states a QA id or prefix names, as the `anim` QA family does (tools/qa/anim.ts `humanoidStates`), draws them with `anim.sheet()` (engine/anim/sheet.ts) from the cameras of a `SHEET_CAMERAS` preset (engine/anim/check.ts), and turns the SVG into a PNG in the platform's Chromium.
-  - Exports: `default`, `MAX_WIDTH`, `sheetFrames`, `SheetFramesOptions`, `subjectIds`
+  - Exports: `default`, `MAX_WIDTH`, `qaPrefixes`, `sheetFrames`, `SheetFramesOptions`, `subjectIds`
   - Tests: [`tools/cmd/sheet.test.ts`](../tools/cmd/sheet.test.ts)
 - [`shot.ts`](../tools/cmd/shot.ts): Renders a page on WebGPU in the platform's Chromium and reports what it drew as numbers and text: the look metrics, the ID pass (which object covers which pixels) and a 48 × 27 text thumbnail; images only on demand.
   - Exports: `default`, `encodePng`, `frameMetrics`, `judgeFrame`, `pageUrl`, `READY_TIMEOUT_MS`, `resolvePage`, `shotMetrics`
@@ -1248,7 +1251,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 ## tools/qa
 
 - [`anim.ts`](../tools/qa/anim.ts): The `anim` QA family (PLAN.md §8.6, WP 6.6, I-29): `node x qa anim` drives every body the engine animates through its state matrix and measures the motion, in Node.
-  - Exports: `actionStates`, `ANIM_QA`, `animViolations`, `closure`, `default`, `footSlide`, `Found`, `HUMANOIDS`, `humanoidStates`, `limbs`, `makeHumanoid`, `motionTrack`, `pops`, `Track`
+  - Exports: `actionStates`, `ANIM_QA`, `animViolations`, `closure`, `default`, `footSlide`, `Found`, `humanoidPrefixes`, `HUMANOIDS`, `humanoidStates`, `limbs`, `makeHumanoid`, `motionTrack`, `pops`, `Track`
   - Tests: [`tools/qa/anim.test.ts`](../tools/qa/anim.test.ts)
 - [`audio.ts`](../tools/qa/audio.ts): The `audio` QA family (PLAN.md §8.6, WP 9.4, I-23, I-29): `node x qa audio` renders every sound the shared registry has, the engine's `sfx` and `song` entries (engine/audio/data) and a game's (each `*.ts` module under `labs/<name>/sounds/` imported first), and measures each render by numbers: no ear needed (doctrine: Verifiable).
   - Exports: `AUDIO_LIMITS`, `checkSounds`, `dbfs`, `default`, `fft`, `findClicks`, `frameSpectrum`, `loadSoundModules`, `soundMetrics`, `SoundMetrics`, `soundModules`, `SoundProblem`, `soundProblems`, `spectralCentroid`
@@ -1262,3 +1265,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`tex.ts`](../tools/qa/tex.ts): The `tex` QA family (PLAN.md §8.6, WP 2.3, WP 7.3, I-20): `node x qa tex` bakes every texture generator the shared registry has, the engine's (engine/gfx/textures/v1.ts, v2.ts) and a game's (each `*.ts` module under `labs/<name>/textures/` imported first), at its default size and at twice it, with seeds 1 and 2, and checks every bake; then, under each `prop` entry's id (WP 4.5; a game's props under `labs/<name>/props/` imported first), the textures its parts' materials name, baked as each material bakes them (its parameters and size), and a `reference` violation for a part naming a material no entry defines.
   - Exports: `checkPropTextures`, `checkTextures`, `default`, `textureModules`, `textureSheet`
   - Tests: [`tools/qa/tex.test.ts`](../tools/qa/tex.test.ts)
+
+## tools/qa/anim
+
+- [`clips.ts`](../tools/qa/anim/clips.ts): The `anim` QA family's clips (PLAN.md §8.6 and §10, WP 8.6, I-13, I-29): every clip of the library under `data/anim/sets/`, checked as data and as played, for tools/qa/anim.ts.
+  - Exports: `CLIP_DATA_METRICS`, `CLIP_PLAY_METRICS`, `CLIP_QA`, `clipBuilds`, `clipDataFindings`, `clipPlayFindings`, `ClipReport`, `clipState`, `clipViolations`, `librarySets`
+  - Tests: [`tests/unit/data/anim/qa.test.ts`](../tests/unit/data/anim/qa.test.ts)

@@ -165,7 +165,7 @@ Thrown by `new Combo(moves)` (engine/anim/timeline.ts) when `moves` is empty: `p
 
 - Message: `the clip layer measures paces and root motion on {layer}, but its animator plays {animator}`
 - Fix: make the layer with the animator's build: new ClipLayer({ library, build: animator.body.build })
-- Registered in: [`engine/anim/clip/library.ts` line 51](../engine/anim/clip/library.ts)
+- Registered in: [`engine/anim/clip/library.ts` line 52](../engine/anim/clip/library.ts)
 
 Raised by the clip layer (engine/anim/clip/layer.ts) when it poses an animator of another build. The sim’s step measures walk paces and root motion on the layer’s own build, so on another one they would be off by the hip-height ratio and the feet would slide.
 
@@ -173,7 +173,7 @@ Raised by the clip layer (engine/anim/clip/layer.ts) when it poses an animator o
 
 - Message: `set {set} has no rest body for clip {name} (source {src})`
 - Fix: give the set a sources entry for that source, with the rest body its importer measured
-- Registered in: [`engine/anim/clip/library.ts` line 46](../engine/anim/clip/library.ts)
+- Registered in: [`engine/anim/clip/library.ts` line 47](../engine/anim/clip/library.ts)
 
 Raised by the clip library (engine/anim/clip/library.ts) when a clip names a source the set lacks, or the set has no sources: a clip decodes only on the rest body it was measured on.
 
@@ -197,7 +197,7 @@ Thrown by `Actions.go` (engine/anim/actions.ts) for a beat name the playing acti
 
 - Message: `set {set} has no clip {name}{suggestion}`
 - Fix: use one of its clips (library.names lists them; a page's library may need that set loaded)
-- Registered in: [`engine/anim/clip/library.ts` line 41](../engine/anim/clip/library.ts)
+- Registered in: [`engine/anim/clip/library.ts` line 42](../engine/anim/clip/library.ts)
 
 Raised by the clip library and the clip layer (engine/anim/clip/library.ts, layer.ts) for a clip name the loaded sets lack. The message names the closest names.
 
