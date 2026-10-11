@@ -209,6 +209,14 @@ Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `st
 
 Raised by `noteFreq` and `render` (engine/audio/dsp/voice.ts, render.ts) for a pitch that is neither a positive number nor a note name.
 
+### AUDIO_BAD_OPTION
+
+- Message: `{option} is {value}, not {expected}`
+- Fix: pass {expected} as {option}
+- Registered in: [`engine/audio/runtime/sound.ts` line 26](../engine/audio/runtime/sound.ts)
+
+Raised by `audio.play` and `Sound.move` (engine/audio/runtime/sound.ts) for a volume, pitch, variant or position out of range.
+
 ### AUDIO_BAD_RATE
 
 - Message: `the sample rate {rate} is not a whole number from 8000 to 192000`
@@ -216,6 +224,14 @@ Raised by `noteFreq` and `render` (engine/audio/dsp/voice.ts, render.ts) for a p
 - Registered in: [`engine/audio/dsp/render.ts` line 38](../engine/audio/dsp/render.ts)
 
 Raised by `render` (engine/audio/dsp/render.ts).
+
+### AUDIO_BAD_ROOM
+
+- Message: `room {room} is not a preset{hint}`
+- Fix: name one of the ROOMS presets ({names}), or pass { decay, predelay, damping, wet }
+- Registered in: [`engine/audio/runtime/reverb.ts` line 28](../engine/audio/runtime/reverb.ts)
+
+Raised by `impulseResponse` and `audio.room` (engine/audio/runtime/reverb.ts) for a room name that is not in `ROOMS`, or numbers out of range.
 
 ### AUDIO_BAD_SEED
 
@@ -248,6 +264,14 @@ Raised by `renderSfx` (engine/audio/data/sfx.ts).
 - Registered in: [`engine/audio/data/sfx.ts` line 46](../engine/audio/data/sfx.ts)
 
 Raised by `sfxVoices` and `renderSfx` (engine/audio/data/sfx.ts) when following layers leads back to an effect already on the path.
+
+### AUDIO_OFF
+
+- Message: `sound is off: {reason}`
+- Fix: open the page in a browser with Web Audio (every current one has it); the game runs on in silence
+- Registered in: [`engine/audio/runtime/audio.ts` line 56](../engine/audio/runtime/audio.ts)
+
+Advice from `createAudio` (engine/audio/runtime/audio.ts) when there is no Web Audio, or the context could not be made.
 
 ### AUDIO_TOO_LONG
 

@@ -30,6 +30,11 @@ game agent's manual.
 - `animSheet` (function from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): Draws `frames` (poses, or `{ pose, label }`) as an SVG contact sheet: one card per frame, holding one panel per view, all at one scale.
 - `approach` (function from [`engine/core/math.ts`](../engine/core/math.ts)): `a` moved toward `b` by at most `step` (≥ 0), never past it.
 - `approachAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `a` turned toward `b` by at most `step` (≥ 0) the short way round; exactly `b` once within reach.
+- `Audio` (interface from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): A page's sound (see the file comment).
+- `AudioBus` (type from [`engine/audio/runtime/mixer.ts`](../engine/audio/runtime/mixer.ts)): One of the buses.
+- `AudioInfo` (interface from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): What `info()` reports: plain data.
+- `AudioOptions` (interface from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): How `createAudio` is set up; in a page every field has its default.
+- `AudioState` (type from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): The runtime's state: `locked` until a gesture, then the context's; `off` without Web Audio.
 - `B` (function from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): `f` metres forward, `r` right and `u` up, in the model frame (+Z forward, −X right, +Y up).
 - `bakeTexture` (function from [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)): Bakes `ref` on `registry` (the shared one by default).
 - `Bindings` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): An action map with the player's changes.
@@ -54,6 +59,7 @@ game agent's manual.
 - `Build` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): A `build` entry: one body's proportions, in metres before `size`.
 - `buildGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): Builds geometry `ref` (an id, or `{ geometry, params }`) from `registry` (the shared one by default): a new `BufferGeometry` the caller owns and disposes.
 - `BuildSpec` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): What `defineBuild` takes: any field; the others keep `build:chibi`'s values.
+- `BUS_VOLUMES` (const from [`engine/audio/runtime/mixer.ts`](../engine/audio/runtime/mixer.ts)): The starting volumes, the master's included.
 - `CameraInfo` (interface from [`engine/app/view.ts`](../engine/app/view.ts)): What `camera.get()` and `camera.set(code)` return: the camera as a code, in words, and its pose.
 - `CameraInputSample` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): What the camera takes each frame: mouse look `[right, up]` rad, the right stick `[right, up]`, wheel notches.
 - `CameraLike` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A camera as the input reads it (engine/gfx/cameras/pose.ts `Camera`): its heading, and its pitch for first person.
@@ -74,6 +80,7 @@ game agent's manual.
 - `connectVirtualDevice` (function from [`engine/input/devices/inspector.ts`](../engine/input/devices/inspector.ts)): Gives `host` (the app's inspector host) the page input's virtual device, so `__engine.input` drives the page.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
+- `createAudio` (function from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): Makes a page's sound (see the file comment).
 - `createBindings` (function from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Makes the bindings of the action map `map` (an id or an entry), loading saved changes from `options.storage`.
 - `createCharacter` (function from [`engine/physics/character.ts`](../engine/physics/character.ts)): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
 - `createEngine` (function from [`engine/app/engine.ts`](../engine/app/engine.ts)): Starts the engine in a page (see the file comment); resolves once it is up or has failed.
@@ -135,6 +142,7 @@ game agent's manual.
 - `GeometryRef` (interface from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): A geometry by id with parameters: what a prop's or a level's `geometry` field may hold beside a bare id.
 - `GeometryReport` (interface from [`engine/gfx/geometry/inspect.ts`](../engine/gfx/geometry/inspect.ts)): What `inspectGeometry` measured.
 - `GeometrySpec` (interface from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): What `defineGeometry` takes: the entry's fields (`params` and `budget` have defaults), `create` typed by `params`.
+- `GestureTarget` (type from [`engine/audio/runtime/gesture.ts`](../engine/audio/runtime/gesture.ts)): Where gestures arrive: `window`, or any `EventTarget`.
 - `getActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The action map `id`.
 - `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
 - `getGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): The geometry `id` of `registry` (the shared one by default); a missing id gives `geometry:box`, with a warning.
@@ -202,6 +210,7 @@ game agent's manual.
 - `LimbSide` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A side of the body.
 - `listActionMaps` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Every action map, sorted by id.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
+- `ListenerPose` (interface from [`engine/audio/runtime/spatial.ts`](../engine/audio/runtime/spatial.ts)): Where the listener is and where it looks: the engine's camera pose (engine/gfx/cameras/pose.ts) satisfies it.
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
 - `MaskName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A preset bone mask's name.
 - `MASKS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The preset bone masks.
@@ -213,6 +222,9 @@ game agent's manual.
 - `measureFeel` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `mergeGeometries` (function from [`engine/gfx/geometry/groups.ts`](../engine/gfx/geometry/groups.ts)): Joins `geometries` into one, in order: their attributes end to end, their indices offset.
 - `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
+- `MixerInfo` (interface from [`engine/audio/runtime/mixer.ts`](../engine/audio/runtime/mixer.ts)): What `info()` reports.
+- `MusicChange` (interface from [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)): When and how a change happens.
+- `MusicPosition` (interface from [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)): Where the music is.
 - `OverlapOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): An overlap's options.
 - `palette` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A palette's hex colours as sRGB bytes; throws `GFX_EMPTY_PALETTE` naming `what` when it has none.
 - `parseRoutes` (function from [`engine/app/routes.ts`](../engine/app/routes.ts)): Reads a page's query (see the file comment).
@@ -228,6 +240,7 @@ game agent's manual.
 - `pillarParts` (function from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's parts, bottom to top (see the file comment).
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `PlayIntoOptions` (interface from [`engine/app/playback.ts`](../engine/app/playback.ts)): How `playInto` plays.
+- `PlayOptions` (interface from [`engine/audio/runtime/sound.ts`](../engine/audio/runtime/sound.ts)): How `play` plays one effect.
 - `PlayResult` (interface from [`engine/app/playback.ts`](../engine/app/playback.ts)): What a played replay gave.
 - `Point3` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A point in metres: `[x, y, z]`.
 - `PointName` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): A point a rigid pair can name: a joint, a socket, or the root.
@@ -236,6 +249,7 @@ game agent's manual.
 - `POSES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The held poses, each with what it shows.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `ProbeOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A probe's options: where the downward ray starts, and the groups that count as ground.
+- `Quantize` (type from [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)): Where a change lands: the next bar line, the next beat, or at once.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `QuatLike` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A rotation: three.js's `Quaternion`, `{ x, y, z, w }` or `[x, y, z, w]`.
 - `QueryOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What every query takes: the groups it hits, and a body it skips.
@@ -260,6 +274,9 @@ game agent's manual.
 - `ringGeometry` (function from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring lying on the ground (see the file comment).
 - `RingOptions` (interface from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring's radii and height in metres, and its tessellation.
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
+- `RoomName` (type from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): A preset's name.
+- `ROOMS` (const from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): The room presets, from no reverb to a cave.
+- `RoomSpec` (interface from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): A room's reverb, as numbers.
 - `roundedBoxGeometry` (function from [`engine/gfx/geometry/roundedBox.ts`](../engine/gfx/geometry/roundedBox.ts)): A rounded box standing on the ground (see the file comment).
 - `RoundedBoxOptions` (interface from [`engine/gfx/geometry/roundedBox.ts`](../engine/gfx/geometry/roundedBox.ts)): A rounded box's size and rounding, in metres.
 - `routeQuery` (function from [`engine/app/routes.ts`](../engine/app/routes.ts)): A query for these routes: `?scene=room&cam=iso&time.scale=0.5` (keys in this order, settings last).
@@ -301,6 +318,7 @@ game agent's manual.
 - `SongTiming` (interface from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): How long a step and a bar are, and how long one pass of the song is.
 - `SongTrack` (interface from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One track of a song.
 - `songVoices` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One pass of the song as a voice list, track by track: what `renderSong` renders.
+- `Sound` (interface from [`engine/audio/runtime/sound.ts`](../engine/audio/runtime/sound.ts)): A sound playing.
 - `SoundDef` (type from [`engine/audio/dsp/voice.ts`](../engine/audio/dsp/voice.ts)): A sound: one voice, or several played together.
 - `spawnActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
 - `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
@@ -343,6 +361,8 @@ game agent's manual.
 - `ViewChange` (interface from [`engine/app/playback.ts`](../engine/app/playback.ts)): A view change during a replay: a camera code, and view settings by path.
 - `VirtualDevice` (interface from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): The virtual device.
 - `Voice` (interface from [`engine/audio/dsp/voice.ts`](../engine/audio/dsp/voice.ts)): One voice of a sound: every field is optional.
+- `VOICE_LIMITS` (const from [`engine/audio/runtime/voices.ts`](../engine/audio/runtime/voices.ts)): The default limits.
+- `VoiceLimits` (interface from [`engine/audio/runtime/voices.ts`](../engine/audio/runtime/voices.ts)): How many voices may play.
 - `Weapon` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A weapon's name.
 - `WEAPONS` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): What the right hand holds, by the direction its blade rests in: `[forward, right, up]`, normalised when used.
 - `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
@@ -971,6 +991,95 @@ For the agents who maintain the engine.
 - `VOICE_CODES` (const): The codes a definition's checks raise, with their fixes (collected into docs/ERRORS.md by `x docs`).
 - `Wave` (type): One of the waves.
 - `WAVES` (const): Every wave: the tonal ones, white noise, and a Karplus–Strong pluck.
+
+### [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)
+
+- `Audio` (interface): A page's sound (see the file comment).
+- `AUDIO_CODES` (const): The runtime's codes, with their fixes.
+- `AudioInfo` (interface): What `info()` reports: plain data.
+- `AudioOptions` (interface): How `createAudio` is set up; in a page every field has its default.
+- `AudioState` (type): The runtime's state: `locked` until a gesture, then the context's; `off` without Web Audio.
+- `createAudio` (function): Makes a page's sound (see the file comment).
+
+### [`engine/audio/runtime/buffers.ts`](../engine/audio/runtime/buffers.ts)
+
+- `loopLayout` (function): `samples` (one pass of `pass` samples, then tails) as the head pass followed by the folded loop pass.
+- `passSamples` (function): The samples of one pass of `song` at `rate`.
+- `renderLayers` (function): Each layer of `song` rendered at `rate`, laid out to loop when the song loops (else as rendered).
+- `SongLayer` (interface): One intensity layer of a song.
+- `songLayers` (function): The layers of `song`, by ascending intensity (see the file comment).
+- `toBuffer` (function): `samples` as a one-channel `AudioBuffer` of `context` at `rate`.
+
+### [`engine/audio/runtime/gesture.ts`](../engine/audio/runtime/gesture.ts)
+
+- `GESTURE_EVENTS` (const): The events that may be gestures, as `addEventListener` names them.
+- `GestureEvent` (interface): What `isGesture` reads of an event.
+- `GestureTarget` (type): Where gestures arrive: `window`, or any `EventTarget`.
+- `isGesture` (function): Whether `event` lets a page start sound: a trusted key other than Escape, click or pointer release.
+- `onGesture` (function): Calls `listener` on every gesture at `target` (capture phase); returns the function that stops listening.
+
+### [`engine/audio/runtime/mixer.ts`](../engine/audio/runtime/mixer.ts)
+
+- `AudioBus` (type): One of the buses.
+- `BUS_VOLUMES` (const): The starting volumes, the master's included.
+- `BUSES` (const): The mixer's buses.
+- `createMixer` (function): Makes the mixer's graph on `context`, into its destination.
+- `DUCK` (const): How ducking sounds: the level the ducked buses fall to, and how fast, s.
+- `Mixer` (interface): The mixer of a context.
+- `MixerInfo` (interface): What `info()` reports.
+- `ROOM_FADE` (const): Seconds a room change takes to fade from the old reverb to the new.
+
+### [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)
+
+- `createMusic` (function): Makes the music player of `context`, playing into `output` (the mixer's `music` bus).
+- `LAYER_FADE` (const): How long a layer takes to fade in or out, s.
+- `Music` (interface): The music of one context.
+- `MUSIC_LEAD` (const): How far ahead of `currentTime` a change is scheduled at the earliest, s.
+- `MusicChange` (interface): When and how a change happens.
+- `MusicOptions` (interface): What the player needs beyond its context and output.
+- `MusicPosition` (interface): Where the music is.
+- `nextLine` (function): The first line of a grid of `period` seconds from `start` at or after `time`.
+- `Quantize` (type): Where a change lands: the next bar line, the next beat, or at once.
+- `SECTION_FADE` (const): How long the old song fades out at a section change, s.
+
+### [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)
+
+- `impulseResponse` (function): The room's stereo impulse response at `rate` samples per second, or null when it has no reverb.
+- `REVERB_CODES` (const): The codes the rooms raise, with their fixes.
+- `RoomName` (type): A preset's name.
+- `ROOMS` (const): The room presets, from no reverb to a cave.
+- `roomSpec` (function): The numbers of `room`, a preset's name or a spec; throws `AUDIO_BAD_ROOM` for an unknown name or a bad value.
+- `RoomSpec` (interface): A room's reverb, as numbers.
+
+### [`engine/audio/runtime/sound.ts`](../engine/audio/runtime/sound.ts)
+
+- `checkPlay` (function): Checks `options` for an effect with `variants` variants; throws `AUDIO_BAD_OPTION` naming the first bad one.
+- `createVoice` (function): Wires and starts one voice (see the file comment).
+- `PlayOptions` (interface): How `play` plays one effect.
+- `RuntimeSound` (interface): A sound as the runtime holds it: it can be occluded.
+- `Sound` (interface): A sound playing.
+- `SOUND_CODES` (const): The codes of a sound's options, with their fixes.
+- `STOP_FADE` (const): Seconds a sound fades out over when it is stopped or makes room for another.
+- `VoiceSpec` (interface): What `createVoice` wires.
+
+### [`engine/audio/runtime/spatial.ts`](../engine/audio/runtime/spatial.ts)
+
+- `listenerAxes` (function): The listener's forward and up directions (unit vectors) for `pose`.
+- `ListenerPose` (interface): Where the listener is and where it looks: the engine's camera pose (engine/gfx/cameras/pose.ts) satisfies it.
+- `occluded` (function): Whether a wall of the level stands between `from` (the listener) and `to` (the sound).
+- `OCCLUSION` (const): How an occluded sound is muffled, and how occlusion is tested.
+- `PANNER` (const): How every placed sound is panned and fades with distance (`PannerNode`'s options).
+- `placeListener` (function): Puts the context's listener at `pose` at `time`.
+- `placePanner` (function): Puts `panner` at `position` at `time`.
+- `Vec3` (type): A point or a direction, world space, m: `[x, y, z]`.
+
+### [`engine/audio/runtime/voices.ts`](../engine/audio/runtime/voices.ts)
+
+- `createVoicePool` (function): Makes an empty pool with `limits` over the defaults.
+- `PooledVoice` (interface): What the pool knows of a voice.
+- `VOICE_LIMITS` (const): The default limits.
+- `VoiceLimits` (interface): How many voices may play.
+- `VoicePool` (interface): The voices playing, and the rules for a new one.
 
 ### [`engine/core/color.ts`](../engine/core/color.ts)
 
@@ -2340,6 +2449,10 @@ For the agents who maintain the engine.
 - `Harness` (interface): What each test gets as `harness`.
 - `test` (const): Playwright's `test` with the `seed` option (default 1) and the `harness` fixture, set up for every test.
 - `WebGPUProof` (interface): What WebGPU did in the page, as `assertWebGPU` measured it.
+
+### [`tests/pages/audio.ts`](../tests/pages/audio.ts)
+
+- `FREQ` (const): The test sounds' frequencies, Hz.
 
 ### [`tests/pages/audioDspCases.ts`](../tests/pages/audioDspCases.ts)
 
