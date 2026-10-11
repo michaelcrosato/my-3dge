@@ -5,8 +5,9 @@
  * runs in T1 through `runQa` (tools/qa/audio.test.ts), and `x audio` (tools/cmd/audio.ts) prints the same metrics for
  * one sound.
  *
- * Renders: every variant of an effect (the variants already draw their noise from four seeds) and a song with every
- * track (intensity 1), from seed 0, at 44,100 Hz. Metrics, one violation per sound and metric, valued by the worst render (larger is worse):
+ * Renders: every variant of an effect (each variant already draws its noise from its own seed) and a song with every
+ * track (intensity 1), from seed 0, at 44,100 Hz. Metrics, one violation per sound and metric, valued by the worst
+ * render (larger is worse):
  * - `clipping`: the peak above 1 (full scale), where the output clips;
  * - `dcOffset`: the mean sample's size above 0.01;
  * - `clicks`: how many jumps of at least 0.05 lead into or out of near-silence, the buffer's ends included, and do not
@@ -132,7 +133,7 @@ export function fft(re: Float64Array, im: Float64Array): void {
   }
 }
 
-/** Fills `re` (and zeroes `im`) with the Hann-windowed `re.length` samples centred on `centre`, then transforms them. */
+/** Fills `re` (zeroing `im`) with the Hann-windowed `re.length` samples centred on `centre`, then transforms them. */
 function transform(samples: ArrayLike<number>, centre: number, re: Float64Array, im: Float64Array): void {
   const size = re.length;
   const { hann } = planOf(size);
@@ -156,7 +157,7 @@ export function frameSpectrum(samples: ArrayLike<number>, centre: number, size =
   return out;
 }
 
-/** The power-weighted mean frequency of `samples`' spectrum (frames of 2048, half overlapping), in Hz; 0 for silence. */
+/** The power-weighted mean frequency of `samples`' spectrum (2048-sample frames, half overlapping), in Hz; 0: silence. */
 export function spectralCentroid(samples: ArrayLike<number>, rate: number): number {
   const size = 2048;
   const re = new Float64Array(size);
@@ -322,6 +323,13 @@ export function soundModules(root: string): string[] {
     );
 }
 
+/** Imports the games' sound modules, so their entries join the shared registry's (whose sound kinds it declares). */
+export async function loadSoundModules(root: string): Promise<void> {
+  for (const module of soundModules(root)) await import(pathToFileURL(join(root, module)).href);
+  sfxKind(sharedRegistry);
+  songKind(sharedRegistry);
+}
+
 /** The renders the family checks of a sound, from seed 0: each variant of an effect, a song with every track. */
 function renders(registry: Registry, kind: string, id: string): { at: string; render: () => Float32Array }[] {
   if (kind !== 'sfx') return [{ at: 'every track', render: () => renderSong(id, { registry }) }];
@@ -360,9 +368,7 @@ export function checkSounds(registry: Registry = sharedRegistry, ids?: readonly 
 /** The family: every sound of the shared registry, after importing the games' sound modules. */
 const family: QaFamily = {
   async run({ root, only }) {
-    for (const module of soundModules(root)) await import(pathToFileURL(join(root, module)).href);
-    sfxKind(sharedRegistry);
-    songKind(sharedRegistry);
+    await loadSoundModules(root);
     const ids = [...sharedRegistry.list('sfx'), ...sharedRegistry.list('song')].map((entry) => entry.id);
     return checkSounds(
       sharedRegistry,
