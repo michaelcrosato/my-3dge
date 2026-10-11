@@ -62,9 +62,12 @@ game agent's manual.
 - `blendPoses` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), each joint's share scaled by `options.mask`, written into `out` (a new pose by default; `a` or `b` may be `out`).
 - `Blob` (class from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A blob: its state, its skeleton's pose.
 - `BLOB` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's tuning: the source's numbers, lengths ÷ 16 in metres.
+- `BLOB_BODY` (const from [`engine/gfx/puppets/bodies/blob.ts`](../engine/gfx/puppets/bodies/blob.ts)): The slime: a blob with eyes and nothing else.
 - `BLOB_JOINTS` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's skeleton, parents first, and what each joint's world matrix places.
 - `BLOB_LEAP` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The slime's leap: back 3, reach 15, height 9 units.
 - `BLOB_MOVES` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's moves: a short low bite, its leap, a high pounce, and a spit that rears back and stretches forward.
+- `blobBody` (function from [`engine/gfx/puppets/bodies/blob.ts`](../engine/gfx/puppets/bodies/blob.ts)): A blob body with `features` (see the file comment).
+- `BlobFeatures` (interface from [`engine/gfx/puppets/bodies/blob.ts`](../engine/gfx/puppets/bodies/blob.ts)): The features `blobBody` can add.
 - `BlobInput` (interface from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): What a blob is told each step; every field is optional.
 - `BlobJoint` (type from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A joint of the blob's skeleton.
 - `BlobLeap` (interface from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A creature's leap, which its moves take shares of.
@@ -130,6 +133,8 @@ game agent's manual.
 - `createBindings` (function from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Makes the bindings of the action map `map` (an id or an entry), loading saved changes from `options.storage`.
 - `createBlobShadows` (function from [`engine/gfx/puppets/blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts)): Makes the blob-shadow batch, drawn with the library's `material:blobShadow` (see the file comment).
 - `createCharacter` (function from [`engine/physics/character.ts`](../engine/physics/character.ts)): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
+- `createCrowd` (function from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): Makes a crowd's batches and level of detail (see the file comment).
+- `createCrowdLod` (function from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): Makes a crowd's level of detail (see the file comment).
 - `createCutaway` (function from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): Gives `meshes`' cutting parts their twins (see the file comment).
 - `createEngine` (function from [`engine/app/engine.ts`](../engine/app/engine.ts)): Starts the engine in a page (see the file comment); resolves once it is up or has failed.
 - `createFootPlantState` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A new, unlocked `FootPlantState`.
@@ -150,14 +155,24 @@ game agent's manual.
 - `createStyleSet` (function from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): Makes a style set (see the file comment).
 - `createVirtualDevice` (function from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): Makes a virtual device, holding nothing.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
+- `Crowd` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A crowd's batches and level of detail (see the file comment).
 - `CROWD_AGENT` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): An agent with every field at its default: queued, a walker's capsule at the origin.
 - `CROWD_AGENT_FIELDS` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): A crowd agent's fields, for a scene's component: `defineComponent('pusher', { description, fields: … })`.
 - `CROWD_GROUNDED` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): The grounded heuristic's thresholds (m/s, m): the prototype's 6 units/s, 2 units and 1 unit/s.
 - `CROWD_LIMITS` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What `updateCrowd` does at most each step by default: bodies added (shardfall's load ramps), corpses kept.
+- `CROWD_LOD` (const from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): The default bands (see the file comment).
 - `CROWD_MATERIAL` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): The crowd's material: the prototype's density (1 a cubic unit: a walker weighs about 50 kg), no friction under the min rule (an agent slides on everything), no bounce; a corpse's friction, averaged, so it slides to a stop.
 - `CrowdAgent` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): A crowd agent: its body, its make and what the last readback saw (`CROWD_AGENT_FIELDS` says what each means).
+- `CrowdBand` (interface from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): One band of detail: the bodies whose distance is under its `upTo` and at least the band before's.
+- `CrowdBandSpec` (type from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): A band as written: without its index.
 - `CrowdChanges` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What one `updateCrowd` changed: indices into the list it was given, in order.
+- `CrowdDraw` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): How a body is drawn: its band (full detail when absent) and the floor under it, for a blob shadow.
+- `CrowdLod` (interface from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): A crowd's level of detail (see the file comment).
+- `CrowdLodCounts` (interface from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): A frame's counts so far: bodies drawn in each band, and those culled by the view, the distance and `near`.
+- `CrowdLodOptions` (interface from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): How a crowd's level of detail is made.
 - `CrowdOptions` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): How `updateCrowd` runs.
+- `CrowdRigDraw` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): How a rig is drawn: also its flags (`when`, `unless`) and its scale against its body.
+- `CrowdStats` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A frame's counts: the bands and culling (lod.ts), bodies drawn, and each batch's instances and shown pages.
 - `CrowdStepper` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What the crowd's calls read from the sim: the step length (s).
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
 - `Cutaway` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): A level's cutaway (see the file comment).
@@ -207,6 +222,7 @@ game agent's manual.
 - `FLICKER` (const from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): A flame's flicker at time `t` (s): about 0.77 to 1.03, the 2D hall's (my-3d2dge's `FLICKER`).
 - `Floater` (class from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater: its state, its pose.
 - `FLOATER` (const from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's tuning: the source's numbers, lengths ÷ 16 in metres, and the bank's.
+- `FLOATER_BODY` (const from [`engine/gfx/puppets/bodies/floater.ts`](../engine/gfx/puppets/bodies/floater.ts)): The wisp (see the file comment).
 - `FloaterInput` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is told each step; every field is optional.
 - `FloaterOptions` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is made from.
 - `FloaterPose` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater's pose: the core's world matrix and the motes' world positions.
@@ -431,7 +447,11 @@ game agent's manual.
 - `RescueLevel` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
 - `rescueLost` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
 - `RESERVED_CODES` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Codes no action map binds: the pause buttons, and keys the browser or the system keeps.
+- `RigBody` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A rig body (see the file comment).
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
+- `RigJoints` (type from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A rig's pose: each joint a world matrix, a point, or a list of points.
+- `RigPart` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point or a list of points (one part on each).
+- `RigShape` (type from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A unit shape a rig part draws: any but the limb.
 - `ringGeometry` (function from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring lying on the ground (see the file comment).
 - `RingOptions` (interface from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring's radii and height in metres, and its tessellation.
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
@@ -2227,6 +2247,19 @@ For the agents who maintain the engine.
 - `BlobShadows` (interface): Blob shadows (see the file comment).
 - `createBlobShadows` (function): Makes the blob-shadow batch, drawn with the library's `material:blobShadow` (see the file comment).
 
+### [`engine/gfx/puppets/bodies/blob.ts`](../engine/gfx/puppets/bodies/blob.ts)
+
+- `BLOB_BODY` (const): The slime: a blob with eyes and nothing else.
+- `BLOB_BODY_RADIUS` (const): The blob's radius the sizes are written for (engine/anim/blob.ts `BLOB.radius`), metres.
+- `blobBody` (function): A blob body with `features` (see the file comment).
+- `BlobFeatures` (interface): The features `blobBody` can add.
+
+### [`engine/gfx/puppets/bodies/floater.ts`](../engine/gfx/puppets/bodies/floater.ts)
+
+- `FLOATER_BODY` (const): The wisp (see the file comment).
+- `floaterMaterials` (function): Defines `material:puppetHalo` on `registry` (the shared one by default) unless it has it.
+- `PUPPET_HALO_MATERIAL` (const): The halo's material: unlit, see-through, writing no depth.
+
 ### [`engine/gfx/puppets/bodies/humanoid.ts`](../engine/gfx/puppets/bodies/humanoid.ts)
 
 - `HUMANOID_BODY` (const): The neutral humanoid (see the file comment).
@@ -2241,6 +2274,21 @@ For the agents who maintain the engine.
 - `PieceShape` (type): A unit shape a piece draws (see the file comment).
 - `recolor` (function): `compiled` with its slots' colours replaced by `palette`'s (hex), the pieces shared.
 - `restPositions` (function): Each joint's rest position on `skeleton`, 3 per joint (rest rotations are the identity).
+
+### [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)
+
+- `createCrowd` (function): Makes a crowd's batches and level of detail (see the file comment).
+- `Crowd` (interface): A crowd's batches and level of detail (see the file comment).
+- `CROWD_CODES` (const): The codes crowd drawing raises, with their fixes.
+- `CROWD_PAGE_SLOTS` (const): Instances per page of the crowd's batches.
+- `CrowdDraw` (interface): How a body is drawn: its band (full detail when absent) and the floor under it, for a blob shadow.
+- `CrowdRigDraw` (interface): How a rig is drawn: also its flags (`when`, `unless`) and its scale against its body.
+- `CrowdStats` (interface): A frame's counts: the bands and culling (lod.ts), bodies drawn, and each batch's instances and shown pages.
+- `HUMANOID_SHADOW` (const): A humanoid's blob shadow, metres at size 1 (the source's 5 units).
+- `RigBody` (interface): A rig body (see the file comment).
+- `RigJoints` (type): A rig's pose: each joint a world matrix, a point, or a list of points.
+- `RigPart` (interface): One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point or a list of points (one part on each).
+- `RigShape` (type): A unit shape a rig part draws: any but the limb.
 
 ### [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)
 
@@ -2274,6 +2322,17 @@ For the agents who maintain the engine.
 - `PartOptions` (interface): A part's options: the bone it rides (a joint, or `'root'`).
 - `PartType` (type): A part type's name.
 - `pointProblem` (function): Why `point` is no point, or null.
+
+### [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)
+
+- `createCrowdLod` (function): Makes a crowd's level of detail (see the file comment).
+- `CROWD_LOD` (const): The default bands (see the file comment).
+- `CROWD_LOD_CODES` (const): The codes the crowd's level of detail raises, with their fixes.
+- `CrowdBand` (interface): One band of detail: the bodies whose distance is under its `upTo` and at least the band before's.
+- `CrowdBandSpec` (type): A band as written: without its index.
+- `CrowdLod` (interface): A crowd's level of detail (see the file comment).
+- `CrowdLodCounts` (interface): A frame's counts so far: bodies drawn in each band, and those culled by the view, the distance and `near`.
+- `CrowdLodOptions` (interface): How a crowd's level of detail is made.
 
 ### [`engine/gfx/quality.ts`](../engine/gfx/quality.ts)
 
@@ -3205,6 +3264,20 @@ For the agents who maintain the engine.
 - `randomSound` (function): A seeded random sound of one to three voices; with its seed and rate, it is one case of the spec's sweep.
 - `SOUND_CASES` (const): The reference sounds.
 - `SoundCase` (interface): One reference sound: a definition rendered with a seed at a rate.
+
+### [`tests/pages/crowd-render.ts`](../tests/pages/crowd-render.ts)
+
+- `Grown` (interface): What `grow` reports.
+- `Ran` (interface): What `run` reports.
+
+### [`tests/pages/crowdRenderScene.ts`](../tests/pages/crowdRenderScene.ts)
+
+- `CAPED_ID` (const): The caped humanoid's id: the humanoid with a cape from its back.
+- `createCrowdScene` (function): A crowd scene with `seed`, its wanderers in a square of `side` metres.
+- `CrowdScene` (interface): What a crowd scene offers the page.
+- `CrowdWorld` (type): The scene's world.
+- `SLIME_LOOKS` (const): The slimes' looks, as the source's cast varied them: plain twice, horns, cat ears, wings.
+- `WALKER_LOOKS` (const): The walkers' looks: compiled bodies, whose builds their animators share.
 
 ### [`tests/pages/driftProbe.ts`](../tests/pages/driftProbe.ts)
 

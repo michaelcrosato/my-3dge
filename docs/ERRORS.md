@@ -565,6 +565,14 @@ Raised by the geometry kit (engine/gfx/geometry/) when a builder gets sizes it c
 
 Advice from `frame()` (engine/gfx/renderer.ts): the pipeline counter (engine/gfx/pipelines.ts) saw a pipeline built during a drawn frame after the first warm-up, the stall PLAN.md §8.7 budgets at 0.
 
+### GFX_CROWD_LOD
+
+- Message: `crowd LOD band {index} {problem}`
+- Fix: give each band an upTo in metres above the last one and a pose level from 0 to {last} (engine/anim/weights.ts LOD)
+- Registered in: [`engine/gfx/puppets/lod.ts` line 41](../engine/gfx/puppets/lod.ts)
+
+Raised by `createCrowdLod` (engine/gfx/puppets/lod.ts) for bands that are not in increasing distance, or whose pose level is not one of the animator’s detail levels.
+
 ### GFX_DEFAULT_LIMITS
 
 - Message: `the adapter refused a device with its own limits ({reason}), so the device has WebGPU's default limits`
@@ -686,6 +694,14 @@ Advice from an outline shell's push (engine/gfx/materials/outline.ts), once, whe
 - Registered in: [`engine/gfx/pipelines.ts` line 36](../engine/gfx/pipelines.ts)
 
 Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipelines` no longer has r182's shape, usually after a three.js upgrade: the count of pipelines three.js keeps cached is then unknown (null). Builds are counted at the device and stay exact.
+
+### GFX_RIG_BODY
+
+- Message: `rig body {body}, part {part}: {problem}`
+- Fix: {fix}
+- Registered in: [`engine/gfx/puppets/crowd.ts` line 56](../engine/gfx/puppets/crowd.ts)
+
+Raised by `createCrowd` (engine/gfx/puppets/crowd.ts) for a rig body whose part has an unknown shape, a slot the body lacks, a size that is not positive, or a joint the rig’s pose lacks.
 
 ### GFX_SMALL_BUFFERS
 
