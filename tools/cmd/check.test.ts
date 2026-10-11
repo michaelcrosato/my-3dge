@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { Finding } from '../lib/report';
-import { MAX_LINES, ROOT } from '../x';
+import { CHILD_TIMEOUT_MS, MAX_LINES, ROOT } from '../x';
 import { assetScan, binaryKind, discoverPlugins, isLane, runChecks, type CheckPlugin } from './check';
 
 const temporary: string[] = [];
@@ -200,11 +200,12 @@ describe('the plugins', () => {
 });
 
 describe('node x check', () => {
-  it('passes on the repository, in at most 20 lines, with a report', () => {
+  it('passes on the repository, in at most 20 lines, with a report', { timeout: CHILD_TIMEOUT_MS }, () => {
     const run = spawnSync(process.execPath, ['x', 'check'], {
       cwd: ROOT,
       encoding: 'utf8',
       env: { ...process.env, X_LANE: '0' },
+      timeout: CHILD_TIMEOUT_MS,
     });
     expect(run.status, run.stdout).toBe(0);
     expect(run.stdout.split('\n')[0]).toMatch(/^x check: ok: /);

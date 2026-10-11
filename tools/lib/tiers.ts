@@ -73,11 +73,13 @@ export const TIERS: Readonly<Record<TierId, Tier>> = {
 };
 
 /**
- * The long runs (PLAN.md §8.2): no budget, run at each gate. The flake hunt, and the crowd ladder (WP 5.5) against the
- * crowd's budgets (tests/baselines/perf/box-crowd-1000.json, WP 5.7). Long replays (WP 1.5) join them.
+ * The long runs (PLAN.md §8.2): no budget, run at each gate. The flake hunt, the kernel's perf budget (WP 1.5; T1
+ * never asserts timing) and the crowd ladder's (WPs 5.5, 5.7: tests/baselines/perf/box-crowd-1000.json). Long
+ * replays (WP 1.5) join them.
  */
 export const LONG_RUNS: readonly { name: string; command: readonly string[] }[] = [
   { name: 'flake hunt', command: ['npm', 'run', 'e2e', '--', '--repeat-each', '3'] },
+  { name: 'kernel budget', command: ['node', 'x', 'perf', 'fixtures/scenes/kernel', '--budget'] },
   {
     name: 'crowd ladder',
     command: ['node', 'x', 'perf', 'labs/box', '--scene', 'crowd-1000', '--ladder', '--budget'],

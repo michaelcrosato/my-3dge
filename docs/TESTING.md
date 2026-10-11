@@ -15,7 +15,7 @@ it cannot drift from them (PLAN.md §8.2, §8.8).
 - **T2, `npm run e2e`**: Playwright Test suites in tests/e2e/, on the platform's Chromium with WebGPU on SwiftShader,
   and every other test that needs Chromium (the advice trap's Playwright harness test, tests/e2e/adviceTrap.spec.ts).
   Run it before every push.
-- **Long runs**: long replays, the crowd ladder, flake hunting; at each gate.
+- **Long runs**: long replays, the kernel's perf budget, the crowd ladder, flake hunting; at each gate.
 
 Each tier's command and budget, and the long runs, are `TIERS` and `LONG_RUNS` in tools/lib/tiers.ts. `x ci --local`
 warns when a tier runs over its budget and fails it at 1.5×.
@@ -51,4 +51,8 @@ to.
   as `deferred: no source`.
 - **A test that spawns Vitest or Playwright** removes the `VITEST*` variables (and, in a spec, Playwright's worker
   variables) from the child's environment. One that drives Chromium is a spec in tests/e2e/, not a Vitest test.
-- Tests step a virtual clock and never wait on wall-clock time. Never skip, disable or loosen a test to get green.
+- **A test that waits on a whole command in a child process** (`node x <cmd>`, Vitest, `npx`) gives it and itself
+  `CHILD_TIMEOUT_MS` (tools/x.ts), so a loaded machine never fails it.
+- Tests step a virtual clock, never wait on wall-clock time and never assert it: a timing budget is a long run
+  (`x perf --budget`), and a T1 budget counts CPU time (tools/qa/audio.test.ts). Never skip, disable or loosen a test
+  to get green.
