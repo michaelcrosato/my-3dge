@@ -8,8 +8,9 @@
  * - **ladder** (`--ladder`, Node): the same at 100, 1,000 and 5,000 agents (`--steps` 300; warm-up at 100), counted by
  *   the integer setting `--agents` names (`crowd1000.agents`), else the budget's `ladder.setting`. `labs/<name>
  *   --scene <id>` names the lab's scene `<name>:<id>`. Section: `ladder: { setting, steps, rungs: { "100": {…} } }`.
- * - **page**: `labs/<name>` (with `--scene`) or an `.html` file, opened in Chromium as `x shot` opens it, paused,
- *   stepped `--steps` times (120), 60 frames drawn, then `__engine.stats()` read (engine/dev/stats.ts): the medians of
+ * - **page**: `labs/<name>` (with `--scene`) or an `.html` file, opened in Chromium as `x shot` opens it, its clock
+ *   real again (the virtual clock's `performance.now` taken away, so the meter times real work), paused, stepped
+ *   `--steps` times (120), 60 frames drawn, then `__engine.stats()` read (engine/dev/stats.ts): the medians of
  *   sim, physics, anim and render ms, and the last frame's draw calls, triangles, compute calls, textures, geometries
  *   and pipelines (after warm-up). Section: `page: { steps, budgets: { simMs, …, pipelinesAfterWarmUp } }`.
  *
@@ -355,6 +356,7 @@ async function runPage(root: string, page: string, flags: Flags): Promise<Comman
       stats = await tab.evaluate(
         async ({ steps, frames }) => {
           if (typeof __engine.stats !== 'function') return null;
+          Reflect.deleteProperty(performance, 'now'); // the virtual clock's (tools/lib/browser.ts): time the real one
           __engine.pause();
           __engine.step(steps);
           await __engine.render(frames);
