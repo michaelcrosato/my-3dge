@@ -28,7 +28,7 @@
  * @example
  * WALKER.speed.min; // 1.75: m/s
  * // const out = steerWalker(agent, walker, chase, new Vector3()); setVelocity(physics, agent, out, w);
- * @see labs/box/cast/cast.test.ts
+ * @see labs/box/cast/crowd.test.ts
  */
 import {
   approachAng,
