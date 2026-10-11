@@ -2,7 +2,8 @@
  * @file Tests for the physics world (engine/physics/world.ts) and its parameters (engine/physics/params.ts): bodies
  * fall under the `physics.gravity` setting and rest on a floor, ids come from handles in insertion order, a removed
  * slot comes back under a new id, impulses and changes act as the units say, the pinned integration parameters are the
- * world's, collision groups decide who touches, bad arguments are named, and `physicsOf` finds a bound world.
+ * world's, collision groups decide who touches, a convex hull collider stands where its points say, bad arguments are
+ * named, and `physicsOf` finds a bound world.
  */
 import { describe, expect, it } from 'vitest';
 import { createRegistry } from '../core/registry';
@@ -142,6 +143,25 @@ describe('the physics world', () => {
     p.dispose();
   });
 
+  it('builds a convex hull collider from its points: a wedge whose slope probes as its plane', () => {
+    const p = createPhysics();
+    // A ramp 4 m long (z 0 to 4) and 2 m wide, rising from 0 at z 4 to 1 m at z 0.
+    const points = [
+      [0, 0, 0],
+      [2, 0, 0],
+      [0, 0, 4],
+      [2, 0, 4],
+      [0, 1, 0],
+      [2, 1, 0],
+    ] as const;
+    const id = p.addBody({ type: 'fixed', colliders: [{ shape: { type: 'hull', points } }] });
+    p.step(sim());
+    for (const z of [0.01, 1, 2, 3, 3.99]) expect(p.probe(1, z)?.y).toBeCloseTo((4 - z) / 4, 5);
+    expect(p.probe(1, 2)?.body).toBe(id);
+    expect(p.probe(1, 4.5)).toBeNull();
+    p.dispose();
+  });
+
   it('names a bad argument', () => {
     const p = createPhysics();
     expect(() => p.addBody({ type: 'static' as 'fixed' })).toThrow(/PHYSICS_BAD_ARGUMENT.*addBody\(\{ type \}\)/);
@@ -152,6 +172,20 @@ describe('the physics world', () => {
     expect(() => p.addBody({ colliders: [{ shape: { type: 'ball', radius: 1 }, restitution: 2 }] })).toThrow(
       /restitution/,
     );
+    const flat = [
+      [0, 0, 0],
+      [1, 0, 0],
+      [0, 0, 1],
+      [1, 0, 1],
+    ] as const;
+    expect(() => p.addBody({ colliders: [{ shape: { type: 'hull', points: flat.slice(0, 3) } }] })).toThrow(
+      /shape\.points.*at least 4 points/,
+    );
+    expect(() => p.addBody({ colliders: [{ shape: { type: 'hull', points: flat } }] })).toThrow(
+      /shape\.points.*not all on one plane/,
+    );
+    const line = [0, 1, 2, 3].map((x) => [x, 0, 0] as const);
+    expect(() => p.addBody({ colliders: [{ shape: { type: 'hull', points: line } }] })).toThrow(/not all on one plane/);
     expect(p.count).toBe(0); // nothing half-made
     expect(() => p.applyImpulse(0, [1, 0, 0])).toThrow(/PHYSICS_NO_BODY/);
     p.dispose();

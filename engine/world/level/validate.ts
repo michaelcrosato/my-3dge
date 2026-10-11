@@ -1,20 +1,24 @@
 /**
- * @file Level validation (PLAN.md WP 2.2, §8.6, I-22): every problem a level's text has, each at its line and column
- * with its fix in the level's terms. `checkLevel` finds the structural ones, which `compileLevel` refuses: the text's
- * own (parse.ts: front matter, no map, ragged rows), characters the legend lacks (`LEVEL_UNKNOWN_GLYPH`) and blocks
- * that do not fill whole footprint squares (`LEVEL_BAD_BLOCK`, a pillar that is not PP over PP). `validateLevel` adds
- * the content checks the QA family (`node x qa level`) runs: spawns nobody can reach (`LEVEL_UNREACHABLE_SPAWN`) and
- * walkable areas cut off from the main floor (`LEVEL_UNREACHABLE_AREA`).
+ * @file Level validation (PLAN.md WP 2.2, WP 4.2, §8.6, I-22): every problem a level's text has, each at its line and
+ * column with its fix in the level's terms. `checkLevel` finds the structural ones, which `compileLevel` refuses: the
+ * text's own (parse.ts: front matter, no map, ragged rows), characters the legend lacks (`LEVEL_UNKNOWN_GLYPH`),
+ * blocks that do not fill whole footprint squares (`LEVEL_BAD_BLOCK`, a pillar that is not PP over PP), stairs that
+ * make no ramp (`LEVEL_BAD_RAMP`) and daises that make no octagon (`LEVEL_BAD_DAIS`; shapes.ts finds both). It also
+ * returns the ramps and daises, for compile.ts. `validateLevel` adds the content checks the QA family (`node x qa
+ * level`) runs: spawns nobody can reach (`LEVEL_UNREACHABLE_SPAWN`) and walkable areas cut off from the main floor
+ * (`LEVEL_UNREACHABLE_AREA`).
  *
- * Reachability: bodies walk between the 4 neighbouring walkable tiles whose floors differ by at most the climb limit
- * (`NAV_CLIMB`, the prototype crowd's 3.5 units: 0.219 m; PLAN.md Appendix C), so diagonal moves, which never cut
- * corners, connect nothing more. The main floor is the largest such area (the first in reading order on a tie). A
- * spawn on a tile that is not walkable, or outside the main floor, is unreachable; every other cut-off area is
- * reported once, at its first tile. WP 4.2 adds stairs, whose climbs are one-way.
+ * Reachability (walk.ts): bodies step between the 4 neighbouring walkable tiles where the floor between their centres
+ * never rises more than the climb limit at once (`NAV_CLIMB`, the prototype crowd's 3.5 units: 0.219 m; PLAN.md
+ * Appendix C), so stairs and a dais's edge are climbed, and a gallery is dropped from but climbed only by its stairs:
+ * steps are one-way where floors differ. An area is a set of tiles that reach each other both ways; the main floor is
+ * the largest (the first in reading order on a tie). A spawn on a tile that is not walkable, or outside the main
+ * floor, is unreachable; every other area is reported once, at its first tile: bodies there cannot walk to the main
+ * floor and back.
  *
  * Invariants: problems come in a fixed order (the text's; unknown characters by first tile; bad blocks by glyph id,
- * then reading order; unreachable spawns, then cut-off areas, in reading order), each unknown character once, so the
- * same text gives the same list.
+ * then reading order; bad ramps, then bad daises, by glyph id, then reading order; unreachable spawns, then cut-off
+ * areas, in reading order), each unknown character once, so the same text gives the same list.
  *
  * @example
  * const problems = validateLevel('#######\n#@#...#\n#######\n', { file: 'cell.txt' });
@@ -24,9 +28,13 @@
  */
 import type { Registry } from '../../core/registry';
 import { legendOf, type Glyph } from './glyph';
+import type { HeightSource } from './heights';
 import { parseLevel, type ParsedLevel } from './parse';
 import { levelProblem, where, type LevelProblem } from './problems';
 import { findBlocks } from './rects';
+import { findDaises, findRamps, type ShapeProblem } from './shapes';
+import type { DaisDescriptor, RampDescriptor } from './types';
+import { walkAreas } from './walk';
 
 /** The default climb limit between neighbouring tiles' floors (m): the prototype's `CLIMB`, 3.5 units. */
 export const NAV_CLIMB = 3.5 / 16;
@@ -39,11 +47,14 @@ export interface LevelSource {
   registry?: Registry;
 }
 
-/** A level read against its legend: the parsed text, the glyph of every tile, and the structural problems. */
+/** A level read against its legend: the parsed text, the glyph of every tile, its slopes, and the structural problems. */
 export interface CheckedLevel {
   parsed: ParsedLevel;
   /** Each tile's glyph, row-major; empty when the text has structural problems. */
   glyphs: Glyph[];
+  /** The ramps and daises (engine/world/level/shapes.ts); empty when the text has structural problems. */
+  ramps: RampDescriptor[];
+  daises: DaisDescriptor[];
   problems: LevelProblem[];
 }
 
@@ -62,7 +73,8 @@ function showChar(char: string): string {
 export function checkLevel(text: string, source: LevelSource = {}): CheckedLevel {
   const parsed = parseLevel(text, { file: source.file });
   const problems = [...parsed.problems];
-  if (parsed.rows.length === 0) return { parsed, glyphs: [], problems };
+  const none = { ramps: [], daises: [] };
+  if (parsed.rows.length === 0) return { parsed, glyphs: [], ...none, problems };
   const legend = legendOf(source.registry);
   const { rows, firstLine, width: cols, file } = parsed;
   const unknown = new Map<string, { line: number; column: number; count: number }>();
@@ -89,7 +101,7 @@ export function checkLevel(text: string, source: LevelSource = {}): CheckedLevel
     };
     problems.push(levelProblem('LEVEL_UNKNOWN_GLYPH', values, line, column));
   }
-  if (problems.length) return { parsed, glyphs: [], problems };
+  if (problems.length) return { parsed, glyphs: [], ...none, problems };
   const used = [...new Set(glyphs)].filter((glyph) => glyph.footprint > 1).sort((a, b) => (a.id < b.id ? -1 : 1));
   for (const glyph of used) {
     const n = glyph.footprint;
@@ -104,7 +116,19 @@ export function checkLevel(text: string, source: LevelSource = {}): CheckedLevel
       problems.push(levelProblem('LEVEL_BAD_BLOCK', values, line, column));
     }
   }
-  return { parsed, glyphs: problems.length ? [] : glyphs, problems };
+  const grid = { cols, rows: rows.length, tile: parsed.header.tile, tiles: glyphs };
+  const { ramps, problems: badRamps } = findRamps(grid, NAV_CLIMB);
+  const { daises, problems: badDaises } = findDaises(grid);
+  for (const bad of [...badRamps, ...badDaises]) problems.push(shapeProblem(bad, file, firstLine));
+  return problems.length ? { parsed, glyphs: [], ...none, problems } : { parsed, glyphs, ramps, daises, problems };
+}
+
+/** A ramp or dais block that makes none, as a problem at its first tile. */
+function shapeProblem(bad: ShapeProblem, file: string, firstLine: number): LevelProblem {
+  const [line, column] = [firstLine + bad.first[1], bad.first[0] + 1];
+  const { char, id, top, edge } = bad.glyph;
+  const values = { at: where(file, line, column), char, glyph: id, why: bad.why, top, edge };
+  return levelProblem(bad.shape === 'ramp' ? 'LEVEL_BAD_RAMP' : 'LEVEL_BAD_DAIS', values, line, column);
 }
 
 /**
@@ -112,14 +136,15 @@ export function checkLevel(text: string, source: LevelSource = {}): CheckedLevel
  * is fine. Never throws. `climb` is the largest floor step between neighbouring tiles that bodies walk (m).
  */
 export function validateLevel(text: string, source: LevelSource & { climb?: number } = {}): LevelProblem[] {
-  const { parsed, glyphs, problems } = checkLevel(text, source);
+  const { parsed, glyphs, ramps, daises, problems } = checkLevel(text, source);
   if (problems.length) return problems;
   const climb = source.climb ?? NAV_CLIMB;
   const { rows, firstLine, width: cols, file } = parsed;
-  const walkable = (c: number, r: number) => glyphs[r * cols + c].nav.walkable;
-  const step = (c: number, r: number, c2: number, r2: number) =>
-    Math.abs(glyphs[r * cols + c].floor - glyphs[r2 * cols + c2].floor) <= climb;
-  const { blocks, blockOf } = findBlocks(cols, rows.length, walkable, step);
+  const legend: Record<string, Glyph> = {};
+  for (const glyph of glyphs) legend[glyph.char] ??= glyph;
+  const tiles = glyphs.map((glyph) => glyph.char);
+  const level: HeightSource = { tile: parsed.header.tile, cols, rows: rows.length, tiles, legend, ramps, daises };
+  const { areas: blocks, areaOf: blockOf } = walkAreas(level, climb);
   let main = -1;
   blocks.forEach((block, i) => {
     if (main < 0 || block.tiles > blocks[main].tiles) main = i;

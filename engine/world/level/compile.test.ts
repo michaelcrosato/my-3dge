@@ -1,7 +1,7 @@
 /**
  * @file Unit tests for engine/world/level/compile.ts, colliders.ts, meshes.ts, grid.ts and heights.ts (T1), on the
- * fixture levels (fixtures/levels/*.txt): each compiles to its golden hash, the same again, under the sim's fdlibm
- * swap and on a fresh registry; the merged colliders cover exactly the solid tiles, each once, from the ground to
+ * fixture levels (fixtures/levels/*.txt) and the box's hall (labs/box/levels/hall.txt): each compiles to its golden
+ * hash, the same again, under the sim's fdlibm swap and on a fresh registry; the hall validates clean; the merged colliders cover exactly the solid tiles, each once, from the ground to
  * the glyph's top; colliders, pieces, spawns and heights match values computed by hand; the result is frozen plain
  * data; a structural problem throws `LEVEL_INVALID` with the problems, a content problem does not stop it.
  * @see engine/world/level/compile.ts
@@ -20,6 +20,7 @@ import { withSimMath } from '../../core/simMath';
 import { compileLevel, levelName } from './compile';
 import { defineGlyph } from './glyph';
 import { floorHeight, solidAt, tileAt, topHeight } from './heights';
+import { validateLevel } from './validate';
 import type { CompiledLevel } from './types';
 
 const DIR = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'levels');
@@ -28,11 +29,16 @@ const text = (file: string) => readFileSync(join(DIR, file), 'utf8');
 const compile = (file: string) => compileLevel(text(file), { file: `fixtures/levels/${file}` });
 const hash = (level: CompiledLevel) => hashValue(level as unknown as Canonical);
 
-/** Each fixture's compiled hash: a change here is a change of the compiled shape or of a v1 glyph. */
+/**
+ * Each fixture's compiled hash: a change here is a change of the compiled shape or of a v1 glyph. Re-recorded in
+ * WP 4.2, which added fields (per-tile `tiles`, `ramps`, `daises`; the glyphs' `floorShape`, `edge`, `radius`): with
+ * those fields left out, each fixture still gives its WP 2.2 hash (0f8fead48e003460, 87e43d7f346d34f7,
+ * e67a59b6ffdfc096), so no v1 value moved.
+ */
 const GOLDEN: Record<string, string> = {
-  'hall-v1.txt': '0f8fead48e003460',
-  'heights.txt': '87e43d7f346d34f7',
-  'room.txt': 'e67a59b6ffdfc096',
+  'hall-v1.txt': 'a3d27feb414efb3b',
+  'heights.txt': '1304ac3722f266ec',
+  'room.txt': '17ca7ff6df095bd9',
 };
 
 describe('compileLevel on the fixtures', () => {
@@ -54,7 +60,9 @@ describe('compileLevel on the fixtures', () => {
     const level = compile(file);
     const t = level.tile;
     const cover = new Array(level.cols * level.rows).fill(0);
-    for (const box of level.colliders) {
+    const boxes = level.colliders.filter((collider) => collider.shape === 'box');
+    expect(boxes).toEqual(level.colliders);
+    for (const box of boxes) {
       const [c0, r0, c1, r1] = box.tiles;
       expect(box.min).toEqual([c0 * t, 0, r0 * t]);
       expect(box.max).toEqual([(c1 + 1) * t, level.legend[level.map[r0][c0]].top, (r1 + 1) * t]);
@@ -66,6 +74,35 @@ describe('compileLevel on the fixtures', () => {
       }
     }
     expect(cover).toEqual(level.solid.map((solid) => (solid ? 1 : 0)));
+  });
+});
+
+describe('the hall (labs/box/levels/hall.txt, WP 4.2)', () => {
+  const file = 'labs/box/levels/hall.txt';
+  const hallText = readFileSync(join(import.meta.dirname, '..', '..', '..', file), 'utf8');
+  /** The hall's compiled hash: a change here is a change of the hall, of a glyph it uses or of the compiled shape. */
+  const HALL_GOLDEN = '1388c149cdefd2fb';
+
+  it('compiles to its golden hash, again, under the fdlibm swap and on a fresh registry', () => {
+    const hall = compileLevel(hallText, { file });
+    expect(hash(hall)).toBe(HALL_GOLDEN);
+    expect(hash(compileLevel(hallText, { file }))).toBe(HALL_GOLDEN);
+    expect(withSimMath(() => hash(compileLevel(hallText, { file })))).toBe(HALL_GOLDEN);
+    expect(hash(compileLevel(hallText, { file, registry: createRegistry() }))).toBe(HALL_GOLDEN);
+    expect(hashValue(deserialize(serialize(hall as unknown as Canonical)))).toBe(HALL_GOLDEN);
+  });
+
+  it('validates clean: every walkable tile, the galleries included, reachable from the spawn', () => {
+    expect(validateLevel(hallText, { file })).toEqual([]);
+  });
+
+  it('is the prototype hall: 64 × 44 m, its glyphs, colliders and spawn', () => {
+    const hall = compileLevel(hallText, { file });
+    expect([hall.name, hall.cols, hall.rows, hall.tile]).toEqual(['hall', 64, 44, 1]);
+    expect(Object.keys(hall.legend).sort()).toEqual(['#', '.', '=', '@', 'P', '^', 'o', 't', 'w']);
+    const count = (shape: string) => hall.colliders.filter((collider) => collider.shape === shape).length;
+    expect([count('box'), count('hull'), count('cylinder')]).toEqual([4 + 23 + 11 + 2, 3, 30]);
+    expect(hall.spawns.map((spawn) => spawn.id)).toEqual(['spawn:hero']);
   });
 });
 
@@ -83,7 +120,7 @@ describe('the room fixture, by hand', () => {
   });
 
   it('merges its colliders as the prototype would: 4 wall boxes, 1 pillar, 1 low wall', () => {
-    expect(room.colliders.map((box) => [box.glyph, box.tiles, box.max[1]])).toEqual([
+    expect(room.colliders.map((box) => [box.glyph, box.tiles, box.shape === 'box' && box.max[1]])).toEqual([
       ['glyph:lowWall', [4, 6, 9, 6], 0.75],
       ['glyph:pillar', [11, 3, 12, 4], 3.5],
       ['glyph:wall', [0, 0, 15, 0], 3],
@@ -146,7 +183,7 @@ describe('the room fixture, by hand', () => {
 
   it('is frozen plain data', () => {
     expect(
-      Object.isFrozen(room) && Object.isFrozen(room.colliders[0].min) && Object.isFrozen(room.legend['#'].nav),
+      Object.isFrozen(room) && Object.isFrozen(room.colliders[0].tiles) && Object.isFrozen(room.legend['#'].nav),
     ).toBe(true);
     expect(() => (room.solid as boolean[]).push(true)).toThrow(TypeError);
   });
@@ -158,7 +195,9 @@ describe('the heights fixture (half-metre tiles), by hand', () => {
   it('scales every position by the tile size', () => {
     expect([level.tile, level.cols, level.rows, level.bounds.max]).toEqual([0.5, 10, 8, [5, 3.5, 4]]);
     expect(
-      level.colliders.filter((box) => box.glyph !== 'glyph:wall').map((box) => [box.glyph, box.min, box.max]),
+      level.colliders
+        .filter((box) => box.glyph !== 'glyph:wall')
+        .map((box) => [box.glyph, box.shape === 'box' && box.min, box.shape === 'box' && box.max]),
     ).toEqual([
       ['glyph:lowWall', [3.5, 0, 1.5], [4, 0.75, 3]],
       ['glyph:lowWall', [1.5, 0, 2.5], [3, 0.75, 3]],
@@ -203,27 +242,32 @@ describe('compileLevel', () => {
   });
 
   it("lists a game glyph's light spots and raised floors", () => {
+    // The engine's legend holds = and t since WP 4.2, so the game's glyphs take L and T here.
     const reg = createRegistry();
     defineGlyph(
-      'glyph:brazier',
-      { char: 't', top: 1, solid: true, collider: 'box', nav: { walkable: false }, light: 'torch', lightHeight: 0.5 },
+      'glyph:lamp',
+      { char: 'T', top: 1, solid: true, collider: 'box', nav: { walkable: false }, light: 'torch', lightHeight: 0.5 },
       reg,
     );
-    defineGlyph('glyph:ledge', { char: '=', floor: 1, top: 1, collider: 'box', mesh: 'gallery' }, reg);
-    const level = compileLevel('#####\n#t.=#\n#####\n', { registry: reg });
-    expect(level.lights).toEqual([{ tag: 'torch', glyph: 'glyph:brazier', col: 1, row: 1, position: [1.5, 1.5, 1.5] }]);
+    defineGlyph('glyph:ledge', { char: 'L', floor: 1, top: 1, collider: 'box', mesh: 'gallery' }, reg);
+    defineGlyph('glyph:shelf', { char: 'S', floor: 1, top: 1, mesh: 'shelf' }, reg);
+    const level = compileLevel('######\n#T.LS#\n######\n', { registry: reg });
+    expect(level.lights).toEqual([{ tag: 'torch', glyph: 'glyph:lamp', col: 1, row: 1, position: [1.5, 1.5, 1.5] }]);
     expect([floorHeight(level, 3.5, 1.5), topHeight(level, 3.5, 1.5), solidAt(level, 3.5, 1.5)]).toEqual([1, 1, false]);
     expect(level.colliders.map((box) => box.glyph)).toEqual([
-      'glyph:brazier',
+      'glyph:lamp',
       'glyph:ledge',
       'glyph:wall',
       'glyph:wall',
       'glyph:wall',
       'glyph:wall',
     ]);
+    // WP 4.2: a raised floor whose box collider rises from the ground is drawn from the ground (a gallery's block);
+    // one without a collider stands on its floor.
     expect(level.meshes.map((mesh) => [mesh.recipe, mesh.bottom])).toEqual([
       ['floor', 0],
-      ['gallery', 1],
+      ['gallery', 0],
+      ['shelf', 1],
       ['wall', 0],
     ]);
   });
