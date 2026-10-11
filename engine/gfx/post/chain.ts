@@ -11,14 +11,9 @@
  * 5. the composite (engine/gfx/post/composite.ts): every other filter in one pass, gated by uniforms, in a fixed
  *    order, straight to the screen (the chain's colour transform is off: the composite ends in display colours).
  * Every filter is a uniform, so switching any filter, scope or look builds no pipeline and recompiles no material;
- * passes that are off do not run (bloom's, SMAA's), except in the warm-up's frame, which draws all of them. While
- * every filter is off, the chain shows the picture and the materials are in the style the chain was made with
- * (`isPlain`: `look:clean`), a frame skips the chain and draws the scene straight, as the renderer does without one
- * (`plain`): the chain would leave the picture as it is, at the cost of the MRT's second target and three full-screen
- * passes. Measured on SwiftShader through `createEngine` (WP 7.4's core proposal): tests/e2e/parity.spec.ts's Box 4
- * replays, a frame drawn after each of 1,500 steps, took 193 s through the chain against 118 s without it (at a load
- * average of 36 to 41), and 108 to 110 s with plain frames drawn straight against 119 s without it (at 5 to 22). The
- * warm-up's frame draws both ways, so switching between them builds nothing.
+ * passes that are off do not run (bloom's, SMAA's), except in the warm-up's frame, which draws all of them. A plain
+ * frame (`look:clean`) skips the chain's passes and draws the scene straight (`Post.plain` says when, and what it
+ * saves); the warm-up's frame draws both ways, so switching between them builds nothing.
  *
  * What it draws comes from three view settings, `post.look`, `post.filters` and `post.show` (`POST_SETTINGS`), which
  * exist only where a chain does (or a page declares them first, `definePostSettings`, which says which routes reach
@@ -169,7 +164,15 @@ export interface Post {
   readonly scenePass: PassNode;
   /** How many times the output graph was built: 1, plus one per tone-mapping or colour-space change. */
   readonly builds: number;
-  /** Whether the last frame drew the scene straight, skipping the chain's passes (see the file comment). */
+  /**
+   * Whether the last frame was plain and drew the scene straight, as the renderer does without a chain: every filter
+   * off (`isPlain`), the picture shown, the materials in the style the chain was made with (the warm-up compiles the
+   * others for the MRT alone). The chain's passes would leave the picture as it is, at the cost of the MRT's second
+   * target and three full-screen passes: on SwiftShader through `createEngine` (WP 7.4's core proposal),
+   * tests/e2e/parity.spec.ts's Box 4 replays, a frame drawn after each of 1,500 steps, took 193 s through the chain
+   * against 118 s without it (at a load average of 36 to 41), and 108 to 110 s drawn straight against 119 s (at 5 to
+   * 22).
+   */
   readonly plain: boolean;
   /** The edge smoothing it was made with. */
   readonly aa: AaKind;
