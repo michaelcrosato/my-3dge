@@ -1,6 +1,6 @@
 /**
- * @file The Stress Box page (labs/box/index.html, PLAN.md §9.0): it registers the box's levels and scenes, then
- * starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the
+ * @file The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports the box's scenes and levels, then starts
+ * the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the
  * box's replays offered to `?replay=<name>`. Everything else a page does (routes, the renderer, the warm-up, the
  * frame loop, `window.__engine`, the error overlay) is the engine's, so this file stays a list of the box's content.
  *
@@ -12,11 +12,12 @@
  * // node x shot labs/box --scene room --cam iso
  */
 /// <reference types="vite/client" />
-import { createEngine, defineLevel } from '../../engine';
+import { createEngine } from '../../engine';
 import roomLevel from './levels/room.txt?raw';
 import { room } from './scenes/room';
 
-defineLevel('level:room', { text: roomLevel, file: 'labs/box/levels/room.txt' });
+/** The box's levels, by id, as text: the engine registers them (`x describe` never loads this page module). */
+const levels = { 'level:room': { text: roomLevel, file: 'labs/box/levels/room.txt' } };
 
 /** The box's replays, by name (`box-1-room`), as text loaded on demand. */
 const replays = Object.fromEntries(
@@ -25,4 +26,4 @@ const replays = Object.fromEntries(
   ).map(([path, load]) => [path.replace(/^.*\/|\.replay\.json$/g, ''), load]),
 );
 
-await createEngine({ canvas: document.querySelector<HTMLCanvasElement>('#view')!, scenes: [room.id], replays });
+await createEngine({ canvas: document.querySelector<HTMLCanvasElement>('#view')!, scenes: [room.id], levels, replays });

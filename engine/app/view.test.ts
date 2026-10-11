@@ -1,0 +1,93 @@
+/**
+ * @file Unit tests for engine/app/view.ts through `createHeadless({ view: true })` (T1, PLAN.md §8.3, WP 2.7): in
+ * Node, the box room's view is built without a GPU: `scene.dump()` lists the floor, every wall run, the low wall, the
+ * pillar and the three movers, which move as the sim steps; `render` and `shot` throw `DEV_NO_RENDERER`; cameras
+ * switch by code and never change the hash; a restart reads the new run; an engine without a view refuses
+ * `scene.dump` (`APP_NO_VIEW`), and one whose level is not registered refuses to start (`APP_NO_LEVEL`); `replay`
+ * plays the box's replays to their goldens headless.
+ * @see engine/app/view.ts
+ */
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
+import { ROOM_PATHS } from '../../labs/box/scenes/room';
+import { createRegistry, registry } from '../core/registry';
+import { defineScene } from '../sim/scene';
+import { defineLevel } from '../world/level/level';
+import { createHeadless } from './headless';
+
+const ROOM = 'labs/box/levels/room.txt';
+if (!registry.has('level', 'level:room')) defineLevel('level:room', { text: readFileSync(ROOM, 'utf8'), file: ROOM });
+
+type Dumps = { dump(options?: object): string };
+type Cameras = { get(): { code: string; describe: string; yaw: number }; set(code: string): { code: string } };
+
+describe('createHeadless({ view: true })', () => {
+  it("dumps the room's scene graph: the floor, every wall run, the low wall, the pillar and the movers", async () => {
+    const engine = await createHeadless({ scene: 'box:room', view: true });
+    const dump = (engine.scene as Dumps).dump();
+    for (const name of [
+      'level:room/floor Mesh',
+      'level:room/wall@0,0-15,0 InstancedMesh',
+      'level:room/wall@0,1-0,11 InstancedMesh',
+      'level:room/wall@15,1-15,11 InstancedMesh',
+      'level:room/wall@1,11-14,11 InstancedMesh',
+      'level:room/lowWall InstancedMesh',
+      'level:room/pillar InstancedMesh',
+      'stage/ground Mesh',
+    ]) {
+      expect(dump).toContain(name);
+    }
+    const movers = dump.split('\n').filter((line) => line.includes('pathMover#'));
+    expect(movers).toEqual([
+      '    pathMover#1 Mesh at 3.5,0,4.5 size 0.8×0.8×0.8 material:planks tris 12 entity 1',
+      '    pathMover#2 Mesh at 6.5,0,7.5 size 0.8×0.8×0.8 material:planks tris 12 entity 2',
+      '    pathMover#3 Mesh at 10.5,0,5.5 size 0.8×0.8×0.8 material:planks tris 12 entity 3',
+    ]);
+    expect(ROOM_PATHS).toHaveLength(3);
+    engine.step(60);
+    const moved = (engine.scene as Dumps).dump({ filter: 'pathMover#1' });
+    expect(moved).toMatch(/pathMover#1 Mesh at 5,0,4\.5 /); // 1.5 m/s for 1 s along the line east
+    expect((engine.scene as Dumps).dump({ depth: 1 }).split('\n')).toHaveLength(7);
+  });
+
+  it('throws no renderer for render and shot, and switches cameras without touching the hash', async () => {
+    const engine = await createHeadless({ scene: 'box:room', view: true });
+    await expect(Promise.resolve().then(() => (engine.render as () => unknown)())).rejects.toThrow(/DEV_NO_RENDERER/);
+    expect(() => (engine.shot as () => unknown)()).toThrow(/DEV_NO_RENDERER/);
+    const cameras = engine.camera as Cameras;
+    expect(cameras.get()).toMatchObject({ code: 'cam=iso', describe: expect.stringContaining('Isometric') });
+    const hash = engine.hash();
+    for (const code of ['cam=topdown', 'cam=side', 'cam3=orbit', 'cam3=fly', 'cam=iso,45,2,persp']) {
+      expect(cameras.set(code).code.split(',')[0]).toBe(code.split(',')[0]);
+    }
+    expect(engine.hash()).toBe(hash);
+    expect(() => cameras.set('cam=nosuch')).toThrow(/GFX_UNKNOWN_CAMERA/);
+    engine.step(30);
+    const before = (engine.scene as Dumps).dump({ filter: 'pathMover' });
+    expect(engine.seed(4)).toBe(4);
+    expect((engine.scene as Dumps).dump({ filter: 'pathMover' })).not.toBe(before); // the new run, from step 0
+    expect((engine.scene as Dumps).dump({ filter: 'pathMover#1' })).toContain('at 3.5,0,4.5');
+  });
+
+  it('plays the box replays to their goldens headless, the view following', async () => {
+    const engine = await createHeadless({ scene: 'box:room', view: true });
+    for (const name of ['box-1-room', 'box-1-tuned']) {
+      const text = readFileSync(`tests/replays/${name}.replay.json`, 'utf8');
+      const run = (await (engine.replay as (t: string) => Promise<{ hashes: object; frames: number }>)(text)) ?? {};
+      expect(run.hashes, name).toEqual(JSON.parse(text).hashes['linux-x64']);
+      expect(run.frames).toBe(0);
+    }
+    expect(engine.info()).toMatchObject({ scene: 'box:room', seed: 7, tick: 600 });
+  });
+
+  it('refuses scene.dump without a view, and a view whose level is not registered', async () => {
+    const plain = await createHeadless({ scene: 'box:room' });
+    expect(() => (plain.scene as Dumps).dump()).toThrow(/APP_NO_VIEW.*createHeadless\(\{ scene, view: true \}\)/);
+    expect(() => (plain.camera as Cameras).get()).toThrow(/APP_NO_VIEW/);
+    const lonely = createRegistry();
+    defineScene('lost', { level: 'level:nowhere', setup: () => {} }, lonely);
+    await expect(createHeadless({ scene: 'lost', registry: lonely, view: true })).rejects.toThrow(
+      /APP_NO_LEVEL.*defineLevel\('level:nowhere'/,
+    );
+  });
+});

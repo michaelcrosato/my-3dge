@@ -1,6 +1,6 @@
 /**
- * @file The engine in a page (PLAN.md §6.4, §6.9, §8.3, WP 2.7): `createEngine({ canvas, scenes })` reads the page's
- * routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay` and settings by path), starts the scene as a recorded
+ * @file The engine in a page (PLAN.md §6.4, §6.9, §8.3, WP 2.7): `createEngine({ canvas, scenes, levels })` registers
+ * the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay` and settings by path), starts the scene as a recorded
  * run with its view (engine/app/headless.ts, engine/app/view.ts), publishes the run's inspector as
  * `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts), warms up every pipeline the
  * view needs through both cameras (perspective and orthographic), draws the first frame, and then runs the frame
@@ -50,6 +50,7 @@ import type { Inspector } from '../dev/inspector';
 import { createAppHost, type AppRun, type Drawing } from './headless';
 import { createLoop, type Loop } from './loop';
 import { createPlayback, type Playback } from './playback';
+import { defineLevel } from '../world/level/level';
 import { parseRoutes, type Routes } from './routes';
 import { HEADLESS_ASPECT } from './view';
 
@@ -79,6 +80,8 @@ export interface EngineOptions {
   canvas: HTMLCanvasElement;
   /** The page's scenes, by id (registered with defineScene); `?scene` picks one, the first by default. */
   scenes: readonly string[];
+  /** The levels the page's scenes load, by id: their text (Vite's `?raw` import) and file; registered unless already. */
+  levels?: Readonly<Record<string, { text: string; file?: string }>>;
   /** Replays the page offers by name (`?replay=<name>`): name → its text, loaded when asked for. */
   replays?: Readonly<Record<string, () => Promise<string>>>;
   /** The query to read (`location.search`). */
@@ -237,6 +240,9 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   };
 
   try {
+    for (const [id, level] of Object.entries(options.levels ?? {})) {
+      if (!registry.has('level', id)) defineLevel(id, level, registry);
+    }
     routes = parseRoutes(options.search ?? location.search, { scenes: options.scenes, registry });
     const materials = createMaterialLibrary({ registry });
     const { scene, seed, settings, cam } = routes;

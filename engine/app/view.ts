@@ -121,7 +121,8 @@ function placed(session: Session, kinds: readonly string[]): EntityData[] {
 export function createRunView(options: RunViewOptions): RunView {
   const { registry } = options;
   const scene = options.run().scene;
-  if (scene.level !== undefined && !registry.has('level', scene.level)) {
+  const known = (id: string) => registry.kinds().includes('level') && registry.has('level', id);
+  if (scene.level !== undefined && !known(scene.level)) {
     throw codeError('APP_NO_LEVEL', { scene: scene.id, level: scene.level });
   }
   const level = scene.level === undefined ? null : getLevel(scene.level, registry);

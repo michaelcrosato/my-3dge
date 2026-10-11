@@ -48,7 +48,8 @@ const materialName = (material: Material) =>
 /** One object's line, without its indent. */
 function line(object: Object3D, hidden: number): string {
   const mesh = object as Mesh & Partial<InstancedMesh>;
-  const parts = [object.name || `${object.type}#${object.id}`, object.type];
+  const type = mesh.isInstancedMesh ? 'InstancedMesh' : object.type; // three.js types an InstancedMesh 'Mesh'
+  const parts = [object.name || `${type}#${object.id}`, type];
   if (!object.visible) parts.push('hidden');
   const { x, y, z } = object.position;
   parts.push(`at ${num(x)},${num(y)},${num(z)}`);

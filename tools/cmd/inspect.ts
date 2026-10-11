@@ -294,6 +294,12 @@ export default {
   },
   maxPositionals: 0,
   async run({ values, root }): Promise<CommandResult> {
+    if (values.stop) {
+      const running = findSession(root);
+      if (!running) return { ok: true, summary: 'no inspect session was running' };
+      await callSession(running, 'stop');
+      return { ok: true, summary: `stopped the inspect session (pid ${running.pid})` };
+    }
     const asked = values.page !== undefined || values.scene !== undefined || values.cam !== undefined || values.set;
     const page = pageUrl((values.page as string | undefined) ?? 'labs/box', {
       scene: values.scene as string | undefined,
@@ -308,11 +314,6 @@ export default {
       await new Promise(() => undefined); // until stop exits the process
     }
     let session = findSession(root);
-    if (values.stop) {
-      if (!session) return { ok: true, summary: 'no inspect session was running' };
-      await callSession(session, 'stop');
-      return { ok: true, summary: `stopped the inspect session (pid ${session.pid})` };
-    }
     const lines: string[] = [];
     if (!session) session = await startSession(root, page);
     else if (asked && session.page !== page) await callSession(session, 'goto', { page });
