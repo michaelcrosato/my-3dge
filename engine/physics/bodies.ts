@@ -11,10 +11,9 @@
  *   tip toward the push with a twist.
  * - **Movers** (shardfall's): kinematic bodies whose pose is a function of time, `moverPose(mover, t)`: back and forth
  *   along `offset` (waiting `hold` at the ends, eased when `smooth`), turning about +Y at `spin`. `driveMover` sets
- *   the velocities that bring the body there when the world steps, so the character controller carries riders
- *   (engine/physics/character.ts reads a moving floor's velocity), and only the component and the body's pose are
- *   read, so a restore continues exactly. Call it in the phase `ai`, before the actors move, with the world (`w.time`
- *   during step k is k·dt: the step's end, shardfall's `pose((tick + 1) · dt)`).
+ *   the velocities that bring the body there when the world steps, so the character controller carries riders, and
+ *   reads only the component and the body's pose, so a restore continues exactly. Call it in the phase `ai`, before
+ *   the actors move, with the world (`w.time` in step k is k·dt, the step's end: shardfall's `pose((tick + 1) · dt)`).
  * - **Triggers.** `addSensor(physics, shape, spec)` adds a fixed (or kinematic) body whose collider blocks nothing and
  *   detects every dynamic and kinematic body it overlaps; `sensorHits` lists those as of the last step, and
  *   `updateTrigger(physics, trigger)` compares them with `trigger.inside` and returns who entered and left, for the
@@ -356,8 +355,8 @@ function nearestWalkable(level: RescueLevel, x: number, z: number): number {
 
 /**
  * Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on
- * the nearest walkable tile: at its centre, its lowest point just above the floor (5 cm), still, turned as it was, so it
- * drops onto the floor. Returns their ids.
+ * the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops
+ * onto the floor. Returns their ids.
  */
 export function rescueLost(physics: Physics, level: RescueLevel, options: { depth?: number } = {}): number[] {
   const depth = finite(options.depth, DEPTH, 'rescueLost({ depth })');
