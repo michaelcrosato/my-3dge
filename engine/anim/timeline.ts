@@ -13,8 +13,9 @@
  *   share 0 as the phase begins, one at share 1 as it ends), and `end` after the last phase. Each event says how
  *   long before the end of the step it happened (`late`), so a reader can place it inside the step.
  * - All state is plain data (`save`, `load`): a timeline is two numbers, the phase index (−1 idle) and the seconds into
- *   the phase; an attack adds the ids it hit this swing and its last segment. Pure arithmetic: no clock, no random
- *   stream. A hit window open for only part of a step (a strike shorter than a tick) still counts as open for it.
+ *   the phase; an attack adds the keys it hit this swing (numbers: the type system asks for a target's `id` or a
+ *   keying function) and its last segment. Pure arithmetic: no clock, no random stream. A hit window open for only
+ *   part of a step (a strike shorter than a tick) still counts as open for it.
  *
  * Carried from `my-3d2dge:engine/my-3d2dge.js:2467-2533` (`Attack`: the leftover carried across phases, `hitAt`,
  * one hit per target per swing; `Combo`: the chaining window), generalised to any phases and events.
@@ -30,10 +31,21 @@
  * @see engine/anim/timeline.test.ts
  */
 
+import { codeError, defineCodes } from '../core/log';
 import { Vector3 } from '../core/math';
+import { show } from '../core/schema';
 import { strikePart } from './moves';
 import { resolveMove, rootTravel, type Move, type MoveInput, type MovePhase, type MoveSpec } from './moves-data';
 import type { TrailName } from './states';
+
+/** The codes this module raises, with their fixes. */
+export const TIMELINE_CODES = defineCodes('anim', {
+  ANIM_BAD_HIT_KEY: {
+    template: 'hits keyed a target by {key}, not a finite number, so it could not tell the targets apart',
+    fix: 'give each target a numeric id field, or pass hits a fourth argument that returns one: (t) => t.entity',
+    doc: 'Thrown by `Attack.hits` and `Combo.hits` (engine/anim/timeline.ts), which hit each target once per swing by its key: its `id` field, or what the keying function given returns. Targets without one would all share the key `undefined`, so only the first would ever be hit.',
+  },
+});
 
 /** Seconds within which a phase counts as finished: far below a tick, far above a float sum's error. */
 export const TICK_EPSILON = 1e-9;
@@ -200,6 +212,9 @@ export interface Sweep {
   readonly tip1: Vector3;
 }
 
+/** A target's own `id` field: the key `hits` uses unless given another (it checks the key is a number). */
+const ownId = (target: unknown): number => (target as { id?: number } | null | undefined)?.id as number;
+
 /** An attack as plain data: its timeline, the targets it hit this swing, its last segment, its window. */
 export interface AttackState {
   timeline: TimelineState;
@@ -296,19 +311,18 @@ export class Attack {
   }
 
   /**
-   * While the hit window is open, calls `fn` once per swing for each target that passes `test`, keyed by `id` (its
-   * `id` field by default). Returns how many it hit this call.
+   * While the hit window is open, calls `fn` once per swing for each target that passes `test`, keyed by its `id`
+   * field, or by `id` for targets without one. Returns how many it hit this call. Throws `ANIM_BAD_HIT_KEY` for a
+   * key that is not a finite number.
    */
-  hits<T>(
-    targets: Iterable<T>,
-    test: (target: T) => boolean,
-    fn: (target: T) => void,
-    id: (target: T) => number = (t) => (t as { id: number }).id,
-  ): number {
+  hits<T extends { readonly id: number }>(targets: Iterable<T>, test: (t: T) => boolean, fn: (t: T) => void): number;
+  hits<T>(targets: Iterable<T>, test: (t: T) => boolean, fn: (t: T) => void, id: (t: T) => number): number;
+  hits<T>(targets: Iterable<T>, test: (t: T) => boolean, fn: (t: T) => void, id: (t: T) => number = ownId): number {
     if (!this.#open) return 0;
     let n = 0;
     for (const target of targets) {
       const key = id(target);
+      if (!Number.isFinite(key)) throw codeError('ANIM_BAD_HIT_KEY', { key: show(key) });
       if (this.#hit.has(key) || !test(target)) continue;
       this.#hit.add(key);
       n++;
@@ -319,7 +333,10 @@ export class Attack {
 
   /**
    * Records the striking part's segment this step (`strikeSegment`) and, while the hit window is open, returns the
-   * sweep from the last step's segment (from this one on the window's first step); null otherwise.
+   * sweep from the last step's segment (from this one on the window's first step); null otherwise. Sim code reads the
+   * segment only from a pose the sim made: `strikeSegment` of the `Animator` itself with `preciseHits` (it throws
+   * without), or of a spare `Humanoid` the sim updates. An animator's `body` is otherwise the view's pose (none
+   * headless), and the hits would depend on what was drawn.
    */
   sweep(base: Vector3, tip: Vector3): Sweep | null {
     const had = this.#segment.length === 6;
@@ -438,8 +455,10 @@ export class Combo {
     return events;
   }
 
-  /** The current hit's `hits`. */
-  hits<T>(targets: Iterable<T>, test: (t: T) => boolean, fn: (t: T) => void, id?: (t: T) => number): number {
+  /** The current hit's `hits`: targets keyed by their `id` field, or by `id` for targets without one. */
+  hits<T extends { readonly id: number }>(targets: Iterable<T>, test: (t: T) => boolean, fn: (t: T) => void): number;
+  hits<T>(targets: Iterable<T>, test: (t: T) => boolean, fn: (t: T) => void, id: (t: T) => number): number;
+  hits<T>(targets: Iterable<T>, test: (t: T) => boolean, fn: (t: T) => void, id: (t: T) => number = ownId): number {
     return this.step >= 0 ? this.current.hits(targets, test, fn, id) : 0;
   }
 

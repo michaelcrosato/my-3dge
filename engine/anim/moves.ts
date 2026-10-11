@@ -8,6 +8,8 @@
  * Invariants:
  * - `measureMove` runs under the sim's math (engine/core/simMath.ts) and caches by what it measured (the move's fields,
  *   the build's, the weapon), so a changed move or build is measured again and the same bits come back everywhere.
+ * - `strikeSegment` reads a pose, so it takes an animator only with `preciseHits`, whose pose the sim makes
+ *   (`ANIM_NOT_PRECISE` otherwise): a hit never depends on what the view drew.
  * - Pure helpers otherwise: no clock, no random stream, no state.
  *
  * Carried from `my-3d2dge:engine/my-3d2dge.js:2574-2582` (`E.move`, `E.knockback`), `:194` (`inArc`) and
@@ -23,15 +25,25 @@
  * inArc(new Vector3(), 0, new Vector3(0, 0, 1), 1.5, 0.5); // true: 1 m straight ahead
  * @see engine/anim/moves.test.ts
  */
+import { codeError, defineCodes } from '../core/log';
 import { angDiff, Quaternion, Vector3 } from '../core/math';
 import { withSimMath } from '../core/simMath';
 import { getBuild, type Build } from './builds';
-import { TRAIL } from './character';
+import { TRAIL, type Animator } from './character';
 import { jointPosition, jointRotation, socketPosition } from './fk';
 import { Humanoid } from './humanoid';
 import { resolveMove, type Move, type MoveInput, type MovePhase, type MoveSpec } from './moves-data';
 import type { Weapon } from './poses';
 import type { TrailName } from './states';
+
+/** The codes this module raises, with their fixes. */
+export const MOVE_CODES = defineCodes('anim', {
+  ANIM_NOT_PRECISE: {
+    template: 'strikeSegment was given an animator without preciseHits: its pose is the view’s, not the sim’s',
+    fix: 'make the animator (an actor’s anim) with preciseHits: true, so the sim poses it every tick; or pass a Humanoid the sim updates itself',
+    doc: 'Thrown by `strikeSegment` (engine/anim/moves.ts) for an `Animator` without `preciseHits`. A strike’s span is read from a pose, and the sim poses only animators with `preciseHits` (engine/sim/actors.ts, the system `actors.pose`); any other animator holds whatever the view last drew, nothing headless, so hits read from it would depend on rendering and visibility.',
+  },
+});
 
 /** Scratch objects. */
 const [at, start, sweep] = Array.from({ length: 3 }, () => new Vector3());
@@ -52,13 +64,22 @@ export function strikePart(move: Move, armed: boolean): TrailName {
 /** What `strikeSegment` reads of a body. */
 export type StrikeBody = Pick<Humanoid, 'skeleton' | 'world' | 'build' | 'weapon'>;
 
+/** What `strikeSegment` reads of an animator: its body, which the sim poses only with `preciseHits`. */
+export type StrikeAnimator = Pick<Animator, 'body' | 'preciseHits'>;
+
 /**
- * Where `part` spans on `body` now, world metres, into `base` and `tip`: a sword from near the grip to its tip
+ * Where `part` spans on a body's pose now, world metres, into `base` and `tip`: a sword from near the grip to its tip
  * (another weapon strikes as the right fist), a forearm from the elbow to the wrist, the right shin from the knee to
  * the sole. The span the animator's trail samples (engine/anim/character.ts).
+ *
+ * It reads the pose, so sim code (a gameplay hit, `Attack.sweep`) reads it only from a pose the sim made: pass the
+ * `Animator` itself, made with `preciseHits` (the sim poses it every tick; without it this throws `ANIM_NOT_PRECISE`),
+ * or a spare `Humanoid` the sim updates itself. An animator's `body` otherwise holds the view's pose (none headless),
+ * and play would depend on what was drawn.
  */
-export function strikeSegment(body: StrikeBody, part: TrailName, base: Vector3, tip: Vector3): void {
-  const { skeleton, world, build, weapon } = body;
+export function strikeSegment(from: StrikeBody | StrikeAnimator, part: TrailName, base: Vector3, tip: Vector3): void {
+  if ('preciseHits' in from && !from.preciseHits) throw codeError('ANIM_NOT_PRECISE');
+  const { skeleton, world, build, weapon } = 'preciseHits' in from ? from.body : from;
   if (part === 'blade' && weapon === 'sword') {
     socketPosition(skeleton, world, 'weaponR', base);
     sweep.set(0, 0, build.size).applyQuaternion(jointRotation(world, 'handR', turn));

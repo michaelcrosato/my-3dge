@@ -49,6 +49,25 @@ describe('the arm path', () => {
     expect(arm.theta0).toBe(-0.9); // the vertical plane's rest
   });
 
+  it('starts a swing again when the move changes during the wind (a feint), as my-3d2dge did', () => {
+    const arm = createArmState();
+    stepArm(arm, moveAt('slash', 0.5, 'wind'), ARMED, () => effectorsAt(0.2), 1);
+    expect([arm.theta0, arm.from[0]]).toEqual([1.1, 0.2]);
+    const theta = arm.theta; // 0.75 of the way from the ground rest (1.1) to the slash's 1.7
+    stepArm(arm, moveAt('overhead', 0.25, 'wind'), ARMED, () => effectorsAt(0.3), 1);
+    expect([arm.theta0, arm.from[0], arm.vertical]).toEqual([theta, 0.3, 1]); // chained from the slash's wind
+    stepArm(arm, moveAt('overhead', 0.5, 'wind'), ARMED, () => effectorsAt(0.4), 1);
+    expect([arm.theta0, arm.from[0]]).toEqual([theta, 0.3]); // the same move winds on
+
+    const spec = (a0: number) => ({ move: { arc: [a0, 0] as [number, number] }, phase: 'wind', u: 0.5 }) as const;
+    stepArm(arm, spec(0.5), ARMED, () => effectorsAt(0.5), 1); // a move made from a spec: move:custom
+    expect(arm.from[0]).toBe(0.5);
+    stepArm(arm, spec(0.5), ARMED, () => effectorsAt(0.6), 1); // the same spec, made anew: winds on
+    expect(arm.from[0]).toBe(0.5);
+    stepArm(arm, spec(-0.5), ARMED, () => effectorsAt(0.7), 1); // another spec, also move:custom: starts again
+    expect(arm.from[0]).toBe(0.7);
+  });
+
   it('lays nothing at rest, and the strike over the hands and the blade once it plays', () => {
     const ctx = restContext(getBuild('build:chibi'));
     const arm = createArmState();

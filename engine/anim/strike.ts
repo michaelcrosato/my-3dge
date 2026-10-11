@@ -11,8 +11,11 @@
  *   and, as a swing begins, the body's effectors before the step (computed from the state, never from a pose), so
  *   the sim's hash never depends on whether the body was posed. Laying it reads only the state and the effectors.
  * - A new swing starts its wind from where the arm was: the hands and blade of those effectors, and the last path
- *   while the arm is still raised (weight above 0.3), as my-3d2dge chained hits. A chain from a kick into a hand move
- *   (or back) starts its height at rest: the old rig mixed a share of the hip height with a height in units there.
+ *   while the arm is still raised (weight above 0.3), as my-3d2dge chained hits. It starts as a wind begins, and
+ *   when the move changes during a wind (a feint, a cancel into another move): `ArmState.move` keys the move by its
+ *   fields, so two moves made from specs (both `move:custom`) differ, and a spec made anew each step does not. A
+ *   chain from a kick into a hand move (or back) starts its height at rest: the old rig mixed a share of the hip
+ *   height with a height in units there.
  * - moves.test.ts holds all 24 moves to my-3d2dge's reference vectors (tests/baselines/port/moves.json): the hands,
  *   the blade's tip and the right foot within 1 cm on average and 3 cm at worst.
  *
@@ -33,6 +36,7 @@
  * layArm(arm, restContext(getBuild('build:chibi')), E).hands.R.length() > 0; // true: the right hand reaches out
  * @see engine/anim/strike.test.ts
  */
+import { hashValue } from '../core/hash';
 import { approach, ease, MathUtils, Vector3 } from '../core/math';
 import { B, fromFRU, SIDES, sideSign, type FRU, type Sided } from './authoring';
 import type { BodyMotion, EffectorContext } from './locomotion';
@@ -87,6 +91,8 @@ export interface ArmState {
   weight: number;
   /** The phase of the last step: 0 none, 1 wind, 2 active, 3 recover. */
   phase: number;
+  /** The move of the last step, keyed by a hash of its fields (0 before any): another move restarts a wind. */
+  move: number;
   /** The swing angle now, radians (+ toward the right hand; up on the vertical plane). */
   theta: number;
   /** The height now: metres from the shoulder centre, or a kick's share of the hip height. */
@@ -115,7 +121,18 @@ export interface ArmState {
 export function createArmState(): ArmState {
   const [theta, height, reach] = [ARM.rest.ground, ARM.restHeight.hand, 7 / 16];
   const path = { theta, height, reach, theta0: theta, height0: height, reach0: reach };
-  return { weight: 0, phase: 0, ...path, windK: 1, turn: 0, hand: 1, kick: 0, vertical: 0, from: Array(9).fill(0) };
+  const shape = { windK: 1, turn: 0, hand: 1, kick: 0, vertical: 0, from: Array<number>(9).fill(0) };
+  return { weight: 0, phase: 0, move: 0, ...path, ...shape };
+}
+
+/** Each move's key, made once: its fields hashed (core/hash.ts `hashValue`), 52 bits, the same in Node and Chromium. */
+const keys = new WeakMap<Move, number>();
+
+/** `m`'s key: equal for moves with equal fields, and (to 52 bits) different for any other (`ArmState.move`). */
+function moveKey(m: Move): number {
+  let key = keys.get(m);
+  if (key === undefined) keys.set(m, (key = Number.parseInt(hashValue(m).slice(3), 16) || 1));
+  return key;
 }
 
 /** What `stepArm` reads of the body. */
@@ -131,8 +148,9 @@ export type ArmMotion = BodyMotion & { lead: 'L' | 'R' };
 
 /**
  * One fixed step of the arm: the path at `input`'s phase and share (none: the arm eases down), the weight eased
- * toward it, and, as a swing begins its wind, where it starts (`last`: the body's effectors before this step, asked
- * for only then). Returns the body motion the move asks for, or undefined when no move plays.
+ * toward it, and, as a swing begins its wind (or the move changes during one), where it starts (`last`: the body's
+ * effectors before this step, asked for only then). Returns the body motion the move asks for, or undefined when no
+ * move plays.
  */
 export function stepArm(
   arm: ArmState,
@@ -143,11 +161,12 @@ export function stepArm(
 ): ArmMotion | undefined {
   let target = 0;
   let motion: ArmMotion | undefined;
+  const m = input ? resolveMove(input.move) : undefined;
   const phase = input ? PHASE_NUMBER[input.phase] : 0;
-  if (input && phase === 1 && arm.phase !== 1) startSwing(arm, resolveMove(input.move), body, last());
+  const key = m ? moveKey(m) : arm.move;
+  if (m && phase === 1 && (arm.phase !== 1 || arm.move !== key)) startSwing(arm, m, body, last());
   [arm.windK, arm.turn] = [1, 0];
-  if (input) {
-    const m = resolveMove(input.move);
+  if (input && m) {
     const u = MathUtils.clamp(input.u, 0, 1);
     const kick = m.limb === 'footR';
     const vertical = !kick && m.plane === 'vertical';
@@ -158,7 +177,7 @@ export function stepArm(
     const [r0, r1] = [m.reach[0] * scale, m.reach[1] * scale];
     const { lean, hop, crouch } = m.body;
     const lunge = m.rootMotion === 'apply' ? 0 : m.body.lunge;
-    [arm.phase, arm.kick, arm.vertical] = [phase, kick ? 1 : 0, vertical ? 1 : 0];
+    [arm.phase, arm.move, arm.kick, arm.vertical] = [phase, key, kick ? 1 : 0, vertical ? 1 : 0];
     arm.hand = m.hand === 'both' ? 2 : left ? -1 : 1;
     motion = { lean: 0, lunge: 0, hop: 0, crouch: 0, twist: 0, lead: left ? 'R' : 'L' };
     target = 1;

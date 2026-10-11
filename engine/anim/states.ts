@@ -15,7 +15,7 @@
  * - Pure: no clock, no random stream; the warnings go through the given log, once per word.
  *
  * Carried from `my-3d2dge:src/emberdeep/18-characters.js:36-38` (the state bag a body's `update(dt, s)` takes, unknown
- * keys ignored) and `:82-88` (`CHAR_STATES`, as `SAMPLE_STATES` in metres, without the moves, which arrive in WP 6.1);
+ * keys ignored) and `:82-88` (`CHAR_STATES`, as `SAMPLE_STATES` in metres, the three moves told as `body`, WP 6.1);
  * `src/emberdeep/33-beasts.js:1053-1060` reads the same words on a body that is not a humanoid.
  *
  * @example
@@ -149,12 +149,18 @@ export interface SampleState {
   readonly seconds: number;
 }
 
-/** Named body states, my-3d2dge's `CHAR_STATES` in metres (moving along +Z), without the moves (WP 6.1). */
+/**
+ * Named body states, my-3d2dge's `CHAR_STATES` in metres (moving along +Z); the wind-up, the strike and the
+ * follow-through are a slash told as `body` (WP 6.1, as `moveAt` names it).
+ */
 export const SAMPLE_STATES = {
   idle: { states: {}, seconds: 0.6 },
   run: { states: { run: 1 }, seconds: 0.6 },
   dodge: { states: { dash: true, velocity: new Vector3(0, 0, 13.75) }, seconds: 0.15 },
   jump: { states: { air: true, position: new Vector3(0, 0.625, 0) }, seconds: 0.3 },
+  windUp: { states: { body: { move: 'move:slash', phase: 'wind', u: 0.8 } }, seconds: 0.2 },
+  strike: { states: { body: { move: 'move:slash', phase: 'active', u: 0.5 } }, seconds: 0.2 },
+  followThrough: { states: { body: { move: 'move:slash', phase: 'recover', u: 0.5 } }, seconds: 0.2 },
   cast: { states: { pose: 'cast' }, seconds: 0.5 },
   guard: { states: { stance: 'guard' }, seconds: 0.5 },
   hurt: { states: { hurt: true }, seconds: 0.2 },

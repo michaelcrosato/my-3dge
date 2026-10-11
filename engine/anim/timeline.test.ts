@@ -118,6 +118,49 @@ describe('Attack', () => {
     expect(hit).toEqual([3, 5, 3, 5]);
   });
 
+  it('keys targets without an id by the function given, and throws for a key that is no number (ANIM_BAD_HIT_KEY)', () => {
+    const [a, b] = [
+      { name: 'a', at: new Vector3(1, 0, 0) },
+      { name: 'b', at: new Vector3(-1, 0, 0) },
+    ];
+    const key = (t: typeof a) => (t === a ? 1 : 2);
+    const hit: string[] = [];
+    const record = (t: typeof a) => hit.push(t.name);
+    const slash = new Attack('slash');
+    slash.start();
+    while (slash.busy) {
+      slash.update(SIM_DT);
+      slash.hits([a, b], () => true, record, key);
+    }
+    const combo = new Combo(['slash']);
+    combo.press();
+    while (combo.busy) {
+      combo.update(SIM_DT);
+      combo.hits([b, a], () => true, record, key);
+    }
+    expect(hit).toEqual(['a', 'b', 'b', 'a']);
+
+    slash.start();
+    while (!slash.hitOpen) slash.update(SIM_DT);
+    // @ts-expect-error: targets without an id field need a keying function
+    expect(() => slash.hits([a, b], () => true, record)).toThrow(
+      '[ANIM_BAD_HIT_KEY] hits keyed a target by undefined, not a finite number',
+    );
+    expect(() =>
+      slash.hits(
+        [a],
+        () => true,
+        record,
+        () => Number.NaN,
+      ),
+    ).toThrow('by NaN, not a finite number');
+    combo.press();
+    while (!combo.current.hitOpen) combo.update(SIM_DT);
+    // @ts-expect-error: the same for a combo
+    expect(() => combo.hits([a], () => true, record)).toThrow('[ANIM_BAD_HIT_KEY]');
+    expect(hit).toEqual(['a', 'b', 'b', 'a']);
+  });
+
   it('opens the window for the step even when the strike is shorter than a tick', () => {
     const flick = new Attack({ arc: [0, 0], time: { wind: 0.02, active: 0.004, recover: 0.05 } });
     flick.start();

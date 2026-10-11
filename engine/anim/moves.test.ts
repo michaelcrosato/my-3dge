@@ -4,7 +4,7 @@
  * hands' and the blade tip's paths over u within 1 cm on average and 3 cm at worst, each exception listed with its
  * reason. Also: a humanoid and an animator playing moves (bone lengths, a solve from the state alone, a spin's turn,
  * the sim's state the same whether or not it was posed, a precise trail), `moveAt`, `measureMove` and its cache,
- * `inArc`, `inHitShape`, `knockback` and the strike's span.
+ * `inArc`, `inHitShape`, `knockback` and the strike's span, read from an animator only with `preciseHits`.
  */
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -255,5 +255,18 @@ describe('measureMove, the hit helpers and the strike', () => {
     expect(base.distanceTo(tip)).toBeCloseTo(rig.build.armLower, 6);
     strikeSegment(rig, 'kick', base, tip);
     expect(tip.y).toBeLessThan(base.y);
+  });
+
+  it('spans a strike on an animator only with preciseHits: else its pose is the view’s (ANIM_NOT_PRECISE)', () => {
+    const make = (preciseHits: boolean) =>
+      new Animator({ build: 'build:heroic', weapon: 'sword', clock: 0, preciseHits }).update({ body: moveAt('slash') });
+    const [base, tip, bodyBase, bodyTip] = Array.from({ length: 4 }, () => new Vector3());
+    const precise = make(true);
+    strikeSegment(precise, 'blade', base, tip);
+    strikeSegment(precise.body, 'blade', bodyBase, bodyTip);
+    expect([base, tip]).toEqual([bodyBase, bodyTip]);
+    expect(() => strikeSegment(make(false), 'blade', base, tip)).toThrow(
+      /^\[ANIM_NOT_PRECISE\] strikeSegment was given an animator without preciseHits: .*: make the animator/,
+    );
   });
 });

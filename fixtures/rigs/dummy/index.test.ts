@@ -33,12 +33,12 @@ interface Swing {
 }
 
 /**
- * The hero (an animator), at the origin facing +Z, plays `attack` (or a combo) to its end at `dummy`: each tick it
- * steps and poses, publishes
- * the strike's sweep, and connects with the dummy when the sweep crosses its capsule or the dummy is in the hit shape.
+ * The hero (an animator with `preciseHits`, so its pose is sim data), at the origin facing +Z, plays `attack` (or a
+ * combo) to its end at `dummy`: each tick it steps and poses, publishes the strike's sweep (read from the animator,
+ * as sim code must), and connects with the dummy when the sweep crosses its capsule or the dummy is in the hit shape.
  */
 function swingAt(dummy: Dummy, attack: Attack | Combo, press: (tick: number) => boolean = (t) => t === 0): Swing {
-  const hero = new Animator({ ...HERO, clock: 0 });
+  const hero = new Animator({ ...HERO, clock: 0, preciseHits: true });
   const out: Swing = { hits: [], touches: [], window: [] };
   const [base, tip] = [new Vector3(), new Vector3()];
   const at = new Vector3();
@@ -53,7 +53,7 @@ function swingAt(dummy: Dummy, attack: Attack | Combo, press: (tick: number) => 
     const current = attack instanceof Combo ? attack.current : attack;
     if (!current.hitOpen) continue;
     out.window.push(tick);
-    strikeSegment(hero.body, strikePart(current.move, true), base, tip);
+    strikeSegment(hero, strikePart(current.move, true), base, tip);
     const sweep: Sweep | null = current.sweep(base, tip);
     const touches = sweep !== null && sweepTouches(dummy, sweep);
     if (touches) out.touches.push(tick);

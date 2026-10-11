@@ -9,9 +9,9 @@
  *
  * Invariants:
  * - Angles turn toward the right hand when positive (authoring.ts `turnRight`); on the `vertical` plane, upward.
- * - Heights are metres from the shoulder centre (the neck joint), at the reference arm; a kick's `kickHeight` is a
- *   share of the hip height. Reaches are metres from the shoulder centre at the reference arm (`REFERENCE_ARM`), scaled
- *   by the body's arm length when `reachScale` is `'arm'`.
+ * - Heights are metres from the shoulder centre (the neck joint), never scaled; a kick's `kickHeight` is a share of
+ *   the hip height. Reaches (and `windReach`) are metres from the shoulder centre at the reference arm
+ *   (`REFERENCE_ARM`), scaled by the body's arm length when `reachScale` is `'arm'`.
  * - `hitAt` is the move's own: 0.35 of the active phase by default for every move, however the move was made (the
  *   old one depended on whether it was built from a name or a spec).
  * - Entries are frozen registry entries (engine/core/registry.ts); a game adds its own with `defineMove`. A missing id
@@ -109,7 +109,8 @@ export const MOVE_FIELDS = {
     type: 'string',
     enum: ['arm', 'none'],
     default: 'arm',
-    description: 'Scale reaches and heights by the body’s arm length over the reference arm, or not.',
+    description:
+      'Scale reaches (and windReach) by the body’s arm length over the reference arm, or not; heights are never scaled.',
   },
   rootMotion: {
     type: 'string',
