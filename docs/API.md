@@ -283,6 +283,7 @@ game agent's manual.
 - `HeadlessOptions` (interface from [`engine/app/headless.ts`](../engine/app/headless.ts)): How a headless engine starts.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
 - `Hit` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What a raycast or shape cast struck.
+- `hitProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Hits the prop `id` from `from` (m): calls its `hit` hook, whose `knock(more)` knocks its body away from `from` with `strength` under `more` (engine/physics/bodies.ts's `knock`: 4.6875 m/s across, 2.5 m/s up, no twist by default).
 - `holdsToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Whether `id` holds a token: one of the oldest `cap` grants.
 - `hop` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The launch velocity (m/s) that carries a body thrown up at `up` m/s from `from` to land on `to` under `gravity` (m/s²): `up` vertically and the ground distance over `airTime` across, so a jumper hops onto a crate as well as across the floor.
 - `HOP` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): The prototype slime's jumps: `up` (m/s) for a hop of at most `reach` metres, `pounce` (m/s) for its lower, flatter leap at a target.
@@ -460,6 +461,7 @@ game agent's manual.
 - `releaseToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Gives `id`'s token back (its attack ended, or was broken off): true when it held one.
 - `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body.
 - `removeAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Removes an agent's body now (`updateCrowd` does it for `leaving` agents and old corpses): it is `gone`.
+- `removeProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Removes a prop: its entity and its body.
 - `renderSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect as mono samples (engine/audio/dsp/render.ts): one variant, its layers mixed in.
 - `renderSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One pass of the song as mono samples (engine/audio/dsp/render.ts): at least the pass's length, so passes played back to back every `songTiming(song).seconds` keep time, plus the last notes' tails; silence when no track plays at the intensity asked for.
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
@@ -487,7 +489,10 @@ game agent's manual.
 - `SAMPLE_STATES` (const from [`engine/anim/states.ts`](../engine/anim/states.ts)): Named body states, my-3d2dge's `CHAR_STATES` in metres (moving along +Z), without the moves (WP 6.1).
 - `SampleState` (interface from [`engine/anim/states.ts`](../engine/anim/states.ts)): A named body state and how long it is held, seconds: a body stepped through it shows it.
 - `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
+- `SCENE_PROP_FIELDS` (const from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `sceneProp`'s fields.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
+- `ScenePropComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `sceneProp`: a prop standing in a scene.
+- `ScenePropComponents` (type from [`engine/sim/props.ts`](../engine/sim/props.ts)): The components this module reads.
 - `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
 - `ScriptedGamepad` (interface from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): A pad that a script moves frame by frame.
@@ -540,6 +545,7 @@ game agent's manual.
 - `SpatialHashOptions` (type from [`engine/world/spatial.ts`](../engine/world/spatial.ts)): What `new SpatialHash` takes: each field of `SPATIAL_HASH_FIELDS`, optional.
 - `spawnActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
 - `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
+- `spawnProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Stands the prop of `placement` in the scene: its body (when it has one; the scene needs physics then) and an entity with the component `sceneProp`.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
@@ -777,6 +783,7 @@ game agent's manual.
 - `hashPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose's 64-bit FNV-1a digest (16 hex digits) over the numbers `toArray` gives: equal numbers, equal hash.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
 - `Hit` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What a raycast or shape cast struck.
+- `hitProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Hits the prop `id` from `from` (m): calls its `hit` hook, whose `knock(more)` knocks its body away from `from` with `strength` under `more` (engine/physics/bodies.ts's `knock`: 4.6875 m/s across, 2.5 m/s up, no twist by default).
 - `holdsToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Whether `id` holds a token: one of the oldest `cap` grants.
 - `hop` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The launch velocity (m/s) that carries a body thrown up at `up` m/s from `from` to land on `to` under `gravity` (m/s²): `up` vertically and the ground distance over `airTime` across, so a jumper hops onto a crate as well as across the floor.
 - `HOP` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): The prototype slime's jumps: `up` (m/s) for a hop of at most `reach` metres, `pounce` (m/s) for its lower, flatter leap at a target.
@@ -883,6 +890,7 @@ game agent's manual.
 - `releaseToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Gives `id`'s token back (its attack ended, or was broken off): true when it held one.
 - `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body.
 - `removeAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Removes an agent's body now (`updateCrowd` does it for `leaving` agents and old corpses): it is `gone`.
+- `removeProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Removes a prop: its entity and its body.
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
 - `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
 - `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
@@ -893,7 +901,10 @@ game agent's manual.
 - `SAMPLE_STATES` (const from [`engine/anim/states.ts`](../engine/anim/states.ts)): Named body states, my-3d2dge's `CHAR_STATES` in metres (moving along +Z), without the moves (WP 6.1).
 - `SampleState` (interface from [`engine/anim/states.ts`](../engine/anim/states.ts)): A named body state and how long it is held, seconds: a body stepped through it shows it.
 - `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
+- `SCENE_PROP_FIELDS` (const from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `sceneProp`'s fields.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
+- `ScenePropComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `sceneProp`: a prop standing in a scene.
+- `ScenePropComponents` (type from [`engine/sim/props.ts`](../engine/sim/props.ts)): The components this module reads.
 - `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
 - `seek` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way from `from` to `to` on the ground: a unit vector, zero within a millimetre.
@@ -926,6 +937,7 @@ game agent's manual.
 - `SpatialHashOptions` (type from [`engine/world/spatial.ts`](../engine/world/spatial.ts)): What `new SpatialHash` takes: each field of `SPATIAL_HASH_FIELDS`, optional.
 - `spawnActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
 - `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
+- `spawnProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Stands the prop of `placement` in the scene: its body (when it has one; the scene needs physics then) and an entity with the component `sceneProp`.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
@@ -2511,6 +2523,12 @@ For the agents who maintain the engine.
 - `StageOptions` (interface): What a stage is made of: the level (none for an empty stage), where materials come from, and its registry.
 - `StandInPlace` (interface): Where a stand-in stands and how it looks, read from its entity's placing component.
 
+### [`engine/gfx/stageProps.ts`](../engine/gfx/stageProps.ts)
+
+- `createStageProps` (function): Draws the scene's props (see the file comment).
+- `StageProps` (interface): Props drawn on the stage (see the file comment).
+- `StagePropsOptions` (interface): What `createStageProps` takes.
+
 ### [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)
 
 - `bakeKey` (function): The key of a bake from `source`: the canonical hash of its texture, seed, parameters and size.
@@ -2979,6 +2997,16 @@ For the agents who maintain the engine.
 - `addLevelBodies` (function): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id.
 - `LEVEL_FRICTION` (const): The level's friction: the prototype's hall.
 
+### [`engine/sim/props.ts`](../engine/sim/props.ts)
+
+- `definePropKinds` (function): Declares the component `sceneProp` on `registry` (once).
+- `hitProp` (function): Hits the prop `id` from `from` (m): calls its `hit` hook, whose `knock(more)` knocks its body away from `from` with `strength` under `more` (engine/physics/bodies.ts's `knock`: 4.6875 m/s across, 2.5 m/s up, no twist by default).
+- `removeProp` (function): Removes a prop: its entity and its body.
+- `SCENE_PROP_FIELDS` (const): The component `sceneProp`'s fields.
+- `ScenePropComponent` (interface): The component `sceneProp`: a prop standing in a scene.
+- `ScenePropComponents` (type): The components this module reads.
+- `spawnProp` (function): Stands the prop of `placement` in the scene: its body (when it has one; the scene needs physics then) and an entity with the component `sceneProp`.
+
 ### [`engine/sim/queryView.ts`](../engine/sim/queryView.ts)
 
 - `queryView` (function): The read-only view of a physics world.
@@ -3348,6 +3376,27 @@ For the agents who maintain the engine.
 - `HeroTuning` (interface): What a scene may tune of the hero: his walk, take-off and dash speeds, m/s.
 - `PROTOTYPE` (const): The hero's numbers as the prototype wrote them, in its units and seconds (see the file comment).
 - `spawnHero` (function): Spawns the hero, the player, with his feet at `at` facing `yaw` (rad); returns his id.
+
+### [`labs/box/scenes/hall-props.ts`](../labs/box/scenes/hall-props.ts)
+
+- `default` (default): The hall with its props, Box 3 (PLAN.md §9.0, WP 4.6): the hall with a hero (labs/box/scenes/hall.ts) and its props, standing in the scene through `spawnProp` (their bodies in the physics world, the page drawing them through the instanced prop meshes): the level's own, a brazier's fire on each of its 30 stands (`levelProps`), and `box.hallProps.count` crates and barrels, 10 to 300, on the first of `HALL_SPOTS`.
+- `HALL_PROPS_SETTINGS` (const): The scene's settings: how many crates and barrels.
+- `HALL_SPOTS` (const): The 300 spots of the hall's crates and barrels (see the file comment), as placements on the floor or a stack.
+- `HALL_SWING` (const): The scene's own component: the hero's shove, whose it is and its ticks left.
+- `hallProps` (const): The hall with its props.
+- `inShove` (function): Whether a shove from `hero` (his feet and heading) reaches the prop centred at `p` (see `SHOVE`).
+- `shove` (function): The hero shoves: every prop his shove reaches is hit, from his feet (see the file comment); returns the ids hit.
+- `SHOVE` (const): The hero's shove: how far it reaches (m), how wide (rad either side), how high (m from his middle), how long (s).
+
+### [`labs/box/scenes/hall.ts`](../labs/box/scenes/hall.ts)
+
+- `default` (default): The hall with a hero, Box 3 (PLAN.md §9.0, WP 4.6): the hall (labs/box/levels/hall.txt: 64 × 44 m inside walls 3 m high, a grid of pillars 3.5 m high, low walls to jump onto, 30 brazier stands, two galleries 1 m up along the north wall with stairs rising to each, and the octagonal rune dais at the centre, 0.5 m up) as a physics level, and the hero (labs/box/cast/hero.ts) at its spawn `@` on the dais, facing south.
+- `hall` (const): The hall with a hero.
+- `HALL_LEVEL` (const): The hall, compiled for the sim (its colliders, spawns and light spots).
+- `HALL_SETTINGS` (const): The scene's settings: the hero's speeds, m/s.
+- `HALL_START` (const): Where the hero starts: the level's spawn `@`, on the dais (m).
+- `HALL_TEXT` (const): labs/box/levels/hall.txt, as it is (see the file comment).
+- `setupHall` (function): The hall's setup: its level bodies, and the hero at the spawn facing south, tuned by `box.hall.*`; returns his id.
 
 ### [`labs/box/scenes/room-hero.ts`](../labs/box/scenes/room-hero.ts)
 

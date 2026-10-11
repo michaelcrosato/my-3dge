@@ -85,3 +85,16 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
 - The level's cutaway is made when a player first stands on it and runs while the view follows him, so side and
   brawler views see the hero. A level with no player (Box 1) never has one.
 - Plan edit: WP-3.10's Owns names the core proposal's files (accepted).
+
+## Amendment 5 (2026-10-11, WP-4.6): props stand in a running scene and draw themselves
+
+- **Core change:** `engine/sim/props.ts`: `spawnProp(w, placement)` adds the `propBody` and an entity with the engine
+  component `sceneProp` (prop, body, x/y/z centre, q turn). The system `props.readback` (phase readback) copies each
+  body's pose into that component. `hitProp` calls the prop's `hit` hook with `knock` wired to `bodies.ts` on its
+  body, plus the caller's strength; `removeProp` removes both. The name is `sceneProp` because
+  `fixtures/scenes/physics-props` declares `prop`.
+- `engine/gfx/stageProps.ts`: the stage draws `sceneProp` entities through `createPropMeshes`, lerping position and
+  slerping turn between steps. The meshes are made with the first prop, so stages without props keep their graph.
+  They are registered with the warm-up, with the key part `stage:props`, and get no stand-in.
+- Plan edit: WP-4.6's Owns adds the core proposal `engine/sim/props{,.test}.ts` and `engine/gfx/stageProps{,.test}.ts`,
+  and extends `engine/gfx/stage.ts` and `engine/sim-api.ts` (accepted).
