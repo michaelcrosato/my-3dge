@@ -1,0 +1,14 @@
+{"clip": "Idle_Torch", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Idle_Torch_Loop", "dur": 1.583, "loop": true, "tags": ["idle","prop","alt"], "desc": "standing with one arm raised, holding up a torch or lantern", "keys": [
+  {"t":0,
+   "hips":[-10,-1,100], "body":[13,-5,0], "chest":[0,11,0], "head":[0,2,0],
+   "shL":[0,0], "shR":[0,0], "armL":[97,25,0,54,37], "armR":[14,17,-98,57,-1],
+   "legL":[6,17,-98,22,6], "legR":[-31,14,-94,14,-38], "footL":[5,8,0], "footR":[4,32,0]},
+  {"t":0.5,
+   "hips":[-10,-1,99], "body":[13,-5,0], "chest":[0,7,0], "head":[0,5,0],
+   "shL":[0,-2], "shR":[-1,-2], "armL":[96,25,10,50,40], "armR":[18,15,-97,58,-2],
+   "legL":[6,17,-98,27,6], "legR":[-31,14,-94,22,-39], "footL":[5,8,0], "footR":[4,32,0]},
+  {"t":1.6,
+   "hips":[-10,-1,100], "body":[13,-5,0], "chest":[0,11,0], "head":[0,2,0],
+   "shL":[0,0], "shR":[0,0], "armL":[97,25,0,54,37], "armR":[14,17,-98,57,-1],
+   "legL":[6,17,-98,22,6], "legR":[-31,14,-94,14,-38], "footL":[5,8,0], "footR":[4,32,0]}
+]}

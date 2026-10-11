@@ -1,0 +1,10 @@
+{"clip": "Sleeping", "src": "M2M_ANIMATED", "dur": 1.667, "loop": true, "tags": ["rest","lie","idle"], "desc": "lies on the back asleep, the chest rising and falling", "keys": [
+  {"t":0,
+   "hips":[0,0,7], "body":[174,-90,174], "chest":[0,0,0], "head":[15,-12,18],
+   "shL":[0,0], "shR":[0,0], "armL":[60,-54,-59,145,-21], "armR":[-2,97,-24,37,-33],
+   "legL":[-8,16,-98,14,-14], "legR":[-8,12,-99,18,10], "footL":[0,15,0], "footR":[0,23,0]},
+  {"t":1.667,
+   "hips":[0,0,7], "body":[174,-90,174], "chest":[0,0,0], "head":[15,-12,18],
+   "shL":[0,0], "shR":[0,0], "armL":[60,-54,-59,145,-21], "armR":[-2,97,-24,37,-33],
+   "legL":[-8,16,-98,14,-14], "legR":[-8,12,-99,18,10], "footL":[0,15,0], "footR":[0,23,0]}
+]}
