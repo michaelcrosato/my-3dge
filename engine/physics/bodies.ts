@@ -11,15 +11,16 @@
  *   tip toward the push with a twist.
  * - **Movers** (shardfall's): kinematic bodies whose pose is a function of time, `moverPose(mover, t)`: back and forth
  *   along `offset` (waiting `hold` at the ends, eased when `smooth`), turning about +Y at `spin`. `driveMover` sets
- *   the velocities that bring the body there when the world steps, so riders are carried, and only the component and
- *   the body's pose are read, so a restore continues exactly. Call it in the phase `ai`, before the actors move, with
- *   the world (`w.time` during step k is k·dt: the step's end, shardfall's `pose((tick + 1) · dt)`).
+ *   the velocities that bring the body there when the world steps, so the character controller carries riders
+ *   (engine/physics/character.ts reads a moving floor's velocity), and only the component and the body's pose are
+ *   read, so a restore continues exactly. Call it in the phase `ai`, before the actors move, with the world (`w.time`
+ *   during step k is k·dt: the step's end, shardfall's `pose((tick + 1) · dt)`).
  * - **Triggers.** `addSensor(physics, shape, spec)` adds a fixed (or kinematic) body whose collider blocks nothing and
  *   detects every dynamic and kinematic body it overlaps; `sensorHits` lists those as of the last step, and
  *   `updateTrigger(physics, trigger)` compares them with `trigger.inside` and returns who entered and left, for the
  *   scene to emit as events. Fixed bodies (the level) never trip one.
  * - **The lost-body rescue.** `rescueLost(physics, level)` puts every dynamic body that fell `depth` below its tile's
- *   floor, or left the level, back on the nearest walkable tile, resting on the floor, still. It returns their ids.
+ *   floor, or left the level, back on the nearest walkable tile, just above its floor and still. It returns their ids.
  *
  * Invariants: no state beside Rapier's and the caller's (`trigger.inside`, the mover's fields); lists are in id order;
  * the nearest tile is the first in the level's order among equals. A mover's colliders sit on its body's origin.
@@ -41,7 +42,7 @@
 import RAPIER from '@dimforge/rapier3d-simd-compat';
 import { codeError } from '../core/log';
 import { Quaternion, Vector3 } from '../core/math';
-import { defineSchema, isPlainObject, show } from '../core/schema';
+import { copyValue, defineSchema, freezeValue, isPlainObject, show } from '../core/schema';
 import { bodyId, handleOf } from './capture';
 import type { GroupName } from './groups';
 import { check, quat, vec, type QuatLike, type Shape, type Vec3Like } from './queries';
@@ -198,8 +199,10 @@ export interface Mover {
 }
 
 /** A mover with every field at its default (no body). */
-export const MOVER: Readonly<Mover> = Object.freeze(
-  Object.fromEntries(Object.entries(MOVER_FIELDS).map(([key, field]) => [key, field.default])) as unknown as Mover,
+export const MOVER: Readonly<Mover> = freezeValue(
+  Object.fromEntries(
+    Object.entries(MOVER_FIELDS).map(([key, field]) => [key, copyValue(field.default)]),
+  ) as unknown as Mover,
 );
 
 /** Up, the axis movers turn about. */
@@ -353,7 +356,8 @@ function nearestWalkable(level: RescueLevel, x: number, z: number): number {
 
 /**
  * Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on
- * the nearest walkable tile: at its centre, resting on its floor, still, turned as it was. Returns their ids.
+ * the nearest walkable tile: at its centre, its lowest point just above the floor (5 cm), still, turned as it was, so it
+ * drops onto the floor. Returns their ids.
  */
 export function rescueLost(physics: Physics, level: RescueLevel, options: { depth?: number } = {}): number[] {
   const depth = finite(options.depth, DEPTH, 'rescueLost({ depth })');
