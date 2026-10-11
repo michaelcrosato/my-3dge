@@ -281,3 +281,26 @@ export type { PropMeshesOptions } from './gfx/props';
 export type { PropMeshPose } from './gfx/props';
 export type { PropLight } from './gfx/props';
 export { FLICKER } from './gfx/props';
+// Crowd rendering and pose LOD (WP 5.4): thousands of humanoids, blobs and floaters in a few dozen draw calls over the
+// instancing service, each body seen through bands of detail by its distance (the animator's pose level, capes),
+// culled by the view; the blob and floater bodies as data.
+export { createCrowd } from './gfx/puppets/crowd';
+export type { Crowd } from './gfx/puppets/crowd';
+export type { CrowdDraw } from './gfx/puppets/crowd';
+export type { CrowdRigDraw } from './gfx/puppets/crowd';
+export type { CrowdStats } from './gfx/puppets/crowd';
+export type { RigBody } from './gfx/puppets/crowd';
+export type { RigPart } from './gfx/puppets/crowd';
+export type { RigJoints } from './gfx/puppets/crowd';
+export type { RigShape } from './gfx/puppets/crowd';
+export { createCrowdLod } from './gfx/puppets/lod';
+export { CROWD_LOD } from './gfx/puppets/lod';
+export type { CrowdLod } from './gfx/puppets/lod';
+export type { CrowdLodOptions } from './gfx/puppets/lod';
+export type { CrowdLodCounts } from './gfx/puppets/lod';
+export type { CrowdBand } from './gfx/puppets/lod';
+export type { CrowdBandSpec } from './gfx/puppets/lod';
+export { BLOB_BODY } from './gfx/puppets/bodies/blob';
+export { blobBody } from './gfx/puppets/bodies/blob';
+export type { BlobFeatures } from './gfx/puppets/bodies/blob';
+export { FLOATER_BODY } from './gfx/puppets/bodies/floater';
