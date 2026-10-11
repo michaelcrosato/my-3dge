@@ -41,8 +41,10 @@ function swingAt(dummy: Dummy, attack: Attack | Combo, press: (tick: number) => 
   const [base, tip] = [new Vector3(), new Vector3()];
   const hero = new Vector3();
   for (let tick = 0; tick < 240; tick++) {
-    if (press(tick) && attack instanceof Combo) attack.press();
-    else if (press(tick)) attack.start();
+    if (press(tick)) {
+      if (attack instanceof Combo) attack.press();
+      else attack.start();
+    }
     attack.update(DT);
     rig.update({ move: attack.body });
     stepDummy(dummy, DT);

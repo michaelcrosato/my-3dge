@@ -134,25 +134,25 @@ const ARMED = { armed: true, armLength: 0.575 };
 describe('the arm', () => {
   it('eases its weight in at 30 and out at 12 per second, and asks the body to move', () => {
     const arm = createArmState();
-    const motion = stepArm(arm, moveAt('slash', 0.5), ARMED, effectorsAt(0), 1 / 60);
+    const motion = stepArm(arm, moveAt('slash', 0.5), ARMED, () => effectorsAt(0), 1 / 60);
     expect(arm.weight).toBeCloseTo(0.5, 12);
     expect(motion).toMatchObject({ lean: 0.3, lead: 'L' });
-    expect(stepArm(arm, undefined, ARMED, effectorsAt(0), 1 / 60)).toBeUndefined();
+    expect(stepArm(arm, undefined, ARMED, () => effectorsAt(0), 1 / 60)).toBeUndefined();
     expect(arm.weight).toBeCloseTo(0.3, 12);
-    expect(stepArm(arm, moveAt('jab', 0.5), ARMED, effectorsAt(0), 1 / 60)?.lead).toBe('R');
+    expect(stepArm(arm, moveAt('jab', 0.5), ARMED, () => effectorsAt(0), 1 / 60)?.lead).toBe('R');
   });
 
   it('starts a swing from rest, or from the last path while the arm is still raised (a chain)', () => {
     const arm = createArmState();
     const E = effectorsAt(0.2);
-    stepArm(arm, moveAt('slash', 0, 'wind'), ARMED, E, 1);
+    stepArm(arm, moveAt('slash', 0, 'wind'), ARMED, () => E, 1);
     expect([arm.theta0, arm.from.slice(0, 3)]).toEqual([1.1, [0.2, 1, 0]]);
-    stepArm(arm, moveAt('slash', 0.5, 'recover'), ARMED, E, 1);
+    stepArm(arm, moveAt('slash', 0.5, 'recover'), ARMED, () => E, 1);
     const theta = arm.theta;
-    stepArm(arm, moveAt('backslash', 0, 'wind'), ARMED, effectorsAt(0.3), 1);
+    stepArm(arm, moveAt('backslash', 0, 'wind'), ARMED, () => effectorsAt(0.3), 1);
     expect([arm.theta0, arm.from[0]]).toEqual([theta, 0.3]);
-    stepArm(arm, undefined, ARMED, E, 1);
-    stepArm(arm, moveAt('overhead', 0, 'wind'), ARMED, E, 1);
+    stepArm(arm, undefined, ARMED, () => E, 1);
+    stepArm(arm, moveAt('overhead', 0, 'wind'), ARMED, () => E, 1);
     expect(arm.theta0).toBe(-0.9); // the vertical plane's rest
   });
 

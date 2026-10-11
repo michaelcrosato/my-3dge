@@ -151,23 +151,24 @@ export type ArmMotion = BodyMotion & { lead: 'L' | 'R' };
 
 /**
  * One fixed step of the arm: the path at `input`'s phase and share (none: the arm eases down), the weight eased
- * toward it, and, as a swing begins its wind, where it starts (`last`: the body's last effectors). Returns the body
- * motion the move asks for, or undefined when no move plays.
+ * toward it, and, as a swing begins its wind, where it starts (`last`: the body's effectors before this step, asked
+ * for only then). Returns the body motion the move asks for, or undefined when no move plays.
  */
 export function stepArm(
   arm: ArmState,
   input: MoveInput | undefined,
   body: ArmBody,
-  last: Effectors,
+  last: () => Effectors,
   dt: number,
 ): ArmMotion | undefined {
   let target = 0;
   let motion: ArmMotion | undefined;
+  const phase = input ? PHASE_NUMBER[input.phase] : 0;
+  if (input && phase === 1 && arm.phase !== 1) startSwing(arm, resolveMove(input.move), body, last());
   [arm.windK, arm.turn] = [1, 0];
   if (input) {
     const m = resolveMove(input.move);
     const u = MathUtils.clamp(input.u, 0, 1);
-    const phase = PHASE_NUMBER[input.phase];
     const kick = m.limb === 'footR';
     const vertical = !kick && m.plane === 'vertical';
     const left = m.hand === 'L';
@@ -177,7 +178,6 @@ export function stepArm(
     const [r0, r1] = [m.reach[0] * scale, m.reach[1] * scale];
     const { lean, hop, crouch } = m.body;
     const lunge = m.rootMotion === 'apply' ? 0 : m.body.lunge;
-    if (phase === 1 && arm.phase !== 1) startSwing(arm, m, body, last, { kick, vertical, scale, z0 });
     [arm.phase, arm.kick, arm.vertical] = [phase, kick ? 1 : 0, vertical ? 1 : 0];
     arm.hand = m.hand === 'both' ? 2 : left ? -1 : 1;
     motion = { lean: 0, lunge: 0, hop: 0, crouch: 0, twist: 0, lead: left ? 'R' : 'L' };
@@ -220,35 +220,25 @@ export function stepArm(
 }
 
 /** A swing begins: its wind starts from rest, or from where a chained one left the arm; `from` keeps where it was. */
-function startSwing(
-  arm: ArmState,
-  m: Move,
-  body: ArmBody,
-  last: Effectors,
-  o: { kick: boolean; vertical: boolean; scale: number; z0: number },
-): void {
+function startSwing(arm: ArmState, m: Move, body: ArmBody, last: Effectors): void {
+  const kick = m.limb === 'footR';
   const chain = arm.weight > ARM.chain;
   const fists = !body.armed || m.hand === 'L' || !m.trail;
-  const restHeight = o.kick ? ARM.restHeight.kick : ARM.restHeight.hand;
-  arm.theta0 = chain ? arm.theta : o.vertical ? ARM.rest.vertical : ARM.rest.ground;
-  arm.height0 = chain && arm.kick === (o.kick ? 1 : 0) ? arm.height : fists ? o.z0 : restHeight;
-  arm.reach0 = chain ? arm.reach : (m.windReach ?? 0.75 * m.reach[0]) * o.scale;
+  const [rest, z0] = kick ? [ARM.restHeight.kick, m.kickHeight[0]] : [ARM.restHeight.hand, m.height[0]];
+  const scale = m.reachScale === 'arm' ? body.armLength / REFERENCE_ARM : 1;
+  arm.theta0 = chain ? arm.theta : !kick && m.plane === 'vertical' ? ARM.rest.vertical : ARM.rest.ground;
+  arm.height0 = chain && arm.kick === (kick ? 1 : 0) ? arm.height : fists ? z0 : rest;
+  arm.reach0 = chain ? arm.reach : (m.windReach ?? 0.75 * m.reach[0]) * scale;
   last.hands.L.toArray(arm.from, 0);
   last.hands.R.toArray(arm.from, 3);
   last.blade.toArray(arm.from, 6);
 }
 
-/** What `layArm` reads of the body beside its effectors. */
-export interface ArmLayBody {
-  readonly build: Build;
-  readonly armed: boolean;
-  /** The guard stance's weight: over 0.5, the free fist guards the chin. */
-  readonly guard: number;
-  /** The humanoid's attack weight: the kicking foot follows only while it is above 0. */
-  readonly attack: number;
-  /** The body's hop now, metres. */
-  readonly hop: number;
-}
+/**
+ * What `layArm` reads of the body beside its effectors: its build, whether it is armed, the guard stance's weight
+ * (over 0.5 the free fist guards the chin), the attack weight (the kicking foot follows only above 0) and the hop.
+ */
+export type ArmLayContext = Pick<EffectorContext, 'build' | 'armed' | 'w' | 'body'>;
 
 /** Scratch objects. */
 const [aim, dir, at, start, sweep] = Array.from({ length: 5 }, () => new Vector3());
@@ -269,7 +259,7 @@ function strikeTarget(arm: ArmState, E: Effectors): void {
 }
 
 /** Lays the arm over effectors `E` (rig-local, before size): the hands, and the right foot of a kick. */
-export function layArm(arm: ArmState, body: ArmLayBody, E: Effectors): Effectors {
+export function layArm(arm: ArmState, ctx: ArmLayContext, E: Effectors): Effectors {
   const w = arm.weight;
   if (!(w > 0)) return E;
   strikeTarget(arm, E);
@@ -288,14 +278,14 @@ export function layArm(arm: ArmState, body: ArmLayBody, E: Effectors): Effectors
     else if (arm.hand === 2) hand.lerp(at.copy(aim).addScaledVector(dir, -ARM.grip), w);
     else {
       const [f, r, u] = ARM.pullBack;
-      const guards = !body.armed || body.guard > 0.5;
+      const guards = !ctx.armed || ctx.w.stanceGuard > 0.5;
       const target = (guards ? fromFRU(GUARD_HANDS[side], at) : B(f, s * r, u, at)).add(E.chest);
       hand.lerp(blend ? start.lerp(target, arm.windK) : target, blend ? w : w * ARM.pullShare);
     }
   }
-  if (arm.kick && body.attack > 0) {
+  if (arm.kick && ctx.w.attack > 0) {
     const [c, s, reach] = [Math.cos(arm.theta), Math.sin(arm.theta), arm.reach + ARM.kickReach];
-    E.feet.R.lerp(B(c * reach, s * reach, arm.height * body.build.hipHeight + body.hop, at), w);
+    E.feet.R.lerp(B(c * reach, s * reach, arm.height * ctx.build.hipHeight + ctx.body.hop, at), w);
   }
   return E;
 }
@@ -336,7 +326,7 @@ export class MoveRig {
     const { move, ...rest } = input;
     const h = this.body;
     const armBody = { armed: h.weapon !== 'none', armLength: h.build.armUpper + h.build.armLower };
-    const motion = stepArm(this.arm, move, armBody, h.effectors, h.dt);
+    const motion = stepArm(this.arm, move, armBody, () => h.effectors, h.dt);
     h.step(motion ? { ...rest, body: motion } : rest);
     return this;
   }
@@ -349,7 +339,7 @@ export class MoveRig {
     if (!(arm.weight > 0) && arm.turn === 0) return this;
     const { effectors: E, pose: P, state: st } = h;
     const ctx = contextOf(h);
-    layArm(arm, { build: h.build, armed: ctx.armed, guard: st.weights.stanceGuard, attack: st.weights.attack, hop: st.body.hop }, E); // prettier-ignore
+    layArm(arm, ctx, E);
     armBlade(arm, fromFRU(WEAPONS[h.weapon], at).normalize(), E, E.blade);
     applyLayers(BLADE_LAYERS, ctx, 'R', E.blade).normalize();
     if (st.weights.down > 0) E.blade.lerp(fromFRU(DROPPED_BLADE, at), st.weights.down).normalize();
