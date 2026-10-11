@@ -1,7 +1,7 @@
 /**
  * @file The animation library's tools (PLAN.md §10, WP 8.5): find a clip, show it, bake it, draw it, cut a smaller
  * set, import libraries and fetch CMU takes, all from the command line, with no browser. Usage: node x anim
- * <find|show|cut|import|cmu|bake|sheet> …. Exit 0 when it did what was asked (`--check`: nothing differs), 1 when it
+ * <find|show|cut|import|cmu|bake|sheet|repack> …. Exit 0 when it did what was asked (`--check`: nothing differs), 1 when it
  * failed (a difference, a fetch, a broken file), 2 on a usage error naming the closest choice.
  *
  * - `find <words…> [--cat tag] [--max 20] [--json]`: every set's catalog, then the CMU ledger's takes not yet in a set
@@ -23,6 +23,8 @@
  *   (`--subjects 5,13`, `--legacy`) or convert them into `.cache/anim/cmu-lib/`; query the ledger (`[category|word…]
  *   [--status none|used|pick|skip] [--top N] [--json]`); verify the rates of takes the list leaves out (`rates [ids…]
  *   [--write]`).
+ * - `repack [set.json…] [--check]`: my-3d2dge's curated sets, or plain JSON sets, split into set directories
+ *   (tools/anim/repack.ts).
  *
  * @example
  * subcommandOf(['find', 'punch']); // 'find'
@@ -40,12 +42,21 @@ import { cutSet } from '../anim/cut';
 import { findClips } from '../anim/find';
 import { listGlb } from '../anim/glb-library';
 import { importSet, type Catalog } from '../anim/import';
-import { readSet, readSetDir, setDirName, splitSet, SETS_DIR, writeSetDir, type SetFiles } from '../anim/repack';
+import {
+  readSet,
+  readSetDir,
+  repackSets,
+  setDirName,
+  splitSet,
+  SETS_DIR,
+  writeSetDir,
+  type SetFiles,
+} from '../anim/repack';
 import { bakeReport, clipSheet, resolveClip } from '../anim/view';
 import { targetSlug } from '../lib/report';
 import { closest, UsageError, type Command, type CommandResult } from '../x';
 
-const SUBCOMMANDS = ['find', 'show', 'cut', 'import', 'cmu', 'bake', 'sheet'] as const;
+const SUBCOMMANDS = ['find', 'show', 'cut', 'import', 'cmu', 'bake', 'sheet', 'repack'] as const;
 type Sub = (typeof SUBCOMMANDS)[number];
 /** The flags each subcommand takes; any other is a usage error. */
 const FLAGS: Record<Sub, string[]> = {
@@ -59,6 +70,7 @@ const FLAGS: Record<Sub, string[]> = {
   cmu: ['subjects', 'legacy', 'tol', 'status', 'top', 'json', 'write'],
   bake: ['json'],
   sheet: ['frames', 'views'],
+  repack: ['check'],
 };
 type Values = Record<string, unknown>;
 
@@ -247,6 +259,18 @@ function run(sub: Sub, positionals: string[], values: Values, root: string): Com
     }
     case 'import':
       return { ...runImport(args, values, root), target: values.cmu ? 'import-cmu' : target };
+    case 'repack': {
+      const { lines, differ } = repackSets(
+        args.map((file) => resolve(root, file)),
+        values.check === true,
+      );
+      const summary = values.check
+        ? differ
+          ? `${differ} file(s) differ`
+          : 'every set as the repacker writes it'
+        : 'repacked';
+      return { ok: !differ, summary, lines, target };
+    }
     case 'cmu': {
       const cmuTarget = cmuTargets(args);
       const result = runCmu({ args, values, root, jsonPath: `out/anim/${targetSlug(cmuTarget)}/cmu.json` });
@@ -260,7 +284,7 @@ function run(sub: Sub, positionals: string[], values: Values, root: string): Com
 }
 
 const command: Command = {
-  usage: 'anim <find|show|cut|import|cmu|bake|sheet> [args]',
+  usage: 'anim <find|show|cut|import|cmu|bake|sheet|repack> [args]',
   options: {
     ...Object.fromEntries(
       ['cat', 'max', 'clips', 'name', 'title', 'credit', 'out', 'catalog', 'sources', 'rest', 'rm'].map((f) => [

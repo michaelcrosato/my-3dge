@@ -1,0 +1,112 @@
+/**
+ * @file Tests `x anim` (tools/cmd/anim.ts, WP 8.5) through the dispatcher, offline: `find punch` in 20 lines or fewer
+ * (Done when), `show`, `bake` with its three.js JSON, `sheet`'s SVG, `cut` and `import` writing and checking set
+ * directories, `cmu ledger`, and the usage errors that name the closest choice. The `cmu` subcommands that fetch
+ * (`get`, `all`, `rates`) and `import --cmu` need the network: tools/anim/*.test.ts cover them offline.
+ */
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { AnimationClip } from 'three';
+import { describe, expect, it } from 'vitest';
+import { riggedGlb } from '../anim/glb-fixture';
+import { requireSource } from '../lib/source';
+import { dispatch, MAX_LINES, ROOT } from '../x';
+import { subcommandOf, targetOf } from './anim';
+
+/** Runs `node x anim …` in process; the exit code and the printed lines. */
+async function anim(...args: string[]): Promise<[number, string[]]> {
+  const lines: string[] = [];
+  const code = await dispatch(['anim', ...args], { print: (line) => lines.push(line) });
+  return [code, lines];
+}
+const reportOf = (target: string) => JSON.parse(readFileSync(join(ROOT, 'out/anim', target, 'report.json'), 'utf8'));
+
+describe('x anim', () => {
+  it('find punch prints 20 lines or fewer (Done when)', async () => {
+    const [code, lines] = await anim('find', 'punch');
+    expect(code).toBe(0);
+    expect(lines.length).toBeLessThanOrEqual(MAX_LINES);
+    expect(lines[0]).toMatch(/^x anim: ok: \d+ clips and \d+ CMU takes match/);
+    expect(lines.at(-1)).toBe('report: out/anim/find-punch/report.json');
+  });
+
+  it('shows a clip as text, the lens folding its angles', async () => {
+    const [code, lines] = await anim('show', 'cmu/Walk_Loop', '--lens');
+    expect(code).toBe(0);
+    expect(lines[0]).toBe('x anim: ok: cmu/Walk_Loop: 1.1 s, a loop, 16 keys');
+    expect(lines[1]).toMatch(/^\{"clip": "Walk_Loop", "src": "CMU_02"/);
+  });
+
+  it('bakes a clip, and writes it as three.js AnimationClip JSON', async () => {
+    const [code, lines] = await anim('bake', 'cmu/Walk_Loop', '--json');
+    expect(code).toBe(0);
+    expect(lines[0]).toMatch(/34 frames, [\d.]+ KB of tracks; FK parity mean 0\.\d\d mm/);
+    const json = JSON.parse(readFileSync(join(ROOT, 'out/anim/bake-cmu-Walk_Loop/clip.json'), 'utf8'));
+    expect(AnimationClip.parse(json).tracks.length).toBe(json.tracks.length);
+  });
+
+  it('draws a contact sheet as SVG', async () => {
+    const [code] = await anim('sheet', 'quaternius/Punch_Cross', '--frames', '3', '--views', 'front,top');
+    expect(code).toBe(0);
+    const svg = readFileSync(join(ROOT, 'out/anim/sheet-quaternius-Punch_Cross/sheet.svg'), 'utf8');
+    expect(svg.startsWith('<svg')).toBe(true);
+    expect(reportOf('sheet-quaternius-Punch_Cross').artifacts[0].kind).toBe('image');
+  });
+
+  it('cuts a set into a directory, then finds nothing changed', async () => {
+    const out = mkdtempSync(join(tmpdir(), 'anim-cut-'));
+    expect((await anim('cut', 'cmu', '--clips', 'Cartwheel,Backflip', '--name', 'FLIPS', '--out', out))[0]).toBe(0);
+    const [code, lines] = await anim(
+      'cut',
+      'cmu',
+      '--clips',
+      'Cartwheel,Backflip',
+      '--name',
+      'FLIPS',
+      '--out',
+      out,
+      '--check',
+    );
+    expect(code).toBe(0);
+    expect(lines[0]).toMatch(/all 4 files as the tool writes them/);
+  });
+
+  it('imports a .glb, lists one, and checks a set against what it writes', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'anim-import-'));
+    writeFileSync(join(dir, 'lib.glb'), riggedGlb());
+    const glb = join(dir, 'lib.glb');
+    const [listed, list] = await anim('import', glb, '--list');
+    expect([listed, list[1]]).toEqual([0, `${glb}: rig unreal`]);
+    const out = join(dir, 'set');
+    expect((await anim('import', glb, '--name', 'MINE', '--out', out))[0]).toBe(0);
+    expect(readFileSync(join(out, 'Wave_Loop.json'), 'utf8')).toMatch(/"via": "source"/);
+    expect((await anim('import', glb, '--name', 'MINE', '--out', out, '--check'))[0]).toBe(0);
+    const [code, lines] = await anim('import', glb, '--name', 'MINE', '--out', out, '--check', '--legacy');
+    expect(code).toBe(1);
+    expect(lines.join('\n')).toMatch(/ANIM_SET_DIFFERS/);
+  });
+
+  it('queries the CMU ledger', async () => {
+    const [code, lines] = await anim('cmu', 'ledger', 'cartwheel', '--status', 'used');
+    expect(code).toBe(0);
+    expect(lines[1]).toMatch(/^49_06\t.*USED: Cartwheel/);
+  });
+
+  it('repacks the curated sets still from my-3d2dge as committed (needs the my-3d2dge checkout)', async (context) => {
+    requireSource('my-3d2dge', context);
+    const [code, lines] = await anim('repack', '--check');
+    expect(code).toBe(0);
+    expect(lines.slice(1, 3)).toEqual(['mesh2motion: ok', 'cmu: ok']);
+  });
+
+  it('exits 2 for an unknown subcommand or a flag it does not take, naming the closest', async () => {
+    expect(() => subcommandOf(['fnd'])).toThrow(/did you mean find\?/);
+    expect(targetOf(['show', 'cmu/Walk_Loop'])).toBe('show-cmu-Walk_Loop');
+    const [code, lines] = await anim('find', 'punch', '--lens');
+    expect(code).toBe(2);
+    expect(lines.join('\n')).toMatch(/anim find takes no --lens/);
+    expect((await anim('cmu', 'ledgr'))[0]).toBe(2);
+    expect((await anim('show'))[0]).toBe(2);
+  });
+});
