@@ -1,14 +1,21 @@
 {
   "action": "deathShock",
-  "desc": "Death by electrocution (Crash, Diablo III): arms flung out, the body jerking from side to side until the game ends it (finish), then a collapse onto its back.",
+  "desc": "Death by electrocution (Crash, Diablo III): a jolt flings the arms out, the body jerks from side to side until the game ends it (finish), collapses onto its back and stays down; finish again revives it.",
   "beats": [
+    {
+      "name": "jolt",
+      "seconds": 0.15,
+      "body": { "hurt": true },
+      "motion": { "lean": -0.25 },
+      "effectors": { "handL": [0.1, -0.5, 0.2], "handR": [0.1, 0.5, 0.2] },
+      "events": [{ "type": "zap" }]
+    },
     {
       "name": "jerkL",
       "seconds": 0.05,
       "body": { "hurt": true },
       "motion": { "lean": -0.3, "twist": 0.4 },
-      "effectors": { "handL": [0.1, -0.5, 0.15], "handR": [0.1, 0.5, 0.25] },
-      "events": [{ "type": "zap" }]
+      "effectors": { "handL": [0.1, -0.5, 0.15], "handR": [0.1, 0.5, 0.25] }
     },
     {
       "name": "jerkR",
@@ -19,14 +26,16 @@
       "effectors": { "handL": [0.1, -0.5, 0.25], "handR": [0.1, 0.5, 0.15] }
     },
     { "name": "collapse", "seconds": 0.4, "body": { "down": 1 }, "events": [{ "type": "down", "at": 1 }] },
-    { "name": "dead", "seconds": 0.2, "until": "next", "body": { "down": 1 } }
+    { "name": "dead", "seconds": 0.2, "until": "next", "body": { "down": 1 } },
+    { "name": "revive", "seconds": 0.25, "body": { "down": 0.5, "pose": "crouch" }, "events": [{ "type": "revive" }] },
+    { "name": "kneel", "seconds": 0.3, "body": { "pose": "kneel" } },
+    { "name": "stand", "seconds": 0.25 }
   ],
   "exit": "collapse",
   "check": {
     "signals": [
       { "at": 1, "do": "finish" },
-      { "at": 2, "do": "stop" }
-    ],
-    "seconds": 2.5
+      { "at": 2, "do": "next" }
+    ]
   }
 }

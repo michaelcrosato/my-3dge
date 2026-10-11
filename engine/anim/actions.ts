@@ -19,8 +19,8 @@
  * - Effector targets are `[forward, right, up]` metres (authoring.ts `B`) times the build's size: the grips and the
  *   gaze from the shoulder centre at rest, scaled by the arm's length over the reference arm; the soles from the
  *   ground under the body, scaled by the leg's over `build:chibi`'s.
- * - A flip turns the body `turns` times about a pivot `ACTION.pivot` hip heights up; a scale keeps the lowest point
- *   where it was; with either, the body never dips below its ground point.
+ * - A flip turns the body `turns` times about a pivot `ACTION.pivot` hip heights up (a `ground` one, a roll, keeps its
+ *   lowest point on its ground point; in the air the arc is the game's); a scale keeps the lowest point where it was.
  *
  * Carried from `my-3d2dge:src/emberdeep/96-hero-clips.js:31-49` (`HCL_MOVES`, as input: a moment's clip and its
  * speed, fades, mask, walk, hold, landed and next, as a beat's `clip` and the beats after it) and
@@ -145,7 +145,7 @@ export const ACTION_FIELDS = {
   exit: { type: 'string', default: '', description: 'The beat finish() goes to ("": it stops).' },
   pair: { type: 'string', default: '', description: "The partner's action, played in lockstep (a grab's victim)." },
   check: { type: 'object', default: { seconds: 0, signals: [], lift: [] }, description: 'How the anim QA plays it (actionCheck).', properties: {
-    seconds: { ...seconds('How long (0: its length plus ACTION.out).'), default: 0 },
+    seconds: { ...seconds('How long (0: the last signal, then its length, plus ACTION.out).'), default: 0 },
     signals: { type: 'array', default: [], description: 'What the game does, when: next, finish, stop or a beat (go).', items: {
       type: 'object', properties: {
         at: { ...seconds('Seconds after it starts.'), required: true },
@@ -524,7 +524,7 @@ export class Actions implements AnimLayer {
     }
   }
 
-  /** `flipLayer`: squashes the body keeping its lowest point, turns it about its pivot, keeps it off the ground. */
+  /** `flipLayer`: squashes the body keeping its lowest point, turns it about its pivot, rolls it on the ground. */
   #turn(animator: Animator): void {
     const ch = this.channels();
     const { pose, world, skeleton, build: b, position, yaw } = animator.body;
@@ -544,8 +544,7 @@ export class Actions implements AnimLayer {
     pose.rootPos.sub(pivot).applyQuaternion(turn).add(pivot);
     pose.rootRot.premultiply(turn);
     forwardKinematics(skeleton, pose, world);
-    const low = position.y - lowest(skeleton, world);
-    pose.rootPos.y += ground ? low : Math.max(0, low);
+    if (ground) pose.rootPos.y += position.y - lowest(skeleton, world); // in the air, the arc is the game's
   }
 }
 
@@ -571,7 +570,7 @@ export function actionCheck(
   const { seconds, signals, lift } = entry.check;
   const length = entry.beats.reduce((sum, b) => sum + (b.until === 'next' ? 0 : b.seconds), 0);
   return {
-    seconds: seconds || length + ACTION.out,
+    seconds: seconds || Math.max(0, ...signals.map((s) => s.at)) + length + ACTION.out, // the last signal, then the rest
     script: (animator) => {
       const { dt, build } = animator.body;
       const libraries = options.libraries ?? [];

@@ -1,10 +1,14 @@
 {
   "action": "deathSpin",
-  "desc": "Death by spinning (ALttP: four facings times three turns, about 6 frames each, then a collapse): three turns in place, flat on its back, dead.",
+  "desc": "Death by spinning (ALttP: four facings times three turns, about 6 frames each, then a collapse): three turns in place, flat on its back, dead until the game revives it (finish: sit up, kneel, stand).",
   "beats": [
     { "name": "spin", "seconds": 1.2, "body": { "hurt": true }, "flip": { "turns": 3, "axis": "spin" } },
     { "name": "collapse", "seconds": 0.35, "body": { "down": 1 }, "events": [{ "type": "down", "at": 1 }] },
-    { "name": "dead", "seconds": 0.2, "until": "next", "body": { "down": 1 } }
+    { "name": "dead", "seconds": 0.2, "until": "next", "body": { "down": 1 } },
+    { "name": "revive", "seconds": 0.25, "body": { "down": 0.5, "pose": "crouch" }, "events": [{ "type": "revive" }] },
+    { "name": "kneel", "seconds": 0.3, "body": { "pose": "kneel" } },
+    { "name": "stand", "seconds": 0.25 }
   ],
-  "check": { "signals": [{ "at": 2.2, "do": "stop" }], "seconds": 3 }
+  "exit": "revive",
+  "check": { "signals": [{ "at": 2.2, "do": "finish" }] }
 }

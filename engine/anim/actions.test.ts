@@ -208,7 +208,7 @@ describe('the player', () => {
     expect(a.save()).toEqual(b.save());
   });
 
-  it('rolls a body on its ground point, and keeps one flipping in the air above it', () => {
+  it('rolls a body on its ground point; one flipping in the air rides the arc the game makes', () => {
     for (const [id, ground] of [
       ['roll', true],
       ['backflip', false],
@@ -225,7 +225,7 @@ describe('the player', () => {
         const tips = JOINTS.map((_, j) => Math.min(world.positions[j * 3 + 1], tipPosition(skeleton, world, j).y));
         const low = Math.min(...tips, ...SOCKETS.map((socket) => socketPosition(skeleton, world, socket).y));
         if (ground) expect(low).toBeCloseTo(0, 6);
-        else expect(low).toBeGreaterThan(-1e-6);
+        else expect(animator.body.pose.rootPos.y).toBeLessThan(2); // not lifted off: a backflip turns about its pivot
       }
     }
   });

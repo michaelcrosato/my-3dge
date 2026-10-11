@@ -5,7 +5,7 @@
     {
       "name": "rise",
       "seconds": 0.9,
-      "clip": { "name": "QUATERNIUS/LayToIdle", "speed": 1.1, "fade": 0, "out": 0.25 },
+      "clip": { "name": "QUATERNIUS/LayToIdle", "speed": 1.1, "fade": 0.15, "out": 0.25 },
       "flags": ["invulnerable"]
     },
     {
