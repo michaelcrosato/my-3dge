@@ -158,6 +158,6 @@ export default defineScene<Components>('steps', {
     const course = buildCourse(physicsOf(w));
     w.spawn({ shuttle: { body: course.platform.body } });
     w.systems.add('shuttle', shuttle, { phase: 'ai' });
-    spawnActor(w as unknown as World, { at: [course.oneBox.x0, 0, course.oneBox.z], character: HERO });
+    spawnActor(w, { at: [course.oneBox.x0, 0, course.oneBox.z], character: HERO });
   },
 });

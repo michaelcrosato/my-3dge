@@ -1,30 +1,38 @@
 /**
- * @file The feel meter (PLAN.md WP 3.2; doctrine: Agent-operable): how a character handles, as numbers, so agents
- * tune feel by numbers instead of by eye. `measureFeel(character)` drives a character over a flat course in a world of
- * its own (run, let go, run, reverse, stop, a standing jump, a running jump, a dash, then jumps at ledges) and reports
- * `FeelReport`: response ticks, top speed, acceleration, stop and turn times, the jump's apex, air time and distance,
- * the reach (the highest ledge it jumps onto, which WP 4.3's walkable grid takes as the climb limit) and the dash's
- * distance. `__engine.feel()` (engine/sim/actors.ts) and `node x sim <scene> --feel` report it for a scene's actor.
+ * @file The feel (PLAN.md WP 3.2, §5.8; doctrine: Agent-operable): how a character's intents become its motion, and the
+ * meter that measures how it handles, so agents tune feel by numbers instead of by eye.
  *
- * The meter itself is `createFeelMeter` and `updateFeelMeter(meter, sample)`, one sample per tick (what the character
- * was told and did), so live play can be metered the same way. Its rules: a run starts when the move's length passes
- * 0.3; it is steady once its speed has not grown for 10 ticks; acceleration is the time to 90% of that speed; a stop
- * starts on letting go above 0.5 m/s and ends below 0.1 m/s; a turn starts when the move points against the motion
- * (cosine below −0.5) above 1 m/s and ends at 90% of the turn's starting speed the other way; a jump is measured from
- * the last tick on the ground to the first back on it, kept only when longer than 120 ms, its apex and distance from
- * where it took off. Times are seconds, distances metres.
+ * - `steer` and `settle` are one tick's feel, before and after the controller moves it (engine/physics/character.ts
+ *   `stepCharacter` calls them): the momentum model (acceleration, deceleration when let go, skid when told to go
+ *   against its motion, `airControl` in the air), jumps with coyote time and a buffer, the variable jump, the wall
+ *   jump, the dash, its own gravity integrated exactly, then landing, head bumps, the dash's end and facing.
+ * - The meter: `createFeelMeter` and `updateFeelMeter(meter, sample)`, one sample per tick, give a `FeelReport`.
+ *   Its rules: a run starts when the move's length passes 0.3 and is steady once its speed has not grown for 10
+ *   ticks; acceleration is the time to 90% of that speed; a stop starts on letting go above 0.5 m/s and ends below 0.1
+ *   m/s; a turn starts when the move points against the motion (cosine below −0.5) above 1 m/s and ends at 90% of that
+ *   speed the other way; a jump runs from the last tick on the ground to the first back on it (kept when longer than
+ *   120 ms), its apex and distance from where it took off. `measureFeel` (engine/sim/actors.ts) drives a character
+ *   over a flat course through the meter and adds the reach and the dash; `__engine.feel()` and `x sim --feel` print it.
  *
- * Invariants: measuring changes nothing but its own world, which it frees; it runs under the sim's maths
- * (engine/core/simMath.ts), so the report is the same number for number in Node and Chromium, run after run.
+ * Ticks: seconds round to ticks (coyote 0.10 s is 6 at 60 Hz, the buffer 0.12 s is 7). A jump pressed up to `buffer`
+ * ticks before the first tick on the ground jumps then; one up to `coyote` ticks after the last still jumps. A dash
+ * runs `duration` at `speed`, then keeps at most the run speed; its `cooldown` counts from its start. Gravity is the
+ * character's own, integrated exactly (Δy = (v₀ + v₁)/2·dt), so the apex is jumpSpeed²/2g within g·dt²/8.
  *
- * Carried from shardfall@fa2dab6 `crates/pav_core/src/feel.rs` (`FeelMeter::update`), in seconds instead of
- * milliseconds, with the course, the reach and the dash added.
+ * Invariants: `steer` and `settle` read and write only the state they are given (plain data, so the sim hashes and
+ * restores it). The meter keeps what it measures in its own plain object.
+ *
+ * Carried from shardfall@fa2dab6 `crates/pav_core/src/character.rs:770-925` (the movement maths) and
+ * `crates/pav_core/src/feel.rs` (`FeelMeter::update`, here in seconds), and `my-3d2dge:engine/my-3d2dge.js` §16
+ * (`Platformer`: the dash and the wall jump).
  *
  * @example
- * import { createCharacter } from './character';
- * const feel = measureFeel(createCharacter({ speed: 5 }));
- * feel.topSpeed; // 5
- * feel.apex; // 1.35: jumpSpeed²/2g, held to the top
+ * const meter = createFeelMeter(1 / 60);
+ * for (let tick = 1; tick <= 30; tick++) {
+ *   const speed = Math.min(6, tick * 0.75);
+ *   updateFeelMeter(meter, { tick, wish: [1, 0], velocity: [speed, 0, 0], feet: [0, 0, 0], grounded: true });
+ * }
+ * [meter.report.topSpeed, meter.report.accelerationTime]; // [6, 0.1333…]: 90% of 6 m/s after 8 ticks
  * @see engine/physics/feel.test.ts
  */
 import { Vector3 } from '../core/math';

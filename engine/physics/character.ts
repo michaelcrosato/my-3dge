@@ -5,43 +5,31 @@
  *
  * `createCharacter(spec)` checks settings against `CHARACTER_FIELDS` and fills the defaults (shardfall's movement, the
  * stress test's capsule: PLAN.md Appendix C); `addCharacter` adds the body (group `actor`), its bottom just outside the
- * skin so it does not stick at seams. `stepCharacter` is one tick: intents → velocity (acceleration, skid, air
- * control, coyote time, a jump buffer, a variable jump, a wall jump, a dash, its own gravity) → `moveCharacter` → the
- * velocity fixed from what happened. Its `state` (`CHARACTER_STATE_FIELDS`) is plain data in the actor's component.
+ * skin, so it does not stick at seams. `stepCharacter` is one tick: `steer` (engine/physics/feel.ts), `moveCharacter`,
+ * `settle`, then walls, pushes and the ground probe. Its `state` (`CHARACTER_STATE_FIELDS`) is plain data.
  *
  * How it moves, and why (Rapier 0.21, measured):
- * - **Across, then down.** One combined `computeColliderMovement` loses all its sideways motion on some ticks on level
- *   ground (§4.8), and a capsule skimming its floor at the skin meets phantom contacts. So a grounded move goes up by
- *   the skin, across, then down alone: no tick keeps less than 95% of its motion.
- * - **Steps and snapping are ours.** Rapier's autostep misses steps while sliding and climbs ~5 cm above its setting,
- *   so it is off: a grounded move across that a wall stops is tried again up by `autostep.height`, across (at least
- *   far enough to stand) and down, and kept when it gets further and lands on walkable ground no higher than `height`
- *   (exactly what it climbs; the round bottom also rides over edges below r(1 − cos maxSlope), 0.1 m here). Snapping
- *   follows the ground down by `snap`, only while grounded and not rising. Grounded means standing on walkable ground.
- * - **Its own gravity** (`characterGravity`, else the setting `physics.characterGravity`, 32 m/s², where props want
- *   9.81), integrated exactly, Δy = (v₀ + v₁)/2·dt: the apex is jumpSpeed²/2g within g·dt²/8 (1 mm at 60 Hz).
- * - **Pushing shares momentum**: walking into a dynamic body is an inelastic collision of a `push`-kg mass, so both
- *   leave at (push·v + m·u)/(push + m); its weight presses dynamic floors. Walls stop the velocity going into them,
- *   slopes do not. Moving floors carry it (Rapier's kinematic friction); idle on fixed ground it skips the controller;
- *   one-way platforms (unrotated boxes) hold feet at or above their top, less 8 cm.
- * - **Ticks**: seconds round to ticks (coyote 0.10 s: 6 at 60 Hz; buffer 0.12 s: 7). A jump pressed up to `buffer`
- *   ticks before the first tick on the ground jumps then; one up to `coyote` ticks after the last still jumps. A dash
- *   runs `duration` at `speed`, then keeps at most the run speed; its `cooldown` counts from its start.
+ * - **Across, then down.** One combined move loses all its sideways motion on some ticks on level ground (§4.8), and a
+ *   capsule skimming its floor at the skin meets phantom contacts: a grounded move goes up by the skin, across, then
+ *   down alone, and no tick keeps less than 95% of its motion.
+ * - **Steps and snapping are ours.** Rapier's autostep misses steps while sliding and climbs ~5 cm above its setting:
+ *   `autostep.height` is exactly what `moveCharacter` climbs. Grounded means standing on walkable ground (Rapier alone
+ *   also says so against a wall at a jump's apex).
+ * - **Pushing shares momentum** (an inelastic collision of a `push`-kg mass); walls stop the velocity going into them,
+ *   slopes do not; moving floors carry it; idle on fixed ground it skips the controller.
  *
  * Invariants: Rapier's controller (one per Rapier world and skin) keeps nothing between moves, so after a restore (a
  * new Rapier world) a new one takes over. Same state, input and world: same move, in Node and Chromium.
  *
- * Carried from shardfall@fa2dab6: `pavilion-lite/src/character.rs:179-399`, `crates/pav_core/src/character.rs:124-162,
- * 770-1089` (wiring, fixes, maths, defaults); `my-3d2dge:src/stress-world/20-sim.js:84, 125-131, 288-300` (capsule,
- * controller); `my-3d2dge:engine/my-3d2dge.js` §16 (`Platformer`: the dash, the wall jump).
+ * Carried from shardfall@fa2dab6 (`pavilion-lite/src/character.rs:179-399`, `crates/pav_core/src/character.rs:124-162,
+ * 959-1089`) and `my-3d2dge:src/stress-world/20-sim.js:84, 125-131, 288-300` (the capsule and controller).
  *
  * @example
  * import { createPhysics } from './world';
  * const physics = createPhysics();
  * physics.addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size: [40, 1, 40] }, position: [0, -0.5, 0] }] });
- * const hero = createCharacter({ speed: 5 });
+ * const [hero, state] = [createCharacter({ speed: 5 }), createCharacterState()];
  * const body = addCharacter(physics, hero, [0, 0, 0]);
- * const state = createCharacterState();
  * const settings = { get: (path: string) => (path === 'physics.gravity' ? 9.81 : undefined) };
  * for (let i = 0; i < 60; i++) {
  *   stepCharacter(physics, body, hero, state, { move: [1, 0] }, { dt: 1 / 60, gravity: 32 });
@@ -437,9 +425,10 @@ const PROBE_DEPTH = 0.15;
 /**
  * One sim tick of a character: `steer` turns its intents into a velocity and a move (engine/physics/feel.ts), the
  * controller makes the move (`moveCharacter`), `settle` fixes the velocity from what happened, walls stop the velocity
- * going into them, and it pushes what it walked into, probes the ground under it and weighs on a dynamic floor.
- * Changes `state`; sets the body's velocity, so the body gets there when the world steps: call it before the world
- * steps (engine/sim/actors.ts: the phase `anim`).
+ * going into them, it pushes what it walked into (both leave at (push·v + m·u)/(push + m)), probes the ground under it
+ * and presses a dynamic floor with push × world gravity. Moving floors carry it (Rapier's kinematic friction: a still
+ * character moves 1 mm down to keep it checking); idle on fixed ground it skips the controller. Changes `state` and
+ * sets the body's velocity, so the body gets there when the world steps: call it before (actors.ts: the phase `anim`).
  */
 export function stepCharacter(
   physics: Physics,
