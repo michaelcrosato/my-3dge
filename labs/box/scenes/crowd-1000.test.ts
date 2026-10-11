@@ -1,0 +1,119 @@
+/**
+ * @file Unit tests for the crowd, Box 4 (labs/box/scenes/crowd-1000.ts and its presets crowd-100.ts and crowd-5000.ts,
+ * PLAN.md WP 5.7): the queue lets 25 members in a step (1,000 are in after 40 steps); the mix is drawn as asked;
+ * every member starts on an open tile of the hall's floor, nearly all at least 5 m from the hero; the presets differ
+ * only in their count; and, driven as the climb replay drives the hero (off the dais, up the west stairs, along the
+ * west gallery), the crowd follows him up the stairs: walkers and slimes stand on the west gallery, 1 m up, at the end
+ * (Done-when 1), in the same run each time.
+ * @see labs/box/scenes/crowd-1000.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { createHeadless, floorHeight, tileAt, type Intents } from '../../../engine';
+import { HALL_LEVEL, HALL_START } from './hall';
+import { CROWD_TILES, crowd1000 } from './crowd-1000';
+import { crowd100 } from './crowd-100';
+import { crowd5000 } from './crowd-5000';
+
+type Member = {
+  crowdMember: { state: string; x: number; y: number; z: number; shape: string; flyer: boolean };
+  crowdWalker?: object;
+  crowdSlime?: object;
+  crowdWisp?: object;
+};
+type Engine = Awaited<ReturnType<typeof createHeadless>>;
+
+/** Every member of the crowd, in id order. */
+const members = (engine: Engine) => engine.entities('crowdMember').map(({ id }) => engine.get(id) as unknown as Member);
+/** A member's kind. */
+const kind = (m: Member) => (m.crowdWalker ? 'walker' : m.crowdSlime ? 'slime' : m.crowdWisp ? 'wisp' : '?');
+/** The glyph id of the tile under (x, z). */
+function glyphAt(x: number, z: number): string {
+  const { col, row } = tileAt(HALL_LEVEL, x, z)!;
+  return HALL_LEVEL.legend[HALL_LEVEL.tiles[row * HALL_LEVEL.cols + col]].id;
+}
+
+/** The climb replay's inputs (tests/replays/box-3-climb.replay.json): off the dais, up the west stairs, west. */
+const CLIMB: [number, Partial<Intents>][] = [
+  [20, {}],
+  [300, { move: [-0.8, -0.6] }],
+  [84, { move: [0, -1] }],
+  [36, {}],
+  [60, { move: [-1, 0] }],
+];
+
+describe('the crowd', () => {
+  it('queues every member at the start and lets 25 in a step: 1,000 after 40 steps, all alive', async () => {
+    const engine = await createHeadless({ scene: crowd1000 });
+    const alive = () => members(engine).filter((m) => m.crowdMember.state === 'alive').length;
+    expect(members(engine)).toHaveLength(1000);
+    const counts: number[] = [];
+    for (let k = 0; k < 41; k++) {
+      engine.step(1);
+      counts.push(alive());
+    }
+    expect(counts.slice(0, 5)).toEqual([25, 50, 75, 100, 125]);
+    expect(counts.slice(38)).toEqual([975, 1000, 1000]);
+  });
+
+  it('draws the mix: half walkers, three in ten slimes, two in ten wisps, or one kind alone', async () => {
+    const census = async (mix: string) => {
+      const engine = await createHeadless({ scene: crowd1000, settings: { 'box.crowd.mix': mix } });
+      return members(engine).reduce<Record<string, number>>((n, m) => ({ ...n, [kind(m)]: (n[kind(m)] ?? 0) + 1 }), {});
+    };
+    const mixed = await census('mixed');
+    expect(mixed.walker + mixed.slime + mixed.wisp).toBe(1000);
+    expect(Math.abs(mixed.walker - 500)).toBeLessThan(50);
+    expect(Math.abs(mixed.slime - 300)).toBeLessThan(45);
+    expect(Math.abs(mixed.wisp - 200)).toBeLessThan(40);
+    expect(await census('walkers')).toEqual({ walker: 1000 });
+    expect(await census('slimes')).toEqual({ slime: 1000 });
+    expect(await census('wisps')).toEqual({ wisp: 1000 });
+    const engine = await createHeadless({ scene: crowd1000 });
+    const shapes = new Set(members(engine).map((m) => `${kind(m)}:${m.crowdMember.shape}:${m.crowdMember.flyer}`));
+    expect([...shapes].sort()).toEqual(['slime:ball:false', 'walker:capsule:false', 'wisp:ball:true']);
+  });
+
+  it('starts every member on an open tile of the hall’s floor, nearly all at least 5 m from the hero', async () => {
+    const engine = await createHeadless({ scene: crowd1000 });
+    const tiles = new Set(CROWD_TILES);
+    const list = members(engine);
+    for (const { crowdMember: a } of list) {
+      const { col, row } = tileAt(HALL_LEVEL, a.x, a.z)!;
+      expect(tiles.has(row * HALL_LEVEL.cols + col)).toBe(true);
+      expect(a.y).toBe(floorHeight(HALL_LEVEL, a.x, a.z)); // the floor, or the foot of the dais's slope
+      expect(a.y).toBeLessThan(0.5);
+    }
+    const near = list.filter(({ crowdMember: a }) => Math.hypot(a.x - HALL_START[0], a.z - HALL_START[2]) < 5);
+    expect(near.length).toBeLessThan(5); // 40 draws each: only the unlucky stay near
+  });
+
+  it('has presets for 100 and 5,000, which differ only in their count; the count can be set', async () => {
+    expect([crowd100.id, crowd1000.id, crowd5000.id]).toEqual(['box:crowd-100', 'box:crowd-1000', 'box:crowd-5000']);
+    expect([crowd100, crowd1000, crowd5000].map((scene) => scene.settings)).toEqual([
+      { 'box.crowd.count': 100 },
+      { 'box.crowd.count': 1000 },
+      { 'box.crowd.count': 5000 },
+    ]);
+    expect(members(await createHeadless({ scene: crowd100 }))).toHaveLength(100);
+    expect(members(await createHeadless({ scene: crowd5000, settings: { 'box.crowd.count': 7 } }))).toHaveLength(7);
+  });
+
+  it('follows the hero up the west stairs: walkers and slimes stand on the west gallery at the end', async () => {
+    const run = async () => {
+      const engine = await createHeadless({ scene: crowd100 });
+      for (const [steps, intents] of CLIMB) engine.step(steps, intents);
+      engine.step(400);
+      return engine;
+    };
+    const [engine, again] = [await run(), await run()];
+    const hero = engine.get(1)?.actor as { x: number; y: number; z: number };
+    expect(glyphAt(hero.x, hero.z)).toBe('glyph:gallery');
+    const up = members(engine).filter(
+      ({ crowdMember: a }) => glyphAt(a.x, a.z) === 'glyph:gallery' && Math.abs(a.y - 1) < 0.02,
+    );
+    const kinds = new Set(up.map(kind));
+    expect(up.length).toBeGreaterThanOrEqual(5);
+    expect([kinds.has('walker'), kinds.has('wisp')]).toEqual([true, false]); // on their feet, by the stairs
+    expect(again.hash()).toBe(engine.hash());
+  }, 60_000);
+});
