@@ -2,9 +2,10 @@
  * @file The `anim` QA family (PLAN.md §8.6, WP 6.6, I-29): `node x qa anim` drives every body the engine animates
  * through its state matrix and measures the motion, in Node. The humanoid (each build in `HUMANOIDS`, through
  * `animCheckBody`, engine/anim/check.ts) holds every sample state (`state:<name>`), pose (`pose:<name>`), stance
- * (`stance:<name>`), move (`move:<name>`, played by an `Attack`) and reaction (`reaction:<name>`) at both facings, from
- * rest and back to rest; the blob (`blob:<state>`) and the floater (`floater:<state>`) hold theirs. The first build
- * also runs its matrix twice and at half the step, and so do the blob and the floater.
+ * (`stance:<name>`), move (`move:<name>`, played by an `Attack`), reaction (`reaction:<name>`) and action
+ * (`action:<name>`, each of data/anim/actions/ played by its own check, engine/anim/actions.ts `actionCheck`, WP 8.7)
+ * at both facings, from rest and back to rest; the blob (`blob:<state>`) and the floater (`floater:<state>`) hold
+ * theirs. The first build also runs its matrix twice and at half the step, and so do the blob and the floater.
  *
  * Metrics, one violation per id and metric, valued by the worst case (larger is worse) and naming where it happened:
  * - `nan` (1), `stretch`, `underFloor`, `reach` (metres): `animCheck`'s finite values, bone lengths, feet at or
@@ -36,11 +37,15 @@
  * Object.keys(humanoidStates()).includes('move:slash'); // true
  * @see tools/qa/anim.test.ts
  */
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { Fnv64 } from '../../engine/core/hash';
 import { Quaternion, Vector3 } from '../../engine/core/math';
 import { SIM_DT } from '../../engine/core/time';
 import { getBuild } from '../../engine/anim/builds';
+import { actionCheck, loadActions } from '../../engine/anim/actions';
 import { Animator } from '../../engine/anim/character';
+import { loadClipLibrary, type ClipLibrary } from '../../engine/anim/clip/library';
 import {
   animCheckBody,
   rateDrift,
@@ -61,7 +66,9 @@ import { SAMPLE_STATES } from '../../engine/anim/states';
 import { Attack } from '../../engine/anim/timeline';
 import { Blob, BLOB_MOVES, blobMoveTimes, type BlobInput } from '../../engine/anim/blob';
 import { Floater, FLOATER } from '../../engine/anim/floater';
+import { readSet } from '../anim/repack';
 import type { QaFamily, QaViolation } from '../cmd/qa';
+import { ROOT } from '../x';
 
 /** The thresholds, in metres and radians for a body of `size` 1. */
 export const ANIM_QA = {
@@ -131,7 +138,21 @@ function reaction(
   };
 }
 
-/** The humanoid's matrix: every sample state, pose, stance, move and reaction, by QA id. */
+/** The clip sets the actions' clip beats play from (WP 8.7), read once. */
+let actionClips: ClipLibrary[] | undefined;
+
+/** Each action of data/anim/actions/ (WP 8.7) played by its own check, by QA id (its id, `action:<name>`). */
+export function actionStates(): Record<string, MatrixState> {
+  const dir = join(ROOT, 'data', 'anim', 'actions');
+  const files = readdirSync(dir)
+    .filter((file) => file.endsWith('.json'))
+    .sort();
+  const actions = loadActions(files.map((file) => JSON.parse(readFileSync(join(dir, file), 'utf8')) as unknown));
+  actionClips ??= ['quaternius', 'mesh2motion'].map((set) => loadClipLibrary(readSet(set)));
+  return Object.fromEntries(actions.map((action) => [action.id, actionCheck(action, { libraries: actionClips })]));
+}
+
+/** The humanoid's matrix: every sample state, pose, stance, move, reaction and action, by QA id. */
 export function humanoidStates(): Record<string, MatrixState> {
   const states: Record<string, MatrixState> = {};
   for (const [name, state] of Object.entries(SAMPLE_STATES)) {
@@ -150,7 +171,7 @@ export function humanoidStates(): Record<string, MatrixState> {
   states['reaction:fallBack'] = reaction(1.8, (r, f) => r.knockDown(facingTurn(BEHIND, f), f));
   states['reaction:fallFront'] = reaction(1.8, (r, f) => r.knockDown(facingTurn(AHEAD, f), f));
   states['reaction:die'] = reaction(2.6, (r) => r.die(), [1.8, (r) => r.getUp()]);
-  return states;
+  return { ...states, ...actionStates() };
 }
 
 /** One run as the metrics read it: points per step, world and measured from the body, and what they need besides. */

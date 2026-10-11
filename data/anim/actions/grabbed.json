@@ -1,0 +1,32 @@
+{
+  "action": "grabbed",
+  "desc": "Grabbed, the victim's side of grab: a flinch, lifted in the clinch, held kicking with its hands on the attacker's arms, thrown flat and left lying. The game pins it to the attacker's grips.",
+  "beats": [
+    { "name": "reach", "seconds": 0.12, "body": { "hurt": true } },
+    {
+      "name": "clinch",
+      "seconds": 0.1,
+      "body": { "hurt": true, "air": true },
+      "events": [{ "type": "grabbed", "at": 1 }]
+    },
+    {
+      "name": "hold",
+      "seconds": 0.1,
+      "until": "next",
+      "body": { "air": true },
+      "effectors": { "handL": [0.25, -0.12, -0.05], "handR": [0.25, 0.12, -0.05] }
+    },
+    { "name": "throw", "seconds": 0.2, "body": { "down": 1 }, "events": [{ "type": "thrown", "at": 0.5 }] },
+    { "name": "recover", "seconds": 0.25, "body": { "down": 1 } }
+  ],
+  "check": {
+    "signals": [{ "at": 0.72, "do": "next" }],
+    "lift": [
+      [0.12, 0],
+      [0.22, 0.25],
+      [0.72, 0.25],
+      [0.82, 0.35],
+      [0.92, 0]
+    ]
+  }
+}

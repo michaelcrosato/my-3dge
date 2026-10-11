@@ -1,0 +1,42 @@
+{
+  "action": "hurt",
+  "desc": "Hurt with a knockback hop and a blink (ALttP: a hop, 19 frames without control, 58 frames blinking): the hit, the hop away, the recovery, the rest of the blink. Invulnerable throughout.",
+  "beats": [
+    {
+      "name": "hit",
+      "seconds": 0.05,
+      "body": { "hurt": true },
+      "motion": { "lean": -0.35 },
+      "flags": ["invulnerable"],
+      "events": [{ "type": "blinkOn" }]
+    },
+    {
+      "name": "hop",
+      "seconds": 0.27,
+      "body": { "hurt": true, "air": true },
+      "motion": { "lean": -0.2 },
+      "flags": ["invulnerable"]
+    },
+    {
+      "name": "recover",
+      "seconds": 0.25,
+      "motion": { "crouch": 0.2 },
+      "flags": ["invulnerable"],
+      "cancel": { "by": ["move", "walk", "jump"] }
+    },
+    {
+      "name": "blink",
+      "seconds": 0.4,
+      "flags": ["invulnerable"],
+      "events": [{ "type": "blinkOff", "at": 1 }],
+      "cancel": { "by": ["any"] }
+    }
+  ],
+  "check": {
+    "lift": [
+      [0.05, 0],
+      [0.18, 0.12],
+      [0.32, 0]
+    ]
+  }
+}

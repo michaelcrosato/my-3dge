@@ -1,0 +1,26 @@
+/**
+ * @file Unit tests for the action `action:{{name}}` ({{id}}.ts): it is defined, plays every beat to its end, and its
+ * check passes animCheckBody on a heroic body with a sword.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { actionCheck, Actions, animCheckBody, Animator } from '../../../engine/sim-api';
+import { {{name}} } from './{{name}}';
+
+describe('action:{{name}}', () => {
+  it('is defined, and plays every beat to its end', () => {
+    expect({{name}}.id).toBe('action:{{name}}');
+    const acts = new Actions().play({{name}});
+    const begun: string[] = [];
+    for (let tick = 0; tick < 600 && acts.beat; tick++) {
+      for (const event of acts.step()) if (event.type === event.phase) begun.push(event.type); // each beat as it begins
+    }
+    expect(begun).toEqual({{name}}.beats.map((beat) => beat.name));
+    expect(acts.state.playing).toBe('');
+  });
+
+  it('passes its check: finite, on the floor, in reach, the same hash twice, 1/60 s against 1/120 s', () => {
+    const hero = (dt: number) => new Animator({ build: 'build:heroic', weapon: 'sword', clock: 1, dt });
+    expect(animCheckBody(hero, { states: { [{{name}}.id]: actionCheck({{name}}) } }).problems).toEqual([]);
+  });
+});

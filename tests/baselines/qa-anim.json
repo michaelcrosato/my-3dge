@@ -1,5 +1,233 @@
 [
   {
+    "id": "action:backflip",
+    "metric": "underFloor",
+    "value": 0.0104,
+    "reason": "a crouch of 0.4 to 1 (a landing squash, a tucked roll or spin) sinks the back foot's ball or toe a few centimetres on build:bulky: the crouch floor sink of ADR-0009 amendment 3"
+  },
+  {
+    "id": "action:bored",
+    "metric": "footSlide",
+    "value": 1.1393,
+    "reason": "it lies down to sleep (down 1) and kneels before and after: the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "action:bored",
+    "metric": "underFloor",
+    "value": 0.1091,
+    "reason": "it kneels before it lies down and after it wakes: the kneel floor sink of ADR-0009 amendment 3 (worst on build:bulky): the old leg had no ankle, so the back foot's ball and toe sink as the body kneels"
+  },
+  {
+    "id": "action:charge",
+    "metric": "footSlide",
+    "value": 1.0652,
+    "reason": "the release is move:spin, which turns the whole body about its root, the planted feet swinging round with it (move:spin's own entry); the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold them"
+  },
+  {
+    "id": "action:deathBlown",
+    "metric": "footSlide",
+    "value": 0.3521,
+    "reason": "Death_B and the LayToIdle revive: a format-1 library clip on the clip layer (WP 8.4) plants its feet only inside format-2 contacts, which Mesh2Motion's and Quaternius' clips lack until WP 8.8 re-imports them, so the feet slide as captured and as the clip fades in over the body and out"
+  },
+  {
+    "id": "action:deathBlown",
+    "metric": "jointLimit",
+    "value": 2.4956,
+    "reason": "Mesh2Motion's Death_B on build:skeleton: the clip layer's rotation copy (WP 8.4, retarget.ts) carries the clip's elbow without the hinge's limit, and the skeleton's short forearm folds it past straight as the body is thrown back"
+  },
+  {
+    "id": "action:deathBlown",
+    "metric": "underFloor",
+    "value": 0.0154,
+    "reason": "Death_B fading in: the clip layer (WP 8.4, retarget.ts) lifts a pose by its soles, balls and ankles, not its toe tips, and its fade blends the clip with the body under it, so a toe or a sole dips a few centimetres as the clip lands or fades"
+  },
+  {
+    "id": "action:deathCrush",
+    "metric": "footSlide",
+    "value": 0.1358,
+    "reason": "the squash scales the body about its root (pose.rootScale), keeping its lowest point, so the soles spread with its 1.4 times width as it goes flat"
+  },
+  {
+    "id": "action:deathShock",
+    "metric": "footSlide",
+    "value": 0.9637,
+    "reason": "it collapses onto its back and its revive kneels: the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "action:deathShock",
+    "metric": "underFloor",
+    "value": 0.1054,
+    "reason": "its revive kneels: the kneel floor sink of ADR-0009 amendment 3 (worst on build:bulky): the old leg had no ankle, so the back foot's ball and toe sink as the body kneels"
+  },
+  {
+    "id": "action:deathShrink",
+    "metric": "footSlide",
+    "value": 0.1647,
+    "reason": "the shrink scales the body about its root toward its lowest point, so the soles gather as it spins to nothing (a pit fall)"
+  },
+  {
+    "id": "action:deathSink",
+    "metric": "footSlide",
+    "value": 0.357,
+    "reason": "Death_A and the LayToIdle revive: a format-1 library clip on the clip layer (WP 8.4) plants its feet only inside format-2 contacts, which Mesh2Motion's and Quaternius' clips lack until WP 8.8 re-imports them, so the feet slide as captured and as the clip fades in over the body and out"
+  },
+  {
+    "id": "action:deathSink",
+    "metric": "underFloor",
+    "value": 0.0223,
+    "reason": "Death_A crossfading into LayToIdle: the clip layer (WP 8.4, retarget.ts) lifts a pose by its soles, balls and ankles, not its toe tips, and its fade blends the clip with the body under it, so a toe or a sole dips a few centimetres as the clip lands or fades"
+  },
+  {
+    "id": "action:deathSpin",
+    "metric": "footSlide",
+    "value": 3.2233,
+    "reason": "three whole turns about the root (ALttP's death spin, no steps in it) swing the planted feet round with the body, then the collapse slides it (KNOCKDOWN.shift); the post-IK foot plant (ADR-0009 amendment 4) would hold them"
+  },
+  {
+    "id": "action:deathSpin",
+    "metric": "underFloor",
+    "value": 0.1074,
+    "reason": "its revive kneels: the kneel floor sink of ADR-0009 amendment 3 (worst on build:bulky): the old leg had no ankle, so the back foot's ball and toe sink as the body kneels"
+  },
+  {
+    "id": "action:deathTopple",
+    "metric": "footSlide",
+    "value": 0.9631,
+    "reason": "the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "action:deathTopple",
+    "metric": "rateDrift",
+    "value": 0.0766,
+    "reason": "the die pose's own drift (pose:die's entry): my-3d2dge's die pose eases hurt and kneel twice a step toward opposite targets (humanoid.ts step, as engine:1815, 1821 and 1826 do), so they move by a step's worth, not by time; the fix belongs to humanoid.ts"
+  },
+  {
+    "id": "action:deathTopple",
+    "metric": "underFloor",
+    "value": 0.1048,
+    "reason": "the die pose's knees give, and its revive kneels: the kneel floor sink of ADR-0009 amendment 3 (worst on build:bulky): the old leg had no ankle, so the back foot's ball and toe sink as the body kneels"
+  },
+  {
+    "id": "action:dizzy",
+    "metric": "footSlide",
+    "value": 0.2004,
+    "reason": "Mesh2Motion's Dizzy: a format-1 library clip on the clip layer (WP 8.4) plants its feet only inside format-2 contacts, which Mesh2Motion's and Quaternius' clips lack until WP 8.8 re-imports them, so the feet slide as captured and as the clip fades in over the body and out"
+  },
+  {
+    "id": "action:dizzy",
+    "metric": "underFloor",
+    "value": 0.0217,
+    "reason": "Dizzy fading in: the clip layer (WP 8.4, retarget.ts) lifts a pose by its soles, balls and ankles, not its toe tips, and its fade blends the clip with the body under it, so a toe or a sole dips a few centimetres as the clip lands or fades"
+  },
+  {
+    "id": "action:getUp",
+    "metric": "footSlide",
+    "value": 0.965,
+    "reason": "it lies (down 1), then sits up and kneels: the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "action:getUp",
+    "metric": "underFloor",
+    "value": 0.1146,
+    "reason": "the kneel floor sink of ADR-0009 amendment 3 (worst on build:bulky): the old leg had no ankle, so the back foot's ball and toe sink as the body kneels"
+  },
+  {
+    "id": "action:grab",
+    "metric": "footSlide",
+    "value": 0.2198,
+    "reason": "the reach lunges and the throw twists the body as a strike does (a motion like move:cross's), moving the planted feet along the floor; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold them"
+  },
+  {
+    "id": "action:grabbed",
+    "metric": "footSlide",
+    "value": 0.4077,
+    "reason": "thrown flat (down 1) and left lying: the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "action:grabbed",
+    "metric": "underFloor",
+    "value": 0.0021,
+    "reason": "the knockdown's rigid turn (my-3d2dge's) swings the left sole 2 mm under the floor as the body tips back, on build:chibi (pose:down's entry)"
+  },
+  {
+    "id": "action:groundPound",
+    "metric": "footSlide",
+    "value": 0.1063,
+    "reason": "the impact's crouch (0.9): the procedural body has no foot lock (my-3d2dge's effector layers): its soles slide to the crouch's stance and back as the beat's motion eases in and out; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold them"
+  },
+  {
+    "id": "action:groundPound",
+    "metric": "underFloor",
+    "value": 0.0308,
+    "reason": "a crouch of 0.4 to 1 (a landing squash, a tucked roll or spin) sinks the back foot's ball or toe a few centimetres on build:bulky: the crouch floor sink of ADR-0009 amendment 3"
+  },
+  {
+    "id": "action:jump",
+    "metric": "footSlide",
+    "value": 0.0636,
+    "reason": "the take-off squat and the landing squash: the procedural body has no foot lock (my-3d2dge's effector layers): its soles slide to the crouch's stance and back as the beat's motion eases in and out; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold them"
+  },
+  {
+    "id": "action:jump",
+    "metric": "underFloor",
+    "value": 0.0089,
+    "reason": "a crouch of 0.4 to 1 (a landing squash, a tucked roll or spin) sinks the back foot's ball or toe a few centimetres on build:bulky: the crouch floor sink of ADR-0009 amendment 3"
+  },
+  {
+    "id": "action:landHeavy",
+    "metric": "footSlide",
+    "value": 0.4822,
+    "reason": "Mesh2Motion's Land_Three_Point: a format-1 library clip on the clip layer (WP 8.4) plants its feet only inside format-2 contacts, which Mesh2Motion's and Quaternius' clips lack until WP 8.8 re-imports them, so the feet slide as captured and as the clip fades in over the body and out"
+  },
+  {
+    "id": "action:landHeavy",
+    "metric": "underFloor",
+    "value": 0.1017,
+    "reason": "Land_Three_Point from 0.47 s, as the feet touch: the clip layer (WP 8.4, retarget.ts) lifts a pose by its soles, balls and ankles, not its toe tips, and its fade blends the clip with the body under it, so a toe or a sole dips a few centimetres as the clip lands or fades"
+  },
+  {
+    "id": "action:rise",
+    "metric": "footSlide",
+    "value": 0.6588,
+    "reason": "rise is played on a body lying after a death or a respawn (my-3d2dge's hero revive); its check starts standing, so the 0.15 s fade into LayToIdle's lying pose slides the feet; and a format-1 library clip on the clip layer (WP 8.4) plants its feet only inside format-2 contacts, which Mesh2Motion's and Quaternius' clips lack until WP 8.8 re-imports them, so the feet slide as captured and as the clip fades in over the body and out"
+  },
+  {
+    "id": "action:rise",
+    "metric": "underFloor",
+    "value": 0.1623,
+    "reason": "rise is played on a body lying after a death or a respawn (my-3d2dge's hero revive); its check starts standing, so the 0.15 s fade from a standing body into LayToIdle's lying one dips the soles; and the clip layer (WP 8.4, retarget.ts) lifts a pose by its soles, balls and ankles, not its toe tips, and its fade blends the clip with the body under it, so a toe or a sole dips a few centimetres as the clip lands or fades"
+  },
+  {
+    "id": "action:roll",
+    "metric": "footSlide",
+    "value": 0.2418,
+    "reason": "the dip and the rise crouch on the floor before and after the roll: the procedural body has no foot lock (my-3d2dge's effector layers): its soles slide to the crouch's stance and back as the beat's motion eases in and out; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold them"
+  },
+  {
+    "id": "action:roll",
+    "metric": "underFloor",
+    "value": 0.0409,
+    "reason": "the rise lands the tucked roll in a crouch: a crouch of 0.4 to 1 (a landing squash, a tucked roll or spin) sinks the back foot's ball or toe a few centimetres on build:bulky: the crouch floor sink of ADR-0009 amendment 3"
+  },
+  {
+    "id": "action:spinJump",
+    "metric": "underFloor",
+    "value": 0.0362,
+    "reason": "the tucked spin (crouch 0.8) lands into the squash: a crouch of 0.4 to 1 (a landing squash, a tucked roll or spin) sinks the back foot's ball or toe a few centimetres on build:bulky: the crouch floor sink of ADR-0009 amendment 3"
+  },
+  {
+    "id": "action:techRoll",
+    "metric": "footSlide",
+    "value": 0.4371,
+    "reason": "it rolls back from lying (down 1) onto its feet: the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "action:techRoll",
+    "metric": "underFloor",
+    "value": 0.0409,
+    "reason": "the roll lands in a crouch: a crouch of 0.4 to 1 (a landing squash, a tucked roll or spin) sinks the back foot's ball or toe a few centimetres on build:bulky: the crouch floor sink of ADR-0009 amendment 3"
+  },
+  {
     "id": "move:axekick",
     "metric": "footSlide",
     "value": 0.0637,

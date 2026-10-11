@@ -1,0 +1,24 @@
+{
+  "action": "itemGet",
+  "desc": "Holding up an item (Zelda: 128 frames, 16 px above the head; SM64's star, Mega Man's weapon get): a reach to the chest, both hands raised overhead, held while the eyes look up at it, then lowered. The item rides the hands' grips.",
+  "beats": [
+    {
+      "name": "reach",
+      "seconds": 0.15,
+      "motion": { "crouch": 0.25 },
+      "effectors": { "handL": [0.25, -0.1, -0.2], "handR": [0.25, 0.1, -0.2] }
+    },
+    {
+      "name": "raise",
+      "seconds": 0.2,
+      "effectors": { "handL": [0.05, -0.12, 0.5], "handR": [0.05, 0.12, 0.5], "look": [0.3, 0, 1] },
+      "events": [{ "type": "show", "at": 1 }]
+    },
+    {
+      "name": "hold",
+      "seconds": 2.13,
+      "effectors": { "handL": [0.05, -0.12, 0.5], "handR": [0.05, 0.12, 0.5], "look": [0.3, 0, 1] }
+    },
+    { "name": "lower", "seconds": 0.3, "events": [{ "type": "hide" }], "cancel": { "by": ["any"], "after": 0.5 } }
+  ]
+}

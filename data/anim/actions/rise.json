@@ -1,0 +1,18 @@
+{
+  "action": "rise",
+  "desc": "Getting up when revived (my-3d2dge's hero moment rise, Quaternius' LayToIdle at 1.1 times): up off the ground in one motion, invulnerable until on its feet.",
+  "beats": [
+    {
+      "name": "rise",
+      "seconds": 0.9,
+      "clip": { "name": "QUATERNIUS/LayToIdle", "speed": 1.1, "fade": 0.15, "out": 0.25 },
+      "flags": ["invulnerable"]
+    },
+    {
+      "name": "stand",
+      "seconds": 0.49,
+      "clip": { "name": "QUATERNIUS/LayToIdle", "speed": 1.1, "out": 0.25 },
+      "cancel": { "by": ["any"], "after": 0.3 }
+    }
+  ]
+}
