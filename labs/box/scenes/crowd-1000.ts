@@ -16,6 +16,12 @@
  *   the stream `crowd`.
  * - **The crowd's step** (the system `crowd.update`, phase `readback`): `updateCrowd` (the queue, the readback, the
  *   grounded test over the hall's floor), the removed despawned, lost bodies rescued (`rescueLost`).
+ * - **Their bodies** (the system `crowd.rigs`, phase `anim`): each member also has a crowd body (`crowdBody`,
+ *   engine/sim/crowdBodies.ts), its look drawn at its spawn: a walker a humanoid in one of `WALKER.looks`, a slime a
+ *   blob in one of `SLIME.looks`, a wisp a floater. Each living member's rig steps where its agent stands, at its
+ *   velocity: a walker's animator facing its heading, off its feet when it is; a slime's blob squashed by its hop; a
+ *   wisp's floater at its core. The stage draws them through a crowd, from the frame's camera; a member still queued
+ *   has not stepped and is not drawn, so the drawn crowd grows as the bodies enter.
  *
  * Settings (`box.crowd.*`, read when the scene starts, so they change play and go in replays): how many (0 to 5,000;
  * the perf ladder sets it, tests/baselines/perf/box-crowd-1000.json) and the mix. The hero's are the hall's
@@ -41,6 +47,8 @@ import {
   physicsOf,
   rescueLost,
   setVelocity,
+  stepCrowdBody,
+  type CrowdBody,
   updateCrowd,
   type CrowdAgent,
   type World,
@@ -86,6 +94,7 @@ export const CROWD_MEMBER = defineComponent('crowdMember', {
 /** The scene's components. */
 export type CrowdComponents = {
   crowdMember: CrowdAgent;
+  crowdBody: CrowdBody;
   crowdWalker: WalkerData;
   crowdSlime: SlimeData;
   crowdWisp: WispData;
@@ -121,12 +130,17 @@ function queue(w: World<CrowdComponents>, mix: readonly [number, number]): void 
     if (dx * dx + dz * dz >= SPAWN.away * SPAWN.away) break;
   }
   const feet = { x: at.x, y: floor(at.x, at.z), z: at.z };
+  const pick = (looks: readonly string[]) => looks[rng.int(0, looks.length - 1)];
   if (roll < mix[0]) {
-    w.spawn({ crowdMember: { ...WALKER.agent, ...feet }, crowdWalker: makeWalker(rng, rng.range(-Math.PI, Math.PI)) });
+    const walker = makeWalker(rng, rng.range(-Math.PI, Math.PI));
+    const crowdBody = { rig: 'humanoid', look: pick(WALKER.looks), ...feet, yaw: walker.yaw } as CrowdBody;
+    w.spawn({ crowdMember: { ...WALKER.agent, ...feet }, crowdWalker: walker, crowdBody });
   } else if (roll < mix[1]) {
-    w.spawn({ crowdMember: { ...SLIME.agent, ...feet }, crowdSlime: makeSlime(rng) });
+    const crowdBody = { rig: 'blob', look: pick(SLIME.looks), size: SLIME.agent.radius, ...feet } as CrowdBody;
+    w.spawn({ crowdMember: { ...SLIME.agent, ...feet }, crowdSlime: makeSlime(rng), crowdBody });
   } else {
-    w.spawn({ crowdMember: { ...WISP.agent, ...feet }, crowdWisp: makeWisp(rng) });
+    const crowdBody = { rig: 'floater', ...feet, y: feet.y + WISP.agent.radius } as CrowdBody;
+    w.spawn({ crowdMember: { ...WISP.agent, ...feet }, crowdWisp: makeWisp(rng), crowdBody });
   }
 }
 
@@ -171,6 +185,28 @@ function update(w: World<CrowdComponents>): void {
   rescueLost(physics, HALL_LEVEL);
 }
 
+/** The system `crowd.rigs`: each living member's rig stepped where its agent stands (see the file comment). */
+function rigs(w: World<CrowdComponents>): void {
+  for (const { id, crowdMember: a, crowdBody: body, crowdWalker, crowdSlime } of w.query('crowdMember', 'crowdBody')) {
+    if (a.state !== 'alive' && a.state !== 'corpse') continue;
+    const velocity = [a.vx, a.vy, a.vz] as const;
+    if (crowdWalker) {
+      stepCrowdBody(w, id, body, { at: [a.x, a.y, a.z], velocity, yaw: crowdWalker.yaw, air: !a.grounded });
+    } else if (crowdSlime) {
+      const { hop } = crowdSlime;
+      const squash =
+        hop === 'crouch'
+          ? SLIME.squash.crouch
+          : hop === 'rest'
+            ? SLIME.squash.rest
+            : a.vy > 0
+              ? SLIME.squash.rising
+              : SLIME.squash.falling;
+      stepCrowdBody(w, id, body, { at: [a.x, a.y, a.z], velocity, blob: { squash } });
+    } else stepCrowdBody(w, id, body, { at: [a.x, a.y + a.radius, a.z], velocity });
+  }
+}
+
 /** The crowd's setup: the hall and its hero, `box.crowd.count` members queued, the crowd's systems; the hero's id. */
 export function setupCrowd(w: World<CrowdComponents>): number {
   const hero = setupHall(w);
@@ -178,6 +214,7 @@ export function setupCrowd(w: World<CrowdComponents>): number {
   const mix = MIXES[w.settings.get<keyof typeof MIXES>('box.crowd.mix')];
   for (let i = 0; i < count; i++) queue(w, mix);
   w.systems.add('crowd.steer', (world) => steer(world, hero), { phase: 'ai' });
+  w.systems.add('crowd.rigs', rigs, { phase: 'anim' });
   w.systems.add('crowd.update', update, { phase: 'readback' });
   return hero;
 }

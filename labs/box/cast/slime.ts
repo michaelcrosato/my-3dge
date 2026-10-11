@@ -17,6 +17,9 @@
  * of 0.28 s; a rest of 0.45 s plus up to 0.6 s; braking at 400 units/s² → 25 m/s²; its ring 34 units → 2.125 m, its
  * band 8 units → 0.5 m. Its first rest is drawn from its spawn, up to 1 s.
  *
+ * Its body is drawn as a blob (a crowd body, engine/sim/crowdBodies.ts) in one of `SLIME.looks`, squashed by where it
+ * is in its hop (`SLIME.squash`); the blob's spring makes the bounce.
+ *
  * Game code, sim-side: it imports only engine/sim-api.ts.
  *
  * @example
@@ -62,6 +65,10 @@ export const SLIME = Object.freeze({
   brake: 400 / UNITS,
   /** The ring it keeps round the hero (m), and its band either side (m). */
   ring: Object.freeze({ radius: 34 / UNITS, band: 8 / UNITS }),
+  /** Its looks, one drawn per slime: the prototype's `SLIME_PARTS`, plain twice, horns, cat ears, wings. */
+  looks: Object.freeze(['', '', 'horns', 'ears', 'wings']),
+  /** The squash its body eases to (engine/anim/blob.ts): flat in its crouch, stretched rising, braced falling. */
+  squash: Object.freeze({ rest: 0, crouch: -0.35, rising: 0.25, falling: -0.1 }),
 });
 
 /** Where a slime is in its hop. */

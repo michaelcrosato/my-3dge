@@ -20,6 +20,9 @@
  *   drifting round at 0.4 of it, the sway's phase drawn per walker at 0.9 rad/s; level within 14 units → 0.875 m;
  * - turning at 5 rad/s. Its attacks arrive with Box 5 (PLAN.md §9.0).
  *
+ * Its body is drawn as the neutral humanoid (a crowd body, engine/sim/crowdBodies.ts) in one of `WALKER.looks`: the
+ * prototype's mixed husks, knights and skeletons, as builds.
+ *
  * Game code, sim-side: it imports only engine/sim-api.ts.
  *
  * @example
@@ -56,6 +59,8 @@ export const WALKER = Object.freeze({
   sway: 0.9,
   /** How fast it turns to face where it goes (rad/s). */
   turn: 5,
+  /** The builds it is drawn in, one drawn per walker: the prototype's mixed skins (husk, knight, skeleton) and more. */
+  looks: Object.freeze(['build:chibi', 'build:heroic', 'build:bulky', 'build:skeleton']),
 });
 
 /** The walker's own state, beside its crowd agent. */

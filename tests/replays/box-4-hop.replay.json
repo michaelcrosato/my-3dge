@@ -1,0 +1,37 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Box 4, a crowd of 100 slimes hops after the hero as he walks off the dais north-west to the west stairs and climbs them to the west gallery; the slimes hop up the stairs after him.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "box:crowd-100",
+  "settings": { "box.crowd.mix": "slimes" },
+  "seed": 1,
+  "hz": 60,
+  "steps": 780,
+  "inputs": [
+    [20, { "move": [-0.8, -0.6] }],
+    [320, { "move": [0, -1] }],
+    [404, { "move": null }],
+    [440, { "move": [-1, 0] }],
+    [500, { "move": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "ca6d38339cac6f69",
+      "60": "de471f92e9694ce9",
+      "120": "6d8fe7a716c17d2b",
+      "180": "99fe6252a1f22e03",
+      "240": "27f4c45077f4de43",
+      "300": "a948ca5ffc31fb23",
+      "360": "8d5a0f43012a2e36",
+      "420": "6cea8619d4cfb178",
+      "480": "c3acef4d9917af7e",
+      "540": "593f7e1a8c3c1e85",
+      "600": "5098874b993f7145",
+      "660": "3feaa3f635aa7030",
+      "720": "ce71d73bbac4ca6c",
+      "780": "cd0346ec04508aa9"
+    }
+  }
+}

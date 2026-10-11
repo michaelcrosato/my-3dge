@@ -17,6 +17,8 @@
  * hovering 20 units → 1.25 m up, ±3 units at 2 rad/s, climbing at 6 times the gap (`HOVER`). Its shots arrive with
  * Box 5.
  *
+ * Its body is drawn as a floater (a crowd body, engine/sim/crowdBodies.ts), banking into its turns, its motes round it.
+ *
  * Game code, sim-side: it imports only engine/sim-api.ts.
  *
  * @example
