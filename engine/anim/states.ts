@@ -1,7 +1,7 @@
 /**
  * @file The body-state vocabulary (PLAN.md WP 3.7, §4.6; I-09): the words a body is told each step, kept distinct
  * from input intents (what a player or an AI wants): where it is and how it moves, whether it dashes, flinches or is
- * airborne, the pose or stance it holds, a move's body motion, the part that leaves a trail. `BODY_STATES` gives each
+ * airborne, the pose or stance it holds, the move it plays, the part that leaves a trail. `BODY_STATES` gives each
  * word the kind of value it takes; `checkBodyStates` warns once for a word outside the vocabulary, naming the closest
  * (`ANIM_UNKNOWN_STATE`), and once for a value of the wrong kind (`ANIM_BAD_STATE`), and drops both. `SAMPLE_STATES`
  * are named body states (idle, run, dodge…) with how long each is held, for tests, sheets and rig checks.

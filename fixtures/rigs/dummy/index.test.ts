@@ -11,7 +11,8 @@ import {
   inHitShape,
   knockback,
   measureMove,
-  MoveRig,
+  Animator,
+  Humanoid,
   moveAt,
   strikePart,
   strikeSegment,
@@ -32,35 +33,36 @@ interface Swing {
 }
 
 /**
- * The hero, at the origin facing +Z, plays `attack` (or a combo) to its end at `dummy`: each tick it poses, publishes
+ * The hero (an animator), at the origin facing +Z, plays `attack` (or a combo) to its end at `dummy`: each tick it
+ * steps and poses, publishes
  * the strike's sweep, and connects with the dummy when the sweep crosses its capsule or the dummy is in the hit shape.
  */
 function swingAt(dummy: Dummy, attack: Attack | Combo, press: (tick: number) => boolean = (t) => t === 0): Swing {
-  const rig = new MoveRig({ ...HERO, clock: 0 });
+  const hero = new Animator({ ...HERO, clock: 0 });
   const out: Swing = { hits: [], touches: [], window: [] };
   const [base, tip] = [new Vector3(), new Vector3()];
-  const hero = new Vector3();
+  const at = new Vector3();
   for (let tick = 0; tick < 240; tick++) {
     if (press(tick)) {
       if (attack instanceof Combo) attack.press();
       else attack.start();
     }
     attack.update(DT);
-    rig.update({ move: attack.body });
+    hero.update({ body: attack.body });
     stepDummy(dummy, DT);
     const current = attack instanceof Combo ? attack.current : attack;
     if (!current.hitOpen) continue;
     out.window.push(tick);
-    strikeSegment(rig.body, strikePart(current.move, true), base, tip);
+    strikeSegment(hero.body, strikePart(current.move, true), base, tip);
     const sweep: Sweep | null = current.sweep(base, tip);
     const touches = sweep !== null && sweepTouches(dummy, sweep);
     if (touches) out.touches.push(tick);
     const shape = measureMove(current.move, HERO);
-    const inShape = inHitShape(hero, 0, shape, dummy.position.clone().setY(1), dummy.radius + 1);
+    const inShape = inHitShape(at, 0, shape, dummy.position.clone().setY(1), dummy.radius + 1);
     current.hits(
       [dummy],
-      () => touches || (inShape && dummy.position.distanceTo(hero) <= shape.range + dummy.radius),
-      (d) => hitDummy(d, { move: current.move.id, tick, push: knockback(hero, d.position, 4, 1) }),
+      () => touches || (inShape && dummy.position.distanceTo(at) <= shape.range + dummy.radius),
+      (d) => hitDummy(d, { move: current.move.id, tick, push: knockback(at, d.position, 4, 1) }),
       () => 1,
     );
     if (dummy.hits.at(-1)?.tick === tick) out.hits.push(tick);
@@ -75,10 +77,10 @@ function swingAt(dummy: Dummy, attack: Attack | Combo, press: (tick: number) => 
  */
 function onThePath(name: string): Vector3 {
   const attack = new Attack(name);
-  const rig = new MoveRig({ ...HERO, clock: 0, dt: 1 });
-  rig.update({ move: moveAt(name, (1 + attack.move.hitAt) / 2, 'active') });
+  const rig = new Humanoid({ ...HERO, clock: 0, dt: 1 });
+  rig.update({ body: moveAt(name, (1 + attack.move.hitAt) / 2, 'active') });
   const [base, tip] = [new Vector3(), new Vector3()];
-  strikeSegment(rig.body, strikePart(attack.move, true), base, tip);
+  strikeSegment(rig, strikePart(attack.move, true), base, tip);
   return tip.setY(0).multiplyScalar(0.8);
 }
 

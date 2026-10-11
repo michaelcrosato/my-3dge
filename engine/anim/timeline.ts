@@ -253,7 +253,7 @@ export class Attack {
     return this.timeline.u;
   }
 
-  /** What the body is told while it plays (`MoveRig`'s `move`), or undefined when idle. */
+  /** What the body is told while it plays (a humanoid's or an animator's `body`), or undefined when idle. */
   get body(): MoveInput | undefined {
     const phase = this.phase;
     return phase ? { move: this.move, phase, u: this.u } : undefined;

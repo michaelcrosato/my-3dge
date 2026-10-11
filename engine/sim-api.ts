@@ -236,8 +236,9 @@ export type { WeightRates } from './anim/weights';
 export { HUMANOID_WEIGHTS } from './anim/weights';
 export type { WeightInfo } from './anim/weights';
 // Moves (WP 6.1): moves as data in metres (the kind move: my-3d2dge's 24, converted by Appendix C's table), timelines
-// whose events carry leftover time, attacks and combos with hit windows, sweeps and root motion, the arm path played on
-// a humanoid, moves at a moment for previews, measured hit shapes, and the cone and knockback helpers.
+// whose events carry leftover time, attacks and combos with hit windows, sweeps and root motion, moves played on a
+// humanoid through its body state (the arm path), moves at a moment for previews, measured hit shapes, and the cone
+// and knockback helpers.
 export { defineMove } from './anim/moves-data';
 export { getMove } from './anim/moves-data';
 export { resolveMove } from './anim/moves-data';
@@ -256,8 +257,6 @@ export type { TimelineEvent } from './anim/timeline';
 export { Attack } from './anim/timeline';
 export { Combo } from './anim/timeline';
 export type { Sweep } from './anim/timeline';
-export { MoveRig } from './anim/moves';
-export type { MoveRigInput } from './anim/moves';
 export { moveAt } from './anim/moves';
 export { measureMove } from './anim/moves';
 export type { HitShape } from './anim/moves';

@@ -2,8 +2,9 @@
  * @file Unit tests for moves on a body (engine/anim/moves.ts), PLAN.md WP 6.1's Done when: all 24 moves pass the
  * differential tests against my-3d2dge's reference vectors (tests/baselines/port/moves.json, converted to SI), the
  * hands' and the blade tip's paths over u within 1 cm on average and 3 cm at worst, each exception listed with its
- * reason. Also: the arm's weight and chains, `moveAt`, `measureMove` and its cache, `inArc`, `inHitShape` and
- * `knockback`.
+ * reason. Also: a humanoid and an animator playing moves (bone lengths, a solve from the state alone, a spin's turn,
+ * the sim's state the same whether or not it was posed, a precise trail), `moveAt`, `measureMove` and its cache,
+ * `inArc`, `inHitShape`, `knockback` and the strike's span.
  */
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -12,21 +13,11 @@ import { TRAIL } from './character';
 import { animCheck } from './check';
 import { jointPosition, jointRotation, jointToWorld } from './fk';
 import { ENGINE_MOVES, getMove, MOVE_PHASES, resolveMove, type MovePhase } from './moves-data';
-import {
-  createArmState,
-  inArc,
-  inHitShape,
-  knockback,
-  measureMove,
-  moveAt,
-  MoveRig,
-  stepArm,
-  strikePart,
-  strikeSegment,
-} from './moves';
+import { inArc, inHitShape, knockback, measureMove, moveAt, strikePart, strikeSegment } from './moves';
+import { Animator } from './character';
+import { Humanoid } from './humanoid';
 import { hashPose, type Pose } from './pose';
-import { createEffectors } from './poses';
-import { Combo } from './timeline';
+import { Attack, Combo } from './timeline';
 
 /** One reference record (tools/cmd/port.ts `moveRecord`): a move in a phase on a build, 21 samples over u. */
 interface MoveRecord {
@@ -48,17 +39,24 @@ const BLADE = 11 / 16;
 /** Facing φ = 0 is yaw π/2 (Appendix C): forward +X, right +Z, as the old (f, r) → (x, y). */
 const AT_ORIGIN = { position: new Vector3(), yaw: Math.PI / 2 };
 
-/** A reference rig's sample: rest at t = 0 with dt = 1, then the move at (phase, u), again at t = 0 (the README). */
-function sampleRig(build: string, move: string, phase: MovePhase, u: number): MoveRig {
-  const rig = new MoveRig({ build: `build:${build}`, weapon: 'sword', clock: -1, dt: 1 });
+/**
+ * Half a breathing cycle (breathing is sin(2.3 t)): the step a sample takes. The reference rig sat at rest at t = 0,
+ * then was set back to t = −1 and stepped 1 s into the move, so both poses breathe at t = 0 (the README). Here a
+ * swing's start comes from the state before the step, which a clock set back would make breathe; stepping from t = 0
+ * by this much breathes at both ends just the same (not at all), and every easing still saturates.
+ */
+const STEP = Math.PI / 2.3;
+
+/** A reference rig's sample: rest at t = 0, then the move at (phase, u), every easing saturated (the README). */
+function sampleRig(build: string, move: string, phase: MovePhase, u: number): Humanoid {
+  const rig = new Humanoid({ build: `build:${build}`, weapon: 'sword', clock: -STEP, dt: STEP });
   rig.update(AT_ORIGIN);
-  rig.body.state.clock = -1;
-  return rig.update({ ...AT_ORIGIN, move: { move: `move:${move}`, phase, u } });
+  return rig.update({ ...AT_ORIGIN, body: { move: `move:${move}`, phase, u } });
 }
 
 /** Where an old sample point is on the new rig: the wrists, the sword's tip, the sole under the right ankle. */
-function newPoint(rig: MoveRig, name: string, out: Vector3): Vector3 {
-  const { world, build } = rig.body;
+function newPoint(rig: Humanoid, name: string, out: Vector3): Vector3 {
+  const { world, build } = rig;
   if (name === 'handR' || name === 'handL') return jointPosition(world, name, out);
   if (name === 'footR') return jointToWorld(world, 'footR', new Vector3(0, -build.ankleHeight * build.size, 0), out);
   const blade = new Vector3(0, 0, 1).applyQuaternion(jointRotation(world, 'handR'));
@@ -121,91 +119,86 @@ describe('the differential tests against my-3d2dge (WP 6.1 Done when)', () => {
   });
 });
 
-/** A fresh effectors set holding hands and a blade where `stepArm` captures them from. */
-const effectorsAt = (x: number) => {
-  const E = createEffectors();
-  E.hands.L.set(x, 1, 0);
-  E.hands.R.set(-x, 1, 0);
-  E.blade.set(0, 0, 1);
-  return E;
-};
-const ARMED = { armed: true, armLength: 0.575 };
-
-describe('the arm', () => {
-  it('eases its weight in at 30 and out at 12 per second, and asks the body to move', () => {
-    const arm = createArmState();
-    const motion = stepArm(arm, moveAt('slash', 0.5), ARMED, () => effectorsAt(0), 1 / 60);
-    expect(arm.weight).toBeCloseTo(0.5, 12);
-    expect(motion).toMatchObject({ lean: 0.3, lead: 'L' });
-    expect(stepArm(arm, undefined, ARMED, () => effectorsAt(0), 1 / 60)).toBeUndefined();
-    expect(arm.weight).toBeCloseTo(0.3, 12);
-    expect(stepArm(arm, moveAt('jab', 0.5), ARMED, () => effectorsAt(0), 1 / 60)?.lead).toBe('R');
-  });
-
-  it('starts a swing from rest, or from the last path while the arm is still raised (a chain)', () => {
-    const arm = createArmState();
-    const E = effectorsAt(0.2);
-    stepArm(arm, moveAt('slash', 0, 'wind'), ARMED, () => E, 1);
-    expect([arm.theta0, arm.from.slice(0, 3)]).toEqual([1.1, [0.2, 1, 0]]);
-    stepArm(arm, moveAt('slash', 0.5, 'recover'), ARMED, () => E, 1);
-    const theta = arm.theta;
-    stepArm(arm, moveAt('backslash', 0, 'wind'), ARMED, () => effectorsAt(0.3), 1);
-    expect([arm.theta0, arm.from[0]]).toEqual([theta, 0.3]);
-    stepArm(arm, undefined, ARMED, () => E, 1);
-    stepArm(arm, moveAt('overhead', 0, 'wind'), ARMED, () => E, 1);
-    expect(arm.theta0).toBe(-0.9); // the vertical plane's rest
-  });
-
+describe('moveAt', () => {
   it('names a move at a moment, by id or bare name, at mid-strike by default', () => {
     expect(moveAt('uppercut')).toEqual({ move: getMove('move:uppercut'), phase: 'active', u: 0.5 });
     expect(moveAt('move:kick', 0.2, 'wind').phase).toBe('wind');
   });
 });
 
-describe('MoveRig', () => {
-  it('keeps every bone its length and every value finite, in every phase of every move', () => {
+describe('a humanoid and an animator playing moves', () => {
+  it('keep every bone its length and every value finite, in every phase of every move', () => {
     for (const build of ['build:chibi', 'build:skeleton']) {
       const poses: Pose[] = [];
       for (const id of Object.keys(ENGINE_MOVES)) {
-        const rig = new MoveRig({ build, weapon: 'sword', clock: 1 });
+        const rig = new Humanoid({ build, weapon: 'sword', clock: 1 });
         for (const phase of MOVE_PHASES) {
-          for (let i = 0; i <= 10; i++) poses.push(rig.update({ move: moveAt(id, i / 10, phase) }).body.pose.clone());
+          for (let i = 0; i <= 10; i++) poses.push(rig.update({ body: moveAt(id, i / 10, phase) }).pose.clone());
         }
-        for (let i = 0; i < 20; i++) poses.push(rig.update().body.pose.clone());
+        for (let i = 0; i < 20; i++) poses.push(rig.update().pose.clone());
       }
       expect(animCheck({ poses, skeleton: build, floor: -10 }).problems).toEqual([]);
     }
   });
 
-  it('solves from the state alone: the same state gives the same pose, and solving again changes nothing', () => {
-    const rig = new MoveRig({ build: 'build:heroic', weapon: 'sword', clock: 2 });
+  it('solve from the state alone: the same state gives the same pose, and solving again changes nothing', () => {
+    const rig = new Humanoid({ build: 'build:heroic', weapon: 'sword', clock: 2 });
     const combo = new Combo(['slash', 'backslash', 'spin']);
     for (let i = 0; i < 40; i++) {
       if (i % 12 === 0) combo.press();
-      combo.update(rig.body.dt);
-      rig.update({ move: combo.body, velocity: new Vector3(0, 0, 1) });
+      combo.update(rig.dt);
+      rig.update({ body: combo.body, velocity: new Vector3(0, 0, 1) });
     }
-    const hash = hashPose(rig.body.pose);
-    expect(hashPose(rig.solve().body.pose)).toBe(hash);
-    const copy = new MoveRig({ build: 'build:heroic', weapon: 'sword' });
-    Object.assign(copy.body.state, structuredClone(rig.body.state));
-    Object.assign(copy.arm, structuredClone(rig.arm));
-    copy.body.position.copy(rig.body.position);
-    copy.body.yaw = rig.body.yaw;
-    expect(hashPose(copy.solve().body.pose)).toBe(hash);
+    const hash = hashPose(rig.pose);
+    expect(hashPose(rig.solve().pose)).toBe(hash);
+    const copy = new Humanoid({ build: 'build:heroic', weapon: 'sword' });
+    Object.assign(copy.state, structuredClone(rig.state));
+    copy.position.copy(rig.position);
+    copy.yaw = rig.yaw;
+    expect(hashPose(copy.solve().pose)).toBe(hash);
   });
 
-  it('turns the whole body through a spin, about where it stands', () => {
-    const rig = new MoveRig({ weapon: 'sword', clock: 0, dt: 1 });
-    rig.update({ position: new Vector3(2, 0, 3), move: moveAt('spin', 0, 'active') });
-    const facing = new Vector3(0, 0, 1).applyQuaternion(rig.body.pose.rootRot);
-    rig.update({ move: moveAt('spin', 0.5, 'active') }); // outCubic(0.5) = 0.875 of a turn
-    const turned = new Vector3(0, 0, 1).applyQuaternion(rig.body.pose.rootRot);
-    expect(Math.atan2(turned.x, turned.z) - Math.atan2(facing.x, facing.z)).toBeCloseTo(
-      0.875 * 2 * Math.PI - 2 * Math.PI,
-      9,
-    );
-    expect(rig.body.pose.rootPos.distanceTo(new Vector3(2, rig.body.pose.rootPos.y, 3))).toBeLessThan(0.1);
+  it('turn the whole body through a spin, about where it stands', () => {
+    const rig = new Humanoid({ weapon: 'sword', clock: 0, dt: 1 });
+    rig.update({ position: new Vector3(2, 0, 3), body: moveAt('spin', 0, 'active') });
+    const facing = new Vector3(0, 0, 1).applyQuaternion(rig.pose.rootRot);
+    rig.update({ body: moveAt('spin', 0.5, 'active') }); // outCubic(0.5) = 0.875 of a turn
+    const turned = new Vector3(0, 0, 1).applyQuaternion(rig.pose.rootRot);
+    const angle = Math.atan2(turned.x, turned.z) - Math.atan2(facing.x, facing.z);
+    expect(angle).toBeCloseTo(0.875 * 2 * Math.PI - 2 * Math.PI, 9);
+    expect(rig.pose.rootPos.distanceTo(new Vector3(2, rig.pose.rootPos.y, 3))).toBeLessThan(0.1);
+  });
+
+  it('leave the sim state as it is whether or not the animator was posed (WP 3.7, with moves)', () => {
+    const play = (posed: boolean) => {
+      const hero = new Animator({ build: 'build:heroic', weapon: 'sword', clock: 0 });
+      const combo = new Combo(['slash', 'thrust', 'roundhouse', 'spin']);
+      const saved: string[] = [];
+      for (let i = 0; i < 120; i++) {
+        if (i % 13 === 0) combo.press();
+        combo.update(hero.body.dt);
+        hero.step({ body: combo.body, velocity: new Vector3(0, 0, i % 40 < 20 ? 0 : 2) });
+        if (posed && i % 3 !== 1) hero.pose();
+        saved.push(JSON.stringify(hero.body.state));
+      }
+      return saved;
+    };
+    expect(play(true)).toEqual(play(false));
+  });
+
+  it('sample the blade into a precise trail while a strike plays: weapon sweeps as sim data', () => {
+    const hero = new Animator({ build: 'build:heroic', weapon: 'sword', clock: 0, preciseHits: true });
+    const slash = new Attack('slash');
+    slash.start();
+    const tips: Vector3[] = [];
+    while (slash.busy) {
+      slash.update(hero.body.dt);
+      hero.update({ body: slash.body, trail: slash.trail(true) });
+      if (slash.hitOpen) tips.push(hero.trail.at(-1)!.tip.clone());
+    }
+    expect(tips.length).toBeGreaterThan(2);
+    const travel = tips.slice(1).reduce((sum, tip, i) => sum + tip.distanceTo(tips[i]), 0);
+    expect(travel).toBeGreaterThan(0.5); // the tip sweeps across the front
   });
 });
 
@@ -253,14 +246,14 @@ describe('measureMove, the hit helpers and the strike', () => {
   });
 
   it('spans the striking part: a sword from near its grip to its tip, a forearm, a shin to its sole', () => {
-    const rig = new MoveRig({ build: 'build:heroic', weapon: 'sword', clock: 0 }).update({ move: moveAt('slash') });
+    const rig = new Humanoid({ build: 'build:heroic', weapon: 'sword', clock: 0 }).update({ body: moveAt('slash') });
     const [base, tip] = [new Vector3(), new Vector3()];
     expect(strikePart(getMove('move:slash'), true)).toBe('blade');
-    strikeSegment(rig.body, 'blade', base, tip);
+    strikeSegment(rig, 'blade', base, tip);
     expect(base.distanceTo(tip)).toBeCloseTo(TRAIL.bladeTip - TRAIL.bladeBase, 6);
-    strikeSegment(rig.body, 'fistL', base, tip);
-    expect(base.distanceTo(tip)).toBeCloseTo(rig.body.build.armLower, 6);
-    strikeSegment(rig.body, 'kick', base, tip);
+    strikeSegment(rig, 'fistL', base, tip);
+    expect(base.distanceTo(tip)).toBeCloseTo(rig.build.armLower, 6);
+    strikeSegment(rig, 'kick', base, tip);
     expect(tip.y).toBeLessThan(base.y);
   });
 });
