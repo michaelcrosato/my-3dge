@@ -1,0 +1,10 @@
+{
+  "action": "deathSpin",
+  "desc": "Death by spinning (ALttP: four facings times three turns, about 6 frames each, then a collapse): three turns in place, flat on its back, dead.",
+  "beats": [
+    { "name": "spin", "seconds": 1.2, "body": { "hurt": true }, "flip": { "turns": 3, "axis": "spin" } },
+    { "name": "collapse", "seconds": 0.35, "body": { "down": 1 }, "events": [{ "type": "down", "at": 1 }] },
+    { "name": "dead", "seconds": 0.2, "until": "next", "body": { "down": 1 } }
+  ],
+  "check": { "signals": [{ "at": 2.2, "do": "stop" }], "seconds": 3 }
+}

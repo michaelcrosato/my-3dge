@@ -1,0 +1,32 @@
+{
+  "action": "deathShock",
+  "desc": "Death by electrocution (Crash, Diablo III): arms flung out, the body jerking from side to side until the game ends it (finish), then a collapse onto its back.",
+  "beats": [
+    {
+      "name": "jerkL",
+      "seconds": 0.05,
+      "body": { "hurt": true },
+      "motion": { "lean": -0.3, "twist": 0.4 },
+      "effectors": { "handL": [0.1, -0.5, 0.15], "handR": [0.1, 0.5, 0.25] },
+      "events": [{ "type": "zap" }]
+    },
+    {
+      "name": "jerkR",
+      "seconds": 0.05,
+      "then": "jerkL",
+      "body": { "hurt": true },
+      "motion": { "lean": -0.2, "twist": -0.4 },
+      "effectors": { "handL": [0.1, -0.5, 0.25], "handR": [0.1, 0.5, 0.15] }
+    },
+    { "name": "collapse", "seconds": 0.4, "body": { "down": 1 }, "events": [{ "type": "down", "at": 1 }] },
+    { "name": "dead", "seconds": 0.2, "until": "next", "body": { "down": 1 } }
+  ],
+  "exit": "collapse",
+  "check": {
+    "signals": [
+      { "at": 1, "do": "finish" },
+      { "at": 2, "do": "stop" }
+    ],
+    "seconds": 2.5
+  }
+}

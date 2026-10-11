@@ -1,0 +1,27 @@
+{
+  "action": "spinJump",
+  "desc": "A spin jump (Super Metroid, Contra): a crouch, forward somersaults while airborne, looping until the game lands it (go land), the landing squash.",
+  "beats": [
+    { "name": "crouch", "seconds": 0.08, "motion": { "crouch": 0.45 }, "events": [{ "type": "takeoff", "at": 1 }] },
+    {
+      "name": "spin",
+      "seconds": 0.25,
+      "then": "spin",
+      "body": { "air": true },
+      "motion": { "crouch": 0.8 },
+      "flip": { "turns": 1 }
+    },
+    { "name": "land", "seconds": 0.12, "motion": { "crouch": 0.5 }, "events": [{ "type": "land" }] },
+    { "name": "recover", "seconds": 0.15, "cancel": { "by": ["any"] } }
+  ],
+  "check": {
+    "signals": [{ "at": 0.83, "do": "land" }],
+    "lift": [
+      [0.08, 0],
+      [0.3, 0.7],
+      [0.45, 0.8],
+      [0.83, 0]
+    ],
+    "seconds": 1.3
+  }
+}

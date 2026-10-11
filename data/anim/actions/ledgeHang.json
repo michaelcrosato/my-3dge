@@ -1,0 +1,46 @@
+{
+  "action": "ledgeHang",
+  "desc": "Ledge hang and climb up (Prince of Persia: 14 frames to hang, 17 to climb up; SM64, Tomb Raider): the hands catch the edge and hold it, the body hangs in Mesh2Motion's Ledge Hang until the game climbs it (next), pulls up on the hands, mantles a knee over and stands. Letting go is stop. The game lifts the body.",
+  "beats": [
+    {
+      "name": "catch",
+      "seconds": 0.12,
+      "effectors": { "handL": [0.25, -0.15, 0.5], "handR": [0.25, 0.15, 0.5] },
+      "events": [{ "type": "grab", "at": 1 }]
+    },
+    {
+      "name": "hang",
+      "seconds": 0.2,
+      "until": "next",
+      "clip": { "name": "MESH2MOTION/Ledge Hang", "loop": true, "fade": 0.15 },
+      "effectors": { "handL": [0.25, -0.15, 0.5], "handR": [0.25, 0.15, 0.5] },
+      "cancel": { "by": ["jump", "action"] }
+    },
+    {
+      "name": "pull",
+      "seconds": 0.3,
+      "body": { "air": true },
+      "motion": { "crouch": 0.4, "lean": 0.5 },
+      "effectors": { "handL": [0.3, -0.15, -0.3], "handR": [0.3, 0.15, -0.3] },
+      "events": [{ "type": "pull" }]
+    },
+    {
+      "name": "mantle",
+      "seconds": 0.25,
+      "motion": { "crouch": 0.7, "lean": 0.6 },
+      "effectors": { "handL": [0.25, -0.15, -0.85], "handR": [0.25, 0.15, -0.85] },
+      "events": [{ "type": "top", "at": 1 }]
+    },
+    { "name": "stand", "seconds": 0.25, "cancel": { "by": ["any"], "after": 0.4 } }
+  ],
+  "check": {
+    "signals": [{ "at": 0.62, "do": "next" }],
+    "lift": [
+      [0, 0.4],
+      [0.62, 0.4],
+      [0.92, 1.1],
+      [1.17, 1.5]
+    ],
+    "seconds": 1.6
+  }
+}
