@@ -3986,7 +3986,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 6.2 | Reactions and secondary motion | A | todo | | |
 | 6.3 | Combat helpers | W | todo | | |
 | 6.4 | Effects | R | todo | | |
-| 6.5 | The HTML/CSS overlay and damage numbers | I | todo | | |
+| 6.5 | The HTML/CSS overlay and damage numbers | I | done | be166ee (#6) | engine/ui/{overlay,labels,state}.ts: createOverlay({canvas}) roots a DOM layer over the canvas; labels placed with CSS2DRenderer's projection and cull, z-ordered by depth; pooled damage numbers (48) rise 1.1 m over 0.8 s, pop and blink by CSS keyframes on the overlay clock (--ui-age); HUD lines in 6 places, crosshair, ui.state()/uiState; never changes the hash (box-1-room goldens, Node 240 steps); call made: stacked numbers take screen slots one number high, not 0.5 m world offsets; no __engine member; touch rules built, untested (ADR-0021); deferred proof: shown in the box in WP 6.7, which wires createOverlay into createEngine (engine.ui) |
 | 6.6 | Animation checks, QA, sheets | A | todo | | |
 | 6.7 | Box 5: combat | B | todo | | |
 | **G6** | **Gate: Box 5** | | todo | | |

@@ -964,3 +964,23 @@ Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities
 - Registered in: [`engine/sim/state.ts` line 48](../engine/sim/state.ts)
 
 Raised by the world (engine/sim/world.ts) and the hash (engine/sim/state.ts) for an entity property, a `spawn`, `add`, `remove` or `query` name, or a captured component that no `defineComponent` declared: the hash covers declared components only, so an undeclared one is refused rather than skipped.
+
+## ui
+
+### UI_BAD_DT
+
+- Message: `update(camera, dt) got dt {dt}`
+- Fix: pass the seconds since the last frame, 0 or more (the frame loop's dt)
+- Registered in: [`engine/ui/overlay.ts` line 56](../engine/ui/overlay.ts)
+
+### UI_BAD_PLACE
+
+- Message: `hud "{id}" asks for the place {got}`
+- Fix: use one of top-left, top, top-right, bottom-left, bottom, bottom-right
+- Registered in: [`engine/ui/overlay.ts` line 52](../engine/ui/overlay.ts)
+
+### UI_BAD_POINT
+
+- Message: `{what} is {got}, not a point in the world`
+- Fix: pass [x, y, z] in metres, a Vector3 or { x, y, z }, or a function returning one
+- Registered in: [`engine/ui/labels.ts` line 39](../engine/ui/labels.ts)

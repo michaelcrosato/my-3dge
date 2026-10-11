@@ -28,6 +28,7 @@ game agent's manual.
 - `AIM_CHAIN` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The default chain, from the body up: about 103° of yaw and 69° of pitch in all.
 - `AimLink` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): One joint of an aim chain: the `joint`, its `share` of the turn (a chain's shares need not add up to 1), and the most it turns the gaze left or right (`yaw`) and up or down (`pitch`), in radians.
 - `AimOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `aim` turns.
+- `Anchor` (type from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): Where a label is: a point read every frame (a `Vector3` the caller moves follows), or a function giving one.
 - `angDiff` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The signed angle from `a` to `b` the short way round, in [−π, π).
 - `Animator` (class from [`engine/anim/character.ts`](../engine/anim/character.ts)): The character animator: a body, its layer stack and the two update paths.
 - `AnimatorComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `animator`: an actor's character animator as plain data, and what its game code tells its body.
@@ -136,6 +137,7 @@ game agent's manual.
 - `createInstancedBatch` (function from [`engine/gfx/instancing.ts`](../engine/gfx/instancing.ts)): Makes an instanced batch (see the file comment).
 - `createLevelMeshes` (function from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): Draws `level`'s mesh descriptors (see the file comment).
 - `createMaterialLibrary` (function from [`engine/gfx/materials/library.ts`](../engine/gfx/materials/library.ts)): Makes a material library over `registry` (the shared one by default).
+- `createOverlay` (function from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): Builds the overlay over `options.canvas` (see the file comment).
 - `createPuppet` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Draws `compiled` as one rigid-skinned mesh (see the file comment), at rest until `setPose`.
 - `createPuppetBatches` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Makes instanced puppet batches (see the file comment).
 - `createScriptedGamepad` (function from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
@@ -149,6 +151,8 @@ game agent's manual.
 - `CutWhen` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars).
 - `CylinderCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An upright cylinder collider (Rapier's cylinder, three.js's CylinderGeometry): one per tile, at its centre.
 - `DaisDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A dais: an octagonal frustum (faces toward the axes and the diagonals) standing on a block of a dais glyph's tiles.
+- `DAMAGE_NUMBERS` (const from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): The damage numbers' behaviour (see the file comment); seconds and metres.
+- `DamageOptions` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): How a damage number is shown.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
 - `defineActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Registers an action map (on the shared registry by default).
 - `defineBody` (function from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): Defines a body on `registry` (the shared one by default).
@@ -230,6 +234,8 @@ game agent's manual.
 - `HeadlessOptions` (interface from [`engine/app/headless.ts`](../engine/app/headless.ts)): How a headless engine starts.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
 - `Hit` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What a raycast or shape cast struck.
+- `HudOptions` (interface from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): How a HUD line is shown.
+- `HudPlace` (type from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): Where a HUD line goes: a corner, or the middle of the top or bottom edge.
 - `HullCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A convex hull collider (Rapier's convex hull of its points): a ramp's wedge or a dais's frustum, from the ground.
 - `Humanoid` (class from [`engine/anim/humanoid.ts`](../engine/anim/humanoid.ts)): A procedural humanoid: state, effectors, pose.
 - `HUMANOID_WEIGHTS` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): Every weight of the humanoid: its body state, its slot and its rates (from humanoid.ts's `STEP`).
@@ -261,6 +267,8 @@ game agent's manual.
 - `KindSpec` (interface from [`engine/core/registry.ts`](../engine/core/registry.ts)): How a kind is declared.
 - `knock` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Knocks a body away from `from`: a push across the ground and up, a tip toward the push and a twist (`knockProp`).
 - `KnockOptions` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): How hard `knock` hits: speeds, the same for every mass.
+- `Label` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): A world-anchored label: change its text, anchor or visibility at any time; it shows them at the next frame.
+- `LabelOptions` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): How a label is made.
 - `LAYER_SLOTS` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The slots that take layers: those after the solve, each changing the solved pose.
 - `LayerSlot` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A slot that takes layers.
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
@@ -314,6 +322,9 @@ game agent's manual.
 - `NavGridOptions` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
 - `NEAREST_RINGS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
 - `OverlapOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): An overlap's options.
+- `Overlay` (interface from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): The overlay over one canvas (see the file comment).
+- `OverlayCamera` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): What the overlay reads of a camera: any three.js camera (without `near` and `far`, it culls only behind it).
+- `OverlayOptions` (interface from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): How an overlay is made.
 - `palette` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A palette's hex colours as sRGB bytes; throws `GFX_EMPTY_PALETTE` naming `what` when it has none.
 - `parseRoutes` (function from [`engine/app/routes.ts`](../engine/app/routes.ts)): Reads a page's query (see the file comment).
 - `PartCut` (interface from [`engine/gfx/level/shapes.ts`](../engine/gfx/level/shapes.ts)): How the cutaway cuts a part: its recipe's cut, and the geometry of its twin (a new one each call).
@@ -469,6 +480,9 @@ game agent's manual.
 - `twoBone` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Two-bone IK on positions (`ik3`): the middle joint (knee, elbow) and the end of a limb of bone lengths `upper` and `lower` from `root` toward `target`, bent toward the direction `pole`; out of reach, the end stops on the line to the target.
 - `TwoBoneOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `twoBoneRot` and `handTo` solve.
 - `twoBoneRot` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the limb ending at `end` (an ankle or a wrist) through its three joints' local rotations so the end reaches `target`, then runs FK.
+- `UiElementState` (interface from [`engine/ui/state.ts`](../engine/ui/state.ts)): One overlay element (see the file comment).
+- `uiState` (function from [`engine/ui/state.ts`](../engine/ui/state.ts)): The overlay under `root` as plain data (see the file comment).
+- `UiState` (interface from [`engine/ui/state.ts`](../engine/ui/state.ts)): The overlay as plain data (see the file comment).
 - `updateInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Records one step's intents in `buffer` (changed in place, and returned): call it once per step, with the world's `tick`, before reading `released`, `buffered` or `repeated`.
 - `updateTrigger` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Brings `trigger.inside` up to date with its sensor and returns the bodies that entered and left, in id order.
 - `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
@@ -486,6 +500,7 @@ game agent's manual.
 - `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
 - `World` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
 - `WorldEvents` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
+- `WorldPoint` (type from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): A point in the world, m: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]` (physics' `Vec3Like`).
 - `WorldPose` (interface from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): A pose in world space: each joint's matrix (16 numbers), position (3) and rotation (4), in `JOINTS` order.
 - `WorldTimers` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
 - `wrapIndex` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): `i` folded into [0, n) (n a positive integer): -1 → n − 1.
@@ -2699,6 +2714,41 @@ For the agents who maintain the engine.
 - `createChrome` (function): Makes the touch-mode chrome of `document` (off until `setTouch(true)`).
 - `TURN_HINT` (const): The hint shown to a phone held upright.
 
+### [`engine/ui/labels.ts`](../engine/ui/labels.ts)
+
+- `Anchor` (type): Where a label is: a point read every frame (a `Vector3` the caller moves follows), or a function giving one.
+- `createWorldLayer` (function): Builds the world layer: labels in `labels`, damage numbers in `numbers` (two sibling layers, numbers on top).
+- `DAMAGE_NUMBERS` (const): The damage numbers' behaviour (see the file comment); seconds and metres.
+- `DamageColumn` (interface): The last damage number's column: its anchor (m), when its latest number came (s) and how many it holds.
+- `DamageOptions` (interface): How a damage number is shown.
+- `damageRise` (function): How far above its anchor a damage number is `age` seconds after it appeared, m.
+- `Label` (interface): A world-anchored label: change its text, anchor or visibility at any time; it shows them at the next frame.
+- `LABEL_CODES` (const): The error codes of the world-anchored elements.
+- `LabelOptions` (interface): How a label is made.
+- `OverlayCamera` (interface): What the overlay reads of a camera: any three.js camera (without `near` and `far`, it culls only behind it).
+- `projectToOverlay` (function): Where the point (x, y, z) shows on an overlay `width` × `height` CSS px over `camera`'s picture: writes its centre (px from the top left) and its depth (m in front of the camera) into `out`, or returns false, writing nothing, when it is nearer than `near` or beyond `far`.
+- `stackDamage` (function): Where a damage number at `point` goes at `time` (s), after the column `last`: in it when near enough and soon enough (`last` is then updated), else in a new column at `point`.
+- `WorldFrame` (interface): What one frame places by.
+- `WorldLayer` (interface): The labels and damage numbers of one overlay.
+- `worldPoint` (function): `point` as `[x, y, z]`, or `UI_BAD_POINT` naming `what`.
+- `WorldPoint` (type): A point in the world, m: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]` (physics' `Vec3Like`).
+
+### [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)
+
+- `createOverlay` (function): Builds the overlay over `options.canvas` (see the file comment).
+- `HUD_PLACES` (const): Every HUD place, in the order the overlay adds them.
+- `HudOptions` (interface): How a HUD line is shown.
+- `HudPlace` (type): Where a HUD line goes: a corner, or the middle of the top or bottom edge.
+- `Overlay` (interface): The overlay over one canvas (see the file comment).
+- `OVERLAY_CODES` (const): The error codes of the overlay.
+- `OverlayOptions` (interface): How an overlay is made.
+
+### [`engine/ui/state.ts`](../engine/ui/state.ts)
+
+- `UiElementState` (interface): One overlay element (see the file comment).
+- `uiState` (function): The overlay under `root` as plain data (see the file comment).
+- `UiState` (interface): The overlay as plain data (see the file comment).
+
 ### [`engine/ui/swipe.ts`](../engine/ui/swipe.ts)
 
 - `attachSwipes` (function): Lets fingers swipe away the `[data-swipe]` elements of `document` (see the file comment).
@@ -3043,6 +3093,14 @@ For the agents who maintain the engine.
 - `RunOptions` (interface): How to run a hook.
 - `tempDir` (function): A new temporary directory, as a real path.
 - `writeFiles` (function): Writes each file (path relative to `root` → content), creating directories; `mode` applies to all of them.
+
+### [`tests/unit/ui/fakeDom.ts`](../tests/unit/ui/fakeDom.ts)
+
+- `asDom` (function): The fake's objects as the DOM types the modules take.
+- `CanvasRect` (interface): A canvas's client rect, CSS px.
+- `FakeDocument` (class): A fake document: a `<html>` with `<head>` and `<body>`, and an optional window.
+- `FakeElement` (class): A fake element (see the file comment).
+- `fakePage` (function): A fake page and a canvas (not yet in it) whose client rect is `rect`, which a test may change.
 
 ### [`tools/anim/legacy-readable.ts`](../tools/anim/legacy-readable.ts)
 
