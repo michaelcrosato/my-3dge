@@ -1,0 +1,23 @@
+/**
+ * @file Unit tests for the body `body:{{name}}` ({{id}}.ts): it is defined, compiles for every engine build, and draws
+ * as one puppet within 10 draw calls with a shadow map.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { compileBody, createMaterialLibrary, createPuppet } from '../../../engine';
+import { {{name}} } from './{{name}}';
+
+describe('body:{{name}}', () => {
+  it('is defined, compiles for every build, and draws within 10 draw calls', () => {
+    expect({{name}}.id).toBe('body:{{name}}');
+    const library = createMaterialLibrary();
+    for (const build of ['build:chibi', 'build:heroic', 'build:bulky', 'build:skeleton']) {
+      const compiled = compileBody({{name}}, build);
+      expect(compiled.pieces.length, build).toBeGreaterThan(0);
+      const puppet = createPuppet(compiled, { materials: library });
+      expect(puppet.drawCalls(1), build).toBeLessThanOrEqual(10);
+      puppet.dispose();
+    }
+    library.dispose();
+  });
+});
