@@ -17,7 +17,8 @@
  *
  * Shardfall's lessons, kept: levels per channel are 0 (off) or 8 and more (24 suits pixel art), since fewer shift the
  * hue of dull colours (`shardfall:docs/HISTORY.md:424-426`; a grey floor went pink at 5–6 levels); the pixel filter
- * snaps the camera to its block grid (`snap`), so pixel art does not shimmer as the camera slides.
+ * snaps the camera to its block grid (`snap`) while the environment is pixel art, so it does not shimmer as the
+ * camera slides (engine/gfx/post/chain.ts's `snapBlock`).
  *
  * Carried from `my-3d2dge:src/stress-world/45-filters.js` (cel, pixel, Bayer dither, the `keep(m)` scope) and
  * `shardfall:crates/pav_render/src/scene.rs:409-500` (the filters' numbers and defaults, keys renamed).
@@ -137,7 +138,7 @@ export const FILTER_FIELDS = {
     snap: {
       type: 'boolean',
       default: true,
-      description: 'Snap the camera to the block grid, so blocks do not shimmer.',
+      description: 'Snap the camera to the block grid while the environment is pixel art, so it does not shimmer.',
     },
   }),
   palette: filter('Colour reduction: levels per channel or a fixed palette, with ordered (Bayer) dithering.', {

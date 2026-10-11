@@ -17,8 +17,9 @@
  * `post.look` (a `look` id, engine/gfx/post/looks.ts), `post.filters` (part of a filter chain laid over the look's,
  * filter by filter and field by field) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`,
  * `groups`). A look's style is applied to the style set given (`styles.setStyle`, WP 7.2); a look with style `''`
- * puts back the style the set had when the chain was made, and its toon look. Pixel art snaps the camera to its
- * block grid for the frame (engine/gfx/post/snap.ts) and puts it back.
+ * puts back the style the set had when the chain was made, and its toon look. Pixel art on the environment, or
+ * the whole screen's low resolution, snaps the camera to its block grid for the frame (`snapBlock`,
+ * engine/gfx/post/snap.ts) and puts it back.
  *
  * Use: `gfx.frame(post.view(frameView))` draws a frame through the chain; `post.attach(gfx.warmup)` once, before the
  * first warm-up, registers the MRT's compile step and the chain's key part.
@@ -34,7 +35,7 @@
  * // gfx.frame(post.view(view.frame({ alpha, dt, aspect })));
  * @see tests/e2e/post.spec.ts
  */
-import { Matrix4, PostProcessing, Vector2, type Camera, type PassNode, type ToneMapping, type WebGPURenderer } from 'three/webgpu'; // prettier-ignore
+import { Matrix4, PerspectiveCamera, PostProcessing, Scene, Vector2, type Camera, type PassNode, type ToneMapping, type WebGPURenderer } from 'three/webgpu'; // prettier-ignore
 import { renderGroup, renderOutput, rtt, uniform, vec4 } from 'three/tsl';
 import { bloom as bloomNode } from 'three/addons/tsl/display/BloomNode.js';
 import { defineCodes, log as sharedLog, type Log } from '../../core/log';
@@ -54,12 +55,13 @@ import {
   fixLevels,
   layerChain,
   partialSchema,
+  scopeMask,
   writeFilters,
   type FilterChain,
   type FilterSpec,
 } from './filters';
 import { defineLooks, type LookEntry } from './looks';
-import { clearMrt, createScenePass, useSceneMrt, WARM_MRT_ID } from './mrt';
+import { clearMrt, createScenePass, PART_BITS, useSceneMrt, WARM_MRT_ID } from './mrt';
 import { snapToBlocks } from './snap';
 
 /** The codes this module raises, with their fixes. */
@@ -149,6 +151,16 @@ export interface Post {
   dispose(): void;
 }
 
+/**
+ * The block grid the camera snaps to for `chain`: pixel art's when it covers the environment and snaps (characters
+ * and objects in pixel art move on their own, and a snapping camera would make a sharp world jump), else the whole
+ * screen's low resolution; 1 for none.
+ */
+export function snapBlock(chain: FilterChain): number {
+  if (chain.pixel.snap && (scopeMask(chain.pixel.scope) & PART_BITS.environment) !== 0) return chain.pixel.size;
+  return chain.screen.scope === 'all' ? chain.screen.pixelate : 1;
+}
+
 /** Chains made so far: each registers its warm-up entry and key part under its own number. */
 let chains = 0;
 
@@ -166,7 +178,8 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
   const serial = ++chains;
   const own = styles ? { style: styles.style, toon: styles.toon.values() as ToonLook } : null;
 
-  const scenePass = createScenePass(null as never, null as never);
+  // `view(frame)` gives the pass the frame's scene and camera; these stand in until the first frame.
+  const scenePass = createScenePass(new Scene(), new PerspectiveCamera());
   const uniforms = createFilterUniforms();
   const invProj = uniform(new Matrix4()).setGroup(renderGroup);
   const bloomGate = uniform(0).setGroup(renderGroup);
@@ -175,8 +188,8 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
   let warming = false;
   let bloomRuns = false;
   gateUpdates(glow, () => warming || bloomRuns);
-  const chainOut = new PostProcessing(renderer);
-  chainOut.outputColorTransform = false;
+  const processing = new PostProcessing(renderer);
+  processing.outputColorTransform = false;
 
   let built: { tone: ToneMapping; space: string; aa: Aa; display: ReturnType<typeof rtt> } | null = null;
   let builds = 0;
@@ -189,14 +202,14 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
     const display = rtt(renderOutput(vec4(lit.rgb, 1), renderer.toneMapping, renderer.outputColorSpace));
     display.name = 'postDisplay'; // a WGSL identifier: r182 names the binding after it
     const aa = createAa(aaKind, display, aaGate, () => warming || aaGate.value > 0.5);
-    chainOut.outputNode = createComposite({
+    processing.outputNode = createComposite({
       display: aa.texture,
       normals: scenePass.getTextureNode('normal'),
       depth: scenePass.getTextureNode('depth'),
       invProj,
       uniforms,
     });
-    chainOut.needsUpdate = true;
+    processing.needsUpdate = true;
     built = { tone: renderer.toneMapping, space: renderer.outputColorSpace, aa, display };
     builds++;
   };
@@ -255,11 +268,11 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
     invProj.value.copy(camera.projectionMatrixInverse);
     uniforms.frame.value.y = frames++ / 60;
     renderer.getDrawingBufferSize(size);
-    const snapped = chain.pixel.scope !== 'off' && chain.pixel.snap;
-    const restore = snapped ? snapToBlocks(camera, chain.pixel.size, { width: size.x, height: size.y }) : null;
+    const block = snapBlock(chain);
+    const restore = block > 1 ? snapToBlocks(camera, block, { width: size.x, height: size.y }) : null;
     clearMrt(renderer);
     try {
-      chainOut.render();
+      processing.render();
     } finally {
       restore?.();
       warming = false;
@@ -310,7 +323,7 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
       built?.display.renderTarget?.dispose();
       glow.dispose();
       scenePass.dispose();
-      chainOut.dispose();
+      processing.dispose();
     },
   };
 }

@@ -14,7 +14,7 @@
  *
  * `show` (the setting `post.show`) draws what the MRT holds instead of the picture: `parts` (characters red,
  * objects green, the environment blue, the background black), `normals`, or `groups` (a colour per outline group):
- * the parts as numbers for tests and agents (`x shot` reads them back), with no pipeline built, since it is a
+ * the parts as numbers for tests and agents (a shot reads them back), with no pipeline built, since it is a
  * uniform too.
  *
  * Invariants: one pass, one pipeline per target format, built once; a filter whose mask is 0 costs one comparison;
