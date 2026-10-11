@@ -245,13 +245,13 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `a frame threw, so the loop stopped: {message}`
 - Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
-- Registered in: [`engine/app/engine.ts` line 78](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 80](../engine/app/engine.ts)
 
 ### APP_NO_FRAME
 
 - Message: `no frame was drawn in {tries} tries: the warm-up never finished`
 - Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 86](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 88](../engine/app/engine.ts)
 
 ### APP_NO_LEVEL
 
@@ -263,7 +263,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the page has no replay {name}`
 - Fix: use one of: {names}
-- Registered in: [`engine/app/engine.ts` line 82](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 84](../engine/app/engine.ts)
 
 ### APP_NO_VIEW
 
@@ -293,7 +293,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 74](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 76](../engine/app/engine.ts)
 
 ## audio
 
@@ -791,11 +791,43 @@ Advice from an outline shell's push (engine/gfx/materials/outline.ts), once, whe
 
 Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipelines` no longer has r182's shape, usually after a three.js upgrade: the count of pipelines three.js keeps cached is then unknown (null). Builds are counted at the device and stay exact.
 
+### GFX_POST_FEW_LEVELS
+
+- Message: `{where} asks for {levels} levels per channel; the chain draws 8`
+- Fix: posterize with 0 (off) or 8 levels and more: fewer shift the hue of dull colours (shardfall measured a grey floor turning pink)
+- Registered in: [`engine/gfx/post/chain.ts` line 78](../engine/gfx/post/chain.ts)
+
+Advice from the post chain when `post.filters` sets 1–7 levels; looks are checked when they are defined.
+
+### GFX_POST_FLAG_SLOTS
+
+- Message: `{missed} objects draw as the environment: the flag table has {slots} slots, all taken`
+- Fix: draw fewer separate objects (instance or merge them); slots come back as their objects are collected
+- Registered in: [`engine/gfx/post/chain.ts` line 83](../engine/gfx/post/chain.ts)
+
+Advice from the post chain: more live drawable objects than the fixed MRT’s flag table holds (engine/gfx/post/mrt.ts).
+
+### GFX_POST_NO_BLOOM
+
+- Message: `bloom is off at the {tier} quality tier: {look} draws without its glow`
+- Fix: raise the view setting quality to 'medium' or 'high' to see the glow; nothing else about the look changes
+- Registered in: [`engine/gfx/post/chain.ts` line 73](../engine/gfx/post/chain.ts)
+
+Advice from the post chain (engine/gfx/post/chain.ts): the look asks for bloom, which the quality tier turns off (WP 3.12).
+
+### GFX_POST_NO_STYLES
+
+- Message: `{look} asks for the material style {style}, but the chain has no style set: it draws only its filters`
+- Fix: give createPost a style set (createStyleSet, WP 7.2) as options.styles, attached to the warm-up, so looks change the materials too
+- Registered in: [`engine/gfx/post/chain.ts` line 88](../engine/gfx/post/chain.ts)
+
+Advice from the post chain (engine/gfx/post/chain.ts): a look with a material style, drawn by a chain made without `styles`.
+
 ### GFX_RIG_BODY
 
 - Message: `rig body {body}, part {part}: {problem}`
 - Fix: {fix}
-- Registered in: [`engine/gfx/puppets/crowd.ts` line 56](../engine/gfx/puppets/crowd.ts)
+- Registered in: [`engine/gfx/puppets/crowd.ts` line 58](../engine/gfx/puppets/crowd.ts)
 
 Raised by `createCrowd` (engine/gfx/puppets/crowd.ts) for a rig body whose part has an unknown shape, a slot the body lacks, a size that is not positive, or a joint the rig’s pose lacks.
 

@@ -216,6 +216,7 @@ game agent's manual.
 - `createMaterialLibrary` (function from [`engine/gfx/materials/library.ts`](../engine/gfx/materials/library.ts)): Makes a material library over `registry` (the shared one by default).
 - `createOutline` (function from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): Makes an outline (see the file comment).
 - `createOverlay` (function from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): Builds the overlay over `options.canvas` (see the file comment).
+- `createPost` (function from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): Makes the chain on `gfx.renderer` (see the file comment).
 - `createPropMeshes` (function from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): Makes the prop meshes; see the file comment.
 - `createPuppet` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Draws `compiled` as one rigid-skinned mesh (see the file comment), at rest until `setPose`.
 - `createPuppetBatches` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Makes instanced puppet batches (see the file comment).
@@ -275,9 +276,11 @@ game agent's manual.
 - `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
 - `defineLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): Registers a level on `registry` (the shared one by default) after checking its text compiles against that registry's legend; returns the entry.
 - `defineLight` (function from [`engine/gfx/lights.ts`](../engine/gfx/lights.ts)): Declares a light kind (`light:<tag>`, the tag a level's light spots carry); see `LIGHT_FIELDS`.
+- `defineLook` (function from [`engine/gfx/post/looks.ts`](../engine/gfx/post/looks.ts)): Declares a look (`look:<name>`); see `LOOK_FIELDS`.
 - `defineMannequin` (function from [`engine/gfx/puppets/bodies/mannequin.ts`](../engine/gfx/puppets/bodies/mannequin.ts)): Registers `build:mannequin` (rest body `source` of `set`, its first by default) and `body:mannequin` (its `body`) on `registry` (the shared one), once; returns both.
 - `defineMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): Defines a material on `registry` (the shared one by default) and returns it.
 - `defineMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): Defines a move on `registry` (the shared one by default) and returns it; absent fields keep a plain strike's values.
+- `definePostSettings` (function from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): Declares the chain's settings (`POST_SETTINGS`) and the setting `quality` it reads on `registry` (the shared one by default), unless it has them: on the shared one when this module loads, so `node x set post.look look:game-boy` knows them in Node (tools/cmd/set.ts imports the modules that declare settings), and on any other when `createPost` or `createEngine` runs.
 - `defineProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): Defines a prop on `registry` (the shared one by default) and returns it.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
@@ -311,6 +314,10 @@ game agent's manual.
 - `FeelOptions` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
+- `FILTER_NAMES` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Every filter, in the composite's order (bloom and aa run before it).
+- `FilterChain` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): A filter chain: every filter with its scope and numbers.
+- `FilterName` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): A filter's name.
+- `FilterSpec` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Part of a chain: some filters, each with some of its fields (a look's `filters`, the setting `post.filters`).
 - `FLICKER` (const from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): A flame's flicker at time `t` (s): about 0.77 to 1.03, the 2D hall's (my-3d2dge's `FLICKER`).
 - `FLIP_AXES` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What a flip turns about, in the body's frame: the top of the body goes forward, back, left, right; or it spins left.
 - `Floater` (class from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater: its state, its pose.
@@ -477,6 +484,8 @@ game agent's manual.
 - `loadClipLibrary` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Loads a set (its text or object, read by validate.ts `parseClipSet`, which throws its `ANIM_CLIP_*` codes).
 - `LOD` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The detail levels `pose({ lod })` takes, by index: how often it re-solves, in ticks, and which slots run.
 - `LOOK_AHEAD` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many tiles downhill `FlowField.direction` looks ahead (shardfall's 3).
+- `LookEntry` (type from [`engine/gfx/post/looks.ts`](../engine/gfx/post/looks.ts)): A `look` entry.
+- `LookSpec` (type from [`engine/gfx/post/looks.ts`](../engine/gfx/post/looks.ts)): What `defineLook` takes: any of the fields, the filters as part of a chain.
 - `Lying` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body lies: on its back (`up`) or on its face (`down`).
 - `lyingOf` (function from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body whose chest turned by `chest` (a world rotation) lies: face up when the chest's front looks up.
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
@@ -530,13 +539,16 @@ game agent's manual.
 - `OverlayCamera` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): What the overlay reads of a camera: any three.js camera (without `near` and `far`, it culls only behind it).
 - `OverlayOptions` (interface from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): How an overlay is made.
 - `palette` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A palette's hex colours as sRGB bytes; throws `GFX_EMPTY_PALETTE` naming `what` when it has none.
+- `PALETTES` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): The fixed palettes (sRGB): Game Boy greens, PICO-8's sixteen, CGA, 1-bit, an amber terminal.
 - `parseClip` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Reads a clip of format 1 or 2 from its text (`//` comment lines allowed) or an object, which is not changed: the result is a copy, its keys sorted by time and `dur` filled in.
 - `parseClipSet` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Reads a set of clips (a set file's text or object): its header, then every clip by `parseClip`.
 - `parseRoutes` (function from [`engine/app/routes.ts`](../engine/app/routes.ts)): Reads a page's query (see the file comment).
+- `Part` (type from [`engine/gfx/post/mrt.ts`](../engine/gfx/post/mrt.ts)): A part of the scene: a character (puppets, the hero), an object (props, entities) or the environment.
 - `PartCut` (interface from [`engine/gfx/level/shapes.ts`](../engine/gfx/level/shapes.ts)): How the cutaway cuts a part: its recipe's cut, and the geometry of its twin (a new one each call).
 - `ParticleFields` (type from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): The particle fields as an emitter entry holds them.
 - `ParticleStats` (interface from [`engine/gfx/fx/particles.ts`](../engine/gfx/fx/particles.ts)): What a pool did.
 - `PartOptions` (interface from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): A part's options: the bone it rides (a joint, or `'root'`).
+- `PARTS` (const from [`engine/gfx/post/mrt.ts`](../engine/gfx/post/mrt.ts)): The parts of the scene a filter can be scoped to.
 - `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
 - `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
 - `Physics` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A physics world: bodies, stepping, queries, and the sim's physics hook (`state`, `capture`, `restore`).
@@ -565,6 +577,11 @@ game agent's manual.
 - `PoseName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A pose's name.
 - `PoseOptions` (interface from [`engine/anim/character.ts`](../engine/anim/character.ts)): Where and how `pose` draws the body.
 - `POSES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The held poses, each with what it shows.
+- `Post` (interface from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): A post-processing chain (see the file comment).
+- `POST_SETTINGS` (const from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): The view settings the chain reads, declared by `definePostSettings`: `post.look` (a `look` id, engine/gfx/post/looks.ts), `post.filters` (part of a filter chain laid over the look's, filter by filter and field by field) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
+- `PostOptions` (interface from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): How `createPost` makes a chain.
+- `PostShow` (type from [`engine/gfx/post/composite.ts`](../engine/gfx/post/composite.ts)): What the composite draws.
+- `PostTag` (interface from [`engine/gfx/post/mrt.ts`](../engine/gfx/post/mrt.ts)): What `setPart` records on an object (`userData.post`).
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `ProbeOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A probe's options: where the downward ray starts, and the groups that count as ground.
 - `Projectile` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot: what it is, where it flies and what it hit (`PROJECTILE_FIELDS` says what each means).
@@ -664,6 +681,8 @@ game agent's manual.
 - `ScenePropComponents` (type from [`engine/sim/props.ts`](../engine/sim/props.ts)): The components this module reads.
 - `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
+- `Scope` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): A filter's scope.
+- `SCOPES` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Where a filter applies: nowhere, everywhere, or one or two parts of the scene (engine/gfx/post/mrt.ts).
 - `ScreenShake` (class from [`engine/gfx/fx/shake.ts`](../engine/gfx/fx/shake.ts)): Camera shake: see the file comment.
 - `ScriptedGamepad` (interface from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): A pad that a script moves frame by frame.
 - `Secondary` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The secondary-motion layer: squash, hair, cape and tail on a humanoid.
@@ -671,6 +690,7 @@ game agent's manual.
 - `seek` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way from `from` to `to` on the ground: a unit vector, zero within a millimetre.
 - `sensorHits` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): The dynamic and kinematic bodies a body's sensors overlapped at the last step, in id order.
 - `SensorSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Where a sensor goes and how it moves.
+- `setPart` (function from [`engine/gfx/post/mrt.ts`](../engine/gfx/post/mrt.ts)): Tags `object` (and what it holds) with a part of the scene, an outline group and the pixel-art flag.
 - `SettingValue` (type from [`engine/core/settings.ts`](../engine/core/settings.ts)): A setting's value: plain data.
 - `setVelocity` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Moves a living agent's velocity toward `want` by at most `acceleration × dt` this step: across the ground (a flyer: up and down too), keeping the vertical speed gravity and the solver gave it.
 - `Sfx` (interface from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): An `sfx` entry: the spec with its defaults filled, frozen.
@@ -742,6 +762,7 @@ game agent's manual.
 - `strikeTime` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): When `clip`'s strike lands, seconds from its start, decoded on rest body `R` (see the file comment).
 - `StyleSet` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): A page's materials in every style (see the file comment).
 - `StyleSetOptions` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): How `createStyleSet` makes a set.
+- `STYLIZE_KINDS` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): The painterly and print styles.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
 - `Sweep` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
 - `sweepHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets the swept quad touches (`sweepTouches`), by id, ascending.
@@ -1754,6 +1775,43 @@ For the agents who maintain the engine.
 - `rigToEngine` (function): A rig vector `[forward, right, up]` (times `scale`) in engine axes: x left, y up, z forward.
 - `sampleBaked` (function): Samples `baked` at `t` seconds: its 23 local rotations into `rotations` (slerped between frames, as three.js's mixer does) and its pelvis into `hips` (lerped).
 - `travelAt` (function): How far `baked` has carried the root by `t` seconds, `(x, z)` metres on the source body (a loop's laps added).
+
+### [`engine/anim/clip/encode.ts`](../engine/anim/clip/encode.ts)
+
+- `capSample` (function): The capture's 36 points at `t` seconds, in-betweened between its frames (loops wrap), written into `out`.
+- `Capture` (interface): A captured clip, the importer's input: `n` frames at `fps` of the 36 body points (mm, rig frame).
+- `encodeClip` (function): A readable clip from a capture, keeping frames `kf` as its keys; `extra` adds the catalog's words and a blade.
+- `EncodeExtra` (interface): What `encodeClip` adds besides the keys: the catalog's words, and whether to aim a blade from the right fist.
+- `encodePose` (function): One key pose from captured body points `X`; `prev`, the key before, lets angles continue without jumps.
+- `fitClip` (function): A readable clip within `tol` mm of the capture: it starts from `reduce`'s key frames and adds the frame the in-betweening misses most, until every frame is within `tol` of what the format can hold at all there (that frame encoded as its own key): keys past the format's own limits are not worth their tokens.
+- `Fitted` (interface): A fitted clip, with its worst and average body-point error against the capture (mm, over every frame).
+- `measure` (function): A body's rest measurements (plain, rounded data, saved in the set) from its own captures: proportions and rest offsets from the T-pose clip `tposeName` (else the first clip's first frame), and how much of the hips-to-chest turn each spine bone takes (and the neck of the chest-to-head turn), fitted from about six frames of every clip.
+- `reduce` (function): The key frames (Ramer–Douglas–Peucker over whole poses): in-betweening the rest stays within `tol` mm.
+
+### [`engine/anim/clip/frames.ts`](../engine/anim/clip/frames.ts)
+
+- `add` (const): `a + b`.
+- `compose` (const): Parent frame, then a frame relative to it: the child in the grandparent's coordinates.
+- `cross` (const): The cross product `a × b`.
+- `DG` (const): Radians in a degree.
+- `dot` (const): The dot product of `a` and `b`.
+- `Frame` (type): A frame: its forward, right and up axes `[F, R, U]`, each in the parent's coordinates.
+- `fromEuler` (function): The frame of `[turn, lean, tilt]` degrees: yaw about up, then pitch about right, then roll.
+- `hintFor` (function): The direction limb `limb` of side `s` (−1 left, 1 right) bends toward at twist 0, pointing `dLocal` in `M`.
+- `len` (const): The length of `a`.
+- `Limb` (type): A limb kind: an arm (shoulder, elbow, fist) or a leg (hip, knee, ankle).
+- `limbEnd` (const): Where a limb from `root` ends: direction `v` in frame `M` (mirrored for side `s`) at distance `l`.
+- `mul` (const): `a` scaled by `k`.
+- `norm` (function): `a` at length 1 (a zero vector stays zero).
+- `qFromTo` (const): The rotation that takes rest frame A to frame B, as a quaternion.
+- `qrot` (const): `v` turned by quaternion `q`.
+- `qslerp` (function): The quaternion a fraction `t` of the shortest way from `a` to `b`.
+- `reachOf` (const): A two-bone limb's root-to-end distance for a bend (degrees, 0 = straight).
+- `SG` (const): Each side's sign across the body: left −1, right 1.
+- `sub` (const): `a − b`.
+- `torso` (function): The torso and head frames of key pose `k` on rest body `R`, and the joints placed from them.
+- `V` (type): A vector `[f, r, z]` (mm, or a direction), or a quaternion `[x, y, z, w]`.
+- `wld` (const): A local vector `l` of frame `M` (axes F, R, U as columns) in the parent's coordinates.
 
 ### [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)
 
@@ -3205,6 +3263,132 @@ For the agents who maintain the engine.
 - `PipelineCounter` (interface): The counter of one device.
 - `PIPELINES_CODES` (const): The codes this module raises, with their fixes.
 
+### [`engine/gfx/post/aa.ts`](../engine/gfx/post/aa.ts)
+
+- `Aa` (interface): The smoothing's output, and its passes' gate for `updateBefore`.
+- `AA_CHOICE` (const): The one the chain uses: the one that measured better (see the file comment).
+- `AA_KINDS` (const): The edge smoothing three.js r182 offers as TSL display nodes.
+- `AA_MEASURED` (const): What decided it (tests/e2e/post.spec.ts): the mean absolute error, in 0–255 luma levels, over the pixels where the unsmoothed frame differs from the supersampled one by more than 8, of the unsmoothed frame and of each smoothing, and the full-screen passes each adds.
+- `AaKind` (type): An edge smoothing.
+- `createAa` (function): Smooths `display` with `kind`, while `gate` is above 0.5; SMAA's passes run only while `runs()` (see above).
+- `gateUpdates` (function): Wraps a node's `updateBefore` so its passes run only while `runs()` holds, and in any frame that set it up again.
+
+### [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)
+
+- `createPost` (function): Makes the chain on `gfx.renderer` (see the file comment).
+- `definePostSettings` (function): Declares the chain's settings (`POST_SETTINGS`) and the setting `quality` it reads on `registry` (the shared one by default), unless it has them: on the shared one when this module loads, so `node x set post.look look:game-boy` knows them in Node (tools/cmd/set.ts imports the modules that declare settings), and on any other when `createPost` or `createEngine` runs.
+- `Post` (interface): A post-processing chain (see the file comment).
+- `POST_CODES` (const): The codes this module raises, with their fixes.
+- `POST_SETTINGS` (const): The view settings the chain reads, declared by `definePostSettings`: `post.look` (a `look` id, engine/gfx/post/looks.ts), `post.filters` (part of a filter chain laid over the look's, filter by filter and field by field) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
+- `PostOptions` (interface): How `createPost` makes a chain.
+- `snapBlock` (function): The block grid the camera snaps to for `chain`: pixel art's when it covers the environment and snaps (characters and objects in pixel art move on their own, and a snapping camera would make a sharp world jump), else the whole screen's low resolution; 1 for none.
+
+### [`engine/gfx/post/composite.ts`](../engine/gfx/post/composite.ts)
+
+- `CompositeInputs` (interface): What the composite reads.
+- `createComposite` (function): The composite's output node: every filter over `display`, gated by `uniforms` (see the file comment).
+- `POST_SHOW` (const): The views `show` picks, in the uniform's order.
+- `PostShow` (type): What the composite draws.
+
+### [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)
+
+- `chainOf` (function): A whole chain from part of one: every filter and field `spec` leaves out at its default (off).
+- `createFilterUniforms` (function): Makes the composite's uniforms, every filter off.
+- `FILTER_FIELDS` (const): The filters of a chain; see the file comment.
+- `FILTER_NAMES` (const): Every filter, in the composite's order (bloom and aa run before it).
+- `FilterChain` (type): A filter chain: every filter with its scope and numbers.
+- `FilterName` (type): A filter's name.
+- `FilterSpec` (type): Part of a chain: some filters, each with some of its fields (a look's `filters`, the setting `post.filters`).
+- `FilterUniforms` (interface): The composite's uniforms: one vec4 per filter (and a second for the long ones), render-group, set up once.
+- `fixLevels` (function): `spec` with every level count of 1–7 raised to 8 (see the file comment), and what was raised: a layer over a look (the setting `post.filters`) is fixed and reported this way; looks are checked when they are defined.
+- `isPlain` (function): Whether `chain` has every filter off, so it would leave the picture as the scene draws it (`look:clean`).
+- `layerChain` (function): `chain` with `over` laid on it, filter by filter and field by field.
+- `levelsProblem` (function): Checks a level count: 0, or 8 and more (see the file comment).
+- `PALETTES` (const): The fixed palettes (sRGB): Game Boy greens, PICO-8's sixteen, CGA, 1-bit, an amber terminal.
+- `partialSchema` (function): `schema` with every default left out, so a value holds only what was given (`post.filters` layers it).
+- `Scope` (type): A filter's scope.
+- `scopeMask` (function): The bits of a scope: characters 1, objects 2, environment 4; `off` 0.
+- `SCOPES` (const): Where a filter applies: nowhere, everywhere, or one or two parts of the scene (engine/gfx/post/mrt.ts).
+- `SCREEN_SCOPES` (const): The scopes of the filters that cover the whole screen.
+- `STYLIZE_KINDS` (const): The painterly and print styles.
+- `writeFilters` (function): Writes `chain` into `uniforms`: a uniform write per filter, nothing more.
+
+### [`engine/gfx/post/looks.ts`](../engine/gfx/post/looks.ts)
+
+- `defineLook` (function): Declares a look (`look:<name>`); see `LOOK_FIELDS`.
+- `defineLooks` (function): Declares the kind `look` and the built-in looks and presets on `registry`, unless it has them.
+- `LOOK_FIELDS` (const): The fields of a `look` entry; see the file comment.
+- `LOOK_GROUPS` (const): Where a menu lists a look: `look` for a whole look, else the filter it presets, or `shading` for a style.
+- `LookEntry` (type): A `look` entry.
+- `LOOKS` (const): The whole looks, from shardfall's `[[look]]` tables (see the file comment), and the clean picture.
+- `LookSpec` (type): What `defineLook` takes: any of the fields, the filters as part of a chain.
+
+### [`engine/gfx/post/mrt.ts`](../engine/gfx/post/mrt.ts)
+
+- `clearMrt` (function): Turns any MRT off, as the frame's own drawing expects.
+- `createFlagTable` (function): Makes an empty flag table: each drawable object gets a slot, for life, and `write` puts every object's flags at its slot, in one render-group uniform array the GPU reads at the slot.
+- `createScenePass` (function): The scene pass: `scene` through `camera` into colour, normals with flags, and depth (the fixed MRT).
+- `FLAG_BITS` (const): The packed value's bits: +512 on characters, +1024 on characters and objects.
+- `FLAG_SLOTS` (const): Slots in a flag table: four to a `vec4`, 4,096 of them, 64 KiB (WebGPU's smallest uniform buffer limit).
+- `Flags` (interface): A tag as the composite reads it.
+- `flagsOf` (function): The flags `object` is drawn with: its tag (`setPart`), or its nearest tagged ancestor's; untagged objects count as characters when they are a puppet (`userData.body`) or the protagonist (`userData.protagonist`), as objects when they stand for an entity (`userData.entity`), and as the environment otherwise.
+- `FlagTable` (interface): The flags of every object a scene pass draws, by slot (see the file comment).
+- `foldGroup` (function): `n` folded into the groups 1..511 (0 and below stay 0, the background's).
+- `GROUPS` (const): Groups fold into 1..511; the bits above carry the part and the sign the pixel-art flag.
+- `packFlags` (function): The packed value of a part, group and pixel-art flag (see the file comment).
+- `Part` (type): A part of the scene: a character (puppets, the hero), an object (props, entities) or the environment.
+- `PART_BITS` (const): Each part's bit in a filter's scope mask (engine/gfx/post/filters.ts).
+- `PARTS` (const): The parts of the scene a filter can be scoped to.
+- `PostTag` (interface): What `setPart` records on an object (`userData.post`).
+- `setPart` (function): Tags `object` (and what it holds) with a part of the scene, an outline group and the pixel-art flag.
+- `unpackFlags` (function): The part, group and pixel-art flag of a packed value; 0 or 1 (the cleared background) is the environment.
+- `useSceneMrt` (function): Turns the scene pass's MRT on for what the renderer compiles or draws next (the warm-up's compile steps).
+- `WARM_MRT_ID` (const): The warm-up entry that turns the MRT on for the compile steps: `!` sorts before every other id.
+- `writeFlags` (function): Writes the flags of everything `scenePass` draws into its table, as they are now: call it before each frame, so a tag takes effect on the next one.
+
+### [`engine/gfx/post/presets.ts`](../engine/gfx/post/presets.ts)
+
+- `PRESETS` (const): The presets, by id (see the file comment).
+
+### [`engine/gfx/post/shaders/common.ts`](../engine/gfx/post/shaders/common.ts)
+
+- `postAimed` (const): Whether a filter with scope mask `mask` applies to a pixel whose flags are `w`.
+- `postBase` (const): The display colour at a pixel, clamped to the target (shardfall's \`base_color\`).
+- `postBayer` (const): The 4 × 4 Bayer threshold of a cell, 0 to 1.
+- `postFlags` (const): The MRT's normal and flags at a pixel, clamped to the target.
+- `postHash` (const): A hash of a position, 0 to 1.
+- `postHex` (const): A 0xRRGGBB colour as 0–1 channels.
+- `postLuma` (const): Rec.
+- `postNoise` (const): Smooth value noise, 0 to 1.
+- `postPalette` (const): The nearest colour of a fixed palette (1 Game Boy, 2 PICO-8, 3 CGA, 4 1-bit, 5 amber) at dither threshold `th` (0.5 is none): the monochrome ones spread the brightness range over their shades, the others pick the nearest.
+- `postPart` (const): A pixel's part as a scope bit: 1 a character, 2 an object, 4 the environment.
+- `postViewDepth` (const): The distance in front of the camera at a pixel, from the depth target and the inverse projection.
+- `wgsl` (function): A WGSL function for TSL (`wgslFn`); `includes` are the functions it calls.
+- `WgslFunction` (type): A WGSL function as TSL calls it: with its arguments by name, `fn({ c: colour })`.
+
+### [`engine/gfx/post/shaders/edges.ts`](../engine/gfx/post/shaders/edges.ts)
+
+- `postArtRim` (const): Whether the block centred on `c` (block size `art`) gets pixel art's dark rim; `mask` is the pixel filter's scope.
+- `postCel` (const): Comic cel over the picture `s` at `p`: `bands`, colour `punch`, `ink` strength and `ink_w` (px); see above.
+- `postEdge` (const): 1 where pixel `px` is on an outline `t` px wide (see the file comment), else 0.
+
+### [`engine/gfx/post/shaders/stylize.ts`](../engine/gfx/post/shaders/stylize.ts)
+
+- `postAscii` (const): Text mode: a grid of character cells, each cell's brightness picking a glyph of " .-:+=o&*8#@".
+- `postBrush` (const): Brush strokes: a brightness factor round 1 (see the file comment).
+- `postDots` (const): Coverage of one dot screen turned by `angle`, `cell` px apart; ink 0–3 is C, M, Y, K, below 0 brightness alone.
+- `postHalftone` (const): Print: process-colour dot screens on cream paper, or black dots alone as `keep` falls to 0.
+- `postHatch` (const): One family of parallel pencil lines across `dir`, `spacing` px apart: 1 on a line, 0 between.
+- `postPaint` (const): Oil paint at pixel `c` (see the file comment); `mask` is the filter's scope mask (7 lets every sample in).
+- `postSketch` (const): Pencil on paper over the picture `s` at `p`; `bp` is the picture there before the outline; `time` in seconds.
+- `postStylize` (const): A style (1 paint, 2 halftone, 3 ASCII, 4 pencil) over the picture `s` at `p`; `size` in px, `keep` the colour kept, `mask` the scope mask, `time` in seconds.
+
+### [`engine/gfx/post/snap.ts`](../engine/gfx/post/snap.ts)
+
+- `blockSize` (function): The size of one block in world units, across and up, for `camera` drawing `size` pixels.
+- `SNAP_FALLBACK_DEPTH` (const): How far ahead a perspective camera snaps when its line of sight never meets the ground, in metres.
+- `snapToBlocks` (function): Moves `camera` to the nearest whole block in its screen plane (see the file comment); returns how to undo it.
+
 ### [`engine/gfx/props.ts`](../engine/gfx/props.ts)
 
 - `buildPropPart` (function): Builds `part`'s geometry (the caller's), with its tops and bottoms a group of their own when it has a `top`.
@@ -4527,6 +4711,28 @@ For the agents who maintain the engine.
 - `test` (const): Playwright's `test` with the `seed` option (default 1) and the `harness` fixture, set up for every test.
 - `WebGPUProof` (interface): What WebGPU did in the page, as `assertWebGPU` measured it.
 
+### [`tests/e2e/post-cases.ts`](../tests/e2e/post-cases.ts)
+
+- `SCOPED` (const): The scoped filters, each with numbers that change what they touch plainly, the share each must change and, for some, the colour every changed pixel takes (`to`, sRGB): every palette, the levels alone (palette `none`), every style, and the outline's own colour (with `darken: 1` only the colour can change a pixel).
+- `SCOPES` (const): The scopes tried, each with the parts (0 characters, 1 objects, 2 environment) it covers.
+- `SCREEN` (const): The whole-screen filters, each with the share of the picture it must change.
+
+### [`tests/e2e/post-pixels.ts`](../tests/e2e/post-pixels.ts)
+
+- `averageDown` (function): `big`, drawn at `by` × `by` the size of a `width` × `height` shot, averaged down to that size.
+- `borderOf` (function): Whether each pixel has another part within `r` pixels.
+- `changedShare` (function): The share of pixels that differ.
+- `DIFF` (const): A channel moving by more than this many levels changes a pixel.
+- `differs` (function): Whether pixel `p` differs between `a` and `b` by more than `diff` in some channel.
+- `edgeError` (function): Mean absolute luma error against the reference, over the pixels where `none` misses it by more than 8.
+- `idsOf` (function): The ID pass's visible list, as compared: name, pixels and bounding box.
+- `lumaAt` (function): A pixel's luma.
+- `nearPart` (function): Whether each pixel has a pixel of `part` within `r` pixels.
+- `partIn` (function): How many pixels of `part` a `width`-wide parts view has in `box` ([x0, y0, x1, y1], inclusive: an ID-pass box).
+- `partsOf` (function): The parts view as a part per pixel: 0 a character, 1 an object, 2 the environment (the background included).
+- `rgba` (function): A shot's pixels.
+- `Shot` (interface): A shot as the page returns it.
+
 ### [`tests/pages/audio.ts`](../tests/pages/audio.ts)
 
 - `FREQ` (const): The test sounds' frequencies, Hz.
@@ -4616,6 +4822,11 @@ For the agents who maintain the engine.
 - `LOOKS` (const): The comparison's looks: v1's Lambert, the toon bands, the baseline's gradient map.
 - `PARTS` (const): The parts: place, turn (rad about x, y, z) and size, metres; far from the batch's origin, each its own way.
 - `PARTS_SHOT` (const): The ID pass's size for `part`.
+
+### [`tests/pages/post.ts`](../tests/pages/post.ts)
+
+- `CAMERA` (const): The camera: the box's iso view, zoomed in so the characters and objects cover more of the picture.
+- `SLIDE_BLOCK` (const): The pixel filter's block size in the slide test, px.
 
 ### [`tests/pages/props.ts`](../tests/pages/props.ts)
 
@@ -4760,6 +4971,124 @@ For the agents who maintain the engine.
 - `FakeElement` (class): A fake element (see the file comment).
 - `fakePage` (function): A fake page and a canvas (not yet in it) whose client rect is `rect`, which a test may change.
 
+### [`tools/anim/asf-amc-fixture.ts`](../tools/anim/asf-amc-fixture.ts)
+
+- `testAmc` (function): A take of `n` frames at 120 a second: a walk forward at `travel` units a second (0: in place), as `.amc` text.
+- `testAsf` (function): The skeleton, as an `.asf` file's text.
+
+### [`tools/anim/asf-amc.ts`](../tools/anim/asf-amc.ts)
+
+- `AmcFrame` (type): One frame of a take: each bone's channel values.
+- `AsfBone` (interface): A bone: its rest direction (unit, world), length (file units), axis frame C and its inverse, and channels.
+- `mm` (const): The product `a · b` of two 3 × 3 matrices.
+- `mv` (const): Vector `v` turned by matrix `m`.
+- `pose` (function): Every bone's world rotation and end (metres) in one frame (none: the rest pose, the root at the origin).
+- `readAmc` (function): Reads an `.amc` take: one `{ bone: values }` per frame.
+- `readAsf` (function): Reads an `.asf` skeleton.
+- `Skeleton` (interface): A skeleton: metres per file unit, its bones, their order (parents first) and each one's parent.
+- `tr` (const): The transpose of `m` (its inverse, for a rotation).
+- `V` (type): A vector, or a 3 × 3 matrix (row major).
+
+### [`tools/anim/cmu-capture.ts`](../tools/anim/cmu-capture.ts)
+
+- `CmuCapture` (type): A capture read from a take, with each bone's rotation from rest per frame (`bones` order), quaternions.
+- `CmuOptions` (interface): How `readCmu` samples: the output rate, nearest frames (legacy) or in-betweened ones, and where notes go.
+- `Pick` (interface): A picked stretch of a take: seconds `from`–`to` (to the end when absent), its rate, and whether it loops.
+- `readCmu` (function): One subject's picked stretches as captures, plus `_rest` (see the file comment); `asfFile` is the skeleton.
+
+### [`tools/anim/cmu-cli.ts`](../tools/anim/cmu-cli.ts)
+
+- `CMU_SUBCOMMANDS` (const): The `cmu` subcommands.
+- `CmuRequest` (interface): What `runCmu` needs: the words after `cmu`, the flags, and the repository root (for paths it prints).
+- `cmuTargets` (const): The report target of `x anim cmu …`.
+- `runCmu` (function): Runs `x anim cmu <sub> …`; throws plain errors for bad arguments (the caller makes them usage errors).
+
+### [`tools/anim/cmu.ts`](../tools/anim/cmu.ts)
+
+- `ANIM_CACHE` (const): The cache's root, `.cache/anim/`.
+- `ARCHIVE` (const): Every subject's skeleton and takes, 1.08 GB, read by ranges.
+- `asfOf` (const): The skeleton file of subject `s` in `dir`: `02.asf`.
+- `CMU_CACHE` (const): Where takes go: `.cache/anim/cmu/`.
+- `cmuAll` (function): Every take: the archive's, read in a few dozen ranged requests, and the motion list's that it lacks.
+- `cmuArchive` (const): The archive, its directory read (two small requests); entries are read only when asked for.
+- `cmuGet` (function): The cached paths of takes `ids` (`02_01`), each with its subject's skeleton, fetching what is missing.
+- `cmuIndex` (function): The site's motion list, from `index.tsv` in `dir` (fetched and written there once).
+- `IndexedTake` (interface): A take on the site's motion list.
+- `parseMotionList` (function): The takes on the site's full motion list (`search.php?subjectnumber=%&motion=%`), from its HTML.
+- `SITE` (const): The site; it serves plain HTTP.
+
+### [`tools/anim/cut.ts`](../tools/anim/cut.ts)
+
+- `cutSet` (function): Cuts the clips `picks` out of `sets` into a new set named `name` (see the file comment).
+
+### [`tools/anim/cycle.ts`](../tools/anim/cycle.ts)
+
+- `bestCycle` (function): The best cycle in seconds `from`–`to` of a take of `count` frames at `src` a second: `[start, end, seam]`, in seconds, `seam` the cost that remained.
+
+### [`tools/anim/find.ts`](../tools/anim/find.ts)
+
+- `catalogRows` (function): Every set's catalog rows, in set and clip order.
+- `ClipHit` (interface): One clip a search found: its `set/clip`, its catalog row and its score.
+- `findClips` (function): Searches the sets, then the ledger, for `words` (see the file comment).
+- `Found` (interface): What a search found: every hit, a count, and the lines that show the best.
+- `TakeHit` (interface): One CMU take a search found, not yet in a set.
+
+### [`tools/anim/glb-fixture.ts`](../tools/anim/glb-fixture.ts)
+
+- `FixtureTrack` (interface): One animation track: a bone, a path, key times and flat values, optionally quantized or splined.
+- `GlbBuilder` (class): Packs elements into one binary buffer, one buffer view and accessor each.
+- `riggedGlb` (function): A T-posed Unreal-named humanoid with `clips` (by name, each a list of tracks) as a `.glb`.
+- `turn` (function): A rotation of `deg` degrees about `axis` as `[x, y, z, w]`.
+
+### [`tools/anim/glb-library.ts`](../tools/anim/glb-library.ts)
+
+- `GlbCapture` (type): A captured clip and the rate its keys were exported at.
+- `GlbLibrary` (interface): A library read from a `.glb`: its rig, its clips as body points, its mannequin's look, and what is worth noting.
+- `listGlb` (function): What a `.glb` holds, for `x anim import --list`: its rig (or none), its clips and its bones.
+- `MannequinBody` (interface): The mannequin's look, measured from a Rigify mesh: height (mm), segment radii and joint-ring bands.
+- `readGlbLibrary` (function): Reads a library from a `.glb`'s bytes (`file` names it), sampling every clip at `fps` (see the file comment).
+
+### [`tools/anim/glb.ts`](../tools/anim/glb.ts)
+
+- `Glb` (interface): A parsed `.glb`: its JSON, the whole file and where the binary chunk's data starts.
+- `glbBytes` (function): A `.glb` file's bytes from a document and its binary data (for tests and tools that write one).
+- `GltfAccessor` (interface): An accessor: how to read typed elements out of a buffer view.
+- `GltfAnimation` (interface): An animation: channels targeting node paths, through samplers.
+- `GltfJson` (interface): The parts of a glTF document the importer reads (anything else is ignored).
+- `GltfNode` (interface): A node: its name, children, and rest transform.
+- `mat` (function): A transform matrix from a translation, a rotation and a scale.
+- `mul` (function): The product `a · b`.
+- `nodeTree` (function): The document's node tree.
+- `NodeTree` (interface): A node tree: each node's parent (−1 for a root), the order that visits parents first, and names by any case.
+- `parseGlb` (function): Splits a `.glb` into its JSON and the binary chunk's start; `file` names it in errors.
+- `readAccessor` (function): An accessor's elements: numbers for SCALAR, else arrays of its components, normalized when it says so.
+- `sampleTrack` (function): A track's value at `time`: held before its first key and after its last, in-betweened as it says between.
+- `slerp` (function): The shortest rotation from `a` toward `b`, a share `t` of the way (normalized-linear when they nearly agree).
+- `Track` (interface): One animation channel: the node and path it moves, its key times and values, and how it in-betweens.
+- `tracksOf` (function): An animation's tracks (channels with no node, or moving weights, are left out).
+- `xf` (const): Point `p` transformed by `m`.
+
+### [`tools/anim/import.ts`](../tools/anim/import.ts)
+
+- `Catalog` (type): A catalog: each clip's `[tags, desc, orig?]`, plus `$sources`, `$skip` and (CMU) `$pick`.
+- `ImportOptions` (interface): What to import and how (see the file comment).
+- `importSet` (function): Imports a set (see the file comment); `notes` says what was left out, warned of or measured.
+
+### [`tools/anim/ledger.ts`](../tools/anim/ledger.ts)
+
+- `Category` (interface): One category: its name, its file, its number of takes and its pattern (none for `other` and `undescribed`).
+- `categoryOf` (function): A take's category: the first whose pattern matches its description, lower-cased; `undescribed` or `other` else.
+- `compareIds` (function): Numeric order of take ids (`2_10` after `2_9`).
+- `Ledger` (interface): The whole ledger, and each file's comment lines (kept on writing).
+- `LEDGER_DIR` (const): The split ledger's directory, `data/anim/cmu/`.
+- `ledgerFiles` (function): The ledger's files as text, by name: each category's rows, the index with their counts, and the subjects.
+- `queryLedger` (function): The takes matching every word (a category's name, or text in the id, description, flags, note or clips used).
+- `readLedger` (function): Reads the ledger in `dir`.
+- `Subject` (interface): One subject: its number, its number of takes and its description on the site's motion list.
+- `Take` (type): One take's row, with the category its file names.
+- `TAKE_COLUMNS` (const): The columns of each category file, in order.
+- `writeLedger` (function): Writes the ledger into `dir`; returns the files whose text changed.
+
 ### [`tools/anim/legacy-readable.ts`](../tools/anim/legacy-readable.ts)
 
 - `CLIP_FPS` (const): The rate the clips are decoded at, frames per second.
@@ -4778,6 +5107,16 @@ For the agents who maintain the engine.
 - `readLegacySet` (function): The source's set `name` (`quaternius`, `mesh2motion`, `cmu`, `hero`), read from `src/mocap/sets/<name>.js`.
 - `sampledFrames` (const): The frames committed for a clip of `n` frames: the first, and those a third and two thirds of the way in.
 
+### [`tools/anim/rates.ts`](../tools/anim/rates.ts)
+
+- `amcFrames` (const): How many frames an `.amc` take has.
+- `applyRates` (function): Writes the evidence into the ledger's rows: the rate, and the evidence in place of `fps?`.
+- `c3dEvidence` (function): The rate in a take's C3D file on the site, when it has one there and its frames agree with the `.amc`'s.
+- `c3dHeader` (function): A C3D header's point frame rate and number of frames (an Intel-format file; another is refused).
+- `RateEvidence` (interface): What settles a take's rate.
+- `twinCandidates` (function): Listed takes the ledger measured the same as `id` (length, stretch, fit, travel, hips): its possible twins.
+- `verifyRates` (function): Verifies the rate of each take in `ids` (default: every `fps?` take), downloading what it compares into `dir`; `readC3d` reads the first kilobyte of a C3D file's URL (by default, by an HTTP range).
+
 ### [`tools/anim/repack.ts`](../tools/anim/repack.ts)
 
 - `ALT_TAG` (const): The tag of a clip that is another set's clip again (it has an `orig`): finders rank it after the original.
@@ -4789,15 +5128,27 @@ For the agents who maintain the engine.
 - `legacySetFiles` (function): The files of my-3d2dge's three curated sets (HERO dropped), from the checkout at `sourcePath`, by directory.
 - `main` (function): The command line (see the file comment).
 - `readPlainSet` (function): A plain JSON set, as shardfall writes it (text, or an object), read through the codec's parser.
-- `readSet` (function): The set stored in `data/anim/sets/<dir>/` (or under `root`), rejoined.
+- `readSet` (function): The set stored in `data/anim/sets/<dir>/` (or under `root`, or at `dir` when absolute), rejoined.
 - `readSetDir` (function): Reads a set's directory: every file in it, by name.
+- `repackSets` (function): Repacks sets into `root` (see the file comment): plain JSON sets from `paths`, else the curated sets the my-3d2dge checkout still provides (mesh2motion and cmu; WP 8.10 replaced quaternius); with `check` it only compares.
 - `SET_FILE` (const): The file that holds a set's header: everything but its clips.
 - `setDirName` (const): A set's directory name: its name, slugged, in lower case (`STYLE100_BACK` → `style100_back`).
 - `SetFiles` (type): A set's directory as text: file name → contents.
 - `SETS_DIR` (const): The sets' directory, `data/anim/sets/`: one directory per set, named by `setDirName`.
 - `splitSet` (function): Writes a set as its directory's files: one `text()` per clip, `_set.json` and `catalog.tsv` (the file comment).
 - `tagAlternates` (function): The set with `alt` added last to the tags of each clip made from another set's clip (one with an `orig`).
+- `withCmuTerms` (function): The CMU set with CMU's terms in each of its source records, as the CMU catalog states them: my-3d2dge's set said "free for all uses"; WP 8.1 corrected the catalog, and the importer (`x anim import --cmu`) writes what it says.
 - `writeSetDir` (function): Writes a set's files into `dir`, made if missing, and removes the files it no longer has; lists what changed.
+
+### [`tools/anim/rigs.ts`](../tools/anim/rigs.ts)
+
+- `bonesFor` (function): Each of the 36 body points with the bone (and the spot on it) that gives it, in `POSE_POINTS` order.
+- `BoneSpot` (type): Where on a bone a point sits: its head (absent), its far end, or 12 cm in front of it.
+- `PointBone` (type): One body point's bone: `[point, bone, where]`.
+- `recogniseRig` (const): The rig whose `test` bone the file has (`has` matches names whatever their case), or undefined.
+- `Rig` (interface): A rig: the bone that identifies it, its root, its limb and core bones, and its measured segments.
+- `RIGS` (const): The rigs the importer knows, by name.
+- `Segment` (type): A segment whose thickness the mesh gives: `[from point, to point, bone that owns its vertices]`.
 
 ### [`tools/anim/shardfall.ts`](../tools/anim/shardfall.ts)
 
@@ -4815,12 +5166,50 @@ For the agents who maintain the engine.
 - `V1_KEPT` (const): The clips a set keeps from my-3d2dge's v1 of it, by directory: those shardfall's version dropped.
 - `V1_SETS` (const): The set of my-3d2dge whose `body` and `V1_KEPT` clips a shardfall set takes, by directory.
 
+### [`tools/anim/survey.ts`](../tools/anim/survey.ts)
+
+- `CMU_CATALOG` (const): The CMU catalog, whose `$pick` names the take each clip of the CMU set was cut from.
+- `CMU_CREDIT` (const): The credit every CMU set carries (data/anim/SOURCES.md has the terms).
+- `flagsOf` (function): The flags a take's measurements earn: upside down (over 2 frames), feet off the floor (60%), short, loose.
+- `LIBRARY_DIR` (const): The converted library's directory, `.cache/anim/cmu-lib/`.
+- `surveyCmu` (function): Surveys the downloaded takes (see the file comment); returns how many it converted and the seconds of motion.
+- `SurveyOptions` (interface): What the survey does: which subjects, legacy reading, the ledger and library tolerances, and where things go.
+- `usedBy` (function): Which clips of the CMU set each take feeds: `{ '13_17': ['Boxing_Guard_Loop', 'Boxing_Jab'] }`.
+
+### [`tools/anim/view.ts`](../tools/anim/view.ts)
+
+- `bakedPoints` (function): The 36 decode points of `baked` at `t`, by FK on its rest body's own skeleton (mm, rig frame).
+- `bakeReport` (function): A baked clip, its tracks' size in bytes and its FK parity with the decode (mean and worst, mm).
+- `ClipRef` (interface): A clip found in the library: its set's directory and header, its name, the clip and its rest body.
+- `clipSheet` (function): The clip as a contact sheet: `frames` poses spread over it, each from `views`, on its rest body's skeleton.
+- `resolveClip` (function): Finds `<set>/<clip>` in `setsDir`, or a clip name only one set has; errors name the closest choices.
+- `shownDir` (function): A directory as an error names it: from the repository root when it is inside it, else as given.
+
+### [`tools/anim/zip.ts`](../tools/anim/zip.ts)
+
+- `ByteSource` (interface): Where bytes come from: `bytes(from, to)` gives bytes `from`–`to` inclusive, or with `from` < 0 the last `-from`.
+- `fetchBytes` (const): A whole file on the web (`curl` follows redirects and the proxy settings).
+- `fileSource` (function): A file on disk, read by ranges.
+- `MAX_GAP` (const): The most unwanted bytes `readMany` fetches between two wanted entries rather than start a new request.
+- `MAX_RANGE` (const): The most bytes `readMany` asks for at once.
+- `openZip` (function): Opens an archive: reads its end record and central directory (two reads), not its entries.
+- `urlSource` (function): A file on the web, read by ranges.
+- `Zip` (interface): An archive's entries, and a reader for them.
+- `zipBytes` (function): A zip archive of `files` (name → text), deflated, for tests and tools that write one.
+- `ZipEntry` (interface): One file in an archive: its name, compression, packed and unpacked sizes, and where its local header is.
+
 ### [`tools/checkAll.ts`](../tools/checkAll.ts)
 
 - `CACHE_DIRS` (const): The cache directories ESLint and Prettier create on a cold run.
 - `CHECK_TOOLS` (const): The T0 tools, in the order their output is printed; `tsc` runs package.json's `typecheck` command.
 - `checkAll` (function): Runs every tool in parallel, prints their output in order, and returns the exit code (0 only if all pass).
 - `CheckTool` (interface): One T0 tool: its name and its command line, run from the repository root.
+
+### [`tools/cmd/anim.ts`](../tools/cmd/anim.ts)
+
+- `default` (default): The animation library's tools (PLAN.md §10, WP 8.5): find a clip, show it, bake it, draw it, cut a smaller set, import libraries and fetch CMU takes, all from the command line, with no browser.
+- `subcommandOf` (function): The subcommand named first, or a usage error naming the closest.
+- `targetOf` (const): The report's target: the subcommand and its first arguments.
 
 ### [`tools/cmd/audio.ts`](../tools/cmd/audio.ts)
 

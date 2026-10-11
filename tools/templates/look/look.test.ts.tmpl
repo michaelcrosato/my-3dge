@@ -1,0 +1,30 @@
+/**
+ * @file Unit tests for the look `look:{{name}}` ({{id}}.ts): its entry parses, it posterizes with 0 or 8 and more
+ * levels, and `node x set post.look look:{{name}}` switches to it: the look the chain then draws is this one, not the
+ * fallback.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { registry } from '../../../engine/core/registry';
+import { checkSetting } from '../../../tools/cmd/set';
+import { look } from './{{name}}';
+
+describe('look:{{name}}', () => {
+  it('parses: its id, its description, and every filter with a scope', () => {
+    expect(look.id).toBe('look:{{name}}');
+    expect(look.description).not.toBe('');
+    for (const [name, filter] of Object.entries(look.filters)) expect(typeof filter.scope, name).toBe('string');
+  });
+
+  it('posterizes with 0 or 8 and more levels, so dull colours keep their hue', () => {
+    for (const [name, filter] of Object.entries(look.filters)) {
+      if ('levels' in filter) expect(filter.levels === 0 || filter.levels >= 8, `filters.${name}.levels`).toBe(true);
+    }
+  });
+
+  it('switches with node x set post.look: the chain draws this look, not the fallback', () => {
+    const change = checkSetting('post.look', look.id);
+    expect(change.value).toBe(look.id);
+    expect(registry.get('look', String(change.value))).toBe(look);
+  });
+});

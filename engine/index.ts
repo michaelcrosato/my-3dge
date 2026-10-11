@@ -273,6 +273,29 @@ export type { Outline } from './gfx/materials/outline';
 export type { OutlineMode } from './gfx/materials/outline';
 export type { OutlineOptions } from './gfx/materials/outline';
 export type { OutlineShells } from './gfx/materials/outline';
+// Post-processing (WP 7.4): one chain every frame draws through, every filter a uniform (scoped to the characters,
+// the objects or the environment), looks as data (a material style plus a filter chain), objects tagged by part.
+export { createPost } from './gfx/post/chain';
+export { POST_SETTINGS } from './gfx/post/chain';
+export { definePostSettings } from './gfx/post/chain';
+export type { Post } from './gfx/post/chain';
+export type { PostOptions } from './gfx/post/chain';
+export { setPart } from './gfx/post/mrt';
+export { PARTS } from './gfx/post/mrt';
+export type { Part } from './gfx/post/mrt';
+export type { PostTag } from './gfx/post/mrt';
+export { defineLook } from './gfx/post/looks';
+export type { LookEntry } from './gfx/post/looks';
+export type { LookSpec } from './gfx/post/looks';
+export { FILTER_NAMES } from './gfx/post/filters';
+export { SCOPES } from './gfx/post/filters';
+export { PALETTES } from './gfx/post/filters';
+export { STYLIZE_KINDS } from './gfx/post/filters';
+export type { FilterName } from './gfx/post/filters';
+export type { Scope } from './gfx/post/filters';
+export type { FilterChain } from './gfx/post/filters';
+export type { FilterSpec } from './gfx/post/filters';
+export type { PostShow } from './gfx/post/composite';
 // Props drawn (WP 4.5): every prop part a batch of the instancing service, posed by its body, the flames dancing on
 // the visual streams, the light spots flickering, for the light pool.
 export { createPropMeshes } from './gfx/props';

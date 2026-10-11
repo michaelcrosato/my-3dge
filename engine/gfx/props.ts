@@ -15,6 +15,7 @@
  *   the prop's light does: what the light pool (WP 7.1) places its lights at.
  * - **Looks.** The props' texture and materials (`PROP_MATERIALS`) are defined on the shared registry when the module
  *   loads, and on another when a prop mesh set is made over it (`propLooks`).
+ * - **Post-processing.** The root is tagged an object (`setPart`, engine/gfx/post/mrt.ts), in one outline group.
  *
  * Carried from `my-3d2dge:src/stress-world/30-crowd.js:293-329` (`crateTex`, `barrelTex`'s lids, `drawProps`: every
  * prop where its body is) and `src/stress-world/10-hall.js:409-436` (`animateBraziers`' tongues, `FLICKER`).
@@ -45,6 +46,7 @@ import { sidesThenTops } from './geometry/groups';
 import { createInstancedBatch, type InstancedBatch } from './instancing';
 import type { MaterialLibrary } from './materials/library';
 import { defineMaterial } from './materials/material';
+import { setPart } from './post/mrt';
 import { defineTexture, textureKind } from './textures/texture';
 import { palette, wrapIndex } from './textures/tile';
 import { textureSpec } from './textures/types';
@@ -233,6 +235,7 @@ export function createPropMeshes(options: PropMeshesOptions): PropMeshes {
   propLooks(registry);
   const root = new Group();
   root.name = 'props';
+  setPart(root, 'object', { group: root.id });
   const draws = new Map<string, { prop: Prop; parts: PartDraw[]; drawn: number }>();
   const warmups = new Map<Pick<Warmup, 'register'>, { dispose(): void }[]>();
   const phases = new Map<string, number>();
