@@ -110,3 +110,13 @@ why". character.ts keeps the character's settings, state and tick (`createCharac
 `stepCharacter`, the carry and the pushes): 357 and 271 lines. WP 3.2's Owns, and WP 4.1's extension of it, widen to
 engine/physics/move.ts. Nothing behaves differently: every physics test and every replay passes unchanged, in Node and
 in Chromium.
+
+## Amendment 7 (2026-10-11, WP-7.3): the v2 textures join the kind, and the tex family draws a contact sheet
+
+Core change accepted: WP 7.3's Owns widens to engine/gfx/textures/{v1,v2,texture,texture.test}.ts and
+tools/qa/tex{,.test}.ts. v2.ts lists runes, moss, metal, plaster, dirt, grass and water, and textureKind registers them
+after v1, so every registry has 13 generators by id. `node x qa tex` also writes out/qa/tex/sheet.png. Each texture
+checked gets three panels (colour, normal, emissive), each tiled 2 × 2 into 128 px with its shape kept and row 0 of a
+map at its panel's bottom, three textures to a row. The level floor bake (levelFloorTexture) is a spec builder that a
+game defines under its own id; it is not a registered generator. Casters are glyphs with a box collider whose top rises
+0.25 m above the tile's floor; walkable blocks (galleries) are floor.

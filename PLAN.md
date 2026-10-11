@@ -2894,7 +2894,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm run e2e -- tests/e2e/materials-v2.spec.ts`
 
 #### WP-7.3 The texture library (v2)
-- **Owns:** `engine/gfx/textures/generators/{runes,moss,metal,plaster,dirt,grass,water}.ts`, `engine/gfx/textures/{tslNoise,contactShadow}.ts`
+- **Owns:** `engine/gfx/textures/generators/{runes,moss,metal,plaster,dirt,grass,water}.ts`, `engine/gfx/textures/{tslNoise,contactShadow}.ts`; core proposal: `engine/gfx/textures/{v1,v2,texture,texture.test}.ts`, `tools/qa/tex{,.test}.ts` (accepted, ADR-0020 amendment 7)
 - **Needs:** WP 2.3, WP 4.2
 - **Size:** M
 - **Carry:** the hall floor bake (`stress-world/10-hall.js:206-287`): flagstones with the rune circle as an emissive map, moss near the walls, and contact shadows at the wall feet.
@@ -3993,7 +3993,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | **G6** | **Gate: Box 5** | | todo | | |
 | 7.1 | Lights, shadows, atmosphere, sky | R | done | 3d1d317 (#6) | engine/gfx/{lights,shadows,atmosphere,sky}.ts: a fixed pool of 12 point lights (8–16) ranked by distance/priority from the level's light spots, fading at the cut-off, flicker phases from fxRng; shadow budget 2/1/0 by quality tier (casters are the pool's first slots, the sun takes the first where a preset has one); range+height TSL fog node; SkyMesh dome with exposure plus a baked backdrop cylinder; kinds light (light:torch) and sky (sky:hall, sky:daylight); 0 pipelines built while lights reassign, presets never change the hash; shown in tests/pages/lights.html (box wiring is WP 7.8's); calls made on r182 traps: lights added in id order, fog/dome uniforms in renderGroup (docs/THREE-DELTA.md); no escalations; no deferred proofs |
 | 7.2 | Materials (v2): toon, outlines, styles | R | done | 1f26ebc (#6) | engine/gfx/materials/{styles,toon,outline}.ts: four styles (lambert, toon, flat, pbr) switched at run time with 0 pipelines built and the hash unchanged; toon as a TSL lighting model (smoothed bands, gated rim) over the MeshToonMaterial+gradient baseline (thumbs materials-v2-toon-{bands,gradient}); outline shells on instanced parts centred within 1 px; shown in tests/pages/materials-v2.html (box wiring is WP 7.8's); calls made (ADR-0008 Amendment 3): style is a style set's view state and bands/rim its uniforms (material schema unchanged), lambert kept as a 4th style, warm-up swaps drawn meshes per style via ~styles/* entries, toon and flat drop the normal map, skinned meshes get no shell; no escalations; no deferred proofs |
-| 7.3 | Texture library (v2) | W | todo | | |
+| 7.3 | Texture library (v2) | W | done | dfb88c1 (#8) | engine/gfx/textures/generators/{runes,moss,metal,plaster,dirt,grass,water}.ts and {tslNoise,contactShadow}.ts; v2.ts registers the seven after v1 (13 generators per registry); `node x qa tex` writes out/qa/tex/sheet.png (colour, normal, emissive, tiled 2 × 2, row 0 at the panel's bottom, proved by a ramp and grass/staves test); core change accepted (ADR-0020 amendment 7: Owns widens to textures/{v1,v2,texture,texture.test}.ts and tools/qa/tex{,.test}.ts); merge kept WP 4.5's prop texture checks beside the sheet; escalations: none; nothing deferred; not verified: T2 (npm run e2e) after the review fix; verifier: pass after 1 fix round |
 | 7.4 | Post-processing | R | todo | | |
 | 7.5 | Performance governor | I | on demand | | |
 | 7.6 | MCP server | T | on demand | | |

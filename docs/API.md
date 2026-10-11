@@ -138,6 +138,7 @@ game agent's manual.
 - `connectVirtualDevice` (function from [`engine/input/devices/inspector.ts`](../engine/input/devices/inspector.ts)): Gives `host` (the app's inspector host) the page input's virtual device, so `__engine.input` drives the page.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
+- `ContactShadowOptions` (interface from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): How the contact shadow at the foot of a block looks.
 - `createAudio` (function from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): Makes a page's sound (see the file comment).
 - `createBindings` (function from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Makes the bindings of the action map `map` (an id or an entry), loading saved changes from `options.storage`.
 - `createBlobShadows` (function from [`engine/gfx/puppets/blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts)): Makes the blob-shadow batch, drawn with the library's `material:blobShadow` (see the file comment).
@@ -243,6 +244,8 @@ game agent's manual.
 - `FloaterPose` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater's pose: the core's world matrix and the motes' world positions.
 - `FloaterState` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's state: what `step` eases and `pose` reads, plain numbers.
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): the highest flat floor, ramp or dais there; 0 outside the map.
+- `FloorMossOptions` (interface from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): How moss creeps in from the foot of the blocks.
+- `FloorRuneOptions` (interface from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): The rune circle laid on each dais; sizes in metres.
 - `FlowField` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): Every tile's walking distance to a goal set: walk downhill to get there.
 - `FlowOptions` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `flowField` takes.
 - `FOLLOW` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): `followFlow`'s defaults: straight within 4 m in a clear line (emberdeep's 64 units), full speed to the target.
@@ -342,6 +345,8 @@ game agent's manual.
 - `LevelCell` (interface from [`engine/gfx/level/cells.ts`](../engine/gfx/level/cells.ts)): One piece of a block mesh: its tiles, its centre on the ground (m), its size across (m), and the way it faces out ([x, z], length 1).
 - `LevelCut` (interface from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): How the cutaway cuts a recipe's pieces: to a twin `height` metres tall, `when` the view needs it.
 - `LevelEntry` (type from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): A `level` entry: a level's text and where it came from.
+- `LevelFloorOptions` (interface from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): What a level's floor is baked from; every part may be left out.
+- `levelFloorTexture` (function from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): A texture generator for `level`'s whole floor: its base texture with moss at the walls' feet, rune circles on the daises and contact shadows along every block's foot (see the file comment).
 - `LevelGlyph` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
 - `LevelMeshes` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): A level's meshes (see the file comment).
 - `LevelMeshesOptions` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): What `createLevelMeshes` needs: where materials come from, and optionally more recipes and a log.
@@ -2563,6 +2568,16 @@ For the agents who maintain the engine.
 
 - `TEXTURE_CODES` (const): The codes of the texture bake, with their fixes.
 
+### [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)
+
+- `CONTACT_SHADOW_CODES` (const): The codes of the level floor bake, with their fixes.
+- `contactShadow` (function): The shadow at `d` texels from a block's foot (0–1), fading to 0 at `radius` texels in `steps` bands.
+- `ContactShadowOptions` (interface): How the contact shadow at the foot of a block looks.
+- `FloorMossOptions` (interface): How moss creeps in from the foot of the blocks.
+- `FloorRuneOptions` (interface): The rune circle laid on each dais; sizes in metres.
+- `LevelFloorOptions` (interface): What a level's floor is baked from; every part may be left out.
+- `levelFloorTexture` (function): A texture generator for `level`'s whole floor: its base texture with moss at the walls' feet, rune circles on the daises and contact shadows along every block's foot (see the file comment).
+
 ### [`engine/gfx/textures/dataTexture.ts`](../engine/gfx/textures/dataTexture.ts)
 
 - `DataTextureOptions` (interface): How the textures are made: the look (the bake's own by default) and a repeat overriding the density.
@@ -2577,13 +2592,43 @@ For the agents who maintain the engine.
 
 - `CHECKER` (const): The checker generator's spec.
 
+### [`engine/gfx/textures/generators/dirt.ts`](../engine/gfx/textures/generators/dirt.ts)
+
+- `DIRT` (const): The dirt generator's spec.
+
 ### [`engine/gfx/textures/generators/flagstone.ts`](../engine/gfx/textures/generators/flagstone.ts)
 
 - `FLAGSTONE` (const): The flagstone generator's spec.
 
+### [`engine/gfx/textures/generators/grass.ts`](../engine/gfx/textures/generators/grass.ts)
+
+- `GRASS` (const): The grass generator's spec.
+
+### [`engine/gfx/textures/generators/metal.ts`](../engine/gfx/textures/generators/metal.ts)
+
+- `METAL` (const): The metal generator's spec.
+
+### [`engine/gfx/textures/generators/moss.ts`](../engine/gfx/textures/generators/moss.ts)
+
+- `MOSS` (const): The moss generator's spec.
+- `mossGrowth` (function): Moss growth over a texture of `size` texels: `grow(texel, x, y, cover)` lays moss over the texel when it grows there at `cover` (0–1, about the share of open stone it covers; joints and cracks take it first), and says whether it did.
+
 ### [`engine/gfx/textures/generators/planks.ts`](../engine/gfx/textures/generators/planks.ts)
 
 - `PLANKS` (const): The plank generator's spec.
+
+### [`engine/gfx/textures/generators/plaster.ts`](../engine/gfx/textures/generators/plaster.ts)
+
+- `PLASTER` (const): The plaster generator's spec.
+
+### [`engine/gfx/textures/generators/runes.ts`](../engine/gfx/textures/generators/runes.ts)
+
+- `paintRune` (function): Writes `mark` onto `texel` (nothing for 0): the inlay's colour, its glow, a little below the stone, smoother.
+- `runeCircle` (function): A rune circle: `mark(i, j)` is the mark of the texel whose centre lies (i + ½, j + ½) texels from the circle's centre (i, j whole numbers; the centre on a texel corner).
+- `RuneCircleOptions` (interface): The shape of a rune circle, in texels.
+- `RuneMark` (type): What a texel of a rune circle is: nothing, a faint line (ring or spoke), or a bright rune or the centre.
+- `RUNES` (const): The rune generator's spec.
+- `RuneTones` (interface): The colours of a rune circle and how brightly its lines glow (its runes and centre glow at 1).
 
 ### [`engine/gfx/textures/generators/staves.ts`](../engine/gfx/textures/generators/staves.ts)
 
@@ -2592,6 +2637,11 @@ For the agents who maintain the engine.
 ### [`engine/gfx/textures/generators/stone.ts`](../engine/gfx/textures/generators/stone.ts)
 
 - `STONE` (const): The dressed-stone generator's spec.
+
+### [`engine/gfx/textures/generators/water.ts`](../engine/gfx/textures/generators/water.ts)
+
+- `WATER` (const): The water generator's spec.
+- `wave` (function): A smooth wave of period 1 in [−1, 1], 1 at whole numbers: a smoothstepped triangle, close to cos 2πt.
 
 ### [`engine/gfx/textures/mips.ts`](../engine/gfx/textures/mips.ts)
 
@@ -2620,7 +2670,7 @@ For the agents who maintain the engine.
 - `sizeProblem` (function): Why `entry` cannot bake at `size` with `params` (a sentence), or '' when it can.
 - `TEXTURE_FIELDS` (const): The fields of a `texture` entry.
 - `TextureEntry` (type): A `texture` entry: one generator.
-- `textureKind` (function): Declares the kind `texture` on `registry`, with the engine's v1 generators, unless it has it.
+- `textureKind` (function): Declares the kind `texture` on `registry`, with the engine's v1 and v2 generators, unless it has it.
 - `textureParams` (function): The parameters of `entry` with `given` set: every parameter filled; throws `CORE_BAD_SPEC` naming each problem.
 
 ### [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)
@@ -2634,6 +2684,17 @@ For the agents who maintain the engine.
 - `TileNoiseOptions` (interface): How `tileNoise` is made.
 - `wrapIndex` (function): `i` folded into [0, n) (n a positive integer): -1 → n − 1.
 
+### [`engine/gfx/textures/tslNoise.ts`](../engine/gfx/textures/tslNoise.ts)
+
+- `fractalNode` (function): Fractal value noise in [0, 1] at the vec2 node `p` (`fractalNoise` on the GPU).
+- `fractalNoise` (function): Fractal value noise in [0, 1] at (x, y): the weighted mean of `octaves` octaves.
+- `latticeHash` (function): The lattice value at integer point (x, y) for `seed`, in [0, 1): the CPU twin of the shader's hash.
+- `noiseNode` (function): Value noise in [0, 1] at the vec2 node `p`, one lattice cell per unit (`valueNoise` on the GPU).
+- `valueNoise` (function): Value noise in [0, 1] at (x, y), one lattice cell per unit: the CPU twin of `noiseNode`.
+- `variationAt` (function): The variation factor at world (x, z) metres: 1 + amount (2 · fractal noise at (x, z) / scale − 1).
+- `variationNode` (function): The large-scale variation factor as a float node around 1 (`variationAt` on the GPU), sampled at `position`'s x and z (world space by default, so it runs on across meshes and instances): multiply a colour by it.
+- `VariationOptions` (interface): How the large-scale variation is made.
+
 ### [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)
 
 - `Texel` (interface): One texel as a generator writes it.
@@ -2646,6 +2707,10 @@ For the agents who maintain the engine.
 ### [`engine/gfx/textures/v1.ts`](../engine/gfx/textures/v1.ts)
 
 - `V1_TEXTURES` (const): The v1 generators, by id.
+
+### [`engine/gfx/textures/v2.ts`](../engine/gfx/textures/v2.ts)
+
+- `V2_TEXTURES` (const): The v2 generators, by id.
 
 ### [`engine/gfx/thumbnail.ts`](../engine/gfx/thumbnail.ts)
 
@@ -4442,8 +4507,9 @@ For the agents who maintain the engine.
 
 - `checkPropTextures` (function): The violations of the textures of every prop on `registry` (or those of `ids`), in id order, as the props' ids.
 - `checkTextures` (function): The violations of every texture on `registry` (or those of `ids`), in id order.
-- `default` (default): The `tex` QA family (PLAN.md §8.6, WP 2.3, I-20): `node x qa tex` bakes every texture generator the shared registry has, the engine's (engine/gfx/textures/v1.ts) and a game's (each `*.ts` module under `labs/<name>/textures/` imported first), at its default size and at twice it, with seeds 1 and 2, and checks every bake; then, under each `prop` entry's id (WP 4.5; a game's props under `labs/<name>/props/` imported first), the textures its parts' materials name, baked as each material bakes them (its parameters and size), and a `reference` violation for a part naming a material no entry defines.
+- `default` (default): The `tex` QA family (PLAN.md §8.6, WP 2.3, WP 7.3, I-20): `node x qa tex` bakes every texture generator the shared registry has, the engine's (engine/gfx/textures/v1.ts, v2.ts) and a game's (each `*.ts` module under `labs/<name>/textures/` imported first), at its default size and at twice it, with seeds 1 and 2, and checks every bake; then, under each `prop` entry's id (WP 4.5; a game's props under `labs/<name>/props/` imported first), the textures its parts' materials name, baked as each material bakes them (its parameters and size), and a `reference` violation for a part naming a material no entry defines.
 - `textureModules` (function): A game's texture modules, `labs/<name>/textures/*.ts` (tests excluded), labs and files in name order.
+- `textureSheet` (function): The contact sheet of `bakes`: per texture its colour, normal and emissive maps (black when nothing glows), each tiled 2 × 2 and scaled by nearest texels to fit a 128 px panel, keeping its shape (row 0 of a map at the bottom, as it is drawn), and a label.
 
 ### [`tools/x.ts`](../tools/x.ts)
 

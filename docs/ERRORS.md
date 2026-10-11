@@ -607,6 +607,14 @@ Advice from `requestDevice` (engine/gfx/caps.ts): the device is made with every 
 - Fix: give it at least one hex colour ('#6b6f5a')
 - Registered in: [`engine/gfx/textures/codes.ts` line 21](../engine/gfx/textures/codes.ts)
 
+### GFX_FLOOR_BAKE
+
+- Message: `level {level}'s floor cannot bake at {density} texels per metre: {reason}`
+- Fix: give levelFloorTexture a density that makes each {tile} m tile a whole number of texels and the floor at most 4096 texels on a side ({suggest} texels per metre fits)
+- Registered in: [`engine/gfx/textures/contactShadow.ts` line 53](../engine/gfx/textures/contactShadow.ts)
+
+Raised by `levelFloorTexture` (engine/gfx/textures/contactShadow.ts) when a tile would not be a whole number of texels (texels would straddle tiles, and the contact shadows would not line up with the walls) or the floor would be more than 4096 texels on a side, the largest texture a bake makes.
+
 ### GFX_GPU_ERROR
 
 - Message: `WebGPU refused a call ({kind}): {message}`
