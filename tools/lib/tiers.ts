@@ -72,9 +72,16 @@ export const TIERS: Readonly<Record<TierId, Tier>> = {
   },
 };
 
-/** The long runs: no budget, run at each gate. Long replays (WP 1.5) and the crowd ladder (WP 5.5) join them. */
+/**
+ * The long runs (PLAN.md §8.2): no budget, run at each gate. The flake hunt, and the crowd ladder (WP 5.5) against the
+ * crowd's budgets (tests/baselines/perf/box-crowd-1000.json, WP 5.7). Long replays (WP 1.5) join them.
+ */
 export const LONG_RUNS: readonly { name: string; command: readonly string[] }[] = [
   { name: 'flake hunt', command: ['npm', 'run', 'e2e', '--', '--repeat-each', '3'] },
+  {
+    name: 'crowd ladder',
+    command: ['node', 'x', 'perf', 'labs/box', '--scene', 'crowd-1000', '--ladder', '--budget'],
+  },
 ];
 
 /** A path whose change runs a whole tier: a file, or a directory when it ends in `/`. */

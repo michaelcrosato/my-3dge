@@ -1,11 +1,12 @@
 /**
  * @file T2 for the Stress Box, stage 4 (PLAN.md §9.0, WP 5.7): the crowd (labs/box/?scene=crowd-100, crowd-5000) on
- * WebGPU. The chase replay, played in the page and drawing a frame after every step through the crowd's level of
- * detail, gives its goldens and ends with walkers on the west gallery, 1 m up (Done-when 1 and 4); the crowd draws
- * through its batches (the ID pass sees the humanoids', the blobs' and the floaters' parts and their shadows, and the
- * dump no stand-in for a member); and the crowd at 5,000 grows, 25 entering a step, with frames drawn at 25, 1,000,
- * 2,500 and 5,000 members, building 0 pipelines after the warm-up (Done-when 3). The CPU-only contract for the crowd,
- * every camera and resolution mode included, is tests/e2e/parity.spec.ts.
+ * WebGPU. The chase replay, played in the page, gives its goldens and ends with walkers on the west gallery, 1 m up
+ * (Done-when 1); the crowd draws through its batches (the ID pass sees the humanoids', the blobs' and the floaters'
+ * parts and their shadows, and the dump no stand-in for a member); and the crowd at 5,000 grows, 25 entering a step,
+ * with frames drawn at 25, 1,000, 2,500 and 5,000 members, building 0 pipelines after the warm-up (Done-when 3). The
+ * CPU-only contract for the crowd (Done-when 4) is tests/e2e/parity.spec.ts: there the chase gives the same goldens
+ * drawing a frame after every step through the crowd's level of detail, so the gallery's end state holds while it
+ * renders, and this file plays it without drawing (T2's 6-minute budget).
  *
  * Invariants: the page is driven through `window.__engine` and the virtual clock, as an agent drives it; goldens come
  * from the replay files, never from the page itself.
@@ -72,14 +73,13 @@ async function open(page: Page, harness: Harness, scene: string, query = '') {
 test.describe('the box, stage 4: the crowd', () => {
   test.setTimeout(420_000);
 
-  test('the chase gives its goldens while the crowd renders, and walkers end on the west gallery', async ({
-    page,
-    harness,
-  }) => {
+  test('the chase gives its goldens in the page, and walkers end on the west gallery', async ({ page, harness }) => {
     await open(page, harness, 'crowd-100');
-    const run = await call<{ hashes: Record<string, string>; frames: number }>(page, 'replay', CHASE);
+    const run = await call<{ hashes: Record<string, string>; steps: number; frames: number }>(page, 'replay', CHASE, {
+      draw: 0,
+    });
     expect(run.hashes).toEqual(goldensOf(CHASE));
-    expect(run.frames).toBe(720);
+    expect([run.steps, run.frames]).toEqual([720, 0]);
     const up = (await agents(page)).filter(
       (a) =>
         a.kind === 'walker' &&
