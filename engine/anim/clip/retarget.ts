@@ -14,21 +14,23 @@
  *
  * From my-3d2dge's `drive` (`my-3d2dge:src/mocap/mocap.js`), its ideas on the rotation skeleton: the sole, not the
  * ankle, goes to the floor (the sole target fades out as the ankle rises 0.3 m); a clip that dips below the ground is
- * lifted by its lowest point; the blade runs along the knuckles (bake.ts turns the hand's +Z to it). The heading trust ramp is
- * not needed: the pelvis carries its whole turn.
+ * lifted by its lowest point; the blade runs along the knuckles (bake.ts turns the hand's +Z to it). The heading
+ * trust ramp is not needed: the pelvis carries its whole turn.
  *
- * Invariants: a skeleton's standing hip height is its pelvis's rest height (straight legs, `legUpper + legLower`
- * times `size` for a build), and a clip's 100% (`H0`) maps to it. Feet: the ankle aims where the source's sole is,
- * scaled, plus the target's own ankle height; the foot keeps the clip's turn. Hands reach only inside a format-2
- * `contacts` interval. Places are metres in the character's frame, the root on the ground at the origin.
+ * Invariants: a skeleton's standing hip height is its hip joints' rest height (straight legs: `legUpper + legLower`
+ * times `size` for a build); the hip-height ratio is the target's over the rest body's, and every place of the clip
+ * scales by it. Feet: the ankle aims where the source's sole is, scaled, plus the target's own ankle height; the foot
+ * keeps the clip's turn. Hands reach only inside a format-2 `contacts` interval. Places are metres in the
+ * character's frame, the root on the ground at the origin.
  *
  * @example
  * import { createSkeleton } from '../skeleton';
  * import { bakeClip } from './bake';
  * import { REST, standing, clipOf } from '../../../tests/unit/anim/clip-fixtures';
  * const baked = bakeClip(clipOf([standing(0), standing(1)]), REST);
- * const pose = retargetPose(baked, 0.5, createSkeleton('build:heroic'));
- * pose.rootPos.y; // 0: the heroic pelvis at its own standing height, 0.925 m
+ * const heroic = createSkeleton('build:heroic');
+ * hipRatio(baked, heroic); // 0.9924: heroic's straight legs, 0.925 m, over REST's hip joints, 0.9321 m
+ * retargetPose(baked, 0.5, heroic).rootPos.y; // -0.0153: REST's pelvis sits under its hip joints, so heroic's does
  * @see engine/anim/clip/retarget.test.ts
  */
 import { createRegistry } from '../../core/registry';

@@ -235,6 +235,65 @@ export { easeWeight } from './anim/weights';
 export type { WeightRates } from './anim/weights';
 export { HUMANOID_WEIGHTS } from './anim/weights';
 export type { WeightInfo } from './anim/weights';
+// The animation library (WP 8.4): readable key-pose clips (format 1 and 2: parse, print, check, the normalized lens,
+// mirroring, the decode to 36 body points), loaded per set; baked to 30 fps rotation tracks on the skeleton,
+// retargeted onto any build (rotation copy aligned at rest, the hip-height ratio, contact IK) or given to three.js as
+// AnimationClip JSON; played by the clip layer in the animator's clip slot, loops at the ground speed, with shardfall's
+// walk-run switch and strike time.
+export { parseClip } from './anim/clip/validate';
+export { parseClipSet } from './anim/clip/validate';
+export { validateClip } from './anim/clip/validate';
+export { poseError } from './anim/clip/validate';
+export { poseMeanError } from './anim/clip/validate';
+export type { ClipSet } from './anim/clip/validate';
+export type { ClipSource } from './anim/clip/validate';
+export type { RestBody } from './anim/clip/validate';
+export type { ClipWarning } from './anim/clip/validate';
+export { clipText } from './anim/clip/lens';
+export { normalizedLens } from './anim/clip/lens';
+export { mirrorClip } from './anim/clip/mirror';
+export { decodePose } from './anim/clip/readable';
+export { samplePose } from './anim/clip/readable';
+export { POSE_POINTS } from './anim/clip/readable';
+export { POINT_INDEX } from './anim/clip/readable';
+export type { Clip } from './anim/clip/readable';
+export type { ClipKey } from './anim/clip/readable';
+export type { KeyPose } from './anim/clip/readable';
+export type { LimbPose } from './anim/clip/readable';
+export type { ClipEvent } from './anim/clip/readable';
+export type { ClipContact } from './anim/clip/readable';
+export { bakeClip } from './anim/clip/bake';
+export { sampleBaked } from './anim/clip/bake';
+export { travelAt } from './anim/clip/bake';
+export { BAKE_FPS } from './anim/clip/bake';
+export type { BakedClip } from './anim/clip/bake';
+export { retargetPose } from './anim/clip/retarget';
+export type { RetargetOptions } from './anim/clip/retarget';
+export { clipJSON } from './anim/clip/retarget';
+export type { AnimationClipJSON } from './anim/clip/retarget';
+export { hipRatio } from './anim/clip/retarget';
+export { standingHipHeight } from './anim/clip/retarget';
+export { restSkeleton } from './anim/clip/retarget';
+export { restPoints } from './anim/clip/retarget';
+export { restBuild } from './anim/clip/retarget';
+export { RETARGET } from './anim/clip/retarget';
+export { loadClipLibrary } from './anim/clip/library';
+export type { ClipLibrary } from './anim/clip/library';
+export type { ClipOrigin } from './anim/clip/library';
+export { clipPace } from './anim/clip/library';
+export { walkRate } from './anim/clip/library';
+export { runOverWalk } from './anim/clip/library';
+export { strikeTime } from './anim/clip/library';
+export { GROUND_SPEED } from './anim/clip/library';
+export { STRIKE } from './anim/clip/library';
+export { ClipLayer } from './anim/clip/layer';
+export { CLIP_LAYER } from './anim/clip/layer';
+export type { ClipLayerOptions } from './anim/clip/layer';
+export type { ClipPlay } from './anim/clip/layer';
+export type { ClipSlot } from './anim/clip/layer';
+export type { ClipLayerState } from './anim/clip/layer';
+export type { ClipLayerEvent } from './anim/clip/layer';
+export type { ClipStepInput } from './anim/clip/layer';
 
 // Physics (WP 3.1): Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id,
 // raycasts, shape casts, overlaps and ground probes, collision groups by name, a level's bodies; presentation reads

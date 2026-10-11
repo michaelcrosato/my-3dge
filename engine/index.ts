@@ -229,3 +229,14 @@ export type { PuppetBatches } from './gfx/puppets/draw';
 export { createBlobShadows } from './gfx/puppets/blobShadow';
 export { blobScale } from './gfx/puppets/blobShadow';
 export type { BlobShadows } from './gfx/puppets/blobShadow';
+// Clips in pages (WP 8.4): three.js's AnimationClip and AnimationMixer, for presentation only (a page plays a baked
+// clip on a puppet with clipJSON and AnimationClip.parse); the sim samples the same tracks through the clip layer.
+// The mannequin: the Quaternius figure the library was measured on, as a body and a build.
+/** three.js's animation clip: `AnimationClip.parse(clipJSON(baked, skeleton))` makes one from a baked clip. */
+export { AnimationClip } from 'three/webgpu';
+/** three.js's animation mixer: plays clips on an object's bones (a puppet's mesh), for presentation only. */
+export { AnimationMixer } from 'three/webgpu';
+export { defineMannequin } from './gfx/puppets/bodies/mannequin';
+export { mannequinBody } from './gfx/puppets/bodies/mannequin';
+export { MANNEQUIN_SLOTS } from './gfx/puppets/bodies/mannequin';
+export type { MannequinData } from './gfx/puppets/bodies/mannequin';

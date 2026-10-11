@@ -13,7 +13,10 @@ import { Pose } from '../pose';
 import { createSkeleton, JOINTS, PARENTS } from '../skeleton';
 import { busy, clipOf, REST, standing } from '../../../tests/unit/anim/clip-fixtures';
 import { setOf } from '../../../tests/unit/anim/clip-parity';
+import { Animator } from '../character';
 import { bakeClip } from './bake';
+import { ClipLayer } from './layer';
+import { loadClipLibrary } from './library';
 import { clipJSON, hipRatio, restBuild, restSkeleton, retargetPose, standingHipHeight } from './retarget';
 
 const heroic = createSkeleton('build:heroic');
@@ -107,10 +110,9 @@ describe('retargetPose', () => {
 });
 
 describe('clipJSON: the baked clip as three.js’s AnimationClip', () => {
-  it('played by an AnimationMixer, matches the clip layer’s pose within 0.1 mm (no contact IK)', () => {
-    const set = setOf('quaternius');
-    const clip = set.clips.Sword_Attack;
-    const baked = bakeClip(clip, set.sources![clip.src!].rest, 'Sword_Attack');
+  it('played by an AnimationMixer, matches the clip layer’s pose within 0.1 mm (the rotation copy, no contact IK)', () => {
+    const library = loadClipLibrary(setOf('quaternius'));
+    const baked = library.bake('Sword_Attack');
     const three = AnimationClip.parse(clipJSON(baked, heroic));
     expect(three.tracks).toHaveLength(JOINTS.length + 1);
     // the puppets' bones: `root`, then one per joint at its rest offset (engine/gfx/puppets/draw.ts)
@@ -125,17 +127,22 @@ describe('clipJSON: the baked clip as three.js’s AnimationClip', () => {
     });
     const mixer = new AnimationMixer(holder);
     mixer.clipAction(three).play();
-    const [world, at] = [createWorldPose(), new ThreeVector3()];
-    let worst = 0;
-    for (let t = 0; t <= baked.duration; t += 1 / 60) {
-      mixer.setTime(t);
+    const layer = new ClipLayer({ library, build: 'build:heroic', ik: false });
+    const hero = new Animator({ build: 'build:heroic', clock: 0 }).use('clips', layer);
+    layer.play('Sword_Attack', { fade: 0 });
+    const at = new ThreeVector3();
+    let [worst, samples] = [0, 0];
+    while (layer.state.current && layer.state.current.t < baked.duration) {
+      hero.step().pose();
+      mixer.setTime(layer.state.current.t);
       holder.updateMatrixWorld(true);
-      retargetPose(baked, t, heroic, new Pose(), { world, ik: false, lift: false });
       JOINTS.forEach((_, j) => {
         at.setFromMatrixPosition(bones[j + 1].matrixWorld);
-        worst = Math.max(worst, at.distanceTo(new Vector3().fromArray(world.positions, j * 3)));
+        worst = Math.max(worst, at.distanceTo(new Vector3().fromArray(hero.body.world.positions, j * 3)));
       });
+      [samples] = [samples + 1, layer.step()];
     }
+    expect(samples).toBeGreaterThan(90); // every 60 Hz tick of its 1.53 s
     expect(worst).toBeLessThan(1e-4);
   });
 });

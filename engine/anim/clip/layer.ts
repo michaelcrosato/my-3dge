@@ -1,15 +1,16 @@
 /**
  * @file The clip layer (PLAN.md §10.4, WP 8.4): library clips played in the animator's `clips` slot (WP 3.7,
  * engine/anim/weights.ts). `play` crossfades a clip in over what plays now, the clip before kept playing under it
- * until the new one is fully in (shardfall's two slots, `shardfall:crates/pav_core/src/puppet.rs:582-615, 653-698`);
- * `stop` fades it out and the body's own animation takes over; `locomote` picks an idle, a walk or a run by ground speed,
- * each loop played at the character's ground speed (library.ts `walkRate`, `runOverWalk`).
+ * until the new one is fully in (shardfall's two slots, `shardfall:crates/pav_core/src/puppet.rs:582-615,
+ * 653-698`); `stop` fades it out and the body's own animation takes over; `locomote` picks an idle, a walk or a run
+ * by ground speed, each loop played at the character's ground speed (library.ts `walkRate`, `runOverWalk`).
  *
  * Each play takes my-3d2dge's moment fields (`my-3d2dge:src/emberdeep/96-hero-clips.js`, `HCL_MOVES`): `speed`,
- * `fade` and `out`, a bone `mask` ('upper': the legs keep the body's own), `loop`, `additive` (the clip's change from its first
- * frame, added), `mirror`, and the flags `walk` (moving or a flinch does not cancel it), `hold` (a one-shot keeps its
- * last pose), `next` (the clip that follows), `landed` (clip seconds by which a fall is down). Cancel rules: an action
- * takes the body back at once (0.07 s); moving faster than 1.25 m/s, or a flinch, fades a clip without `walk`.
+ * `fade` and `out`, a bone `mask` ('upper': the legs keep the body's own), `loop`, `additive` (the clip's change from
+ * its first frame, added), `mirror`, and the flags `walk` (moving or a flinch does not cancel it), `hold` (a one-shot
+ * keeps its last pose), `next` (the clip that follows), `landed` (clip seconds by which a fall is down). Cancel rules:
+ * an action takes the body back at once (0.07 s); moving faster than 1.25 m/s, or a flinch, fades a clip without
+ * `walk`.
  *
  * The two update paths (§6.4), as the animator's: `step` is the sim's, one fixed tick (times, fades, the walk–run
  * switch, cancels, events, root motion), on plain data (`state`, `save`, `load`); `apply` is the view's, sampling the
@@ -22,10 +23,18 @@
  * found in the first library that has it; an unknown one throws `ANIM_UNKNOWN_CLIP`.
  *
  * @example
- * // const clips = new ClipLayer({ library, build: 'build:heroic' });
- * // hero.use('clips', clips);
- * // clips.play('Wave', { mask: 'upper', walk: true });        // a wave over the walk
- * // each tick: hero.step(states); clips.step({ groundSpeed }); then in the view: hero.pose();
+ * import { Animator } from '../character';
+ * import { REST, standing } from '../../../tests/unit/anim/clip-fixtures';
+ * import { loadClipLibrary } from './library';
+ * const up = { ...standing(0.25), armR: [0, 30, 100, 0, 0] };
+ * const wave = { src: 'A', dur: 0.5, keys: [standing(0), up, standing(0.5)] };
+ * const library = loadClipLibrary({ set: 'TEST', sources: { A: { rest: REST } }, clips: { Wave: wave } });
+ * const clips = new ClipLayer({ library, build: 'build:heroic' });
+ * const hero = new Animator({ build: 'build:heroic' }).use('clips', clips);
+ * clips.play('Wave', { mask: 'upper', walk: true }); // a wave over whatever the legs do
+ * for (let i = 0; i < 12; i++) [hero.step(), clips.step({ groundSpeed: 0 })]; // the sim's ticks
+ * hero.pose(); // the view: the body's own pose, then the wave laid over it
+ * clips.state.current?.w; // 1: faded in over 0.12 s
  * @see engine/anim/clip/layer.test.ts
  */
 import { codeError, didYouMean } from '../../core/log';
@@ -129,6 +138,8 @@ export interface ClipLayerOptions {
   build?: Build | string;
   /** The fixed step (`SIM_DT`). */
   dt?: number;
+  /** Contact IK and the lift (retarget.ts; true); off, the pose is the rotation copy alone, as a mixer plays it. */
+  ik?: boolean;
 }
 
 /** Scratch. */
@@ -146,6 +157,8 @@ export class ClipLayer implements AnimLayer {
   /** The last step's events. */
   readonly events: ClipLayerEvent[] = [];
   readonly dt: number;
+  /** Whether `apply` plants the feet and lifts the pose (retarget.ts). */
+  readonly ik: boolean;
   readonly build: Build;
   readonly #libraries: readonly ClipLibrary[];
   readonly #skeleton: Skeleton;
@@ -156,6 +169,7 @@ export class ClipLayer implements AnimLayer {
     this.build = typeof options.build === 'object' ? options.build : getBuild(options.build ?? 'build:chibi');
     this.#skeleton = createSkeleton(this.build);
     this.dt = options.dt ?? SIM_DT;
+    this.ik = options.ik ?? true;
   }
 
   /** The standing hip height of the layer's build, metres. */
@@ -226,7 +240,7 @@ export class ClipLayer implements AnimLayer {
       if (!slot || slot.w <= 0) continue;
       const [library, name] = this.resolve(slot.clip);
       const baked = library.bake(name, slot.play.mirror);
-      const options = { contacts: library.clip(name).contacts, world };
+      const options = { contacts: library.clip(name).contacts, world, ik: this.ik, lift: this.ik };
       const place = (pose: Pose) => {
         pose.rootPos.applyQuaternion(yaw).add(body.position);
         pose.rootRot.copy(yaw);
