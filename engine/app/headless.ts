@@ -10,7 +10,9 @@
  * Time: a headless engine has a frame clock over the run's settings, like a page, but no frames. `step(n, intents)`
  * runs n steps at once, inside the session, so the steps are recorded and `headlessHost(h).session.record()` is the
  * run as a replay. `pause`, `resume` and `timeScale` set the clock's settings as in a page (no real time passes
- * headless, so only `step` runs steps). `seed(n)` starts the scene again with seed n, a new session and clock, keeping
+ * headless, so only `step` runs steps). After each step the run hands the hit-stop its rules asked for
+ * (engine/sim/damage.ts `takeHitStop`) to its clock, whose budget shrinks stops that follow closely, so a page's
+ * frames stop and a crowd hit stutters once. `seed(n)` starts the scene again with seed n, a new session and clock, keeping
  * every setting that differs from what a fresh start gives; `replay(text)` starts the replay's run and plays it. The
  * run's stats meter (engine/dev/stats.ts, `__engine.stats()`) times every step it runs, and the world's systems through
  * the world's probe; a page times its frames through it and gives it the renderer's counts (`Drawing.counts`).
@@ -43,6 +45,7 @@ import { createStatsMeter, type RenderCounts, type StatsMeter } from '../dev/sta
 import { createMaterialLibrary, type MaterialLibrary } from '../gfx/materials/library';
 import type { FrameReport } from '../gfx/renderer';
 import type { ShotJson, ShotOptions } from '../gfx/shot';
+import { takeHitStop } from '../sim/damage';
 import type { Replay } from '../sim/replay';
 import { checkSeed, createSession, getScene, type Scene, type Session } from '../sim/scene';
 import type { AnyComponents } from '../sim/state';
@@ -210,6 +213,8 @@ export function createAppHost<C extends object = AnyComponents, E extends EventM
   };
   const stepOnce = (intents: unknown) => {
     meter.time('sim', () => run.session.step(intents));
+    const stop = takeHitStop(run.session.world);
+    if (stop > 0) run.clock.hitStop(stop);
     view?.stepped();
   };
   const host: AppHost = {

@@ -3,7 +3,8 @@
  * or as a scene, seeded, with settings over the scene's; `step(n, intents)` runs n recorded steps, holding one intents
  * object (its presses on the first step only) or following a script; the recording replays to the same hashes; the
  * kernel fixture gives the same hash through it as through a plain session; a seed is a whole number from 0; a test
- * registry gets the clock's settings; `headlessHost` takes only a headless engine.
+ * registry gets the clock's settings; `headlessHost` takes only a headless engine; the hit-stop a step's rules ask
+ * reaches the run's clock once per step, through its budget, and never the hash.
  * @see engine/app/headless.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -12,6 +13,7 @@ import { EngineError } from '../core/log';
 import { createRegistry } from '../core/registry';
 import { defineSettings } from '../core/settings';
 import { held, pressed } from '../input/intents';
+import { damage, requestHitStop } from '../sim/damage';
 import { playReplay } from '../sim/replay';
 import { createSession, defineScene } from '../sim/scene';
 import { defineComponent } from '../sim/state';
@@ -109,5 +111,28 @@ describe('createHeadless', () => {
     expect(engine.timeScale(3)).toBe(3);
     expect(() => headlessHost({} as typeof engine)).toThrow(EngineError);
     expect(() => headlessHost({} as typeof engine)).toThrow(/APP_NOT_HEADLESS/);
+  });
+
+  it('hands the hit-stop a step asked for to its clock, once per step, through the budget', async () => {
+    const registry = createRegistry();
+    const scene = defineScene(
+      'strike',
+      {
+        setup: () => {},
+        step(w) {
+          if (w.tick === 2) for (let id = 1; id <= 12; id++) damage(w, { id }, { from: [0, 0, 0], stop: 0.06 });
+          if (w.tick === 3) requestHitStop(w, 0.06);
+        },
+      },
+      registry,
+    );
+    const engine = await createHeadless({ scene, registry });
+    const { clock } = headlessHost(engine);
+    engine.step(1);
+    expect(clock.state().hitStop).toEqual({ seconds: 0, debt: 0 });
+    engine.step(1);
+    expect(clock.state().hitStop).toEqual({ seconds: 0.06, debt: 0.06 }); // 12 hits: one full stop, counted once
+    engine.step(1);
+    expect(clock.state().hitStop).toEqual({ seconds: 0.06, debt: 0.06 }); // the next at once: shrunk inside it
   });
 });
