@@ -2828,18 +2828,12 @@ For the agents who maintain the engine.
 - `CHARACTER_FIELDS` (const): A character's settings: `createCharacter` checks a spec against these and fills the defaults.
 - `CHARACTER_SETTINGS` (const): The character's settings (the setting `physics.characterGravity`).
 - `CHARACTER_STATE_FIELDS` (const): What a character remembers between ticks: plain data in its actor's component, hashed and captured with the sim.
-- `CharacterHit` (interface): One obstacle the controller met: the body, the point it touched and that surface's outward normal.
 - `CharacterInput` (interface): What a character wants this tick: from the intents (engine/sim/actors.ts) or from its AI.
-- `CharacterMove` (interface): What `moveCharacter` did: the translation it made, whether it ended grounded, and what it hit.
 - `CharacterState` (type): A character's own state, as `stepCharacter` reads and writes it (`CHARACTER_STATE_FIELDS` documents each field).
 - `CharacterStep` (interface): What one tick did.
 - `createCharacter` (function): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
 - `createCharacterState` (function): A character's state at rest, every field at its default.
 - `feetOf` (function): Where a character's feet are: the bottom of its capsule, less the skin (on flat ground, the ground's height).
-- `isWalkable` (function): Whether `character` can stand on a surface: no steeper than it climbs.
-- `isWall` (function): Whether a surface is a wall to `character`: steeper than it climbs, not a ceiling.
-- `moveCharacter` (function): Moves a character's capsule by `desired` as far as it can: across first (sliding along walls, up slopes it climbs, pushing props), then down or up alone.
-- `MoveOptions` (interface): How `moveCharacter` moves: whether it stands on the ground (and is not rising), and the one-way platforms.
 - `stepCharacter` (function): One sim tick of a character: `steer` turns its intents into a velocity and a move (engine/physics/feel.ts), the controller makes the move (`moveCharacter`), `settle` fixes the velocity from what happened, walls stop the velocity going into them, it pushes what it walked into (both leave at (push·v + m·u)/(push + m)), probes the ground under it and presses a dynamic floor with push × world gravity.
 - `StepOptions` (interface): What `stepCharacter` needs beside the character: the step length, the gravities and the one-way platforms.
 
@@ -2884,6 +2878,17 @@ For the agents who maintain the engine.
 - `GroupName` (type): A collision group's name.
 - `queryBits` (function): Rapier's interaction groups for a query that hits the groups named (all of them when none are).
 - `touches` (function): Whether colliders of groups `a` and `b` touch.
+
+### [`engine/physics/move.ts`](../engine/physics/move.ts)
+
+- `CharacterHit` (interface): One obstacle the controller met: the body, the point it touched and that surface's outward normal.
+- `CharacterMove` (interface): What `moveCharacter` did: the translation it made, whether it ended grounded, and what it hit.
+- `isWalkable` (function): Whether `character` can stand on a surface: no steeper than it climbs.
+- `isWall` (function): Whether a surface is a wall to `character`: steeper than it climbs, not a ceiling.
+- `moveCharacter` (function): Moves a character's capsule by `desired` as far as it can: across first (sliding along walls, up slopes it climbs, pushing props), then down or up alone.
+- `MoveOptions` (interface): How `moveCharacter` moves: whether it stands on the ground (and is not rising), and the one-way platforms.
+- `partsOf` (function): The Rapier body of a character, with its capsule (its first collider); throws `PHYSICS_BAD_ARGUMENT`.
+- `sink` (function): How far a character goes down `by` (< 0) with its sinking `floor`, from where its last move left the capsule: a controller move that leaves the floor out, so a ledge it overhangs holds it up rather than taking it in.
 
 ### [`engine/physics/params.ts`](../engine/physics/params.ts)
 
@@ -3697,8 +3702,10 @@ For the agents who maintain the engine.
 
 - `createDescribeCommand` (function): Builds the command; tests shorten the child process's time limit.
 - `default` (default): Lists the registries from their schemas (PLAN.md §8.1, §6.6): `x describe` names every kind with its entry count, `x describe <kind>` gives its fields (type, default, range, unit, docs) and ids, and `x describe <kind> <id>` one entry's values, `*` marking those that differ from the default.
+- `describeFile` (function): Where `x describe [kind [id]]` writes the whole description: `describe.json` beside its report.
 - `describeInWorker` (function): Runs the listing in a child Node process over `root`'s registrations; resolves to what it sent, or to the failure when it hung (stopped after `timeoutMs`) or ended without a listing, naming the module it was loading.
 - `fieldLine` (function): One line for a field: name, type, default, range, unit, values, flags, then its description.
+- `idsLine` (function): A kind's ids as one line of at most `IDS_LINE` characters; a cut list says how many there are and where.
 - `listing` (function): What one listing prints, from the shared registry; throws the registry's error for an unknown kind or id.
 - `Listing` (interface): What one listing prints, besides the verdict, and the data `describe.json` holds.
 - `loadRegistrations` (function): Imports each module that registers content, telling `loading` first; a module that fails becomes a warning.
@@ -3741,28 +3748,14 @@ For the agents who maintain the engine.
 ### [`tools/cmd/film.ts`](../tools/cmd/film.ts)
 
 - `addWorktree` (function): Checks commit `sha` out in a temporary worktree under out/film/, with this tree's node_modules linked into it.
-- `checkFilmThumbs` (function): Records the film's thumbnails as `tests/baselines/thumbs/<name>.json` with `update`, else compares them with it.
-- `compareFilmThumbs` (function): Compares each frame's thumbnail with the baseline's (24 of 255): a line per frame that moved, or the counts.
-- `compareFrames` (function): Compares frame `a` with the base's frame `b` pixel by pixel, attributing each difference (see the file comment).
-- `contactSheet` (function): Lays frames out in `cols` columns, each labelled; with the base's frames and the diffs, rows A, B and the diff.
 - `default` (default): Films a page (PLAN.md WP 3.11, I-28): plays a script of steps over `__engine.input` and `step`, shoots a frame wherever the script says, lays the frames out on a labelled contact sheet, and with `--compare <ref>` films the same steps at that commit and attributes every pixel that differs to an object, through the ID pass.
-- `drawText` (function): Draws `text` in upper case on `sheet` at `at`, each font pixel 2 × 2, cut before x `clip`; `?` for other glyphs.
-- `EMPTY` (const): What a differing pixel that no object's box holds is attributed to.
-- `FilmFrame` (interface): One filmed frame: its number, the sim tick, its pixels (row-major RGBA), the ID pass's visible objects, thumbnail.
-- `FilmObject` (interface): An object that differs over a film: its pixels, the frames, and whether its ID-pass entry changed (it moved).
 - `FilmStep` (interface): One step of a film: the `__engine` member it calls and the arguments; the verb `shot` films a frame.
-- `FilmVerdict` (interface): The verdict on a comparison, its findings, and the objects that differ, most pixels first.
-- `FrameDiff` (interface): How a frame differs from the base's: the pixels that differ (-1: not comparable) by object, the changed entries.
 - `hasFile` (const): Whether commit `sha` has the file `path`.
-- `judgeCompare` (function): Judges a comparison with `ref`: `none` says why there is no baseline, `unchanged` that the sources are the ref's.
-- `LABEL` (const): The height of a label under a frame, in pixels: the 3 × 5 font at twice its size, with a margin.
-- `MAGENTA` (const): The colour of a pixel that differs from the base's, on the sheet's diff row.
 - `parseSteps` (function): Reads a script of steps (see the file comment); throws `UsageError` naming the step it cannot read.
 - `PARTS` (const): How many parts, each followed by a frame, a `step` is filmed in when the script never shoots.
 - `removeWorktree` (function): Removes a worktree `addWorktree` made: the node_modules link first (never what it points at), then the checkout.
 - `resolveRef` (function): The commit `ref` names, in full; throws `UsageError` when it names none.
 - `sameSources` (const): Whether the working tree's sources are commit `sha`'s: no tracked change, no untracked file git does not ignore.
-- `Sheet` (interface): A contact sheet, or any RGBA image: its size and its pixels, row-major.
 - `SHOT` (const): The shot a film takes: the pixels, the ID pass and the thumbnail, without the look metrics.
 - `simSteps` (const): `n` sim steps with what the virtual device holds.
 
@@ -3793,6 +3786,7 @@ For the agents who maintain the engine.
 - `fill` (function): Fills `{{id}}`, `{{name}}` and `{{dir}}` in `text`; throws on any other placeholder.
 - `Kind` (interface): A kind, as its manifest declares it.
 - `listKinds` (function): Reads and validates every kind under `tools/templates/`; throws naming the first problem.
+- `NEXT` (const): What to do after writing an entry of a kind whose manifest has no `next`.
 - `render` (function): The files an entry of `kind` with `id` consists of: repository path → formatted text.
 - `runCheck` (function): Runs one check on the new files; returns one sentence per problem.
 - `runChecks` (function): Runs a kind's checks on `files`: one line per check, and a finding per problem.
@@ -3897,7 +3891,7 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/sim.ts`](../tools/cmd/sim.ts)
 
-- `default` (default): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene> [--scene id] [--steps n] [--seed s] [--set key=value…] [--feel] [--map]`.
+- `default` (default): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5).
 - `feelLines` (function): The feel report as two lines of text, rounded for reading (the metrics keep every digit).
 - `feelOf` (function): The feel meter's report for a run's first player actor (the inspector member `feel`); a usage error without one.
 - `HashedView` (interface): One run's view of a step, with the hash its runtime gave.
@@ -4112,7 +4106,7 @@ For the agents who maintain the engine.
 - `formatMarkdown` (function): Formats Markdown as Prettier would format `file` under `root`.
 - `GENERATED` (const): The generated files, by repository path.
 - `generateDocs` (function): The generated docs' contents, formatted, by repository path.
-- `indexMarkdown` (function): `docs/INDEX.md`, before formatting.
+- `indexMarkdown` (function): `docs/INDEX.md`, before formatting; `start` is its "Start here" section (tools/lib/docsStart.ts's `startHere`).
 - `kindRows` (function): The kinds section of `docs/INDEX.md`: one row per kind declared with `defineKind`, sorted by kind.
 
 ### [`tools/lib/docsHelp.ts`](../tools/lib/docsHelp.ts)
@@ -4139,6 +4133,16 @@ For the agents who maintain the engine.
 - `PathOptions` (interface): Options for `checkPaths`.
 - `Planned` (interface): The paths PLAN.md plans: the Owns of WPs not yet done, and §6.2's layout.
 - `readPlanned` (function): Reads the planned paths from PLAN.md under `root` (none when it is missing).
+
+### [`tools/lib/docsStart.ts`](../tools/lib/docsStart.ts)
+
+- `Guide` (interface): One task guide: a repository path and what it is for.
+- `Skill` (interface): One skill: its name, its SKILL.md path and when to load it.
+- `skills` (function): Every skill under `.claude/skills/` in `root`, from its SKILL.md front matter, in name order.
+- `SKILLS` (const): The skills' directory.
+- `startHere` (function): INDEX's "Start here" section as Markdown lines (links relative to `docs/`), or [] with no guide and no skill.
+- `taskGuides` (function): The task guides an AGENTS.md text lists: the `- <path>: <what>` bullets after its "Task guides" line.
+- `whenToLoad` (function): A skill's description in short: its first sentence up to a dash (what it is), then the sentence that says when to load it ("Use when…"), when there is one.
 
 ### [`tools/lib/escalations.ts`](../tools/lib/escalations.ts)
 
@@ -4167,6 +4171,27 @@ For the agents who maintain the engine.
 - `writeIndex` (function): Rewrites the README when it differs from the records; returns whether it wrote.
 - `writeRecord` (function): Writes a record to `docs/escalations/<file>` under `root`.
 
+### [`tools/lib/filmCompare.ts`](../tools/lib/filmCompare.ts)
+
+- `checkFilmThumbs` (function): Records the film's thumbnails as `tests/baselines/thumbs/<name>.json` with `update`, else compares them with it.
+- `compareFilmThumbs` (function): Compares each frame's thumbnail with the baseline's (24 of 255): a line per frame that moved, or the counts.
+- `compareFrames` (function): Compares frame `a` with the base's frame `b` pixel by pixel, attributing each difference (see the file comment).
+- `EMPTY` (const): What a differing pixel that no object's box holds is attributed to.
+- `FilmFrame` (interface): One filmed frame: its number, the sim tick, its pixels (row-major RGBA), the ID pass's visible objects, thumbnail.
+- `FilmObject` (interface): An object that differs over a film: its pixels, the frames, and whether its ID-pass entry changed (it moved).
+- `FilmVerdict` (interface): The verdict on a comparison, its findings, and the objects that differ, most pixels first.
+- `FrameDiff` (interface): How a frame differs from the base's: the pixels that differ (-1: not comparable) by object, the changed entries.
+- `judgeCompare` (function): Judges a comparison with `ref`: `none` says why there is no baseline, `unchanged` that the sources are the ref's.
+- `samePixel` (const): Whether the pixel at byte offset `p` has the same RGBA in both buffers.
+
+### [`tools/lib/filmSheet.ts`](../tools/lib/filmSheet.ts)
+
+- `contactSheet` (function): Lays frames out in `cols` columns, each labelled; with the base's frames and the diffs, rows A, B and the diff.
+- `drawText` (function): Draws `text` in upper case on `sheet` at `at`, each font pixel 2 × 2, cut before x `clip`; `?` for other glyphs.
+- `LABEL` (const): The height of a label under a frame, in pixels: the 3 × 5 font at twice its size, with a margin.
+- `MAGENTA` (const): The colour of a pixel that differs from the base's, on the sheet's diff row.
+- `Sheet` (interface): A contact sheet, or any RGBA image: its size and its pixels, row-major.
+
 ### [`tools/lib/hash.ts`](../tools/lib/hash.ts)
 
 - `fnv1a` (function): Hashes a string (as UTF-8) or bytes with 32-bit FNV-1a, continuing from `seed` (the FNV offset basis by default).
@@ -4194,6 +4219,7 @@ For the agents who maintain the engine.
 - `Artifact` (interface): A file a command wrote, for example a PNG, with what it shows.
 - `Finding` (interface): One failure or warning: what was expected and what happened, where, and the likely fix, as a plain sentence.
 - `makeReport` (function): Builds a complete report from the parts a command knows, filling the version, the runtime and empty lists.
+- `outputPath` (function): Where the dispatcher keeps every line of a command's output when it cuts what it prints: beside the report.
 - `packageVersion` (function): Reads the engine's version from `package.json` under `root`.
 - `Report` (interface): The fixed schema of `out/<cmd>/<target>/report.json`.
 - `reportPath` (function): The repository-relative path of a command's report: `out/<cmd>/<target>/report.json`.

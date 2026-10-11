@@ -203,13 +203,13 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `headlessHost was given {value}, not a headless engine`
 - Fix: pass the object createHeadless resolved to
-- Registered in: [`engine/app/headless.ts` line 57](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 58](../engine/app/headless.ts)
 
 ### APP_OTHER_SCENE
 
 - Message: `this engine draws {shown}, so it cannot start {scene}`
 - Fix: play {scene} in its own page (labs/<name>/?scene=<name>), or headless: createHeadless({ scene: '{scene}' })
-- Registered in: [`engine/app/headless.ts` line 61](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 62](../engine/app/headless.ts)
 
 ### APP_PLAY_SETTING
 

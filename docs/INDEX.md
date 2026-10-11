@@ -2,9 +2,27 @@
 
 # Index of modules
 
-Every registry kind, then every module of the engine and its tools: what it is for (its file comment's first
-sentence), what it exports and the tests that cover it. Each export, with the first sentence of its doc comment, is
-in [API.md](API.md); error and advice codes are in [ERRORS.md](ERRORS.md).
+The task guides, every registry kind, then every module of the engine and its tools: what it is for (its file
+comment's first sentence), what it exports and the tests that cover it. Each export, with the first sentence of its
+doc comment, is in [API.md](API.md); error and advice codes are in [ERRORS.md](ERRORS.md).
+
+## Start here
+
+The task guides, as AGENTS.md lists them under "Where things are", and the skills: read each when the task needs
+it.
+
+- [`docs/PROGRESS.md`](../docs/PROGRESS.md): read first, every session: where things stand, what is next, the open issues.
+- [`docs/TESTING.md`](../docs/TESTING.md): the tiers, and which unit tests and specs a change selects.
+- [`labs/box/README.md`](../labs/box/README.md): the box's scenes, settings and quick loop; adding a scene or a variant (a variant is a new scene file or a settings preset, never a change of meaning in a passing scene).
+- [`tests/replays/README.md`](../tests/replays/README.md): the replay format; checking, recording and making replays.
+- [`tools/templates/`](../tools/templates/): `node x new <kind> <id>` writes a module, scene, material… from its kind's template and checks it (`node x new` lists the kinds).
+- [`.claude/skills/`](../.claude/skills/): the skills, each loaded when its description says (x-loop after any change, stress-box for the box, determinism-debugging when hashes part, rapier, three-webgpu, escalation).
+  - [`.claude/skills/determinism-debugging/SKILL.md`](../.claude/skills/determinism-debugging/SKILL.md): How to find and fix a determinism bug in my-3dge. Use whenever x replay, a replay test or a hash comparison fails.
+  - [`.claude/skills/escalation/SKILL.md`](../.claude/skills/escalation/SKILL.md): When and how to escalate to the owner in my-3dge. Use before any such action, and when the SessionStart hook or the Stop hook names an open escalation.
+  - [`.claude/skills/rapier/SKILL.md`](../.claude/skills/rapier/SKILL.md): Rapier physics in my-3dge under the reproducibility contract. Use when adding bodies, colliders or queries, touching engine/physics, or debugging a physics hash or capture.
+  - [`.claude/skills/stress-box/SKILL.md`](../.claude/skills/stress-box/SKILL.md): The Stress Box (labs/box), the engine's integration target. Use when you work on the box, add or tune a box scene, or need to show an engine capability in the box.
+  - [`.claude/skills/three-webgpu/SKILL.md`](../.claude/skills/three-webgpu/SKILL.md): Writing three.js code in my-3dge. Use before writing, reviewing or debugging code that imports three.js.
+  - [`.claude/skills/x-loop/SKILL.md`](../.claude/skills/x-loop/SKILL.md): The my-3dge work loop, edit → check → test → report. Use whenever you change code in this repository, or are unsure what to run next.
 
 ## Kinds
 
@@ -117,6 +135,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/app
 
+- [`animMember.ts`](../engine/app/animMember.ts): The inspector member `anim(id?)` (PLAN.md §8.3; WP 3.7's member, delivered at gate G3's review): an animated actor's character animator as `Animator.inspect()` gives it (engine/anim/character.ts): its weights, each slot of the layer stack with what is active in it, the effectors, sockets, events and trail.
+  - Tests: [`engine/app/viewMembers.test.ts`](../engine/app/viewMembers.test.ts), [`labs/box/scenes/room-hero.test.ts`](../labs/box/scenes/room-hero.test.ts)
 - [`engine.ts`](../engine/app/engine.ts): The engine in a page (PLAN.md §6.4, §6.9, §8.3, WP 2.7): `createEngine({ canvas, scenes, levels })` registers the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay` and settings by path), starts the scene as a recorded run with its view (engine/app/headless.ts, engine/app/view.ts), publishes the run's inspector as `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts), warms up every pipeline the view needs through both cameras (perspective and orthographic), draws the first frame, and then runs the frame loop (engine/app/loop.ts): the devices sampled into intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from the clock, the view drawn at the clock's alpha.
   - Exports: `createEngine`, `Engine`, `ENGINE_CODES`, `EngineOptions`, `recordOf`
   - Tests: [`engine/app/engine.test.ts`](../engine/app/engine.test.ts), [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts)
@@ -611,7 +631,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `bodyId`, `bodyIds`, `CAPTURE_CODES`, `capturePhysics`, `handleOf`, `PhysicsCapture`, `physicsState`, `rapierBuild`, `restorePhysics`, `STATE_STRIDE`
   - Tests: [`engine/physics/capture.test.ts`](../engine/physics/capture.test.ts)
 - [`character.ts`](../engine/physics/character.ts): The character controller (PLAN.md WP 3.2, §4.8, §5.8; doctrines: Common ground, Quality under the hood): a capsule on a kinematic body moved by Rapier's kinematic character controller, with an action game's movement on top.
-  - Exports: `addCharacter`, `Character`, `CHARACTER_FIELDS`, `CHARACTER_SETTINGS`, `CHARACTER_STATE_FIELDS`, `CharacterHit`, `CharacterInput`, `CharacterMove`, `CharacterState`, `CharacterStep`, `createCharacter`, `createCharacterState`, `feetOf`, `isWalkable`, `isWall`, `moveCharacter`, `MoveOptions`, `stepCharacter`, `StepOptions`
+  - Exports: `addCharacter`, `Character`, `CHARACTER_FIELDS`, `CHARACTER_SETTINGS`, `CHARACTER_STATE_FIELDS`, `CharacterInput`, `CharacterState`, `CharacterStep`, `createCharacter`, `createCharacterState`, `feetOf`, `stepCharacter`, `StepOptions`
   - Tests: [`engine/physics/character.test.ts`](../engine/physics/character.test.ts)
 - [`crowd.ts`](../engine/physics/crowd.ts): Crowd bodies (PLAN.md WP 5.1, §4.7; doctrines: Common ground, Reproducible, Quality under the hood): a crowd of dynamic bodies driven by the velocities its AI wants, so the solver resolves the crowd and no separation code is needed.
   - Exports: `addAgent`, `AgentState`, `CROWD_AGENT`, `CROWD_AGENT_FIELDS`, `CROWD_GROUNDED`, `CROWD_LIMITS`, `CROWD_MATERIAL`, `CrowdAgent`, `CrowdChanges`, `CrowdOptions`, `CrowdStepper`, `killAgent`, `knockback`, `launch`, `removeAgent`, `setVelocity`, `updateCrowd`, `VelocityOptions`
@@ -622,6 +642,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`groups.ts`](../engine/physics/groups.ts): Collision groups (PLAN.md WP 3.1, §5.1): the one table of what touches what, by name.
   - Exports: `COLLISION_GROUPS`, `GROUP_CODES`, `GROUP_NAMES`, `groupBits`, `GroupName`, `queryBits`, `touches`
   - Tests: [`engine/physics/groups.test.ts`](../engine/physics/groups.test.ts)
+- [`move.ts`](../engine/physics/move.ts): The character controller's moves (PLAN.md WP 3.2, §4.8; doctrine: Quality under the hood): `moveCharacter` moves a character's capsule through Rapier's kinematic character controller, across then down, climbing steps and snapping to the ground itself, and `sink` takes it down with a sinking floor.
+  - Exports: `CharacterHit`, `CharacterMove`, `isWalkable`, `isWall`, `moveCharacter`, `MoveOptions`, `partsOf`, `sink`
+  - Tests: [`engine/physics/character.test.ts`](../engine/physics/character.test.ts)
 - [`params.ts`](../engine/physics/params.ts): The physics parameters (PLAN.md WP 3.1, §6.5 item 5; doctrine: Reproducible): the one table of Rapier's integration parameters, pinned rather than left to the release's defaults, and the world's gravity as a setting.
   - Exports: `INTEGRATION_PARAMETERS`, `PHYSICS_SETTINGS`
   - Tests: [`engine/physics/world.test.ts`](../engine/physics/world.test.ts)
@@ -759,7 +782,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## labs/box
 
-- [`main.ts`](../labs/box/main.ts): The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports the box's scenes and levels, then starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: jump, then dash) for every scene.
+- [`main.ts`](../labs/box/main.ts): The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports every module under `labs/box/scenes/`, so a scene added there opens at `?scene=<name>` with no change here, and the box's levels, then starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: jump, then dash) for every scene.
 - [`touch.ts`](../labs/box/touch.ts): The box's touch layout (PLAN.md WP 3.10, WP 3.12; ADR-0021: built, not tested): `touchlayout:box`, the buttons a phone or tablet shows over the box page (engine/ui/touch.ts draws them, engine/input/devices/touch.ts reads them).
   - Exports: `BOX_TOUCH`
 
@@ -922,7 +945,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `check`, `createDepsCommand`, `default`
   - Tests: [`tools/cmd/deps.test.ts`](../tools/cmd/deps.test.ts)
 - [`describe.ts`](../tools/cmd/describe.ts): Lists the registries from their schemas (PLAN.md §8.1, §6.6): `x describe` names every kind with its entry count, `x describe <kind>` gives its fields (type, default, range, unit, docs) and ids, and `x describe <kind> <id>` one entry's values, `*` marking those that differ from the default.
-  - Exports: `createDescribeCommand`, `default`, `describeInWorker`, `fieldLine`, `listing`, `Listing`, `loadRegistrations`, `registersContent`, `REGISTRATION_ROOTS`, `registrationModules`, `WORKER_TIMEOUT_MS`, `WorkerDone`, `WorkerMessage`
+  - Exports: `createDescribeCommand`, `default`, `describeFile`, `describeInWorker`, `fieldLine`, `idsLine`, `listing`, `Listing`, `loadRegistrations`, `registersContent`, `REGISTRATION_ROOTS`, `registrationModules`, `WORKER_TIMEOUT_MS`, `WorkerDone`, `WorkerMessage`
   - Tests: [`tools/cmd/describe.test.ts`](../tools/cmd/describe.test.ts)
 - [`docs.ts`](../tools/cmd/docs.ts): Generates and checks the docs that come from the code (PLAN.md §6.8, §8.12): `docs/INDEX.md`, `docs/API.md` and `docs/ERRORS.md`, the `@example` blocks, the paths the docs mention, and `docs/PROGRESS.md`'s length.
   - Exports: `check`, `checkComments`, `createDocsCommand`, `default`, `DocsOptions`, `driftChecks`, `MAX_COMMENT_LINES`, `PROGRESS`
@@ -937,7 +960,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `default`
   - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
 - [`film.ts`](../tools/cmd/film.ts): Films a page (PLAN.md WP 3.11, I-28): plays a script of steps over `__engine.input` and `step`, shoots a frame wherever the script says, lays the frames out on a labelled contact sheet, and with `--compare <ref>` films the same steps at that commit and attributes every pixel that differs to an object, through the ID pass.
-  - Exports: `addWorktree`, `checkFilmThumbs`, `compareFilmThumbs`, `compareFrames`, `contactSheet`, `default`, `drawText`, `EMPTY`, `FilmFrame`, `FilmObject`, `FilmStep`, `FilmVerdict`, `FrameDiff`, `hasFile`, `judgeCompare`, `LABEL`, `MAGENTA`, `parseSteps`, `PARTS`, `removeWorktree`, `resolveRef`, `sameSources`, `Sheet`, `SHOT`, `simSteps`
+  - Exports: `addWorktree`, `default`, `FilmStep`, `hasFile`, `parseSteps`, `PARTS`, `removeWorktree`, `resolveRef`, `sameSources`, `SHOT`, `simSteps`
   - Tests: [`tools/cmd/film.test.ts`](../tools/cmd/film.test.ts)
 - [`help.ts`](../tools/cmd/help.ts): Prints the generated help: every command, or one command's file comment and flags.
   - Exports: `default`
@@ -946,7 +969,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `callSession`, `default`, `findSession`, `Opened`, `pageErrorFinding`, `pageFailures`, `reloadLines`, `SESSION_FILE`, `SessionInfo`, `sessionShot`, `SessionTab`, `shootInSession`
   - Tests: [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts), [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
 - [`new.ts`](../tools/cmd/new.ts): Scaffolds a new entry of a kind from its template (PLAN.md §8.13): `x new <kind> <id>` writes the files of `tools/templates/<kind>/`, filled in for the id, then runs the kind's checks and prints the summary.
-  - Exports: `CheckName`, `CHECKS`, `default`, `fill`, `Kind`, `listKinds`, `render`, `runCheck`, `runChecks`, `testKind`, `writeFiles`
+  - Exports: `CheckName`, `CHECKS`, `default`, `fill`, `Kind`, `listKinds`, `NEXT`, `render`, `runCheck`, `runChecks`, `testKind`, `writeFiles`
   - Tests: [`tools/cmd/new.test.ts`](../tools/cmd/new.test.ts)
 - [`perf.ts`](../tools/cmd/perf.ts): Performance as counters against budgets, never frames per second (PLAN.md §8.1, §8.7, WPs 1.5 and 5.5).
   - Exports: `agentsSetting`, `BUDGET_KEYS`, `budgetPath`, `default`, `DEFAULT_STEPS`, `LADDER`, `measure`, `median`, `PAGE_KEYS`, `PageKey`, `PerfBudget`, `PerfKey`, `readBudget`, `recordTrend`, `regressions`, `TREND_FILE`, `TREND_LIMIT`, `Way`, `withinBudget`
@@ -966,7 +989,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`shot.ts`](../tools/cmd/shot.ts): Renders a page on WebGPU in the platform's Chromium and reports what it drew as numbers and text: the look metrics, the ID pass (which object covers which pixels) and a 48 × 27 text thumbnail; images only on demand.
   - Exports: `default`, `encodePng`, `frameMetrics`, `judgeFrame`, `pageUrl`, `READY_TIMEOUT_MS`, `resolvePage`, `shotMetrics`
   - Tests: [`tests/e2e/shot.spec.ts`](../tests/e2e/shot.spec.ts), [`tools/cmd/shot.test.ts`](../tools/cmd/shot.test.ts)
-- [`sim.ts`](../tools/cmd/sim.ts): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene> [--scene id] [--steps n] [--seed s] [--set key=value…] [--feel] [--map]`.
+- [`sim.ts`](../tools/cmd/sim.ts): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5).
   - Exports: `default`, `feelLines`, `feelOf`, `HashedView`, `levelOf`, `loadScene`, `navMap`, `nodeRuntime`, `parseSets`, `replayText`, `resolveSceneModule`, `Runtime`, `sceneModules`, `sceneRoots`, `typedSets`, `wholeFlag`, `writeReplay`
   - Tests: [`tools/cmd/sim.test.ts`](../tools/cmd/sim.test.ts)
 - [`src.ts`](../tools/cmd/src.ts): Prints and checks the read-only source checkouts, `$MY3D2DGE_SRC` and `$SHARDFALL_SRC`, at their pins.
@@ -1023,7 +1046,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`docsExamples.ts`](../tools/lib/docsExamples.ts): Runs the `@example` blocks of file and export comments in Node (PLAN.md §8.12, WP 0.6): `x docs --check` runs them, and so does `tests/unit/examples.test.ts` in T1.
   - Exports: `collectExamples`, `compileExample`, `EXAMPLE_TIMEOUT_MS`, `ExampleOutcome`, `rewriteImports`, `runExample`, `runExamples`
   - Tests: [`tests/unit/examples.test.ts`](../tests/unit/examples.test.ts), [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
-- [`docsGenerate.ts`](../tools/lib/docsGenerate.ts): Writes the generated docs from what tools/lib/docs.ts reads (PLAN.md §6.8, WP 0.6): `docs/INDEX.md` (a row per registry kind declared with `defineKind`, PLAN.md §6.6, then module → purpose → exports → tests), `docs/API.md` (each export with the first sentence of its doc comment, the public API first) and `docs/ERRORS.md` (every code registered with `defineCodes`, with its message and fix).
+- [`docsGenerate.ts`](../tools/lib/docsGenerate.ts): Writes the generated docs from what tools/lib/docs.ts reads (PLAN.md §6.8, WP 0.6): `docs/INDEX.md` (the "Start here" task guides and skills of tools/lib/docsStart.ts, a row per registry kind declared with `defineKind`, PLAN.md §6.6, then module → purpose → exports → tests), `docs/API.md` (each export with the first sentence of its doc comment, the public API first) and `docs/ERRORS.md` (every code registered with `defineCodes`, with its message and fix).
   - Exports: `apiMarkdown`, `BARRELS`, `errorsMarkdown`, `formatMarkdown`, `GENERATED`, `generateDocs`, `indexMarkdown`, `kindRows`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
 - [`docsHelp.ts`](../tools/lib/docsHelp.ts): The `help()` drift check (PLAN.md §8.12, §8.3, WP 1.6; doctrine: Agent-operable): `x docs --check` fails when the inspector's `help()` differs from its real API, the members the object actually has.
@@ -1035,9 +1058,18 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`docsPaths.ts`](../tools/lib/docsPaths.ts): The path checks of `x docs` (PLAN.md §8.12, WP 0.6): every path, source citation and name that the file and export comments, AGENTS.md, README.md and the Markdown under `docs/` mention must exist.
   - Exports: `checkable`, `checkPaths`, `coveredDocs`, `expand`, `GENERATED_DIRS`, `isPlanned`, `PathOptions`, `Planned`, `readPlanned`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
+- [`docsStart.ts`](../tools/lib/docsStart.ts): The "Start here" section that opens `docs/INDEX.md` (PLAN.md §6.8): the task guides AGENTS.md lists under "Where things are", then every skill in `.claude/skills/`, with its description's headline and the sentence that says when to load it.
+  - Exports: `Guide`, `Skill`, `skills`, `SKILLS`, `startHere`, `taskGuides`, `whenToLoad`
+  - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
 - [`escalations.ts`](../tools/lib/escalations.ts): Escalation records (DOCTRINE.md, Escalation; PLAN.md §8.14, ADR-0017): `docs/escalations/ESC-NNNN-<slug>.md`, front matter then a short body.
   - Exports: `canonicalPrinciple`, `deadlineFor`, `DIR`, `Escalation`, `FIELDS`, `generateIndex`, `INDEX`, `indexMarkdown`, `isoSeconds`, `isOverdue`, `nextId`, `parseRecord`, `PRINCIPLES`, `readRecords`, `RecordFile`, `serializeRecord`, `slugOf`, `Status`, `STATUSES`, `validateFields`, `WAIT_MINUTES`, `wellFormed`, `writeIndex`, `writeRecord`
   - Tests: [`tools/cmd/esc.test.ts`](../tools/cmd/esc.test.ts)
+- [`filmCompare.ts`](../tools/lib/filmCompare.ts): The frame comparison of `x film` (tools/cmd/film.ts, PLAN.md WP 3.11): `compareFrames` compares a filmed frame with the base's pixel by pixel and gives each differing pixel to an object through the ID pass, `judgeCompare` turns a film's differences into its verdict and findings, and `checkFilmThumbs` holds each frame's thumbnail to `tests/baselines/thumbs/<case>.json`.
+  - Exports: `checkFilmThumbs`, `compareFilmThumbs`, `compareFrames`, `EMPTY`, `FilmFrame`, `FilmObject`, `FilmVerdict`, `FrameDiff`, `judgeCompare`, `samePixel`
+  - Tests: [`tools/cmd/film.test.ts`](../tools/cmd/film.test.ts)
+- [`filmSheet.ts`](../tools/lib/filmSheet.ts): The contact sheet of `x film` (tools/cmd/film.ts, PLAN.md WP 3.11): frames laid out in columns, each labelled in a 3 × 5 pixel font drawn in Node (no canvas, no font file), with the base's frames and a diff row (A in grey, each differing pixel in magenta) when the film was compared.
+  - Exports: `contactSheet`, `drawText`, `LABEL`, `MAGENTA`, `Sheet`
+  - Tests: [`tools/cmd/film.test.ts`](../tools/cmd/film.test.ts)
 - [`hash.ts`](../tools/lib/hash.ts): The FNV-1a hash (32-bit), shared by the tools: report ids, the e2e fixture's named random streams, and the proof hashes later WPs print.
   - Exports: `fnv1a`, `fnv1aHex`
   - Tests: [`tools/lib/hash.test.ts`](../tools/lib/hash.test.ts)
@@ -1048,7 +1080,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `decodePng`
   - Tests: [`tools/lib/png.test.ts`](../tools/lib/png.test.ts)
 - [`report.ts`](../tools/lib/report.ts): The `report.json` every `x` command writes (PLAN.md §8.1): its schema, its validation, and the writer that also updates `out/latest.json`.
-  - Exports: `Artifact`, `Finding`, `makeReport`, `packageVersion`, `Report`, `reportPath`, `runtime`, `targetSlug`, `validateReport`, `writeReport`
+  - Exports: `Artifact`, `Finding`, `makeReport`, `outputPath`, `packageVersion`, `Report`, `reportPath`, `runtime`, `targetSlug`, `validateReport`, `writeReport`
   - Tests: [`tools/lib/report.test.ts`](../tools/lib/report.test.ts)
 - [`source.ts`](../tools/lib/source.ts): The read-only source checkouts: my-3d2dge at `$MY3D2DGE_SRC` and shardfall at `$SHARDFALL_SRC` (PLAN.md WP 0.1).
   - Exports: `repoSlug`, `requireSource`, `ResolvedSource`, `ResolveOptions`, `resolveSource`, `SkippableTest`, `SourceSpec`, `sourceSpecs`

@@ -24,7 +24,9 @@ Phases 0–2 are done (PR #2, #3, #5): the foundation, the reproducible kernel a
 
 ## Open issues
 
-- engine/physics/character.ts is 523 lines (cap 400): splitting move.ts needs an Owns widening. ik.ts is at 400.
+- Over the 400-line warning (cap 600): engine/sim-api.ts 425, engine/physics/world.ts 419, tools/cmd/port.ts 408,
+  engine/sim/scene.ts 406, tools/cmd/ci.ts 404; ik.ts at 400 (character.ts and film.ts were split at G3's review).
+- The post-IK foot plant (WP 6.2) and preciseHits Node/Chromium parity (WP 6.1) are open.
 - The ID pass sees an InstancedMesh as one object (proposal: colour by instanceIndex). Chase/first/rail camera codes
   are not yet known to codes.ts and createCamera (core proposal, WP 3.9).
 - Headless step(n) should take the virtual device's intents (proposal, WP 3.3). Steps replay goldens not committed.

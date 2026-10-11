@@ -219,3 +219,18 @@ Core proposal accepted at integration. Calls made where PLAN.md §9 WP 5.5 and �
 - **Means, not medians.** Chromium's clock reads in 0.1 ms steps, so medians collapse onto that grid. `stats()` also adds `steps`, `frames` and `pipelinesAfterWarmUp`; it has no `gpuMs` yet (the timestamp-query WP adds it). `renderMs` is CPU time only.
 - **Budget files** are named tests/baselines/perf/<scene id, ':' as '-'>.json, one per scene, with sections `node`, `page` and `ladder`. A value passes up to budget × (1 + tolerance). WP 5.7's budget file is therefore tests/baselines/perf/box-crowd-1000.json.
 - **The ladder names its agent setting** (`--agents` or the budget's `ladder.setting`) instead of guessing it from the scene.
+
+## Amendment 13 (2026-10-11, gate G3's review): cut output, x sim's directory, template next steps, x film's modules, __engine.anim
+- When the dispatcher cuts a command's output, it writes every line to out/<cmd>/<target>/output.txt, names that file
+  in the "… N more in" line and lists it in the report's artifacts. The report schema is unchanged. `x describe <kind>`
+  prints the ids before the fields, and a list of ids too long for its line names describe.json.
+- `x sim` writes run.replay.json, state.json and map.txt beside its report, in out/sim/<slug>/ (the scene id as a
+  directory name: box:room → box-room), no longer in out/sim/<scene id>/.
+- A template manifest may hold `next`, which `x new` prints after writing an entry, filled like the targets. The
+  scene's names the replay steps, the README entry and parity.spec.ts's STAGES.
+- x film's frame comparison and thumbnail baselines move to tools/lib/filmCompare.ts, and its contact sheet and font to
+  tools/lib/filmSheet.ts (film.ts 588 → 351 lines, WP 3.11's recorded follow-up).
+- `__engine.anim(id?)` (engine/app/animMember.ts) is WP 3.7's deferred member. It returns the actor's
+  Animator.inspect() from an animator pool of its own, posed where the actor stands, and never touches the sim's
+  animators.
+(The lane proposed this as amendment 12; WP 5.5 had already taken that number, so it is 13.)

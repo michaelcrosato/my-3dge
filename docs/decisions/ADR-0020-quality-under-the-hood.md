@@ -100,3 +100,13 @@ out, so a ledge the rider overhangs holds it up instead of taking it into the pi
 Measured: riders keep their place within 0.3 mm and stay grounded every tick across, up and down at up to 5 m/s and
 turning at up to 3 rad/s. Movers (bodies.ts) are velocity-driven kinematic bodies, so the carry keeps no state and
 restores exactly.
+
+## Amendment 6 (2026-10-11, gate G3's review): the character controller's moves in their own module
+engine/physics/character.ts had 593 lines, 7 under the hard cap, after WP 4.1's kinematic carry joined WP 3.2's
+controller. Its split into move.ts had been open since gate G2 (ledger row 3.2). Gate G3's review made the split.
+engine/physics/move.ts holds the controller's moves (`moveCharacter`, `isWall`, `isWalkable`, the step-up, one-way
+platforms, and `sink` for a sinking floor), the Rapier controller they share, and amendment 3's "how it moves, and
+why". character.ts keeps the character's settings, state and tick (`createCharacter`, `addCharacter`, `feetOf`,
+`stepCharacter`, the carry and the pushes): 357 and 271 lines. WP 3.2's Owns, and WP 4.1's extension of it, widen to
+engine/physics/move.ts. Nothing behaves differently: every physics test and every replay passes unchanged, in Node and
+in Chromium.
