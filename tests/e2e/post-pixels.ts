@@ -1,8 +1,8 @@
 /**
  * @file Pixel arithmetic for the post-processing T2 (tests/e2e/post.spec.ts): shots as RGBA bytes, which pixels
- * changed, the parts view read back as a part per pixel, the pixels near a part or another part, the ID pass as
- * compared, the edge error that chose the edge smoothing and the reference it is measured against. Pure functions
- * of their arguments, no page.
+ * changed, the parts view read back as a part per pixel (and counted in an ID-pass box), the pixels near a part or
+ * another part, the ID pass as compared, the edge error that chose the edge smoothing and the reference it is
+ * measured against. Pure functions of their arguments, no page.
  *
  * Invariants: colours compare by channel, a pixel "changed" when a channel moved by more than `DIFF` levels; parts
  * are 0 a character, 1 an object, 2 the environment (the background included).
@@ -43,6 +43,13 @@ export function partsOf(shot: Shot): Uint8Array {
   const out = new Uint8Array(shot.width * shot.height);
   for (let p = 0; p < out.length; p++) out[p] = px[p * 4] > 128 ? 0 : px[p * 4 + 1] > 128 ? 1 : 2;
   return out;
+}
+
+/** How many pixels of `part` a `width`-wide parts view has in `box` ([x0, y0, x1, y1], inclusive: an ID-pass box). */
+export function partIn(parts: Uint8Array, width: number, box: readonly number[], part: number): number {
+  let n = 0;
+  for (let y = box[1]; y <= box[3]; y++) for (let x = box[0]; x <= box[2]; x++) if (parts[y * width + x] === part) n++;
+  return n;
 }
 
 /** Whether each pixel has another part within `r` pixels. */

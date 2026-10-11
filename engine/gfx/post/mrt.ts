@@ -115,7 +115,9 @@ function lookUp<T>(object: Object3D, read: (node: Object3D) => T | undefined): T
  * The flags `object` is drawn with: its tag (`setPart`), or its nearest tagged ancestor's; untagged objects count as
  * characters when they are a puppet (`userData.body`) or the protagonist (`userData.protagonist`), as objects when they
  * stand for an entity (`userData.entity`), and as the environment otherwise. The group is the tag's, else the entity's
- * id, else 1 for the environment and the object's own id for the rest.
+ * id, else 1 for the environment and the object's own id for the rest. The engine's instanced drawers tag their own
+ * roots, each in one group: the prop meshes (engine/gfx/props.ts) as objects, a crowd's bodies
+ * (engine/gfx/puppets/crowd.ts) as characters; a crowd's blob shadows stay the environment.
  */
 export function flagsOf(object: Object3D): Flags {
   const tag = lookUp(object, (node) => node.userData.post as PostTag | undefined);

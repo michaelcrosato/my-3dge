@@ -1,10 +1,18 @@
 /**
  * @file Unit tests for the fixed MRT's flags (engine/gfx/post/mrt.ts): packing round-trips for every part, group and
- * pixel-art flag within a half float's exact integers, the parts objects are drawn as, tagged or not, and the flag
- * table: a slot per drawable object for life, its flags as they are at each write.
+ * pixel-art flag within a half float's exact integers, the parts objects are drawn as, tagged or not (the engine's
+ * prop meshes and crowds among them), and the flag table: a slot per drawable object for life, its flags as they are
+ * at each write.
  */
 import { Group, Line, Mesh, Object3D, Scene, type Vector4 } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
+import type { InstancedBatch } from '../instancing';
+import { createMaterialLibrary } from '../materials/library';
+import { createPropMeshes } from '../props';
+import { BLOB_BODY } from '../puppets/bodies/blob';
+import '../puppets/bodies/humanoid';
+import { compileBody } from '../puppets/compile';
+import { createCrowd } from '../puppets/crowd';
 import { createFlagTable, flagsOf, foldGroup, GROUPS, packFlags, PARTS, setPart, unpackFlags } from './mrt';
 
 describe('packFlags and unpackFlags', () => {
@@ -57,6 +65,29 @@ describe('flagsOf', () => {
     crate.userData.entity = 12;
     expect(flagsOf(crate)).toEqual({ part: 'object', group: 12, pixelArt: false });
     expect(flagsOf(new Object3D())).toEqual({ part: 'environment', group: 1, pixelArt: false });
+  });
+
+  it("reads the engine's own drawers: props as objects, a crowd's bodies as characters, its shadows as the environment", () => {
+    const materials = createMaterialLibrary();
+    const pagesOf = (batches: Iterable<InstancedBatch>) => [...batches].flatMap((batch) => batch.pages);
+    const props = createPropMeshes({ materials });
+    const propPages = pagesOf(props.batches());
+    expect(propPages.length).toBeGreaterThan(0);
+    for (const page of propPages) {
+      expect(flagsOf(page), page.name).toEqual({ part: 'object', group: foldGroup(props.root.id), pixelArt: false });
+    }
+    const crowd = createCrowd({ materials }).prepare(compileBody('body:humanoid', 'build:heroic'), BLOB_BODY);
+    const bodyPages = [...pagesOf(crowd.puppets.batches.values()), ...pagesOf(crowd.rigs.values())];
+    expect(crowd.rigs.size).toBeGreaterThan(0);
+    expect(crowd.puppets.batches.size).toBeGreaterThan(0);
+    for (const page of bodyPages) {
+      expect(flagsOf(page), page.name).toEqual({ part: 'character', group: foldGroup(crowd.root.id), pixelArt: false });
+    }
+    const shadows = crowd.shadows!.batch.pages;
+    expect(shadows.length).toBeGreaterThan(0);
+    for (const page of shadows) expect(flagsOf(page).part, page.name).toBe('environment');
+    props.dispose();
+    crowd.dispose();
   });
 });
 
