@@ -248,7 +248,7 @@ test.describe('the CPU-only gameplay contract, a new box scene', () => {
       const ran = x(root, 'sim', 'labs/box/scenes/spinners', '--steps', '600');
       expect(ran.code, ran.output).toBe(0);
       const file = 'tests/replays/box-1-spinners.replay.json';
-      copyFileSync(join(root, 'out', 'sim', 'box:spinners', 'run.replay.json'), join(root, file));
+      copyFileSync(join(root, 'out', 'sim', 'box-spinners', 'run.replay.json'), join(root, file));
       const recorded = x(root, 'replay', file, '--browser', 'sim', '--update');
       expect(recorded.code, recorded.output).toBe(0);
       // the room's replay after it: the page opens again on the room

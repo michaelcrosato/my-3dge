@@ -36,10 +36,11 @@ prefix a scene's own (`pathMover`, `spinnersCrate`); a scene's settings are `box
    `labs/box/?scene=<name>` (main.ts imports every scene module).
 2. Make it show what the stage needs. A variant is a new file or a settings preset, never a change of meaning in a
    passing scene.
-3. Record a replay: `node x sim labs/box/scenes/<name> --steps 600`, copy `out/sim/box:<name>/run.replay.json` to
+3. Record a replay: `node x sim labs/box/scenes/<name> --steps 600`, copy `out/sim/box-<name>/run.replay.json` to
    `tests/replays/box-<stage>-<name>.replay.json`, then `node x replay <file> --browser sim --update` (goldens hold in
    Node and Chromium) and `node x replay <file> --browser page` (and while the page renders).
-4. List it in labs/box/README.md (scene, what it shows, covered by, its settings) and extend the box suite.
+4. List it in labs/box/README.md (scene, what it shows, covered by, its settings) and extend the box suite. When it
+   belongs to a stage, add it to `STAGES` in tests/e2e/parity.spec.ts: T2's rendering-page check plays only those.
 
 ## The quick loop
 

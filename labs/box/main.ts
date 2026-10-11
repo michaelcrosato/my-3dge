@@ -1,13 +1,13 @@
 /**
- * @file The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports the box's scenes and levels, then starts
- * the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's
- * replays offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: jump, then dash) for every
- * scene. Everything else a page does (routes, the renderer, the warm-up, the frame loop, `window.__engine`, the error
- * overlay, the touch layer) is the engine's, so this file stays a list of the box's content.
+ * @file The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports every module under `labs/box/scenes/`, so
+ * a scene added there opens at `?scene=<name>` with no change here, and the box's levels, then starts the engine
+ * (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays
+ * offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: jump, then dash) for every scene.
+ * Everything else a page does (routes, the renderer, the warm-up, the frame loop, `window.__engine`, the error overlay,
+ * the touch layer) is the engine's, so this file stays a list of the box's content.
  *
- * Every module under `labs/box/scenes/` is imported, so a scene added there (`node x new scene
- * labs/box/scenes/<name>`) opens at `?scene=<name>` with no change here. Levels come in as text through Vite's `?raw`
- * (never a fetch, PLAN.md §6.3); the engine registers them.
+ * A new scene comes from `node x new scene labs/box/scenes/<name>` (labs/box/README.md). Levels come in as text
+ * through Vite's `?raw` (never a fetch, PLAN.md §6.3); the engine registers them.
  *
  * Game code: it imports only the engine's public API (engine/index.ts) and the box's own files.
  *

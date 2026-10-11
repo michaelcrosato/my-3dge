@@ -45,6 +45,8 @@ to.
   them. A test that belongs to no module goes in tests/unit/.
 - **A browser suite**: `tests/e2e/<suite>.spec.ts`, importing from `./fixtures`, with its page at
   `tests/pages/<suite>.html` (vite.config.ts serves it). Set `PORT` when another dev server is running.
+- **A replay**: tests/replays/README.md says how to make one, labs/box/README.md the six steps for a box scene. T2
+  plays a replay in the rendering page only when tests/e2e/parity.spec.ts's `STAGES` names it.
 - **A test that reads the sources** calls `requireSource()` (tools/lib/source.ts); offline it is skipped and reported
   as `deferred: no source`.
 - **A test that spawns Vitest or Playwright** removes the `VITEST*` variables (and, in a spec, Playwright's worker

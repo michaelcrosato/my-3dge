@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { ROOT, UsageError } from '../x';
-import command, { CHECKS, fill, listKinds, render, testKind, type Kind } from './new';
+import command, { CHECKS, fill, listKinds, NEXT, render, testKind, type Kind } from './new';
 
 const made: string[] = [];
 afterAll(() => made.forEach((dir) => rmSync(dir, { recursive: true, force: true })));
@@ -49,6 +49,7 @@ describe('kinds', () => {
     [{ checks: ['spell'] }, '"checks" lists some of types, lint, test, docs'],
     [{ sample: 'elsewhere/x' }, 'does not match its pattern'],
     [{ describe: '' }, '"describe" must be a non-empty string'],
+    [{ next: '' }, '"next", when present, must be a non-empty string'],
   ])('rejects a manifest with %j', (extra, problem) => {
     const root = tree({
       'tools/templates/thing/template.json': manifest(extra),
@@ -74,7 +75,7 @@ describe('writing an entry', () => {
     const run = (positionals: string[]) => command.run({ values: {}, positionals, root });
     const result = await run(['module', 'engine/core/clock']);
     expect(result.ok).toBe(true);
-    expect(result.summary).toContain('wrote engine/core/clock.ts, engine/core/clock.test.ts');
+    expect(result.summary).toBe(`wrote engine/core/clock.ts, engine/core/clock.test.ts; next: ${NEXT}`);
     expect(readFileSync(join(root, 'engine/core/clock.ts'), 'utf8')).toContain(
       "export function clock(): string {\n  return 'clock';\n}",
     );
@@ -83,6 +84,19 @@ describe('writing an entry', () => {
     await expect(run(['module', 'engine/core/Clock'])).rejects.toThrow(UsageError);
     await expect(run(['modul', 'engine/core/x'])).rejects.toThrow('did you mean module?');
     await expect(run(['module'])).rejects.toThrow('name the new module');
+  });
+
+  it("prints the kind's own next step when its manifest has one, filled for the id", async () => {
+    const root = tree({
+      'tools/templates/thing/template.json': manifest({ next: 'record {{name}} as tests/{{name}}.json' }),
+      'tools/templates/thing/thing.txt': 'x',
+    });
+    const result = await command.run({ values: {}, positionals: ['thing', 'things/lamp'], root });
+    expect(result.summary).toBe('wrote things/lamp.txt; next: record lamp as tests/lamp.json');
+    const scene = listKinds(ROOT).find((kind) => kind.kind === 'scene');
+    for (const step of ['x sim', '--browser sim --update', '--browser page', 'labs/box/README.md', 'STAGES']) {
+      expect(scene?.next).toContain(step); // the scene's own steps: its replay, the README entry, the stage
+    }
   });
 
   it('lists the kinds when given none', async () => {

@@ -4,9 +4,10 @@
  *
  * A kind is a directory `tools/templates/<kind>/` holding its template files and a manifest, `template.json`:
  * `describe` (one sentence), `id` (what an id looks like), `pattern` (a regular expression every id must match),
- * `sample` (the id `--test` writes), `files` (template file → target path) and `checks`. Template files and
- * targets hold `{{id}}` (the id as given), `{{name}}` (its last segment) and `{{dir}}` (the rest); any other
- * placeholder, or any other manifest key, is an error. Written files are formatted by Prettier.
+ * `sample` (the id `--test` writes), `files` (template file → target path), `checks`, and optionally `next` (what to
+ * do after writing one, printed in place of the generic "replace the placeholder text, then node x docs --write").
+ * Template files, targets and `next` hold `{{id}}` (the id as given), `{{name}}` (its last segment) and `{{dir}}`
+ * (the rest); any other placeholder, or any other manifest key, is an error. Written files are formatted by Prettier.
  *
  * Checks, run on the new files only: `types` (TypeScript's diagnostics, with tsconfig.json's options), `lint`
  * (ESLint's errors), `test` (Vitest runs the new `*.test.ts` files) and `docs` (a file comment, every export
@@ -51,9 +52,13 @@ export interface Kind {
   sample: string;
   files: Record<string, string>;
   checks: CheckName[];
+  /** What to do after writing one, when the generic `NEXT` is not enough (the scene's replay steps). */
+  next?: string;
 }
 
-const KEYS = ['describe', 'id', 'pattern', 'sample', 'files', 'checks'];
+const KEYS = ['describe', 'id', 'pattern', 'sample', 'files', 'checks', 'next'];
+/** What to do after writing an entry of a kind whose manifest has no `next`. */
+export const NEXT = 'replace the placeholder text, then node x docs --write';
 const TEMPLATES = 'tools/templates';
 
 /** Reads and validates every kind under `tools/templates/`; throws naming the first problem. */
@@ -77,6 +82,8 @@ export function listKinds(root: string): Kind[] {
       for (const key of ['describe', 'id', 'pattern', 'sample']) {
         if (typeof manifest[key] !== 'string' || !manifest[key]) fail(`"${key}" must be a non-empty string`);
       }
+      if ('next' in manifest && (typeof manifest.next !== 'string' || !manifest.next))
+        fail('"next", when present, must be a non-empty string');
       const files = manifest.files as Record<string, unknown>;
       if (!files || typeof files !== 'object' || !Object.keys(files).length)
         fail('"files" maps template files to targets');
@@ -273,7 +280,7 @@ export default {
     const written = writeFiles(root, await render(root, kind, id));
     const result = await runChecks(root, kind, written);
     const ok = result.failures.length === 0;
-    const next = ok ? 'next: replace the placeholder text, then node x docs --write' : 'fix the problems below';
+    const next = ok ? `next: ${fill(kind.next ?? NEXT, id, `${kind.dir}/template.json`)}` : 'fix the problems below';
     return { ok, summary: `wrote ${written.join(', ')}; ${next}`, ...result, target: kind.kind };
   },
 } satisfies Command;
