@@ -9,7 +9,8 @@
  *
  * `PANNER` is how every placed sound is panned: HRTF (the best Web Audio offers for headphones), the inverse distance
  * model (gain `refDistance / d` past 1 m, as three.js's `PositionalAudio`), no cone. `OCCLUSION` is how a blocked one
- * sounds: through a lowpass at `cutoff` Hz (Butterworth, so the lows keep their level) and at `gain`, both eased in with a time constant of `ease` seconds.
+ * sounds: through a lowpass at `cutoff` Hz (Butterworth, so the lows keep their level) and at `gain`, both eased in
+ * with a time constant of `ease` seconds.
  *
  * Invariants: `occluded` casts one ray from the listener to the sound against `OCCLUSION.groups` (the level: `world`),
  * stopping `OCCLUSION.margin` short of the sound, so a torch on a wall is not hidden by its own wall; a sound closer
@@ -21,7 +22,8 @@
  * import { queryView } from '../../sim/queryView';
  * listenerAxes({ yaw: 0, pitch: 0 }); // { forward: [0, 0, 1], up: [-0, 1, -0] }
  * const physics = createPhysics();
- * physics.addBody({ type: 'fixed', position: [0, 1.5, 4], colliders: [{ shape: { type: 'box', size: [4, 3, 0.5] } }] });
+ * const wall = { shape: { type: 'box', size: [4, 3, 0.5] } } as const;
+ * physics.addBody({ type: 'fixed', position: [0, 1.5, 4], colliders: [wall] });
  * physics.step({ dt: 1 / 60, settings: createSettings().sim }); // queries see it from the next step
  * occluded(queryView(physics), [0, 1.6, 0], [0, 1.6, 8]); // true: the wall stands between
  * @see engine/audio/runtime/spatial.test.ts

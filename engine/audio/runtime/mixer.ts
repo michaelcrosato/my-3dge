@@ -12,8 +12,9 @@
  * a pause menu), `duck(seconds)` holds for that long (an effect played with `duck`), and timed ducks overlap.
  *
  * Invariants: volumes are clamped to [0, 1]; `BUS_VOLUMES` are the starting levels (the source's: master 0.7, music
- * 0.5, the rest 1). A room change fades the old reverb out and the new one in over `ROOM_FADE` seconds. Nothing here
- * reads a clock but the context's own `currentTime`.
+ * 0.5, the rest 1). A room change fades the old reverb out and the new one in over `ROOM_FADE` seconds; asking for
+ * the room already in place changes nothing, so a game may name its room every frame. Nothing here reads a clock but
+ * the context's own `currentTime`.
  *
  * Carried from `my-3d2dge:engine/my-3d2dge.js:3714-3735` (`_init`, `_levels`, `setVolume`, `mute`, `_duck`): the
  * master, sfx and music buses and their levels, the 0.35 duck; `ui`, `ambience`, timed ducks and the reverb added.
@@ -151,6 +152,7 @@ export function createMixer(context: BaseAudioContext): Mixer {
     },
     room(room) {
       const spec = roomSpec(room);
+      if ((Object.keys(spec) as (keyof RoomSpec)[]).every((key) => spec[key] === current[key])) return;
       const now = context.currentTime;
       if (fading) {
         reverbIn.disconnect(fading.send);

@@ -1,7 +1,7 @@
 /**
  * @file Unit tests for the audio runtime without Web Audio (engine/audio/runtime/audio.ts, in Node): it is `off`, says
- * so once (`AUDIO_OFF`), and every call is a quiet no-op, while mistakes still throw with their fix: an unknown id,
- * an option out of range, an unknown room. Playing through Web Audio is tests/e2e/audio.spec.ts's.
+ * so once (`AUDIO_OFF`), and every call is a quiet no-op, while mistakes still throw with their fix: an unknown id
+ * (effect, song, stinger or binding), an option out of range, an unknown room. Playing through Web Audio is tests/e2e/audio.spec.ts's.
  */
 import { describe, expect, it } from 'vitest';
 import { createLog } from '../../core/log';
@@ -57,5 +57,8 @@ describe('createAudio without Web Audio', () => {
     expect(() => audio.play('sfx:jump', { variant: 1.5 })).toThrow(/variant is 1.5, not a whole number from 0 to 3/);
     expect(() => audio.play('sfx:jump', { position: [0, 1] as never })).toThrow(/position is \[0,1\]/);
     expect(() => audio.room('cavern' as never)).toThrow(/AUDIO_BAD_ROOM/);
+    expect(() => audio.music('song:dungeonn')).toThrow(/CORE_NO_ENTRY.*song:dungeon/);
+    expect(() => audio.stinger('sfx:secrte')).toThrow(/CORE_NO_ENTRY.*sfx:secret/);
+    expect(() => audio.bind('boss', 'sfx:secrte')).toThrow(/CORE_NO_ENTRY.*sfx:secret/);
   });
 });

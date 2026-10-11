@@ -5,13 +5,14 @@
  *
  * Invariants: a voice's gain is its `vol`, times `OCCLUSION.gain` while occluded; `stop` fades it to 0 over
  * `STOP_FADE` seconds, then stops the source (once: stopping again does nothing); it reports `playing: false` from
- * then on. When the source ends, the voice disconnects every node it made and calls `onEnded`. Options are checked before anything
- * is made: a value out of range throws `AUDIO_BAD_OPTION`.
+ * then on. When the source ends, the voice disconnects every node it made and calls `onEnded`. Options are checked
+ * before anything is made: a value out of range throws `AUDIO_BAD_OPTION`.
  *
  * @example
  * // browser: Web Audio's nodes exist only in a page (tests/e2e/audio.spec.ts plays voices)
  * const input = mixer.input('effects');
- * const voice = createVoice(context, { id: 'sfx:hit', bus: 'effects', buffer, input, when: 0, options: { position: [2, 1, 0] } });
+ * const options = { position: [2, 1, 0] as const };
+ * const voice = createVoice(context, { id: 'sfx:hit', bus: 'effects', buffer, input, when: 0, options });
  * voice.move([3, 1, 0]);
  * voice.stop();
  * @see tests/e2e/audio.spec.ts

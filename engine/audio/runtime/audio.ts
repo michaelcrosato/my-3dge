@@ -21,7 +21,7 @@
  * `bind(type, id)` plays its stinger on the beat.
  *
  * Invariants: presentation only: nothing here changes the sim, and the QueryView only answers occlusion rays. An
- * unknown id throws `CORE_NO_ENTRY` naming the closest. Renders are cached per effect and variant at the context's
+ * unknown id throws `CORE_NO_ENTRY` naming the closest, when it is asked for, locked or not. Renders are cached per effect and variant at the context's
  * rate; a voice disconnects its nodes when it ends.
  *
  * Carried from `my-3d2dge:engine/my-3d2dge.js:3708-3786` (`ChipAudio`: the lazy context, resume on a gesture, the
@@ -41,6 +41,7 @@ import { defineCodes, log as sharedLog, type Log } from '../../core/log';
 import { registry as sharedRegistry, type Registry } from '../../core/registry';
 import type { QueryView } from '../../sim/queryView';
 import { getSfx, renderSfx, sfxKind, type Sfx } from '../data/sfx';
+import { getSong, songKind } from '../data/song';
 import { onGesture, type GestureTarget } from './gesture';
 import { BUS_VOLUMES, createMixer, type AudioBus, type Mixer, type MixerInfo } from './mixer';
 import { createMusic, type Music, type MusicChange, type MusicPosition } from './music';
@@ -126,6 +127,9 @@ export function createAudio(options: AudioOptions = {}): Audio {
   const registry = options.registry ?? sharedRegistry;
   const out = options.log ?? sharedLog;
   sfxKind(registry);
+  songKind(registry);
+  /** `id` once it names a song or an effect; else throws `CORE_NO_ENTRY` naming the closest effects. */
+  const checkSound = (id: string) => (registry.has('song', id) ? id : getSfx(id, registry).id);
   const footsteps = options.footsteps ?? {};
   const pool = createVoicePool<RuntimeSound>(options.limits);
   const buffers = new Map<string, AudioBuffer>();
@@ -169,6 +173,7 @@ export function createAudio(options: AudioOptions = {}): Audio {
         begin(new AudioContext({ latencyHint: 'interactive' }));
       } catch (error) {
         state = 'off';
+        stopListening();
         out.warnOnce('AUDIO_OFF', { reason: (error as Error).message ?? String(error) });
         return;
       }
@@ -250,9 +255,10 @@ export function createAudio(options: AudioOptions = {}): Audio {
     },
     bind(type, id) {
       if (id === null) bindings.delete(type);
-      else bindings.set(type, id);
+      else bindings.set(type, checkSound(id));
     },
     music(id, opts = {}) {
+      if (id !== null) getSong(id, registry);
       if (opts.intensity !== undefined) level = opts.intensity;
       if (player) player.play(id, opts);
       else pending = { id, options: opts };
@@ -262,6 +268,7 @@ export function createAudio(options: AudioOptions = {}): Audio {
       player?.intensity(value, opts);
     },
     stinger(id, opts) {
+      checkSound(id); // also while locked, when the player is not there yet
       player?.stinger(id, opts);
     },
     update(next, view) {
