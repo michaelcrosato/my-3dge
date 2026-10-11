@@ -246,3 +246,11 @@ export { DAMAGE_NUMBERS } from './ui/labels';
 export { uiState } from './ui/state';
 export type { UiState } from './ui/state';
 export type { UiElementState } from './ui/state';
+// Props drawn (WP 4.5): every prop part a batch of the instancing service, posed by its body, the flames dancing on
+// the visual streams, the light spots flickering, for the light pool.
+export { createPropMeshes } from './gfx/props';
+export type { PropMeshes } from './gfx/props';
+export type { PropMeshesOptions } from './gfx/props';
+export type { PropMeshPose } from './gfx/props';
+export type { PropLight } from './gfx/props';
+export { FLICKER } from './gfx/props';
