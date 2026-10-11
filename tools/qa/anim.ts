@@ -13,8 +13,7 @@
  *   step and more than `ratio` times the steps either side (a fast, steady sweep is motion, not a pop).
  * - `footSlide` (metres): a sole within `ANIM_QA.slide.contact` of the floor in consecutive steps moves over the
  *   ground (a treadmill's ground moves too) more than `limit` in one contact.
- * - `jointLimit` (radians): a knee or an elbow (ik.ts `LIMBS`) turns off its hinge, or bends the wrong way or past
- *   straight back.
+ * - `jointLimit` (radians): a knee or an elbow (ik.ts `LIMBS`) turns off its hinge or bends the wrong way.
  * - `loopClosure` (metres): the last pose, back at rest, is farther than `ANIM_QA.closure` from a body that rested
  *   all along.
  * - `twistJump` (radians): a bone of a limb folded past `ANIM_QA.twist.fold` rolls more than `jump` about itself in
@@ -25,12 +24,12 @@
  *
  * Accepted exceptions go in `tests/baselines/qa-anim.json`, each with its reason; `--only move:` keeps the moves.
  *
- * Invariants: subjects run in a fixed order with fixed clocks and no random stream, so the same tree gives the same
- * violations; thresholds scale with the build's `size`.
+ * Invariants: subjects run in a fixed order with fixed clocks and seeded streams, so the same tree gives the same
+ * violations; lengths scale with the build's `size`.
  *
  * Carried from `my-3d2dge:tools/ed-sheet.mjs:100-131`: the pops relative to the neighbouring steps (9 units a step and
- * 2.5 times the neighbours, the neighbours counted as at least 0.5 units), the idle foot slide (2 units), the joints
- * under the floor and the stretch of the limbs, here in metres.
+ * 2.5 times the neighbours, the neighbours counted as at least 0.5 units, here in metres), the foot slide (there over
+ * the idle hold, here per contact in every state), the joints under the floor and the stretch of the limbs.
  *
  * @example
  * animViolations((id) => id.startsWith('floater:')); // []: the floater's states, all within the thresholds
