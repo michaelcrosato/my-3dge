@@ -1,7 +1,7 @@
 /**
  * @file T2 for post-processing (PLAN.md WP 7.4) on the post page (tests/pages/post.html: the Stress Box's room with
  * two characters and a glowing orb, drawn through the chain):
- * 1. the clean look draws the plain frame; every scoped filter (cel, pixel, palette, outline, stylize, grade,
+ * 1. the clean look skips the chain (`plain`, fewer draw calls) and draws the plain frame; every scoped filter (cel, pixel, palette, outline, stylize, grade,
  *    scanlines, grain, chroma), with every palette, every style and the outline's own colour, changes the pixels of
  *    the parts its scope names and leaves the rest alone, for the scopes all, characters, objects and environment,
  *    the parts read back from the chain's own parts view; the whole-screen filters (bloom, edge smoothing, curvature,
@@ -63,8 +63,9 @@ interface Shown {
   builds: number;
   recompiled: number;
   style: string;
-  stats: { warmUps: number; pipelines: number };
+  stats: { warmUps: number; pipelines: number; drawCalls: number };
   during: Counts;
+  plain: boolean;
 }
 
 /** What a switch may do: nothing that warms up or builds. */
@@ -125,6 +126,7 @@ test('every filter and scope works, a clean look is the plain frame, and the ID 
   await open(page, harness);
   const clean = await page.evaluate(() => __postPage.setLook('look:clean'));
   expect(clean.frame).toMatchObject({ drawn: true, built: 0 });
+  expect(clean.plain, 'the clean look draws straight, skipping the chain').toBe(true);
   const base = await page.evaluate(() => __postPage.shoot({ ids: true }));
   const plain = await page.evaluate(() => __postPage.shootPlain());
   expect(changedShare(rgba(base), rgba(plain)), 'the clean look against the plain frame').toBe(0);
@@ -144,6 +146,7 @@ test('every filter and scope works, a clean look is the plain frame, and the ID 
       const spec = { [name]: { ...filters, scope } };
       const shown = await page.evaluate((f) => __postPage.setLook('look:clean', f), spec);
       expectStill(shown, first, `${name} ${JSON.stringify(filters)} on ${scope}`);
+      expect([shown.plain, shown.stats.drawCalls > first.stats.drawCalls], `${name} on ${scope}: through the chain`).toEqual([false, true]); // prettier-ignore
       const shot = await page.evaluate(() => __postPage.shoot({ ids: true }));
       expect(idsOf(shot), `the ID pass with ${name} ${JSON.stringify(filters)} on ${scope}`).toEqual(ids);
       const after = rgba(shot);
@@ -264,6 +267,9 @@ test('every look builds 0 pipelines after the warm-up and recompiles nothing, an
   expect(looks.length).toBe(86);
   await page.evaluate(() => __postPage.setLook('look:clean'));
   const ids = idsOf(await page.evaluate(() => __postPage.shoot({ ids: true, pixels: false })));
+  // A shot draws into a target of its own: its first frame straight (above) and through the chain (the parts view)
+  // build their pipelines; every switch below leaves the counts as this one left them.
+  await page.evaluate(() => __postPage.parts());
   const first = await page.evaluate(() => __postPage.setLook('look:clean'));
   const styles = new Set<string>();
   for (const id of [...looks, 'look:clean']) {
@@ -329,9 +335,11 @@ test('bloom is off at the low quality tier, with advice', async ({ page, harness
   const glow = { bloom: { scope: 'all', strength: 1.5, threshold: 0.1 } };
   await page.evaluate(() => __postPage.setLook('look:clean'));
   const off = rgba(await page.evaluate(() => __postPage.shoot()));
-  const first = await page.evaluate((f) => __postPage.setLook('look:clean', f), glow);
-  expect(first.during, 'switching bloom on').toEqual(STILL);
+  const on = await page.evaluate((f) => __postPage.setLook('look:clean', f), glow);
+  expect(on.during, 'switching bloom on').toEqual(STILL);
   const high = rgba(await page.evaluate(() => __postPage.shoot()));
+  // The shots' own first builds, straight and through the chain, are done: the switch below leaves the counts so.
+  const first = await page.evaluate((f) => __postPage.setLook('look:clean', f), glow);
   expect(changedShare(off, high), 'bloom at the high tier').toBeGreaterThan(0.05);
   await page.evaluate(() => __postPage.settings.set('quality', 'low'));
   const shown = await page.evaluate((f) => __postPage.setLook('look:clean', f), glow);

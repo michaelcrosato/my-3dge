@@ -218,6 +218,11 @@ export function layerChain(chain: FilterChain, over: FilterSpec): FilterChain {
   return chainOf(out as FilterSpec);
 }
 
+/** Whether `chain` has every filter off, so it would leave the picture as the scene draws it (`look:clean`). */
+export function isPlain(chain: FilterChain): boolean {
+  return FILTER_NAMES.every((name) => chain[name].scope === 'off');
+}
+
 /** Checks a level count: 0, or 8 and more (see the file comment). */
 export function levelsProblem(levels: number, where: string): string | null {
   return levels > 0 && levels < 8
