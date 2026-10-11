@@ -374,6 +374,15 @@ export { propPose } from './world/props/place';
 export type { PropPlacement } from './world/props/place';
 export type { PropBody } from './world/props/place';
 export type { PropPose } from './world/props/place';
+// Props in a scene (WP 4.6): spawnProp stands a prop in a running scene (its body, and an entity with the component
+// sceneProp whose pose is read back after each step, which the view draws as the prop); hitProp calls its hit hook
+// with the means to knock it; removeProp.
+export { spawnProp } from './sim/props';
+export { removeProp } from './sim/props';
+export { hitProp } from './sim/props';
+export { SCENE_PROP_FIELDS } from './sim/props';
+export type { ScenePropComponent } from './sim/props';
+export type { ScenePropComponents } from './sim/props';
 
 // Crowd bodies (WP 5.1): agents as dynamic capsules and balls driven by the velocities their AI wants (approach
 // limits, only on their feet), knockback and launches, the corpse group and its timers, spawn and despawn queues.
