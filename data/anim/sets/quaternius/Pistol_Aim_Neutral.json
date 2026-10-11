@@ -1,0 +1,10 @@
+{"clip": "Pistol_Aim_Neutral", "src": "UAL1", "dur": 0.167, "loop": false, "tags": ["gun","aim","pose"], "desc": "two-handed pistol aim, level (a pose to blend with up and down)", "keys": [
+  {"t":0,
+   "hips":[-9,0,96], "body":[13,-6,0], "chest":[26,16,-8], "head":[-37,8,8],
+   "shL":[-23,0], "shR":[27,-3], "armL":[99,13,10,57,19], "armR":[69,-68,23,43,9],
+   "legL":[3,18,-98,19,7], "legR":[-33,13,-93,9,-39], "footL":[6,8,0], "footR":[5,33,0]},
+  {"t":0.167,
+   "hips":[-9,0,96], "body":[13,-6,0], "chest":[26,16,-8], "head":[-37,8,8],
+   "shL":[-23,0], "shR":[27,-3], "armL":[99,13,10,57,19], "armR":[69,-68,23,43,9],
+   "legL":[3,18,-98,19,7], "legR":[-33,13,-93,9,-39], "footL":[6,8,0], "footR":[5,33,0]}
+]}

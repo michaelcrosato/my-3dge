@@ -1,0 +1,10 @@
+{"clip": "Pistol_Aim_Neutral", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Pistol_Aim_Neutral", "dur": 0.208, "loop": false, "tags": ["gun","aim","pose","alt"], "desc": "two-handed pistol aim, level (a pose to blend with up and down)", "keys": [
+  {"t":0,
+   "hips":[-10,0,100], "body":[13,-6,0], "chest":[25,6,-5], "head":[-13,16,7],
+   "shL":[-29,7], "shR":[33,-6], "armL":[99,15,-8,39,19], "armR":[72,-68,15,22,3],
+   "legL":[4,18,-98,20,8], "legR":[-33,13,-94,14,-36], "footL":[6,8,0], "footR":[5,33,0]},
+  {"t":0.2,
+   "hips":[-10,0,100], "body":[13,-6,0], "chest":[25,6,-5], "head":[-13,16,7],
+   "shL":[-29,7], "shR":[33,-6], "armL":[99,15,-8,39,19], "armR":[72,-68,15,22,3],
+   "legL":[4,18,-98,20,8], "legR":[-33,13,-94,14,-36], "footL":[6,8,0], "footR":[5,33,0]}
+]}

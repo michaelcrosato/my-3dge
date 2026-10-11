@@ -1,0 +1,10 @@
+{"clip": "Shivering", "src": "M2M_ANIMATED", "dur": 0.25, "loop": true, "tags": ["idle","emote"], "desc": "hunched with the arms hugged in, shivering with cold", "keys": [
+  {"t":0,
+   "hips":[-6,-1,83], "body":[0,-6,0], "chest":[0,45,0], "head":[1,-6,1],
+   "shL":[-2,10], "shR":[1,15], "armL":[37,-93,-2,129,-48], "armR":[40,-91,-8,144,52],
+   "legL":[-16,27,-95,64,-24], "legR":[-16,29,-94,63,23], "footL":[6,-21,0], "footR":[6,-21,0]},
+  {"t":0.267,
+   "hips":[-6,-1,83], "body":[0,-6,0], "chest":[0,45,0], "head":[1,-6,1],
+   "shL":[-2,10], "shR":[1,15], "armL":[37,-93,-2,129,-48], "armR":[40,-91,-8,144,52],
+   "legL":[-16,27,-95,64,-24], "legR":[-16,29,-94,63,23], "footL":[6,-21,0], "footR":[6,-21,0]}
+]}

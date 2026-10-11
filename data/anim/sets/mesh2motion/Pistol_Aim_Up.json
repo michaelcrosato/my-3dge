@@ -1,0 +1,10 @@
+{"clip": "Pistol_Aim_Up", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Pistol_Aim_Up", "dur": 0.208, "loop": false, "tags": ["gun","aim","pose","alt"], "desc": "two-handed pistol aim, pointing up", "keys": [
+  {"t":0,
+   "hips":[-10,0,100], "body":[13,-6,0], "chest":[33,-32,28], "head":[-14,21,8],
+   "shL":[-29,8], "shR":[33,-6], "armL":[93,11,35,0,20], "armR":[62,-59,52,29,-27],
+   "legL":[4,18,-98,20,8], "legR":[-33,13,-94,14,-36], "footL":[6,8,0], "footR":[5,33,0]},
+  {"t":0.2,
+   "hips":[-10,0,100], "body":[13,-6,0], "chest":[33,-32,28], "head":[-14,21,8],
+   "shL":[-29,8], "shR":[33,-6], "armL":[93,11,35,0,20], "armR":[62,-59,52,29,-27],
+   "legL":[4,18,-98,20,8], "legR":[-33,13,-94,14,-36], "footL":[6,8,0], "footR":[5,33,0]}
+]}

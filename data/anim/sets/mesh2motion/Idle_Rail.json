@@ -1,0 +1,10 @@
+{"clip": "Idle_Rail", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Idle_Rail_Loop", "dur": 2.5, "loop": true, "tags": ["idle","lean","alt"], "desc": "leaning forward on the forearms, as over a railing", "keys": [
+  {"t":0,
+   "hips":[-53,-1,105], "body":[6,34,-2], "chest":[0,9,1], "head":[-14,-13,1],
+   "shL":[0,0], "shR":[0,0], "armL":[72,-65,-24,116,-26], "armR":[98,-20,7,91,-18],
+   "legL":[67,17,-73,21,4], "legR":[49,7,-87,25,-38], "footL":[-34,0,0], "footR":[-28,29,-2]},
+  {"t":2.5,
+   "hips":[-53,-1,105], "body":[6,34,-2], "chest":[0,9,1], "head":[-14,-13,1],
+   "shL":[0,0], "shR":[0,0], "armL":[72,-65,-24,116,-26], "armR":[98,-20,7,91,-18],
+   "legL":[67,17,-73,21,4], "legR":[49,7,-87,25,-38], "footL":[-34,0,0], "footR":[-28,29,-2]}
+]}
