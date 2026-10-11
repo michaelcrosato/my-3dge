@@ -235,8 +235,8 @@ export interface VelocityOptions extends CrowdStepper {
 /**
  * Moves a living agent's velocity toward `want` by at most `acceleration × dt` this step: across the ground (a
  * flyer: up and down too), keeping the vertical speed gravity and the solver gave it. Only while it is on its feet
- * (`grounded`; a flyer always): a thrown body flies on. A sleeping agent that wants to stay still stays asleep. True
- * when it steered.
+ * (`grounded`; a flyer always): a thrown body flies on. A sleeping agent that wants to stay still (under 5 cm/s)
+ * stays asleep; any other wish wakes it. True when it steered.
  */
 export function setVelocity(physics: Physics, agent: CrowdAgent, want: Vec3Like, options: VelocityOptions): boolean {
   const b = bodyOf(physics, agent, 'setVelocity(agent)');
