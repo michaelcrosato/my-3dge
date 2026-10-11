@@ -7,7 +7,8 @@
  * Terms: vectors are three.js's `Vector3` or `{ x, y, z }` or `[x, y, z]`; rotations `Quaternion`, `{ x, y, z, w }` or
  * `[x, y, z, w]`. Shapes are sized as three.js sizes its geometries: a box by its full `size` (BoxGeometry's width,
  * height, depth), a capsule by `radius` and the `height` of its straight middle (CapsuleGeometry), a cylinder by
- * `radius` and full `height`. A hit names the body it struck by id (engine/physics/capture.ts), never a Rapier object,
+ * `radius` and full `height`. Bodies also take a convex hull (`HullShape`: the smallest convex solid holding its points,
+ * for ramps and platforms; WP 4.2), which queries do not cast. A hit names the body it struck by id (engine/physics/capture.ts), never a Rapier object,
  * with `distance` in metres along the direction (normalized first), the world-space `point` and the surface `normal`.
  *
  * Invariants: queries read and never change the world. They see colliders as of the last physics step: Rapier updates
@@ -59,6 +60,12 @@ export type Shape =
   | { readonly type: 'ball'; readonly radius: number }
   | { readonly type: 'capsule'; readonly radius: number; readonly height: number }
   | { readonly type: 'cylinder'; readonly radius: number; readonly height: number };
+
+/** A convex hull, for bodies only: the smallest convex solid holding `points` (m, in the body's frame), at least 4 not all in one plane. */
+export interface HullShape {
+  readonly type: 'hull';
+  readonly points: readonly Vec3Like[];
+}
 
 /** What every query takes: the groups it hits, and a body it skips. */
 export interface QueryOptions {
@@ -193,6 +200,45 @@ export function shapeArgs(shape: Shape, where: string): ['cuboid' | 'ball' | 'ca
   }
   check(false, `${where}.type`, type, "a shape type: 'box', 'ball', 'capsule' or 'cylinder'");
   throw new Error('unreachable');
+}
+
+/** How far (m) a hull's points must reach off a line, then off a plane, to make a solid. */
+const HULL_TOLERANCE = 1e-6;
+
+/** Whether flattened points span a solid: some 4 of them are not on one plane. */
+function spansSolid(flat: Float32Array): boolean {
+  const n = flat.length / 3;
+  const from0 = (i: number) => [flat[3 * i] - flat[0], flat[3 * i + 1] - flat[1], flat[3 * i + 2] - flat[2]];
+  const cross = (a: number[], b: number[]) => [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0],
+  ];
+  const dot = (a: number[], b: number[]) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const length = (a: number[]) => Math.sqrt(dot(a, a));
+  let [axis, normal] = [
+    [0, 0, 0],
+    [0, 0, 0],
+  ];
+  for (let i = 1; i < n && length(axis) <= HULL_TOLERANCE; i++) axis = from0(i);
+  if (length(axis) <= HULL_TOLERANCE) return false;
+  for (let i = 1; i < n && length(normal) <= HULL_TOLERANCE * length(axis); i++) normal = cross(axis, from0(i));
+  if (length(normal) <= HULL_TOLERANCE * length(axis)) return false;
+  for (let i = 1; i < n; i++) if (Math.abs(dot(normal, from0(i))) > HULL_TOLERANCE * length(normal)) return true;
+  return false;
+}
+
+/** A hull's points, checked (at least 4 finite vectors, not all on one plane), flattened as Rapier takes them. */
+export function hullPoints(shape: HullShape, where: string): Float32Array {
+  const { points } = shape;
+  check(Array.isArray(points) && points.length >= 4, `${where}.points`, points, 'at least 4 points, [x, y, z] each');
+  const flat = new Float32Array(points.length * 3);
+  points.forEach((point, i) => {
+    const { x, y, z } = vec(point, `${where}.points[${i}]`);
+    flat.set([x, y, z], i * 3);
+  });
+  check(spansSolid(flat), `${where}.points`, points, 'points that are not all on one plane (a hull is a solid)');
+  return flat;
 }
 
 /** A Rapier shape for a query. */

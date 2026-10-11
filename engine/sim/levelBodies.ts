@@ -4,16 +4,17 @@
  * its text says, and as high as its glyphs stand.
  *
  * `addLevelBodies(physics, level)` adds one fixed body in the collision group `world`: the ground slab under the whole
- * map (one tile wider all round, its top at y 0), one box per merged collider, from the ground to its glyph's top, and
- * one upright cylinder per cylinder collider (a brazier). It returns the body's id. Queries see the level from the
- * next physics step on (engine/physics/queries.ts). A hull collider (stairs, the dais) needs a hull shape that
- * engine/physics does not offer yet: it raises `PHYSICS_BAD_ARGUMENT` naming it (the WP 4.2 core proposal adds it).
+ * map (one tile wider all round, its top at y 0), one box per merged collider, from the ground to its glyph's top, one
+ * convex hull per hull collider (a flight of stairs' wedge, the dais's frustum), whose top is the floor floorHeight
+ * gives, and one upright cylinder per cylinder collider (a brazier). It returns the body's id. Queries see the level
+ * from the next physics step on (engine/physics/queries.ts).
  *
  * Invariants: colliders enter in the level's own order (the slab, then the descriptors as `compileLevel` lists them),
  * so the same level gives the same Rapier state and hash; the level is never changed. Friction is the prototype's 0.6.
  *
  * Carried from `my-3d2dge:src/stress-world/10-hall.js:188-201` (`hallColliders`: one fixed body, the floor slab, the
- * merged boxes and the braziers' cylinders, friction 0.6), in metres and from descriptors.
+ * merged boxes, the hulls of the stairs and the dais and the braziers' cylinders, friction 0.6), in metres and from
+ * descriptors.
  *
  * @example
  * import { compileLevel } from '../world/level/compile';
@@ -23,7 +24,6 @@
  * addLevelBodies(physics, level); // 0: one fixed body, the slab and 3 boxes
  * @see engine/sim/levelBodies.test.ts
  */
-import { codeError } from '../core/log';
 import type { ColliderSpec, Physics } from '../physics/world';
 import type { ColliderDescriptor, CompiledLevel, Point3 } from '../world/level/types';
 
@@ -40,18 +40,11 @@ function box(min: Point3, max: Point3): ColliderSpec {
 }
 
 /** The collider a descriptor makes. */
-function collider(part: ColliderDescriptor, i: number): ColliderSpec {
+function collider(part: ColliderDescriptor): ColliderSpec {
   if (part.shape === 'box') return box(part.min, part.max);
-  if (part.shape === 'cylinder') {
-    const { radius, height } = part;
-    return { shape: { type: 'cylinder', radius, height }, position: part.center, friction: LEVEL_FRICTION };
-  }
-  throw codeError('PHYSICS_BAD_ARGUMENT', {
-    where: `addLevelBodies(level).colliders[${i}] (${part.glyph})`,
-    value: 'a hull collider',
-    expected:
-      "a level whose colliders are boxes and cylinders: engine/physics has no hull shape yet (stairs and the dais need the WP 4.2 core proposal's { type: 'hull', points })",
-  });
+  if (part.shape === 'hull') return { shape: { type: 'hull', points: part.points }, friction: LEVEL_FRICTION };
+  const { radius, height } = part;
+  return { shape: { type: 'cylinder', radius, height }, position: part.center, friction: LEVEL_FRICTION };
 }
 
 /** Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id. */

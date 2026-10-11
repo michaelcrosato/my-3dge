@@ -212,8 +212,8 @@ describe('the recipes', () => {
       { char: 'h', top: 1.2, solid: true, collider: 'box', mesh: 'hedge', nav: { walkable: false } },
       reg,
     );
-    defineGlyph('glyph:ledge', { char: '=', floor: 1, top: 1, mesh: 'gallery' }, reg);
-    const level = compileLevel('#####\n#.h=#\n#####\n', { file: 'garden.txt', registry: reg });
+    defineGlyph('glyph:ledge', { char: 'L', floor: 1, top: 1, mesh: 'gallery' }, reg); // = is the engine's gallery (WP 4.2)
+    const level = compileLevel('#####\n#.hL#\n#####\n', { file: 'garden.txt', registry: reg });
     const printed: string[] = [];
     const log = createLog({ console: { warn: (line) => printed.push(line), error: () => {} } });
     const stand = materials();

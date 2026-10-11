@@ -11,7 +11,8 @@
  * Bodies are plain data in, ids out: `addBody({ type, position, rotation, velocity, angularVelocity, colliders, group,
  * … })` returns the body's id (engine/physics/capture.ts), `readBody(id)` copies its pose and velocities into three.js
  * math classes, and `setBody`, `applyImpulse` and `removeBody` change it. Shapes and vectors are those of
- * engine/physics/queries.ts; colliders take their group from the body (`prop` for dynamic bodies, `world` otherwise)
+ * engine/physics/queries.ts, and a collider may also be a convex hull of points (`{ type: 'hull', points }`: a ramp's wedge,
+ * a dais's frustum); colliders take their group from the body (`prop` for dynamic bodies, `world` otherwise)
  * unless they name one (engine/physics/groups.ts). Densities are in kg/m³ (1,000, water, by default).
  *
  * Stepping: `step(sim)` sets the step length to the sim's `dt` and gravity to the `physics.gravity` setting
@@ -59,11 +60,13 @@ import {
   probe,
   quat,
   raycast,
+  hullPoints,
   shapeArgs,
   shapeCast,
   vec,
   type Ground,
   type Hit,
+  type HullShape,
   type OverlapOptions,
   type ProbeOptions,
   type QuatLike,
@@ -92,7 +95,8 @@ export type BodyType = 'dynamic' | 'fixed' | 'kinematic';
 
 /** One collider of a body: a shape where the body puts it, and its material. */
 export interface ColliderSpec {
-  shape: Shape;
+  /** A query shape, or a convex hull of points (bodies only). */
+  shape: Shape | HullShape;
   /** Where it sits on the body (the body's origin by default). */
   position?: Vec3Like;
   rotation?: QuatLike;
@@ -234,18 +238,23 @@ function pin(world: RAPIER.World): void {
   });
 }
 
+/** A Rapier collider description of a shape: a hull from its points, the others from their sizes. */
+function shapeDesc(shape: Shape | HullShape, where: string): RAPIER.ColliderDesc {
+  if ((shape as { type?: unknown } | undefined)?.type === 'hull') {
+    const hull = RAPIER.ColliderDesc.convexHull(hullPoints(shape as HullShape, where));
+    check(hull !== null, `${where}.points`, (shape as HullShape).points, 'points Rapier can wrap in a hull');
+    return hull as RAPIER.ColliderDesc;
+  }
+  const [kind, a, b, c] = shapeArgs(shape as Shape, where);
+  if (kind === 'cuboid') return RAPIER.ColliderDesc.cuboid(a, b, c);
+  if (kind === 'ball') return RAPIER.ColliderDesc.ball(a);
+  return kind === 'capsule' ? RAPIER.ColliderDesc.capsule(a, b) : RAPIER.ColliderDesc.cylinder(a, b);
+}
+
 /** A Rapier collider description from a spec. */
 function colliderDesc(spec: ColliderSpec, group: GroupName, where: string): RAPIER.ColliderDesc {
   check(isPlainObject(spec), where, spec, 'a collider: { shape, position?, rotation?, density?, friction?, … }');
-  const [kind, a, b, c] = shapeArgs(spec.shape, `${where}.shape`);
-  const desc =
-    kind === 'cuboid'
-      ? RAPIER.ColliderDesc.cuboid(a, b, c)
-      : kind === 'ball'
-        ? RAPIER.ColliderDesc.ball(a)
-        : kind === 'capsule'
-          ? RAPIER.ColliderDesc.capsule(a, b)
-          : RAPIER.ColliderDesc.cylinder(a, b);
+  const desc = shapeDesc(spec.shape, `${where}.shape`);
   const at = vec(spec.position ?? [0, 0, 0], `${where}.position`);
   return desc
     .setTranslation(at.x, at.y, at.z)
