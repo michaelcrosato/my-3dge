@@ -281,3 +281,5 @@ export type { PropMeshesOptions } from './gfx/props';
 export type { PropMeshPose } from './gfx/props';
 export type { PropLight } from './gfx/props';
 export { FLICKER } from './gfx/props';
+// Performance counters (WP 5.5): what `__engine.stats()` returns, medians in ms and the renderer's counts, never fps.
+export type { EngineStats } from './dev/stats';
