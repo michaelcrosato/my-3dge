@@ -1,6 +1,5 @@
 /**
- * @file Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene>
- * [--scene id] [--steps n] [--seed s] [--set key=value…] [--feel]`.
+ * @file Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5).
  *
  * `<scene>` is a scene module (a `.ts` file, or a directory with `index.ts`, such as `fixtures/scenes/kernel`) or a
  * scene id (`kernel`), found among the modules under `fixtures/scenes/` and `labs/<name>/scenes/` that call
@@ -8,16 +7,21 @@
  * changes a setting for the run (validated against the settings schema; an unknown path names the closest), and the
  * values are recorded in the report's `args` and `metrics`. The run goes through `createHeadless`
  * (engine/app/headless.ts: the inspector's `step`, `hash`, `trace` and `state`) and steps with no intents; its session
- * records it, so `run.replay.json` beside the report replays it (engine/sim/replay.ts), golden hashes for this
- * platform included (`node x replay out/sim/<id>/run.replay.json`; copy it to tests/replays/ to keep it).
+ * records it, so `run.replay.json` replays it (engine/sim/replay.ts), golden hashes for this platform included (copy
+ * it to tests/replays/ to keep it). Every file goes beside the report, in `out/sim/<slug>/` (`box:room`: `box-room`).
  *
  * Output, at most about 20 lines: the hash; the entities, systems and events (by type, counted from the trace after
  * every step); the settings changed; the trace's per-part digests; the files written. `state.json` holds the final
  * state and trace. `--feel` adds the feel meter's report for the scene's first player actor (`__engine.feel()`,
- * engine/sim/actors.ts; WP 3.2): two lines, and every number as a `feel.<name>` metric.
+ * engine/sim/actors.ts; WP 3.2): two lines, and every number as a `feel.<name>` metric. `--map` (WP 4.3) writes
+ * `map.txt`, the scene's level as navigation sees it (engine/world/nav.ts; shardfall's `levelmap nav=true` as text):
+ * blocked tiles, raised floors, tiles never reached, and a route from the hero's spawn; one line and `map.*` metrics
+ * sum it up. Its climb limit is the crowd's, or with `--feel` the actor's jump reach. A level no module registered is
+ * read from the scene's lab (`labs/<lab>/levels/<name>.txt`) or `fixtures/levels/`.
  *
- * Usage: node x sim <scene> [--scene id] [--steps n] [--seed s] [--set k=v…] [--feel]. Exit 0 when the scene ran, 1
- * when it threw, 2 on a usage error (no such module or scene, a bad flag or setting, `--feel` without an actor).
+ * Usage: node x sim <scene> [--scene id] [--steps n] [--seed s] [--set k=v…] [--feel] [--map]. Exit 0 when the scene
+ * ran, 1 when it threw, 2 on a usage error (no such module or scene, a bad flag or setting, `--feel` without an actor,
+ * `--map` without a level).
  *
  * @example
  * parseSets(['kernel.speed=2', 'kernel.movers=3']); // { 'kernel.speed': '2', 'kernel.movers': '3' }
@@ -35,7 +39,11 @@ import { checkpointsOf, playReplay, REPLAY_KEYS, type Replay, type StepView } fr
 import { createHeadless, headlessHost } from '../../engine/app/headless';
 import { getScene, isScene, type Scene } from '../../engine/sim/scene';
 import type { FeelReport } from '../../engine/physics/feel';
+import { defineLevel, getLevel } from '../../engine/world/level/level';
+import type { CompiledLevel } from '../../engine/world/level/types';
+import { NAV_DIRECTIONS, NavGrid } from '../../engine/world/nav';
 import { walk } from '../lib/docs';
+import { targetSlug } from '../lib/report';
 import { UsageError, type Command, type CommandResult } from '../x';
 
 /** Where scene modules live: `fixtures/scenes/` and every `labs/<name>/scenes/` (tests/pages/replay.ts globs the same). */
@@ -202,19 +210,21 @@ export async function writeReplay(root: string, path: string, replay: Replay): P
 }
 
 export default {
-  usage: 'sim <scene> [--scene id] [--steps n] [--seed s] [--set k=v…] [--feel]',
+  usage: 'sim <scene> [--scene id] [--steps n] [--seed s] [--set k=v…] [--feel] [--map]',
   options: {
     scene: { type: 'string' },
     steps: { type: 'string' },
     seed: { type: 'string' },
     set: { type: 'string', multiple: true },
     feel: { type: 'boolean' },
+    map: { type: 'boolean' },
   },
   maxPositionals: 1,
   async run({ values, positionals, root }): Promise<CommandResult> {
     const [target] = positionals;
     if (!target) throw new UsageError('name a scene module (fixtures/scenes/kernel) or a scene id');
     const { file, scene } = await loadScene(root, target, values.scene as string | undefined);
+    const level = values.map ? levelOf(root, file, scene) : undefined;
     const steps = wholeFlag(values.steps, 'steps', 600);
     const seed = wholeFlag(values.seed, 'seed', 1);
     const sets = typedSets((values.set as string[] | undefined) ?? []);
@@ -237,7 +247,7 @@ export default {
     const stepMs = steps ? (performance.now() - started) / steps : 0;
     const hash = engine.hash();
     const trace = engine.trace();
-    const out = join('out', 'sim', scene.id);
+    const out = join('out', 'sim', targetSlug(scene.id)); // beside the report
     mkdirSync(join(root, out), { recursive: true });
     const platform = `${process.platform}-${process.arch}`;
     const replay = { ...session.record(), description: `x sim ${target}`, hashes: { [platform]: hashes } };
@@ -249,6 +259,8 @@ export default {
     const eventLine = Object.entries(events).sort(([a], [b]) => (a < b ? -1 : 1));
     const setLine = Object.entries(sets).map(([path, value]) => `${path}=${JSON.stringify(value)}`);
     const feel = values.feel ? feelOf(engine as unknown as Record<string, unknown>, scene.id) : undefined;
+    const map = level && navMap(level, feel?.reach);
+    if (map) writeFileSync(join(root, out, 'map.txt'), `${map.lines.join('\n')}\n`);
     return {
       ok: true,
       target: scene.id,
@@ -267,6 +279,7 @@ export default {
           .join(', ')}`,
         `files: ${out}/state.json, ${out}/run.replay.json`,
         ...(feel ? feelLines(feel) : []),
+        ...(map ? [`map: ${out}/map.txt: ${map.summary}`] : []),
       ],
       metrics: {
         hash,
@@ -279,6 +292,7 @@ export default {
           Object.entries(sets).map(([path, value]) => [`set.${path}`, serialize(value as Canonical)]),
         ),
         ...Object.fromEntries(Object.entries(feel ?? {}).map(([name, value]) => [`feel.${name}`, value])),
+        ...Object.fromEntries(Object.entries(map?.metrics ?? {}).map(([name, value]) => [`map.${name}`, value])),
       },
       artifacts: [
         {
@@ -291,6 +305,9 @@ export default {
           kind: 'json',
           describes: `this run as a replay, with this platform's hashes`,
         },
+        ...(map
+          ? [{ path: `${out}/map.txt`, kind: 'text', describes: `the nav grid of ${scene.level} and a route` }]
+          : []),
       ],
     };
   },
@@ -313,4 +330,71 @@ export function feelLines(feel: FeelReport): string[] {
     `feel: jumps ${n(feel.apex, 3)} m, ${n(feel.airTime)} s in the air, ${n(feel.jumpDistance)} m running; ` +
       `reaches ${n(feel.reach, 3)} m; dashes ${n(feel.dashDistance)} m`,
   ];
+}
+
+/** The level a scene loads, for `--map`: registered by its module, else read from its lab's or the fixtures' levels. */
+export function levelOf(root: string, module: string, scene: Scene): CompiledLevel {
+  const id = scene.level;
+  if (id === undefined) {
+    throw new UsageError(`--map: the scene ${scene.id} has no level; name one (defineScene('${scene.id}', { level }))`);
+  }
+  try {
+    return getLevel(id);
+  } catch (error) {
+    if (!(error instanceof EngineError) || error.code !== 'CORE_NO_ENTRY') throw error;
+  }
+  const name = id.replace(/^level:(fixtures\/)?/, '');
+  const lab = /^labs\/[^/]+\//.exec(module)?.[0];
+  const places = [...(lab ? [`${lab}levels/${name}.txt`] : []), `fixtures/levels/${name}.txt`];
+  const file = places.find((path) => existsSync(join(root, path)));
+  if (!file) {
+    const where = places.join(' or ');
+    throw new UsageError(`--map: no module registered ${id}, and no ${where} holds it: register it with defineLevel`);
+  }
+  defineLevel(id, { text: readFileSync(join(root, file), 'utf8'), file });
+  return getLevel(id);
+}
+
+/**
+ * The text map of `level`'s nav grid under `climb` (the crowd's by default), as `--map` writes it: a key, then one row
+ * per map row, and an A* route from the hero's spawn (else the first spawn) to the tile it reaches in the most steps.
+ */
+export function navMap(level: CompiledLevel, climb?: number) {
+  const grid = new NavGrid(level, climb === undefined ? {} : { climb });
+  const spawn = level.spawns.find((s) => s.id === 'spawn:hero') ?? level.spawns[0];
+  const start = spawn ? grid.nearestOpen(spawn.position[0], spawn.position[2]) : grid.open.indexOf(1);
+  if (start < 0) throw new UsageError(`--map: ${level.name} has no walkable tile near its spawn to start from`);
+  const [steps, queue] = [new Int32Array(grid.open.length).fill(-1), [start]]; // breadth first
+  steps[start] = 0;
+  for (const i of queue) {
+    NAV_DIRECTIONS.forEach(([dc, dr], k) => {
+      const j = i + dr * grid.cols + dc;
+      if (!(grid.steps[i] & (1 << k)) || steps[j] >= 0) return;
+      steps[j] = steps[i] + 1;
+      queue.push(j);
+    });
+  }
+  const goal = Math.min(...queue.filter((i) => steps[i] === steps[queue[queue.length - 1]])); // most steps away
+  const route = grid.findPath(grid.center(start), grid.center(goal));
+  const chars: string[] = [...grid.open].map((o, i) =>
+    !o ? '#' : steps[i] < 0 ? '!' : level.floor[i] > grid.climb ? '+' : '.',
+  );
+  let [length, x, z] = [0, grid.center(start).x, grid.center(start).z];
+  for (const p of route ?? []) {
+    const n = Math.ceil(Math.hypot(p.x - x, p.z - z) * 4);
+    for (let s = 0; s <= n; s++) chars[grid.cellAt(x + ((p.x - x) * s) / n, z + ((p.z - z) * s) / n)] = '*';
+    [length, x, z] = [length + Math.hypot(p.x - x, p.z - z), p.x, p.z];
+  }
+  [chars[start], chars[goal]] = ['@', 'X'];
+  const [walkable, unreached] = [grid.open.reduce((sum, o) => sum + o, 0), chars.filter((c) => c === '!').length];
+  const metrics = { walkable, unreached, route: Math.round(length * 1000) / 1000, waypoints: route?.length ?? 0 };
+  const [name, rows] = [spawn?.id ?? 'the first open tile', Array.from({ length: grid.rows }, (_, r) => r * grid.cols)];
+  const lines = [
+    `# ${level.name}: ${grid.cols} × ${grid.rows} tiles of ${grid.tile} m, climb ${grid.climb} m; north up.`,
+    `# Key: # blocked, . walkable, + walkable above the climb limit, ! never reached from @, * the route to X.`,
+    `# Route: @ (${name}) to X, the tile it reaches in most steps: ${metrics.route} m, ${metrics.waypoints} waypoints.`,
+    ...rows.map((first) => chars.slice(first, first + grid.cols).join('')),
+  ];
+  const summary = `${walkable} tiles walkable, ${unreached} never reached from ${name}; a route of ${metrics.route} m`;
+  return { lines, summary: `${summary} (climb ${grid.climb} m)`, metrics };
 }

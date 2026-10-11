@@ -63,12 +63,14 @@ describe('createStage', () => {
     const stage = createStage({ level: room, materials: createMaterialLibrary(), registry });
     const names: string[] = [];
     stage.scene.traverse((object) => void (object.name && names.push(object.name)));
-    expect(names.filter((name) => name.includes('/wall'))).toEqual([
+    const runs = [
       'level:room/wall@0,0-15,0',
       'level:room/wall@0,1-0,11',
       'level:room/wall@15,1-15,11',
       'level:room/wall@1,11-14,11',
-    ]);
+    ];
+    expect(names.filter((name) => name.includes('/wall'))).toEqual(runs);
+    expect(stage.cutaway).toBeNull(); // no player stands on it
     expect(stage.centre).toEqual([8, 0, 6]);
     stage.capture([
       { id: 4, crate: { x: 1, y: 0, z: 1, yaw: 3 } },
@@ -95,7 +97,7 @@ describe('createStage', () => {
       keyPart: (name: string, part: () => string) => (parts.set(name, part), { dispose: () => parts.delete(name) }),
     };
     const registration = stage.register(warmup);
-    expect(ids).toEqual(['stage:ground', 'stage:level', 'stage:stand-ins']);
+    expect(ids).toEqual(['stage:ground', 'stage:level', 'stage:cutaway', 'stage:stand-ins', 'stage:actors']);
     stage.capture([{ id: 1, dot: { x: 0, z: 0 } }]);
     expect(parts.get('stage:stand-ins')!()).toBe('0.5|material:default');
     registration.dispose();

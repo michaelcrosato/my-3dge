@@ -7,6 +7,14 @@ Every code the engine prints, as `[CODE] message`, with its fix. Each module reg
 
 ## anim
 
+### ANIM_BAD_LAYER
+
+- Message: `layer {name}: {problem}`
+- Fix: give each layer its own name and one of the slots {slots}
+- Registered in: [`engine/anim/character.ts` line 53](../engine/anim/character.ts)
+
+Raised by `Animator.use` (engine/anim/character.ts) for a slot that takes no layers or a name already in use.
+
 ### ANIM_BAD_MASK
 
 - Message: `the bone mask weight of {name} is {value}`
@@ -14,6 +22,14 @@ Every code the engine prints, as `[CODE] message`, with its fix. Each module reg
 - Registered in: [`engine/anim/skeleton.ts` line 37](../engine/anim/skeleton.ts)
 
 Raised by `boneMask` (engine/anim/skeleton.ts) for a weight that is not a number from 0 to 1.
+
+### ANIM_BAD_STATE
+
+- Message: `body state {name} is {value}, not {expected}{suggestion}; it is ignored`
+- Fix: give {name} {expected}
+- Registered in: [`engine/anim/states.ts` line 42](../engine/anim/states.ts)
+
+Raised once per word by the animator (engine/anim/character.ts `step`, through `checkBodyStates`) for a body state whose value is of the wrong kind: a number for `dash`, a trail that does not exist. `BODY_STATES` (engine/anim/states.ts) gives each word its kind.
 
 ### ANIM_BAD_TARGET
 
@@ -137,6 +153,14 @@ Raised by `animCheck` (engine/anim/check.ts) for a rigid pair naming a point the
 
 Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `stance` or `weapon` it does not know. The message names the closest names; `POSES`, `STANCES` and `WEAPONS` (engine/anim/poses.ts) list them all. An unknown weapon holds nothing.
 
+### ANIM_UNKNOWN_STATE
+
+- Message: `{name} is not a body state{suggestion}; it is ignored`
+- Fix: use one of: {names}
+- Registered in: [`engine/anim/states.ts` line 37](../engine/anim/states.ts)
+
+Raised once per word by the animator (engine/anim/character.ts `step`, through `checkBodyStates`) for a body state outside the vocabulary, usually a typo. The message names the closest words; `BODY_STATES` (engine/anim/states.ts) lists them all.
+
 ## app
 
 ### APP_BAD_ROUTE
@@ -149,43 +173,43 @@ Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `st
 
 - Message: `a frame threw, so the loop stopped: {message}`
 - Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
-- Registered in: [`engine/app/engine.ts` line 77](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 78](../engine/app/engine.ts)
 
 ### APP_NO_FRAME
 
 - Message: `no frame was drawn in {tries} tries: the warm-up never finished`
 - Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 85](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 86](../engine/app/engine.ts)
 
 ### APP_NO_LEVEL
 
 - Message: `the scene {scene} loads the level {level}, which is not registered, so its view cannot be built`
 - Fix: register the level's text before the view starts: in a page, import text from './levels/<name>.txt?raw' and call defineLevel('{level}', { text, file }); in Node, read the file and do the same
-- Registered in: [`engine/app/view.ts` line 41](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 49](../engine/app/view.ts)
 
 ### APP_NO_REPLAY
 
 - Message: `the page has no replay {name}`
 - Fix: use one of: {names}
-- Registered in: [`engine/app/engine.ts` line 81](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 82](../engine/app/engine.ts)
 
 ### APP_NO_VIEW
 
 - Message: `{member} needs the scene drawn as a view, and this engine has none`
 - Fix: start it with createHeadless({ scene, view: true }) in Node; a page always has one
-- Registered in: [`engine/app/view.ts` line 45](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 53](../engine/app/view.ts)
 
 ### APP_NOT_HEADLESS
 
 - Message: `headlessHost was given {value}, not a headless engine`
 - Fix: pass the object createHeadless resolved to
-- Registered in: [`engine/app/headless.ts` line 54](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 58](../engine/app/headless.ts)
 
 ### APP_OTHER_SCENE
 
 - Message: `this engine draws {shown}, so it cannot start {scene}`
 - Fix: play {scene} in its own page (labs/<name>/?scene=<name>), or headless: createHeadless({ scene: '{scene}' })
-- Registered in: [`engine/app/headless.ts` line 58](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 62](../engine/app/headless.ts)
 
 ### APP_PLAY_SETTING
 
@@ -197,7 +221,7 @@ Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `st
 
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 73](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 74](../engine/app/engine.ts)
 
 ## audio
 
@@ -209,6 +233,14 @@ Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `st
 
 Raised by `noteFreq` and `render` (engine/audio/dsp/voice.ts, render.ts) for a pitch that is neither a positive number nor a note name.
 
+### AUDIO_BAD_OPTION
+
+- Message: `{option} is {value}, not {expected}`
+- Fix: pass {expected} as {option}
+- Registered in: [`engine/audio/runtime/sound.ts` line 26](../engine/audio/runtime/sound.ts)
+
+Raised by `audio.play` and `Sound.move` (engine/audio/runtime/sound.ts) for a volume, pitch, variant or position out of range.
+
 ### AUDIO_BAD_RATE
 
 - Message: `the sample rate {rate} is not a whole number from 8000 to 192000`
@@ -216,6 +248,14 @@ Raised by `noteFreq` and `render` (engine/audio/dsp/voice.ts, render.ts) for a p
 - Registered in: [`engine/audio/dsp/render.ts` line 38](../engine/audio/dsp/render.ts)
 
 Raised by `render` (engine/audio/dsp/render.ts).
+
+### AUDIO_BAD_ROOM
+
+- Message: `room {room} is not a preset{hint}`
+- Fix: name one of the ROOMS presets ({names}), or pass { decay, predelay, damping, wet }
+- Registered in: [`engine/audio/runtime/reverb.ts` line 28](../engine/audio/runtime/reverb.ts)
+
+Raised by `impulseResponse` and `audio.room` (engine/audio/runtime/reverb.ts) for a room name that is not in `ROOMS`, or numbers out of range.
 
 ### AUDIO_BAD_SEED
 
@@ -248,6 +288,14 @@ Raised by `renderSfx` (engine/audio/data/sfx.ts).
 - Registered in: [`engine/audio/data/sfx.ts` line 46](../engine/audio/data/sfx.ts)
 
 Raised by `sfxVoices` and `renderSfx` (engine/audio/data/sfx.ts) when following layers leads back to an effect already on the path.
+
+### AUDIO_OFF
+
+- Message: `sound is off: {reason}`
+- Fix: open the page in a browser with Web Audio (every current one has it); the game runs on in silence
+- Registered in: [`engine/audio/runtime/audio.ts` line 56](../engine/audio/runtime/audio.ts)
+
+Advice from `createAudio` (engine/audio/runtime/audio.ts) when there is no Web Audio, or the context could not be made.
 
 ### AUDIO_TOO_LONG
 
@@ -451,6 +499,14 @@ Raised by the settings store (engine/core/settings.ts) for an unknown path in `g
 
 Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when an argument does not match the schema its member declares: a wrong type, a value out of range, a missing required argument or one too many. Nothing has happened yet.
 
+### DEV_NO_METER
+
+- Message: `__engine.stats() has no meter to read on this host ({runtime})`
+- Fix: start the engine with createEngine or createHeadless (engine/app), which time its steps and frames; a host made by hand carries a meter from createStatsMeter() as `meter`
+- Registered in: [`engine/dev/stats.ts` line 35](../engine/dev/stats.ts)
+
+Raised by `__engine.stats()` (engine/dev/stats.ts) on an inspector whose host was made without a stats meter, such as a test host built by hand.
+
 ### DEV_NO_RENDERER
 
 - Message: `__engine.{member} needs a renderer, and this engine has none ({runtime}, headless)`
@@ -464,6 +520,14 @@ Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when
 - Message: `the frame alpha must be a number from 0 to 1, not {alpha}`
 - Fix: pass the clock's interpolation alpha (clock.advance(now).alpha), which is always from 0 to 1
 - Registered in: [`engine/gfx/renderer.ts` line 72](../engine/gfx/renderer.ts)
+
+### GFX_BAD_BODY
+
+- Message: `cannot compile {body} for {build}: {part} {problem}`
+- Fix: {fix}
+- Registered in: [`engine/gfx/puppets/compile.ts` line 51](../engine/gfx/puppets/compile.ts)
+
+Raised by `compileBody` (engine/gfx/puppets/compile.ts) for what a body definition cannot check without a build: a limb or curve no longer than the difference of its radii, or a part whose two points are the same.
 
 ### GFX_BAD_CAMERA
 
@@ -489,6 +553,12 @@ Raised by `parseCameraCode` (engine/gfx/cameras/codes.ts) for an empty part, a w
 
 Raised by the geometry kit (engine/gfx/geometry/) when a builder gets sizes it cannot build: a size of 0 or less, NaN, a limb no longer than the difference of its radii, a ring whose inner radius is not below its outer, fewer segments than the shape needs.
 
+### GFX_BAD_LIGHT_POOL
+
+- Message: `a light pool of {size} lights: it holds {min} to {max}`
+- Fix: give createLightPool a whole size from 8 to 16 (12 by default); more lights than that need tiled lighting (WP 11.5)
+- Registered in: [`engine/gfx/lights.ts` line 46](../engine/gfx/lights.ts)
+
 ### GFX_BAD_SHOT_SIZE
 
 - Message: `a shot must be at least 1 × 1 whole pixels, not {width} × {height}`
@@ -502,6 +572,14 @@ Raised by the geometry kit (engine/gfx/geometry/) when a builder gets sizes it c
 - Registered in: [`engine/gfx/renderer.ts` line 63](../engine/gfx/renderer.ts)
 
 Advice from `frame()` (engine/gfx/renderer.ts): the pipeline counter (engine/gfx/pipelines.ts) saw a pipeline built during a drawn frame after the first warm-up, the stall PLAN.md §8.7 budgets at 0.
+
+### GFX_CROWD_LOD
+
+- Message: `crowd LOD band {index} {problem}`
+- Fix: give each band an upTo in metres above the last one and a pose level from 0 to {last} (engine/anim/weights.ts LOD)
+- Registered in: [`engine/gfx/puppets/lod.ts` line 41](../engine/gfx/puppets/lod.ts)
+
+Raised by `createCrowdLod` (engine/gfx/puppets/lod.ts) for bands that are not in increasing distance, or whose pose level is not one of the animator’s detail levels.
 
 ### GFX_DEFAULT_LIMITS
 
@@ -537,11 +615,43 @@ Advice from `requestDevice` (engine/gfx/caps.ts): the device is made with every 
 
 Recorded from the device's `uncapturederror` event (engine/gfx/renderer.ts): a validation, out-of-memory or internal error nothing caught.
 
+### GFX_INSTANCE_ATTRIBUTE
+
+- Message: `instanced batch {name}: {problem}`
+- Fix: name per-instance attributes in the attributes option with an item size of 1 to 4, not instanceMatrix, instanceColor or an attribute the geometry has ({names})
+- Registered in: [`engine/gfx/instancing.ts` line 63](../engine/gfx/instancing.ts)
+
+Raised by `createInstancedBatch` and `setAttributeAt` (engine/gfx/instancing.ts) for a per-instance attribute with an item size outside 1–4, one named like an attribute the geometry has or like `instanceMatrix`/`instanceColor`, or one the batch was not made with.
+
+### GFX_INSTANCE_PAGE
+
+- Message: `instanced batch {name} asks for pages of {slots} slots`
+- Fix: give pageSlots a whole number above 1000 (1024 by default): at 1,000 or fewer, r182 keeps the matrices in a uniform buffer and compiles a shader for every page
+- Registered in: [`engine/gfx/instancing.ts` line 58](../engine/gfx/instancing.ts)
+
+Raised by `createInstancedBatch` (engine/gfx/instancing.ts) for a page size of 1,000 slots or fewer, or not a whole number. r182 puts up to 1,000 instance matrices in a uniform buffer sized by the mesh, so each such page would build pipelines of its own; above 1,000 every page shares one shader (PLAN.md §4.7).
+
+### GFX_INSTANCE_SLOT
+
+- Message: `instanced batch {name} has no slot {slot}`
+- Fix: pass a whole slot number of at least 0; slots above the capacity add pages, so only negative or fractional slots fail
+- Registered in: [`engine/gfx/instancing.ts` line 73](../engine/gfx/instancing.ts)
+
+Raised by the slot methods of an instanced batch (engine/gfx/instancing.ts) for a slot that is negative, fractional or not a number.
+
+### GFX_INSTANCING_UNPINNED
+
+- Message: `the instancing service did not move the instance sync before the upload: {problems}`
+- Fix: instanced meshes may show a change one frame late; check the new release's InstanceNode and update syncBeforeUpload in engine/gfx/instancing.ts (PINNED_REVISION in engine/gfx/pipelines.ts)
+- Registered in: [`engine/gfx/instancing.ts` line 68](../engine/gfx/instancing.ts)
+
+Advice from `createInstancedBatch` (engine/gfx/instancing.ts), once, when three.js is not r182 or its `InstanceNode` lacks the `update`/`getUpdateBeforeType` the fix wraps: r182 uploads an instance change one render late, and the service's fix was not applied (r185's rewrite syncs every frame, which also fixes it).
+
 ### GFX_LEVEL_RECIPE
 
 - Message: `level {level} uses the mesh recipe {recipe}, which no level recipe defines: its tiles are grey blocks`
 - Fix: pass createLevelMeshes a recipe named {recipe} in its recipes option (shape, materials, castShadow and receiveShadow, as engine/gfx/level/recipes.ts writes them), or give the glyph a recipe the engine has: {known}
-- Registered in: [`engine/gfx/level/meshes.ts` line 49](../engine/gfx/level/meshes.ts)
+- Registered in: [`engine/gfx/level/meshes.ts` line 51](../engine/gfx/level/meshes.ts)
 
 Advice from `createLevelMeshes` (engine/gfx/level/meshes.ts) when a glyph names a mesh recipe that neither the engine (engine/gfx/level/recipes.ts) nor the `recipes` option defines: its tiles are drawn as grey boxes from their floor to their top, so the level still shows where they are.
 
@@ -569,6 +679,22 @@ Advice from the feature registry (engine/gfx/features.ts) when the device has no
 
 Raised at startup, before anything touches the GPU, when the browser has no `navigator.gpu`, gives no adapter or device, or three.js starts another backend than WebGPU. WebGPU is the only renderer: there is no WebGL fallback (PLAN.md §6.7), so nothing starts, and a page shows this message with its fix.
 
+### GFX_OUTLINE_TARGET
+
+- Message: `outline shells cannot outline {object}: {problem}`
+- Fix: give shells to meshes and instanced batches; outline a skinned mesh with the edge outline filter (WP 7.4) instead
+- Registered in: [`engine/gfx/materials/outline.ts` line 74](../engine/gfx/materials/outline.ts)
+
+Raised by `outline.shell` (engine/gfx/materials/outline.ts) for an object that is not a mesh, or a skinned mesh: the shell's push reads the vertex before skinning.
+
+### GFX_OUTLINE_UNPINNED
+
+- Message: `outline shells cannot find the instance matrix of {object}`
+- Fix: instanced shells are pushed as if their instances stood unturned at the origin; check the new release's InstanceNode (instanceMatrixNode, and whether it still moves positionNode's result) and update instanceMatrixOf and pushNode in engine/gfx/materials/outline.ts
+- Registered in: [`engine/gfx/materials/outline.ts` line 69](../engine/gfx/materials/outline.ts)
+
+Advice from an outline shell's push (engine/gfx/materials/outline.ts), once, when an instanced mesh's vertex stage holds no r182 `InstanceNode` with an `instanceMatrixNode`: the push reads the instance's matrix there, so on another three.js release instanced shells are pushed the wrong way.
+
 ### GFX_PIPELINES_UNPINNED
 
 - Message: `three.js r{revision}'s renderer internals differ from r182's: {problems}`
@@ -576,6 +702,14 @@ Raised at startup, before anything touches the GPU, when the browser has no `nav
 - Registered in: [`engine/gfx/pipelines.ts` line 36](../engine/gfx/pipelines.ts)
 
 Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipelines` no longer has r182's shape, usually after a three.js upgrade: the count of pipelines three.js keeps cached is then unknown (null). Builds are counted at the device and stay exact.
+
+### GFX_RIG_BODY
+
+- Message: `rig body {body}, part {part}: {problem}`
+- Fix: {fix}
+- Registered in: [`engine/gfx/puppets/crowd.ts` line 56](../engine/gfx/puppets/crowd.ts)
+
+Raised by `createCrowd` (engine/gfx/puppets/crowd.ts) for a rig body whose part has an unknown shape, a slot the body lacks, a size that is not positive, or a joint the rig’s pose lacks.
 
 ### GFX_SMALL_BUFFERS
 
@@ -600,6 +734,14 @@ Raised by `bakeTexture` (engine/gfx/textures/bake.ts) and by `defineTexture` for
 - Registered in: [`engine/gfx/cameras/codes.ts` line 47](../engine/gfx/cameras/codes.ts)
 
 Raised by `parseCameraCode` and the camera factories (engine/gfx/cameras/) for a view or camera name they do not know, with the closest names.
+
+### GFX_UNKNOWN_STYLE
+
+- Message: `there is no material style {style}`
+- Fix: use one of {styles}
+- Registered in: [`engine/gfx/materials/styles.ts` line 67](../engine/gfx/materials/styles.ts)
+
+Raised by a style set (engine/gfx/materials/styles.ts) for a style name it does not have.
 
 ### GFX_WARMUP_FAILED
 
@@ -876,3 +1018,23 @@ Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities
 - Registered in: [`engine/sim/state.ts` line 48](../engine/sim/state.ts)
 
 Raised by the world (engine/sim/world.ts) and the hash (engine/sim/state.ts) for an entity property, a `spawn`, `add`, `remove` or `query` name, or a captured component that no `defineComponent` declared: the hash covers declared components only, so an undeclared one is refused rather than skipped.
+
+## ui
+
+### UI_BAD_DT
+
+- Message: `update(camera, dt) got dt {dt}`
+- Fix: pass the seconds since the last frame, 0 or more (the frame loop's dt)
+- Registered in: [`engine/ui/overlay.ts` line 56](../engine/ui/overlay.ts)
+
+### UI_BAD_PLACE
+
+- Message: `hud "{id}" asks for the place {got}`
+- Fix: use one of top-left, top, top-right, bottom-left, bottom, bottom-right
+- Registered in: [`engine/ui/overlay.ts` line 52](../engine/ui/overlay.ts)
+
+### UI_BAD_POINT
+
+- Message: `{what} is {got}, not a point in the world`
+- Fix: pass [x, y, z] in metres, a Vector3 or { x, y, z }, or a function returning one
+- Registered in: [`engine/ui/labels.ts` line 39](../engine/ui/labels.ts)

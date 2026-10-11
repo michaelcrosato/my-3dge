@@ -4,9 +4,11 @@
  *
  * A kind is a directory `tools/templates/<kind>/` holding its template files and a manifest, `template.json`:
  * `describe` (one sentence), `id` (what an id looks like), `pattern` (a regular expression every id must match),
- * `sample` (the id `--test` writes), `files` (template file → target path) and `checks`. Template files and
- * targets hold `{{id}}` (the id as given), `{{name}}` (its last segment) and `{{dir}}` (the rest); any other
- * placeholder, or any other manifest key, is an error. Written files are formatted by Prettier.
+ * `sample` (the id `--test` writes), `files` (template file → target path), `checks`, and optionally `next` (what to
+ * do after writing one, printed in place of the generic "replace the placeholder text, then node x docs --write").
+ * Template files, targets and `next` hold `{{id}}` (the id as given), `{{name}}` (its last segment) and `{{dir}}`
+ * (the rest); any other placeholder, or any other manifest key, is an error. Written files are formatted by Prettier,
+ * and each doc comment paragraph a filled-in id runs past 120 columns is rewrapped, since Prettier never rewraps one.
  *
  * Checks, run on the new files only: `types` (TypeScript's diagnostics, with tsconfig.json's options), `lint`
  * (ESLint's errors), `test` (Vitest runs the new `*.test.ts` files) and `docs` (a file comment, every export
@@ -51,9 +53,13 @@ export interface Kind {
   sample: string;
   files: Record<string, string>;
   checks: CheckName[];
+  /** What to do after writing one, when the generic `NEXT` is not enough (the scene's replay steps). */
+  next?: string;
 }
 
-const KEYS = ['describe', 'id', 'pattern', 'sample', 'files', 'checks'];
+const KEYS = ['describe', 'id', 'pattern', 'sample', 'files', 'checks', 'next'];
+/** What to do after writing an entry of a kind whose manifest has no `next`. */
+export const NEXT = 'replace the placeholder text, then node x docs --write';
 const TEMPLATES = 'tools/templates';
 
 /** Reads and validates every kind under `tools/templates/`; throws naming the first problem. */
@@ -77,6 +83,8 @@ export function listKinds(root: string): Kind[] {
       for (const key of ['describe', 'id', 'pattern', 'sample']) {
         if (typeof manifest[key] !== 'string' || !manifest[key]) fail(`"${key}" must be a non-empty string`);
       }
+      if ('next' in manifest && (typeof manifest.next !== 'string' || !manifest.next))
+        fail('"next", when present, must be a non-empty string');
       const files = manifest.files as Record<string, unknown>;
       if (!files || typeof files !== 'object' || !Object.keys(files).length)
         fail('"files" maps template files to targets');
@@ -104,7 +112,86 @@ export function fill(text: string, id: string, where: string): string {
   });
 }
 
-/** The files an entry of `kind` with `id` consists of: repository path → formatted text. Writes nothing. */
+/** The column doc comments are rewrapped to: Prettier's printWidth, which Prettier never applies to a comment. */
+const WIDTH = 120;
+/** A line inside a doc comment: its leader (the indent and the `*`) and its text. */
+const COMMENT_LINE = /^(\s*\*)(?: (.*))?$/;
+/** A list item's marker, which its wrapped lines hang under. */
+const LIST_ITEM = /^(\d+\.|[-*]) /;
+
+/**
+ * Refills a paragraph's words into lines of at most `WIDTH` columns behind `lead`: a code span stays on one line, and
+ * a list item's lines hang under its text.
+ */
+function refill(lead: string, lines: string[]): string[] {
+  const tokens: string[] = [];
+  for (const word of lines.join(' ').split(/\s+/).filter(Boolean)) {
+    const open = tokens.length > 0 && tokens[tokens.length - 1].split('`').length % 2 === 0;
+    if (open) tokens[tokens.length - 1] += ` ${word}`;
+    else tokens.push(word);
+  }
+  const hang = ' '.repeat(LIST_ITEM.exec(lines[0])?.[0].length ?? 0);
+  const out: string[] = [];
+  let line = '';
+  for (const token of tokens) {
+    const start = out.length ? `${lead} ${hang}` : `${lead} `;
+    if (line && start.length + line.length + 1 + token.length > WIDTH) {
+      out.push(start + line);
+      line = token;
+    } else line = line ? `${line} ${token}` : token;
+  }
+  return [...out, (out.length ? `${lead} ${hang}` : `${lead} `) + line];
+}
+
+/**
+ * Rewraps each paragraph of a `/** … *\/` comment in `text` that has a line over `WIDTH` columns, as a filled-in id
+ * can make it; every other line is kept. A paragraph ends at a blank comment line, a tag or a list item; `@example`
+ * code is kept as it is; a one-line comment over `WIDTH` opens into a block.
+ */
+function rewrapComments(text: string): string {
+  const out: string[] = [];
+  let paragraph: string[] = [];
+  let lead = '';
+  let inComment = false;
+  let inExample = false;
+  const flush = () => {
+    const fits = paragraph.every((line) => lead.length + 1 + line.length <= WIDTH);
+    out.push(...(fits ? paragraph.map((line) => `${lead} ${line}`) : refill(lead, paragraph)));
+    paragraph = [];
+  };
+  for (const line of text.split('\n')) {
+    const single = /^(\s*)\/\*\* (.*) \*\/$/.exec(line);
+    if (!inComment && single && line.length > WIDTH) {
+      out.push(`${single[1]}/**`, ...refill(`${single[1]} *`, [single[2]]), `${single[1]} */`);
+      continue;
+    }
+    const match = COMMENT_LINE.exec(line);
+    if (!inComment || !match || line.includes('*/')) {
+      flush();
+      out.push(line);
+      inComment = inComment ? !line.includes('*/') : /^\s*\/\*\*/.test(line) && !line.includes('*/');
+      inExample &&= inComment;
+      continue;
+    }
+    const [, leader, body = ''] = match;
+    if (body.startsWith('@')) inExample = body.startsWith('@example');
+    if (!body.trim() || inExample) {
+      flush();
+      out.push(line);
+      continue;
+    }
+    if (body.startsWith('@') || LIST_ITEM.test(body) || leader !== lead) flush();
+    lead = leader;
+    paragraph.push(body);
+  }
+  flush();
+  return out.join('\n');
+}
+
+/**
+ * The files an entry of `kind` with `id` consists of: repository path → formatted text. Its doc comments are rewrapped
+ * where the id runs a line past 120 columns. Writes nothing.
+ */
 export async function render(root: string, kind: Kind, id: string): Promise<Record<string, string>> {
   if (!new RegExp(kind.pattern).test(id)) throw new UsageError(`"${id}" is not a ${kind.kind} id: ${kind.id}`);
   const files: Record<string, string> = {};
@@ -114,8 +201,9 @@ export async function render(root: string, kind: Kind, id: string): Promise<Reco
     const text = fill(readFileSync(resolve(root, where), 'utf8'), id, where);
     const info = await getFileInfo(join(root, path), { ignorePath: join(root, '.prettierignore') });
     const options = (await resolveConfig(join(root, path))) ?? {};
-    files[path] =
+    const formatted =
       info.ignored || !info.inferredParser ? text : await format(text, { ...options, filepath: join(root, path) });
+    files[path] = /\.[cm]?[jt]sx?$/.test(path) ? rewrapComments(formatted) : formatted;
   }
   return files;
 }
@@ -273,7 +361,7 @@ export default {
     const written = writeFiles(root, await render(root, kind, id));
     const result = await runChecks(root, kind, written);
     const ok = result.failures.length === 0;
-    const next = ok ? 'next: replace the placeholder text, then node x docs --write' : 'fix the problems below';
+    const next = ok ? `next: ${fill(kind.next ?? NEXT, id, `${kind.dir}/template.json`)}` : 'fix the problems below';
     return { ok, summary: `wrote ${written.join(', ')}; ${next}`, ...result, target: kind.kind };
   },
 } satisfies Command;

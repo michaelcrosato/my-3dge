@@ -54,3 +54,10 @@ Calls made where the plan is silent, and WP 0.6's paths widened:
 - **Generated paths.** A path inside a git-ignored directory that tools generate (`node_modules/.cache/`, `out/`,
   `.cache/`, `dist/`) always passes the path checks: a fresh checkout has none of them, and `x docs --check` failed
   there on the caches that eslint.config.js and tools/checkAll.ts cite.
+
+## Amendment 3 (2026-10-11, gate G3's review): INDEX opens with "Start here"
+docs/INDEX.md now begins with a generated "Start here" section (tools/lib/docsStart.ts). It lists the task guides
+AGENTS.md gives under "Where things are" (the bullets after its "Task guides" line), then every skill in
+.claude/skills/ with its description's headline and its "Use when" sentence. The list is written once, in AGENTS.md,
+whose paths x docs already checks; INDEX's own drift check catches a guide or skill added without `x docs --write`. The
+generated docs now depend on AGENTS.md and the skills as well as the code.

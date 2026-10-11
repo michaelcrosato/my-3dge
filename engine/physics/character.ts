@@ -5,24 +5,17 @@
  *
  * `createCharacter(spec)` checks settings against `CHARACTER_FIELDS` and fills the defaults (shardfall's movement, the
  * stress test's capsule: PLAN.md Appendix C); `addCharacter` adds the body (group `actor`), its bottom just outside the
- * skin, so it does not stick at seams. `stepCharacter` is one tick: `steer` (engine/physics/feel.ts), `moveCharacter`,
- * `settle`, then walls, pushes and the ground probe. Its `state` (`CHARACTER_STATE_FIELDS`) is plain data.
+ * skin, so it does not stick at seams. `stepCharacter` is one tick: `steer` (engine/physics/feel.ts), the controller's
+ * move (engine/physics/move.ts's `moveCharacter`: across then down, its own steps and snap), `settle`, then walls,
+ * pushes and the ground probe. Its `state` (`CHARACTER_STATE_FIELDS`) is plain data. Pushing shares momentum (an
+ * inelastic collision of a `push`-kg mass); walls stop the velocity going into them, slopes do not; kinematic floors
+ * carry it exactly (`carried`); idle on fixed ground it skips the controller (ADR-0020 amendments 3 and 5).
  *
- * How it moves, and why (Rapier 0.21, measured):
- * - **Across, then down.** One combined move loses all its sideways motion on some ticks on level ground (§4.8), and a
- *   capsule skimming its floor at the skin meets phantom contacts: a grounded move goes up by the skin, across, then
- *   down alone, and no tick keeps less than 95% of its motion.
- * - **Steps and snapping are ours.** Rapier's autostep misses steps while sliding and climbs ~5 cm above its setting:
- *   `autostep.height` is exactly what `moveCharacter` climbs. Grounded means standing on walkable ground (Rapier alone
- *   also says so against a wall at a jump's apex).
- * - **Pushing shares momentum** (an inelastic collision of a `push`-kg mass); walls stop the velocity going into them,
- *   slopes do not; moving floors carry it; idle on fixed ground it skips the controller.
+ * Invariants: it keeps nothing between ticks but `state` (move.ts's controller keeps nothing either), so a restored
+ * world steps on alike. Same state, input and world: same tick, in Node and Chromium.
  *
- * Invariants: Rapier's controller (one per Rapier world and skin) keeps nothing between moves, so after a restore (a
- * new Rapier world) a new one takes over. Same state, input and world: same move, in Node and Chromium.
- *
- * Carried from shardfall@fa2dab6 (`pavilion-lite/src/character.rs:179-399`, `crates/pav_core/src/character.rs:124-162,
- * 959-1089`) and `my-3d2dge:src/stress-world/20-sim.js:84, 125-131, 288-300` (the capsule and controller).
+ * Carried from shardfall@fa2dab6 (`crates/pav_core/src/character.rs:124-162, 959-1089`) and
+ * `my-3d2dge:src/stress-world/20-sim.js:84` (the capsule).
  *
  * @example
  * import { createPhysics } from './world';
@@ -38,13 +31,14 @@
  * [state.grounded, state.vx]; // [true, 5]: walking east at full speed
  * @see engine/physics/character.test.ts
  */
-import RAPIER from '@dimforge/rapier3d-simd-compat';
+import type RAPIER from '@dimforge/rapier3d-simd-compat';
 import { Vector3 } from '../core/math';
 import { defineSchema, freezeValue, parse, type EntryOf, type Field, type Schema } from '../core/schema';
 import { defineSettings } from '../core/settings';
-import { bodyId, handleOf } from './capture';
-import { check, vec, type Vec3Like } from './queries';
+import { handleOf } from './capture';
 import { settle, steer } from './feel';
+import { isWall, moveCharacter, partsOf, sink, type CharacterMove } from './move';
+import { check, vec, type Vec3Like } from './queries';
 import { rapierOf, type Physics } from './world';
 
 /** One degree, in radians. */
@@ -170,211 +164,6 @@ export interface CharacterInput {
   dashPressed?: boolean;
 }
 
-/** One obstacle the controller met: the body, the point it touched and that surface's outward normal. */
-export interface CharacterHit {
-  body: number;
-  point: Vector3;
-  normal: Vector3;
-}
-
-/** What `moveCharacter` did: the translation it made, whether it ended grounded, and what it hit. */
-export interface CharacterMove {
-  moved: Vector3;
-  grounded: boolean;
-  /** Obstacles met moving across (pushed props among them). */
-  across: CharacterHit[];
-  /** Obstacles met moving down or up. */
-  vertical: CharacterHit[];
-}
-
-/** How `moveCharacter` moves: whether it stands on the ground (and is not rising), and the one-way platforms. */
-export interface MoveOptions {
-  /** It stood on the ground and is not rising: it climbs steps and follows the ground down. */
-  grounded?: boolean;
-  /** Bodies that are one-way platforms: solid only to feet at or above their top. */
-  oneWay?: ReadonlySet<number>;
-}
-
-/** Rapier's controller per Rapier world and skin: no state between moves (every parameter is set before each). */
-const controllers = new WeakMap<RAPIER.World, Map<number, RAPIER.KinematicCharacterController>>();
-
-/** Rapier's normal nudge factor, pinned (its default, as shardfall sets it). */
-const NUDGE = 1e-4;
-/** How far past `maxSlope` a slope still counts as climbable (rad): a 50° ramp is 50° only to float precision. */
-const SLOPE_TOLERANCE = 1e-3;
-/** A grounded move across starts this many skins (offsets) above the floor, so it never grazes it. */
-const LIFT = 1;
-/** One-way platforms hold feet down to this far below their top (m). */
-const ONE_WAY_GRACE = 0.08;
-/** Sensors never block a character. */
-const FLAGS = RAPIER.QueryFilterFlags.EXCLUDE_SENSORS;
-
-/** The controller for `world` with a skin of `offset`, made once. */
-function controllerOf(world: RAPIER.World, offset: number): RAPIER.KinematicCharacterController {
-  let byOffset = controllers.get(world);
-  if (!byOffset) controllers.set(world, (byOffset = new Map()));
-  let controller = byOffset.get(offset);
-  if (!controller) {
-    controller = world.createCharacterController(offset);
-    controller.setUp({ x: 0, y: 1, z: 0 });
-    controller.setNormalNudgeFactor(NUDGE);
-    byOffset.set(offset, controller);
-  }
-  return controller;
-}
-
-/** The Rapier body of a character, with its capsule (its first collider). */
-function partsOf(world: RAPIER.World, body: number, where: string) {
-  const rigid = Number.isInteger(body) && body >= 0 ? world.bodies.get(handleOf(body)) : null;
-  const collider = rigid?.isKinematic() && rigid.numColliders() > 0 ? rigid.collider(0) : null;
-  const capsule = collider?.shapeType() === RAPIER.ShapeType.Capsule;
-  check(capsule, where, body, 'a character’s body id (addCharacter)');
-  return { rigid: rigid!, collider: collider! };
-}
-
-/** Sets the controller up for one move: Rapier's own autostep and snap are off (`moveCharacter` does both). */
-function configure(controller: RAPIER.KinematicCharacterController, character: Character, slide: boolean) {
-  controller.setSlideEnabled(slide);
-  controller.setMaxSlopeClimbAngle(character.maxSlope + SLOPE_TOLERANCE);
-  controller.setMinSlopeSlideAngle(character.slideSlope);
-  controller.setApplyImpulsesToDynamicBodies(false);
-  controller.disableSnapToGround();
-  controller.disableAutostep();
-}
-
-/** The obstacles of the controller's last move, by body. */
-function hitsOf(controller: RAPIER.KinematicCharacterController): CharacterHit[] {
-  const hits: CharacterHit[] = [];
-  for (let i = 0; i < controller.numComputedCollisions(); i++) {
-    const hit = controller.computedCollision(i);
-    const parent = hit?.collider?.parent();
-    if (!hit || !parent) continue;
-    const [p, n] = [hit.witness1, hit.normal1];
-    hits.push({ body: bodyId(parent.handle), point: new Vector3(p.x, p.y, p.z), normal: new Vector3(n.x, n.y, n.z) });
-  }
-  return hits;
-}
-
-/** One controller move's outcome. */
-interface Leg {
-  moved: Vector3;
-  grounded: boolean;
-  hits: CharacterHit[];
-}
-
-/** Whether a surface is a wall to `character`: steeper than it climbs, not a ceiling. */
-export function isWall(character: Character, normal: Vector3): boolean {
-  return normal.y < Math.cos(character.maxSlope + SLOPE_TOLERANCE) && normal.y > -1e-3;
-}
-
-/** Whether `character` can stand on a surface: no steeper than it climbs. */
-export function isWalkable(character: Character, normal: Vector3): boolean {
-  return normal.y >= Math.cos(character.maxSlope + SLOPE_TOLERANCE);
-}
-
-/**
- * Moves a character's capsule by `desired` as far as it can: across first (sliding along walls, up slopes it climbs,
- * pushing props), then down or up alone. A `grounded` character moves across lifted off the floor by its skin (so the
- * move never grazes the floor it stands on), climbs steps (a move across that a wall stops is tried again up by
- * `autostep.height`, across and down, and kept when it gets further and lands no higher than that on ground it can
- * stand on, with `autostep.width` of room), and follows the ground down by up to `snap`. Returns the translation made;
- * the body gets there when the world steps (`stepCharacter` sets its velocity). Throws `PHYSICS_BAD_ARGUMENT`.
- */
-export function moveCharacter(
-  physics: Physics,
-  body: number,
-  character: Character,
-  desired: Vec3Like,
-  options: MoveOptions = {},
-): CharacterMove {
-  const world = rapierOf(physics);
-  const { rigid, collider } = partsOf(world, body, 'moveCharacter(body)');
-  const want = vec(desired, 'moveCharacter(desired)');
-  const start = new Vector3().copy(rigid.translation());
-  const controller = controllerOf(world, character.offset);
-  const groups = collider.collisionGroups();
-  const { radius, height } = character.capsule;
-  const ground = start.y - height / 2 - radius - character.offset;
-  const solid = oneWayFilter(world, options.oneWay, ground + character.offset);
-  const leg: LegMove = (from, x, y, z, slide = character.slide) => {
-    configure(controller, character, slide);
-    collider.setTranslation(from);
-    controller.computeColliderMovement(collider, { x, y, z }, FLAGS, groups, solid);
-    const m = controller.computedMovement();
-    return { moved: new Vector3(m.x, m.y, m.z), grounded: controller.computedGrounded(), hits: hitsOf(controller) };
-  };
-  const grounded = options.grounded ?? false;
-  const lift = grounded ? leg(start, 0, character.offset * LIFT, 0).moved : new Vector3();
-  const from = start.clone().add(lift);
-  let across = leg(from, want.x, 0, want.z);
-  if (grounded) across = stepUp(world, character, collider, rigid, leg, from, ground, want, across) ?? across;
-  const mid = from.clone().add(across.moved);
-  let down = leg(mid, 0, want.y - lift.y, 0);
-  if (grounded && !down.grounded && character.snap > 0) {
-    const snap = leg(mid.clone().add(down.moved), 0, -character.snap, 0, false);
-    if (snap.grounded) down = { moved: down.moved.add(snap.moved), grounded: true, hits: [...down.hits, ...snap.hits] };
-  }
-  const moved = lift.add(across.moved).add(down.moved);
-  collider.setTranslation(start.clone().add(moved));
-  const standing = down.grounded && down.hits.some((hit) => isWalkable(character, hit.normal));
-  return { moved, grounded: standing, across: across.hits, vertical: down.hits };
-}
-
-/** A controller move from a point by `(x, y, z)`, sliding along what it meets or not. */
-type LegMove = (from: Vector3, x: number, y: number, z: number, slide?: boolean) => Leg;
-
-/** The step a wall-stopped grounded move across may be: up, across, down (see `moveCharacter`); null when it is not. */
-function stepUp(
-  world: RAPIER.World,
-  character: Character,
-  collider: RAPIER.Collider,
-  rigid: RAPIER.RigidBody,
-  leg: LegMove,
-  from: Vector3,
-  ground: number,
-  want: RAPIER.Vector,
-  across: Leg,
-): Leg | null {
-  const { height, width, dynamic } = character.autostep;
-  const reach = Math.hypot(want.x, want.z);
-  const got = Math.hypot(across.moved.x, across.moved.z);
-  const stair = (hit: CharacterHit) =>
-    isWall(character, hit.normal) && (dynamic || world.bodies.get(handleOf(hit.body))?.isDynamic() !== true);
-  if (height <= 0 || got >= reach - 1e-4 || !across.hits.some(stair)) return null;
-  const up = leg(from, 0, height, 0);
-  const top = from.clone().add(up.moved);
-  const dir = { x: want.x / reach, y: 0, z: want.z / reach };
-  const { radius } = character.capsule;
-  const lean = Math.min(character.slideSlope, character.maxSlope);
-  const onto = Math.max(reach, width, radius + character.offset - radius * Math.sin(lean) + 0.005);
-  const room = [collider.shape, 0, onto, true, FLAGS, collider.collisionGroups(), undefined, rigid] as const;
-  if (world.castShape(top, collider.rotation(), dir, ...room)) return null;
-  const over = leg(top, dir.x * onto, 0, dir.z * onto);
-  const fall = leg(top.clone().add(over.moved), 0, ground - top.y, 0, false);
-  const stand = (hit: CharacterHit) => isWalkable(character, hit.normal) && hit.point.y <= ground + height + 1e-3;
-  const moved = up.moved.add(over.moved).add(fall.moved);
-  const fits = fall.grounded && fall.hits.some(stand) && Math.hypot(moved.x, moved.z) > got + 1e-4;
-  return fits ? { moved, grounded: true, hits: over.hits } : null;
-}
-
-/**
- * The filter that makes one-way platforms solid only to feet at or above their top, less a grace. Their tops are read
- * first: Rapier calls the filter in the middle of a move, when no collider may be asked anything.
- */
-function oneWayFilter(world: RAPIER.World, oneWay: ReadonlySet<number> | undefined, feet: number) {
-  if (!oneWay?.size) return undefined;
-  const tops = new Map<number, number>();
-  for (const id of oneWay) {
-    const platform = world.bodies.get(handleOf(id));
-    for (let i = 0; i < (platform?.numColliders() ?? 0); i++) {
-      const collider = platform!.collider(i);
-      const half = collider.shapeType() === RAPIER.ShapeType.Cuboid ? (collider.halfExtents()?.y ?? 0) : 0;
-      tops.set(collider.handle, collider.translation().y + half);
-    }
-  }
-  return (collider: RAPIER.Collider) => feet >= (tops.get(collider.handle) ?? -Infinity) - ONE_WAY_GRACE;
-}
-
 /** Adds a character's body (a kinematic capsule, group `actor`), its bottom just outside the skin above `feet`. */
 export function addCharacter(physics: Physics, character: Character, feet: Vec3Like): number {
   const at = vec(feet, 'addCharacter(feet)');
@@ -426,9 +215,9 @@ const PROBE_DEPTH = 0.15;
  * One sim tick of a character: `steer` turns its intents into a velocity and a move (engine/physics/feel.ts), the
  * controller makes the move (`moveCharacter`), `settle` fixes the velocity from what happened, walls stop the velocity
  * going into them, it pushes what it walked into (both leave at (push·v + m·u)/(push + m)), probes the ground under it
- * and presses a dynamic floor with push × world gravity. Moving floors carry it (Rapier's kinematic friction: a still
- * character moves 1 mm down to keep it checking); idle on fixed ground it skips the controller. Changes `state` and
- * sets the body's velocity, so the body gets there when the world steps: call it before (actors.ts: the phase `anim`).
+ * and presses a dynamic floor with push × world gravity. A kinematic floor it stands on carries it (`carried`); idle on
+ * fixed ground it skips the controller. Changes `state` and sets the body's velocity, so the body gets there when the
+ * world steps: call it before (actors.ts: the phase `anim`).
  */
 export function stepCharacter(
   physics: Physics,
@@ -449,12 +238,12 @@ export function stepCharacter(
   const plan = steer(character, state, input, dt, g);
   const still = Math.hypot(state.vx, state.vz) < 1e-3 && state.vy <= 0 && state.vy > -g * dt * 1.5;
   const idle = wasGrounded && still && !plan.jumped && !plan.dashing && fixedBody(world, state.ground);
+  const grounded = wasGrounded && !plan.jumped && state.vy <= 0;
   const move = idle
     ? { moved: new Vector3(), grounded: true, across: [], vertical: [] }
-    : moveCharacter(physics, body, character, plan.desired, {
-        grounded: wasGrounded && !plan.jumped && state.vy <= 0,
-        oneWay: options.oneWay,
-      });
+    : carried(physics, body, character, grounded ? state.ground : -1, options, (carry) =>
+        moveCharacter(physics, body, character, carry.add(plan.desired), { grounded, oneWay: options.oneWay }),
+      );
   const landed = settle(character, state, plan, move.moved, move.grounded);
   for (const hit of [...move.across, ...move.vertical]) {
     if (!isWall(character, hit.normal) || world.bodies.get(handleOf(hit.body))?.isDynamic()) continue;
@@ -467,6 +256,51 @@ export function stepCharacter(
   const { moved } = move;
   rigid.setLinvel({ x: moved.x / dt, y: moved.y / dt, z: moved.z / dt }, true);
   return { desired: plan.desired, moved, jumped: plan.jumped, landed, dashed: plan.dashed, moving: !idle };
+}
+
+/**
+ * Runs `move` with the carry of the kinematic body `floor` (where the step takes the point under the feet: turned
+ * about its centre of mass and moved, as Rapier integrates it; zero for any other floor or none), that body's
+ * velocities held at zero meanwhile, so Rapier's kinematic friction adds nothing. `move` gets the carry across; its
+ * rise or sink is added after, since moving up or down through the controller ends on the floor where it is now: the
+ * floor then rose into the rider, or sank away from it. A rising floor lifts it unchecked (a ceiling crushes it, as
+ * the floor would anyway); a sinking one takes it down as far as anything else under it allows (`sink`). Rapier's
+ * friction alone acts on each leg that ends within its prediction distance of the floor, so it carried 0, 1 or 2
+ * times a tick: a rider slipped 0.1 to 0.8 m over a 6 m ride, lost the ground for 47 to 184 ticks of 480 on a lift
+ * going down, and was thrown off floors that turned, sank as they went or ran fast (WP 4.1, Rapier 0.21). Carried
+ * this way it keeps its place within 0.3 mm and the ground every tick: across, up and down at up to 5 m/s, and
+ * turning at up to 3 rad/s (character.test.ts).
+ */
+function carried(
+  physics: Physics,
+  body: number,
+  character: Character,
+  floor: number,
+  options: StepOptions,
+  move: (carry: Vector3) => CharacterMove,
+): CharacterMove {
+  const world = rapierOf(physics);
+  const rigid = floor >= 0 ? world.bodies.get(handleOf(floor)) : null;
+  if (!rigid?.isKinematic()) return move(new Vector3());
+  const [linear, angular, com] = [rigid.linvel(), rigid.angvel(), rigid.worldCom()];
+  const carry = new Vector3(linear.x, linear.y, linear.z).multiplyScalar(options.dt);
+  const turn = new Vector3(angular.x, angular.y, angular.z).multiplyScalar(options.dt);
+  const angle = turn.length();
+  if (angle > 0) {
+    const arm = feetOf(physics, body, character).sub(com);
+    carry.add(arm.clone().applyAxisAngle(turn.divideScalar(angle), angle).sub(arm));
+  }
+  const rise = carry.y;
+  rigid.setLinvel({ x: 0, y: 0, z: 0 }, false);
+  rigid.setAngvel({ x: 0, y: 0, z: 0 }, false);
+  try {
+    const made = move(carry.setY(0));
+    made.moved.y += rise < 0 ? sink(world, body, character, rigid, rise, options.oneWay) : rise;
+    return made;
+  } finally {
+    rigid.setLinvel(linear, false);
+    rigid.setAngvel(angular, false);
+  }
 }
 
 /** Whether `id` names a fixed body of `world`. */

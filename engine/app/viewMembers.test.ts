@@ -29,6 +29,8 @@ const NO_ACTOR = 'pass an actor’s id (none)';
 /** Every member's headless check. */
 const CALLS: Record<string, Call> = {
   advice: (e) => expect(Array.isArray(e.advice)).toBe(true),
+  'anim()': (_e, call) =>
+    expect(() => call('anim')).toThrow('[SIM_BAD_ARGUMENT] anim(id) got undefined: pass an animated actor’s id (none)'),
   'camera.get()': (_e, call) => expect(call('camera.get')).toMatchObject({ code: 'cam=iso' }),
   'camera.set()': (_e, call) => expect(call('camera.set', 'cam=brawler')).toMatchObject({ code: 'cam=brawler' }),
   'capture()': (e, call) => {
@@ -76,6 +78,10 @@ const CALLS: Record<string, Call> = {
   'set()': (e) => expect(e.set('box.room.speed', '2')).toMatchObject({ value: 2, previous: 1.5, when: 'now' }),
   'shot()': (_e, call) => expect(() => call('shot')).toThrow(/DEV_NO_RENDERER/),
   'state()': (e) => expect(e.state('pathMover').entities).toHaveLength(3),
+  'stats()': (e, call) => {
+    e.step(3); // timed steps; headless, nothing is drawn, so nothing is counted
+    expect(call('stats')).toMatchObject({ steps: 3, frames: 0, renderMs: null, drawCalls: null, pipelines: null });
+  },
   'step()': (e) => expect(e.step(10)).toBe(10),
   'timeScale()': (e) => expect(e.timeScale(0.5)).toBe(0.5),
   'trace()': (e) => expect(e.trace().tick).toBe(0),

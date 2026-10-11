@@ -151,10 +151,23 @@ describe('the dispatcher', () => {
     expect(printed[1]).toBe('X_USAGE: unexpected argument "b" (usage: node x demo [target])');
   });
 
-  it(`prints at most ${MAX_LINES} lines and says where the rest is`, async () => {
-    const { printed } = await run(['chatty']);
+  it(`prints at most ${MAX_LINES} lines and says where the rest is: every line in output.txt beside the report`, async () => {
+    const { printed, latest, root } = await run(['chatty']);
     expect(printed).toHaveLength(MAX_LINES);
-    expect(printed[MAX_LINES - 2]).toBe('… 33 more in out/chatty/all/report.json');
+    expect(printed[MAX_LINES - 2]).toBe('… 33 more in out/chatty/all/output.txt');
+    const [, path] = /^… \d+ more in (\S+)$/.exec(printed[MAX_LINES - 2])!;
+    const output = readFileSync(join(root, path), 'utf8').trimEnd().split('\n');
+    expect(output[0]).toBe(printed[0]);
+    expect(output.slice(1)).toEqual(Array.from({ length: 50 }, (_, i) => `line ${i}`));
+    const cut = printed.slice(1, MAX_LINES - 2).length;
+    expect(output.slice(1 + cut)).toHaveLength(33); // the lines the output did not print
+    expect(latest.artifacts).toContainEqual({
+      path,
+      kind: 'text',
+      describes: 'every line of the output, 33 cut from it',
+    });
+    await dispatch(['chatty'], { root, commands: { chatty: commands.pass }, print: () => {} });
+    expect(existsSync(join(root, path))).toBe(false); // a run that cuts nothing leaves no stale output.txt
   });
 
   it('names the closest candidate only when it is close', () => {

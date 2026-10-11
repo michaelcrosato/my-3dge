@@ -1,5 +1,5 @@
 /**
- * @file Tests for the character controller (engine/physics/character.ts) on the steps fixture's course
+ * @file Tests for the character controller (engine/physics/character.ts and move.ts) on the steps fixture's course
  * (fixtures/scenes/steps): WP 3.2's Done-when numbers (the feel meter's are in feel.test.ts): every tick keeps ≥ 95%
  * of its move across a one-box floor and a floor of merged boxes, it climbs steps up to its configured height and no
  * higher, walks up slopes to 50°, peaks at v²/2g, dashes speed × duration and waits for its cooldown, pushes a 20 kg
@@ -14,12 +14,14 @@ import {
   createCharacter,
   createCharacterState,
   feetOf,
-  moveCharacter,
   stepCharacter,
   type Character,
   type CharacterInput,
   type CharacterStep,
 } from './character';
+import { Vector3 } from '../core/math';
+import { driveMover, MOVER, type Mover } from './bodies';
+import { moveCharacter } from './move';
 import { createPhysics, rapierOf } from './world';
 
 const DT = 1 / 60;
@@ -254,6 +256,46 @@ describe('pushing', () => {
   });
 });
 
+/** A ride on a 3 m mover (`MOVER`'s fields; 8 s, hold 0.25 unless named), standing `at` on it, maybe by a ledge. */
+interface Ride extends Partial<Pick<Mover, 'period' | 'hold' | 'spin'>> {
+  origin: readonly [number, number, number];
+  offset: readonly [number, number, number];
+  at?: readonly [number, number];
+  ledge?: boolean;
+}
+
+/** Rides `ticks` ticks: the feet's worst distance from their place on the mover, ticks off the ground, lowest feet. */
+function ride({ origin, offset, period = 8, hold = 0.25, spin = 0, at = [0, 0], ledge }: Ride, ticks: number) {
+  const physics = createPhysics();
+  const size: [number, number, number] = ledge ? [20, 5, 40] : [40, 1, 40]; // the ledge: x ≥ 1.5, y ≤ 0
+  const position: [number, number, number] = ledge ? [11.5, -2.5, 0] : [0, -0.5, 0];
+  physics.addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size }, position }] });
+  const mover = { ...MOVER, origin: [...origin], offset: [...offset], period, hold, spin };
+  const platform = { shape: { type: 'box', size: [3, 0.4, 3] } } as const;
+  mover.body = physics.addBody({ type: 'kinematic', position: origin, colliders: [platform] });
+  const [hero, state] = [createCharacter(), createCharacterState()];
+  const body = addCharacter(physics, hero, [origin[0] + at[0], origin[1] + 0.2, origin[2] + at[1]]);
+  const step = (k: number) => {
+    if (k > 0) driveMover(physics, mover, { time: k * DT, dt: DT });
+    stepCharacter(physics, body, hero, state, {}, { dt: DT, gravity: 32 });
+    physics.step({ dt: DT, settings: SETTINGS });
+  };
+  for (let k = 0; k < 10; k++) step(0); // stands on it, still
+  const place = new Vector3(at[0], 0.2, at[1]); // on the platform, in its frame
+  let [worst, air, lowest] = [0, 0, Infinity];
+  for (let k = 1; k <= ticks; k++) {
+    step(k);
+    const { position, rotation } = physics.readBody(mover.body);
+    const feet = feetOf(physics, body, hero);
+    worst = Math.max(worst, feet.distanceTo(place.clone().applyQuaternion(rotation).add(position)));
+    lowest = Math.min(lowest, feet.y);
+    if (!state.grounded) air++;
+  }
+  const feet = feetOf(physics, body, hero);
+  physics.dispose();
+  return { worst, air, lowest, feet };
+}
+
 describe('the rest of the wiring', () => {
   it('rides a moving floor', () => {
     const c = rig(createCharacter(), [4, 0.4, 82]);
@@ -261,6 +303,36 @@ describe('the rest of the wiring', () => {
     const ride = c.run(60);
     expect(ride.at(-1)!.x - from.x).toBeCloseTo(2, 1);
     expect(ride.every((t) => t.grounded && Math.abs(t.y - 0.4) < 0.01)).toBe(true);
+  });
+
+  it('rides a mover within 1 mm of its place, grounded: across, up and down at up to 5 m/s, turning (WP 4.1)', () => {
+    const rides: Ride[] = [
+      { origin: [0, 0.2, 0], offset: [6, 0, 0] },
+      { origin: [5, 0.2, 2], offset: [6, 0, 0] },
+      { origin: [0, 0.2, 0], offset: [0, 1.5, 0] },
+      { origin: [0, 0.2, 0], offset: [3, 1, 2] },
+      { origin: [0, 0.2, 0], offset: [0, 0, 0], spin: 1, at: [0.9, 0] },
+      { origin: [0, 0.2, 0], offset: [0, 0, 0], spin: 3, at: [0.9, 0] },
+      { origin: [2, 0.2, 1], offset: [3, 0.5, 0], spin: -0.6, at: [-0.5, 0.7] },
+      { origin: [0, 0.2, 0], offset: [0, 3, 0], period: 4, hold: 0 }, // lifts peaking at 2.25 and 3 m/s
+      { origin: [0, 0.2, 0], offset: [0, 3, 0], period: 3, hold: 0 },
+      { origin: [0, 3.2, 0], offset: [0, -3, 0], period: 1.8, hold: 0 }, // sinks at up to 5 m/s, then rises
+      { origin: [0, 2.2, 0], offset: [3, -2, 2], period: 3, hold: 0 },
+    ];
+    for (const r of rides) {
+      const { worst, air } = ride(r, 480);
+      expect(worst, `${r.offset} from ${r.origin} in ${r.period ?? 8} s, turning at ${r.spin ?? 0}`).toBeLessThan(
+        0.001,
+      );
+      expect(air, `${r.offset} from ${r.origin} in ${r.period ?? 8} s: ticks off the ground`).toBe(0);
+    }
+  });
+
+  it('stays on a ledge it overhangs when its lift sinks away under it at 6 m/s (WP 4.1)', () => {
+    const pit = { origin: [0, -0.2, 0], offset: [0, -3, 0], period: 1, hold: 0, at: [1.4, 0], ledge: true } as const;
+    const { lowest, feet } = ride(pit, 60); // the lift's edge is at x 1.5, the capsule's at 1.68
+    expect(lowest).toBeGreaterThan(-0.05); // on the edge, as on fixed ground: not taken down the pit
+    expect([feet.x, feet.y > -0.05]).toEqual([expect.closeTo(1.4, 2), true]);
   });
 
   it('jumps up through a one-way platform and stands on it; a solid one bumps its head', () => {

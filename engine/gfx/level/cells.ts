@@ -1,8 +1,8 @@
 /**
  * @file Level cells and the way they face out (PLAN.md WP 2.4): one cell per piece of a block mesh (a wall tile, a
- * pillar's footprint), with its tiles, its centre and its outward direction, the way it faces out of the room, away
- * from the open floor beside it. A camera on that side looks over the wall: the cutaway (WP 4.4) swaps such walls to
- * their cut twins.
+ * pillar's footprint), with its tiles, its centre, its size and its outward direction, the way it faces out of the
+ * room, away from the open floor beside it. A camera on that side looks over the wall: the cutaway
+ * (engine/gfx/cutaway.ts) swaps such walls to their cut twins, and stumps a pillar whose cell stands in the way.
  *
  * The outward direction, on the map (X east, Z south): a piece open to the west (a tile beside it that is not solid)
  * leans east, open to the east leans west, open to the north leans south, open to the south leans north; open on
@@ -21,10 +21,14 @@
  */
 import type { CompiledLevel, TileRect } from '../../world/level/types';
 
-/** One piece of a block mesh: its tiles, its centre on the ground (m), and the way it faces out ([x, z], length 1). */
+/**
+ * One piece of a block mesh: its tiles, its centre on the ground (m), its size across (m), and the way it faces out
+ * ([x, z], length 1).
+ */
 export interface LevelCell {
   tiles: TileRect;
   centre: [x: number, y: number, z: number];
+  size: [x: number, z: number];
   out: [x: number, z: number];
 }
 
@@ -68,6 +72,7 @@ export function levelCells(level: CompiledLevel, pieces: readonly TileRect[], bo
       z = (r0 + r1 + 1) / 2 < level.rows / 2 ? -1 : 1;
     }
     const length = Math.hypot(x, z);
-    return { tiles, centre, out: [x / length, z / length] };
+    const size: LevelCell['size'] = [(c1 - c0 + 1) * level.tile, (r1 - r0 + 1) * level.tile];
+    return { tiles, centre, size, out: [x / length, z / length] };
   });
 }

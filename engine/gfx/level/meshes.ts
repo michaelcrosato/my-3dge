@@ -1,17 +1,20 @@
 /**
- * @file The level meshes (PLAN.md WP 2.4, §6.1 "data descriptors"): `createLevelMeshes(level, { materials })` draws a
- * compiled level (engine/world/level/compile.ts) from its mesh descriptors: one mesh per descriptor, built by the
- * recipe its glyphs name (engine/gfx/level/recipes.ts). The floor is one welded surface (one draw call); walls, low
- * walls and pillars are instanced boxes, one instance per piece, their faces in two groups, sides then tops (two
- * draw calls per recipe however many pieces), so the room fixture draws in 7 calls, 13 with a shadow map.
- * `register(warmup)` registers the meshes with the warm-up (engine/gfx/warmup.ts), so their pipelines are built
- * before the first frame shows them; `cells` gives each block piece's tiles and the way it faces out (the cutaway's
- * input, WP 4.4); `drawCalls(shadowMaps)` says what a frame costs.
+ * @file The level meshes (PLAN.md WP 2.4, WP 4.4, §6.1 "data descriptors"): `createLevelMeshes(level, { materials })`
+ * draws a compiled level (engine/world/level/compile.ts) from its mesh descriptors: one mesh per descriptor, built in
+ * the shape of the recipe its glyphs name (engine/gfx/level/recipes.ts, shapes.ts). The floor is one welded surface
+ * (one draw call); walls and low walls are instanced boxes and pillars instanced pillars (a plinth, a shaft and a
+ * capital), one instance per piece, their faces in two groups, sides then tops: the room fixture draws in 7 calls,
+ * 13 with a shadow map. v2's galleries, stairs, dais and brazier stands are one mesh per descriptor, a draw group per
+ * material slot: the hall draws in 15 calls, 24 with a shadow map.
+ *
+ * `register(warmup)` registers the meshes with the warm-up (engine/gfx/warmup.ts); `cells` gives each instanced
+ * piece's tiles, size and the way it faces out, and each part its recipe's `cut` (the cutaway's input,
+ * engine/gfx/cutaway.ts); `drawCalls(shadowMaps)` says what a frame costs.
  *
  * A block's UVs are in metres from each piece's own corner (one geometry serves every instance), so a texture whose
- * pattern repeats a whole number of times across a piece (on 1 m tiles, the v1 brick every 0.5 m, the dressed stone
- * every 1 m) runs on from piece to piece, while its tones repeat with each piece, as the prototype's per-tile wall
- * textures did; the floor's UVs run on across the whole level.
+ * pattern repeats a whole number of times across a piece (the v1 brick every 0.5 m, the dressed stone every 1 m)
+ * runs on from piece to piece, its tones repeating with each piece as the prototype's per-tile wall textures did; the
+ * other shapes' UVs are anchored to the world and run on across the whole level.
  *
  * Everything sits under one group, `root`, named `level:<name>`; a mesh is named `level:<name>/<recipe>` (with `#2`…
  * after a second descriptor of the same recipe), and carries `userData.level`, `userData.recipe` and
@@ -22,9 +25,9 @@
  * `options.materials` (the page's material library) and are never disposed here; `dispose()` frees the geometries,
  * leaves the parent and unregisters; nothing reaches the sim.
  *
- * Carried from the meshes of `my-3d2dge:src/stress-world/10-hall.js:264-332`: the floor, the instanced walls and low
- * walls (`inst`, one instance per tile, `sidesThenTops`) and the pillars (plain blocks in v1: WP 4.4 stands them on
- * plinths under capitals, engine/gfx/geometry/pillar.ts), built from WP 2.2's descriptors.
+ * Carried from the meshes of `my-3d2dge:src/stress-world/10-hall.js:264-405`: the floor, the instanced walls and low
+ * walls (`inst`, one instance per tile, `sidesThenTops`), the pillars on plinths under capitals, the galleries, the
+ * stairs and the dais, built from WP 2.2's and WP 4.2's descriptors.
  *
  * @example
  * // const meshes = createLevelMeshes(getLevel('level:room'), { materials: createMaterialLibrary() });
@@ -33,16 +36,15 @@
  * // meshes.drawCalls(1); // 13 for the room: 7 in colour, 6 into the shadow map
  * @see engine/gfx/level/meshes.test.ts
  * @see tests/e2e/level-meshes.spec.ts
+ * @see tests/e2e/hall.spec.ts
  */
-import { Group, InstancedMesh, Matrix4, Mesh, type BufferGeometry, type Material } from 'three/webgpu';
+import { Group, type InstancedMesh, type Material, type Mesh } from 'three/webgpu';
 import { defineCodes, log as sharedLog, type Log } from '../../core/log';
-import type { CompiledLevel, MeshDescriptor } from '../../world/level/types';
-import { boxGeometry } from '../geometry/box';
-import { sidesThenTops } from '../geometry/groups';
+import type { CompiledLevel } from '../../world/level/types';
 import type { Warmup } from '../warmup';
-import { levelCells, type LevelCell } from './cells';
-import { FALLBACK_RECIPE, LEVEL_RECIPES, type LevelRecipe } from './recipes';
-import { surfaceGeometry } from './surface';
+import type { LevelCell } from './cells';
+import { FALLBACK_RECIPE, LEVEL_RECIPES, type LevelRecipe, type LevelShape } from './recipes';
+import { buildShape, type PartCut } from './shapes';
 
 /** The codes the level meshes raise, with their fixes. */
 export const LEVEL_MESH_CODES = defineCodes('gfx', {
@@ -63,14 +65,21 @@ export interface LevelMeshesOptions {
   log?: Log;
 }
 
-/** One level mesh: its descriptor's recipe and glyphs, the mesh, and for a block one cell per instance. */
+/** One level mesh: its descriptor's recipe and glyphs, the mesh, and for an instanced shape one cell per instance. */
 export interface LevelMeshPart {
   name: string;
   recipe: string;
+  /** The shape it was drawn in (the recipe's, or a block for a recipe nobody defined). */
+  shape: LevelShape;
   glyphs: readonly string[];
   mesh: Mesh | InstancedMesh;
-  /** The block's pieces in instance order (empty for a surface). */
+  /** The pieces of a block or pillar shape in instance order (empty for the shapes drawn as one mesh). */
   cells: readonly LevelCell[];
+  /** The height its pieces stand on and that of their tops (m): its descriptor's. */
+  bottom: number;
+  top: number;
+  /** How the cutaway cuts its pieces, and its twin's geometry; null when it never cuts. */
+  cut: PartCut | null;
   castShadow: boolean;
 }
 
@@ -90,35 +99,14 @@ export interface LevelMeshes {
   dispose(): void;
 }
 
-/** One instance per cell, standing at the cell's centre. */
-function instanced(
-  geometry: BufferGeometry,
-  materials: Material | Material[],
-  cells: readonly LevelCell[],
-): InstancedMesh {
-  const mesh = new InstancedMesh(geometry, materials, cells.length);
-  const matrix = new Matrix4();
-  cells.forEach((cell, i) => mesh.setMatrixAt(i, matrix.makeTranslation(...cell.centre)));
-  mesh.instanceMatrix.needsUpdate = true;
-  mesh.computeBoundingBox();
-  mesh.computeBoundingSphere();
-  return mesh;
-}
-
-/** Builds one descriptor's mesh with `recipe`. */
-function build(level: CompiledLevel, descriptor: MeshDescriptor, recipe: LevelRecipe, options: LevelMeshesOptions) {
-  const materials = recipe.materials.map((id) => options.materials.get(id));
-  const [c0, r0, c1, r1] = descriptor.pieces[0] ?? [0, 0, 0, 0];
-  const height = descriptor.top - descriptor.bottom;
-  if (recipe.shape === 'surface' || height <= 0) {
-    const geometry = surfaceGeometry(level.tile, descriptor.pieces, descriptor.bottom);
-    return { mesh: new Mesh(geometry, materials[0]), cells: [] };
-  }
-  const box = boxGeometry({ width: (c1 - c0 + 1) * level.tile, height, depth: (r1 - r0 + 1) * level.tile });
-  const cells = levelCells(level, descriptor.pieces, descriptor.bottom);
-  // One material draws the whole box at once; two draw its sides, then its tops.
-  const drawn = materials.length > 1 ? materials.slice(0, 2) : materials[0];
-  return { mesh: instanced(sidesThenTops(box), drawn, cells), cells };
+/**
+ * The draw calls `mesh` costs a frame: its groups (one with a single material), once in colour and once per shadow
+ * map when it casts; none while it is hidden or an instanced mesh with no instances.
+ */
+export function meshDrawCalls(mesh: Mesh | InstancedMesh, castShadow: boolean, shadowMaps = 0): number {
+  if (!mesh.visible || ((mesh as InstancedMesh).isInstancedMesh && (mesh as InstancedMesh).count === 0)) return 0;
+  const groups = Array.isArray(mesh.material) ? mesh.geometry.groups.length : 1;
+  return groups * (1 + (castShadow ? shadowMaps : 0));
 }
 
 /** Draws `level`'s mesh descriptors (see the file comment). */
@@ -136,7 +124,8 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
       log.warnOnce('GFX_LEVEL_RECIPE', { level: level.name, recipe: descriptor.recipe, known }, descriptor.recipe);
       recipe = FALLBACK_RECIPE;
     }
-    const { mesh, cells } = build(level, descriptor, recipe, options);
+    const materials = recipe.materials.map((id) => options.materials.get(id));
+    const { mesh, cells, cut } = buildShape(level, descriptor, recipe, materials);
     const base = `${root.name}/${descriptor.recipe}`;
     const seen = (names.get(base) ?? 0) + 1;
     names.set(base, seen);
@@ -148,9 +137,13 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
     return {
       name: mesh.name,
       recipe: descriptor.recipe,
+      shape: recipe.shape,
       glyphs: descriptor.glyphs,
       mesh,
       cells,
+      bottom: descriptor.bottom,
+      top: descriptor.top,
+      cut,
       castShadow: recipe.castShadow,
     };
   });
@@ -161,10 +154,7 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
     parts,
     cells: parts.flatMap((part) => part.cells),
     drawCalls(shadowMaps = 0) {
-      return parts.reduce((sum, { mesh, castShadow }) => {
-        const groups = Array.isArray(mesh.material) ? mesh.geometry.groups.length : 1;
-        return sum + groups * (1 + (castShadow ? shadowMaps : 0));
-      }, 0);
+      return parts.reduce((sum, { mesh, castShadow }) => sum + meshDrawCalls(mesh, castShadow, shadowMaps), 0);
     },
     register(warmup, id = root.name) {
       const entry = warmup.register(id, { objects: () => parts.map((part) => part.mesh) });

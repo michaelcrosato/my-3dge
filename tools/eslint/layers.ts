@@ -3,7 +3,7 @@
  * engine layer, naming what the layer may import, so a forbidden edge fails T0 with the rule and the way round it.
  *
  * Imports inside the engine are relative, so each pattern matches where an import climbs to: from
- * `engine/gfx/level/mesh.ts`, `../../physics/world` climbs into `physics`. The rule sees each relative source in its
+ * `engine/gfx/level/meshes.ts`, `../../physics/world` climbs into `physics`. The rule sees each relative source in its
  * shortest spelling from the importing file (`resolvingImports`, family.ts), so `../../../engine/physics/world` and
  * `./../../physics/world` are the same edge. Packages have single owners: only `physics/` imports Rapier, only `gfx/`
  * imports three.js, and `core/math.ts` alone takes three.js's math classes (`allowImportNames`). The sim-side

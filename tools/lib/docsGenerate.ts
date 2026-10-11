@@ -1,12 +1,14 @@
 /**
- * @file Writes the generated docs from what tools/lib/docs.ts reads (PLAN.md §6.8, WP 0.6): `docs/INDEX.md` (a row per
- * registry kind declared with `defineKind`, PLAN.md §6.6, then module → purpose → exports → tests), `docs/API.md`
- * (each export with the first sentence of its doc comment, the public API first) and `docs/ERRORS.md` (every code
- * registered with `defineCodes`, with its message and fix).
+ * @file Writes the generated docs from what tools/lib/docs.ts reads (PLAN.md §6.8, WP 0.6): `docs/INDEX.md` (the
+ * "Start here" task guides and skills of tools/lib/docsStart.ts, a row per registry kind declared with `defineKind`,
+ * PLAN.md §6.6, then module → purpose → exports → tests), `docs/API.md` (each export with the first sentence of its
+ * doc comment, the public API first) and `docs/ERRORS.md` (every code registered with `defineCodes`, with its message
+ * and fix).
  *
- * Invariants: the output depends only on the code, never on the clock or the machine, and is Prettier-formatted
- * with the repository's settings, so `prettier --check` passes on it and a stale file shows as a difference. Links
- * are relative to `docs/`. Modules are grouped by directory, in path order; the root's files come first.
+ * Invariants: the output depends only on the repository's files (the code, AGENTS.md's task guides, the skills),
+ * never on the clock or the machine, and is Prettier-formatted with the repository's settings, so `prettier --check`
+ * passes on it and a stale file shows as a difference. Links are relative to `docs/`. Modules are grouped by
+ * directory, in path order; the root's files come first.
  *
  * @example
  * import { readModules } from './docs';
@@ -19,6 +21,7 @@ import { format, resolveConfig } from 'prettier';
 import { firstSentence } from '../x';
 import type { CodeDoc } from './docsCodes';
 import { directoryOf, resolveExports, type DocComment, type ModuleDoc, type ResolvedExport } from './docs';
+import { startHere } from './docsStart';
 
 /** The generated files, by repository path. */
 export const GENERATED = ['docs/INDEX.md', 'docs/API.md', 'docs/ERRORS.md'] as const;
@@ -72,16 +75,17 @@ export function kindRows(modules: readonly ModuleDoc[]): string[] {
   return out;
 }
 
-/** `docs/INDEX.md`, before formatting. */
-export function indexMarkdown(modules: readonly ModuleDoc[]): string {
+/** `docs/INDEX.md`, before formatting; `start` is its "Start here" section (tools/lib/docsStart.ts's `startHere`). */
+export function indexMarkdown(modules: readonly ModuleDoc[], start: readonly string[] = []): string {
   const out = [
     BANNER,
     '',
     '# Index of modules',
     '',
-    "Every registry kind, then every module of the engine and its tools: what it is for (its file comment's first",
-    'sentence), what it exports and the tests that cover it. Each export, with the first sentence of its doc comment, is',
-    'in [API.md](API.md); error and advice codes are in [ERRORS.md](ERRORS.md).',
+    'The task guides, every registry kind, then every module of the engine and its tools: what it is for (its file',
+    "comment's first sentence), what it exports and the tests that cover it. Each export, with the first sentence of its",
+    'doc comment, is in [API.md](API.md); error and advice codes are in [ERRORS.md](ERRORS.md).',
+    ...start,
     ...kindRows(modules),
   ];
   for (const [dir, group] of byDirectory(modules)) {
@@ -173,7 +177,7 @@ export async function formatMarkdown(root: string, file: string, text: string): 
 /** The generated docs' contents, formatted, by repository path. */
 export async function generateDocs(root: string, modules: readonly ModuleDoc[]): Promise<Record<string, string>> {
   const raw: Record<string, string> = {
-    'docs/INDEX.md': indexMarkdown(modules),
+    'docs/INDEX.md': indexMarkdown(modules, startHere(root)),
     'docs/API.md': apiMarkdown(root, modules),
     'docs/ERRORS.md': errorsMarkdown(modules),
   };
