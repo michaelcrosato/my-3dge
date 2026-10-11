@@ -125,23 +125,19 @@ export function budgetPath(scene: string): string {
   return join('tests', 'baselines', 'perf', `${scene.replace(/:/g, '-')}.json`);
 }
 
-/** One run's timings: ms per step, per hash and per capture. */
+/** One run's timings: ms per step, then per hash and per capture of the state it reached (10 of each). */
 export function measure(
   scene: Scene,
   options: { steps: number; seed: number; settings: Record<string, SettingValue> },
 ): Record<PerfKey, number> {
   const session = createSession(scene, { seed: options.seed, settings: options.settings });
-  const { world } = session;
-  let started = performance.now();
-  for (let k = 0; k < options.steps; k++) session.step();
-  const stepMs = (performance.now() - started) / Math.max(1, options.steps);
-  const repeat = 10;
-  started = performance.now();
-  for (let i = 0; i < repeat; i++) world.hash();
-  const hashMs = (performance.now() - started) / repeat;
-  started = performance.now();
-  for (let i = 0; i < repeat; i++) world.capture();
-  return { stepMs, hashMs, captureMs: (performance.now() - started) / repeat };
+  const each = (times: number, run: () => unknown) => {
+    const started = performance.now();
+    for (let k = 0; k < times; k++) run();
+    return (performance.now() - started) / Math.max(1, times);
+  };
+  const stepMs = each(options.steps, () => session.step());
+  return { stepMs, hashMs: each(10, () => session.world.hash()), captureMs: each(10, () => session.world.capture()) };
 }
 
 /** Reads and checks a budget file; throws `UsageError` naming each problem (an unknown key with the closest). */
@@ -281,13 +277,8 @@ export function agentsSetting(asked: string | undefined): string {
   if (!asked) throw new UsageError(`${need}: name it with --agents <path>, or in the budget's ladder.setting`);
   const rows = createSettings().describe();
   const row = rows.find((candidate) => candidate.path === asked);
-  if (!row)
-    throw new UsageError(
-      `--agents ${asked} is no setting${didYouMean(
-        asked,
-        rows.map((r) => r.path),
-      )}`,
-    );
+  const paths = rows.map((candidate) => candidate.path);
+  if (!row) throw new UsageError(`--agents ${asked} is no setting${didYouMean(asked, paths)}`);
   if (row.type !== 'integer' || (row.maximum ?? Infinity) < top) throw new UsageError(`${asked}: ${need}`);
   return asked;
 }
