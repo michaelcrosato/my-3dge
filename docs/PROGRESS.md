@@ -3,29 +3,31 @@
 Read this first: where things stand, what is next and the open issues, on one screen (`node x docs --check` fails it
 past 40 lines). The integrator rewrites it at each gate; every WP's status and notes are in the ledger, PLAN.md §14.
 
-## Where things stand (2026-10-10, gate G1)
+## Where things stand (2026-10-10, gate G2)
 
-Phases 0 and 1 are done (PR #2, PR #3): the foundation and the reproducible kernel. No rendering engine yet.
-- Kernel (engine/core, engine/sim, engine/input): fdlibm sin/cos/pow swapped into Math while the sim steps
-  (`withSimMath`), so Node and Chromium agree bit for bit; seeded named RNG streams; registry, schema, settings,
-  events, log with coded errors and warn-once advice; the frame clock and timers; the world (plain-data components,
-  systems in fixed phases), its hash, capture and restore; intents, scenes, sessions and replays with bisection.
-- Public API: engine/index.ts (pages) and engine/sim-api.ts (sim-side); game code imports only these (lint).
-- `__engine` / `createHeadless`: one inspector API; `help()` checked against it. Mutations go through the session.
-- Commands: `node x help`; `x sim`, `x replay --browser sim`, `x perf`, `x describe`. Gate: `node x ci --local`.
-- Every L-size WP had a verifier review; all findings were fixed before merging (see the ledger notes).
+Phases 0–2 are done (PR #2, #3, #5): the foundation, the reproducible kernel and Box 1, a room that renders and steps.
+- Renderer on WebGPU only (features with downgrade advice, resolution modes, a warm-up: 0 pipelines after it), the
+  level compiler (v1, plus the v2 hall), procedural textures and materials, the geometry kit and level meshes (room in
+  13 draw calls), cameras v1, shots with the ID pass and `x shot`, and the box app (`labs/box`, `createEngine`).
+- Box-1 replays give one golden set headless and in the page while it renders, switches cameras and turns GPU
+  features off; every inspector member and setting is reachable from `x` and `__engine`.
+- Already in from Box 2: Rapier adapter (3.1), character controller (3.2), input (3.3), skeleton, IK and the humanoid
+  port (3.4–3.6), cameras v2 (3.9), touch controls (3.12, not tested). Lane L: 8.1–8.3, 8.10. Lane X: 9.1, 9.2, 9.4.
+- Gate: `node x ci --local` green in 3 min 42 s (check 6.8 s, test 28.3 s with 2,048 tests, e2e 2 min 25 s).
 
 ## What is next
 
-- Box 1 (Phase 2, gate G2), parallel lanes: WP 2.1 renderer and 2.2 level compiler first; then 2.3 materials and
-  textures, 2.5 cameras, 2.6 shots and the ID pass; then 2.4 geometry and level meshes; then 2.7, the box app.
-- Background lanes from G1: L (animation library, WP 8.1, 8.2) and X (audio, WP 9.1), never delaying a box stage.
+- Box 2 (Phase 3, gate G3), remaining lanes: A 3.7 animator and body states; R 3.8 instancing and puppets; T 3.11
+  film and visual comparison; then B 3.10, a hero in the box, which also proves 3.3–3.6 and 3.9 in the box.
+- Background: lane L (8.4 baker and retargeting, then 8.5–8.7, 8.9) and lane X (9.3 runtime, then 9.5), never
+  delaying a box stage. Phase 4 WP 4.2 is done early.
 
 ## Open issues
 
-- T0 (`npm run check`) runs about 9–10 s of its 10 s budget; `tsc` (7 s) is the bottleneck and incremental mode does
-  not help with --noEmit. Plan: project references (or another measured fix) when T0 first warns.
+- engine/physics/character.ts is 523 lines (cap 400): splitting move.ts needs an Owns widening. ik.ts is at 400.
+- The ID pass sees an InstancedMesh as one object (proposal: colour by instanceIndex). Chase/first/rail camera codes
+  are not yet known to codes.ts and createCamera (core proposal, WP 3.9).
+- Headless step(n) should take the virtual device's intents (proposal, WP 3.3). Steps replay goldens not committed.
 - ESC-0001 (GitHub Actions) was decided in the owner's absence: Actions off, `x ci --local` is the gate.
-- Vitest 4 qualifies 2026-10-22 (U-1). Vite HMR re-running a module that calls defineSettings throws
-  CORE_DUPLICATE_ID (WP 2.7 must handle it). Browser `@example` blocks are flagged but not run.
-- Deferred proof (WP 0.10): a fresh cloud session starts clean and both subagents load.
+- Vitest 4 qualifies 2026-10-22 (U-1). Browser `@example` blocks are flagged but not run.
+- Not verified: physical pads, a real phone, hull determinism in Chromium beyond physics-40.
