@@ -144,6 +144,29 @@ export type { SongTiming } from './audio/data/song';
 export type { SongRenderOptions } from './audio/data/song';
 export type { Voice } from './audio/dsp/voice';
 export type { SoundDef } from './audio/dsp/voice';
+// The audio runtime (WP 9.3): a page's sound through Web Audio, started by the first gesture: buses with ducking and
+// voice limits, sounds placed in 3D and occluded through the QueryView, room reverb, and music in intensity layers
+// that change on the beat and the bar line.
+export { createAudio } from './audio/runtime/audio';
+export type { Audio } from './audio/runtime/audio';
+export type { AudioOptions } from './audio/runtime/audio';
+export type { AudioState } from './audio/runtime/audio';
+export type { AudioInfo } from './audio/runtime/audio';
+export type { PlayOptions } from './audio/runtime/sound';
+export type { Sound } from './audio/runtime/sound';
+export type { ListenerPose } from './audio/runtime/spatial';
+export type { GestureTarget } from './audio/runtime/gesture';
+export type { AudioBus } from './audio/runtime/mixer';
+export { BUS_VOLUMES } from './audio/runtime/mixer';
+export type { MixerInfo } from './audio/runtime/mixer';
+export type { MusicChange } from './audio/runtime/music';
+export type { MusicPosition } from './audio/runtime/music';
+export type { Quantize } from './audio/runtime/music';
+export { ROOMS } from './audio/runtime/reverb';
+export type { RoomName } from './audio/runtime/reverb';
+export type { RoomSpec } from './audio/runtime/reverb';
+export { VOICE_LIMITS } from './audio/runtime/voices';
+export type { VoiceLimits } from './audio/runtime/voices';
 // The engine in a page (WP 2.7): createEngine reads the routes, starts the scene with its view, publishes
 // window.__engine, warms up and runs the frame loop; createHeadless({ view: true }) builds the same view in Node.
 export { createEngine } from './app/engine';
