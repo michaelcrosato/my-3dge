@@ -44,7 +44,7 @@ import { Quaternion, Vector3 } from '../core/math';
 import { copyValue, defineSchema, freezeValue, isPlainObject, show } from '../core/schema';
 import { bodyId, handleOf } from './capture';
 import type { GroupName } from './groups';
-import { check, quat, vec, type QuatLike, type Shape, type Vec3Like } from './queries';
+import { check, quat, vec, type HullShape, type QuatLike, type Shape, type Vec3Like } from './queries';
 import { rapierOf, type BodySpec, type Physics } from './world';
 
 /**
@@ -84,8 +84,8 @@ function finite(value: number | undefined, fallback: number, where: string): num
   return value ?? fallback;
 }
 
-/** Adds a dynamic body of one `shape`, made of `PROP_MATERIAL` unless `spec` says otherwise; returns its id. */
-export function addProp(physics: Physics, shape: Shape, spec: PropSpec = {}): number {
+/** Adds a dynamic body of one `shape` (a hull too: a rock), of `PROP_MATERIAL` unless `spec` says otherwise; its id. */
+export function addProp(physics: Physics, shape: Shape | HullShape, spec: PropSpec = {}): number {
   check(isPlainObject(spec), 'addProp(spec)', spec, 'a prop: { position?, rotation?, density?, friction?, … }');
   const { density, friction, restitution, ...body } = spec;
   const m = PROP_MATERIAL;
@@ -252,13 +252,8 @@ export interface SensorSpec {
 /** Adds a body whose one collider is a sensor of `shape`: it blocks nothing and detects bodies. Returns its id. */
 export function addSensor(physics: Physics, shape: Shape, spec: SensorSpec = {}): number {
   check(isPlainObject(spec), 'addSensor(spec)', spec, 'a sensor: { type?, position?, rotation?, group? }');
-  check(
-    [undefined, 'fixed', 'kinematic'].includes(spec.type),
-    'addSensor({ type })',
-    spec.type,
-    "'fixed' or 'kinematic'",
-  );
   const { type = 'fixed', position, rotation, group } = spec;
+  check(type === 'fixed' || type === 'kinematic', 'addSensor({ type })', type, "'fixed' or 'kinematic'");
   const id = physics.addBody({ type, position, rotation, group, colliders: [{ shape, sensor: true }] });
   rigid(physics, id).collider(0).setActiveCollisionTypes(RAPIER.ActiveCollisionTypes.ALL); // kinematic actors too
   return id;
@@ -323,22 +318,40 @@ const DEPTH = 3.75;
 /** The gap left under a rescued body (m). */
 const GAP = 0.05;
 
-/** The farthest any of a body's colliders reaches from its origin (m). */
-function reach(b: RAPIER.RigidBody): number {
-  let most = 0;
+/** How far a collider reaches from its centre against `up` (in its own frame): its support straight down. */
+function reachDown(c: RAPIER.Collider, up: Vector3): number {
+  const S = RAPIER.ShapeType;
+  switch (c.shapeType()) {
+    case S.Cuboid: {
+      const h = c.halfExtents()!;
+      return Math.abs(up.x) * h.x + Math.abs(up.y) * h.y + Math.abs(up.z) * h.z;
+    }
+    case S.Capsule:
+      return Math.abs(up.y) * c.halfHeight() + c.radius();
+    case S.Cylinder:
+      return Math.abs(up.y) * c.halfHeight() + Math.hypot(up.x, up.z) * c.radius();
+    case S.ConvexPolyhedron: {
+      const v = c.vertices();
+      let most = -Infinity;
+      for (let k = 0; k < v.length; k += 3) most = Math.max(most, -(v[k] * up.x + v[k + 1] * up.y + v[k + 2] * up.z));
+      return most;
+    }
+    default:
+      return c.radius(); // a ball
+  }
+}
+
+/** How far a body's lowest point is below its origin (m), turned as it is now. */
+function depthOf(b: RAPIER.RigidBody): number {
+  const turn = new Quaternion().copy(b.rotation());
+  let most = -Infinity;
   for (let i = 0; i < b.numColliders(); i++) {
     const c = b.collider(i);
-    const [t, h, type] = [c.translationWrtParent() ?? { x: 0, y: 0, z: 0 }, c.halfExtents(), c.shapeType()];
-    const extent = h
-      ? Math.hypot(h.x, h.y, h.z)
-      : type === RAPIER.ShapeType.Capsule
-        ? c.halfHeight() + c.radius()
-        : type === RAPIER.ShapeType.Cylinder
-          ? Math.hypot(c.halfHeight(), c.radius())
-          : c.radius();
-    most = Math.max(most, Math.hypot(t.x, t.y, t.z) + extent);
+    const [t, r] = [c.translationWrtParent()!, c.rotationWrtParent()!];
+    const up = UP.clone().applyQuaternion(turn.clone().multiply(new Quaternion().copy(r)).invert());
+    most = Math.max(most, reachDown(c, up) - new Vector3(t.x, t.y, t.z).applyQuaternion(turn).y);
   }
-  return most;
+  return Number.isFinite(most) ? most : 0;
 }
 
 /** The walkable tile whose centre is nearest (x, z), the first in tile order among equals; −1 when none is. */
@@ -373,7 +386,7 @@ export function rescueLost(physics: Physics, level: RescueLevel, options: { dept
     if (inside && p.y >= level.floor[row * cols + col] - depth) continue;
     const i = nearestWalkable(level, p.x, p.z);
     if (i < 0) continue;
-    const y = level.floor[i] + reach(b) + GAP;
+    const y = level.floor[i] + depthOf(b) + GAP;
     b.setTranslation({ x: ((i % cols) + 0.5) * tile, y, z: (Math.floor(i / cols) + 0.5) * tile }, true);
     b.setLinvel({ x: 0, y: 0, z: 0 }, true);
     b.setAngvel({ x: 0, y: 0, z: 0 }, true);

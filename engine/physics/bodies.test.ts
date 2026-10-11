@@ -14,6 +14,7 @@ import {
   addBox,
   addCapsule,
   addCylinder,
+  addProp,
   addSensor,
   applyTorqueImpulse,
   driveBody,
@@ -235,15 +236,38 @@ describe('the lost-body rescue', () => {
     const out = addBall(p, 0.25, { position: [9, 0.25, 5.5] }); // east of the level, by row 2
     const fine = addBall(p, 0.25, { position: [1, -3, 1] }); // under the floor, but not 3.75 m under
     const deep = addBall(p, 0.25, { position: [5, -6, 3] }); // under the raised tile (2, 1)
-    expect(rescueLost(p, LEVEL)).toEqual([sunk, out, deep]);
+    const eighth = new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), Math.PI / 4);
+    const tilted = addBox(p, [0.75, 0.75, 0.75], { position: [1, -5, 5], rotation: eighth }); // on an edge
+    const lying = addCapsule(p, 0.3, 0.5, { position: [-2, 0, 1], rotation: [Math.SQRT1_2, 0, 0, Math.SQRT1_2] });
+    const rock = addProp(
+      p,
+      {
+        type: 'hull',
+        points: [
+          [0, -0.2, 0],
+          [0.5, 0.3, 0],
+          [-0.5, 0.3, 0.4],
+          [0, 0.3, -0.5],
+        ],
+      },
+      {
+        position: [7, -5, 1],
+      },
+    );
+    expect(rescueLost(p, LEVEL)).toEqual([sunk, out, deep, tilted, lying, rock]);
     const at = (id: number) =>
       p
         .readBody(id)
         .position.toArray()
         .map((v) => +v.toFixed(3));
-    expect(at(sunk)).toEqual([3, +(Math.hypot(0.375, 0.375, 0.375) + 0.05).toFixed(3), 1]); // 4 nearest: (1, 0) first
+    // Each lowest point 5 cm above its tile's floor, turned as it was:
+    expect(at(sunk)).toEqual([3, 0.425, 1]); // 4 tiles nearest: (1, 0) first
     expect(at(out)).toEqual([7, 0.3, 5]);
     expect(at(deep)).toEqual([5, 1.3, 3]); // on the raised tile, above its floor
+    expect(at(tilted)).toEqual([1, +(0.375 * Math.SQRT2 + 0.05).toFixed(3), 5]);
+    expect(at(lying)).toEqual([1, 0.35, 1]);
+    expect(at(rock)).toEqual([7, 0.25, 1]);
+    expect(Math.abs(p.readBody(tilted).rotation.dot(eighth))).toBeCloseTo(1, 6); // still turned as it fell
     expect(at(fine)).toEqual([1, -3, 1]);
     expect(p.readBody(sunk).velocity.length()).toBe(0);
     steps(p, 60);
