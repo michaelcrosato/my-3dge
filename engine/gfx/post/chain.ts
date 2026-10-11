@@ -237,7 +237,7 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
     if (state.chain !== appliedChain) writeFilters(uniforms, state.chain);
     appliedChain = state.chain;
     if (state.look !== applied && styles && own) {
-      styles.setStyle(state.look.style || own.style, scenePass.scene ?? undefined);
+      styles.setStyle(state.look.style || own.style, scenePass.scene);
       styles.toon.set(state.look.style === 'toon' ? state.look.toon : own.toon);
     }
     applied = state.look;
