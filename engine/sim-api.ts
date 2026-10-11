@@ -395,3 +395,31 @@ export { updateCrowd } from './physics/crowd';
 export type { CrowdOptions } from './physics/crowd';
 export type { CrowdChanges } from './physics/crowd';
 export type { CrowdStepper } from './physics/crowd';
+
+// Steering kit (WP 5.2): the velocity a crowd agent wants (seek and arrive, flow-field following, approach rings, a
+// flyer's hover, a jumper's hop), attack tokens that cap the attackers at once, and awareness by distance and sight.
+export { seek } from './world/steer';
+export { followFlow } from './world/steer';
+export { approachRing } from './world/steer';
+export { hover } from './world/steer';
+export { airTime } from './world/steer';
+export { hop } from './world/steer';
+export { FOLLOW } from './world/steer';
+export { APPROACH_RING } from './world/steer';
+export { HOVER } from './world/steer';
+export { HOP } from './world/steer';
+export type { SteerPoint } from './world/steer';
+export type { FollowOptions } from './world/steer';
+export type { ApproachRingOptions } from './world/steer';
+export type { HoverOptions } from './world/steer';
+export { ATTACK_TOKENS_FIELDS } from './world/ai';
+export { ATTACK_TOKENS } from './world/ai';
+export type { AttackTokens } from './world/ai';
+export { takeToken } from './world/ai';
+export { releaseToken } from './world/ai';
+export { holdsToken } from './world/ai';
+export { keepTokens } from './world/ai';
+export { canSee } from './world/ai';
+export { clearSight } from './world/ai';
+export { SIGHT } from './world/ai';
+export type { SightOptions } from './world/ai';
