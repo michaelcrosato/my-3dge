@@ -97,7 +97,10 @@ export interface Effects {
   burst(id: string, at: PointLike, options?: BurstOptions & { size?: number }): number;
   /** Bursts every emitter answering `type` where `payload` says; returns the particles born (0: none answers). */
   event(type: string, payload?: FxEventPayload): number;
-  /** Plays the events of a sim world's trace not played yet, by their numbers; returns how many were answered. */
+  /**
+   * Plays the events of a sim world's trace not played yet, by their numbers; returns how many were answered. The
+   * trace keeps the latest 256 events: feed it after every step.
+   */
   feed(trace: readonly { seq: number; type: string; payload: unknown }[]): number;
   /** Runs emitter `id` at `at` for this frame at its rate; `key` names it, so its fractions and light carry over. */
   emit(id: string, at: PointLike, key: string | number): void;
