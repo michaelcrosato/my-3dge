@@ -29,7 +29,7 @@
 import { codeError, defineCodes, didYouMean } from '../core/log';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
 import { createSettings, type SettingValue } from '../core/settings';
-import { parseCameraCode } from '../gfx/cameras/codes';
+import { readCameraCode } from '../gfx/cameras/place';
 import { getScene } from '../sim/scene';
 
 /** The codes this module raises, with their fixes. */
@@ -101,7 +101,7 @@ export function parseRoutes(search: string, options: RouteOptions): Routes {
   const [cam, cam3] = [one('cam'), one('cam3')];
   if (cam !== null && cam3 !== null) bad('cam3', cam3, 'comes with cam', 'give one camera: ?cam=… or ?cam3=…');
   const code = cam !== null ? `cam=${cam}` : cam3 !== null ? `cam3=${cam3}` : undefined;
-  if (code !== undefined) parseCameraCode(code);
+  if (code !== undefined) readCameraCode(code);
   const replay = one('replay') ?? undefined;
   if (replay !== undefined && !/^[a-z0-9][a-z0-9-]*$/.test(replay)) {
     bad(

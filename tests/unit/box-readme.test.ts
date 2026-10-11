@@ -13,7 +13,7 @@ import { describe, expect, it } from 'vitest';
 import { createHeadless } from '../../engine';
 import { ROUTE_KEYS } from '../../engine/app/routes';
 import { registry } from '../../engine/core/registry';
-import { parseCameraCode } from '../../engine/gfx/cameras/codes';
+import { readCameraCode } from '../../engine/gfx/cameras/place';
 import { loadSettings } from '../../tools/cmd/set';
 import { commandNames, loadCommand, ROOT } from '../../tools/x';
 import '../../labs/box/scenes/room';
@@ -84,7 +84,7 @@ async function readmeProblems(text: string): Promise<string[]> {
       if (!registry.has('scene', span)) problems.push(`${where} names a scene nobody registers`);
     } else if (/^cam3?=/.test(span)) {
       try {
-        parseCameraCode(span);
+        readCameraCode(span);
       } catch (error) {
         problems.push(`${where} is no camera code: ${(error as Error).message}`);
       }

@@ -2,12 +2,13 @@
  * @file Unit tests for placing cameras (`engine/gfx/cameras/place.ts`), in Node with three.js's real cameras: a placed
  * camera looks along the pose's forward with the pose's up, has the pose's lens or frustum and WebGPU's depth range;
  * the pair places the camera of each projection and never makes another; `createCamera` makes the camera a code
- * names and switches from the camera before it; and bad aspects or projections are refused.
+ * names and switches from the camera before it, WP 3.9's chase, first-person and rail cameras included (WP 3.10);
+ * `readCameraCode` reads every code; and bad aspects or projections are refused.
  */
 import { OrthographicCamera, PerspectiveCamera, Vector3, WebGPUCoordinateSystem } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { VIEW_NAMES } from './codes';
-import { createCamera, createCameraPair, placeCamera } from './place';
+import { createCamera, createCameraPair, FOLLOW_CAMERAS, placeCamera, readCameraCode } from './place';
 import { makePose, poseForward, poseTarget, poseUp, type Vec3 } from './pose';
 import { createViewCamera } from './presets';
 
@@ -103,5 +104,26 @@ describe('createCamera', () => {
     // a code's own target wins over `from`
     const pinned = createCamera('cam=iso,0,1,1,0,1', { from });
     close(poseTarget(pinned.pose()), [1, 0, 1] as Vec3);
+  });
+
+  it("makes WP 3.9's cameras from their codes, which readCameraCode reads with every other", () => {
+    for (const type of FOLLOW_CAMERAS) {
+      const camera = createCamera(`cam3=${type}`);
+      expect([camera.type, readCameraCode(camera.code()).type]).toEqual([type, type]);
+    }
+    expect(readCameraCode('cam3=chase,90,-20,4')).toEqual({
+      type: 'chase',
+      yaw: Math.PI / 2,
+      pitch: (-20 * Math.PI) / 180,
+      distance: 4,
+    });
+    expect(readCameraCode('?cam=iso')).toEqual({ type: 'view', view: 'iso' });
+    expect(() => readCameraCode('cam3=chase,1')).toThrow(/GFX_BAD_CAMERA_CODE|takes 0 or 3 numbers/);
+    const from = createViewCamera({ view: 'threequarter' }).pose();
+    expect(createCamera('cam3=chase', { from }).yaw()).toBeCloseTo(from.yaw, 12); // a bare one keeps the heading
+    expect(createCamera('cam3=first', { from }).yaw()).toBeCloseTo(from.yaw, 12);
+    const chase = createCamera('cam3=chase,0,-20,5');
+    const pose = chase.update({ follow: [2, 0, 3] }, 1 / 60);
+    expect(pose.position[2]).toBeLessThan(3); // behind the hero, who faces +Z
   });
 });

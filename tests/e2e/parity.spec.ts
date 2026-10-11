@@ -1,10 +1,11 @@
 /**
  * @file The CPU-only gameplay contract (PLAN.md §6.7, §6.5 item 9, I-07; doctrine: WebGPU only), from Box 1 on: each
- * stage adds its scenes. In the scene's own page (labs/box), rendering as it steps:
- * 1. every box-1 replay gives its golden hashes, a frame drawn after each step (`__engine.replay`, the same player
- *    as `x replay --browser page`), and so it does while every camera preset and resolution mode is switched;
- * 2. live play recorded in the page (devices, a setting changed mid-run) replays in Node to the same hashes, so the
- *    renderer never wrote the sim;
+ * stage adds its scenes (`STAGES`: Box 1's room and its movers, Box 2's room with the hero). In the scene's own page
+ * (labs/box), rendering as it steps:
+ * 1. every replay of the stage gives its golden hashes, a frame drawn after each step (`__engine.replay`, the same
+ *    player as `x replay --browser page`), and so it does while every camera preset and resolution mode is switched;
+ * 2. live play recorded in the page (devices, a setting changed mid-run, the camera switched) replays in Node to the
+ *    same hashes, so the renderer never wrote the sim;
  * 3. turning every optional GPU feature off never changes the hash;
  * 4. the gameplay entities in view appear in the ID pass;
  * 5. a second box scene, made and recorded as the scene template and the stress-box skill say (in a scratch copy of
@@ -20,16 +21,80 @@ import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
 import type { Page } from '@playwright/test';
 import '../../labs/box/scenes/room';
+import '../../labs/box/scenes/room-hero';
 import { playReplay, type Replay } from '../../engine/sim/replay';
 import { CAMERA_3D, VIEW_NAMES } from '../../engine/gfx/cameras/codes';
+import { FOLLOW_CAMERAS } from '../../engine/gfx/cameras/place';
 import { RESOLUTION_MODES } from '../../engine/gfx/resolution';
 import { expect, test, type Harness } from './fixtures';
 
 const ROOT = join(import.meta.dirname, '..', '..');
-const REPLAYS = ['box-1-room', 'box-1-tuned'].map((name) => ({
+/** A replay file's name and text. */
+const replay = (name: string) => ({
   name,
   text: readFileSync(join(ROOT, `tests/replays/${name}.replay.json`), 'utf8'),
-}));
+});
+
+/** A box stage's scene and its replays, and live play to record in it (inside `evaluate`, ticking the virtual clock). */
+interface Stage {
+  stage: string;
+  scene: string;
+  /** The component its gameplay entities hold. */
+  component: string;
+  replays: { name: string; text: string }[];
+  /** Plays live in the page through the devices and `__engine`, from the first frame. */
+  live: () => void;
+}
+
+/** The stages and what each proves the contract with. */
+const STAGES: Stage[] = [
+  {
+    stage: 'Box 1',
+    scene: 'room',
+    component: 'pathMover',
+    replays: ['box-1-room', 'box-1-tuned'].map(replay),
+    live: () => {
+      const tick = (frames: number) => window.__clock.tick(frames);
+      tick(1); // the clock's origin
+      __engine.input.axis('move', [0, 1]);
+      tick(45);
+      __engine.set('box.room.speed', '2.5');
+      __engine.input.hold('jump');
+      tick(30);
+      __engine.camera.set('cam=topdown');
+      __engine.input.hold('jump', false);
+      __engine.input.axis('move', null);
+      tick(50);
+    },
+  },
+  {
+    stage: 'Box 2',
+    scene: 'room-hero',
+    component: 'actor',
+    replays: ['box-2-walk', 'box-2-dash', 'box-2-jump'].map(replay),
+    live: () => {
+      const tick = (frames: number) => window.__clock.tick(frames);
+      tick(1);
+      __engine.input.axis('move', [1, 0.3]);
+      tick(30);
+      __engine.input.press('dash');
+      tick(20);
+      __engine.camera.set('cam3=chase');
+      __engine.input.axis('move', [0, 1]);
+      tick(25);
+      __engine.input.hold('jump');
+      tick(15);
+      __engine.camera.set('cam3=first');
+      __engine.input.hold('jump', false);
+      tick(20);
+      __engine.input.axis('move', [-1, 0]);
+      __engine.camera.set('cam=side');
+      tick(30);
+      __engine.input.axis('move', null);
+      tick(20);
+    },
+  },
+];
 const goldens = (text: string) => (JSON.parse(text) as Replay).hashes['linux-x64'];
 /** Variables a test runner sets for its own workers; the `x` children start without them. */
 const RUNNER_VARIABLE = /^(VITEST|TEST_WORKER_INDEX$|TEST_PARALLEL_INDEX$|PW_TS_ESM|PW_TEST_SOURCE_TRANSFORM)/;
@@ -64,10 +129,14 @@ function scratchCopy(): string {
   return root;
 }
 
-/** Every camera preset: each classic view in both projections, then each 3D camera (engine/gfx/cameras/codes.ts). */
+/**
+ * Every camera preset: each classic view in both projections, then each 3D camera (engine/gfx/cameras/codes.ts), then
+ * the cameras that follow the hero (chase, first person, the depth rail; engine/gfx/cameras/place.ts).
+ */
 const CAMERA_PRESETS = [
   ...VIEW_NAMES.flatMap((view) => [`cam=${view}`, `cam=${view},persp`]),
   ...CAMERA_3D.map((type) => `cam3=${type}`),
+  ...FOLLOW_CAMERAS.map((type) => `cam3=${type}`),
 ];
 
 /** The page's engine, inside `evaluate`. */
@@ -95,82 +164,81 @@ async function open(page: Page, harness: Harness, query = '?scene=room') {
   await harness.assertWebGPU();
 }
 
-test.describe('the CPU-only gameplay contract, Box 1', () => {
-  test.setTimeout(240_000);
+for (const { stage, scene, component, replays, live } of STAGES) {
+  test.describe(`the CPU-only gameplay contract, ${stage}`, () => {
+    test.setTimeout(240_000);
 
-  test('each replay gives its golden hashes while the scene renders as it steps', async ({ page, harness }) => {
-    await open(page, harness);
-    for (const { name, text } of REPLAYS) {
-      const run = await play(page, text);
-      expect(run.hashes, name).toEqual(goldens(text));
-      expect([run.steps, run.frames], name).toEqual([600, 600]);
-    }
-  });
-
-  test('switching every camera preset and resolution mode during a replay leaves its hashes unchanged', async ({
-    page,
-    harness,
-  }) => {
-    await open(page, harness);
-    const views: [number, { cam?: string; set?: Record<string, unknown> }][] = [];
-    CAMERA_PRESETS.forEach((cam, i) => views.push([10 + i * 38, { cam }]));
-    RESOLUTION_MODES.forEach((mode, i) => views.push([25 + i * 170, { set: { 'gfx.resolution': mode } }]));
-    for (const { name, text } of REPLAYS) {
-      const run = await play(page, text, { views });
-      expect(run.hashes, name).toEqual(goldens(text));
-    }
-    const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
-    expect(advice).not.toContain('GFX_COLD_PIPELINE');
-  });
-
-  test('turning every optional GPU feature off never changes the hash', async ({ page, harness }) => {
-    const off = encodeURIComponent(
-      JSON.stringify(['feature:timestamps', 'feature:float32Filtering', 'feature:largeBuffers']),
-    );
-    await open(page, harness, `?scene=room&gfx.featuresOff=${off}`);
-    const downgrades = await page.evaluate(() => (__engine.info() as { downgrades: string[] }).downgrades);
-    expect(downgrades.length).toBeGreaterThan(0);
-    for (const { name, text } of REPLAYS) expect((await play(page, text)).hashes, name).toEqual(goldens(text));
-    harness.advice(); // the downgrades' advice is the point of this test
-  });
-
-  test('live play recorded in the page replays in Node to the same hashes', async ({ page, harness }) => {
-    await open(page, harness, '?scene=room&cam=threequarter');
-    const live = await page.evaluate(() => {
-      const tick = (frames: number) => window.__clock.tick(frames);
-      tick(1); // the clock's origin
-      __engine.input.axis('move', [0, 1]);
-      tick(45);
-      __engine.set('box.room.speed', '2.5');
-      __engine.input.hold('jump');
-      tick(30);
-      __engine.camera.set('cam=topdown');
-      __engine.input.hold('jump', false);
-      __engine.input.axis('move', null);
-      tick(50);
-      return { replay: __engine.input.record() as Replay, hash: __engine.hash() as string };
+    test('each replay gives its golden hashes while the scene renders as it steps', async ({ page, harness }) => {
+      await open(page, harness, `?scene=${scene}`);
+      for (const { name, text } of replays) {
+        const run = await play(page, text);
+        expect(run.hashes, name).toEqual(goldens(text));
+        expect([run.steps, run.frames], name).toEqual([600, 600]);
+      }
     });
-    expect(live.replay.steps).toBeGreaterThanOrEqual(120); // a step a frame, give or take the clock's rounding
-    expect(live.replay.inputs.some(([, change]) => change.set?.['box.room.speed'] === 2.5)).toBe(true);
-    expect(live.replay.inputs.some(([, change]) => Array.isArray(change.move))).toBe(true);
-    const node = playReplay(live.replay);
-    expect(node.hashes[String(live.replay.steps)]).toBe(live.hash);
-  });
 
-  test('the gameplay entities in view appear in the ID pass', async ({ page, harness }) => {
-    await open(page, harness, '?scene=room&cam=topdown');
-    await play(page, REPLAYS[0].text, { until: 300, draw: 0 });
-    const seen = await page.evaluate(async () => {
-      const shot = (await __engine.shot({ ids: true, metrics: false, thumbnail: false })) as {
-        ids: { visible: { entity?: number }[] };
-      };
-      const entities = (__engine.entities('pathMover') as { id: number }[]).map((e) => e.id);
-      return { entities, visible: shot.ids.visible.flatMap((e) => (e.entity === undefined ? [] : [e.entity])) };
+    test('switching every camera preset and resolution mode during a replay leaves its hashes unchanged', async ({
+      page,
+      harness,
+    }) => {
+      await open(page, harness, `?scene=${scene}`);
+      const views: [number, { cam?: string; set?: Record<string, unknown> }][] = [];
+      const every = Math.floor(560 / CAMERA_PRESETS.length);
+      CAMERA_PRESETS.forEach((cam, i) => views.push([10 + i * every, { cam }]));
+      RESOLUTION_MODES.forEach((mode, i) => views.push([25 + i * 170, { set: { 'gfx.resolution': mode } }]));
+      for (const { name, text } of replays) {
+        const run = await play(page, text, { views });
+        expect(run.hashes, name).toEqual(goldens(text));
+      }
+      const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
+      expect(advice).not.toContain('GFX_COLD_PIPELINE');
     });
-    expect(seen.entities).toEqual([1, 2, 3]);
-    expect(seen.visible.sort()).toEqual(seen.entities);
-  });
 
+    test('turning every optional GPU feature off never changes the hash', async ({ page, harness }) => {
+      const off = encodeURIComponent(
+        JSON.stringify(['feature:timestamps', 'feature:float32Filtering', 'feature:largeBuffers']),
+      );
+      await open(page, harness, `?scene=${scene}&gfx.featuresOff=${off}`);
+      const downgrades = await page.evaluate(() => (__engine.info() as { downgrades: string[] }).downgrades);
+      expect(downgrades.length).toBeGreaterThan(0);
+      for (const { name, text } of replays) expect((await play(page, text)).hashes, name).toEqual(goldens(text));
+      harness.advice(); // the downgrades' advice is the point of this test
+    });
+
+    test('live play recorded in the page replays in Node to the same hashes', async ({ page, harness }) => {
+      await open(page, harness, `?scene=${scene}&cam=threequarter`);
+      await page.evaluate(live);
+      const recorded = await page.evaluate(() => ({
+        replay: __engine.input.record() as Replay,
+        hash: __engine.hash() as string,
+      }));
+      expect(recorded.replay.steps).toBeGreaterThanOrEqual(120); // a step a frame, give or take the clock's rounding
+      expect(recorded.replay.scene).toBe(`box:${scene}`);
+      expect(recorded.replay.inputs.some(([, change]) => Array.isArray(change.move))).toBe(true);
+      if (scene === 'room') {
+        expect(recorded.replay.inputs.some(([, change]) => change.set?.['box.room.speed'] === 2.5)).toBe(true);
+      }
+      const node = playReplay(recorded.replay);
+      expect(node.hashes[String(recorded.replay.steps)]).toBe(recorded.hash);
+    });
+
+    test('the gameplay entities in view appear in the ID pass', async ({ page, harness }) => {
+      await open(page, harness, `?scene=${scene}&cam=topdown`);
+      await play(page, replays[0].text, { until: 300, draw: 0 });
+      const seen = await page.evaluate(async (kind) => {
+        const shot = (await __engine.shot({ ids: true, metrics: false, thumbnail: false })) as {
+          ids: { visible: { entity?: number }[] };
+        };
+        const entities = (__engine.entities(kind) as { id: number }[]).map((e) => e.id);
+        return { entities, visible: shot.ids.visible.flatMap((e) => (e.entity === undefined ? [] : [e.entity])) };
+      }, component);
+      expect(seen.entities.length).toBeGreaterThan(0);
+      expect(seen.visible.sort()).toEqual(seen.entities);
+    });
+  });
+}
+
+test.describe('the CPU-only gameplay contract, a new box scene', () => {
   test("a second box scene's replay gives its goldens in the page, which ?replay alone opens on that scene", async () => {
     test.setTimeout(300_000);
     const root = scratchCopy();
