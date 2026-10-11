@@ -105,21 +105,25 @@ export function addProp(physics: Physics, shape: Shape, spec: PropSpec = {}): nu
   });
 }
 
-/** A box prop, sized as BoxGeometry (full width, height, depth). */
-export const addBox = (physics: Physics, size: Vec3Like, spec?: PropSpec): number =>
-  addProp(physics, { type: 'box', size }, spec);
+/** Adds a box prop, sized as BoxGeometry (full width, height, depth); returns its id. */
+export function addBox(physics: Physics, size: Vec3Like, spec?: PropSpec): number {
+  return addProp(physics, { type: 'box', size }, spec);
+}
 
-/** A ball prop. */
-export const addBall = (physics: Physics, radius: number, spec?: PropSpec): number =>
-  addProp(physics, { type: 'ball', radius }, spec);
+/** Adds a ball prop; returns its id. */
+export function addBall(physics: Physics, radius: number, spec?: PropSpec): number {
+  return addProp(physics, { type: 'ball', radius }, spec);
+}
 
-/** A capsule prop, standing up: `height` is its straight middle, as CapsuleGeometry's. */
-export const addCapsule = (physics: Physics, radius: number, height: number, spec?: PropSpec): number =>
-  addProp(physics, { type: 'capsule', radius, height }, spec);
+/** Adds a capsule prop, standing up (`height` is its straight middle, as CapsuleGeometry's); returns its id. */
+export function addCapsule(physics: Physics, radius: number, height: number, spec?: PropSpec): number {
+  return addProp(physics, { type: 'capsule', radius, height }, spec);
+}
 
-/** A cylinder prop, standing up (a barrel). */
-export const addCylinder = (physics: Physics, radius: number, height: number, spec?: PropSpec): number =>
-  addProp(physics, { type: 'cylinder', radius, height }, spec);
+/** Adds a cylinder prop, standing up (a barrel); returns its id. */
+export function addCylinder(physics: Physics, radius: number, height: number, spec?: PropSpec): number {
+  return addProp(physics, { type: 'cylinder', radius, height }, spec);
+}
 
 /** Turns a body: an angular impulse (N·m·s) about its centre of mass, waking it. */
 export function applyTorqueImpulse(physics: Physics, id: number, torque: Vec3Like): void {
@@ -155,7 +159,7 @@ export function knock(physics: Physics, id: number, from: Vec3Like, options: Kno
   b.applyTorqueImpulse({ x: uz * m * TIP, y: spin * m * TWIST, z: -ux * m * TIP }, true); // about up × push
 }
 
-/** The fields of a mover, for its component: `defineComponent('mover', { description, fields: MOVER_FIELDS })`. */
+/** A mover's fields, for a scene's component: `defineComponent('platform', { description, fields: MOVER_FIELDS })`. */
 export const MOVER_FIELDS = defineSchema({
   body: { type: 'integer', default: -1, minimum: -1, description: 'The kinematic body it drives.' },
   origin: { type: 'array', items: { type: 'number' }, default: [0, 0, 0], unit: 'm', description: 'Where it starts.' },
@@ -274,7 +278,7 @@ export function sensorHits(physics: Physics, id: number): number[] {
   return [...hits].sort((x, y) => x - y);
 }
 
-/** The fields of a trigger, for its component: `defineComponent('trigger', { description, fields: TRIGGER_FIELDS })`. */
+/** A trigger's fields, for a scene's component: `defineComponent('zone', { description, fields: TRIGGER_FIELDS })`. */
 export const TRIGGER_FIELDS = defineSchema({
   body: { type: 'integer', default: -1, minimum: -1, description: 'Its sensor body (addSensor).' },
   inside: {
