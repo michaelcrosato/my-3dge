@@ -113,3 +113,18 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
 - `tests/e2e/parity.spec.ts`: replays may run longer than 600 steps.
 - Plan edit: WP-5.7's Owns adds `engine/sim/crowdBodies{,.test}.ts` and `engine/gfx/stageCrowd{,.test}.ts`, and
   extends `engine/gfx/stage.ts`, `engine/app/view.ts` and `engine/sim-api.ts` (accepted).
+
+## Amendment 7 (2026-10-11, WP-7.4): every frame through the post chain; props and crowds tagged
+
+- **Core change, app:** `engine/app/engine.ts`: `createEngine` declares the post settings (`definePostSettings`) before
+  it reads the URL, makes one chain (`createPost`) after the renderer, attaches it to the warm-up before the first
+  warm-up, and draws the warm-up, every frame and `drawing.shot` through `post.view`. On the default look
+  (`look:clean`) a frame is plain and draws the scene straight. `tests/baselines/perf/box-room.json` records the
+  chain's targets and warm-up pipelines as the new budgets (its reason says why).
+- **Core change, tools:** `tools/cmd/set.ts` hands `pageUrl` the raw pair, so the page URL is no longer encoded twice.
+- **Core change, gfx:** `engine/gfx/props.ts` tags the props' root as an object and `engine/gfx/puppets/crowd.ts`
+  tags its puppet and rig batches as characters (`setPart`, engine/gfx/post/mrt.ts), one outline group per drawer
+  (the root's id), not per batch page, so no ID outline falls between a body's own batches. Blob shadows stay
+  environment.
+- Plan edit: WP-7.4's Owns extends `engine/app/engine.ts`, `engine/gfx/props.ts`, `engine/gfx/puppets/crowd.ts` and
+  `tools/cmd/set.ts`, and names the kind `look`'s template `tools/templates/look/` (accepted).
