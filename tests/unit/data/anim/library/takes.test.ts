@@ -1,6 +1,6 @@
 /**
  * @file The takes the library's clips were cut from, and the CMU ledger's completeness (PLAN.md §10.1 and §10.3, WP
- * 8.6), rewritten from my-3d2dge's `tools/mocap-test.mjs`:
+ * 8.6), rewritten from `my-3d2dge:tools/mocap-test.mjs`:
  * - a clip cut from a capture database names the take and the seconds it was cut from, `TAKE FROM-TO`, where TAKE is
  *   CMU's (`13_29`) or 100STYLE's (`<Style>_<gait>`, the gait one of FW, BW, FR, BR, SW, SR and ID: `Old_FW`), the
  *   cut lasting the clip's length to within a frame at 30 fps (format 1's grid);

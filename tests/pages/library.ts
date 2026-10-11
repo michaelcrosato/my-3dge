@@ -1,6 +1,6 @@
 /**
  * @file The library page's module (tests/pages/library.html, PLAN.md WP 8.6): the clip library in the browser,
- * my-3d2dge's Mocap Lab check (`tools/mocap-test.mjs`) rewritten as a smoke test. The engine's renderer draws a lit
+ * the Mocap Lab check (`my-3d2dge:tools/mocap-test.mjs`) rewritten as a smoke test. The engine's renderer draws a lit
  * scene with two figures side by side, the mannequin (`body:mannequin` on `build:mannequin`, the Quaternius set's
  * own body, engine/gfx/puppets/bodies/mannequin.ts) on the left and the humanoid (`body:humanoid` on `build:heroic`)
  * on the right, each a rigid-skinned puppet posed by an animator whose clip layer plays the clip; a third puppet of

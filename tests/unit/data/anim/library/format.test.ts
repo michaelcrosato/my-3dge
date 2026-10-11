@@ -1,5 +1,5 @@
 /**
- * @file The library's format checks (PLAN.md §10.2, WP 8.6), rewritten from my-3d2dge's `tools/mocap-test.mjs` for
+ * @file The library's format checks (PLAN.md §10.2, WP 8.6), rewritten from `my-3d2dge:tools/mocap-test.mjs` for
  * every clip committed under `data/anim/sets/`, offline: each clip's text reads back to the same clip; mirrored twice,
  * it prints as the original (a twist of 0 may come back as −0, and a key's fields in another order); and every frame
  * at 30 fps decodes to finite points on its own source's rest body. Through the library, an edit swapped in plays (an

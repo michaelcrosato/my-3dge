@@ -1,9 +1,9 @@
 /**
  * @file T2 for the clip library (PLAN.md WP 8.6) on the library page (tests/pages/library.html): the browser smoke
- * test that replaces my-3d2dge's Mocap Lab check (`tools/mocap-test.mjs`). One clip of each of the ten sets plays on
- * the mannequin and on the humanoid (`build:heroic`) through the clip layer, at four moments from its start to its end:
- * each frame draws both figures (the ID pass sees each) and compiles no pipeline (the ID pass compiles its own), and
- * each pose is sound (`animCheck`: finite, every bone at its length, the feet on or over the floor, the sockets in
+ * test that replaces the Mocap Lab check (`my-3d2dge:tools/mocap-test.mjs`). One clip of each of the ten sets plays
+ * on the mannequin and on the humanoid (`build:heroic`) through the clip layer, at four moments from its start to its
+ * end: each frame draws both figures (the ID pass sees each) and compiles no pipeline (the ID pass compiles its own),
+ * and each pose is sound (`animCheck`: finite, every bone at its length, the feet on or over the floor, the sockets in
  * reach). Quaternius' `Sword_Attack` also plays as three.js's `AnimationClip` on an `AnimationMixer`, every bone within
  * 0.1 mm of the clip layer's FK, and draws. The page raises no error and no advice (the harness's trap).
  */

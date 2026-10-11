@@ -1,5 +1,5 @@
 /**
- * @file The library's provenance checks (PLAN.md §10.1, WP 8.6), rewritten from my-3d2dge's `tools/mocap-test.mjs` for
+ * @file The library's provenance checks (PLAN.md §10.1, WP 8.6), rewritten from `my-3d2dge:tools/mocap-test.mjs` for
  * every set committed under `data/anim/sets/`: each set carries its credit and its sources, each source with a label,
  * an origin, a license and a URL, and a rest body of finite measurements; each clip names one of its set's sources
  * (`src`), and a clip made from another set's clip names it (`orig`, `SET/Clip`), which that set has; and the import
@@ -58,7 +58,7 @@ describe('every clip', () => {
     expect(unknown).toEqual([]);
   });
 
-  it('made from another set’s clip names it as SET/Clip, a clip of that set: Mesh2Motion’s 84 Quaternius re-exports', () => {
+  it('made from another set’s clip names it, SET/Clip, which that set has: Mesh2Motion’s 84 re-exports', () => {
     const made = SETS.flatMap(([, set]) =>
       Object.entries(set.clips).flatMap(([name, clip]) =>
         clip.orig === undefined ? [] : [[set.set, name, clip.orig]],
