@@ -232,3 +232,12 @@ export type { ActorComponents } from './sim/actors';
 export { measureFeel } from './sim/actors';
 export type { FeelReport } from './physics/feel';
 export type { FeelOptions } from './sim/actors';
+
+// Levels v2 (WP 4.2): the hall's glyphs (gallery =, stairs ^, dais o, brazier t), ramps and daises, hull and cylinder
+// colliders, and the surface tag underfoot.
+export { surfaceAt } from './world/level/heights';
+export type { HullCollider } from './world/level/types';
+export type { CylinderCollider } from './world/level/types';
+export type { RampDescriptor } from './world/level/types';
+export type { DaisDescriptor } from './world/level/types';
+export type { Side } from './world/level/types';
