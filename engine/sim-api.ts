@@ -566,4 +566,3 @@ export type { DamageEvent } from './sim/damage';
 export type { DamageEvents } from './sim/damage';
 export { damage } from './sim/damage';
 export { requestHitStop } from './sim/damage';
-export { takeHitStop } from './sim/damage';

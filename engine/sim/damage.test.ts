@@ -3,14 +3,16 @@
  * as v²/2g says) into the corpse group, and a lighter launch leaves it standing; knockback is momentum the solver
  * carries into a neighbour; a dead or gone target takes no hit; the event's payload and the health it writes; a crowd
  * hit hands the frame clock one stop however many it strikes (the same stalled frames for 1 foe and for 12), and the
- * budget shortens the next; the longest stop asked waits for its host, outside the hash; a capture taken while a
- * corpse flies restores and continues exactly; bad arguments are refused, naming the field.
+ * budget shortens the next; the longest stop asked waits for its host, outside the hash, and only hosts take it (the
+ * public API cannot); a capture taken while a corpse flies restores and continues exactly; bad arguments are refused,
+ * naming the field.
  */
 import { describe, expect, it } from 'vitest';
 import { deserialize, serialize, type Canonical } from '../core/hash';
 import { createClock, createVirtualClock } from '../core/time';
 import { CROWD_AGENT_FIELDS, updateCrowd, type CrowdAgent } from '../physics/crowd';
 import { physicsOf } from '../physics/world';
+import * as simApi from '../sim-api';
 import { SpatialHash } from '../world/spatial';
 import type { WorldCapture } from './capture';
 import {
@@ -272,5 +274,11 @@ describe('hit-stop', () => {
     expect(w.hash()).toBe(hash);
     expect([takeHitStop(w), takeHitStop(w)]).toEqual([0.08, 0]);
     expect(takeHitStop(yard([[0, 1]]))).toBe(0); // per world
+  });
+
+  it('lets game code ask for a stop but never take one: the public API has requestHitStop, not takeHitStop', () => {
+    // A rule that took the outbox would see what its host took, which differs live and in a replay: the hash splits.
+    expect(Object.keys(simApi)).toContain('requestHitStop');
+    expect(Object.keys(simApi)).not.toContain('takeHitStop');
   });
 });

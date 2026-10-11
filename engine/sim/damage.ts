@@ -10,17 +10,17 @@
  * - **Bodies**: a crowd agent's (engine/physics/crowd.ts): `knockback` adds the push the same for every mass and the
  *   solver carries it into the crowd; `launch` throws it up; `killAgent` moves it to the group `corpse`, which the
  *   crowd walks through, and `updateCrowd` removes it later.
- * - **Hit-stop**: a sim decision that the frame clock carries out (engine/core/time.ts). `requestHitStop` keeps the
- *   longest stop asked in the step (emberdeep's freeze: stops never add up); the run's host takes it after the step
- *   (`takeHitStop`) and hands it to `clock.hitStop`, whose leaky budget shrinks the stops that follow closely. So a
- *   crowd hit stops time once however many it strikes. The clock is outside the hash: a stop changes how many steps
- *   a frame runs, never what a step does.
+ * - **Hit-stop**: a sim decision the frame clock carries out (engine/core/time.ts). `requestHitStop` keeps the longest
+ *   stop asked in the step (they never add up); the run's host takes it after the step (`takeHitStop`) for
+ *   `clock.hitStop`, whose leaky budget shrinks stops that follow closely, so a crowd hit stops time once however many
+ *   it strikes. The clock is outside the hash: a stop changes how many steps a frame runs, never what a step does.
  *
- * Invariants: a dead or absent target (health at 0 or below, a body no longer `alive`) takes no hit: `damage`
- * returns null and changes nothing. Everything a hit changes is in the target's components and its body, and the
- * events are plain data, so a capture restores it. The asked stop waits in a side table by world, an outbox the sim
- * never reads (no listener: a listener would join the world's captured schedule), so it never changes the hash. No
- * clock, no random stream: a rule that wants randomness draws from a named stream and passes the result in.
+ * Invariants: a dead or absent target (health at 0 or below, a body no longer `alive`) takes no hit: `damage` returns
+ * null and changes nothing. Everything a hit changes is in the target's components and its body, and the events are
+ * plain data, so a capture restores it. The asked stop waits in a side table by world, an outbox the sim never reads
+ * (no listener: a listener would join the world's captured schedule), so it never changes the hash. Only hosts take it:
+ * engine/sim-api.ts leaves `takeHitStop` out. No clock, no random stream: a rule that wants randomness draws from a
+ * named stream and passes the result in.
  *
  * Carried from `my-3d2dge:src/stress-world/20-sim.js:324-342` (`damageEnemy`: the knockback along the blow, the big
  * hit's launch, the kill launch and its 1.3 carry, the switch to the dead group, the freeze), the hit-stop through
@@ -163,8 +163,9 @@ export function requestHitStop<C extends object, E extends EventMap>(world: Worl
 }
 
 /**
- * For the run's host (the page's or a headless run's step, never sim code): the longest hit-stop asked since the
- * last take (s; 0 for none), forgotten once taken. Hand it to the frame clock after each step: `clock.hitStop(s)`.
+ * For the run's host (the page's or a headless run's step, never sim code, so not in engine/sim-api.ts): the longest
+ * hit-stop asked since the last take (s; 0 for none), forgotten once taken. Hand it to the frame clock after each
+ * step: `clock.hitStop(s)`.
  */
 export function takeHitStop<C extends object, E extends EventMap>(world: World<C, E>): number {
   const seconds = asked.get(world) ?? 0;
