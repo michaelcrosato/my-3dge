@@ -129,6 +129,30 @@ Reported by `validateClip` (engine/anim/clip/validate.ts) for a twist that chang
 - Fix: use only the fields {fields}
 - Registered in: [`engine/anim/clip/validate.ts` line 107](../engine/anim/clip/validate.ts)
 
+### ANIM_LAYER_BUILD
+
+- Message: `the clip layer measures paces and root motion on {layer}, but its animator plays {animator}`
+- Fix: make the layer with the animator's build: new ClipLayer({ library, build: animator.body.build })
+- Registered in: [`engine/anim/clip/library.ts` line 51](../engine/anim/clip/library.ts)
+
+Raised by the clip layer (engine/anim/clip/layer.ts) when it poses an animator of another build. The sim’s step measures walk paces and root motion on the layer’s own build, so on another one they would be off by the hip-height ratio and the feet would slide.
+
+### ANIM_NO_REST
+
+- Message: `set {set} has no rest body for clip {name} (source {src})`
+- Fix: give the set a sources entry for that source, with the rest body its importer measured
+- Registered in: [`engine/anim/clip/library.ts` line 46](../engine/anim/clip/library.ts)
+
+Raised by the clip library (engine/anim/clip/library.ts) when a clip names a source the set lacks, or the set has no sources: a clip decodes only on the rest body it was measured on.
+
+### ANIM_UNKNOWN_CLIP
+
+- Message: `set {set} has no clip {name}{suggestion}`
+- Fix: use one of its clips (library.names lists them; a page's library may need that set loaded)
+- Registered in: [`engine/anim/clip/library.ts` line 41](../engine/anim/clip/library.ts)
+
+Raised by the clip library and the clip layer (engine/anim/clip/library.ts, layer.ts) for a clip name the loaded sets lack. The message names the closest names.
+
 ### ANIM_UNKNOWN_JOINT
 
 - Message: `{name} is not a {what} of the humanoid skeleton{suggestion}`
@@ -670,6 +694,14 @@ Advice from `createLevelMeshes` (engine/gfx/level/meshes.ts) when a glyph names 
 - Registered in: [`engine/gfx/features.ts` line 46](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device has no `float32-filterable`: three.js r182 then samples 32-bit float textures unfiltered.
+
+### GFX_NO_MANNEQUIN
+
+- Message: `set {set} has no {missing} to make the mannequin from`
+- Fix: pass the joined quaternius set (data/anim/sets/quaternius/), the only one with a body
+- Registered in: [`engine/gfx/puppets/bodies/mannequin.ts` line 40](../engine/gfx/puppets/bodies/mannequin.ts)
+
+Raised by `defineMannequin` (engine/gfx/puppets/bodies/mannequin.ts) for a set without a `body` or without the rest body it names.
 
 ### GFX_NO_TIMESTAMPS
 
