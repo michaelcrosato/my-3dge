@@ -2553,7 +2553,7 @@ A WP is done only when all of these hold:
 - **Done when:**
   - In the hall, the flow field reaches every walkable tile from the spawn, and one-way ledges are respected.
   - With the hero's jump reach as the climb limit, the hall's grid reaches every gallery from the spawn, and a test ledge above the reach is not walkable.
-  - 1,000 agents' queries stay within the budget recorded here.
+  - 1,000 agents' queries stay within the budget recorded in `tests/baselines/perf/nav-1000.json` (6 ms per step).
 - **Verify:** `npm test -- engine/world/nav engine/world/spatial && node x perf fixtures/scenes/nav-1000 --budget`
 
 #### WP-4.4 Level meshes (v2) and cutaway
@@ -3968,7 +3968,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | **G3** | **Gate: Box 2** | | todo | | |
 | 4.1 | Bodies and props physics | P | todo | | |
 | 4.2 | Level compiler (v2): the hall | W | done | 29a6370 (#5) | v2 glyphs = ^ o t (gallery 1 m, ramp stairs rising toward their gallery, octagonal dais, brazier cylinder plus torch spot); floorHeight/topHeight/surfaceAt; hull and cylinder descriptors; LEVEL_BAD_RAMP and LEVEL_BAD_DAIS; one-way reach checked along each step (walk.ts); labs/box/levels/hall.txt; calls: mesh bottom 0 for box/hull glyphs, geo-QA exceptions for level:hall in qa-geo-hall.json until WP 4.4, fixture goldens re-recorded (only new fields); core proposal accepted: hull shape in engine/physics (ADR-0020 amendment 4), hall hulls probed within 1 cm; no escalations; deferred: hall drawn in WP 4.4; not verified: hull determinism in Chromium beyond physics-40 |
-| 4.3 | Navigation and spatial queries | W | todo | | |
+| 4.3 | Navigation and spatial queries | W | done | 09984a3 (#6) | engine/world/nav.ts: NavGrid with 8 steps under a climb limit (crowd's NAV_CLIMB or the hero's reach), A* with octile estimate, line-of-sight smoothing and index ties, LRU-cached multi-goal flow fields with reach, 3-tile look-ahead; engine/world/spatial.ts: typed-array SpatialHash with query and nearest; fixtures/scenes/nav-1000 with budget (step 6 ms); x sim --map writes out/sim/<id>/map.txt; calls: corner rule covers ledges, lineOfSight keeps a 0.3 m body radius, hash query-into-Int32Array plus nearest, hall.txt copied into hall.ts with a drift test, --map climb from --feel's reach; no escalations; no deferred proofs; not verified: nav-1000 determinism in Chromium |
 | 4.4 | Level meshes (v2) and cutaway | R | todo | | |
 | 4.5 | Props as data | R | todo | | |
 | 4.6 | Box 3: the hall | B | todo | | |

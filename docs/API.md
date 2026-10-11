@@ -127,6 +127,8 @@ game agent's manual.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): the highest flat floor, ramp or dais there; 0 outside the map.
+- `FlowField` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): Every tile's walking distance to a goal set: walk downhill to get there.
+- `FlowOptions` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `flowField` takes.
 - `FOOT_PLANT` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `footPlant`'s tuning, in metres and seconds.
 - `FootLock` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
 - `footPlant` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
@@ -156,6 +158,7 @@ game agent's manual.
 - `Ground` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): The ground under a point: its height, its normal and the body it belongs to.
 - `GroundDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The slab under the whole level: the ground's collider, one tile wider than the map all round, 1 m deep.
 - `GroundHit` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Where a ground probe hit, in world space: the `point`, and the surface's unit `normal` there.
+- `GroundPoint` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): A point on the ground (m): x east, z south.
 - `GroundProbe` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Casts a ray straight down from `origin`, at most `distance` metres; on a hit it fills `hit` and returns true.
 - `GroupName` (type from [`engine/physics/groups.ts`](../engine/physics/groups.ts)): A collision group's name.
 - `handTo` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `twoBoneRot` for the arm of `hand`, bringing its weapon socket (`weaponL`, `weaponR`) to `grip`: returns how far the socket stays from it (0 in reach).
@@ -211,6 +214,7 @@ game agent's manual.
 - `listActionMaps` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Every action map, sorted by id.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
 - `ListenerPose` (interface from [`engine/audio/runtime/spatial.ts`](../engine/audio/runtime/spatial.ts)): Where the listener is and where it looks: the engine's camera pose (engine/gfx/cameras/pose.ts) satisfies it.
+- `LOOK_AHEAD` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many tiles downhill `FlowField.direction` looks ahead (shardfall's 3).
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
 - `MaskName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A preset bone mask's name.
 - `MASKS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The preset bone masks.
@@ -225,6 +229,12 @@ game agent's manual.
 - `MixerInfo` (interface from [`engine/audio/runtime/mixer.ts`](../engine/audio/runtime/mixer.ts)): What `info()` reports.
 - `MusicChange` (interface from [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)): When and how a change happens.
 - `MusicPosition` (interface from [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)): Where the music is.
+- `NAV_CLIMB` (const from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): The default climb limit between neighbouring tiles' floors (m): the prototype's `CLIMB`, 3.5 units.
+- `NAV_DIRECTIONS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): The 8 neighbours, as [columns east, rows south]: east, west, south, north, then the diagonals (bit k of a step).
+- `NAV_GRID_FIELDS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): The options of `new NavGrid(level, options)`.
+- `NavGrid` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): The walkable grid of a compiled level, and the searches over it (see the file comment).
+- `NavGridOptions` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
+- `NEAREST_RINGS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
 - `OverlapOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): An overlap's options.
 - `palette` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A palette's hex colours as sRGB bytes; throws `GFX_EMPTY_PALETTE` naming `what` when it has none.
 - `parseRoutes` (function from [`engine/app/routes.ts`](../engine/app/routes.ts)): Reads a page's query (see the file comment).
@@ -320,6 +330,9 @@ game agent's manual.
 - `songVoices` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One pass of the song as a voice list, track by track: what `renderSong` renders.
 - `Sound` (interface from [`engine/audio/runtime/sound.ts`](../engine/audio/runtime/sound.ts)): A sound playing.
 - `SoundDef` (type from [`engine/audio/dsp/voice.ts`](../engine/audio/dsp/voice.ts)): A sound: one voice, or several played together.
+- `SPATIAL_HASH_FIELDS` (const from [`engine/world/spatial.ts`](../engine/world/spatial.ts)): The options of `new SpatialHash(options)`.
+- `SpatialHash` (class from [`engine/world/spatial.ts`](../engine/world/spatial.ts)): Points on the ground, hashed by cell (see the file comment).
+- `SpatialHashOptions` (type from [`engine/world/spatial.ts`](../engine/world/spatial.ts)): What `new SpatialHash` takes: each field of `SPATIAL_HASH_FIELDS`, optional.
 - `spawnActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
 - `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
@@ -447,6 +460,8 @@ game agent's manual.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): the highest flat floor, ramp or dais there; 0 outside the map.
+- `FlowField` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): Every tile's walking distance to a goal set: walk downhill to get there.
+- `FlowOptions` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `flowField` takes.
 - `FOOT_PLANT` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `footPlant`'s tuning, in metres and seconds.
 - `FootLock` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
 - `footPlant` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
@@ -462,6 +477,7 @@ game agent's manual.
 - `Ground` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): The ground under a point: its height, its normal and the body it belongs to.
 - `GroundDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The slab under the whole level: the ground's collider, one tile wider than the map all round, 1 m deep.
 - `GroundHit` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Where a ground probe hit, in world space: the `point`, and the surface's unit `normal` there.
+- `GroundPoint` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): A point on the ground (m): x east, z south.
 - `GroundProbe` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Casts a ray straight down from `origin`, at most `distance` metres; on a hit it fills `hit` and returns true.
 - `GroupName` (type from [`engine/physics/groups.ts`](../engine/physics/groups.ts)): A collision group's name.
 - `handTo` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `twoBoneRot` for the arm of `hand`, bringing its weapon socket (`weaponL`, `weaponR`) to `grip`: returns how far the socket stays from it (0 in reach).
@@ -499,6 +515,7 @@ game agent's manual.
 - `LIMBS` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The skeleton's four limbs, by their end joint.
 - `LimbSide` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A side of the body.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
+- `LOOK_AHEAD` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many tiles downhill `FlowField.direction` looks ahead (shardfall's 3).
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
 - `MaskName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A preset bone mask's name.
 - `MASKS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The preset bone masks.
@@ -506,6 +523,12 @@ game agent's manual.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
 - `measureFeel` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
+- `NAV_CLIMB` (const from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): The default climb limit between neighbouring tiles' floors (m): the prototype's `CLIMB`, 3.5 units.
+- `NAV_DIRECTIONS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): The 8 neighbours, as [columns east, rows south]: east, west, south, north, then the diagonals (bit k of a step).
+- `NAV_GRID_FIELDS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): The options of `new NavGrid(level, options)`.
+- `NavGrid` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): The walkable grid of a compiled level, and the searches over it (see the file comment).
+- `NavGridOptions` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
+- `NEAREST_RINGS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
 - `OverlapOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): An overlap's options.
 - `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
 - `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
@@ -556,6 +579,9 @@ game agent's manual.
 - `socketPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of `socket`: it rides its joint, so it turns with it.
 - `SOCKETS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The sockets: attachment points that turn with their joint (`SOCKET_JOINTS`).
 - `solidAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): Whether (x, z) is in a solid tile (a wall, a pillar, a low wall, a brazier), or outside the map.
+- `SPATIAL_HASH_FIELDS` (const from [`engine/world/spatial.ts`](../engine/world/spatial.ts)): The options of `new SpatialHash(options)`.
+- `SpatialHash` (class from [`engine/world/spatial.ts`](../engine/world/spatial.ts)): Points on the ground, hashed by cell (see the file comment).
+- `SpatialHashOptions` (type from [`engine/world/spatial.ts`](../engine/world/spatial.ts)): What `new SpatialHash` takes: each field of `SPATIAL_HASH_FIELDS`, optional.
 - `spawnActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
 - `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
@@ -2416,6 +2442,24 @@ For the agents who maintain the engine.
 - `WalkArea` (interface): An area of tiles that reach each other both ways: its first tile in reading order and its tile count.
 - `walkAreas` (function): The areas of `level`'s walkable tiles under the climb limit, and the area index of every tile (−1 if unwalkable).
 
+### [`engine/world/nav.ts`](../engine/world/nav.ts)
+
+- `FlowField` (class): Every tile's walking distance to a goal set: walk downhill to get there.
+- `FlowOptions` (interface): What `flowField` takes.
+- `GroundPoint` (type): A point on the ground (m): x east, z south.
+- `LOOK_AHEAD` (const): How many tiles downhill `FlowField.direction` looks ahead (shardfall's 3).
+- `NAV_DIRECTIONS` (const): The 8 neighbours, as [columns east, rows south]: east, west, south, north, then the diagonals (bit k of a step).
+- `NAV_GRID_FIELDS` (const): The options of `new NavGrid(level, options)`.
+- `NavGrid` (class): The walkable grid of a compiled level, and the searches over it (see the file comment).
+- `NavGridOptions` (type): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
+- `NEAREST_RINGS` (const): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
+
+### [`engine/world/spatial.ts`](../engine/world/spatial.ts)
+
+- `SPATIAL_HASH_FIELDS` (const): The options of `new SpatialHash(options)`.
+- `SpatialHash` (class): Points on the ground, hashed by cell (see the file comment).
+- `SpatialHashOptions` (type): What `new SpatialHash` takes: each field of `SPATIAL_HASH_FIELDS`, optional.
+
 ### [`eslint.config.js`](../eslint.config.js)
 
 - `configure` (function): Builds the whole config; `switches` defaults to `SWITCHES` (tests turn every switch on).
@@ -2858,11 +2902,13 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/sim.ts`](../tools/cmd/sim.ts)
 
-- `default` (default): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene> [--scene id] [--steps n] [--seed s] [--set key=value…] [--feel]`.
+- `default` (default): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene> [--scene id] [--steps n] [--seed s] [--set key=value…] [--feel] [--map]`.
 - `feelLines` (function): The feel report as two lines of text, rounded for reading (the metrics keep every digit).
 - `feelOf` (function): The feel meter's report for a run's first player actor (the inspector member `feel`); a usage error without one.
 - `HashedView` (interface): One run's view of a step, with the hash its runtime gave.
+- `levelOf` (function): The level a scene loads, for `--map`: registered by its module, else read from its lab's or the fixtures' levels.
 - `loadScene` (function): Imports a scene module and picks its scene: `id`, else the one scene it exports.
+- `navMap` (function): The text map of `level`'s nav grid under `climb` (the crowd's by default), as `--map` writes it: a key, then one row per map row, and an A* route from the hero's spawn (else the first spawn) to the tile it reaches in the most steps.
 - `nodeRuntime` (function): Replays in Node, in this process, on `registry` (the shared one by default): `x replay`'s first runtime.
 - `parseSets` (function): `key=value` pairs as path → text; throws `UsageError` for a pair without `=`.
 - `replayText` (function): A replay as readable text: its keys in file order, one change-point per line, each platform's hashes one step per line, numbers exact (`-0` kept, engine/core/hash.ts `serialize`).
