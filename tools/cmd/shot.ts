@@ -44,15 +44,8 @@ import { decodePng } from '../lib/png';
 import { targetSlug, type Artifact, type Finding, type Report } from '../lib/report';
 import { startVite } from '../lib/vite';
 import { UsageError, type Command, type CommandResult } from '../x';
-import {
-  findSession,
-  pageErrorFinding,
-  pageFailures,
-  shootInSession,
-  waitReady,
-  type Opened,
-  type Signals,
-} from './inspect';
+import { waitReady, type Signals } from '../lib/page';
+import { findSession, pageErrorFinding, pageFailures, shootInSession, type Opened } from './inspect';
 
 /** How long a page may take to signal ready or an error, in milliseconds. */
 export const READY_TIMEOUT_MS = 30_000;

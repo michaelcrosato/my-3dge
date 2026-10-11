@@ -11,14 +11,14 @@
  *
  * The session answers on 127.0.0.1 with JSON (`callSession`): `status`, `eval` (an expression, awaited, its value as
  * JSON), `dump` (`__engine.scene.dump` and the state), `set` (`__engine.set`), `goto` and `shot` (`__engine.shot` on
- * the open page when it shows the URL asked, else in a new tab of the same browser), and `stop`. The helpers here
- * (`readSignals`, `waitReady`, `labPageOf`) are shared with `x shot` and `x replay --browser page`.
+ * the open page when it shows the URL asked, else in a new tab of the same browser), and `stop`. `shootInSession` and
+ * `pageFailures` are `x shot`'s; tools/lib/page.ts has the page helpers.
  *
  * Usage: node x inspect [--page p] [--scene s] [--cam code] [--set k=v…] [--stop] [--serve]. Exit 0 when the session
  * is up (or stopped), 1 when the page failed to start, 2 on a usage error.
  *
  * @example
- * labPageOf(process.cwd(), 'labs/box/scenes/room.ts'); // 'labs/box/'
+ * reloadLines({ reloaded: '12:00:01' }); // ['the page reloaded after a change (12:00:01) since the last call']
  * @see tools/cmd/inspect.test.ts
  * @see tests/e2e/box.spec.ts
  */
@@ -34,24 +34,19 @@ import {
   VIEWPORT,
   type ConsoleRecord,
   type PageError,
-  type PageWatch,
 } from '../lib/browser';
 import type { Finding } from '../lib/report';
 import type { ShotJson, ShotOptions } from '../../engine/gfx/shot';
+import { readSignals, READY_MS, waitReady, type PageEngine, type Signals } from '../lib/page';
 import { freePort, startVite } from '../lib/vite';
 import { UsageError, type Command, type CommandResult } from '../x';
 import { pageUrl, resolvePage } from './shot';
 
-/** Where a running session says where it listens. */
-export const SESSION_FILE = join('out', 'inspect', 'session.json');
-/** How long a page may take to signal ready or an error, ms. */
-export const READY_MS = 60_000;
-
-/** `window.__engine` as the session calls it in the page. */
-type PageEngine = Record<string, (...args: unknown[]) => unknown> & { scene: { dump(options: object): string } };
 /** The page's engine, inside `evaluate`. */
 declare const __engine: PageEngine;
 
+/** Where a running session says where it listens. */
+export const SESSION_FILE = join('out', 'inspect', 'session.json');
 /** What `session.json` holds. */
 export interface SessionInfo {
   pid: number;
@@ -61,49 +56,6 @@ export interface SessionInfo {
   /** The page path open now: `labs/box/?scene=room`. */
   page: string;
   ready: boolean;
-}
-
-/** A page's ready-or-error signal (PLAN.md §8.3), read once. */
-export interface Signals {
-  ready: boolean;
-  errors: string[];
-  info?: Record<string, unknown>;
-  shoots: boolean;
-}
-
-/** Reads `window.__engine`'s signal in `tab`; undefined before the page publishes one. */
-export function readSignals(tab: Page): Promise<Signals | undefined> {
-  return tab.evaluate(() => {
-    const engine = (window as unknown as { __engine?: Record<string, unknown> }).__engine;
-    if (!engine) return undefined;
-    const errors = ((engine.errors ?? []) as { code?: string; message?: string; fix?: string }[]).map(
-      (e) => `${e.code ?? 'ERROR'}: ${e.message ?? ''}${e.fix ? ` (fix: ${e.fix})` : ''}`,
-    );
-    const info = typeof engine.info === 'function' ? (engine.info as () => Record<string, unknown>)() : undefined;
-    return { ready: engine.ready === true, errors, info, shoots: typeof engine.shot === 'function' };
-  });
-}
-
-/** Waits until `tab` signals ready or an error, or throws an uncaught error, or `ms` pass; returns the last signal. */
-export async function waitReady(tab: Page, watch: PageWatch, ms = READY_MS): Promise<Signals | undefined> {
-  const deadline = Date.now() + ms;
-  for (;;) {
-    const signals = await readSignals(tab).catch(() => undefined);
-    const thrown = await watch.errors();
-    if (signals?.ready || signals?.errors.length || thrown.length || Date.now() > deadline) return signals;
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  }
-}
-
-/** The page that draws the scenes of a module under `labs/<name>/scenes/`: `labs/<name>/`; throws for other modules. */
-export function labPageOf(root: string, file: string): string {
-  const lab = /^labs\/([^/]+)\/scenes\//.exec(file)?.[1];
-  if (!lab || !existsSync(join(root, 'labs', lab, 'index.html'))) {
-    throw new Error(
-      `${file} has no page: a scene's page is labs/<name>/ for a module under labs/<name>/scenes/ (use --browser sim for the others)`,
-    );
-  }
-  return `labs/${lab}/`;
 }
 
 /** The running session's info, or null; a session whose process is gone is cleared. */
