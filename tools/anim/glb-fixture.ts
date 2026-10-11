@@ -8,7 +8,8 @@
  * reader's guards meet them through the whole importer.
  *
  * @example
- * const library = readGlbLibrary(riggedGlb(), 'test.glb', 30); // tools/anim/glb-library.ts
+ * import { readGlbLibrary } from './glb-library';
+ * const library = readGlbLibrary(riggedGlb(), 'test.glb', 30);
  * library.clips.Wave_Loop.n; // 31
  * @see tools/anim/glb-library.test.ts
  */
