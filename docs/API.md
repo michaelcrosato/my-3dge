@@ -93,6 +93,7 @@ game agent's manual.
 - `createAudio` (function from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): Makes a page's sound (see the file comment).
 - `createBindings` (function from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Makes the bindings of the action map `map` (an id or an entry), loading saved changes from `options.storage`.
 - `createCharacter` (function from [`engine/physics/character.ts`](../engine/physics/character.ts)): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
+- `createCutaway` (function from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): Gives `meshes`' cutting parts their twins (see the file comment).
 - `createEngine` (function from [`engine/app/engine.ts`](../engine/app/engine.ts)): Starts the engine in a page (see the file comment); resolves once it is up or has failed.
 - `createFootPlantState` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A new, unlocked `FootPlantState`.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
@@ -105,6 +106,10 @@ game agent's manual.
 - `createVirtualDevice` (function from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): Makes a virtual device, holding nothing.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
+- `Cutaway` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): A level's cutaway (see the file comment).
+- `CutawayReport` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): How many of each cutting part's pieces are cut, after an `update`.
+- `CutTarget` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): What the cutaway decides over: the pieces of one part, how they cut, and their heights (m).
+- `CutWhen` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars).
 - `CylinderCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An upright cylinder collider (Rapier's cylinder, three.js's CylinderGeometry): one per tile, at its centre.
 - `DaisDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A dais: an octagonal frustum (faces toward the axes and the diagonals) standing on a block of a dais glyph's tiles.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
@@ -207,16 +212,17 @@ game agent's manual.
 - `LayerSlot` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A slot that takes layers.
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
 - `LEVEL_FORMAT` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level.
-- `LEVEL_RECIPES` (const from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): The engine's v1 recipes, by the name a glyph's `mesh` gives.
-- `LevelCell` (interface from [`engine/gfx/level/cells.ts`](../engine/gfx/level/cells.ts)): One piece of a block mesh: its tiles, its centre on the ground (m), and the way it faces out ([x, z], length 1).
+- `LEVEL_RECIPES` (const from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): The engine's recipes, by the name a glyph's `mesh` gives.
+- `LevelCell` (interface from [`engine/gfx/level/cells.ts`](../engine/gfx/level/cells.ts)): One piece of a block mesh: its tiles, its centre on the ground (m), its size across (m), and the way it faces out ([x, z], length 1).
+- `LevelCut` (interface from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): How the cutaway cuts a recipe's pieces: to a twin `height` metres tall, `when` the view needs it.
 - `LevelEntry` (type from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): A `level` entry: a level's text and where it came from.
 - `LevelGlyph` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
 - `LevelMeshes` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): A level's meshes (see the file comment).
 - `LevelMeshesOptions` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): What `createLevelMeshes` needs: where materials come from, and optionally more recipes and a log.
-- `LevelMeshPart` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): One level mesh: its descriptor's recipe and glyphs, the mesh, and for a block one cell per instance.
+- `LevelMeshPart` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): One level mesh: its descriptor's recipe and glyphs, the mesh, and for an instanced shape one cell per instance.
 - `LevelProblem` (interface from [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
-- `LevelRecipe` (interface from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): A level mesh recipe: its shape, materials and shadows.
-- `LevelShape` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): How a recipe draws its pieces: see the file comment.
+- `LevelRecipe` (interface from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): A level mesh recipe: its shape, materials, shadows and cut.
+- `LevelShape` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): How a recipe draws its pieces, with what each material slot draws: - `surface`: one welded surface over the pieces at their bottom height, facing up, UVs in metres along X and -Z (one draw call): the floor.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
 - `LightSpot` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A light spot: a tile's centre, `lightHeight` above its top.
 - `Limb` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A two-bone limb: the joint it hangs from (`upper`: hip or shoulder), its hinge (`middle`: knee or elbow), and the hinge's axis in the upper joint's frame (`hinge`; a positive turn bends the shin back and the forearm forward).
@@ -253,6 +259,7 @@ game agent's manual.
 - `OverlapOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): An overlap's options.
 - `palette` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A palette's hex colours as sRGB bytes; throws `GFX_EMPTY_PALETTE` naming `what` when it has none.
 - `parseRoutes` (function from [`engine/app/routes.ts`](../engine/app/routes.ts)): Reads a page's query (see the file comment).
+- `PartCut` (interface from [`engine/gfx/level/shapes.ts`](../engine/gfx/level/shapes.ts)): How the cutaway cuts a part: its recipe's cut, and the geometry of its twin (a new one each call).
 - `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
 - `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
 - `Physics` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A physics world: bodies, stepping, queries, and the sim's physics hook (`state`, `capture`, `restore`).
@@ -263,6 +270,7 @@ game agent's manual.
 - `PillarOptions` (interface from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's footprint and height in metres.
 - `PillarPart` (interface from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): One part of a pillar: a square slab `width` across, from height `from` to `to` (m).
 - `pillarParts` (function from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's parts, bottom to top (see the file comment).
+- `planCutaway` (function from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): For each target, for each cell: whether `pose`, looking at `focus`, cuts it.
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `PlayIntoOptions` (interface from [`engine/app/playback.ts`](../engine/app/playback.ts)): How `playInto` plays.
 - `PlayOptions` (interface from [`engine/audio/runtime/sound.ts`](../engine/audio/runtime/sound.ts)): How `play` plays one effect.
@@ -1630,6 +1638,21 @@ For the agents who maintain the engine.
 - `readCaps` (function): The report of `device` made from `adapter`: identity, features, limits.
 - `requestDevice` (function): A device with every feature `adapter` offers and its best limits; when the adapter refuses those limits, one with the default limits, after advice `GFX_DEFAULT_LIMITS`.
 
+### [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)
+
+- `AIM_STEEP` (const): Looking down at least this steeply (rad, 60°), only the hero's head and feet are aimed at, not the floor round him.
+- `createCutaway` (function): Gives `meshes`' cutting parts their twins (see the file comment).
+- `CUT_AIMS` (const): The points aimed at (m): the head and the feet above the focus, and the floor this far round it.
+- `CUT_FACING` (const): A wall is cut when the cosine between its outward direction and the way to the camera is above this.
+- `CUT_MARGIN` (const): How far round a blocking piece's box a line of sight still counts as through it (m): 4 prototype units.
+- `CUT_STEEP` (const): Looking down steeper than this (rad, 85°), the camera sees over every wall: none is cut.
+- `Cutaway` (interface): A level's cutaway (see the file comment).
+- `cutawayAims` (function): The points the camera must see, round `focus`, for a camera at `pitch` (rad): the hero's head and feet, and unless it looks down `AIM_STEEP` or more, the floor `CUT_AIMS.around` metres round him, where the fight is.
+- `CutawayReport` (interface): How many of each cutting part's pieces are cut, after an `update`.
+- `CutTarget` (interface): What the cutaway decides over: the pieces of one part, how they cut, and their heights (m).
+- `planCutaway` (function): For each target, for each cell: whether `pose`, looking at `focus`, cuts it.
+- `segmentHitsBox` (function): Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`).
+
 ### [`engine/gfx/features.ts`](../engine/gfx/features.ts)
 
 - `defineFeatures` (function): Declares the kind `feature`, the built-in features and `gfx.featuresOff` on `registry`, unless it has them.
@@ -1737,10 +1760,27 @@ For the agents who maintain the engine.
 - `UnseenReason` (type): Why a drawable object covers no pixel.
 - `withIdScene` (function): Runs `draw(root)` with `root` a stand-in for `scene` that draws the ID pass: it shares the scene's children, has no background, and overrides every material with the ID material reading `table`; the clear colour is transparent black meanwhile.
 
+### [`engine/gfx/level/brazier.ts`](../engine/gfx/level/brazier.ts)
+
+- `brazierGeometry` (function): The stands on `pieces` of `level`, from `bottom` to `top` (m), and the ground under them (see the file comment).
+
 ### [`engine/gfx/level/cells.ts`](../engine/gfx/level/cells.ts)
 
-- `LevelCell` (interface): One piece of a block mesh: its tiles, its centre on the ground (m), and the way it faces out ([x, z], length 1).
+- `LevelCell` (interface): One piece of a block mesh: its tiles, its centre on the ground (m), its size across (m), and the way it faces out ([x, z], length 1).
 - `levelCells` (function): The cells of `pieces` in `level`, standing at height `bottom` (see the file comment).
+
+### [`engine/gfx/level/dais.ts`](../engine/gfx/level/dais.ts)
+
+- `daisGeometry` (function): The daises `daises`, and the ground at `ground` over `pieces` (see the file comment).
+
+### [`engine/gfx/level/faces.ts`](../engine/gfx/level/faces.ts)
+
+- `Ground` (type): A point on the ground (m): `[x, z]`.
+- `polygon` (function): Writes the flat polygon `points` (a fan from the first) with `uvs`, facing `outward`: its points are taken in the other order when they wind against it.
+- `slotted` (function): Makes an empty set of slot writers (see the file comment).
+- `Slotted` (interface): One writer per material slot, joined by `build` into one geometry with a draw group per slot used.
+- `tread` (function): Writes the level rectangle `[x0, z0, x1, z1]` at height `y`, facing up.
+- `upright` (function): Writes the upright quad over the ground edge `a` → `b` from height `y0` to `y1`.
 
 ### [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)
 
@@ -1748,14 +1788,35 @@ For the agents who maintain the engine.
 - `LEVEL_MESH_CODES` (const): The codes the level meshes raise, with their fixes.
 - `LevelMeshes` (interface): A level's meshes (see the file comment).
 - `LevelMeshesOptions` (interface): What `createLevelMeshes` needs: where materials come from, and optionally more recipes and a log.
-- `LevelMeshPart` (interface): One level mesh: its descriptor's recipe and glyphs, the mesh, and for a block one cell per instance.
+- `LevelMeshPart` (interface): One level mesh: its descriptor's recipe and glyphs, the mesh, and for an instanced shape one cell per instance.
+- `meshDrawCalls` (function): The draw calls `mesh` costs a frame: its groups (one with a single material), once in colour and once per shadow map when it casts; none while it is hidden or an instanced mesh with no instances.
 
 ### [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)
 
+- `CutWhen` (type): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars).
 - `FALLBACK_RECIPE` (const): What a recipe nobody defined draws: grey blocks (`material:default`), casting and receiving shadows.
-- `LEVEL_RECIPES` (const): The engine's v1 recipes, by the name a glyph's `mesh` gives.
-- `LevelRecipe` (interface): A level mesh recipe: its shape, materials and shadows.
-- `LevelShape` (type): How a recipe draws its pieces: see the file comment.
+- `LEVEL_RECIPES` (const): The engine's recipes, by the name a glyph's `mesh` gives.
+- `LevelCut` (interface): How the cutaway cuts a recipe's pieces: to a twin `height` metres tall, `when` the view needs it.
+- `LevelRecipe` (interface): A level mesh recipe: its shape, materials, shadows and cut.
+- `LevelShape` (type): How a recipe draws its pieces, with what each material slot draws: - `surface`: one welded surface over the pieces at their bottom height, facing up, UVs in metres along X and -Z (one draw call): the floor.
+
+### [`engine/gfx/level/shapes.ts`](../engine/gfx/level/shapes.ts)
+
+- `buildShape` (function): Builds `descriptor`'s mesh in `recipe`'s shape, with `materials` (the recipe's, compiled).
+- `BuiltShape` (interface): One descriptor's mesh, its cells (one per instance; none for a single mesh) and its cut.
+- `instanced` (function): One instance per cell, standing at the cell's centre.
+- `PartCut` (interface): How the cutaway cuts a part: its recipe's cut, and the geometry of its twin (a new one each call).
+- `placeInstances` (function): Stands `mesh`'s instances on `cells`, as many as there are, and refits its bounds.
+
+### [`engine/gfx/level/slab.ts`](../engine/gfx/level/slab.ts)
+
+- `slabGeometry` (function): A raised block over `pieces` from `bottom` to `top` (m), tiles `tile` metres wide (see the file comment).
+
+### [`engine/gfx/level/stairs.ts`](../engine/gfx/level/stairs.ts)
+
+- `stairsGeometry` (function): The flights of `ramps`, standing on the ground at `ground` (m), tiles `tile` metres wide (see the file comment).
+- `STEP_RUN` (const): The run of one step (m): two steps per metre, as the prototype's two per tile.
+- `stepsOf` (function): How many steps a ramp's flight has: its run in `STEP_RUN`s, at least one.
 
 ### [`engine/gfx/level/surface.ts`](../engine/gfx/level/surface.ts)
 
@@ -2612,6 +2673,12 @@ For the agents who maintain the engine.
 - `ProbeResult` (interface): What one runtime gave.
 - `resultsOf` (function): `fn`'s results on `inputs`, natively or inside `withSimMath` (narrowed to `swap`).
 - `runProbe` (function): Runs every probe natively and inside `withSimMath` (narrowed to `swap`), on `inputs` seeded inputs a function.
+
+### [`tests/pages/hall.ts`](../tests/pages/hall.ts)
+
+- `Looked` (interface): What `look` reports.
+- `Overview` (interface): A view of the whole level from round its middle: degrees, and the projection.
+- `Shown` (interface): What `show` reports.
 
 ### [`tests/pages/level-meshes.ts`](../tests/pages/level-meshes.ts)
 

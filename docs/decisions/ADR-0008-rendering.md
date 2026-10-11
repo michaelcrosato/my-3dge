@@ -43,3 +43,15 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
 - **No `feature` scaffold template yet** (§8.13, §9.3 item 4). The three built-in features are one table in
   `engine/gfx/features.ts`, as the settings and the inspector members are, and game code never writes a feature. The
   first WP that adds features outside that table (WP 11.1, which completes the framework) adds the template.
+
+## Amendment 2 (2026-10-10, WP-4.4): level meshes v2 and the cutaway
+
+- **Core change.** WP 4.4 re-records `tests/baselines/thumbs/box-room-iso.json` (WP 2.7's file). The room's pillar now
+  stands on a plinth under a capital, so 3 cells moved by up to 28/255.
+- **Stairs.** Each ramp is one stepped solid with two steps per metre. Each tread sits on the hull's slope at its
+  middle, so feet are never more than half a riser off. All flights of one descriptor share a mesh; the stage's runs
+  give each flight its own.
+- **Cutaway.** Walls are cut by their outward direction relative to the camera (cos > 0.3, none steeper than 85°).
+  Pillars become stumps when a sight line to the hero's head, feet or the floor around him passes through them,
+  measured in boosted picture heights. The rule applies to any camera.
+- **Pages that switch between projections warm up through both cameras.**

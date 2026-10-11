@@ -2558,14 +2558,14 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/world/nav engine/world/spatial && node x perf fixtures/scenes/nav-1000 --budget`
 
 #### WP-4.4 Level meshes (v2) and cutaway
-- **Owns:** extends `engine/gfx/level/**` (from WP 2.4) with stairs, galleries, the dais and pillars with plinths and capitals; `engine/gfx/cutaway.ts`
+- **Owns:** extends `engine/gfx/level/**` (from WP 2.4) with stairs, galleries, the dais and pillars with plinths and capitals; `engine/gfx/cutaway.ts`; core proposal: re-records `tests/baselines/thumbs/box-room-iso.json` (the room's pillar gains its plinth and capital; ADR-0008 amendment 2)
 - **Needs:** WP 2.4, WP 4.2
 - **Size:** M
 - **Carry:**
   - The stairs, gallery, dais and pillar meshes (`stress-world/10-hall.js:336-405`).
   - The wall and pillar cutaway (`stress-world/10-hall.js:302-370`, `40-cameras.js:166-181`) and `segBox`.
 - **Build:**
-  - Meshes for the v2 glyphs; each flight of stairs is one mesh (the prototype used 20).
+  - Meshes for the v2 glyphs; each flight of stairs is one solid of steps, a descriptor's flights one mesh (the prototype used a mesh per step, 20).
   - **Cutaway:** walls facing an outside camera swap to their cut twin; pillars between the camera and the focus become stumps.
   - Everything registered with the warm-up.
 - **Done when:**
@@ -3970,7 +3970,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 4.1 | Bodies and props physics | P | todo | | |
 | 4.2 | Level compiler (v2): the hall | W | done | 29a6370 (#5) | v2 glyphs = ^ o t (gallery 1 m, ramp stairs rising toward their gallery, octagonal dais, brazier cylinder plus torch spot); floorHeight/topHeight/surfaceAt; hull and cylinder descriptors; LEVEL_BAD_RAMP and LEVEL_BAD_DAIS; one-way reach checked along each step (walk.ts); labs/box/levels/hall.txt; calls: mesh bottom 0 for box/hull glyphs, geo-QA exceptions for level:hall in qa-geo-hall.json until WP 4.4, fixture goldens re-recorded (only new fields); core proposal accepted: hull shape in engine/physics (ADR-0020 amendment 4), hall hulls probed within 1 cm; no escalations; deferred: hall drawn in WP 4.4; not verified: hull determinism in Chromium beyond physics-40 |
 | 4.3 | Navigation and spatial queries | W | done | 09984a3 (#6) | engine/world/nav.ts: NavGrid with 8 steps under a climb limit (crowd's NAV_CLIMB or the hero's reach), A* with octile estimate, line-of-sight smoothing and index ties, LRU-cached multi-goal flow fields with reach, 3-tile look-ahead; engine/world/spatial.ts: typed-array SpatialHash with query and nearest; fixtures/scenes/nav-1000 with budget (step 6 ms); x sim --map writes out/sim/<id>/map.txt; calls: corner rule covers ledges, lineOfSight keeps a 0.3 m body radius, hash query-into-Int32Array plus nearest, hall.txt copied into hall.ts with a drift test, --map climb from --feel's reach; no escalations; no deferred proofs; not verified: nav-1000 determinism in Chromium |
-| 4.4 | Level meshes (v2) and cutaway | R | todo | | |
+| 4.4 | Level meshes (v2) and cutaway | R | done | f18c133 (#6) | v2 level shapes in engine/gfx/level: pillar (plinth, shaft, capital), slab (gallery), stairs (one stepped solid per flight; each tread on the slope at its middle), dais (on the hull's corners plus bare ground at its corners), brazier stands (foot, bowl, glowing coals); recipes gain `cut` (wall 0.4375 m facing, pillar 0.875 m blocking); engine/gfx/cutaway.ts: planCutaway, createCutaway, twins registered with the warm-up; hall = 15 calls, 24 with one shadow map, +8 twins = 32 budget; qa-geo-hall.json records only drawCalls 24; calls: a descriptor's flights share a mesh (stage runs give each flight its own), level draws the brazier stand (WP 4.5 adds flames and torch), cutaway rule geometric for any camera, pages switching projections warm up through both cameras (r182 builds 6 pipelines on the first switch); core proposal accepted: re-recorded box-room-iso thumbnail (ADR-0008 amendment 2); shown in fixture tests/pages/hall.html, box deferred to WP 4.6 (createCutaway on stage meshes, update(pose, hero) per frame); no escalations; not verified: box.spec.ts 'every inspector member' fails on integration before this WP (__engine.feel missing) |
 | 4.5 | Props as data | R | todo | | |
 | 4.6 | Box 3: the hall | B | todo | | |
 | **G4** | **Gate: Box 3** | | todo | | |
