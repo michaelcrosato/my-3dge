@@ -25,6 +25,7 @@ import '../../labs/box/scenes/room';
 import '../../labs/box/scenes/room-hero';
 import '../../labs/box/scenes/hall';
 import '../../labs/box/scenes/hall-props';
+import '../../labs/box/scenes/crowd-100';
 import { playReplay, type Replay } from '../../engine/sim/replay';
 import { CAMERA_3D, VIEW_NAMES } from '../../engine/gfx/cameras/codes';
 import { FOLLOW_CAMERAS } from '../../engine/gfx/cameras/place';
