@@ -78,3 +78,18 @@ Differential tests against the ported reference vectors (WP 0.11); the animation
   `authoring.test.ts`'s KNOWN floor sinks (amendment 3) stay open.
 - The carried source path is `src/emberdeep/18-characters.js` at my-3d2dge@e37e4ee.
 - Evidence: `engine/anim/{character,states,weights}.test.ts`.
+
+## Amendment 5 (2026-10-11, WP-6.1)
+- **The arm path lives in the humanoid (core change, accepted at review).** The humanoid's `input.body` slot
+  (amendment 3) took only a move's body motion, so moves could not reach the animator, the sim's `preciseHits` posing
+  or its trail. The arm path moves into `engine/anim/strike.ts`; the humanoid keeps it in `HumanoidState.arm`, steps it
+  in `step` (a swing's start read from the effector stage of the state before the step, never from a pose), lays it in
+  its effector stage (`poses.ts` `effectorStage`, the ready stance fading under a strike, as in my-3d2dge) and turns
+  its root through a spin. A Humanoid or an Animator told `body: moveAt(...)` or `attack.body` plays the move; no
+  separate move rig. WP 6.1's Owns is extended to `engine/anim/{strike,humanoid,poses,locomotion,states,weights,character}.ts`.
+- **Recorded format.** `HumanoidState.arm` is part of the animator's saved, hashed state, so the eight hero replays'
+  goldens were re-recorded (tests/replays/README.md); with `arm` left out the runs give their earlier goldens.
+- **Bad move input.** A move told in `body` with a phase outside `MOVE_PHASES` or a non-finite share warns once
+  (`ANIM_BAD_STATE`) and does not play. `Combo.load` treats a saved step outside its attacks as idle, as
+  `Timeline.load` does an index out of range. New codes: `ANIM_BAD_HIT_KEY`, `ANIM_EMPTY_COMBO`, `ANIM_NOT_PRECISE`.
+- Evidence: `engine/anim/{moves,strike,timeline,moves-data}.test.ts`, `fixtures/rigs/dummy/index.test.ts`.

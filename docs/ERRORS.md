@@ -7,6 +7,14 @@ Every code the engine prints, as `[CODE] message`, with its fix. Each module reg
 
 ## anim
 
+### ANIM_BAD_HIT_KEY
+
+- Message: `hits keyed a target by {key}, not a finite number, so it could not tell the targets apart`
+- Fix: give each target a numeric id field, or pass hits a fourth argument that returns one: (t) => t.entity
+- Registered in: [`engine/anim/timeline.ts` line 43](../engine/anim/timeline.ts)
+
+Thrown by `Attack.hits` and `Combo.hits` (engine/anim/timeline.ts), which hit each target once per swing by its key: its `id` field, or what the keying function given returns. Targets without one would all share the key `undefined`, so only the first would ever be hit.
+
 ### ANIM_BAD_LAYER
 
 - Message: `layer {name}: {problem}`
@@ -29,7 +37,7 @@ Raised by `boneMask` (engine/anim/skeleton.ts) for a weight that is not a number
 - Fix: give {name} {expected}
 - Registered in: [`engine/anim/states.ts` line 42](../engine/anim/states.ts)
 
-Raised once per word by the animator (engine/anim/character.ts `step`, through `checkBodyStates`) for a body state whose value is of the wrong kind: a number for `dash`, a trail that does not exist. `BODY_STATES` (engine/anim/states.ts) gives each word its kind.
+Raised once per word by the animator (engine/anim/character.ts `step`, through `checkBodyStates`) for a body state whose value is of the wrong kind: a number for `dash`, a trail that does not exist. `BODY_STATES` (engine/anim/states.ts) gives each word its kind. Raised once too by a humanoid playing a move told in `body` (engine/anim/strike.ts `stepArm`) whose phase is not wind, active or recover, or whose share `u` is not finite: data or the console, which TypeScript does not check; the move does not play.
 
 ### ANIM_BAD_TARGET
 
@@ -129,6 +137,14 @@ Reported by `validateClip` (engine/anim/clip/validate.ts) for a twist that chang
 - Fix: use only the fields {fields}
 - Registered in: [`engine/anim/clip/validate.ts` line 107](../engine/anim/clip/validate.ts)
 
+### ANIM_EMPTY_COMBO
+
+- Message: `a Combo was made from no moves, so it has no hit to play`
+- Fix: pass Combo at least one move (an id such as "jab", a Move, a spec or an Attack); check a list read from data before making the combo
+- Registered in: [`engine/anim/timeline.ts` line 48](../engine/anim/timeline.ts)
+
+Thrown by `new Combo(moves)` (engine/anim/timeline.ts) when `moves` is empty: `press`, `current`, `save` and `load` all play or read one of its hits.
+
 ### ANIM_LAYER_BUILD
 
 - Message: `the clip layer measures paces and root motion on {layer}, but its animator plays {animator}`
@@ -144,6 +160,14 @@ Raised by the clip layer (engine/anim/clip/layer.ts) when it poses an animator o
 - Registered in: [`engine/anim/clip/library.ts` line 46](../engine/anim/clip/library.ts)
 
 Raised by the clip library (engine/anim/clip/library.ts) when a clip names a source the set lacks, or the set has no sources: a clip decodes only on the rest body it was measured on.
+
+### ANIM_NOT_PRECISE
+
+- Message: `strikeSegment was given an animator without preciseHits: its pose is the view’s, not the sim’s`
+- Fix: make the animator (an actor’s anim) with preciseHits: true, so the sim poses it every tick; or pass a Humanoid the sim updates itself
+- Registered in: [`engine/anim/moves.ts` line 41](../engine/anim/moves.ts)
+
+Thrown by `strikeSegment` (engine/anim/moves.ts) for an `Animator` without `preciseHits`. A strike’s span is read from a pose, and the sim poses only animators with `preciseHits` (engine/sim/actors.ts, the system `actors.pose`); any other animator holds whatever the view last drew, nothing headless, so hits read from it would depend on rendering and visibility.
 
 ### ANIM_UNKNOWN_CLIP
 
@@ -173,7 +197,7 @@ Raised by `animCheck` (engine/anim/check.ts) for a rigid pair naming a point the
 
 - Message: `{name} is not a humanoid {what}{suggestion}; it is ignored`
 - Fix: use one of: {names}
-- Registered in: [`engine/anim/poses.ts` line 45](../engine/anim/poses.ts)
+- Registered in: [`engine/anim/poses.ts` line 46](../engine/anim/poses.ts)
 
 Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `stance` or `weapon` it does not know. The message names the closest names; `POSES`, `STANCES` and `WEAPONS` (engine/anim/poses.ts) list them all. An unknown weapon holds nothing.
 
