@@ -663,6 +663,22 @@ Advice from the feature registry (engine/gfx/features.ts) when the device has no
 
 Raised at startup, before anything touches the GPU, when the browser has no `navigator.gpu`, gives no adapter or device, or three.js starts another backend than WebGPU. WebGPU is the only renderer: there is no WebGL fallback (PLAN.md §6.7), so nothing starts, and a page shows this message with its fix.
 
+### GFX_OUTLINE_TARGET
+
+- Message: `outline shells cannot outline {object}: {problem}`
+- Fix: give shells to meshes and instanced batches; outline a skinned mesh with the edge outline filter (WP 7.4) instead
+- Registered in: [`engine/gfx/materials/outline.ts` line 74](../engine/gfx/materials/outline.ts)
+
+Raised by `outline.shell` (engine/gfx/materials/outline.ts) for an object that is not a mesh, or a skinned mesh: the shell's push reads the vertex before skinning.
+
+### GFX_OUTLINE_UNPINNED
+
+- Message: `outline shells cannot find the instance matrix of {object}`
+- Fix: instanced shells are pushed as if their instances stood unturned at the origin; check the new release's InstanceNode (instanceMatrixNode, and whether it still moves positionNode's result) and update instanceMatrixOf and pushNode in engine/gfx/materials/outline.ts
+- Registered in: [`engine/gfx/materials/outline.ts` line 69](../engine/gfx/materials/outline.ts)
+
+Advice from an outline shell's push (engine/gfx/materials/outline.ts), once, when an instanced mesh's vertex stage holds no r182 `InstanceNode` with an `instanceMatrixNode`: the push reads the instance's matrix there, so on another three.js release instanced shells are pushed the wrong way.
+
 ### GFX_PIPELINES_UNPINNED
 
 - Message: `three.js r{revision}'s renderer internals differ from r182's: {problems}`
@@ -694,6 +710,14 @@ Raised by `bakeTexture` (engine/gfx/textures/bake.ts) and by `defineTexture` for
 - Registered in: [`engine/gfx/cameras/codes.ts` line 47](../engine/gfx/cameras/codes.ts)
 
 Raised by `parseCameraCode` and the camera factories (engine/gfx/cameras/) for a view or camera name they do not know, with the closest names.
+
+### GFX_UNKNOWN_STYLE
+
+- Message: `there is no material style {style}`
+- Fix: use one of {styles}
+- Registered in: [`engine/gfx/materials/styles.ts` line 67](../engine/gfx/materials/styles.ts)
+
+Raised by a style set (engine/gfx/materials/styles.ts) for a style name it does not have.
 
 ### GFX_WARMUP_FAILED
 

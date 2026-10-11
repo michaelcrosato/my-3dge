@@ -55,3 +55,19 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
   Pillars become stumps when a sight line to the hero's head, feet or the floor around him passes through them,
   measured in boosted picture heights. The rule applies to any camera.
 - **Pages that switch between projections warm up through both cameras.**
+
+## Amendment 3 (2026-10-11, WP-7.2): material styles, toon and outlines
+
+- **Styles are view state.** Material styles (lambert, toon, flat, pbr) are view state held by a style set
+  (`createStyleSet`). The material registry gets no style or bands fields. The toon look (bands, rim) is a set of
+  shared uniforms, and WP 7.4's looks pick the style and the look. Lambert stays as a fourth style.
+- **Each warm-up compiles every style.** Entries `~styles/<style>` point the drawn meshes at that style and `~styles~`
+  restores them. Probes per material cannot stand in, because r182 compiles a shader per instanced mesh of 1,000 slots
+  or fewer (the level's walls).
+- **Toon is a TSL lighting model** (smoothed bands, gated rim), chosen over `MeshToonMaterial` with a gradient map:
+  r182's ToonLightingModel uses `normalGeometry` against a view-space light. The comparison is in `toon.ts`'s file
+  comment and asserted by tests/e2e/materials-v2.spec.ts. Toon and flat draw no normal map.
+- **Outline push.** r182's InstanceNode transforms `positionNode`'s result afterwards, so the push returns
+  `positionGeometry` plus the offset taken back through the instance's turn. It reads the instance matrix from the
+  vertex-stage InstanceNode (advice `GFX_OUTLINE_UNPINNED` otherwise). Skinned meshes are refused
+  (`GFX_OUTLINE_TARGET`); WP 7.4's edge filter covers them.

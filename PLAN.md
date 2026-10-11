@@ -2883,9 +2883,9 @@ A WP is done only when all of these hold:
 - **Size:** M
 - **Carry:** `TOON_BANDS` and `outlineMat` (`stress-world/00-setup.js:91-116`); lab3d's `toonMat` (`lab3d/10-materials.js:80-96`).
 - **Build:**
-  - **Toon shading at the best quality the builder can reach** (doctrine: Quality under the hood): `MeshToonMaterial` with a generated gradient map as the baseline, or a TSL node material where it measurably looks better (banding under the light pool, rim light, shadow terminators). The data game code writes stays the material registry's (`style: 'toon'`, bands, colours). Shardfall's smoothed bands and gated rim, with the style as a per-instance id, are the reference (§5.8).
-  - Outline shells correct under instancing: a TSL push whose direction comes from `positionGeometry` (§4.1).
-  - Material styles, each warmed and each compiled from the same material data: toon, flat and pbr (`MeshStandardMaterial`).
+  - **Toon shading at the best quality the builder can reach** (doctrine: Quality under the hood): `MeshToonMaterial` with a generated gradient map as the baseline, or a TSL node material where it measurably looks better (banding under the light pool, rim light, shadow terminators). The data game code writes stays the material registry's (colours, maps); the style and the toon look (bands, rim) are view state of a style set (ADR-0008 Amendment 3). Shardfall's smoothed bands and gated rim, with the style as a per-instance id, are the reference (§5.8).
+  - Outline shells correct under instancing: a TSL push whose direction comes from `positionGeometry` (§4.1), taken back through the instance's turn; skinned meshes get no shell (ADR-0008 Amendment 3).
+  - Material styles, each warmed and each compiled from the same material data: toon, flat and pbr (`MeshStandardMaterial`), plus lambert; each warm-up compiles every style for the drawn meshes (ADR-0008 Amendment 3).
 - **Done when:**
   - Toggling every style builds 0 pipelines after warm-up, and never changes the hash.
   - The toon implementation chosen is recorded with the comparison that decided it (thumbnails and look metrics).
@@ -3991,7 +3991,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 6.7 | Box 5: combat | B | todo | | |
 | **G6** | **Gate: Box 5** | | todo | | |
 | 7.1 | Lights, shadows, atmosphere, sky | R | done | 3d1d317 (#6) | engine/gfx/{lights,shadows,atmosphere,sky}.ts: a fixed pool of 12 point lights (8–16) ranked by distance/priority from the level's light spots, fading at the cut-off, flicker phases from fxRng; shadow budget 2/1/0 by quality tier (casters are the pool's first slots, the sun takes the first where a preset has one); range+height TSL fog node; SkyMesh dome with exposure plus a baked backdrop cylinder; kinds light (light:torch) and sky (sky:hall, sky:daylight); 0 pipelines built while lights reassign, presets never change the hash; shown in tests/pages/lights.html (box wiring is WP 7.8's); calls made on r182 traps: lights added in id order, fog/dome uniforms in renderGroup (docs/THREE-DELTA.md); no escalations; no deferred proofs |
-| 7.2 | Materials (v2): toon, outlines, styles | R | todo | | |
+| 7.2 | Materials (v2): toon, outlines, styles | R | done | 1f26ebc (#6) | engine/gfx/materials/{styles,toon,outline}.ts: four styles (lambert, toon, flat, pbr) switched at run time with 0 pipelines built and the hash unchanged; toon as a TSL lighting model (smoothed bands, gated rim) over the MeshToonMaterial+gradient baseline (thumbs materials-v2-toon-{bands,gradient}); outline shells on instanced parts centred within 1 px; shown in tests/pages/materials-v2.html (box wiring is WP 7.8's); calls made (ADR-0008 Amendment 3): style is a style set's view state and bands/rim its uniforms (material schema unchanged), lambert kept as a 4th style, warm-up swaps drawn meshes per style via ~styles/* entries, toon and flat drop the normal map, skinned meshes get no shell; no escalations; no deferred proofs |
 | 7.3 | Texture library (v2) | W | todo | | |
 | 7.4 | Post-processing | R | todo | | |
 | 7.5 | Performance governor | I | on demand | | |

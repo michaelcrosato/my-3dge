@@ -137,12 +137,14 @@ game agent's manual.
 - `createInstancedBatch` (function from [`engine/gfx/instancing.ts`](../engine/gfx/instancing.ts)): Makes an instanced batch (see the file comment).
 - `createLevelMeshes` (function from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): Draws `level`'s mesh descriptors (see the file comment).
 - `createMaterialLibrary` (function from [`engine/gfx/materials/library.ts`](../engine/gfx/materials/library.ts)): Makes a material library over `registry` (the shared one by default).
+- `createOutline` (function from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): Makes an outline (see the file comment).
 - `createOverlay` (function from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): Builds the overlay over `options.canvas` (see the file comment).
 - `createPuppet` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Draws `compiled` as one rigid-skinned mesh (see the file comment), at rest until `setPose`.
 - `createPuppetBatches` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Makes instanced puppet batches (see the file comment).
 - `createScriptedGamepad` (function from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Puts a sky on `scene`: the light pool lit from `level`'s light spots (phases from `rng`, a visual stream), the sun, the dome, the backdrop and the atmosphere; shows `sky:daylight` until `set` names another preset.
+- `createStyleSet` (function from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): Makes a style set (see the file comment).
 - `createVirtualDevice` (function from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): Makes a virtual device, holding nothing.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
@@ -305,9 +307,11 @@ game agent's manual.
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
 - `MaskName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A preset bone mask's name.
 - `MASKS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The preset bone masks.
+- `MATERIAL_STYLES` (const from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): The material styles: v1's Lambert, toon, flat and pbr.
 - `MaterialEntry` (type from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): A `material` entry.
 - `MaterialLibrary` (interface from [`engine/gfx/materials/library.ts`](../engine/gfx/materials/library.ts)): A page's compiled materials and baked maps.
 - `MaterialSpec` (type from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): What `defineMaterial` takes: any of the fields, each with its default.
+- `MaterialStyle` (type from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): A material style (see `MATERIAL_STYLES`).
 - `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
 - `measureFeel` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
@@ -326,6 +330,11 @@ game agent's manual.
 - `NavGrid` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): The walkable grid of a compiled level, and the searches over it (see the file comment).
 - `NavGridOptions` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
 - `NEAREST_RINGS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
+- `Outline` (interface from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): An outline: its material and the shells it gives (see the file comment).
+- `OUTLINE_MODES` (const from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): How a shell's vertices are pushed: along their normals, or away from the part's centre.
+- `OutlineMode` (type from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): An outline mode (see `OUTLINE_MODES`).
+- `OutlineOptions` (interface from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): How `createOutline` makes an outline.
+- `OutlineShells` (interface from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): The shells of an instanced batch's pages (see the file comment).
 - `OverlapOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): An overlap's options.
 - `Overlay` (interface from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): The overlay over one canvas (see the file comment).
 - `OverlayCamera` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): What the overlay reads of a camera: any three.js camera (without `near` and `far`, it culls only behind it).
@@ -456,6 +465,8 @@ game agent's manual.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
 - `STANCES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The stances, held while moving.
 - `StickView` (interface from [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)): Where the stick is drawn, in client CSS px: its centre and its knob.
+- `StyleSet` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): A page's materials in every style (see the file comment).
+- `StyleSetOptions` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): How `createStyleSet` makes a set.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
 - `SYSTEM_ACTIONS` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The system layer: action → codes.
@@ -471,6 +482,9 @@ game agent's manual.
 - `tileNoise` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): Value noise in [0, 1] over a texture of `size` texels, repeating exactly every `size`: lattice values from `cellHash`, blended with smoothstep, `cells` lattice cells across on each axis (stretched when they differ), summed over octaves and divided by the total weight.
 - `TileRect` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A rectangle of tiles, inclusive: `[col0, row0, col1, row1]`.
 - `tipPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
+- `TOON_LOOK` (const from [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)): The default look: three bands (shadow, base, lit) and shardfall's rim.
+- `ToonLook` (interface from [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)): A toon look: how many bands of light, and how strong the rim is (0 for none).
+- `ToonUniforms` (interface from [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)): A toon look as uniforms: set `.value` (or `set`) and every material reading them follows, building nothing.
 - `topHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The top (m) of whatever stands at (x, z): a wall's top over its tiles, a brazier's within its radius, the floor elsewhere; 0 outside the map.
 - `TouchButtonSpec` (interface from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): One button of a touch layout.
 - `touchCode` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The code a touch button for `action` writes; every action binds its own (engine/input/input.ts).
@@ -2072,6 +2086,43 @@ For the agents who maintain the engine.
 - `MaterialSpec` (type): What `defineMaterial` takes: any of the fields, each with its default.
 - `textureRefOf` (function): A material's `map` filled (null for none).
 
+### [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)
+
+- `createOutline` (function): Makes an outline (see the file comment).
+- `Outline` (interface): An outline: its material and the shells it gives (see the file comment).
+- `OUTLINE_CODES` (const): The codes this module raises, with their fixes.
+- `OUTLINE_MODES` (const): How a shell's vertices are pushed: along their normals, or away from the part's centre.
+- `OutlineMode` (type): An outline mode (see `OUTLINE_MODES`).
+- `OutlineOptions` (interface): How `createOutline` makes an outline.
+- `OutlineShells` (interface): The shells of an instanced batch's pages (see the file comment).
+
+### [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)
+
+- `checkStyle` (function): Throws `GFX_UNKNOWN_STYLE` unless `style` is a material style.
+- `compileStyled` (function): The three.js material of a lit `entry` in `style` (not `lambert`, which v1 compiles), with `maps` baked from its map and the toon look `toon`.
+- `createStyleSet` (function): Makes a style set (see the file comment).
+- `FlatStyleLighting` (class): The flat style's light: each light's colour where it reaches (shadow and falloff), with no N·L; ambient as Lambert.
+- `MATERIAL_STYLES` (const): The material styles: v1's Lambert, toon, flat and pbr.
+- `MaterialStyle` (type): A material style (see `MATERIAL_STYLES`).
+- `MeshFlatStyleNodeMaterial` (class): The flat style's material: Lambert's parameters, drawn by `FlatStyleLighting`.
+- `STYLE_CODES` (const): The codes this module raises, with their fixes.
+- `STYLE_WARMUP_IDS` (const): The warm-up entries' ids: one per style, then the one that puts every material back; after every other entry.
+- `StyleSet` (interface): A page's materials in every style (see the file comment).
+- `StyleSetOptions` (interface): How `createStyleSet` makes a set.
+
+### [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)
+
+- `BandedToonLighting` (class): The toon lighting model (see the file comment): banded direct light and a gated rim per light, on Lambert's diffuse scale; indirect light and the environment as Lambert's (it extends three.js's Phong model without specular).
+- `bandsOf` (function): A share of light, 0–1, cut into `bands` bands: the levels 0, 1/(bands − 1) … 1, each edge smoothed over about a pixel (`fwidth`) so it never shimmers; 2 bands or fewer is lit wherever the share passes 0.02.
+- `createToonUniforms` (function): Makes a look's uniforms, from `TOON_LOOK` and `look`.
+- `gradientToonMaterial` (function): The measured baseline (see the file comment): three.js's toon material with the carried gradient map.
+- `MeshBandedToonNodeMaterial` (class): The toon material: Lambert's parameters (`color`, `map`, `normalMap`, `emissive`…), drawn by `BandedToonLighting`.
+- `TOON_BANDS` (const): The carried gradient map's levels (0–255): shadow, base, lit, as the prototype's puppets drew them.
+- `TOON_LOOK` (const): The default look: three bands (shadow, base, lit) and shardfall's rim.
+- `toonGradientMap` (function): The carried baseline's gradient map: one texel per level (`TOON_BANDS`), grey, nearest, for `MeshToonMaterial`.
+- `ToonLook` (interface): A toon look: how many bands of light, and how strong the rim is (0 for none).
+- `ToonUniforms` (interface): A toon look as uniforms: set `.value` (or `set`) and every material reading them follows, building nothing.
+
 ### [`engine/gfx/pipelines.ts`](../engine/gfx/pipelines.ts)
 
 - `advanceFrame` (function): Starts a new frame for three.js's nodes, so a post pass and every other node updated once per frame draws afresh, also off r182's own animation-frame loop.
@@ -3052,6 +3103,15 @@ For the agents who maintain the engine.
 - `HashRunOptions` (interface): How `hashRun` interleaves presentation with the steps.
 - `Looked` (interface): What `look` reports.
 - `LookOptions` (interface): What `look` takes: where the focus is, and optionally the camera, preset, tier and flicker time.
+
+### [`tests/pages/materials-v2.ts`](../tests/pages/materials-v2.ts)
+
+- `COMPARE_SHOT` (const): The comparison's size.
+- `Compared` (interface): What `compare` returns.
+- `Look` (type): A comparison look.
+- `LOOKS` (const): The comparison's looks: v1's Lambert, the toon bands, the baseline's gradient map.
+- `PARTS` (const): The parts: place, turn (rad about x, y, z) and size, metres; far from the batch's origin, each its own way.
+- `PARTS_SHOT` (const): The ID pass's size for `part`.
 
 ### [`tests/pages/puppets.ts`](../tests/pages/puppets.ts)
 
