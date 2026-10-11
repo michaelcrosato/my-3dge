@@ -195,7 +195,7 @@ describe('the rates verified (WP 8.5)', () => {
 
   it('give a twin its take’s rate and measurements, the same frames measured the same', () => {
     const twins = ledger.takes.filter((take) => /(^| )twin:/.test(take.flags));
-    expect(twins).toHaveLength(93);
+    expect(twins).toHaveLength(112);
     for (const take of twins) {
       const other = byId.get(
         take.flags

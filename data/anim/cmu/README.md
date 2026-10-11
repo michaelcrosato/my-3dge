@@ -55,13 +55,17 @@ The site's motion list gives each take's frame rate. 113 takes are missing from 
 
 - `fps:c3d`: the take's C3D file on the site (`subjects/NN/NN_MM.c3d`, the capture's marker data) gives the rate in
   its header, over the same number of frames as the `.amc` (58 takes);
-- `twin:<id>`: the take's skeleton and frames are byte for byte those of `<id>`, a take on the list (subject 63 is
-  64's golf, 73 is 70's suitcase, 117 is 85's breakdance, 121 is 90's acrobatics), so it has that take's rate, and
-  the same length, stretch, fit, travel and hips (93 takes; subjects 63 and 73 have C3D files as well).
+- `twin:<id>`: the take's skeleton and frames are byte for byte those of `<id>`, a take on the list, so it has that
+  take's rate, and the same length, stretch, fit, travel and hips (112 takes: subject 63 is 64's golf, 73 is 70's
+  suitcase, 84 is 74's walks on slopes, 117 is 85's breakdance and 121 is 90's acrobatics).
 
-Subject 84's takes (walking up an incline board) were captured at 60 frames a second, all but `84_09` (120): their
-rate is corrected, and their length, active stretch, fit and flags were measured again at it (`x anim cmu rates
---write` surveys them again). The other 94 are 120, as assumed. A survey keeps a row's evidence and rate.
+Subject 84's takes were captured at 60 frames a second, all but `84_09` (120), as their C3D files and their twins
+say: their rate is corrected, and their length, active stretch, fit and flags were measured again at it (`x anim
+cmu rates --write` surveys them again). The other 94 are 120, as assumed. A survey keeps a row's evidence and rate.
+
+`84_09` has no twin: the list gives `74_09` 60 frames a second, but `74_09` has `84_09`'s frames byte for byte, and
+its C3D header, like `84_09`'s, says 120. The list is wrong there; `74_09`'s row follows the list, as every listed
+take's does.
 
 ## Counts
 
@@ -74,7 +78,7 @@ rate is corrected, and their length, active stretch, fit and flags were measured
 | Takes flagged `inverted` | 189 |
 | Takes flagged `fps?` | 0 |
 | Takes flagged `fps:c3d` | 58 |
-| Takes flagged `twin:<id>` | 93 |
+| Takes flagged `twin:<id>` | 112 |
 | Takes flagged `floats` | 63 |
 | Takes flagged `loose` | 56 |
 | Takes flagged `short` | 25 |

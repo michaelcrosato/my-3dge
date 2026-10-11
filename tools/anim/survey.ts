@@ -168,6 +168,7 @@ export function surveyCmu(options: SurveyOptions = {}): { done: number; secs: nu
   for (const [s, text] of about) {
     const entry = next.subjects.find((x) => x.subject === s);
     if (!entry) next.subjects.push({ subject: s, takes: 0, about: text });
+    else if (text) entry.about = text;
   }
   if (options.ledger !== false) writeLedger(next, options.ledgerDir);
   return { done, secs, ledger: next };

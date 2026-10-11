@@ -52,11 +52,11 @@ export const amcFrames = (text: string) => text.split('\n').filter((line) => /^\
 const framesOf = (text: string) => text.slice(text.search(/^1\s*$/m));
 
 /** The rate in a take's C3D file on the site, when it has one there and its frames agree with the `.amc`'s. */
-export function c3dEvidence(id: string, amcText: string, read = (url: string) => urlSource(url).bytes(0, 1023)) {
+export function c3dEvidence(id: string, amcText: string, read?: (url: string) => Uint8Array) {
   const url = `${SITE}/subjects/${id.split('_')[0]}/${id}.c3d`;
   let header: { rate: number; frames: number };
   try {
-    header = c3dHeader(read(url));
+    header = c3dHeader((read ?? ((u: string) => urlSource(u).bytes(0, 1023)))(url));
   } catch {
     return null;
   }
@@ -78,8 +78,16 @@ export function twinCandidates(ledger: Ledger, id: string): string[] {
     .sort(compareIds);
 }
 
-/** Verifies the rate of each take in `ids` (default: every `fps?` take), downloading what it compares. */
-export function verifyRates(ledger: Ledger, ids?: string[], dir: string = CMU_CACHE): RateEvidence[] {
+/**
+ * Verifies the rate of each take in `ids` (default: every `fps?` take), downloading what it compares into `dir`;
+ * `readC3d` reads the first kilobyte of a C3D file's URL (by default, by an HTTP range).
+ */
+export function verifyRates(
+  ledger: Ledger,
+  ids?: string[],
+  dir: string = CMU_CACHE,
+  readC3d?: (url: string) => Uint8Array,
+): RateEvidence[] {
   const wanted = ids ?? ledger.takes.filter((t) => t.flags.split(' ').includes('fps?')).map((t) => t.id);
   const out: RateEvidence[] = [];
   for (const id of [...wanted].sort(compareIds)) {
@@ -91,7 +99,7 @@ export function verifyRates(ledger: Ledger, ids?: string[], dir: string = CMU_CA
       .slice(1)
       .find((f) => text(f.asf) === text(mine.asf) && framesOf(text(f.amc)) === framesOf(text(mine.amc)));
     const twinFps = twin && +(ledger.takes.find((t) => t.id === twin.id)?.fps ?? 0);
-    const c3d = c3dEvidence(id, text(mine.amc));
+    const c3d = c3dEvidence(id, text(mine.amc), readC3d);
     if (c3d && twin && c3d.fps !== twinFps)
       throw new Error(`${id}: its C3D says ${c3d.fps} fps, its twin ${twin.id} ${twinFps}`);
     const flags = [...(c3d ? ['fps:c3d'] : []), ...(twin ? [`twin:${twin.id}`] : [])];
