@@ -1,7 +1,7 @@
 /**
  * @file Tests for retargeting (WP 8.4): the rest body's own skeleton and build, the rotation copy aligned at rest, the
- * pelvis by the hip-height ratio, contact IK for feet and hands, the lift, and three.js's `AnimationClip` played by an
- * `AnimationMixer` matching the clip layer's pose within 0.1 mm (Done when).
+ * pelvis by the hip-height ratio, contact IK for feet and hands, the lift, the held blade kept above the floor, and
+ * three.js's `AnimationClip` played by an `AnimationMixer` matching the clip layer's pose within 0.1 mm (Done when).
  */
 import { AnimationClip, AnimationMixer, Bone, Object3D, Vector3 as ThreeVector3 } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
@@ -17,7 +17,8 @@ import { Animator } from '../character';
 import { bakeClip } from './bake';
 import { ClipLayer } from './layer';
 import { loadClipLibrary } from './library';
-import { clipJSON, hipRatio, restBuild, restSkeleton, retargetPose, standingHipHeight } from './retarget';
+import type { ClipKey } from './readable';
+import { clipJSON, hipRatio, RETARGET, restBuild, restSkeleton, retargetPose, standingHipHeight } from './retarget';
 
 const heroic = createSkeleton('build:heroic');
 const stand = bakeClip(clipOf([standing(0), standing(1)]), REST);
@@ -107,6 +108,36 @@ describe('retargetPose', () => {
     for (const j of ['toeL', 'toeR', 'handL', 'handR', 'head'] as const) low = Math.min(low, tipPosition(heroic, world, j).y); // prettier-ignore
     expect(low).toBeGreaterThan(-1e-9);
   });
+
+  it('keeps a held blade’s tip above the floor: lowered only to lie along it, its heading kept, the wrist still', () => {
+    const length = 1.1; // shardfall's reach: 1.19 standing hip heights
+    const turned = (world: ReturnType<typeof createWorldPose>) => {
+      const grip = socketPosition(heroic, world, 'weaponR');
+      const tip = new Vector3(0, 0, 1).applyQuaternion(jointRotation(world, 'handR')).multiplyScalar(length).add(grip);
+      return { tip, heading: Math.atan2(tip.x - grip.x, tip.z - grip.z), wrist: jointPosition(world, 'handR') };
+    };
+    for (const [blade, through] of [
+      [[30, 30, -100], true],
+      [[100, 0, 0], false],
+    ] as const) {
+      const crouch = { hips: [0, 0, 55], legL: [70, 0, -50, 100, 0], legR: [70, 0, -50, 100, 0] } as const;
+      const key: ClipKey = { ...standing(0), ...crouch, armR: [100, 0, -40, 0, 0], blade: [...blade] } as ClipKey;
+      const baked = bakeClip(clipOf([key]), REST);
+      const [free, held] = [createWorldPose(), createWorldPose()];
+      const [loose, holding] = [new Pose(), new Pose()];
+      retargetPose(baked, 0, heroic, loose, { world: free });
+      retargetPose(baked, 0, heroic, holding, { world: held, blade: length });
+      const [a, b] = [turned(free), turned(held)];
+      if (!through) {
+        expect(holding.equals(loose)).toBe(true); // a blade over the floor is left as the clip holds it
+        continue;
+      }
+      expect(a.tip.y).toBeLessThan(-0.1); // the clip's blade goes through the floor
+      expect(Math.abs(b.tip.y - RETARGET.bladeFloor)).toBeLessThan(1e-4); // its own margin over the floor
+      expect(b.heading).toBeCloseTo(a.heading, 5);
+      expect(b.wrist.distanceTo(a.wrist)).toBeLessThan(1e-9);
+    }
+  });
 });
 
 describe('clipJSON: the baked clip as three.js’s AnimationClip', () => {
@@ -132,9 +163,9 @@ describe('clipJSON: the baked clip as three.js’s AnimationClip', () => {
     layer.play('Sword_Attack', { fade: 0 });
     const at = new ThreeVector3();
     let [worst, samples] = [0, 0];
-    while (layer.state.current && layer.state.current.t < baked.duration) {
+    while (layer.current && layer.current.t < baked.duration) {
       hero.step().pose();
-      mixer.setTime(layer.state.current.t);
+      mixer.setTime(layer.current.t);
       holder.updateMatrixWorld(true);
       JOINTS.forEach((_, j) => {
         at.setFromMatrixPosition(bones[j + 1].matrixWorld);

@@ -1,26 +1,27 @@
 /**
  * @file The clip layer (PLAN.md §10.4, WP 8.4): library clips played in the animator's `clips` slot (WP 3.7,
- * engine/anim/weights.ts). `play` crossfades a clip in over what plays now, the clip before kept playing under it
- * until the new one is fully in (shardfall's two slots, `shardfall:crates/pav_core/src/puppet.rs:582-615,
- * 653-698`); `stop` fades it out and the body's own animation takes over; `locomote` picks an idle, a walk or a run
- * by ground speed, each loop played at the character's ground speed (library.ts `walkRate`, `runOverWalk`).
+ * engine/anim/weights.ts), stacked, the last played on top (`current`), each fading in over what plays under it. A
+ * full-body clip covers the clips under it: they play on until it is fully in, and fade out with it, by the same
+ * step, when it stops first (shardfall's two slots, `shardfall:crates/pav_core/src/puppet.rs:582-615, 653-698`); a
+ * masked or additive one lies over them, and they play on under it and after it. `locomote` picks an idle, a walk or
+ * a run by ground speed, each loop at the character's ground speed (library.ts `walkRate`, `runOverWalk`).
  *
  * Each play takes my-3d2dge's moment fields (`my-3d2dge:src/emberdeep/96-hero-clips.js`, `HCL_MOVES`): `speed`,
  * `fade` and `out`, a bone `mask` ('upper': the legs keep the body's own), `loop`, `additive` (the clip's change from
  * its first frame, added), `mirror`, and the flags `walk` (moving or a flinch does not cancel it), `hold` (a one-shot
  * keeps its last pose), `next` (the clip that follows), `landed` (clip seconds by which a fall is down). Cancel rules:
- * an action takes the body back at once (0.07 s); moving faster than 1.25 m/s, or a flinch, fades a clip without
- * `walk`.
+ * an action takes the body back at once (0.07 s); moving over 1.25 m/s, or a flinch, fades a clip without `walk`.
  *
  * The two update paths (§6.4), as the animator's: `step` is the sim's, one fixed tick (times, fades, the walk–run
  * switch, cancels, events, root motion), on plain data (`state`, `save`, `load`); `apply` is the view's, sampling the
- * clips on the animator's skeleton (retarget.ts, contact IK included) and laying them over the pose. Events are a
- * clip's own (format 2), `hit` (an attack's: its `hit` event, else its strike time), `landed` and `end`.
+ * clips on the animator's skeleton (retarget.ts: contact IK, the held blade above the floor) and laying them over the
+ * pose. Events are a clip's own (format 2), `hit` (an attack's: its `hit` event, else its strike time), `landed` and
+ * `end`, from each clip not covered.
  *
  * Invariants: `apply` writes only the pose (the animator fades the layer by its `weight` and runs FK); a slot's weight
- * eases linearly and shows smoothstepped. Root motion is the clip's travel over the tick, metres in the character's
- * frame at the layer's build (`root`); the pose itself plays in place. Clip names are `SET/Clip`, or a bare name
- * found in the first library that has it; an unknown one throws `ANIM_UNKNOWN_CLIP`.
+ * eases linearly and shows smoothstepped, and a slot goes only at 0 or under a full-body clip fully in: nothing pops.
+ * Root motion is the top full-body clip's travel over the tick, metres in the character's frame at the layer's build
+ * (`root`). Clip names are `SET/Clip`, or a bare name found in the first library that has it, else `ANIM_UNKNOWN_CLIP`.
  *
  * @example
  * import { Animator } from '../character';
@@ -34,7 +35,7 @@
  * clips.play('Wave', { mask: 'upper', walk: true }); // a wave over whatever the legs do
  * for (let i = 0; i < 12; i++) [hero.step(), clips.step({ groundSpeed: 0 })]; // the sim's ticks
  * hero.pose(); // the view: the body's own pose, then the wave laid over it
- * clips.state.current?.w; // 1: faded in over 0.12 s
+ * clips.current?.w; // 1: faded in over 0.12 s
  * @see engine/anim/clip/layer.test.ts
  */
 import { codeError, didYouMean } from '../../core/log';
@@ -48,6 +49,7 @@ import { boneMask, createSkeleton, type JointName, type MaskName, type Skeleton 
 import type { AnimLayer } from '../weights';
 import { travelAt, type BakedClip } from './bake';
 import { clipPace, GROUND_SPEED, runOverWalk, walkRate, type ClipLibrary } from './library';
+import type { Clip } from './readable';
 import { hipRatio, retargetPose } from './retarget';
 
 /** How a clip plays (see the file comment). */
@@ -99,8 +101,8 @@ export interface ClipSlot {
 
 /** The layer's state, plain data: what `step` changes and `save` copies. */
 export interface ClipLayerState {
-  current: ClipSlot | null;
-  previous: ClipSlot | null;
+  /** The clips playing, bottom first: the last is the current one. */
+  slots: ClipSlot[];
   /** The loops `locomote` picks from, by ground speed. */
   moving: { idle?: string; walk: string; run?: string } | null;
   /** Whether the run plays (the walk–run switch's side). */
@@ -140,25 +142,35 @@ export interface ClipLayerOptions {
   dt?: number;
   /** Contact IK and the lift (retarget.ts; true); off, the pose is the rotation copy alone, as a mixer plays it. */
   ik?: boolean;
+  /** A blade held in the right hand: its length, metres, along the weaponR socket's +Z, kept above the floor. */
+  blade?: number;
 }
 
 /** Scratch. */
-const [clipPose, reference, delta] = [new Pose(), new Pose(), new Pose()];
-const [world, from, to] = [createWorldPose(), new Vector3(), new Vector3()];
-const [UP, yaw] = [new Vector3(0, 1, 0), new Quaternion()];
+const [clipPose, reference, delta, world] = [new Pose(), new Pose(), new Pose(), createWorldPose()];
+const [UP, yaw, from, to] = [new Vector3(0, 1, 0), new Quaternion(), new Vector3(), new Vector3()];
 const smooth = (w: number) => MathUtils.smoothstep(w, 0, 1);
+/** Whether a slot covers what plays under it: a full-body clip, laid over, not added. */
+const covers = (s: ClipSlot) => !s.play.additive && (!s.play.mask || s.play.mask === 'full');
+/** A slot's bake, looping or not as its play says. */
+const loopedAs = (baked: BakedClip, s: ClipSlot): BakedClip =>
+  s.play.loop === undefined || s.play.loop === baked.loop ? baked : { ...baked, loop: s.play.loop };
+/** The fade out of `s`: `fade`, else its `out`. */
+const outOf = (s: ClipSlot, fade?: number) => Math.max(1e-6, fade ?? s.play.out ?? CLIP_LAYER.out);
 
 /** Library clips in the animator's clip slot (see the file comment). */
 export class ClipLayer implements AnimLayer {
   readonly name: string;
   /** The animator fades the whole layer by it. */
   weight = 1;
-  readonly state: ClipLayerState = { current: null, previous: null, moving: null, running: false, ground: 0, root: [0, 0] }; // prettier-ignore
+  readonly state: ClipLayerState = { slots: [], moving: null, running: false, ground: 0, root: [0, 0] };
   /** The last step's events. */
   readonly events: ClipLayerEvent[] = [];
   readonly dt: number;
   /** Whether `apply` plants the feet and lifts the pose (retarget.ts). */
   readonly ik: boolean;
+  /** The held blade's length (m), or 0 for none. */
+  readonly blade: number;
   readonly build: Build;
   readonly #libraries: readonly ClipLibrary[];
   readonly #skeleton: Skeleton;
@@ -170,6 +182,12 @@ export class ClipLayer implements AnimLayer {
     this.#skeleton = createSkeleton(this.build);
     this.dt = options.dt ?? SIM_DT;
     this.ik = options.ik ?? true;
+    this.blade = options.blade ?? 0;
+  }
+
+  /** The clip on top, the one played last; null when none plays. */
+  get current(): ClipSlot | null {
+    return this.state.slots.at(-1) ?? null;
   }
 
   /** The standing hip height of the layer's build, metres. */
@@ -190,25 +208,28 @@ export class ClipLayer implements AnimLayer {
   }
 
   /**
-   * Plays `clip`, crossfading from what plays now; the same clip already playing only takes the new `play`. Its mask
-   * and `next` are checked now, so a step never throws: `ANIM_UNKNOWN_CLIP`, `ANIM_UNKNOWN_JOINT`, `ANIM_BAD_MASK`.
+   * Plays `clip` on top, fading in over what plays now; the same clip already on top only takes the new `play`. Its
+   * mask and `next` are checked now, so a step never throws: `ANIM_UNKNOWN_CLIP`, `ANIM_UNKNOWN_JOINT`,
+   * `ANIM_BAD_MASK`.
    */
   play(clip: string, play: ClipPlay = {}): this {
     const [library, name] = this.resolve(clip);
     if (play.mask) boneMask(play.mask);
     if (play.next) this.resolve(play.next);
-    this.#start(`${library.name}/${name}`, play, false);
+    const [c, id] = [this.current, `${library.name}/${name}`];
+    if (c?.clip === id && !c.stopping) [c.play, c.loco] = [{ ...play }, false];
+    else this.#start(id, play, false, this.state.slots.length);
     return this;
   }
 
   /**
-   * Fades the clip out over `fade` seconds (its `out`): `locomote`'s loops take over, or the body's own animation.
-   * Stopping one of `locomote`'s loops ends `locomote`.
+   * Fades out the top clip not already fading, over `fade` seconds (its `out`), with the clips it covers: what lies
+   * under it takes over, `locomote`'s loops, or the body's own animation. Stopping one of the loops ends `locomote`.
    */
   stop(fade?: number): this {
-    const c = this.state.current;
+    const c = this.state.slots.filter((s) => !s.stopping).at(-1);
     if (c?.loco) this.state.moving = null;
-    if (c && !c.stopping) c.stopping = Math.max(1e-6, fade ?? c.play.out ?? CLIP_LAYER.out);
+    if (c) c.stopping = outOf(c, fade);
     return this;
   }
 
@@ -216,15 +237,13 @@ export class ClipLayer implements AnimLayer {
   locomote(loops: ClipLayerState['moving']): this {
     if (loops) for (const name of Object.values(loops)) if (name) this.resolve(name);
     this.state.moving = loops;
-    const c = this.state.current;
-    if (!loops && c?.loco && !c.stopping) c.stopping = CLIP_LAYER.loco;
+    if (!loops) for (const s of this.state.slots) if (s.loco && !s.stopping) s.stopping = CLIP_LAYER.loco;
     return this;
   }
 
   /** Whether a fall played with `landed` is down. */
   down(): boolean {
-    const c = this.state.current;
-    return !!c && c.play.landed !== undefined && c.t >= c.play.landed;
+    return this.state.slots.some((s) => s.play.landed !== undefined && s.t >= s.play.landed);
   }
 
   /** The sim's step, one fixed tick (see the file comment); returns the tick's events. */
@@ -233,11 +252,20 @@ export class ClipLayer implements AnimLayer {
     const ground = input.groundSpeed ?? 0;
     [st.ground, st.root, this.events.length] = [ground, [0, 0], 0];
     this.#cancel(input, ground);
-    if (st.moving && (!st.current || st.current.loco || st.current.stopping)) this.#locomote(ground);
-    const [c, p] = [st.current, st.previous];
-    if (c) this.#advance(c, true);
-    if (p && p === st.previous) this.#advance(p, false);
-    if (st.previous && (!st.current || st.current.w >= 1 || st.previous.w <= 0)) st.previous = null;
+    // the loops run unless a full-body clip of the caller's plays on
+    if (st.moving && !st.slots.some((s) => !s.loco && !s.stopping && covers(s))) this.#locomote(ground);
+    // top down: a full-body clip fading out takes what it covers with it, by the same step (`locomote`'s loops stay
+    // its own); under one playing on, a slot is covered (no events); the top full-body one moves the root
+    let [fade, covered, rooted] = [0, false, false];
+    for (const s of st.slots.slice().reverse()) {
+      if (fade && !s.stopping && !(s.loco && st.moving)) s.stopping = fade;
+      const whole = covers(s);
+      this.#advance(s, !covered, whole && !rooted);
+      [covered, rooted, fade] = [covered || (whole && !s.stopping), rooted || whole, fade || (whole ? s.stopping : 0)];
+    }
+    // gone: the slots faded out, and every slot under a full-body clip fully in
+    const top = st.slots.reduce((at, s, i) => (covers(s) && s.w >= 1 ? i : at), -1);
+    st.slots = st.slots.filter((s, i) => i >= top && !(s.stopping && s.w <= 0));
     return this.events;
   }
 
@@ -245,17 +273,17 @@ export class ClipLayer implements AnimLayer {
   apply(animator: Animator): void {
     const { body } = animator;
     yaw.setFromAxisAngle(UP, body.yaw);
-    for (const slot of [this.state.previous, this.state.current]) {
-      if (!slot || slot.w <= 0) continue;
+    for (const slot of this.state.slots) {
+      if (slot.w <= 0) continue;
       const [library, name] = this.resolve(slot.clip);
-      const baked = library.bake(name, slot.play.mirror);
-      const options = { contacts: library.clip(name).contacts, world, ik: this.ik, lift: this.ik };
+      const baked = library.bake(name, slot.play.mirror); // its contacts too, mirrored with it
+      const options = { world, ik: this.ik, lift: this.ik, blade: this.blade };
       const place = (pose: Pose) => {
         pose.rootPos.applyQuaternion(yaw).add(body.position);
         pose.rootRot.copy(yaw);
         return pose;
       };
-      place(retargetPose(this.#bakedFor(baked, slot), slot.t, body.skeleton, clipPose, options));
+      place(retargetPose(loopedAs(baked, slot), slot.t, body.skeleton, clipPose, options));
       const mask = slot.play.mask ? boneMask(slot.play.mask) : undefined;
       if (!slot.play.additive) blendPoses(body.pose, clipPose, smooth(slot.w), body.pose, { mask });
       else {
@@ -265,13 +293,12 @@ export class ClipLayer implements AnimLayer {
     }
   }
 
-  /** The layer as plain JSON: each slot, the locomotion loops, the ground speed, the root motion. */
+  /** The layer as plain JSON: each slot, bottom first, the locomotion loops, the ground speed, the root motion. */
   inspect(): Record<string, unknown> {
     const r = (x: number) => Math.round(x * 1e4) / 1e4 || 0;
-    const slot = (s: ClipSlot | null) =>
-      s && { clip: s.clip, t: r(s.t), w: r(s.w), rate: r(s.rate), stopping: s.stopping > 0, loco: s.loco, ...s.play };
-    const { moving, running, ground, root } = this.state;
-    return { current: slot(this.state.current), previous: slot(this.state.previous), moving, running, ground: r(ground), root: root.map(r) }; // prettier-ignore
+    const slot = (s: ClipSlot) => ({ clip: s.clip, t: r(s.t), w: r(s.w), rate: r(s.rate), stopping: s.stopping > 0, loco: s.loco, ...s.play }); // prettier-ignore
+    const { slots, moving, running, ground, root } = this.state;
+    return { slots: slots.map(slot), moving, running, ground: r(ground), root: root.map(r) };
   }
 
   /** A copy of `state`, plain data. */
@@ -285,51 +312,40 @@ export class ClipLayer implements AnimLayer {
     return this;
   }
 
-  /** A slot's bake, looping or not as its play says. */
-  #bakedFor(baked: BakedClip, slot: ClipSlot): BakedClip {
-    return slot.play.loop === undefined || slot.play.loop === baked.loop ? baked : { ...baked, loop: slot.play.loop };
-  }
-
-  /** Starts `clip` in the current slot, the one playing moving under it (see `play`). */
-  #start(clip: string, play: ClipPlay, loco: boolean): void {
-    const st = this.state;
-    const c = st.current;
-    if (c && c.clip === clip && !c.stopping) {
-      [c.play, c.loco] = [{ ...play }, loco];
-      return;
-    }
-    if (c && c.w > 0) st.previous = { ...c, stopping: 0 };
+  /** Starts `clip` in a new slot at `at` in the stack (the top: `slots.length`). */
+  #start(clip: string, play: ClipPlay, loco: boolean, at: number): void {
     const w = (play.fade ?? CLIP_LAYER.fade) > 0 ? 0 : 1;
-    st.current = { clip, t: play.at ?? 0, w, rate: 0, stopping: 0, loco, play: { ...play } };
+    this.state.slots.splice(at, 0, { clip, t: play.at ?? 0, w, rate: 0, stopping: 0, loco, play: { ...play } });
   }
 
-  /** The cancel rules (see the file comment). */
+  /** The cancel rules (see the file comment), for each clip but `locomote`'s loops. */
   #cancel(input: ClipStepInput, ground: number): void {
-    const c = this.state.current;
-    if (!c || c.stopping || c.loco) return;
-    if (input.action) this.stop(CLIP_LAYER.quick);
-    else if (!c.play.walk && (ground > CLIP_LAYER.move || input.hurt)) this.stop();
+    for (const s of this.state.slots) {
+      if (s.stopping || s.loco) continue;
+      if (input.action) s.stopping = CLIP_LAYER.quick;
+      else if (!s.play.walk && (ground > CLIP_LAYER.move || input.hurt)) s.stopping = outOf(s);
+    }
   }
 
   /** Picks the idle, walk or run loop for `ground` m/s, with the walk–run switch's hysteresis. */
   #locomote(ground: number): void {
     const st = this.state;
     const loops = st.moving!;
-    const pace = (name?: string) => (name ? clipPace(this.#clip(name), this.hipHeight) : null);
+    const pace = (name?: string) => (name ? clipPace(this.#find(name)[0], this.hipHeight) : null);
     st.running = !!loops.run && runOverWalk(pace(loops.walk), pace(loops.run), ground, st.running, this.hipHeight);
     const want = ground < GROUND_SPEED.idle ? loops.idle : st.running ? loops.run : loops.walk;
-    const c = st.current;
-    if (!want) {
-      if (c?.loco && !c.stopping) c.stopping = CLIP_LAYER.loco;
-      return;
-    }
-    const [library, name] = this.resolve(want);
-    const clip = `${library.name}/${name}`;
-    if (c?.clip !== clip || c.stopping) this.#start(clip, { fade: CLIP_LAYER.loco }, true);
+    const clip = want && this.#find(want)[1];
+    // the loops not wanted fade out; the one wanted plays on, or starts under the clips laid over the top
+    const live = st.slots.filter((s) => s.loco && !s.stopping);
+    for (const s of live) if (s.clip !== clip) s.stopping = CLIP_LAYER.loco;
+    if (!clip || live.some((s) => s.clip === clip)) return;
+    let at = st.slots.length;
+    while (at > 0 && !st.slots[at - 1].loco && !covers(st.slots[at - 1])) at--;
+    this.#start(clip, { fade: CLIP_LAYER.loco }, true, at);
   }
 
-  /** One tick of `slot`: its rate, time, fade, events and travel (the current slot's only). */
-  #advance(slot: ClipSlot, current: boolean): void {
+  /** One tick of `slot`: its rate, time and fade; its events and end when `live`, its travel when `root`. */
+  #advance(slot: ClipSlot, live: boolean, root: boolean): void {
     const [library, name] = this.resolve(slot.clip);
     const clip = library.clip(name);
     const pace = slot.loco ? clipPace(clip, this.hipHeight) : null;
@@ -337,20 +353,24 @@ export class ClipLayer implements AnimLayer {
     const t0 = slot.t;
     slot.t += this.dt * slot.rate;
     const loop = slot.play.loop ?? !!clip.loop;
-    if (current) this.#events(slot, library, name, t0, loop);
-    if (current && !loop && t0 < clip.dur && slot.t >= clip.dur && !slot.stopping) {
+    if (live) this.#events(slot, library, name, t0, loop);
+    if (live && !loop && t0 < clip.dur && slot.t >= clip.dur && !slot.stopping) {
       this.events.push({ type: 'end', clip: slot.clip });
-      if (slot.play.next) this.#start(this.#name(slot.play.next), {}, false);
-      else if (!slot.play.hold) slot.stopping = slot.play.out ?? CLIP_LAYER.out;
+      const next = slot.play.next;
+      if (next) this.#start(this.#find(next)[1], {}, false, this.state.slots.indexOf(slot) + 1);
+      else if (!slot.play.hold) slot.stopping = outOf(slot);
     }
     if (!loop && slot.play.hold && slot.t > clip.dur) slot.t = clip.dur;
     // fades step linearly, and snap to their ends (sixths of a second do not add up to 1 in floats)
     const step = this.dt / (slot.stopping || Math.max(1e-6, slot.play.fade ?? CLIP_LAYER.fade));
     if (slot.stopping) slot.w = slot.w - step > 1e-9 ? slot.w - step : 0;
-    else if (current) slot.w = slot.w + step < 1 - 1e-9 ? slot.w + step : 1;
-    if (current && slot.w <= 0 && slot.stopping) this.state.current = null;
-    const baked = () => this.#bakedFor(library.bake(name, slot.play.mirror), slot);
-    if (current && !slot.loco) this.#travel(baked(), t0, Math.min(slot.t, loop ? Infinity : clip.dur));
+    else slot.w = slot.w + step < 1 - 1e-9 ? slot.w + step : 1;
+    // root motion: the clip's travel over the tick, at the layer's build
+    const baked = root && !slot.loco ? loopedAs(library.bake(name, slot.play.mirror), slot) : null;
+    if (!baked?.root) return;
+    travelAt(baked, Math.min(slot.t, loop ? Infinity : clip.dur), to).sub(travelAt(baked, t0, from));
+    to.multiplyScalar(hipRatio(baked, this.#skeleton));
+    this.state.root = [to.x, to.z];
   }
 
   /** The events of `slot` crossed from `t0` to its time now (a loop's on every lap). */
@@ -372,24 +392,9 @@ export class ClipLayer implements AnimLayer {
     }
   }
 
-  /** Root motion: the clip's travel from `t0` to `t1`, at the layer's build. */
-  #travel(baked: BakedClip, t0: number, t1: number): void {
-    if (!baked.root) return;
-    travelAt(baked, t1, to)
-      .sub(travelAt(baked, t0, from))
-      .multiplyScalar(hipRatio(baked, this.#skeleton));
-    this.state.root = [to.x, to.z];
-  }
-
-  /** The clip `name` resolves to. */
-  #clip(name: string) {
+  /** The clip `name` resolves to, and its `SET/Clip`. */
+  #find(name: string): [Clip, string] {
     const [library, clip] = this.resolve(name);
-    return library.clip(clip);
-  }
-
-  /** `SET/Clip` for `name`. */
-  #name(name: string): string {
-    const [library, clip] = this.resolve(name);
-    return `${library.name}/${clip}`;
+    return [library.clip(clip), `${library.name}/${clip}`];
   }
 }

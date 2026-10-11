@@ -14,14 +14,15 @@
  *
  * From my-3d2dge's `drive` (`my-3d2dge:src/mocap/mocap.js`), its ideas on the rotation skeleton: the sole, not the
  * ankle, goes to the floor (the sole target fades out as the ankle rises 0.3 m); a clip that dips below the ground is
- * lifted by its lowest point; the blade runs along the knuckles (bake.ts turns the hand's +Z to it). The heading
- * trust ramp is not needed: the pelvis carries its whole turn.
+ * lifted by its lowest point; the blade runs along the knuckles (bake.ts turns the hand's +Z to it), and a held blade
+ * (`blade`, its length) never goes below the floor: the hand turns its tip up until the blade lies along the floor,
+ * keeping its heading (`mocap.js:251-257`). The heading trust ramp is not needed: the pelvis carries its whole turn.
  *
  * Invariants: a skeleton's standing hip height is its hip joints' rest height (straight legs: `legUpper + legLower`
  * times `size` for a build); the hip-height ratio is the target's over the rest body's, and every place of the clip
  * scales by it. Feet: the ankle aims where the source's sole is, scaled, plus the target's own ankle height; the foot
- * keeps the clip's turn. Hands reach only inside a format-2 `contacts` interval. Places are metres in the
- * character's frame, the root on the ground at the origin.
+ * keeps the clip's turn. Hands reach only inside a format-2 `contacts` interval (a loop's on every lap). Places are
+ * metres in the character's frame, the root on the ground at the origin.
  *
  * @example
  * import { createSkeleton } from '../skeleton';
@@ -35,8 +36,17 @@
  */
 import { createRegistry } from '../../core/registry';
 import { Quaternion, Vector3 } from '../../core/math';
+import { holdAlong } from '../authoring';
 import { defineBuild, type BuildSpec } from '../builds';
-import { createWorldPose, forwardKinematics, jointPosition, socketPosition, tipPosition, type WorldPose } from '../fk';
+import {
+  createWorldPose,
+  forwardKinematics,
+  jointPosition,
+  jointRotation,
+  socketPosition,
+  tipPosition,
+  type WorldPose,
+} from '../fk';
 import { twoBoneRot, type LimbEnd } from '../ik';
 import { Pose } from '../pose';
 import {
@@ -53,8 +63,11 @@ import { frameQuaternion, rigToEngine, sampleBaked, travelAt, type BakedClip } f
 import { POSE_POINTS, POINT_COUNT } from './readable';
 import type { RestBody } from './validate';
 
-/** Contact IK's tuning: the rise (m) of the source's ankle over its standing height at which its sole stops counting. */
-export const RETARGET = { soleFade: 0.3 } as const;
+/**
+ * Contact IK's tuning: the rise (m) of the source's ankle over its standing height at which its sole stops counting;
+ * the height (m) a held blade's tip keeps over the floor (drive's 0.3 units).
+ */
+export const RETARGET = { soleFade: 0.3, bladeFloor: 0.3 / 16 } as const;
 
 const mm = (v: readonly number[]) => rigToEngine(v, new Vector3(), 0.001);
 const along = (side: 'L' | 'R', length: number, y = 0, z = 0) => new Vector3(side === 'L' ? length : -length, y, z);
@@ -260,8 +273,10 @@ export interface RetargetOptions {
   ik?: boolean;
   /** Lift a pose whose lowest point dips below the floor (true). */
   lift?: boolean;
-  /** Format 2's contact intervals, for the hands. */
+  /** Format 2's contact intervals, for the hands (the bake's own). */
   contacts?: readonly { part: string; from: number; to: number }[];
+  /** A blade held in the right hand: its length, metres, along the weaponR socket's +Z; its tip stays above the floor. */
+  blade?: number;
   /** FK to fill (a scratch one by default): the result's world pose. */
   world?: WorldPose;
 }
@@ -270,10 +285,30 @@ const [hips, target, source] = [new Vector3(), new Vector3(), new Vector3()];
 const [sourcePose, sourceWorld, scratchWorld] = [new Pose(), createWorldPose(), createWorldPose()];
 const LOWEST = ['contactL', 'contactR'] as const;
 
+const [dir, want] = [new Vector3(), new Vector3()];
+/**
+ * The held blade's tip kept above the floor (see the file comment): the blade lowered no further than to lie along
+ * it, the right hand turned to it as `holdAlong` holds a weapon (which moves the grip a little: two more passes
+ * take that in, to 0.1 mm). Runs FK.
+ */
+function keepBladeUp(skeleton: Skeleton, pose: Pose, world: WorldPose, length: number): void {
+  const floor = RETARGET.bladeFloor;
+  for (let pass = 0; pass < 3; pass++) {
+    const grip = socketPosition(skeleton, world, 'weaponR', target).y;
+    dir.set(0, 0, 1).applyQuaternion(jointRotation(world, 'handR', rot));
+    if (grip + dir.y * length >= floor - 1e-6 || grip + length <= floor) return; // above it, or too low to lie along it
+    const y = (floor - grip) / length;
+    const [flat, across] = [Math.hypot(dir.x, dir.z), Math.sqrt(Math.max(0, 1 - y * y))];
+    if (flat > 1e-6) want.set((dir.x / flat) * across, y, (dir.z / flat) * across);
+    else want.set(0, y, across);
+    holdAlong({ skeleton, pose, world, rootOffset: target }, want); // it reads the pose, its FK and the skeleton
+  }
+}
+
 /**
  * `baked` at `t` seconds on `skeleton`, written into `out` (a new pose by default): the rotations copied and aligned
  * at rest, the pelvis at the clip's hips times the hip-height ratio, the root at the origin unturned; then the feet
- * planted and the pose lifted (`options`). FK is left in `options.world`.
+ * planted, the pose lifted and a held blade kept above the floor (`options`). FK is left in `options.world`.
  */
 export function retargetPose(
   baked: BakedClip,
@@ -299,8 +334,10 @@ export function retargetPose(
       target.y = Math.max(0, target.y) + own * fade;
       twoBoneRot(skeleton, out, world, end, target);
     }
-    for (const c of options.contacts ?? []) {
-      if ((c.part !== 'handL' && c.part !== 'handR') || t < c.from || t > c.to) continue;
+    const d = baked.duration;
+    const lap = baked.loop && d > 0 ? ((t % d) + d) % d : t;
+    for (const c of options.contacts ?? baked.contacts) {
+      if ((c.part !== 'handL' && c.part !== 'handR') || lap < c.from || lap > c.to) continue;
       twoBoneRot(skeleton, out, world, c.part as LimbEnd, jointPosition(sourceWorld, c.part, target).multiplyScalar(m.ratio)); // prettier-ignore
     }
   }
@@ -316,6 +353,7 @@ export function retargetPose(
       forwardKinematics(skeleton, out, world);
     }
   }
+  if (options.blade) keepBladeUp(skeleton, out, world, options.blade);
   return out;
 }
 

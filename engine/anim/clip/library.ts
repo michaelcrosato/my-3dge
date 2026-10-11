@@ -1,8 +1,9 @@
 /**
  * @file The clip library (PLAN.md §10, WP 8.4; ADR-0010): a set of readable clips loaded for playing. It keeps
  * my-3d2dge's `Mocap.load` API (`my-3d2dge:src/mocap/mocap.js`: `clip`, `sample`, `moveAt`, `text`, `replace`,
- * `restore`, `origin`) and adds what the runtime needs: `bake` (lazy, cached rotation tracks, bake.ts), mirrored
- * clips, and each clip's strike time. Two of shardfall's rules live here as plain functions
+ * `restore`, `origin`; its `blend` of two sampled point sets is superseded by blending poses, pose.ts `blendPoses`,
+ * as the clip layer crossfades) and adds what the runtime needs: `bake` (lazy, cached rotation tracks, bake.ts),
+ * mirrored clips, and each clip's strike time. Two of shardfall's rules live here as plain functions
  * (`shardfall:crates/pav_core/src/clips.rs:441-550`): playing a loop at the character's ground speed, with the
  * walk–run switch, and the strike time.
  *

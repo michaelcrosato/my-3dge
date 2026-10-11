@@ -36,7 +36,7 @@
  */
 import { Matrix4, Quaternion, Vector3 } from '../../core/math';
 import { JOINT_COUNT, JOINTS, PARENTS, type JointName } from '../skeleton';
-import { keyAt, moveAt, type Clip, type KeyPose } from './readable';
+import { keyAt, moveAt, type Clip, type ClipContact, type KeyPose } from './readable';
 import type { RestBody } from './validate';
 
 /** Frames a second of a baked clip. */
@@ -59,6 +59,8 @@ export interface BakedClip {
   readonly hips: Float32Array;
   /** Each frame's root travel `(x, z)`, metres on the source body; null for a clip that does not travel. */
   readonly root: Float32Array | null;
+  /** Format 2's contact intervals (a mirrored bake's on the other side): retarget.ts plants the hands in them. */
+  readonly contacts: readonly ClipContact[];
   /** The rest body it was baked on (retarget.ts measures the source's own places on it). */
   readonly rest: RestBody;
 }
@@ -266,7 +268,7 @@ export function bakeClip(clip: Clip, R: RestBody, name = clip.clip ?? ''): Baked
     if (move && root) [root[i * 2], root[i * 2 + 1]] = [-move[1] / 1000, move[0] / 1000];
   }
   const loop = !!clip.loop;
-  return { name, duration, loop, frames, times, rotations, hips, root, rest: R };
+  return { name, duration, loop, frames, times, rotations, hips, root, contacts: clip.contacts ?? [], rest: R };
 }
 
 /** Turns frame `i`'s rotations to the same side of the sphere as frame `i − 1`'s, joint by joint. */
