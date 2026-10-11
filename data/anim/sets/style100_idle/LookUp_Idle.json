@@ -1,0 +1,10 @@
+{"clip": "LookUp_Idle", "src": "100STYLE", "take": "LookUp_ID 14.95-17.45", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, look up style: tilt head to look at ceiling", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-10,1], "chest":[0,5,-1], "head":[9,-27,3],
+   "shL":[6,-10], "shR":[6,-7], "armL":[-15,6,-99,15,-144], "armR":[-5,8,-100,14,170],
+   "legL":[-24,1,-97,11,-3], "legR":[-27,0,-96,13,8], "footL":[10,6,0], "footR":[10,12,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-10,1], "chest":[0,5,-1], "head":[9,-27,3],
+   "shL":[6,-10], "shR":[6,-7], "armL":[-15,6,-99,15,-144], "armR":[-5,8,-100,14,170],
+   "legL":[-24,1,-97,11,-3], "legR":[-27,0,-96,13,8], "footL":[10,6,0], "footR":[10,12,0]}
+]}

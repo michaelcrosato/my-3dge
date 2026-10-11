@@ -1,9 +1,9 @@
-{"clip": "A_TPose", "src": "UAL1", "dur": 0.167, "loop": false, "tags": ["reference"], "desc": "T-pose, arms straight out: the rest pose every clip is measured from", "keys": [
+{"clip": "A_TPose", "src": "UAL1", "dur": 2.5, "loop": false, "tags": ["reference"], "desc": "T-pose, arms straight out: the rest pose every clip is measured from", "via": "shardfall", "keys": [
   {"t":0,
    "hips":[-5,0,100], "body":[0,0,0], "chest":[0,-2,0], "head":[0,4,0],
    "shL":[0,0], "shR":[0,0], "armL":[0,100,0,2,-7], "armR":[0,100,0,2,7],
    "legL":[-5,0,-100,3,-6], "legR":[-5,0,-100,3,6], "footL":[0,0,0], "footR":[0,0,0]},
-  {"t":0.167,
+  {"t":2.5,
    "hips":[-5,0,100], "body":[0,0,0], "chest":[0,-2,0], "head":[0,4,0],
    "shL":[0,0], "shR":[0,0], "armL":[0,100,0,2,-7], "armR":[0,100,0,2,7],
    "legL":[-5,0,-100,3,-6], "legR":[-5,0,-100,3,6], "footL":[0,0,0], "footR":[0,0,0]}

@@ -1,0 +1,10 @@
+{"clip": "Neutral_Idle", "src": "100STYLE", "take": "Neutral_ID 14.42-16.92", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, neutral style: normal walking", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-7,0], "chest":[1,10,1], "head":[1,18,-1],
+   "shL":[3,-10], "shR":[3,-7], "armL":[12,10,-99,14,114], "armR":[19,9,-98,13,-60],
+   "legL":[-19,3,-98,10,-11], "legR":[-16,2,-99,10,11], "footL":[10,2,0], "footR":[9,11,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,-7,0], "chest":[1,10,1], "head":[1,18,-1],
+   "shL":[3,-10], "shR":[3,-7], "armL":[12,10,-99,14,114], "armR":[19,9,-98,13,-60],
+   "legL":[-19,3,-98,10,-11], "legR":[-16,2,-99,10,11], "footL":[10,2,0], "footR":[9,11,0]}
+]}

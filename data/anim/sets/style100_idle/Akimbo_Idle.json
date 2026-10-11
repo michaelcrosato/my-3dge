@@ -1,0 +1,10 @@
+{"clip": "Akimbo_Idle", "src": "100STYLE", "take": "Akimbo_ID 15.08-17.58", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, akimbo style: hands on hips", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-4,0], "chest":[0,12,-1], "head":[6,20,3],
+   "shL":[4,-5], "shR":[4,-7], "armL":[25,2,-97,91,-33], "armR":[29,-3,-96,98,26],
+   "legL":[-13,1,-99,11,-4], "legR":[-13,-2,-99,13,-13], "footL":[3,6,0], "footR":[4,13,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-4,0], "chest":[0,12,-1], "head":[6,20,3],
+   "shL":[4,-5], "shR":[4,-7], "armL":[25,2,-97,91,-33], "armR":[29,-3,-96,98,26],
+   "legL":[-13,1,-99,11,-4], "legR":[-13,-2,-99,13,-13], "footL":[3,6,0], "footR":[4,13,0]}
+]}

@@ -1,0 +1,10 @@
+{"clip": "Dinosaur_Idle", "src": "100STYLE", "take": "Dinosaur_ID 11.52-14.05", "dur": 2.533, "loop": true, "tags": ["idle","style"], "desc": "Standing, dinosaur style: like a t-rex arms close to body dinosaur posture", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,88], "body":[0,14,-1], "chest":[4,23,0], "head":[3,-10,5],
+   "shL":[3,-5], "shR":[6,-8], "armL":[99,11,11,116,47], "armR":[98,4,18,117,-46],
+   "legL":[32,0,-95,66,4], "legR":[29,-3,-96,64,-3], "footL":[-9,8,0], "footR":[-11,9,0]},
+  {"t":2.533,
+   "hips":[0,0,88], "body":[0,14,-1], "chest":[4,23,0], "head":[3,-10,5],
+   "shL":[3,-5], "shR":[6,-8], "armL":[99,11,11,116,47], "armR":[98,4,18,117,-46],
+   "legL":[32,0,-95,66,4], "legR":[29,-3,-96,64,-3], "footL":[-9,8,0], "footR":[-11,9,0]}
+]}

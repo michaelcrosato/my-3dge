@@ -1,0 +1,10 @@
+{"clip": "Swat_Idle", "src": "100STYLE", "take": "Swat_ID 14.68-17.18", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, swat style: as if holding a rifle and raiding a building", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,95], "body":[0,-21,0], "chest":[4,34,-3], "head":[-41,40,10],
+   "shL":[6,1], "shR":[3,3], "armL":[95,30,8,68,27], "armR":[84,-43,-34,135,51],
+   "legL":[-20,13,-97,36,10], "legR":[-56,11,-82,30,-7], "footL":[22,23,0], "footR":[18,36,0]},
+  {"t":2.5,
+   "hips":[0,0,95], "body":[0,-21,0], "chest":[4,34,-3], "head":[-41,40,10],
+   "shL":[6,1], "shR":[3,3], "armL":[95,30,8,68,27], "armR":[84,-43,-34,135,51],
+   "legL":[-20,13,-97,36,10], "legR":[-56,11,-82,30,-7], "footL":[22,23,0], "footR":[18,36,0]}
+]}

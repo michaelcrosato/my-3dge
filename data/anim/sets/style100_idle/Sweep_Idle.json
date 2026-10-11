@@ -1,0 +1,10 @@
+{"clip": "Sweep_Idle", "src": "100STYLE", "take": "Sweep_ID 21.48-23.98", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, sweep style: sweeping with a broom while moving", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,94], "body":[0,34,-12], "chest":[10,56,-16], "head":[-24,16,-10],
+   "shL":[18,-2], "shR":[1,-5], "armL":[100,7,-4,27,34], "armR":[88,26,-39,94,-25],
+   "legL":[72,43,-54,18,33], "legR":[64,-4,-77,36,-12], "footL":[-34,41,0], "footR":[-26,20,-1]},
+  {"t":2.5,
+   "hips":[0,0,94], "body":[0,34,-12], "chest":[10,56,-16], "head":[-24,16,-10],
+   "shL":[18,-2], "shR":[1,-5], "armL":[100,7,-4,27,34], "armR":[88,26,-39,94,-25],
+   "legL":[72,43,-54,18,33], "legR":[64,-4,-77,36,-12], "footL":[-34,41,0], "footR":[-26,20,-1]}
+]}

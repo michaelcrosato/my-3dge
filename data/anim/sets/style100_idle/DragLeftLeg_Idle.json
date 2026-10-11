@@ -1,0 +1,10 @@
+{"clip": "DragLeftLeg_Idle", "src": "100STYLE", "take": "DragLeftLeg_ID 19.75-22.25", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, drag left leg style: drag left foot along the floor", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-11,-1], "chest":[4,12,0], "head":[9,23,6],
+   "shL":[3,-10], "shR":[0,-10], "armL":[7,7,-100,12,151], "armR":[14,6,-99,10,-90],
+   "legL":[-33,-2,-94,10,-2], "legR":[-14,-6,-99,10,5], "footL":[10,37,0], "footR":[11,6,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-11,-1], "chest":[4,12,0], "head":[9,23,6],
+   "shL":[3,-10], "shR":[0,-10], "armL":[7,7,-100,12,151], "armR":[14,6,-99,10,-90],
+   "legL":[-33,-2,-94,10,-2], "legR":[-14,-6,-99,10,5], "footL":[10,37,0], "footR":[11,6,0]}
+]}

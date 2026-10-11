@@ -1,0 +1,10 @@
+{"clip": "WildLegs_Idle", "src": "100STYLE", "take": "WildLegs_ID 20.00-22.50", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, wild legs style: kick legs into the air with each step", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,99], "body":[0,-13,-1], "chest":[0,28,4], "head":[-3,4,-1],
+   "shL":[4,-7], "shR":[4,-7], "armL":[24,7,-97,16,103], "armR":[33,17,-93,20,-142],
+   "legL":[-28,21,-94,9,74], "legR":[-30,15,-94,9,169], "footL":[12,20,0], "footR":[13,18,0]},
+  {"t":2.5,
+   "hips":[0,0,99], "body":[0,-13,-1], "chest":[0,28,4], "head":[-3,4,-1],
+   "shL":[4,-7], "shR":[4,-7], "armL":[24,7,-97,16,103], "armR":[33,17,-93,20,-142],
+   "legL":[-28,21,-94,9,74], "legR":[-30,15,-94,9,169], "footL":[12,20,0], "footR":[13,18,0]}
+]}

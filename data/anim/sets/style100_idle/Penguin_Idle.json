@@ -1,0 +1,10 @@
+{"clip": "Penguin_Idle", "src": "100STYLE", "take": "Penguin_ID 16.75-19.25", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, penguin style: waddle with feet close together", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-6,-1], "chest":[0,4,2], "head":[4,12,-2],
+   "shL":[3,-11], "shR":[3,-8], "armL":[-6,15,-99,36,141], "armR":[-3,20,-98,37,-127],
+   "legL":[-14,-1,-99,15,9], "legR":[-14,-5,-99,12,-12], "footL":[5,24,0], "footR":[6,35,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-6,-1], "chest":[0,4,2], "head":[4,12,-2],
+   "shL":[3,-11], "shR":[3,-8], "armL":[-6,15,-99,36,141], "armR":[-3,20,-98,37,-127],
+   "legL":[-14,-1,-99,15,9], "legR":[-14,-5,-99,12,-12], "footL":[5,24,0], "footR":[6,35,0]}
+]}

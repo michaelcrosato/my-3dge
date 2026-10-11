@@ -1,0 +1,10 @@
+{"clip": "ShieldedRight_Idle", "src": "100STYLE", "take": "ShieldedRight_ID 18.42-20.92", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, shielded right style: squat down with right arm raised in block as if holding a shield above head. Left arm as if holding a sword", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,96], "body":[0,-2,-2], "chest":[9,36,-18], "head":[7,9,23],
+   "shL":[10,-8], "shR":[-2,6], "armL":[57,28,-77,65,-12], "armR":[42,-5,91,98,-2],
+   "legL":[-4,4,-100,36,-6], "legR":[13,-4,-99,35,-1], "footL":[0,-5,0], "footR":[4,-1,0]},
+  {"t":2.5,
+   "hips":[0,0,96], "body":[0,-2,-2], "chest":[9,36,-18], "head":[7,9,23],
+   "shL":[10,-8], "shR":[-2,6], "armL":[57,28,-77,65,-12], "armR":[42,-5,91,98,-2],
+   "legL":[-4,4,-100,36,-6], "legR":[13,-4,-99,35,-1], "footL":[0,-5,0], "footR":[4,-1,0]}
+]}

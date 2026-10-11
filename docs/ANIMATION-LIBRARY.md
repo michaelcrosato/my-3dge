@@ -11,12 +11,19 @@ ported from my-3d2dge's `my-3d2dge:docs/MOCAP.md` (WP 8.1), with the format and 
 
 | Set | What it holds | License |
 |---|---|---|
-| QUATERNIUS | Every free clip of Quaternius' Universal Animation Library 1 and 2. WP 8.10 replaces it with version 2 | CC0 1.0 |
+| QUATERNIUS | Every free clip of Quaternius' Universal Animation Library 1 and 2, version 2 (June 2026), from shardfall, each travelling clip with its root-motion twin `_RM`; and version 1's `Punch_Enter`, which version 2 dropped | CC0 1.0 |
 | MESH2MOTION | Mesh2Motion's human animations: Quaternius' clips as it re-exported them, clips its contributors animated (climbs, ledge hang, bow, backflip, dodges, crawling, flying, dances, emotes, deaths) and its own mocopi captures | CC0 1.0 |
 | CMU | Moments cut from the CMU Graphics Lab Motion Capture Database, picked for what a game needs: gaits, traversal, fighting, falls and get-ups, townsfolk at work, gestures, monsters acted by people, acrobatics | CMU's terms: never resold as data |
-| STYLE100 (WP 8.10, from shardfall) | 100STYLE: about 100 styles of walking, running and standing, one loop per style and gait, in seven sets | CC BY 4.0: credit on screen |
+| STYLE100, STYLE100_BACK, _BACKRUN, _IDLE, _RUN, _SIDE, _SIDERUN | 100STYLE, from shardfall: about 100 styles of walking, running, sidestepping and standing, one loop per style and gait, each loop with the `speed` it was captured at | CC BY 4.0: credit on screen (below) |
 
-Their sizes, fit and sources are PLAN.md §10.1's table. Beside the sets:
+Their sizes, fit and sources are PLAN.md §10.1's table.
+
+**100STYLE's credit (CC BY 4.0).** Any page or game that ships a `style100*` clip shows the credit on screen: the
+title, the authors, the license with its link, a link to the dataset, and a note that the clips were changed. SOURCES.md
+gives the wording and the links; the box shows it from WP 8.9, since Vercel publishes it (WP 0.12). The CC0 sets need
+no credit; CMU's terms and acknowledgment are in SOURCES.md.
+
+Beside the sets:
 - **[SOURCES.md](../data/anim/SOURCES.md)**: every library, its license text (`data/anim/LICENSES/`), URL and file
   names, CMU's terms and acknowledgment verbatim, and where each file of `data/anim/` came from. Read it before
   shipping a clip.
@@ -27,7 +34,8 @@ Their sizes, fit and sources are PLAN.md §10.1's table. Beside the sets:
 
 The layout is PLAN.md §10.3. What arrives when:
 - this page, the provenance, the catalogs and the ledger: WP 8.1;
-- the sets, one JSON file per clip in `data/anim/sets/<set>/`: WP 8.3;
+- the sets, one JSON file per clip in `data/anim/sets/<set>/`: WP 8.3; 100STYLE and Quaternius version 2, from
+  shardfall (`tools/anim/shardfall.ts`, `npx tsx tools/anim/shardfall.ts --check`): WP 8.10;
 - the codec, validator and lens: WP 8.2; baking, the clip layer and retargeting: WP 8.4;
 - the tools (`x anim find|show|cut|import|cmu|bake|sheet`): WP 8.5; until then the recipes below run with my-3d2dge's
   own tools (`my-3d2dge:tools/anim-import.mjs`, `my-3d2dge:tools/cmu.mjs`).
@@ -111,7 +119,8 @@ The runtime path is PLAN.md §10.4. In short:
   contact IK for feet and hands; the sole, not the ankle, meets the floor.
 - **Sampling stays on the CPU**, so root motion, events and hit volumes are the same in Node and in every page.
 - **The mannequin** (`engine/gfx/puppets/bodies/mannequin.ts`) is a look-alike of the libraries' own figure, built
-  from the `body` measured from the first library's mesh (`data/anim/sets/quaternius/_set.json`).
+  from the `body` measured from the first library's mesh (`data/anim/sets/quaternius/_set.json`, version 1's, which
+  WP 8.10 kept; every other set's `body` is `null`).
 
 **What the clips assume:**
 - **In-place jumps.** `Jump_Start`, `Jump_Loop` and the `NinjaJump_*` clips keep the root on the floor while the feet
@@ -235,13 +244,13 @@ Contents, prices and terms as my-3d2dge recorded them in October 2026.
 
 | Source | Humanoid clips | Cost | License | Files | Here |
 |---|---|---|---|---|---|
-| Quaternius Universal Animation Library 1 and 2, Standard | 45 + T-pose, and 42 | free | CC0 | GLB | Imported (QUATERNIUS); version 2 from shardfall (WP 8.10) |
+| Quaternius Universal Animation Library 1 and 2, Standard | 45 + T-pose, and 42 | free | CC0 | GLB | Imported: version 2 from shardfall, with root-motion twins (QUATERNIUS) |
 | [Library 1 Pro](https://quaternius.itch.io/universal-animation-library) | 120+ | $9.99 | CC0 | GLB, FBX | Drop-in: the Standard skeleton. Import it in place of the Standard file |
 | [Library 2 Source](https://quaternius.itch.io/universal-animation-library-2) (Library 2 has no Pro tier) | 130+ | $14.99 | CC0 | .blend only | Convert to GLB, then import. Library 1's Source edition ($14.99) is the same route |
 | [Mesh2Motion](https://github.com/Mesh2Motion/mesh2motion-app) humans | 178 | free | CC0 | GLB | Imported (MESH2MOTION; one defective re-export skipped) |
 | [CMU motion capture](http://mocap.cs.cmu.edu/) | 2,548 takes, about ten hours | free | CMU's terms: use, change and share freely, credit mocap.cs.cmu.edu, never sell the data itself | ASF/AMC | Imported (CMU) and all of it surveyed in the ledger |
 | [CMU, retargeted by RancidMilk](https://rancidmilk.itch.io/free-character-animations) | 2,000+ | free | CMU's terms | FBX, on a Quaternius character | Not tried: convert to GLB; it needs a bone map if the rig is not one the importer reads |
-| [100STYLE](https://zenodo.org/records/8127870) | about 100 walking, running and standing styles | free | CC BY 4.0 (credit required) | BVH | Approved by the owner (ADR-0021): shardfall's loops (WP 8.10); the original takes on demand (WP 8.8) |
+| [100STYLE](https://zenodo.org/records/8127870) | about 100 walking, running and standing styles | free | CC BY 4.0 (credit required) | BVH | Approved by the owner (ADR-0021). Imported: shardfall's 878 loops (STYLE100 and six more sets); the original takes on demand (WP 8.8) |
 | Mixamo | thousands | free account | Adobe's terms forbid redistributing the animations in an editable form | FBX | No: a converted set in an open repository is exactly that |
 | Bandai Namco Research motion dataset | 3,000 | free | CC BY-NC-ND 4.0 | BVH | No: retargeting is a derivative |
 
@@ -281,6 +290,7 @@ where each stands here:
 ## Tests
 
 - `tests/unit/data/anim/`: the provenance (`sources/`), the catalogs and the coverage map (`catalogs/`), the ledger
-  (`ledger/`), and the sets (`sets/`, WP 8.3).
+  (`ledger/`), the sets (`sets/`, WP 8.3), and what came from shardfall (`shardfall.test.ts`, WP 8.10: the `via`
+  marks and bodies, the catalogs, Quaternius version 2 against version 1, every clip decoding, 100STYLE's credit).
 - The library QA (WP 8.6): format, fit thresholds, the `anim` QA family over every clip, and a browser smoke test
   (`tests/e2e/library.spec.ts`).

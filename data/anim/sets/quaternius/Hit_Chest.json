@@ -1,7 +1,7 @@
-{"clip": "Hit_Chest", "src": "UAL1", "dur": 0.333, "loop": false, "tags": ["hurt"], "desc": "takes a blow to the chest: torso snaps back, recovers", "keys": [
+{"clip": "Hit_Chest", "src": "UAL1", "dur": 0.333, "loop": false, "tags": ["hurt"], "desc": "takes a blow to the chest: torso snaps back, recovers", "via": "shardfall", "keys": [
   {"t":0,
    "hips":[-6,-1,93], "body":[14,-15,2], "chest":[-1,2,5], "head":[0,-12,-2],
-   "shL":[6,-3], "shR":[-6,-2], "armL":[29,19,-94,56,6], "armR":[29,18,-94,64,-3],
+   "shL":[6,-3], "shR":[-6,-2], "armL":[29,19,-94,56,5], "armR":[29,18,-94,63,-3],
    "legL":[-15,14,-98,32,6], "legR":[-50,19,-85,23,-37], "footL":[15,8,0], "footR":[11,37,-1]},
   {"t":0.1,
    "hips":[-7,-1,94], "body":[14,-13,2], "chest":[-1,10,3], "head":[-2,-26,1],

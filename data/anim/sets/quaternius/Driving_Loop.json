@@ -1,10 +1,10 @@
-{"clip": "Driving_Loop", "src": "UAL1", "dur": 1.667, "loop": true, "tags": ["sit","vehicle"], "desc": "seated, hands on a steering wheel, small turns", "keys": [
+{"clip": "Driving_Loop", "src": "UAL1", "dur": 1.667, "loop": true, "tags": ["sit","vehicle"], "desc": "seated, hands on a steering wheel, small turns", "via": "shardfall", "keys": [
   {"t":0,
    "hips":[-34,0,59], "body":[0,-18,0], "chest":[0,24,0], "head":[-11,-10,-2],
-   "shL":[6,-3], "shR":[-6,-2], "armL":[99,-15,-8,86,16], "armR":[99,-11,-10,76,-10],
+   "shL":[6,-3], "shR":[-6,-2], "armL":[99,-14,-9,80,16], "armR":[99,-10,-10,69,-11],
    "legL":[37,11,-92,84,11], "legR":[37,17,-91,83,-10], "footL":[18,0,0], "footR":[18,4,0]},
   {"t":1.667,
    "hips":[-34,0,59], "body":[0,-18,0], "chest":[0,24,0], "head":[-11,-10,-2],
-   "shL":[6,-3], "shR":[-6,-2], "armL":[99,-15,-8,86,16], "armR":[99,-11,-10,76,-10],
+   "shL":[6,-3], "shR":[-6,-2], "armL":[99,-14,-9,80,16], "armR":[99,-10,-10,69,-11],
    "legL":[37,11,-92,84,11], "legR":[37,17,-91,83,-10], "footL":[18,0,0], "footR":[18,4,0]}
 ]}

@@ -1,7 +1,7 @@
-{"clip": "Hit_Head", "src": "UAL1", "dur": 0.433, "loop": false, "tags": ["hurt"], "desc": "takes a blow to the head: head snaps aside, recovers", "keys": [
+{"clip": "Hit_Head", "src": "UAL1", "dur": 0.433, "loop": false, "tags": ["hurt"], "desc": "takes a blow to the head: head snaps aside, recovers", "via": "shardfall", "keys": [
   {"t":0,
    "hips":[-9,-1,96], "body":[13,-5,0], "chest":[0,12,2], "head":[0,-18,0],
-   "shL":[6,-2], "shR":[-6,-2], "armL":[29,19,-94,52,6], "armR":[29,17,-94,61,-4],
+   "shL":[6,-2], "shR":[-6,-2], "armL":[29,19,-94,52,6], "armR":[29,17,-94,61,-3],
    "legL":[5,17,-98,20,4], "legR":[-31,14,-94,9,-42], "footL":[5,8,0], "footR":[4,32,0]},
   {"t":0.133,
    "hips":[-12,-1,95], "body":[13,-5,0], "chest":[0,16,1], "head":[-18,-32,-6],

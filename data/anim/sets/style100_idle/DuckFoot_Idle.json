@@ -1,0 +1,10 @@
+{"clip": "DuckFoot_Idle", "src": "100STYLE", "take": "DuckFoot_ID 24.95-27.45", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, duck foot style: toes pointing inwards", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-12,0], "chest":[2,16,1], "head":[-2,18,-2],
+   "shL":[2,-10], "shR":[0,-8], "armL":[7,2,-100,0,-113], "armR":[14,12,-98,15,-106],
+   "legL":[-23,4,-97,2,-2], "legR":[-24,3,-97,6,0], "footL":[7,62,0], "footR":[6,67,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,-12,0], "chest":[2,16,1], "head":[-2,18,-2],
+   "shL":[2,-10], "shR":[0,-8], "armL":[7,2,-100,0,-113], "armR":[14,12,-98,15,-106],
+   "legL":[-23,4,-97,2,-2], "legR":[-24,3,-97,6,0], "footL":[7,62,0], "footR":[6,67,0]}
+]}

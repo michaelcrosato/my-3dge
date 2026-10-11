@@ -1,0 +1,10 @@
+{"clip": "HighKnees_Idle", "src": "100STYLE", "take": "HighKnees_ID 11.85-14.37", "dur": 2.533, "loop": true, "tags": ["idle","style"], "desc": "Standing, high knees style: lift knees high but only knees – not marching", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-13,0], "chest":[2,19,0], "head":[0,7,0],
+   "shL":[5,-9], "shR":[4,-8], "armL":[17,9,-98,13,78], "armR":[23,10,-97,9,-46],
+   "legL":[-32,-3,-95,11,-6], "legR":[-33,1,-94,13,-1], "footL":[14,4,0], "footR":[14,1,0]},
+  {"t":2.533,
+   "hips":[0,0,100], "body":[0,-13,0], "chest":[2,19,0], "head":[0,7,0],
+   "shL":[5,-9], "shR":[4,-8], "armL":[17,9,-98,13,78], "armR":[23,10,-97,9,-46],
+   "legL":[-32,-3,-95,11,-6], "legR":[-33,1,-94,13,-1], "footL":[14,4,0], "footR":[14,1,0]}
+]}

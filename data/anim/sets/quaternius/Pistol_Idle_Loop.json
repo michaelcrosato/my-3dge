@@ -1,14 +1,14 @@
-{"clip": "Pistol_Idle_Loop", "src": "UAL1", "dur": 1.667, "loop": true, "tags": ["gun","idle"], "desc": "standing ready, pistol held low in both hands", "keys": [
+{"clip": "Pistol_Idle_Loop", "src": "UAL1", "dur": 1.667, "loop": true, "tags": ["gun","idle"], "desc": "standing ready, pistol held low in both hands", "via": "shardfall", "keys": [
   {"t":0,
    "hips":[-9,0,96], "body":[13,-6,0], "chest":[26,16,-8], "head":[-37,10,8],
-   "shL":[-23,0], "shR":[27,-3], "armL":[99,13,10,57,19], "armR":[70,-68,22,43,9],
+   "shL":[-23,0], "shR":[27,-3], "armL":[99,12,9,48,19], "armR":[70,-68,22,37,11],
    "legL":[3,18,-98,19,7], "legR":[-33,13,-93,9,-39], "footL":[6,8,0], "footR":[5,33,0]},
   {"t":0.967,
    "hips":[-9,0,96], "body":[13,-6,0], "chest":[27,20,-9], "head":[-38,9,6],
-   "shL":[-24,1], "shR":[28,-3], "armL":[98,13,14,61,15], "armR":[67,-69,28,48,8],
+   "shL":[-24,1], "shR":[28,-3], "armL":[98,13,14,53,17], "armR":[67,-69,27,41,10],
    "legL":[3,18,-98,19,7], "legR":[-33,13,-93,9,-39], "footL":[6,8,0], "footR":[5,33,0]},
   {"t":1.667,
    "hips":[-9,0,96], "body":[13,-6,0], "chest":[26,16,-8], "head":[-37,10,8],
-   "shL":[-23,0], "shR":[27,-3], "armL":[99,13,10,57,19], "armR":[70,-68,22,43,9],
+   "shL":[-23,0], "shR":[27,-3], "armL":[99,12,9,48,19], "armR":[70,-68,22,37,11],
    "legL":[3,18,-98,19,7], "legR":[-33,13,-93,9,-39], "footL":[6,8,0], "footR":[5,33,0]}
 ]}

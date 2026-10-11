@@ -1,0 +1,10 @@
+{"clip": "LegsApart_Idle", "src": "100STYLE", "take": "LegsApart_ID 19.78-22.28", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, legs apart style: legs relatively straight wide apart", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,96], "body":[0,-11,0], "chest":[1,15,0], "head":[-6,18,-1],
+   "shL":[3,-7], "shR":[2,-6], "armL":[8,9,-99,0,163], "armR":[13,14,-98,0,-102],
+   "legL":[-23,33,-91,0,-19], "legR":[-21,33,-92,0,156], "footL":[10,2,0], "footR":[10,11,0]},
+  {"t":2.5,
+   "hips":[0,0,96], "body":[0,-11,0], "chest":[1,15,0], "head":[-6,18,-1],
+   "shL":[3,-7], "shR":[2,-6], "armL":[8,9,-99,0,163], "armR":[13,14,-98,0,-102],
+   "legL":[-23,33,-91,0,-19], "legR":[-21,33,-92,0,156], "footL":[10,2,0], "footR":[10,11,0]}
+]}

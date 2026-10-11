@@ -1,0 +1,10 @@
+{"clip": "HandsInPockets_Idle", "src": "100STYLE", "take": "HandsInPockets_ID 24.05-26.55", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, hands in pockets style: place hands in pockets and walk and run", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-14,0], "chest":[1,25,-1], "head":[-1,4,1],
+   "shL":[5,-8], "shR":[2,-7], "armL":[31,-5,-95,49,-22], "armR":[31,-12,-94,53,29],
+   "legL":[-28,-2,-96,12,-1], "legR":[-32,-2,-95,14,1], "footL":[14,9,0], "footR":[14,13,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-14,0], "chest":[1,25,-1], "head":[-1,4,1],
+   "shL":[5,-8], "shR":[2,-7], "armL":[31,-5,-95,49,-22], "armR":[31,-12,-94,53,29],
+   "legL":[-28,-2,-96,12,-1], "legR":[-32,-2,-95,14,1], "footL":[14,9,0], "footR":[14,13,0]}
+]}

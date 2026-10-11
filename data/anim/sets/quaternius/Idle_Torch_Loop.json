@@ -1,4 +1,4 @@
-{"clip": "Idle_Torch_Loop", "src": "UAL1", "dur": 1.267, "loop": true, "tags": ["idle","prop"], "desc": "standing with one arm raised, holding up a torch or lantern", "keys": [
+{"clip": "Idle_Torch_Loop", "src": "UAL1", "dur": 1.267, "loop": true, "tags": ["idle","prop"], "desc": "standing with one arm raised, holding up a torch or lantern", "via": "shardfall", "keys": [
   {"t":0,
    "hips":[-9,-1,96], "body":[13,-5,0], "chest":[0,21,0], "head":[-11,1,0],
    "shL":[6,-2], "shR":[-6,-2], "armL":[96,24,12,61,41], "armR":[29,17,-94,60,-4],

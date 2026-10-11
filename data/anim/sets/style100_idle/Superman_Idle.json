@@ -1,0 +1,10 @@
+{"clip": "Superman_Idle", "src": "100STYLE", "take": "Superman_ID 18.12-20.65", "dur": 2.533, "loop": true, "tags": ["idle","style"], "desc": "Standing, superman style: right arm raised like superman flying", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,20,-1], "chest":[0,18,-1], "head":[-4,28,13],
+   "shL":[5,-13], "shR":[-6,19], "armL":[-63,21,-75,20,-147], "armR":[63,38,67,24,-85],
+   "legL":[37,5,-93,0,1], "legR":[36,4,-93,3,3], "footL":[-19,-6,0], "footR":[-18,3,0]},
+  {"t":2.533,
+   "hips":[0,0,101], "body":[0,20,-1], "chest":[0,18,-1], "head":[-4,28,13],
+   "shL":[5,-13], "shR":[-6,19], "armL":[-63,21,-75,20,-147], "armR":[63,38,67,24,-85],
+   "legL":[37,5,-93,0,1], "legR":[36,4,-93,3,3], "footL":[-19,-6,0], "footR":[-18,3,0]}
+]}

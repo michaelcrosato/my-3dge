@@ -1,0 +1,10 @@
+{"clip": "Chicken_Idle", "src": "100STYLE", "take": "Chicken_ID 13.95-16.45", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, chicken style: bob head - arms as wings", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,95], "body":[0,15,-2], "chest":[-2,35,3], "head":[5,-9,4],
+   "shL":[9,-6], "shR":[8,-5], "armL":[20,-11,-97,98,-20], "armR":[23,-8,-97,105,19],
+   "legL":[32,4,-95,42,-2], "legR":[32,-6,-94,40,-2], "footL":[-15,-6,0], "footR":[-14,2,0]},
+  {"t":2.5,
+   "hips":[0,0,95], "body":[0,15,-2], "chest":[-2,35,3], "head":[5,-9,4],
+   "shL":[9,-6], "shR":[8,-5], "armL":[20,-11,-97,98,-20], "armR":[23,-8,-97,105,19],
+   "legL":[32,4,-95,42,-2], "legR":[32,-6,-94,40,-2], "footL":[-15,-6,0], "footR":[-14,2,0]}
+]}

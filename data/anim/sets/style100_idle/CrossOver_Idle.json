@@ -1,0 +1,10 @@
+{"clip": "CrossOver_Idle", "src": "100STYLE", "take": "CrossOver_ID 14.38-16.88", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, cross over style: step each foot in front of other leg", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,98], "body":[0,-3,4], "chest":[2,2,-4], "head":[3,27,1],
+   "shL":[1,-11], "shR":[2,-7], "armL":[2,10,-100,0,130], "armR":[11,9,-99,0,-15],
+   "legL":[-11,-25,-96,0,111], "legR":[2,-16,-99,19,-3], "footL":[-2,-17,0], "footR":[-1,-14,0]},
+  {"t":2.5,
+   "hips":[0,0,98], "body":[0,-3,4], "chest":[2,2,-4], "head":[3,27,1],
+   "shL":[1,-11], "shR":[2,-7], "armL":[2,10,-100,0,130], "armR":[11,9,-99,0,-15],
+   "legL":[-11,-25,-96,0,111], "legR":[2,-16,-99,19,-3], "footL":[-2,-17,0], "footR":[-1,-14,0]}
+]}

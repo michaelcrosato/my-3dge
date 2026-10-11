@@ -1,0 +1,10 @@
+{"clip": "ArmsBehindBack_Idle", "src": "100STYLE", "take": "ArmsBehindBack_ID 13.75-16.25", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, arms behind back style: hands clasped behind back", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-10,0], "chest":[2,17,-3], "head":[1,11,1],
+   "shL":[4,-12], "shR":[3,-12], "armL":[-22,-21,-95,23,-72], "armR":[-16,-29,-94,34,49],
+   "legL":[-27,2,-96,11,-3], "legR":[-28,3,-96,8,-3], "footL":[10,-11,0], "footR":[10,7,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-10,0], "chest":[2,17,-3], "head":[1,11,1],
+   "shL":[4,-12], "shR":[3,-12], "armL":[-22,-21,-95,23,-72], "armR":[-16,-29,-94,34,49],
+   "legL":[-27,2,-96,11,-3], "legR":[-28,3,-96,8,-3], "footL":[10,-11,0], "footR":[10,7,0]}
+]}

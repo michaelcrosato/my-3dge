@@ -1,0 +1,14 @@
+{"clip": "WalkingStickLeft_Run", "src": "100STYLE", "take": "WalkingStickLeft_FR 56.62-57.12", "dur": 0.5, "loop": true, "speed": 14, "tags": ["run","style"], "desc": "Running, walking stick left style: walk with a stick – used broom handle", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[2,-8,-1], "chest":[1,13,1], "head":[1,24,4],
+   "shL":[2,-7], "shR":[3,-7], "armL":[56,15,-82,88,22], "armR":[47,11,-88,49,-15],
+   "legL":[-18,-3,-98,14,5], "legR":[-14,-10,-99,2,8], "footL":[10,16,0], "footR":[11,3,0]},
+  {"t":0.2,
+   "hips":[2,0,101], "body":[2,-10,-1], "chest":[-1,14,1], "head":[3,25,5],
+   "shL":[3,-9], "shR":[3,-6], "armL":[57,15,-81,90,24], "armR":[42,7,-91,45,-14],
+   "legL":[-23,-3,-97,13,9], "legR":[-20,-10,-98,0,11], "footL":[12,16,0], "footR":[12,3,0]},
+  {"t":0.5,
+   "hips":[0,0,101], "body":[2,-8,-1], "chest":[1,13,1], "head":[1,24,4],
+   "shL":[2,-7], "shR":[3,-7], "armL":[56,15,-82,88,22], "armR":[47,11,-88,49,-15],
+   "legL":[-18,-3,-98,14,5], "legR":[-14,-10,-99,2,8], "footL":[10,16,0], "footR":[11,3,0]}
+]}
