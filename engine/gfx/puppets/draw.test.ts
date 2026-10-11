@@ -120,8 +120,10 @@ describe('a puppet', () => {
     expect([lit.vertexColors, glow.vertexColors, glow.type]).toEqual([true, true, 'MeshBasicMaterial']);
   });
 
-  it('is bound at rest: the skinned rest pose is the geometry', () => {
-    puppet.setPose(new Pose());
+  it('is bound at rest: the skinned rest pose is the geometry, inside its bounding sphere from the start', () => {
+    const sphere = mesh.boundingSphere!;
+    expect(sphere.radius).toBeCloseTo(humanoid.reach, 12);
+    expect(sphere.center.y).toBeCloseTo(humanoid.rest[1], 12);
     mesh.updateMatrixWorld(true);
     const position = mesh.geometry.getAttribute('position');
     const v = new Vector3();

@@ -42,7 +42,7 @@ import {
   type Material,
 } from 'three/webgpu';
 import { createWorldPose, forwardKinematics } from '../../anim/fk';
-import type { Pose } from '../../anim/pose';
+import { Pose } from '../../anim/pose';
 import { JOINTS, PARENTS, SOCKETS, type SocketName } from '../../anim/skeleton';
 import { registry as sharedRegistry, type Registry } from '../../core/registry';
 import { limbGeometry } from '../geometry/limb';
@@ -210,7 +210,7 @@ export interface Puppet {
   dispose(): void;
 }
 
-/** Draws `compiled` as one rigid-skinned mesh (see the file comment). */
+/** Draws `compiled` as one rigid-skinned mesh (see the file comment), at rest until `setPose`. */
 export function createPuppet(compiled: CompiledBody, options: { materials: PuppetMaterials; name?: string }): Puppet {
   const { body, skeleton, rest } = compiled;
   const bones = [new Bone(), ...JOINTS.map(() => new Bone())];
@@ -263,7 +263,7 @@ export function createPuppet(compiled: CompiledBody, options: { materials: Puppe
       mesh.removeFromParent();
     },
   };
-  return puppet;
+  return puppet.setPose(new Pose());
 }
 
 /** Instanced parts for crowds (see the file comment). */
