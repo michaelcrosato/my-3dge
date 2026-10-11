@@ -73,7 +73,7 @@ const DIRECTION_OF = [7, 3, 5, 1, -1, 0, 6, 2, 4];
 class TileHeap {
   readonly #heap: Int32Array;
   readonly #at: Int32Array;
-  #keys = new Float64Array(0);
+  #keys: Float64Array = new Float64Array(0);
   size = 0; // how many tiles it holds
 
   constructor(tiles: number) {

@@ -30,7 +30,9 @@ function reached(grid: NavGrid, start: number): Set<number> {
     const i = queue.shift()!;
     NAV_DIRECTIONS.forEach(([dc, dr], k) => {
       const j = i + dr * grid.cols + dc;
-      if (grid.steps[i] & (1 << k) && !seen.has(j)) (queue.push(j), seen.add(j));
+      if (!(grid.steps[i] & (1 << k)) || seen.has(j)) return;
+      queue.push(j);
+      seen.add(j);
     });
   }
   return seen;
@@ -104,7 +106,7 @@ describe('the hall, under the hero’s jump reach', () => {
       description: `A test ledge ${height} m up.`,
       floor: height,
       top: height,
-      collider: 'box',
+      collider: 'box' as const,
       mesh: 'gallery',
     });
     defineGlyph('glyph:low', ledge('L', Math.round((reach - 0.02) * 1000) / 1000), registry);
