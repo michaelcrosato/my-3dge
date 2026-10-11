@@ -1,0 +1,11 @@
+{
+  "describe": "A prop: a thing that stands in a level, as data (meshes by geometry and material id, a body, an optional light spot, where a level places it, hooks), with a unit test that its parts build clean and stand as tall as its body (PLAN.md WP 4.5).",
+  "id": "the module's path, labs/<lab>/props/<name> (its id is prop:<name>): labs/box/props/chest",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/props|tools/templates/prop)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/prop/sampleProp",
+  "files": {
+    "prop.ts.tmpl": "{{id}}.ts",
+    "prop.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}
