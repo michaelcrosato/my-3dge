@@ -1,6 +1,6 @@
 /**
  * @file Unit tests for engine/dev/stats.ts (T1, PLAN.md §8.3, §8.7, WP 5.5): on a clock the test moves, the meter's
- * medians cover the last 60 steps or frames; the probe adds each `physics` and `anim` system's time to its phase for
+ * means cover the last 60 steps or frames, readings in coarse steps included; the probe adds each `physics` and `anim` system's time to its phase for
  * the step under way and passes the other phases through, each system run once; phases timed outside a step are not
  * counted; the renderer's counts are read live, and are null headless with `renderMs`; `reset` forgets the samples;
  * and the `stats` member reads its host's meter, or throws `DEV_NO_METER` naming the fix.
@@ -11,7 +11,7 @@ import { EngineError } from '../core/log';
 import { registry as sharedRegistry } from '../core/registry';
 import { createInspector } from './inspector';
 import type { InspectorHost } from './members';
-import { createStatsMeter, medianOf, STATS_WINDOW, type RenderCounts, type StatsMeter } from './stats';
+import { createStatsMeter, STATS_WINDOW, type RenderCounts, type StatsMeter } from './stats';
 
 /** A meter on a clock the test moves; `step(ms)` times a step whose phases take `ms.physics`, `ms.anim` and `ms.logic`. */
 function clocked(counts?: () => RenderCounts | null) {
@@ -39,16 +39,19 @@ const COUNTS: RenderCounts = {
 };
 
 describe('the meter', () => {
-  it('reports the medians of the last 60 steps and frames, split into physics, anim and the rest', () => {
+  it('reports the means of the last 60 steps and frames, split into physics, anim and the rest', () => {
     const { meter, step, frame } = clocked();
     for (let k = 0; k < STATS_WINDOW; k++) step({ physics: 2, anim: 1, logic: 0.5 });
     for (let k = 0; k < 3; k++) frame(4);
     frame(10);
-    expect(meter.read()).toMatchObject({ simMs: 3.5, physicsMs: 2, animMs: 1, renderMs: 4, steps: 60, frames: 4 });
+    expect(meter.read()).toMatchObject({ simMs: 3.5, physicsMs: 2, animMs: 1, renderMs: 5.5, steps: 60, frames: 4 });
     for (let k = 0; k < STATS_WINDOW; k++) step({ physics: 6, anim: 0, logic: 1 });
     expect(meter.read()).toMatchObject({ simMs: 7, physicsMs: 6, animMs: 0, steps: 120 });
-    step({ physics: 100 });
-    expect(meter.read().physicsMs).toBe(6); // one slow step of 60 moves no median
+    step({ physics: 66 });
+    expect(meter.read().physicsMs).toBe(7); // the oldest step left the window: (59 × 6 + 66) / 60
+    const coarse = clocked(); // a clock that reads in steps of 0.1 ms: 3 steps of 0.03 ms read 0, 0, 0.1
+    for (let k = 0; k < 60; k++) coarse.step({ logic: k % 10 < 3 ? 0.1 : 0 });
+    expect(coarse.meter.read().simMs).toBe(0.03);
   });
 
   it('runs each system once, passes other phases through, and counts phases only inside a timed step', () => {
@@ -87,10 +90,6 @@ describe('the meter', () => {
     expect(meter.read()).toMatchObject({ ...COUNTS, renderMs: 2, frames: 1 });
     meter.reset();
     expect(meter.read()).toMatchObject({ ...COUNTS, renderMs: null, simMs: null, frames: 0, steps: 0 });
-  });
-
-  it('takes medians of odd and even counts, and none of no samples', () => {
-    expect([medianOf([3, 1, 2]), medianOf([4, 1, 3, 2]), medianOf([])]).toEqual([2, 2.5, null]);
   });
 });
 

@@ -10,7 +10,7 @@
  *   --scene <id>` names the lab's scene `<name>:<id>`. Section: `ladder: { setting, steps, rungs: { "100": {…} } }`.
  * - **page**: `labs/<name>` (with `--scene`) or an `.html` file, opened in Chromium as `x shot` opens it, its clock
  *   real again (the virtual clock's `performance.now` taken away, so the meter times real work), paused, stepped
- *   `--steps` times (120), 60 frames drawn, then `__engine.stats()` read (engine/dev/stats.ts): the medians of
+ *   `--steps` times (120), 60 frames drawn, then `__engine.stats()` read (engine/dev/stats.ts): the means of
  *   sim, physics, anim and render ms, and the last frame's draw calls, triangles, compute calls, textures, geometries
  *   and pipelines (after warm-up). Section: `page: { steps, budgets: { simMs, …, pipelinesAfterWarmUp } }`.
  *
@@ -37,7 +37,7 @@ import { dirname, join } from 'node:path';
 import { didYouMean } from '../../engine/core/log';
 import { show, validate, type Field, type Schema } from '../../engine/core/schema';
 import { createSettings, type SettingValue } from '../../engine/core/settings';
-import { COUNT_KEYS, medianOf, STATS_WINDOW, type EngineStats } from '../../engine/dev/stats';
+import { COUNT_KEYS, STATS_WINDOW, type EngineStats } from '../../engine/dev/stats';
 import { createSession, type Scene } from '../../engine/sim/scene';
 import { browserRuntime, launchBrowser, preparePage, VIEWPORT } from '../lib/browser';
 import { READY_MS, waitReady } from '../lib/page';
@@ -52,7 +52,7 @@ import { loadScene, sceneModules, typedSets, wholeFlag } from './sim';
 export const BUDGET_KEYS = ['stepMs', 'hashMs', 'captureMs'] as const;
 /** One quantity a Node run measures. */
 export type PerfKey = (typeof BUDGET_KEYS)[number];
-/** What a page measures: `__engine.stats()`'s medians, then its counts. */
+/** What a page measures: `__engine.stats()`'s means, then its counts. */
 export const PAGE_KEYS = ['simMs', 'physicsMs', 'animMs', 'renderMs', ...COUNT_KEYS] as const;
 /** One quantity a page measures. */
 export type PageKey = (typeof PAGE_KEYS)[number];
@@ -109,7 +109,11 @@ const FILE: Schema = {
 const SHAPE = `{ scene, steps, budgets: { ${BUDGET_KEYS.join(', ')} }, page: { steps, budgets }, ladder: { setting, steps, rungs }, tolerance, reason }`;
 
 /** The middle value (the mean of the two middle ones for an even count). */
-export const median = (values: readonly number[]): number => medianOf(values) ?? NaN;
+export function median(values: readonly number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = sorted.length >> 1;
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
 
 /** Whether `value` is within `limit`, `tolerance` (a fraction) over it allowed. */
 export function withinBudget(value: number, limit: number, tolerance = 0): boolean {

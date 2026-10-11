@@ -1,11 +1,13 @@
 /**
  * @file The inspector member `stats()` and the meter behind it (PLAN.md §8.3, §8.7, WP 5.5; doctrine: Verifiable):
- * performance as counters, never frames per second. `stats()` gives the median milliseconds of the last 60 sim steps
+ * performance as counters, never frames per second. `stats()` gives the mean milliseconds of the last 60 sim steps
  * (`simMs`) and of their `physics` and `anim` phases (`physicsMs`, `animMs`; the phases of engine/sim/systems.ts),
- * the median CPU milliseconds of the last 60 drawn frames (`renderMs`), and the renderer's counts: the last frame's
+ * the mean CPU milliseconds of the last 60 drawn frames (`renderMs`), and the renderer's counts: the last frame's
  * draw calls, triangles and compute dispatches, the textures and geometries alive on the GPU, the pipelines built
  * since startup and those built after the warm-up (0, or a frame stalled: §8.7). The split is the prototype
- * benchmark's (physics, logic and drawing): the step's logic is `simMs - physicsMs - animMs`.
+ * benchmark's (physics, logic and drawing): the step's logic is `simMs - physicsMs - animMs`. Means, not medians: a
+ * browser's clock reads in steps of 0.1 ms (with jitter), so a cheap step reads 0 most times, and only the mean of
+ * the readings comes out right; a pause lifts the mean for one second (60 samples) at most.
  *
  * A meter (`createStatsMeter`) collects them. The engine times each step and each frame through it (`time('sim',
  * run)`, `time('render', run)`) and hands the world its `probe`, which runs each system and adds its time to its
@@ -37,7 +39,7 @@ export const STATS_CODES = defineCodes('dev', {
   },
 });
 
-/** How many steps or frames the medians cover: the last second at 60 Hz. */
+/** How many steps or frames the means cover: the last second at 60 Hz. */
 export const STATS_WINDOW = 60;
 
 /** What the meter times: the whole sim step, its `physics` and `anim` phases, and a drawn frame's CPU side. */
@@ -62,15 +64,15 @@ export const COUNT_KEYS = [
   'pipelinesAfterWarmUp',
 ] as const satisfies readonly (keyof RenderCounts)[];
 
-/** What `__engine.stats()` returns: medians in milliseconds, then the renderer's counts (null when not measured). */
+/** What `__engine.stats()` returns: means in milliseconds, then the renderer's counts (null when not measured). */
 export interface EngineStats {
-  /** The median of the last 60 sim steps, whole; null before the first. */
+  /** The mean of the last 60 sim steps, whole; null before the first. */
   simMs: number | null;
-  /** The median time of those steps' `physics` phase (the Rapier step); 0 for a scene without physics. */
+  /** The mean time of those steps' `physics` phase (the Rapier step); 0 for a scene without physics. */
   physicsMs: number | null;
-  /** The median time of those steps' `anim` phase (characters, timelines, animators). */
+  /** The mean time of those steps' `anim` phase (characters, timelines, animators). */
   animMs: number | null;
-  /** The median CPU time of the last 60 drawn frames (the view's update and the draw calls' encoding); null headless. */
+  /** The mean CPU time of the last 60 drawn frames (the view's update and the draw calls' encoding); null headless. */
   renderMs: number | null;
   /** Steps timed since the engine started. */
   steps: number;
@@ -103,7 +105,7 @@ export interface StatsMeter {
   time<T>(part: 'sim' | 'render', run: () => T): T;
   /** The world's probe (`createWorld({ probe })`): runs one system, adding its time to its phase's total. */
   readonly probe: (system: ProbedSystem, run: () => void) => void;
-  /** The medians and counts now. */
+  /** The means and counts now. */
   read(): EngineStats;
   /** Forgets every sample (the counts are the renderer's, read live). */
   reset(): void;
@@ -121,16 +123,8 @@ export interface StatsHost extends InspectorHost {
   readonly meter?: StatsMeter;
 }
 
-/** The median of `values` (the mean of the middle two for an even count); null for none. */
-export function medianOf(values: readonly number[]): number | null {
-  if (values.length === 0) return null;
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = sorted.length >> 1;
-  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-}
-
 /** Milliseconds as a report shows them: 4 decimals. */
-const round = (ms: number | null) => (ms === null ? null : Math.round(ms * 1e4) / 1e4);
+const round = (ms: number) => Math.round(ms * 1e4) / 1e4;
 
 /** Makes a meter (see the file comment). */
 export function createStatsMeter(options: StatsMeterOptions = {}): StatsMeter {
@@ -171,12 +165,15 @@ export function createStatsMeter(options: StatsMeterOptions = {}): StatsMeter {
     },
     read() {
       const counts = options.counts?.() ?? null;
-      const median = (part: TimedPart) => round(medianOf(samples[part]));
+      const mean = (part: TimedPart) => {
+        const list = samples[part];
+        return list.length ? round(list.reduce((sum, ms) => sum + ms, 0) / list.length) : null;
+      };
       return {
-        simMs: median('sim'),
-        physicsMs: median('physics'),
-        animMs: median('anim'),
-        renderMs: median('render'),
+        simMs: mean('sim'),
+        physicsMs: mean('physics'),
+        animMs: mean('anim'),
+        renderMs: mean('render'),
         steps,
         frames,
         ...(Object.fromEntries(COUNT_KEYS.map((key) => [key, counts ? counts[key] : null])) as Pick<
@@ -200,6 +197,6 @@ export function meterOf(host: InspectorHost): StatsMeter {
 }
 
 defineMember('stats', {
-  help: "Performance counters, never fps: median sim, physics, anim and render ms of the last 60 steps or frames; the last frame's draw calls, triangles and compute calls; textures, geometries and pipelines (after warm-up).",
+  help: "Performance counters, never fps: mean sim, physics, anim and render ms of the last 60 steps or frames; the last frame's draw calls, triangles and compute calls; textures, geometries and pipelines (after warm-up).",
   impl: (host) => meterOf(host).read(),
 });
