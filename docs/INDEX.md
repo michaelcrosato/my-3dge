@@ -358,8 +358,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`orbit.ts`](../engine/gfx/cameras/orbit.ts): The orbit camera (PLAN.md WP 2.5; doctrine: Common ground): a perspective camera on a sphere round a target, turned, tilted and pulled in by the devices, as three.js's OrbitControls does, and following a point unless fixed.
   - Exports: `createOrbitCamera`, `ORBIT_DEFAULTS`, `ORBIT_FOV`, `ORBIT_LAG`, `ORBIT_LIFT`, `ORBIT_LIMITS`, `ORBIT_TURN_SPEED`, `ORBIT_ZOOM_STEP`, `OrbitOptions`, `orbitPose`, `orbitSpec`, `orbitState`, `OrbitState`, `stepOrbit`
   - Tests: [`engine/gfx/cameras/orbit.test.ts`](../engine/gfx/cameras/orbit.test.ts)
-- [`place.ts`](../engine/gfx/cameras/place.ts): Cameras into three.js (PLAN.md WP 2.5, §8.3): `createCamera` makes the camera a code names (engine/gfx/cameras/codes.ts) from the camera before it, and `placeCamera` puts a pose on a three.js camera each frame, so the renderer draws it (`gfx.frame({ scene, camera })`, engine/gfx/renderer.ts).
-  - Exports: `CameraPair`, `createCamera`, `CreateCameraOptions`, `createCameraPair`, `placeCamera`
+- [`place.ts`](../engine/gfx/cameras/place.ts): Cameras into three.js (PLAN.md WP 2.5, §8.3): `createCamera` makes the camera a code names (engine/gfx/cameras/codes.ts, and WP 3.9's `FOLLOW_CAMERAS`, the chase camera, first person and the depth rail, whose modules read their own codes: `readCameraCode` reads them all) from the camera before it, and `placeCamera` puts a pose on a three.js camera each frame, so the renderer draws it (`gfx.frame({ scene, camera })`, engine/gfx/renderer.ts).
+  - Exports: `AnyCamera`, `AnyCameraSpec`, `CameraPair`, `createCamera`, `CreateCameraOptions`, `createCameraPair`, `FOLLOW_CAMERAS`, `placeCamera`, `readCameraCode`
   - Tests: [`engine/gfx/cameras/place.test.ts`](../engine/gfx/cameras/place.test.ts)
 - [`pose.ts`](../engine/gfx/cameras/pose.ts): Camera poses (PLAN.md WP 2.5, §6.3; doctrine: Common ground): what every camera computes each frame, as plain data in three.js's camera words, and the pure math over it.
   - Exports: `approach`, `Camera`, `cameraFrom`, `CameraInput`, `CameraPose`, `CameraSteps`, `frameSize`, `headingOf`, `lookAt`, `makePose`, `orbitPoint`, `perspectiveFrom`, `pointProblems`, `POSE_DEFAULTS`, `poseForward`, `poseRight`, `poseTarget`, `poseUp`, `Projection`, `rangeProblems`, `refuse`, `Vec3`, `wrapAngle`
@@ -472,6 +472,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/gfx/puppets
 
+- [`actors.ts`](../engine/gfx/puppets/actors.ts): Actors on the stage (PLAN.md WP 3.10, §6.4's view; I-21): every actor with an animator (engine/sim/actors.ts: an entity with the components `actor` and `animator`) drawn as a puppet (engine/gfx/puppets/draw.ts) of the neutral humanoid (`ACTOR_BODY`) in its animator's build, posed every frame by the presentation's half of its animator (engine/anim/character.ts's `pose`) where its feet are at the frame's alpha, so it walks, dashes and jumps as the sim steps it.
+  - Exports: `ACTOR_BODY`, `ActorPuppets`, `createActorPuppets`, `PlayerView`
+  - Tests: [`engine/gfx/puppets/actors.test.ts`](../engine/gfx/puppets/actors.test.ts)
 - [`blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts): Blob shadows (PLAN.md WP 3.8): a soft dark disc on the floor under each body, all of them in one instanced batch (engine/gfx/instancing.ts), so a crowd's shadows cost one draw call.
   - Exports: `BLOB_SHADOW`, `BLOB_SHADOW_MATERIAL`, `blobScale`, `blobShadowMaterial`, `BlobShadows`, `createBlobShadows`
   - Tests: [`engine/gfx/puppets/blobShadow.test.ts`](../engine/gfx/puppets/blobShadow.test.ts), [`tests/e2e/puppets.spec.ts`](../tests/e2e/puppets.spec.ts)
@@ -747,10 +750,21 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## labs/box
 
-- [`main.ts`](../labs/box/main.ts): The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports the box's scenes and levels, then starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays offered to `?replay=<name>`.
+- [`main.ts`](../labs/box/main.ts): The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports the box's scenes and levels, then starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: jump, then dash) for every scene.
+- [`touch.ts`](../labs/box/touch.ts): The box's touch layout (PLAN.md WP 3.10, WP 3.12; ADR-0021: built, not tested): `touchlayout:box`, the buttons a phone or tablet shows over the box page (engine/ui/touch.ts draws them, engine/input/devices/touch.ts reads them).
+  - Exports: `BOX_TOUCH`
+
+## labs/box/cast
+
+- [`hero.ts`](../labs/box/cast/hero.ts): The box's hero (PLAN.md §9.0, WP 3.10): who the player walks, dashes and jumps as from Box 2 on.
+  - Exports: `HERO`, `HERO_BODY`, `heroCharacter`, `HeroTuning`, `PROTOTYPE`, `spawnHero`
+  - Tests: [`labs/box/cast/hero.test.ts`](../labs/box/cast/hero.test.ts)
 
 ## labs/box/scenes
 
+- [`room-hero.ts`](../labs/box/scenes/room-hero.ts): The room with a hero, Box 2 (PLAN.md §9.0, WP 3.10): the box room (labs/box/levels/room.txt: 16 × 12 m inside walls 3 m high, a low wall 0.75 m high, a 2 × 2 m pillar) as a physics level, and the hero (labs/box/cast/hero.ts) at its spawn `@`, facing south into the room.
+  - Exports: `default`, `ROOM_HERO_LEVEL`, `ROOM_HERO_SETTINGS`, `ROOM_TEXT`, `roomHero`
+  - Tests: [`labs/box/scenes/room-hero.test.ts`](../labs/box/scenes/room-hero.test.ts)
 - [`room.ts`](../labs/box/scenes/room.ts): The box room, Box 1 (PLAN.md §9.0, WP 2.7): the level `level:room` (labs/box/levels/room.txt: 16 × 12 m, walls, one low wall, a pillar, spawn markers) with three scripted movers, crates on fixed paths with no physics yet, so that stepping changes state.
   - Exports: `default`, `lapLength`, `MOVER`, `pathPoint`, `room`, `ROOM_PATHS`, `ROOM_SETTINGS`
   - Tests: [`labs/box/scenes/room.test.ts`](../labs/box/scenes/room.test.ts)

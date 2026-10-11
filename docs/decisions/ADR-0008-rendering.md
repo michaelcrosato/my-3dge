@@ -71,3 +71,17 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
   `positionGeometry` plus the offset taken back through the instance's turn. It reads the instance matrix from the
   vertex-stage InstanceNode (advice `GFX_OUTLINE_UNPINNED` otherwise). Skinned meshes are refused
   (`GFX_OUTLINE_TARGET`); WP 7.4's edge filter covers them.
+
+## Amendment 4 (2026-10-11, WP-3.10): actors on the stage, the view follows the player
+
+- **Core change:** `engine/gfx/puppets/actors.ts` draws every actor with an animator as a `body:humanoid` puppet in
+  its build. Each frame a view-side AnimatorPool poses it at the interpolated feet, and the stage skips its stand-in.
+  `Puppet.hide(joints)` zeroes those joints' skin weights for first-person culling (an attribute upload, never a
+  pipeline; hidden parts cast no shadow).
+- `engine/app/view.ts` follows the first player actor, else the level's middle. In physics scenes chase gets the
+  sim's QueryView; first person gets the player's eye, and `camera.get()` reports `culled`.
+- `place.ts`: `readCameraCode` and `createCamera` read WP 3.9's chase, first and rail codes (`FOLLOW_CAMERAS`) without
+  touching codes.ts. `createCamera` returns `AnyCamera`, and routes validate with `readCameraCode`.
+- The level's cutaway is made when a player first stands on it and runs while the view follows him, so side and
+  brawler views see the hero. A level with no player (Box 1) never has one.
+- Plan edit: WP-3.10's Owns names the core proposal's files (accepted).

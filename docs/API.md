@@ -1844,11 +1844,15 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/cameras/place.ts`](../engine/gfx/cameras/place.ts)
 
+- `AnyCamera` (type): Any camera `createCamera` makes: codes.ts's (`Camera`), or a WP 3.9 camera, whose inputs add the hero's.
+- `AnyCameraSpec` (type): The code data of any camera: codes.ts's, or a WP 3.9 camera's.
 - `CameraPair` (interface): One three.js camera per projection, and `place`, which aims the one a pose needs.
-- `createCamera` (function): The camera `code` names (a code, or its data from `parseCameraCode`): `cam=iso`, `cam3=orbit,…`.
+- `createCamera` (function): The camera `code` names (a code, or its data from `readCameraCode`): `cam=iso`, `cam3=orbit,…`, `cam3=chase`.
 - `CreateCameraOptions` (interface): What `createCamera` may start from beyond the code.
 - `createCameraPair` (function): A perspective and an orthographic camera, made once (see the file comment).
+- `FOLLOW_CAMERAS` (const): WP 3.9's cameras, which follow the hero and read their own codes: chase, first person, the depth rail.
 - `placeCamera` (function): Puts `pose` on `camera` for a picture `aspect` (width / height) wide, boost included (see the file comment).
+- `readCameraCode` (function): Reads any camera's code: `cam3=chase…`, `cam3=first…` and `cam3=rail…` by their modules, every other by `parseCameraCode`.
 
 ### [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)
 
@@ -2237,6 +2241,13 @@ For the agents who maintain the engine.
 - `PropMeshesOptions` (interface): What `createPropMeshes` takes.
 - `PropMeshPose` (interface): A prop's pose: its centre (its body's origin) and its turn.
 - `tongueMatrices` (function): Tongue `k`'s outer flame and core in its part's frame at `t` (s): the 2D hall's dance, in metres.
+
+### [`engine/gfx/puppets/actors.ts`](../engine/gfx/puppets/actors.ts)
+
+- `ACTOR_BODY` (const): The body every animated actor wears (engine/gfx/puppets/bodies/humanoid.ts).
+- `ActorPuppets` (interface): Actors drawn as puppets (see the file comment).
+- `createActorPuppets` (function): Draws actors as puppets (see the file comment); `registry` holds the bodies and gets the puppets' materials.
+- `PlayerView` (interface): The player actor as the last draw put it.
 
 ### [`engine/gfx/puppets/blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts)
 
@@ -3225,6 +3236,23 @@ For the agents who maintain the engine.
 - `default` (default): ESLint's settings for T0 (PLAN.md §6.10; `npm run lint`, inside `npm run check`): typescript-eslint's recommended rules without type information (so T0 stays fast), the file-comment and size rules, then the doctrine's rule families from tools/eslint/, one block per family, each message naming the fix.
 - `SWITCHES` (const): Rules written ahead of the code they guard.
 
+### [`labs/box/cast/hero.ts`](../labs/box/cast/hero.ts)
+
+- `HERO` (const): The hero's character, untuned.
+- `HERO_BODY` (const): The hero's animator: the default build, empty-handed.
+- `heroCharacter` (function): The hero's character with `tuning` over his own numbers.
+- `HeroTuning` (interface): What a scene may tune of the hero: his walk, take-off and dash speeds, m/s.
+- `PROTOTYPE` (const): The hero's numbers as the prototype wrote them, in its units and seconds (see the file comment).
+- `spawnHero` (function): Spawns the hero, the player, with his feet at `at` facing `yaw` (rad); returns his id.
+
+### [`labs/box/scenes/room-hero.ts`](../labs/box/scenes/room-hero.ts)
+
+- `default` (default): The room with a hero, Box 2 (PLAN.md §9.0, WP 3.10): the box room (labs/box/levels/room.txt: 16 × 12 m inside walls 3 m high, a low wall 0.75 m high, a 2 × 2 m pillar) as a physics level, and the hero (labs/box/cast/hero.ts) at its spawn `@`, facing south into the room.
+- `ROOM_HERO_LEVEL` (const): The room, compiled for the sim (its colliders and spawns).
+- `ROOM_HERO_SETTINGS` (const): The scene's settings: the hero's speeds, m/s.
+- `ROOM_TEXT` (const): labs/box/levels/room.txt, as it is (see the file comment).
+- `roomHero` (const): The room with a hero.
+
 ### [`labs/box/scenes/room.ts`](../labs/box/scenes/room.ts)
 
 - `default` (default): The box room, Box 1 (PLAN.md §9.0, WP 2.7): the level `level:room` (labs/box/levels/room.txt: 16 × 12 m, walls, one low wall, a pillar, spawn markers) with three scripted movers, crates on fixed paths with no physics yet, so that stepping changes state.
@@ -3234,6 +3262,10 @@ For the agents who maintain the engine.
 - `room` (const): The box room.
 - `ROOM_PATHS` (const): The movers' paths, in mover order, in the level's metres (x east, z south; a tile is 1 m).
 - `ROOM_SETTINGS` (const): The room's settings.
+
+### [`labs/box/touch.ts`](../labs/box/touch.ts)
+
+- `BOX_TOUCH` (const): The box page's touch layout's id.
 
 ### [`labs/hello/hello.ts`](../labs/hello/hello.ts)
 
