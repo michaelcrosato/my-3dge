@@ -1,7 +1,7 @@
 /**
  * @file The CPU-only gameplay contract (PLAN.md §6.7, §6.5 item 9, I-07; doctrine: WebGPU only), from Box 1 on: each
- * stage adds its scenes (`STAGES`: Box 1's room and its movers, Box 2's room with the hero). In the scene's own page
- * (labs/box), rendering as it steps:
+ * stage adds its scenes (`STAGES`: Box 1's room and its movers, Box 2's room with the hero, Box 3's hall with the hero).
+ * In the scene's own page (labs/box), rendering as it steps:
  * 1. every replay of the stage gives its golden hashes, a frame drawn after each step (`__engine.replay`, the same
  *    player as `x replay --browser page`), and so it does while every camera preset and resolution mode is switched;
  * 2. live play recorded in the page (devices, a setting changed mid-run, the camera switched) replays in Node to the
@@ -22,6 +22,7 @@ import { join, relative, sep } from 'node:path';
 import type { Page } from '@playwright/test';
 import '../../labs/box/scenes/room';
 import '../../labs/box/scenes/room-hero';
+import '../../labs/box/scenes/hall';
 import { playReplay, type Replay } from '../../engine/sim/replay';
 import { CAMERA_3D, VIEW_NAMES } from '../../engine/gfx/cameras/codes';
 import { FOLLOW_CAMERAS } from '../../engine/gfx/cameras/place';
@@ -89,6 +90,32 @@ const STAGES: Stage[] = [
       tick(20);
       __engine.input.axis('move', [-1, 0]);
       __engine.camera.set('cam=side');
+      tick(30);
+      __engine.input.axis('move', null);
+      tick(20);
+    },
+  },
+  {
+    stage: 'Box 3',
+    scene: 'hall',
+    component: 'actor',
+    replays: ['box-3-climb', 'box-3-dais'].map(replay),
+    live: () => {
+      const tick = (frames: number) => window.__clock.tick(frames);
+      tick(1);
+      __engine.input.axis('move', [-0.8, 0.6]);
+      tick(40); // off the dais, down its slope
+      __engine.camera.set('cam3=chase');
+      __engine.input.press('dash');
+      tick(20);
+      __engine.input.axis('move', [0, -1]);
+      __engine.input.hold('jump');
+      tick(15);
+      __engine.camera.set('cam3=first');
+      __engine.input.hold('jump', false);
+      tick(25);
+      __engine.input.axis('move', [1, 0]);
+      __engine.camera.set('cam=iso');
       tick(30);
       __engine.input.axis('move', null);
       tick(20);
@@ -226,6 +253,7 @@ for (const { stage, scene, component, replays, live } of STAGES) {
       await open(page, harness, `?scene=${scene}&cam=topdown`);
       await play(page, replays[0].text, { until: 300, draw: 0 });
       const seen = await page.evaluate(async (kind) => {
+        await __engine.render(30); // a camera that follows the player settles on him: the hall is larger than a view
         const shot = (await __engine.shot({ ids: true, metrics: false, thumbnail: false })) as {
           ids: { visible: { entity?: number }[] };
         };
