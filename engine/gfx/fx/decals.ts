@@ -8,7 +8,8 @@
  * of the facing; π all round: a disc or a ring) or `line(…)` (a strip `width` wide, `length` forward), or
  * `telegraph(t, place)`, then `end()`. A decal paints its `fill` (the sector out to the `fill` radius, the strip's
  * first `fill` metres) at opacity `alpha`, and a rim 4 cm wide inside its whole outline at opacity `edge`, in a
- * linear colour; it covers (premultiplied, as the sprites blend) and lies 2 cm above the floor's height it is given.
+ * linear colour; it covers (premultiplied, as the sprites blend) and lies 2 cm above the floor's height it is given,
+ * both faces in one pass (`forceSinglePass`: r182 would draw a transparent double-sided object twice).
  * A sector's quad is the outer radius round its origin, a strip's the square round its middle; the per-instance
  * attributes are `fxShape` (kind, then inner, outer and half angle, or half width and half length) and `fxPaint`
  * (fill, the quad's half side, alpha, edge).
@@ -123,6 +124,7 @@ const sector = (p: Node, rho: Node, r: Node, inner: Node, half: Node) => {
 /** The decals' material: see the file comment. */
 export function decalMaterial(): MeshBasicNodeMaterial {
   const material = new MeshBasicNodeMaterial({ transparent: true, depthWrite: false, fog: false, side: DoubleSide });
+  material.forceSinglePass = true;
   Object.assign(material, {
     name: 'fx:decal',
     blending: CustomBlending,

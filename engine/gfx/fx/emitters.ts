@@ -15,7 +15,8 @@
  * (engine/gfx/fx/presets.ts); a game adds its own with `defineEmitter` (`x new emitter`).
  *
  * `particleSpec(entry, set)` is what the particle pool (engine/gfx/fx/particles.ts) takes: the fields with their
- * colours linear and multiplied by their brightness, cached per entry and change.
+ * colours linear and multiplied by their brightness, cached per entry and change. `lightLevel(light, t, seed)` is a
+ * running emitter's light at presentation time `t`: its intensity, flickering and pulsing as shardfall's do.
  *
  * Invariants: plain data, every field filled; pairs have two numbers ([birth, death] or [shortest, longest]),
  * vectors three, colours are hex; a layer names another emitter, never its own, and changes only particle fields.
@@ -287,4 +288,25 @@ export function particleSpec(entry: ParticleFields, set: Readonly<Partial<Partic
   });
   byChange.set(set, spec);
   return spec;
+}
+
+/** A light of the frame, as three.js's `PointLight` takes it. */
+export interface FxLight {
+  position: [number, number, number];
+  color: string;
+  intensity: number;
+  distance: number;
+  decay: number;
+}
+
+/** Shardfall's flicker and pulse of an object light at time `t` from `seed`, times `intensity`. */
+export function lightLevel(light: Emitter['light'], t: number, seed: number): number {
+  let k = light.intensity;
+  if (light.flicker > 0) {
+    const n =
+      Math.sin(t * 13 + seed) * 0.5 + Math.sin(t * 7.3 + seed * 1.7) * 0.3 + Math.sin(t * 23 + seed * 0.3) * 0.2;
+    k *= 1 - light.flicker * 0.7 * (n * 0.5 + 0.5);
+  }
+  if (light.pulse > 0) k *= 0.55 + 0.45 * Math.sin(t * light.pulse * 2 * Math.PI + seed);
+  return k;
 }

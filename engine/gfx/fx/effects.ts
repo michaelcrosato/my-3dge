@@ -49,7 +49,7 @@ import { RngStreams, type Rng } from '../../core/rng';
 import { getTelegraph, pointOf, type PointLike, type TelegraphPlace } from '../../world/telegraphs';
 import type { Warmup } from '../warmup';
 import { createDecals } from './decals';
-import { emitterKind, getEmitter, particleSpec, type Emitter } from './emitters';
+import { emitterKind, getEmitter, lightLevel, particleSpec, type Emitter, type FxLight } from './emitters';
 import { ParticlePool, type BurstOptions, type ParticleStats } from './particles';
 import { createRibbons, type TrailSampleLike } from './ribbons';
 import { ScreenShake } from './shake';
@@ -76,15 +76,6 @@ export interface FxEventPayload {
   color?: string;
   /** The floor's height landing particles bounce on (the position's height). */
   ground?: number;
-}
-
-/** A light of the frame, as three.js's `PointLight` takes it. */
-export interface FxLight {
-  position: [number, number, number];
-  color: string;
-  intensity: number;
-  distance: number;
-  decay: number;
 }
 
 /** What `createEffects` takes. */
@@ -127,6 +118,8 @@ export interface Effects {
   drawCalls(): number;
   stats(): FxStats;
   register(warmup: Pick<Warmup, 'register'>): { dispose(): void };
+  /** Forgets everything running (particles, rings, emitters, shake, the trace read): the view's run started again. */
+  reset(): void;
   dispose(): void;
 }
 
@@ -151,25 +144,12 @@ interface Bolt {
   size: number;
 }
 
-/** Shardfall's flicker and pulse of an object light at time `t` from `seed`, times `intensity`. */
-export function lightLevel(light: Emitter['light'], t: number, seed: number): number {
-  let k = light.intensity;
-  if (light.flicker > 0) {
-    const n =
-      Math.sin(t * 13 + seed) * 0.5 + Math.sin(t * 7.3 + seed * 1.7) * 0.3 + Math.sin(t * 23 + seed * 0.3) * 0.2;
-    k *= 1 - light.flicker * 0.7 * (n * 0.5 + 0.5);
-  }
-  if (light.pulse > 0) k *= 0.55 + 0.45 * Math.sin(t * light.pulse * 2 * Math.PI + seed);
-  return k;
-}
-
 /** Makes the effects; see the file comment. */
 export function createEffects(options: EffectsOptions = {}): Effects {
   const registry = options.registry ?? sharedRegistry;
   emitterKind(registry);
   const streams = new RngStreams(1);
   const fxRng = options.fxRng ?? ((...keys) => streams.stream(...keys));
-  const rng = fxRng('fx');
   const pool = new ParticlePool(FX_BUDGET.particles);
   const sprites = createSprites({ capacity: FX_BUDGET.particles + FX_BUDGET.glows });
   const decals = createDecals({ capacity: FX_BUDGET.decals });
@@ -204,10 +184,10 @@ export function createEffects(options: EffectsOptions = {}): Effects {
     const place = (offset: readonly number[]) => at.map((v, k) => v + (entry.offset[k] + offset[k]) * size);
     let born = 0;
     const counted = (count: number) => (count > 0 ? Math.max(1, Math.round(count * more)) : 0);
-    born += pool.burst(particleSpec(entry), counted(entry.count), place([0, 0, 0]), rng, options);
+    born += pool.burst(particleSpec(entry), counted(entry.count), place([0, 0, 0]), fxRng('fx'), options);
     for (const layer of entry.layers) {
       const spec = particleSpec(getEmitter(layer.emitter, registry), layer.set);
-      born += pool.burst(spec, counted(layer.count), place(layer.offset), rng, options);
+      born += pool.burst(spec, counted(layer.count), place(layer.offset), fxRng('fx'), options);
     }
     shake.add(entry.shake * size);
     const ring = entry.ring;
@@ -306,7 +286,7 @@ export function createEffects(options: EffectsOptions = {}): Effects {
               particleSpec(entry),
               n,
               at.map((v, k) => v + entry.offset[k]),
-              rng,
+              fxRng('fx'),
               { ground: at[1] },
             );
           if (entry.light.intensity > 0) {
@@ -387,6 +367,15 @@ export function createEffects(options: EffectsOptions = {}): Effects {
         warmup.register('fx:ribbons', { objects: () => [ribbons.mesh] }),
       ];
       return { dispose: () => held.forEach((registration) => registration.dispose()) };
+    },
+    reset() {
+      pool.clear();
+      rings.length = 0;
+      running.clear();
+      queued = { emits: [], places: [] };
+      shapes = { trails: [], bolts: [] };
+      frameLights = [];
+      [shake.amount, seen] = [0, -Infinity];
     },
     dispose() {
       sprites.dispose();

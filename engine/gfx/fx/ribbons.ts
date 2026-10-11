@@ -7,13 +7,14 @@
  *
  * Each frame: `begin()`, `add(trail, rgb)` per trail (its newest `samples` samples, two at least), `end()`. A
  * sample k of n (oldest first) is lit `((k + 1) / n)^1.5 × 0.85 × weight`, the tip at that and the base at half,
- * in the linear colour `rgb`; the ribbons add light, double-sided, depth-tested but never written (`renderOrder` 3).
+ * in the linear colour `rgb`; the ribbons add light, double-sided in one pass (`forceSinglePass`), depth-tested but
+ * never written (`renderOrder` 3).
  *
  * Carried from `my-3d2dge:src/stress-world/35-effects.js:45-71` (`RIBBONS`: 12 samples, the fade, one material for
  * every trail) and its tints (`HERO_TRAIL` `#d8f2ff`, `CLAW_TRAIL` `#ff7a5a`: `TRAIL_TINTS`).
  *
  * Invariants: presentation only; at most `capacity` ribbons a frame (more are counted in `skipped`); the buffers are
- * made once and uploaded over the part used.
+ * made once, and a frame uploads only its own ribbons (the draw range stops there).
  *
  * @example
  * const ribbons = createRibbons({ capacity: 8 });
@@ -98,10 +99,10 @@ export function createRibbons(options: RibbonsOptions): Ribbons {
     fog: false,
     blending: AdditiveBlending,
   });
-  material.name = 'fx:ribbon';
+  Object.assign(material, { name: 'fx:ribbon', forceSinglePass: true });
   const mesh = new Mesh(geometry, material);
   Object.assign(mesh, { name: options.name ?? 'fx:ribbons', frustumCulled: false, renderOrder: 3, visible: false });
-  let [count, skipped, uploaded] = [0, 0, 0];
+  let [count, skipped] = [0, 0];
 
   /** Writes vertex `v`'s position `p` and colour `rgb` × `k`. */
   function vertex(v: number, p: PointLike, rgb: readonly number[], k: number) {
@@ -142,8 +143,7 @@ export function createRibbons(options: RibbonsOptions): Ribbons {
     end() {
       mesh.visible = count > 0;
       geometry.setDrawRange(0, count * (samples - 1) * 6);
-      const used = Math.max(count, uploaded) * samples * 2 * 3;
-      uploaded = count;
+      const used = count * samples * 2 * 3;
       if (!used) return;
       for (const name of ['position', 'color'] as const) {
         const attribute = geometry.getAttribute(name) as BufferAttribute;

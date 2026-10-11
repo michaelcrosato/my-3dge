@@ -11,8 +11,8 @@ import { PerspectiveCamera, type Object3D } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { createRegistry } from '../../core/registry';
 import { createFxScene } from '../../../tests/pages/fxScene';
-import { createEffects, FX_BUDGET, lightLevel, type Effects } from './effects';
-import { getEmitter } from './emitters';
+import { createEffects, FX_BUDGET, type Effects } from './effects';
+import { getEmitter, lightLevel } from './emitters';
 
 /** The fx page's camera: over the yard's south side, looking at its middle. */
 function camera(): PerspectiveCamera {

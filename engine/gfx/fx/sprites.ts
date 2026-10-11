@@ -11,7 +11,8 @@
  *   the per-instance attribute `fxAlpha` is the opacity that covers.
  * - **Streaks:** a stretching particle's quad lies along its velocity as the camera sees it, `size + speed × 0.03`
  *   long and `0.45 × size` wide.
- * - Unlit, no fog, depth-tested but never written, drawn after the floor decals and trails (`renderOrder` 4).
+ * - Unlit, no fog, front faces only (a quad always faces the camera, streaks too), depth-tested but never written,
+ *   drawn after the floor decals and trails (`renderOrder` 4).
  *
  * Carried from `shardfall:crates/pav_render/src/shaders/particle_draw.wgsl` (the soft disc, the premultiplied blend,
  * the streak's axes) and `my-3d2dge:src/stress-world/35-effects.js:73-79` (`quad`: camera-facing quads in an
@@ -31,7 +32,6 @@
  */
 import {
   CustomBlending,
-  DoubleSide,
   MeshBasicNodeMaterial,
   OneFactor,
   OneMinusSrcAlphaFactor,
@@ -72,7 +72,7 @@ export interface Sprites {
 
 /** The sprites' material: see the file comment. */
 export function spriteMaterial(): MeshBasicNodeMaterial {
-  const material = new MeshBasicNodeMaterial({ transparent: true, depthWrite: false, fog: false, side: DoubleSide });
+  const material = new MeshBasicNodeMaterial({ transparent: true, depthWrite: false, fog: false });
   Object.assign(material, {
     name: 'fx:sprite',
     blending: CustomBlending,
