@@ -1,7 +1,8 @@
 /**
  * @file Tests `x anim` (tools/cmd/anim.ts, WP 8.5) through the dispatcher, offline: `find punch` in 20 lines or fewer
  * (Done when), `show`, `bake` with its three.js JSON, `sheet`'s SVG, `cut` and `import` writing and checking set
- * directories, `cmu ledger`, and the usage errors that name the closest choice. The `cmu` subcommands that fetch
+ * directories, each reading another directory of sets (`--sets`, an `import --out`'s), `cmu ledger`, and the usage
+ * errors that name the closest choice. The `cmu` subcommands that fetch
  * (`get`, `all`, `rates`) and `import --cmu` need the network: tools/anim/*.test.ts cover them offline.
  */
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
@@ -85,6 +86,31 @@ describe('x anim', () => {
     const [code, lines] = await anim('import', glb, '--name', 'MINE', '--out', out, '--check', '--legacy');
     expect(code).toBe(1);
     expect(lines.join('\n')).toMatch(/ANIM_SET_DIFFERS/);
+  });
+
+  it('finds, shows, bakes, draws and cuts the sets of another directory (--sets), naming the flag', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'anim-sets-'));
+    writeFileSync(join(dir, 'lib.glb'), riggedGlb());
+    expect((await anim('import', join(dir, 'lib.glb'), '--name', 'MINE', '--out', join(dir, 'mine')))[0]).toBe(0);
+    const [found, hits] = await anim('find', 'wave', '--sets', dir);
+    expect([found, hits[1]]).toEqual([0, expect.stringMatching(/^mine\/Wave_Loop {2}/)]);
+    expect(await anim('show', 'mine/Wave_Loop', '--sets', dir)).toEqual([
+      0,
+      expect.arrayContaining([expect.stringMatching(/^x anim: ok: mine\/Wave_Loop: /)]),
+    ]);
+    expect((await anim('bake', 'Wave_Loop', '--sets', dir))[0]).toBe(0);
+    expect((await anim('sheet', 'mine/Wave_Loop', '--frames', '2', '--sets', dir))[0]).toBe(0);
+    const out = join(dir, 'cut');
+    const [cut] = await anim('cut', 'mine', '--sets', dir, '--clips', 'Wave_Loop', '--name', 'WAVE', '--out', out);
+    expect(cut).toBe(0);
+    const clipIn = (set: string) => readFileSync(join(set, 'Wave_Loop.json'), 'utf8');
+    expect(clipIn(out)).toBe(clipIn(join(dir, 'mine')));
+    const [missing, lines] = await anim('cut', 'mine', '--clips', 'Wave_Loop', '--name', 'WAVE', '--out', out);
+    expect(missing).toBe(1);
+    expect(lines[0]).toMatch(/no set mine in data\/anim\/sets\/: .*--sets <dir>/);
+    const [noDir, why] = await anim('show', 'mine/Wave_Loop', '--sets', join(dir, 'nowhere'));
+    expect([noDir, why[0]]).toEqual([1, expect.stringMatching(/--sets takes a directory of set directories/)]);
+    expect((await anim('show', 'mine/Wave_Loop'))[1][0]).toMatch(/no set mine in data\/anim\/sets\/: .*--sets <dir>/);
   });
 
   it('queries the CMU ledger', async () => {

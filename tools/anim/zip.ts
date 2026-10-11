@@ -1,13 +1,15 @@
 /**
  * @file Files out of a zip archive on the web, read by HTTP ranges (PLAN.md §5.3, WP 8.5): the end record, then the
  * central directory, then only the entries asked for, so one take of the CMU database's 1.08 GB `allasfamc.zip`
- * costs its own bytes and never the archive. Ported from shardfall's `crates/pav_tools/src/mocap/fetch.rs:49-161`.
+ * costs the directory (about 315 KB) and its own bytes, never the archive. Ported from shardfall's
+ * `crates/pav_tools/src/mocap/fetch.rs:49-161`, which reads each entry on its own.
  * Requests go through `curl`, as shardfall's do: every container has it, and it follows the environment's proxy
  * settings, which Node's `fetch` ignores. A file on disk reads the same way (`fileSource`).
  *
  * Invariants: stored (0) and deflated (8) entries are read; another method, a zip64 archive (over 4 GB) or a server
- * that ignores ranges is an error that says so. `readMany` reads neighbouring entries in one request of at most
- * `MAX_RANGE` bytes, so the whole archive takes a few dozen requests.
+ * that ignores ranges is an error that says so. `readMany` reads wanted entries in one request while the unwanted
+ * bytes between two of them are at most `MAX_GAP` and the request at most `MAX_RANGE`, so it fetches at most `MAX_GAP`
+ * more than its entries' own bytes for each entry, and the whole archive takes a few dozen requests.
  *
  * @example
  * import { writeFileSync, mkdtempSync } from 'node:fs';
@@ -43,12 +45,17 @@ export interface ZipEntry {
 export interface Zip {
   entries: ZipEntry[];
   read(entry: ZipEntry): Uint8Array;
-  /** Reads several entries, neighbours in one request each (`MAX_RANGE` bytes at most), in the order given. */
+  /** Reads several entries, in the order given; near neighbours share a request (`MAX_GAP`, `MAX_RANGE`). */
   readMany(entries: ZipEntry[]): Uint8Array[];
 }
 
 /** The most bytes `readMany` asks for at once. */
 export const MAX_RANGE = 64 * 1024 * 1024;
+/**
+ * The most unwanted bytes `readMany` fetches between two wanted entries rather than start a new request. A request
+ * to the CMU site costs about 0.13 s, measured, which is what 256 KiB to 0.6 MB take to arrive.
+ */
+export const MAX_GAP = 256 * 1024;
 
 /** Runs `curl` with `args`, returning its output; a failure names the URL and curl's message. */
 function curl(args: string[], what: string): Uint8Array {
@@ -140,6 +147,7 @@ export function openZip(src: ByteSource): Zip {
   const ends = new Map<ZipEntry, number>();
   const byPlace = [...entries].sort((a, b) => a.local - b.local);
   byPlace.forEach((entry, i) => ends.set(entry, byPlace[i + 1]?.local ?? offset));
+  const end = (entry: ZipEntry) => ends.get(entry) ?? offset;
   const read = (entry: ZipEntry) => {
     const head = src.bytes(entry.local, entry.local + 29);
     const start = entry.local + 30 + u16(head, 26) + u16(head, 28);
@@ -154,8 +162,13 @@ export function openZip(src: ByteSource): Zip {
     const sorted = [...wanted].sort((a, b) => a.local - b.local);
     for (let i = 0; i < sorted.length;) {
       let j = i + 1;
-      while (j < sorted.length && (ends.get(sorted[j]) ?? 0) - sorted[i].local <= MAX_RANGE) j++;
-      const [from, to] = [sorted[i].local, (ends.get(sorted[j - 1]) ?? offset) - 1];
+      while (
+        j < sorted.length &&
+        sorted[j].local - end(sorted[j - 1]) <= MAX_GAP &&
+        end(sorted[j]) - sorted[i].local <= MAX_RANGE
+      )
+        j++;
+      const [from, to] = [sorted[i].local, end(sorted[j - 1]) - 1];
       const chunk = src.bytes(from, to);
       for (const entry of sorted.slice(i, j)) out.set(entry, unpack(chunk, entry.local - from, entry, src.name));
       i = j;

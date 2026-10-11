@@ -1,6 +1,7 @@
 /**
  * @file One clip of the library, looked at without a browser (PLAN.md §10.3 and §10.4, WP 8.5): `resolveClip` finds
- * `<set>/<clip>` (or a clip name only one set has) in `data/anim/sets/`; `bakeReport` bakes it on its own source's
+ * `<set>/<clip>` (or a clip name only one set has) in `data/anim/sets/` or another directory of sets (`x anim …
+ * --sets`, such as `.cache/anim/cmu-lib/`); `bakeReport` bakes it on its own source's
  * rest body (engine/anim/clip/bake.ts) and measures FK parity against the format-1 decode at every frame and the
  * midpoints between; `clipSheet` draws it as a contact sheet of stick figures in SVG (engine/anim/sheet.ts). `x anim
  * show`, `bake` and `sheet` print them.
@@ -18,7 +19,7 @@
  * @see tools/anim/view.test.ts
  */
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { isAbsolute, join, relative } from 'node:path';
 import { Vector3 } from 'three';
 import { bakeClip, sampleBaked, type BakedClip } from '../../engine/anim/clip/bake';
 import { POSE_POINTS, samplePose, type Clip } from '../../engine/anim/clip/readable';
@@ -27,6 +28,7 @@ import { parseClip, type ClipSet, type RestBody } from '../../engine/anim/clip/v
 import { createWorldPose, forwardKinematics } from '../../engine/anim/fk';
 import { Pose } from '../../engine/anim/pose';
 import { animSheet, type Sheet, type SheetView } from '../../engine/anim/sheet';
+import { ROOT } from '../x';
 import { catalogRows } from './find';
 import { clipSlug, SET_FILE, SETS_DIR } from './repack';
 
@@ -39,21 +41,31 @@ export interface ClipRef {
   header: Omit<ClipSet, 'clips'>;
 }
 
-/** Finds `<set>/<clip>`, or a clip name only one set has; errors name the closest choices. */
+/** A directory as an error names it: from the repository root when it is inside it, else as given. */
+export function shownDir(dir: string): string {
+  const rel = relative(ROOT, dir);
+  return rel && !rel.startsWith('..') && !isAbsolute(rel) ? `${rel}/` : `${dir}/`;
+}
+
+/** Finds `<set>/<clip>` in `setsDir`, or a clip name only one set has; errors name the closest choices. */
 export function resolveClip(ref: string, setsDir: string = SETS_DIR): ClipRef {
   const [given, name] = ref.includes('/') ? (ref.split('/', 2) as [string, string]) : ['', ref];
   let set = given;
   if (!set) {
     const owners = catalogRows(setsDir).filter(({ row }) => row.name === name);
     if (owners.length !== 1) {
-      const why = owners.length ? `is in ${owners.map((o) => o.set).join(' and ')}` : 'is in no set';
+      const why = owners.length
+        ? `is in ${owners.map((o) => o.set).join(' and ')}`
+        : `is in no set in ${shownDir(setsDir)}`;
       throw new Error(`${name} ${why}: name it as <set>/${name} (x anim find ${name} lists the clips)`);
     }
     set = owners[0].set;
   }
   const file = join(setsDir, set, `${clipSlug(name)}.json`);
   if (!existsSync(join(setsDir, set, SET_FILE)))
-    throw new Error(`no set ${set} in data/anim/sets/: x anim find lists the sets`);
+    throw new Error(
+      `no set ${set} in ${shownDir(setsDir)}: x anim find lists each set's clips; --sets <dir> reads others`,
+    );
   if (!existsSync(file)) throw new Error(`no clip ${name} in ${set}: x anim find ${name} lists the clips`);
   const clip = parseClip(readFileSync(file, 'utf8'), `${set}/${name}`);
   const header = JSON.parse(readFileSync(join(setsDir, set, SET_FILE), 'utf8')) as Omit<ClipSet, 'clips'>;

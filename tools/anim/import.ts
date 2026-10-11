@@ -128,8 +128,12 @@ function cmuLibraries(
   const ledger = options.ledger ?? readLedger();
   const rows = new Map(ledger.takes.map((t) => [t.id, t]));
   const [bySubject, subjectOf, order] = [new Map<string, TakePick[]>(), new Map<string, number>(), [] as string[]];
+  // every take the picks need, fetched at once: one read of the archive's directory, near neighbours in one request
+  const files = new Map(
+    cmuGet([...new Set(Object.values(picks).map(([take]) => take))], options.cmuDir ?? CMU_CACHE).map((f) => [f.id, f]),
+  );
   for (const [name, [take, from0, to0, minCycle]] of Object.entries(picks)) {
-    const [file] = cmuGet([take], options.cmuDir ?? CMU_CACHE);
+    const file = files.get(take) as { asf: string; amc: string };
     const [t, row] = [byId.get(take), rows.get(take)];
     const act = row && /^[\d.]+-[\d.]+$/.test(row.active) ? row.active.split('-').map(Number) : null;
     if (!t && !row) notes.push(`${take} is not in the CMU index or the ledger`);

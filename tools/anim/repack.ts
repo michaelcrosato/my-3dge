@@ -36,7 +36,7 @@
  * @see tests/unit/data/anim/sets/sets.test.ts
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { clipText } from '../../engine/anim/clip/lens';
 import type { Clip } from '../../engine/anim/clip/readable';
 import { parseClip, parseClipSet, type ClipSet } from '../../engine/anim/clip/validate';
@@ -185,9 +185,9 @@ export function readSetDir(dir: string): SetFiles {
   return Object.fromEntries(files.map((entry) => [entry.name, readFileSync(join(dir, entry.name), 'utf8')]));
 }
 
-/** The set stored in `data/anim/sets/<dir>/` (or under `root`), rejoined. */
+/** The set stored in `data/anim/sets/<dir>/` (or under `root`, or at `dir` when absolute), rejoined. */
 export function readSet(dir: string, root: string = SETS_DIR): ClipSet {
-  return joinSet(readSetDir(join(root, dir)), relative(ROOT, join(root, dir)));
+  return joinSet(readSetDir(resolve(root, dir)), relative(ROOT, resolve(root, dir)));
 }
 
 /** Writes a set's files into `dir`, made if missing, and removes the files it no longer has; lists what changed. */

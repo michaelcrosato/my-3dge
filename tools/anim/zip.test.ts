@@ -1,7 +1,8 @@
 /**
  * @file Tests reading zip archives by ranges (tools/anim/zip.ts, WP 8.5) on archives built here: the entries listed
- * from the central directory alone, one entry read in two small requests, neighbours read in one, the same through
- * `curl` (a `file://` URL stands in for the web, offline), and the errors for what is not a zip archive.
+ * from the central directory alone, one entry read in two small requests, neighbours read in one, entries apart
+ * read in a request each (an unwanted take between them is never fetched), the same through `curl` (a `file://` URL
+ * stands in for the web, offline), and the errors for what is not a zip archive.
  */
 import { randomBytes } from 'node:crypto';
 import { mkdtempSync, writeFileSync } from 'node:fs';
@@ -9,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { fileSource, openZip, urlSource, zipBytes, type ByteSource } from './zip';
+import { fileSource, MAX_GAP, openZip, urlSource, zipBytes, type ByteSource } from './zip';
 
 const FILES = {
   'all/subjects/02/02.asf': 'a skeleton\n'.repeat(50),
@@ -60,6 +61,24 @@ describe('a zip archive read by ranges', () => {
     const many = zip.readMany([zip.entries[2], zip.entries[0]]);
     expect(many.map((b) => new TextDecoder().decode(b))).toEqual(['', FILES['all/subjects/02/02.asf']]);
     expect(log.requests - before).toBe(3);
+  });
+
+  it('reads entries apart in a request each, never fetching the unwanted entry between them', () => {
+    // a take of over MAX_GAP packed bytes between the skeleton and the take wanted, as 13_01–13_28 lie before 13_29
+    const [skeleton, take] = [FILES['all/subjects/02/02.asf'], FILES['all/subjects/02/02_01.amc']];
+    const unwanted = randomBytes(2 * MAX_GAP).toString('hex');
+    const file = join(mkdtempSync(join(tmpdir(), 'zip-')), 'apart.zip');
+    writeFileSync(file, zipBytes({ '13.asf': skeleton, '13_01.amc': unwanted, '13_29.amc': take }));
+    const { src, log } = counted(fileSource(file));
+    const zip = openZip(src);
+    const [asf, between, amc] = zip.entries;
+    expect(between.packed).toBeGreaterThan(MAX_GAP);
+    const [requests, served] = [log.requests, log.bytes];
+    const many = zip.readMany([amc, asf]);
+    expect(many.map((b) => new TextDecoder().decode(b))).toEqual([take, skeleton]);
+    expect(log.requests - requests).toBe(2);
+    // exactly each entry's own bytes: its local header (30 bytes and its name) and its packed bytes
+    expect(log.bytes - served).toBe([asf, amc].reduce((n, e) => n + 30 + e.name.length + e.packed, 0));
   });
 
   it('reads through curl the same way (a file:// URL stands in for the web)', () => {

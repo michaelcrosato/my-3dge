@@ -13,6 +13,8 @@
  * - `sheet <set>/<clip> [--frames 8] [--views front,side]`: a contact sheet, `sheet.svg` (engine/anim/sheet.ts).
  * - `cut <set…> --clips A,SET:B --name NAME --out <dir> [--title T] [--credit C] [--check]`: a smaller set, one file
  *   a clip (tools/anim/cut.ts).
+ * - `--sets <dir>` (find, show, bake, sheet, cut): the directory of set directories they read, from the repository
+ *   root: `data/anim/sets` by default, `.cache/anim/cmu-lib` for `cmu library`'s sets, the parent of an `import --out`.
  * - `import <a.glb…> [--rm a_RM.glb,…] [--sources A,…] [--rest clip,…] [--catalog file] [--name SET] [--title T]
  *   [--credit C] [--tol 30] [--fps 30] [--clips A,B] [--blade Sword] [--legacy] [--out dir] [--check] [--list]`, or
  *   `import --cmu [--legacy] [--check]` (the CMU catalog's picks, fetched by ranges): tools/anim/import.ts. Format 2
@@ -46,13 +48,14 @@ import {
   readSet,
   readSetDir,
   repackSets,
+  SET_FILE,
   setDirName,
   splitSet,
   SETS_DIR,
   writeSetDir,
   type SetFiles,
 } from '../anim/repack';
-import { bakeReport, clipSheet, resolveClip } from '../anim/view';
+import { bakeReport, clipSheet, resolveClip, shownDir } from '../anim/view';
 import { targetSlug } from '../lib/report';
 import { closest, UsageError, type Command, type CommandResult } from '../x';
 
@@ -60,16 +63,16 @@ const SUBCOMMANDS = ['find', 'show', 'cut', 'import', 'cmu', 'bake', 'sheet', 'r
 type Sub = (typeof SUBCOMMANDS)[number];
 /** The flags each subcommand takes; any other is a usage error. */
 const FLAGS: Record<Sub, string[]> = {
-  find: ['cat', 'max', 'json'],
-  show: ['lens'],
-  cut: ['clips', 'name', 'title', 'credit', 'out', 'check'],
+  find: ['cat', 'max', 'json', 'sets'],
+  show: ['lens', 'sets'],
+  cut: ['clips', 'name', 'title', 'credit', 'out', 'check', 'sets'],
   import: [
     ...['cmu', 'legacy', 'list', 'check', 'out', 'catalog', 'sources', 'rest', 'rm', 'name', 'title', 'credit'],
     ...['tol', 'fps', 'clips', 'blade'],
   ],
   cmu: ['subjects', 'legacy', 'tol', 'status', 'top', 'json', 'write'],
-  bake: ['json'],
-  sheet: ['frames', 'views'],
+  bake: ['json', 'sets'],
+  sheet: ['frames', 'views', 'sets'],
   repack: ['check'],
 };
 type Values = Record<string, unknown>;
@@ -97,6 +100,24 @@ const number = (values: Values, flag: string, fallback: number) => {
   if (!/^\d+(\.\d+)?$/.test(raw)) throw new UsageError(`--${flag} takes a number, not "${raw}"`);
   return +raw;
 };
+
+/** The directory of sets `--sets` names, from `root` (`data/anim/sets` by default); a missing one names the flag. */
+function setsOf(values: Values, root: string): string {
+  const given = text(values, 'sets');
+  const dir = resolve(root, given ?? 'data/anim/sets');
+  if (!existsSync(dir))
+    throw new Error(`no directory ${given ?? 'data/anim/sets'}: --sets takes a directory of set directories`);
+  return dir;
+}
+
+/** The set in directory `dir` of `sets` (or at `dir`, when absolute); a missing one names `--sets`. */
+function setIn(dir: string, sets: string) {
+  if (!existsSync(join(resolve(sets, dir), SET_FILE)))
+    throw new Error(
+      `no set ${dir} in ${shownDir(sets)}: name one of its set directories, or another with --sets <dir>`,
+    );
+  return readSet(dir, sets);
+}
 
 /** Writes `files` into `dir`, or with `check` lists the files that differ; a result either way. */
 function writeOrCheck(dir: string, files: SetFiles, check: boolean, root: string): CommandResult {
@@ -172,12 +193,16 @@ function run(sub: Sub, positionals: string[], values: Values, root: string): Com
   const args = positionals.slice(1);
   const one = () => {
     if (args.length !== 1) throw new UsageError(`${sub} takes one clip, as <set>/<clip>`);
-    return resolveClip(args[0]);
+    return resolveClip(args[0], setsOf(values, root));
   };
   switch (sub) {
     case 'find': {
       if (!args.length && !values.cat) throw new UsageError('find needs words, or --cat');
-      const found = findClips(args, { cat: text(values, 'cat'), max: number(values, 'max', 20) });
+      const found = findClips(args, {
+        cat: text(values, 'cat'),
+        max: number(values, 'max', 20),
+        setsDir: setsOf(values, root),
+      });
       const artifacts = values.json
         ? [
             artifact(
@@ -250,8 +275,9 @@ function run(sub: Sub, positionals: string[], values: Values, root: string): Com
       const [clips, name, out] = [list(values, 'clips'), text(values, 'name'), text(values, 'out')];
       if (!args.length || !clips || !name || !out)
         throw new UsageError('cut needs sets, --clips A,SET:B, --name NAME and --out <dir>');
+      const sets = setsOf(values, root);
       const set = cutSet(
-        args.map((dir) => readSet(dir)),
+        args.map((dir) => setIn(dir, sets)),
         clips,
         { name, title: text(values, 'title'), credit: text(values, 'credit') },
       );
@@ -287,7 +313,7 @@ const command: Command = {
   usage: 'anim <find|show|cut|import|cmu|bake|sheet|repack> [args]',
   options: {
     ...Object.fromEntries(
-      ['cat', 'max', 'clips', 'name', 'title', 'credit', 'out', 'catalog', 'sources', 'rest', 'rm'].map((f) => [
+      ['cat', 'max', 'clips', 'name', 'title', 'credit', 'out', 'catalog', 'sources', 'rest', 'rm', 'sets'].map((f) => [
         f,
         { type: 'string' as const },
       ]),
