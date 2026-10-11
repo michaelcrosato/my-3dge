@@ -1,0 +1,10 @@
+{"clip": "Zombie_Idle", "src": "100STYLE", "take": "Zombie_ID 23.20-25.70", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, zombie style: arms in front like zombie", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-18,1], "chest":[5,21,3], "head":[4,3,1],
+   "shL":[2,-3], "shR":[3,7], "armL":[98,18,-7,11,136], "armR":[99,10,2,17,-141],
+   "legL":[-36,10,-93,11,-5], "legR":[-45,-4,-89,0,4], "footL":[20,-7,0], "footR":[16,27,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-18,1], "chest":[5,21,3], "head":[4,3,1],
+   "shL":[2,-3], "shR":[3,7], "armL":[98,18,-7,11,136], "armR":[99,10,2,17,-141],
+   "legL":[-36,10,-93,11,-5], "legR":[-45,-4,-89,0,4], "footL":[20,-7,0], "footR":[16,27,0]}
+]}

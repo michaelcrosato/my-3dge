@@ -1,0 +1,10 @@
+{"clip": "Quail_Idle", "src": "100STYLE", "take": "Quail_ID 18.33-20.83", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, quail style: arms straight by sides slightly back very small quick steps", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,97], "body":[0,15,-1], "chest":[0,18,0], "head":[1,2,2],
+   "shL":[1,-6], "shR":[-1,-7], "armL":[15,9,-98,21,-6], "armR":[23,7,-97,24,13],
+   "legL":[27,-3,-96,33,-2], "legR":[29,-9,-95,34,0], "footL":[-15,0,0], "footR":[-13,6,0]},
+  {"t":2.5,
+   "hips":[0,0,97], "body":[0,15,-1], "chest":[0,18,0], "head":[1,2,2],
+   "shL":[1,-6], "shR":[-1,-7], "armL":[15,9,-98,21,-6], "armR":[23,7,-97,24,13],
+   "legL":[27,-3,-96,33,-2], "legR":[29,-9,-95,34,0], "footL":[-15,0,0], "footR":[-13,6,0]}
+]}

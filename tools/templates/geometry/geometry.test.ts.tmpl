@@ -1,0 +1,21 @@
+/**
+ * @file Unit tests for the geometry `geometry:{{name}}` ({{id}}.ts): it passes the geo QA family's checks at its
+ * defaults (no degenerate triangles, consistent normals, sane bounds, within its budget), stands on the ground, and
+ * builds clean at other parameters too.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { buildGeometry, inspectGeometry } from '../../../engine';
+import { checkGeometries } from '../../../tools/qa/geo';
+import { {{name}} } from './{{name}}';
+
+describe('geometry:{{name}}', () => {
+  it("passes the geo checks and stands on the ground", () => {
+    expect(checkGeometries(undefined, [{{name}}.id])).toEqual([]);
+    for (const params of [{}, { size: 2 }, { size: 0.2, radius: 0.5 }]) {
+      const report = inspectGeometry(buildGeometry({ geometry: {{name}}.id, params }));
+      expect(report.min[1]).toBeCloseTo(0, 6);
+      expect([report.degenerate, report.flipped, report.badNormals, report.missing]).toEqual([0, 0, 0, []]);
+    }
+  });
+});

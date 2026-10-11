@@ -19,3 +19,18 @@ The owner's direction, given on 2026-10-10.
 
 ## Enforced by
 AGENTS.md's rules; the `verifier`'s exception list; §8.14's pre-approved list.
+
+## Amendment 1 (2026-10-10, WP-3.12): touch buttons that act while held, and the page's conventions
+- A `touchlayout` button takes `{ action, label?, hold? }`. With `hold`, the button acts as shardfall's skills do: a
+  tap presses once on release, and a hold (0.32 s and two frames) holds the action. Without it, a button acts the
+  moment it is touched and stays held while the finger stays.
+- Pages mark what the touch layer reads:
+  - `data-panel`: a panel, open while it has no `hidden` attribute. A tap on the game hides the top one and
+    dispatches `close`.
+  - `data-keyboard` and `data-stats`: hidden in touch mode.
+  - `data-hud`: text scaled by `--touch-k`.
+  - The menu button is `data-tap="menu"`.
+- Taps and holds are timed by the frame timestamps passed to `input.sample(camera, now)`, so the tools' virtual clock
+  drives them.
+- `keepWidth` (the portrait lens) applies to any picture taller than wide, as in shardfall, not only on touch screens.
+- PLAN.md's WP-3.12 Buttons bullet is edited to match.

@@ -21,3 +21,5 @@ Golden references for how a frame looks, as text instead of images (PLAN.md §8.
 ## Cases
 
 - `shot-objects`: tests/pages/shot.html, scene `objects`, camera `front` (WP 2.6), compared by tests/e2e/shot.spec.ts.
+- `box-room-iso`: the Stress Box (labs/box), scene `room`, camera `iso`, at step 0 (WP 2.7), compared by
+  tests/e2e/box.spec.ts.

@@ -1,0 +1,10 @@
+{"clip": "Roadrunner_Idle", "src": "100STYLE", "take": "Roadrunner_ID 13.55-16.05", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, roadrunner style: arms behind as wings pick up knees - bent a little", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,97], "body":[0,12,-1], "chest":[4,38,1], "head":[-1,-5,0],
+   "shL":[9,-11], "shR":[8,-7], "armL":[-25,6,-97,56,-20], "armR":[-13,12,-99,53,17],
+   "legL":[25,1,-97,33,0], "legR":[26,0,-97,34,0], "footL":[-13,1,0], "footR":[-11,0,0]},
+  {"t":2.5,
+   "hips":[0,0,97], "body":[0,12,-1], "chest":[4,38,1], "head":[-1,-5,0],
+   "shL":[9,-11], "shR":[8,-7], "armL":[-25,6,-97,56,-20], "armR":[-13,12,-99,53,17],
+   "legL":[25,1,-97,33,0], "legR":[26,0,-97,34,0], "footL":[-13,1,0], "footR":[-11,0,0]}
+]}

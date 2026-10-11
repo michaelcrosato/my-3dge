@@ -110,6 +110,12 @@ const CASES: Case[] = [
     "export { rng } from '../../core/rng';",
   ),
   layer(
+    'audio/data imports only core and audio/dsp',
+    'engine/audio/data/sfx.ts',
+    "export { play } from '../runtime/player';",
+    "export { rng } from '../../core/rng';\nexport { osc } from '../dsp/osc';",
+  ),
+  layer(
     'audio/runtime imports audio/dsp, core and sim types',
     'engine/audio/runtime/player.ts',
     "export { nav } from '../../world/nav';",

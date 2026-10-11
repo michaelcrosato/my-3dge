@@ -47,3 +47,34 @@ constants) is allowed.
     `THREE.TSL.x`), and the docs' names unbound; a namespace passed through another variable is not followed. The
     syntax selectors keep the names imported or re-exported by name;
   - Node's `Buffer` global is banned sim-side, with the other Node globals.
+
+## Amendment 3 (2026-10-10, WP-3.2): the character controller does its own steps, snap and pushes
+engine/physics/character.ts drives Rapier's `KinematicCharacterController` but does its own steps, snap-to-ground
+and pushes, because Rapier 0.21 was measured to fail at each: its autostep misses steps while sliding is on and
+creeps about 5 cm above its setting; `computedGrounded` is true against a wall at a jump's apex; its impulses treat a
+translation as a velocity. Rapier's autostep, snap and impulses are off.
+- **Steps:** a grounded move that a wall stops is retried up by `autostep.height`, then across by at least enough to
+  stand, then down. It is kept when it lands on walkable ground no higher than that height, so the configured height
+  is exactly the height climbed.
+- **Grounded** means a walkable contact on the down leg.
+- **Pushing** is an inelastic collision of a push-kg mass, applied level with the centre of mass. This replaces
+  shardfall's push_mass/(push_mass+load) scaling.
+- **A grounded move goes up by the skin first**, which avoids phantom contacts while skimming the floor. The
+  prototype's grounded-flicker workaround was not needed.
+- **Files:** the movement maths sit with the meter in engine/physics/feel.ts, and `measureFeel`'s course is in
+  engine/sim/actors.ts, to avoid an import cycle.
+- **Core change accepted:** engine/physics/world.ts gains `rapierOf(physics)` (a WeakMap and one export, for the
+  modules beside it only; not in the barrels), so the controller reaches the Rapier world, including after a restore.
+
+## Amendment 4 (2026-10-10, WP-4.2): convex hull colliders, and the hall's level rules
+engine/physics has no hull shape and engine/sim/levelBodies.ts must not import Rapier, so the hall's stairs and dais
+need a core change.
+- **Core change accepted:** WP 4.2's Owns widens to engine/physics/{world,queries,world.test}.ts, for a collider
+  shape used only by bodies: `{ type: 'hull', points }` (`HullShape`), a convex hull in three.js ConvexGeometry's
+  terms. It is refused when it has fewer than 4 points or all points lie in one plane (Rapier 0.21's `convexHull`
+  never returns null, measured). Owns also gains a one-character edit to engine/gfx/level/meshes.test.ts, whose ledge
+  moves from `=` to `L` because `=` is now `glyph:gallery`.
+- **Mesh descriptors:** `bottom` is 0 for glyphs whose box or hull collider rises from the ground (a gallery is drawn
+  as a block), and the glyph's floor otherwise.
+- **Reachability:** areas are strongly connected. Each step is sampled 8 times between centres and climbs at most
+  `NAV_CLIMB`; steps down are always allowed.

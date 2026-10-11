@@ -18,3 +18,45 @@ set drove animation (doctrine: Reproducible).
 
 ## Enforced by
 Differential tests against the ported reference vectors (WP 0.11); the animation QA checks and sheets (WP 6.6).
+
+## Amendment 1 (2026-10-10, WP-3.4)
+- **The old rig's `footL`/`footR` is the sole, not the ankle.** Its drawing puts the ankle 62% of the way from the
+  knee to the foot point. So build `legLower` is knee to sole, the `foot` joint (the ankle) sits `ankleHeight` above
+  the sole, and the rest pose stands the soles at y = 0. WP 3.6 compares the old `footL` with the point on the sole
+  under the ankle (contact height), not with the `foot` joint. Appendix C's joint table notes it.
+- **Public names.** `anim.sheet()` and `anim.check()` are exported as `animSheet` and `animCheck`: sim-api takes flat
+  names.
+- **Build fields.** Builds hold `hipHeight` (was `hipZ`) and `headRadius` (was `headR`), since Z is no longer up, plus
+  the stance and gait fields, so locomotion (WP 3.6) reads them from the entry. Four fields are new, with chosen
+  defaults rather than source values (the old rig had no ankles, hands or back): `ankleHeight`, `footLength`,
+  `handLength`, `chestDepth`; WP 3.8 should review them once bodies are drawn.
+- **No `skeleton` registry kind** until a second skeleton exists; builds are registry kind `build`.
+- Evidence: `engine/anim/fk.test.ts` (4 builds at sizes 1 and 0.5, soles at y = 0, three.js `Bone` hierarchy within
+  1e-9 m).
+
+## Amendment 2 (2026-10-10, WP-3.5)
+- **`twoBone` is `ik3` verbatim, with one fix.** When the pole lies along the limb, `ik3`'s unnormalised fallback
+  (n_y, -n_x, 0) shortened the bones; `twoBone` falls back to a unit horizontal instead, and to +Z for a vertical
+  limb. Otherwise it matches `ik3` bit for bit (in metres, after the /16 axis swap).
+- **`twoBoneRot`'s pole is a world direction**, so the old hints work as poles; it defaults to the current bend.
+- **Hinges.** Knees bend about +X and elbows about -Y (left) or +Y (right) in the upper joint's frame.
+- **Target.** The solve targets the end joint (the ankle), or `options.offset` in its frame. WP 3.6 can pass the
+  contact socket's offset to target the sole.
+- **No per-solver weight.** Solvers have no weight option; `blendPoses` fades them. A non-limb joint raises the
+  existing `ANIM_UNKNOWN_JOINT`; one new code, `ANIM_BAD_TARGET`.
+- Evidence: `engine/anim/ik.test.ts` (2000 random cases bit-exact against `ik3`; soles within 5 mm on a 10° slope and
+  a 0.2 m step on 3 builds, worst gap 2.3e-8 m).
+
+## Amendment 3 (2026-10-10, WP-3.6)
+- **Scope of the state update.** WP 3.6 ports the gait, idle, lean, arm swing, poses, stances and knockdown (as a root
+  turn) from `engine:1803` onward. The moves' arm and kick paths go to WP 6.1, and the squash, hair and cape to WP 6.2
+  (secondary motion); the humanoid leaves them an `input.body` slot, matching WP 3.7's layer stack.
+- **Known floor sinks.** The old leg had no ankle, so the back foot's ball sinks below the floor when kneeling (up to
+  11.5 cm), crouching (5 cm), dashing (7 cm) and in guard (8 mm). They are listed with reasons in
+  `engine/anim/authoring.test.ts` (KNOWN); WP 3.7's post-IK foot plant and the WP 6.6 motion QA close them.
+- **No differential exceptions.** The reference vectors were recorded with no view hacks, so EXCEPTIONS is empty.
+- **New code** `ANIM_UNKNOWN_POSE`, with the closest names as suggestions.
+- **`LimbSide`.** The body side `'L' | 'R'` is exported as `LimbSide`, since WP 4.2 already exports a level `Side`
+  (integration call).
+- Evidence: `engine/anim/humanoid.test.ts` (3 builds, 14,688 points each; mean 0.70-0.78 mm, worst 1.56-2.04 cm, joints
+  above the knees within 2e-6 m).

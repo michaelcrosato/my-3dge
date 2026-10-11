@@ -1,17 +1,20 @@
 /**
  * @file The legend registry (PLAN.md WP 2.2, §6.6, I-22): the registry kind `glyph`, one entry per character a level
- * map may hold, saying what that character means: its floor and top heights, whether it is solid, its collider and
- * mesh recipes, nav flags, a spawn point, a light spot, a surface tag and its footprint. The level compiler
+ * map may hold, saying what that character means: its floor and top heights and how its floor runs (flat, a ramp, a
+ * dais), whether it is solid, its collider and mesh recipes, nav flags, a spawn point, a light spot, a surface tag
+ * and its footprint. The level compiler
  * (engine/world/level/compile.ts) reads only these fields, never an id (ask the entry, §6.6), so a new glyph works in
  * every level without editing the compiler.
  *
  * `defineGlyph(id, spec)` adds one (a game's own glyphs live with the game: `labs/box/`, never the engine).
- * `legendOf(registry)` maps each character to its glyph. A registry gets the kind, and the engine's v1 glyphs
+ * `legendOf(registry)` maps each character to its glyph. A registry gets the kind, and the engine's v1 and v2 glyphs
  * (engine/world/level/legend.ts), the first time anything here touches it; the shared registry gets them on import.
  *
  * Invariants: a glyph's `char` is one character (one code point), not whitespace, and no other glyph's; `top` is at
  * least `floor`; a solid glyph is not walkable (`nav.walkable: false`); spawn names and light tags are words
- * (letters, digits, `_`, `-`). Problems raise `CORE_BAD_SPEC` naming each, as every registry kind does.
+ * (letters, digits, `_`, `-`). A ramp or a dais rises (`top` above `floor`), is walked on (not solid) and has a hull
+ * collider or none, a dais an `edge` above 0; a hull collider follows a ramp or a dais; a cylinder collider has a
+ * `radius` and a `top` above `floor`. Problems raise `CORE_BAD_SPEC` naming each, as every registry kind does.
  *
  * @example
  * import { createRegistry } from '../../core/registry';
@@ -23,7 +26,7 @@
  */
 import { registry as sharedRegistry, type Entry, type Registry } from '../../core/registry';
 import type { Schema, SpecOf } from '../../core/schema';
-import { V1_GLYPHS } from './legend';
+import { V1_GLYPHS, V2_GLYPHS } from './legend';
 
 /** The fields of a `glyph` entry. */
 export const GLYPH_FIELDS = {
@@ -55,16 +58,37 @@ export const GLYPH_FIELDS = {
   },
   collider: {
     type: 'string',
-    enum: ['none', 'box'],
+    enum: ['none', 'box', 'hull', 'cylinder'],
     default: 'none',
     description:
-      "The collider recipe: 'box' is a box from the ground (y 0) to top over its tiles, merged with touching tiles of the same glyph into few boxes (greedy, rows first); 'none' adds none. WP 4.2 adds hulls.",
+      "The collider recipe: 'box' is a box from the ground (y 0) to top over its tiles, merged with touching tiles of the same glyph into few boxes (greedy, rows first); 'hull' a convex hull under a ramp (a wedge) or a dais (a frustum), from the ground; 'cylinder' an upright cylinder of radius at each tile's centre, from floor to top; 'none' adds none.",
+  },
+  floorShape: {
+    type: 'string',
+    enum: ['flat', 'ramp', 'dais'],
+    default: 'flat',
+    description:
+      "How its floor runs: 'flat' at floor; 'ramp' rising in a straight slope from floor to top across each filled rectangle of its tiles, toward the one side whose neighbours stand at top (stairs up to a gallery); 'dais' an octagonal platform on each square block of its tiles, its edge sloping from floor to top.",
+  },
+  edge: {
+    type: 'number',
+    default: 0,
+    minimum: 0,
+    unit: 'm',
+    description: "A dais's sloped edge, measured across: its top's faces stand this far inside its base's.",
+  },
+  radius: {
+    type: 'number',
+    default: 0,
+    minimum: 0,
+    unit: 'm',
+    description: "A cylinder collider's radius.",
   },
   mesh: {
     type: 'string',
     default: 'none',
     description:
-      "The mesh recipe the level meshes (WP 2.4) build for its tiles: 'floor', 'wall', 'lowWall', 'pillar'; 'none' for nothing.",
+      "The mesh recipe the level meshes (WP 2.4) build for its tiles: 'floor', 'wall', 'lowWall', 'pillar', 'gallery', 'stairs', 'dais', 'brazier'; 'none' for nothing.",
   },
   nav: {
     type: 'object',
@@ -154,21 +178,47 @@ function glyphProblems(glyph: Glyph, registry: Registry): string[] {
       "a box collider needs a top above 0 (it is a box from the ground to top): set top, or collider: 'none'",
     );
   }
+  problems.push(...shapeProblems(glyph));
   if (!glyph.mesh) problems.push("mesh is empty; name a recipe, or 'none'");
   return problems;
 }
 
-/** Declares the kind `glyph` on `registry`, with the engine's v1 glyphs, unless it has it. */
+/** The problems of a glyph's floor shape and of its hull or cylinder collider. */
+function shapeProblems(glyph: Glyph): string[] {
+  const problems: string[] = [];
+  const shape = glyph.floorShape;
+  if (shape !== 'flat') {
+    if (glyph.top <= glyph.floor) problems.push(`a ${shape} rises: give it a top above its floor (${glyph.floor})`);
+    if (glyph.solid) problems.push(`a ${shape} is walked on: it cannot be solid`);
+    if (glyph.collider === 'box' || glyph.collider === 'cylinder') {
+      problems.push(`a ${shape}'s collider is 'hull' (under its slope) or 'none', not '${glyph.collider}'`);
+    }
+  }
+  if (shape === 'dais' && glyph.edge <= 0) problems.push('a dais needs an edge above 0: its sloped edge, across (m)');
+  if (glyph.collider === 'hull' && shape === 'flat') {
+    problems.push(
+      "a hull collider follows the floor's slope: give it floorShape: 'ramp' or 'dais', or collider: 'box'",
+    );
+  }
+  if (glyph.collider === 'cylinder') {
+    if (glyph.radius <= 0) problems.push('a cylinder collider needs a radius above 0 (m)');
+    if (glyph.top <= glyph.floor)
+      problems.push('a cylinder collider stands from floor to top: give it a top above its floor');
+  }
+  return problems;
+}
+
+/** Declares the kind `glyph` on `registry`, with the engine's v1 and v2 glyphs, unless it has it. */
 export function glyphKind(registry: Registry): void {
   if (registry.kinds().includes('glyph')) return;
   registry.defineKind('glyph', {
     description:
-      'Level legend glyphs: what one map character means (heights, solid, collider and mesh recipes, nav flags, spawn, light spot, surface, footprint).',
+      'Level legend glyphs: what one map character means (heights, floor shape, solid, collider and mesh recipes, nav flags, spawn, light spot, surface, footprint).',
     fields: GLYPH_FIELDS,
     defineWith: "defineGlyph('<id>', { char: '<one character>', description: '…', … })",
     check: (entry) => glyphProblems(entry as Glyph, registry),
   });
-  for (const [id, spec] of Object.entries(V1_GLYPHS)) registry.def('glyph', id, spec);
+  for (const [id, spec] of Object.entries({ ...V1_GLYPHS, ...V2_GLYPHS })) registry.def('glyph', id, spec);
 }
 glyphKind(sharedRegistry);
 

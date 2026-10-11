@@ -86,7 +86,7 @@ export interface WorldOptions<C extends object = AnyComponents, E extends EventM
   seed?: number;
   /** Where component kinds and settings are declared (the shared registry). */
   registry?: Registry;
-  /** The settings store (a new one over `registry`); the hash and captures read its non-view values. */
+  /** The settings store (a new one over `registry`); captures read its non-view values, the hash those changed. */
   settings?: Settings;
   /** Sim steps per second, fixed for the world's life (the `time.hz` setting when it is made, else 60). */
   hz?: number;
@@ -255,7 +255,8 @@ export function createWorld<C extends object = AnyComponents, E extends EventMap
     hz,
     entities: order,
     timers: timers.state(),
-    settings: store.values({ view: false }),
+    // Only what differs from its default: declaring another setting (any scene module does) never changes the hash.
+    settings: Object.fromEntries(Object.entries(store.values({ view: false })).filter(([path]) => store.differs(path))),
     rng: streams.state(),
     ...(physics ? { physics: physics.state() } : {}),
   });

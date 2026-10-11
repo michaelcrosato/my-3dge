@@ -1,0 +1,37 @@
+/**
+ * @file The replay test of the box scene `box:{{name}}` ({{id}}.ts): 600 steps give the same hash three times, the
+ * run's recording replays to the same hashes at every checkpoint (as `x replay` checks a replay file), and its
+ * setting changes the run. Keep a replay with its goldens too: `node x sim {{id}} --steps 600`, copy
+ * out/sim/box:{{name}}/run.replay.json to tests/replays/, then `node x replay <file> --browser page`.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { createHeadless } from '../../../engine';
+import { {{name}} } from './{{name}}';
+
+describe('box:{{name}}', () => {
+  it('gives the same hash three times, and its recording replays to the same hashes', async () => {
+    const live = async () => {
+      const engine = await createHeadless({ scene: {{name}} });
+      const hashes: Record<string, string> = { 0: engine.hash() };
+      for (let k = 60; k <= 600; k += 60) hashes[k] = (engine.step(60), engine.hash());
+      return { engine, hashes };
+    };
+    const runs = [await live(), await live(), await live()];
+    expect(runs[1].hashes).toEqual(runs[0].hashes);
+    expect(runs[2].hashes).toEqual(runs[0].hashes);
+    const recorded = (runs[0].engine.input as { record(): object }).record();
+    const replay = JSON.stringify({ ...recorded, hashes: { [`${process.platform}-${process.arch}`]: runs[0].hashes } });
+    const again = await createHeadless({ scene: {{name}} });
+    const played = await (again.replay as (text: string) => Promise<{ hashes: object }>)(replay);
+    expect(played.hashes).toEqual(runs[0].hashes);
+  });
+
+  it('is tuned by box.{{name}}.speed', async () => {
+    const slow = await createHeadless({ scene: {{name}} });
+    const fast = await createHeadless({ scene: {{name}}, settings: { 'box.{{name}}.speed': 3 } });
+    slow.step(60);
+    fast.step(60);
+    expect(fast.hash()).not.toBe(slow.hash());
+  });
+});

@@ -168,3 +168,41 @@ took 14.5 s, so T0 would have failed (15 s) by the end of the box stages. Calls:
   false` (a quarter less CPU, 29 s, but test files then share module state, the shared registry among it, and a
   timing test failed). It is the lever to take when T1 nears 45 s, with a check that no test file leaves shared state
   behind.
+
+## Amendment 8 (2026-10-10, WP-0.1 platform, U-8 not triggered): the platform's Chromium outside the cloud container
+
+- **What changed.** Sessions now also run on the owner's workstation (Ubuntu on WSL2, x64), which has no
+  `/opt/pw-browsers/chromium`. The platform's browser stays the same release, Chromium 141.0.7390.37 (tools/deps.json),
+  so every recorded golden, thumbnail and perf baseline keeps its meaning: U-8 (a new platform Chromium) does not fire.
+- **How.** scripts/setup.sh fetches Chrome for Testing 141.0.7390.37 from Google's official bucket into
+  `~/.cache/my3dge/` when neither `$CHROMIUM_PATH` nor the container's path exists, and tools/lib/browser.ts's
+  `chromiumPath` resolves `$CHROMIUM_PATH`, else the container's path, else that cache. No shell state is needed, so
+  ultracode lanes in their own worktrees resolve the same browser.
+- **Measured.** WebGPU runs on SwiftShader there with shardfall's flags (`tests/e2e/harness.spec.ts`: adapter, exact
+  pixels), and `x ci --local` on 652ea6b passed all seven steps in 31.4 s (T0 1.7 s, T1 11.9 s, T2 9.5 s).
+
+## Amendment 9 (2026-10-10, WP-3.3): `__engine.input` gains `hold` and `state`
+
+- **What changed.** `__engine.input` adds `hold(action, down)` and `state()` to the four members PLAN.md §8.3 lists
+  (`press`, `axis`, `play`, `record`). Without `hold`, a button can be held only inside a script; `state()` lets an
+  agent read what the virtual device holds. §8.3's Input row and WP 3.3's entry say so.
+- **Headless.** `step(n)` does not read the virtual device: `input.play('N')` steps with it. The lane proposes that
+  `step(n)` with no intents take the virtual device's intents (engine/app/headless.ts and the core `step` member), so
+  `press('jump'); step(1)` works headless; left open for the core owner (ledger, WP 3.3).
+
+## Amendment 10 (2026-10-10, WP-2.7): the box app's modules, its edits to other WPs' files, and APP_NO_VIEW
+Calls made where PLAN.md §9 WP 2.7 and amendment 6 did not fit what the work needed:
+- **The app and gfx code split into more modules** (doctrine: Agent-readable, 400 lines and one concept per file). WP 2.7's Owns named engine/app/{engine,loop,routes}.ts. The result is engine.ts 341 lines, headless.ts 300, tools/cmd/inspect.ts 378, tools/cmd/shot.ts 354 and engine/gfx/stage.ts 312, so folding any of these modules back in would pass 400. WP 2.7's Owns gains:
+  - engine/app/view.ts: the run's view (stage and camera), built without a GPU and shared by the page and `createHeadless({ view: true })`;
+  - engine/app/viewMembers.ts: the rendering members (`ready`, `render`, `shot`, `camera.get`, `camera.set`, `scene.dump`, `replay`). These are registered from their own module, not from engine/app/engine.ts as the WP's Build says, so that engine/app/headless.ts loads them in Node without engine.ts's renderer, DOM and device imports, and a page and Node list the same members;
+  - engine/app/playback.ts: replays played a step at a time (the `replay` member, `?replay`, `x replay --browser page`);
+  - engine/gfx/stage.ts: the presentation graph without a GPU (level meshes split into runs, one stand-in per placed entity, lights and ground);
+  - engine/gfx/sceneDump.ts: `scene.dump`'s text format;
+  - tools/lib/page.ts: the page helpers that `x inspect`, `x shot` and `x replay --browser page` share (waiting for ready or an error, finding the page for a scene module, playing replays in the scene's own page).
+- **Edits to other WPs' files**, each the smallest change the Done-when needed:
+  - tools/cmd/help.ts and tools/x.test.ts (WP 0.2): with WP 2.7's four new commands (set, eval, dump, inspect), `x help` lists 19 or more commands, which with its summary passes the 20-line output cap (MAX_LINES). Past the cap it now prints the names on a few lines and writes every command with its first sentence to out/help/all/commands.txt, which it reports as an artifact. Under the cap the output is unchanged. tools/x.test.ts accepts both forms.
+  - tools/cmd/sim.ts and tools/cmd/sim.test.ts (WP 1.5, extended by WP 1.6): the Done-when runs `x sim labs/box/scenes/room` without an extension, the way imports name a module. `resolveSceneModule` now takes `<path>.ts` when `<path>` is given.
+  - tests/baselines/thumbs/README.md (WP 2.6): one line for the `box-room-iso` case. The baseline file itself is WP 2.7's under §9.3.
+  - tests/unit/hooks/settings.test.ts (WP 0.10): its skills list names stress-box, which WP 0.10's entry says WP 2.7 adds.
+- **`APP_NO_VIEW` instead of `needs: 'view'`.** Amendment 6 said WP 2.7 would add `view` to the values of `needs`. That field and its check belong to WP 1.6 (engine/dev/members.ts, engine/dev/inspector.ts), and the check decides from a host flag (`host.renderer`). A view is `host.view`, which only the app's host (`AppHost`, engine/app/viewMembers.ts) has. So `camera.get`, `camera.set` and `scene.dump` throw `APP_NO_VIEW` themselves through one helper (`viewOf`), naming the member and the fix (`createHeadless({ scene, view: true })`), and the dev layer is left unchanged. For an agent the behaviour is the same: `help()` lists the members everywhere, and a call without a view is a coded error that names the fix. The cost is that `help()` does not add "(needs a view)" the way it adds "(needs a renderer)". A `needs: 'view'` value replaces the helper once a second module's members need a view.
+- **A restore or a dev action snaps the view** (review round 3). createAppHost hands members `recordedRun(session)` with `restore` and `act` followed by `view.restarted()`, so the stand-ins snap to the world, with no interpolation from the places they had, as after a restart. engine/dev/members.ts is unchanged. engine/app/view.test.ts proves it.

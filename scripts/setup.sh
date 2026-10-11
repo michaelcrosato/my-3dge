@@ -12,7 +12,10 @@
 #    resolved in this order: the environment variable; else an existing local clone, cloned with
 #    `git clone --shared` into .cache/src-3d2dge or .cache/src-shardfall; else a clone from GitHub. Either clone is
 #    then detached at the pinned commit. The resolved paths are printed, and appended to $CLAUDE_ENV_FILE when set.
-# 3. `npm ci`.
+# 3. Chromium. Outside the cloud container (no /opt/pw-browsers/chromium and no $CHROMIUM_PATH), it downloads Chrome for
+#    Testing at the platform's release (tools/deps.json) from Google's official bucket into ~/.cache/my3dge/ (once);
+#    tools/lib/browser.ts finds it there, so no shell state is needed. Offline, it warns and T2 cannot run.
+# 4. `npm ci`.
 #
 # Exit status: 0 when the dependencies are installed (an offline Node download or an unreachable source only warns);
 # 1 when `npm ci` fails.
@@ -145,7 +148,35 @@ GIT_LFS_SKIP_SMUDGE=1 resolve_source SHARDFALL_SRC .cache/src-shardfall fa2dab6c
   /home/user/michaelcrosato/shardfall https://github.com/michaelcrosato/shardfall
 
 # ---------------------------------------------------------------------------------------------------------------------
-# 3. The dependencies
+# 3. Chromium (the platform's release, where the container's is absent)
+# ---------------------------------------------------------------------------------------------------------------------
+
+chromium_version="141.0.7390.37"
+chromium_dir="$cache_dir/chrome-${chromium_version}"
+if [ -n "${CHROMIUM_PATH:-}" ] || [ -x /opt/pw-browsers/chromium ]; then
+  say "Chromium: ${CHROMIUM_PATH:-/opt/pw-browsers/chromium}"
+elif [ -x "$chromium_dir/chrome-linux64/chrome" ]; then
+  say "Chromium ${chromium_version} is already in $chromium_dir"
+elif [ "$(uname -s)" = "Linux" ] && [ "$(uname -m)" = "x86_64" ]; then
+  (
+    mkdir -p "$cache_dir"
+    work="$(mktemp -d "$cache_dir/.download.XXXXXX")"
+    trap 'rm -rf "$work"' EXIT
+    url="https://storage.googleapis.com/chrome-for-testing-public/${chromium_version}/linux64/chrome-linux64.zip"
+    if ! curl --fail --silent --show-error --location --retry 2 --connect-timeout 15 -o "$work/chrome.zip" "$url"; then
+      say "offline: could not download Chromium ${chromium_version}; T2 cannot run until it is in $chromium_dir"
+      exit 0
+    fi
+    if command -v unzip >/dev/null 2>&1; then unzip -q "$work/chrome.zip" -d "$work/unpacked"; else
+      7zz x -y -o"$work/unpacked" "$work/chrome.zip" >/dev/null && chmod +x "$work"/unpacked/chrome-linux64/{chrome,chrome_crashpad_handler,chrome_sandbox,chrome-wrapper}
+    fi
+    rm -rf "$chromium_dir" && mkdir -p "$chromium_dir" && mv "$work/unpacked/chrome-linux64" "$chromium_dir/"
+    say "installed Chromium $("$chromium_dir/chrome-linux64/chrome" --version 2>/dev/null) in $chromium_dir"
+  ) || say "warning: could not install Chromium ${chromium_version}"
+fi
+
+# ---------------------------------------------------------------------------------------------------------------------
+# 4. The dependencies
 # ---------------------------------------------------------------------------------------------------------------------
 
 say "npm ci on Node $(node --version), npm $(npm --version)"

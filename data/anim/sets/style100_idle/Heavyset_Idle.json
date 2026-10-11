@@ -1,0 +1,10 @@
+{"clip": "Heavyset_Idle", "src": "100STYLE", "take": "Heavyset_ID 19.72-22.22", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, heavyset style: walking as a muscle man tensed biceps", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-9,1], "chest":[3,18,0], "head":[-2,15,-1],
+   "shL":[3,-3], "shR":[4,-1], "armL":[33,20,-92,75,-32], "armR":[34,12,-93,71,32],
+   "legL":[-23,1,-97,10,-4], "legR":[-25,2,-97,12,5], "footL":[9,-5,0], "footR":[9,2,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-9,1], "chest":[3,18,0], "head":[-2,15,-1],
+   "shL":[3,-3], "shR":[4,-1], "armL":[33,20,-92,75,-32], "armR":[34,12,-93,71,32],
+   "legL":[-23,1,-97,10,-4], "legR":[-25,2,-97,12,5], "footL":[9,-5,0], "footR":[9,2,0]}
+]}

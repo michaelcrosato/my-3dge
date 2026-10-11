@@ -1,0 +1,10 @@
+{"clip": "Flying Forward", "src": "M2M_ANIMATED", "dur": 0.5, "loop": true, "tags": ["fly","air"], "desc": "flying forward, body level, arms at the sides, legs trailing", "keys": [
+  {"t":0,
+   "hips":[-3,0,140], "body":[108,80,-108], "chest":[-1,-10,0], "head":[1,-20,6],
+   "shL":[0,0], "shR":[0,0], "armL":[-16,60,-78,44,-3], "armR":[9,57,-82,44,16],
+   "legL":[2,0,-100,28,7], "legR":[5,-3,-100,28,12], "footL":[58,3,0], "footR":[58,-10,0]},
+  {"t":0.5,
+   "hips":[-3,0,140], "body":[108,80,-108], "chest":[-1,-10,0], "head":[1,-20,6],
+   "shL":[0,0], "shR":[0,0], "armL":[-16,60,-78,44,-3], "armR":[9,57,-82,44,16],
+   "legL":[2,0,-100,28,7], "legR":[5,-3,-100,28,12], "footL":[58,3,0], "footR":[58,-10,0]}
+]}

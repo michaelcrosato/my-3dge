@@ -1,0 +1,84 @@
+# The CMU ledger's takes in category "combat" (categories.tsv says why; README.md explains the columns).
+id	subject	fps	sec	active	fit	travel	hips	flags	used	note	desc
+02_05	2	120	15.4	0.0-15.1	11/84	1.7	86-104				punch/strike
+02_07	2	120	18.8	0.0-18.0	13/112	2.4	91-103		Sword_Lunge		swordplay
+02_08	2	120	12.5	0.0-11.8	10/66	2.5	83-105				swordplay
+02_09	2	120	8.6	0.0-8.6	12/53	1.6	77-105				swordplay
+10_01	10	120	6.7	1.5-6.7	21/116	2.0	90-106				soccer - kick ball
+10_02	10	120	4.9	1.9-4.9	23/115	2.1	85-104				soccer - kick ball
+10_03	10	120	3.0	0.0-2.6	27/126	3.3	80-103				soccer - kick ball
+10_05	10	120	3.6	0.9-3.6	26/136	3.5	83-105				soccer - kick ball
+10_06	10	120	4.8	0.0-4.8	24/127	4.2	83-107				soccer - kick ball
+11_01	11	120	5.0	1.5-5.0	18/77	3.4	86-106				soccer - kick ball
+13_17	13	120	40.3	0.0-40.3	15/145	16.1	73-104		Boxing_Guard_Loop Boxing_Jab		boxing
+13_18	13	120	25.0	0.0-24.9	15/147	8.4	74-106				boxing
+14_01	14	120	46.6	0.6-46.6	19/130	19.9	77-107				boxing
+14_02	14	120	45.2	0.3-45.2	20/138	22.0	72-109				boxing
+14_03	14	120	46.1	0.0-46.1	19/130	22.3	73-109				boxing
+15_04	15	120	187.9	0.8-187.9	23/133	19.8	59-106				wash windows, paint; hand signals; dance - Egyptian walk, the Dive, the Twist, the Cabbage Patch; boxing
+15_05	15	120	191.2	8.3-191.2	23/144	21.1	48-105				wash windows, paint; hand signals; dance - Egyptian walk, the Dive, the Twist, the Cabbage Patch; boxing
+15_13	15	120	77.7	0.0-77.7	26/172	27.1	85-103				boxing
+17_10	17	120	23.2	0.0-23.2	19/199	14.8	64-108				boxing
+22_17	22	120	6.9	0.0-6.9	32/96	1.3	71-93	loose			rush up, arm wrestle (2 subjects - subject A)
+22_20	22	120	3.1	0.0-3.1	25/119	1.4	52-94				violence - A picks up high stool, threatens to strike B (2 subjects - subject A)
+23_17	23	120	6.9	0.0-6.9	22/121	1.6	70-100				rush up, arm wrestle (2 subjects - subject B)
+23_20	23	120	3.1	0.0-3.1	16/85	0.4	59-64				violence - A picks up high stool, threatens to strike B (2 subjects - subject B)
+56_03	56	120	51.8	0.0-51.1	15/101	13.6	91-117				vignettes - fists up, wipe window, yawn, stretch, angrily grab, smash against wall, lift open window, throw punches, skip
+56_04	56	120	56.4	0.0-56.4	15/90	22.2	88-141				vignettes - fists up, wipe window, grab, lift open window, throw punches, yawn, stretch, walk, jump
+56_05	56	120	61.3	0.1-61.3	15/127	32.0	85-136				vignettes - walk, drink water, run/jog, jump, wipe window, lift open window, throw punches, yawn, stretch
+56_06	56	120	56.5	2.6-56.5	17/126	30.9	83-144				vignettes - throw punches, grab, skip, yawn, stretch, leap, lift open window, walk, jump/bound
+74_03	74	60	6.6	2.2-6.6	19/76	1.8	101-111				kick
+74_04	74	60	5.2	1.1-4.8	19/73	2.4	97-117				kick
+74_05	74	60	5.4	1.6-3.9	18/74	0.8	99-107				kick
+74_06	74	60	5.4	1.6-3.8	21/80	1.1	99-109				kick
+75_16	75	60	5.7	0.0-4.9	18/78	2.7	87-142				jump kick
+76_01	76	120	7.7	0.0-7.7	15/69	2.0	97-107				walk backwards then attack with a punch
+76_02	76	120	9.7	1.5-9.7	14/72	2.3	97-107				walk backwards, feign a few attacks, then attack
+76_03	76	120	9.0	0.4-9.0	20/273	3.5	65-105				avoid attacker
+76_05	76	120	7.2	0.0-7.2	16/78	2.7	94-106				swatting at pesky bug
+77_09	77	60	16.5	0.0-16.5	20/122	2.1	50-105		Duck_Thrown_Object		duck to avoid flying object
+79_08	79	60	7.4	1.8-6.8	17/62	0.5	99-105				boxing
+79_88	79	60	15.1	1.1-13.1	14/102	0.5	100-104				swatting at a fly
+80_10	80	60	12.9	1.7-12.4	21/121	1.1	103-105				boxing
+86_01	86	120	38.2	0.0-38.2	23/142	13.1	67-124				jumps kicks and punches
+86_02	86	120	88.5	0.0-88.5	22/127	29.2	57-141				walk, squats, run, stretch, jumps, punches, and drinking
+86_03	86	120	70.0	0.0-70.0	21/101	34.0	65-127				walking, running, jumping, kicking, and stretching
+86_04	86	120	84.0	0.0-84.0	24/107	20.9	104-108				walking, stretching, punching, chopping, and drinking
+86_05	86	120	69.5	0.0-69.5	21/112	22.8	78-137				walking, jumping, jumping jacks, jumping on one foot, punching, chopping,
+86_06	86	120	82.8	0.0-82.8	21/304	33.4	85-106				walking, running, kicking, punching, knee kicking, and stretching
+86_08	86	120	76.7	0.0-76.7	22/137	29.1	58-107				walking, squats, stretching, kicking, and punching
+87_01	87	60	10.3	0.0-10.3	17/109	3.6	84-129	inverted		pick: Spin_Jump_Kick (a second tornado kick)	Jump with kick and spin
+88_06	88	60	3.8	0.0-3.6	26/361	3.2	72-126	inverted			jump and spin kick
+90_05	90	120	4.3	0.9-4.1	18/99	3.2	83-138		Jump_Kick		jump kick
+90_06	90	120	5.2	2.2-4.9	19/107	3.5	87-134				jump kick
+90_07	90	120	7.5	4.3-7.2	14/91	3.8	86-135				jump kick
+111_19	111	120	8.5	0.0-8.5	16/101	2.1	98-104				Punch Kick
+113_13	113	120	11.2	0.0-10.7	21/155	5.0	87-102				Punch and kick
+127_29	127	120	1.7	0.0-1.7	18/136	5.4	72-101		Duck_Under		Run Duck Underneath
+127_30	127	120	2.0	0.0-2.0	18/57	5.8	76-103				Run Duck Underneath
+127_31	127	120	4.3	0.0-4.3	20/93	5.6	46-96				Run Duck Underneath
+127_32	127	120	2.7	0.0-2.7	28/199	4.9	63-94				Run Duck Underneath
+127_37	127	120	2.8	0.8-2.8	17/92	5.3	76-100	inverted			Run Duck Underneath
+127_38	127	120	1.6	0.0-1.6	15/62	5.4	79-103	inverted			Run Duck Underneath
+128_04	128	120	1.1	0.0-1.1	16/55	4.2	80-97				Run Duck Underneath
+131_05	131	120	10.5	0.4-9.1	15/96	4.5	68-104				Start Duck Underneath Stop
+131_06	131	120	9.9	1.0-8.9	16/78	4.3	65-105				Start Duck Underneath Stop
+132_14	132	120	55.3	1.0-55.3	19/116	26.7	101-106				Walk Duck Footed
+134_01	134	120	3.0	0.0-3.0	17/86	5.3	69-116				Duck Under
+135_04	135	120	11.0	0.6-11.0	22/109	4.1	82-99		Front_Kick		Front Kick
+139_09	139	120	8.2	0.0-8.2	20/122	2.1	50-105				Ducking
+141_14	141	120	4.8	0.0-4.8	25/161	1.8	98-108				Punch and Kick
+143_23	143	120	6.8	0.1-6.3	12/60	0.7	94-103				Punching
+143_24	143	120	8.4	0.5-8.4	11/67	3.9	93-109				Kicking
+144_05	144	120	23.2	0.0-22.1	15/87	9.9	91-106				Front_Kicking
+144_06	144	120	30.3	0.9-30.3	16/103	10.3	92-105				Front_Kicking001
+144_07	144	120	20.4	0.1-20.4	13/79	6.8	97-105				Left_Blocks
+144_08	144	120	25.0	0.0-24.5	12/76	8.5	97-104				Left_Blocks001
+144_09	144	120	28.2	0.5-28.2	15/103	9.5	89-104				Left_Front_Kicking
+144_10	144	120	29.1	0.6-29.1	15/110	9.9	89-104				Left_Front_Kicking001
+144_13	144	120	16.2	0.3-16.2	19/121	2.4	64-105				Left_Punch_Sequence001
+144_14	144	120	17.1	0.0-17.1	17/121	2.5	76-106				Left_Punch_Sequence002
+144_20	144	120	18.9	0.0-18.9	18/147	2.8	59-107		Punch_Combo		Punch_Sequence
+144_21	144	120	16.1	0.0-16.0	21/164	2.4	56-106				Punch_Sequence001
+144_26	144	120	27.9	0.4-27.9	11/66	10.4	95-106		Block_Combo		Right_Blocks
+144_27	144	120	22.1	0.6-21.3	11/82	8.2	90-104				Right_Blocks001

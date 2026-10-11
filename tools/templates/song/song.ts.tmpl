@@ -1,0 +1,25 @@
+/**
+ * @file The song `song:{{name}}`: where it plays and its mood (replace this text; `x docs` puts the first sentence in INDEX).
+ *
+ * Invariants: tracker notation, one token per step: a note (C4, F#3, Bb2), - holding the note before it, . a rest,
+ * and | a bar line, which takes no step; a drums track writes the kit's tokens (k kick, s snare, h hat, o open hat,
+ * c crash, t tom). At `steps` per beat and `beats` per bar, every track fills whole bars or divides one (node x
+ * describe song lists the fields; engine/audio/data/song.ts gives the rules). `intensity` makes a track join only
+ * when the music's intensity reaches it.
+ *
+ * @example
+ * import { songTiming } from '../../../engine';
+ * songTiming({{name}}).seconds; // 4: two bars of 4/4 at 120 bpm
+ * @see {{id}}.test.ts
+ */
+import { defineSong } from '../../../engine';
+
+/** The song `song:{{name}}`: replace this sentence with where it plays. */
+export const {{name}} = defineSong('song:{{name}}', {
+  bpm: 120,
+  tracks: [
+    { wave: 'square', vol: 0.12, notes: 'C5 - E5 - G5 - E5 - D5 - F5 - A5 - G5 - | E5 - - - D5 - - - C5 - - - - - . .' },
+    { wave: 'triangle', vol: 0.25, notes: 'C3 - - - G2 - - - C3 - - - G2 - - - | C3 - - - G2 - - - C3 - - - . . . .' },
+    { wave: 'drums', vol: 0.12, intensity: 0.25, notes: 'k . h . s . h . k . h . s . h h' },
+  ],
+});

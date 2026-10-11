@@ -1,0 +1,10 @@
+{"clip": "LeftHop_Idle", "src": "100STYLE", "take": "LeftHop_ID 15.88-18.38", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, left hop style: hop on left foot", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,102], "body":[0,-3,-5], "chest":[0,11,4], "head":[-1,12,4],
+   "shL":[0,-8], "shR":[3,-5], "armL":[12,13,-98,7,11], "armR":[13,16,-98,0,-20],
+   "legL":[-13,0,-99,0,-4], "legR":[-29,-6,-96,84,-2], "footL":[5,8,0], "footR":[48,-127,-18]},
+  {"t":2.5,
+   "hips":[0,0,102], "body":[0,-3,-5], "chest":[0,11,4], "head":[-1,12,4],
+   "shL":[0,-8], "shR":[3,-5], "armL":[12,13,-98,7,11], "armR":[13,16,-98,0,-20],
+   "legL":[-13,0,-99,0,-4], "legR":[-29,-6,-96,84,-2], "footL":[5,8,0], "footR":[48,-127,-18]}
+]}

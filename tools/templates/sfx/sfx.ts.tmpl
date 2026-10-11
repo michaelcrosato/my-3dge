@@ -1,0 +1,18 @@
+/**
+ * @file The effect `sfx:{{name}}`: what it is the sound of (replace this text; `x docs` puts the first sentence in INDEX).
+ *
+ * Invariants: voices in the chip synth's words (wave, freq, to, dur, vol, arp, vib, filter…; node x describe sfx lists
+ * the kind's fields, engine/audio/dsp/voice.ts a voice's); `layers` mix other effects in ({ sfx, at, vol, pitch });
+ * `variants` versions spread ±`vary` in pitch, for a sound heard often; `bus` is effects, ui or ambience.
+ *
+ * @example
+ * {{name}}.id; // 'sfx:{{name}}'
+ * @see {{id}}.test.ts
+ */
+import { defineSfx } from '../../../engine';
+
+/** The effect `sfx:{{name}}`: replace this sentence with what it is the sound of. */
+export const {{name}} = defineSfx('sfx:{{name}}', {
+  voices: { wave: 'square', freq: 440, to: 880, dur: 0.12, vol: 0.25 },
+  variants: 4,
+});

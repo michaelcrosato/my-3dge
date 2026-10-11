@@ -1,0 +1,15 @@
+---
+description: The box room, Box 1 (PLAN.md §9.0, WP 2.7). 16 × 12 m of flagstones inside brick walls 3 m high, one low wall (0.75 m) across the middle, a 2 × 2 m pillar 3.5 m high, the hero's spawn, and three numbered markers where the scripted movers of labs/box/scenes/room.ts start, all in view of the iso camera.
+---
+################
+#..............#
+#..@...........#
+#..........PP..#
+#..1.......PP..#
+#.........3....#
+#...wwwwww.....#
+#.....2........#
+#..............#
+#..............#
+#..............#
+################

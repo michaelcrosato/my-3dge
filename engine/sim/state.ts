@@ -7,7 +7,8 @@
  * What the hash covers, after the format tag (`STATE_FORMAT`), in this order, each part tagged: the seed, the next
  * entity id and the world's step rate (hz); every entity in id order, its components in name order, each
  * component's fields in the order its kind declares them; the timers' tick count and timers (engine/core/timers.ts
- * `state()`); the settings except `view` ones (`settings.values({ view: false })`); the state of every sim RNG stream
+ * `state()`); the settings that differ from their defaults, except `view` ones (so declaring another setting, as each
+ * scene module loaded beside this one does, never changes a hash); the state of every sim RNG stream
  * away from its derived seed (`rng()`, `rng.entity()`); and the physics hook's state (WP 3.1: every body's
  * translation, rotation and velocities in handle order, never Rapier's snapshot bytes). Visual streams (`fxRng`),
  * event listeners, systems and view settings are never hashed (captures hold listeners and systems beside the data).
@@ -140,7 +141,7 @@ export interface StateDifference {
 }
 
 /** The hash format; changing what the hash reads changes this tag, and with it every golden. */
-export const STATE_FORMAT = 'my3dge-state/3';
+export const STATE_FORMAT = 'my3dge-state/4';
 /** Code-unit order, so sorting never depends on the locale. */
 const byText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 /** A component kind's name: the entity property that holds it. */

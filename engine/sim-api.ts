@@ -59,6 +59,17 @@ export { INTENT_KEYS } from './input/intents';
 export type { Intents } from './input/intents';
 export type { IntentValue } from './input/intents';
 export type { CustomIntentKey } from './input/intents';
+export { createInputBuffer } from './input/intents';
+export { updateInputBuffer } from './input/intents';
+export { released } from './input/intents';
+export { buffered } from './input/intents';
+export { consume } from './input/intents';
+export { consumeAll } from './input/intents';
+export { repeated } from './input/intents';
+export { BUFFER_STEPS } from './input/intents';
+export { REPEAT_DELAY } from './input/intents';
+export { REPEAT_RATE } from './input/intents';
+export type { InputBuffer } from './input/intents';
 
 // Math: three.js's math classes and the engine's helpers (MathUtils covers clamp, lerp, damp, smoothstep).
 export { Vector3 } from './core/math';
@@ -114,3 +125,139 @@ export type { SpawnPoint } from './world/level/types';
 export type { LightSpot } from './world/level/types';
 export type { TileRect } from './world/level/types';
 export type { Point3 } from './world/level/types';
+
+// Animation (WP 3.4): the humanoid skeleton (a root plus 23 joints) and its builds, poses with three.js quaternions,
+// blending under bone masks, additive layers, forward kinematics, SVG contact sheets and the pose checks.
+export { JOINTS } from './anim/skeleton';
+export { SOCKETS } from './anim/skeleton';
+export { MASKS } from './anim/skeleton';
+export type { JointName } from './anim/skeleton';
+export type { SocketName } from './anim/skeleton';
+export type { MaskName } from './anim/skeleton';
+export { createSkeleton } from './anim/skeleton';
+export type { Skeleton } from './anim/skeleton';
+export { boneMask } from './anim/skeleton';
+export type { BoneMask } from './anim/skeleton';
+export { defineBuild } from './anim/builds';
+export { getBuild } from './anim/builds';
+export type { Build } from './anim/builds';
+export type { BuildSpec } from './anim/builds';
+export { Pose } from './anim/pose';
+export type { JointRef } from './anim/pose';
+export type { BlendOptions } from './anim/pose';
+export { blendPoses } from './anim/pose';
+export { makeAdditive } from './anim/pose';
+export { addPose } from './anim/pose';
+export { hashPose } from './anim/pose';
+export { forwardKinematics } from './anim/fk';
+export { createWorldPose } from './anim/fk';
+export type { WorldPose } from './anim/fk';
+export { jointPosition } from './anim/fk';
+export { jointRotation } from './anim/fk';
+export { jointMatrix } from './anim/fk';
+export { jointToWorld } from './anim/fk';
+export { socketPosition } from './anim/fk';
+export { tipPosition } from './anim/fk';
+export { animSheet } from './anim/sheet';
+export type { Sheet } from './anim/sheet';
+export type { SheetFrame } from './anim/sheet';
+export type { SheetOptions } from './anim/sheet';
+export type { SheetView } from './anim/sheet';
+export { animCheck } from './anim/check';
+export type { AnimCheckSpec } from './anim/check';
+export type { AnimCheckReport } from './anim/check';
+export type { AnimProblem } from './anim/check';
+export type { RigidPair } from './anim/check';
+export type { PointName } from './anim/check';
+export { twoBone } from './anim/ik';
+export { twoBoneRot } from './anim/ik';
+export type { TwoBoneOptions } from './anim/ik';
+export type { LimbEnd } from './anim/ik';
+export type { Limb } from './anim/ik';
+export { LIMBS } from './anim/ik';
+export { aim } from './anim/ik';
+export type { AimOptions } from './anim/ik';
+export type { AimLink } from './anim/ik';
+export { AIM_CHAIN } from './anim/ik';
+export { footPlant } from './anim/ik';
+export type { FootPlantOptions } from './anim/ik';
+export type { FootPlantState } from './anim/ik';
+export type { FootLock } from './anim/ik';
+export { createFootPlantState } from './anim/ik';
+export { FOOT_PLANT } from './anim/ik';
+export type { GroundProbe } from './anim/ik';
+export type { GroundHit } from './anim/ik';
+export { handTo } from './anim/ik';
+// The procedural humanoid (WP 3.6): my-3d2dge's gait, idle, lean, arm swing, held poses and stances as effector
+// targets written with B(forward, right, up), solved onto the skeleton; a fixed step and a seeded stream.
+export { Humanoid } from './anim/humanoid';
+export type { HumanoidOptions } from './anim/humanoid';
+export type { HumanoidInput } from './anim/humanoid';
+export type { HumanoidState } from './anim/humanoid';
+export type { HumanoidWeights } from './anim/locomotion';
+export type { BodyMotion } from './anim/locomotion';
+export { POSES } from './anim/poses';
+export type { PoseName } from './anim/poses';
+export { STANCES } from './anim/poses';
+export type { StanceName } from './anim/poses';
+export { WEAPONS } from './anim/poses';
+export type { Weapon } from './anim/poses';
+export type { Effectors } from './anim/poses';
+export { B } from './anim/authoring';
+export { turnRight } from './anim/authoring';
+export type { FRU } from './anim/authoring';
+export type { LimbSide } from './anim/authoring';
+export type { Sided } from './anim/authoring';
+
+// Physics (WP 3.1): Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id,
+// raycasts, shape casts, overlaps and ground probes, collision groups by name, a level's bodies; presentation reads
+// it through the read-only QueryView.
+export { physicsOf } from './physics/world';
+export type { Physics } from './physics/world';
+export type { BodySpec } from './physics/world';
+export type { ColliderSpec } from './physics/world';
+export type { BodyState } from './physics/world';
+export type { BodyChange } from './physics/world';
+export type { BodyType } from './physics/world';
+export type { Shape } from './physics/queries';
+export type { Vec3Like } from './physics/queries';
+export type { QuatLike } from './physics/queries';
+export type { Hit } from './physics/queries';
+export type { Ground } from './physics/queries';
+export type { QueryOptions } from './physics/queries';
+export type { RayOptions } from './physics/queries';
+export type { ShapeCastOptions } from './physics/queries';
+export type { OverlapOptions } from './physics/queries';
+export type { ProbeOptions } from './physics/queries';
+export { COLLISION_GROUPS } from './physics/groups';
+export type { GroupName } from './physics/groups';
+export { PHYSICS_SETTINGS } from './physics/params';
+export { addLevelBodies } from './sim/levelBodies';
+export { queryViewOf } from './sim/queryView';
+export type { QueryView } from './sim/queryView';
+
+// Characters (WP 3.2): actors moved by the character controller (Rapier's, moved across then down), with an action
+// game's feel: acceleration and skid, coyote time, a jump buffer, a variable jump, a wall jump, a dash, pushing props;
+// the feel meter measures how one handles.
+export { createCharacter } from './physics/character';
+export type { Character } from './physics/character';
+export { CHARACTER_FIELDS } from './physics/character';
+export { CHARACTER_STATE_FIELDS } from './physics/character';
+export type { CharacterState } from './physics/character';
+export { spawnActor } from './sim/actors';
+export { removeActor } from './sim/actors';
+export type { ActorSpec } from './sim/actors';
+export type { ActorComponent } from './sim/actors';
+export type { ActorComponents } from './sim/actors';
+export { measureFeel } from './sim/actors';
+export type { FeelReport } from './physics/feel';
+export type { FeelOptions } from './sim/actors';
+
+// Levels v2 (WP 4.2): the hall's glyphs (gallery =, stairs ^, dais o, brazier t), ramps and daises, hull and cylinder
+// colliders, and the surface tag underfoot.
+export { surfaceAt } from './world/level/heights';
+export type { HullCollider } from './world/level/types';
+export type { CylinderCollider } from './world/level/types';
+export type { RampDescriptor } from './world/level/types';
+export type { DaisDescriptor } from './world/level/types';
+export type { Side } from './world/level/types';

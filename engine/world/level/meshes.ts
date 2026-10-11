@@ -4,6 +4,9 @@
  * every glyph with a mesh recipe by recipe, bottom, top, surface and footprint, giving each group its pieces (a tile,
  * or a footprint square: one pillar) and the same tiles merged into few rectangles.
  *
+ * A piece stands on the ground when its glyph's box or hull collider rises from it (a gallery: a block from the ground
+ * to its floor; stairs and the dais, whose own meshes follow level.ramps and level.daises), else on its floor.
+ *
  * Invariants: one descriptor per distinct recipe, bottom, top, surface and footprint (so floor tiles under spawn
  * markers join the floor), in that order of keys; pieces in reading order of their north-west corners; the rects
  * cover exactly the group's tiles. Inputs are never changed.
@@ -45,19 +48,22 @@ function piecesOf(grid: TileGrid, glyph: Glyph): TileRect[] {
   return pieces;
 }
 
+/** The height a glyph's pieces stand on: the ground under a box or hull collider, else its floor. */
+const bottomOf = (glyph: Glyph) => (glyph.collider === 'box' || glyph.collider === 'hull' ? 0 : glyph.floor);
+
 /** The mesh descriptors: one per recipe, bottom, top, surface and footprint, for every glyph whose mesh is not 'none'. */
 export function levelMeshes(grid: TileGrid): MeshDescriptor[] {
   const groups = new Map<string, Glyph[]>();
   for (const glyph of glyphsOf(grid)) {
     if (glyph.mesh === 'none') continue;
-    const key = JSON.stringify([glyph.mesh, glyph.floor, glyph.top, glyph.surface, glyph.footprint]);
+    const key = JSON.stringify([glyph.mesh, bottomOf(glyph), glyph.top, glyph.surface, glyph.footprint]);
     groups.set(key, [...(groups.get(key) ?? []), glyph]);
   }
   const ordered = [...groups.values()].sort((a, b) => {
     const [x, y] = [a[0], b[0]];
     return (
       byText(x.mesh, y.mesh) ||
-      x.floor - y.floor ||
+      bottomOf(x) - bottomOf(y) ||
       x.top - y.top ||
       byText(x.surface, y.surface) ||
       x.footprint - y.footprint
@@ -70,7 +76,7 @@ export function levelMeshes(grid: TileGrid): MeshDescriptor[] {
       recipe: first.mesh,
       glyphs: glyphs.map((glyph) => glyph.id),
       surface: first.surface,
-      bottom: first.floor,
+      bottom: bottomOf(first),
       top: first.top,
       footprint: first.footprint,
       pieces,

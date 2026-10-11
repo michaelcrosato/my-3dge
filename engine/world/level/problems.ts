@@ -43,10 +43,20 @@ export const LEVEL_CODES = defineCodes('level', {
     fix: 'redraw the block as a filled rectangle whose sides are multiples of {n} tiles (a pillar is PP over PP)',
     doc: 'Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts) for a glyph with a footprint above 1 whose touching tiles do not make a filled rectangle of whole footprint squares.',
   },
+  LEVEL_BAD_RAMP: {
+    template: '{at}: this {char} block {why}',
+    fix: 'draw {glyph} as a filled rectangle with exactly one side against walkable floor {top} m up (a gallery, =): it rises toward that side',
+    doc: 'Raised by `validateLevel` and `compileLevel` (engine/world/level/shapes.ts) for a block of a ramp glyph (stairs, ^) that is not a filled rectangle, or whose neighbours at its top height (walkable, flat, within the climb limit) lie on no side or on several, so the direction it rises is not clear.',
+  },
+  LEVEL_BAD_DAIS: {
+    template: '{at}: this {char} block {why}',
+    fix: 'redraw {glyph} as an octagon in a square of tiles (as many rows as columns), wide enough that its base reaches more than its {edge} m edge from its centre',
+    doc: 'Raised by `validateLevel` and `compileLevel` (engine/world/level/shapes.ts) for a block of a dais glyph (o) whose bounding box is not square, or too small for its sloped edge.',
+  },
   LEVEL_UNREACHABLE_SPAWN: {
     template: '{at}: the spawn {spawn} ({char}) {why}',
     fix: 'open a gap in the walls round it, or move the {char} onto the main floor',
-    doc: 'Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`: the spawn stands on a tile nobody walks on, or in an area cut off from the main floor (the largest area bodies can walk across, stepping between tiles at most the climb limit apart).',
+    doc: 'Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`: the spawn stands on a tile nobody walks on, or in an area cut off from the main floor (the largest area whose tiles bodies walk between both ways, never climbing more than the climb limit at once; engine/world/level/walk.ts).',
   },
   LEVEL_UNREACHABLE_AREA: {
     template: '{at}: the walkable area from here ({count}) is cut off from the main floor ({main})',

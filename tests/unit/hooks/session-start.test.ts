@@ -105,6 +105,8 @@ function start(source: string, env: Record<string, string> = {}) {
         CLAUDE_ENV_FILE: join(base, 'env.sh'),
         MY3D2DGE_SRC: join(base, 'src-3d2dge'),
         SHARDFALL_SRC: join(base, 'src-shardfall'),
+        // The platform's browser is present, as in the container, so setup.sh fetches none (ADR-0014 amendment 8).
+        CHROMIUM_PATH: '/opt/pw-browsers/chromium',
         ...env,
       },
     },

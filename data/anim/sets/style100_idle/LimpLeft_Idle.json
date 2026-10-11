@@ -1,0 +1,10 @@
+{"clip": "LimpLeft_Idle", "src": "100STYLE", "take": "LimpLeft_ID 19.45-21.95", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, limp left style: keep left leg straight and limp", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-11,-4], "chest":[4,16,2], "head":[8,17,5],
+   "shL":[2,-9], "shR":[2,-8], "armL":[11,9,-99,17,131], "armR":[21,6,-98,13,-88],
+   "legL":[-36,3,-93,13,-1], "legR":[-26,-8,-96,11,1], "footL":[8,36,0], "footR":[14,13,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-11,-4], "chest":[4,16,2], "head":[8,17,5],
+   "shL":[2,-9], "shR":[2,-8], "armL":[11,9,-99,17,131], "armR":[21,6,-98,13,-88],
+   "legL":[-36,3,-93,13,-1], "legR":[-26,-8,-96,11,1], "footL":[8,36,0], "footR":[14,13,0]}
+]}

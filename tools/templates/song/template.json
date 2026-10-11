@@ -1,0 +1,11 @@
+{
+  "describe": "A song: tempo, bars and tracks in tracker notation (notes, holds, rests, drum tokens), with a unit test that renders one pass, audible and below full scale (PLAN.md WP 9.2).",
+  "id": "the module's path, labs/<lab>/sounds/<name> (its id is song:<name>): labs/box/sounds/caveTheme",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/sounds|tools/templates/song)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/song/sampleSong",
+  "files": {
+    "song.ts.tmpl": "{{id}}.ts",
+    "song.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}

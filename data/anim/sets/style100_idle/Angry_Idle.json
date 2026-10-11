@@ -1,0 +1,10 @@
+{"clip": "Angry_Idle", "src": "100STYLE", "take": "Angry_ID 17.90-20.42", "dur": 2.533, "loop": true, "tags": ["idle","style"], "desc": "Standing, angry style: swing lower arms aggressively - fists closed", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-7,0], "chest":[0,16,0], "head":[3,28,1],
+   "shL":[3,-12], "shR":[3,-10], "armL":[28,8,-96,2,49], "armR":[27,10,-96,22,-32],
+   "legL":[-21,2,-98,0,-10], "legR":[-21,-6,-97,0,11], "footL":[8,-8,0], "footR":[9,5,0]},
+  {"t":2.533,
+   "hips":[0,0,101], "body":[0,-7,0], "chest":[0,16,0], "head":[3,28,1],
+   "shL":[3,-12], "shR":[3,-10], "armL":[28,8,-96,2,49], "armR":[27,10,-96,22,-32],
+   "legL":[-21,2,-98,0,-10], "legR":[-21,-6,-97,0,11], "footL":[8,-8,0], "footR":[9,5,0]}
+]}

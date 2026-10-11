@@ -1,0 +1,10 @@
+{"clip": "ArmsFolded_Idle", "src": "100STYLE", "take": "ArmsFolded_ID 16.90-19.40", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, arms folded style: right arm folded over left", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-14,0], "chest":[1,20,-1], "head":[1,16,5],
+   "shL":[4,-5], "shR":[7,-9], "armL":[53,-68,-51,91,-46], "armR":[38,-79,-48,86,54],
+   "legL":[-31,1,-95,11,2], "legR":[-33,-2,-94,13,11], "footL":[13,15,0], "footR":[14,19,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-14,0], "chest":[1,20,-1], "head":[1,16,5],
+   "shL":[4,-5], "shR":[7,-9], "armL":[53,-68,-51,91,-46], "armR":[38,-79,-48,86,54],
+   "legL":[-31,1,-95,11,2], "legR":[-33,-2,-94,13,11], "footL":[13,15,0], "footR":[14,19,0]}
+]}

@@ -1,0 +1,10 @@
+{"clip": "Aeroplane_Idle", "src": "100STYLE", "take": "Aeroplane_ID 14.23-16.73", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, aeroplane style: both arms raised as wings – tilting from side to side", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-3,0], "chest":[6,13,2], "head":[26,14,13],
+   "shL":[27,12], "shR":[9,7], "armL":[-12,98,-15,16,-171], "armR":[26,96,5,14,-166],
+   "legL":[-11,1,-99,12,17], "legR":[-12,-1,-99,11,-19], "footL":[3,10,0], "footR":[3,12,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-3,0], "chest":[6,13,2], "head":[26,14,13],
+   "shL":[27,12], "shR":[9,7], "armL":[-12,98,-15,16,-171], "armR":[26,96,5,14,-166],
+   "legL":[-11,1,-99,12,17], "legR":[-12,-1,-99,11,-19], "footL":[3,10,0], "footR":[3,12,0]}
+]}

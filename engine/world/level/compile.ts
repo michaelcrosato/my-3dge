@@ -1,9 +1,10 @@
 /**
- * @file The level compiler (PLAN.md WP 2.2, §9.0, I-22; doctrines: Agent-accessible assets, Reproducible): a level's
- * text and the legend (engine/world/level/glyph.ts) in, a `CompiledLevel` out (engine/world/level/types.ts): the map,
- * the glyphs it uses, per-tile solid, walkable, floor and top grids, the ground slab, merged box colliders, mesh
- * descriptors, spawn points and light spots. Sim-side: no meshes, no Rapier, no randomness; heights.ts answers
- * `floorHeight` and `topHeight` on the result, WP 2.4 draws it and WP 3.1 makes its bodies.
+ * @file The level compiler (PLAN.md WP 2.2, WP 4.2, §9.0, I-22; doctrines: Agent-accessible assets, Reproducible): a
+ * level's text and the legend (engine/world/level/glyph.ts) in, a `CompiledLevel` out (engine/world/level/types.ts):
+ * the map, the glyphs it uses, per-tile characters and solid, walkable, floor and top grids, the ground slab, the
+ * colliders (merged boxes, hulls under ramps and daises, cylinders), the ramps and daises, mesh descriptors, spawn
+ * points and light spots. Sim-side: no meshes, no Rapier, no randomness; heights.ts answers `floorHeight`, `topHeight`
+ * and `surfaceAt` on the result, WP 2.4 draws it and WP 3.1 makes its bodies.
  *
  * `compileLevel(text, { file, name })` throws `LEVEL_INVALID` listing every structural problem (validate.ts), each at
  * its line and column. Content problems (an unreachable spawn) do not stop it; `validateLevel` and `node x qa level`
@@ -13,9 +14,12 @@
  * in Node or in a page, gives equal data and an equal `hashValue` (no Math.random, no clock; every list in a fixed
  * order). It is frozen all the way down, shares nothing a caller can change, and holds only canonical data.
  *
- * Carried from `my-3d2dge:src/stress-world/10-hall.js:22-115` (the hall as text: heights, colliders, the walkable grid
- * and meshes all derived from one map) and `my-3d2dge:src/lab3d/20-world.js:12-35`, with the glyph meanings moved
- * out of the code into the legend.
+ * Spawns stand on the floor at their tile's centre, and light spots `lightHeight` above the top there, so a spawn on a
+ * dais stands on the dais and a torch spot on a brazier sits above its bowl.
+ *
+ * Carried from `my-3d2dge:src/stress-world/10-hall.js:22-124` (the hall as text: heights, colliders, the walkable grid,
+ * the torch spots and meshes all derived from one map) and `my-3d2dge:src/lab3d/20-world.js:12-35`, with the glyph
+ * meanings moved out of the code into the legend.
  *
  * @example
  * const level = compileLevel('---\ndescription: A cell.\n---\n#####\n#@.w#\n#####\n', { file: 'cell.txt' });
@@ -27,6 +31,7 @@ import { codeError } from '../../core/log';
 import { freezeValue } from '../../core/schema';
 import { groundSlab, levelColliders } from './colliders';
 import type { Glyph } from './glyph';
+import { floorHeight, topHeight, type HeightSource } from './heights';
 import { levelMeshes } from './meshes';
 import { LEVEL_FORMAT, type CompiledLevel, type LevelGlyph, type LightSpot, type SpawnPoint } from './types';
 import { checkLevel, type LevelSource } from './validate';
@@ -57,7 +62,7 @@ function levelGlyph(glyph: Glyph): LevelGlyph {
  */
 export function compileLevel(text: string, options: CompileOptions = {}): CompiledLevel {
   const file = options.file ?? options.name ?? 'level';
-  const { parsed, glyphs: tiles, problems } = checkLevel(text, { ...options, file });
+  const { parsed, glyphs: tiles, ramps, daises, problems } = checkLevel(text, { ...options, file });
   if (problems.length) {
     const more = problems.length > LISTED ? `; and ${problems.length - LISTED} more` : '';
     const list = problems.slice(0, LISTED).map((problem) => problem.message);
@@ -74,11 +79,16 @@ export function compileLevel(text: string, options: CompileOptions = {}): Compil
   const grid = { cols, rows, tile: t, tiles };
   const legend: Record<string, LevelGlyph> = {};
   for (const glyph of tiles) legend[glyph.char] ??= levelGlyph(glyph);
+  const chars = tiles.map((glyph) => glyph.char);
+  const heights: HeightSource = { tile: t, cols, rows, tiles: chars, legend, ramps, daises };
+  const centres = tiles.map((_, i) => [((i % cols) + 0.5) * t, (Math.floor(i / cols) + 0.5) * t] as const);
+  const floor = centres.map(([x, z]) => floorHeight(heights, x, z));
+  const top = centres.map(([x, z]) => topHeight(heights, x, z));
   const spawns: SpawnPoint[] = [];
   const lights: LightSpot[] = [];
   tiles.forEach((glyph, i) => {
     const [col, row] = [i % cols, Math.floor(i / cols)];
-    const [x, z] = [(col + 0.5) * t, (row + 0.5) * t];
+    const [x, z] = centres[i];
     if (glyph.spawn) {
       spawns.push({
         id: `spawn:${glyph.spawn}`,
@@ -86,14 +96,13 @@ export function compileLevel(text: string, options: CompileOptions = {}): Compil
         glyph: glyph.id,
         col,
         row,
-        position: [x, glyph.floor, z],
+        position: [x, floor[i], z],
       });
     }
     if (glyph.light) {
-      lights.push({ tag: glyph.light, glyph: glyph.id, col, row, position: [x, glyph.top + glyph.lightHeight, z] });
+      lights.push({ tag: glyph.light, glyph: glyph.id, col, row, position: [x, top[i] + glyph.lightHeight, z] });
     }
   });
-  const top = tiles.map((glyph) => glyph.top);
   const level: CompiledLevel = {
     format: LEVEL_FORMAT,
     name: options.name ?? (options.file ? levelName(options.file) : 'level'),
@@ -103,13 +112,16 @@ export function compileLevel(text: string, options: CompileOptions = {}): Compil
     rows,
     map: map.map((row) => row.join('')),
     legend,
+    tiles: chars,
     solid: tiles.map((glyph) => glyph.solid),
     walkable: tiles.map((glyph) => glyph.nav.walkable),
-    floor: tiles.map((glyph) => glyph.floor),
+    floor,
     top,
     bounds: { min: [0, 0, 0], max: [cols * t, top.reduce((a, b) => Math.max(a, b), 0), rows * t] },
     ground: groundSlab(grid),
-    colliders: levelColliders(grid),
+    colliders: levelColliders(grid, { ramps, daises }),
+    ramps,
+    daises,
     meshes: levelMeshes(grid),
     spawns,
     lights,

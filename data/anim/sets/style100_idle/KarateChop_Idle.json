@@ -1,0 +1,10 @@
+{"clip": "KarateChop_Idle", "src": "100STYLE", "take": "KarateChop_ID 17.67-20.17", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, karate chop style: open hands swing hand with each step to do a karate chop", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-12,0], "chest":[0,16,0], "head":[2,13,1],
+   "shL":[4,-8], "shR":[5,-9], "armL":[95,-26,-15,104,4], "armR":[95,-31,-2,108,-15],
+   "legL":[-28,3,-96,13,-19], "legR":[-30,-2,-95,11,11], "footL":[12,-10,0], "footR":[12,15,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-12,0], "chest":[0,16,0], "head":[2,13,1],
+   "shL":[4,-8], "shR":[5,-9], "armL":[95,-26,-15,104,4], "armR":[95,-31,-2,108,-15],
+   "legL":[-28,3,-96,13,-19], "legR":[-30,-2,-95,11,11], "footL":[12,-10,0], "footR":[12,15,0]}
+]}

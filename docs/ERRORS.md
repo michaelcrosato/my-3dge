@@ -5,13 +5,273 @@
 Every code the engine prints, as `[CODE] message`, with its fix. Each module registers its own codes with
 `defineCodes` beside the code that raises them; tools/lib/docs.ts says how they are read.
 
+## anim
+
+### ANIM_BAD_MASK
+
+- Message: `the bone mask weight of {name} is {value}`
+- Fix: give each weight a number from 0 to 1
+- Registered in: [`engine/anim/skeleton.ts` line 37](../engine/anim/skeleton.ts)
+
+Raised by `boneMask` (engine/anim/skeleton.ts) for a weight that is not a number from 0 to 1.
+
+### ANIM_BAD_TARGET
+
+- Message: `the {what} given to {solver} is ({x}, {y}, {z})`
+- Fix: pass finite world coordinates in metres
+- Registered in: [`engine/anim/ik.ts` line 41](../engine/anim/ik.ts)
+
+Raised by the IK solvers (engine/anim/ik.ts) for a target, pole or grip with a coordinate that is NaN or infinite, which would spread NaN through the pose.
+
+### ANIM_CLIP_ANGLE_RANGE
+
+- Message: `{where}: key {key} (t {t}): "{field}" holds {value}°, past ±540°`
+- Fix: take whole turns (360) off it, keeping it near the keys round it; normalizedLens(clip) shows every angle folded to ±180°
+- Registered in: [`engine/anim/clip/validate.ts` line 126](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_BAD_FIELD
+
+- Message: `{where}: key {key} (t {t}): "{field}" is {value}`
+- Fix: make "{field}" {shape}
+- Registered in: [`engine/anim/clip/validate.ts` line 94](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_BAD_HEADER
+
+- Message: `{where}: "{field}" is {value}`
+- Fix: make "{field}" {shape}
+- Registered in: [`engine/anim/clip/validate.ts` line 102](../engine/anim/clip/validate.ts)
+
+Raised by `parseClip` and `parseClipSet` (engine/anim/clip/validate.ts) for a clip or set header field of the wrong type or shape, and for a clip whose `src` is not one of its set’s sources.
+
+### ANIM_CLIP_BAD_KEY
+
+- Message: `{where}: key {key} is {value}, not a key pose`
+- Fix: write each key as an object holding "t" (seconds) and the fields LEGEND lists (engine/anim/clip/lens.ts)
+- Registered in: [`engine/anim/clip/validate.ts` line 82](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_BELOW_FLOOR
+
+- Message: `{where}: key {key} (t {t}): the hips are at {value}% of standing hip height, below the floor`
+- Fix: raise hips[2] to 0 or more (100 is standing, 55 sitting on a chair)
+- Registered in: [`engine/anim/clip/validate.ts` line 130](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_KNEE_RANGE
+
+- Message: `{where}: key {key} (t {t}): "{field}" {problem}`
+- Fix: keep the knee bend from 0 to 165 and, while it bends more than 30, its twist within 120 of forward
+- Registered in: [`engine/anim/clip/validate.ts` line 122](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_LIMB_COLLAPSE
+
+- Message: `{where}: "{field}" turns {angle}° between key {key} (t {t}) and key {next} (t {nextT})`
+- Fix: add a key between them pointing the way the limb should swing: in-betweens of opposite directions pass through the joint
+- Registered in: [`engine/anim/clip/validate.ts` line 111](../engine/anim/clip/validate.ts)
+
+Reported by `validateClip` (engine/anim/clip/validate.ts) when a limb direction turns more than 150° from one key to the next: keys in-between every number linearly, so the direction nearly vanishes on the way and the limb snaps round.
+
+### ANIM_CLIP_MISSING_FIELD
+
+- Message: `{where}: key {key} (t {t}) has no "{field}"`
+- Fix: add "{field}": {shape}; every key needs hips, body, chest, head, armL, armR, legL and legR
+- Registered in: [`engine/anim/clip/validate.ts` line 90](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_NO_KEYS
+
+- Message: `{where} has no key poses`
+- Fix: give it "keys": [ … ] with at least one key pose, each { "t": seconds, "hips": [0, 0, 100], … }
+- Registered in: [`engine/anim/clip/validate.ts` line 78](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_NO_TIME
+
+- Message: `{where}: key {key} has no time "t"`
+- Fix: give every key its time in seconds from the start of the clip, such as "t": 0.5
+- Registered in: [`engine/anim/clip/validate.ts` line 86](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_NOT_JSON
+
+- Message: `{where} is not JSON: {problem}`
+- Fix: write the clip as JSON (lines starting with // are comments): { "dur": seconds, "loop": false, "keys": [ … ] }
+- Registered in: [`engine/anim/clip/validate.ts` line 74](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_TWIST_POP
+
+- Message: `{where}: "{field}" twist jumps {jump}° between key {key} (t {t}) and key {next} (t {nextT}) while bent {bend}°`
+- Fix: add or subtract 360 so the twist continues from the key before, or add a key between them
+- Registered in: [`engine/anim/clip/validate.ts` line 116](../engine/anim/clip/validate.ts)
+
+Reported by `validateClip` (engine/anim/clip/validate.ts) for a twist that changes more than 120° between keys while either key bends the limb more than 140°: the elbow or knee spins round the limb (the v1 pop pattern).
+
+### ANIM_CLIP_UNKNOWN_FIELD
+
+- Message: `{where}: key {key} (t {t}) has no field "{field}"{suggestion}`
+- Fix: use only the key fields {fields} (LEGEND, in engine/anim/clip/lens.ts, says what each means)
+- Registered in: [`engine/anim/clip/validate.ts` line 98](../engine/anim/clip/validate.ts)
+
+### ANIM_CLIP_UNKNOWN_HEADER
+
+- Message: `{where} has no field "{field}"{suggestion}`
+- Fix: use only the fields {fields}
+- Registered in: [`engine/anim/clip/validate.ts` line 107](../engine/anim/clip/validate.ts)
+
+### ANIM_UNKNOWN_JOINT
+
+- Message: `{name} is not a {what} of the humanoid skeleton{suggestion}`
+- Fix: use one of: {names}
+- Registered in: [`engine/anim/skeleton.ts` line 32](../engine/anim/skeleton.ts)
+
+Raised by `jointIndex`, `socketIndex`, `boneMask` and the pose functions that take a joint (engine/anim/) for a name the skeleton lacks, or a joint index outside 0–22. The message names the closest names; `JOINTS`, `SOCKETS` and `MASKS` list them all.
+
+### ANIM_UNKNOWN_POINT
+
+- Message: `the rigid pair names {name}, which is not a joint, a socket or the root{suggestion}`
+- Fix: name joints (JOINTS), sockets (SOCKETS) or "root" in rigid pairs
+- Registered in: [`engine/anim/check.ts` line 44](../engine/anim/check.ts)
+
+Raised by `animCheck` (engine/anim/check.ts) for a rigid pair naming a point the skeleton lacks.
+
+### ANIM_UNKNOWN_POSE
+
+- Message: `{name} is not a humanoid {what}{suggestion}; it is ignored`
+- Fix: use one of: {names}
+- Registered in: [`engine/anim/poses.ts` line 45](../engine/anim/poses.ts)
+
+Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `stance` or `weapon` it does not know. The message names the closest names; `POSES`, `STANCES` and `WEAPONS` (engine/anim/poses.ts) list them all. An unknown weapon holds nothing.
+
 ## app
+
+### APP_BAD_ROUTE
+
+- Message: `the URL parameter {key}={value} {problem}`
+- Fix: {fix}
+- Registered in: [`engine/app/routes.ts` line 37](../engine/app/routes.ts)
+
+### APP_FRAME
+
+- Message: `a frame threw, so the loop stopped: {message}`
+- Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
+- Registered in: [`engine/app/engine.ts` line 77](../engine/app/engine.ts)
+
+### APP_NO_FRAME
+
+- Message: `no frame was drawn in {tries} tries: the warm-up never finished`
+- Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
+- Registered in: [`engine/app/engine.ts` line 85](../engine/app/engine.ts)
+
+### APP_NO_LEVEL
+
+- Message: `the scene {scene} loads the level {level}, which is not registered, so its view cannot be built`
+- Fix: register the level's text before the view starts: in a page, import text from './levels/<name>.txt?raw' and call defineLevel('{level}', { text, file }); in Node, read the file and do the same
+- Registered in: [`engine/app/view.ts` line 41](../engine/app/view.ts)
+
+### APP_NO_REPLAY
+
+- Message: `the page has no replay {name}`
+- Fix: use one of: {names}
+- Registered in: [`engine/app/engine.ts` line 81](../engine/app/engine.ts)
+
+### APP_NO_VIEW
+
+- Message: `{member} needs the scene drawn as a view, and this engine has none`
+- Fix: start it with createHeadless({ scene, view: true }) in Node; a page always has one
+- Registered in: [`engine/app/view.ts` line 45](../engine/app/view.ts)
 
 ### APP_NOT_HEADLESS
 
 - Message: `headlessHost was given {value}, not a headless engine`
 - Fix: pass the object createHeadless resolved to
-- Registered in: [`engine/app/headless.ts` line 40](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 54](../engine/app/headless.ts)
+
+### APP_OTHER_SCENE
+
+- Message: `this engine draws {shown}, so it cannot start {scene}`
+- Fix: play {scene} in its own page (labs/<name>/?scene=<name>), or headless: createHeadless({ scene: '{scene}' })
+- Registered in: [`engine/app/headless.ts` line 58](../engine/app/headless.ts)
+
+### APP_PLAY_SETTING
+
+- Message: `views at step {step} sets {path}, which is not a view setting, so it would change play`
+- Fix: change only settings marked view during a replay (gfx.resolution, time.scale…); a setting that changes play belongs in the replay's own inputs
+- Registered in: [`engine/app/playback.ts` line 32](../engine/app/playback.ts)
+
+### APP_START
+
+- Message: `the page failed to start: {message}`
+- Fix: the console names the cause; node x shot <page> reports it headless
+- Registered in: [`engine/app/engine.ts` line 73](../engine/app/engine.ts)
+
+## audio
+
+### AUDIO_BAD_NOTE
+
+- Message: `{where}: "{note}" is not a note`
+- Fix: write a frequency in Hz or a note name: a letter A–G, then # or b, then the octave (A4 = 440 Hz, C#5, Bb2)
+- Registered in: [`engine/audio/dsp/voice.ts` line 47](../engine/audio/dsp/voice.ts)
+
+Raised by `noteFreq` and `render` (engine/audio/dsp/voice.ts, render.ts) for a pitch that is neither a positive number nor a note name.
+
+### AUDIO_BAD_RATE
+
+- Message: `the sample rate {rate} is not a whole number from 8000 to 192000`
+- Fix: render at a whole number of samples per second from 8000 to 192000, usually 44100 or 48000
+- Registered in: [`engine/audio/dsp/render.ts` line 38](../engine/audio/dsp/render.ts)
+
+Raised by `render` (engine/audio/dsp/render.ts).
+
+### AUDIO_BAD_SEED
+
+- Message: `the seed {seed} is not a whole number`
+- Fix: pass a whole number as the seed, such as one drawn with rng.int
+- Registered in: [`engine/audio/dsp/render.ts` line 43](../engine/audio/dsp/render.ts)
+
+Raised by `render` (engine/audio/dsp/render.ts): seeds name random streams exactly, so 1.5 is refused rather than silently rounded.
+
+### AUDIO_BAD_VALUE
+
+- Message: `{where}: {field} is {value}`
+- Fix: make {field} {rule}
+- Registered in: [`engine/audio/dsp/voice.ts` line 42](../engine/audio/dsp/voice.ts)
+
+Raised by `render` (engine/audio/dsp/render.ts) for a value of the wrong type or outside its range, and for fields that do not apply to the voice (a pitch change on a pluck, fm on noise).
+
+### AUDIO_BAD_VARIANT
+
+- Message: `{id} has variants 0 to {last}; {variant} is not one of them`
+- Fix: ask for a whole number from 0 to {last}, or give the effect more variants
+- Registered in: [`engine/audio/data/sfx.ts` line 51](../engine/audio/data/sfx.ts)
+
+Raised by `renderSfx` (engine/audio/data/sfx.ts).
+
+### AUDIO_LAYER_CYCLE
+
+- Message: `{id} contains itself through its layers: {path}`
+- Fix: remove one layer of the cycle: a layer mixes another effect in, which cannot contain the first
+- Registered in: [`engine/audio/data/sfx.ts` line 46](../engine/audio/data/sfx.ts)
+
+Raised by `sfxVoices` and `renderSfx` (engine/audio/data/sfx.ts) when following layers leads back to an effect already on the path.
+
+### AUDIO_TOO_LONG
+
+- Message: `the sound lasts {seconds} s, past the {max} s limit`
+- Fix: shorten its voices (at, dur) or its echo (delay.time, delay.feedback); a song renders section by section
+- Registered in: [`engine/audio/dsp/render.ts` line 48](../engine/audio/dsp/render.ts)
+
+Raised by `render` (engine/audio/dsp/render.ts) before it allocates the buffer.
+
+### AUDIO_UNKNOWN_FIELD
+
+- Message: `{where} has no field "{field}"{suggestion}`
+- Fix: use only the fields {fields}
+- Registered in: [`engine/audio/dsp/voice.ts` line 37](../engine/audio/dsp/voice.ts)
+
+Raised by `render` (engine/audio/dsp/render.ts) for a field a voice, filter, fm, pluck or delay does not have: usually a typo, which would otherwise be silently ignored.
+
+### AUDIO_UNKNOWN_WAVE
+
+- Message: `{where}: there is no wave "{wave}"{suggestion}`
+- Fix: use one of {waves}
+- Registered in: [`engine/audio/dsp/voice.ts` line 32](../engine/audio/dsp/voice.ts)
+
+Raised by `render` (engine/audio/dsp/render.ts) when a voice names a wave the DSP does not make.
 
 ## core
 
@@ -221,6 +481,14 @@ Raised by the camera factories, `makePose` and `placeCamera` (engine/gfx/cameras
 
 Raised by `parseCameraCode` (engine/gfx/cameras/codes.ts) for an empty part, a word where a number belongs, the wrong count of numbers, or a number out of its range (each range is named). Every problem is listed at once.
 
+### GFX_BAD_GEOMETRY
+
+- Message: `cannot build the {shape}: {problem}`
+- Fix: pass {expected}
+- Registered in: [`engine/gfx/geometry/checks.ts` line 18](../engine/gfx/geometry/checks.ts)
+
+Raised by the geometry kit (engine/gfx/geometry/) when a builder gets sizes it cannot build: a size of 0 or less, NaN, a limb no longer than the difference of its radii, a ring whose inner radius is not below its outer, fewer segments than the shape needs.
+
 ### GFX_BAD_SHOT_SIZE
 
 - Message: `a shot must be at least 1 × 1 whole pixels, not {width} × {height}`
@@ -268,6 +536,14 @@ Advice from `requestDevice` (engine/gfx/caps.ts): the device is made with every 
 - Registered in: [`engine/gfx/renderer.ts` line 54](../engine/gfx/renderer.ts)
 
 Recorded from the device's `uncapturederror` event (engine/gfx/renderer.ts): a validation, out-of-memory or internal error nothing caught.
+
+### GFX_LEVEL_RECIPE
+
+- Message: `level {level} uses the mesh recipe {recipe}, which no level recipe defines: its tiles are grey blocks`
+- Fix: pass createLevelMeshes a recipe named {recipe} in its recipes option (shape, materials, castShadow and receiveShadow, as engine/gfx/level/recipes.ts writes them), or give the glyph a recipe the engine has: {known}
+- Registered in: [`engine/gfx/level/meshes.ts` line 49](../engine/gfx/level/meshes.ts)
+
+Advice from `createLevelMeshes` (engine/gfx/level/meshes.ts) when a glyph names a mesh recipe that neither the engine (engine/gfx/level/recipes.ts) nor the `recipes` option defines: its tiles are drawn as grey boxes from their floor to their top, so the level still shows where they are.
 
 ### GFX_NO_FLOAT32_FILTERING
 
@@ -333,13 +609,37 @@ Raised by `parseCameraCode` and the camera factories (engine/gfx/cameras/) for a
 
 ## input
 
+### INPUT_BAD_BINDINGS
+
+- Message: `saved bindings {key}: {problems}`
+- Fix: the rest loaded; rebind those actions, or reset() them to the map, which saves a clean file
+- Registered in: [`engine/input/bindings.ts` line 40](../engine/input/bindings.ts)
+
+Advice from `createBindings` (engine/input/bindings.ts) when saved bindings name an unknown action, a bad, reserved or taken code, or are not a bindings file: those entries are skipped, the others load.
+
 ### INPUT_BAD_INTENTS
 
 - Message: `{where}: {problems}`
 - Fix: give intents as { move: [x, z], cam, aim: [x, y, z], look: [yaw, pitch], b: [held buttons], p: [pressed buttons] } with finite numbers, plus custom keys namespaced "game:key" holding plain data (engine/input/intents.ts); null or a missing key means not given
-- Registered in: [`engine/input/intents.ts` line 33](../engine/input/intents.ts)
+- Registered in: [`engine/input/intents.ts` line 44](../engine/input/intents.ts)
 
 Raised by `normalizeIntents`, `applyIntents` and the replay checks (engine/input/intents.ts, engine/sim/replay.ts) for an unknown key (named with the closest), a non-finite or misshapen number, a button that is not a non-empty string, or a custom value that is not plain data. Every problem is listed at once.
+
+### INPUT_BAD_SCRIPT
+
+- Message: `{where}: {problems}`
+- Fix: write one line per stretch: "<count> key=value …" (a whole count from 1, keys as listed, "#" starts a comment), e.g. "30 move=0,1 hold=sprint tap=jump"
+- Registered in: [`engine/input/script.ts` line 23](../engine/input/script.ts)
+
+Raised by the input scripts (engine/input/script.ts): the scripted gamepad of the tests and `__engine.input.play`. Every bad line is named with its problem.
+
+### INPUT_BAD_VIRTUAL
+
+- Message: `{what}: {problem}`
+- Fix: press(action) and hold(action) take an action's name; axis takes 'move' or 'look' [x, y], 'aim' [x, y, z], 'cam' (rad) or a 'game:key' with plain data, and null to let go
+- Registered in: [`engine/input/devices/virtual.ts` line 34](../engine/input/devices/virtual.ts)
+
+Raised by the virtual device (engine/input/devices/virtual.ts) and `__engine.input` for an empty action name, an unknown axis, or a value of the wrong shape.
 
 ## level
 
@@ -351,6 +651,14 @@ Raised by `normalizeIntents`, `applyIntents` and the replay checks (engine/input
 
 Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts) for a glyph with a footprint above 1 whose touching tiles do not make a filled rectangle of whole footprint squares.
 
+### LEVEL_BAD_DAIS
+
+- Message: `{at}: this {char} block {why}`
+- Fix: redraw {glyph} as an octagon in a square of tiles (as many rows as columns), wide enough that its base reaches more than its {edge} m edge from its centre
+- Registered in: [`engine/world/level/problems.ts` line 51](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/shapes.ts) for a block of a dais glyph (o) whose bounding box is not square, or too small for its sloped edge.
+
 ### LEVEL_BAD_HEADER
 
 - Message: `{at}: {problem}`
@@ -358,6 +666,14 @@ Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts) fo
 - Registered in: [`engine/world/level/problems.ts` line 22](../engine/world/level/problems.ts)
 
 Raised by `validateLevel` and `compileLevel` (engine/world/level/parse.ts) for an unknown or repeated key, a bad value, a line that is not `key: value`, or front matter that is never closed.
+
+### LEVEL_BAD_RAMP
+
+- Message: `{at}: this {char} block {why}`
+- Fix: draw {glyph} as a filled rectangle with exactly one side against walkable floor {top} m up (a gallery, =): it rises toward that side
+- Registered in: [`engine/world/level/problems.ts` line 46](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/shapes.ts) for a block of a ramp glyph (stairs, ^) that is not a filled rectangle, or whose neighbours at its top height (walkable, flat, within the climb limit) lie on no side or on several, so the direction it rises is not clear.
 
 ### LEVEL_EMPTY
 
@@ -369,7 +685,7 @@ Raised by `validateLevel` and `compileLevel` (engine/world/level/parse.ts) for a
 
 - Message: `{where} has {count}: {list}`
 - Fix: fix each at the line and column it names (validateLevel(text) lists them; node x qa level checks every level file)
-- Registered in: [`engine/world/level/problems.ts` line 56](../engine/world/level/problems.ts)
+- Registered in: [`engine/world/level/problems.ts` line 66](../engine/world/level/problems.ts)
 
 Thrown by `compileLevel` and `defineLevel` (engine/world/level/compile.ts) for a level with structural problems; the error carries them as `values.problems`.
 
@@ -393,7 +709,7 @@ Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts), o
 
 - Message: `{at}: the walkable area from here ({count}) is cut off from the main floor ({main})`
 - Fix: open a gap to it, or fill it with a solid glyph (#) if nobody should stand there
-- Registered in: [`engine/world/level/problems.ts` line 51](../engine/world/level/problems.ts)
+- Registered in: [`engine/world/level/problems.ts` line 61](../engine/world/level/problems.ts)
 
 Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`, once per cut-off area without a spawn, at its first tile in reading order.
 
@@ -401,9 +717,43 @@ Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa leve
 
 - Message: `{at}: the spawn {spawn} ({char}) {why}`
 - Fix: open a gap in the walls round it, or move the {char} onto the main floor
-- Registered in: [`engine/world/level/problems.ts` line 46](../engine/world/level/problems.ts)
+- Registered in: [`engine/world/level/problems.ts` line 56](../engine/world/level/problems.ts)
 
-Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`: the spawn stands on a tile nobody walks on, or in an area cut off from the main floor (the largest area bodies can walk across, stepping between tiles at most the climb limit apart).
+Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`: the spawn stands on a tile nobody walks on, or in an area cut off from the main floor (the largest area whose tiles bodies walk between both ways, never climbing more than the climb limit at once; engine/world/level/walk.ts).
+
+## physics
+
+### PHYSICS_BAD_ARGUMENT
+
+- Message: `{where} got {value}`
+- Fix: pass {expected}
+- Registered in: [`engine/physics/queries.ts` line 43](../engine/physics/queries.ts)
+
+Raised by bodies and queries (engine/physics/world.ts, engine/physics/queries.ts) for a vector, rotation, shape, size or option that is not of the right kind: non-finite numbers, a zero direction, a size that is not positive, an unknown shape type.
+
+### PHYSICS_BAD_CAPTURE
+
+- Message: `the physics part of a capture {problem}`
+- Fix: restore what capture() returned (or its serialize/deserialize round trip), unchanged, with the engine's own Rapier build and version: snapshots are version-locked, so a capture taken with another Rapier restores only there
+- Registered in: [`engine/physics/capture.ts` line 35](../engine/physics/capture.ts)
+
+### PHYSICS_NO_BODY
+
+- Message: `there is no body {id}{why}`
+- Fix: use an id addBody() returned while its body exists (hasBody(id) tells); bodies() lists them
+- Registered in: [`engine/physics/world.ts` line 83](../engine/physics/world.ts)
+
+### PHYSICS_NONE
+
+- Message: `{what} has no physics world`
+- Fix: give its scene a physics world, defineScene(id, { physics: true, setup(w) { physicsOf(w).addBody(…) } }), or pass createPhysics() as createWorld's or startScene's physics option
+- Registered in: [`engine/physics/world.ts` line 87](../engine/physics/world.ts)
+
+### PHYSICS_UNKNOWN_GROUP
+
+- Message: `there is no collision group {group}{suggestion}`
+- Fix: name one of the groups in engine/physics/groups.ts: world, prop, actor, crowd, flyer, corpse
+- Registered in: [`engine/physics/groups.ts` line 33](../engine/physics/groups.ts)
 
 ## sim
 
@@ -441,7 +791,7 @@ Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step ru
 
 - Message: `{where} got the seed {value}, which a replay cannot hold`
 - Fix: pass a whole number, 0 or more (x sim --seed 3, __engine.seed(3)): record() writes the seed into the replay
-- Registered in: [`engine/sim/scene.ts` line 71](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 72](../engine/sim/scene.ts)
 
 ### SIM_BAD_SYSTEM
 
@@ -461,7 +811,7 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `the capture the session of {scene} took at step {step} was changed since (it hashes {now}, not {then})`
 - Fix: restore it unchanged, then make the change through the session so record() replays it: session.set(path, value) (__engine.set) for a setting, a dev action (session.act(name, args)) for components
-- Registered in: [`engine/sim/scene.ts` line 67](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 68](../engine/sim/scene.ts)
 
 ### SIM_EVENT_STORM
 
@@ -473,13 +823,13 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `restore() was given a capture the session of {scene} did not take`
 - Fix: restore what this session's capture() (__engine.capture()) returned, the object itself: the session knows where its recording stood then; the world's own captures, another session's and copies have no place in it, so reach other state by starting the scene again (__engine.seed(n)) or playing a replay
-- Registered in: [`engine/sim/scene.ts` line 63](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 64](../engine/sim/scene.ts)
 
 ### SIM_NO_ACTION
 
 - Message: `the scene {scene} has no dev action {name} ({suggestion})`
 - Fix: add it to the scene: defineScene('{scene}', { actions: { {name}(w, args) { … } } }), or call one it has
-- Registered in: [`engine/sim/scene.ts` line 55](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 56](../engine/sim/scene.ts)
 
 ### SIM_NO_CALLBACKS
 
@@ -505,7 +855,7 @@ Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities
 
 - Message: `the world took {count} steps outside its session, so the recording misses their intents`
 - Fix: step a recorded scene through session.step(intents), never world.step(); capture and restore it through session.capture() and session.restore(capture), never the world
-- Registered in: [`engine/sim/scene.ts` line 59](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 60](../engine/sim/scene.ts)
 
 ### SIM_SHARED_DATA
 
@@ -517,12 +867,12 @@ Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities
 
 - Message: `entity {id} has {name}.{field}, a field the component kind {name} does not declare{suggestion}`
 - Fix: declare the field in defineComponent({name}, { fields }) or stop writing it: the hash and captures read the declared fields only, so an undeclared one would let two different states match
-- Registered in: [`engine/sim/state.ts` line 52](../engine/sim/state.ts)
+- Registered in: [`engine/sim/state.ts` line 53](../engine/sim/state.ts)
 
 ### SIM_UNKNOWN_COMPONENT
 
 - Message: `{name} is not a component kind{suggestion}`
 - Fix: declare it with defineComponent({name}, { description, fields }) before an entity holds it (node x describe component lists the declared kinds)
-- Registered in: [`engine/sim/state.ts` line 47](../engine/sim/state.ts)
+- Registered in: [`engine/sim/state.ts` line 48](../engine/sim/state.ts)
 
 Raised by the world (engine/sim/world.ts) and the hash (engine/sim/state.ts) for an entity property, a `spawn`, `add`, `remove` or `query` name, or a captured component that no `defineComponent` declared: the hash covers declared components only, so an undeclared one is refused rather than skipped.

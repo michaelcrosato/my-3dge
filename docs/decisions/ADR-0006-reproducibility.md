@@ -149,3 +149,14 @@ engine/dev/members.ts); no deviation from a Done-when:
   replays the run either way. A seed of -0 is read as 0, which is what a replay written as JSON holds.
 - **Members get frozen copies** (`recordedRun`): entities from `get` and `query`, the systems list and the
   change-points, so a write through them throws instead of changing the run off the record.
+
+## Amendment 6 (2026-10-10, WP-3.1)
+The sim's physics and the settings part of the hash (engine/sim/{scene,world,state}.ts); accepted as a core proposal:
+- **The hash reads only the non-view settings that differ from their defaults** (format `my3dge-state/4`). Captures
+  still hold every setting. Before this, declaring any setting changed every later replay's hash, as any second scene
+  module does: measured, kernel-movers' final hash went from 123e33f0… to c9f55886…. The kernel goldens were
+  re-recorded (kernel-movers' final hash is now `abe01b2a0b4104f0`); only the format changed.
+- **A scene with `physics: true` gets a physics world**, found with `physicsOf(w)` and stepped by the system
+  `physics`.
+- **The physics hash part** is, per body in id order: id, translation, rotation, linear and angular velocity.
+- **The capture is Rapier's snapshot, tagged with its build**; a restore under another build is refused.

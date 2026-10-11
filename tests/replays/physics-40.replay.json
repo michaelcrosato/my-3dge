@@ -1,0 +1,33 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Forty bodies fall into a walled pit (WP 3.1): at step 200, with crates stacked and balls resting on them, the physics world is captured and restored in place from its text form (the goldens are those of the run without it); a push scatters the pile at step 240; gravity rises to 30 m/s² at step 420.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "physics-40",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [
+    [200, { "dev": "roundtrip" }],
+    [240, { "b": ["push"] }],
+    [241, { "b": null }],
+    [420, { "set": { "physics.gravity": 30 } }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "95fe1c07b90c312c",
+      "60": "2fc75c338bd06416",
+      "120": "1089a174031c989e",
+      "180": "37ea7980ac747401",
+      "240": "f80601ba7c33d7a5",
+      "300": "b40fbbf405d6913f",
+      "360": "a1ea3ebc48c4baa7",
+      "420": "92f62b8071b07a38",
+      "480": "bbd78de558e7f53e",
+      "540": "fa393403487ceeee",
+      "600": "5ca6362e257197fe"
+    }
+  }
+}

@@ -1282,7 +1282,8 @@ A command arrives with the WP that needs it; on-demand commands do not exist, ev
 | Scene | `scene.dump({ depth, filter })` → a text tree (name, type, visible, position, bounds, material, triangles); `camera.get()`, `camera.set(code)` |
 | Rendering | `stats()` → `{ simMs, physicsMs, animMs, renderMs, gpuMs?, drawCalls, triangles, computeCalls, pipelines, textures, geometries }` |
 | Shots | `shot({ ids, metrics, thumbnail, size })`, through a render target and `readRenderTargetPixelsAsync` |
-| Input | `input.press(action)`, `input.axis(name, value)`, `input.play(script)`, `input.record()` |
+| Input | `input.press(action)`, `input.hold(action, down)`, `input.axis(name, value)`, `input.play(script)`, `input.record()`, `input.state()` |
+| Feel | `feel(id?)` → an actor's feel meter report (WP 3.2) |
 | Dev actions | `actions.list()`, `actions.run(id, args)`: god mode, freeze AI, spawn, travel (WP 5.6, on demand) |
 | Help | `help()`: every member, one line each (checked against the API by `x docs --check`) |
 
@@ -2175,13 +2176,13 @@ A WP is done only when all of these hold:
 - **Verify:** `npm run e2e -- tests/e2e/shot.spec.ts && npm test -- engine/gfx/shot`
 
 #### WP-2.7 Box 1: the box app
-- **Owns:** `engine/app/{engine,loop,routes}.ts`; `engine/dev/overlay.ts` (the error overlay); `labs/box/{index.html,main.ts,README.md}`, `labs/box/levels/room.txt`, `labs/box/scenes/room.ts`; `tools/cmd/{set,eval,dump,inspect}.ts`; `tools/templates/scene/`; extends `tools/cmd/replay.ts` (from WP 1.5) with `--browser page`; `tests/e2e/parity.spec.ts`; `.claude/skills/stress-box/`; `tests/replays/box-1-*.replay.json`; `tests/unit/box-readme.test.ts`; extends `index.html` (from WP 0.12), `engine/app/headless.ts` (from WP 1.6) with `view: true`, and `tools/cmd/shot.ts` (from WP 0.8) so `x shot` reuses a running `x inspect` (§8.1)
+- **Owns:** `engine/app/{engine,loop,routes,view,viewMembers,playback}.ts` (view, viewMembers and playback: ADR-0014, amendment 10); `engine/gfx/{stage,sceneDump}.ts` (amendment 10); `engine/dev/overlay.ts` (the error overlay); `labs/box/{index.html,main.ts,README.md}`, `labs/box/levels/room.txt`, `labs/box/scenes/room.ts`; `tools/cmd/{set,eval,dump,inspect}.ts`, `tools/lib/page.ts` (amendment 10); `tools/templates/scene/`; extends `tools/cmd/replay.ts` (from WP 1.5) with `--browser page`; `tests/e2e/parity.spec.ts`; `.claude/skills/stress-box/`; `tests/replays/box-1-*.replay.json`; `tests/unit/box-readme.test.ts`; extends `index.html` (from WP 0.12), `engine/app/headless.ts` (from WP 1.6) with `view: true`, `tools/cmd/shot.ts` (from WP 0.8) so `x shot` reuses a running `x inspect` (§8.1), `tools/cmd/help.ts` and `tools/x.test.ts` (from WP 0.2: past the 20-line cap, the names), `tools/cmd/sim.ts` (from WP 1.5: extensionless module targets), `tests/baselines/thumbs/README.md` (from WP 2.6: the `box-room-iso` case) and `tests/unit/hooks/settings.test.ts` (from WP 0.10: the stress-box skill) (ADR-0014, amendment 10)
 - **Needs:** WP 2.4, WP 2.5, WP 2.6
 - **Size:** L
 - **Carry:** the scene and timer patterns of `engine` §10. The stress-world page structure, as a reference only.
 - **Build:**
   - **`createEngine`** with the loop of §6.4 (fixed step plus interpolation), and routes that map `?scene` to the scenes registered with `engine/sim/scene.ts` (WP 1.5): `?scene ?cam ?seed ?set ?replay`.
-  - **The rendering members of `__engine`** (§8.3), registered from `engine/app/engine.ts`: `render`, `shot`, `camera`, `scene.dump` (`stats` arrives with WP 5.5).
+  - **The rendering members of `__engine`** (§8.3), registered from `engine/app/viewMembers.ts`, which engine/app/headless.ts loads, so a page and Node list the same members (ADR-0014, amendment 10): `render`, `shot`, `camera`, `scene.dump` (`stats` arrives with WP 5.5).
   - **`createHeadless({ …, view: true })`** also builds the scene's presentation graph in Node, so `scene.dump()` and `camera` work headless (§8.3).
   - **The error overlay**, and `ready || error`.
   - **`x set`** (schema-validated; prints the URL parameter and applies it to the inspect session), **`x eval`** and **`x dump`**, over **`x inspect`**.
@@ -2208,7 +2209,7 @@ A WP is done only when all of these hold:
 ### Phase 3: Box 2, a hero (lanes P, I, A, R, T, B)
 
 #### WP-3.1 Rapier adapter and queries
-- **Owns:** `engine/physics/{world,groups,params,capture,queries}.ts`, `engine/sim/{queryView,levelBodies}.ts`, `fixtures/scenes/physics-40/`, `tests/replays/physics-40.replay.json`, `.claude/skills/rapier/`
+- **Owns:** `engine/physics/{world,groups,params,capture,queries}.ts`, `engine/sim/{queryView,levelBodies}.ts`, `fixtures/scenes/physics-40/`, `tests/replays/physics-40.replay.json`, `.claude/skills/rapier/`; extends `engine/sim/{scene,world,state}.ts` (from WPs 1.4–1.5) with `physics: true` and the settings part of the hash, and re-records `tests/replays/kernel-*.replay.json`
 - **Needs:** WP 2.2
 - **Size:** M
 - **Carry:**
@@ -2233,7 +2234,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/physics engine/sim/levelBodies && node x replay tests/replays/physics-40.replay.json --browser sim`
 
 #### WP-3.2 Character controller
-- **Owns:** `engine/physics/{character,feel}.ts`, `engine/sim/actors.ts` (spawns an actor with its controller; WP 3.7 extends it with the animator), `fixtures/scenes/steps/` (steps, slopes, a one-box floor and a floor of merged boxes, built by a scene script, because the level's stairs arrive in WP 4.2); extends `tools/cmd/sim.ts` (from WP 1.5) with `--feel`
+- **Owns:** `engine/physics/{character,feel}.ts`, `engine/sim/actors.ts` (spawns an actor with its controller; WP 3.7 extends it with the animator), `engine/app/feelMember.ts` (the `feel` inspector member, moved there from actors.ts by gate G2's review so it registers whatever loads first), `fixtures/scenes/steps/` (steps, slopes, a one-box floor and a floor of merged boxes, built by a scene script, because the level's stairs arrive in WP 4.2); extends `tools/cmd/sim.ts` (from WP 1.5) with `--feel`; core proposal: engine/physics/world.ts gains `rapierOf(physics)` (accepted, ADR-0020 amendment 3)
 - **Needs:** WP 3.1
 - **Size:** M
 - **Carry:**
@@ -2251,6 +2252,7 @@ A WP is done only when all of these hold:
   - **`characterGravity`** is the controller's own, separate from the world's (WP 3.1).
   - **The feel meter** (`engine/physics/feel.ts`): response ticks, acceleration, stop and turn times, jump apex, air time and reach. It is an inspector member and an `x sim --feel` report, so agents tune feel by numbers, and WP 4.3's walkable grid takes the reach as a climb limit.
   - The prototype's grounded-flicker workaround for Rapier 0.19.3 (a small downward component each step) only if the Done-when test still needs it.
+  - **As built (ADR-0020 amendment 3):** Rapier's autostep, snap and impulses are off; steps, snap-to-ground and momentum-sharing pushes (an inelastic collision of a push-kg mass, level with the centre of mass) are the controller's own; a grounded move is lifted by the skin first; the flicker workaround was not needed.
 - **Done when** (Node tests):
   - Walking across a one-box floor and a floor of merged boxes with the usual downward push, no tick moves less than 95% of the intended distance.
   - It climbs a step 0.05 m below the height it is configured to climb, and refuses one 0.05 m above it. With a 0.281 m capsule, an autostep of 0.25 m climbs 0.30 m and refuses 0.35 m (§4.8), so the configured height is the measured one, not the raw setting.
@@ -2278,7 +2280,7 @@ A WP is done only when all of these hold:
   - **Edges, buffering and `consume`** in sim time.
   - **Clear on blur, visibility change and disconnect.**
   - **Camera-relative intents**, through `intents.fromCamera` and the camera's `yaw()`.
-  - **A virtual device, and a recorder.** `__engine.input` (§8.3) drives the virtual device; this WP registers that member from its own file, `engine/input/devices/inspector.ts`.
+  - **A virtual device, and a recorder.** `__engine.input` (§8.3) drives the virtual device; this WP registers that member from its own file, `engine/input/devices/inspector.ts`. It adds `hold(action, down)` and `state()` to §8.3's four members (ADR-0014 amendment 9).
 - **Improves:** I-24.
 - **Done when:** browser tests pass with injected keyboard and gamepad-stub events, and the intents are unit-tested in Node.
 - **Verify:** `npm test -- engine/input && npm run e2e -- tests/e2e/input.spec.ts`
@@ -2288,7 +2290,7 @@ A WP is done only when all of these hold:
 - **Needs:** G1
 - **Size:** M
 - **Carry:**
-  - The builds (`chibi heroic bulky skeleton`, `size`) from `engine` §11, in metres.
+  - The builds (`chibi heroic bulky skeleton`, `size`) from `engine` §11, in metres (`hipZ` → `hipHeight`, `headR` → `headRadius`; new `ankleHeight`, `footLength`, `handLength`, `chestDepth`; ADR-0009 amendment 1).
   - Joint naming aligned with `rig.J` and the 36 mocap points (Appendix C).
 - **Build:**
   - **Skeleton:** root plus 23 joints:
@@ -2299,8 +2301,8 @@ A WP is done only when all of these hold:
   - **FK** to matrices and positions.
   - **Blending:** slerp/nlerp, bone masks (upper, arms, legs, lists), additive layers.
   - **A pose hash.**
-  - **`anim.sheet()`:** SVG skeleton contact sheets in Node. `x sheet` (WP 6.6) turns them into PNG through the browser, on demand.
-  - **The core of `anim.check(def)`:** finite values, bone lengths and declared rigid pairs, feet at or above the floor, sockets reachable. WP 6.6 adds the state matrix, the QA family and sheets.
+  - **`anim.sheet()`** (public name `animSheet`, ADR-0009 amendment 1): SVG skeleton contact sheets in Node. `x sheet` (WP 6.6) turns them into PNG through the browser, on demand.
+  - **The core of `anim.check(def)`** (public name `animCheck`): finite values, bone lengths and declared rigid pairs, feet at or above the floor, sockets reachable. WP 6.6 adds the state matrix, the QA family and sheets.
 - **Improves:** I-01, I-08, I-49.
 - **Done when:**
   - The rest pose's FK matches the build proportions.
@@ -2314,11 +2316,12 @@ A WP is done only when all of these hold:
 - **Size:** S
 - **Carry:** `ik3`, `engine:129-140` (COPY).
 - **Build:**
-  - `twoBone`, verbatim.
-  - `twoBoneRot`: local quaternions with an explicit pole.
+  - `twoBone`, verbatim, except a unit fallback when the pole lies along the limb (ADR-0009 amendment 2).
+  - `twoBoneRot`: local quaternions with an explicit pole (a world direction; hinge knees and elbows).
   - `aim`: a chain spread over chest, neck and head, with limits.
   - `footPlant(probe)`: drop the pelvis, align the foot to the normal, lock it during stance.
   - `handTo`: hand IK to a grip (the weapon socket).
+  - No per-solver weight: a solve is faded with `blendPoses` (ADR-0009 amendment 2).
 - **Improves:** I-11.
 - **Done when:**
   - Reach, limits and poles are tested.
@@ -2340,7 +2343,7 @@ A WP is done only when all of these hold:
   - An effector stage, then a solve stage:
     - the spine from lean and twist;
     - limbs through `twoBoneRot`, using the old hints as poles;
-    - feet and hands.
+    - feet and hands. The old `footL`/`footR` is the sole, not the ankle: compare it with the sole point under the ankle (contact height), not with the `foot` joint, which is `ankleHeight` above it (ADR-0009 amendment 1).
   - A fixed dt, and seeded per-entity streams.
 - **Improves:** I-09.
 - **Done when:** the differential tests against `tests/baselines/port/humanoid-*.json`, converted to SI, pass:
@@ -2449,7 +2452,7 @@ A WP is done only when all of these hold:
     - a hold lasts at least 0.32 s and two frames;
     - a tap on the open game closes the top panel;
     - `pointercancel` never taps, and blur clears every finger.
-  - **Buttons** (`engine/ui/touch.ts`), from a `touchlayout` entry: `{ buttons: [{ action, label? }], menu: true }`. The page names its layout (`createEngine({ touchLayout: 'touchlayout:box' })`); scenes stay sim-side and name none. Without a layout, only the stick shows.
+  - **Buttons** (`engine/ui/touch.ts`), from a `touchlayout` entry: `{ buttons: [{ action, label?, hold? }], menu: true }` (`hold`: acts while held, ADR-0021 amendment 1). The page names its layout (`createEngine({ touchLayout: 'touchlayout:box' })`); scenes stay sim-side and name none. Without a layout, only the stick shows.
     - Slots fill in order: the main button (68k px across), centred 40k px in from the right and bottom margins; then an inner ring of 48k px buttons, 92k px from its centre, at 180°, 225° and 270°; then an outer ring at 158k px, at 205° and 245°.
     - Angles are in screen space with y down, as in shardfall's `Fan` (`touch.rs:590-595`): 180° is straight left of the main button and 270° straight above it. Round buttons take touches up to 8 px outside their rim (`touch.rs:114`).
     - A 38k px menu button at the top right pauses, then calls `onMenu`, which the page passes to `createEngine`.
@@ -2518,7 +2521,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/physics/bodies && node x replay tests/replays/physics-props.replay.json --browser sim`
 
 #### WP-4.2 The level compiler (v2): the hall
-- **Owns:** extends `engine/world/level/**` (from WP 2.2) with the v2 glyphs; extends `engine/sim/levelBodies.ts` (from WP 3.1) with convex hulls; `labs/box/levels/hall.txt`
+- **Owns:** extends `engine/world/level/**` (from WP 2.2) with the v2 glyphs; extends `engine/sim/levelBodies.ts` (from WP 3.1) with convex hulls; `labs/box/levels/hall.txt`, `tests/baselines/qa-geo-hall.json`; core proposal: extends `engine/physics/{world,queries,world.test}.ts` with the hull shape and edits one glyph in `engine/gfx/level/meshes.test.ts` (accepted, ADR-0020 amendment 4)
 - **Needs:** WP 3.1
 - **Size:** M
 - **Carry:** the hall's glyphs `= ^ o t` and their geometry (`stress-world/10-hall.js:22-67, 94-124, 188-201`): galleries at 1 m, stairs as ramps with hull wedges, the octagonal dais (`octR`) with a hull frustum, braziers as cylinders, torch spots.
@@ -3022,6 +3025,7 @@ A WP is done only when all of these hold:
   - **`x port refs --clips`:** `MR.pose` decodes of all 325 curated clips at 30 fps. That set is large: commit a sampled subset with checksums, and keep the full set regenerable.
   - The oracle is the source decoder itself. `tools/anim/legacy-readable.ts` (about 10 lines) runs `$MY3D2DGE_SRC/src/mocap/readable.js` in a `vm` context, as `tools/mocap-lib.mjs:7-9` does. Nothing is copied. The bit-for-bit check runs wherever the source resolves.
   - Format 2's optional fields (§10.2), including shardfall's clip `speed` and set `title` and `legend`, so its sets parse unchanged (WP 8.10).
+  - Format 2's key fields (`hand`, `roll`, `yaw`, `spine`, `grip`) are parsed, in-betweened, mirrored, lensed and printed; the decode reads format-1 fields only (WP 8.8 defines theirs; ADR-0010 amendment 1). Reference decodes use each clip's own source rest body.
   - The validator, the normalized lens and mirroring.
   - Parse errors that name the key, its time and the field.
 - **Improves:** I-13.
@@ -3035,8 +3039,8 @@ A WP is done only when all of these hold:
 - **Needs:** WP 8.2
 - **Size:** S
 - **Build:**
-  - One JSON file per clip: slugged file names, with the real name kept in `clip`.
-  - `_set.json`, and a generated `catalog.tsv`.
+  - One JSON file per clip, exactly its `text()`: slugged file names, with the real name kept in `clip` (ADR-0010 amendment 2).
+  - `_set.json` (keeping the set's `fit` map, whose order is the clip order), and a generated `catalog.tsv`. Prettier skips `data/anim/sets/`.
   - `alt` tags on the 84 Mesh2Motion re-exports.
   - The repacker also reads plain JSON sets, as shardfall writes them (for WP 8.10), and `catalog.tsv` gains a `speed` column.
   - HERO dropped.
@@ -3054,7 +3058,7 @@ A WP is done only when all of these hold:
 - **Build:**
   - **A baker** that works from format-1 **parameters** (direction, bend, twist, hints), handles singular poses, and produces 30 fps rotation tracks on the canonical skeleton.
   - **Standard clips too** (doctrine: Common ground): each baked clip is also a three.js `AnimationClip` (`QuaternionKeyframeTrack`s on the canonical bone names), so pages can play it with three.js's `AnimationMixer`, which `engine/index.ts` re-exports (§6.1), for presentation only (the Library Lab, props). The sim's clip layer samples the same tracks on the CPU.
-  - **The library API.**
+  - **The library API**, which also exports WP 8.2's codec (parse, text, validate, lens, mirror, decode) from `engine/index.ts` and `engine/sim-api.ts`.
   - **The clip layer**, in the animator's clip slot (WP 3.7): weight, mask, fade from the current pose, speed, loop, additive, `walk/hold/next/landed` flags, cancel rules, events, root motion.
   - **Ground speed** (shardfall's): a loop with a `speed` plays at rate = clamp(ground speed / pace, 0.4, 2.5), where pace = `speed`/100 × the build's hip height, in m/s. A walk and a run switch to the run above √(w·r) × 1.15 and back below √(w·r) × 0.87, where w and r are their paces (1.4 and 4.0 hip heights a second when a clip has none), so a speed near the line never flickers. Below 0.1 m/s the character idles.
   - **Strike time** (shardfall's `crates/pav_core/src/clips.rs:478-550`, §5.8): the moment a clip's hand reaches furthest ahead of the hips (the blade's tip for a clip that holds one, a foot for a clip tagged `kick`), sampled at 60 Hz and measured once per clip. A move that plays a clip as its attack lands its hit there when the clip has no `hit` event.
@@ -3069,7 +3073,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/anim/clip` (the library QA runs in WP 8.6)
 
 #### WP-8.5 Tools port
-- **Owns:** `tools/anim/*`, `tools/cmd/anim.ts`. It extends `repack.ts` from WP 8.3 and the `fps?` rows of WP 8.1's `data/anim/cmu/`; `legacy-readable.ts` stays WP 8.2's, and `shardfall.ts` stays WP 8.10's
+- **Owns:** `tools/anim/*`, `tools/cmd/anim.ts`, `engine/anim/clip/encode.ts` (the importer half of `readable.js`: `measure`, `encode`, `fit`, `capSample`, `reduce`; ADR-0010 amendment 1). It extends `repack.ts` from WP 8.3 and the `fps?` rows of WP 8.1's `data/anim/cmu/`; `legacy-readable.ts` stays WP 8.2's, and `shardfall.ts` stays WP 8.10's
 - **Needs:** WP 8.1, WP 8.3, WP 8.4
 - **Size:** L
 - **Carry:** `anim-import`, `asf-amc`, `cmu`, `anim-set`, `mocap-lib`, `to-glb.py`.
@@ -3125,6 +3129,7 @@ A WP is done only when all of these hold:
   - The owner supplies the four GLBs of the Quaternius Universal Animation Library's version 2 once (`UAL1_Standard.glb`, `UAL1_Standard_RM.glb`, `UAL2_Standard.glb`, `UAL2_Standard_RM.glb`): an escalation (§11.5). Until then, Quaternius clips stay as WP 8.10 brought them and are listed as blocked. Their parity reference is v2's format-1 decode.
   - Re-import with hands, foot roll, root yaw, spine, contacts and events, and each loop's `speed` by WP 8.5's rule. 100STYLE's BVH takes use shardfall's rig maps, rest pose (the frame where the body stands straightest) and units from leg length (`crates/pav_tools/src/mocap/bvh.rs:235-605`, parsed with three.js's `BVHLoader`), and its loop finders (`mocap/takes.rs:53-243`).
   - Swap clips in one at a time, checking parity, marked `via: "source"`.
+  - The decode of format 2's key fields (`hand`, `roll`, `yaw`, `spine`, `grip`) in `engine/anim/clip/readable.ts`, defined together with WP 8.5's encode that writes them (ADR-0010 amendment 1).
 - **Improves:** I-14.
 - **Done when:** in every set, at least 80% of the clips whose sources are available are upgraded with parity (§10.5 step 9); a unit test counts the `via: "source"` clips against those whose sources are available, per set, and fails below 80%. The 100STYLE sets are left out of the count until a defect touches them. The rest are listed with reasons.
 - **Verify:** `node x qa anim --only clip: && npm test -- engine/anim/clip tests/unit/data/anim/upgrade`
@@ -3197,12 +3202,12 @@ The stress test had no sound. The engine's sound data and synth design come over
 #### WP-9.2 Sound data
 - **Owns:** `engine/audio/data/**`, `fixtures/sounds/` (a small neutral sound set and one demo song, for tests)
 - **Needs:** WP 9.1
-- **Size:** S
+- **Size:** M (ADR-0013 amendment 1)
 - **Carry:** the engine's 33 effects, 6 drums and 5 songs (COPY the data).
 - **Build:**
-  - The data as typed modules (kinds `sfx` and `song`, with their scaffold templates).
-  - Validators (track length must divide the bar; value ranges).
-  - Variants, and layered effects.
+  - The data as typed modules (kinds `sfx` and `song`, with their scaffold templates); drums are `sfx` entries.
+  - Validators (track length must fill whole bars or divide a bar, and divide the song length; value ranges).
+  - Variants (4 rendered per effect, replacing the source's per-play detune), and layered effects.
 - **Improves:** I-23.
 - **Done when:** every sound renders, and its validators pass. The clipping, DC and duration checks (the `audio` QA family) run over them from WP 9.4 on.
 - **Verify:** `npm test -- engine/audio`
@@ -3943,26 +3948,26 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 2.1 | Renderer, capabilities, features, resolution, warm-up | R | done | 056039a | renderer: adapter features and limits in info(), feature registry with downgrade advice (GFX_NO_TIMESTAMPS, GFX_NO_FLOAT32_FILTERING, GFX_SMALL_BUFFERS; gfx.featuresOff), gfx.resolution (pixels/balanced/full), warm-up registry compiling for the real frame target plus a warm frame, pipelines counted at the device (r182 internals only in pipelines.ts, pinned by tests); 0 pipelines after warm-up across resolution switches and the post pass; calls in ADR-0008 amendment 1 (r182 has no renderer.onError: GPU errors via uncapturederror and onDeviceLost; feature template deferred to WP 11.1); no escalations |
 | 2.2 | Level compiler (v1) | W | done | e44f5fb | `glyph` kind (legend `. # w P`, spawns `@`, `1`–`9`) and `level` kind; level text = front matter + map; compiled format my3dge-level/1 (ground, colliders with min/max, meshes: pieces and merged rects, spawns, floorHeight/topHeight); golden hashes per fixture; QA family `level` (tools/cmd/qa.test.ts expectation updated); hall 64×44 compiles in ≈2.1 ms; size M–L, covered by the G2 review; no escalations |
 | 2.3 | Materials and procedural textures (v1) | R | done | 65e8efe | engine/gfx/textures (the texture kind; flagstone, brick, stone, planks, staves, checker generators; CPU bake with height normals and golden hashes, linear-light mips, seam and period checks) and engine/gfx/materials (the material kind, 8 built-ins, Lambert or Basic when unlit, compile cache with warm-up probes); every generator tiles (worst seam ≈1.1% of 2%) and repeats exactly; page bakes hash as Node's; every material renders with 0 pipelines after warm-up; QA family tex; texture and material templates; seam range = the channel's full range (seams.ts); size L, covered by the G2 review; no escalations |
-| 2.4 | Geometry kit and level meshes (v1) | W | todo | | |
+| 2.4 | Geometry kit and level meshes (v1) | W | done | b987973 (#5) | geometry kit with UVs in metres (box, roundedBox, limb, ramp/wedge, frustum, pillarParts/pillarGeometry, ring), sidesThenTops, mergeGeometries, inspectGeometry; geometry registry kind (7 built-ins, fallback geometry:box) and its template; level meshes (welded floor, instanced blocks in 2 groups, recipes, cells with outward directions, warm-up registration, GFX_LEVEL_RECIPE); QA family geo; room = 13 draw calls with 1 shadow map (budget 20); calls: v1 pillars are plain blocks (WP 4.4 adds plinths/capitals); note for WP 2.7: walls are one InstancedMesh (`level:room/wall`), so the ID pass sees one object unless it colours by instanceIndex; block colour tones repeat per tile (world-space UVs belong to WP 2.3/7.2); no escalations |
 | 2.5 | Cameras (v1) | R | done | 1d08d4d | cameras v1: plain-data poses named as three.js names them, classic views (orthographic by default, 330 lines) with the height boost (within 1% of the 2D engine in all 5 views), orbit, fly, fixed, cam=/cam3= codes that round-trip, createCamera(code, {from}); GFX_BAD_CAMERA_CODE, GFX_UNKNOWN_CAMERA, GFX_BAD_CAMERA; box proof (switching, 0 pipelines) in WP 2.7; no escalations |
 | 2.6 | Shots, ID pass, `x shot` | T | done | 08b2d95 | engine/gfx/{shot,idpass,lookMetrics,thumbnail}.ts and x shot (--scene, --cam, --set, --ids, --metrics, --marks, --png, --thumb case [--update]); the ID pass reports every drawable (visible, or unseen: hidden/outside/covered) with 0 stray pixels; thumbnails and metrics identical over 3 loads; 48×27 readback exact (padding stripped); a shot builds its own pipelines once (ShotResult.built); r182's output pass target restored after a shot; baseline thumbs/shot-objects.json; size M–L, covered by the G2 review; no escalations |
-| 2.7 | Box 1: the box app | B | todo | | |
-| **G2** | **Gate: Box 1** | | todo | | |
-| 3.1 | Rapier adapter and queries | P | todo | | |
-| 3.2 | Character controller | P | todo | | |
-| 3.3 | Input devices, bindings, intents | I | todo | | |
-| 3.4 | Skeleton, builds, pose, FK, sheets | A | todo | | |
-| 3.5 | IK | A | todo | | |
-| 3.6 | Humanoid procedural port | A | todo | | |
+| 2.7 | Box 1: the box app | B | done | 43d4b7b (#5) | createEngine with the §6.4 loop and ?scene/?cam/?seed/?set/?replay routes, the box page and room scene with three movers, rendering members (ready, render, shot, camera, scene.dump, replay), createHeadless({ view: true }), x set/eval/dump/inspect, x replay --browser page, parity.spec.ts, box-1 replays, stress-box skill, scene template; a restore or a dev action through __engine now snaps the view to the world (view.restarted()); calls (ADR-0014 amendment 10): Owns widened by view, viewMembers, playback, gfx stage/sceneDump and tools/lib/page.ts, small edits to help.ts/x.test.ts, sim.ts, thumbs README and hooks settings test, APP_NO_VIEW in place of needs:'view'; about 4.7k inserted lines, over L's 2,500; proposals: idpass colouring instanced meshes by instanceIndex, a Node ?raw loader hook in x.js, scene.backgroundNode draws nothing on r182 with the box's camera (a Color sky plus a ground plane used instead); box-1 goldens unchanged after merging WP-3.1's my3dge-state/4 (Node x3 and Chromium page x3 match); no escalations; not verified: x ci --local, full e2e beyond box and parity; verifier: pass after 1 fix round |
+| **G2** | **Gate: Box 1** | | done | e3cb94c (#5) | x ci --local green at e3cb94c on a clean tree, first run, no flakes (3 min 42 s: check 6.8 s of 10, test 28.3 s of 60 with 2,048 tests, x new --test-all 36.7 s, e2e 2 min 25 s of 6 min with 56 tests, T2 in full); proven: the room steps headless and in the page to one golden set (box-1-room 600 steps → 1f0611eb795b4970, box-1-tuned → d16b25c94e9f6a8b; Node and Chromium page, 3 runs each), and its hashes hold while it renders, while every camera preset and resolution mode is switched and with every optional GPU feature off; live play recorded in the page replays in Node to the same hashes; the ID pass lists every object from cam iso (floor, wall runs, low wall, pillar, movers) with 0 stray pixels; 0 pipelines built after warm-up across cameras, resolution modes and materials; room level meshes in 13 draw calls (budget 20), the 64 × 44 hall in the same 13; every inspector member works in the page with help() matching and every setting reachable through __engine.set and x set/eval/dump/inspect; calls: Phase 3, lane L (8.1–8.3, 8.10) and lane X (9.1, 9.2, 9.4) WPs that finished before the gate ride in the same PR, each with its own ledger row; verifier review of the gate (WPs 2.2, 2.3, 2.6 and the whole) passed after one fix round (WP-G2-fix-r1, 721bae9: the `feel` member moved to engine/app/feelMember.ts so it registers whatever loads first); x deps --qualify: nothing qualified beyond the pins; no new escalations (ESC-0001 still awaits the owner); open risks: engine/physics/character.ts at 523 lines (over 400, under 600), ID pass sees an InstancedMesh as one object (proposal: colour by instanceIndex), chase/first/rail camera codes not yet known to codes.ts, Vitest 4 qualifies 2026-10-22, steps replay goldens not committed |
+| 3.1 | Rapier adapter and queries | P | done | 23401df (#5) | Rapier 0.21 adapter, groups, params, capture, queries, level bodies, QueryView, physics-40 fixture and replay; core change accepted as ADR-0006 amendment 6: hash reads only non-default non-view settings, my3dge-state/4, goldens re-recorded; scenes take physics: true; queries see a body from the next step; presentation reaches the QueryView through queryViewOf(w) until sim.snapshot() exists |
+| 3.2 | Character controller | P | done | 05e818b (#5) | engine/physics/{character,feel}.ts (createCharacter, addCharacter, moveCharacter, stepCharacter; steer, settle, the meter), engine/sim/actors.ts (spawnActor, measureFeel), engine/app/feelMember.ts (`__engine.feel`, since gate G2's review; §8.3 row added), fixtures/scenes/steps, x sim --feel; calls: Rapier's autostep, snap and impulses off, steps, snapping and momentum-sharing pushes our own, a grounded move lifted by the skin, flicker workaround not needed (ADR-0020 amendment 3); core change accepted: rapierOf in world.ts; no escalations; no deferred proofs; open: character.ts 523 lines (split into move.ts needs an Owns widening), WP 2.7 must build its inspector after scene setup, steps replay goldens not committed |
+| 3.3 | Input devices, bindings, intents | I | done | 2f683a4 (#5) | engine/input/{codes,actionMaps,bindings,script,input}.ts and devices/{keyboard,mouse,gamepad,padScript,virtual,inspector}.ts; intents.ts gained InputBuffer (released, buffered, consume, consumeAll, repeated; 9/18/5 steps); kind actionMap with 4 presets; system layer and RESERVED_CODES; `__engine.input` press, hold, axis, play, record, state (ADR-0014 amendment 9; §8.3 row edited); barrels appended; calls: the system layer and the move actions kept out of b/p, mouse and pad codes named (MouseLeft, PadSouth, PadLeftStickUp), stick directions bound like keys get the radial deadzone; size came out L, not M (≈1,870 code + 1,210 test lines); no escalations; open: headless step(n) should take the virtual device's intents (core proposal), WP 2.7 createEngine must load engine/dev/members before devices/inspector.ts, call connectVirtualDevice and sample once per frame (p on the first step only), WP 10.6 system-layer actions never enter intents; not verified: physical pads, non-standard mappings, non-Chromium pointer lock; deferred proof: in the box, WP 3.10; re-run lane (2026-10-10) only re-checked integration 5ee52bf: input unit 53/53, e2e 8/8, check, full suite 1758/1758 pass, no new commits |
+| 3.4 | Skeleton, builds, pose, FK, sheets | A | done | 043b1b7 (#5) | engine/anim/{skeleton,builds,pose,fk,sheet,check}.ts (root plus 23 joints, 8 sockets, a T-pose rest; registry kind `build`; Pose with flat float32 storage; slerp/nlerp, bone masks, additive layers; FK in doubles; SVG sheets, rest-sheet golden 8f7539de0bbc1301; animCheck), the scaffold tools/templates/build, an Animation area in sim-api.ts; calls in ADR-0009 amendment 1: animSheet/animCheck as flat names, old footL = the sole (foot joint `ankleHeight` above it; WP 3.6 compares at contact height), hipZ → hipHeight, headR → headRadius, builds carry the stance and gait fields for WP 3.6, new fields ankleHeight, footLength, handLength, chestDepth with chosen defaults (review in WP 3.8), no `skeleton` kind until a second skeleton exists; codes ANIM_UNKNOWN_JOINT, ANIM_BAD_MASK, ANIM_UNKNOWN_POINT; no escalations; deferred proof: in the box, WP 3.10; duplicate dispatch re-verified on integration 5ee52bf, no new commits |
+| 3.5 | IK | A | done | 5f656de (#5) | engine/anim/ik.ts (twoBone = ik3 bit-exact in metres, with a unit fallback for a pole along the limb; twoBoneRot in model space with hinge knees/elbows, a world-direction pole defaulting to the current bend, offset/rotation options; aim over chest/neck/head with limits; footPlant with downward-ray probe, pelvis drop, normal alignment, stance lock; handTo to the weapon socket), 19 sim-api exports; calls in ADR-0009 amendment 2: no per-solver weight (fade with blendPoses), a non-limb joint raises ANIM_UNKNOWN_JOINT, new code ANIM_BAD_TARGET; no escalations; open: footPlant probes only under the contact point (heel/toe probes a follow-up), assumes uniform root scale, ik.ts at the 400-line cap (split footPlant.ts needs an Owns change); deferred proof: in the box, WP 3.10 |
+| 3.6 | Humanoid procedural port | A | done | c589884 (#5) | engine/anim/{authoring,locomotion,poses,humanoid}.ts (B(f,r,u), turnRight, spine/arm/leg/blade solvers through twoBoneRot; GAIT table; POSES/STANCES/WEAPONS, ordered FOOT/HAND/BLADE layer tables; step = sim state, solve = effectors + solve, knockdown as root turn), 20 sim-api exports; differential mean 0.7-0.8 mm, worst 2.0 cm, EXCEPTIONS empty; calls in ADR-0009 amendment 3: moves' arm and kick paths go to WP 6.1, squash, hair and cape to WP 6.2 (input.body slot); new code ANIM_UNKNOWN_POSE; integration call: anim `Side` renamed `LimbSide` (WP 4.2 exports a level `Side`); no escalations; deferred: floor sinks of kneel/crouch/dash/guard feet (authoring.test.ts KNOWN) to WP 3.7 foot plant and the WP 6.6 QA, solve-stage performance not measured; in the box, WP 3.10; verifier: pass after 0 fix rounds |
 | 3.7 | Character animator and body states | A | todo | | |
 | 3.8 | Instancing service and puppets | R | todo | | |
-| 3.9 | Cameras (v2): chase, first person, rail | R | todo | | |
+| 3.9 | Cameras (v2): chase, first person, rail | R | done | cbe12c6 (#5) | engine/gfx/cameras/{chase,first,rail}.ts: chase as a spring arm whose ball casts go through the QueryView (in at once, back out over 0.3 s; 0 bad frames over 2400 in chase-walls), first person at the eye sockets' midpoint with nearBodyCull (hides all but the hands plus any part within 0.3 m of the eye), the depth rail keeping the hero in a near/far band; cam3=chase/first/rail codes round-trip; fixture chase-walls; calls made: codes live in the camera modules, not codes.ts, so parseCameraCode/createCamera do not yet know the three (open issue: proposed core change to codes.ts and place.ts createCamera, not applied, outside this WP's Owns), ~850 source lines, over S's 300; no escalations; deferred proofs: ID-pass camera suite (WP 3.10), no box check names the rail |
 | 3.10 | Box 2: a hero in the box | B | todo | | |
 | 3.11 | Film and visual comparison | T | todo | | |
-| 3.12 | Touch controls (not tested, ADR-0021) | I | todo | | |
+| 3.12 | Touch controls (not tested, ADR-0021) | I | done | 1d2525c (#5) | Built, not tested (ADR-0021): the touch device (stick, touch:<action> codes, taps and holds, touch mode with the `touch` setting); the ui layer, swipe and chrome; touch.css and the manifest; gfx/quality.ts (`quality` setting) with resolution pixel caps and the portrait lens; the 60 fps cap; createEngine's touchLayout and onMenu; calls (ADR-0021 amendment 1): buttons can take `hold`; page conventions data-panel, data-keyboard, data-stats, data-hud; timing uses frame timestamps; box.spec now covers WP 3.2's `feel`; escalations: none; deferred: the box layout (WP 3.10) and checks on a real phone |
 | **G3** | **Gate: Box 2** | | todo | | |
 | 4.1 | Bodies and props physics | P | todo | | |
-| 4.2 | Level compiler (v2): the hall | W | todo | | |
+| 4.2 | Level compiler (v2): the hall | W | done | 29a6370 (#5) | v2 glyphs = ^ o t (gallery 1 m, ramp stairs rising toward their gallery, octagonal dais, brazier cylinder plus torch spot); floorHeight/topHeight/surfaceAt; hull and cylinder descriptors; LEVEL_BAD_RAMP and LEVEL_BAD_DAIS; one-way reach checked along each step (walk.ts); labs/box/levels/hall.txt; calls: mesh bottom 0 for box/hull glyphs, geo-QA exceptions for level:hall in qa-geo-hall.json until WP 4.4, fixture goldens re-recorded (only new fields); core proposal accepted: hull shape in engine/physics (ADR-0020 amendment 4), hall hulls probed within 1 cm; no escalations; deferred: hall drawn in WP 4.4; not verified: hull determinism in Chromium beyond physics-40 |
 | 4.3 | Navigation and spatial queries | W | todo | | |
 | 4.4 | Level meshes (v2) and cutaway | R | todo | | |
 | 4.5 | Props as data | R | todo | | |
@@ -3993,21 +3998,21 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 7.7 | Gallery | I | on demand | | |
 | 7.8 | Box 6: the Stress Box | B | todo | | |
 | **G7** | **Gate: the Stress Box (foundation)** | | todo | | |
-| 8.1 | Provenance, catalogs, ledger, docs | L | todo | | |
-| 8.2 | Readable codec and format 2 | L | todo | | |
-| 8.3 | Re-containerize the sets | L | todo | | |
+| 8.1 | Provenance, catalogs, ledger, docs | L | done | ea27caf (#5) | data/anim/{SOURCES.md,LICENSES/,catalogs/,cmu/} (ledger split into 17 categories plus subjects.tsv, fallback fixed), docs/ANIMATION-LIBRARY.md (from MOCAP.md), docs/ANIMATION-RESEARCH.md (Engine column and 2D inventory dropped, coverage map added), tests in tests/unit/data/anim/{catalogs,ledger,sources}; call: kept the research doc's Build/Size columns, labelled as the 2D engine's proposals; INDEX/API regenerated on merge; no escalations, no deferred proofs; re-dispatch on integration 5ee52bf re-checked every claim (CMU terms against the live site, CC0 hash, ledger join-back 2548/2548, catalogs) and dropped a leftover 2D-engine mark "topple (✅)" from ANIMATION-RESEARCH item 6; open issue: data/anim/sets/cmu/_set.json (WP-8.3) still carries the old CMU license, to be corrected when WP-8.5's importer regenerates the set (its --legacy proof names the change) |
+| 8.2 | Readable codec and format 2 | L | done | d570025 (#5) | Readable codec port (bit-identical to the source), format-2 types and parse, validator, lens, mirror; `x port refs --clips` commits 3 float32 samples per clip plus a sha256 over every frame; calls: decode on each clip's own source rest, format-2 key fields carried but not decoded (WP 8.8), unknown fields refused (ADR-0010 amendment 1); open: port.ts at 408 lines (soft cap) |
+| 8.3 | Re-containerize the sets | L | done | c9fdfa1 (#5) | tools/anim/repack.ts (split/join, clipSlug, catalog.tsv, tagAlternates, readPlainSet) and data/anim/sets/{quaternius,mesh2motion,cmu} as 325 text() files plus _set.json and catalog.tsv; calls: fit stays in _set.json and sets the clip order, alt is the last tag, the sets kept out of Prettier (ADR-0010 amendment 2); no escalations; no deferred proofs; re-dispatch on integration 5ee52bf found it already merged (d51746f), re-verified green, no new commits |
 | 8.4 | Baker, clip layer, retargeting, mannequin | L | todo | | |
 | 8.5 | Tools port | L | todo | | |
 | 8.6 | Library tests and QA | L | todo | | |
 | 8.7 | ACTIONS layer | L | todo | | |
 | 8.8 | Re-import from sources (after G8) | L | on demand | | |
 | 8.9 | Clip mode in the box | L | todo | | |
-| 8.10 | 100STYLE and Quaternius v2 from shardfall | L | todo | | |
+| 8.10 | 100STYLE and Quaternius v2 from shardfall | L | done | a044e3d (#5) | tools/anim/shardfall.ts adopts 100STYLE (7 sets, 878 loops, body null) and Quaternius v2 (102 clips plus v1's Punch_Enter and body) with 8 catalogs, every clip marked via; calls: 100STYLE's Set cell names its catalog family, parity runs over the shorter duration (only A_TPose differs); parity on v1 rests 79/87 within fit (8 misses with checked reasons in shardfall.test.ts); no escalations (100STYLE approved, ADR-0021); deferred without the checkouts: the oracle decode and parity tests; INDEX/API regenerated on merge; no verifier review (lane ran it as S-size although the ledger sizes it L); open for WP 8.5: repack.ts with no arguments still rewrites quaternius from v1 (drop it from legacySetFiles) |
 | **G8** | **Gate: animation library** | | todo | | |
-| 9.1 | DSP core | X | todo | | |
-| 9.2 | Sound data | X | todo | | |
+| 9.1 | DSP core | X | done | 4d59721 (#5) | engine/audio/dsp: PolyBLEP oscillators, noise, ADSR and the source's fall/hold envelopes, sweep, arpeggio, vibrato, 8 cookbook biquads, echo, 2-operator FM, tuned Karplus-Strong pluck; render(def, seed, rate) → Float32Array under withSimMath, hashed by soundHash, same hashes in Node and Chromium (20 reference + 200 random sounds); calls: goldens in tests/pages/audioDspCases.ts, plucks hold by default, aliasing claim corrected to the measured ~6x (15 dB), linear cookbook Q for every filter; engine/index.ts exports left to WP 9.2/9.3; no escalations, no deferred proofs; duplicate dispatch re-verified on integration 5ee52bf, no new commits |
+| 9.2 | Sound data | X | done | da451ce (#5) | engine/audio/data/{sfx,song,effects,drums,songs}.ts: kinds sfx and song; 33 effects, 6 drums and 5 songs copied from my-3d2dge; validators (tokens, bar lines, track length fills/divides bars and divides the song, ranges, voices via normalizeSound), layers, stratified pitch variants, fixtures/sounds, templates sfx and song, 44 goldens (linux-x64); calls (ADR-0013 amendment 1): 4 variants per effect replace ±3% per-play detune, added fields bus/intensity/kit/beats, drums are sfx, noise tracks refused, public names in engine/index.ts, audio/data a sim-side layer, size M; no escalations; deferred proof: audio QA (clipping/DC/duration) to WP 9.4; integrator: song.ts 2 ** octave → Math.pow (sim-side lint), audio/data layer fixture |
 | 9.3 | Runtime, spatial audio, music | X | todo | | |
-| 9.4 | Audio tools | X | todo | | |
+| 9.4 | Audio tools | X | done | e80dce8 (#5) | the audio QA family (tools/qa/audio.ts: peak/clipping, DC, clicks, leading silence, duration and spectral centroid, valued by each sound's worst variant; baseline []; ~0.74 s over 39 sfx × variants plus 5 songs) and x audio (tools/cmd/audio.ts: metrics, --wav, --spectrogram, --replay mixing a replay's sound events offline, failing on clipping, a bad event or a run that parts from its goldens); call made: a sound event is a sim event whose payload is { sfx, vol?, variant? }, variants play in turn when none is given; ~780 source + 330 test lines, over S's 300; no escalations, no deferred proofs; open: WP 9.3/9.5 mapping events to sounds on the audio side would need a registry hook for x audio; an optional onStep in playReplay would remove the copied stepping loop; not verified: browser, listening to --wav |
 | 9.5 | Sound in the box | X | todo | | |
 | **G9** | **Gate: audio** | | todo | | |
 | 10.1 | Building blocks and fixture rigs | A | on demand | | |
@@ -4204,7 +4209,7 @@ In this table, `engine` §N means section N of `engine/my-3d2dge.js`, not a sect
 | hand L/R | forearm | `handL`/`handR` | `wrist` (+`index`, `knuck`, `pinky`, `fist`) |
 | thigh L/R | pelvis | `hipL`/`hipR` | `hip` |
 | shin L/R | thigh | `kneeL`/`kneeR` | `knee` |
-| foot L/R | shin | `footL`/`footR` | `ankle` |
+| foot L/R | shin | `footL`/`footR` (the sole; the ankle joint is `ankleHeight` above it) | `ankle` |
 | toe L/R | foot | — | `ball` → `toe` |
 
 - **Sockets:** `weaponR` and `weaponL` (from the hand, plus the grip; the blade direction comes from `J.bladeDir` or the knuckle line), `headTop`, `eyeL`, `eyeR`, `contactL` and `contactR` (the soles), `back` (the cape anchor).

@@ -1,0 +1,34 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Box 1, the room tuned mid-run: two movers, seed 7, box.room.speed set to 3 at step 120 and 0.5 at step 400, while a player walks and turns the camera (the room ignores intents, but they are recorded).",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "box:room",
+  "settings": { "box.room.movers": 2 },
+  "seed": 7,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [
+    [0, { "cam": -2.356, "move": [0, 1] }],
+    [120, { "set": { "box.room.speed": 3 } }],
+    [200, { "b": ["jump"], "move": null }],
+    [210, { "b": null }],
+    [400, { "cam": 3.142, "set": { "box.room.speed": 0.5 } }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "a0cbd22b345d156a",
+      "60": "e3fa3f49fbe8863b",
+      "120": "f5a905900692e7e4",
+      "180": "a1dff0cfecea0533",
+      "240": "40a7a49593e3179b",
+      "300": "7c7db55b0032f5b3",
+      "360": "29741101cae3eb46",
+      "420": "8ad3b56a1bc3542c",
+      "480": "4cc3182e3fbcc2fd",
+      "540": "5c001cac8116e9e0",
+      "600": "d16b25c94e9f6a8b"
+    }
+  }
+}

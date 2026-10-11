@@ -15,7 +15,9 @@
  * @see tests/e2e/harness.spec.ts
  */
 /// <reference types="@webgpu/types" />
+import { existsSync } from 'node:fs';
 import { SourceMap } from 'node:module';
+import { homedir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, type Browser, type LaunchOptions, type Page } from '@playwright/test';
@@ -35,12 +37,30 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 /** The container's Chromium 141; `$CHROMIUM_PATH` overrides it. Nothing ever runs `playwright install`. */
 export const DEFAULT_CHROMIUM = '/opt/pw-browsers/chromium';
 
+/** The platform's Chromium release (tools/deps.json), which scripts/setup.sh fetches where the container's is absent. */
+export const CHROMIUM_VERSION = '141.0.7390.37';
+
+/** Where scripts/setup.sh keeps Chrome for Testing `CHROMIUM_VERSION` on a machine without `DEFAULT_CHROMIUM`. */
+export function cachedChromium(env: Record<string, string | undefined> = process.env): string {
+  return join(env.HOME || homedir(), '.cache', 'my3dge', `chrome-${CHROMIUM_VERSION}`, 'chrome-linux64', 'chrome');
+}
+
 /** The viewport every harness page gets. */
 export const VIEWPORT = { width: 960, height: 540 } as const;
 
-/** The Chromium executable: `$CHROMIUM_PATH`, else `DEFAULT_CHROMIUM`. */
-export function chromiumPath(env: Record<string, string | undefined> = process.env): string {
-  return env.CHROMIUM_PATH || DEFAULT_CHROMIUM;
+/**
+ * The Chromium executable: `$CHROMIUM_PATH`; else `DEFAULT_CHROMIUM` when it exists; else `cachedChromium()` when it
+ * exists (a machine outside the container, after scripts/setup.sh); else `DEFAULT_CHROMIUM`, so the launch error names
+ * the platform's path. No shell state is needed, so every worktree resolves the same browser.
+ */
+export function chromiumPath(
+  env: Record<string, string | undefined> = process.env,
+  exists: (path: string) => boolean = existsSync,
+): string {
+  if (env.CHROMIUM_PATH) return env.CHROMIUM_PATH;
+  if (exists(DEFAULT_CHROMIUM)) return DEFAULT_CHROMIUM;
+  const cached = cachedChromium(env);
+  return exists(cached) ? cached : DEFAULT_CHROMIUM;
 }
 
 /** Playwright's launch options for WebGPU on this platform, shared by `playwright.config.ts` and the `x` commands. */

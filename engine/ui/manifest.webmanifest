@@ -1,0 +1,11 @@
+{
+  "name": "my-3dge",
+  "short_name": "my-3dge",
+  "description": "A fully 3D web game engine.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#15171c",
+  "theme_color": "#15171c"
+}

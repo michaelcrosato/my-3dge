@@ -12,15 +12,21 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 | Kind              | What it is                                                                                                                                                               | Declared in                                                               |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `actionMap`       | Named actions and the physical codes bound to each (keys by KeyboardEvent.code, mouse, pad by position): what the input devices turn into intents.                       | [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)             |
+| `build`           | Body proportions for the humanoid skeleton, in metres before size (limbs, torso, head, stance, gait).                                                                    | [`engine/anim/builds.ts`](../engine/anim/builds.ts)                       |
 | `component`       | Component kinds: the plain-object data entities hold (e.position), with their fields. The canonical state and the hash read every component's declared fields, in order. | [`engine/sim/state.ts`](../engine/sim/state.ts)                           |
 | `feature`         | Optional GPU features and techniques: what each needs, what is lost without it, and its advice code.                                                                     | [`engine/gfx/features.ts`](../engine/gfx/features.ts)                     |
-| `glyph`           | Level legend glyphs: what one map character means (heights, solid, collider and mesh recipes, nav flags, spawn, light spot, surface, footprint).                         | [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)           |
+| `geometry`        | Shapes props, levels and bodies name by id: a builder of a three.js BufferGeometry with its parameters and a vertex budget.                                              | [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)   |
+| `glyph`           | Level legend glyphs: what one map character means (heights, floor shape, solid, collider and mesh recipes, nav flags, spawn, light spot, surface, footprint).            | [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)           |
 | `inspectorMember` | Members of the inspector (__engine, createHeadless): a call or property with its help line, argument schema and implementation.                                          | [`engine/dev/members.ts`](../engine/dev/members.ts)                       |
 | `level`           | Levels: a level text (front matter and a map in legend characters) that compileLevel turns into data.                                                                    | [`engine/world/level/level.ts`](../engine/world/level/level.ts)           |
 | `material`        | Materials as data with three.js's classic parameters (color, map, roughness, emissive, flags); the engine decides how to draw them.                                      | [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts) |
 | `scene`           | Scenes: a level, settings, a setup and a step, sim-side, so x sim, x replay and createHeadless run them in Node.                                                         | [`engine/sim/scene.ts`](../engine/sim/scene.ts)                           |
 | `setting`         | The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set.                                                             | [`engine/core/settings.ts`](../engine/core/settings.ts)                   |
+| `sfx`             | A sound effect: voices for the DSP core, layers of other effects, variants and a mixer bus.                                                                              | [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)                 |
+| `song`            | A looping tune in tracker notation: tempo, bars and tracks of notes or drum tokens.                                                                                      | [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)               |
 | `texture`         | Seeded, periodic texture generators: colour, height, roughness and emissive per texel, with their parameters, size, tile, density and look.                              | [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)     |
+| `touchlayout`     | A page's touch controls: the buttons in the corner fan, each pressing an action, and whether the menu button shows.                                                      | [`engine/ui/touch.ts`](../engine/ui/touch.ts)                             |
 
 ## The root
 
@@ -35,15 +41,134 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 ## engine
 
 - [`index.ts`](../engine/index.ts): The engine's front page: the public API for pages and tools (PLAN.md §6.1, §6.9, WP 1.6; doctrine: Quality under the hood).
-  - Exports: `* from './sim-api'`, `bakeTexture`, `cellHash`, `createHeadless`, `createMaterialLibrary`, `defineMaterial`, `defineTexture`, `EngineInfo`, `EntitySummary`, `getMaterial`, `Headless`, `HeadlessOptions`, `Inspector`, `MaterialEntry`, `MaterialLibrary`, `MaterialSpec`, `palette`, `pickTone`, `runningBond`, `Texel`, `TextureBake`, `TextureContext`, `TextureEntry`, `TextureLook`, `TextureRef`, `TextureSpec`, `tileNoise`, `wrapIndex`
+  - Exports: `* from './sim-api'`, `ActionMap`, `ActionMapSpec`, `bakeTexture`, `Bindings`, `BindingsFile`, `BindingsOptions`, `BindingsStorage`, `boxGeometry`, `BoxOptions`, `buildGeometry`, `CameraInfo`, `CameraInputSample`, `CameraLike`, `cellHash`, `codeLabel`, `connectVirtualDevice`, `createBindings`, `createEngine`, `createHeadless`, `createInput`, `createLevelMeshes`, `createMaterialLibrary`, `createScriptedGamepad`, `createVirtualDevice`, `defineActionMap`, `defineGeometry`, `defineMaterial`, `defineSfx`, `defineSong`, `defineTexture`, `defineTouchLayout`, `DeviceKind`, `Engine`, `EngineInfo`, `EngineOptions`, `EntitySummary`, `frustumGeometry`, `FrustumOptions`, `GamepadLike`, `GeometryEntry`, `GeometryRef`, `GeometryReport`, `GeometrySpec`, `getActionMap`, `getGeometry`, `getMaterial`, `getSfx`, `getSong`, `getTouchLayout`, `Headless`, `HeadlessOptions`, `Input`, `InputOptions`, `inspectGeometry`, `Inspector`, `isCode`, `LEVEL_RECIPES`, `LevelCell`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `LevelRecipe`, `LevelShape`, `limbGeometry`, `LimbOptions`, `listActionMaps`, `MaterialEntry`, `MaterialLibrary`, `MaterialSpec`, `mergeGeometries`, `palette`, `parseRoutes`, `pickTone`, `pillarGeometry`, `PillarOptions`, `PillarPart`, `pillarParts`, `PlayIntoOptions`, `PlayResult`, `rampGeometry`, `RampOptions`, `readKeyboardLayout`, `RebindResult`, `renderSfx`, `renderSong`, `RESERVED_CODES`, `ringGeometry`, `RingOptions`, `roundedBoxGeometry`, `RoundedBoxOptions`, `routeQuery`, `Routes`, `runningBond`, `ScriptedGamepad`, `Sfx`, `SfxBus`, `SfxLayer`, `SfxRenderOptions`, `SfxSpec`, `sfxVoices`, `sidesThenTops`, `Song`, `SongRenderOptions`, `SongSpec`, `songTiming`, `SongTiming`, `SongTrack`, `songVoices`, `SoundDef`, `StickView`, `SYSTEM_ACTIONS`, `Texel`, `TextureBake`, `TextureContext`, `TextureEntry`, `TextureLook`, `TextureRef`, `TextureSpec`, `tileNoise`, `TouchButtonSpec`, `touchCode`, `TouchDevice`, `TouchLayout`, `TouchLayoutSpec`, `TouchSetting`, `ViewChange`, `VirtualDevice`, `Voice`, `wrapIndex`
 - [`sim-api.ts`](../engine/sim-api.ts): The public API for sim-side game code (PLAN.md §6.1, §6.9, WP 1.6; doctrine: Quality under the hood): what a scene, a cast member or a behaviour imports, and all it may import (ESLint's public-API rule), so `x sim` runs it in Node and its play is reproducible.
-  - Exports: `angDiff`, `approach`, `approachAng`, `Box3`, `BoxCollider`, `ColliderDescriptor`, `Color`, `CompiledLevel`, `compileLevel`, `CompileOptions`, `ComponentOf`, `CustomIntentKey`, `def`, `defineComponent`, `defineGlyph`, `defineKind`, `defineLevel`, `defineScene`, `defineSettings`, `ease`, `Entity`, `Entry`, `Euler`, `EventMap`, `Field`, `floorHeight`, `fromCamera`, `getLevel`, `Glyph`, `GlyphSpec`, `GroundDescriptor`, `held`, `INTENT_KEYS`, `Intents`, `IntentValue`, `Kind`, `KindSpec`, `lerpAng`, `LEVEL_FORMAT`, `LevelEntry`, `LevelGlyph`, `LevelProblem`, `LevelSource`, `LightSpot`, `Listener`, `MathUtils`, `Matrix4`, `MeshDescriptor`, `Phase`, `PHASES`, `Plane`, `Point3`, `pressed`, `Quaternion`, `Ray`, `Rng`, `Scene`, `SceneAction`, `SceneSpec`, `Schema`, `SettingValue`, `SimRng`, `SimSettings`, `smoothDamp`, `solidAt`, `SpawnPoint`, `SpawnSpec`, `Sphere`, `swingTwist`, `SystemFn`, `tileAt`, `TileRect`, `topHeight`, `TraceRecord`, `validateLevel`, `Vector3`, `With`, `World`, `WorldEvents`, `WorldTimers`
+  - Exports: `ActorComponent`, `ActorComponents`, `ActorSpec`, `addLevelBodies`, `addPose`, `aim`, `AIM_CHAIN`, `AimLink`, `AimOptions`, `angDiff`, `animCheck`, `AnimCheckReport`, `AnimCheckSpec`, `AnimProblem`, `animSheet`, `approach`, `approachAng`, `B`, `BlendOptions`, `blendPoses`, `BodyChange`, `BodyMotion`, `BodySpec`, `BodyState`, `BodyType`, `boneMask`, `BoneMask`, `Box3`, `BoxCollider`, `BUFFER_STEPS`, `buffered`, `Build`, `BuildSpec`, `Character`, `CHARACTER_FIELDS`, `CHARACTER_STATE_FIELDS`, `CharacterState`, `ColliderDescriptor`, `ColliderSpec`, `COLLISION_GROUPS`, `Color`, `CompiledLevel`, `compileLevel`, `CompileOptions`, `ComponentOf`, `consume`, `consumeAll`, `createCharacter`, `createFootPlantState`, `createInputBuffer`, `createSkeleton`, `createWorldPose`, `CustomIntentKey`, `CylinderCollider`, `DaisDescriptor`, `def`, `defineBuild`, `defineComponent`, `defineGlyph`, `defineKind`, `defineLevel`, `defineScene`, `defineSettings`, `ease`, `Effectors`, `Entity`, `Entry`, `Euler`, `EventMap`, `FeelOptions`, `FeelReport`, `Field`, `floorHeight`, `FOOT_PLANT`, `FootLock`, `footPlant`, `FootPlantOptions`, `FootPlantState`, `forwardKinematics`, `fromCamera`, `FRU`, `getBuild`, `getLevel`, `Glyph`, `GlyphSpec`, `Ground`, `GroundDescriptor`, `GroundHit`, `GroundProbe`, `GroupName`, `handTo`, `hashPose`, `held`, `Hit`, `HullCollider`, `Humanoid`, `HumanoidInput`, `HumanoidOptions`, `HumanoidState`, `HumanoidWeights`, `InputBuffer`, `INTENT_KEYS`, `Intents`, `IntentValue`, `jointMatrix`, `JointName`, `jointPosition`, `JointRef`, `jointRotation`, `JOINTS`, `jointToWorld`, `Kind`, `KindSpec`, `lerpAng`, `LEVEL_FORMAT`, `LevelEntry`, `LevelGlyph`, `LevelProblem`, `LevelSource`, `LightSpot`, `Limb`, `LimbEnd`, `LIMBS`, `LimbSide`, `Listener`, `makeAdditive`, `MaskName`, `MASKS`, `MathUtils`, `Matrix4`, `measureFeel`, `MeshDescriptor`, `OverlapOptions`, `Phase`, `PHASES`, `Physics`, `PHYSICS_SETTINGS`, `physicsOf`, `Plane`, `Point3`, `PointName`, `Pose`, `PoseName`, `POSES`, `pressed`, `ProbeOptions`, `Quaternion`, `QuatLike`, `QueryOptions`, `QueryView`, `queryViewOf`, `RampDescriptor`, `Ray`, `RayOptions`, `released`, `removeActor`, `REPEAT_DELAY`, `REPEAT_RATE`, `repeated`, `RigidPair`, `Rng`, `Scene`, `SceneAction`, `SceneSpec`, `Schema`, `SettingValue`, `Shape`, `ShapeCastOptions`, `Sheet`, `SheetFrame`, `SheetOptions`, `SheetView`, `Side`, `Sided`, `SimRng`, `SimSettings`, `Skeleton`, `smoothDamp`, `SocketName`, `socketPosition`, `SOCKETS`, `solidAt`, `spawnActor`, `SpawnPoint`, `SpawnSpec`, `Sphere`, `StanceName`, `STANCES`, `surfaceAt`, `swingTwist`, `SystemFn`, `tileAt`, `TileRect`, `tipPosition`, `topHeight`, `TraceRecord`, `turnRight`, `twoBone`, `TwoBoneOptions`, `twoBoneRot`, `updateInputBuffer`, `validateLevel`, `Vec3Like`, `Vector3`, `Weapon`, `WEAPONS`, `With`, `World`, `WorldEvents`, `WorldPose`, `WorldTimers`
+
+## engine/anim
+
+- [`authoring.ts`](../engine/anim/authoring.ts): Effector-space authoring (PLAN.md WP 3.6, ADR-0009, Appendix C): a pose is written as targets in the character's own terms and solved onto the rotation skeleton.
+  - Exports: `B`, `fromFRU`, `fru`, `FRU`, `holdAlong`, `LimbSide`, `Rig`, `rigFromWorld`, `rigToWorld`, `Sided`, `SIDES`, `sideSign`, `SOLVE`, `solveArm`, `solveLeg`, `solveSpine`, `SpineTargets`, `turnRight`
+  - Tests: [`engine/anim/authoring.test.ts`](../engine/anim/authoring.test.ts)
+- [`builds.ts`](../engine/anim/builds.ts): Body builds (PLAN.md WP 3.4, §5.2, I-08): the registry kind `build`, one entry per body proportion set, in metres.
+  - Exports: `Build`, `BUILD_FIELDS`, `buildKind`, `BuildSpec`, `defineBuild`, `getBuild`
+  - Tests: [`engine/anim/builds.test.ts`](../engine/anim/builds.test.ts)
+- [`check.ts`](../engine/anim/check.ts): The core of `anim.check(def)` (PLAN.md WP 3.4): `animCheck` runs a set of poses through FK and reports what breaks the body's contract, as plain sentences: values that are not finite, bones that changed length, declared rigid pairs that drifted, feet below the floor, and sockets out of reach.
+  - Exports: `animCheck`, `AnimCheckName`, `AnimCheckReport`, `AnimCheckSpec`, `AnimProblem`, `CHECK_CODES`, `PointName`, `RigidPair`
+  - Tests: [`engine/anim/check.test.ts`](../engine/anim/check.test.ts)
+- [`fk.ts`](../engine/anim/fk.ts): Forward kinematics (PLAN.md WP 3.4, I-08): `forwardKinematics(skeleton, pose)` turns a pose's local rotations into each joint's world matrix, position and rotation, and the helpers read a joint, a socket or a leaf bone's tip out of the result as three.js math objects.
+  - Exports: `createWorldPose`, `forwardKinematics`, `jointMatrix`, `jointPosition`, `jointRotation`, `jointToWorld`, `socketPosition`, `tipPosition`, `WorldPose`
+  - Tests: [`engine/anim/fk.test.ts`](../engine/anim/fk.test.ts)
+- [`humanoid.ts`](../engine/anim/humanoid.ts): The procedural humanoid (PLAN.md WP 3.6, §5.2; I-09): my-3d2dge's `Humanoid` on the rotation skeleton.
+  - Exports: `Humanoid`, `HumanoidInput`, `HumanoidOptions`, `HumanoidState`, `KNOCKDOWN`, `STEP`
+  - Tests: [`engine/anim/humanoid.test.ts`](../engine/anim/humanoid.test.ts)
+- [`ik.ts`](../engine/anim/ik.ts): Inverse kinematics for the humanoid skeleton (PLAN.md WP 3.5, I-11): `twoBone` (my-3d2dge's `ik3`) places a limb's middle joint, `twoBoneRot` turns a leg or an arm to a target with a pole, `aim` spreads a look-at over chest, neck and head within limits, `footPlant` stands the feet on probed ground, and `handTo` puts a grip in a hand.
+  - Exports: `aim`, `AIM_CHAIN`, `AimLink`, `AimOptions`, `createFootPlantState`, `FOOT_PLANT`, `FootLock`, `footPlant`, `FootPlantOptions`, `FootPlantState`, `GroundHit`, `GroundProbe`, `handTo`, `IK_CODES`, `Limb`, `LimbEnd`, `LIMBS`, `twoBone`, `TwoBoneOptions`, `twoBoneRot`
+  - Tests: [`engine/anim/ik.test.ts`](../engine/anim/ik.test.ts)
+- [`locomotion.ts`](../engine/anim/locomotion.ts): Procedural locomotion for the humanoid (PLAN.md WP 3.6, §5.2): my-3d2dge's gait, idle, lean and arm-swing formulas as effector targets in the character's own terms (`B(f, r, u)`, authoring.ts): where the pelvis rides, where each foot and hand swings, which way the spine and the head lean, where the shoulders sit.
+  - Exports: `BodyMotion`, `crouchShare`, `EffectorContext`, `GAIT`, `gaitFoot`, `gaitHand`, `headDirection`, `hipTarget`, `HumanoidWeights`, `pelvisTarget`, `restContext`, `shoulderTarget`, `spineDirection`
+  - Tests: [`engine/anim/poses.test.ts`](../engine/anim/poses.test.ts)
+- [`pose.ts`](../engine/anim/pose.ts): Poses (PLAN.md WP 3.4, I-08, I-49): `Pose` holds a root transform and one local rotation per joint of the humanoid skeleton; `blendPoses` crossfades two (slerp or nlerp) under a bone mask, `makeAdditive` and `addPose` make and apply additive layers, and `hashPose` digests one.
+  - Exports: `addPose`, `BlendOptions`, `blendPoses`, `hashPose`, `JointRef`, `makeAdditive`, `Pose`, `POSE_LENGTH`
+  - Tests: [`engine/anim/pose.test.ts`](../engine/anim/pose.test.ts)
+- [`poses.ts`](../engine/anim/poses.ts): Held poses, stances and the humanoid's effector layers (PLAN.md WP 3.6, §5.2; I-09): the names a humanoid takes (`POSES`, `STANCES`, `WEAPONS`), with a warning that suggests the closest name for a misspelt one, and the ordered tables that lay each pose, stance and state over the gait's targets: `FOOT_LAYERS` for the soles, `HAND_LAYERS` for the wrists, `BLADE_LAYERS` for the weapon's direction.
+  - Exports: `applyLayers`, `BLADE_LAYERS`, `createEffectors`, `DROPPED_BLADE`, `EffectorLayer`, `Effectors`, `effectorStage`, `FOOT_LAYERS`, `HAND_LAYERS`, `layerWeights`, `Placement`, `POSE_CODES`, `poseName`, `PoseName`, `POSES`, `stanceName`, `StanceName`, `STANCES`, `Weapon`, `weaponName`, `WEAPONS`
+  - Tests: [`engine/anim/poses.test.ts`](../engine/anim/poses.test.ts)
+- [`sheet.ts`](../engine/anim/sheet.ts): Skeleton contact sheets (PLAN.md WP 3.4, `anim.sheet()`): `animSheet(frames)` draws poses as stick figures in one SVG, in Node, each frame from the views asked for, so an agent can look at a pose, a move's samples or a state matrix without a browser.
+  - Exports: `animSheet`, `Sheet`, `SHEET_VIEWS`, `SheetFrame`, `SheetOptions`, `SheetView`
+  - Tests: [`engine/anim/sheet.test.ts`](../engine/anim/sheet.test.ts)
+- [`skeleton.ts`](../engine/anim/skeleton.ts): The humanoid skeleton (PLAN.md WP 3.4, §5.2, Appendix C; I-01, I-08): a root plus 23 joints, their sockets, the rest pose a build gives them (`createSkeleton`), and bone masks (`boneMask`) for blending.
+  - Exports: `boneMask`, `BoneMask`, `createSkeleton`, `JOINT_COUNT`, `JOINT_INFO`, `jointIndex`, `JointInfo`, `JointName`, `JOINTS`, `MaskName`, `MASKS`, `PARENTS`, `PROPORTIONS`, `Skeleton`, `SKELETON_CODES`, `SOCKET_JOINTS`, `socketIndex`, `SocketName`, `SOCKETS`
+  - Tests: [`engine/anim/skeleton.test.ts`](../engine/anim/skeleton.test.ts)
+
+## engine/anim/clip
+
+- [`lens.ts`](../engine/anim/clip/lens.ts): How a clip reads (PLAN.md §10.2, WP 8.2): `LEGEND`, what every key field means, and each field's shape (`KEY_ARRAYS`, `KEY_NUMBERS`, `ANGLE_ENTRIES`), which parsing, in-betweening and the validator read; `clipText`, the text an agent reads and edits, ported from `my-3d2dge:src/mocap/readable.js`'s `text` with no change in its output; and the normalized lens, every angle folded to (−180°, 180°] for reading, without changing the stored data.
+  - Exports: `ANGLE_ENTRIES`, `clipText`, `foldAngle`, `KEY_ARRAYS`, `KEY_FIELDS`, `KEY_NUMBERS`, `LEGEND`, `normalizedLens`, `REQUIRED`
+  - Tests: [`engine/anim/clip/lens.test.ts`](../engine/anim/clip/lens.test.ts)
+- [`mirror.ts`](../engine/anim/clip/mirror.ts): Mirroring a clip (PLAN.md §10.2, WP 8.2): the same motion on the other side.
+  - Exports: `mirrorClip`
+  - Tests: [`engine/anim/clip/mirror.test.ts`](../engine/anim/clip/mirror.test.ts)
+- [`readable.ts`](../engine/anim/clip/readable.ts): Readable key poses, the stored clip format (PLAN.md §10.2, WP 8.2; ADR-0010): its types, format 1 and the fields format 2 adds, and the decode that rebuilds 36 body points from a key pose on a measured rest body.
+  - Exports: `Clip`, `ClipContact`, `ClipEvent`, `ClipKey`, `decodePose`, `keyAt`, `KeyPose`, `LimbPose`, `moveAt`, `POINT_COUNT`, `POINT_INDEX`, `PointArray`, `POSE_POINTS`, `samplePose`, `Triple`
+  - Tests: [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts)
+- [`validate.ts`](../engine/anim/clip/validate.ts): Reading clips in, and checking them (PLAN.md §10.2, WP 8.2): `parseClip` and `parseClipSet` turn text or objects into clips and sets of format 1 or 2, refusing a broken one with an error that names the clip, the key, its time and the field, and the fix; `validateClip` then warns about poses that read but play badly.
+  - Exports: `CLIP_CODES`, `ClipCode`, `ClipSet`, `ClipSource`, `ClipWarning`, `parseClip`, `parseClipSet`, `poseError`, `poseMeanError`, `RestBody`, `validateClip`
+  - Tests: [`engine/anim/clip/validate.test.ts`](../engine/anim/clip/validate.test.ts)
 
 ## engine/app
 
-- [`headless.ts`](../engine/app/headless.ts): The engine without a page (PLAN.md §8.3, §6.9, WP 1.6; doctrine: Verifiable): `createHeadless({ scene, seed, settings })` starts a scene as a recorded session (engine/sim/scene.ts) and returns its inspector, the same object a page publishes as `window.__engine` minus a renderer: members that need one throw `DEV_NO_RENDERER`.
-  - Exports: `createHeadless`, `Headless`, `HEADLESS_CODES`, `headlessHost`, `HeadlessOptions`
+- [`engine.ts`](../engine/app/engine.ts): The engine in a page (PLAN.md §6.4, §6.9, §8.3, WP 2.7): `createEngine({ canvas, scenes, levels })` registers the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay` and settings by path), starts the scene as a recorded run with its view (engine/app/headless.ts, engine/app/view.ts), publishes the run's inspector as `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts), warms up every pipeline the view needs through both cameras (perspective and orthographic), draws the first frame, and then runs the frame loop (engine/app/loop.ts): the devices sampled into intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from the clock, the view drawn at the clock's alpha.
+  - Exports: `createEngine`, `Engine`, `ENGINE_CODES`, `EngineOptions`, `recordOf`
+  - Tests: [`engine/app/engine.test.ts`](../engine/app/engine.test.ts), [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts)
+- [`feelMember.ts`](../engine/app/feelMember.ts): The inspector member `feel(id?)` (PLAN.md §8.3, WP 3.2): an actor's feel meter report, `measureFeel` (engine/sim/actors.ts) over the actor's character at the run's rate and `physics.characterGravity`; the first player when `id` is absent, else `SIM_BAD_ARGUMENT` naming the actors' ids (`none` in a scene without one).
+  - Tests: [`engine/app/viewMembers.test.ts`](../engine/app/viewMembers.test.ts), [`engine/sim/actors.test.ts`](../engine/sim/actors.test.ts)
+- [`headless.ts`](../engine/app/headless.ts): The engine without a page (PLAN.md §8.3, §6.9, WPs 1.6 and 2.7; doctrine: Verifiable): `createHeadless({ scene, seed, settings, view })` starts a scene as a recorded session (engine/sim/scene.ts) and returns its inspector, the same object a page publishes as `window.__engine` minus a renderer: `render` and `shot` throw `DEV_NO_RENDERER`.
+  - Exports: `AppHostOptions`, `AppRun`, `createAppHost`, `createHeadless`, `Drawing`, `Headless`, `HEADLESS_CODES`, `headlessHost`, `HeadlessOptions`
   - Tests: [`engine/app/headless.test.ts`](../engine/app/headless.test.ts)
+- [`loop.ts`](../engine/app/loop.ts): The frame loop (PLAN.md §6.4, WP 2.7; doctrine: Reproducible): fixed sim steps plus interpolation, once per animation frame.
+  - Exports: `createLoop`, `FRAME_SLACK_MS`, `FRAME_SLOT_MS`, `Loop`, `LoopOptions`
+  - Tests: [`engine/app/loop.test.ts`](../engine/app/loop.test.ts)
+- [`playback.ts`](../engine/app/playback.ts): Replays one step at a time (PLAN.md §6.5 item 9, §6.7's CPU-only contract, WP 2.7): what lets a page render between the steps of a replay, so `x replay --browser page` and tests/e2e/parity.spec.ts prove that rendering never changes play, and `?replay=<name>` plays one in real time.
+  - Exports: `createPlayback`, `Playback`, `PLAYBACK_CODES`, `playInto`, `PlayIntoOptions`, `PlayResult`, `PlayTarget`, `ViewChange`
+  - Tests: [`engine/app/playback.test.ts`](../engine/app/playback.test.ts)
+- [`routes.ts`](../engine/app/routes.ts): Routes and deep links (PLAN.md §6.1: URL parameters are parsed once, here, and passed down; §8.1; WP 2.7): what a page's query asks for.
+  - Exports: `parseRoutes`, `ROUTE_CODES`, `ROUTE_KEYS`, `RouteOptions`, `routeQuery`, `Routes`
+  - Tests: [`engine/app/routes.test.ts`](../engine/app/routes.test.ts)
+- [`view.ts`](../engine/app/view.ts): The view of a run (PLAN.md §6.4's `view.update`, §8.3, WP 2.7): what a running scene looks like, built without a GPU, so a page draws it and `createHeadless({ view: true })` dumps it in Node.
+  - Exports: `CameraInfo`, `createRunView`, `DEFAULT_CAMERA`, `HEADLESS_ASPECT`, `RunView`, `RunViewOptions`, `VIEW_CODES`, `ViewFrame`
+  - Tests: [`engine/app/view.test.ts`](../engine/app/view.test.ts)
+- [`viewMembers.ts`](../engine/app/viewMembers.ts): The view's inspector members (PLAN.md §8.3, WP 2.7): `ready`, `render`, `shot`, `camera.get`, `camera.set`, `scene.dump` and `replay`, registered from here as entries of the registry kind `inspectorMember` (engine/dev/members.ts), so `window.__engine` in a page and `createHeadless` in Node list the same members.
+  - Exports: `AppHost`
+  - Tests: [`engine/app/viewMembers.test.ts`](../engine/app/viewMembers.test.ts)
+
+## engine/audio/data
+
+- [`drums.ts`](../engine/audio/data/drums.ts): The engine's six drums and the drum kit songs play them from (PLAN.md WP 9.2, I-23): a kick, a snare, a closed and an open hi-hat, a crash and a tom, each an `sfx` entry (engine/audio/data/sfx.ts), and `DRUM_KIT`, the one-letter tokens a song's `drums` track writes (`k s h o c t`), each naming its drum's id.
+  - Exports: `DRUM_KIT`, `DRUMS`
+  - Tests: [`engine/audio/data/sounds.test.ts`](../engine/audio/data/sounds.test.ts)
+- [`effects.ts`](../engine/audio/data/effects.ts): The engine's 33 sound effects as data (PLAN.md WP 9.2, I-23): jumps, landings, steps, pickups, hits, shots, explosions, doors, jingles and the menu and text blips, each an `sfx` entry (engine/audio/data/sfx.ts) under the id `sfx:<name>`.
+  - Exports: `EFFECTS`
+  - Tests: [`engine/audio/data/sounds.test.ts`](../engine/audio/data/sounds.test.ts)
+- [`sfx.ts`](../engine/audio/data/sfx.ts): The `sfx` kind (PLAN.md WP 9.2, I-23; doctrines: Assets, Agent-operable): a sound effect as data, rendered into samples by the DSP core (engine/audio/dsp/render.ts).
+  - Exports: `defineSfx`, `getSfx`, `renderSfx`, `Sfx`, `SFX_BUSES`, `SFX_CODES`, `SFX_FIELDS`, `SfxBus`, `sfxKind`, `SfxLayer`, `sfxProblems`, `SfxRenderOptions`, `SfxSpec`, `sfxVoices`, `variantPitch`
+  - Tests: [`engine/audio/data/sfx.test.ts`](../engine/audio/data/sfx.test.ts)
+- [`song.ts`](../engine/audio/data/song.ts): The `song` kind (PLAN.md WP 9.2, I-23; doctrines: Assets, Agent-operable): a looping tune as data, written in tracker notation, its tracks played on the DSP core's waves and its drums from a kit of `sfx` entries.
+  - Exports: `defineSong`, `getSong`, `renderSong`, `Song`, `SONG_FIELDS`, `songKind`, `songProblems`, `SongRenderOptions`, `SongSpec`, `songTiming`, `SongTiming`, `SongTrack`, `songVoices`, `TRACK_WAVES`, `TrackWave`
+  - Tests: [`engine/audio/data/song.test.ts`](../engine/audio/data/song.test.ts)
+- [`songs.ts`](../engine/audio/data/songs.ts): The engine's five songs as data (PLAN.md WP 9.2, I-23): original chiptune loops for a title screen, an adventure, a dungeon, a boss fight and a victory jingle, each a `song` entry (engine/audio/data/song.ts) under the id `song:<name>`.
+  - Exports: `SONGS`
+  - Tests: [`engine/audio/data/sounds.test.ts`](../engine/audio/data/sounds.test.ts)
+
+## engine/audio/dsp
+
+- [`biquad.ts`](../engine/audio/dsp/biquad.ts): Biquad filters of the DSP core (PLAN.md WP 9.1): the eight types of Web Audio's `BiquadFilterNode` (lowpass, highpass, bandpass, notch, allpass, peaking, lowshelf, highshelf), with the coefficients of Robert Bristow-Johnson's Audio EQ Cookbook, which Web Audio's own formulas come from.
+  - Exports: `Biquad`, `FILTER_TYPES`, `FilterType`
+  - Tests: [`engine/audio/dsp/biquad.test.ts`](../engine/audio/dsp/biquad.test.ts)
+- [`delay.ts`](../engine/audio/dsp/delay.ts): The delay (echo) effect of the DSP core (PLAN.md WP 9.1): a feedback delay line, as a `DelayNode` looped through a feedback `GainNode` and mixed back with the dry signal is in Web Audio.
+  - Exports: `echo`, `ECHO_FLOOR`, `echoCount`, `echoSpacing`, `EchoSpec`, `MAX_ECHOES`
+  - Tests: [`engine/audio/dsp/delay.test.ts`](../engine/audio/dsp/delay.test.ts)
+- [`envelope.ts`](../engine/audio/dsp/envelope.ts): Volume envelopes of the DSP core (PLAN.md WP 9.1): the source's percussive envelope (a linear attack, then an exponential fall to 0.0005 at the end, as Web Audio's `exponentialRampToValueAtTime` gives it) and ADSR (attack, decay, sustain, release), which also covers the source's `hold` (sustain at full volume, a 30 ms release).
+  - Exports: `AdsrEnvelope`, `Envelope`, `envelopeCurve`, `FALL_FLOOR`, `FallEnvelope`, `holdEnvelope`
+  - Tests: [`engine/audio/dsp/envelope.test.ts`](../engine/audio/dsp/envelope.test.ts)
+- [`measure.ts`](../engine/audio/dsp/measure.ts): Numbers about rendered samples (PLAN.md WP 9.1, §8.5; doctrine: Verifiable without a display): peak, RMS, DC offset and the amplitude of one frequency (Goertzel's algorithm), so tests and tools judge a sound by numbers instead of by ear.
+  - Exports: `dcOffset`, `peak`, `rms`, `toneAmplitude`
+  - Tests: [`engine/audio/dsp/measure.test.ts`](../engine/audio/dsp/measure.test.ts)
+- [`osc.ts`](../engine/audio/dsp/osc.ts): The tonal oscillators of the DSP core (PLAN.md WP 9.1; doctrine: Quality under the hood): square, pulse 25%, pulse 12.5%, triangle, sine and saw, each a function of a phase.
+  - Exports: `blamp`, `blep`, `DUTY`, `oscillate`, `TONAL_WAVES`, `TonalWave`, `wrap`
+  - Tests: [`engine/audio/dsp/osc.test.ts`](../engine/audio/dsp/osc.test.ts)
+- [`pluck.ts`](../engine/audio/dsp/pluck.ts): The Karplus–Strong pluck of the DSP core (PLAN.md WP 9.1): a burst of seeded noise circulating in a delay line whose loop averages neighbouring samples, so it rings like a plucked string and darkens as it decays.
+  - Exports: `Pluck`
+  - Tests: [`engine/audio/dsp/pluck.test.ts`](../engine/audio/dsp/pluck.test.ts)
+- [`render.ts`](../engine/audio/dsp/render.ts): The DSP core's entry point (PLAN.md WP 9.1, §6.5, ADR-0013; doctrines: Assets, Reproducible, Verifiable): `render(def, seed, rate)` turns a sound definition (engine/audio/dsp/voice.ts) into a `Float32Array` of mono samples, and `soundHash` digests one, so every sound is code, renders in Node, and checks by its hash.
+  - Exports: `DEFAULT_RATE`, `render`, `RENDER_CODES`, `soundHash`
+  - Tests: [`engine/audio/dsp/render.test.ts`](../engine/audio/dsp/render.test.ts), [`tests/e2e/audio-dsp.spec.ts`](../tests/e2e/audio-dsp.spec.ts)
+- [`synth.ts`](../engine/audio/dsp/synth.ts): One voice rendered into samples (PLAN.md WP 9.1): the pitch path (an exponential sweep, the arpeggio's steps, vibrato), the source (a tonal oscillator with optional FM, seeded white noise, or a Karplus–Strong pluck), the filter, the envelope and the echo, in that order, added into the sound's buffer at the voice's start.
+  - Exports: `renderVoice`, `voiceEnd`, `voiceSamples`
+  - Tests: [`engine/audio/dsp/render.test.ts`](../engine/audio/dsp/render.test.ts)
+- [`voice.ts`](../engine/audio/dsp/voice.ts): A sound definition and its checks (PLAN.md WP 9.1; doctrines: Assets, Agent-operable): a sound is plain data, one voice or a list of voices played together, in the source chip synth's words (`wave`, `freq`, `to`, `dur`, `vol`, `attack`, `hold`, `arp`, `step`, `loop`, `vib`, `filter`, `q`), so its effects, drums and songs copy over as they are (WP 9.2), plus ADSR (`decay`, `sustain`, `release`), a start time `at`, an explicit filter, `fm`, `pluck` and a `delay` echo.
+  - Exports: `DelaySpec`, `FilterSpec`, `FmSpec`, `MAX_SECONDS`, `normalizeSound`, `NormalVoice`, `noteFreq`, `Pitch`, `PluckSpec`, `SoundDef`, `Voice`, `VOICE_CODES`, `Wave`, `WAVES`
+  - Tests: [`engine/audio/dsp/render.test.ts`](../engine/audio/dsp/render.test.ts)
 
 ## engine/core
 
@@ -95,6 +220,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`members.ts`](../engine/dev/members.ts): The registry kind `inspectorMember` (PLAN.md §8.3, §5.8's one tool table, WP 1.6): what an inspector member is (a help line, its arguments as schema fields, its implementation), the checks each one passes when defined, and the signatures and help lines made from them.
   - Exports: `defineMember`, `helpText`, `InspectorHost`, `Member`, `memberKind`, `MemberSpec`, `recordedRun`, `RecordedRun`, `signatureOf`, `WorldReads`
   - Tests: [`engine/dev/inspector.test.ts`](../engine/dev/inspector.test.ts)
+- [`overlay.ts`](../engine/dev/overlay.ts): The error overlay (PLAN.md §8.3's "ready or error", WP 2.7): what a page shows while it starts and when it fails, as page text over the canvas, since whoever opens a deployed page sees the page, not its console (shardfall:web/index.html:34-40, 62-65).
+  - Exports: `createOverlay`, `Overlay`, `OverlayRecord`
+  - Tests: [`engine/dev/overlay.test.ts`](../engine/dev/overlay.test.ts)
 
 ## engine/gfx
 
@@ -113,15 +241,23 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`pipelines.ts`](../engine/gfx/pipelines.ts): The public pipeline counter (PLAN.md §6.7, §8.7, I-18, Appendix B): how many GPU pipelines and shader modules the renderer has built, so "0 pipelines built after warm-up" is a number tests assert, never a hope.
   - Exports: `advanceFrame`, `checkPinned`, `countPipelines`, `PINNED_REVISION`, `PipelineCount`, `PipelineCounter`, `PIPELINES_CODES`
   - Tests: [`engine/gfx/pipelines.test.ts`](../engine/gfx/pipelines.test.ts), [`tests/e2e/renderer.spec.ts`](../tests/e2e/renderer.spec.ts)
+- [`quality.ts`](../engine/gfx/quality.ts): Quality tiers, the defaults for phones (PLAN.md WP 3.12, ADR-0021: built, not tested): the view setting `quality` (`auto`, `low`, `medium` or `high`) and what each tier turns off.
+  - Exports: `QUALITY_SETTING_VALUES`, `QUALITY_SETTINGS`, `qualityBudget`, `QualityBudget`, `QualitySetting`, `QualityTier`, `resolveQuality`
 - [`renderer.ts`](../engine/gfx/renderer.ts): The renderer (PLAN.md §6.7, WP 0.8 then WP 2.1): WebGPU or nothing, then everything WebGPU offers.
   - Exports: `createRenderer`, `FRAME_CODES`, `FrameReport`, `FrameView`, `Gfx`, `GFX_CODES`, `GfxCode`, `GfxError`, `GfxInfo`, `GfxOptions`, `GfxStats`, `requestWebGPU`
   - Tests: [`engine/gfx/renderer.test.ts`](../engine/gfx/renderer.test.ts), [`tests/e2e/hello.spec.ts`](../tests/e2e/hello.spec.ts), [`tests/e2e/renderer.spec.ts`](../tests/e2e/renderer.spec.ts)
 - [`resolution.ts`](../engine/gfx/resolution.ts): Resolution modes (PLAN.md WP 2.1): how many pixels the renderer draws for the canvas's size on screen, from the view setting `gfx.resolution`.
-  - Exports: `createResolution`, `Fit`, `fitResolution`, `MAX_PIXEL_RATIO`, `PIXEL_LINES`, `Resolution`, `RESOLUTION_MODES`, `RESOLUTION_SETTINGS`, `ResolutionMode`, `ResolutionOptions`, `Size`
+  - Exports: `createResolution`, `Fit`, `fitResolution`, `keepWidth`, `MAX_PIXEL_RATIO`, `MAX_PORTRAIT_FOV`, `PIXEL_LINES`, `PixelCap`, `portraitFov`, `Resolution`, `RESOLUTION_MODES`, `RESOLUTION_SETTINGS`, `ResolutionMode`, `ResolutionOptions`, `Size`
   - Tests: [`engine/gfx/resolution.test.ts`](../engine/gfx/resolution.test.ts)
+- [`sceneDump.ts`](../engine/gfx/sceneDump.ts): The scene as text (PLAN.md §8.3's `scene.dump`; doctrines: Agent-operable, Verifiable): `dumpScene(root, { depth, filter })` writes a three.js object tree one object a line, indented by depth, so an agent reads what a page draws without seeing it, in Node as in a page (the stage needs no GPU, engine/gfx/stage.ts).
+  - Exports: `DumpOptions`, `dumpScene`
+  - Tests: [`engine/gfx/sceneDump.test.ts`](../engine/gfx/sceneDump.test.ts)
 - [`shot.ts`](../engine/gfx/shot.ts): Shots (PLAN.md §8.5, §8.3's `shot`): what the frame draws, read back from the GPU as numbers and text, never as a committed image.
   - Exports: `Readback`, `readPixels`, `rowBytes`, `shot`, `SHOT_CODES`, `shotForJson`, `ShotGfx`, `ShotJson`, `ShotOptions`, `ShotResult`, `stripRowPadding`, `toBase64`
   - Tests: [`engine/gfx/shot.test.ts`](../engine/gfx/shot.test.ts), [`tests/e2e/shot.spec.ts`](../tests/e2e/shot.spec.ts)
+- [`stage.ts`](../engine/gfx/stage.ts): The stage (PLAN.md §6.4's view, §9.0, WP 2.7): a running scene's presentation graph, built from plain data with no GPU, so a page draws it and a headless engine dumps it (`createHeadless({ view: true })`).
+  - Exports: `createStage`, `placeableKinds`, `placeOf`, `splitRuns`, `Stage`, `StageOptions`, `StandInPlace`
+  - Tests: [`engine/gfx/stage.test.ts`](../engine/gfx/stage.test.ts)
 - [`thumbnail.ts`](../engine/gfx/thumbnail.ts): Text thumbnails (PLAN.md §8.5): a frame as a 48 × 27 grid of hex colours, kept as JSON (tests/baselines/thumbs/<case>.json) instead of an image (doctrine: Assets), compared per cell with a tolerance, and read as a coarse map.
   - Exports: `compareThumbnails`, `MAP_SYMBOLS`, `STRAY`, `THUMB_HEIGHT`, `THUMB_WIDTH`, `thumbnail`, `Thumbnail`, `ThumbnailDiff`, `ThumbnailIds`
   - Tests: [`engine/gfx/thumbnail.test.ts`](../engine/gfx/thumbnail.test.ts)
@@ -134,9 +270,15 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`boost.ts`](../engine/gfx/cameras/boost.ts): The height boost (PLAN.md WP 2.5; doctrine: Quality under the hood): the 2D engine's `zBoost`, the classic pixel-art cheat that draws heights taller than they are so walls and characters read, done in the projection matrix only.
   - Exports: `applyBoost`, `boost`, `Boosted`, `BoostedOrthographicCamera`, `BoostedPerspectiveCamera`, `isBoosted`
   - Tests: [`engine/gfx/cameras/boost.test.ts`](../engine/gfx/cameras/boost.test.ts)
+- [`chase.ts`](../engine/gfx/cameras/chase.ts): The chase camera (PLAN.md WP 3.9, §6.1; doctrine: Common ground, Quality under the hood): a perspective camera on a spring arm behind and above the hero, turned by the devices, that slides in front of a wall rather than through it, as Unreal's spring arm and Cinemachine's third-person follow do.
+  - Exports: `CHASE_DEFAULTS`, `CHASE_HEIGHT`, `CHASE_LAG`, `CHASE_LIMITS`, `CHASE_RADIUS`, `CHASE_RETURN`, `CHASE_SKIN`, `CHASE_TURN_SPEED`, `ChaseInput`, `ChaseOptions`, `chasePose`, `chaseSpec`, `ChaseSpec`, `chaseState`, `ChaseState`, `codeDegrees`, `codeNumber`, `CodePart`, `createChaseCamera`, `describeChase`, `followCamera`, `FollowCamera`, `FollowSteps`, `formatChaseCode`, `parseChaseCode`, `QueryGroups`, `readCode`, `stepChase`
+  - Tests: [`engine/gfx/cameras/chase.test.ts`](../engine/gfx/cameras/chase.test.ts)
 - [`codes.ts`](../engine/gfx/cameras/codes.ts): Camera codes (PLAN.md WP 2.5, §8.3; doctrine: Agent-operable): a camera as one short text that a link, a command (`x shot --cam`) or `__engine.camera.set(code)` carries, and the words that say what a camera shows.
   - Exports: `CAMERA_3D`, `CAMERA_CODES`, `CameraSpec`, `CameraType`, `describeCamera`, `formatCameraCode`, `FreeSpec`, `OrbitSpec`, `parseCameraCode`, `VIEW_LABELS`, `VIEW_NAMES`, `ViewName`, `ViewSpec`
   - Tests: [`engine/gfx/cameras/codes.test.ts`](../engine/gfx/cameras/codes.test.ts)
+- [`first.ts`](../engine/gfx/cameras/first.ts): The first-person camera (PLAN.md WP 3.9; doctrine: Common ground): the hero's eyes, turned by the devices, and the near-body culling that hides his own body from them.
+  - Exports: `createFirstCamera`, `CullOptions`, `describeFirst`, `eyePoint`, `FIRST_BOB_LAG`, `FIRST_DEFAULTS`, `FIRST_EYE_HEIGHT`, `FIRST_NEAR_BODY`, `FIRST_SHOWN`, `FIRST_TURN_SPEED`, `FirstInput`, `FirstOptions`, `firstPose`, `firstSpec`, `FirstSpec`, `firstState`, `FirstState`, `formatFirstCode`, `nearBodyCull`, `parseFirstCode`, `stepFirst`
+  - Tests: [`engine/gfx/cameras/first.test.ts`](../engine/gfx/cameras/first.test.ts)
 - [`fixed.ts`](../engine/gfx/cameras/fixed.ts): The fixed camera (PLAN.md WP 2.5): a perspective camera that stays where it is put, the prototype's "Fix" (F): the hero is the devices' again while the camera watches.
   - Exports: `createFixedCamera`, `FixedOptions`, `fixedPose`, `fixedSpec`, `fixedState`, `FixedState`, `stepFixed`
   - Tests: [`engine/gfx/cameras/fixed.test.ts`](../engine/gfx/cameras/fixed.test.ts)
@@ -155,6 +297,66 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`presets.ts`](../engine/gfx/cameras/presets.ts): The classic views (PLAN.md WP 2.5; doctrine: Common ground): the 2D engine's isometric, three-quarter, top-down, brawler and side views, and custom ones, as 3D cameras that follow a point with the 2D camera's lag.
   - Exports: `createViewCamera`, `ORTHO_DISTANCE`, `ORTHO_FAR`, `stepView`, `stepZoom`, `VIEW_FOV`, `VIEW_LAG`, `VIEW_LIFT`, `VIEW_PRESETS`, `VIEW_ZOOMS`, `ViewOptions`, `viewPose`, `ViewPreset`, `viewSpec`, `viewState`, `ViewState`
   - Tests: [`engine/gfx/cameras/presets.test.ts`](../engine/gfx/cameras/presets.test.ts)
+- [`rail.ts`](../engine/gfx/cameras/rail.ts): The depth rail (PLAN.md WP 3.9; doctrine: Common ground): side scrolling with depth, a perspective camera on a rail beside the hero, the 2D engine's Mode 7 side view.
+  - Exports: `createRailCamera`, `describeRail`, `formatRailCode`, `parseRailCode`, `RAIL_DEFAULTS`, `RAIL_FOV`, `RAIL_HEIGHT`, `RAIL_LAG`, `RAIL_START`, `RAIL_TILT`, `railPose`, `railSpec`, `RailSpec`, `railState`, `RailState`, `stepRail`
+  - Tests: [`engine/gfx/cameras/rail.test.ts`](../engine/gfx/cameras/rail.test.ts)
+
+## engine/gfx/geometry
+
+- [`box.ts`](../engine/gfx/geometry/box.ts): Boxes (PLAN.md WP 2.4): `boxGeometry({ width, height, depth })`, three.js's `BoxGeometry` with two changes the level meshes and props need: it stands on the ground (its bottom at y 0, centred in X and Z), and its UVs are in metres, so a texture keeps its density (16 texels per metre for the v1 textures) on every face whatever the box's size, instead of being stretched over each face.
+  - Exports: `boxGeometry`, `BoxOptions`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`builtins.ts`](../engine/gfx/geometry/builtins.ts): The geometry kit's built-in entries (PLAN.md WP 2.4): one `geometry` entry per builder of engine/gfx/geometry/, its parameters the builder's options as schema fields with the builder's defaults, and a vertex budget a little above what the defaults build.
+  - Exports: `BUILT_IN_GEOMETRY`
+  - Tests: [`engine/gfx/geometry/geometry.test.ts`](../engine/gfx/geometry/geometry.test.ts)
+- [`checks.ts`](../engine/gfx/geometry/checks.ts): The geometry kit's codes and argument checks (PLAN.md WP 2.4): a builder given sizes it cannot build (a size of 0, a limb shorter than the difference of its radii, a ring whose inner radius is not below its outer) throws `GFX_BAD_GEOMETRY`, naming the shape, the problem and what to pass, before it writes a vertex.
+  - Exports: `assertSegments`, `assertSizes`, `badGeometry`, `GEOMETRY_CODES`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`frustum.ts`](../engine/gfx/geometry/frustum.ts): Frustums, prisms and cylinders (PLAN.md WP 2.4): `frustumGeometry({ radiusBottom, radiusTop, height, radialSegments, smooth })`, three.js's `CylinderGeometry` standing on the ground, with UVs in metres: an octagonal dais, a brazier's bowl, a barrel, a cone (`radiusTop` 0), a well.
+  - Exports: `frustumGeometry`, `FrustumOptions`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`geometry.ts`](../engine/gfx/geometry/geometry.ts): The geometry registry (PLAN.md WP 2.4, §6.6, I-29): the registry kind `geometry`, one entry per shape a prop, a level or a body names by id (§6.1: `world` names geometry by id, `gfx` builds it).
+  - Exports: `buildGeometry`, `defineGeometry`, `GEOMETRY_FIELDS`, `GeometryEntry`, `geometryKind`, `GeometryRef`, `GeometrySpec`, `getGeometry`
+  - Tests: [`engine/gfx/geometry/geometry.test.ts`](../engine/gfx/geometry/geometry.test.ts)
+- [`groups.ts`](../engine/gfx/geometry/groups.ts): Draw groups and merging (PLAN.md WP 2.4): `sidesThenTops(geometry)` sorts a geometry's triangles into two draw groups, its sides (material 0) then its tops and bottoms (material 1), so a box, a pillar or a wall drawn with a face material and a top material costs two draw calls instead of one per face; `mergeGeometries` joins indexed geometries with the same attributes into one.
+  - Exports: `mergeGeometries`, `sidesThenTops`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`inspect.ts`](../engine/gfx/geometry/inspect.ts): Geometry measured as numbers (PLAN.md WP 2.4, §8.6, I-29): `inspectGeometry(geometry)` counts what the `geo` QA family (tools/qa/geo.ts) and the kit's tests check, in Node: vertices and triangles, missing attributes (`position`, `normal`, `uv`), index entries out of range, NaN or infinite numbers, degenerate triangles (an area below 1e-10 m²: a sliver no pixel shows, which breaks normals and physics hulls), normals that are not of length 1 (within 1e-3), triangles wound against their own normals (a corner's normal pointing away from the side the winding faces: the face is culled where it should show, or lit from behind), and the bounds.
+  - Exports: `DEGENERATE_AREA`, `GeometryReport`, `inspectGeometry`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`limb.ts`](../engine/gfx/geometry/limb.ts): Tapered limbs (PLAN.md WP 2.4): `limbGeometry({ length, radiusStart, radiusEnd })`, the smooth hull of two spheres, one of `radiusStart` at the origin (the joint) and one of `radiusEnd` at `length` up +Y (the next joint): an upper arm, a thigh, a finger, a tail segment.
+  - Exports: `limbGeometry`, `LimbOptions`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`pillar.ts`](../engine/gfx/geometry/pillar.ts): Pillar parts (PLAN.md WP 2.4): the prototype's pillar, a plinth, a shaft of dressed stone and a capital of two slabs, as sizes (`pillarParts`) and as one geometry (`pillarGeometry`: the parts' boxes merged, sides then tops, so a pillar is two draw calls however many stand).
+  - Exports: `pillarGeometry`, `PillarOptions`, `PillarPart`, `pillarParts`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`ramp.ts`](../engine/gfx/geometry/ramp.ts): Ramps and wedges (PLAN.md WP 2.4): `rampGeometry({ width, depth, low, high })`, a block standing on the ground whose top slopes from `low` at its -Z end up to `high` at its +Z end, so walking forward (+Z, the way characters face) climbs it.
+  - Exports: `rampGeometry`, `RampOptions`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`ring.ts`](../engine/gfx/geometry/ring.ts): Rings (PLAN.md WP 2.4): `ringGeometry({ innerRadius, outerRadius, height, radialSegments })`, a ring lying on the ground around the Y axis.
+  - Exports: `ringGeometry`, `RingOptions`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`roundedBox.ts`](../engine/gfx/geometry/roundedBox.ts): Rounded boxes (PLAN.md WP 2.4): `roundedBoxGeometry({ width, height, depth, radius, segments })`, a box whose edges and corners are rounded with `radius`, as three.js's `RoundedBoxGeometry` addon draws one, standing on the ground like every shape of the kit (its bottom at y 0, centred in X and Z), with UVs in metres and smooth normals.
+  - Exports: `roundedBoxGeometry`, `RoundedBoxOptions`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+- [`writer.ts`](../engine/gfx/geometry/writer.ts): The geometry writer (PLAN.md WP 2.4): the one place the kit's builders (engine/gfx/geometry/) turn vertices and triangles into a three.js `BufferGeometry` with `position`, `normal` and `uv` and an index.
+  - Exports: `createWriter`, `cross`, `dot`, `normalize`, `ProfilePoint`, `Vec3`, `Writer`
+  - Tests: [`engine/gfx/geometry/kit.test.ts`](../engine/gfx/geometry/kit.test.ts)
+
+## engine/gfx/level
+
+- [`cells.ts`](../engine/gfx/level/cells.ts): Level cells and the way they face out (PLAN.md WP 2.4): one cell per piece of a block mesh (a wall tile, a pillar's footprint), with its tiles, its centre and its outward direction, the way it faces out of the room, away from the open floor beside it.
+  - Exports: `LevelCell`, `levelCells`
+  - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts)
+- [`meshes.ts`](../engine/gfx/level/meshes.ts): The level meshes (PLAN.md WP 2.4, §6.1 "data descriptors"): `createLevelMeshes(level, { materials })` draws a compiled level (engine/world/level/compile.ts) from its mesh descriptors: one mesh per descriptor, built by the recipe its glyphs name (engine/gfx/level/recipes.ts).
+  - Exports: `createLevelMeshes`, `LEVEL_MESH_CODES`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`
+  - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`tests/e2e/level-meshes.spec.ts`](../tests/e2e/level-meshes.spec.ts)
+- [`recipes.ts`](../engine/gfx/level/recipes.ts): Level mesh recipes (PLAN.md WP 2.4): how the level meshes (engine/gfx/level/meshes.ts) draw the tiles of a glyph whose `mesh` names a recipe (engine/world/level/legend.ts).
+  - Exports: `FALLBACK_RECIPE`, `LEVEL_RECIPES`, `LevelRecipe`, `LevelShape`
+  - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts)
+- [`surface.ts`](../engine/gfx/level/surface.ts): Level surfaces (PLAN.md WP 2.4): `surfaceGeometry(tile, pieces, y)` lays one flat surface over a level's pieces at height `y`, facing up: the floor.
+  - Exports: `surfaceGeometry`
+  - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts)
 
 ## engine/gfx/materials
 
@@ -222,17 +424,88 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/input
 
+- [`actionMaps.ts`](../engine/input/actionMaps.ts): Action maps and presets (PLAN.md WP 3.3, I-24; doctrine: Common ground): the registry kind `actionMap`, a set of named actions with the physical codes bound to each (engine/input/codes.ts), as Unity's action maps and Godot's InputMap hold them; the presets; and the system layer, which no player rebinds.
+  - Exports: `ActionMap`, `actionMapKind`, `ActionMapSpec`, `defineActionMap`, `getActionMap`, `listActionMaps`, `PRESETS`, `RESERVED_CODES`, `SYSTEM_ACTIONS`
+  - Tests: [`engine/input/bindings.test.ts`](../engine/input/bindings.test.ts)
+- [`bindings.ts`](../engine/input/bindings.ts): Bindings (PLAN.md WP 3.3, I-24; doctrine: Agent-operable): an action map (engine/input/actionMaps.ts) with the player's changes on top, as engine data.
+  - Exports: `Bindings`, `BINDINGS_CODES`, `BINDINGS_FORMAT`, `BindingsFile`, `BindingsOptions`, `BindingsStorage`, `createBindings`, `pickLabel`, `RebindResult`
+  - Tests: [`engine/input/bindings.test.ts`](../engine/input/bindings.test.ts)
+- [`codes.ts`](../engine/input/codes.ts): The physical input codes (PLAN.md WP 3.3, I-24; doctrine: Common ground): what a binding names, and the label a prompt shows for it.
+  - Exports: `codeLabel`, `DeviceKind`, `deviceOf`, `InputSink`, `isCode`, `LabelOptions`, `MOUSE_BUTTONS`, `PAD_BUTTONS`, `PAD_STICKS`, `padStyle`, `PadStyle`, `readKeyboardLayout`, `TOUCH_PREFIX`, `touchCode`, `WHEEL_CODES`
+  - Tests: [`engine/input/bindings.test.ts`](../engine/input/bindings.test.ts)
+- [`input.ts`](../engine/input/input.ts): The input (PLAN.md §6.4, WP 3.3, I-24; doctrine: Reproducible): the devices of a page (keyboard, mouse, gamepads, touch, the virtual device) turned into one step's intents through bindings (engine/input/bindings.ts).
+  - Exports: `CameraInputSample`, `CameraLike`, `createInput`, `Input`, `InputOptions`
+  - Tests: [`engine/input/input.test.ts`](../engine/input/input.test.ts)
 - [`intents.ts`](../engine/input/intents.ts): The intents vocabulary (PLAN.md §6.4, §6.5 item 3, §8.4, WP 1.5; doctrine: Reproducible): everything the sim reads from outside arrives once per step as plain data, recorded by replays.
-  - Exports: `applyIntents`, `CustomIntentKey`, `diffIntents`, `fromCamera`, `held`, `INTENT_CODES`, `INTENT_KEYS`, `IntentChanges`, `IntentKey`, `Intents`, `IntentValue`, `NO_INTENTS`, `normalizeIntents`, `pressed`
-  - Tests: [`engine/input/intents.test.ts`](../engine/input/intents.test.ts)
+  - Exports: `applyIntents`, `BUFFER_STEPS`, `buffered`, `consume`, `consumeAll`, `createInputBuffer`, `CustomIntentKey`, `diffIntents`, `fromCamera`, `held`, `InputBuffer`, `INTENT_CODES`, `INTENT_KEYS`, `IntentChanges`, `IntentKey`, `Intents`, `IntentValue`, `NO_INTENTS`, `normalizeIntents`, `pressed`, `released`, `REPEAT_DELAY`, `REPEAT_RATE`, `repeated`, `updateInputBuffer`
+  - Tests: [`engine/input/buffer.test.ts`](../engine/input/buffer.test.ts), [`engine/input/intents.test.ts`](../engine/input/intents.test.ts)
+- [`script.ts`](../engine/input/script.ts): The input script grammar (PLAN.md WP 3.3, §5.8; doctrine: Agent-operable): shardfall's scripted gamepad, one line per stretch of time, `<count> key=value key=value …` with `#` comments.
+  - Exports: `names`, `numbers`, `parseScript`, `SCRIPT_CODES`, `ScriptLine`, `ValueReader`
+  - Tests: [`engine/input/devices/virtual.test.ts`](../engine/input/devices/virtual.test.ts)
+
+## engine/input/devices
+
+- [`gamepad.ts`](../engine/input/devices/gamepad.ts): The gamepad device (PLAN.md WP 3.3, I-24): polls the Gamepad API once per sample and writes its buttons and sticks as codes (engine/input/codes.ts).
+  - Exports: `createGamepadDevice`, `DEADZONE`, `GamepadDevice`, `GamepadLike`, `GamepadSource`, `radialDeadzone`
+  - Tests: [`engine/input/devices/devices.test.ts`](../engine/input/devices/devices.test.ts)
+- [`inspector.ts`](../engine/input/devices/inspector.ts): `__engine.input` (PLAN.md §8.3, WP 3.3; doctrine: Agent-operable): the inspector members that drive the virtual device (engine/input/devices/virtual.ts) and record the run, registered from this file as entries of the registry kind `inspectorMember` (engine/dev/members.ts), so no layer imports `dev/` and no other WP edits the inspector.
+  - Exports: `connectVirtualDevice`, `virtualDeviceOf`
+  - Tests: [`engine/input/devices/virtual.test.ts`](../engine/input/devices/virtual.test.ts)
+- [`keyboard.ts`](../engine/input/devices/keyboard.ts): The keyboard device (PLAN.md WP 3.3, I-24): key events → codes by `KeyboardEvent.code`, the physical key, so bindings hold on every layout (engine/input/codes.ts).
+  - Exports: `attachKeyboard`, `isTyping`
+  - Tests: [`engine/input/devices/devices.test.ts`](../engine/input/devices/devices.test.ts)
+- [`mouse.ts`](../engine/input/devices/mouse.ts): The mouse device (PLAN.md WP 3.3, I-24): buttons over the game's element as codes (`MouseLeft`…), the wheel as taps (`WheelUp`, `WheelDown`) and zoom steps, the pointer's position for aiming, and pointer lock for mouse look: while the element holds the lock, movement turns the view by `lookSpeed` radians per pixel.
+  - Exports: `attachMouse`, `LOOK_SPEED`, `MouseDevice`, `MouseTargets`
+  - Tests: [`engine/input/devices/devices.test.ts`](../engine/input/devices/devices.test.ts)
+- [`padScript.ts`](../engine/input/devices/padScript.ts): The scripted gamepad (PLAN.md WP 3.3, §5.8; doctrine: Verifiable without a display): a stand-in for a real pad that tests plug into any slot, driven by shardfall's script format, one line per stretch of frames: `<frames> [left=x,y] [right=x,y] [lt=v] [rt=v] [hold=South,North] [tap=Up]`, `#` comments (engine/input/script.ts).
+  - Exports: `createScriptedGamepad`, `parsePadScript`, `ScriptedGamepad`
+  - Tests: [`engine/input/devices/devices.test.ts`](../engine/input/devices/devices.test.ts)
+- [`touch.ts`](../engine/input/devices/touch.ts): The touch device (PLAN.md WP 3.12, ADR-0021: built, not tested): fingers on a phone or tablet, read from pointer events whose `pointerType` is not `mouse`, written into the input sink like any device.
+  - Exports: `attachTouch`, `BUTTON_SLOP`, `HOLD_FRAMES`, `HOLD_TIME`, `MOUSE_SLOP`, `STICK_DEAD`, `STICK_FULL`, `STICK_RADIUS`, `stickAxis`, `StickView`, `TAP_SLOP`, `TAP_TIME`, `TOUCH_SETTINGS`, `TouchDevice`, `TouchOptions`, `TouchSetting`, `TouchTargets`
+- [`virtual.ts`](../engine/input/devices/virtual.ts): The virtual device (PLAN.md WP 3.3, §8.3; doctrine: Agent-operable): input made by code instead of hands, the one `__engine.input` drives (engine/input/devices/inspector.ts).
+  - Exports: `createVirtualDevice`, `playScript`, `VIRTUAL_CODES`, `VirtualDevice`, `virtualIntents`, `VirtualSample`
+  - Tests: [`engine/input/devices/virtual.test.ts`](../engine/input/devices/virtual.test.ts)
+
+## engine/physics
+
+- [`capture.ts`](../engine/physics/capture.ts): The physics part of the sim's state (PLAN.md WP 3.1, §6.5 items 5–7; doctrine: Reproducible): how bodies are named (ids from Rapier's handles), what the hash covers, and the capture that restores the world exactly.
+  - Exports: `bodyId`, `bodyIds`, `CAPTURE_CODES`, `capturePhysics`, `handleOf`, `PhysicsCapture`, `physicsState`, `rapierBuild`, `restorePhysics`, `STATE_STRIDE`
+  - Tests: [`engine/physics/capture.test.ts`](../engine/physics/capture.test.ts)
+- [`character.ts`](../engine/physics/character.ts): The character controller (PLAN.md WP 3.2, §4.8, §5.8; doctrines: Common ground, Quality under the hood): a capsule on a kinematic body moved by Rapier's kinematic character controller, with an action game's movement on top.
+  - Exports: `addCharacter`, `Character`, `CHARACTER_FIELDS`, `CHARACTER_SETTINGS`, `CHARACTER_STATE_FIELDS`, `CharacterHit`, `CharacterInput`, `CharacterMove`, `CharacterState`, `CharacterStep`, `createCharacter`, `createCharacterState`, `feetOf`, `isWalkable`, `isWall`, `moveCharacter`, `MoveOptions`, `stepCharacter`, `StepOptions`
+  - Tests: [`engine/physics/character.test.ts`](../engine/physics/character.test.ts)
+- [`feel.ts`](../engine/physics/feel.ts): The feel (PLAN.md WP 3.2, §5.8; doctrine: Agent-operable): how a character's intents become its motion, and the meter that measures how it handles, so agents tune feel by numbers instead of by eye.
+  - Exports: `createFeelMeter`, `FeelMeter`, `FeelReport`, `FeelSample`, `settle`, `steer`, `Steering`, `updateFeelMeter`
+  - Tests: [`engine/physics/feel.test.ts`](../engine/physics/feel.test.ts)
+- [`groups.ts`](../engine/physics/groups.ts): Collision groups (PLAN.md WP 3.1, §5.1): the one table of what touches what, by name.
+  - Exports: `COLLISION_GROUPS`, `GROUP_CODES`, `GROUP_NAMES`, `groupBits`, `GroupName`, `queryBits`, `touches`
+  - Tests: [`engine/physics/groups.test.ts`](../engine/physics/groups.test.ts)
+- [`params.ts`](../engine/physics/params.ts): The physics parameters (PLAN.md WP 3.1, §6.5 item 5; doctrine: Reproducible): the one table of Rapier's integration parameters, pinned rather than left to the release's defaults, and the world's gravity as a setting.
+  - Exports: `INTEGRATION_PARAMETERS`, `PHYSICS_SETTINGS`
+  - Tests: [`engine/physics/world.test.ts`](../engine/physics/world.test.ts)
+- [`queries.ts`](../engine/physics/queries.ts): Queries (PLAN.md WP 3.1, §6.1; doctrine: Common ground): raycasts, shape casts, overlaps and the ground `probe(x, z)` over a Rapier world, in plain terms, and the plain-data shapes and vectors that bodies and queries share.
+  - Exports: `check`, `Ground`, `Hit`, `hullPoints`, `HullShape`, `overlap`, `OverlapOptions`, `probe`, `ProbeOptions`, `quat`, `QuatLike`, `QUERY_CODES`, `QueryOptions`, `raycast`, `RayOptions`, `Shape`, `shapeArgs`, `shapeCast`, `ShapeCastOptions`, `vec`, `Vec3Like`
+  - Tests: [`engine/physics/queries.test.ts`](../engine/physics/queries.test.ts)
+- [`world.ts`](../engine/physics/world.ts): The physics world (PLAN.md WP 3.1, §6.1, §6.5 items 4–7; doctrines: Reproducible, Quality under the hood): Rapier behind plain terms.
+  - Exports: `attachPhysics`, `bindPhysics`, `BodyChange`, `BodySpec`, `BodyState`, `BodyType`, `ColliderSpec`, `createPhysics`, `Physics`, `physicsOf`, `PhysicsStepper`, `rapierOf`, `scenePhysics`, `WORLD_CODES`
+  - Tests: [`engine/physics/world.test.ts`](../engine/physics/world.test.ts)
 
 ## engine/sim
 
+- [`actors.ts`](../engine/sim/actors.ts): Actors (PLAN.md WP 3.2; WP 3.7 adds the animator): entities that walk, jump and dash through the character controller (engine/physics/character.ts).
+  - Exports: `ActorComponent`, `ActorComponents`, `ActorSpec`, `defineActorKinds`, `FeelOptions`, `measureFeel`, `removeActor`, `spawnActor`
+  - Tests: [`engine/sim/actors.test.ts`](../engine/sim/actors.test.ts)
 - [`capture.ts`](../engine/sim/capture.ts): Capture and restore (PLAN.md §6.5 item 7, WP 1.4; doctrine: Reproducible): `capture()` copies the whole sim at a step boundary, entities, components, timers, settings except `view` ones, the seed, the step rate and every sim RNG state, plus the physics hook's part (Rapier's snapshot, WP 3.1), and `restore()` puts it back so the next steps continue exactly like the uninterrupted run.
   - Exports: `CAPTURE_CODES`, `CAPTURE_FORMAT`, `CaptureSource`, `cloneData`, `makeCapture`, `readCapture`, `Restoration`, `RestoreTarget`, `ScheduleData`, `scheduleOf`, `WorldCapture`
   - Tests: [`engine/sim/capture.test.ts`](../engine/sim/capture.test.ts)
 - [`entities.ts`](../engine/sim/entities.ts): The shape of an entity's data (PLAN.md §6.5 items 4, 6 and 7, WP 1.4; doctrine: Reproducible): the rules the hash (engine/sim/state.ts), captures and restores (engine/sim/capture.ts) and the world (engine/sim/world.ts) share, so a restored entity is the live one, field for field and in the same order (ADR-0006 amendment 3).
   - Exports: `capturable`, `componentNames`, `eachField`, `ENTITY_CODES`, `LiveEntity`, `makeEntity`, `notData`, `NotData`, `placeComponent`
+- [`levelBodies.ts`](../engine/sim/levelBodies.ts): Level bodies (PLAN.md WP 3.1, WP 4.2, §5.1 "colliders from text"): a compiled level's collider descriptors (engine/world/level/colliders.ts) become one fixed body in the physics world, so the level is solid exactly where its text says, and as high as its glyphs stand.
+  - Exports: `addLevelBodies`, `LEVEL_FRICTION`
+  - Tests: [`engine/sim/levelBodies.test.ts`](../engine/sim/levelBodies.test.ts)
+- [`queryView.ts`](../engine/sim/queryView.ts): The read-only `QueryView` (PLAN.md WP 3.1, §6.1 "reaching physics from presentation"): the physics queries, and nothing that changes the world, for code that must not change play.
+  - Exports: `queryView`, `QueryView`, `queryViewOf`
+  - Tests: [`engine/sim/queryView.test.ts`](../engine/sim/queryView.test.ts)
 - [`replay.ts`](../engine/sim/replay.ts): Replays (PLAN.md §8.4, §6.5 items 3 and 6–9, WP 1.5; doctrine: Reproducible): the readable replay format and its checks, the player that `x replay` and tests/pages/replay.html run, and the comparison of runs that `x replay` judges and bisects with.
   - Exports: `CHECKPOINT_STEPS`, `checkpointsOf`, `checkReplay`, `firstDifference`, `InputChange`, `InputEntry`, `judgeRuns`, `Parting`, `partingOf`, `PLATFORM_KEYS`, `Playback`, `PlayOptions`, `playReplay`, `Replay`, `REPLAY_CODES`, `REPLAY_FORMAT`, `REPLAY_KEYS`, `StepView`, `Verdict`
   - Tests: [`engine/sim/replay.test.ts`](../engine/sim/replay.test.ts)
@@ -249,25 +522,34 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createWorld`, `SimRng`, `World`, `WORLD_CODES`, `WorldEvents`, `WorldOptions`, `WorldTimers`
   - Tests: [`engine/sim/world.test.ts`](../engine/sim/world.test.ts)
 
+## engine/ui
+
+- [`chrome.ts`](../engine/ui/chrome.ts): The page in touch mode (PLAN.md WP 3.12, ADR-0021: built, not tested): `setTouch(on)` puts the `touch` class on the page, which engine/ui/touch.css styles (no scrolling, overscroll, text selection or tap highlight; panels that start below the menu button and scroll; key hints, the keyboard guide and the dev stats hidden; HUD text scaled by `--touch-k`; touch targets at least 44 × 34 px).
+  - Exports: `Chrome`, `createChrome`, `TURN_HINT`
+- [`swipe.ts`](../engine/ui/swipe.ts): Swipe to dismiss (PLAN.md WP 3.12, ADR-0021: built, not tested): elements a page marks `data-swipe` (notices, banners, cards) follow a finger and fade as they go.
+  - Exports: `attachSwipes`, `SWIPE_DISTANCE`, `SWIPE_FLICK`, `SWIPE_FLICK_TIME`, `SWIPE_FLY`, `SWIPE_FLY_TIME`, `Swipes`
+- [`touch.ts`](../engine/ui/touch.ts): The touch controls' layer (PLAN.md WP 3.12, ADR-0021: built, not tested): HTML over the canvas that shows the floating stick while a thumb holds it, a fan of round buttons in the bottom right corner, and the menu button in the top right, as shardfall lays them out.
+  - Exports: `createTouchLayer`, `defineTouchLayout`, `getTouchLayout`, `TOUCH_SLOTS`, `TouchButtonSpec`, `TouchLayer`, `TouchLayerState`, `TouchLayout`, `touchLayoutKind`, `TouchLayoutSpec`, `touchScale`, `TouchSlot`
+
 ## engine/world/level
 
-- [`colliders.ts`](../engine/world/level/colliders.ts): Collider descriptors from a level's tiles (PLAN.md WP 2.2, §5.1 "colliders from text", §6.1 "data descriptors"): plain data saying which boxes the level bodies (WP 3.1, engine/sim/levelBodies.ts) make, with no Rapier here.
-  - Exports: `groundSlab`, `levelColliders`
+- [`colliders.ts`](../engine/world/level/colliders.ts): Collider descriptors from a level's tiles (PLAN.md WP 2.2, WP 4.2, §5.1 "colliders from text", §6.1 "data descriptors"): plain data saying which shapes the level bodies (WP 3.1, engine/sim/levelBodies.ts) make, with no Rapier here.
+  - Exports: `groundSlab`, `levelColliders`, `Slopes`
   - Tests: [`engine/world/level/compile.test.ts`](../engine/world/level/compile.test.ts)
-- [`compile.ts`](../engine/world/level/compile.ts): The level compiler (PLAN.md WP 2.2, §9.0, I-22; doctrines: Agent-accessible assets, Reproducible): a level's text and the legend (engine/world/level/glyph.ts) in, a `CompiledLevel` out (engine/world/level/types.ts): the map, the glyphs it uses, per-tile solid, walkable, floor and top grids, the ground slab, merged box colliders, mesh descriptors, spawn points and light spots.
+- [`compile.ts`](../engine/world/level/compile.ts): The level compiler (PLAN.md WP 2.2, WP 4.2, §9.0, I-22; doctrines: Agent-accessible assets, Reproducible): a level's text and the legend (engine/world/level/glyph.ts) in, a `CompiledLevel` out (engine/world/level/types.ts): the map, the glyphs it uses, per-tile characters and solid, walkable, floor and top grids, the ground slab, the colliders (merged boxes, hulls under ramps and daises, cylinders), the ramps and daises, mesh descriptors, spawn points and light spots.
   - Exports: `compileLevel`, `CompileOptions`, `levelName`
   - Tests: [`engine/world/level/compile.test.ts`](../engine/world/level/compile.test.ts)
-- [`glyph.ts`](../engine/world/level/glyph.ts): The legend registry (PLAN.md WP 2.2, §6.6, I-22): the registry kind `glyph`, one entry per character a level map may hold, saying what that character means: its floor and top heights, whether it is solid, its collider and mesh recipes, nav flags, a spawn point, a light spot, a surface tag and its footprint.
+- [`glyph.ts`](../engine/world/level/glyph.ts): The legend registry (PLAN.md WP 2.2, §6.6, I-22): the registry kind `glyph`, one entry per character a level map may hold, saying what that character means: its floor and top heights and how its floor runs (flat, a ramp, a dais), whether it is solid, its collider and mesh recipes, nav flags, a spawn point, a light spot, a surface tag and its footprint.
   - Exports: `defineGlyph`, `Glyph`, `GLYPH_FIELDS`, `glyphKind`, `GlyphSpec`, `legendOf`
   - Tests: [`engine/world/level/glyph.test.ts`](../engine/world/level/glyph.test.ts)
 - [`grid.ts`](../engine/world/level/grid.ts): A level's tile grid (PLAN.md WP 2.2): its size, its tile size and the glyph of each tile, as compile.ts hands it to the descriptor builders (colliders.ts, meshes.ts), with the two questions both ask: which glyphs it holds, in id order, and whether a tile holds one of some glyphs.
   - Exports: `byText`, `glyphsOf`, `holds`, `TileGrid`
   - Tests: [`engine/world/level/compile.test.ts`](../engine/world/level/compile.test.ts)
-- [`heights.ts`](../engine/world/level/heights.ts): Height and solid queries on a compiled level (PLAN.md WP 2.2, §5.1): `floorHeight(level, x, z)`, the walkable surface's height at a point (the prototype's `floorH`: where feet, spawns and nav stand), `topHeight`, the top of whatever stands there (`topH`: a wall's top over its tiles, for shots and particles), `solidAt` and `tileAt`.
-  - Exports: `floorHeight`, `solidAt`, `tileAt`, `topHeight`
+- [`heights.ts`](../engine/world/level/heights.ts): Height, solid and surface queries on a compiled level (PLAN.md WP 2.2, WP 4.2, §5.1): `floorHeight(level, x, z)`, the walkable surface's height at a point (the prototype's `floorH`: where feet, spawns and nav stand), `topHeight`, the top of whatever stands there (`topH`: a wall's top over its tiles, for shots and particles), `surfaceAt`, the surface tag underfoot (footsteps, particles), `solidAt` and `tileAt`.
+  - Exports: `floorHeight`, `HeightSource`, `solidAt`, `surfaceAt`, `tileAt`, `topHeight`
   - Tests: [`engine/world/level/compile.test.ts`](../engine/world/level/compile.test.ts)
-- [`legend.ts`](../engine/world/level/legend.ts): The engine's v1 legend (PLAN.md WP 2.2, I-22): the glyphs every level can use without defining any, as plain specs of the kind `glyph` (engine/world/level/glyph.ts declares the kind and registers these with it).
-  - Exports: `V1_GLYPHS`
+- [`legend.ts`](../engine/world/level/legend.ts): The engine's legend (PLAN.md WP 2.2, WP 4.2, I-22): the glyphs every level can use without defining any, as plain specs of the kind `glyph` (engine/world/level/glyph.ts declares the kind and registers these with it).
+  - Exports: `V1_GLYPHS`, `V2_GLYPHS`
   - Tests: [`engine/world/level/glyph.test.ts`](../engine/world/level/glyph.test.ts)
 - [`level.ts`](../engine/world/level/level.ts): Levels as registry entries (PLAN.md WP 2.2, §6.6, §6.9): the registry kind `level`, so a scene names its level by id (`defineScene('box:room', { level: 'level:room', … })`, engine/sim/scene.ts) and `x describe level` lists them.
   - Exports: `defineLevel`, `getLevel`, `LEVEL_FIELDS`, `LevelEntry`
@@ -284,12 +566,28 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`rects.ts`](../engine/world/level/rects.ts): Rectangles and blocks of tiles (PLAN.md WP 2.2).
   - Exports: `findBlocks`, `mergeRects`, `TileBlock`
   - Tests: [`engine/world/level/rects.test.ts`](../engine/world/level/rects.test.ts)
+- [`shapes.ts`](../engine/world/level/shapes.ts): Ramps and daises (PLAN.md WP 4.2, I-22): the floors that slope, found in a level's tiles and measured.
+  - Exports: `daisHeight`, `findDaises`, `findRamps`, `frustumPoints`, `octagonRadius`, `rampHeight`, `ShapeProblem`, `wedgePoints`
+  - Tests: [`engine/world/level/shapes.test.ts`](../engine/world/level/shapes.test.ts)
 - [`types.ts`](../engine/world/level/types.ts): The compiled level's shape (PLAN.md WP 2.2, §6.1 "data descriptors"): what `compileLevel` returns, plain data that the level meshes (WP 2.4), the level bodies (WP 3.1), navigation (WP 4.3) and scenes read, with no meshes, no Rapier bodies and no functions in it.
-  - Exports: `BoxCollider`, `ColliderDescriptor`, `CompiledLevel`, `GroundDescriptor`, `LEVEL_FORMAT`, `LevelGlyph`, `LightSpot`, `MeshDescriptor`, `Point3`, `SpawnPoint`, `TileRect`
+  - Exports: `BoxCollider`, `ColliderDescriptor`, `CompiledLevel`, `CylinderCollider`, `DaisDescriptor`, `GroundDescriptor`, `HullCollider`, `LEVEL_FORMAT`, `LevelGlyph`, `LightSpot`, `MeshDescriptor`, `Point3`, `RampDescriptor`, `Side`, `SpawnPoint`, `TileRect`
   - Tests: [`engine/world/level/compile.test.ts`](../engine/world/level/compile.test.ts)
-- [`validate.ts`](../engine/world/level/validate.ts): Level validation (PLAN.md WP 2.2, §8.6, I-22): every problem a level's text has, each at its line and column with its fix in the level's terms.
+- [`validate.ts`](../engine/world/level/validate.ts): Level validation (PLAN.md WP 2.2, WP 4.2, §8.6, I-22): every problem a level's text has, each at its line and column with its fix in the level's terms.
   - Exports: `CheckedLevel`, `checkLevel`, `LevelSource`, `NAV_CLIMB`, `validateLevel`
   - Tests: [`engine/world/level/validate.test.ts`](../engine/world/level/validate.test.ts)
+- [`walk.ts`](../engine/world/level/walk.ts): Where bodies walk on a level (PLAN.md WP 2.2, WP 4.2, I-22): the steps between neighbouring walkable tiles and the areas they make, for validate.ts's reachability checks (and a model for navigation, WP 4.3).
+  - Exports: `canStep`, `STEP_SAMPLES`, `WalkArea`, `walkAreas`
+  - Tests: [`engine/world/level/walk.test.ts`](../engine/world/level/walk.test.ts)
+
+## labs/box
+
+- [`main.ts`](../labs/box/main.ts): The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports the box's scenes and levels, then starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays offered to `?replay=<name>`.
+
+## labs/box/scenes
+
+- [`room.ts`](../labs/box/scenes/room.ts): The box room, Box 1 (PLAN.md §9.0, WP 2.7): the level `level:room` (labs/box/levels/room.txt: 16 × 12 m, walls, one low wall, a pillar, spawn markers) with three scripted movers, crates on fixed paths with no physics yet, so that stepping changes state.
+  - Exports: `default`, `lapLength`, `MOVER`, `pathPoint`, `room`, `ROOM_PATHS`, `ROOM_SETTINGS`
+  - Tests: [`labs/box/scenes/room.test.ts`](../labs/box/scenes/room.test.ts)
 
 ## labs/hello
 
@@ -307,11 +605,19 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## tests/pages
 
+- [`audio-dsp.ts`](../tests/pages/audio-dsp.ts): The audio-dsp page's module (`tests/pages/audio-dsp.html`), Chromium's half of tests/e2e/audio-dsp.spec.ts: it publishes the DSP core's `render` over the reference sounds and the seeded random ones of tests/pages/audioDspCases.ts as `window.__audioDsp`, then signals ready through `window.__engine`.
+- [`audioDspCases.ts`](../tests/pages/audioDspCases.ts): The DSP core's reference sounds and their golden hashes (PLAN.md WP 9.1, §6.5; doctrine: Reproducible): the sounds engine/audio/dsp/render.test.ts renders in Node and tests/e2e/audio-dsp.spec.ts renders in Node and in Chromium (tests/pages/audio-dsp.html), so one golden per sound holds in both.
+  - Exports: `caseHashes`, `GOLDEN`, `randomSound`, `SOUND_CASES`, `SoundCase`
+  - Tests: [`engine/audio/dsp/render.test.ts`](../engine/audio/dsp/render.test.ts), [`tests/e2e/audio-dsp.spec.ts`](../tests/e2e/audio-dsp.spec.ts)
 - [`drift.ts`](../tests/pages/drift.ts): The drift page's module (`tests/pages/drift.html`), Chromium's half of tests/e2e/drift.spec.ts: it publishes the drift probe (tests/pages/driftProbe.ts) and `withSimMath` as `window.__drift`, then signals ready through `window.__engine`.
 - [`driftProbe.ts`](../tests/pages/driftProbe.ts): The drift probe (PLAN.md §6.5, WP 1.1): every `Math` function, the `**` operator, three.js's math classes and a small feedback sim, each run on seeded inputs natively and inside `withSimMath`, and hashed bit for bit.
   - Exports: `bitDiff`, `compareDrift`, `DRIFT_FUNCTIONS`, `DRIFT_INPUTS`, `DriftFunction`, `inputsOf`, `ProbeResult`, `resultsOf`, `runProbe`
   - Tests: [`tests/e2e/drift.spec.ts`](../tests/e2e/drift.spec.ts)
 - [`harness.ts`](../tests/pages/harness.ts): The harness page's module (`tests/pages/harness.html`), the page `tests/e2e/harness.spec.ts` checks the e2e fixture on: it draws with raw WebGPU, signals ready through `window.__engine`, and with `?throw` throws on purpose from `explode` below.
+- [`input.ts`](../tests/pages/input.ts): The input page's module (tests/pages/input.html), the browser half of tests/e2e/input.spec.ts (PLAN.md WP 3.3): the engine's input (engine/input/input.ts) over the page's real window, document and canvas, with its bindings saved in `localStorage`, gamepads coming through a stubbed `navigator.getGamepads` whose slots the tests fill with scripted pads (engine/input/devices/padScript.ts), and a headless engine whose `__engine.input` members drive the page input's virtual device (`connectVirtualDevice`).
+- [`level-meshes.ts`](../tests/pages/level-meshes.ts): The level-meshes page's module (tests/pages/level-meshes.html, PLAN.md WP 2.4): the engine's renderer (engine/gfx/renderer.ts) with a lit, shadowed, empty scene, and `window.__levelPage.show(text, file)`, which compiles a level's text (engine/world/level/compile.ts), draws it with the level meshes (engine/gfx/level/meshes.ts) and the material library (engine/gfx/materials/library.ts), registers them with the warm-up, warms up, draws a frame and reports what it cost: the frame (pipelines built), the renderer's draw calls and triangles, those of the empty scene (the renderer's own output pass), the meshes' own count of their draw calls, and their names.
+  - Exports: `Shown`
+  - Tests: [`tests/e2e/level-meshes.spec.ts`](../tests/e2e/level-meshes.spec.ts)
 - [`replay.ts`](../tests/pages/replay.ts): The replay page's module (`tests/pages/replay.html`), Chromium's half of `node x replay --browser sim` (PLAN.md §6.5 item 9, WP 1.5): the sim in a page with no renderer.
 - [`scene.ts`](../tests/pages/scene.ts): The scene page's module (tests/pages/scene.html): the fixture scene (tests/pages/sceneFixture.ts) drawn by the engine's renderer (engine/gfx/renderer.ts) for the render tests, which drive it through `window.__scene` and import the modules they test into the page (`await import('/engine/gfx/pipelines.ts')`): the same module instances the page runs.
   - Tests: [`tests/e2e/renderer.spec.ts`](../tests/e2e/renderer.spec.ts)
@@ -328,6 +634,30 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`trapOutcomes.ts`](../tests/setup/trapOutcomes.ts): What the advice trap's fixture tests must give in either harness (WP 0.5): every `passes:` test passed, and every `fails:` test failed through the trap, naming what it printed and the allow-list fix.
   - Exports: `expectTrapOutcomes`, `PRINTED`, `TrapExpect`, `TrapOutcome`
 
+## tests/unit/anim
+
+- [`clip-fixtures.ts`](../tests/unit/anim/clip-fixtures.ts): Shared fixtures for the clip codec's tests (engine/anim/clip/*.test.ts, WP 8.2): a measured rest body, a standing key pose and a clip builder for the offline tests, and, for those that need the my-3d2dge checkout, the source's codec (the oracle) with its curated sets, loaded once per test file.
+  - Exports: `busy`, `clipOf`, `curatedClips`, `legacy`, `REST`, `standing`
+  - Tests: [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts)
+
+## tests/unit/data/anim/catalogs
+
+- [`catalogs.ts`](../tests/unit/data/anim/catalogs/catalogs.ts): Compares the library's catalogs with the files they were copied from, and reads the coverage map of `docs/ANIMATION-RESEARCH.md`, for the library's data tests (PLAN.md §10.5 step 2 and §10.6, WP 8.1).
+  - Exports: `canonicalSha256`, `COVERAGE_HEADING`, `CoverageRow`, `differences`, `readCoverage`, `RESEARCH_FILE`, `sourceOrigin`, `valueAt`, `Verdict`, `withValueAt`
+  - Tests: [`tests/unit/data/anim/catalogs/catalogs.test.ts`](../tests/unit/data/anim/catalogs/catalogs.test.ts), [`tests/unit/data/anim/catalogs/coverage.test.ts`](../tests/unit/data/anim/catalogs/coverage.test.ts)
+
+## tests/unit/data/anim/ledger
+
+- [`ledger.ts`](../tests/unit/data/anim/ledger/ledger.ts): Reads the CMU ledger in `data/anim/cmu/` for the library's data tests (PLAN.md §10.3, WP 8.1): the category index (`categories.tsv`), one file of takes per category and `subjects.tsv`.
+  - Exports: `ANIM_DIR`, `Category`, `categoryOf`, `compareIds`, `fallbackCategoryOf`, `joinBack`, `Ledger`, `LEDGER_DIR`, `ledgerFiles`, `ORIGINAL_COLUMNS`, `originalRows`, `parseTsv`, `readLedger`, `readLedgerFile`, `Subject`, `Take`, `TAKE_COLUMNS`, `Tsv`
+  - Tests: [`tests/unit/data/anim/ledger/ledger.test.ts`](../tests/unit/data/anim/ledger/ledger.test.ts)
+
+## tests/unit/data/anim/sources
+
+- [`sources.ts`](../tests/unit/data/anim/sources/sources.ts): Reads `data/anim/SOURCES.md` and the catalogs in `data/anim/catalogs/` for the library's data tests (PLAN.md §10.1, WP 8.1): the **Sources** table (one row per library a catalog's `"$sources"` names) and the **Where each file came from** table (each data file's origin and the values that differ from it).
+  - Exports: `Catalog`, `CATALOG_DIR`, `CatalogSource`, `CMU_TERMS`, `entries`, `FileRow`, `readCatalogs`, `readSources`, `SourceRow`, `Sources`, `SOURCES_FILE`, `squash`, `tableUnder`
+  - Tests: [`tests/unit/data/anim/sources/sources.test.ts`](../tests/unit/data/anim/sources/sources.test.ts)
+
 ## tests/unit/hooks
 
 - [`harness.ts`](../tests/unit/hooks/harness.ts): Runs the Claude Code hook scripts in `.claude/hooks/` the way Claude Code runs them, for their unit tests (WP 0.10): the input as JSON on stdin, `$CLAUDE_PROJECT_DIR` naming a fixture project in a temporary directory, and the exit code, stdout and stderr handed back.
@@ -343,8 +673,23 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `closest`, `Command`, `CommandContext`, `commandHelp`, `commandNames`, `CommandOptions`, `CommandResult`, `dispatch`, `DispatchOptions`, `fileComment`, `firstSentence`, `loadCommand`, `MAX_LINES`, `ROOT`, `UsageError`
   - Tests: [`tools/x.test.ts`](../tools/x.test.ts)
 
+## tools/anim
+
+- [`legacy-readable.ts`](../tools/anim/legacy-readable.ts): The legacy oracle (PLAN.md WP 8.2, §10.5 step 3): my-3d2dge's own readable codec, `src/mocap/readable.js`, run from the checkout at `$MY3D2DGE_SRC` in a fresh Node `vm` context, as `my-3d2dge:tools/mocap-lib.mjs:7-9` does, and its animation sets read the same way.
+  - Exports: `CLIP_FPS`, `clipVectorFiles`, `clipVectorsReadme`, `CURATED_SETS`, `decodeLegacyClip`, `float32Number`, `frameCount`, `framesSha256`, `LEGACY_CODEC`, `legacyClipVectors`, `LegacyReadable`, `LegacySet`, `loadLegacyReadable`, `readLegacySet`, `sampledFrames`
+  - Tests: [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts), [`tools/anim/legacy-readable.test.ts`](../tools/anim/legacy-readable.test.ts)
+- [`repack.ts`](../tools/anim/repack.ts): The repacker (PLAN.md §10.3 and §10.5 step 4, WP 8.3): a set of clips stored as a directory, `data/anim/sets/<set>/`, one file per clip, so an agent opens only the clips it uses.
+  - Exports: `ALT_TAG`, `CATALOG_COLUMNS`, `CATALOG_FILE`, `catalogTsv`, `clipSlug`, `joinSet`, `legacySetFiles`, `main`, `readPlainSet`, `readSet`, `readSetDir`, `SET_FILE`, `setDirName`, `SetFiles`, `SETS_DIR`, `splitSet`, `tagAlternates`, `writeSetDir`
+  - Tests: [`tests/unit/data/anim/sets/sets.test.ts`](../tests/unit/data/anim/sets/sets.test.ts), [`tools/anim/repack.test.ts`](../tools/anim/repack.test.ts)
+- [`shardfall.ts`](../tools/anim/shardfall.ts): Adopts the sets and catalogs shardfall converted (PLAN.md §5.8 and §10.5 step 5, WP 8.10): 100STYLE's 878 loops as seven sets, `style100` (forward walks) and `style100_back`, `_backrun`, `_idle`, `_run`, `_side` and `_siderun`, and version 2 of Quaternius' Universal Animation Library (102 clips) in place of v1's `quaternius`, with their eight catalogs.
+  - Exports: `adoptSet`, `CATALOGS_DIR`, `main`, `markVia`, `readShardfallSet`, `readV1Set`, `SHARDFALL_CATALOGS`, `SHARDFALL_SETS`, `shardfallCatalogFiles`, `shardfallSet`, `shardfallSetFiles`, `V1_KEPT`, `V1_SETS`
+  - Tests: [`tests/unit/data/anim/sets/sets.test.ts`](../tests/unit/data/anim/sets/sets.test.ts), [`tests/unit/data/anim/shardfall.test.ts`](../tests/unit/data/anim/shardfall.test.ts)
+
 ## tools/cmd
 
+- [`audio.ts`](../tools/cmd/audio.ts): Renders a sound in Node and prints its numbers, or mixes a replay's sound events (PLAN.md §8.1, WP 9.4, I-23).
+  - Exports: `default`, `encodeWav`, `mixSoundEvents`, `Picture`, `replaySoundEvents`, `SoundEvent`, `SoundTimeline`, `spectrogram`, `SPECTROGRAM`
+  - Tests: [`tools/cmd/audio.test.ts`](../tools/cmd/audio.test.ts)
 - [`check.ts`](../tools/cmd/check.ts): Runs the repository checks no standard tool covers, last in `npm run check` (PLAN.md §8.1).
   - Exports: `assetScan`, `binaryKind`, `CheckContext`, `CheckOutcome`, `CheckPlugin`, `default`, `discoverPlugins`, `isLane`, `repositoryFiles`, `runChecks`
   - Tests: [`tools/cmd/check.test.ts`](../tools/cmd/check.test.ts)
@@ -360,12 +705,21 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`docs.ts`](../tools/cmd/docs.ts): Generates and checks the docs that come from the code (PLAN.md §6.8, §8.12): `docs/INDEX.md`, `docs/API.md` and `docs/ERRORS.md`, the `@example` blocks, the paths the docs mention, and `docs/PROGRESS.md`'s length.
   - Exports: `check`, `checkComments`, `createDocsCommand`, `default`, `DocsOptions`, `driftChecks`, `MAX_COMMENT_LINES`, `PROGRESS`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
+- [`dump.ts`](../tools/cmd/dump.ts): Dumps the scene and the state of the page `x inspect` keeps open, as text (PLAN.md §8.1, §8.3, WP 2.7): `__engine.scene.dump()`, one object a line (name, type, position, size, material, triangles, entity), then the run's tick, hash and entities.
+  - Exports: `default`
+  - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
 - [`esc.ts`](../tools/cmd/esc.ts): Escalations and the calls made without an answer (DOCTRINE.md, Escalation; PLAN.md §8.14, ADR-0017): writes and lists the records in docs/escalations/ (tools/lib/escalations.ts), and checks them as `x check`'s `esc` plugin.
   - Exports: `check`, `checkEscalations`, `createEscCommand`, `default`, `EscOptions`, `messageFor`, `runId`
   - Tests: [`tools/cmd/esc.test.ts`](../tools/cmd/esc.test.ts)
+- [`eval.ts`](../tools/cmd/eval.ts): Evaluates JavaScript in the page `x inspect` keeps open, and prints its value as JSON (PLAN.md §8.1, WP 2.7): `node x eval "__engine.hash()"`.
+  - Exports: `default`
+  - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
 - [`help.ts`](../tools/cmd/help.ts): Prints the generated help: every command, or one command's file comment and flags.
   - Exports: `default`
   - Tests: [`tools/x.test.ts`](../tools/x.test.ts)
+- [`inspect.ts`](../tools/cmd/inspect.ts): Keeps one headless page open over the Vite dev server, for `x eval`, `x dump` and `x set`, which `x shot` reuses while it runs (PLAN.md §8.1, WP 2.7; doctrine: Agent-operable).
+  - Exports: `callSession`, `default`, `findSession`, `Opened`, `pageErrorFinding`, `pageFailures`, `reloadLines`, `SESSION_FILE`, `SessionInfo`, `sessionShot`, `SessionTab`, `shootInSession`
+  - Tests: [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts), [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
 - [`new.ts`](../tools/cmd/new.ts): Scaffolds a new entry of a kind from its template (PLAN.md §8.13): `x new <kind> <id>` writes the files of `tools/templates/<kind>/`, filled in for the id, then runs the kind's checks and prints the summary.
   - Exports: `CheckName`, `CHECKS`, `default`, `fill`, `Kind`, `listKinds`, `render`, `runCheck`, `runChecks`, `testKind`, `writeFiles`
   - Tests: [`tools/cmd/new.test.ts`](../tools/cmd/new.test.ts)
@@ -378,14 +732,17 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`qa.ts`](../tools/cmd/qa.ts): Runs content QA for the families named, against their baselines (PLAN.md §8.6).
   - Exports: `compareWithBaselines`, `default`, `loadFamily`, `QaBaseline`, `QaContext`, `qaFamilies`, `QaFamily`, `QaViolation`, `readBaselines`, `runQa`
   - Tests: [`tools/cmd/qa.test.ts`](../tools/cmd/qa.test.ts)
-- [`replay.ts`](../tools/cmd/replay.ts): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WP 1.5).
+- [`replay.ts`](../tools/cmd/replay.ts): Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WPs 1.5 and 2.7).
   - Exports: `Checked`, `checkFile`, `checkFiles`, `default`, `findParting`, `Outcome`, `parseSwap`, `partingLines`, `PLATFORM`, `replayFiles`, `ReplayOptions`, `Run`, `RunParting`
   - Tests: [`tools/cmd/replay.test.ts`](../tools/cmd/replay.test.ts)
+- [`set.ts`](../tools/cmd/set.ts): Checks a setting against the settings schema, prints it as a URL parameter, and applies it to the page `x inspect` keeps open (PLAN.md §8.1, §3's Agent-operable, I-37, WP 2.7): `node x set box.room.speed 3`.
+  - Exports: `checkSetting`, `default`, `loadSettings`, `sceneModuleOf`, `settingModules`, `settingParam`
+  - Tests: [`tools/cmd/set.test.ts`](../tools/cmd/set.test.ts)
 - [`shot.ts`](../tools/cmd/shot.ts): Renders a page on WebGPU in the platform's Chromium and reports what it drew as numbers and text: the look metrics, the ID pass (which object covers which pixels) and a 48 × 27 text thumbnail; images only on demand.
   - Exports: `default`, `encodePng`, `frameMetrics`, `judgeFrame`, `pageUrl`, `READY_TIMEOUT_MS`, `resolvePage`, `shotMetrics`
   - Tests: [`tests/e2e/shot.spec.ts`](../tests/e2e/shot.spec.ts), [`tools/cmd/shot.test.ts`](../tools/cmd/shot.test.ts)
-- [`sim.ts`](../tools/cmd/sim.ts): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene> [--scene id] [--steps n] [--seed s] [--set key=value…]`.
-  - Exports: `default`, `HashedView`, `loadScene`, `nodeRuntime`, `parseSets`, `replayText`, `resolveSceneModule`, `Runtime`, `sceneModules`, `sceneRoots`, `typedSets`, `wholeFlag`, `writeReplay`
+- [`sim.ts`](../tools/cmd/sim.ts): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene> [--scene id] [--steps n] [--seed s] [--set key=value…] [--feel]`.
+  - Exports: `default`, `feelLines`, `feelOf`, `HashedView`, `loadScene`, `nodeRuntime`, `parseSets`, `replayText`, `resolveSceneModule`, `Runtime`, `sceneModules`, `sceneRoots`, `typedSets`, `wholeFlag`, `writeReplay`
   - Tests: [`tools/cmd/sim.test.ts`](../tools/cmd/sim.test.ts)
 - [`src.ts`](../tools/cmd/src.ts): Prints and checks the read-only source checkouts, `$MY3D2DGE_SRC` and `$SHARDFALL_SRC`, at their pins.
   - Exports: `default`
@@ -421,7 +778,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 ## tools/lib
 
 - [`browser.ts`](../tools/lib/browser.ts): Chromium for the tools and the e2e fixture, through Playwright: the launch options `playwright.config.ts` also uses, the init script every page gets before its own scripts run (a virtual clock, seeded randomness and a WebGPU probe), and page errors mapped to `.ts` files and lines through Vite's inline source maps (§8.1, §8.8).
-  - Exports: `AdapterRecord`, `browserRuntime`, `chromiumPath`, `ConsoleRecord`, `DEFAULT_CHROMIUM`, `describePageError`, `GpuLog`, `initScript`, `launchBrowser`, `launchOptions`, `mapPageError`, `mapStack`, `PageError`, `PageWatch`, `parseStack`, `preparePage`, `servedPath`, `SourceFrame`, `VIEWPORT`, `VirtualClock`, `WEBGPU_FLAGS`
+  - Exports: `AdapterRecord`, `browserRuntime`, `cachedChromium`, `CHROMIUM_VERSION`, `chromiumPath`, `ConsoleRecord`, `DEFAULT_CHROMIUM`, `describePageError`, `GpuLog`, `initScript`, `launchBrowser`, `launchOptions`, `mapPageError`, `mapStack`, `PageError`, `PageWatch`, `parseStack`, `preparePage`, `servedPath`, `SourceFrame`, `VIEWPORT`, `VirtualClock`, `WEBGPU_FLAGS`
   - Tests: [`tests/e2e/harness.spec.ts`](../tests/e2e/harness.spec.ts), [`tools/lib/browser.test.ts`](../tools/lib/browser.test.ts)
 - [`deps.ts`](../tools/lib/deps.ts): The dependency record (`tools/deps.json`) and the model behind `x deps` (PLAN.md §6.10, doctrine: Mastery): versions and their lines, the 12-month rule, registry answers, and the lockfile's types packages.
   - Exports: `compareVersions`, `DepsRecord`, `evenLines`, `firstOfNextLine`, `gitBlob`, `isDay`, `isRelease`, `Knowledge`, `lineName`, `lineOf`, `LockEntry`, `Lockfile`, `lookup`, `newestInLine`, `newestQualified`, `NextLine`, `parseVersion`, `PinRecord`, `qualifiesOn`, `readRepository`, `RECORD`, `RegistryAnswer`, `Release`, `Repository`, `Rule`, `RULES`, `satisfies`, `SECTIONS`, `stableReleases`, `todayUtc`, `TYPES`, `TypesDep`, `typesInLock`
@@ -459,6 +816,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`hash.ts`](../tools/lib/hash.ts): The FNV-1a hash (32-bit), shared by the tools: report ids, the e2e fixture's named random streams, and the proof hashes later WPs print.
   - Exports: `fnv1a`, `fnv1aHex`
   - Tests: [`tools/lib/hash.test.ts`](../tools/lib/hash.test.ts)
+- [`page.ts`](../tools/lib/page.ts): Pages for the `x` commands (PLAN.md §8.1, §8.3, WP 2.7): reading a page's ready-or-error signal (`window.__engine`), waiting for it, finding the page that draws a scene module's scenes, and playing replays in that page, opened on each replay's scene, for `x replay --browser page` (`pageRuntime`: `__engine.replay`, engine/app/playback.ts, which draws a frame after every step), or in tests/pages/replay.html for `--browser sim` (`replayBrowser`).
+  - Exports: `BrowserMode`, `labPageOf`, `PageEngine`, `pageRuntime`, `readSignals`, `READY_MS`, `replayBrowser`, `scenePath`, `Signals`, `waitReady`
+  - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
 - [`png.ts`](../tools/lib/png.ts): Decodes the PNGs Chromium's screenshots produce (non-interlaced, 8-bit RGB or RGBA) into RGBA bytes, for the frame reads of the e2e fixture (tests/e2e/fixtures.ts) and `x shot` (tools/cmd/shot.ts).
   - Exports: `decodePng`
   - Tests: [`tools/lib/png.test.ts`](../tools/lib/png.test.ts)
@@ -477,6 +837,12 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## tools/qa
 
+- [`audio.ts`](../tools/qa/audio.ts): The `audio` QA family (PLAN.md §8.6, WP 9.4, I-23, I-29): `node x qa audio` renders every sound the shared registry has, the engine's `sfx` and `song` entries (engine/audio/data) and a game's (each `*.ts` module under `labs/<name>/sounds/` imported first), and measures each render by numbers: no ear needed (doctrine: Verifiable).
+  - Exports: `AUDIO_LIMITS`, `checkSounds`, `dbfs`, `default`, `fft`, `findClicks`, `frameSpectrum`, `loadSoundModules`, `soundMetrics`, `SoundMetrics`, `soundModules`, `SoundProblem`, `soundProblems`, `spectralCentroid`
+  - Tests: [`tools/qa/audio.test.ts`](../tools/qa/audio.test.ts)
+- [`geo.ts`](../tools/qa/geo.ts): The `geo` QA family (PLAN.md §8.6, WP 2.4, I-29): `node x qa geo` checks every `geometry` entry the shared registry has (the kit's, engine/gfx/geometry/builtins.ts, and a game's: each `*.ts` module under `labs/<name>/geometry/` imported first), built at its defaults, and the level meshes (engine/gfx/level/meshes.ts) of every level file the `level` family reads (tools/qa/level.ts: `labs/box/levels/`, `fixtures/levels/`; a level that does not compile is the `level` family's to report).
+  - Exports: `checkGeometries`, `checkLevelMeshes`, `default`, `geometryModules`, `LEVEL_DRAW_CALLS`, `LEVEL_VERTICES_PER_TILE`, `MAX_SIZE`
+  - Tests: [`tools/qa/geo.test.ts`](../tools/qa/geo.test.ts)
 - [`level.ts`](../tools/qa/level.ts): The `level` QA family (PLAN.md §8.6, WP 2.2, I-29): `node x qa level` validates every level file, the box's (`labs/box/levels/*.txt`, ids `level:<name>`) and the fixtures' (`fixtures/levels/*.txt`, ids `level:fixtures/<name>`; the seeded errors under `fixtures/levels/broken/` are the unit tests' business and are skipped), and runs in T1 through `runQa` (tools/qa/level.test.ts).
   - Exports: `default`, `LEVEL_DIRS`, `LevelFile`, `levelFiles`
   - Tests: [`tools/qa/level.test.ts`](../tools/qa/level.test.ts)

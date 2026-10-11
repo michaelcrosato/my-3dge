@@ -1,0 +1,10 @@
+{"clip": "Teapot_Idle", "src": "100STYLE", "take": "Teapot_ID 15.83-18.33", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, teapot style: one arm on hip other arm raised", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-8,1], "chest":[-3,13,-2], "head":[7,17,8],
+   "shL":[6,10], "shR":[2,-9], "armL":[20,97,-16,60,-121], "armR":[21,-6,-97,100,24],
+   "legL":[-21,0,-98,12,-12], "legR":[-24,2,-97,11,14], "footL":[8,-7,0], "footR":[8,4,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-8,1], "chest":[-3,13,-2], "head":[7,17,8],
+   "shL":[6,10], "shR":[2,-9], "armL":[20,97,-16,60,-121], "armR":[21,-6,-97,100,24],
+   "legL":[-21,0,-98,12,-12], "legR":[-24,2,-97,11,14], "footL":[8,-7,0], "footR":[8,4,0]}
+]}

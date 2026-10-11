@@ -1,0 +1,10 @@
+{"clip": "RightHop_Idle", "src": "100STYLE", "take": "RightHop_ID 20.47-22.97", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, right hop style: hop on right foot", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,102], "body":[0,-6,6], "chest":[7,11,-6], "head":[10,17,3],
+   "shL":[1,-8], "shR":[-1,-6], "armL":[15,17,-97,9,68], "armR":[7,8,-99,0,16],
+   "legL":[-24,2,-97,83,-7], "legR":[-14,-1,-99,0,-5], "footL":[21,-174,-24], "footR":[5,18,0]},
+  {"t":2.5,
+   "hips":[0,0,102], "body":[0,-6,6], "chest":[7,11,-6], "head":[10,17,3],
+   "shL":[1,-8], "shR":[-1,-6], "armL":[15,17,-97,9,68], "armR":[7,8,-99,0,16],
+   "legL":[-24,2,-97,83,-7], "legR":[-14,-1,-99,0,-5], "footL":[21,-174,-24], "footR":[5,18,0]}
+]}

@@ -1,0 +1,11 @@
+{
+  "describe": "A body build: the humanoid skeleton's proportions in metres (limbs, torso, head, stance, gait), with a unit test that stands its rest pose on the floor and runs anim.check (PLAN.md WP 3.4).",
+  "id": "the module's path, labs/<lab>/builds/<name> (its id is build:<name>): labs/box/builds/ogre",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/builds|tools/templates/build)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/build/sampleBuild",
+  "files": {
+    "build.ts.tmpl": "{{id}}.ts",
+    "build.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}

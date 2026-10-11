@@ -28,3 +28,4 @@ so a diff means the source, the generator or the runtime changed: a baseline cha
   right foot, the rig at the origin facing φ = 0 (world = rig-local (f, r, z), but for `spin`'s turn).
 - `blob.json` (WP 5.3): scripts on a fresh `new E.Blob()`: each segment holds `input` for `steps` updates of
   1/120 s, after `kick(v)` when named; every step is sampled. Body radius R(1 − 0.55 sq), height and centre R(1 + sq).
+- `clips/` (WP 8.2): the library's clip decodes, written by `x port refs --clips`; its README says what they hold.

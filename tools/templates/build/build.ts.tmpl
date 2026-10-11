@@ -1,0 +1,21 @@
+/**
+ * @file The build `build:{{name}}`: whose body it is (replace this text; `x docs` puts the first sentence in INDEX).
+ *
+ * Invariants: lengths in metres before `size`, which scales them all; a field left out keeps `build:chibi`'s value
+ * (node x describe build lists the fields with their defaults); hipHeight is at most legUpper + legLower.
+ *
+ * @example
+ * {{name}}.id; // 'build:{{name}}'
+ * @see {{id}}.test.ts
+ */
+import { defineBuild } from '../../../engine/sim-api';
+
+/** The build `build:{{name}}`: replace this sentence with whose body it is. */
+export const {{name}} = defineBuild('build:{{name}}', {
+  size: 1,
+  legUpper: 0.42,
+  legLower: 0.42,
+  hipHeight: 0.81,
+  torso: 0.55,
+  headRadius: 0.2,
+});

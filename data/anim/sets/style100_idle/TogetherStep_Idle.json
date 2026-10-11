@@ -1,0 +1,10 @@
+{"clip": "TogetherStep_Idle", "src": "100STYLE", "take": "TogetherStep_ID 16.93-19.65", "dur": 2.7, "loop": true, "tags": ["idle","style"], "desc": "Standing, together step style: step left foot - then together – then right foot", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-10,0], "chest":[3,12,0], "head":[2,19,-3],
+   "shL":[4,-11], "shR":[4,-7], "armL":[6,8,-99,11,64], "armR":[15,8,-99,15,-38],
+   "legL":[-24,-6,-97,12,-4], "legR":[-26,-8,-96,10,6], "footL":[11,-6,0], "footR":[11,-2,0]},
+  {"t":2.7,
+   "hips":[0,0,100], "body":[0,-10,0], "chest":[3,12,0], "head":[2,19,-3],
+   "shL":[4,-11], "shR":[4,-7], "armL":[6,8,-99,11,64], "armR":[15,8,-99,15,-38],
+   "legL":[-24,-6,-97,12,-4], "legR":[-26,-8,-96,10,6], "footL":[11,-6,0], "footR":[11,-2,0]}
+]}

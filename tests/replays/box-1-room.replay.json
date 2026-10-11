@@ -1,0 +1,28 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Box 1, the room for 10 s: the three movers on their paths at the scene's speed, every one finishing a lap.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "box:room",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [],
+  "hashes": {
+    "linux-x64": {
+      "0": "8a5babb59aa0ec67",
+      "60": "0abc00de320421e5",
+      "120": "3ec72e3b5ff59522",
+      "180": "435b3ea0e50ea092",
+      "240": "275ca25606b300ec",
+      "300": "0745001a09092d56",
+      "360": "17b7b8132b142677",
+      "420": "1768bdae85a186c9",
+      "480": "e0455969289dea0a",
+      "540": "b599f03c7b510eef",
+      "600": "1f0611eb795b4970"
+    }
+  }
+}

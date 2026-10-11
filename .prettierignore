@@ -7,5 +7,8 @@
 !docs/ERRORS.md
 !docs/escalations/README.md
 tests/baselines/port/
+# The clip sets: machine-written by tools/anim/repack.ts, each clip its codec text() (three lines a key), pinned
+# byte for byte by tests/unit/data/anim/sets/; Prettier would spread each key over 13 lines (ADR-0010 amendment 2).
+data/anim/sets/
 # Written by npm.
 package-lock.json

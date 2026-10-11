@@ -1,14 +1,17 @@
 /**
- * @file Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WP 1.5). Usage: node x replay <file|dir…>
- * [--update] [--browser sim] [--bisect] [--runs n] [--swap names]. Exit 0 when every replay gives its goldens in every
- * run (or, recorded elsewhere, agrees with itself; or was recorded), 1 otherwise, 2 on a usage error. The verdict
- * never says "match" unless this platform's goldens were compared. WP 2.7 adds `--browser page` (the scene's page).
+ * @file Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WPs 1.5 and 2.7). Usage: node x replay
+ * <file|dir…> [--update] [--browser sim|page] [--bisect] [--runs n] [--swap names]. Exit 0 when every replay gives its
+ * goldens in every run (or, recorded elsewhere, agrees with itself; or was recorded), 1 otherwise, 2 on a usage error.
+ * The verdict never says "match" unless this platform's goldens were compared.
  *
  * Each `*.replay.json` (a directory means every one under it) plays from step 0 in Node, `--runs` times (3), and with
  * `--browser sim` as often again in Chromium, in tests/pages/replay.html: the sim in a page, no renderer, through the
  * same player (engine/sim/replay.ts). Every run must give the goldens of this platform (`linux-x64`): one set, valid
  * in Node and in Chromium alike (`judgeRuns`). A replay recorded on another platform only runs at least twice and
  * compares the runs ("golden: other platform"). Its scene module is found from its `scene` id, as `x sim` finds it.
+ * `--browser page` plays each replay in its scene's own page instead (`labs/<name>/?scene=<scene>` for a module under
+ * `labs/<name>/scenes/`, through `__engine.replay`, engine/app/playback.ts), drawing a frame after every step: the
+ * CPU-only gameplay contract's proof that rendering never changes play (§6.7). Fixture scenes have no page.
  *
  * `--update` (with `--browser sim`, never `--swap`) records this platform's goldens (0, the replay's checkpoints, else
  * every 60 steps, and the last) and the engine, three.js and Rapier versions. It judges every file and reads the
@@ -29,44 +32,15 @@ import { basename, join, relative, resolve } from 'node:path';
 import { SIM_MATH_NAMES, type SimMathName } from '../../engine/core/simMath';
 import { checkReplay, firstDifference, judgeRuns, partingOf, type Parting, type Replay } from '../../engine/sim/replay';
 import { componentTable, hashState } from '../../engine/sim/state';
-import { browserRuntime, describePageError, launchBrowser, preparePage } from '../lib/browser';
+import { describePageError } from '../lib/browser';
+import { replayBrowser, type BrowserMode } from '../lib/page';
 import { walk } from '../lib/docs';
 import type { Finding } from '../lib/report';
-import { startVite } from '../lib/vite';
 import { UsageError, type Command, type CommandResult } from '../x';
 import { nodeRuntime, resolveSceneModule, wholeFlag, writeReplay, type Runtime } from './sim';
 
 /** This platform's golden key: `linux-x64`. */
 export const PLATFORM = `${process.platform}-${process.arch}`;
-
-/** Chromium in tests/pages/replay.html, with its own Vite server, under the swap `swap` names (all by default). */
-async function chromium(root: string, swap?: SimMathName[]) {
-  const server = await startVite({ root });
-  const browser = await launchBrowser();
-  const close = async () => {
-    await browser.close();
-    await server.close();
-  };
-  try {
-    const page = await browser.newPage();
-    const watch = await preparePage(page, { seed: 1, root });
-    await page.goto(`${server.url}tests/pages/replay.html`);
-    const ready = () => (window as { __engine?: { ready?: boolean } }).__engine?.ready === true;
-    await page.waitForFunction(ready, undefined, { timeout: 30_000 });
-    const runtime: Runtime = {
-      name: 'Chromium',
-      load: (file) => page.evaluate((path) => window.__replay.load(path), file),
-      play: (text, every) =>
-        page.evaluate(([t, e, s]) => window.__replay.play(t, { every: e, swap: s }), [text, every, swap] as const),
-      stateAt: (text, step) =>
-        page.evaluate(([t, k, s]) => window.__replay.stateAt(t, k, { swap: s }), [text, step, swap] as const),
-    };
-    return { runtime, watch, version: browserRuntime(browser.version()), close };
-  } catch (error) {
-    await close();
-    throw error;
-  }
-}
 
 /** A run of a replay: which runtime, and the hashes it took. */
 export interface Run {
@@ -323,7 +297,7 @@ export function parseSwap(value: string | undefined): SimMathName[] | undefined 
 }
 
 export default {
-  usage: 'replay <file|dir…> [--update] [--browser sim] [--bisect] [--runs n] [--swap names]',
+  usage: 'replay <file|dir…> [--update] [--browser sim|page] [--bisect] [--runs n] [--swap names]',
   options: {
     update: { type: 'boolean' },
     browser: { type: 'string' },
@@ -334,12 +308,15 @@ export default {
   maxPositionals: 100,
   async run({ values, positionals, root }): Promise<CommandResult> {
     if (!positionals.length) throw new UsageError('name replay files or a directory of them (tests/replays)');
-    const browserMode = values.browser as string | undefined;
-    if (browserMode !== undefined && browserMode !== 'sim') {
-      throw new UsageError(`--browser takes sim (the sim-only page; WP 2.7 adds page), not ${browserMode}`);
+    const browserMode = values.browser as BrowserMode | undefined;
+    if (browserMode !== undefined && browserMode !== 'sim' && browserMode !== 'page') {
+      throw new UsageError(
+        `--browser takes sim (the sim-only page) or page (the scene's own page), not ${browserMode}`,
+      );
     }
     const swap = parseSwap(values.swap as string | undefined);
-    if (swap && !browserMode) throw new UsageError('--swap narrows the swap in Chromium: use it with --browser sim');
+    if (swap && browserMode !== 'sim')
+      throw new UsageError('--swap narrows the swap in Chromium: use it with --browser sim');
     const update = values.update === true;
     if (update && !browserMode) {
       throw new UsageError('--update records goldens that hold in Node and Chromium alike: add --browser sim');
@@ -348,14 +325,14 @@ export default {
     const runs = wholeFlag(values.runs, 'runs', 3, 1);
     const files = positionals.flatMap((target) => replayFiles(root, target));
     const runtimes: Runtime[] = [nodeRuntime(root)];
-    const page = browserMode ? await chromium(root, swap) : undefined;
+    const page = browserMode ? await replayBrowser(root, browserMode, swap) : undefined;
     if (page) runtimes.push(page.runtime);
     let all: Checked;
     try {
       const pageErrors = async () =>
         (await page!.watch.errors()).map((error) => ({
           id: 'REPLAY_PAGE_ERROR',
-          message: `tests/pages/replay.html threw: ${describePageError(error)}`,
+          message: `${browserMode === 'page' ? "the scene's page" : 'tests/pages/replay.html'} threw: ${describePageError(error)}`,
           ...(error.file ? { file: error.file, line: error.line } : {}),
         }));
       const bisect = values.bisect === true;
@@ -365,7 +342,10 @@ export default {
         for (const warning of findUnlisted(page.watch.console, loadAllowList())) {
           all.warnings.push({
             id: 'REPLAY_CONSOLE',
-            message: describeUnlisted([warning], ' in tests/pages/replay.html'),
+            message: describeUnlisted(
+              [warning],
+              browserMode === 'page' ? " in the scene's page" : ' in tests/pages/replay.html',
+            ),
           });
         }
       }

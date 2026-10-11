@@ -1,0 +1,10 @@
+{"clip": "Rushed_Idle", "src": "100STYLE", "take": "Rushed_ID 20.12-23.08", "dur": 2.967, "loop": true, "tags": ["idle","style"], "desc": "Standing, rushed style: rushing about swinging arms for extra momentum", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-5,0], "chest":[2,19,-2], "head":[3,12,1],
+   "shL":[2,-7], "shR":[3,-8], "armL":[20,13,-97,14,18], "armR":[23,12,-97,19,-2],
+   "legL":[-22,4,-97,9,-10], "legR":[-22,-1,-98,11,0], "footL":[6,-6,0], "footR":[7,2,0]},
+  {"t":2.967,
+   "hips":[0,0,100], "body":[0,-5,0], "chest":[2,19,-2], "head":[3,12,1],
+   "shL":[2,-7], "shR":[3,-8], "armL":[20,13,-97,14,18], "armR":[23,12,-97,19,-2],
+   "legL":[-22,4,-97,9,-10], "legR":[-22,-1,-98,11,0], "footL":[6,-6,0], "footR":[7,2,0]}
+]}

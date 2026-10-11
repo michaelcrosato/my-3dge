@@ -1,0 +1,10 @@
+{"clip": "Rest Pose", "src": "M2M_ANIMATED", "dur": 0.417, "loop": false, "tags": ["reference"], "desc": "Mesh2Motion's rest pose, arms out: the pose its clips are measured from", "keys": [
+  {"t":0,
+   "hips":[-5,0,100], "body":[0,0,0], "chest":[0,-13,0], "head":[0,18,0],
+   "shL":[0,0], "shR":[0,0], "armL":[2,100,-2,9,-27], "armR":[2,100,-2,9,27],
+   "legL":[-6,0,-100,11,-3], "legR":[-6,0,-100,11,3], "footL":[0,0,0], "footR":[0,0,0]},
+  {"t":0.4,
+   "hips":[-5,0,100], "body":[0,0,0], "chest":[0,-13,0], "head":[0,18,0],
+   "shL":[0,0], "shR":[0,0], "armL":[2,100,-2,9,-27], "armR":[2,100,-2,9,27],
+   "legL":[-6,0,-100,11,-3], "legR":[-6,0,-100,11,3], "footL":[0,0,0], "footR":[0,0,0]}
+]}

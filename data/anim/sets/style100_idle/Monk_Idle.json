@@ -1,0 +1,10 @@
+{"clip": "Monk_Idle", "src": "100STYLE", "take": "Monk_ID 16.37-18.87", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, monk style: interlock hands in front of pelvis head slightly bowed", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-7,0], "chest":[-2,17,0], "head":[-7,66,11],
+   "shL":[2,-8], "shR":[1,-5], "armL":[31,-31,-90,52,-57], "armR":[37,-27,-89,53,56],
+   "legL":[-18,4,-98,13,-8], "legR":[-19,1,-98,12,4], "footL":[7,-13,0], "footR":[7,3,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-7,0], "chest":[-2,17,0], "head":[-7,66,11],
+   "shL":[2,-8], "shR":[1,-5], "armL":[31,-31,-90,52,-57], "armR":[37,-27,-89,53,56],
+   "legL":[-18,4,-98,13,-8], "legR":[-19,1,-98,12,4], "footL":[7,-13,0], "footR":[7,3,0]}
+]}

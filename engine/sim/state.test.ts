@@ -12,7 +12,7 @@ import { Vector3 } from '../core/math';
 import { createLog, EngineError } from '../core/log';
 import { createRegistry } from '../core/registry';
 import { createSettings, defineSettings } from '../core/settings';
-import { componentTable, defineComponent, diffStates, hashState, traceState } from './state';
+import { componentTable, defineComponent, diffStates, hashState, STATE_FORMAT, traceState } from './state';
 import { createWorld } from './world';
 
 /** The code of the EngineError `fn` throws. */
@@ -122,7 +122,7 @@ describe('the hash', () => {
       ...makeWorld(registry).w.state(),
       entities: [{ id: 1, body: { mass: 2, speed: -0, note: 'é', dir: [1, 2] } }],
     };
-    const slow = new Fnv64().value('my3dge-state/3').value('world').number(view.seed).number(view.nextId);
+    const slow = new Fnv64().value(STATE_FORMAT).value('world').number(view.seed).number(view.nextId);
     slow.number(view.hz);
     slow.value('entities').uint32(1).number(1).uint32(1).value('body');
     for (const value of [2, -0, 'é', [1, 2]]) slow.value(value);
@@ -183,16 +183,20 @@ describe('the hash', () => {
   });
 
   it('leaves out view settings and visual streams, and covers sim settings and sim streams', () => {
-    const { w, settings } = makeWorld();
+    const registry = makeRegistry();
+    const { w, settings } = makeWorld(registry);
     w.spawn({ body: {} });
     const base = w.hash();
     settings.set('demo.bloom', 4);
     for (let i = 0; i < 50; i++) w.fxRng('sparks', i % 3).next();
     expect(w.hash()).toBe(base);
-    expect(w.state().settings).toEqual({ 'demo.gravity': -30 }); // no time.hz: this registry lacks it
+    expect(w.state().settings).toEqual({}); // only settings that differ from their defaults
     settings.set('demo.gravity', -9.8);
     const gravity = w.hash();
     expect(gravity).not.toBe(base);
+    expect(w.state().settings).toEqual({ 'demo.gravity': -9.8 });
+    defineSettings({ 'demo.other': { type: 'number', default: 1, description: 'Declared later.' } }, registry);
+    expect(w.hash()).toBe(gravity); // declaring another setting (another scene module loaded) changes nothing
     w.rng('ai').next();
     expect(w.hash()).not.toBe(gravity);
   });

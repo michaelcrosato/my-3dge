@@ -1,0 +1,10 @@
+{"clip": "Robot_Idle", "src": "100STYLE", "take": "Robot_ID 21.18-23.68", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, robot style: stiff movements arms bending at elbows", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-6,0], "chest":[0,8,-2], "head":[6,15,1],
+   "shL":[2,-8], "shR":[3,-10], "armL":[72,-16,-68,85,15], "armR":[72,-18,-67,88,-13],
+   "legL":[-15,3,-99,0,-10], "legR":[-18,2,-98,0,1], "footL":[6,-6,0], "footR":[6,5,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,-6,0], "chest":[0,8,-2], "head":[6,15,1],
+   "shL":[2,-8], "shR":[3,-10], "armL":[72,-16,-68,85,15], "armR":[72,-18,-67,88,-13],
+   "legL":[-15,3,-99,0,-10], "legR":[-18,2,-98,0,1], "footL":[6,-6,0], "footR":[6,5,0]}
+]}

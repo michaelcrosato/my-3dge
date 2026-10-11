@@ -1,0 +1,10 @@
+{"clip": "Strutting_Idle", "src": "100STYLE", "take": "Strutting_ID 23.93-26.43", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, strutting style: with swagger leant slightly back arms swinging freely", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-28,0], "chest":[0,29,5], "head":[-2,-6,-11],
+   "shL":[0,-10], "shR":[1,-7], "armL":[13,-2,-99,0,-179], "armR":[12,14,-98,9,-103],
+   "legL":[-53,7,-85,9,-4], "legR":[-57,3,-82,8,5], "footL":[27,4,0], "footR":[27,21,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-28,0], "chest":[0,29,5], "head":[-2,-6,-11],
+   "shL":[0,-10], "shR":[1,-7], "armL":[13,-2,-99,0,-179], "armR":[12,14,-98,9,-103],
+   "legL":[-53,7,-85,9,-4], "legR":[-57,3,-82,8,5], "footL":[27,4,0], "footR":[27,21,0]}
+]}

@@ -1,0 +1,10 @@
+{"clip": "Old_Idle", "src": "100STYLE", "take": "Old_ID 17.33-19.85", "dur": 2.533, "loop": true, "tags": ["idle","style"], "desc": "Standing, old style: hunchbacked move very slowly", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,11,0], "chest":[0,43,1], "head":[-1,4,-3],
+   "shL":[4,-5], "shR":[3,-4], "armL":[79,-4,-61,73,23], "armR":[85,-5,-53,79,-18],
+   "legL":[28,1,-96,0,-5], "legR":[24,0,-97,0,1], "footL":[-9,-5,0], "footR":[-10,7,0]},
+  {"t":2.533,
+   "hips":[0,0,101], "body":[0,11,0], "chest":[0,43,1], "head":[-1,4,-3],
+   "shL":[4,-5], "shR":[3,-4], "armL":[79,-4,-61,73,23], "armR":[85,-5,-53,79,-18],
+   "legL":[28,1,-96,0,-5], "legR":[24,0,-97,0,1], "footL":[-9,-5,0], "footR":[-10,7,0]}
+]}
