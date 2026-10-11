@@ -5,7 +5,9 @@
  * CMU catalog's picks all agree with the rows.
  *
  * The join-back is proved twice: against the original rows' SHA-256, recorded here, and, when the my-3d2dge checkout
- * resolves, line by line against its file (deferred: no source otherwise).
+ * resolves, line by line against its file (deferred: no source otherwise). The 113 takes the site's list leaves out
+ * are left out of both: WP 8.5 verified their frame rates, and each row names its evidence (`fps:c3d`, `twin:<id>`);
+ * a twin's measurements are its take's, and only the rate, the measurements and the flags of the others changed.
  *
  * @see data/anim/cmu/README.md
  */
@@ -17,6 +19,7 @@ import { requireSource } from '../../../../../tools/lib/source';
 import {
   ANIM_DIR,
   categoryOf,
+  ORIGINAL_COLUMNS,
   compareIds,
   fallbackCategoryOf,
   joinBack,
@@ -27,11 +30,24 @@ import {
   TAKE_COLUMNS,
 } from './ledger';
 
-/** SHA-256 of the header and rows of `my-3d2dge:src/mocap/catalogs/cmu-takes.tsv` at e37e4ee (no comment lines). */
-const ORIGINAL_ROWS_SHA256 = 'c9b672279bf7973ee9a4b70b2c7c6b0b757cccb92894fb88d17119bd09523514';
+/**
+ * SHA-256 of the header and rows of `my-3d2dge:src/mocap/catalogs/cmu-takes.tsv` at e37e4ee (no comment lines), but
+ * for the 113 rows whose rates WP 8.5 verified (all the rows: c9b672279bf7973ee9a4b70b2c7c6b0b757cccb92894fb88d17119bd09523514).
+ */
+const ORIGINAL_ROWS_SHA256 = 'f7da4bbe3fc5a48e733ce7d913a9308e87ed428e132302c957b13c85bc70fa94';
 
 const ledger = readLedger();
 const byId = new Map(ledger.takes.map((take) => [take.id, take]));
+/** A rate's evidence in a row's flags: the take's C3D file, or a twin on the site's list (data/anim/cmu/README.md). */
+const evidenceOf = (flags: string) => flags.split(' ').filter((flag) => flag === 'fps:c3d' || flag.startsWith('twin:'));
+/** The takes whose rates WP 8.5 verified. */
+const verified = new Set(ledger.takes.filter((take) => evidenceOf(take.flags).length).map((take) => take.id));
+/** Joined-back text without the verified takes' rows. */
+const unverified = (text: string) =>
+  text
+    .split('\n')
+    .filter((line) => !verified.has(line.split('\t')[0] ?? ''))
+    .join('\n');
 
 /** A catalog entry list keyed by clip name, plus the `$` records. */
 type Catalog = Record<string, unknown> & { $pick: Record<string, [string, ...number[]]> };
@@ -85,19 +101,34 @@ describe('the split ledger', () => {
 });
 
 describe('the join-back', () => {
-  it('rebuilds the original rows exactly (SHA-256)', () => {
+  it('rebuilds the original rows exactly, but for the 113 rates verified (SHA-256)', () => {
     const rebuilt = joinBack(ledger);
     expect(rebuilt.split('\n')).toHaveLength(2_548 + 2);
-    expect(createHash('sha256').update(rebuilt).digest('hex')).toBe(ORIGINAL_ROWS_SHA256);
+    expect(verified.size).toBe(113);
+    expect(createHash('sha256').update(unverified(rebuilt)).digest('hex')).toBe(ORIGINAL_ROWS_SHA256);
   });
 
-  it('rebuilds the original rows line for line (needs the my-3d2dge checkout)', (context) => {
+  it('rebuilds the original rows line for line, the verified ones changed only in rate, measures and flags (needs the my-3d2dge checkout)', (context) => {
     const source = requireSource('my-3d2dge', context);
-    const original = originalRows(readFileSync(join(source, 'src/mocap/catalogs/cmu-takes.tsv'), 'utf8')).split('\n');
-    const rebuilt = joinBack(ledger).split('\n');
+    const text = originalRows(readFileSync(join(source, 'src/mocap/catalogs/cmu-takes.tsv'), 'utf8'));
+    const [original, rebuilt] = [unverified(text).split('\n'), unverified(joinBack(ledger)).split('\n')];
     const first = original.findIndex((line, i) => line !== rebuilt[i]);
     expect(first === -1 ? null : { line: first, original: original[first], rebuilt: rebuilt[first] }).toBeNull();
     expect(rebuilt).toHaveLength(original.length);
+    const before = new Map(text.split('\n').map((line) => [line.split('\t')[0], line.split('\t')]));
+    const kept = ['id', 'subject', 'category', 'used', 'note', 'desc', 'about'].map((key) =>
+      ORIGINAL_COLUMNS.indexOf(key),
+    );
+    for (const line of joinBack(ledger)
+      .split('\n')
+      .filter((l) => verified.has(l.split('\t')[0] ?? ''))) {
+      const [now, then] = [line.split('\t'), before.get(line.split('\t')[0]) ?? []];
+      expect(
+        kept.map((i) => now[i]),
+        now[0],
+      ).toEqual(kept.map((i) => then[i]));
+      expect(then[ORIGINAL_COLUMNS.indexOf('flags')]?.split(' '), now[0]).toContain('fps?');
+    }
   });
 
   it('changes only the takes that fell back on their subject: 191, now other', () => {
@@ -124,9 +155,10 @@ describe('the counts', () => {
     'Takes `used` by the CMU set': String(ledger.takes.filter((take) => take.used).length),
     'Takes marked `pick`': String(ledger.takes.filter((take) => take.note.startsWith('pick')).length),
   };
-  for (const flag of ['inverted', 'fps?', 'floats', 'loose', 'short']) {
+  for (const flag of ['inverted', 'fps?', 'fps:c3d', 'floats', 'loose', 'short']) {
     computed[`Takes flagged \`${flag}\``] = String(flagged(flag));
   }
+  computed['Takes flagged `twin:<id>`'] = String(ledger.takes.filter((t) => /(^| )twin:/.test(t.flags)).length);
 
   it('match README.md', () => {
     const readme = readFileSync(join(LEDGER_DIR, 'README.md'), 'utf8');
@@ -137,15 +169,44 @@ describe('the counts', () => {
     expect(rows).toEqual(computed);
   });
 
-  it('are 2,548 takes of 113 subjects, 113 of them fps? at an assumed 120 fps, and 30 picks', () => {
+  it('are 2,548 takes of 113 subjects, none at an assumed rate any more, and 30 picks', () => {
     expect(ledger.takes).toHaveLength(2_548);
     expect(ledger.subjects).toHaveLength(113);
-    const assumed = ledger.takes.filter((take) => take.flags.split(' ').includes('fps?'));
-    expect(assumed).toHaveLength(113);
-    for (const take of assumed) expect(take.fps, take.id).toBe('120');
+    expect(ledger.takes.filter((take) => take.flags.split(' ').includes('fps?'))).toEqual([]);
     const picks = ledger.takes.filter((take) => take.note);
     expect(picks).toHaveLength(30);
     for (const take of picks) expect(take.note, take.id).toMatch(/^pick: [A-Z][A-Za-z_]* \(.+\)$/);
+  });
+});
+
+describe('the rates verified (WP 8.5)', () => {
+  it('name their evidence first: subject 84 at 60 fps by its C3D files but 84_09, the rest at 120', () => {
+    for (const id of verified) {
+      const take = byId.get(id);
+      expect(take?.flags.split(' ').slice(0, evidenceOf(take?.flags ?? '').length), id).toEqual(
+        evidenceOf(take?.flags ?? ''),
+      );
+      expect(['63', '73', '84', '117', '121'], id).toContain(take?.subject);
+    }
+    const sixty = [...verified].filter((id) => byId.get(id)?.fps === '60');
+    expect(sixty).toEqual([...verified].filter((id) => id.startsWith('84_') && id !== '84_09'));
+    expect(sixty.every((id) => evidenceOf(byId.get(id)?.flags ?? '').includes('fps:c3d'))).toBe(true);
+  });
+
+  it('give a twin its take’s rate and measurements, the same frames measured the same', () => {
+    const twins = ledger.takes.filter((take) => /(^| )twin:/.test(take.flags));
+    expect(twins).toHaveLength(93);
+    for (const take of twins) {
+      const other = byId.get(
+        take.flags
+          .split(' ')
+          .find((f) => f.startsWith('twin:'))
+          ?.slice(5) ?? '',
+      );
+      expect(evidenceOf(other?.flags ?? ''), take.id).toEqual([]);
+      const measures = (t: typeof take | undefined) => [t?.fps, t?.sec, t?.active, t?.fit, t?.travel, t?.hips];
+      expect(measures(take), take.id).toEqual(measures(other));
+    }
   });
 });
 

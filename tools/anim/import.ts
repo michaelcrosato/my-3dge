@@ -33,7 +33,7 @@
 import { basename } from 'node:path';
 import { fitClip, measure, type Capture } from '../../engine/anim/clip/encode';
 import type { Clip } from '../../engine/anim/clip/readable';
-import type { ClipSet, ClipSource } from '../../engine/anim/clip/validate';
+import type { ClipSet, ClipSource, RestBody } from '../../engine/anim/clip/validate';
 import { cmuGet, cmuIndex, CMU_CACHE, type IndexedTake } from './cmu';
 import { readCmu, type Pick as TakePick } from './cmu-capture';
 import { readGlbLibrary, type GlbLibrary } from './glb-library';
@@ -194,7 +194,8 @@ export function importSet(options: ImportOptions): { set: ClipSet; notes: string
   libraries.forEach((L, li) => {
     const restClip = [options.rest?.[li], ...REST_CLIPS].find((n) => n && L.clips[n]);
     const id = sourceIds[li] || basename(L.file).replace(/\.glb$/i, '');
-    const rest = measure(L.clips, restClip);
+    // as a set file stores it: JSON has no −0, which the rounding leaves on some measurements
+    const rest = JSON.parse(JSON.stringify(measure(L.clips, restClip))) as RestBody;
     if (catalogued && !about[id])
       notes.push(`no "$sources" entry for ${id}: the set will not say where its clips came from`);
     (set.sources as Record<string, ClipSource>)[id] = {
