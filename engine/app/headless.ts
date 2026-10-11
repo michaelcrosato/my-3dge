@@ -8,12 +8,16 @@
  * with the same calls an agent makes in a page.
  *
  * Time: a headless engine has a frame clock over the run's settings, like a page, but no frames. `step(n, intents)`
- * runs n steps at once, inside the session, so the steps are recorded and `headlessHost(h).session.record()` is the
- * run as a replay. `pause`, `resume` and `timeScale` set the clock's settings as in a page (no real time passes
- * headless, so only `step` runs steps). `seed(n)` starts the scene again with seed n, a new session and clock, keeping
- * every setting that differs from what a fresh start gives; `replay(text)` starts the replay's run and plays it. The
- * run's stats meter (engine/dev/stats.ts, `__engine.stats()`) times every step it runs, and the world's systems through
- * the world's probe; a page times its frames through it and gives it the renderer's counts (`Drawing.counts`).
+ * runs n steps at once, inside the session, so the steps are recorded and `headlessHost(h).session.record()` is the run
+ * as a replay. `pause`, `resume` and `timeScale` set the clock's settings as in a page (no real time passes headless,
+ * so only `step` runs steps). After each step the run hands the hit-stop its rules asked for (engine/sim/damage.ts
+ * `takeHitStop`) to its clock, whose budget shrinks stops that follow closely, so a page's frames stop and a crowd hit
+ * stutters once; a page's real-time `?replay=` playback hands them over the same way (`stepped`), and a dev action's
+ * goes with the next step, as in that playback. `seed(n)` starts the scene again with seed n, a new session and clock,
+ * keeping every setting that differs from what a fresh start gives; `replay(text)` starts the replay's run and plays
+ * it, with a page's loop held, so it drops the stops it asks for (none is left to freeze a later frame). The run's
+ * stats meter (engine/dev/stats.ts, `__engine.stats()`) times every step it runs, and the world's systems through the
+ * world's probe; a page times its frames through it and gives it the renderer's counts (`Drawing.counts`).
  *
  * `createAppHost` is the run behind both engines: engine/app/engine.ts adds a page's drawing to it. Invariants:
  * everything runs synchronously after the promise resolves (the fdlibm swap holds only through synchronous entry
@@ -43,6 +47,7 @@ import { createStatsMeter, type RenderCounts, type StatsMeter } from '../dev/sta
 import { createMaterialLibrary, type MaterialLibrary } from '../gfx/materials/library';
 import type { FrameReport } from '../gfx/renderer';
 import type { ShotJson, ShotOptions } from '../gfx/shot';
+import { takeHitStop } from '../sim/damage';
 import type { Replay } from '../sim/replay';
 import { checkSeed, createSession, getScene, type Scene, type Session } from '../sim/scene';
 import type { AnyComponents } from '../sim/state';
@@ -115,8 +120,13 @@ export interface AppRun {
   readonly clock: Clock;
   /** The view, or null. */
   readonly view: RunView | null;
-  /** Runs one step with `intents` through the session, and lets the view read it. */
+  /** Runs one step with `intents` through the session, hands its hit-stop to the clock, and lets the view read it. */
   stepOnce(intents: unknown): void;
+  /**
+   * After a step played outside `stepOnce` (a page's real-time `?replay=` playback): hands the step's hit-stop to the
+   * clock and lets the view read the world, as `stepOnce` does.
+   */
+  stepped(): void;
   /** True while a replay plays: the page's loop steps nothing then. */
   readonly playing: boolean;
   /** Starts a replay's run (its scene, seed and settings), for playing it step by step; returns its session. */
@@ -208,9 +218,15 @@ export function createAppHost<C extends object = AnyComponents, E extends EventM
     restart(getScene(replay.scene, registry), replay.seed, replay.settings);
     return run.session;
   };
+  // After a step of the run's: the clock gets the hit-stop the step's rules asked for, and the view reads the world.
+  const stepped = () => {
+    const stop = takeHitStop(run.session.world);
+    if (stop > 0) run.clock.hitStop(stop);
+    view?.stepped();
+  };
   const stepOnce = (intents: unknown) => {
     meter.time('sim', () => run.session.step(intents));
-    view?.stepped();
+    stepped();
   };
   const host: AppHost = {
     registry,
@@ -267,6 +283,9 @@ export function createAppHost<C extends object = AnyComponents, E extends EventM
         );
       } finally {
         playing = false;
+        // The loop was held, so no frame passed for the stops its steps asked for: left in the outbox, they would
+        // freeze the first live frame after it.
+        takeHitStop(run.session.world);
       }
     },
   };
@@ -283,6 +302,7 @@ export function createAppHost<C extends object = AnyComponents, E extends EventM
     },
     view,
     stepOnce,
+    stepped,
     get playing() {
       return playing;
     },

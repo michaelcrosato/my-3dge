@@ -1,0 +1,194 @@
+[
+  {
+    "id": "clip:CMU/Backflip",
+    "metric": "angleRange",
+    "value": 15.9349,
+    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): its importer unwinds each angle from the key before, and the right foot's out angle winds through the flip to 913°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
+  },
+  {
+    "id": "clip:CMU/Chop_Wood",
+    "metric": "kneeRange",
+    "value": 0.8901,
+    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): at 1.2 s the left knee bends 31°, one over the validator's 30°, with its twist turned 171° from forward: a nearly straight leg, whose twist barely shows, so it plays as one"
+  },
+  {
+    "id": "clip:CMU/Curtsey",
+    "metric": "angleRange",
+    "value": 12.322,
+    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): its importer unwinds each angle from the key before, and the right leg, nearly straight (bent 0–15°, where its twist barely shows), winds its twist through whole turns to -706°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
+  },
+  {
+    "id": "clip:CMU/Dig",
+    "metric": "angleRange",
+    "value": 11.6239,
+    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): its importer unwinds each angle from the key before, and the right leg, nearly straight (bent 0–15°, where its twist barely shows), winds its twist through whole turns to 666°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
+  },
+  {
+    "id": "clip:CMU/Fishing",
+    "metric": "angleRange",
+    "value": 15.0273,
+    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): its importer unwinds each angle from the key before, and the right leg, nearly straight (bent 0–15°, where its twist barely shows), winds its twist through whole turns to 861°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
+  },
+  {
+    "id": "clip:CMU/Get_Up_From_Side",
+    "metric": "pop",
+    "value": 0.7875,
+    "reason": "contact IK on the build (retarget.ts: the feet planted through ik.ts twoBoneRot) swings the left knee through at 5.1 s, folded 145°, on build:mannequin (0.79 m in a step): the format-1 decode's knee and the baked tracks stay put, and the same clip without contact IK plays clean; open for the retargeter's IK (WP 8.6 note)"
+  },
+  {
+    "id": "clip:CMU/Get_Up_From_Side",
+    "metric": "twistJump",
+    "value": 3.073,
+    "reason": "contact IK on the build (retarget.ts: the feet planted through ik.ts twoBoneRot) swings the left knee through at 5.1 s, folded 145°, on build:mannequin: the shin rolls half a turn in that step: the format-1 decode's knee and the baked tracks stay put, and the same clip without contact IK plays clean; open for the retargeter's IK (WP 8.6 note)"
+  },
+  {
+    "id": "clip:CMU/Jump_Kick",
+    "metric": "angleRange",
+    "value": 10.1578,
+    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): the spinning kick turns the body 582°, a turn and a half kept as one continuous turn, so the keys in-between it the way the capture turns"
+  },
+  {
+    "id": "clip:CMU/Punch_Combo",
+    "metric": "angleRange",
+    "value": 18.9543,
+    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): its importer unwinds each angle from the key before, and the right leg, nearly straight (bent 0–15°, where its twist barely shows), winds its twist through whole turns to -1086°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
+  },
+  {
+    "id": "clip:CMU/Rake_Leaves",
+    "metric": "angleRange",
+    "value": 10.6989,
+    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): its importer unwinds each angle from the key before, and the left leg, nearly straight (bent 0–15°, where its twist barely shows), winds its twist through whole turns to -613°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
+  },
+  {
+    "id": "clip:MESH2MOTION/Roll",
+    "metric": "twistPop",
+    "value": 2.4609,
+    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3), a Quaternius re-export: the v1 pop pattern (PLAN.md §10.2), the left arm folded fully (180°) while its twist jumps 141° at 0.7 s; WP 8.8's re-import from the source is where it gets fixed"
+  },
+  {
+    "id": "clip:MESH2MOTION/Roll_RM",
+    "metric": "twistPop",
+    "value": 2.4609,
+    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3), a Quaternius re-export: the v1 pop pattern (PLAN.md §10.2), the left arm folded fully (180°) while its twist jumps 141° at 0.7 s; WP 8.8's re-import from the source is where it gets fixed"
+  },
+  {
+    "id": "clip:MESH2MOTION/Slide_Exit",
+    "metric": "twistJump",
+    "value": 3.0272,
+    "reason": "contact IK on the build (retarget.ts: the feet planted through ik.ts twoBoneRot) swings the left knee through at 0.2 s, folded 150°, on build:skeleton: the thigh rolls half a turn in that step: the format-1 decode's knee and the baked tracks stay put, and the same clip without contact IK plays clean; open for the retargeter's IK (WP 8.6 note)"
+  },
+  {
+    "id": "clip:MESH2MOTION/Victory",
+    "metric": "twistPop",
+    "value": 3.0543,
+    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): the v1 pop the validator was written for (HERO Victory, 1.2–1.27 s): the right arm folded 163° while its twist jumps 175°; WP 8.8's re-import from the source is where it gets fixed"
+  },
+  {
+    "id": "clip:MESH2MOTION/Zombie_Rise",
+    "metric": "belowFloor",
+    "value": 0.3667,
+    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): the zombie rises out of the ground, its hips starting at 40% of standing hip height under the floor, by design; the retargeter lifts the pose by its lowest point, so on a build it rises from the floor"
+  },
+  {
+    "id": "clip:MESH2MOTION/Zombie_Rise",
+    "metric": "pop",
+    "value": 0.7215,
+    "reason": "contact IK on the build (retarget.ts: the feet planted through ik.ts twoBoneRot) swings the left knee through at 1.5 s, folded 136° as it rises with its hips under the floor, on build:mannequin (0.72 m in a step): the format-1 decode's knee and the baked tracks stay put, and the same clip without contact IK plays clean; open for the retargeter's IK (WP 8.6 note)"
+  },
+  {
+    "id": "clip:QUATERNIUS/Roll",
+    "metric": "jointLimit",
+    "value": 3.1416,
+    "reason": "the left arm folds fully (180°) from 0.5 to 0.6 s while its twist pops (twistPop): at a full fold the elbow's turn about its hinge is π, which reads as −π on build:heroic; the arm itself is where the decode puts it"
+  },
+  {
+    "id": "clip:QUATERNIUS/Roll",
+    "metric": "twistPop",
+    "value": 3.0892,
+    "reason": "shardfall's Quaternius v2, as adopted (WP 8.10): the v1 pop pattern (PLAN.md §10.2), the left arm folded fully (180°) while its twist jumps 177° at 0.53 s; WP 8.8's re-import from the source is where it gets fixed"
+  },
+  {
+    "id": "clip:QUATERNIUS/Roll_RM",
+    "metric": "jointLimit",
+    "value": 3.1416,
+    "reason": "the left arm folds fully (180°) from 0.5 to 0.6 s while its twist pops (twistPop): at a full fold the elbow's turn about its hinge is π, which reads as −π on build:heroic; the arm itself is where the decode puts it"
+  },
+  {
+    "id": "clip:QUATERNIUS/Roll_RM",
+    "metric": "twistPop",
+    "value": 3.0718,
+    "reason": "shardfall's Quaternius v2, as adopted (WP 8.10): the v1 pop pattern (PLAN.md §10.2), the left arm folded fully (180°) while its twist jumps 176° at 0.53 s; WP 8.8's re-import from the source is where it gets fixed"
+  },
+  {
+    "id": "clip:QUATERNIUS/Swim_Fwd_Loop",
+    "metric": "belowFloor",
+    "value": 0.0825,
+    "reason": "WP 8.10's known case (PLAN.md §10.5 step 5): swimming, the hips at −7% to −9% of standing hip height, under the floor that stands in for the water's surface; the retargeter lifts the pose by its lowest point, so on a build it swims above the floor"
+  },
+  {
+    "id": "clip:QUATERNIUS/Swim_Idle_Loop",
+    "metric": "belowFloor",
+    "value": 0.4308,
+    "reason": "WP 8.10's known case (PLAN.md §10.5 step 5): treading water, the hips at −36% to −47% of standing hip height, under the floor that stands in for the water's surface; the retargeter lifts the pose by its lowest point, so on a build it treads above the floor"
+  },
+  {
+    "id": "clip:STYLE100/HandsBetweenLegs_Walk",
+    "metric": "fitMean",
+    "value": 73,
+    "reason": "WP 8.10's known case (PLAN.md §10.1): shardfall's import keeps this 100STYLE capture to 73 mm on average (292 at worst) (its recorded fit), past a clip's limits (40 mm on average, 300 at worst); a closer fit is format 2's re-import from the source (WP 8.8)"
+  },
+  {
+    "id": "clip:STYLE100/SwingArmsRound_Walk",
+    "metric": "fitWorst",
+    "value": 395,
+    "reason": "WP 8.10's known case (PLAN.md §10.1): shardfall's import keeps this 100STYLE capture to 395 mm at worst (40 on average) (its recorded fit), past a clip's limits (40 mm on average, 300 at worst); a closer fit is format 2's re-import from the source (WP 8.8)"
+  },
+  {
+    "id": "clip:STYLE100/WildLegs_Walk",
+    "metric": "fitMean",
+    "value": 71,
+    "reason": "WP 8.10's known case (PLAN.md §10.1): shardfall's import keeps this 100STYLE capture to 71 mm on average (its recorded fit), past a clip's limits (40 mm on average, 300 at worst); a closer fit is format 2's re-import from the source (WP 8.8)"
+  },
+  {
+    "id": "clip:STYLE100/WildLegs_Walk",
+    "metric": "fitWorst",
+    "value": 546,
+    "reason": "WP 8.10's known case (PLAN.md §10.1): shardfall's import keeps this 100STYLE capture to 546 mm at worst (its recorded fit), past a clip's limits (40 mm on average, 300 at worst); a closer fit is format 2's re-import from the source (WP 8.8)"
+  },
+  {
+    "id": "clip:STYLE100_IDLE/BouncyRight_Idle",
+    "metric": "angleRange",
+    "value": 10.0007,
+    "reason": "WP 8.10's known case (PLAN.md §10.1): shardfall's importer unwinds each angle from the key before, so the left arm's twist, nearly straight (bent 0–10°, where its twist barely shows), winds to 573°; decoded through its sine and cosine it plays as its fold (normalizedLens shows it folded), and the keys in-between it the short way, so it stays as captured"
+  },
+  {
+    "id": "clip:STYLE100_RUN/WhirlArms_Run",
+    "metric": "angleRange",
+    "value": 14.1023,
+    "reason": "WP 8.10's known case (PLAN.md §10.1): shardfall's importer unwinds each angle from the key before, so the left foot's out angle as the arms whirl winds to -808°; decoded through its sine and cosine it plays as its fold (normalizedLens shows it folded), and the keys in-between it the short way, so it stays as captured"
+  },
+  {
+    "id": "clip:STYLE100_RUN/WildArms_Run",
+    "metric": "angleRange",
+    "value": 15.4636,
+    "reason": "WP 8.10's known case (PLAN.md §10.1): shardfall's importer unwinds each angle from the key before, so the left foot's out angle as the arms flail winds to -886°; decoded through its sine and cosine it plays as its fold (normalizedLens shows it folded), and the keys in-between it the short way, so it stays as captured"
+  },
+  {
+    "id": "clip:STYLE100_SIDE/OnPhoneRight_SideRight",
+    "metric": "angleRange",
+    "value": 9.5993,
+    "reason": "WP 8.10's known case (PLAN.md §10.1): shardfall's importer unwinds each angle from the key before, so the left arm's twist, nearly straight (bent 0–13°), winds to 550°; decoded through its sine and cosine it plays as its fold (normalizedLens shows it folded), and the keys in-between it the short way, so it stays as captured"
+  },
+  {
+    "id": "clip:STYLE100_SIDE/SwingArmsRound_SideLeft",
+    "metric": "angleRange",
+    "value": 10.0356,
+    "reason": "WP 8.10's known case (PLAN.md §10.1): shardfall's importer unwinds each angle from the key before, so the left arm's twist, straight (bent 0°) as it swings round, winds to -575°; decoded through its sine and cosine it plays as its fold (normalizedLens shows it folded), and the keys in-between it the short way, so it stays as captured"
+  },
+  {
+    "id": "clip:STYLE100_SIDERUN/Elated_SideRunRight",
+    "metric": "fitWorst",
+    "value": 435,
+    "reason": "WP 8.10's known case (PLAN.md §10.1): shardfall's import keeps this 100STYLE capture to 435 mm at worst (30 on average) (its recorded fit), past a clip's limits (40 mm on average, 300 at worst); a closer fit is format 2's re-import from the source (WP 8.8)"
+  }
+]

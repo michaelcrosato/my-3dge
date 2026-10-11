@@ -5,7 +5,9 @@
  * (`stance:<name>`), move (`move:<name>`, played by an `Attack`), reaction (`reaction:<name>`) and action
  * (`action:<name>`, each of data/anim/actions/ played by its own check, engine/anim/actions.ts `actionCheck`, WP 8.7)
  * at both facings, from rest and back to rest; the blob (`blob:<state>`) and the floater (`floater:<state>`) hold
- * theirs. The first build also runs its matrix twice and at half the step, and so do the blob and the floater.
+ * theirs. The first build also runs its matrix twice and at half the step, and so do the blob and the floater. Then
+ * every library clip (`clip:<SET>/<Clip>`, `set:<SET>`), as data and on every build (tools/qa/anim/clips.ts, WP 8.6,
+ * with its metrics; baseline tests/baselines/qa-anim-library.json): about 40 s, so T1 plays a sample.
  *
  * Metrics, one violation per id and metric, valued by the worst case (larger is worse) and naming where it happened:
  * - `nan` (1), `stretch`, `underFloor`, `reach` (metres): `animCheck`'s finite values, bone lengths, feet at or
@@ -24,7 +26,6 @@
  *   `STATE_MATRIX.rate` from a run at half the step, beyond a step of its own motion (check.ts `rateDrift`).
  *
  * Accepted exceptions go in `tests/baselines/qa-anim.json`, each with its reason; `--only move:` keeps the moves.
- *
  * Invariants: subjects run in a fixed order with fixed clocks and seeded streams, so the same tree gives the same
  * violations; lengths scale with the build's `size`.
  *
@@ -172,6 +173,11 @@ export function humanoidStates(): Record<string, MatrixState> {
   states['reaction:fallFront'] = reaction(1.8, (r, f) => r.knockDown(facingTurn(AHEAD, f), f));
   states['reaction:die'] = reaction(2.6, (r) => r.die(), [1.8, (r) => r.getUp()]);
   return { ...states, ...actionStates() };
+}
+
+/** The kinds of the humanoid's QA ids (`state:`, `pose:`, …), from its matrix: as `only`, the humanoid without clips. */
+export function humanoidPrefixes(): string[] {
+  return [...new Set(Object.keys(humanoidStates()).map((id) => id.slice(0, id.indexOf(':') + 1)))];
 }
 
 /** One run as the metrics read it: points per step, world and measured from the body, and what they need besides. */
@@ -513,9 +519,13 @@ export function animViolations(keep: (id: string) => boolean = () => true): QaVi
   return [...found.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : a.metric < b.metric ? -1 : 1));
 }
 
-/** The family: every body's motion through its state matrix. */
+/** The family: every body's motion through its state matrix, then every clip of the library (anim/clips.ts). */
 const family: QaFamily = {
-  run: ({ only }) => animViolations((id) => only.length === 0 || only.some((prefix) => id.startsWith(prefix))),
+  async run({ root, only }) {
+    const keep = (id: string) => only.length === 0 || only.some((prefix) => id.startsWith(prefix));
+    const { clipViolations } = await import('./anim/clips'); // loaded here: it measures with this file's metrics
+    return [...animViolations(keep), ...clipViolations(root, keep)];
+  },
 };
 
 export default family;
