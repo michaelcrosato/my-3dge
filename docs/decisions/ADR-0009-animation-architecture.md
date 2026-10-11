@@ -110,3 +110,17 @@ Differential tests against the ported reference vectors (WP 0.11); the animation
   twohand and uppercut, and bulky's elbow pops in bash, overhead, throw and twohand; feet slide almost everywhere until
   a foot plant lands (amendment 4's `footPlant` proposal).
 - Evidence: `engine/anim/check.test.ts`, `tools/qa/anim.test.ts`, `tools/cmd/sheet.test.ts`.
+
+## Amendment 7 (2026-10-11, WP-8.7): actions as data, and the anim QA plays them
+- **Actions are data that the reader loads.** The engine imports nothing outside engine/, so a page or tool reads
+  data/anim/actions/*.json and defines them with `loadActions`, as with clip sets.
+- **Channels.** Beats hand over 30 channels (motion, effector targets and weights, flip angle and axis, scale),
+  snapshotted from data and eased by smoothstep over each beat.
+- **Flips** pivot at 0.55 of hip height (heroRoll); only a ground flip is held on the floor, and in the air the game
+  makes the arc.
+- **Checks.** Each action's `check` field drives it through `actionCheck`; held or looping beats need signals. The
+  unit test leaves the floor and rate checks to the anim QA's baseline. Deaths revive on finish.
+- **Core change accepted:** WP 8.7's Owns extends tools/qa/anim.ts and tools/qa/anim.test.ts (WP 6.6) with the action
+  subjects (`actionStates()`), with 38 entries in tests/baselines/qa-anim.json, each with its reason; it also owns
+  tools/templates/action/ (PLAN.md WP 8.7 edited).
+- Evidence: `engine/anim/actions.test.ts`, `tools/qa/anim.test.ts`, `node x qa anim --only action:`.

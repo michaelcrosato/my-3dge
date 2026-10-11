@@ -844,6 +844,7 @@ my-3dge/
   engine/                   TypeScript (strict), ES modules, extensionless imports, unit tests beside the code (*.test.ts)
     index.ts                the public API for pages; its file comment is the engine's front page
     sim-api.ts              the public API for sim-side game code (scenes, cast, behaviours); index.ts re-exports it
+                            (its Animation area is anim/api.ts, re-exported whole: ADR-0020 amendment 8)
     core/  sim/  physics/  anim/  anim/clip/  anim/proc/  world/  world/level/  world/props/  input/
     audio/dsp/  audio/data/  audio/runtime/  gfx/  gfx/materials/  gfx/textures/  gfx/geometry/  gfx/level/
     gfx/puppets/  gfx/cameras/  gfx/post/  gfx/fx/  gfx/enhanced/  ui/  dev/  app/
@@ -3108,7 +3109,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/anim/clip tests/unit/data/anim && npm run e2e -- tests/e2e/library.spec.ts`
 
 #### WP-8.7 The ACTIONS layer
-- **Owns:** `engine/anim/actions.ts`, `data/anim/actions/*`
+- **Owns:** `engine/anim/actions.ts`, `data/anim/actions/*`, `tools/templates/action/`; extends `tools/qa/anim.ts` and `tools/qa/anim.test.ts` (WP 6.6) with the action subjects (ADR-0009 amendment 7)
 - **Needs:** WP 6.6, WP 8.4
 - **Size:** M
 - **Carry:**
@@ -3754,7 +3755,7 @@ A range such as `2.1 → 2.7` means every WP of the stage in numeric order. On-d
 - Shared files are owned by the integrator or regenerated:
   - `eslint.config.js`, `package.json`, `tools/deps.json`, `tsconfig.json`, `vite.config.ts`, `playwright.config.ts`, the generated docs, the ledger.
   - `package-lock.json` is regenerated: on a conflict, take either side and run `npm install`.
-  - `engine/index.ts` and `engine/sim-api.ts` are append-only: a lane appends its own export lines, and a merge keeps both sides.
+  - `engine/index.ts`, `engine/sim-api.ts` and its Animation area `engine/anim/api.ts` (ADR-0020 amendment 8) are append-only: a lane appends its own export lines, and a merge keeps both sides.
   - After G7, `labs/box/main.ts` and `labs/box/README.md`: Phases 8–9 and the on-demand WPs request their wiring there.
 - Lanes request changes to shared files through their final report.
 
@@ -4007,7 +4008,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 8.4 | Baker, clip layer, retargeting, mannequin | L | done | b465fec (#8) | Baker (30 fps rotation tracks), clip layer in the animator's clip slot (ground-speed loops, walk-run switch, strike time), retargeting onto any build, the mannequin; review r6 fix: the build's hip-joint centre goes at the source's times the hip-height ratio (my-3d2dge hipC) and contact IK plants each foot's lowest point, dropping the pelvis just enough for a straight leg (CMU Shrug on heroic: 197 mm to 0); AnimationMixer matches the clip layer within 0.1 mm; mannequin baseline rewritten with a reason (cmu 116.6 to 92.7 mm, quaternius 58.1 to 72.4, mesh2motion 49.5 to 59.9); call: straight-leg reach over keeping the clip's knee bend (knees through the floor on kneeling clips); open: lift still raises some clips' feet (longer hands, Quaternius swims/jumps); docs regenerated on merge; no escalations; deferred: browser/e2e look of the clip layer and mannequin; verifier: pass after 1 fix round(s) |
 | 8.5 | Tools port | L | todo | | |
 | 8.6 | Library tests and QA | L | todo | | |
-| 8.7 | ACTIONS layer | L | todo | | |
+| 8.7 | ACTIONS layer | L | done | 4cc8dee (#8) | engine/anim/actions.ts adds the action kind, the Actions player and actionCheck (beats of body states, a motion or a move, clips, IK effectors, flips, squash, events, flags, cancel windows, until-next holds, loops, exit, lockstep pairs, 30 eased channels); data/anim/actions/ holds 28 actions (jump phases, hurt, dizzy, flips, 8 deaths, charge, itemGet, ledgeHang, wallSlide, grab and grabbed, get-ups, idle life); tools/templates/action; core change accepted (4cc8dee, ADR-0009 amendment 7): the anim QA plays every action by its check, 38 baseline entries with reasons (full QA about 5.5 s unloaded); calls: actions are data the reader loads (loadActions), deaths revive on finish, only ground flips are clamped to the floor; integration: sim-api.ts was at 595 of 600 lines, so its Animation area moved verbatim to engine/anim/api.ts, re-exported whole, and the Actions exports were added there (ADR-0020 amendment 8; x new action --test green); docs regenerated; open: actions.ts 596 lines (proposed split into actions-data.ts), x describe action lists no ids (the engine cannot import data/); no escalations; not verified: T2 (no page code touched) |
 | 8.8 | Re-import from sources (after G8) | L | on demand | | |
 | 8.9 | Clip mode in the box | L | todo | | |
 | 8.10 | 100STYLE and Quaternius v2 from shardfall | L | done | a044e3d (#5) | tools/anim/shardfall.ts adopts 100STYLE (7 sets, 878 loops, body null) and Quaternius v2 (102 clips plus v1's Punch_Enter and body) with 8 catalogs, every clip marked via; calls: 100STYLE's Set cell names its catalog family, parity runs over the shorter duration (only A_TPose differs); parity on v1 rests 79/87 within fit (8 misses with checked reasons in shardfall.test.ts); no escalations (100STYLE approved, ADR-0021); deferred without the checkouts: the oracle decode and parity tests; INDEX/API regenerated on merge; no verifier review (lane ran it as S-size although the ledger sizes it L); open for WP 8.5: repack.ts with no arguments still rewrites quaternius from v1 (drop it from legacySetFiles) |

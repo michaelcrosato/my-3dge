@@ -7,6 +7,14 @@ Every code the engine prints, as `[CODE] message`, with its fix. Each module reg
 
 ## anim
 
+### ANIM_ACTION_NO_CLIPS
+
+- Message: `action {action} plays clips ({clips}), but its Actions has no clip layer`
+- Fix: make it with one: new Actions({ clips }), the ClipLayer in the animator's clips slot, with the sets those clips come from
+- Registered in: [`engine/anim/actions.ts` line 66](../engine/anim/actions.ts)
+
+Thrown by `Actions.play` (engine/anim/actions.ts) for an action with a `clip` beat when the player was made without `clips`: the beat would play nothing, silently.
+
 ### ANIM_BAD_CHAIN
 
 - Message: `a chain cannot have {field} {value}`
@@ -176,6 +184,14 @@ Raised by the clip library (engine/anim/clip/library.ts) when a clip names a sou
 - Registered in: [`engine/anim/moves.ts` line 41](../engine/anim/moves.ts)
 
 Thrown by `strikeSegment` (engine/anim/moves.ts) for an `Animator` without `preciseHits`. A strike’s span is read from a pose, and the sim poses only animators with `preciseHits` (engine/sim/actors.ts, the system `actors.pose`); any other animator holds whatever the view last drew, nothing headless, so hits read from it would depend on rendering and visibility.
+
+### ANIM_UNKNOWN_BEAT
+
+- Message: `action {action} has no beat {name}{suggestion}`
+- Fix: go to one of its beats: {names}
+- Registered in: [`engine/anim/actions.ts` line 61](../engine/anim/actions.ts)
+
+Thrown by `Actions.go` (engine/anim/actions.ts) for a beat name the playing action lacks, or when nothing plays. The message names the closest beats.
 
 ### ANIM_UNKNOWN_CLIP
 
