@@ -355,6 +355,35 @@ export type { ArmState } from './anim/strike';
 export { inArc } from './anim/moves';
 export { inHitShape } from './anim/moves';
 export { knockbackVelocity } from './anim/moves';
+// Reactions and secondary motion (WP 6.2): a directional flinch, knockdown, death and the get-up chosen by how the
+// body lies (face up or face down), stepped in the sim; verlet chains (hair, tails) with bone-capsule colliders, a
+// floor probe and a rest shape, a cape of two chains, and the squash spring as a volume-preserving root scale, drawn
+// by an animator layer in the view.
+export { Reactions } from './anim/reactions';
+export type { ReactionOptions } from './anim/reactions';
+export type { ReactionState } from './anim/reactions';
+export type { ReactionBody } from './anim/reactions';
+export type { ReactionName } from './anim/reactions';
+export { REACTION } from './anim/reactions';
+export { REACTIONS } from './anim/reactions';
+export type { Lying } from './anim/reactions';
+export { lyingOf } from './anim/reactions';
+export { Chain } from './anim/secondary';
+export type { ChainOptions } from './anim/secondary';
+export type { ChainTuning } from './anim/secondary';
+export type { BoneCapsule } from './anim/secondary';
+export { CHAIN } from './anim/secondary';
+export { Cape } from './anim/secondary';
+export type { CapeOptions } from './anim/secondary';
+export { Secondary } from './anim/secondary';
+export type { SecondaryOptions } from './anim/secondary';
+export { HAIR } from './anim/secondary';
+export { CAPE } from './anim/secondary';
+export { TAIL } from './anim/secondary';
+export { SQUASH } from './anim/secondary';
+export { squashScale } from './anim/secondary';
+export { BODY_CAPSULES } from './anim/secondary';
+export { bodyCapsules } from './anim/secondary';
 
 // Physics (WP 3.1): Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id,
 // raycasts, shape casts, overlaps and ground probes, collision groups by name, a level's bodies; presentation reads
