@@ -16,7 +16,7 @@
  * switch, cancels, events, root motion), on plain data (`state`, `save`, `load`); `apply` is the view's, sampling the
  * clips on the animator's skeleton (retarget.ts: contact IK, the held blade above the floor) and laying them over the
  * pose. Events are a clip's own (format 2), `hit` (an attack's: its `hit` event, else its strike time), `landed` and
- * `end`, from each clip not covered.
+ * `end`, from each clip neither covered nor fading out: a cancelled or stopped attack lands no hit.
  *
  * Invariants: `apply` writes only the pose (the animator fades the layer by its `weight` and runs FK); a slot's weight
  * eases linearly and shows smoothstepped, and a slot goes only at 0 or under a full-body clip fully in: nothing pops.
@@ -343,7 +343,7 @@ export class ClipLayer implements AnimLayer {
     this.#start(clip, { fade: CLIP_LAYER.loco }, true, at);
   }
 
-  /** One tick of `slot`: its rate, time and fade; its events and end when `live`, its travel when `root`. */
+  /** One tick of `slot`: its rate, time and fade; its events and end when `live` and not stopping, travel at `root`. */
   #advance(slot: ClipSlot, live: boolean, root: boolean): void {
     const [library, name] = this.resolve(slot.clip);
     const clip = library.clip(name);
@@ -352,7 +352,8 @@ export class ClipLayer implements AnimLayer {
     const t0 = slot.t;
     slot.t += this.dt * slot.rate;
     const loop = slot.play.loop ?? !!clip.loop;
-    if (live) this.#events(slot, library, name, t0, loop);
+    // a slot fading out says nothing more: a cancelled or stopped attack lands no hit, a fall stopped early no `landed`
+    if (live && !slot.stopping) this.#events(slot, library, name, t0, loop);
     if (live && !loop && t0 < clip.dur && slot.t >= clip.dur && !slot.stopping) {
       this.events.push({ type: 'end', clip: slot.clip });
       const next = slot.play.next;

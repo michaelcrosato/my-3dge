@@ -1,10 +1,11 @@
 /**
  * @file Tests for the clip layer (WP 8.4): fades and crossfades, stop and the cancel rules, no joint jumping in a
  * tick when a crossfade is stopped, cancelled or cut short, the `hold`, `next` and `landed` flags, events (a clip's
- * own, a lap's, an attack's hit at its strike time), root motion, masks and additive clips in the animator's pose and
- * over another clip, a mirrored clip's hand contacts, the walk–run switch on either side of both its lines with the
- * walk and with the run playing, each change at the drive that makes it (Done when), shardfall's three walkers played
- * at their ground speed (Done when), save and load, and the errors (a layer refuses an animator of another build).
+ * own, a lap's, an attack's hit at its strike time; none from a clip fading out, so a cancelled attack lands no hit),
+ * root motion, masks and additive clips in the animator's pose and over another clip, a mirrored clip's hand
+ * contacts, the walk–run switch on either side of both its lines with the walk and with the run playing, each change
+ * at the drive that makes it (Done when), shardfall's three walkers played at their ground speed (Done when), save and
+ * load, and the errors (a layer refuses an animator of another build).
  */
 import { describe, expect, it } from 'vitest';
 import { Quaternion, Vector3 } from '../../core/math';
@@ -182,6 +183,32 @@ describe('flags and events', () => {
     for (let i = 0; i < 40 && at < 0; i++) if (layer.step().some((e) => e.type === 'hit')) at = layer.current!.t;
     expect(at - strike).toBeGreaterThan(0);
     expect(at - strike).toBeLessThanOrEqual(1 / 60 + 1e-9);
+  });
+
+  it('lands no hit from an attack cancelled or stopped before its strike, and no `landed` from a fall stopped early', () => {
+    const before = Math.floor(library.strikeTime('Punch') * 60) - 3; // three ticks before the strike
+    const cancels: [string, (layer: ClipLayer) => void, ClipStepInput][] = [
+      ['plays on', () => {}, {}],
+      ['a flinch', () => {}, { hurt: true }],
+      ['an action', () => {}, { action: true }],
+      ['moving', () => {}, { groundSpeed: 3 }],
+      ['stop()', (layer) => layer.stop(), {}],
+    ];
+    const hits = cancels.map(([how, cancel, input]) => {
+      const layer = layerOf().play('Punch', { fade: 0, attack: true });
+      const events = run(layer, before);
+      cancel(layer);
+      events.push(...run(layer, 30, input));
+      return [how, events.filter((e) => e.type === 'hit').length];
+    });
+    expect(hits).toEqual(cancels.map(([how], i) => [how, i === 0 ? 1 : 0]));
+    for (const stopped of [false, true]) {
+      const layer = layerOf().play('Fall', { fade: 0, hold: true, landed: 0.8 });
+      const events = run(layer, 45);
+      if (stopped) layer.stop();
+      events.push(...run(layer, 60));
+      expect(events.filter((e) => e.type === 'landed')).toHaveLength(stopped ? 0 : 1);
+    }
   });
 
   it('reports the clip’s travel as root motion, at the layer’s build', () => {
