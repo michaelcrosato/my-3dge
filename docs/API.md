@@ -139,6 +139,7 @@ game agent's manual.
 - `createMaterialLibrary` (function from [`engine/gfx/materials/library.ts`](../engine/gfx/materials/library.ts)): Makes a material library over `registry` (the shared one by default).
 - `createOutline` (function from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): Makes an outline (see the file comment).
 - `createOverlay` (function from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): Builds the overlay over `options.canvas` (see the file comment).
+- `createPropMeshes` (function from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): Makes the prop meshes; see the file comment.
 - `createPuppet` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Draws `compiled` as one rigid-skinned mesh (see the file comment), at rest until `setPose`.
 - `createPuppetBatches` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Makes instanced puppet batches (see the file comment).
 - `createScriptedGamepad` (function from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
@@ -167,6 +168,7 @@ game agent's manual.
 - `defineLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): Registers a level on `registry` (the shared one by default) after checking its text compiles against that registry's legend; returns the entry.
 - `defineLight` (function from [`engine/gfx/lights.ts`](../engine/gfx/lights.ts)): Declares a light kind (`light:<tag>`, the tag a level's light spots carry); see `LIGHT_FIELDS`.
 - `defineMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): Defines a material on `registry` (the shared one by default) and returns it.
+- `defineProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): Defines a prop on `registry` (the shared one by default) and returns it.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
 - `defineSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): Defines an effect on `registry` (the shared one by default) and returns it.
@@ -191,6 +193,7 @@ game agent's manual.
 - `FeelOptions` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
+- `FLICKER` (const from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): A flame's flicker at time `t` (s): about 0.77 to 1.03, the 2D hall's (my-3d2dge's `FLICKER`).
 - `Floater` (class from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater: its state, its pose.
 - `FLOATER` (const from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's tuning: the source's numbers, lengths ÷ 16 in metres, and the bank's.
 - `FloaterInput` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is told each step; every field is optional.
@@ -222,6 +225,7 @@ game agent's manual.
 - `getGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): The geometry `id` of `registry` (the shared one by default); a missing id gives `geometry:box`, with a warning.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
 - `getMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): The material `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `material:default`.
+- `getProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): The prop `id` of `registry` (the shared one by default); a missing id gives `prop:crate`, with a warning.
 - `getSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
 - `getSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): The song `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
 - `getTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): The touch layout `id`.
@@ -287,6 +291,7 @@ game agent's manual.
 - `LevelMeshesOptions` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): What `createLevelMeshes` needs: where materials come from, and optionally more recipes and a log.
 - `LevelMeshPart` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): One level mesh: its descriptor's recipe and glyphs, the mesh, and for an instanced shape one cell per instance.
 - `LevelProblem` (interface from [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
+- `levelProps` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): The placements `level` makes for the props of `registry` (the shared one by default); see the file comment.
 - `LevelRecipe` (interface from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): A level mesh recipe: its shape, materials, shadows and cut.
 - `LevelShape` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): How a recipe draws its pieces, with what each material slot draws: - `surface`: one welded surface over the pieces at their bottom height, facing up, UVs in metres along X and -Z (one draw call): the floor.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
@@ -367,8 +372,23 @@ game agent's manual.
 - `POSES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The held poses, each with what it shows.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `ProbeOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A probe's options: where the downward ray starts, and the groups that count as ground.
+- `Prop` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): A `prop` entry: see the file comment.
 - `PROP_MATERIAL` (const from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): The props' material: a hollow wooden crate's (24 kg at 0.75 m), Coulomb friction, a little bounce, and damping that lets a knocked prop slide and roll to rest.
+- `propBody` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): The body `physics.addBody` takes for `placement`, or `null` when its prop has none; see the file comment.
+- `PropBody` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): A prop's body, as `physics.addBody` takes it (engine/physics/world.ts's `BodySpec`).
+- `propCentre` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): The height of a prop's centre above its base (m): its body's origin, half its shape's height; 0 without a body.
+- `PropDefinition` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): What `defineProp` takes: any field, and of its objects (body, light, place, each part and its flame) any key.
+- `PropKnock` (interface from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): How hard a knock is, as engine/physics/bodies.ts's `knock` takes it.
+- `PropLight` (interface from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): A prop's light this frame, in world space, as three.js's `PointLight` takes it.
+- `PropMeshes` (interface from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): The props of a scene, drawn: see the file comment.
+- `PropMeshesOptions` (interface from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): What `createPropMeshes` takes.
+- `PropMeshPose` (interface from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): A prop's pose: its centre (its body's origin) and its turn.
+- `PropPart` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): One part of a `prop` entry, filled: see `PROP_PART_FIELDS`.
+- `PropPlacement` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): A prop placed: which, its base (m) and its turn about +Y (rad).
+- `propPose` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): Where `placement` is drawn while no body moves it: the prop's centre and turn.
+- `PropPose` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): Where a prop is drawn: its centre (m) and its turn, `[x, y, z, w]`.
 - `PropSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A prop as `addProp` takes it: a body's pose, velocities and options, and its material.
+- `PropTouch` (interface from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): What a hook is given: the prop, its body, where the touch comes from, and the means to answer it.
 - `Puppet` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): One character drawn as a rigid-skinned mesh (see the file comment).
 - `PuppetBatches` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Instanced parts for crowds (see the file comment).
 - `PuppetMaterials` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Where materials come from: the page's material library.
@@ -623,6 +643,7 @@ game agent's manual.
 - `defineGlyph` (function from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): Defines a glyph on `registry` (the shared one by default) and returns it.
 - `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
 - `defineLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): Registers a level on `registry` (the shared one by default) after checking its text compiles against that registry's legend; returns the entry.
+- `defineProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): Defines a prop on `registry` (the shared one by default) and returns it.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
@@ -656,6 +677,7 @@ game agent's manual.
 - `FRU` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A rig-local point or direction: metres (or a direction's parts) forward, right and up.
 - `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
+- `getProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): The prop `id` of `registry` (the shared one by default); a missing id gives `prop:crate`, with a warning.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `Ground` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): The ground under a point: its height, its normal and the body it belongs to.
@@ -697,6 +719,7 @@ game agent's manual.
 - `LevelEntry` (type from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): A `level` entry: a level's text and where it came from.
 - `LevelGlyph` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
 - `LevelProblem` (interface from [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
+- `levelProps` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): The placements `level` makes for the props of `registry` (the shared one by default); see the file comment.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
 - `LightSpot` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A light spot: a tile's centre, `lightHeight` above its top.
 - `Limb` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A two-bone limb: the joint it hangs from (`upper`: hip or shoulder), its hinge (`middle`: knee or elbow), and the hinge's axis in the upper joint's frame (`hinge`; a positive turn bends the shin back and the forearm forward).
@@ -738,8 +761,19 @@ game agent's manual.
 - `POSES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The held poses, each with what it shows.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `ProbeOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A probe's options: where the downward ray starts, and the groups that count as ground.
+- `Prop` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): A `prop` entry: see the file comment.
 - `PROP_MATERIAL` (const from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): The props' material: a hollow wooden crate's (24 kg at 0.75 m), Coulomb friction, a little bounce, and damping that lets a knocked prop slide and roll to rest.
+- `propBody` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): The body `physics.addBody` takes for `placement`, or `null` when its prop has none; see the file comment.
+- `PropBody` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): A prop's body, as `physics.addBody` takes it (engine/physics/world.ts's `BodySpec`).
+- `propCentre` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): The height of a prop's centre above its base (m): its body's origin, half its shape's height; 0 without a body.
+- `PropDefinition` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): What `defineProp` takes: any field, and of its objects (body, light, place, each part and its flame) any key.
+- `PropKnock` (interface from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): How hard a knock is, as engine/physics/bodies.ts's `knock` takes it.
+- `PropPart` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): One part of a `prop` entry, filled: see `PROP_PART_FIELDS`.
+- `PropPlacement` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): A prop placed: which, its base (m) and its turn about +Y (rad).
+- `propPose` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): Where `placement` is drawn while no body moves it: the prop's centre and turn.
+- `PropPose` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): Where a prop is drawn: its centre (m) and its turn, `[x, y, z, w]`.
 - `PropSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A prop as `addProp` takes it: a body's pose, velocities and options, and its material.
+- `PropTouch` (interface from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): What a hook is given: the prop, its body, where the touch comes from, and the means to answer it.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `QuatLike` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A rotation: three.js's `Quaternion`, `{ x, y, z, w }` or `[x, y, z, w]`.
 - `QueryOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What every query takes: the groups it hits, and a body it skips.
@@ -2133,6 +2167,21 @@ For the agents who maintain the engine.
 - `PipelineCounter` (interface): The counter of one device.
 - `PIPELINES_CODES` (const): The codes this module raises, with their fixes.
 
+### [`engine/gfx/props.ts`](../engine/gfx/props.ts)
+
+- `buildPropPart` (function): Builds `part`'s geometry (the caller's), with its tops and bottoms a group of their own when it has a `top`.
+- `CRATE_TEXTURE` (const): The crate's face generator: see the file comment.
+- `createPropMeshes` (function): Makes the prop meshes; see the file comment.
+- `FLICKER` (const): A flame's flicker at time `t` (s): about 0.77 to 1.03, the 2D hall's (my-3d2dge's `FLICKER`).
+- `partMatrix` (function): Where `part` stands in its prop's frame (the base at the origin).
+- `PROP_MATERIALS` (const): The props' materials, by id: `material:crate` (texture:crate, my-3d2dge's `crateTex`, a 0.75 m face per tile), `material:barrelStaves` (texture:staves wrapped exactly once round the twelve-sided barrel, a stave per side), `material:barrelLid` and `material:flame` (unlit white, so tints show).
+- `PropLight` (interface): A prop's light this frame, in world space, as three.js's `PointLight` takes it.
+- `propLooks` (function): Defines the props' texture and materials on `registry`, unless it has them.
+- `PropMeshes` (interface): The props of a scene, drawn: see the file comment.
+- `PropMeshesOptions` (interface): What `createPropMeshes` takes.
+- `PropMeshPose` (interface): A prop's pose: its centre (its body's origin) and its turn.
+- `tongueMatrices` (function): Tongue `k`'s outer flame and core in its part's frame at `t` (s): the 2D hall's dance, in metres.
+
 ### [`engine/gfx/puppets/blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts)
 
 - `BLOB_SHADOW` (const): The shadow rule's numbers: the lift above the floor, the height where it stops shrinking, its smallest scale.
@@ -3019,6 +3068,35 @@ For the agents who maintain the engine.
 - `NavGridOptions` (type): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
 - `NEAREST_RINGS` (const): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
 
+### [`engine/world/props/catalog.ts`](../engine/world/props/catalog.ts)
+
+- `BUILT_IN_PROPS` (const): The engine's props, by id.
+
+### [`engine/world/props/place.ts`](../engine/world/props/place.ts)
+
+- `levelProps` (function): The placements `level` makes for the props of `registry` (the shared one by default); see the file comment.
+- `propBody` (function): The body `physics.addBody` takes for `placement`, or `null` when its prop has none; see the file comment.
+- `PropBody` (interface): A prop's body, as `physics.addBody` takes it (engine/physics/world.ts's `BodySpec`).
+- `PropCollider` (type): A prop's collider, as `physics.addBody` takes it.
+- `PropPlacement` (interface): A prop placed: which, its base (m) and its turn about +Y (rad).
+- `propPose` (function): Where `placement` is drawn while no body moves it: the prop's centre and turn.
+- `PropPose` (interface): Where a prop is drawn: its centre (m) and its turn, `[x, y, z, w]`.
+
+### [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)
+
+- `defineProp` (function): Defines a prop on `registry` (the shared one by default) and returns it.
+- `getProp` (function): The prop `id` of `registry` (the shared one by default); a missing id gives `prop:crate`, with a warning.
+- `Prop` (type): A `prop` entry: see the file comment.
+- `PROP_FIELDS` (const): The fields of a `prop` entry.
+- `PROP_PART_FIELDS` (const): The fields of one part: a mesh of the prop.
+- `PROP_SHAPES` (const): The physics shapes a prop's body may have, sized as three.js sizes its geometries.
+- `propCentre` (function): The height of a prop's centre above its base (m): its body's origin, half its shape's height; 0 without a body.
+- `PropDefinition` (type): What `defineProp` takes: any field, and of its objects (body, light, place, each part and its flame) any key.
+- `propKind` (function): Declares the kind `prop` on `registry`, with the engine's props, unless it has it.
+- `PropKnock` (interface): How hard a knock is, as engine/physics/bodies.ts's `knock` takes it.
+- `PropPart` (type): One part of a `prop` entry, filled: see `PROP_PART_FIELDS`.
+- `PropTouch` (interface): What a hook is given: the prop, its body, where the touch comes from, and the means to answer it.
+
 ### [`engine/world/spatial.ts`](../engine/world/spatial.ts)
 
 - `SPATIAL_HASH_FIELDS` (const): The options of `new SpatialHash(options)`.
@@ -3112,6 +3190,14 @@ For the agents who maintain the engine.
 - `LOOKS` (const): The comparison's looks: v1's Lambert, the toon bands, the baseline's gradient map.
 - `PARTS` (const): The parts: place, turn (rad about x, y, z) and size, metres; far from the batch's origin, each its own way.
 - `PARTS_SHOT` (const): The ID pass's size for `part`.
+
+### [`tests/pages/props.ts`](../tests/pages/props.ts)
+
+- `Knocked` (interface): What `knock` reports at one tick.
+- `SCENE` (const): The props the page places itself, beside the level's.
+- `Seen` (type): What the ID pass sees of one batch.
+- `Shown` (interface): What `show` reports.
+- `YARD` (const): The yard: 12 × 7 m, walled; a crate's spawn point (`c`) and a brazier stand (`t`).
 
 ### [`tests/pages/puppets.ts`](../tests/pages/puppets.ts)
 
@@ -3911,11 +3997,14 @@ For the agents who maintain the engine.
 
 - `checkGeometries` (function): The violations of every geometry on `registry` (or those of `ids`), in id order.
 - `checkLevelMeshes` (function): The violations of `level`'s meshes, as item `id`.
-- `default` (default): The `geo` QA family (PLAN.md §8.6, WP 2.4, I-29): `node x qa geo` checks every `geometry` entry the shared registry has (the kit's, engine/gfx/geometry/builtins.ts, and a game's: each `*.ts` module under `labs/<name>/geometry/` imported first), built at its defaults, and the level meshes (engine/gfx/level/meshes.ts) of every level file the `level` family reads (tools/qa/level.ts: `labs/box/levels/`, `fixtures/levels/`; a level that does not compile is the `level` family's to report).
+- `checkProps` (function): The violations of every prop on `registry` (or those of `ids`), in id order, as the props' ids.
+- `default` (default): The `geo` QA family (PLAN.md §8.6, WP 2.4, I-29): `node x qa geo` checks every `geometry` entry the shared registry has (the kit's, engine/gfx/geometry/builtins.ts, and a game's: each `*.ts` module under `labs/<name>/geometry/` imported first), built at its defaults; every `prop` entry's parts (WP 4.5: the engine's, engine/world/props/catalog.ts, and a game's under `labs/<name>/props/`), each built as the prop draws it, under the prop's id; and the level meshes (engine/gfx/level/meshes.ts) of every level file the `level` family reads (tools/qa/level.ts: `labs/box/levels/`, `fixtures/levels/`; a level that does not compile is the `level` family's to report).
 - `geometryModules` (function): A game's geometry modules, `labs/<name>/geometry/*.ts` (tests excluded), labs and files in name order.
+- `labModules` (function): A game's modules in `labs/<name>/<folder>/*.ts` (tests excluded), labs and files in name order.
 - `LEVEL_DRAW_CALLS` (const): Draw calls a level's meshes may cost with one shadow map.
 - `LEVEL_VERTICES_PER_TILE` (const): Drawn vertices a level may have per map tile.
 - `MAX_SIZE` (const): The longest a geometry may be on any axis (m).
+- `PROP_FLOAT` (const): How far (m) a prop's parts may reach below or stop above its base, where its body stands.
 
 ### [`tools/qa/level.ts`](../tools/qa/level.ts)
 
@@ -3926,8 +4015,9 @@ For the agents who maintain the engine.
 
 ### [`tools/qa/tex.ts`](../tools/qa/tex.ts)
 
+- `checkPropTextures` (function): The violations of the textures of every prop on `registry` (or those of `ids`), in id order, as the props' ids.
 - `checkTextures` (function): The violations of every texture on `registry` (or those of `ids`), in id order.
-- `default` (default): The `tex` QA family (PLAN.md §8.6, WP 2.3, I-20): `node x qa tex` bakes every texture generator the shared registry has, the engine's (engine/gfx/textures/v1.ts) and a game's (each `*.ts` module under `labs/<name>/textures/` imported first), at its default size and at twice it, with seeds 1 and 2, and checks every bake.
+- `default` (default): The `tex` QA family (PLAN.md §8.6, WP 2.3, I-20): `node x qa tex` bakes every texture generator the shared registry has, the engine's (engine/gfx/textures/v1.ts) and a game's (each `*.ts` module under `labs/<name>/textures/` imported first), at its default size and at twice it, with seeds 1 and 2, and checks every bake; then, under each `prop` entry's id (WP 4.5; a game's props under `labs/<name>/props/` imported first), the textures its parts' materials name, baked as each material bakes them (its parameters and size), and a `reference` violation for a part naming a material no entry defines.
 - `textureModules` (function): A game's texture modules, `labs/<name>/textures/*.ts` (tests excluded), labs and files in name order.
 
 ### [`tools/x.ts`](../tools/x.ts)
