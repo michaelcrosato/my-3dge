@@ -3,18 +3,21 @@
  * tests/baselines/qa-tex.json; on a registry with seeded faults, a generator that does not wrap gives `seamDelta` and
  * `period`, one with values out of range gives `range`, one that throws gives `bake`, each once, valued by the worst
  * bake and naming it; a game's texture modules are found under `labs/<name>/textures/`;
- * `--only` and a baseline entry accepting a known problem work through `runQa`.
+ * `--only` and a baseline entry accepting a known problem work through `runQa`; the contact sheet is written for
+ * what was checked, laid out three panels a texture, tiled 2 × 2 with each texture's shape kept.
  * @see tools/qa/tex.ts
  */
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createRegistry } from '../../engine/core/registry';
+import { bakeTexture } from '../../engine/gfx/textures/bake';
 import { defineTexture } from '../../engine/gfx/textures/texture';
 import { runQa, type QaFamily } from '../cmd/qa';
 import { ROOT } from '../x';
-import family, { checkTextures, textureModules } from './tex';
+import { decodePng } from '../lib/png';
+import family, { checkTextures, textureModules, textureSheet } from './tex';
 
 const temporary: string[] = [];
 afterEach(() => {
@@ -104,6 +107,25 @@ describe('the tex QA family', () => {
     });
     expect(textureModules(root)).toEqual(['labs/box/textures/moss.ts', 'labs/hello/textures/sample.ts']);
     expect(await family.run({ root, only: ['texture:brick'] })).toEqual([]);
+    // The contact sheet of what it checked: one texture, three panels.
+    const sheet = decodePng(readFileSync(join(root, 'out', 'qa', 'tex', 'sheet.png')));
+    expect([sheet.width, sheet.height]).toEqual([408, 160]);
+  });
+
+  it('lays out the contact sheet: colour, normal and emissive tiled 2 × 2, shapes kept, labelled', () => {
+    const checker = bakeTexture('texture:checker');
+    const staves = bakeTexture('texture:staves');
+    const sheet = textureSheet([checker, staves]);
+    expect([sheet.width, sheet.height]).toEqual([808, 160]);
+    const pixel = (x: number, y: number) => [...sheet.rgba.slice((y * 808 + x) * 4, (y * 808 + x) * 4 + 3)];
+    // The checker's panel: its top-left pixel is the map's top row's first texel; one period is 64 px.
+    const top = (63 * 64 + 0) * 4;
+    expect(pixel(8, 8)).toEqual([...checker.map.slice(top, top + 3)]);
+    expect(pixel(8, 8)).toEqual(pixel(8 + 64, 8 + 64));
+    // No glow: the emissive panel is black. The staves (48 × 16) fill 128 × 43 px, the background below.
+    expect(pixel(8 + 2 * 132 + 10, 20)).toEqual([0, 0, 0]);
+    expect(pixel(416 + 10, 8 + 42)).not.toEqual([27, 27, 36]);
+    expect(pixel(416 + 10, 8 + 44)).toEqual([27, 27, 36]);
   });
 
   it('fails new problems and passes ones the baseline accepts with a reason', async () => {
