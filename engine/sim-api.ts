@@ -188,6 +188,26 @@ export { FOOT_PLANT } from './anim/ik';
 export type { GroundProbe } from './anim/ik';
 export type { GroundHit } from './anim/ik';
 export { handTo } from './anim/ik';
+// The procedural humanoid (WP 3.6): my-3d2dge's gait, idle, lean, arm swing, held poses and stances as effector
+// targets written with B(forward, right, up), solved onto the skeleton; a fixed step and a seeded stream.
+export { Humanoid } from './anim/humanoid';
+export type { HumanoidOptions } from './anim/humanoid';
+export type { HumanoidInput } from './anim/humanoid';
+export type { HumanoidState } from './anim/humanoid';
+export type { HumanoidWeights } from './anim/locomotion';
+export type { BodyMotion } from './anim/locomotion';
+export { POSES } from './anim/poses';
+export type { PoseName } from './anim/poses';
+export { STANCES } from './anim/poses';
+export type { StanceName } from './anim/poses';
+export { WEAPONS } from './anim/poses';
+export type { Weapon } from './anim/poses';
+export type { Effectors } from './anim/poses';
+export { B } from './anim/authoring';
+export { turnRight } from './anim/authoring';
+export type { FRU } from './anim/authoring';
+export type { Side } from './anim/authoring';
+export type { Sided } from './anim/authoring';
 
 // Physics (WP 3.1): Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id,
 // raycasts, shape casts, overlaps and ground probes, collision groups by name, a level's bodies; presentation reads
