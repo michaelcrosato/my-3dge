@@ -46,6 +46,7 @@ import type { AnyComponents } from '../sim/state';
 import { playInto, type PlayIntoOptions, type PlayResult } from './playback';
 import { createRunView, type RunView } from './view';
 import type { AppHost } from './viewMembers';
+import './feelMember';
 import './viewMembers';
 
 /** The codes this module raises, with their fixes. */

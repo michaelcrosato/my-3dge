@@ -259,6 +259,11 @@ test.describe('the box, stage 1', () => {
       out['input.play'] = e.input.play('2').steps;
       out['input.state'] = typeof e.input.state();
       out['input.record'] = e.input.record().steps;
+      try {
+        out.feel = e.feel(); // the room has no actor
+      } catch (error) {
+        out.feel = (error as Error).message;
+      }
       out.render = (await e.render(1)).drawn;
       out.shot = (await e.shot({ ids: true, metrics: false, thumbnail: false })).ids.objects;
       out.replay = (await e.replay(replay, { draw: 0 })).hashes['600'];
@@ -293,6 +298,7 @@ test.describe('the box, stage 1', () => {
       'input.play': 2,
       'input.state': 'object',
       'input.record': 12,
+      feel: '[SIM_BAD_ARGUMENT] feel(id) got undefined: pass an actor’s id (none)',
       render: true,
       shot: 11,
       replay: GOLDEN['600'],

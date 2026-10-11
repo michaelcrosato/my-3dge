@@ -13,8 +13,8 @@
  *
  * `measureFeel(character)` drives a character over a flat course in a world of its own through the feel meter
  * (engine/physics/feel.ts) and adds the reach (the highest ledge it jumps onto, WP 4.3's climb limit) and the dash's
- * distance; it runs under the sim's maths, so the numbers match in Node and Chromium. `__engine.feel(id?)` (registered
- * here) reports it for an actor, the first player by default; `node x sim <scene> --feel` prints it.
+ * distance; it runs under the sim's maths, so the numbers match in Node and Chromium. `__engine.feel(id?)`
+ * (engine/app/feelMember.ts) reports it for an actor, the first player by default; `node x sim <scene> --feel` prints it.
  *
  * Invariants: the systems are added once per world, on the first spawn; everything an actor remembers is in its
  * component. Despawning an actor leaves its body; `removeActor` removes both.
@@ -135,7 +135,6 @@ export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): 
     w.systems.add('actors', moveActors, { phase: 'anim' });
     w.systems.add('actors.readback', readActors, { phase: 'readback' });
   }
-  registerFeel();
   return w.spawn({ actor: { body, player: spec.player ?? true, character: spec.character, x, y, z, ...state } });
 }
 
@@ -193,40 +192,6 @@ function readActors(w: World): void {
     [actor.x, actor.y, actor.z] = [feet.x, feet.y, feet.z];
   }
 }
-
-/** The inspector member `feel`: an actor's feel, measured on the standard course. */
-const FEEL_MEMBER = {
-  help: "An actor's feel measured on a flat course: response, acceleration, stop, turn, jump apex, air time, reach.",
-  args: {
-    id: { type: 'integer', minimum: 1, description: 'The actor’s entity id; the first player when absent.' },
-  },
-  impl(host: FeelHost, id?: number): FeelReport {
-    const { world, settings } = host.session;
-    const actors = world.query('actor') as unknown as (ActorComponents & { id: number })[];
-    const actor = actors.find((e) => (id === undefined ? e.actor.player : e.id === id))?.actor;
-    if (!actor) {
-      const ids = actors.map((e) => e.id).join(', ') || 'none';
-      throw codeError('SIM_BAD_ARGUMENT', { where: 'feel(id)', value: String(id), expected: `an actor’s id (${ids})` });
-    }
-    const gravity = settings.get('physics.characterGravity') as number;
-    return measureFeel(actor.character, { hz: world.hz, gravity });
-  },
-};
-
-/** What the `feel` member reads of its host: the run's world and settings. */
-interface FeelHost {
-  session: {
-    world: { hz: number; query(...names: string[]): readonly unknown[] };
-    settings: { get(path: string): unknown };
-  };
-}
-
-/** Registers `feel` on the shared registry once the inspector's kind exists (dev/members.ts declares it). */
-function registerFeel(): void {
-  if (!sharedRegistry.kinds().includes('inspectorMember') || sharedRegistry.has('inspectorMember', 'feel')) return;
-  sharedRegistry.def('inspectorMember', 'feel', FEEL_MEMBER as unknown as Record<string, unknown>);
-}
-registerFeel();
 
 /** How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one. */
 export interface FeelOptions {

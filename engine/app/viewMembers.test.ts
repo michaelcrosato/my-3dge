@@ -11,8 +11,7 @@ import { describe, expect, it } from 'vitest';
 import '../../labs/box/scenes/room';
 import { apiOf, helpNames } from '../../tools/lib/docsHelp';
 import { registry } from '../core/registry';
-import '../dev/members'; // declares the kind before the input members register
-import '../input/devices/inspector';
+import '../index'; // the public API's modules, so the members are the page's (input.*), whatever loaded first
 import { defineLevel } from '../world/level/level';
 import { createHeadless, type Headless } from './headless';
 
@@ -23,6 +22,9 @@ if (!registry.has('level', 'level:room')) defineLevel('level:room', { text: read
 type Call = (engine: Headless, call: (path: string, ...args: unknown[]) => unknown) => Promise<void> | void;
 
 const REPLAY = readFileSync('tests/replays/box-1-room.replay.json', 'utf8');
+
+/** What `feel()` says on the room, which has no actor. */
+const NO_ACTOR = 'pass an actor’s id (none)';
 
 /** Every member's headless check. */
 const CALLS: Record<string, Call> = {
@@ -41,6 +43,7 @@ const CALLS: Record<string, Call> = {
   'describe()': (e) => expect(e.describe('setting', 'box.room.speed')).toMatchObject({ id: 'box.room.speed' }),
   'entities()': (e) => expect(e.entities('pathMover').map((entity) => entity.id)).toEqual([1, 2, 3]),
   errors: (e) => expect(e.errors).toEqual([]),
+  'feel()': (_e, call) => expect(() => call('feel')).toThrow(`[SIM_BAD_ARGUMENT] feel(id) got undefined: ${NO_ACTOR}`),
   'get()': (e) => expect(e.get(1)).toMatchObject({ id: 1, pathMover: { x: 3.5, z: 4.5 } }),
   'hash()': (e) => expect(e.hash()).toMatch(/^[0-9a-f]{16}$/),
   'help()': (e) => expect(e.help('scene.dump')).toContain('options'),
