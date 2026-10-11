@@ -120,7 +120,8 @@ const NO_CIRCLES = { buttons: [] as number[][], menu: null };
 
 /** The overlay's stylesheet (see the file comment). */
 const STYLE = `
-.ui-overlay { position: fixed; left: 0; top: 0; width: 0; height: 0; overflow: hidden; pointer-events: none;
+.ui-overlay { position: fixed; left: 0; top: 0; width: 0; height: 0; overflow: hidden; contain: strict;
+  pointer-events: none;
   font: 600 16px/1.2 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #f0e3c6;
   -webkit-user-select: none; user-select: none; }
 .touch .ui-overlay { font-size: calc(var(--touch-k, 1) * 16px); }
@@ -210,8 +211,9 @@ export function createOverlay(options: OverlayOptions): Overlay {
 
   const world = createWorldLayer(labels, numbers);
   const blocks = new Map<HudPlace, HTMLElement>();
-  const lines = new Map<string, HTMLElement>();
+  const lines = new Map<string, { el: HTMLElement; color: string }>();
   const box = { left: NaN, top: NaN, width: NaN, height: NaN };
+  const centre = ['', ''];
   let corner = '';
   let menu = '';
 
@@ -259,21 +261,23 @@ export function createOverlay(options: OverlayOptions): Overlay {
       if (!HUD_PLACES.includes(place)) throw codeError('UI_BAD_PLACE', { id, got: JSON.stringify(place) });
       let line = lines.get(id);
       if (text === null || text === '') {
-        line?.remove();
+        line?.el.remove();
         lines.delete(id);
         return;
       }
       if (!line) {
-        line = div(doc, 'ui-hud');
-        line.dataset.ui = 'hud';
-        line.dataset.id = id;
+        line = { el: div(doc, 'ui-hud'), color: '' };
+        line.el.dataset.ui = 'hud';
+        line.el.dataset.id = id;
         lines.set(id, line);
       }
+      const { el } = line;
       const into = block(place);
-      if (line.parentNode !== into) into.append(line);
-      if (line.textContent !== text) line.textContent = text;
-      line.toggleAttribute('data-keyboard', hudOptions.keys === true);
-      line.style.color = hudOptions.color ?? '';
+      if (el.parentNode !== into) into.append(el);
+      if (el.textContent !== text) el.textContent = text;
+      el.toggleAttribute('data-keyboard', hudOptions.keys === true);
+      const color = hudOptions.color ?? '';
+      if (line.color !== color) el.style.color = line.color = color;
     },
     crosshair(on) {
       cross.hidden = !on;
@@ -284,8 +288,9 @@ export function createOverlay(options: OverlayOptions): Overlay {
       if (!(dt >= 0 && Number.isFinite(dt))) throw codeError('UI_BAD_DT', { dt });
       if (camera.parent === null && camera.matrixWorldAutoUpdate === true) camera.updateMatrixWorld?.();
       const rect = fit();
-      cross.style.setProperty('--ui-x', String(Math.round(rect.width * 50) / 100));
-      cross.style.setProperty('--ui-y', String(Math.round(rect.height * 50) / 100));
+      const [x, y] = [rect.width, rect.height].map((v) => String(Math.round(v * 50) / 100));
+      if (x !== centre[0]) cross.style.setProperty('--ui-x', (centre[0] = x));
+      if (y !== centre[1]) cross.style.setProperty('--ui-y', (centre[1] = y));
       world.place({ camera, width: rect.width, height: rect.height, dt, blocked: touchFrame(rect) });
     },
     state: () => uiState(root),

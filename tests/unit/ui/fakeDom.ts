@@ -59,7 +59,10 @@ function parse(selector: string): Simple[] {
 export class FakeElement {
   readonly children: FakeElement[] = [];
   parentElement: FakeElement | null = null;
-  readonly style = new FakeStyle();
+  /** Unset properties read '', as a page's do. */
+  readonly style = new Proxy(new FakeStyle(), {
+    get: (style, key) => (key in style ? (style as unknown as Record<string | symbol, unknown>)[key] : ''),
+  });
   private readonly attributes = new Map<string, string>();
   private ownText = '';
   readonly dataset: Record<string, string | undefined>;
