@@ -306,3 +306,10 @@ export type { BlobFeatures } from './gfx/puppets/bodies/blob';
 export { FLOATER_BODY } from './gfx/puppets/bodies/floater';
 // Performance counters (WP 5.5): what `__engine.stats()` returns, means in ms and the renderer's counts, never fps.
 export type { EngineStats } from './dev/stats';
+// The texture library (v2, WP 7.3): a level's whole floor as a texture generator (define it under a game's id), with
+// moss at the walls' feet, a rune circle on each dais and contact shadows along every block's foot.
+export { levelFloorTexture } from './gfx/textures/contactShadow';
+export type { LevelFloorOptions } from './gfx/textures/contactShadow';
+export type { ContactShadowOptions } from './gfx/textures/contactShadow';
+export type { FloorMossOptions } from './gfx/textures/contactShadow';
+export type { FloorRuneOptions } from './gfx/textures/contactShadow';
