@@ -1,0 +1,27 @@
+/**
+ * @file The look `look:{{name}}`: what the picture looks like (replace this text; `x docs` puts the first sentence in
+ * INDEX). It starts as the scenery in 24 shades a channel, softly dithered, the characters and objects inked, the
+ * whole picture a little warmer.
+ *
+ * Invariants: data only, the kind's fields (`node x describe look`): the filters it turns on, each with its scope
+ * (all, characters, objects, environment, or two joined by '+') and numbers, every filter left out off; and a
+ * material style (`style`: lambert, toon, flat, pbr), which only a page whose chain has a style set applies (advice
+ * `GFX_POST_NO_STYLES` otherwise; '' keeps the scene's own). Levels are 0 (off) or 8 and more (24 suits pixel art),
+ * so dull colours keep their hue. A page draws it when its setting `post.look` names it.
+ *
+ * @example
+ * look.id; // 'look:{{name}}'
+ * @see {{id}}.test.ts
+ */
+import { defineLook } from '../../../engine';
+
+/** The look `look:{{name}}`: replace this sentence with what it looks like. */
+export const look = defineLook('look:{{name}}', {
+  description: 'The scenery in 24 soft shades, the characters and objects inked, the picture warmer (replace).',
+  style: '',
+  filters: {
+    outline: { scope: 'characters+objects', width: 2, darken: 0 },
+    palette: { scope: 'environment', levels: 24, dither: 0.3 },
+    grade: { scope: 'all', temperature: 0.2, saturation: 1.1 },
+  },
+});

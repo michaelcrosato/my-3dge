@@ -16,7 +16,8 @@
  * is `look:palette/512-colours`, at 8.
  *
  * Invariants: every look's levels are 0 or 8 and more (the kind's check); a missing id falls back to `look:clean`
- * with a warning naming the closest ids; looks read their fields, never their ids.
+ * with a warning naming the closest ids; looks read their fields, never their ids. A game's own look is scaffolded by
+ * `node x new look labs/<lab>/looks/<name>` (tools/templates/look/).
  *
  * @example
  * import { createRegistry } from '../../core/registry';
