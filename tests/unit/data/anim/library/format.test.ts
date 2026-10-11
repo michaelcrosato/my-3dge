@@ -87,6 +87,6 @@ describe('editing a clip through the library', () => {
     expect(() => library.replace('Idle_Loop', '{"keys":[{"t":0,"hips":[0,0,100]}]}')).toThrow(
       /\[ANIM_CLIP_MISSING_FIELD\] clip "QUATERNIUS\/Idle_Loop": key 1 \(t 0\) has no "body"/,
     );
-    expect(library.text('Idle_Loop')).toBe(before);
+    expect([library.text('Idle_Loop'), library.edited('Idle_Loop')]).toEqual([before, false]);
   });
 });
