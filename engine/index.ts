@@ -229,3 +229,19 @@ export type { PuppetBatches } from './gfx/puppets/draw';
 export { createBlobShadows } from './gfx/puppets/blobShadow';
 export { blobScale } from './gfx/puppets/blobShadow';
 export type { BlobShadows } from './gfx/puppets/blobShadow';
+// Materials v2 (WP 7.2): the same material data drawn in four styles (lambert, toon, flat, pbr), switched at run time
+// with every style warmed; the toon look (bands and rim) as uniforms; outline shells for meshes and instanced batches.
+export { createStyleSet } from './gfx/materials/styles';
+export { MATERIAL_STYLES } from './gfx/materials/styles';
+export type { MaterialStyle } from './gfx/materials/styles';
+export type { StyleSet } from './gfx/materials/styles';
+export type { StyleSetOptions } from './gfx/materials/styles';
+export { TOON_LOOK } from './gfx/materials/toon';
+export type { ToonLook } from './gfx/materials/toon';
+export type { ToonUniforms } from './gfx/materials/toon';
+export { createOutline } from './gfx/materials/outline';
+export { OUTLINE_MODES } from './gfx/materials/outline';
+export type { Outline } from './gfx/materials/outline';
+export type { OutlineMode } from './gfx/materials/outline';
+export type { OutlineOptions } from './gfx/materials/outline';
+export type { OutlineShells } from './gfx/materials/outline';
