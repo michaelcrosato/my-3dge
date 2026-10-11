@@ -50,10 +50,18 @@ game agent's manual.
 - `BindingsStorage` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Where bindings are saved: the `localStorage` shape.
 - `BlendOptions` (interface from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): How `blendPoses` blends.
 - `blendPoses` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), each joint's share scaled by `options.mask`, written into `out` (a new pose by default; `a` or `b` may be `out`).
+- `blobScale` (function from [`engine/gfx/puppets/blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts)): How much a body `height` metres above its floor shrinks its shadow: 1 on the floor, down to 0.35 at 5 m.
+- `BlobShadows` (interface from [`engine/gfx/puppets/blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts)): Blob shadows (see the file comment).
+- `Body` (type from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): A `body` entry: the parsed spec, its parts typed.
 - `BODY_STATES` (const from [`engine/anim/states.ts`](../engine/anim/states.ts)): Every body state and the kind of value it takes (`AnimatorInput` documents each word).
 - `BodyChange` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): The changes `setBody` makes; each wakes the body.
+- `BodyLength` (type from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): A size or an offset: metres, or `[k, ref]`, k times the head radius, the limb radius or the torso radius.
 - `BodyMotion` (interface from [`engine/anim/locomotion.ts`](../engine/anim/locomotion.ts)): A move's body motion now, eased toward its targets: the slot moves (WP 6.1) fill.
+- `BodyPart` (type from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): One part, one line (see the file comment).
+- `BodyPiece` (interface from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): One piece: a unit shape on one bone (see the file comment).
+- `BodyPoint` (type from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): Where a part's end lies (see the file comment).
 - `BodySpec` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A body as `addBody` takes it.
+- `BodySpec` (interface from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): What `defineBody` takes: any field; absent ones keep their defaults.
 - `BodyState` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A body's state, copied: changing it changes nothing.
 - `BodyStateName` (type from [`engine/anim/states.ts`](../engine/anim/states.ts)): A body state's name.
 - `BodyType` (type from [`engine/physics/world.ts`](../engine/physics/world.ts)): How a body moves: pushed by forces and contacts, never, or by the velocity code gives it.
@@ -83,6 +91,8 @@ game agent's manual.
 - `ColliderSpec` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): One collider of a body: a shape where the body puts it, and its material.
 - `COLLISION_GROUPS` (const from [`engine/physics/groups.ts`](../engine/physics/groups.ts)): The collision groups: each one's membership bit and the groups it touches.
 - `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
+- `compileBody` (function from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): Compiles `body` (or its id) for `build` (a skeleton, a build or a build id; `build:chibi` by default).
+- `CompiledBody` (interface from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): A body compiled for one build (see the file comment).
 - `CompiledLevel` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A compiled level: the map, its legend, per-tile grids and descriptors; see the file comment.
 - `compileLevel` (function from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): Compiles a level's text against the legend of `options.registry` (the shared one by default) into plain data; see the file comment.
 - `CompileOptions` (interface from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): What `compileLevel` takes beside the text.
@@ -92,6 +102,7 @@ game agent's manual.
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
 - `createAudio` (function from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): Makes a page's sound (see the file comment).
 - `createBindings` (function from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Makes the bindings of the action map `map` (an id or an entry), loading saved changes from `options.storage`.
+- `createBlobShadows` (function from [`engine/gfx/puppets/blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts)): Makes the blob-shadow batch, drawn with the library's `material:blobShadow` (see the file comment).
 - `createCharacter` (function from [`engine/physics/character.ts`](../engine/physics/character.ts)): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
 - `createCutaway` (function from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): Gives `meshes`' cutting parts their twins (see the file comment).
 - `createEngine` (function from [`engine/app/engine.ts`](../engine/app/engine.ts)): Starts the engine in a page (see the file comment); resolves once it is up or has failed.
@@ -99,8 +110,11 @@ game agent's manual.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
 - `createInput` (function from [`engine/input/input.ts`](../engine/input/input.ts)): Makes the page's input.
 - `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
+- `createInstancedBatch` (function from [`engine/gfx/instancing.ts`](../engine/gfx/instancing.ts)): Makes an instanced batch (see the file comment).
 - `createLevelMeshes` (function from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): Draws `level`'s mesh descriptors (see the file comment).
 - `createMaterialLibrary` (function from [`engine/gfx/materials/library.ts`](../engine/gfx/materials/library.ts)): Makes a material library over `registry` (the shared one by default).
+- `createPuppet` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Draws `compiled` as one rigid-skinned mesh (see the file comment), at rest until `setPose`.
+- `createPuppetBatches` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Makes instanced puppet batches (see the file comment).
 - `createScriptedGamepad` (function from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createVirtualDevice` (function from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): Makes a virtual device, holding nothing.
@@ -114,6 +128,7 @@ game agent's manual.
 - `DaisDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A dais: an octagonal frustum (faces toward the axes and the diagonals) standing on a block of a dais glyph's tiles.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
 - `defineActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Registers an action map (on the shared registry by default).
+- `defineBody` (function from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): Defines a body on `registry` (the shared one by default).
 - `defineBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
 - `defineGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): Defines a geometry on `registry` (the shared one by default) and returns it.
@@ -162,6 +177,7 @@ game agent's manual.
 - `GeometrySpec` (interface from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): What `defineGeometry` takes: the entry's fields (`params` and `budget` have defaults), `create` typed by `params`.
 - `GestureTarget` (type from [`engine/audio/runtime/gesture.ts`](../engine/audio/runtime/gesture.ts)): Where gestures arrive: `window`, or any `EventTarget`.
 - `getActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The action map `id`.
+- `getBody` (function from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): The body `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `body:humanoid`.
 - `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
 - `getGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): The geometry `id` of `registry` (the shared one by default); a missing id gives `geometry:box`, with a warning.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
@@ -195,6 +211,10 @@ game agent's manual.
 - `InputOptions` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): How an input is made; in a page every field has its default.
 - `inspectGeometry` (function from [`engine/gfx/geometry/inspect.ts`](../engine/gfx/geometry/inspect.ts)): Measures `geometry` (see the file comment).
 - `Inspector` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): The inspector, `window.__engine` in a page and what `createHeadless` returns: `help()` lists every member.
+- `InstanceColor` (type from [`engine/gfx/instancing.ts`](../engine/gfx/instancing.ts)): A colour: three.js's `Color` (linear `r`, `g`, `b`) or linear `[r, g, b]`.
+- `InstancedBatch` (interface from [`engine/gfx/instancing.ts`](../engine/gfx/instancing.ts)): An instanced batch (see the file comment).
+- `InstancedBatchOptions` (interface from [`engine/gfx/instancing.ts`](../engine/gfx/instancing.ts)): How `createInstancedBatch` makes a batch.
+- `InstancedBatchStats` (type from [`engine/gfx/instancing.ts`](../engine/gfx/instancing.ts)): A batch's pages, slots and instances, and the pages and bytes its last `end()` uploaded.
 - `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
 - `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
 - `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
@@ -260,12 +280,14 @@ game agent's manual.
 - `palette` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A palette's hex colours as sRGB bytes; throws `GFX_EMPTY_PALETTE` naming `what` when it has none.
 - `parseRoutes` (function from [`engine/app/routes.ts`](../engine/app/routes.ts)): Reads a page's query (see the file comment).
 - `PartCut` (interface from [`engine/gfx/level/shapes.ts`](../engine/gfx/level/shapes.ts)): How the cutaway cuts a part: its recipe's cut, and the geometry of its twin (a new one each call).
+- `PartOptions` (interface from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): A part's options: the bone it rides (a joint, or `'root'`).
 - `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
 - `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
 - `Physics` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A physics world: bodies, stepping, queries, and the sim's physics hook (`state`, `capture`, `restore`).
 - `PHYSICS_SETTINGS` (const from [`engine/physics/params.ts`](../engine/physics/params.ts)): The physics settings, path → field; `defineSettings(PHYSICS_SETTINGS, registry)` declares them on another registry.
 - `physicsOf` (function from [`engine/physics/world.ts`](../engine/physics/world.ts)): The physics world of a sim world: its bodies and queries.
 - `pickTone` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): One of `colors`, picked by `value` in [0, 1).
+- `PieceShape` (type from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): A unit shape a piece draws (see the file comment).
 - `pillarGeometry` (function from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar as one geometry standing on the ground: its parts' boxes, sides then tops.
 - `PillarOptions` (interface from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's footprint and height in metres.
 - `PillarPart` (interface from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): One part of a pillar: a square slab `width` across, from height `from` to `to` (m).
@@ -283,6 +305,9 @@ game agent's manual.
 - `POSES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The held poses, each with what it shows.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `ProbeOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A probe's options: where the downward ray starts, and the groups that count as ground.
+- `Puppet` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): One character drawn as a rigid-skinned mesh (see the file comment).
+- `PuppetBatches` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Instanced parts for crowds (see the file comment).
+- `PuppetMaterials` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Where materials come from: the page's material library.
 - `Quantize` (type from [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)): Where a change lands: the next bar line, the next beat, or at once.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `QuatLike` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A rotation: three.js's `Quaternion`, `{ x, y, z, w }` or `[x, y, z, w]`.
@@ -296,6 +321,7 @@ game agent's manual.
 - `RayOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A raycast's options.
 - `readKeyboardLayout` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The page's keyboard layout (`navigator.keyboard.getLayoutMap()`, Chromium), or undefined where it is missing.
 - `RebindResult` (type from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): What `rebind` did: the action's codes now, or why it refused and which action holds the code.
+- `recolor` (function from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): `compiled` with its slots' colours replaced by `palette`'s (hex), the pieces shared.
 - `released` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` went up on the buffer's step (a tap shorter than a step included).
 - `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body.
 - `renderSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect as mono samples (engine/audio/dsp/render.ts): one variant, its layers mixed in.
@@ -1760,6 +1786,20 @@ For the agents who maintain the engine.
 - `UnseenReason` (type): Why a drawable object covers no pixel.
 - `withIdScene` (function): Runs `draw(root)` with `root` a stand-in for `scene` that draws the ID pass: it shares the scene's children, has no background, and overrides every material with the ID material reading `table`; the clear colour is transparent black meanwhile.
 
+### [`engine/gfx/instancing.ts`](../engine/gfx/instancing.ts)
+
+- `createInstancedBatch` (function): Makes an instanced batch (see the file comment).
+- `INSTANCE_SYNC` (const): What importing this module did to r182's `InstanceNode` (see `syncBeforeUpload`): `patched` is true on r182.
+- `InstanceColor` (type): A colour: three.js's `Color` (linear `r`, `g`, `b`) or linear `[r, g, b]`.
+- `InstancedBatch` (interface): An instanced batch (see the file comment).
+- `InstancedBatchOptions` (interface): How `createInstancedBatch` makes a batch.
+- `InstancedBatchStats` (type): A batch's pages, slots and instances, and the pages and bytes its last `end()` uploaded.
+- `instancePath` (function): Where r182 reads an instanced mesh's matrices from, for a mesh of `slots` slots (see the file comment).
+- `INSTANCING_CODES` (const): The codes the instancing service raises, with their fixes.
+- `PAGE_SLOTS` (const): The default page size: above `UNIFORM_INSTANCE_LIMIT`, so every page shares one shader.
+- `syncBeforeUpload` (function): Makes r182's `InstanceNode` sync its buffers' versions before the renderer uploads them (see the file comment): every instance node gets an `updateBefore` that runs its own `update` once per render.
+- `UNIFORM_INSTANCE_LIMIT` (const): r182's threshold: up to this many slots, an instanced mesh's matrices go to a uniform buffer (a shader per mesh).
+
 ### [`engine/gfx/level/brazier.ts`](../engine/gfx/level/brazier.ts)
 
 - `brazierGeometry` (function): The stands on `pieces` of `level`, from `bottom` to `top` (m), and the ground under them (see the file comment).
@@ -1868,6 +1908,63 @@ For the agents who maintain the engine.
 - `PipelineCount` (interface): What the counter reports.
 - `PipelineCounter` (interface): The counter of one device.
 - `PIPELINES_CODES` (const): The codes this module raises, with their fixes.
+
+### [`engine/gfx/puppets/blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts)
+
+- `BLOB_SHADOW` (const): The shadow rule's numbers: the lift above the floor, the height where it stops shrinking, its smallest scale.
+- `BLOB_SHADOW_MATERIAL` (const): The material blob shadows draw with.
+- `blobScale` (function): How much a body `height` metres above its floor shrinks its shadow: 1 on the floor, down to 0.35 at 5 m.
+- `blobShadowMaterial` (function): Defines `material:blobShadow` on `registry` (the shared one by default) unless it has it.
+- `BlobShadows` (interface): Blob shadows (see the file comment).
+- `createBlobShadows` (function): Makes the blob-shadow batch, drawn with the library's `material:blobShadow` (see the file comment).
+
+### [`engine/gfx/puppets/bodies/humanoid.ts`](../engine/gfx/puppets/bodies/humanoid.ts)
+
+- `HUMANOID_BODY` (const): The neutral humanoid (see the file comment).
+
+### [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)
+
+- `BodyPiece` (interface): One piece: a unit shape on one bone (see the file comment).
+- `CAPE_THICKNESS` (const): How thick a cape strip is, in metres at size 1.
+- `COMPILE_CODES` (const): The codes compiling a body raises, with their fixes.
+- `compileBody` (function): Compiles `body` (or its id) for `build` (a skeleton, a build or a build id; `build:chibi` by default).
+- `CompiledBody` (interface): A body compiled for one build (see the file comment).
+- `PieceShape` (type): A unit shape a piece draws (see the file comment).
+- `recolor` (function): `compiled` with its slots' colours replaced by `palette`'s (hex), the pieces shared.
+- `restPositions` (function): Each joint's rest position on `skeleton`, 3 per joint (rest rotations are the identity).
+
+### [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)
+
+- `createPuppet` (function): Draws `compiled` as one rigid-skinned mesh (see the file comment), at rest until `setPose`.
+- `createPuppetBatches` (function): Makes instanced puppet batches (see the file comment).
+- `PieceRange` (interface): Where one piece's vertices lie in a puppet's geometry (`geometry.userData.pieces`, in drawing order).
+- `Puppet` (interface): One character drawn as a rigid-skinned mesh (see the file comment).
+- `PUPPET_MATERIALS` (const): The materials puppets draw with by default.
+- `PuppetBatches` (interface): Instanced parts for crowds (see the file comment).
+- `puppetGeometry` (function): The rigid-skinned geometry of `compiled`: lit pieces (group 0), then glow pieces (group 1), see the file comment; `userData.pieces` lists each piece's vertices (`PieceRange`).
+- `puppetMaterials` (function): Defines `PUPPET_MATERIALS` on `registry` (the shared one by default), those it lacks.
+- `PuppetMaterials` (interface): Where materials come from: the page's material library.
+- `unitGeometry` (function): The unit geometry of `shape`; `limb@k` is an open frustum of radius 1 at y = 0 and k at y = 1.
+
+### [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)
+
+- `Body` (type): A `body` entry: the parsed spec, its parts typed.
+- `BODY_FIELDS` (const): The fields of a `body` entry.
+- `bodyKind` (function): Declares the kind `body` on `registry`, with the engine's bodies (`body:humanoid`), unless it has it.
+- `BodyLength` (type): A size or an offset: metres, or `[k, ref]`, k times the head radius, the limb radius or the torso radius.
+- `BodyPart` (type): One part, one line (see the file comment).
+- `BodyPoint` (type): Where a part's end lies (see the file comment).
+- `bodyProblems` (function): The problems of a body beyond its fields' types: colours that are not hex, builds giving other fields, and in every part an unknown type, the wrong number of arguments, a point that is no joint or socket, a slot the body lacks, a size that is not positive, a count outside 1–64, or options other than `{ on }`.
+- `BodySpec` (interface): What `defineBody` takes: any field; absent ones keep their defaults.
+- `defineBody` (function): Defines a body on `registry` (the shared one by default).
+- `getBody` (function): The body `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `body:humanoid`.
+- `mirrorName` (function): `name` with its side swapped (`thighL` → `thighR`), when the swapped name exists; else `name`.
+- `mirrorPart` (function): `part` mirrored left to right: its points and its `on` bone (see the file comment).
+- `mirrorPoint` (function): `point` mirrored left to right.
+- `PART_TYPES` (const): Each part type's arguments after its name: `p` a point, `s` a size, `r` a size or three, `n` a number, `c` a count (1–64), `k` the slot.
+- `PartOptions` (interface): A part's options: the bone it rides (a joint, or `'root'`).
+- `PartType` (type): A part type's name.
+- `pointProblem` (function): Why `point` is no point, or null.
 
 ### [`engine/gfx/quality.ts`](../engine/gfx/quality.ts)
 
@@ -2680,9 +2777,23 @@ For the agents who maintain the engine.
 - `Overview` (interface): A view of the whole level from round its middle: degrees, and the projection.
 - `Shown` (interface): What `show` reports.
 
+### [`tests/pages/instancing.ts`](../tests/pages/instancing.ts)
+
+- `GRID` (const): The shot's size, the grid's pitch and cell count, and each instance's side, in pixels (= metres here).
+- `Placed` (interface): What `place` reports.
+
 ### [`tests/pages/level-meshes.ts`](../tests/pages/level-meshes.ts)
 
 - `Shown` (interface): What `show` reports.
+
+### [`tests/pages/puppets.ts`](../tests/pages/puppets.ts)
+
+- `CrowdShown` (interface): What `crowd` reports.
+- `EveryPartShown` (interface): What `everyPart` reports.
+- `HumanoidShown` (interface): What `humanoid` reports.
+- `MARK_SHOT` (const): The socket shots: their side in metres and in pixels.
+- `SocketShot` (interface): What `sockets` reports for one socket.
+- `testPose` (function): A seeded pose: every joint turned up to `spread` radians about a seeded axis, the root turned `turn` about +Y.
 
 ### [`tests/pages/sceneFixture.ts`](../tests/pages/sceneFixture.ts)
 
