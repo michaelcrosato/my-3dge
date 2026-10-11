@@ -1,6 +1,6 @@
 /**
  * @file Unit tests for the filters as data (engine/gfx/post/filters.ts): scopes as masks, a chain's defaults (every
- * filter off), layering, the posterize rule, and the uniforms a chain writes.
+ * filter off) and when a chain is plain, layering, the posterize rule, and the uniforms a chain writes.
  */
 import { describe, expect, it } from 'vitest';
 import { validate } from '../../core/schema';
@@ -10,6 +10,7 @@ import {
   FILTER_FIELDS,
   FILTER_NAMES,
   fixLevels,
+  isPlain,
   layerChain,
   levelsProblem,
   partialSchema,
@@ -29,6 +30,15 @@ describe('a filter chain', () => {
     const chain = chainOf();
     expect(Object.keys(chain).sort()).toEqual([...FILTER_NAMES].sort());
     for (const name of FILTER_NAMES) expect(chain[name].scope, name).toBe('off');
+  });
+
+  it('is plain only while every filter is off, whatever its numbers', () => {
+    expect(isPlain(chainOf()), 'every filter off').toBe(true);
+    expect(isPlain(chainOf({ grade: { saturation: 0 }, pixel: { size: 8 } })), 'numbers, scopes off').toBe(true);
+    for (const name of FILTER_NAMES) {
+      const scope = name === 'bloom' || name === 'aa' || name === 'screen' ? 'all' : 'environment';
+      expect(isPlain(chainOf({ [name]: { scope } })), name).toBe(false);
+    }
   });
 
   it('layers filter by filter and field by field', () => {

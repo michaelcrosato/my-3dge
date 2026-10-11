@@ -13,7 +13,7 @@
  *
  * `window.__postPage`:
  * - `setLook(id, filters)` sets `post.look` and `post.filters`, draws a frame and reports it: the pipelines it built,
- *   the chain's build count, how many of the scene's materials changed version since the warm-up, the renderer's
+ *   whether it skipped the chain (`plain`), the chain's build count, how many of the scene's materials changed version since the warm-up, the renderer's
  *   stats, and `during`: the warm-ups run, pipelines built and idle frames drawn while it switched, so a re-warm
  *   (the warm-up key changing with the look) shows even though the frame drawn after it builds nothing;
  * - `shoot({ ids, pixels })` shoots the frame as drawn (engine/gfx/shot.ts: pixels as base64, the ID pass);
@@ -203,7 +203,8 @@ async function start(): Promise<void> {
       settings.set('post.filters', filters);
       const frame = await settle();
       const during = since(before);
-      return { frame, builds: post.builds, recompiled: recompiled(), style: styles.style, stats: gfx.stats(), during };
+      const { plain } = post;
+      return { frame, plain, builds: post.builds, recompiled: recompiled(), style: styles.style, stats: gfx.stats(), during }; // prettier-ignore
     },
     /** Shoots the frame as the chain draws it now. */
     async shoot(options: { ids?: boolean; pixels?: boolean } = {}): Promise<ShotJson> {

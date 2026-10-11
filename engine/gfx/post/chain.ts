@@ -11,7 +11,13 @@
  * 5. the composite (engine/gfx/post/composite.ts): every other filter in one pass, gated by uniforms, in a fixed
  *    order, straight to the screen (the chain's colour transform is off: the composite ends in display colours).
  * Every filter is a uniform, so switching any filter, scope or look builds no pipeline and recompiles no material;
- * passes that are off do not run (bloom's, SMAA's), except in the warm-up's frame, which draws all of them.
+ * passes that are off do not run (bloom's, SMAA's), except in the warm-up's frame, which draws all of them. While
+ * every filter is off, the chain shows the picture and the materials are in the style the chain was made with
+ * (`isPlain`: `look:clean`), a frame skips the chain and draws the scene straight, as the renderer does without one
+ * (`plain`): the chain would leave the picture as it is, at the cost of the MRT's second target and three full-screen
+ * passes. Measured on SwiftShader, at a load average of 36 to 41:
+ * tests/e2e/parity.spec.ts's Box 4 replays, a frame drawn after each of 1,500 steps, took 118 s drawn straight and
+ * 193 s through the chain. The warm-up's frame draws both ways, so switching between them builds nothing.
  *
  * What it draws comes from three view settings, `post.look`, `post.filters` and `post.show` (`POST_SETTINGS`), which
  * exist only where a chain does (or a page declares them first, `definePostSettings`, which says which routes reach
@@ -54,6 +60,7 @@ import {
   createFilterUniforms,
   FILTER_FIELDS,
   fixLevels,
+  isPlain,
   layerChain,
   partialSchema,
   scopeMask,
@@ -161,6 +168,8 @@ export interface Post {
   readonly scenePass: PassNode;
   /** How many times the output graph was built: 1, plus one per tone-mapping or colour-space change. */
   readonly builds: number;
+  /** Whether the last frame drew the scene straight, skipping the chain's passes (see the file comment). */
+  readonly plain: boolean;
   /** The edge smoothing it was made with. */
   readonly aa: AaKind;
   /** `frame` drawn through the chain: give it to `gfx.frame` or `shot`. */
@@ -285,9 +294,17 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
 
   const size = new Vector2();
   let frames = 0;
-  /** Draws one frame through the chain. */
+  let plain = false;
+  /** Draws one frame: straight while the chain is plain, else through it; the warm-up's frame both ways. */
   const draw = () => {
     const chain = sync();
+    // Straight only in the style the warm-up's frame drew: the warm-up compiles every other style for the MRT alone.
+    plain = isPlain(chain) && uniforms.frame.value.x === 0 && (!styles || !own || styles.style === own.style);
+    if (plain || warming) {
+      clearMrt(renderer);
+      renderer.render(scenePass.scene, scenePass.camera);
+      if (!warming) return;
+    }
     if (!built || built.tone !== renderer.toneMapping || built.space !== renderer.outputColorSpace) build();
     const camera = scenePass.camera as Camera;
     camera.updateMatrixWorld();
@@ -320,6 +337,9 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
     scenePass,
     get builds() {
       return builds;
+    },
+    get plain() {
+      return plain;
     },
     aa: aaKind,
     view(frame) {
