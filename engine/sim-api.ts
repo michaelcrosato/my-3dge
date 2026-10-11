@@ -432,3 +432,12 @@ export { canSee } from './world/ai';
 export { clearSight } from './world/ai';
 export { SIGHT } from './world/ai';
 export type { SightOptions } from './world/ai';
+
+// Crowd bodies (WP 5.7): a crowd member's look and rig (a humanoid in a build, a blob, a floater) in the component
+// crowdBody, its rig stepped in the sim by stepCrowdBody; the stage draws them through a crowd with its level of detail.
+export { CROWD_BODY_FIELDS } from './sim/crowdBodies';
+export { CROWD_BODY } from './sim/crowdBodies';
+export type { CrowdBody } from './sim/crowdBodies';
+export type { CrowdRig } from './sim/crowdBodies';
+export type { CrowdBodyInput } from './sim/crowdBodies';
+export { stepCrowdBody } from './sim/crowdBodies';

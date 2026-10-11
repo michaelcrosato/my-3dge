@@ -9,8 +9,11 @@
  * wall run on its own (`level:room/wall@0,0-15,0`: tiles from column 0, row 0 to column 15, row 0); a run costs its
  * two draw groups, in colour and in each shadow map. The floor stays one surface.
  *
- * Actors with an animator draw themselves as puppets (engine/gfx/puppets/actors.ts, WP 3.10: `actors`), and props
- * standing in the scene (`sceneProp`, engine/sim/props.ts) as their props (engine/gfx/stageProps.ts, WP 4.6: `props`).
+ * Actors with an animator draw themselves as puppets (engine/gfx/puppets/actors.ts, WP 3.10: `actors`), props
+ * standing in the scene (`sceneProp`, engine/sim/props.ts) as their props (engine/gfx/stageProps.ts, WP 4.6: `props`),
+ * and crowd bodies (`crowdBody`, engine/sim/crowdBodies.ts) through a crowd (engine/gfx/stageCrowd.ts, WP 5.7:
+ * `crowd`), which the view draws once it has placed the frame's camera (`crowd.draw(alpha, camera)`): its level of
+ * detail and culling need the camera.
  * Stand-ins: any other entity is drawn as a box when one of its components declares `x` and `z` as numbers in metres
  * (`placeableKinds`: asked of the component entries, never of a name). The first such component in registry order
  * places it: `x`, `y` (the box's bottom, 0 by default) and `z`, `yaw` (rad), `size` (the box's side, m; 0.5 by
@@ -25,7 +28,7 @@
  * and every view sees him; a stage with no player never has one, and its level stands whole.
  *
  * Warm-up: `register(warmup)` registers the ground, the level meshes, the cutaway's twins, the puppets, the props'
- * batches and the stand-ins, and adds the stand-ins' looks (side and material), the puppets' builds and whether there
+ * batches, the crowd's batches and the stand-ins, and adds the stand-ins' looks (side and material), the puppets' builds and whether there
  * are a cutaway and props to the shader key, so a new look makes the next frame warm up first instead of stalling.
  *
  * Invariants: presentation only: it reads sim data and never writes it (doctrine: WebGPU only); every object it
@@ -59,6 +62,7 @@ import { createCutaway, type Cutaway } from './cutaway';
 import { boxGeometry } from './geometry/box';
 import { createLevelMeshes, type LevelMeshes } from './level/meshes';
 import { createActorPuppets, type ActorPuppets } from './puppets/actors';
+import { createStageCrowd, type StageCrowd } from './stageCrowd';
 import { createStageProps, type StageProps } from './stageProps';
 import type { Warmup } from './warmup';
 
@@ -102,6 +106,8 @@ export interface Stage {
   readonly actors: ActorPuppets;
   /** The props standing in the scene, drawn as their props. */
   readonly props: StageProps;
+  /** The crowd bodies, drawn through a crowd from the frame's camera (`crowd.draw(alpha, camera)`, after `draw`). */
+  readonly crowd: StageCrowd;
   /** Reads where the entities are after a sim step of `dt` s (keeps the place before for `draw`); adds and removes. */
   capture(entities: Iterable<EntityData>, dt?: number): void;
   /** Puts every stand-in and puppet `alpha` (0 to 1) of the way from its place a step ago to its last. */
@@ -251,6 +257,7 @@ export function createStage(options: StageOptions): Stage {
   const actors = createActorPuppets({ materials: options.materials, registry: options.registry });
   scene.add(boxes, actors.root);
   const props = createStageProps({ scene, materials: options.materials, registry: options.registry });
+  const crowd = createStageCrowd({ scene, materials: options.materials, level, registry: options.registry });
 
   const kinds = placeableKinds(options.registry);
   const geometries = new Map<number, BufferGeometry>();
@@ -274,15 +281,18 @@ export function createStage(options: StageOptions): Stage {
     standIns,
     actors,
     props,
+    crowd,
     capture(entities, dt) {
       const list = [...entities];
       const seen = new Set<number>();
       const puppets = actors.capture(list, dt);
       const drawn = props.capture(list, dt);
+      const crowded = crowd.capture(list, dt);
       if (meshes && !cutaway && actors.hasPlayer()) cutaway = createCutaway(meshes);
       for (const entity of list) {
         const placed = placeOf(entity, kinds);
-        if (!placed || seen.has(entity.id) || puppets.has(entity.id) || drawn.has(entity.id)) continue;
+        if (!placed || seen.has(entity.id) || puppets.has(entity.id) || drawn.has(entity.id) || crowded.has(entity.id))
+          continue;
         seen.add(entity.id);
         const { kind, place } = placed;
         const last = places.get(entity.id);
@@ -329,6 +339,7 @@ export function createStage(options: StageOptions): Stage {
         warmup.keyPart('stage:stand-ins', () => [...looks].sort().join(';')),
         actors.register(warmup),
         props.register(warmup),
+        crowd.register(warmup),
       ];
       return { dispose: () => registrations.forEach((registration) => registration.dispose()) };
     },
@@ -338,6 +349,7 @@ export function createStage(options: StageOptions): Stage {
       meshes?.dispose();
       actors.dispose();
       props.dispose();
+      crowd.dispose();
       ground.geometry.dispose();
       for (const geometry of geometries.values()) geometry.dispose();
       geometries.clear();
