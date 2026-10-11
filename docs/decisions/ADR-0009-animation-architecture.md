@@ -60,3 +60,21 @@ Differential tests against the ported reference vectors (WP 0.11); the animation
   (integration call).
 - Evidence: `engine/anim/humanoid.test.ts` (3 builds, 14,688 points each; mean 0.70-0.78 mm, worst 1.56-2.04 cm, joints
   above the knees within 2e-6 m).
+
+## Amendment 4 (2026-10-10, WP-3.7)
+- **Public names.** The class is `Animator` and its input is `AnimatorInput`, because sim-api already exports
+  `Character` (the controller's settings) and `BodyState` (a physics body). New codes: `ANIM_UNKNOWN_STATE`,
+  `ANIM_BAD_STATE`, `ANIM_BAD_LAYER`.
+- **Placement.** `weights.ts` holds the stack's `SLOTS`, `LAYER_SLOTS`, `AnimLayer` and `LOD` beside the weight table,
+  which keeps `character.ts` under 400 lines. Actors keep the animator in a component of their own, `animator`
+  (`spawnActor(w, { anim })`), so actors without one hash as before.
+- **`preciseHits` posing in the sim runs the body's layers only.** Plug-in layers stay view-side until their WPs make
+  their state sim data.
+- **Footsteps.** A footstep is the gait setting a foot down (phase π/2 + kπ). At full stride the heroic soles hang about
+  10 cm above their targets because the legs cannot reach (WP 3.6's solve).
+- **The post-IK slot stays empty.** `ik.ts`'s `footPlant` measures lifts from `pose.rootPos.y`, which carries the
+  pelvis offset (about 4.4 cm below `position.y` standing); a ground layer built on it held the soles 4.4 cm high.
+  Proposed core change, not built: `floor?: number` in `FootPlantOptions` (default `rootPos.y`). Until then
+  `authoring.test.ts`'s KNOWN floor sinks (amendment 3) stay open.
+- The carried source path is `src/emberdeep/18-characters.js` at my-3d2dge@e37e4ee.
+- Evidence: `engine/anim/{character,states,weights}.test.ts`.

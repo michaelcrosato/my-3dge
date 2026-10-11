@@ -7,6 +7,14 @@ Every code the engine prints, as `[CODE] message`, with its fix. Each module reg
 
 ## anim
 
+### ANIM_BAD_LAYER
+
+- Message: `layer {name}: {problem}`
+- Fix: give each layer its own name and one of the slots {slots}
+- Registered in: [`engine/anim/character.ts` line 53](../engine/anim/character.ts)
+
+Raised by `Animator.use` (engine/anim/character.ts) for a slot that takes no layers or a name already in use.
+
 ### ANIM_BAD_MASK
 
 - Message: `the bone mask weight of {name} is {value}`
@@ -14,6 +22,14 @@ Every code the engine prints, as `[CODE] message`, with its fix. Each module reg
 - Registered in: [`engine/anim/skeleton.ts` line 37](../engine/anim/skeleton.ts)
 
 Raised by `boneMask` (engine/anim/skeleton.ts) for a weight that is not a number from 0 to 1.
+
+### ANIM_BAD_STATE
+
+- Message: `body state {name} is {value}, not {expected}{suggestion}; it is ignored`
+- Fix: give {name} {expected}
+- Registered in: [`engine/anim/states.ts` line 42](../engine/anim/states.ts)
+
+Raised once per word by the animator (engine/anim/character.ts `step`, through `checkBodyStates`) for a body state whose value is of the wrong kind: a number for `dash`, a trail that does not exist. `BODY_STATES` (engine/anim/states.ts) gives each word its kind.
 
 ### ANIM_BAD_TARGET
 
@@ -136,6 +152,14 @@ Raised by `animCheck` (engine/anim/check.ts) for a rigid pair naming a point the
 - Registered in: [`engine/anim/poses.ts` line 45](../engine/anim/poses.ts)
 
 Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `stance` or `weapon` it does not know. The message names the closest names; `POSES`, `STANCES` and `WEAPONS` (engine/anim/poses.ts) list them all. An unknown weapon holds nothing.
+
+### ANIM_UNKNOWN_STATE
+
+- Message: `{name} is not a body state{suggestion}; it is ignored`
+- Fix: use one of: {names}
+- Registered in: [`engine/anim/states.ts` line 37](../engine/anim/states.ts)
+
+Raised once per word by the animator (engine/anim/character.ts `step`, through `checkBodyStates`) for a body state outside the vocabulary, usually a typo. The message names the closest words; `BODY_STATES` (engine/anim/states.ts) lists them all.
 
 ## app
 
