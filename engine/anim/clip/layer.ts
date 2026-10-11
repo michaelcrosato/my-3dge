@@ -21,7 +21,7 @@
  * Invariants: `apply` writes only the pose (the animator fades the layer by its `weight` and runs FK); a slot's weight
  * eases linearly and shows smoothstepped, and a slot goes only at 0 or under a full-body clip fully in: nothing pops.
  * Root motion is the top full-body clip's travel over the tick, metres in the character's frame at the layer's build
- * (`root`). Clip names are `SET/Clip`, or a bare name found in the first library that has it, else `ANIM_UNKNOWN_CLIP`.
+ * (`root`), which must be the animator's. Clip names are `SET/Clip`, or bare: the first library's with that name.
  *
  * @example
  * import { Animator } from '../character';
@@ -136,7 +136,7 @@ export interface ClipLayerOptions {
   library: ClipLibrary | readonly ClipLibrary[];
   /** Its name in the animator ('clips'). */
   name?: string;
-  /** The build its paces and root motion are measured on (the animator's; `build:chibi`). */
+  /** The build its paces and root motion are measured on: the animator's (`build:chibi`, as its default). */
   build?: Build | string;
   /** The fixed step (`SIM_DT`). */
   dt?: number;
@@ -180,9 +180,7 @@ export class ClipLayer implements AnimLayer {
     this.name = options.name ?? 'clips';
     this.build = typeof options.build === 'object' ? options.build : getBuild(options.build ?? 'build:chibi');
     this.#skeleton = createSkeleton(this.build);
-    this.dt = options.dt ?? SIM_DT;
-    this.ik = options.ik ?? true;
-    this.blade = options.blade ?? 0;
+    [this.dt, this.ik, this.blade] = [options.dt ?? SIM_DT, options.ik ?? true, options.blade ?? 0];
   }
 
   /** The clip on top, the one played last; null when none plays. */
@@ -269,9 +267,10 @@ export class ClipLayer implements AnimLayer {
     return this.events;
   }
 
-  /** Lays the playing clips over the animator's pose, on its skeleton, where it stands (the view's part). */
+  /** The view's part: the clips laid over the animator's pose, on its skeleton (`ANIM_LAYER_BUILD`: another build). */
   apply(animator: Animator): void {
-    const { body } = animator;
+    const [body, build] = [animator.body, this.build];
+    if (body.build !== build) throw codeError('ANIM_LAYER_BUILD', { layer: build.id, animator: body.build.id });
     yaw.setFromAxisAngle(UP, body.yaw);
     for (const slot of this.state.slots) {
       if (slot.w <= 0) continue;

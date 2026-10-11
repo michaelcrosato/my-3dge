@@ -48,6 +48,11 @@ export const LIBRARY_CODES = defineCodes('anim', {
     fix: 'give the set a sources entry for that source, with the rest body its importer measured',
     doc: 'Raised by the clip library (engine/anim/clip/library.ts) when a clip names a source the set lacks, or the set has no sources: a clip decodes only on the rest body it was measured on.',
   },
+  ANIM_LAYER_BUILD: {
+    template: 'the clip layer measures paces and root motion on {layer}, but its animator plays {animator}',
+    fix: "make the layer with the animator's build: new ClipLayer({ library, build: animator.body.build })",
+    doc: 'Raised by the clip layer (engine/anim/clip/layer.ts) when it poses an animator of another build. The sim’s step measures walk paces and root motion on the layer’s own build, so on another one they would be off by the hip-height ratio and the feet would slide.',
+  },
 });
 
 /** shardfall's ground-speed numbers (`clips.rs:441-476`). */

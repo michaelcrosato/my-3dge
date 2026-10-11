@@ -1,8 +1,9 @@
 /**
  * @file The baker (PLAN.md §10.4, WP 8.4; ADR-0010): a readable clip turned into rotation tracks on the humanoid
- * skeleton (engine/anim/skeleton.ts) at about 30 frames a second: each frame holds the 23 joints' local rotations,
- * the pelvis's place and the root's travel. retarget.ts plays the tracks on any build (and on the rest body's own
- * skeleton, for parity) and makes them a three.js `AnimationClip`; layer.ts plays them in the animator.
+ * skeleton (engine/anim/skeleton.ts), 30 frames a second on format 1's key grid (`bakeTimes`): each frame holds the
+ * 23 joints' local rotations, the pelvis's place and the root's travel. retarget.ts plays the tracks on any build (and
+ * on the rest body's own skeleton, for parity) and makes them a three.js `AnimationClip`; layer.ts plays them in the
+ * animator.
  *
  * The baker works from the key's parameters, as the decode (readable.ts) does, not from decoded points: the frames
  * of the pelvis, chest and head from their turn, lean and tilt; each limb from its direction, bend and twist through
@@ -49,9 +50,9 @@ export interface BakedClip {
   /** Seconds. */
   readonly duration: number;
   readonly loop: boolean;
-  /** How many frames, evenly spaced over [0, duration], both ends included (a loop's last is its first). */
+  /** How many frames: one every 1/30 s from 0 (format 1's key grid), one at `duration` (a loop's last is its first). */
   readonly frames: number;
-  /** Each frame's time, seconds. */
+  /** Each frame's time, seconds: frame i's is i/30, the last's `duration` (so the last step can be shorter). */
   readonly times: Float32Array;
   /** Each frame's local rotations: 23 × (x, y, z, w) in `JOINTS` order, the pelvis's relative to the root. */
   readonly rotations: Float32Array;
@@ -248,11 +249,25 @@ export function keyRotations(R: RestBody, k: KeyPose, rotations: Float32Array, o
   return rigToEngine(k.hips as V, hips, R.H0 / 100_000);
 }
 
+/**
+ * The frame times of a clip `duration` seconds long: every 1/30 s from 0, format 1's key grid (a key's `t` is its
+ * frame's time to the millisecond; v1 sampled its clips there too), and a last frame at `duration`, which a grid frame
+ * less than a millisecond before it gives way to. So every key falls on a frame, even in a clip whose length is off
+ * the grid (most of mesh2motion's), and three.js's keyframe tracks take the shorter last step as they come.
+ */
+export function bakeTimes(duration: number): Float32Array {
+  const grid = Math.max(1, Math.ceil((duration - 1e-3) * BAKE_FPS));
+  const times = new Float32Array(grid + 1);
+  for (let i = 0; i < grid; i++) times[i] = i / BAKE_FPS;
+  times[grid] = duration;
+  return times;
+}
+
 /** Bakes `clip` on its source's rest body `R` (see the file comment). */
 export function bakeClip(clip: Clip, R: RestBody, name = clip.clip ?? ''): BakedClip {
   const duration = clip.dur || clip.keys[clip.keys.length - 1].t;
-  const frames = Math.max(2, Math.round(duration * BAKE_FPS) + 1);
-  const times = new Float32Array(frames);
+  const times = bakeTimes(duration);
+  const frames = times.length;
   const rotations = new Float32Array(frames * JOINT_COUNT * 4);
   const hips = new Float32Array(frames * 3);
   const travels = !!clip.keys[0].root;
@@ -260,8 +275,7 @@ export function bakeClip(clip: Clip, R: RestBody, name = clip.clip ?? ''): Baked
   const straight = { ...clip, loop: false }; // a loop's travel runs on to its end, never back to its start
   const pelvis = new Vector3();
   for (let i = 0; i < frames; i++) {
-    const t = (duration * i) / (frames - 1);
-    times[i] = t;
+    const t = i < frames - 1 ? i / BAKE_FPS : duration;
     keyRotations(R, keyAt(clip, t), rotations, i * JOINT_COUNT * 4, pelvis).toArray(hips, i * 3);
     if (i > 0) keepSigns(rotations, i);
     const move = travels ? moveAt(R, straight, t) : null;
@@ -282,13 +296,21 @@ function keepSigns(rotations: Float32Array, i: number): void {
   }
 }
 
-/** Where time `t` falls in `baked`: the frame before, the share toward the next (loops wrap, one-shots hold). */
+/**
+ * Where time `t` falls in `baked`: the frame before, the share toward the next (loops wrap, one-shots hold), looked up
+ * in `baked.times` as three.js's interpolants do, so the last, shorter step is timed as the mixer times it.
+ */
 export function frameAt(baked: BakedClip, t: number): [frame: number, share: number] {
-  const { duration: d, frames } = baked;
+  const { duration: d, times } = baked;
   const tt = baked.loop && d > 0 ? ((t % d) + d) % d : Math.min(Math.max(0, t), d);
-  const f = d > 0 ? (tt / d) * (frames - 1) : 0;
-  const i = Math.min(Math.floor(f), frames - 2);
-  return [i, Math.min(1, f - i)];
+  let [lo, hi] = [0, times.length - 1];
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (times[mid] <= tt) lo = mid;
+    else hi = mid;
+  }
+  const step = times[hi] - times[lo];
+  return [lo, step > 0 ? Math.min(1, Math.max(0, (tt - times[lo]) / step)) : 0];
 }
 
 /** The flat quaternion slerp three.js's mixer interpolates with (typed arrays, as its interpolants pass them). */

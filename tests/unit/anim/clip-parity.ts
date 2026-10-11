@@ -1,7 +1,8 @@
 /**
  * @file The library's FK parity, measured for the baker's and the mannequin's tests (WP 8.4): every clip of every set
  * in `data/anim/sets/`, baked, played back and run through FK, against the format-1 decode (readable.ts), at 30
- * frames a second and at the 60 Hz midpoints between them. The numbers and the worst cases are recorded in
+ * frames a second and at the 60 Hz midpoints between them (`restParity` also at each clip's own key times, which
+ * format 1 writes to the millisecond). The numbers and the worst cases are recorded in
  * tests/baselines/anim-clips.json (`ANIM_CLIPS_BASELINE=write` rewrites it, with a reason in the commit).
  *
  * Two measures. `restParity`: the baked pose on the rest body's own skeleton (retarget.ts `restSkeleton`) against the
@@ -12,13 +13,14 @@
  * points a build's joints stand for.
  *
  * @example
- * const stats = restParity('quaternius'); // { clips: 103, samples: …, mean: 0.378, worst: { clip, t, point, mm } … }
+ * const stats = restParity('quaternius'); // { clips: 103, samples: …, mean: 0.366, worst: { clip, t, point, mm } … }
+ * restParity('mesh2motion', 'keys').mean; // 0.172 (mm)
  * @see engine/anim/clip/bake.test.ts
  */
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { bakeClip, sampleBaked } from '../../../engine/anim/clip/bake';
-import { decodePose, keyAt, POINT_INDEX, POSE_POINTS } from '../../../engine/anim/clip/readable';
+import { decodePose, keyAt, POINT_INDEX, POSE_POINTS, type Clip } from '../../../engine/anim/clip/readable';
 import { hipRatio, restPoints, restSkeleton, retargetPose } from '../../../engine/anim/clip/retarget';
 import type { ClipSet } from '../../../engine/anim/clip/validate';
 import { createWorldPose, forwardKinematics, jointPosition } from '../../../engine/anim/fk';
@@ -58,12 +60,18 @@ export interface Parity {
   worstClips: Case[];
 }
 
-/** Sample times of a clip: 30 a second and the 60 Hz midpoints, as far as its length. */
-const timesOf = (dur: number) => Array.from({ length: Math.floor(dur * 60 + 1e-9) + 1 }, (_, k) => k / 60);
+/** Where a parity samples a clip: `grid`, 30 a second and the 60 Hz midpoints; `keys`, at the clip's own keys. */
+export type SampleAt = 'grid' | 'keys';
+const TIMES: Record<SampleAt, (clip: Clip) => number[]> = {
+  grid: (clip) => Array.from({ length: Math.floor(clip.dur * 60 + 1e-9) + 1 }, (_, k) => k / 60),
+  // a few of mesh2motion's last keys lie past the clip's end, where neither the decode nor the bake reaches
+  keys: (clip) => clip.keys.map((key) => key.t).filter((t) => t <= clip.dur),
+};
 
-/** Runs `measure(clip, t, decoded)` over every sample of every clip in `dir`; it returns (point, mm) pairs. */
+/** Runs `measure(clip, t, decoded)` over every sample (`at`) of every clip in `dir`; it returns (point, mm) pairs. */
 function scan(
   dir: string,
+  at: SampleAt,
   measure: (name: string, t: number, decoded: Float64Array) => Iterable<[string, number]>,
 ): Parity {
   const set = setOf(dir);
@@ -73,7 +81,7 @@ function scan(
   for (const [name, clip] of Object.entries(set.clips)) {
     const R = set.sources![clip.src!].rest;
     let worst: Case = { clip: name, t: 0, point: '', mm: -1 };
-    for (const t of timesOf(clip.dur)) {
+    for (const t of TIMES[at](clip)) {
       decodePose(R, keyAt(clip, t), decoded);
       for (const [point, mm] of measure(name, t, decoded)) {
         [sum, n] = [sum + mm, n + 1];
@@ -95,12 +103,12 @@ function scan(
 
 const RIGID = POSE_POINTS.filter((p) => !p.startsWith('index') && !p.startsWith('pinky'));
 
-/** The baked pose on the rest skeleton against the decode (see the file comment). */
-export function restParity(dir: string): Parity {
+/** The baked pose on the rest skeleton against the decode (see the file comment), on the grid or at the keys. */
+export function restParity(dir: string, at: SampleAt = 'grid'): Parity {
   const set = setOf(dir);
   const [pose, world, hips, points] = [new Pose(), createWorldPose(), new Vector3(), new Float64Array(108)];
   const bakes = new Map<string, ReturnType<typeof bakeClip>>();
-  return scan(dir, function* (name, t, decoded) {
+  return scan(dir, at, function* (name, t, decoded) {
     const clip = set.clips[name];
     const R = set.sources![clip.src!].rest;
     let baked = bakes.get(name);
@@ -136,7 +144,7 @@ export function buildParity(dir: string, skeleton: Skeleton): Parity {
   const set = setOf(dir);
   const [pose, world, at] = [new Pose(), createWorldPose(), new Vector3()];
   const bakes = new Map<string, ReturnType<typeof bakeClip>>();
-  return scan(dir, function* (name, t, decoded) {
+  return scan(dir, 'grid', function* (name, t, decoded) {
     const clip = set.clips[name];
     let baked = bakes.get(name);
     if (!baked) bakes.set(name, (baked = bakeClip(clip, set.sources![clip.src!].rest, name)));

@@ -4,7 +4,7 @@
  * own, a lap's, an attack's hit at its strike time), root motion, masks and additive clips in the animator's pose and
  * over another clip, a mirrored clip's hand contacts, the walk–run switch on either side of both its lines with the
  * walk and with the run playing, each change at the drive that makes it (Done when), shardfall's three walkers played
- * at their ground speed (Done when), and save and load.
+ * at their ground speed (Done when), save and load, and the errors (a layer refuses an animator of another build).
  */
 import { describe, expect, it } from 'vitest';
 import { Quaternion, Vector3 } from '../../core/math';
@@ -353,5 +353,19 @@ describe('errors', () => {
     expect(() => layer.play('Wave', { next: 'Nodd' })).toThrow(/ANIM_UNKNOWN_CLIP/);
     expect(layer.current).toBeNull();
     expect(layer.play('test/Nod').current?.clip).toBe('TEST/Nod'); // a set's name in any case
+  });
+
+  it('refuses to pose an animator of another build, whose paces and root motion it would measure wrong', () => {
+    const chibi = new ClipLayer({ library }).play('Crawl'); // its build left out: build:chibi
+    const hero = heroOf(chibi); // build:heroic
+    expect(run(chibi, 3)).toEqual([]);
+    expect(() => hero.pose()).toThrow(
+      /ANIM_LAYER_BUILD.*on build:chibi.*plays build:heroic.*build: animator\.body\.build/s,
+    );
+    const layer = new ClipLayer({ library, build: hero.body.build }).play('Crawl');
+    run(layer, 3);
+    expect(() => heroOf(layer).pose()).not.toThrow();
+    // what it fixes: chibi's root motion, short by the hip-height ratio
+    expect(layer.state.root[1] / chibi.state.root[1]).toBeCloseTo(layer.hipHeight / chibi.hipHeight, 2);
   });
 });

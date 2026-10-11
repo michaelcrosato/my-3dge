@@ -1,7 +1,7 @@
 /**
- * @file Tests for the baker (WP 8.4): the frames, FK parity with the format-1 decode (exact on a key, a mean of 1 mm
- * or less over every set at 30 fps and the 60 Hz midpoints, the worst cases in tests/baselines/anim-clips.json), the
- * hand's roll, the singular poses, and the root's travel.
+ * @file Tests for the baker (WP 8.4): the frames on format 1's key grid, FK parity with the format-1 decode (exact on
+ * a key, a mean of 1 mm or less over every set at 30 fps and the 60 Hz midpoints, and at each clip's own key times, the
+ * worst cases in tests/baselines/anim-clips.json), the hand's roll, the singular poses, and the root's travel.
  */
 import { describe, expect, it } from 'vitest';
 import { Quaternion, Vector3 } from '../../core/math';
@@ -17,7 +17,7 @@ import {
   WRITING,
   writeBaseline,
 } from '../../../tests/unit/anim/clip-parity';
-import { bakeClip, BAKE_FPS, frameAt, keyRotations, sampleBaked, travelAt } from './bake';
+import { bakeClip, BAKE_FPS, bakeTimes, frameAt, keyRotations, sampleBaked, travelAt } from './bake';
 import { decodePose, keyAt, POINT_INDEX, POSE_POINTS, type ClipKey } from './readable';
 import { restPoints, restSkeleton } from './retarget';
 
@@ -63,6 +63,24 @@ describe('bakeClip', () => {
     expect([...baked.rotations.subarray(30 * JOINT_COUNT * 4)]).toEqual([...baked.rotations.subarray(0, JOINT_COUNT * 4)]); // prettier-ignore
     expect(frameAt(baked, 1.25)).toEqual([7, expect.closeTo(0.5, 6)]);
     expect(frameAt({ ...baked, loop: false }, 9)).toEqual([29, 1]);
+  });
+
+  it('keeps the frames on the key grid when the clip ends off it, with a last frame at its end', () => {
+    expect([...bakeTimes(0.542)]).toEqual([...Array.from({ length: 17 }, (_, i) => i / 30), 0.542].map(Math.fround));
+    expect(bakeTimes(1.534).length).toBe(47); // a grid frame within a millisecond of the end gives way to it
+    expect([...bakeTimes(0)]).toEqual([0, 0]);
+    // a clip as long as Sword_Regular_B (0.542 s) that strikes at 0.5 s: the strike is frame 15, where frames spaced
+    // evenly over the clip would fall at 0.475 s and 0.508 s, either side of it
+    const strikeKey: ClipKey = { ...busy(0.5), body: [160, -20, 10], armR: [-60, 40, 80, 120, 170] };
+    const baked = bakeClip(clipOf([standing(0), strikeKey, standing(0.533)], { dur: 0.542 }), REST);
+    const strike = new Float32Array(JOINT_COUNT * 4);
+    keyRotations(REST, strikeKey, strike);
+    for (let j = 0; j < JOINT_COUNT; j++) {
+      const q = new Quaternion().fromArray(baked.rotations, (15 * JOINT_COUNT + j) * 4);
+      expect(Math.abs(q.dot(new Quaternion().fromArray(strike, j * 4)))).toBeCloseTo(1, 6);
+    }
+    expect(frameAt(baked, 0.54)).toEqual([16, expect.closeTo((0.54 - 16 / 30) / (0.542 - 16 / 30), 4)]);
+    expect(frameAt(baked, 0.5)).toEqual([15, expect.closeTo(0, 5)]);
   });
 
   it('rebuilds every rigid decode point of a key, on the rest body’s own skeleton, and the hand’s roll', () => {
@@ -131,22 +149,33 @@ describe('bakeClip', () => {
 });
 
 describe('FK parity with the format-1 decode, every set (Done when: a mean of 1 mm or less)', () => {
-  const recorded = readBaseline().rest?.sets ?? {};
+  const baseline = readBaseline();
   const measured = Object.fromEntries(SET_DIRS.map((dir) => [dir, restParity(dir)]));
+  const atKeys = Object.fromEntries(SET_DIRS.map((dir) => [dir, restParity(dir, 'keys')]));
   if (WRITING) {
     writeBaseline(
       'rest',
       measured,
-      'FK of the baked tracks on each rest body’s own skeleton against the format-1 decode, over 34 points (index and pinky are roll hints, not rigid), at 30 fps and the 60 Hz midpoints. At a key the two agree to a micron (the rotations are float32); the worst cases are midpoints where a limb’s pole swings fast between two frames and the slerp between the frames takes another way than the decode’s in-between of the key numbers.',
+      'FK of the baked tracks on each rest body’s own skeleton against the format-1 decode, over 34 points (index and pinky are roll hints, not rigid), at 30 fps and the 60 Hz midpoints. The frames lie on format 1’s key grid, every 1/30 s from 0 and a last one at the clip’s end (bake.ts `bakeTimes`), the times v1 sampled its clips at, so at a 30 fps sample the two agree to 5 µm (the rotations are float32). The worst cases are midpoints where a limb’s pole swings fast between two frames (a sword arm’s twist, a fist pulled across the chest), and the slerp between the frames takes another way than the decode’s in-between of the key numbers.',
+    );
+    writeBaseline(
+      'restKeys',
+      atKeys,
+      'The same measure at each clip’s own key times (keys past a clip’s end, which neither reaches, left out). Format 1 writes a key’s time to the millisecond, so it lies up to a third of a millisecond from its frame (0.033 s for 1/30 s), 1% of a frame’s step. The worst cases are keys in the fastest swings, where that 1% is up to 35 mm: Victory’s right arm turns its twist by 175° toward the next key, so the decode itself moves 35 mm between 1.233 s and 1/30 s × 37; Sword_Regular_B’s sword arm swings into its last key, which the decode reaches at 0.533 s and the bake at its frame, 1/30 s × 16. At the frames the two agree to 5 µm.',
     );
   }
 
   it.each(SET_DIRS)('%s', (dir) => {
-    const parity = measured[dir];
-    expect(parity.mean).toBeLessThanOrEqual(1);
-    expect(recorded[dir], `no baseline for ${dir}: run with ANIM_CLIPS_BASELINE=write`).toBeDefined();
-    expect(parity.mean).toBeCloseTo(recorded[dir].mean, 2);
-    expect(parity.worstClips.map((c) => c.clip)).toEqual(recorded[dir].worstClips.map((c) => c.clip));
-    expect(parity.worst.mm).toBeCloseTo(recorded[dir].worst.mm, 0);
+    for (const [parity, section] of [
+      [measured[dir], 'rest'],
+      [atKeys[dir], 'restKeys'],
+    ] as const) {
+      const recorded = baseline[section]?.sets[dir];
+      expect(parity.mean, section).toBeLessThanOrEqual(1);
+      expect(recorded, `no ${section} baseline for ${dir}: run with ANIM_CLIPS_BASELINE=write`).toBeDefined();
+      expect(parity.mean).toBeCloseTo(recorded.mean, 2);
+      expect(parity.worstClips.map((c) => c.clip)).toEqual(recorded.worstClips.map((c) => c.clip));
+      expect(parity.worst.mm).toBeCloseTo(recorded.worst.mm, 0);
+    }
   });
 });
