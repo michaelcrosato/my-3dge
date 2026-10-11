@@ -29,6 +29,7 @@
  * // engine.ready; // true once the first frame is drawn
  * @see tests/e2e/box.spec.ts
  */
+import '../dev/members'; // declares the kind inspectorMember before input/devices/inspector registers its members
 import {
   codeError,
   codeInfo,
