@@ -100,14 +100,14 @@ describe('labs/box/README.md', () => {
 
   it('fails a fixture README that names a missing setting, file, command, flag or member', async () => {
     const fixture = [
-      'Tune `box.room.sped` (a typo), read `labs/box/levels/hall.txt`, run `node x film labs/box` and',
+      'Tune `box.room.sped` (a typo), read `labs/box/levels/hall.txt`, run `node x flim labs/box` (a typo) and',
       '`node x shot labs/box --angle 3 --set box.room.slow=1`, open `labs/box/?box.room.fast=2`, call `__engine.stats()`,',
       'set one with `node x set box.room.sped 3`.',
     ].join('\n');
     expect(await readmeProblems(fixture)).toEqual([
       '`box.room.sped` names the setting box.room.sped, which nobody declares',
       '`labs/box/levels/hall.txt` names labs/box/levels/hall.txt, which does not exist',
-      '`node x film labs/box` runs x film, which is no command',
+      '`node x flim labs/box` runs x flim, which is no command',
       '`node x shot labs/box --angle 3 --set box.room.slow=1` gives x shot the flag --angle, which it does not take',
       '`node x shot labs/box --angle 3 --set box.room.slow=1` names the setting box.room.slow, which nobody declares',
       '`labs/box/?box.room.fast=2` names the setting box.room.fast, which nobody declares',
