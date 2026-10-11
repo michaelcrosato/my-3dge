@@ -1,9 +1,11 @@
 /**
  * @file The `geo` QA family (PLAN.md §8.6, WP 2.4, I-29): `node x qa geo` checks every `geometry` entry the shared
  * registry has (the kit's, engine/gfx/geometry/builtins.ts, and a game's: each `*.ts` module under
- * `labs/<name>/geometry/` imported first), built at its defaults, and the level meshes (engine/gfx/level/meshes.ts) of
- * every level file the `level` family reads (tools/qa/level.ts: `labs/box/levels/`, `fixtures/levels/`; a level that
- * does not compile is the `level` family's to report). It runs in T1 through `runQa` (tools/qa/geo.test.ts).
+ * `labs/<name>/geometry/` imported first), built at its defaults; every `prop` entry's parts (WP 4.5: the engine's,
+ * engine/world/props/catalog.ts, and a game's under `labs/<name>/props/`), each built as the prop draws it, under the
+ * prop's id; and the level meshes (engine/gfx/level/meshes.ts) of every level file the `level` family reads
+ * (tools/qa/level.ts: `labs/box/levels/`, `fixtures/levels/`; a level that does not compile is the `level` family's
+ * to report). It runs in T1 through `runQa` (tools/qa/geo.test.ts).
  *
  * Metrics, one violation per item and metric, larger worse (engine/gfx/geometry/inspect.ts measures):
  * - `attributes`: a missing `position`, `normal` or `uv`, or an index entry naming no vertex;
@@ -12,8 +14,11 @@
  * - `normals`: normals not of length 1, and triangles wound against their normals (normal consistency);
  * - `bounds`: for a geometry, the axes longer than 100 m (centimetres taken for metres) or, when fewer than two axes
  *   reach 1 mm, a line or a point; for a level, how far (m) its meshes reach outside the level's bounds;
- * - `vertices`: a geometry's vertices above its entry's `budget`, a level's drawn vertices (each instance counted)
- *   above 32 per map tile;
+ * - `vertices`: a geometry's (or a prop part's) vertices above its entry's `budget`, a level's drawn vertices (each
+ *   instance counted) above 32 per map tile;
+ * - `reference`: a prop part naming a geometry no entry defines (drawn as a box);
+ * - `float`: a prop with a body whose parts' lowest point is more than 1 cm above or below its base, where its
+ *   body stands: it floats or sinks;
  * - `drawCalls`: a level's meshes costing more than 20 draw calls with one shadow map;
  * - `recipe`: a level's mesh recipes that no level recipe defines (drawn as grey blocks);
  * - `unstableHash`: 1 when building a geometry twice gives other buffers;
@@ -21,7 +26,8 @@
  * A violation names the numbers, the budget and the likely fix. Accepted exceptions go in
  * `tests/baselines/qa-geo.json`, each with its reason.
  *
- * Invariants: geometry in id order, then levels in `levelFiles` order, so violations come in a fixed order; the level
+ * Invariants: geometry in id order, then props in id order (each one's parts in order), then levels in `levelFiles`
+ * order, so violations come in a fixed order; the level
  * meshes are built with stand-in materials (geometry only) and a log of their own, so the family prints nothing.
  *
  * @example
@@ -38,6 +44,8 @@ import { registry as sharedRegistry, type Registry } from '../../engine/core/reg
 import { buildGeometry, geometryKind, type GeometryEntry } from '../../engine/gfx/geometry/geometry';
 import { inspectGeometry } from '../../engine/gfx/geometry/inspect';
 import { createLevelMeshes } from '../../engine/gfx/level/meshes';
+import { buildPropPart, partMatrix } from '../../engine/gfx/props';
+import { propKind, type Prop } from '../../engine/world/props/prop';
 import { compileLevel } from '../../engine/world/level/compile';
 import type { CompiledLevel } from '../../engine/world/level/types';
 import type { QaFamily, QaViolation } from '../cmd/qa';
@@ -54,11 +62,16 @@ export const LEVEL_DRAW_CALLS = 20;
 
 /** A game's geometry modules, `labs/<name>/geometry/*.ts` (tests excluded), labs and files in name order. */
 export function geometryModules(root: string): string[] {
+  return labModules(root, 'geometry');
+}
+
+/** A game's modules in `labs/<name>/<folder>/*.ts` (tests excluded), labs and files in name order. */
+export function labModules(root: string, folder: string): string[] {
   const labs = join(root, 'labs');
   if (!existsSync(labs)) return [];
   return readdirSync(labs)
     .sort()
-    .map((lab) => join('labs', lab, 'geometry'))
+    .map((lab) => join('labs', lab, folder))
     .filter((dir) => existsSync(join(root, dir)))
     .flatMap((dir) =>
       readdirSync(join(root, dir))
@@ -100,13 +113,28 @@ function faultsOf(id: string, geometry: BufferGeometry, where: string): QaViolat
 
 /** The violations of one `geometry` entry, built at its defaults. */
 function checkEntry(registry: Registry, entry: GeometryEntry): QaViolation[] {
+  return checkShape(entry.id, () => buildGeometry(entry.id, registry), entry.budget, 'at its defaults', '').violations;
+}
+
+/**
+ * The violations of the shape `build` builds, as item `id`, and the shape: `where` says which shape (`at its
+ * defaults`), and `lead` starts the messages that do not name it otherwise.
+ */
+function checkShape(
+  id: string,
+  build: () => BufferGeometry,
+  budget: number,
+  where: string,
+  lead: string,
+): { violations: QaViolation[]; geometry: BufferGeometry | null } {
   let geometry: BufferGeometry;
   try {
-    geometry = buildGeometry(entry.id, registry);
+    geometry = build();
   } catch (error) {
-    return [{ id: entry.id, metric: 'build', value: 1, message: `building it threw: ${(error as Error).message}` }];
+    const message = `${lead}building it threw: ${(error as Error).message}`;
+    return { violations: [{ id, metric: 'build', value: 1, message }], geometry: null };
   }
-  const out = faultsOf(entry.id, geometry, 'at its defaults');
+  const out = faultsOf(id, geometry, where);
   const { vertices, min, max } = inspectGeometry(geometry);
   const sizes = max.map((high, k) => high - min[k]);
   const long = sizes.filter((size) => size > MAX_SIZE).length;
@@ -116,29 +144,70 @@ function checkEntry(registry: Registry, entry: GeometryEntry): QaViolation[] {
     const why = long
       ? `longer than ${MAX_SIZE} m: sizes are in metres (a centimetre value is 100 times too big)`
       : 'a line or a point: give it at least two sides of 1 mm or more';
-    out.push({ id: entry.id, metric: 'bounds', value: long || 1, message: `its bounds are ${shown} m, ${why}` });
+    out.push({ id, metric: 'bounds', value: long || 1, message: `${lead}its bounds are ${shown} m, ${why}` });
   }
-  if (vertices > entry.budget) {
+  if (vertices > budget) {
     out.push({
-      id: entry.id,
+      id,
       metric: 'vertices',
       value: vertices,
-      message: `${vertices} vertices at its defaults, above its budget of ${entry.budget}: use fewer segments, or raise budget if the shape needs them`,
+      message: `${vertices} vertices ${where}, above its budget of ${budget}: use fewer segments, or raise budget if the shape needs them`,
     });
   }
-  const again = buildGeometry(entry.id, registry);
+  const again = build();
   const same = (name: string) =>
     Array.from(again.getAttribute(name)?.array ?? []).join() ===
     Array.from(geometry.getAttribute(name)?.array ?? []).join();
   if (!['position', 'normal', 'uv'].every(same)) {
     out.push({
-      id: entry.id,
+      id,
       metric: 'unstableHash',
       value: 1,
-      message: 'building it twice gave other buffers: a builder takes no randomness and keeps no state between calls',
+      message: `${lead}building it twice gave other buffers: a builder takes no randomness and keeps no state between calls`,
     });
   }
+  again.dispose();
+  return { violations: out, geometry };
+}
+
+/** How far (m) a prop's parts may reach below or stop above its base, where its body stands. */
+export const PROP_FLOAT = 0.01;
+
+/** The violations of one prop's parts, each built as the prop draws it, as the prop's id. */
+function checkProp(registry: Registry, prop: Prop): QaViolation[] {
+  const out: QaViolation[] = [];
+  let lowest = Infinity;
+  for (const part of prop.parts) {
+    const named = `part ${part.name} (${part.geometry})`;
+    if (!registry.has('geometry', part.geometry)) {
+      const message = `${named} names a geometry no entry defines, so it draws as a box: define it, or name one of node x describe geometry`;
+      out.push({ id: prop.id, metric: 'reference', value: 1, message });
+      continue;
+    }
+    const budget = (registry.get('geometry', part.geometry) as unknown as GeometryEntry).budget;
+    const build = () => buildPropPart(part, registry);
+    const { violations, geometry } = checkShape(prop.id, build, budget, `in ${named}`, `${named}: `);
+    out.push(...violations);
+    if (!geometry || part.flame.tongues) continue;
+    geometry.applyMatrix4(partMatrix(part));
+    lowest = Math.min(lowest, inspectGeometry(geometry).min[1]);
+    geometry.dispose();
+  }
+  if (prop.body.type !== 'none' && Number.isFinite(lowest) && Math.abs(lowest) > PROP_FLOAT) {
+    const off = `${Math.abs(lowest).toFixed(3)} m ${lowest > 0 ? 'above' : 'below'}`;
+    const message = `its parts' lowest point is ${off} its base, where its ${prop.body.shape} body stands, so the prop ${lowest > 0 ? 'floats' : 'sinks'}: stand the parts on the base (their position's y), or size the body to them`;
+    out.push({ id: prop.id, metric: 'float', value: Math.abs(lowest), message });
+  }
   return out;
+}
+
+/** The violations of every prop on `registry` (or those of `ids`), in id order, as the props' ids. */
+export function checkProps(registry: Registry = sharedRegistry, ids?: readonly string[]): QaViolation[] {
+  propKind(registry);
+  geometryKind(registry);
+  return (registry.list('prop') as unknown as Prop[])
+    .filter((prop) => !ids || ids.includes(prop.id))
+    .flatMap((prop) => checkProp(registry, prop));
 }
 
 /** The violations of every geometry on `registry` (or those of `ids`), in id order. */
@@ -209,13 +278,18 @@ export function checkLevelMeshes(id: string, level: CompiledLevel, file?: string
   return out;
 }
 
-/** The family: every geometry of the shared registry, then every level file's meshes. */
+/** The family: every geometry of the shared registry, then every prop's parts, then every level file's meshes. */
 const family: QaFamily = {
   async run({ root, only }) {
-    for (const module of geometryModules(root)) await import(pathToFileURL(join(root, module)).href);
+    for (const module of [...geometryModules(root), ...labModules(root, 'props')]) {
+      await import(pathToFileURL(join(root, module)).href);
+    }
     const keep = (id: string) => !only.length || only.some((prefix) => id.startsWith(prefix));
     const ids = sharedRegistry.list('geometry').map((entry) => entry.id);
     const violations = checkGeometries(sharedRegistry, ids.filter(keep));
+    propKind(sharedRegistry);
+    const props = sharedRegistry.list('prop').map((entry) => entry.id);
+    violations.push(...checkProps(sharedRegistry, props.filter(keep)));
     for (const level of levelFiles(root)) {
       if (!keep(level.id)) continue;
       let compiled: CompiledLevel;

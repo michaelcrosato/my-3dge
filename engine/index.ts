@@ -273,3 +273,11 @@ export type { Outline } from './gfx/materials/outline';
 export type { OutlineMode } from './gfx/materials/outline';
 export type { OutlineOptions } from './gfx/materials/outline';
 export type { OutlineShells } from './gfx/materials/outline';
+// Props drawn (WP 4.5): every prop part a batch of the instancing service, posed by its body, the flames dancing on
+// the visual streams, the light spots flickering, for the light pool.
+export { createPropMeshes } from './gfx/props';
+export type { PropMeshes } from './gfx/props';
+export type { PropMeshesOptions } from './gfx/props';
+export type { PropMeshPose } from './gfx/props';
+export type { PropLight } from './gfx/props';
+export { FLICKER } from './gfx/props';
