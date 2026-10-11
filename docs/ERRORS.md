@@ -643,6 +643,40 @@ Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa leve
 
 Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`: the spawn stands on a tile nobody walks on, or in an area cut off from the main floor (the largest area bodies can walk across, stepping between tiles at most the climb limit apart).
 
+## physics
+
+### PHYSICS_BAD_ARGUMENT
+
+- Message: `{where} got {value}`
+- Fix: pass {expected}
+- Registered in: [`engine/physics/queries.ts` line 42](../engine/physics/queries.ts)
+
+Raised by bodies and queries (engine/physics/world.ts, engine/physics/queries.ts) for a vector, rotation, shape, size or option that is not of the right kind: non-finite numbers, a zero direction, a size that is not positive, an unknown shape type.
+
+### PHYSICS_BAD_CAPTURE
+
+- Message: `the physics part of a capture {problem}`
+- Fix: restore what capture() returned (or its serialize/deserialize round trip), unchanged, with the engine's own Rapier build and version: snapshots are version-locked, so a capture taken with another Rapier restores only there
+- Registered in: [`engine/physics/capture.ts` line 35](../engine/physics/capture.ts)
+
+### PHYSICS_NO_BODY
+
+- Message: `there is no body {id}{why}`
+- Fix: use an id addBody() returned while its body exists (hasBody(id) tells); bodies() lists them
+- Registered in: [`engine/physics/world.ts` line 80](../engine/physics/world.ts)
+
+### PHYSICS_NONE
+
+- Message: `{what} has no physics world`
+- Fix: give its scene a physics world, defineScene(id, { physics: true, setup(w) { physicsOf(w).addBody(…) } }), or pass createPhysics() as createWorld's or startScene's physics option
+- Registered in: [`engine/physics/world.ts` line 84](../engine/physics/world.ts)
+
+### PHYSICS_UNKNOWN_GROUP
+
+- Message: `there is no collision group {group}{suggestion}`
+- Fix: name one of the groups in engine/physics/groups.ts: world, prop, actor, crowd, flyer, corpse
+- Registered in: [`engine/physics/groups.ts` line 33](../engine/physics/groups.ts)
+
 ## sim
 
 ### SIM_BAD_ARGUMENT
@@ -679,7 +713,7 @@ Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step ru
 
 - Message: `{where} got the seed {value}, which a replay cannot hold`
 - Fix: pass a whole number, 0 or more (x sim --seed 3, __engine.seed(3)): record() writes the seed into the replay
-- Registered in: [`engine/sim/scene.ts` line 71](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 72](../engine/sim/scene.ts)
 
 ### SIM_BAD_SYSTEM
 
@@ -699,7 +733,7 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `the capture the session of {scene} took at step {step} was changed since (it hashes {now}, not {then})`
 - Fix: restore it unchanged, then make the change through the session so record() replays it: session.set(path, value) (__engine.set) for a setting, a dev action (session.act(name, args)) for components
-- Registered in: [`engine/sim/scene.ts` line 67](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 68](../engine/sim/scene.ts)
 
 ### SIM_EVENT_STORM
 
@@ -711,13 +745,13 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `restore() was given a capture the session of {scene} did not take`
 - Fix: restore what this session's capture() (__engine.capture()) returned, the object itself: the session knows where its recording stood then; the world's own captures, another session's and copies have no place in it, so reach other state by starting the scene again (__engine.seed(n)) or playing a replay
-- Registered in: [`engine/sim/scene.ts` line 63](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 64](../engine/sim/scene.ts)
 
 ### SIM_NO_ACTION
 
 - Message: `the scene {scene} has no dev action {name} ({suggestion})`
 - Fix: add it to the scene: defineScene('{scene}', { actions: { {name}(w, args) { … } } }), or call one it has
-- Registered in: [`engine/sim/scene.ts` line 55](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 56](../engine/sim/scene.ts)
 
 ### SIM_NO_CALLBACKS
 
@@ -743,7 +777,7 @@ Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities
 
 - Message: `the world took {count} steps outside its session, so the recording misses their intents`
 - Fix: step a recorded scene through session.step(intents), never world.step(); capture and restore it through session.capture() and session.restore(capture), never the world
-- Registered in: [`engine/sim/scene.ts` line 59](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 60](../engine/sim/scene.ts)
 
 ### SIM_SHARED_DATA
 
@@ -755,12 +789,12 @@ Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities
 
 - Message: `entity {id} has {name}.{field}, a field the component kind {name} does not declare{suggestion}`
 - Fix: declare the field in defineComponent({name}, { fields }) or stop writing it: the hash and captures read the declared fields only, so an undeclared one would let two different states match
-- Registered in: [`engine/sim/state.ts` line 52](../engine/sim/state.ts)
+- Registered in: [`engine/sim/state.ts` line 53](../engine/sim/state.ts)
 
 ### SIM_UNKNOWN_COMPONENT
 
 - Message: `{name} is not a component kind{suggestion}`
 - Fix: declare it with defineComponent({name}, { description, fields }) before an entity holds it (node x describe component lists the declared kinds)
-- Registered in: [`engine/sim/state.ts` line 47](../engine/sim/state.ts)
+- Registered in: [`engine/sim/state.ts` line 48](../engine/sim/state.ts)
 
 Raised by the world (engine/sim/world.ts) and the hash (engine/sim/state.ts) for an entity property, a `spawn`, `add`, `remove` or `query` name, or a captured component that no `defineComponent` declared: the hash covers declared components only, so an undeclared one is refused rather than skipped.
