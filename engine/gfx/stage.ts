@@ -11,10 +11,8 @@
  *
  * Actors with an animator draw themselves as puppets (engine/gfx/puppets/actors.ts, WP 3.10: `actors`), props
  * standing in the scene (`sceneProp`, engine/sim/props.ts) as their props (engine/gfx/stageProps.ts, WP 4.6: `props`),
- * and crowd bodies (`crowdBody`, engine/sim/crowdBodies.ts) through a crowd (engine/gfx/stageCrowd.ts, WP 5.7:
- * `crowd`), which the view draws once it has placed the frame's camera (`crowd.draw(alpha, camera)`): its level of
- * detail and culling need the camera.
- * Stand-ins: any other entity is drawn as a box when one of its components declares `x` and `z` as numbers in metres
+ * and crowd bodies (`crowdBody`) through a crowd (engine/gfx/stageCrowd.ts, WP 5.7: `crowd`), which the view draws
+ * once the frame's camera is placed (`crowd.draw(alpha, camera)`). Stand-ins: any other entity is drawn as a box when one of its components declares `x` and `z` as numbers in metres
  * (`placeableKinds`: asked of the component entries, never of a name). The first such component in registry order
  * places it: `x`, `y` (the box's bottom, 0 by default) and `z`, `yaw` (rad), `size` (the box's side, m; 0.5 by
  * default) and `material` (an id from the material library; `material:default` otherwise). A stand-in is named
@@ -24,12 +22,12 @@
  * shorter way round for yaw).
  *
  * The level's cutaway (engine/gfx/cutaway.ts, `cutaway`) is made when a player actor first stands on it, and the view
- * runs it while it follows him (engine/app/view.ts), so walls facing the camera and pillars before the hero cut away
- * and every view sees him; a stage with no player never has one, and its level stands whole.
+ * runs it while it follows him (engine/app/view.ts); a stage with no player never has one.
  *
  * Warm-up: `register(warmup)` registers the ground, the level meshes, the cutaway's twins, the puppets, the props'
- * batches, the crowd's batches and the stand-ins, and adds the stand-ins' looks (side and material), the puppets' builds and whether there
- * are a cutaway and props to the shader key, so a new look makes the next frame warm up first instead of stalling.
+ * and the crowd's batches and the stand-ins, and adds the stand-ins' looks (side and material), the puppets' builds,
+ * the crowd's looks and whether there are a cutaway and props to the shader key, so a new look makes the next frame
+ * warm up first instead of stalling.
  *
  * Invariants: presentation only: it reads sim data and never writes it (doctrine: WebGPU only); every object it
  * makes is under `scene`; equal inputs make equal graphs; materials belong to the library and are never disposed here.
@@ -37,8 +35,7 @@
  * @example
  * // const stage = createStage({ level: getLevel('level:room'), materials: createMaterialLibrary() });
  * // stage.capture(world.query('mover'));
- * // stage.draw(0.5); // halfway between the last two steps
- * // renderer.render(stage.scene, camera);
+ * // stage.draw(0.5); // halfway between the last two steps; then renderer.render(stage.scene, camera)
  * @see engine/gfx/stage.test.ts
  */
 import {
