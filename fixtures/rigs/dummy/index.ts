@@ -9,7 +9,7 @@
  * queries arrive in WP 6.3.
  *
  * @example
- * import { Vector3 } from '../../../engine/sim-api';
+ * import { Vector3, type Sweep } from '../../../engine/sim-api';
  * const dummy = createDummy(new Vector3(0, 0, 1));
  * hitDummy(dummy, { move: 'move:jab', tick: 3, push: new Vector3(0, 0, 2) });
  * stepDummy(dummy, 1 / 60);
@@ -17,7 +17,7 @@
  * dummy.lean.z > 0; // true: it rocks away from the hit, then settles
  * @see fixtures/rigs/dummy/index.test.ts
  */
-import { Vector3 } from '../../../engine/sim-api';
+import { Vector3, type Sweep } from '../../../engine/sim-api';
 
 /** A hit the dummy took. */
 export interface DummyHit {
@@ -103,16 +103,8 @@ export function segmentDistance(p1: Vector3, q1: Vector3, p2: Vector3, q2: Vecto
   return p1.clone().addScaledVector(d1, s).distanceTo(p2.clone().addScaledVector(d2, t));
 }
 
-/** A swept strike: the striking part's segment at the last step and at this one (engine/anim/timeline.ts `Sweep`). */
-export interface SweptSegment {
-  readonly base0: Vector3;
-  readonly tip0: Vector3;
-  readonly base1: Vector3;
-  readonly tip1: Vector3;
-}
-
 /** Whether `sweep` crosses the dummy's capsule: the quad it swept, as `slices` segments across it, within reach. */
-export function sweepTouches(dummy: Dummy, sweep: SweptSegment, slices = 8): boolean {
+export function sweepTouches(dummy: Dummy, sweep: Sweep, slices = 8): boolean {
   const [bottom, top] = dummyAxis(dummy);
   const [base, tip] = [new Vector3(), new Vector3()];
   for (let i = 0; i <= slices; i++) {

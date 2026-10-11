@@ -1,0 +1,21 @@
+/**
+ * @file The move `move:{{name}}`: what strike it is (replace this text; `x docs` puts the first sentence in INDEX).
+ *
+ * Invariants: angles in radians, + toward the right hand (up on the vertical plane); heights and reaches in metres
+ * from the shoulder centre at the reference arm; times in seconds; a field left out keeps a plain strike's value
+ * (node x describe move lists the fields with their defaults; getMove('move:slash') is a worked one).
+ *
+ * @example
+ * {{name}}.id; // 'move:{{name}}'
+ * @see {{id}}.test.ts
+ */
+import { defineMove } from '../../../engine/sim-api';
+
+/** The move `move:{{name}}`: replace this sentence with what strike it is. */
+export const {{name}} = defineMove('move:{{name}}', {
+  arc: [1.2, -1.2],
+  height: [-0.3, -0.45],
+  reach: [0.45, 0.5],
+  body: { lean: 0.3, lunge: 0.08 },
+  time: { wind: 0.1, active: 0.1, recover: 0.2 },
+});
