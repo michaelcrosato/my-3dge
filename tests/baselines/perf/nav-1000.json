@@ -1,0 +1,10 @@
+{
+  "scene": "nav-1000",
+  "steps": 600,
+  "budgets": {
+    "stepMs": 6,
+    "hashMs": 3,
+    "captureMs": 1.5
+  },
+  "reason": "WP 4.3, measured with node x perf fixtures/scenes/nav-1000 on the development platform (Node 24, 20 cores shared by up to 6 lanes): 1,000 agents' queries (each step a flow-field look-ahead and a spatial-hash neighbour query each, A* paths for those beyond the field's 24 m reach) step in 1.0 to 1.5 ms, hash in 0.5 to 0.8 ms and capture in 0.2 to 0.3 ms (medians of 5 runs, over several runs); the budgets leave about 4x for a loaded machine, so only a real regression fails."
+}
