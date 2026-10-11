@@ -18,11 +18,16 @@
  * wraps three times round an open cylinder that follows the camera, its foot just under eye level, drawn at the far
  * plane like the dome, so the level always stands in front of both.
  *
+ * Measured on r182 (WP 7.1): its lights node sorts its lights by id, in place, whenever it builds a shader, while the
+ * render list gives them in scene order; where the two orders differ the light key flips from frame to frame, and
+ * every instanced mesh rebuilds its pipelines (each build names its own instance buffer). So `createSky` adds its
+ * lights in id order (the pool, the ambient light, then the sun), and a light made later belongs after them in the
+ * scene. And a TSL uniform in the object group (the default) refreshes only when its object or material changes, so
+ * a still floor keeps its first fog: the dome's knobs and the fog's numbers are render-group uniforms.
+ *
  * Carried from `my-3d2dge:engine/my-3d2dge.js:3859-3958` (§21b, the backdrop generators: the `day` preset's colours,
  * `ridge`, `smooth`, `range` and the tones), rebuilt as a cylinder round a 3D camera instead of screen layers.
- *
- * Invariants: equal presets bake equal strips; the scene's light count never changes after `createSky`; a missing
- * preset id warns once and gives `sky:daylight`.
+ * Invariants: equal presets bake equal strips; the scene's light count never changes after `createSky`.
  *
  * @example
  * bakeBackdrop({ haze: '#c8e4f8', layers: [{ kind: 'hills', color: '#5aa060', height: 0.5, haze: 0, seed: 1 }] }, 64, 16).length; // 4096
@@ -61,7 +66,7 @@ import type { CompiledLevel } from '../world/level/types';
 import { AMBIENT_FIELDS, createAtmosphere, FOG_FIELDS, type Atmosphere, type FogReport } from './atmosphere';
 import { createLightPool, lightSources, type LightPool, type PoolSlot } from './lights';
 import type { QualityBudget } from './quality';
-import { shadowCasters, splitCasters } from './shadows';
+import { shadowCasters, splitCasters, type Casters } from './shadows';
 import type { Warmup } from './warmup';
 
 const text = (description: string, value: string) => ({ type: 'string', default: value, description }) as const;
@@ -126,6 +131,13 @@ export const SKY_FIELDS = {
 /** A `sky` entry. */
 export type SkyEntry = Entry<typeof SKY_FIELDS>;
 
+/** What `defineSky` takes: any of the fields, and any of a nested object's (a backdrop's layers whole). */
+export type SkySpec = {
+  [K in Exclude<keyof SkyEntry, 'id' | 'kind'>]?: SkyEntry[K] extends string | number
+    ? SkyEntry[K]
+    : Partial<SkyEntry[K]>;
+};
+
 /** A backdrop as a `sky` entry gives it. */
 export type BackdropSpec = SkyEntry['backdrop'];
 
@@ -169,7 +181,7 @@ export function defineSkies(registry: Registry = sharedRegistry): void {
 defineSkies();
 
 /** Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`. */
-export function defineSky(id: string, spec: Record<string, unknown>, registry: Registry = sharedRegistry): SkyEntry {
+export function defineSky(id: string, spec: SkySpec, registry: Registry = sharedRegistry): SkyEntry {
   return registry.def('sky', id, spec) as SkyEntry;
 }
 
@@ -241,7 +253,7 @@ export interface Sky {
 export interface SkyReport {
   preset: string;
   /** Lights that cast shadows now: the sun first, then the pool's. */
-  casters: { sun: boolean; points: number };
+  casters: Casters;
   slots: PoolSlot[];
   fog: FogReport;
 }
@@ -272,12 +284,7 @@ export function createSky(
   sun.target.name = 'sky/sun/target';
   sun.shadow.mapSize.set(2048, 2048);
   sun.shadow.bias = -0.0005;
-  const [min, max] = options.level
-    ? [options.level.bounds.min, options.level.bounds.max]
-    : [
-        [-8, 0, -8],
-        [8, 4, 8],
-      ];
+  const { min, max } = options.level?.bounds ?? { min: [-8, 0, -8], max: [8, 4, 8] };
   const centre = [(min[0] + max[0]) / 2, min[1], (min[2] + max[2]) / 2] as const;
   const half = Math.hypot(max[0] - min[0], max[2] - min[2]) / 2 + 2;
   Object.assign(sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, near: 1, far: 3 * half + 60 });
@@ -315,7 +322,7 @@ export function createSky(
 
   let preset = registry.get('sky', 'sky:daylight') as SkyEntry;
   let casters = shadowCasters({ shadowCasters: null });
-  let split = { sun: false, points: 0 };
+  let split: Casters = { sun: false, points: 0 };
   const applyCasters = () => {
     split = splitCasters(casters, { sun: preset.sun.intensity > 0, points: preset.pointLights > 0 });
     sun.castShadow = split.sun;

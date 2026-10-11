@@ -14,7 +14,8 @@
  * `register(warmup)` adds the fog to the warm-up's shader key (engine/gfx/warmup.ts reads `scene.fog`, never a fog
  * node), so installing it makes the next frame warm up first instead of stalling.
  *
- * Invariants: presentation only, never in the hash; one fog node and one ambient light per atmosphere, made once.
+ * Invariants: presentation only, never in the hash; one fog node and one ambient light per atmosphere, made once; the
+ * fog's numbers are render-group uniforms, so every object sees each frame's (engine/gfx/sky.ts says why).
  *
  * Carried from `my-3d2dge:src/stress-world/50-frame.js:54-56` (the fog that starts a little past the hero, however
  * far the camera is: 12 m to 70 m past it) and the hall's hemisphere light (`10-hall.js:438`).
@@ -86,7 +87,7 @@ export interface FogReport {
   /** Where range fog starts and is whole, as view depths (m). */
   near: number;
   far: number;
-  /** The focus's view depth (m). */
+  /** How far the camera stands from the focus (m), which stands in for the focus's view depth. */
   focus: number;
   amount: number;
 }

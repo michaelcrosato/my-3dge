@@ -13,7 +13,16 @@ import { Rng } from '../core/rng';
 import { compileLevel } from '../world/level/compile';
 import { defineLights } from './lights';
 import { qualityBudget } from './quality';
-import { BACKDROP, BACKDROP_KINDS, bakeBackdrop, createSky, defineSkies, defineSky, type SkyEntry } from './sky';
+import {
+  BACKDROP,
+  BACKDROP_KINDS,
+  bakeBackdrop,
+  createSky,
+  defineSkies,
+  defineSky,
+  type SkyEntry,
+  type SkySpec,
+} from './sky';
 import type { Warmup } from './warmup';
 
 const HALL = compileLevel(readFileSync(join(import.meta.dirname, '../../labs/box/levels/hall.txt'), 'utf8'), {
@@ -50,7 +59,8 @@ describe('sky presets', () => {
     expect(day.backdrop.layers.map((l) => l.kind)).toEqual(['mountains', 'hills', 'forest']);
     const own = defineSky('sky:dusk', { background: '#1a1440', sun: { intensity: 1, elevation: 0.1 } }, registry);
     expect(own.sun).toEqual({ color: '#fff0d8', intensity: 1, azimuth: 0, elevation: 0.1 });
-    expect(() => defineSky('sky:bad', { backdrop: { layers: [{ kind: 'dunes' }] } }, registry)).toThrow(/dunes/);
+    const dunes = { backdrop: { layers: [{ kind: 'dunes' }] } } as unknown as SkySpec;
+    expect(() => defineSky('sky:bad', dunes, registry)).toThrow(/dunes/);
   });
 });
 
@@ -92,7 +102,9 @@ describe('createSky', () => {
   it('switches presets and tiers without adding or removing a light: only who casts changes', () => {
     const { scene, sky } = make();
     const ids = lightKey(scene).map((key) => key.replace('s', ''));
-    expect(ids).toHaveLength(12 + 2); // the pool, the sun and the ambient light
+    expect(ids).toHaveLength(12 + 2); // the pool, the ambient light and the sun
+    // In id order, as r182's lights node sorts them (see the file comment).
+    expect(ids.map(Number)).toEqual(ids.map(Number).sort((a, b) => a - b));
     const casting = () => lightKey(scene).filter((key) => key.endsWith('s')).length;
     sky.set('sky:hall');
     expect(sky.report().casters).toEqual({ sun: false, points: 2 });

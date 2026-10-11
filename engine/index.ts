@@ -229,3 +229,14 @@ export type { PuppetBatches } from './gfx/puppets/draw';
 export { createBlobShadows } from './gfx/puppets/blobShadow';
 export { blobScale } from './gfx/puppets/blobShadow';
 export type { BlobShadows } from './gfx/puppets/blobShadow';
+// Lights, shadows, atmosphere and sky (WP 7.1): light kinds for a level's light spots, a fixed pool of point lights
+// near the focus with a shadow budget by quality tier, and sky presets (background, dome, backdrop, sun, ambient
+// light, fog) that a sky puts on a scene.
+export { defineLight } from './gfx/lights';
+export type { LightEntry } from './gfx/lights';
+export type { LightSource } from './gfx/lights';
+export { defineSky } from './gfx/sky';
+export type { SkyEntry } from './gfx/sky';
+export type { SkySpec } from './gfx/sky';
+export { createSky } from './gfx/sky';
+export type { Sky } from './gfx/sky';
