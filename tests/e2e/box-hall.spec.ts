@@ -8,12 +8,15 @@
  * above the floor (Done-when 2), where every camera sees him in the ID pass with the gallery and the stairs, the walls
  * and pillars before him cut away. The hall with its props (labs/box/?scene=hall-props) draws its 100 crates and
  * barrels and its 30 fires through one instanced batch per prop part, each seen by the ID pass; its knock replay,
- * played in the page, gives its goldens, and the crate the hero shoves moves more than 0.25 m there (Done-when 3).
- * In both scenes, cycling every camera and resolution mode while he walks builds 0 pipelines after the warm-up
- * (Done-when 4). The CPU-only contract for the hall is tests/e2e/parity.spec.ts.
+ * played in the page, gives its goldens, and the crate the hero shoves moves more than 0.25 m there (Done-when 3): read
+ * once the replay has played to the shove's press, then again once the page has stepped on with that press to the
+ * checkpoint after it, drawing after every step, where the hash is the replay's golden. In both scenes, cycling every
+ * camera and resolution mode while he walks builds 0 pipelines after the warm-up (Done-when 4). The CPU-only contract
+ * for the hall is tests/e2e/parity.spec.ts.
  *
  * Invariants: the page is driven through `window.__engine` and the virtual clock, as an agent drives it; goldens come
- * from the replay files, never from the page itself.
+ * from the replay files, never from the page itself. Each test opens its own page and shares nothing, so they run in
+ * parallel: in order, on one worker, this file was T2's longest chain after parity.spec.ts went parallel.
  */
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -24,12 +27,17 @@ import { FOLLOW_CAMERAS } from '../../engine/gfx/cameras/place';
 import { RESOLUTION_MODES } from '../../engine/gfx/resolution';
 import { expect, test, type Harness } from './fixtures';
 
+test.describe.configure({ mode: 'parallel' });
+
 const ROOT = join(import.meta.dirname, '..', '..');
 /** Variables a test runner sets for its own workers; the `x` children start without them. */
 const RUNNER_VARIABLE = /^(VITEST|TEST_WORKER_INDEX$|TEST_PARALLEL_INDEX$|PW_TS_ESM|PW_TEST_SOURCE_TRANSFORM)/;
 const CLIMB = readFileSync(join(ROOT, 'tests/replays/box-3-climb.replay.json'), 'utf8');
 const KNOCK = readFileSync(join(ROOT, 'tests/replays/box-3-knock.replay.json'), 'utf8');
-/** The knock replay's first shove: the step it comes at, and the crate it knocks (its spot, after the level's 30 fires). */
+/**
+ * The knock replay's first shove: the step its press comes at, the checkpoint after it, and the crate it knocks (its
+ * spot, after the level's 30 fires).
+ */
 const SHOVE = { at: 190, after: 240, prop: 30 + 40 };
 /** Every camera but first person: each classic view in both projections, then each 3D camera, then chase and rail. */
 const CAMERAS = [
@@ -178,13 +186,29 @@ test.describe('the box, stage 3: the hall', () => {
     const run = await call<{ hashes: Record<string, string>; frames: number }>(page, 'replay', KNOCK);
     expect(run.hashes).toEqual(goldensOf(KNOCK));
     expect(run.frames).toBe(600);
-    /** The shoved crate after `until` steps of the knock replay, drawn after each step. */
-    const crate = async (until: number) => {
-      await call(page, 'replay', KNOCK, { until });
+    /** The shoved crate now. */
+    const crate = async () => {
       const id = (await call<{ id: number }[]>(page, 'entities', 'sceneProp'))[SHOVE.prop].id;
       return (await call<{ sceneProp: { prop: string; x: number; z: number } }>(page, 'get', id)).sceneProp;
     };
-    const [before, after] = [await crate(SHOVE.at), await crate(SHOVE.after)];
+    // One more play, to the shove's press, then on to the checkpoint after it, a frame drawn after every step.
+    await call(page, 'replay', KNOCK, { until: SHOVE.at });
+    const before = await crate();
+    const changes = (JSON.parse(KNOCK) as { inputs: [number, object][] }).inputs.filter(
+      ([at]) => at >= SHOVE.at && at < SHOVE.after,
+    );
+    expect(changes).toEqual([[SHOVE.at, { p: ['attack'] }]]); // the press alone, so step(1, press) then step(1, {})
+    await page.evaluate(
+      async ([press, steps]) => {
+        for (let k = 0; k < steps; k++) {
+          __engine.step(1, k === 0 ? press : {});
+          await __engine.render(1);
+        }
+      },
+      [changes[0][1], SHOVE.after - SHOVE.at] as const,
+    );
+    expect(await call(page, 'hash')).toBe(goldensOf(KNOCK)[SHOVE.after]); // stepped on exactly as the replay plays
+    const after = await crate();
     expect(before.prop).toBe('prop:crate');
     expect(Math.hypot(after.x - before.x, after.z - before.z)).toBeGreaterThan(0.25);
     const frame = await call<{ drawn: boolean; built: number }>(page, 'render', 2);
