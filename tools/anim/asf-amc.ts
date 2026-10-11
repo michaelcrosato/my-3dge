@@ -14,7 +14,7 @@
  * const skeleton = readAsf(testAsf());
  * const frames = readAmc(testAmc(12));
  * [skeleton.order.length, frames.length]; // [30, 12]
- * pose(skeleton, frames[0]).end.root; // [0, 0.9257…, 0]: the root, in metres
+ * pose(skeleton, frames[0]).end.root; // [0, 0.9426…, 0]: the root, in metres
  * @see tools/anim/asf-amc.test.ts
  */
 /** A vector, or a 3 × 3 matrix (row major). */

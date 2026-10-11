@@ -27,7 +27,7 @@
  * writeFileSync(join(dir, '99.asf'), testAsf());
  * writeFileSync(join(dir, '99_01.amc'), testAmc(240));
  * const caps = readCmu(join(dir, '99.asf'), [{ name: 'Walk', take: '99_01', fps: 120 }]);
- * [caps.Walk.n, caps.Walk.take]; // [60, '99_01 0.00-1.99']
+ * [caps.Walk.n, caps.Walk.take]; // [61, '99_01 0.00-1.99']
  * @see tools/anim/asf-amc.test.ts
  */
 import { readFileSync } from 'node:fs';

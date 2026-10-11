@@ -11,7 +11,7 @@
  *
  * @example
  * const found = findClips(['punch']);
- * found.clips[0].ref; // 'mesh2motion/Punch_Combo' or another set's punch: names first
+ * found.clips[0].ref; // 'cmu/Punch_Combo': a clip named for the word first
  * found.lines.length <= 18; // true: with the verdict (the count) and the report path, 20 lines
  * @see tools/anim/find.test.ts
  */
