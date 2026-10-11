@@ -358,3 +358,24 @@ export type { Trigger } from './physics/bodies';
 export { updateTrigger } from './physics/bodies';
 export { rescueLost } from './physics/bodies';
 export type { RescueLevel } from './physics/bodies';
+
+// Crowd bodies (WP 5.1): agents as dynamic capsules and balls driven by the velocities their AI wants (approach
+// limits, only on their feet), knockback and launches, the corpse group and its timers, spawn and despawn queues.
+export { CROWD_AGENT_FIELDS } from './physics/crowd';
+export { CROWD_AGENT } from './physics/crowd';
+export type { CrowdAgent } from './physics/crowd';
+export type { AgentState } from './physics/crowd';
+export { CROWD_MATERIAL } from './physics/crowd';
+export { CROWD_LIMITS } from './physics/crowd';
+export { CROWD_GROUNDED } from './physics/crowd';
+export { addAgent } from './physics/crowd';
+export { removeAgent } from './physics/crowd';
+export { setVelocity } from './physics/crowd';
+export type { VelocityOptions } from './physics/crowd';
+export { knockback } from './physics/crowd';
+export { launch } from './physics/crowd';
+export { killAgent } from './physics/crowd';
+export { updateCrowd } from './physics/crowd';
+export type { CrowdOptions } from './physics/crowd';
+export type { CrowdChanges } from './physics/crowd';
+export type { CrowdStepper } from './physics/crowd';
