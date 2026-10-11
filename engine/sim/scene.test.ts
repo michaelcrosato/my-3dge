@@ -2,7 +2,8 @@
  * @file Unit tests for engine/sim/scene.ts (T1): scenes register as entries of the kind `scene` with defaults filled,
  * their settings are schema-checked when defined and their actions must be functions; `startScene` layers the
  * caller's settings over the scene's over the defaults, seeds the world, runs `setup` under the fdlibm swap and the
- * scene's `step` first in the phase `intents`, and every start is a fresh world and settings store; an unknown id
+ * scene's `step` first in the phase `intents`, and every start is a fresh world and settings store (a scene with
+ * `physics: true` its own physics world, stepped as the system `physics`); an unknown id
  * names the closest. A session records setting changes made through its own store (set, setText, load, fromUrl,
  * reset, override) at their step, merged in play order, so its replay gives the live hashes; what no step has followed
  * yet waits; a dev action that throws is rolled back and not recorded; the session restores only its own captures,
@@ -17,6 +18,7 @@ import { defineSettings } from '../core/settings';
 import { inSimMath } from '../core/simMath';
 import { checkReplay, playReplay, type Replay } from './replay';
 import { checkSeed, createSession, defineScene, getScene, isScene, startScene } from './scene';
+import { physicsOf } from '../physics/world';
 import { defineComponent } from './state';
 
 /** The message of the EngineError `fn` throws, after its code. */
@@ -54,7 +56,14 @@ describe('defineScene', () => {
     const registry = setupRegistry();
     const scene = defineScene('demo', { setup: () => {} }, registry);
     expect(isScene(scene)).toBe(true);
-    expect(scene).toMatchObject({ id: 'demo', kind: 'scene', description: '', settings: {}, actions: {} });
+    expect(scene).toMatchObject({
+      id: 'demo',
+      kind: 'scene',
+      description: '',
+      settings: {},
+      actions: {},
+      physics: false,
+    });
     expect(typeof scene.step).toBe('function');
     expect(getScene('demo', registry)).toBe(scene);
     expect(registry.describe('scene').ids).toEqual(['demo']);
@@ -133,6 +142,25 @@ describe('startScene', () => {
     const registry = setupRegistry();
     defineScene('kernel', { setup: () => {} }, registry);
     expect(failure(() => startScene('kernal', { registry }))).toMatch(/^CORE_NO_ENTRY.*kernel/);
+  });
+
+  it('gives a scene with physics: true its own physics world, bound to it and stepped as the system physics', () => {
+    const registry = setupRegistry();
+    const ball = { position: [0, 5, 0] as const, colliders: [{ shape: { type: 'ball' as const, radius: 0.5 } }] };
+    defineScene('drop', { physics: true, setup: (w) => void physicsOf(w).addBody(ball) }, registry);
+    defineScene('plain', { setup: () => {} }, registry);
+    const [a, b] = [startScene('drop', { registry }).world, startScene('drop', { registry }).world];
+    expect(physicsOf(a)).not.toBe(physicsOf(b));
+    expect(a.systems.list().map((system) => `${system.phase}:${system.name}`)).toEqual([
+      'intents:scene',
+      'physics:physics',
+    ]);
+    a.step({});
+    expect(physicsOf(a).readBody(0).velocity.y).toBeCloseTo(-9.81 / 60, 5); // physics.gravity, declared for it
+    expect(a.hash()).not.toBe(b.hash());
+    b.step({});
+    expect(a.hash()).toBe(b.hash());
+    expect(failure(() => physicsOf(startScene('plain', { registry }).world))).toMatch(/^PHYSICS_NONE/);
   });
 });
 

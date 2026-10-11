@@ -9,7 +9,7 @@
  * A scene is game code: `setup(w)` spawns, adds systems and listeners (inside `w.run`, so under the fdlibm swap);
  * `step(w, intents)` runs every sim step as the system `scene`, first in the phase `intents`, ahead of the systems
  * setup adds there; `actions` are its dev actions, `(w, args) => void` by name (WP 5.6 adds the engine's own).
- * `level` names the level it loads (WP 2.2 compiles it).
+ * `level` names the level it loads (WP 2.2 compiles it); `physics: true` gives it a physics world (physicsOf, WP 3.1).
  *
  * A session logs, each at the step it happens (merged in play order: set, then dev, then intents), what its intents
  * change (a step the world does not count logs nothing), every non-view setting change (through `set` or its own store,
@@ -45,6 +45,7 @@ import { registry as sharedRegistry, sameValue, type Entry, type Registry } from
 import { isPlainObject, show, type Schema } from '../core/schema';
 import { createSettings, type SettingChange, type Settings, type SettingValue } from '../core/settings';
 import { diffIntents, INTENT_KEYS, NO_INTENTS, normalizeIntents, type Intents } from '../input/intents';
+import { attachPhysics, scenePhysics } from '../physics/world';
 import type { WorldCapture } from './capture';
 import type { InputChange, InputEntry, Replay } from './replay';
 import type { AnyComponents, PhysicsHook } from './state';
@@ -90,6 +91,8 @@ export interface SceneSpec<C extends object = AnyComponents, E extends EventMap 
   description?: string;
   /** The level it loads (`level:<name>`), when it has one (WP 2.2). */
   level?: string;
+  /** Whether it has a physics world (WP 3.1): `physicsOf(w)` reaches it, the system `physics` steps it. */
+  physics?: boolean;
   /** Setting values for its lifetime, path → value (schema-checked). */
   settings?: Readonly<Record<string, unknown>>;
   /** Runs once when it starts: spawns, systems, listeners. */
@@ -109,6 +112,7 @@ export type Scene<C extends object = AnyComponents, E extends EventMap = EventMa
 const SCENE_FIELDS = {
   description: { type: 'string', default: '', description: 'What the scene shows or tests, in plain sentences.' },
   level: { type: 'string', description: 'The level it loads (level:<name>, compiled by WP 2.2), when it has one.' },
+  physics: { type: 'boolean', default: false, description: 'Whether it has a physics world: physicsOf(w) reaches it.' },
   settings: {
     type: 'object',
     default: {},
@@ -216,6 +220,7 @@ export function startScene<C extends object = AnyComponents, E extends EventMap 
 ): SceneRun<C, E> {
   const registry = options.registry ?? sharedRegistry;
   const entry = (typeof scene === 'string' ? getScene(scene, registry) : scene) as Scene<C, E>;
+  const physics = options.physics ? undefined : scenePhysics(entry.physics, registry);
   const settings = createSettings({ registry });
   settings.override(entry.settings, `scene ${entry.id}`);
   if (options.settings && Object.keys(options.settings).length) settings.override(options.settings, 'run');
@@ -224,9 +229,10 @@ export function startScene<C extends object = AnyComponents, E extends EventMap 
     registry,
     settings,
     log: options.log,
-    physics: options.physics,
+    physics: options.physics ?? physics,
   });
   world.systems.add('scene', (w, intents) => entry.step(w, intents), { phase: 'intents' });
+  if (physics) attachPhysics(world, physics);
   world.run((w) => entry.setup(w));
   return { scene: entry, world, settings };
 }
