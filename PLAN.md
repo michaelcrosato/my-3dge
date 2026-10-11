@@ -3959,7 +3959,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 3.6 | Humanoid procedural port | A | todo | | |
 | 3.7 | Character animator and body states | A | todo | | |
 | 3.8 | Instancing service and puppets | R | todo | | |
-| 3.9 | Cameras (v2): chase, first person, rail | R | todo | | |
+| 3.9 | Cameras (v2): chase, first person, rail | R | done | cbe12c6 (#5) | engine/gfx/cameras/{chase,first,rail}.ts: chase as a spring arm whose ball casts go through the QueryView (in at once, back out over 0.3 s; 0 bad frames over 2400 in chase-walls), first person at the eye sockets' midpoint with nearBodyCull (hides all but the hands plus any part within 0.3 m of the eye), the depth rail keeping the hero in a near/far band; cam3=chase/first/rail codes round-trip; fixture chase-walls; calls made: codes live in the camera modules, not codes.ts, so parseCameraCode/createCamera do not yet know the three (open issue: proposed core change to codes.ts and place.ts createCamera, not applied, outside this WP's Owns), ~850 source lines, over S's 300; no escalations; deferred proofs: ID-pass camera suite (WP 3.10), no box check names the rail |
 | 3.10 | Box 2: a hero in the box | B | todo | | |
 | 3.11 | Film and visual comparison | T | todo | | |
 | 3.12 | Touch controls (not tested, ADR-0021) | I | todo | | |

@@ -982,6 +982,37 @@ For the agents who maintain the engine.
 - `BoostedPerspectiveCamera` (class): three.js's `PerspectiveCamera` with a height `boost` its projection keeps (see the file comment).
 - `isBoosted` (function): Whether `camera` keeps its own boost (one of this module's camera classes).
 
+### [`engine/gfx/cameras/chase.ts`](../engine/gfx/cameras/chase.ts)
+
+- `CHASE_DEFAULTS` (const): The arm's starting pitch (rad, + up), length (m) and the lens (degrees, `PerspectiveCamera.fov`).
+- `CHASE_HEIGHT` (const): The pivot's height above the followed point, m: the hero's head.
+- `CHASE_LAG` (const): The time constant of the pivot's follow, real seconds.
+- `CHASE_LIMITS` (const): The range of the pitch (rad) and the arm's length (m).
+- `CHASE_RADIUS` (const): The radius of the ball cast along the arm, m: wider than the near plane's corners (0.09 m at 60° and 21:9).
+- `CHASE_RETURN` (const): The time constant of the arm easing back out after a wall, real seconds.
+- `CHASE_SKIN` (const): How far short of a surface the ball stops, m.
+- `CHASE_TURN_SPEED` (const): Turn rates at full `input.turn`, rad/s: `[right, up]` (the prototype's [ ] keys turn 2.2).
+- `ChaseInput` (interface): A chase camera's input: the devices' and the hero's, and the sim's queries for its walls.
+- `ChaseOptions` (interface): Options for a chase camera: its code's data, the lens, and the camera before it.
+- `chasePose` (function): The chase camera's pose: `arm` metres back from the pivot along its view direction, looking at the pivot.
+- `chaseSpec` (function): The chase camera's code data.
+- `ChaseSpec` (interface): A chase camera's code as data: without the numbers it keeps the heading of the camera before it.
+- `chaseState` (function): A checked chase state for `options`.
+- `ChaseState` (interface): A chase camera's state: plain data, replaced by each step.
+- `codeDegrees` (function): Radians as a code writes them: degrees to 0.01, wrapped into (−180, 180] when `wrap` (headings).
+- `codeNumber` (function): A number as a camera code writes it: rounded to `places` decimals, shortest form, never `-0` (as codes.ts).
+- `CodePart` (type): One number of a code: its name and the range it must be in, as written (degrees, metres).
+- `createChaseCamera` (function): A chase camera: behind the hero on its arm, following `input.follow`, in front of the walls `input.queries` sees.
+- `describeChase` (function): A chase camera in words.
+- `followCamera` (function): Wraps a camera's pure steps and first state in a camera, as `cameraFrom` does for the cameras codes.ts lists.
+- `FollowCamera` (interface): A WP 3.9 camera: a `Camera` (engine/gfx/cameras/pose.ts) whose type and code data codes.ts does not list yet.
+- `FollowSteps` (interface): What a WP 3.9 camera gives `followCamera`: its pure steps, as `CameraSteps`, and its code and words.
+- `formatChaseCode` (function): The canonical code of a chase camera's data (numbers rounded: 0.01°, 0.001 m).
+- `parseChaseCode` (function): Reads a chase camera's code: `cam3=chase[,<yaw>,<pitch>,<distance>]`.
+- `QueryGroups` (type): The collision groups a query hits, as the `QueryView` names them.
+- `readCode` (function): The numbers of `cam3=<name>[,…]` (with or without the `?` and the key): as many as one of `counts`, each within its `parts` range.
+- `stepChase` (function): Steps a chase camera by one rendered frame: turned by `look` and `turn`, `zoom` on the arm, following, walls.
+
 ### [`engine/gfx/cameras/codes.ts`](../engine/gfx/cameras/codes.ts)
 
 - `CAMERA_3D` (const): The 3D cameras of `cam3=`.
@@ -997,6 +1028,30 @@ For the agents who maintain the engine.
 - `VIEW_NAMES` (const): Every view name, in the order the 2D engine cycles them (`custom` last).
 - `ViewName` (type): The classic views (engine/gfx/cameras/presets.ts has their numbers), and `custom` (any azimuth and elevation).
 - `ViewSpec` (interface): A classic view's code as data: missing fields take the camera's defaults.
+
+### [`engine/gfx/cameras/first.ts`](../engine/gfx/cameras/first.ts)
+
+- `createFirstCamera` (function): A first-person camera: at the hero's eyes (`input.eye`), turned by the devices.
+- `CullOptions` (interface): Options for `nearBodyCull`.
+- `describeFirst` (function): A first-person camera in words.
+- `eyePoint` (function): The head socket: the midpoint of the eye sockets of `skeleton` posed as `world` (engine/anim/fk.ts), m.
+- `FIRST_BOB_LAG` (const): The time constant of the eye's height, real seconds: it softens the head's bob.
+- `FIRST_DEFAULTS` (const): The starting pitch (rad, + up) and lens (degrees, `PerspectiveCamera.fov`).
+- `FIRST_EYE_HEIGHT` (const): The eye's height above the followed point without a rig, m.
+- `FIRST_NEAR_BODY` (const): A shown part closer to the eye than this is culled too, m.
+- `FIRST_SHOWN` (const): The joints whose parts the camera shows (unless near the eye): the hands, which hold the weapons.
+- `FIRST_TURN_SPEED` (const): Turn rates at full `input.turn`, rad/s: `[right, up]`.
+- `FirstInput` (interface): A first-person camera's input: the devices', and the hero's eye.
+- `FirstOptions` (interface): Options for a first-person camera: its code's data, and the camera before it.
+- `firstPose` (function): The first-person camera's pose: at the eye, looking along its yaw and pitch.
+- `firstSpec` (function): The first-person camera's code data.
+- `FirstSpec` (interface): A first-person camera's code as data: without the numbers it looks where the camera before it looked.
+- `firstState` (function): A checked first-person state for `options`.
+- `FirstState` (interface): A first-person camera's state: plain data, replaced by each step.
+- `formatFirstCode` (function): The canonical code of a first-person camera's data (numbers rounded to 0.01°).
+- `nearBodyCull` (function): Near-body culling: the joints, in `JOINTS` order, whose body parts a first-person camera at `eye` hides from the character `skeleton` posed as `world`: those not in `options.show`, the head, and those whose part comes within `options.near` of the eye (see the file comment).
+- `parseFirstCode` (function): Reads a first-person camera's code: `cam3=first[,<yaw>,<pitch>[,<fov>]]`.
+- `stepFirst` (function): Steps a first-person camera by one rendered frame: turned by `look` and `turn`, `zoom` on the lens, at the eye.
 
 ### [`engine/gfx/cameras/fixed.ts`](../engine/gfx/cameras/fixed.ts)
 
@@ -1094,6 +1149,25 @@ For the agents who maintain the engine.
 - `viewSpec` (function): A view's code data: a custom view's angles and boost, or a preset's name and turn.
 - `viewState` (function): A checked view state for `options` (a view's code data, plus the lens and frame).
 - `ViewState` (interface): A view camera's state: plain data, replaced (never changed) by each step.
+
+### [`engine/gfx/cameras/rail.ts`](../engine/gfx/cameras/rail.ts)
+
+- `createRailCamera` (function): A depth rail: beside the hero, following `input.follow` along the rail and keeping him within near and far.
+- `describeRail` (function): A depth rail in words.
+- `formatRailCode` (function): The canonical code of a depth rail's data (numbers rounded: 0.01°, 0.001 m; a zoom of 1 left out).
+- `parseRailCode` (function): Reads a depth rail's code: `cam3=rail[,<azimuth>,<near>,<far>[,<zoom>]]`.
+- `RAIL_DEFAULTS` (const): The hero's depth from the rail is kept between `near` and `far`, m (the prototype's 110 and 260 units).
+- `RAIL_FOV` (const): The rail's lens, degrees (`PerspectiveCamera.fov`).
+- `RAIL_HEIGHT` (const): The rail's height above the hero, m.
+- `RAIL_LAG` (const): The time constant of the follow along the rail and in height, real seconds; depth moves at twice the rate.
+- `RAIL_START` (const): How far out the rail starts from the hero, m.
+- `RAIL_TILT` (const): How far the rail looks down, rad.
+- `railPose` (function): The depth rail's pose: on its rail, looking across at the hero's line, tilted down.
+- `railSpec` (function): The depth rail's code data.
+- `RailSpec` (interface): A depth rail's code as data.
+- `railState` (function): A checked depth rail state for `options`.
+- `RailState` (interface): A depth rail's state: plain data, replaced by each step.
+- `stepRail` (function): Steps a depth rail by one rendered frame: `zoom`, then following along, in height, and in depth.
 
 ### [`engine/gfx/caps.ts`](../engine/gfx/caps.ts)
 

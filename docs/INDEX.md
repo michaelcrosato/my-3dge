@@ -226,9 +226,15 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`boost.ts`](../engine/gfx/cameras/boost.ts): The height boost (PLAN.md WP 2.5; doctrine: Quality under the hood): the 2D engine's `zBoost`, the classic pixel-art cheat that draws heights taller than they are so walls and characters read, done in the projection matrix only.
   - Exports: `applyBoost`, `boost`, `Boosted`, `BoostedOrthographicCamera`, `BoostedPerspectiveCamera`, `isBoosted`
   - Tests: [`engine/gfx/cameras/boost.test.ts`](../engine/gfx/cameras/boost.test.ts)
+- [`chase.ts`](../engine/gfx/cameras/chase.ts): The chase camera (PLAN.md WP 3.9, §6.1; doctrine: Common ground, Quality under the hood): a perspective camera on a spring arm behind and above the hero, turned by the devices, that slides in front of a wall rather than through it, as Unreal's spring arm and Cinemachine's third-person follow do.
+  - Exports: `CHASE_DEFAULTS`, `CHASE_HEIGHT`, `CHASE_LAG`, `CHASE_LIMITS`, `CHASE_RADIUS`, `CHASE_RETURN`, `CHASE_SKIN`, `CHASE_TURN_SPEED`, `ChaseInput`, `ChaseOptions`, `chasePose`, `chaseSpec`, `ChaseSpec`, `chaseState`, `ChaseState`, `codeDegrees`, `codeNumber`, `CodePart`, `createChaseCamera`, `describeChase`, `followCamera`, `FollowCamera`, `FollowSteps`, `formatChaseCode`, `parseChaseCode`, `QueryGroups`, `readCode`, `stepChase`
+  - Tests: [`engine/gfx/cameras/chase.test.ts`](../engine/gfx/cameras/chase.test.ts)
 - [`codes.ts`](../engine/gfx/cameras/codes.ts): Camera codes (PLAN.md WP 2.5, §8.3; doctrine: Agent-operable): a camera as one short text that a link, a command (`x shot --cam`) or `__engine.camera.set(code)` carries, and the words that say what a camera shows.
   - Exports: `CAMERA_3D`, `CAMERA_CODES`, `CameraSpec`, `CameraType`, `describeCamera`, `formatCameraCode`, `FreeSpec`, `OrbitSpec`, `parseCameraCode`, `VIEW_LABELS`, `VIEW_NAMES`, `ViewName`, `ViewSpec`
   - Tests: [`engine/gfx/cameras/codes.test.ts`](../engine/gfx/cameras/codes.test.ts)
+- [`first.ts`](../engine/gfx/cameras/first.ts): The first-person camera (PLAN.md WP 3.9; doctrine: Common ground): the hero's eyes, turned by the devices, and the near-body culling that hides his own body from them.
+  - Exports: `createFirstCamera`, `CullOptions`, `describeFirst`, `eyePoint`, `FIRST_BOB_LAG`, `FIRST_DEFAULTS`, `FIRST_EYE_HEIGHT`, `FIRST_NEAR_BODY`, `FIRST_SHOWN`, `FIRST_TURN_SPEED`, `FirstInput`, `FirstOptions`, `firstPose`, `firstSpec`, `FirstSpec`, `firstState`, `FirstState`, `formatFirstCode`, `nearBodyCull`, `parseFirstCode`, `stepFirst`
+  - Tests: [`engine/gfx/cameras/first.test.ts`](../engine/gfx/cameras/first.test.ts)
 - [`fixed.ts`](../engine/gfx/cameras/fixed.ts): The fixed camera (PLAN.md WP 2.5): a perspective camera that stays where it is put, the prototype's "Fix" (F): the hero is the devices' again while the camera watches.
   - Exports: `createFixedCamera`, `FixedOptions`, `fixedPose`, `fixedSpec`, `fixedState`, `FixedState`, `stepFixed`
   - Tests: [`engine/gfx/cameras/fixed.test.ts`](../engine/gfx/cameras/fixed.test.ts)
@@ -247,6 +253,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`presets.ts`](../engine/gfx/cameras/presets.ts): The classic views (PLAN.md WP 2.5; doctrine: Common ground): the 2D engine's isometric, three-quarter, top-down, brawler and side views, and custom ones, as 3D cameras that follow a point with the 2D camera's lag.
   - Exports: `createViewCamera`, `ORTHO_DISTANCE`, `ORTHO_FAR`, `stepView`, `stepZoom`, `VIEW_FOV`, `VIEW_LAG`, `VIEW_LIFT`, `VIEW_PRESETS`, `VIEW_ZOOMS`, `ViewOptions`, `viewPose`, `ViewPreset`, `viewSpec`, `viewState`, `ViewState`
   - Tests: [`engine/gfx/cameras/presets.test.ts`](../engine/gfx/cameras/presets.test.ts)
+- [`rail.ts`](../engine/gfx/cameras/rail.ts): The depth rail (PLAN.md WP 3.9; doctrine: Common ground): side scrolling with depth, a perspective camera on a rail beside the hero, the 2D engine's Mode 7 side view.
+  - Exports: `createRailCamera`, `describeRail`, `formatRailCode`, `parseRailCode`, `RAIL_DEFAULTS`, `RAIL_FOV`, `RAIL_HEIGHT`, `RAIL_LAG`, `RAIL_START`, `RAIL_TILT`, `railPose`, `railSpec`, `RailSpec`, `railState`, `RailState`, `stepRail`
+  - Tests: [`engine/gfx/cameras/rail.test.ts`](../engine/gfx/cameras/rail.test.ts)
 
 ## engine/gfx/geometry
 
