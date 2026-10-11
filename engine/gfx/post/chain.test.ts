@@ -1,7 +1,7 @@
 /**
- * @file Unit tests for the post chain's GPU-free parts (engine/gfx/post/chain.ts): its view settings, which exist only
- * once a chain does, are reachable like any other and are kept out of the hash; and the block grid the camera snaps
- * to.
+ * @file Unit tests for the post chain's GPU-free parts (engine/gfx/post/chain.ts): its view settings, declared on the
+ * shared registry and on another when asked, are reachable like any other and are kept out of the hash; and the block
+ * grid the camera snaps to.
  */
 import { describe, expect, it } from 'vitest';
 import { createRegistry, registry as sharedRegistry } from '../../core/registry';
@@ -10,8 +10,8 @@ import { definePostSettings, POST_SETTINGS, snapBlock } from './chain';
 import { chainOf } from './filters';
 
 describe('the chain’s settings', () => {
-  it('do not exist until a chain declares them, so setting one where no chain draws fails rather than does nothing', () => {
-    expect(sharedRegistry.has('setting', 'post.look'), 'importing the chain declares nothing').toBe(false);
+  it('exist on the shared registry, and on another once a chain or an engine declares them', () => {
+    expect(sharedRegistry.has('setting', 'post.look'), 'the shared registry has them, for x set in Node').toBe(true);
     const registry = createRegistry();
     const settings = createSettings({ registry });
     expect(() => settings.set('post.look', 'look:game-boy')).toThrow(/CORE_UNKNOWN_SETTING.*post\.look/);

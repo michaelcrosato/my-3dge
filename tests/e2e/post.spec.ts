@@ -21,7 +21,10 @@
  *    drawn at 4 × 4 the size and averaged down;
  * 7. URL parameters reach the chain (the route `node x shot tests/pages/post.html --set post.look=…` takes): the page
  *    opened with `?post.look=look:game-boy` draws that look, and `__engine.shot`, which `x shot` calls, shoots it with
- *    the clean frame's ID pass.
+ *    the clean frame's ID pass;
+ * 8. the Stress Box (labs/box, a `createEngine` page) draws every frame and shot through the chain: the look its URL
+ *    names (`node x shot labs/box --set post.look=…`) and the one `__engine.set` names (`node x set post.look …` in an
+ *    inspect session) are what `__engine.shot` shoots, with the same ID pass.
  *
  * Invariants: frames are drawn by calling the page; the Node session is the same scene and seed, stepped with no
  * intents; colours compare by channel, a pixel "changed" when a channel moved by more than `DIFF` levels.
@@ -97,8 +100,11 @@ interface PostPage {
 
 declare const __postPage: PostPage;
 
-/** The page's `window.__engine.shot`, which `node x shot` calls (tools/cmd/shot.ts). */
-declare const __engine: { shot(options: object): Promise<Shot & { metrics: { colors: number } }> };
+/** The page's `window.__engine`: `shot`, which `node x shot` calls (tools/cmd/shot.ts), and the box's `set`. */
+declare const __engine: {
+  shot(options: object): Promise<Shot & { metrics: { colors: number } }>;
+  set(path: string, value: string): unknown;
+};
 
 const PAGE = 'tests/pages/post.html';
 /** Pixels this close to another part's are left out of "outside": neighbourhood filters reach that far. */
@@ -367,4 +373,24 @@ test('URL parameters reach the chain, and x shot shoots what it draws', async ({
   await page.evaluate(() => __postPage.setLook('look:game-boy'));
   const set = rgba(await page.evaluate(() => __postPage.shoot()));
   expect(changedShare(rgba(shot), set), 'the look the URL named against the same look set on the page').toBe(0);
+});
+
+test('the Stress Box draws through the chain: its URL and __engine.set name the look __engine.shot shoots', async ({
+  page,
+  harness,
+}) => {
+  await page.goto('labs/box/?scene=room&post.look=look:game-boy');
+  await harness.ready({ timeout: 120_000 });
+  await harness.assertWebGPU();
+  const shoot = () => page.evaluate(() => __engine.shot({ ids: true, metrics: true, pixels: true, thumbnail: false }));
+  const opened = await shoot();
+  expect(opened.metrics.colors, 'look:game-boy, named in the URL').toBeLessThanOrEqual(4);
+  await page.evaluate(() => __engine.set('post.look', 'look:clean'));
+  const clean = await shoot();
+  expect(clean.metrics.colors, 'look:clean, set through __engine').toBeGreaterThan(4);
+  expect(idsOf(opened), 'the ID pass of the look the URL named').toEqual(idsOf(clean));
+  expect(changedShare(rgba(opened), rgba(clean)), 'look:game-boy against look:clean').toBeGreaterThan(0.5);
+  await page.evaluate(() => __engine.set('post.look', 'look:game-boy'));
+  const set = await shoot();
+  expect(changedShare(rgba(set), rgba(opened)), 'look:game-boy set through __engine against the URL’s').toBe(0);
 });
