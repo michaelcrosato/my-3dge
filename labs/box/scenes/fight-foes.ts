@@ -97,7 +97,10 @@ interface FoeTurn {
   telegraph: FightTelegraph;
   physics: Physics;
   chase: Chase;
+  /** The hero: his id, his actor and his attack tokens. */
   hero: number;
+  actor: FightComponents['actor'];
+  tokens: FightComponents['fightTokens'];
   /** The hero across the floor from it: the unit way to him, and how far (m). */
   way: [number, number];
   distance: number;
@@ -116,8 +119,7 @@ function walkerTurn(t: FoeTurn, walker: FightComponents['crowdWalker']): void {
   if (foe.phase === 'idle') {
     setVelocity(physics, agent, steerWalker(agent, walker, chase, want), w);
     const near = distance < WALKER_ATTACK.stand + 0.75 && levelWith(chase, agent.y);
-    const tokens = heroOf(w)!.fightTokens;
-    if (!near || foe.cool > 0 || !takeToken(tokens, id, w.time, w.rng('fight'))) return;
+    if (!near || foe.cool > 0 || !takeToken(t.tokens, id, w.time, w.rng('fight'))) return;
     foe.move = w.rng('fight').int(0, SWINGS.length - 1);
     const swing = SWINGS[foe.move];
     swing.cancel(); // the shared swing may hold another walker's: start from idle
@@ -140,7 +142,7 @@ function walkerTurn(t: FoeTurn, walker: FightComponents['crowdWalker']): void {
   }
   const placed = place(t, swing.phase === 'wind' ? WALKER_ATTACK.telegraph : '', walker.yaw, swing.u);
   if (swing.hitOpen) {
-    const { actor } = heroOf(w)!;
+    const { actor } = t;
     const middle = [actor.x, actor.y + HERO_MIDDLE, actor.z] as const;
     const inside = () => inTelegraph(WALKER_SWING, { ...placed, u: 1 }, middle, HERO.capsule.radius);
     swing.hits([{ id: t.hero }], inside, () => hurtHero(w, WALKER_ATTACK.damage, [agent.x, agent.y, agent.z], id));
@@ -160,7 +162,7 @@ function slimeTurn(t: FoeTurn, slime: FightComponents['crowdSlime']): void {
     steerSlime(physics, agent, slime, chase);
     const onRing = Math.abs(distance - SLIME.ring.radius) < SLIME.ring.band + SLIME_ATTACK.slack;
     const ready = slime.hop === 'rest' && onRing && levelWith(chase, agent.y) && foe.cool <= 0;
-    if (!ready || !takeToken(heroOf(w)!.fightTokens, id, w.time, w.rng('fight'))) return;
+    if (!ready || !takeToken(t.tokens, id, w.time, w.rng('fight'))) return;
     [foe.phase, foe.timer] = ['wind', SLIME_ATTACK.wind];
   }
   if (foe.phase === 'wind') {
@@ -184,7 +186,7 @@ function slimeTurn(t: FoeTurn, slime: FightComponents['crowdSlime']): void {
     return;
   }
   steerSlime(physics, agent, slime, chase); // in the air until it lands
-  const { actor } = heroOf(w)!;
+  const { actor } = t;
   const touch = SLIME.agent.radius + HERO.capsule.radius + SLIME_ATTACK.touch;
   const level = agent.y < actor.y + HERO_MIDDLE * 2 && agent.y + 2 * SLIME.agent.radius > actor.y;
   if (foe.phase === 'pounce' && distance < touch && level) {
@@ -212,7 +214,7 @@ function wispTurn(t: FoeTurn, wisp: FightComponents['crowdWisp']): void {
   foe.timer -= w.dt;
   place(t, WISP_ATTACK.telegraph, Math.atan2(way[0], way[1]), 1 - Math.max(0, foe.timer) / WISP_ATTACK.charge);
   if (foe.timer > 1e-9) return;
-  const { actor } = heroOf(w)!;
+  const { actor } = t;
   const from = [agent.x, agent.y + agent.radius, agent.z];
   const [dx, dy, dz] = [actor.x - from[0], actor.y + WISP_ATTACK.chest - from[1], actor.z - from[2]];
   const length = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
@@ -270,6 +272,8 @@ export function steerFoes(w: FightWorld): void {
       physics,
       chase,
       hero: hero.id,
+      actor,
+      tokens: hero.fightTokens,
       way,
       distance,
     };

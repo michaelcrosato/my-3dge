@@ -3,8 +3,9 @@
  * scripted fight (tests/replays/box-5-fight.replay.json), played in the page drawing a frame after every step, gives
  * its goldens, ends with at least three of its 36 foes cut down (their bodies thrown and removed: Done-when 1; Node's
  * labs/box/scenes/fight.test.ts measures the throw, on the same run, since the goldens match), and builds 0 pipelines
- * after the warm-up while the fight's bodies, swings, telegraphs and bolts come and go (Done-when 4). The CPU-only
- * contract for the fight is tests/e2e/parity.spec.ts's Box 5.
+ * after the warm-up while the fight's bodies, swings, telegraphs and bolts come and go (Done-when 4). Played in real
+ * time (`?replay=`), the hits' hit-stops hold its steps back by the frame clock's budget (WP 6.3's deferred proof).
+ * The CPU-only contract for the fight is tests/e2e/parity.spec.ts's Box 5.
  *
  * Invariants: the page is driven through `window.__engine`, as an agent drives it; goldens come from the replay
  * files, never from the page itself.
@@ -62,6 +63,17 @@ test.describe('the box, stage 5: the fight', () => {
     expect(stats.pipelinesAfterWarmUp).toBe(0);
     const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
     expect(advice).not.toContain('GFX_COLD_PIPELINE');
+    expect(harness.advice()).toEqual([]);
+  });
+
+  test('played in real time, its hits’ hit-stops hold its steps back', async ({ page, harness }) => {
+    await page.goto('labs/box/?replay=box-5-fight');
+    await harness.ready({ timeout: 60_000 });
+    await harness.tick(1); // the clock's origin
+    await harness.tick(480);
+    const tick = await page.evaluate(() => (__engine.info() as { tick: number }).tick);
+    expect(tick).toBeGreaterThan(400);
+    expect(tick).toBeLessThan(480 - 3); // stopped for a few frames, the budget shrinking stops that follow closely
     expect(harness.advice()).toEqual([]);
   });
 });
