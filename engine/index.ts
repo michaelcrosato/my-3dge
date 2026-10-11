@@ -144,3 +144,15 @@ export type { SongTiming } from './audio/data/song';
 export type { SongRenderOptions } from './audio/data/song';
 export type { Voice } from './audio/dsp/voice';
 export type { SoundDef } from './audio/dsp/voice';
+// The engine in a page (WP 2.7): createEngine reads the routes, starts the scene with its view, publishes
+// window.__engine, warms up and runs the frame loop; createHeadless({ view: true }) builds the same view in Node.
+export { createEngine } from './app/engine';
+export type { Engine } from './app/engine';
+export type { EngineOptions } from './app/engine';
+export { parseRoutes } from './app/routes';
+export { routeQuery } from './app/routes';
+export type { Routes } from './app/routes';
+export type { CameraInfo } from './app/view';
+export type { PlayResult } from './app/playback';
+export type { PlayIntoOptions } from './app/playback';
+export type { ViewChange } from './app/playback';

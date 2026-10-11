@@ -60,13 +60,14 @@ export function sceneModules(root: string): Map<string, string> {
   return found;
 }
 
-/** The module a target names: a `.ts` file, a directory's `index.ts`, or the module that defines a scene id. */
+/** The module a target names: a `.ts` file (its extension optional), a directory's `index.ts`, or a scene id's module. */
 export function resolveSceneModule(root: string, target: string): string {
   const path = resolve(root, target);
   if (existsSync(path) && statSync(path).isDirectory() && existsSync(join(path, 'index.ts'))) {
     return relative(root, join(path, 'index.ts'));
   }
   if (existsSync(path) && path.endsWith('.ts')) return relative(root, path);
+  if (existsSync(`${path}.ts`)) return relative(root, `${path}.ts`); // extensionless, as imports name it
   const modules = sceneModules(root);
   const file = modules.get(target);
   if (file) return file;

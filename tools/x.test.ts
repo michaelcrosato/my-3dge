@@ -179,7 +179,14 @@ describe('the commands in tools/cmd/', () => {
     const output = execFileSync(process.execPath, ['x', 'help'], { cwd: ROOT, encoding: 'utf8' });
     const lines = output.trimEnd().split('\n');
     expect(lines[0]).toMatch(/^x help: ok: /);
-    for (const name of commandNames()) expect(lines.some((line) => line.trim().startsWith(`${name} `))).toBe(true);
+    // One command a line while they fit; past MAX_LINES, their names on a few lines (each with its sentence in a file).
+    const listed = lines.flatMap((line) =>
+      line
+        .trim()
+        .split(/,\s*|\s{2,}/)
+        .slice(0, line.includes(',') ? undefined : 1),
+    );
+    for (const name of commandNames()) expect(listed, name).toContain(name);
     expect(lines.length).toBeLessThanOrEqual(MAX_LINES);
   });
 

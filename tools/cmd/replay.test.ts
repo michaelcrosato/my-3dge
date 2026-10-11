@@ -146,7 +146,8 @@ describe('x replay in Node', () => {
     const bad = await replay(path);
     expect(bad.report.failures[0]).toMatchObject({ id: 'REPLAY_BAD' });
     expect(bad.report.failures[0].message).toContain('unknown key "stpes" (did you mean "steps"?)');
-    expect((await replay('tests/replays', '--browser', 'page')).code).toBe(2);
+    expect((await replay('tests/replays', '--browser', 'film')).code).toBe(2);
+    expect((await replay('tests/replays', '--browser', 'page', '--swap', 'none')).code).toBe(2);
     expect((await replay('tests/replays', '--swap', 'none')).code).toBe(2);
     expect((await replay('tests/replays', '--browser', 'sim', '--swap', 'tan')).code).toBe(2);
     expect((await replay('tests/nowhere')).code).toBe(2);
