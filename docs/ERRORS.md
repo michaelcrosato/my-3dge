@@ -545,6 +545,12 @@ Raised by `parseCameraCode` (engine/gfx/cameras/codes.ts) for an empty part, a w
 
 Raised by the geometry kit (engine/gfx/geometry/) when a builder gets sizes it cannot build: a size of 0 or less, NaN, a limb no longer than the difference of its radii, a ring whose inner radius is not below its outer, fewer segments than the shape needs.
 
+### GFX_BAD_LIGHT_POOL
+
+- Message: `a light pool of {size} lights: it holds {min} to {max}`
+- Fix: give createLightPool a whole size from 8 to 16 (12 by default); more lights than that need tiled lighting (WP 11.5)
+- Registered in: [`engine/gfx/lights.ts` line 46](../engine/gfx/lights.ts)
+
 ### GFX_BAD_SHOT_SIZE
 
 - Message: `a shot must be at least 1 × 1 whole pixels, not {width} × {height}`

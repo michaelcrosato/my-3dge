@@ -3990,7 +3990,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 6.6 | Animation checks, QA, sheets | A | todo | | |
 | 6.7 | Box 5: combat | B | todo | | |
 | **G6** | **Gate: Box 5** | | todo | | |
-| 7.1 | Lights, shadows, atmosphere, sky | R | todo | | |
+| 7.1 | Lights, shadows, atmosphere, sky | R | done | 3d1d317 (#6) | engine/gfx/{lights,shadows,atmosphere,sky}.ts: a fixed pool of 12 point lights (8–16) ranked by distance/priority from the level's light spots, fading at the cut-off, flicker phases from fxRng; shadow budget 2/1/0 by quality tier (casters are the pool's first slots, the sun takes the first where a preset has one); range+height TSL fog node; SkyMesh dome with exposure plus a baked backdrop cylinder; kinds light (light:torch) and sky (sky:hall, sky:daylight); 0 pipelines built while lights reassign, presets never change the hash; shown in tests/pages/lights.html (box wiring is WP 7.8's); calls made on r182 traps: lights added in id order, fog/dome uniforms in renderGroup (docs/THREE-DELTA.md); no escalations; no deferred proofs |
 | 7.2 | Materials (v2): toon, outlines, styles | R | todo | | |
 | 7.3 | Texture library (v2) | W | todo | | |
 | 7.4 | Post-processing | R | todo | | |

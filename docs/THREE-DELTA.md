@@ -50,6 +50,13 @@ rewrites this page (PLAN.md §9, Upgrade work packages); `node x deps --check` f
   indirection.
 - **r186 does not run here:** it passes a `swizzle` to `GPUTexture.createView()`, which the platform's Chromium 141
   rejects at startup (PLAN.md §4.7).
+- **Lights in id order.** r182's `LightsNode` sorts its light list by id, in place, whenever it builds a shader, while
+  the render list hands it the lights in scene order. Where the two orders differ, the lights' cache key flips every
+  frame and every instanced mesh rebuilds its pipelines (each build names its own instance buffer). Add lights to the
+  scene in the order they were made (engine/gfx/sky.ts does).
+- **Uniform groups.** A TSL `uniform()` is in the object group by default, and r182 refreshes that group only when its
+  object or material changes, so a value shared by still objects keeps its first draw's value. Put per-frame values
+  in `renderGroup` (`uniform(v).setGroup(renderGroup)`), as three.js's own fog does.
 
 ## 2. For agents who know older releases (r180 and before)
 

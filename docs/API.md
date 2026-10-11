@@ -142,6 +142,7 @@ game agent's manual.
 - `createPuppetBatches` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Makes instanced puppet batches (see the file comment).
 - `createScriptedGamepad` (function from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
+- `createSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Puts a sky on `scene`: the light pool lit from `level`'s light spots (phases from `rng`, a visual stream), the sun, the dome, the backdrop and the atmosphere; shows `sky:daylight` until `set` names another preset.
 - `createVirtualDevice` (function from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): Makes a virtual device, holding nothing.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
@@ -162,10 +163,12 @@ game agent's manual.
 - `defineGlyph` (function from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): Defines a glyph on `registry` (the shared one by default) and returns it.
 - `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
 - `defineLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): Registers a level on `registry` (the shared one by default) after checking its text compiles against that registry's legend; returns the entry.
+- `defineLight` (function from [`engine/gfx/lights.ts`](../engine/gfx/lights.ts)): Declares a light kind (`light:<tag>`, the tag a level's light spots carry); see `LIGHT_FIELDS`.
 - `defineMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): Defines a material on `registry` (the shared one by default) and returns it.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
 - `defineSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): Defines an effect on `registry` (the shared one by default) and returns it.
+- `defineSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`.
 - `defineSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): Defines a song on `registry` (the shared one by default) and returns it.
 - `defineTexture` (function from [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)): Defines a texture generator on `registry` (the shared one by default) and returns it.
 - `defineTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): Registers a touch layout (on the shared registry by default).
@@ -285,6 +288,8 @@ game agent's manual.
 - `LevelRecipe` (interface from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): A level mesh recipe: its shape, materials, shadows and cut.
 - `LevelShape` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): How a recipe draws its pieces, with what each material slot draws: - `surface`: one welded surface over the pieces at their bottom height, facing up, UVs in metres along X and -Z (one draw call): the floor.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
+- `LightEntry` (type from [`engine/gfx/lights.ts`](../engine/gfx/lights.ts)): A `light` entry.
+- `LightSource` (interface from [`engine/gfx/lights.ts`](../engine/gfx/lights.ts)): A light source the pool may light: a `light` entry's id and where it shines (m).
 - `LightSpot` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A light spot: a tile's centre, `lightHeight` above its top.
 - `Limb` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A two-bone limb: the joint it hangs from (`upper`: hip or shoulder), its hinge (`middle`: knee or elbow), and the hinge's axis in the upper joint's frame (`hinge`; a positive turn bends the shin back and the forearm forward).
 - `LimbEnd` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A joint that ends a two-bone limb: an ankle or a wrist.
@@ -422,6 +427,9 @@ game agent's manual.
 - `SimRng` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
 - `SimSettings` (interface from [`engine/core/settings.ts`](../engine/core/settings.ts)): What sim-side code reads settings through (`w.settings` in a scene): no view settings, no writes.
 - `Skeleton` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A humanoid skeleton made from a build: rest offsets, bone lengths, leaf tips and sockets, in metres.
+- `Sky` (interface from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): A sky on a scene; see the file comment.
+- `SkyEntry` (type from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): A `sky` entry.
+- `SkySpec` (type from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): What `defineSky` takes: any of the fields, and any of a nested object's (a backdrop's layers whole).
 - `SlotName` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A slot's name.
 - `SLOTS` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The stack's slots, in order, with what fills each.
 - `smoothDamp` (function from [`engine/core/math.ts`](../engine/core/math.ts)): A critically damped spring toward `target` (Game Programming Gems 4's, as Unity's `SmoothDamp`): reaches it in about `smoothTime` seconds without overshoot.
@@ -1595,6 +1603,17 @@ For the agents who maintain the engine.
 - `Overlay` (interface): The page's message line over the canvas.
 - `OverlayRecord` (interface): What the overlay shows for an error: a code, what happened, and the fix.
 
+### [`engine/gfx/atmosphere.ts`](../engine/gfx/atmosphere.ts)
+
+- `AMBIENT_FIELDS` (const): The fields of a sky preset's `ambient` (engine/gfx/sky.ts); see `AmbientSpec`.
+- `AmbientSpec` (interface): The ambient light a sky preset gives: three.js's HemisphereLight.
+- `Atmosphere` (interface): The atmosphere: its ambient light and fog; see the file comment.
+- `createAtmosphere` (function): Makes an atmosphere (fog and ambient light), off until `set` gives it a preset.
+- `FOG_FIELDS` (const): The fields of a sky preset's `fog` (engine/gfx/sky.ts); see `FogSpec`.
+- `fogAt` (function): How much fog covers a point `depth` metres along the view and `y` high, the focus at view depth `focus` (0..1).
+- `FogReport` (interface): What the fog does now.
+- `FogSpec` (interface): The fog a sky preset gives; see the file comment.
+
 ### [`engine/gfx/cameras/boost.ts`](../engine/gfx/cameras/boost.ts)
 
 - `applyBoost` (function): Multiplies `camera`'s projection by V·S·V⁻¹ (S: world y × `k`), with its current matrices.
@@ -1997,6 +2016,25 @@ For the agents who maintain the engine.
 
 - `surfaceGeometry` (function): A flat surface at height `y` over every tile of `pieces`, tiles `tile` metres wide (see the file comment).
 
+### [`engine/gfx/lights.ts`](../engine/gfx/lights.ts)
+
+- `createLightPool` (function): Makes a light pool of `size` lights (8 to 16; 12 by default).
+- `defineLight` (function): Declares a light kind (`light:<tag>`, the tag a level's light spots carry); see `LIGHT_FIELDS`.
+- `defineLights` (function): Declares the kind `light` and the built-in light kinds on `registry`, unless it has them.
+- `FADE` (const): The share of the cut-off rank over which the last lights chosen fade out.
+- `fadeOf` (function): How much a source of `rank` shines when the first left out ranks `cutoff`: 1, fading to 0 at the cut-off.
+- `flicker` (function): The prototype's torch flicker at `time` (s), shifted by `phase` (s) and scaled by `amount` (0 is steady).
+- `LIGHT_FIELDS` (const): The fields of a `light` entry: three.js's `PointLight` parameters, and how the pool treats it.
+- `LightEntry` (type): A `light` entry.
+- `LightPool` (interface): A fixed pool of point lights; see the file comment.
+- `LIGHTS_CODES` (const): The codes this module raises, with their fixes.
+- `LightSource` (interface): A light source the pool may light: a `light` entry's id and where it shines (m).
+- `lightSources` (function): The light sources of a compiled level: one per light spot, of the kind `light:<tag>`.
+- `POOL_SIZES` (const): The pool's sizes: the fewest and most lights, and the default.
+- `PoolSlot` (interface): One slot of the pool, as the last `update` left it.
+- `Ranking` (interface): What `rankSources` chose: the sources best first, their ranks, and the rank of the first left out.
+- `rankSources` (function): The `count` sources that matter most at `focus` (see the file comment); `priorities` default to 1.
+
 ### [`engine/gfx/lookMetrics.ts`](../engine/gfx/lookMetrics.ts)
 
 - `judgeLook` (function): The notes on `metrics`, `where` naming the frame in each sentence (`tests/pages/shot.html from cam iso`), and the ID pass's objects, when measured, naming the protagonist: a blank frame fails (and is the only note); the others warn, each with its number, its limit and a fix.
@@ -2149,6 +2187,17 @@ For the agents who maintain the engine.
 - `DumpOptions` (interface): What `dumpScene` writes.
 - `dumpScene` (function): The tree under `root` as text, one object a line (see the file comment).
 
+### [`engine/gfx/shadows.ts`](../engine/gfx/shadows.ts)
+
+- `Casters` (interface): Who casts shadows: whether the sun does, and how many of the light pool's first slots.
+- `configurePointCaster` (function): Gives a point light the caster's shadow settings (`POINT_SHADOW`); whether it casts is the budget's call.
+- `enableShadows` (function): Turns the renderer's shadow map on, with the engine's one shadow map type.
+- `MAX_SHADOW_CASTERS` (const): The most lights that cast shadows at once: the budget at the `high` tier.
+- `POINT_SHADOW` (const): A point caster's shadow settings, carried from the prototype's shadow lights.
+- `SHADOW_MAP_TYPE` (const): The shadow map type every caster uses (r182's `PCFShadowMap`; see the file comment).
+- `shadowCasters` (function): How many lights may cast shadows under `budget` (a quality tier's, engine/gfx/quality.ts).
+- `splitCasters` (function): Who casts under a budget of `casters`: the sun first when it shines, then the point lights when they shine.
+
 ### [`engine/gfx/shot.ts`](../engine/gfx/shot.ts)
 
 - `Readback` (interface): The readback's padded layout: bytes per row as WebGPU copied them, and the buffer's length.
@@ -2163,6 +2212,21 @@ For the agents who maintain the engine.
 - `ShotResult` (interface): What a shot returns: its size, the readback's layout, what was asked, pipelines built, and how long it took.
 - `stripRowPadding` (function): Drops the row padding of a readback: `height` rows of `width` pixels from rows of `rowBytes(width)` bytes.
 - `toBase64` (function): Base64 of bytes, in the browser and in Node.
+
+### [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)
+
+- `BACKDROP` (const): The backdrop strip's size in texels, and its band round the camera (m): radius, height, foot below the eye.
+- `BACKDROP_KINDS` (const): The kinds of backdrop layer.
+- `BackdropSpec` (type): A backdrop as a `sky` entry gives it.
+- `bakeBackdrop` (function): Bakes a backdrop into RGBA bytes, `width` × `height`, row 0 at the bottom; above the skylines is clear.
+- `createSky` (function): Puts a sky on `scene`: the light pool lit from `level`'s light spots (phases from `rng`, a visual stream), the sun, the dome, the backdrop and the atmosphere; shows `sky:daylight` until `set` names another preset.
+- `defineSkies` (function): Declares the kind `sky` and the built-in presets on `registry`, unless it has them.
+- `defineSky` (function): Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`.
+- `Sky` (interface): A sky on a scene; see the file comment.
+- `SKY_FIELDS` (const): The fields of a `sky` entry; see the file comment.
+- `SkyEntry` (type): A `sky` entry.
+- `SkyReport` (interface): What a sky shows now.
+- `SkySpec` (type): What `defineSky` takes: any of the fields, and any of a nested object's (a backdrop's layers whole).
 
 ### [`engine/gfx/stage.ts`](../engine/gfx/stage.ts)
 
@@ -2982,6 +3046,12 @@ For the agents who maintain the engine.
 ### [`tests/pages/level-meshes.ts`](../tests/pages/level-meshes.ts)
 
 - `Shown` (interface): What `show` reports.
+
+### [`tests/pages/lights.ts`](../tests/pages/lights.ts)
+
+- `HashRunOptions` (interface): How `hashRun` interleaves presentation with the steps.
+- `Looked` (interface): What `look` reports.
+- `LookOptions` (interface): What `look` takes: where the focus is, and optionally the camera, preset, tier and flicker time.
 
 ### [`tests/pages/puppets.ts`](../tests/pages/puppets.ts)
 
