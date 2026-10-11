@@ -17,7 +17,10 @@
  *    only when it crosses half a block, then by a whole block; without the snap every slide shimmers;
  * 5. bloom is off at the `low` quality tier, with advice `GFX_POST_NO_BLOOM`;
  * 6. the edge smoothing that measures better (engine/gfx/post/aa.ts records it): FXAA and SMAA against the frame
- *    drawn at 4 × 4 the size and averaged down.
+ *    drawn at 4 × 4 the size and averaged down;
+ * 7. URL parameters reach the chain (the route `node x shot tests/pages/post.html --set post.look=…` takes): the page
+ *    opened with `?post.look=look:game-boy` draws that look, and `__engine.shot`, which `x shot` calls, shoots it with
+ *    the clean frame's ID pass.
  *
  * Invariants: frames are drawn by calling the page; the Node session is the same scene and seed, stepped with no
  * intents; colours compare by channel, a pixel "changed" when a channel moved by more than `DIFF` levels.
@@ -52,7 +55,8 @@ interface Shown {
 /** What the page publishes as `window.__postPage` (tests/pages/post.ts), as far as this suite uses it. */
 interface PostPage {
   looks(): string[];
-  settings: { set(path: string, value: unknown): unknown };
+  post: { look: { id: string } };
+  settings: { set(path: string, value: unknown): unknown; get(path: string): unknown };
   setLook(id: string, filters?: object): Promise<Shown>;
   shoot(options?: { ids?: boolean; pixels?: boolean }): Promise<Shot>;
   shootPlain(): Promise<Shot>;
@@ -66,13 +70,16 @@ interface PostPage {
 
 declare const __postPage: PostPage;
 
+/** The page's `window.__engine.shot`, which `node x shot` calls (tools/cmd/shot.ts). */
+declare const __engine: { shot(options: object): Promise<Shot & { metrics: { colors: number } }> };
+
 const PAGE = 'tests/pages/post.html';
 /** Pixels this close to another part's are left out of "outside": neighbourhood filters reach that far. */
 const BORDER = 13;
 
-/** Opens the page, ready on WebGPU. */
-async function open(page: Page, harness: Harness): Promise<void> {
-  await page.goto(PAGE);
+/** Opens the page with `query` (URL parameters), ready on WebGPU. */
+async function open(page: Page, harness: Harness, query = ''): Promise<void> {
+  await page.goto(`${PAGE}${query}`);
   await harness.ready({ timeout: 120_000 });
   await harness.assertWebGPU();
 }
@@ -366,4 +373,20 @@ test('the edge smoothing that measures better is the one the chain uses', async 
   const other = AA_CHOICE === 'fxaa' ? 'smaa' : 'fxaa';
   expect(errors[AA_CHOICE], JSON.stringify(errors)).toBeLessThan(errors.none);
   expect(errors[AA_CHOICE], JSON.stringify(errors)).toBeLessThanOrEqual(errors[other]);
+});
+
+test('URL parameters reach the chain, and x shot shoots what it draws', async ({ page, harness }) => {
+  await open(page, harness, '?post.look=look:game-boy');
+  const opened = await page.evaluate(() => [__postPage.settings.get('post.look'), __postPage.post.look.id]);
+  expect(opened, 'post.look read back, and the look drawn').toEqual(['look:game-boy', 'look:game-boy']);
+  // What `node x shot tests/pages/post.html --set post.look=look:game-boy` calls.
+  const shot = await page.evaluate(() => __engine.shot({ ids: true, metrics: true, pixels: true, thumbnail: false }));
+  expect(shot.metrics.colors, 'the Game Boy look draws four greens at most').toBeLessThanOrEqual(4);
+  await page.evaluate(() => __postPage.setLook('look:clean'));
+  const clean = await page.evaluate(() => __postPage.shoot({ ids: true }));
+  expect(idsOf(shot), 'the ID pass of the look the URL named').toEqual(idsOf(clean));
+  expect(changedShare(rgba(shot), rgba(clean)), 'the look the URL named against look:clean').toBeGreaterThan(0.5);
+  await page.evaluate(() => __postPage.setLook('look:game-boy'));
+  const set = rgba(await page.evaluate(() => __postPage.shoot()));
+  expect(changedShare(rgba(shot), set), 'the look the URL named against the same look set on the page').toBe(0);
 });

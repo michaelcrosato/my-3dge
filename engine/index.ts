@@ -277,6 +277,7 @@ export type { OutlineShells } from './gfx/materials/outline';
 // the objects or the environment), looks as data (a material style plus a filter chain), objects tagged by part.
 export { createPost } from './gfx/post/chain';
 export { POST_SETTINGS } from './gfx/post/chain';
+export { definePostSettings } from './gfx/post/chain';
 export type { Post } from './gfx/post/chain';
 export type { PostOptions } from './gfx/post/chain';
 export { setPart } from './gfx/post/mrt';

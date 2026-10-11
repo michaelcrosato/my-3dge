@@ -14,12 +14,13 @@
  * passes that are off do not run (bloom's, SMAA's), except in the warm-up's frame, which draws all of them.
  *
  * What it draws comes from three view settings, `post.look`, `post.filters` and `post.show` (`POST_SETTINGS`), which
- * exist only where a chain does, and act only on the frames drawn through `post.view` (`definePostSettings` says which
- * routes reach them: `createEngine` draws no chain yet, so on its pages they are unknown settings, never ignored
- * ones). A look's style is applied to the style set given (`styles.setStyle`, WP 7.2); a look with style `''` puts
- * back the style the set had when the chain was made, and its toon look; without a style set a look draws only its
- * filters, with advice `GFX_POST_NO_STYLES`. Pixel art on the environment, or the whole screen's low resolution,
- * snaps the camera to its block grid for the frame (`snapBlock`, engine/gfx/post/snap.ts) and puts it back.
+ * exist only where a chain does (or a page declares them first, `definePostSettings`, which says which routes reach
+ * them), and act only on the frames drawn through `post.view`: `createEngine` draws no chain yet, so on its pages they
+ * are unknown settings, never ignored ones. A look's style is applied to the style set given (`styles.setStyle`,
+ * WP 7.2); a look with style `''` puts back the style the set had when the chain was made, and its toon look; without
+ * a style set a look draws only its filters, with advice `GFX_POST_NO_STYLES`. Pixel art on the environment, or the
+ * whole screen's low resolution, snaps the camera to its block grid for the frame (`snapBlock`,
+ * engine/gfx/post/snap.ts) and puts it back.
  *
  * Use: `gfx.frame(post.view(frameView))` draws a frame through the chain; `post.attach(gfx.warmup)` once, before the
  * first warm-up, registers the MRT's compile step and the chain's key part.
@@ -119,11 +120,13 @@ export const POST_SETTINGS = {
 /**
  * Declares the chain's settings (`POST_SETTINGS`) and the setting `quality` it reads on `registry` (the shared one by
  * default), unless it has them. `createPost` calls it, so the settings exist once a chain does, and the chain reads
- * them from the store it is given: `settings.set` on that store reaches it, and so do `__engine.set`, URL parameters
- * and `x set` on a page whose frames and shots go through `post.view` (a page that parses its URL before it can make
- * the chain calls this first). `createEngine` (engine/app/engine.ts) draws no chain yet (WP 7.4's core proposal), so
- * on its pages, the Stress Box's among them, `x set post.look …`, `?post.look=` and `__engine.set('post.look', …)`
- * fail with `CORE_UNKNOWN_SETTING` or `CORE_BAD_SETTING` rather than change nothing.
+ * them from the store it is given: `settings.set` on that store reaches it. A page that reads its URL before it can
+ * make the chain calls this first, so URL parameters reach the chain too, and with them `node x shot <page> --set
+ * post.look=…` (tests/pages/post.ts does: `node x shot tests/pages/post.html --set post.look=look:game-boy`).
+ * `node x set` checks a path in Node against the settings modules declare as they load, which these are not, so it
+ * refuses `post.*` with `CORE_UNKNOWN_SETTING`. `createEngine` (engine/app/engine.ts) draws no chain yet (WP 7.4's
+ * core proposal), so on its pages, the Stress Box's among them, `?post.look=` and `__engine.set('post.look', …)` fail
+ * with `CORE_BAD_SETTING` or `CORE_UNKNOWN_SETTING` rather than change nothing.
  */
 export function definePostSettings(registry: Registry = sharedRegistry): void {
   const has = (path: string) => registry.kinds().includes('setting') && registry.has('setting', path);

@@ -6,6 +6,11 @@
  * style are warm too. The canvas is 480 × 270 CSS px. Every frame draws through the chain (`post.view`), applying
  * the current style first (`styles.apply`).
  *
+ * The chain's settings are declared (`definePostSettings`) before the URL is read, so URL parameters reach the chain,
+ * and `window.__engine.shot` shoots the frame as the chain draws it (engine/gfx/shot.ts), so `node x shot` reports
+ * the look metrics and the ID pass of any look and filters: `node x shot tests/pages/post.html --set
+ * post.look=look:game-boy`, or `--set 'post.filters={"pixel":{"scope":"environment","size":6}}'`.
+ *
  * `window.__postPage`:
  * - `setLook(id, filters)` sets `post.look` and `post.filters`, draws a frame and reports it: the pipelines it built,
  *   the chain's build count, and how many of the scene's materials changed version since the warm-up;
@@ -35,12 +40,12 @@ import { registry } from '../../engine/core/registry';
 import { createSettings } from '../../engine/core/settings';
 import { createMaterialLibrary } from '../../engine/gfx/materials/library';
 import { createStyleSet } from '../../engine/gfx/materials/styles';
-import { createPost, type Post } from '../../engine/gfx/post/chain';
+import { createPost, definePostSettings, type Post } from '../../engine/gfx/post/chain';
 import type { FilterSpec } from '../../engine/gfx/post/filters';
 import { flagsOf, setPart } from '../../engine/gfx/post/mrt';
 import { blockSize } from '../../engine/gfx/post/snap';
 import { createRenderer, type FrameReport, type FrameView, type Gfx, type GfxError } from '../../engine/gfx/renderer';
-import { shot, shotForJson, type ShotJson } from '../../engine/gfx/shot';
+import { shot, shotForJson, type ShotJson, type ShotOptions } from '../../engine/gfx/shot';
 import { createSession } from '../../engine/sim/scene';
 import { defineLevel } from '../../engine/world/level/level';
 
@@ -75,6 +80,8 @@ function fail(record: ErrorRecord): void {
 
 /** Starts the renderer, the room, the chain; warms up and publishes `__postPage`. */
 async function start(): Promise<void> {
+  // The chain's settings are declared before the URL is read, so `?post.look=…` (`x shot --set`) reaches the chain.
+  definePostSettings(registry);
   const settings = createSettings();
   settings.fromUrl(location.search);
   let gfx: Gfx;
@@ -305,6 +312,13 @@ async function start(): Promise<void> {
   if (first.built > 0) throw new Error(`post page: the first frame built ${first.built} pipelines`);
   warmVersions = versions();
   Object.assign(window, { __postPage: page });
+  Object.assign(signals, {
+    /** `x shot`'s entry: the frame as the chain draws it now, with the ID pass and the look metrics. */
+    shot: async (options: ShotOptions = {}): Promise<ShotJson> => {
+      await settle();
+      return shotForJson(await shot(gfx, viewNow(), options));
+    },
+  });
   info = { page: 'post', ...gfx.info };
   if (message) message.hidden = true;
   signals.ready = true;
