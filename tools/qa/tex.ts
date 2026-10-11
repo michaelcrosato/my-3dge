@@ -154,12 +154,13 @@ export function textureSheet(bakes: readonly TextureBake[]): Sheet {
       2 * GAP + Math.floor(i / PER_ROW) * (PANEL + LABEL + 2 * GAP),
     ];
     const maps = [bake.map, bake.normalMap, bake.emissiveMap];
-    // Two periods each way, scaled to fit the panel and keep the texture's shape; the top row shows the map's top.
+    // Two periods each way, scaled to fit the panel and keep the texture's shape. Panel rows count down from the top
+    // and map rows up from the bottom, so the panel's bottom row shows row 0 and its top row the map's top.
     const scale = PANEL / (2 * Math.max(bake.width, bake.height));
     const [pw, ph] = [Math.round(2 * bake.width * scale), Math.round(2 * bake.height * scale)];
     for (const [k, map] of maps.entries()) {
       for (let y = 0; y < ph; y++) {
-        const ty = bake.height - 1 - (Math.floor((ph - 1 - y) / scale) % bake.height);
+        const ty = Math.floor((ph - 1 - y) / scale) % bake.height;
         for (let x = 0; x < pw; x++) {
           const tx = Math.floor(x / scale) % bake.width;
           const at = ((y0 + y) * width + x0 + k * (PANEL + GAP) + x) * 4;
