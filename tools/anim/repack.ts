@@ -12,8 +12,9 @@
  *
  * Sets come in two ways: my-3d2dge's `src/mocap/sets/<set>.js`, read through the legacy oracle
  * (tools/anim/legacy-readable.ts), which `legacySetFiles` repacks into data/anim/sets/ (the three curated sets, HERO
- * dropped, each of Mesh2Motion's Quaternius re-exports tagged `alt` by `tagAlternates`); and plain JSON sets, as
- * shardfall writes them (`readPlainSet`; WP 8.10's tools/anim/shardfall.ts).
+ * dropped, each of Mesh2Motion's Quaternius re-exports tagged `alt` by `tagAlternates`, and CMU's sources given CMU's
+ * terms by `withCmuTerms`); and plain JSON sets, as shardfall writes them (`readPlainSet`; WP 8.10's
+ * tools/anim/shardfall.ts).
  *
  * Invariants: a clip file holds its clip's `text()` and nothing else, so the repack leaves `text()` output unchanged.
  * Every file is read through the codec's parser (engine/anim/clip/validate.ts), so a broken one is refused with its
@@ -21,9 +22,9 @@
  * `writeSetDir` removes the files a set no longer has. Prettier leaves the directory alone (`.prettierignore`), since
  * it would spread each key over 13 lines.
  *
- * Usage: `npx tsx tools/anim/repack.ts [--check]` repacks the curated sets from `$MY3D2DGE_SRC` (`node x src`) into
- * data/anim/sets/, or with `--check` only compares; `npx tsx tools/anim/repack.ts <set.json>… [--check]` does the same
- * for plain JSON sets. Exit 1 on a difference or an error. WP 8.5's anim command takes this over.
+ * Usage: `node x anim repack [--check]` (or `npx tsx tools/anim/repack.ts [--check]`) repacks the curated sets from
+ * `$MY3D2DGE_SRC` (`node x src`) into data/anim/sets/, or with `--check` only compares; `node x anim repack
+ * <set.json>… [--check]` does the same for plain JSON sets. Exit 1 on a difference or an error.
  *
  * @example
  * clipSlug('Bow Pull Back'); // 'Bow_Pull_Back'
@@ -35,7 +36,7 @@
  * @see tests/unit/data/anim/sets/sets.test.ts
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { clipText } from '../../engine/anim/clip/lens';
 import type { Clip } from '../../engine/anim/clip/readable';
 import { parseClip, parseClipSet, type ClipSet } from '../../engine/anim/clip/validate';
@@ -184,9 +185,9 @@ export function readSetDir(dir: string): SetFiles {
   return Object.fromEntries(files.map((entry) => [entry.name, readFileSync(join(dir, entry.name), 'utf8')]));
 }
 
-/** The set stored in `data/anim/sets/<dir>/` (or under `root`), rejoined. */
+/** The set stored in `data/anim/sets/<dir>/` (or under `root`, or at `dir` when absolute), rejoined. */
 export function readSet(dir: string, root: string = SETS_DIR): ClipSet {
-  return joinSet(readSetDir(join(root, dir)), relative(ROOT, join(root, dir)));
+  return joinSet(readSetDir(resolve(root, dir)), relative(ROOT, resolve(root, dir)));
 }
 
 /** Writes a set's files into `dir`, made if missing, and removes the files it no longer has; lists what changed. */
@@ -200,16 +201,41 @@ export function writeSetDir(dir: string, files: SetFiles): { written: string[]; 
   return { written: written.sort(), removed: removed.sort() };
 }
 
+/** The curated sets that tools/anim/shardfall.ts writes from shardfall's files instead (WP 8.10). */
+const SHARDFALL_WRITES = new Set(['quaternius']);
+
+/** The CMU catalog, whose `$sources.CMU.license` states CMU's terms (data/anim/SOURCES.md). */
+const CMU_CATALOG = join(ROOT, 'data', 'anim', 'catalogs', 'cmu.json');
+
+/**
+ * The CMU set with CMU's terms in each of its source records, as the CMU catalog states them: my-3d2dge's set said
+ * "free for all uses"; WP 8.1 corrected the catalog, and the importer (`x anim import --cmu`) writes what it says.
+ */
+export function withCmuTerms(set: ClipSet, catalog: string = CMU_CATALOG): ClipSet {
+  const license = (JSON.parse(readFileSync(catalog, 'utf8')) as { $sources?: { CMU?: { license?: string } } }).$sources
+    ?.CMU?.license;
+  if (!license) throw new Error(`${catalog} has no "$sources".CMU.license: restore CMU's terms there`);
+  const sources = Object.entries(set.sources ?? {}).map(([id, source]) => [id, { ...source, license }]);
+  return { ...set, sources: Object.fromEntries(sources) };
+}
+
 /** The files of my-3d2dge's three curated sets (HERO dropped), from the checkout at `sourcePath`, by directory. */
 export function legacySetFiles(sourcePath: string): Record<string, SetFiles> {
-  const sets = CURATED_SETS.map((name) => tagAlternates(readPlainSet(readLegacySet(sourcePath, name))));
+  const sets = CURATED_SETS.map((name) => tagAlternates(readPlainSet(readLegacySet(sourcePath, name)))).map((set) =>
+    set.set === 'CMU' ? withCmuTerms(set) : set,
+  );
   return Object.fromEntries(sets.map((set) => [setDirName(set.set), splitSet(set)]));
 }
 
-/** The command line (see the file comment). Returns the exit code. */
-export function main(args: string[], root: string = SETS_DIR): number {
-  const check = args.includes('--check');
-  const paths = args.filter((arg) => arg !== '--check');
+/**
+ * Repacks sets into `root` (see the file comment): plain JSON sets from `paths`, else the curated sets the my-3d2dge
+ * checkout still provides (mesh2motion and cmu; WP 8.10 replaced quaternius); with `check` it only compares. Returns a line per set and how many files differ.
+ */
+export function repackSets(
+  paths: string[],
+  check: boolean,
+  root: string = SETS_DIR,
+): { lines: string[]; differ: number } {
   let sets: Record<string, SetFiles>;
   if (paths.length) {
     const read = paths.map((path) => readPlainSet(readFileSync(path, 'utf8')));
@@ -217,12 +243,13 @@ export function main(args: string[], root: string = SETS_DIR): number {
   } else {
     const spec = sourceSpecs().find((candidate) => candidate.name === 'my-3d2dge');
     const source = spec && resolveSource(spec);
-    if (!source?.ok || !source.path) {
-      console.error(`repack: FAIL: ${source?.problem ?? 'no my-3d2dge source in scripts/setup.sh'}`);
-      return 1;
-    }
-    sets = legacySetFiles(source.path);
+    if (!source?.ok || !source.path) throw new Error(source?.problem ?? 'no my-3d2dge source in scripts/setup.sh');
+    // quaternius is v2's now, which tools/anim/shardfall.ts writes (WP 8.10): only the others come from my-3d2dge
+    sets = Object.fromEntries(
+      Object.entries(legacySetFiles(source.path)).filter(([dir]) => !SHARDFALL_WRITES.has(dir)),
+    );
   }
+  const lines: string[] = [];
   let differ = 0;
   for (const [dir, files] of Object.entries(sets)) {
     const path = join(root, dir);
@@ -231,13 +258,29 @@ export function main(args: string[], root: string = SETS_DIR): number {
       const changed = [...new Set([...Object.keys(on), ...Object.keys(files)])].filter((f) => on[f] !== files[f]);
       differ += changed.length;
       const count = `${changed.length} file${changed.length === 1 ? ' differs' : 's differ'}`;
-      console.log(`${dir}: ${changed.length ? `${count}: ${changed.slice(0, 5).join(', ')}` : 'ok'}`);
+      lines.push(`${dir}: ${changed.length ? `${count}: ${changed.slice(0, 5).join(', ')}` : 'ok'}`);
     } else {
       const { written, removed } = writeSetDir(path, files);
-      console.log(`${dir}: ${Object.keys(files).length} files, ${written.length} written, ${removed.length} removed`);
+      lines.push(`${dir}: ${Object.keys(files).length} files, ${written.length} written, ${removed.length} removed`);
     }
   }
-  return differ ? 1 : 0;
+  return { lines, differ };
+}
+
+/** The command line (see the file comment). Returns the exit code. */
+export function main(args: string[], root: string = SETS_DIR): number {
+  try {
+    const { lines, differ } = repackSets(
+      args.filter((arg) => arg !== '--check'),
+      args.includes('--check'),
+      root,
+    );
+    for (const line of lines) console.log(line);
+    return differ ? 1 : 0;
+  } catch (error) {
+    console.error(`repack: FAIL: ${(error as Error).message}`);
+    return 1;
+  }
 }
 
 if (import.meta.main) {
