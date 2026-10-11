@@ -22,9 +22,6 @@
  * throws stops the step, which drops what it queued and counts only if its timers stage has run (a throw before it
  * leaves `tick` as it was and fires no timer).
  *
- * A `probe` (createWorld's option; the stats meter's, engine/dev/stats.ts) runs each system of a step, once, to time
- * it; it reads a clock, never the sim, so a world with one steps and hashes as a world without.
- *
  * Gameplay state lives in components, settings, timers or RNG streams, never in closure or module variables: those
  * are neither hashed nor captured, so a restore would leave them behind. Hold ids, not entity objects, across steps:
  * a restore makes new objects; and an id (an entity's or a timer's) kept from a timeline a restore abandoned may name
@@ -103,7 +100,10 @@ export interface WorldOptions<C extends object = AnyComponents, E extends EventM
   probe?: SystemProbe;
 }
 
-/** A probe around each system's run: the system's name and phase, and its run, to call once. */
+/**
+ * A probe around each system's run (the stats meter's, engine/dev/stats.ts): the system's name and phase, and its run,
+ * to call once. It reads a clock, never the sim, so a world with one steps and hashes as a world without.
+ */
 export type SystemProbe = (system: { readonly name: string; readonly phase: Phase }, run: () => void) => void;
 
 /** The timers a world offers game code: `after` and `every` in sim seconds; the world steps them. */

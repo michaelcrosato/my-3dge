@@ -76,6 +76,10 @@ const CALLS: Record<string, Call> = {
   'set()': (e) => expect(e.set('box.room.speed', '2')).toMatchObject({ value: 2, previous: 1.5, when: 'now' }),
   'shot()': (_e, call) => expect(() => call('shot')).toThrow(/DEV_NO_RENDERER/),
   'state()': (e) => expect(e.state('pathMover').entities).toHaveLength(3),
+  'stats()': (e, call) => {
+    e.step(3); // timed steps; headless, nothing is drawn, so nothing is counted
+    expect(call('stats')).toMatchObject({ steps: 3, frames: 0, renderMs: null, drawCalls: null, pipelines: null });
+  },
   'step()': (e) => expect(e.step(10)).toBe(10),
   'timeScale()': (e) => expect(e.timeScale(0.5)).toBe(0.5),
   'trace()': (e) => expect(e.trace().tick).toBe(0),
