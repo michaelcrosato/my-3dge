@@ -12,7 +12,8 @@
  * off; the function `onGesture` returns removes every one of them.
  *
  * @example
- * const off = onGesture(window, () => context.resume());
+ * const page = new EventTarget(); // window, in a page
+ * const off = onGesture(page, () => console.log('resume the context'));
  * off(); // no longer listening
  * isGesture({ type: 'keydown', key: 'Escape', isTrusted: true }); // false
  * @see engine/audio/runtime/gesture.test.ts

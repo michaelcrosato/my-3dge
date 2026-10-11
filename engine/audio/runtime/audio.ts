@@ -28,6 +28,7 @@
  * buses and their levels, `sfx` with its per-sound rule, `music`), on pre-rendered buffers.
  *
  * @example
+ * // browser: Web Audio plays only in a page (tests/e2e/audio.spec.ts runs this runtime)
  * const audio = createAudio({ footsteps: { iron: 'sfx:clang', '*': 'sfx:step' } });
  * audio.music('song:dungeon', { intensity: 0 }); // starts on the first gesture
  * audio.bind('bossSeen', 'sfx:secret');
@@ -41,11 +42,11 @@ import { registry as sharedRegistry, type Registry } from '../../core/registry';
 import type { QueryView } from '../../sim/queryView';
 import { getSfx, renderSfx, sfxKind, type Sfx } from '../data/sfx';
 import { onGesture, type GestureTarget } from './gesture';
-import { BUS_VOLUMES, createMixer, type Bus, type Mixer, type MixerInfo } from './mixer';
+import { BUS_VOLUMES, createMixer, type AudioBus, type Mixer, type MixerInfo } from './mixer';
 import { createMusic, type Music, type MusicChange, type MusicPosition } from './music';
 import { roomSpec, type RoomName, type RoomSpec } from './reverb';
 import { toBuffer } from './buffers';
-import { checkPlay, createVoice, type PlayOptions, type Sound, type Voice } from './sound';
+import { checkPlay, createVoice, type PlayOptions, type Sound, type RuntimeSound } from './sound';
 import { occluded, placeListener, type ListenerPose, type Vec3 } from './spatial';
 import { createVoicePool, type VoiceLimits } from './voices';
 
@@ -110,7 +111,7 @@ export interface Audio {
   stinger(id: string, options?: MusicChange & { vol?: number }): void;
   /** Once per rendered frame: the listener follows `pose`, and placed sounds are occluded through `queries`. */
   update(pose?: ListenerPose, queries?: QueryView): void;
-  volume(bus: Bus | 'master', value?: number): number;
+  volume(bus: AudioBus | 'master', value?: number): number;
   mute(on?: boolean): boolean;
   /** `true` holds a duck of the music and ambience, `false` lets it go, a number ducks for that many seconds. */
   duck(on: boolean | number): void;
@@ -126,7 +127,7 @@ export function createAudio(options: AudioOptions = {}): Audio {
   const out = options.log ?? sharedLog;
   sfxKind(registry);
   const footsteps = options.footsteps ?? {};
-  const pool = createVoicePool<Voice>(options.limits);
+  const pool = createVoicePool<RuntimeSound>(options.limits);
   const buffers = new Map<string, AudioBuffer>();
   const turns = new Map<string, number>();
   const bindings = new Map<string, string>();
@@ -149,7 +150,7 @@ export function createAudio(options: AudioOptions = {}): Audio {
   const begin = (made: BaseAudioContext) => {
     context = made;
     mixer = createMixer(made);
-    for (const [bus, value] of Object.entries(volumes)) mixer.volume(bus as Bus | 'master', value);
+    for (const [bus, value] of Object.entries(volumes)) mixer.volume(bus as AudioBus | 'master', value);
     mixer.mute(muted);
     mixer.room(room);
     if (pose) placeListener(made.listener, pose, made.currentTime);
@@ -194,7 +195,7 @@ export function createAudio(options: AudioOptions = {}): Audio {
     return buffer;
   };
 
-  function play(id: string, opts: PlayOptions = {}): Voice | null {
+  function play(id: string, opts: PlayOptions = {}): RuntimeSound | null {
     const entry = getSfx(id, registry);
     checkPlay(opts, entry.variants);
     const c = context;
@@ -202,13 +203,16 @@ export function createAudio(options: AudioOptions = {}): Audio {
     const when = Math.max(opts.when ?? c.currentTime, c.currentTime);
     const steal = pool.admit(id, when);
     if (!steal) return null;
-    for (const voice of steal) voice.stop();
+    for (const voice of steal) {
+      voice.stop();
+      pool.remove(voice);
+    }
     const turn = turns.get(id) ?? 0;
     turns.set(id, turn + 1);
     const buffer = bufferOf(entry, opts.variant ?? turn % entry.variants, c);
     const bus = opts.bus ?? entry.bus;
     const input = mixer.input(bus);
-    const voice: Voice = createVoice(c, {
+    const voice: RuntimeSound = createVoice(c, {
       id,
       bus,
       buffer,

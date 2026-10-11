@@ -19,6 +19,7 @@
  * master, sfx and music buses and their levels, the 0.35 duck; `ui`, `ambience`, timed ducks and the reverb added.
  *
  * @example
+ * // browser: Web Audio's nodes exist only in a page (tests/e2e/audio.spec.ts renders the mix)
  * const mixer = createMixer(new OfflineAudioContext(2, 44100, 44100));
  * mixer.volume('music', 0.8);
  * mixer.duck(0.5); // music and ambience at 0.35 for half a second
@@ -31,10 +32,10 @@ import { impulseResponse, roomSpec, type RoomName, type RoomSpec } from './rever
 export const BUSES = Object.freeze(['effects', 'music', 'ui', 'ambience'] as const);
 
 /** One of the buses. */
-export type Bus = (typeof BUSES)[number];
+export type AudioBus = (typeof BUSES)[number];
 
 /** The starting volumes, the master's included. */
-export const BUS_VOLUMES: Readonly<Record<Bus | 'master', number>> = Object.freeze({
+export const BUS_VOLUMES: Readonly<Record<AudioBus | 'master', number>> = Object.freeze({
   master: 0.7,
   effects: 1,
   music: 0.5,
@@ -54,11 +55,11 @@ export const DUCK = Object.freeze({
 export const ROOM_FADE = 0.2;
 
 /** The buses that feed the reverb. */
-const WET_BUSES: readonly Bus[] = ['effects', 'ambience'];
+const WET_BUSES: readonly AudioBus[] = ['effects', 'ambience'];
 
 /** What `info()` reports. */
 export interface MixerInfo {
-  volumes: Record<Bus | 'master', number>;
+  volumes: Record<AudioBus | 'master', number>;
   muted: boolean;
   /** Whether a duck holds now. */
   ducked: boolean;
@@ -69,9 +70,9 @@ export interface MixerInfo {
 /** The mixer of a context. */
 export interface Mixer {
   /** Where a voice on `bus` connects. */
-  input(bus: Bus): AudioNode;
+  input(bus: AudioBus): AudioNode;
   /** The volume of `bus` (or the master), set first when `value` is given (clamped to [0, 1]). */
-  volume(bus: Bus | 'master', value?: number): number;
+  volume(bus: AudioBus | 'master', value?: number): number;
   /** Mutes everything (`true`), or unmutes; toggles without an argument. Returns whether it is muted. */
   mute(on?: boolean): boolean;
   /** `true` holds a duck, `false` lets it go, a number of seconds ducks for that long from `when` (now). */
@@ -92,8 +93,8 @@ export function createMixer(context: BaseAudioContext): Mixer {
   let muted = false;
   const master = gain(volumes.master, context.destination);
   const reverbIn = new GainNode(context);
-  const ducks = new Map<Bus, GainNode>();
-  const buses = new Map<Bus, GainNode>();
+  const ducks = new Map<AudioBus, GainNode>();
+  const buses = new Map<AudioBus, GainNode>();
   for (const bus of BUSES) {
     const duck = gain(1, master);
     if (WET_BUSES.includes(bus)) duck.connect(reverbIn);
@@ -107,8 +108,8 @@ export function createMixer(context: BaseAudioContext): Mixer {
   let reverb: Reverb = null;
   let fading: Reverb = null as Reverb;
 
-  const level = (bus: Bus | 'master') => (bus === 'master' ? master : (buses.get(bus) as GainNode));
-  const apply = (bus: Bus | 'master') => {
+  const level = (bus: AudioBus | 'master') => (bus === 'master' ? master : (buses.get(bus) as GainNode));
+  const apply = (bus: AudioBus | 'master') => {
     const value = bus === 'master' && muted ? 0 : volumes[bus];
     level(bus).gain.setValueAtTime(value, context.currentTime);
   };

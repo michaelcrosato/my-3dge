@@ -4,18 +4,20 @@
  * `createVoice` wires it and starts it; the runtime (engine/audio/runtime/audio.ts) hands out the `Sound` side.
  *
  * Invariants: a voice's gain is its `vol`, times `OCCLUSION.gain` while occluded; `stop` fades it to 0 over
- * `STOP_FADE` seconds, then stops the source (once: stopping again does nothing). When the source ends, the voice
- * reports `playing: false`, disconnects every node it made and calls `onEnded`. Options are checked before anything
+ * `STOP_FADE` seconds, then stops the source (once: stopping again does nothing); it reports `playing: false` from
+ * then on. When the source ends, the voice disconnects every node it made and calls `onEnded`. Options are checked before anything
  * is made: a value out of range throws `AUDIO_BAD_OPTION`.
  *
  * @example
- * const voice = createVoice(context, { id: 'sfx:hit', bus: 'effects', buffer, input: mixer.input('effects'), when: 0, options: { position: [2, 1, 0] } });
+ * // browser: Web Audio's nodes exist only in a page (tests/e2e/audio.spec.ts plays voices)
+ * const input = mixer.input('effects');
+ * const voice = createVoice(context, { id: 'sfx:hit', bus: 'effects', buffer, input, when: 0, options: { position: [2, 1, 0] } });
  * voice.move([3, 1, 0]);
  * voice.stop();
  * @see tests/e2e/audio.spec.ts
  */
 import { codeError, defineCodes } from '../../core/log';
-import type { Bus } from './mixer';
+import type { AudioBus } from './mixer';
 import { OCCLUSION, PANNER, placePanner, type Vec3 } from './spatial';
 
 /** The codes of a sound's options, with their fixes. */
@@ -39,7 +41,7 @@ export interface PlayOptions {
   /** The variant; in turn by default. */
   variant?: number;
   /** The bus; the entry's by default. */
-  bus?: Bus;
+  bus?: AudioBus;
   /** Where it sounds, world space, m: placed and occluded; unplaced (in the head) by default. */
   position?: Vec3;
   /** The context time it starts at; now by default. */
@@ -53,7 +55,7 @@ export interface PlayOptions {
 /** A sound playing. */
 export interface Sound {
   readonly id: string;
-  readonly bus: Bus;
+  readonly bus: AudioBus;
   /** The context time it starts at. */
   readonly start: number;
   /** Whether it loops until stopped. */
@@ -71,7 +73,7 @@ export interface Sound {
 }
 
 /** A sound as the runtime holds it: it can be occluded. */
-export interface Voice extends Sound {
+export interface RuntimeSound extends Sound {
   /** Muffles it (`on`) or opens it, easing with `OCCLUSION.ease` or at once. */
   occlude(on: boolean, ease: boolean): void;
 }
@@ -102,7 +104,7 @@ export function checkPlay(options: PlayOptions, variants: number): void {
 /** What `createVoice` wires. */
 export interface VoiceSpec {
   id: string;
-  bus: Bus;
+  bus: AudioBus;
   buffer: AudioBuffer;
   /** Where it connects: the bus's input. */
   input: AudioNode;
@@ -114,7 +116,7 @@ export interface VoiceSpec {
 }
 
 /** Wires and starts one voice (see the file comment). */
-export function createVoice(c: BaseAudioContext, spec: VoiceSpec): Voice {
+export function createVoice(c: BaseAudioContext, spec: VoiceSpec): RuntimeSound {
   const { id, bus, buffer, input, when, options } = spec;
   const vol = options.vol ?? 1;
   const loop = options.loop ?? false;
@@ -122,14 +124,14 @@ export function createVoice(c: BaseAudioContext, spec: VoiceSpec): Voice {
   const gain = new GainNode(c, { gain: vol });
   const open = Math.min(OCCLUSION.open, c.sampleRate / 2);
   let where = options.position ?? null;
-  const filter = where ? new BiquadFilterNode(c, { type: 'lowpass', frequency: open }) : null;
+  const filter = where ? new BiquadFilterNode(c, { type: 'lowpass', frequency: open, Q: OCCLUSION.q }) : null;
   const panner = where ? new PannerNode(c, PANNER) : null;
   if (panner && where) placePanner(panner, where, when);
   const chain: AudioNode[] = filter && panner ? [source, gain, filter, panner] : [source, gain];
   chain.forEach((node, i) => node.connect(chain[i + 1] ?? input));
   let playing = true;
   let stopping = false;
-  const voice: Voice = {
+  const voice: RuntimeSound = {
     id,
     bus,
     start: when,
@@ -150,6 +152,7 @@ export function createVoice(c: BaseAudioContext, spec: VoiceSpec): Voice {
     stop(fade = STOP_FADE) {
       if (stopping) return;
       stopping = true;
+      playing = false;
       const now = c.currentTime;
       gain.gain.cancelScheduledValues(now);
       gain.gain.setValueAtTime(gain.gain.value, now);

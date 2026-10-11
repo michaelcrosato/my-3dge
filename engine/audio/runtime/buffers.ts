@@ -15,6 +15,7 @@
  * rate they were rendered at.
  *
  * @example
+ * import { getSong } from '../data/song';
  * const layers = songLayers(getSong('song:boss')); // [{ intensity: 0, song }]: every engine song is one layer
  * loopLayout(new Float32Array([1, 2, 3, 4, 5]), 2); // [1, 2, 9, 6]: the head, then 1+3+5 and 2+4
  * @see engine/audio/runtime/buffers.test.ts

@@ -21,6 +21,7 @@
  * own bus, faded out on stop), now pre-rendered loops with layers, quantized changes and stingers.
  *
  * @example
+ * // browser: Web Audio plays only in a page (tests/e2e/audio.spec.ts measures the timing)
  * const music = createMusic(context, mixer.input('music'), { sfx: (id, when) => audio.play(id, { when }) });
  * music.play('song:dungeon', { intensity: 0 });
  * music.intensity(1); // on the next beat, every layer
