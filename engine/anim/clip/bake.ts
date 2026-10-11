@@ -10,7 +10,8 @@
  * the decode's own hint and two-bone solve (rewritten here to give frames, not points); the feet from down, out and
  * toes. So a straight arm keeps its twist (its pole comes from the hint, not from an elbow that no longer bends), and
  * the singular poses are handled: a limb with no direction keeps its parent's frame, a hint along the limb takes the
- * parent's pole, and a hand whose across direction nears the forearm's line eases back to the forearm's roll.
+ * parent's pole, a limb folded so far that its middle joint falls behind its root still bends forward (an elbow past
+ * ~130°), and a hand whose across direction nears the forearm's line eases back to the forearm's roll.
  *
  * What a rotation means (identity is the skeleton's T-pose, every frame the character's: +Y up, +Z forward, left +X):
  * - the pelvis turns from the T-pose to the key's pelvis frame; the spine, chest, neck and head take the decode's own
@@ -180,9 +181,14 @@ function limbFrames(M: Frame, s: Side, kind: 'arm' | 'leg', v: V, R: RestBody, a
   // a hint along the limb (the decode's fallback): the parent's pole instead
   if (vb.lengthSq() < 1e-12) vb.copy(pole).applyQuaternion(parent).addScaledVector(va, -vb.dot(va));
   if (vb.lengthSq() < 1e-12) vb.crossVectors(va, Math.abs(va.y) < 0.9 ? Y_AXIS : X_AXIS);
+  if (rigToEngine(d2, vd).lengthSq() < 1e-12) vd.copy(va);
+  // the pole lies on the side the limb bends away from, so the middle joint turns by 0 to π about its hinge: the
+  // hint, made square to the upper bone, turns to the other side once the elbow falls behind the shoulder along the
+  // line to the hand (a forearm and fist longer than the upper arm, folded past ~130°), which would roll the upper
+  // bone half a turn and bend the middle one backward, and contact IK on a build then swings it through
+  if (vb.dot(vd) > 0) vb.negate();
   const wu = turnPair(bone, pole, va, vb.normalize(), W[index[upper as JointName]]);
   const axis = vc.crossVectors(va, vb);
-  if (rigToEngine(d2, vd).lengthSq() < 1e-12) vd.copy(va);
   const angle = Math.atan2(ve.crossVectors(va, vd).dot(axis), va.dot(vd));
   const wm = W[index[middle as JointName]].setFromAxisAngle(axis, angle).multiply(wu);
   if (kind === 'leg' || !across) return;

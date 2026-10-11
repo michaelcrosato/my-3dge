@@ -1,7 +1,8 @@
 /**
  * @file Tests for the baker (WP 8.4): the frames on format 1's key grid, FK parity with the format-1 decode (exact on
  * a key, a mean of 1 mm or less over every set at 30 fps and the 60 Hz midpoints, and at each clip's own key times, the
- * worst cases in tests/baselines/anim-clips.json), the hand's roll, the singular poses, and the root's travel.
+ * worst cases in tests/baselines/anim-clips.json), the hand's roll, the singular poses (a deep fold bending forward
+ * among them: WP 8.6), and the root's travel.
  */
 import { describe, expect, it } from 'vitest';
 import { Quaternion, Vector3 } from '../../core/math';
@@ -115,6 +116,24 @@ describe('bakeClip', () => {
       [straight(90), b],
     ] as const) {
       expect(rigidError(baked.points, decodePose(REST, k, new Float64Array(108)))).toBeLessThan(1e-3);
+    }
+  });
+
+  it('bends an elbow or a knee forward about its hinge however far it folds, its upper bone rolling smoothly', () => {
+    // past ~130° the elbow passes behind the line from the shoulder to the hand (the forearm and fist outreach the
+    // upper arm), where the decode's hint, projected across the upper arm, turns to the other side (WP 8.6's QA)
+    const hinge = { forearmL: new Vector3(0, -1, 0), forearmR: new Vector3(0, 1, 0), shinL: new Vector3(1, 0, 0) };
+    let before: Quaternion | undefined;
+    for (let bend = 90; bend <= 175; bend += 5) {
+      const { pose } = bakedPoints({ ...standing(0), armL: [25, 68, 70, bend, 34], armR: [83, -41, -37, bend, 3], legL: [-90, 0, -40, bend, -3] }); // prettier-ignore
+      for (const [joint, axis] of Object.entries(hinge) as [keyof typeof hinge, Vector3][]) {
+        const q = pose.getRotation(joint);
+        const turn = 2 * Math.atan2(q.x * axis.x + q.y * axis.y + q.z * axis.z, q.w);
+        expect((((turn * 180) / Math.PI + 540) % 360) - 180, `${joint} at ${bend}°`).toBeCloseTo(bend, 2);
+      }
+      const upper = pose.getRotation('upperArmL');
+      if (before) expect((upper.angleTo(before) * 180) / Math.PI, `upperArmL at ${bend}°`).toBeLessThan(30); // no half turn
+      before = upper;
     }
   });
 
