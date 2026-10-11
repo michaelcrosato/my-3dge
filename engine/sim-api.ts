@@ -261,3 +261,20 @@ export type { CylinderCollider } from './world/level/types';
 export type { RampDescriptor } from './world/level/types';
 export type { DaisDescriptor } from './world/level/types';
 export type { Side } from './world/level/types';
+
+// Navigation and spatial queries (WP 4.3): a level's walkable grid under a climb limit (the crowd's, or a hero's jump
+// reach from measureFeel), A* paths smoothed by line of sight, cached flow fields with reach and a look-ahead
+// direction, and a spatial hash on typed arrays for neighbours.
+export { NavGrid } from './world/nav';
+export { FlowField } from './world/nav';
+export { NAV_GRID_FIELDS } from './world/nav';
+export type { NavGridOptions } from './world/nav';
+export type { FlowOptions } from './world/nav';
+export type { GroundPoint } from './world/nav';
+export { NAV_DIRECTIONS } from './world/nav';
+export { LOOK_AHEAD } from './world/nav';
+export { NEAREST_RINGS } from './world/nav';
+export { NAV_CLIMB } from './world/level/validate';
+export { SpatialHash } from './world/spatial';
+export { SPATIAL_HASH_FIELDS } from './world/spatial';
+export type { SpatialHashOptions } from './world/spatial';

@@ -1,9 +1,9 @@
 /**
  * @file Tests for `x sim` and its scene helpers (tools/cmd/sim.ts): scene modules are found by path or by id, the
  * command prints the hash and events within 20 lines, records `--set` values in its report, writes a replay of the
- * run that plays back to the same hash, gives the same hash on every run, adds the feel meter's report with `--feel`,
- * and refuses unknown settings, scenes and flags with exit 2 naming the closest; `replayText` writes readable, exact
- * text.
+ * run that plays back to the same hash, gives the same hash on every run, adds the feel meter's report with `--feel`
+ * and a text map of the level's nav grid with `--map` (WP 4.3), and refuses unknown settings, scenes and flags with
+ * exit 2 naming the closest; `replayText` writes readable, exact text.
  * @see tools/cmd/sim.ts
  */
 import { readFileSync } from 'node:fs';
@@ -11,7 +11,8 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { checkReplay, playReplay, type Replay } from '../../engine/sim/replay';
 import { dispatch, ROOT } from '../x';
-import { replayText, resolveSceneModule, sceneModules, sceneRoots } from './sim';
+import { compileLevel } from '../../engine/world/level/compile';
+import { navMap, replayText, resolveSceneModule, sceneModules, sceneRoots } from './sim';
 
 /** Runs `node x sim …` in this repository; resolves to the exit code and printed lines. */
 async function sim(...args: string[]): Promise<{ code: number; lines: string[] }> {
@@ -64,6 +65,33 @@ describe('x sim', () => {
     const none = await sim('kernel', '--steps', '1', '--feel');
     expect(none.code).toBe(2);
     expect(none.lines.join('\n')).toMatch(/--feel: the scene kernel has no actor/);
+  });
+
+  it('draws the level as navigation sees it with --map (WP 4.3), reading an unregistered level from its lab', async () => {
+    const { code, lines } = await sim('fixtures/scenes/nav-1000', '--steps', '3', '--map');
+    expect(code).toBe(0);
+    expect(lines.length).toBeLessThanOrEqual(20);
+    expect(lines).toContain(
+      'map: out/sim/nav-1000/map.txt: 2443 tiles walkable, 0 never reached from spawn:hero; a route of 40.423 m (climb 0.21875 m)',
+    );
+    const map = readFileSync(join(ROOT, 'out/sim/nav-1000/map.txt'), 'utf8').trimEnd().split('\n');
+    expect(map.filter((line) => !line.startsWith('# '))).toHaveLength(44);
+    expect(map.slice(3).every((row) => row.length === 64)).toBe(true);
+    expect(map.slice(3).join('').match(/[@X]/g)).toEqual(['X', '@']);
+    expect(map[3 + 2].slice(3, 23)).toBe('+'.repeat(20)); // a gallery: above the crowd's climb limit
+    const report = JSON.parse(readFileSync(join(ROOT, 'out/sim/nav-1000/report.json'), 'utf8'));
+    expect(report.metrics).toMatchObject({ 'map.walkable': 2443, 'map.unreached': 0, 'map.waypoints': 5 });
+    const room = await sim('labs/box/scenes/room', '--steps', '1', '--map');
+    expect(room.lines.join('\n')).toMatch(/map: .*130 tiles walkable, 0 never reached from spawn:hero/);
+    const none = await sim('kernel', '--steps', '1', '--map');
+    expect(none.code).toBe(2);
+    expect(none.lines.join('\n')).toMatch(/--map: the scene kernel has no level/);
+  });
+
+  it('marks tiles never reached and raised floors by the climb limit it is given', () => {
+    const level = compileLevel('######\n#@..=#\n######\n', { file: 'ledge.txt' });
+    expect(navMap(level).lines.slice(3)).toEqual(['######', '#@*X!#', '######']); // the ledge is 1 m up
+    expect(navMap(level, 2).lines.slice(3)).toEqual(['######', '#@**X#', '######']); // a jump of 2 m reaches it
   });
 
   it('leaves view settings out of the hash', async () => {
