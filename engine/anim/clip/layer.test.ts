@@ -5,7 +5,7 @@
  * root motion, masks and additive clips in the animator's pose and over another clip, a mirrored clip's hand
  * contacts, the walk–run switch on either side of both its lines with the walk and with the run playing, each change
  * at the drive that makes it (Done when), shardfall's three walkers played at their ground speed (Done when), save and
- * load, and the errors (a layer refuses an animator of another build).
+ * load, and the errors (a layer refuses an animator of another build). The play options: layer-play.test.ts.
  */
 import { describe, expect, it } from 'vitest';
 import { Quaternion, Vector3 } from '../../core/math';

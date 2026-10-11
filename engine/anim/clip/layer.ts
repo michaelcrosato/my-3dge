@@ -36,7 +36,7 @@
  * for (let i = 0; i < 12; i++) [hero.step(), clips.step({ groundSpeed: 0 })]; // the sim's ticks
  * hero.pose(); // the view: the body's own pose, then the wave laid over it
  * clips.current?.w; // 1: faded in over 0.12 s
- * @see engine/anim/clip/layer.test.ts
+ * @see engine/anim/clip/layer-play.test.ts (the play options; layer.test.ts, beside this file, tests the rest)
  */
 import { codeError, didYouMean } from '../../core/log';
 import { MathUtils, Quaternion, Vector3 } from '../../core/math';
