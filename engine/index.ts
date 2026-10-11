@@ -331,7 +331,7 @@ export { FX_BUDGET } from './gfx/fx/effects';
 export { BOLT } from './gfx/fx/effects';
 export type { Effects } from './gfx/fx/effects';
 export type { EffectsOptions } from './gfx/fx/effects';
-export type { FxEventPayload } from './gfx/fx/effects';
+export type { FxEventPayload } from './gfx/fx/payload';
 export type { FxStats } from './gfx/fx/effects';
 export { defineEmitter } from './gfx/fx/emitters';
 export { getEmitter } from './gfx/fx/emitters';

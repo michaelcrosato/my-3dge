@@ -132,6 +132,16 @@ describe('events', () => {
     });
     expect(counts).toEqual([1, 1, 0, 0]); // 0.4 s
   });
+
+  it('lay a decal of their own, a scorch that fades over its life', () => {
+    const fx = createEffects({ registry: createRegistry() });
+    fx.decal([1, 0, 1], { radius: [0.5, 0.5], width: 1, color: '#201810', alpha: 0.8, life: 2 });
+    const counts = [0, 1, 2, 3].map(() => {
+      fx.frame(0.6, camera());
+      return fx.stats().decals;
+    });
+    expect(counts).toEqual([1, 1, 1, 0]);
+  });
 });
 
 describe('running emitters', () => {

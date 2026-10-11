@@ -5,10 +5,11 @@
  *
  * A view hands it what happened and what is on screen, then calls `frame(dt, camera)` once per rendered frame:
  * - **Events:** `event(type, payload)` bursts every emitter answering `type` (engine/gfx/fx/emitters.ts) where the
- *   payload says (`FxEventPayload`); `feed(trace)` plays the sim world's event trace (`world.events.trace()`) once,
- *   reading it without listening, so the sim is untouched; `burst(id, at)` bursts one emitter.
+ *   payload says (engine/gfx/fx/payload.ts); `feed(trace)` plays the sim world's event trace (`world.events.trace()`)
+ *   once, reading it without listening, so the sim is untouched; `burst(id, at)` bursts one emitter.
  * - **This frame's shapes:** `emit` runs an emitter at its rate, `telegraph` draws a telegraph (engine/world/
  *   telegraphs.ts) at floor height, `trail` a ribbon, `bolt` a projectile; `lights()` lists the frame's lights.
+ * - **Decals:** `decal(at, ring)` lays a floor ring or scorch that grows and fades over its life, as bursts do.
  * - **Camera shake** (`shake`, engine/gfx/fx/shake.ts): apply it after placing the camera, restore it after drawing.
  * Randomness comes from the visual streams it is given (`fxRng`: the sim world's `w.fxRng`, never hashed).
  *
@@ -41,9 +42,18 @@ import { RngStreams, type Rng } from '../../core/rng';
 import { getTelegraph, pointOf, type PointLike, type TelegraphPlace } from '../../world/telegraphs';
 import type { Warmup } from '../warmup';
 import { createDecals } from './decals';
-import { emitterKind, getEmitter, lightLevel, particleSpec, type Emitter, type FxLight } from './emitters';
+import {
+  EMITTER_FIELDS,
+  emitterKind,
+  getEmitter,
+  lightLevel,
+  particleSpec,
+  type Emitter,
+  type FxLight,
+} from './emitters';
 import { ParticlePool, type BurstOptions, type ParticleStats } from './particles';
 import { createRibbons, type TrailSampleLike } from './ribbons';
+import { eventOptions, eventPosition, type FxEventPayload } from './payload';
 import { ScreenShake } from './shake';
 import { createSprites } from './sprites';
 
@@ -52,23 +62,6 @@ export const FX_BUDGET = { particles: 4096, glows: 1024, decals: 1024, ribbons: 
 
 /** How a bolt looks: the Stress test's hero bolt by default. */
 export const BOLT = { color: '#ffb347', core: '#fff3c4', halo: 0.3125, radius: 0.125, light: 10, reach: 2.5 } as const;
-
-/** What an event carries for its effects (any other keys are left alone). Shake and rings scale with the size too. */
-export interface FxEventPayload {
-  /** Where it happens (m), or its `x`, `y`, `z`. */
-  position?: PointLike;
-  x?: number;
-  y?: number;
-  z?: number;
-  /** Scales the burst: an explosion's radius, a body's size (1). */
-  size?: number;
-  /** Added to the particles' velocity (m/s). */
-  velocity?: PointLike;
-  /** Replaces the particles' colours, hex. */
-  color?: string;
-  /** The floor's height landing particles bounce on (the position's height). */
-  ground?: number;
-}
 
 /** What `createEffects` takes. */
 export interface EffectsOptions {
@@ -112,6 +105,9 @@ export interface Effects {
   telegraph(place: TelegraphPlace): void;
   /** Draws a ribbon along `samples` (oldest first, an animator's trail) this frame, in `tint` (hex). */
   trail(samples: readonly TrailSampleLike[], tint: string): void;
+  /** Lays a floor decal at `at` growing and fading over its life: a ring, or a disc (a scorch) when its width is twice
+   * its radius; its fields are an emitter's `ring` (the rest keep their defaults). */
+  decal(at: PointLike, ring: Partial<Emitter['ring']>): void;
   /** Draws a bolt at `at` this frame: a halo and a hot core (`BOLT`'s colours and sizes, or `look`'s). */
   bolt(at: PointLike, look?: { color?: string; core?: string; size?: number }): void;
   /** Moves the effects `dt` seconds on and draws them as `camera` sees them; then the frame's shapes are cleared. */
@@ -128,7 +124,10 @@ export interface Effects {
   dispose(): void;
 }
 
-/** A floor ring growing and fading: a burst's shockwave. */
+/** A ring's fields when a decal leaves them out: the emitter kind's defaults (a 0.35 s shockwave). */
+const RING = EMITTER_FIELDS.ring.default as Emitter['ring'];
+
+/** A floor ring growing and fading: a burst's shockwave, or a decal. */
 interface Ring {
   at: [number, number, number];
   r0: number;
@@ -195,38 +194,15 @@ export function createEffects(options: EffectsOptions = {}): Effects {
       born += pool.burst(spec, counted(layer.count), place(layer.offset), fxRng('fx'), options);
     }
     shake.add(entry.shake * size);
-    const ring = entry.ring;
-    if (ring.radius[1] > 0 && rings.length < FX_BUDGET.decals) {
-      const [r0, r1] = [ring.radius[0] * size, ring.radius[1] * size];
-      rings.push({
-        at: [at[0], options.ground!, at[2]],
-        r0,
-        r1,
-        width: ring.width * size,
-        rgb: toLinear(ring.color),
-        alpha: ring.alpha,
-        life: ring.life,
-        age: 0,
-      });
-    }
+    lay([at[0], options.ground!, at[2]], entry.ring, size);
     return born;
   }
 
-  /** The burst options of an event payload. */
-  function payloadOptions(payload: FxEventPayload): BurstOptions {
-    const options: BurstOptions = {};
-    if (payload.velocity) options.velocity = pointOf(payload.velocity);
-    if (payload.color) options.color = [toLinear(payload.color), toLinear(payload.color)];
-    if (typeof payload.ground === 'number') options.ground = payload.ground;
-    return options;
-  }
-
-  /** Where an event payload happens, or null. */
-  function whereOf(payload: FxEventPayload | undefined): number[] | null {
-    if (!payload || typeof payload !== 'object') return null;
-    if (payload.position) return pointOf(payload.position);
-    const { x, y, z } = payload;
-    return typeof x === 'number' && typeof z === 'number' ? [x, typeof y === 'number' ? y : 0, z] : null;
+  /** Lays a timed floor ring at `at` (on the floor), its lengths scaled by `size`, within the decals' budget. */
+  function lay(at: [number, number, number], ring: Emitter['ring'], size: number): void {
+    if (!(ring.radius[1] > 0) || rings.length >= FX_BUDGET.decals) return;
+    const [r0, r1, width] = [ring.radius[0] * size, ring.radius[1] * size, ring.width * size];
+    rings.push({ at, r0, r1, width, rgb: toLinear(ring.color), alpha: ring.alpha, life: ring.life, age: 0 });
   }
 
   const fx: Effects = {
@@ -238,12 +214,12 @@ export function createEffects(options: EffectsOptions = {}): Effects {
       return burstEntry(getEmitter(id, registry), pointOf(at), burstOptions.size ?? 1, burstOptions);
     },
     event(type, payload) {
-      const at = whereOf(payload);
+      const at = eventPosition(payload);
       const entries = answering(type);
       if (!fx.enabled || !at || !entries.length) return 0;
       played++;
       let born = 0;
-      for (const entry of entries) born += burstEntry(entry, at, payload?.size ?? 1, payloadOptions(payload!));
+      for (const entry of entries) born += burstEntry(entry, at, payload?.size ?? 1, eventOptions(payload!));
       return born;
     },
     feed(trace) {
@@ -251,7 +227,7 @@ export function createEffects(options: EffectsOptions = {}): Effects {
       for (const record of trace) {
         if (record.seq <= seen) continue;
         seen = record.seq;
-        if (fx.enabled && whereOf(record.payload as FxEventPayload) && answering(record.type).length) n++;
+        if (fx.enabled && eventPosition(record.payload as FxEventPayload) && answering(record.type).length) n++;
         fx.event(record.type, record.payload as FxEventPayload);
       }
       return n;
@@ -264,6 +240,9 @@ export function createEffects(options: EffectsOptions = {}): Effects {
     },
     trail(samples, tint) {
       if (fx.enabled) shapes.trails.push([samples, toLinear(tint)]);
+    },
+    decal(at, ring) {
+      if (fx.enabled) lay(pointOf(at), { ...RING, ...ring }, 1);
     },
     bolt(at, look = {}) {
       if (!fx.enabled) return;
