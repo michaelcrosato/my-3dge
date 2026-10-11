@@ -1,8 +1,8 @@
 /**
  * @file The animation library's tools (PLAN.md §10, WP 8.5): find a clip, show it, bake it, draw it, cut a smaller
- * set, import libraries and fetch CMU takes, all from the command line, with no browser. Usage: node x anim
- * <find|show|cut|import|cmu|bake|sheet|repack> …. Exit 0 when it did what was asked (`--check`: nothing differs), 1 when it
- * failed (a difference, a fetch, a broken file), 2 on a usage error naming the closest choice.
+ * set, import libraries and fetch CMU takes, all from the command line, with no browser. Usage: node x anim <find|
+ * show|cut|import|cmu|bake|sheet|repack> …. Exit 0 when it did what was asked (`--check`: nothing differs), 1 when
+ * it failed (a difference, a fetch, a broken file), 2 on a usage error naming the closest choice.
  *
  * - `find <words…> [--cat tag] [--max 20] [--json]`: every set's catalog, then the CMU ledger's takes not yet in a set
  *   (tools/anim/find.ts); the best first, `max` lines in all; `--json` writes every hit to `find.json`.
