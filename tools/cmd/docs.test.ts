@@ -1,7 +1,9 @@
 /**
  * @file Tests `x docs` (WP 0.6) on fixture repositories written to temporary directories, never committed: a broken
  * example, a stale INDEX and a missing path each fail (generated and cache paths aside); so do undocumented exports, a
- * long PROGRESS.md, bad codes, unreadable kinds and bad citations; each kind gets its row in INDEX. The last tests cover the `x check` plugin: drift checks without the examples, a warning in lanes.
+ * long PROGRESS.md, bad codes, unreadable kinds and bad citations; each kind gets its row in INDEX, which opens with
+ * AGENTS.md's task guides and the skills. The last tests cover the `x check` plugin: drift checks without the
+ * examples, a warning in lanes.
  * @see tools/cmd/docs.ts
  */
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
@@ -98,6 +100,30 @@ describe('x docs on fixture repositories', () => {
       expect.objectContaining({ id: 'DOCS_STALE', file: 'docs/INDEX.md' }),
       expect.objectContaining({ id: 'DOCS_STALE', file: 'docs/API.md' }),
     ]);
+  });
+
+  it('opens INDEX with the task guides AGENTS.md lists and the skills, and fails a guide that is gone', async () => {
+    const skill = '---\nname: demo\ndescription: A demo skill — what it holds. Use when testing.\n---\n\n# Demo\n';
+    const root = repo({
+      'AGENTS.md':
+        '# Rules\n\nTask guides:\n- docs/PROGRESS.md: read first.\n- docs/GONE.md: a guide\n  that runs on.\n\nAfter.\n',
+      '.claude/skills/demo/SKILL.md': skill,
+    });
+    await docs(root, 'write');
+    const index = readFileSync(join(root, 'docs/INDEX.md'), 'utf8');
+    const start = index.slice(index.indexOf('## Start here'), index.indexOf('## Kinds'));
+    expect(start).toContain('- [`docs/PROGRESS.md`](../docs/PROGRESS.md): read first.\n');
+    expect(start).toContain('- [`docs/GONE.md`](../docs/GONE.md): a guide that runs on.\n');
+    expect(start).toContain('- The skills, in `.claude/skills/`, each loaded when its description says:\n');
+    expect(start).toContain(
+      '  - [`.claude/skills/demo/SKILL.md`](../.claude/skills/demo/SKILL.md): A demo skill. Use when testing.',
+    );
+    const failures = (await docs(root, 'check')).failures ?? [];
+    expect(failures.map((f) => [f.id, f.file, f.line])).toEqual([['DOCS_PATH', 'AGENTS.md', 5]]);
+    expect(failures[0].message).toContain('docs/GONE.md does not exist');
+    mkdirSync(join(root, '.claude/skills/more'));
+    writeFileSync(join(root, '.claude/skills/more/SKILL.md'), skill.replace('demo', 'more'));
+    expect(ids((await docs(root, 'check')).failures)).toContain('DOCS_STALE'); // a skill added: INDEX regenerates
   });
 
   it('fails a missing path, a broken link, an unknown command or script, and skips the frozen docs', async () => {

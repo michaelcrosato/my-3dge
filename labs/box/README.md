@@ -61,9 +61,17 @@ tested (ADR-0021); `labs/box/?touch=on` shows them on a desktop.
 
 ## Adding a scene or a variant
 
+A variant is a new scene file or a settings preset, never a change of meaning in a passing scene (PLAN.md §9.0).
 `node x new scene labs/box/scenes/<name>` writes a box scene with its replay test, which passes its checks; the page
-imports every module under `labs/box/scenes/`, so it opens at `labs/box/?scene=<name>`. A variant is a new scene
-file or a settings preset, never a change of meaning in a passing scene (PLAN.md §9.0). Keep a replay of it in
-`tests/replays/` with goldens from `node x replay <file> --browser sim --update`, and list it here with what it
-shows, what covers it and the settings that tune it. The `stress-box` skill (`.claude/skills/stress-box/SKILL.md`)
-says the rest.
+imports every module under `labs/box/scenes/`, so it opens at `labs/box/?scene=<name>`. Then keep a replay of it, the
+sequence `tests/e2e/parity.spec.ts` runs on a new scene:
+
+1. `node x sim labs/box/scenes/<name> --steps 600` writes the run's replay beside its report.
+2. Copy `out/sim/box-<name>/run.replay.json` to `tests/replays/box-<stage>-<name>.replay.json`.
+3. `node x replay <file> --browser sim --update` records its goldens, which hold in Node and in Chromium.
+4. `node x replay <file> --browser page` checks them while the page renders.
+5. List the scene and the replay here, with what it shows, what covers it and the settings that tune it.
+6. When it belongs to a stage, add it to `STAGES` in `tests/e2e/parity.spec.ts`: T2's rendering-page check plays
+   only the replays named there.
+
+The `stress-box` skill (`.claude/skills/stress-box/SKILL.md`) says the rest.

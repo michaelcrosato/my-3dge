@@ -29,6 +29,8 @@ const NO_ACTOR = 'pass an actor’s id (none)';
 /** Every member's headless check. */
 const CALLS: Record<string, Call> = {
   advice: (e) => expect(Array.isArray(e.advice)).toBe(true),
+  'anim()': (_e, call) =>
+    expect(() => call('anim')).toThrow('[SIM_BAD_ARGUMENT] anim(id) got undefined: pass an animated actor’s id (none)'),
   'camera.get()': (_e, call) => expect(call('camera.get')).toMatchObject({ code: 'cam=iso' }),
   'camera.set()': (_e, call) => expect(call('camera.set', 'cam=brawler')).toMatchObject({ code: 'cam=brawler' }),
   'capture()': (e, call) => {

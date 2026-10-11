@@ -12,7 +12,14 @@ import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { registry } from '../../engine/core/registry';
 import { dispatch, loadCommand, ROOT, type Command } from '../x';
-import { createDescribeCommand, fieldLine, loadRegistrations, registrationModules } from './describe';
+import {
+  createDescribeCommand,
+  describeFile,
+  fieldLine,
+  idsLine,
+  loadRegistrations,
+  registrationModules,
+} from './describe';
 
 /** Imports the shared registry from a fixture module in a temporary directory. */
 const REGISTRY = JSON.stringify(join(realpathSync(ROOT), 'engine/core/registry.ts'));
@@ -138,9 +145,9 @@ gadgets.def('testGadget:small', {});
     expect(kind.lines).toEqual([
       'x describe: ok: testGadget: 2 fields, 2 entries',
       'A test-only kind.',
+      'ids: testGadget:big, testGadget:small',
       '  size: number, = 1, 0..9, m: Its size.',
       '  mode: string, = "a", one of "a"|"b": Its mode.',
-      'ids: testGadget:big, testGadget:small',
       'report: out/describe/testGadget/report.json',
     ]);
     const entry = await run(root, 'testGadget', 'testGadget:big');
@@ -219,5 +226,17 @@ defineSettings({ 'test.speed': { type: 'number', default: 2, description: 'Speed
     expect(
       fieldLine({ key: 'impl', type: 'function', required: true, view: true, when: 'scene', description: 'Runs.' }),
     ).toBe('  impl: function, required, view, when scene: Runs.');
+  });
+
+  it('cuts a long list of ids to its line, naming describe.json, where every id is', () => {
+    expect(idsLine('gadget', [])).toBe('ids: none yet');
+    expect(idsLine('gadget', ['gadget:a', 'gadget:b'])).toBe('ids: gadget:a, gadget:b');
+    const ids = Array.from({ length: 60 }, (_, i) => `gadget:number${i}`);
+    const line = idsLine('gadget', ids);
+    expect(line.length).toBeLessThanOrEqual(400);
+    const [, shown, more, all, file] = /^ids: (.*), … \((\d+) more; all (\d+) in (\S+)\)$/.exec(line)!;
+    expect(shown.split(', ')).toEqual(ids.slice(0, 60 - Number(more)));
+    expect([Number(all), file]).toEqual([60, describeFile('gadget')]);
+    expect(file).toBe('out/describe/gadget/describe.json');
   });
 });
