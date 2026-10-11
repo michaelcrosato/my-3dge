@@ -13,7 +13,8 @@
  *    opens the page on each replay's scene, and `?replay=<name>` alone starts the replay's scene.
  *
  * Invariants: goldens come from the replay files (one set per platform, recorded in Node and the sim-only page), so
- * these tests compare the rendering page with them, never with themselves.
+ * these tests compare the rendering page with them, never with themselves. Each test opens its own page and shares
+ * nothing, so they run in parallel: in order, on one worker, this file alone held T2 past its 6-minute budget.
  */
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
@@ -27,6 +28,8 @@ import { CAMERA_3D, VIEW_NAMES } from '../../engine/gfx/cameras/codes';
 import { FOLLOW_CAMERAS } from '../../engine/gfx/cameras/place';
 import { RESOLUTION_MODES } from '../../engine/gfx/resolution';
 import { expect, test, type Harness } from './fixtures';
+
+test.describe.configure({ mode: 'parallel' });
 
 const ROOT = join(import.meta.dirname, '..', '..');
 /** A replay file's name and text. */
