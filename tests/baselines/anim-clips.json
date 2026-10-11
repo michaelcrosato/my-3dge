@@ -1,0 +1,137 @@
+{
+  "rest": {
+    "reason": "FK of the baked tracks on each rest body’s own skeleton against the format-1 decode, over 34 points (index and pinky are roll hints, not rigid), at 30 fps and the 60 Hz midpoints. At a key the two agree to a micron (the rotations are float32); the worst cases are midpoints where a limb’s pole swings fast between two frames and the slerp between the frames takes another way than the decode’s in-between of the key numbers.",
+    "sets": {
+      "cmu": {
+        "clips": 60,
+        "samples": 454624,
+        "mean": 0.139,
+        "worst": { "clip": "Fishing", "t": 2.383, "point": "fistR", "mm": 248.5 },
+        "worstClips": [
+          { "clip": "Fishing", "t": 2.383, "point": "fistR", "mm": 248.5 },
+          { "clip": "Get_Up_From_Side", "t": 5.083, "point": "toeL", "mm": 241.1 },
+          { "clip": "Get_Up_From_Back", "t": 4.117, "point": "ballR", "mm": 228.8 },
+          { "clip": "Stretch_Yawn", "t": 0.917, "point": "fistR", "mm": 216.8 },
+          { "clip": "Boxing_Jab", "t": 0.283, "point": "fistL", "mm": 213.5 }
+        ]
+      },
+      "mesh2motion": {
+        "clips": 177,
+        "samples": 621856,
+        "mean": 0.531,
+        "worst": { "clip": "Sword_Regular_B", "t": 0.533, "point": "fistR", "mm": 565.9 },
+        "worstClips": [
+          { "clip": "Sword_Regular_B", "t": 0.533, "point": "fistR", "mm": 565.9 },
+          { "clip": "Angry", "t": 0.75, "point": "fistL", "mm": 407.6 },
+          { "clip": "Dodge_left", "t": 0.117, "point": "fistL", "mm": 404 },
+          { "clip": "Dodge_left_RM", "t": 0.117, "point": "fistL", "mm": 404 },
+          { "clip": "Dodge_right", "t": 0.117, "point": "fistR", "mm": 404 }
+        ]
+      },
+      "quaternius": {
+        "clips": 103,
+        "samples": 312096,
+        "mean": 0.378,
+        "worst": { "clip": "Punch_Cross", "t": 0.183, "point": "fistR", "mm": 532.2 },
+        "worstClips": [
+          { "clip": "Punch_Cross", "t": 0.183, "point": "fistR", "mm": 532.2 },
+          { "clip": "Punch_Jab", "t": 0.15, "point": "fistL", "mm": 509.7 },
+          { "clip": "Roll", "t": 0.417, "point": "fistL", "mm": 465.5 },
+          { "clip": "Roll_RM", "t": 0.417, "point": "fistL", "mm": 465.5 },
+          { "clip": "Punch_Enter", "t": 0.383, "point": "fistL", "mm": 391.8 }
+        ]
+      },
+      "style100": {
+        "clips": 98,
+        "samples": 264800,
+        "mean": 0.11,
+        "worst": { "clip": "BeatChest_Walk", "t": 0.517, "point": "fistL", "mm": 266.5 },
+        "worstClips": [
+          { "clip": "BeatChest_Walk", "t": 0.517, "point": "fistL", "mm": 266.5 },
+          { "clip": "Swat_Walk", "t": 0.95, "point": "fistR", "mm": 264.5 },
+          { "clip": "Elated_Walk", "t": 1.017, "point": "fistR", "mm": 35 },
+          { "clip": "Rushed_Walk", "t": 1.417, "point": "fistL", "mm": 30.4 },
+          { "clip": "Angry_Walk", "t": 0.517, "point": "fistL", "mm": 30.2 }
+        ]
+      },
+      "style100_back": {
+        "clips": 98,
+        "samples": 255712,
+        "mean": 0.1,
+        "worst": { "clip": "BeatChest_WalkBack", "t": 0.283, "point": "fistR", "mm": 271.5 },
+        "worstClips": [
+          { "clip": "BeatChest_WalkBack", "t": 0.283, "point": "fistR", "mm": 271.5 },
+          { "clip": "WildArms_WalkBack", "t": 1.117, "point": "fistR", "mm": 82.6 },
+          { "clip": "Rushed_WalkBack", "t": 0.783, "point": "fistR", "mm": 69.9 },
+          { "clip": "Elated_WalkBack", "t": 0.017, "point": "fistR", "mm": 25.5 },
+          { "clip": "Angry_WalkBack", "t": 0.483, "point": "fistR", "mm": 20.3 }
+        ]
+      },
+      "style100_backrun": {
+        "clips": 98,
+        "samples": 156064,
+        "mean": 0.185,
+        "worst": { "clip": "March_RunBack", "t": 0.65, "point": "fistR", "mm": 287.1 },
+        "worstClips": [
+          { "clip": "March_RunBack", "t": 0.65, "point": "fistR", "mm": 287.1 },
+          { "clip": "BeatChest_RunBack", "t": 0.55, "point": "fistL", "mm": 281.3 },
+          { "clip": "OnPhoneLeft_RunBack", "t": 0.083, "point": "fistL", "mm": 265.6 },
+          { "clip": "KarateChop_RunBack", "t": 0.017, "point": "fistR", "mm": 265.4 },
+          { "clip": "Elated_RunBack", "t": 0.85, "point": "fistL", "mm": 49.6 }
+        ]
+      },
+      "style100_idle": {
+        "clips": 98,
+        "samples": 502208,
+        "mean": 0.031,
+        "worst": { "clip": "BeatChest_Idle", "t": 0.017, "point": "fistL", "mm": 270.8 },
+        "worstClips": [
+          { "clip": "BeatChest_Idle", "t": 0.017, "point": "fistL", "mm": 270.8 },
+          { "clip": "WildArms_Idle", "t": 2.25, "point": "fistR", "mm": 35.9 },
+          { "clip": "Elated_Idle", "t": 0.15, "point": "fistL", "mm": 10.2 },
+          { "clip": "SwingArmsRound_Idle", "t": 0.517, "point": "fistR", "mm": 8.1 },
+          { "clip": "BouncyLeft_Idle", "t": 1.783, "point": "fistL", "mm": 6.9 }
+        ]
+      },
+      "style100_run": {
+        "clips": 98,
+        "samples": 177152,
+        "mean": 0.211,
+        "worst": { "clip": "March_Run", "t": 0.583, "point": "fistR", "mm": 289.1 },
+        "worstClips": [
+          { "clip": "March_Run", "t": 0.583, "point": "fistR", "mm": 289.1 },
+          { "clip": "BeatChest_Run", "t": 0.183, "point": "fistR", "mm": 269.1 },
+          { "clip": "OnPhoneLeft_Run", "t": 0.017, "point": "fistL", "mm": 264.6 },
+          { "clip": "LeftHop_Run", "t": 0.083, "point": "fistR", "mm": 264.1 },
+          { "clip": "KarateChop_Run", "t": 1.117, "point": "fistR", "mm": 263.5 }
+        ]
+      },
+      "style100_side": {
+        "clips": 194,
+        "samples": 518560,
+        "mean": 0.07,
+        "worst": { "clip": "BeatChest_SideLeft", "t": 0.783, "point": "fistR", "mm": 267.1 },
+        "worstClips": [
+          { "clip": "BeatChest_SideLeft", "t": 0.783, "point": "fistR", "mm": 267.1 },
+          { "clip": "BeatChest_SideRight", "t": 1.083, "point": "fistR", "mm": 267 },
+          { "clip": "March_SideRight", "t": 0.483, "point": "fistR", "mm": 265.3 },
+          { "clip": "WildArms_SideRight", "t": 0.917, "point": "fistR", "mm": 57.8 },
+          { "clip": "WildArms_SideLeft", "t": 0.417, "point": "fistR", "mm": 53.2 }
+        ]
+      },
+      "style100_siderun": {
+        "clips": 194,
+        "samples": 319648,
+        "mean": 0.148,
+        "worst": { "clip": "BeatChest_SideRunRight", "t": 0.117, "point": "fistR", "mm": 266.1 },
+        "worstClips": [
+          { "clip": "BeatChest_SideRunRight", "t": 0.117, "point": "fistR", "mm": 266.1 },
+          { "clip": "OnPhoneRight_SideRunLeft", "t": 1.283, "point": "fistR", "mm": 263.8 },
+          { "clip": "March_SideRunLeft", "t": 1.083, "point": "fistL", "mm": 263.6 },
+          { "clip": "BeatChest_SideRunLeft", "t": 0.117, "point": "fistR", "mm": 261.3 },
+          { "clip": "WildArms_SideRunRight", "t": 0.483, "point": "fistR", "mm": 49.4 }
+        ]
+      }
+    }
+  }
+}
