@@ -12,8 +12,9 @@
  *
  * Sets come in two ways: my-3d2dge's `src/mocap/sets/<set>.js`, read through the legacy oracle
  * (tools/anim/legacy-readable.ts), which `legacySetFiles` repacks into data/anim/sets/ (the three curated sets, HERO
- * dropped, each of Mesh2Motion's Quaternius re-exports tagged `alt` by `tagAlternates`); and plain JSON sets, as
- * shardfall writes them (`readPlainSet`; WP 8.10's tools/anim/shardfall.ts).
+ * dropped, each of Mesh2Motion's Quaternius re-exports tagged `alt` by `tagAlternates`, and CMU's sources given CMU's
+ * terms by `withCmuTerms`); and plain JSON sets, as shardfall writes them (`readPlainSet`; WP 8.10's
+ * tools/anim/shardfall.ts).
  *
  * Invariants: a clip file holds its clip's `text()` and nothing else, so the repack leaves `text()` output unchanged.
  * Every file is read through the codec's parser (engine/anim/clip/validate.ts), so a broken one is refused with its
@@ -203,9 +204,26 @@ export function writeSetDir(dir: string, files: SetFiles): { written: string[]; 
 /** The curated sets that tools/anim/shardfall.ts writes from shardfall's files instead (WP 8.10). */
 const SHARDFALL_WRITES = new Set(['quaternius']);
 
+/** The CMU catalog, whose `$sources.CMU.license` states CMU's terms (data/anim/SOURCES.md). */
+const CMU_CATALOG = join(ROOT, 'data', 'anim', 'catalogs', 'cmu.json');
+
+/**
+ * The CMU set with CMU's terms in each of its source records, as the CMU catalog states them: my-3d2dge's set said
+ * "free for all uses"; WP 8.1 corrected the catalog, and the importer (`x anim import --cmu`) writes what it says.
+ */
+export function withCmuTerms(set: ClipSet, catalog: string = CMU_CATALOG): ClipSet {
+  const license = (JSON.parse(readFileSync(catalog, 'utf8')) as { $sources?: { CMU?: { license?: string } } }).$sources
+    ?.CMU?.license;
+  if (!license) throw new Error(`${catalog} has no "$sources".CMU.license: restore CMU's terms there`);
+  const sources = Object.entries(set.sources ?? {}).map(([id, source]) => [id, { ...source, license }]);
+  return { ...set, sources: Object.fromEntries(sources) };
+}
+
 /** The files of my-3d2dge's three curated sets (HERO dropped), from the checkout at `sourcePath`, by directory. */
 export function legacySetFiles(sourcePath: string): Record<string, SetFiles> {
-  const sets = CURATED_SETS.map((name) => tagAlternates(readPlainSet(readLegacySet(sourcePath, name))));
+  const sets = CURATED_SETS.map((name) => tagAlternates(readPlainSet(readLegacySet(sourcePath, name)))).map((set) =>
+    set.set === 'CMU' ? withCmuTerms(set) : set,
+  );
   return Object.fromEntries(sets.map((set) => [setDirName(set.set), splitSet(set)]));
 }
 
