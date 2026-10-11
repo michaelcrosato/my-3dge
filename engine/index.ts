@@ -313,3 +313,14 @@ export type { LevelFloorOptions } from './gfx/textures/contactShadow';
 export type { ContactShadowOptions } from './gfx/textures/contactShadow';
 export type { FloorMossOptions } from './gfx/textures/contactShadow';
 export type { FloorRuneOptions } from './gfx/textures/contactShadow';
+// Clips in pages (WP 8.4): three.js's AnimationClip and AnimationMixer, for presentation only (a page plays a baked
+// clip on a puppet with clipJSON and AnimationClip.parse); the sim samples the same tracks through the clip layer.
+// The mannequin: the Quaternius figure the library was measured on, as a body and a build.
+/** three.js's animation clip: `AnimationClip.parse(clipJSON(baked, skeleton))` makes one from a baked clip. */
+export { AnimationClip } from 'three/webgpu';
+/** three.js's animation mixer: plays clips on an object's bones (a puppet's mesh), for presentation only. */
+export { AnimationMixer } from 'three/webgpu';
+export { defineMannequin } from './gfx/puppets/bodies/mannequin';
+export { mannequinBody } from './gfx/puppets/bodies/mannequin';
+export { MANNEQUIN_SLOTS } from './gfx/puppets/bodies/mannequin';
+export type { MannequinData } from './gfx/puppets/bodies/mannequin';
