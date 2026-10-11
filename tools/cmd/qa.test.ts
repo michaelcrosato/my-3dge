@@ -8,7 +8,7 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { dispatch, loadCommand, ROOT } from '../x';
+import { CHILD_TIMEOUT_MS, dispatch, loadCommand, ROOT } from '../x';
 import { compareWithBaselines, qaFamilies, readBaselines, runQa, type QaBaseline, type QaViolation } from './qa';
 
 const temporary: string[] = [];
@@ -161,9 +161,13 @@ describe('families', () => {
     expect(await dispatch(['qa'], { root, commands, print: () => undefined })).toBe(2);
   });
 
-  it('node x qa on the repository lists the families in tools/qa/, level (WP 2.2) among them', () => {
-    const run = spawnSync(process.execPath, ['x', 'qa'], { cwd: ROOT, encoding: 'utf8' });
-    expect(run.status).toBe(2);
-    expect(run.stdout).toMatch(/name a QA family \(families: ([a-z]+, )*level(, [a-z]+)*\)/);
-  });
+  it(
+    'node x qa on the repository lists the families in tools/qa/, level (WP 2.2) among them',
+    { timeout: CHILD_TIMEOUT_MS },
+    () => {
+      const run = spawnSync(process.execPath, ['x', 'qa'], { cwd: ROOT, encoding: 'utf8', timeout: CHILD_TIMEOUT_MS });
+      expect(run.status).toBe(2);
+      expect(run.stdout).toMatch(/name a QA family \(families: ([a-z]+, )*level(, [a-z]+)*\)/);
+    },
+  );
 });

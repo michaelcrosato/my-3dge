@@ -1,0 +1,36 @@
+/**
+ * @file The prop `prop:{{name}}`: what it is (replace this text; `x docs` puts the first sentence in INDEX).
+ * It starts as a small wooden chest, a box of planks under a lid, that slides and tumbles when it is hit.
+ *
+ * Invariants: its parts stand on its base (the origin, +Y up), in metres, built from geometry and materials by id
+ * (`node x describe geometry`, `node x describe material`); its body's shape stands on the base too, as tall as the
+ * parts; `node x qa geo tex --only prop:{{name}}` checks its parts and their textures.
+ *
+ * @example
+ * {{name}}.body.type; // 'dynamic'
+ * @see {{id}}.test.ts
+ */
+import { defineProp } from '../../../engine/sim-api';
+
+/** The prop `prop:{{name}}`: replace this sentence with what it is. */
+export const {{name}} = defineProp('prop:{{name}}', {
+  description: 'A small wooden chest: a box of planks under a lid (replace).',
+  parts: [
+    {
+      name: 'box',
+      geometry: 'geometry:box',
+      params: { width: 0.6, height: 0.3, depth: 0.4 },
+      material: 'material:planks',
+    },
+    {
+      name: 'lid',
+      geometry: 'geometry:box',
+      params: { width: 0.62, height: 0.15, depth: 0.42 },
+      material: 'material:planks',
+      position: [0, 0.3, 0],
+      tint: '#c8a080',
+    },
+  ],
+  body: { type: 'dynamic', shape: 'box', size: [0.6, 0.45, 0.4] },
+  place: { spawn: '{{name}}' },
+});

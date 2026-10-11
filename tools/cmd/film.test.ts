@@ -6,7 +6,8 @@
  * difference on unchanged sources fails, on changed sources it warns; a base without the page or scene is "no
  * baseline", never a failure), the contact sheet's layout, labels and diff row, the thumbnail baselines, the
  * temporary worktree, and the usage errors raised before any browser starts. The browser half is proven by
- * `node x film labs/box --scene room --steps "step 60" --compare HEAD` (WP 3.11's Verify).
+ * `node x film labs/box --scene room --steps "step 60" --compare HEAD` (WP 3.11's Verify). The comparison and the
+ * thumbnails are tools/lib/filmCompare.ts, the sheet tools/lib/filmSheet.ts.
  * @see tools/cmd/film.ts
  */
 import { execFileSync } from 'node:child_process';
@@ -27,25 +28,15 @@ import type { IdEntry } from '../../engine/gfx/idpass';
 import { thumbnail } from '../../engine/gfx/thumbnail';
 import { dispatch, loadCommand, ROOT } from '../x';
 import {
-  addWorktree,
   checkFilmThumbs,
   compareFilmThumbs,
   compareFrames,
-  contactSheet,
-  drawText,
   EMPTY,
-  hasFile,
   judgeCompare,
-  LABEL,
-  MAGENTA,
-  parseSteps,
-  removeWorktree,
-  resolveRef,
-  sameSources,
-  SHOT,
-  simSteps,
   type FilmFrame,
-} from './film';
+} from '../lib/filmCompare';
+import { contactSheet, drawText, LABEL, MAGENTA } from '../lib/filmSheet';
+import { addWorktree, hasFile, parseSteps, removeWorktree, resolveRef, sameSources, SHOT, simSteps } from './film';
 
 const temporary: string[] = [];
 afterEach(() => {

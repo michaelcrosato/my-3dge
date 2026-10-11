@@ -1,0 +1,45 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Box 2, the hero jumps onto the low wall (0.75 m) from its north side, walks east and west along its top, jumps down to the south, walks back and jumps up again from the south, ending on top.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "box:room-hero",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [
+    [20, { "move": [1, 0] }],
+    [59, { "move": [0, 1] }],
+    [110, { "b": ["jump"], "move": [0, 0.4] }],
+    [132, { "b": null }],
+    [138, { "move": null }],
+    [180, { "move": [1, 0] }],
+    [204, { "move": null }],
+    [240, { "move": [-1, 0] }],
+    [276, { "move": null }],
+    [310, { "b": ["jump"], "move": [0, 1] }],
+    [328, { "b": null }],
+    [350, { "move": null }],
+    [390, { "move": [0, -1] }],
+    [420, { "b": ["jump"], "move": [0, -0.4] }],
+    [442, { "b": null }],
+    [448, { "move": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "f3cd20d0f939ec19",
+      "60": "36867ded09e9e8fa",
+      "120": "8ab5e794feeaa4c3",
+      "180": "bfc499f40e4bf0c0",
+      "240": "835275da7dc958f2",
+      "300": "c698fc534d460ddf",
+      "360": "a2ed3a538233e330",
+      "420": "a3f37e8fd2cb610f",
+      "480": "5347a54a41b8f2a1",
+      "540": "bc198a84055a2aae",
+      "600": "90ebcd609baf3658"
+    }
+  }
+}

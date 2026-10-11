@@ -11,7 +11,9 @@
  * runs n steps at once, inside the session, so the steps are recorded and `headlessHost(h).session.record()` is the
  * run as a replay. `pause`, `resume` and `timeScale` set the clock's settings as in a page (no real time passes
  * headless, so only `step` runs steps). `seed(n)` starts the scene again with seed n, a new session and clock, keeping
- * every setting that differs from what a fresh start gives; `replay(text)` starts the replay's run and plays it.
+ * every setting that differs from what a fresh start gives; `replay(text)` starts the replay's run and plays it. The
+ * run's stats meter (engine/dev/stats.ts, `__engine.stats()`) times every step it runs, and the world's systems through
+ * the world's probe; a page times its frames through it and gives it the renderer's counts (`Drawing.counts`).
  *
  * `createAppHost` is the run behind both engines: engine/app/engine.ts adds a page's drawing to it. Invariants:
  * everything runs synchronously after the promise resolves (the fdlibm swap holds only through synchronous entry
@@ -37,6 +39,7 @@ import { createSettings, defineSettings, type SettingValue } from '../core/setti
 import { createClock, TIME_SETTINGS, type Clock } from '../core/time';
 import { createInspector, type Inspector } from '../dev/inspector';
 import { recordedRun, type InspectorHost, type RecordedRun } from '../dev/members';
+import { createStatsMeter, type RenderCounts, type StatsMeter } from '../dev/stats';
 import { createMaterialLibrary, type MaterialLibrary } from '../gfx/materials/library';
 import type { FrameReport } from '../gfx/renderer';
 import type { ShotJson, ShotOptions } from '../gfx/shot';
@@ -46,6 +49,7 @@ import type { AnyComponents } from '../sim/state';
 import { playInto, type PlayIntoOptions, type PlayResult } from './playback';
 import { createRunView, type RunView } from './view';
 import type { AppHost } from './viewMembers';
+import './animMember';
 import './feelMember';
 import './viewMembers';
 
@@ -97,6 +101,8 @@ export interface Drawing {
   draw(): Promise<void>;
   /** Sets a view setting (it never changes play). */
   setView(path: string, value: SettingValue): void;
+  /** The renderer's counts for `__engine.stats()`, null before it started. */
+  counts(): RenderCounts | null;
 }
 
 /** The run behind an engine: the inspector, its host, and the live session (app code only, never members). */
@@ -115,6 +121,8 @@ export interface AppRun {
   readonly playing: boolean;
   /** Starts a replay's run (its scene, seed and settings), for playing it step by step; returns its session. */
   begin(replay: Replay): Session;
+  /** The stats meter (engine/dev/stats.ts): it times every step and phase; a page times its frames through it. */
+  readonly meter: StatsMeter;
 }
 
 /** How `createAppHost` makes a run: `createHeadless`'s options, plus a page's drawing and material library. */
@@ -149,6 +157,7 @@ export function createAppHost<C extends object = AnyComponents, E extends EventM
   const timed = registry.kinds().includes('setting') && registry.has('setting', 'time.hz');
   if (!timed) defineSettings(TIME_SETTINGS, registry); // the clock reads them: a test registry may lack them
   const { drawing } = options;
+  const meter = createStatsMeter({ counts: () => drawing?.counts() ?? null });
   // Members get `recordedRun(session)`, except that a restore or a dev action moves entities between steps, so the
   // view then snaps to the world as it is (no interpolation from the places it had), as it does after a restart.
   const followed = (session: Session): RecordedRun => {
@@ -172,7 +181,7 @@ export function createAppHost<C extends object = AnyComponents, E extends EventM
     ) as RecordedRun;
   };
   const start = (scene: Scene, seed: number, settings: Readonly<Record<string, unknown>> | undefined) => {
-    const session = createSession(scene, { seed, settings, registry, log: options.log });
+    const session = createSession(scene, { seed, settings, registry, log: options.log, probe: meter.probe });
     const clock = createClock({ settings: session.settings, log: options.log });
     return { session, recorded: followed(session), clock };
   };
@@ -200,7 +209,7 @@ export function createAppHost<C extends object = AnyComponents, E extends EventM
     return run.session;
   };
   const stepOnce = (intents: unknown) => {
-    run.session.step(intents);
+    meter.time('sim', () => run.session.step(intents));
     view?.stepped();
   };
   const host: AppHost = {
@@ -230,6 +239,7 @@ export function createAppHost<C extends object = AnyComponents, E extends EventM
       return drawing ? drawing.ready() : true;
     },
     view,
+    meter,
     step(n, intents) {
       const script = Array.isArray(intents) ? intents : undefined;
       const later = isPlainObject(intents) ? { ...intents, p: undefined } : intents;
@@ -277,6 +287,7 @@ export function createAppHost<C extends object = AnyComponents, E extends EventM
       return playing;
     },
     begin,
+    meter,
   };
 }
 

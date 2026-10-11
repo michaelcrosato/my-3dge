@@ -1,0 +1,17 @@
+{
+  "action": "roll",
+  "desc": "A forward roll on the ground, the dodge (Ocarina, Minish Cap, Hades; my-3d2dge's heroRoll): a crouch, one tucked somersault about the hips, and up. Invulnerable while it rolls.",
+  "beats": [
+    { "name": "dip", "seconds": 0.06, "motion": { "crouch": 0.6, "lean": 0.5 } },
+    {
+      "name": "roll",
+      "seconds": 0.4,
+      "body": { "air": true },
+      "motion": { "crouch": 1, "lean": 0.4 },
+      "flip": { "turns": 1, "axis": "forward", "ground": true },
+      "flags": ["invulnerable"],
+      "events": [{ "type": "dust", "at": 0.1 }]
+    },
+    { "name": "rise", "seconds": 0.15, "motion": { "crouch": 0.3 }, "cancel": { "by": ["any"], "after": 0.3 } }
+  ]
+}

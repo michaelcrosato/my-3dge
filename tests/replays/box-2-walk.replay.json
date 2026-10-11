@@ -1,0 +1,39 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Box 2, the hero walks a square twice from his spawn: east, south, west and north, about 4 × 3 m, between the north wall, the pillar and the low wall, back to within about 30 cm of where he started; footsteps as he walks.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "box:room-hero",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [
+    [30, { "move": [1, 0] }],
+    [78, { "move": [0, 1] }],
+    [114, { "move": [-1, 0] }],
+    [162, { "move": [0, -1] }],
+    [198, { "move": null }],
+    [270, { "move": [1, 0] }],
+    [318, { "move": [0, 1] }],
+    [354, { "move": [-1, 0] }],
+    [402, { "move": [0, -1] }],
+    [438, { "move": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "f3cd20d0f939ec19",
+      "60": "4cb6c11d9f613014",
+      "120": "951e1864872f7b3e",
+      "180": "bab8ba268510c4ea",
+      "240": "21daac6830fe2fd2",
+      "300": "6abfb238b4b9e9fa",
+      "360": "e81885ebaace8852",
+      "420": "4bd764587f34529c",
+      "480": "2e5386700f115701",
+      "540": "6d5400ee62bdb65a",
+      "600": "5be99c34de6d5dc4"
+    }
+  }
+}

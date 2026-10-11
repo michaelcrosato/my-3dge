@@ -1,0 +1,27 @@
+{
+  "action": "deathBlown",
+  "desc": "Death by a crushing blow (my-3d2dge's hero moment deathBlown, Mesh2Motion's Death_B): thrown back off its feet, down by 1.2 s, and stays down until the game revives it (finish: Quaternius' LayToIdle, as the hero's rise).",
+  "beats": [
+    {
+      "name": "blown",
+      "seconds": 1.875,
+      "clip": { "name": "MESH2MOTION/Death_B", "hold": true, "landed": 1.2 },
+      "events": [{ "type": "down", "at": 0.64 }]
+    },
+    {
+      "name": "dead",
+      "seconds": 0.2,
+      "until": "next",
+      "body": { "down": 1 },
+      "clip": { "name": "MESH2MOTION/Death_B", "hold": true }
+    },
+    {
+      "name": "revive",
+      "seconds": 1.39,
+      "clip": { "name": "QUATERNIUS/LayToIdle", "speed": 1.1, "fade": 0.25, "out": 0.25 },
+      "events": [{ "type": "revive" }]
+    }
+  ],
+  "exit": "revive",
+  "check": { "signals": [{ "at": 2.3, "do": "finish" }] }
+}

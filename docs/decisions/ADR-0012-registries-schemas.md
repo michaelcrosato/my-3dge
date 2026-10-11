@@ -59,3 +59,21 @@ Calls made where the plan is silent:
   `.defineKind(…)`.
 - **A kind may say how its entries are written** (`defineWith`), for the missing-id messages: settings name
   `defineSettings({ '<path>': { … } })`, other kinds `def('<kind>', '<id>', { … })`.
+
+## Amendment 3 (2026-10-11, WP-4.5)
+Props are checked by the geo and tex families, under their own ids.
+- `x qa geo` builds each prop's parts as the prop draws them (buildPropPart) and reports their faults under the prop's
+  id. It adds `reference` (a part names a geometry nobody defined) and `float` (a prop with a body whose parts start
+  more than 1 cm above or below its base).
+- `x qa tex` bakes the textures that a prop's materials name, the way the material bakes them (with its params and
+  size), under the prop's id. It adds `reference` for a material nobody defined.
+- Both families import a game's props from labs/<name>/props/. With this, `--only prop:` really checks props, as the
+  Verify of WP 4.5 and WP 10.3 expects.
+- WP 4.5's Owns is extended by tools/qa/{geo,tex}{,.test}.ts, which come from WPs 2.4 and 2.3.
+- Calls made where the plan is silent:
+  - The brazier prop is only the fire. It stands on the stand drawn by the level's `t` glyph (WP 4.4) and is placed
+    under each light spot tagged torch.
+  - Where a level places a prop is data on the entry (`place.spawn`, `place.light`).
+  - engine/world may import only core. So propBody returns the plain spec that addBody takes, and the hit/use hooks
+    receive a `knock` from the caller.
+  - A prop's pose is its body's centre, propCentre above its base.

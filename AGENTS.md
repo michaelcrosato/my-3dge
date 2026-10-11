@@ -18,7 +18,7 @@ bash scripts/setup.sh (idempotent) does three things:
   Set them to your own checkouts at those commits, or leave them unset: the script then clones .cache/src-3d2dge and
   .cache/src-shardfall (git clone --shared from a local clone, else GitHub) and detaches them at the pinned commits.
   Tools resolve them the same way ($VAR, else .cache/src-*), so no shell state is needed. Never edit them.
-- npm ci.
+- npm ci. npm's warning that an .npmrc allow-scripts setting is ignored is expected: package.json's allowScripts rules.
 It prints the export lines for PATH, MY3D2DGE_SRC and SHARDFALL_SRC, and appends them to $CLAUDE_ENV_FILE when that is
 set. Phase 0 builds the tools below one WP at a time: until a command exists, skip its step (PLAN.md §9.3).
 
@@ -64,7 +64,8 @@ stopping. Record every escalation, every later conflict and every call.
    modules you touch (not whole files). The sources being ported are read-only at $MY3D2DGE_SRC and $SHARDFALL_SRC
    (node x src).
 3. Edit. The after-edit hook formats and lints the file: fix what it reports.
-4. npm run check (< 10 s) → npm test (< 60 s) → npm run e2e (< 6 min; PLAN.md §8.2 says what to select).
+4. npm run check (< 10 s once a new checkout's first run filled its caches) → npm test (< 60 s) → npm run e2e
+   (< 6 min; docs/TESTING.md says what to select, and labs/box/README.md which box specs and replays).
 5. Read out/**/report.json. Open images only when a metric points at one (use the visual-reviewer subagent).
 6. Show it in the box or a fixture test. Update the ledger row in PLAN.md §14 (in ultracode lanes, report it).
 7. Commit "<area>: <what> (WP-x.y)". Report the commit, the report paths and any escalations.
@@ -97,3 +98,14 @@ engine/ (code + unit tests; index.ts and sim-api.ts are the public API) · labs/
 (readable data) · fixtures/ · tools/ (x commands, content QA, the ESLint plugin, deps.json) · tests/ (e2e, replays,
 baselines) · docs/ (generated INDEX/API/ERRORS, ADRs in docs/decisions/, escalations, reference) · scripts/setup.sh
 (the platform) · .cache/ (git-ignored: the source checkouts, importer inputs)
+
+Task guides (docs/INDEX.md opens with them), each read when the task needs it:
+- docs/PROGRESS.md: read first, every session: where things stand, what is next, the open issues.
+- docs/TESTING.md: the tiers, and which unit tests and specs a change selects.
+- labs/box/README.md: the box's scenes, settings and quick loop; adding a scene or a variant (a variant is a new
+  scene file or a settings preset, never a change of meaning in a passing scene).
+- tests/replays/README.md: the replay format; checking, recording and making replays.
+- tools/templates/: `node x new <kind> <id>` writes a module, scene, material… from its kind's template and checks it
+  (`node x new` lists the kinds).
+- .claude/skills/: the skills, each loaded when its description says (x-loop after any change, stress-box for the box,
+  determinism-debugging when hashes part, rapier, three-webgpu, escalation).

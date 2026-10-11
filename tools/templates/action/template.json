@@ -1,0 +1,11 @@
+{
+  "describe": "An action: a multi-beat sequence a body plays (beats of body states, a motion or a move, a clip, IK targets, a flip, a squash, events, flags, cancel windows), with a unit test that plays every beat to its end and passes its check through animCheckBody on a humanoid (PLAN.md WP 8.7).",
+  "id": "the module's path, labs/<lab>/actions/<name> (its id is action:<name>): labs/box/actions/bow",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/actions|tools/templates/action)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/action/sampleAction",
+  "files": {
+    "action.ts.tmpl": "{{id}}.ts",
+    "action.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}

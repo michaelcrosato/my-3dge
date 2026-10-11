@@ -5,7 +5,9 @@
  *   joint's rest offset and local rotation), bound at the rest pose; every vertex follows the one bone its piece
  *   rides, with weight 1 (smooth skinning is for later). `setPose(pose)` writes a WP 3.4 `Pose` into the bones, so
  *   the drawn sockets are FK's. Its geometry holds every lit piece in one group and every glow piece (eyes) in
- *   another, coloured per vertex from the slots: two draw calls, and two more per shadow map.
+ *   another, coloured per vertex from the slots: two draw calls, and two more per shadow map. `hide(joints)` gives
+ *   the vertices of the pieces on those joints no skin weight (first person's near-body culling), so skinning folds
+ *   them to a point that covers no pixel: an attribute upload, never a pipeline; the bones move as before.
  * - `createPuppetBatches({ materials })`: instanced parts per shape for crowds (engine/gfx/instancing.ts):
  *   `draw(compiled, pose)` runs FK and writes each piece's world matrix and slot colour into its shape's batch; a
  *   limb draws as a frustum whose taper is rounded to eighths (one batch per eighth) with a ball at each end, so a
@@ -43,7 +45,7 @@ import {
 } from 'three/webgpu';
 import { createWorldPose, forwardKinematics } from '../../anim/fk';
 import { Pose } from '../../anim/pose';
-import { JOINTS, PARENTS, SOCKETS, type SocketName } from '../../anim/skeleton';
+import { JOINTS, PARENTS, SOCKETS, type JointName, type SocketName } from '../../anim/skeleton';
 import { registry as sharedRegistry, type Registry } from '../../core/registry';
 import { limbGeometry } from '../geometry/limb';
 import { createInstancedBatch, type InstancedBatch } from '../instancing';
@@ -202,6 +204,8 @@ export interface Puppet {
   setPose(pose: Pose): this;
   /** Where `socket` is drawn, from the bones' world matrices. */
   socketPosition(socket: SocketName, out?: Vector3): Vector3;
+  /** Hides the pieces riding `joints` and shows the rest (see the file comment); `[]` shows every piece. */
+  hide(joints: readonly JointName[]): this;
   /** Draw calls a frame costs: one per group (lit, glow), again per shadow map. */
   drawCalls(shadowMaps?: number): number;
   /** Registers the mesh with `warmup` as `id` (the mesh's name, `puppet:<body>`, by default). */
@@ -232,7 +236,7 @@ export function createPuppet(compiled: CompiledBody, options: { materials: Puppe
   mesh.bind(new Skeleton(bones, inverses), new Matrix4());
   Object.assign(mesh, { castShadow: true, receiveShadow: true, boundingSphere: new Sphere() });
   Object.assign(mesh.userData, { body: body.id, build: skeleton.build.id });
-  const pelvis = new Vector3();
+  const [pelvis, shown] = [new Vector3(), { hidden: new Set<number>() }];
   const puppet: Puppet = {
     mesh,
     compiled,
@@ -251,6 +255,14 @@ export function createPuppet(compiled: CompiledBody, options: { materials: Puppe
       const bone = bones[skeleton.socketJoints[s] + 1];
       bone.updateWorldMatrix(true, false);
       return out.fromArray(skeleton.socketOffsets, s * 3).applyMatrix4(bone.matrixWorld);
+    },
+    hide(joints) {
+      const next = new Set(joints.map((joint) => JOINTS.indexOf(joint) + 1)); // the bones, as skinIndex holds them
+      if (next.size === shown.hidden.size && [...next].every((bone) => shown.hidden.has(bone))) return puppet;
+      const [skinIndex, skinWeight] = [geometry.getAttribute('skinIndex'), geometry.getAttribute('skinWeight')];
+      for (let v = 0; v < skinIndex.count; v++) skinWeight.setX(v, next.has(skinIndex.getX(v)) ? 0 : 1);
+      [shown.hidden, skinWeight.needsUpdate] = [next, true];
+      return puppet;
     },
     drawCalls(shadowMaps = 0) {
       return geometry.groups.length * (1 + (mesh.castShadow ? shadowMaps : 0));

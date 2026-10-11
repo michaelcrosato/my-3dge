@@ -1,0 +1,19 @@
+/**
+ * @file Unit tests for the telegraph `telegraph:{{name}}` ({{id}}.ts): a body inside its reach is hit, one just past
+ * it is a near miss, one far past it neither.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { inTelegraph, nearMiss, type TelegraphPlace } from '../../../engine/sim-api';
+import { {{name}} } from './{{name}}';
+
+describe('telegraph:{{name}}', () => {
+  it('hits inside its reach and counts a near miss just past it', () => {
+    const place: TelegraphPlace = { telegraph: {{name}}.id, position: [0, 0, 0], yaw: 0, u: 1 };
+    const ahead = (metres: number) => [0, 0, metres] as const;
+    expect(inTelegraph({{name}}, place, ahead(({{name}}.inner + {{name}}.radius) / 2))).toBe(true);
+    expect(nearMiss({{name}}, place, ahead({{name}}.radius + {{name}}.near / 2))).toBe(true);
+    expect(inTelegraph({{name}}, place, ahead({{name}}.radius + {{name}}.near * 2))).toBe(false);
+    expect(nearMiss({{name}}, place, ahead({{name}}.radius + {{name}}.near * 2))).toBe(false);
+  });
+});

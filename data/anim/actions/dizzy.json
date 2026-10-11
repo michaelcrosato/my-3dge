@@ -1,0 +1,17 @@
+{
+  "action": "dizzy",
+  "desc": "Dizzy (Street Fighter II, beat-'em-ups): a stagger, then Mesh2Motion's Dizzy sway until the game ends it (finish), stars at the head from the event, and a shake back to the guard.",
+  "beats": [
+    { "name": "stagger", "seconds": 0.3, "body": { "hurt": true }, "motion": { "lean": -0.2, "twist": 0.3 } },
+    {
+      "name": "dazed",
+      "seconds": 0.3,
+      "until": "next",
+      "clip": { "name": "MESH2MOTION/Dizzy", "loop": true, "fade": 0.25, "out": 0.3 },
+      "events": [{ "type": "stars" }]
+    },
+    { "name": "recover", "seconds": 0.4, "events": [{ "type": "starsOff" }], "cancel": { "by": ["any"], "after": 0.5 } }
+  ],
+  "exit": "recover",
+  "check": { "signals": [{ "at": 2, "do": "finish" }], "seconds": 2.6 }
+}

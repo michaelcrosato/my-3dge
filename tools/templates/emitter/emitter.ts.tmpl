@@ -1,0 +1,30 @@
+/**
+ * @file The emitter `emitter:{{name}}`: what it is (replace this text; `x docs` puts the first sentence in INDEX).
+ * It starts as a puff of pale green spores drifting up, swirling and fading, burst at each `{{name}}` event.
+ *
+ * Invariants: its fields are the kind's (`node x describe emitter`), in metres and seconds; its colours are hex, a
+ * brightness above 1 glows; it answers the event types in `events` (a view's `effects.event(type, { position })`).
+ *
+ * @example
+ * {{name}}.events; // ['{{name}}']
+ * @see {{id}}.test.ts
+ */
+import { defineEmitter } from '../../../engine';
+
+/** The emitter `emitter:{{name}}`: replace this sentence with what it is. */
+export const {{name}} = defineEmitter('emitter:{{name}}', {
+  description: 'Pale green spores drifting up, swirling and fading (replace).',
+  area: [0.2, 0.1, 0.2],
+  velocity: [0, 0.8, 0],
+  spread: 0.5,
+  gravity: -0.3,
+  drag: 0.8,
+  turbulence: 1.5,
+  life: [0.8, 1.6],
+  size: [0.06, 0],
+  color: ['#c8ff9a', '#6ad16a'],
+  brightness: [1.5, 1],
+  alpha: [0.9, 0],
+  count: 16,
+  events: ['{{name}}'],
+});

@@ -1,0 +1,13 @@
+{
+  "action": "deathTopple",
+  "desc": "Death by toppling, the plain one (Zelda, Final Fantasy): the humanoid's die pose (a stagger, the knees give, onto its back), then dead until the game revives it (finish: sit up, kneel, stand).",
+  "beats": [
+    { "name": "die", "seconds": 0.7, "body": { "pose": "die" }, "events": [{ "type": "down", "at": 1 }] },
+    { "name": "dead", "seconds": 0.2, "until": "next", "body": { "pose": "die" } },
+    { "name": "revive", "seconds": 0.25, "body": { "down": 0.5, "pose": "crouch" }, "events": [{ "type": "revive" }] },
+    { "name": "kneel", "seconds": 0.3, "body": { "pose": "kneel" } },
+    { "name": "stand", "seconds": 0.25 }
+  ],
+  "exit": "revive",
+  "check": { "signals": [{ "at": 1.6, "do": "finish" }] }
+}

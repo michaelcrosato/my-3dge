@@ -25,6 +25,7 @@ import {
   TIERS,
   vitestRerunTriggers,
 } from './tiers';
+import { CHILD_TIMEOUT_MS } from '../x';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 
@@ -104,31 +105,36 @@ describe('the base, the changes and the selections, in a temporary repository', 
     git('reset', '--quiet', '--hard', gate);
   });
 
-  it('selects every Vitest test that imports a changed engine/core/a.ts, directly or not, and runs T2 in full', () => {
-    write('engine/core/a.ts', 'export const a = 2;\n');
-    const { base, changes, t1, t2 } = plan(repo);
-    expect(changes).toEqual({ base: base.sha, files: ['engine/core/a.ts'], versionOnly: [] });
-    expect(t1).toMatchObject({
-      mode: 'some',
-      reason: "T1 runs the tests that import engine/core/a.ts, directly or not (Vite's module graph)",
-    });
-    expect(t1.command).toEqual(['npx', 'vitest', 'related', '--run', '--passWithNoTests', 'engine/core/a.ts']);
-    const report = join(repo, 'out', 'related.json');
-    const run = spawnSync(t1.command[0], [...t1.command.slice(1), '--reporter=json', `--outputFile=${report}`], {
-      cwd: repo,
-      encoding: 'utf8',
-    });
-    expect(run.status, run.stdout + run.stderr).toBe(0);
-    const ran = (JSON.parse(readFileSync(report, 'utf8')) as { testResults: { name: string }[] }).testResults
-      .map((result) => result.name.slice(repo.length + 1))
-      .sort();
-    expect(ran).toEqual(['engine/core/a.test.ts', 'engine/core/b.test.ts']);
-    expect(t2).toMatchObject({ mode: 'all', command: ['npm', 'run', 'e2e'] });
-    expect(t2.reason).toBe(
-      "T2 runs in full: engine/core/a.ts changed (engine code, which pages load through the dev server, not through the specs' imports)",
-    );
-    git('checkout', '--quiet', '--', '.');
-  });
+  it(
+    'selects every Vitest test that imports a changed engine/core/a.ts, directly or not, and runs T2 in full',
+    { timeout: CHILD_TIMEOUT_MS },
+    () => {
+      write('engine/core/a.ts', 'export const a = 2;\n');
+      const { base, changes, t1, t2 } = plan(repo);
+      expect(changes).toEqual({ base: base.sha, files: ['engine/core/a.ts'], versionOnly: [] });
+      expect(t1).toMatchObject({
+        mode: 'some',
+        reason: "T1 runs the tests that import engine/core/a.ts, directly or not (Vite's module graph)",
+      });
+      expect(t1.command).toEqual(['npx', 'vitest', 'related', '--run', '--passWithNoTests', 'engine/core/a.ts']);
+      const report = join(repo, 'out', 'related.json');
+      const run = spawnSync(t1.command[0], [...t1.command.slice(1), '--reporter=json', `--outputFile=${report}`], {
+        cwd: repo,
+        encoding: 'utf8',
+        timeout: CHILD_TIMEOUT_MS,
+      });
+      expect(run.status, run.stdout + run.stderr).toBe(0);
+      const ran = (JSON.parse(readFileSync(report, 'utf8')) as { testResults: { name: string }[] }).testResults
+        .map((result) => result.name.slice(repo.length + 1))
+        .sort();
+      expect(ran).toEqual(['engine/core/a.test.ts', 'engine/core/b.test.ts']);
+      expect(t2).toMatchObject({ mode: 'all', command: ['npm', 'run', 'e2e'] });
+      expect(t2.reason).toBe(
+        "T2 runs in full: engine/core/a.ts changed (engine code, which pages load through the dev server, not through the specs' imports)",
+      );
+      git('checkout', '--quiet', '--', '.');
+    },
+  );
 
   it('runs T2 in full for page code, and only the changed specs for a spec helper', () => {
     write('tests/pages/demo.html', '<!doctype html><title>changed</title>\n');

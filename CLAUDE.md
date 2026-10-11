@@ -19,5 +19,7 @@
   carries its JSDoc), never by memory of another release: `tsc` rejects a name the pinned release lacks.
 - **Subagents** (WP 0.10): `verifier` reviews L-size WPs and every gate against DOCTRINE.md and the WP's Done-when
   list; `visual-reviewer` reads images and returns a JSON verdict.
+- **Skills** in `.claude/skills/` load when their descriptions match the task; AGENTS.md's task guides ("Where things
+  are") and docs/INDEX.md's "Start here" list them with docs/PROGRESS.md, the READMEs and the templates.
 - **Pushes, stage PRs, squash merges and branch deletions** need no approval (ADR-0021). Any other outward action
   is escalated first (AGENTS.md, "Escalate, don't stall").

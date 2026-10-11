@@ -1,7 +1,8 @@
 /**
  * @file The `node x <cmd>` dispatcher (PLAN.md §8.1): finds `tools/cmd/<cmd>.ts`, parses its arguments with
  * `node:util`'s `parseArgs` in strict mode, runs it, prints at most about 20 lines (the verdict first), writes
- * `out/<cmd>/<target>/report.json` plus `out/latest.json`, and returns the exit code.
+ * `out/<cmd>/<target>/report.json` plus `out/latest.json`, and returns the exit code. When it cuts the output, every
+ * line is in `output.txt` beside the report: the line that says how many were cut names it, and so does the report.
  *
  * Invariants: exit 0 when the command passes, 1 when it fails (a crash included, the import of its module too), 2 on
  * a usage error (unknown command, unknown flag, bad argument), each naming the closest valid choice. Every run writes
@@ -12,11 +13,11 @@
  * // node x help --nope  → exit 2: unknown flag
  * @see tools/x.test.ts
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
-import { makeReport, writeReport, type Artifact, type Finding, type Report } from './lib/report';
+import { makeReport, outputPath, writeReport, type Artifact, type Finding, type Report } from './lib/report';
 
 /** The flags a command accepts, in `parseArgs`'s format. */
 export type CommandOptions = Record<string, { type: 'string' | 'boolean'; short?: string; multiple?: boolean }>;
@@ -71,6 +72,14 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** The most lines a command prints, the report path included (PLAN.md §8.1: "at most about 20"). */
 export const MAX_LINES = 20;
+
+/**
+ * How long a test waits on a whole command it runs as a child process (`node x <cmd>`, Vitest, `npx`), in ms: the
+ * test's timeout and the child's, killed then, so only a hang trips it. Such a run starts Node, compiles TypeScript
+ * and does all its work, which a loaded machine stretches far more than Vitest's 30 s default allows for in-process
+ * work (vite.config.ts): `node x check` took 4.3 s idle and over 30 s with six lanes testing at once (gate G3).
+ */
+export const CHILD_TIMEOUT_MS = 120_000;
 
 /** Lists the command names found in `tools/cmd/` (every `<name>.ts` that is not a test). */
 export function commandNames(root: string = ROOT): string[] {
@@ -183,18 +192,24 @@ export async function dispatch(argv: readonly string[], options: DispatchOptions
   const [name = '', ...rest] = argv;
 
   const finish = (cmd: string, tool: string, args: Record<string, unknown>, result: CommandResult, code: number) => {
-    const report = makeReport({ ...result, tool, args, ms: performance.now() - started, root });
-    const path = writeReport(root, cmd, result.target ?? '', report);
-    const findings = [...report.failures, ...report.warnings].map((f) => {
+    const findings = [...(result.failures ?? []), ...(result.warnings ?? [])].map((f) => {
       const where = f.file ? ` (${f.file}${f.line ? `:${f.line}` : ''})` : '';
       return `${f.id}: ${f.message}${where}`;
     });
+    const verdict = `${tool}: ${result.ok ? 'ok' : 'FAIL'}: ${result.summary}`;
     const body = [...(result.lines ?? []), ...findings];
     const room = MAX_LINES - 2;
-    const shown =
-      body.length > room ? [...body.slice(0, room - 1), `… ${body.length - room + 1} more in ${path}`] : body;
-    print(`${tool}: ${result.ok ? 'ok' : 'FAIL'}: ${result.summary}`);
-    for (const line of shown) print(line);
+    const cut = body.length > room ? body.length - room + 1 : 0;
+    const output = outputPath(cmd, result.target ?? '');
+    const kept: Artifact = { path: output, kind: 'text', describes: `every line of the output, ${cut} cut from it` };
+    const artifacts = cut ? [...(result.artifacts ?? []), kept] : result.artifacts;
+    const report = makeReport({ ...result, artifacts, tool, args, ms: performance.now() - started, root });
+    const path = writeReport(root, cmd, result.target ?? '', report);
+    // The whole output beside the report when it is cut; none left from an earlier run when it is not.
+    if (cut) writeFileSync(join(root, output), `${[verdict, ...body].join('\n')}\n`);
+    else rmSync(join(root, output), { force: true });
+    print(verdict);
+    for (const line of cut ? [...body.slice(0, room - 1), `… ${cut} more in ${output}`] : body) print(line);
     print(`report: ${path}`);
     return code;
   };

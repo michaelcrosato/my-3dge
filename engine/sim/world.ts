@@ -51,7 +51,7 @@ import { cloneData, makeCapture, readCapture, scheduleOf, type WorldCapture } fr
 import { makeEntity, placeComponent, type LiveEntity } from './entities';
 import { componentTable, hashState, traceState } from './state';
 import type { AnyComponents, Entity, PhysicsHook, SpawnSpec, StateView, With, WorldState, WorldTrace } from './state';
-import { createSystems, phaseIndex, type Intents, type SystemSpec, type Systems } from './systems';
+import { createSystems, phaseIndex, type Intents, type Phase, type SystemSpec, type Systems } from './systems';
 
 /** The codes this module raises, with their fixes. */
 export const WORLD_CODES = defineCodes('sim', {
@@ -96,7 +96,15 @@ export interface WorldOptions<C extends object = AnyComponents, E extends EventM
   physics?: PhysicsHook;
   /** Where failing event listeners are recorded (the shared log). */
   log?: Log;
+  /** Runs each system of a step (engine/dev/stats.ts times them): it calls `run` once, and never touches the sim. */
+  probe?: SystemProbe;
 }
+
+/**
+ * A probe around each system's run (the stats meter's, engine/dev/stats.ts): the system's name and phase, and its run,
+ * to call once. It reads a clock, never the sim, so a world with one steps and hashes as a world without.
+ */
+export type SystemProbe = (system: { readonly name: string; readonly phase: Phase }, run: () => void) => void;
 
 /** The timers a world offers game code: `after` and `every` in sim seconds; the world steps them. */
 export type WorldTimers = Pick<Timers, 'after' | 'every' | 'size'>;
@@ -189,6 +197,7 @@ export function createWorld<C extends object = AnyComponents, E extends EventMap
   const emitter = createEvents<E>({ log: options.log ?? sharedLog });
   const systems = createSystems<World<C, E>>();
   const physics = options.physics;
+  const { probe } = options;
   const streams = new RngStreams(firstSeed);
   const fx = new RngStreams(derive(firstSeed, 'fx'));
   let nextId = 1;
@@ -342,15 +351,17 @@ export function createWorld<C extends object = AnyComponents, E extends EventMap
       enter('step()', () => {
         timers.tick(); // the step's number from its first phase, so a timer made in any phase waits a step
         const list = systems.list();
+        const run = (system: (typeof list)[number]) =>
+          probe ? probe(system, () => system.run(world, intents)) : system.run(world, intents);
         let at = 0;
         try {
-          for (; at < list.length && phaseIndex(list[at].phase) < RULES; at++) list[at].run(world, intents);
+          for (; at < list.length && phaseIndex(list[at].phase) < RULES; at++) run(list[at]);
         } catch (error) {
           timers.untick(); // thrown before the timers stage: the step does not count
           throw error;
         }
         timers.fire();
-        for (; at < list.length; at++) list[at].run(world, intents);
+        for (; at < list.length; at++) run(list[at]);
       });
     },
     state: () => withSimMath(() => cloneData(view() as WorldState, 'the state')),

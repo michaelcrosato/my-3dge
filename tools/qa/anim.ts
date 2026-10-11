@@ -1,0 +1,521 @@
+/**
+ * @file The `anim` QA family (PLAN.md §8.6, WP 6.6, I-29): `node x qa anim` drives every body the engine animates
+ * through its state matrix and measures the motion, in Node. The humanoid (each build in `HUMANOIDS`, through
+ * `animCheckBody`, engine/anim/check.ts) holds every sample state (`state:<name>`), pose (`pose:<name>`), stance
+ * (`stance:<name>`), move (`move:<name>`, played by an `Attack`), reaction (`reaction:<name>`) and action
+ * (`action:<name>`, each of data/anim/actions/ played by its own check, engine/anim/actions.ts `actionCheck`, WP 8.7)
+ * at both facings, from rest and back to rest; the blob (`blob:<state>`) and the floater (`floater:<state>`) hold
+ * theirs. The first build also runs its matrix twice and at half the step, and so do the blob and the floater.
+ *
+ * Metrics, one violation per id and metric, valued by the worst case (larger is worse) and naming where it happened:
+ * - `nan` (1), `stretch`, `underFloor`, `reach` (metres): `animCheck`'s finite values, bone lengths, feet at or
+ *   above the floor and sockets in reach; for the blob and the floater, their points finite and over the floor.
+ * - `pop` (metres in a step): a point, measured from the body's position, jumps more than `ANIM_QA.pop.min` in one
+ *   step and more than `ratio` times the steps either side (a fast, steady sweep is motion, not a pop).
+ * - `footSlide` (metres): a sole within `ANIM_QA.slide.contact` of the floor in consecutive steps moves over the
+ *   ground (a treadmill's ground moves too) more than `limit` in one contact.
+ * - `jointLimit` (radians): a knee or an elbow (ik.ts `LIMBS`) turns off its hinge or bends the wrong way.
+ * - `loopClosure` (metres): the last pose, back at rest, is farther than `ANIM_QA.closure` from a body that rested
+ *   all along.
+ * - `twistJump` (radians): a bone of a limb folded past `ANIM_QA.twist.fold` rolls more than `jump` about itself in
+ *   one step (my-3d2dge's v1 pop).
+ * - `angleRange` (radians): an angle of the body's state (the swing, the spin, the lean, the twist, the aim) past ±540°.
+ * - `unstableHash` (1): running the matrix again gives another pose. `rateDrift` (metres): a point strays farther than
+ *   `STATE_MATRIX.rate` from a run at half the step, beyond a step of its own motion (check.ts `rateDrift`).
+ *
+ * Accepted exceptions go in `tests/baselines/qa-anim.json`, each with its reason; `--only move:` keeps the moves.
+ *
+ * Invariants: subjects run in a fixed order with fixed clocks and seeded streams, so the same tree gives the same
+ * violations; lengths scale with the build's `size`.
+ *
+ * Carried from `my-3d2dge:tools/ed-sheet.mjs:100-131`: the pops relative to the neighbouring steps (9 units a step and
+ * 2.5 times the neighbours, the neighbours counted as at least 0.5 units, here in metres), the foot slide (there over
+ * the idle hold, here per contact in every state), the joints under the floor and the stretch of the limbs.
+ *
+ * @example
+ * animViolations((id) => id.startsWith('floater:')); // []: the floater's states, all within the thresholds
+ * Object.keys(humanoidStates()).includes('move:slash'); // true
+ * @see tools/qa/anim.test.ts
+ */
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { Fnv64 } from '../../engine/core/hash';
+import { Quaternion, Vector3 } from '../../engine/core/math';
+import { SIM_DT } from '../../engine/core/time';
+import { getBuild } from '../../engine/anim/builds';
+import { actionCheck, loadActions } from '../../engine/anim/actions';
+import { Animator } from '../../engine/anim/character';
+import { loadClipLibrary, type ClipLibrary } from '../../engine/anim/clip/library';
+import {
+  animCheckBody,
+  rateDrift,
+  RUN_POINTS,
+  runPoints,
+  STATE_MATRIX,
+  type AnimCheckName,
+  type MatrixRun,
+  type MatrixState,
+} from '../../engine/anim/check';
+import { createWorldPose, forwardKinematics, jointPosition } from '../../engine/anim/fk';
+import { LIMBS } from '../../engine/anim/ik';
+import { ENGINE_MOVES } from '../../engine/anim/moves-data';
+import { POSES, STANCES, type PoseName, type StanceName, type Weapon } from '../../engine/anim/poses';
+import { Reactions } from '../../engine/anim/reactions';
+import { jointIndex, JOINTS } from '../../engine/anim/skeleton';
+import { SAMPLE_STATES } from '../../engine/anim/states';
+import { Attack } from '../../engine/anim/timeline';
+import { Blob, BLOB_MOVES, blobMoveTimes, type BlobInput } from '../../engine/anim/blob';
+import { Floater, FLOATER } from '../../engine/anim/floater';
+import { readSet } from '../anim/repack';
+import type { QaFamily, QaViolation } from '../cmd/qa';
+import { ROOT } from '../x';
+
+/** The thresholds, in metres and radians for a body of `size` 1. */
+export const ANIM_QA = {
+  pop: { min: 9 / 16, ratio: 2.5, floor: 0.5 / 16 },
+  slide: { contact: 0.005, limit: 0.05 },
+  closure: 0.02,
+  twist: { fold: (140 * Math.PI) / 180, jump: (120 * Math.PI) / 180 },
+  hinge: 0.02,
+  angle: 3 * Math.PI,
+} as const;
+
+/** The humanoid bodies the family drives through the whole matrix; the first also runs it twice and at half the step. */
+export const HUMANOIDS: readonly { build: string; weapon: Weapon }[] = [
+  { build: 'build:heroic', weapon: 'sword' },
+  { build: 'build:chibi', weapon: 'none' },
+  { build: 'build:bulky', weapon: 'staff' },
+  { build: 'build:skeleton', weapon: 'sword' },
+];
+
+/** A humanoid of `HUMANOIDS`, made at a step: what the matrix drives. */
+export const makeHumanoid =
+  ({ build, weapon }: { build: string; weapon: Weapon }) =>
+  (dt: number) =>
+    new Animator({ build, weapon, clock: 1, dt });
+
+const WALK = new Vector3(0, 0, 2.5);
+const [AHEAD, BEHIND, LEFT] = [new Vector3(0, 0, 1), new Vector3(0, 0, -1), new Vector3(1, 0, 0)];
+/** A direction in the body's frame, turned to its facing. */
+const facingTurn = (direction: Vector3, facing: number) =>
+  direction.clone().applyAxisAngle(new Vector3(0, 1, 0), facing);
+
+/** A move played by an `Attack` from its wind to its end. */
+function attack(id: string): MatrixState {
+  const { time } = new Attack(id).move;
+  return {
+    seconds: time.wind + time.active + time.recover + 1 / 30,
+    script: () => {
+      const swing = new Attack(id);
+      swing.start();
+      return (dt) => {
+        swing.update(dt);
+        return swing.body ? { body: swing.body } : {};
+      };
+    },
+  };
+}
+
+/** A reaction played on the animator: `begin` starts it, `at` seconds in, `then` follows (a get-up). */
+function reaction(
+  seconds: number,
+  begin: (r: Reactions, facing: number) => void,
+  then?: [number, (r: Reactions, facing: number) => void],
+): MatrixState {
+  return {
+    seconds,
+    script: (animator, facing) => {
+      const react = new Reactions({ dt: animator.body.dt }).attach(animator);
+      let time = 0;
+      begin(react, facing);
+      return (dt) => {
+        if (then && time < then[0] && time + dt >= then[0]) then[1](react, facing);
+        time += dt;
+        react.step();
+        return { ...react.body };
+      };
+    },
+  };
+}
+
+/** The clip sets the actions' clip beats play from (WP 8.7), read once. */
+let actionClips: ClipLibrary[] | undefined;
+
+/** Each action of data/anim/actions/ (WP 8.7) played by its own check, by QA id (its id, `action:<name>`). */
+export function actionStates(): Record<string, MatrixState> {
+  const dir = join(ROOT, 'data', 'anim', 'actions');
+  const files = readdirSync(dir)
+    .filter((file) => file.endsWith('.json'))
+    .sort();
+  const actions = loadActions(files.map((file) => JSON.parse(readFileSync(join(dir, file), 'utf8')) as unknown));
+  actionClips ??= ['quaternius', 'mesh2motion'].map((set) => loadClipLibrary(readSet(set)));
+  return Object.fromEntries(actions.map((action) => [action.id, actionCheck(action, { libraries: actionClips })]));
+}
+
+/** The humanoid's matrix: every sample state, pose, stance, move, reaction and action, by QA id. */
+export function humanoidStates(): Record<string, MatrixState> {
+  const states: Record<string, MatrixState> = {};
+  for (const [name, state] of Object.entries(SAMPLE_STATES)) {
+    const words = Object.keys(state.states);
+    if (words.length !== 1 || words[0] !== 'pose') states[`state:${name}`] = state; // a held pose is `pose:<name>`
+  }
+  for (const pose of Object.keys(POSES) as PoseName[])
+    states[`pose:${pose}`] = { states: { pose }, seconds: pose === 'die' ? 2.2 : 1 };
+  for (const stance of Object.keys(STANCES) as StanceName[])
+    states[`stance:${stance}`] = { states: { stance, velocity: WALK }, seconds: 1 };
+  for (const id of Object.keys(ENGINE_MOVES)) states[id] = attack(id);
+  states['reaction:flinch'] = reaction(0.8, (r, f) => r.hit(facingTurn(LEFT, f), f, 2), [
+    0.3,
+    (r, f) => r.hit(facingTurn(BEHIND, f), f, 3),
+  ]);
+  states['reaction:fallBack'] = reaction(1.8, (r, f) => r.knockDown(facingTurn(BEHIND, f), f));
+  states['reaction:fallFront'] = reaction(1.8, (r, f) => r.knockDown(facingTurn(AHEAD, f), f));
+  states['reaction:die'] = reaction(2.6, (r) => r.die(), [1.8, (r) => r.getUp()]);
+  return { ...states, ...actionStates() };
+}
+
+/** One run as the metrics read it: points per step, world and measured from the body, and what they need besides. */
+export interface Track {
+  /** Where it ran, for messages: the build, the state, the facing. */
+  where: string;
+  /** The body's scale: thresholds grow with it. */
+  size: number;
+  dt: number;
+  names: readonly string[];
+  world: Vector3[][];
+  /** The points measured from the body's position. */
+  local: Vector3[][];
+  /** The indices of the soles. */
+  feet: readonly number[];
+  /** The ground's velocity under the body while it holds the state, and the steps that hold it. */
+  treadmill: Vector3;
+  held: readonly [number, number];
+}
+
+/** What a metric found: the worst value and its sentence. */
+export type Found = { value: number; message: string } | undefined;
+
+const ZERO = new Vector3();
+/** A metre (or radian) value for messages: up to 4 decimals. */
+const m = (value: number) => String(Math.round(value * 1e4) / 1e4);
+/** The worse of two findings. */
+const worse = (a: Found, b: Found): Found => (!a || (b && b.value > a.value) ? b : a);
+
+/** A track from its points (world metres) and the body's position at each step. */
+export function motionTrack(
+  spec: Pick<Track, 'where' | 'names' | 'world'> & Partial<Track> & { positions: readonly Vector3[] },
+): Track {
+  const local = spec.world.map((points, i) => points.map((p) => p.clone().sub(spec.positions[i])));
+  return { size: 1, dt: SIM_DT, feet: [], treadmill: ZERO, held: [0, 0], local, ...spec };
+}
+
+/** A humanoid run as a track: its joints and sockets (check.ts `RUN_POINTS`), standing on its soles. */
+function humanoidTrack(run: MatrixRun, where: string, size: number): Track {
+  const world = runPoints(run).map((points, i) => points.map((p) => p.add(run.positions[i])));
+  const feet = [RUN_POINTS.indexOf('contactL'), RUN_POINTS.indexOf('contactR')];
+  const { dt, treadmill, held, positions } = run;
+  return motionTrack({ where, size, dt, names: RUN_POINTS, world, positions, feet, treadmill, held });
+}
+
+/** Pops: a point that jumps in one step while the steps either side are much shorter (ed-sheet.mjs:122-125). */
+export function pops(t: Track): Found {
+  const { min, ratio, floor } = ANIM_QA.pop;
+  let found: Found;
+  t.names.forEach((name, k) => {
+    const d = t.local.slice(1).map((points, i) => points[k].distanceTo(t.local[i][k]));
+    for (let i = 1; i < d.length - 1; i++) {
+      if (d[i] <= min * t.size || d[i] <= ratio * Math.max(d[i - 1], d[i + 1], floor * t.size)) continue;
+      const message = `${t.where}: ${name} jumps ${m(d[i])} m in one step at frame ${i + 1} (${m(d[i - 1])} and ${m(d[i + 1])} m either side); ease into the pose`;
+      found = worse(found, { value: d[i], message });
+    }
+  });
+  return found;
+}
+
+/** Foot slide: a sole on the floor moving over the ground, the most in one contact. */
+export function footSlide(t: Track): Found {
+  const { contact, limit } = ANIM_QA.slide;
+  let found: Found;
+  for (const k of t.feet) {
+    let slide = -1;
+    for (let i = 1; i < t.world.length; i++) {
+      const [a, b] = [t.world[i - 1][k], t.world[i][k]];
+      if (Math.max(a.y, b.y) > contact * t.size) {
+        slide = -1;
+        continue;
+      }
+      const ground = i >= t.held[0] && i < t.held[1] ? t.treadmill : ZERO;
+      slide = Math.max(0, slide) + Math.hypot(b.x - a.x - ground.x * t.dt, b.z - a.z - ground.z * t.dt);
+      if (slide <= limit * t.size) continue;
+      const message = `${t.where}: ${t.names[k]} slides ${m(slide)} m on the floor by frame ${i} in one contact; plant it, or lift it to move it`;
+      found = worse(found, { value: slide, message });
+    }
+  }
+  return found;
+}
+
+/** Loop closure: the last pose against a body that rested all along, at the same step (the first `count` points). */
+export function closure(t: Track, rest: Track, count = t.names.length): Found {
+  const last = t.local.length - 1;
+  let found: Found;
+  t.local[last].slice(0, count).forEach((p, k) => {
+    const off = p.distanceTo(rest.local[last][k]);
+    if (off <= ANIM_QA.closure * t.size) return;
+    const message = `${t.where}: back at rest, ${t.names[k]} is ${m(off)} m from where a resting body holds it; let every weight ease back`;
+    found = worse(found, { value: off, message });
+  });
+  return found;
+}
+
+/** The angle of `q`'s turn about the unit `axis`, radians in [−π, π]. */
+function turnAbout(q: Quaternion, axis: Vector3): number {
+  const angle = 2 * Math.atan2(q.x * axis.x + q.y * axis.y + q.z * axis.z, q.w);
+  return angle > Math.PI ? angle - 2 * Math.PI : angle < -Math.PI ? angle + 2 * Math.PI : angle;
+}
+
+/** Joint limits and twist jumps of the limbs (ik.ts `LIMBS`): hinges kept, folded bones never flipping about themselves. */
+export function limbs(run: MatrixRun, where: string): { limit: Found; twist: Found } {
+  let [limit, twist]: Found[] = [undefined, undefined];
+  const pose = createWorldPose();
+  const [hinge, q, r, delta] = [new Vector3(), new Quaternion(), new Quaternion(), new Quaternion()];
+  let before: Float64Array | undefined;
+  run.poses.forEach((p, i) => {
+    forwardKinematics(run.skeleton, p, pose);
+    for (const [end, limb] of Object.entries(LIMBS)) {
+      const [u, mid, e] = [jointIndex(limb.upper), jointIndex(limb.middle), jointIndex(end as never)];
+      hinge.fromArray(limb.hinge);
+      p.getRotation(mid, q);
+      const bend = turnAbout(q, hinge);
+      const off = 2 * Math.acos(Math.min(1, Math.abs(r.setFromAxisAngle(hinge, -bend).premultiply(q).w)));
+      const bad = Math.max(off, -bend);
+      if (bad > ANIM_QA.hinge) {
+        const message = `${where}: at frame ${i}, ${limb.middle} turns ${m(off)} rad off its hinge and bends ${m(bend)} rad (0 to π); solve the limb with twoBoneRot`;
+        limit = worse(limit, { value: bad, message });
+      }
+      const [a, b, c] = [jointPosition(pose, u), jointPosition(pose, mid), jointPosition(pose, e)];
+      const fold = b.clone().sub(a).angleTo(c.clone().sub(b));
+      if (before && fold > ANIM_QA.twist.fold) {
+        for (const [j, child] of [
+          [u, b],
+          [mid, c],
+        ] as const) {
+          const axis = child.clone().sub(jointPosition(pose, j)).normalize();
+          const now = new Quaternion().fromArray(pose.rotations, j * 4);
+          delta.multiplyQuaternions(now, new Quaternion().fromArray(before, j * 4).invert());
+          const roll = Math.abs(turnAbout(delta, axis));
+          if (roll <= ANIM_QA.twist.jump) continue;
+          const message = `${where}: at frame ${i}, ${JOINTS[j]} rolls ${m(roll)} rad about itself in one step, folded ${m(fold)} rad; keep its pole steady`;
+          twist = worse(twist, { value: roll, message });
+        }
+      }
+    }
+    before = pose.rotations.slice();
+  });
+  return { limit, twist };
+}
+
+/** A body that is not a humanoid, as the family drives it: its points, its states and a fresh body for one. */
+interface PointRig {
+  names: readonly string[];
+  /** How many of the first points a state must bring back at rest (the others cycle: wings, motes). */
+  closed: number;
+  /** Seconds each state holds, by QA id. */
+  states: Readonly<Record<string, number>>;
+  /** A fresh body for `state` at `facing`: `step(time)` tells it the state `time` seconds in, or its rest (undefined). */
+  make(state: string, facing: number, dt: number): { step(time?: number): Vector3; points(): Vector3[] };
+}
+
+/** The blob's states: what it is told, at rest (time undefined) and while it holds the state. */
+const BLOB_TELLS: Readonly<Record<string, (facing: number, blob: Blob, time?: number) => BlobInput>> = {
+  rest: () => ({}),
+  stretch: (_, __, time) => ({ squash: time === undefined ? 0 : 0.45 }),
+  flatten: (_, __, time) => ({ squash: time === undefined ? 0 : -0.45 }),
+  turn: (facing, _, time) => ({ look: facingTurn(time === undefined ? AHEAD : LEFT, facing) }),
+  hang: () => ({ hang: true }), // a roost is held from the start: hanging is a switch, not a motion
+  fold: (_, __, time) => (time === undefined ? {} : { flap: 0, squint: true }),
+  kick: (_, blob, time) => (time === 0 && blob.kick(5), {}),
+};
+
+/** The blob rig: its body, eyes, mouth and wings, rest-closed. */
+const BLOB_RIG: PointRig = {
+  names: ['root', 'centre', 'top', 'bottom', 'eyeL', 'eyeR', 'mouth', 'wingL', 'wingL tip', 'wingR', 'wingR tip'],
+  closed: 7,
+  states: {
+    ...Object.fromEntries(Object.keys(BLOB_TELLS).map((name) => [`blob:${name}`, 0.6])),
+    ...Object.fromEntries(Object.keys(BLOB_MOVES).map((name) => [`blob:${name}`, blobMoveTimes(name as never).end])),
+  },
+  make(state, facing, dt) {
+    const blob = new Blob({ yaw: facing, dt });
+    const name = state.slice('blob:'.length);
+    const tell = BLOB_TELLS[name] ?? ((_, __, time) => (time === undefined ? {} : { move: { name, time } }));
+    return {
+      step: (time) => blob.step(tell(facing, blob, time)).position,
+      points() {
+        const J = blob.pose();
+        const at = (matrix: (typeof J)['root'], x = 0, y = 0) => new Vector3(x, y, 0).applyMatrix4(matrix);
+        return [at(J.root), at(J.body), at(J.body, 0, 1), at(J.body, 0, -1), at(J.eyeL), at(J.eyeR), at(J.mouth), at(J.wingL), at(J.wingL, 0, 1), at(J.wingR), at(J.wingR, 0, 1)]; // prettier-ignore
+      },
+    };
+  },
+};
+
+/** The floater rig: its core, its axes at the motes' orbit and its motes, hovering on its own over the floor. */
+const FLOATER_RIG: PointRig = {
+  names: ['core', 'nose', 'side', 'top', 'mote0', 'mote1', 'mote2'],
+  closed: 4,
+  states: { 'floater:rest': 1, 'floater:travel': 1, 'floater:turn': 1.5, 'floater:swell': 1 }, // a swell held 1 s
+  make(state, facing, dt) {
+    const wisp = new Floater({ yaw: facing, clock: 0, dt });
+    const at = new Vector3(0, FLOATER.height, 0);
+    return {
+      step(time) {
+        const ahead = facingTurn(AHEAD, facing + (state === 'floater:turn' ? 2 * (time ?? 0) : 0)).multiplyScalar(4);
+        const moving = time !== undefined && (state === 'floater:travel' || state === 'floater:turn');
+        const velocity = moving ? ahead : new Vector3();
+        // a charge builds and is spent within the hold: the caller eases the swell, the floater shows it
+        const swell = time !== undefined && state === 'floater:swell' ? Math.sin(Math.PI * time) : 0;
+        wisp.step({ position: at, velocity, swell, yaw: moving ? undefined : facing });
+        const placed = at.clone();
+        at.addScaledVector(velocity, dt).y += wisp.hover(at.y, 0) * dt;
+        return placed;
+      },
+      points() {
+        const J = wisp.pose();
+        const axes = [AHEAD, LEFT, new Vector3(0, 1, 0)].map((axis) => axis.clone().multiplyScalar(FLOATER.orbit).applyMatrix4(J.core)); // prettier-ignore
+        return [new Vector3().setFromMatrixPosition(J.core), ...axes, ...J.motes.map((mote) => mote.clone())];
+      },
+    };
+  },
+};
+
+/** One run of a point rig: the state held at a facing, from rest and back to rest (or at rest throughout). */
+function drive(rig: PointRig, state: string, facing: number, dt: number, rest = false): Track {
+  const body = rig.make(state, facing, dt);
+  const steps = (s: number) => Math.round(s / dt);
+  const [lead, end] = [steps(STATE_MATRIX.lead), steps(STATE_MATRIX.lead) + Math.max(1, steps(rig.states[state]))];
+  const [world, at]: [Vector3[][], Vector3[]] = [[], []];
+  for (let i = 0; i < end + steps(STATE_MATRIX.after); i++) {
+    at.push(body.step(!rest && i >= lead && i < end ? (i - lead) * dt : undefined).clone());
+    world.push(body.points());
+  }
+  return motionTrack({ where: `facing ${facing}`, dt, names: rig.names, world, positions: at, held: [lead, end] });
+}
+
+/** A track's digest over every point of every step. */
+const hashTrack = (t: Track) => t.world.reduce((h, points) => points.reduce((g, p) => g.numbers(p.toArray()), h), new Fnv64()).hex(); // prettier-ignore
+
+/** Where a point rig's points are not finite or sink below the floor. */
+function pointProblems(t: Track): { nan: Found; floor: Found } {
+  let [nan, floor]: Found[] = [undefined, undefined];
+  t.world.forEach((points, i) =>
+    points.forEach((p, k) => {
+      const at = `${t.where}: at frame ${i}, ${t.names[k]}`;
+      if (![p.x, p.y, p.z].every(Number.isFinite)) nan ??= { value: 1, message: `${at} is not a finite point` };
+      else if (p.y < -0.001) floor = worse(floor, { value: -p.y, message: `${at} is ${m(-p.y)} m below the floor` });
+    }),
+  );
+  return { nan, floor };
+}
+
+/** The metric each of `animCheckBody`'s checks reports as. */
+const METRIC: Readonly<Record<AnimCheckName, string>> = {
+  finite: 'nan',
+  length: 'stretch',
+  rigid: 'stretch',
+  floor: 'underFloor',
+  reach: 'reach',
+  hash: 'unstableHash',
+  rate: 'rateDrift',
+};
+
+/** Adds what a finding says to the violations, keeping the worst per id and metric. */
+type Report = (id: string, metric: string, found: Found) => void;
+
+/** A humanoid body through the whole matrix: `animCheckBody`'s checks, then the motion over each run. */
+function checkHumanoid(
+  body: (typeof HUMANOIDS)[number],
+  states: Record<string, MatrixState>,
+  full: boolean,
+  report: Report,
+): void {
+  const make = makeHumanoid(body);
+  const angles = new Map<MatrixRun, number>();
+  const onStep = ({ body: { state: s } }: Animator, run: MatrixRun) => {
+    const largest = Math.max(
+      ...[s.arm.theta, s.arm.theta0, s.arm.turn, s.body.lean, s.body.twist, s.aim].map(Math.abs),
+    );
+    angles.set(run, Math.max(angles.get(run) ?? 0, largest));
+  };
+  const result = animCheckBody(make, { states, onStep, hash: full, rate: full ? STATE_MATRIX.rate : false });
+  for (const p of result.problems) {
+    report(p.state ?? '', METRIC[p.check], {
+      value: Number.isNaN(p.worst) ? 1 : p.worst,
+      message: `${body.build}, ${p.message}`,
+    });
+  }
+  const size = getBuild(body.build).size;
+  const longest = Math.max(...Object.values(states).map((state) => state.seconds));
+  const rests = new Map(
+    animCheckBody(make, { states: { rest: { seconds: longest } }, hash: false, rate: false }).runs.map((run) => [
+      run.facing,
+      humanoidTrack(run, '', size),
+    ]),
+  );
+  for (const run of result.runs) {
+    const where = `${body.build}, ${run.state} facing ${run.facing}`;
+    const t = humanoidTrack(run, where, size);
+    const { limit, twist } = limbs(run, where);
+    const rest = rests.get(run.facing);
+    const angle = angles.get(run) ?? 0;
+    report(run.state, 'pop', pops(t));
+    report(run.state, 'footSlide', footSlide(t));
+    report(run.state, 'loopClosure', rest && closure(t, rest));
+    report(run.state, 'jointLimit', limit);
+    report(run.state, 'twistJump', twist);
+    if (angle > ANIM_QA.angle) report(run.state, 'angleRange', { value: angle, message: `${where}: an angle of the body's state reaches ${m(angle)} rad, past ±540°; wrap it` }); // prettier-ignore
+  }
+}
+
+/** A point rig's states: its own checks, the motion, the hash and the rate. */
+function checkPointRig(rig: PointRig, keep: (id: string) => boolean, report: Report): void {
+  for (const state of Object.keys(rig.states)) {
+    if (!keep(state)) continue;
+    for (const facing of STATE_MATRIX.facings) {
+      const t = drive(rig, state, facing, 1 / 60);
+      const { nan, floor } = pointProblems(t);
+      report(state, 'nan', nan);
+      report(state, 'underFloor', floor);
+      report(state, 'pop', pops(t));
+      report(state, 'loopClosure', closure(t, drive(rig, state, facing, 1 / 60, true), rig.closed));
+      if (hashTrack(drive(rig, state, facing, 1 / 60)) !== hashTrack(t)) {
+        report(state, 'unstableHash', { value: 1, message: `${t.where}: running it again gave other points; look for module state` }); // prettier-ignore
+      }
+      const { worst, frame, point } = rateDrift(t.local, drive(rig, state, facing, 1 / 120).local);
+      if (worst > STATE_MATRIX.rate) {
+        report(state, 'rateDrift', { value: worst, message: `${t.where}: at frame ${frame}, ${t.names[point]} is ${m(worst)} m from where half steps put it (over ${STATE_MATRIX.rate} m); scale each step's change by dt` }); // prettier-ignore
+      }
+    }
+  }
+}
+
+/** Every violation of the bodies whose ids `keep` keeps, the worst per id and metric, in id order. */
+export function animViolations(keep: (id: string) => boolean = () => true): QaViolation[] {
+  const found = new Map<string, QaViolation>();
+  const report: Report = (id, metric, value) => {
+    const key = `${id}\u0000${metric}`;
+    if (value && value.value > (found.get(key)?.value ?? -Infinity)) {
+      found.set(key, { id, metric, value: Math.round(value.value * 1e4) / 1e4, message: value.message });
+    }
+  };
+  const states = Object.fromEntries(Object.entries(humanoidStates()).filter(([id]) => keep(id)));
+  if (Object.keys(states).length) HUMANOIDS.forEach((body, i) => checkHumanoid(body, states, i === 0, report));
+  for (const rig of [BLOB_RIG, FLOATER_RIG]) checkPointRig(rig, keep, report);
+  return [...found.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : a.metric < b.metric ? -1 : 1));
+}
+
+/** The family: every body's motion through its state matrix. */
+const family: QaFamily = {
+  run: ({ only }) => animViolations((id) => only.length === 0 || only.some((prefix) => id.startsWith(prefix))),
+};
+
+export default family;

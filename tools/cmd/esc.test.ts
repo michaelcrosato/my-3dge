@@ -19,7 +19,7 @@ import {
   writeIndex,
   type Escalation,
 } from '../lib/escalations';
-import { dispatch, ROOT } from '../x';
+import { CHILD_TIMEOUT_MS, dispatch, ROOT } from '../x';
 import { discoverPlugins } from './check';
 import { checkEscalations, createEscCommand, runId } from './esc';
 
@@ -293,8 +293,12 @@ describe('the repository', () => {
     expect((await plugin?.run({ root: ROOT, lane: false }))?.failures).toEqual([]);
   });
 
-  it('node x esc list exits 0', () => {
-    const run = spawnSync(process.execPath, ['x', 'esc', 'list'], { cwd: ROOT, encoding: 'utf8' });
+  it('node x esc list exits 0', { timeout: CHILD_TIMEOUT_MS }, () => {
+    const run = spawnSync(process.execPath, ['x', 'esc', 'list'], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      timeout: CHILD_TIMEOUT_MS,
+    });
     expect(run.status).toBe(0);
     expect(run.stdout).toMatch(/^x esc: ok: \d+ records? in all/);
   });

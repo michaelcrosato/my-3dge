@@ -1,0 +1,42 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Box 2, the hero dashes: walking east (a second press within the dash does nothing), from standing toward the east wall, south past the pillar, west along the room, and north into the low wall, which stops him.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "box:room-hero",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [
+    [20, { "move": [1, 0] }],
+    [40, { "p": ["dash"] }],
+    [46, { "p": ["dash"] }],
+    [70, { "move": null }],
+    [120, { "p": ["dash"] }],
+    [180, { "move": [0, 1] }],
+    [190, { "p": ["dash"] }],
+    [230, { "move": null }],
+    [280, { "move": [-1, 0] }],
+    [290, { "p": ["dash"] }],
+    [330, { "move": [0, -1] }],
+    [340, { "p": ["dash"] }],
+    [380, { "move": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "f3cd20d0f939ec19",
+      "60": "fb9233bd07558c8f",
+      "120": "ac05b53bc059b5dd",
+      "180": "770a31ea05c89c44",
+      "240": "031b23b5d962c7ea",
+      "300": "3fdd372f1bbc34f4",
+      "360": "75d5a0e149d30bee",
+      "420": "42250998d8dd18df",
+      "480": "5dc9f9393431792b",
+      "540": "52b74c3107da0638",
+      "600": "70b4565c073e8836"
+    }
+  }
+}

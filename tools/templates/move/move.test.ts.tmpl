@@ -1,0 +1,24 @@
+/**
+ * @file Unit tests for the move `move:{{name}}` ({{id}}.ts): it is defined, plays from its wind to its end in its own
+ * time with its hit window inside the strike, and its strike reaches out from a humanoid holding a sword.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { Attack, measureMove } from '../../../engine/sim-api';
+import { {{name}} } from './{{name}}';
+
+describe('move:{{name}}', () => {
+  it('is defined, and plays from its wind to its end with its hit window in the strike', () => {
+    expect({{name}}.id).toBe('move:{{name}}');
+    const attack = new Attack({{name}});
+    const seen: string[] = attack.start() ? attack.events.map((e) => e.type) : [];
+    for (let tick = 0; tick < 600 && attack.busy; tick++) seen.push(...attack.update(1 / 60).map((e) => e.type));
+    expect(seen).toEqual(['wind', 'active', 'hitOpen', 'hitClose', 'recover', 'end']);
+  });
+
+  it('reaches out from a humanoid holding a sword', () => {
+    const shape = measureMove({{name}}, { build: 'build:heroic', weapon: 'sword' });
+    expect(shape.range).toBeGreaterThan(0.2);
+    expect(shape.yMin).toBeLessThanOrEqual(shape.yMax);
+  });
+});

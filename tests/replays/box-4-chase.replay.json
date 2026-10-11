@@ -1,0 +1,36 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Box 4, a crowd of 100 walkers, slimes and wisps enters the hall and chases the hero as he walks off the dais north-west through it to the west stairs, climbs them to the west gallery and walks west along it; the walkers and slimes follow him up the stairs onto the gallery.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "box:crowd-100",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 720,
+  "inputs": [
+    [20, { "move": [-0.8, -0.6] }],
+    [320, { "move": [0, -1] }],
+    [404, { "move": null }],
+    [440, { "move": [-1, 0] }],
+    [500, { "move": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "13bdd9b8ad2e3355",
+      "60": "7854c39ce6d99f23",
+      "120": "ad1d7aeb3512afef",
+      "180": "37536399af72fc84",
+      "240": "936b395cc022900d",
+      "300": "e786b143fce7c299",
+      "360": "a15bcdb962f1a55b",
+      "420": "42db3ef66d2f4fe8",
+      "480": "5f76e62d64a234aa",
+      "540": "df535d0fb2dbfbf7",
+      "600": "1424e1885217d755",
+      "660": "a46462fadbffa872",
+      "720": "9bbe97252d4e673e"
+    }
+  }
+}

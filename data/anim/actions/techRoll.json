@@ -1,0 +1,22 @@
+{
+  "action": "techRoll",
+  "desc": "A tech roll, the quick get-up (Street Fighter, Guardian Heroes): from lying on its back, a backward roll onto its feet, invulnerable throughout.",
+  "beats": [
+    { "name": "lie", "seconds": 0.3, "body": { "down": 1 }, "flags": ["invulnerable"] },
+    {
+      "name": "roll",
+      "seconds": 0.35,
+      "body": { "air": true },
+      "motion": { "crouch": 1 },
+      "flip": { "turns": 1, "axis": "back", "ground": true },
+      "flags": ["invulnerable"]
+    },
+    {
+      "name": "land",
+      "seconds": 0.15,
+      "motion": { "crouch": 0.4 },
+      "flags": ["invulnerable"],
+      "cancel": { "by": ["any"], "after": 0.5 }
+    }
+  ]
+}

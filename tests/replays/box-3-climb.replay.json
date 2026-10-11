@@ -1,0 +1,34 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Box 3, the hero walks off the dais north-west across the hall to the foot of the west stairs, climbs them to the west gallery, 1 m up, and walks west along it, ending on the gallery.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "box:hall",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [
+    [20, { "move": [-0.8, -0.6] }],
+    [320, { "move": [0, -1] }],
+    [404, { "move": null }],
+    [440, { "move": [-1, 0] }],
+    [500, { "move": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "9f763d2c91720d70",
+      "60": "624b7ab5ae0c8d4f",
+      "120": "5ae3c6204e850e02",
+      "180": "2cfc763dbad47ccf",
+      "240": "7396f610d25d2ca3",
+      "300": "6c3f8a32b543f00c",
+      "360": "aaab2d552c985e2e",
+      "420": "6820a9da27a5f332",
+      "480": "d8c971e2286ad217",
+      "540": "f9808c5a30a42bcc",
+      "600": "abffa56d86c05ef2"
+    }
+  }
+}

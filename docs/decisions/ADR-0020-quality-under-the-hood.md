@@ -100,3 +100,34 @@ out, so a ledge the rider overhangs holds it up instead of taking it into the pi
 Measured: riders keep their place within 0.3 mm and stay grounded every tick across, up and down at up to 5 m/s and
 turning at up to 3 rad/s. Movers (bodies.ts) are velocity-driven kinematic bodies, so the carry keeps no state and
 restores exactly.
+
+## Amendment 6 (2026-10-11, gate G3's review): the character controller's moves in their own module
+engine/physics/character.ts had 593 lines, 7 under the hard cap, after WP 4.1's kinematic carry joined WP 3.2's
+controller. Its split into move.ts had been open since gate G2 (ledger row 3.2). Gate G3's review made the split.
+engine/physics/move.ts holds the controller's moves (`moveCharacter`, `isWall`, `isWalkable`, the step-up, one-way
+platforms, and `sink` for a sinking floor), the Rapier controller they share, and amendment 3's "how it moves, and
+why". character.ts keeps the character's settings, state and tick (`createCharacter`, `addCharacter`, `feetOf`,
+`stepCharacter`, the carry and the pushes): 357 and 271 lines. WP 3.2's Owns, and WP 4.1's extension of it, widen to
+engine/physics/move.ts. Nothing behaves differently: every physics test and every replay passes unchanged, in Node and
+in Chromium.
+
+## Amendment 7 (2026-10-11, WP-7.3): the v2 textures join the kind, and the tex family draws a contact sheet
+
+Core change accepted: WP 7.3's Owns widens to engine/gfx/textures/{v1,v2,texture,texture.test}.ts and
+tools/qa/tex{,.test}.ts. v2.ts lists runes, moss, metal, plaster, dirt, grass and water, and textureKind registers them
+after v1, so every registry has 13 generators by id. `node x qa tex` also writes out/qa/tex/sheet.png. Each texture
+checked gets three panels (colour, normal, emissive), each tiled 2 × 2 into 128 px with its shape kept and row 0 of a
+map at its panel's bottom, three textures to a row. The level floor bake (levelFloorTexture) is a spec builder that a
+game defines under its own id; it is not a registered generator. Casters are glyphs with a box collider whose top rises
+0.25 m above the tile's floor; walkable blocks (galleries) are floor.
+
+## Amendment 8 (2026-10-11, WP-8.7 integration): the Animation area of the sim API in its own file
+
+engine/sim-api.ts reached 595 of its 600-line hard cap, so WP 8.7's Actions exports could not be appended, and the
+action template (`x new action --test`) failed without them. The integrator moved the whole Animation area (WP 3.4
+onward, with WP 6.6's animation checks) verbatim into engine/anim/api.ts and added the Actions names there;
+engine/sim-api.ts re-exports it with one `export * from './anim/api'` line. The public surface is unchanged plus the
+Actions names: game code still imports only engine/sim-api.ts or engine/index.ts, and `x docs` follows the re-export to
+each declaration. engine/anim/api.ts keeps sim-api's invariants (one name per line, append-only by area) and sits in
+the anim layer, so it re-exports only engine/anim/ modules. Later WPs append animation names to engine/anim/api.ts
+(PLAN.md §11.3 and §5 edited). sim-api.ts drops to about 330 lines, anim/api.ts is about 300.

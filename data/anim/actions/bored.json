@@ -1,0 +1,43 @@
+{
+  "action": "bored",
+  "desc": "The bored idle (Sonic 2: a look, foot taps every 18 frames; SM64: look round, sit, sleep): looks left and right, taps a foot three times, kneels, lies down asleep until the game wakes it (finish), and gets up.",
+  "beats": [
+    { "name": "lookL", "seconds": 0.5, "effectors": { "look": [0.6, -1, 0.1] } },
+    { "name": "lookR", "seconds": 0.6, "effectors": { "look": [0.6, 1, 0.1] } },
+    { "name": "lookAhead", "seconds": 0.4 },
+    { "name": "tapUp", "seconds": 0.15, "effectors": { "footR": [0.05, 0.12, 0.05] } },
+    {
+      "name": "tapDown",
+      "seconds": 0.15,
+      "effectors": { "footR": [0.05, 0.12, 0] },
+      "events": [{ "type": "tap", "at": 1 }]
+    },
+    { "name": "tapUp2", "seconds": 0.15, "effectors": { "footR": [0.05, 0.12, 0.05] } },
+    {
+      "name": "tapDown2",
+      "seconds": 0.15,
+      "effectors": { "footR": [0.05, 0.12, 0] },
+      "events": [{ "type": "tap", "at": 1 }]
+    },
+    { "name": "tapUp3", "seconds": 0.15, "effectors": { "footR": [0.05, 0.12, 0.05] } },
+    {
+      "name": "tapDown3",
+      "seconds": 0.15,
+      "effectors": { "footR": [0.05, 0.12, 0] },
+      "events": [{ "type": "tap", "at": 1 }]
+    },
+    { "name": "kneel", "seconds": 0.6, "body": { "pose": "kneel" } },
+    {
+      "name": "sleep",
+      "seconds": 0.4,
+      "until": "next",
+      "body": { "down": 1 },
+      "events": [{ "type": "zzz", "at": 1 }],
+      "cancel": { "by": ["any"] }
+    },
+    { "name": "wake", "seconds": 0.35, "body": { "pose": "kneel" }, "events": [{ "type": "wake" }] },
+    { "name": "stand", "seconds": 0.3, "cancel": { "by": ["any"] } }
+  ],
+  "exit": "wake",
+  "check": { "signals": [{ "at": 4, "do": "finish" }], "seconds": 4.8 }
+}

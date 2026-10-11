@@ -296,3 +296,76 @@ export type { Scope } from './gfx/post/filters';
 export type { FilterChain } from './gfx/post/filters';
 export type { FilterSpec } from './gfx/post/filters';
 export type { PostShow } from './gfx/post/composite';
+// Props drawn (WP 4.5): every prop part a batch of the instancing service, posed by its body, the flames dancing on
+// the visual streams, the light spots flickering, for the light pool.
+export { createPropMeshes } from './gfx/props';
+export type { PropMeshes } from './gfx/props';
+export type { PropMeshesOptions } from './gfx/props';
+export type { PropMeshPose } from './gfx/props';
+export type { PropLight } from './gfx/props';
+export { FLICKER } from './gfx/props';
+// Crowd rendering and pose LOD (WP 5.4): thousands of humanoids, blobs and floaters in a few dozen draw calls over the
+// instancing service, each body seen through bands of detail by its distance (the animator's pose level, capes),
+// culled by the view; the blob and floater bodies as data.
+export { createCrowd } from './gfx/puppets/crowd';
+export type { Crowd } from './gfx/puppets/crowd';
+export type { CrowdDraw } from './gfx/puppets/crowd';
+export type { CrowdRigDraw } from './gfx/puppets/crowd';
+export type { CrowdStats } from './gfx/puppets/crowd';
+export type { RigBody } from './gfx/puppets/crowd';
+export type { RigPart } from './gfx/puppets/crowd';
+export type { RigJoints } from './gfx/puppets/crowd';
+export type { RigShape } from './gfx/puppets/crowd';
+export { createCrowdLod } from './gfx/puppets/lod';
+export { CROWD_LOD } from './gfx/puppets/lod';
+export type { CrowdLod } from './gfx/puppets/lod';
+export type { CrowdLodOptions } from './gfx/puppets/lod';
+export type { CrowdLodCounts } from './gfx/puppets/lod';
+export type { CrowdBand } from './gfx/puppets/lod';
+export type { CrowdBandSpec } from './gfx/puppets/lod';
+export { BLOB_BODY } from './gfx/puppets/bodies/blob';
+export { blobBody } from './gfx/puppets/bodies/blob';
+export type { BlobFeatures } from './gfx/puppets/bodies/blob';
+export { FLOATER_BODY } from './gfx/puppets/bodies/floater';
+// Performance counters (WP 5.5): what `__engine.stats()` returns, means in ms and the renderer's counts, never fps.
+export type { EngineStats } from './dev/stats';
+// The texture library (v2, WP 7.3): a level's whole floor as a texture generator (define it under a game's id), with
+// moss at the walls' feet, a rune circle on each dais and contact shadows along every block's foot.
+export { levelFloorTexture } from './gfx/textures/contactShadow';
+export type { LevelFloorOptions } from './gfx/textures/contactShadow';
+export type { ContactShadowOptions } from './gfx/textures/contactShadow';
+export type { FloorMossOptions } from './gfx/textures/contactShadow';
+export type { FloorRuneOptions } from './gfx/textures/contactShadow';
+// Clips in pages (WP 8.4): three.js's AnimationClip and AnimationMixer, for presentation only (a page plays a baked
+// clip on a puppet with clipJSON and AnimationClip.parse); the sim samples the same tracks through the clip layer.
+// The mannequin: the Quaternius figure the library was measured on, as a body and a build.
+/** three.js's animation clip: `AnimationClip.parse(clipJSON(baked, skeleton))` makes one from a baked clip. */
+export { AnimationClip } from 'three/webgpu';
+/** three.js's animation mixer: plays clips on an object's bones (a puppet's mesh), for presentation only. */
+export { AnimationMixer } from 'three/webgpu';
+export { defineMannequin } from './gfx/puppets/bodies/mannequin';
+export { mannequinBody } from './gfx/puppets/bodies/mannequin';
+export { MANNEQUIN_SLOTS } from './gfx/puppets/bodies/mannequin';
+export type { MannequinData } from './gfx/puppets/bodies/mannequin';
+// Effects (WP 6.4): particles as data (emitters: shardfall's presets, the 2D engine's kinds, event effects), drawn
+// with telegraphs on the floor, socket trails, bolts and camera shake by a view's effects; never part of the hash.
+export { createEffects } from './gfx/fx/effects';
+export { FX_BUDGET } from './gfx/fx/effects';
+export { BOLT } from './gfx/fx/effects';
+export type { Effects } from './gfx/fx/effects';
+export type { EffectsOptions } from './gfx/fx/effects';
+export type { FxEventPayload } from './gfx/fx/payload';
+export type { FxStats } from './gfx/fx/effects';
+export { defineEmitter } from './gfx/fx/emitters';
+export { getEmitter } from './gfx/fx/emitters';
+export type { Emitter } from './gfx/fx/emitters';
+export type { EmitterSpec } from './gfx/fx/emitters';
+export type { EmitterLayer } from './gfx/fx/emitters';
+export type { ParticleFields } from './gfx/fx/emitters';
+export type { FxLight } from './gfx/fx/emitters';
+export type { BurstOptions } from './gfx/fx/particles';
+export type { ParticleStats } from './gfx/fx/particles';
+export { TRAIL_TINTS } from './gfx/fx/ribbons';
+export type { TrailSampleLike } from './gfx/fx/ribbons';
+export { ScreenShake } from './gfx/fx/shake';
+export { SHAKE } from './gfx/fx/shake';

@@ -3,8 +3,9 @@
  * also updates `out/latest.json`. Agents read these files instead of scrolling output.
  *
  * Invariants: a report has exactly the keys of `Report` (unknown keys are errors, like unknown flags); it lives at
- * `out/<cmd>/<target>/report.json`; `out/latest.json` is the last report written, plus its `report` path; every
- * report records the runtime it ran on.
+ * `out/<cmd>/<target>/report.json`, with `output.txt` beside it when the dispatcher cut the printed output
+ * (`outputPath`); `out/latest.json` is the last report written, plus its `report` path; every report records the
+ * runtime it ran on.
  *
  * @example
  * const report = makeReport({ tool: 'x src', args: {}, ms: 12, ok: true, root: process.cwd() });
@@ -196,6 +197,11 @@ export function validateReport(value: unknown): string[] {
 /** The repository-relative path of a command's report: `out/<cmd>/<target>/report.json`. */
 export function reportPath(cmd: string, target: string): string {
   return `out/${cmd}/${targetSlug(target)}/report.json`;
+}
+
+/** Where the dispatcher keeps every line of a command's output when it cuts what it prints: beside the report. */
+export function outputPath(cmd: string, target: string): string {
+  return `out/${cmd}/${targetSlug(target)}/output.txt`;
 }
 
 function writeJson(file: string, value: unknown): void {
