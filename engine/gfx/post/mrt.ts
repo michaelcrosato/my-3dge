@@ -13,11 +13,10 @@
  * target is cleared to (0, 0, 0, 1), as r182 clears every attachment after the first, so the background reads as a
  * zero normal with `w` = 1: the environment, never outlined from inside.
  *
- * Each object's flags are a per-object uniform set through `onObjectUpdate` from its tag: `setPart(object, part)`, on
- * it or its nearest tagged ancestor; untagged objects count as characters when they are a puppet (`userData.body`) or
- * the protagonist (`userData.protagonist`), as objects when they stand for an entity (`userData.entity`), and as the
- * environment otherwise. The group is the tag's, else the entity's id, else 1 for the environment and the object's own
- * id for the rest. A transparent object replaces the normal and flags under it: r182 blends only the first attachment.
+ * Each object's flags come from its tag (`setPart`, read by `flagsOf`). They live in a table the chain writes before
+ * each frame (`writeFlags`), which the GPU reads at the object's slot (`createFlagTable` says why: a per-object uniform
+ * missed tags set on objects that never move). A transparent object replaces the normal and flags under it: r182
+ * blends only the first attachment.
  *
  * The warm-up (engine/gfx/warmup.ts) compiles for the render target the frame draws the scene into, but knows nothing
  * of MRT; r182's `PassNode.compileAsync` sets both. So the chain registers the warm-up entry `WARM_MRT_ID`, which
@@ -26,18 +25,21 @@
  * frame draws. The chain's draw turns it off again before drawing (`clearMrt`).
  *
  * Invariants: presentation only (nothing here reaches the sim); a tag never changes a material; `packFlags` and
- * `unpackFlags` are inverse for every part, group 1..511 and pixel-art flag.
+ * `unpackFlags` are inverse for every part, group 1..511 and pixel-art flag; a tag takes effect on the next frame,
+ * whether or not the object moves; slot 0 is never given out and always holds the environment's flags.
  *
  * @example
  * packFlags('character', 7, false); // 1543: 7 + 512 + 1024
  * unpackFlags(-1031); // { part: 'object', group: 7, pixelArt: true }
  * // const scenePass = createScenePass(scene, camera); // colour, normals with flags, depth
  * // setPart(hero, 'character', { pixelArt: true });
+ * // writeFlags(scenePass); // before each frame: the hero is pixel art from this frame on
  * @see engine/gfx/post/mrt.test.ts
  * @see tests/e2e/post.spec.ts
  */
-import { Fn, mrt, normalView, output, pass, uniform, vec3, vec4 } from 'three/tsl';
-import type { Camera, Node, NodeBuilder, Object3D, PassNode, Scene, WebGPURenderer } from 'three/webgpu';
+import { dot, float, Fn, mrt, normalView, output, pass, renderGroup, select, uniform, uniformArray, vec3, vec4 } from 'three/tsl'; // prettier-ignore
+import { Vector4 } from 'three/webgpu';
+import type { Camera, Node, NodeBuilder, Object3D, PassNode, Scene, UniformArrayNode, WebGPURenderer } from 'three/webgpu'; // prettier-ignore
 
 /** The parts of the scene a filter can be scoped to. */
 export const PARTS = ['character', 'object', 'environment'] as const;
@@ -109,7 +111,12 @@ function lookUp<T>(object: Object3D, read: (node: Object3D) => T | undefined): T
   return undefined;
 }
 
-/** The flags `object` is drawn with (see the file comment). */
+/**
+ * The flags `object` is drawn with: its tag (`setPart`), or its nearest tagged ancestor's; untagged objects count as
+ * characters when they are a puppet (`userData.body`) or the protagonist (`userData.protagonist`), as objects when they
+ * stand for an entity (`userData.entity`), and as the environment otherwise. The group is the tag's, else the entity's
+ * id, else 1 for the environment and the object's own id for the rest.
+ */
 export function flagsOf(object: Object3D): Flags {
   const tag = lookUp(object, (node) => node.userData.post as PostTag | undefined);
   const entity = lookUp(object, (node) =>
@@ -123,14 +130,78 @@ export function flagsOf(object: Object3D): Flags {
   return { part, group, pixelArt: tag?.pixelArt === true };
 }
 
-/** The MRT the scene pass draws: the colour, and the view normal with the object's packed flags in `w`. */
-function sceneMrt(): Node {
-  const flags = uniform(0);
-  flags.onObjectUpdate(({ object }) => {
-    if (!object) return 1;
-    const { part, group, pixelArt } = flagsOf(object);
-    return packFlags(part, group, pixelArt);
-  });
+/** Slots in a flag table: four to a `vec4`, 4,096 of them, 64 KiB (WebGPU's smallest uniform buffer limit). */
+export const FLAG_SLOTS = 16384;
+
+/** The flags of every object a scene pass draws, by slot (see the file comment). */
+export interface FlagTable {
+  /** The render-group uniform array the MRT reads: slot `s` is component `s % 4` of row `s / 4`. */
+  readonly node: UniformArrayNode;
+  /** `object`'s slot, given out on first use and kept for life; 0 when every slot is taken. */
+  slotOf(object: Object3D): number;
+  /** Writes the flags of every drawable object under `root` at its slot; returns how many had no slot. */
+  write(root: Object3D): number;
+}
+
+/** Whether three.js draws `object` (a mesh, line, points or sprite). */
+function drawable(object: Object3D): boolean {
+  const o = object as Object3D & { isMesh?: boolean; isLine?: boolean; isPoints?: boolean; isSprite?: boolean };
+  return o.isMesh === true || o.isLine === true || o.isPoints === true || o.isSprite === true;
+}
+
+/**
+ * Makes an empty flag table: each drawable object gets a slot, for life, and `write` puts every object's flags at its
+ * slot, in one render-group uniform array the GPU reads at the slot. Measured on r182 (WP 7.4's review): a per-object
+ * uniform is refreshed only when r182's `NodeMaterialObserver` refreshes the object, which it skips for an object that
+ * has not moved and whose material has no node property, unless it is the first one drawn with that compiled
+ * material, so a tag set after such an object's first frame never reached the picture until it moved. The slot, the
+ * one per-object value left, never changes, so a skipped refresh cannot leave it stale. A slot is freed when its
+ * object is collected; past `FLAG_SLOTS` live objects, the rest draw as the environment and `write` counts them
+ * (advice `GFX_POST_FLAG_SLOTS`, engine/gfx/post/chain.ts).
+ */
+export function createFlagTable(): FlagTable {
+  const rows = Array.from({ length: FLAG_SLOTS / 4 }, () => new Vector4());
+  rows[0].x = packFlags('environment', 1, false);
+  const node = uniformArray(rows, 'vec4').setGroup(renderGroup) as unknown as UniformArrayNode;
+  const slots = new WeakMap<Object3D, number>();
+  const free: number[] = [];
+  const collected = new FinalizationRegistry<number>((slot) => free.push(slot));
+  let next = 1;
+  const slotOf = (object: Object3D) => {
+    let slot = slots.get(object);
+    if (slot === undefined) {
+      slot = free.pop() ?? (next < FLAG_SLOTS ? next++ : 0);
+      if (slot === 0) return 0;
+      slots.set(object, slot);
+      collected.register(object, slot);
+    }
+    return slot;
+  };
+  return {
+    node,
+    slotOf,
+    write(root) {
+      let missed = 0;
+      root.traverse((object) => {
+        if (!drawable(object)) return;
+        const slot = slotOf(object);
+        if (slot === 0) return void missed++;
+        const { part, group, pixelArt } = flagsOf(object);
+        rows[slot >> 2].setComponent(slot & 3, packFlags(part, group, pixelArt));
+      });
+      return missed;
+    },
+  };
+}
+
+/** The MRT the scene pass draws: the colour, and the view normal with the object's packed flags (from `table`) in `w`. */
+function sceneMrt(table: FlagTable): Node {
+  const slot = uniform(0);
+  slot.onObjectUpdate(({ object }) => (object ? table.slotOf(object) : 0));
+  const row = slot.div(4).floor();
+  const lane = slot.sub(row.mul(4));
+  const pick = (k: number) => select(lane.equal(k), float(1), float(0));
+  const flags = dot(table.node.element(row.toInt()), vec4(pick(0), pick(1), pick(2), pick(3)));
   // Lines and points have no normals: they read as facing the camera, and keep their flags.
   const normal = Fn((builder: NodeBuilder) =>
     builder.geometry?.hasAttribute('normal') ? vec4(normalView, flags) : vec4(vec3(0, 0, 1), flags),
@@ -138,11 +209,24 @@ function sceneMrt(): Node {
   return mrt({ output, normal });
 }
 
+/** Each scene pass's flag table. */
+const tables = new WeakMap<PassNode, FlagTable>();
+
 /** The scene pass: `scene` through `camera` into colour, normals with flags, and depth (the fixed MRT). */
 export function createScenePass(scene: Scene, camera: Camera): PassNode {
   const scenePass = pass(scene, camera);
-  scenePass.setMRT(sceneMrt() as ReturnType<typeof mrt>);
+  const table = createFlagTable();
+  tables.set(scenePass, table);
+  scenePass.setMRT(sceneMrt(table) as ReturnType<typeof mrt>);
   return scenePass;
+}
+
+/**
+ * Writes the flags of everything `scenePass` draws into its table, as they are now: call it before each frame, so a
+ * tag takes effect on the next one. Returns how many objects had no slot (drawn as the environment).
+ */
+export function writeFlags(scenePass: PassNode): number {
+  return tables.get(scenePass)?.write(scenePass.scene) ?? 0;
 }
 
 /** Turns the scene pass's MRT on for what the renderer compiles or draws next (the warm-up's compile steps). */

@@ -2,17 +2,21 @@
  * @file T2 for post-processing (PLAN.md WP 7.4) on the post page (tests/pages/post.html: the Stress Box's room with
  * two characters and a glowing orb, drawn through the chain):
  * 1. the clean look draws the plain frame; every scoped filter (cel, pixel, palette, outline, stylize, grade,
- *    scanlines, grain, chroma) changes the pixels of the parts its scope names and leaves the rest alone, for the
- *    scopes all, characters, objects and environment, the parts read back from the chain's own parts view; the
- *    whole-screen filters (bloom, edge smoothing, curvature, vignette, low resolution) change the picture; and the ID
- *    pass of every one of those frames is the clean frame's;
- * 2. switching to every look builds 0 pipelines after the warm-up and recompiles no material, the ID pass staying the
+ *    scanlines, grain, chroma), with every palette, every style and the outline's own colour, changes the pixels of
+ *    the parts its scope names and leaves the rest alone, for the scopes all, characters, objects and environment,
+ *    the parts read back from the chain's own parts view; the whole-screen filters (bloom, edge smoothing, curvature,
+ *    vignette, low resolution) change the picture; and the ID pass of every one of those frames is the clean frame's;
+ * 2. objects tagged pixel art (`setPart(…, { pixelArt: true })`) are drawn as pixel art under a pixel filter scoped
+ *    elsewhere, exactly as when its scope covers them, and pixel art's one-block rim darkens the blocks round them and
+ *    nothing far away; a look with a material style, drawn by a chain made without a style set, gives advice
+ *    `GFX_POST_NO_STYLES`;
+ * 3. switching to every look builds 0 pipelines after the warm-up and recompiles no material, the ID pass staying the
  *    clean frame's, and switching looks every 20 steps while the room's session steps leaves its hashes those of the
  *    same session stepped in Node;
- * 3. pixel art snaps the camera to its block grid: sliding the camera by fractions of a block changes the picture
+ * 4. pixel art snaps the camera to its block grid: sliding the camera by fractions of a block changes the picture
  *    only when it crosses half a block, then by a whole block; without the snap every slide shimmers;
- * 4. bloom is off at the `low` quality tier, with advice `GFX_POST_NO_BLOOM`;
- * 5. the edge smoothing that measures better (engine/gfx/post/aa.ts records it): FXAA and SMAA against the frame
+ * 5. bloom is off at the `low` quality tier, with advice `GFX_POST_NO_BLOOM`;
+ * 6. the edge smoothing that measures better (engine/gfx/post/aa.ts records it): FXAA and SMAA against the frame
  *    drawn at 4 × 4 the size and averaged down.
  *
  * Invariants: frames are drawn by calling the page; the Node session is the same scene and seed, stepped with no
@@ -20,18 +24,22 @@
  */
 import type { Page } from '@playwright/test';
 import '../../labs/box/scenes/room';
-import type { IdEntry } from '../../engine/gfx/idpass';
 import { AA_CHOICE } from '../../engine/gfx/post/aa';
 import { createSession } from '../../engine/sim/scene';
 import { expect, test, type Harness } from './fixtures';
-
-/** A shot as the page returns it. */
-interface Shot {
-  width: number;
-  height: number;
-  pixels?: string;
-  ids?: { visible: IdEntry[] };
-}
+import {
+  borderOf,
+  changedShare,
+  DIFF,
+  differs,
+  edgeError,
+  idsOf,
+  lumaAt,
+  nearPart,
+  partsOf,
+  rgba,
+  type Shot,
+} from './post-pixels';
 
 /** What a look switch reports. */
 interface Shown {
@@ -48,6 +56,8 @@ interface PostPage {
   setLook(id: string, filters?: object): Promise<Shown>;
   shoot(options?: { ids?: boolean; pixels?: boolean }): Promise<Shot>;
   shootPlain(): Promise<Shot>;
+  pixelArt(on: boolean): number;
+  withoutStyles(id: string): Promise<{ drawn: boolean; built: number }>;
   parts(): Promise<Shot>;
   run(steps: number, every: number, looks: string[]): Promise<{ hashes: Record<string, string>; built: number[] }>;
   slide(fractions: number[], snap: boolean): Promise<string[]>;
@@ -57,8 +67,6 @@ interface PostPage {
 declare const __postPage: PostPage;
 
 const PAGE = 'tests/pages/post.html';
-/** A channel moving by more than this many levels changes a pixel. */
-const DIFF = 8;
 /** Pixels this close to another part's are left out of "outside": neighbourhood filters reach that far. */
 const BORDER = 13;
 
@@ -69,59 +77,27 @@ async function open(page: Page, harness: Harness): Promise<void> {
   await harness.assertWebGPU();
 }
 
-/** A shot's pixels. */
-function rgba(shot: Shot | string): Uint8Array {
-  return new Uint8Array(Buffer.from(typeof shot === 'string' ? shot : shot.pixels!, 'base64'));
-}
-
-/** Whether pixel `p` differs between `a` and `b` by more than `diff` in some channel. */
-function differs(a: Uint8Array, b: Uint8Array, p: number, diff = DIFF): boolean {
-  return [0, 1, 2].some((c) => Math.abs(a[p * 4 + c] - b[p * 4 + c]) > diff);
-}
-
-/** The share of pixels that differ. */
-function changedShare(a: Uint8Array, b: Uint8Array): number {
-  let n = 0;
-  for (let p = 0; p < a.length / 4; p++) if (differs(a, b, p)) n++;
-  return n / (a.length / 4);
-}
-
-/** The parts view as a part per pixel: 0 a character, 1 an object, 2 the environment (the background included). */
-function partsOf(shot: Shot): Uint8Array {
-  const px = rgba(shot);
-  const out = new Uint8Array(shot.width * shot.height);
-  for (let p = 0; p < out.length; p++) out[p] = px[p * 4] > 128 ? 0 : px[p * 4 + 1] > 128 ? 1 : 2;
-  return out;
-}
-
-/** Whether each pixel has another part within `r` pixels. */
-function borderOf(parts: Uint8Array, width: number, height: number, r: number): Uint8Array {
-  const near = new Uint8Array(parts.length);
-  const mark = (x: number, y: number) => {
-    for (let yy = Math.max(0, y - r); yy <= Math.min(height - 1, y + r); yy++)
-      near.fill(1, yy * width + Math.max(0, x - r), yy * width + Math.min(width, x + r + 1));
-  };
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const p = y * width + x;
-      if ((x > 0 && parts[p - 1] !== parts[p]) || (y > 0 && parts[p - width] !== parts[p])) mark(x, y);
-    }
-  }
-  return near;
-}
-
-/** The ID pass's visible list, as compared: name, pixels and bounding box. */
-function idsOf(shot: Shot): string[] {
-  return shot.ids!.visible.map((entry) => `${entry.name}:${entry.px}:${entry.bbox.join(',')}`).sort();
-}
-
-/** The scoped filters, each with numbers that change what they touch plainly, and the share each must change. */
-const SCOPED: { name: string; filters: Record<string, unknown>; inside: number }[] = [
+/**
+ * The scoped filters, each with numbers that change what they touch plainly, the share each must change and, for some,
+ * the colour every changed pixel takes (`to`, sRGB): every palette, the levels alone (palette `none`), every style, and
+ * the outline's own colour (with `darken: 1` only the colour can change a pixel). The shares are about half those
+ * measured on the least covered part (WP 7.4's review).
+ */
+const SCOPED: { name: string; filters: Record<string, unknown>; inside: number; to?: [number, number, number] }[] = [
   { name: 'cel', filters: { bands: 3, punch: 1.8, ink: 1 }, inside: 0.25 },
   { name: 'pixel', filters: { size: 6, levels: 8, outline: false, snap: false }, inside: 0.2 },
   { name: 'palette', filters: { palette: 'gameboy', dither: 0.6 }, inside: 0.6 },
+  { name: 'palette', filters: { palette: 'pico8', dither: 0.6 }, inside: 0.5 },
+  { name: 'palette', filters: { palette: 'cga', dither: 0.6 }, inside: 0.5 },
+  { name: 'palette', filters: { palette: '1bit', dither: 0.6 }, inside: 0.5 },
+  { name: 'palette', filters: { palette: 'amber', dither: 0.6 }, inside: 0.5 },
+  { name: 'palette', filters: { palette: 'none', levels: 8, dither: 0 }, inside: 0.4 },
   { name: 'outline', filters: { width: 2, darken: 0 }, inside: 0.02 },
+  { name: 'outline', filters: { width: 2, darken: 1, color: '#ff0000' }, inside: 0.02, to: [255, 0, 0] },
+  { name: 'stylize', filters: { style: 'paint', size: 4, color: 1 }, inside: 0.15 },
   { name: 'stylize', filters: { style: 'halftone', size: 4, color: 1 }, inside: 0.5 },
+  { name: 'stylize', filters: { style: 'ascii', size: 6, color: 1 }, inside: 0.5 },
+  { name: 'stylize', filters: { style: 'sketch', size: 4, color: 1 }, inside: 0.4 },
   { name: 'grade', filters: { temperature: 1, brightness: 1.6, saturation: 0 }, inside: 0.5 },
   { name: 'scanlines', filters: { strength: 1, period: 2 }, inside: 0.25 },
   { name: 'grain', filters: { amount: 1 }, inside: 0.3 },
@@ -165,28 +141,30 @@ test('every filter and scope works, a clean look is the plain frame, and the ID 
   expect(ids.length, 'objects the ID pass sees').toBeGreaterThan(10);
   const before = rgba(base);
 
-  for (const { name, filters, inside } of SCOPED) {
+  for (const { name, filters, inside, to } of SCOPED) {
     for (const [scope, covered] of SCOPES) {
       const spec = { [name]: { ...filters, scope } };
       const shown = await page.evaluate((f) => __postPage.setLook('look:clean', f), spec);
-      expect(shown.frame, `${name} on ${scope}`).toMatchObject({ drawn: true, built: 0 });
+      expect(shown.frame, `${name} ${JSON.stringify(filters)} on ${scope}`).toMatchObject({ drawn: true, built: 0 });
       const shot = await page.evaluate(() => __postPage.shoot({ ids: true }));
-      expect(idsOf(shot), `the ID pass with ${name} on ${scope}`).toEqual(ids);
+      expect(idsOf(shot), `the ID pass with ${name} ${JSON.stringify(filters)} on ${scope}`).toEqual(ids);
       const after = rgba(shot);
-      const tally = { in: 0, inChanged: 0, out: 0, outChanged: 0 };
+      const tally = { in: 0, inChanged: 0, out: 0, outChanged: 0, offColour: 0 };
       for (let p = 0; p < parts.length; p++) {
         const changed = differs(before, after, p);
         if (covered.includes(parts[p])) {
           tally.in++;
           if (changed) tally.inChanged++;
+          if (changed && to && [0, 1, 2].some((c) => Math.abs(after[p * 4 + c] - to[c]) > DIFF)) tally.offColour++;
         } else if (!border[p]) {
           tally.out++;
           if (changed) tally.outChanged++;
         }
       }
-      const where = `${name} on ${scope}: ${tally.inChanged}/${tally.in} inside changed, ${tally.outChanged}/${tally.out} outside`;
+      const where = `${name} ${JSON.stringify(filters)} on ${scope}: ${tally.inChanged}/${tally.in} inside changed, ${tally.outChanged}/${tally.out} outside`;
       expect(tally.inChanged / tally.in, where).toBeGreaterThanOrEqual(inside);
       if (tally.out > 0) expect(tally.outChanged / tally.out, where).toBeLessThanOrEqual(0.002);
+      expect(tally.offColour, `${where}; changed pixels not ${to?.join(',')}`).toBe(0);
     }
   }
 
@@ -198,6 +176,83 @@ test('every filter and scope works, a clean look is the plain frame, and the ID 
     const share = changedShare(before, rgba(shot));
     expect(share, JSON.stringify(filters)).toBeGreaterThanOrEqual(changed);
   }
+});
+
+test('objects tagged pixel art are pixel art whatever the scope, and pixel art has its one-block dark rim', async ({
+  page,
+  harness,
+}) => {
+  test.setTimeout(120_000);
+  await open(page, harness);
+  await page.evaluate(() => __postPage.setLook('look:clean'));
+  const partsShot = await page.evaluate(() => __postPage.parts());
+  const { width, height } = partsShot;
+  const parts = partsOf(partsShot);
+  const nearCharacter = nearPart(parts, width, height, 0, BORDER);
+  const pixel = { size: 6, levels: 0, outline: false, snap: false };
+  const shoot = async (filters: object) => {
+    await page.evaluate((f) => __postPage.setLook('look:clean', f), filters);
+    return rgba(await page.evaluate(() => __postPage.shoot()));
+  };
+
+  // The pixel filter on the environment only: once tagged pixel art, the characters change, and are drawn as when
+  // the filter's scope covers them.
+  const environment = { pixel: { ...pixel, scope: 'environment' } };
+  const untagged = await shoot(environment);
+  const scoped = await shoot({ pixel: { ...pixel, scope: 'characters+environment' } });
+  expect(await page.evaluate(() => __postPage.pixelArt(true)), 'meshes tagged pixel art').toBeGreaterThanOrEqual(2);
+  let tagged: Uint8Array;
+  try {
+    tagged = await shoot(environment);
+  } finally {
+    await page.evaluate(() => __postPage.pixelArt(false));
+  }
+  const art = { in: 0, inChanged: 0, out: 0, outChanged: 0 };
+  for (let p = 0; p < parts.length; p++) {
+    const changed = differs(untagged, tagged, p);
+    if (parts[p] === 0) {
+      art.in++;
+      if (changed) art.inChanged++;
+    } else if (!nearCharacter[p]) {
+      art.out++;
+      if (changed) art.outChanged++;
+    }
+  }
+  const artWhere = `tagged characters: ${art.inChanged}/${art.in} inside changed, ${art.outChanged}/${art.out} away from them`;
+  // Measured 862/2134 inside (WP 7.4's review): blocks change a smooth capsule's edges and shading.
+  expect(art.inChanged / art.in, artWhere).toBeGreaterThanOrEqual(0.2);
+  expect(art.outChanged / art.out, artWhere).toBeLessThanOrEqual(0.002);
+  expect(changedShare(tagged, scoped), 'tagged characters against characters in scope').toBeLessThanOrEqual(0.0005);
+
+  // The pixel filter on the characters, with and without the rim: dark blocks appear round them, and only there.
+  const rimless = await shoot({ pixel: { ...pixel, scope: 'characters' } });
+  const rimmed = await shoot({ pixel: { ...pixel, scope: 'characters', outline: true } });
+  const rim = { outside: 0, darker: 0, far: 0, farChanged: 0 };
+  for (let p = 0; p < parts.length; p++) {
+    const changed = differs(rimless, rimmed, p);
+    if (!nearCharacter[p]) {
+      rim.far++;
+      if (changed) rim.farChanged++;
+    } else if (changed && parts[p] !== 0) {
+      rim.outside++;
+      if (lumaAt(rimmed, p) < lumaAt(rimless, p)) rim.darker++;
+    }
+  }
+  const rimWhere = `the rim: ${rim.outside} pixels outside the characters changed, ${rim.darker} darker; ${rim.farChanged}/${rim.far} far from them`;
+  // Measured 1083 pixels, every one darker (WP 7.4's review).
+  expect(rim.outside, rimWhere).toBeGreaterThanOrEqual(400);
+  expect(rim.darker / rim.outside, rimWhere).toBeGreaterThanOrEqual(0.9);
+  expect(rim.farChanged / rim.far, rimWhere).toBeLessThanOrEqual(0.002);
+});
+
+test('a look with a material style, drawn by a chain without a style set, draws its filters with advice', async ({
+  page,
+  harness,
+}) => {
+  await open(page, harness);
+  const frame = await page.evaluate(() => __postPage.withoutStyles('look:cartoon'));
+  expect(frame).toMatchObject({ drawn: true });
+  expect(harness.advice().map((advice) => advice.code)).toContain('GFX_POST_NO_STYLES');
 });
 
 test('every look builds 0 pipelines after the warm-up and recompiles nothing, and switching looks never changes the hash', async ({
@@ -283,19 +338,6 @@ test('bloom is off at the low quality tier, with advice', async ({ page, harness
   expect(changedShare(off, low), 'bloom at the low tier').toBe(0);
   expect(harness.advice().map((advice) => advice.code)).toContain('GFX_POST_NO_BLOOM');
 });
-
-/** Mean absolute luma error against the reference, over the pixels where `none` misses it by more than 8. */
-function edgeError(shot: Uint8Array, none: Uint8Array, reference: Uint8Array): number {
-  const luma = (px: Uint8Array, p: number) => 0.2126 * px[p * 4] + 0.7152 * px[p * 4 + 1] + 0.0722 * px[p * 4 + 2];
-  let sum = 0;
-  let n = 0;
-  for (let p = 0; p < none.length / 4; p++) {
-    if (Math.abs(luma(none, p) - luma(reference, p)) <= 8) continue;
-    sum += Math.abs(luma(shot, p) - luma(reference, p));
-    n++;
-  }
-  return sum / Math.max(1, n);
-}
 
 test('the edge smoothing that measures better is the one the chain uses', async ({ page, harness }) => {
   test.setTimeout(240_000);

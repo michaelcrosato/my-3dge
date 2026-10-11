@@ -1,8 +1,8 @@
 /**
  * @file Post-processing (PLAN.md WP 7.4, §6.7, I-46): `createPost` sets up, once, one `PostProcessing` chain (r182)
  * that every frame draws through, and draws the look the view settings name. The chain:
- * 1. the scene pass with the fixed MRT (engine/gfx/post/mrt.ts): colour, view normals with each object's flags,
- *    depth;
+ * 1. the scene pass with the fixed MRT (engine/gfx/post/mrt.ts): colour, view normals with each object's flags (its
+ *    tag as it is when the frame starts, `writeFlags`), depth;
  * 2. `bloom` (three.js's `BloomNode`) on the scene's light, added before anything else and never scoped; off at the
  *    `low` quality tier (WP 3.12), with advice `GFX_POST_NO_BLOOM` when a look asks for it there;
  * 3. the picture in display colours (`renderOutput`: the renderer's tone mapping and colour space), drawn into a
@@ -13,13 +13,13 @@
  * Every filter is a uniform, so switching any filter, scope or look builds no pipeline and recompiles no material;
  * passes that are off do not run (bloom's, SMAA's), except in the warm-up's frame, which draws all of them.
  *
- * What it draws comes from three view settings (doctrine: Agent-operable; `x set`, URL parameters, `__engine.set`):
- * `post.look` (a `look` id, engine/gfx/post/looks.ts), `post.filters` (part of a filter chain laid over the look's,
- * filter by filter and field by field) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`,
- * `groups`). A look's style is applied to the style set given (`styles.setStyle`, WP 7.2); a look with style `''`
- * puts back the style the set had when the chain was made, and its toon look. Pixel art on the environment, or
- * the whole screen's low resolution, snaps the camera to its block grid for the frame (`snapBlock`,
- * engine/gfx/post/snap.ts) and puts it back.
+ * What it draws comes from three view settings, `post.look`, `post.filters` and `post.show` (`POST_SETTINGS`), which
+ * exist only where a chain does, and act only on the frames drawn through `post.view` (`definePostSettings` says which
+ * routes reach them: `createEngine` draws no chain yet, so on its pages they are unknown settings, never ignored
+ * ones). A look's style is applied to the style set given (`styles.setStyle`, WP 7.2); a look with style `''` puts
+ * back the style the set had when the chain was made, and its toon look; without a style set a look draws only its
+ * filters, with advice `GFX_POST_NO_STYLES`. Pixel art on the environment, or the whole screen's low resolution,
+ * snaps the camera to its block grid for the frame (`snapBlock`, engine/gfx/post/snap.ts) and puts it back.
  *
  * Use: `gfx.frame(post.view(frameView))` draws a frame through the chain; `post.attach(gfx.warmup)` once, before the
  * first warm-up, registers the MRT's compile step and the chain's key part.
@@ -61,7 +61,7 @@ import {
   type FilterSpec,
 } from './filters';
 import { defineLooks, type LookEntry } from './looks';
-import { clearMrt, createScenePass, PART_BITS, useSceneMrt, WARM_MRT_ID } from './mrt';
+import { clearMrt, createScenePass, FLAG_SLOTS, PART_BITS, useSceneMrt, WARM_MRT_ID, writeFlags } from './mrt';
 import { snapToBlocks } from './snap';
 
 /** The codes this module raises, with their fixes. */
@@ -76,9 +76,23 @@ export const POST_CODES = defineCodes('gfx', {
     fix: 'posterize with 0 (off) or 8 levels and more: fewer shift the hue of dull colours (shardfall measured a grey floor turning pink)',
     doc: 'Advice from the post chain when `post.filters` sets 1–7 levels; looks are checked when they are defined.',
   },
+  GFX_POST_FLAG_SLOTS: {
+    template: '{missed} objects draw as the environment: the flag table has {slots} slots, all taken',
+    fix: 'draw fewer separate objects (instance or merge them); slots come back as their objects are collected',
+    doc: 'Advice from the post chain: more live drawable objects than the fixed MRT’s flag table holds (engine/gfx/post/mrt.ts).',
+  },
+  GFX_POST_NO_STYLES: {
+    template: '{look} asks for the material style {style}, but the chain has no style set: it draws only its filters',
+    fix: 'give createPost a style set (createStyleSet, WP 7.2) as options.styles, attached to the warm-up, so looks change the materials too',
+    doc: 'Advice from the post chain (engine/gfx/post/chain.ts): a look with a material style, drawn by a chain made without `styles`.',
+  },
 });
 
-/** The view settings the chain reads (see the file comment). */
+/**
+ * The view settings the chain reads, declared by `definePostSettings`: `post.look` (a `look` id,
+ * engine/gfx/post/looks.ts), `post.filters` (part of a filter chain laid over the look's, filter by filter and field by
+ * field) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
+ */
 export const POST_SETTINGS = {
   'post.look': {
     type: 'string',
@@ -101,13 +115,20 @@ export const POST_SETTINGS = {
     description: "What the chain draws: the 'picture', or what its MRT holds: 'parts', 'normals' or 'groups'.",
   },
 } as const satisfies Record<string, Field>;
-defineSettings(POST_SETTINGS);
 
-/** Declares the chain's settings and the quality setting on `registry`, unless it has them. */
-function defineOn(registry: Registry): void {
-  if (registry === sharedRegistry) return;
-  if (!registry.has('setting', 'post.look')) defineSettings(POST_SETTINGS, registry);
-  if (!registry.has('setting', 'quality')) defineSettings(QUALITY_SETTINGS, registry);
+/**
+ * Declares the chain's settings (`POST_SETTINGS`) and the setting `quality` it reads on `registry` (the shared one by
+ * default), unless it has them. `createPost` calls it, so the settings exist once a chain does, and the chain reads
+ * them from the store it is given: `settings.set` on that store reaches it, and so do `__engine.set`, URL parameters
+ * and `x set` on a page whose frames and shots go through `post.view` (a page that parses its URL before it can make
+ * the chain calls this first). `createEngine` (engine/app/engine.ts) draws no chain yet (WP 7.4's core proposal), so
+ * on its pages, the Stress Box's among them, `x set post.look …`, `?post.look=` and `__engine.set('post.look', …)`
+ * fail with `CORE_UNKNOWN_SETTING` or `CORE_BAD_SETTING` rather than change nothing.
+ */
+export function definePostSettings(registry: Registry = sharedRegistry): void {
+  const has = (path: string) => registry.kinds().includes('setting') && registry.has('setting', path);
+  if (!has('post.look')) defineSettings(POST_SETTINGS, registry);
+  if (!has('quality')) defineSettings(QUALITY_SETTINGS, registry);
 }
 
 /** How `createPost` makes a chain. */
@@ -116,7 +137,7 @@ export interface PostOptions {
   settings?: Settings;
   /** The registry the looks are in (the shared one by default). */
   registry?: Registry;
-  /** The style set a look's style is applied to; without it, looks change only filters. */
+  /** The style set a look's style is applied to; without it, looks change only filters (`GFX_POST_NO_STYLES`). */
   styles?: StyleSet;
   /** The edge smoothing (`AA_CHOICE` by default). */
   aa?: AaKind;
@@ -168,7 +189,7 @@ let chains = 0;
 export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptions = {}): Post {
   const { renderer } = gfx;
   const registry = options.registry ?? sharedRegistry;
-  defineOn(registry);
+  definePostSettings(registry);
   const settings = options.settings ?? createSettings({ registry });
   const log = options.log ?? sharedLog;
   const styles = options.styles;
@@ -239,6 +260,8 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
     if (state.look !== applied && styles && own) {
       styles.setStyle(state.look.style || own.style, scenePass.scene);
       styles.toon.set(state.look.style === 'toon' ? state.look.toon : own.toon);
+    } else if (state.look !== applied && state.look.style) {
+      log.warnOnce('GFX_POST_NO_STYLES', { look: state.look.id, style: state.look.style }, state.look.id);
     }
     applied = state.look;
     const chain = state.chain;
@@ -270,6 +293,8 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
     renderer.getDrawingBufferSize(size);
     const block = snapBlock(chain);
     const restore = block > 1 ? snapToBlocks(camera, block, { width: size.x, height: size.y }) : null;
+    const missed = writeFlags(scenePass);
+    if (missed > 0) log.warnOnce('GFX_POST_FLAG_SLOTS', { missed, slots: FLAG_SLOTS }, 'slots');
     clearMrt(renderer);
     try {
       processing.render();

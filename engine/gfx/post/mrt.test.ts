@@ -1,10 +1,11 @@
 /**
  * @file Unit tests for the fixed MRT's flags (engine/gfx/post/mrt.ts): packing round-trips for every part, group and
- * pixel-art flag within a half float's exact integers, and the parts objects are drawn as, tagged or not.
+ * pixel-art flag within a half float's exact integers, the parts objects are drawn as, tagged or not, and the flag
+ * table: a slot per drawable object for life, its flags as they are at each write.
  */
-import { Group, Mesh, Object3D } from 'three/webgpu';
+import { Group, Line, Mesh, Object3D, Scene, type Vector4 } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
-import { flagsOf, foldGroup, GROUPS, packFlags, PARTS, setPart, unpackFlags } from './mrt';
+import { createFlagTable, flagsOf, foldGroup, GROUPS, packFlags, PARTS, setPart, unpackFlags } from './mrt';
 
 describe('packFlags and unpackFlags', () => {
   it('round-trip every part, group and pixel-art flag, within ±2,047', () => {
@@ -56,5 +57,39 @@ describe('flagsOf', () => {
     crate.userData.entity = 12;
     expect(flagsOf(crate)).toEqual({ part: 'object', group: 12, pixelArt: false });
     expect(flagsOf(new Object3D())).toEqual({ part: 'environment', group: 1, pixelArt: false });
+  });
+});
+
+describe('the flag table', () => {
+  /** The value at `slot` of `table`. */
+  const at = (table: ReturnType<typeof createFlagTable>, slot: number) =>
+    (table.node.array[slot >> 2] as Vector4).getComponent(slot & 3);
+
+  it('gives each drawable object a slot for life and writes its flags as they are at each write', () => {
+    const table = createFlagTable();
+    const scene = new Scene();
+    const hero = setPart(new Mesh(), 'character');
+    const crate = new Mesh();
+    crate.userData.entity = 12;
+    const rope = new Line();
+    const holder = new Group();
+    holder.add(crate);
+    scene.add(hero, holder, rope);
+    expect(table.write(scene)).toBe(0);
+    const slots = [hero, crate, rope].map((object) => table.slotOf(object));
+    expect(new Set(slots).size).toBe(3);
+    expect(slots.every((slot) => slot > 0)).toBe(true);
+    expect(at(table, slots[0])).toBe(packFlags('character', hero.id, false));
+    expect(at(table, slots[1])).toBe(packFlags('object', 12, false));
+    expect(at(table, slots[2])).toBe(packFlags('environment', 1, false));
+    expect(at(table, 0), 'slot 0 is the environment').toBe(packFlags('environment', 1, false));
+
+    // A tag changed after the first frame reaches the table at the next write, the slot unchanged.
+    setPart(hero, 'character', { pixelArt: true });
+    setPart(holder, 'environment');
+    table.write(scene);
+    expect(table.slotOf(hero)).toBe(slots[0]);
+    expect(at(table, slots[0])).toBe(packFlags('character', hero.id, true));
+    expect(at(table, slots[1])).toBe(packFlags('environment', 12, false));
   });
 });

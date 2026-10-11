@@ -14,6 +14,10 @@
  * - `run(steps, every, looks)` steps the session, drawing after each step and switching to the next look every
  *   `every` steps; returns the hashes every 60 steps and the pipelines each frame built;
  * - `shootPlain()` shoots the frame drawn plainly, without the chain;
+ * - `pixelArt(on)` tags every mesh drawn as a character (the capsules and the room's own stand-ins, which are
+ *   characters through `userData`) as pixel art with `setPart(…, { pixelArt: true })`, keeping its group, or puts
+ *   their own tags back;
+ * - `withoutStyles(id)` draws look `id` through a chain of its own made without a style set, then disposes it;
  * - `slide(fractions, snap)` shoots the pixel filter with the camera moved across by each fraction of a block;
  * - `measureAa()` shoots the frame unsmoothed, with FXAA and with SMAA (each a chain of its own) and drawn plainly at
  *   4 × 4 the size, for the comparison that chose the edge smoothing.
@@ -33,7 +37,7 @@ import { createMaterialLibrary } from '../../engine/gfx/materials/library';
 import { createStyleSet } from '../../engine/gfx/materials/styles';
 import { createPost, type Post } from '../../engine/gfx/post/chain';
 import type { FilterSpec } from '../../engine/gfx/post/filters';
-import { setPart } from '../../engine/gfx/post/mrt';
+import { flagsOf, setPart } from '../../engine/gfx/post/mrt';
 import { blockSize } from '../../engine/gfx/post/snap';
 import { createRenderer, type FrameReport, type FrameView, type Gfx, type GfxError } from '../../engine/gfx/renderer';
 import { shot, shotForJson, type ShotJson } from '../../engine/gfx/shot';
@@ -138,6 +142,8 @@ async function start(): Promise<void> {
     return out;
   };
   let warmVersions = new Map<string, number>();
+  /** The meshes `pixelArt(true)` tagged, each with the tag it had. */
+  let artTags: [THREE.Object3D, unknown][] = [];
 
   /** Draws until a frame is drawn, waiting out any warm-up; resolves once the GPU has finished it. */
   const settle = async (through: Post = post): Promise<FrameReport> => {
@@ -208,6 +214,38 @@ async function start(): Promise<void> {
         if (k % 60 === 0) hashes[k] = session.world.hash();
       }
       return { hashes, built, switched: turn };
+    },
+    /** Tags every character as pixel art, or puts their own tags back (see the file comment). */
+    pixelArt(on: boolean) {
+      if (on && artTags.length === 0) {
+        scene.traverse((object) => {
+          if ((object as THREE.Mesh).isMesh && flagsOf(object).part === 'character')
+            artTags.push([object, object.userData.post]);
+        });
+        for (const [object] of artTags) setPart(object, 'character', { group: flagsOf(object).group, pixelArt: true });
+      } else if (!on) {
+        for (const [object, tag] of artTags) {
+          if (tag === undefined) delete object.userData.post;
+          else object.userData.post = tag;
+        }
+        artTags = [];
+      }
+      return artTags.length;
+    },
+    /** Draws look `id` through a chain without a style set (see the file comment); returns the frame's report. */
+    async withoutStyles(id: string): Promise<FrameReport> {
+      const bare = createPost(gfx, { settings });
+      const attached = bare.attach(gfx.warmup);
+      settings.set('post.look', id);
+      settings.set('post.filters', {});
+      try {
+        await gfx.warmup.run(viewNow(bare));
+        return await settle(bare);
+      } finally {
+        attached.dispose();
+        bare.dispose();
+        settings.set('post.look', 'look:clean');
+      }
     },
     /** Shoots the frame drawn plainly, without the chain. */
     async shootPlain(): Promise<ShotJson> {
