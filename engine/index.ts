@@ -190,3 +190,13 @@ export type { TouchDevice } from './input/devices/touch';
 export type { StickView } from './input/devices/touch';
 export type { TouchSetting } from './input/devices/touch';
 export { touchCode } from './input/codes';
+// Level meshes v2 and the cutaway (WP 4.4): galleries, stairs, the dais, pillars with plinths and capitals and
+// brazier stands as recipe shapes; walls facing an outside camera cut low and pillars before the hero as stumps.
+export { createCutaway } from './gfx/cutaway';
+export { planCutaway } from './gfx/cutaway';
+export type { Cutaway } from './gfx/cutaway';
+export type { CutawayReport } from './gfx/cutaway';
+export type { CutTarget } from './gfx/cutaway';
+export type { LevelCut } from './gfx/level/recipes';
+export type { CutWhen } from './gfx/level/recipes';
+export type { PartCut } from './gfx/level/shapes';

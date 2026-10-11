@@ -1,14 +1,8 @@
 [
   {
     "id": "level:hall",
-    "metric": "recipe",
-    "value": 4,
-    "reason": "WP 4.2 writes the hall with the v2 glyphs before their meshes exist: the recipes gallery, stairs, dais and brazier arrive with WP 4.4 (engine/gfx/level, the v2 glyphs' meshes), and until then they are drawn as grey blocks with GFX_LEVEL_RECIPE. WP 4.4 removes this entry."
-  },
-  {
-    "id": "level:hall",
     "metric": "drawCalls",
-    "value": 29,
-    "reason": "The hall's 8 level meshes (one per recipe, height, surface and footprint, 4 of them the grey blocks above) cost 29 draw calls with one shadow map against the room-sized budget of 20. WP 4.4 draws the v2 recipes (each flight of stairs one mesh) and sets the hall's own number."
+    "value": 24,
+    "reason": "WP 4.4: the hall's own number. Its 8 level meshes (floor, gallery, stairs, dais, brazier stands, low walls, pillars, walls: one per recipe, a draw group per material slot) cost 15 draw calls in colour and 9 more into one shadow map, against the room-sized budget of 20. The cutaway's twins add at most 8 while they hold pieces; tests/e2e/hall.spec.ts holds the whole to 32."
   }
 ]

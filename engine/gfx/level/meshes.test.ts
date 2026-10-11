@@ -102,9 +102,15 @@ describe('createLevelMeshes on the room fixture', () => {
     expect((lowWall as InstancedMesh).count).toBe(6);
     expect(instances(lowWall as InstancedMesh)[0]).toEqual([4.5, 0, 6.5]);
     expect(inspectGeometry(lowWall.geometry).max).toEqual([0.5, 0.75, 0.5]);
-    // The pillar: one 2 × 2-tile piece, a 2 × 3.5 × 2 m box at the middle of columns 11–12 and rows 3–4.
+    // The pillar: one 2 × 2-tile piece at the middle of columns 11–12 and rows 3–4, 3.5 m tall: a plinth, a shaft
+    // and a capital, the capital's abacus 38/32 of the footprint across (engine/gfx/geometry/pillar.ts).
     expect(instances(pillar as InstancedMesh)).toEqual([[12, 0, 4]]);
-    expect(inspectGeometry(pillar.geometry)).toMatchObject({ min: [-1, 0, -1], max: [1, 3.5, 1] });
+    expect(inspectGeometry(pillar.geometry)).toMatchObject({
+      vertices: 96,
+      min: [-1.1875, 0, -1.1875],
+      max: [1.1875, 3.5, 1.1875],
+    });
+    expect(pillar.geometry.groups.map((group) => group.count)).toEqual([96, 48]);
   });
 
   it('draws in 7 calls, 13 with one shadow map: within the budget of 20', () => {
@@ -155,7 +161,10 @@ describe('createLevelMeshes on the other fixtures', () => {
     const meshes = build(fixture('heights'));
     const [, , pillar, wall] = meshes.parts.map((part) => part.mesh);
     expect(inspectGeometry(wall.geometry)).toMatchObject({ min: [-0.25, 0, -0.25], max: [0.25, 3, 0.25] });
-    expect(inspectGeometry(pillar.geometry)).toMatchObject({ min: [-0.5, 0, -0.5], max: [0.5, 3.5, 0.5] });
+    expect(inspectGeometry(pillar.geometry)).toMatchObject({
+      min: [-0.59375, 0, -0.59375],
+      max: [0.59375, 3.5, 0.59375],
+    });
     expect(bounds(meshes.root)).toEqual([
       [0, 0, 0],
       [5, 3.5, 4],
@@ -212,34 +221,43 @@ describe('the recipes', () => {
       { char: 'h', top: 1.2, solid: true, collider: 'box', mesh: 'hedge', nav: { walkable: false } },
       reg,
     );
+    defineGlyph(
+      'glyph:arch',
+      { char: 'A', top: 2, solid: true, collider: 'box', mesh: 'arch', nav: { walkable: false } },
+      reg,
+    );
     defineGlyph('glyph:ledge', { char: 'L', floor: 1, top: 1, mesh: 'gallery' }, reg); // = is the engine's gallery (WP 4.2)
-    const level = compileLevel('#####\n#.hL#\n#####\n', { file: 'garden.txt', registry: reg });
+    const level = compileLevel('######\n#.hLA#\n######\n', { file: 'garden.txt', registry: reg });
     const printed: string[] = [];
     const log = createLog({ console: { warn: (line) => printed.push(line), error: () => {} } });
     const stand = materials();
     const meshes = createLevelMeshes(level, { materials: stand, log });
-    expect(meshes.parts.map((part) => [part.name, kind(part.mesh)])).toEqual([
-      ['level:garden/floor', 'mesh'],
-      ['level:garden/gallery', 'mesh'],
-      ['level:garden/hedge', 'instanced'],
-      ['level:garden/wall', 'instanced'],
+    expect(meshes.parts.map((part) => [part.name, kind(part.mesh), part.shape])).toEqual([
+      ['level:garden/arch', 'instanced', 'block'],
+      ['level:garden/floor', 'mesh', 'surface'],
+      ['level:garden/gallery', 'mesh', 'slab'],
+      ['level:garden/hedge', 'instanced', 'block'],
+      ['level:garden/wall', 'instanced', 'block'],
     ]);
+    const known = 'brazier, dais, floor, gallery, lowWall, pillar, stairs, wall';
     expect(printed).toEqual([
-      expect.stringMatching(/^\[GFX_LEVEL_RECIPE\] level garden uses the mesh recipe gallery, which no level recipe/),
-      expect.stringMatching(
-        /^\[GFX_LEVEL_RECIPE\] level garden uses the mesh recipe hedge.*floor, lowWall, pillar, wall/,
-      ),
+      expect.stringMatching(/^\[GFX_LEVEL_RECIPE\] level garden uses the mesh recipe arch, which no level recipe/),
+      expect.stringContaining(`level garden uses the mesh recipe hedge, which no level recipe defines`),
     ]);
-    // A block whose top is its floor is drawn as a surface at that height.
-    expect(inspectGeometry(meshes.parts[1].mesh.geometry)).toMatchObject({
+    expect(printed[1]).toContain(known);
+    // A slab whose top is its floor is its walk alone, in the walk's material (slot 1: flagstones).
+    expect(inspectGeometry(meshes.parts[2].mesh.geometry)).toMatchObject({
       vertices: 4,
       min: [3, 1, 1],
       max: [4, 1, 2],
     });
-    expect([].concat(meshes.parts[2].mesh.material as never).map((m: Material) => m.name)).toEqual([
+    expect(meshes.parts[2].mesh.geometry.groups).toEqual([{ start: 0, count: 6, materialIndex: 1 }]);
+    expect((meshes.parts[2].mesh.material as Material[])[1].name).toBe('material:flagstone');
+    expect([].concat(meshes.parts[3].mesh.material as never).map((m: Material) => m.name)).toEqual([
       'material:default',
       'material:default',
     ]);
+    expect(meshes.drawCalls()).toBe(2 + 1 + 1 + 2 + 2);
     const quiet: string[] = [];
     const hedge = {
       shape: 'block',
@@ -247,25 +265,25 @@ describe('the recipes', () => {
       castShadow: true,
       receiveShadow: true,
     } as const;
-    const gallery = { ...LEVEL_RECIPES.floor };
+    const recipes = { hedge, arch: { ...LEVEL_RECIPES.lowWall }, gallery: { ...LEVEL_RECIPES.floor } };
     const own = createLevelMeshes(level, {
       materials: materials(),
-      recipes: { hedge, gallery },
+      recipes,
       log: createLog({ console: { warn: (line) => quiet.push(line), error: () => {} } }),
     });
     expect(quiet).toEqual([]);
-    expect([].concat(own.parts[2].mesh.material as never).map((m: Material) => m.name)).toEqual([
+    expect([].concat(own.parts[3].mesh.material as never).map((m: Material) => m.name)).toEqual([
       'material:moss',
       'material:leaves',
     ]);
-    expect(own.drawCalls()).toBe(1 + 1 + 2 + 2);
+    expect(own.drawCalls()).toBe(2 + 1 + 1 + 2 + 2);
     // A block with one material draws the whole box at once.
     const plain = createLevelMeshes(level, {
       materials: materials(),
-      recipes: { hedge: { ...hedge, materials: ['material:moss'] }, gallery },
+      recipes: { ...recipes, hedge: { ...hedge, materials: ['material:moss'] } },
     });
-    expect((plain.parts[2].mesh.material as Material).name).toBe('material:moss');
-    expect(plain.drawCalls()).toBe(1 + 1 + 1 + 2);
+    expect((plain.parts[3].mesh.material as Material).name).toBe('material:moss');
+    expect(plain.drawCalls()).toBe(2 + 1 + 1 + 1 + 2);
   });
 });
 
