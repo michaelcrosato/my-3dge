@@ -819,6 +819,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`eval.ts`](../tools/cmd/eval.ts): Evaluates JavaScript in the page `x inspect` keeps open, and prints its value as JSON (PLAN.md §8.1, WP 2.7): `node x eval "__engine.hash()"`.
   - Exports: `default`
   - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
+- [`film.ts`](../tools/cmd/film.ts): Films a page (PLAN.md WP 3.11, I-28): plays a script of steps over `__engine.input` and `step`, shoots a frame wherever the script says, lays the frames out on a labelled contact sheet, and with `--compare <ref>` films the same steps at that commit and attributes every pixel that differs to an object, through the ID pass.
+  - Exports: `addWorktree`, `checkFilmThumbs`, `compareFilmThumbs`, `compareFrames`, `contactSheet`, `default`, `drawText`, `EMPTY`, `FilmFrame`, `FilmObject`, `FilmStep`, `FilmVerdict`, `FrameDiff`, `hasFile`, `judgeCompare`, `LABEL`, `MAGENTA`, `parseSteps`, `PARTS`, `removeWorktree`, `resolveRef`, `sameSources`, `Sheet`, `SHOT`, `simSteps`
+  - Tests: [`tools/cmd/film.test.ts`](../tools/cmd/film.test.ts)
 - [`help.ts`](../tools/cmd/help.ts): Prints the generated help: every command, or one command's file comment and flags.
   - Exports: `default`
   - Tests: [`tools/x.test.ts`](../tools/x.test.ts)

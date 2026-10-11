@@ -3056,6 +3056,34 @@ For the agents who maintain the engine.
 
 - `default` (default): Evaluates JavaScript in the page `x inspect` keeps open, and prints its value as JSON (PLAN.md §8.1, WP 2.7): `node x eval "__engine.hash()"`.
 
+### [`tools/cmd/film.ts`](../tools/cmd/film.ts)
+
+- `addWorktree` (function): Checks commit `sha` out in a temporary worktree under out/film/, with this tree's node_modules linked into it.
+- `checkFilmThumbs` (function): Records the film's thumbnails as `tests/baselines/thumbs/<name>.json` with `update`, else compares them with it.
+- `compareFilmThumbs` (function): Compares each frame's thumbnail with the baseline's (24 of 255): a line per frame that moved, or the counts.
+- `compareFrames` (function): Compares frame `a` with the base's frame `b` pixel by pixel, attributing each difference (see the file comment).
+- `contactSheet` (function): Lays frames out in `cols` columns, each labelled; with the base's frames and the diffs, rows A, B and the diff.
+- `default` (default): Films a page (PLAN.md WP 3.11, I-28): plays a script of steps over `__engine.input` and `step`, shoots a frame wherever the script says, lays the frames out on a labelled contact sheet, and with `--compare <ref>` films the same steps at that commit and attributes every pixel that differs to an object, through the ID pass.
+- `drawText` (function): Draws `text` in upper case on `sheet` at `at`, each font pixel 2 × 2, cut before x `clip`; `?` for other glyphs.
+- `EMPTY` (const): What a differing pixel that no object's box holds is attributed to.
+- `FilmFrame` (interface): One filmed frame: its number, the sim tick, its pixels (row-major RGBA), the ID pass's visible objects, thumbnail.
+- `FilmObject` (interface): An object that differs over a film: its pixels, the frames, and whether its ID-pass entry changed (it moved).
+- `FilmStep` (interface): One step of a film: the `__engine` member it calls and the arguments; the verb `shot` films a frame.
+- `FilmVerdict` (interface): The verdict on a comparison, its findings, and the objects that differ, most pixels first.
+- `FrameDiff` (interface): How a frame differs from the base's: the pixels that differ (-1: not comparable) by object, the changed entries.
+- `hasFile` (const): Whether commit `sha` has the file `path`.
+- `judgeCompare` (function): Judges a comparison with `ref`: `none` says why there is no baseline, `unchanged` that the sources are the ref's.
+- `LABEL` (const): The height of a label under a frame, in pixels: the 3 × 5 font at twice its size, with a margin.
+- `MAGENTA` (const): The colour of a pixel that differs from the base's, on the sheet's diff row.
+- `parseSteps` (function): Reads a script of steps (see the file comment); throws `UsageError` naming the step it cannot read.
+- `PARTS` (const): How many parts, each followed by a frame, a `step` is filmed in when the script never shoots.
+- `removeWorktree` (function): Removes a worktree `addWorktree` made: the node_modules link first (never what it points at), then the checkout.
+- `resolveRef` (function): The commit `ref` names, in full; throws `UsageError` when it names none.
+- `sameSources` (const): Whether the working tree's sources are commit `sha`'s: no tracked change, no untracked file git does not ignore.
+- `Sheet` (interface): A contact sheet, or any RGBA image: its size and its pixels, row-major.
+- `SHOT` (const): The shot a film takes: the pixels, the ID pass and the thumbnail, without the look metrics.
+- `simSteps` (const): `n` sim steps with what the virtual device holds.
+
 ### [`tools/cmd/help.ts`](../tools/cmd/help.ts)
 
 - `default` (default): Prints the generated help: every command, or one command's file comment and flags.
