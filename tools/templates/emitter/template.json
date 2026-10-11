@@ -1,0 +1,11 @@
+{
+  "describe": "An emitter: a particle effect as data (how its particles start, move and look; its burst, the event types it answers, its rate and light), with a unit test that its event bursts its particles within budget (PLAN.md WP 6.4).",
+  "id": "the module's path, labs/<lab>/emitters/<name> (its id is emitter:<name>): labs/box/emitters/spores",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/emitters|tools/templates/emitter)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/emitter/sampleEmitter",
+  "files": {
+    "emitter.ts.tmpl": "{{id}}.ts",
+    "emitter.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}

@@ -324,3 +324,25 @@ export { defineMannequin } from './gfx/puppets/bodies/mannequin';
 export { mannequinBody } from './gfx/puppets/bodies/mannequin';
 export { MANNEQUIN_SLOTS } from './gfx/puppets/bodies/mannequin';
 export type { MannequinData } from './gfx/puppets/bodies/mannequin';
+// Effects (WP 6.4): particles as data (emitters: shardfall's presets, the 2D engine's kinds, event effects), drawn
+// with telegraphs on the floor, socket trails, bolts and camera shake by a view's effects; never part of the hash.
+export { createEffects } from './gfx/fx/effects';
+export { FX_BUDGET } from './gfx/fx/effects';
+export { BOLT } from './gfx/fx/effects';
+export type { Effects } from './gfx/fx/effects';
+export type { EffectsOptions } from './gfx/fx/effects';
+export type { FxEventPayload } from './gfx/fx/payload';
+export type { FxStats } from './gfx/fx/effects';
+export { defineEmitter } from './gfx/fx/emitters';
+export { getEmitter } from './gfx/fx/emitters';
+export type { Emitter } from './gfx/fx/emitters';
+export type { EmitterSpec } from './gfx/fx/emitters';
+export type { EmitterLayer } from './gfx/fx/emitters';
+export type { ParticleFields } from './gfx/fx/emitters';
+export type { FxLight } from './gfx/fx/emitters';
+export type { BurstOptions } from './gfx/fx/particles';
+export type { ParticleStats } from './gfx/fx/particles';
+export { TRAIL_TINTS } from './gfx/fx/ribbons';
+export type { TrailSampleLike } from './gfx/fx/ribbons';
+export { ScreenShake } from './gfx/fx/shake';
+export { SHAKE } from './gfx/fx/shake';

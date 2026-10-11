@@ -1,0 +1,21 @@
+/**
+ * @file The telegraph `telegraph:{{name}}`: what it warns of (replace this text; `x docs` puts the first sentence in
+ * INDEX). It starts as a tail's sweep: the floor beside and behind its owner, from half a metre out to 2.5 m.
+ *
+ * Invariants: its fields are the kind's (`node x describe telegraph`), in metres and radians; sim code tests it with
+ * `inTelegraph` and `nearMiss` where its attacker stands, and a view's effects draw it filling as it winds up.
+ *
+ * @example
+ * {{name}}.shape; // 'arc'
+ * @see {{id}}.test.ts
+ */
+import { defineTelegraph } from '../../../engine/sim-api';
+
+/** The telegraph `telegraph:{{name}}`: replace this sentence with what it warns of. */
+export const {{name}} = defineTelegraph('telegraph:{{name}}', {
+  description: "A tail's sweep: the floor beside and behind its owner, out to 2.5 m (replace).",
+  shape: 'arc',
+  inner: 0.5,
+  radius: 2.5,
+  halfAngle: 2.2,
+});
