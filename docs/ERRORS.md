@@ -197,7 +197,7 @@ Raised by `jointIndex`, `socketIndex`, `boneMask` and the pose functions that ta
 
 - Message: `the rigid pair names {name}, which is not a joint, a socket or the root{suggestion}`
 - Fix: name joints (JOINTS), sockets (SOCKETS) or "root" in rigid pairs
-- Registered in: [`engine/anim/check.ts` line 44](../engine/anim/check.ts)
+- Registered in: [`engine/anim/check.ts` line 60](../engine/anim/check.ts)
 
 Raised by `animCheck` (engine/anim/check.ts) for a rigid pair naming a point the skeleton lacks.
 

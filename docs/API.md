@@ -42,6 +42,8 @@ game agent's manual.
 - `AnimatorOptions` (interface from [`engine/anim/character.ts`](../engine/anim/character.ts)): What an animator is made from: the humanoid's options, and `preciseHits`.
 - `AnimatorReport` (type from [`engine/anim/character.ts`](../engine/anim/character.ts)): What `inspect()` returns: plain JSON, numbers to 0.1 mm.
 - `animCheck` (function from [`engine/anim/check.ts`](../engine/anim/check.ts)): Checks every pose of `spec` against the skeleton's contract: finite values, bone lengths, declared rigid pairs, feet at or above the floor, sockets in reach.
+- `animCheckBody` (function from [`engine/anim/check.ts`](../engine/anim/check.ts)): Checks a whole body (my-3d2dge's `checkRig`): every pose of the state matrix (`animCheck`), the same hashes when the matrix runs again (`hash`), and the joints within `rate` metres of a run at half the step (`rate`).
+- `AnimCheckName` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): One kind of problem: which check found it.
 - `AnimCheckReport` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheck` found.
 - `AnimCheckSpec` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheck` checks.
 - `AnimEvent` (type from [`engine/anim/character.ts`](../engine/anim/character.ts)): An event of the tick `step` took.
@@ -102,6 +104,8 @@ game agent's manual.
 - `BODY_STATES` (const from [`engine/anim/states.ts`](../engine/anim/states.ts)): Every body state and the kind of value it takes (`AnimatorInput` documents each word).
 - `bodyCapsules` (function from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The body's bone capsules in `world` (`BODY_CAPSULES`, then the head as a ball), written into `out`.
 - `BodyChange` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): The changes `setBody` makes; each wakes the body.
+- `BodyCheckOptions` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheckBody` checks: the matrix, `animCheck`'s spec, the hash and the rate.
+- `BodyCheckReport` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheckBody` found, with the runs it checked.
 - `BodyLength` (type from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): A size or an offset: metres, or `[k, ref]`, k times the head radius, the limb radius or the torso radius.
 - `BodyMotion` (interface from [`engine/anim/locomotion.ts`](../engine/anim/locomotion.ts)): A move's body motion now, eased toward its targets (a move's arm path asks for them, strike.ts `stepArm`).
 - `BodyPart` (type from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): One part, one line (see the file comment).
@@ -461,6 +465,8 @@ game agent's manual.
 - `MaterialStyle` (type from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): A material style (see `MATERIAL_STYLES`).
 - `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
+- `MatrixRun` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): One run of the matrix: a state held at a facing, from rest and back to rest, one pose per step.
+- `MatrixState` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): A state the matrix holds: the body states told every step, or a script, for so many seconds.
 - `measureFeel` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `measureMove` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Measures where `move`'s strike point (the blade's tip, the fist, the foot's sole) goes through its hit window, on a spare body of `options.build` holding `options.weapon` (`build:chibi` with a sword by default): the hit cone and height window to test targets against (`inHitShape`).
 - `mergeGeometries` (function from [`engine/gfx/geometry/groups.ts`](../engine/gfx/geometry/groups.ts)): Joins `geometries` into one, in order: their attributes end to end, their indices offset.
@@ -642,6 +648,7 @@ game agent's manual.
 - `Shape` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A shape, sized like three.js's geometries (see the file comment).
 - `ShapeCastOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A shape cast's options.
 - `Sheet` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A drawn sheet: the SVG text, its hash, and its size in pixels.
+- `SHEET_CAMERAS` (const from [`engine/anim/check.ts`](../engine/anim/check.ts)): The cameras sheets of the matrix draw each frame from: presets of `anim.sheet()`'s views (engine/anim/sheet.ts).
 - `SheetFrame` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): One frame of a sheet: a pose, and its label (`#<index>` when absent).
 - `SheetOptions` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): What a sheet draws, and how.
 - `SheetView` (type from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A view's name.
@@ -685,6 +692,9 @@ game agent's manual.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
 - `STANCES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The stances, held while moving.
 - `standingHipHeight` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): A skeleton's standing hip height, metres: its hip joints' rest height (straight legs; for a build, its pelvis's, `legUpper + legLower` times `size`).
+- `STATE_MATRIX` (const from [`engine/anim/check.ts`](../engine/anim/check.ts)): The state matrix's defaults.
+- `stateMatrix` (function from [`engine/anim/check.ts`](../engine/anim/check.ts)): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
+- `StateMatrixOptions` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `stateMatrix` runs.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `StickView` (interface from [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)): Where the stick is drawn, in client CSS px: its centre and its knob.
@@ -805,6 +815,8 @@ game agent's manual.
 - `AnimatorOptions` (interface from [`engine/anim/character.ts`](../engine/anim/character.ts)): What an animator is made from: the humanoid's options, and `preciseHits`.
 - `AnimatorReport` (type from [`engine/anim/character.ts`](../engine/anim/character.ts)): What `inspect()` returns: plain JSON, numbers to 0.1 mm.
 - `animCheck` (function from [`engine/anim/check.ts`](../engine/anim/check.ts)): Checks every pose of `spec` against the skeleton's contract: finite values, bone lengths, declared rigid pairs, feet at or above the floor, sockets in reach.
+- `animCheckBody` (function from [`engine/anim/check.ts`](../engine/anim/check.ts)): Checks a whole body (my-3d2dge's `checkRig`): every pose of the state matrix (`animCheck`), the same hashes when the matrix runs again (`hash`), and the joints within `rate` metres of a run at half the step (`rate`).
+- `AnimCheckName` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): One kind of problem: which check found it.
 - `AnimCheckReport` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheck` found.
 - `AnimCheckSpec` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheck` checks.
 - `AnimEvent` (type from [`engine/anim/character.ts`](../engine/anim/character.ts)): An event of the tick `step` took.
@@ -849,6 +861,8 @@ game agent's manual.
 - `BODY_STATES` (const from [`engine/anim/states.ts`](../engine/anim/states.ts)): Every body state and the kind of value it takes (`AnimatorInput` documents each word).
 - `bodyCapsules` (function from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The body's bone capsules in `world` (`BODY_CAPSULES`, then the head as a ball), written into `out`.
 - `BodyChange` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): The changes `setBody` makes; each wakes the body.
+- `BodyCheckOptions` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheckBody` checks: the matrix, `animCheck`'s spec, the hash and the rate.
+- `BodyCheckReport` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheckBody` found, with the runs it checked.
 - `BodyMotion` (interface from [`engine/anim/locomotion.ts`](../engine/anim/locomotion.ts)): A move's body motion now, eased toward its targets (a move's arm path asks for them, strike.ts `stepArm`).
 - `BodySpec` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A body as `addBody` takes it.
 - `BodyState` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A body's state, copied: changing it changes nothing.
@@ -1064,6 +1078,8 @@ game agent's manual.
 - `MASKS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The preset bone masks.
 - `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
+- `MatrixRun` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): One run of the matrix: a state held at a facing, from rest and back to rest, one pose per step.
+- `MatrixState` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): A state the matrix holds: the body states told every step, or a script, for so many seconds.
 - `measureFeel` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `measureMove` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Measures where `move`'s strike point (the blade's tip, the fist, the foot's sole) goes through its hit window, on a spare body of `options.build` holding `options.weapon` (`build:chibi` with a sword by default): the hit cone and height window to test targets against (`inHitShape`).
 - `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
@@ -1178,6 +1194,7 @@ game agent's manual.
 - `Shape` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A shape, sized like three.js's geometries (see the file comment).
 - `ShapeCastOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A shape cast's options.
 - `Sheet` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A drawn sheet: the SVG text, its hash, and its size in pixels.
+- `SHEET_CAMERAS` (const from [`engine/anim/check.ts`](../engine/anim/check.ts)): The cameras sheets of the matrix draw each frame from: presets of `anim.sheet()`'s views (engine/anim/sheet.ts).
 - `SheetFrame` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): One frame of a sheet: a pose, and its label (`#<index>` when absent).
 - `SheetOptions` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): What a sheet draws, and how.
 - `SheetView` (type from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A view's name.
@@ -1208,6 +1225,9 @@ game agent's manual.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
 - `STANCES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The stances, held while moving.
 - `standingHipHeight` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): A skeleton's standing hip height, metres: its hip joints' rest height (straight legs; for a build, its pelvis's, `legUpper + legLower` times `size`).
+- `STATE_MATRIX` (const from [`engine/anim/check.ts`](../engine/anim/check.ts)): The state matrix's defaults.
+- `stateMatrix` (function from [`engine/anim/check.ts`](../engine/anim/check.ts)): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
+- `StateMatrixOptions` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `stateMatrix` runs.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
@@ -1338,13 +1358,26 @@ For the agents who maintain the engine.
 ### [`engine/anim/check.ts`](../engine/anim/check.ts)
 
 - `animCheck` (function): Checks every pose of `spec` against the skeleton's contract: finite values, bone lengths, declared rigid pairs, feet at or above the floor, sockets in reach.
+- `animCheckBody` (function): Checks a whole body (my-3d2dge's `checkRig`): every pose of the state matrix (`animCheck`), the same hashes when the matrix runs again (`hash`), and the joints within `rate` metres of a run at half the step (`rate`).
 - `AnimCheckName` (type): One kind of problem: which check found it.
 - `AnimCheckReport` (interface): What `animCheck` found.
 - `AnimCheckSpec` (interface): What `animCheck` checks.
 - `AnimProblem` (interface): One problem: the check, the point, the first frame that has it, how many frames do, and a plain sentence.
+- `BodyCheckOptions` (interface): What `animCheckBody` checks: the matrix, `animCheck`'s spec, the hash and the rate.
+- `BodyCheckReport` (interface): What `animCheckBody` found, with the runs it checked.
 - `CHECK_CODES` (const): The codes this module raises, with their fixes.
+- `hashRun` (function): A run's 64-bit FNV-1a digest over every pose, 16 hex digits: the same run, the same hash.
+- `MatrixRun` (interface): One run of the matrix: a state held at a facing, from rest and back to rest, one pose per step.
+- `MatrixState` (interface): A state the matrix holds: the body states told every step, or a script, for so many seconds.
 - `PointName` (type): A point a rigid pair can name: a joint, a socket, or the root.
+- `rateDrift` (function): How far points stray between a run (`coarse`, points per step) and the same run at half the step, beyond what each moves in one coarse step either side (two discretizations of a fast motion may lie a step apart): the worst excess, its step and its point's index.
 - `RigidPair` (type): Two points whose distance must not change: from the first frame, or the distance given third (metres).
+- `RUN_POINTS` (const): The points `runPoints` measures, in order: the joints, then the sockets.
+- `runPoints` (function): Each step's joints and sockets (`RUN_POINTS`), measured from the body's position: what a rate or a pop compares.
+- `SHEET_CAMERAS` (const): The cameras sheets of the matrix draw each frame from: presets of `anim.sheet()`'s views (engine/anim/sheet.ts).
+- `STATE_MATRIX` (const): The state matrix's defaults.
+- `stateMatrix` (function): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
+- `StateMatrixOptions` (interface): What `stateMatrix` runs.
 
 ### [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)
 
@@ -4613,6 +4646,14 @@ For the agents who maintain the engine.
 - `settingModules` (function): The modules that declare settings (`defineSettings(` in their text), tests aside; with `scene`, only its own.
 - `settingParam` (function): A setting as a URL parameter: `path=value`, a string as it is, anything else as JSON.
 
+### [`tools/cmd/sheet.ts`](../tools/cmd/sheet.ts)
+
+- `default` (default): Draws a body's state matrix as a contact sheet, plus its numeric checks (PLAN.md WP 6.6, §8.5): `node x sheet <subject>` runs the humanoid through the states a QA id or prefix names, as the `anim` QA family does (tools/qa/anim.ts `humanoidStates`), draws them with `anim.sheet()` (engine/anim/sheet.ts) from the cameras of a `SHEET_CAMERAS` preset (engine/anim/check.ts), and turns the SVG into a PNG in the platform's Chromium.
+- `MAX_WIDTH` (const): The widest sheet, pixels (§8.5: contact sheets are capped at 1,600 px).
+- `sheetFrames` (function): The frames a sheet of `subject` draws, and whether they are moves (for the cameras).
+- `SheetFramesOptions` (interface): What `sheetFrames` draws.
+- `subjectIds` (function): The QA ids `subject` names: itself, or every id it prefixes (`humanoid`: all of them).
+
 ### [`tools/cmd/shot.ts`](../tools/cmd/shot.ts)
 
 - `default` (default): Renders a page on WebGPU in the platform's Chromium and reports what it drew as numbers and text: the look metrics, the ID pass (which object covers which pixels) and a 48 × 27 text thumbnail; images only on demand.
@@ -5009,6 +5050,22 @@ For the agents who maintain the engine.
 - `DevServer` (interface): A running dev server.
 - `freePort` (function): Asks the system for a free TCP port on 127.0.0.1.
 - `startVite` (function): Starts Vite on the repository at `root` (default: this repository), on `port` (default: any free port).
+
+### [`tools/qa/anim.ts`](../tools/qa/anim.ts)
+
+- `ANIM_QA` (const): The thresholds, in metres and radians for a body of `size` 1.
+- `animViolations` (function): Every violation of the bodies whose ids `keep` keeps, the worst per id and metric, in id order.
+- `closure` (function): Loop closure: the last pose against a body that rested all along, at the same step (the first `count` points).
+- `default` (default): The `anim` QA family (PLAN.md §8.6, WP 6.6, I-29): `node x qa anim` drives every body the engine animates through its state matrix and measures the motion, in Node.
+- `footSlide` (function): Foot slide: a sole on the floor moving over the ground, the most in one contact.
+- `Found` (type): What a metric found: the worst value and its sentence.
+- `HUMANOIDS` (const): The humanoid bodies the family drives through the whole matrix; the first also runs it twice and at half the step.
+- `humanoidStates` (function): The humanoid's matrix: every sample state, pose, stance, move and reaction, by QA id.
+- `limbs` (function): Joint limits and twist jumps of the limbs (ik.ts `LIMBS`): hinges kept, folded bones never flipping about themselves.
+- `makeHumanoid` (const): A humanoid of `HUMANOIDS`, made at a step: what the matrix drives.
+- `motionTrack` (function): A track from its points (world metres) and the body's position at each step.
+- `pops` (function): Pops: a point that jumps in one step while the steps either side are much shorter (ed-sheet.mjs:122-125).
+- `Track` (interface): One run as the metrics read it: points per step, world and measured from the body, and what they need besides.
 
 ### [`tools/qa/audio.ts`](../tools/qa/audio.ts)
 

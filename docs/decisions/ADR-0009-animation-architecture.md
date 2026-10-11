@@ -93,3 +93,20 @@ Differential tests against the ported reference vectors (WP 0.11); the animation
   (`ANIM_BAD_STATE`) and does not play. `Combo.load` treats a saved step outside its attacks as idle, as
   `Timeline.load` does an index out of range. New codes: `ANIM_BAD_HIT_KEY`, `ANIM_EMPTY_COMBO`, `ANIM_NOT_PRECISE`.
 - Evidence: `engine/anim/{moves,strike,timeline,moves-data}.test.ts`, `fixtures/rigs/dummy/index.test.ts`.
+
+## Amendment 6 (2026-10-11, WP-6.6)
+- **Sheet cameras.** `x sheet` draws with `anim.sheet()`'s orthographic views; `SHEET_CAMERAS` (body, move,
+  turntable) are presets of those views. `sheet.ts` fits every frame and view at one scale, so every camera frames
+  every pose. Shardfall's back-off fixes perspective cameras, and sheets have none (PLAN.md WP 6.6 and §2 edited).
+- **Rate check.** Step i at 1/60 s is compared with step 2i+1 at 1/120 s; only drift beyond the joint's own one-step
+  motion counts, with a 2 cm limit.
+- **Thresholds.** Pops use v1's numbers (9/16 m, ratio 2.5, floor 0.5/16, scaled by build size). A foot is in contact
+  within 5 mm of the floor; slide limit 5 cm per contact. Loop closure 2 cm. Twist jump 120° while folded past 140°.
+  Hinge tolerance 0.02 rad. Angle limit ±540°.
+- **Coverage.** The fixture dummy is not driven: it has no skeleton. Clips go to WP 8.6, actions to WP 8.7.
+- **Baselined, not fixed** (`tests/baselines/qa-anim.json`, 62 entries with reasons): the die pose's hurt and kneel
+  ease twice per step toward opposite targets (faithful to v1), so they drift by step, up to 7.7 cm at half steps; the
+  face-down turn (WP 6.2) sinks toe tips up to 0.30 m below the floor; v1's twist pops in axekick, overhead, throw,
+  twohand and uppercut, and bulky's elbow pops in bash, overhead, throw and twohand; feet slide almost everywhere until
+  a foot plant lands (amendment 4's `footPlant` proposal).
+- Evidence: `engine/anim/check.test.ts`, `tools/qa/anim.test.ts`, `tools/cmd/sheet.test.ts`.
