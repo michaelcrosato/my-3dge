@@ -10,8 +10,11 @@
  * getLayoutMap()`, read by `readKeyboardLayout`), else a name from the code; pad buttons show the family's names
  * (`padStyle` reads it from `Gamepad.id`: Xbox by default, PlayStation, Nintendo).
  *
- * Invariants: `isCode` accepts exactly the codes above; `deviceOf` is `gamepad` for `Pad…`, `mouse` for `Mouse…` and
- * `Wheel…`, `keyboard` otherwise; `PAD_BUTTONS[i]` is the code of standard button i.
+ * Touch buttons (WP 3.12) write `touch:<action>` (`touchCode`): every action binds its own implicitly, so no map
+ * lists one and no player rebinds one; a button names its action with `data-action` (engine/input/devices/touch.ts).
+ *
+ * Invariants: `isCode` accepts exactly the codes above, touch codes aside; `deviceOf` is `gamepad` for `Pad…`, `mouse`
+ * for `Mouse…` and `Wheel…`, `touch` for `touch:…`, `keyboard` otherwise; `PAD_BUTTONS[i]` is standard button i.
  *
  * Carried from `my-3d2dge:src/emberdeep/61-controls.js:28-116` (`bindingCode`, `PAD_LABELS`, `codeLabel`), with
  * position names for the pad and labels per pad family.
@@ -26,7 +29,7 @@
  */
 
 /** The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts). */
-export type DeviceKind = 'keyboard' | 'mouse' | 'gamepad' | 'virtual';
+export type DeviceKind = 'keyboard' | 'mouse' | 'gamepad' | 'touch' | 'virtual';
 
 /** Where the devices write (engine/input/input.ts keeps it): codes going down and up, analog strengths, use. */
 export interface InputSink {
@@ -96,8 +99,17 @@ export function isCode(code: unknown): code is string {
   return typeof code === 'string' && (OTHER.has(code) || KEY.test(code));
 }
 
+/** The prefix of the codes touch buttons write: `touch:jump` is the jump button (`touchCode`). */
+export const TOUCH_PREFIX = 'touch:';
+
+/** The code a touch button for `action` writes; every action binds its own (engine/input/input.ts). */
+export function touchCode(action: string): string {
+  return `${TOUCH_PREFIX}${action}`;
+}
+
 /** The device a code belongs to. */
 export function deviceOf(code: string): Exclude<DeviceKind, 'virtual'> {
+  if (code.startsWith(TOUCH_PREFIX)) return 'touch';
   if (code.startsWith('Pad')) return 'gamepad';
   return code.startsWith('Mouse') || code.startsWith('Wheel') ? 'mouse' : 'keyboard';
 }

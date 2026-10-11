@@ -1,8 +1,10 @@
 /**
  * @file The input (PLAN.md §6.4, WP 3.3, I-24; doctrine: Reproducible): the devices of a page (keyboard, mouse,
- * gamepads, the virtual device) turned into one step's intents through bindings (engine/input/bindings.ts). The
- * frame loop calls `sample(camera)` once per rendered frame, before the clock hands out steps, and gives the result
- * to the frame's first step (its later steps get it without `p`, PLAN.md §6.4); the session records it.
+ * gamepads, touch, the virtual device) turned into one step's intents through bindings (engine/input/bindings.ts).
+ * The frame loop calls `sample(camera, now)` once per rendered frame, before the clock hands out steps, and gives the
+ * result to the frame's first step (its later steps get it without `p`, PLAN.md §6.4); the session records it, so
+ * touch play replays like any other (WP 3.12: every action also binds `touch:<action>`, and the touch stick adds to
+ * the move axes before `fromCamera` clamps them to length 1).
  *
  * What a sample holds: `b`, the map's actions held, sorted; `p`, those pressed since the last sample (an action whose code went
  * down, so a tap shorter than a frame still presses); `move`, the strengths of the map's four move actions as
@@ -39,10 +41,11 @@ import type { Log } from '../core/log';
 import type { Registry } from '../core/registry';
 import { SYSTEM_ACTIONS } from './actionMaps';
 import { createBindings, pickLabel, type Bindings, type BindingsStorage } from './bindings';
-import { deviceOf, PAD_BUTTONS, type DeviceKind, type InputSink } from './codes';
+import { deviceOf, PAD_BUTTONS, touchCode, type DeviceKind, type InputSink } from './codes';
 import { createGamepadDevice, type GamepadDevice, type GamepadSource } from './devices/gamepad';
 import { attachKeyboard } from './devices/keyboard';
 import { attachMouse, type MouseDevice, type MouseTargets } from './devices/mouse';
+import { attachTouch, type TouchDevice, type TouchSetting } from './devices/touch';
 import { createVirtualDevice, type VirtualDevice } from './devices/virtual';
 import { fromCamera } from './intents';
 
@@ -74,6 +77,10 @@ export interface InputOptions {
   invertY?: boolean;
   /** The keyboard layout for prompts (`readKeyboardLayout()`). */
   layout?: ReadonlyMap<string, string>;
+  /** The `touch` setting now (`auto`, `on`, `off`): touch mode follows the screen unless forced. */
+  touchMode?: () => TouchSetting;
+  /** A tap on a touch tap control (`data-tap`: `menu`) or on the open game (`game`), as it happens. */
+  onTap?: (name: string) => void;
   /** Where the map is registered (the shared registry). */
   registry?: Registry;
   /** Where advice goes (the shared log). */
@@ -95,10 +102,12 @@ export interface Input {
   readonly virtual: VirtualDevice;
   /** The mouse (pointer lock, pointer), when there is a page. */
   readonly mouse: MouseDevice | undefined;
+  /** Fingers (touch mode, the stick, the buttons under them), when there is a page. */
+  readonly touch: TouchDevice | undefined;
   /** The device used last: prompts follow it. */
   readonly lastDevice: DeviceKind;
-  /** One frame's intents (unnormalized): see the file comment. */
-  sample(camera?: CameraLike): Record<string, unknown>;
+  /** One frame's intents (unnormalized) at the frame's timestamp `now` (ms): see the file comment. */
+  sample(camera?: CameraLike, now?: number): Record<string, unknown>;
   /** Whether `action` (either layer) was held at the last sample. */
   held(action: string): boolean;
   /** Whether `action` (either layer) was pressed at the last sample. */
@@ -139,8 +148,9 @@ export function createInput(options: InputOptions = {}): Input {
 
   const codesOf = (action: string): readonly string[] => {
     if (table.version !== bindings.version) {
-      const codes = new Map<string, readonly string[]>(Object.entries(SYSTEM_ACTIONS));
-      for (const name of bindings.actions()) codes.set(name, bindings.codes(name));
+      const codes = new Map<string, readonly string[]>();
+      for (const [name, own] of Object.entries(SYSTEM_ACTIONS)) codes.set(name, [...own, touchCode(name)]);
+      for (const name of bindings.actions()) codes.set(name, [...bindings.codes(name), touchCode(name)]);
       table = { version: bindings.version, codes, bound: new Set([...codes.values()].flat()) };
     }
     return table.codes.get(action) ?? [];
@@ -155,7 +165,8 @@ export function createInput(options: InputOptions = {}): Input {
     press(code, device) {
       last = device;
       if (listening && code === 'Escape') return hear(null);
-      const family = deviceOf(code) === 'gamepad' ? 'gamepad' : 'keyboard';
+      const kind = deviceOf(code);
+      const family = kind === 'gamepad' ? 'gamepad' : kind === 'touch' ? 'touch' : 'keyboard';
       if (listening?.family === family && (family === 'keyboard' || PAD_BUTTONS.includes(code as never))) {
         return hear(code);
       }
@@ -184,6 +195,8 @@ export function createInput(options: InputOptions = {}): Input {
   const virtual = createVirtualDevice();
   const detachKeyboard = win ? attachKeyboard(win, sink) : () => {};
   const mouse = element && win ? attachMouse({ element, target: win, document: doc }, sink, options) : undefined;
+  const touchOptions = { mode: options.touchMode, onTap: options.onTap };
+  const touch = element && win ? attachTouch({ element, target: win }, sink, touchOptions) : undefined;
   const clear = () => {
     down.clear();
     taps.clear();
@@ -192,6 +205,7 @@ export function createInput(options: InputOptions = {}): Input {
     pressedNow = new Set();
     strengths = new Map();
     mouse?.clear();
+    touch?.clear();
   };
   const hidden = () => void (doc?.visibilityState === 'hidden' && clear());
   const unplugged = (event: Event) => {
@@ -206,11 +220,13 @@ export function createInput(options: InputOptions = {}): Input {
     bindings,
     virtual,
     mouse,
+    touch,
     get lastDevice() {
       return last;
     },
-    sample(camera) {
+    sample(camera, now) {
       pads.poll();
+      touch?.frame(now ?? Number.NaN);
       if (virtual.touched) last = 'virtual';
       const own = virtual.take();
       const nextHeld = new Set<string>();
@@ -233,6 +249,8 @@ export function createInput(options: InputOptions = {}): Input {
       const [forward, back, left, right] = map.move;
       const stick = Array.isArray(own.axes.move) ? (own.axes.move as number[]) : [0, 0];
       const axes: [number, number] = [level(right) - level(left) + stick[0], level(forward) - level(back) + stick[1]];
+      const thumb = touch?.stick() ?? [0, 0];
+      if (thumb[0] !== 0 || thumb[1] !== 0) [axes[0], axes[1]] = [axes[0] + thumb[0], axes[1] + thumb[1]];
       const yaw = typeof own.axes.cam === 'number' ? own.axes.cam : camera?.yaw();
       const out: Record<string, unknown> = {};
       if (axes[0] !== 0 || axes[1] !== 0) out.move = fromCamera(yaw ?? 0, axes);
@@ -272,6 +290,7 @@ export function createInput(options: InputOptions = {}): Input {
       hear(null);
       detachKeyboard();
       mouse?.detach();
+      touch?.detach();
       win?.removeEventListener('blur', clear);
       win?.removeEventListener('gamepaddisconnected', unplugged);
       doc?.removeEventListener('visibilitychange', hidden);

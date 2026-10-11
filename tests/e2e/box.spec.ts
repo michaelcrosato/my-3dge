@@ -263,6 +263,11 @@ test.describe('the box, stage 1', () => {
       out.shot = (await e.shot({ ids: true, metrics: false, thumbnail: false })).ids.objects;
       out.replay = (await e.replay(replay, { draw: 0 })).hashes['600'];
       out.seed = e.seed(9);
+      try {
+        out.feel = e.feel(); // WP 3.2's feel meter: it measures an actor, and the room has none
+      } catch (error) {
+        out.feel = String((error as Error).message).includes('SIM_BAD_ARGUMENT');
+      }
       return out;
     }, REPLAY);
     expect(results).toEqual({
@@ -297,6 +302,7 @@ test.describe('the box, stage 1', () => {
       shot: 11,
       replay: GOLDEN['600'],
       seed: 9,
+      feel: true,
     });
     const members = api.listed.map((name) => name.replace('()', ''));
     expect(Object.keys(results).sort()).toEqual(members.sort());

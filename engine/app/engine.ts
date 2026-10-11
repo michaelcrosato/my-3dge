@@ -21,6 +21,10 @@
  * starts the replay's own scene (when it is one of the page's), since a page draws one scene and plays only its
  * replays.
  *
+ * Touch (WP 3.12, ADR-0021: built, not tested): the app wires the touch device (engine/input/devices/touch.ts), the
+ * page's chrome, the touch layer from `touchLayout` and swiping (engine/ui/), the quality budget's pixel caps
+ * (engine/gfx/quality.ts) and, in touch mode, the loop's 60 fps cap; the menu button pauses, then calls `onMenu`.
+ *
  * Invariants: rendering never writes the sim (doctrine: WebGPU only): the loop steps the session only with intents
  * and recorded settings; cameras and view settings never reach the hash. Nothing reads a wall clock: time comes from
  * the animation frames' timestamps.
@@ -46,10 +50,16 @@ import { registry as sharedRegistry, type Registry } from '../core/registry';
 import type { Settings, SettingValue } from '../core/settings';
 import { createOverlay } from '../dev/overlay';
 import { createMaterialLibrary } from '../gfx/materials/library';
+import { qualityBudget, type QualitySetting } from '../gfx/quality';
+import { keepWidth } from '../gfx/resolution';
 import { createRenderer, type FrameReport, type Gfx } from '../gfx/renderer';
 import { shot, shotForJson } from '../gfx/shot';
 import { connectVirtualDevice } from '../input/devices/inspector';
 import { createInput, type Input } from '../input/input';
+import type { TouchSetting } from '../input/devices/touch';
+import { createChrome } from '../ui/chrome';
+import { attachSwipes } from '../ui/swipe';
+import { createTouchLayer, getTouchLayout, type TouchLayer, type TouchLayout } from '../ui/touch';
 import type { Inspector } from '../dev/inspector';
 import { createAppHost, type AppRun, type Drawing } from './headless';
 import { createLoop, type Loop } from './loop';
@@ -94,6 +104,10 @@ export interface EngineOptions {
   registry?: Registry;
   /** Where errors and advice go (the shared log). */
   log?: Log;
+  /** The page's touch buttons, a `touchlayout` id (engine/ui/touch.ts); without it, only the touch stick shows. */
+  touchLayout?: string;
+  /** Opens the page's menu, called after the touch menu button has paused the game. */
+  onMenu?: () => void;
 }
 
 /** A started engine. */
@@ -203,6 +217,8 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   };
 
   let input: Input | null = null;
+  let layout: TouchLayout | null = null;
+  let layer: TouchLayer | null = null;
   let playback: Playback | null = null;
   let draws = 0;
   const aspect = () => {
@@ -210,15 +226,30 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     return css && css.width > 0 && css.height > 0 ? css.width / css.height : HEADLESS_ASPECT;
   };
   const viewNow = () => run!.view!;
+  const settingsNow = currentSettings(() => run!);
+  const chrome = createChrome(document);
+  /** Touch mode this frame: the page's class and layer, and the quality tier's pixel caps. */
+  const touchFrame = () => {
+    const touch = input?.touch;
+    const on = touch?.active ?? false;
+    chrome.setTouch(on);
+    const covered = on && chrome.topPanel() !== null;
+    const { innerWidth: width, innerHeight: height } = window;
+    layer?.update({ on, stick: touch?.stickView() ?? null, down: touch?.down() ?? [], covered, width, height });
+    gfx!.resolution.cap(qualityBudget(settingsNow.get<QualitySetting>('quality'), on));
+  };
   /** Warms up through both cameras, so switching projection later builds nothing. */
   const warmBoth = async () => {
     const view = viewNow();
     for (const camera of view.cameras) await gfx!.warmup.run({ scene: view.stage.scene, camera });
   };
   const frameNow = (alpha: number, dt: number): FrameReport => {
+    touchFrame();
     gfx!.resolution.update();
     const cameraInput = input?.camera();
-    return gfx!.frame(viewNow().frame({ alpha, dt, aspect: aspect(), input: cameraInput }));
+    const view = viewNow().frame({ alpha, dt, aspect: aspect(), input: cameraInput });
+    keepWidth(view.camera, aspect());
+    return gfx!.frame(view);
   };
   const settle = async (alpha: number, dt: number): Promise<FrameReport> => {
     for (let tries = 0; tries < TRIES; tries++) {
@@ -252,6 +283,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     },
     async shot(shotOptions) {
       const view = viewNow().frame({ alpha: 1, dt: 0, aspect: aspect() });
+      keepWidth(view.camera, aspect());
       return shotForJson(await shot(gfx!, view, shotOptions));
     },
     async draw() {
@@ -277,6 +309,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
         routes = { ...routes, scene };
       }
     }
+    if (options.touchLayout !== undefined) layout = getTouchLayout(options.touchLayout, registry);
     const materials = createMaterialLibrary({ registry });
     const { scene, seed, settings, cam } = routes;
     run = createAppHost({ scene, seed, settings, cam, registry, log, drawing, materials });
@@ -286,7 +319,16 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   }
   const started = run;
   Object.assign(window, { __engine: started.inspector });
-  input = createInput({ window, document, element: options.canvas, registry, log });
+  const onTap = (name: string) => {
+    if (name === 'game') chrome.closeTopPanel();
+    if (name !== 'menu') return;
+    started.clock.pause();
+    options.onMenu?.();
+  };
+  const touchMode = () => settingsNow.get<TouchSetting>('touch');
+  input = createInput({ window, document, element: options.canvas, registry, log, touchMode, onTap });
+  layer = createTouchLayer(document, layout);
+  attachSwipes(document);
   connectVirtualDevice(started.host, input.virtual);
   try {
     gfx = await createRenderer(options.canvas, { settings: currentSettings(() => started), registry, log });
@@ -314,7 +356,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   };
   loop = createLoop({
     clock: () => started.clock,
-    sample: () => input!.sample({ yaw: () => viewNow().camera.yaw() }),
+    sample: (now) => input!.sample({ yaw: () => viewNow().camera.yaw() }, now),
     step,
     draw: ({ alpha, dt }) => {
       if (warming) return;
@@ -322,6 +364,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
       if (!report.drawn && report.warming) warming = warmBoth().finally(() => (warming = null));
     },
     hold: () => started.playing,
+    cap: () => input?.touch?.active ?? false,
     onError: (error) => fail(error, 'APP_FRAME'),
   });
   ready = true;
