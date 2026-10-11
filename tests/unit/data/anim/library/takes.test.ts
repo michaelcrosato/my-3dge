@@ -100,7 +100,11 @@ describe('the CMU ledger', () => {
       const [loose, short] = [flags.includes('loose'), flags.includes('short')];
       expect(loose ? mean >= 30 : mean <= 30, `${where}: loose ${loose}, fit ${take.fit}`).toBe(true);
       expect(short ? sec <= 1 : sec >= 1, `${where}: short ${short}, ${take.sec} s`).toBe(true);
-      for (const flag of flags) expect(['inverted', 'floats', 'loose', 'short', 'fps?'], where).toContain(flag);
+      // WP 8.5 names each unlisted take's frame-rate evidence: fps:c3d or twin:<id> (data/anim/cmu/README.md)
+      for (const flag of flags) {
+        const kind = /^twin:\d+_\d+$/.test(flag) ? 'twin:<id>' : flag;
+        expect(['inverted', 'floats', 'loose', 'short', 'fps?', 'fps:c3d', 'twin:<id>'], where).toContain(kind);
+      }
     }
   });
 });

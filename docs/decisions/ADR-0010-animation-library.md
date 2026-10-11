@@ -57,3 +57,15 @@ The library's tests and QA (WP 8.6); the asset scan in `x check`.
 - **Fixes to WP 8.4 files:** `bake.ts` puts the pole on the side the limb bends away from, so a fold never bends
   backward (`anim-clips.json` rewritten; the `clip-parity.ts` `@example` cites the new means, 0.315 and 0.155 mm).
   `library.ts` `replace()` parses before it records the original.
+
+## Amendment 4 (2026-10-11, WP-8.5)
+- **The codec's frame math has one copy: `engine/anim/clip/frames.ts`.** It holds the vectors, frames, quaternions,
+  `fromEuler`, `reachOf`, the limb hint `hintFor`, `limbEnd` and `torso`. The decode (`readable.ts`) and the encode
+  (`encode.ts`) both import it, which replaces amendment 1's "`readable.ts` exports `torso()` for it". The decode keeps
+  `ik3` and `poleHint`; the encode keeps their inverses (`euler`, `bendOf`, `poleOf`, `bodyFrames`). WP 8.8 changes
+  format 2's spine, roll and yaw in this one place. The move fixes a WP 8.2 file and changes no behaviour: all 325
+  curated clips still decode bit-identical to the source, the encode still matches the source oracle, and
+  `x anim import --cmu --legacy --check` still reproduces the CMU set byte for byte.
+- **`x anim cmu` reads entries near each other in one range request**: entries share a request only when the unwanted
+  bytes between them are at most 256 KiB. One request to the CMU site costs about 0.13 s, measured. Shardfall reads
+  each entry on its own.

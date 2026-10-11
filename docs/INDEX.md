@@ -150,6 +150,12 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`bake.ts`](../engine/anim/clip/bake.ts): The baker (PLAN.md §10.4, WP 8.4; ADR-0010): a readable clip turned into rotation tracks on the humanoid skeleton (engine/anim/skeleton.ts), 30 frames a second on format 1's key grid (`bakeTimes`): each frame holds the 23 joints' local rotations, the pelvis's place and the root's travel.
   - Exports: `BAKE_FPS`, `bakeClip`, `BakedClip`, `bakeTimes`, `frameAt`, `frameQuaternion`, `keyRotations`, `rigToEngine`, `sampleBaked`, `travelAt`
   - Tests: [`engine/anim/clip/bake.test.ts`](../engine/anim/clip/bake.test.ts)
+- [`encode.ts`](../engine/anim/clip/encode.ts): The importer half of the readable codec (PLAN.md §10, WP 8.5; ADR-0010 amendment 1): a captured clip, 36 body points a frame, turned into readable key poses.
+  - Exports: `capSample`, `Capture`, `encodeClip`, `EncodeExtra`, `encodePose`, `fitClip`, `Fitted`, `measure`, `reduce`
+  - Tests: [`engine/anim/clip/encode.test.ts`](../engine/anim/clip/encode.test.ts)
+- [`frames.ts`](../engine/anim/clip/frames.ts): The readable codec's frame math (PLAN.md §10.2, WP 8.2 and WP 8.5; ADR-0010 amendment 4): vectors, frames `[F, R, U]` (forward, right and up as columns), quaternions `[x, y, z, w]`, `[turn, lean, tilt]` degrees, the hint a limb's twist is measured from, and `torso`, which places a key pose's spine, neck, head, shoulders and hips on a rest body.
+  - Exports: `add`, `compose`, `cross`, `DG`, `dot`, `Frame`, `fromEuler`, `hintFor`, `len`, `Limb`, `limbEnd`, `mul`, `norm`, `qFromTo`, `qrot`, `qslerp`, `reachOf`, `SG`, `sub`, `torso`, `V`, `wld`
+  - Tests: [`engine/anim/clip/encode.test.ts`](../engine/anim/clip/encode.test.ts), [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts)
 - [`layer.ts`](../engine/anim/clip/layer.ts): The clip layer (PLAN.md §10.4, WP 8.4): library clips played in the animator's `clips` slot (WP 3.7, engine/anim/weights.ts), stacked, the last played on top (`current`), each fading in over what plays under it.
   - Exports: `CLIP_LAYER`, `ClipLayer`, `ClipLayerEvent`, `ClipLayerOptions`, `ClipLayerState`, `ClipPlay`, `ClipSlot`, `ClipStepInput`
   - Tests: [`engine/anim/clip/layer-play.test.ts`](../engine/anim/clip/layer-play.test.ts), [`engine/anim/clip/layer.test.ts`](../engine/anim/clip/layer.test.ts)
@@ -1082,18 +1088,75 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## tools/anim
 
+- [`asf-amc-fixture.ts`](../tools/anim/asf-amc-fixture.ts): A CMU-like skeleton and takes written here as text for the CMU tools' tests (WP 8.5; no capture is committed): `testAsf()`, the database's 30 bones with made-up proportions, and `testAmc(n)`, a take of `n` frames at 120 a second in which the subject walks forward (its legs and arms swing, once a second) or, with `travel` 0, steps in place.
+  - Exports: `testAmc`, `testAsf`
+  - Tests: [`tools/anim/asf-amc.test.ts`](../tools/anim/asf-amc.test.ts)
+- [`asf-amc.ts`](../tools/anim/asf-amc.ts): The Acclaim skeleton and motion formats the CMU motion capture database uses (PLAN.md §5.3, WP 8.5): `.asf`, a subject's bones, and `.amc`, a take, the bones' angles frame by frame, and the forward kinematics that pose a skeleton from a frame.
+  - Exports: `AmcFrame`, `AsfBone`, `mm`, `mv`, `pose`, `readAmc`, `readAsf`, `Skeleton`, `tr`, `V`
+  - Tests: [`tools/anim/asf-amc.test.ts`](../tools/anim/asf-amc.test.ts)
+- [`cmu-capture.ts`](../tools/anim/cmu-capture.ts): CMU takes turned into captures (PLAN.md §5.3, WP 8.5): `readCmu` cuts picked stretches of a subject's takes (tools/anim/asf-amc.ts reads and poses them) into the captures the importer fits (engine/anim/clip/encode.ts `Capture`: the 36 body points in the rig's frame, f forward, r right, z up, centred on the root on the ground), like any other library's.
+  - Exports: `CmuCapture`, `CmuOptions`, `Pick`, `readCmu`
+  - Tests: [`tools/anim/asf-amc.test.ts`](../tools/anim/asf-amc.test.ts)
+- [`cmu-cli.ts`](../tools/anim/cmu-cli.ts): `x anim cmu …` (PLAN.md §5.3, WP 8.5): the CMU database's subcommands, ported from `my-3d2dge:tools/cmu.mjs` (`find`, `subject`, `get`, `all`, `survey`, `library`, `ledger`) with the ledger split and every take fetched into `.cache/anim/cmu/` by HTTP ranges (tools/anim/cmu.ts), plus `rates`, which verifies the frame rate of takes the site's list leaves out (tools/anim/rates.ts).
+  - Exports: `CMU_SUBCOMMANDS`, `CmuRequest`, `cmuTargets`, `runCmu`
+  - Tests: [`tools/cmd/anim.test.ts`](../tools/cmd/anim.test.ts)
+- [`cmu.ts`](../tools/anim/cmu.ts): The CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu), fetched on demand into `.cache/anim/` (PLAN.md §5.3 and §10.3, WP 8.5): about 2,500 takes by 113 subjects, each subject a skeleton (`NN.asf`) and each take a motion (`NN_MM.amc`) at 120 frames a second (some at 60).
+  - Exports: `ANIM_CACHE`, `ARCHIVE`, `asfOf`, `CMU_CACHE`, `cmuAll`, `cmuArchive`, `cmuGet`, `cmuIndex`, `IndexedTake`, `parseMotionList`, `SITE`
+  - Tests: [`tools/anim/cmu.test.ts`](../tools/anim/cmu.test.ts)
+- [`cut.ts`](../tools/anim/cut.ts): A smaller set cut from bigger ones (PLAN.md §5.3, WP 8.5): the clips a game adopts, with the records of the libraries they came from (their rest bodies and origins) and the mannequin's look, read from and written as set directories, one file a clip (tools/anim/repack.ts).
+  - Exports: `cutSet`
+  - Tests: [`tools/anim/cut.test.ts`](../tools/anim/cut.test.ts)
+- [`cycle.ts`](../tools/anim/cycle.ts): The loop-cycle search (PLAN.md §5.3, WP 8.5): the best cycle in a stretch of a take, a stride or a hop, the span whose end matches its start in pose and in speed.
+  - Exports: `bestCycle`
+  - Tests: [`tools/anim/asf-amc.test.ts`](../tools/anim/asf-amc.test.ts)
+- [`find.ts`](../tools/anim/find.ts): Searching the library (PLAN.md §10.3, WP 8.5): `x anim find <words>` looks through every set's generated `catalog.tsv` (data/anim/sets/<set>/, tools/anim/repack.ts), then the CMU ledger's takes not yet in a set (tools/anim/ledger.ts), so an agent picks a clip without opening the library.
+  - Exports: `catalogRows`, `ClipHit`, `findClips`, `Found`, `TakeHit`
+  - Tests: [`tools/anim/find.test.ts`](../tools/anim/find.test.ts)
+- [`glb-fixture.ts`](../tools/anim/glb-fixture.ts): Small `.glb` files built in memory for the importer's tests (WP 8.5; no binary fixture is committed): a `GlbBuilder` that packs typed arrays into accessors, and `riggedGlb`, a T-posed humanoid with the Unreal mannequin's bone names (tools/anim/rigs.ts) and the clips asked for, each a track list on named bones.
+  - Exports: `FixtureTrack`, `GlbBuilder`, `riggedGlb`, `turn`
+  - Tests: [`tools/anim/glb-library.test.ts`](../tools/anim/glb-library.test.ts)
+- [`glb-library.ts`](../tools/anim/glb-library.ts): One animation library read from a `.glb` (PLAN.md §5.3, WP 8.5): its rig (tools/anim/rigs.ts), every clip sampled at a fixed rate and turned into the 36 body points the readable format measures (engine/anim/clip/encode.ts `Capture`), and, for a Rigify mesh, the look of its mannequin (`body`: height, segment radii, joint-ring bands).
+  - Exports: `GlbCapture`, `GlbLibrary`, `listGlb`, `MannequinBody`, `readGlbLibrary`
+  - Tests: [`tools/anim/glb-library.test.ts`](../tools/anim/glb-library.test.ts)
+- [`glb.ts`](../tools/anim/glb.ts): The glTF binary reader the importer uses (PLAN.md §5.3, WP 8.5): a `.glb`'s JSON and binary chunks, its accessors, its node tree and its animation tracks, sampled at any time.
+  - Exports: `Glb`, `glbBytes`, `GltfAccessor`, `GltfAnimation`, `GltfJson`, `GltfNode`, `mat`, `mul`, `nodeTree`, `NodeTree`, `parseGlb`, `readAccessor`, `sampleTrack`, `slerp`, `Track`, `tracksOf`, `xf`
+  - Tests: [`tools/anim/glb.test.ts`](../tools/anim/glb.test.ts)
+- [`import.ts`](../tools/anim/import.ts): The importer (PLAN.md §5.3 and §10, WP 8.5): skeletal animation libraries turned into a set of readable clips.
+  - Exports: `Catalog`, `ImportOptions`, `importSet`
+  - Tests: [`tools/anim/import.test.ts`](../tools/anim/import.test.ts)
+- [`ledger.ts`](../tools/anim/ledger.ts): The CMU ledger, read and written (PLAN.md §10.3, WP 8.5): every take of the CMU database, one row each, split into `data/anim/cmu/<category>.tsv`, with `categories.tsv` (the categories, tried in order, with their patterns) and `subjects.tsv` (each subject's description once).
+  - Exports: `Category`, `categoryOf`, `compareIds`, `Ledger`, `LEDGER_DIR`, `ledgerFiles`, `queryLedger`, `readLedger`, `Subject`, `Take`, `TAKE_COLUMNS`, `writeLedger`
+  - Tests: [`tools/anim/ledger.test.ts`](../tools/anim/ledger.test.ts)
 - [`legacy-readable.ts`](../tools/anim/legacy-readable.ts): The legacy oracle (PLAN.md WP 8.2, §10.5 step 3): my-3d2dge's own readable codec, `src/mocap/readable.js`, run from the checkout at `$MY3D2DGE_SRC` in a fresh Node `vm` context, as `my-3d2dge:tools/mocap-lib.mjs:7-9` does, and its animation sets read the same way.
   - Exports: `CLIP_FPS`, `clipVectorFiles`, `clipVectorsReadme`, `CURATED_SETS`, `decodeLegacyClip`, `float32Number`, `frameCount`, `framesSha256`, `LEGACY_CODEC`, `legacyClipVectors`, `LegacyReadable`, `LegacySet`, `loadLegacyReadable`, `readLegacySet`, `sampledFrames`
   - Tests: [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts), [`tools/anim/legacy-readable.test.ts`](../tools/anim/legacy-readable.test.ts)
+- [`rates.ts`](../tools/anim/rates.ts): Verifying the frame rate of CMU takes the site's motion list leaves out (PLAN.md WP 8.5): the ledger read them at an assumed 120 frames a second and flagged them `fps?`.
+  - Exports: `amcFrames`, `applyRates`, `c3dEvidence`, `c3dHeader`, `RateEvidence`, `twinCandidates`, `verifyRates`
+  - Tests: [`tools/anim/rates.test.ts`](../tools/anim/rates.test.ts)
 - [`repack.ts`](../tools/anim/repack.ts): The repacker (PLAN.md §10.3 and §10.5 step 4, WP 8.3): a set of clips stored as a directory, `data/anim/sets/<set>/`, one file per clip, so an agent opens only the clips it uses.
-  - Exports: `ALT_TAG`, `CATALOG_COLUMNS`, `CATALOG_FILE`, `catalogTsv`, `clipSlug`, `joinSet`, `legacySetFiles`, `main`, `readPlainSet`, `readSet`, `readSetDir`, `SET_FILE`, `setDirName`, `SetFiles`, `SETS_DIR`, `splitSet`, `tagAlternates`, `writeSetDir`
+  - Exports: `ALT_TAG`, `CATALOG_COLUMNS`, `CATALOG_FILE`, `catalogTsv`, `clipSlug`, `joinSet`, `legacySetFiles`, `main`, `readPlainSet`, `readSet`, `readSetDir`, `repackSets`, `SET_FILE`, `setDirName`, `SetFiles`, `SETS_DIR`, `splitSet`, `tagAlternates`, `withCmuTerms`, `writeSetDir`
   - Tests: [`tests/unit/data/anim/sets/sets.test.ts`](../tests/unit/data/anim/sets/sets.test.ts), [`tools/anim/repack.test.ts`](../tools/anim/repack.test.ts)
+- [`rigs.ts`](../tools/anim/rigs.ts): The rig maps (PLAN.md §5.3, WP 8.5): which bone of a known humanoid rig gives each of the 36 body points the readable format measures (engine/anim/clip/readable.ts `POSE_POINTS`).
+  - Exports: `bonesFor`, `BoneSpot`, `PointBone`, `recogniseRig`, `Rig`, `RIGS`, `Segment`
+  - Tests: [`tools/anim/glb-library.test.ts`](../tools/anim/glb-library.test.ts)
 - [`shardfall.ts`](../tools/anim/shardfall.ts): Adopts the sets and catalogs shardfall converted (PLAN.md §5.8 and §10.5 step 5, WP 8.10): 100STYLE's 878 loops as seven sets, `style100` (forward walks) and `style100_back`, `_backrun`, `_idle`, `_run`, `_side` and `_siderun`, and version 2 of Quaternius' Universal Animation Library (102 clips) in place of v1's `quaternius`, with their eight catalogs.
   - Exports: `adoptSet`, `CATALOGS_DIR`, `main`, `markVia`, `readShardfallSet`, `readV1Set`, `SHARDFALL_CATALOGS`, `SHARDFALL_SETS`, `shardfallCatalogFiles`, `shardfallSet`, `shardfallSetFiles`, `V1_KEPT`, `V1_SETS`
   - Tests: [`tests/unit/data/anim/sets/sets.test.ts`](../tests/unit/data/anim/sets/sets.test.ts), [`tests/unit/data/anim/shardfall.test.ts`](../tests/unit/data/anim/shardfall.test.ts)
+- [`survey.ts`](../tools/anim/survey.ts): The CMU survey (PLAN.md §5.3, WP 8.5): every downloaded take converted the way the importer would (whole takes, 30 frames a second, fitted within 30 mm) and measured into its ledger row (tools/anim/ledger.ts): its fit, the stretch where it moves, how far it travels, how high and low the hips go, and its flags (upside down, feet off the floor, loose, short, an assumed rate).
+  - Exports: `CMU_CATALOG`, `CMU_CREDIT`, `flagsOf`, `LIBRARY_DIR`, `surveyCmu`, `SurveyOptions`, `usedBy`
+  - Tests: [`tools/anim/survey.test.ts`](../tools/anim/survey.test.ts)
+- [`view.ts`](../tools/anim/view.ts): One clip of the library, looked at without a browser (PLAN.md §10.3 and §10.4, WP 8.5): `resolveClip` finds `<set>/<clip>` (or a clip name only one set has) in `data/anim/sets/` or another directory of sets (`x anim … --sets`, such as `.cache/anim/cmu-lib/`); `bakeReport` bakes it on its own source's rest body (engine/anim/clip/bake.ts) and measures FK parity against the format-1 decode at every frame and the midpoints between; `clipSheet` draws it as a contact sheet of stick figures in SVG (engine/anim/sheet.ts).
+  - Exports: `bakedPoints`, `bakeReport`, `ClipRef`, `clipSheet`, `resolveClip`, `shownDir`
+  - Tests: [`tools/anim/view.test.ts`](../tools/anim/view.test.ts)
+- [`zip.ts`](../tools/anim/zip.ts): Files out of a zip archive on the web, read by HTTP ranges (PLAN.md §5.3, WP 8.5): the end record, then the central directory, then only the entries asked for, so one take of the CMU database's 1.08 GB `allasfamc.zip` costs the directory (about 315 KB) and its own bytes, never the archive.
+  - Exports: `ByteSource`, `fetchBytes`, `fileSource`, `MAX_GAP`, `MAX_RANGE`, `openZip`, `urlSource`, `Zip`, `zipBytes`, `ZipEntry`
+  - Tests: [`tools/anim/zip.test.ts`](../tools/anim/zip.test.ts)
 
 ## tools/cmd
 
+- [`anim.ts`](../tools/cmd/anim.ts): The animation library's tools (PLAN.md §10, WP 8.5): find a clip, show it, bake it, draw it, cut a smaller set, import libraries and fetch CMU takes, all from the command line, with no browser.
+  - Exports: `default`, `subcommandOf`, `targetOf`
+  - Tests: [`tools/cmd/anim.test.ts`](../tools/cmd/anim.test.ts)
 - [`audio.ts`](../tools/cmd/audio.ts): Renders a sound in Node and prints its numbers, or mixes a replay's sound events (PLAN.md §8.1, WP 9.4, I-23).
   - Exports: `default`, `encodeWav`, `mixSoundEvents`, `Picture`, `replaySoundEvents`, `SoundEvent`, `SoundTimeline`, `spectrogram`, `SPECTROGRAM`
   - Tests: [`tools/cmd/audio.test.ts`](../tools/cmd/audio.test.ts)
