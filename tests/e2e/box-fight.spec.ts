@@ -11,19 +11,18 @@
  * tests/e2e/parity.spec.ts's Box 5.
  *
  * Invariants: the page is driven through `window.__engine`, as an agent drives it; goldens come from the replay
- * files, never from the page itself.
+ * files, never from the page itself. Nothing from engine/ or labs/ is imported here but types: Node's run of the
+ * fight is a child process, so the kinds it registers never reach the specs this worker runs next.
  */
+import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { createHeadless, defineScene, type Intents } from '../../engine';
-import type { DamageEvent } from '../../engine/sim-api';
-import { fight, fightStep, setupFight } from '../../labs/box/scenes/fight';
-import type { FightComponents, FightEvents } from '../../labs/box/scenes/fight-rules';
 import { expect, test, type Harness } from './fixtures';
 
 const ROOT = join(import.meta.dirname, '..', '..');
-const FIGHT = readFileSync(join(ROOT, 'tests/replays/box-5-fight.replay.json'), 'utf8');
+const FIGHT_FILE = 'tests/replays/box-5-fight.replay.json';
+const FIGHT = readFileSync(join(ROOT, FIGHT_FILE), 'utf8');
 /** How many foes the fight starts with: `box.crowd.count` in labs/box/scenes/fight.ts. */
 const FOES = 36;
 
@@ -41,40 +40,63 @@ async function open(page: Page, harness: Harness, query = '') {
   await harness.assertWebGPU();
 }
 
-/** A replay's file. */
-interface Replay {
-  steps: number;
-  inputs: [number, Record<string, unknown>][];
-}
+/** Variables a test runner sets for its own workers; the Node child starts without them. */
+const RUNNER_VARIABLE = /^(VITEST|TEST_WORKER_INDEX$|TEST_PARALLEL_INDEX$|PW_TS_ESM|PW_TEST_SOURCE_TRANSFORM)/;
 
-/** The hits of the fight in Node, by the step they landed in: a listener on its `damage` events, the run unchanged. */
-async function hitsInNode(text: string): Promise<{ step: number; amount: number }[]> {
-  const hits: { step: number; amount: number }[] = [];
-  const watched = defineScene<FightComponents, FightEvents>('box:fight-watched', {
-    level: 'level:hall',
-    physics: true,
-    settings: fight.settings,
-    setup(w) {
-      setupFight(w);
-      w.events.on('damage', (event: DamageEvent) => hits.push({ step: w.tick, amount: event.amount }));
-    },
-    step: fightStep,
-  });
-  const engine = await createHeadless({ scene: watched });
-  const replay = JSON.parse(text) as Replay;
-  const held: Record<string, unknown> = {};
-  for (let k = 0, next = 0; k < replay.steps; k++) {
-    let pressed: unknown;
-    for (; next < replay.inputs.length && replay.inputs[next][0] === k; next++) {
-      for (const [key, value] of Object.entries(replay.inputs[next][1])) {
-        if (key === 'p') pressed = value;
-        else if (value === null) delete held[key];
-        else held[key] = value;
-      }
+/**
+ * The Node run `hitsInNode` starts, as a module run from the repository root under tsx: it plays the replay file named
+ * by its argument through `box:fight`'s setup and step, with a listener on the `damage` events added, and prints the
+ * hits as one line of JSON. It runs in a child process because the engine and the box register their kinds (the
+ * puppet, prop and shadow materials) in the registry of the process that imports them: imported here, they would
+ * stay in this Playwright worker's registry for the next spec it runs (materials.spec.ts lists that registry).
+ */
+const HITS_SCRIPT = `
+import { readFileSync } from 'node:fs';
+import { createHeadless, defineScene } from './engine/index.ts';
+import { fight, fightStep, setupFight } from './labs/box/scenes/fight.ts';
+
+const hits = [];
+const watched = defineScene('box:fight-watched', {
+  level: 'level:hall',
+  physics: true,
+  settings: fight.settings,
+  setup(w) {
+    setupFight(w);
+    w.events.on('damage', (event) => hits.push({ step: w.tick, amount: event.amount }));
+  },
+  step: fightStep,
+});
+const engine = await createHeadless({ scene: watched });
+const replay = JSON.parse(readFileSync(process.argv[1], 'utf8'));
+const held = {};
+for (let k = 0, next = 0; k < replay.steps; k++) {
+  let pressed;
+  for (; next < replay.inputs.length && replay.inputs[next][0] === k; next++) {
+    for (const [key, value] of Object.entries(replay.inputs[next][1])) {
+      if (key === 'p') pressed = value;
+      else if (value === null) delete held[key];
+      else held[key] = value;
     }
-    engine.step(1, { ...held, ...(pressed ? { p: pressed } : {}) } as Intents);
   }
-  return hits.filter(({ amount }) => amount > 0);
+  engine.step(1, { ...held, ...(pressed ? { p: pressed } : {}) });
+}
+process.stdout.write('\\n' + JSON.stringify(hits.filter(({ amount }) => amount > 0)) + '\\n');
+`;
+
+/**
+ * The hits of the fight in Node, by the step they landed in: a listener on its `damage` events, the run unchanged.
+ * The run is a child process (`HITS_SCRIPT`), so this worker never imports the engine or the box.
+ */
+function hitsInNode(file: string): { step: number; amount: number }[] {
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !RUNNER_VARIABLE.test(key)));
+  const run = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', HITS_SCRIPT, file], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    env,
+    timeout: 180_000,
+  });
+  if (run.status !== 0) throw new Error(`the fight's Node run failed (${run.status}):\n${run.stdout}${run.stderr}`);
+  return JSON.parse(run.stdout.trim().split('\n').at(-1)!) as { step: number; amount: number }[];
 }
 
 /** The foes still standing in the page. */
@@ -113,7 +135,7 @@ test.describe('the box, stage 5: the fight', () => {
     page,
     harness,
   }) => {
-    const hits = await hitsInNode(FIGHT);
+    const hits = hitsInNode(FIGHT_FILE);
     // a step after a flurry, with no hit in the half second before it: its numbers alone are on screen (0.8 s each)
     const at = hits.find(({ step }) => step > 60 && !hits.some((hit) => hit.step > step - 30 && hit.step < step))!.step;
     const until = at + 20;
