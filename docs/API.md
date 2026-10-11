@@ -146,6 +146,7 @@ game agent's manual.
 - `Cape` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape: two chains, its left and right edges, held `width` apart (wider toward the hem by `flare`).
 - `CAPE` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
 - `CapeOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What a cape is made of: its edges' chain options, `width` metres apart at the top, and `CAPE`'s flare and flutter.
+- `capsuleCast` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Where a ball of `radius` moving from `from` by `delta` (m) first touches `target`: the share of the move, 0 to 1 (0 when it touches already), or −1 when it never does.
 - `cellHash` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A seeded value in [0, 1) for the integer point (x, y), with `salt` telling apart uses of one seed (a stone's tone, its crack).
 - `Chain` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): One verlet strand.
 - `CHAIN` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The chains' shared tuning.
@@ -191,6 +192,7 @@ game agent's manual.
 - `compileLevel` (function from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): Compiles a level's text against the legend of `options.registry` (the shared one by default) into plain data; see the file comment.
 - `CompileOptions` (interface from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): What `compileLevel` takes beside the text.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `coneHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets in the hit cone (`inCone`), by id, ascending: those the hash holds near enough, then the exact test.
 - `coneOf` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A cone's fields from a measured hit shape (engine/anim/moves.ts `measureMove`): its range, angle and heights.
 - `connectVirtualDevice` (function from [`engine/input/devices/inspector.ts`](../engine/input/devices/inspector.ts)): Gives `host` (the app's inspector host) the page input's virtual device, so `__engine.input` drives the page.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
@@ -254,8 +256,12 @@ game agent's manual.
 - `CutWhen` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars).
 - `CylinderCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An upright cylinder collider (Rapier's cylinder, three.js's CylinderGeometry): one per tile, at its centre.
 - `DaisDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A dais: an octagonal frustum (faces toward the axes and the diagonals) standing on a block of a dais glyph's tiles.
+- `damage` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Lands a hit on `target`: takes `hit.amount` from its health, and on its crowd body (in the scene's physics world) adds the knockback away from `hit.from`, the launch, and when the hit kills, the switch to the corpse group and the kill launch; asks for `hit.stop` of hit-stop; emits `damage` and returns the event.
 - `DAMAGE_NUMBERS` (const from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): The damage numbers' behaviour (see the file comment); seconds and metres.
+- `DamageEvent` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The event `damage`: a hit landed.
+- `DamageEvents` (type from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The events this module emits, for a world's event map: `World<Components, DamageEvents & MyEvents>`.
 - `DamageOptions` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): How a damage number is shown.
+- `DamageTarget` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): What a hit lands on: the entity (named in the events), its health and its crowd body, either optional.
 - `decodePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
 - `defineAction` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Defines an action on `registry` (the shared one).
@@ -371,11 +377,15 @@ game agent's manual.
 - `hashPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose's 64-bit FNV-1a digest (16 hex digits) over the numbers `toArray` gives: equal numbers, equal hash.
 - `Headless` (type from [`engine/app/headless.ts`](../engine/app/headless.ts)): A headless engine: `__engine`'s members, over a scene running in this process.
 - `HeadlessOptions` (interface from [`engine/app/headless.ts`](../engine/app/headless.ts)): How a headless engine starts.
+- `Health` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health (`HEALTH_FIELDS` says what each field means).
+- `HEALTH` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Health with every field at its default: 1 hit point, never hit.
+- `HEALTH_FIELDS` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health, for a scene's component: `defineComponent('health', { description, fields: HEALTH_FIELDS })`.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
 - `hipRatio` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The hip-height ratio of `skeleton` to the rest body `baked` was measured on (their standing hip joints): the clip's places scale by it on that skeleton (the hip joints, the feet's goals, the travel).
 - `Hit` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What a raycast or shape cast struck.
 - `hitProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Hits the prop `id` from `from` (m): calls its `hit` hook, whose `knock(more)` knocks its body away from `from` with `strength` under `more` (engine/physics/bodies.ts's `knock`: 4.6875 m/s across, 2.5 m/s up, no twist by default).
 - `HitShape` (interface from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Where a strike can connect, around its body, which faces +Z standing at the origin: metres and radians.
+- `HitSpec` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A hit as the rules decided it.
 - `holdsToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Whether `id` holds a token: one of the oldest `cap` grants.
 - `hop` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The launch velocity (m/s) that carries a body thrown up at `up` m/s from `from` to land on `to` under `gravity` (m/s²): `up` vertically and the ground distance over `airTime` across, so a jumper hops onto a crate as well as across the floor.
 - `HOP` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): The prototype slime's jumps: `up` (m/s) for a hop of at most `reach` metres, `pounce` (m/s) for its lower, flatter leap at a target.
@@ -391,7 +401,10 @@ game agent's manual.
 - `HumanoidOptions` (interface from [`engine/anim/humanoid.ts`](../engine/anim/humanoid.ts)): What a humanoid is made from.
 - `HumanoidState` (interface from [`engine/anim/humanoid.ts`](../engine/anim/humanoid.ts)): The humanoid's state: plain numbers, what the sim keeps of it.
 - `HumanoidWeights` (interface from [`engine/anim/locomotion.ts`](../engine/anim/locomotion.ts)): The weights the effector stage reads: each 0 (off) to 1 (full), eased toward its input by the humanoid.
+- `HurtCapsule` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A target's hurt volume: an upright capsule standing on its feet at `x`, `y`, `z` (m), `radius` wide, its straight middle `height` long (CapsuleGeometry's sizes; 2 × radius + height tall), or a ball (`shape: 'ball'`, or height 0).
+- `HurtSet` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Targets for hit tests: a spatial hash of their feet by id (filled this step, engine/world/spatial.ts) and their hurt capsules.
 - `inArc` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Whether `target` (plus `radius`) is within `range` of `from` on the ground plane and within `halfAngle` of the facing `yaw` (forward is (sin yaw, 0, cos yaw)).
+- `inCone` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether `target` is in the hit cone of `shape` (scaled by `size`) from the feet `from`, facing `yaw` (forward is (sin yaw, 0, cos yaw)): its footprint (a disc of its radius) meets the ground sector the strike reaches, and its height overlaps the strike's height window above the feet.
 - `inHitShape` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): `inArc` with `shape`'s range and half angle, scaled by `size`, and its height window (± `radius`) above `from`.
 - `Input` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A page's input.
 - `InputBuffer` (interface from [`engine/input/intents.ts`](../engine/input/intents.ts)): What a body remembers of its buttons across steps: plain data for a component field (`type: 'object'`, default `createInputBuffer()`), so it is hashed, captured and restored.
@@ -529,6 +542,7 @@ game agent's manual.
 - `Physics` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A physics world: bodies, stepping, queries, and the sim's physics hook (`state`, `capture`, `restore`).
 - `PHYSICS_SETTINGS` (const from [`engine/physics/params.ts`](../engine/physics/params.ts)): The physics settings, path → field; `defineSettings(PHYSICS_SETTINGS, registry)` declares them on another registry.
 - `physicsOf` (function from [`engine/physics/world.ts`](../engine/physics/world.ts)): The physics world of a sim world: its bodies and queries.
+- `physicsWalls` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
 - `pickTone` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): One of `colors`, picked by `value` in [0, 1).
 - `PieceShape` (type from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): A unit shape a piece draws (see the file comment).
 - `pillarGeometry` (function from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar as one geometry standing on the ground: its parts' boxes, sides then tops.
@@ -553,6 +567,12 @@ game agent's manual.
 - `POSES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The held poses, each with what it shows.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `ProbeOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A probe's options: where the downward ray starts, and the groups that count as ground.
+- `Projectile` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot: what it is, where it flies and what it hit (`PROJECTILE_FIELDS` says what each means).
+- `PROJECTILE` (const from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot with every field at its default: a 5 cm ball at the origin, at rest, flying for 3 s.
+- `PROJECTILE_FIELDS` (const from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot's fields, for a scene's component: `defineComponent('bolt', { description, fields: PROJECTILE_FIELDS })`.
+- `ProjectileHit` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot's hit this step: a target or a wall, where along the move and where the shot's centre was then.
+- `ProjectileState` (type from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Where a shot is in its flight: see `PROJECTILE_FIELDS.state`.
+- `ProjectileStep` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): How `stepProjectiles` steps.
 - `Prop` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): A `prop` entry: see the file comment.
 - `PROP_MATERIAL` (const from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): The props' material: a hollow wooden crate's (24 kg at 0.75 m), Coulomb friction, a little bounce, and damping that lets a knocked prop slide and roll to rest.
 - `propBody` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): The body `physics.addBody` takes for `placement`, or `null` when its prop has none; see the file comment.
@@ -604,6 +624,7 @@ game agent's manual.
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
 - `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
 - `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
+- `requestHitStop` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Asks the frame clock for a hit-stop of `seconds` (real seconds, before its budget): kept until the run's host takes it after the step (`takeHitStop`), the longest of the step winning.
 - `RescueLevel` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
 - `rescueLost` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
 - `RESERVED_CODES` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Codes no action map binds: the pause buttons, and keys the browser or the system keeps.
@@ -711,6 +732,7 @@ game agent's manual.
 - `StateMatrixOptions` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `stateMatrix` runs.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
+- `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
 - `StickView` (interface from [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)): Where the stick is drawn, in client CSS px: its centre and its knob.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
 - `StrikeAnimator` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of an animator: its body, which the sim poses only with `preciseHits`.
@@ -722,6 +744,8 @@ game agent's manual.
 - `StyleSetOptions` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): How `createStyleSet` makes a set.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
 - `Sweep` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
+- `sweepHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets the swept quad touches (`sweepTouches`), by id, ascending.
+- `sweepTouches` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
 - `SYSTEM_ACTIONS` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The system layer: action → codes.
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
@@ -789,6 +813,8 @@ game agent's manual.
 - `VOICE_LIMITS` (const from [`engine/audio/runtime/voices.ts`](../engine/audio/runtime/voices.ts)): The default limits.
 - `VoiceLimits` (interface from [`engine/audio/runtime/voices.ts`](../engine/audio/runtime/voices.ts)): How many voices may play.
 - `walkRate` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): The rate that plays a loop of `pace` m/s at `groundSpeed` m/s: within 0.4–2.5; 1 without a pace.
+- `WallContact` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall a shot struck: the share of its move where it touched, the body (−1: none) and the surface's normal.
+- `WallTest` (type from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall test: the first wall a ball of `radius` meets moving from `from` by `delta` (m), or null.
 - `Weapon` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A weapon's name.
 - `WEAPONS` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): What the right hand holds, by the direction its blade rests in: `[forward, right, up]`, normalised when used.
 - `WeightInfo` (interface from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): What drives a weight and how it eases.
@@ -903,6 +929,7 @@ game agent's manual.
 - `Cape` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape: two chains, its left and right edges, held `width` apart (wider toward the hem by `flare`).
 - `CAPE` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
 - `CapeOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What a cape is made of: its edges' chain options, `width` metres apart at the top, and `CAPE`'s flare and flutter.
+- `capsuleCast` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Where a ball of `radius` moving from `from` by `delta` (m) first touches `target`: the share of the move, 0 to 1 (0 when it touches already), or −1 when it never does.
 - `Chain` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): One verlet strand.
 - `CHAIN` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The chains' shared tuning.
 - `ChainOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What a chain is made of: `n` points (2 or more, the anchor first) `seg` metres apart, and its tuning.
@@ -944,6 +971,7 @@ game agent's manual.
 - `compileLevel` (function from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): Compiles a level's text against the legend of `options.registry` (the shared one by default) into plain data; see the file comment.
 - `CompileOptions` (interface from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): What `compileLevel` takes beside the text.
 - `ComponentOf` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): The data type of a component of kind fields `S`, as `make` returns it: writable, defaults filled.
+- `coneHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets in the hit cone (`inCone`), by id, ascending: those the hash holds near enough, then the exact test.
 - `coneOf` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A cone's fields from a measured hit shape (engine/anim/moves.ts `measureMove`): its range, angle and heights.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
@@ -969,6 +997,10 @@ game agent's manual.
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
 - `CylinderCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An upright cylinder collider (Rapier's cylinder, three.js's CylinderGeometry): one per tile, at its centre.
 - `DaisDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A dais: an octagonal frustum (faces toward the axes and the diagonals) standing on a block of a dais glyph's tiles.
+- `damage` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Lands a hit on `target`: takes `hit.amount` from its health, and on its crowd body (in the scene's physics world) adds the knockback away from `hit.from`, the launch, and when the hit kills, the switch to the corpse group and the kill launch; asks for `hit.stop` of hit-stop; emits `damage` and returns the event.
+- `DamageEvent` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The event `damage`: a hit landed.
+- `DamageEvents` (type from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The events this module emits, for a world's event map: `World<Components, DamageEvents & MyEvents>`.
+- `DamageTarget` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): What a hit lands on: the entity (named in the events), its health and its crowd body, either optional.
 - `decodePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
 - `defineAction` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Defines an action on `registry` (the shared one).
@@ -1035,11 +1067,15 @@ game agent's manual.
 - `HAIR` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): Hair from behind the head (`behind` and `lift` head radii from its centre), the source's numbers.
 - `handTo` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `twoBoneRot` for the arm of `hand`, bringing its weapon socket (`weaponL`, `weaponR`) to `grip`: returns how far the socket stays from it (0 in reach).
 - `hashPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose's 64-bit FNV-1a digest (16 hex digits) over the numbers `toArray` gives: equal numbers, equal hash.
+- `Health` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health (`HEALTH_FIELDS` says what each field means).
+- `HEALTH` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Health with every field at its default: 1 hit point, never hit.
+- `HEALTH_FIELDS` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health, for a scene's component: `defineComponent('health', { description, fields: HEALTH_FIELDS })`.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
 - `hipRatio` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The hip-height ratio of `skeleton` to the rest body `baked` was measured on (their standing hip joints): the clip's places scale by it on that skeleton (the hip joints, the feet's goals, the travel).
 - `Hit` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What a raycast or shape cast struck.
 - `hitProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Hits the prop `id` from `from` (m): calls its `hit` hook, whose `knock(more)` knocks its body away from `from` with `strength` under `more` (engine/physics/bodies.ts's `knock`: 4.6875 m/s across, 2.5 m/s up, no twist by default).
 - `HitShape` (interface from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Where a strike can connect, around its body, which faces +Z standing at the origin: metres and radians.
+- `HitSpec` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A hit as the rules decided it.
 - `holdsToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Whether `id` holds a token: one of the oldest `cap` grants.
 - `hop` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The launch velocity (m/s) that carries a body thrown up at `up` m/s from `from` to land on `to` under `gravity` (m/s²): `up` vertically and the ground distance over `airTime` across, so a jumper hops onto a crate as well as across the floor.
 - `HOP` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): The prototype slime's jumps: `up` (m/s) for a hop of at most `reach` metres, `pounce` (m/s) for its lower, flatter leap at a target.
@@ -1053,7 +1089,10 @@ game agent's manual.
 - `HumanoidOptions` (interface from [`engine/anim/humanoid.ts`](../engine/anim/humanoid.ts)): What a humanoid is made from.
 - `HumanoidState` (interface from [`engine/anim/humanoid.ts`](../engine/anim/humanoid.ts)): The humanoid's state: plain numbers, what the sim keeps of it.
 - `HumanoidWeights` (interface from [`engine/anim/locomotion.ts`](../engine/anim/locomotion.ts)): The weights the effector stage reads: each 0 (off) to 1 (full), eased toward its input by the humanoid.
+- `HurtCapsule` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A target's hurt volume: an upright capsule standing on its feet at `x`, `y`, `z` (m), `radius` wide, its straight middle `height` long (CapsuleGeometry's sizes; 2 × radius + height tall), or a ball (`shape: 'ball'`, or height 0).
+- `HurtSet` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Targets for hit tests: a spatial hash of their feet by id (filled this step, engine/world/spatial.ts) and their hurt capsules.
 - `inArc` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Whether `target` (plus `radius`) is within `range` of `from` on the ground plane and within `halfAngle` of the facing `yaw` (forward is (sin yaw, 0, cos yaw)).
+- `inCone` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether `target` is in the hit cone of `shape` (scaled by `size`) from the feet `from`, facing `yaw` (forward is (sin yaw, 0, cos yaw)): its footprint (a disc of its radius) meets the ground sector the strike reaches, and its height overlaps the strike's height window above the feet.
 - `inHitShape` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): `inArc` with `shape`'s range and half angle, scaled by `size`, and its height window (± `radius`) above `from`.
 - `InputBuffer` (interface from [`engine/input/intents.ts`](../engine/input/intents.ts)): What a body remembers of its buttons across steps: plain data for a component field (`type: 'object'`, default `createInputBuffer()`), so it is hashed, captured and restored.
 - `inTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` overlaps telegraph `t` placed at `place`: what it hits as it goes off.
@@ -1138,6 +1177,7 @@ game agent's manual.
 - `Physics` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A physics world: bodies, stepping, queries, and the sim's physics hook (`state`, `capture`, `restore`).
 - `PHYSICS_SETTINGS` (const from [`engine/physics/params.ts`](../engine/physics/params.ts)): The physics settings, path → field; `defineSettings(PHYSICS_SETTINGS, registry)` declares them on another registry.
 - `physicsOf` (function from [`engine/physics/world.ts`](../engine/physics/world.ts)): The physics world of a sim world: its bodies and queries.
+- `physicsWalls` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `POINT_INDEX` (const from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Each point's position in `POSE_POINTS`.
 - `Point3` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A point in metres: `[x, y, z]`.
@@ -1152,6 +1192,12 @@ game agent's manual.
 - `POSES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The held poses, each with what it shows.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `ProbeOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A probe's options: where the downward ray starts, and the groups that count as ground.
+- `Projectile` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot: what it is, where it flies and what it hit (`PROJECTILE_FIELDS` says what each means).
+- `PROJECTILE` (const from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot with every field at its default: a 5 cm ball at the origin, at rest, flying for 3 s.
+- `PROJECTILE_FIELDS` (const from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot's fields, for a scene's component: `defineComponent('bolt', { description, fields: PROJECTILE_FIELDS })`.
+- `ProjectileHit` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot's hit this step: a target or a wall, where along the move and where the shot's centre was then.
+- `ProjectileState` (type from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Where a shot is in its flight: see `PROJECTILE_FIELDS.state`.
+- `ProjectileStep` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): How `stepProjectiles` steps.
 - `Prop` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): A `prop` entry: see the file comment.
 - `PROP_MATERIAL` (const from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): The props' material: a hollow wooden crate's (24 kg at 0.75 m), Coulomb friction, a little bounce, and damping that lets a knocked prop slide and roll to rest.
 - `propBody` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): The body `physics.addBody` takes for `placement`, or `null` when its prop has none; see the file comment.
@@ -1188,6 +1234,7 @@ game agent's manual.
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
 - `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
 - `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
+- `requestHitStop` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Asks the frame clock for a hit-stop of `seconds` (real seconds, before its budget): kept until the run's host takes it after the step (`takeHitStop`), the longest of the step winning.
 - `RescueLevel` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
 - `rescueLost` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
 - `resolveMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `move` names, with `over` laid on it (`time` and `body` field by field): an id (a bare name gets the `move:` prefix), a `Move` entry, or a spec, parsed once and frozen.
@@ -1258,6 +1305,7 @@ game agent's manual.
 - `StateMatrixOptions` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `stateMatrix` runs.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
+- `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
 - `StrikeAnimator` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of an animator: its body, which the sim poses only with `preciseHits`.
 - `StrikeBody` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of a body.
@@ -1266,6 +1314,8 @@ game agent's manual.
 - `strikeTime` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): When `clip`'s strike lands, seconds from its start, decoded on rest body `R` (see the file comment).
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
 - `Sweep` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
+- `sweepHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets the swept quad touches (`sweepTouches`), by id, ascending.
+- `sweepTouches` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
 - `TAIL` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A tail from the back of the pelvis, holding its curve back and up (chosen here: the source had none).
@@ -1305,6 +1355,8 @@ game agent's manual.
 - `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
 - `VelocityOptions` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): How `setVelocity` steers.
 - `walkRate` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): The rate that plays a loop of `pace` m/s at `groundSpeed` m/s: within 0.4–2.5; 1 without a pace.
+- `WallContact` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall a shot struck: the share of its move where it touched, the body (−1: none) and the surface's normal.
+- `WallTest` (type from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall test: the first wall a ball of `radius` meets moving from `from` by `delta` (m), or null.
 - `Weapon` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A weapon's name.
 - `WEAPONS` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): What the right hand holds, by the direction its blade rests in: `[forward, right, up]`, normalised when used.
 - `WeightInfo` (interface from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): What drives a weight and how it eases.
@@ -3910,6 +3962,19 @@ For the agents who maintain the engine.
 - `CrowdRig` (type): The rigs a crowd body can have.
 - `stepCrowdBody` (function): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 
+### [`engine/sim/damage.ts`](../engine/sim/damage.ts)
+
+- `damage` (function): Lands a hit on `target`: takes `hit.amount` from its health, and on its crowd body (in the scene's physics world) adds the knockback away from `hit.from`, the launch, and when the hit kills, the switch to the corpse group and the kill launch; asks for `hit.stop` of hit-stop; emits `damage` and returns the event.
+- `DamageEvent` (interface): The event `damage`: a hit landed.
+- `DamageEvents` (type): The events this module emits, for a world's event map: `World<Components, DamageEvents & MyEvents>`.
+- `DamageTarget` (interface): What a hit lands on: the entity (named in the events), its health and its crowd body, either optional.
+- `Health` (interface): A target's health (`HEALTH_FIELDS` says what each field means).
+- `HEALTH` (const): Health with every field at its default: 1 hit point, never hit.
+- `HEALTH_FIELDS` (const): A target's health, for a scene's component: `defineComponent('health', { description, fields: HEALTH_FIELDS })`.
+- `HitSpec` (interface): A hit as the rules decided it.
+- `requestHitStop` (function): Asks the frame clock for a hit-stop of `seconds` (real seconds, before its budget): kept until the run's host takes it after the step (`takeHitStop`), the longest of the step winning.
+- `takeHitStop` (function): For the run's host (the page's or a headless run's step, never sim code, so not in engine/sim-api.ts): the longest hit-stop asked since the last take (s; 0 for none), forgotten once taken.
+
 ### [`engine/sim/entities.ts`](../engine/sim/entities.ts)
 
 - `capturable` (function): The entities copied for a capture: plain data only (`SIM_NOT_DATA`) and no object in two places (`SIM_SHARED_DATA`): a capture copies each place separately, so a shared object would come back as two.
@@ -3921,6 +3986,14 @@ For the agents who maintain the engine.
 - `notData` (function): Checks that `value` is plain data (null, booleans, numbers, strings, arrays and plain objects all the way down) and says where it is not; the path is built only for a refusal.
 - `NotData` (interface): Where a value stops being plain data, and what is there; undefined when it is all plain data.
 - `placeComponent` (function): Puts `component` on a live `entity` as `name`, keeping components in name order (later ones are put back after).
+
+### [`engine/sim/hits.ts`](../engine/sim/hits.ts)
+
+- `coneHits` (function): The targets in the hit cone (`inCone`), by id, ascending: those the hash holds near enough, then the exact test.
+- `inCone` (function): Whether `target` is in the hit cone of `shape` (scaled by `size`) from the feet `from`, facing `yaw` (forward is (sin yaw, 0, cos yaw)): its footprint (a disc of its radius) meets the ground sector the strike reaches, and its height overlaps the strike's height window above the feet.
+- `physicsWalls` (function): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
+- `sweepHits` (function): The targets the swept quad touches (`sweepTouches`), by id, ascending.
+- `sweepTouches` (function): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
 
 ### [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)
 
@@ -4239,6 +4312,23 @@ For the agents who maintain the engine.
 - `NavGrid` (class): The walkable grid of a compiled level, and the searches over it (see the file comment).
 - `NavGridOptions` (type): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
 - `NEAREST_RINGS` (const): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
+
+### [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)
+
+- `capsuleCast` (function): Where a ball of `radius` moving from `from` by `delta` (m) first touches `target`: the share of the move, 0 to 1 (0 when it touches already), or −1 when it never does.
+- `HurtCapsule` (interface): A target's hurt volume: an upright capsule standing on its feet at `x`, `y`, `z` (m), `radius` wide, its straight middle `height` long (CapsuleGeometry's sizes; 2 × radius + height tall), or a ball (`shape: 'ball'`, or height 0).
+- `hurtLength` (const): The length of a hurt capsule's straight middle: 0 for a ball.
+- `hurtNear` (function): The ids within `reach` (plus the set's margin) of (x, z) on the ground, in the hash's fixed order.
+- `HurtSet` (interface): Targets for hit tests: a spatial hash of their feet by id (filled this step, engine/world/spatial.ts) and their hurt capsules.
+- `Projectile` (interface): A shot: what it is, where it flies and what it hit (`PROJECTILE_FIELDS` says what each means).
+- `PROJECTILE` (const): A shot with every field at its default: a 5 cm ball at the origin, at rest, flying for 3 s.
+- `PROJECTILE_FIELDS` (const): A shot's fields, for a scene's component: `defineComponent('bolt', { description, fields: PROJECTILE_FIELDS })`.
+- `ProjectileHit` (interface): A shot's hit this step: a target or a wall, where along the move and where the shot's centre was then.
+- `ProjectileState` (type): Where a shot is in its flight: see `PROJECTILE_FIELDS.state`.
+- `ProjectileStep` (interface): How `stepProjectiles` steps.
+- `stepProjectiles` (function): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
+- `WallContact` (interface): A wall a shot struck: the share of its move where it touched, the body (−1: none) and the surface's normal.
+- `WallTest` (type): A wall test: the first wall a ball of `radius` meets moving from `from` by `delta` (m), or null.
 
 ### [`engine/world/props/catalog.ts`](../engine/world/props/catalog.ts)
 
