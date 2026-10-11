@@ -6,7 +6,7 @@
  * mover 3 goes round the pillar from marker 3. Each step a mover goes `box.room.speed` × dt further along its path and faces the way it
  * goes; a mover that finishes a lap emits `lap`.
  *
- * The page draws each mover as a crate where its `mover` component says (x, y, z, yaw, size, material): the engine's
+ * The page draws each mover as a crate where its `pathMover` component says (x, y, z, yaw, size, material): the engine's
  * stand-in for entities that declare a place (engine/gfx/stage.ts), until actors and props draw themselves.
  *
  * Game code, sim-side: it imports only engine/sim-api.ts, so `x sim` runs it in Node. The level's text is registered
@@ -42,7 +42,7 @@ export const ROOM_SETTINGS = defineSettings({
 });
 
 /** A mover's component: where it stands (its feet), which way it faces, how far along its path it is, how it looks. */
-export const MOVER = defineComponent('mover', {
+export const MOVER = defineComponent('pathMover', {
   description: 'A scripted mover of the box room: its place, facing, distance along its path, and its crate.',
   fields: {
     x: { type: 'number', default: 0, unit: 'm', description: 'East: the middle of its footprint.' },
@@ -59,7 +59,7 @@ export const MOVER = defineComponent('mover', {
 
 /** The room's components, typed. */
 type Room = {
-  mover: {
+  pathMover: {
     x: number;
     y: number;
     z: number;
@@ -138,8 +138,8 @@ export function pathPoint(path: RoomPath, s: number): [number, number, number] {
 /** Moves every mover along its path; a mover that finishes a lap emits `lap`. */
 function move(w: W): void {
   const speed = w.settings.get<number>('box.room.speed');
-  for (const e of w.query('mover')) {
-    const m = e.mover;
+  for (const e of w.query('pathMover')) {
+    const m = e.pathMover;
     const path = ROOM_PATHS[m.path];
     const lap = lapLength(path);
     const before = Math.floor(m.s / lap);
@@ -161,7 +161,7 @@ export const room = defineScene<Room, RoomEvents>('box:room', {
     const count = w.settings.get<number>('box.room.movers');
     for (let path = 0; path < count; path++) {
       const [x, z, yaw] = pathPoint(ROOM_PATHS[path], 0);
-      w.spawn({ mover: { x, z, yaw, path } });
+      w.spawn({ pathMover: { x, z, yaw, path } });
     }
     w.systems.add('move', move, { phase: 'physics' });
   },

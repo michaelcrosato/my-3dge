@@ -12,7 +12,8 @@
  * top left, `unseen.<name>`: `hidden`, `outside` or `covered`; a repeated name gets `#<id>`), and each look note as
  * a warning with its number and fix; `out/shot/<target>/shot.json` holds the whole result, thumbnail and object map
  * included (out/ is never committed). A page without `__engine.shot` (labs/hello) is screenshotted instead: look
- * metrics and thumbnail, no ID pass.
+ * metrics and thumbnail, no ID pass. While `x inspect` runs, the shot is taken in its browser instead of a new one:
+ * on its open page when that shows the URL asked (so what `x set` changed shows), else in a new tab (§8.1).
  *
  * Flags: `--ids` (the ID pass only) and `--metrics` (the look only), both when neither is given; `--marks` numbers
  * what the ID pass sees on `marks.png`, the legend as `mark.<n>` (shardfall's `see`); `--png` writes `frame.png`;
@@ -38,11 +39,20 @@ import type { IdEntry, IdUnseen } from '../../engine/gfx/idpass';
 import { judgeLook, lookMetrics, type LookMetrics, type LookNote } from '../../engine/gfx/lookMetrics';
 import type { ShotJson, ShotOptions } from '../../engine/gfx/shot';
 import { compareThumbnails, thumbnail, type Thumbnail } from '../../engine/gfx/thumbnail';
-import { browserRuntime, describePageError, launchBrowser, preparePage, VIEWPORT } from '../lib/browser';
+import { browserRuntime, launchBrowser, preparePage, VIEWPORT } from '../lib/browser';
 import { decodePng } from '../lib/png';
 import { targetSlug, type Artifact, type Finding, type Report } from '../lib/report';
 import { startVite } from '../lib/vite';
 import { UsageError, type Command, type CommandResult } from '../x';
+import {
+  findSession,
+  pageErrorFinding,
+  pageFailures,
+  shootInSession,
+  waitReady,
+  type Opened,
+  type Signals,
+} from './inspect';
 
 /** How long a page may take to signal ready or an error, in milliseconds. */
 export const READY_TIMEOUT_MS = 30_000;
@@ -139,25 +149,6 @@ function labPages(root: string): string[] {
     .map((name) => `labs/${name}`);
 }
 
-/** The page's signal (PLAN.md §8.3), read once: ready, its errors as lines, its info, and whether it can shoot. */
-interface Signals {
-  ready: boolean;
-  errors: string[];
-  info?: Record<string, unknown>;
-  shoots: boolean;
-}
-
-/** Runs in the page, through `evaluate`: reads `window.__engine`, if the page has published it. */
-function pageSignals(): Signals | undefined {
-  const engine = (window as unknown as { __engine?: Record<string, unknown> }).__engine;
-  if (!engine) return undefined;
-  const errors = ((engine.errors ?? []) as { code?: string; message?: string; fix?: string }[]).map(
-    (error) => `${error.code ?? 'ERROR'}: ${error.message ?? ''}${error.fix ? ` (fix: ${error.fix})` : ''}`,
-  );
-  const info = typeof engine.info === 'function' ? (engine.info as () => Record<string, unknown>)() : undefined;
-  return { ready: engine.ready === true, errors, info, shoots: typeof engine.shot === 'function' };
-}
-
 /** Runs in the page, through `evaluate`: `__engine.shot(options)`, which returns `shotForJson`'s shape. */
 function pageShot(options: ShotOptions): Promise<ShotJson> {
   const engine = (window as unknown as { __engine: { shot(options: ShotOptions): Promise<ShotJson> } }).__engine;
@@ -219,6 +210,90 @@ async function checkThumb(root: string, name: string, thumb: Thumbnail, update: 
   return { lines, metrics, failures: [{ id: 'SHOT_THUMB_MOVED', message, file: baseline }] };
 }
 
+/** What `finishShot` needs to know about the run. */
+interface ShotContext {
+  root: string;
+  page: string;
+  file: string;
+  target: string;
+  where: string;
+  thumb?: string;
+  update: boolean;
+  ids: boolean;
+  marks: boolean;
+}
+
+/** Judges a shot and writes its report, files and lines (the same for a reused session and a fresh browser). */
+async function finishShot(context: ShotContext, opened: Opened): Promise<CommandResult> {
+  const { root, page, target, where, thumb } = context;
+  const { shot, noIds, signals, failures, runtime } = opened;
+  const out = join('out', 'shot', targetSlug(target));
+  const warnings: Finding[] = [];
+  if (noIds) (context.ids || context.marks ? failures : warnings).push({ id: 'SHOT_NO_ID_PASS', message: noIds });
+  const verdict = judgeFrame(shot.notes ?? []);
+  failures.push(...verdict.failures);
+  // Loaded here, not at the top: these test modules join the program only when a shot runs.
+  const { describeUnlisted, findUnlisted, loadAllowList } = await import('../../tests/setup/adviceTrap');
+  for (const warning of findUnlisted(opened.console, loadAllowList()))
+    warnings.push({ id: 'SHOT_CONSOLE', message: describeUnlisted([warning], ` in ${page}`) });
+  warnings.push(...verdict.warnings);
+  const metrics = shotMetrics(shot);
+  const lines: string[] = opened.reused ? [opened.reused] : [];
+  if (shot.ids) {
+    lines.push(
+      listLine(
+        'visible',
+        shot.ids.visible.map((e) => `${e.name} ${(e.share * 100).toFixed(1)}%`),
+      ),
+    );
+    const unseen = shot.ids.unseen.map((e) => `${e.name} (${e.reason})`);
+    if (unseen.length) lines.push(listLine('unseen', unseen));
+  }
+  if (shot.marks)
+    lines.push(
+      listLine(
+        'marks',
+        shot.marks.map((mark) => `${mark.n} ${mark.name}`),
+      ),
+    );
+  mkdirSync(join(root, out), { recursive: true });
+  const artifacts: Artifact[] = [];
+  const image = (name: string, base64: string | undefined, describes: string) => {
+    if (base64 === undefined) return;
+    writeFileSync(join(root, out, name), encodePng(shot.width, shot.height, Buffer.from(base64, 'base64')));
+    artifacts.push({ path: `${out}/${name}`, kind: 'image', describes });
+  };
+  image('frame.png', shot.pixels, `${where}, as the frame draws it (WebGPU)`);
+  image('marks.png', shot.marked, `${where}, each object the ID pass sees numbered (the legend: mark.<n>)`);
+  if (thumb && shot.thumbnail) {
+    const checked = await checkThumb(root, thumb, shot.thumbnail, context.update, where);
+    lines.push(...checked.lines);
+    Object.assign(metrics, checked.metrics);
+    failures.push(...checked.failures);
+  }
+  const saved: Partial<ShotJson> = { ...shot };
+  delete saved.pixels;
+  delete saved.marked;
+  writeFileSync(join(root, out, 'shot.json'), `${JSON.stringify({ page: where, ...saved }, null, 2)}\n`);
+  const describes = 'the whole shot: the ID pass, the look metrics and notes, the thumbnail and its map, the marks';
+  artifacts.push({ path: `${out}/shot.json`, kind: 'json', describes });
+  const m = shot.metrics;
+  const look = m ? `, coverage ${(m.coverage * 100).toFixed(1)}%, luma ${m.lumaP5}–${m.lumaP95}` : '';
+  const seen = shot.ids ? `, ${shot.ids.visible.length} of ${shot.ids.objects} objects visible` : '';
+  const info = { ...(signals.info?.adapter as Record<string, unknown> | undefined), ...signals.info };
+  return {
+    ok: failures.length === 0,
+    summary: `${where}: ${shot.width}×${shot.height}${look}${seen}`,
+    lines: [...lines, `files: ${artifacts.map((artifact) => artifact.path).join(', ')}`],
+    target,
+    browser: runtime,
+    failures,
+    warnings,
+    metrics: { ...metrics, backend: String(info.backend ?? 'unreported'), three: String(info.three ?? 'unreported') },
+    artifacts,
+  };
+}
+
 export default {
   usage:
     'shot <page> [--scene s] [--cam code] [--set k=v…] [--ids] [--metrics] [--marks] [--png] [--thumb case [--update]]',
@@ -253,113 +328,31 @@ export default {
     const marks = values.marks === true;
     const target = `${targetSlug(page)}${scene ? `-${scene}` : ''}${cam ? `-${cam}` : ''}`;
     const where = `${page}${scene ? ` scene ${scene}` : ''}${cam ? ` from cam ${cam}` : ''}`;
-    const out = join('out', 'shot', targetSlug(target));
+    const options = { ids: neither || values.ids === true || marks, metrics: neither || values.metrics === true };
+    const asked = { ...options, marks, pixels: values.png === true, where };
+    const finish = (opened: Opened) =>
+      finishShot(
+        { root, page, file, target, where, thumb, update: values.update === true, ids: values.ids === true, marks },
+        opened,
+      );
+    const session = findSession(root);
+    if (session) {
+      const reused = await shootInSession(session, path, asked, page);
+      if (reused) return finish(reused);
+    }
     const server = await startVite({ root });
     const browser = await launchBrowser();
     try {
       const tab = await browser.newPage({ viewport: VIEWPORT });
       const watch = await preparePage(tab, { seed: 1, root });
-      let pageErrors = 0;
-      tab.on('pageerror', () => pageErrors++);
       await tab.goto(`${server.url}${path}`);
-      const deadline = Date.now() + READY_TIMEOUT_MS;
-      let signals = await tab.evaluate(pageSignals);
-      while (!signals?.ready && !signals?.errors.length && pageErrors === 0 && Date.now() < deadline) {
-        await new Promise((resolve) => setTimeout(resolve, 50));
-        signals = await tab.evaluate(pageSignals);
-      }
+      const signals = await waitReady(tab, watch, READY_TIMEOUT_MS);
       const runtime = browserRuntime(browser.version());
-      const failures: Finding[] = (await watch.errors()).map((error) => ({
-        id: 'SHOT_PAGE_ERROR',
-        message: `${page} threw: ${describePageError(error)}`,
-        ...(error.file ? { file: error.file, line: error.line } : {}),
-      }));
-      for (const error of signals?.errors ?? [])
-        failures.push({ id: 'SHOT_PAGE_SIGNAL', message: `${page} signalled ${error}` });
-      if (!signals?.ready && failures.length === 0) {
-        const message = `${page} signalled neither window.__engine.ready nor an error within ${READY_TIMEOUT_MS} ms; publish __engine (PLAN.md §8.3)`;
-        failures.push({ id: 'SHOT_NOT_READY', message, file });
-      }
-      const info = signals?.info ?? {};
-      if (failures.length === 0 && info.backend !== undefined && info.backend !== 'WebGPU') {
-        failures.push({
-          id: 'SHOT_NOT_WEBGPU',
-          message: `${page} reports backend ${String(info.backend)}, not WebGPU (PLAN.md §6.7)`,
-        });
-      }
+      const failures = pageFailures(page, file, signals, (await watch.errors()).map(pageErrorFinding(page)));
       if (failures.length > 0 || !signals)
         return { ok: false, summary: `${page} did not draw`, target, browser: runtime, failures };
-
-      const options = { ids: neither || values.ids === true || marks, metrics: neither || values.metrics === true };
-      const { shot, noIds } = await shootPage(tab, signals, { ...options, marks, pixels: values.png === true, where });
-      const warnings: Finding[] = [];
-      if (noIds) (values.ids || marks ? failures : warnings).push({ id: 'SHOT_NO_ID_PASS', message: noIds });
-      const verdict = judgeFrame(shot.notes ?? []);
-      failures.push(...verdict.failures);
-      // Loaded here, not at the top: these test modules join the program only when a shot runs.
-      const { describeUnlisted, findUnlisted, loadAllowList } = await import('../../tests/setup/adviceTrap');
-      for (const warning of findUnlisted(watch.console, loadAllowList()))
-        warnings.push({ id: 'SHOT_CONSOLE', message: describeUnlisted([warning], ` in ${page}`) });
-      warnings.push(...verdict.warnings);
-
-      const metrics = shotMetrics(shot);
-      const lines: string[] = [];
-      if (shot.ids) {
-        lines.push(
-          listLine(
-            'visible',
-            shot.ids.visible.map((e) => `${e.name} ${(e.share * 100).toFixed(1)}%`),
-          ),
-        );
-        const unseen = shot.ids.unseen.map((e) => `${e.name} (${e.reason})`);
-        if (unseen.length) lines.push(listLine('unseen', unseen));
-      }
-      if (shot.marks)
-        lines.push(
-          listLine(
-            'marks',
-            shot.marks.map((mark) => `${mark.n} ${mark.name}`),
-          ),
-        );
-      mkdirSync(join(root, out), { recursive: true });
-      const artifacts: Artifact[] = [];
-      const image = (name: string, base64: string | undefined, describes: string) => {
-        if (base64 === undefined) return;
-        writeFileSync(join(root, out, name), encodePng(shot.width, shot.height, Buffer.from(base64, 'base64')));
-        artifacts.push({ path: `${out}/${name}`, kind: 'image', describes });
-      };
-      image('frame.png', shot.pixels, `${where}, as the frame draws it (WebGPU)`);
-      image('marks.png', shot.marked, `${where}, each object the ID pass sees numbered (the legend: mark.<n>)`);
-      if (thumb && shot.thumbnail) {
-        const checked = await checkThumb(root, thumb, shot.thumbnail, values.update === true, where);
-        lines.push(...checked.lines);
-        Object.assign(metrics, checked.metrics);
-        failures.push(...checked.failures);
-      }
-      const saved: Partial<ShotJson> = { ...shot };
-      delete saved.pixels;
-      delete saved.marked;
-      writeFileSync(join(root, out, 'shot.json'), `${JSON.stringify({ page: where, ...saved }, null, 2)}\n`);
-      const describes = 'the whole shot: the ID pass, the look metrics and notes, the thumbnail and its map, the marks';
-      artifacts.push({ path: `${out}/shot.json`, kind: 'json', describes });
-      const m = shot.metrics;
-      const look = m ? `, coverage ${(m.coverage * 100).toFixed(1)}%, luma ${m.lumaP5}–${m.lumaP95}` : '';
-      const seen = shot.ids ? `, ${shot.ids.visible.length} of ${shot.ids.objects} objects visible` : '';
-      return {
-        ok: failures.length === 0,
-        summary: `${where}: ${shot.width}×${shot.height}${look}${seen}`,
-        lines: [...lines, `files: ${artifacts.map((artifact) => artifact.path).join(', ')}`],
-        target,
-        browser: runtime,
-        failures,
-        warnings,
-        metrics: {
-          ...metrics,
-          backend: String(info.backend ?? 'unreported'),
-          three: String(info.three ?? 'unreported'),
-        },
-        artifacts,
-      };
+      const { shot, noIds } = await shootPage(tab, signals, asked);
+      return finish({ shot, noIds, signals, failures, console: watch.console, runtime });
     } finally {
       await browser.close();
       await server.close();
