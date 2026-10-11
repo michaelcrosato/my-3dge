@@ -7,6 +7,14 @@ Every code the engine prints, as `[CODE] message`, with its fix. Each module reg
 
 ## anim
 
+### ANIM_BAD_CHAIN
+
+- Message: `a chain cannot have {field} {value}`
+- Fix: give a chain n ≥ 2 points, seg > 0 metres and iterations ≥ 1
+- Registered in: [`engine/anim/secondary.ts` line 52](../engine/anim/secondary.ts)
+
+Thrown by `new Chain` and `new Cape` (engine/anim/secondary.ts) for fewer than 2 points, a segment that is not a positive length, or no constraint pass: such a chain has nothing to hang or never holds its length.
+
 ### ANIM_BAD_HIT_KEY
 
 - Message: `hits keyed a target by {key}, not a finite number, so it could not tell the targets apart`
