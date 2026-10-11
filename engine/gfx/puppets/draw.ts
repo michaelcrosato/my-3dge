@@ -188,7 +188,7 @@ export function puppetGeometry(compiled: CompiledBody): BufferGeometry {
   geometry.setAttribute('skinIndex', new BufferAttribute(skinIndex, 4));
   geometry.setAttribute('skinWeight', new BufferAttribute(skinWeight, 4));
   geometry.setIndex(index);
-  geometry.addGroup(0, litIndices, 0);
+  if (litIndices > 0) geometry.addGroup(0, litIndices, 0);
   if (index.length > litIndices) geometry.addGroup(litIndices, index.length - litIndices, 1);
   geometry.userData.pieces = ranges;
   return geometry;
@@ -202,7 +202,7 @@ export interface Puppet {
   setPose(pose: Pose): this;
   /** Where `socket` is drawn, from the bones' world matrices. */
   socketPosition(socket: SocketName, out?: Vector3): Vector3;
-  /** Draw calls a frame costs: one per group, again per shadow map. */
+  /** Draw calls a frame costs: one per group (lit, glow), again per shadow map. */
   drawCalls(shadowMaps?: number): number;
   /** Registers the mesh with `warmup` as `id` (the mesh's name, `puppet:<body>`, by default). */
   register(warmup: Pick<Warmup, 'register'>, id?: string): { dispose(): void };

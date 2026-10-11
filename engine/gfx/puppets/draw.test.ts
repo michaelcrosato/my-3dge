@@ -11,6 +11,7 @@
 import { Matrix4, Quaternion, Vector3, type BufferAttribute, type SkinnedMesh } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { defineEveryPart } from '../../../fixtures/bodies/everyPart';
+import { defineSocketMarks } from '../../../fixtures/bodies/socketMarks';
 import { forwardKinematics, jointPosition, socketPosition } from '../../anim/fk';
 import { Pose } from '../../anim/pose';
 import { JOINTS, SOCKETS, type SocketName } from '../../anim/skeleton';
@@ -85,6 +86,12 @@ describe('the rigid-skinned geometry', () => {
         expect([color.getX(i), color.getY(i), color.getZ(i)], range.part).toEqual(rgb);
       }
     }
+  });
+
+  it('leaves out an empty group: a body of glow pieces only draws once', () => {
+    const marks = compileBody(defineSocketMarks(createRegistry()), 'build:chibi');
+    expect(puppetGeometry(marks).groups).toEqual([{ start: 0, count: expect.any(Number), materialIndex: 1 }]);
+    expect(createPuppet(marks, { materials: library }).drawCalls(1)).toBe(2);
   });
 
   it('passes the geo QA family’s checks: finite, no degenerate or flipped triangles, unit normals', () => {
