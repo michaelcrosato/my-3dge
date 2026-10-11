@@ -65,3 +65,16 @@ translation as a velocity. Rapier's autostep, snap and impulses are off.
   engine/sim/actors.ts, to avoid an import cycle.
 - **Core change accepted:** engine/physics/world.ts gains `rapierOf(physics)` (a WeakMap and one export, for the
   modules beside it only; not in the barrels), so the controller reaches the Rapier world, including after a restore.
+
+## Amendment 4 (2026-10-10, WP-4.2): convex hull colliders, and the hall's level rules
+engine/physics has no hull shape and engine/sim/levelBodies.ts must not import Rapier, so the hall's stairs and dais
+need a core change.
+- **Core change accepted:** WP 4.2's Owns widens to engine/physics/{world,queries,world.test}.ts, for a collider
+  shape used only by bodies: `{ type: 'hull', points }` (`HullShape`), a convex hull in three.js ConvexGeometry's
+  terms. It is refused when it has fewer than 4 points or all points lie in one plane (Rapier 0.21's `convexHull`
+  never returns null, measured). Owns also gains a one-character edit to engine/gfx/level/meshes.test.ts, whose ledge
+  moves from `=` to `L` because `=` is now `glyph:gallery`.
+- **Mesh descriptors:** `bottom` is 0 for glyphs whose box or hull collider rises from the ground (a gallery is drawn
+  as a block), and the glyph's floor otherwise.
+- **Reachability:** areas are strongly connected. Each step is sampled 8 times between centres and climbs at most
+  `NAV_CLIMB`; steps down are always allowed.

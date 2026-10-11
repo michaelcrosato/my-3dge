@@ -2521,7 +2521,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/physics/bodies && node x replay tests/replays/physics-props.replay.json --browser sim`
 
 #### WP-4.2 The level compiler (v2): the hall
-- **Owns:** extends `engine/world/level/**` (from WP 2.2) with the v2 glyphs; extends `engine/sim/levelBodies.ts` (from WP 3.1) with convex hulls; `labs/box/levels/hall.txt`
+- **Owns:** extends `engine/world/level/**` (from WP 2.2) with the v2 glyphs; extends `engine/sim/levelBodies.ts` (from WP 3.1) with convex hulls; `labs/box/levels/hall.txt`, `tests/baselines/qa-geo-hall.json`; core proposal: extends `engine/physics/{world,queries,world.test}.ts` with the hull shape and edits one glyph in `engine/gfx/level/meshes.test.ts` (accepted, ADR-0020 amendment 4)
 - **Needs:** WP 3.1
 - **Size:** M
 - **Carry:** the hall's glyphs `= ^ o t` and their geometry (`stress-world/10-hall.js:22-67, 94-124, 188-201`): galleries at 1 m, stairs as ramps with hull wedges, the octagonal dais (`octR`) with a hull frustum, braziers as cylinders, torch spots.
@@ -3967,7 +3967,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 3.12 | Touch controls (not tested, ADR-0021) | I | todo | | |
 | **G3** | **Gate: Box 2** | | todo | | |
 | 4.1 | Bodies and props physics | P | todo | | |
-| 4.2 | Level compiler (v2): the hall | W | todo | | |
+| 4.2 | Level compiler (v2): the hall | W | done | 29a6370 (#5) | v2 glyphs = ^ o t (gallery 1 m, ramp stairs rising toward their gallery, octagonal dais, brazier cylinder plus torch spot); floorHeight/topHeight/surfaceAt; hull and cylinder descriptors; LEVEL_BAD_RAMP and LEVEL_BAD_DAIS; one-way reach checked along each step (walk.ts); labs/box/levels/hall.txt; calls: mesh bottom 0 for box/hull glyphs, geo-QA exceptions for level:hall in qa-geo-hall.json until WP 4.4, fixture goldens re-recorded (only new fields); core proposal accepted: hull shape in engine/physics (ADR-0020 amendment 4), hall hulls probed within 1 cm; no escalations; deferred: hall drawn in WP 4.4; not verified: hull determinism in Chromium beyond physics-40 |
 | 4.3 | Navigation and spatial queries | W | todo | | |
 | 4.4 | Level meshes (v2) and cutaway | R | todo | | |
 | 4.5 | Props as data | R | todo | | |

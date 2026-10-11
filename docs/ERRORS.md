@@ -643,6 +643,14 @@ Raised by the virtual device (engine/input/devices/virtual.ts) and `__engine.inp
 
 Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts) for a glyph with a footprint above 1 whose touching tiles do not make a filled rectangle of whole footprint squares.
 
+### LEVEL_BAD_DAIS
+
+- Message: `{at}: this {char} block {why}`
+- Fix: redraw {glyph} as an octagon in a square of tiles (as many rows as columns), wide enough that its base reaches more than its {edge} m edge from its centre
+- Registered in: [`engine/world/level/problems.ts` line 51](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/shapes.ts) for a block of a dais glyph (o) whose bounding box is not square, or too small for its sloped edge.
+
 ### LEVEL_BAD_HEADER
 
 - Message: `{at}: {problem}`
@@ -650,6 +658,14 @@ Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts) fo
 - Registered in: [`engine/world/level/problems.ts` line 22](../engine/world/level/problems.ts)
 
 Raised by `validateLevel` and `compileLevel` (engine/world/level/parse.ts) for an unknown or repeated key, a bad value, a line that is not `key: value`, or front matter that is never closed.
+
+### LEVEL_BAD_RAMP
+
+- Message: `{at}: this {char} block {why}`
+- Fix: draw {glyph} as a filled rectangle with exactly one side against walkable floor {top} m up (a gallery, =): it rises toward that side
+- Registered in: [`engine/world/level/problems.ts` line 46](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/shapes.ts) for a block of a ramp glyph (stairs, ^) that is not a filled rectangle, or whose neighbours at its top height (walkable, flat, within the climb limit) lie on no side or on several, so the direction it rises is not clear.
 
 ### LEVEL_EMPTY
 
@@ -661,7 +677,7 @@ Raised by `validateLevel` and `compileLevel` (engine/world/level/parse.ts) for a
 
 - Message: `{where} has {count}: {list}`
 - Fix: fix each at the line and column it names (validateLevel(text) lists them; node x qa level checks every level file)
-- Registered in: [`engine/world/level/problems.ts` line 56](../engine/world/level/problems.ts)
+- Registered in: [`engine/world/level/problems.ts` line 66](../engine/world/level/problems.ts)
 
 Thrown by `compileLevel` and `defineLevel` (engine/world/level/compile.ts) for a level with structural problems; the error carries them as `values.problems`.
 
@@ -685,7 +701,7 @@ Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts), o
 
 - Message: `{at}: the walkable area from here ({count}) is cut off from the main floor ({main})`
 - Fix: open a gap to it, or fill it with a solid glyph (#) if nobody should stand there
-- Registered in: [`engine/world/level/problems.ts` line 51](../engine/world/level/problems.ts)
+- Registered in: [`engine/world/level/problems.ts` line 61](../engine/world/level/problems.ts)
 
 Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`, once per cut-off area without a spawn, at its first tile in reading order.
 
@@ -693,9 +709,9 @@ Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa leve
 
 - Message: `{at}: the spawn {spawn} ({char}) {why}`
 - Fix: open a gap in the walls round it, or move the {char} onto the main floor
-- Registered in: [`engine/world/level/problems.ts` line 46](../engine/world/level/problems.ts)
+- Registered in: [`engine/world/level/problems.ts` line 56](../engine/world/level/problems.ts)
 
-Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`: the spawn stands on a tile nobody walks on, or in an area cut off from the main floor (the largest area bodies can walk across, stepping between tiles at most the climb limit apart).
+Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`: the spawn stands on a tile nobody walks on, or in an area cut off from the main floor (the largest area whose tiles bodies walk between both ways, never climbing more than the climb limit at once; engine/world/level/walk.ts).
 
 ## physics
 
@@ -703,7 +719,7 @@ Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa leve
 
 - Message: `{where} got {value}`
 - Fix: pass {expected}
-- Registered in: [`engine/physics/queries.ts` line 42](../engine/physics/queries.ts)
+- Registered in: [`engine/physics/queries.ts` line 43](../engine/physics/queries.ts)
 
 Raised by bodies and queries (engine/physics/world.ts, engine/physics/queries.ts) for a vector, rotation, shape, size or option that is not of the right kind: non-finite numbers, a zero direction, a size that is not positive, an unknown shape type.
 
@@ -717,13 +733,13 @@ Raised by bodies and queries (engine/physics/world.ts, engine/physics/queries.ts
 
 - Message: `there is no body {id}{why}`
 - Fix: use an id addBody() returned while its body exists (hasBody(id) tells); bodies() lists them
-- Registered in: [`engine/physics/world.ts` line 80](../engine/physics/world.ts)
+- Registered in: [`engine/physics/world.ts` line 83](../engine/physics/world.ts)
 
 ### PHYSICS_NONE
 
 - Message: `{what} has no physics world`
 - Fix: give its scene a physics world, defineScene(id, { physics: true, setup(w) { physicsOf(w).addBody(…) } }), or pass createPhysics() as createWorld's or startScene's physics option
-- Registered in: [`engine/physics/world.ts` line 84](../engine/physics/world.ts)
+- Registered in: [`engine/physics/world.ts` line 87](../engine/physics/world.ts)
 
 ### PHYSICS_UNKNOWN_GROUP
 
