@@ -57,8 +57,24 @@ game agent's manual.
 - `BindingsStorage` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Where bindings are saved: the `localStorage` shape.
 - `BlendOptions` (interface from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): How `blendPoses` blends.
 - `blendPoses` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), each joint's share scaled by `options.mask`, written into `out` (a new pose by default; `a` or `b` may be `out`).
+- `Blob` (class from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A blob: its state, its skeleton's pose.
+- `BLOB` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's tuning: the source's numbers, lengths ÷ 16 in metres.
+- `BLOB_JOINTS` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's skeleton, parents first, and what each joint's world matrix places.
+- `BLOB_LEAP` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The slime's leap: back 3, reach 15, height 9 units.
+- `BLOB_MOVES` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's moves: a short low bite, its leap, a high pounce, and a spit that rears back and stretches forward.
+- `BlobInput` (interface from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): What a blob is told each step; every field is optional.
+- `BlobJoint` (type from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A joint of the blob's skeleton.
+- `BlobLeap` (interface from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A creature's leap, which its moves take shares of.
+- `blobMove` (function from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): Move `name` at `seconds` in (clamped to its length), on the creature's `leap`: the body's offset and squash.
+- `BlobMove` (interface from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A blob move as data: its timing, and the shares of the creature's leap it strikes with.
+- `BlobMoveFrame` (interface from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A move at a moment: the body's offset (metres forward along the look, and up) and the squash it aims for.
+- `BlobMoveName` (type from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A blob move's name.
+- `blobMoveTimes` (function from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): When move `name` hits and when it ends, seconds from its start, on the creature's `leap`.
+- `BlobOptions` (interface from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): What a blob is made from.
+- `BlobPose` (type from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's pose: each joint's world matrix (`BLOB_JOINTS` says what it places).
 - `blobScale` (function from [`engine/gfx/puppets/blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts)): How much a body `height` metres above its floor shrinks its shadow: 1 on the floor, down to 0.35 at 5 m.
 - `BlobShadows` (interface from [`engine/gfx/puppets/blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts)): Blob shadows (see the file comment).
+- `BlobState` (interface from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's state: what `step` eases and `pose` reads, plain data.
 - `Body` (type from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): A `body` entry: the parsed spec, its parts typed.
 - `BODY_STATES` (const from [`engine/anim/states.ts`](../engine/anim/states.ts)): Every body state and the kind of value it takes (`AnimatorInput` documents each word).
 - `BodyChange` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): The changes `setBody` makes; each wakes the body.
@@ -166,6 +182,12 @@ game agent's manual.
 - `FeelOptions` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
+- `Floater` (class from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater: its state, its pose.
+- `FLOATER` (const from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's tuning: the source's numbers, lengths ÷ 16 in metres, and the bank's.
+- `FloaterInput` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is told each step; every field is optional.
+- `FloaterOptions` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is made from.
+- `FloaterPose` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater's pose: the core's world matrix and the motes' world positions.
+- `FloaterState` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's state: what `step` eases and `pose` reads, plain numbers.
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): the highest flat floor, ramp or dais there; 0 outside the map.
 - `FlowField` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): Every tile's walking distance to a goal set: walk downhill to get there.
 - `FlowOptions` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `flowField` takes.
@@ -504,6 +526,22 @@ game agent's manual.
 - `B` (function from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): `f` metres forward, `r` right and `u` up, in the model frame (+Z forward, −X right, +Y up).
 - `BlendOptions` (interface from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): How `blendPoses` blends.
 - `blendPoses` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), each joint's share scaled by `options.mask`, written into `out` (a new pose by default; `a` or `b` may be `out`).
+- `Blob` (class from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A blob: its state, its skeleton's pose.
+- `BLOB` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's tuning: the source's numbers, lengths ÷ 16 in metres.
+- `BLOB_JOINTS` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's skeleton, parents first, and what each joint's world matrix places.
+- `BLOB_LEAP` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The slime's leap: back 3, reach 15, height 9 units.
+- `BLOB_MOVES` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's moves: a short low bite, its leap, a high pounce, and a spit that rears back and stretches forward.
+- `BlobInput` (interface from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): What a blob is told each step; every field is optional.
+- `BlobJoint` (type from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A joint of the blob's skeleton.
+- `BlobLeap` (interface from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A creature's leap, which its moves take shares of.
+- `blobMove` (function from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): Move `name` at `seconds` in (clamped to its length), on the creature's `leap`: the body's offset and squash.
+- `BlobMove` (interface from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A blob move as data: its timing, and the shares of the creature's leap it strikes with.
+- `BlobMoveFrame` (interface from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A move at a moment: the body's offset (metres forward along the look, and up) and the squash it aims for.
+- `BlobMoveName` (type from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A blob move's name.
+- `blobMoveTimes` (function from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): When move `name` hits and when it ends, seconds from its start, on the creature's `leap`.
+- `BlobOptions` (interface from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): What a blob is made from.
+- `BlobPose` (type from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's pose: each joint's world matrix (`BLOB_JOINTS` says what it places).
+- `BlobState` (interface from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's state: what `step` eases and `pose` reads, plain data.
 - `BODY_STATES` (const from [`engine/anim/states.ts`](../engine/anim/states.ts)): Every body state and the kind of value it takes (`AnimatorInput` documents each word).
 - `BodyChange` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): The changes `setBody` makes; each wakes the body.
 - `BodyMotion` (interface from [`engine/anim/locomotion.ts`](../engine/anim/locomotion.ts)): A move's body motion now, eased toward its targets: the slot moves (WP 6.1) fill.
@@ -562,6 +600,12 @@ game agent's manual.
 - `FeelOptions` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
+- `Floater` (class from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater: its state, its pose.
+- `FLOATER` (const from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's tuning: the source's numbers, lengths ÷ 16 in metres, and the bank's.
+- `FloaterInput` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is told each step; every field is optional.
+- `FloaterOptions` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is made from.
+- `FloaterPose` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater's pose: the core's world matrix and the motes' world positions.
+- `FloaterState` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's state: what `step` eases and `pose` reads, plain numbers.
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): the highest flat floor, ramp or dais there; 0 outside the map.
 - `FlowField` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): Every tile's walking distance to a goal set: walk downhill to get there.
 - `FlowOptions` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `flowField` takes.
@@ -769,6 +813,25 @@ For the agents who maintain the engine.
 - `SpineTargets` (interface): Where a spine points: rig-frame directions and rig-local shoulder points (`solveSpine`).
 - `turnRight` (function): A turn of `angle` radians about the up axis toward the right hand (my-3d2dge's `rz`), written into `out`.
 
+### [`engine/anim/blob.ts`](../engine/anim/blob.ts)
+
+- `Blob` (class): A blob: its state, its skeleton's pose.
+- `BLOB` (const): The blob's tuning: the source's numbers, lengths ÷ 16 in metres.
+- `BLOB_JOINTS` (const): The blob's skeleton, parents first, and what each joint's world matrix places.
+- `BLOB_LEAP` (const): The slime's leap: back 3, reach 15, height 9 units.
+- `BLOB_MOVES` (const): The blob's moves: a short low bite, its leap, a high pounce, and a spit that rears back and stretches forward.
+- `BlobInput` (interface): What a blob is told each step; every field is optional.
+- `BlobJoint` (type): A joint of the blob's skeleton.
+- `BlobLeap` (interface): A creature's leap, which its moves take shares of.
+- `blobMove` (function): Move `name` at `seconds` in (clamped to its length), on the creature's `leap`: the body's offset and squash.
+- `BlobMove` (interface): A blob move as data: its timing, and the shares of the creature's leap it strikes with.
+- `BlobMoveFrame` (interface): A move at a moment: the body's offset (metres forward along the look, and up) and the squash it aims for.
+- `BlobMoveName` (type): A blob move's name.
+- `blobMoveTimes` (function): When move `name` hits and when it ends, seconds from its start, on the creature's `leap`.
+- `BlobOptions` (interface): What a blob is made from.
+- `BlobPose` (type): The blob's pose: each joint's world matrix (`BLOB_JOINTS` says what it places).
+- `BlobState` (interface): The blob's state: what `step` eases and `pose` reads, plain data.
+
 ### [`engine/anim/builds.ts`](../engine/anim/builds.ts)
 
 - `Build` (type): A `build` entry: one body's proportions, in metres before `size`.
@@ -863,6 +926,15 @@ For the agents who maintain the engine.
 - `socketPosition` (function): The world position of `socket`: it rides its joint, so it turns with it.
 - `tipPosition` (function): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
 - `WorldPose` (interface): A pose in world space: each joint's matrix (16 numbers), position (3) and rotation (4), in `JOINTS` order.
+
+### [`engine/anim/floater.ts`](../engine/anim/floater.ts)
+
+- `Floater` (class): A floater: its state, its pose.
+- `FLOATER` (const): The floater's tuning: the source's numbers, lengths ÷ 16 in metres, and the bank's.
+- `FloaterInput` (interface): What a floater is told each step; every field is optional.
+- `FloaterOptions` (interface): What a floater is made from.
+- `FloaterPose` (interface): A floater's pose: the core's world matrix and the motes' world positions.
+- `FloaterState` (interface): The floater's state: what `step` eases and `pose` reads, plain numbers.
 
 ### [`engine/anim/humanoid.ts`](../engine/anim/humanoid.ts)
 

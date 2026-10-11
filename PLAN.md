@@ -3976,7 +3976,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | **G4** | **Gate: Box 3** | | todo | | |
 | 5.1 | Crowd bodies | P | todo | | |
 | 5.2 | Steering kit | W | todo | | |
-| 5.3 | Blob and floater rigs | A | todo | | |
+| 5.3 | Blob and floater rigs | A | done | a6da2bc (#6) | engine/anim/{blob,floater}.ts plus tests and 24 sim-api exports; blob: source update ported exactly, width R/sqrt(1+sq) so volume is kept (det = R^3 to 1e-12), minimal skeleton (root, body, eyeL/R, mouth, wingL/R as Matrix4), BLOB_MOVES bite/leap/pounce/spit on BlobLeap plus blobMove and blobMoveTimes; floater: wisp hover, new bank, motes; differential vs WP 0.11 mean 3.7 mm, worst 3.66 cm, 9 EXCEPTIONS from the volume fix; calls: move timings from the lab's jab/slash/overhead/cast, blob reads its own words (body-state mapping left to WP 5.7), slimeParts placement now joints, source `walk` dropped and beat wraps at 2π, floater heading/bank (atan(a/15), max 0.6 rad, smoothDamp 0.2 s)/mote frame new; not verified: crowd-scale performance, Node vs Chromium bit equality (atan2/hypot not swapped); deferred: shown in the box WP 5.7, drawn WP 5.4; no escalations |
 | 5.4 | Crowd rendering and pose LOD | R | todo | | |
 | 5.5 | Performance counters and crowd ladder | T | todo | | |
 | 5.6 | Bot and dev actions | I | on demand | | |
