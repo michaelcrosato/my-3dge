@@ -1,8 +1,9 @@
 /**
- * @file The fixture body `body:everyPart` (PLAN.md WP 3.8): one part of every type and every kind of point, for the
- * puppet tests (engine/gfx/puppets/*.test.ts) and the puppets page (tests/pages/puppets.ts), so each shape, point
- * form, mirror and `on` option is compiled, skinned and instanced against a body whose lines never change with the
- * engine's own humanoid.
+ * @file The fixture body `body:everyPart` (PLAN.md WP 3.8): one part of every type and every kind of point, so each
+ * shape, point form, mirror and `on` option is compiled, skinned and instanced against a body whose lines never change
+ * with the engine's own humanoid: in Node by the puppet tests (engine/gfx/puppets/*.test.ts), and on the GPU by the
+ * puppets page (tests/pages/puppets.ts), which draws it rigid-skinned and instanced, every unit shape seen by the ID
+ * pass (tests/e2e/puppets.spec.ts).
  *
  * - every part type: `limb`, `curve` (a claw from each hand), `ball` (a head, and an ellipsoid disc riding the root),
  *   `eye`, `box` (a chest plate and the feet), `cone` (horns), `blade` (from the right grip), `cape` (from the back
@@ -19,6 +20,7 @@
  * const registry = createRegistry();
  * defineEveryPart(registry).mirror.length; // 8
  * @see engine/gfx/puppets/compile.test.ts
+ * @see tests/e2e/puppets.spec.ts
  */
 import { defineBody, type Body, type BodySpec } from '../../engine';
 import type { Registry } from '../../engine/core/registry';

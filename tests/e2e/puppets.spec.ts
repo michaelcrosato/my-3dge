@@ -6,13 +6,16 @@
  * within 1 mm: a white mark on each socket (fixtures/bodies/socketMarks.ts), shot from the front and the side at
  * 0.25 mm per pixel around FK's socket, has its centre within 1 mm of the shot's centre, and its area says nothing
  * else fell in the shot. A crowd of instanced humanoids with blob shadows costs the draw calls the batches count, one
- * per shown page, and growing it from 16 to 100 bodies (more pages) builds no pipeline.
+ * per shown page, and growing it from 16 to 100 bodies (more pages) builds no pipeline. The fixture body
+ * (fixtures/bodies/everyPart.ts), one part of every type, draws as a rigid-skinned puppet and two instanced ones: a
+ * batch per unit shape (ball, blade, box, cone, eye, strip and limbs of several tapers), each seen by the ID pass,
+ * for the draw calls counted and no pipeline built after the warm-up.
  *
  * Invariants: frames are drawn by calling the page; draw calls are the renderer's (`renderer.info`), pipelines the
  * device's (engine/gfx/pipelines.ts); no advice is raised.
  */
 import type { Page } from '@playwright/test';
-import type { CrowdShown, HumanoidShown, SocketShot } from '../pages/puppets';
+import type { CrowdShown, EveryPartShown, HumanoidShown, SocketShot } from '../pages/puppets';
 import { expect, test } from './fixtures';
 
 /** What the page publishes as `window.__puppetsPage` (tests/pages/puppets.ts), as far as this suite uses it. */
@@ -20,6 +23,7 @@ interface PuppetsPage {
   humanoid(): Promise<HumanoidShown>;
   sockets(side: 'front' | 'side'): Promise<SocketShot[]>;
   crowd(n: number): Promise<CrowdShown>;
+  everyPart(): Promise<EveryPartShown>;
 }
 type PuppetsWindow = { __puppetsPage: PuppetsPage };
 
@@ -112,5 +116,28 @@ test('a crowd of instanced humanoids costs a draw call per shown page, and growi
   expect(large.pages.ball, '4,200 balls on 1,024-slot pages').toBe(5);
   expect(large.drawCalls - large.empty).toBe(large.counted);
   expect(large.counted - small.counted, 'only the added pages cost more').toBeGreaterThan(0);
+  expect(harness.advice()).toEqual([]);
+});
+
+test('the fixture body draws every shape, rigid-skinned and instanced, and builds no pipeline', async ({
+  page,
+  harness,
+}) => {
+  await page.goto(PAGE);
+  await harness.ready();
+
+  const shown = await call(page, 'everyPart');
+  expect(shown.frame).toMatchObject({ drawn: true, built: 0 });
+  expect(shown.pipelinesAfterWarmUp).toBe(0);
+  expect(shown.drawCalls - shown.empty, "the renderer's count, beyond the empty scene's").toBe(shown.counted);
+  const shapes = shown.shapes.filter((key) => !key.startsWith('limb@')).sort();
+  expect(shapes, 'a batch for every unit shape but the limb').toEqual(['ball', 'blade', 'box', 'cone', 'eye', 'strip']);
+  expect(shown.shapes.length - shapes.length, 'limbs of more than one taper').toBeGreaterThan(1);
+  const px = new Map(shown.seen.map(({ name, px }) => [name, px]));
+  const pages = shown.shapes.map((key) => `parts/${key}/page0`);
+  expect([...px.keys()].sort(), "each shape's page drawn and in view, and nothing else").toEqual(
+    ['puppet:body:everyPart', ...pages].sort(),
+  );
+  expect(px.get('puppet:body:everyPart'), 'the rigid-skinned puppet, whole').toBeGreaterThan(4000);
   expect(harness.advice()).toEqual([]);
 });

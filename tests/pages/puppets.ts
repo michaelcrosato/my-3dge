@@ -1,12 +1,15 @@
 /**
  * @file The puppets page's module (tests/pages/puppets.html, PLAN.md WP 3.8): the engine's renderer with a lit scene
- * (a hemisphere light and one shadow-casting sun: one shadow map) and three things to show, one at a time, each
+ * (a hemisphere light and one shadow-casting sun: one shadow map) and four things to show, one at a time, each
  * registered with the warm-up before the first frame:
  * - the neutral humanoid (`body:humanoid`, build:chibi) as one rigid-skinned puppet (engine/gfx/puppets/draw.ts), in
  *   the page's test pose (`testPose`: every joint turned up to 0.5 rad about a seeded axis, the root turned 0.6 rad);
  * - the socket marks (fixtures/bodies/socketMarks.ts) in the same build and pose, as a puppet of their own;
  * - a crowd of instanced humanoids (`createPuppetBatches`) with blob shadows, on a grid 1.5 m apart, each in a seeded
- *   pose of its own.
+ *   pose of its own;
+ * - the fixture body `body:everyPart` (fixtures/bodies/everyPart.ts), one part of every type, in the same build: one
+ *   rigid-skinned puppet and two instanced ones of its own batches (`parts/…`), one facing the camera and one turned
+ *   away (its cape), so every part type is drawn both ways.
  *
  * `window.__puppetsPage`:
  * - `humanoid()` shows the humanoid, draws a frame and shoots it: the frame's draw calls, those of the empty scene
@@ -18,6 +21,8 @@
  *   error (m), and their area says nothing else fell in the square.
  * - `crowd(n)` shows n humanoids and their shadows, draws a frame and reports its draw calls against the batches' own
  *   count, the pipelines it built, the batches' pages and what the ID pass sees.
+ * - `everyPart()` shows the fixture body's three puppets, draws a frame and reports its draw calls against the
+ *   puppet's and the batches' own count, the pipelines it built, the batches' shapes and what the ID pass sees.
  *
  * Invariants: `ready` turns true once the warm-up has run and the empty scene has drawn, never after an error; frames
  * are drawn by calling the page; nothing is compiled or registered after the first warm-up.
@@ -25,6 +30,7 @@
  * @see tests/e2e/puppets.spec.ts
  */
 import * as THREE from 'three/webgpu';
+import { defineEveryPart } from '../../fixtures/bodies/everyPart';
 import { defineSocketMarks, SOCKET_MARK_RADIUS, SOCKET_MARKS_ID } from '../../fixtures/bodies/socketMarks';
 import { forwardKinematics, jointPosition, socketPosition } from '../../engine/anim/fk';
 import { Pose } from '../../engine/anim/pose';
@@ -83,6 +89,18 @@ export interface CrowdShown {
   pages: Record<string, number>;
   pipelinesAfterWarmUp: number | null;
   seen: string[];
+}
+
+/** What `everyPart` reports. */
+export interface EveryPartShown {
+  frame: FrameReport;
+  drawCalls: number;
+  empty: number;
+  counted: number;
+  pipelinesAfterWarmUp: number | null;
+  /** The instanced batches' shapes (`ball`, `limb@0.875`…). */
+  shapes: string[];
+  seen: { name: string; px: number }[];
 }
 
 const message = document.querySelector<HTMLElement>('#msg');
@@ -164,13 +182,22 @@ async function start(): Promise<void> {
   const crowdPuppets = createPuppetBatches({ materials: library, name: 'crowd' });
   crowdPuppets.prepare(humanoid);
   const shadows = createBlobShadows({ materials: library, name: 'crowd/shadows' });
-  const shown = { humanoid: puppet.mesh, marks: marks.mesh, crowd: new THREE.Group() };
+  const everyPart = compileBody(defineEveryPart(registry), humanoid.skeleton);
+  const partsPose = testPose(3, 0.3, 0.5);
+  partsPose.rootPos.set(-1.6, 0, 0);
+  const partsPuppet = createPuppet(everyPart, { materials: library }).setPose(partsPose);
+  const partsCrowd = createPuppetBatches({ materials: library, name: 'parts' });
+  partsCrowd.prepare(everyPart);
+  const shown = { humanoid: puppet.mesh, marks: marks.mesh, crowd: new THREE.Group(), parts: new THREE.Group() };
   shown.crowd.add(crowdPuppets.root, shadows.root);
+  shown.parts.add(partsPuppet.mesh, partsCrowd.root);
   for (const object of Object.values(shown)) scene.add(object);
   puppet.register(gfx.warmup);
   marks.register(gfx.warmup);
   crowdPuppets.register(gfx.warmup);
   shadows.register(gfx.warmup);
+  partsPuppet.register(gfx.warmup);
+  partsCrowd.register(gfx.warmup);
 
   /** Shows only `which` (nothing when null). */
   const show = (which: keyof typeof shown | null) => {
@@ -280,6 +307,30 @@ async function start(): Promise<void> {
         pages,
         pipelinesAfterWarmUp: stats.pipelinesAfterWarmUp,
         seen: result.ids!.visible.map((entry) => entry.name),
+      };
+    },
+    async everyPart(): Promise<EveryPartShown> {
+      show('parts');
+      partsCrowd.begin();
+      // One facing the camera, one turned away so its cape shows.
+      const facing = testPose(4, 0.3, -0.4);
+      const away = testPose(5, 0.3, Math.PI + 0.4);
+      away.rootPos.set(1.6, 0, 0);
+      for (const body of [facing, away]) partsCrowd.draw(everyPart, body);
+      partsCrowd.end();
+      camera.position.set(0, 1.3, 4.4);
+      camera.lookAt(0, 0.8, 0);
+      const frame = await settle(gfx, view);
+      const stats = gfx.stats();
+      const result = await shot(gfx, view, { metrics: false, thumbnail: false });
+      return {
+        frame,
+        drawCalls: stats.drawCalls,
+        empty,
+        counted: partsPuppet.drawCalls(1) + partsCrowd.drawCalls(1),
+        pipelinesAfterWarmUp: stats.pipelinesAfterWarmUp,
+        shapes: [...partsCrowd.batches.keys()],
+        seen: result.ids!.visible.map(({ name, px }) => ({ name, px })),
       };
     },
   };

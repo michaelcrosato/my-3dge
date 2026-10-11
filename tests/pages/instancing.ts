@@ -7,8 +7,10 @@
  *
  * `window.__instancingPage`:
  * - `place({ count, away })` writes `count` instances: slot `i` in cell `i % 2000` of the grid, stacked one unit
- *   higher per 2,000 (so slots from 2,000 on lie on top, drawn red: a yellow instance colour times a red tint), and
- *   the slots in `away` (`[start, end)`) moved 10 km south, out of view; then draws a frame and reports it.
+ *   higher per 2,000, and the slots in `away` (`[start, end)`) moved 10 km south, out of view; then draws a frame and
+ *   reports it. Slots below 2,000 are white (white colour, white tint); those from 2,000 on lie on top, drawn red: a
+ *   magenta instance colour times a yellow tint, so each factor shows apart (a colour never uploaded, still the
+ *   page's white, draws yellow; a tint never uploaded, still zero, draws black).
  * - `ids()` shoots 400 × 320 and returns the ID pass's visible entries and the pixels' colours at given points.
  * - `control(slots)` draws a plain `InstancedMesh` of `slots` slots, outside the batch and the warm-up, for one
  *   frame, and reports the pipelines that frame built: r182 compiles a shader for each one of 1,000 slots or fewer.
@@ -120,8 +122,8 @@ async function start(): Promise<void> {
         const x = (cell % GRID.cols) * GRID.pitch + GRID.pitch / 2;
         const z = Math.floor(cell / GRID.cols) * GRID.pitch + GRID.pitch / 2 + (i >= start && i < end ? 10_000 : 0);
         m.makeScale(GRID.side, 1, GRID.side).setPosition(x, layer, z);
-        const slot = batch.add(m.elements, layer ? [1, 1, 0] : [1, 1, 1]);
-        batch.setAttributeAt('tint', slot, layer ? [1, 0, 0] : [1, 1, 1]);
+        const slot = batch.add(m.elements, layer ? [1, 0, 1] : [1, 1, 1]);
+        batch.setAttributeAt('tint', slot, layer ? [1, 1, 0] : [1, 1, 1]);
       }
       batch.end();
       const frame = await settle(gfx, view);

@@ -5,8 +5,9 @@
  * pixels per instance in view, the counts drop by 36 for each instance moved out of view, its box shrinks to the
  * rows still there, and both come back when the instances return. No shader is built per page: growing the batch to
  * five pages after the warm-up builds no pipeline (the device's counter, engine/gfx/pipelines.ts), the later pages
- * show their instance colours and per-instance tints (set before their first render), while a plain InstancedMesh of
- * 1,000 slots or fewer builds pipelines of its own each time, and one above 1,000 does not once the path is built.
+ * show their instance colours and per-instance tints (set before their first render: magenta times yellow draws red,
+ * which neither factor alone gives), while a plain InstancedMesh of 1,000 slots or fewer builds pipelines of its own
+ * each time, and one above 1,000 does not once the path is built.
  *
  * Invariants: frames are drawn by calling the page; the pipeline counts are the device's (every pipeline the GPU
  * built); the controls' GFX_COLD_PIPELINE advice is read, and is the only advice.
@@ -103,13 +104,15 @@ test('no shader is built per page: five pages build no pipeline after the warm-u
   expect(five.drawCalls - two.drawCalls, "r182's count: one draw call per page").toBe(3);
   expect(five.counted).toBe(5);
 
-  // Slots 4,000 and 4,999 (pages 3 and 4, made after the first frame) lie on top: a yellow colour times a red tint.
+  // Slots 4,000 and 4,999 (pages 3 and 4, made after the first frame) lie on top: a magenta colour times a yellow
+  // tint. Red needs both: a colour that never uploaded (the page's white) would draw yellow, a tint that never
+  // uploaded (zero) black.
   const { colours, byName } = await ids(page, [
     [4, 4],
     [396, 156],
     [0, 0],
   ]);
-  expect(colours, 'red on top where the later pages lie; the gaps between cells empty').toEqual([
+  expect(colours, 'red (colour and tint both shown) where the later pages lie; the gaps between cells empty').toEqual([
     [255, 0, 0],
     [255, 0, 0],
     [0, 0, 0],
