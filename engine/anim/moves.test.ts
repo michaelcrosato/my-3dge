@@ -5,7 +5,7 @@
  * reason. Also: a humanoid and an animator playing moves (bone lengths, a solve from the state alone, a spin's turn,
  * the body's lunge only with root motion `'visual'`, the sim's state the same whether or not it was posed, a precise
  * trail), `moveAt`, `measureMove` and its cache,
- * `inArc`, `inHitShape`, `knockback` and the strike's span, read from an animator only with `preciseHits`.
+ * `inArc`, `inHitShape`, `knockbackVelocity` and the strike's span, read from an animator only with `preciseHits`.
  */
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -14,7 +14,7 @@ import { TRAIL } from './character';
 import { animCheck } from './check';
 import { jointPosition, jointRotation, jointToWorld } from './fk';
 import { ENGINE_MOVES, getMove, MOVE_PHASES, resolveMove, type MovePhase } from './moves-data';
-import { inArc, inHitShape, knockback, measureMove, moveAt, strikePart, strikeSegment } from './moves';
+import { inArc, inHitShape, knockbackVelocity, measureMove, moveAt, strikePart, strikeSegment } from './moves';
 import { Animator } from './character';
 import { Humanoid } from './humanoid';
 import { hashPose, type Pose } from './pose';
@@ -258,8 +258,8 @@ describe('measureMove, the hit helpers and the strike', () => {
   });
 
   it('knocks a target away along the ground, and up', () => {
-    expect(knockback(new Vector3(0, 5, 0), new Vector3(3, 0, 4), 10, 2).toArray()).toEqual([6, 2, 8]);
-    expect(knockback(new Vector3(), new Vector3(), 10, 2).toArray()).toEqual([0, 2, 0]);
+    expect(knockbackVelocity(new Vector3(0, 5, 0), new Vector3(3, 0, 4), 10, 2).toArray()).toEqual([6, 2, 8]);
+    expect(knockbackVelocity(new Vector3(), new Vector3(), 10, 2).toArray()).toEqual([0, 2, 0]);
   });
 
   it('spans the striking part: a sword from near its grip to its tip, a forearm, a shin to its sole', () => {

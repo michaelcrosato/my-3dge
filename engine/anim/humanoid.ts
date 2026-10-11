@@ -258,7 +258,7 @@ export class Humanoid implements Rig {
     const move = input.body && 'move' in input.body ? input.body : undefined;
     const arm = { armed: this.weapon !== 'none', armLength: b.armUpper + b.armLower };
     const before = () => effectorStage(this.#context(this.#before), this.weapon, this.#before);
-    const motion = stepArm(st.arm, move, arm, before, dt);
+    const motion = stepArm(st.arm, move, arm, before, dt, this.#log);
     st.clock += dt;
     if (input.position) this.position.copy(input.position);
     if (input.yaw !== undefined) this.yaw = input.yaw;

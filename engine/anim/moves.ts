@@ -3,7 +3,7 @@
  * plays a move told as its body state `body` (engine/anim/humanoid.ts, through the arm path of strike.ts): `moveAt`
  * names a move at a moment (previews, sheets, cutscenes); `measureMove` measures where its strike reaches on a spare
  * body (`HitShape`); `strikePart` and `strikeSegment` say what strikes and where it spans; `inArc`, `inHitShape` and
- * `knockback` are the hit helpers. Attacks and combos play moves over time (engine/anim/timeline.ts).
+ * `knockbackVelocity` are the hit helpers. Attacks and combos play moves over time (engine/anim/timeline.ts).
  *
  * Invariants:
  * - `measureMove` runs under the sim's math (engine/core/simMath.ts) and caches by what it measured (the move's fields,
@@ -188,10 +188,11 @@ export function inHitShape(
 }
 
 /**
- * The push a hit gives `target` away from `from`: `speed` m/s along the ground, plus `up` m/s upward, into `out`
- * (nothing along the ground when they stand on the same spot). The receiver adds it to its velocity.
+ * The velocity a hit gives `target` away from `from`: `speed` m/s along the ground, plus `up` m/s upward, into `out`
+ * (nothing along the ground when they stand on the same spot). It only computes the velocity: the receiver adds it
+ * to its own (a crowd agent through engine/physics/crowd.ts `knockback`, which applies one).
  */
-export function knockback(from: Vector3, target: Vector3, speed: number, up = 0, out = new Vector3()): Vector3 {
+export function knockbackVelocity(from: Vector3, target: Vector3, speed: number, up = 0, out = new Vector3()): Vector3 {
   const [dx, dz] = [target.x - from.x, target.z - from.z];
   const d = Math.hypot(dx, dz) || 1;
   return out.set((dx / d) * speed, up, (dz / d) * speed);

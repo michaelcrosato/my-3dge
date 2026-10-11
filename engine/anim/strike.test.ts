@@ -1,14 +1,19 @@
 /**
  * @file Unit tests for the arm path (engine/anim/strike.ts), PLAN.md WP 6.1: the arm's weight eases in and out at
  * my-3d2dge's rates, a swing starts from rest or, while the arm is still raised, from the last path (a chain), and
- * the body motion it asks for. The differential tests of the paths themselves are in moves.test.ts.
+ * the body motion it asks for; a move told with a phase outside wind, active and recover, or a share that is not
+ * finite, warns once and plays nothing. The differential tests of the paths themselves are in moves.test.ts.
  */
 import { describe, expect, it } from 'vitest';
 import { getBuild } from './builds';
+import { Humanoid } from './humanoid';
 import { restContext } from './locomotion';
 import { moveAt } from './moves';
+import type { MoveInput } from './moves-data';
 import { createEffectors } from './poses';
 import { armBlade, createArmState, layArm, stepArm } from './strike';
+import { hashValue, type Canonical } from '../core/hash';
+import { createLog } from '../core/log';
 import { Vector3 } from '../core/math';
 
 /** Effectors holding hands and a blade where `stepArm` captures them from. */
@@ -79,5 +84,34 @@ describe('the arm path', () => {
     layArm(arm, ctx, E);
     expect(E.hands.R.z).toBeGreaterThan(0.5); // the thrust's hand reaches 0.625 m ahead of the shoulders
     expect(armBlade(arm, rest, E, new Vector3()).z).toBeGreaterThan(0.9);
+  });
+
+  it('warns once for a phase outside wind, active and recover, or a share that is not finite, and plays nothing', () => {
+    const printed: string[] = [];
+    const log = createLog({ console: { warn: (line) => printed.push(line), error: () => {} } });
+    const told = (phase: string, u = 0.5) => ({ move: 'move:slash', phase, u }) as unknown as MoveInput;
+    const arm = createArmState();
+    for (let i = 0; i < 3; i++)
+      expect(stepArm(arm, told('Active'), ARMED, () => effectorsAt(0), 1 / 60, log)).toBe(undefined);
+    expect([arm.phase, arm.weight, arm.move]).toEqual([0, 0, 0]);
+    expect(printed).toEqual([
+      '[ANIM_BAD_STATE] body state body is a move at phase "Active", with u 0.5, not a move at phase wind, active or recover, with a finite u (did you mean "active"?); it is ignored: give body a move at phase wind, active or recover, with a finite u',
+    ]);
+    expect(log.advice).toMatchObject([{ code: 'ANIM_BAD_STATE', subject: 'state:body.move', count: 3 }]);
+    stepArm(arm, told('active', Number.NaN), ARMED, () => effectorsAt(0), 1 / 60, log);
+    expect([arm.phase, log.advice[0]?.count]).toEqual([0, 4]); // the same advice about the same word: counted
+
+    // On a humanoid, as data or the console would tell it: one advice, and the state stays hashable.
+    const hero = new Humanoid({
+      build: 'build:heroic',
+      weapon: 'sword',
+      clock: 0,
+      log: createLog({ console: { warn: () => {}, error: () => {} } }),
+    });
+    for (let i = 0; i < 10; i++) hero.update({ body: told('strike') });
+    expect([hero.state.arm.phase, hero.state.arm.weight, hero.state.body.lunge]).toEqual([0, 0, 0]);
+    expect(() => hashValue(hero.state as unknown as Canonical)).not.toThrow();
+    hero.update({ body: moveAt('slash', 0.5, 'active') });
+    expect(hero.state.arm.phase).toBe(2); // a move told rightly plays at once
   });
 });

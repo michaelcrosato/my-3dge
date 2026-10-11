@@ -25,7 +25,7 @@ export interface DummyHit {
   readonly move: string;
   /** The tick it landed on. */
   readonly tick: number;
-  /** The push it gave, m/s (engine/anim/moves.ts `knockback`). */
+  /** The push it gave, m/s (engine/anim/moves.ts `knockbackVelocity`). */
   readonly push: Vector3;
 }
 

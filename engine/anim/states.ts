@@ -42,7 +42,7 @@ export const STATE_CODES = defineCodes('anim', {
   ANIM_BAD_STATE: {
     template: 'body state {name} is {value}, not {expected}{suggestion}; it is ignored',
     fix: 'give {name} {expected}',
-    doc: 'Raised once per word by the animator (engine/anim/character.ts `step`, through `checkBodyStates`) for a body state whose value is of the wrong kind: a number for `dash`, a trail that does not exist. `BODY_STATES` (engine/anim/states.ts) gives each word its kind.',
+    doc: 'Raised once per word by the animator (engine/anim/character.ts `step`, through `checkBodyStates`) for a body state whose value is of the wrong kind: a number for `dash`, a trail that does not exist. `BODY_STATES` (engine/anim/states.ts) gives each word its kind. Raised once too by a humanoid playing a move told in `body` (engine/anim/strike.ts `stepArm`) whose phase is not wind, active or recover, or whose share `u` is not finite: data or the console, which TypeScript does not check; the move does not play.',
   },
 });
 

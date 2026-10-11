@@ -9,7 +9,7 @@ import {
   Attack,
   Combo,
   inHitShape,
-  knockback,
+  knockbackVelocity,
   measureMove,
   Animator,
   Humanoid,
@@ -62,7 +62,7 @@ function swingAt(dummy: Dummy, attack: Attack | Combo, press: (tick: number) => 
     current.hits(
       [dummy],
       () => touches || (inShape && dummy.position.distanceTo(at) <= shape.range + dummy.radius),
-      (d) => hitDummy(d, { move: current.move.id, tick, push: knockback(at, d.position, 4, 1) }),
+      (d) => hitDummy(d, { move: current.move.id, tick, push: knockbackVelocity(at, d.position, 4, 1) }),
       () => 1,
     );
     if (dummy.hits.at(-1)?.tick === tick) out.hits.push(tick);

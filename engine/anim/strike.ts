@@ -16,6 +16,8 @@
  *   fields, so two moves made from specs (both `move:custom`) differ, and a spec made anew each step does not. A
  *   chain from a kick into a hand move (or back) starts its height at rest: the old rig mixed a share of the hip
  *   height with a height in units there.
+ * - A move told with a phase outside `MOVE_PHASES` or a share that is not finite (data, the console) plays as no
+ *   move: `stepArm` warns once (`ANIM_BAD_STATE`, naming the closest phase), so the state stays plain numbers.
  * - moves.test.ts holds all 24 moves to my-3d2dge's reference vectors (tests/baselines/port/moves.json): the hands,
  *   the blade's tip and the right foot within 1 cm on average and 3 cm at worst.
  *
@@ -37,11 +39,14 @@
  * @see engine/anim/strike.test.ts
  */
 import { hashValue } from '../core/hash';
+import { didYouMean, log as engineLog, type Log } from '../core/log';
 import { approach, ease, MathUtils, Vector3 } from '../core/math';
+import { show } from '../core/schema';
 import { B, fromFRU, SIDES, sideSign, type FRU, type Sided } from './authoring';
 import type { BodyMotion, EffectorContext } from './locomotion';
-import { resolveMove, REFERENCE_ARM, type Move, type MoveInput, type MovePhase } from './moves-data';
+import { MOVE_PHASES, resolveMove, REFERENCE_ARM, type Move, type MoveInput, type MovePhase } from './moves-data';
 import type { Effectors } from './poses';
+import './states'; // registers ANIM_BAD_STATE, which a move told with a bad phase or share raises
 
 const TAU = Math.PI * 2;
 
@@ -84,6 +89,24 @@ const GUARD_HANDS: Sided<FRU> = { L: [0.2375, -0.0625, 0.025], R: [0.14375, 0.09
 
 /** The phases by number, as `ArmState.phase` keeps them: 0 when no move plays. */
 const PHASE_NUMBER: Readonly<Record<MovePhase, number>> = { wind: 1, active: 2, recover: 3 };
+
+/** What a move is told with, as `ANIM_BAD_STATE` says it. */
+const MOVE_EXPECTED = `a move at phase ${MOVE_PHASES.slice(0, -1).join(', ')} or ${MOVE_PHASES.at(-1)}, with a finite u`;
+
+/**
+ * `input` when its phase is one of `MOVE_PHASES` and its share `u` a finite number; otherwise undefined, after
+ * warning once through `to` (`ANIM_BAD_STATE`, naming the closest phase).
+ */
+function checkMove(input: MoveInput | undefined, to: Log): MoveInput | undefined {
+  if (!input) return undefined;
+  const { phase, u } = input as { readonly phase: unknown; readonly u: unknown };
+  const known = typeof phase === 'string' && Object.hasOwn(PHASE_NUMBER, phase);
+  if (known && typeof u === 'number' && Number.isFinite(u)) return input;
+  const suggestion = typeof phase === 'string' && !known ? didYouMean(phase, MOVE_PHASES) : '';
+  const value = `a move at phase ${show(phase)}, with u ${show(u)}`;
+  to.warnOnce('ANIM_BAD_STATE', { name: 'body', value, expected: MOVE_EXPECTED, suggestion }, 'state:body.move');
+  return undefined;
+}
 
 /** The arm's state: plain numbers, stepped by `stepArm`, read by `layArm` and `armBlade`. */
 export interface ArmState {
@@ -150,17 +173,20 @@ export type ArmMotion = BodyMotion & { lead: 'L' | 'R' };
  * One fixed step of the arm: the path at `input`'s phase and share (none: the arm eases down), the weight eased
  * toward it, and, as a swing begins its wind (or the move changes during one), where it starts (`last`: the body's
  * effectors before this step, asked for only then). Returns the body motion the move asks for, or undefined when no
- * move plays.
+ * move plays. A phase outside `MOVE_PHASES` or a share that is not finite warns once through `to`
+ * (`ANIM_BAD_STATE`) and plays no move.
  */
 export function stepArm(
   arm: ArmState,
-  input: MoveInput | undefined,
+  told: MoveInput | undefined,
   body: ArmBody,
   last: () => Effectors,
   dt: number,
+  to: Log = engineLog,
 ): ArmMotion | undefined {
   let target = 0;
   let motion: ArmMotion | undefined;
+  const input = checkMove(told, to);
   const m = input ? resolveMove(input.move) : undefined;
   const phase = input ? PHASE_NUMBER[input.phase] : 0;
   const key = m ? moveKey(m) : arm.move;

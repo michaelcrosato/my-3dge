@@ -237,8 +237,8 @@ export { HUMANOID_WEIGHTS } from './anim/weights';
 export type { WeightInfo } from './anim/weights';
 // Moves (WP 6.1): moves as data in metres (the kind move: my-3d2dge's 24, converted by Appendix C's table), timelines
 // whose events carry leftover time, attacks and combos with hit windows, sweeps and root motion, moves played on a
-// humanoid through its body state (the arm path), moves at a moment for previews, measured hit shapes, and the cone
-// and knockback helpers.
+// humanoid through its body state (the arm path), moves at a moment for previews, measured hit shapes, the cone
+// helpers and a hit's knockback velocity.
 export { defineMove } from './anim/moves-data';
 export { getMove } from './anim/moves-data';
 export { resolveMove } from './anim/moves-data';
@@ -270,7 +270,7 @@ export type { StrikeAnimator } from './anim/moves';
 export type { ArmState } from './anim/strike';
 export { inArc } from './anim/moves';
 export { inHitShape } from './anim/moves';
-export { knockback } from './anim/moves';
+export { knockbackVelocity } from './anim/moves';
 
 // Physics (WP 3.1): Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id,
 // raycasts, shape casts, overlaps and ground probes, collision groups by name, a level's bodies; presentation reads
