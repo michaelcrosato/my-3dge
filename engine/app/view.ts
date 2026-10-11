@@ -17,7 +17,9 @@
  * itself (near-body culling, `cameraInfo().culled`). While it follows a player the level's cutaway runs
  * (engine/gfx/cutaway.ts): walls facing the camera and pillars before him cut away, so every view sees him. `restarted()` after the run
  * starts again (a new seed, a replay) or its world changes between steps (a restore, a dev action) reads the entities
- * afresh: the stand-ins snap to them, so no dump, shot or frame shows the places they had before.
+ * afresh: the stand-ins and bolts snap to them, so no dump, shot or frame shows the places they had before. The
+ * effects forget what ran only for a new world, read from its first event; the same world keeps its trace read (the
+ * trace is history, never restored), so a restore or a dev action never plays an event twice.
  *
  * The level comes from the scene's `level` id (engine/world/level/level.ts): its text must be registered before the
  * view starts (`APP_NO_LEVEL`), by the page (`import text from './levels/room.txt?raw'`) or a Node test (read the
@@ -143,12 +145,14 @@ export function createRunView(options: RunViewOptions): RunView {
   const level = scene.level === undefined ? null : getLevel(scene.level, registry);
   const fxRng = (...keys: readonly (string | number)[]) => options.run().world.fxRng(...keys);
   const stage = createStage({ level, materials: options.materials, registry, log: options.log, fxRng });
-  /** Whether the view setting `gfx.effects` is on (a registry without it: on). */
-  const effectsOn = () => {
+  /** Turns the effects on or off by the view setting `gfx.effects` (a registry without it: on), before they read. */
+  const syncEffects = () => {
     const run = options.run();
     const declared = registry.kinds().includes('setting') && registry.has('setting', 'gfx.effects');
-    return !declared || run.settings.get<boolean>('gfx.effects') !== false;
+    stage.fx.effects.enabled = !declared || run.settings.get<boolean>('gfx.effects') !== false;
   };
+  /** The world whose trace the effects read: only a new one is read from its first event. */
+  let fxWorld: object | null = null;
   const pair = createCameraPair();
   let camera: AnyCamera = createCamera(options.cam ?? DEFAULT_CAMERA);
   let drawn: BoostedPerspectiveCamera | BoostedOrthographicCamera = pair.perspective;
@@ -202,13 +206,20 @@ export function createRunView(options: RunViewOptions): RunView {
     },
     stepped() {
       const run = options.run();
+      syncEffects(); // off, the bolts this step reads draw as stand-ins at once
       stage.capture(placed(run, stage.kinds), run.world.dt);
       stage.draw((alpha = 1)); // the latest state until a frame interpolates: what a headless dump shows
       crowdStale = true; // posed by the next frame or dump, not every step
     },
     restarted() {
       const run = options.run();
-      stage.fx.reset();
+      // A new world is read from its first event. The same one (a restore, a dev action) keeps its trace read: the
+      // trace is history, never restored, so reading it again would play its events twice. Bolts snap either way.
+      if (run.world !== fxWorld) {
+        stage.fx.reset();
+        fxWorld = run.world;
+      }
+      syncEffects();
       stage.capture([]);
       stage.capture(placed(run, stage.kinds), run.world.dt);
       stage.draw((alpha = 1));
@@ -219,7 +230,7 @@ export function createRunView(options: RunViewOptions): RunView {
       stage.draw((alpha = frame.alpha));
       drawn = pair.place(move(frame.input, frame.dt), aspect);
       drawCrowd();
-      stage.fx.effects.enabled = effectsOn();
+      syncEffects();
       stage.fx.frame(frame.dt, drawn, options.run().world.events.trace());
       return { scene: stage.scene, camera: drawn, alpha: frame.alpha };
     },

@@ -109,7 +109,10 @@ export interface Stage {
   readonly props: StageProps;
   /** The crowd bodies, drawn through a crowd from the frame's camera (`crowd.draw(alpha, camera)`, after `draw`). */
   readonly crowd: StageCrowd;
-  /** The effects: bolts, telegraphs, trails and the events' bursts (engine/gfx/stageFx.ts); the view hands it frames. */
+  /**
+   * The effects: bolts, telegraphs, trails and the events' bursts (engine/gfx/stageFx.ts); the view hands it frames.
+   * Turned off, they claim no bolt, so bolts draw as stand-ins.
+   */
   readonly fx: StageFx;
   /** Reads where the entities are after a sim step of `dt` s (keeps the place before for `draw`); adds and removes. */
   capture(entities: Iterable<EntityData>, dt?: number): void;

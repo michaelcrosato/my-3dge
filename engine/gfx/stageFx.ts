@@ -18,12 +18,15 @@
  *   emitter answering an event's type bursts where its payload says (`hit`, `slain`, `shot`, `slam`…).
  *
  * The view setting `gfx.effects` (true) turns them on and off; off, they draw nothing and draw no random number, and
- * the sim hash is the same either way (doctrine: WebGPU only). Every pool is the effects' own, made at full size and
- * registered for the warm-up (`register`), so the fight draws with 0 pipelines built after it.
+ * claim no bolt, so bolts draw as their stand-ins, which the ID pass names (§6.7: a view setting never hides a
+ * gameplay entity); the sim hash is the same either way (doctrine: WebGPU only). The view sets it before each read.
+ * Every pool is the effects' own, made at full size and registered for the warm-up (`register`), so the fight draws
+ * with 0 pipelines built after it.
  *
  * Invariants: presentation only: it reads entities, the trace and the puppets' trails, and never writes the sim;
  * randomness comes from the visual streams it is given (`fxRng`: the world's, never hashed); `reset()` forgets
- * what runs and the trace read, for a run started again.
+ * what runs and the trace read, for a new world only: a restore or a dev action keeps the world, whose trace is
+ * history and never restored, so reading it again would play its events twice (engine/app/view.ts `restarted`).
  *
  * @example
  * // const fx = createStageFx({ registry, trails: () => actors.trails() });
@@ -95,7 +98,7 @@ export interface StageFx {
   readonly effects: Effects;
   /** The component kinds it reads: the bolts' and the telegraphs'. */
   readonly kinds: readonly string[];
-  /** Reads the entities after a sim step; returns the ids it draws as bolts (no stand-in for them). */
+  /** Reads the entities after a sim step; returns the ids it draws as bolts (no stand-in for them): none while off. */
   capture(entities: Iterable<EntityData>): ReadonlySet<number>;
   /** Puts the bolts `alpha` of the way between their last two steps. */
   draw(alpha: number): void;
@@ -103,7 +106,7 @@ export interface StageFx {
   frame(dt: number, camera: Camera, trace: readonly { seq: number; type: string; payload: unknown }[]): void;
   /** Registers the effects' pools with the warm-up. */
   register(warmup: Pick<Warmup, 'register'>): { dispose(): void };
-  /** Forgets what runs and the trace read: the run started again. */
+  /** Forgets what runs and the trace read: a new world, never the same one restored (it would play its trace again). */
   reset(): void;
   dispose(): void;
 }
@@ -122,6 +125,10 @@ export function createStageFx(options: StageFxOptions = {}): StageFx {
     capture(entities) {
       const flying = new Set<number>();
       places = [];
+      if (!effects.enabled) {
+        bolts.clear(); // off, the stage draws them as stand-ins; on again, they start from where they are
+        return flying;
+      }
       for (const entity of entities) {
         for (const kind of boltKinds) {
           const bolt = entity[kind] as BoltData | undefined;

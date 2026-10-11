@@ -3,7 +3,7 @@
  * component entries (a component declaring the projectile's fields is a bolt, one declaring a telegraph's place is a
  * telegraph, whatever their names); a flying bolt is drawn between its last two places and a stopped one is not; a
  * telegraph is drawn while it names one; an actor's trail becomes a ribbon; the trace's events burst once; turned
- * off, it draws nothing; reset forgets what ran.
+ * off, it draws nothing and claims no bolt (the stage stands it in); reset forgets what ran.
  * @see engine/gfx/stageFx.ts
  */
 import { PerspectiveCamera, Vector3 } from 'three/webgpu';
@@ -101,5 +101,22 @@ describe('the stage’s effects', () => {
     fx.capture([{ id: 2, warning: { telegraph: 'telegraph:arc', position: [0, 0, 0], yaw: 0, u: 1 } }]);
     fx.frame(1 / 60, camera(), [{ seq: 2, type: 'hit', payload: { position: [0, 1, 0] } }]);
     expect([fx.effects.stats().decals, fx.effects.stats().particles.live]).toEqual([0, 0]);
+  });
+
+  it('claims no bolt turned off, so the stage draws it as a stand-in; on again, it starts where it is', () => {
+    const fx = createStageFx({ registry: kinds() });
+    const bolt = (x: number) => ({ id: 2, arrow: { ...PROJECTILE, x, y: 1, state: 'flying' } });
+    expect([...fx.capture([bolt(0)])]).toEqual([2]);
+    fx.effects.enabled = false;
+    expect([...fx.capture([bolt(1)])]).toEqual([]);
+    fx.draw(0.5);
+    fx.frame(1 / 60, camera(), []);
+    expect(fx.effects.stats().sprites).toBe(0);
+    fx.effects.enabled = true;
+    expect([...fx.capture([bolt(3)])]).toEqual([2]);
+    fx.draw(0); // from where it is, not from x = 0 before it was turned off
+    fx.frame(1 / 60, camera(), []);
+    expect(fx.effects.stats().sprites).toBe(2); // its halo and core
+    expect(fx.effects.lights()[0]?.position[0]).toBeCloseTo(3, 9);
   });
 });

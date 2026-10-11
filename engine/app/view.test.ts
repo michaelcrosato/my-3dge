@@ -3,7 +3,9 @@
  * Node, the box room's view is built without a GPU: `scene.dump()` lists the floor, every wall run, the low wall, the
  * pillar and the three movers, which move as the sim steps; `render` and `shot` throw `DEV_NO_RENDERER`; cameras
  * switch by code and never change the hash; a restart reads the new run, and a restore or a dev action snaps the view
- * to the world (the dump and the next frame, at any alpha, show no place from before); an engine without a view refuses
+ * to the world (the dump and the next frame, at any alpha, show no place from before) while its effects play no event
+ * twice (a restart's new world plays from its first); with the effects off, a flying bolt is a named stand-in from the
+ * step they are turned off; an engine without a view refuses
  * `scene.dump` (`APP_NO_VIEW`), and one whose level is not registered refuses to start (`APP_NO_LEVEL`); `replay`
  * plays the box's replays to their goldens headless. WP 3.10: in the room with a hero, the hero is a puppet, the
  * cameras follow him, the chase camera stays inside the room, first person hides his body but the hands, and the
@@ -18,7 +20,9 @@ import { JOINTS } from '../anim/skeleton';
 import { poseTarget, type CameraPose } from '../gfx/cameras/pose';
 import { createRegistry, registry } from '../core/registry';
 import { defineScene } from '../sim/scene';
+import { defineComponent } from '../sim/state';
 import { defineLevel } from '../world/level/level';
+import { PROJECTILE, PROJECTILE_FIELDS } from '../world/projectiles';
 import { createHeadless, headlessHost } from './headless';
 import type { AppHost } from './viewMembers';
 
@@ -106,6 +110,55 @@ describe('createHeadless({ view: true })', () => {
     expect(dump).toContain('at 4,0,2');
     (headlessHost(nudged) as AppHost).view!.frame({ alpha: 0, dt: 0, aspect: 16 / 9 });
     expect((nudged.scene as Dumps).dump({ filter: 'pathMover#1' })).toBe(dump);
+  });
+
+  it("plays each event once across a restore or a dev action, and a restart's new world from its first", async () => {
+    if (!registry.has('scene', 'view:sparks')) {
+      defineScene('view:sparks', {
+        setup: () => {},
+        step: (w) => w.emit('hit', { position: [1, 1, 1] }), // one burst a step
+        actions: { poke: () => {} },
+      });
+    }
+    const engine = await createHeadless({ scene: 'view:sparks', view: true });
+    const host = headlessHost(engine) as AppHost;
+    const played = () => {
+      host.view!.frame({ alpha: 1, dt: 1 / 60, aspect: 16 / 9 });
+      return host.view!.stage.fx.effects.stats().events;
+    };
+    engine.step(5);
+    expect(played()).toBe(5);
+    const capture = engine.capture();
+    engine.step(1);
+    expect(played()).toBe(6);
+    engine.restore(capture); // the same world: its trace (6 events) is history, read already
+    expect(played()).toBe(6);
+    engine.step(1);
+    expect(played()).toBe(7); // the restored run's step plays its own event
+    host.session.act('poke', {});
+    expect(played()).toBe(7);
+    engine.seed(3); // a new world, its events numbered from 1 again
+    engine.step(2);
+    expect(played()).toBe(9);
+  });
+
+  it('draws a flying bolt as its stand-in while the effects are off, from the step they are turned off', async () => {
+    if (!registry.has('component', 'viewBolt')) {
+      defineComponent('viewBolt', { description: 'A bolt.', fields: PROJECTILE_FIELDS });
+      defineScene('view:bolt', {
+        setup: (w) => void w.spawn({ viewBolt: { ...PROJECTILE, state: 'flying', x: 1, y: 1, z: 1 } }),
+      });
+    }
+    const engine = await createHeadless({ scene: 'view:bolt', view: true });
+    const host = headlessHost(engine) as AppHost;
+    const standIn = () => (engine.scene as Dumps).dump({ filter: 'viewBolt#1' }).includes('entity 1');
+    expect([host.view!.stage.standIns.has(1), standIn()]).toEqual([false, false]); // the effects draw it
+    host.session.set('gfx.effects', false);
+    engine.step(1);
+    expect([host.view!.stage.standIns.has(1), standIn()]).toEqual([true, true]); // named, as the ID pass names it
+    host.session.set('gfx.effects', true);
+    engine.step(1);
+    expect(host.view!.stage.standIns.has(1)).toBe(false);
   });
 
   it('plays the box replays to their goldens headless, the view following', async () => {
