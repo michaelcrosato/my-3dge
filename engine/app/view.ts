@@ -6,7 +6,10 @@
  * run: `stepped()` after every sim step reads where the entities are, `frame({ alpha, dt, aspect })` puts every
  * puppet and stand-in `alpha` of the way between its last two steps and moves the camera by a rendered frame, then
  * draws the crowd bodies as that camera sees them (engine/gfx/stageCrowd.ts: its level of detail and culling; after
- * steps with no frame, `dump` draws them first), returning what to draw (`{ scene, camera, alpha }`, engine/gfx/renderer.ts's `FrameView`).
+ * steps with no frame, `dump` draws them first), then moves the stage's effects on by the frame (engine/gfx/stageFx.ts:
+ * the world's new events burst, its bolts, telegraphs and trails drawn, unless the view setting `gfx.effects` is off;
+ * the page shakes its camera by them while it draws), returning what to draw (`{ scene, camera, alpha }`,
+ * engine/gfx/renderer.ts's `FrameView`).
  *
  * The camera follows the player (WP 3.10): the first player actor's feet as the frame draws them, else the level's
  * middle. The chase camera also gets the sim's read-only `QueryView` (engine/sim/queryView.ts) in a physics scene,
@@ -138,7 +141,14 @@ export function createRunView(options: RunViewOptions): RunView {
     throw codeError('APP_NO_LEVEL', { scene: scene.id, level: scene.level });
   }
   const level = scene.level === undefined ? null : getLevel(scene.level, registry);
-  const stage = createStage({ level, materials: options.materials, registry, log: options.log });
+  const fxRng = (...keys: readonly (string | number)[]) => options.run().world.fxRng(...keys);
+  const stage = createStage({ level, materials: options.materials, registry, log: options.log, fxRng });
+  /** Whether the view setting `gfx.effects` is on (a registry without it: on). */
+  const effectsOn = () => {
+    const run = options.run();
+    const declared = registry.kinds().includes('setting') && registry.has('setting', 'gfx.effects');
+    return !declared || run.settings.get<boolean>('gfx.effects') !== false;
+  };
   const pair = createCameraPair();
   let camera: AnyCamera = createCamera(options.cam ?? DEFAULT_CAMERA);
   let drawn: BoostedPerspectiveCamera | BoostedOrthographicCamera = pair.perspective;
@@ -198,6 +208,7 @@ export function createRunView(options: RunViewOptions): RunView {
     },
     restarted() {
       const run = options.run();
+      stage.fx.reset();
       stage.capture([]);
       stage.capture(placed(run, stage.kinds), run.world.dt);
       stage.draw((alpha = 1));
@@ -208,6 +219,8 @@ export function createRunView(options: RunViewOptions): RunView {
       stage.draw((alpha = frame.alpha));
       drawn = pair.place(move(frame.input, frame.dt), aspect);
       drawCrowd();
+      stage.fx.effects.enabled = effectsOn();
+      stage.fx.frame(frame.dt, drawn, options.run().world.events.trace());
       return { scene: stage.scene, camera: drawn, alpha: frame.alpha };
     },
     cameraInfo: info,

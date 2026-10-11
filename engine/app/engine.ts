@@ -8,9 +8,9 @@
  * intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from the clock, the view
  * drawn at the clock's alpha.
  *
- * Ready or error (§8.3): `__engine.ready` turns true once the first frame is done on the GPU, and never after a
- * startup error; every failure is one record in `__engine.errors` (the log's) and shown as page text by the error
- * overlay (engine/dev/overlay.ts), so a startup crash is one line, never a hang. Without WebGPU (`GFX_NO_WEBGPU`) the
+ * Ready or error (§8.3): `__engine.ready` turns true once the first frame is done on the GPU, never after a startup
+ * error; every failure is one record in `__engine.errors` (the log's), shown as page text by the error overlay
+ * (engine/dev/overlay.ts), so a startup crash is one line, never a hang. Without WebGPU (`GFX_NO_WEBGPU`) the
  * sim still runs, and `__engine` still steps it; only `render` and `shot` throw. A frame that throws stops the loop
  * and becomes an error record too.
  *
@@ -20,7 +20,8 @@
  * every step (the CPU-only contract's proof, §6.7: `x replay --browser page`, tests/e2e/parity.spec.ts).
  * `?replay=<name>` plays one of `options.replays` in real time instead, from step 0, then hands back to the devices;
  * without `?scene`, the page starts the replay's own scene (when it is one of the page's), since a page draws one
- * scene and plays only its replays.
+ * scene and plays only its replays. The game's UI (WP 6.7): the HTML/CSS overlay over the canvas (engine/ui/overlay.ts,
+ * `engine.ui`) shows the sim's hits as damage numbers after each frame (engine/app/damageNumbers.ts).
  *
  * Touch (WP 3.12, ADR-0021: built, not tested): the app wires the touch device (engine/input/devices/touch.ts), the
  * page's chrome, the touch layer from `touchLayout` and swiping (engine/ui/), the quality budget's pixel caps
@@ -62,6 +63,8 @@ import { createChrome } from '../ui/chrome';
 import { attachSwipes } from '../ui/swipe';
 import { createTouchLayer, getTouchLayout, type TouchLayer, type TouchLayout } from '../ui/touch';
 import type { Inspector } from '../dev/inspector';
+import { createOverlay as createUi, type Overlay } from '../ui/overlay';
+import { createDamageNumbers, type DamageNumbers } from './damageNumbers';
 import { createAppHost, type AppRun, type Drawing } from './headless';
 import { createLoop, type Loop } from './loop';
 import { createPlayback, type Playback } from './playback';
@@ -119,6 +122,8 @@ export interface Engine {
   readonly ready: boolean;
   /** What the query asked for; null when it could not be read. */
   readonly routes: Routes | null;
+  /** The game's HTML/CSS overlay over the canvas (engine/ui/overlay.ts); null until the renderer started. */
+  readonly ui: Overlay | null;
   /** Stops the frame loop. */
   stop(): void;
 }
@@ -214,6 +219,9 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     get routes() {
       return routes;
     },
+    get ui() {
+      return ui;
+    },
     stop: () => loop?.stop(),
   };
 
@@ -222,6 +230,8 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   let layer: TouchLayer | null = null;
   let playback: Playback | null = null;
   let draws = 0;
+  let ui: Overlay | null = null;
+  let numbers: DamageNumbers | null = null;
   const aspect = () => {
     const css = gfx?.resolution.current?.css;
     return css && css.width > 0 && css.height > 0 ? css.width / css.height : HEADLESS_ASPECT;
@@ -251,7 +261,13 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
       const cameraInput = input?.camera();
       const view = viewNow().frame({ alpha, dt, aspect: aspect(), input: cameraInput });
       keepWidth(view.camera, aspect());
-      return gfx!.frame(view);
+      const { shake } = viewNow().stage.fx.effects;
+      shake.apply(view.camera);
+      const report = gfx!.frame(view);
+      shake.restore(view.camera);
+      numbers?.frame(run!.session.world);
+      ui?.update(view.camera, dt);
+      return report;
     });
   const settle = async (alpha: number, dt: number): Promise<FrameReport> => {
     for (let tries = 0; tries < TRIES; tries++) {
@@ -339,6 +355,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     fail(error);
     return engine;
   }
+  numbers = createDamageNumbers((ui = createUi({ canvas: options.canvas })));
   try {
     gfx.renderer.shadowMap.enabled = true;
     viewNow().stage.register(gfx.warmup);

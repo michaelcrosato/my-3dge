@@ -54,7 +54,7 @@ describe('createHeadless({ view: true })', () => {
     engine.step(60);
     const moved = (engine.scene as Dumps).dump({ filter: 'pathMover#1' });
     expect(moved).toMatch(/pathMover#1 Mesh at 5,0,4\.5 /); // 1.5 m/s for 1 s along the line east
-    expect((engine.scene as Dumps).dump({ depth: 1 }).split('\n')).toHaveLength(8); // the scene, sky, sun, its target, ground, level, stand-ins, actors
+    expect((engine.scene as Dumps).dump({ depth: 1 }).split('\n')).toHaveLength(9); // the scene, sky, sun, its target, ground, level, stand-ins, actors, effects
   });
 
   it('throws no renderer for render and shot, and switches cameras without touching the hash', async () => {

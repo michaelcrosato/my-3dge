@@ -3,9 +3,12 @@
  * scripted fight (tests/replays/box-5-fight.replay.json), played in the page drawing a frame after every step, gives
  * its goldens, ends with at least three of its 36 foes cut down (their bodies thrown and removed: Done-when 1; Node's
  * labs/box/scenes/fight.test.ts measures the throw, on the same run, since the goldens match), and builds 0 pipelines
- * after the warm-up while the fight's bodies, swings, telegraphs and bolts come and go (Done-when 4). Played in real
- * time (`?replay=`), the hits' hit-stops hold its steps back by the frame clock's budget (WP 6.3's deferred proof).
- * The CPU-only contract for the fight is tests/e2e/parity.spec.ts's Box 5.
+ * after the warm-up while the fight's bodies, swings, telegraphs, bolts, effects and damage numbers come and go
+ * (Done-when 4). DOM queries find the damage numbers its hits put over the canvas, with the values Node's run of it
+ * gives (Done-when 2). Its effects are drawn (the ID pass sees them) and never change its hashes: it gives its goldens
+ * with them turned off too (`gfx.effects`, Done-when 3). Played in real time (`?replay=`), the hits' hit-stops hold its
+ * steps back by the frame clock's budget (WP 6.3's deferred proof). The CPU-only contract for the fight is
+ * tests/e2e/parity.spec.ts's Box 5.
  *
  * Invariants: the page is driven through `window.__engine`, as an agent drives it; goldens come from the replay
  * files, never from the page itself.
@@ -13,6 +16,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
+import { createHeadless, defineScene, type Intents } from '../../engine';
+import type { DamageEvent } from '../../engine/sim-api';
+import { fight, fightStep, setupFight } from '../../labs/box/scenes/fight';
+import type { FightComponents, FightEvents } from '../../labs/box/scenes/fight-rules';
 import { expect, test, type Harness } from './fixtures';
 
 const ROOT = join(import.meta.dirname, '..', '..');
@@ -32,6 +39,42 @@ async function open(page: Page, harness: Harness, query = '') {
   await page.goto(`labs/box/?scene=fight${query}`);
   await harness.ready({ timeout: 60_000 });
   await harness.assertWebGPU();
+}
+
+/** A replay's file. */
+interface Replay {
+  steps: number;
+  inputs: [number, Record<string, unknown>][];
+}
+
+/** The hits of the fight in Node, by the step they landed in: a listener on its `damage` events, the run unchanged. */
+async function hitsInNode(text: string): Promise<{ step: number; amount: number }[]> {
+  const hits: { step: number; amount: number }[] = [];
+  const watched = defineScene<FightComponents, FightEvents>('box:fight-watched', {
+    level: 'level:hall',
+    physics: true,
+    settings: fight.settings,
+    setup(w) {
+      setupFight(w);
+      w.events.on('damage', (event: DamageEvent) => hits.push({ step: w.tick, amount: event.amount }));
+    },
+    step: fightStep,
+  });
+  const engine = await createHeadless({ scene: watched });
+  const replay = JSON.parse(text) as Replay;
+  const held: Record<string, unknown> = {};
+  for (let k = 0, next = 0; k < replay.steps; k++) {
+    let pressed: unknown;
+    for (; next < replay.inputs.length && replay.inputs[next][0] === k; next++) {
+      for (const [key, value] of Object.entries(replay.inputs[next][1])) {
+        if (key === 'p') pressed = value;
+        else if (value === null) delete held[key];
+        else held[key] = value;
+      }
+    }
+    engine.step(1, { ...held, ...(pressed ? { p: pressed } : {}) } as Intents);
+  }
+  return hits.filter(({ amount }) => amount > 0);
 }
 
 /** The foes still standing in the page. */
@@ -63,6 +106,58 @@ test.describe('the box, stage 5: the fight', () => {
     expect(stats.pipelinesAfterWarmUp).toBe(0);
     const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
     expect(advice).not.toContain('GFX_COLD_PIPELINE');
+    expect(harness.advice()).toEqual([]);
+  });
+
+  test('DOM queries find the damage numbers its hits put over the canvas, with their values', async ({
+    page,
+    harness,
+  }) => {
+    const hits = await hitsInNode(FIGHT);
+    // a step after a flurry, with no hit in the half second before it: its numbers alone are on screen (0.8 s each)
+    const at = hits.find(({ step }) => step > 60 && !hits.some((hit) => hit.step > step - 30 && hit.step < step))!.step;
+    const until = at + 20;
+    const expected = hits.filter(({ step }) => step >= at && step <= until).map(({ amount }) => String(amount));
+    expect(expected.length).toBeGreaterThan(0);
+    await open(page, harness);
+    await page.evaluate(([text, n]) => __engine.replay(text, { until: n }), [FIGHT, until] as const);
+    const numbers = await page.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>('[data-ui=damage]')].map((element) => ({
+        value: element.dataset.value,
+        text: element.textContent,
+        shown: element.checkVisibility(),
+      })),
+    );
+    expect(numbers.map(({ value }) => value).sort()).toEqual([...expected].sort());
+    for (const number of numbers) expect([number.text, number.shown]).toEqual([number.value, true]);
+    expect(harness.advice()).toEqual([]);
+  });
+
+  test('its effects are drawn, and turning them off never changes the hash', async ({ page, harness }) => {
+    const effects = async (on: boolean) => {
+      await open(page, harness, '&cam=iso');
+      const views = [[0, { set: { 'gfx.effects': on } }]];
+      const run = await page.evaluate(
+        ([text, v]) => __engine.replay(text, { until: 240, views: v }) as Promise<{ hashes: Record<string, string> }>,
+        [FIGHT, views] as const,
+      );
+      const shot = await page.evaluate(
+        () =>
+          __engine.shot({ ids: true, metrics: false, thumbnail: false }) as Promise<{
+            ids: { visible: { name: string; px: number }[] };
+          }>,
+      );
+      const drawn = shot.ids.visible.filter(({ name }) => name.startsWith('fx:')).reduce((sum, { px }) => sum + px, 0);
+      return { hashes: run.hashes, drawn };
+    };
+    const goldens = goldensOf(FIGHT);
+    const upTo240 = Object.fromEntries(Object.entries(goldens).filter(([step]) => Number(step) <= 240));
+    const on = await effects(true);
+    expect(on.hashes).toEqual(upTo240);
+    expect(on.drawn).toBeGreaterThan(0);
+    const off = await effects(false);
+    expect(off.hashes).toEqual(upTo240);
+    expect(off.drawn).toBe(0);
     expect(harness.advice()).toEqual([]);
   });
 
