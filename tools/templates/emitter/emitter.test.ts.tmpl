@@ -1,0 +1,16 @@
+/**
+ * @file Unit tests for the emitter `emitter:{{name}}` ({{id}}.ts): its event bursts its particles where it happens,
+ * every one born within the effects' budget.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { createEffects } from '../../../engine';
+import { {{name}} } from './{{name}}';
+
+describe('emitter:{{name}}', () => {
+  it('bursts its particles at its event, within budget', () => {
+    const fx = createEffects();
+    expect(fx.event({{name}}.events[0], { position: [0, 1, 0] })).toBe({{name}}.count);
+    expect(fx.stats().particles).toMatchObject({ live: {{name}}.count, dropped: 0 });
+  });
+});

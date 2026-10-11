@@ -536,3 +536,18 @@ export type { CrowdBody } from './sim/crowdBodies';
 export type { CrowdRig } from './sim/crowdBodies';
 export type { CrowdBodyInput } from './sim/crowdBodies';
 export { stepCrowdBody } from './sim/crowdBodies';
+
+// Telegraphs (WP 6.4): an attack's warning shape on the floor as data (an arc, a ring, a line or a cone, in metres),
+// and the geometry sim code tests it with as it goes off: a body inside it is hit, one just outside it a near miss.
+export { TELEGRAPH_SHAPES } from './world/telegraphs';
+export { defineTelegraph } from './world/telegraphs';
+export { getTelegraph } from './world/telegraphs';
+export { telegraphGap } from './world/telegraphs';
+export { inTelegraph } from './world/telegraphs';
+export { nearMiss } from './world/telegraphs';
+export { telegraphFill } from './world/telegraphs';
+export { coneOf } from './world/telegraphs';
+export type { Telegraph } from './world/telegraphs';
+export type { TelegraphSpec } from './world/telegraphs';
+export type { TelegraphPlace } from './world/telegraphs';
+export type { PointLike } from './world/telegraphs';

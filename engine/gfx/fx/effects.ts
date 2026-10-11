@@ -1,34 +1,26 @@
 /**
  * @file The effects of a view (PLAN.md WP 6.4, §6.4's view state; doctrine: WebGPU only): `createEffects()` draws
  * particles, floor decals and telegraphs, socket trails, bolts and camera shake for a scene, all under one group
- * (`root`), as presentation that the sim never sees: the sim hash is the same with effects on or off.
+ * (`root`), as presentation the sim never sees: the sim hash is the same with effects on or off.
  *
- * What a view gives it, then `frame(dt, camera)` once per rendered frame:
- * - **Events:** `event(type, payload)` bursts every emitter answering `type` (engine/gfx/fx/emitters.ts: its own
- *   particles, its layers, its shake and its floor ring) at the payload's `position` (or its `x`, `y`, `z`), scaled
- *   by its `size`, pushed by its `velocity`, in its `color` (hex), landing on its `ground`. `feed(trace)` plays the
- *   events of the sim world's trace (`world.events.trace()`) it has not played yet, reading it without listening, so
- *   the sim is untouched. `burst(id, at, options)` bursts one emitter.
- * - **This frame's shapes:** `emit(id, at, key)` runs an emitter at its `rate` for the frame (`key` names it, so its
- *   fractions carry over frames and its light flickers from its own phase), `telegraph(place)` draws a telegraph
- *   (engine/world/telegraphs.ts) at floor height, `trail(samples, tint)` a ribbon (an animator's trail), and
- *   `bolt(at, look)` a projectile's halo and hot core; `lights()` lists the frame's lights for the light pool (WP
- *   7.1): a running emitter's, flickering and pulsing as shardfall's object lights do, and the first bolts'.
- * - **Camera shake:** `shake` (engine/gfx/fx/shake.ts): `shake.apply(camera)` after placing the camera,
- *   `shake.restore(camera)` after drawing.
- * Randomness comes from the visual streams it is given (`fxRng`, the sim world's `w.fxRng`: never hashed).
+ * A view hands it what happened and what is on screen, then calls `frame(dt, camera)` once per rendered frame:
+ * - **Events:** `event(type, payload)` bursts every emitter answering `type` (engine/gfx/fx/emitters.ts) where the
+ *   payload says (`FxEventPayload`); `feed(trace)` plays the sim world's event trace (`world.events.trace()`) once,
+ *   reading it without listening, so the sim is untouched; `burst(id, at)` bursts one emitter.
+ * - **This frame's shapes:** `emit` runs an emitter at its rate, `telegraph` draws a telegraph (engine/world/
+ *   telegraphs.ts) at floor height, `trail` a ribbon, `bolt` a projectile; `lights()` lists the frame's lights.
+ * - **Camera shake** (`shake`, engine/gfx/fx/shake.ts): apply it after placing the camera, restore it after drawing.
+ * Randomness comes from the visual streams it is given (`fxRng`: the sim world's `w.fxRng`, never hashed).
  *
- * Budgets (`FX_BUDGET`): the pools are made at their full size before the warm-up and never grow: 4,096 particles
- * and 1,024 glows (sprites in pages of 1,024), 1,024 decals, 32 ribbons, so a frame costs at most 7 draw calls and
- * builds no pipeline. Past a budget, particles are not born and sprites, decals and ribbons are left out, and `stats()`
- * counts them. `register(warmup)` registers every pool with the warm-up.
- *
- * With `enabled` false it draws nothing, draws no random number and plays no event (the trace is still read, so turning
- * it on again plays only what comes next).
+ * Budgets (`FX_BUDGET`): every pool is made at its full size before the warm-up and never grows: 4,096 particles and
+ * 1,024 glows (sprites, in pages of 1,024), 1,024 decals, 32 ribbons, so a frame costs at most 7 draw calls and builds
+ * no pipeline. Past a budget, particles are not born and shapes are left out; `stats()` counts them.
+ * `register(warmup)` registers every pool. With `enabled` false it draws nothing, draws no random number and plays
+ * no event (the trace is still read, so turning it on again plays only what comes next).
  *
  * Carried from `my-3d2dge:src/stress-world/35-effects.js:81-131` (`drawEffects`: telegraphs, trails, bolts with the
- * first four lit, particles) and `engine/my-3d2dge.js:1569-1580` (`hitFx`), with shardfall's event bursts and object
- * lights (`shardfall:crates/pav_view/src/fx.rs:264-276, 290-480`).
+ * first four lit, particles) and `my-3d2dge:engine/my-3d2dge.js:1569-1580` (`hitFx`), with shardfall's event bursts
+ * and object lights (`shardfall:crates/pav_view/src/fx.rs:264-276, 290-480`).
  *
  * Invariants: presentation only: it reads what it is given and writes only its own objects; equal calls, streams and
  * frames give equal pictures; every object it makes is under `root`.
@@ -61,7 +53,7 @@ export const FX_BUDGET = { particles: 4096, glows: 1024, decals: 1024, ribbons: 
 /** How a bolt looks: the Stress test's hero bolt by default. */
 export const BOLT = { color: '#ffb347', core: '#fff3c4', halo: 0.3125, radius: 0.125, light: 10, reach: 2.5 } as const;
 
-/** What an event carries for its effects (any other keys are left alone). */
+/** What an event carries for its effects (any other keys are left alone). Shake and rings scale with the size too. */
 export interface FxEventPayload {
   /** Where it happens (m), or its `x`, `y`, `z`. */
   position?: PointLike;
@@ -102,21 +94,34 @@ export interface FxStats {
 
 /** The effects of a view: see the file comment. */
 export interface Effects {
+  /** Every object the effects draw: add it to the scene. */
   readonly root: Group;
+  /** Whether they draw (see the file comment); turning them off never changes the sim. */
   enabled: boolean;
+  /** The camera shake the bursts add to. */
   readonly shake: ScreenShake;
+  /** Bursts emitter `id` at `at`, scaled by `options.size`; returns the particles born. */
   burst(id: string, at: PointLike, options?: BurstOptions & { size?: number }): number;
+  /** Bursts every emitter answering `type` where `payload` says; returns the particles born (0: none answers). */
   event(type: string, payload?: FxEventPayload): number;
+  /** Plays the events of a sim world's trace not played yet, by their numbers; returns how many were answered. */
   feed(trace: readonly { seq: number; type: string; payload: unknown }[]): number;
+  /** Runs emitter `id` at `at` for this frame at its rate; `key` names it, so its fractions and light carry over. */
   emit(id: string, at: PointLike, key: string | number): void;
+  /** Draws a telegraph this frame, filled as far as its wind-up. */
   telegraph(place: TelegraphPlace): void;
+  /** Draws a ribbon along `samples` (oldest first, an animator's trail) this frame, in `tint` (hex). */
   trail(samples: readonly TrailSampleLike[], tint: string): void;
+  /** Draws a bolt at `at` this frame: a halo and a hot core (`BOLT`'s colours and sizes, or `look`'s). */
   bolt(at: PointLike, look?: { color?: string; core?: string; size?: number }): void;
   /** Moves the effects `dt` seconds on and draws them as `camera` sees them; then the frame's shapes are cleared. */
   frame(dt: number, camera: Camera): void;
+  /** This frame's lights: running emitters' (flickering, pulsing) and the first `FX_BUDGET.boltLights` bolts'. */
   lights(): FxLight[];
+  /** This frame's draw calls: one per used page of sprites and decals, one for the ribbons. */
   drawCalls(): number;
   stats(): FxStats;
+  /** Registers every pool with the warm-up (`fx:sprites`, `fx:decals`, `fx:ribbons`); dispose to stop. */
   register(warmup: Pick<Warmup, 'register'>): { dispose(): void };
   /** Forgets everything running (particles, rings, emitters, shake, the trace read): the view's run started again. */
   reset(): void;

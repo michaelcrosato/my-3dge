@@ -25,7 +25,8 @@
  * @example
  * import { createRegistry } from '../../core/registry';
  * const reg = createRegistry();
- * defineEmitter('emitter:sap', { count: 12, velocity: [0, 1.5, 0], gravity: 9.8, lands: true, color: ['#9ad14b', '#4b7a1e'] }, reg);
+ * const sap = { count: 12, velocity: [0, 1.5, 0], gravity: 9.8, lands: true, color: ['#9ad14b', '#4b7a1e'] };
+ * defineEmitter('emitter:sap', sap, reg);
  * getEmitter('emitter:sap', reg).life; // [1, 1.5]: the default
  * particleSpec(getEmitter('emitter:sparks', reg)).c0; // [6, 3.2, 0.99, 1]: shardfall's sparks, linear and glowing
  * @see engine/gfx/fx/emitters.test.ts

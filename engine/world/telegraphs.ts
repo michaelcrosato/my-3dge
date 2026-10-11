@@ -250,7 +250,7 @@ export function nearMiss(t: Telegraph, place: TelegraphPlace, point: PointLike, 
   return gap > 0 && gap <= t.near * (place.size ?? 1);
 }
 
-/** How far `t`'s drawn fill reaches at wind-up share `u` (clamped 0 to 1), metres before scaling: see the file comment. */
+/** How far `t`'s drawn fill reaches at wind-up share `u` (clamped 0 to 1), metres before scaling (file comment). */
 export function telegraphFill(t: Telegraph, u: number): number {
   const k = Math.min(1, Math.max(0, u));
   if (t.shape === 'line') return t.length * k;

@@ -16,8 +16,8 @@
  * crowded fight costs at most the pool, never a frame spike; `stats()` says how many live, were born and dropped.
  *
  * Carried from `shardfall:crates/pav_render/src/fx.rs:584-618` (births: area, the unit ball, prewarm) and
- * `shaders/particle_update.wgsl` (the step), on the CPU (its GPU version is WP 11.3), with `my-3d2dge:engine/
- * my-3d2dge.js:940-959` (`Particles`: a capped list, swap-removal).
+ * `shaders/particle_update.wgsl` (the step), on the CPU (its GPU version is WP 11.3), with
+ * `my-3d2dge:engine/my-3d2dge.js:940-959` (`Particles`: a capped list, swap-removal).
  *
  * Invariants: view state only (doctrine: WebGPU only): nothing here reads or writes the sim; draws only from the
  * stream it is given, so the same bursts, stream and frames give the same particles; particles are kept in slots
