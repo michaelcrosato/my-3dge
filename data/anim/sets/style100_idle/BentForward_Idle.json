@@ -1,0 +1,10 @@
+{"clip": "BentForward_Idle", "src": "100STYLE", "take": "BentForward_ID 14.27-16.77", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, bent forward style: tilt torso forwards", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,51,2], "chest":[0,39,0], "head":[1,22,3],
+   "shL":[6,-4], "shR":[12,-6], "armL":[68,11,-73,19,11], "armR":[69,7,-72,22,-32],
+   "legL":[82,-1,-57,0,94], "legR":[81,2,-58,0,-47], "footL":[-50,1,0], "footR":[-50,16,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,51,2], "chest":[0,39,0], "head":[1,22,3],
+   "shL":[6,-4], "shR":[12,-6], "armL":[68,11,-73,19,11], "armR":[69,7,-72,22,-32],
+   "legL":[82,-1,-57,0,94], "legR":[81,2,-58,0,-47], "footL":[-50,1,0], "footR":[-50,16,0]}
+]}

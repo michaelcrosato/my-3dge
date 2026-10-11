@@ -1,0 +1,10 @@
+{"clip": "Proud_Idle", "src": "100STYLE", "take": "Proud_ID 15.95-18.45", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, proud style: straight back arms move as if marching to a lesser degree", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-7,0], "chest":[1,5,-1], "head":[3,21,2],
+   "shL":[3,-11], "shR":[4,-11], "armL":[1,4,-100,0,-60], "armR":[-2,2,-100,0,-104],
+   "legL":[-16,-2,-99,0,-14], "legR":[-20,-3,-98,0,0], "footL":[7,-7,0], "footR":[7,4,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,-7,0], "chest":[1,5,-1], "head":[3,21,2],
+   "shL":[3,-11], "shR":[4,-11], "armL":[1,4,-100,0,-60], "armR":[-2,2,-100,0,-104],
+   "legL":[-16,-2,-99,0,-14], "legR":[-20,-3,-98,0,0], "footL":[7,-7,0], "footR":[7,4,0]}
+]}

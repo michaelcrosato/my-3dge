@@ -1,0 +1,10 @@
+{"clip": "GracefulArms_Idle", "src": "100STYLE", "take": "GracefulArms_ID 17.42-19.92", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, graceful arms style: one arm across chest the other extended walk tall", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-6,2], "chest":[-7,19,-2], "head":[7,7,4],
+   "shL":[4,4], "shR":[2,0], "armL":[17,98,-9,13,144], "armR":[66,-41,-63,125,56],
+   "legL":[-15,-1,-99,0,-9], "legR":[-19,0,-98,0,4], "footL":[7,-14,0], "footR":[5,6,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,-6,2], "chest":[-7,19,-2], "head":[7,7,4],
+   "shL":[4,4], "shR":[2,0], "armL":[17,98,-9,13,144], "armR":[66,-41,-63,125,56],
+   "legL":[-15,-1,-99,0,-9], "legR":[-19,0,-98,0,4], "footL":[7,-14,0], "footR":[5,6,0]}
+]}

@@ -1,4 +1,4 @@
-{"clip": "Punch_Enter", "src": "UAL1", "dur": 0.867, "loop": false, "tags": ["unarmed","stance"], "desc": "brings the fists up into a fighting stance", "keys": [
+{"clip": "Punch_Enter", "src": "UAL1", "dur": 0.867, "loop": false, "tags": ["unarmed","stance"], "desc": "brings the fists up into a fighting stance", "via": "v1", "keys": [
   {"t":0,
    "hips":[-9,-1,96], "body":[13,-5,0], "chest":[0,21,0], "head":[-11,1,0],
    "shL":[6,-2], "shR":[-6,-2], "armL":[29,19,-94,51,6], "armR":[29,17,-94,60,-4],

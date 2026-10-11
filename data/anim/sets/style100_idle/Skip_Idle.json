@@ -1,0 +1,10 @@
+{"clip": "Skip_Idle", "src": "100STYLE", "take": "Skip_ID 11.23-13.73", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, skip style: skipping like a child", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-10,0], "chest":[2,12,1], "head":[4,25,2],
+   "shL":[3,-9], "shR":[2,-8], "armL":[12,7,-99,0,9], "armR":[16,13,-98,0,-26],
+   "legL":[-28,1,-96,0,3], "legR":[-27,-3,-96,0,0], "footL":[12,1,0], "footR":[11,11,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,-10,0], "chest":[2,12,1], "head":[4,25,2],
+   "shL":[3,-9], "shR":[2,-8], "armL":[12,7,-99,0,9], "armR":[16,13,-98,0,-26],
+   "legL":[-28,1,-96,0,3], "legR":[-27,-3,-96,0,0], "footL":[12,1,0], "footR":[11,11,0]}
+]}

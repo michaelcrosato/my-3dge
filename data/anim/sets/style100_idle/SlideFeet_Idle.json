@@ -1,0 +1,10 @@
+{"clip": "SlideFeet_Idle", "src": "100STYLE", "take": "SlideFeet_ID 18.47-20.97", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, slide feet style: barely lift feet off the floor/kick into floor", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-8,0], "chest":[0,11,-1], "head":[-3,22,1],
+   "shL":[2,-9], "shR":[1,-9], "armL":[8,6,-100,0,140], "armR":[19,3,-98,0,-68],
+   "legL":[-22,2,-98,0,27], "legR":[-21,0,-98,0,6], "footL":[9,10,0], "footR":[9,13,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,-8,0], "chest":[0,11,-1], "head":[-3,22,1],
+   "shL":[2,-9], "shR":[1,-9], "armL":[8,6,-100,0,140], "armR":[19,3,-98,0,-68],
+   "legL":[-22,2,-98,0,27], "legR":[-21,0,-98,0,6], "footL":[9,10,0], "footR":[9,13,0]}
+]}

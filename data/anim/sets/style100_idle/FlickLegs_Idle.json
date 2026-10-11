@@ -1,0 +1,10 @@
+{"clip": "FlickLegs_Idle", "src": "100STYLE", "take": "FlickLegs_ID 16.78-19.28", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, flick legs style: knees together and flick legs to sides as moving", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-14,0], "chest":[0,26,1], "head":[-4,12,-2],
+   "shL":[2,-1], "shR":[3,-7], "armL":[28,7,-96,15,45], "armR":[35,6,-93,14,-15],
+   "legL":[-32,2,-95,11,-3], "legR":[-32,-5,-95,12,7], "footL":[14,-13,0], "footR":[15,8,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-14,0], "chest":[0,26,1], "head":[-4,12,-2],
+   "shL":[2,-1], "shR":[3,-7], "armL":[28,7,-96,15,45], "armR":[35,6,-93,14,-15],
+   "legL":[-32,2,-95,11,-3], "legR":[-32,-5,-95,12,7], "footL":[14,-13,0], "footR":[15,8,0]}
+]}

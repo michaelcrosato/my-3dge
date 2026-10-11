@@ -1,0 +1,10 @@
+{"clip": "Punch_Idle", "src": "100STYLE", "take": "Punch_ID 17.45-19.95", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, punch style: punch with every step", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-11,-1], "chest":[0,18,1], "head":[0,8,0],
+   "shL":[2,-4], "shR":[1,4], "armL":[82,-57,1,128,7], "armR":[92,-37,12,130,-15],
+   "legL":[-27,3,-96,0,2], "legR":[-28,-4,-96,0,-4], "footL":[11,1,0], "footR":[12,5,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,-11,-1], "chest":[0,18,1], "head":[0,8,0],
+   "shL":[2,-4], "shR":[1,4], "armL":[82,-57,1,128,7], "armR":[92,-37,12,130,-15],
+   "legL":[-27,3,-96,0,2], "legR":[-28,-4,-96,0,-4], "footL":[11,1,0], "footR":[12,5,0]}
+]}

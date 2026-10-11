@@ -1,0 +1,10 @@
+{"clip": "LeanRight_Idle", "src": "100STYLE", "take": "LeanRight_ID 17.87-20.37", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, lean right style: normal motion upperbody tilted left", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-10,9], "chest":[6,18,34], "head":[-21,35,24],
+   "shL":[-3,-12], "shR":[-1,-8], "armL":[12,-16,-98,21,-3], "armR":[16,53,-83,12,-114],
+   "legL":[-22,-7,-97,5,-1], "legR":[-18,18,-97,0,7], "footL":[18,0,7], "footR":[4,12,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,-10,9], "chest":[6,18,34], "head":[-21,35,24],
+   "shL":[-3,-12], "shR":[-1,-8], "armL":[12,-16,-98,21,-3], "armR":[16,53,-83,12,-114],
+   "legL":[-22,-7,-97,5,-1], "legR":[-18,18,-97,0,7], "footL":[18,0,7], "footR":[4,12,0]}
+]}

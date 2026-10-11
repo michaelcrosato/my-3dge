@@ -1,0 +1,10 @@
+{"clip": "OnPhoneRight_Idle", "src": "100STYLE", "take": "OnPhoneRight_ID 17.47-19.97", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, on phone right style: holding phone in right", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-9,-1], "chest":[1,16,2], "head":[1,18,3],
+   "shL":[2,-11], "shR":[1,4], "armL":[22,6,-97,10,-164], "armR":[41,-34,84,151,-43],
+   "legL":[-23,3,-97,3,-2], "legR":[-22,-4,-98,0,-3], "footL":[10,3,0], "footR":[11,18,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,-9,-1], "chest":[1,16,2], "head":[1,18,3],
+   "shL":[2,-11], "shR":[1,4], "armL":[22,6,-97,10,-164], "armR":[41,-34,84,151,-43],
+   "legL":[-23,3,-97,3,-2], "legR":[-22,-4,-98,0,-3], "footL":[10,3,0], "footR":[11,18,0]}
+]}

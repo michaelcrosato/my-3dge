@@ -1,0 +1,10 @@
+{"clip": "Crouched_Idle", "src": "100STYLE", "take": "Crouched_ID 13.50-16.00", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, crouched style: squat slightly and bend back", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,89], "body":[0,11,0], "chest":[2,18,1], "head":[-7,0,-1],
+   "shL":[6,-9], "shR":[6,-8], "armL":[43,8,-90,0,49], "armR":[48,12,-87,0,-120],
+   "legL":[32,-3,-95,57,2], "legR":[32,-8,-94,59,-2], "footL":[-11,-1,0], "footR":[-8,15,0]},
+  {"t":2.5,
+   "hips":[0,0,89], "body":[0,11,0], "chest":[2,18,1], "head":[-7,0,-1],
+   "shL":[6,-9], "shR":[6,-8], "armL":[43,8,-90,0,49], "armR":[48,12,-87,0,-120],
+   "legL":[32,-3,-95,57,2], "legR":[32,-8,-94,59,-2], "footL":[-11,-1,0], "footR":[-8,15,0]}
+]}

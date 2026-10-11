@@ -1,0 +1,10 @@
+{"clip": "RaisedRightArm_Idle", "src": "100STYLE", "take": "RaisedRightArm_ID 19.25-21.77", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, raised right arm style: raise right arm perpendicular to body", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-6,-2], "chest":[3,19,-5], "head":[-7,8,6],
+   "shL":[7,-7], "shR":[1,0], "armL":[23,18,-96,14,169], "armR":[19,95,-24,16,162],
+   "legL":[-20,8,-98,9,0], "legR":[-21,1,-98,4,4], "footL":[5,-3,0], "footR":[7,1,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-6,-2], "chest":[3,19,-5], "head":[-7,8,6],
+   "shL":[7,-7], "shR":[1,0], "armL":[23,18,-96,14,169], "armR":[19,95,-24,16,162],
+   "legL":[-20,8,-98,9,0], "legR":[-21,1,-98,4,4], "footL":[5,-3,0], "footR":[7,1,0]}
+]}

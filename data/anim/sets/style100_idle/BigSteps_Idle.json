@@ -1,0 +1,10 @@
+{"clip": "BigSteps_Idle", "src": "100STYLE", "take": "BigSteps_ID 17.80-20.30", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, big steps style: as large steps as possible", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-10,0], "chest":[0,17,-2], "head":[-6,11,3],
+   "shL":[2,-6], "shR":[0,-8], "armL":[15,10,-98,11,11], "armR":[21,10,-97,18,-70],
+   "legL":[-20,4,-98,17,-6], "legR":[-23,7,-97,13,1], "footL":[11,5,0], "footR":[11,9,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-10,0], "chest":[0,17,-2], "head":[-6,11,3],
+   "shL":[2,-6], "shR":[0,-8], "armL":[15,10,-98,11,11], "armR":[21,10,-97,18,-70],
+   "legL":[-20,4,-98,17,-6], "legR":[-23,7,-97,13,1], "footL":[11,5,0], "footR":[11,9,0]}
+]}

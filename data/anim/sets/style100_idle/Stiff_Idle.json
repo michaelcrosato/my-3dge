@@ -1,0 +1,10 @@
+{"clip": "Stiff_Idle", "src": "100STYLE", "take": "Stiff_ID 19.48-21.98", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, stiff style: stiff limbs arms straight", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-5,1], "chest":[0,-1,0], "head":[2,25,-2],
+   "shL":[0,-11], "shR":[1,-8], "armL":[-12,1,-99,0,-130], "armR":[-12,-1,-99,0,143],
+   "legL":[-13,-2,-99,0,-12], "legR":[-14,-2,-99,0,4], "footL":[5,-9,0], "footR":[4,3,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,-5,1], "chest":[0,-1,0], "head":[2,25,-2],
+   "shL":[0,-11], "shR":[1,-8], "armL":[-12,1,-99,0,-130], "armR":[-12,-1,-99,0,143],
+   "legL":[-13,-2,-99,0,-12], "legR":[-14,-2,-99,0,4], "footL":[5,-9,0], "footR":[4,3,0]}
+]}

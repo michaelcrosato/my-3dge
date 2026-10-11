@@ -1,0 +1,18 @@
+{"clip": "CrowdAvoidance_Idle", "src": "100STYLE", "take": "CrowdAvoidance_ID 12.50-15.00", "dur": 2.5, "loop": true, "tags": ["idle","style","varies"], "desc": "Standing, crowd avoidance style: occasionally turning shoulders or turn sideways to avoid others", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-9,1], "chest":[-3,16,0], "head":[-2,19,-2],
+   "shL":[-1,-10], "shR":[-3,-8], "armL":[24,7,-97,16,-172], "armR":[22,9,-97,14,-52],
+   "legL":[-20,1,-98,12,-8], "legR":[-18,1,-98,17,1], "footL":[9,-8,0], "footR":[9,11,0]},
+  {"t":0.333,
+   "hips":[0,0,100], "body":[0,-9,1], "chest":[-3,14,0], "head":[-5,19,-5],
+   "shL":[-1,-10], "shR":[-2,-7], "armL":[17,5,-98,17,-173], "armR":[30,7,-95,17,-15],
+   "legL":[-20,1,-98,13,-17], "legR":[-18,1,-98,17,-2], "footL":[9,-8,0], "footR":[9,11,0]},
+  {"t":0.833,
+   "hips":[-1,1,100], "body":[1,-10,1], "chest":[-2,16,0], "head":[-5,19,-4],
+   "shL":[-1,-10], "shR":[-3,-7], "armL":[26,7,-96,15,-168], "armR":[16,9,-98,12,-119],
+   "legL":[-21,2,-98,12,-5], "legR":[-18,0,-98,17,3], "footL":[10,-8,0], "footR":[10,10,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-9,1], "chest":[-3,16,0], "head":[-2,19,-2],
+   "shL":[-1,-10], "shR":[-3,-8], "armL":[24,7,-97,16,-172], "armR":[22,9,-97,14,-52],
+   "legL":[-20,1,-98,12,-8], "legR":[-18,1,-98,17,1], "footL":[9,-8,0], "footR":[9,11,0]}
+]}

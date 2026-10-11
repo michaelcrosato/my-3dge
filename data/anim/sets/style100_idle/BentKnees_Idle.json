@@ -1,0 +1,10 @@
+{"clip": "BentKnees_Idle", "src": "100STYLE", "take": "BentKnees_ID 22.52-25.02", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, bent knees style: bend knees as much as possible", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,92], "body":[0,-11,-1], "chest":[2,24,3], "head":[-1,-3,-3],
+   "shL":[6,-11], "shR":[3,-9], "armL":[24,2,-97,6,53], "armR":[32,8,-94,10,-59],
+   "legL":[-22,-2,-98,54,-2], "legR":[-22,-3,-98,52,1], "footL":[13,-1,0], "footR":[12,2,0]},
+  {"t":2.5,
+   "hips":[0,0,92], "body":[0,-11,-1], "chest":[2,24,3], "head":[-1,-3,-3],
+   "shL":[6,-11], "shR":[3,-9], "armL":[24,2,-97,6,53], "armR":[32,8,-94,10,-59],
+   "legL":[-22,-2,-98,54,-2], "legR":[-22,-3,-98,52,1], "footL":[13,-1,0], "footR":[12,2,0]}
+]}

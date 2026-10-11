@@ -1,4 +1,4 @@
-{"clip": "Interact", "src": "UAL1", "dur": 2, "loop": false, "tags": ["interact"], "desc": "reaches forward at chest height and works something with the hands (a lever, a door, a box)", "keys": [
+{"clip": "Interact", "src": "UAL1", "dur": 2, "loop": false, "tags": ["interact"], "desc": "reaches forward at chest height and works something with the hands (a lever, a door, a box)", "via": "shardfall", "keys": [
   {"t":0,
    "hips":[-9,-1,96], "body":[13,-5,0], "chest":[0,21,0], "head":[-11,1,0],
    "shL":[6,-2], "shR":[-6,-2], "armL":[32,9,-94,61,-4], "armR":[29,17,-94,60,-4],
@@ -25,7 +25,7 @@
    "legL":[8,19,-98,25,5], "legR":[-29,13,-95,22,-37], "footL":[4,8,0], "footR":[3,32,0]},
   {"t":0.6,
    "hips":[-10,0,95], "body":[13,-4,0], "chest":[0,21,0], "head":[-11,-2,0],
-   "shL":[6,-5], "shR":[-6,-5], "armL":[98,10,16,55,46], "armR":[33,13,-94,62,-6],
+   "shL":[6,-5], "shR":[-6,-5], "armL":[98,10,16,55,47], "armR":[33,13,-94,62,-6],
    "legL":[8,19,-98,25,5], "legR":[-29,13,-95,22,-37], "footL":[4,8,0], "footR":[3,32,0]},
   {"t":0.767,
    "hips":[-10,0,95], "body":[13,-4,0], "chest":[0,21,0], "head":[-11,0,0],
@@ -53,7 +53,7 @@
    "legL":[8,18,-98,19,8], "legR":[-29,13,-95,14,-36], "footL":[4,8,0], "footR":[3,32,0]},
   {"t":1.733,
    "hips":[-10,0,96], "body":[13,-4,0], "chest":[0,20,0], "head":[-11,0,0],
-   "shL":[7,-3], "shR":[-6,-2], "armL":[43,7,-90,56,-2], "armR":[30,16,-94,61,-7],
+   "shL":[7,-3], "shR":[-6,-2], "armL":[43,7,-90,56,-2], "armR":[30,16,-94,61,-6],
    "legL":[8,18,-98,19,9], "legR":[-29,13,-95,14,-35], "footL":[4,8,0], "footR":[3,32,0]},
   {"t":2,
    "hips":[-9,-1,96], "body":[13,-5,0], "chest":[0,21,0], "head":[-11,1,0],

@@ -1,0 +1,10 @@
+{"clip": "FairySteps_Idle", "src": "100STYLE", "take": "FairySteps_ID 13.70-16.28", "dur": 2.6, "loop": true, "tags": ["idle","style"], "desc": "Standing, fairy steps style: one foot in front of the other so the heel touches the toe", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-7,0], "chest":[1,12,0], "head":[-5,19,1],
+   "shL":[2,-8], "shR":[1,-8], "armL":[18,10,-98,14,59], "armR":[20,7,-98,17,-25],
+   "legL":[-20,-5,-98,11,-11], "legR":[-20,-6,-98,12,12], "footL":[7,-3,0], "footR":[8,-2,0]},
+  {"t":2.6,
+   "hips":[0,0,100], "body":[0,-7,0], "chest":[1,12,0], "head":[-5,19,1],
+   "shL":[2,-8], "shR":[1,-8], "armL":[18,10,-98,14,59], "armR":[20,7,-98,17,-25],
+   "legL":[-20,-5,-98,11,-11], "legR":[-20,-6,-98,12,12], "footL":[7,-3,0], "footR":[8,-2,0]}
+]}

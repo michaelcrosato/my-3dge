@@ -1,0 +1,10 @@
+{"clip": "Rocket_Idle", "src": "100STYLE", "take": "Rocket_ID 19.17-21.67", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, rocket style: bent to flat back with hands behind as thrusters", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,42,1], "chest":[2,41,1], "head":[3,10,1],
+   "shL":[8,-9], "shR":[10,-7], "armL":[-36,17,-92,22,7], "armR":[-20,18,-96,11,21],
+   "legL":[71,-6,-70,4,19], "legR":[70,0,-72,0,-163], "footL":[-40,-2,0], "footR":[-41,8,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,42,1], "chest":[2,41,1], "head":[3,10,1],
+   "shL":[8,-9], "shR":[10,-7], "armL":[-36,17,-92,22,7], "armR":[-20,18,-96,11,21],
+   "legL":[71,-6,-70,4,19], "legR":[70,0,-72,0,-163], "footL":[-40,-2,0], "footR":[-41,8,0]}
+]}

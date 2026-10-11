@@ -1,0 +1,10 @@
+{"clip": "ArmsAboveHead_Idle", "src": "100STYLE", "take": "ArmsAboveHead_ID 19.80-22.30", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, arms above head style: arms raised straight above head", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-7,-1], "chest":[1,9,-2], "head":[-7,30,7],
+   "shL":[-3,19], "shR":[-4,15], "armL":[57,-24,78,14,40], "armR":[61,6,79,34,-34],
+   "legL":[-20,7,-98,10,-23], "legR":[-21,-3,-98,6,-169], "footL":[9,7,0], "footR":[10,13,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,-7,-1], "chest":[1,9,-2], "head":[-7,30,7],
+   "shL":[-3,19], "shR":[-4,15], "armL":[57,-24,78,14,40], "armR":[61,6,79,34,-34],
+   "legL":[-20,7,-98,10,-23], "legR":[-21,-3,-98,6,-169], "footL":[9,7,0], "footR":[10,13,0]}
+]}

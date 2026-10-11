@@ -1,0 +1,10 @@
+{"clip": "StartStop_Idle", "src": "100STYLE", "take": "StartStop_ID 15.17-17.67", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, start stop style: pause briefly after step", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-11,0], "chest":[1,24,0], "head":[0,42,-1],
+   "shL":[2,-9], "shR":[3,-8], "armL":[29,11,-95,0,68], "armR":[28,12,-95,0,-57],
+   "legL":[-26,2,-97,0,-1], "legR":[-26,0,-97,0,3], "footL":[12,-2,0], "footR":[11,6,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,-11,0], "chest":[1,24,0], "head":[0,42,-1],
+   "shL":[2,-9], "shR":[3,-8], "armL":[29,11,-95,0,68], "armR":[28,12,-95,0,-57],
+   "legL":[-26,2,-97,0,-1], "legR":[-26,0,-97,0,3], "footL":[12,-2,0], "footR":[11,6,0]}
+]}

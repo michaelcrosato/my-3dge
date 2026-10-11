@@ -1,0 +1,10 @@
+{"clip": "WalkingStickRight_Idle", "src": "100STYLE", "take": "WalkingStickRight_ID 22.33-24.83", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, walking stick right style: walk with a stick – used broom handle", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-8,1], "chest":[1,14,-1], "head":[7,15,4],
+   "shL":[3,-8], "shR":[0,-9], "armL":[21,9,-97,0,-12], "armR":[82,-9,-56,71,-23],
+   "legL":[-21,2,-98,0,2], "legR":[-23,2,-97,0,-5], "footL":[9,0,0], "footR":[8,8,0]},
+  {"t":2.5,
+   "hips":[0,0,101], "body":[0,-8,1], "chest":[1,14,-1], "head":[7,15,4],
+   "shL":[3,-8], "shR":[0,-9], "armL":[21,9,-97,0,-12], "armR":[82,-9,-56,71,-23],
+   "legL":[-21,2,-98,0,2], "legR":[-23,2,-97,0,-5], "footL":[9,0,0], "footR":[8,8,0]}
+]}

@@ -1,0 +1,10 @@
+{"clip": "PigeonToed_Idle", "src": "100STYLE", "take": "PigeonToed_ID 25.28-28.13", "dur": 2.833, "loop": true, "tags": ["idle","style"], "desc": "Standing, pigeon toed style: toes turned inwards", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,101], "body":[0,-6,0], "chest":[1,5,-1], "head":[-3,23,1],
+   "shL":[2,-10], "shR":[2,-10], "armL":[2,3,-100,0,145], "armR":[9,3,-100,0,-76],
+   "legL":[-16,6,-98,0,-23], "legR":[-16,0,-99,0,25], "footL":[5,-41,0], "footR":[4,-27,0]},
+  {"t":2.833,
+   "hips":[0,0,101], "body":[0,-6,0], "chest":[1,5,-1], "head":[-3,23,1],
+   "shL":[2,-10], "shR":[2,-10], "armL":[2,3,-100,0,145], "armR":[9,3,-100,0,-76],
+   "legL":[-16,6,-98,0,-23], "legR":[-16,0,-99,0,25], "footL":[5,-41,0], "footR":[4,-27,0]}
+]}

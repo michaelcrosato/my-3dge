@@ -1,0 +1,10 @@
+{"clip": "Star_Idle", "src": "100STYLE", "take": "Star_ID 16.78-19.28", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, star style: wide arms and legs. Arms slightly below horizontal", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,98], "body":[0,-9,-1], "chest":[-4,26,0], "head":[7,5,1],
+   "shL":[4,2], "shR":[4,-3], "armL":[24,92,-31,7,-148], "armR":[22,90,-38,6,176],
+   "legL":[-23,26,-94,6,23], "legR":[-16,21,-97,9,-9], "footL":[10,8,0], "footR":[9,22,0]},
+  {"t":2.5,
+   "hips":[0,0,98], "body":[0,-9,-1], "chest":[-4,26,0], "head":[7,5,1],
+   "shL":[4,2], "shR":[4,-3], "armL":[24,92,-31,7,-148], "armR":[22,90,-38,6,176],
+   "legL":[-23,26,-94,6,23], "legR":[-16,21,-97,9,-9], "footL":[10,8,0], "footR":[9,22,0]}
+]}

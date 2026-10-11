@@ -1,0 +1,10 @@
+{"clip": "Swimming_Idle", "src": "100STYLE", "take": "Swimming_ID 14.55-17.05", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, swimming style: breaststroke walking", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-12,0], "chest":[2,19,-3], "head":[12,22,-1],
+   "shL":[6,3], "shR":[6,5], "armL":[98,15,14,12,52], "armR":[99,-10,13,9,-58],
+   "legL":[-29,1,-96,12,3], "legR":[-31,0,-95,11,11], "footL":[12,9,0], "footR":[12,18,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-12,0], "chest":[2,19,-3], "head":[12,22,-1],
+   "shL":[6,3], "shR":[6,5], "armL":[98,15,14,12,52], "armR":[99,-10,13,9,-58],
+   "legL":[-29,1,-96,12,3], "legR":[-31,0,-95,11,11], "footL":[12,9,0], "footR":[12,18,0]}
+]}

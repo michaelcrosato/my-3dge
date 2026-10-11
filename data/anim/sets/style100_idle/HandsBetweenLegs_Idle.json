@@ -1,0 +1,10 @@
+{"clip": "HandsBetweenLegs_Idle", "src": "100STYLE", "take": "HandsBetweenLegs_ID 15.67-18.17", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, hands between legs style: bent back – legs wide - hands swing between legs", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,97], "body":[0,56,4], "chest":[-4,48,4], "head":[8,27,6],
+   "shL":[16,-2], "shR":[14,-4], "armL":[99,-12,-12,20,37], "armR":[100,-1,-8,25,-59],
+   "legL":[88,21,-43,9,82], "legR":[84,32,-45,9,-166], "footL":[-54,2,0], "footR":[-53,24,-1]},
+  {"t":2.5,
+   "hips":[0,0,97], "body":[0,56,4], "chest":[-4,48,4], "head":[8,27,6],
+   "shL":[16,-2], "shR":[14,-4], "armL":[99,-12,-12,20,37], "armR":[100,-1,-8,25,-59],
+   "legL":[88,21,-43,9,82], "legR":[84,32,-45,9,-166], "footL":[-54,2,0], "footR":[-53,24,-1]}
+]}

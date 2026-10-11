@@ -1,0 +1,10 @@
+{"clip": "Kick_Idle", "src": "100STYLE", "take": "Kick_ID 18.87-21.37", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, kick style: kick with every step", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-7,-1], "chest":[0,12,2], "head":[-4,11,-2],
+   "shL":[3,-9], "shR":[2,-4], "armL":[15,6,-99,16,36], "armR":[17,15,-97,11,-43],
+   "legL":[-24,-3,-97,13,0], "legR":[-21,-4,-98,8,1], "footL":[8,6,0], "footR":[7,4,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-7,-1], "chest":[0,12,2], "head":[-4,11,-2],
+   "shL":[3,-9], "shR":[2,-4], "armL":[15,6,-99,16,36], "armR":[17,15,-97,11,-43],
+   "legL":[-24,-3,-97,13,0], "legR":[-21,-4,-98,8,1], "footL":[8,6,0], "footR":[7,4,0]}
+]}

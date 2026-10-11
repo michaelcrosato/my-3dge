@@ -1,0 +1,10 @@
+{"clip": "March_Idle", "src": "100STYLE", "take": "March_ID 17.78-20.28", "dur": 2.5, "loop": true, "tags": ["idle","style"], "desc": "Standing, march style: high knees swing arms at elbows", "via": "shardfall", "keys": [
+  {"t":0,
+   "hips":[0,0,100], "body":[0,-7,0], "chest":[1,5,0], "head":[5,15,0],
+   "shL":[4,-11], "shR":[2,-10], "armL":[-1,3,-100,15,-133], "armR":[-1,2,-100,12,-175],
+   "legL":[-19,-2,-98,13,-13], "legR":[-19,-6,-98,10,-24], "footL":[7,-7,0], "footR":[7,5,0]},
+  {"t":2.5,
+   "hips":[0,0,100], "body":[0,-7,0], "chest":[1,5,0], "head":[5,15,0],
+   "shL":[4,-11], "shR":[2,-10], "armL":[-1,3,-100,15,-133], "armR":[-1,2,-100,12,-175],
+   "legL":[-19,-2,-98,13,-13], "legR":[-19,-6,-98,10,-24], "footL":[7,-7,0], "footR":[7,5,0]}
+]}
