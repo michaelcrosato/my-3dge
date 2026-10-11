@@ -23,8 +23,8 @@
  * - The removed view hacks (`_cheat`, `_pitch`, `_camSide`) have no counterpart: the camera never feeds animation.
  *
  * Carried from `my-3d2dge:engine/my-3d2dge.js:1803-1871` (`update`, the state) and `:1917-1994` (`_pose`; the
- * knockdown's rigid turn at `:1989-1993`, as a root rotation). The attack's arm path, the squash, hair and cape
- * belong to moves (WP 6.1) and secondary motion (WP 6.2); `input.body` is a move's slot.
+ * knockdown's rigid turn at `:1989-1993`, as a root rotation). The attack's arm path and a kick's foot (`:1937`),
+ * the squash, hair and cape belong to moves (WP 6.1) and secondary motion (WP 6.2); `input.body` is a move's slot.
  *
  * @example
  * import { Vector3 } from '../core/math';
