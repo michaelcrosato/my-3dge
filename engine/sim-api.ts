@@ -319,6 +319,42 @@ export type { ClipSlot } from './anim/clip/layer';
 export type { ClipLayerState } from './anim/clip/layer';
 export type { ClipLayerEvent } from './anim/clip/layer';
 export type { ClipStepInput } from './anim/clip/layer';
+// Moves (WP 6.1): moves as data in metres (the kind move: my-3d2dge's 24, converted by Appendix C's table), timelines
+// whose events carry leftover time, attacks and combos with hit windows, sweeps and root motion, moves played on a
+// humanoid through its body state (the arm path), moves at a moment for previews, measured hit shapes, the cone
+// helpers and a hit's knockback velocity.
+export { defineMove } from './anim/moves-data';
+export { getMove } from './anim/moves-data';
+export { resolveMove } from './anim/moves-data';
+export { MOVE_PHASES } from './anim/moves-data';
+export { LEGACY_FIELDS } from './anim/moves-data';
+export { fromLegacy } from './anim/moves-data';
+export type { Move } from './anim/moves-data';
+export type { MoveSpec } from './anim/moves-data';
+export type { MoveInput } from './anim/moves-data';
+export type { MovePhase } from './anim/moves-data';
+export type { LegacyMove } from './anim/moves-data';
+export { Timeline } from './anim/timeline';
+export type { TimelinePhase } from './anim/timeline';
+export type { TimelineMark } from './anim/timeline';
+export type { TimelineEvent } from './anim/timeline';
+export type { TimelineState } from './anim/timeline';
+export { Attack } from './anim/timeline';
+export { Combo } from './anim/timeline';
+export type { AttackState } from './anim/timeline';
+export type { ComboState } from './anim/timeline';
+export type { Sweep } from './anim/timeline';
+export { moveAt } from './anim/moves';
+export { measureMove } from './anim/moves';
+export type { HitShape } from './anim/moves';
+export { strikePart } from './anim/moves';
+export { strikeSegment } from './anim/moves';
+export type { StrikeBody } from './anim/moves';
+export type { StrikeAnimator } from './anim/moves';
+export type { ArmState } from './anim/strike';
+export { inArc } from './anim/moves';
+export { inHitShape } from './anim/moves';
+export { knockbackVelocity } from './anim/moves';
 
 // Physics (WP 3.1): Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id,
 // raycasts, shape casts, overlaps and ground probes, collision groups by name, a level's bodies; presentation reads

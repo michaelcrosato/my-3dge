@@ -34,7 +34,7 @@ import type { BodyStateName } from './states';
 export const SLOTS = {
   weights: 'Named eased weights (`HUMANOID_WEIGHTS`): the body.',
   base: 'Locomotion (gait, idle, air, climb) as effector targets: the body.',
-  override: 'Stances, held poses, a move’s body motion and reactions over the base, in a fixed order: the body.',
+  override: 'Stances, held poses, a move’s arm path and body motion, reactions over the base, in order: the body.',
   solve: 'Effectors to local rotations (the spine, two-bone IK, the feet, the weapon hand): the body.',
   clips: 'Clip layers: sampled clips with a weight, a bone mask and a crossfade (WP 8.4).',
   additive: 'Additive layers: breathing, flinches, recoil, look-at (WP 6.2).',

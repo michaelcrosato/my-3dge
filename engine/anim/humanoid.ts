@@ -11,9 +11,8 @@
  *   the same result.
  * - A fixed step, `dt` (`SIM_DT` by default). The breathing phase and the blinks come from the entity's stream
  *   (`rng`); `clock` sets the phase instead (the differential tests inject the reference rig's).
- * - `effectors` are rig-local metres before `size`, in the model frame (+Z forward, +Y up). The root places them:
- *   `rootRot` is the yaw (times the knockdown's turn), `rootPos` carries the pelvis's offset from its rest
- *   (`rootOffset`).
+ * - `effectors` are rig-local metres before `size`, in the model frame (+Z forward, +Y up), placed by the root:
+ *   `rootRot` is the yaw (times the knockdown's turn), `rootPos` carries the pelvis's offset (`rootOffset`).
  * - Where the joints land (humanoid.test.ts checks it against the reference vectors): the pelvis on the old `hipC`,
  *   the neck joint on `shC`, the head's centre on `head`, the upper arms on `shL`/`shR`, the elbows, wrists and hips
  *   on theirs, the blade from the right wrist along the weapon socket's +Z, and the sole under each ankle on the old
@@ -21,10 +20,12 @@
  *   `solveLeg`), the knee and the sole move, about 3 mm on average and 2 cm at worst; elsewhere the joints match to
  *   float32 rounding.
  * - The removed view hacks (`_cheat`, `_pitch`, `_camSide`) have no counterpart: the camera never feeds animation.
+ * - A move plays through `input.body` (WP 6.1): `step` steps its arm path (strike.ts, `state.arm`), the effector
+ *   stage lays it, a spin turns the root. A swing's start comes from the effector stage of the state before the step,
+ *   never from a pose, so posing or not leaves the state as it is. A body motion given instead is taken as it is.
  *
  * Carried from `my-3d2dge:engine/my-3d2dge.js:1803-1871` (`update`, the state) and `:1917-1994` (`_pose`; the
- * knockdown's rigid turn at `:1989-1993`, as a root rotation). The attack's arm path and a kick's foot (`:1937`),
- * the squash, hair and cape belong to moves (WP 6.1) and secondary motion (WP 6.2); `input.body` is a move's slot.
+ * knockdown's rigid turn at `:1989-1993`, as a root rotation). Squash, hair and cape are secondary motion (WP 6.2).
  *
  * @example
  * import { Vector3 } from '../core/math';
@@ -34,8 +35,7 @@
  * for (let i = 0; i < 60; i++) hero.update({ velocity: new Vector3(0, 0, 5), position: new Vector3(0, 0, i / 12) });
  * hero.state.weights.speed; // 1: walking at its reference speed
  * jointPosition(hero.world, 'head').y; // ≈ 1.6: the base of the skull
- * for (let i = 0; i < 30; i++) hero.update({ pose: 'cheer' });
- * hero.state.weights.cheer; // 1: both fists up
+ * hero.update({ body: { move: 'move:slash', phase: 'active', u: 0.5 } }).state.arm.weight; // 0.5: a strike begins
  * @see engine/anim/humanoid.test.ts
  */
 import { log as engineLog, type Log } from '../core/log';
@@ -47,9 +47,11 @@ import { getBuild, type Build } from './builds';
 import { createWorldPose, forwardKinematics, type WorldPose } from './fk';
 import { crouchShare, GAIT, type BodyMotion, type EffectorContext, type HumanoidWeights } from './locomotion';
 import { Pose } from './pose';
+import type { MoveInput } from './moves-data';
 import { createEffectors, effectorStage, poseName, stanceName, weaponName, type Effectors } from './poses';
 import type { PoseName, StanceName, Weapon } from './poses';
 import { createSkeleton, jointIndex, type Skeleton } from './skeleton';
+import { createArmState, stepArm, type ArmState } from './strike';
 
 /** Every constant of the state update: rates are per second, times in seconds; pairs are [in, out]. */
 export const STEP = {
@@ -152,8 +154,11 @@ export interface HumanoidInput {
   stance?: StanceName;
   /** 0–1: knocked flat, overriding the `die` and `down` poses. */
   down?: number;
-  /** A move's body motion while it plays (moves fill it, WP 6.1): its targets, and the foot that leads a lunge. */
-  body?: Partial<BodyMotion> & { lead?: LimbSide };
+  /**
+   * A move playing (WP 6.1): the move at its phase and share (`moveAt`, `Attack.body`), whose arm path and body
+   * motion the humanoid plays; or a body motion's targets alone, and the foot that leads a lunge.
+   */
+  body?: MoveInput | (Partial<BodyMotion> & { lead?: LimbSide });
 }
 
 /** The humanoid's state: plain numbers, what the sim keeps of it. */
@@ -180,6 +185,8 @@ export interface HumanoidState {
   weights: HumanoidWeights;
   /** A move's body motion now. */
   body: BodyMotion;
+  /** A move's arm path now (strike.ts). */
+  arm: ArmState;
 }
 
 const ZERO = new Vector3();
@@ -213,6 +220,8 @@ export class Humanoid implements Rig {
   readonly rootOffset = new Vector3();
   readonly #rng: Rng;
   readonly #log: Log;
+  /** The effectors of the state before a step, for a swing's start. */
+  readonly #before: Effectors = createEffectors();
 
   /** A humanoid standing at the origin, facing +Z. Warns `ANIM_UNKNOWN_POSE` for an unknown weapon. */
   constructor(options: HumanoidOptions = {}) {
@@ -236,6 +245,7 @@ export class Humanoid implements Rig {
       lead: -1,
       weights: { ...zero, stanceGuard: 0, stanceReady: 0, ...held },
       body: { lunge: 0, hop: 0, crouch: 0, lean: 0, twist: 0 },
+      arm: createArmState(),
     };
     this.solve();
   }
@@ -245,6 +255,10 @@ export class Humanoid implements Rig {
     const { dt, build: b, state: st } = this;
     const S = STEP;
     const w = st.weights;
+    const move = input.body && 'move' in input.body ? input.body : undefined;
+    const arm = { armed: this.weapon !== 'none', armLength: b.armUpper + b.armLower };
+    const before = () => effectorStage(this.#context(this.#before), this.weapon, this.#before);
+    const motion = stepArm(st.arm, move, arm, before, dt, this.#log);
     st.clock += dt;
     if (input.position) this.position.copy(input.position);
     if (input.yaw !== undefined) this.yaw = input.yaw;
@@ -285,7 +299,8 @@ export class Humanoid implements Rig {
     st.aim = approach(st.aim, input.aim ?? 0, dt * S.aim);
     st.blink -= dt;
     if (st.blink < -S.blink.shut) st.blink = S.blink.gap + this.#rng.next() * S.blink.spread;
-    const body = input.body ?? {};
+    const direct = move ? undefined : (input.body as Partial<BodyMotion> & { lead?: LimbSide });
+    const body = (move ? motion : direct) ?? {};
     if (body.lead) st.lead = sideSign(body.lead);
     for (const channel of ['lunge', 'hop', 'crouch', 'lean', 'twist'] as const) {
       st.body[channel] = MathUtils.lerp(st.body[channel], body[channel] ?? 0, Math.min(1, dt * S.body[channel]));
@@ -311,9 +326,9 @@ export class Humanoid implements Rig {
     return this.step(input).solve();
   }
 
-  /** What the effector stage reads now. */
-  #context(): EffectorContext {
-    const { state: st, effectors: E, build: b } = this;
+  /** What the effector stage reads now, its anchors placed in `E` (the humanoid's effectors by default). */
+  #context(E: Effectors = this.effectors): EffectorContext {
+    const { state: st, build: b } = this;
     return {
       build: b,
       armed: this.weapon !== 'none',
@@ -333,6 +348,7 @@ export class Humanoid implements Rig {
       chest: E.chest,
       shoulders: E.shoulders,
       hips: E.hips,
+      arm: st.arm,
     };
   }
 
@@ -341,7 +357,7 @@ export class Humanoid implements Rig {
     const { pose: P, build: b, effectors: E } = this;
     const s = b.size;
     const down = this.state.weights.down;
-    yaw.setFromAxisAngle(UP, this.yaw);
+    yaw.setFromAxisAngle(UP, this.yaw + this.state.arm.turn);
     knock.setFromAxisAngle(X_AXIS, -down * KNOCKDOWN.turn);
     P.reset();
     P.rootRot.copy(yaw).multiply(knock);
