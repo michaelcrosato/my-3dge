@@ -580,3 +580,16 @@ export type { Telegraph } from './world/telegraphs';
 export type { TelegraphSpec } from './world/telegraphs';
 export type { TelegraphPlace } from './world/telegraphs';
 export type { PointLike } from './world/telegraphs';
+// Animation checks (WP 6.6): the state matrix (each body state held at each facing, from rest and back to rest) and
+// animCheckBody, which checks a whole body over it: every pose, the same hashes twice, 1/60 s against 1/120 s; and the
+// camera presets sheets of it are drawn from.
+export { stateMatrix } from './anim/check';
+export { STATE_MATRIX } from './anim/check';
+export type { MatrixState } from './anim/check';
+export type { MatrixRun } from './anim/check';
+export type { StateMatrixOptions } from './anim/check';
+export { animCheckBody } from './anim/check';
+export type { BodyCheckOptions } from './anim/check';
+export type { BodyCheckReport } from './anim/check';
+export type { AnimCheckName } from './anim/check';
+export { SHEET_CAMERAS } from './anim/check';

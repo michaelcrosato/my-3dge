@@ -1,0 +1,374 @@
+[
+  {
+    "id": "move:axekick",
+    "metric": "footSlide",
+    "value": 0.0637,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:axekick",
+    "metric": "twistJump",
+    "value": 2.4591,
+    "reason": "the axe kick's wind lifts the leg from rest in two steps (my-3d2dge's kick path, WP 6.1) and the thigh rolls about itself as the knee folds past 140°, on build:chibi"
+  },
+  {
+    "id": "move:backslash",
+    "metric": "footSlide",
+    "value": 0.1391,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:bash",
+    "metric": "footSlide",
+    "value": 0.2589,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:bash",
+    "metric": "pop",
+    "value": 0.6001,
+    "reason": "my-3d2dge's arm path (WP 6.1 holds it to the source within 1 cm): as the wind of a two-handed or vertical swing begins, the elbow snaps over in one step; on build:bulky's longer arm the jump crosses the carried 9-unit pop line"
+  },
+  {
+    "id": "move:cast",
+    "metric": "footSlide",
+    "value": 0.1145,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:claw",
+    "metric": "footSlide",
+    "value": 0.301,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:cross",
+    "metric": "footSlide",
+    "value": 0.2885,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:elbow",
+    "metric": "footSlide",
+    "value": 0.1648,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:flyingkick",
+    "metric": "footSlide",
+    "value": 0.2841,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:haymaker",
+    "metric": "footSlide",
+    "value": 0.4357,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:hook",
+    "metric": "footSlide",
+    "value": 0.2186,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:jab",
+    "metric": "footSlide",
+    "value": 0.1359,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:kick",
+    "metric": "footSlide",
+    "value": 0.0633,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:knee",
+    "metric": "footSlide",
+    "value": 0.1566,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:overhead",
+    "metric": "footSlide",
+    "value": 0.3571,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:overhead",
+    "metric": "pop",
+    "value": 0.6402,
+    "reason": "my-3d2dge's arm path (WP 6.1 holds it to the source within 1 cm): as the wind of a two-handed or vertical swing begins, the elbow snaps over in one step; on build:bulky's longer arm the jump crosses the carried 9-unit pop line"
+  },
+  {
+    "id": "move:overhead",
+    "metric": "twistJump",
+    "value": 2.206,
+    "reason": "the v1 pop pattern, carried with the arm path: the elbow's pole (my-3d2dge's hint) flips while the arm is folded past 140°, so the forearm rolls about itself in one step"
+  },
+  {
+    "id": "move:rising",
+    "metric": "footSlide",
+    "value": 0.0652,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:roundhouse",
+    "metric": "footSlide",
+    "value": 0.0645,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:slash",
+    "metric": "footSlide",
+    "value": 0.2046,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:spin",
+    "metric": "footSlide",
+    "value": 1.0622,
+    "reason": "the spin turns the whole body about its root (my-3d2dge's spin), the planted feet swinging round with it; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:sweep",
+    "metric": "footSlide",
+    "value": 0.1546,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:sweep",
+    "metric": "underFloor",
+    "value": 0.0191,
+    "reason": "a crouching strike (crouch 0.5-0.9) sinks the back foot's ball a few millimetres on build:bulky: the crouch floor sink of ADR-0009 amendment 3"
+  },
+  {
+    "id": "move:throw",
+    "metric": "footSlide",
+    "value": 0.3013,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:throw",
+    "metric": "pop",
+    "value": 0.6441,
+    "reason": "my-3d2dge's arm path (WP 6.1 holds it to the source within 1 cm): as the wind of a two-handed or vertical swing begins, the elbow snaps over in one step; on build:bulky's longer arm the jump crosses the carried 9-unit pop line"
+  },
+  {
+    "id": "move:throw",
+    "metric": "twistJump",
+    "value": 2.176,
+    "reason": "the v1 pop pattern, carried with the arm path: the elbow's pole (my-3d2dge's hint) flips while the arm is folded past 140°, so the forearm rolls about itself in one step"
+  },
+  {
+    "id": "move:thrust",
+    "metric": "footSlide",
+    "value": 0.4845,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:twohand",
+    "metric": "footSlide",
+    "value": 0.4445,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:twohand",
+    "metric": "pop",
+    "value": 0.6416,
+    "reason": "my-3d2dge's arm path (WP 6.1 holds it to the source within 1 cm): as the wind of a two-handed or vertical swing begins, the elbow snaps over in one step; on build:bulky's longer arm the jump crosses the carried 9-unit pop line"
+  },
+  {
+    "id": "move:twohand",
+    "metric": "twistJump",
+    "value": 3.1258,
+    "reason": "the v1 pop pattern, carried with the arm path: the elbow's pole (my-3d2dge's hint) flips while the arm is folded past 140°, so the forearm rolls about itself in one step"
+  },
+  {
+    "id": "move:twohand",
+    "metric": "underFloor",
+    "value": 0.007,
+    "reason": "a crouching strike (crouch 0.5-0.9) sinks the back foot's ball a few millimetres on build:bulky: the crouch floor sink of ADR-0009 amendment 3"
+  },
+  {
+    "id": "move:uppercut",
+    "metric": "footSlide",
+    "value": 0.0986,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "move:uppercut",
+    "metric": "twistJump",
+    "value": 2.9886,
+    "reason": "the v1 pop pattern, carried with the arm path: the elbow's pole (my-3d2dge's hint) flips while the arm is folded past 140°, so the forearm rolls about itself in one step"
+  },
+  {
+    "id": "move:uppercut",
+    "metric": "underFloor",
+    "value": 0.005,
+    "reason": "a crouching strike (crouch 0.5-0.9) sinks the back foot's ball a few millimetres on build:bulky: the crouch floor sink of ADR-0009 amendment 3"
+  },
+  {
+    "id": "pose:crouch",
+    "metric": "footSlide",
+    "value": 0.1424,
+    "reason": "the soles slide to the pose's stance as its weight eases in and back out (my-3d2dge's effector layers move them along the floor, never stepping); the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "pose:crouch",
+    "metric": "underFloor",
+    "value": 0.0417,
+    "reason": "a known floor sink (ADR-0009 amendment 3, authoring.test.ts KNOWN): the old leg had no ankle, so the back foot's ball sinks when kneeling, crouching, dashing or in guard, worst on build:bulky; the post-IK foot plant settles it"
+  },
+  {
+    "id": "pose:die",
+    "metric": "footSlide",
+    "value": 0.7361,
+    "reason": "the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "pose:die",
+    "metric": "rateDrift",
+    "value": 0.0766,
+    "reason": "my-3d2dge's die pose eases hurt and kneel twice a step toward opposite targets (humanoid.ts step, as engine:1815, 1821 and 1826 do), so they move by a step's worth, not by time: at half steps the flinch is half as deep; the fix belongs to humanoid.ts"
+  },
+  {
+    "id": "pose:die",
+    "metric": "underFloor",
+    "value": 0.0301,
+    "reason": "the die pose's knees give, and its get-up kneels: the kneel floor sink of ADR-0009 amendment 3 (worst on build:bulky)"
+  },
+  {
+    "id": "pose:down",
+    "metric": "footSlide",
+    "value": 0.4371,
+    "reason": "the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "pose:down",
+    "metric": "underFloor",
+    "value": 0.0022,
+    "reason": "the knockdown's rigid turn (my-3d2dge's) swings the left sole 2 mm under the floor as the body tips back, on build:chibi"
+  },
+  {
+    "id": "pose:guard",
+    "metric": "footSlide",
+    "value": 0.2917,
+    "reason": "the soles slide to the pose's stance as its weight eases in and back out (my-3d2dge's effector layers move them along the floor, never stepping); the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "pose:guard",
+    "metric": "underFloor",
+    "value": 0.0066,
+    "reason": "a known floor sink (ADR-0009 amendment 3, authoring.test.ts KNOWN): the old leg had no ankle, so the back foot's ball sinks when kneeling, crouching, dashing or in guard, worst on build:bulky; the post-IK foot plant settles it"
+  },
+  {
+    "id": "pose:kneel",
+    "metric": "footSlide",
+    "value": 0.4792,
+    "reason": "the soles slide to the pose's stance as its weight eases in and back out (my-3d2dge's effector layers move them along the floor, never stepping); the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "pose:kneel",
+    "metric": "underFloor",
+    "value": 0.0943,
+    "reason": "a known floor sink (ADR-0009 amendment 3, authoring.test.ts KNOWN): the old leg had no ankle, so the back foot's ball sinks when kneeling, crouching, dashing or in guard, worst on build:bulky; the post-IK foot plant settles it"
+  },
+  {
+    "id": "reaction:die",
+    "metric": "footSlide",
+    "value": 0.9632,
+    "reason": "the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "reaction:die",
+    "metric": "rateDrift",
+    "value": 0.0766,
+    "reason": "my-3d2dge's die pose eases hurt and kneel twice a step toward opposite targets (humanoid.ts step, as engine:1815, 1821 and 1826 do), so they move by a step's worth, not by time: at half steps the flinch is half as deep; the fix belongs to humanoid.ts"
+  },
+  {
+    "id": "reaction:die",
+    "metric": "underFloor",
+    "value": 0.1045,
+    "reason": "the die pose's knees give, and its get-up kneels: the kneel floor sink of ADR-0009 amendment 3 (worst on build:bulky)"
+  },
+  {
+    "id": "reaction:fallBack",
+    "metric": "footSlide",
+    "value": 0.964,
+    "reason": "the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "reaction:fallBack",
+    "metric": "underFloor",
+    "value": 0.1108,
+    "reason": "the get-up kneels on the back foot: the kneel floor sink of ADR-0009 amendment 3 (worst on build:bulky)"
+  },
+  {
+    "id": "reaction:fallFront",
+    "metric": "footSlide",
+    "value": 1.0783,
+    "reason": "the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "reaction:fallFront",
+    "metric": "underFloor",
+    "value": 0.2974,
+    "reason": "WP 6.2's face-down turn (reactions.ts lyingLayer) points the feet only at full down: through the fall and the push-up (down 0.5) the toe tips dig up to 0.3 m into the floor on build:heroic; reported to the integrator for reactions.ts"
+  },
+  {
+    "id": "stance:guard",
+    "metric": "footSlide",
+    "value": 0.4043,
+    "reason": "my-3d2dge's gait has no foot lock: a planted sole drifts through its stance and slides to the standing stance as the walk stops (or, running in place, as the gait catches up with the belt); the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "stance:ready",
+    "metric": "footSlide",
+    "value": 0.4043,
+    "reason": "my-3d2dge's gait has no foot lock: a planted sole drifts through its stance and slides to the standing stance as the walk stops (or, running in place, as the gait catches up with the belt); the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "state:dodge",
+    "metric": "footSlide",
+    "value": 0.0821,
+    "reason": "the dash drags the trailing foot along the floor (my-3d2dge's dash, ADR-0009 amendment 3); the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "state:dodge",
+    "metric": "underFloor",
+    "value": 0.0496,
+    "reason": "a known floor sink (ADR-0009 amendment 3, authoring.test.ts KNOWN): the old leg had no ankle, so the back foot's ball sinks when kneeling, crouching, dashing or in guard, worst on build:bulky; the post-IK foot plant settles it"
+  },
+  {
+    "id": "state:followThrough",
+    "metric": "footSlide",
+    "value": 0.1627,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "state:knockedDown",
+    "metric": "footSlide",
+    "value": 0.4371,
+    "reason": "the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "state:knockedDown",
+    "metric": "underFloor",
+    "value": 0.0022,
+    "reason": "the knockdown's rigid turn (my-3d2dge's) swings the left sole 2 mm under the floor as the body tips back, on build:chibi"
+  },
+  {
+    "id": "state:run",
+    "metric": "footSlide",
+    "value": 0.4222,
+    "reason": "my-3d2dge's gait has no foot lock: a planted sole drifts through its stance and slides to the standing stance as the walk stops (or, running in place, as the gait catches up with the belt); the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  },
+  {
+    "id": "state:strike",
+    "metric": "footSlide",
+    "value": 0.1683,
+    "reason": "my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; the post-IK foot plant (ik.ts footPlant in the animator's post slot, ADR-0009 amendment 4) would hold it"
+  }
+]
