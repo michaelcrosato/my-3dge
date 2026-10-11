@@ -653,6 +653,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## tools/cmd
 
+- [`audio.ts`](../tools/cmd/audio.ts): Renders a sound in Node and prints its numbers, or mixes a replay's sound events (PLAN.md §8.1, WP 9.4, I-23).
+  - Exports: `default`, `encodeWav`, `mixSoundEvents`, `Picture`, `replaySoundEvents`, `SoundEvent`, `SoundTimeline`, `spectrogram`, `SPECTROGRAM`
+  - Tests: [`tools/cmd/audio.test.ts`](../tools/cmd/audio.test.ts)
 - [`check.ts`](../tools/cmd/check.ts): Runs the repository checks no standard tool covers, last in `npm run check` (PLAN.md §8.1).
   - Exports: `assetScan`, `binaryKind`, `CheckContext`, `CheckOutcome`, `CheckPlugin`, `default`, `discoverPlugins`, `isLane`, `repositoryFiles`, `runChecks`
   - Tests: [`tools/cmd/check.test.ts`](../tools/cmd/check.test.ts)
@@ -800,6 +803,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## tools/qa
 
+- [`audio.ts`](../tools/qa/audio.ts): The `audio` QA family (PLAN.md §8.6, WP 9.4, I-23, I-29): `node x qa audio` renders every sound the shared registry has, the engine's `sfx` and `song` entries (engine/audio/data) and a game's (each `*.ts` module under `labs/<name>/sounds/` imported first), and measures each render by numbers: no ear needed (doctrine: Verifiable).
+  - Exports: `AUDIO_LIMITS`, `checkSounds`, `dbfs`, `default`, `fft`, `findClicks`, `frameSpectrum`, `loadSoundModules`, `soundMetrics`, `SoundMetrics`, `soundModules`, `SoundProblem`, `soundProblems`, `spectralCentroid`
+  - Tests: [`tools/qa/audio.test.ts`](../tools/qa/audio.test.ts)
 - [`geo.ts`](../tools/qa/geo.ts): The `geo` QA family (PLAN.md §8.6, WP 2.4, I-29): `node x qa geo` checks every `geometry` entry the shared registry has (the kit's, engine/gfx/geometry/builtins.ts, and a game's: each `*.ts` module under `labs/<name>/geometry/` imported first), built at its defaults, and the level meshes (engine/gfx/level/meshes.ts) of every level file the `level` family reads (tools/qa/level.ts: `labs/box/levels/`, `fixtures/levels/`; a level that does not compile is the `level` family's to report).
   - Exports: `checkGeometries`, `checkLevelMeshes`, `default`, `geometryModules`, `LEVEL_DRAW_CALLS`, `LEVEL_VERTICES_PER_TILE`, `MAX_SIZE`
   - Tests: [`tools/qa/geo.test.ts`](../tools/qa/geo.test.ts)

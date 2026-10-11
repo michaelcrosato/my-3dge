@@ -2304,6 +2304,18 @@ For the agents who maintain the engine.
 - `checkAll` (function): Runs every tool in parallel, prints their output in order, and returns the exit code (0 only if all pass).
 - `CheckTool` (interface): One T0 tool: its name and its command line, run from the repository root.
 
+### [`tools/cmd/audio.ts`](../tools/cmd/audio.ts)
+
+- `default` (default): Renders a sound in Node and prints its numbers, or mixes a replay's sound events (PLAN.md §8.1, WP 9.4, I-23).
+- `encodeWav` (function): Encodes samples as a 16-bit mono PCM WAV file, clamped to ±1.
+- `mixSoundEvents` (function): The events' effects rendered (each once per variant, seed 0, at 44,100 Hz) and summed into one mono mix at least `seconds` long, with each event's span in it, `[start, end)` in samples.
+- `Picture` (type): A picture as RGBA bytes, row by row from the top.
+- `replaySoundEvents` (function): Plays `replay` (its scene defined on `registry`) step by step, as `playReplay` does, hashing its checkpoints, and reads the sound events from the sim's event trace after setup, each change-point and each step.
+- `SoundEvent` (interface): One sound event of a replay: when, from which sim event, which effect at which gain and variant.
+- `SoundTimeline` (interface): A replay's sound events, the problems of those that name no sound, its length and the hashes of its checkpoints.
+- `spectrogram` (function): A spectrogram of `samples` as RGBA bytes (see the file comment for its axes and colours).
+- `SPECTROGRAM` (const): The spectrogram's size, FFT length, floor (dBFS) and lowest frequency (Hz).
+
 ### [`tools/cmd/check.ts`](../tools/cmd/check.ts)
 
 - `assetScan` (const): The asset scan (doctrine: Assets).
@@ -2857,6 +2869,23 @@ For the agents who maintain the engine.
 - `DevServer` (interface): A running dev server.
 - `freePort` (function): Asks the system for a free TCP port on 127.0.0.1.
 - `startVite` (function): Starts Vite on the repository at `root` (default: this repository), on `port` (default: any free port).
+
+### [`tools/qa/audio.ts`](../tools/qa/audio.ts)
+
+- `AUDIO_LIMITS` (const): The levels and limits the checks use (see the file comment).
+- `checkSounds` (function): The violations of every sound on `registry` (or those of `ids`): effects, then songs, each in id order.
+- `dbfs` (const): `x` in decibels relative to full scale, one decimal.
+- `default` (default): The `audio` QA family (PLAN.md §8.6, WP 9.4, I-23, I-29): `node x qa audio` renders every sound the shared registry has, the engine's `sfx` and `song` entries (engine/audio/data) and a game's (each `*.ts` module under `labs/<name>/sounds/` imported first), and measures each render by numbers: no ear needed (doctrine: Verifiable).
+- `fft` (function): In-place radix-2 FFT of `re` and `im`, whose length is a power of two.
+- `findClicks` (function): The clicks of `samples`, as sample indices `i`, one per 1 ms: each jump `x[i] − x[i−1]` of at least 0.05 (silence before the start and after the end) into or out of near-silence (the 1 ms before or from it peaking below a sixteenth of the jump) that the waveform does not repeat: no jump of the same sign at least half as large in the 25 ms before an onset, or after a cut.
+- `frameSpectrum` (function): The amplitude spectrum of the `size` samples centred on `centre` (zeros beyond the ends), Hann-windowed: `size / 2 + 1` bins `rate / size` apart, about 1 for a full-scale sine on a bin.
+- `loadSoundModules` (function): Imports the games' sound modules, so their entries join the shared registry's (whose sound kinds it declares).
+- `soundMetrics` (function): Every metric of a render (see `SoundMetrics`).
+- `SoundMetrics` (interface): What `soundMetrics` measures.
+- `soundModules` (function): A game's sound modules, `labs/<name>/sounds/*.ts` (tests excluded), labs and files in name order.
+- `SoundProblem` (interface): A problem a render shows: its metric, its value (larger is worse) and the sentence an agent reads.
+- `soundProblems` (function): The problems of a render of a `kind` (`sfx` or `song`) sound, judged by its metrics against `AUDIO_LIMITS`.
+- `spectralCentroid` (function): The power-weighted mean frequency of `samples`' spectrum (2048-sample frames, half overlapping), in Hz; 0: silence.
 
 ### [`tools/qa/geo.ts`](../tools/qa/geo.ts)
 
