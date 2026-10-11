@@ -13,7 +13,8 @@
  * "The source's object" is proved twice: offline, by the SHA-256 of `JSON.stringify` of each rejoined set with those
  * changes taken off, against the source's recorded here (key order included, so the clips' order and every field's
  * order count, not only the values); and, when the checkout resolves (else deferred: no source), against the source
- * itself: deep-equal, the same `text()` for every clip, and the tool writing exactly the committed files.
+ * itself: deep-equal, the same `text()` for every clip, and the tool writing exactly the committed files. The changes
+ * are checked offline too: the `alt` tags sit on exactly the 84 re-exports, and each CMU license is the catalog's.
  *
  * @see tools/anim/repack.ts
  * @see tools/anim/shardfall.ts
@@ -42,6 +43,7 @@ import { shardfallSet } from '../../../../../tools/anim/shardfall';
 import { requireSource } from '../../../../../tools/lib/source';
 import { legacy } from '../../../anim/clip-fixtures';
 import { canonicalSha256 } from '../catalogs/catalogs';
+import { readCatalogs } from '../sources/sources';
 
 /** Where a set came from: its checkout, its file there, its clips, and the SHA-256 of the source's object. */
 interface SourceSet {
@@ -126,9 +128,18 @@ function withoutAltTags(set: ClipSet): ClipSet {
 /** my-3d2dge's license in the CMU set's source records, which CMU's terms replaced (WP 8.5). */
 const LEGACY_CMU_LICENSE = 'free for all uses (may be copied, modified, or redistributed without permission)';
 
-/** The CMU set as my-3d2dge wrote it: its sources' licenses as they were. */
+/** CMU's terms, as the CMU catalog states them (`"$sources".CMU.license`): what each CMU source record says. */
+const CMU_LICENSE = readCatalogs()['cmu.json']?.$sources.CMU?.license;
+
+/**
+ * The CMU set as my-3d2dge wrote it: each source record that says the catalog's CMU terms says the old wording again.
+ * A record that says anything else is left as it is, so the SHA-256 and the deep-equal still catch it.
+ */
 function withLegacyLicense(set: ClipSet): ClipSet {
-  const sources = Object.entries(set.sources ?? {}).map(([id, s]) => [id, { ...s, license: LEGACY_CMU_LICENSE }]);
+  const sources = Object.entries(set.sources ?? {}).map(([id, s]) => [
+    id,
+    s.license === CMU_LICENSE ? { ...s, license: LEGACY_CMU_LICENSE } : s,
+  ]);
   return { ...set, sources: Object.fromEntries(sources) };
 }
 
@@ -176,6 +187,13 @@ describe('data/anim/sets/', () => {
     }
     const reexports = Object.values(sets.mesh2motion?.clips ?? {}).filter((clip) => clip.orig !== undefined);
     expect(reexports.map((clip) => clip.clip)).toEqual(tagged.map((clip) => clip.clip));
+  });
+
+  it("gives each of cmu's 25 source records CMU's terms, exactly as catalogs/cmu.json states them", () => {
+    expect(CMU_LICENSE, 'catalogs/cmu.json "$sources".CMU.license').toMatch(/^CMU terms /);
+    const records = Object.entries(sets.cmu?.sources ?? {});
+    expect(records).toHaveLength(25);
+    for (const [id, record] of records) expect(record.license, `cmu: ${id}'s license`).toBe(CMU_LICENSE);
   });
 
   it("holds Quaternius v2's 102 clips and v1's Punch_Enter in quaternius, and only v2's from shardfall", () => {
