@@ -351,7 +351,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   const step = (intents: Record<string, unknown>) => {
     if (playback && !playback.done) {
       playback.step(started.session);
-      started.view?.stepped();
+      started.stepped(); // its hit-stops reach the clock as in live play
     } else {
       playback = null;
       started.stepOnce(intents);

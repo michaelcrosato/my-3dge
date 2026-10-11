@@ -326,3 +326,33 @@ export type { Telegraph } from './world/telegraphs';
 export type { TelegraphSpec } from './world/telegraphs';
 export type { TelegraphPlace } from './world/telegraphs';
 export type { PointLike } from './world/telegraphs';
+
+// Combat helpers (WP 6.3): hit queries against hurt capsules found through a spatial hash (cones with height windows,
+// weapon sweeps), damage on health and crowd bodies (knockback as momentum, launches, death into the corpse group, the
+// event damage), hit-stop handed to the frame clock's budget, and projectiles with swept tests.
+export { PROJECTILE_FIELDS } from './world/projectiles';
+export { PROJECTILE } from './world/projectiles';
+export type { Projectile } from './world/projectiles';
+export type { ProjectileState } from './world/projectiles';
+export type { ProjectileStep } from './world/projectiles';
+export type { ProjectileHit } from './world/projectiles';
+export { stepProjectiles } from './world/projectiles';
+export type { HurtCapsule } from './world/projectiles';
+export type { HurtSet } from './world/projectiles';
+export { capsuleCast } from './world/projectiles';
+export type { WallTest } from './world/projectiles';
+export type { WallContact } from './world/projectiles';
+export { inCone } from './sim/hits';
+export { coneHits } from './sim/hits';
+export { sweepTouches } from './sim/hits';
+export { sweepHits } from './sim/hits';
+export { physicsWalls } from './sim/hits';
+export { HEALTH_FIELDS } from './sim/damage';
+export { HEALTH } from './sim/damage';
+export type { Health } from './sim/damage';
+export type { DamageTarget } from './sim/damage';
+export type { HitSpec } from './sim/damage';
+export type { DamageEvent } from './sim/damage';
+export type { DamageEvents } from './sim/damage';
+export { damage } from './sim/damage';
+export { requestHitStop } from './sim/damage';
