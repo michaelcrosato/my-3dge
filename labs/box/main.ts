@@ -1,8 +1,9 @@
 /**
  * @file The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports the box's scenes and levels, then starts
  * the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's
- * replays offered to `?replay=<name>`. Everything else a page does (routes, the renderer, the warm-up, the frame
- * loop, `window.__engine`, the error overlay) is the engine's, so this file stays a list of the box's content.
+ * replays offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: jump, then dash) for every
+ * scene. Everything else a page does (routes, the renderer, the warm-up, the frame loop, `window.__engine`, the error
+ * overlay, the touch layer) is the engine's, so this file stays a list of the box's content.
  *
  * Every module under `labs/box/scenes/` is imported, so a scene added there (`node x new scene
  * labs/box/scenes/<name>`) opens at `?scene=<name>` with no change here. Levels come in as text through Vite's `?raw`
@@ -12,12 +13,14 @@
  *
  * @example
  * // http://127.0.0.1:5173/labs/box/?scene=room&cam=topdown&box.room.speed=3
+ * // http://127.0.0.1:5173/labs/box/?scene=room-hero&cam=threequarter
  * // node x shot labs/box --scene room --cam iso
  */
 /// <reference types="vite/client" />
 import { createEngine } from '../../engine';
 import roomLevel from './levels/room.txt?raw';
 import { room } from './scenes/room';
+import { BOX_TOUCH } from './touch';
 
 /** The box's levels, by id, as text: the engine registers them. */
 const levels = { 'level:room': { text: roomLevel, file: 'labs/box/levels/room.txt' } };
@@ -39,4 +42,5 @@ const replays = Object.fromEntries(
   ).map(([path, load]) => [path.replace(/^.*\/|\.replay\.json$/g, ''), load]),
 );
 
-await createEngine({ canvas: document.querySelector<HTMLCanvasElement>('#view')!, scenes, levels, replays });
+const canvas = document.querySelector<HTMLCanvasElement>('#view')!;
+await createEngine({ canvas, scenes, levels, replays, touchLayout: BOX_TOUCH });
