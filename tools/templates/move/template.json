@@ -1,0 +1,11 @@
+{
+  "describe": "A move: a named strike in metres, radians and seconds (the swing's arc, height and reach, what strikes, the body motion, the phase times and the hit window), with a unit test that plays it on a timeline and measures its reach on a humanoid (PLAN.md WP 6.1).",
+  "id": "the module's path, labs/<lab>/moves/<name> (its id is move:<name>): labs/box/moves/lunge",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/moves|tools/templates/move)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/move/sampleMove",
+  "files": {
+    "move.ts.tmpl": "{{id}}.ts",
+    "move.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}

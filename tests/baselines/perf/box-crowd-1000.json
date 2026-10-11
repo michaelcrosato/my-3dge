@@ -1,0 +1,13 @@
+{
+  "scene": "box:crowd-1000",
+  "ladder": {
+    "setting": "box.crowd.count",
+    "steps": 300,
+    "rungs": {
+      "100": { "stepMs": 4, "hashMs": 14, "captureMs": 3 },
+      "1000": { "stepMs": 36, "hashMs": 130, "captureMs": 20 },
+      "5000": { "stepMs": 160, "hashMs": 650, "captureMs": 125 }
+    }
+  },
+  "reason": "WP 5.7, measured with node x perf labs/box --scene crowd-1000 --ladder on the development platform (Node 24, 20 cores at a load average of about 38 from up to 6 lanes, Rapier 0.21 SIMD): the hall with its hero and the crowd (mixed: half walkers, three in ten slimes, two in ten wisps) entering 25 a step and chasing him, 300 steps from the start, medians of 5 runs. Sim step: 2.06 ms at 100, 17.8 ms at 1,000 and 77.6 ms at 5,000 (at 5,000 the queue is still letting bodies in until step 200); hash: 6.8, 65 and 326 ms (most of it the walkers' animator data, the humanoid's state, which the state hash feeds through its general path); capture: 1.1, 9.0 and 61 ms. The budgets leave about 2x over these loaded medians, so only a real regression fails; a rung's budget holds for this scene, its settings and 300 steps."
+}

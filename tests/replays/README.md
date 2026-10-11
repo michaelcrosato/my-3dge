@@ -42,7 +42,8 @@ are in engine/sim/replay.ts; the inputs' vocabulary is engine/input/intents.ts.
 | Record or re-record the goldens of this platform (writes only when every file and the page pass) | `node x replay <file> --browser sim --update` (say why in the commit) |
 | Find the first step, entity and field where runs part | `node x replay <file> --browser sim --bisect` |
 | Show that a replay depends on the fdlibm swap | `node x replay <file> --browser sim --swap none` (must fail) |
-| Make a new one | write it by hand, or copy `out/sim/<scene>/run.replay.json` from `node x sim <scene>`, then `--browser sim --update` |
+| Make a new one | write it by hand, or copy `out/sim/<slug>/run.replay.json` from `node x sim <scene>` (the slug is the scene id as a directory name: `box:room` → `box-room`), then `node x replay <file> --browser sim --update` |
+| Make one for a box scene | the six steps in labs/box/README.md, "Adding a scene or a variant": named `box-<stage>-<name>.replay.json`, checked with `--browser page`, listed in that README and, for a stage, in tests/e2e/parity.spec.ts's `STAGES` (T2's page check plays only those) |
 
 The kernel replays (`kernel-*.replay.json`) run fixtures/scenes/kernel/index.ts. Without the swap, Node and Chromium
 part at step 0 (kernel-crowd) and by step 60 (kernel-movers), so their one set of goldens proves the swap end to end.
@@ -61,3 +62,8 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   kernel-crowd and `123e33f07be4148e` for kernel-movers). The runs themselves did not change: the kernel's
   `every(2.5)` is a whole 150 ticks, and each replay's final state, timer tuples and format tag aside, is the same
   field for field as under `my3dge-state/2`; only the hashes moved.
+- The goldens of the eight replays with a hero (box-2-walk, box-2-dash, box-2-jump, box-3-climb, box-3-dais,
+  box-3-knock, box-4-chase, box-4-hop) were re-recorded (`--update`, Node ×3 and Chromium ×3 agreeing) when the
+  humanoid's state gained the arm path, `HumanoidState.arm` (WP 6.1: a move told as the body state `body` plays
+  on the arms), which the hero's animator saves into the hashed state. The runs themselves did not change: with
+  `arm` left out of the animator's saved state, all fifteen replays gave their earlier goldens in Node and Chromium.

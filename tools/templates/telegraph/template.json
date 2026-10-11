@@ -1,0 +1,11 @@
+{
+  "describe": "A telegraph: an attack's warning shape on the floor as data (an arc, a ring, a line or a cone, in metres), with a unit test that it hits inside its reach and counts a near miss just past it (PLAN.md WP 6.4).",
+  "id": "the module's path, labs/<lab>/telegraphs/<name> (its id is telegraph:<name>): labs/box/telegraphs/tailSweep",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/telegraphs|tools/templates/telegraph)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/telegraph/sampleTelegraph",
+  "files": {
+    "telegraph.ts.tmpl": "{{id}}.ts",
+    "telegraph.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}

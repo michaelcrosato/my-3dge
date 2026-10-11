@@ -6,8 +6,8 @@
  * exit 2 naming the closest; `replayText` writes readable, exact text.
  * @see tools/cmd/sim.ts
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { checkReplay, playReplay, type Replay } from '../../engine/sim/replay';
 import { dispatch, ROOT } from '../x';
@@ -52,6 +52,18 @@ describe('x sim', () => {
     expect(playReplay(replay).hashes['240']).toBe(hash);
     const again = await sim('kernel', '--steps', '240', '--set', 'kernel.movers=4');
     expect(again.lines[0]).toBe(lines[0]);
+  });
+
+  it('writes its files beside its report, for a scene id that is no directory name too (box:room)', async () => {
+    const { code, lines } = await sim('labs/box/scenes/room', '--steps', '1', '--map');
+    expect(code).toBe(0);
+    const dir = dirname(lines.at(-1)!.replace('report: ', ''));
+    expect(dir).toBe('out/sim/box-room');
+    expect(lines).toContain(`files: ${dir}/state.json, ${dir}/run.replay.json`);
+    expect(lines.find((line) => line.startsWith('map: '))).toMatch(new RegExp(`^map: ${dir}/map.txt: `));
+    for (const file of ['report.json', 'state.json', 'run.replay.json', 'map.txt']) {
+      expect(existsSync(join(ROOT, dir, file)), file).toBe(true);
+    }
   });
 
   it('adds the feel meter’s report with --feel (WP 3.2), and refuses it for a scene without an actor', async () => {

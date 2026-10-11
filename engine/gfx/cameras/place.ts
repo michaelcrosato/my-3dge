@@ -1,6 +1,8 @@
 /**
  * @file Cameras into three.js (PLAN.md WP 2.5, §8.3): `createCamera` makes the camera a code names
- * (engine/gfx/cameras/codes.ts) from the camera before it, and `placeCamera` puts a pose on a three.js camera each
+ * (engine/gfx/cameras/codes.ts, and WP 3.9's `FOLLOW_CAMERAS`, the chase camera, first person and the depth rail,
+ * whose modules read their own codes: `readCameraCode` reads them all) from the camera before it, and
+ * `placeCamera` puts a pose on a three.js camera each
  * frame, so the renderer draws it (`gfx.frame({ scene, camera })`, engine/gfx/renderer.ts). `createCameraPair` holds
  * one `PerspectiveCamera` and one `OrthographicCamera` (both keeping their height boost, engine/gfx/cameras/boost.ts)
  * and places the one a pose's projection names, so switching cameras never makes another three.js camera (that it
@@ -28,12 +30,40 @@
 import { OrthographicCamera, PerspectiveCamera, WebGPUCoordinateSystem } from 'three/webgpu';
 import { MathUtils } from '../../core/math';
 import { BoostedOrthographicCamera, BoostedPerspectiveCamera, boost } from './boost';
+import { createChaseCamera, parseChaseCode, type ChaseSpec } from './chase';
 import { parseCameraCode, type CameraSpec } from './codes';
+import { createFirstCamera, parseFirstCode, type FirstSpec } from './first';
 import { createFixedCamera } from './fixed';
 import { createFlyCamera, type FlyBounds } from './fly';
 import { createOrbitCamera, ORBIT_LIMITS } from './orbit';
 import { poseTarget, rangeProblems, refuse, type Camera, type CameraPose } from './pose';
 import { createViewCamera } from './presets';
+import { createRailCamera, parseRailCode, type RailSpec } from './rail';
+
+/** WP 3.9's cameras, which follow the hero and read their own codes: chase, first person, the depth rail. */
+export const FOLLOW_CAMERAS = Object.freeze(['chase', 'first', 'rail'] as const);
+
+/** The code data of any camera: codes.ts's, or a WP 3.9 camera's. */
+export type AnyCameraSpec = CameraSpec | ChaseSpec | FirstSpec | RailSpec;
+
+/** Any camera `createCamera` makes: codes.ts's (`Camera`), or a WP 3.9 camera, whose inputs add the hero's. */
+export type AnyCamera =
+  | Camera
+  | ReturnType<typeof createChaseCamera>
+  | ReturnType<typeof createFirstCamera>
+  | ReturnType<typeof createRailCamera>;
+
+/**
+ * Reads any camera's code: `cam3=chase…`, `cam3=first…` and `cam3=rail…` by their modules, every other by
+ * `parseCameraCode`. Throws `GFX_BAD_CAMERA_CODE` or `GFX_UNKNOWN_CAMERA`.
+ */
+export function readCameraCode(code: string): AnyCameraSpec {
+  const head = /^\??(?:cam3?=)?([^,]*)/.exec(String(code).trim())?.[1].trim();
+  if (head === 'chase') return parseChaseCode(code);
+  if (head === 'first') return parseFirstCode(code);
+  if (head === 'rail') return parseRailCode(code);
+  return parseCameraCode(code);
+}
 
 /** Puts `pose` on `camera` for a picture `aspect` (width / height) wide, boost included (see the file comment). */
 export function placeCamera(pose: CameraPose, camera: PerspectiveCamera | OrthographicCamera, aspect: number): void {
@@ -99,14 +129,18 @@ export interface CreateCameraOptions {
 }
 
 /**
- * The camera `code` names (a code, or its data from `parseCameraCode`): `cam=iso`, `cam3=orbit,…`. Switching from
- * `from`, the camera before it: a following view or orbit starts on its target (until the first follow), an orbit
- * without angles looks the same way, and a bare `fly` or `fixed` starts at its place (the prototype's switching).
- * Throws `GFX_BAD_CAMERA_CODE` or `GFX_UNKNOWN_CAMERA` for a bad code.
+ * The camera `code` names (a code, or its data from `readCameraCode`): `cam=iso`, `cam3=orbit,…`, `cam3=chase`.
+ * Switching from `from`, the camera before it: a following view or orbit starts on its target (until the first
+ * follow), an orbit without angles looks the same way, a bare `fly` or `fixed` starts at its place (the prototype's
+ * switching), and a bare chase or first person keeps its heading. Throws `GFX_BAD_CAMERA_CODE` or
+ * `GFX_UNKNOWN_CAMERA` for a bad code.
  */
-export function createCamera(code: string | CameraSpec, options: CreateCameraOptions = {}): Camera {
-  const spec = typeof code === 'string' ? parseCameraCode(code) : code;
+export function createCamera(code: string | AnyCameraSpec, options: CreateCameraOptions = {}): AnyCamera {
+  const spec = typeof code === 'string' ? readCameraCode(code) : code;
   const { from } = options;
+  if (spec.type === 'chase') return createChaseCamera({ ...spec, from });
+  if (spec.type === 'first') return createFirstCamera({ ...spec, from });
+  if (spec.type === 'rail') return createRailCamera(spec);
   const start = from && !('target' in spec && spec.target) ? poseTarget(from) : undefined;
   switch (spec.type) {
     case 'view': {

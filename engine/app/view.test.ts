@@ -5,12 +5,17 @@
  * switch by code and never change the hash; a restart reads the new run, and a restore or a dev action snaps the view
  * to the world (the dump and the next frame, at any alpha, show no place from before); an engine without a view refuses
  * `scene.dump` (`APP_NO_VIEW`), and one whose level is not registered refuses to start (`APP_NO_LEVEL`); `replay`
- * plays the box's replays to their goldens headless.
+ * plays the box's replays to their goldens headless. WP 3.10: in the room with a hero, the hero is a puppet, the
+ * cameras follow him, the chase camera stays inside the room, first person hides his body but the hands, and the
+ * cutaway cuts the wall before a side view.
  * @see engine/app/view.ts
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ROOM_PATHS } from '../../labs/box/scenes/room';
+import '../../labs/box/scenes/room-hero';
+import { JOINTS } from '../anim/skeleton';
+import { poseTarget, type CameraPose } from '../gfx/cameras/pose';
 import { createRegistry, registry } from '../core/registry';
 import { defineScene } from '../sim/scene';
 import { defineLevel } from '../world/level/level';
@@ -49,7 +54,7 @@ describe('createHeadless({ view: true })', () => {
     engine.step(60);
     const moved = (engine.scene as Dumps).dump({ filter: 'pathMover#1' });
     expect(moved).toMatch(/pathMover#1 Mesh at 5,0,4\.5 /); // 1.5 m/s for 1 s along the line east
-    expect((engine.scene as Dumps).dump({ depth: 1 }).split('\n')).toHaveLength(7);
+    expect((engine.scene as Dumps).dump({ depth: 1 }).split('\n')).toHaveLength(8); // the scene, sky, sun, its target, ground, level, stand-ins, actors
   });
 
   it('throws no renderer for render and shot, and switches cameras without touching the hash', async () => {
@@ -123,5 +128,28 @@ describe('createHeadless({ view: true })', () => {
     await expect(createHeadless({ scene: 'lost', registry: lonely, view: true })).rejects.toThrow(
       /APP_NO_LEVEL.*defineLevel\('level:nowhere'/,
     );
+  });
+
+  it('draws the hero as a puppet and follows him: chase inside the room, first person without his body', async () => {
+    const engine = await createHeadless({ scene: 'box:room-hero', view: true });
+    type Info = { code: string; pose: CameraPose; culled?: string[] };
+    const cameras = engine.camera as { get(): Info; set(code: string): Info };
+    const start = poseTarget(cameras.get().pose); // the first follow snaps to him, not to the room's middle (8, 6)
+    expect(start[0]).toBeCloseTo(3.5, 9);
+    expect(start[2]).toBeCloseTo(2.5, 9);
+    engine.step(40, { move: [1, 0] });
+    const hero = engine.get(1)!.actor as { x: number; y: number; z: number };
+    expect((engine.scene as Dumps).dump({ filter: 'actor#1' })).toMatch(/actor#1 SkinnedMesh .*entity 1/);
+    const chase = cameras.set('cam3=chase,0,-20,5.5');
+    expect(chase.culled).toBeUndefined();
+    const [x, y, z] = chase.pose.position;
+    expect(x > 1 && x < 15 && z > 1 && z < 11 && y > hero.y).toBe(true); // in front of the north wall, not in it
+    const first = cameras.set('cam3=first');
+    expect(first.culled).toEqual(JOINTS.filter((joint) => joint !== 'handL' && joint !== 'handR'));
+    expect(Math.hypot(first.pose.position[0] - hero.x, first.pose.position[2] - hero.z)).toBeLessThan(0.5); // eyes ahead of the feet, leaning into the walk
+    expect(first.pose.position[1] - hero.y).toBeGreaterThan(0.8); // at his eyes
+    expect(cameras.set('cam=iso').culled).toBeUndefined();
+    cameras.set('cam=side'); // from the south, level with him: the south wall cuts low so the view sees him
+    expect((engine.scene as Dumps).dump({ filter: ':cut' })).toMatch(/wall@1,11-14,11:cut InstancedMesh .*×14/);
   });
 });

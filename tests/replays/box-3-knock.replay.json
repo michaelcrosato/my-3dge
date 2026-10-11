@@ -1,0 +1,40 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Box 3, the hall with its props (100 crates and barrels): the hero walks west off the dais into a crate and pushes it 4 m before him, shoves it (attack) 3 m on, walks south-east and shoves another crate 2.9 m across the floor, then pushes a barrel 3.4 m east, toward a pillar.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "box:hall-props",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [
+    [20, { "move": [-1, 0] }],
+    [140, { "move": null }],
+    [165, { "move": [-1, 0] }],
+    [178, { "move": null }],
+    [190, { "p": ["attack"] }],
+    [240, { "move": [0.7071067811865475, 0.7071067811865476] }],
+    [345, { "move": null }],
+    [360, { "p": ["attack"] }],
+    [400, { "move": [0.83, -0.56] }],
+    [444, { "move": [1, 0] }],
+    [540, { "move": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "986c86277b66e22b",
+      "60": "44914e4e95db6a1d",
+      "120": "e30947e9e5d884da",
+      "180": "a7061779dddf8830",
+      "240": "d83db3b39cf97a0f",
+      "300": "392cf7016fdad32d",
+      "360": "607353301b744afb",
+      "420": "26efcde93e2b7711",
+      "480": "edc8832a909f8322",
+      "540": "37a0969fb03b2dcf",
+      "600": "47dfa00fa824cefe"
+    }
+  }
+}

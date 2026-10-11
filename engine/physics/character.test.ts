@@ -1,5 +1,5 @@
 /**
- * @file Tests for the character controller (engine/physics/character.ts) on the steps fixture's course
+ * @file Tests for the character controller (engine/physics/character.ts and move.ts) on the steps fixture's course
  * (fixtures/scenes/steps): WP 3.2's Done-when numbers (the feel meter's are in feel.test.ts): every tick keeps ≥ 95%
  * of its move across a one-box floor and a floor of merged boxes, it climbs steps up to its configured height and no
  * higher, walks up slopes to 50°, peaks at v²/2g, dashes speed × duration and waits for its cooldown, pushes a 20 kg
@@ -14,7 +14,6 @@ import {
   createCharacter,
   createCharacterState,
   feetOf,
-  moveCharacter,
   stepCharacter,
   type Character,
   type CharacterInput,
@@ -22,6 +21,7 @@ import {
 } from './character';
 import { Vector3 } from '../core/math';
 import { driveMover, MOVER, type Mover } from './bodies';
+import { moveCharacter } from './move';
 import { createPhysics, rapierOf } from './world';
 
 const DT = 1 / 60;

@@ -6,7 +6,9 @@
  * refuses `--swap`, and writes Prettier-clean goldens only once every file and the page came out clean, every failure
  * keeps its sentence under `--bisect` (the bisect's first line inside it), and bad files and flags are named. The
  * Chromium half is proven by `node x replay tests/replays --browser sim` (WP 1.5's Verify), through the same player;
- * here a second Node runtime stands in for it.
+ * here a second Node runtime stands in for it. The other replays' goldens are held in Node by their own tests:
+ * labs/box/scenes/room-hero.test.ts (box-2-*), engine/app/view.test.ts (box-1-*) and the fixtures' index.test.ts
+ * (crowd-1000, physics-40, physics-props).
  * @see tools/cmd/replay.ts
  */
 import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -73,12 +75,17 @@ async function run(label: string, runtime: Runtime, text: string): Promise<Run> 
 }
 
 describe('x replay in Node', () => {
-  it('gives the kernel replays their goldens, three runs each', async () => {
-    const { code, lines, report } = await replay('tests/replays');
+  it('gives the kernel replays their goldens, three runs each, from a directory', async () => {
+    // Only the kernel replays: each other replay has its own Node test of its goldens (see the file comment), and a
+    // whole tests/replays/ here grew with every replay added until it timed out under x ci's load.
+    const dir = mkdtempSync(join(tmpdir(), 'x-replay-'));
+    temporary.push(dir);
+    for (const name of ['kernel-crowd', 'kernel-movers']) {
+      copyFileSync(join(ROOT, `tests/replays/${name}.replay.json`), join(dir, `${name}.replay.json`));
+    }
+    const { code, lines, report } = await replay(dir);
     expect(code).toBe(0);
-    expect(lines[0]).toMatch(
-      new RegExp(`^x replay: ok: \\d+ replays match their golden hashes \\(${PLATFORM}\\): Node ×3$`),
-    );
+    expect(lines[0]).toBe(`x replay: ok: 2 replays match their golden hashes (${PLATFORM}): Node ×3`);
     expect(
       lines.some((line) =>
         /^kernel-movers: 600 steps, 11 golden hashes, final [0-9a-f]{16}: Node ×3, all match$/.test(line),

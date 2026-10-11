@@ -10,6 +10,7 @@ import { dirname, join } from 'node:path';
 import { createServer } from 'vite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import config from '../../vite.config';
+import { CHILD_TIMEOUT_MS } from '../x';
 import { freePort, startVite, type DevServer } from './vite';
 
 const ROOT = join(import.meta.dirname, '..', '..');
@@ -92,11 +93,12 @@ describe('vite.config.ts', () => {
     expect(config.test?.exclude).toContain('.cache/**');
   });
 
-  it('makes a test filter that matches no file exit 1 (npm test -- <filter>)', () => {
+  it('makes a test filter that matches no file exit 1 (npm test -- <filter>)', { timeout: CHILD_TIMEOUT_MS }, () => {
     const report = join(mkdtempSync(join(tmpdir(), 'x-vitest-')), 'report.json');
     const run = spawnSync(process.execPath, [VITEST, 'run', 'no/such/test/path', `--outputFile.json=${report}`], {
       cwd: ROOT,
       encoding: 'utf8',
+      timeout: CHILD_TIMEOUT_MS,
     });
     expect(run.stdout + run.stderr).toContain('No test files found');
     expect(run.status).toBe(1);

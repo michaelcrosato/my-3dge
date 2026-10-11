@@ -1,0 +1,20 @@
+{
+  "action": "groundPound",
+  "desc": "A ground pound (SM64: a somersault, a hang 4 frames past the flip, a straight drop, the impact with a dust ring and a shake): played in the air; the drop holds until the game lands it (next).",
+  "beats": [
+    { "name": "flip", "seconds": 0.2, "body": { "air": true }, "motion": { "crouch": 0.6 }, "flip": { "turns": 1 } },
+    { "name": "hang", "seconds": 0.07, "body": { "air": true }, "motion": { "crouch": 0.6 } },
+    { "name": "drop", "seconds": 0.08, "until": "next", "motion": { "crouch": 0.2 }, "events": [{ "type": "drop" }] },
+    { "name": "impact", "seconds": 0.25, "motion": { "crouch": 0.9, "lean": 0.3 }, "events": [{ "type": "impact" }] },
+    { "name": "rise", "seconds": 0.2, "cancel": { "by": ["any"], "after": 0.5 } }
+  ],
+  "check": {
+    "signals": [{ "at": 0.45, "do": "next" }],
+    "lift": [
+      [0, 0],
+      [0.2, 0.8],
+      [0.27, 0.8],
+      [0.45, 0]
+    ]
+  }
+}

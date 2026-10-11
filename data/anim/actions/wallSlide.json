@@ -1,0 +1,42 @@
+{
+  "action": "wallSlide",
+  "desc": "Wall slide and wall kick (Mega Man X, Super Metroid, Celeste): a hand and a foot against the wall ahead, sliding down until the game kicks off (go kick, or finish) or lands (stop).",
+  "beats": [
+    {
+      "name": "catch",
+      "seconds": 0.08,
+      "body": { "air": true },
+      "motion": { "lean": -0.1 },
+      "effectors": { "handR": [0.35, 0.15, 0.1], "footR": [0.3, 0.12, 0.3] },
+      "events": [{ "type": "catch" }]
+    },
+    {
+      "name": "slide",
+      "seconds": 0.15,
+      "until": "next",
+      "body": { "air": true },
+      "motion": { "lean": -0.1 },
+      "effectors": { "handR": [0.35, 0.15, 0.1], "footR": [0.3, 0.12, 0.3] },
+      "events": [{ "type": "dust", "at": 1 }],
+      "cancel": { "by": ["jump", "move"] }
+    },
+    {
+      "name": "kick",
+      "seconds": 0.15,
+      "body": { "air": true },
+      "motion": { "lean": -0.3 },
+      "events": [{ "type": "kick" }]
+    }
+  ],
+  "exit": "kick",
+  "check": {
+    "signals": [{ "at": 0.8, "do": "kick" }],
+    "lift": [
+      [0, 0.8],
+      [0.8, 0.2],
+      [0.9, 0.3],
+      [1.1, 0]
+    ],
+    "seconds": 1.3
+  }
+}

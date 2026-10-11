@@ -1,0 +1,44 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Box 3, the hero walks a lap round the rune dais's top, 0.5 m up, walks down its south slope onto the floor and back up it, then crosses the rune circle north-west with a jump and walks back to the spawn.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "box:hall",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [
+    [20, { "move": [1, 0] }],
+    [50, { "move": [0, -1] }],
+    [110, { "move": [-1, 0] }],
+    [182, { "move": [0, 1] }],
+    [242, { "move": [1, 0] }],
+    [284, { "move": [0, 1] }],
+    [344, { "move": null }],
+    [360, { "move": [0, -1] }],
+    [420, { "move": null }],
+    [430, { "move": [-0.7071067811865475, -0.7071067811865476] }],
+    [455, { "b": ["jump"] }],
+    [470, { "b": null }],
+    [490, { "move": null }],
+    [520, { "move": [0.7071067811865475, 0.7071067811865476] }],
+    [580, { "move": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "9f763d2c91720d70",
+      "60": "dea30da63d8f51ee",
+      "120": "85c493d9419960d8",
+      "180": "973c7e01b9b01f53",
+      "240": "bc2c2b068283a3d7",
+      "300": "d64c14a4c15ed748",
+      "360": "d3e101777c1c3394",
+      "420": "5204b64d2c49198d",
+      "480": "67bcd9846a2eaab5",
+      "540": "b588dd06c8724e65",
+      "600": "68e5e336f4d5adfc"
+    }
+  }
+}

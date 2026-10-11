@@ -1,0 +1,9 @@
+{
+  "action": "deathCrush",
+  "desc": "Death by crushing (Mario, Crash): squashed flat in a tenth of a second, its feet where they stood, and left flat.",
+  "beats": [
+    { "name": "squash", "seconds": 0.1, "scale": [1.4, 0.15, 1.4], "events": [{ "type": "crush" }] },
+    { "name": "flat", "seconds": 0.1, "until": "next", "scale": [1.4, 0.15, 1.4] }
+  ],
+  "check": { "signals": [{ "at": 1, "do": "stop" }], "seconds": 1.5 }
+}

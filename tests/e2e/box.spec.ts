@@ -259,12 +259,16 @@ test.describe('the box, stage 1', () => {
       out['input.play'] = e.input.play('2').steps;
       out['input.state'] = typeof e.input.state();
       out['input.record'] = e.input.record().steps;
-      try {
-        out.feel = e.feel(); // the room has no actor
-      } catch (error) {
-        out.feel = (error as Error).message;
+      for (const member of ['feel', 'anim']) {
+        try {
+          out[member] = e[member](); // the room has no actor
+        } catch (error) {
+          out[member] = (error as Error).message;
+        }
       }
       out.render = (await e.render(1)).drawn;
+      const stats = e.stats(); // the virtual clock holds time, so only the counts are checked here
+      out.stats = { frames: stats.frames > 0, drawCalls: stats.drawCalls > 0, after: stats.pipelinesAfterWarmUp };
       out.shot = (await e.shot({ ids: true, metrics: false, thumbnail: false })).ids.objects;
       out.replay = (await e.replay(replay, { draw: 0 })).hashes['600'];
       out.seed = e.seed(9);
@@ -299,7 +303,9 @@ test.describe('the box, stage 1', () => {
       'input.state': 'object',
       'input.record': 12,
       feel: '[SIM_BAD_ARGUMENT] feel(id) got undefined: pass an actor’s id (none)',
+      anim: '[SIM_BAD_ARGUMENT] anim(id) got undefined: pass an animated actor’s id (none)',
       render: true,
+      stats: { frames: true, drawCalls: true, after: 0 },
       shot: 11,
       replay: GOLDEN['600'],
       seed: 9,

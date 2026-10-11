@@ -1,11 +1,18 @@
 /**
  * @file The view of a run (PLAN.md §6.4's `view.update`, §8.3, WP 2.7): what a running scene looks like, built
  * without a GPU, so a page draws it and `createHeadless({ view: true })` dumps it in Node. `createRunView` makes the
- * stage of the scene (engine/gfx/stage.ts: lights, the level's meshes, a stand-in per placed entity) and its camera
- * (engine/gfx/cameras: a camera code, `cam=iso` by default, following the level's middle), and keeps both in step
- * with the run: `stepped()` after every sim step reads where the entities are, `frame({ alpha, dt, aspect })` moves
- * the camera by a rendered frame and puts every stand-in `alpha` of the way between its last two steps, returning
- * what to draw (`{ scene, camera, alpha }`, engine/gfx/renderer.ts's `FrameView`). `restarted()` after the run
+ * stage of the scene (engine/gfx/stage.ts: lights, the level's meshes, actors as puppets, a stand-in per other placed
+ * entity) and its camera (engine/gfx/cameras: a camera code, `cam=iso` by default), and keeps both in step with the
+ * run: `stepped()` after every sim step reads where the entities are, `frame({ alpha, dt, aspect })` puts every
+ * puppet and stand-in `alpha` of the way between its last two steps and moves the camera by a rendered frame, then
+ * draws the crowd bodies as that camera sees them (engine/gfx/stageCrowd.ts: its level of detail and culling; after
+ * steps with no frame, `dump` draws them first), returning what to draw (`{ scene, camera, alpha }`, engine/gfx/renderer.ts's `FrameView`).
+ *
+ * The camera follows the player (WP 3.10): the first player actor's feet as the frame draws them, else the level's
+ * middle. The chase camera also gets the sim's read-only `QueryView` (engine/sim/queryView.ts) in a physics scene,
+ * so it stays in front of the walls; first person gets the player's eye, and hides his body but the hands from
+ * itself (near-body culling, `cameraInfo().culled`). While it follows a player the level's cutaway runs
+ * (engine/gfx/cutaway.ts): walls facing the camera and pillars before him cut away, so every view sees him. `restarted()` after the run
  * starts again (a new seed, a replay) or its world changes between steps (a restore, a dev action) reads the entities
  * afresh: the stand-ins snap to them, so no dump, shot or frame shows the places they had before.
  *
@@ -13,8 +20,9 @@
  * view starts (`APP_NO_LEVEL`), by the page (`import text from './levels/room.txt?raw'`) or a Node test (read the
  * file). Cameras are view state: switching one (`setCamera(code)`, `__engine.camera.set`) never reaches the sim.
  *
- * Invariants: presentation only (doctrine: WebGPU only): it reads the run and never writes it; one stage per view
- * and one three.js camera per projection (engine/gfx/cameras/place.ts), so switching cameras makes no new object.
+ * Invariants: presentation only (doctrine: WebGPU only): it reads the run and never writes it (the `QueryView` has
+ * no way in); one stage per view and one three.js camera per projection (engine/gfx/cameras/place.ts), so switching
+ * cameras makes no new object.
  *
  * @example
  * // const view = createRunView({ run: () => session, registry, materials: createMaterialLibrary() });
@@ -26,12 +34,13 @@
 import { codeError, defineCodes, type Log } from '../core/log';
 import type { Registry } from '../core/registry';
 import type { BoostedOrthographicCamera, BoostedPerspectiveCamera } from '../gfx/cameras/boost';
-import { createCamera, createCameraPair } from '../gfx/cameras/place';
-import type { Camera, CameraInput, CameraPose } from '../gfx/cameras/pose';
+import { createCamera, createCameraPair, type AnyCamera } from '../gfx/cameras/place';
+import type { CameraInput, CameraPose, Vec3 } from '../gfx/cameras/pose';
 import type { MaterialLibrary } from '../gfx/materials/library';
 import type { FrameView } from '../gfx/renderer';
 import { dumpScene, type DumpOptions } from '../gfx/sceneDump';
 import { createStage, type Stage } from '../gfx/stage';
+import { queryViewOf, type QueryView } from '../sim/queryView';
 import type { Session } from '../sim/scene';
 import type { EntityData } from '../sim/state';
 import { getLevel } from '../world/level/level';
@@ -62,6 +71,8 @@ export interface CameraInfo {
   /** The heading it looks along, rad: the intents' `cam`. */
   yaw: number;
   pose: CameraPose;
+  /** First person: the player's joints whose body parts it hides from itself (near-body culling). */
+  culled?: string[];
 }
 
 /** What a view is made from. */
@@ -90,7 +101,7 @@ export interface ViewFrame {
 export interface RunView {
   readonly stage: Stage;
   /** The camera's state (what codes and the devices change). */
-  readonly camera: Camera;
+  readonly camera: AnyCamera;
   /** Both three.js cameras, perspective then orthographic: what a warm-up compiles for. */
   readonly cameras: readonly [BoostedPerspectiveCamera, BoostedOrthographicCamera];
   /** The three.js camera the last frame placed. */
@@ -129,16 +140,46 @@ export function createRunView(options: RunViewOptions): RunView {
   const level = scene.level === undefined ? null : getLevel(scene.level, registry);
   const stage = createStage({ level, materials: options.materials, registry, log: options.log });
   const pair = createCameraPair();
-  let camera = createCamera(options.cam ?? DEFAULT_CAMERA);
+  let camera: AnyCamera = createCamera(options.cam ?? DEFAULT_CAMERA);
   let drawn: BoostedPerspectiveCamera | BoostedOrthographicCamera = pair.perspective;
   let aspect = HEADLESS_ASPECT;
-  const follow = stage.centre;
+  let culled: string[] = [];
+  let alpha = 1;
+  let crowdStale = false;
+  /** Poses and draws the crowd bodies as the camera now placed sees them. */
+  const drawCrowd = () => {
+    stage.crowd.draw(alpha, drawn);
+    crowdStale = false;
+  };
+  const views = new WeakMap<object, QueryView>();
+  /** The sim's read-only queries, for the chase camera's walls; none without physics. */
+  const queries = (): QueryView | undefined => {
+    const run = options.run();
+    if (!run.scene.physics) return undefined;
+    const world = run.world;
+    if (!views.has(world)) views.set(world, queryViewOf(world));
+    return views.get(world);
+  };
+  /** What the camera takes from the run this frame: whom it follows, his eye, the walls. */
+  const follow = (): { follow: Vec3; eye?: Vec3; queries?: QueryView } => {
+    const player = stage.actors.player();
+    return { follow: player?.feet ?? stage.centre, eye: player?.posed?.eye, queries: queries() };
+  };
+  /** Steps the camera by `dt` with `input`, then hides the player's body from a first-person camera. */
+  const move = (input: CameraInput | undefined, dt: number): CameraPose => {
+    const pose = camera.update({ ...follow(), ...input }, dt);
+    culled = stage.actors.cull(camera.type === 'first' ? pose.position : null);
+    const player = stage.actors.player();
+    if (player) stage.cutaway?.update(pose, player.feet);
+    return pose;
+  };
   const info = (): CameraInfo => ({
     code: camera.code(),
     describe: camera.describe(),
     type: camera.type,
     yaw: camera.yaw(),
     pose: camera.pose(),
+    ...(camera.type === 'first' ? { culled: [...culled] } : {}),
   });
   const view: RunView = {
     stage,
@@ -150,28 +191,36 @@ export function createRunView(options: RunViewOptions): RunView {
       return drawn;
     },
     stepped() {
-      stage.capture(placed(options.run(), stage.kinds));
-      stage.draw(1); // the latest state until a frame interpolates: what a headless dump shows
+      const run = options.run();
+      stage.capture(placed(run, stage.kinds), run.world.dt);
+      stage.draw((alpha = 1)); // the latest state until a frame interpolates: what a headless dump shows
+      crowdStale = true; // posed by the next frame or dump, not every step
     },
     restarted() {
+      const run = options.run();
       stage.capture([]);
-      stage.capture(placed(options.run(), stage.kinds));
-      stage.draw(1);
+      stage.capture(placed(run, stage.kinds), run.world.dt);
+      stage.draw((alpha = 1));
+      crowdStale = true;
     },
     frame(frame) {
       aspect = frame.aspect;
-      const pose = camera.update({ follow, ...frame.input }, frame.dt);
-      drawn = pair.place(pose, aspect);
-      stage.draw(frame.alpha);
+      stage.draw((alpha = frame.alpha));
+      drawn = pair.place(move(frame.input, frame.dt), aspect);
+      drawCrowd();
       return { scene: stage.scene, camera: drawn, alpha: frame.alpha };
     },
     cameraInfo: info,
     setCamera(code) {
       camera = createCamera(code, { from: camera.pose() });
-      drawn = pair.place(camera.update({ follow }, 0), aspect);
+      drawn = pair.place(move(undefined, 0), aspect);
+      drawCrowd();
       return info();
     },
-    dump: (dumpOptions) => dumpScene(stage.scene, dumpOptions),
+    dump: (dumpOptions) => {
+      if (crowdStale) drawCrowd();
+      return dumpScene(stage.scene, dumpOptions);
+    },
     dispose: () => stage.dispose(),
   };
   view.restarted();

@@ -1,6 +1,5 @@
 /**
- * @file Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5): `node x sim <scene>
- * [--scene id] [--steps n] [--seed s] [--set key=value…] [--feel] [--map]`.
+ * @file Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5).
  *
  * `<scene>` is a scene module (a `.ts` file, or a directory with `index.ts`, such as `fixtures/scenes/kernel`) or a
  * scene id (`kernel`), found among the modules under `fixtures/scenes/` and `labs/<name>/scenes/` that call
@@ -8,8 +7,8 @@
  * changes a setting for the run (validated against the settings schema; an unknown path names the closest), and the
  * values are recorded in the report's `args` and `metrics`. The run goes through `createHeadless`
  * (engine/app/headless.ts: the inspector's `step`, `hash`, `trace` and `state`) and steps with no intents; its session
- * records it, so `run.replay.json` beside the report replays it (engine/sim/replay.ts), golden hashes for this
- * platform included (`node x replay out/sim/<id>/run.replay.json`; copy it to tests/replays/ to keep it).
+ * records it, so `run.replay.json` replays it (engine/sim/replay.ts), golden hashes for this platform included (copy
+ * it to tests/replays/ to keep it). Every file goes beside the report, in `out/sim/<slug>/` (`box:room`: `box-room`).
  *
  * Output, at most about 20 lines: the hash; the entities, systems and events (by type, counted from the trace after
  * every step); the settings changed; the trace's per-part digests; the files written. `state.json` holds the final
@@ -44,6 +43,7 @@ import { defineLevel, getLevel } from '../../engine/world/level/level';
 import type { CompiledLevel } from '../../engine/world/level/types';
 import { NAV_DIRECTIONS, NavGrid } from '../../engine/world/nav';
 import { walk } from '../lib/docs';
+import { targetSlug } from '../lib/report';
 import { UsageError, type Command, type CommandResult } from '../x';
 
 /** Where scene modules live: `fixtures/scenes/` and every `labs/<name>/scenes/` (tests/pages/replay.ts globs the same). */
@@ -247,7 +247,7 @@ export default {
     const stepMs = steps ? (performance.now() - started) / steps : 0;
     const hash = engine.hash();
     const trace = engine.trace();
-    const out = join('out', 'sim', scene.id);
+    const out = join('out', 'sim', targetSlug(scene.id)); // beside the report
     mkdirSync(join(root, out), { recursive: true });
     const platform = `${process.platform}-${process.arch}`;
     const replay = { ...session.record(), description: `x sim ${target}`, hashes: { [platform]: hashes } };

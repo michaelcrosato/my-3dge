@@ -1,0 +1,15 @@
+{
+  "action": "deathShrink",
+  "desc": "Death by falling into a pit (ALttP: six shrink steps of 10 frames): the body shrinks to nothing toward its feet as it spins twice, then stays gone.",
+  "beats": [
+    {
+      "name": "shrink",
+      "seconds": 1,
+      "body": { "air": true },
+      "scale": [0.05, 0.05, 0.05],
+      "flip": { "turns": 2, "axis": "spin" }
+    },
+    { "name": "gone", "seconds": 0.1, "until": "next", "scale": [0.05, 0.05, 0.05], "events": [{ "type": "gone" }] }
+  ],
+  "check": { "signals": [{ "at": 1.4, "do": "stop" }], "seconds": 1.9 }
+}

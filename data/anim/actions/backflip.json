@@ -1,0 +1,28 @@
+{
+  "action": "backflip",
+  "desc": "A backflip (SM64: up 62, back 16): a crouch, one backward turn in the air, the landing squash. The game makes the jump.",
+  "beats": [
+    {
+      "name": "crouch",
+      "seconds": 0.1,
+      "motion": { "crouch": 0.5, "lean": -0.1 },
+      "events": [{ "type": "takeoff", "at": 1 }]
+    },
+    {
+      "name": "flip",
+      "seconds": 0.5,
+      "body": { "air": true },
+      "motion": { "crouch": 0.4 },
+      "flip": { "turns": 1, "axis": "back" }
+    },
+    { "name": "land", "seconds": 0.15, "motion": { "crouch": 0.5, "lean": 0.2 }, "events": [{ "type": "land" }] },
+    { "name": "recover", "seconds": 0.15, "cancel": { "by": ["any"] } }
+  ],
+  "check": {
+    "lift": [
+      [0.1, 0],
+      [0.35, 0.9],
+      [0.6, 0]
+    ]
+  }
+}

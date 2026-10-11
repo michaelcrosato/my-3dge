@@ -21,13 +21,14 @@
  */
 import { codeError } from '../core/log';
 import { defineMember, type InspectorHost } from '../dev/members';
+import type { StatsHost } from '../dev/stats';
 import type { FrameReport } from '../gfx/renderer';
 import type { ShotJson, ShotOptions } from '../gfx/shot';
 import type { PlayIntoOptions, PlayResult } from './playback';
 import type { RunView } from './view';
 
-/** What the view's members work on: the inspector's host, plus the view and the drawing. */
-export interface AppHost extends InspectorHost {
+/** What the view's members work on: the inspector's host, plus the view, the drawing and the stats meter. */
+export interface AppHost extends StatsHost {
   /** True once the engine is up (a page: its first frame drawn); never after a startup error. */
   readonly ready: boolean;
   /** The scene's view, or null (headless without `view: true`). */

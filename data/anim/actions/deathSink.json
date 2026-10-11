@@ -1,0 +1,27 @@
+{
+  "action": "deathSink",
+  "desc": "Death by wearing down, from poison, fire or bleeding (my-3d2dge's hero moment deathSink, Mesh2Motion's Death_A at 1.4 times): it clutches its chest and sinks onto its side, and stays down until the game revives it (finish: Quaternius' LayToIdle, as the hero's rise).",
+  "beats": [
+    {
+      "name": "sink",
+      "seconds": 3.2,
+      "clip": { "name": "MESH2MOTION/Death_A", "speed": 1.4, "hold": true, "landed": 3.75 },
+      "events": [{ "type": "down", "at": 0.84 }]
+    },
+    {
+      "name": "dead",
+      "seconds": 0.2,
+      "until": "next",
+      "body": { "down": 1 },
+      "clip": { "name": "MESH2MOTION/Death_A", "hold": true }
+    },
+    {
+      "name": "revive",
+      "seconds": 1.39,
+      "clip": { "name": "QUATERNIUS/LayToIdle", "speed": 1.1, "fade": 0.25, "out": 0.25 },
+      "events": [{ "type": "revive" }]
+    }
+  ],
+  "exit": "revive",
+  "check": { "signals": [{ "at": 3.6, "do": "finish" }] }
+}

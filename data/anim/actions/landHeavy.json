@@ -1,0 +1,13 @@
+{
+  "action": "landHeavy",
+  "desc": "A heavy landing (my-3d2dge's hero moment land, from Mesh2Motion's Land_Three_Point): from just before the feet touch, down onto one knee and a hand, then up. The game drops the body.",
+  "beats": [
+    {
+      "name": "land",
+      "seconds": 0.9,
+      "clip": { "name": "MESH2MOTION/Land_Three_Point", "at": 0.47, "fade": 0.06, "out": 0.3 },
+      "events": [{ "type": "land" }],
+      "cancel": { "by": ["move", "walk", "jump"], "after": 0.6 }
+    }
+  ]
+}

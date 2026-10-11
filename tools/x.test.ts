@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  CHILD_TIMEOUT_MS,
   closest,
   commandHelp,
   commandNames,
@@ -151,10 +152,23 @@ describe('the dispatcher', () => {
     expect(printed[1]).toBe('X_USAGE: unexpected argument "b" (usage: node x demo [target])');
   });
 
-  it(`prints at most ${MAX_LINES} lines and says where the rest is`, async () => {
-    const { printed } = await run(['chatty']);
+  it(`prints at most ${MAX_LINES} lines and says where the rest is: every line in output.txt beside the report`, async () => {
+    const { printed, latest, root } = await run(['chatty']);
     expect(printed).toHaveLength(MAX_LINES);
-    expect(printed[MAX_LINES - 2]).toBe('… 33 more in out/chatty/all/report.json');
+    expect(printed[MAX_LINES - 2]).toBe('… 33 more in out/chatty/all/output.txt');
+    const [, path] = /^… \d+ more in (\S+)$/.exec(printed[MAX_LINES - 2])!;
+    const output = readFileSync(join(root, path), 'utf8').trimEnd().split('\n');
+    expect(output[0]).toBe(printed[0]);
+    expect(output.slice(1)).toEqual(Array.from({ length: 50 }, (_, i) => `line ${i}`));
+    const cut = printed.slice(1, MAX_LINES - 2).length;
+    expect(output.slice(1 + cut)).toHaveLength(33); // the lines the output did not print
+    expect(latest.artifacts).toContainEqual({
+      path,
+      kind: 'text',
+      describes: 'every line of the output, 33 cut from it',
+    });
+    await dispatch(['chatty'], { root, commands: { chatty: commands.pass }, print: () => {} });
+    expect(existsSync(join(root, path))).toBe(false); // a run that cuts nothing leaves no stale output.txt
   });
 
   it('names the closest candidate only when it is close', () => {
@@ -175,8 +189,12 @@ describe('the commands in tools/cmd/', () => {
     }
   });
 
-  it('node x help exits 0 and lists every command', () => {
-    const output = execFileSync(process.execPath, ['x', 'help'], { cwd: ROOT, encoding: 'utf8' });
+  it('node x help exits 0 and lists every command', { timeout: CHILD_TIMEOUT_MS }, () => {
+    const output = execFileSync(process.execPath, ['x', 'help'], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      timeout: CHILD_TIMEOUT_MS,
+    });
     const lines = output.trimEnd().split('\n');
     expect(lines[0]).toMatch(/^x help: ok: /);
     // One command a line while they fit; past MAX_LINES, their names on a few lines (each with its sentence in a file).
@@ -190,16 +208,21 @@ describe('the commands in tools/cmd/', () => {
     expect(lines.length).toBeLessThanOrEqual(MAX_LINES);
   });
 
-  it('node x exits 2 for an unknown command and an unknown flag', () => {
-    const unknown = spawnSync(process.execPath, ['x', 'nosuch'], { cwd: ROOT, encoding: 'utf8' });
+  it('node x exits 2 for an unknown command and an unknown flag', { timeout: CHILD_TIMEOUT_MS }, () => {
+    const options = { cwd: ROOT, encoding: 'utf8', timeout: CHILD_TIMEOUT_MS } as const;
+    const unknown = spawnSync(process.execPath, ['x', 'nosuch'], options);
     expect(unknown.status).toBe(2);
-    const flag = spawnSync(process.execPath, ['x', 'help', '--verbose'], { cwd: ROOT, encoding: 'utf8' });
+    const flag = spawnSync(process.execPath, ['x', 'help', '--verbose'], options);
     expect(flag.status).toBe(2);
     expect(flag.stdout).toContain('X_UNKNOWN_FLAG: x help has no flag --verbose');
   });
 
-  it("node x <cmd> --help prints that command's help", () => {
-    const output = execFileSync(process.execPath, ['x', 'src', '--help'], { cwd: ROOT, encoding: 'utf8' });
+  it("node x <cmd> --help prints that command's help", { timeout: CHILD_TIMEOUT_MS }, () => {
+    const output = execFileSync(process.execPath, ['x', 'src', '--help'], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      timeout: CHILD_TIMEOUT_MS,
+    });
     expect(output.split('\n')[0]).toBe('x help: ok: node x src');
     expect(output).toContain(firstSentence(commandHelp(ROOT, 'src')).split(' ').slice(0, 4).join(' '));
   });

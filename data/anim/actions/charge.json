@@ -1,0 +1,33 @@
+{
+  "action": "charge",
+  "desc": "A charge-up (ALttP's spin attack: sparkles from 6 frames, ready at 48; Mega Man's buster): the weapon drawn back into move:spin's wind and held, full at 48 frames, until the game releases it (next, or go release before it is full), then the spin.",
+  "beats": [
+    {
+      "name": "gather",
+      "seconds": 0.1,
+      "move": { "id": "move:spin", "phase": "wind" },
+      "events": [{ "type": "sparkle", "at": 1 }]
+    },
+    { "name": "charge", "seconds": 0.7, "move": { "id": "move:spin", "phase": "wind", "u": [1, 1] } },
+    {
+      "name": "charged",
+      "seconds": 0.1,
+      "until": "next",
+      "move": { "id": "move:spin", "phase": "wind", "u": [1, 1] },
+      "events": [{ "type": "full" }]
+    },
+    {
+      "name": "release",
+      "seconds": 0.3,
+      "move": { "id": "move:spin", "phase": "active" },
+      "events": [{ "type": "release" }]
+    },
+    {
+      "name": "recover",
+      "seconds": 0.18,
+      "move": { "id": "move:spin", "phase": "recover" },
+      "cancel": { "by": ["any"], "after": 0.5 }
+    }
+  ],
+  "check": { "signals": [{ "at": 1.2, "do": "next" }], "seconds": 1.9 }
+}
