@@ -13,8 +13,9 @@ launch bodies, burst effects and show damage numbers, in replays that hold in No
 gate G7): every scene in every look, the torch-lit hall with its flickering torches and fog, toon shading with ink
 outlines, and the prototype's cel, pixel, bloom and FXAA over it, on the hall's rune floor, with no pipeline built after
 a warm-up and the goldens unchanged; and the benchmark, the fight and the crowd at 100, 1,000 and 5,000 within their
-budgets. Every claim below is checked by `tests/unit/box-readme.test.ts`: a setting, file or command named here that
-does not exist fails it.
+budgets. Clip mode (Phase 8): the hero and the mannequin play any clip of the animation library through the clip layer,
+the clip `node x anim show` prints, frame for frame. Every claim below is checked by `tests/unit/box-readme.test.ts`: a
+setting, file or command named here that does not exist fails it.
 
 ## The demo index
 
@@ -31,6 +32,7 @@ Every scene, what it proves, and the command that shows it; each scene opens in 
 | `labs/box/scenes/crowd-5000.ts` | Box 4: 5,000 bodies entering with no pipeline built; Box 6: the benchmark's crowd, within budget. | `node x perf labs/box --scene crowd-5000 --ladder --budget` |
 | `labs/box/scenes/fight.ts` | Box 5: combat, its deaths, launches, telegraphs, effects and damage numbers drawn from the sim, its goldens the same with effects on and off. | `node x replay tests/replays/box-5-fight.replay.json --browser page` |
 | `labs/box/scenes/fight-1000.ts` | Box 6: the benchmark, the fight at 100, 1,000 and 5,000, within budget. | `node x perf labs/box --scene fight-1000 --ladder --budget` |
+| `labs/box/scenes/clips.ts` | Clip mode (Phase 8): the hero and the mannequin play any clip of the library's 1,218 through the clip layer, over the hero's own rig; the clip a setting names is the one `x anim show` prints, frame for frame. | `npm run e2e -- tests/e2e/box-clips.spec.ts` |
 | every scene, every look | Box 6: every look renders with no pipeline built after a warm-up, across every toggle, and the goldens are unchanged (Looks, below). | `npm run e2e -- tests/e2e/box-look.spec.ts tests/e2e/parity.spec.ts` |
 
 The benchmark's budgets and the numbers they were measured from are in `tests/baselines/perf/box-fight-1000.json`
@@ -46,6 +48,7 @@ and `tests/baselines/perf/box-crowd-5000.json`.
 | `box:hall-props` (`labs/box/scenes/hall-props.ts`) | The hall with the hero and its props, standing in Rapier and drawn through one instanced batch per prop part: a brazier's fire on each of the 30 stands, and 100 crates and barrels (10 to 300) on the prototype's seeded spots, every fifth crate stacked on the one before where both are crates. He pushes them by walking into them, and shoves (J, the left mouse button) every prop within 1.9 m in his arc, knocking it away, both hands thrust forward. | `tests/e2e/box-hall.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-3-knock.replay.json`, `labs/box/scenes/hall-props.test.ts` |
 | `box:crowd-1000` (`labs/box/scenes/crowd-1000.ts`) | The hall with its hero and a crowd of 1,000 (its presets for 100 and 5,000 are `labs/box/scenes/crowd-100.ts` and `labs/box/scenes/crowd-5000.ts`, at `?scene=crowd-100` and `?scene=crowd-5000`): walkers (`labs/box/cast/walker.ts`, capsules walking at 1.75 to 2.5 m/s), slimes (`labs/box/cast/slime.ts`, balls hopping up to 2.75 m) and wisps (`labs/box/cast/wisp.ts`, flyers hovering 1.25 m up), half, three in ten and two in ten, queued at the start on the hall's floor and entering 25 a step. They chase the hero along a flow field toward his tile, round the pillars and up the stairs when he climbs to a gallery; level with him the walkers wait on a ring 1.5 m round him and the slimes on one 2.1 m round him, and the wisps circle him 4.4 to 6.3 m out. Their bodies push each other apart in Rapier. The page draws them through a crowd (instanced batches), each posed at the detail its distance from the camera allows: walkers as the neutral humanoid in four builds, slimes as blobs with horns, ears or wings, wisps as floaters with their motes. | `tests/e2e/box-crowd.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-4-chase.replay.json`, `tests/replays/box-4-hop.replay.json`, `labs/box/scenes/crowd-1000.test.ts`, `labs/box/cast/crowd.test.ts`, `tests/baselines/perf/box-crowd-1000.json` |
 | `box:fight` (`labs/box/scenes/fight.ts`) | Box 5: the hall, its hero with a sword (`HERO_FIGHT`, `labs/box/cast/hero.ts`) and a crowd of 36, mixed (its preset for 1,000 is `labs/box/scenes/fight-1000.ts`, at `?scene=fight-1000`), fighting. Attack (J, the left mouse button) runs his combo, a slash, a backslash and a spin, and out of a dash the thrust; skill (L, the right mouse button) fires a bolt (`labs/box/scenes/fight-hero.ts`). The walkers swing their fists, the slimes pounce and the wisps shoot (`WALKER_ATTACK`, `SLIME_ATTACK`, `WISP_ATTACK` in the cast's files; `labs/box/scenes/fight-foes.ts`), each telegraphing on the floor while it winds up, the walkers and slimes three at a time through his attack tokens. Blows land through the engine's `damage` (`labs/box/scenes/fight-rules.ts`): hit points, pushes, big hits throwing bodies up a little and killing ones throwing them high, corpses the crowd walks through, hit-stop, and the events the page draws effects and damage numbers from. | `tests/e2e/box-fight.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-5-fight.replay.json`, `labs/box/scenes/fight.test.ts` |
+| `box:clips` (`labs/box/scenes/clips.ts`) | Clip mode, the Mocap Lab's: the room, the hero at its spawn and the mannequin 1.5 m east of him (`body:mannequin` on `build:mannequin`, the figure the Quaternius clips were measured on), both playing the clip `box.clips.clip` names through the clip layer in their animators, the hero's retargeted to his build. He stays the player and walks under it; masked to his upper body (`box.clips.mask`), his legs keep their own walk. A new clip crossfades in from the pose on screen; a one-shot holds its end 0.8 s, then plays again; clips that travel play in place. The page loads the library first: every set under `data/anim/sets`, registered as a `clipset` (`__engine.describe('clipset')`). | `tests/e2e/box-clips.spec.ts`, `labs/box/scenes/clips.test.ts` |
 
 The page draws each mover as a crate: an entity is drawn as a stand-in box when one of its components declares `x`
 and `z` in metres (engine/gfx/stage.ts), until it draws itself: actors with an animator are puppets from Box 2
@@ -92,6 +95,13 @@ from `node x new look labs/box/looks/<name>`; the page imports every module unde
 | `box.crowd.count` | How many walkers, slimes and wisps fill the hall with the crowd (1,000 in `box:crowd-1000`, 100 and 5,000 in its presets; 0 to 5,000), when the scene starts. Changes play: recorded in replays. |
 | `box.crowd.mix` | Who fills it: `mixed` (half walkers, three in ten slimes, two in ten wisps), `walkers`, `slimes` or `wisps`, when the scene starts. |
 | `box.fight.god` | Whether foes' blows only flinch and push the hero in the fight (true, as the prototype's proof ran) or also take his hit points (false: at none he rallies at once), when the scene starts. |
+| `box.clips.clip` | The clip the figures play in clip mode, `<set>/<clip>` as `node x anim find cartwheel` lists them (the Quaternius set's Dance_Loop by default), or a name only one set has. Changes play: recorded in replays. |
+| `box.clips.speed` | The rate it plays at (1; 0 holds it). |
+| `box.clips.frame` | Frame stepping: the frame of its bake held, from 0, 30 a second (-1 plays). |
+| `box.clips.mirror` | Whether it plays mirrored (false). |
+| `box.clips.mask` | The joints it plays: `full`, or `upper` over the legs' own walk. |
+| `box.clips.cast` | Who plays it: `both`, `mannequin` or `hero`, when the scene starts. |
+| `box.clips.ik` | Whether the figures plant their feet and lift over the floor (true), when the scene starts. |
 | `post.look` | The look drawn (`look:clean`, the scene's own; the box's looks above). A view setting: never in the hash. |
 | `quality` | The quality tier: `auto` (`high` on a desktop), `high`, `medium` or `low`: shadow casters, bloom, pixel caps. A view setting. |
 | `gfx.effects` | Whether the fight's effects draw (true): bolts, telegraphs, trails, bursts. A view setting. |
@@ -112,6 +122,10 @@ the hall, `?replay=box-3-knock` the hall with its props, `?replay=box-4-chase` t
 and `?post.look=look:torch-lit` (a look, above). In the page,
 `window.__engine.help()` lists every member.
 
+`?scene=clips` opens clip mode (`labs/box/?scene=clips&box.clips.clip=cmu/Cartwheel&cam=threequarter`); the page loads
+the animation library for it alone. The page ships the clips, so it always shows 100STYLE's credit (CC BY 4.0,
+`data/anim/SOURCES.md`) in its corner.
+
 On a phone or tablet the page shows the touch controls (`labs/box/touch.ts`, for every scene): a floating stick
 wherever the thumb lands, attack as the main button, and jump, dash and the bolt beside it. Like the rest of the touch layer they are not
 tested (ADR-0021); `labs/box/?touch=on` shows them on a desktop.
@@ -126,7 +140,9 @@ tested (ADR-0021); `labs/box/?touch=on` shows them on a desktop.
    `node x sim labs/box/scenes/crowd-100 --steps 600 --set box.crowd.mix=slimes`, and its cost at 100, 1,000 and
    5,000, `node x perf labs/box --scene crowd-1000 --ladder`; for the fight,
    `node x sim labs/box/scenes/fight --steps 600 --set box.fight.god=false`; in a look,
-   `node x shot labs/box --scene hall --cam iso --set post.look=look:torch-cel`.
+   `node x shot labs/box --scene hall --cam iso --set post.look=look:torch-cel`; in clip mode,
+   `node x anim show Cartwheel` (the clip as text) and
+   `node x shot labs/box --scene clips --cam threequarter,0,5 --set box.clips.clip=cmu/Cartwheel --set box.clips.frame=30`.
 3. Prove play: `node x replay tests/replays/box-1-room.replay.json --browser page` (the goldens, in Node and in the
    page while it renders); `node x replay tests/replays/box-2-jump.replay.json --browser page` for the hero,
    `node x replay tests/replays/box-3-climb.replay.json --browser page` in the hall,
@@ -140,7 +156,8 @@ tested (ADR-0021); `labs/box/?touch=on` shows them on a desktop.
    (it reuses the session); `node x inspect --stop` ends it.
 5. Commit with the suites green: `npm run e2e -- tests/e2e/box.spec.ts tests/e2e/parity.spec.ts`, and for the hall
    `npm run e2e -- tests/e2e/box-hall.spec.ts`, for the crowd `npm run e2e -- tests/e2e/box-crowd.spec.ts`, for the
-   fight `npm run e2e -- tests/e2e/box-fight.spec.ts`, for the looks `npm run e2e -- tests/e2e/box-look.spec.ts`.
+   fight `npm run e2e -- tests/e2e/box-fight.spec.ts`, for the looks `npm run e2e -- tests/e2e/box-look.spec.ts`, for
+   clip mode `npm run e2e -- tests/e2e/box-clips.spec.ts`.
 
 ## Adding a scene or a variant
 
