@@ -4814,6 +4814,23 @@ For the agents who maintain the engine.
 
 - `look` (const): The look `look:torch-toon`: toon shading with outlines in the torch-lit hall.
 
+### [`labs/box/menu.ts`](../labs/box/menu.ts)
+
+- `BOX_ACTION_MAP` (const): The action map the page's input binds: createEngine's default (engine/input/input.ts).
+- `BoxMenuOptions` (interface): What the menu lists.
+- `ControlRow` (interface): One row of the controls: what it does, then the keys and mouse buttons, then the pad's buttons.
+- `controlRows` (function): The rows of the controls for `map`: moving first, then each other action in the map's order.
+- `createBoxMenu` (function): Builds the menu in `document` when `box.menu` shows it (see the file comment) and returns its panel; null when it stays out (automation, or `box.menu=off`).
+- `linkQuery` (function): A link's query: `changes` (null removes a key) over `search`, or over only its `keep` keys; `:` and `,` readable.
+- `MENU_KEY` (const): The key that shows and hides the menu: M, which no action map binds.
+- `MENU_SETTINGS` (const): The menu's view setting (see the file comment).
+- `MENU_STORAGE_KEY` (const): The `localStorage` key that remembers whether the reader left the menu `open` or `closed`.
+- `MenuEntry` (interface): A listed entry: a scene or a look, as its module exports it.
+- `menuShown` (function): Whether `setting` (the query's `box.menu`) shows the menu in a browser that automation does or does not drive.
+- `menuStartsOpen` (function): Whether the menu starts open: unless `storage` remembers the reader closing it; storage that throws forgets.
+- `MenuStorage` (type): Where the menu remembers being open or closed: the `localStorage` shape.
+- `rememberMenu` (function): Remembers in `storage` that the reader left the menu open or closed; storage that throws (blocked, full) forgets.
+
 ### [`labs/box/scenes/clips.ts`](../labs/box/scenes/clips.ts)
 
 - `clips` (const): Clip mode: the hero and the mannequin playing the library's clips in the room.

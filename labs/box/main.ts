@@ -10,6 +10,8 @@
  * as sounds, the demo song and the torches. Clip mode (`?scene=clips`, or `?replay=` one of its replays,
  * labs/box/scenes/clips.ts) loads the animation library first: every set under data/anim/sets/, as text
  * (`import.meta.glob`, never a fetch), registered by labs/box/library.ts; no other scene loads it.
+ * Before the engine starts, the menu for humans (labs/box/menu.ts) lists those scenes, replays and looks, cameras and
+ * the controls, so a person sees what the box offers while it loads, or after a bad route; automation never gets it.
  * Everything else a page does (routes, the renderer, the warm-up, the frame loop, `window.__engine`, the error overlay,
  * the touch layer) is the engine's, so this file stays a list of the box's content.
  *
@@ -33,6 +35,7 @@ import hallLevel from './levels/hall.txt?raw';
 import roomLevel from './levels/room.txt?raw';
 import { loadLibrary } from './library';
 import { HALL_MATERIALS } from './looks/hall-floor';
+import { createBoxMenu, type MenuEntry } from './menu';
 import { room } from './scenes/room';
 import { createBoxSound } from './sounds/page';
 import { BOX_TOUCH } from './touch';
@@ -43,18 +46,22 @@ const levels = {
   'level:hall': { text: hallLevel, file: 'labs/box/levels/hall.txt', materials: HALL_MATERIALS },
 };
 
+/** The entries of `kind` that `modules` export (scenes, looks), each once, in module order. */
+function exported(modules: Record<string, Record<string, unknown>>, kind: string): (MenuEntry & { kind: string })[] {
+  return Object.values(modules)
+    .flatMap((module) => Object.values(module))
+    .filter((value): value is MenuEntry & { kind: string } => (value as { kind?: unknown })?.kind === kind)
+    .filter((entry, i, all) => all.findIndex((other) => other.id === entry.id) === i);
+}
+
 /** The box's looks, each module imported now so its look registers: `?post.look=look:torch-lit` opens it. */
-import.meta.glob(['./looks/*.ts', '!./looks/*.test.ts'], { eager: true });
+const lookModules = import.meta.glob<Record<string, unknown>>(['./looks/*.ts', '!./looks/*.test.ts'], { eager: true });
+const looks = exported(lookModules, 'look');
 
 /** Every box scene module, imported now so each registers its scene; the room comes first, the default. */
 const modules = import.meta.glob<Record<string, unknown>>(['./scenes/*.ts', '!./scenes/*.test.ts'], { eager: true });
-const scenes = [
-  room.id,
-  ...Object.values(modules)
-    .flatMap((module) => Object.values(module))
-    .filter((value): value is { kind: 'scene'; id: string } => (value as { kind?: unknown })?.kind === 'scene')
-    .map((scene) => scene.id),
-].filter((id, i, all) => all.indexOf(id) === i);
+const sceneEntries = exported({ room: { room }, ...modules }, 'scene');
+const scenes = sceneEntries.map((entry) => entry.id);
 
 /** The box's replays, by name (`box-1-room`), as text loaded on demand. */
 const replays = Object.fromEntries(
@@ -71,6 +78,7 @@ const params = new URLSearchParams(location.search);
 const named = params.get('replay') ?? '';
 const replayScene = async () => (JSON.parse(await replays[named]()) as { scene: string }).scene; // ?replay alone
 const scene = params.get('scene') ?? (Object.hasOwn(replays, named) ? await replayScene() : '');
+createBoxMenu(document, { scenes: sceneEntries, looks, replays: Object.keys(replays), scene });
 if (/^(box:)?clips$/.test(scene)) await loadLibrary(libraryFiles);
 
 const canvas = document.querySelector<HTMLCanvasElement>('#view')!;

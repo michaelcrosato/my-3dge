@@ -61,4 +61,4 @@ pixel, bloom and FXAA filters, 5,000 bodies. It is the better demo for a person:
 and a bottleneck readout, a benchmark button, monster skins, waves, the card characters and a WebGL fallback. What
 my-3dge adds is underneath: audio, the 1,218-clip animation library with reactions, replays with the same golden
 hashes in Node and Chromium, about 3,400 tests, and a documented public API for game code. That only pays off once
-agents build games on it. The box's menu (branch `box-menu`) is the first step toward the panel.
+agents build games on it. The box's menu (labs/box/menu.ts) is the first step toward the panel.
