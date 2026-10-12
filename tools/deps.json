@@ -1,6 +1,6 @@
 {
   "$comment": "The dependency pins and why each is here (PLAN.md §6.10). Every field and rule: tools/cmd/deps.ts's file comment. Dates are npm's and nodejs.org's, UTC. Change pins through node x deps --update, or an upgrade WP.",
-  "measured": "2026-10-10",
+  "measured": "2026-10-12",
   "dependencies": {
     "three": {
       "qualifying": {
@@ -114,8 +114,8 @@
     },
     "@types/node": {
       "qualifying": {
-        "version": "24.7.1",
-        "date": "2025-10-09"
+        "version": "24.7.2",
+        "date": "2025-10-11"
       },
       "pin": {
         "version": "24.19.2",
@@ -180,8 +180,8 @@
     },
     "eslint-plugin-jsdoc": {
       "qualifying": {
-        "version": "61.1.0",
-        "date": "2025-10-09"
+        "version": "61.1.1",
+        "date": "2025-10-12"
       },
       "pin": {
         "version": "61.7.1",
@@ -281,12 +281,12 @@
         "date": "2025-10-06"
       },
       "pin": {
-        "version": "8.71.1",
-        "date": "2026-10-05"
+        "version": "8.71.2",
+        "date": "2026-10-12"
       },
       "newest": {
-        "version": "8.71.1",
-        "date": "2026-10-05"
+        "version": "8.71.2",
+        "date": "2026-10-12"
       },
       "rule": "compatible",
       "next": null,
