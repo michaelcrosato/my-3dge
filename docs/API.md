@@ -142,6 +142,7 @@ game agent's manual.
 - `CameraInfo` (interface from [`engine/app/view.ts`](../engine/app/view.ts)): What `camera.get()` and `camera.set(code)` return: the camera as a code, in words, and its pose.
 - `CameraInputSample` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): What the camera takes each frame: mouse look `[right, up]` rad, the right stick `[right, up]`, wheel notches.
 - `CameraLike` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A camera as the input reads it (engine/gfx/cameras/pose.ts `Camera`): its heading, and its pitch for first person.
+- `CameraPose` (interface from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): Where a camera is, where it looks and its lens, in a frame: plain, frozen data (see the file comment).
 - `canSee` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Whether an agent with its feet at `from` is aware of a target with its feet at `to`: within `range` metres on the ground, and either within `near` metres or in a clear sight line from its eye to the target's `aim`.
 - `Cape` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape: two chains, its left and right edges, held `width` apart (wider toward the hem by `flare`).
 - `CAPE` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
@@ -303,6 +304,7 @@ game agent's manual.
 - `EmitterLayer` (interface from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): One layer of an emitter, filled.
 - `EmitterSpec` (type from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): What `defineEmitter` takes: any field; of `ring` and `light`, any key.
 - `Engine` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): A started engine.
+- `EngineFrame` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): What `onFrame` gets once per drawn frame: the run to read, never to change (presentation only: nothing reaches the hash), and the camera the frame was drawn from.
 - `EngineInfo` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): What `info()` reports: the engine's identity and health, and the run.
 - `EngineOptions` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): How a page starts the engine.
 - `EngineStats` (interface from [`engine/dev/stats.ts`](../engine/dev/stats.ts)): What `__engine.stats()` returns: means in milliseconds, then the renderer's counts (null when not measured).
@@ -341,6 +343,7 @@ game agent's manual.
 - `FootPlantOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `footPlant` plants.
 - `FootPlantState` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
 - `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
+- `FrameWorld` (type from [`engine/app/engine.ts`](../engine/app/engine.ts)): The read side of the run's world a page gets each frame: its step, rate, entities and the trace of its events.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
 - `fromLegacy` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A legacy `E.MOVES` spec in the new fields (Appendix C, `LEGACY_FIELDS`); defaults are written out only when needed.
 - `FRU` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A rig-local point or direction: metres (or a direction's parts) forward, right and up.
@@ -2167,7 +2170,9 @@ For the agents who maintain the engine.
 - `createEngine` (function): Starts the engine in a page (see the file comment); resolves once it is up or has failed.
 - `Engine` (interface): A started engine.
 - `ENGINE_CODES` (const): The codes this module raises, with their fixes.
+- `EngineFrame` (interface): What `onFrame` gets once per drawn frame: the run to read, never to change (presentation only: nothing reaches the hash), and the camera the frame was drawn from.
 - `EngineOptions` (interface): How a page starts the engine.
+- `FrameWorld` (type): The read side of the run's world a page gets each frame: its step, rate, entities and the trace of its events.
 - `recordOf` (function): The log record for a thrown value: its own code and values when it is a coded error (a `GfxError` carries only its message, so the values are read back from it through the code's template), else `code` with the message.
 
 ### [`engine/app/headless.ts`](../engine/app/headless.ts)
@@ -4806,6 +4811,45 @@ For the agents who maintain the engine.
 - `ROOM_PATHS` (const): The movers' paths, in mover order, in the level's metres (x east, z south; a tile is 1 m).
 - `ROOM_SETTINGS` (const): The room's settings.
 
+### [`labs/box/sounds/boxHall.ts`](../labs/box/sounds/boxHall.ts)
+
+- `boxHall` (const): The song `song:boxHall`: the box's music, calm, with a fight's drums and lead from intensity 0.5.
+
+### [`labs/box/sounds/effects.ts`](../labs/box/sounds/effects.ts)
+
+- `boxDeath` (const): A body falling for good: a sinking groan, then the thud.
+- `boxHit` (const): A blow landing: a bright crack over a low knock.
+- `boxLaunch` (const): A bolt leaving: a rising saw with a hiss.
+- `boxStep` (const): A footstep on stone: a heel's low thump under a gritty scuff.
+- `boxStepIron` (const): A footstep on iron: a tick and a short metal ring.
+- `boxThud` (const): A body coming down (a landing, a slime's pounce): a falling sine with a dull burst.
+- `boxTorch` (const): A torch's crackle, looped on the ambience bus: pops over a soft roar that rises from and falls to silence.
+
+### [`labs/box/sounds/events.ts`](../labs/box/sounds/events.ts)
+
+- `BOX_FOOTSTEPS` (const): Footsteps by surface tag (the level legend's `surface`): the effect a step on it plays; `'*'` any other.
+- `BoxSoundEvent` (interface): One sound the box plays for a sim event.
+- `createSoundReader` (function): A reader that reads each event of a world once (see the file comment).
+- `footstepSfx` (function): The effect a footstep plays at `at` on `level`: its surface's (`BOX_FOOTSTEPS`), the `'*'` one off any level.
+- `Point` (type): A point in the world, metres.
+- `SOUND_EVENTS` (const): The event types that play a sound, in the order the file comment gives them.
+- `soundOf` (function): The sound one traced event plays in `world` on `level` (read at `world.tick`), or null when it plays none.
+- `SoundReader` (interface): Reads a world's new events as sounds (see the file comment).
+- `SoundWorld` (interface): What the reader reads of a world: its step, its event trace and its entities.
+- `timelineHash` (function): A timeline's hash: FNV-1a, 64 bits, over its JSON's UTF-16 code units, as 16 hex digits.
+
+### [`labs/box/sounds/page.ts`](../labs/box/sounds/page.ts)
+
+- `BOX_ROOMS` (const): The reverb by level id; any other level, or none, is dry.
+- `BoxSound` (interface): The box's sound in a page (see the file comment).
+- `BoxSoundInfo` (interface): What `info()` reports: plain data.
+- `createBoxSound` (function): Makes the box's sound: `audio` to play into (a page's `createAudio()` by default), published unless `publish` is false.
+- `LOG_SIZE` (const): How many sound events `info().log` keeps.
+- `MUSIC` (const): The song, and the seconds without a blow before it calms.
+- `nearestTorches` (function): The torches that sound: those of `playing` within `keep` m of the `voices`-th nearest, then the nearest others, up to `voices`; nearest first, ties by index.
+- `SoundFrame` (interface): What `frame` reads each rendered frame (the engine's `onFrame` gives it): never a way to change play.
+- `TORCH` (const): The torch ambience: voices at once, the margin before a nearer torch takes a voice (m), and its gain.
+
 ### [`labs/box/touch.ts`](../labs/box/touch.ts)
 
 - `BOX_TOUCH` (const): The box page's touch layout's id.
@@ -4861,6 +4905,12 @@ For the agents who maintain the engine.
 - `randomSound` (function): A seeded random sound of one to three voices; with its seed and rate, it is one case of the spec's sweep.
 - `SOUND_CASES` (const): The reference sounds.
 - `SoundCase` (interface): One reference sound: a definition rendered with a seed at a rate.
+
+### [`tests/pages/boxAudioTimeline.ts`](../tests/pages/boxAudioTimeline.ts)
+
+- `FIGHT_TIMELINE` (const): The fight replay (tests/replays/box-5-fight.replay.json) and its timeline's golden: how many sounds, their hash.
+- `soundTimeline` (function): Plays a replay's text and reads its sounds after every step, on its scene's `level` (see the file comment).
+- `Timeline` (interface): A replay's sound timeline: its sounds, their hash, the world's hash at the end and the events missed (0).
 
 ### [`tests/pages/crowd-render.ts`](../tests/pages/crowd-render.ts)
 

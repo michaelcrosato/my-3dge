@@ -245,13 +245,13 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `a frame threw, so the loop stopped: {message}`
 - Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
-- Registered in: [`engine/app/engine.ts` line 84](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 88](../engine/app/engine.ts)
 
 ### APP_NO_FRAME
 
 - Message: `no frame was drawn in {tries} tries: the warm-up never finished`
 - Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 92](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 96](../engine/app/engine.ts)
 
 ### APP_NO_LEVEL
 
@@ -263,7 +263,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the page has no replay {name}`
 - Fix: use one of: {names}
-- Registered in: [`engine/app/engine.ts` line 88](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 92](../engine/app/engine.ts)
 
 ### APP_NO_VIEW
 
@@ -293,7 +293,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 80](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 84](../engine/app/engine.ts)
 
 ## audio
 

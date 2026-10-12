@@ -31,6 +31,7 @@ Every scene, what it proves, and the command that shows it; each scene opens in 
 | `labs/box/scenes/crowd-5000.ts` | Box 4: 5,000 bodies entering with no pipeline built; Box 6: the benchmark's crowd, within budget. | `node x perf labs/box --scene crowd-5000 --ladder --budget` |
 | `labs/box/scenes/fight.ts` | Box 5: combat, its deaths, launches, telegraphs, effects and damage numbers drawn from the sim, its goldens the same with effects on and off. | `node x replay tests/replays/box-5-fight.replay.json --browser page` |
 | `labs/box/scenes/fight-1000.ts` | Box 6: the benchmark, the fight at 100, 1,000 and 5,000, within budget. | `node x perf labs/box --scene fight-1000 --ladder --budget` |
+| `labs/box/sounds/page.ts` | Phase 9: the box plays its sim events as sounds, spatialized and ducked, with torch ambience and a demo song; the fight replay's sound timeline hashes the same in Node and in Chromium. | `npm run e2e -- tests/e2e/box-audio.spec.ts` |
 | every scene, every look | Box 6: every look renders with no pipeline built after a warm-up, across every toggle, and the goldens are unchanged (Looks, below). | `npm run e2e -- tests/e2e/box-look.spec.ts tests/e2e/parity.spec.ts` |
 
 The benchmark's budgets and the numbers they were measured from are in `tests/baselines/perf/box-fight-1000.json`
@@ -75,6 +76,17 @@ Switch with `?post.look=look:torch-toon` (`labs/box/?scene=fight&cam3=chase&post
 SwiftShader, about a minute for the hall in a style under the sky; a GPU takes a moment); from then on a switch builds
 nothing. `quality` sets how many torches cast shadows: 2 at `high`, 1 at `medium`, none at `low`. A new look comes
 from `node x new look labs/box/looks/<name>`; the page imports every module under `labs/box/looks/`.
+
+## Sound
+
+The box sounds through its page (`labs/box/sounds/page.ts`, `window.__boxSound`): silent until the first key, click or
+end of a touch. It then plays the sim's events as sounds (`labs/box/sounds/events.ts`: footsteps by the surface
+underfoot, landings, jumps and dashes, hits, bolts launched, pounces, and deaths that duck the music), placed where they
+happen and muffled behind walls. The level sets the room's reverb, and the two torches nearest the camera crackle
+(`sfx:boxTorch`). The demo song is `song:boxHall` (`labs/box/sounds/boxHall.ts`); its drums and lead join while blows
+land. The effects are `labs/box/sounds/effects.ts`: `node x qa audio` checks them, and
+`node x audio sfx:boxHit --spectrogram` shows one. The fight replay's sound timeline hashes the same in Node and in
+Chromium (`tests/e2e/box-audio.spec.ts`).
 
 ## Settings
 

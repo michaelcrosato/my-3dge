@@ -27,3 +27,16 @@ The DSP tests and hashes (WP 9.1); the asset scan.
 - **Size** came out M, not S.
 - Evidence: `engine/audio/data/sounds.test.ts` (33 effects x 4 variants, 6 drums, 5 songs, 44 goldens, linux-x64),
   `sfx.test.ts`, `song.test.ts`. Clipping, DC and duration checks: deferred to WP 9.4.
+
+## Amendment 2 (2026-10-12, WP-9.5)
+- **A page's own presentation each frame.** Core change, app: `createEngine({ onFrame })` is called once per drawn
+  frame, after the draw and the damage numbers, with `EngineFrame { world: FrameWorld (tick, hz, get, query,
+  events.trace), scene, camera: CameraPose, queries: read-only QueryView in a physics scene else null, dt }`.
+  `EngineFrame`, `FrameWorld` and `CameraPose` are appended to `engine/index.ts`. The page reads, never writes, so
+  hashes are unchanged (parity and box suites green).
+- **The box's sound comes from its sim events.** Box sound events are a pure page-side map of the box's sim events
+  (`labs/box/sounds/events.ts`), not sfx payloads in the sim, so scenes and engine events are untouched. A replay's
+  timeline is read after every step and hashed (FNV-1a 64 over JSON). One golden for Node and Chromium: box-5-fight,
+  81 sounds, `8da39df56b106f5f`. "Launches" means bolts launched (shot).
+- **Plan edit:** WP-9.5's Owns adds `engine/app/engine.ts`, `engine/index.ts` (append), `labs/box/main.ts` (wiring),
+  `tests/pages/box-audio.{html,ts}` and `tests/pages/boxAudioTimeline.ts`. Size came out M, not S.
