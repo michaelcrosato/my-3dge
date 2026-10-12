@@ -17,7 +17,7 @@
  * `map.txt`, the scene's level as navigation sees it (engine/world/nav.ts; shardfall's `levelmap nav=true` as text):
  * blocked tiles, raised floors, tiles never reached, and a route from the hero's spawn; one line and `map.*` metrics
  * sum it up. Its climb limit is the crowd's, or with `--feel` the actor's jump reach. A level no module registered is
- * read from the scene's lab (`labs/<lab>/levels/<name>.txt`) or `fixtures/levels/`.
+ * read from the scene's lab (`labs/<lab>/levels/<name>.txt`) or `fixtures/levels/`; clip sets, from data/anim/sets/.
  *
  * Usage: node x sim <scene> [--scene id] [--steps n] [--seed s] [--set k=v…] [--feel] [--map]. Exit 0 when the scene
  * ran, 1 when it threw, 2 on a usage error (no such module or scene, a bad flag or setting, `--feel` without an actor,
@@ -42,6 +42,7 @@ import type { FeelReport } from '../../engine/physics/feel';
 import { defineLevel, getLevel } from '../../engine/world/level/level';
 import type { CompiledLevel } from '../../engine/world/level/types';
 import { NAV_DIRECTIONS, NavGrid } from '../../engine/world/nav';
+import { defineLibrary } from '../anim/library';
 import { walk } from '../lib/docs';
 import { targetSlug } from '../lib/report';
 import { UsageError, type Command, type CommandResult } from '../x';
@@ -88,6 +89,7 @@ export function resolveSceneModule(root: string, target: string): string {
 /** Imports a scene module and picks its scene: `id`, else the one scene it exports. */
 export async function loadScene(root: string, target: string, id?: string): Promise<{ file: string; scene: Scene }> {
   const file = resolveSceneModule(root, target);
+  defineLibrary(); // the sim reads no files: clip mode's sets come first, as in the box page
   const module = (await import(pathToFileURL(join(root, file)).href)) as Record<string, unknown>;
   const exported = [...new Set(Object.values(module).filter(isScene))];
   if (id !== undefined) {
@@ -162,7 +164,7 @@ export interface Runtime {
 export function nodeRuntime(root: string, registry?: Registry, name = 'Node'): Runtime {
   return {
     name,
-    load: async (file) => void (await import(pathToFileURL(join(root, file)).href)),
+    load: async (file) => void (defineLibrary(registry), await import(pathToFileURL(join(root, file)).href)),
     play: async (text, every) =>
       playReplay(JSON.parse(text), { registry, checkpoints: every ? 'every' : undefined }).hashes,
     async stateAt(text, step) {

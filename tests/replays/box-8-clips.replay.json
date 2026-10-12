@@ -1,0 +1,40 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Clip mode: the hero and the mannequin dance (Dance_Loop), then cartwheel, crossfaded; frame stepping holds frame 30, steps to 31 and plays on; the hero walks south, east, north and west, his legs their own, under the Sword_Attack one-shot laid over his upper body (mask=upper), which holds its end 0.8 s and plays again; then both play Old_Walk mirrored over the whole body, at half speed for the last second.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "box:clips",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [
+    [60, { "set": { "box.clips.clip": "cmu/Cartwheel" } }],
+    [150, { "set": { "box.clips.frame": 30 } }],
+    [180, { "set": { "box.clips.frame": 31 } }],
+    [210, { "set": { "box.clips.frame": -1 } }],
+    [270, { "move": [0, 1], "set": { "box.clips.clip": "quaternius/Sword_Attack", "box.clips.mask": "upper" } }],
+    [300, { "move": [1, 0] }],
+    [348, { "move": [0, -1] }],
+    [378, { "move": [-1, 0] }],
+    [390, { "move": null }],
+    [480, { "set": { "box.clips.clip": "style100/Old_Walk", "box.clips.mask": "full", "box.clips.mirror": true } }],
+    [540, { "set": { "box.clips.speed": 0.5 } }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "2e22ae945146b63d",
+      "60": "cefb126535326079",
+      "120": "61d735286a2b8cea",
+      "180": "acd822c958077f6e",
+      "240": "7dca11c474c45b7d",
+      "300": "f34d9e0e536bb834",
+      "360": "ab51b419c7e69fe0",
+      "420": "6fe5aada872c9dad",
+      "480": "b944a771e006613a",
+      "540": "a656bef212dd2943",
+      "600": "900f06cdd21a82a7"
+    }
+  }
+}

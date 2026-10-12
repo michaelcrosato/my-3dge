@@ -2,8 +2,9 @@
  * @file The CPU-only gameplay contract (PLAN.md §6.7, §6.5 item 9, I-07; doctrine: WebGPU only), from Box 1 on: each
  * stage adds its scenes (`STAGES`: Box 1's room and its movers, Box 2's room with the hero, Box 3's hall with the hero
  * and the hall with its props, Box 4's hall with a crowd of 100, drawn through the crowd's level of detail, Box 5's
- * fight, its blows, bodies, telegraphs and bolts). In the
- * scene's own page (labs/box), rendering as it steps:
+ * fight, its blows, bodies, telegraphs and bolts, and Phase 8's clip mode, the hero and the mannequin playing the
+ * animation library's clips through the clip layer, the sets registered in each host: the page, and Node through
+ * tools/anim/library.ts). In the scene's own page (labs/box), rendering as it steps:
  * 1. every replay of the stage gives its golden hashes, a frame drawn after each step (`__engine.replay`, the same
  *    player as `x replay --browser page`), and so do its swept replays (`swept`: all of them, or for Box 4 the chase,
  *    its mixed crowd) while every camera preset and resolution mode is switched (the crowd's bands and culling too),
@@ -38,10 +39,12 @@ import '../../labs/box/scenes/hall';
 import '../../labs/box/scenes/hall-props';
 import '../../labs/box/scenes/crowd-100';
 import '../../labs/box/scenes/fight';
+import '../../labs/box/scenes/clips';
 import { playReplay, type Replay } from '../../engine/sim/replay';
 import { CAMERA_3D, VIEW_NAMES } from '../../engine/gfx/cameras/codes';
 import { FOLLOW_CAMERAS } from '../../engine/gfx/cameras/place';
 import { RESOLUTION_MODES } from '../../engine/gfx/resolution';
+import { defineLibrary } from '../../tools/anim/library';
 import { expect, test, type Harness } from './fixtures';
 
 test.describe.configure({ mode: 'parallel' });
@@ -215,6 +218,32 @@ const STAGES: Stage[] = [
       tick(30);
       __engine.input.axis('move', null);
       tick(20);
+    },
+  },
+  {
+    stage: 'clip mode',
+    scene: 'clips',
+    component: 'actor',
+    replays: ['box-8-clips'].map(replay),
+    live: () => {
+      const tick = (frames: number) => window.__clock.tick(frames);
+      tick(1);
+      __engine.set('box.clips.mask', 'upper');
+      __engine.input.axis('move', [0, 1]);
+      tick(30); // south, dancing above the waist
+      __engine.set('box.clips.clip', 'quaternius/Sword_Attack');
+      __engine.camera.set('cam3=chase');
+      tick(30);
+      __engine.input.axis('move', [1, 0]);
+      __engine.set('box.clips.frame', 12);
+      tick(20); // frame 12 held as he walks east
+      __engine.set('box.clips.frame', -1);
+      __engine.camera.set('cam3=orbit');
+      tick(30);
+      __engine.input.axis('move', null);
+      __engine.set('box.clips.mask', 'full');
+      __engine.set('box.clips.clip', 'cmu/Cartwheel');
+      tick(40);
     },
   },
 ];
@@ -419,6 +448,7 @@ for (const { stage, scene, component, replays, swept, looks, live } of [...STAGE
       if (scene === 'room') {
         expect(recorded.replay.inputs.some(([, change]) => change.set?.['box.room.speed'] === 2.5)).toBe(true);
       }
+      defineLibrary(); // the sim reads no files: clip mode's sets, registered as the page registered them
       const node = playReplay(recorded.replay);
       expect(node.hashes[String(recorded.replay.steps)]).toBe(recorded.hash);
     });
