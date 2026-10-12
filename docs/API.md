@@ -2155,6 +2155,13 @@ For the agents who maintain the engine.
 - `WeightName` (type): A humanoid weight's name.
 - `WeightRates` (type): A weight's easing rates, per second: `[rising, falling]`.
 
+### [`engine/app/damageNumbers.ts`](../engine/app/damageNumbers.ts)
+
+- `createDamageNumbers` (function): Makes the damage numbers of an overlay `ui` (engine/ui/overlay.ts).
+- `DAMAGE_RISE` (const): How far above where a hit struck its number appears, m: about a head above a body's middle.
+- `DamageNumbers` (interface): Damage numbers from a world's trace (see the file comment).
+- `TracedWorld` (interface): What the numbers read: a world's event trace.
+
 ### [`engine/app/engine.ts`](../engine/app/engine.ts)
 
 - `createEngine` (function): Starts the engine in a page (see the file comment); resolves once it is up or has failed.
@@ -3620,6 +3627,14 @@ For the agents who maintain the engine.
 - `StageCrowd` (interface): The crowd bodies on a stage (see the file comment).
 - `StageCrowdOptions` (interface): What the stage's crowd is made from: where it goes, the materials, the level for the shadows' floor, a registry.
 
+### [`engine/gfx/stageFx.ts`](../engine/gfx/stageFx.ts)
+
+- `createStageFx` (function): Makes the stage's effects (see the file comment).
+- `fxKinds` (function): The component kinds the effects draw: bolts and telegraphs (see the file comment), in registry order.
+- `STAGE_FX_SETTINGS` (const): The view setting that turns the stage's effects on and off.
+- `StageFx` (interface): The stage's effects (see the file comment).
+- `StageFxOptions` (interface): What `createStageFx` takes.
+
 ### [`engine/gfx/stageProps.ts`](../engine/gfx/stageProps.ts)
 
 - `createStageProps` (function): Draws the scene's props (see the file comment).
@@ -4595,7 +4610,9 @@ For the agents who maintain the engine.
 
 - `HERO` (const): The hero's character, untuned.
 - `HERO_BODY` (const): The hero's animator: the default build, empty-handed.
+- `HERO_FIGHT` (const): The hero's fight (Box 5, WP 6.7), with a sword.
 - `heroCharacter` (function): The hero's character with `tuning` over his own numbers.
+- `HeroHit` (interface): What one of the hero's hits does: its cone, hit points, push (m/s), lunge (m/s) and whether it is a big one.
 - `HeroTuning` (interface): What a scene may tune of the hero: his walk, take-off and dash speeds, m/s.
 - `PROTOTYPE` (const): The hero's numbers as the prototype wrote them, in its units and seconds (see the file comment).
 - `spawnHero` (function): Spawns the hero, the player, with his feet at `at` facing `yaw` (rad); returns his id.
@@ -4605,6 +4622,8 @@ For the agents who maintain the engine.
 - `CROWD_SLIME` (const): The slime's component: where it is in its hop, and the time left in that part (or spent in the air).
 - `makeSlime` (function): A new slime's own state: resting, its first rest drawn from `rng`, up to 1 s.
 - `SLIME` (const): The slime's numbers (see the file comment).
+- `SLIME_ATTACK` (const): The slime's pounce (see the file comment): seconds, metres, m/s and hit points.
+- `SLIME_POUNCE` (const): The slime's pounce on the floor: a line its own width, from it to just past the hero on its ring.
 - `SlimeData` (interface): The slime's own state, beside its crowd agent.
 - `SlimeHop` (type): Where a slime is in its hop.
 - `steerSlime` (function): Moves a living slime one step (see the file comment): in the air until it lands, else braking on the floor while it rests and crouches, then a leap by `knockback` and `launch` (engine/physics/crowd.ts).
@@ -4617,6 +4636,8 @@ For the agents who maintain the engine.
 - `makeWalker` (function): A new walker's own state, its speed and sway's phase drawn from `rng`, facing `yaw`.
 - `steerWalker` (function): The velocity (m/s) the walker wants this step, into `out`, turning it toward where it goes (see the file comment).
 - `WALKER` (const): The walker's numbers (see the file comment).
+- `WALKER_ATTACK` (const): The walker's attack (see the file comment): seconds, metres, m/s and hit points.
+- `WALKER_SWING` (const): The walker's swing on the floor: an arc ±0.8 rad, from 0.6 of its radius to 1.35 m, its colour the prototype's.
 - `WalkerData` (interface): The walker's own state, beside its crowd agent.
 
 ### [`labs/box/cast/wisp.ts`](../labs/box/cast/wisp.ts)
@@ -4625,6 +4646,8 @@ For the agents who maintain the engine.
 - `makeWisp` (function): A new wisp's own state: its way round and its clock (up to 9 s) drawn from `rng`.
 - `steerWisp` (function): The velocity (m/s) the wisp wants this step, into `out`, its clock advanced (see the file comment).
 - `WISP` (const): The wisp's numbers (see the file comment).
+- `WISP_ATTACK` (const): The wisp's shot (see the file comment): seconds, metres, m/s and hit points.
+- `WISP_SHOT` (const): The wisp's shot on the floor: a narrow line from under it, as far as it shoots.
 - `WispData` (interface): The wisp's own state, beside its crowd agent.
 
 ### [`labs/box/scenes/crowd-100.ts`](../labs/box/scenes/crowd-100.ts)
@@ -4649,6 +4672,57 @@ For the agents who maintain the engine.
 
 - `crowd5000` (const): The crowd at 5,000.
 - `default` (default): The crowd at 5,000, Box 4 (PLAN.md §9.0, WP 5.7): the crowd scene (labs/box/scenes/crowd-1000.ts) with 5,000 walkers, slimes and wisps, 25 entering a step, so the hall fills over 200 steps: the top of the perf ladder, and the page that shows the crowd grows to 5,000 with no pipeline built (tests/e2e/box-crowd.spec.ts).
+
+### [`labs/box/scenes/fight-1000.ts`](../labs/box/scenes/fight-1000.ts)
+
+- `default` (default): The fight at 1,000, Box 5 (PLAN.md §9.0, WP 6.7): the fight (labs/box/scenes/fight.ts) against a crowd of 1,000 walkers, slimes and wisps, entering 25 a step: the hero's attack tokens still let only three swing and pounce at once, so it is the crowd's, the hits' and the effects' cost that grows, not the danger.
+- `fight1000` (const): The fight at 1,000.
+
+### [`labs/box/scenes/fight-foes.ts`](../labs/box/scenes/fight-foes.ts)
+
+- `fightRigs` (function): The system `fight.rigs` (see the file comment).
+- `flyShots` (function): The system `fight.shots` (see the file comment).
+- `steerFoes` (function): The system `fight.steer` (see the file comment).
+
+### [`labs/box/scenes/fight-hero.ts`](../labs/box/scenes/fight-hero.ts)
+
+- `heroFight` (function): The hero's fight, one step (see the file comment).
+
+### [`labs/box/scenes/fight-rules.ts`](../labs/box/scenes/fight-rules.ts)
+
+- `breakAttack` (function): Ends a foe's attack: its token back, its telegraph gone.
+- `FIGHT_FOE` (const): The component `fightFoe`: where a foe is in its attack, and its timers.
+- `FIGHT_HEALTH` (const): The component `fightHealth`: a fighter's hit points (see the file comment).
+- `FIGHT_HERO` (const): The component `fightHero`: the hero's combo, thrust and counters.
+- `FIGHT_SHOT` (const): The component `fightShot`: a bolt in flight.
+- `FIGHT_TELEGRAPH` (const): The component `fightTelegraph`: a foe's telegraph where it stands.
+- `FIGHT_TOKENS` (const): The component `fightTokens`: the hero's attack tokens.
+- `FightBurst` (interface): A burst for the page's effects: where, and how big.
+- `FightComponents` (type): The fight's components: the crowd's, the hero's actor, and its own.
+- `FightEvents` (type): The fight's events.
+- `FightFoe` (interface): A foe's fight: where it is in its attack, its move and swing, and its timers (s).
+- `FightHero` (interface): The hero's fight: his combo's and thrust's saved states, and his counters (ticks).
+- `FightShot` (type): A bolt in flight: a projectile, and the hit points it takes.
+- `FightTelegraph` (interface): A foe's telegraph where it stands: a `TelegraphPlace` as plain data (none while `telegraph` is empty).
+- `FightWorld` (type): The fight's world.
+- `FoePhase` (type): Where a foe is in its attack.
+- `foeSet` (function): The living foes as hurt capsules, through a spatial hash of their feet, built now.
+- `heroCombo` (const): The hero's combo, as `HERO_FIGHT` says (an idle one; its state is `fightHero.combo`).
+- `heroOf` (function): The hero: his id and components; undefined before setup.
+- `heroSet` (function): The hero as a hurt capsule (his controller's), built now.
+- `heroThrust` (const): The hero's thrust out of a dash (an idle one; its state is `fightHero.thrust`).
+- `hurtHero` (function): A foe's blow (`amount` hit points, from `from`) on the hero: unless he is safe, he flinches and is pushed away, the hit lands through `damage` (no hit points in god mode), his combo is broken off when it takes any, and the event `hit` fires.
+- `strikeFoe` (function): The hero's blow (`hit`, from his feet `from`) on the foe `id`: its hit points, push, throw and hit-stop through `damage`, its attack broken off, a stun, and the events `hit` (and `slain`).
+- `STUN` (const): How long a blow stuns a foe (s): it steers and attacks again after.
+
+### [`labs/box/scenes/fight.ts`](../labs/box/scenes/fight.ts)
+
+- `default` (default): The fight, Box 5 (PLAN.md §9.0, WP 6.7): the hall with its hero and a crowd (labs/box/scenes/crowd-1000.ts), fighting.
+- `fight` (const): The fight, 36 mixed.
+- `FIGHT_SETTINGS` (const): The fight's setting: whether the hero's hit points hold.
+- `fightStep` (function): The fight's step: joined at the first, then the hero's fight (labs/box/scenes/fight-hero.ts).
+- `joinFight` (function): The fight joined, once, at the first step (spawns made in the setup join at its end): the hero's sword and his components, each member's (see the file comment).
+- `setupFight` (function): The fight's setup: the crowd's, and the fight's systems (see the file comment); returns the hero's id.
 
 ### [`labs/box/scenes/hall-props.ts`](../labs/box/scenes/hall-props.ts)
 

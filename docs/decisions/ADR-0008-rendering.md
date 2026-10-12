@@ -128,3 +128,25 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
   environment.
 - Plan edit: WP-7.4's Owns extends `engine/app/engine.ts`, `engine/gfx/props.ts`, `engine/gfx/puppets/crowd.ts` and
   `tools/cmd/set.ts`, and names the kind `look`'s template `tools/templates/look/` (accepted).
+
+## Amendment 8 (2026-10-11, WP-6.7): the stage's effects and the page's damage numbers
+
+- **Core change, gfx:** `engine/gfx/stageFx.ts` draws a running scene's effects from plain data (WP 6.4's effects):
+  flying bolts (entities declaring the projectile's fields, drawn instead of a stand-in), telegraphs, every actor's
+  trail as a ribbon, and bursts from the world's event trace, read without listening. `engine/gfx/stage.ts` makes one
+  (`stage.fx`); `engine/gfx/puppets/actors.ts` gains `trails()`; `engine/gfx/fx/ribbons.ts` keeps a non-empty draw
+  range while hidden, so the warm-up never draws an empty one. The view setting `gfx.effects` (true) turns them on and
+  off; off, they draw nothing, draw no random number and claim no bolt, so bolts draw as their named stand-ins, and
+  the hash is the same either way. When `gfx.effects` is switched between steps, the next frame re-reads the entities
+  before drawing (`engine/app/view.ts`), so a flying bolt is drawn by the effects or as its named stand-in from that
+  frame, and never by neither.
+- **Core change, app:** `engine/app/damageNumbers.ts` shows each `damage` event that took hit points as a damage number
+  on the HTML/CSS overlay (engine/ui/labels.ts), read from the trace once per frame. `engine/app/engine.ts` puts the
+  overlay over the canvas, shakes the camera by the effects, draws, then shows the numbers and updates the overlay.
+- Perf: the effects' pools add 7 geometries (the sprites' 5 pages, the decals' page, the ribbon mesh) and, through
+  the post chain, 9 pipelines, all built at warm-up: `tests/baselines/perf/box-room.json` budgets geometries 17 and
+  pipelines 75, with 0 after warm-up. `tests/e2e/box.spec.ts`: the room's ID pass counts the effects' 7 drawables.
+- Plan edit: WP-6.7's Owns adds `engine/gfx/stageFx{,.test}.ts` and `engine/app/damageNumbers{,.test}.ts`, and extends
+  `engine/gfx/stage{,.test}.ts`, `engine/gfx/puppets/actors.ts`, `engine/gfx/fx/ribbons.ts`,
+  `engine/app/{engine,view,view.test}.ts`, `tests/e2e/box.spec.ts` and `tests/baselines/perf/box-room.json`
+  (accepted).

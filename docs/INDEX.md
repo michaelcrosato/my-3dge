@@ -183,6 +183,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 - [`animMember.ts`](../engine/app/animMember.ts): The inspector member `anim(id?)` (PLAN.md §8.3; WP 3.7's member, delivered at gate G3's review): an animated actor's character animator as `Animator.inspect()` gives it (engine/anim/character.ts): its weights, each slot of the layer stack with what is active in it, the effectors, sockets, events and trail.
   - Tests: [`engine/app/viewMembers.test.ts`](../engine/app/viewMembers.test.ts), [`labs/box/scenes/room-hero.test.ts`](../labs/box/scenes/room-hero.test.ts)
+- [`damageNumbers.ts`](../engine/app/damageNumbers.ts): Damage numbers from the sim (PLAN.md §6.7: game UI in HTML/CSS; WP 6.5's numbers shown in the box, WP 6.7 core proposal, ADR-0008 amendment 8): `createDamageNumbers(ui)` reads a sim world's event trace once per rendered frame, without listening, and shows each new `damage` event (engine/sim/damage.ts) that took hit points as a damage number `DAMAGE_RISE` m above where it struck (engine/ui/labels.ts: it rises, stacks and is pooled), so a page shows the hits of any scene that lands them through `damage`.
+  - Exports: `createDamageNumbers`, `DAMAGE_RISE`, `DamageNumbers`, `TracedWorld`
+  - Tests: [`engine/app/damageNumbers.test.ts`](../engine/app/damageNumbers.test.ts)
 - [`engine.ts`](../engine/app/engine.ts): The engine in a page (PLAN.md §6.4, §6.9, §8.3, WP 2.7): `createEngine({ canvas, scenes, levels })` registers the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay` and settings by path), starts the scene as a recorded run with its view (engine/app/headless.ts, engine/app/view.ts), publishes the run's inspector as `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts) and the post-processing chain every frame and shot is drawn through (engine/gfx/post/chain.ts: the view settings `post.look`, `post.filters` and `post.show`), warms up every pipeline the view needs through both cameras (perspective and orthographic), draws the first frame, and then runs the frame loop (engine/app/loop.ts): the devices sampled into intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from the clock, the view drawn at the clock's alpha.
   - Exports: `createEngine`, `Engine`, `ENGINE_CODES`, `EngineOptions`, `recordOf`
   - Tests: [`engine/app/engine.test.ts`](../engine/app/engine.test.ts), [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts)
@@ -400,6 +403,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`stageCrowd.ts`](../engine/gfx/stageCrowd.ts): Crowd bodies on the stage (PLAN.md WP 5.7 core proposal, ADR-0008 amendment 6; §6.4's view; I-21): every entity with the component `crowdBody` (engine/sim/crowdBodies.ts: a humanoid, blob or floater rig, where it stands and its rig's state) drawn through a crowd (engine/gfx/puppets/crowd.ts: instanced batches, a few dozen draw calls for thousands), seen through the crowd's level of detail (engine/gfx/puppets/lod.ts) from the frame's camera.
   - Exports: `createStageCrowd`, `StageCrowd`, `StageCrowdOptions`
   - Tests: [`engine/gfx/stageCrowd.test.ts`](../engine/gfx/stageCrowd.test.ts)
+- [`stageFx.ts`](../engine/gfx/stageFx.ts): The stage's effects (PLAN.md §6.4's view: particles, shake; WP 6.4's effects shown in the box, WP 6.7 core proposal, ADR-0008 amendment 8): what a running scene's sim shows engine/gfx/fx's effects, read from plain data, so a scene draws particles, telegraphs, trails and bolts with no view code of its own.
+  - Exports: `createStageFx`, `fxKinds`, `STAGE_FX_SETTINGS`, `StageFx`, `StageFxOptions`
+  - Tests: [`engine/gfx/stageFx.test.ts`](../engine/gfx/stageFx.test.ts)
 - [`stageProps.ts`](../engine/gfx/stageProps.ts): Props on the stage (PLAN.md WP 4.6 core proposal, ADR-0008 amendment 5; §6.4's view): every entity with the component `sceneProp` (engine/sim/props.ts: a prop standing in a scene, its id and its pose) drawn as its prop through the prop meshes (engine/gfx/props.ts: one instanced batch per prop part, so a hundred crates are one draw call), where its pose is at the frame's alpha.
   - Exports: `createStageProps`, `StageProps`, `StagePropsOptions`
   - Tests: [`engine/gfx/stageProps.test.ts`](../engine/gfx/stageProps.test.ts)
@@ -954,23 +960,23 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## labs/box
 
-- [`main.ts`](../labs/box/main.ts): The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports every module under `labs/box/scenes/`, so a scene added there opens at `?scene=<name>` with no change here, and the box's levels, then starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: jump, then dash) for every scene.
-- [`touch.ts`](../labs/box/touch.ts): The box's touch layout (PLAN.md WP 3.10, WP 3.12; ADR-0021: built, not tested): `touchlayout:box`, the buttons a phone or tablet shows over the box page (engine/ui/touch.ts draws them, engine/input/devices/touch.ts reads them).
+- [`main.ts`](../labs/box/main.ts): The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports every module under `labs/box/scenes/`, so a scene added there opens at `?scene=<name>` with no change here, and the box's levels, then starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: attack, then jump, dash and the bolt) for every scene.
+- [`touch.ts`](../labs/box/touch.ts): The box's touch layout (PLAN.md WP 3.10, WP 3.12, WP 6.7; ADR-0021: built, not tested): `touchlayout:box`, the buttons a phone or tablet shows over the box page (engine/ui/touch.ts draws them, engine/input/devices/touch.ts reads them).
   - Exports: `BOX_TOUCH`
 
 ## labs/box/cast
 
 - [`hero.ts`](../labs/box/cast/hero.ts): The box's hero (PLAN.md §9.0, WP 3.10): who the player walks, dashes and jumps as from Box 2 on.
-  - Exports: `HERO`, `HERO_BODY`, `heroCharacter`, `HeroTuning`, `PROTOTYPE`, `spawnHero`
+  - Exports: `HERO`, `HERO_BODY`, `HERO_FIGHT`, `heroCharacter`, `HeroHit`, `HeroTuning`, `PROTOTYPE`, `spawnHero`
   - Tests: [`labs/box/cast/hero.test.ts`](../labs/box/cast/hero.test.ts)
 - [`slime.ts`](../labs/box/cast/slime.ts): The box's slime (PLAN.md §9.0, WP 5.7): a ball that hops after the hero, from Box 4 on.
-  - Exports: `CROWD_SLIME`, `makeSlime`, `SLIME`, `SlimeData`, `SlimeHop`, `steerSlime`
+  - Exports: `CROWD_SLIME`, `makeSlime`, `SLIME`, `SLIME_ATTACK`, `SLIME_POUNCE`, `SlimeData`, `SlimeHop`, `steerSlime`
   - Tests: [`labs/box/cast/crowd.test.ts`](../labs/box/cast/crowd.test.ts)
 - [`walker.ts`](../labs/box/cast/walker.ts): The box's walker (PLAN.md §9.0, WP 5.7): the crowd's foot soldier from Box 4 on, a capsule that walks after the hero.
-  - Exports: `Chase`, `CROWD_WALKER`, `levelWith`, `makeWalker`, `steerWalker`, `WALKER`, `WalkerData`
+  - Exports: `Chase`, `CROWD_WALKER`, `levelWith`, `makeWalker`, `steerWalker`, `WALKER`, `WALKER_ATTACK`, `WALKER_SWING`, `WalkerData`
   - Tests: [`labs/box/cast/crowd.test.ts`](../labs/box/cast/crowd.test.ts)
 - [`wisp.ts`](../labs/box/cast/wisp.ts): The box's wisp (PLAN.md §9.0, WP 5.7): a floater that hovers after the hero and circles him, from Box 4 on.
-  - Exports: `CROWD_WISP`, `makeWisp`, `steerWisp`, `WISP`, `WispData`
+  - Exports: `CROWD_WISP`, `makeWisp`, `steerWisp`, `WISP`, `WISP_ATTACK`, `WISP_SHOT`, `WispData`
   - Tests: [`labs/box/cast/crowd.test.ts`](../labs/box/cast/crowd.test.ts)
 
 ## labs/box/scenes
@@ -984,6 +990,21 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`crowd-5000.ts`](../labs/box/scenes/crowd-5000.ts): The crowd at 5,000, Box 4 (PLAN.md §9.0, WP 5.7): the crowd scene (labs/box/scenes/crowd-1000.ts) with 5,000 walkers, slimes and wisps, 25 entering a step, so the hall fills over 200 steps: the top of the perf ladder, and the page that shows the crowd grows to 5,000 with no pipeline built (tests/e2e/box-crowd.spec.ts).
   - Exports: `crowd5000`, `default`
   - Tests: [`labs/box/scenes/crowd-1000.test.ts`](../labs/box/scenes/crowd-1000.test.ts)
+- [`fight-1000.ts`](../labs/box/scenes/fight-1000.ts): The fight at 1,000, Box 5 (PLAN.md §9.0, WP 6.7): the fight (labs/box/scenes/fight.ts) against a crowd of 1,000 walkers, slimes and wisps, entering 25 a step: the hero's attack tokens still let only three swing and pounce at once, so it is the crowd's, the hits' and the effects' cost that grows, not the danger.
+  - Exports: `default`, `fight1000`
+  - Tests: [`labs/box/scenes/fight.test.ts`](../labs/box/scenes/fight.test.ts)
+- [`fight-foes.ts`](../labs/box/scenes/fight-foes.ts): The foes' fight, Box 5 (PLAN.md §9.0, WP 6.7): the fight scene's systems for the crowd (labs/box/scenes/fight.ts puts them in the place of the crowd's `crowd.steer` and `crowd.rigs`) and for the bolts.
+  - Exports: `fightRigs`, `flyShots`, `steerFoes`
+  - Tests: [`labs/box/scenes/fight.test.ts`](../labs/box/scenes/fight.test.ts)
+- [`fight-hero.ts`](../labs/box/scenes/fight-hero.ts): The hero's fight, Box 5 (PLAN.md §9.0, WP 6.7): `heroFight(w, intents)`, the fight scene's step (labs/box/scenes/fight.ts), first in each step, before the controller moves him.
+  - Exports: `heroFight`
+  - Tests: [`labs/box/scenes/fight.test.ts`](../labs/box/scenes/fight.test.ts)
+- [`fight-rules.ts`](../labs/box/scenes/fight-rules.ts): The fight's rules, Box 5 (PLAN.md §9.0, WP 6.7): what labs/box/scenes/fight.ts and its systems (fight-hero.ts, fight-foes.ts) share.
+  - Exports: `breakAttack`, `FIGHT_FOE`, `FIGHT_HEALTH`, `FIGHT_HERO`, `FIGHT_SHOT`, `FIGHT_TELEGRAPH`, `FIGHT_TOKENS`, `FightBurst`, `FightComponents`, `FightEvents`, `FightFoe`, `FightHero`, `FightShot`, `FightTelegraph`, `FightWorld`, `FoePhase`, `foeSet`, `heroCombo`, `heroOf`, `heroSet`, `heroThrust`, `hurtHero`, `strikeFoe`, `STUN`
+  - Tests: [`labs/box/scenes/fight.test.ts`](../labs/box/scenes/fight.test.ts)
+- [`fight.ts`](../labs/box/scenes/fight.ts): The fight, Box 5 (PLAN.md §9.0, WP 6.7): the hall with its hero and a crowd (labs/box/scenes/crowd-1000.ts), fighting.
+  - Exports: `default`, `fight`, `FIGHT_SETTINGS`, `fightStep`, `joinFight`, `setupFight`
+  - Tests: [`labs/box/scenes/fight.test.ts`](../labs/box/scenes/fight.test.ts)
 - [`hall-props.ts`](../labs/box/scenes/hall-props.ts): The hall with its props, Box 3 (PLAN.md §9.0, WP 4.6): the hall with a hero (labs/box/scenes/hall.ts) and its props, standing in the scene through `spawnProp` (their bodies in the physics world, the page drawing them through the instanced prop meshes): the level's own, a brazier's fire on each of its 30 stands (`levelProps`), and `box.hallProps.count` crates and barrels, 10 to 300, on the first of `HALL_SPOTS`.
   - Exports: `default`, `HALL_PROPS_SETTINGS`, `HALL_SPOTS`, `HALL_SWING`, `hallProps`, `inShove`, `shove`, `SHOVE`
   - Tests: [`labs/box/scenes/hall-props.test.ts`](../labs/box/scenes/hall-props.test.ts)
