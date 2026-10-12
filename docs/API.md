@@ -5367,6 +5367,11 @@ For the agents who maintain the engine.
 - `readLegacySet` (function): The source's set `name` (`quaternius`, `mesh2motion`, `cmu`, `hero`), read from `src/mocap/sets/<name>.js`.
 - `sampledFrames` (const): The frames committed for a clip of `n` frames: the first, and those a third and two thirds of the way in.
 
+### [`tools/anim/library.ts`](../tools/anim/library.ts)
+
+- `defineLibrary` (function): Registers every set of the library, then the mannequin, into `registry` (once); returns the sets' ids.
+- `libraryDirs` (function): The library's set directories (`cmu`, `quaternius`…): each directory of `root` with a set header, sorted.
+
 ### [`tools/anim/rates.ts`](../tools/anim/rates.ts)
 
 - `amcFrames` (const): How many frames an `.amc` take has.
