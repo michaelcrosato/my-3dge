@@ -1699,7 +1699,7 @@ A WP is done only when all of these hold:
     - `testDir: tests/e2e`; one project, `webgpu`, with the flags of §8.8 and `executablePath` from `CHROMIUM_PATH` (default `/opt/pw-browsers/chromium`);
     - a `webServer` that starts Vite on `PORT` (default 5173; each ultracode lane sets its own);
     - the `line` and `json` reporters (`out/e2e/report.json`);
-    - `workers` from the machine's cores, at most 4, so parallel lanes don't starve Chromium.
+    - `workers` from the machine's cores, one per 4 cores, from 1 to 4, so a Chromium on SwiftShader keeps the cores the parity replays need and parallel lanes don't starve it (ADR-0014 amendment 15).
   - **The shared fixture, `tests/e2e/fixtures.ts`:**
     - before page scripts run: the virtual clock and named seeded streams;
     - a `ready || error` wait, `readFrame` and `assertWebGPU`;

@@ -257,3 +257,19 @@ Core proposal accepted at integration. Calls made where PLAN.md §9 WP 5.5 and �
   measures again.
 - **Plan edit:** T2's 6 minutes becomes 9 in PLAN.md §1 item 8, I-27 (§7), §8.2's tier table, §8.9 and Appendix E's
   loop, in AGENTS.md's loop and in the x-loop skill.
+
+## Amendment 15 (2026-10-12, after gate G9): one Playwright worker per 4 cores
+
+- **Measured** in a cloud container, the development platform of PLAN.md Appendix D (Linux x64, 4 cores, 16 GB):
+  `x ci --local` at 42fbd4b ran T2 on `Math.min(4, cores)` = 4 workers, at load 13, in 39 min 12 s, and 9 of 165
+  tests timed out: 8 in parity.spec.ts (the box's replays drawn as they step, past their 240 s) and the offline audio
+  spatial test (past 60 s). Re-run on the same tree, 6 passed on 2 workers and 3 did not (Box 4's chase replay and
+  camera sweep, the new-scene replay, which paired with each other); those 3 passed on 1 worker, Box 4's chase in
+  165.5 s and its sweep in 144.3 s of their 240 s. SwiftShader draws on the CPU, so each Chromium needs several cores:
+  four workers on four cores leave each about one, which the owner's 20-core box (amendment 14: 186–188 s at load
+  13–60) never showed.
+- **Call:** `workers` is one per 4 cores, from 1 to 4 (`CORES_PER_WORKER` in playwright.config.ts): 1 in the cloud
+  container, 4 from 16 cores, so the owner's box keeps its 4. No test, timeout or assertion changes; a lane's
+  `--workers` still overrides it (ADR-0022 amendment 1). T2 takes longer on 4 cores; its budget only warns (ADR-0022).
+  Rejected: longer timeouts (they would hide a real slowdown), 2 workers on 4 cores (measured: 3 timeouts).
+- **Plan edit:** PLAN.md WP 0.2's `playwright.config.ts` item.
