@@ -29,6 +29,8 @@ The plan's phases 0–9 are done: the foundation, the kernel, Boxes 1–6, the a
 ## Open issues
 
 - T2 runs over its 9 min, a warning only (ADR-0022): the gate selects T2 in full while it is over.
+- Owner: on a 4-core cloud container, T2's 4 workers starve SwiftShader: at 42fbd4b, 9 parity/audio tests timed out
+  (39 min); re-run, 6 passed at 2 workers and the 3 crowd replays only at 1, so no worker count is proved yet.
 - `x audio --replay` finds 0 box sounds: the box's sound map is page-side (needs a registry hook for a game's map).
 - 17 files are over the 400-line warning (cap 600), none over the cap: `npm run lint` lists them (max-lines).
 - The crowd's batches draw no flinch lean; at 1,000 agents the crowd blocks the stairs' foot.
