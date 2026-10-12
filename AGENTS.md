@@ -105,6 +105,8 @@ baselines) · docs/ (generated INDEX/API/ERRORS, ADRs in docs/decisions/, escala
 Task guides (docs/INDEX.md opens with them), each read when the task needs it:
 - docs/PROGRESS.md: read first, every session: where things stand, what is next, the open issues.
 - docs/TESTING.md: the tiers, and which unit tests and specs a change selects.
+- docs/HANDOFF.md: starting in a new environment, handing the engine to an agent to try, and the box against
+  my-3d2dge's stress-world.
 - labs/box/README.md: the box's scenes, settings and quick loop; adding a scene or a variant (a variant is a new
   scene file or a settings preset, never a change of meaning in a passing scene).
 - tests/replays/README.md: the replay format; checking, recording and making replays.
