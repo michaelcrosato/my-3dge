@@ -89,14 +89,19 @@ export const HERO: Character = heroCharacter();
 /** The hero's animator: the default build, empty-handed. */
 export const HERO_BODY = Object.freeze({ build: 'build:chibi', weapon: 'none' }) satisfies ActorSpec['anim'];
 
-/** Spawns the hero, the player, with his feet at `at` facing `yaw` (rad); returns his id. */
+/**
+ * Spawns the hero, the player, with his feet at `at` facing `yaw` (rad), and any further `components` (the fight's
+ * reactions and cape); returns his id.
+ */
 export function spawnHero<C extends object>(
   w: World<C>,
   at: readonly [number, number, number],
   yaw = 0,
   tuning: HeroTuning = {},
+  components?: ActorSpec['components'],
 ): number {
-  return spawnActor(w, { at: [...at], character: heroCharacter(tuning), player: true, yaw, anim: { ...HERO_BODY } });
+  const character = heroCharacter(tuning);
+  return spawnActor(w, { at: [...at], character, player: true, yaw, anim: { ...HERO_BODY }, components });
 }
 
 /** What one of the hero's hits does: its cone, hit points, push (m/s), lunge (m/s) and whether it is a big one. */

@@ -34,6 +34,7 @@ import {
   defineScene,
   defineSettings,
   physicsOf,
+  type ActorSpec,
   type World,
 } from '../../../engine/sim-api';
 import { HERO, spawnHero } from '../cast/hero';
@@ -125,15 +126,18 @@ export const HALL_SETTINGS = defineSettings({
   },
 });
 
-/** The hall's setup: its level bodies, and the hero at the spawn facing south, tuned by `box.hall.*`; returns his id. */
-export function setupHall<C extends object>(w: World<C>): number {
+/**
+ * The hall's setup: its level bodies, and the hero at the spawn facing south, tuned by `box.hall.*`, with any further
+ * `components` (the fight's); returns his id.
+ */
+export function setupHall<C extends object>(w: World<C>, components?: ActorSpec['components']): number {
   addLevelBodies(physicsOf(w), HALL_LEVEL);
   const tuning = {
     speed: w.settings.get<number>('box.hall.speed'),
     jumpSpeed: w.settings.get<number>('box.hall.jump'),
     dashSpeed: w.settings.get<number>('box.hall.dash'),
   };
-  return spawnHero(w, [HALL_START[0], HALL_START[1], HALL_START[2]], 0, tuning);
+  return spawnHero(w, [HALL_START[0], HALL_START[1], HALL_START[2]], 0, tuning, components);
 }
 
 /** The hall with a hero. */

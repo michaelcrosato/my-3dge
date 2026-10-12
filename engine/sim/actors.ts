@@ -145,6 +145,11 @@ export interface ActorSpec {
   yaw?: number;
   /** Its character animator's make (engine/anim/character.ts); none when absent. */
   anim?: Pick<AnimatorOptions, 'build' | 'weapon' | 'preciseHits'>;
+  /**
+   * Further components it spawns with, by name (its `reactions`, its `secondary`: engine/sim/reactions.ts), so they
+   * are there from its first step, and a page's first warm-up builds what they draw.
+   */
+  components?: Readonly<Record<string, object>>;
 }
 
 /** Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`. Returns the id. */
@@ -159,13 +164,14 @@ export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): 
     w.systems.add('actors.readback', readActors, { phase: 'readback' });
   }
   const actor = { body, player: spec.player ?? true, character: spec.character, x, y, z, ...state };
-  if (!spec.anim) return w.spawn({ actor });
+  if (!spec.anim) return w.spawn({ ...spec.components, actor });
   if (!w.systems.has('actors.anim')) {
     w.systems.add('actors.anim', stepAnimators, { phase: 'anim' });
     w.systems.add('actors.pose', poseAnimators, { phase: 'readback' });
   }
   const { build = 'build:chibi', weapon = 'none', preciseHits = false } = spec.anim;
-  return w.spawn({ actor, animator: { build: typeof build === 'string' ? build : build.id, weapon, preciseHits } });
+  const animator = { build: typeof build === 'string' ? build : build.id, weapon, preciseHits };
+  return w.spawn({ ...spec.components, actor, animator });
 }
 
 /** Removes an actor and its body. */

@@ -50,6 +50,7 @@ import {
   stepCrowdBody,
   type CrowdBody,
   updateCrowd,
+  type ActorSpec,
   type CrowdAgent,
   type World,
 } from '../../../engine/sim-api';
@@ -207,9 +208,12 @@ function rigs(w: World<CrowdComponents>): void {
   }
 }
 
-/** The crowd's setup: the hall and its hero, `box.crowd.count` members queued, the crowd's systems; the hero's id. */
-export function setupCrowd(w: World<CrowdComponents>): number {
-  const hero = setupHall(w);
+/**
+ * The crowd's setup: the hall and its hero (with any further `components`), `box.crowd.count` members queued, the
+ * crowd's systems; returns the hero's id.
+ */
+export function setupCrowd(w: World<CrowdComponents>, components?: ActorSpec['components']): number {
+  const hero = setupHall(w, components);
   const count = w.settings.get<number>('box.crowd.count');
   const mix = MIXES[w.settings.get<keyof typeof MIXES>('box.crowd.mix')];
   for (let i = 0; i < count; i++) queue(w, mix);
