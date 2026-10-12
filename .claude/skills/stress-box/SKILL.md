@@ -16,7 +16,7 @@ the settings that tune it; a test (tests/unit/box-readme.test.ts) fails when it 
 | `labs/box/index.html`, `labs/box/main.ts` | The page: imports every scene under `scenes/`, every look under `looks/` and the levels as `?raw` text, then `createEngine` | page (engine/index.ts only) |
 | `labs/box/scenes/*.ts` | Sim-side scene modules: level, settings, spawns, systems; `x sim` runs them in Node | sim-side (engine/sim-api.ts only) |
 | `labs/box/cast/*.ts` | The cast: the hero (`HERO`, `HERO_FIGHT`), the walkers, slimes and wisps, their numbers and steering | sim-side |
-| `props/` (none yet) | The box's own props, made by `node x new prop labs/<lab>/props/<name>` with `<lab>` = `box`; the page reaches one only through a scene that imports it | sim-side data |
+| `labs/<lab>/props/*.ts`, `<lab>` = `box` (none yet) | The box's own props, made by `node x new prop labs/<lab>/props/<name>`; the page reaches one only through a scene that imports it | sim-side data |
 | `labs/box/looks/*.ts` | The box's looks (`look:torch-lit`…, `node x new look`) and the hall floor's bake | page (view data) |
 | `labs/box/sounds/*.ts` | The box's sounds from its sim events, its effects and music (WP 9.5) | page |
 | `labs/box/touch.ts` | The touch controls on a phone (ADR-0021: not tested) | page |
@@ -48,8 +48,7 @@ prefix a scene's own (`pathMover`, `spinnersCrate`); a scene's settings are `box
    drive it (`[0, { "move": [0, 1] }]` walks south, +Z: tests/replays/README.md, "Coordinates and inputs"); `node x
    replay <file> --state` writes where it ends (out/replay/<name>/state.json). Then `node x replay <file> --browser sim
    --update` (goldens hold in Node and Chromium) and `node x replay <file> --browser page` (while the page renders).
-   `<stage>` is the stage it proves; a variant outside every stage's claims takes the current stage's number (6) and
-   stays out of `STAGES`.
+   `<stage>`: labs/box/README.md, "Adding a scene or a variant", step 2.
 4. List it in labs/box/README.md's demo index and settings (tests/unit/box-readme.test.ts fails a scene or a `box.*`
    setting left out) and extend the box suite. When it belongs to a stage, add it to `STAGES` in
    tests/e2e/parity.spec.ts: T2's rendering-page check plays only those.
