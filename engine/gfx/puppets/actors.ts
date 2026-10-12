@@ -16,11 +16,19 @@
  * A puppet is named `actor#<id>`, as its stand-in would be, and carries `userData.entity`; the player's also carries
  * `userData.protagonist`, so the ID pass reports "the hero" (engine/gfx/idpass.ts).
  *
+ * WP 6.2 in the box (WP 7.8, ADR-0018 amendment 1): an actor with the component `reactions` (engine/sim/reactions.ts)
+ * gets a `Reactions` layer on its puppet's animator, loaded from the sim's at every pose, so its flinch bends its
+ * spine and neck and a body lying face down is drawn on its face; one with the component `secondary` gets a
+ * `Secondary` layer (its hair, cape or tail: engine/anim/secondary.ts), stepped by the body clock as the animator
+ * re-solves, and its chains drawn as meshes under the puppet's (engine/gfx/puppets/chains.ts: `actor#<id>/cape`…),
+ * in the puppet's material, so the ID pass names each part and counts it as the actor's.
+ *
  * Invariants: presentation only (doctrine: WebGPU only): its animators are its own, an `AnimatorPool` loaded from the
  * sim's data at every pose and never writing it, so drawing, culling or not drawing never changes the hash (the
- * animator's own invariant, engine/anim/character.test.ts); one puppet per actor, made again only when its build
- * changes; every object it makes is under `root`. A puppet is a skinned mesh of two draw calls: right for heroes and
- * a few foes; crowds draw through instanced batches (WP 5.4).
+ * animator's own invariant, engine/anim/character.test.ts), and so are its layers, which read the sim's components
+ * and never write them; one puppet per actor, made again only when its build changes, and its layers again when its
+ * animator, its `secondary` or whether it has `reactions` changes; every object it makes is under `root`. A puppet is
+ * a skinned mesh of two draw calls: right for heroes and a few foes; crowds draw through instanced batches (WP 5.4).
  *
  * @example
  * // const actors = createActorPuppets({ materials: library });
@@ -31,15 +39,19 @@
  * @see engine/gfx/puppets/actors.test.ts
  */
 import { Group } from 'three/webgpu';
-import { AnimatorPool, type AnimatorData, type TrailSample } from '../../anim/character';
+import { AnimatorPool, type Animator, type AnimatorData, type TrailSample } from '../../anim/character';
 import type { WorldPose } from '../../anim/fk';
+import { Reactions, type ReactionState } from '../../anim/reactions';
+import { Secondary } from '../../anim/secondary';
 import type { JointName, Skeleton } from '../../anim/skeleton';
 import { lerpAng, Vector3 } from '../../core/math';
 import { registry as sharedRegistry, type Registry } from '../../core/registry';
+import type { SecondaryComponent } from '../../sim/reactions';
 import type { EntityData } from '../../sim/state';
 import { eyePoint, nearBodyCull } from '../cameras/first';
 import type { Vec3 } from '../cameras/pose';
 import type { Warmup } from '../warmup';
+import { createChainMeshes, type ChainMeshes } from './chains';
 import { compileBody } from './compile';
 import { createPuppet, puppetMaterials, type Puppet, type PuppetMaterials } from './draw';
 
@@ -61,6 +73,32 @@ interface Held {
   player: boolean;
   data: AnimatorData | null;
   puppet: Puppet | null;
+  reactions: ReactionState | null;
+  secondary: SecondaryComponent | null;
+}
+
+/** The view's own layers on one actor's puppet animator: its reactions, its secondary motion and their meshes. */
+interface Layers {
+  animator: Animator;
+  key: string;
+  reactions: Reactions | null;
+  secondary: Secondary | null;
+  chains: ChainMeshes | null;
+}
+
+/** What an actor's layers are made for: whether it has reactions, and its secondary motion. */
+const layersKey = (held: Held) => {
+  const look = held.secondary;
+  const parts = look ? [look.hair, look.cape ? 'cape' : '', look.tail ? 'tail' : ''].filter(Boolean) : [];
+  const drawn = look && parts.length ? `${parts.join('+')}@${look.color}` : '';
+  return `${held.reactions ? 'reactions' : ''}|${drawn}`;
+};
+
+/** Takes `layers` off their animator and frees their meshes. */
+function dropLayers(layers: Layers): void {
+  if (layers.reactions) layers.animator.drop(layers.reactions.name).drop(layers.reactions.lyingLayer.name);
+  if (layers.secondary) layers.animator.drop(layers.secondary.name);
+  layers.chains?.dispose();
 }
 
 /** The player actor as the last draw put it. */
@@ -88,6 +126,8 @@ export interface ActorPuppets {
   hasPlayer(): boolean;
   /** Each puppet's trail as its last pose sampled it, by entity id (its animator's: oldest first, empty for none). */
   trails(): ReadonlyMap<number, readonly TrailSample[]>;
+  /** The view's layers on each puppet's animator, by entity id: its `Reactions` and `Secondary`, when it has them. */
+  layers(): ReadonlyMap<number, { readonly reactions: Reactions | null; readonly secondary: Secondary | null }>;
   /** Hides from a first-person camera at `eye` the player's body but its hands; null shows it. Returns what it hid. */
   cull(eye: Vec3 | null): JointName[];
   /** Registers the puppets with `warmup`, and their builds with its shader key. */
@@ -106,6 +146,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
   const puppets = new Map<number, Puppet>();
   const pool = new AnimatorPool();
   const trails = new Map<number, readonly TrailSample[]>();
+  const layers = new Map<number, Layers>();
   const at = new Vector3();
   let step = 1 / 60;
   let shown: PlayerView | null = null;
@@ -125,6 +166,32 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
     return puppet;
   };
 
+  /** The layers of actor `id`, whose puppet animator is `animator`: made again when what they are made for changed. */
+  const layersFor = (id: number, animator: Animator, held: Held, puppet: Puppet): Layers => {
+    const key = layersKey(held);
+    let own = layers.get(id);
+    if (own?.animator !== animator || own.key !== key) {
+      if (own) dropLayers(own);
+      const look = held.secondary;
+      const reactions = held.reactions ? new Reactions({ name: 'view:reactions' }).attach(animator) : null;
+      const wanted = look && (look.hair || look.cape || look.tail) ? look : null;
+      const secondary = wanted
+        ? new Secondary({ name: 'view:secondary', squash: false, cape: wanted.cape, tail: wanted.tail, ...(wanted.hair ? { hair: wanted.hair } : {}) }) // prettier-ignore
+        : null;
+      if (secondary) animator.use('secondary', secondary);
+      const material = options.materials.get(puppet.compiled.body.material);
+      const chains =
+        secondary && wanted
+          ? createChainMeshes(secondary, { material, color: wanted.color, name: `actor#${id}` })
+          : null;
+      own = { animator, key, reactions, secondary, chains };
+      layers.set(id, own);
+    }
+    const meshes = own.chains?.meshes ?? [];
+    if (meshes.length && meshes[0].parent !== puppet.mesh) puppet.mesh.add(...meshes); // a puppet made again
+    return own;
+  };
+
   return {
     root,
     puppets,
@@ -141,7 +208,10 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
         const last = held.get(entity.id);
         const player = actor.player === true;
         const puppet = data ? puppetFor(entity.id, data, player) : null;
-        held.set(entity.id, { before: last ? last.after : place, after: place, player, data, puppet });
+        const reactions = (entity.reactions as ReactionState | undefined) ?? null;
+        const secondary = (entity.secondary as SecondaryComponent | undefined) ?? null;
+        const before = last ? last.after : place;
+        held.set(entity.id, { before, after: place, player, data, puppet, reactions, secondary });
         if (puppet) drawn.add(entity.id);
       }
       for (const id of [...held.keys()]) if (!seen.has(id)) held.delete(id);
@@ -152,19 +222,29 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
         puppets.delete(id);
         trails.delete(id);
       }
+      for (const [id, own] of layers) {
+        if (drawn.has(id)) continue;
+        dropLayers(own);
+        layers.delete(id);
+      }
       pool.prune((id) => drawn.has(id));
       return drawn;
     },
     draw(alpha) {
       const k = Math.min(1, Math.max(0, alpha));
       shown = null;
-      for (const [id, { before: a, after: b, player, data, puppet }] of [...held].sort(([p], [q]) => p - q)) {
+      for (const [id, actor] of [...held].sort(([p], [q]) => p - q)) {
+        const { before: a, after: b, player, data, puppet } = actor;
         at.set(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k, a.z + (b.z - a.z) * k);
         const feet: Vec3 = [at.x, at.y, at.z];
         let posed: PlayerView['posed'] = null;
         if (puppet && data) {
-          const animator = pool.get(id, data, { dt: step }).pose({ at, yaw: lerpAng(a.yaw, b.yaw, k) });
+          const animator = pool.get(id, data, { dt: step });
+          const own = layersFor(id, animator, actor, puppet);
+          if (own.reactions && actor.reactions) own.reactions.load(actor.reactions);
+          animator.pose({ at, yaw: lerpAng(a.yaw, b.yaw, k) });
           puppet.setPose(animator.body.pose);
+          own.chains?.update();
           trails.set(id, animator.trail);
           const { skeleton, world } = animator.body;
           posed = { skeleton, world, eye: eyePoint(skeleton, world) };
@@ -175,6 +255,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
     },
     player: () => shown,
     trails: () => trails,
+    layers: () => layers,
     hasPlayer: () => players > 0,
     cull(eye) {
       const hide = eye && shown?.posed ? nearBodyCull(shown.posed.skeleton, shown.posed.world, eye) : [];
@@ -182,15 +263,22 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
       return hide;
     },
     register(warmup) {
+      const chains = () => [...layers.values()].flatMap((own) => own.chains?.meshes ?? []);
       const registrations = [
-        warmup.register('stage:actors', { objects: () => [...puppets.values()].map((puppet) => puppet.mesh) }),
-        warmup.keyPart('stage:actors', () =>
-          [...new Set([...puppets.values()].map((p) => p.compiled.skeleton.build.id))].sort().join(';'),
-        ),
+        warmup.register('stage:actors', {
+          objects: () => [...[...puppets.values()].map((puppet) => puppet.mesh), ...chains()],
+        }),
+        warmup.keyPart('stage:actors', () => {
+          const builds = [...new Set([...puppets.values()].map((p) => p.compiled.skeleton.build.id))].sort().join(';');
+          const parts = [...new Set(chains().map((mesh) => String(mesh.userData.part)))].sort().join('+');
+          return parts ? `${builds}|${parts}` : builds;
+        }),
       ];
       return { dispose: () => registrations.forEach((registration) => registration.dispose()) };
     },
     dispose() {
+      for (const own of layers.values()) dropLayers(own);
+      layers.clear();
       for (const puppet of puppets.values()) puppet.dispose();
       puppets.clear();
       held.clear();

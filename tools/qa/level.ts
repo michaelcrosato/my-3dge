@@ -81,10 +81,10 @@ function stableHash(text: string, file: string): boolean {
 
 /** The family: every level file's problems, and whether it compiles reproducibly. */
 const family: QaFamily = {
-  run({ root, only }) {
+  run({ root, only, keep }) {
     const violations: QaViolation[] = [];
     for (const level of levelFiles(root)) {
-      if (only.length && !only.some((prefix) => level.id.startsWith(prefix))) continue;
+      if (!(keep ? keep(level.id) : !only.length || only.some((prefix) => level.id.startsWith(prefix)))) continue;
       const text = readFileSync(join(root, level.file), 'utf8');
       const problems = validateLevel(text, { file: level.file });
       violations.push(...violationsOf(level, problems));

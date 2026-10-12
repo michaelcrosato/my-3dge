@@ -10,8 +10,8 @@
  * the intents its AI writes into `actor.intents`, its presses taken from the edges of `b`. Events: `jump` `{ id }`,
  * `land` `{ id, speed }`, `dash` `{ id }`. Gravity: `physics.characterGravity` unless the settings name one; the weight
  * on dynamic floors uses `physics.gravity`. Entities with the component `oneWay` make their body a one-way platform.
- * WP 3.7: `anim` adds the component `animator`, stepped by the system `actors.anim` after `actors` and, with
- * `preciseHits`, posed by `actors.pose` after `actors.readback`. Event: `footstep` `{ id, side, speed }`.
+ * WP 3.7: `anim` adds the component `animator`, stepped by `actors.anim` after `actors` (its `reactions` first, WP
+ * 7.8) and, with `preciseHits`, posed by `actors.pose` after `actors.readback`. Event: `footstep` `{ id, side, speed }`.
  *
  * `measureFeel(character)` drives a character over a flat course in a world of its own through the feel meter
  * (engine/physics/feel.ts) and adds the reach (the highest ledge it jumps onto, WP 4.3's climb limit) and the dash's
@@ -62,6 +62,7 @@ import {
 import { createFeelMeter, updateFeelMeter, type FeelReport } from '../physics/feel';
 import { createPhysics, physicsOf } from '../physics/world';
 import type { Vec3Like } from '../physics/queries';
+import { defineReactionKinds, stepReactions, type ReactionComponents } from './reactions';
 import { defineComponent } from './state';
 import type { World } from './world';
 
@@ -98,8 +99,12 @@ export interface AnimatorComponent extends AnimatorData {
 /** The components this module reads: `actor`, `animator`, and `oneWay` for one-way platforms. */
 export type ActorComponents = { actor: ActorComponent; animator: AnimatorComponent; oneWay: { body: number } };
 
-/** Declares the components `actor`, `animator` and `oneWay` and the setting `physics.characterGravity` on `registry`. */
+/**
+ * Declares the components `actor`, `animator` and `oneWay`, `reactions` and `secondary` (engine/sim/reactions.ts) and
+ * the setting `physics.characterGravity` on `registry`.
+ */
 export function defineActorKinds(registry: Registry = sharedRegistry): void {
+  defineReactionKinds(registry);
   if (!registry.kinds().includes('setting') || !registry.has('setting', 'physics.characterGravity')) {
     defineSettings(CHARACTER_SETTINGS, registry);
   }
@@ -218,21 +223,24 @@ function animated(w: World) {
   const pool = pools.get(w) ?? new AnimatorPool();
   pools.set(w, pool);
   pool.prune((id) => w.has(id));
-  return [w.query('actor', 'animator') as unknown as (ActorComponents & { id: number })[], pool] as const;
+  const actors = w.query('actor', 'animator') as unknown as (ActorComponents & Partial<ReactionComponents>)[];
+  return [actors as (ActorComponents & Partial<ReactionComponents> & { id: number })[], pool] as const;
 }
 
 /**
  * The system `actors.anim`: each animator's step in id order, told its `states` and the controller's (`velocity`, `yaw`,
- * `air`, `dash`), its breathing phase drawn from `rng.entity(id, 'anim')` at its first step; emits its events.
+ * `air`, `dash`), its breathing phase drawn from `rng.entity(id, 'anim')` at its first step; emits its events. An
+ * actor's `reactions` step first, what their phase tells the body laid over its `states`.
  */
 function stepAnimators(w: World): void {
   const [actors, pool] = animated(w);
-  for (const { id, actor, animator: data } of actors) {
+  for (const { id, actor, animator: data, reactions } of actors) {
     const rng = w.rng.entity(id, 'anim');
     if (!data.started) [data.state.clock, data.started] = [rng.next() * STEP.clockSpread, true]; // as a humanoid does
     const animator = pool.get(id, data, { rng, dt: w.dt });
     velocity.set(actor.vx, actor.vy, actor.vz);
-    animator.step({ ...data.states, velocity, yaw: actor.yaw, air: !actor.grounded, dash: actor.dash > 0 }).save(data);
+    const told = reactions ? { ...data.states, ...stepReactions(reactions, w.dt) } : data.states;
+    animator.step({ ...told, velocity, yaw: actor.yaw, air: !actor.grounded, dash: actor.dash > 0 }).save(data);
     for (const { type, ...event } of animator.events) w.emit(type, { id, ...event });
   }
 }

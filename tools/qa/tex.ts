@@ -231,11 +231,11 @@ export function textureSheet(bakes: readonly TextureBake[]): Sheet {
 /** The family: every texture of the shared registry, then every prop's, after importing a game's modules; and the
  * sheet of the textures. */
 const family: QaFamily = {
-  async run({ root, only }) {
+  async run({ root, only, keep: asked }) {
     for (const module of [...textureModules(root), ...labModules(root, 'props')]) {
       await import(pathToFileURL(join(root, module)).href);
     }
-    const keep = (id: string) => !only.length || only.some((prefix) => id.startsWith(prefix));
+    const keep = asked ?? ((id: string) => !only.length || only.some((prefix) => id.startsWith(prefix)));
     const ids = sharedRegistry.list('texture').map((entry) => entry.id);
     propKind(sharedRegistry);
     const props = sharedRegistry.list('prop').map((entry) => entry.id);

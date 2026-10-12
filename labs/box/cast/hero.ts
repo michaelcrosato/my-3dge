@@ -130,6 +130,11 @@ const hit = (range: number, halfAngle: number, damage: number, knockback: number
  * flinches him, pushes him away, and then he cannot be hit for a moment (`hurt`). The numbers are the prototype's
  * (`my-3d2dge:src/stress-world/20-sim.js:107-112, 134-135, 268-274, 303-316, 324-342`: `HIT`, the combo, the thrust,
  * `hurtHero`, `fireBolt`, `damageEnemy`), in metres and seconds, as starting values.
+ *
+ * WP 6.2 in the box (WP 7.8): every blow flinches the body it lands on through its reactions, `react.small` or
+ * `react.big` hard (engine/anim/reactions.ts `hit`: about 1 for a blow); a big one knocks a walker down. He wears a
+ * cape (`secondary`: the component the view hangs on his puppet, engine/sim/reactions.ts; the cape WP 6.2 carried
+ * from `my-3d2dge:engine/my-3d2dge.js:2033-2068`), chosen here as the part a fight swings most.
  */
 export const HERO_FIGHT = Object.freeze({
   /** What his right hand holds. */
@@ -167,4 +172,8 @@ export const HERO_FIGHT = Object.freeze({
   health: 100,
   /** When a foe hits him: his flinch (s), the push (m/s), the time he cannot be hit after (s), the hit-stop (s). */
   hurt: Object.freeze({ flinch: 0.22, knockback: 170 / UNITS, safe: 0.8, stop: 0.05 }),
+  /** How hard a blow flinches the body it lands on (a reaction's strength): a small blow's, a big one's. */
+  react: Object.freeze({ small: 1, big: 2 }),
+  /** His cape, the component `secondary` (engine/sim/reactions.ts): the view hangs it on his puppet and swings it. */
+  secondary: Object.freeze({ cape: true, color: '#7a2430' }),
 });

@@ -245,11 +245,12 @@ export function defineLooks(registry: Registry = sharedRegistry): void {
   if (!registry.kinds().includes('look')) {
     registry.defineKind('look', {
       description:
-        'Looks: a material style plus a filter chain (post-processing), as whole looks or one-filter presets.',
+        'Looks: a material style plus a filter chain (post-processing), and the sky that lights it, as whole looks or one-filter presets.',
       fields: LOOK_FIELDS,
       fallback: 'look:clean',
       check: (entry) => checkLook(entry as LookEntry),
-      defineWith: "defineLook('look:<name>', { description, style, toon, filters: { pixel: { scope, size }, … } })",
+      defineWith:
+        "defineLook('look:<name>', { description, style, toon, sky, filters: { pixel: { scope, size }, … } })",
     });
   }
   for (const [id, spec] of Object.entries({ ...LOOKS, ...PRESETS })) {

@@ -521,8 +521,8 @@ export function animViolations(keep: (id: string) => boolean = () => true): QaVi
 
 /** The family: every body's motion through its state matrix, then every clip of the library (anim/clips.ts). */
 const family: QaFamily = {
-  async run({ root, only }) {
-    const keep = (id: string) => only.length === 0 || only.some((prefix) => id.startsWith(prefix));
+  async run({ root, only, keep: asked }) {
+    const keep = asked ?? ((id: string) => only.length === 0 || only.some((prefix) => id.startsWith(prefix)));
     const { clipViolations } = await import('./anim/clips'); // loaded here: it measures with this file's metrics
     return [...animViolations(keep), ...clipViolations(root, keep)];
   },

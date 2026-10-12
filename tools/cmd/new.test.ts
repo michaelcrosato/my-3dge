@@ -216,4 +216,25 @@ describe('testing templates (x new … --test)', () => {
     ]);
     expect(existsSync(join(ROOT, 'tools/templates/module/brokenSample.ts'))).toBe(false);
   });
+
+  it('fails a template whose comment cites a path that does not exist, as x docs --check does', async () => {
+    const dir = tree({
+      'cites.ts.tmpl':
+        '/**\n * @file A module run as `node x sim {{id}}`: a path without its .ts.\n */\n\n/** One. */\nexport const {{name}} = 1;\n',
+    });
+    const kind: Kind = {
+      kind: 'cites',
+      dir,
+      describe: 'A template citing a path that does not exist.',
+      id: 'a path',
+      pattern: '.',
+      sample: 'tools/templates/module/citesSample',
+      files: { 'cites.ts.tmpl': '{{id}}.ts' },
+      checks: ['docs'],
+    };
+    const result = await testKind(ROOT, kind);
+    expect(result.lines).toEqual(['docs: 1 problem']);
+    expect(result.failures[0].message).toMatch(/tools\/templates\/module\/citesSample does not exist.*DOCS_PATH/);
+    expect(existsSync(join(ROOT, 'tools/templates/module/citesSample.ts'))).toBe(false);
+  });
 });

@@ -3,8 +3,9 @@
  * their calls (comments, strings, declarations, tests, `defineCodes`, `defineProperty` and `defineConfig` aside), a
  * module that fails to load is a warning, kinds declared in fixture modules are listed by a child process without
  * editing the command (a module's timers and side effects never reach the command; one that never finishes loading
- * is named), the three listings print and write `describe.json`, and an unknown kind or id is a usage error naming the
- * closest.
+ * is named), the three listings print and write `describe.json`, an entry is found as `kind:name` alone or by its
+ * name without the kind's prefix, a listing with a line cut short ends naming `describe.json`, and an unknown kind or
+ * id is a usage error naming the closest.
  */
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -163,7 +164,28 @@ gadgets.def('testGadget:small', {});
       '  mode = "a"',
     ]);
     expect(existsSync(join(root, 'out/describe/testGadget-testGadget-big/describe.json'))).toBe(true);
+    for (const asked of [['testGadget:big'], ['testGadget', 'big']]) {
+      const same = await run(root, ...asked);
+      expect([same.code, ...same.lines.slice(0, 3)], asked.join(' ')).toEqual([0, ...entry.lines.slice(0, 3)]);
+    }
     expect(registry.kinds()).not.toContain('testGadget');
+  });
+
+  it('ends a listing whose line is cut short naming describe.json, where the whole text is', async () => {
+    const long = 'A field whose description runs on and on, '.repeat(5);
+    const root = repository({
+      'engine/long.ts': `import { defineKind } from ${REGISTRY};
+defineKind('testLong', { description: 'Long.', fields: { text: { type: 'string', default: '', description: ${JSON.stringify(long)} } } });
+`,
+    });
+    const { code, lines } = await run(root, 'testLong');
+    expect(code).toBe(0);
+    expect(lines.find((line) => line.startsWith('  text:'))).toMatch(/\.\.\.$/);
+    expect(lines.at(-2)).toBe('(a line above is cut short: the whole text is in out/describe/testLong/describe.json)');
+    const data = JSON.parse(readFileSync(join(root, 'out/describe/testLong/describe.json'), 'utf8'));
+    expect(data.fields[0].description).toBe(long);
+    const short = await run(root);
+    expect(short.lines.some((line) => line.includes('cut short'))).toBe(false);
   });
 
   it('describes a setting from the schema it was declared with', async () => {

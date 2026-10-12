@@ -7,8 +7,11 @@
  * (Done-when 4). DOM queries find the damage numbers its hits put over the canvas, with the values Node's run of it
  * gives (Done-when 2). Its effects are drawn (the ID pass sees them) and never change its hashes: it gives its goldens
  * with them turned off too (`gfx.effects`, Done-when 3). Played in real time (`?replay=`), the hits' hit-stops hold its
- * steps back by the frame clock's budget (WP 6.3's deferred proof). The CPU-only contract for the fight is
- * tests/e2e/parity.spec.ts's Box 5.
+ * steps back by the frame clock's budget (WP 6.3's deferred proof). WP 6.2 in the box (WP 7.8, ADR-0018 amendment 1):
+ * at the scripted fight's end the ID pass sees the hero's cape (his `secondary`, drawn under his puppet and counted as
+ * his), and the walkers its big blows knocked down lie in the page, each reaction telling its body `down` (Node's
+ * labs/box/scenes/fight.test.ts follows the knockdowns, get-ups and deaths over the same run). The CPU-only contract
+ * for the fight is tests/e2e/parity.spec.ts's Box 5.
  *
  * Invariants: the page is driven through `window.__engine`, as an agent drives it; goldens come from the replay
  * files, never from the page itself. Nothing from engine/ or labs/ is imported here but types: Node's run of the
@@ -99,6 +102,31 @@ function hitsInNode(file: string): { step: number; amount: number }[] {
   return JSON.parse(run.stdout.trim().split('\n').at(-1)!) as { step: number; amount: number }[];
 }
 
+/** A body with reactions, as the page has it: alive or not, the reaction and phase playing, how far down its body is. */
+interface Reacting {
+  id: number;
+  alive: boolean;
+  playing: string;
+  phase: number;
+  down: number;
+}
+
+/** Every body with reactions in the page (see `Reacting`). */
+function reacting(page: Page): Promise<Reacting[]> {
+  return page.evaluate(() =>
+    (__engine.entities('reactions') as { id: number }[]).map(({ id }) => {
+      const e = __engine.get(id) as {
+        reactions: { playing: string; timeline: number[] };
+        crowdMember?: { state: string };
+        crowdBody?: { state: { state?: { weights: { down: number } } } };
+      };
+      const down = e.crowdBody?.state.state?.weights.down ?? 0;
+      const alive = e.crowdMember?.state === 'alive';
+      return { id, alive, playing: e.reactions.playing, phase: e.reactions.timeline[0], down };
+    }),
+  );
+}
+
 /** The foes still standing in the page. */
 function standing(page: Page): Promise<number> {
   return page.evaluate(
@@ -112,7 +140,7 @@ function standing(page: Page): Promise<number> {
 test.describe('the box, stage 5: the fight', () => {
   test.setTimeout(240_000);
 
-  test('the scripted fight gives its goldens drawn in the page, cuts down 3 or more, and builds no pipeline after the warm-up', async ({
+  test('the scripted fight gives its goldens drawn in the page, cuts down 3 or more, builds no pipeline after the warm-up, and shows the hero’s cape and the walkers it knocked down', async ({
     page,
     harness,
   }) => {
@@ -128,6 +156,25 @@ test.describe('the box, stage 5: the fight', () => {
     expect(stats.pipelinesAfterWarmUp).toBe(0);
     const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
     expect(advice).not.toContain('GFX_COLD_PIPELINE');
+    // WP 6.2 in the box: the walkers knocked down near the end lie, their reactions telling their bodies `down`
+    const lying = (await reacting(page)).filter((body) => body.alive && body.playing === 'down' && body.phase === 1);
+    expect(lying.length).toBeGreaterThan(0);
+    for (const body of lying) expect(body.down, `walker ${body.id}`).toBeGreaterThan(0.9);
+    // and the ID pass sees the hero's cape, drawn under his puppet, counted as his
+    const shot = await page.evaluate(
+      () =>
+        __engine.shot({ ids: true, metrics: false, thumbnail: false }) as Promise<{
+          ids: {
+            visible: { name: string; px: number; entity?: number; protagonist?: boolean }[];
+            protagonist: { name: string; px: number } | null;
+          };
+        }>,
+    );
+    const cape = shot.ids.visible.find(({ name }) => name === 'actor#1/cape');
+    expect(cape).toMatchObject({ entity: 1, protagonist: true });
+    expect(cape!.px).toBeGreaterThan(0);
+    expect(shot.ids.protagonist).toMatchObject({ name: 'actor#1' });
+    expect(shot.ids.protagonist!.px).toBeGreaterThan(cape!.px); // his body and his cape
     expect(harness.advice()).toEqual([]);
   });
 

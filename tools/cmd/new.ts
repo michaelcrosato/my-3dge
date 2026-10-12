@@ -12,7 +12,8 @@
  *
  * Checks, run on the new files only: `types` (TypeScript's diagnostics, with tsconfig.json's options), `lint`
  * (ESLint's errors), `test` (Vitest runs the new `*.test.ts` files) and `docs` (a file comment, every export
- * documented, every `@example` runs; tools/cmd/docs.ts).
+ * documented, every `@example` runs, every path and command its comments cite exists: tools/cmd/docs.ts and
+ * tools/lib/docsPaths.ts, as `x docs --check` checks them).
  *
  * `--test` writes the kind's `sample` into the repository, runs its checks and always removes it again, so a template
  * cannot rot; `--test-all` tests every kind (`x ci --local` runs it). With no arguments it lists the kinds.
@@ -33,6 +34,7 @@ import { format, getFileInfo, resolveConfig } from 'prettier';
 import ts from 'typescript';
 import { readModule } from '../lib/docs';
 import { runExample } from '../lib/docsExamples';
+import { checkPaths } from '../lib/docsPaths';
 import type { Finding } from '../lib/report';
 import { closest, UsageError, type Command, type CommandResult } from '../x';
 import { checkComments } from './docs';
@@ -273,6 +275,8 @@ export async function runCheck(root: string, check: CheckName, files: string[]):
   }
   const modules = code.filter((file) => !tests.includes(file)).map((file) => readModule(root, file));
   const problems = checkComments(root, modules).map((finding) => finding.message);
+  const paths = checkPaths(root, modules).failures; // as x docs --check checks them
+  problems.push(...paths.map((finding) => `${finding.file}:${finding.line}: ${finding.message} (${finding.id})`));
   for (const example of modules.flatMap((module) => module.examples)) {
     const outcome = await runExample(root, example);
     if (!outcome.ok) problems.push(`the @example at ${example.module}:${example.line} does not run: ${outcome.error}`);

@@ -1,5 +1,5 @@
 /**
- * @file The stage's lights (PLAN.md §6.4's view, WP 7.8, ADR-0008 amendment 9): the stage's own, a hemisphere light
+ * @file The stage's lights (PLAN.md §6.4's view, WP 7.8, ADR-0008 amendment 10): the stage's own, a hemisphere light
  * and one shadow-casting sun fitted to the level under a plain background, and a sky on demand (engine/gfx/sky.ts: the
  * light pool lit from the level's light spots and flickering, the sky's sun, its dome and backdrop, the ambient light
  * and the fog). A look names the sky (`look.sky`, engine/gfx/post/looks.ts) and the app shows it (engine/app/look.ts):

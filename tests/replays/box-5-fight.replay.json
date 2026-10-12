@@ -1,6 +1,6 @@
 {
   "format": "my3dge-replay/1",
-  "description": "Box 5, the fight: the hero with a sword walks a square round the dais through 36 walkers, slimes and wisps on the prototype's proof timetable (attack every 24 steps, a bolt every 90, a dash every 150, a jump every 200), cutting several down and throwing a body high, while they swing, pounce and shoot at him, telegraphed, in god mode.",
+  "description": "Box 5, the fight: the hero with a sword walks a square round the dais through 36 walkers, slimes and wisps on the prototype's proof timetable (attack every 24 steps, a bolt every 90, a dash every 150, a jump every 200), cutting several down and throwing a body high, his big blows knocking walkers down to get up again (their reactions), while they swing, pounce and shoot at him, telegraphed, in god mode.",
   "engine": "0.0.0",
   "three": "0.182.0",
   "rapier": "simd-compat 0.21.0",
@@ -106,16 +106,16 @@
   "hashes": {
     "linux-x64": {
       "0": "ab1b22b7b3c570a6",
-      "60": "6fdbb0208f91794d",
-      "120": "06baf771cd66f3b9",
-      "180": "b517c6ce7f572f29",
-      "240": "6a08bfa9c49ecde6",
-      "300": "f6c94f914cbfd991",
-      "360": "ed52f64cc9c59278",
-      "420": "a2485d9e6d5dc5b9",
-      "480": "34d0dbe5f498f2c4",
-      "540": "92a98394e889abf4",
-      "600": "2ebb2e561e8755e0"
+      "60": "5d733feeb57e821f",
+      "120": "139822d4dd175ca7",
+      "180": "b86f6c63f2e4df39",
+      "240": "fec9c5b666badd80",
+      "300": "728ca2d68fa00269",
+      "360": "bc94b5938743f6bb",
+      "420": "6070a2b756c23c19",
+      "480": "638a8474c94f2bcb",
+      "540": "7fc13282c7cc98f9",
+      "600": "0c78816619924b95"
     }
   }
 }

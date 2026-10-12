@@ -16,9 +16,10 @@
  *
  * The setup is the crowd's (`setupCrowd`: the hall, the hero, the queue, the crowd's step), then the fight's systems:
  * `fight.steer` and `fight.rigs` in the place of the crowd's `crowd.steer` and `crowd.rigs`, and `fight.shots`. The
- * first step joins the fight (`joinFight`; what the setup spawns joins at its end): the hero's sword and his
- * `fightHero`, `fightHealth` and `fightTokens`; each member's `fightHealth` (its kind's hit points), `fightFoe` (a
- * first cool-down drawn from the stream `fight`: up to 1 s, a wisp's first shot later) and `fightTelegraph`.
+ * first step joins the fight (`joinFight`; what the setup spawns joins at its end): the hero's sword, his reactions and
+ * cape (`reactions`, `secondary`: WP 6.2 in the box, WP 7.8) and his `fightHero`, `fightHealth` and `fightTokens`;
+ * each member's `fightHealth` (its kind's hit points), `fightFoe` (a first cool-down drawn from the stream `fight`: up
+ * to 1 s, a wisp's first shot later) and `fightTelegraph`.
  *
  * Settings: the crowd's (`box.crowd.count`, 36 here; `box.crowd.mix`), the hall's for the hero (`box.hall.*`), and
  * `box.fight.god` (`FIGHT_SETTINGS`: what it does is fight-rules.ts's `hurtHero`).
@@ -71,6 +72,8 @@ export function joinFight(w: FightWorld): void {
   const [hero] = w.query('actor', 'animator');
   if (!hero || hero.fightHero) return;
   hero.animator.weapon = HERO_FIGHT.weapon;
+  w.add(hero.id, 'reactions');
+  w.add(hero.id, 'secondary', { ...HERO_FIGHT.secondary });
   w.add(hero.id, 'fightHero');
   w.add(hero.id, 'fightHealth', { hp: HERO_FIGHT.health });
   w.add(hero.id, 'fightTokens');
