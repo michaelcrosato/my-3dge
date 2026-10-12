@@ -3,11 +3,20 @@
  * animator gets a puppet of the humanoid in its build, named and tagged for the ID pass, and one without gets none;
  * a draw puts the player's feet and puppet `alpha` of the way between its last two steps; his eye is the head socket;
  * first-person culling hides every part but the hands and shows them all again; a despawned actor's puppet goes; and
- * drawing, posing and culling never change the sim's hash.
+ * drawing, posing and culling never change the sim's hash. WP 8.9: an actor with clips is drawn posed by its clip
+ * layer, as the clip is retargeted, in the body its component `puppet` names (the mannequin).
  * @see engine/gfx/puppets/actors.ts
  */
 import { describe, expect, it } from 'vitest';
-import { JOINTS } from '../../anim/skeleton';
+import { getBuild } from '../../anim/builds';
+import { ClipLayerPool, defineClipSet, getClipSet } from '../../anim/clip/clipsets';
+import { retargetPose } from '../../anim/clip/retarget';
+import { createWorldPose, forwardKinematics, socketPosition } from '../../anim/fk';
+import { Pose } from '../../anim/pose';
+import { createSkeleton, JOINTS } from '../../anim/skeleton';
+import { Vector3 } from '../../core/math';
+import { readSet } from '../../../tools/anim/repack';
+import { defineMannequin } from './bodies/mannequin';
 import { createCharacter } from '../../physics/character';
 import { physicsOf } from '../../physics/world';
 import { spawnActor } from '../../sim/actors';
@@ -95,5 +104,39 @@ describe('actors drawn as puppets', () => {
     world.despawn(1);
     expect([...actors.capture(world.query('actor'), world.dt)]).toEqual([]);
     expect([actors.puppets.size, actors.root.children.length]).toEqual([0, 0]);
+  });
+
+  it('draws an actor with clips posed by its clip layer, in the body its puppet names (WP 8.9)', () => {
+    defineClipSet(readSet('quaternius'));
+    defineMannequin(getClipSet('clipset:quaternius'));
+    const clips = { sets: ['clipset:quaternius'], ik: false, play: { clip: 'Sword_Attack', fade: 0, at: 0.6 } };
+    const anim = { build: 'build:mannequin' };
+    const at = [2, 0, 3] as const;
+    const mannequin = defineScene('test:actor-puppets-clips', {
+      physics: true,
+      setup(w) {
+        const floor = { shape: { type: 'box', size: [40, 1, 40] }, position: [0, -0.5, 0] } as const;
+        physicsOf(w).addBody({ type: 'fixed', colliders: [floor] });
+        spawnActor(w, { at, character: createCharacter(), player: false, anim, clips, body: 'body:mannequin' });
+      },
+    });
+    const { world } = startScene(mannequin);
+    world.step({});
+    const actors = createActorPuppets({ materials: createMaterialLibrary() });
+    actors.capture(world.query('actor'), world.dt);
+    actors.draw(1);
+    const puppet = actors.puppets.get(1)!;
+    expect(puppet.compiled.body.id).toBe('body:mannequin');
+    // the clip's frame at its time now, retargeted onto the mannequin where its feet are: what the puppet shows
+    const { clips: data, actor } = world.get(1) as unknown as { clips: { state: { slots: { t: number }[] } }; actor: { x: number; y: number; z: number } }; // prettier-ignore
+    const skeleton = createSkeleton(getBuild('build:mannequin'));
+    const baked = new ClipLayerPool().library('clipset:quaternius').bake('Sword_Attack');
+    const pose = retargetPose(baked, data.state.slots[0].t, skeleton, new Pose(), { ik: false, lift: false });
+    pose.rootPos.add(new Vector3(actor.x, actor.y, actor.z));
+    const world2 = forwardKinematics(skeleton, pose, createWorldPose());
+    const [drawn, expected] = [new Vector3(), new Vector3()];
+    for (const socket of ['weaponR', 'weaponL', 'headTop', 'contactL', 'contactR'] as const) {
+      expect(puppet.socketPosition(socket, drawn).distanceTo(socketPosition(skeleton, world2, socket, expected))).toBeLessThan(1e-6); // prettier-ignore
+    }
   });
 });

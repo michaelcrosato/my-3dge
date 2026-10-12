@@ -7,7 +7,8 @@
  *
  * The animator is made for the call from the actor's `animator` component (an `AnimatorPool` of its own, as the view's
  * puppets make theirs, engine/gfx/puppets/actors.ts) and posed where the actor stands, at full detail, so its
- * effectors and sockets are the tick's. Registered from here, an app module engine/app/headless.ts loads (as
+ * effectors and sockets are the tick's; an actor with clips (engine/sim/actorClips.ts) has its clip layer in the clips
+ * slot, loaded from its component `clips` (WP 8.9). Registered from here, an app module engine/app/headless.ts loads (as
  * engine/app/feelMember.ts is), so `createHeadless` and `window.__engine` both list it.
  *
  * Invariants: it reads the world only (no recorded operation) and never touches the sim's own animators, and posing
@@ -35,10 +36,15 @@
  * @see labs/box/scenes/room-hero.test.ts
  */
 import { AnimatorPool, type AnimatorReport } from '../anim/character';
+import { ClipLayerPool, type ClipsData } from '../anim/clip/clipsets';
 import { codeError } from '../core/log';
 import { Vector3 } from '../core/math';
 import { defineMember } from '../dev/members';
 import type { ActorComponents } from '../sim/actors';
+
+/** The member's clip layers, a pool per world, so a set is loaded once (never the sim's pool: posing writes nothing). */
+const clipPools = new WeakMap<object, ClipLayerPool>();
+const clipPoolOf = (world: object) => clipPools.get(world) ?? clipPools.set(world, new ClipLayerPool()).get(world)!;
 
 defineMember('anim', {
   help: "An animated actor's animator: its weights, the layer stack slot by slot, effectors, sockets, events, trail.",
@@ -56,8 +62,10 @@ defineMember('anim', {
       const expected = `an animated actor’s id (${ids})`;
       throw codeError('SIM_BAD_ARGUMENT', { where: 'anim(id)', value: String(id), expected });
     }
-    const { actor, animator } = found as ActorComponents & { id: number };
+    const { actor, animator, clips } = found as ActorComponents & { id: number; clips?: ClipsData };
     const at = new Vector3(actor.x, actor.y, actor.z);
-    return new AnimatorPool().get(found.id, animator, { dt: world.dt }).pose({ at, yaw: actor.yaw }).inspect();
+    const made = new AnimatorPool().get(found.id, animator, { dt: world.dt });
+    if (clips) made.use('clips', clipPoolOf(world).get(found.id, clips, made.body.build, world.dt));
+    return made.pose({ at, yaw: actor.yaw }).inspect();
   },
 });

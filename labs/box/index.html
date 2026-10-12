@@ -18,6 +18,9 @@
       it in #msg, so a broken page is one line of text, never a blank one. On phones (WP 3.12, built, not tested):
       a viewport that does not zoom, the engine's manifest (full screen, landscape) and engine/ui/touch.css, which
       styles the touch controls and the page in touch mode; the canvas follows the visible height (100dvh).
+      The page ships the animation library's clips (clip mode, labs/box/scenes/clips.ts), so it shows the credit
+      100STYLE's license (CC BY 4.0) asks for on screen, always (#credit; data/anim/SOURCES.md, PLAN.md WP 8.9): the
+      title, the authors, the license with its link, the dataset's link and a note of the changes.
     -->
     <style>
       html,
@@ -54,6 +57,24 @@
       #msg[hidden] {
         display: none;
       }
+      #credit {
+        position: fixed;
+        left: 8px;
+        bottom: 6px;
+        margin: 0;
+        max-width: calc(100vw - 16px);
+        font:
+          11px/1.3 system-ui,
+          sans-serif;
+        color: #c9ccd4;
+        opacity: 0.75;
+        text-shadow: 0 1px 2px #000;
+        pointer-events: none;
+      }
+      #credit a {
+        color: inherit;
+        pointer-events: auto;
+      }
     </style>
     <script>
       window.__engine = { ready: false, errors: [] };
@@ -78,6 +99,12 @@
   <body>
     <canvas id="view"></canvas>
     <div id="msg" role="status" aria-live="polite">Loading…</div>
+    <p id="credit">
+      Motion: <a href="https://zenodo.org/records/8127870" target="_blank" rel="noopener">100STYLE</a>, by Mason, Starke
+      and Komura (2022),
+      <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>; converted to
+      key poses, one loop per style and gait
+    </p>
     <script type="module" src="./main.ts" onerror="boxFailed('labs/box/main.ts did not load')"></script>
   </body>
 </html>

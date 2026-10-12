@@ -1,9 +1,12 @@
 /**
  * @file Actors on the stage (PLAN.md WP 3.10, §6.4's view; I-21): every actor with an animator (engine/sim/actors.ts:
  * an entity with the components `actor` and `animator`) drawn as a puppet (engine/gfx/puppets/draw.ts) of the neutral
- * humanoid (`ACTOR_BODY`) in its animator's build, posed every frame by the presentation's half of its animator
- * (engine/anim/character.ts's `pose`) where its feet are at the frame's alpha, so it walks, dashes and jumps as the sim
- * steps it. The stage (engine/gfx/stage.ts) draws these instead of stand-ins.
+ * humanoid (`ACTOR_BODY`), or of the body its component `puppet` names (`body:mannequin`, WP 8.9), in its animator's
+ * build, posed every frame by the presentation's half of its animator (engine/anim/character.ts's `pose`) where its
+ * feet are at the frame's alpha, so it walks, dashes and jumps as the sim steps it; an actor with clips (the component
+ * `clips`, engine/sim/actorClips.ts) has its clip layer laid over the body, loaded from the same data (a
+ * `ClipLayerPool` of the view's own, engine/anim/clip/clipsets.ts). The stage (engine/gfx/stage.ts) draws these
+ * instead of stand-ins.
  *
  * `capture(entities, dt)` after each sim step keeps each actor's last two places (feet and heading) and its animator's
  * data; `draw(alpha)` poses each puppet `alpha` of the way from the one before to the last. `player()` is the first
@@ -32,6 +35,7 @@
  */
 import { Group } from 'three/webgpu';
 import { AnimatorPool, type AnimatorData, type TrailSample } from '../../anim/character';
+import { ClipLayerPool, type ClipsData } from '../../anim/clip/clipsets';
 import type { WorldPose } from '../../anim/fk';
 import type { JointName, Skeleton } from '../../anim/skeleton';
 import { lerpAng, Vector3 } from '../../core/math';
@@ -45,6 +49,9 @@ import { createPuppet, puppetMaterials, type Puppet, type PuppetMaterials } from
 
 /** The body every animated actor wears (engine/gfx/puppets/bodies/humanoid.ts). */
 export const ACTOR_BODY = 'body:humanoid';
+
+/** A puppet's part of the warm-up's key: its build, and its body when not `ACTOR_BODY`. */
+const worn = (build: string, body = ACTOR_BODY) => (body === ACTOR_BODY ? build : `${build}+${body}`);
 
 /** Where an actor stands: its feet (m) and heading (rad). */
 interface Place {
@@ -60,6 +67,8 @@ interface Held {
   after: Place;
   player: boolean;
   data: AnimatorData | null;
+  /** Its clip layer's data (the component `clips`), or null. */
+  clips: ClipsData | null;
   puppet: Puppet | null;
 }
 
@@ -105,17 +114,18 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
   const held = new Map<number, Held>();
   const puppets = new Map<number, Puppet>();
   const pool = new AnimatorPool();
+  const clipPool = new ClipLayerPool(registry);
   const trails = new Map<number, readonly TrailSample[]>();
   const at = new Vector3();
   let step = 1 / 60;
   let shown: PlayerView | null = null;
   let players = 0;
 
-  const puppetFor = (id: number, data: AnimatorData, player: boolean): Puppet => {
+  const puppetFor = (id: number, data: AnimatorData, player: boolean, body: string): Puppet => {
     let puppet = puppets.get(id);
-    if (puppet && puppet.compiled.skeleton.build.id === data.build) return puppet;
+    if (puppet && puppet.compiled.skeleton.build.id === data.build && puppet.compiled.body.id === body) return puppet;
     puppet?.dispose();
-    puppet = createPuppet(compileBody(ACTOR_BODY, data.build, { registry }), {
+    puppet = createPuppet(compileBody(body, data.build, { registry }), {
       materials: options.materials,
       name: `actor#${id}`,
     });
@@ -138,10 +148,12 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
         seen.add(entity.id);
         const place = { x: actor.x, y: actor.y, z: actor.z, yaw: actor.yaw };
         const data = (entity.animator as AnimatorData | undefined) ?? null;
+        const clips = (entity.clips as ClipsData | undefined) ?? null;
+        const body = (entity.puppet as { body?: string } | undefined)?.body ?? ACTOR_BODY;
         const last = held.get(entity.id);
         const player = actor.player === true;
-        const puppet = data ? puppetFor(entity.id, data, player) : null;
-        held.set(entity.id, { before: last ? last.after : place, after: place, player, data, puppet });
+        const puppet = data ? puppetFor(entity.id, data, player, body) : null;
+        held.set(entity.id, { before: last ? last.after : place, after: place, player, data, clips, puppet });
         if (puppet) drawn.add(entity.id);
       }
       for (const id of [...held.keys()]) if (!seen.has(id)) held.delete(id);
@@ -153,17 +165,23 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
         trails.delete(id);
       }
       pool.prune((id) => drawn.has(id));
+      clipPool.prune((id) => drawn.has(id));
       return drawn;
     },
     draw(alpha) {
       const k = Math.min(1, Math.max(0, alpha));
       shown = null;
-      for (const [id, { before: a, after: b, player, data, puppet }] of [...held].sort(([p], [q]) => p - q)) {
+      for (const [id, { before: a, after: b, player, data, clips, puppet }] of [...held].sort(([p], [q]) => p - q)) {
         at.set(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k, a.z + (b.z - a.z) * k);
         const feet: Vec3 = [at.x, at.y, at.z];
         let posed: PlayerView['posed'] = null;
         if (puppet && data) {
-          const animator = pool.get(id, data, { dt: step }).pose({ at, yaw: lerpAng(a.yaw, b.yaw, k) });
+          const animator = pool.get(id, data, { dt: step });
+          // its clips, laid over the body as the sim plays them (engine/sim/actorClips.ts)
+          const layer = clips ? clipPool.get(id, clips, animator.body.build, step) : null;
+          if (animator.layer('clips') !== (layer ?? undefined)) animator.drop('clips');
+          if (layer && !animator.layer('clips')) animator.use('clips', layer);
+          animator.pose({ at, yaw: lerpAng(a.yaw, b.yaw, k) });
           puppet.setPose(animator.body.pose);
           trails.set(id, animator.trail);
           const { skeleton, world } = animator.body;
@@ -185,7 +203,9 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
       const registrations = [
         warmup.register('stage:actors', { objects: () => [...puppets.values()].map((puppet) => puppet.mesh) }),
         warmup.keyPart('stage:actors', () =>
-          [...new Set([...puppets.values()].map((p) => p.compiled.skeleton.build.id))].sort().join(';'),
+          [...new Set([...puppets.values()].map(({ compiled }) => worn(compiled.skeleton.build.id, compiled.body.id)))]
+            .sort()
+            .join(';'),
         ),
       ];
       return { dispose: () => registrations.forEach((registration) => registration.dispose()) };
