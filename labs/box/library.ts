@@ -4,6 +4,8 @@
  * `clipset` entry (engine/anim/clip/clipsets.ts: its `_set.json` and its clip files joined, `clipSetFromFiles`), then
  * the mannequin, its build and body, from the Quaternius set (engine/gfx/puppets/bodies/mannequin.ts): what clip mode
  * (labs/box/scenes/clips.ts) plays and draws. The page calls it before it opens clip mode; no other scene loads it.
+ * tests/pages/replay.ts calls it too, so clip mode's replays play in the sim page as here; Node registers the same
+ * entries through tools/anim/library.ts.
  *
  * Invariants: the sets register sorted by directory, each once (`defineClipSet` keeps a set registered already); the
  * module does nothing at its top level, so tools that import it in Node (`x describe`) load it as it is.

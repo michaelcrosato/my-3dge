@@ -86,5 +86,9 @@ The library's tests and QA (WP 8.6); the asset scan in `x check`.
   `engine/sim/actorClips{,.test}.ts`, `labs/box/library.ts` and `labs/box/scenes/clips.test.ts`, and extends
   `engine/sim/actors.ts`, `engine/gfx/puppets/actors{,.test}.ts`, `engine/app/animMember.ts`, `engine/anim/api.ts`,
   `engine/sim-api.ts` (append), `labs/box/{main.ts,README.md}` and `tools/lib/tiers.ts`'s `LONG_RUNS`.
-- **Deferred:** no replay or goldens for `box:clips` yet: `x sim`, `x replay` and `tests/pages/replay.ts` register no
-  clip sets, so it runs only in the page and in tests (proposal: those hosts register data/anim/sets).
+- **Every host registers the library** (gate G8's review closed the deferral): `x sim`, `x perf`, `x replay`'s Node
+  runtime, `x describe` and tests through `tools/anim/library.ts` (`defineLibrary`, once a registry), the box page and
+  `tests/pages/replay.ts` through `labs/box/library.ts`; both end with the same entries (library.test.ts). The box page
+  loads it for `?replay=` a clip-mode replay too. `tests/replays/box-8-clips.replay.json` (a clip change, frame stepping,
+  the hero walking under a one-shot masked to his upper body) gives one set of goldens in Node, the sim page and the
+  rendering page; it is a `STAGES` entry of tests/e2e/parity.spec.ts. Cost: about 0.5 s more per Node host run.

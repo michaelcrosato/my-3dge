@@ -7,9 +7,9 @@
  * opens at `?post.look=<id>`, and registers the hall with its material swap, so the hall's floor is its bake, its
  * runes glowing on the dais (labs/box/looks/hall-floor.ts). Its sound (labs/box/sounds/page.ts, `window.__boxSound`)
  * runs each drawn frame through `onFrame`: silent until the first key, click or end of a touch, then the sim's events
- * as sounds, the demo song and the torches. Clip mode (`?scene=clips`, labs/box/scenes/clips.ts) loads the animation
- * library first: every set under data/anim/sets/, as text (`import.meta.glob`, never a fetch), registered by
- * labs/box/library.ts; no other scene loads it.
+ * as sounds, the demo song and the torches. Clip mode (`?scene=clips`, or `?replay=` one of its replays,
+ * labs/box/scenes/clips.ts) loads the animation library first: every set under data/anim/sets/, as text
+ * (`import.meta.glob`, never a fetch), registered by labs/box/library.ts; no other scene loads it.
  * Everything else a page does (routes, the renderer, the warm-up, the frame loop, `window.__engine`, the error overlay,
  * the touch layer) is the engine's, so this file stays a list of the box's content.
  *
@@ -67,7 +67,11 @@ const replays = Object.fromEntries(
 const libraryFiles = import.meta.glob<string>('../../data/anim/sets/*/*.json', { query: '?raw', import: 'default' });
 
 // clip mode (labs/box/scenes/clips.ts) needs the library registered before it starts; the other scenes never load it
-if (/^(box:)?clips$/.test(new URLSearchParams(location.search).get('scene') ?? '')) await loadLibrary(libraryFiles);
+const params = new URLSearchParams(location.search);
+const named = params.get('replay') ?? '';
+const replayScene = async () => (JSON.parse(await replays[named]()) as { scene: string }).scene; // ?replay alone
+const scene = params.get('scene') ?? (Object.hasOwn(replays, named) ? await replayScene() : '');
+if (/^(box:)?clips$/.test(scene)) await loadLibrary(libraryFiles);
 
 const canvas = document.querySelector<HTMLCanvasElement>('#view')!;
 const sound = createBoxSound();

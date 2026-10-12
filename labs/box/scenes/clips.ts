@@ -13,17 +13,19 @@
  * When the scene starts: who plays (`box.clips.cast`) and contact IK (`box.clips.ik`).
  *
  * The library's sets come from the registry (`defineClipSet`, the kind `clipset`): the box page registers every set
- * under data/anim/sets/ before it opens this scene (labs/box/main.ts), a test or tool reads them (tools/anim/repack.ts
- * `readSet`). Without them the setup fails with `CORE_NO_ENTRY`, naming `defineClipSet`. Clips that travel play in
- * place (their root motion is the layer's `root`, which a game moves the body by). Its machine interface: `node x anim
- * show <set>/<clip>` prints the clip this plays, `__engine.describe('clipset')` lists the sets, and the inspector shows
- * each figure's component `clips` (what plays, its time and weight) and its animator's layers (`__engine.anim(id)`).
+ * under data/anim/sets/ before it opens this scene (labs/box/main.ts), and so do tests/pages/replay.ts and the Node
+ * hosts, `x sim`, `x replay` and tests (tools/anim/library.ts `defineLibrary`). Without them the setup fails with
+ * `CORE_NO_ENTRY`, naming `defineClipSet`. Clips that travel play in place (their root motion is the layer's `root`,
+ * which a game moves the body by). Its machine interface: `node x anim show <set>/<clip>` prints the clip this plays,
+ * `__engine.describe('clipset')` and `node x describe clipset` list the sets, and the inspector shows each figure's
+ * component `clips` (what plays, its time and weight) and its animator's layers (`__engine.anim(id)`).
  *
  * Game code, sim-side: it imports only engine/sim-api.ts and the box's own files.
  *
  * Tests: labs/box/scenes/clips.test.ts (every clip on the mannequin headless; `x anim show` and the setting select the
- * same clip, frame for frame), tests/e2e/box-clips.spec.ts (one clip of each set in the page; `BOX_CLIPS=all` plays
- * them all, a long run).
+ * same clip, frame for frame; tests/replays/box-8-clips.replay.json's goldens), tests/e2e/box-clips.spec.ts (one clip
+ * of each set in the page; `BOX_CLIPS=all` plays them all, a long run), tests/e2e/parity.spec.ts (the replay's
+ * goldens while the page renders; live play replayed in Node).
  *
  * @example
  * // labs/box/?scene=clips&box.clips.clip=cmu/Cartwheel&cam=threequarter

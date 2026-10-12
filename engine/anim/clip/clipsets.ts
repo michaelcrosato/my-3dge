@@ -2,10 +2,10 @@
  * @file Clip sets in the registry, and clip layers kept as plain data (PLAN.md §10.4, WP 8.9): the registry kind
  * `clipset`, one entry per set of readable clips (`clipset:quaternius`: the set's header and its clips), which the
  * reader registers, as levels and actions are (the engine imports nothing outside engine/: a page imports the files of
- * `data/anim/sets/<set>/` with `import.meta.glob`, a tool reads them), so `__engine.describe('clipset')` and
- * `x describe clipset` list them; and `ClipLayerPool`, the clip layer (layer.ts) of an entity, loaded from its plain
- * data at every `get`, as `AnimatorPool` keeps animators (character.ts), so the sim steps it and the view poses it
- * from the same numbers.
+ * `data/anim/sets/<set>/` with `import.meta.glob`, a Node tool reads them, tools/anim/library.ts), so
+ * `__engine.describe('clipset')` and `x describe clipset` list them; and `ClipLayerPool`, the clip layer (layer.ts) of
+ * an entity, loaded from its plain data at every `get`, as `AnimatorPool` keeps animators (character.ts), so the sim
+ * steps it and the view poses it from the same numbers.
  *
  * - `defineClipSet(set)` parses the set (validate.ts `parseClipSet`: a broken clip is refused with its `ANIM_CLIP_*`
  *   code) and registers it as `clipset:<set, lower case>`; the same set again returns the entry already there.
