@@ -362,3 +362,15 @@ export type { DamageEvent } from './sim/damage';
 export type { DamageEvents } from './sim/damage';
 export { damage } from './sim/damage';
 export { requestHitStop } from './sim/damage';
+
+// Clips on actors (WP 8.9): the clip layer in an actor's animator as sim data, the component clips, stepped at the
+// actor's ground speed and drawn over its body by the view; its events come as `clip`. spawnActor's `body` names the
+// body it is drawn as (body:mannequin).
+export { addClips } from './sim/actorClips';
+export type { ClipsSpec } from './sim/actorClips';
+export { playClip } from './sim/actorClips';
+export { stopClip } from './sim/actorClips';
+export { seekClip } from './sim/actorClips';
+export { locomoteClips } from './sim/actorClips';
+export { clipLayerOf } from './sim/actorClips';
+export type { PuppetComponent } from './sim/actors';
