@@ -17,7 +17,8 @@
  *   own `--changed` reruns everything on the same `T1_FULL` files (vite.config.ts's `forceRerunTriggers`).
  * - **T2** runs in full when engine, lab or page code changed (`T2_FULL`), because pages reach the browser through the
  *   dev server and not through the specs' imports; else as `playwright test --only-changed=<base>`.
- * - **Budgets.** A tier over its budget warns; at 1.5× its budget it fails.
+ * - **Budgets.** A tier over its budget warns and never fails: wall-clock time on this shared machine is noise, not
+ *   proof (ADR-0022); the counts the pages measure are the checks that fail.
  *
  * @example
  * const { base, t1, t2 } = plan(); // t2.reason: 'T2 runs in full: engine/core/a.ts changed (engine code, …)'
@@ -334,31 +335,24 @@ export function duration(ms: number): string {
   return `${Math.floor(seconds / 60)} min${rest ? ` ${rest} s` : ''}`;
 }
 
-/** A tier at this multiple of its budget, or more, fails; over the budget alone warns. */
-export const FAIL_FACTOR = 1.5;
-
 /** A tier's duration against its budget. */
 export interface BudgetCheck {
   tier: TierId;
   ms: number;
   budgetMs: number;
-  status: 'ok' | 'warn' | 'fail';
+  status: 'ok' | 'warn';
   /** One sentence: the duration, the budget and, when over, where to look. */
   message: string;
 }
 
-/** Checks one duration against its tier's budget: over it warns, at `FAIL_FACTOR` times it fails. */
+/** Checks one duration against its tier's budget: over it warns (ADR-0022: time budgets never fail). */
 export function checkBudget(tier: TierId, ms: number): BudgetCheck {
   const { budgetMs, fix } = TIERS[tier];
-  const status = ms >= budgetMs * FAIL_FACTOR ? 'fail' : ms > budgetMs ? 'warn' : 'ok';
+  const status = ms > budgetMs ? 'warn' : 'ok';
   const budget = duration(budgetMs);
   const took = `${tier} took ${duration(ms)}`;
   const message =
-    status === 'ok'
-      ? `${took}, within its ${budget} budget`
-      : status === 'warn'
-        ? `${took}, over its ${budget} budget (it fails at ${duration(budgetMs * FAIL_FACTOR)}): ${fix}`
-        : `${took}, at least ${FAIL_FACTOR}× its ${budget} budget: ${fix}`;
+    status === 'ok' ? `${took}, within its ${budget} budget` : `${took}, over its ${budget} budget: ${fix}`;
   return { tier, ms, budgetMs, status, message };
 }
 

@@ -2,7 +2,7 @@
  * @file Unit tests for the test tiers (tools/lib/tiers.ts). In a temporary git repository: the base (none, the last
  * green run, then the merge-base once origin/main holds a gate), the changes, a change to `engine/core/a.ts` selecting
  * every Vitest test that imports it directly or not (run for real), page code running T2 in full, and a version bump
- * selecting nothing. Then the budgets over JSON reports (over warns, 1.5× fails) and the timing table.
+ * selecting nothing. Then the budgets over JSON reports (over warns, never fails: ADR-0022) and the timing table.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
@@ -250,20 +250,16 @@ describe('selections without git', () => {
 });
 
 describe('budgets', () => {
-  it('warns over the budget and fails at 1.5× it', () => {
+  it('warns over the budget and never fails', () => {
     expect(checkBudget('T1', 60_000)).toMatchObject({ status: 'ok', message: 'T1 took 60 s, within its 60 s budget' });
     expect(checkBudget('T1', 61_000).status).toBe('warn');
     expect(checkBudget('T1', 89_999).status).toBe('warn');
-    expect(checkBudget('T1', 90_000).status).toBe('fail');
-    expect(checkBudget('T0', 12_000).message).toBe(
-      `T0 took 12 s, over its 10 s budget (it fails at 15 s): ${TIERS.T0.fix}`,
-    );
-    expect(checkBudget('T2', 810_000).message).toBe(
-      `T2 took 13 min 30 s, at least 1.5× its 9 min budget: ${TIERS.T2.fix}`,
-    );
+    expect(checkBudget('T1', 900_000).status).toBe('warn');
+    expect(checkBudget('T0', 12_000).message).toBe(`T0 took 12 s, over its 10 s budget: ${TIERS.T0.fix}`);
+    expect(checkBudget('T2', 810_000).message).toBe(`T2 took 13 min 30 s, over its 9 min budget: ${TIERS.T2.fix}`);
   });
 
-  it('reads the durations of Vitest and Playwright JSON reports: over budget warns, at 1.5× fails', () => {
+  it('reads the durations of Vitest and Playwright JSON reports: over budget warns', () => {
     const root = mkdtempSync(join(tmpdir(), 'x-budget-'));
     try {
       mkdirSync(join(root, 'out/test'), { recursive: true });
@@ -276,9 +272,9 @@ describe('budgets', () => {
       expect(checks.map(({ tier, ms, status }) => [tier, ms, status])).toEqual([
         ['T0', 4_000, 'ok'],
         ['T1', 70_000, 'warn'],
-        ['T2', 810_000, 'fail'],
+        ['T2', 810_000, 'warn'],
       ]);
-      expect(checkReports(root, { T1: 1_000 }).map((check) => check.status)).toEqual(['ok', 'fail']);
+      expect(checkReports(root, { T1: 1_000 }).map((check) => check.status)).toEqual(['ok', 'warn']);
       writeFileSync(join(root, 'out/test/report.json'), '{"x":1}');
       expect(() => reportMs(join(root, 'out/test/report.json'))).toThrow(
         /neither a Vitest nor a Playwright JSON report/,

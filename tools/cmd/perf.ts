@@ -17,14 +17,15 @@
  * The budget file `tests/baselines/perf/<scene id>.json` (`box:room` → `box-room.json`) is `{ scene, steps?,
  * budgets?, page?, ladder?, tolerance?, reason }`, at least one section, no other key (named with the closest). A
  * value is within its budget up to budget × (1 + `tolerance`), 0 by default (0.15 allows 15%). `--budget` fails a
- * value over its budget or a missing section; without it budgets are shown. A budget holds for the run it was measured
+ * count over its budget or a missing section, and warns for a time (`…Ms`) over its budget: wall-clock time on this
+ * shared machine is noise, not proof (ADR-0022); without it budgets are shown. A budget holds for the run it was measured
  * on (the file's scene, the section's steps, which a run takes unless `--steps` says otherwise, the scene's own
  * settings), so `--budget` refuses (exit 2, naming the fix) other steps, `--set`, another `--agents` or scene.
  * Trends (§8.7): each run appends its numbers to `out/perf/trend.json` (the last 20 per way, scene, steps and sets)
  * and warns `PERF_TREND` for each that grew over 15% since the run before.
  *
  * Usage: node x perf <scene|page> [--scene id] [--steps n] [--runs n] [--seed s] [--set k=v…] [--ladder [--agents
- * path]] [--budget]. Exit 0 when measured (and within budget under `--budget`), 1 over a budget, without the section
+ * path]] [--budget]. Exit 0 when measured (and its counts within budget under `--budget`), 1 with a count over its budget, without the section
  * under `--budget`, or when a page fails or has no `stats()`, 2 on a usage error (a malformed budget file included).
  *
  * @example
@@ -226,6 +227,7 @@ async function judged(
   const tolerance = budget?.tolerance ?? 0;
   const plus = tolerance ? ` +${Math.round(tolerance * 100)}%` : '';
   const failures: Finding[] = [];
+  const over: Finding[] = [];
   if (flags.budget && !section) {
     const message = `no ${way} budget for ${scene}: write it in ${file} (${SHAPE})`;
     failures.push({ id: 'PERF_NO_BUDGET', message, file });
@@ -238,7 +240,7 @@ async function judged(
       const within = limit === undefined || value === null || withinBudget(value, limit, tolerance);
       if (!within && flags.budget) {
         const message = `${scene}${row.name ? ` (${row.name})` : ''}: ${key} ${ms(value!)} is over its budget ${limit}${plus} (${budget?.reason})`;
-        failures.push({ id: 'PERF_OVER_BUDGET', message, file });
+        (key.endsWith('Ms') ? over : failures).push({ id: 'PERF_OVER_BUDGET', message, file });
       }
       const verdict = limit === undefined || value === null ? '' : `, ${within ? 'within' : 'OVER'} ${limit}${plus}`;
       const spread = row.spread ? ` (${row.spread(key)})` : '';
@@ -255,7 +257,7 @@ async function judged(
           ? `budgets: ${file}, measured over ${section.steps} steps; this run took ${steps}, so they are not compared`
           : `budgets: ${file}${plus ? ` (${plus.trim()})` : ''}${flags.budget ? '' : ' (shown; --budget enforces them)'}`,
   );
-  const warnings = recordTrend(root, [way, scene, `${steps} steps`, ...setsOf(flags)].join(' '), metrics);
+  const warnings = [...over, ...recordTrend(root, [way, scene, `${steps} steps`, ...setsOf(flags)].join(' '), metrics)];
   return { ok: failures.length === 0, steps, lines, failures, warnings, metrics };
 }
 
