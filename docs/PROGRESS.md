@@ -3,32 +3,34 @@
 Read this first: where things stand, what is next and the open issues, on one screen (`node x docs --check` fails it
 past 40 lines). The integrator rewrites it at each gate; every WP's status and notes are in the ledger, PLAN.md §14.
 
-## Where things stand (2026-10-12, gate G7 done: the Stress Box, the foundation is set)
+## Where things stand (2026-10-12, gate G8 done: the animation library)
 
-Phases 0–7 are done: the foundation, the kernel and Boxes 1–6 (PR #2–#9). The box does the stress test's job.
-- Box 6's looks (labs/box/looks/): the torch-lit hall (`sky:hall`), toon, cel, pixel, bloom and FXAA on the hall's
-  baked rune floor; every look builds no pipeline after a warm-up and keeps box-3-knock's goldens.
-- The fight's blows go through the bodies' `reactions` (flinch, knockdown, get-up, death) and the hero wears a cape
-  (`secondary`, view-only). Clip mode (8.9) and the box's sound (9.5) are in the box too.
-- The benchmark (`x perf --ladder`, medians at 100 / 1,000 / 5,000): fight step 1.74 / 13.4 / 50.8 ms, crowd step
-  0.94 / 9.95 / 50.5 ms, within tests/baselines/perf/box-{fight-1000,crowd-5000}.json.
-- The gate's dry run (a fresh agent added a prop and a variant): 15 of 16 friction items fixed (`x replay --state`,
-  `x describe kind:name`, `x qa` counts, README "Adding a prop", "Coordinates and inputs"); PLAN.md §14, row G7.
-- Gate: `node x ci --local` green at 4af3816 in 10 min 54 s (check 5.9 s, test 30.1 s with 3,262 tests, e2e
-  9 min 25 s with 164 tests); `x deps --qualify`: nothing qualifies beyond the pins.
+Phases 0–8 are done: the foundation, the kernel, Boxes 1–6 and the animation library (PR #2–#10).
+- The library: 1,218 clips in 10 sets (CMU, Quaternius v2, mesh2motion and 100STYLE's 7 sets) as readable text,
+  with provenance (data/anim/SOURCES.md, licenses, catalogs, the CMU ledger) and parity proofs (the codec
+  bit-identical to the source; 79 of 87 Quaternius clips within v1's fit, the 8 others listed with reasons).
+- The clip layer plays every clip on every build in Node, with the anim QA baselined with reasons
+  (qa-anim-library.json, 32 entries); 28 actions (data/anim/actions/) play through the Actions player.
+- Clip mode (`box:clips`) runs headless and in the page: every host registers the library (tools/anim/library.ts);
+  the box-8-clips replay gives one golden set in Node, the sim page and the rendering page.
+- `x anim import --cmu --legacy --check` reproduces the CMU set byte for byte (62 files).
+- Gate: `node x ci --local` green at bb3862f (check 6.1 s, test 31.8 s with 3,262 tests); T2 in full at the review,
+  159/159 in 14 min 24 s; `x deps --qualify`: nothing qualifies beyond the pins.
 
 ## What is next
 
-- Lane L's gate G8 (the animation library: its WPs and review fixes are in), then lane X's gate G9 (audio).
-- Everything else is on demand: each WP waits for its measured trigger (PLAN.md §9.1).
+- Lane X's gate G9 (audio: WPs 9.1–9.5 are in, sound in the box included).
+- Everything else is on demand: each WP waits for its measured trigger (PLAN.md §9.1); WP 8.8 (re-import from the
+  sources, format 2's key fields) among them.
 
 ## Open issues
 
-- T2 took 9 min 25 s, over its 9 min, a warning only (ADR-0022): the gate selects T2 in full while it is over.
+- T2 runs over its 9 min, a warning only (ADR-0022): the gate selects T2 in full while it is over.
 - Over the 400-line warning (cap 600): engine/anim/actions.ts, secondary.ts, engine/app/engine.ts,
-  tests/e2e/parity.spec.ts, physics/world.ts, sim/world.ts, sim/scene.ts, ci.ts, tiers.ts, perf.ts, port.ts.
+  tests/e2e/parity.spec.ts, tools/cmd/sim.ts, physics/world.ts, sim/world.ts, sim/scene.ts, ci.ts, tiers.ts, perf.ts,
+  port.ts.
 - The crowd's batches draw no flinch lean (no `reactions` layer); at 1,000 agents the crowd blocks the stairs' foot.
 - The post-IK foot plant (WP 6.2) and preciseHits Node/Chromium parity (WP 6.1) are open.
-- docs/INDEX.md is one 240 KB generated file: read its "Start here" and grep the rest.
+- docs/INDEX.md is one large generated file: read its "Start here" and grep the rest.
 - ESC-0001 (GitHub Actions) was decided in the owner's absence: Actions off, `x ci --local` is the gate.
 - Vitest 4 qualifies 2026-10-22. Not verified: touch (ADR-0021), physical pads, real-GPU performance.
