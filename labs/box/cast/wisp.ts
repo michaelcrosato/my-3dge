@@ -14,8 +14,13 @@
  * (PLAN.md Appendix C: 16 units a metre), as starting values (§9.0: similar, not identical): a ball of radius 5 units
  * → 0.3125 m; in from beyond 100 units → 6.25 m and out from inside 70 → 4.375 m at 60 units/s² against a drag of 1.6
  * a second (so 2.34 m/s at most), round at 34 units/s² (1.33 m/s); steered at 3.75 m/s², the prototype's 60 units/s²;
- * hovering 20 units → 1.25 m up, ±3 units at 2 rad/s, climbing at 6 times the gap (`HOVER`). Its shots arrive with
- * Box 5.
+ * hovering 20 units → 1.25 m up, ±3 units at 2 rad/s, climbing at 6 times the gap (`HOVER`).
+ *
+ * Its shot (Box 5, WP 6.7): `WISP_ATTACK`. Within `range` of the hero, every `every` s plus up to `spread` (the first
+ * after `first` plus up to `spread`), it charges for `charge` s, its line telegraph (`telegraph:boxShot`) filling on
+ * the floor toward him, swelling as it goes, then shoots at his chest (`chest` m up): a bolt at `speed` m/s that lives
+ * `life` s and takes `damage` hit points. Walls stop it. It takes no attack token: the prototype's wisps shot
+ * whenever they were charged. A hit on it breaks its charge off. It has `health` hit points.
  *
  * Its body is drawn as a floater (a crowd body, engine/sim/crowdBodies.ts), banking into its turns, its motes round it.
  *
@@ -26,7 +31,15 @@
  * // setVelocity(physics, agent, steerWisp(agent, wisp, chase, new Vector3()), w);
  * @see labs/box/cast/crowd.test.ts
  */
-import { defineComponent, followFlow, hover, type CrowdAgent, type Rng, type Vector3 } from '../../../engine/sim-api';
+import {
+  defineComponent,
+  defineTelegraph,
+  followFlow,
+  hover,
+  type CrowdAgent,
+  type Rng,
+  type Vector3,
+} from '../../../engine/sim-api';
 import type { Chase } from './walker';
 
 /** The prototype's units per metre (PLAN.md Appendix C). */
@@ -87,3 +100,36 @@ export function steerWisp(agent: CrowdAgent, wisp: WispData, chase: Chase, out: 
   out.y = hover(agent.y, chase.floor(agent.x, agent.z), wisp.clock);
   return out;
 }
+
+/** The wisp's shot (see the file comment): seconds, metres, m/s and hit points. */
+export const WISP_ATTACK = Object.freeze({
+  /** Its hit points, and the hit points its shot takes. */
+  health: 14,
+  damage: 8,
+  /** It shoots within this distance of the hero across the floor (m). */
+  range: 160 / UNITS,
+  /** Its charge (s), and the seconds between shots: `every` plus up to `spread`, the first `first` plus up to `spread`. */
+  charge: 0.6,
+  every: 2.5,
+  first: 2,
+  spread: 2,
+  /** Its shot: speed (m/s), life (s), radius (m), aimed this high above the hero's feet (m). */
+  speed: 95 / UNITS,
+  life: 3,
+  radius: 3 / UNITS,
+  chest: 14 / UNITS,
+  /** Its telegraph: a line from the floor under it toward the hero. */
+  telegraph: 'telegraph:boxShot',
+});
+
+/** The wisp's shot on the floor: a narrow line from under it, as far as it shoots. */
+export const WISP_SHOT = defineTelegraph(WISP_ATTACK.telegraph, {
+  description: 'A box wisp’s shot: the line on the floor under its path, toward the hero.',
+  shape: 'line',
+  length: 160 / UNITS,
+  width: 0.3,
+  yMin: 0,
+  yMax: 3,
+  near: 0.5,
+  color: '#c78bff',
+});

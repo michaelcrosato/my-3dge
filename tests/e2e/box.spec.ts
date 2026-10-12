@@ -306,7 +306,7 @@ test.describe('the box, stage 1', () => {
       anim: '[SIM_BAD_ARGUMENT] anim(id) got undefined: pass an animated actor’s id (none)',
       render: true,
       stats: { frames: true, drawCalls: true, after: 0 },
-      shot: 11,
+      shot: 18, // the room's 11 drawables and its effects' 7 (five sprite pages, the decals' page, the ribbons)
       replay: GOLDEN['600'],
       seed: 9,
     });

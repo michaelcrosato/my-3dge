@@ -14,7 +14,8 @@
  * every trail) and its tints (`HERO_TRAIL` `#d8f2ff`, `CLAW_TRAIL` `#ff7a5a`: `TRAIL_TINTS`).
  *
  * Invariants: presentation only; at most `capacity` ribbons a frame (more are counted in `skipped`); the buffers are
- * made once, and a frame uploads only its own ribbons (the draw range stops there).
+ * made once, and a frame uploads only its own ribbons (the draw range stops there); a frame with none hides the mesh
+ * and keeps the last range, so the warm-up, which draws hidden objects, never draws an empty range.
  *
  * @example
  * const ribbons = createRibbons({ capacity: 8 });
@@ -142,7 +143,8 @@ export function createRibbons(options: RibbonsOptions): Ribbons {
     },
     end() {
       mesh.visible = count > 0;
-      geometry.setDrawRange(0, count * (samples - 1) * 6);
+      // hidden, it keeps its last range: the warm-up draws hidden objects, and an empty draw is a WebGPU warning
+      if (count > 0) geometry.setDrawRange(0, count * (samples - 1) * 6);
       const used = count * samples * 2 * 3;
       if (!used) return;
       for (const name of ['position', 'color'] as const) {
