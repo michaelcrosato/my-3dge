@@ -137,6 +137,7 @@ game agent's manual.
 - `buffered` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed within the last `steps` steps (its press step counts as 0) and not consumed since.
 - `Build` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): A `build` entry: one body's proportions, in metres before `size`.
 - `buildGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): Builds geometry `ref` (an id, or `{ geometry, params }`) from `registry` (the shared one by default): a new `BufferGeometry` the caller owns and disposes.
+- `buildPropPart` (function from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): Builds `part`'s geometry (the caller's), with its tops and bottoms a group of their own when it has a `top`.
 - `BuildSpec` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): What `defineBuild` takes: any field; the others keep `build:chibi`'s values.
 - `BurstOptions` (interface from [`engine/gfx/fx/particles.ts`](../engine/gfx/fx/particles.ts)): How a burst differs from its spec.
 - `BUS_VOLUMES` (const from [`engine/audio/runtime/mixer.ts`](../engine/audio/runtime/mixer.ts)): The starting volumes, the master's included.
@@ -566,6 +567,7 @@ game agent's manual.
 - `PartCut` (interface from [`engine/gfx/level/shapes.ts`](../engine/gfx/level/shapes.ts)): How the cutaway cuts a part: its recipe's cut, and the geometry of its twin (a new one each call).
 - `ParticleFields` (type from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): The particle fields as an emitter entry holds them.
 - `ParticleStats` (interface from [`engine/gfx/fx/particles.ts`](../engine/gfx/fx/particles.ts)): What a pool did.
+- `partMatrix` (function from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): Where `part` stands in its prop's frame (the base at the origin).
 - `PartOptions` (interface from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): A part's options: the bone it rides (a joint, or `'root'`).
 - `PARTS` (const from [`engine/gfx/post/mrt.ts`](../engine/gfx/post/mrt.ts)): The parts of the scene a filter can be scoped to.
 - `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
@@ -622,7 +624,7 @@ game agent's manual.
 - `PropMeshesOptions` (interface from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): What `createPropMeshes` takes.
 - `PropMeshPose` (interface from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): A prop's pose: its centre (its body's origin) and its turn.
 - `PropPart` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): One part of a `prop` entry, filled: see `PROP_PART_FIELDS`.
-- `PropPlacement` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): A prop placed: which, its base (m) and its turn about +Y (rad).
+- `PropPlacement` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): A prop placed: `{ prop: 'prop:<id>', at: [x, y, z], yaw }`, its base at `at` (m) and its turn `yaw` about +Y (rad), as `spawnProp` takes it and `levelProps` gives it.
 - `propPose` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): Where `placement` is drawn while no body moves it: the prop's centre and turn.
 - `PropPose` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): Where a prop is drawn: its centre (m) and its turn, `[x, y, z, w]`.
 - `PropSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A prop as `addProp` takes it: a body's pose, velocities and options, and its material.
@@ -643,12 +645,15 @@ game agent's manual.
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
 - `RayOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A raycast's options.
 - `REACTION` (const from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): Every constant of the reactions: rates per second, times in seconds.
+- `REACTION_FIELDS` (const from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): The component `reactions`' fields: `Reactions.save()`'s, at rest by default.
 - `ReactionBody` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): What a reaction's phase tells the humanoid: a pose, how far down.
+- `ReactionComponents` (type from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): The components this module declares.
 - `ReactionName` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): A reaction timeline's name.
 - `ReactionOptions` (interface from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): What `new Reactions` takes.
 - `Reactions` (class from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): A body's reactions: the flinch, the knockdown, the death, the get-ups.
 - `REACTIONS` (const from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): The reactions' timelines: each phase's name, seconds and body states.
 - `ReactionState` (interface from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): Reactions as plain data.
+- `reactTo` (function from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): Runs `act` on entity `id`'s reactions (the component `reactions`, added at rest when it has none) and saves them back; returns the component.
 - `readKeyboardLayout` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The page's keyboard layout (`navigator.keyboard.getLayoutMap()`, Chromium), or undefined where it is missing.
 - `RebindResult` (type from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): What `rebind` did: the action's codes now, or why it refused and which action holds the code.
 - `recolor` (function from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): `compiled` with its slots' colours replaced by `palette`'s (hex), the pieces shared.
@@ -707,6 +712,8 @@ game agent's manual.
 - `ScreenShake` (class from [`engine/gfx/fx/shake.ts`](../engine/gfx/fx/shake.ts)): Camera shake: see the file comment.
 - `ScriptedGamepad` (interface from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): A pad that a script moves frame by frame.
 - `Secondary` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The secondary-motion layer: squash, hair, cape and tail on a humanoid.
+- `SECONDARY_FIELDS` (const from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): The component `secondary`'s fields: what the view hangs on an actor's puppet.
+- `SecondaryComponent` (interface from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): The component `secondary`: the secondary motion the view hangs on an actor's puppet.
 - `SecondaryOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What `Secondary` runs: each part is off unless given (the squash is on unless `false`).
 - `seek` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way from `from` to `to` on the ground: a unit vector, zero within a millimetre.
 - `seekClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Puts the clip on top of actor `id` at `t` clip seconds (kept within 0 and its length), its fade done: a frame step is `seekClip(w, id, frame / BAKE_FPS)`.
@@ -761,7 +768,7 @@ game agent's manual.
 - `SpatialHashOptions` (type from [`engine/world/spatial.ts`](../engine/world/spatial.ts)): What `new SpatialHash` takes: each field of `SPATIAL_HASH_FIELDS`, optional.
 - `spawnActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
 - `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
-- `spawnProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Stands the prop of `placement` in the scene: its body (when it has one; the scene needs physics then) and an entity with the component `sceneProp`.
+- `spawnProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Stands a prop in the scene, `spawnProp(w, { prop: 'prop:<id>', at: [x, y, z], yaw })`: its base at `at` (m), turned `yaw` about +Y (rad).
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `SQUASH` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The squash spring (my-3d2dge's numbers): its pull and damping per second, and its bound either way.
@@ -775,6 +782,7 @@ game agent's manual.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
+- `stepReactions` (function from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): Steps reactions `state` one tick of `dt` s, in place; returns what the phase playing tells the body.
 - `StickView` (interface from [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)): Where the stick is drawn, in client CSS px: its centre and its knob.
 - `stopClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Fades out the clip on top of actor `id` over `fade` seconds (its `out`), with what it covers.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
@@ -1267,7 +1275,7 @@ game agent's manual.
 - `PropDefinition` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): What `defineProp` takes: any field, and of its objects (body, light, place, each part and its flame) any key.
 - `PropKnock` (interface from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): How hard a knock is, as engine/physics/bodies.ts's `knock` takes it.
 - `PropPart` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): One part of a `prop` entry, filled: see `PROP_PART_FIELDS`.
-- `PropPlacement` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): A prop placed: which, its base (m) and its turn about +Y (rad).
+- `PropPlacement` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): A prop placed: `{ prop: 'prop:<id>', at: [x, y, z], yaw }`, its base at `at` (m) and its turn `yaw` about +Y (rad), as `spawnProp` takes it and `levelProps` gives it.
 - `propPose` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): Where `placement` is drawn while no body moves it: the prop's centre and turn.
 - `PropPose` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): Where a prop is drawn: its centre (m) and its turn, `[x, y, z, w]`.
 - `PropSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A prop as `addProp` takes it: a body's pose, velocities and options, and its material.
@@ -1282,12 +1290,15 @@ game agent's manual.
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
 - `RayOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A raycast's options.
 - `REACTION` (const from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): Every constant of the reactions: rates per second, times in seconds.
+- `REACTION_FIELDS` (const from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): The component `reactions`' fields: `Reactions.save()`'s, at rest by default.
 - `ReactionBody` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): What a reaction's phase tells the humanoid: a pose, how far down.
+- `ReactionComponents` (type from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): The components this module declares.
 - `ReactionName` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): A reaction timeline's name.
 - `ReactionOptions` (interface from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): What `new Reactions` takes.
 - `Reactions` (class from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): A body's reactions: the flinch, the knockdown, the death, the get-ups.
 - `REACTIONS` (const from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): The reactions' timelines: each phase's name, seconds and body states.
 - `ReactionState` (interface from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): Reactions as plain data.
+- `reactTo` (function from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): Runs `act` on entity `id`'s reactions (the component `reactions`, added at rest when it has none) and saves them back; returns the component.
 - `released` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` went up on the buffer's step (a tap shorter than a step included).
 - `releaseToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Gives `id`'s token back (its attack ended, or was broken off): true when it held one.
 - `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body.
@@ -1322,6 +1333,8 @@ game agent's manual.
 - `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
 - `Secondary` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The secondary-motion layer: squash, hair, cape and tail on a humanoid.
+- `SECONDARY_FIELDS` (const from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): The component `secondary`'s fields: what the view hangs on an actor's puppet.
+- `SecondaryComponent` (interface from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): The component `secondary`: the secondary motion the view hangs on an actor's puppet.
 - `SecondaryOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What `Secondary` runs: each part is off unless given (the squash is on unless `false`).
 - `seek` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way from `from` to `to` on the ground: a unit vector, zero within a millimetre.
 - `seekClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Puts the clip on top of actor `id` at `t` clip seconds (kept within 0 and its length), its fade done: a frame step is `seekClip(w, id, frame / BAKE_FPS)`.
@@ -1355,7 +1368,7 @@ game agent's manual.
 - `SpatialHashOptions` (type from [`engine/world/spatial.ts`](../engine/world/spatial.ts)): What `new SpatialHash` takes: each field of `SPATIAL_HASH_FIELDS`, optional.
 - `spawnActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
 - `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
-- `spawnProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Stands the prop of `placement` in the scene: its body (when it has one; the scene needs physics then) and an entity with the component `sceneProp`.
+- `spawnProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Stands a prop in the scene, `spawnProp(w, { prop: 'prop:<id>', at: [x, y, z], yaw })`: its base at `at` (m), turned `yaw` about +Y (rad).
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `SQUASH` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The squash spring (my-3d2dge's numbers): its pull and damping per second, and its bound either way.
@@ -1369,6 +1382,7 @@ game agent's manual.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
+- `stepReactions` (function from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): Steps reactions `state` one tick of `dt` s, in place; returns what the phase playing tells the body.
 - `stopClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Fades out the clip on top of actor `id` over `fade` seconds (its `out`), with what it covers.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
 - `StrikeAnimator` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of an animator: its body, which the sim poses only with `preciseHits`.
@@ -3531,6 +3545,13 @@ For the agents who maintain the engine.
 - `mannequinBody` (function): `body` (a set's measured figure) as a body for `build`, the rest body `R`'s own (see the file comment).
 - `MannequinData` (interface): A set's `body`, as the importer measured it (mm).
 
+### [`engine/gfx/puppets/chains.ts`](../engine/gfx/puppets/chains.ts)
+
+- `ChainMeshes` (interface): The meshes of one `Secondary`'s chains (see the file comment).
+- `ChainMeshOptions` (interface): What `createChainMeshes` takes: the material (lit, vertex-coloured), the colour (CSS hex) and the name's stem.
+- `createChainMeshes` (function): The meshes of `secondary`'s chains (see the file comment).
+- `STRAND` (const): A strand's width, metres: hair's and a tail's square tube.
+
 ### [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)
 
 - `BodyPiece` (interface): One piece: a unit shape on one bone (see the file comment).
@@ -4230,7 +4251,7 @@ For the agents who maintain the engine.
 - `ActorComponents` (type): The components this module reads: `actor`, `animator`, `puppet`, and `oneWay` for one-way platforms.
 - `ActorSpec` (interface): What `spawnActor` takes.
 - `AnimatorComponent` (interface): The component `animator`: an actor's character animator as plain data, and what its game code tells its body.
-- `defineActorKinds` (function): Declares the components `actor`, `animator`, `puppet`, `clips` (engine/sim/actorClips.ts) and `oneWay` and the setting `physics.characterGravity` on `registry`.
+- `defineActorKinds` (function): Declares the components `actor`, `animator`, `puppet`, `clips` (engine/sim/actorClips.ts), `oneWay`, `reactions` and `secondary` (engine/sim/reactions.ts) and the setting `physics.characterGravity` on `registry`.
 - `FeelOptions` (interface): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
 - `measureFeel` (function): Measures a character's feel on the standard course (the file comment says what each number is).
 - `PuppetComponent` (interface): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
@@ -4306,13 +4327,23 @@ For the agents who maintain the engine.
 - `SCENE_PROP_FIELDS` (const): The component `sceneProp`'s fields.
 - `ScenePropComponent` (interface): The component `sceneProp`: a prop standing in a scene.
 - `ScenePropComponents` (type): The components this module reads.
-- `spawnProp` (function): Stands the prop of `placement` in the scene: its body (when it has one; the scene needs physics then) and an entity with the component `sceneProp`.
+- `spawnProp` (function): Stands a prop in the scene, `spawnProp(w, { prop: 'prop:<id>', at: [x, y, z], yaw })`: its base at `at` (m), turned `yaw` about +Y (rad).
 
 ### [`engine/sim/queryView.ts`](../engine/sim/queryView.ts)
 
 - `queryView` (function): The read-only view of a physics world.
 - `QueryView` (type): The physics queries, read-only: what presentation code may ask of the sim's physics.
 - `queryViewOf` (function): The read-only view of a sim world's physics.
+
+### [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)
+
+- `defineReactionKinds` (function): Declares the components `reactions` and `secondary` on `registry` (the shared one by default), once.
+- `REACTION_FIELDS` (const): The component `reactions`' fields: `Reactions.save()`'s, at rest by default.
+- `ReactionComponents` (type): The components this module declares.
+- `reactTo` (function): Runs `act` on entity `id`'s reactions (the component `reactions`, added at rest when it has none) and saves them back; returns the component.
+- `SECONDARY_FIELDS` (const): The component `secondary`'s fields: what the view hangs on an actor's puppet.
+- `SecondaryComponent` (interface): The component `secondary`: the secondary motion the view hangs on an actor's puppet.
+- `stepReactions` (function): Steps reactions `state` one tick of `dt` s, in place; returns what the phase playing tells the body.
 
 ### [`engine/sim/replay.ts`](../engine/sim/replay.ts)
 
@@ -4638,7 +4669,7 @@ For the agents who maintain the engine.
 - `propBody` (function): The body `physics.addBody` takes for `placement`, or `null` when its prop has none; see the file comment.
 - `PropBody` (interface): A prop's body, as `physics.addBody` takes it (engine/physics/world.ts's `BodySpec`).
 - `PropCollider` (type): A prop's collider, as `physics.addBody` takes it.
-- `PropPlacement` (interface): A prop placed: which, its base (m) and its turn about +Y (rad).
+- `PropPlacement` (interface): A prop placed: `{ prop: 'prop:<id>', at: [x, y, z], yaw }`, its base at `at` (m) and its turn `yaw` about +Y (rad), as `spawnProp` takes it and `levelProps` gives it.
 - `propPose` (function): Where `placement` is drawn while no body moves it: the prop's centre and turn.
 - `PropPose` (interface): Where a prop is drawn: its centre (m) and its turn, `[x, y, z, w]`.
 
@@ -4714,7 +4745,7 @@ For the agents who maintain the engine.
 - `HeroHit` (interface): What one of the hero's hits does: its cone, hit points, push (m/s), lunge (m/s) and whether it is a big one.
 - `HeroTuning` (interface): What a scene may tune of the hero: his walk, take-off and dash speeds, m/s.
 - `PROTOTYPE` (const): The hero's numbers as the prototype wrote them, in its units and seconds (see the file comment).
-- `spawnHero` (function): Spawns the hero, the player, with his feet at `at` facing `yaw` (rad); returns his id.
+- `spawnHero` (function): Spawns the hero, the player, with his feet at `at` facing `yaw` (rad), and any further `components` (the fight's reactions and cape); returns his id.
 
 ### [`labs/box/cast/slime.ts`](../labs/box/cast/slime.ts)
 
@@ -4806,7 +4837,7 @@ For the agents who maintain the engine.
 - `CrowdComponents` (type): The scene's components.
 - `default` (default): The crowd, Box 4 (PLAN.md §9.0, WP 5.7): the hall with a hero (labs/box/scenes/hall.ts) filling with `box.crowd.count` walkers, slimes and wisps (labs/box/cast/{walker,slime,wisp}.ts) that chase him, round the walls and pillars and up the stairs after him.
 - `MIXES` (const): A crowd mix: the share of walkers, and of walkers and slimes together; the rest are wisps.
-- `setupCrowd` (function): The crowd's setup: the hall and its hero, `box.crowd.count` members queued, the crowd's systems; the hero's id.
+- `setupCrowd` (function): The crowd's setup: the hall and its hero (with any further `components`), `box.crowd.count` members queued, the crowd's systems; returns the hero's id.
 - `SPAWN` (const): Where members start: at least `away` m from the hero (the prototype's 80 units), `tries` draws, `jitter` in a tile.
 
 ### [`labs/box/scenes/crowd-5000.ts`](../labs/box/scenes/crowd-5000.ts)
@@ -4839,7 +4870,7 @@ For the agents who maintain the engine.
 - `FIGHT_TELEGRAPH` (const): The component `fightTelegraph`: a foe's telegraph where it stands.
 - `FIGHT_TOKENS` (const): The component `fightTokens`: the hero's attack tokens.
 - `FightBurst` (interface): A burst for the page's effects: where, and how big.
-- `FightComponents` (type): The fight's components: the crowd's, the hero's actor, and its own.
+- `FightComponents` (type): The fight's components: the crowd's, the hero's actor, the bodies' reactions and his cape, and its own.
 - `FightEvents` (type): The fight's events.
 - `FightFoe` (interface): A foe's fight: where it is in its attack, its move and swing, and its timers (s).
 - `FightHero` (interface): The hero's fight: his combo's and thrust's saved states, and his counters (ticks).
@@ -4852,8 +4883,9 @@ For the agents who maintain the engine.
 - `heroOf` (function): The hero: his id and components; undefined before setup.
 - `heroSet` (function): The hero as a hurt capsule (his controller's), built now.
 - `heroThrust` (const): The hero's thrust out of a dash (an idle one; its state is `fightHero.thrust`).
-- `hurtHero` (function): A foe's blow (`amount` hit points, from `from`) on the hero: unless he is safe, he flinches and is pushed away, the hit lands through `damage` (no hit points in god mode), his combo is broken off when it takes any, and the event `hit` fires.
-- `strikeFoe` (function): The hero's blow (`hit`, from his feet `from`) on the foe `id`: its hit points, push, throw and hit-stop through `damage`, its attack broken off, a stun, and the events `hit` (and `slain`).
+- `hurtHero` (function): A foe's blow (`amount` hit points, from `from`) on the hero: unless he is safe, he flinches (his body state `hurt`, and his reactions along the push) and is pushed away, the hit lands through `damage` (no hit points in god mode), his combo is broken off when it takes any, and the event `hit` fires.
+- `knockedDown` (const): Whether a body's reactions play a knockdown or its get-up (or a death): while they do, it acts on nothing.
+- `strikeFoe` (function): The hero's blow (`hit`, from his feet `from`) on the foe `id`: its hit points, push, throw and hit-stop through `damage`, a walker's reactions (a flinch; a big blow's knockdown, a killing one's death), its attack broken off, a stun, and the events `hit` (and `slain`).
 - `STUN` (const): How long a blow stuns a foe (s): it steers and attacks again after.
 
 ### [`labs/box/scenes/fight.ts`](../labs/box/scenes/fight.ts)
@@ -4884,7 +4916,7 @@ For the agents who maintain the engine.
 - `HALL_SETTINGS` (const): The scene's settings: the hero's speeds, m/s.
 - `HALL_START` (const): Where the hero starts: the level's spawn `@`, on the dais (m).
 - `HALL_TEXT` (const): labs/box/levels/hall.txt, as it is (see the file comment).
-- `setupHall` (function): The hall's setup: its level bodies, and the hero at the spawn facing south, tuned by `box.hall.*`; returns his id.
+- `setupHall` (function): The hall's setup: its level bodies, and the hero at the spawn facing south, tuned by `box.hall.*`, with any further `components` (the fight's); returns his id.
 
 ### [`labs/box/scenes/room-hero.ts`](../labs/box/scenes/room-hero.ts)
 
@@ -5537,12 +5569,13 @@ For the agents who maintain the engine.
 - `describeInWorker` (function): Runs the listing in a child Node process over `root`'s registrations; resolves to what it sent, or to the failure when it hung (stopped after `timeoutMs`) or ended without a listing, naming the module it was loading.
 - `fieldLine` (function): One line for a field: name, type, default, range, unit, values, flags, then its description.
 - `idsLine` (function): A kind's ids as one line of at most `IDS_LINE` characters; a cut list says how many there are and where.
-- `listing` (function): What one listing prints, from the shared registry; throws the registry's error for an unknown kind or id.
+- `listing` (function): What one listing prints, from the shared registry, ending with where the whole description is when a line was cut; throws the registry's error for an unknown kind or id.
 - `Listing` (interface): What one listing prints, besides the verdict, and the data `describe.json` holds.
 - `loadRegistrations` (function): Imports each module that registers content, telling `loading` first; a module that fails becomes a warning.
 - `registersContent` (function): Whether a parsed module calls something that registers content (comments, strings and declarations aside).
 - `REGISTRATION_ROOTS` (const): Where modules that register content live.
 - `registrationModules` (function): The modules under `root` that register content, repository-relative and sorted.
+- `resolveTarget` (function): The kind and id `x describe` was asked for, as the registry names them (see the file comment): a lone `kind:name` that is no kind is that kind's entry; a `name` that is no id of `kind` is `kind:name` when that one is.
 - `WORKER_TIMEOUT_MS` (const): How long the child process may take before it is stopped and the module it was loading named (ms).
 - `WorkerDone` (interface): What the child process reports when it is done: what loaded, and the listing or the usage problem.
 - `WorkerMessage` (type): One message from the child process: the module it starts loading, or the end.
@@ -5673,8 +5706,10 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/qa.ts`](../tools/cmd/qa.ts)
 
+- `closestIds` (function): The ids among `ids` closest to `prefix`: the longest start they share with it first, then in id order; at most `n`.
 - `compareWithBaselines` (function): Compares a family's violations with its baselines: failures for new or worse ones, warnings for slack entries.
 - `default` (default): Runs content QA for the families named, against their baselines (PLAN.md §8.6).
+- `kept` (const): Whether `id` passes the `only` prefixes.
 - `loadFamily` (function): Loads `tools/qa/<family>.ts`'s default export.
 - `QaBaseline` (interface): An accepted exception in `tests/baselines/qa-<family>[-<area>].json`.
 - `QaContext` (interface): What a family is given: the repository root and the id prefixes to keep (empty: every id).
@@ -6053,6 +6088,11 @@ For the agents who maintain the engine.
 ### [`tools/lib/png.ts`](../tools/lib/png.ts)
 
 - `decodePng` (function): Decodes a non-interlaced 8-bit RGB or RGBA PNG (what Chromium's screenshots are) into RGBA bytes.
+
+### [`tools/lib/replayState.ts`](../tools/lib/replayState.ts)
+
+- `stateFile` (function): Where the state of replay `file` goes: `out/replay/<name>/state.json`, beside the reports.
+- `writeState` (function): Writes the state `file` reaches in `runtime` after step `until` (its last by default) and its trace to `stateFile(file)`; returns the line that says where, with the state's hash.
 
 ### [`tools/lib/report.ts`](../tools/lib/report.ts)
 
