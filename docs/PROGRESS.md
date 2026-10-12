@@ -16,7 +16,8 @@ The plan's phases 0–9 are done: the foundation, the kernel, Boxes 1–6, the a
 - Gate: `node x ci --local` green at 8573abe (check 6.2 s, test 31.5 s with 3,262 tests); T2 in full at the review,
   151/151 in 11 min 16 s; `x deps --qualify`: nothing qualifies beyond the pins.
 - Since G9: typescript-eslint 8.71.2 adopted; the box's menu for humans (labs/box/menu.ts: scenes, cameras, looks,
-  replays, controls) is in, and remembers being closed.
+  replays, controls) is in, and remembers being closed. T2 runs one Playwright worker per 4 cores (ADR-0014
+  amendment 15): `x ci --local` green at caff36a in the 4-core cloud container, T2 165/165 in 57 min 40 s.
 
 ## What is next
 
@@ -28,10 +29,7 @@ The plan's phases 0–9 are done: the foundation, the kernel, Boxes 1–6, the a
 
 ## Open issues
 
-- T2 runs over its 9 min, a warning only (ADR-0022): the gate selects T2 in full while it is over.
-- Owner: on a 4-core cloud container, T2's 4 workers starve SwiftShader: at 42fbd4b, 9 parity/audio tests timed out
-  (39 min); re-run, 6 passed at 2 workers and the 3 crowd replays only at 1, so no worker count is proved yet.
-- `x audio --replay` finds 0 box sounds: the box's sound map is page-side (needs a registry hook for a game's map).
+- T2 runs over its 9 min, a warning only (ADR-0022): the gate selects T2 in full while it is over.- `x audio --replay` finds 0 box sounds: the box's sound map is page-side (needs a registry hook for a game's map).
 - 17 files are over the 400-line warning (cap 600), none over the cap: `npm run lint` lists them (max-lines).
 - The crowd's batches draw no flinch lean; at 1,000 agents the crowd blocks the stairs' foot.
 - The post-IK foot plant (WP 6.2) and preciseHits Node/Chromium parity (WP 6.1) are open.

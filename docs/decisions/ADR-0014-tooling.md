@@ -273,3 +273,5 @@ Core proposal accepted at integration. Calls made where PLAN.md ยง9 WP 5.5 and ย
   `--workers` still overrides it (ADR-0022 amendment 1). T2 takes longer on 4 cores; its budget only warns (ADR-0022).
   Rejected: longer timeouts (they would hide a real slowdown), 2 workers on 4 cores (measured: 3 timeouts).
 - **Plan edit:** PLAN.md WP 0.2's `playwright.config.ts` item.
+- **Proved:** `x ci --local` green at caff36a in the cloud container, every step: T2 165/165 on 1 worker in
+  57 min 40 s (over its 9 min, a warning only), 0 timeouts.
