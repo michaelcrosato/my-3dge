@@ -3,8 +3,8 @@
  * budget check over the JSON reports. `x ci --local` (WP 0.9) calls `plan`, `checkReports`, `timingTable` and
  * `recordGreen`; an agent iterating reads the same selections.
  *
- * - **Tiers.** T0 `npm run check` (10 s), T1 `npm test` (60 s), T2 `npm run e2e` (6 min), and `LONG_RUNS`, which have
- *   no budget and run at each gate.
+ * - **Tiers.** T0 `npm run check` (10 s), T1 `npm test` (60 s), T2 `npm run e2e` (9 min since gate G6: ADR-0014
+ *   amendment 14), and `LONG_RUNS`, which have no budget and run at each gate.
  * - **The base** is the merge-base of HEAD with `origin/main` once main holds a gate (its PLAN.md ledger marks a
  *   `**G<n>**` row `done`), else the commit in `out/ci/last-green` (the last green `x ci --local`), else none, and
  *   every tier runs in full. Nothing here fetches: run `git fetch origin main` first for a current base.
@@ -66,7 +66,7 @@ export const TIERS: Readonly<Record<TierId, Tier>> = {
   T2: {
     id: 'T2',
     command: ['npm', 'run', 'e2e'],
-    budgetMs: 360_000,
+    budgetMs: 540_000, // 6 min until gate G6: each box stage adds its parity tests (ADR-0014 amendment 14)
     report: 'out/e2e/report.json',
     fix: 'find the slowest specs in out/e2e/report.json and speed them up; the gate selects T2 while it is over (§8.9)',
   },

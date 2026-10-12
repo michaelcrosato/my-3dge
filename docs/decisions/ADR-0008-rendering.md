@@ -177,7 +177,8 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
 - **Result** (load 4 to 7): the hall's page builds 35 pipelines and is ready in about 4 s, the room's 24 in 2 s, the
   fight's 45 in 4 s; 0 after the warm-up, as before. Measured one after another at load 13 to 19, from a cold page
   to the end of a drawn 600-step replay: the hall 26 s before WP 7.4, 38 s at gate G6, 23 s now; the room 9.6, 15.1
-  and 10.8 s. A frame costs what it did before WP 7.4 (27 ms a step drawn in the hall, 13 to 17 in the room).
+  and 10.8 s. A frame costs what it did before WP 7.4 (27 ms a step drawn in the hall, 13 to 17 in the room). T2
+  stays over 6 minutes for its content: ADR-0014 amendment 14.
 - Perf: `tests/baselines/perf/box-room.json` budgets pipelines 24 (75) and textures 32 (30: the warm-up's 1 × 1
   stand-in for the plain frame's compile), its reason says how they were measured.
 - Tests: `engine/gfx/warmup.test.ts` (every pass compiled, entered and left, also on a failure),

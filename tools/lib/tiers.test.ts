@@ -245,7 +245,7 @@ describe('selections without git', () => {
       mode: 'all',
       reason: 'T2 runs in full: its full set last took 3 min 20 s, within its budget (§8.9)',
     });
-    expect(selectT2(changes('tools/cmd/qa.ts'), { lastFullMs: 400_000 }).mode).toBe('some');
+    expect(selectT2(changes('tools/cmd/qa.ts'), { lastFullMs: TIERS.T2.budgetMs + 1 }).mode).toBe('some');
   });
 });
 
@@ -258,7 +258,9 @@ describe('budgets', () => {
     expect(checkBudget('T0', 12_000).message).toBe(
       `T0 took 12 s, over its 10 s budget (it fails at 15 s): ${TIERS.T0.fix}`,
     );
-    expect(checkBudget('T2', 540_000).message).toBe(`T2 took 9 min, at least 1.5× its 6 min budget: ${TIERS.T2.fix}`);
+    expect(checkBudget('T2', 810_000).message).toBe(
+      `T2 took 13 min 30 s, at least 1.5× its 9 min budget: ${TIERS.T2.fix}`,
+    );
   });
 
   it('reads the durations of Vitest and Playwright JSON reports: over budget warns, at 1.5× fails', () => {
@@ -268,13 +270,13 @@ describe('budgets', () => {
       mkdirSync(join(root, 'out/e2e'), { recursive: true });
       const vitest = { startTime: 1_000, success: true, testResults: [{ endTime: 30_000 }, { endTime: 71_000 }] };
       writeFileSync(join(root, 'out/test/report.json'), JSON.stringify(vitest));
-      writeFileSync(join(root, 'out/e2e/report.json'), JSON.stringify({ suites: [], stats: { duration: 540_000 } }));
+      writeFileSync(join(root, 'out/e2e/report.json'), JSON.stringify({ suites: [], stats: { duration: 810_000 } }));
       expect(reportMs(join(root, 'out/test/report.json'))).toBe(70_000);
       const checks = checkReports(root, { T0: 4_000 });
       expect(checks.map(({ tier, ms, status }) => [tier, ms, status])).toEqual([
         ['T0', 4_000, 'ok'],
         ['T1', 70_000, 'warn'],
-        ['T2', 540_000, 'fail'],
+        ['T2', 810_000, 'fail'],
       ]);
       expect(checkReports(root, { T1: 1_000 }).map((check) => check.status)).toEqual(['ok', 'fail']);
       writeFileSync(join(root, 'out/test/report.json'), '{"x":1}');

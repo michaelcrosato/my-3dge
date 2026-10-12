@@ -13,7 +13,7 @@
  * checkpoint after it, drawing after every step, where the hash is the replay's golden. In both scenes, cycling every
  * camera and resolution mode while he walks builds 0 pipelines after the warm-up (Done-when 4). The CPU-only contract
  * for the hall is tests/e2e/parity.spec.ts: there both replays give the same goldens drawing a frame after every step,
- * so the end states hold while it renders, and this file plays them without drawing (T2's 6-minute budget).
+ * so the end states hold while it renders, and this file plays them without drawing (T2's budget).
  *
  * Invariants: the page is driven through `window.__engine` and the virtual clock, as an agent drives it; goldens come
  * from the replay files, never from the page itself. Each test opens its own page and shares nothing, so they run in

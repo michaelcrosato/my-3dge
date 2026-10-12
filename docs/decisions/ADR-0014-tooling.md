@@ -234,3 +234,24 @@ Core proposal accepted at integration. Calls made where PLAN.md §9 WP 5.5 and �
   Animator.inspect() from an animator pool of its own, posed where the actor stands, and never touches the sim's
   animators.
 (The lane proposed this as amendment 12; WP 5.5 had already taken that number, so it is 13.)
+
+## Amendment 14 (2026-10-11, gate G6's review): T2's budget is 9 minutes
+
+- **Measured:** gate G6's `x ci --local` failed CI_BUDGET: T2 took 14 min 16 s at load 13–15, against 6 min (it
+  fails at 9). Its cause, a page's warm-up (566 pipelines in the hall), is fixed (ADR-0008 amendment 9): a box page
+  is ready in 2–4 s again and draws a frame at its pre-WP-7.4 cost. The same 146 tests then took 10 min 46 s, 11 min
+  7 s and 12 min 1 s on 4 workers at load 35–80 from other lanes; the gate's tree without the fix took 16 min 57 s at
+  load 23–75 in the same hour (summed test time: 3,030 and 3,470 s without the fix, 2,300–2,420 s with it).
+- **What remains is content:** each box stage adds its CPU-only contract to parity.spec.ts (I-07, five tests a
+  stage: its replays drawn a frame after every step, swept through every camera and resolution mode, with the GPU
+  features off, live play, the ID pass), on SwiftShader, where a frame costs 14 ms in the room and 24 ms in the hall
+  (the GPU process; the page's own frame work is 0.6–2.2 ms). parity.spec.ts alone is 1,500–1,600 s of the sum with
+  the fix (2,000–2,250 s without), over 6 minutes on 4 workers. T2 grew from 114 tests at G4 (5 min 38 s) and 122
+  at G5 (6 min 28 s, over budget) to 146.
+- **Call:** T2's budget is 9 minutes (`TIERS.T2`, fails at 13 min 30 s): over it warns, as at G5; 6 minutes would fail
+  every gate from here at this load. Rejected: drawing fewer frames or smaller ones in parity.spec.ts (the contract is
+  a frame after every step), cheaper shadows (a look change to speed up tests), more Playwright workers (a shared
+  setting; up to 6 lanes share the box's 20 cores). Box 6 (WP 7.8) adds its looks to parity.spec.ts: its gate
+  measures again.
+- **Plan edit:** T2's 6 minutes becomes 9 in PLAN.md §1 item 8, I-27 (§7), §8.2's tier table, §8.9 and Appendix E's
+  loop, in AGENTS.md's loop and in the x-loop skill.
