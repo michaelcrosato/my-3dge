@@ -156,8 +156,9 @@ test.describe('the box, stage 5: the fight', () => {
   });
 
   test('its effects are drawn, and turning them off never changes the hash', async ({ page, harness }) => {
+    // One page plays both: each replay starts its run again from step 0, and the view setting changes no state.
+    await open(page, harness, '&cam=iso');
     const effects = async (on: boolean) => {
-      await open(page, harness, '&cam=iso');
       const views = [[0, { set: { 'gfx.effects': on } }]];
       const run = await page.evaluate(
         ([text, v]) => __engine.replay(text, { until: 240, views: v }) as Promise<{ hashes: Record<string, string> }>,

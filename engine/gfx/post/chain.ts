@@ -13,7 +13,7 @@
  * Every filter is a uniform, so switching any filter, scope or look builds no pipeline and recompiles no material;
  * passes that are off do not run (bloom's, SMAA's), except in the warm-up's frame, which draws all of them. A plain
  * frame (`look:clean`) skips the chain's passes and draws the scene straight (`Post.plain` says when, and what it
- * saves); the warm-up's frame draws both ways, so switching between them builds nothing.
+ * saves); the warm-up's frame draws both ways (`Post.view` says how), so switching between them builds nothing.
  *
  * What it draws comes from three view settings, `post.look`, `post.filters` and `post.show` (`POST_SETTINGS`), which
  * act on the frames drawn through `post.view`: `createEngine` (engine/app/engine.ts) draws every frame and shot of its
@@ -25,7 +25,7 @@
  * engine/gfx/post/snap.ts) and puts it back.
  *
  * Use: `gfx.frame(post.view(frameView))` draws a frame through the chain; `post.attach(gfx.warmup)` once, before the
- * first warm-up, registers the MRT's compile step and the chain's key part.
+ * first warm-up, adds the chain's key part.
  *
  * Invariants: presentation only: nothing here reaches the sim or the hash (the settings are view settings); the
  * output graph is built once (`builds`), again only when the renderer's tone mapping or colour space changes, which
@@ -49,7 +49,7 @@ import type { StyleSet } from '../materials/styles';
 import type { ToonLook } from '../materials/toon';
 import { QUALITY_SETTINGS, qualityBudget, type QualityBudget, type QualitySetting } from '../quality';
 import type { FrameView } from '../renderer';
-import type { Warmup } from '../warmup';
+import type { Warmup, WarmupPass } from '../warmup';
 import { AA_CHOICE, createAa, gateUpdates, type Aa, type AaKind } from './aa';
 import { createComposite, POST_SHOW, type PostShow } from './composite';
 import {
@@ -65,7 +65,7 @@ import {
   type FilterSpec,
 } from './filters';
 import { defineLooks, type LookEntry } from './looks';
-import { clearMrt, createScenePass, FLAG_SLOTS, PART_BITS, useSceneMrt, WARM_MRT_ID, writeFlags } from './mrt';
+import { clearMrt, createScenePass, FLAG_SLOTS, PART_BITS, useSceneMrt, writeFlags } from './mrt';
 import { snapToBlocks } from './snap';
 
 /** The codes this module raises, with their fixes. */
@@ -175,13 +175,21 @@ export interface Post {
   readonly plain: boolean;
   /** The edge smoothing it was made with. */
   readonly aa: AaKind;
-  /** `frame` drawn through the chain: give it to `gfx.frame` or `shot`. */
+  /**
+   * `frame` drawn through the chain: give it to `gfx.frame` or `shot`. It gives the warm-up the chain's two passes
+   * (`WarmupView.passes`): the scene pass with its MRT on, where the entries and the material styles compile step by
+   * step, then the target `render()` draws plain frames into. The warm frame draws the scene straight, and the chain's
+   * passes over an empty scene, so it builds only those passes: on SwiftShader a pipeline's first draw costs time
+   * again, and drawing the scene through the chain there too made each Stress Box page (the room, the hall, the fight)
+   * about 1 s slower to start, for a picture a clean look never draws (gate G6's review). The first frame of another
+   * look pays that instead, once, building nothing.
+   */
   view(frame: FrameView): FrameView;
   /** Draws look `id` from the next frame (sets `post.look`). */
   use(id: string): void;
   /** Lays `filters` over the look from the next frame (sets `post.filters`); `{}` clears it. */
   set(filters: FilterSpec): void;
-  /** Registers the MRT's compile step and the chain's key part with `warmup`; `dispose()` removes them. */
+  /** Adds the chain's key part to `warmup`'s shader key; `dispose()` removes it. */
   attach(warmup: Warmup): { dispose(): void };
   /** Frees the chain's targets. */
   dispose(): void;
@@ -197,7 +205,7 @@ export function snapBlock(chain: FilterChain): number {
   return chain.screen.scope === 'all' ? chain.screen.pixelate : 1;
 }
 
-/** Chains made so far: each registers its warm-up entry and key part under its own number. */
+/** Chains made so far: each adds its key part under its own number. */
 let chains = 0;
 
 /** Makes the chain on `gfx.renderer` (see the file comment). */
@@ -222,6 +230,7 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
   const aaGate = uniform(0).setGroup(renderGroup);
   const glow = bloomNode(scenePass.getTextureNode('output'), 0, 0.4, 0.9);
   let warming = false;
+  const empty = new Scene();
   let bloomRuns = false;
   gateUpdates(glow, () => warming || bloomRuns);
   const processing = new PostProcessing(renderer);
@@ -295,6 +304,22 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
     return chain;
   };
 
+  /**
+   * How a frame draws the scene, for the warm-up: the scene pass with its MRT on, then what `render()` draws a plain
+   * frame into. Entering the first makes the next frame the warm frame, which draws both ways.
+   */
+  const passes: readonly WarmupPass[] = [
+    {
+      target: scenePass.renderTarget,
+      enter: () => {
+        useSceneMrt(renderer, scenePass);
+        warming = true;
+      },
+      leave: () => clearMrt(renderer),
+    },
+    {},
+  ];
+
   const size = new Vector2();
   let frames = 0;
   let plain = false;
@@ -319,9 +344,13 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
     const missed = writeFlags(scenePass);
     if (missed > 0) log.warnOnce('GFX_POST_FLAG_SLOTS', { missed, slots: FLAG_SLOTS }, 'slots');
     clearMrt(renderer);
+    const scene = scenePass.scene;
+    // The warm frame draws the chain's passes over an empty scene: the warm-up's first pass compiled the scene's.
+    if (warming) scenePass.scene = empty;
     try {
       processing.render();
     } finally {
+      scenePass.scene = scene;
       restore?.();
       warming = false;
     }
@@ -348,7 +377,7 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
     view(frame) {
       scenePass.scene = frame.scene;
       scenePass.camera = frame.camera;
-      return { ...frame, draw, target: scenePass.renderTarget };
+      return { ...frame, draw, passes };
     },
     use(id) {
       settings.set('post.look', id);
@@ -357,17 +386,8 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
       settings.set('post.filters', filters);
     },
     attach(warmup) {
-      const entry = warmup.register(`${WARM_MRT_ID}#${serial}`, {
-        objects: () => {
-          if (renderer.getRenderTarget() === scenePass.renderTarget) {
-            useSceneMrt(renderer, scenePass);
-            warming = true;
-          }
-          return [];
-        },
-      });
       const part = warmup.keyPart(`post#${serial}`, () => `${aaKind}`);
-      return { dispose: () => (entry.dispose(), part.dispose()) };
+      return { dispose: () => part.dispose() };
     },
     dispose() {
       built?.aa.dispose();

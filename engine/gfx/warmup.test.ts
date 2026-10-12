@@ -1,8 +1,9 @@
 /**
  * @file Unit tests for the warm-up registry (`engine/gfx/warmup.ts`) on three.js objects in Node, with a stand-in
  * renderer that records each `compileAsync`: the shader key follows fog, shadows, lights, entries and key parts;
- * a run compiles step by step for the frame's real target, with progress, makes each registered object drawable
- * without showing it, draws the warm frame and puts everything back, also when it fails. That the real renderer
+ * a run compiles step by step for the frame's real target, then once for each of its other passes (each entered and
+ * left), with progress, makes each registered object drawable without showing it, draws the warm frame and puts
+ * everything back, also when it fails. That the real renderer
  * then builds 0 pipelines is proven by tests/e2e/renderer.spec.ts.
  */
 import {
@@ -159,15 +160,53 @@ describe('run', () => {
     scene.traverse((object) => expect(object.frustumCulled, object.type).toBe(true));
   });
 
-  it("uses the view's target when given, and the canvas when render() needs no internal target", async () => {
+  it("uses the pass's target when given, and the canvas when render() needs no internal target", async () => {
     const given = setup();
     const target = new RenderTarget(4, 4);
-    await given.warmup.run({ scene: given.scene, camera: given.camera, target });
+    await given.warmup.run({ scene: given.scene, camera: given.camera, passes: [{ target }] });
     expect(given.compiles[0].target).toBe(target);
     const direct = setup();
     direct.fake.needsFrameBufferTarget = false;
     await direct.warmup.run({ scene: direct.scene, camera: direct.camera });
     expect(direct.compiles[0].target).toBeNull();
+  });
+
+  it('compiles for every pass: the first step by step, each other once with every entry drawable', async () => {
+    const { warmup, scene, camera, sparks, flag, compiles, fake } = setup();
+    warmup.register('pool:sparks', { objects: () => [sparks] });
+    warmup.register('pool:flags', { objects: () => [flag] });
+    const target = new RenderTarget(4, 4);
+    const calls: string[] = [];
+    const pass = (name: string, given?: RenderTarget) => ({
+      ...(given ? { target: given } : {}),
+      enter: () => void calls.push(`enter ${name} ${fake.target === null ? 'canvas' : fake.target === target}`),
+      leave: () => void calls.push(`leave ${name}`),
+    });
+    const progress: string[] = [];
+    const report = await warmup.run(
+      { scene, camera, passes: [pass('scene pass', target), pass('plain')] },
+      { onProgress: ({ done, total, step }) => progress.push(`${done}/${total} ${step}`) },
+    );
+    expect(progress).toEqual(['1/5 scene', '2/5 pool:flags', '3/5 pool:sparks', '4/5 pass 2', '5/5 frame']);
+    expect(calls).toEqual(['enter scene pass true', 'leave scene pass', 'enter plain false', 'leave plain']);
+    // The second pass compiles once, for the stand-in render() draws into (asked before any target was set), with
+    // both pools drawable.
+    expect(compiles.map((c) => [c.target === target, c.sparks, c.flagsShown])).toEqual([
+      [true, 0, false],
+      [true, 0, true],
+      [true, 1, true],
+      [false, 1, true],
+    ]);
+    expect(compiles[3].target).toBeInstanceOf(RenderTarget);
+    expect([report.compiled, report.drawn, fake.target]).toEqual([4, 1, null]);
+  });
+
+  it('leaves a pass it entered when its compile fails', async () => {
+    const { warmup, scene, camera, fake } = setup({ failCompile: true });
+    const calls: string[] = [];
+    const passes = [{ enter: () => void calls.push('enter'), leave: () => void calls.push('leave') }];
+    await expect(warmup.run({ scene, camera, passes })).rejects.toThrow('compile failed');
+    expect([calls, fake.target]).toEqual([['enter', 'leave'], null]);
   });
 
   it('runs one warm-up at a time, and draws the warm frame through the view', async () => {

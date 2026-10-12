@@ -150,3 +150,38 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
   `engine/gfx/stage{,.test}.ts`, `engine/gfx/puppets/actors.ts`, `engine/gfx/fx/ribbons.ts`,
   `engine/app/{engine,view,view.test}.ts`, `tests/e2e/box.spec.ts` and `tests/baselines/perf/box-room.json`
   (accepted).
+
+## Amendment 9 (2026-10-11, gate G6's review): a page's warm-up compiles what its frames draw, and builds little
+
+- **Measured:** T2 took 14 min 16 s at gate G6 against its 6 min (it fails at 9 min), 6 min 28 s at G5. A Stress Box
+  page's warm-up was the cause: on SwiftShader the hall's built 566 pipelines and the page was ready in 15 to 19 s
+  (205 and 8 to 9 s before WP 7.4, at the same load; WP 6.7's effects added 9). A pipeline the warm frame builds is
+  built alone, about 45 ms each, while `compileAsync` builds its pipelines side by side, about 7 ms each.
+- **The warm-up compiles for every pass** (`engine/gfx/warmup.ts`): a view gives its `passes`, each a target with
+  `enter`/`leave`, compiled in order, the first step by step and the others once. The chain's (`Post.view`) are its
+  scene pass with the MRT on, then the target `render()` draws plain frames into. Before, it compiled once, for the
+  scene pass's target before its MRT entry (`!post-mrt`, now gone) turned the MRT on, a variant no frame draws, and
+  left every plain-frame variant to the warm frame (155 of the hall's).
+- **The scene pass has both attachments from the start** (`createScenePass` asks for `normal`): r182's `MRTNode`
+  writes only the outputs its target has textures for, so the MRT variants compiled before the chain first drew were
+  one-attachment ones, built again by the warm frame.
+- **The warm frame draws the chain's passes over an empty scene**, so it builds only the chain's 11 full-screen
+  passes: drawing the scene through the chain there too made each page about 1 s slower to start (a pipeline's first
+  draw costs time again on SwiftShader), for a picture a clean look never draws. The first frame of another look pays
+  that instead, once, building nothing.
+- **Instanced level meshes share their shaders** (`instanceSlots`, `engine/gfx/level/shapes.ts`; the cutaway's twins
+  too): r182 reads the matrices of an instanced mesh of 1,000 slots or fewer from a uniform buffer named after its
+  node, a shader per mesh, so the hall's 37 instanced parts and 26 twins were a pipeline each per material, pass and
+  camera. At 1,024 slots, as the instancing service's pages have (WP 3.8), they read an instanced attribute and share
+  one; each costs 64 KiB of matrices.
+- **Result** (load 4 to 7): the hall's page builds 35 pipelines and is ready in about 4 s, the room's 24 in 2 s, the
+  fight's 45 in 4 s; 0 after the warm-up, as before. Measured one after another at load 13 to 19, from a cold page
+  to the end of a drawn 600-step replay: the hall 26 s before WP 7.4, 38 s at gate G6, 23 s now; the room 9.6, 15.1
+  and 10.8 s. A frame costs what it did before WP 7.4 (27 ms a step drawn in the hall, 13 to 17 in the room).
+- Perf: `tests/baselines/perf/box-room.json` budgets pipelines 24 (75) and textures 32 (30: the warm-up's 1 × 1
+  stand-in for the plain frame's compile), its reason says how they were measured.
+- Tests: `engine/gfx/warmup.test.ts` (every pass compiled, entered and left, also on a failure),
+  `engine/gfx/level/meshes.test.ts` and `engine/gfx/cutaway.test.ts` (every instanced part and twin on the attribute
+  path); T2's own 0-pipelines checks hold.
+- Plan edit: none: gate G6's review fixes, in files of WPs 2.1 (the warm-up), 4.4 (the level meshes, the cutaway)
+  and 7.4 (the chain, the MRT).
