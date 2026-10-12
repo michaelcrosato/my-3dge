@@ -2182,6 +2182,12 @@ For the agents who maintain the engine.
 - `headlessHost` (function): The run behind a headless engine: its session (world, settings, recording) and clock.
 - `HeadlessOptions` (interface): How a headless engine starts.
 
+### [`engine/app/look.ts`](../engine/app/look.ts)
+
+- `createPageLook` (function): Makes a page's look (see the file comment).
+- `PageLook` (interface): A page's look (see the file comment).
+- `PageLookOptions` (interface): What a page's look works with.
+
 ### [`engine/app/loop.ts`](../engine/app/loop.ts)
 
 - `createLoop` (function): Makes a frame loop (see the file comment).
@@ -3641,6 +3647,12 @@ For the agents who maintain the engine.
 - `StageProps` (interface): Props drawn on the stage (see the file comment).
 - `StagePropsOptions` (interface): What `createStageProps` takes.
 
+### [`engine/gfx/stageSky.ts`](../engine/gfx/stageSky.ts)
+
+- `createStageSky` (function): Makes the stage's lights on `scene` (see the file comment); the stage's own show until a sky is asked for.
+- `StageSky` (interface): The stage's lights (see the file comment).
+- `StageSkyOptions` (interface): What the stage's lights are made from.
+
 ### [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)
 
 - `bakeKey` (function): The key of a bake from `source`: the canonical hash of its texture, seed, parameters and size.
@@ -4650,6 +4662,36 @@ For the agents who maintain the engine.
 - `WISP_ATTACK` (const): The wisp's shot (see the file comment): seconds, metres, m/s and hit points.
 - `WISP_SHOT` (const): The wisp's shot on the floor: a narrow line from under it, as far as it shoots.
 - `WispData` (interface): The wisp's own state, beside its crowd agent.
+
+### [`labs/box/looks/hall-floor.ts`](../labs/box/looks/hall-floor.ts)
+
+- `HALL_FLOOR` (const): The material that draws the hall's floor bake.
+- `HALL_FLOOR_TEXTURE` (const): The hall's floor bake: its texture id.
+- `HALL_MATERIALS` (const): The hall level's material swap: its flagstones drawn as the hall's floor bake (see the file comment).
+
+### [`labs/box/looks/torch-bloom.ts`](../labs/box/looks/torch-bloom.ts)
+
+- `look` (const): The look `look:torch-bloom`: bloom over the torch-lit hall.
+
+### [`labs/box/looks/torch-cel.ts`](../labs/box/looks/torch-cel.ts)
+
+- `look` (const): The look `look:torch-cel`: the prototype's comic cel over the torch-lit hall.
+
+### [`labs/box/looks/torch-fxaa.ts`](../labs/box/looks/torch-fxaa.ts)
+
+- `look` (const): The look `look:torch-fxaa`: fXAA over the torch-lit hall.
+
+### [`labs/box/looks/torch-lit.ts`](../labs/box/looks/torch-lit.ts)
+
+- `look` (const): The look `look:torch-lit`: the torch-lit hall: the sky `sky:hall` over the scene's own style, no filter.
+
+### [`labs/box/looks/torch-pixel.ts`](../labs/box/looks/torch-pixel.ts)
+
+- `look` (const): The look `look:torch-pixel`: the prototype's pixel look over the torch-lit hall.
+
+### [`labs/box/looks/torch-toon.ts`](../labs/box/looks/torch-toon.ts)
+
+- `look` (const): The look `look:torch-toon`: toon shading with outlines in the torch-lit hall.
 
 ### [`labs/box/scenes/crowd-100.ts`](../labs/box/scenes/crowd-100.ts)
 

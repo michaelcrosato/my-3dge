@@ -45,7 +45,7 @@ prefix a scene's own (`pathMover`, `spinnersCrate`); a scene's settings are `box
 ## The quick loop
 
 - `node x set box.room.speed 3` (validates, prints the URL, applies to a running `x inspect`)
-- `node x sim labs/box/scenes/room --steps 600 --set box.room.speed=3` (hash, events, a replay of the run)
+- `node x sim labs/box/scenes/room.ts --steps 600 --set box.room.speed=3` (hash, events, a replay of the run)
 - `node x shot labs/box --scene room --cam iso` (ID pass, look metrics; `--png`, `--marks`, `--thumb <case>`)
 - `node x replay tests/replays/box-1-room.replay.json --browser page` (goldens while the page renders)
 - `node x inspect --scene room`, then `node x eval "<js>"`, `node x dump --step 60`, `node x shot …` (reuses it),

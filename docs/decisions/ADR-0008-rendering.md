@@ -186,3 +186,23 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
   path); T2's own 0-pipelines checks hold.
 - Plan edit: none: gate G6's review fixes, in files of WPs 2.1 (the warm-up), 4.4 (the level meshes, the cutaway)
   and 7.4 (the chain, the MRT).
+
+## Amendment 10 (2026-10-11, WP-7.8): the look's sky, the page's styles, level material swaps
+
+- **The look kind gains `sky`** (`''` keeps the scene's own lights).
+- **Core change, gfx:** `engine/gfx/stageSky.ts` (`stage.sky`): the stage keeps its own lights until a look names a
+  sky. The sky is then made once (`createSky` from the level's light spots, phases from `fxRng`) and the stage's
+  lights are hidden. `''` hides the sky, removes the fog and restores the background. Hidden lights stay out of the
+  shader key, so a page with no sky keeps its pipelines, and switching warms up first.
+- **Core change, app:** `engine/app/look.ts` plus `createEngine`: one style set for the chain. Before each warm-up,
+  frame and shot the page applies the look's sky and the tier's shadow budget; at the first look in another style,
+  the style set joins the warm-up, and later re-points newly shown meshes.
+- **Level entry `materials`** (id → id, presentation only; the view passes them to the level meshes).
+- **`engine/gfx/post/chain.ts`:** the warm frame's straight pass draws in the set's own style. Without this fix, a
+  page opened in a styled look built 7 to 23 cold pipelines when it went plain.
+- `tests/baselines/thumbs/box-hall-iso.json` re-recorded (the hall's floor is its rune bake).
+- Plan edit: WP-7.8's Owns adds `engine/gfx/stageSky{,.test}.ts` and `engine/app/look{,.test}.ts`, and extends
+  `engine/gfx/{stage,post/looks,post/looks.test,post/chain}.ts`, `engine/app/{engine,view,view.test}.ts`,
+  `engine/world/level/level{,.test}.ts` and `tests/baselines/thumbs/{box-hall-iso.json,README.md}`.
+  The planned `box.json` perf budget becomes `tests/baselines/perf/box-fight-1000.json` and `box-crowd-5000.json`
+  (`x perf` names budget files per scene) (accepted).

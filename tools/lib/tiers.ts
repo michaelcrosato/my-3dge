@@ -84,6 +84,10 @@ export const LONG_RUNS: readonly { name: string; command: readonly string[] }[] 
     name: 'crowd ladder',
     command: ['node', 'x', 'perf', 'labs/box', '--scene', 'crowd-1000', '--ladder', '--budget'],
   },
+  {
+    name: 'fight ladder',
+    command: ['node', 'x', 'perf', 'labs/box', '--scene', 'fight-1000', '--ladder', '--budget'],
+  },
   { name: 'clip QA', command: ['node', 'x', 'qa', 'anim', '--only', 'clip:,set:'] },
 ];
 

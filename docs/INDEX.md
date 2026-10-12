@@ -186,7 +186,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`damageNumbers.ts`](../engine/app/damageNumbers.ts): Damage numbers from the sim (PLAN.md §6.7: game UI in HTML/CSS; WP 6.5's numbers shown in the box, WP 6.7 core proposal, ADR-0008 amendment 8): `createDamageNumbers(ui)` reads a sim world's event trace once per rendered frame, without listening, and shows each new `damage` event (engine/sim/damage.ts) that took hit points as a damage number `DAMAGE_RISE` m above where it struck (engine/ui/labels.ts: it rises, stacks and is pooled), so a page shows the hits of any scene that lands them through `damage`.
   - Exports: `createDamageNumbers`, `DAMAGE_RISE`, `DamageNumbers`, `TracedWorld`
   - Tests: [`engine/app/damageNumbers.test.ts`](../engine/app/damageNumbers.test.ts)
-- [`engine.ts`](../engine/app/engine.ts): The engine in a page (PLAN.md §6.4, §6.9, §8.3, WP 2.7): `createEngine({ canvas, scenes, levels })` registers the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay` and settings by path), starts the scene as a recorded run with its view (engine/app/headless.ts, engine/app/view.ts), publishes the run's inspector as `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts) and the post-processing chain every frame and shot is drawn through (engine/gfx/post/chain.ts: the view settings `post.look`, `post.filters` and `post.show`), warms up every pipeline the view needs through both cameras (perspective and orthographic), draws the first frame, and then runs the frame loop (engine/app/loop.ts): the devices sampled into intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from the clock, the view drawn at the clock's alpha.
+- [`engine.ts`](../engine/app/engine.ts): The engine in a page (PLAN.md §6.4, §6.9, §8.3, WP 2.7): `createEngine({ canvas, scenes, levels })` registers the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay` and settings by path), starts the scene as a recorded run with its view (engine/app/headless.ts, engine/app/view.ts), publishes the run's inspector as `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts) and the post-processing chain every frame and shot is drawn through (engine/gfx/post/chain.ts: the view settings `post.look`, `post.filters` and `post.show`; the look's sky and style, engine/app/look.ts), warms up every pipeline the view needs through both cameras (perspective and orthographic), draws the first frame, then runs the frame loop (engine/app/loop.ts): the devices sampled into intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from the clock, the view drawn at the clock's alpha.
   - Exports: `createEngine`, `Engine`, `ENGINE_CODES`, `EngineOptions`, `recordOf`
   - Tests: [`engine/app/engine.test.ts`](../engine/app/engine.test.ts), [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts)
 - [`feelMember.ts`](../engine/app/feelMember.ts): The inspector member `feel(id?)` (PLAN.md §8.3, WP 3.2): an actor's feel meter report, `measureFeel` (engine/sim/actors.ts) over the actor's character at the run's rate and `physics.characterGravity`; the first player when `id` is absent, else `SIM_BAD_ARGUMENT` naming the actors' ids (`none` in a scene without one).
@@ -194,6 +194,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`headless.ts`](../engine/app/headless.ts): The engine without a page (PLAN.md §8.3, §6.9, WPs 1.6 and 2.7; doctrine: Verifiable): `createHeadless({ scene, seed, settings, view })` starts a scene as a recorded session (engine/sim/scene.ts) and returns its inspector, the same object a page publishes as `window.__engine` minus a renderer: `render` and `shot` throw `DEV_NO_RENDERER`.
   - Exports: `AppHostOptions`, `AppRun`, `createAppHost`, `createHeadless`, `Drawing`, `Headless`, `HEADLESS_CODES`, `headlessHost`, `HeadlessOptions`
   - Tests: [`engine/app/headless.test.ts`](../engine/app/headless.test.ts)
+- [`look.ts`](../engine/app/look.ts): The page's look (PLAN.md WP 7.8, §6.7, ADR-0008 amendment 9): what `createEngine` (engine/app/engine.ts) does before every warm-up, frame and shot, so the look the view setting `post.look` names (engine/gfx/post/looks.ts) reaches the whole picture and not only the post chain's filters (engine/gfx/post/chain.ts): - **its sky:** the stage's lights show the look's sky, or the stage's own for `''` (engine/gfx/stageSky.ts), with the quality tier's shadow budget (engine/gfx/quality.ts); - **its material style:** the page's style set (engine/gfx/materials/styles.ts), which the chain switches, joins the warm-up the first time a look asks for a style other than the set's own, so every warm-up from then on compiles the drawn meshes in every style; and while it is joined, meshes shown since the last frame (a crowd entering, a stand-in) are re-pointed to the style drawn now.
+  - Exports: `createPageLook`, `PageLook`, `PageLookOptions`
+  - Tests: [`engine/app/look.test.ts`](../engine/app/look.test.ts), [`tests/e2e/box-look.spec.ts`](../tests/e2e/box-look.spec.ts)
 - [`loop.ts`](../engine/app/loop.ts): The frame loop (PLAN.md §6.4, WP 2.7; doctrine: Reproducible): fixed sim steps plus interpolation, once per animation frame.
   - Exports: `createLoop`, `FRAME_SLACK_MS`, `FRAME_SLOT_MS`, `Loop`, `LoopOptions`
   - Tests: [`engine/app/loop.test.ts`](../engine/app/loop.test.ts)
@@ -409,6 +412,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`stageProps.ts`](../engine/gfx/stageProps.ts): Props on the stage (PLAN.md WP 4.6 core proposal, ADR-0008 amendment 5; §6.4's view): every entity with the component `sceneProp` (engine/sim/props.ts: a prop standing in a scene, its id and its pose) drawn as its prop through the prop meshes (engine/gfx/props.ts: one instanced batch per prop part, so a hundred crates are one draw call), where its pose is at the frame's alpha.
   - Exports: `createStageProps`, `StageProps`, `StagePropsOptions`
   - Tests: [`engine/gfx/stageProps.test.ts`](../engine/gfx/stageProps.test.ts)
+- [`stageSky.ts`](../engine/gfx/stageSky.ts): The stage's lights (PLAN.md §6.4's view, WP 7.8, ADR-0008 amendment 9): the stage's own, a hemisphere light and one shadow-casting sun fitted to the level under a plain background, and a sky on demand (engine/gfx/sky.ts: the light pool lit from the level's light spots and flickering, the sky's sun, its dome and backdrop, the ambient light and the fog).
+  - Exports: `createStageSky`, `StageSky`, `StageSkyOptions`
+  - Tests: [`engine/gfx/stageSky.test.ts`](../engine/gfx/stageSky.test.ts), [`tests/e2e/box-look.spec.ts`](../tests/e2e/box-look.spec.ts)
 - [`thumbnail.ts`](../engine/gfx/thumbnail.ts): Text thumbnails (PLAN.md §8.5): a frame as a 48 × 27 grid of hex colours, kept as JSON (tests/baselines/thumbs/<case>.json) instead of an image (doctrine: Assets), compared per cell with a tolerance, and read as a coarse map.
   - Exports: `compareThumbnails`, `MAP_SYMBOLS`, `STRAY`, `THUMB_HEIGHT`, `THUMB_WIDTH`, `thumbnail`, `Thumbnail`, `ThumbnailDiff`, `ThumbnailIds`
   - Tests: [`engine/gfx/thumbnail.test.ts`](../engine/gfx/thumbnail.test.ts)
@@ -595,7 +601,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`filters.ts`](../engine/gfx/post/filters.ts): The filters (PLAN.md WP 7.4, §6.7): what each one takes, as data, and the uniforms the composite reads them through.
   - Exports: `chainOf`, `createFilterUniforms`, `FILTER_FIELDS`, `FILTER_NAMES`, `FilterChain`, `FilterName`, `FilterSpec`, `FilterUniforms`, `fixLevels`, `isPlain`, `layerChain`, `levelsProblem`, `PALETTES`, `partialSchema`, `Scope`, `scopeMask`, `SCOPES`, `SCREEN_SCOPES`, `STYLIZE_KINDS`, `writeFilters`
   - Tests: [`engine/gfx/post/filters.test.ts`](../engine/gfx/post/filters.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
-- [`looks.ts`](../engine/gfx/post/looks.ts): Looks (PLAN.md WP 7.4, §6.6 kind `look`): a material style (WP 7.2, engine/gfx/materials/styles.ts) plus a filter chain (engine/gfx/post/filters.ts), as data.
+- [`looks.ts`](../engine/gfx/post/looks.ts): Looks (PLAN.md WP 7.4, §6.6 kind `look`): a material style (WP 7.2, engine/gfx/materials/styles.ts) plus a filter chain (engine/gfx/post/filters.ts), as data, and the sky that lights the scene (WP 7.8, a `sky` id, engine/gfx/sky.ts).
   - Exports: `defineLook`, `defineLooks`, `LOOK_FIELDS`, `LOOK_GROUPS`, `LookEntry`, `LOOKS`, `LookSpec`
   - Tests: [`engine/gfx/post/looks.test.ts`](../engine/gfx/post/looks.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`mrt.ts`](../engine/gfx/post/mrt.ts): The one fixed MRT of post-processing (PLAN.md WP 7.4, §6.7, I-46): the scene pass draws, once per frame and always the same way, the colour (`output`) and the view normals (`normal`), whose spare channel `w` carries what the composite needs to know about each pixel's object: its outline group, its part of the scene (a character, an object or the environment) and whether it is drawn as pixel art.
@@ -978,6 +984,30 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`wisp.ts`](../labs/box/cast/wisp.ts): The box's wisp (PLAN.md §9.0, WP 5.7): a floater that hovers after the hero and circles him, from Box 4 on.
   - Exports: `CROWD_WISP`, `makeWisp`, `steerWisp`, `WISP`, `WISP_ATTACK`, `WISP_SHOT`, `WispData`
   - Tests: [`labs/box/cast/crowd.test.ts`](../labs/box/cast/crowd.test.ts)
+
+## labs/box/looks
+
+- [`hall-floor.ts`](../labs/box/looks/hall-floor.ts): The hall's floor (PLAN.md WP 7.8, from WP 7.3): flagstones with the rune circle glowing on the dais, moss creeping in from the foot of the walls and contact shadows along them, baked once over the whole hall as the prototype baked it (`levelFloorTexture`, engine/gfx/textures/contactShadow.ts).
+  - Exports: `HALL_FLOOR`, `HALL_FLOOR_TEXTURE`, `HALL_MATERIALS`
+  - Tests: [`labs/box/looks/hall-floor.test.ts`](../labs/box/looks/hall-floor.test.ts), [`tests/e2e/box-look.spec.ts`](../tests/e2e/box-look.spec.ts)
+- [`torch-bloom.ts`](../labs/box/looks/torch-bloom.ts): The look `look:torch-bloom`: bloom over the torch-lit hall (PLAN.md WP 7.8): the flames, the coals, the dais's runes and the fight's sparks glow.
+  - Exports: `look`
+  - Tests: [`labs/box/looks/torch-bloom.test.ts`](../labs/box/looks/torch-bloom.test.ts), [`tests/e2e/box-look.spec.ts`](../tests/e2e/box-look.spec.ts)
+- [`torch-cel.ts`](../labs/box/looks/torch-cel.ts): The look `look:torch-cel`: the prototype's comic cel over the torch-lit hall (PLAN.md WP 7.8): light in four flat bands keeping each colour's hue, the colour pushed, ink where the picture changes sharply.
+  - Exports: `look`
+  - Tests: [`labs/box/looks/torch-cel.test.ts`](../labs/box/looks/torch-cel.test.ts), [`tests/e2e/box-look.spec.ts`](../tests/e2e/box-look.spec.ts)
+- [`torch-fxaa.ts`](../labs/box/looks/torch-fxaa.ts): The look `look:torch-fxaa`: FXAA over the torch-lit hall (PLAN.md WP 7.8): the edges smoothed along their direction.
+  - Exports: `look`
+  - Tests: [`labs/box/looks/torch-fxaa.test.ts`](../labs/box/looks/torch-fxaa.test.ts), [`tests/e2e/box-look.spec.ts`](../tests/e2e/box-look.spec.ts)
+- [`torch-lit.ts`](../labs/box/looks/torch-lit.ts): The look `look:torch-lit`: the torch-lit hall, the prototype's stress world (PLAN.md WP 7.8): dark but for the torches on the braziers, each flickering on its own, the nearest casting shadows, and fog from 12 m past the hero.
+  - Exports: `look`
+  - Tests: [`labs/box/looks/torch-lit.test.ts`](../labs/box/looks/torch-lit.test.ts), [`tests/e2e/box-look.spec.ts`](../tests/e2e/box-look.spec.ts)
+- [`torch-pixel.ts`](../labs/box/looks/torch-pixel.ts): The look `look:torch-pixel`: the prototype's pixel look over the torch-lit hall (PLAN.md WP 7.8): the picture in 4 px blocks, 8 shades a channel, dithered between them.
+  - Exports: `look`
+  - Tests: [`labs/box/looks/torch-pixel.test.ts`](../labs/box/looks/torch-pixel.test.ts), [`tests/e2e/box-look.spec.ts`](../tests/e2e/box-look.spec.ts)
+- [`torch-toon.ts`](../labs/box/looks/torch-toon.ts): The look `look:torch-toon`: toon shading with outlines in the torch-lit hall (PLAN.md WP 7.8): every material banded in three steps of light with a rim, the characters and objects inked, as the prototype drew them.
+  - Exports: `look`
+  - Tests: [`labs/box/looks/torch-toon.test.ts`](../labs/box/looks/torch-toon.test.ts), [`tests/e2e/box-look.spec.ts`](../tests/e2e/box-look.spec.ts)
 
 ## labs/box/scenes
 
