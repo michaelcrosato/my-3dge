@@ -3,7 +3,9 @@
  * a scene added there opens at `?scene=<name>` with no change here, and the box's levels, then starts the engine
  * (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays
  * offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: attack, then jump, dash and the bolt) for
- * every scene.
+ * every scene. It also imports every module under `labs/box/looks/`, so each of the box's looks (`look:torch-lit`…)
+ * opens at `?post.look=<id>`, and registers the hall with its material swap, so the hall's floor is its bake, its
+ * runes glowing on the dais (labs/box/looks/hall-floor.ts).
  * Everything else a page does (routes, the renderer, the warm-up, the frame loop, `window.__engine`, the error overlay,
  * the touch layer) is the engine's, so this file stays a list of the box's content.
  *
@@ -17,20 +19,25 @@
  * // http://127.0.0.1:5173/labs/box/?scene=room-hero&cam3=chase
  * // http://127.0.0.1:5173/labs/box/?scene=hall&cam3=chase
  * // http://127.0.0.1:5173/labs/box/?scene=fight&cam3=chase
+ * // http://127.0.0.1:5173/labs/box/?scene=fight&cam3=chase&post.look=look:torch-toon
  * // node x shot labs/box --scene room --cam iso
  */
 /// <reference types="vite/client" />
 import { createEngine } from '../../engine';
 import hallLevel from './levels/hall.txt?raw';
 import roomLevel from './levels/room.txt?raw';
+import { HALL_MATERIALS } from './looks/hall-floor';
 import { room } from './scenes/room';
 import { BOX_TOUCH } from './touch';
 
-/** The box's levels, by id, as text: the engine registers them. */
+/** The box's levels, by id, as text: the engine registers them; the hall with its floor bake (HALL_MATERIALS). */
 const levels = {
   'level:room': { text: roomLevel, file: 'labs/box/levels/room.txt' },
-  'level:hall': { text: hallLevel, file: 'labs/box/levels/hall.txt' },
+  'level:hall': { text: hallLevel, file: 'labs/box/levels/hall.txt', materials: HALL_MATERIALS },
 };
+
+/** The box's looks, each module imported now so its look registers: `?post.look=look:torch-lit` opens it. */
+import.meta.glob(['./looks/*.ts', '!./looks/*.test.ts'], { eager: true });
 
 /** Every box scene module, imported now so each registers its scene; the room comes first, the default. */
 const modules = import.meta.glob<Record<string, unknown>>(['./scenes/*.ts', '!./scenes/*.test.ts'], { eager: true });
