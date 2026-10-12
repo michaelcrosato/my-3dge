@@ -1,8 +1,13 @@
 /**
  * @file Replays against their golden hashes (PLAN.md §8.4, §6.5 items 8–9, WPs 1.5 and 2.7). Usage: node x replay
- * <file|dir…> [--update] [--browser sim|page] [--bisect] [--runs n] [--swap names]. Exit 0 when every replay gives its
- * goldens in every run (or, recorded elsewhere, agrees with itself; or was recorded), 1 otherwise, 2 on a usage error.
- * The verdict never says "match" unless this platform's goldens were compared.
+ * <file|dir…> [--update] [--browser sim|page] [--bisect] [--runs n] [--swap names] [--state] [--until n]. Exit 0 when
+ * every replay gives its goldens in every run (or, recorded elsewhere, agrees with itself; or was recorded), 1
+ * otherwise, 2 on a usage error. The verdict never says "match" unless this platform's goldens were compared.
+ *
+ * `--state` writes the state a replay ends in, as Node plays it: its canonical state and event trace, as `x sim`
+ * writes its own, to `out/replay/<name>/state.json` (`<name>`: the file's, without `.replay.json`); `--until n` (it
+ * implies `--state`) writes the state after step n instead. So an agent reads where a run left its bodies, its props
+ * and its components without a page or a probe of its own (tools/lib/replayState.ts).
  *
  * Each `*.replay.json` (a directory means every one under it) plays from step 0 in Node, `--runs` times (3), and with
  * `--browser sim` as often again in Chromium, in tests/pages/replay.html: the sim in a page, no renderer, through the
@@ -35,6 +40,7 @@ import { checkReplay, firstDifference, judgeRuns, partingOf, type Parting, type 
 import { componentTable, hashState } from '../../engine/sim/state';
 import { describePageError } from '../lib/browser';
 import { replayBrowser, type BrowserMode } from '../lib/page';
+import { stateFile, writeState } from '../lib/replayState';
 import { walk } from '../lib/docs';
 import type { Finding } from '../lib/report';
 import { UsageError, type Command, type CommandResult } from '../x';
@@ -298,13 +304,16 @@ export function parseSwap(value: string | undefined): SimMathName[] | undefined 
 }
 
 export default {
-  usage: 'replay <file|dir…> [--update] [--browser sim|page] [--bisect] [--runs n] [--swap names]',
+  usage:
+    'replay <file|dir…> [--update] [--browser sim|page] [--bisect] [--runs n] [--swap names] [--state] [--until n]',
   options: {
     update: { type: 'boolean' },
     browser: { type: 'string' },
     bisect: { type: 'boolean' },
     runs: { type: 'string' },
     swap: { type: 'string' },
+    state: { type: 'boolean' },
+    until: { type: 'string' },
   },
   maxPositionals: 100,
   async run({ values, positionals, root }): Promise<CommandResult> {
@@ -324,6 +333,8 @@ export default {
     }
     if (update && swap) throw new UsageError('--update never records under a narrowed swap: drop --swap or --update');
     const runs = wholeFlag(values.runs, 'runs', 3, 1);
+    const until = values.until === undefined ? undefined : wholeFlag(values.until, 'until', 0, 0);
+    const state = values.state === true || until !== undefined;
     const files = positionals.flatMap((target) => replayFiles(root, target));
     const runtimes: Runtime[] = [nodeRuntime(root)];
     const page = browserMode ? await replayBrowser(root, browserMode, swap) : undefined;
@@ -353,6 +364,7 @@ export default {
     } finally {
       await page?.close();
     }
+    if (state) for (const file of files) all.lines.push(await writeState(root, file, runtimes[0], until));
     const where = runtimes.map((runtime) => `${runtime.name} ×${runs}`).join(', ');
     const count = (n: number, what: string) => `${n} ${what}${n === 1 ? '' : 's'}`;
     const match = (n: number) => `${n === 1 ? 'matches its' : 'match their'} golden hashes`;
@@ -374,6 +386,7 @@ export default {
       failures: all.failures,
       warnings: all.warnings,
       metrics: { replays: files.length, runs, ...all.metrics },
+      ...(state ? { artifacts: files.map((file) => ({ path: stateFile(file), kind: 'json', describes: `the state ${basename(file)} reaches in Node, and its trace` })) } : {}), // prettier-ignore
     };
   },
 } satisfies Command;

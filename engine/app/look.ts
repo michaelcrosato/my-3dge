@@ -1,5 +1,5 @@
 /**
- * @file The page's look (PLAN.md WP 7.8, §6.7, ADR-0008 amendment 9): what `createEngine` (engine/app/engine.ts) does
+ * @file The page's look (PLAN.md WP 7.8, §6.7, ADR-0008 amendment 10): what `createEngine` (engine/app/engine.ts) does
  * before every warm-up, frame and shot, so the look the view setting `post.look` names (engine/gfx/post/looks.ts)
  * reaches the whole picture and not only the post chain's filters (engine/gfx/post/chain.ts):
  * - **its sky:** the stage's lights show the look's sky, or the stage's own for `''` (engine/gfx/stageSky.ts), with the

@@ -10,31 +10,35 @@ that hold in Node and in the page. Stage 4 (Box 4, gate G5): the hall fills with
 100 to 5,000, that chase the hero round the pillars and up the stairs. Stage 5 (Box 5, gate G6): the hero fights the
 crowd with a sword and a bolt; it swings, pounces and shoots back, telegraphed, taking turns; blows kill, throw and
 launch bodies, burst effects and show damage numbers, in replays that hold in Node and in the page. Stage 6 (Box 6,
-gate G7): every scene in every look, the torch-lit hall with its flickering torches and fog, toon shading with ink
-outlines, and the prototype's cel, pixel, bloom and FXAA over it, on the hall's rune floor, with no pipeline built after
-a warm-up and the goldens unchanged; and the benchmark, the fight and the crowd at 100, 1,000 and 5,000 within their
-budgets. Clip mode (Phase 8): the hero and the mannequin play any clip of the animation library through the clip layer,
-the clip `node x anim show` prints, frame for frame. Every claim below is checked by `tests/unit/box-readme.test.ts`: a
+gate G7): the box's looks on the hall with its props, the torch-lit hall with its flickering torches and fog, toon
+shading with ink outlines, and the prototype's cel, pixel, bloom and FXAA over it, on the hall's rune floor, with no
+pipeline built after a warm-up and the knock replay's goldens unchanged; the fight's blows through the bodies'
+reactions (walkers flinch, are knocked down and get up, the slain fall; the hero flinches) and the hero's cape, swung
+by the view; and the benchmark, the fight and the crowd at 100, 1,000 and 5,000 within their budgets. Clip mode
+(Phase 8): the hero and the mannequin play any clip of the animation library through the clip layer, the clip
+`node x anim show` prints, frame for frame. Every claim below is checked by `tests/unit/box-readme.test.ts`: a
 setting, file or command named here that does not exist fails it.
 
 ## The demo index
 
 Every scene, what it proves, and the command that shows it; each scene opens in the page at `labs/box/?scene=<name>`.
+A test (`tests/unit/box-readme.test.ts`) fails when a scene of `labs/box/scenes/` is missing here, or a `box.*`
+setting from the settings below.
 
 | Scene | What it proves | The command that shows it |
 |---|---|---|
 | `labs/box/scenes/room.ts` | Box 1: the box renders on WebGPU and steps headless, its goldens the same in Node and in Chromium; it is inspected and set from `node x` and `window.__engine`. | `node x replay tests/replays/box-1-room.replay.json --browser page` |
 | `labs/box/scenes/room-hero.ts` | Box 2: the hero walks, dashes and jumps through the character controller, his body stepped by the animator; his goldens hold while the page renders, whatever the camera. | `node x replay tests/replays/box-2-jump.replay.json --browser page` |
 | `labs/box/scenes/hall.ts` | Box 3: a physics level, its stairs, galleries and the dais's slopes walked and climbed, the cutaway showing the hero; the floor its rune bake (Box 6). | `node x replay tests/replays/box-3-climb.replay.json --browser page` |
-| `labs/box/scenes/hall-props.ts` | Box 3: 10 to 300 props standing in Rapier, pushed and shoved, drawn as instanced batches; Box 6: its replay's goldens hold through every look. | `node x replay tests/replays/box-3-knock.replay.json --browser page` |
+| `labs/box/scenes/hall-props.ts` | Box 3: 10 to 300 props standing in Rapier, pushed and shoved, drawn as instanced batches; Box 6: its replay's goldens hold through every box look and a look of each material style. | `node x replay tests/replays/box-3-knock.replay.json --browser page` |
 | `labs/box/scenes/crowd-100.ts` | Box 4: a crowd chasing the hero by flow field up the stairs, drawn through its level of detail; its goldens hold in the page. | `node x replay tests/replays/box-4-chase.replay.json --browser page` |
 | `labs/box/scenes/crowd-1000.ts` | Box 4: the crowd's cost at 100, 1,000 and 5,000 agents, within budget. | `node x perf labs/box --scene crowd-1000 --ladder --budget` |
 | `labs/box/scenes/crowd-5000.ts` | Box 4: 5,000 bodies entering with no pipeline built; Box 6: the benchmark's crowd, within budget. | `node x perf labs/box --scene crowd-5000 --ladder --budget` |
-| `labs/box/scenes/fight.ts` | Box 5: combat, its deaths, launches, telegraphs, effects and damage numbers drawn from the sim, its goldens the same with effects on and off. | `node x replay tests/replays/box-5-fight.replay.json --browser page` |
+| `labs/box/scenes/fight.ts` | Box 5: combat, its deaths, launches, telegraphs, effects and damage numbers drawn from the sim, its goldens the same with effects on and off; Box 6: its blows through the bodies' reactions (flinch, knockdown, get-up, death) and the hero's cape, which the ID pass sees. | `node x replay tests/replays/box-5-fight.replay.json --browser page` |
 | `labs/box/scenes/fight-1000.ts` | Box 6: the benchmark, the fight at 100, 1,000 and 5,000, within budget. | `node x perf labs/box --scene fight-1000 --ladder --budget` |
+| `labs/box/scenes/hall-props.ts`, every look | Box 6: every box look, and one of the engine's looks in each material style, renders on the hall with its props with no pipeline built after a warm-up, across every toggle, the knock replay's goldens unchanged (Looks, below); the engine's 86 looks each build nothing and keep the hash on the room (`tests/e2e/post.spec.ts`). Each test lists the scene and the looks it covered as its annotations (`looks`) in out/e2e/report.json. | `npm run e2e -- tests/e2e/box-look.spec.ts tests/e2e/parity.spec.ts` |
 | `labs/box/sounds/page.ts` | Phase 9: the box plays its sim events as sounds, spatialized and ducked, with torch ambience and a demo song; the fight replay's sound timeline hashes the same in Node and in Chromium. | `npm run e2e -- tests/e2e/box-audio.spec.ts` |
 | `labs/box/scenes/clips.ts` | Clip mode (Phase 8): the hero and the mannequin play any clip of the library's 1,218 through the clip layer, over the hero's own rig; the clip a setting names is the one `x anim show` prints, frame for frame; its replay's goldens are the same in Node and in Chromium, drawn or not (`node x replay tests/replays/box-8-clips.replay.json --browser page`). | `npm run e2e -- tests/e2e/box-clips.spec.ts` |
-| every scene, every look | Box 6: every look renders with no pipeline built after a warm-up, across every toggle, and the goldens are unchanged (Looks, below). | `npm run e2e -- tests/e2e/box-look.spec.ts tests/e2e/parity.spec.ts` |
 
 The benchmark's budgets and the numbers they were measured from are in `tests/baselines/perf/box-fight-1000.json`
 and `tests/baselines/perf/box-crowd-5000.json`.
@@ -48,7 +52,7 @@ and `tests/baselines/perf/box-crowd-5000.json`.
 | `box:hall` (`labs/box/scenes/hall.ts`) | The hall, `labs/box/levels/hall.txt`, as a physics level: 64 × 44 m inside walls 3 m high, a grid of pillars, low walls, 30 brazier stands, two galleries 1 m up along the north wall with stairs rising to each, and the octagonal rune dais at the centre, 0.5 m up. The hero starts on the dais: he walks down its slopes and up them, climbs the stairs to the galleries, jumps onto the low walls; the walls and pillars before him cut away. Its floor is its bake (`labs/box/looks/hall-floor.ts`): flagstones, moss creeping from the walls' feet, contact shadows along them, and the rune circle glowing on the dais. | `tests/e2e/box-hall.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-3-climb.replay.json`, `tests/replays/box-3-dais.replay.json`, `labs/box/scenes/hall.test.ts`, `tests/baselines/thumbs/box-hall-iso.json` |
 | `box:hall-props` (`labs/box/scenes/hall-props.ts`) | The hall with the hero and its props, standing in Rapier and drawn through one instanced batch per prop part: a brazier's fire on each of the 30 stands, and 100 crates and barrels (10 to 300) on the prototype's seeded spots, every fifth crate stacked on the one before where both are crates. He pushes them by walking into them, and shoves (J, the left mouse button) every prop within 1.9 m in his arc, knocking it away, both hands thrust forward. | `tests/e2e/box-hall.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-3-knock.replay.json`, `labs/box/scenes/hall-props.test.ts` |
 | `box:crowd-1000` (`labs/box/scenes/crowd-1000.ts`) | The hall with its hero and a crowd of 1,000 (its presets for 100 and 5,000 are `labs/box/scenes/crowd-100.ts` and `labs/box/scenes/crowd-5000.ts`, at `?scene=crowd-100` and `?scene=crowd-5000`): walkers (`labs/box/cast/walker.ts`, capsules walking at 1.75 to 2.5 m/s), slimes (`labs/box/cast/slime.ts`, balls hopping up to 2.75 m) and wisps (`labs/box/cast/wisp.ts`, flyers hovering 1.25 m up), half, three in ten and two in ten, queued at the start on the hall's floor and entering 25 a step. They chase the hero along a flow field toward his tile, round the pillars and up the stairs when he climbs to a gallery; level with him the walkers wait on a ring 1.5 m round him and the slimes on one 2.1 m round him, and the wisps circle him 4.4 to 6.3 m out. Their bodies push each other apart in Rapier. The page draws them through a crowd (instanced batches), each posed at the detail its distance from the camera allows: walkers as the neutral humanoid in four builds, slimes as blobs with horns, ears or wings, wisps as floaters with their motes. | `tests/e2e/box-crowd.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-4-chase.replay.json`, `tests/replays/box-4-hop.replay.json`, `labs/box/scenes/crowd-1000.test.ts`, `labs/box/cast/crowd.test.ts`, `tests/baselines/perf/box-crowd-1000.json` |
-| `box:fight` (`labs/box/scenes/fight.ts`) | Box 5: the hall, its hero with a sword (`HERO_FIGHT`, `labs/box/cast/hero.ts`) and a crowd of 36, mixed (its preset for 1,000 is `labs/box/scenes/fight-1000.ts`, at `?scene=fight-1000`), fighting. Attack (J, the left mouse button) runs his combo, a slash, a backslash and a spin, and out of a dash the thrust; skill (L, the right mouse button) fires a bolt (`labs/box/scenes/fight-hero.ts`). The walkers swing their fists, the slimes pounce and the wisps shoot (`WALKER_ATTACK`, `SLIME_ATTACK`, `WISP_ATTACK` in the cast's files; `labs/box/scenes/fight-foes.ts`), each telegraphing on the floor while it winds up, the walkers and slimes three at a time through his attack tokens. Blows land through the engine's `damage` (`labs/box/scenes/fight-rules.ts`): hit points, pushes, big hits throwing bodies up a little and killing ones throwing them high, corpses the crowd walks through, hit-stop, and the events the page draws effects and damage numbers from. | `tests/e2e/box-fight.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-5-fight.replay.json`, `labs/box/scenes/fight.test.ts` |
+| `box:fight` (`labs/box/scenes/fight.ts`) | Box 5: the hall, its hero with a sword (`HERO_FIGHT`, `labs/box/cast/hero.ts`) and a crowd of 36, mixed (its preset for 1,000 is `labs/box/scenes/fight-1000.ts`, at `?scene=fight-1000`), fighting. Attack (J, the left mouse button) runs his combo, a slash, a backslash and a spin, and out of a dash the thrust; skill (L, the right mouse button) fires a bolt (`labs/box/scenes/fight-hero.ts`). The walkers swing their fists, the slimes pounce and the wisps shoot (`WALKER_ATTACK`, `SLIME_ATTACK`, `WISP_ATTACK` in the cast's files; `labs/box/scenes/fight-foes.ts`), each telegraphing on the floor while it winds up, the walkers and slimes three at a time through his attack tokens. Blows land through the engine's `damage` (`labs/box/scenes/fight-rules.ts`): hit points, pushes, big hits throwing bodies up a little and killing ones throwing them high, corpses the crowd walks through, hit-stop, and the events the page draws effects and damage numbers from. Each blow goes through the body's reactions (the component `reactions`, Box 6): a walker flinches, a big blow knocks it down and it gets up the way it lies, acting on nothing meanwhile, and a killing one fells it; a foe's blow flinches the hero. He wears a cape (the component `secondary`), which the view swings and the ID pass names as his (actor#1/cape). | `tests/e2e/box-fight.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-5-fight.replay.json`, `labs/box/scenes/fight.test.ts` |
 | `box:clips` (`labs/box/scenes/clips.ts`) | Clip mode, the Mocap Lab's: the room, the hero at its spawn and the mannequin 1.5 m east of him (`body:mannequin` on `build:mannequin`, the figure the Quaternius clips were measured on), both playing the clip `box.clips.clip` names through the clip layer in their animators, the hero's retargeted to his build. He stays the player and walks under it; masked to his upper body (`box.clips.mask`), his legs keep their own walk. A new clip crossfades in from the pose on screen; a one-shot holds its end 0.8 s, then plays again; clips that travel play in place. The page loads the library first: every set under `data/anim/sets`, registered as a `clipset` (`__engine.describe('clipset')`); `node x sim`, `node x replay` and the sim-only page register it too. | `tests/e2e/box-clips.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-8-clips.replay.json`, `labs/box/scenes/clips.test.ts` |
 
 The page draws each mover as a crate: an entity is drawn as a stand-in box when one of its components declares `x`
@@ -60,9 +64,11 @@ with its level of detail from Box 4 (engine/gfx/stageCrowd.ts).
 ## Looks
 
 A look is how the page draws a scene, as data (`node x describe look`): the sky that lights it, a material style and a
-filter chain; a look never changes play, so every scene shows every look, and the box's replays hold in each. The
-box's own (`labs/box/looks/`) are the torch-lit hall and the prototype's looks over it; the engine's 86 (`look:cartoon`,
-`look:game-boy`, the one-filter presets…) show in the box too.
+filter chain; a look never changes play, so any scene can show any look. The box's own (`labs/box/looks/`) are the
+torch-lit hall and the prototype's looks over it; the engine's 86 (`look:cartoon`, `look:game-boy`, the one-filter
+presets…) show in the box too. What is proved, on the hall with its props: every box look, and one engine look of each
+material style, builds nothing after its warm-up and keeps the knock replay's goldens (`tests/e2e/box-look.spec.ts`,
+`tests/e2e/parity.spec.ts`); each of the engine's 86 does the same on the room (`tests/e2e/post.spec.ts`).
 
 | Look | What it draws |
 |---|---|
@@ -146,6 +152,8 @@ tested (ADR-0021); `labs/box/?touch=on` shows them on a desktop.
 
 1. Change a setting or the scene, then run it headless: `node x sim labs/box/scenes/room --steps 600 --set box.room.speed=3`;
    for the hero, `node x sim labs/box/scenes/room-hero --feel --set box.roomHero.speed=6` also prints how he handles.
+   `x sim` steps with no intents: its replay (`out/sim/box-<name>/run.replay.json`) has empty `inputs`, which you edit to
+   drive the hero (`[0, { "move": [0, 1] }]` walks him south, +Z; tests/replays/README.md, "Coordinates and inputs").
 2. See it as numbers: `node x shot labs/box --scene room --cam iso` (the ID pass and the look metrics; `--png` for
    a picture, `--thumb box-room-iso` against the baseline); for the hall,
    `node x shot labs/box --scene hall --cam iso --thumb box-hall-iso`; for the crowd,
@@ -160,7 +168,9 @@ tested (ADR-0021); `labs/box/?touch=on` shows them on a desktop.
    `node x replay tests/replays/box-3-climb.replay.json --browser page` in the hall,
    `node x replay tests/replays/box-4-chase.replay.json --browser page` with the crowd,
    `node x replay tests/replays/box-5-fight.replay.json --browser page` in the fight,
-   `node x replay tests/replays/box-8-clips.replay.json --browser page` in clip mode; the crowd's budgets,
+   `node x replay tests/replays/box-8-clips.replay.json --browser page` in clip mode, and with `--state` (or
+   `--until 300`) the state a run reaches, in out/replay/<name>/state.json: where the hero, the props and the
+   bodies ended, every component; the crowd's budgets,
    `node x perf labs/box --scene crowd-1000 --ladder --budget`, and the benchmark's,
    `node x perf labs/box --scene fight-1000 --ladder --budget` and
    `node x perf labs/box --scene crowd-5000 --ladder --budget`.
@@ -179,12 +189,41 @@ A variant is a new scene file or a settings preset, never a change of meaning in
 imports every module under `labs/box/scenes/`, so it opens at `labs/box/?scene=<name>`. Then keep a replay of it, the
 sequence `tests/e2e/parity.spec.ts` runs on a new scene:
 
-1. `node x sim labs/box/scenes/<name> --steps 600` writes the run's replay beside its report.
-2. Copy `out/sim/box-<name>/run.replay.json` to `tests/replays/box-<stage>-<name>.replay.json`.
+1. `node x sim labs/box/scenes/<name> --steps 600` writes the run's replay beside its report, with no intents.
+2. Copy `out/sim/box-<name>/run.replay.json` to `tests/replays/box-<stage>-<name>.replay.json`. `<stage>` is the
+   stage the scene proves; a variant outside every stage's claims takes the newest stage's number (the highest
+   `box-<n>-` among tests/replays/) and stays out of `STAGES`. Edit its `inputs` to drive it before you record (tests/replays/README.md,
+   "Coordinates and inputs": `move` is world [x, z], +X east, +Z south); `node x replay <file> --state` then shows
+   where the run ends.
 3. `node x replay <file> --browser sim --update` records its goldens, which hold in Node and in Chromium.
 4. `node x replay <file> --browser page` checks them while the page renders.
-5. List the scene and the replay here, with what it shows, what covers it and the settings that tune it.
+5. List the scene and the replay here, with what it shows, what covers it and the settings that tune it (the demo
+   index and the settings table: `tests/unit/box-readme.test.ts` fails a scene or a `box.*` setting left out).
 6. When it belongs to a stage, add it to `STAGES` in `tests/e2e/parity.spec.ts`: T2's rendering-page check plays
    only the replays named there.
+
+## Adding a prop
+
+`labs/box/scenes/hall-props.ts` is the worked example. A prop is data (engine/world/props: its parts, its body, where
+a level places it):
+
+1. `node x new prop labs/box/props/<name>` writes `prop:<name>` and its test (its parts build clean and stand as tall
+   as its body), which pass their checks; `node x qa geo tex --only prop:<name>` checks its parts and textures and
+   counts what it checked (a prefix that keeps nothing is a usage error naming the closest ids).
+2. Import it from the scene that shows it (`import '../props/<name>';`): the page reaches labs/box/props/ only
+   through the scenes it imports, and QA through its own import of every module there.
+3. The scene needs a physics world and floors to stand on: `physics: true`, then in `setup`
+   `addLevelBodies(physicsOf(w), <compiled level>)` (the template's `level: 'level:room'` has none: the page draws
+   the room, but nothing in it is solid; `labs/box/scenes/room-hero.ts` exports the room compiled as
+   `ROOM_HERO_LEVEL`, `labs/box/scenes/hall.ts` the hall as `HALL_LEVEL`).
+4. Stand it: `spawnProp(w, { prop: 'prop:<name>', at: [x, y, z], yaw })`, its base at `at` (m), turned `yaw` (rad)
+   about +Y; it returns the entity, whose `sceneProp` component the sim hashes and the view draws as the prop.
+5. Or let the level place it: give the prop `place: { spawn: '<spot>' }` and the level a glyph with that spawn
+   (`defineGlyph('glyph:<spot>', { char, description, mesh: 'floor', spawn: '<spot>' })` in the scene module, before
+   the level compiles), then `for (const placement of levelProps(<compiled level>)) spawnProp(w, placement);`. The
+   digits are the engine's own spawns (`3` places at `spawn:3`).
+
+Tile (col, row) of a level has its centre at x = (col + 0.5) × tile, z = (row + 0.5) × tile (1 m tiles in the box),
+rows running +Z (south), as tests/replays/README.md says.
 
 The `stress-box` skill (`.claude/skills/stress-box/SKILL.md`) says the rest.

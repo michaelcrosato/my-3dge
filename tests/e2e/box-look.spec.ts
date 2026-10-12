@@ -11,8 +11,11 @@
  * 3. switching between the box's looks, styles included, builds no pipeline; each in turn while the knock replay
  *    (tests/replays/box-3-knock.replay.json) plays its first 180 steps, a frame drawn after each, its goldens hold;
  *    each renders, none blank, dark or blown out, over the same ID pass.
- * No frame builds a pipeline after a warm-up (Done-when 1's toggles). The goldens in the engine's 86 looks are
- * tests/e2e/parity.spec.ts's (Box 3, props); what each filter does to the pixels is tests/e2e/post.spec.ts's.
+ * No frame builds a pipeline after a warm-up (Done-when 1's toggles). The scene and the looks it covers are the test's
+ * annotations in out/e2e/report.json (`looks`): the hall with its props, every box look. The goldens with a look of
+ * each material style in the box page are tests/e2e/parity.spec.ts's (Box 3, props); every one of the engine's 86
+ * looks with no pipeline built and the hash unchanged, and what each filter does to the pixels, are
+ * tests/e2e/post.spec.ts's.
  *
  * Invariants: the page is driven through `window.__engine`, as an agent drives it; images are read as numbers
  * (look metrics, the ID pass, the share of pixels that changed), never looked at.
@@ -82,6 +85,7 @@ test('the box looks: the torch-lit hall flickers on its rune floor, every tier a
   harness,
 }) => {
   test.setTimeout(600_000); // four warm-ups and one of every style under the sky: 4 to 7 minutes on a loaded SwiftShader
+  test.info().annotations.push({ type: 'looks', description: `box:hall-props: ${BOX_LOOKS.join(', ')}` });
   await page.goto('labs/box/?scene=hall-props&cam=iso&post.look=look:torch-lit');
   await harness.ready({ timeout: 240_000 });
   await harness.assertWebGPU();

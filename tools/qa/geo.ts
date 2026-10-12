@@ -280,11 +280,11 @@ export function checkLevelMeshes(id: string, level: CompiledLevel, file?: string
 
 /** The family: every geometry of the shared registry, then every prop's parts, then every level file's meshes. */
 const family: QaFamily = {
-  async run({ root, only }) {
+  async run({ root, only, keep: asked }) {
     for (const module of [...geometryModules(root), ...labModules(root, 'props')]) {
       await import(pathToFileURL(join(root, module)).href);
     }
-    const keep = (id: string) => !only.length || only.some((prefix) => id.startsWith(prefix));
+    const keep = asked ?? ((id: string) => !only.length || only.some((prefix) => id.startsWith(prefix)));
     const ids = sharedRegistry.list('geometry').map((entry) => entry.id);
     const violations = checkGeometries(sharedRegistry, ids.filter(keep));
     propKind(sharedRegistry);

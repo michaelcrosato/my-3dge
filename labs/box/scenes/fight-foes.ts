@@ -15,8 +15,9 @@
  *   - a wisp, within range, charges while its line fills and it swells, then shoots at his chest, circling him all
  *     the while.
  * - **`fight.rigs`** (phase `anim`): each body's rig stepped as the crowd's are, and told what plays: a walker's swing
- *   (its move at its phase and share, and the fist that trails), its flinch while stunned, the pose `die` once it is
- *   a corpse; a slime's squat; a wisp's swell.
+ *   (its move at its phase and share, and the fist that trails), its flinch while stunned, and its reactions
+ *   (fight-rules.ts: stepped here, a knockdown's fall and get-up or a corpse's death laid over its states); a slime's
+ *   squat; a wisp's swell. A walker knocked down acts on nothing until it is up (`fight.steer` lets its push carry it).
  * - **`fight.shots`** (phase `rules`): every bolt flown one swept step (engine/world/projectiles.ts), the hero's
  *   against the living foes and the foes' against him, walls stopping both (the event `hit` where one strikes a
  *   wall); a stopped bolt is despawned.
@@ -44,6 +45,7 @@ import {
   setVelocity,
   stepCrowdBody,
   stepProjectiles,
+  stepReactions,
   takeToken,
   type AnimatorInput,
   type CrowdAgent,
@@ -63,6 +65,7 @@ import {
   heroOf,
   heroSet,
   hurtHero,
+  knockedDown,
   strikeFoe,
   type FightComponents,
   type FightFoe,
@@ -256,8 +259,8 @@ export function steerFoes(w: FightWorld): void {
       continue;
     }
     foe.cool = Math.max(0, foe.cool - w.dt);
-    if (foe.stun > 0) {
-      foe.stun = Math.max(0, foe.stun - w.dt); // knocked: its push carries it
+    if (foe.stun > 0 || knockedDown(e.reactions)) {
+      foe.stun = Math.max(0, foe.stun - w.dt); // knocked, or down: its push carries it
       continue;
     }
     const [dx, dz] = [actor.x - agent.x, actor.z - agent.z];
@@ -287,30 +290,34 @@ export function steerFoes(w: FightWorld): void {
 export function fightRigs(w: FightWorld): void {
   const sim = w as unknown as World<FightComponents>; // stepCrowdBody's world: any events
   for (const e of w.query('crowdMember', 'crowdBody', 'fightFoe')) {
-    const { id, crowdMember: a, crowdBody: body, fightFoe: foe } = e;
+    const { id, crowdMember: a, crowdBody: rig, fightFoe: foe } = e;
     if (a.state !== 'alive' && a.state !== 'corpse') continue;
     const velocity = [a.vx, a.vy, a.vz] as const;
     if (e.crowdWalker) {
+      const body = e.reactions ? stepReactions(e.reactions, w.dt) : undefined;
       const states: AnimatorInput = {};
       if (a.state === 'corpse') states.pose = 'die';
-      else if (foe.stun > 0) states.hurt = true;
+      else if (knockedDown(e.reactions)) {
+        // its reaction tells its body (below)
+      } else if (foe.stun > 0) states.hurt = true;
       else if (foe.phase !== 'idle') {
         const swing = swingOf(foe);
         if (swing.phase) states.body = { move: WALKER_ATTACK.moves[foe.move], phase: swing.phase, u: swing.u };
         const trail = swing.trail(false);
         if (trail) states.trail = trail;
       }
+      if (body) Object.assign(states, body);
       const at = [a.x, a.y, a.z] as const;
-      stepCrowdBody(sim, id, body, { at, velocity, yaw: e.crowdWalker.yaw, air: !a.grounded, states });
+      stepCrowdBody(sim, id, rig, { at, velocity, yaw: e.crowdWalker.yaw, air: !a.grounded, states });
     } else if (e.crowdSlime) {
       const { hop: part } = e.crowdSlime;
       const { squash } = SLIME;
       const crouched = part === 'crouch' || foe.phase === 'wind';
       const s = crouched ? squash.crouch : part === 'rest' ? squash.rest : a.vy > 0 ? squash.rising : squash.falling;
-      stepCrowdBody(sim, id, body, { at: [a.x, a.y, a.z], velocity, blob: { squash: s } });
+      stepCrowdBody(sim, id, rig, { at: [a.x, a.y, a.z], velocity, blob: { squash: s } });
     } else {
       const swell = foe.phase === 'wind' ? 1 - Math.max(0, foe.timer) / WISP_ATTACK.charge : 0;
-      stepCrowdBody(sim, id, body, { at: [a.x, a.y + a.radius, a.z], velocity, swell });
+      stepCrowdBody(sim, id, rig, { at: [a.x, a.y + a.radius, a.z], velocity, swell });
     }
   }
 }

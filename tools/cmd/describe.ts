@@ -14,12 +14,17 @@
  * command, a timer it starts cannot keep the command running, and one that never finishes loading is stopped after a
  * minute and named. A module that cannot load in Node is a warning naming it, and the listing goes on without it.
  *
- * Output: at most about 20 lines, a kind's ids before its fields so a cut output still shows them (a list too long for
- * its line ends naming `describe.json`); the whole description is in `describe.json` beside the report. An unknown
- * kind or id is a usage error (exit 2) naming the closest.
+ * An entry may be named as `x describe <kind> <id>`, as `x describe <kind>:<name>` (its id alone: the kind is the
+ * part before the colon, `geometry:frustum`), or as `x describe <kind> <name>` (the id without its kind's prefix,
+ * `geometry roundedBox`) when that is no id of its own (`resolveTarget`).
  *
- * Usage: node x describe [kind [id]]. Exit 0 when the listing is complete or only warned about modules, 1 when the
- * child process hung or crashed.
+ * Output: at most about 20 lines, a kind's ids before its fields so a cut output still shows them (a list too long for
+ * its line ends naming `describe.json`); a line or value cut short ends in `...`, and the listing then ends naming
+ * `describe.json`, where the whole description is, beside the report. An unknown kind or id is a usage error (exit 2)
+ * naming the closest.
+ *
+ * Usage: node x describe [kind [id] | kind:name]. Exit 0 when the listing is complete or only warned about modules, 1
+ * when the child process hung or crashed.
  * @see tools/cmd/describe.test.ts
  */
 import { fork } from 'node:child_process';
@@ -97,6 +102,25 @@ function brief(value: unknown, room = 40): string {
   return text.length > room ? `${text.slice(0, room - 3)}...` : text;
 }
 
+/** Whether `line` was cut short: it ends in `...`, or a value in it was (`brief`). */
+const wasCut = (line: string) => /\.\.\.("|$|,|:| )/.test(line);
+
+/**
+ * The kind and id `x describe` was asked for, as the registry names them (see the file comment): a lone `kind:name`
+ * that is no kind is that kind's entry; a `name` that is no id of `kind` is `kind:name` when that one is.
+ */
+export function resolveTarget(kind?: string, id?: string): [kind: string | undefined, id: string | undefined] {
+  const kinds = registry.kinds();
+  if (kind !== undefined && id === undefined && !kinds.includes(kind) && kind.includes(':')) {
+    const head = kind.slice(0, kind.indexOf(':'));
+    if (kinds.includes(head)) return [head, kind];
+  }
+  if (kind !== undefined && id !== undefined && kinds.includes(kind) && !registry.has(kind, id)) {
+    if (registry.has(kind, `${kind}:${id}`)) return [kind, `${kind}:${id}`];
+  }
+  return [kind, id];
+}
+
 /** One line for a field: name, type, default, range, unit, values, flags, then its description. */
 export function fieldLine(field: FieldRow): string {
   const parts: string[] = [field.type];
@@ -139,8 +163,19 @@ export interface Listing {
   data: unknown;
 }
 
-/** What one listing prints, from the shared registry; throws the registry's error for an unknown kind or id. */
+/**
+ * What one listing prints, from the shared registry, ending with where the whole description is when a line was cut;
+ * throws the registry's error for an unknown kind or id.
+ */
 export function listing(kind: string | undefined, id: string | undefined): Listing {
+  const listed = listingLines(kind, id);
+  if (!listed.lines.some(wasCut)) return listed;
+  const whole = `(a line above is cut short: the whole text is in ${describeFile(kind, id)})`;
+  return { ...listed, lines: [...listed.lines, whole] };
+}
+
+/** The lines of one listing (see `listing`). */
+function listingLines(kind: string | undefined, id: string | undefined): Listing {
   if (kind === undefined) {
     const data = registry.describe();
     const entries = data.kinds.reduce((sum, row) => sum + row.count, 0);
@@ -175,6 +210,8 @@ export interface WorkerDone {
   loaded: string[];
   warnings: Finding[];
   kinds: number;
+  /** The kind and id listed, as the registry names them (`resolveTarget`). */
+  target: [kind: string | undefined, id: string | undefined];
   listing?: Listing;
   /** An unknown kind or id, as a usage error's message. */
   usage?: string;
@@ -196,9 +233,10 @@ async function workerMain([root, kind, id]: string[]): Promise<void> {
   const send = (message: WorkerMessage) => new Promise<void>((sent) => process.send?.(message, () => sent()));
   const { loaded, warnings } = await loadRegistrations(root, (file) => send({ loading: file }));
   defineLibrary();
-  const done: WorkerDone = { loaded, warnings, kinds: registry.kinds().length };
+  const target = resolveTarget(kind, id);
+  const done: WorkerDone = { loaded, warnings, kinds: registry.kinds().length, target };
   try {
-    done.listing = listing(kind, id);
+    done.listing = listing(...target);
   } catch (error) {
     if (error instanceof EngineError && (error.code === 'CORE_UNKNOWN_KIND' || error.code === 'CORE_NO_ENTRY')) {
       done.usage = error.message.replace(/^\[\w+\] /, '');
@@ -263,7 +301,7 @@ export function describeInWorker(
 /** Builds the command; tests shorten the child process's time limit. */
 export function createDescribeCommand(options: { timeoutMs?: number } = {}): Command {
   return {
-    usage: 'describe [kind [id]]',
+    usage: 'describe [kind [id] | kind:name]',
     options: {},
     maxPositionals: 2,
     async run({ root, positionals }): Promise<CommandResult> {
@@ -278,10 +316,10 @@ export function createDescribeCommand(options: { timeoutMs?: number } = {}): Com
           failures: [outcome.failure],
         };
       }
-      const { loaded, warnings, kinds, listing: result, usage, crash } = outcome.done;
+      const { loaded, warnings, kinds, listing: result, usage, crash, target: asked } = outcome.done;
       if (usage) throw new UsageError(usage);
       if (!result) throw new Error(crash ?? 'the listing process sent no listing');
-      const file = describeFile(kind, id);
+      const file = describeFile(...asked);
       mkdirSync(join(root, file, '..'), { recursive: true });
       writeFileSync(join(root, file), `${JSON.stringify(result.data, null, 2)}\n`);
       return {

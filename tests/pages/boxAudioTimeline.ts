@@ -20,8 +20,12 @@ import { createSession } from '../../engine/sim/scene';
 import type { CompiledLevel } from '../../engine/world/level/types';
 import { createSoundReader, timelineHash, type BoxSoundEvent } from '../../labs/box/sounds/events';
 
-/** The fight replay (tests/replays/box-5-fight.replay.json) and its timeline's golden: how many sounds, their hash. */
-export const FIGHT_TIMELINE = { replay: 'tests/replays/box-5-fight.replay.json', sounds: 81, hash: '8da39df56b106f5f' };
+/**
+ * The fight replay (tests/replays/box-5-fight.replay.json) and its timeline's golden: how many sounds, their hash.
+ * Re-recorded with the replay's goldens at gate G7's review: the fight's blows go through the walkers' reactions
+ * (WP 7.8): the big ones knock walkers down for a while, so the run changes and gives 79 sounds where it gave 81.
+ */
+export const FIGHT_TIMELINE = { replay: 'tests/replays/box-5-fight.replay.json', sounds: 79, hash: '94ad7308afa14921' };
 
 /** A replay's sound timeline: its sounds, their hash, the world's hash at the end and the events missed (0). */
 export interface Timeline {

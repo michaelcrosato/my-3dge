@@ -278,7 +278,8 @@ export type { OutlineMode } from './gfx/materials/outline';
 export type { OutlineOptions } from './gfx/materials/outline';
 export type { OutlineShells } from './gfx/materials/outline';
 // Post-processing (WP 7.4): one chain every frame draws through, every filter a uniform (scoped to the characters,
-// the objects or the environment), looks as data (a material style plus a filter chain), objects tagged by part.
+// the objects or the environment), looks as data (a material style plus a filter chain, and the sky that lights it,
+// WP 7.8), objects tagged by part.
 export { createPost } from './gfx/post/chain';
 export { POST_SETTINGS } from './gfx/post/chain';
 export { definePostSettings } from './gfx/post/chain';
@@ -301,13 +302,16 @@ export type { FilterChain } from './gfx/post/filters';
 export type { FilterSpec } from './gfx/post/filters';
 export type { PostShow } from './gfx/post/composite';
 // Props drawn (WP 4.5): every prop part a batch of the instancing service, posed by its body, the flames dancing on
-// the visual streams, the light spots flickering, for the light pool.
+// the visual streams, the light spots flickering, for the light pool; a part's geometry and where it stands (its
+// matrix in the prop's frame), for a prop's tests.
 export { createPropMeshes } from './gfx/props';
 export type { PropMeshes } from './gfx/props';
 export type { PropMeshesOptions } from './gfx/props';
 export type { PropMeshPose } from './gfx/props';
 export type { PropLight } from './gfx/props';
 export { FLICKER } from './gfx/props';
+export { buildPropPart } from './gfx/props';
+export { partMatrix } from './gfx/props';
 // Crowd rendering and pose LOD (WP 5.4): thousands of humanoids, blobs and floaters in a few dozen draw calls over the
 // instancing service, each body seen through bands of detail by its distance (the animator's pose level, capes),
 // culled by the view; the blob and floater bodies as data.

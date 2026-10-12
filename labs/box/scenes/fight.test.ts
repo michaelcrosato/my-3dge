@@ -4,7 +4,11 @@
  * body more than 1 m up (Done-when 1), its blows landing as `damage` events with their hit points; the hero's combo
  * chains slash, backslash and spin, and out of a dash attack is the thrust; at most three foes swing or pounce at
  * once (his attack tokens), and every foe winding up shows its telegraph, filling; a foe's swing hits a hero who
- * stands in its arc and misses one who stepped out; `box:fight-1000` is the same fight with 1,000.
+ * stands in its arc and misses one who stepped out; `box:fight-1000` is the same fight with 1,000. WP 6.2 in the box
+ * (WP 7.8, ADR-0018 amendment 1): the fight's blows go through the bodies' reactions: the big ones knock walkers down,
+ * they lie (their bodies told `down`) and get up the way they lie, attacking nothing meanwhile, and the slain die; a
+ * foe's blow flinches the hero, and his flinch springs back; he wears his cape (`secondary`), which the view draws
+ * (engine/gfx/puppets/actors.test.ts, tests/e2e/box-fight.spec.ts).
  * @see labs/box/scenes/fight.ts
  */
 import { readFileSync } from 'node:fs';
@@ -16,12 +20,23 @@ import { WALKER_ATTACK, WALKER_SWING } from '../cast/walker';
 import { HALL_LEVEL } from './hall';
 import { fight, fightStep, setupFight } from './fight';
 import { fight1000 } from './fight-1000';
-import type { FightComponents, FightEvents, FightFoe, FightHero, FightTelegraph } from './fight-rules';
+import {
+  heroOf,
+  hurtHero,
+  type FightComponents,
+  type FightEvents,
+  type FightFoe,
+  type FightHero,
+  type FightTelegraph,
+} from './fight-rules';
 
 type Engine = Awaited<ReturnType<typeof createHeadless>>;
 type Foe = {
   crowdMember: { state: string; x: number; y: number; z: number };
   crowdWisp?: object;
+  crowdWalker?: object;
+  crowdBody: { state: { state?: { weights: { down: number } } } };
+  reactions?: FightComponents['reactions'];
   fightFoe: FightFoe;
   fightTelegraph: FightTelegraph;
   fightHealth: { hp: number };
@@ -145,6 +160,55 @@ describe('the fight', () => {
     expect(inTelegraph(WALKER_SWING, place, middle(1.8), r)).toBe(false); // stepped back
     expect(nearMiss(WALKER_SWING, place, middle(1.8), r)).toBe(true);
     expect(inTelegraph(WALKER_SWING, { ...place, yaw: Math.PI }, middle(WALKER_ATTACK.stand), r)).toBe(false);
+  });
+
+  it('knocks walkers down with its big blows: they lie, get up the way they lie and attack nothing meanwhile; the slain die', async () => {
+    const engine = await createHeadless({ scene: fight });
+    const played = new Map<number, string[]>();
+    let lying = 0;
+    drive(engine, REPLAY, () => {
+      for (const [id, foe] of foes(engine)) {
+        const react = foe.reactions;
+        if (!react) continue;
+        expect(foe.crowdWalker).toBeDefined(); // only humanoids react
+        const list = played.get(id) ?? [];
+        if (list.at(-1) !== react.playing) list.push(react.playing);
+        played.set(id, list);
+        if (foe.crowdMember.state !== 'alive' || react.playing === '') continue;
+        expect([foe.fightFoe.phase, foe.fightTelegraph.telegraph]).toEqual(['idle', '']); // down: no attack
+        if (react.playing === 'down' && react.timeline[0] === 1) {
+          expect(foe.crowdBody.state.state!.weights.down).toBeGreaterThan(0.9); // its reaction lays its body down
+          lying++;
+        }
+      }
+    });
+    const runs = [...played.values()].map((list) => list.join('>'));
+    expect(runs.some((run) => /down>getUp(Back|Front)/.test(run))).toBe(true);
+    expect(runs.filter((run) => run.includes('down')).length).toBeGreaterThanOrEqual(3);
+    expect(runs.some((run) => run.endsWith('die'))).toBe(true);
+    expect(lying).toBeGreaterThan(0);
+  });
+
+  it('flinches the hero through his reactions when a foe’s blow lands, springing back; he wears his cape', async () => {
+    const hurt = defineScene<FightComponents, FightEvents>('box:fight-hurt', {
+      level: 'level:hall',
+      physics: true,
+      settings: fight.settings,
+      setup: setupFight,
+      step(w, intents) {
+        fightStep(w, intents);
+        const hero = heroOf(w);
+        if (w.tick === 30 && hero) hurtHero(w, 5, [hero.actor.x - 1, hero.actor.y, hero.actor.z], -1);
+      },
+    });
+    const engine = await createHeadless({ scene: hurt });
+    const flinch = () => (engine.get(1) as unknown as FightComponents).reactions.flinch;
+    engine.step(32);
+    const [side, forward] = flinch();
+    expect(Math.hypot(side, forward)).toBeGreaterThan(0.02); // a blow from his left leans him
+    engine.step(120);
+    expect(Math.hypot(flinch()[0], flinch()[1])).toBeLessThan(1e-3); // and the spring brings him back
+    expect((engine.get(1) as unknown as FightComponents).secondary).toMatchObject({ cape: true });
   });
 
   it('has a preset for 1,000, the same fight with more', async () => {
