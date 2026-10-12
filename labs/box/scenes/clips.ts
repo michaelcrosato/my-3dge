@@ -159,9 +159,9 @@ function clipNamed(named: string): string {
 function playSettings(w: World): void {
   const named = clipNamed(w.settings.get<string>('box.clips.clip'));
   const frame = w.settings.get<number>('box.clips.frame');
-  const [mode] = w.query('clipsMode' as never) as unknown as { clipsMode: { held: number } }[];
+  const [mode] = w.query('clipsMode') as unknown as { clipsMode: { held: number } }[];
   let ended = false;
-  for (const { id } of w.query('clips' as never) as unknown as { id: number }[]) {
+  for (const { id } of w.query('clips') as unknown as { id: number }[]) {
     const layer = clipLayerOf(w, id);
     const [library, name] = layer.resolve(named); // ANIM_UNKNOWN_CLIP names the closest clips
     const { dur, loop = false } = library.clip(name);
@@ -179,7 +179,7 @@ function playSettings(w: World): void {
   mode.clipsMode.held = ended ? mode.clipsMode.held + 1 : 0;
   if (mode.clipsMode.held * w.dt < HOLD) return;
   mode.clipsMode.held = 0;
-  for (const { id } of w.query('clips' as never) as unknown as { id: number }[]) seekClip(w, id, 0);
+  for (const { id } of w.query('clips') as unknown as { id: number }[]) seekClip(w, id, 0);
 }
 
 /** Clip mode: the hero and the mannequin playing the library's clips in the room. */
@@ -202,7 +202,7 @@ export const clips = defineScene('box:clips', {
       const at = [x + BESIDE, y, z] as const;
       spawnActor(w, { at, character: createCharacter(), player: false, anim, body: 'body:mannequin', clips });
     }
-    w.spawn({ clipsMode: { held: 0 } } as never);
+    w.spawn({ clipsMode: { held: 0 } });
   },
   step: playSettings,
 });
