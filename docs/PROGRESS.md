@@ -15,14 +15,14 @@ The plan's phases 0–9 are done: the foundation, the kernel, Boxes 1–6, the a
   the page plays it with music, torches and the room's reverb (box-audio.spec.ts).
 - Gate: `node x ci --local` green at 8573abe (check 6.2 s, test 31.5 s with 3,262 tests); T2 in full at the review,
   151/151 in 11 min 16 s; `x deps --qualify`: nothing qualifies beyond the pins.
+- Since G9: typescript-eslint 8.71.2 adopted; the box's menu for humans (labs/box/menu.ts: scenes, cameras, looks,
+  replays, controls) is in, and remembers being closed.
 
 ## What is next
 
 - The plan's phases are complete. Everything else is on demand: each WP waits for its measured trigger
   (PLAN.md §9.1), WP 8.8 (re-import from the sources) among them; upgrades go in when they qualify (U-1 Vitest 4
   qualifies 2026-10-22).
-- Owner: the box's menu (scenes, cameras, looks, replays, controls) is on branch `box-menu` (7cfda07, x ci green),
-  unmerged: it opens on every load; make it remember being closed, then merge it.
 - Owner: handing the engine to an agent, and the box against stress-world: docs/HANDOFF.md. U-1 also clears the
   4 Dependabot alerts (dev-only vitest and tinypool).
 
@@ -30,9 +30,7 @@ The plan's phases 0–9 are done: the foundation, the kernel, Boxes 1–6, the a
 
 - T2 runs over its 9 min, a warning only (ADR-0022): the gate selects T2 in full while it is over.
 - `x audio --replay` finds 0 box sounds: the box's sound map is page-side (needs a registry hook for a game's map).
-- Over the 400-line warning (cap 600): engine/anim/actions.ts, secondary.ts, engine/app/engine.ts,
-  tests/e2e/parity.spec.ts, tools/cmd/sim.ts, physics/world.ts, sim/world.ts, sim/scene.ts, ci.ts, tiers.ts, perf.ts,
-  port.ts.
+- 17 files are over the 400-line warning (cap 600), none over the cap: `npm run lint` lists them (max-lines).
 - The crowd's batches draw no flinch lean; at 1,000 agents the crowd blocks the stairs' foot.
 - The post-IK foot plant (WP 6.2) and preciseHits Node/Chromium parity (WP 6.1) are open.
 - ESC-0001 (GitHub Actions) was decided in the owner's absence: Actions off, `x ci --local` is the gate.

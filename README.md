@@ -7,12 +7,8 @@ HTML/CSS. Games see a small public API built on the most widely used web tools (
 ESLint, Prettier), so any agent can work with what it already knows; behind that API, the engine's internals use the
 best approach its builders can execute well.
 
-**Status: Phases 0 and 1 are done (gates G0 and G1); Box 1, the first Stress Box stage, is next.** The repository
-has its rules, toolchain and checks, and the reproducible kernel: deterministic math shared by Node and Chromium,
-registries and settings, the world with its hash, capture and restore, scenes, sessions and replays that give one
-golden hash in both runtimes, a headless app and the inspector (`__engine`). Rendering arrives with Box 1.
-[`docs/PROGRESS.md`](docs/PROGRESS.md) is the one-screen status; the ledger in [`PLAN.md`](PLAN.md) §14 has every
-work package.
+**Status:** [`docs/PROGRESS.md`](docs/PROGRESS.md) is the one-screen status, rewritten at each gate: where things
+stand, what is next and the open issues. The ledger in [`PLAN.md`](PLAN.md) §14 has every work package.
 
 ## The doctrine
 
@@ -46,8 +42,8 @@ repository checks), `npm run e2e` (the browser suites) and the `node x` command 
 
 Vercel imports the repository, and [`vercel.json`](vercel.json) does the rest: `npm ci`, then `npm run build` (plain
 `vite build`, on the Node 24 that `package.json`'s `engines` names), then `dist/` served as static files. Every push
-deploys: `main` to production, other branches to previews. The landing page, `index.html`, opens the hello page with
-the URL's query and hash, and opens the box once it exists. Nothing tests the deployment, by the owner's order
+deploys: `main` to production, other branches to previews. The landing page, `index.html`, opens the Stress Box
+(`labs/box/`) with the URL's query and hash. Nothing tests the deployment, by the owner's order
 ([ADR-0021](docs/decisions/ADR-0021-owner-calls-2026-10-10.md)). To build and serve the same output locally:
 
 ```sh
