@@ -13,6 +13,7 @@ it.
 
 - [`docs/PROGRESS.md`](../docs/PROGRESS.md): read first, every session: where things stand, what is next, the open issues.
 - [`docs/TESTING.md`](../docs/TESTING.md): the tiers, and which unit tests and specs a change selects.
+- [`docs/HANDOFF.md`](../docs/HANDOFF.md): starting in a new environment, handing the engine to an agent to try, and the box against my-3d2dge's stress-world.
 - [`labs/box/README.md`](../labs/box/README.md): the box's scenes, settings and quick loop; adding a scene or a variant (a variant is a new scene file or a settings preset, never a change of meaning in a passing scene).
 - [`tests/replays/README.md`](../tests/replays/README.md): the replay format; checking, recording and making replays.
 - [`tools/templates/`](../tools/templates/): `node x new <kind> <id>` writes a module, scene, material… from its kind's template and checks it (`node x new` lists the kinds).

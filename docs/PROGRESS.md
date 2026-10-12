@@ -21,6 +21,10 @@ The plan's phases 0–9 are done: the foundation, the kernel, Boxes 1–6, the a
 - The plan's phases are complete. Everything else is on demand: each WP waits for its measured trigger
   (PLAN.md §9.1), WP 8.8 (re-import from the sources) among them; upgrades go in when they qualify (U-1 Vitest 4
   qualifies 2026-10-22).
+- Owner: the box's menu (scenes, cameras, looks, replays, controls) is on branch `box-menu` (7cfda07, x ci green),
+  unmerged: it opens on every load; make it remember being closed, then merge it.
+- Owner: handing the engine to an agent, and the box against stress-world: docs/HANDOFF.md. U-1 also clears the
+  4 Dependabot alerts (dev-only vitest and tinypool).
 
 ## Open issues
 
