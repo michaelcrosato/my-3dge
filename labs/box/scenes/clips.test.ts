@@ -1,25 +1,23 @@
 /**
- * @file Clip mode headless (PLAN.md WP 8.9; labs/box/scenes/clips.ts), with every set of the library registered as a
- * tool reads them (tools/anim/repack.ts `readSet`): the mannequin plays every clip of every set in the box, at its
- * first, middle and last frame, each pose finite with every bone at its length (the anim QA, tools/qa/anim/clips.ts,
- * holds the floor and reach, with its baseline); `node x anim show <set>/<clip>` and the setting `box.clips.clip`
- * select the same clip, and frame for frame the drawn mannequin (the view's puppets, engine/gfx/puppets/actors.ts)
- * stands as `x anim bake`'s bake of it, retargeted; frame stepping holds a frame; a one-shot holds its end, then plays
- * again; the hero walks under a clip laid over his upper body; two runs give one hash.
+ * @file Clip mode headless (PLAN.md WP 8.9; labs/box/scenes/clips.ts), with every set of the library registered as the
+ * Node hosts register them (tools/anim/library.ts `defineLibrary`): the mannequin plays every clip of every set in the
+ * box, at its first, middle and last frame, each pose finite with every bone at its length (the anim QA,
+ * tools/qa/anim/clips.ts, holds the floor and reach, with its baseline); `node x anim show <set>/<clip>` and the
+ * setting `box.clips.clip` select the same clip, and frame for frame the drawn mannequin (the view's puppets,
+ * engine/gfx/puppets/actors.ts) stands as `x anim bake`'s bake of it, retargeted; frame stepping holds a frame; a
+ * one-shot holds its end, then plays again; the hero walks under a clip laid over his upper body; two runs give one
+ * hash; and its replay, tests/replays/box-8-clips.replay.json, gives its goldens in Node every run, and shows what it
+ * says (a clip change, frame stepping, the hero walking under a one-shot laid over his upper body). Its goldens in
+ * Chromium, drawn or not: `node x replay tests/replays/box-8-clips.replay.json --browser page` and
+ * tests/e2e/parity.spec.ts.
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { animCheck } from '../../../engine/anim/check';
 import { AnimatorPool, type AnimatorData } from '../../../engine/anim/character';
 import { BAKE_FPS } from '../../../engine/anim/clip/bake';
-import {
-  clipSetId,
-  ClipLayerPool,
-  defineClipSet,
-  getClipSet,
-  type ClipsData,
-} from '../../../engine/anim/clip/clipsets';
+import { clipSetId, ClipLayerPool, getClipSet, type ClipsData } from '../../../engine/anim/clip/clipsets';
 import { clipText } from '../../../engine/anim/clip/lens';
 import { retargetPose } from '../../../engine/anim/clip/retarget';
 import { getBuild } from '../../../engine/anim/builds';
@@ -30,18 +28,15 @@ import { Vector3 } from '../../../engine/core/math';
 import { createHeadless, headlessHost } from '../../../engine/app/headless';
 import { createMaterialLibrary } from '../../../engine/gfx/materials/library';
 import { createActorPuppets } from '../../../engine/gfx/puppets/actors';
-import { defineMannequin } from '../../../engine/gfx/puppets/bodies/mannequin';
 import type { World } from '../../../engine/sim/world';
 import { clipLayerOf } from '../../../engine/sim/actorClips';
-import { readSet, SET_FILE, SETS_DIR } from '../../../tools/anim/repack';
+import { defineLibrary, libraryDirs } from '../../../tools/anim/library';
 import { bakeReport, resolveClip } from '../../../tools/anim/view';
 import { dispatch, ROOT } from '../../../tools/x';
 import { CLIPS_START } from './clips';
 
 /** Every set directory of the library. */
-const DIRS = readdirSync(SETS_DIR)
-  .filter((dir) => existsSync(join(SETS_DIR, dir, SET_FILE)))
-  .sort();
+const DIRS = libraryDirs();
 /** One clip of each set, as x anim show names it: the library page's picks (tests/e2e/library.spec.ts). */
 const PICKS = [
   'cmu/Cartwheel',
@@ -56,10 +51,7 @@ const PICKS = [
   'style100_siderun/Old_SideRunRight',
 ];
 
-beforeAll(() => {
-  for (const dir of DIRS) defineClipSet(readSet(dir));
-  defineMannequin(getClipSet('clipset:quaternius'));
-});
+beforeAll(() => void defineLibrary());
 
 /** The clips component of entity `id`. */
 const clipsOf = (world: World, id: number) => (world.get(id) as unknown as { clips: ClipsData }).clips;
@@ -218,5 +210,32 @@ describe('clip mode in the box, headless', () => {
     engine.set('box.clips.clip', 'quaternius/Dance_Loop');
     engine.step(40);
     expect(engine.hash()).not.toBe(a);
+  });
+
+  it('box-8-clips gives its goldens every run, and shows a clip change, a frame held and a walk under a one-shot', async () => {
+    const text = readFileSync(join(ROOT, 'tests/replays/box-8-clips.replay.json'), 'utf8');
+    const goldens = (JSON.parse(text) as { hashes: Record<string, object> }).hashes[`${process.platform}-${process.arch}`]; // prettier-ignore
+    const play = async (until?: number) => {
+      const { engine } = await start();
+      const replay = engine.replay as (text: string, options: { until?: number }) => Promise<{ hashes: object }>;
+      const { hashes } = await replay(text, { until });
+      return { hashes, world: headlessHost(engine).session.world as unknown as World }; // the replay's own session
+    };
+    for (const run of [await play(), await play()]) expect(run.hashes).toEqual(goldens);
+    const changed = await play(70); // 10 steps into the crossfade from the dance to the cartwheel
+    expect(clipsOf(changed.world, 1).state.slots.map((slot) => slot.clip)).toEqual(['QUATERNIUS/Dance_Loop', 'CMU/Cartwheel']); // prettier-ignore
+    for (const [until, t] of [
+      [179, 30],
+      [209, 31],
+    ]) {
+      const { world } = await play(until); // frame 30 held for 30 steps, then 31
+      for (const id of [1, 2]) expect(topOf(world, id).t).toBe(t / BAKE_FPS);
+    }
+    const walked = await play(390); // south, east, north and west, under the one-shot, which ended and holds
+    const { actor } = walked.world.get(1) as unknown as { actor: { x: number; z: number } };
+    expect(Math.hypot(actor.x - CLIPS_START[0], actor.z - CLIPS_START[2])).toBeGreaterThan(3);
+    expect(topOf(walked.world, 1)).toMatchObject({ clip: 'QUATERNIUS/Sword_Attack', play: { mask: 'upper' } });
+    const again = await play(420); // it held its end 0.8 s, then played again
+    expect(topOf(again.world, 1).t).toBeLessThan(0.5);
   });
 });

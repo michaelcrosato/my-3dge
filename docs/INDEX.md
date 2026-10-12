@@ -1442,7 +1442,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `repoSlug`, `requireSource`, `ResolvedSource`, `ResolveOptions`, `resolveSource`, `SkippableTest`, `SourceSpec`, `sourceSpecs`
   - Tests: [`tools/lib/source.test.ts`](../tools/lib/source.test.ts)
 - [`tiers.ts`](../tools/lib/tiers.ts): The test tiers (PLAN.md §8.2): their commands and budgets, what a change selects in T1 and T2 and why, and the budget check over the JSON reports.
-  - Exports: `Base`, `BudgetCheck`, `changedFiles`, `Changes`, `checkBudget`, `checkReports`, `duration`, `FAIL_FACTOR`, `findBase`, `isVersionOnly`, `LAST_GREEN`, `LONG_RUNS`, `plan`, `recordGreen`, `reportMs`, `Selection`, `selectT1`, `selectT2`, `T1_FULL`, `T2_FULL`, `Tier`, `TierId`, `TIERS`, `Timing`, `timingTable`, `Trigger`, `vitestRerunTriggers`
+  - Exports: `Base`, `BudgetCheck`, `changedFiles`, `Changes`, `checkBudget`, `checkReports`, `duration`, `findBase`, `isVersionOnly`, `LAST_GREEN`, `LONG_RUNS`, `plan`, `recordGreen`, `reportMs`, `Selection`, `selectT1`, `selectT2`, `T1_FULL`, `T2_FULL`, `Tier`, `TierId`, `TIERS`, `Timing`, `timingTable`, `Trigger`, `vitestRerunTriggers`
   - Tests: [`tools/lib/tiers.test.ts`](../tools/lib/tiers.test.ts)
 - [`vite.ts`](../tools/lib/vite.ts): A Vite dev server through Vite's JavaScript API, for the `x` commands that open pages (PLAN.md §8.1).
   - Exports: `DevServer`, `freePort`, `startVite`

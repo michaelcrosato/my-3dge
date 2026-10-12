@@ -6080,10 +6080,9 @@ For the agents who maintain the engine.
 - `BudgetCheck` (interface): A tier's duration against its budget.
 - `changedFiles` (function): What differs from `base` in `root`'s working tree (see the file comment).
 - `Changes` (interface): What changed since a base.
-- `checkBudget` (function): Checks one duration against its tier's budget: over it warns, at `FAIL_FACTOR` times it fails.
+- `checkBudget` (function): Checks one duration against its tier's budget: over it warns (ADR-0022: time budgets never fail).
 - `checkReports` (function): Checks each tier's duration: `measured` first (T0 writes no report, so `x ci --local` times it), else the tier's JSON report under `root`.
 - `duration` (function): `8.1 s`, `2 min 5 s`, `6 min`.
-- `FAIL_FACTOR` (const): A tier at this multiple of its budget, or more, fails; over the budget alone warns.
 - `findBase` (function): The base for selections in `root` (see the file comment).
 - `isVersionOnly` (function): True when every changed line of a unified diff is a `"version": "…"` line, as many removed as added.
 - `LAST_GREEN` (const): Where the last green `x ci --local` records its commit, relative to the root.

@@ -8,10 +8,11 @@
  * and `fixtures/` (tests aside) that register content are found from their syntax, comments and strings aside: a
  * call of `def(…)` or of a `define…(…)` function other than those that register nothing (`defineCodes`,
  * `defineSchema`, `defineProperty`, `defineProperties`, `defineConfig`), or of the registry members `.def(…)` and
- * `.defineKind(…)`. A child Node process imports them and lists the shared registry of engine/core/registry.ts,
- * then exits (ADR-0012 amendment 2): a module's side effects never touch the command, a timer it starts cannot keep
- * the command running, and one that never finishes loading is stopped after a minute and named. A module that
- * cannot load in Node is a warning naming it, and the listing goes on without it.
+ * `.defineKind(…)`. A child Node process imports them, registers the animation library's sets (data/anim/sets/,
+ * which pages and tools read and register, never a module's top level: tools/anim/library.ts) and lists the shared
+ * registry of engine/core/registry.ts, then exits (ADR-0012 amendment 2): a module's side effects never touch the
+ * command, a timer it starts cannot keep the command running, and one that never finishes loading is stopped after a
+ * minute and named. A module that cannot load in Node is a warning naming it, and the listing goes on without it.
  *
  * An entry may be named as `x describe <kind> <id>`, as `x describe <kind>:<name>` (its id alone: the kind is the
  * part before the colon, `geometry:frustum`), or as `x describe <kind> <name>` (the id without its kind's prefix,
@@ -22,8 +23,8 @@
  * `describe.json`, where the whole description is, beside the report. An unknown kind or id is a usage error (exit 2)
  * naming the closest.
  *
- * Usage: node x describe [kind [id] | kind:name]. Exit 0 when the listing is complete or only warned about modules, 1 when the
- * child process hung or crashed.
+ * Usage: node x describe [kind [id] | kind:name]. Exit 0 when the listing is complete or only warned about modules, 1
+ * when the child process hung or crashed.
  * @see tools/cmd/describe.test.ts
  */
 import { fork } from 'node:child_process';
@@ -35,6 +36,7 @@ import ts from 'typescript';
 import { EngineError } from '../../engine/core/log';
 import { registry, type EntryDescription, type KindDescription } from '../../engine/core/registry';
 import type { FieldRow } from '../../engine/core/schema';
+import { defineLibrary } from '../anim/library';
 import { walk } from '../lib/docs';
 import { targetSlug, type Finding } from '../lib/report';
 import { UsageError, type Command, type CommandResult } from '../x';
@@ -230,6 +232,7 @@ const WORKER_FLAG = '--describe-worker';
 async function workerMain([root, kind, id]: string[]): Promise<void> {
   const send = (message: WorkerMessage) => new Promise<void>((sent) => process.send?.(message, () => sent()));
   const { loaded, warnings } = await loadRegistrations(root, (file) => send({ loading: file }));
+  defineLibrary();
   const target = resolveTarget(kind, id);
   const done: WorkerDone = { loaded, warnings, kinds: registry.kinds().length, target };
   try {

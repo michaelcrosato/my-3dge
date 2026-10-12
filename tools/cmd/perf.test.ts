@@ -165,7 +165,7 @@ describe('x perf', () => {
     expect(lines).toContain(`budgets: ${budgetPath('kernel')} (shown; --budget enforces them)`);
   });
 
-  it('fails --budget without a budget file, and over a budget', async () => {
+  it('fails --budget without a budget file, and warns for a time over its budget', async () => {
     const root = tinyRepository();
     const missing = await perf(root, 'fixtures/scenes/tiny', '--runs', '1', '--steps', '10', '--budget');
     expect([missing.code, missing.report.failures[0].id]).toEqual([1, 'PERF_NO_BUDGET']);
@@ -173,7 +173,7 @@ describe('x perf', () => {
     const budget = { scene: 'perfTiny', steps: 10, budgets: { stepMs: 0 }, reason: 'a test budget nothing meets' };
     writeFileSync(join(root, 'tests/baselines/perf/perfTiny.json'), JSON.stringify(budget));
     const over = await perf(root, 'fixtures/scenes/tiny', '--runs', '1', '--steps', '10', '--budget');
-    expect([over.code, over.report.failures[0].id]).toEqual([1, 'PERF_OVER_BUDGET']);
+    expect([over.code, over.report.failures.length, over.report.warnings[0].id]).toEqual([0, 0, 'PERF_OVER_BUDGET']);
     const shown = await perf(root, 'fixtures/scenes/tiny', '--runs', '1', '--steps', '10');
     expect(shown.code).toBe(0);
     expect(shown.lines.some((line) => line.includes('OVER 0'))).toBe(true);
@@ -228,8 +228,12 @@ describe('x perf', () => {
     const budget = { scene: 'perfLadder', ladder: { setting: 'perfladder.agents', steps: 2, rungs }, reason: 'a test' };
     writeFileSync(path, JSON.stringify({ ...budget, tolerance: 0.15 }));
     const over = await run('--budget');
-    expect(over.code).toBe(1);
-    expect(over.report.failures.map((f: { id: string; message: string }) => [f.id, f.message])).toEqual([
+    expect([over.code, over.report.failures.length]).toEqual([0, 0]); // a time over its budget warns (ADR-0022)
+    expect(
+      over.report.warnings
+        .filter((f: { id: string }) => f.id === 'PERF_OVER_BUDGET')
+        .map((f: { id: string; message: string }) => [f.id, f.message]),
+    ).toEqual([
       [
         'PERF_OVER_BUDGET',
         expect.stringMatching(/^perfLadder \(5000 agents\): hashMs [\d.]+ is over its budget 0 \+15%/),
