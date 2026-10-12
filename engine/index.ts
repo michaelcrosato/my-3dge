@@ -179,6 +179,10 @@ export type { CameraInfo } from './app/view';
 export type { PlayResult } from './app/playback';
 export type { PlayIntoOptions } from './app/playback';
 export type { ViewChange } from './app/playback';
+// A page's own presentation (WP 9.5): createEngine's onFrame, once per drawn frame, with the run to read and the camera.
+export type { EngineFrame } from './app/engine';
+export type { FrameWorld } from './app/engine';
+export type { CameraPose } from './gfx/cameras/pose';
 // Touch controls (WP 3.12; built, not tested, ADR-0021): a page's touch layout (the corner fan's buttons and the menu
 // button) for createEngine's touchLayout and onMenu, the touch device on input.touch, and the touch codes it writes.
 export { defineTouchLayout } from './ui/touch';
