@@ -7,9 +7,10 @@
  * 1. every replay of the stage gives its golden hashes, a frame drawn after each step (`__engine.replay`, the same
  *    player as `x replay --browser page`), and so do its swept replays (`swept`: all of them, or for Box 4 the chase,
  *    its mixed crowd) while every camera preset and resolution mode is switched (the crowd's bands and culling too),
- *    and with `looks` (Box 3's hall with its props, the hero and the three parts a filter scopes; WP 7.8) each of the
- *    engine's 86 looks in turn (the first in a material style joins the style set to the warm-up) and the effects off
- *    and on; the box's looks, under their torch-lit sky, are tests/e2e/box-look.spec.ts's, with the same replay;
+ *    and with `looks` (Box 3's hall with its props, the hero and the three parts a filter scopes; WP 7.8) up to the
+ *    checkpoint after each of the engine's 86 looks is switched in turn, 5 steps each (the first in a material style joins the style
+ *    set to the warm-up) and the effects off and on; the box's looks, under their torch-lit sky, whose point shadows
+ *    make a frame several times dearer on SwiftShader, are tests/e2e/box-look.spec.ts's, with the same replay;
  * 2. live play recorded in the page (devices, a setting changed mid-run, the camera switched) replays in Node to the
  *    same hashes, so the renderer never wrote the sim;
  * 3. turning every optional GPU feature off never changes the hashes of its swept replays (all, or Box 4's hop);
@@ -61,7 +62,7 @@ interface Stage {
   replays: { name: string; text: string }[];
   /** The replays, by name, the camera-switching and GPU-features-off tests play: all of `replays` when absent. */
   swept?: { cameras: string[]; featuresOff: string[] };
-  /** Whether the camera sweep also switches each of the engine's looks (see the file comment). */
+  /** Whether its replays are also played through each of the engine's looks (see the file comment). */
   looks?: boolean;
   /** Plays live in the page through the devices and `__engine`, from the first frame. */
   live: () => void;
@@ -279,20 +280,15 @@ function play(page: Page, text: string, options: object = {}): Promise<PlayResul
   return page.evaluate(([t, o]) => __engine.replay(t, o) as Promise<PlayResult>, [text, options] as const);
 }
 
-/**
- * Each of the engine's looks in turn, from step 12, and the effects off and on: what a sweep with `looks` adds. The
- * box's, under their torch-lit sky, are tests/e2e/box-look.spec.ts's: the sky's point shadows make a frame several
- * times dearer on SwiftShader.
- */
+/** Each of the engine's looks in turn from step 10, 5 steps each, and the effects off and on: a stage's `looks`. */
 function lookViews(page: Page): Promise<[number, { set: Record<string, unknown> }][]> {
   return page.evaluate(() => {
     const { ids } = __engine.describe('look') as { ids: string[] };
     const fields = (id: string) =>
       (__engine.describe('look', id) as { fields: { key: string; value: unknown }[] }).fields;
     const own = ids.filter((id) => fields(id).some(({ key, value }) => key === 'sky' && value === ''));
-    const every = Math.floor(570 / own.length);
     const views = own.map((id, i): [number, { set: Record<string, unknown> }] => [
-      12 + i * every,
+      10 + i * 5,
       { set: { 'post.look': id } },
     ]);
     return [...views, [200, { set: { 'gfx.effects': false } }], [260, { set: { 'gfx.effects': true } }]];
@@ -359,18 +355,16 @@ for (const { stage, scene, component, replays, swept, looks, live } of [...STAGE
       }
     });
 
-    test(`switching every camera preset${looks ? ", the engine's looks" : ''} and resolution mode during a replay leaves its hashes unchanged`, async ({
+    test('switching every camera preset and resolution mode during a replay leaves its hashes unchanged', async ({
       page,
       harness,
     }) => {
-      if (looks) test.setTimeout(480_000); // a warm-up of every material style midway
       playing(sweep.cameras);
       await open(page, harness, `?scene=${scene}`);
       const views: [number, { cam?: string; set?: Record<string, unknown> }][] = [];
       const every = Math.floor(560 / CAMERA_PRESETS.length);
       CAMERA_PRESETS.forEach((cam, i) => views.push([10 + i * every, { cam }]));
       RESOLUTION_MODES.forEach((mode, i) => views.push([25 + i * 170, { set: { 'gfx.resolution': mode } }]));
-      if (looks) views.push(...(await lookViews(page)));
       for (const { name, text } of sweep.cameras) {
         const run = await play(page, text, { views });
         expect(run.hashes, name).toEqual(goldens(text));
@@ -378,6 +372,25 @@ for (const { stage, scene, component, replays, swept, looks, live } of [...STAGE
       const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
       expect(advice).not.toContain('GFX_COLD_PIPELINE');
     });
+
+    if (looks) {
+      test("switching each of the engine's looks during a replay leaves its hashes unchanged", async ({
+        page,
+        harness,
+      }) => {
+        playing(replays);
+        await open(page, harness, `?scene=${scene}`);
+        const views = await lookViews(page);
+        const until = Math.ceil((Math.max(...views.map(([step]) => step)) + 10) / 60) * 60; // a checkpoint past the last
+        for (const { name, text } of replays) {
+          const run = await play(page, text, { views, until });
+          const golden = Object.entries(goldens(text)).filter(([step]) => Number(step) <= until);
+          expect(run.hashes, name).toEqual(Object.fromEntries(golden));
+        }
+        const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
+        expect(advice).not.toContain('GFX_COLD_PIPELINE');
+      });
+    }
 
     test('turning every optional GPU feature off never changes the hash', async ({ page, harness }) => {
       const off = encodeURIComponent(

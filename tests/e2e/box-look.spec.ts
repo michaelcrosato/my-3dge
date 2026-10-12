@@ -81,7 +81,7 @@ test('the box looks: the torch-lit hall flickers on its rune floor, every tier a
   page,
   harness,
 }) => {
-  test.setTimeout(480_000);
+  test.setTimeout(600_000); // four warm-ups and one of every style under the sky: 4 to 7 minutes on a loaded SwiftShader
   await page.goto('labs/box/?scene=hall-props&cam=iso&post.look=look:torch-lit');
   await harness.ready({ timeout: 240_000 });
   await harness.assertWebGPU();
