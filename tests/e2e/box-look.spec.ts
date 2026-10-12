@@ -8,16 +8,22 @@
  * 2. the quality tiers: each casts fewer shadows (fewer draw calls) and builds its pipelines in a warm-up before its
  *    first frame; so does the switch back to the stage's own lights (`look:clean`), and the first look in a material
  *    style (`look:torch-toon`), which joins the style set to the warm-up (at the medium tier, as what follows);
- * 3. every box look then renders, none blank, dark or blown out, over the same ID pass, and switching between them,
- *    styles included, builds no pipeline at all.
- * No frame builds a pipeline after a warm-up (Done-when 1's toggles). The goldens in every look, the engine's and the
- * box's, are tests/e2e/parity.spec.ts's (Box 3, props); what each filter does to the pixels is tests/e2e/post.spec.ts's.
+ * 3. switching between the box's looks, styles included, builds no pipeline; each in turn while the knock replay
+ *    (tests/replays/box-3-knock.replay.json) plays its first 180 steps, a frame drawn after each, its goldens hold;
+ *    each renders, none blank, dark or blown out, over the same ID pass.
+ * No frame builds a pipeline after a warm-up (Done-when 1's toggles). The goldens in the engine's 86 looks are
+ * tests/e2e/parity.spec.ts's (Box 3, props); what each filter does to the pixels is tests/e2e/post.spec.ts's.
  *
  * Invariants: the page is driven through `window.__engine`, as an agent drives it; images are read as numbers
  * (look metrics, the ID pass, the share of pixels that changed), never looked at.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
+
+/** The knock replay (Box 3, the hall with its props): its first 180 steps play through the box's looks. */
+const KNOCK = readFileSync(join(import.meta.dirname, '../replays/box-3-knock.replay.json'), 'utf8');
 
 /** The page's engine, inside `evaluate`. */
 declare const __engine: Record<string, unknown> & { [name: string]: (...args: unknown[]) => unknown };
@@ -117,11 +123,22 @@ test('the box looks: the torch-lit hall flickers on its rune floor, every tier a
   for (const tier of [high, medium, low, clean, toon]) expect(tier.pipelinesAfterWarmUp).toBe(0);
   expect(toon.pipelines).toBeGreaterThan(clean.pipelines);
 
-  // 3. Every box look: switching builds nothing; each renders over the same ID pass.
+  // 3. Every box look: switching builds nothing; then each in turn while the knock replay plays, a frame after each
+  // step: its goldens hold, and no frame stalls (the replay starts at the default tier, which warms up first).
   for (const look of BOX_LOOKS) {
     const stats = await show(page, { 'post.look': look });
     expect([look, stats.pipelines, stats.pipelinesAfterWarmUp]).toEqual([look, toon.pipelines, 0]);
   }
+  const views = BOX_LOOKS.map((look, i) => [i * 30, { set: { 'post.look': look } }]);
+  const run = (await page.evaluate(([t, v]) => __engine.replay(t, { until: 180, views: v }), [
+    KNOCK,
+    views,
+  ] as const)) as {
+    hashes: Record<string, string>;
+  };
+  const goldens = (JSON.parse(KNOCK) as { hashes: Record<string, Record<string, string>> }).hashes['linux-x64'];
+  expect(run.hashes).toEqual(Object.fromEntries(Object.entries(goldens).filter(([step]) => Number(step) <= 180)));
+  expect(((await page.evaluate(() => __engine.stats())) as Stats).pipelinesAfterWarmUp).toBe(0);
   const shots: Record<string, Shot> = {}; // after the switches: a shot's ID pass builds pipelines of its own
   for (const look of BOX_LOOKS) {
     await show(page, { 'post.look': look });
