@@ -45,3 +45,28 @@ Calls made where the plan is silent, and one deviation:
 - **Per-entity clocks are plain numbers** (`{ rate, frozen, time }`) that a component holds, advanced by functions,
   so captures and the hash take them as data. A freeze counts world seconds, the longest wins, and a freeze ending
   inside a step gives the rest of the step back.
+
+## Amendment 2 (2026-10-11, WP-6.3): hit-stop from the rules
+Rules ask for hit-stops in the sim through engine/sim/damage.ts `requestHitStop`; `damage` calls it with `hit.stop`.
+The longest stop asked waits in a per-world outbox that the sim never reads, so it stays out of the hash and out of
+captures. `takeHitStop` is for hosts only, and engine/sim-api.ts does not export it. When the outbox is emptied
+depends on how the host steps, so a rule that read it would play differently live and in its replay.
+
+The run's host hands the stop over after each step through engine/app/headless.ts `stepped`: take the stop, pass it
+to `clock.hitStop`, then `view.stepped`. Two paths call it:
+- `stepOnce`, which serves both page frames and headless `step`.
+- The page loop's real-time `?replay=` playback (`AppRun.stepped`), so a playback's hits stop the clock as live play
+  does.
+
+`replay(text)` (playInto) plays with the page's loop held, so it drops the stops its steps asked for when it ends;
+none is left to freeze the first live frame afterwards. A dev action's stop goes with the next step, as it does in a
+playback, where the action runs just before that step.
+
+The clock's leaky budget shrinks stops that follow closely. So a crowd hit reaches the clock once per step, and a
+steady rhythm keeps its full stops.
+
+This is not an event listener: a host listener would join the world's captured schedule, and restores would then
+refuse captures from worlds that lack it.
+
+This change is outside WP 6.3's Owns: engine/app/headless.ts (the `stepped` handover and the drop after a replay) and
+one line in engine/app/engine.ts. PLAN.md's WP-6.3 Owns line now names both.

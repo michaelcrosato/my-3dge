@@ -9,7 +9,13 @@
  * under its own gravity, onto a stair as well as across the floor; level with the hero it keeps to a ring round him
  * instead, leaping in from beyond it by what it lacks and out from inside it. A hop too short to bother with, or one
  * out of reach, waits a moment. After landing it rests for `SLIME.rest` plus up to `SLIME.restSpread`, drawn from the
- * crowd's stream. Its pounce at the hero arrives with Box 5.
+ * crowd's stream.
+ *
+ * Its pounce (Box 5, WP 6.7): `SLIME_ATTACK`. Resting on its ring round the hero, cooled down and granted one of his
+ * attack tokens, it squats for `wind` s, its line telegraph (`telegraph:boxPounce`) filling toward him, then leaps at
+ * where he stood, up at `up` m/s, to land just short of him; touching him on the way takes `damage` hit points and
+ * throws it back off him. Landed, it gives the token back and rests `rest` s plus up to `SLIME.restSpread`. A hit on
+ * it breaks its pounce off. It has `health` hit points.
  *
  * Its numbers are the stress test's slime (`my-3d2dge:src/stress-world/20-sim.js:200-203, 387-414`), in SI units
  * (PLAN.md Appendix C: 16 units a metre), as starting values (§9.0: similar, not identical): a ball of radius 6 units
@@ -30,6 +36,7 @@
 import {
   HOP,
   defineComponent,
+  defineTelegraph,
   followFlow,
   hop,
   knockback,
@@ -157,3 +164,36 @@ export function steerSlime(physics: Physics, agent: CrowdAgent, slime: SlimeData
   launch(physics, agent, leap.y);
   [slime.hop, slime.timer] = ['air', 0];
 }
+
+/** The slime's pounce (see the file comment): seconds, metres, m/s and hit points. */
+export const SLIME_ATTACK = Object.freeze({
+  /** Its hit points, and the hit points its pounce takes. */
+  health: 20,
+  damage: 6,
+  /** Its squat before it leaps (s), and how far off its ring it may stand to start one (m). */
+  wind: 0.5,
+  slack: 0.25,
+  /** Its leap up (m/s), landing this far short of the hero's feet (m), its body touching his within `touch` m. */
+  up: 85 / UNITS,
+  short: 0.4,
+  touch: 1 / UNITS,
+  /** Thrown back off him as it touches (a share of its speed) and up (m/s). */
+  bounce: 0.7,
+  bounceUp: 90 / UNITS,
+  /** Its rest after a pounce (s), before `SLIME.restSpread`. */
+  rest: 1.1,
+  /** Its telegraph: a line from it toward the hero, as long as its ring is wide and a little more. */
+  telegraph: 'telegraph:boxPounce',
+});
+
+/** The slime's pounce on the floor: a line its own width, from it to just past the hero on its ring. */
+export const SLIME_POUNCE = defineTelegraph(SLIME_ATTACK.telegraph, {
+  description: 'A box slime’s pounce: the strip of floor it leaps along, from it to the hero.',
+  shape: 'line',
+  length: 34 / UNITS + 0.5,
+  width: (2 * 6) / UNITS,
+  yMin: 0,
+  yMax: 1.5,
+  near: 0.5,
+  color: '#ff6aa8',
+});

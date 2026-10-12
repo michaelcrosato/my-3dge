@@ -11,7 +11,8 @@
  *
  * Invariants: every tool runs to the end, so one run names every failure; each tool's output is printed whole, in
  * the fixed order below, after all have finished (never interleaved); the exit code is 0 only when all four pass,
- * else 1. Caches live under node_modules/.cache/, which `x ci --local` keeps across `npm ci`.
+ * else 1. Caches live under node_modules/.cache/, which `x ci --local` keeps across `npm ci`; a new checkout or
+ * worktree has none, so its first run fills them (measured after G5: 13.9 s cold, Prettier 13.7 s of it; 5.8 s warm).
  *
  * Usage: `npm run check` (package.json: `"check": "node tools/checkAll.ts"`). Importing the module runs nothing.
  *

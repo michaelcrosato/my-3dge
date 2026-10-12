@@ -18,7 +18,15 @@
  *   31.25 m/s²);
  * - the ring: the hero's reach plus 10 units → 1.5 m, a band of 3 units either side, backing off at half speed and
  *   drifting round at 0.4 of it, the sway's phase drawn per walker at 0.9 rad/s; level within 14 units → 0.875 m;
- * - turning at 5 rad/s. Its attacks arrive with Box 5 (PLAN.md §9.0).
+ * - turning at 5 rad/s.
+ *
+ * Its attack (Box 5, WP 6.7): `WALKER_ATTACK`. Waiting on its ring, cooled down and granted one of the hero's attack
+ * tokens (engine/world/ai.ts), it winds one of its fists' moves up (`moves`, drawn per swing; the prototype's husk's
+ * claw, haymaker and hook), its wind-up at least `wind` s and twice the move's, its recovery `recover` s longer. While
+ * it winds it turns to him at `turn` rad/s and walks to `stand` m from him, its arc telegraph (`telegraph:boxSwing`)
+ * filling on the floor before it; as it strikes it lunges in when he stepped back, and what the arc holds as its hit
+ * window opens is hit: `damage` hit points. Then it gives the token back and cools down for `cool` s plus up to
+ * `coolSpread`. A hit on it breaks its swing off. It has `health` hit points.
  *
  * Its body is drawn as the neutral humanoid (a crowd body, engine/sim/crowdBodies.ts) in one of `WALKER.looks`: the
  * prototype's mixed husks, knights and skeletons, as builds.
@@ -34,6 +42,7 @@ import {
   approachAng,
   approachRing,
   defineComponent,
+  defineTelegraph,
   followFlow,
   type CrowdAgent,
   type FlowField,
@@ -120,3 +129,38 @@ export function steerWalker(agent: CrowdAgent, walker: WalkerData, chase: Chase,
   walker.yaw = approachAng(walker.yaw, facing, chase.dt * WALKER.turn);
   return out.multiplyScalar(walker.speed);
 }
+
+/** The walker's attack (see the file comment): seconds, metres, m/s and hit points. */
+export const WALKER_ATTACK = Object.freeze({
+  /** Its hit points. */
+  health: 32,
+  /** The moves it swings, one drawn per swing (the prototype's husk's), and the hit points one takes. */
+  moves: Object.freeze(['move:claw', 'move:haymaker', 'move:hook']),
+  damage: 10,
+  /** Its wind-up: at least this, and twice the move's; its recovery: the move's plus this. */
+  wind: 0.34,
+  recover: 0.12,
+  /** Where it winds up from: this far from the hero (m), turning to him at `turn` rad/s. */
+  stand: 1,
+  turn: 2.5,
+  /** Its lunge as it strikes (m/s): √(`lunge` · the metres it stands too far), at most `lungeMax`. */
+  lunge: 1000 / UNITS,
+  lungeMax: 70 / UNITS,
+  /** Its cool-down after a swing (s): `cool` plus up to `coolSpread`. */
+  cool: 0.8,
+  coolSpread: 1,
+  /** Its telegraph: the prototype's walker arc, from 0.6 of its radius out past the hero at `stand`. */
+  telegraph: 'telegraph:boxSwing',
+});
+
+/** The walker's swing on the floor: an arc ±0.8 rad, from 0.6 of its radius to 1.35 m, its colour the prototype's. */
+export const WALKER_SWING = defineTelegraph(WALKER_ATTACK.telegraph, {
+  description: 'A box walker’s swing: the floor its fist sweeps, from its body out past the hero.',
+  shape: 'arc',
+  inner: (0.6 * 5) / UNITS,
+  radius: 1.35,
+  halfAngle: 0.8,
+  yMin: 0,
+  yMax: 2,
+  near: 0.5,
+});

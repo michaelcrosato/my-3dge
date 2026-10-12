@@ -1,7 +1,7 @@
 /**
  * @file Unit tests for `x check` (tools/cmd/check.ts): the asset scan on fixture repositories written to temporary
- * directories (every failure has a failing and a passing fixture), lane detection in a linked worktree, the plugin
- * contract and its discovery, and a smoke run on the repository.
+ * directories (every failure has a failing and a passing fixture, and a file deleted after the listing is skipped),
+ * lane detection in a linked worktree, the plugin contract and its discovery, and a smoke run on the repository.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
@@ -9,8 +9,17 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { Finding } from '../lib/report';
-import { MAX_LINES, ROOT } from '../x';
-import { assetScan, binaryKind, discoverPlugins, isLane, runChecks, type CheckPlugin } from './check';
+import { CHILD_TIMEOUT_MS, MAX_LINES, ROOT } from '../x';
+import {
+  assetScan,
+  binaryKind,
+  discoverPlugins,
+  isLane,
+  repositoryFiles,
+  runChecks,
+  scanAssets,
+  type CheckPlugin,
+} from './check';
 
 const temporary: string[] = [];
 afterEach(() => {
@@ -136,6 +145,16 @@ describe('the asset scan', () => {
     );
   });
 
+  it('skips a listed file deleted before it is read, as a parallel x new --test deletes its sample', () => {
+    const root = repository({ 'tools/templates/module/sample.ts': 'export const a = 1;\n', 'art/logo.png': PNG });
+    const listed = repositoryFiles(root);
+    expect(listed).toEqual(['art/logo.png', 'tools/templates/module/sample.ts']);
+    rmSync(join(root, 'tools/templates/module/sample.ts'));
+    const outcome = scanAssets(root, listed);
+    expect(outcome.failures.map((f) => `${f.id} ${f.file}`)).toEqual(['ASSET_BINARY art/logo.png']);
+    expect(outcome.metrics).toMatchObject({ files: 1, binaries: 1 });
+  });
+
   it('skips files git ignores, and scans untracked ones', async () => {
     expect((await scan({ '.gitignore': '.cache/\n', '.cache/model.glb': PNG })).failures).toEqual([]);
     expect((await scan({ 'new/untracked.glb': PNG })).failures).toEqual(['ASSET_BINARY new/untracked.glb']);
@@ -200,11 +219,12 @@ describe('the plugins', () => {
 });
 
 describe('node x check', () => {
-  it('passes on the repository, in at most 20 lines, with a report', () => {
+  it('passes on the repository, in at most 20 lines, with a report', { timeout: CHILD_TIMEOUT_MS }, () => {
     const run = spawnSync(process.execPath, ['x', 'check'], {
       cwd: ROOT,
       encoding: 'utf8',
       env: { ...process.env, X_LANE: '0' },
+      timeout: CHILD_TIMEOUT_MS,
     });
     expect(run.status, run.stdout).toBe(0);
     expect(run.stdout.split('\n')[0]).toMatch(/^x check: ok: /);

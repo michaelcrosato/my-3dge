@@ -1,7 +1,7 @@
 /**
  * @file The engine's v1 texture generators (PLAN.md WP 2.3): flagstone, brick courses, dressed stone, planks, barrel
- * staves and checker, by id. Every registry gets them with the kind `texture` (engine/gfx/textures/texture.ts); WP
- * 7.3 adds the rest of the library (runes, moss, metal, plaster, dirt, grass, water).
+ * staves and checker, by id. Every registry gets them with the kind `texture` (engine/gfx/textures/texture.ts), with
+ * WP 7.3's rest of the library (engine/gfx/textures/v2.ts: runes, moss, metal, plaster, dirt, grass, water).
  *
  * Invariants: ids are `texture:<name>`, one per generator module under engine/gfx/textures/generators/.
  *

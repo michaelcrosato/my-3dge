@@ -39,6 +39,7 @@ import {
   spineDirection,
 } from './locomotion';
 import type { EffectorContext } from './locomotion';
+import { armBlade, layArm } from './strike';
 
 /** The codes this module raises, with their fixes. */
 export const POSE_CODES = defineCodes('anim', {
@@ -293,8 +294,8 @@ export const BLADE_LAYERS: readonly EffectorLayer[] = [
   { name: 'cheer', weight: (c) => c.w.cheer, at: toward([0.15, 0.05, 1]) },
   /** Block: held upright across the body. */
   { name: 'block', weight: (c) => c.w.block, at: toward([0.35, -0.3, 0.9]) },
-  /** Ready stance: forward and up, in both hands. */
-  { name: 'stanceReady', weight: (c) => c.w.stanceReady, at: toward([0.62, 0.08, 0.78]) },
+  /** Ready stance: forward and up, in both hands; a strike's arm fades it out. */
+  { name: 'stanceReady', weight: (c) => c.w.stanceReady * (1 - (c.arm?.weight ?? 0)), at: toward([0.62, 0.08, 0.78]) },
   /** Point: along the aim. */
   { name: 'point', weight: (c) => c.w.point, at: (c, _s, _cur, out) => B(Math.cos(c.aim), 0, Math.sin(c.aim), out) },
 ];
@@ -362,8 +363,9 @@ export function createEffectors(): Effectors {
 }
 
 /**
- * The effector stage: the gait's targets (locomotion.ts), then the layers over them in order, into `out`, whose
- * pelvis, chest, shoulders and hips must be `ctx`'s anchors. `weapon` sets the blade's rest.
+ * The effector stage: the gait's targets (locomotion.ts), then the layers over them in order, then a move's arm path
+ * (strike.ts `layArm`), into `out`, whose pelvis, chest, shoulders and hips must be `ctx`'s anchors. `weapon` sets
+ * the blade's rest; the arm turns it toward the strike before the blade layers.
  */
 export function effectorStage(ctx: EffectorContext, weapon: Weapon, out: Effectors): Effectors {
   pelvisTarget(ctx, out.pelvis);
@@ -378,7 +380,9 @@ export function effectorStage(ctx: EffectorContext, weapon: Weapon, out: Effecto
     applyLayers(FOOT_LAYERS, ctx, side, gaitFoot(ctx, side, out.feet[side]));
     applyLayers(HAND_LAYERS, ctx, side, gaitHand(ctx, side, out.hands[side]));
   }
-  applyLayers(BLADE_LAYERS, ctx, 'R', fromFRU(WEAPONS[weapon], out.blade).normalize()).normalize();
+  const blade = fromFRU(WEAPONS[weapon], out.blade).normalize();
+  if (ctx.arm) armBlade(ctx.arm, blade, layArm(ctx.arm, ctx, out), blade);
+  applyLayers(BLADE_LAYERS, ctx, 'R', blade).normalize();
   if (ctx.w.down > 0) out.blade.lerp(fromFRU(DROPPED_BLADE, target), ctx.w.down).normalize();
   return out;
 }

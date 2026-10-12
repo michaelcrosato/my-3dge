@@ -6,7 +6,11 @@
  * run: `stepped()` after every sim step reads where the entities are, `frame({ alpha, dt, aspect })` puts every
  * puppet and stand-in `alpha` of the way between its last two steps and moves the camera by a rendered frame, then
  * draws the crowd bodies as that camera sees them (engine/gfx/stageCrowd.ts: its level of detail and culling; after
- * steps with no frame, `dump` draws them first), returning what to draw (`{ scene, camera, alpha }`, engine/gfx/renderer.ts's `FrameView`).
+ * steps with no frame, `dump` draws them first), then moves the stage's effects on by the frame (engine/gfx/stageFx.ts:
+ * the world's new events burst, its bolts, telegraphs and trails drawn, unless the view setting `gfx.effects` is off;
+ * the page shakes its camera by them while it draws), returning what to draw (`{ scene, camera, alpha }`,
+ * engine/gfx/renderer.ts's `FrameView`). A frame that finds `gfx.effects` switched since the last read reads the
+ * entities again first, so a flying bolt is the effects' or its stand-in from that frame, with or without a step.
  *
  * The camera follows the player (WP 3.10): the first player actor's feet as the frame draws them, else the level's
  * middle. The chase camera also gets the sim's read-only `QueryView` (engine/sim/queryView.ts) in a physics scene,
@@ -14,7 +18,9 @@
  * itself (near-body culling, `cameraInfo().culled`). While it follows a player the level's cutaway runs
  * (engine/gfx/cutaway.ts): walls facing the camera and pillars before him cut away, so every view sees him. `restarted()` after the run
  * starts again (a new seed, a replay) or its world changes between steps (a restore, a dev action) reads the entities
- * afresh: the stand-ins snap to them, so no dump, shot or frame shows the places they had before.
+ * afresh: the stand-ins and bolts snap to them, so no dump, shot or frame shows the places they had before. The
+ * effects forget what ran only for a new world, read from its first event; the same world keeps its trace read (the
+ * trace is history, never restored), so a restore or a dev action never plays an event twice.
  *
  * The level comes from the scene's `level` id (engine/world/level/level.ts): its text must be registered before the
  * view starts (`APP_NO_LEVEL`), by the page (`import text from './levels/room.txt?raw'`) or a Node test (read the
@@ -138,7 +144,28 @@ export function createRunView(options: RunViewOptions): RunView {
     throw codeError('APP_NO_LEVEL', { scene: scene.id, level: scene.level });
   }
   const level = scene.level === undefined ? null : getLevel(scene.level, registry);
-  const stage = createStage({ level, materials: options.materials, registry, log: options.log });
+  const fxRng = (...keys: readonly (string | number)[]) => options.run().world.fxRng(...keys);
+  const stage = createStage({ level, materials: options.materials, registry, log: options.log, fxRng });
+  /**
+   * Turns the effects on or off by the view setting `gfx.effects` (a registry without it: on), before they read;
+   * returns whether that changed them.
+   */
+  const syncEffects = (): boolean => {
+    const run = options.run();
+    const declared = registry.kinds().includes('setting') && registry.has('setting', 'gfx.effects');
+    const enabled = !declared || run.settings.get<boolean>('gfx.effects') !== false;
+    const changed = stage.fx.effects.enabled !== enabled;
+    stage.fx.effects.enabled = enabled;
+    return changed;
+  };
+  /** Reads the entities afresh from the run's last step: every stand-in, puppet and bolt snaps to it. */
+  const reread = () => {
+    const run = options.run();
+    stage.capture([]);
+    stage.capture(placed(run, stage.kinds), run.world.dt);
+  };
+  /** The world whose trace the effects read: only a new one is read from its first event. */
+  let fxWorld: object | null = null;
   const pair = createCameraPair();
   let camera: AnyCamera = createCamera(options.cam ?? DEFAULT_CAMERA);
   let drawn: BoostedPerspectiveCamera | BoostedOrthographicCamera = pair.perspective;
@@ -192,22 +219,33 @@ export function createRunView(options: RunViewOptions): RunView {
     },
     stepped() {
       const run = options.run();
+      syncEffects(); // off, the bolts this step reads draw as stand-ins at once
       stage.capture(placed(run, stage.kinds), run.world.dt);
       stage.draw((alpha = 1)); // the latest state until a frame interpolates: what a headless dump shows
       crowdStale = true; // posed by the next frame or dump, not every step
     },
     restarted() {
       const run = options.run();
-      stage.capture([]);
-      stage.capture(placed(run, stage.kinds), run.world.dt);
+      // A new world is read from its first event. The same one (a restore, a dev action) keeps its trace read: the
+      // trace is history, never restored, so reading it again would play its events twice. Bolts snap either way.
+      if (run.world !== fxWorld) {
+        stage.fx.reset();
+        fxWorld = run.world;
+      }
+      syncEffects();
+      reread();
       stage.draw((alpha = 1));
       crowdStale = true;
     },
     frame(frame) {
       aspect = frame.aspect;
+      // Turned on or off since the last read (a paused page, a hit-stop, a shot): read the world again first, so a
+      // flying bolt changes hands at once between the effects and its stand-in, and no frame draws it by neither.
+      if (syncEffects()) reread();
       stage.draw((alpha = frame.alpha));
       drawn = pair.place(move(frame.input, frame.dt), aspect);
       drawCrowd();
+      stage.fx.frame(frame.dt, drawn, options.run().world.events.trace());
       return { scene: stage.scene, camera: drawn, alpha: frame.alpha };
     },
     cameraInfo: info,

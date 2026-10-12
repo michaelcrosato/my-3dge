@@ -25,6 +25,7 @@ import {
   TIERS,
   vitestRerunTriggers,
 } from './tiers';
+import { CHILD_TIMEOUT_MS } from '../x';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 
@@ -104,31 +105,36 @@ describe('the base, the changes and the selections, in a temporary repository', 
     git('reset', '--quiet', '--hard', gate);
   });
 
-  it('selects every Vitest test that imports a changed engine/core/a.ts, directly or not, and runs T2 in full', () => {
-    write('engine/core/a.ts', 'export const a = 2;\n');
-    const { base, changes, t1, t2 } = plan(repo);
-    expect(changes).toEqual({ base: base.sha, files: ['engine/core/a.ts'], versionOnly: [] });
-    expect(t1).toMatchObject({
-      mode: 'some',
-      reason: "T1 runs the tests that import engine/core/a.ts, directly or not (Vite's module graph)",
-    });
-    expect(t1.command).toEqual(['npx', 'vitest', 'related', '--run', '--passWithNoTests', 'engine/core/a.ts']);
-    const report = join(repo, 'out', 'related.json');
-    const run = spawnSync(t1.command[0], [...t1.command.slice(1), '--reporter=json', `--outputFile=${report}`], {
-      cwd: repo,
-      encoding: 'utf8',
-    });
-    expect(run.status, run.stdout + run.stderr).toBe(0);
-    const ran = (JSON.parse(readFileSync(report, 'utf8')) as { testResults: { name: string }[] }).testResults
-      .map((result) => result.name.slice(repo.length + 1))
-      .sort();
-    expect(ran).toEqual(['engine/core/a.test.ts', 'engine/core/b.test.ts']);
-    expect(t2).toMatchObject({ mode: 'all', command: ['npm', 'run', 'e2e'] });
-    expect(t2.reason).toBe(
-      "T2 runs in full: engine/core/a.ts changed (engine code, which pages load through the dev server, not through the specs' imports)",
-    );
-    git('checkout', '--quiet', '--', '.');
-  });
+  it(
+    'selects every Vitest test that imports a changed engine/core/a.ts, directly or not, and runs T2 in full',
+    { timeout: CHILD_TIMEOUT_MS },
+    () => {
+      write('engine/core/a.ts', 'export const a = 2;\n');
+      const { base, changes, t1, t2 } = plan(repo);
+      expect(changes).toEqual({ base: base.sha, files: ['engine/core/a.ts'], versionOnly: [] });
+      expect(t1).toMatchObject({
+        mode: 'some',
+        reason: "T1 runs the tests that import engine/core/a.ts, directly or not (Vite's module graph)",
+      });
+      expect(t1.command).toEqual(['npx', 'vitest', 'related', '--run', '--passWithNoTests', 'engine/core/a.ts']);
+      const report = join(repo, 'out', 'related.json');
+      const run = spawnSync(t1.command[0], [...t1.command.slice(1), '--reporter=json', `--outputFile=${report}`], {
+        cwd: repo,
+        encoding: 'utf8',
+        timeout: CHILD_TIMEOUT_MS,
+      });
+      expect(run.status, run.stdout + run.stderr).toBe(0);
+      const ran = (JSON.parse(readFileSync(report, 'utf8')) as { testResults: { name: string }[] }).testResults
+        .map((result) => result.name.slice(repo.length + 1))
+        .sort();
+      expect(ran).toEqual(['engine/core/a.test.ts', 'engine/core/b.test.ts']);
+      expect(t2).toMatchObject({ mode: 'all', command: ['npm', 'run', 'e2e'] });
+      expect(t2.reason).toBe(
+        "T2 runs in full: engine/core/a.ts changed (engine code, which pages load through the dev server, not through the specs' imports)",
+      );
+      git('checkout', '--quiet', '--', '.');
+    },
+  );
 
   it('runs T2 in full for page code, and only the changed specs for a spec helper', () => {
     write('tests/pages/demo.html', '<!doctype html><title>changed</title>\n');
@@ -239,7 +245,7 @@ describe('selections without git', () => {
       mode: 'all',
       reason: 'T2 runs in full: its full set last took 3 min 20 s, within its budget (§8.9)',
     });
-    expect(selectT2(changes('tools/cmd/qa.ts'), { lastFullMs: 400_000 }).mode).toBe('some');
+    expect(selectT2(changes('tools/cmd/qa.ts'), { lastFullMs: TIERS.T2.budgetMs + 1 }).mode).toBe('some');
   });
 });
 
@@ -252,7 +258,9 @@ describe('budgets', () => {
     expect(checkBudget('T0', 12_000).message).toBe(
       `T0 took 12 s, over its 10 s budget (it fails at 15 s): ${TIERS.T0.fix}`,
     );
-    expect(checkBudget('T2', 540_000).message).toBe(`T2 took 9 min, at least 1.5× its 6 min budget: ${TIERS.T2.fix}`);
+    expect(checkBudget('T2', 810_000).message).toBe(
+      `T2 took 13 min 30 s, at least 1.5× its 9 min budget: ${TIERS.T2.fix}`,
+    );
   });
 
   it('reads the durations of Vitest and Playwright JSON reports: over budget warns, at 1.5× fails', () => {
@@ -262,13 +270,13 @@ describe('budgets', () => {
       mkdirSync(join(root, 'out/e2e'), { recursive: true });
       const vitest = { startTime: 1_000, success: true, testResults: [{ endTime: 30_000 }, { endTime: 71_000 }] };
       writeFileSync(join(root, 'out/test/report.json'), JSON.stringify(vitest));
-      writeFileSync(join(root, 'out/e2e/report.json'), JSON.stringify({ suites: [], stats: { duration: 540_000 } }));
+      writeFileSync(join(root, 'out/e2e/report.json'), JSON.stringify({ suites: [], stats: { duration: 810_000 } }));
       expect(reportMs(join(root, 'out/test/report.json'))).toBe(70_000);
       const checks = checkReports(root, { T0: 4_000 });
       expect(checks.map(({ tier, ms, status }) => [tier, ms, status])).toEqual([
         ['T0', 4_000, 'ok'],
         ['T1', 70_000, 'warn'],
-        ['T2', 540_000, 'fail'],
+        ['T2', 810_000, 'fail'],
       ]);
       expect(checkReports(root, { T1: 1_000 }).map((check) => check.status)).toEqual(['ok', 'fail']);
       writeFileSync(join(root, 'out/test/report.json'), '{"x":1}');

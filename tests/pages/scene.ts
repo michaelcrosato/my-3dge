@@ -68,7 +68,7 @@ async function start(): Promise<void> {
     const scenePass = pass(scene, camera);
     pipeline.outputNode = scenePass;
     view.draw = () => pipeline.render();
-    view.target = scenePass.renderTarget;
+    view.passes = [{ target: scenePass.renderTarget }];
   }
   const progress: WarmupProgress[] = [];
   const startup = await gfx.warmup.run(view, { onProgress: (step) => progress.push(step) });

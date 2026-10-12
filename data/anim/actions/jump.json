@@ -1,0 +1,47 @@
+{
+  "action": "jump",
+  "desc": "Jump phases (SMB, Prince of Persia, Celeste): a take-off squat, the rise, a hang at the apex, a fall with the legs reaching that holds until the game lands it (next), and a landing squash. The game makes the arc.",
+  "beats": [
+    {
+      "name": "squat",
+      "seconds": 0.08,
+      "motion": { "crouch": 0.45, "lean": 0.15 },
+      "events": [{ "type": "takeoff", "at": 1 }]
+    },
+    {
+      "name": "rise",
+      "seconds": 0.25,
+      "body": { "air": true },
+      "motion": { "lean": -0.05 },
+      "cancel": { "by": ["move"] }
+    },
+    {
+      "name": "apex",
+      "seconds": 0.12,
+      "body": { "air": true },
+      "motion": { "lean": 0.05 },
+      "cancel": { "by": ["move"] }
+    },
+    {
+      "name": "fall",
+      "seconds": 0.2,
+      "until": "next",
+      "effectors": { "handL": [0.05, -0.38, 0.1], "handR": [0.05, 0.38, 0.1] },
+      "cancel": { "by": ["move"] }
+    },
+    { "name": "land", "seconds": 0.1, "motion": { "crouch": 0.55, "lean": 0.2 }, "events": [{ "type": "land" }] },
+    { "name": "recover", "seconds": 0.15, "cancel": { "by": ["any"] } }
+  ],
+  "check": {
+    "signals": [{ "at": 0.75, "do": "next" }],
+    "lift": [
+      [0.08, 0],
+      [0.2, 0.4],
+      [0.33, 0.58],
+      [0.45, 0.6],
+      [0.6, 0.4],
+      [0.75, 0]
+    ],
+    "seconds": 1.2
+  }
+}

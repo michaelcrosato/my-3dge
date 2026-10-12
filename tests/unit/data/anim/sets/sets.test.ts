@@ -2,7 +2,9 @@
  * @file The sets' checks (PLAN.md §10.3 and §10.5 steps 4 and 5, WPs 8.3 and 8.10): `data/anim/sets/` holds ten
  * sets, each a directory of one `<Clip_Slug>.json` per clip, `_set.json` and a generated `catalog.tsv` (repack.ts):
  * - my-3d2dge's two curated sets left after WP 8.10, `mesh2motion` and `cmu` (HERO dropped). Rejoined, each is the
- *   source's object, apart from the `alt` tag on each of Mesh2Motion's 84 Quaternius re-exports;
+ *   source's object, apart from the `alt` tag on each of Mesh2Motion's 84 Quaternius re-exports, and the license in
+ *   each of `cmu`'s 25 source records: CMU's terms, as the CMU catalog states them (WP 8.5; my-3d2dge's said "free for
+ *   all uses"), which `x anim import --cmu --legacy` writes;
  * - shardfall's eight (tools/anim/shardfall.ts): 100STYLE's seven `style100*` sets and Quaternius v2's `quaternius`,
  *   which replaced v1's. Rejoined, each is shardfall's file, apart from its `body`, the `via` marks and, in
  *   `quaternius`, `Punch_Enter`, kept from v1 (its clip and its `fit` entry).
@@ -11,7 +13,8 @@
  * "The source's object" is proved twice: offline, by the SHA-256 of `JSON.stringify` of each rejoined set with those
  * changes taken off, against the source's recorded here (key order included, so the clips' order and every field's
  * order count, not only the values); and, when the checkout resolves (else deferred: no source), against the source
- * itself: deep-equal, the same `text()` for every clip, and the tool writing exactly the committed files.
+ * itself: deep-equal, the same `text()` for every clip, and the tool writing exactly the committed files. The changes
+ * are checked offline too: the `alt` tags sit on exactly the 84 re-exports, and each CMU license is the catalog's.
  *
  * @see tools/anim/repack.ts
  * @see tools/anim/shardfall.ts
@@ -40,6 +43,7 @@ import { shardfallSet } from '../../../../../tools/anim/shardfall';
 import { requireSource } from '../../../../../tools/lib/source';
 import { legacy } from '../../../anim/clip-fixtures';
 import { canonicalSha256 } from '../catalogs/catalogs';
+import { readCatalogs } from '../sources/sources';
 
 /** Where a set came from: its checkout, its file there, its clips, and the SHA-256 of the source's object. */
 interface SourceSet {
@@ -121,6 +125,24 @@ function withoutAltTags(set: ClipSet): ClipSet {
   return { ...set, clips };
 }
 
+/** my-3d2dge's license in the CMU set's source records, which CMU's terms replaced (WP 8.5). */
+const LEGACY_CMU_LICENSE = 'free for all uses (may be copied, modified, or redistributed without permission)';
+
+/** CMU's terms, as the CMU catalog states them (`"$sources".CMU.license`): what each CMU source record says. */
+const CMU_LICENSE = readCatalogs()['cmu.json']?.$sources.CMU?.license;
+
+/**
+ * The CMU set as my-3d2dge wrote it: each source record that says the catalog's CMU terms says the old wording again.
+ * A record that says anything else is left as it is, so the SHA-256 and the deep-equal still catch it.
+ */
+function withLegacyLicense(set: ClipSet): ClipSet {
+  const sources = Object.entries(set.sources ?? {}).map(([id, s]) => [
+    id,
+    s.license === CMU_LICENSE ? { ...s, license: LEGACY_CMU_LICENSE } : s,
+  ]);
+  return { ...set, sources: Object.fromEntries(sources) };
+}
+
 /** The set as shardfall wrote it: its `body`, each clip's `via`, and the clips kept from v1 and their fit taken off. */
 function asShardfallWroteIt(set: ClipSet): ClipSet {
   const { body: _body, fit, clips, ...header } = set;
@@ -134,7 +156,11 @@ function asShardfallWroteIt(set: ClipSet): ClipSet {
 
 /** The set as its source wrote it, the repacker's and the adoption's changes taken off. */
 const restore = (dir: string, set: ClipSet) =>
-  SOURCE_SETS[dir]?.source === 'shardfall' ? asShardfallWroteIt(set) : withoutAltTags(set);
+  SOURCE_SETS[dir]?.source === 'shardfall'
+    ? asShardfallWroteIt(set)
+    : dir === 'cmu'
+      ? withLegacyLicense(withoutAltTags(set))
+      : withoutAltTags(set);
 
 const sets = Object.fromEntries(Object.keys(SOURCE_SETS).map((dir) => [dir, readSet(dir)]));
 const read = (dir: string, file: string) => readFileSync(join(SETS_DIR, dir, file), 'utf8');
@@ -163,6 +189,13 @@ describe('data/anim/sets/', () => {
     expect(reexports.map((clip) => clip.clip)).toEqual(tagged.map((clip) => clip.clip));
   });
 
+  it("gives each of cmu's 25 source records CMU's terms, exactly as catalogs/cmu.json states them", () => {
+    expect(CMU_LICENSE, 'catalogs/cmu.json "$sources".CMU.license').toMatch(/^CMU terms /);
+    const records = Object.entries(sets.cmu?.sources ?? {});
+    expect(records).toHaveLength(25);
+    for (const [id, record] of records) expect(record.license, `cmu: ${id}'s license`).toBe(CMU_LICENSE);
+  });
+
   it("holds Quaternius v2's 102 clips and v1's Punch_Enter in quaternius, and only v2's from shardfall", () => {
     const clips = Object.values(sets.quaternius?.clips ?? {});
     expect(clips.filter((clip) => clip.via === 'shardfall')).toHaveLength(102);
@@ -175,7 +208,8 @@ describe('data/anim/sets/', () => {
     describe(dir, () => {
       const set = sets[dir] as ClipSet;
       const files = readSetDir(join(SETS_DIR, dir));
-      const changes = source === 'shardfall' ? 'body, via marks and v1 clips' : 'alt tags';
+      const changes =
+        source === 'shardfall' ? 'body, via marks and v1 clips' : dir === 'cmu' ? 'licenses (CMU’s terms)' : 'alt tags';
 
       it(`is _set.json, catalog.tsv and ${clips} clip files, each named by its clip's slug`, () => {
         expect(set.set.toLowerCase()).toBe(dir);
@@ -224,7 +258,7 @@ describe('data/anim/sets/', () => {
         it(`deep-equals ${from}, prints the same text() with the source's codec, and repacks to these files (needs the my-3d2dge checkout)`, (context) => {
           const { MR, sets: sources, source: path } = legacy(context);
           const original = sources[dir] as unknown as ClipSet;
-          const restored = withoutAltTags(set);
+          const restored = restore(dir, set);
           expect(restored).toEqual(original);
           expect(JSON.stringify(restored)).toBe(JSON.stringify(original));
           expect(canonicalSha256(original), 'the recorded SHA-256').toBe(sha256);

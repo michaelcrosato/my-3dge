@@ -3,14 +3,15 @@
  * the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay`
  * and settings by path), starts the scene as a recorded run with its view (engine/app/headless.ts,
  * engine/app/view.ts), publishes the run's inspector as `window.__engine`, starts the renderer (WebGPU or nothing,
- * engine/gfx/renderer.ts), warms up every pipeline the view needs through both cameras (perspective and
- * orthographic), draws the first frame, and then runs the frame loop (engine/app/loop.ts): the devices sampled into
- * intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from the clock, the view
- * drawn at the clock's alpha.
+ * engine/gfx/renderer.ts) and the post-processing chain every frame and shot is drawn through
+ * (engine/gfx/post/chain.ts: the view settings `post.look`, `post.filters` and `post.show`), warms up every pipeline
+ * the view needs through both cameras (perspective and orthographic), draws the first frame, and then runs the frame
+ * loop (engine/app/loop.ts): the devices sampled into intents (engine/input/input.ts; `__engine.input` drives the same
+ * session), fixed steps from the clock, the view drawn at the clock's alpha.
  *
- * Ready or error (§8.3): `__engine.ready` turns true once the first frame is done on the GPU, and never after a
- * startup error; every failure is one record in `__engine.errors` (the log's) and shown as page text by the error
- * overlay (engine/dev/overlay.ts), so a startup crash is one line, never a hang. Without WebGPU (`GFX_NO_WEBGPU`) the
+ * Ready or error (§8.3): `__engine.ready` turns true once the first frame is done on the GPU, never after a startup
+ * error; every failure is one record in `__engine.errors` (the log's), shown as page text by the error overlay
+ * (engine/dev/overlay.ts), so a startup crash is one line, never a hang. Without WebGPU (`GFX_NO_WEBGPU`) the
  * sim still runs, and `__engine` still steps it; only `render` and `shot` throw. A frame that throws stops the loop
  * and becomes an error record too.
  *
@@ -19,8 +20,8 @@
  * frames now, `shot` shoots the view (engine/gfx/shot.ts), and `replay(text)` plays a replay drawing a frame after
  * every step (the CPU-only contract's proof, §6.7: `x replay --browser page`, tests/e2e/parity.spec.ts).
  * `?replay=<name>` plays one of `options.replays` in real time instead, from step 0, then hands back to the devices;
- * without `?scene`, the page starts the replay's own scene (when it is one of the page's), since a page draws one
- * scene and plays only its replays.
+ * without `?scene`, the page starts the replay's own scene (when it is one of the page's). The HTML/CSS overlay
+ * (engine/ui/overlay.ts, `engine.ui`, WP 6.7) shows the sim's hits as damage numbers (engine/app/damageNumbers.ts).
  *
  * Touch (WP 3.12, ADR-0021: built, not tested): the app wires the touch device (engine/input/devices/touch.ts), the
  * page's chrome, the touch layer from `touchLayout` and swiping (engine/ui/), the quality budget's pixel caps
@@ -53,7 +54,8 @@ import { createOverlay } from '../dev/overlay';
 import { createMaterialLibrary } from '../gfx/materials/library';
 import { qualityBudget, type QualitySetting } from '../gfx/quality';
 import { keepWidth } from '../gfx/resolution';
-import { createRenderer, type FrameReport, type Gfx } from '../gfx/renderer';
+import { createPost, definePostSettings, type Post } from '../gfx/post/chain';
+import { createRenderer, type FrameReport, type FrameView, type Gfx } from '../gfx/renderer';
 import { shot, shotForJson } from '../gfx/shot';
 import { connectVirtualDevice } from '../input/devices/inspector';
 import { createInput, type Input } from '../input/input';
@@ -62,6 +64,8 @@ import { createChrome } from '../ui/chrome';
 import { attachSwipes } from '../ui/swipe';
 import { createTouchLayer, getTouchLayout, type TouchLayer, type TouchLayout } from '../ui/touch';
 import type { Inspector } from '../dev/inspector';
+import { createOverlay as createUi, type Overlay } from '../ui/overlay';
+import { createDamageNumbers, type DamageNumbers } from './damageNumbers';
 import { createAppHost, type AppRun, type Drawing } from './headless';
 import { createLoop, type Loop } from './loop';
 import { createPlayback, type Playback } from './playback';
@@ -119,6 +123,8 @@ export interface Engine {
   readonly ready: boolean;
   /** What the query asked for; null when it could not be read. */
   readonly routes: Routes | null;
+  /** The game's HTML/CSS overlay over the canvas (engine/ui/overlay.ts); null until the renderer started. */
+  readonly ui: Overlay | null;
   /** Stops the frame loop. */
   stop(): void;
 }
@@ -188,6 +194,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   let routes: Routes | null = null;
   let run: AppRun | null = null;
   let gfx: Gfx | null = null;
+  let post: Post | null = null;
   let loop: Loop | null = null;
   const fail = (error: unknown, code = 'APP_START'): ErrorRecord => {
     const record = log.error(...recordOf(error, code), error);
@@ -214,6 +221,9 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     get routes() {
       return routes;
     },
+    get ui() {
+      return ui;
+    },
     stop: () => loop?.stop(),
   };
 
@@ -222,6 +232,8 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   let layer: TouchLayer | null = null;
   let playback: Playback | null = null;
   let draws = 0;
+  let ui: Overlay | null = null;
+  let numbers: DamageNumbers | null = null;
   const aspect = () => {
     const css = gfx?.resolution.current?.css;
     return css && css.width > 0 && css.height > 0 ? css.width / css.height : HEADLESS_ASPECT;
@@ -239,10 +251,12 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     layer?.update({ on, stick: touch?.stickView() ?? null, down: touch?.down() ?? [], covered, width, height });
     gfx!.resolution.cap(qualityBudget(settingsNow.get<QualitySetting>('quality'), on));
   };
+  /** `view` drawn through the post chain, once there is one. */
+  const through = (view: FrameView): FrameView => (post ? post.view(view) : view);
   /** Warms up through both cameras, so switching projection later builds nothing. */
   const warmBoth = async () => {
     const view = viewNow();
-    for (const camera of view.cameras) await gfx!.warmup.run({ scene: view.stage.scene, camera });
+    for (const camera of view.cameras) await gfx!.warmup.run(through({ scene: view.stage.scene, camera }));
   };
   const frameNow = (alpha: number, dt: number): FrameReport =>
     run!.meter.time('render', () => {
@@ -251,7 +265,13 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
       const cameraInput = input?.camera();
       const view = viewNow().frame({ alpha, dt, aspect: aspect(), input: cameraInput });
       keepWidth(view.camera, aspect());
-      return gfx!.frame(view);
+      const { shake } = viewNow().stage.fx.effects;
+      shake.apply(view.camera);
+      const report = gfx!.frame(through(view));
+      shake.restore(view.camera);
+      numbers?.frame(run!.session.world);
+      ui?.update(view.camera, dt);
+      return report;
     });
   const settle = async (alpha: number, dt: number): Promise<FrameReport> => {
     for (let tries = 0; tries < TRIES; tries++) {
@@ -286,7 +306,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     async shot(shotOptions) {
       const view = viewNow().frame({ alpha: 1, dt: 0, aspect: aspect() });
       keepWidth(view.camera, aspect());
-      return shotForJson(await shot(gfx!, view, shotOptions));
+      return shotForJson(await shot(gfx!, through(view), shotOptions));
     },
     async draw() {
       if (!gfx) return;
@@ -300,6 +320,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   };
 
   try {
+    definePostSettings(registry);
     for (const [id, level] of Object.entries(options.levels ?? {})) {
       if (!registry.has('level', id)) defineLevel(id, level, registry);
     }
@@ -339,8 +360,11 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     fail(error);
     return engine;
   }
+  numbers = createDamageNumbers((ui = createUi({ canvas: options.canvas })));
   try {
     gfx.renderer.shadowMap.enabled = true;
+    post = createPost(gfx, { settings: currentSettings(() => started), registry, log });
+    post.attach(gfx.warmup);
     viewNow().stage.register(gfx.warmup);
     await warmBoth();
     await settle(1, 0);
@@ -351,7 +375,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   const step = (intents: Record<string, unknown>) => {
     if (playback && !playback.done) {
       playback.step(started.session);
-      started.view?.stepped();
+      started.stepped(); // its hit-stops reach the clock as in live play
     } else {
       playback = null;
       started.stepOnce(intents);

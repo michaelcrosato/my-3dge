@@ -11,9 +11,15 @@
  *
  * Measured on r182 (WP 2.1): `compileAsync` compiles for the render target set on the renderer, and `render()` draws
  * a scene into an internal half-float target whenever it converts colours for the screen, so a plain `compileAsync`
- * built 4 pipelines `render()` never used and missed 4 it did. The warm-up therefore compiles for the target the
- * frame really draws the scene into: `view.target` when given (a post pass's `renderTarget`), else a 1 × 1 stand-in
- * with the internal target's attachments, which shares its render context; the warm frame catches the rest.
+ * built 4 pipelines `render()` never used and missed 4 it did. The warm-up therefore compiles for each target the
+ * frame really draws the scene into, its passes (`view.passes`): a post pass's `renderTarget`, set up by the pass's
+ * `enter` (its MRT on), or, by default, what `render()` draws into: a 1 × 1 stand-in with the internal target's
+ * attachments, which shares its render context. The warm frame catches the rest.
+ *
+ * Compile, never draw, what `compileAsync` reaches. Measured on SwiftShader (gate G6's review): a pipeline the warm
+ * frame builds is built on its own, one after another, about 45 ms each, while `compileAsync` builds its pipelines
+ * side by side, about 7 ms each; the Stress Box hall's warm-up through a post chain whose plain frames were left to
+ * the warm frame built 155 of its pipelines there, and its warm frame took 6 to 7 s a camera.
  *
  * Drawable without showing: each registered object, and each hidden ancestor of it, is made visible, and the
  * topmost one made visible is scaled to nothing; an `InstancedMesh` with no instances gets one, at zero scale; every
@@ -58,14 +64,28 @@ export interface WarmupEntry {
   objects(): readonly Object3D[];
 }
 
-/** What a warm-up draws: the scene, its camera, how the frame draws it, and what it draws the scene into. */
+/** One way a frame draws the scene: into a render target, with the renderer set up for it. */
+export interface WarmupPass {
+  /** The render target (a post pass's `renderTarget`); what `render()` draws into when left out. */
+  target?: RenderTarget | null;
+  /** Sets the renderer up as the frame does for this target (a post pass turns its MRT on), once it is set. */
+  enter?(): void;
+  /** Puts back what `enter` set, after compiling for this target. */
+  leave?(): void;
+}
+
+/** What a warm-up draws: the scene, its camera, how the frame draws it, and every way it draws the scene. */
 export interface WarmupView {
   scene: Scene;
   camera: Camera;
   /** The frame's own drawing (a post pass's `render()`); `renderer.render(scene, camera)` by default. */
   draw?: () => void;
-  /** The render target the scene is drawn into (a post pass's `renderTarget`); what `render()` uses by default. */
-  target?: RenderTarget | null;
+  /**
+   * Every way the frame draws the scene (a post chain's scene pass, then `render()`'s own target for its plain frames),
+   * each compiled for: the first step by step (the scene, then each entry), every other once, with every entry
+   * drawable. One pass into what `render()` draws into by default.
+   */
+  passes?: readonly WarmupPass[];
 }
 
 /** Progress, after each step: steps done of the total, and the step just done. */
@@ -185,9 +205,9 @@ export function createWarmup(options: { renderer: WebGPURenderer; counter: Pipel
   const sorted = <T>(map: Map<string, T>) => [...map.keys()].sort();
   const builtNow = () => counter.count().built;
 
-  /** The target the frame draws the scene into, when it is not the canvas. */
-  const targetOf = (view: WarmupView): RenderTarget | null => {
-    if (view.target !== undefined) return view.target;
+  /** The target `pass` draws the scene into, when it is not the canvas; asked before any target is set. */
+  const targetOf = (pass: WarmupPass): RenderTarget | null => {
+    if (pass.target !== undefined) return pass.target;
     if (!renderer.needsFrameBufferTarget) return null;
     standIn ??= new RenderTarget(1, 1, {
       type: renderer.getOutputBufferType(),
@@ -246,7 +266,7 @@ export function createWarmup(options: { renderer: WebGPURenderer; counter: Pipel
     },
   };
 
-  /** One warm-up: compile step by step, draw the warm frame, put everything back, report. */
+  /** One warm-up: compile for each pass (the first step by step), draw the warm frame, put everything back, report. */
   async function warm(view: WarmupView, onProgress?: (progress: WarmupProgress) => void): Promise<WarmupReport> {
     const { scene, camera } = view;
     const startedAt = performance.now();
@@ -255,19 +275,32 @@ export function createWarmup(options: { renderer: WebGPURenderer; counter: Pipel
     began = before;
     const key = warmup.key(scene);
     const ids = sorted(entries);
-    const total = ids.length + 2;
+    const passes: readonly WarmupPass[] = view.passes?.length ? view.passes : [{}];
+    const total = ids.length + passes.length + 1;
     const undo = [unculled(scene)];
     const progress = (done: number, step: string) => onProgress?.({ done, total, step });
     try {
+      const targets = passes.map(targetOf);
       const previous = renderer.getRenderTarget();
-      renderer.setRenderTarget(targetOf(view));
       try {
-        await renderer.compileAsync(scene, camera);
-        progress(1, 'scene');
-        for (const [i, id] of ids.entries()) {
-          for (const object of entries.get(id)!.objects()) undo.push(makeDrawable(object, scene));
-          await renderer.compileAsync(scene, camera);
-          progress(i + 2, id);
+        for (const [p, pass] of passes.entries()) {
+          renderer.setRenderTarget(targets[p]);
+          pass.enter?.();
+          try {
+            await renderer.compileAsync(scene, camera);
+            if (p > 0) {
+              progress(ids.length + 1 + p, `pass ${p + 1}`);
+              continue;
+            }
+            progress(1, 'scene');
+            for (const [i, id] of ids.entries()) {
+              for (const object of entries.get(id)!.objects()) undo.push(makeDrawable(object, scene));
+              await renderer.compileAsync(scene, camera);
+              progress(i + 2, id);
+            }
+          } finally {
+            pass.leave?.();
+          }
         }
       } finally {
         renderer.setRenderTarget(previous);

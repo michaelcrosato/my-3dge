@@ -10,7 +10,8 @@
  * player actor (in id order) as the last draw put it: its feet and, with a puppet, its skeleton, world pose and eye
  * (the head socket, engine/gfx/cameras/first.ts's `eyePoint`), which the cameras follow (engine/app/view.ts).
  * `cull(eye)` hides the player's body from a first-person camera at `eye` (`nearBodyCull`: all but the hands, and any
- * part near the eye) and returns the joints it hid; `cull(null)` shows it whole.
+ * part near the eye) and returns the joints it hid; `cull(null)` shows it whole. `trails()` is each puppet's trail as
+ * its last pose sampled it (WP 6.7: what its strike sweeps, oldest first), which the stage's effects draw as ribbons.
  *
  * A puppet is named `actor#<id>`, as its stand-in would be, and carries `userData.entity`; the player's also carries
  * `userData.protagonist`, so the ID pass reports "the hero" (engine/gfx/idpass.ts).
@@ -30,7 +31,7 @@
  * @see engine/gfx/puppets/actors.test.ts
  */
 import { Group } from 'three/webgpu';
-import { AnimatorPool, type AnimatorData } from '../../anim/character';
+import { AnimatorPool, type AnimatorData, type TrailSample } from '../../anim/character';
 import type { WorldPose } from '../../anim/fk';
 import type { JointName, Skeleton } from '../../anim/skeleton';
 import { lerpAng, Vector3 } from '../../core/math';
@@ -85,6 +86,8 @@ export interface ActorPuppets {
   player(): PlayerView | null;
   /** Whether the last capture held a player actor. */
   hasPlayer(): boolean;
+  /** Each puppet's trail as its last pose sampled it, by entity id (its animator's: oldest first, empty for none). */
+  trails(): ReadonlyMap<number, readonly TrailSample[]>;
   /** Hides from a first-person camera at `eye` the player's body but its hands; null shows it. Returns what it hid. */
   cull(eye: Vec3 | null): JointName[];
   /** Registers the puppets with `warmup`, and their builds with its shader key. */
@@ -102,6 +105,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
   const held = new Map<number, Held>();
   const puppets = new Map<number, Puppet>();
   const pool = new AnimatorPool();
+  const trails = new Map<number, readonly TrailSample[]>();
   const at = new Vector3();
   let step = 1 / 60;
   let shown: PlayerView | null = null;
@@ -146,6 +150,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
         if (drawn.has(id)) continue;
         puppet.dispose();
         puppets.delete(id);
+        trails.delete(id);
       }
       pool.prune((id) => drawn.has(id));
       return drawn;
@@ -160,6 +165,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
         if (puppet && data) {
           const animator = pool.get(id, data, { dt: step }).pose({ at, yaw: lerpAng(a.yaw, b.yaw, k) });
           puppet.setPose(animator.body.pose);
+          trails.set(id, animator.trail);
           const { skeleton, world } = animator.body;
           posed = { skeleton, world, eye: eyePoint(skeleton, world) };
         }
@@ -168,6 +174,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
       root.updateMatrixWorld(true);
     },
     player: () => shown,
+    trails: () => trails,
     hasPlayer: () => players > 0,
     cull(eye) {
       const hide = eye && shown?.posed ? nearBodyCull(shown.posed.skeleton, shown.posed.world, eye) : [];
@@ -187,6 +194,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
       for (const puppet of puppets.values()) puppet.dispose();
       puppets.clear();
       held.clear();
+      trails.clear();
       shown = null;
     },
   };

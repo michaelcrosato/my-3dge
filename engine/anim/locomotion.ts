@@ -27,6 +27,7 @@
 import { MathUtils, Quaternion, Vector3 } from '../core/math';
 import { B, sideSign, turnRight, type LimbSide, type Sided } from './authoring';
 import type { Build } from './builds';
+import type { ArmState } from './strike';
 
 /** Every constant of the gait, idle, lean and arm swing; lengths in metres (the source's units ÷ 16). */
 export const GAIT = {
@@ -132,7 +133,7 @@ export interface HumanoidWeights {
   block: number;
 }
 
-/** A move's body motion now, eased toward its targets: the slot moves (WP 6.1) fill. */
+/** A move's body motion now, eased toward its targets (a move's arm path asks for them, strike.ts `stepArm`). */
 export interface BodyMotion {
   /** Forward step of the pelvis and the lead foot, metres. */
   lunge: number;
@@ -184,6 +185,8 @@ export interface EffectorContext {
   readonly shoulders: Sided<Vector3>;
   /** The hip joints, placed by `hipTarget`. */
   readonly hips: Sided<Vector3>;
+  /** A move's arm path (strike.ts), laid over the hands, the kicking foot and the blade; none at rest. */
+  readonly arm?: Readonly<ArmState>;
 }
 
 /** The share of a full crouch now: the held pose, a move's, or the knees buckling while the body falls or rises. */

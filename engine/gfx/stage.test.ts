@@ -87,7 +87,7 @@ describe('createStage', () => {
     stage.dispose();
   });
 
-  it("registers the ground, the level and the stand-ins, with the stand-ins' looks in the shader key", () => {
+  it("registers the ground, the level, the stand-ins and the effects, with the stand-ins' looks in the shader key", () => {
     const registry = kinds();
     const stage = createStage({ level: room, materials: createMaterialLibrary(), registry });
     const ids: string[] = [];
@@ -97,7 +97,16 @@ describe('createStage', () => {
       keyPart: (name: string, part: () => string) => (parts.set(name, part), { dispose: () => parts.delete(name) }),
     };
     const registration = stage.register(warmup);
-    expect(ids).toEqual(['stage:ground', 'stage:level', 'stage:cutaway', 'stage:stand-ins', 'stage:actors']);
+    expect(ids).toEqual([
+      'stage:ground',
+      'stage:level',
+      'stage:cutaway',
+      'stage:stand-ins',
+      'stage:actors',
+      'fx:sprites',
+      'fx:decals',
+      'fx:ribbons',
+    ]);
     stage.capture([{ id: 1, dot: { x: 0, z: 0 } }]);
     expect(parts.get('stage:stand-ins')!()).toBe('0.5|material:default');
     registration.dispose();

@@ -1,0 +1,24 @@
+/**
+ * @file The action `action:{{name}}`: what sequence it is (replace this text; `x docs` puts the first sentence in INDEX).
+ *
+ * Invariants: each beat lasts its seconds and eases its channels to its own over them; effector targets are
+ * `[forward, right, up]` metres, the hands' and the gaze's from the shoulder centre, the soles' from the ground; a beat
+ * held `until: 'next'` or a loop needs `check.signals` (node x describe action lists the fields; data/anim/actions/
+ * holds the engine's set, each a worked example).
+ *
+ * @example
+ * {{name}}.id; // 'action:{{name}}'
+ * @see {{id}}.test.ts
+ */
+import { defineAction } from '../../../engine/sim-api';
+
+/** The action `action:{{name}}`: replace this sentence with what sequence it is. */
+export const {{name}} = defineAction('action:{{name}}', {
+  desc: 'Replace with what it is and where its timing comes from.',
+  beats: [
+    { name: 'wind', seconds: 0.15, motion: { lean: 0.15 } },
+    { name: 'reach', seconds: 0.2, effectors: { handR: [0.4, 0.15, -0.1] }, events: [{ type: 'contact', at: 1 }] },
+    { name: 'hold', seconds: 0.25, effectors: { handR: [0.4, 0.15, -0.1] } },
+    { name: 'recover', seconds: 0.2, cancel: { by: ['any'] } },
+  ],
+});

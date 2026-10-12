@@ -8,7 +8,7 @@
  *   `out/ci/logs/<n>-<step>.log`, never printed. A failed `npm ci` skips the rest; after any other failure the next
  *   steps still run, so one run names every failure. The GitHub workflow, once the owner enables Actions, runs the
  *   same list: its unit test compares against `CI_STEPS`. The Vercel build is not a step (ADR-0021).
- * - **T2** runs in full while its last full run (`out/ci/t2-full.json`) stayed within its 6-minute budget, and when
+ * - **T2** runs in full while its last full run (`out/ci/t2-full.json`) stayed within its budget (tiers.ts), and when
  *   no full run was measured yet; otherwise it runs what tiers.ts's `plan()` selects, and nothing when that selects
  *   nothing.
  * - **Budgets:** T0 is timed; T1 and T2 take the duration their JSON report records when the step rewrote it, else

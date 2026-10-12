@@ -10,7 +10,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 2 (various expressions and human behaviors)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=2",
       "rest": {
         "H0": 962.61,
@@ -45,7 +45,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 120 (Various Style Walks)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=120",
       "rest": {
         "H0": 930.84,
@@ -80,7 +80,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 13 (various everyday behaviors)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=13",
       "rest": {
         "H0": 1026.32,
@@ -115,7 +115,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 90 (cartwheels; acrobatics; dances)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=90",
       "rest": {
         "H0": 994.64,
@@ -150,7 +150,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 49 (modern dance, gymnastics)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=49",
       "rest": {
         "H0": 929.71,
@@ -185,7 +185,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 9 (run)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=9",
       "rest": {
         "H0": 970.49,
@@ -220,7 +220,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 139 (Action Walks, sneaking, wounded, looking around)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=139",
       "rest": {
         "H0": 911.57,
@@ -255,7 +255,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 91 (walks and turns)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=91",
       "rest": {
         "H0": 840.23,
@@ -290,7 +290,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 136 (Weird Walks)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=136",
       "rest": {
         "H0": 921.26,
@@ -325,7 +325,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 132 (Varying Weird Walks)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=132",
       "rest": {
         "H0": 981.69,
@@ -360,7 +360,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 127 (Action Adventure Obstacles, running, jumping, ducking, rolling)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=127",
       "rest": {
         "H0": 937.01,
@@ -395,7 +395,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 128 (Action Adventure Motions running, ducking, rolling, stopping)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=128",
       "rest": {
         "H0": 981.15,
@@ -430,7 +430,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 85 (jumps; flips; breakdance)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=85",
       "rest": {
         "H0": 929.37,
@@ -465,7 +465,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 144 (punching female)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=144",
       "rest": {
         "H0": 853.75,
@@ -500,7 +500,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 135 (Martial Arts Walks)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=135",
       "rest": {
         "H0": 927.44,
@@ -535,7 +535,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 140 (Getting Up From Ground)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=140",
       "rest": {
         "H0": 902.66,
@@ -570,7 +570,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 77 (careful actions)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=77",
       "rest": {
         "H0": 921.57,
@@ -605,7 +605,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 79 (actor everyday activities)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=79",
       "rest": {
         "H0": 1006.62,
@@ -640,7 +640,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 80 (assorted motions)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=80",
       "rest": {
         "H0": 951.57,
@@ -675,7 +675,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 143 (General Subject Capture)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=143",
       "rest": {
         "H0": 856.46,
@@ -710,7 +710,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 141 (General Subject Capture)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=141",
       "rest": {
         "H0": 859.32,
@@ -745,7 +745,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 104 (motion)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=104",
       "rest": {
         "H0": 934.91,
@@ -780,7 +780,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 54 (animal behaviors (pantomime - human subject)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=54",
       "rest": {
         "H0": 885.13,
@@ -815,7 +815,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 29 (recreation, nursery rhymes, animal behaviors (pantomime - human subject)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=29",
       "rest": {
         "H0": 984.5,
@@ -850,7 +850,7 @@
       "rig": "cmu",
       "label": "CMU motion capture, subject 87 (acrobatics)",
       "origin": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu). The database was created with funding from NSF EIA-0196217.",
-      "license": "free for all uses (may be copied, modified, or redistributed without permission)",
+      "license": "CMU terms (data/anim/SOURCES.md): \"The motion capture data may be copied, modified, or redistributed without permission.\" \"You may include this data in commercially-sold products, but you may not resell this data directly, even in converted form.\" Acknowledge it with: \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
       "url": "http://mocap.cs.cmu.edu/search.php?subjectnumber=87",
       "rest": {
         "H0": 858.01,

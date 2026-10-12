@@ -50,6 +50,21 @@ describe('x set', () => {
     expect(lines.some((line) => line.startsWith('no inspect session: start one with node x inspect'))).toBe(true);
   });
 
+  it('reaches the post chain’s settings, which every createEngine page draws through (WP 7.4)', async () => {
+    /** The value of `path` in the page URL `x set` printed. */
+    const urlValue = (lines: string[], path: string) =>
+      new URL(lines.find((line) => line.startsWith('page: '))!.slice(6), 'http://box/').searchParams.get(path);
+    const look = await set('post.look', 'look:game-boy');
+    expect(look.code).toBe(0);
+    expect(look.lines).toContain('URL parameter: ?post.look=look%3Agame-boy');
+    expect(urlValue(look.lines, 'post.look'), 'the page URL, encoded once').toBe('look:game-boy');
+    const filters = '{"pixel":{"scope":"environment","size":6}}';
+    const layered = await set('post.filters', filters);
+    expect(layered.code).toBe(0);
+    expect(urlValue(layered.lines, 'post.filters')).toBe(filters);
+    expect((await set('post.show', 'depth')).code).toBe(2);
+  });
+
   it('refuses an unknown setting, naming the closest, and a bad value, naming the rule (exit 2)', async () => {
     const unknown = await set('box.room.sped', '3');
     expect(unknown.code).toBe(2);

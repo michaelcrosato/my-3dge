@@ -7,6 +7,30 @@ Every code the engine prints, as `[CODE] message`, with its fix. Each module reg
 
 ## anim
 
+### ANIM_ACTION_NO_CLIPS
+
+- Message: `action {action} plays clips ({clips}), but its Actions has no clip layer`
+- Fix: make it with one: new Actions({ clips }), the ClipLayer in the animator's clips slot, with the sets those clips come from
+- Registered in: [`engine/anim/actions.ts` line 66](../engine/anim/actions.ts)
+
+Thrown by `Actions.play` (engine/anim/actions.ts) for an action with a `clip` beat when the player was made without `clips`: the beat would play nothing, silently.
+
+### ANIM_BAD_CHAIN
+
+- Message: `a chain cannot have {field} {value}`
+- Fix: give a chain n ≥ 2 points, seg > 0 metres and iterations ≥ 1
+- Registered in: [`engine/anim/secondary.ts` line 52](../engine/anim/secondary.ts)
+
+Thrown by `new Chain` and `new Cape` (engine/anim/secondary.ts) for fewer than 2 points, a segment that is not a positive length, or no constraint pass: such a chain has nothing to hang or never holds its length.
+
+### ANIM_BAD_HIT_KEY
+
+- Message: `hits keyed a target by {key}, not a finite number, so it could not tell the targets apart`
+- Fix: give each target a numeric id field, or pass hits a fourth argument that returns one: (t) => t.entity
+- Registered in: [`engine/anim/timeline.ts` line 43](../engine/anim/timeline.ts)
+
+Thrown by `Attack.hits` and `Combo.hits` (engine/anim/timeline.ts), which hit each target once per swing by its key: its `id` field, or what the keying function given returns. Targets without one would all share the key `undefined`, so only the first would ever be hit.
+
 ### ANIM_BAD_LAYER
 
 - Message: `layer {name}: {problem}`
@@ -29,7 +53,7 @@ Raised by `boneMask` (engine/anim/skeleton.ts) for a weight that is not a number
 - Fix: give {name} {expected}
 - Registered in: [`engine/anim/states.ts` line 42](../engine/anim/states.ts)
 
-Raised once per word by the animator (engine/anim/character.ts `step`, through `checkBodyStates`) for a body state whose value is of the wrong kind: a number for `dash`, a trail that does not exist. `BODY_STATES` (engine/anim/states.ts) gives each word its kind.
+Raised once per word by the animator (engine/anim/character.ts `step`, through `checkBodyStates`) for a body state whose value is of the wrong kind: a number for `dash`, a trail that does not exist. `BODY_STATES` (engine/anim/states.ts) gives each word its kind. Raised once too by a humanoid playing a move told in `body` (engine/anim/strike.ts `stepArm`) whose phase is not wind, active or recover, or whose share `u` is not finite: data or the console, which TypeScript does not check; the move does not play.
 
 ### ANIM_BAD_TARGET
 
@@ -129,6 +153,54 @@ Reported by `validateClip` (engine/anim/clip/validate.ts) for a twist that chang
 - Fix: use only the fields {fields}
 - Registered in: [`engine/anim/clip/validate.ts` line 107](../engine/anim/clip/validate.ts)
 
+### ANIM_EMPTY_COMBO
+
+- Message: `a Combo was made from no moves, so it has no hit to play`
+- Fix: pass Combo at least one move (an id such as "jab", a Move, a spec or an Attack); check a list read from data before making the combo
+- Registered in: [`engine/anim/timeline.ts` line 48](../engine/anim/timeline.ts)
+
+Thrown by `new Combo(moves)` (engine/anim/timeline.ts) when `moves` is empty: `press`, `current`, `save` and `load` all play or read one of its hits.
+
+### ANIM_LAYER_BUILD
+
+- Message: `the clip layer measures paces and root motion on {layer}, but its animator plays {animator}`
+- Fix: make the layer with the animator's build: new ClipLayer({ library, build: animator.body.build })
+- Registered in: [`engine/anim/clip/library.ts` line 52](../engine/anim/clip/library.ts)
+
+Raised by the clip layer (engine/anim/clip/layer.ts) when it poses an animator of another build. The sim’s step measures walk paces and root motion on the layer’s own build, so on another one they would be off by the hip-height ratio and the feet would slide.
+
+### ANIM_NO_REST
+
+- Message: `set {set} has no rest body for clip {name} (source {src})`
+- Fix: give the set a sources entry for that source, with the rest body its importer measured
+- Registered in: [`engine/anim/clip/library.ts` line 47](../engine/anim/clip/library.ts)
+
+Raised by the clip library (engine/anim/clip/library.ts) when a clip names a source the set lacks, or the set has no sources: a clip decodes only on the rest body it was measured on.
+
+### ANIM_NOT_PRECISE
+
+- Message: `strikeSegment was given an animator without preciseHits: its pose is the view’s, not the sim’s`
+- Fix: make the animator (an actor’s anim) with preciseHits: true, so the sim poses it every tick; or pass a Humanoid the sim updates itself
+- Registered in: [`engine/anim/moves.ts` line 41](../engine/anim/moves.ts)
+
+Thrown by `strikeSegment` (engine/anim/moves.ts) for an `Animator` without `preciseHits`. A strike’s span is read from a pose, and the sim poses only animators with `preciseHits` (engine/sim/actors.ts, the system `actors.pose`); any other animator holds whatever the view last drew, nothing headless, so hits read from it would depend on rendering and visibility.
+
+### ANIM_UNKNOWN_BEAT
+
+- Message: `action {action} has no beat {name}{suggestion}`
+- Fix: go to one of its beats: {names}
+- Registered in: [`engine/anim/actions.ts` line 61](../engine/anim/actions.ts)
+
+Thrown by `Actions.go` (engine/anim/actions.ts) for a beat name the playing action lacks, or when nothing plays. The message names the closest beats.
+
+### ANIM_UNKNOWN_CLIP
+
+- Message: `set {set} has no clip {name}{suggestion}`
+- Fix: use one of its clips (library.names lists them; a page's library may need that set loaded)
+- Registered in: [`engine/anim/clip/library.ts` line 42](../engine/anim/clip/library.ts)
+
+Raised by the clip library and the clip layer (engine/anim/clip/library.ts, layer.ts) for a clip name the loaded sets lack. The message names the closest names.
+
 ### ANIM_UNKNOWN_JOINT
 
 - Message: `{name} is not a {what} of the humanoid skeleton{suggestion}`
@@ -141,7 +213,7 @@ Raised by `jointIndex`, `socketIndex`, `boneMask` and the pose functions that ta
 
 - Message: `the rigid pair names {name}, which is not a joint, a socket or the root{suggestion}`
 - Fix: name joints (JOINTS), sockets (SOCKETS) or "root" in rigid pairs
-- Registered in: [`engine/anim/check.ts` line 44](../engine/anim/check.ts)
+- Registered in: [`engine/anim/check.ts` line 60](../engine/anim/check.ts)
 
 Raised by `animCheck` (engine/anim/check.ts) for a rigid pair naming a point the skeleton lacks.
 
@@ -149,7 +221,7 @@ Raised by `animCheck` (engine/anim/check.ts) for a rigid pair naming a point the
 
 - Message: `{name} is not a humanoid {what}{suggestion}; it is ignored`
 - Fix: use one of: {names}
-- Registered in: [`engine/anim/poses.ts` line 45](../engine/anim/poses.ts)
+- Registered in: [`engine/anim/poses.ts` line 46](../engine/anim/poses.ts)
 
 Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `stance` or `weapon` it does not know. The message names the closest names; `POSES`, `STANCES` and `WEAPONS` (engine/anim/poses.ts) list them all. An unknown weapon holds nothing.
 
@@ -173,43 +245,43 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `a frame threw, so the loop stopped: {message}`
 - Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
-- Registered in: [`engine/app/engine.ts` line 78](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 82](../engine/app/engine.ts)
 
 ### APP_NO_FRAME
 
 - Message: `no frame was drawn in {tries} tries: the warm-up never finished`
 - Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 86](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 90](../engine/app/engine.ts)
 
 ### APP_NO_LEVEL
 
 - Message: `the scene {scene} loads the level {level}, which is not registered, so its view cannot be built`
 - Fix: register the level's text before the view starts: in a page, import text from './levels/<name>.txt?raw' and call defineLevel('{level}', { text, file }); in Node, read the file and do the same
-- Registered in: [`engine/app/view.ts` line 50](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 56](../engine/app/view.ts)
 
 ### APP_NO_REPLAY
 
 - Message: `the page has no replay {name}`
 - Fix: use one of: {names}
-- Registered in: [`engine/app/engine.ts` line 82](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 86](../engine/app/engine.ts)
 
 ### APP_NO_VIEW
 
 - Message: `{member} needs the scene drawn as a view, and this engine has none`
 - Fix: start it with createHeadless({ scene, view: true }) in Node; a page always has one
-- Registered in: [`engine/app/view.ts` line 54](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 60](../engine/app/view.ts)
 
 ### APP_NOT_HEADLESS
 
 - Message: `headlessHost was given {value}, not a headless engine`
 - Fix: pass the object createHeadless resolved to
-- Registered in: [`engine/app/headless.ts` line 58](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 63](../engine/app/headless.ts)
 
 ### APP_OTHER_SCENE
 
 - Message: `this engine draws {shown}, so it cannot start {scene}`
 - Fix: play {scene} in its own page (labs/<name>/?scene=<name>), or headless: createHeadless({ scene: '{scene}' })
-- Registered in: [`engine/app/headless.ts` line 62](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 67](../engine/app/headless.ts)
 
 ### APP_PLAY_SETTING
 
@@ -221,7 +293,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 74](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 78](../engine/app/engine.ts)
 
 ## audio
 
@@ -599,13 +671,21 @@ Advice from `requestDevice` (engine/gfx/caps.ts): the device is made with every 
 
 - Message: `the warm-up already has an entry {id}`
 - Fix: dispose the first registration (register returns { dispose }), or register the second under another id
-- Registered in: [`engine/gfx/warmup.ts` line 50](../engine/gfx/warmup.ts)
+- Registered in: [`engine/gfx/warmup.ts` line 56](../engine/gfx/warmup.ts)
 
 ### GFX_EMPTY_PALETTE
 
 - Message: `{what} lists no colours`
 - Fix: give it at least one hex colour ('#6b6f5a')
 - Registered in: [`engine/gfx/textures/codes.ts` line 21](../engine/gfx/textures/codes.ts)
+
+### GFX_FLOOR_BAKE
+
+- Message: `level {level}'s floor cannot bake at {density} texels per metre: {reason}`
+- Fix: give levelFloorTexture a density that makes each {tile} m tile a whole number of texels and the floor at most 4096 texels on a side ({suggest} texels per metre fits)
+- Registered in: [`engine/gfx/textures/contactShadow.ts` line 53](../engine/gfx/textures/contactShadow.ts)
+
+Raised by `levelFloorTexture` (engine/gfx/textures/contactShadow.ts) when a tile would not be a whole number of texels (texels would straddle tiles, and the contact shadows would not line up with the walls) or the floor would be more than 4096 texels on a side, the largest texture a bake makes.
 
 ### GFX_GPU_ERROR
 
@@ -663,6 +743,14 @@ Advice from `createLevelMeshes` (engine/gfx/level/meshes.ts) when a glyph names 
 
 Advice from the feature registry (engine/gfx/features.ts) when the device has no `float32-filterable`: three.js r182 then samples 32-bit float textures unfiltered.
 
+### GFX_NO_MANNEQUIN
+
+- Message: `set {set} has no {missing} to make the mannequin from`
+- Fix: pass the joined quaternius set (data/anim/sets/quaternius/), the only one with a body
+- Registered in: [`engine/gfx/puppets/bodies/mannequin.ts` line 40](../engine/gfx/puppets/bodies/mannequin.ts)
+
+Raised by `defineMannequin` (engine/gfx/puppets/bodies/mannequin.ts) for a set without a `body` or without the rest body it names.
+
 ### GFX_NO_TIMESTAMPS
 
 - Message: `{feature} is off: {reason}; {downgrade}`
@@ -703,11 +791,43 @@ Advice from an outline shell's push (engine/gfx/materials/outline.ts), once, whe
 
 Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipelines` no longer has r182's shape, usually after a three.js upgrade: the count of pipelines three.js keeps cached is then unknown (null). Builds are counted at the device and stay exact.
 
+### GFX_POST_FEW_LEVELS
+
+- Message: `{where} asks for {levels} levels per channel; the chain draws 8`
+- Fix: posterize with 0 (off) or 8 levels and more: fewer shift the hue of dull colours (shardfall measured a grey floor turning pink)
+- Registered in: [`engine/gfx/post/chain.ts` line 78](../engine/gfx/post/chain.ts)
+
+Advice from the post chain when `post.filters` sets 1–7 levels; looks are checked when they are defined.
+
+### GFX_POST_FLAG_SLOTS
+
+- Message: `{missed} objects draw as the environment: the flag table has {slots} slots, all taken`
+- Fix: draw fewer separate objects (instance or merge them); slots come back as their objects are collected
+- Registered in: [`engine/gfx/post/chain.ts` line 83](../engine/gfx/post/chain.ts)
+
+Advice from the post chain: more live drawable objects than the fixed MRT’s flag table holds (engine/gfx/post/mrt.ts).
+
+### GFX_POST_NO_BLOOM
+
+- Message: `bloom is off at the {tier} quality tier: {look} draws without its glow`
+- Fix: raise the view setting quality to 'medium' or 'high' to see the glow; nothing else about the look changes
+- Registered in: [`engine/gfx/post/chain.ts` line 73](../engine/gfx/post/chain.ts)
+
+Advice from the post chain (engine/gfx/post/chain.ts): the look asks for bloom, which the quality tier turns off (WP 3.12).
+
+### GFX_POST_NO_STYLES
+
+- Message: `{look} asks for the material style {style}, but the chain has no style set: it draws only its filters`
+- Fix: give createPost a style set (createStyleSet, WP 7.2) as options.styles, attached to the warm-up, so looks change the materials too
+- Registered in: [`engine/gfx/post/chain.ts` line 88](../engine/gfx/post/chain.ts)
+
+Advice from the post chain (engine/gfx/post/chain.ts): a look with a material style, drawn by a chain made without `styles`.
+
 ### GFX_RIG_BODY
 
 - Message: `rig body {body}, part {part}: {problem}`
 - Fix: {fix}
-- Registered in: [`engine/gfx/puppets/crowd.ts` line 56](../engine/gfx/puppets/crowd.ts)
+- Registered in: [`engine/gfx/puppets/crowd.ts` line 58](../engine/gfx/puppets/crowd.ts)
 
 Raised by `createCrowd` (engine/gfx/puppets/crowd.ts) for a rig body whose part has an unknown shape, a slot the body lacks, a size that is not positive, or a joint the rig’s pose lacks.
 

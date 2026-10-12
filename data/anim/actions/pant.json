@@ -1,0 +1,29 @@
+{
+  "action": "pant",
+  "desc": "Panting at low health (SM64; Resident Evil's heroes): hunched with a hand on the knee, breathing hard in and out until the game ends it (finish), then straightening.",
+  "beats": [
+    {
+      "name": "hunch",
+      "seconds": 0.35,
+      "motion": { "lean": 0.35, "crouch": 0.2 },
+      "effectors": { "handL": [0.25, -0.15, -0.55] }
+    },
+    {
+      "name": "inhale",
+      "seconds": 0.35,
+      "motion": { "lean": 0.28, "crouch": 0.15 },
+      "effectors": { "handL": [0.25, -0.15, -0.55] }
+    },
+    {
+      "name": "exhale",
+      "seconds": 0.35,
+      "then": "inhale",
+      "motion": { "lean": 0.4, "crouch": 0.22 },
+      "effectors": { "handL": [0.25, -0.15, -0.55] },
+      "cancel": { "by": ["walk", "move", "action"] }
+    },
+    { "name": "straighten", "seconds": 0.3 }
+  ],
+  "exit": "straighten",
+  "check": { "signals": [{ "at": 2, "do": "finish" }], "seconds": 2.5 }
+}

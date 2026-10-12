@@ -2,7 +2,8 @@
  * @file The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports every module under `labs/box/scenes/`, so
  * a scene added there opens at `?scene=<name>` with no change here, and the box's levels, then starts the engine
  * (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays
- * offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: jump, then dash) for every scene.
+ * offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: attack, then jump, dash and the bolt) for
+ * every scene.
  * Everything else a page does (routes, the renderer, the warm-up, the frame loop, `window.__engine`, the error overlay,
  * the touch layer) is the engine's, so this file stays a list of the box's content.
  *
@@ -15,6 +16,7 @@
  * // http://127.0.0.1:5173/labs/box/?scene=room&cam=topdown&box.room.speed=3
  * // http://127.0.0.1:5173/labs/box/?scene=room-hero&cam3=chase
  * // http://127.0.0.1:5173/labs/box/?scene=hall&cam3=chase
+ * // http://127.0.0.1:5173/labs/box/?scene=fight&cam3=chase
  * // node x shot labs/box --scene room --cam iso
  */
 /// <reference types="vite/client" />

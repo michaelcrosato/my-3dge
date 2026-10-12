@@ -1,12 +1,12 @@
 /**
  * @file The cutaway (PLAN.md WP 4.4): what keeps a level's walls and pillars from hiding the play. `createCutaway(
  * meshes)` gives every level mesh part whose recipe cuts (engine/gfx/level/recipes.ts, `cut`) a twin, an instanced
- * mesh of its cut-down shape under the level's root, and `update(pose, focus)` moves each piece between the part and
- * its twin as the camera needs (`planCutaway` says how, pure and unit-tested): a wall facing the camera is cut low, a
- * pillar between the camera and the hero becomes a stump. A part's instances are its uncut cells, in order, and its
- * twin's its cut ones, so each costs its draw groups only while it has instances (`drawCalls`). Nothing changes on
- * the GPU but instance matrices, and the twins are registered with the warm-up (`register`), so turning the camera
- * builds no pipeline.
+ * mesh of its cut-down shape under the level's root with its part's slots (`instanceSlots`, which says why), and
+ * `update(pose, focus)` moves each piece between the part and its twin as the camera needs (`planCutaway` says how,
+ * pure and unit-tested): a wall facing the camera is cut low, a pillar between the camera and the hero becomes a
+ * stump. A part's instances are its uncut cells, in order, and its twin's its cut ones, so each costs its draw groups
+ * only while it has instances (`drawCalls`). Nothing changes on the GPU but instance matrices, and the twins are
+ * registered with the warm-up (`register`), so turning the camera builds no pipeline.
  *
  * The prototype cut only for its classic views and never for its 3D cameras; this asks the geometry instead, so an
  * orbit camera outside the hall cuts the walls in front of it and a chase camera inside cuts none.
@@ -35,7 +35,7 @@ import { poseForward, poseTarget, type CameraPose, type Vec3 } from './cameras/p
 import type { LevelCell } from './level/cells';
 import { meshDrawCalls, type LevelMeshes, type LevelMeshPart } from './level/meshes';
 import type { CutWhen } from './level/recipes';
-import { placeInstances } from './level/shapes';
+import { instanceSlots, placeInstances } from './level/shapes';
 import type { Warmup } from './warmup';
 
 /** A wall is cut when the cosine between its outward direction and the way to the camera is above this. */
@@ -174,7 +174,7 @@ export function createCutaway(meshes: Pick<LevelMeshes, 'root' | 'parts'>): Cuta
   const entries: Entry[] = meshes.parts
     .filter((part): part is Entry['part'] => part.cut !== null && (part.mesh as InstancedMesh).isInstancedMesh)
     .map((part) => {
-      const twin = new InstancedMesh(part.cut.geometry(), part.mesh.material, Math.max(1, part.cells.length));
+      const twin = new InstancedMesh(part.cut.geometry(), part.mesh.material, instanceSlots(part.cells.length));
       twin.name = `${part.name}:cut`;
       twin.castShadow = part.mesh.castShadow;
       twin.receiveShadow = part.mesh.receiveShadow;

@@ -1,0 +1,12 @@
+{
+  "scene": "fx",
+  "page": {
+    "budgets": {
+      "drawCalls": 7,
+      "triangles": 12992,
+      "particles": 4096,
+      "pipelinesAfterWarmUp": 0
+    }
+  },
+  "reason": "WP 6.4, the effects' own budgets on the fx page (tests/pages/fx.html, Chromium 141 on SwiftShader): a frame asking for more than every pool holds (40 explosions, 1,100 telegraphs, 40 trails, 1,200 bolts) draws the pools full and no more: 4,096 particles and 1,024 glows as 5,120 sprites on 5 pages, 1,024 floor decals on 1 page and 32 ribbons in 1 mesh, so 7 draw calls and 12,992 triangles (10,240 + 2,048 + 32 × 11 × 2) beyond the empty yard, and 0 pipelines after the warm-up. These are counts, the same on every run: a change to them is a change to FX_BUDGET (engine/gfx/fx/effects.ts), recorded here with its reason."
+}

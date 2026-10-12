@@ -1,0 +1,407 @@
+{
+  "rest": {
+    "reason": "FK of the baked tracks on each rest body’s own skeleton against the format-1 decode, over 34 points (index and pinky are roll hints, not rigid), at 30 fps and the 60 Hz midpoints. The frames lie on format 1’s key grid, every 1/30 s from 0 and a last one at the clip’s end (bake.ts `bakeTimes`), the times v1 sampled its clips at, so at a 30 fps sample the two agree to 5 µm (the rotations are float32). The worst cases are midpoints where a limb’s pole swings fast between two frames (a sword arm’s twist, a fist pulled across the chest), and the slerp between the frames takes another way than the decode’s in-between of the key numbers.",
+    "sets": {
+      "cmu": {
+        "clips": 60,
+        "samples": 454624,
+        "mean": 0.118,
+        "worst": { "clip": "Side_Kick", "t": 4.117, "point": "toeR", "mm": 172.6 },
+        "worstClips": [
+          { "clip": "Side_Kick", "t": 4.117, "point": "toeR", "mm": 172.6 },
+          { "clip": "Dive_Roll", "t": 1.15, "point": "fistL", "mm": 103.3 },
+          { "clip": "Roundhouse_Kick", "t": 0.85, "point": "toeL", "mm": 99.3 },
+          { "clip": "Backflip", "t": 0.65, "point": "fistL", "mm": 97.5 },
+          { "clip": "Breakdance_Helicopter", "t": 4.15, "point": "toeL", "mm": 74.6 }
+        ]
+      },
+      "mesh2motion": {
+        "clips": 177,
+        "samples": 621856,
+        "mean": 0.144,
+        "worst": { "clip": "Sword_Regular_B", "t": 0.517, "point": "fistR", "mm": 459.3 },
+        "worstClips": [
+          { "clip": "Sword_Regular_B", "t": 0.517, "point": "fistR", "mm": 459.3 },
+          { "clip": "Victory", "t": 1.25, "point": "elbowR", "mm": 389.6 },
+          { "clip": "Hit_Knockback", "t": 0.817, "point": "fistL", "mm": 338.7 },
+          { "clip": "Roll", "t": 0.383, "point": "toeL", "mm": 240 },
+          { "clip": "Roll_RM", "t": 0.383, "point": "toeL", "mm": 240 }
+        ]
+      },
+      "quaternius": {
+        "clips": 103,
+        "samples": 312096,
+        "mean": 0.315,
+        "worst": { "clip": "Sprint_Loop", "t": 0.55, "point": "toeR", "mm": 287.5 },
+        "worstClips": [
+          { "clip": "Sprint_Loop", "t": 0.55, "point": "toeR", "mm": 287.5 },
+          { "clip": "Sword_Dash", "t": 0.35, "point": "fistR", "mm": 183 },
+          { "clip": "Sword_Dash_RM", "t": 0.35, "point": "fistR", "mm": 183 },
+          { "clip": "Sword_Regular_Combo", "t": 0.717, "point": "fistR", "mm": 146.8 },
+          { "clip": "Sword_Regular_Combo_RM", "t": 0.717, "point": "fistR", "mm": 146.8 }
+        ]
+      },
+      "style100": {
+        "clips": 98,
+        "samples": 264800,
+        "mean": 0.088,
+        "worst": { "clip": "Elated_Walk", "t": 1.017, "point": "fistR", "mm": 35.1 },
+        "worstClips": [
+          { "clip": "Elated_Walk", "t": 1.017, "point": "fistR", "mm": 35.1 },
+          { "clip": "Rushed_Walk", "t": 1.417, "point": "fistL", "mm": 30.4 },
+          { "clip": "Angry_Walk", "t": 0.517, "point": "fistL", "mm": 30.2 },
+          { "clip": "BouncyRight_Walk", "t": 0.983, "point": "fistL", "mm": 23.8 },
+          { "clip": "RaisedRightArm_Walk", "t": 0.583, "point": "toeL", "mm": 23.2 }
+        ]
+      },
+      "style100_back": {
+        "clips": 98,
+        "samples": 255712,
+        "mean": 0.063,
+        "worst": { "clip": "WildArms_WalkBack", "t": 1.117, "point": "fistR", "mm": 82.3 },
+        "worstClips": [
+          { "clip": "WildArms_WalkBack", "t": 1.117, "point": "fistR", "mm": 82.3 },
+          { "clip": "Rushed_WalkBack", "t": 0.783, "point": "fistR", "mm": 70.1 },
+          { "clip": "Elated_WalkBack", "t": 0.017, "point": "fistR", "mm": 25.5 },
+          { "clip": "Angry_WalkBack", "t": 0.483, "point": "fistR", "mm": 20.3 },
+          { "clip": "BouncyRight_WalkBack", "t": 0.483, "point": "toeL", "mm": 16.4 }
+        ]
+      },
+      "style100_backrun": {
+        "clips": 98,
+        "samples": 156064,
+        "mean": 0.112,
+        "worst": { "clip": "Elated_RunBack", "t": 0.85, "point": "fistL", "mm": 49.5 },
+        "worstClips": [
+          { "clip": "Elated_RunBack", "t": 0.85, "point": "fistL", "mm": 49.5 },
+          { "clip": "March_RunBack", "t": 0.283, "point": "fistR", "mm": 39 },
+          { "clip": "WildLegs_RunBack", "t": 0.117, "point": "toeR", "mm": 32.1 },
+          { "clip": "WildArms_RunBack", "t": 1.083, "point": "fistR", "mm": 28.8 },
+          { "clip": "LeftHop_RunBack", "t": 0.15, "point": "toeL", "mm": 26.9 }
+        ]
+      },
+      "style100_idle": {
+        "clips": 98,
+        "samples": 502208,
+        "mean": 0.012,
+        "worst": { "clip": "WildArms_Idle", "t": 2.25, "point": "fistR", "mm": 35.9 },
+        "worstClips": [
+          { "clip": "WildArms_Idle", "t": 2.25, "point": "fistR", "mm": 35.9 },
+          { "clip": "Elated_Idle", "t": 0.15, "point": "fistL", "mm": 10.2 },
+          { "clip": "SwingArmsRound_Idle", "t": 0.517, "point": "fistR", "mm": 8.1 },
+          { "clip": "BouncyLeft_Idle", "t": 1.783, "point": "fistL", "mm": 7.1 },
+          { "clip": "Waving_Idle", "t": 2.183, "point": "fistR", "mm": 5.7 }
+        ]
+      },
+      "style100_run": {
+        "clips": 98,
+        "samples": 177152,
+        "mean": 0.138,
+        "worst": { "clip": "WildArms_Run", "t": 0.317, "point": "fistR", "mm": 54.7 },
+        "worstClips": [
+          { "clip": "WildArms_Run", "t": 0.317, "point": "fistR", "mm": 54.7 },
+          { "clip": "Flapping_Run", "t": 1.283, "point": "fistR", "mm": 36.5 },
+          { "clip": "Punch_Run", "t": 1.25, "point": "toeL", "mm": 27.8 },
+          { "clip": "March_Run", "t": 0.383, "point": "toeR", "mm": 24 },
+          { "clip": "BigSteps_Run", "t": 0.083, "point": "fistR", "mm": 21.9 }
+        ]
+      },
+      "style100_side": {
+        "clips": 194,
+        "samples": 518560,
+        "mean": 0.05,
+        "worst": { "clip": "WildArms_SideRight", "t": 0.917, "point": "fistR", "mm": 57.7 },
+        "worstClips": [
+          { "clip": "WildArms_SideRight", "t": 0.917, "point": "fistR", "mm": 57.7 },
+          { "clip": "WildArms_SideLeft", "t": 0.417, "point": "fistR", "mm": 53.2 },
+          { "clip": "SwingArmsRound_SideRight", "t": 1.317, "point": "fistL", "mm": 45.1 },
+          { "clip": "Angry_SideLeft", "t": 0.683, "point": "fistL", "mm": 44.6 },
+          { "clip": "Zombie_SideRight", "t": 0.117, "point": "fistL", "mm": 32.8 }
+        ]
+      },
+      "style100_siderun": {
+        "clips": 194,
+        "samples": 319648,
+        "mean": 0.113,
+        "worst": { "clip": "WildArms_SideRunRight", "t": 0.483, "point": "fistR", "mm": 49.6 },
+        "worstClips": [
+          { "clip": "WildArms_SideRunRight", "t": 0.483, "point": "fistR", "mm": 49.6 },
+          { "clip": "WildLegs_SideRunRight", "t": 0.65, "point": "toeR", "mm": 45.9 },
+          { "clip": "Angry_SideRunRight", "t": 0.183, "point": "fistR", "mm": 45.5 },
+          { "clip": "Punch_SideRunRight", "t": 0.85, "point": "fistL", "mm": 40.6 },
+          { "clip": "Punch_SideRunLeft", "t": 0.05, "point": "fistL", "mm": 33.3 }
+        ]
+      }
+    }
+  },
+  "mannequin": {
+    "reason": "The clip layer’s pose on build:mannequin (rotation copy aligned at rest, the hip joints placed by the hip-height ratio, contact IK, the lift) against the format-1 decode scaled by the same ratio, over the 22 points its joints stand for, at 30 fps and the 60 Hz midpoints. A build lays its bones out straight: its hip joints sit level with its pelvis and its spine stands on them, and its shoulders sit level with the neck, where the libraries’ sit 4–6 cm lower and behind it. Retargeting puts the hip joints where the source’s are (as my-3d2dge’s drive did), so the legs follow the source’s and the torso moves by the source’s own hip layout: on Quaternius’ clips (its lifted swims and jumps left out) the hips match to 0 mm and the knees and ankles to 6–7 mm on average, while the pelvis and spine stand 4 cm ahead, since its hips sit 5 cm ahead of its pelvis point (mesh2motion’s too); on CMU’s, whose hips sit 10 cm under the pelvis point, the pelvis stands 13 cm lower than the decode’s on average. The other sets’ bodies have other proportions than the mannequin’s. The worst cases are clips that lie on the floor or dip below it (the lift raises them) and the parity’s own fast pole swings.",
+    "sets": {
+      "cmu": {
+        "clips": 60,
+        "samples": 312554,
+        "mean": 92.762,
+        "worst": { "clip": "Get_Up_From_Side", "t": 5.133, "point": "kneeL", "mm": 816.1 },
+        "worstClips": [
+          { "clip": "Get_Up_From_Side", "t": 5.133, "point": "kneeL", "mm": 816.1 },
+          { "clip": "Get_Up_From_Back", "t": 3.933, "point": "kneeR", "mm": 800.3 },
+          { "clip": "Fall_On_Face", "t": 1.333, "point": "kneeR", "mm": 650 },
+          { "clip": "Breakdance_Helicopter", "t": 4.8, "point": "ankleL", "mm": 365.7 },
+          { "clip": "Cartwheel", "t": 1.533, "point": "kneeR", "mm": 306.6 }
+        ]
+      },
+      "mesh2motion": {
+        "clips": 177,
+        "samples": 427526,
+        "mean": 59.872,
+        "worst": { "clip": "Zombie_Rise", "t": 1.067, "point": "ankleL", "mm": 968.6 },
+        "worstClips": [
+          { "clip": "Zombie_Rise", "t": 1.067, "point": "ankleL", "mm": 968.6 },
+          { "clip": "NinjaJump_Idle", "t": 0, "point": "kneeL", "mm": 568.2 },
+          { "clip": "NinjaJump_Land", "t": 0, "point": "kneeL", "mm": 568.2 },
+          { "clip": "NinjaJump_Start", "t": 0.95, "point": "kneeL", "mm": 557.6 },
+          { "clip": "Hit_Knockback", "t": 0.767, "point": "kneeL", "mm": 451 }
+        ]
+      },
+      "quaternius": {
+        "clips": 103,
+        "samples": 214566,
+        "mean": 72.444,
+        "worst": { "clip": "Swim_Idle_Loop", "t": 1.533, "point": "ballL", "mm": 1813.3 },
+        "worstClips": [
+          { "clip": "Swim_Idle_Loop", "t": 1.533, "point": "ballL", "mm": 1813.3 },
+          { "clip": "Swim_Fwd_Loop", "t": 1.117, "point": "kneeL", "mm": 1086.9 },
+          { "clip": "Sword_Dash", "t": 0.35, "point": "wristR", "mm": 246.5 },
+          { "clip": "Sword_Dash_RM", "t": 0.35, "point": "wristR", "mm": 246.5 },
+          { "clip": "Sprint_Loop", "t": 0.017, "point": "ballL", "mm": 230.6 }
+        ]
+      },
+      "style100": {
+        "clips": 98,
+        "samples": 182050,
+        "mean": 53.048,
+        "worst": { "clip": "Rushed_Walk", "t": 2.033, "point": "kneeL", "mm": 197 },
+        "worstClips": [
+          { "clip": "Rushed_Walk", "t": 2.033, "point": "kneeL", "mm": 197 },
+          { "clip": "OnPhoneRight_Walk", "t": 0.5, "point": "wristR", "mm": 147.7 },
+          { "clip": "OnPhoneLeft_Walk", "t": 1.3, "point": "wristL", "mm": 146.6 },
+          { "clip": "KarateChop_Walk", "t": 0.417, "point": "wristR", "mm": 144.8 },
+          { "clip": "Morris_Walk", "t": 0.667, "point": "wristR", "mm": 142.7 }
+        ]
+      },
+      "style100_back": {
+        "clips": 98,
+        "samples": 175802,
+        "mean": 53.002,
+        "worst": { "clip": "KarateChop_WalkBack", "t": 0.4, "point": "wristL", "mm": 150.9 },
+        "worstClips": [
+          { "clip": "KarateChop_WalkBack", "t": 0.4, "point": "wristL", "mm": 150.9 },
+          { "clip": "OnPhoneRight_WalkBack", "t": 1.133, "point": "wristR", "mm": 146.4 },
+          { "clip": "OnPhoneLeft_WalkBack", "t": 0.567, "point": "wristL", "mm": 142.9 },
+          { "clip": "Punch_WalkBack", "t": 0.683, "point": "wristL", "mm": 142.7 },
+          { "clip": "Skip_WalkBack", "t": 1.183, "point": "wristR", "mm": 141.7 }
+        ]
+      },
+      "style100_backrun": {
+        "clips": 98,
+        "samples": 107294,
+        "mean": 53.362,
+        "worst": { "clip": "KarateChop_RunBack", "t": 0.783, "point": "wristL", "mm": 151.1 },
+        "worstClips": [
+          { "clip": "KarateChop_RunBack", "t": 0.783, "point": "wristL", "mm": 151.1 },
+          { "clip": "OnPhoneRight_RunBack", "t": 0.533, "point": "wristR", "mm": 147.4 },
+          { "clip": "Morris_RunBack", "t": 0, "point": "wristR", "mm": 144.7 },
+          { "clip": "Punch_RunBack", "t": 0.533, "point": "wristR", "mm": 143.7 },
+          { "clip": "OnPhoneLeft_RunBack", "t": 0.033, "point": "wristL", "mm": 143.1 }
+        ]
+      },
+      "style100_idle": {
+        "clips": 98,
+        "samples": 345268,
+        "mean": 51.345,
+        "worst": { "clip": "Dinosaur_Idle", "t": 0, "point": "wristR", "mm": 144.9 },
+        "worstClips": [
+          { "clip": "Dinosaur_Idle", "t": 0, "point": "wristR", "mm": 144.9 },
+          { "clip": "Waving_Idle", "t": 1.367, "point": "wristR", "mm": 142.4 },
+          { "clip": "Morris_Idle", "t": 2.667, "point": "wristR", "mm": 141.4 },
+          { "clip": "Punch_Idle", "t": 0, "point": "wristR", "mm": 141.3 },
+          { "clip": "KarateChop_Idle", "t": 0, "point": "wristR", "mm": 138.8 }
+        ]
+      },
+      "style100_run": {
+        "clips": 98,
+        "samples": 121792,
+        "mean": 53.366,
+        "worst": { "clip": "KarateChop_Run", "t": 0.933, "point": "wristR", "mm": 148.3 },
+        "worstClips": [
+          { "clip": "KarateChop_Run", "t": 0.933, "point": "wristR", "mm": 148.3 },
+          { "clip": "Punch_Run", "t": 1.567, "point": "wristR", "mm": 147.6 },
+          { "clip": "OnPhoneRight_Run", "t": 0.5, "point": "wristR", "mm": 143.9 },
+          { "clip": "Waving_Run", "t": 0.1, "point": "wristR", "mm": 143.7 },
+          { "clip": "Morris_Run", "t": 1.1, "point": "wristR", "mm": 143.6 }
+        ]
+      },
+      "style100_side": {
+        "clips": 194,
+        "samples": 356510,
+        "mean": 52.637,
+        "worst": { "clip": "KarateChop_SideLeft", "t": 0.667, "point": "wristL", "mm": 149.9 },
+        "worstClips": [
+          { "clip": "KarateChop_SideLeft", "t": 0.667, "point": "wristL", "mm": 149.9 },
+          { "clip": "OnPhoneRight_SideRight", "t": 0.233, "point": "wristR", "mm": 149.4 },
+          { "clip": "OnPhoneRight_SideLeft", "t": 1.383, "point": "wristR", "mm": 148.6 },
+          { "clip": "KarateChop_SideRight", "t": 0.9, "point": "wristL", "mm": 148 },
+          { "clip": "OnPhoneLeft_SideRight", "t": 1.033, "point": "wristL", "mm": 145.1 }
+        ]
+      },
+      "style100_siderun": {
+        "clips": 194,
+        "samples": 219758,
+        "mean": 52.852,
+        "worst": { "clip": "OnPhoneRight_SideRunRight", "t": 1.133, "point": "wristR", "mm": 148.1 },
+        "worstClips": [
+          { "clip": "OnPhoneRight_SideRunRight", "t": 1.133, "point": "wristR", "mm": 148.1 },
+          { "clip": "KarateChop_SideRunRight", "t": 1.133, "point": "wristL", "mm": 147.8 },
+          { "clip": "KarateChop_SideRunLeft", "t": 0.833, "point": "wristR", "mm": 147.6 },
+          { "clip": "OnPhoneRight_SideRunLeft", "t": 1, "point": "wristR", "mm": 146 },
+          { "clip": "Morris_SideRunRight", "t": 0.3, "point": "wristL", "mm": 144 }
+        ]
+      }
+    }
+  },
+  "restKeys": {
+    "reason": "The same measure at each clip’s own key times (keys past a clip’s end, which neither reaches, left out). Format 1 writes a key’s time to the millisecond, so it lies up to a third of a millisecond from its frame (0.033 s for 1/30 s), 1% of a frame’s step. The worst cases are keys in the fastest swings, where that 1% is up to 35 mm: Victory’s right arm turns its twist by 175° toward the next key, so the decode itself moves 35 mm between 1.233 s and 1/30 s × 37; Sword_Regular_B’s sword arm swings into its last key, which the decode reaches at 0.533 s and the bake at its frame, 1/30 s × 16. At the frames the two agree to 5 µm.",
+    "sets": {
+      "cmu": {
+        "clips": 60,
+        "samples": 76032,
+        "mean": 0.105,
+        "worst": { "clip": "Side_Kick", "t": 4.133, "point": "ankleR", "mm": 5.6 },
+        "worstClips": [
+          { "clip": "Side_Kick", "t": 4.133, "point": "ankleR", "mm": 5.6 },
+          { "clip": "Backflip", "t": 1.467, "point": "toeR", "mm": 4.3 },
+          { "clip": "Get_Up_From_Side", "t": 2.167, "point": "toeL", "mm": 4.2 },
+          { "clip": "Dive_Roll", "t": 1.133, "point": "fistL", "mm": 3.9 },
+          { "clip": "Breakdance_Helicopter", "t": 4.133, "point": "toeR", "mm": 3.2 }
+        ]
+      },
+      "mesh2motion": {
+        "clips": 177,
+        "samples": 87872,
+        "mean": 0.155,
+        "worst": { "clip": "Victory", "t": 1.233, "point": "elbowR", "mm": 34.3 },
+        "worstClips": [
+          { "clip": "Victory", "t": 1.233, "point": "elbowR", "mm": 34.3 },
+          { "clip": "Sword_Regular_B", "t": 0.533, "point": "fistR", "mm": 26.3 },
+          { "clip": "Sword_Regular_Combo", "t": 2.833, "point": "toeL", "mm": 15.4 },
+          { "clip": "Spell_Simple_Exit", "t": 0.533, "point": "fistL", "mm": 9.1 },
+          { "clip": "Sprint", "t": 0.633, "point": "ballR", "mm": 8.1 }
+        ]
+      },
+      "quaternius": {
+        "clips": 103,
+        "samples": 56704,
+        "mean": 0.253,
+        "worst": { "clip": "Melee_Hook", "t": 0.267, "point": "fistR", "mm": 13.9 },
+        "worstClips": [
+          { "clip": "Melee_Hook", "t": 0.267, "point": "fistR", "mm": 13.9 },
+          { "clip": "Melee_Hook_RM", "t": 0.267, "point": "fistR", "mm": 13.9 },
+          { "clip": "Sword_Heavy_Combo", "t": 0.367, "point": "fistR", "mm": 13.1 },
+          { "clip": "Sword_Heavy_Combo_RM", "t": 0.367, "point": "fistR", "mm": 13.1 },
+          { "clip": "Sword_Regular_Combo", "t": 0.733, "point": "fistR", "mm": 9.5 }
+        ]
+      },
+      "style100": {
+        "clips": 98,
+        "samples": 49600,
+        "mean": 0.074,
+        "worst": { "clip": "Rushed_Walk", "t": 1.233, "point": "toeR", "mm": 2.4 },
+        "worstClips": [
+          { "clip": "Rushed_Walk", "t": 1.233, "point": "toeR", "mm": 2.4 },
+          { "clip": "ArmsAboveHead_Walk", "t": 1.033, "point": "toeR", "mm": 2 },
+          { "clip": "HighKnees_Walk", "t": 0.267, "point": "toeL", "mm": 1.9 },
+          { "clip": "Punch_Walk", "t": 1.067, "point": "toeL", "mm": 1.8 },
+          { "clip": "Heavyset_Walk", "t": 0.467, "point": "toeR", "mm": 1.7 }
+        ]
+      },
+      "style100_back": {
+        "clips": 98,
+        "samples": 41504,
+        "mean": 0.066,
+        "worst": { "clip": "WildArms_WalkBack", "t": 1.133, "point": "fistR", "mm": 3.2 },
+        "worstClips": [
+          { "clip": "WildArms_WalkBack", "t": 1.133, "point": "fistR", "mm": 3.2 },
+          { "clip": "Rushed_WalkBack", "t": 0.767, "point": "fistR", "mm": 2.5 },
+          { "clip": "Punch_WalkBack", "t": 1.267, "point": "elbowL", "mm": 1.9 },
+          { "clip": "Angry_WalkBack", "t": 0.367, "point": "fistR", "mm": 1.4 },
+          { "clip": "Elated_WalkBack", "t": 0.033, "point": "toeR", "mm": 1.3 }
+        ]
+      },
+      "style100_backrun": {
+        "clips": 98,
+        "samples": 37696,
+        "mean": 0.109,
+        "worst": { "clip": "Punch_RunBack", "t": 0.333, "point": "elbowL", "mm": 3.1 },
+        "worstClips": [
+          { "clip": "Punch_RunBack", "t": 0.333, "point": "elbowL", "mm": 3.1 },
+          { "clip": "Elated_RunBack", "t": 0.867, "point": "elbowL", "mm": 2.3 },
+          { "clip": "OnPhoneLeft_RunBack", "t": 0.333, "point": "toeL", "mm": 2.1 },
+          { "clip": "HandsInPockets_RunBack", "t": 0.467, "point": "toeR", "mm": 1.7 },
+          { "clip": "WildLegs_RunBack", "t": 0.133, "point": "kneeR", "mm": 1.5 }
+        ]
+      },
+      "style100_idle": {
+        "clips": 98,
+        "samples": 19232,
+        "mean": 0.035,
+        "worst": { "clip": "WildArms_Idle", "t": 0.533, "point": "fistL", "mm": 0.9 },
+        "worstClips": [
+          { "clip": "WildArms_Idle", "t": 0.533, "point": "fistL", "mm": 0.9 },
+          { "clip": "Elated_Idle", "t": 1.633, "point": "elbowL", "mm": 0.7 },
+          { "clip": "WhirlArms_Idle", "t": 2.267, "point": "fistR", "mm": 0.7 },
+          { "clip": "LawnMower_Idle", "t": 1.367, "point": "fistR", "mm": 0.7 },
+          { "clip": "SwingArmsRound_Idle", "t": 1.567, "point": "elbowR", "mm": 0.7 }
+        ]
+      },
+      "style100_run": {
+        "clips": 98,
+        "samples": 47040,
+        "mean": 0.119,
+        "worst": { "clip": "WildArms_Run", "t": 1.467, "point": "elbowR", "mm": 2.3 },
+        "worstClips": [
+          { "clip": "WildArms_Run", "t": 1.467, "point": "elbowR", "mm": 2.3 },
+          { "clip": "FlickLegs_Run", "t": 0.367, "point": "toeL", "mm": 2.3 },
+          { "clip": "WalkingStickRight_Run", "t": 0.933, "point": "toeL", "mm": 2.1 },
+          { "clip": "Monk_Run", "t": 0.633, "point": "toeR", "mm": 1.8 },
+          { "clip": "Morris_Run", "t": 0.867, "point": "toeL", "mm": 1.8 }
+        ]
+      },
+      "style100_side": {
+        "clips": 194,
+        "samples": 82784,
+        "mean": 0.071,
+        "worst": { "clip": "SwingArmsRound_SideRight", "t": 1.333, "point": "elbowL", "mm": 2.4 },
+        "worstClips": [
+          { "clip": "SwingArmsRound_SideRight", "t": 1.333, "point": "elbowL", "mm": 2.4 },
+          { "clip": "WildArms_SideRight", "t": 0.333, "point": "fistR", "mm": 2.1 },
+          { "clip": "WildArms_SideLeft", "t": 0.433, "point": "fistR", "mm": 1.6 },
+          { "clip": "Angry_SideLeft", "t": 0.667, "point": "fistL", "mm": 1.4 },
+          { "clip": "Zombie_SideRight", "t": 0.133, "point": "fistL", "mm": 1.4 }
+        ]
+      },
+      "style100_siderun": {
+        "clips": 194,
+        "samples": 84672,
+        "mean": 0.118,
+        "worst": { "clip": "Elated_SideRunRight", "t": 1.067, "point": "elbowL", "mm": 2.1 },
+        "worstClips": [
+          { "clip": "Elated_SideRunRight", "t": 1.067, "point": "elbowL", "mm": 2.1 },
+          { "clip": "Angry_SideRunRight", "t": 0.167, "point": "fistR", "mm": 2.1 },
+          { "clip": "WildArms_SideRunRight", "t": 0.467, "point": "fistR", "mm": 2 },
+          { "clip": "Elated_SideRunLeft", "t": 0.933, "point": "elbowL", "mm": 1.7 },
+          { "clip": "Skip_SideRunLeft", "t": 0.867, "point": "toeL", "mm": 1.7 }
+        ]
+      }
+    }
+  }
+}

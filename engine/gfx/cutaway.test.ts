@@ -17,6 +17,7 @@ import { compileLevel } from '../world/level/compile';
 import { createCamera } from './cameras/place';
 import { makePose, type CameraPose, type Vec3 } from './cameras/pose';
 import { CUT_AIMS, createCutaway, cutawayAims, planCutaway, segmentHitsBox, type CutTarget } from './cutaway';
+import { instancePath } from './instancing';
 import { createLevelMeshes } from './level/meshes';
 import type { Warmup } from './warmup';
 
@@ -162,6 +163,8 @@ describe('createCutaway', () => {
     expect(wallTwin.geometry.boundingBox!.max.toArray()).toEqual([0.5, 0.4375, 0.5]);
     expect(pillarTwin.geometry.boundingBox!.max.toArray()).toEqual([1.0625, 0.875, 1.0625]);
     expect(wallTwin.userData).toMatchObject({ level: 'hall', recipe: 'wall', cut: 0.4375 });
+    // A page's slots, as its part has, so the twins share their shader (engine/gfx/level/shapes.ts).
+    expect(cutaway.twins.map((twin) => instancePath(twin.instanceMatrix.count))).toEqual(['attribute', 'attribute']);
     expect(cutaway.drawCalls(1)).toBe(0);
 
     const wall = meshes.parts.find((part) => part.recipe === 'wall')!.mesh as InstancedMesh;

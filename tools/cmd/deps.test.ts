@@ -15,7 +15,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { gitBlob } from '../lib/deps';
 import { checkDeps } from '../lib/depsCheck';
 import { planUpdate, qualify, update, type Registry, type Runner } from '../lib/depsUpdate';
-import { dispatch, ROOT } from '../x';
+import { CHILD_TIMEOUT_MS, dispatch, ROOT } from '../x';
 import { discoverPlugins } from './check';
 import { createDepsCommand } from './deps';
 
@@ -341,11 +341,15 @@ describe('node x deps', () => {
     ).toBe(1);
   });
 
-  it("passes on the repository's pins, and x check runs it as a plugin", async () => {
+  it("passes on the repository's pins, and x check runs it as a plugin", { timeout: CHILD_TIMEOUT_MS }, async () => {
     const outcome = checkDeps(ROOT, { nodeVersion: NODE });
     expect(outcome.failures).toEqual([]);
     expect((await discoverPlugins(ROOT)).map((plugin) => plugin.name)).toContain('deps');
-    const cli = spawnSync(process.execPath, ['x', 'deps', '--check'], { cwd: ROOT, encoding: 'utf8' });
+    const cli = spawnSync(process.execPath, ['x', 'deps', '--check'], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      timeout: CHILD_TIMEOUT_MS,
+    });
     expect(cli.status, cli.stdout).toBe(0);
   });
 });

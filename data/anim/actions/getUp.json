@@ -1,0 +1,16 @@
+{
+  "action": "getUp",
+  "desc": "Getting up from lying on its back (Final Fight, Streets of Rage, Street Fighter's wake-up): lie, sit up, one knee, stand, invulnerable until it stands.",
+  "beats": [
+    { "name": "lie", "seconds": 0.3, "body": { "down": 1 }, "flags": ["invulnerable"] },
+    { "name": "sitUp", "seconds": 0.25, "body": { "down": 0.5, "pose": "crouch" }, "flags": ["invulnerable"] },
+    { "name": "kneel", "seconds": 0.3, "body": { "pose": "kneel" }, "flags": ["invulnerable"] },
+    {
+      "name": "rise",
+      "seconds": 0.25,
+      "flags": ["invulnerable"],
+      "events": [{ "type": "vulnerable", "at": 1 }],
+      "cancel": { "by": ["move", "walk"], "after": 0.6 }
+    }
+  ]
+}

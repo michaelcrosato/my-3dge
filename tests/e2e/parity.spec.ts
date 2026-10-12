@@ -1,7 +1,8 @@
 /**
  * @file The CPU-only gameplay contract (PLAN.md §6.7, §6.5 item 9, I-07; doctrine: WebGPU only), from Box 1 on: each
  * stage adds its scenes (`STAGES`: Box 1's room and its movers, Box 2's room with the hero, Box 3's hall with the hero
- * and the hall with its props, Box 4's hall with a crowd of 100, drawn through the crowd's level of detail). In the
+ * and the hall with its props, Box 4's hall with a crowd of 100, drawn through the crowd's level of detail, Box 5's
+ * fight, its blows, bodies, telegraphs and bolts). In the
  * scene's own page (labs/box), rendering as it steps:
  * 1. every replay of the stage gives its golden hashes, a frame drawn after each step (`__engine.replay`, the same
  *    player as `x replay --browser page`), and so do its swept replays (`swept`: all of them, or for Box 4 the chase,
@@ -32,6 +33,7 @@ import '../../labs/box/scenes/room-hero';
 import '../../labs/box/scenes/hall';
 import '../../labs/box/scenes/hall-props';
 import '../../labs/box/scenes/crowd-100';
+import '../../labs/box/scenes/fight';
 import { playReplay, type Replay } from '../../engine/sim/replay';
 import { CAMERA_3D, VIEW_NAMES } from '../../engine/gfx/cameras/codes';
 import { FOLLOW_CAMERAS } from '../../engine/gfx/cameras/place';
@@ -180,6 +182,34 @@ const STAGES: Stage[] = [
       tick(20);
     },
   },
+  {
+    stage: 'Box 5',
+    scene: 'fight',
+    component: 'actor',
+    replays: ['box-5-fight'].map(replay),
+    live: () => {
+      const tick = (frames: number) => window.__clock.tick(frames);
+      tick(1);
+      __engine.input.axis('move', [0.8, 0.6]);
+      tick(40); // off the dais, the fight joining round him
+      __engine.input.press('attack');
+      tick(12);
+      __engine.input.press('attack');
+      tick(12);
+      __engine.camera.set('cam3=chase');
+      __engine.input.press('attack');
+      tick(25);
+      __engine.input.press('skill');
+      tick(15);
+      __engine.input.press('dash');
+      tick(4);
+      __engine.input.press('attack');
+      __engine.camera.set('cam3=orbit');
+      tick(30);
+      __engine.input.axis('move', null);
+      tick(20);
+    },
+  },
 ];
 const goldens = (text: string) => (JSON.parse(text) as Replay).hashes['linux-x64'];
 /** Variables a test runner sets for its own workers; the `x` children start without them. */
@@ -288,8 +318,12 @@ for (const { stage, scene, component, replays, swept, live } of [...STAGES].reve
       cameras: swept?.cameras.map(replay) ?? replays,
       featuresOff: swept?.featuresOff.map(replay) ?? replays,
     };
+    /** Annotates the running test with the replays it plays, so out/e2e/report.json says which replays T2 played. */
+    const playing = (played: { name: string }[]) =>
+      test.info().annotations.push({ type: 'replays', description: played.map(({ name }) => name).join(', ') });
 
     test('each replay gives its golden hashes while the scene renders as it steps', async ({ page, harness }) => {
+      playing(replays);
       await open(page, harness, `?scene=${scene}`);
       for (const { name, text } of replays) {
         const run = await play(page, text);
@@ -303,6 +337,7 @@ for (const { stage, scene, component, replays, swept, live } of [...STAGES].reve
       page,
       harness,
     }) => {
+      playing(sweep.cameras);
       await open(page, harness, `?scene=${scene}`);
       const views: [number, { cam?: string; set?: Record<string, unknown> }][] = [];
       const every = Math.floor(560 / CAMERA_PRESETS.length);
@@ -320,6 +355,7 @@ for (const { stage, scene, component, replays, swept, live } of [...STAGES].reve
       const off = encodeURIComponent(
         JSON.stringify(['feature:timestamps', 'feature:float32Filtering', 'feature:largeBuffers']),
       );
+      playing(sweep.featuresOff);
       await open(page, harness, `?scene=${scene}&gfx.featuresOff=${off}`);
       const downgrades = await page.evaluate(() => (__engine.info() as { downgrades: string[] }).downgrades);
       expect(downgrades.length).toBeGreaterThan(0);

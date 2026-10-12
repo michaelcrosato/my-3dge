@@ -1,0 +1,34 @@
+{
+  "action": "grab",
+  "desc": "A grab, the attacker's side of a pair (Final Fight, Streets of Rage 2): a reach, the clinch, a hold until the game throws (next), the throw to the right, the recovery. Its pair, grabbed, plays the victim in lockstep.",
+  "beats": [
+    {
+      "name": "reach",
+      "seconds": 0.12,
+      "motion": { "lunge": 0.1, "lean": 0.2 },
+      "effectors": { "handL": [0.4, -0.15, -0.1], "handR": [0.4, 0.15, -0.1] }
+    },
+    {
+      "name": "clinch",
+      "seconds": 0.1,
+      "effectors": { "handL": [0.3, -0.12, -0.15], "handR": [0.3, 0.12, -0.15] },
+      "events": [{ "type": "grab", "at": 1 }]
+    },
+    {
+      "name": "hold",
+      "seconds": 0.1,
+      "until": "next",
+      "motion": { "lean": -0.1 },
+      "effectors": { "handL": [0.3, -0.12, -0.15], "handR": [0.3, 0.12, -0.15] }
+    },
+    {
+      "name": "throw",
+      "seconds": 0.2,
+      "motion": { "twist": 1.2, "lean": 0.3 },
+      "events": [{ "type": "throw", "at": 0.5 }]
+    },
+    { "name": "recover", "seconds": 0.25, "cancel": { "by": ["any"], "after": 0.4 } }
+  ],
+  "pair": "action:grabbed",
+  "check": { "signals": [{ "at": 0.72, "do": "next" }] }
+}

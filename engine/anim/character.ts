@@ -4,8 +4,8 @@
  * (socket history), reports its footsteps and returns all of it as plain JSON (`inspect()`).
  *
  * The stack (weights.ts `SLOTS`, in order): weights → base → override → solve → clips → additive → post → physics →
- * secondary. The body fills the first four: the named weights, locomotion, poses, stances and a move's body motion
- * (the body state `body`, WP 6.1), and the IK solve. The others take `AnimLayer`s (`use(slot, layer)`): clips (WP
+ * secondary. The body fills the first four: the named weights, locomotion, poses, stances and a move (the body state
+ * `body`: its arm path and body motion, WP 6.1), and the IK solve. The others take `AnimLayer`s (`use(slot, layer)`): clips (WP
  * 8.4), additive reactions and secondary motion (WP 6.2), post IK (the feet on probed ground, grips, aim), a
  * ragdoll blend (WP 10.2). A layer writes the pose at full strength; the animator fades it by its weight.
  *

@@ -8,10 +8,11 @@
  * lists every name with the first sentence of its doc comment; `node x describe` lists the registries.
  *
  * Invariants: a flat list of `export … from` lines, one name per line, grouped by area, and append-only: each WP adds
- * its public names at the end of their area, so parallel lanes merge cleanly (§11.3). Only sim-side modules are
- * re-exported (ESLint's layer rule for this file). Each name is documented where it is declared, and
- * `x docs --check` fails a public export without its doc comment. Game code reaches three.js only through these
- * re-exports.
+ * its public names at the end of their area, so parallel lanes merge cleanly (§11.3). The Animation area lives in
+ * engine/anim/api.ts, re-exported here whole so this file stays under its line cap (ADR-0020 amendment 8): append
+ * animation names there. Only sim-side modules are re-exported (ESLint's layer rule for this file). Each name is
+ * documented where it is declared, and `x docs --check` fails a public export without its doc comment. Game code
+ * reaches three.js only through these re-exports.
  *
  * @example
  * // fixtures/scenes/kernel/index.ts
@@ -126,140 +127,9 @@ export type { LightSpot } from './world/level/types';
 export type { TileRect } from './world/level/types';
 export type { Point3 } from './world/level/types';
 
-// Animation (WP 3.4): the humanoid skeleton (a root plus 23 joints) and its builds, poses with three.js quaternions,
-// blending under bone masks, additive layers, forward kinematics, SVG contact sheets and the pose checks.
-export { JOINTS } from './anim/skeleton';
-export { SOCKETS } from './anim/skeleton';
-export { MASKS } from './anim/skeleton';
-export type { JointName } from './anim/skeleton';
-export type { SocketName } from './anim/skeleton';
-export type { MaskName } from './anim/skeleton';
-export { createSkeleton } from './anim/skeleton';
-export type { Skeleton } from './anim/skeleton';
-export { boneMask } from './anim/skeleton';
-export type { BoneMask } from './anim/skeleton';
-export { defineBuild } from './anim/builds';
-export { getBuild } from './anim/builds';
-export type { Build } from './anim/builds';
-export type { BuildSpec } from './anim/builds';
-export { Pose } from './anim/pose';
-export type { JointRef } from './anim/pose';
-export type { BlendOptions } from './anim/pose';
-export { blendPoses } from './anim/pose';
-export { makeAdditive } from './anim/pose';
-export { addPose } from './anim/pose';
-export { hashPose } from './anim/pose';
-export { forwardKinematics } from './anim/fk';
-export { createWorldPose } from './anim/fk';
-export type { WorldPose } from './anim/fk';
-export { jointPosition } from './anim/fk';
-export { jointRotation } from './anim/fk';
-export { jointMatrix } from './anim/fk';
-export { jointToWorld } from './anim/fk';
-export { socketPosition } from './anim/fk';
-export { tipPosition } from './anim/fk';
-export { animSheet } from './anim/sheet';
-export type { Sheet } from './anim/sheet';
-export type { SheetFrame } from './anim/sheet';
-export type { SheetOptions } from './anim/sheet';
-export type { SheetView } from './anim/sheet';
-export { animCheck } from './anim/check';
-export type { AnimCheckSpec } from './anim/check';
-export type { AnimCheckReport } from './anim/check';
-export type { AnimProblem } from './anim/check';
-export type { RigidPair } from './anim/check';
-export type { PointName } from './anim/check';
-export { twoBone } from './anim/ik';
-export { twoBoneRot } from './anim/ik';
-export type { TwoBoneOptions } from './anim/ik';
-export type { LimbEnd } from './anim/ik';
-export type { Limb } from './anim/ik';
-export { LIMBS } from './anim/ik';
-export { aim } from './anim/ik';
-export type { AimOptions } from './anim/ik';
-export type { AimLink } from './anim/ik';
-export { AIM_CHAIN } from './anim/ik';
-export { footPlant } from './anim/ik';
-export type { FootPlantOptions } from './anim/ik';
-export type { FootPlantState } from './anim/ik';
-export type { FootLock } from './anim/ik';
-export { createFootPlantState } from './anim/ik';
-export { FOOT_PLANT } from './anim/ik';
-export type { GroundProbe } from './anim/ik';
-export type { GroundHit } from './anim/ik';
-export { handTo } from './anim/ik';
-// The procedural humanoid (WP 3.6): my-3d2dge's gait, idle, lean, arm swing, held poses and stances as effector
-// targets written with B(forward, right, up), solved onto the skeleton; a fixed step and a seeded stream.
-export { Humanoid } from './anim/humanoid';
-export type { HumanoidOptions } from './anim/humanoid';
-export type { HumanoidInput } from './anim/humanoid';
-export type { HumanoidState } from './anim/humanoid';
-export type { HumanoidWeights } from './anim/locomotion';
-export type { BodyMotion } from './anim/locomotion';
-export { POSES } from './anim/poses';
-export type { PoseName } from './anim/poses';
-export { STANCES } from './anim/poses';
-export type { StanceName } from './anim/poses';
-export { WEAPONS } from './anim/poses';
-export type { Weapon } from './anim/poses';
-export type { Effectors } from './anim/poses';
-export { B } from './anim/authoring';
-export { turnRight } from './anim/authoring';
-export type { FRU } from './anim/authoring';
-export type { LimbSide } from './anim/authoring';
-export type { Sided } from './anim/authoring';
-// The character animator (WP 3.7): a body driven through an explicit layer stack (weights, base, override, solve,
-// then layers in clips, additive, post, physics and secondary), told its body states each step (unknown words warn
-// with the closest), with footsteps, sockets, a trail and detail levels; step runs in the sim, pose in the view.
-export { Animator } from './anim/character';
-export type { AnimatorOptions } from './anim/character';
-export type { PoseOptions } from './anim/character';
-export type { AnimatorReport } from './anim/character';
-export type { AnimEvent } from './anim/character';
-export type { TrailSample } from './anim/character';
-export { BODY_STATES } from './anim/states';
-export type { BodyStateName } from './anim/states';
-export type { AnimatorInput } from './anim/states';
-export { checkBodyStates } from './anim/states';
-export { TRAILS } from './anim/states';
-export type { TrailName } from './anim/states';
-export { SAMPLE_STATES } from './anim/states';
-export type { SampleState } from './anim/states';
-export { SLOTS } from './anim/weights';
-export type { SlotName } from './anim/weights';
-export { LAYER_SLOTS } from './anim/weights';
-export type { LayerSlot } from './anim/weights';
-export type { AnimLayer } from './anim/weights';
-export { LOD } from './anim/weights';
-export { easeWeight } from './anim/weights';
-export type { WeightRates } from './anim/weights';
-export { HUMANOID_WEIGHTS } from './anim/weights';
-export type { WeightInfo } from './anim/weights';
-// Blob and floater rigs (WP 5.3): my-3d2dge's squash-and-stretch blob on a minimal skeleton (a volume-preserving
-// squash spring, a smoothed look, wings, its moves as data: bite, leap, pounce, spit) and a floater that hovers over
-// the floor, banks into turns and carries orbiting motes; step runs in the sim, pose in the view.
-export { Blob } from './anim/blob';
-export type { BlobOptions } from './anim/blob';
-export type { BlobInput } from './anim/blob';
-export type { BlobState } from './anim/blob';
-export { BLOB } from './anim/blob';
-export { BLOB_JOINTS } from './anim/blob';
-export type { BlobJoint } from './anim/blob';
-export type { BlobPose } from './anim/blob';
-export { BLOB_LEAP } from './anim/blob';
-export type { BlobLeap } from './anim/blob';
-export { BLOB_MOVES } from './anim/blob';
-export type { BlobMove } from './anim/blob';
-export type { BlobMoveName } from './anim/blob';
-export type { BlobMoveFrame } from './anim/blob';
-export { blobMove } from './anim/blob';
-export { blobMoveTimes } from './anim/blob';
-export { Floater } from './anim/floater';
-export type { FloaterOptions } from './anim/floater';
-export type { FloaterInput } from './anim/floater';
-export type { FloaterState } from './anim/floater';
-export type { FloaterPose } from './anim/floater';
-export { FLOATER } from './anim/floater';
+// Animation (WP 3.4 onward): skeleton, builds, poses, IK, the humanoid, moves, reactions, checks and actions, listed
+// area by area in engine/anim/api.ts so this file stays under its line cap (ADR-0020 amendment 8).
+export * from './anim/api';
 
 // Physics (WP 3.1): Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id,
 // raycasts, shape casts, overlaps and ground probes, collision groups by name, a level's bodies; presentation reads
@@ -441,3 +311,48 @@ export type { CrowdBody } from './sim/crowdBodies';
 export type { CrowdRig } from './sim/crowdBodies';
 export type { CrowdBodyInput } from './sim/crowdBodies';
 export { stepCrowdBody } from './sim/crowdBodies';
+
+// Telegraphs (WP 6.4): an attack's warning shape on the floor as data (an arc, a ring, a line or a cone, in metres),
+// and the geometry sim code tests it with as it goes off: a body inside it is hit, one just outside it a near miss.
+export { TELEGRAPH_SHAPES } from './world/telegraphs';
+export { defineTelegraph } from './world/telegraphs';
+export { getTelegraph } from './world/telegraphs';
+export { telegraphGap } from './world/telegraphs';
+export { inTelegraph } from './world/telegraphs';
+export { nearMiss } from './world/telegraphs';
+export { telegraphFill } from './world/telegraphs';
+export { coneOf } from './world/telegraphs';
+export type { Telegraph } from './world/telegraphs';
+export type { TelegraphSpec } from './world/telegraphs';
+export type { TelegraphPlace } from './world/telegraphs';
+export type { PointLike } from './world/telegraphs';
+
+// Combat helpers (WP 6.3): hit queries against hurt capsules found through a spatial hash (cones with height windows,
+// weapon sweeps), damage on health and crowd bodies (knockback as momentum, launches, death into the corpse group, the
+// event damage), hit-stop handed to the frame clock's budget, and projectiles with swept tests.
+export { PROJECTILE_FIELDS } from './world/projectiles';
+export { PROJECTILE } from './world/projectiles';
+export type { Projectile } from './world/projectiles';
+export type { ProjectileState } from './world/projectiles';
+export type { ProjectileStep } from './world/projectiles';
+export type { ProjectileHit } from './world/projectiles';
+export { stepProjectiles } from './world/projectiles';
+export type { HurtCapsule } from './world/projectiles';
+export type { HurtSet } from './world/projectiles';
+export { capsuleCast } from './world/projectiles';
+export type { WallTest } from './world/projectiles';
+export type { WallContact } from './world/projectiles';
+export { inCone } from './sim/hits';
+export { coneHits } from './sim/hits';
+export { sweepTouches } from './sim/hits';
+export { sweepHits } from './sim/hits';
+export { physicsWalls } from './sim/hits';
+export { HEALTH_FIELDS } from './sim/damage';
+export { HEALTH } from './sim/damage';
+export type { Health } from './sim/damage';
+export type { DamageTarget } from './sim/damage';
+export type { HitSpec } from './sim/damage';
+export type { DamageEvent } from './sim/damage';
+export type { DamageEvents } from './sim/damage';
+export { damage } from './sim/damage';
+export { requestHitStop } from './sim/damage';

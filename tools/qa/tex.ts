@@ -1,10 +1,15 @@
 /**
- * @file The `tex` QA family (PLAN.md §8.6, WP 2.3, I-20): `node x qa tex` bakes every texture generator the shared
- * registry has, the engine's (engine/gfx/textures/v1.ts) and a game's (each `*.ts` module under `labs/<name>/textures/`
- * imported first), at its default size and at twice it, with seeds 1 and 2, and checks every
+ * @file The `tex` QA family (PLAN.md §8.6, WP 2.3, WP 7.3, I-20): `node x qa tex` bakes every texture generator the
+ * shared registry has, the engine's (engine/gfx/textures/v1.ts, v2.ts) and a game's (each `*.ts` module under
+ * `labs/<name>/textures/` imported first), at its default size and at twice it, with seeds 1 and 2, and checks every
  * bake; then, under each `prop` entry's id (WP 4.5; a game's props under `labs/<name>/props/` imported first), the
  * textures its parts' materials name, baked as each material bakes them (its parameters and size), and a `reference`
  * violation for a part naming a material no entry defines. It runs in T1 through `runQa` (tools/qa/tex.test.ts).
+ *
+ * It also writes the contact sheet, `out/qa/tex/sheet.png` (WP 7.3): every texture checked, at seed 1 and its default
+ * size, as its colour, normal and emissive maps side by side, each tiled 2 × 2 into 128 px (nearest texels, its
+ * shape kept) so a seam shows as a line through the middle, labelled with its id and size, three textures to a row
+ * (1,208 px wide). Look at it when a metric points at a texture, or hand it to the `visual-reviewer`.
  *
  * Metrics, one violation per texture and metric, valued by the worst bake (larger is worse): `seamDelta`, the
  * tileability check (engine/gfx/textures/seams.ts: the mean difference across the wrap edge above that of the
@@ -20,10 +25,12 @@
  *
  * @example
  * import { registry } from '../../engine/core/registry';
+ * import { bakeTexture } from '../../engine/gfx/textures/bake';
  * checkTextures(registry, ['texture:checker']).length; // 0
+ * textureSheet([bakeTexture('texture:checker')]).width; // 408: one texture's three panels
  * @see tools/qa/tex.test.ts
  */
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { registry as sharedRegistry, type Registry } from '../../engine/core/registry';
@@ -35,8 +42,10 @@ import { textureKind, type TextureEntry } from '../../engine/gfx/textures/textur
 import { materialKind, textureRefOf, type MapRef } from '../../engine/gfx/materials/material';
 import { propLooks } from '../../engine/gfx/props';
 import { propKind, type Prop } from '../../engine/world/props/prop';
+import { drawText, type Sheet } from '../lib/filmSheet';
 import type { QaFamily, QaViolation } from '../cmd/qa';
 import { labModules } from './geo';
+import { encodePng } from '../cmd/shot';
 
 /** A game's texture modules, `labs/<name>/textures/*.ts` (tests excluded), labs and files in name order. */
 export function textureModules(root: string): string[] {
@@ -175,7 +184,52 @@ export function checkPropTextures(registry: Registry = sharedRegistry, ids?: rea
     .flatMap((prop) => checkProp(registry, prop));
 }
 
-/** The family: every texture of the shared registry, then every prop's, after importing a game's modules. */
+/** A contact sheet's panel side, the space between panels and textures, and the label's height, in pixels. */
+const [PANEL, GAP, LABEL] = [128, 4, 16];
+/** Textures per row of the sheet. */
+const PER_ROW = 3;
+
+/**
+ * The contact sheet of `bakes`: per texture its colour, normal and emissive maps (black when nothing glows), each
+ * tiled 2 × 2 and scaled by nearest texels to fit a 128 px panel, keeping its shape (row 0 of a map at the bottom,
+ * as it is drawn), and a label.
+ */
+export function textureSheet(bakes: readonly TextureBake[]): Sheet {
+  const block = 3 * PANEL + 2 * GAP;
+  const cols = Math.max(1, Math.min(PER_ROW, bakes.length));
+  const width = cols * block + (cols + 1) * 2 * GAP;
+  const height = Math.ceil(bakes.length / PER_ROW) * (PANEL + LABEL + 2 * GAP) + 2 * GAP;
+  const sheet: Sheet = { width, height, rgba: new Uint8Array(width * height * 4) };
+  for (let p = 0; p < sheet.rgba.length; p += 4) sheet.rgba.set([27, 27, 36, 255], p);
+  for (const [i, bake] of bakes.entries()) {
+    const [x0, y0] = [
+      2 * GAP + (i % PER_ROW) * (block + 2 * GAP),
+      2 * GAP + Math.floor(i / PER_ROW) * (PANEL + LABEL + 2 * GAP),
+    ];
+    const maps = [bake.map, bake.normalMap, bake.emissiveMap];
+    // Two periods each way, scaled to fit the panel and keep the texture's shape. Panel rows count down from the top
+    // and map rows up from the bottom, so the panel's bottom row shows row 0 and its top row the map's top.
+    const scale = PANEL / (2 * Math.max(bake.width, bake.height));
+    const [pw, ph] = [Math.round(2 * bake.width * scale), Math.round(2 * bake.height * scale)];
+    for (const [k, map] of maps.entries()) {
+      for (let y = 0; y < ph; y++) {
+        const ty = Math.floor((ph - 1 - y) / scale) % bake.height;
+        for (let x = 0; x < pw; x++) {
+          const tx = Math.floor(x / scale) % bake.width;
+          const at = ((y0 + y) * width + x0 + k * (PANEL + GAP) + x) * 4;
+          const from = (ty * bake.width + tx) * 4;
+          sheet.rgba.set(map ? [map[from], map[from + 1], map[from + 2], 255] : [0, 0, 0, 255], at);
+        }
+      }
+    }
+    const name = `${bake.texture.replace(/^texture:/, '')} ${bake.width}x${bake.height}`;
+    drawText(sheet, [x0, y0 + PANEL + 3], name, [200, 200, 224], x0 + block);
+  }
+  return sheet;
+}
+
+/** The family: every texture of the shared registry, then every prop's, after importing a game's modules; and the
+ * sheet of the textures. */
 const family: QaFamily = {
   async run({ root, only }) {
     for (const module of [...textureModules(root), ...labModules(root, 'props')]) {
@@ -185,10 +239,24 @@ const family: QaFamily = {
     const ids = sharedRegistry.list('texture').map((entry) => entry.id);
     propKind(sharedRegistry);
     const props = sharedRegistry.list('prop').map((entry) => entry.id);
-    return [
-      ...checkTextures(sharedRegistry, ids.filter(keep)),
+    const kept = ids.filter(keep);
+    const violations = [
+      ...checkTextures(sharedRegistry, kept),
       ...checkPropTextures(sharedRegistry, props.filter(keep)),
     ];
+    const bakes = kept.flatMap((id) => {
+      try {
+        return [bakeTexture(id, sharedRegistry)];
+      } catch {
+        return []; // a generator that throws is already a `bake` violation
+      }
+    });
+    if (bakes.length) {
+      const sheet = textureSheet(bakes);
+      mkdirSync(join(root, 'out', 'qa', 'tex'), { recursive: true });
+      writeFileSync(join(root, 'out', 'qa', 'tex', 'sheet.png'), encodePng(sheet.width, sheet.height, sheet.rgba));
+    }
+    return violations;
   },
 };
 
