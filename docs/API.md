@@ -21,12 +21,13 @@ game agent's manual.
 - `ActionSpec` (type from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What `defineAction` takes: `desc` and `beats`, each beat's `name` and `seconds`; the rest as it likes.
 - `ActionsState` (interface from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): An `Actions`' state, plain data.
 - `ActorComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `actor`: an entity the character controller moves.
-- `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, `animator`, and `oneWay` for one-way platforms.
+- `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, `animator`, `puppet`, and `oneWay` for one-way platforms.
 - `ActorSpec` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): What `spawnActor` takes.
 - `addAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds a queued agent's body now (`updateCrowd` does it through the queue), its feet at `x`, `y`, `z`, moving at `vx`, `vy`, `vz`; returns its id.
 - `addBall` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a ball prop; returns its id.
 - `addBox` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a box prop, sized as BoxGeometry (full width, height, depth); returns its id.
 - `addCapsule` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a capsule prop, standing up (`height` is its straight middle, as CapsuleGeometry's); returns its id.
+- `addClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Gives the live animated actor `id` the component `clips` (`clipsFor`); an actor spawned in the same step takes them from `spawnActor`'s `clips`.
 - `addCylinder` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a cylinder prop, standing up (a barrel); returns its id.
 - `addLevelBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
@@ -168,15 +169,25 @@ game agent's manual.
 - `ClipKey` (interface from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): One key pose.
 - `ClipLayer` (class from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): Library clips in the animator's clip slot (see the file comment).
 - `ClipLayerEvent` (type from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): An event of the tick `step` took.
+- `clipLayerOf` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): The clip layer of actor `id`, loaded from its component, to read (`current`, `inspect()`); changes are not kept.
 - `ClipLayerOptions` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): What a `ClipLayer` is made with.
+- `ClipLayerPool` (class from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Clip layers by entity id, each loaded from its entity's `clips` data at every `get` (see the file comment).
 - `ClipLayerState` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): The layer's state, plain data: what `step` changes and `save` copies.
 - `ClipLibrary` (interface from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): A loaded set (see the file comment).
 - `ClipOrigin` (interface from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Where a clip came from: its library's label, origin and license, and the clip or take it was made from.
 - `clipPace` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): A clip's pace on a body whose standing hip height is `hipHeight` metres: m/s, or null when it has no `speed`.
 - `ClipPlay` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): How a clip plays (see the file comment).
+- `CLIPS_FIELDS` (const from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The fields of an actor's component `clips`: its clip layer as plain data (see the file comment).
+- `ClipsData` (interface from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): What `CLIPS_FIELDS` holds.
 - `ClipSet` (interface from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): A set of clips: the header, then the clips by name.
+- `CLIPSET_FIELDS` (const from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The fields of a `clipset` entry: a set's header (validate.ts `ClipSet`) and its clips.
+- `ClipSetEntry` (type from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): A `clipset` entry: a parsed set, frozen.
+- `clipSetFromFiles` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): A set directory's files (`_set.json` and one `.json` file a clip, by file name; others ignored) as one set (`parseClipSet`), its clips in its `fit`'s order, then by file name, as tools/anim/repack.ts `joinSet` gives it: what a page registers from the text `import.meta.glob` loads.
+- `clipSetId` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The id a set registers under: `clipset:` and its name in lower case (`clipset:style100_back`).
+- `clipSetIds` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The ids of the sets registered on `registry`, sorted (`clipset:cmu`, `clipset:mesh2motion`…).
 - `ClipSlot` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): A slot: a playing clip and where it is.
 - `ClipSource` (interface from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): A library a set's clips came from: its provenance and the rest body they were measured on.
+- `ClipsSpec` (interface from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): What `spawnActor`'s `clips` and `addClips` take.
 - `ClipStepInput` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): What `step` reads.
 - `clipText` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): The text an agent reads and edits: the clip's header on one line, then each key as three short lines.
 - `ClipWarning` (interface from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): One warning about a clip: the code, the key (from 1) and its time, the field, and the sentence naming the fix.
@@ -270,6 +281,7 @@ game agent's manual.
 - `defineActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Registers an action map (on the shared registry by default).
 - `defineBody` (function from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): Defines a body on `registry` (the shared one by default).
 - `defineBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
+- `defineClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Parses `input` (a set's text or object, `parseClipSet`) and registers it on `registry` as `clipSetId(set)`; a set registered already is returned when it is the same, and refused (`CORE_DUPLICATE_ID`) when it differs.
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
 - `defineEmitter` (function from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): Defines an emitter on `registry` (the shared one by default) and returns it.
 - `defineGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): Defines a geometry on `registry` (the shared one by default) and returns it.
@@ -284,6 +296,7 @@ game agent's manual.
 - `definePostSettings` (function from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): Declares the chain's settings (`POST_SETTINGS`) and the setting `quality` it reads on `registry` (the shared one by default), unless it has them: on the shared one when this module loads, so `node x set post.look look:game-boy` knows them in Node (tools/cmd/set.ts imports the modules that declare settings), and on any other when `createPost` or `createEngine` runs.
 - `defineProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): Defines a prop on `registry` (the shared one by default) and returns it.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
+- `defineSetBuild` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Registers build `id` with the proportions clip set `setId`'s clips were captured on (retarget.ts `restBuild` of its first source's rest body, or `source`'s), once, and returns it: `build:mannequin` from `clipset:quaternius` is the build engine/gfx/puppets/bodies/mannequin.ts draws, which the sim's animator needs before the view's body exists.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
 - `defineSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): Defines an effect on `registry` (the shared one by default) and returns it.
 - `defineSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`.
@@ -303,6 +316,7 @@ game agent's manual.
 - `Emitter` (type from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): An `emitter` entry: see the file comment.
 - `EmitterLayer` (interface from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): One layer of an emitter, filled.
 - `EmitterSpec` (type from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): What `defineEmitter` takes: any field; of `ring` and `light`, any key.
+- `emptyClipState` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): An empty clip layer's state: nothing plays.
 - `Engine` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): A started engine.
 - `EngineFrame` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): What `onFrame` gets once per drawn frame: the run to read, never to change (presentation only: nothing reaches the hash), and the camera the frame was drawn from.
 - `EngineInfo` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): What `info()` reports: the engine's identity and health, and the run.
@@ -363,6 +377,7 @@ game agent's manual.
 - `getActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The action map `id`.
 - `getBody` (function from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): The body `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `body:humanoid`.
 - `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
+- `getClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The registered set `id` (`clipset:quaternius`); a missing one throws `CORE_NO_ENTRY`, naming the closest ids.
 - `getEmitter` (function from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): The emitter `id` of `registry` (the shared one by default); a missing id gives `emitter:sparks`, with a warning.
 - `getGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): The geometry `id` of `registry` (the shared one by default); a missing id gives `geometry:box`, with a warning.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
@@ -485,6 +500,7 @@ game agent's manual.
 - `ListenerPose` (interface from [`engine/audio/runtime/spatial.ts`](../engine/audio/runtime/spatial.ts)): Where the listener is and where it looks: the engine's camera pose (engine/gfx/cameras/pose.ts) satisfies it.
 - `loadActions` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Defines the actions of files read from data/anim/actions/ (each `{ "action": "<name>", …spec }`, as `action:<name>`) and returns them.
 - `loadClipLibrary` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Loads a set (its text or object, read by validate.ts `parseClipSet`, which throws its `ANIM_CLIP_*` codes).
+- `locomoteClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `loops.idle`, `walk` or `run` on actor `id` by its ground speed, each at that speed; null stops them.
 - `LOD` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The detail levels `pose({ lod })` takes, by index: how often it re-solves, in ticks, and which slots run.
 - `LOOK_AHEAD` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many tiles downhill `FlowField.direction` looks ahead (shardfall's 3).
 - `LookEntry` (type from [`engine/gfx/post/looks.ts`](../engine/gfx/post/looks.ts)): A `look` entry.
@@ -566,6 +582,7 @@ game agent's manual.
 - `pillarParts` (function from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's parts, bottom to top (see the file comment).
 - `planCutaway` (function from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): For each target, for each cell: whether `pose`, looking at `focus`, cuts it.
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
+- `playClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `clip` (`SET/Clip`, or bare) on actor `id`, fading in over what plays (the layer's `play`).
 - `PlayIntoOptions` (interface from [`engine/app/playback.ts`](../engine/app/playback.ts)): How `playInto` plays.
 - `PlayOptions` (interface from [`engine/audio/runtime/sound.ts`](../engine/audio/runtime/sound.ts)): How `play` plays one effect.
 - `PlayResult` (interface from [`engine/app/playback.ts`](../engine/app/playback.ts)): What a played replay gave.
@@ -612,6 +629,7 @@ game agent's manual.
 - `PropTouch` (interface from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): What a hook is given: the prop, its body, where the touch comes from, and the means to answer it.
 - `Puppet` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): One character drawn as a rigid-skinned mesh (see the file comment).
 - `PuppetBatches` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Instanced parts for crowds (see the file comment).
+- `PuppetComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
 - `PuppetMaterials` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Where materials come from: the page's material library.
 - `Quantize` (type from [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)): Where a change lands: the next bar line, the next beat, or at once.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
@@ -691,6 +709,7 @@ game agent's manual.
 - `Secondary` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The secondary-motion layer: squash, hair, cape and tail on a humanoid.
 - `SecondaryOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What `Secondary` runs: each part is off unless given (the squash is on unless `false`).
 - `seek` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way from `from` to `to` on the ground: a unit vector, zero within a millimetre.
+- `seekClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Puts the clip on top of actor `id` at `t` clip seconds (kept within 0 and its length), its fade done: a frame step is `seekClip(w, id, frame / BAKE_FPS)`.
 - `sensorHits` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): The dynamic and kinematic bodies a body's sensors overlapped at the last step, in id order.
 - `SensorSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Where a sensor goes and how it moves.
 - `setPart` (function from [`engine/gfx/post/mrt.ts`](../engine/gfx/post/mrt.ts)): Tags `object` (and what it holds) with a part of the scene, an outline group and the pixel-art flag.
@@ -757,6 +776,7 @@ game agent's manual.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
 - `StickView` (interface from [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)): Where the stick is drawn, in client CSS px: its centre and its knob.
+- `stopClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Fades out the clip on top of actor `id` over `fade` seconds (its `out`), with what it covers.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
 - `StrikeAnimator` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of an animator: its body, which the sim poses only with `preciseHits`.
 - `StrikeBody` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of a body.
@@ -861,12 +881,13 @@ game agent's manual.
 - `ActionSpec` (type from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What `defineAction` takes: `desc` and `beats`, each beat's `name` and `seconds`; the rest as it likes.
 - `ActionsState` (interface from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): An `Actions`' state, plain data.
 - `ActorComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `actor`: an entity the character controller moves.
-- `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, `animator`, and `oneWay` for one-way platforms.
+- `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, `animator`, `puppet`, and `oneWay` for one-way platforms.
 - `ActorSpec` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): What `spawnActor` takes.
 - `addAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds a queued agent's body now (`updateCrowd` does it through the queue), its feet at `x`, `y`, `z`, moving at `vx`, `vy`, `vz`; returns its id.
 - `addBall` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a ball prop; returns its id.
 - `addBox` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a box prop, sized as BoxGeometry (full width, height, depth); returns its id.
 - `addCapsule` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a capsule prop, standing up (`height` is its straight middle, as CapsuleGeometry's); returns its id.
+- `addClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Gives the live animated actor `id` the component `clips` (`clipsFor`); an actor spawned in the same step takes them from `spawnActor`'s `clips`.
 - `addCylinder` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a cylinder prop, standing up (a barrel); returns its id.
 - `addLevelBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
@@ -973,15 +994,25 @@ game agent's manual.
 - `ClipKey` (interface from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): One key pose.
 - `ClipLayer` (class from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): Library clips in the animator's clip slot (see the file comment).
 - `ClipLayerEvent` (type from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): An event of the tick `step` took.
+- `clipLayerOf` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): The clip layer of actor `id`, loaded from its component, to read (`current`, `inspect()`); changes are not kept.
 - `ClipLayerOptions` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): What a `ClipLayer` is made with.
+- `ClipLayerPool` (class from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Clip layers by entity id, each loaded from its entity's `clips` data at every `get` (see the file comment).
 - `ClipLayerState` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): The layer's state, plain data: what `step` changes and `save` copies.
 - `ClipLibrary` (interface from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): A loaded set (see the file comment).
 - `ClipOrigin` (interface from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Where a clip came from: its library's label, origin and license, and the clip or take it was made from.
 - `clipPace` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): A clip's pace on a body whose standing hip height is `hipHeight` metres: m/s, or null when it has no `speed`.
 - `ClipPlay` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): How a clip plays (see the file comment).
+- `CLIPS_FIELDS` (const from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The fields of an actor's component `clips`: its clip layer as plain data (see the file comment).
+- `ClipsData` (interface from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): What `CLIPS_FIELDS` holds.
 - `ClipSet` (interface from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): A set of clips: the header, then the clips by name.
+- `CLIPSET_FIELDS` (const from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The fields of a `clipset` entry: a set's header (validate.ts `ClipSet`) and its clips.
+- `ClipSetEntry` (type from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): A `clipset` entry: a parsed set, frozen.
+- `clipSetFromFiles` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): A set directory's files (`_set.json` and one `.json` file a clip, by file name; others ignored) as one set (`parseClipSet`), its clips in its `fit`'s order, then by file name, as tools/anim/repack.ts `joinSet` gives it: what a page registers from the text `import.meta.glob` loads.
+- `clipSetId` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The id a set registers under: `clipset:` and its name in lower case (`clipset:style100_back`).
+- `clipSetIds` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The ids of the sets registered on `registry`, sorted (`clipset:cmu`, `clipset:mesh2motion`…).
 - `ClipSlot` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): A slot: a playing clip and where it is.
 - `ClipSource` (interface from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): A library a set's clips came from: its provenance and the rest body they were measured on.
+- `ClipsSpec` (interface from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): What `spawnActor`'s `clips` and `addClips` take.
 - `ClipStepInput` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): What `step` reads.
 - `clipText` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): The text an agent reads and edits: the clip's header on one line, then each key as three short lines.
 - `ClipWarning` (interface from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): One warning about a clip: the code, the key (from 1) and its time, the field, and the sentence naming the fix.
@@ -1029,6 +1060,7 @@ game agent's manual.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
 - `defineAction` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Defines an action on `registry` (the shared one).
 - `defineBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
+- `defineClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Parses `input` (a set's text or object, `parseClipSet`) and registers it on `registry` as `clipSetId(set)`; a set registered already is returned when it is the same, and refused (`CORE_DUPLICATE_ID`) when it differs.
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
 - `defineGlyph` (function from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): Defines a glyph on `registry` (the shared one by default) and returns it.
 - `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
@@ -1036,6 +1068,7 @@ game agent's manual.
 - `defineMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): Defines a move on `registry` (the shared one by default) and returns it; absent fields keep a plain strike's values.
 - `defineProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): Defines a prop on `registry` (the shared one by default) and returns it.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
+- `defineSetBuild` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Registers build `id` with the proportions clip set `setId`'s clips were captured on (retarget.ts `restBuild` of its first source's rest body, or `source`'s), once, and returns it: `build:mannequin` from `clipset:quaternius` is the build engine/gfx/puppets/bodies/mannequin.ts draws, which the sim's animator needs before the view's body exists.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
 - `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
@@ -1044,6 +1077,7 @@ game agent's manual.
 - `easeWeight` (function from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): One fixed step of easing: `value` moves toward `target` at `rates[0]` (+ `gain` × value) rising, `rates[1]` falling.
 - `Effectors` (interface from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The effector stage's targets: rig-local metres before `size`, in the model frame (+Z forward, +Y up).
 - `EFFECTORS` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The effectors a beat may pull, in channel order.
+- `emptyClipState` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): An empty clip layer's state: nothing plays.
 - `Entity` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity: its id and the components it holds, by kind name (`e.position`).
 - `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
 - `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
@@ -1075,6 +1109,7 @@ game agent's manual.
 - `FRU` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A rig-local point or direction: metres (or a direction's parts) forward, right and up.
 - `getAction` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The action `id` (`action:jump`, or `jump`); a missing one throws `CORE_NO_ENTRY`, naming the closest.
 - `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
+- `getClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The registered set `id` (`clipset:quaternius`); a missing one throws `CORE_NO_ENTRY`, naming the closest ids.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
 - `getMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`, naming the closest) and gives `move:slash`.
 - `getProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): The prop `id` of `registry` (the shared one by default); a missing id gives `prop:crate`, with a warning.
@@ -1160,6 +1195,7 @@ game agent's manual.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
 - `loadActions` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Defines the actions of files read from data/anim/actions/ (each `{ "action": "<name>", …spec }`, as `action:<name>`) and returns them.
 - `loadClipLibrary` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Loads a set (its text or object, read by validate.ts `parseClipSet`, which throws its `ANIM_CLIP_*` codes).
+- `locomoteClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `loops.idle`, `walk` or `run` on actor `id` by its ground speed, each at that speed; null stops them.
 - `LOD` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The detail levels `pose({ lod })` takes, by index: how often it re-solves, in ticks, and which slots run.
 - `LOOK_AHEAD` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many tiles downhill `FlowField.direction` looks ahead (shardfall's 3).
 - `Lying` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body lies: on its back (`up`) or on its face (`down`).
@@ -1203,6 +1239,7 @@ game agent's manual.
 - `physicsOf` (function from [`engine/physics/world.ts`](../engine/physics/world.ts)): The physics world of a sim world: its bodies and queries.
 - `physicsWalls` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
+- `playClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `clip` (`SET/Clip`, or bare) on actor `id`, fading in over what plays (the layer's `play`).
 - `POINT_INDEX` (const from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Each point's position in `POSE_POINTS`.
 - `Point3` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A point in metres: `[x, y, z]`.
 - `PointLike` (type from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A point: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`, metres.
@@ -1235,6 +1272,7 @@ game agent's manual.
 - `PropPose` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): Where a prop is drawn: its centre (m) and its turn, `[x, y, z, w]`.
 - `PropSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A prop as `addProp` takes it: a body's pose, velocities and options, and its material.
 - `PropTouch` (interface from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): What a hook is given: the prop, its body, where the touch comes from, and the means to answer it.
+- `PuppetComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `QuatLike` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A rotation: three.js's `Quaternion`, `{ x, y, z, w }` or `[x, y, z, w]`.
 - `QueryOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What every query takes: the groups it hits, and a body it skips.
@@ -1286,6 +1324,7 @@ game agent's manual.
 - `Secondary` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The secondary-motion layer: squash, hair, cape and tail on a humanoid.
 - `SecondaryOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What `Secondary` runs: each part is off unless given (the squash is on unless `false`).
 - `seek` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way from `from` to `to` on the ground: a unit vector, zero within a millimetre.
+- `seekClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Puts the clip on top of actor `id` at `t` clip seconds (kept within 0 and its length), its fade done: a frame step is `seekClip(w, id, frame / BAKE_FPS)`.
 - `sensorHits` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): The dynamic and kinematic bodies a body's sensors overlapped at the last step, in id order.
 - `SensorSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Where a sensor goes and how it moves.
 - `SettingValue` (type from [`engine/core/settings.ts`](../engine/core/settings.ts)): A setting's value: plain data.
@@ -1330,6 +1369,7 @@ game agent's manual.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
+- `stopClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Fades out the clip on top of actor `id` over `fade` seconds (its `out`), with what it covers.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
 - `StrikeAnimator` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of an animator: its body, which the sim poses only with `preciseHits`.
 - `StrikeBody` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of a body.
@@ -1500,12 +1540,20 @@ For the agents who maintain the engine.
 - `ClipLayer` (class from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): Library clips in the animator's clip slot (see the file comment).
 - `ClipLayerEvent` (type from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): An event of the tick `step` took.
 - `ClipLayerOptions` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): What a `ClipLayer` is made with.
+- `ClipLayerPool` (class from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Clip layers by entity id, each loaded from its entity's `clips` data at every `get` (see the file comment).
 - `ClipLayerState` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): The layer's state, plain data: what `step` changes and `save` copies.
 - `ClipLibrary` (interface from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): A loaded set (see the file comment).
 - `ClipOrigin` (interface from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Where a clip came from: its library's label, origin and license, and the clip or take it was made from.
 - `clipPace` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): A clip's pace on a body whose standing hip height is `hipHeight` metres: m/s, or null when it has no `speed`.
 - `ClipPlay` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): How a clip plays (see the file comment).
+- `CLIPS_FIELDS` (const from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The fields of an actor's component `clips`: its clip layer as plain data (see the file comment).
+- `ClipsData` (interface from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): What `CLIPS_FIELDS` holds.
 - `ClipSet` (interface from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): A set of clips: the header, then the clips by name.
+- `CLIPSET_FIELDS` (const from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The fields of a `clipset` entry: a set's header (validate.ts `ClipSet`) and its clips.
+- `ClipSetEntry` (type from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): A `clipset` entry: a parsed set, frozen.
+- `clipSetFromFiles` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): A set directory's files (`_set.json` and one `.json` file a clip, by file name; others ignored) as one set (`parseClipSet`), its clips in its `fit`'s order, then by file name, as tools/anim/repack.ts `joinSet` gives it: what a page registers from the text `import.meta.glob` loads.
+- `clipSetId` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The id a set registers under: `clipset:` and its name in lower case (`clipset:style100_back`).
+- `clipSetIds` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The ids of the sets registered on `registry`, sorted (`clipset:cmu`, `clipset:mesh2motion`…).
 - `ClipSlot` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): A slot: a playing clip and where it is.
 - `ClipSource` (interface from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): A library a set's clips came from: its provenance and the rest body they were measured on.
 - `ClipStepInput` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): What `step` reads.
@@ -1519,10 +1567,13 @@ For the agents who maintain the engine.
 - `decodePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it.
 - `defineAction` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Defines an action on `registry` (the shared one).
 - `defineBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
+- `defineClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Parses `input` (a set's text or object, `parseClipSet`) and registers it on `registry` as `clipSetId(set)`; a set registered already is returned when it is the same, and refused (`CORE_DUPLICATE_ID`) when it differs.
 - `defineMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): Defines a move on `registry` (the shared one by default) and returns it; absent fields keep a plain strike's values.
+- `defineSetBuild` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Registers build `id` with the proportions clip set `setId`'s clips were captured on (retarget.ts `restBuild` of its first source's rest body, or `source`'s), once, and returns it: `build:mannequin` from `clipset:quaternius` is the build engine/gfx/puppets/bodies/mannequin.ts draws, which the sim's animator needs before the view's body exists.
 - `easeWeight` (function from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): One fixed step of easing: `value` moves toward `target` at `rates[0]` (+ `gain` × value) rising, `rates[1]` falling.
 - `Effectors` (interface from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The effector stage's targets: rig-local metres before `size`, in the model frame (+Z forward, +Y up).
 - `EFFECTORS` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The effectors a beat may pull, in channel order.
+- `emptyClipState` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): An empty clip layer's state: nothing plays.
 - `FLIP_AXES` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What a flip turns about, in the body's frame: the top of the body goes forward, back, left, right; or it spins left.
 - `Floater` (class from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater: its state, its pose.
 - `FLOATER` (const from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's tuning: the source's numbers, lengths ÷ 16 in metres, and the bank's.
@@ -1540,6 +1591,7 @@ For the agents who maintain the engine.
 - `FRU` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A rig-local point or direction: metres (or a direction's parts) forward, right and up.
 - `getAction` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The action `id` (`action:jump`, or `jump`); a missing one throws `CORE_NO_ENTRY`, naming the closest.
 - `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
+- `getClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The registered set `id` (`clipset:quaternius`); a missing one throws `CORE_NO_ENTRY`, naming the closest ids.
 - `getMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`, naming the closest) and gives `move:slash`.
 - `GROUND_SPEED` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): shardfall's ground-speed numbers (`clips.rs:441-476`).
 - `GroundHit` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Where a ground probe hit, in world space: the `point`, and the surface's unit `normal` there.
@@ -1778,6 +1830,22 @@ For the agents who maintain the engine.
 - `rigToEngine` (function): A rig vector `[forward, right, up]` (times `scale`) in engine axes: x left, y up, z forward.
 - `sampleBaked` (function): Samples `baked` at `t` seconds: its 23 local rotations into `rotations` (slerped between frames, as three.js's mixer does) and its pelvis into `hips` (lerped).
 - `travelAt` (function): How far `baked` has carried the root by `t` seconds, `(x, z)` metres on the source body (a loop's laps added).
+
+### [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)
+
+- `ClipLayerPool` (class): Clip layers by entity id, each loaded from its entity's `clips` data at every `get` (see the file comment).
+- `CLIPS_FIELDS` (const): The fields of an actor's component `clips`: its clip layer as plain data (see the file comment).
+- `ClipsData` (interface): What `CLIPS_FIELDS` holds.
+- `CLIPSET_FIELDS` (const): The fields of a `clipset` entry: a set's header (validate.ts `ClipSet`) and its clips.
+- `ClipSetEntry` (type): A `clipset` entry: a parsed set, frozen.
+- `clipSetFromFiles` (function): A set directory's files (`_set.json` and one `.json` file a clip, by file name; others ignored) as one set (`parseClipSet`), its clips in its `fit`'s order, then by file name, as tools/anim/repack.ts `joinSet` gives it: what a page registers from the text `import.meta.glob` loads.
+- `clipSetId` (function): The id a set registers under: `clipset:` and its name in lower case (`clipset:style100_back`).
+- `clipSetIds` (function): The ids of the sets registered on `registry`, sorted (`clipset:cmu`, `clipset:mesh2motion`…).
+- `clipSetKind` (function): Declares the kind `clipset` on `registry`, once.
+- `defineClipSet` (function): Parses `input` (a set's text or object, `parseClipSet`) and registers it on `registry` as `clipSetId(set)`; a set registered already is returned when it is the same, and refused (`CORE_DUPLICATE_ID`) when it differs.
+- `defineSetBuild` (function): Registers build `id` with the proportions clip set `setId`'s clips were captured on (retarget.ts `restBuild` of its first source's rest body, or `source`'s), once, and returns it: `build:mannequin` from `clipset:quaternius` is the build engine/gfx/puppets/bodies/mannequin.ts draws, which the sim's animator needs before the view's body exists.
+- `emptyClipState` (function): An empty clip layer's state: nothing plays.
+- `getClipSet` (function): The registered set `id` (`clipset:quaternius`); a missing one throws `CORE_NO_ENTRY`, naming the closest ids.
 
 ### [`engine/anim/clip/encode.ts`](../engine/anim/clip/encode.ts)
 
@@ -4144,15 +4212,28 @@ For the agents who maintain the engine.
 - `scenePhysics` (function): For a scene that asks for physics: a new physics world, with `physics.gravity` declared on `registry` if it lacks it.
 - `WORLD_CODES` (const): The codes this module raises, with their fixes.
 
+### [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)
+
+- `addClips` (function): Gives the live animated actor `id` the component `clips` (`clipsFor`); an actor spawned in the same step takes them from `spawnActor`'s `clips`.
+- `clipLayerOf` (function): The clip layer of actor `id`, loaded from its component, to read (`current`, `inspect()`); changes are not kept.
+- `clipsFor` (function): The component `clips` for `spec` on an animator of `build` (its `play` playing, else nothing), the world given the system `actors.clips`: what `spawnActor`'s `clips` spawns an actor with.
+- `ClipsSpec` (interface): What `spawnActor`'s `clips` and `addClips` take.
+- `defineClipKinds` (function): Declares the component `clips` on `registry`, once.
+- `locomoteClips` (function): Plays `loops.idle`, `walk` or `run` on actor `id` by its ground speed, each at that speed; null stops them.
+- `playClip` (function): Plays `clip` (`SET/Clip`, or bare) on actor `id`, fading in over what plays (the layer's `play`).
+- `seekClip` (function): Puts the clip on top of actor `id` at `t` clip seconds (kept within 0 and its length), its fade done: a frame step is `seekClip(w, id, frame / BAKE_FPS)`.
+- `stopClip` (function): Fades out the clip on top of actor `id` over `fade` seconds (its `out`), with what it covers.
+
 ### [`engine/sim/actors.ts`](../engine/sim/actors.ts)
 
 - `ActorComponent` (interface): The component `actor`: an entity the character controller moves.
-- `ActorComponents` (type): The components this module reads: `actor`, `animator`, and `oneWay` for one-way platforms.
+- `ActorComponents` (type): The components this module reads: `actor`, `animator`, `puppet`, and `oneWay` for one-way platforms.
 - `ActorSpec` (interface): What `spawnActor` takes.
 - `AnimatorComponent` (interface): The component `animator`: an actor's character animator as plain data, and what its game code tells its body.
-- `defineActorKinds` (function): Declares the components `actor`, `animator` and `oneWay` and the setting `physics.characterGravity` on `registry`.
+- `defineActorKinds` (function): Declares the components `actor`, `animator`, `puppet`, `clips` (engine/sim/actorClips.ts) and `oneWay` and the setting `physics.characterGravity` on `registry`.
 - `FeelOptions` (interface): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
 - `measureFeel` (function): Measures a character's feel on the standard course (the file comment says what each number is).
+- `PuppetComponent` (interface): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
 - `removeActor` (function): Removes an actor and its body.
 - `spawnActor` (function): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
 
@@ -4668,6 +4749,10 @@ For the agents who maintain the engine.
 - `WISP_SHOT` (const): The wisp's shot on the floor: a narrow line from under it, as far as it shoots.
 - `WispData` (interface): The wisp's own state, beside its crowd agent.
 
+### [`labs/box/library.ts`](../labs/box/library.ts)
+
+- `loadLibrary` (function): Registers the sets in `files` (path → its text, loaded on demand), then the mannequin from the Quaternius set.
+
 ### [`labs/box/looks/hall-floor.ts`](../labs/box/looks/hall-floor.ts)
 
 - `HALL_FLOOR` (const): The material that draws the hall's floor bake.
@@ -4697,6 +4782,14 @@ For the agents who maintain the engine.
 ### [`labs/box/looks/torch-toon.ts`](../labs/box/looks/torch-toon.ts)
 
 - `look` (const): The look `look:torch-toon`: toon shading with outlines in the torch-lit hall.
+
+### [`labs/box/scenes/clips.ts`](../labs/box/scenes/clips.ts)
+
+- `clips` (const): Clip mode: the hero and the mannequin playing the library's clips in the room.
+- `CLIPS_MODE` (const): Clip mode's own state: how long the one-shot playing has held its end, in steps.
+- `CLIPS_SETTINGS` (const): The scene's settings (see the file comment).
+- `CLIPS_START` (const): Where the hero starts: the room's spawn `@`, as in the room with a hero.
+- `default` (default): Clip mode, the animation library in the box (PLAN.md §10, WP 8.9; the Mocap Lab's clip mode, `my-3d2dge:src/mocap.game.js`): the room (labs/box/levels/room.txt) as a physics level, the hero at its spawn and the mannequin beside him, both playing a clip of the library through the clip layer in their animators (engine/sim actorClips.ts), over the procedural rig.
 
 ### [`labs/box/scenes/crowd-100.ts`](../labs/box/scenes/crowd-100.ts)
 
