@@ -4,9 +4,10 @@
  * reads them). Attack is the main button, the big one in the corner, since Box 5's fight; jump, dash and the bolt
  * (the action `skill`) sit beside it on the inner ring. Each acts from the moment the thumb lands and stays held
  * while it stays, so a held jump climbs higher than a tapped one, as on the keyboard; in the scenes without a fight,
- * attack is the hall's shove (labs/box/scenes/hall-props.ts) or nothing. No menu button: the box has no menu to open,
- * and a pause with nothing to resume it would strand a phone. The page names the layout for every scene
- * (labs/box/main.ts); the floating stick walks the hero wherever the other thumb lands.
+ * attack is the hall's shove (labs/box/scenes/hall-props.ts) or nothing. No menu button: the box's menu
+ * (labs/box/menu.ts) has its own button and pauses nothing, and a pause with nothing to resume it would strand a phone.
+ * The page names the layout for every scene (labs/box/main.ts); the floating stick walks the hero wherever the other
+ * thumb lands.
  *
  * Like the rest of the touch layer it has no test, by the owner's order (ADR-0021): only the owner's reports check it.
  * `node x set touch on` opens it on a desktop, for reading through DOM queries.

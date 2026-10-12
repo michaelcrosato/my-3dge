@@ -126,6 +126,7 @@ Chromium (`tests/e2e/box-audio.spec.ts`).
 | `gfx.resolution` | The resolution mode: `pixels`, `balanced` or `full`. A view setting: never in the hash. |
 | `time.scale` | Sim seconds per real second (1). A view setting. |
 | `touch` | The touch controls: `auto`, `on` or `off`. A view setting (below). |
+| `box.menu` | The page's menu for humans (below): `auto` shows it unless automation drives the browser, `on` and `off` force it, when the page opens. A view setting. |
 
 Set one with `node x set box.room.speed 3`, as a URL parameter (`labs/box/?box.room.speed=3`), or with
 `__engine.set('box.room.speed', 3)`; `node x describe setting` lists them all.
@@ -140,13 +141,24 @@ the hall, `?replay=box-3-knock` the hall with its props, `?replay=box-4-chase` t
 and `?post.look=look:torch-lit` (a look, above). In the page,
 `window.__engine.help()` lists every member.
 
+The page opens with its menu for humans (`labs/box/menu.ts`) in the top-left corner: every scene above as a link with
+a one-line label, the replays, cameras (`cam3=chase`, `cam3=first`, `cam3=orbit`, `cam=iso`, `cam=topdown`) and looks
+(the box's, then `look:cartoon`, `look:game-boy` and a few more of the engine's) that keep the scene, and the
+controls, read from the action map the page's input binds (`actionMap:thirdPerson`: WASD or the arrows move, Space
+jumps, Shift dashes, the left button or J attacks, the right button or L fires the bolt, E interacts), with the
+wheel's zoom and the first click or key that starts the sound. Its button or M shows and hides it; no action map binds
+M (`tests/e2e/box-menu.spec.ts`). A browser that automation drives (navigator.webdriver: every e2e spec and every `x`
+command that opens the page) gets none of it, so no test's screenshot holds it, and `__engine.shot` reads the GPU,
+never the page; `?box.menu=on` shows it there.
+
 `?scene=clips` opens clip mode (`labs/box/?scene=clips&box.clips.clip=cmu/Cartwheel&cam=threequarter`); the page loads
 the animation library for it and its replays alone. The page ships the clips, so it always shows 100STYLE's credit (CC BY 4.0,
 `data/anim/SOURCES.md`) in its corner.
 
 On a phone or tablet the page shows the touch controls (`labs/box/touch.ts`, for every scene): a floating stick
-wherever the thumb lands, attack as the main button, and jump, dash and the bolt beside it. Like the rest of the touch layer they are not
-tested (ADR-0021); `labs/box/?touch=on` shows them on a desktop.
+wherever the thumb lands, attack as the main button, and jump, dash and the bolt beside it. The menu is a page panel
+there: it starts below its button and scrolls, the touch buttons hide while it is open, and a tap on the game closes
+it. Like the rest of the touch layer they are not tested (ADR-0021); `labs/box/?touch=on` shows them on a desktop.
 
 ## The quick loop
 
