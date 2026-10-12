@@ -18,7 +18,7 @@ it cannot drift from them (PLAN.md §8.2, §8.8).
 - **Long runs**: long replays, the kernel's perf budget, the crowd ladder, flake hunting; at each gate.
 
 Each tier's command and budget, and the long runs, are `TIERS` and `LONG_RUNS` in tools/lib/tiers.ts. `x ci --local`
-warns when a tier runs over its budget and fails it at 1.5×.
+warns when a tier runs over its budget; wall-clock time never fails a gate (ADR-0022).
 
 ## What a change selects
 

@@ -2,7 +2,7 @@
  * @file Unit tests for `x ci --local` (tools/cmd/ci.ts) in temporary roots, with a fake step runner, git, selections
  * and clock: the step list against PLAN.md §8.9; the order, the logs and the green commit; a failed step that leaves
  * the next ones running, and a failed `npm ci` that skips them; T2 in full or selected by its last full run; the
- * budgets (fresh JSON reports read, stale ones ignored, over warns, 1.5× fails); the cache kept across `npm ci`;
+ * budgets (fresh JSON reports read, stale ones ignored, over warns, never fails: ADR-0022); the cache kept across `npm ci`;
  * `--long`; the summary; and the exit codes and the 20-line output through the dispatcher. The real suite never runs
  * here: `node x ci --local` is WP 0.9's Verify.
  */
@@ -196,7 +196,7 @@ describe('runCi', () => {
 });
 
 describe('budgets', () => {
-  it('warn over a budget and fail the gate at 1.5×', async () => {
+  it('warn over a budget and never fail the gate for time', async () => {
     const warn = await runCi(measured(6000), fakeDeps({ 'npm run check': { ms: 12_000 } }).deps);
     expect(warn.ok).toBe(true);
     expect(warn.budgets.map((check) => [check.tier, check.status])).toEqual([
@@ -204,9 +204,9 @@ describe('budgets', () => {
       ['T1', 'ok'],
       ['T2', 'ok'],
     ]);
-    const fail = await runCi(measured(6000), fakeDeps({ 'npm run check': { ms: 15_000 } }).deps);
-    expect(fail.ok).toBe(false);
-    expect(fail.budgets[0]).toMatchObject({ tier: 'T0', status: 'fail' });
+    const slow = await runCi(measured(6000), fakeDeps({ 'npm run check': { ms: 150_000 } }).deps);
+    expect(slow.ok).toBe(true);
+    expect(slow.budgets[0]).toMatchObject({ tier: 'T0', status: 'warn' });
   });
 
   it('take T1 and T2 from the JSON reports their steps rewrote', async () => {
@@ -289,7 +289,7 @@ describe('node x ci through the dispatcher', () => {
     expect(report.artifacts.map((artifact: { path: string }) => artifact.path)).toContain(LAST_GREEN);
   });
 
-  it('exits 1 when a step fails or a tier reaches 1.5× its budget, naming each', async () => {
+  it('exits 1 when a step fails, naming it, and only warns when a tier is over its budget', async () => {
     const failed = await x(measured(6000), ['--local'], fakeDeps({ 'node x src': { code: 1, ms: 200 } }).deps);
     expect(failed.code).toBe(1);
     expect(failed.lines[0]).toBe('x ci: FAIL: 1 problem: x src');
@@ -297,9 +297,8 @@ describe('node x ci through the dispatcher', () => {
       `CI_STEP_FAILED: node x src exited 1 after 0.2 s: read ${CI_OUT.logs}/2-x-src.log (its last lines are in ${CI_OUT.summary})`,
     );
     const slow = await x(measured(6000), ['--local'], fakeDeps({ 'npm test': { ms: 90_000 } }).deps);
-    expect(slow.code).toBe(1);
-    expect(slow.lines[0]).toBe('x ci: FAIL: 1 problem: over budget');
-    expect(slow.lines.some((line) => line.startsWith('CI_BUDGET: T1 took 1 min 30 s, at least 1.5×'))).toBe(true);
+    expect(slow.code).toBe(0);
+    expect(slow.lines.some((line) => line.startsWith('CI_BUDGET: T1 took 1 min 30 s, over its'))).toBe(true);
     expect(slow.lines.length).toBeLessThanOrEqual(MAX_LINES);
   });
 

@@ -1266,7 +1266,7 @@ A command arrives with the WP that needs it; on-demand commands do not exist, ev
 **Rules:**
 - **Selection.** T1 selects through Vite's module graph: `vitest run --changed <base>` while iterating, `vitest related <files>` to see what covers a file. T2 runs in full whenever engine, lab or page code changed, because page code reaches the browser through the dev server rather than through the specs' imports. When only specs or their helpers changed, `--only-changed <base>` is enough.
 - **The base** is the merge-base with `origin/main` once `main` holds a gate, and otherwise the commit recorded in `out/ci/last-green` by the last green `x ci --local`.
-- **Budgets.** `x ci --local` reads the JSON reports, warns when a tier is over its budget, and fails at 1.5×.
+- **Budgets.** `x ci --local` reads the JSON reports and warns when a tier is over its budget; wall-clock time never fails a gate (ADR-0022).
 - **T0 costs what a change reaches** (ADR-0014, amendment 7). Its type check is `tsc -b` over three composite projects (`tsconfig.check.json`: the engine, the code that runs on it, the unit tests) that keep their declarations in `node_modules/.cache/tsc/`, so an unchanged project is skipped and a change re-checks only the files it can reach. Together the projects hold exactly `tsconfig.json`'s files, which `tsc --noEmit` still checks as one program.
 - **Browser work is T2.** A test that drives Chromium, even through a child Playwright, is a spec in `tests/e2e/`, never a Vitest test; T1 runs one Vitest worker per core.
 - A test that waits on wall-clock time is a bug. Tests step the engine (`step(n)`) on a virtual clock.
@@ -1755,13 +1755,13 @@ A WP is done only when all of these hold:
 - **Build:**
   - **The tiers** as npm scripts (§8.1, §8.2): T0 `npm run check`, T1 `npm test`, T2 `npm run e2e`, and the long runs.
   - **Selection** (§8.2): T1 through `vitest run --changed <base>` and `vitest related`. T2 runs in full when engine, lab or page code changed, and otherwise as `playwright test --only-changed <base>`. `tools/lib/tiers.ts` computes the base (the merge-base with `origin/main` once `main` holds a gate, else `out/ci/last-green`) and the T2 decision, for `x ci --local`.
-  - **Budget enforcement:** `tools/lib/tiers.ts` reads the JSON reports, warns when a tier is over its budget, and fails at 1.5×.
+  - **Budget enforcement:** `tools/lib/tiers.ts` reads the JSON reports and warns when a tier is over its budget (ADR-0022: time never fails).
   - **The advice trap.** A Vitest setup file and the Playwright fixture both fail on any engine advice code, `console.warn` or three.js deprecation that is not listed in a file under `tests/baselines/advice/`. Each area has its own file of `{ code, reason }` entries, owned by the WP that adds them; the trap reads the whole directory. Its proof in the Playwright harness drives Chromium, so it runs in T2 (`tests/e2e/adviceTrap.spec.ts`), and its Vitest proof in T1 (`tests/setup/harnesses.test.ts`; ADR-0014, amendment 7).
 - **Improves:** I-27, I-41, I-48.
 - **Done when:**
   - In a temporary git repository the test builds, a change to a fixture `engine/core/a.ts` selects every Vitest test that imports it, directly or not, and a change to page code makes T2 run in full.
   - An unlisted warning fails a fixture test in each harness; a listed one passes.
-  - A report over its budget warns, and one at 1.5× fails.
+  - A report over its budget warns (ADR-0022).
 - **Verify:** `npm test -- tools/lib/tiers tests/setup && npm run e2e -- tests/e2e/adviceTrap.spec.ts`
 
 #### WP-0.3 Dependency qualification and pinned knowledge

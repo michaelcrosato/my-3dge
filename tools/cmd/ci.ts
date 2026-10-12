@@ -12,14 +12,14 @@
  *   no full run was measured yet; otherwise it runs what tiers.ts's `plan()` selects, and nothing when that selects
  *   nothing.
  * - **Budgets:** T0 is timed; T1 and T2 take the duration their JSON report records when the step rewrote it, else
- *   the step's time. Over a budget warns; at 1.5× it fails the gate (tiers.ts's `checkBudget`).
+ *   the step's time. Over a budget warns and never fails the gate (tiers.ts's `checkBudget`, ADR-0022).
  * - **`npm ci` reinstalls node_modules under this running process.** That is safe, measured: everything this command
  *   runs is imported before it starts, and every later step is a new process. `KEPT_CACHES` survive it:
  *   `node_modules/.cache/` (the ESLint and Prettier caches, and tsc's declarations and build info), so T0 is timed
  *   warm, as its budget means, and Vitest's file durations, so T1 starts its longest files first.
  * - `--long` also runs tiers.ts's `LONG_RUNS` after the steps (at each gate).
  *
- * Usage: node x ci --local [--long]. Exit 0 when every step passed within 1.5× its budget; 1 otherwise; 2 on a usage
+ * Usage: node x ci --local [--long]. Exit 0 when every step passed; 1 otherwise; 2 on a usage
  * error, `--local` missing included (the GitHub workflow waits for the owner).
  *
  * @example
@@ -293,7 +293,7 @@ export async function runCi(root: string, deps: CiDeps, options: { long?: boolea
   }
 
   const budgets = measured.map(([tier, ms]) => checkBudget(tier, ms));
-  const ok = steps.every((step) => step.status !== 'fail') && budgets.every((check) => check.status !== 'fail');
+  const ok = steps.every((step) => step.status !== 'fail');
   const run: CiRun = { ok, head, started, runtime: runtime(), base: base.reason, steps, budgets };
   if (ok) recordGreen(head.sha, root);
   writeFileSync(join(root, CI_OUT.summary), renderSummary(run));
@@ -341,8 +341,7 @@ export function toResult(run: CiRun): CommandResult {
   }));
   const warnings: Finding[] = [];
   for (const check of run.budgets) {
-    if (check.status !== 'ok')
-      (check.status === 'fail' ? failures : warnings).push({ id: 'CI_BUDGET', message: check.message });
+    if (check.status !== 'ok') warnings.push({ id: 'CI_BUDGET', message: check.message });
   }
   if (run.head.dirty.length) {
     const message = `${run.head.dirty.length} uncommitted changes (${run.head.dirty[0].trim()}…): this run covers them, not ${run.head.sha.slice(0, 7)} alone; commit and run it again before merging`;
@@ -369,7 +368,7 @@ export function toResult(run: CiRun): CommandResult {
     ok: run.ok,
     summary: run.ok
       ? `${run.steps.length} steps passed in ${duration(total)}; ${run.head.sha.slice(0, 7)} recorded in ${LAST_GREEN}`
-      : `${failures.length} problem${failures.length === 1 ? '' : 's'}: ${failed.map((step) => step.name).join(', ') || 'over budget'}`,
+      : `${failures.length} problem${failures.length === 1 ? '' : 's'}: ${failed.map((step) => step.name).join(', ')}`,
     lines: [...timingTable(rows), ...(t2?.note ? [t2.note] : []), `summary: ${CI_OUT.summary}`],
     target: 'local',
     failures,
