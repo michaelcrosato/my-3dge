@@ -671,7 +671,7 @@ Advice from `requestDevice` (engine/gfx/caps.ts): the device is made with every 
 
 - Message: `the warm-up already has an entry {id}`
 - Fix: dispose the first registration (register returns { dispose }), or register the second under another id
-- Registered in: [`engine/gfx/warmup.ts` line 50](../engine/gfx/warmup.ts)
+- Registered in: [`engine/gfx/warmup.ts` line 56](../engine/gfx/warmup.ts)
 
 ### GFX_EMPTY_PALETTE
 

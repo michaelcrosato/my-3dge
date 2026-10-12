@@ -65,7 +65,7 @@ stopping. Record every escalation, every later conflict and every call.
    (node x src).
 3. Edit. The after-edit hook formats and lints the file: fix what it reports.
 4. npm run check (< 10 s once a new checkout's first run filled its caches) → npm test (< 60 s) → npm run e2e
-   (< 6 min; docs/TESTING.md says what to select, and labs/box/README.md which box specs and replays).
+   (< 9 min; docs/TESTING.md says what to select, and labs/box/README.md which box specs and replays).
 5. Read out/**/report.json. Open images only when a metric points at one (use the visual-reviewer subagent).
 6. Show it in the box or a fixture test. Update the ledger row in PLAN.md §14 (in ultracode lanes, report it).
 7. Commit "<area>: <what> (WP-x.y)". Report the commit, the report paths and any escalations.

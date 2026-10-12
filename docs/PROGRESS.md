@@ -25,8 +25,11 @@ Phases 0–5 are done: the foundation, the kernel, Box 1 (PR #2, #3, #5), Box 2 
 
 ## Open issues
 
-- T2 took 6 min 28 s, over its 6 min budget (fails at 9 min) under load 36–46: parity.spec.ts's render tests
-  (133–146 s each) are the longest, so the gate keeps running T2 in full. T0 passed 10 s at G3 under heavy load.
+- T2's budget is 9 min since G6 (ADR-0014 amendment 14): 10 min 16 s – 12 min 1 s with 146 tests at load 13–80
+  after the warm-up fix (ADR-0008 amendment 9: the hall page builds 35 pipelines instead of 566, ready in about 4 s);
+  parity.spec.ts is most of it, and Box 4's replay test (186–188 s) nears its 240 s timeout at load 85+.
+- WP 6.2's reactions and secondary motion are not in the box yet: moved from WP 6.7 to WP 7.8 at gate G6's review
+  (ADR-0018 amendment 1).
 - Over the 400-line warning (cap 600): engine/sim-api.ts 443, physics/world.ts 419, tools/cmd/perf.ts 414,
   sim/world.ts 410, sim/scene.ts 409, tools/cmd/port.ts 408, tools/cmd/ci.ts 404, tools/lib/tiers.ts 405.
 - At 1,000 agents the crowd blocks the hero at the stairs' foot; the state hash dominates the step at 5,000.

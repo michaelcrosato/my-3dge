@@ -413,7 +413,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `compareThumbnails`, `MAP_SYMBOLS`, `STRAY`, `THUMB_HEIGHT`, `THUMB_WIDTH`, `thumbnail`, `Thumbnail`, `ThumbnailDiff`, `ThumbnailIds`
   - Tests: [`engine/gfx/thumbnail.test.ts`](../engine/gfx/thumbnail.test.ts)
 - [`warmup.ts`](../engine/gfx/warmup.ts): The warm-up registry (PLAN.md §8.7, I-18): every GPU pipeline is built before play needs it, so no frame stalls on one.
-  - Exports: `createWarmup`, `Warmup`, `WARMUP_CODES`, `WarmupEntry`, `WarmupProgress`, `WarmupReport`, `WarmupView`
+  - Exports: `createWarmup`, `Warmup`, `WARMUP_CODES`, `WarmupEntry`, `WarmupPass`, `WarmupProgress`, `WarmupReport`, `WarmupView`
   - Tests: [`engine/gfx/warmup.test.ts`](../engine/gfx/warmup.test.ts), [`tests/e2e/renderer.spec.ts`](../tests/e2e/renderer.spec.ts)
 
 ## engine/gfx/cameras
@@ -545,7 +545,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `CutWhen`, `FALLBACK_RECIPE`, `LEVEL_RECIPES`, `LevelCut`, `LevelRecipe`, `LevelShape`
   - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
 - [`shapes.ts`](../engine/gfx/level/shapes.ts): The level's shapes (PLAN.md WP 2.4, WP 4.4): `buildShape(level, descriptor, recipe, materials)` builds the mesh of one mesh descriptor (engine/world/level/types.ts) in its recipe's shape (engine/gfx/level/recipes.ts): a welded surface (the floor), instanced blocks (walls, low walls) or pillars (plinth, shaft and capital, engine/gfx/geometry/pillar.ts), or one mesh for a slab (a gallery, slab.ts), the stairs (stairs.ts), a dais (dais.ts) or brazier stands (brazier.ts).
-  - Exports: `buildShape`, `BuiltShape`, `instanced`, `PartCut`, `placeInstances`
+  - Exports: `buildShape`, `BuiltShape`, `instanced`, `instanceSlots`, `PartCut`, `placeInstances`
   - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
 - [`slab.ts`](../engine/gfx/level/slab.ts): Slabs (PLAN.md WP 4.4): `slabGeometry(tile, pieces, bottom, top)` draws a raised block of tiles as one solid, a gallery: its walk, one welded surface over every tile at `top` (engine/gfx/level/surface.ts), and its sides, upright faces from `bottom` to `top` along the outline only, where a piece's tile meets a tile that is not one of the pieces' (or the map's edge).
   - Exports: `slabGeometry`
@@ -599,7 +599,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `defineLook`, `defineLooks`, `LOOK_FIELDS`, `LOOK_GROUPS`, `LookEntry`, `LOOKS`, `LookSpec`
   - Tests: [`engine/gfx/post/looks.test.ts`](../engine/gfx/post/looks.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`mrt.ts`](../engine/gfx/post/mrt.ts): The one fixed MRT of post-processing (PLAN.md WP 7.4, §6.7, I-46): the scene pass draws, once per frame and always the same way, the colour (`output`) and the view normals (`normal`), whose spare channel `w` carries what the composite needs to know about each pixel's object: its outline group, its part of the scene (a character, an object or the environment) and whether it is drawn as pixel art.
-  - Exports: `clearMrt`, `createFlagTable`, `createScenePass`, `FLAG_BITS`, `FLAG_SLOTS`, `Flags`, `flagsOf`, `FlagTable`, `foldGroup`, `GROUPS`, `packFlags`, `Part`, `PART_BITS`, `PARTS`, `PostTag`, `setPart`, `unpackFlags`, `useSceneMrt`, `WARM_MRT_ID`, `writeFlags`
+  - Exports: `clearMrt`, `createFlagTable`, `createScenePass`, `FLAG_BITS`, `FLAG_SLOTS`, `Flags`, `flagsOf`, `FlagTable`, `foldGroup`, `GROUPS`, `packFlags`, `Part`, `PART_BITS`, `PARTS`, `PostTag`, `setPart`, `unpackFlags`, `useSceneMrt`, `writeFlags`
   - Tests: [`engine/gfx/post/mrt.test.ts`](../engine/gfx/post/mrt.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`presets.ts`](../engine/gfx/post/presets.ts): One-filter presets (PLAN.md WP 7.4): looks that set one filter or the shading, seeded from shardfall's tuned `[[preset]]` tables (`shardfall:crates/pav_view/src/looks.toml:13-500`), keys renamed (engine/gfx/post/looks.ts says what was left out), plus three from the prototype's filter panel (`my-3d2dge:src/stress-world/ 45-filters.js:21-24`: its comic cel, its dithered pixel look, FXAA).
   - Exports: `PRESETS`
@@ -1229,7 +1229,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `default`, `encodeWav`, `mixSoundEvents`, `Picture`, `replaySoundEvents`, `SoundEvent`, `SoundTimeline`, `spectrogram`, `SPECTROGRAM`
   - Tests: [`tools/cmd/audio.test.ts`](../tools/cmd/audio.test.ts)
 - [`check.ts`](../tools/cmd/check.ts): Runs the repository checks no standard tool covers, last in `npm run check` (PLAN.md §8.1).
-  - Exports: `assetScan`, `binaryKind`, `CheckContext`, `CheckOutcome`, `CheckPlugin`, `default`, `discoverPlugins`, `isLane`, `repositoryFiles`, `runChecks`
+  - Exports: `assetScan`, `binaryKind`, `CheckContext`, `CheckOutcome`, `CheckPlugin`, `default`, `discoverPlugins`, `isLane`, `repositoryFiles`, `runChecks`, `scanAssets`
   - Tests: [`tools/cmd/check.test.ts`](../tools/cmd/check.test.ts)
 - [`ci.ts`](../tools/cmd/ci.ts): The merge gate (PLAN.md §8.9, WP 0.9): `x ci --local` runs `CI_STEPS` in order on this machine, holds the tiers to their budgets (tools/lib/tiers.ts), writes `out/ci/summary.md` and, when everything passed, records HEAD in `out/ci/last-green`, the base of the selections until main holds a gate.
   - Exports: `CI_OUT`, `CI_STEPS`, `CiDeps`, `CiRun`, `CiStep`, `createCiCommand`, `default`, `Head`, `KEPT_CACHES`, `readHead`, `readT2Full`, `renderSummary`, `runCi`, `spawnStep`, `StepOutcome`, `StepResult`, `StepRunner`, `toResult`

@@ -3150,6 +3150,7 @@ For the agents who maintain the engine.
 - `buildShape` (function): Builds `descriptor`'s mesh in `recipe`'s shape, with `materials` (the recipe's, compiled).
 - `BuiltShape` (interface): One descriptor's mesh, its cells (one per instance; none for a single mesh) and its cut.
 - `instanced` (function): One instance per cell, standing at the cell's centre.
+- `instanceSlots` (function): The slots of an instanced level mesh of `count` pieces: at least `PAGE_SLOTS`, so it shares its shader.
 - `PartCut` (interface): How the cutaway cuts a part: its recipe's cut, and the geometry of its twin (a new one each call).
 - `placeInstances` (function): Stands `mesh`'s instances on `cells`, as many as there are, and refits its bounds.
 
@@ -3350,7 +3351,6 @@ For the agents who maintain the engine.
 - `setPart` (function): Tags `object` (and what it holds) with a part of the scene, an outline group and the pixel-art flag.
 - `unpackFlags` (function): The part, group and pixel-art flag of a packed value; 0 or 1 (the cleared background) is the environment.
 - `useSceneMrt` (function): Turns the scene pass's MRT on for what the renderer compiles or draws next (the warm-up's compile steps).
-- `WARM_MRT_ID` (const): The warm-up entry that turns the MRT on for the compile steps: `!` sorts before every other id.
 - `writeFlags` (function): Writes the flags of everything `scenePass` draws into its table, as they are now: call it before each frame, so a tag takes effect on the next one.
 
 ### [`engine/gfx/post/presets.ts`](../engine/gfx/post/presets.ts)
@@ -3819,9 +3819,10 @@ For the agents who maintain the engine.
 - `Warmup` (interface): A renderer's warm-up registry.
 - `WARMUP_CODES` (const): The codes this module raises, with their fixes.
 - `WarmupEntry` (interface): What a pool or batch registers: the objects it may show, each made drawable for the warm-up.
+- `WarmupPass` (interface): One way a frame draws the scene: into a render target, with the renderer set up for it.
 - `WarmupProgress` (interface): Progress, after each step: steps done of the total, and the step just done.
 - `WarmupReport` (interface): What one warm-up did.
-- `WarmupView` (interface): What a warm-up draws: the scene, its camera, how the frame draws it, and what it draws the scene into.
+- `WarmupView` (interface): What a warm-up draws: the scene, its camera, how the frame draws it, and every way it draws the scene.
 
 ### [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)
 
@@ -5309,6 +5310,7 @@ For the agents who maintain the engine.
 - `isLane` (function): Whether `root` is an ultracode lane: `X_LANE` when set (0 or 1), else whether it is a linked git worktree.
 - `repositoryFiles` (function): The files git tracks or would track under `root`: tracked plus untracked, ignored ones left out.
 - `runChecks` (function): Runs `plugins` side by side and merges what they found; in a lane, `warnInLane` plugins only warn.
+- `scanAssets` (function): The asset scan of `files`, paths under `root` as `repositoryFiles` lists them.
 
 ### [`tools/cmd/ci.ts`](../tools/cmd/ci.ts)
 
