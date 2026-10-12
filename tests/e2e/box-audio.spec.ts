@@ -6,7 +6,8 @@
  * - the runtime smoke test with the box: in the box page (labs/box/, sound from labs/box/sounds/page.ts, published as
  *   `window.__boxSound`) the sound is locked until a gesture (a key, a click), then running: the demo song plays, the
  *   room's reverb is the level's, the nearest torches crackle, and the fight replayed in real time (`?replay=`) asks
- *   for the very sounds Node's timeline lists, in its order, with none missed and the music a fight's while blows land.
+ *   for the very sounds Node's timeline lists, in its order, with none missed and the music a fight's while blows land
+ *   (once the replay ends, the page plays on live, with no input, and its sounds follow).
  * The fixture fails a test on any page error or unlisted console warning, so "no errors" holds throughout.
  *
  * Invariants: nothing from engine/ or labs/ is imported here: Node's half runs in a child process (as
@@ -123,7 +124,7 @@ test.describe('the runtime with the box', () => {
     expect(await page.evaluate(() => __engine.info().tick)).toBeGreaterThanOrEqual(600);
     const end = await info(page);
     expect(end.missed).toBe(0);
-    expect(end.log).toEqual(node.log);
+    expect(end.log.slice(0, node.log.length)).toEqual(node.log); // then live play goes on, with no input
     expect(end.played).toBeGreaterThan(0);
     for (const sfx of ['sfx:boxStep', 'sfx:boxHit', 'sfx:boxLaunch', 'sfx:boxThud', 'sfx:boxDeath'])
       expect(end.asked[sfx]).toBeGreaterThan(0);
