@@ -984,7 +984,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `loadLibrary`
 - [`main.ts`](../labs/box/main.ts): The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports every module under `labs/box/scenes/`, so a scene added there opens at `?scene=<name>` with no change here, and the box's levels, then starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: attack, then jump, dash and the bolt) for every scene.
 - [`menu.ts`](../labs/box/menu.ts): The box page's menu for humans (labs/box/index.html): what the box offers and how to play it, as a small HTML/CSS panel in the top-left corner over the game.
-  - Exports: `BOX_ACTION_MAP`, `BoxMenuOptions`, `ControlRow`, `controlRows`, `createBoxMenu`, `linkQuery`, `MENU_KEY`, `MENU_SETTINGS`, `MenuEntry`, `menuShown`
+  - Exports: `BOX_ACTION_MAP`, `BoxMenuOptions`, `ControlRow`, `controlRows`, `createBoxMenu`, `linkQuery`, `MENU_KEY`, `MENU_SETTINGS`, `MENU_STORAGE_KEY`, `MenuEntry`, `menuShown`, `menuStartsOpen`, `MenuStorage`, `rememberMenu`
+  - Tests: [`labs/box/menu.test.ts`](../labs/box/menu.test.ts)
 - [`touch.ts`](../labs/box/touch.ts): The box's touch layout (PLAN.md WP 3.10, WP 3.12, WP 6.7; ADR-0021: built, not tested): `touchlayout:box`, the buttons a phone or tablet shows over the box page (engine/ui/touch.ts draws them, engine/input/devices/touch.ts reads them).
   - Exports: `BOX_TOUCH`
 

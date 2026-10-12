@@ -4,7 +4,8 @@
  * open, above the credit, and lists as links every scene of labs/box/scenes/ that the README's demo index lists, each
  * at `?scene=<name>`; every box replay at `?replay=<name>`; registered looks and the cameras, both keeping the scene;
  * and the controls, a row for each action of the page's action map. Its key is bound by no registered action map, the
- * system layer or the reserved codes, and it, like the button, hides and shows the panel. Touch mode has no test, by
+ * system layer or the reserved codes, and it, like the button, hides and shows the panel. The page remembers the last
+ * toggle: closed, it opens closed with its button showing; opened again, it opens open. Touch mode has no test, by
  * the owner's order (ADR-0021).
  *
  * Invariants: the page is read through DOM queries and `window.__engine` only; the room keeps the run cheap.
@@ -120,6 +121,20 @@ test('the box menu: none under automation; with box.menu=on, every scene, replay
   await expect(panel).toBeHidden();
   await toggle.click();
   await expect(panel).toBeVisible();
+
+  // The last toggle is remembered: closed, the next page opens with the panel closed and its button showing.
+  await toggle.click();
+  await page.goto('labs/box/?scene=room&box.menu=on');
+  await harness.ready({ timeout: 60_000 });
+  await expect(toggle).toBeVisible();
+  await expect(panel).toBeHidden();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await page.keyboard.press(key);
+  await expect(panel).toBeVisible();
+  await page.goto('labs/box/?scene=room&box.menu=on');
+  await harness.ready({ timeout: 60_000 });
+  await expect(panel).toBeVisible();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   expect(await harness.errors()).toEqual([]);
   expect(harness.advice()).toEqual([]);
 });

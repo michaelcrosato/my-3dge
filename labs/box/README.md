@@ -147,7 +147,8 @@ a one-line label, the replays, cameras (`cam3=chase`, `cam3=first`, `cam3=orbit`
 controls, read from the action map the page's input binds (`actionMap:thirdPerson`: WASD or the arrows move, Space
 jumps, Shift dashes, the left button or J attacks, the right button or L fires the bolt, E interacts), with the
 wheel's zoom and the first click or key that starts the sound. Its button or M shows and hides it; no action map binds
-M (`tests/e2e/box-menu.spec.ts`). A browser that automation drives (navigator.webdriver: every e2e spec and every `x`
+M (`tests/e2e/box-menu.spec.ts`). The page remembers the last toggle in the browser: closed, the menu stays closed
+across reloads and its own links, its button still in the corner, until it is opened again. A browser that automation drives (navigator.webdriver: every e2e spec and every `x`
 command that opens the page) gets none of it, so no test's screenshot holds it, and `__engine.shot` reads the GPU,
 never the page; `?box.menu=on` shows it there.
 

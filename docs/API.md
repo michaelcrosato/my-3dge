@@ -4824,8 +4824,12 @@ For the agents who maintain the engine.
 - `linkQuery` (function): A link's query: `changes` (null removes a key) over `search`, or over only its `keep` keys; `:` and `,` readable.
 - `MENU_KEY` (const): The key that shows and hides the menu: M, which no action map binds.
 - `MENU_SETTINGS` (const): The menu's view setting (see the file comment).
+- `MENU_STORAGE_KEY` (const): The `localStorage` key that remembers whether the reader left the menu `open` or `closed`.
 - `MenuEntry` (interface): A listed entry: a scene or a look, as its module exports it.
 - `menuShown` (function): Whether `setting` (the query's `box.menu`) shows the menu in a browser that automation does or does not drive.
+- `menuStartsOpen` (function): Whether the menu starts open: unless `storage` remembers the reader closing it; storage that throws forgets.
+- `MenuStorage` (type): Where the menu remembers being open or closed: the `localStorage` shape.
+- `rememberMenu` (function): Remembers in `storage` that the reader left the menu open or closed; storage that throws (blocked, full) forgets.
 
 ### [`labs/box/scenes/clips.ts`](../labs/box/scenes/clips.ts)
 

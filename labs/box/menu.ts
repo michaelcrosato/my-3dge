@@ -11,7 +11,8 @@
  * Toggle: the button in the corner, or M (`MENU_KEY`, a key no action map binds: tests/e2e/box-menu.spec.ts checks
  * every registered map, the system layer and the reserved codes). The panel is a page panel (`data-panel`,
  * engine/ui/chrome.ts): in touch mode it starts below the corner and scrolls, the touch buttons hide while it is open,
- * and a tap on the game closes it; its key rows are `data-keyboard`, which touch mode hides.
+ * and a tap on the game closes it; its key rows are `data-keyboard`, which touch mode hides. It opens unless the
+ * reader closed it last (`MENU_STORAGE_KEY` in `localStorage`, across reloads and its links); blocked storage forgets.
  *
  * Who sees it: the view setting `box.menu`, read when the page opens. `auto` (the default) shows it unless automation
  * drives the browser (`navigator.webdriver`, which Playwright sets: every e2e spec and every x command that opens the
@@ -49,6 +50,12 @@ export const MENU_SETTINGS = defineSettings({
 
 /** The key that shows and hides the menu: M, which no action map binds. */
 export const MENU_KEY = 'KeyM';
+
+/** The `localStorage` key that remembers whether the reader left the menu `open` or `closed`. */
+export const MENU_STORAGE_KEY = 'my3dge:box:menu';
+
+/** Where the menu remembers being open or closed: the `localStorage` shape. */
+export type MenuStorage = Pick<Storage, 'getItem' | 'setItem'>;
 
 /** The action map the page's input binds: createEngine's default (engine/input/input.ts). */
 export const BOX_ACTION_MAP = 'actionMap:thirdPerson';
@@ -123,6 +130,8 @@ export interface BoxMenuOptions {
   scene: string;
   /** The page's query (`location.search`). */
   search?: string;
+  /** Where it remembers being open or closed (the page's `localStorage`); null remembers nothing. */
+  storage?: MenuStorage | null;
 }
 
 /** One row of the controls: what it does, then the keys and mouse buttons, then the pad's buttons. */
@@ -136,6 +145,33 @@ export interface ControlRow {
 /** Whether `setting` (the query's `box.menu`) shows the menu in a browser that automation does or does not drive. */
 export function menuShown(setting: string | null, automated: boolean): boolean {
   return setting === 'on' || (setting !== 'off' && !automated);
+}
+
+/** Whether the menu starts open: unless `storage` remembers the reader closing it; storage that throws forgets. */
+export function menuStartsOpen(storage: MenuStorage | null): boolean {
+  try {
+    return storage?.getItem(MENU_STORAGE_KEY) !== 'closed';
+  } catch {
+    return true; // blocked site data: open, as on a first visit
+  }
+}
+
+/** Remembers in `storage` that the reader left the menu open or closed; storage that throws (blocked, full) forgets. */
+export function rememberMenu(storage: MenuStorage | null, open: boolean): void {
+  try {
+    storage?.setItem(MENU_STORAGE_KEY, open ? 'open' : 'closed');
+  } catch {
+    // Nothing kept: the next page opens the menu.
+  }
+}
+
+/** The page's `localStorage`, or null where reading it throws (site data blocked). */
+function pageStorage(document: Document): MenuStorage | null {
+  try {
+    return document.defaultView?.localStorage ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** A link's query: `changes` (null removes a key) over `search`, or over only its `keep` keys; `:` and `,` readable. */
@@ -339,21 +375,26 @@ export function createBoxMenu(document: Document, options: BoxMenuOptions): HTML
   );
   toggle.dataset.key = MENU_KEY;
   toggle.setAttribute('aria-keyshortcuts', codeLabel(MENU_KEY));
+  const storage = options.storage === undefined ? pageStorage(document) : options.storage;
   const show = (open: boolean) => {
     panel.hidden = !open;
     toggle.setAttribute('aria-expanded', String(open));
   };
+  const choose = (open: boolean) => {
+    show(open);
+    rememberMenu(storage, open);
+  };
   toggle.addEventListener('mousedown', (event) => event.preventDefault()); // no focus: Space stays the jump
-  toggle.addEventListener('click', () => show(panel.hidden));
-  panel.addEventListener('close', () => show(false)); // a tap on the game closed it (engine/ui/chrome.ts)
+  toggle.addEventListener('click', () => choose(panel.hidden));
+  panel.addEventListener('close', () => choose(false)); // a tap on the game closed it (engine/ui/chrome.ts)
   document.defaultView?.addEventListener('keydown', (event) => {
     if (event.code !== MENU_KEY || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
-    show(panel.hidden);
+    choose(panel.hidden);
   });
   if (!document.getElementById('box-menu-style')) {
     document.head.append(el('style', { id: 'box-menu-style' }, STYLE));
   }
   document.body.append(toggle, panel);
-  show(true);
+  show(menuStartsOpen(storage));
   return panel;
 }
