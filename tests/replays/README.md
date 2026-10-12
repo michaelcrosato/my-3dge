@@ -34,6 +34,18 @@ are in engine/sim/replay.ts; the inputs' vocabulary is engine/input/intents.ts.
 - A session records setting changes made through `session.set` or its own store (`session.settings`), and dev actions
   (all or nothing: one that throws changes nothing and is not recorded).
 
+## Coordinates and inputs
+
+The world is SI metres with +Y up (ADR-0004): +X is east, +Z south, and a body facing yaw ψ looks along
+(sin ψ, 0, cos ψ), so yaw 0 faces +Z. A level's tile (col, row) has its centre at ((col + 0.5) × tile, (row + 0.5) ×
+tile) on the floor, rows running +Z; the box's tiles are 1 m, so `labs/box/levels/room.txt`'s `@` in column 3, row 2
+is the spawn at (3.5, 2.5). An input's `move` is a world-space direction [x, z], length 1 at most: `[0, { "move": [0, 1] }]`
+walks the hero south (+Z) from step 0 until a later point changes it, `[60, { "move": null }]` stops him,
+`[90, { "p": ["jump"] }]` jumps once and `[90, { "b": ["jump"] }]` holds it. engine/input/intents.ts lists every
+key (`b` held and `p` pressed buttons: `jump`, `dash`, `attack`, `skill`). `node x sim <scene>` steps with no
+intents, so the replay it writes (`out/sim/<slug>/run.replay.json`) has `"inputs": []`: edit them there, then record
+(`--update`, below) and check where the run ends with `--state`.
+
 ## Working with them
 
 | Task | Command |
@@ -42,6 +54,7 @@ are in engine/sim/replay.ts; the inputs' vocabulary is engine/input/intents.ts.
 | Record or re-record the goldens of this platform (writes only when every file and the page pass) | `node x replay <file> --browser sim --update` (say why in the commit) |
 | Find the first step, entity and field where runs part | `node x replay <file> --browser sim --bisect` |
 | Show that a replay depends on the fdlibm swap | `node x replay <file> --browser sim --swap none` (must fail) |
+| See the state a replay ends in: every entity's components (where the hero, a prop, a body stands) and the trace | `node x replay <file> --state` writes it to `out/replay/<name>/state.json`; `--until <n>` the state after step n |
 | Make a new one | write it by hand, or copy `out/sim/<slug>/run.replay.json` from `node x sim <scene>` (the slug is the scene id as a directory name: `box:room` → `box-room`), then `node x replay <file> --browser sim --update` |
 | Make one for a box scene | the six steps in labs/box/README.md, "Adding a scene or a variant": named `box-<stage>-<name>.replay.json`, checked with `--browser page`, listed in that README and, for a stage, in tests/e2e/parity.spec.ts's `STAGES` (T2's page check plays only those) |
 
@@ -67,3 +80,8 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   humanoid's state gained the arm path, `HumanoidState.arm` (WP 6.1: a move told as the body state `body` plays
   on the arms), which the hero's animator saves into the hashed state. The runs themselves did not change: with
   `arm` left out of the animator's saved state, all fifteen replays gave their earlier goldens in Node and Chromium.
+- box-5-fight's goldens were re-recorded (`--update`, Node ×3 and Chromium ×3 agreeing) at gate G7's review, when the
+  fight's blows began to go through the bodies' reactions (WP 7.8, ADR-0018 amendment 1): the hero and every walker
+  struck carry the component `reactions` (hashed), a big blow knocks a walker down to lie and get up, attacking
+  nothing meanwhile, and the hero carries his cape (`secondary`, drawn by the view only). The run itself changed: it
+  still kills 5 foes and throws a body 1.72 m up, and the walkers it knocks down near the end still lie at step 600.

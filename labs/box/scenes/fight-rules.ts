@@ -21,6 +21,13 @@
  * `STUN` s; one that kills it lets it fall with the kill's throw (`HERO_FIGHT.kill`), a body the crowd walks through
  * that the crowd's step removes later.
  *
+ * Reactions (WP 6.2 in the box, WP 7.8): every blow on the hero or a walker goes through the body's reactions (the
+ * component `reactions`, engine/sim/reactions.ts `reactTo`): it flinches along the push (`HERO_FIGHT.react`), a big
+ * blow knocks a walker down (it lies, then gets up the way it lies: `knockedDown` holds while it does, and the foe
+ * acts on nothing meanwhile), and a killing one plays its death. The hero's are stepped by the actors' system and drawn
+ * by his puppet (his flinch bends his spine); a walker's by fight-foes.ts's rigs, what they tell its body (`down`, a
+ * pose) laid over its states. Slimes and wisps are not humanoids: they have none.
+ *
  * Game code, sim-side: it imports only engine/sim-api.ts and the box's own files.
  *
  * @see labs/box/scenes/fight.test.ts
@@ -32,8 +39,10 @@ import {
   HEALTH_FIELDS,
   PROJECTILE_FIELDS,
   SpatialHash,
+  Vector3,
   damage,
   defineComponent,
+  reactTo,
   releaseToken,
   type ActorComponent,
   type AnimatorComponent,
@@ -44,6 +53,8 @@ import {
   type Health,
   type HurtSet,
   type Projectile,
+  type ReactionComponents,
+  type ReactionState,
   type World,
 } from '../../../engine/sim-api';
 import { HERO, HERO_FIGHT, type HeroHit } from '../cast/hero';
@@ -103,17 +114,18 @@ export interface FightBurst {
 /** The fight's events. */
 export type FightEvents = DamageEvents & { hit: FightBurst; slain: FightBurst; shot: FightBurst; slam: FightBurst };
 
-/** The fight's components: the crowd's, the hero's actor, and its own. */
-export type FightComponents = CrowdComponents & {
-  actor: ActorComponent;
-  animator: AnimatorComponent;
-  fightHealth: Health;
-  fightHero: FightHero;
-  fightFoe: FightFoe;
-  fightTelegraph: FightTelegraph;
-  fightShot: FightShot;
-  fightTokens: AttackTokens;
-};
+/** The fight's components: the crowd's, the hero's actor, the bodies' reactions and his cape, and its own. */
+export type FightComponents = CrowdComponents &
+  ReactionComponents & {
+    actor: ActorComponent;
+    animator: AnimatorComponent;
+    fightHealth: Health;
+    fightHero: FightHero;
+    fightFoe: FightFoe;
+    fightTelegraph: FightTelegraph;
+    fightShot: FightShot;
+    fightTokens: AttackTokens;
+  };
 
 /** The fight's world. */
 export type FightWorld = World<FightComponents, FightEvents>;
@@ -213,6 +225,12 @@ export function heroSet(w: FightWorld): HurtSet {
   return { hash: heroHash, hurt: (id) => (id === hero.id ? { x, y, z, radius, height } : undefined) };
 }
 
+/** Whether a body's reactions play a knockdown or its get-up (or a death): while they do, it acts on nothing. */
+export const knockedDown = (reactions: ReactionState | undefined): boolean =>
+  reactions !== undefined && reactions.playing !== '';
+
+const push = new Vector3();
+
 /** Ends a foe's attack: its token back, its telegraph gone. */
 export function breakAttack(w: FightWorld, id: number): void {
   const e = w.get(id);
@@ -225,7 +243,8 @@ export function breakAttack(w: FightWorld, id: number): void {
 
 /**
  * The hero's blow (`hit`, from his feet `from`) on the foe `id`: its hit points, push, throw and hit-stop through
- * `damage`, its attack broken off, a stun, and the events `hit` (and `slain`). Returns whether it landed.
+ * `damage`, a walker's reactions (a flinch; a big blow's knockdown, a killing one's death), its attack broken off, a
+ * stun, and the events `hit` (and `slain`). Returns whether it landed.
  */
 export function strikeFoe(w: FightWorld, id: number, hit: Omit<HeroHit, 'shape' | 'push'>, from: number[]): boolean {
   const e = w.get(id);
@@ -245,6 +264,15 @@ export function strikeFoe(w: FightWorld, id: number, hit: Omit<HeroHit, 'shape' 
     },
   );
   if (!event) return false;
+  if (e.crowdWalker) {
+    const yaw = e.crowdWalker.yaw;
+    push.set(event.dir[0], event.dir[1], event.dir[2]);
+    reactTo(w, id, (reactions) => {
+      reactions.hit(push, yaw, hit.big ? HERO_FIGHT.react.big : HERO_FIGHT.react.small);
+      if (event.killed) reactions.die(push, yaw);
+      else if (hit.big) reactions.knockDown(push, yaw);
+    });
+  }
   breakAttack(w, id);
   e.fightFoe.stun = STUN;
   w.emit('hit', { position: [...event.at], size: hit.big ? 1.3 : 1 });
@@ -254,9 +282,9 @@ export function strikeFoe(w: FightWorld, id: number, hit: Omit<HeroHit, 'shape' 
 }
 
 /**
- * A foe's blow (`amount` hit points, from `from`) on the hero: unless he is safe, he flinches and is pushed away, the
- * hit lands through `damage` (no hit points in god mode), his combo is broken off when it takes any, and the event
- * `hit` fires. Returns whether it landed.
+ * A foe's blow (`amount` hit points, from `from`) on the hero: unless he is safe, he flinches (his body state `hurt`,
+ * and his reactions along the push) and is pushed away, the hit lands through `damage` (no hit points in god mode),
+ * his combo is broken off when it takes any, and the event `hit` fires. Returns whether it landed.
  */
 export function hurtHero(w: FightWorld, amount: number, from: number[], source: number): boolean {
   const hero = heroOf(w);
@@ -272,6 +300,8 @@ export function hurtHero(w: FightWorld, amount: number, from: number[], source: 
   );
   if (!event) return false;
   [actor.vx, actor.vz] = [actor.vx + event.dir[0] * knockback, actor.vz + event.dir[2] * knockback];
+  push.set(event.dir[0], event.dir[1], event.dir[2]);
+  reactTo(w, hero.id, (reactions) => reactions.hit(push, actor.yaw, HERO_FIGHT.react.small));
   const centre: [number, number, number] = [actor.x, actor.y + HERO.capsule.radius + HERO.capsule.height / 2, actor.z];
   w.emit('hit', { position: centre, size: 0.8 });
   if (god) return true;

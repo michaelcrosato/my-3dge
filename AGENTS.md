@@ -8,6 +8,9 @@ Act as a trusted, capable manager of this engine. Where the doctrine and the pla
 record the call. When going against the doctrine looks best, escalate with your reasoning (below); never deviate
 quietly. Aim for the best expected overall result, not flawless software: solve problems when they surface, not in
 anticipation. On-demand work packages wait for their measured trigger (PLAN.md §9.1).
+Testing budget (ADR-0022): verify with cheap, objective checks (suites, hashes, counts), never wall-clock time on
+this shared machine; run a full suite once per commit. Unclear after a cheap test means no proven benefit: stop,
+record it as an open issue starting "Owner:" and move on.
 
 ## Setup
 bash scripts/setup.sh (idempotent) does three things:

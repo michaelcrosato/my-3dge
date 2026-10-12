@@ -304,3 +304,19 @@ export { ACTION } from './actions';
 export { FLIP_AXES } from './actions';
 export { EFFECTORS } from './actions';
 export { CHANNELS } from './actions';
+
+// Clip sets in the registry (WP 8.9): the kind clipset, one entry per set of readable clips, which a page or tool
+// registers from data/anim/sets/ (defineClipSet), and the clip layer of an entity kept as plain data, loaded from it
+// at every use (ClipLayerPool), as an actor's component clips holds it.
+export { defineClipSet } from './clip/clipsets';
+export { clipSetFromFiles } from './clip/clipsets';
+export { getClipSet } from './clip/clipsets';
+export { clipSetId } from './clip/clipsets';
+export { clipSetIds } from './clip/clipsets';
+export { defineSetBuild } from './clip/clipsets';
+export type { ClipSetEntry } from './clip/clipsets';
+export { CLIPSET_FIELDS } from './clip/clipsets';
+export { CLIPS_FIELDS } from './clip/clipsets';
+export type { ClipsData } from './clip/clipsets';
+export { emptyClipState } from './clip/clipsets';
+export { ClipLayerPool } from './clip/clipsets';

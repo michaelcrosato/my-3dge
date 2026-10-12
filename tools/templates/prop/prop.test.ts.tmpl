@@ -1,20 +1,22 @@
 /**
  * @file Unit tests for the prop `prop:{{name}}` ({{id}}.ts): its parts build clean (no degenerate triangles,
  * consistent normals), stand on its base, and reach as high as its body, which stands on the base where it is placed.
+ * Each part is measured where it stands in the prop (`partMatrix`: its position and rotation), so a part turned on
+ * its side counts its turned height.
  * @see {{id}}.ts
  */
 import { describe, expect, it } from 'vitest';
-import { buildGeometry, inspectGeometry, propBody } from '../../../engine';
+import { buildPropPart, inspectGeometry, partMatrix, propBody } from '../../../engine';
 import { {{name}} } from './{{name}}';
 
 describe('prop:{{name}}', () => {
   it('builds clean parts that stand on its base, as tall as its body', () => {
     let top = 0;
     for (const part of {{name}}.parts) {
-      const report = inspectGeometry(buildGeometry({ geometry: part.geometry, params: { ...part.params } }));
+      const report = inspectGeometry(buildPropPart(part).applyMatrix4(partMatrix(part)));
       expect([report.missing, report.degenerate, report.flipped, report.badNormals], part.name).toEqual([[], 0, 0, 0]);
-      expect(report.min[1] + part.position[1], part.name).toBeGreaterThanOrEqual(-1e-6);
-      top = Math.max(top, report.max[1] + part.position[1]);
+      expect(report.min[1], part.name).toBeGreaterThanOrEqual(-1e-6);
+      top = Math.max(top, report.max[1]);
     }
     const body = propBody({ prop: {{name}}.id, at: [2, 0, 3], yaw: 0 });
     [2, top / 2, 3].forEach((value, k) => expect(body?.position[k]).toBeCloseTo(value, 5));

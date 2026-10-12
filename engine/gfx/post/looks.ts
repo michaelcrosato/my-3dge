@@ -1,9 +1,11 @@
 /**
  * @file Looks (PLAN.md WP 7.4, §6.6 kind `look`): a material style (WP 7.2, engine/gfx/materials/styles.ts) plus a
- * filter chain (engine/gfx/post/filters.ts), as data. A look names what it changes; every filter it leaves out is off,
- * and a style of `''` keeps the scene's own. The chain draws the look the setting `post.look` names
- * (engine/gfx/post/chain.ts); switching looks writes uniforms and re-points materials to styles the warm-up has
- * already compiled, so it builds no pipeline.
+ * filter chain (engine/gfx/post/filters.ts), as data, and the sky that lights the scene (WP 7.8, a `sky` id,
+ * engine/gfx/sky.ts). A look names what it changes; every filter it leaves out is off, and a style or sky of `''`
+ * keeps the scene's own. The chain draws the look the setting `post.look` names (engine/gfx/post/chain.ts); switching
+ * looks writes uniforms and re-points materials to styles the warm-up has already compiled, so it builds no
+ * pipeline. A look's sky is shown by the pages `createEngine` starts (engine/app/look.ts): the stage's lights give way
+ * to it (engine/gfx/stageSky.ts), which changes the shader key, so a look with another sky warms up before it draws.
  *
  * The entries are seeded from shardfall's tuned presets (`shardfall:crates/pav_view/src/looks.toml`, with
  * `look.rs:100-353`), keys renamed: its whole looks are here (`look:hd-2d`, `look:game-boy`…), and its one-section
@@ -55,6 +57,12 @@ export const LOOK_FIELDS = {
     enum: ['', ...MATERIAL_STYLES],
     default: '',
     description: "The material style everything is drawn in (lambert, toon, flat, pbr); '' keeps the scene's own.",
+  },
+  sky: {
+    type: 'string',
+    default: '',
+    description:
+      "The sky preset that lights the scene (a 'sky' id: sky:hall, the torch-lit hall); '' keeps the scene's own lights.",
   },
   toon: {
     type: 'object',
@@ -237,11 +245,12 @@ export function defineLooks(registry: Registry = sharedRegistry): void {
   if (!registry.kinds().includes('look')) {
     registry.defineKind('look', {
       description:
-        'Looks: a material style plus a filter chain (post-processing), as whole looks or one-filter presets.',
+        'Looks: a material style plus a filter chain (post-processing), and the sky that lights it, as whole looks or one-filter presets.',
       fields: LOOK_FIELDS,
       fallback: 'look:clean',
       check: (entry) => checkLook(entry as LookEntry),
-      defineWith: "defineLook('look:<name>', { description, style, toon, filters: { pixel: { scope, size }, … } })",
+      defineWith:
+        "defineLook('look:<name>', { description, style, toon, sky, filters: { pixel: { scope, size }, … } })",
     });
   }
   for (const [id, spec] of Object.entries({ ...LOOKS, ...PRESETS })) {

@@ -5,16 +5,24 @@
  * `window.__engine`. It draws nothing and runs nothing until the tool calls it.
  *
  * Scene modules come in through `import.meta.glob` (never a `fetch()`, §6.3), over the same roots `x sim` and `x replay`
- * search: `fixtures/scenes/` and `labs/<name>/scenes/`. Replays arrive as their file's text, so every number reaches the
- * player exactly as JSON wrote it. `swap` narrows the fdlibm swap to the names given (an outer `withSimMath`, inside
- * which the world's own calls swap nothing more): `[]` runs native `Math`, to show a replay depends on the swap.
+ * search: `fixtures/scenes/` and `labs/<name>/scenes/`. Before the first, the animation library registers, every set of
+ * data/anim/sets/ as text, as the box page registers it for clip mode (labs/box/library.ts `loadLibrary`) and the Node
+ * hosts do (tools/anim/library.ts): the sim reads no files. Replays arrive as their file's text, so every number
+ * reaches the player exactly as JSON wrote it. `swap` narrows the fdlibm swap to the names given (an outer
+ * `withSimMath`, inside which the world's own calls swap nothing more): `[]` runs native `Math`, to show a replay
+ * depends on the swap.
  */
 /// <reference types="vite/client" />
 import { withSimMath, type SimMathName } from '../../engine/core/simMath';
 import { playReplay } from '../../engine/sim/replay';
+import { loadLibrary } from '../../labs/box/library';
 
 /** The scene modules the page can load, by path from this file. */
 const SCENES = import.meta.glob(['../../fixtures/scenes/**/*.ts', '../../labs/*/scenes/**/*.ts', '!**/*.test.ts']);
+/** The animation library's files (data/anim/sets/<set>/*.json), as text loaded on demand, as the box page loads them. */
+const LIBRARY = import.meta.glob<string>('../../data/anim/sets/*/*.json', { query: '?raw', import: 'default' });
+/** The library, registered once, before the first scene module loads. */
+let library: Promise<string[]> | undefined;
 
 /** How a replay plays in the page: every step hashed or the replay's checkpoints, and the swap's names. */
 interface PageOptions {
@@ -36,6 +44,7 @@ const replay = {
       throw new Error(
         `the replay page cannot load ${file}: scene modules live under fixtures/scenes/ or labs/<name>/scenes/`,
       );
+    await (library ??= loadLibrary(LIBRARY));
     await load();
   },
   /** Plays a replay's text from step 0; returns the hashes by step. */

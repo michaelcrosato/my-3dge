@@ -24,7 +24,8 @@ Golden references for how a frame looks, as text instead of images (PLAN.md §8.
 - `box-room-iso`: the Stress Box (labs/box), scene `room`, camera `iso`, at step 0 (WP 2.7), compared by
   tests/e2e/box.spec.ts.
 - `box-hall-iso`: the Stress Box (labs/box), scene `hall`, camera `iso`, at step 0: the hero on the dais (WP 4.6),
-  compared by tests/e2e/box-hall.spec.ts.
+  compared by tests/e2e/box-hall.spec.ts; re-recorded in WP 7.8, when the hall's floor became its bake (moss at the
+  walls' feet, contact shadows, the rune circle on the dais: labs/box/looks/hall-floor.ts).
 - `materials-v2-toon-bands`, `materials-v2-toon-gradient`: tests/pages/materials-v2.html's comparison scene
   (`compare('bands')`, `compare('gradient')`, 480 × 270), the toon bands and the gradient-map baseline (WP 7.2),
   compared by tests/e2e/materials-v2.spec.ts (`UPDATE_THUMBS=1` records them).

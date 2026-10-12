@@ -22,7 +22,7 @@ describe('the look kind', () => {
     expect(Object.keys(PRESETS)).toHaveLength(66);
     expect(registry.list('look')).toHaveLength(86);
     const clean = registry.get('look', 'look:clean') as LookEntry;
-    expect(clean.style).toBe('');
+    expect([clean.style, clean.sky]).toEqual(['', '']);
     for (const name of FILTER_NAMES) expect(clean.filters[name].scope, name).toBe('off');
   });
 
@@ -44,6 +44,12 @@ describe('the look kind', () => {
       for (const name of on) expect(allowed, `${id} turns on ${name}`).toContain(name);
       if (look.group !== 'shading') expect(look.style, id).toBe('');
     }
+  });
+
+  it("keeps the scene's own sky unless a look names one (WP 7.8)", () => {
+    const registry = looks();
+    for (const look of registry.list('look') as LookEntry[]) expect(look.sky, look.id).toBe('');
+    expect(defineLook('look:torches', { sky: 'sky:hall', style: 'toon' }, registry).sky).toBe('sky:hall');
   });
 
   it('refuses fewer than 8 levels per channel, naming the rule', () => {

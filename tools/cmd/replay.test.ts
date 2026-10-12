@@ -4,7 +4,8 @@
  * a golden that differs while every run agrees is named as a behaviour change between two checkpoints, a replay from
  * another platform runs twice and reports "golden: other platform" (never "match"), `--update` needs `--browser sim`,
  * refuses `--swap`, and writes Prettier-clean goldens only once every file and the page came out clean, every failure
- * keeps its sentence under `--bisect` (the bisect's first line inside it), and bad files and flags are named. The
+ * keeps its sentence under `--bisect` (the bisect's first line inside it), `--state` and `--until n` write the state a
+ * replay reaches (its golden's hash at that step) and its trace, and bad files and flags are named. The
  * Chromium half is proven by `node x replay tests/replays --browser sim` (WP 1.5's Verify), through the same player;
  * here a second Node runtime stands in for it. The other replays' goldens are held in Node by their own tests:
  * labs/box/scenes/room-hero.test.ts (box-2-*), engine/app/view.test.ts (box-1-*) and the fixtures' index.test.ts
@@ -73,6 +74,26 @@ function injectedRuntime(): Runtime {
 async function run(label: string, runtime: Runtime, text: string): Promise<Run> {
   return { label, runtime, hashes: await runtime.play(text, true) };
 }
+
+describe('x replay --state', () => {
+  it('writes the state the replay ends in, or reaches after step n, with its trace', async () => {
+    const goldens = (JSON.parse(readFileSync(KERNEL, 'utf8')) as Replay).hashes[PLATFORM];
+    const last = await replay(KERNEL, '--state', '--runs', '1');
+    expect(last.code).toBe(0);
+    const file = join(ROOT, 'out/replay/kernel-movers/state.json');
+    const final = JSON.parse(readFileSync(file, 'utf8')) as { state: { entities: unknown[] }; trace: unknown };
+    expect(final.state.entities.length).toBeGreaterThan(0);
+    expect(final.trace).toBeDefined();
+    expect(last.lines).toContain(
+      `kernel-movers.replay.json: the state after step 600 (hash ${goldens['600']}) and its trace in out/replay/kernel-movers/state.json`,
+    );
+    const middle = await replay(KERNEL, '--until', '120', '--runs', '1');
+    expect(middle.lines.find((line) => line.includes('after step 120'))).toContain(`hash ${goldens['120']}`);
+    expect(readFileSync(file, 'utf8')).not.toBe(JSON.stringify(final));
+    const past = await replay(KERNEL, '--until', '601', '--runs', '1');
+    expect([past.code, past.lines[1]]).toEqual([2, expect.stringContaining("--until 601 is past kernel-movers.replay.json's last step, 600")]); // prettier-ignore
+  });
+});
 
 describe('x replay in Node', () => {
   it('gives the kernel replays their goldens, three runs each, from a directory', async () => {

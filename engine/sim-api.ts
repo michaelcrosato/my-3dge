@@ -160,7 +160,7 @@ export type { QueryView } from './sim/queryView';
 
 // Characters (WP 3.2): actors moved by the character controller (Rapier's, moved across then down), with an action
 // game's feel: acceleration and skid, coyote time, a jump buffer, a variable jump, a wall jump, a dash, pushing props;
-// the feel meter measures how one handles.
+// the feel meter measures how one handles. A body's reactions and an actor's secondary motion as components (WP 7.8).
 export { createCharacter } from './physics/character';
 export type { Character } from './physics/character';
 export { CHARACTER_FIELDS } from './physics/character';
@@ -175,6 +175,12 @@ export { measureFeel } from './sim/actors';
 export type { FeelReport } from './physics/feel';
 export type { FeelOptions } from './sim/actors';
 export type { AnimatorComponent } from './sim/actors';
+export { reactTo } from './sim/reactions';
+export { stepReactions } from './sim/reactions';
+export { REACTION_FIELDS } from './sim/reactions';
+export { SECONDARY_FIELDS } from './sim/reactions';
+export type { SecondaryComponent } from './sim/reactions';
+export type { ReactionComponents } from './sim/reactions';
 
 // Levels v2 (WP 4.2): the hall's glyphs (gallery =, stairs ^, dais o, brazier t), ramps and daises, hull and cylinder
 // colliders, and the surface tag underfoot.
@@ -356,3 +362,15 @@ export type { DamageEvent } from './sim/damage';
 export type { DamageEvents } from './sim/damage';
 export { damage } from './sim/damage';
 export { requestHitStop } from './sim/damage';
+
+// Clips on actors (WP 8.9): the clip layer in an actor's animator as sim data, the component clips, stepped at the
+// actor's ground speed and drawn over its body by the view; its events come as `clip`. spawnActor's `body` names the
+// body it is drawn as (body:mannequin).
+export { addClips } from './sim/actorClips';
+export type { ClipsSpec } from './sim/actorClips';
+export { playClip } from './sim/actorClips';
+export { stopClip } from './sim/actorClips';
+export { seekClip } from './sim/actorClips';
+export { locomoteClips } from './sim/actorClips';
+export { clipLayerOf } from './sim/actorClips';
+export type { PuppetComponent } from './sim/actors';

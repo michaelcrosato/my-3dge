@@ -13,7 +13,8 @@
  * entities again first, so a flying bolt is the effects' or its stand-in from that frame, with or without a step.
  *
  * The camera follows the player (WP 3.10): the first player actor's feet as the frame draws them, else the level's
- * middle. The chase camera also gets the sim's read-only `QueryView` (engine/sim/queryView.ts) in a physics scene,
+ * middle; so does the stage's sky once a look shows one (engine/gfx/stageSky.ts), flickering at the frames' time
+ * (WP 7.8), and the level entry's material swaps (`materials`) reach the stage. The chase camera also gets the sim's read-only `QueryView` (engine/sim/queryView.ts) in a physics scene,
  * so it stays in front of the walls; first person gets the player's eye, and hides his body but the hands from
  * itself (near-body culling, `cameraInfo().culled`). While it follows a player the level's cutaway runs
  * (engine/gfx/cutaway.ts): walls facing the camera and pillars before him cut away, so every view sees him. `restarted()` after the run
@@ -49,7 +50,7 @@ import { createStage, type Stage } from '../gfx/stage';
 import { queryViewOf, type QueryView } from '../sim/queryView';
 import type { Session } from '../sim/scene';
 import type { EntityData } from '../sim/state';
-import { getLevel } from '../world/level/level';
+import { getLevel, type LevelEntry } from '../world/level/level';
 
 /** The codes this module raises, with their fixes. */
 export const VIEW_CODES = defineCodes('app', {
@@ -144,8 +145,10 @@ export function createRunView(options: RunViewOptions): RunView {
     throw codeError('APP_NO_LEVEL', { scene: scene.id, level: scene.level });
   }
   const level = scene.level === undefined ? null : getLevel(scene.level, registry);
+  const entry = scene.level === undefined ? null : (registry.get('level', scene.level) as LevelEntry);
+  const levelMaterials = (entry?.materials ?? {}) as Readonly<Record<string, string>>; // strings: the kind checks
   const fxRng = (...keys: readonly (string | number)[]) => options.run().world.fxRng(...keys);
-  const stage = createStage({ level, materials: options.materials, registry, log: options.log, fxRng });
+  const stage = createStage({ level, materials: options.materials, registry, log: options.log, fxRng, levelMaterials });
   /**
    * Turns the effects on or off by the view setting `gfx.effects` (a registry without it: on), before they read;
    * returns whether that changed them.
@@ -173,6 +176,8 @@ export function createRunView(options: RunViewOptions): RunView {
   let culled: string[] = [];
   let alpha = 1;
   let crowdStale = false;
+  /** Seconds of frames drawn: the lights' flicker clock (presentation only). */
+  let time = 0;
   /** Poses and draws the crowd bodies as the camera now placed sees them. */
   const drawCrowd = () => {
     stage.crowd.draw(alpha, drawn);
@@ -244,6 +249,8 @@ export function createRunView(options: RunViewOptions): RunView {
       if (syncEffects()) reread();
       stage.draw((alpha = frame.alpha));
       drawn = pair.place(move(frame.input, frame.dt), aspect);
+      time += frame.dt;
+      stage.sky.update({ camera: drawn, focus: stage.actors.player()?.feet ?? stage.centre, time });
       drawCrowd();
       stage.fx.frame(frame.dt, drawn, options.run().world.events.trace());
       return { scene: stage.scene, camera: drawn, alpha: frame.alpha };

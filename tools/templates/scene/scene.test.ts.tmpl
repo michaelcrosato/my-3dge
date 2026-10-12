@@ -4,7 +4,7 @@
  * setting changes the run.
  *
  * Keep a replay with its goldens too (labs/box/README.md, "Adding a scene or a variant"):
- * 1. `node x sim {{id}} --steps 600`;
+ * 1. `node x sim {{id}}.ts --steps 600`;
  * 2. copy out/sim/box-{{name}}/run.replay.json to tests/replays/box-<stage>-{{name}}.replay.json;
  * 3. `node x replay <file> --browser sim --update` records its goldens, in Node and Chromium;
  * 4. `node x replay <file> --browser page` checks them while the page renders;

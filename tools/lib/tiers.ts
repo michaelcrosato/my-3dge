@@ -17,7 +17,8 @@
  *   own `--changed` reruns everything on the same `T1_FULL` files (vite.config.ts's `forceRerunTriggers`).
  * - **T2** runs in full when engine, lab or page code changed (`T2_FULL`), because pages reach the browser through the
  *   dev server and not through the specs' imports; else as `playwright test --only-changed=<base>`.
- * - **Budgets.** A tier over its budget warns; at 1.5× its budget it fails.
+ * - **Budgets.** A tier over its budget warns and never fails: wall-clock time on this shared machine is noise, not
+ *   proof (ADR-0022); the counts the pages measure are the checks that fail.
  *
  * @example
  * const { base, t1, t2 } = plan(); // t2.reason: 'T2 runs in full: engine/core/a.ts changed (engine code, …)'
@@ -75,7 +76,8 @@ export const TIERS: Readonly<Record<TierId, Tier>> = {
 /**
  * The long runs (PLAN.md §8.2): no budget, run at each gate. The flake hunt, the kernel's perf budget (WP 1.5; T1
  * never asserts timing), the crowd ladder's (WPs 5.5, 5.7: tests/baselines/perf/box-crowd-1000.json) and the clip
- * library's QA, every clip played on every build (WP 8.6: T1 plays a sample). Long replays (WP 1.5) join them.
+ * library's QA, every clip played on every build (WP 8.6: T1 plays a sample), and clip mode in the box page playing
+ * every clip (WP 8.9: T2 plays one of each set). Long replays (WP 1.5) join them.
  */
 export const LONG_RUNS: readonly { name: string; command: readonly string[] }[] = [
   { name: 'flake hunt', command: ['npm', 'run', 'e2e', '--', '--repeat-each', '3'] },
@@ -84,7 +86,15 @@ export const LONG_RUNS: readonly { name: string; command: readonly string[] }[] 
     name: 'crowd ladder',
     command: ['node', 'x', 'perf', 'labs/box', '--scene', 'crowd-1000', '--ladder', '--budget'],
   },
+  {
+    name: 'fight ladder',
+    command: ['node', 'x', 'perf', 'labs/box', '--scene', 'fight-1000', '--ladder', '--budget'],
+  },
   { name: 'clip QA', command: ['node', 'x', 'qa', 'anim', '--only', 'clip:,set:'] },
+  {
+    name: 'box clips',
+    command: ['env', 'BOX_CLIPS=all', 'npm', 'run', 'e2e', '--', 'tests/e2e/box-clips.spec.ts', '--workers=1'],
+  },
 ];
 
 /** A path whose change runs a whole tier: a file, or a directory when it ends in `/`. */
@@ -325,31 +335,24 @@ export function duration(ms: number): string {
   return `${Math.floor(seconds / 60)} min${rest ? ` ${rest} s` : ''}`;
 }
 
-/** A tier at this multiple of its budget, or more, fails; over the budget alone warns. */
-export const FAIL_FACTOR = 1.5;
-
 /** A tier's duration against its budget. */
 export interface BudgetCheck {
   tier: TierId;
   ms: number;
   budgetMs: number;
-  status: 'ok' | 'warn' | 'fail';
+  status: 'ok' | 'warn';
   /** One sentence: the duration, the budget and, when over, where to look. */
   message: string;
 }
 
-/** Checks one duration against its tier's budget: over it warns, at `FAIL_FACTOR` times it fails. */
+/** Checks one duration against its tier's budget: over it warns (ADR-0022: time budgets never fail). */
 export function checkBudget(tier: TierId, ms: number): BudgetCheck {
   const { budgetMs, fix } = TIERS[tier];
-  const status = ms >= budgetMs * FAIL_FACTOR ? 'fail' : ms > budgetMs ? 'warn' : 'ok';
+  const status = ms > budgetMs ? 'warn' : 'ok';
   const budget = duration(budgetMs);
   const took = `${tier} took ${duration(ms)}`;
   const message =
-    status === 'ok'
-      ? `${took}, within its ${budget} budget`
-      : status === 'warn'
-        ? `${took}, over its ${budget} budget (it fails at ${duration(budgetMs * FAIL_FACTOR)}): ${fix}`
-        : `${took}, at least ${FAIL_FACTOR}× its ${budget} budget: ${fix}`;
+    status === 'ok' ? `${took}, within its ${budget} budget` : `${took}, over its ${budget} budget: ${fix}`;
   return { tier, ms, budgetMs, status, message };
 }
 

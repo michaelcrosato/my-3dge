@@ -367,13 +367,11 @@ export function checkSounds(registry: Registry = sharedRegistry, ids?: readonly 
 
 /** The family: every sound of the shared registry, after importing the games' sound modules. */
 const family: QaFamily = {
-  async run({ root, only }) {
+  async run({ root, only, keep: asked }) {
     await loadSoundModules(root);
     const ids = [...sharedRegistry.list('sfx'), ...sharedRegistry.list('song')].map((entry) => entry.id);
-    return checkSounds(
-      sharedRegistry,
-      only.length ? ids.filter((id) => only.some((prefix) => id.startsWith(prefix))) : ids,
-    );
+    const keep = asked ?? ((id: string) => !only.length || only.some((prefix) => id.startsWith(prefix)));
+    return checkSounds(sharedRegistry, ids.filter(keep));
   },
 };
 

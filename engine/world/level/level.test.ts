@@ -1,7 +1,8 @@
 /**
  * @file Unit tests for engine/world/level/level.ts (T1): `defineLevel` keeps a level's text after checking it
  * compiles, refusing a structural problem at its line and column; `getLevel` compiles it, named after its id, with
- * its registry's legend; a missing id names the closest; `describe` lists the kind.
+ * its registry's legend; a missing id names the closest; `describe` lists the kind; a level's material swaps (WP 7.8)
+ * are kept as given, none by default, and a swap that is not a material id is refused.
  * @see engine/world/level/level.ts
  */
 import { readFileSync } from 'node:fs';
@@ -52,6 +53,19 @@ describe('defineLevel and getLevel', () => {
     defineGlyph('glyph:crate', { char: 'c', mesh: 'floor', spawn: 'crate' }, reg);
     defineLevel('level:x', { text: '###\n#c#\n###\n' }, reg);
     expect(getLevel('level:x', reg).spawns.map((spawn) => spawn.id)).toEqual(['spawn:crate']);
+  });
+
+  it('keeps its material swaps, none by default, and refuses a swap that is not an id', () => {
+    const reg = createRegistry();
+    expect(defineLevel('level:plain', { text: ROOM }, reg).materials).toEqual({});
+    const swaps = { 'material:flagstone': 'material:planks' };
+    expect(defineLevel('level:swapped', { text: ROOM, materials: swaps }, reg).materials).toEqual(swaps);
+    const bad = { 'material:flagstone': 3 } as unknown as Record<string, string>;
+    const error = errorOf(() => defineLevel('level:bad', { text: ROOM, materials: bad }, reg));
+    expect([error.code, error.message]).toEqual([
+      'CORE_BAD_SPEC',
+      expect.stringContaining('materials["material:flagstone"]'),
+    ]);
   });
 
   it('names the closest ids for a missing one', () => {

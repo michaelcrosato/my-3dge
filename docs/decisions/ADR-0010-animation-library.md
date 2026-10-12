@@ -69,3 +69,26 @@ The library's tests and QA (WP 8.6); the asset scan in `x check`.
 - **`x anim cmu` reads entries near each other in one range request**: entries share a request only when the unwanted
   bytes between them are at most 256 KiB. One request to the CMU site costs about 0.13 s, measured. Shardfall reads
   each entry on its own.
+
+## Amendment 5 (2026-10-12, WP-8.9): clip sets in the registry, clips on actors
+- **The sim reads no files, so sets reach scenes through the kind `clipset`** (§6.6's Phase 8 kind). A page or tool
+  registers them with `defineClipSet` or `clipSetFromFiles`, as actions are (ADR-0009 amendment 7). `defineSetBuild`
+  registers `build:mannequin` sim-side.
+- **An actor's clip layer is sim data:** `spawnActor`'s `clips` adds the component `clips` (sets, IK, blade,
+  `ClipLayerState`). The system `actors.clips` steps it after `actors.anim` at ground speed and emits events as `clip`.
+  API: `playClip`, `stopClip`, `seekClip`, `locomoteClips`, `clipLayerOf`, `addClips`.
+- **`ClipLayerPool` loads layers from the component at every use.** The sim keeps one pool per world and the view its
+  own, so sim bakes are never shared with the view.
+- **`spawnActor`'s `body` adds the component `puppet`.** The view's actors draw that body and lay the clip layer over
+  the pose. `__engine.anim` shows the clips slot.
+- **The box page loads the library only for `?scene=clips`** (`labs/box/library.ts`, `labs/box/main.ts`).
+- **WP 8.9's Owns grows** (PLAN.md edited to match): it owns `engine/anim/clip/clipsets{,.test}.ts`,
+  `engine/sim/actorClips{,.test}.ts`, `labs/box/library.ts` and `labs/box/scenes/clips.test.ts`, and extends
+  `engine/sim/actors.ts`, `engine/gfx/puppets/actors{,.test}.ts`, `engine/app/animMember.ts`, `engine/anim/api.ts`,
+  `engine/sim-api.ts` (append), `labs/box/{main.ts,README.md}` and `tools/lib/tiers.ts`'s `LONG_RUNS`.
+- **Every host registers the library** (gate G8's review closed the deferral): `x sim`, `x perf`, `x replay`'s Node
+  runtime, `x describe` and tests through `tools/anim/library.ts` (`defineLibrary`, once a registry), the box page and
+  `tests/pages/replay.ts` through `labs/box/library.ts`; both end with the same entries (library.test.ts). The box page
+  loads it for `?replay=` a clip-mode replay too. `tests/replays/box-8-clips.replay.json` (a clip change, frame stepping,
+  the hero walking under a one-shot masked to his upper body) gives one set of goldens in Node, the sim page and the
+  rendering page; it is a `STAGES` entry of tests/e2e/parity.spec.ts. Cost: about 0.5 s more per Node host run.

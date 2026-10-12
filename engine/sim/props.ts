@@ -98,8 +98,14 @@ function readProps(w: World): void {
 }
 
 /**
- * Stands the prop of `placement` in the scene: its body (when it has one; the scene needs physics then) and an entity
- * with the component `sceneProp`. Returns the entity's id. A missing prop id warns and stands a crate (`getProp`).
+ * Stands a prop in the scene, `spawnProp(w, { prop: 'prop:<id>', at: [x, y, z], yaw })`: its base at `at` (m), turned
+ * `yaw` about +Y (rad). It makes the prop's body (when it has one; the scene needs `physics: true` then) and an entity
+ * with the component `sceneProp`, and returns the entity's id. A missing prop id warns and stands a crate (`getProp`).
+ *
+ * @example
+ * // in a scene's setup, with physics: true and its level's bodies added (addLevelBodies(physicsOf(w), level)):
+ * // const id = spawnProp(w, { prop: 'prop:crate', at: [2, 0, 3], yaw: Math.PI / 2 }); // on the floor at x 2, z 3
+ * // labs/box/scenes/hall-props.ts places the hall's props this way, from levelProps and its own spots.
  */
 export function spawnProp<C extends object>(world: World<C>, placement: PropPlacement): number {
   const w = world as unknown as World;

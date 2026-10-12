@@ -1,10 +1,11 @@
 /**
  * @file Unit tests for `x qa` (tools/cmd/qa.ts): families found in `tools/qa/`, baselines compared by id and metric
- * (new and worse violations fail, slack and stale entries warn, unknown keys fail), `--only` prefixes, and the usage
- * errors, on fixture repositories written to temporary directories.
+ * (new and worse violations fail, slack and stale entries warn, unknown keys fail), `--only` prefixes, the count of
+ * what was checked, and the usage errors (an `--only` prefix that keeps nothing among them, naming the closest ids),
+ * on fixture repositories written to temporary directories.
  */
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -121,8 +122,10 @@ describe('families', () => {
     '/** @file A fixture QA family. */',
     "import type { QaFamily } from '" + join(ROOT, 'tools/cmd/qa') + "';",
     'export default {',
-    "  run: ({ only }) => [{ id: 'level:hall', metric: 'unreachable', value: 2, message: 'two spawns cannot reach the exit' }]",
-    '    .filter((v) => only.length === 0 || only.some((p) => v.id.startsWith(p))),',
+    '  run: ({ only, keep = (id) => only.length === 0 || only.some((p) => id.startsWith(p)) }) =>',
+    "    ['level:hall', 'level:room'].filter(keep).flatMap((id) => (id === 'level:hall' ? [",
+    "      { id, metric: 'unreachable', value: 2, message: 'two spawns cannot reach the exit' },",
+    '    ] : [])),',
     '} satisfies QaFamily;',
   ].join('\n');
 
@@ -132,6 +135,8 @@ describe('families', () => {
     expect(qaFamilies(repository({}))).toEqual([]);
     expect((await runQa(root, 'level')).failures.map((f) => f.id)).toEqual(['QA_LEVEL']);
     expect((await runQa(root, 'level', ['prop:'])).violations).toBe(0);
+    const counted = await runQa(root, 'level', ['level:r']);
+    expect([[...counted.checked], [...counted.asked]]).toEqual([['level:room'], ['level:hall', 'level:room']]);
   });
 
   it('x qa runs them, exits 1 on a violation and 0 within the baseline, and filters with --only', async () => {
@@ -141,7 +146,8 @@ describe('families', () => {
     const print = (line: string) => printed.push(line);
     expect(await dispatch(['qa', 'level'], { root, commands, print })).toBe(1);
     expect(printed[0]).toBe('x qa: FAIL: level: 1 new or worse');
-    expect(await dispatch(['qa', 'level', '--only', 'prop:,clip:'], { root, commands, print })).toBe(0);
+    expect(await dispatch(['qa', 'level', '--only', 'level:room'], { root, commands, print })).toBe(0);
+    expect(printed.at(-2)).toBe('level: ok, 1 checked, 0 violations, 0 accepted by the baseline');
     mkdirSync(join(root, 'tests/baselines'), { recursive: true });
     writeFileSync(
       join(root, 'tests/baselines/qa-level.json'),
@@ -149,7 +155,20 @@ describe('families', () => {
     );
     printed.length = 0;
     expect(await dispatch(['qa', 'level'], { root, commands, print })).toBe(0);
-    expect(printed[1]).toBe('level: ok, 1 violations, 1 accepted by the baseline');
+    expect(printed[1]).toBe('level: ok, 2 checked, 1 violations, 1 accepted by the baseline');
+    const report = JSON.parse(readFileSync(join(root, 'out/qa/level/report.json'), 'utf8')) as { metrics: object };
+    expect(report.metrics).toMatchObject({ 'level.checked': 2, 'level.violations': 1, 'level.accepted': 1 });
+  });
+
+  it('x qa exits 2 for an --only prefix that keeps no entry, naming the closest ids', async () => {
+    const root = repository({ 'tools/qa/level.ts': FAMILY });
+    const commands = { qa: () => loadCommand(ROOT, 'qa') };
+    const printed: string[] = [];
+    const print = (line: string) => printed.push(line);
+    expect(await dispatch(['qa', 'level', '--only', 'level:hall,level:hal1'], { root, commands, print })).toBe(2);
+    expect(printed[1]).toContain(
+      '--only level:hal1 keeps no entry of level: the closest ids are level:hall, level:room',
+    );
   });
 
   it('x qa exits 2 for no family or an unknown one, naming the closest', async () => {

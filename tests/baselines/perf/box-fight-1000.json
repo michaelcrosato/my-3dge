@@ -1,0 +1,13 @@
+{
+  "scene": "box:fight-1000",
+  "ladder": {
+    "setting": "box.crowd.count",
+    "steps": 300,
+    "rungs": {
+      "100": { "stepMs": 4, "hashMs": 16, "captureMs": 4 },
+      "1000": { "stepMs": 36, "hashMs": 200, "captureMs": 30 },
+      "5000": { "stepMs": 160, "hashMs": 1000, "captureMs": 160 }
+    }
+  },
+  "reason": "WP 7.8, the benchmark report: measured with node x perf labs/box --scene fight-1000 --ladder --agents box.crowd.count on the development platform (Node 24, 20 cores at a load average of 15 to 19 from up to 6 lanes, Rapier 0.21 SIMD): the hall with its hero fighting a mixed crowd (half walkers, three in ten slimes, two in ten wisps) entering 25 a step, three at a time through his attack tokens, the wisps shooting, 300 steps from the start with no intents, medians of 5 runs. Sim step: 1.74 ms at 100, 13.4 ms at 1,000 and 50.8 ms at 5,000 (the queue still letting bodies in until step 200); hash: 7.6, 79.5 and 410 ms (the crowd's animator data, as box-crowd-1000.json says, plus each member's fightHealth, fightFoe and fightTelegraph: about a quarter above the crowd's own); capture: 1.05, 8.1 and 52 ms. Step keeps the crowd ladder's budgets (box-crowd-1000.json: the fight's are below the crowd's there, measured at a load near 38); hash gets about 2.4x over these medians, the crowd's margin for a load twice this one; capture about 3x, since a rerun at a load of 23 to 27 (the --budget check) measured 19.1 ms at 1,000 and 73.6 at 5,000, step 70.1 and hash 437 at 5,000. A rung's budget holds for this scene, its settings and 300 steps."
+}

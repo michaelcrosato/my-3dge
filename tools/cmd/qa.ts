@@ -11,7 +11,11 @@
  * accept, warns. Unknown keys are errors.
  *
  * `--only` keeps ids starting with a prefix (`clip:`, `action:`, `prop:`); repeat it or join prefixes with commas.
- * Usage: node x qa <family…> [--only <prefix>]. Exit 0, 1 on a new or worse violation, 2 for an unknown family.
+ * Each family asks the context's `keep(id)` of every entry it could check, so the summary and the metrics count what
+ * it checked (`<family>.checked`); a prefix that keeps no entry of any family named is a usage error (`X_USAGE`) that
+ * lists the closest ids, never "ok, 0 violations" over nothing.
+ * Usage: node x qa <family…> [--only <prefix>]. Exit 0, 1 on a new or worse violation, 2 for an unknown family or an
+ * `--only` prefix that keeps nothing.
  * @see tools/cmd/qa.test.ts
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -37,6 +41,11 @@ export interface QaViolation {
 export interface QaContext {
   root: string;
   only: string[];
+  /**
+   * Whether to check entry `id` (it starts with an `only` prefix, or there are none); `runQa`'s records every id asked
+   * and every id kept, for the counts. A family asks it of every entry it could check; without it, it tests `only`.
+   */
+  keep?: (id: string) => boolean;
 }
 
 /** A QA family: the default export of `tools/qa/<family>.ts`. */
@@ -123,7 +132,22 @@ export function readBaselines(root: string, family: string): { entries: QaBaseli
 }
 
 /** Whether `id` passes the `only` prefixes. */
-const kept = (id: string, only: readonly string[]) => only.length === 0 || only.some((prefix) => id.startsWith(prefix));
+export const kept = (id: string, only: readonly string[]) =>
+  only.length === 0 || only.some((prefix) => id.startsWith(prefix));
+
+/** The ids among `ids` closest to `prefix`: the longest start they share with it first, then in id order; at most `n`. */
+export function closestIds(prefix: string, ids: Iterable<string>, n = 5): string[] {
+  const shared = (id: string) => {
+    let k = 0;
+    while (k < prefix.length && k < id.length && prefix[k] === id[k]) k++;
+    return k;
+  };
+  return [...new Set(ids)]
+    .map((id) => ({ id, shared: shared(id) }))
+    .sort((a, b) => b.shared - a.shared || (a.id < b.id ? -1 : 1))
+    .slice(0, n)
+    .map(({ id }) => id);
+}
 
 /** Compares a family's violations with its baselines: failures for new or worse ones, warnings for slack entries. */
 export function compareWithBaselines(
@@ -173,8 +197,23 @@ export async function runQa(
   family: string,
   only: readonly string[] = [],
   load: (root: string, family: string) => Promise<QaFamily> = loadFamily,
-): Promise<{ failures: Finding[]; warnings: Finding[]; violations: number; accepted: number }> {
-  const violations = await (await load(root, family)).run({ root, only: [...only] });
+): Promise<{
+  failures: Finding[];
+  warnings: Finding[];
+  violations: number;
+  accepted: number;
+  /** The ids the family checked (those `only` kept), and every id it asked about. */
+  checked: ReadonlySet<string>;
+  asked: ReadonlySet<string>;
+}> {
+  const [checked, asked] = [new Set<string>(), new Set<string>()];
+  const keep = (id: string) => {
+    asked.add(id);
+    const ok = kept(id, only);
+    if (ok) checked.add(id);
+    return ok;
+  };
+  const violations = await (await load(root, family)).run({ root, only: [...only], keep });
   const baselines = readBaselines(root, family);
   const compared = compareWithBaselines(family, violations, baselines.entries, only);
   return {
@@ -182,6 +221,8 @@ export async function runQa(
     warnings: compared.warnings,
     violations: violations.filter((item) => kept(item.id, only)).length,
     accepted: compared.accepted,
+    checked,
+    asked,
   };
 }
 
@@ -205,13 +246,27 @@ export default {
     const warnings: Finding[] = [];
     const metrics: Record<string, number> = {};
     const lines: string[] = [];
+    const [checked, asked] = [new Set<string>(), new Set<string>()];
     for (const family of positionals) {
       const result = await runQa(root, family, only);
       failures.push(...result.failures);
       warnings.push(...result.warnings);
-      Object.assign(metrics, { [`${family}.violations`]: result.violations, [`${family}.accepted`]: result.accepted });
+      result.checked.forEach((id) => checked.add(id));
+      result.asked.forEach((id) => asked.add(id));
+      Object.assign(metrics, {
+        [`${family}.checked`]: result.checked.size,
+        [`${family}.violations`]: result.violations,
+        [`${family}.accepted`]: result.accepted,
+      });
       lines.push(
-        `${family}: ${result.failures.length ? 'FAIL' : 'ok'}, ${result.violations} violations, ${result.accepted} accepted by the baseline`,
+        `${family}: ${result.failures.length ? 'FAIL' : 'ok'}, ${result.checked.size} checked, ${result.violations} violations, ${result.accepted} accepted by the baseline`,
+      );
+    }
+    for (const prefix of only) {
+      if ([...checked].some((id) => id.startsWith(prefix))) continue;
+      const near = closestIds(prefix, asked);
+      throw new UsageError(
+        `--only ${prefix} keeps no entry of ${positionals.join(', ')}${near.length ? `: the closest ids are ${near.join(', ')}` : ''}`,
       );
     }
     return {

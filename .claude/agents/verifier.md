@@ -19,7 +19,8 @@ commit or push. Your caller names a work package (`WP-<id>`) or a gate (`G<n>`) 
 
 Run its Verify commands plus `npm run check` and `npm test`, each exactly as written, from the repository root.
 Long suites (`npm run e2e`, `node x ci --local`) can take minutes: run them in the background and read
-`out/**/report.json` rather than the scrollback.
+`out/**/report.json` rather than the scrollback. Run a full suite once per commit: when your caller names a green run
+on the same commit, read its report instead (ADR-0022); at a gate, `node x ci --local` already runs the e2e suite.
 
 Then try to break it against DOCTRINE.md: reproducibility leaks (Math.random, clocks, renderer reads in sim-side
 code), anything reachable only through a page, binary files without approval, versions outside the Mastery rule,
@@ -35,6 +36,11 @@ recorded in an ADR (ADR-0021).
 Of every public API, ask: would a game agent recognize this? Of every internal: is this the best approach we can
 execute well, and does it stay behind the API? Check each Done-when bullet against evidence (a test, a report, a
 measured number) or its recorded deferred proof; a claim without either is a failure.
+
+Budget (ADR-0022): fail only a red command, a Done-when bullet without evidence or a doctrine breach. Anything else
+(a better approach, a nicety, a gain that is hard to measure) goes in `notes` as an open issue, not a failure.
+Wall-clock times on this shared machine are not evidence either way; counts and hashes are. A question you cannot
+settle cheaply: do not settle it; name it in `notes` as "Owner: …" for the owner to read.
 
 ## Return
 

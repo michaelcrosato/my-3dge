@@ -4,7 +4,10 @@
  * exists; `node x <cmd>` names a command, flags it takes and settings for `--set` and `node x set <path> <value>`,
  * `npm run <script>` a script of package.json and files that exist; a URL's parameters are routes or settings;
  * `box:<name>` is a registered scene; `cam=…` is a camera code; `__engine.<member>` is a member `help()` lists. A
- * fixture README that names a missing setting, file, command, flag or member fails with one line each.
+ * fixture README that names a missing setting, file, command, flag or member fails with one line each. And the
+ * other way round (gate G7's review): every scene the modules of labs/box/scenes/ register has a row in the demo index
+ * (its file or its id), and every `box.*` setting they declare a row in the settings table; a fixture README that
+ * leaves one out fails, naming it.
  * @see labs/box/README.md
  */
 import { existsSync, globSync, readFileSync } from 'node:fs';
@@ -17,6 +20,40 @@ import { readCameraCode } from '../../engine/gfx/cameras/place';
 import { loadSettings } from '../../tools/cmd/set';
 import { commandNames, loadCommand, ROOT } from '../../tools/x';
 import '../../labs/box/scenes/room';
+
+/** The box's scene modules (tests aside), imported once so their scenes and settings are registered. */
+const SCENE_MODULES = globSync('labs/box/scenes/*.ts', { cwd: ROOT }).filter((file) => !file.endsWith('.test.ts'));
+for (const file of SCENE_MODULES.sort()) await import(join(ROOT, file));
+
+/** The rows of the table under the heading `heading` in `text` (up to the next heading). */
+function section(markdown: string, heading: string): string {
+  const text = `\n${markdown}`;
+  const start = text.indexOf(`\n${heading}\n`);
+  if (start < 0) return '';
+  const next = text.indexOf('\n## ', start + heading.length + 2);
+  return text.slice(start, next < 0 ? undefined : next);
+}
+
+/**
+ * What the README leaves out of `scenes` (`box:<name>` ids) and `settings` (`box.*` paths), one sentence each: a scene
+ * needs a row in the demo index naming its file or id, a setting a row in the settings table.
+ */
+function missingProblems(text: string, scenes: readonly string[], settings: readonly string[]): string[] {
+  const index = section(text, '## The demo index');
+  const table = section(text, '## Settings');
+  const problems: string[] = [];
+  for (const id of scenes) {
+    const file = `labs/box/scenes/${id.slice('box:'.length)}.ts`;
+    const rows = index.split('\n').filter((line) => line.startsWith('| '));
+    if (!rows.some((row) => row.includes(`\`${file}\``) || row.includes(`\`${id}\``))) {
+      problems.push(`the demo index has no row for the scene ${id} (${file})`);
+    }
+  }
+  for (const path of settings) {
+    if (!table.includes(`| \`${path}\` |`)) problems.push(`the settings table has no row for ${path}`);
+  }
+  return problems;
+}
 
 /** A setting path: dotted lower-case words, such as box.room.speed. */
 const SETTING = /^[a-z][A-Za-z0-9]*(?:\.[a-z][A-Za-z0-9]*)+$/;
@@ -94,6 +131,39 @@ async function readmeProblems(text: string): Promise<string[]> {
 }
 
 describe('labs/box/README.md', () => {
+  it('has a demo index row for every box scene and a settings row for every box setting', () => {
+    const scenes = registry.list('scene').flatMap(({ id }) => (id.startsWith('box:') ? [id] : []));
+    const settings = registry.list('setting').flatMap(({ id }) => (id.startsWith('box.') ? [id] : []));
+    expect(scenes.length).toBeGreaterThanOrEqual(9);
+    expect(settings.length).toBeGreaterThanOrEqual(12);
+    const text = readFileSync(join(ROOT, 'labs/box/README.md'), 'utf8');
+    expect(missingProblems(text, scenes, settings)).toEqual([]);
+  });
+
+  it('fails a fixture README that leaves a scene or a setting out', () => {
+    const fixture = [
+      '## The demo index',
+      '',
+      '| Scene | What it proves | The command that shows it |',
+      '|---|---|---|',
+      '| `labs/box/scenes/room.ts` | Box 1. | `node x sim labs/box/scenes/room` |',
+      '',
+      '## Settings',
+      '',
+      '| Setting | What it tunes |',
+      '|---|---|',
+      '| `box.room.speed` | How fast. |',
+      '',
+      '## The page',
+    ].join('\n');
+    const scenes = ['box:room', 'box:hall', 'box:fight-1000'];
+    expect(missingProblems(fixture, scenes, ['box.room.speed', 'box.room.movers'])).toEqual([
+      'the demo index has no row for the scene box:hall (labs/box/scenes/hall.ts)',
+      'the demo index has no row for the scene box:fight-1000 (labs/box/scenes/fight-1000.ts)',
+      'the settings table has no row for box.room.movers',
+    ]);
+  });
+
   it('names only settings, files, commands, flags, scenes, cameras and members that exist', async () => {
     expect(await readmeProblems(readFileSync(join(ROOT, 'labs/box/README.md'), 'utf8'))).toEqual([]);
   });

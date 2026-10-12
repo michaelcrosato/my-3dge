@@ -27,7 +27,10 @@ import { registry as sharedRegistry, type Registry } from '../../core/registry';
 import type { CompiledLevel, Point3 } from '../level/types';
 import { getProp, propCentre, propKind, type Prop } from './prop';
 
-/** A prop placed: which, its base (m) and its turn about +Y (rad). */
+/**
+ * A prop placed: `{ prop: 'prop:<id>', at: [x, y, z], yaw }`, its base at `at` (m) and its turn `yaw` about +Y
+ * (rad), as `spawnProp` takes it and `levelProps` gives it.
+ */
 export interface PropPlacement {
   /** The prop, by id (`prop:crate`). */
   prop: string;

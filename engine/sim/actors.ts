@@ -10,8 +10,9 @@
  * the intents its AI writes into `actor.intents`, its presses taken from the edges of `b`. Events: `jump` `{ id }`,
  * `land` `{ id, speed }`, `dash` `{ id }`. Gravity: `physics.characterGravity` unless the settings name one; the weight
  * on dynamic floors uses `physics.gravity`. Entities with the component `oneWay` make their body a one-way platform.
- * WP 3.7: `anim` adds the component `animator`, stepped by the system `actors.anim` after `actors` and, with
- * `preciseHits`, posed by `actors.pose` after `actors.readback`. Event: `footstep` `{ id, side, speed }`.
+ * WP 3.7: `anim` adds the component `animator`, stepped by `actors.anim` after `actors` (its `reactions` first, WP
+ * 7.8) and, with `preciseHits`, posed by `actors.pose` after `actors.readback`. Event: `footstep` `{ id, side, speed }`.
+ * WP 8.9: `body` adds the component `puppet` (the body drawn) and `clips` the clip layer (engine/sim/actorClips.ts).
  *
  * `measureFeel(character)` drives a character over a flat course in a world of its own through the feel meter
  * (engine/physics/feel.ts) and adds the reach (the highest ledge it jumps onto, WP 4.3's climb limit) and the dash's
@@ -20,7 +21,6 @@
  *
  * Invariants: systems are added once per world, on the first (animated) spawn; all an actor remembers is in its
  * components (the sim's animators are loaded from them). Despawning leaves the body; `removeActor` removes both.
- *
  * Carried from shardfall@fa2dab6 (`pavilion-lite/src/character.rs:179-399`: the order of a step, the events).
  * @example
  * import { createCharacter } from '../physics/character';
@@ -62,6 +62,8 @@ import {
 import { createFeelMeter, updateFeelMeter, type FeelReport } from '../physics/feel';
 import { createPhysics, physicsOf } from '../physics/world';
 import type { Vec3Like } from '../physics/queries';
+import { clipsFor, defineClipKinds, type ClipsSpec } from './actorClips';
+import { defineReactionKinds, stepReactions, type ReactionComponents } from './reactions';
 import { defineComponent } from './state';
 import type { World } from './world';
 
@@ -95,11 +97,25 @@ export interface AnimatorComponent extends AnimatorData {
   states: Partial<AnimatorInput>;
 }
 
-/** The components this module reads: `actor`, `animator`, and `oneWay` for one-way platforms. */
-export type ActorComponents = { actor: ActorComponent; animator: AnimatorComponent; oneWay: { body: number } };
+/** The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid. */
+export interface PuppetComponent {
+  body: string;
+}
 
-/** Declares the components `actor`, `animator` and `oneWay` and the setting `physics.characterGravity` on `registry`. */
+/** The components this module reads: `actor`, `animator`, `puppet`, and `oneWay` for one-way platforms. */
+export type ActorComponents = {
+  actor: ActorComponent;
+  animator: AnimatorComponent;
+  puppet: PuppetComponent;
+  oneWay: { body: number };
+};
+
+/**
+ * Declares the components `actor`, `animator`, `puppet`, `clips` (engine/sim/actorClips.ts), `oneWay`, `reactions` and
+ * `secondary` (engine/sim/reactions.ts) and the setting `physics.characterGravity` on `registry`.
+ */
 export function defineActorKinds(registry: Registry = sharedRegistry): void {
+  defineReactionKinds(registry);
   if (!registry.kinds().includes('setting') || !registry.has('setting', 'physics.characterGravity')) {
     defineSettings(CHARACTER_SETTINGS, registry);
   }
@@ -107,6 +123,15 @@ export function defineActorKinds(registry: Registry = sharedRegistry): void {
     const states = { type: 'object', default: {}, description: 'The body states its game code holds on.' } as const;
     const description = 'A character animator (engine/anim/character.ts): what it keeps, and what its body is told.';
     defineComponent('animator', { description, fields: { ...ANIMATOR_FIELDS, states } }, registry);
+  }
+  defineClipKinds(registry);
+  if (!registry.has('component', 'puppet')) {
+    const body = {
+      type: 'string',
+      default: 'body:humanoid',
+      description: 'Its body’s id (the body grammar’s).',
+    } as const;
+    defineComponent('puppet', { description: 'The body an actor is drawn as, when not the humanoid.', fields: { body } }, registry); // prettier-ignore
   }
   if (registry.has('component', 'actor')) return;
   defineComponent(
@@ -140,6 +165,15 @@ export interface ActorSpec {
   yaw?: number;
   /** Its character animator's make (engine/anim/character.ts); none when absent. */
   anim?: Pick<AnimatorOptions, 'build' | 'weapon' | 'preciseHits'>;
+  /** The body it is drawn as (`body:mannequin`), with `anim`; the neutral humanoid when absent. */
+  body?: string;
+  /** With `anim`, the clip layer in its animator, playing from these sets (engine/sim/actorClips.ts); none when absent. */
+  clips?: ClipsSpec;
+  /**
+   * Further components it spawns with, by name (its `reactions`, its `secondary`: engine/sim/reactions.ts), so they
+   * are there from its first step, and a page's first warm-up builds what they draw.
+   */
+  components?: Readonly<Record<string, object>>;
 }
 
 /** Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`. Returns the id. */
@@ -154,13 +188,16 @@ export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): 
     w.systems.add('actors.readback', readActors, { phase: 'readback' });
   }
   const actor = { body, player: spec.player ?? true, character: spec.character, x, y, z, ...state };
-  if (!spec.anim) return w.spawn({ actor });
+  if (!spec.anim) return w.spawn({ ...spec.components, actor });
   if (!w.systems.has('actors.anim')) {
     w.systems.add('actors.anim', stepAnimators, { phase: 'anim' });
     w.systems.add('actors.pose', poseAnimators, { phase: 'readback' });
   }
   const { build = 'build:chibi', weapon = 'none', preciseHits = false } = spec.anim;
-  return w.spawn({ actor, animator: { build: typeof build === 'string' ? build : build.id, weapon, preciseHits } });
+  const animator = { build: typeof build === 'string' ? build : build.id, weapon, preciseHits };
+  const puppet = spec.body !== undefined ? { body: spec.body } : undefined;
+  const clips = spec.clips && (clipsFor(w, spec.clips, animator.build) as unknown as Record<string, unknown>);
+  return w.spawn({ ...spec.components, actor, animator, puppet, clips });
 }
 
 /** Removes an actor and its body. */
@@ -218,21 +255,24 @@ function animated(w: World) {
   const pool = pools.get(w) ?? new AnimatorPool();
   pools.set(w, pool);
   pool.prune((id) => w.has(id));
-  return [w.query('actor', 'animator') as unknown as (ActorComponents & { id: number })[], pool] as const;
+  const actors = w.query('actor', 'animator') as unknown as (ActorComponents & Partial<ReactionComponents>)[];
+  return [actors as (ActorComponents & Partial<ReactionComponents> & { id: number })[], pool] as const;
 }
 
 /**
  * The system `actors.anim`: each animator's step in id order, told its `states` and the controller's (`velocity`, `yaw`,
- * `air`, `dash`), its breathing phase drawn from `rng.entity(id, 'anim')` at its first step; emits its events.
+ * `air`, `dash`), its breathing phase drawn from `rng.entity(id, 'anim')` at its first step; emits its events. An
+ * actor's `reactions` step first, what their phase tells the body laid over its `states`.
  */
 function stepAnimators(w: World): void {
   const [actors, pool] = animated(w);
-  for (const { id, actor, animator: data } of actors) {
+  for (const { id, actor, animator: data, reactions } of actors) {
     const rng = w.rng.entity(id, 'anim');
     if (!data.started) [data.state.clock, data.started] = [rng.next() * STEP.clockSpread, true]; // as a humanoid does
     const animator = pool.get(id, data, { rng, dt: w.dt });
     velocity.set(actor.vx, actor.vy, actor.vz);
-    animator.step({ ...data.states, velocity, yaw: actor.yaw, air: !actor.grounded, dash: actor.dash > 0 }).save(data);
+    const told = reactions ? { ...data.states, ...stepReactions(reactions, w.dt) } : data.states;
+    animator.step({ ...told, velocity, yaw: actor.yaw, air: !actor.grounded, dash: actor.dash > 0 }).save(data);
     for (const { type, ...event } of animator.events) w.emit(type, { id, ...event });
   }
 }
