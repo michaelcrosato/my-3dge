@@ -5,7 +5,9 @@
  * offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: attack, then jump, dash and the bolt) for
  * every scene. It also imports every module under `labs/box/looks/`, so each of the box's looks (`look:torch-lit`…)
  * opens at `?post.look=<id>`, and registers the hall with its material swap, so the hall's floor is its bake, its
- * runes glowing on the dais (labs/box/looks/hall-floor.ts).
+ * runes glowing on the dais (labs/box/looks/hall-floor.ts). Its sound (labs/box/sounds/page.ts, `window.__boxSound`)
+ * runs each drawn frame through `onFrame`: silent until the first key, click or end of a touch, then the sim's events
+ * as sounds, the demo song and the torches.
  * Everything else a page does (routes, the renderer, the warm-up, the frame loop, `window.__engine`, the error overlay,
  * the touch layer) is the engine's, so this file stays a list of the box's content.
  *
@@ -28,6 +30,7 @@ import hallLevel from './levels/hall.txt?raw';
 import roomLevel from './levels/room.txt?raw';
 import { HALL_MATERIALS } from './looks/hall-floor';
 import { room } from './scenes/room';
+import { createBoxSound } from './sounds/page';
 import { BOX_TOUCH } from './touch';
 
 /** The box's levels, by id, as text: the engine registers them; the hall with its floor bake (HALL_MATERIALS). */
@@ -57,4 +60,5 @@ const replays = Object.fromEntries(
 );
 
 const canvas = document.querySelector<HTMLCanvasElement>('#view')!;
-await createEngine({ canvas, scenes, levels, replays, touchLayout: BOX_TOUCH });
+const sound = createBoxSound();
+await createEngine({ canvas, scenes, levels, replays, touchLayout: BOX_TOUCH, onFrame: sound.frame });

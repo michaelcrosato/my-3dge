@@ -19,9 +19,9 @@
  * engine/dev/stats.ts). The rendering members (engine/app/viewMembers.ts) get their drawing here: `render(n)` draws
  * frames now, `shot` shoots the view (engine/gfx/shot.ts), and `replay(text)` plays a replay drawing a frame after
  * every step (the CPU-only contract's proof, §6.7: `x replay --browser page`, tests/e2e/parity.spec.ts).
- * `?replay=<name>` plays one of `options.replays` in real time instead, from step 0, then hands back to the devices;
- * without `?scene`, the page starts the replay's own scene (when it is one of the page's). The HTML/CSS overlay
- * (engine/ui/overlay.ts, `engine.ui`, WP 6.7) shows the sim's hits as damage numbers (engine/app/damageNumbers.ts).
+ * `?replay=<name>` plays one of `options.replays` in real time from step 0 (without `?scene`, in its own scene if the
+ * page has it), then hands back to the devices. The overlay (engine/ui/overlay.ts, `engine.ui`, WP 6.7) shows the
+ * sim's hits as damage numbers (engine/app/damageNumbers.ts); `onFrame` runs a page's own presentation (`EngineFrame`).
  *
  * Touch (WP 3.12, ADR-0021: built, not tested): the app wires the touch device (engine/input/devices/touch.ts), the
  * page's chrome, the touch layer from `touchLayout` and swiping (engine/ui/), the quality budget's pixel caps
@@ -66,6 +66,10 @@ import { attachSwipes } from '../ui/swipe';
 import { createTouchLayer, getTouchLayout, type TouchLayer, type TouchLayout } from '../ui/touch';
 import type { Inspector } from '../dev/inspector';
 import { createOverlay as createUi, type Overlay } from '../ui/overlay';
+import type { CameraPose } from '../gfx/cameras/pose';
+import { queryViewOf, type QueryView } from '../sim/queryView';
+import type { Scene } from '../sim/scene';
+import type { World, WorldEvents } from '../sim/world';
 import { createDamageNumbers, type DamageNumbers } from './damageNumbers';
 import { createPageLook, type PageLook } from './look';
 import { createAppHost, type AppRun, type Drawing } from './headless';
@@ -118,6 +122,28 @@ export interface EngineOptions {
   touchLayout?: string;
   /** Opens the page's menu, called after the touch menu button has paused the game. */
   onMenu?: () => void;
+  /** The page's own presentation (its sound): called once per drawn frame, after the draw, with the run to read. */
+  onFrame?: (frame: EngineFrame) => void;
+}
+
+/** The read side of the run's world a page gets each frame: its step, rate, entities and the trace of its events. */
+export type FrameWorld = Pick<World, 'tick' | 'hz' | 'get' | 'query'> & { readonly events: Pick<WorldEvents, 'trace'> };
+
+/**
+ * What `onFrame` gets once per drawn frame: the run to read, never to change (presentation only: nothing reaches the
+ * hash), and the camera the frame was drawn from.
+ */
+export interface EngineFrame {
+  /** The run's world: the same object until the run starts again (a new seed, a replay), so a reader compares it. */
+  readonly world: FrameWorld;
+  /** The running scene: its id, its level and whether it has physics. */
+  readonly scene: Scene;
+  /** The camera's pose this frame: where a listener goes. */
+  readonly camera: CameraPose;
+  /** The sim's physics queries, read-only, in a physics scene; null without physics. */
+  readonly queries: QueryView | null;
+  /** Real seconds since the last frame. */
+  readonly dt: number;
 }
 
 /** A started engine. */
@@ -277,6 +303,11 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
       shake.restore(view.camera);
       numbers?.frame(run!.session.world);
       ui?.update(view.camera, dt);
+      if (options.onFrame) {
+        const { world, scene } = run!.session;
+        const queries = scene.physics ? queryViewOf(world) : null;
+        options.onFrame({ world, scene, camera: viewNow().camera.pose(), queries, dt });
+      }
       return report;
     });
   const settle = async (alpha: number, dt: number): Promise<FrameReport> => {
