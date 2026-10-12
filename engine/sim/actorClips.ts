@@ -47,7 +47,7 @@ export function defineClipKinds(registry: Registry = sharedRegistry): void {
 }
 defineClipKinds();
 
-/** What `addClips` takes. */
+/** What `spawnActor`'s `clips` and `addClips` take. */
 export interface ClipsSpec {
   /** The clip sets it plays from, by id (`clipset:quaternius`): a bare clip name is the first set's. */
   sets: readonly string[];
@@ -111,7 +111,7 @@ export function addClips<C extends object>(world: World<C>, id: number, spec: Cl
   const entity = w.get(id) as Partial<ClipActor> | undefined;
   if (!entity?.actor || !entity.animator)
     throw codeError('SIM_BAD_ARGUMENT', { where: 'addClips(w, id, spec)', value: String(id), expected: 'a live animated actor’s id' }); // prettier-ignore
-  return w.add(id, 'clips' as never, clipsFor(w, spec, entity.animator.build) as never) as unknown as ClipsData;
+  return w.add(id, 'clips', clipsFor(w, spec, entity.animator.build) as never) as unknown as ClipsData;
 }
 
 /** Changes the clip layer of `id` with `change` and writes its state back; returns the state. */
@@ -145,8 +145,8 @@ export function locomoteClips<C extends object>(
 }
 
 /**
- * Puts the clip on top of actor `id` at `t` clip seconds (within its length: a loop's wrap, a one-shot's end), its
- * fade done: a frame step is `seekClip(w, id, frame / BAKE_FPS)`. Nothing playing, it changes nothing.
+ * Puts the clip on top of actor `id` at `t` clip seconds (kept within 0 and its length), its fade done: a frame step
+ * is `seekClip(w, id, frame / BAKE_FPS)`. Nothing playing, it changes nothing.
  */
 export function seekClip<C extends object>(world: World<C>, id: number, t: number): ClipLayerState {
   return change(world as unknown as World, id, 'seekClip(w, id, t)', (layer) => {
@@ -168,11 +168,7 @@ export function clipLayerOf<C extends object>(world: World<C>, id: number): Clip
 /** The system `actors.clips`: each layer's tick at its actor's ground speed, in id order; emits its events. */
 function stepClips(w: World): void {
   const pool = poolOf(w);
-  for (const { id, actor, animator, clips } of w.query(
-    'actor',
-    'animator',
-    'clips' as never,
-  ) as unknown as ClipActor[]) {
+  for (const { id, actor, animator, clips } of w.query('actor', 'animator', 'clips') as unknown as ClipActor[]) {
     const layer = pool.get(id, clips, animator.build, w.dt);
     const events = layer.step({ groundSpeed: Math.hypot(actor.vx, actor.vz) });
     clips.state = layer.save();
