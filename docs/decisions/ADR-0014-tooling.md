@@ -239,9 +239,11 @@ Core proposal accepted at integration. Calls made where PLAN.md §9 WP 5.5 and �
 
 - **Measured:** gate G6's `x ci --local` failed CI_BUDGET: T2 took 14 min 16 s at load 13–15, against 6 min (it
   fails at 9). Its cause, a page's warm-up (566 pipelines in the hall), is fixed (ADR-0008 amendment 9): a box page
-  is ready in 2–4 s again and draws a frame at its pre-WP-7.4 cost. The same 146 tests then took 10 min 46 s, 11 min
-  7 s and 12 min 1 s on 4 workers at load 35–80 from other lanes; the gate's tree without the fix took 16 min 57 s at
-  load 23–75 in the same hour (summed test time: 3,030 and 3,470 s without the fix, 2,300–2,420 s with it).
+  is ready in 2–4 s again and draws a frame at its pre-WP-7.4 cost. The same 146 tests then took 10 min 16 s (`x ci
+  --local` green at 73678bf), 10 min 46 s, 11 min 7 s and 12 min 1 s on 4 workers at load 13–80 from other lanes, and
+  at load 85–100 one run lost Box 4's parity replay test to its 240 s timeout (it takes 186–188 s at load 13–60); the
+  gate's tree without the fix took 16 min 57 s at load 23–75 in the same hour (summed test time: 3,030 and 3,470 s
+  without the fix, 2,300–2,420 s with it).
 - **What remains is content:** each box stage adds its CPU-only contract to parity.spec.ts (I-07, five tests a
   stage: its replays drawn a frame after every step, swept through every camera and resolution mode, with the GPU
   features off, live play, the ID pass), on SwiftShader, where a frame costs 14 ms in the room and 24 ms in the hall
