@@ -298,6 +298,16 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
   const size = new Vector2();
   let frames = 0;
   let plain = false;
+  /**
+   * Draws the scene straight, as a plain frame does: in the set's own style, the only one a plain frame draws, so the
+   * warm-up's frame builds those pipelines whatever look it draws (a page may start in a styled look, WP 7.8).
+   */
+  const straight = () => {
+    const drawn = styles && own && styles.style !== own.style ? styles.style : null;
+    if (drawn) styles!.setStyle(own!.style, scenePass.scene);
+    renderer.render(scenePass.scene, scenePass.camera);
+    if (drawn) styles!.setStyle(drawn, scenePass.scene);
+  };
   /** Draws one frame: straight while the chain is plain, else through it; the warm-up's frame both ways. */
   const draw = () => {
     const chain = sync();
@@ -305,7 +315,7 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
     plain = isPlain(chain) && uniforms.frame.value.x === 0 && (!styles || !own || styles.style === own.style);
     if (plain || warming) {
       clearMrt(renderer);
-      renderer.render(scenePass.scene, scenePass.camera);
+      straight();
       if (!warming) return;
     }
     if (!built || built.tone !== renderer.toneMapping || built.space !== renderer.outputColorSpace) build();

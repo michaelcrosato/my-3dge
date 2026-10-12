@@ -10,7 +10,8 @@
  * `scene.dump` (`APP_NO_VIEW`), and one whose level is not registered refuses to start (`APP_NO_LEVEL`); `replay`
  * plays the box's replays to their goldens headless. WP 3.10: in the room with a hero, the hero is a puppet, the
  * cameras follow him, the chase camera stays inside the room, first person hides his body but the hands, and the
- * cutaway cuts the wall before a side view.
+ * cutaway cuts the wall before a side view. WP 7.8: a level entry's material swaps reach the stage's level meshes, and
+ * the stage's sky, once shown, follows the frames: its pool's lights picked near the focus, flickering as they go.
  * @see engine/app/view.ts
  */
 import { readFileSync } from 'node:fs';
@@ -212,6 +213,26 @@ describe('createHeadless({ view: true })', () => {
     await expect(createHeadless({ scene: 'lost', registry: lonely, view: true })).rejects.toThrow(
       /APP_NO_LEVEL.*defineLevel\('level:nowhere'/,
     );
+  });
+
+  it("draws the level with its entry's material swaps, and the stage's sky follows the frames", async () => {
+    const HALL = 'labs/box/levels/hall.txt';
+    if (!registry.has('level', 'level:viewHall')) {
+      const swaps = { 'material:flagstone': 'material:planks' };
+      defineLevel('level:viewHall', { text: readFileSync(HALL, 'utf8'), file: HALL, materials: swaps });
+      defineScene('view:hall', { level: 'level:viewHall', setup: () => {} });
+    }
+    const engine = await createHeadless({ scene: 'view:hall', view: true });
+    expect((engine.scene as Dumps).dump({ filter: 'level:viewHall/floor' })).toMatch(/floor Mesh .*material:planks /);
+    expect((engine.scene as Dumps).dump({ filter: 'stairs' })).toMatch(/stairs.* material:stone /); // not swapped
+    const view = (headlessHost(engine) as AppHost).view!;
+    view.stage.sky.show('sky:hall');
+    const slots = () => view.stage.sky.report().sky!.slots;
+    view.frame({ alpha: 1, dt: 0.5, aspect: 16 / 9 });
+    const first = slots();
+    expect(first.every((slot) => slot.source >= 0 && slot.intensity > 0)).toBe(true); // 12 torches near the middle
+    view.frame({ alpha: 1, dt: 0.25, aspect: 16 / 9 });
+    expect(slots().map((slot) => slot.intensity)).not.toEqual(first.map((slot) => slot.intensity));
   });
 
   it('draws the hero as a puppet and follows him: chase inside the room, first person without his body', async () => {
