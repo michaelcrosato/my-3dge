@@ -176,6 +176,7 @@ gadgets.def('testGadget:small', {});
     const root = repository({
       'engine/long.ts': `import { defineKind } from ${REGISTRY};
 defineKind('testLong', { description: 'Long.', fields: { text: { type: 'string', default: '', description: ${JSON.stringify(long)} } } });
+defineKind('testShort', { description: 'Short.', fields: { size: { type: 'number', default: 1, description: 'Its size.' } } });
 `,
     });
     const { code, lines } = await run(root, 'testLong');
@@ -184,8 +185,8 @@ defineKind('testLong', { description: 'Long.', fields: { text: { type: 'string',
     expect(lines.at(-2)).toBe('(a line above is cut short: the whole text is in out/describe/testLong/describe.json)');
     const data = JSON.parse(readFileSync(join(root, 'out/describe/testLong/describe.json'), 'utf8'));
     expect(data.fields[0].description).toBe(long);
-    const short = await run(root);
-    expect(short.lines.some((line) => line.includes('cut short'))).toBe(false);
+    const short = await run(root, 'testShort'); // nothing cut: no notice
+    expect([short.code, short.lines.some((line) => line.includes('cut short'))]).toEqual([0, false]);
   });
 
   it('describes a setting from the schema it was declared with', async () => {
