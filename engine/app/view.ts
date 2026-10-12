@@ -9,7 +9,8 @@
  * steps with no frame, `dump` draws them first), then moves the stage's effects on by the frame (engine/gfx/stageFx.ts:
  * the world's new events burst, its bolts, telegraphs and trails drawn, unless the view setting `gfx.effects` is off;
  * the page shakes its camera by them while it draws), returning what to draw (`{ scene, camera, alpha }`,
- * engine/gfx/renderer.ts's `FrameView`).
+ * engine/gfx/renderer.ts's `FrameView`). A frame that finds `gfx.effects` switched since the last read reads the
+ * entities again first, so a flying bolt is the effects' or its stand-in from that frame, with or without a step.
  *
  * The camera follows the player (WP 3.10): the first player actor's feet as the frame draws them, else the level's
  * middle. The chase camera also gets the sim's read-only `QueryView` (engine/sim/queryView.ts) in a physics scene,
@@ -145,11 +146,23 @@ export function createRunView(options: RunViewOptions): RunView {
   const level = scene.level === undefined ? null : getLevel(scene.level, registry);
   const fxRng = (...keys: readonly (string | number)[]) => options.run().world.fxRng(...keys);
   const stage = createStage({ level, materials: options.materials, registry, log: options.log, fxRng });
-  /** Turns the effects on or off by the view setting `gfx.effects` (a registry without it: on), before they read. */
-  const syncEffects = () => {
+  /**
+   * Turns the effects on or off by the view setting `gfx.effects` (a registry without it: on), before they read;
+   * returns whether that changed them.
+   */
+  const syncEffects = (): boolean => {
     const run = options.run();
     const declared = registry.kinds().includes('setting') && registry.has('setting', 'gfx.effects');
-    stage.fx.effects.enabled = !declared || run.settings.get<boolean>('gfx.effects') !== false;
+    const enabled = !declared || run.settings.get<boolean>('gfx.effects') !== false;
+    const changed = stage.fx.effects.enabled !== enabled;
+    stage.fx.effects.enabled = enabled;
+    return changed;
+  };
+  /** Reads the entities afresh from the run's last step: every stand-in, puppet and bolt snaps to it. */
+  const reread = () => {
+    const run = options.run();
+    stage.capture([]);
+    stage.capture(placed(run, stage.kinds), run.world.dt);
   };
   /** The world whose trace the effects read: only a new one is read from its first event. */
   let fxWorld: object | null = null;
@@ -220,17 +233,18 @@ export function createRunView(options: RunViewOptions): RunView {
         fxWorld = run.world;
       }
       syncEffects();
-      stage.capture([]);
-      stage.capture(placed(run, stage.kinds), run.world.dt);
+      reread();
       stage.draw((alpha = 1));
       crowdStale = true;
     },
     frame(frame) {
       aspect = frame.aspect;
+      // Turned on or off since the last read (a paused page, a hit-stop, a shot): read the world again first, so a
+      // flying bolt changes hands at once between the effects and its stand-in, and no frame draws it by neither.
+      if (syncEffects()) reread();
       stage.draw((alpha = frame.alpha));
       drawn = pair.place(move(frame.input, frame.dt), aspect);
       drawCrowd();
-      syncEffects();
       stage.fx.frame(frame.dt, drawn, options.run().world.events.trace());
       return { scene: stage.scene, camera: drawn, alpha: frame.alpha };
     },

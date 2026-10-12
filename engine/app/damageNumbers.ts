@@ -1,6 +1,6 @@
 /**
  * @file Damage numbers from the sim (PLAN.md §6.7: game UI in HTML/CSS; WP 6.5's numbers shown in the box, WP 6.7
- * core proposal, ADR-0008 amendment 7): `createDamageNumbers(ui)` reads a sim world's event trace once per rendered
+ * core proposal, ADR-0008 amendment 8): `createDamageNumbers(ui)` reads a sim world's event trace once per rendered
  * frame, without listening, and shows each new `damage` event (engine/sim/damage.ts) that took hit points as a damage
  * number `DAMAGE_RISE` m above where it struck (engine/ui/labels.ts: it rises, stacks and is pooled), so a page shows
  * the hits of any scene that lands them through `damage`. The page (engine/app/engine.ts) calls `frame` after drawing,

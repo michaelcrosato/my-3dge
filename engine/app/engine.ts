@@ -20,9 +20,8 @@
  * frames now, `shot` shoots the view (engine/gfx/shot.ts), and `replay(text)` plays a replay drawing a frame after
  * every step (the CPU-only contract's proof, §6.7: `x replay --browser page`, tests/e2e/parity.spec.ts).
  * `?replay=<name>` plays one of `options.replays` in real time instead, from step 0, then hands back to the devices;
- * without `?scene`, the page starts the replay's own scene (when it is one of the page's), since a page draws one
- * scene and plays only its replays. The game's UI (WP 6.7): the HTML/CSS overlay over the canvas (engine/ui/overlay.ts,
- * `engine.ui`) shows the sim's hits as damage numbers after each frame (engine/app/damageNumbers.ts).
+ * without `?scene`, the page starts the replay's own scene (when it is one of the page's). The HTML/CSS overlay
+ * (engine/ui/overlay.ts, `engine.ui`, WP 6.7) shows the sim's hits as damage numbers (engine/app/damageNumbers.ts).
  *
  * Touch (WP 3.12, ADR-0021: built, not tested): the app wires the touch device (engine/input/devices/touch.ts), the
  * page's chrome, the touch layer from `touchLayout` and swiping (engine/ui/), the quality budget's pixel caps

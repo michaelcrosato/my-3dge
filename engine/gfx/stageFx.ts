@@ -1,6 +1,6 @@
 /**
  * @file The stage's effects (PLAN.md §6.4's view: particles, shake; WP 6.4's effects shown in the box, WP 6.7 core
- * proposal, ADR-0008 amendment 7): what a running scene's sim shows engine/gfx/fx's effects, read from plain data, so
+ * proposal, ADR-0008 amendment 8): what a running scene's sim shows engine/gfx/fx's effects, read from plain data, so
  * a scene draws particles, telegraphs, trails and bolts with no view code of its own. The stage
  * (engine/gfx/stage.ts) makes one (`stage.fx`), under its scene; the run's view (engine/app/view.ts) hands it each
  * rendered frame.
@@ -19,7 +19,9 @@
  *
  * The view setting `gfx.effects` (true) turns them on and off; off, they draw nothing and draw no random number, and
  * claim no bolt, so bolts draw as their stand-ins, which the ID pass names (§6.7: a view setting never hides a
- * gameplay entity); the sim hash is the same either way (doctrine: WebGPU only). The view sets it before each read.
+ * gameplay entity); the sim hash is the same either way (doctrine: WebGPU only). The view sets it before each read,
+ * and a frame that finds it switched reads the entities again first (engine/app/view.ts), so a flying bolt changes
+ * hands in that frame, stepped or not (a paused page, a hit-stop, a shot).
  * Every pool is the effects' own, made at full size and registered for the warm-up (`register`), so the fight draws
  * with 0 pipelines built after it.
  *
