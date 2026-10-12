@@ -1,0 +1,13 @@
+{
+  "scene": "box:crowd-5000",
+  "ladder": {
+    "setting": "box.crowd.count",
+    "steps": 300,
+    "rungs": {
+      "100": { "stepMs": 4, "hashMs": 14, "captureMs": 3 },
+      "1000": { "stepMs": 36, "hashMs": 130, "captureMs": 20 },
+      "5000": { "stepMs": 160, "hashMs": 650, "captureMs": 125 }
+    }
+  },
+  "reason": "WP 7.8, the benchmark report: measured with node x perf labs/box --scene crowd-5000 --ladder --agents box.crowd.count on the development platform (Node 24, 20 cores at a load average of 15 to 19 from up to 6 lanes, Rapier 0.21 SIMD): the hall with its hero and a mixed crowd entering 25 a step and chasing him (crowd-5000 is crowd-1000's preset for 5,000, so its rungs measure the same scene as box-crowd-1000.json's), 300 steps from the start with no intents, medians of 5 runs. Sim step: 0.94 ms at 100, 9.95 ms at 1,000 and 50.5 ms at 5,000; hash: 3.4, 54.6 and 294 ms; capture: 0.36, 4.8 and 42 ms. The budgets are box-crowd-1000.json's (measured at a load near 38, about 2x its medians), which these medians are well within; a rung's budget holds for this scene, its settings and 300 steps."
+}

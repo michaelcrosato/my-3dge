@@ -1,55 +1,44 @@
 /**
- * @file The stage (PLAN.md §6.4's view, §9.0, WP 2.7): a running scene's presentation graph, built from plain data
- * with no GPU, so a page draws it and a headless engine dumps it (`createHeadless({ view: true })`). `createStage`
- * makes a three.js `Scene` with a sky colour, the stage's ground (a textured plane under the level reaching well past
- * it, `stage/ground`), a hemisphere light and one shadow-casting sun fitted to the level, the level's meshes
- * (engine/gfx/level/meshes.ts) and one stand-in per placeable entity.
+ * @file The stage (PLAN.md §6.4's view, §9.0, WP 2.7): a running scene's presentation graph, built from plain data with
+ * no GPU, so a page draws it and a headless engine dumps it (`createHeadless({ view: true })`). `createStage` makes a
+ * three.js `Scene` with a sky colour, the stage's ground (a textured plane under the level reaching well past it,
+ * `stage/ground`), its lights (`sky`, engine/gfx/stageSky.ts: a hemisphere light and a sun fitted to the level, or the
+ * sky a look names), the level's meshes (engine/gfx/level/meshes.ts) and one stand-in per placeable entity.
  *
- * Level meshes: each block descriptor is split into its runs (its merged rectangles), so the ID pass names every
- * wall run on its own (`level:room/wall@0,0-15,0`: tiles from column 0, row 0 to column 15, row 0); a run costs two
- * draw groups, in colour and in each shadow map. The floor stays one surface.
+ * Level meshes: each block descriptor is split into its runs (its merged rectangles), so the ID pass names every wall
+ * run on its own (`level:room/wall@0,0-15,0`: tiles from column 0, row 0 to column 15, row 0); a run costs two draw
+ * groups, in colour and in each shadow map. The floor stays one surface. All take the level's swaps (WP 7.8).
  *
- * Actors with an animator draw themselves as puppets (engine/gfx/puppets/actors.ts, WP 3.10: `actors`), props
- * standing in the scene (`sceneProp`, engine/sim/props.ts) as their props (engine/gfx/stageProps.ts, WP 4.6: `props`),
- * crowd bodies (`crowdBody`) through a crowd (engine/gfx/stageCrowd.ts, WP 5.7: `crowd`), which the view draws once
- * the frame's camera is placed (`crowd.draw(alpha, camera)`), and projectiles as bolts (engine/gfx/stageFx.ts, WP 6.7:
+ * Actors with an animator draw themselves as puppets (engine/gfx/puppets/actors.ts, WP 3.10: `actors`), props standing
+ * in the scene (`sceneProp`, engine/sim/props.ts) as their props (engine/gfx/stageProps.ts, WP 4.6: `props`), crowd
+ * bodies (`crowdBody`) through a crowd (engine/gfx/stageCrowd.ts, WP 5.7: `crowd`), which the view draws once the
+ * frame's camera is placed (`crowd.draw(alpha, camera)`), and projectiles as bolts (engine/gfx/stageFx.ts, WP 6.7:
  * `fx`, with telegraphs, trails and bursts, handed each frame by the view). Stand-ins: any other entity is drawn as a
  * box when one of its components declares `x` and `z` as numbers in metres (`placeableKinds`: asked of the component
  * entries, never of a name). The first such component in registry order places it: `x`, `y` (the box's bottom, 0 by
  * default) and `z`, `yaw` (rad), `size` (the box's side, m; 0.5 by default) and `material` (an id from the material
  * library; `material:default` otherwise). A stand-in is named `<component>#<id>` and carries `userData.entity`, so the
- * ID pass and the inspector say which entity it is. `capture(entities, dt)` after each sim step (of `dt` seconds)
- * keeps the last two places; `draw(alpha)` puts every stand-in, puppet and prop `alpha` of the way from the one before
- * to the last (the frame's interpolation, §6.4; the shorter way round for yaw).
+ * ID pass and the inspector say which entity it is. `capture(entities, dt)` after each sim step (of `dt` seconds) keeps
+ * the last two places; `draw(alpha)` puts every stand-in, puppet and prop `alpha` of the way from the one before to the
+ * last (the frame's interpolation, §6.4; the shorter way round for yaw).
  *
  * The level's cutaway (engine/gfx/cutaway.ts, `cutaway`) is made when a player actor first stands on it, and the view
  * runs it while it follows him (engine/app/view.ts); a stage with no player never has one.
  *
- * Warm-up: `register(warmup)` registers the ground, the level meshes, the cutaway's twins, the puppets, the props'
- * and the crowd's batches and the stand-ins, and adds the stand-ins' looks (side and material), the puppets' builds,
- * the crowd's looks and whether there are a cutaway and props to the shader key, so a new look makes the next frame
- * warm up first instead of stalling.
+ * Warm-up: `register(warmup)` registers the ground, the level meshes, the cutaway's twins, the puppets, the props' and
+ * the crowd's batches and the stand-ins, and adds the stand-ins' looks (side and material), the puppets' builds, the
+ * crowd's looks and whether there are a cutaway and props to the shader key, so a new look makes the next frame warm up
+ * first instead of stalling.
  *
- * Invariants: presentation only: it reads sim data and never writes it (doctrine: WebGPU only); every object it
- * makes is under `scene`; equal inputs make equal graphs; materials belong to the library and are never disposed here.
+ * Invariants: presentation only: it reads sim data and never writes it (doctrine: WebGPU only); every object it makes
+ * is under `scene`; equal inputs make equal graphs; materials belong to the library and are never disposed here.
  * @example
  * // const stage = createStage({ level: getLevel('level:room'), materials: createMaterialLibrary() });
  * // stage.capture(world.query('mover'));
  * // stage.draw(0.5); // halfway between the last two steps; then renderer.render(stage.scene, camera)
  * @see engine/gfx/stage.test.ts
  */
-import {
-  BufferGeometry,
-  Color,
-  DirectionalLight,
-  Group,
-  HemisphereLight,
-  Mesh,
-  PlaneGeometry,
-  Scene,
-  type Material,
-  type Object3D,
-} from 'three/webgpu';
+import { BufferGeometry, Color, Group, Mesh, PlaneGeometry, Scene, type Material, type Object3D } from 'three/webgpu';
 import type { Log } from '../core/log';
 import type { Registry } from '../core/registry';
 import type { Rng } from '../core/rng';
@@ -63,6 +52,7 @@ import { createActorPuppets, type ActorPuppets } from './puppets/actors';
 import { createStageCrowd, type StageCrowd } from './stageCrowd';
 import { createStageFx, type StageFx } from './stageFx';
 import { createStageProps, type StageProps } from './stageProps';
+import { createStageSky, type StageSky } from './stageSky';
 import type { Warmup } from './warmup';
 
 /** What a stage is made of: the level (none for an empty stage), where materials come from, and its registry. */
@@ -77,6 +67,8 @@ export interface StageOptions {
   log?: Log;
   /** The effects' visual streams: the sim world's (`(...keys) => world.fxRng(...keys)`). */
   fxRng?: (...keys: readonly (string | number)[]) => Rng;
+  /** Material swaps for the level's meshes alone: an id its recipes name → the material drawn instead (WP 7.8). */
+  levelMaterials?: Readonly<Record<string, string>>;
 }
 
 /** Where a stand-in stands and how it looks, read from its entity's placing component. */
@@ -95,6 +87,8 @@ export interface Stage {
   readonly scene: Scene;
   /** The level's meshes, or null. */
   readonly level: LevelMeshes | null;
+  /** Its lights: its own, or the sky a look names (engine/gfx/stageSky.ts). */
+  readonly sky: StageSky;
   /** The level's cutaway, made when a player first stands on it; null until then (see the file comment). */
   readonly cutaway: Cutaway | null;
   /** The point a following camera looks at: the level's middle, on the floor. */
@@ -208,7 +202,9 @@ function lerpAngle(a: number, b: number, k: number): number {
 /** The level's meshes, each run named by its tiles: `level:room/wall@0,0-15,0`. */
 function levelMeshes(level: CompiledLevel, options: StageOptions): LevelMeshes {
   const split = splitRuns(level);
-  const meshes = createLevelMeshes(split.level, { materials: options.materials, log: options.log });
+  const swaps = options.levelMaterials ?? {};
+  const materials = { get: (id: string) => options.materials.get(Object.hasOwn(swaps, id) ? swaps[id] : id) };
+  const meshes = createLevelMeshes(split.level, { materials, log: options.log });
   split.runs.forEach((run, i) => {
     if (!run) return;
     const [c0, r0, c1, r1] = run;
@@ -234,24 +230,15 @@ export function createStage(options: StageOptions): Stage {
   const scene = new Scene();
   scene.name = options.level ? `stage:${options.level.name}` : 'stage';
   scene.background = new Color(SKY);
-  const sky = new HemisphereLight('#c8d4ff', '#4a3f30', 1.6);
-  sky.name = 'light:sky';
-  const sun = new DirectionalLight('#fff0d8', 2.6);
-  sun.name = 'light:sun';
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(1024, 1024);
-  sun.shadow.bias = -0.0005;
-  sun.target.name = 'light:sun/target';
-  scene.add(sky, sun, sun.target);
-
   const { level } = options;
+  const lights = createStageSky(scene, {
+    level,
+    registry: options.registry,
+    background: SKY,
+    rng: () => options.fxRng?.('stage', 'lights'),
+  });
   const [w, d] = level ? [level.cols * level.tile, level.rows * level.tile] : [16, 16];
   const centre = [w / 2, 0, d / 2] as const;
-  sun.position.set(centre[0] - w * 0.4, 14, centre[2] - d * 0.6);
-  sun.target.position.set(centre[0], 0, centre[2]);
-  const half = Math.hypot(w, d) / 2 + 2;
-  Object.assign(sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, near: 0.5, far: 60 });
-  sun.shadow.camera.updateProjectionMatrix();
 
   const ground = groundMesh(w, d, options.materials.get(GROUND_MATERIAL));
   scene.add(ground);
@@ -286,6 +273,7 @@ export function createStage(options: StageOptions): Stage {
   const stage: Stage = {
     scene,
     level: meshes,
+    sky: lights,
     get cutaway() {
       return cutaway;
     },
@@ -357,6 +345,7 @@ export function createStage(options: StageOptions): Stage {
         props.register(warmup),
         crowd.register(warmup),
         fx.register(warmup),
+        lights.register(warmup),
       ];
       return { dispose: () => registrations.forEach((registration) => registration.dispose()) };
     },
@@ -368,6 +357,7 @@ export function createStage(options: StageOptions): Stage {
       props.dispose();
       crowd.dispose();
       fx.dispose();
+      lights.dispose();
       ground.geometry.dispose();
       for (const geometry of geometries.values()) geometry.dispose();
       geometries.clear();

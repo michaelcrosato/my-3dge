@@ -9,8 +9,32 @@ hero climbs the hall's stairs to a gallery, walks its dais, and pushes and shove
 that hold in Node and in the page. Stage 4 (Box 4, gate G5): the hall fills with a crowd of walkers, slimes and wisps,
 100 to 5,000, that chase the hero round the pillars and up the stairs. Stage 5 (Box 5, gate G6): the hero fights the
 crowd with a sword and a bolt; it swings, pounces and shoots back, telegraphed, taking turns; blows kill, throw and
-launch bodies, burst effects and show damage numbers, in replays that hold in Node and in the page. Every claim below is checked by `tests/unit/box-readme.test.ts`: a setting, file or
-command named here that does not exist fails it.
+launch bodies, burst effects and show damage numbers, in replays that hold in Node and in the page. Stage 6 (Box 6,
+gate G7): every scene in every look, the torch-lit hall with its flickering torches and fog, toon shading with ink
+outlines, and the prototype's cel, pixel, bloom and FXAA over it, on the hall's rune floor, with no pipeline built after
+a warm-up and the goldens unchanged; and the benchmark, the fight and the crowd at 100, 1,000 and 5,000 within their
+budgets. Every claim below is checked by `tests/unit/box-readme.test.ts`: a setting, file or command named here that
+does not exist fails it.
+
+## The demo index
+
+Every scene, what it proves, and the command that shows it; each scene opens in the page at `labs/box/?scene=<name>`.
+
+| Scene | What it proves | The command that shows it |
+|---|---|---|
+| `labs/box/scenes/room.ts` | Box 1: the box renders on WebGPU and steps headless, its goldens the same in Node and in Chromium; it is inspected and set from `node x` and `window.__engine`. | `node x replay tests/replays/box-1-room.replay.json --browser page` |
+| `labs/box/scenes/room-hero.ts` | Box 2: the hero walks, dashes and jumps through the character controller, his body stepped by the animator; his goldens hold while the page renders, whatever the camera. | `node x replay tests/replays/box-2-jump.replay.json --browser page` |
+| `labs/box/scenes/hall.ts` | Box 3: a physics level, its stairs, galleries and the dais's slopes walked and climbed, the cutaway showing the hero; the floor its rune bake (Box 6). | `node x replay tests/replays/box-3-climb.replay.json --browser page` |
+| `labs/box/scenes/hall-props.ts` | Box 3: 10 to 300 props standing in Rapier, pushed and shoved, drawn as instanced batches; Box 6: its replay's goldens hold through every look. | `node x replay tests/replays/box-3-knock.replay.json --browser page` |
+| `labs/box/scenes/crowd-100.ts` | Box 4: a crowd chasing the hero by flow field up the stairs, drawn through its level of detail; its goldens hold in the page. | `node x replay tests/replays/box-4-chase.replay.json --browser page` |
+| `labs/box/scenes/crowd-1000.ts` | Box 4: the crowd's cost at 100, 1,000 and 5,000 agents, within budget. | `node x perf labs/box --scene crowd-1000 --ladder --budget` |
+| `labs/box/scenes/crowd-5000.ts` | Box 4: 5,000 bodies entering with no pipeline built; Box 6: the benchmark's crowd, within budget. | `node x perf labs/box --scene crowd-5000 --ladder --budget` |
+| `labs/box/scenes/fight.ts` | Box 5: combat, its deaths, launches, telegraphs, effects and damage numbers drawn from the sim, its goldens the same with effects on and off. | `node x replay tests/replays/box-5-fight.replay.json --browser page` |
+| `labs/box/scenes/fight-1000.ts` | Box 6: the benchmark, the fight at 100, 1,000 and 5,000, within budget. | `node x perf labs/box --scene fight-1000 --ladder --budget` |
+| every scene, every look | Box 6: every look renders with no pipeline built after a warm-up, across every toggle, and the goldens are unchanged (Looks, below). | `npm run e2e -- tests/e2e/box-look.spec.ts tests/e2e/parity.spec.ts` |
+
+The benchmark's budgets and the numbers they were measured from are in `tests/baselines/perf/box-fight-1000.json`
+and `tests/baselines/perf/box-crowd-5000.json`.
 
 ## Scenes
 
@@ -18,7 +42,7 @@ command named here that does not exist fails it.
 |---|---|---|
 | `box:room` (`labs/box/scenes/room.ts`) | The room, `labs/box/levels/room.txt`: 16 × 12 m of flagstones in brick walls 3 m high, one low wall (0.75 m), a 2 × 2 m pillar, the hero's spawn and three numbered markers. Three crates move on fixed paths from the markers, no physics yet: along the low wall, round a circle, round the pillar. | `tests/e2e/box.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-1-room.replay.json`, `tests/replays/box-1-tuned.replay.json`, `labs/box/scenes/room.test.ts`, `tests/baselines/thumbs/box-room-iso.json` |
 | `box:room-hero` (`labs/box/scenes/room-hero.ts`) | The same room as a physics level, and the hero (`labs/box/cast/hero.ts`: the stress test's speeds and timings, 5 m/s, a 1.46 m jump, a 3.25 m dash) at the spawn, the player: he walks (WASD, a stick), jumps (Space) onto the low wall but not the walls, and dashes (Shift); his animator steps his body with the sim, drawn as the neutral humanoid. Every camera follows him, and the walls and the pillar before him cut away; first person hides his body but his hands. | `tests/e2e/box-hero.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-2-walk.replay.json`, `tests/replays/box-2-dash.replay.json`, `tests/replays/box-2-jump.replay.json`, `labs/box/scenes/room-hero.test.ts`, `labs/box/cast/hero.test.ts` |
-| `box:hall` (`labs/box/scenes/hall.ts`) | The hall, `labs/box/levels/hall.txt`, as a physics level: 64 × 44 m inside walls 3 m high, a grid of pillars, low walls, 30 brazier stands, two galleries 1 m up along the north wall with stairs rising to each, and the octagonal rune dais at the centre, 0.5 m up. The hero starts on the dais: he walks down its slopes and up them, climbs the stairs to the galleries, jumps onto the low walls; the walls and pillars before him cut away. | `tests/e2e/box-hall.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-3-climb.replay.json`, `tests/replays/box-3-dais.replay.json`, `labs/box/scenes/hall.test.ts`, `tests/baselines/thumbs/box-hall-iso.json` |
+| `box:hall` (`labs/box/scenes/hall.ts`) | The hall, `labs/box/levels/hall.txt`, as a physics level: 64 × 44 m inside walls 3 m high, a grid of pillars, low walls, 30 brazier stands, two galleries 1 m up along the north wall with stairs rising to each, and the octagonal rune dais at the centre, 0.5 m up. The hero starts on the dais: he walks down its slopes and up them, climbs the stairs to the galleries, jumps onto the low walls; the walls and pillars before him cut away. Its floor is its bake (`labs/box/looks/hall-floor.ts`): flagstones, moss creeping from the walls' feet, contact shadows along them, and the rune circle glowing on the dais. | `tests/e2e/box-hall.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-3-climb.replay.json`, `tests/replays/box-3-dais.replay.json`, `labs/box/scenes/hall.test.ts`, `tests/baselines/thumbs/box-hall-iso.json` |
 | `box:hall-props` (`labs/box/scenes/hall-props.ts`) | The hall with the hero and its props, standing in Rapier and drawn through one instanced batch per prop part: a brazier's fire on each of the 30 stands, and 100 crates and barrels (10 to 300) on the prototype's seeded spots, every fifth crate stacked on the one before where both are crates. He pushes them by walking into them, and shoves (J, the left mouse button) every prop within 1.9 m in his arc, knocking it away, both hands thrust forward. | `tests/e2e/box-hall.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-3-knock.replay.json`, `labs/box/scenes/hall-props.test.ts` |
 | `box:crowd-1000` (`labs/box/scenes/crowd-1000.ts`) | The hall with its hero and a crowd of 1,000 (its presets for 100 and 5,000 are `labs/box/scenes/crowd-100.ts` and `labs/box/scenes/crowd-5000.ts`, at `?scene=crowd-100` and `?scene=crowd-5000`): walkers (`labs/box/cast/walker.ts`, capsules walking at 1.75 to 2.5 m/s), slimes (`labs/box/cast/slime.ts`, balls hopping up to 2.75 m) and wisps (`labs/box/cast/wisp.ts`, flyers hovering 1.25 m up), half, three in ten and two in ten, queued at the start on the hall's floor and entering 25 a step. They chase the hero along a flow field toward his tile, round the pillars and up the stairs when he climbs to a gallery; level with him the walkers wait on a ring 1.5 m round him and the slimes on one 2.1 m round him, and the wisps circle him 4.4 to 6.3 m out. Their bodies push each other apart in Rapier. The page draws them through a crowd (instanced batches), each posed at the detail its distance from the camera allows: walkers as the neutral humanoid in four builds, slimes as blobs with horns, ears or wings, wisps as floaters with their motes. | `tests/e2e/box-crowd.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-4-chase.replay.json`, `tests/replays/box-4-hop.replay.json`, `labs/box/scenes/crowd-1000.test.ts`, `labs/box/cast/crowd.test.ts`, `tests/baselines/perf/box-crowd-1000.json` |
 | `box:fight` (`labs/box/scenes/fight.ts`) | Box 5: the hall, its hero with a sword (`HERO_FIGHT`, `labs/box/cast/hero.ts`) and a crowd of 36, mixed (its preset for 1,000 is `labs/box/scenes/fight-1000.ts`, at `?scene=fight-1000`), fighting. Attack (J, the left mouse button) runs his combo, a slash, a backslash and a spin, and out of a dash the thrust; skill (L, the right mouse button) fires a bolt (`labs/box/scenes/fight-hero.ts`). The walkers swing their fists, the slimes pounce and the wisps shoot (`WALKER_ATTACK`, `SLIME_ATTACK`, `WISP_ATTACK` in the cast's files; `labs/box/scenes/fight-foes.ts`), each telegraphing on the floor while it winds up, the walkers and slimes three at a time through his attack tokens. Blows land through the engine's `damage` (`labs/box/scenes/fight-rules.ts`): hit points, pushes, big hits throwing bodies up a little and killing ones throwing them high, corpses the crowd walks through, hit-stop, and the events the page draws effects and damage numbers from. | `tests/e2e/box-fight.spec.ts`, `tests/e2e/parity.spec.ts`, `tests/replays/box-5-fight.replay.json`, `labs/box/scenes/fight.test.ts` |
@@ -28,6 +52,29 @@ and `z` in metres (engine/gfx/stage.ts), until it draws itself: actors with an a
 (engine/gfx/puppets/actors.ts), props a scene stands with `spawnProp` (engine/sim/props.ts) are drawn as their
 props from Box 3 (engine/gfx/stageProps.ts), and crowd bodies (`crowdBody`, engine/sim/crowdBodies.ts) through a crowd
 with its level of detail from Box 4 (engine/gfx/stageCrowd.ts).
+
+## Looks
+
+A look is how the page draws a scene, as data (`node x describe look`): the sky that lights it, a material style and a
+filter chain; a look never changes play, so every scene shows every look, and the box's replays hold in each. The
+box's own (`labs/box/looks/`) are the torch-lit hall and the prototype's looks over it; the engine's 86 (`look:cartoon`,
+`look:game-boy`, the one-filter presets…) show in the box too.
+
+| Look | What it draws |
+|---|---|
+| `look:torch-lit` (`labs/box/looks/torch-lit.ts`) | The torch-lit hall: the sky `sky:hall`, dark but for the torches, 12 of the hall's 30 nearest the hero, each flickering on its own, the nearest casting shadows, and fog from 12 m past him. |
+| `look:torch-toon` (`labs/box/looks/torch-toon.ts`) | Toon shading in it: three bands of light with a rim, the characters and objects inked. |
+| `look:torch-cel` (`labs/box/looks/torch-cel.ts`) | The prototype's comic cel in it: four flat bands, pushed colour, ink lines. |
+| `look:torch-pixel` (`labs/box/looks/torch-pixel.ts`) | The prototype's pixel look in it: 4 px blocks, 8 shades a channel, dithered. |
+| `look:torch-bloom` (`labs/box/looks/torch-bloom.ts`) | Bloom in it: the flames, coals, runes and sparks glow (off at the `low` tier). |
+| `look:torch-fxaa` (`labs/box/looks/torch-fxaa.ts`) | FXAA in it: every edge smoothed. |
+
+Switch with `?post.look=look:torch-toon` (`labs/box/?scene=fight&cam3=chase&post.look=look:torch-toon`), with
+`node x set post.look look:torch-toon` in an inspect session, or with `__engine.set('post.look', 'look:torch-toon')`;
+`look:clean` is the scene's own. The first switch to the torch-lit sky, or to a material style, warms up first (on
+SwiftShader, about a minute for the hall in a style under the sky; a GPU takes a moment); from then on a switch builds
+nothing. `quality` sets how many torches cast shadows: 2 at `high`, 1 at `medium`, none at `low`. A new look comes
+from `node x new look labs/box/looks/<name>`; the page imports every module under `labs/box/looks/`.
 
 ## Settings
 
@@ -45,6 +92,9 @@ with its level of detail from Box 4 (engine/gfx/stageCrowd.ts).
 | `box.crowd.count` | How many walkers, slimes and wisps fill the hall with the crowd (1,000 in `box:crowd-1000`, 100 and 5,000 in its presets; 0 to 5,000), when the scene starts. Changes play: recorded in replays. |
 | `box.crowd.mix` | Who fills it: `mixed` (half walkers, three in ten slimes, two in ten wisps), `walkers`, `slimes` or `wisps`, when the scene starts. |
 | `box.fight.god` | Whether foes' blows only flinch and push the hero in the fight (true, as the prototype's proof ran) or also take his hit points (false: at none he rallies at once), when the scene starts. |
+| `post.look` | The look drawn (`look:clean`, the scene's own; the box's looks above). A view setting: never in the hash. |
+| `quality` | The quality tier: `auto` (`high` on a desktop), `high`, `medium` or `low`: shadow casters, bloom, pixel caps. A view setting. |
+| `gfx.effects` | Whether the fight's effects draw (true): bolts, telegraphs, trails, bursts. A view setting. |
 | `gfx.resolution` | The resolution mode: `pixels`, `balanced` or `full`. A view setting: never in the hash. |
 | `time.scale` | Sim seconds per real second (1). A view setting. |
 | `touch` | The touch controls: `auto`, `on` or `off`. A view setting (below). |
@@ -58,7 +108,8 @@ Set one with `node x set box.room.speed 3`, as a URL parameter (`labs/box/?box.r
 `?cam=iso` (a camera code: `cam=topdown`, `cam=iso,45,2,persp`, `cam3=orbit`, `cam3=fly`; with the hero also
 `cam3=chase`, `cam3=first` and `cam3=rail`, which follow him), any setting by its path,
 and `?replay=box-1-room` (a replay played in real time; `?replay=box-2-jump` opens the hero's room, `?replay=box-3-climb`
-the hall, `?replay=box-3-knock` the hall with its props, `?replay=box-4-chase` the hall with a crowd of 100, `?replay=box-5-fight` the fight). In the page,
+the hall, `?replay=box-3-knock` the hall with its props, `?replay=box-4-chase` the hall with a crowd of 100, `?replay=box-5-fight` the fight)
+and `?post.look=look:torch-lit` (a look, above). In the page,
 `window.__engine.help()` lists every member.
 
 On a phone or tablet the page shows the touch controls (`labs/box/touch.ts`, for every scene): a floating stick
@@ -74,19 +125,22 @@ tested (ADR-0021); `labs/box/?touch=on` shows them on a desktop.
    `node x shot labs/box --scene hall --cam iso --thumb box-hall-iso`; for the crowd,
    `node x sim labs/box/scenes/crowd-100 --steps 600 --set box.crowd.mix=slimes`, and its cost at 100, 1,000 and
    5,000, `node x perf labs/box --scene crowd-1000 --ladder`; for the fight,
-   `node x sim labs/box/scenes/fight --steps 600 --set box.fight.god=false`.
+   `node x sim labs/box/scenes/fight --steps 600 --set box.fight.god=false`; in a look,
+   `node x shot labs/box --scene hall --cam iso --set post.look=look:torch-cel`.
 3. Prove play: `node x replay tests/replays/box-1-room.replay.json --browser page` (the goldens, in Node and in the
    page while it renders); `node x replay tests/replays/box-2-jump.replay.json --browser page` for the hero,
    `node x replay tests/replays/box-3-climb.replay.json --browser page` in the hall,
    `node x replay tests/replays/box-4-chase.replay.json --browser page` with the crowd,
    `node x replay tests/replays/box-5-fight.replay.json --browser page` in the fight; the crowd's budgets,
-   `node x perf labs/box --scene crowd-1000 --ladder --budget`.
+   `node x perf labs/box --scene crowd-1000 --ladder --budget`, and the benchmark's,
+   `node x perf labs/box --scene fight-1000 --ladder --budget` and
+   `node x perf labs/box --scene crowd-5000 --ladder --budget`.
 4. Keep a page open while iterating: `node x inspect --scene room`, then `node x eval "__engine.hash()"`,
    `node x set box.room.speed 3`, `node x dump --step 60 --filter pathMover` and `node x shot labs/box --scene room`
    (it reuses the session); `node x inspect --stop` ends it.
 5. Commit with the suites green: `npm run e2e -- tests/e2e/box.spec.ts tests/e2e/parity.spec.ts`, and for the hall
    `npm run e2e -- tests/e2e/box-hall.spec.ts`, for the crowd `npm run e2e -- tests/e2e/box-crowd.spec.ts`, for the
-   fight `npm run e2e -- tests/e2e/box-fight.spec.ts`.
+   fight `npm run e2e -- tests/e2e/box-fight.spec.ts`, for the looks `npm run e2e -- tests/e2e/box-look.spec.ts`.
 
 ## Adding a scene or a variant
 
