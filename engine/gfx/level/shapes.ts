@@ -7,6 +7,13 @@
  * centre (engine/gfx/level/cells.ts), and for a recipe with `cut` the geometry of its cut twin, which the cutaway
  * (engine/gfx/cutaway.ts) shows in a piece's place: a block `cut.height` tall, or a pillar's parts up to it.
  *
+ * An instanced shape, and a cut twin, has at least `PAGE_SLOTS` (1,024) slots, its count its pieces (`instanceSlots`):
+ * r182 reads the matrices of a mesh of 1,000 slots or fewer from a uniform buffer named after it, compiling a shader
+ * per mesh, and above that from an instanced attribute, one shader for every mesh (engine/gfx/instancing.ts). Measured
+ * at gate G6's review: sized by their pieces, the hall's 37 pillars, low walls and walls and their 26 cut twins were
+ * a pipeline each per material, pass and camera, and the Stress Box hall's warm-up built 357 pipelines in about 14 s
+ * on SwiftShader; at 1,024 slots they share theirs, and it builds 35 in about 4 s. Each costs 64 KiB of matrices.
+ *
  * Stairs and daises are found in `level.ramps` and `level.daises`: a descriptor draws those whose first tile it
  * holds (a ramp's north-west tile; a dais's first tile in reading order), so a descriptor split into runs (the stage,
  * engine/gfx/stage.ts) draws each flight or dais once.
@@ -28,6 +35,7 @@ import type { CompiledLevel, MeshDescriptor, TileRect } from '../../world/level/
 import { boxGeometry } from '../geometry/box';
 import { mergeGeometries, sidesThenTops } from '../geometry/groups';
 import { pillarGeometry, pillarParts } from '../geometry/pillar';
+import { PAGE_SLOTS } from '../instancing';
 import { brazierGeometry } from './brazier';
 import { levelCells, type LevelCell } from './cells';
 import { daisGeometry } from './dais';
@@ -50,13 +58,18 @@ export interface BuiltShape {
   cut: PartCut | null;
 }
 
+/** The slots of an instanced level mesh of `count` pieces: at least `PAGE_SLOTS`, so it shares its shader. */
+export function instanceSlots(count: number): number {
+  return Math.max(count, PAGE_SLOTS);
+}
+
 /** One instance per cell, standing at the cell's centre. */
 export function instanced(
   geometry: BufferGeometry,
   materials: Material | Material[],
   cells: readonly LevelCell[],
 ): InstancedMesh {
-  const mesh = new InstancedMesh(geometry, materials, cells.length);
+  const mesh = new InstancedMesh(geometry, materials, instanceSlots(cells.length));
   placeInstances(mesh, cells);
   return mesh;
 }

@@ -6,7 +6,7 @@
  * with frames drawn at 25, 1,000, 2,500 and 5,000 members, building 0 pipelines after the warm-up (Done-when 3). The
  * CPU-only contract for the crowd (Done-when 4) is tests/e2e/parity.spec.ts: there the chase gives the same goldens
  * drawing a frame after every step through the crowd's level of detail, so the gallery's end state holds while it
- * renders, and this file plays it without drawing (T2's 6-minute budget).
+ * renders, and this file plays it without drawing (T2's budget).
  *
  * Invariants: the page is driven through `window.__engine` and the virtual clock, as an agent drives it; goldens come
  * from the replay files, never from the page itself.

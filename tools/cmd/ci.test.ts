@@ -249,7 +249,7 @@ describe('renderSummary', () => {
     expect(summary).toContain('- Base: the last green x ci --local (c0ffee0)');
     expect(summary).toContain('| `npm ci` | ok | 1 s |  | out/ci/logs/1-npm-ci.log |  |');
     expect(summary).toContain('| `npm test` | FAIL (exit 1) | 1 s | 60 s | out/ci/logs/4-npm-test.log |  |');
-    expect(summary).toContain('| `npm run e2e` | ok | 1 s | 6 min | out/ci/logs/7-npm-run-e2e.log | T2 runs in full');
+    expect(summary).toContain('| `npm run e2e` | ok | 1 s | 9 min | out/ci/logs/7-npm-run-e2e.log | T2 runs in full');
     expect(summary).toContain('## Budgets\n\n- T0 took 1 s, within its 10 s budget\n');
     expect(summary).toContain('### `npm test` exited 1\n\nThe last lines of out/ci/logs/4-npm-test.log:\n\n```text\n');
     expect(summary).toContain('FAIL a.test.ts\n1 failed\n```\n');

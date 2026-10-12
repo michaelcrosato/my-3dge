@@ -27,6 +27,7 @@ import { compileLevel } from '../../world/level/compile';
 import { defineGlyph } from '../../world/level/glyph';
 import type { CompiledLevel } from '../../world/level/types';
 import { inspectGeometry } from '../geometry/inspect';
+import { instancePath, PAGE_SLOTS } from '../instancing';
 import { createMaterialLibrary } from '../materials/library';
 import type { Warmup } from '../warmup';
 import { createLevelMeshes, type LevelMeshes } from './meshes';
@@ -111,6 +112,10 @@ describe('createLevelMeshes on the room fixture', () => {
       max: [1.1875, 3.5, 1.1875],
     });
     expect(pillar.geometry.groups.map((group) => group.count)).toEqual([96, 48]);
+    // Each instanced part has a page's slots, so every one shares its shader (engine/gfx/level/shapes.ts).
+    for (const mesh of [lowWall, pillar, wall] as InstancedMesh[]) {
+      expect([mesh.instanceMatrix.count, instancePath(mesh.instanceMatrix.count)]).toEqual([PAGE_SLOTS, 'attribute']);
+    }
   });
 
   it('draws in 7 calls, 13 with one shadow map: within the budget of 20', () => {

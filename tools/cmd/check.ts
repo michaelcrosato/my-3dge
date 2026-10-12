@@ -7,7 +7,9 @@
  * The asset scan (doctrine: Assets) reads every file git tracks or would track. A binary file (by extension, magic
  * bytes or a NUL byte) passes only if `data/APPROVED-BINARIES.json` lists it, `{ path, escalation: "ESC-NNNN",
  * reason }`, with its record in `docs/escalations/`, or if it is a font (WOFF2, TTF, OTF) under `data/fonts/` with
- * its license beside it. A base64 run or `data:` URI over 1 KB fails too. Else: `x esc open --principle Assets`.
+ * its license beside it. A base64 run or `data:` URI over 1 KB fails too. Else: `x esc open --principle Assets`. A
+ * file deleted between the listing and its read is skipped (`scanAssets`): at gate G6's review, `x new module --test`
+ * wrote and removed its sample in the repository while a parallel `x check` scanned, which crashed on the read.
  *
  * Lane mode is detected: in a linked git worktree (`--git-dir` differs from `--git-common-dir`), an ultracode lane,
  * a `warnInLane` plugin (docs drift) only warns (§11.3). `X_LANE=0|1` overrides the detection.
@@ -162,6 +164,16 @@ function readApprovals(root: string): { approved: Map<string, string>; failures:
   return { approved, failures, warnings };
 }
 
+/** The bytes of the file at `path`, or undefined when it is gone: deleted since it was listed. */
+function readListed(path: string): Buffer | undefined {
+  try {
+    return readFileSync(path);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
+    throw error;
+  }
+}
+
 /** The asset scan (doctrine: Assets). */
 export const assetScan: CheckPlugin = {
   name: 'assets',
@@ -173,50 +185,61 @@ export const assetScan: CheckPlugin = {
       const message = `the asset scan reads the file list from git, which failed: ${(error as Error).message.split('\n')[0]}`;
       return { failures: [{ id: 'ASSET_GIT', message }] };
     }
-    const { approved, failures, warnings } = readApprovals(root);
-    let binaries = 0;
-    let fonts = 0;
-    for (const file of files) {
-      const bytes = readFileSync(join(root, file));
-      const kind = binaryKind(file, bytes);
-      if (kind) {
-        binaries++;
-        const extension = extname(file).slice(1).toLowerCase();
-        if (approved.has(file)) continue;
-        if (FONT_EXTENSIONS.has(extension) && file.startsWith('data/fonts/')) {
-          const beside = readdirSync(join(root, dirname(file))).filter((name) => name !== basename(file));
-          if (beside.some((name) => LICENSE_NAME.test(name))) fonts++;
-          else {
-            const message = `${file} is a font without its license: put the license file beside it (LICENSE, OFL.txt or <font>-LICENSE.txt)`;
-            failures.push({ id: 'ASSET_FONT_LICENSE', message, file });
-          }
-        } else if (FONT_EXTENSIONS.has(extension)) {
-          const message = `${file} is a font outside data/fonts/: fonts are pre-approved only there, each with its license file beside it`;
-          failures.push({ id: 'ASSET_FONT_PLACE', message, file });
-        } else {
-          failures.push({ id: 'ASSET_BINARY', message: `${file} is ${kind}: it ${ASK}`, file });
-        }
-        continue;
-      }
-      const text = bytes.toString('utf8');
-      for (const match of text.matchAll(DATA_URI)) {
-        if (match[1].length <= MAX_EMBEDDED) continue;
-        const message = `${file} embeds a data: URI of ${match[1].length} characters (over 1 KB): an embedded binary ${ASK}`;
-        failures.push({ id: 'ASSET_DATA_URI', message, file, line: lineAt(text, match.index) });
-      }
-      for (const match of text.replace(DATA_URI, (uri) => ' '.repeat(uri.length)).matchAll(BASE64_RUN)) {
-        const message = `${file} holds a base64 run of ${match[0].length} characters (over 1 KB): an embedded binary ${ASK}`;
-        failures.push({ id: 'ASSET_BASE64', message, file, line: lineAt(text, match.index) });
-      }
-    }
-    return {
-      failures,
-      warnings,
-      summary: `${files.length} files, ${binaries} binary (${approved.size} approved, ${fonts} fonts)`,
-      metrics: { files: files.length, binaries, approved: approved.size, fonts },
-    };
+    return scanAssets(root, files);
   },
 };
+
+/**
+ * The asset scan of `files`, paths under `root` as `repositoryFiles` lists them. A file deleted after the listing is
+ * skipped, never counted: it is no asset, and reading it would crash the scan (see the file comment).
+ */
+export function scanAssets(root: string, files: readonly string[]): CheckOutcome {
+  const { approved, failures, warnings } = readApprovals(root);
+  let scanned = 0;
+  let binaries = 0;
+  let fonts = 0;
+  for (const file of files) {
+    const bytes = readListed(join(root, file));
+    if (!bytes) continue;
+    scanned++;
+    const kind = binaryKind(file, bytes);
+    if (kind) {
+      binaries++;
+      const extension = extname(file).slice(1).toLowerCase();
+      if (approved.has(file)) continue;
+      if (FONT_EXTENSIONS.has(extension) && file.startsWith('data/fonts/')) {
+        const beside = readdirSync(join(root, dirname(file))).filter((name) => name !== basename(file));
+        if (beside.some((name) => LICENSE_NAME.test(name))) fonts++;
+        else {
+          const message = `${file} is a font without its license: put the license file beside it (LICENSE, OFL.txt or <font>-LICENSE.txt)`;
+          failures.push({ id: 'ASSET_FONT_LICENSE', message, file });
+        }
+      } else if (FONT_EXTENSIONS.has(extension)) {
+        const message = `${file} is a font outside data/fonts/: fonts are pre-approved only there, each with its license file beside it`;
+        failures.push({ id: 'ASSET_FONT_PLACE', message, file });
+      } else {
+        failures.push({ id: 'ASSET_BINARY', message: `${file} is ${kind}: it ${ASK}`, file });
+      }
+      continue;
+    }
+    const text = bytes.toString('utf8');
+    for (const match of text.matchAll(DATA_URI)) {
+      if (match[1].length <= MAX_EMBEDDED) continue;
+      const message = `${file} embeds a data: URI of ${match[1].length} characters (over 1 KB): an embedded binary ${ASK}`;
+      failures.push({ id: 'ASSET_DATA_URI', message, file, line: lineAt(text, match.index) });
+    }
+    for (const match of text.replace(DATA_URI, (uri) => ' '.repeat(uri.length)).matchAll(BASE64_RUN)) {
+      const message = `${file} holds a base64 run of ${match[0].length} characters (over 1 KB): an embedded binary ${ASK}`;
+      failures.push({ id: 'ASSET_BASE64', message, file, line: lineAt(text, match.index) });
+    }
+  }
+  return {
+    failures,
+    warnings,
+    summary: `${scanned} files, ${binaries} binary (${approved.size} approved, ${fonts} fonts)`,
+    metrics: { files: scanned, binaries, approved: approved.size, fonts },
+  };
+}
 
 /** Whether `root` is an ultracode lane: `X_LANE` when set (0 or 1), else whether it is a linked git worktree. */
 export function isLane(root: string, env: Record<string, string | undefined> = process.env): boolean {

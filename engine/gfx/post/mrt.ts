@@ -19,10 +19,11 @@
  * blends only the first attachment.
  *
  * The warm-up (engine/gfx/warmup.ts) compiles for the render target the frame draws the scene into, but knows nothing
- * of MRT; r182's `PassNode.compileAsync` sets both. So the chain registers the warm-up entry `WARM_MRT_ID`, which
- * sorts before every other id, and whose `objects()` turns this MRT on while the warm-up compiles for the scene pass's
- * own target (`useSceneMrt`): every later compile step, the material styles' among them, builds the MRT variant the
- * frame draws. The chain's draw turns it off again before drawing (`clearMrt`).
+ * of MRT; r182's `PassNode.compileAsync` sets both. So the chain's warm-up pass for the scene pass's own target turns
+ * this MRT on as it enters (`useSceneMrt`) and off as it leaves (`clearMrt`): every compile step for it, the material
+ * styles' among them, builds the MRT variant the frame draws. The pass's target holds both attachments from the start
+ * (`createScenePass`): r182's `MRTNode` writes only the outputs its target has textures for, so a compile made before
+ * the chain first asked for `normal` built a one-attachment variant no frame drew (measured at gate G6's review).
  *
  * Invariants: presentation only (nothing here reaches the sim); a tag never changes a material; `packFlags` and
  * `unpackFlags` are inverse for every part, group 1..511 and pixel-art flag; a tag takes effect on the next frame,
@@ -55,9 +56,6 @@ export const GROUPS = 511;
 
 /** The packed value's bits: +512 on characters, +1024 on characters and objects. */
 export const FLAG_BITS = { character: 512, actor: 1024 } as const;
-
-/** The warm-up entry that turns the MRT on for the compile steps: `!` sorts before every other id. */
-export const WARM_MRT_ID = '!post-mrt';
 
 /** What `setPart` records on an object (`userData.post`). */
 export interface PostTag {
@@ -220,6 +218,7 @@ export function createScenePass(scene: Scene, camera: Camera): PassNode {
   const table = createFlagTable();
   tables.set(scenePass, table);
   scenePass.setMRT(sceneMrt(table) as ReturnType<typeof mrt>);
+  scenePass.getTextureNode('normal'); // its attachment, before anything compiles for the target (see the file comment)
   return scenePass;
 }
 
