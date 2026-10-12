@@ -24,13 +24,13 @@ Phases 0–7 are done: the foundation, the kernel, Boxes 1–5 (PR #2–#8) and 
 
 ## What is next
 
-- Gate G7's PR (stage 7), then gates G8 (lane L) and G9 (lane X); everything else is on demand, each WP waiting for
-  its measured trigger (PLAN.md §9.1).
+- Gate G7's PR (stage 7); lane L's gate G8 (its review fixes are in), then lane X's G9; everything else is on demand,
+  each WP waiting for its measured trigger (PLAN.md §9.1).
 
 ## Open issues
 
-- T2 took 9 min 32 s at load 18–52, over its 9 min (fails at 13 min 30 s, ADR-0014 amendment 14); 13 min 48 s at
-  the review before parity.spec.ts played one replay a test and a look per material style. T0 took 13.9 s of 10 s.
+- T2 took 9 min 32 s at load 18–52, over its 9 min, a warning only (ADR-0022); 13 min 48 s at the review, before
+  parity.spec.ts played one replay a test and a look per material style. T0 took 13.9 s of its 10 s.
 - Over the 400-line warning (cap 600): engine/anim/actions.ts 596, secondary.ts 586, engine/app/engine.ts,
   tests/e2e/parity.spec.ts 459, physics/world.ts, sim/world.ts, sim/scene.ts, ci.ts, tiers.ts, perf.ts, port.ts.
 - The crowd's flinch lean is drawn only on actors (the crowd's batches pose without the `reactions` layer); a walker
