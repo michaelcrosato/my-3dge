@@ -3,8 +3,10 @@
  * (the budget checks over the JSON reports: tools/lib/tierBudgets.ts). `x ci --local` (WP 0.9) calls `plan` and
  * `recordGreen`; an agent iterating reads the same selections.
  *
- * - **Tiers.** T0 `npm run check` (10 s), T1 `npm test` (60 s), T2 `npm run e2e` (9 min since gate G6: ADR-0014
- *   amendment 14), and `LONG_RUNS`, which have no budget and run at each gate.
+ * - **Tiers.** T0 `npm run check` (10 s), T1 `npm test` (60 s), T2 `npm run e2e` (by machine size, `t2Budget`: 9 min
+ *   on 4 workers from 16 cores, 60 min on 1 worker on 4 cores; ADR-0022 amendment 2), and `LONG_RUNS`, which have no
+ *   budget and run at each gate. T2's workers are one per `CORES_PER_WORKER` cores (`t2Workers`, which
+ *   playwright.config.ts reads), so its budget follows the cores; callers pass the core count, never read here.
  * - **The base** is the merge-base of HEAD with `origin/main` once main holds a gate (its PLAN.md ledger marks a
  *   `**G<n>**` row `done`), else the commit in `out/ci/last-green` (the last green `x ci --local`), else none, and
  *   every tier runs in full. Nothing here fetches: run `git fetch origin main` first for a current base.
@@ -22,10 +24,13 @@
  * @example
  * const { base, t1, t2 } = plan(); // t2.reason: 'T2 runs in full: engine/core/a.ts changed (engine code, …)'
  * duration(125_000); // '2 min 5 s'
+ * t2Budget(4).ms; // 3_600_000: 60 min on 1 worker
+ * t2Budget(16).ms; // 540_000: 9 min on 4 workers
  * @see tools/lib/tiers.test.ts
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { availableParallelism } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -40,7 +45,8 @@ export interface Tier {
   id: TierId;
   /** The full run, as argv. */
   command: readonly string[];
-  budgetMs: number;
+  /** Its budget in ms on a machine of `cores` cores (only T2's depends on them). */
+  budgetMs(cores: number): number;
   /** The report it writes (PLAN.md §8.1), relative to the root; T0 writes none, so its caller measures it. */
   report?: string;
   /** Where to look when it is slow. */
@@ -52,24 +58,48 @@ export const TIERS: Readonly<Record<TierId, Tier>> = {
   T0: {
     id: 'T0',
     command: ['npm', 'run', 'check'],
-    budgetMs: 10_000,
+    budgetMs: () => 10_000,
     fix: 'time its parts (npm run typecheck, npm run lint, prettier --check, node x check) and speed up the slowest',
   },
   T1: {
     id: 'T1',
     command: ['npm', 'test'],
-    budgetMs: 60_000,
+    budgetMs: () => 60_000,
     report: 'out/test/report.json',
     fix: 'find the slowest files in out/test/report.json and speed them up; a test that drives a browser belongs in T2 (tests/e2e/), one that is long in the long runs',
   },
   T2: {
     id: 'T2',
     command: ['npm', 'run', 'e2e'],
-    budgetMs: 540_000, // 6 min until gate G6: each box stage adds its parity tests (ADR-0014 amendment 14)
+    budgetMs: (cores) => t2Budget(cores).ms,
     report: 'out/e2e/report.json',
     fix: 'find the slowest specs in out/e2e/report.json and speed them up; the gate selects T2 while it is over (§8.9)',
   },
 };
+
+/** The cores each T2 worker's Chromium gets: SwiftShader draws on the CPU (ADR-0014 amendment 15). */
+export const CORES_PER_WORKER = 4;
+
+/** T2's Playwright workers on a machine of `cores` cores: one per `CORES_PER_WORKER`, from 1 to 4. */
+export function t2Workers(cores: number): number {
+  return Math.max(1, Math.min(4, Math.floor(cores / CORES_PER_WORKER)));
+}
+
+/**
+ * T2's measured budgets in ms, by its worker count (ADR-0022 amendment 2): 9 min on 4 workers, from 16 cores (gate
+ * G6, ADR-0014 amendment 14); 60 min on 1, on 4 cores (57 min 40 s at caff36a in the cloud container, ADR-0014
+ * amendment 15). 2 and 3 workers are unmeasured.
+ */
+export const T2_BUDGETS: Readonly<Record<1 | 4, number>> = { 1: 3_600_000, 4: 540_000 };
+
+/** T2's budget on `cores` cores: its worker count's measured budget; 2 and 3 workers, unmeasured, are held to 1's. */
+export function t2Budget(cores: number): { workers: number; ms: number; measured: boolean; note: string } {
+  const workers = t2Workers(cores);
+  const own = workers === 1 || workers === 4 ? T2_BUDGETS[workers] : undefined;
+  const on = `${workers} worker${workers === 1 ? '' : 's'} on ${cores} cores`;
+  if (own !== undefined) return { workers, ms: own, measured: true, note: on };
+  return { workers, ms: T2_BUDGETS[1], measured: false, note: `${on}, unmeasured: held to 1 worker's` };
+}
 
 /**
  * The long runs (PLAN.md §8.2): no budget, run at each gate. The flake hunt, the kernel's perf budget (WP 1.5; T1
@@ -293,14 +323,20 @@ export function selectT1(changes: Changes | undefined): Selection {
 }
 
 /**
- * What T2 runs for `changes`; undefined changes (no base) run it all. `x ci --local` passes `lastFullMs`, the
- * duration of the last full T2 run: while that is within budget, the gate runs T2 in full (PLAN.md §8.9).
+ * What T2 runs for `changes`; undefined changes (no base) run it all. `x ci --local` passes `lastFull`: the duration
+ * of the last full T2 run and this machine's cores. While that run is within T2's budget on these cores, the gate runs
+ * T2 in full (PLAN.md §8.9): on 4 cores that is the whole hour, by design (ADR-0022 amendment 2).
  */
-export function selectT2(changes: Changes | undefined, options: { lastFullMs?: number } = {}): Selection {
+export function selectT2(
+  changes: Changes | undefined,
+  options: { lastFull?: { ms: number; cores: number } } = {},
+): Selection {
   const all = (reason: string): Selection => ({ tier: 'T2', mode: 'all', command: [...TIERS.T2.command], reason });
-  const { lastFullMs } = options;
-  if (lastFullMs !== undefined && lastFullMs <= TIERS.T2.budgetMs) {
-    return all(`T2 runs in full: its full set last took ${duration(lastFullMs)}, within its budget (§8.9)`);
+  const { lastFull } = options;
+  const budget = lastFull && t2Budget(lastFull.cores);
+  if (lastFull && budget && lastFull.ms <= budget.ms) {
+    const within = `within its ${duration(budget.ms)} budget (${budget.note})`;
+    return all(`T2 runs in full: its full set last took ${duration(lastFull.ms)}, ${within} (§8.9)`);
   }
   if (!changes) return all('T2 runs in full: there is no base to compare against');
   if (!changes.files.length)
@@ -315,14 +351,19 @@ export function selectT2(changes: Changes | undefined, options: { lastFullMs?: n
   };
 }
 
-/** The base, the changes and both selections for `root`: what `x ci --local` and an iterating agent run. */
+/**
+ * The base, the changes and both selections for `root`: what `x ci --local` and an iterating agent run. `cores` is the
+ * machine's (`availableParallelism()` by default), for T2's budget.
+ */
 export function plan(
   root: string = ROOT,
-  options: { lastFullT2Ms?: number } = {},
+  options: { lastFullT2Ms?: number; cores?: number } = {},
 ): { base: Base; changes?: Changes; t1: Selection; t2: Selection } {
   const base = findBase(root);
   const changes = base.sha ? changedFiles(base.sha, root) : undefined;
-  return { base, changes, t1: selectT1(changes), t2: selectT2(changes, { lastFullMs: options.lastFullT2Ms }) };
+  const { lastFullT2Ms: ms, cores = availableParallelism() } = options;
+  const lastFull = ms === undefined ? undefined : { ms, cores };
+  return { base, changes, t1: selectT1(changes), t2: selectT2(changes, { lastFull }) };
 }
 
 /** `8.1 s`, `2 min 5 s`, `6 min`. */

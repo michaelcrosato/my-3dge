@@ -6203,8 +6203,8 @@ For the agents who maintain the engine.
 ### [`tools/lib/tierBudgets.ts`](../tools/lib/tierBudgets.ts)
 
 - `BudgetCheck` (interface): A tier's duration against its budget.
-- `checkBudget` (function): Checks one duration against its tier's budget: over it warns (ADR-0022: time budgets never fail).
-- `checkReports` (function): Checks each tier's duration: `measured` first (T0 writes no report, so `x ci --local` times it), else the tier's JSON report under `root`.
+- `checkBudget` (function): Checks one duration against its tier's budget on `cores` cores: over it warns (ADR-0022: time budgets never fail).
+- `checkReports` (function): Checks each tier's duration on `cores` cores: `measured` first (T0 writes no report, so `x ci --local` times it), else the tier's JSON report under `root`.
 - `reportMs` (function): The wall-clock duration a Vitest or Playwright JSON report records; throws on anything else.
 - `Timing` (interface): One row of the timing table.
 - `timingTable` (function): The timing table: one line per step (verdict, name, duration, budget), then the total.
@@ -6214,6 +6214,7 @@ For the agents who maintain the engine.
 - `Base` (interface): The commit a selection compares against, and why it is that one.
 - `changedFiles` (function): What differs from `base` in `root`'s working tree (see the file comment).
 - `Changes` (interface): What changed since a base.
+- `CORES_PER_WORKER` (const): The cores each T2 worker's Chromium gets: SwiftShader draws on the CPU (ADR-0014 amendment 15).
 - `duration` (function): `8.1 s`, `2 min 5 s`, `6 min`.
 - `findBase` (function): The base for selections in `root` (see the file comment).
 - `isVersionOnly` (function): True when every changed line of a unified diff is a `"version": "…"` line, as many removed as added.
@@ -6226,7 +6227,10 @@ For the agents who maintain the engine.
 - `selectT1` (function): What T1 runs for `changes`; undefined changes (no base) run it all.
 - `selectT2` (function): What T2 runs for `changes`; undefined changes (no base) run it all.
 - `T1_FULL` (const): Changes that run every T1 test: what all of them run under, or read outside their imports.
+- `T2_BUDGETS` (const): T2's measured budgets in ms, by its worker count (ADR-0022 amendment 2): 9 min on 4 workers, from 16 cores (gate G6, ADR-0014 amendment 14); 60 min on 1, on 4 cores (57 min 40 s at caff36a in the cloud container, ADR-0014 amendment 15).
 - `T2_FULL` (const): Changes that run all of T2: code that reaches the browser through the dev server, and what every spec runs under.
+- `t2Budget` (function): T2's budget on `cores` cores: its worker count's measured budget; 2 and 3 workers, unmeasured, are held to 1's.
+- `t2Workers` (function): T2's Playwright workers on a machine of `cores` cores: one per `CORES_PER_WORKER`, from 1 to 4.
 - `Tier` (interface): One tier: its full command, its budget and the JSON report its duration is read from.
 - `TierId` (type): A tier with a budget.
 - `TIERS` (const): The tiers of PLAN.md §8.2.

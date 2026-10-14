@@ -12,7 +12,8 @@
  *   no full run was measured yet; otherwise it runs what tiers.ts's `plan()` selects, and nothing when that selects
  *   nothing.
  * - **Budgets:** T0 is timed; T1 and T2 take the duration their JSON report records when the step rewrote it, else
- *   the step's time. Over a budget warns and never fails the gate (tiers.ts's `checkBudget`, ADR-0022).
+ *   the step's time. Over a budget warns and never fails the gate (tierBudgets.ts's `checkBudget`, ADR-0022). T2's
+ *   budget goes by the machine's cores (`CiDeps.cores`, tiers.ts's `t2Budget`): on 4 cores T2 runs in full, an hour.
  * - **`npm ci` reinstalls node_modules under this running process.** That is safe, measured: everything this command
  *   runs is imported before it starts, and every later step is a new process. `KEPT_CACHES` survive it:
  *   `node_modules/.cache/` (the ESLint and Prettier caches, and tsc's declarations and build info), so T0 is timed
@@ -28,6 +29,7 @@
  */
 import { execFileSync, spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { availableParallelism } from 'node:os';
 import { dirname, join } from 'node:path';
 import { runtime } from '../lib/report';
 import { LONG_RUNS, plan as tiersPlan, recordGreen, TIERS, type Selection, type TierId } from '../lib/tiers';
@@ -110,6 +112,8 @@ export interface CiDeps {
   plan: typeof tiersPlan;
   head: (root: string) => Head;
   now: () => Date;
+  /** The machine's cores, which set T2's workers and budget (`availableParallelism()`). */
+  cores: number;
 }
 
 /** One step's result. */
@@ -138,6 +142,8 @@ export interface CiRun {
   runtime: string;
   /** Why the base is what it is (tiers.ts's `Base.reason`). */
   base: string;
+  /** The machine's cores: T2's budget goes by them. */
+  cores: number;
   steps: StepResult[];
   budgets: BudgetCheck[];
 }
@@ -211,7 +217,7 @@ export async function runCi(root: string, deps: CiDeps, options: { long?: boolea
   const started = deps.now().toISOString();
   const head = deps.head(root);
   const lastFull = readT2Full(root);
-  const { base, t2: selected } = deps.plan(root, { lastFullT2Ms: lastFull });
+  const { base, t2: selected } = deps.plan(root, { lastFullT2Ms: lastFull, cores: deps.cores });
   const t2: Selection =
     lastFull === undefined
       ? {
@@ -271,9 +277,9 @@ export async function runCi(root: string, deps: CiDeps, options: { long?: boolea
     if (!ok && step.required) stop = `skipped: ${step.name} failed`;
   }
 
-  const budgets = measured.map(([tier, ms]) => checkBudget(tier, ms));
+  const budgets = measured.map(([tier, ms]) => checkBudget(tier, ms, deps.cores));
   const ok = steps.every((step) => step.status !== 'fail');
-  const run: CiRun = { ok, head, started, runtime: runtime(), base: base.reason, steps, budgets };
+  const run: CiRun = { ok, head, started, runtime: runtime(), base: base.reason, cores: deps.cores, steps, budgets };
   if (ok) recordGreen(head.sha, root);
   writeFileSync(join(root, CI_OUT.summary), renderSummary(run));
   return run;
@@ -281,7 +287,8 @@ export async function runCi(root: string, deps: CiDeps, options: { long?: boolea
 
 /** Builds the `x ci` command; the tests pass fakes for the step runner, git, the selections and the clock. */
 export function createCiCommand(overrides: Partial<CiDeps> = {}): Command {
-  const deps: CiDeps = { runStep: spawnStep, plan: tiersPlan, head: readHead, now: () => new Date(), ...overrides };
+  const defaults = { runStep: spawnStep, plan: tiersPlan, head: readHead, now: () => new Date(), cores: availableParallelism() }; // prettier-ignore
+  const deps: CiDeps = { ...defaults, ...overrides };
   return {
     usage: 'ci --local [--long]',
     options: { local: { type: 'boolean' }, long: { type: 'boolean' } },

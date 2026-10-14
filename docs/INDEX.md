@@ -1501,11 +1501,11 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`source.ts`](../tools/lib/source.ts): The read-only source checkouts: my-3d2dge at `$MY3D2DGE_SRC` and shardfall at `$SHARDFALL_SRC` (PLAN.md WP 0.1).
   - Exports: `repoSlug`, `requireSource`, `ResolvedSource`, `ResolveOptions`, `resolveSource`, `SkippableTest`, `SourceSpec`, `sourceSpecs`
   - Tests: [`tools/lib/source.test.ts`](../tools/lib/source.test.ts)
-- [`tierBudgets.ts`](../tools/lib/tierBudgets.ts): The tiers' budget checks (PLAN.md §8.2, ADR-0022): each tier's wall-clock duration against its budget (tools/lib/tiers.ts `TIERS`), read from the JSON reports the tiers write (`reportMs`, `checkReports`) or measured by the caller (T0 writes none), and the timing table `x ci --local` prints (`timingTable`).
+- [`tierBudgets.ts`](../tools/lib/tierBudgets.ts): The tiers' budget checks (PLAN.md §8.2, ADR-0022): each tier's wall-clock duration against its budget on the machine's cores (tools/lib/tiers.ts `TIERS`; T2's goes by the cores, `t2Budget`), read from the JSON reports the tiers write (`reportMs`, `checkReports`) or measured by the caller (T0 writes none), and the timing table `x ci --local` prints (`timingTable`).
   - Exports: `BudgetCheck`, `checkBudget`, `checkReports`, `reportMs`, `Timing`, `timingTable`
   - Tests: [`tools/lib/tiers.test.ts`](../tools/lib/tiers.test.ts)
 - [`tiers.ts`](../tools/lib/tiers.ts): The test tiers (PLAN.md §8.2): their commands and budgets, and what a change selects in T1 and T2 and why (the budget checks over the JSON reports: tools/lib/tierBudgets.ts).
-  - Exports: `Base`, `changedFiles`, `Changes`, `duration`, `findBase`, `isVersionOnly`, `LAST_GREEN`, `LONG_RUNS`, `plan`, `recordGreen`, `ROOT`, `Selection`, `selectT1`, `selectT2`, `T1_FULL`, `T2_FULL`, `Tier`, `TierId`, `TIERS`, `Trigger`, `vitestRerunTriggers`
+  - Exports: `Base`, `changedFiles`, `Changes`, `CORES_PER_WORKER`, `duration`, `findBase`, `isVersionOnly`, `LAST_GREEN`, `LONG_RUNS`, `plan`, `recordGreen`, `ROOT`, `Selection`, `selectT1`, `selectT2`, `T1_FULL`, `T2_BUDGETS`, `T2_FULL`, `t2Budget`, `t2Workers`, `Tier`, `TierId`, `TIERS`, `Trigger`, `vitestRerunTriggers`
   - Tests: [`tools/lib/tiers.test.ts`](../tools/lib/tiers.test.ts)
 - [`vite.ts`](../tools/lib/vite.ts): A Vite dev server through Vite's JavaScript API, for the `x` commands that open pages (PLAN.md §8.1).
   - Exports: `DevServer`, `freePort`, `startVite`

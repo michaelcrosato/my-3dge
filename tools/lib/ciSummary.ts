@@ -15,7 +15,7 @@ import type { CommandResult } from '../x';
 import type { CiRun } from '../cmd/ci';
 import type { Artifact, Finding } from './report';
 import { timingTable } from './tierBudgets';
-import { duration, LAST_GREEN, TIERS } from './tiers';
+import { duration, LAST_GREEN, t2Budget, TIERS } from './tiers';
 
 /** Where `x ci --local` writes, relative to the root. */
 export const CI_OUT = {
@@ -34,14 +34,14 @@ export function renderSummary(run: CiRun): string {
     `# x ci --local: ${run.ok ? 'ok' : 'FAIL'}`,
     '',
     `- Commit: ${head.sha.slice(0, 7)} on ${head.branch}${dirty}${run.ok ? `, recorded in ${LAST_GREEN}` : ''}`,
-    `- Started: ${run.started} on ${run.runtime}`,
+    `- Started: ${run.started} on ${run.runtime}, ${run.cores} cores (T2 on ${t2Budget(run.cores).note})`,
     `- Base: ${run.base}`,
     '',
     '| Step | Result | Time | Budget | Log | Note |',
     '| --- | --- | --- | --- | --- | --- |',
   ];
   for (const step of run.steps) {
-    const budget = step.tier ? duration(TIERS[step.tier].budgetMs) : '';
+    const budget = step.tier ? duration(TIERS[step.tier].budgetMs(run.cores)) : '';
     const result = step.status === 'fail' ? `FAIL (exit ${step.code})` : step.status;
     const time = step.status === 'skipped' ? '' : duration(step.ms);
     out.push(`| \`${step.name}\` | ${result} | ${time} | ${budget} | ${step.log ?? ''} | ${step.note ?? ''} |`);
@@ -88,7 +88,7 @@ export function toResult(run: CiRun): CommandResult {
     name: step.status === 'skipped' ? `${step.name} (skipped)` : step.name,
     ms: step.ms,
     ok: step.status !== 'fail',
-    budgetMs: step.tier && TIERS[step.tier].budgetMs,
+    budgetMs: step.tier && TIERS[step.tier].budgetMs(run.cores),
   }));
   return {
     ok: run.ok,

@@ -250,7 +250,8 @@ Core proposal accepted at integration. Calls made where PLAN.md §9 WP 5.5 and �
   (the GPU process; the page's own frame work is 0.6–2.2 ms). parity.spec.ts alone is 1,500–1,600 s of the sum with
   the fix (2,000–2,250 s without), over 6 minutes on 4 workers. T2 grew from 114 tests at G4 (5 min 38 s) and 122
   at G5 (6 min 28 s, over budget) to 146.
-- **Call:** T2's budget is 9 minutes (`TIERS.T2`, fails at 13 min 30 s): over it warns, as at G5; 6 minutes would fail
+- **Call:** T2's budget is 9 minutes (`TIERS.T2`, fails at 13 min 30 s; since ADR-0022 it only warns, and since its
+  amendment 2 the 9 minutes hold from 16 cores, an hour on 4): over it warns, as at G5; 6 minutes would fail
   every gate from here at this load. Rejected: drawing fewer frames or smaller ones in parity.spec.ts (the contract is
   a frame after every step), cheaper shadows (a look change to speed up tests), more Playwright workers (a shared
   setting; up to 6 lanes share the box's 20 cores). Box 6 (WP 7.8) adds its looks to parity.spec.ts: its gate
@@ -274,7 +275,8 @@ Core proposal accepted at integration. Calls made where PLAN.md §9 WP 5.5 and �
   Rejected: longer timeouts (they would hide a real slowdown), 2 workers on 4 cores (measured: 3 timeouts).
 - **Plan edit:** PLAN.md WP 0.2's `playwright.config.ts` item.
 - **Proved:** `x ci --local` green at caff36a in the cloud container, every step: T2 165/165 on 1 worker in
-  57 min 40 s (over its 9 min, a warning only), 0 timeouts.
+  57 min 40 s (over its 9 min, a warning only), 0 timeouts. That run became T2's budget on 4 cores (ADR-0022
+  amendment 2).
 
 ## Amendment 16 (2026-10-14, after G9's cleanup): the 17 files over 400 lines split at their second concept
 

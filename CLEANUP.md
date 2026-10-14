@@ -82,7 +82,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 
 ## 3. T2's budget by machine size (WP 0.5, ADR-0022; decision 3)
 
-- [ ] 3.1 Now: `TIERS.T2.budgetMs` is a flat 540,000 ms (tools/lib/tiers.ts:66-72). It drives the `CI_BUDGET` warning
+- [x] 3.1 Now: `TIERS.T2.budgetMs` is a flat 540,000 ms (tools/lib/tiers.ts:66-72). It drives the `CI_BUDGET` warning
       (tools/cmd/ci.ts:344) and `selectT2`'s rule that runs T2 in full when its last full run fit the budget
       (tiers.ts:304). Only `CORES_PER_WORKER` (playwright.config.ts:22) knows the core count.
   - Do: export one worker count by cores, used by playwright.config.ts and tiers.ts, and derive T2's budget from it:
