@@ -9,8 +9,8 @@ ADRs hold the record. (A root-level .md: `x docs --check` and Prettier skip it.)
 ## Owner decisions, 2026-10-14
 
 1. **ESC-0001: yes.** Add the GitHub Actions workflow (§8). Actions is on (the owner's `game/*` branches ran three
-   workflows on 2026-10-14) and the repository is public, so runner minutes are free. The runner needs read access to
-   the private shardfall, which the owner grants (8.1).
+   workflows on 2026-10-14) and the repository is public, so runner minutes are free. Both sources are public (shardfall is
+   public as of 2026-10-14), so the runner clones them with no secret.
 2. **ADR-0018's two "Owner:" calls are accepted as they are:** crowd walkers show knockdowns but not the flinch lean
    (their batches run no view layers); the cape is a sim component that only the view draws.
 3. **T2's budget goes by machine size:** 9 min from 16 cores; the time measured on the 4-core cloud container becomes
@@ -252,18 +252,18 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 
 ## 8. CI on GitHub Actions (WP 0.9, ESC-0001; decision 1)
 
-- [ ] 8.1 **The owner's part: read access to the private shardfall.** `x src` fails unless both sources resolve
-      (tools/cmd/src.ts:24), and it is step 2 of `CI_STEPS` (tools/cmd/ci.ts:63-71); `GITHUB_TOKEN` cannot read
-      another private repository (my-3d2dge is public and clones anonymously). The workflow reads a read-only deploy
-      key from the my-3dge secret `SHARDFALL_DEPLOY_KEY`, whose public half is in shardfall's Settings → Deploy keys.
-      If the secret is not there by 8.4, escalate once (`node x esc open`) with those steps, and go on.
+- [ ] 8.1 **shardfall is public now** (GitHub reports it public on 2026-10-14; it was private when the plan was
+      written), so the runner clones both sources anonymously and needs no secret. `x src` must resolve both
+      (tools/cmd/src.ts:24; step 2 of `CI_STEPS`, tools/cmd/ci.ts:63-71). Correct the stale "shardfall is private"
+      notes: CLAUDE.md:15, PLAN.md §9's WP 0.2 (`x src`) and §11.5's table, tools/cmd/src.ts:8. If a clone is
+      refused after all, escalate once (`node x esc open`) and go on.
 - [ ] 8.2 **.github/workflows/ci.yml** (WP 0.9's Build): on pull requests and pushes to main, plus a manual dispatch; a
       120-minute timeout. Chromium 141 either from the Playwright image whose browser it is
       (`mcr.microsoft.com/playwright:v1.56.1-noble`, its chromium-1194 as `CHROMIUM_PATH`; check it reports
-      141.0.7390.37, and install git if the image lacks it, since an ssh-key checkout needs it) or on ubuntu-24.04
+      141.0.7390.37, and install git if the image lacks it) or on ubuntu-24.04
       from scripts/setup.sh:154-176's Chrome for Testing download plus `npx playwright install-deps chromium` for the
       system libraries. Check out the repository, then my-3d2dge at e37e4ee into .cache/src-3d2dge and shardfall at
-      fa2dab6 into .cache/src-shardfall (the deploy key; LFS off); Node from .nvmrc; then `node x ci --local` (or its
+      fa2dab6 into .cache/src-shardfall (anonymously; LFS off); Node from .nvmrc; then `node x ci --local` (or its
       seven steps, one per workflow step, if 8.3's test keeps them equal to `CI_STEPS`). Always upload out/** and
       write out/ci/summary.md to `$GITHUB_STEP_SUMMARY`. The actions follow §6.10's version rule. A fresh runner runs
       T2 in full (no t2-full.json, tools/cmd/ci.ts:234-244), about an hour and a quarter in all. Box 4's chase replay
@@ -296,7 +296,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
       rounds, ADR-0022).
 - [ ] 9.6 **`node x ci --local` green**, in the background; read out/ci/summary.md.
 - [ ] 9.7 **Merge:** delete this file; push; open the PR to main ("After G9: the cleanup"); look once at its Vercel
-      status and at the workflow's run (red only for a missing shardfall secret: say so on the PR); squash-merge once
+      status and at the workflow's run (fix it if red, as for any check); squash-merge once
       `x ci --local` is green (ADR-0021).
 - [ ] 9.8 **Report:** the commits, out/ci/summary.md, the escalations, any "Owner:" issues, and what was not verified.
 
