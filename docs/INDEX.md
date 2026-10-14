@@ -838,7 +838,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createFeelMeter`, `FeelMeter`, `FeelReport`, `FeelSample`, `settle`, `steer`, `Steering`, `updateFeelMeter`
   - Tests: [`engine/physics/feel.test.ts`](../engine/physics/feel.test.ts)
 - [`groups.ts`](../engine/physics/groups.ts): Collision groups (PLAN.md WP 3.1, §5.1): the one table of what touches what, by name.
-  - Exports: `COLLISION_GROUPS`, `GROUP_CODES`, `GROUP_NAMES`, `groupBits`, `GroupName`, `queryBits`, `touches`
+  - Exports: `COLLISION_GROUPS`, `dropGroups`, `GROUP_CODES`, `GROUP_NAMES`, `groupBits`, `GroupName`, `queryBits`, `touches`
   - Tests: [`engine/physics/groups.test.ts`](../engine/physics/groups.test.ts)
 - [`move.ts`](../engine/physics/move.ts): The character controller's moves (PLAN.md WP 3.2, §4.8; doctrine: Quality under the hood): `moveCharacter` moves a character's capsule through Rapier's kinematic character controller, across then down, climbing steps and snapping to the ground itself, and `sink` takes it down with a sinking floor.
   - Exports: `CharacterHit`, `CharacterMove`, `isWalkable`, `isWall`, `moveCharacter`, `MoveOptions`, `partsOf`, `sink`

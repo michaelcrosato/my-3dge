@@ -4204,6 +4204,7 @@ For the agents who maintain the engine.
 ### [`engine/physics/groups.ts`](../engine/physics/groups.ts)
 
 - `COLLISION_GROUPS` (const): The collision groups: each one's membership bit and the groups it touches.
+- `dropGroups` (function): Rapier's interaction groups `bits` (a collider's `groupBits`) with the groups named taken out of what they touch: a character controller's query that passes through them (engine/physics/character.ts `shoves`), the collider itself still touching them in the solver.
 - `GROUP_CODES` (const): The codes this module raises, with their fixes.
 - `GROUP_NAMES` (const): The group names, in table order.
 - `groupBits` (function): Rapier's interaction groups for a collider of `group`: its membership bit and the bits of what it touches.

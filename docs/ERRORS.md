@@ -1015,7 +1015,7 @@ Raised by bodies and queries (engine/physics/world.ts, engine/physics/queries.ts
 
 - Message: `there is no collision group {group}{suggestion}`
 - Fix: name one of the groups in engine/physics/groups.ts: world, prop, actor, crowd, flyer, corpse
-- Registered in: [`engine/physics/groups.ts` line 33](../engine/physics/groups.ts)
+- Registered in: [`engine/physics/groups.ts` line 34](../engine/physics/groups.ts)
 
 ## sim
 

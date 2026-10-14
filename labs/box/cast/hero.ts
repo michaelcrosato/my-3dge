@@ -18,6 +18,9 @@
  *   speed down to half: the controller's dash keeps its speed, so it reaches 3.25 m where the prototype's reached
  *   2.7 m); a jump pressed up to 0.12 s before landing still jumps.
  *
+ * He shoves the crowd (`shoves: ['crowd']`): his controller passes walkers, slimes and wisps, and his capsule pushes
+ * their bodies aside, as the prototype's `HERO_QUERY` did (`20-sim.js:33`; ADR-0020 amendment 9).
+ *
  * His body: the default build (`build:chibi`, as the prototype's hero), empty-handed (`weapon: 'none'`).
  *
  * His fight (Box 5, WP 6.7): `HERO_FIGHT`, with a sword: his combo, the thrust out of a dash, his bolt, his hits.
@@ -72,6 +75,7 @@ export function heroCharacter(tuning: HeroTuning = {}): Character {
     jumpSpeed: tuning.jumpSpeed ?? p.jump / UNITS,
     characterGravity: p.gravity / UNITS,
     maxFall: p.maxFall / UNITS,
+    shoves: ['crowd'], // HERO_QUERY: his capsule shoves the crowd aside, never steering round it
     acceleration: rate,
     deceleration: rate,
     skid: rate,

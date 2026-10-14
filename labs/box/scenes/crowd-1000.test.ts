@@ -5,7 +5,8 @@
  * only in their count; and the Box 4 replays do what their descriptions say, to their goldens: in box-4-chase
  * (tests/replays/box-4-chase.replay.json) the hero walks off the dais, up the west stairs and along the west gallery,
  * and the crowd follows him up the stairs, walkers walking their rise and standing on the gallery, 1 m up, at the end
- * (Done-when 1); in box-4-hop a crowd of slimes hops up after him.
+ * (Done-when 1); in box-4-hop a crowd of slimes hops up after him; in box-4-stairs, at 1,000, the hero waits at the
+ * stairs' foot with the crowd round him and still climbs to the gallery, shoving it aside (the hero's `shoves`).
  * @see labs/box/scenes/crowd-1000.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -126,6 +127,18 @@ describe('the crowd', () => {
     expect(kinds.filter((k) => k === 'walker').length).toBeGreaterThanOrEqual(3); // Done-when 1: at least one
     expect(kinds).not.toContain('wisp'); // the flyers hover; those on it walked or hopped up the stairs
   }, 120_000);
+
+  it('lets the hero through 1,000 in box-4-stairs: he waits 5 s at the stairs’ foot in the crowd, then climbs to the gallery', async () => {
+    const waiting = await play('box-4-stairs', 620);
+    const foot = waiting.engine.get(1)?.actor as { x: number; y: number; z: number };
+    const round = members(waiting.engine).filter(({ crowdMember: a }) => Math.hypot(a.x - foot.x, a.z - foot.z) < 2);
+    expect(round.length).toBeGreaterThanOrEqual(5); // the crowd presses in while he waits
+    const end = await play('box-4-stairs');
+    const hero = end.engine.get(1)?.actor as { x: number; y: number; z: number };
+    expect(glyphAt(hero.x, hero.z)).toBe('glyph:gallery');
+    expect(hero.y).toBeCloseTo(1, 1);
+    expect(end.hash).toBe(goldenOf('box-4-stairs'));
+  }, 180_000);
 
   it('hops up the west stairs after him in box-4-hop: slimes stand on the west gallery at the end', async () => {
     const end = await play('box-4-hop');

@@ -24,8 +24,10 @@ import { createSoundReader, timelineHash, type BoxSoundEvent } from '../../labs/
  * The fight replay (tests/replays/box-5-fight.replay.json) and its timeline's golden: how many sounds, their hash.
  * Re-recorded with the replay's goldens at gate G7's review: the fight's blows go through the walkers' reactions
  * (WP 7.8): the big ones knock walkers down for a while, so the run changes and gives 79 sounds where it gave 81.
+ * Again after G9 (WP 5.7, ADR-0020 amendment 9): the hero shoves the crowd aside instead of steering round it, so
+ * his path through the foes changes and the run gives 77 sounds.
  */
-export const FIGHT_TIMELINE = { replay: 'tests/replays/box-5-fight.replay.json', sounds: 79, hash: '94ad7308afa14921' };
+export const FIGHT_TIMELINE = { replay: 'tests/replays/box-5-fight.replay.json', sounds: 77, hash: 'e1ecc4b32f385e87' };
 
 /** A replay's sound timeline: its sounds, their hash, the world's hash at the end and the events missed (0). */
 export interface Timeline {

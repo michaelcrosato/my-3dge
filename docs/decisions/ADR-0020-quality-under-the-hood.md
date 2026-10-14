@@ -131,3 +131,25 @@ Actions names: game code still imports only engine/sim-api.ts or engine/index.ts
 each declaration. engine/anim/api.ts keeps sim-api's invariants (one name per line, append-only by area) and sits in
 the anim layer, so it re-exports only engine/anim/ modules. Later WPs append animation names to engine/anim/api.ts
 (PLAN.md §11.3 and §5 edited). sim-api.ts drops to about 330 lines, anim/api.ts is about 300.
+
+## Amendment 9 (2026-10-14, after G9's cleanup, WP-5.7): a character's controller passes the groups it shoves
+
+At 1,000 walkers the box's hero could not get through the crowd, at the stairs' foot or on open floor: the controller
+queried with his collider's own groups, which include the crowd (engine/physics/groups.ts), so every walker was a wall
+to steer round, and his only way through was amendment 3's 70 kg push per contact, against a crowd pressing in along
+its flow field. The prototype had left the crowd out of its hero's query (`HERO_QUERY`,
+`my-3d2dge:src/stress-world/20-sim.js:33`: "its capsule shoves monsters aside"); that was never ported.
+- **Built:** a character option `shoves` (engine/physics/character.ts, collision group names, absent by default): the
+  controller's queries (the moves across and down, the step-up's room test and `sink`) leave those groups out
+  (groups.ts `dropGroups`), so it never steers round them, while its capsule still meets them in the solver and shoves
+  their dynamic bodies aside. The box's hero sets `shoves: ['crowd']` (labs/box/cast/hero.ts).
+- **Measured:** tests/replays/box-4-stairs.replay.json (box:crowd-1000) walks him to the west stairs' foot, waits 5 s
+  with the crowd pressing round him, and climbs: he stands on the gallery, 1 m up, at step 704 (without `shoves` he
+  ended at the foot, 0.07 m up). The stairs are a 1:5 ramp the crowd climbs, so WP 5.7's "crowd climb 0.06 m" and gate
+  G4's step-height note are settled.
+- **Goldens:** the hero's character is hashed data, so every replay with him moved at step 0. box-4-chase, box-4-hop
+  and box-5-fight changed as runs (the fight's sound timeline gives 77 sounds where it gave 79); box-2-dash, -jump,
+  -walk, box-3-climb, -dais, -knock and box-8-clips did not: with `shoves` left out of the hashed state, all 11
+  checkpoints of each gave their earlier goldens. All were re-recorded (Node ×3 and Chromium ×3 agreeing).
+- **Rejected:** a crowd-wide rule that every controller passes the crowd (a game may want a hero the crowd blocks);
+  keeping the option out of the hash (it is gameplay, so it belongs in the state).

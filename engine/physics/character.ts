@@ -9,7 +9,9 @@
  * move (engine/physics/move.ts's `moveCharacter`: across then down, its own steps and snap), `settle`, then walls,
  * pushes and the ground probe. Its `state` (`CHARACTER_STATE_FIELDS`) is plain data. Pushing shares momentum (an
  * inelastic collision of a `push`-kg mass); walls stop the velocity going into them, slopes do not; kinematic floors
- * carry it exactly (`carried`); idle on fixed ground it skips the controller (ADR-0020 amendments 3 and 5).
+ * carry it exactly (`carried`); idle on fixed ground it skips the controller (ADR-0020 amendments 3 and 5). A
+ * character that `shoves` a group (the box's hero, the crowd) moves as if those bodies were not there, and its capsule
+ * pushes them aside in the physics step, as the prototype's hero shoved monsters (ADR-0020 amendment 9).
  *
  * Invariants: it keeps nothing between ticks but `state` (move.ts's controller keeps nothing either), so a restored
  * world steps on alike. Same state, input and world: same tick, in Node and Chromium.
@@ -36,6 +38,7 @@ import { Vector3 } from '../core/math';
 import { defineSchema, freezeValue, parse, type EntryOf, type Field, type Schema } from '../core/schema';
 import { defineSettings } from '../core/settings';
 import { handleOf } from './capture';
+import { GROUP_NAMES } from './groups';
 import { settle, steer } from './feel';
 import { isWall, moveCharacter, partsOf, sink, type CharacterMove } from './move';
 import { check, vec, type Vec3Like } from './queries';
@@ -72,6 +75,12 @@ export const CHARACTER_FIELDS = defineSchema({
   slideSlope: num(40 * DEG, 0, 90 * DEG, 'Ground steeper than this slides it down (40°).', 'rad'),
   slide: { type: 'boolean', default: true, description: 'Whether it slides along walls and obstacles it walks into.' },
   push: num(70, 0, 100000, 'The mass it pushes props with, and its weight on dynamic floors.', 'kg'),
+  shoves: {
+    type: 'array',
+    items: { type: 'string', enum: GROUP_NAMES },
+    description:
+      'Collision groups its controller passes through, so only the solver meets them: its capsule shoves their bodies aside, never steering round them (the box hero: crowd). Absent: none.',
+  },
   characterGravity: {
     type: 'number',
     minimum: 0,

@@ -23,6 +23,7 @@
  * touches('prop', 'actor'); // true
  * touches('flyer', 'crowd'); // false
  * groupBits('world').toString(16); // '1003f': member of world (bit 1), touches all six groups
+ * dropGroups(groupBits('actor'), ['crowd']).toString(16); // '40003': an actor's query that passes the crowd
  * @see engine/physics/groups.test.ts
  */
 import { codeError, defineCodes, didYouMean } from '../core/log';
@@ -74,6 +75,15 @@ export function touches(a: GroupName, b: GroupName): boolean {
 export function groupBits(group: GroupName): number {
   const { bit, touches: touched } = entry(group);
   return ((bit << 16) | bitsOf(touched)) >>> 0;
+}
+
+/**
+ * Rapier's interaction groups `bits` (a collider's `groupBits`) with the groups named taken out of what they touch: a
+ * character controller's query that passes through them (engine/physics/character.ts `shoves`), the collider itself
+ * still touching them in the solver. Throws `PHYSICS_UNKNOWN_GROUP`.
+ */
+export function dropGroups(bits: number, groups: readonly string[]): number {
+  return (bits & ~bitsOf(groups)) >>> 0;
 }
 
 /** Rapier's interaction groups for a query that hits the groups named (all of them when none are). */

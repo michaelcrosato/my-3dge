@@ -98,7 +98,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 
 ## 4. The hero and the crowd (WP 5.7; the controller of WPs 3.2 and 4.1)
 
-- [ ] 4.1 **At 1,000 walkers the hero cannot get through the crowd**, at the stairs or on open floor.
+- [x] 4.1 **At 1,000 walkers the hero cannot get through the crowd**, at the stairs or on open floor.
   - Now: in a headless run he moves 0.42 m in 3 s at the stairs' foot and 0.05 m on open floor (with 100 walkers he
     reaches the gallery). The stairs are a 1:5 ramp that the crowd climbs, so WP 5.7's "crowd climb 0.06 m" and gate
     G4's step-height note are settled. The cause: the character controller queries with the hero's own collision

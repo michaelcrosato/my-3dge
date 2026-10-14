@@ -12,6 +12,9 @@
  *   `autostep.height` is exactly what `moveCharacter` climbs. Grounded means standing on walkable ground (Rapier alone
  *   also says so against a wall at a jump's apex).
  * - **One-way platforms** are solid only to feet at or above their top, less a grace; sensors never block.
+ * - **What it shoves it passes:** the controller's queries leave out the groups a character `shoves` (the box hero:
+ *   the crowd), so it never steers round them; its capsule meets them in the solver and shoves them aside
+ *   (`my-3d2dge:src/stress-world/20-sim.js:33`, `HERO_QUERY`; ADR-0020 amendment 9).
  *
  * Invariants: Rapier's controller (one per Rapier world and skin) keeps nothing between moves (every parameter is set
  * before each), so after a restore (a new Rapier world) a new one takes over. Same state, input and world: same move,
@@ -36,6 +39,7 @@
 import RAPIER from '@dimforge/rapier3d-simd-compat';
 import { Vector3 } from '../core/math';
 import { bodyId, handleOf } from './capture';
+import { dropGroups } from './groups';
 import type { Character } from './character';
 import { check, vec, type Vec3Like } from './queries';
 import { rapierOf, type Physics } from './world';
@@ -137,6 +141,12 @@ export function isWall(character: Character, normal: Vector3): boolean {
   return normal.y < Math.cos(character.maxSlope + SLOPE_TOLERANCE) && normal.y > -1e-3;
 }
 
+/** The groups a character's controller queries: its collider's, less the groups it `shoves` (groups.ts `dropGroups`). */
+function queryGroups(collider: RAPIER.Collider, character: Character): number {
+  const groups = collider.collisionGroups();
+  return character.shoves?.length ? dropGroups(groups, character.shoves) : groups;
+}
+
 /** Whether `character` can stand on a surface: no steeper than it climbs. */
 export function isWalkable(character: Character, normal: Vector3): boolean {
   return normal.y >= Math.cos(character.maxSlope + SLOPE_TOLERANCE);
@@ -162,7 +172,7 @@ export function moveCharacter(
   const want = vec(desired, 'moveCharacter(desired)');
   const start = new Vector3().copy(rigid.translation());
   const controller = controllerOf(world, character.offset);
-  const groups = collider.collisionGroups();
+  const groups = queryGroups(collider, character);
   const { radius, height } = character.capsule;
   const ground = start.y - height / 2 - radius - character.offset;
   const solid = oneWayFilter(world, options.oneWay, ground + character.offset);
@@ -177,7 +187,7 @@ export function moveCharacter(
   const lift = grounded ? leg(start, 0, character.offset * LIFT, 0).moved : new Vector3();
   const from = start.clone().add(lift);
   let across = leg(from, want.x, 0, want.z);
-  if (grounded) across = stepUp(world, character, collider, rigid, leg, from, ground, want, across) ?? across;
+  if (grounded) across = stepUp(world, character, collider, rigid, leg, from, ground, want, across, groups) ?? across;
   const mid = from.clone().add(across.moved);
   let down = leg(mid, 0, want.y - lift.y, 0);
   if (grounded && !down.grounded && character.snap > 0) {
@@ -204,6 +214,7 @@ function stepUp(
   ground: number,
   want: RAPIER.Vector,
   across: Leg,
+  groups: number,
 ): Leg | null {
   const { height, width, dynamic } = character.autostep;
   const reach = Math.hypot(want.x, want.z);
@@ -217,7 +228,7 @@ function stepUp(
   const { radius } = character.capsule;
   const lean = Math.min(character.slideSlope, character.maxSlope);
   const onto = Math.max(reach, width, radius + character.offset - radius * Math.sin(lean) + 0.005);
-  const room = [collider.shape, 0, onto, true, FLAGS, collider.collisionGroups(), undefined, rigid] as const;
+  const room = [collider.shape, 0, onto, true, FLAGS, groups, undefined, rigid] as const;
   if (world.castShape(top, collider.rotation(), dir, ...room)) return null;
   const over = leg(top, dir.x * onto, 0, dir.z * onto);
   const fall = leg(top.clone().add(over.moved), 0, ground - top.y, 0, false);
@@ -264,7 +275,7 @@ export function sink(
   const controller = controllerOf(world, character.offset);
   configure(controller, character, false);
   const keep = (other: RAPIER.Collider) => !own.has(other.handle) && (solid?.(other) ?? true);
-  controller.computeColliderMovement(collider, { x: 0, y: by, z: 0 }, FLAGS, collider.collisionGroups(), keep);
+  controller.computeColliderMovement(collider, { x: 0, y: by, z: 0 }, FLAGS, queryGroups(collider, character), keep);
   const y = controller.computedMovement().y;
   collider.setTranslation({ x: at.x, y: at.y + y, z: at.z });
   return y;
