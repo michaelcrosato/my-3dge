@@ -1707,7 +1707,7 @@ A WP is done only when all of these hold:
     - page errors mapped to `.ts` files and lines through Vite's source maps.
   - **`x.js` and `tools/x.ts`:** tsx's `register()`, then the dispatcher: `parseArgs`, help generated from file comments, the `report.json` writer and the exit codes (§8.1). Every report records the runtime.
   - **`tools/lib/vite.ts` and `tools/lib/browser.ts`:** a Vite dev server through its JavaScript API, and Chromium through Playwright's library with the options of `playwright.config.ts`, for the `x` commands that open pages.
-  - **`x src`:** prints and checks `$MY3D2DGE_SRC` and `$SHARDFALL_SRC`, cloning each as in WP 0.1 when it is missing. Shardfall is private: when a source cannot be reached, `x src` names the repository the session must include, and the agent escalates once (§11.5).
+  - **`x src`:** prints and checks `$MY3D2DGE_SRC` and `$SHARDFALL_SRC`, cloning each as in WP 0.1 when it is missing. Both sources are public (shardfall since 2026-10-14, after this plan was written), so a clone from GitHub needs no token: when a source cannot be reached, `x src` names the repository the session must reach or include, and the agent escalates once (§11.5).
     Tests that read the source call `requireSource()` (`tools/lib/source.ts`). When the source cannot be resolved
     (offline), they skip and the summary reports `deferred: no source`. `x ci --local` runs `x src` first and fails if
     it cannot resolve the source, so nothing is deferred there.
@@ -3834,7 +3834,7 @@ Humans give direction remotely; agents fly the plane. The owner's part is small,
 | Branch protection that makes `ci.yml` a required check | I-33 | Agents run `x ci --local` before every merge |
 | Vercel imports the repository (the owner's Vercel does it automatically; `vercel.json` sets the build) | WP 0.12 | Films and pictures in the PR or chat; `npm run build` plus `npx vite preview` locally |
 | Report problems seen on a phone or in the deployed pages: nothing tests them (ADR-0021) | WPs 0.12, 3.12 | Nothing is fixed there until reported, except a failed Vercel build |
-| Sessions that run this plan include `michaelcrosato/my-3d2dge` and `michaelcrosato/shardfall` (shardfall is private and cannot be cloned otherwise) | WP 0.1 | `x src` fails, and with it `x ci --local`, so nothing merges; the agent escalates at once |
+| Sessions that run this plan include `michaelcrosato/my-3d2dge` and `michaelcrosato/shardfall` (both are public since 2026-10-14, so a session or a GitHub Actions runner also clones them anonymously) | WP 0.1 | `x src` fails, and with it `x ci --local`, so nothing merges; the agent escalates at once |
 | The four GLBs of the Quaternius Universal Animation Library's version 2 (`UAL1_Standard.glb`, `UAL1_Standard_RM.glb`, `UAL2_Standard.glb`, `UAL2_Standard_RM.glb`): a download link or a private repository | WP 8.8 (on demand) | Quaternius clips stay as WP 8.10 brought them (format 1), listed as blocked |
 | Model access for agent-usability evals (headless Claude Code or an API key) | WP 12.2 (on demand) | `x evals --dry-run` checks the tasks and their acceptance tests only |
 | Any binary asset other than a font (doctrine: Assets) | As needed | A procedural or text version, or the feature waits |

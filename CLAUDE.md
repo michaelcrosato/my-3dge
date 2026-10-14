@@ -11,8 +11,8 @@
   script (PLAN.md §11.5).
 - **Cloud container.** Chromium 141 is at `/opt/pw-browsers/chromium` (`$CHROMIUM_PATH` when set); never run
   `playwright install`. Outbound HTTPS goes through the environment's proxy: never disable TLS verification. If the
-  sources cannot be resolved, the session must include `michaelcrosato/my-3d2dge` and `michaelcrosato/shardfall`
-  (shardfall is private): escalate once (PLAN.md §11.5).
+  sources cannot be resolved, the session must reach GitHub (both are public since 2026-10-14, so they clone with no
+  token) or include `michaelcrosato/my-3d2dge` and `michaelcrosato/shardfall`: escalate once (PLAN.md §11.5).
 - **Long suites** (`npm run e2e`, `node x ci --local`) run as background tasks. Read `out/**/report.json` instead of
   scrolling their output.
 - **API questions** are answered by the pinned packages' own types and sources in `node_modules` (three.js's `src/`

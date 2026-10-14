@@ -252,7 +252,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 
 ## 8. CI on GitHub Actions (WP 0.9, ESC-0001; decision 1)
 
-- [ ] 8.1 **shardfall is public now** (GitHub reports it public on 2026-10-14; it was private when the plan was
+- [x] 8.1 **shardfall is public now** (GitHub reports it public on 2026-10-14; it was private when the plan was
       written), so the runner clones both sources anonymously and needs no secret. `x src` must resolve both
       (tools/cmd/src.ts:24; step 2 of `CI_STEPS`, tools/cmd/ci.ts:63-71). Correct the stale "shardfall is private"
       notes: CLAUDE.md:15, PLAN.md §9's WP 0.2 (`x src`) and §11.5's table, tools/cmd/src.ts:8. If a clone is
