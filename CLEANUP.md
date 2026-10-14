@@ -155,7 +155,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
       (engine/anim/clip/retarget.ts:307), so it takes the thigh frame's default. Pass the source knee's direction as
       the pole. Prove: `node x qa anim --only clip:CMU/Get_Up_From_Side,clip:MESH2MOTION/Slide_Exit,clip:MESH2MOTION/Zombie_Rise`
       reports their 4 entries in tests/baselines/qa-anim-library.json as stale; remove them with the reason.
-- [ ] 5.5 **`x describe action` lists no ids** (WP 8.7): tools/cmd/describe.ts:235 calls only `defineLibrary()`, and
+- [x] 5.5 **`x describe action` lists no ids** (WP 8.7): tools/cmd/describe.ts:235 calls only `defineLibrary()`, and
       the engine cannot import data/. Add a tools-side `defineActions()` beside it (after 2.1's actions.ts split).
       Prove: tools/cmd/describe.test.ts lists the action ids.
 - [ ] 5.6 **The CMU set's credit line** (WP 8.1). The 25 `license` fields are corrected, but `credit` in
@@ -188,7 +188,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
       (engine/app/headless.ts:259-263). Load the input members in headless.ts and let `step(n)` sample the virtual
       device when no intents are given. Prove: a headless test where `hold('jump'); step(3)` records the input. Add to
       WP 10.6's entry in PLAN.md that system-layer actions never enter intents (its plan sends menu actions as input).
-- [ ] 6.5 **Tests that read the clock** (ADR-0022: time is noise, counts are checks): engine/sim/world.test.ts:376-393
+- [x] 6.5 **Tests that read the clock** (ADR-0022: time is noise, counts are checks): engine/sim/world.test.ts:376-393
       compares performance.now ratios; tools/cmd/describe.test.ts:232-237 waits a real 3 s; tools/anim/
       library.test.ts:27-29 asserts under 50 ms. Make each assert a count (calls, reads) or use an injected timer,
       guarding the same thing; the reason goes in the commit.

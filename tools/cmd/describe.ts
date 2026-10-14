@@ -36,7 +36,7 @@ import ts from 'typescript';
 import { EngineError } from '../../engine/core/log';
 import { registry, type EntryDescription, type KindDescription } from '../../engine/core/registry';
 import type { FieldRow } from '../../engine/core/schema';
-import { defineLibrary } from '../anim/library';
+import { defineActions, defineLibrary } from '../anim/library';
 import { walk } from '../lib/docs';
 import { targetSlug, type Finding } from '../lib/report';
 import { UsageError, type Command, type CommandResult } from '../x';
@@ -225,6 +225,21 @@ export type WorkerMessage = { loading: string } | { done: WorkerDone };
 /** How long the child process may take before it is stopped and the module it was loading named (ms). */
 export const WORKER_TIMEOUT_MS = 60_000;
 
+/**
+ * When the child process counts as hung: `watch(stop)` arms the watch, hears each module the child starts loading
+ * (`loading`), and is `done` when the child ends. `afterMs` stops it after a time; the tests stop it on a module's name,
+ * never by the clock (ADR-0022).
+ */
+export type HangWatch = (stop: () => void) => { loading(file: string): void; done(): void };
+
+/** A watch that stops the child `ms` after it started. */
+export const afterMs =
+  (ms: number): HangWatch =>
+  (stop) => {
+    const timer = setTimeout(stop, ms);
+    return { loading: () => undefined, done: () => clearTimeout(timer) };
+  };
+
 /** The argument that makes this module, run as a script with an IPC channel, the child process. */
 const WORKER_FLAG = '--describe-worker';
 
@@ -233,6 +248,7 @@ async function workerMain([root, kind, id]: string[]): Promise<void> {
   const send = (message: WorkerMessage) => new Promise<void>((sent) => process.send?.(message, () => sent()));
   const { loaded, warnings } = await loadRegistrations(root, (file) => send({ loading: file }));
   defineLibrary();
+  defineActions(); // the engine cannot import data/: the actions are data the tools read (WP 8.7)
   const target = resolveTarget(kind, id);
   const done: WorkerDone = { loaded, warnings, kinds: registry.kinds().length, target };
   try {
@@ -248,12 +264,14 @@ async function workerMain([root, kind, id]: string[]): Promise<void> {
 
 /**
  * Runs the listing in a child Node process over `root`'s registrations; resolves to what it sent, or to the failure
- * when it hung (stopped after `timeoutMs`) or ended without a listing, naming the module it was loading.
+ * when it hung (stopped by `hang`, after `timeoutMs` by default) or ended without a listing, naming the module it was
+ * loading.
  */
 export function describeInWorker(
   root: string,
   positionals: readonly string[],
   timeoutMs = WORKER_TIMEOUT_MS,
+  hang: HangWatch = afterMs(timeoutMs),
 ): Promise<{ done: WorkerDone } | { failure: Finding }> {
   const tsx = pathToFileURL(createRequire(import.meta.url).resolve('tsx')).href;
   const child = fork(fileURLToPath(import.meta.url), [WORKER_FLAG, root, ...positionals], {
@@ -267,17 +285,17 @@ export function describeInWorker(
   const keep = (chunk: Buffer) => (output = `${output}${chunk}`.slice(-2000));
   child.stdout?.on('data', keep);
   child.stderr?.on('data', keep);
-  child.on('message', (message: WorkerMessage) => {
-    if ('loading' in message) loading = message.loading;
-    else done = message.done;
-  });
-  const timer = setTimeout(() => {
+  const watch = hang(() => {
     hung = true;
     child.kill('SIGKILL');
-  }, timeoutMs);
+  });
+  child.on('message', (message: WorkerMessage) => {
+    if ('loading' in message) watch.loading((loading = message.loading));
+    else done = message.done;
+  });
   return new Promise((resolve) => {
     const finish = (code: number | null, error?: Error) => {
-      clearTimeout(timer);
+      watch.done();
       if (done) return resolve({ done });
       const file = loading;
       const where = file ? ` while loading ${file}` : '';
@@ -298,8 +316,8 @@ export function describeInWorker(
   });
 }
 
-/** Builds the command; tests shorten the child process's time limit. */
-export function createDescribeCommand(options: { timeoutMs?: number } = {}): Command {
+/** Builds the command; tests give the child process's watch (`hang`) and the time limit its message names. */
+export function createDescribeCommand(options: { timeoutMs?: number; hang?: HangWatch } = {}): Command {
   return {
     usage: 'describe [kind [id] | kind:name]',
     options: {},
@@ -307,7 +325,7 @@ export function createDescribeCommand(options: { timeoutMs?: number } = {}): Com
     async run({ root, positionals }): Promise<CommandResult> {
       const [kind, id] = positionals;
       const target = [kind, id].filter(Boolean).join(' ') || undefined;
-      const outcome = await describeInWorker(root, positionals, options.timeoutMs);
+      const outcome = await describeInWorker(root, positionals, options.timeoutMs, options.hang);
       if ('failure' in outcome) {
         return {
           ok: false,

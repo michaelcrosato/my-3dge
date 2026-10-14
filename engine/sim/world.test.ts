@@ -5,11 +5,10 @@
  * streams, every entry point inside the fdlibm swap (native `Math` again afterwards), entity streams dropped on
  * despawn (and refused afterwards), components as plain data (class instances and typed arrays refused, values copied
  * on entry, kept in name and declared order), `events` without `emit`, frozen intents, the coded errors, and the cost
- * of per-entity streams at 5,000 entities (measured against the same world without them, so the bounds hold on a
- * loaded machine).
+ * of per-entity streams at 5,000 entities, counted (names built, maps walked), never timed (ADR-0022).
  * @see engine/sim/world.ts
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createLog, EngineError } from '../core/log';
 import { createRegistry } from '../core/registry';
 import { createSettings, defineSettings } from '../core/settings';
@@ -354,42 +353,48 @@ describe('randomness and settings', () => {
   });
 });
 
-describe('performance at 5,000 entities', () => {
-  it('keeps per-entity streams cheap: a step and a despawn cost a few times what they cost without them', () => {
-    const make = (streams: boolean) => {
-      const registry = createRegistry();
-      const number = (fallback: number) => ({ type: 'number', default: fallback, description: 'n' }) as const;
-      defineComponent('mover', { description: 'm', fields: { x: number(0), left: number(0) } }, registry);
-      const w = createWorld<{ mover: { x: number; left: number } }>({ seed: 1, registry });
-      w.run(() => {
-        for (let i = 0; i < 5000; i++) w.spawn({ mover: { left: 50 + (i % 100) } });
-      });
-      w.systems.add('move', (w) => {
-        for (const e of w.query('mover')) {
-          e.mover.x += streams ? w.rng.entity(e.id, 'jit').next() : 0.5;
-          if (--e.mover.left > 0) continue;
-          w.despawn(e.id);
-          w.spawn({ mover: { left: 100 } });
-        }
-      });
-      return w;
+describe('per-entity streams at 5,000 entities', () => {
+  it('keep a step and a despawn cheap: no name is built for a stream that exists, and no despawn walks them all', () => {
+    const registry = createRegistry();
+    const number = (fallback: number) => ({ type: 'number', default: fallback, description: 'n' }) as const;
+    defineComponent('mover', { description: 'm', fields: { x: number(0), left: number(0) } }, registry);
+    const w = createWorld<{ mover: { x: number; left: number } }>({ seed: 1, registry });
+    w.run(() => Array.from({ length: 5000 }, (_, i) => w.spawn({ mover: { left: 50 + (i % 100) } })));
+    w.systems.add('move', (w) => {
+      for (const e of w.query('mover')) {
+        e.mover.x += w.rng.entity(e.id, 'jit').next();
+        if (--e.mover.left > 0) continue;
+        w.despawn(e.id);
+        w.spawn({ mover: { left: 100 } });
+      }
+    });
+    /** Runs `fn`, counting the entries `Map` iteration visits in maps of 1,000 or more: a walk over the streams. */
+    const walked = (fn: () => void) => {
+      const proto = Map.prototype as unknown as Record<string | symbol, (...a: unknown[]) => unknown>;
+      const names = ['forEach', 'keys', 'values', 'entries', Symbol.iterator] as const;
+      const originals = names.map((name) => proto[name]);
+      let visited = 0;
+      names.forEach((name, i) => (proto[name] = function (this: Map<unknown, unknown>, ...args: unknown[]) {
+        if (this.size >= 1000) visited += this.size;
+        return originals[i].apply(this, args);
+      })); // prettier-ignore
+      try {
+        fn();
+      } finally {
+        names.forEach((name, i) => (proto[name] = originals[i]));
+      }
+      return visited;
     };
-    /** Milliseconds per call of `fn`, the best of three rounds of `n`. */
-    const time = (fn: () => void, n: number) => {
-      fn();
-      const rounds = [0, 1, 2].map(() => {
-        const start = performance.now();
-        for (let i = 0; i < n; i++) fn();
-        return (performance.now() - start) / n;
-      });
-      return Math.min(...rounds);
-    };
-    const [plain, streamed] = [make(false), make(true)];
-    const step = time(() => streamed.step(), 10) / time(() => plain.step(), 10);
-    const despawn = (w: ReturnType<typeof make>) => () => w.run((w) => w.despawn(w.query('mover')[0].id));
-    const drop = time(despawn(streamed), 20) / time(despawn(plain), 20);
-    expect(Object.keys(streamed.state().rng).length).toBeGreaterThan(4900);
-    expect(step).toBeLessThan(6); // ≈ 1.7 measured; 16 before the entity index and the fast names
-    expect(drop).toBeLessThan(5); // ≈ 1 measured; ≈ 100 when a despawn walked every stream
+    for (let k = 0; k < 55; k++) w.step(); // from step 50 a step respawns 50 movers, with new streams
+    const before = new Set(Object.keys(w.state().rng)); // over 4,900 streams
+    const named = vi.spyOn(JSON, 'stringify');
+    const stepWalk = walked(() => w.step());
+    const built = named.mock.calls.filter(([keys]) => Array.isArray(keys) && keys[0] === 'entity').length; // stream names
+    const created = Object.keys(w.state().rng).filter((name) => !before.has(name)).length;
+    named.mockRestore();
+    expect([before.size > 4900, created > 0]).toEqual([true, true]);
+    expect(built).toBe(created); // a name per new stream, none for the 5,000 that exist (16× the cost before)
+    expect(stepWalk).toBe(0);
+    expect(walked(() => w.run((w) => w.despawn(w.query('mover')[0].id)))).toBe(0); // by index: it walked every stream
   });
 });

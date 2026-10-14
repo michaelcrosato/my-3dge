@@ -5465,6 +5465,8 @@ For the agents who maintain the engine.
 
 ### [`tools/anim/library.ts`](../tools/anim/library.ts)
 
+- `ACTIONS_DIR` (const): The engine's actions, one file each (`{ "action": "<name>", …spec }`).
+- `defineActions` (function): Defines every action of `ACTIONS_DIR`, in file order, into `registry` (the shared one) and returns them: a file defined before with the same spec is kept (`loadActions`), so a second call changes nothing.
 - `defineLibrary` (function): Registers every set of the library, then the mannequin, into `registry` (once); returns the sets' ids.
 - `libraryDirs` (function): The library's set directories (`cmu`, `quaternius`…): each directory of `root` with a set header, sorted.
 
@@ -5624,11 +5626,13 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/describe.ts`](../tools/cmd/describe.ts)
 
-- `createDescribeCommand` (function): Builds the command; tests shorten the child process's time limit.
+- `afterMs` (const): A watch that stops the child `ms` after it started.
+- `createDescribeCommand` (function): Builds the command; tests give the child process's watch (`hang`) and the time limit its message names.
 - `default` (default): Lists the registries from their schemas (PLAN.md §8.1, §6.6): `x describe` names every kind with its entry count, `x describe <kind>` gives its fields (type, default, range, unit, docs) and ids, and `x describe <kind> <id>` one entry's values, `*` marking those that differ from the default.
 - `describeFile` (function): Where `x describe [kind [id]]` writes the whole description: `describe.json` beside its report.
-- `describeInWorker` (function): Runs the listing in a child Node process over `root`'s registrations; resolves to what it sent, or to the failure when it hung (stopped after `timeoutMs`) or ended without a listing, naming the module it was loading.
+- `describeInWorker` (function): Runs the listing in a child Node process over `root`'s registrations; resolves to what it sent, or to the failure when it hung (stopped by `hang`, after `timeoutMs` by default) or ended without a listing, naming the module it was loading.
 - `fieldLine` (function): One line for a field: name, type, default, range, unit, values, flags, then its description.
+- `HangWatch` (type): When the child process counts as hung: `watch(stop)` arms the watch, hears each module the child starts loading (`loading`), and is `done` when the child ends.
 - `idsLine` (function): A kind's ids as one line of at most `IDS_LINE` characters; a cut list says how many there are and where.
 - `listing` (function): What one listing prints, from the shared registry, ending with where the whole description is when a line was cut; throws the registry's error for an unknown kind or id.
 - `Listing` (interface): What one listing prints, besides the verdict, and the data `describe.json` holds.

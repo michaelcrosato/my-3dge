@@ -14,19 +14,21 @@ import { loadLibrary } from '../../labs/box/library';
 import { walk } from '../lib/docs';
 import { ROOT } from '../x';
 import { defineLibrary, libraryDirs } from './library';
-import { readSet } from './repack';
+import { readSet, readSetDir } from './repack';
 
 describe('defineLibrary', () => {
   it('registers every set, sorted, then the mannequin, once per registry', () => {
     const registry = createRegistry();
-    const ids = defineLibrary(registry);
+    let reads = 0;
+    const read: typeof readSetDir = (dir) => (reads++, readSetDir(dir));
+    const ids = defineLibrary(registry, read);
+    expect(reads).toBe(libraryDirs().length);
     expect(libraryDirs()).toEqual([...libraryDirs()].sort());
     expect(ids).toEqual(libraryDirs().map((dir) => `clipset:${dir}`));
     expect(ids).toContain('clipset:quaternius');
     expect([registry.has('build', 'build:mannequin'), registry.has('body', 'body:mannequin')]).toEqual([true, true]);
-    const started = performance.now();
-    expect(defineLibrary(registry)).toEqual(ids);
-    expect(performance.now() - started).toBeLessThan(50); // nothing read again
+    expect(defineLibrary(registry, read)).toEqual(ids);
+    expect(reads).toBe(libraryDirs().length); // nothing read again
   });
 
   it('ends with the entries the box page registers, and the sets the tools join', async () => {

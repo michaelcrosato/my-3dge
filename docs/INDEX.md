@@ -1301,7 +1301,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `CLIP_FPS`, `clipVectorFiles`, `clipVectorsReadme`, `CURATED_SETS`, `decodeLegacyClip`, `float32Number`, `frameCount`, `framesSha256`, `LEGACY_CODEC`, `legacyClipVectors`, `LegacyReadable`, `LegacySet`, `loadLegacyReadable`, `readLegacySet`, `sampledFrames`
   - Tests: [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts), [`tools/anim/legacy-readable.test.ts`](../tools/anim/legacy-readable.test.ts)
 - [`library.ts`](../tools/anim/library.ts): The animation library in Node (PLAN.md §10, WP 8.9): `defineLibrary()` registers every set of `data/anim/sets/` as a `clipset` entry, joined from its files as the box page joins them (`clipSetFromFiles`, engine/anim/clip/clipsets.ts; labs/box/library.ts `loadLibrary`), sorted by directory, then the mannequin, its build and body, from the Quaternius set (engine/gfx/puppets/bodies/mannequin.ts).
-  - Exports: `defineLibrary`, `libraryDirs`
+  - Exports: `ACTIONS_DIR`, `defineActions`, `defineLibrary`, `libraryDirs`
   - Tests: [`tools/anim/library.test.ts`](../tools/anim/library.test.ts)
 - [`rates.ts`](../tools/anim/rates.ts): Verifying the frame rate of CMU takes the site's motion list leaves out (PLAN.md WP 8.5): the ledger read them at an assumed 120 frames a second and flagged them `fps?`.
   - Exports: `amcFrames`, `applyRates`, `c3dEvidence`, `c3dHeader`, `RateEvidence`, `twinCandidates`, `verifyRates`
@@ -1343,7 +1343,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `check`, `createDepsCommand`, `default`
   - Tests: [`tools/cmd/deps.test.ts`](../tools/cmd/deps.test.ts)
 - [`describe.ts`](../tools/cmd/describe.ts): Lists the registries from their schemas (PLAN.md §8.1, §6.6): `x describe` names every kind with its entry count, `x describe <kind>` gives its fields (type, default, range, unit, docs) and ids, and `x describe <kind> <id>` one entry's values, `*` marking those that differ from the default.
-  - Exports: `createDescribeCommand`, `default`, `describeFile`, `describeInWorker`, `fieldLine`, `idsLine`, `listing`, `Listing`, `loadRegistrations`, `registersContent`, `REGISTRATION_ROOTS`, `registrationModules`, `resolveTarget`, `WORKER_TIMEOUT_MS`, `WorkerDone`, `WorkerMessage`
+  - Exports: `afterMs`, `createDescribeCommand`, `default`, `describeFile`, `describeInWorker`, `fieldLine`, `HangWatch`, `idsLine`, `listing`, `Listing`, `loadRegistrations`, `registersContent`, `REGISTRATION_ROOTS`, `registrationModules`, `resolveTarget`, `WORKER_TIMEOUT_MS`, `WorkerDone`, `WorkerMessage`
   - Tests: [`tools/cmd/describe.test.ts`](../tools/cmd/describe.test.ts)
 - [`docs.ts`](../tools/cmd/docs.ts): Generates and checks the docs that come from the code (PLAN.md §6.8, §8.12): `docs/INDEX.md`, `docs/API.md` and `docs/ERRORS.md`, the `@example` blocks, the paths the docs mention, and `docs/PROGRESS.md`'s length.
   - Exports: `check`, `checkComments`, `createDocsCommand`, `default`, `DocsOptions`, `driftChecks`, `MAX_COMMENT_LINES`, `PROGRESS`

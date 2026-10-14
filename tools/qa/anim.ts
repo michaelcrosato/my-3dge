@@ -29,13 +29,10 @@
  * Object.keys(humanoidStates()).includes('move:slash'); // true
  * @see tools/qa/anim.test.ts
  */
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { Fnv64 } from '../../engine/core/hash';
 import { Vector3 } from '../../engine/core/math';
 import { getBuild } from '../../engine/anim/builds';
 import { actionCheck } from '../../engine/anim/actions-check';
-import { loadActions } from '../../engine/anim/actions-data';
 import { Animator } from '../../engine/anim/character';
 import { loadClipLibrary, type ClipLibrary } from '../../engine/anim/clip/library';
 import { animCheckBody, type AnimCheckName } from '../../engine/anim/check';
@@ -55,8 +52,8 @@ import { Attack } from '../../engine/anim/attack';
 import { Blob, BLOB_MOVES, blobMoveTimes, type BlobInput } from '../../engine/anim/blob';
 import { Floater, FLOATER } from '../../engine/anim/floater';
 import { readSet } from '../anim/repack';
+import { defineActions } from '../anim/library';
 import type { QaFamily, QaViolation } from '../cmd/qa';
-import { ROOT } from '../x';
 import {
   ANIM_QA,
   closure,
@@ -133,11 +130,7 @@ let actionClips: ClipLibrary[] | undefined;
 
 /** Each action of data/anim/actions/ (WP 8.7) played by its own check, by QA id (its id, `action:<name>`). */
 export function actionStates(): Record<string, MatrixState> {
-  const dir = join(ROOT, 'data', 'anim', 'actions');
-  const files = readdirSync(dir)
-    .filter((file) => file.endsWith('.json'))
-    .sort();
-  const actions = loadActions(files.map((file) => JSON.parse(readFileSync(join(dir, file), 'utf8')) as unknown));
+  const actions = defineActions();
   actionClips ??= ['quaternius', 'mesh2motion'].map((set) => loadClipLibrary(readSet(set)));
   return Object.fromEntries(actions.map((action) => [action.id, actionCheck(action, { libraries: actionClips })]));
 }
