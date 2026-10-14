@@ -1,12 +1,12 @@
 /**
  * @file Unit tests for `x shot`'s Node half (`tools/cmd/shot.ts`): how a page argument and the `--scene`, `--cam`
- * and `--set` flags become a URL, the verdict on look notes, the PNG encoder (round trip through tools/lib/png.ts),
+ * and `--set` flags become a URL, `--ready-ms` in the usage, the verdict on look notes, the PNG encoder (round trip through tools/lib/png.ts),
  * and the flat report metrics of a shot (look metrics, the ID-pass list, repeated names, the marks' legend). The
  * metrics themselves are tested in engine/gfx/lookMetrics.test.ts; the browser half by tests/e2e/shot.spec.ts.
  */
 import { describe, expect, it } from 'vitest';
 import { decodePng } from '../lib/png';
-import { encodePng, frameMetrics, judgeFrame, pageUrl, resolvePage, shotMetrics } from './shot';
+import shot, { encodePng, frameMetrics, judgeFrame, pageUrl, READY_TIMEOUT_MS, resolvePage, shotMetrics } from './shot';
 
 describe('resolvePage and pageUrl', () => {
   it('opens a lab by its directory and an .html file as is, keeping the query', () => {
@@ -25,6 +25,14 @@ describe('resolvePage and pageUrl', () => {
     expect(pageUrl('labs/hello/?post=0', { cam: 'top' })).toBe('labs/hello/?post=0&cam=top');
     expect(pageUrl('tests/pages/shot.html')).toBe('tests/pages/shot.html');
     expect(() => pageUrl('labs/box', { set: ['gfx.resolution'] })).toThrow('--set takes key=value');
+  });
+});
+
+describe('--ready-ms', () => {
+  it('is in the usage and the options: a page may take longer than 30 s to signal ready (WP 7.8)', () => {
+    expect(READY_TIMEOUT_MS).toBe(30_000);
+    expect(shot.usage).toContain('[--ready-ms n]');
+    expect(shot.options['ready-ms']).toEqual({ type: 'string' });
   });
 });
 

@@ -22,8 +22,11 @@
  * or an `.html` file, with an optional query: `node x shot labs/hello`, `node x shot tests/pages/shot.html --cam iso
  * --marks`.
  *
+ * `--ready-ms <n>` gives the page longer to signal ready than `READY_TIMEOUT_MS` (30 s): a styled look on the hall
+ * under load can take more (WP 7.8).
+ *
  * Usage: node x shot <page> [--scene s] [--cam code] [--set k=v…] [--ids] [--metrics] [--marks] [--png]
- * [--thumb case [--update]]. Fails (exit 1) when the page signals an error or throws, reports another backend than
+ * [--thumb case [--update]] [--ready-ms n]. Fails (exit 1) when the page signals an error or throws, reports another backend than
  * WebGPU, draws a blank frame, has no ID pass for `--ids` or `--marks`, or its thumbnail misses the baseline.
  * Console warnings no advice baseline lists are warnings.
  *
@@ -44,6 +47,7 @@ import { decodePng } from '../lib/png';
 import { targetSlug, type Artifact, type Finding, type Report } from '../lib/report';
 import { startVite } from '../lib/vite';
 import { UsageError, type Command, type CommandResult } from '../x';
+import { wholeFlag } from './sim';
 import { waitReady, type Signals } from '../lib/page';
 import { findSession, pageErrorFinding, pageFailures, shootInSession, type Opened } from './inspect';
 
@@ -289,7 +293,7 @@ async function finishShot(context: ShotContext, opened: Opened): Promise<Command
 
 export default {
   usage:
-    'shot <page> [--scene s] [--cam code] [--set k=v…] [--ids] [--metrics] [--marks] [--png] [--thumb case [--update]]',
+    'shot <page> [--scene s] [--cam code] [--set k=v…] [--ids] [--metrics] [--marks] [--png] [--thumb case [--update]] [--ready-ms n]',
   options: {
     scene: { type: 'string' },
     cam: { type: 'string' },
@@ -300,6 +304,7 @@ export default {
     png: { type: 'boolean' },
     thumb: { type: 'string' },
     update: { type: 'boolean' },
+    'ready-ms': { type: 'string' },
   },
   maxPositionals: 1,
   async run({ positionals, values, root }): Promise<CommandResult> {
@@ -317,6 +322,7 @@ export default {
     if (thumb !== undefined && !/^[a-z0-9][a-z0-9-]*$/.test(thumb))
       throw new UsageError(`--thumb takes a case name in lower case, digits and dashes, not "${thumb}"`);
     const path = pageUrl(page, { scene, cam, set: (values.set ?? []) as string[] });
+    const readyMs = wholeFlag(values['ready-ms'], 'ready-ms', READY_TIMEOUT_MS, 1);
     const neither = !values.ids && !values.metrics;
     const marks = values.marks === true;
     const target = `${targetSlug(page)}${scene ? `-${scene}` : ''}${cam ? `-${cam}` : ''}`;
@@ -339,7 +345,7 @@ export default {
       const tab = await browser.newPage({ viewport: VIEWPORT });
       const watch = await preparePage(tab, { seed: 1, root });
       await tab.goto(`${server.url}${path}`);
-      const signals = await waitReady(tab, watch, READY_TIMEOUT_MS);
+      const signals = await waitReady(tab, watch, readyMs);
       const runtime = browserRuntime(browser.version());
       const failures = pageFailures(page, file, signals, (await watch.errors()).map(pageErrorFinding(page)));
       if (failures.length > 0 || !signals)

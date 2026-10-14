@@ -196,7 +196,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
       (engine/gfx/post/looks.ts:235-241), and engine/gfx/post/filters.ts:324 passes any string to `new Color`. Add a
       colour problem beside `levelsProblem` (filters.ts:227), with its code (GFX_POST_BAD_COLOR, as WP 7.4's note
       proposed). Prove: a looks.test.ts case.
-- [ ] 6.7 **The look spec and the ready wait** (WP 7.8): tests/e2e/box-look.spec.ts is one 600 s test (:87); make it
+- [x] 6.7 **The look spec and the ready wait** (WP 7.8): tests/e2e/box-look.spec.ts is one 600 s test (:87); make it
       one test per look. `x shot` waits 30 s (tools/cmd/shot.ts:51) and pages 60 s (`READY_MS`, tools/lib/page.ts:26),
       short for styled looks under load: add a `--ready-ms` option. Prove: the spec passes; the option is in the help.
 - [ ] 6.8 **Browser `@example`s run nowhere** (WP 0.6's deferred proof; ADR-0015): 42 of 392 examples are flagged

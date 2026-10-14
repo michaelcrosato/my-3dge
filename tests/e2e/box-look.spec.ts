@@ -8,10 +8,12 @@
  * 2. the quality tiers: each casts fewer shadows (fewer draw calls) and builds its pipelines in a warm-up before its
  *    first frame; so does the switch back to the stage's own lights (`look:clean`), and the first look in a material
  *    style (`look:torch-toon`), which joins the style set to the warm-up (at the medium tier, as what follows);
- * 3. switching between the box's looks, styles included, builds no pipeline; each in turn while the knock replay
- *    (tests/replays/box-3-knock.replay.json) plays its first 180 steps, a frame drawn after each, its goldens hold;
- *    each renders, none blank, dark or blown out, over the same ID pass.
- * No frame builds a pipeline after a warm-up (Done-when 1's toggles). The scene and the looks it covers are the test's
+ * 3. each of the box's looks, a test of its own, drawn from the start: it warms up before it draws, renders (none
+ *    blank, dark or blown out) and sees what the torch-lit hall sees (the same ID pass); and switching between them, styles
+ *    included, builds no pipeline: each in turn while the knock replay (tests/replays/box-3-knock.replay.json) plays
+ *    its first 180 steps, a frame drawn after each, its goldens hold.
+ * No frame builds a pipeline after a warm-up (Done-when 1's toggles). One test per look (after G9): a failure names
+ * its look, and each has its own time limit. The scene and the looks it covers are the test's
  * annotations in out/e2e/report.json (`looks`): the hall with its props, every box look. The goldens with a look of
  * each material style in the box page are tests/e2e/parity.spec.ts's (Box 3, props); every one of the engine's 86
  * looks with no pipeline built and the hash unchanged, and what each filter does to the pixels, are
@@ -23,7 +25,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { expect, test, type Harness } from './fixtures';
 
 /** The knock replay (Box 3, the hall with its props): its first 180 steps play through the box's looks. */
 const KNOCK = readFileSync(join(import.meta.dirname, '../replays/box-3-knock.replay.json'), 'utf8');
@@ -80,15 +82,26 @@ function changed(a: Uint8Array, b: Uint8Array): number {
   return moved / (a.length / 4);
 }
 
-test('the box looks: the torch-lit hall flickers on its rune floor, every tier and look warmed before it draws, every look rendered', async ({
+/** Opens the hall with its props from the iso camera in `look`, ready on WebGPU. */
+async function open(page: Page, harness: Harness, look: string, query = ''): Promise<void> {
+  await page.goto(`labs/box/?scene=hall-props&cam=iso&post.look=${look}${query}`);
+  await harness.ready({ timeout: 240_000 });
+  await harness.assertWebGPU();
+}
+
+/** A shot of what the page draws now, with its ID pass and look metrics. */
+const shoot = (page: Page) =>
+  page.evaluate(() => __engine.shot({ ids: true, metrics: true, thumbnail: false })) as Promise<Shot>;
+/** The names a shot's ID pass sees, sorted. */
+const names = (shot: Shot) => shot.ids.visible.map((object) => object.name).sort();
+
+test('look:torch-lit: the hall flickers on its rune floor, and every tier and the clean look warm up before they draw', async ({
   page,
   harness,
 }) => {
-  test.setTimeout(600_000); // four warm-ups and one of every style under the sky: 4 to 7 minutes on a loaded SwiftShader
-  test.info().annotations.push({ type: 'looks', description: `box:hall-props: ${BOX_LOOKS.join(', ')}` });
-  await page.goto('labs/box/?scene=hall-props&cam=iso&post.look=look:torch-lit');
-  await harness.ready({ timeout: 240_000 });
-  await harness.assertWebGPU();
+  test.setTimeout(420_000); // three tiers' warm-ups and the toon style's under the sky on a loaded SwiftShader
+  test.info().annotations.push({ type: 'looks', description: 'box:hall-props: look:torch-lit, look:clean, look:torch-toon' }); // prettier-ignore
+  await open(page, harness, 'look:torch-lit');
   /** How much of the picture changes over a third of a second, the sim paused. */
   const flicker = async () => {
     const before = (await harness.readFrame()).rgba;
@@ -126,9 +139,44 @@ test('the box looks: the torch-lit hall flickers on its rune floor, every tier a
   const toon = await show(page, { 'post.look': 'look:torch-toon' });
   for (const tier of [high, medium, low, clean, toon]) expect(tier.pipelinesAfterWarmUp).toBe(0);
   expect(toon.pipelines).toBeGreaterThan(clean.pipelines);
+  expect(harness.advice()).toEqual([]);
+});
 
-  // 3. Every box look: switching builds nothing; then each in turn while the knock replay plays, a frame after each
-  // step: its goldens hold, and no frame stalls (the replay starts at the default tier, which warms up first).
+// 3a. Each box look on its own: drawn from the start (the medium tier), it warms up before it draws, renders, and sees
+// what the torch-lit hall sees.
+for (const look of BOX_LOOKS) {
+  test(`${look}: it warms up before it draws, renders (not blank, dark or blown out), over the torch-lit hall's ID pass`, async ({
+    page,
+    harness,
+  }) => {
+    test.setTimeout(240_000);
+    test.info().annotations.push({ type: 'looks', description: `box:hall-props: ${look}, look:torch-lit` });
+    await open(page, harness, look, '&quality=medium');
+    expect((await show(page, {})).pipelinesAfterWarmUp).toBe(0);
+    const shot = await shoot(page);
+    expect([look, shot.metrics.blank]).toEqual([look, false]);
+    expect(shot.metrics.lumaMean, look).toBeGreaterThan(0.08); // not dark
+    expect(shot.metrics.lumaMean, look).toBeLessThan(0.8); // not blown out
+    expect(shot.metrics.spread, look).toBeGreaterThan(0.1); // a picture, not a wash
+    expect(names(shot)).toEqual(expect.arrayContaining(['level:hall/floor', 'actor#1']));
+    await show(page, { 'post.look': 'look:torch-lit' });
+    expect(names(await shoot(page)), look).toEqual(names(shot));
+    const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
+    expect(advice).not.toContain('GFX_COLD_PIPELINE');
+    expect(harness.advice()).toEqual([]);
+  });
+}
+
+// 3b. Every box look in turn: switching builds nothing, and while the knock replay plays its first 180 steps, a frame
+// after each, through each look in turn, its goldens hold and no frame stalls.
+test('every box look in turn: switching builds no pipeline, and the knock replay keeps its goldens through them', async ({
+  page,
+  harness,
+}) => {
+  test.setTimeout(420_000); // every style's warm-up on its first switch, under the sky
+  test.info().annotations.push({ type: 'looks', description: `box:hall-props: ${BOX_LOOKS.join(', ')}` });
+  await open(page, harness, 'look:torch-toon', '&quality=medium');
+  const toon = await show(page, {});
   for (const look of BOX_LOOKS) {
     const stats = await show(page, { 'post.look': look });
     expect([look, stats.pipelines, stats.pipelinesAfterWarmUp]).toEqual([look, toon.pipelines, 0]);
@@ -143,22 +191,6 @@ test('the box looks: the torch-lit hall flickers on its rune floor, every tier a
   const goldens = (JSON.parse(KNOCK) as { hashes: Record<string, Record<string, string>> }).hashes['linux-x64'];
   expect(run.hashes).toEqual(Object.fromEntries(Object.entries(goldens).filter(([step]) => Number(step) <= 180)));
   expect(((await page.evaluate(() => __engine.stats())) as Stats).pipelinesAfterWarmUp).toBe(0);
-  const shots: Record<string, Shot> = {}; // after the switches: a shot's ID pass builds pipelines of its own
-  for (const look of BOX_LOOKS) {
-    await show(page, { 'post.look': look });
-    shots[look] = (await page.evaluate(() => __engine.shot({ ids: true, metrics: true, thumbnail: false }))) as Shot;
-  }
-  const names = (shot: Shot) => shot.ids.visible.map((object) => object.name).sort();
-  const first = shots[BOX_LOOKS[0]];
-  expect(names(first)).toEqual(expect.arrayContaining(['level:hall/floor', 'actor#1']));
-  for (const look of BOX_LOOKS) {
-    const { metrics } = shots[look];
-    expect(names(shots[look]), look).toEqual(names(first));
-    expect([look, metrics.blank]).toEqual([look, false]);
-    expect(metrics.lumaMean, look).toBeGreaterThan(0.08); // not dark
-    expect(metrics.lumaMean, look).toBeLessThan(0.8); // not blown out
-    expect(metrics.spread, look).toBeGreaterThan(0.1); // a picture, not a wash
-  }
   const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
   expect(advice).not.toContain('GFX_COLD_PIPELINE');
   expect(harness.advice()).toEqual([]);
