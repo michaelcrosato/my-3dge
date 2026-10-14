@@ -14,7 +14,7 @@ record it as an open issue starting "Owner:" and move on.
 
 ## Setup
 bash scripts/setup.sh (idempotent) does three things:
-- Node 24.21.0 (.nvmrc): when the active node differs, it downloads the official build from nodejs.org, checks it
+- Node 24.22.0 (.nvmrc): when the active node differs, it downloads the official build from nodejs.org, checks it
   against SHASUMS256.txt and keeps it in ~/.cache/my3dge/. Offline, it keeps the container's Node 22: everything runs
   there too, but Node goldens are recorded on 24.
 - The read-only sources: MY3D2DGE_SRC (my-3d2dge@e37e4ee) and SHARDFALL_SRC (shardfall@fa2dab6) are absolute paths.
