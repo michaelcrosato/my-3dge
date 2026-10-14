@@ -45,7 +45,7 @@ ADRs hold the record. (A root-level .md: `x docs --check` and Prettier skip it.)
 ## 1. Start
 
 - [x] 1.1 `node x deps --update`, in a commit of its own (AGENTS.md, the loop, step 1).
-- [ ] 1.2 Record decisions 1–3: `node x esc answer ESC-0001 "Yes (2026-10-14): Actions is on and the repository is
+- [x] 1.2 Record decisions 1–3: `node x esc answer ESC-0001 "Yes (2026-10-14): Actions is on and the repository is
       public; write .github/workflows/ci.yml running node x ci --local"`; an amendment to
       docs/decisions/ADR-0018-roadmap.md with the owner's acceptance of both calls (lines 58-61); WP 7.8's §14 row
       says "accepted by the owner, 2026-10-14" in place of its two "Owner:" clauses.
