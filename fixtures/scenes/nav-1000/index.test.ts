@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { createSession } from '../../../engine/sim/scene';
+import { createSession } from '../../../engine/sim/session';
 import { getLevel } from '../../../engine/world/level/level';
 import { NavGrid } from '../../../engine/world/nav';
 import scene, { NAV_1000_LEVEL, targetAt } from './index';

@@ -5,9 +5,9 @@
  * turns its shuttle round every 2 s; the course is built in a fixed order, so its bodies keep their ids.
  */
 import { describe, expect, it } from 'vitest';
-import { physicsOf } from '../../../engine/physics/world';
+import { physicsOf } from '../../../engine/physics/binding';
 import { playReplay } from '../../../engine/sim/replay';
-import { createSession } from '../../../engine/sim/scene';
+import { createSession } from '../../../engine/sim/session';
 import type { ActorComponents } from '../../../engine/sim/actors';
 import { createPhysics } from '../../../engine/physics/world';
 import { buildCourse, HERO } from './index';

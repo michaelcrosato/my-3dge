@@ -3,7 +3,7 @@
  * plays a move told as its body state `body` (engine/anim/humanoid.ts, through the arm path of strike.ts): `moveAt`
  * names a move at a moment (previews, sheets, cutscenes); `measureMove` measures where its strike reaches on a spare
  * body (`HitShape`); `strikePart` and `strikeSegment` say what strikes and where it spans; `inArc`, `inHitShape` and
- * `knockbackVelocity` are the hit helpers. Attacks and combos play moves over time (engine/anim/timeline.ts).
+ * `knockbackVelocity` are the hit helpers. Attacks and combos play moves over time (engine/anim/attack.ts).
  *
  * Invariants:
  * - `measureMove` runs under the sim's math (engine/core/simMath.ts) and caches by what it measured (the move's fields,

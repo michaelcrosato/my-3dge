@@ -134,7 +134,7 @@ export * from './anim/api';
 // Physics (WP 3.1): Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id,
 // raycasts, shape casts, overlaps and ground probes, collision groups by name, a level's bodies; presentation reads
 // it through the read-only QueryView.
-export { physicsOf } from './physics/world';
+export { physicsOf } from './physics/binding';
 export type { Physics } from './physics/world';
 export type { BodySpec } from './physics/world';
 export type { ColliderSpec } from './physics/world';

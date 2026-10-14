@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { Quaternion, Vector3 } from '../../engine/core/math';
-import type { MatrixRun } from '../../engine/anim/check';
+import type { MatrixRun } from '../../engine/anim/stateMatrix';
 import { ENGINE_MOVES } from '../../engine/anim/moves-data';
 import { Pose } from '../../engine/anim/pose';
 import { POSES, STANCES } from '../../engine/anim/poses';
@@ -15,17 +15,8 @@ import { createSkeleton } from '../../engine/anim/skeleton';
 import { SAMPLE_STATES } from '../../engine/anim/states';
 import { readBaselines, runQa } from '../cmd/qa';
 import { ROOT } from '../x';
-import family, {
-  actionStates,
-  animViolations,
-  closure,
-  footSlide,
-  humanoidPrefixes,
-  humanoidStates,
-  limbs,
-  motionTrack,
-  pops,
-} from './anim';
+import family, { actionStates, animViolations, humanoidPrefixes, humanoidStates } from './anim';
+import { closure, footSlide, limbs, motionTrack, pops } from './anim/metrics';
 
 /** A track of one point, at `ys` heights and `xs` along X, the body standing at the origin. */
 const line = (xs: number[], ys: number[] = xs.map(() => 0)) =>

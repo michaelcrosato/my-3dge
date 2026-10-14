@@ -3,7 +3,7 @@
  * through its state matrix and measures the motion, in Node. The humanoid (each build in `HUMANOIDS`, through
  * `animCheckBody`, engine/anim/check.ts) holds every sample state (`state:<name>`), pose (`pose:<name>`), stance
  * (`stance:<name>`), move (`move:<name>`, played by an `Attack`), reaction (`reaction:<name>`) and action
- * (`action:<name>`, each of data/anim/actions/ played by its own check, engine/anim/actions.ts `actionCheck`, WP 8.7)
+ * (`action:<name>`, each of data/anim/actions/ played by its own check, engine/anim/actions-check.ts `actionCheck`, WP 8.7)
  * at both facings, from rest and back to rest; the blob (`blob:<state>`) and the floater (`floater:<state>`) hold
  * theirs. The first build also runs its matrix twice and at half the step, and so do the blob and the floater. Then
  * every library clip (`clip:<SET>/<Clip>`, `set:<SET>`), as data and on every build (tools/qa/anim/clips.ts, WP 8.6,
@@ -12,26 +12,17 @@
  * Metrics, one violation per id and metric, valued by the worst case (larger is worse) and naming where it happened:
  * - `nan` (1), `stretch`, `underFloor`, `reach` (metres): `animCheck`'s finite values, bone lengths, feet at or
  *   above the floor and sockets in reach; for the blob and the floater, their points finite and over the floor.
- * - `pop` (metres in a step): a point, measured from the body's position, jumps more than `ANIM_QA.pop.min` in one
- *   step and more than `ratio` times the steps either side (a fast, steady sweep is motion, not a pop).
- * - `footSlide` (metres): a sole within `ANIM_QA.slide.contact` of the floor in consecutive steps moves over the
- *   ground (a treadmill's ground moves too) more than `limit` in one contact.
- * - `jointLimit` (radians): a knee or an elbow (ik.ts `LIMBS`) turns off its hinge or bends the wrong way.
- * - `loopClosure` (metres): the last pose, back at rest, is farther than `ANIM_QA.closure` from a body that rested
- *   all along.
- * - `twistJump` (radians): a bone of a limb folded past `ANIM_QA.twist.fold` rolls more than `jump` about itself in
- *   one step (my-3d2dge's v1 pop).
+ * - `pop`, `footSlide`, `loopClosure`, `jointLimit` and `twistJump`: the motion metrics (tools/qa/anim/metrics.ts).
  * - `angleRange` (radians): an angle of the body's state (the swing, the spin, the lean, the twist, the aim) past ±540°.
  * - `unstableHash` (1): running the matrix again gives another pose. `rateDrift` (metres): a point strays farther than
- *   `STATE_MATRIX.rate` from a run at half the step, beyond a step of its own motion (check.ts `rateDrift`).
+ *   `STATE_MATRIX.rate` from a run at half the step, beyond a step of its own motion (stateMatrix.ts `rateDrift`).
  *
  * Accepted exceptions go in `tests/baselines/qa-anim.json`, each with its reason; `--only move:` keeps the moves.
  * Invariants: subjects run in a fixed order with fixed clocks and seeded streams, so the same tree gives the same
  * violations; lengths scale with the build's `size`.
  *
- * Carried from `my-3d2dge:tools/ed-sheet.mjs:100-131`: the pops relative to the neighbouring steps (9 units a step and
- * 2.5 times the neighbours, the neighbours counted as at least 0.5 units, here in metres), the foot slide (there over
- * the idle hold, here per contact in every state), the joints under the floor and the stretch of the limbs.
+ * Carried from `my-3d2dge:tools/ed-sheet.mjs:100-131`: the joints under the floor and the stretch of the limbs (the
+ * pops and the foot slide: metrics.ts).
  *
  * @example
  * animViolations((id) => id.startsWith('floater:')); // []: the floater's states, all within the thresholds
@@ -41,45 +32,43 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Fnv64 } from '../../engine/core/hash';
-import { Quaternion, Vector3 } from '../../engine/core/math';
-import { SIM_DT } from '../../engine/core/time';
+import { Vector3 } from '../../engine/core/math';
 import { getBuild } from '../../engine/anim/builds';
-import { actionCheck, loadActions } from '../../engine/anim/actions';
+import { actionCheck } from '../../engine/anim/actions-check';
+import { loadActions } from '../../engine/anim/actions-data';
 import { Animator } from '../../engine/anim/character';
 import { loadClipLibrary, type ClipLibrary } from '../../engine/anim/clip/library';
+import { animCheckBody, type AnimCheckName } from '../../engine/anim/check';
 import {
-  animCheckBody,
   rateDrift,
   RUN_POINTS,
   runPoints,
   STATE_MATRIX,
-  type AnimCheckName,
   type MatrixRun,
   type MatrixState,
-} from '../../engine/anim/check';
-import { createWorldPose, forwardKinematics, jointPosition } from '../../engine/anim/fk';
-import { LIMBS } from '../../engine/anim/ik';
+} from '../../engine/anim/stateMatrix';
 import { ENGINE_MOVES } from '../../engine/anim/moves-data';
 import { POSES, STANCES, type PoseName, type StanceName, type Weapon } from '../../engine/anim/poses';
 import { Reactions } from '../../engine/anim/reactions';
-import { jointIndex, JOINTS } from '../../engine/anim/skeleton';
 import { SAMPLE_STATES } from '../../engine/anim/states';
-import { Attack } from '../../engine/anim/timeline';
+import { Attack } from '../../engine/anim/attack';
 import { Blob, BLOB_MOVES, blobMoveTimes, type BlobInput } from '../../engine/anim/blob';
 import { Floater, FLOATER } from '../../engine/anim/floater';
 import { readSet } from '../anim/repack';
 import type { QaFamily, QaViolation } from '../cmd/qa';
 import { ROOT } from '../x';
-
-/** The thresholds, in metres and radians for a body of `size` 1. */
-export const ANIM_QA = {
-  pop: { min: 9 / 16, ratio: 2.5, floor: 0.5 / 16 },
-  slide: { contact: 0.005, limit: 0.05 },
-  closure: 0.02,
-  twist: { fold: (140 * Math.PI) / 180, jump: (120 * Math.PI) / 180 },
-  hinge: 0.02,
-  angle: 3 * Math.PI,
-} as const;
+import {
+  ANIM_QA,
+  closure,
+  footSlide,
+  limbs,
+  m,
+  motionTrack,
+  pops,
+  worse,
+  type Found,
+  type Track,
+} from './anim/metrics';
 
 /** The humanoid bodies the family drives through the whole matrix; the first also runs it twice and at half the step. */
 export const HUMANOIDS: readonly { build: string; weapon: Weapon }[] = [
@@ -180,144 +169,12 @@ export function humanoidPrefixes(): string[] {
   return [...new Set(Object.keys(humanoidStates()).map((id) => id.slice(0, id.indexOf(':') + 1)))];
 }
 
-/** One run as the metrics read it: points per step, world and measured from the body, and what they need besides. */
-export interface Track {
-  /** Where it ran, for messages: the build, the state, the facing. */
-  where: string;
-  /** The body's scale: thresholds grow with it. */
-  size: number;
-  dt: number;
-  names: readonly string[];
-  world: Vector3[][];
-  /** The points measured from the body's position. */
-  local: Vector3[][];
-  /** The indices of the soles. */
-  feet: readonly number[];
-  /** The ground's velocity under the body while it holds the state, and the steps that hold it. */
-  treadmill: Vector3;
-  held: readonly [number, number];
-}
-
-/** What a metric found: the worst value and its sentence. */
-export type Found = { value: number; message: string } | undefined;
-
-const ZERO = new Vector3();
-/** A metre (or radian) value for messages: up to 4 decimals. */
-const m = (value: number) => String(Math.round(value * 1e4) / 1e4);
-/** The worse of two findings. */
-const worse = (a: Found, b: Found): Found => (!a || (b && b.value > a.value) ? b : a);
-
-/** A track from its points (world metres) and the body's position at each step. */
-export function motionTrack(
-  spec: Pick<Track, 'where' | 'names' | 'world'> & Partial<Track> & { positions: readonly Vector3[] },
-): Track {
-  const local = spec.world.map((points, i) => points.map((p) => p.clone().sub(spec.positions[i])));
-  return { size: 1, dt: SIM_DT, feet: [], treadmill: ZERO, held: [0, 0], local, ...spec };
-}
-
-/** A humanoid run as a track: its joints and sockets (check.ts `RUN_POINTS`), standing on its soles. */
+/** A humanoid run as a track: its joints and sockets (stateMatrix.ts `RUN_POINTS`), standing on its soles. */
 function humanoidTrack(run: MatrixRun, where: string, size: number): Track {
   const world = runPoints(run).map((points, i) => points.map((p) => p.add(run.positions[i])));
   const feet = [RUN_POINTS.indexOf('contactL'), RUN_POINTS.indexOf('contactR')];
   const { dt, treadmill, held, positions } = run;
   return motionTrack({ where, size, dt, names: RUN_POINTS, world, positions, feet, treadmill, held });
-}
-
-/** Pops: a point that jumps in one step while the steps either side are much shorter (ed-sheet.mjs:122-125). */
-export function pops(t: Track): Found {
-  const { min, ratio, floor } = ANIM_QA.pop;
-  let found: Found;
-  t.names.forEach((name, k) => {
-    const d = t.local.slice(1).map((points, i) => points[k].distanceTo(t.local[i][k]));
-    for (let i = 1; i < d.length - 1; i++) {
-      if (d[i] <= min * t.size || d[i] <= ratio * Math.max(d[i - 1], d[i + 1], floor * t.size)) continue;
-      const message = `${t.where}: ${name} jumps ${m(d[i])} m in one step at frame ${i + 1} (${m(d[i - 1])} and ${m(d[i + 1])} m either side); ease into the pose`;
-      found = worse(found, { value: d[i], message });
-    }
-  });
-  return found;
-}
-
-/** Foot slide: a sole on the floor moving over the ground, the most in one contact. */
-export function footSlide(t: Track): Found {
-  const { contact, limit } = ANIM_QA.slide;
-  let found: Found;
-  for (const k of t.feet) {
-    let slide = -1;
-    for (let i = 1; i < t.world.length; i++) {
-      const [a, b] = [t.world[i - 1][k], t.world[i][k]];
-      if (Math.max(a.y, b.y) > contact * t.size) {
-        slide = -1;
-        continue;
-      }
-      const ground = i >= t.held[0] && i < t.held[1] ? t.treadmill : ZERO;
-      slide = Math.max(0, slide) + Math.hypot(b.x - a.x - ground.x * t.dt, b.z - a.z - ground.z * t.dt);
-      if (slide <= limit * t.size) continue;
-      const message = `${t.where}: ${t.names[k]} slides ${m(slide)} m on the floor by frame ${i} in one contact; plant it, or lift it to move it`;
-      found = worse(found, { value: slide, message });
-    }
-  }
-  return found;
-}
-
-/** Loop closure: the last pose against a body that rested all along, at the same step (the first `count` points). */
-export function closure(t: Track, rest: Track, count = t.names.length): Found {
-  const last = t.local.length - 1;
-  let found: Found;
-  t.local[last].slice(0, count).forEach((p, k) => {
-    const off = p.distanceTo(rest.local[last][k]);
-    if (off <= ANIM_QA.closure * t.size) return;
-    const message = `${t.where}: back at rest, ${t.names[k]} is ${m(off)} m from where a resting body holds it; let every weight ease back`;
-    found = worse(found, { value: off, message });
-  });
-  return found;
-}
-
-/** The angle of `q`'s turn about the unit `axis`, radians in [−π, π]. */
-function turnAbout(q: Quaternion, axis: Vector3): number {
-  const angle = 2 * Math.atan2(q.x * axis.x + q.y * axis.y + q.z * axis.z, q.w);
-  return angle > Math.PI ? angle - 2 * Math.PI : angle < -Math.PI ? angle + 2 * Math.PI : angle;
-}
-
-/** Joint limits and twist jumps of the limbs (ik.ts `LIMBS`): hinges kept, folded bones never flipping about themselves. */
-export function limbs(run: MatrixRun, where: string): { limit: Found; twist: Found } {
-  let [limit, twist]: Found[] = [undefined, undefined];
-  const pose = createWorldPose();
-  const [hinge, q, r, delta] = [new Vector3(), new Quaternion(), new Quaternion(), new Quaternion()];
-  let before: Float64Array | undefined;
-  run.poses.forEach((p, i) => {
-    forwardKinematics(run.skeleton, p, pose);
-    for (const [end, limb] of Object.entries(LIMBS)) {
-      const [u, mid, e] = [jointIndex(limb.upper), jointIndex(limb.middle), jointIndex(end as never)];
-      hinge.fromArray(limb.hinge);
-      p.getRotation(mid, q);
-      const bend = turnAbout(q, hinge);
-      const off = 2 * Math.acos(Math.min(1, Math.abs(r.setFromAxisAngle(hinge, -bend).premultiply(q).w)));
-      const bad = Math.max(off, -bend);
-      if (bad > ANIM_QA.hinge) {
-        const message = `${where}: at frame ${i}, ${limb.middle} turns ${m(off)} rad off its hinge and bends ${m(bend)} rad (0 to π); solve the limb with twoBoneRot`;
-        limit = worse(limit, { value: bad, message });
-      }
-      const [a, b, c] = [jointPosition(pose, u), jointPosition(pose, mid), jointPosition(pose, e)];
-      const fold = b.clone().sub(a).angleTo(c.clone().sub(b));
-      if (before && fold > ANIM_QA.twist.fold) {
-        for (const [j, child] of [
-          [u, b],
-          [mid, c],
-        ] as const) {
-          const axis = child.clone().sub(jointPosition(pose, j)).normalize();
-          const now = new Quaternion().fromArray(pose.rotations, j * 4);
-          delta.multiplyQuaternions(now, new Quaternion().fromArray(before, j * 4).invert());
-          const roll = Math.abs(turnAbout(delta, axis));
-          if (roll <= ANIM_QA.twist.jump) continue;
-          const message = `${where}: at frame ${i}, ${JOINTS[j]} rolls ${m(roll)} rad about itself in one step, folded ${m(fold)} rad; keep its pole steady`;
-          twist = worse(twist, { value: roll, message });
-        }
-      }
-    }
-    before = pose.rotations.slice();
-  });
-  return { limit, twist };
 }
 
 /** A body that is not a humanoid, as the family drives it: its points, its states and a fresh body for one. */

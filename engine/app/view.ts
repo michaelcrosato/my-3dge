@@ -48,7 +48,7 @@ import type { FrameView } from '../gfx/renderer';
 import { dumpScene, type DumpOptions } from '../gfx/sceneDump';
 import { createStage, type Stage } from '../gfx/stage';
 import { queryViewOf, type QueryView } from '../sim/queryView';
-import type { Session } from '../sim/scene';
+import type { Session } from '../sim/session';
 import type { EntityData } from '../sim/state';
 import { getLevel, type LevelEntry } from '../world/level/level';
 

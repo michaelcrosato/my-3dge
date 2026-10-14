@@ -12,7 +12,8 @@ import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { LAST_GREEN, LONG_RUNS, TIERS, type Selection } from '../lib/tiers';
 import { dispatch, MAX_LINES } from '../x';
-import { CI_OUT, CI_STEPS, createCiCommand, renderSummary, runCi, type CiDeps, type StepOutcome } from './ci';
+import { CI_STEPS, createCiCommand, runCi, type CiDeps, type StepOutcome } from './ci';
+import { CI_OUT, renderSummary } from '../lib/ciSummary';
 
 const temporary: string[] = [];
 afterEach(() => {

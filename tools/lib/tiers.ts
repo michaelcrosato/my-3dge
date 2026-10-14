@@ -1,6 +1,6 @@
 /**
- * @file The test tiers (PLAN.md §8.2): their commands and budgets, what a change selects in T1 and T2 and why, and the
- * budget check over the JSON reports. `x ci --local` (WP 0.9) calls `plan`, `checkReports`, `timingTable` and
+ * @file The test tiers (PLAN.md §8.2): their commands and budgets, and what a change selects in T1 and T2 and why
+ * (the budget checks over the JSON reports: tools/lib/tierBudgets.ts). `x ci --local` (WP 0.9) calls `plan` and
  * `recordGreen`; an agent iterating reads the same selections.
  *
  * - **Tiers.** T0 `npm run check` (10 s), T1 `npm test` (60 s), T2 `npm run e2e` (9 min since gate G6: ADR-0014
@@ -17,13 +17,11 @@
  *   own `--changed` reruns everything on the same `T1_FULL` files (vite.config.ts's `forceRerunTriggers`).
  * - **T2** runs in full when engine, lab or page code changed (`T2_FULL`), because pages reach the browser through the
  *   dev server and not through the specs' imports; else as `playwright test --only-changed=<base>`.
- * - **Budgets.** A tier over its budget warns and never fails: wall-clock time on this shared machine is noise, not
- *   proof (ADR-0022); the counts the pages measure are the checks that fail.
+ * - **Budgets.** A tier over its budget warns and never fails (tools/lib/tierBudgets.ts, ADR-0022).
  *
  * @example
  * const { base, t1, t2 } = plan(); // t2.reason: 'T2 runs in full: engine/core/a.ts changed (engine code, …)'
- * const checks = checkReports(process.cwd(), { T0: 4100 }); // T1 and T2 from out/test/ and out/e2e/report.json
- * console.log(timingTable([{ name: 'npm test', ms: 8140, ok: true, budgetMs: TIERS.T1.budgetMs }]).join('\n'));
+ * duration(125_000); // '2 min 5 s'
  * @see tools/lib/tiers.test.ts
  */
 import { execFileSync } from 'node:child_process';
@@ -32,7 +30,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /** The repository root, two levels above this file. */
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /** A tier with a budget. */
 export type TierId = 'T0' | 'T1' | 'T2';
@@ -333,77 +331,4 @@ export function duration(ms: number): string {
   if (seconds <= 60) return `${Number.isInteger(seconds) ? seconds : seconds.toFixed(1)} s`;
   const rest = Math.round(seconds % 60);
   return `${Math.floor(seconds / 60)} min${rest ? ` ${rest} s` : ''}`;
-}
-
-/** A tier's duration against its budget. */
-export interface BudgetCheck {
-  tier: TierId;
-  ms: number;
-  budgetMs: number;
-  status: 'ok' | 'warn';
-  /** One sentence: the duration, the budget and, when over, where to look. */
-  message: string;
-}
-
-/** Checks one duration against its tier's budget: over it warns (ADR-0022: time budgets never fail). */
-export function checkBudget(tier: TierId, ms: number): BudgetCheck {
-  const { budgetMs, fix } = TIERS[tier];
-  const status = ms > budgetMs ? 'warn' : 'ok';
-  const budget = duration(budgetMs);
-  const took = `${tier} took ${duration(ms)}`;
-  const message =
-    status === 'ok' ? `${took}, within its ${budget} budget` : `${took}, over its ${budget} budget: ${fix}`;
-  return { tier, ms, budgetMs, status, message };
-}
-
-/** The wall-clock duration a Vitest or Playwright JSON report records; throws on anything else. */
-export function reportMs(file: string): number {
-  const report = JSON.parse(readFileSync(file, 'utf8')) as {
-    stats?: { duration?: unknown };
-    startTime?: unknown;
-    testResults?: { endTime?: number }[];
-  };
-  if (typeof report.stats?.duration === 'number') return report.stats.duration;
-  if (typeof report.startTime === 'number' && Array.isArray(report.testResults)) {
-    const ends = report.testResults.map((result) => result.endTime ?? report.startTime) as number[];
-    return Math.max(report.startTime, ...ends) - report.startTime;
-  }
-  throw new Error(
-    `${file} is neither a Vitest nor a Playwright JSON report: run npm test or npm run e2e to rewrite it`,
-  );
-}
-
-/**
- * Checks each tier's duration: `measured` first (T0 writes no report, so `x ci --local` times it), else the tier's
- * JSON report under `root`. A tier with neither is left out.
- */
-export function checkReports(root: string = ROOT, measured: Partial<Record<TierId, number>> = {}): BudgetCheck[] {
-  const checks: BudgetCheck[] = [];
-  for (const tier of Object.values(TIERS)) {
-    const report = tier.report && join(root, tier.report);
-    const ms = measured[tier.id] ?? (report && existsSync(report) ? reportMs(report) : undefined);
-    if (ms !== undefined) checks.push(checkBudget(tier.id, ms));
-  }
-  return checks;
-}
-
-/** One row of the timing table. */
-export interface Timing {
-  name: string;
-  ms: number;
-  ok: boolean;
-  budgetMs?: number;
-}
-
-/** The timing table: one line per step (verdict, name, duration, budget), then the total. */
-export function timingTable(rows: readonly Timing[]): string[] {
-  const width = Math.max(4, ...rows.map((row) => row.name.length));
-  const lines = rows.map(({ name, ms, ok, budgetMs }) => {
-    const budget = budgetMs === undefined ? '' : ` / ${duration(budgetMs)}${ms > budgetMs ? ' (over budget)' : ''}`;
-    return `${ok ? 'ok  ' : 'FAIL'}  ${name.padEnd(width)}  ${duration(ms)}${budget}`;
-  });
-  const failed = rows.filter((row) => !row.ok).map((row) => row.name);
-  const total = duration(rows.reduce((sum, row) => sum + row.ms, 0));
-  lines.push(failed.length ? `FAILED: ${failed.join(', ')} (${total} in all)` : `all passed in ${total}`);
-  return lines;
 }

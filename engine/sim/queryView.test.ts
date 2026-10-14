@@ -6,7 +6,8 @@
 import { describe, expect, it } from 'vitest';
 import { hashNumbers } from '../core/hash';
 import { createSettings } from '../core/settings';
-import { bindPhysics, createPhysics, type Physics } from '../physics/world';
+import { createPhysics, type Physics } from '../physics/world';
+import { bindPhysics } from '../physics/binding';
 import { queryView, queryViewOf, type QueryView } from './queryView';
 
 /** A physics world with a floor and a falling crate, stepped 30 times. */

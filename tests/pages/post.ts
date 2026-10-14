@@ -42,13 +42,14 @@ import { registry } from '../../engine/core/registry';
 import { createSettings } from '../../engine/core/settings';
 import { createMaterialLibrary } from '../../engine/gfx/materials/library';
 import { createStyleSet } from '../../engine/gfx/materials/styles';
-import { createPost, definePostSettings, type Post } from '../../engine/gfx/post/chain';
+import { createPost, type Post } from '../../engine/gfx/post/chain';
+import { definePostSettings } from '../../engine/gfx/post/settings';
 import type { FilterSpec } from '../../engine/gfx/post/filters';
 import { flagsOf, setPart } from '../../engine/gfx/post/mrt';
 import { blockSize } from '../../engine/gfx/post/snap';
 import { createRenderer, type FrameReport, type FrameView, type Gfx, type GfxError } from '../../engine/gfx/renderer';
 import { shot, shotForJson, type ShotJson, type ShotOptions } from '../../engine/gfx/shot';
-import { createSession } from '../../engine/sim/scene';
+import { createSession } from '../../engine/sim/session';
 import { defineLevel } from '../../engine/world/level/level';
 
 /** One structured error record, as `window.__engine.errors` holds them (PLAN.md §8.3). */

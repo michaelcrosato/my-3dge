@@ -31,7 +31,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 | Kind              | What it is                                                                                                                                                                                         | Declared in                                                               |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `action`          | A multi-beat sequence played on a body: beats of body states, clips, IK targets, flips and events. The engine's set is data/anim/actions/, one file each (loadActions).                            | [`engine/anim/actions.ts`](../engine/anim/actions.ts)                     |
+| `action`          | A multi-beat sequence played on a body: beats of body states, clips, IK targets, flips and events. The engine's set is data/anim/actions/, one file each (loadActions).                            | [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)           |
 | `actionMap`       | Named actions and the physical codes bound to each (keys by KeyboardEvent.code, mouse, pad by position): what the input devices turn into intents.                                                 | [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)             |
 | `body`            | Puppet bodies: parts on the humanoid skeleton, one line each, with material slots (the palette).                                                                                                   | [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)       |
 | `build`           | Body proportions for the humanoid skeleton, in metres before size (limbs, torso, head, stance, gait).                                                                                              | [`engine/anim/builds.ts`](../engine/anim/builds.ts)                       |
@@ -76,11 +76,20 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/anim
 
+- [`actions-check.ts`](../engine/anim/actions-check.ts): An action's check (PLAN.md WP 8.7): `actionCheck` turns an action's `check` (actions-data.ts `ACTION_FIELDS`) into a state of the animation QA's matrix (stateMatrix.ts `MatrixState`): it plays the action through `Actions` on the animator's build, signals at the check's times and lifts the body as `lift` says.
+  - Exports: `actionCheck`
+  - Tests: [`engine/anim/actions.test.ts`](../engine/anim/actions.test.ts)
+- [`actions-data.ts`](../engine/anim/actions-data.ts): ACTION DATA (PLAN.md WP 8.7; I-11; docs/ANIMATION-RESEARCH.md §2, §6): the registry kind `action`, what engine/anim/actions.ts `Actions` plays.
+  - Exports: `Action`, `ACTION`, `ACTION_FIELDS`, `actionKind`, `ActionSpec`, `Beat`, `BEAT_FIELDS`, `defineAction`, `EFFECTORS`, `FLIP_AXES`, `getAction`, `loadActions`
+  - Tests: [`engine/anim/actions.test.ts`](../engine/anim/actions.test.ts)
 - [`actions.ts`](../engine/anim/actions.ts): ACTIONS (PLAN.md WP 8.7; I-11; docs/ANIMATION-RESEARCH.md §2, §6): multi-beat sequences played on a body, between one move and a behaviour.
-  - Exports: `Action`, `ACTION`, `ACTION_CODES`, `ACTION_FIELDS`, `actionCheck`, `actionKind`, `Actions`, `ActionsOptions`, `ActionSpec`, `ActionsState`, `Beat`, `BEAT_FIELDS`, `CHANNELS`, `defineAction`, `EFFECTORS`, `FLIP_AXES`, `getAction`, `loadActions`
+  - Exports: `ACTION_CODES`, `Actions`, `ActionsOptions`, `ActionsState`, `CHANNELS`
   - Tests: [`engine/anim/actions.test.ts`](../engine/anim/actions.test.ts)
 - [`api.ts`](../engine/anim/api.ts): The animation part of the public sim API (PLAN.md §6.1, WP 8.7 integration, ADR-0020 amendment 8): every name sim-side game code takes from engine/anim/, re-exported whole by engine/sim-api.ts, so engine/sim-api.ts stays under its line cap.
   - Exports: `Action`, `ACTION`, `actionCheck`, `Actions`, `ActionsOptions`, `ActionSpec`, `ActionsState`, `addPose`, `aim`, `AIM_CHAIN`, `AimLink`, `AimOptions`, `AnimationClipJSON`, `Animator`, `AnimatorInput`, `AnimatorOptions`, `AnimatorReport`, `animCheck`, `animCheckBody`, `AnimCheckName`, `AnimCheckReport`, `AnimCheckSpec`, `AnimEvent`, `AnimLayer`, `AnimProblem`, `animSheet`, `ArmState`, `Attack`, `AttackState`, `B`, `BAKE_FPS`, `bakeClip`, `BakedClip`, `Beat`, `BlendOptions`, `blendPoses`, `Blob`, `BLOB`, `BLOB_JOINTS`, `BLOB_LEAP`, `BLOB_MOVES`, `BlobInput`, `BlobJoint`, `BlobLeap`, `blobMove`, `BlobMove`, `BlobMoveFrame`, `BlobMoveName`, `blobMoveTimes`, `BlobOptions`, `BlobPose`, `BlobState`, `BODY_CAPSULES`, `BODY_STATES`, `bodyCapsules`, `BodyCheckOptions`, `BodyCheckReport`, `BodyMotion`, `BodyStateName`, `BoneCapsule`, `boneMask`, `BoneMask`, `Build`, `BuildSpec`, `Cape`, `CAPE`, `CapeOptions`, `Chain`, `CHAIN`, `ChainOptions`, `ChainTuning`, `CHANNELS`, `checkBodyStates`, `Clip`, `CLIP_LAYER`, `ClipContact`, `ClipEvent`, `clipJSON`, `ClipKey`, `ClipLayer`, `ClipLayerEvent`, `ClipLayerOptions`, `ClipLayerPool`, `ClipLayerState`, `ClipLibrary`, `ClipOrigin`, `clipPace`, `ClipPlay`, `CLIPS_FIELDS`, `ClipsData`, `ClipSet`, `CLIPSET_FIELDS`, `ClipSetEntry`, `clipSetFromFiles`, `clipSetId`, `clipSetIds`, `ClipSlot`, `ClipSource`, `ClipStepInput`, `clipText`, `ClipWarning`, `Combo`, `ComboState`, `createFootPlantState`, `createSkeleton`, `createWorldPose`, `decodePose`, `defineAction`, `defineBuild`, `defineClipSet`, `defineMove`, `defineSetBuild`, `easeWeight`, `Effectors`, `EFFECTORS`, `emptyClipState`, `FLIP_AXES`, `Floater`, `FLOATER`, `FloaterInput`, `FloaterOptions`, `FloaterPose`, `FloaterState`, `FOOT_PLANT`, `FootLock`, `footPlant`, `FootPlantOptions`, `FootPlantState`, `forwardKinematics`, `fromLegacy`, `FRU`, `getAction`, `getBuild`, `getClipSet`, `getMove`, `GROUND_SPEED`, `GroundHit`, `GroundProbe`, `HAIR`, `handTo`, `hashPose`, `hipRatio`, `HitShape`, `Humanoid`, `HUMANOID_WEIGHTS`, `HumanoidInput`, `HumanoidOptions`, `HumanoidState`, `HumanoidWeights`, `inArc`, `inHitShape`, `jointMatrix`, `JointName`, `jointPosition`, `JointRef`, `jointRotation`, `JOINTS`, `jointToWorld`, `KeyPose`, `knockbackVelocity`, `LAYER_SLOTS`, `LayerSlot`, `LEGACY_FIELDS`, `LegacyMove`, `Limb`, `LimbEnd`, `LimbPose`, `LIMBS`, `LimbSide`, `loadActions`, `loadClipLibrary`, `LOD`, `Lying`, `lyingOf`, `makeAdditive`, `MaskName`, `MASKS`, `MatrixRun`, `MatrixState`, `measureMove`, `mirrorClip`, `Move`, `MOVE_PHASES`, `moveAt`, `MoveInput`, `MovePhase`, `MoveSpec`, `normalizedLens`, `parseClip`, `parseClipSet`, `POINT_INDEX`, `PointName`, `Pose`, `POSE_POINTS`, `poseError`, `poseMeanError`, `PoseName`, `PoseOptions`, `POSES`, `REACTION`, `ReactionBody`, `ReactionName`, `ReactionOptions`, `Reactions`, `REACTIONS`, `ReactionState`, `resolveMove`, `RestBody`, `restBuild`, `restPoints`, `restSkeleton`, `RETARGET`, `RetargetOptions`, `retargetPose`, `RigidPair`, `runOverWalk`, `SAMPLE_STATES`, `sampleBaked`, `samplePose`, `SampleState`, `Secondary`, `SecondaryOptions`, `Sheet`, `SHEET_CAMERAS`, `SheetFrame`, `SheetOptions`, `SheetView`, `Sided`, `Skeleton`, `SlotName`, `SLOTS`, `SocketName`, `socketPosition`, `SOCKETS`, `SQUASH`, `squashScale`, `StanceName`, `STANCES`, `standingHipHeight`, `STATE_MATRIX`, `stateMatrix`, `StateMatrixOptions`, `STRIKE`, `StrikeAnimator`, `StrikeBody`, `strikePart`, `strikeSegment`, `strikeTime`, `Sweep`, `TAIL`, `Timeline`, `TimelineEvent`, `TimelineMark`, `TimelinePhase`, `TimelineState`, `tipPosition`, `TrailName`, `TRAILS`, `TrailSample`, `travelAt`, `turnRight`, `twoBone`, `TwoBoneOptions`, `twoBoneRot`, `validateClip`, `walkRate`, `Weapon`, `WEAPONS`, `WeightInfo`, `WeightRates`, `WorldPose`
+- [`attack.ts`](../engine/anim/attack.ts): Attacks and combos (PLAN.md WP 6.1, §6.4; I-10): moves played on a timeline (engine/anim/timeline.ts).
+  - Exports: `Attack`, `ATTACK_CODES`, `AttackState`, `Combo`, `ComboState`, `movePhases`, `Sweep`
+  - Tests: [`engine/anim/timeline.test.ts`](../engine/anim/timeline.test.ts)
 - [`authoring.ts`](../engine/anim/authoring.ts): Effector-space authoring (PLAN.md WP 3.6, ADR-0009, Appendix C): a pose is written as targets in the character's own terms and solved onto the rotation skeleton.
   - Exports: `B`, `fromFRU`, `fru`, `FRU`, `holdAlong`, `LimbSide`, `Rig`, `rigFromWorld`, `rigToWorld`, `Sided`, `SIDES`, `sideSign`, `SOLVE`, `solveArm`, `solveLeg`, `solveSpine`, `SpineTargets`, `turnRight`
   - Tests: [`engine/anim/authoring.test.ts`](../engine/anim/authoring.test.ts)
@@ -90,11 +99,14 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`builds.ts`](../engine/anim/builds.ts): Body builds (PLAN.md WP 3.4, §5.2, I-08): the registry kind `build`, one entry per body proportion set, in metres.
   - Exports: `Build`, `BUILD_FIELDS`, `buildKind`, `BuildSpec`, `defineBuild`, `getBuild`
   - Tests: [`engine/anim/builds.test.ts`](../engine/anim/builds.test.ts)
+- [`chain.ts`](../engine/anim/chain.ts): Chains (PLAN.md WP 6.2, §5.2; I-11): the strands secondary motion hangs (engine/anim/secondary.ts runs them on a humanoid).
+  - Exports: `BoneCapsule`, `Cape`, `CAPE`, `CapeOptions`, `Chain`, `CHAIN`, `ChainOptions`, `ChainTuning`, `innerSteps`, `SECONDARY_CODES`
+  - Tests: [`engine/anim/secondary.test.ts`](../engine/anim/secondary.test.ts)
 - [`character.ts`](../engine/anim/character.ts): The character animator (PLAN.md WP 3.7, §6.4, ADR-0009; I-09): `Animator` drives a body (the procedural humanoid, engine/anim/humanoid.ts) through an explicit, named layer stack, keeps its sockets, samples its trail (socket history), reports its footsteps and returns all of it as plain JSON (`inspect()`).
   - Exports: `Animator`, `ANIMATOR_FIELDS`, `AnimatorData`, `AnimatorOptions`, `AnimatorPool`, `AnimatorReport`, `AnimEvent`, `CHARACTER_CODES`, `FOOTSTEP`, `PoseOptions`, `TRAIL`, `TrailSample`
   - Tests: [`engine/anim/character.test.ts`](../engine/anim/character.test.ts)
 - [`check.ts`](../engine/anim/check.ts): `anim.check(def)` (PLAN.md WP 3.4, WP 6.6): `animCheck` runs a set of poses through FK and reports what breaks the body's contract, as plain sentences: values that are not finite, bones that changed length, declared rigid pairs that drifted, feet below the floor, and sockets out of reach.
-  - Exports: `animCheck`, `animCheckBody`, `AnimCheckName`, `AnimCheckReport`, `AnimCheckSpec`, `AnimProblem`, `BodyCheckOptions`, `BodyCheckReport`, `CHECK_CODES`, `hashRun`, `MatrixRun`, `MatrixState`, `PointName`, `rateDrift`, `RigidPair`, `RUN_POINTS`, `runPoints`, `SHEET_CAMERAS`, `STATE_MATRIX`, `stateMatrix`, `StateMatrixOptions`
+  - Exports: `animCheck`, `animCheckBody`, `AnimCheckName`, `AnimCheckReport`, `AnimCheckSpec`, `AnimProblem`, `BodyCheckOptions`, `BodyCheckReport`, `CHECK_CODES`, `PointName`, `RigidPair`
   - Tests: [`engine/anim/check.test.ts`](../engine/anim/check.test.ts)
 - [`fk.ts`](../engine/anim/fk.ts): Forward kinematics (PLAN.md WP 3.4, I-08): `forwardKinematics(skeleton, pose)` turns a pose's local rotations into each joint's world matrix, position and rotation, and the helpers read a joint, a socket or a leaf bone's tip out of the result as three.js math objects.
   - Exports: `createWorldPose`, `forwardKinematics`, `jointMatrix`, `jointPosition`, `jointRotation`, `jointToWorld`, `socketPosition`, `tipPosition`, `WorldPose`
@@ -127,7 +139,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `Lying`, `lyingOf`, `REACTION`, `ReactionBody`, `ReactionName`, `ReactionOptions`, `Reactions`, `REACTIONS`, `ReactionState`
   - Tests: [`engine/anim/reactions.test.ts`](../engine/anim/reactions.test.ts)
 - [`secondary.ts`](../engine/anim/secondary.ts): Secondary motion (PLAN.md WP 6.2, §5.2; I-11): what follows the body without driving it.
-  - Exports: `BODY_CAPSULES`, `bodyCapsules`, `BoneCapsule`, `Cape`, `CAPE`, `CapeOptions`, `Chain`, `CHAIN`, `ChainOptions`, `ChainTuning`, `HAIR`, `Secondary`, `SECONDARY_CODES`, `SecondaryOptions`, `SQUASH`, `squashScale`, `TAIL`
+  - Exports: `BODY_CAPSULES`, `bodyCapsules`, `HAIR`, `Secondary`, `SecondaryOptions`, `SQUASH`, `squashScale`, `TAIL`
   - Tests: [`engine/anim/secondary.test.ts`](../engine/anim/secondary.test.ts)
 - [`sheet.ts`](../engine/anim/sheet.ts): Skeleton contact sheets (PLAN.md WP 3.4, `anim.sheet()`): `animSheet(frames)` draws poses as stick figures in one SVG, in Node, each frame from the views asked for, so an agent can look at a pose, a move's samples or a state matrix without a browser.
   - Exports: `animSheet`, `Sheet`, `SHEET_VIEWS`, `SheetFrame`, `SheetOptions`, `SheetView`
@@ -135,14 +147,17 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`skeleton.ts`](../engine/anim/skeleton.ts): The humanoid skeleton (PLAN.md WP 3.4, §5.2, Appendix C; I-01, I-08): a root plus 23 joints, their sockets, the rest pose a build gives them (`createSkeleton`), and bone masks (`boneMask`) for blending.
   - Exports: `boneMask`, `BoneMask`, `createSkeleton`, `JOINT_COUNT`, `JOINT_INFO`, `jointIndex`, `JointInfo`, `JointName`, `JOINTS`, `MaskName`, `MASKS`, `PARENTS`, `PROPORTIONS`, `Skeleton`, `SKELETON_CODES`, `SOCKET_JOINTS`, `socketIndex`, `SocketName`, `SOCKETS`
   - Tests: [`engine/anim/skeleton.test.ts`](../engine/anim/skeleton.test.ts)
+- [`stateMatrix.ts`](../engine/anim/stateMatrix.ts): The state matrix (PLAN.md WP 3.4, WP 6.6): `stateMatrix` drives a fresh animator through each body state, held from rest and back to rest, at each facing of `STATE_MATRIX`, one pose per step.
+  - Exports: `hashRun`, `MatrixRun`, `MatrixState`, `rateDrift`, `RUN_POINTS`, `runPoints`, `SHEET_CAMERAS`, `STATE_MATRIX`, `stateMatrix`, `StateMatrixOptions`
+  - Tests: [`engine/anim/check.test.ts`](../engine/anim/check.test.ts)
 - [`states.ts`](../engine/anim/states.ts): The body-state vocabulary (PLAN.md WP 3.7, §4.6; I-09): the words a body is told each step, kept distinct from input intents (what a player or an AI wants): where it is and how it moves, whether it dashes, flinches or is airborne, the pose or stance it holds, the move it plays, the part that leaves a trail.
   - Exports: `AnimatorInput`, `BODY_STATES`, `BodyStateName`, `checkBodyStates`, `SAMPLE_STATES`, `SampleState`, `SampleStateName`, `STATE_CODES`, `StateKind`, `TrailName`, `TRAILS`
   - Tests: [`engine/anim/states.test.ts`](../engine/anim/states.test.ts)
 - [`strike.ts`](../engine/anim/strike.ts): The arm path (PLAN.md WP 6.1, §6.4; I-10): how a move plays on a humanoid's arms, my-3d2dge's strike ported onto the rotation skeleton.
   - Exports: `ARM`, `armBlade`, `ArmBody`, `ArmLayContext`, `ArmMotion`, `ArmState`, `createArmState`, `layArm`, `stepArm`
   - Tests: [`engine/anim/strike.test.ts`](../engine/anim/strike.test.ts)
-- [`timeline.ts`](../engine/anim/timeline.ts): Timelines and the moves played on them (PLAN.md WP 6.1, §6.4; I-10): `Timeline` plays a list of phases, one fixed step at a time.
-  - Exports: `Attack`, `AttackState`, `Combo`, `ComboState`, `movePhases`, `Sweep`, `TICK_EPSILON`, `Timeline`, `TIMELINE_CODES`, `TimelineEvent`, `TimelineMark`, `TimelinePhase`, `TimelineState`
+- [`timeline.ts`](../engine/anim/timeline.ts): Timelines (PLAN.md WP 6.1, §6.4; I-10): `Timeline` plays a list of phases, one fixed step at a time.
+  - Exports: `TICK_EPSILON`, `Timeline`, `TimelineEvent`, `TimelineMark`, `TimelinePhase`, `TimelineState`
   - Tests: [`engine/anim/timeline.test.ts`](../engine/anim/timeline.test.ts)
 - [`weights.ts`](../engine/anim/weights.ts): The layer stack and its weights (PLAN.md WP 3.7; I-09): what the animator (engine/anim/character.ts) runs, in order, and how much of each part shows, as tables rather than an order of lerps.
   - Exports: `activeWeights`, `AnimLayer`, `easeWeight`, `HUMANOID_WEIGHTS`, `LAYER_SLOTS`, `LayerSlot`, `LOD`, `SlotName`, `SLOTS`, `WeightInfo`, `WeightName`, `WeightRates`
@@ -191,6 +206,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`damageNumbers.ts`](../engine/app/damageNumbers.ts): Damage numbers from the sim (PLAN.md §6.7: game UI in HTML/CSS; WP 6.5's numbers shown in the box, WP 6.7 core proposal, ADR-0008 amendment 8): `createDamageNumbers(ui)` reads a sim world's event trace once per rendered frame, without listening, and shows each new `damage` event (engine/sim/damage.ts) that took hit points as a damage number `DAMAGE_RISE` m above where it struck (engine/ui/labels.ts: it rises, stacks and is pooled), so a page shows the hits of any scene that lands them through `damage`.
   - Exports: `createDamageNumbers`, `DAMAGE_RISE`, `DamageNumbers`, `TracedWorld`
   - Tests: [`engine/app/damageNumbers.test.ts`](../engine/app/damageNumbers.test.ts)
+- [`drawing.ts`](../engine/app/drawing.ts): The page's drawing (PLAN.md §6.4, §6.7, WP 2.7): what engine/app/engine.ts `createEngine` draws with once its renderer is up.
+  - Exports: `createPageDrawing`, `DRAWING`, `PageDrawing`, `PageDrawingOptions`, `PageParts`
+  - Tests: [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts)
 - [`engine.ts`](../engine/app/engine.ts): The engine in a page (PLAN.md §6.4, §6.9, §8.3, WP 2.7): `createEngine({ canvas, scenes, levels })` registers the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay` and settings by path), starts the scene as a recorded run with its view (engine/app/headless.ts, engine/app/view.ts), publishes the run's inspector as `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts) and the post-processing chain every frame and shot is drawn through (engine/gfx/post/chain.ts: the view settings `post.look`, `post.filters` and `post.show`; the look's sky and style, engine/app/look.ts), warms up every pipeline the view needs through both cameras (perspective and orthographic), draws the first frame, then runs the frame loop (engine/app/loop.ts): the devices sampled into intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from the clock, the view drawn at the clock's alpha.
   - Exports: `createEngine`, `Engine`, `ENGINE_CODES`, `EngineFrame`, `EngineOptions`, `FrameWorld`, `recordOf`
   - Tests: [`engine/app/engine.test.ts`](../engine/app/engine.test.ts), [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts)
@@ -598,7 +616,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `Aa`, `AA_CHOICE`, `AA_KINDS`, `AA_MEASURED`, `AaKind`, `createAa`, `gateUpdates`
   - Tests: [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`chain.ts`](../engine/gfx/post/chain.ts): Post-processing (PLAN.md WP 7.4, §6.7, I-46): `createPost` sets up, once, one `PostProcessing` chain (r182) that every frame draws through, and draws the look the view settings name.
-  - Exports: `createPost`, `definePostSettings`, `Post`, `POST_CODES`, `POST_SETTINGS`, `PostOptions`, `snapBlock`
+  - Exports: `createPost`, `Post`, `PostOptions`, `snapBlock`
   - Tests: [`engine/gfx/post/chain.test.ts`](../engine/gfx/post/chain.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`composite.ts`](../engine/gfx/post/composite.ts): The one composite pass (PLAN.md WP 7.4, I-46): every filter over the finished picture in a single full-screen pass, each gated by a uniform, in a fixed order, so switching any of them is a uniform write (shardfall's design, `shardfall:crates/pav_render/src/shaders/post.wgsl:731-860`).
   - Exports: `CompositeInputs`, `createComposite`, `POST_SHOW`, `PostShow`
@@ -615,6 +633,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`presets.ts`](../engine/gfx/post/presets.ts): One-filter presets (PLAN.md WP 7.4): looks that set one filter or the shading, seeded from shardfall's tuned `[[preset]]` tables (`shardfall:crates/pav_view/src/looks.toml:13-500`), keys renamed (engine/gfx/post/looks.ts says what was left out), plus three from the prototype's filter panel (`my-3d2dge:src/stress-world/ 45-filters.js:21-24`: its comic cel, its dithered pixel look, FXAA).
   - Exports: `PRESETS`
   - Tests: [`engine/gfx/post/looks.test.ts`](../engine/gfx/post/looks.test.ts)
+- [`settings.ts`](../engine/gfx/post/settings.ts): The post chain's codes and settings (PLAN.md WP 7.4, WP 3.12): the advice engine/gfx/post/chain.ts gives (`POST_CODES`: bloom off at a tier, too few levels, the flag table full, a style without a style set) and the view settings it reads (`POST_SETTINGS`: `post.look`, `post.filters`, `post.show`), declared with the setting `quality` by `definePostSettings`.
+  - Exports: `definePostSettings`, `POST_CODES`, `POST_SETTINGS`
+  - Tests: [`engine/gfx/post/chain.test.ts`](../engine/gfx/post/chain.test.ts)
 - [`snap.ts`](../engine/gfx/post/snap.ts): Snapping the camera to pixel art's block grid (PLAN.md WP 7.4; shardfall's lesson, `shardfall:docs/ HISTORY.md:478-479`): the composite cuts the picture into blocks fixed to the screen, so a camera sliding by less than a block changes what every block shows, and the pixel art shimmers.
   - Exports: `blockSize`, `SNAP_FALLBACK_DEPTH`, `snapToBlocks`
   - Tests: [`engine/gfx/post/snap.test.ts`](../engine/gfx/post/snap.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
@@ -798,6 +819,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/physics
 
+- [`binding.ts`](../engine/physics/binding.ts): A physics world bound to a sim world (PLAN.md WP 3.1, §6.1): a scene with `physics: true` gets one (`scenePhysics`, declaring `physics.gravity` on its registry if it lacks it); `attachPhysics` binds it to the sim world and adds the system `physics`, in the phase of that name, after `ai` and `anim` and before `readback`; and `physicsOf(w)` returns the bound world (engine/physics/world.ts `Physics`: its bodies and queries), or throws `PHYSICS_NONE` naming the fix.
+  - Exports: `attachPhysics`, `BINDING_CODES`, `bindPhysics`, `physicsOf`, `scenePhysics`
+  - Tests: [`engine/physics/world.test.ts`](../engine/physics/world.test.ts)
 - [`bodies.ts`](../engine/physics/bodies.ts): Bodies and props (PLAN.md WP 4.1; doctrines: Common ground, Reproducible): what scenes build props, movers and triggers with, on the physics world (engine/physics/world.ts), in plain terms.
   - Exports: `addBall`, `addBox`, `addCapsule`, `addCylinder`, `addProp`, `addSensor`, `applyTorqueImpulse`, `driveBody`, `driveMover`, `knock`, `KnockOptions`, `Mover`, `MOVER`, `MOVER_FIELDS`, `moverPose`, `PROP_MATERIAL`, `PropSpec`, `RescueLevel`, `rescueLost`, `sensorHits`, `SensorSpec`, `Trigger`, `TRIGGER_FIELDS`, `updateTrigger`
   - Tests: [`engine/physics/bodies.test.ts`](../engine/physics/bodies.test.ts)
@@ -826,7 +850,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `check`, `Ground`, `Hit`, `hullPoints`, `HullShape`, `overlap`, `OverlapOptions`, `probe`, `ProbeOptions`, `quat`, `QuatLike`, `QUERY_CODES`, `QueryOptions`, `raycast`, `RayOptions`, `Shape`, `shapeArgs`, `shapeCast`, `ShapeCastOptions`, `vec`, `Vec3Like`
   - Tests: [`engine/physics/queries.test.ts`](../engine/physics/queries.test.ts)
 - [`world.ts`](../engine/physics/world.ts): The physics world (PLAN.md WP 3.1, §6.1, §6.5 items 4–7; doctrines: Reproducible, Quality under the hood): Rapier behind plain terms.
-  - Exports: `attachPhysics`, `bindPhysics`, `BodyChange`, `BodySpec`, `BodyState`, `BodyType`, `ColliderSpec`, `createPhysics`, `Physics`, `physicsOf`, `PhysicsStepper`, `rapierOf`, `scenePhysics`, `WORLD_CODES`
+  - Exports: `BodyChange`, `BodySpec`, `BodyState`, `BodyType`, `ColliderSpec`, `createPhysics`, `Physics`, `PhysicsStepper`, `rapierOf`, `WORLD_CODES`
   - Tests: [`engine/physics/world.test.ts`](../engine/physics/world.test.ts)
 
 ## engine/sim
@@ -848,6 +872,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Tests: [`engine/sim/damage.test.ts`](../engine/sim/damage.test.ts)
 - [`entities.ts`](../engine/sim/entities.ts): The shape of an entity's data (PLAN.md §6.5 items 4, 6 and 7, WP 1.4; doctrine: Reproducible): the rules the hash (engine/sim/state.ts), captures and restores (engine/sim/capture.ts) and the world (engine/sim/world.ts) share, so a restored entity is the live one, field for field and in the same order (ADR-0006 amendment 3).
   - Exports: `capturable`, `componentNames`, `eachField`, `ENTITY_CODES`, `LiveEntity`, `makeEntity`, `notData`, `NotData`, `placeComponent`
+- [`entityTable.ts`](../engine/sim/entityTable.ts): The sim world's entity table (PLAN.md §6.5 item 4, WP 1.4): the live entities of engine/sim/world.ts `createWorld`, in id order, with an id → entity map for lookups.
+  - Exports: `createEntityTable`, `EntityTable`
+  - Tests: [`engine/sim/world.test.ts`](../engine/sim/world.test.ts)
 - [`hits.ts`](../engine/sim/hits.ts): Hit queries (PLAN.md WP 6.3, §6.4; I-10): which targets a strike reaches, in the sim, against the targets' hurt capsules (engine/world/projectiles.ts `HurtCapsule`: upright capsules on their feet, such as crowd agents) found through a spatial hash of their feet (`HurtSet`).
   - Exports: `coneHits`, `inCone`, `physicsWalls`, `sweepHits`, `sweepTouches`
   - Tests: [`engine/sim/hits.test.ts`](../engine/sim/hits.test.ts)
@@ -866,8 +893,11 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`replay.ts`](../engine/sim/replay.ts): Replays (PLAN.md §8.4, §6.5 items 3 and 6–9, WP 1.5; doctrine: Reproducible): the readable replay format and its checks, the player that `x replay` and tests/pages/replay.html run, and the comparison of runs that `x replay` judges and bisects with.
   - Exports: `CHECKPOINT_STEPS`, `checkpointsOf`, `checkReplay`, `firstDifference`, `InputChange`, `InputEntry`, `judgeRuns`, `Parting`, `partingOf`, `PLATFORM_KEYS`, `Playback`, `PlayOptions`, `playReplay`, `Replay`, `REPLAY_CODES`, `REPLAY_FORMAT`, `REPLAY_KEYS`, `StepView`, `Verdict`
   - Tests: [`engine/sim/replay.test.ts`](../engine/sim/replay.test.ts)
-- [`scene.ts`](../engine/sim/scene.ts): Scenes and sessions, sim-side (PLAN.md §6.9, §9.0, §8.4, WP 1.5; doctrines: Reproducible, Agent-operable): `defineScene(id, { level?, settings, setup, step })` registers a scene as an entry of the registry kind `scene`; `startScene` makes its world (a settings store with the scene's settings over the defaults and the caller's over those, a world seeded from the seed, the scene's `step` as the system `scene`, then its `setup`); `createSession` starts one that records its inputs from step 0, the recorder of PLAN.md §8.4.
-  - Exports: `checkSeed`, `createSession`, `defineScene`, `getScene`, `isScene`, `Scene`, `SCENE_CODES`, `SceneAction`, `SceneOptions`, `SceneRun`, `SceneSpec`, `Session`, `startScene`
+- [`scene.ts`](../engine/sim/scene.ts): Scenes, sim-side (PLAN.md §6.9, §9.0, WP 1.5; doctrines: Reproducible, Agent-operable): `defineScene(id, { level?, settings, setup, step })` registers a scene as an entry of the registry kind `scene`; `startScene` makes its world (a settings store with the scene's settings over the defaults and the caller's over those, a world seeded from the seed, the scene's `step` as the system `scene`, then its `setup`).
+  - Exports: `checkSeed`, `defineScene`, `getScene`, `isScene`, `Scene`, `SCENE_CODES`, `SceneAction`, `SceneOptions`, `SceneRun`, `SceneSpec`, `startScene`
+  - Tests: [`engine/sim/scene.test.ts`](../engine/sim/scene.test.ts)
+- [`session.ts`](../engine/sim/session.ts): Sessions (PLAN.md §8.4, WP 1.5; doctrines: Reproducible, Agent-operable): `createSession(scene, options)` starts a scene (engine/sim/scene.ts `startScene`) that records its inputs from step 0, the recorder of PLAN.md §8.4.
+  - Exports: `createSession`, `Session`, `SESSION_CODES`
   - Tests: [`engine/sim/scene.test.ts`](../engine/sim/scene.test.ts)
 - [`state.ts`](../engine/sim/state.ts): The canonical state and its hash (PLAN.md §6.5 items 4 and 6, WP 1.4, I-05; doctrine: Reproducible): component kinds declared with their field lists (registry kind `component`), the plain-data form of the sim that `state()` returns, the one 64-bit FNV-1a hash over everything a capture holds (`hash()`), per-entity digests (`trace()`), and `diffStates`, which names the fields where two states part.
   - Exports: `AnyComponents`, `ComponentData`, `ComponentKind`, `ComponentOf`, `componentTable`, `ComponentTable`, `defineComponent`, `diffStates`, `Entity`, `EntityData`, `hashState`, `PhysicsHook`, `SpawnSpec`, `STATE_CODES`, `STATE_FORMAT`, `StateDifference`, `StateView`, `traceState`, `With`, `WorldState`, `WorldTrace`
@@ -1098,6 +1128,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`fixtures.ts`](../tests/e2e/fixtures.ts): The shared e2e fixture (PLAN.md §8.8): every suite imports `test` and `expect` from here.
   - Exports: `decodePng`, `expect`, `Frame`, `Harness`, `test`, `WebGPUProof`
   - Tests: [`tests/e2e/harness.spec.ts`](../tests/e2e/harness.spec.ts)
+- [`parity-stages.ts`](../tests/e2e/parity-stages.ts): The box's stages for the CPU-only gameplay contract (tests/e2e/parity.spec.ts, PLAN.md §6.7, I-07): each stage's scene, the component its gameplay entities hold, its replays (read from tests/replays/), the ones swept through every camera and with the GPU features off, whether it plays through the looks, and the live play recorded in its page.
+  - Exports: `replay`, `Stage`, `STAGES`
 - [`post-cases.ts`](../tests/e2e/post-cases.ts): The filters the post-processing T2 tries (tests/e2e/post.spec.ts, PLAN.md WP 7.4): the scoped filters with the share of their scope each must change, the scopes with the parts they cover, and the whole-screen filters with the share of the picture each must change.
   - Exports: `SCOPED`, `SCOPES`, `SCREEN`
 - [`post-pixels.ts`](../tests/e2e/post-pixels.ts): Pixel arithmetic for the post-processing T2 (tests/e2e/post.spec.ts): shots as RGBA bytes, which pixels changed, the parts view read back as a part per pixel (and counted in an ID-pass box), the pixels near a part or another part, the ID pass as compared, the edge error that chose the edge smoothing and the reference it is measured against.
@@ -1304,8 +1336,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`check.ts`](../tools/cmd/check.ts): Runs the repository checks no standard tool covers, last in `npm run check` (PLAN.md §8.1).
   - Exports: `assetScan`, `binaryKind`, `CheckContext`, `CheckOutcome`, `CheckPlugin`, `default`, `discoverPlugins`, `isLane`, `repositoryFiles`, `runChecks`, `scanAssets`
   - Tests: [`tools/cmd/check.test.ts`](../tools/cmd/check.test.ts)
-- [`ci.ts`](../tools/cmd/ci.ts): The merge gate (PLAN.md §8.9, WP 0.9): `x ci --local` runs `CI_STEPS` in order on this machine, holds the tiers to their budgets (tools/lib/tiers.ts), writes `out/ci/summary.md` and, when everything passed, records HEAD in `out/ci/last-green`, the base of the selections until main holds a gate.
-  - Exports: `CI_OUT`, `CI_STEPS`, `CiDeps`, `CiRun`, `CiStep`, `createCiCommand`, `default`, `Head`, `KEPT_CACHES`, `readHead`, `readT2Full`, `renderSummary`, `runCi`, `spawnStep`, `StepOutcome`, `StepResult`, `StepRunner`, `toResult`
+- [`ci.ts`](../tools/cmd/ci.ts): The merge gate (PLAN.md §8.9, WP 0.9): `x ci --local` runs `CI_STEPS` in order on this machine, holds the tiers to their budgets (tools/lib/tiers.ts), writes `out/ci/summary.md` (tools/lib/ciSummary.ts) and, when everything passed, records HEAD in `out/ci/last-green`, the base of the selections until main holds a gate.
+  - Exports: `CI_STEPS`, `CiDeps`, `CiRun`, `CiStep`, `createCiCommand`, `default`, `Head`, `KEPT_CACHES`, `readHead`, `readT2Full`, `runCi`, `spawnStep`, `StepOutcome`, `StepResult`, `StepRunner`
   - Tests: [`tools/cmd/ci.test.ts`](../tools/cmd/ci.test.ts)
 - [`deps.ts`](../tools/cmd/deps.ts): Checks the dependency pins against `tools/deps.json` (offline), and asks the registry for compatible releases to adopt and for lines that have qualified (PLAN.md §6.10; doctrine: Mastery, Common ground).
   - Exports: `check`, `createDepsCommand`, `default`
@@ -1338,10 +1370,10 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `CheckName`, `CHECKS`, `default`, `fill`, `Kind`, `listKinds`, `NEXT`, `render`, `runCheck`, `runChecks`, `testKind`, `writeFiles`
   - Tests: [`tools/cmd/new.test.ts`](../tools/cmd/new.test.ts)
 - [`perf.ts`](../tools/cmd/perf.ts): Performance as counters against budgets, never frames per second (PLAN.md §8.1, §8.7, WPs 1.5 and 5.5).
-  - Exports: `agentsSetting`, `BUDGET_KEYS`, `budgetPath`, `default`, `DEFAULT_STEPS`, `LADDER`, `measure`, `median`, `PAGE_KEYS`, `PageKey`, `PerfBudget`, `PerfKey`, `readBudget`, `recordTrend`, `regressions`, `TREND_FILE`, `TREND_LIMIT`, `Way`, `withinBudget`
+  - Exports: `agentsSetting`, `default`, `measure`
   - Tests: [`tools/cmd/perf.test.ts`](../tools/cmd/perf.test.ts)
 - [`port.ts`](../tools/cmd/port.ts): Records the reference vectors the ports from my-3d2dge are tested against (PLAN.md WP 0.11, §9.0): the old engine's own outputs as text JSON in `tests/baselines/port/`, with a generated README that says what each file holds, the source commit, the sampling and the conversion to my-3dge's frame (Appendix C).
-  - Exports: `BLOB_SCRIPTS`, `blobScript`, `buildFiles`, `BUILDS`, `check`, `CHECKSUMS`, `checkVectors`, `colorVectors`, `coreVectors`, `default`, `everyNth`, `humanoidRun`, `humanoidVectors`, `layout`, `LoadedEngine`, `loadEngine`, `moveRecord`, `moveVectors`, `PORT_DIR`, `SourceEngine`, `STATES`, `writeVectors`
+  - Exports: `buildFiles`, `check`, `CHECKSUMS`, `checkVectors`, `default`, `layout`, `PORT_DIR`, `writeVectors`
   - Tests: [`tools/cmd/port.test.ts`](../tools/cmd/port.test.ts)
 - [`qa.ts`](../tools/cmd/qa.ts): Runs content QA for the families named, against their baselines (PLAN.md §8.6).
   - Exports: `closestIds`, `compareWithBaselines`, `default`, `kept`, `loadFamily`, `QaBaseline`, `QaContext`, `qaFamilies`, `QaFamily`, `QaViolation`, `readBaselines`, `runQa`
@@ -1352,14 +1384,14 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`set.ts`](../tools/cmd/set.ts): Checks a setting against the settings schema, prints it as a URL parameter, and applies it to the page `x inspect` keeps open (PLAN.md §8.1, §3's Agent-operable, I-37, WP 2.7): `node x set box.room.speed 3`.
   - Exports: `checkSetting`, `default`, `loadSettings`, `sceneModuleOf`, `settingModules`, `settingParam`
   - Tests: [`tools/cmd/set.test.ts`](../tools/cmd/set.test.ts)
-- [`sheet.ts`](../tools/cmd/sheet.ts): Draws a body's state matrix as a contact sheet, plus its numeric checks (PLAN.md WP 6.6, §8.5): `node x sheet <subject>` runs the humanoid through the states a QA id or prefix names, as the `anim` QA family does (tools/qa/anim.ts `humanoidStates`), draws them with `anim.sheet()` (engine/anim/sheet.ts) from the cameras of a `SHEET_CAMERAS` preset (engine/anim/check.ts), and turns the SVG into a PNG in the platform's Chromium.
+- [`sheet.ts`](../tools/cmd/sheet.ts): Draws a body's state matrix as a contact sheet, plus its numeric checks (PLAN.md WP 6.6, §8.5): `node x sheet <subject>` runs the humanoid through the states a QA id or prefix names, as the `anim` QA family does (tools/qa/anim.ts `humanoidStates`), draws them with `anim.sheet()` (engine/anim/sheet.ts) from the cameras of a `SHEET_CAMERAS` preset (engine/anim/stateMatrix.ts), and turns the SVG into a PNG in the platform's Chromium.
   - Exports: `default`, `MAX_WIDTH`, `qaPrefixes`, `sheetFrames`, `SheetFramesOptions`, `subjectIds`
   - Tests: [`tools/cmd/sheet.test.ts`](../tools/cmd/sheet.test.ts)
 - [`shot.ts`](../tools/cmd/shot.ts): Renders a page on WebGPU in the platform's Chromium and reports what it drew as numbers and text: the look metrics, the ID pass (which object covers which pixels) and a 48 × 27 text thumbnail; images only on demand.
   - Exports: `default`, `encodePng`, `frameMetrics`, `judgeFrame`, `pageUrl`, `READY_TIMEOUT_MS`, `resolvePage`, `shotMetrics`
   - Tests: [`tests/e2e/shot.spec.ts`](../tests/e2e/shot.spec.ts), [`tools/cmd/shot.test.ts`](../tools/cmd/shot.test.ts)
 - [`sim.ts`](../tools/cmd/sim.ts): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5).
-  - Exports: `default`, `feelLines`, `feelOf`, `HashedView`, `levelOf`, `loadScene`, `navMap`, `nodeRuntime`, `parseSets`, `replayText`, `resolveSceneModule`, `Runtime`, `sceneModules`, `sceneRoots`, `typedSets`, `wholeFlag`, `writeReplay`
+  - Exports: `default`, `feelLines`, `feelOf`, `HashedView`, `levelOf`, `navMap`, `nodeRuntime`, `parseSets`, `replayText`, `Runtime`, `typedSets`, `wholeFlag`, `writeReplay`
   - Tests: [`tools/cmd/sim.test.ts`](../tools/cmd/sim.test.ts)
 - [`src.ts`](../tools/cmd/src.ts): Prints and checks the read-only source checkouts, `$MY3D2DGE_SRC` and `$SHARDFALL_SRC`, at their pins.
   - Exports: `default`
@@ -1397,6 +1429,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`browser.ts`](../tools/lib/browser.ts): Chromium for the tools and the e2e fixture, through Playwright: the launch options `playwright.config.ts` also uses, the init script every page gets before its own scripts run (a virtual clock, seeded randomness and a WebGPU probe), and page errors mapped to `.ts` files and lines through Vite's inline source maps (§8.1, §8.8).
   - Exports: `AdapterRecord`, `browserRuntime`, `cachedChromium`, `CHROMIUM_VERSION`, `chromiumPath`, `ConsoleRecord`, `DEFAULT_CHROMIUM`, `describePageError`, `GpuLog`, `initScript`, `launchBrowser`, `launchOptions`, `mapPageError`, `mapStack`, `PageError`, `PageWatch`, `parseStack`, `preparePage`, `servedPath`, `SourceFrame`, `VIEWPORT`, `VirtualClock`, `WEBGPU_FLAGS`
   - Tests: [`tests/e2e/harness.spec.ts`](../tests/e2e/harness.spec.ts), [`tools/lib/browser.test.ts`](../tools/lib/browser.test.ts)
+- [`ciSummary.ts`](../tools/lib/ciSummary.ts): The merge gate's report (PLAN.md §8.9, WP 0.9): where `x ci --local` (tools/cmd/ci.ts) writes (`CI_OUT`), its run as Markdown for `out/ci/summary.md` and the GitHub workflow's step summary (`renderSummary`: the commit, the steps with their times against their budgets, the T2 selection, a failed step's last lines), and as the dispatcher's result (`toResult`: the timing table, the T2 selection and one finding per problem).
+  - Exports: `CI_OUT`, `renderSummary`, `toResult`
+  - Tests: [`tools/cmd/ci.test.ts`](../tools/cmd/ci.test.ts)
 - [`deps.ts`](../tools/lib/deps.ts): The dependency record (`tools/deps.json`) and the model behind `x deps` (PLAN.md §6.10, doctrine: Mastery): versions and their lines, the 12-month rule, registry answers, and the lockfile's types packages.
   - Exports: `compareVersions`, `DepsRecord`, `evenLines`, `firstOfNextLine`, `gitBlob`, `isDay`, `isRelease`, `Knowledge`, `lineName`, `lineOf`, `LockEntry`, `Lockfile`, `lookup`, `newestInLine`, `newestQualified`, `NextLine`, `parseVersion`, `PinRecord`, `qualifiesOn`, `readRepository`, `RECORD`, `RegistryAnswer`, `Release`, `Repository`, `Rule`, `RULES`, `satisfies`, `SECTIONS`, `stableReleases`, `todayUtc`, `TYPES`, `TypesDep`, `typesInLock`
   - Tests: [`tools/cmd/deps.test.ts`](../tools/cmd/deps.test.ts), [`tools/lib/deps.test.ts`](../tools/lib/deps.test.ts)
@@ -1445,20 +1480,32 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`page.ts`](../tools/lib/page.ts): Pages for the `x` commands (PLAN.md §8.1, §8.3, WP 2.7): reading a page's ready-or-error signal (`window.__engine`), waiting for it, finding the page that draws a scene module's scenes, and playing replays in that page, opened on each replay's scene, for `x replay --browser page` (`pageRuntime`: `__engine.replay`, engine/app/playback.ts, which draws a frame after every step), or in tests/pages/replay.html for `--browser sim` (`replayBrowser`).
   - Exports: `BrowserMode`, `labPageOf`, `PageEngine`, `pageRuntime`, `readSignals`, `READY_MS`, `replayBrowser`, `scenePath`, `Signals`, `waitReady`
   - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
+- [`perfBudget.ts`](../tools/lib/perfBudget.ts): Performance budgets and their trend (PLAN.md §8.1, §8.7, WPs 1.5 and 5.5), for `x perf` (tools/cmd/perf.ts, whose file comment says how each way measures).
+  - Exports: `BUDGET_KEYS`, `BUDGET_SHAPE`, `budgetPath`, `Budgets`, `DEFAULT_STEPS`, `LADDER`, `median`, `PAGE_KEYS`, `PageKey`, `PerfBudget`, `PerfKey`, `readBudget`, `recordTrend`, `regressions`, `Section`, `TREND_FILE`, `TREND_LIMIT`, `Way`, `withinBudget`
+  - Tests: [`tools/cmd/perf.test.ts`](../tools/cmd/perf.test.ts)
 - [`png.ts`](../tools/lib/png.ts): Decodes the PNGs Chromium's screenshots produce (non-interlaced, 8-bit RGB or RGBA) into RGBA bytes, for the frame reads of the e2e fixture (tests/e2e/fixtures.ts) and `x shot` (tools/cmd/shot.ts).
   - Exports: `decodePng`
   - Tests: [`tools/lib/png.test.ts`](../tools/lib/png.test.ts)
+- [`portVectors.ts`](../tools/lib/portVectors.ts): The port vectors' builders (PLAN.md WP 0.11, §9.0), for `x port refs` (tools/cmd/port.ts, which formats, writes and checks them): `loadEngine` loads `my-3d2dge:engine/my-3d2dge.js` from a checkout into a Node `vm` context (`console` the only shim; `Math.random` the engine's own `rng`, reseeded per record from its id), and each builder records one file's worth of the old engine's outputs: `coreVectors` (`rng`, `hash2`, `noise2`, the angle helpers), `colorVectors`, `humanoidVectors` per build (the state matrix of `STATES` at eight facings, sampled `everyNth`), `moveVectors` (`E.move` in every phase on every build) and `blobScript` (the `BLOB_SCRIPTS`).
+  - Exports: `BLOB_SCRIPTS`, `blobScript`, `BUILDS`, `colorVectors`, `coreVectors`, `DT`, `ENGINE`, `everyNth`, `humanoidRun`, `humanoidVectors`, `LoadedEngine`, `loadEngine`, `moveRecord`, `moveVectors`, `SourceEngine`, `STATES`, `STEPS`
+  - Tests: [`tools/cmd/port.test.ts`](../tools/cmd/port.test.ts)
 - [`replayState.ts`](../tools/lib/replayState.ts): The state a replay reaches, for `x replay --state` and `--until n` (tools/cmd/replay.ts; gate G7's review): `writeState(root, file, runtime, until?)` plays a replay file in a runtime (Node's, tools/cmd/sim.ts `nodeRuntime`) to its last step, or to step `until`, and writes the canonical state there and its event trace, as `x sim` writes its own, to `stateFile(file)`: `out/replay/<name>/state.json`, `<name>` the file's without `.replay.json`.
   - Exports: `stateFile`, `writeState`
   - Tests: [`tools/cmd/replay.test.ts`](../tools/cmd/replay.test.ts)
 - [`report.ts`](../tools/lib/report.ts): The `report.json` every `x` command writes (PLAN.md §8.1): its schema, its validation, and the writer that also updates `out/latest.json`.
   - Exports: `Artifact`, `Finding`, `makeReport`, `outputPath`, `packageVersion`, `Report`, `reportPath`, `runtime`, `targetSlug`, `validateReport`, `writeReport`
   - Tests: [`tools/lib/report.test.ts`](../tools/lib/report.test.ts)
+- [`scenes.ts`](../tools/lib/scenes.ts): Scene lookup for the tools (PLAN.md §8.1, WP 1.5): where scene modules live (`sceneRoots`: `fixtures/scenes/` and every `labs/<name>/scenes/`), which module defines which scene id (`sceneModules`, from the modules' text: a `defineScene('<id>', …)` with a literal id, tests aside), the module a target names (`resolveSceneModule`: a `.ts` file, a directory's `index.ts`, or a scene id's module) and the scene it exports (`loadScene`, `--scene <id>` for a module that defines several).
+  - Exports: `loadScene`, `resolveSceneModule`, `sceneModules`, `sceneRoots`
+  - Tests: [`tools/cmd/sim.test.ts`](../tools/cmd/sim.test.ts)
 - [`source.ts`](../tools/lib/source.ts): The read-only source checkouts: my-3d2dge at `$MY3D2DGE_SRC` and shardfall at `$SHARDFALL_SRC` (PLAN.md WP 0.1).
   - Exports: `repoSlug`, `requireSource`, `ResolvedSource`, `ResolveOptions`, `resolveSource`, `SkippableTest`, `SourceSpec`, `sourceSpecs`
   - Tests: [`tools/lib/source.test.ts`](../tools/lib/source.test.ts)
-- [`tiers.ts`](../tools/lib/tiers.ts): The test tiers (PLAN.md §8.2): their commands and budgets, what a change selects in T1 and T2 and why, and the budget check over the JSON reports.
-  - Exports: `Base`, `BudgetCheck`, `changedFiles`, `Changes`, `checkBudget`, `checkReports`, `duration`, `findBase`, `isVersionOnly`, `LAST_GREEN`, `LONG_RUNS`, `plan`, `recordGreen`, `reportMs`, `Selection`, `selectT1`, `selectT2`, `T1_FULL`, `T2_FULL`, `Tier`, `TierId`, `TIERS`, `Timing`, `timingTable`, `Trigger`, `vitestRerunTriggers`
+- [`tierBudgets.ts`](../tools/lib/tierBudgets.ts): The tiers' budget checks (PLAN.md §8.2, ADR-0022): each tier's wall-clock duration against its budget (tools/lib/tiers.ts `TIERS`), read from the JSON reports the tiers write (`reportMs`, `checkReports`) or measured by the caller (T0 writes none), and the timing table `x ci --local` prints (`timingTable`).
+  - Exports: `BudgetCheck`, `checkBudget`, `checkReports`, `reportMs`, `Timing`, `timingTable`
+  - Tests: [`tools/lib/tiers.test.ts`](../tools/lib/tiers.test.ts)
+- [`tiers.ts`](../tools/lib/tiers.ts): The test tiers (PLAN.md §8.2): their commands and budgets, and what a change selects in T1 and T2 and why (the budget checks over the JSON reports: tools/lib/tierBudgets.ts).
+  - Exports: `Base`, `changedFiles`, `Changes`, `duration`, `findBase`, `isVersionOnly`, `LAST_GREEN`, `LONG_RUNS`, `plan`, `recordGreen`, `ROOT`, `Selection`, `selectT1`, `selectT2`, `T1_FULL`, `T2_FULL`, `Tier`, `TierId`, `TIERS`, `Trigger`, `vitestRerunTriggers`
   - Tests: [`tools/lib/tiers.test.ts`](../tools/lib/tiers.test.ts)
 - [`vite.ts`](../tools/lib/vite.ts): A Vite dev server through Vite's JavaScript API, for the `x` commands that open pages (PLAN.md §8.1).
   - Exports: `DevServer`, `freePort`, `startVite`
@@ -1467,7 +1514,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 ## tools/qa
 
 - [`anim.ts`](../tools/qa/anim.ts): The `anim` QA family (PLAN.md §8.6, WP 6.6, I-29): `node x qa anim` drives every body the engine animates through its state matrix and measures the motion, in Node.
-  - Exports: `actionStates`, `ANIM_QA`, `animViolations`, `closure`, `default`, `footSlide`, `Found`, `humanoidPrefixes`, `HUMANOIDS`, `humanoidStates`, `limbs`, `makeHumanoid`, `motionTrack`, `pops`, `Track`
+  - Exports: `actionStates`, `animViolations`, `default`, `humanoidPrefixes`, `HUMANOIDS`, `humanoidStates`, `makeHumanoid`
   - Tests: [`tools/qa/anim.test.ts`](../tools/qa/anim.test.ts)
 - [`audio.ts`](../tools/qa/audio.ts): The `audio` QA family (PLAN.md §8.6, WP 9.4, I-23, I-29): `node x qa audio` renders every sound the shared registry has, the engine's `sfx` and `song` entries (engine/audio/data) and a game's (each `*.ts` module under `labs/<name>/sounds/` imported first), and measures each render by numbers: no ear needed (doctrine: Verifiable).
   - Exports: `AUDIO_LIMITS`, `checkSounds`, `dbfs`, `default`, `fft`, `findClicks`, `frameSpectrum`, `loadSoundModules`, `soundMetrics`, `SoundMetrics`, `soundModules`, `SoundProblem`, `soundProblems`, `spectralCentroid`
@@ -1487,3 +1534,6 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`clips.ts`](../tools/qa/anim/clips.ts): The `anim` QA family's clips (PLAN.md §8.6 and §10, WP 8.6, I-13, I-29): every clip of the library under `data/anim/sets/`, checked as data and as played, for tools/qa/anim.ts.
   - Exports: `CLIP_DATA_METRICS`, `CLIP_PLAY_METRICS`, `CLIP_QA`, `clipBuilds`, `clipDataFindings`, `clipPlayFindings`, `ClipReport`, `clipState`, `clipViolations`, `librarySets`
   - Tests: [`tests/unit/data/anim/qa.test.ts`](../tests/unit/data/anim/qa.test.ts)
+- [`metrics.ts`](../tools/qa/anim/metrics.ts): The `anim` QA family's motion metrics (PLAN.md §8.6, WP 6.6): what tools/qa/anim.ts and tools/qa/anim/clips.ts measure on a run, as a `Track` (points per step, world and measured from the body), each returning the worst case (`Found`, larger is worse) and the sentence naming where it happened.
+  - Exports: `ANIM_QA`, `closure`, `footSlide`, `Found`, `limbs`, `m`, `motionTrack`, `pops`, `Track`, `worse`
+  - Tests: [`tools/qa/anim.test.ts`](../tools/qa/anim.test.ts)

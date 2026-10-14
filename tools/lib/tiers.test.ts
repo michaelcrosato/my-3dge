@@ -11,20 +11,17 @@ import { dirname, join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   changedFiles,
-  checkBudget,
-  checkReports,
   duration,
   findBase,
   isVersionOnly,
   plan,
   recordGreen,
-  reportMs,
   selectT1,
   selectT2,
-  timingTable,
   TIERS,
   vitestRerunTriggers,
 } from './tiers';
+import { checkBudget, checkReports, reportMs, timingTable } from './tierBudgets';
 import { CHILD_TIMEOUT_MS } from '../x';
 
 const ROOT = join(import.meta.dirname, '..', '..');

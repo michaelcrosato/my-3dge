@@ -8,7 +8,7 @@ For the owner and for an agent picking the engine up somewhere new. Where things
 git clone https://github.com/michaelcrosato/my-3dge && cd my-3dge && bash scripts/setup.sh
 ```
 
-setup.sh installs Node 24.21.0, clones the read-only sources at their pinned commits and runs `npm ci`; CLAUDE.md
+setup.sh installs Node 24.22.0, clones the read-only sources at their pinned commits and runs `npm ci`; CLAUDE.md
 says where Chromium comes from (the cloud container's, or setup.sh's download, ADR-0014 amendment 8). GitHub's
 `integration` branch holds the same files as `main` with every lane's commit; `main` has them squashed, one commit per
 stage PR. The owner's testing budget is ADR-0022, with what the stage runs learned in its amendment 1.

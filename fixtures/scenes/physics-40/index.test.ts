@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { checkReplay, playReplay, type Replay } from '../../../engine/sim/replay';
-import { physicsOf } from '../../../engine/physics/world';
+import { physicsOf } from '../../../engine/physics/binding';
 import './index';
 
 const REPLAY = checkReplay(

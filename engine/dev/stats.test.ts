@@ -14,7 +14,7 @@ import physics40 from '../../fixtures/scenes/physics-40';
 import { createHeadless } from '../app/headless';
 import { EngineError } from '../core/log';
 import { createRegistry, registry as sharedRegistry } from '../core/registry';
-import { createSession } from '../sim/scene';
+import { createSession } from '../sim/session';
 import { createWorld } from '../sim/world';
 import { createInspector } from './inspector';
 import type { InspectorHost } from './members';

@@ -33,7 +33,7 @@ import { enableShadows } from '../../engine/gfx/shadows';
 import { createSky, type Sky, type SkyReport } from '../../engine/gfx/sky';
 import { applyIntents, NO_INTENTS, type Intents } from '../../engine/input/intents';
 import { checkReplay, checkpointsOf } from '../../engine/sim/replay';
-import { createSession } from '../../engine/sim/scene';
+import { createSession } from '../../engine/sim/session';
 import { compileLevel } from '../../engine/world/level/compile';
 
 /** One structured error record, as `window.__engine.errors` holds them (PLAN.md §8.3). */

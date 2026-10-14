@@ -1,5 +1,5 @@
 /**
- * @file Unit tests for ACTIONS (engine/anim/actions.ts), PLAN.md WP 8.7's Done when: every action of
+ * @file Unit tests for ACTIONS (engine/anim/actions.ts, actions-data.ts, actions-check.ts), PLAN.md WP 8.7's Done when: every action of
  * data/anim/actions/ has a check that plays each of its beats to the end and passes `animCheckBody` on a heroic body
  * with a sword (finite values, bone lengths, sockets in reach, the same hash twice; the floor and the rate are the
  * `anim` QA's, against its baseline: `node x qa anim --only action:`), and a few do, measured, what they say (the box
@@ -14,9 +14,12 @@ import { describe, expect, it } from 'vitest';
 import { readSet } from '../../tools/anim/repack';
 import { createRegistry } from '../core/registry';
 import { SIM_DT } from '../core/time';
-import { ACTION, actionCheck, Actions, CHANNELS, EFFECTORS, defineAction, getAction, loadActions, type ActionSpec } from './actions'; // prettier-ignore
+import { Actions, CHANNELS } from './actions';
+import { actionCheck } from './actions-check';
+import { ACTION, EFFECTORS, defineAction, getAction, loadActions, type ActionSpec } from './actions-data';
 import { Animator } from './character';
-import { animCheckBody, STATE_MATRIX } from './check';
+import { animCheckBody } from './check';
+import { STATE_MATRIX } from './stateMatrix';
 import { ClipLayer } from './clip/layer';
 import { loadClipLibrary } from './clip/library';
 import { forwardKinematics, socketPosition, tipPosition } from './fk';

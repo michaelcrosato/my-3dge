@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { CrowdAgent } from '../../../engine/physics/crowd';
 import { checkReplay, playReplay } from '../../../engine/sim/replay';
-import { createSession, type Session } from '../../../engine/sim/scene';
+import { createSession, type Session } from '../../../engine/sim/session';
 import { BLAST, CENTRE } from './index';
 
 const REPLAY = checkReplay(

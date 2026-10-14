@@ -212,7 +212,7 @@ sequence `tests/e2e/parity.spec.ts` runs on a new scene:
 4. `node x replay <file> --browser page` checks them while the page renders.
 5. List the scene and the replay here, with what it shows, what covers it and the settings that tune it (the demo
    index and the settings table: `tests/unit/box-readme.test.ts` fails a scene or a `box.*` setting left out).
-6. When it belongs to a stage, add it to `STAGES` in `tests/e2e/parity.spec.ts`: T2's rendering-page check plays
+6. When it belongs to a stage, add it to `STAGES` in `tests/e2e/parity-stages.ts`: T2's rendering-page check plays
    only the replays named there.
 
 ## Adding a prop

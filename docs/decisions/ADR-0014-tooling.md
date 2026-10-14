@@ -275,3 +275,30 @@ Core proposal accepted at integration. Calls made where PLAN.md §9 WP 5.5 and �
 - **Plan edit:** PLAN.md WP 0.2's `playwright.config.ts` item.
 - **Proved:** `x ci --local` green at caff36a in the cloud container, every step: T2 165/165 on 1 worker in
   57 min 40 s (over its 9 min, a warning only), 0 timeouts.
+
+## Amendment 16 (2026-10-14, after G9's cleanup): the 17 files over 400 lines split at their second concept
+
+- **Found:** 17 files over the 400-line warning (DOCTRINE.md 1; eslint.config.js's `max-lines`), none past the
+  600-line cap: `npm run lint` listed them since the WPs that grew them.
+- **Call:** each is split at its second concept, behaviour unchanged; each new file has its own file comment, and the
+  WP that owns the old file owns the new one:
+  - engine/anim: actions.ts → actions-data.ts (the kind `action`, its fields and `defineAction`/`loadActions`) and
+    actions-check.ts (`actionCheck`, which plays `Actions` and so cannot sit with the data without a cycle), WP 8.7;
+    secondary.ts → chain.ts (`Chain`, `Cape`, `CAPE`), WP 6.2; timeline.ts → attack.ts (`Attack`, `Combo`, their
+    codes), WP 6.1; check.ts → stateMatrix.ts (the state matrix, `hashRun`, `rateDrift`, `SHEET_CAMERAS`), WP 6.6.
+  - engine/app/engine.ts → drawing.ts (the page's frame, settle, warm-up and the rendering members' `Drawing`, over a
+    `PageParts` object the engine fills as it starts), WP 2.7; engine/physics/world.ts → binding.ts (`physicsOf`,
+    `bindPhysics`, `scenePhysics`, `attachPhysics`, `PHYSICS_NONE`), WP 3.1; engine/sim/world.ts → entityTable.ts
+    (the live entities in id order), WP 1.4; engine/sim/scene.ts → session.ts (`createSession` and its four codes),
+    WP 1.5; engine/gfx/post/chain.ts → settings.ts (`POST_CODES`, `POST_SETTINGS`, `definePostSettings`), WP 7.4.
+  - tools: qa/anim.ts → qa/anim/metrics.ts (the motion metrics and `ANIM_QA`), WP 6.6; cmd/perf.ts →
+    lib/perfBudget.ts (the budget files and the trend), cmd/sim.ts → lib/scenes.ts (scene lookup), WP 1.5;
+    lib/tiers.ts → lib/tierBudgets.ts (the budget checks), WP 0.5; cmd/port.ts → lib/portVectors.ts (the builders),
+    WP 0.11; cmd/ci.ts → lib/ciSummary.ts (`CI_OUT`, the summary and the result), WP 0.9.
+  - tests/e2e: parity.spec.ts → parity-stages.ts (`STAGES`: a box replay joins a stage there), WP 2.7; post.spec.ts →
+    post-box.spec.ts (the box drawing through the chain, its drawers' parts), WP 7.4.
+- **Unchanged:** the public API (engine/index.ts, engine/sim-api.ts and engine/anim/api.ts export the same names, now
+  from the new files), every code and its text, every test and replay golden in Node and Chromium.
+- **Plan edit:** the Owns of WPs 0.5, 0.9, 0.11, 1.4, 1.5, 2.7, 3.1, 6.1, 6.2, 6.6, 7.4 and 8.7; WP 7.4's Verify adds
+  post-box.spec.ts. labs/box/README.md, the stress-box skill, the scene template and docs/TESTING.md name
+  parity-stages.ts for `STAGES`.

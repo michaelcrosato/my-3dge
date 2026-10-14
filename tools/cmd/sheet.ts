@@ -2,7 +2,7 @@
  * @file Draws a body's state matrix as a contact sheet, plus its numeric checks (PLAN.md WP 6.6, §8.5): `node x sheet
  * <subject>` runs the humanoid through the states a QA id or prefix names, as the `anim` QA family does
  * (tools/qa/anim.ts `humanoidStates`), draws them with `anim.sheet()` (engine/anim/sheet.ts) from the cameras of a
- * `SHEET_CAMERAS` preset (engine/anim/check.ts), and turns the SVG into a PNG in the platform's Chromium. It prints
+ * `SHEET_CAMERAS` preset (engine/anim/stateMatrix.ts), and turns the SVG into a PNG in the platform's Chromium. It prints
  * the subject's `anim` QA violations against tests/baselines/qa-anim.json beside it (`humanoid`: every kind of the
  * humanoid's ids, `qaPrefixes`; the library's clips are `node x qa anim --only clip:`'s).
  *
@@ -26,7 +26,7 @@
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { SHEET_CAMERAS, stateMatrix } from '../../engine/anim/check';
+import { SHEET_CAMERAS, stateMatrix } from '../../engine/anim/stateMatrix';
 import { animSheet, type SheetFrame } from '../../engine/anim/sheet';
 import { browserRuntime, launchBrowser } from '../lib/browser';
 import { targetSlug, type Artifact } from '../lib/report';

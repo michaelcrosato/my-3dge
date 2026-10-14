@@ -6,7 +6,8 @@
 import { describe, expect, it } from 'vitest';
 import { createRegistry, registry as sharedRegistry } from '../../core/registry';
 import { createSettings } from '../../core/settings';
-import { definePostSettings, POST_SETTINGS, snapBlock } from './chain';
+import { snapBlock } from './chain';
+import { definePostSettings, POST_SETTINGS } from './settings';
 import { chainOf } from './filters';
 
 describe('the chain’s settings', () => {

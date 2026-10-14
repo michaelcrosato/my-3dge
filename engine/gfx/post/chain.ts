@@ -15,7 +15,7 @@
  * frame (`look:clean`) skips the chain's passes and draws the scene straight (`Post.plain` says when, and what it
  * saves); the warm-up's frame draws both ways (`Post.view` says how), so switching between them builds nothing.
  *
- * What it draws comes from three view settings, `post.look`, `post.filters` and `post.show` (`POST_SETTINGS`), which
+ * What it draws comes from three view settings, `post.look`, `post.filters` and `post.show` (`POST_SETTINGS`, engine/gfx/post/settings.ts), which
  * act on the frames drawn through `post.view`: `createEngine` (engine/app/engine.ts) draws every frame and shot of its
  * pages through one chain, so `x set`, URL parameters (`x shot --set`) and `__engine.set` reach them there
  * (`definePostSettings` says how). A look's style is applied to the style set given (`styles.setStyle`, WP 7.2); a
@@ -41,24 +41,21 @@
 import { Matrix4, PerspectiveCamera, PostProcessing, Scene, Vector2, type Camera, type PassNode, type ToneMapping, type WebGPURenderer } from 'three/webgpu'; // prettier-ignore
 import { renderGroup, renderOutput, rtt, uniform, vec4 } from 'three/tsl';
 import { bloom as bloomNode } from 'three/addons/tsl/display/BloomNode.js';
-import { defineCodes, log as sharedLog, type Log } from '../../core/log';
+import { log as sharedLog, type Log } from '../../core/log';
 import { registry as sharedRegistry, type Registry } from '../../core/registry';
-import { createSettings, defineSettings, type Settings } from '../../core/settings';
-import type { Field } from '../../core/schema';
+import { createSettings, type Settings } from '../../core/settings';
 import type { StyleSet } from '../materials/styles';
 import type { ToonLook } from '../materials/toon';
-import { QUALITY_SETTINGS, qualityBudget, type QualityBudget, type QualitySetting } from '../quality';
+import { qualityBudget, type QualityBudget, type QualitySetting } from '../quality';
 import type { FrameView } from '../renderer';
 import type { Warmup, WarmupPass } from '../warmup';
 import { AA_CHOICE, createAa, gateUpdates, type Aa, type AaKind } from './aa';
 import { createComposite, POST_SHOW, type PostShow } from './composite';
 import {
   createFilterUniforms,
-  FILTER_FIELDS,
   fixLevels,
   isPlain,
   layerChain,
-  partialSchema,
   scopeMask,
   writeFilters,
   type FilterChain,
@@ -66,75 +63,8 @@ import {
 } from './filters';
 import { defineLooks, type LookEntry } from './looks';
 import { clearMrt, createScenePass, FLAG_SLOTS, PART_BITS, useSceneMrt, writeFlags } from './mrt';
+import { definePostSettings } from './settings';
 import { snapToBlocks } from './snap';
-
-/** The codes this module raises, with their fixes. */
-export const POST_CODES = defineCodes('gfx', {
-  GFX_POST_NO_BLOOM: {
-    template: 'bloom is off at the {tier} quality tier: {look} draws without its glow',
-    fix: "raise the view setting quality to 'medium' or 'high' to see the glow; nothing else about the look changes",
-    doc: 'Advice from the post chain (engine/gfx/post/chain.ts): the look asks for bloom, which the quality tier turns off (WP 3.12).',
-  },
-  GFX_POST_FEW_LEVELS: {
-    template: '{where} asks for {levels} levels per channel; the chain draws 8',
-    fix: 'posterize with 0 (off) or 8 levels and more: fewer shift the hue of dull colours (shardfall measured a grey floor turning pink)',
-    doc: 'Advice from the post chain when `post.filters` sets 1–7 levels; looks are checked when they are defined.',
-  },
-  GFX_POST_FLAG_SLOTS: {
-    template: '{missed} objects draw as the environment: the flag table has {slots} slots, all taken',
-    fix: 'draw fewer separate objects (instance or merge them); slots come back as their objects are collected',
-    doc: 'Advice from the post chain: more live drawable objects than the fixed MRT’s flag table holds (engine/gfx/post/mrt.ts).',
-  },
-  GFX_POST_NO_STYLES: {
-    template: '{look} asks for the material style {style}, but the chain has no style set: it draws only its filters',
-    fix: 'give createPost a style set (createStyleSet, WP 7.2) as options.styles, attached to the warm-up, so looks change the materials too',
-    doc: 'Advice from the post chain (engine/gfx/post/chain.ts): a look with a material style, drawn by a chain made without `styles`.',
-  },
-});
-
-/**
- * The view settings the chain reads, declared by `definePostSettings`: `post.look` (a `look` id,
- * engine/gfx/post/looks.ts), `post.filters` (part of a filter chain laid over the look's, filter by filter and field by
- * field) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
- */
-export const POST_SETTINGS = {
-  'post.look': {
-    type: 'string',
-    default: 'look:clean',
-    view: true,
-    description: "The look drawn: a 'look' id (look:clean, look:hd-2d, look:palette/game-boy, …).",
-  },
-  'post.filters': {
-    type: 'object',
-    default: {},
-    view: true,
-    properties: partialSchema(FILTER_FIELDS),
-    description: 'Filters laid over the look, field by field: { "pixel": { "scope": "environment", "size": 6 } }.',
-  },
-  'post.show': {
-    type: 'string',
-    enum: POST_SHOW,
-    default: 'picture',
-    view: true,
-    description: "What the chain draws: the 'picture', or what its MRT holds: 'parts', 'normals' or 'groups'.",
-  },
-} as const satisfies Record<string, Field>;
-
-/**
- * Declares the chain's settings (`POST_SETTINGS`) and the setting `quality` it reads on `registry` (the shared one by
- * default), unless it has them: on the shared one when this module loads, so `node x set post.look look:game-boy`
- * knows them in Node (tools/cmd/set.ts imports the modules that declare settings), and on any other when `createPost`
- * or `createEngine` runs. The chain reads them from the store it is given: `settings.set` on that store reaches it,
- * and so do `__engine.set`, URL parameters and with them `node x shot <page> --set post.look=…`, on a page whose
- * frames and shots go through `post.view`: every `createEngine` page (the Stress Box's: `node x shot labs/box --set
- * post.look=look:game-boy`), and tests/pages/post.html.
- */
-export function definePostSettings(registry: Registry = sharedRegistry): void {
-  const has = (path: string) => registry.kinds().includes('setting') && registry.has('setting', path);
-  if (!has('post.look')) defineSettings(POST_SETTINGS, registry);
-  if (!has('quality')) defineSettings(QUALITY_SETTINGS, registry);
-}
-definePostSettings();
 
 /** How `createPost` makes a chain. */
 export interface PostOptions {

@@ -13,7 +13,8 @@ import '../../labs/box/scenes/room';
 import { registry } from '../core/registry';
 import type { SettingValue } from '../core/settings';
 import { playReplay, type Replay } from '../sim/replay';
-import { createSession, getScene, type Session } from '../sim/scene';
+import { getScene } from '../sim/scene';
+import { createSession, type Session } from '../sim/session';
 import { createPlayback, playInto, type PlayTarget } from './playback';
 
 const REPLAYS = ['kernel-movers', 'kernel-crowd', 'box-1-room', 'box-1-tuned'];

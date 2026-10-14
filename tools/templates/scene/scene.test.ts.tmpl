@@ -9,7 +9,7 @@
  * 3. `node x replay <file> --browser sim --update` records its goldens, in Node and Chromium;
  * 4. `node x replay <file> --browser page` checks them while the page renders;
  * 5. list the scene and its replay in labs/box/README.md;
- * 6. when it belongs to a stage, add it to `STAGES` in tests/e2e/parity.spec.ts: T2 plays only the replays named there.
+ * 6. when it belongs to a stage, add it to `STAGES` in tests/e2e/parity-stages.ts: T2 plays only the replays named there.
  * @see {{id}}.ts
  */
 import { describe, expect, it } from 'vitest';

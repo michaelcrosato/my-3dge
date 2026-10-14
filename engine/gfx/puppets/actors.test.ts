@@ -23,7 +23,7 @@ import { Vector3 } from '../../core/math';
 import { readSet } from '../../../tools/anim/repack';
 import { defineMannequin } from './bodies/mannequin';
 import { createCharacter } from '../../physics/character';
-import { physicsOf } from '../../physics/world';
+import { physicsOf } from '../../physics/binding';
 import { spawnActor } from '../../sim/actors';
 import { reactTo } from '../../sim/reactions';
 import { defineScene, startScene } from '../../sim/scene';

@@ -24,7 +24,7 @@
  * Carried from shardfall@fa2dab6 (`pavilion-lite/src/character.rs:179-399`: the order of a step, the events).
  * @example
  * import { createCharacter } from '../physics/character';
- * import { physicsOf } from '../physics/world';
+ * import { physicsOf } from '../physics/binding';
  * import { startScene, defineScene } from './scene';
  * defineScene('walk', {
  *   physics: true,
@@ -60,7 +60,8 @@ import {
   type CharacterState,
 } from '../physics/character';
 import { createFeelMeter, updateFeelMeter, type FeelReport } from '../physics/feel';
-import { createPhysics, physicsOf } from '../physics/world';
+import { createPhysics } from '../physics/world';
+import { physicsOf } from '../physics/binding';
 import type { Vec3Like } from '../physics/queries';
 import { clipsFor, defineClipKinds, type ClipsSpec } from './actorClips';
 import { defineReactionKinds, stepReactions, type ReactionComponents } from './reactions';

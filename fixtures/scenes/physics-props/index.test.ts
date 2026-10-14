@@ -9,9 +9,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { physicsOf } from '../../../engine/physics/world';
+import { physicsOf } from '../../../engine/physics/binding';
 import { checkReplay, playReplay, type Replay } from '../../../engine/sim/replay';
-import type { Session } from '../../../engine/sim/scene';
+import type { Session } from '../../../engine/sim/session';
 import { tileAt } from '../../../engine/world/level/heights';
 import { BARREL, CRATE, ROOM, STACKS } from './index';
 

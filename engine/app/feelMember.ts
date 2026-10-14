@@ -14,7 +14,7 @@
  * @example
  * import { createRegistry } from '../core/registry';
  * import { createCharacter } from '../physics/character';
- * import { physicsOf } from '../physics/world';
+ * import { physicsOf } from '../physics/binding';
  * import { defineActorKinds, spawnActor } from '../sim/actors';
  * import { defineScene } from '../sim/scene';
  * import { createHeadless } from './headless';

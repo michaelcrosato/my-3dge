@@ -31,7 +31,7 @@
  * @see engine/sim/hits.test.ts
  */
 import type { HitShape } from '../anim/moves';
-import type { Sweep } from '../anim/timeline';
+import type { Sweep } from '../anim/attack';
 import { codeError } from '../core/log';
 import { angDiff, Vector3 } from '../core/math';
 import { show } from '../core/schema';

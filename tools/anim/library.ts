@@ -4,7 +4,7 @@
  * engine/anim/clip/clipsets.ts; labs/box/library.ts `loadLibrary`), sorted by directory, then the mannequin, its build
  * and body, from the Quaternius set (engine/gfx/puppets/bodies/mannequin.ts). The sim reads no files, so the Node hosts
  * that run scenes call it before they load one, as the box page does before clip mode (labs/box/scenes/clips.ts):
- * `x sim` and `x perf` (tools/cmd/sim.ts `loadScene`), `x replay`'s Node runtime (`nodeRuntime`), `x describe`'s
+ * `x sim` and `x perf` (tools/lib/scenes.ts `loadScene`), `x replay`'s Node runtime (`nodeRuntime`), `x describe`'s
  * listing, and tests/e2e/parity.spec.ts, which replays clip mode's live play in Node. The other scenes never read the
  * sets, so registering them changes no other hash.
  *

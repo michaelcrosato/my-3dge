@@ -35,7 +35,7 @@ import type { Log } from '../core/log';
 import { registry as sharedRegistry, type Entry, type Registry } from '../core/registry';
 import { checkField, copyValue, freezeValue, show, type Field, type Schema } from '../core/schema';
 import type { Clock } from '../core/time';
-import type { Session } from '../sim/scene';
+import type { Session } from '../sim/session';
 import type { EntityData } from '../sim/state';
 import type { World, WorldEvents } from '../sim/world';
 

@@ -11,7 +11,7 @@ Every code the engine prints, as `[CODE] message`, with its fix. Each module reg
 
 - Message: `action {action} plays clips ({clips}), but its Actions has no clip layer`
 - Fix: make it with one: new Actions({ clips }), the ClipLayer in the animator's clips slot, with the sets those clips come from
-- Registered in: [`engine/anim/actions.ts` line 66](../engine/anim/actions.ts)
+- Registered in: [`engine/anim/actions.ts` line 60](../engine/anim/actions.ts)
 
 Thrown by `Actions.play` (engine/anim/actions.ts) for an action with a `clip` beat when the player was made without `clips`: the beat would play nothing, silently.
 
@@ -19,7 +19,7 @@ Thrown by `Actions.play` (engine/anim/actions.ts) for an action with a `clip` be
 
 - Message: `a chain cannot have {field} {value}`
 - Fix: give a chain n ≥ 2 points, seg > 0 metres and iterations ≥ 1
-- Registered in: [`engine/anim/secondary.ts` line 52](../engine/anim/secondary.ts)
+- Registered in: [`engine/anim/chain.ts` line 38](../engine/anim/chain.ts)
 
 Thrown by `new Chain` and `new Cape` (engine/anim/secondary.ts) for fewer than 2 points, a segment that is not a positive length, or no constraint pass: such a chain has nothing to hang or never holds its length.
 
@@ -27,9 +27,9 @@ Thrown by `new Chain` and `new Cape` (engine/anim/secondary.ts) for fewer than 2
 
 - Message: `hits keyed a target by {key}, not a finite number, so it could not tell the targets apart`
 - Fix: give each target a numeric id field, or pass hits a fourth argument that returns one: (t) => t.entity
-- Registered in: [`engine/anim/timeline.ts` line 43](../engine/anim/timeline.ts)
+- Registered in: [`engine/anim/attack.ts` line 36](../engine/anim/attack.ts)
 
-Thrown by `Attack.hits` and `Combo.hits` (engine/anim/timeline.ts), which hit each target once per swing by its key: its `id` field, or what the keying function given returns. Targets without one would all share the key `undefined`, so only the first would ever be hit.
+Thrown by `Attack.hits` and `Combo.hits` (engine/anim/attack.ts), which hit each target once per swing by its key: its `id` field, or what the keying function given returns. Targets without one would all share the key `undefined`, so only the first would ever be hit.
 
 ### ANIM_BAD_LAYER
 
@@ -157,9 +157,9 @@ Reported by `validateClip` (engine/anim/clip/validate.ts) for a twist that chang
 
 - Message: `a Combo was made from no moves, so it has no hit to play`
 - Fix: pass Combo at least one move (an id such as "jab", a Move, a spec or an Attack); check a list read from data before making the combo
-- Registered in: [`engine/anim/timeline.ts` line 48](../engine/anim/timeline.ts)
+- Registered in: [`engine/anim/attack.ts` line 41](../engine/anim/attack.ts)
 
-Thrown by `new Combo(moves)` (engine/anim/timeline.ts) when `moves` is empty: `press`, `current`, `save` and `load` all play or read one of its hits.
+Thrown by `new Combo(moves)` (engine/anim/attack.ts) when `moves` is empty: `press`, `current`, `save` and `load` all play or read one of its hits.
 
 ### ANIM_LAYER_BUILD
 
@@ -189,7 +189,7 @@ Thrown by `strikeSegment` (engine/anim/moves.ts) for an `Animator` without `prec
 
 - Message: `action {action} has no beat {name}{suggestion}`
 - Fix: go to one of its beats: {names}
-- Registered in: [`engine/anim/actions.ts` line 61](../engine/anim/actions.ts)
+- Registered in: [`engine/anim/actions.ts` line 55](../engine/anim/actions.ts)
 
 Thrown by `Actions.go` (engine/anim/actions.ts) for a beat name the playing action lacks, or when nothing plays. The message names the closest beats.
 
@@ -213,7 +213,7 @@ Raised by `jointIndex`, `socketIndex`, `boneMask` and the pose functions that ta
 
 - Message: `the rigid pair names {name}, which is not a joint, a socket or the root{suggestion}`
 - Fix: name joints (JOINTS), sockets (SOCKETS) or "root" in rigid pairs
-- Registered in: [`engine/anim/check.ts` line 60](../engine/anim/check.ts)
+- Registered in: [`engine/anim/check.ts` line 62](../engine/anim/check.ts)
 
 Raised by `animCheck` (engine/anim/check.ts) for a rigid pair naming a point the skeleton lacks.
 
@@ -245,13 +245,13 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `a frame threw, so the loop stopped: {message}`
 - Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
-- Registered in: [`engine/app/engine.ts` line 88](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 86](../engine/app/engine.ts)
 
 ### APP_NO_FRAME
 
 - Message: `no frame was drawn in {tries} tries: the warm-up never finished`
 - Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 96](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 94](../engine/app/engine.ts)
 
 ### APP_NO_LEVEL
 
@@ -263,7 +263,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the page has no replay {name}`
 - Fix: use one of: {names}
-- Registered in: [`engine/app/engine.ts` line 92](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 90](../engine/app/engine.ts)
 
 ### APP_NO_VIEW
 
@@ -275,13 +275,13 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `headlessHost was given {value}, not a headless engine`
 - Fix: pass the object createHeadless resolved to
-- Registered in: [`engine/app/headless.ts` line 63](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 64](../engine/app/headless.ts)
 
 ### APP_OTHER_SCENE
 
 - Message: `this engine draws {shown}, so it cannot start {scene}`
 - Fix: play {scene} in its own page (labs/<name>/?scene=<name>), or headless: createHeadless({ scene: '{scene}' })
-- Registered in: [`engine/app/headless.ts` line 67](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 68](../engine/app/headless.ts)
 
 ### APP_PLAY_SETTING
 
@@ -293,7 +293,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 84](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 82](../engine/app/engine.ts)
 
 ## audio
 
@@ -795,7 +795,7 @@ Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipel
 
 - Message: `{where} asks for {levels} levels per channel; the chain draws 8`
 - Fix: posterize with 0 (off) or 8 levels and more: fewer shift the hue of dull colours (shardfall measured a grey floor turning pink)
-- Registered in: [`engine/gfx/post/chain.ts` line 78](../engine/gfx/post/chain.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 32](../engine/gfx/post/settings.ts)
 
 Advice from the post chain when `post.filters` sets 1–7 levels; looks are checked when they are defined.
 
@@ -803,7 +803,7 @@ Advice from the post chain when `post.filters` sets 1–7 levels; looks are chec
 
 - Message: `{missed} objects draw as the environment: the flag table has {slots} slots, all taken`
 - Fix: draw fewer separate objects (instance or merge them); slots come back as their objects are collected
-- Registered in: [`engine/gfx/post/chain.ts` line 83](../engine/gfx/post/chain.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 37](../engine/gfx/post/settings.ts)
 
 Advice from the post chain: more live drawable objects than the fixed MRT’s flag table holds (engine/gfx/post/mrt.ts).
 
@@ -811,7 +811,7 @@ Advice from the post chain: more live drawable objects than the fixed MRT’s fl
 
 - Message: `bloom is off at the {tier} quality tier: {look} draws without its glow`
 - Fix: raise the view setting quality to 'medium' or 'high' to see the glow; nothing else about the look changes
-- Registered in: [`engine/gfx/post/chain.ts` line 73](../engine/gfx/post/chain.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 27](../engine/gfx/post/settings.ts)
 
 Advice from the post chain (engine/gfx/post/chain.ts): the look asks for bloom, which the quality tier turns off (WP 3.12).
 
@@ -819,7 +819,7 @@ Advice from the post chain (engine/gfx/post/chain.ts): the look asks for bloom, 
 
 - Message: `{look} asks for the material style {style}, but the chain has no style set: it draws only its filters`
 - Fix: give createPost a style set (createStyleSet, WP 7.2) as options.styles, attached to the warm-up, so looks change the materials too
-- Registered in: [`engine/gfx/post/chain.ts` line 88](../engine/gfx/post/chain.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 42](../engine/gfx/post/settings.ts)
 
 Advice from the post chain (engine/gfx/post/chain.ts): a look with a material style, drawn by a chain made without `styles`.
 
@@ -1003,13 +1003,13 @@ Raised by bodies and queries (engine/physics/world.ts, engine/physics/queries.ts
 
 - Message: `there is no body {id}{why}`
 - Fix: use an id addBody() returned while its body exists (hasBody(id) tells); bodies() lists them
-- Registered in: [`engine/physics/world.ts` line 83](../engine/physics/world.ts)
+- Registered in: [`engine/physics/world.ts` line 81](../engine/physics/world.ts)
 
 ### PHYSICS_NONE
 
 - Message: `{what} has no physics world`
 - Fix: give its scene a physics world, defineScene(id, { physics: true, setup(w) { physicsOf(w).addBody(…) } }), or pass createPhysics() as createWorld's or startScene's physics option
-- Registered in: [`engine/physics/world.ts` line 87](../engine/physics/world.ts)
+- Registered in: [`engine/physics/binding.ts` line 27](../engine/physics/binding.ts)
 
 ### PHYSICS_UNKNOWN_GROUP
 
@@ -1045,7 +1045,7 @@ Raised by `restore` (engine/sim/capture.ts, engine/sim/world.ts) before anything
 
 - Message: `{where}: {problem}`
 - Fix: write the replay as tests/replays/README.md shows ({ format, scene, settings, seed, hz, steps, inputs: [[step, change]…], hashes: { platform: { step: hash } } }), or record it from a session; settings marked view never go in a replay
-- Registered in: [`engine/sim/replay.ts` line 53](../engine/sim/replay.ts)
+- Registered in: [`engine/sim/replay.ts` line 55](../engine/sim/replay.ts)
 
 Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step runs: an unknown key (named with the closest), a wrong format tag, a seed that is not a whole number from 0, a change-point out of order or at or past `steps`, a bad intent, setting or dev action, a platform key that is not `<os>-<arch>` as Node names them (named with the closest), goldens that do not cover the run (none, or none for the last step), a step key not written plainly, a hash that is not 16 hex digits, a step rate other than the world's, or a view setting.
 
@@ -1053,7 +1053,7 @@ Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step ru
 
 - Message: `{where} got the seed {value}, which a replay cannot hold`
 - Fix: pass a whole number, 0 or more (x sim --seed 3, __engine.seed(3)): record() writes the seed into the replay
-- Registered in: [`engine/sim/scene.ts` line 72](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 42](../engine/sim/scene.ts)
 
 ### SIM_BAD_SYSTEM
 
@@ -1073,7 +1073,7 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `the capture the session of {scene} took at step {step} was changed since (it hashes {now}, not {then})`
 - Fix: restore it unchanged, then make the change through the session so record() replays it: session.set(path, value) (__engine.set) for a setting, a dev action (session.act(name, args)) for components
-- Registered in: [`engine/sim/scene.ts` line 68](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/session.ts` line 55](../engine/sim/session.ts)
 
 ### SIM_EVENT_STORM
 
@@ -1085,13 +1085,13 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `restore() was given a capture the session of {scene} did not take`
 - Fix: restore what this session's capture() (__engine.capture()) returned, the object itself: the session knows where its recording stood then; the world's own captures, another session's and copies have no place in it, so reach other state by starting the scene again (__engine.seed(n)) or playing a replay
-- Registered in: [`engine/sim/scene.ts` line 64](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/session.ts` line 51](../engine/sim/session.ts)
 
 ### SIM_NO_ACTION
 
 - Message: `the scene {scene} has no dev action {name} ({suggestion})`
 - Fix: add it to the scene: defineScene('{scene}', { actions: { {name}(w, args) { … } } }), or call one it has
-- Registered in: [`engine/sim/scene.ts` line 56](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/session.ts` line 43](../engine/sim/session.ts)
 
 ### SIM_NO_CALLBACKS
 
@@ -1117,7 +1117,7 @@ Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities
 
 - Message: `the world took {count} steps outside its session, so the recording misses their intents`
 - Fix: step a recorded scene through session.step(intents), never world.step(); capture and restore it through session.capture() and session.restore(capture), never the world
-- Registered in: [`engine/sim/scene.ts` line 60](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/session.ts` line 47](../engine/sim/session.ts)
 
 ### SIM_SHARED_DATA
 

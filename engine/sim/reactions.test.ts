@@ -10,7 +10,7 @@ import { REACTION, Reactions } from '../anim/reactions';
 import { deserialize, serialize, type Canonical } from '../core/hash';
 import { Vector3 } from '../core/math';
 import { createCharacter } from '../physics/character';
-import { physicsOf } from '../physics/world';
+import { physicsOf } from '../physics/binding';
 import { spawnActor, type ActorComponents } from './actors';
 import type { WorldCapture } from './capture';
 import { REACTION_FIELDS, SECONDARY_FIELDS, reactTo, stepReactions, type ReactionComponents } from './reactions';

@@ -44,7 +44,8 @@ import { stateFile, writeState } from '../lib/replayState';
 import { walk } from '../lib/docs';
 import type { Finding } from '../lib/report';
 import { UsageError, type Command, type CommandResult } from '../x';
-import { nodeRuntime, resolveSceneModule, wholeFlag, writeReplay, type Runtime } from './sim';
+import { nodeRuntime, wholeFlag, writeReplay, type Runtime } from './sim';
+import { resolveSceneModule } from '../lib/scenes';
 
 /** This platform's golden key: `linux-x64`. */
 export const PLATFORM = `${process.platform}-${process.arch}`;

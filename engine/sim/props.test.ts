@@ -10,7 +10,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { deserialize, serialize, type Canonical } from '../core/hash';
-import { physicsOf } from '../physics/world';
+import { physicsOf } from '../physics/binding';
 import { defineProp, type PropTouch } from '../world/props/prop';
 import type { WorldCapture } from './capture';
 import { hitProp, removeProp, spawnProp, type ScenePropComponents } from './props';

@@ -21,7 +21,8 @@
  *
  * @example
  * import { createRegistry } from '../core/registry';
- * import { createSession, defineScene } from './scene';
+ * import { defineScene } from './scene';
+ * import { createSession } from './session';
  * const reg = createRegistry();
  * defineScene('walk', { setup: (w) => w.spawn(), step: (w, i) => void w.rng('walk').next() }, reg);
  * const live = createSession('walk', { seed: 2, registry: reg });
@@ -45,7 +46,8 @@ import {
   type IntentChanges,
   type Intents,
 } from '../input/intents';
-import { createSession, type SceneOptions, type Session } from './scene';
+import { type SceneOptions } from './scene';
+import { createSession, type Session } from './session';
 import { diffStates, type StateDifference, type WorldState, type WorldTrace } from './state';
 
 /** The codes this module raises, with their fixes. */

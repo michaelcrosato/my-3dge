@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { defineClipSet } from '../anim/clip/clipsets';
 import type { ClipLayerState } from '../anim/clip/layer';
 import { createCharacter } from '../physics/character';
-import { physicsOf } from '../physics/world';
+import { physicsOf } from '../physics/binding';
 import { busy, REST, standing } from '../../tests/unit/anim/clip-fixtures';
 import { addClips, clipLayerOf, locomoteClips, playClip, seekClip, stopClip, type ClipsSpec } from './actorClips';
 import { spawnActor } from './actors';

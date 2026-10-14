@@ -16,7 +16,7 @@
  * // soundTimeline(readFileSync(FIGHT_TIMELINE.replay, 'utf8'), HALL_LEVEL).hash === FIGHT_TIMELINE.hash
  */
 import { createPlayback } from '../../engine/app/playback';
-import { createSession } from '../../engine/sim/scene';
+import { createSession } from '../../engine/sim/session';
 import type { CompiledLevel } from '../../engine/world/level/types';
 import { createSoundReader, timelineHash, type BoxSoundEvent } from '../../labs/box/sounds/events';
 

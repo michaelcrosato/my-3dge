@@ -24,7 +24,7 @@ import type { Registry } from '../core/registry';
 import type { SettingValue } from '../core/settings';
 import { applyIntents, NO_INTENTS, type IntentChanges, type Intents } from '../input/intents';
 import { checkpointsOf, checkReplay, type Replay } from '../sim/replay';
-import type { Session } from '../sim/scene';
+import type { Session } from '../sim/session';
 import type { WorldState, WorldTrace } from '../sim/state';
 
 /** The codes this module raises, with their fixes. */

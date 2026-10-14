@@ -77,7 +77,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 | tools/cmd/ci.ts          | 403   | the summary → tools/lib/ciSummary.ts                    | 0.9       |
 | tools/cmd/sim.ts         | 402   | scene lookup (7 tools use it) → tools/lib/scenes.ts     | 1.5       |
 
-- [ ] 2.1 The splits, in as few commits as review allows, with one ADR amendment for all of them. Done when
+- [x] 2.1 The splits, in as few commits as review allows, with one ADR amendment for all of them. Done when
       `npm run lint` shows no max-lines warning and the full T1 and the selected T2 pass unchanged.
 
 ## 3. T2's budget by machine size (WP 0.5, ADR-0022; decision 3)

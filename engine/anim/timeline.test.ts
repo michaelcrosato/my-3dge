@@ -1,5 +1,5 @@
 /**
- * @file Unit tests for timelines, attacks and combos (engine/anim/timeline.ts), PLAN.md WP 6.1's Done when: combo
+ * @file Unit tests for timelines, attacks and combos (engine/anim/timeline.ts, attack.ts), PLAN.md WP 6.1's Done when: combo
  * chaining windows are exact in ticks. Also: phases end on exact ticks, leftover time carries across phases and fires
  * every event in order, the hit window connects once per target per swing (also when shorter than a tick), sweeps,
  * root motion, trails, each step's events in an array a later start or press leaves alone, an empty combo's error,
@@ -9,7 +9,8 @@ import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../core/math';
 import { SIM_DT } from '../core/time';
 import { resolveMove } from './moves-data';
-import { Attack, Combo, Timeline, type TimelineEvent } from './timeline';
+import { Attack, Combo } from './attack';
+import { Timeline, type TimelineEvent } from './timeline';
 
 const types = (events: readonly TimelineEvent[]) => events.map((e) => e.type);
 
