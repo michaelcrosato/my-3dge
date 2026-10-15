@@ -272,7 +272,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 - [x] 8.3 **Its unit test** (beside tools/cmd/ci.test.ts): reads ci.yml as text (no YAML dependency) and asserts that
       its commands equal `x ci --local`'s (`CI_STEPS`), its source commits equal the pinned ones (`sourceSpecs()`,
       tools/lib/source.ts), it takes Node from .nvmrc, and its Chromium matches tools/deps.json's pin.
-- [ ] 8.4 **Push ci.yml in a commit of its own, last.** GitHub refuses a push holding a workflow file without the
+- [x] 8.4 **Push ci.yml in a commit of its own, last.** GitHub refuses a push holding a workflow file without the
       `workflow` permission, and the refusal would hold back everything else. If refused: drop that commit, push the
       rest, and escalate with the file, for the owner to add it or grant the permission. When the workflow runs green:
       `node x esc close ESC-0001`, and update PLAN.md §8.9, ADR-0016 (`x ci --local` was the merge gate "until GitHub
@@ -290,11 +290,11 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
       what waits (below), and any "Owner:" issue this list left. Today its line 32 runs two bullets together and says
       T2 runs in full while over its budget (while over, `selectT2` picks specs by what changed); its line 14 cites
       the old fight golden (7.2); and the G4 rewrite dropped three issues that were still open (6.2, 6.3, 6.4).
-- [ ] 9.4 **U-1's reminder:** a `send_later` for 2026-10-22 (about 16:00 UTC) to run `node x deps --qualify` and do U-1,
+- [x] 9.4 **U-1's reminder:** a `send_later` for 2026-10-22 (about 16:00 UTC) to run `node x deps --qualify` and do U-1,
       Vitest 4, as its own change from main; it also clears the 4 Dependabot alerts (dev-only vitest and tinypool).
-- [ ] 9.5 **Review:** the `verifier` subagent over the whole diff, against DOCTRINE.md and this list (at most two
+- [x] 9.5 **Review:** the `verifier` subagent over the whole diff, against DOCTRINE.md and this list (at most two
       rounds, ADR-0022).
-- [ ] 9.6 **`node x ci --local` green**, in the background; read out/ci/summary.md.
+- [x] 9.6 **`node x ci --local` green**, in the background; read out/ci/summary.md.
 - [ ] 9.7 **Merge:** delete this file; push; open the PR to main ("After G9: the cleanup"); look once at its Vercel
       status and at the workflow's run (fix it if red, as for any check); squash-merge once
       `x ci --local` is green (ADR-0021).

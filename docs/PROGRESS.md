@@ -15,13 +15,15 @@ ledger's row C1):
   gate (`LONG_RUNS`), browser examples run in T2 (tests/e2e/examples.spec.ts), the cold CMU import.
 - The fight's sound timeline: 77 sounds, 288bca340783f86f, in Node and Chromium.
 - CI: T2's budget goes by machine size (60 min on 1 worker here, 9 min from 16 cores; ADR-0022 amendment 2), and
-  .github/workflows/ci.yml runs the same `node x ci --local` on pull requests and pushes to main (ESC-0001).
+  .github/workflows/ci.yml runs the same `node x ci --local` on pull requests and pushes to main; at its first
+  green run ESC-0001 closed, and its `ci` check joined the merge gate (ADR-0016 amendment 1).
 
 ## What waits, by design
 
 - U-1 Vitest 4 qualifies 2026-10-22 (it also clears the 4 Dependabot alerts on dev-only vitest and tinypool); U-2 to
   U-5 wait for the one-year rule (tools/deps.json holds each date); U-6 Rapier, U-7 three r184+, U-8 Chromium wait
-  for a measurement or a platform change.
+  for a measurement or a platform change. The workflow's actions: upload-artifact v5 qualifies 2026-10-24,
+  checkout v6 2026-11-20 (ADR-0016 amendment 1; `x deps` does not track them).
 - The 22 on-demand WPs wait for a measured need (PLAN.md §9.1); QA baseline entries wait on two of them (WP 10.2,
   WP 8.8), and the anim QA's foot slides on a stepping rule for stance locks (ADR-0009 amendment 8).
 - Not verifiable in this container: speakers and headphones, Firefox and Safari, touch on phones (ADR-0021),
@@ -30,4 +32,7 @@ ledger's row C1):
 
 ## Open issues
 
-- None. No "Owner:" issue was left by the cleanup.
+- Owner: on 4 cores T0 and T1 run over their fixed budgets (10 s and 60 s): 20.9 s and 2 min 39 s in x ci --local at
+  1e5d6dd, 37.6 s and 3 min 43 s on the workflow's runner (6.2 s and 31.5 s at G9, on a larger machine), and the
+  runner's T2 took 65 min 44 s of its 60, all CI_BUDGET warnings: scale T0 and T1 by machine size as T2 is (ADR-0022
+  amendment 2), or keep the warnings? (the ledger's row C1)

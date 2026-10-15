@@ -6,7 +6,7 @@ Status: accepted · 2026-10-10 · Records PLAN.md §13.1, §11.1, I-32
 - No committed build output: `out/`, `dist/`, `.cache/`, `node_modules/` and `test-results/` are ignored.
 - A lockfile (`package-lock.json`) and `npm ci`.
 - The version lives in `package.json` only.
-- `x ci --local` is the merge gate until GitHub Actions is enabled (§8.9).
+- `x ci --local` is the merge gate until GitHub Actions is enabled (§8.9; amendment 1 says what it is now).
 - Pushes at milestones; one PR per stage, squash-merged (the only method the repository allows), its branch deleted
   (ADR-0021).
 
@@ -30,10 +30,16 @@ In my-3d2dge, 136 of 301 files were build output, and a version bump touched 10 
   actions/upload-artifact v4 (v4.6.2, 2025-03-19).
   The newer majors (upload-artifact v5 and v6, checkout v6) are not taken under rule 3: whether they work the same way
   only a run of theirs would show, so they wait for their dates (upload-artifact v5 on 2026-10-24, checkout v6 on
-  2026-11-20).
-- **Not the Playwright container** that §8.9 planned (CLEANUP 8.2 allowed either): the runner is built as a fresh
-  machine is, by the platform's own script, so the workflow tests the install path the docs give (§8.9 edited).
+  2026-11-20). docs/PROGRESS.md lists those dates with the other waits: `x deps` reads only package.json's pins, and a
+  call keeps it so (three actions need no tool yet).
+- **Not the Playwright container** that §8.8 planned (CLEANUP 8.2 allowed either): the runner is built as a fresh
+  machine is, by the platform's own script, so the workflow tests the install path the docs give (§8.8 and §8.9
+  edited).
 - **Kept equal** by tools/cmd/ci-workflow.test.ts, which reads the file as text (no YAML dependency): its gate is
   `node x ci --local` and no step runs a `CI_STEPS` command of its own; its commits are `sourceSpecs()`'s; Node comes
   from `.nvmrc`; its Chromium is tools/deps.json's, scripts/setup.sh's and tools/lib/browser.ts's.
-- Until the workflow's first green run, `x ci --local` stays the merge gate.
+- **The merge gate** (CLEANUP 8.4): `x ci --local` alone until the workflow's first green run, which came on PR #14 (run
+  38679570559, 2026-10-15, 72 min; the first, on d007f22, failed one T2 test on two leaks between suites, fixed in
+  7d256f3 and 1e5d6dd). ESC-0001 is closed, and the gate is now `x ci --local` green on the PR's head (agents run it
+  before every merge, ADR-0021) and the workflow's `ci` check green on the same PR. It is not a required status check:
+  branch protection is the owner's switch (PLAN.md §11.5).

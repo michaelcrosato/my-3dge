@@ -80,7 +80,8 @@ stopping. Record every escalation, every later conflict and every call.
 - Versions: only the pins in package.json, as tools/deps.json records them. Upgrades are their own work packages.
 - Never skip, disable or loosen a test to get green. Baselines change only with a written reason.
 - At each gate: push, open the stage's PR, look once at its Vercel status (fix a failed build first), squash-merge
-  it once x ci --local is green (the repository allows only squash merges, and GitHub then deletes the branch).
+  it once x ci --local and its `ci` check (the workflow) are green (the repository allows only squash merges, and
+  GitHub then deletes the branch).
   Start the next stage from the updated main (PLAN.md §11.1). None of this needs the owner's approval (ADR-0021).
 - Touch controls and the Vercel deployment have no tests, by the owner's order (ADR-0021): fix a failed Vercel
   build; fix anything else about them only when the owner reports it.
