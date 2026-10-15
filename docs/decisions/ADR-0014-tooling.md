@@ -311,6 +311,7 @@ Core proposal accepted at integration. Calls made where PLAN.md §9 WP 5.5 and �
   `footPlant` moved to engine/anim/footPlant.ts with its layer (ADR-0009 amendment 8), WP 6.2. engine/gfx/idpass.ts (398
   lines, and gate G2's per-instance ids add to it) → engine/gfx/idmarks.ts (`marksOf`, `drawMarks`, `Mark`: the marks
   `x shot --marks` draws), WP 2.6.
+- **Added:** tests/replays/steps.replay.json (gate G2's note: the steps fixture's run with goldens), WP 3.2.
 - **Unchanged:** the names engine/anim/api.ts exported, now from the new files (it adds `FootPlant` and its options),
   and every replay golden; the retargeter's own changes (the lift, the knee pole) are WP 8.4's and 8.6's rows.
-- **Plan edit:** the Owns of WPs 2.6, 6.2 and 8.4.
+- **Plan edit:** the Owns of WPs 2.6, 3.2, 6.2 and 8.4.

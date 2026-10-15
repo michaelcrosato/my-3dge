@@ -180,7 +180,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
       colour (:169, :210), so a crowd batch counts once. Give each instance its own id (colour by `instanceIndex` in
       TSL). idpass.ts is at 398 lines. Prove: engine/gfx/idpass.test.ts; re-record any ID-pass count baseline with
       the reason.
-- [ ] 6.3 **The steps scene has no replay goldens** (gate G2): fixtures/scenes/steps/index.test.ts:44-51 only checks
+- [x] 6.3 **The steps scene has no replay goldens** (gate G2): fixtures/scenes/steps/index.test.ts:44-51 only checks
       that the scene replays itself. Record a steps replay with goldens and check it as
       fixtures/scenes/physics-40/index.test.ts does. Prove: `npm test -- fixtures/scenes/steps`.
 - [x] 6.4 **Headless `step(n)` ignores the virtual device** (WP 3.3): the inspector's `step` passes `intents ?? {}`
