@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, posix } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { CHILD_TIMEOUT_MS, ROOT, UsageError } from '../x';
-import command, { CHECKS, fill, listKinds, NEXT, render, testKind, type Kind } from './new';
+import command, { CHECKS, fill, listKinds, NEXT, nextIn, render, testKind, type Kind } from './new';
 
 const made: string[] = [];
 afterAll(() => made.forEach((dir) => rmSync(dir, { recursive: true, force: true })));
@@ -36,6 +36,16 @@ const manifest = (extra: object = {}) =>
     checks: [],
     ...extra,
   });
+
+describe('nextIn', () => {
+  it('names the game’s checks in a game, where x docs is the engine’s own command', () => {
+    const game = mkdtempSync(join(tmpdir(), 'x-new-game-'));
+    writeFileSync(join(game, 'engine-lock.json'), '{}');
+    expect(nextIn(ROOT, NEXT)).toBe(NEXT);
+    expect(nextIn(game, NEXT)).toBe('replace the placeholder text, then npm run check and npm test');
+    rmSync(game, { recursive: true, force: true });
+  });
+});
 
 describe('kinds', () => {
   it('discovers the module kind from tools/templates/', () => {

@@ -4,6 +4,11 @@
  * `out/<cmd>/<target>/report.json` plus `out/latest.json`, and returns the exit code. When it cuts the output, every
  * line is in `output.txt` beside the report: the line that says how many were cut names it, and so does the report.
  *
+ * In a game made from the engine (tools/game/new-game.mjs: its root holds engine-lock.json, `isGame`), the engine
+ * repository's own commands (`ENGINE_ONLY_COMMANDS`: its gate, pins, generated docs, escalation records, port
+ * references and source checkouts) are not commands: `x help` leaves them out, `x check` runs none of their plugins,
+ * and naming one says what a game runs instead (ADR-0024).
+ *
  * Invariants: exit 0 when the command passes, 1 when it fails (a crash included, the import of its module too), 2 on
  * a usage error (unknown command, unknown flag, bad argument), each naming the closest valid choice. Every run writes
  * a report, a usage error and a crash included. A command's help is its file comment, so `x help` cannot go stale.
@@ -13,7 +18,7 @@
  * // node x help --nope  → exit 2: unknown flag
  * @see tools/x.test.ts
  */
-import { readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -93,11 +98,21 @@ export const MAX_LINES = 20;
  */
 export const CHILD_TIMEOUT_MS = 120_000;
 
-/** Lists the command names found in `tools/cmd/` (every `<name>.ts` that is not a test). */
+/** The engine repository's own commands, which a game made from it does not have (see the file comment). */
+export const ENGINE_ONLY_COMMANDS: readonly string[] = ['ci', 'deps', 'docs', 'esc', 'port', 'src'];
+
+/** Whether `root` is a game made from the engine (it holds engine-lock.json), not the engine's own repository. */
+export function isGame(root: string = ROOT): boolean {
+  return existsSync(join(root, 'engine-lock.json'));
+}
+
+/** The command names in `tools/cmd/` (every `<name>.ts` that is not a test); in a game, without the engine's own. */
 export function commandNames(root: string = ROOT): string[] {
+  const game = isGame(root);
   return readdirSync(join(root, 'tools', 'cmd'))
     .filter((file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
     .map((file) => file.slice(0, -3))
+    .filter((name) => !game || !ENGINE_ONLY_COMMANDS.includes(name))
     .sort();
 }
 
@@ -251,6 +266,10 @@ export async function dispatch(argv: readonly string[], options: DispatchOptions
     return usage('x', 'x', finding, [`commands: ${Object.keys(commands).join(', ')}`]);
   }
   const load = commands[name];
+  if (!load && isGame(root) && ENGINE_ONLY_COMMANDS.includes(name)) {
+    const message = `x ${name} belongs to the engine's own repository, not a game: here npm run check and npm test are the gate, node x engine says which engine the game is on (AGENTS.md)`;
+    return usage('x', 'x', { id: 'X_ENGINE_ONLY', message });
+  }
   if (!load) {
     const near = closest(name, Object.keys(commands));
     const hint = near ? `did you mean ${near}?` : `commands: ${Object.keys(commands).join(', ')}`;

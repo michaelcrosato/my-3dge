@@ -3,7 +3,7 @@
  * 20-line output cap, a report for every run, and the generated help listing every command in `tools/cmd/`.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -13,7 +13,9 @@ import {
   commandHelp,
   commandNames,
   dispatch,
+  ENGINE_ONLY_COMMANDS,
   firstSentence,
+  isGame,
   loadCommand,
   MAX_LINES,
   ROOT,
@@ -174,6 +176,28 @@ describe('the dispatcher', () => {
   it('names the closest candidate only when it is close', () => {
     expect(closest('hlep', ['help', 'src'])).toBe('help');
     expect(closest('zzzzzz', ['help', 'src'])).toBeUndefined();
+  });
+});
+
+describe('in a game made from the engine', () => {
+  /** A root with a command module per name and, for a game, engine-lock.json. */
+  const root = (game: boolean) => {
+    const dir = sandbox();
+    mkdirSync(join(dir, 'tools', 'cmd'), { recursive: true });
+    for (const name of ['ci', 'docs', 'sim', 'shot']) writeFileSync(join(dir, 'tools', 'cmd', `${name}.ts`), '');
+    if (game) writeFileSync(join(dir, 'engine-lock.json'), '{}');
+    return dir;
+  };
+
+  it('leaves the engine repository’s own commands out, and names what a game runs instead', async () => {
+    expect([isGame(root(false)), isGame(root(true))]).toEqual([false, true]);
+    expect(commandNames(root(false))).toEqual(['ci', 'docs', 'shot', 'sim']);
+    expect(commandNames(root(true))).toEqual(['shot', 'sim']);
+    expect(ENGINE_ONLY_COMMANDS).toEqual(['ci', 'deps', 'docs', 'esc', 'port', 'src']);
+    const lines: string[] = [];
+    const game = root(true);
+    expect(await dispatch(['ci'], { root: game, print: (line) => lines.push(line) })).toBe(2);
+    expect(lines[1]).toMatch(/^X_ENGINE_ONLY: x ci belongs to the engine's own repository.*npm run check and npm test/);
   });
 });
 

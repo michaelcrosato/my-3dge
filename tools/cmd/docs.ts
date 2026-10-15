@@ -11,11 +11,13 @@
  *   followed to its declaration) has none; a code registered with `defineCodes` lacks its template or fix, or is
  *   registered twice; or a kind declared with `defineKind` cannot be read, or is declared twice (tools/lib/docs.ts
  *   gives the forms);
- * - INDEX, API or ERRORS differ from what `--write` would write;
+ * - INDEX, API or ERRORS differ from what `--write` would write, or docs/GAME-GUIDE.md's public API section does
+ *   (tools/lib/docsGameApi.ts: the rest of the guide is hand-written);
  * - `__engine.help()` differs from the inspector's real members (tools/lib/docsHelp.ts);
  * - `docs/PROGRESS.md` is missing or longer than 40 lines (it is one screen, read first by every session).
  *
- * `--write` regenerates INDEX, API and ERRORS, then runs the same checks except the examples and `help()`.
+ * `--write` regenerates INDEX, API, ERRORS and the guide's API section, then runs the same checks except the examples
+ * and `help()`.
  *
  * `x check` runs everything but the examples and `help()` as its `docs` plugin (T0 stays fast: both load modules); in
  * an ultracode lane its failures are warnings, since the integrator regenerates (§11.3). T1 runs the examples
@@ -29,6 +31,7 @@ import { join } from 'node:path';
 import { readModules, resolveExports, type ModuleDoc } from '../lib/docs';
 import { runExamples } from '../lib/docsExamples';
 import { BARRELS, GENERATED, generateDocs } from '../lib/docsGenerate';
+import { GUIDE, guideFindings, writeGuide } from '../lib/docsGameApi';
 import { checkHelp } from '../lib/docsHelp';
 import { checkPaths, type PathOptions } from '../lib/docsPaths';
 import type { Finding } from '../lib/report';
@@ -131,6 +134,8 @@ export async function driftChecks(
       file,
     });
   }
+  const guide = guideFindings(root);
+  failures.push(...guide);
   const progress = join(root, PROGRESS);
   const progressLines = existsSync(progress) ? readFileSync(progress, 'utf8').trimEnd().split('\n').length : 0;
   if (!progressLines) {
@@ -148,7 +153,7 @@ export async function driftChecks(
   return {
     failures,
     warnings: paths.warnings,
-    summary: `${modules.length} modules, ${exports} exports, ${codes} codes, ${paths.checked} paths; ${stale.length ? `${stale.length} stale` : 'generated docs current'}`,
+    summary: `${modules.length} modules, ${exports} exports, ${codes} codes, ${paths.checked} paths; ${stale.length + guide.length ? `${stale.length + guide.length} stale` : 'generated docs current'}`,
     metrics: {
       modules: modules.length,
       exports,
@@ -185,7 +190,10 @@ export function createDocsCommand(options: DocsOptions = {}): Command {
           writeFileSync(path, generated[file]);
           written.push(file);
         }
-        lines.push(written.length ? `wrote ${written.join(', ')}` : 'INDEX, API and ERRORS were already current');
+        if (writeGuide(root)) written.push(GUIDE);
+        lines.push(
+          written.length ? `wrote ${written.join(', ')}` : 'INDEX, API, ERRORS and the guide were already current',
+        );
       }
       const outcome = await driftChecks(root, options, modules);
       const failures = [...outcome.failures];

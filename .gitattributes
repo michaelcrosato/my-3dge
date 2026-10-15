@@ -1,0 +1,2 @@
+# GitHub fills in the engine's commit and date when it serves an archive (tools/game/new-game.mjs reads them).
+tools/game/engine-version.txt export-subst
