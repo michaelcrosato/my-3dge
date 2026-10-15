@@ -38,7 +38,7 @@ export const SLOTS = {
   solve: 'Effectors to local rotations (the spine, two-bone IK, the feet, the weapon hand): the body.',
   clips: 'Clip layers: sampled clips with a weight, a bone mask and a crossfade (WP 8.4).',
   additive: 'Additive layers: breathing, flinches, recoil, look-at (WP 6.2).',
-  post: 'Post IK: the feet on probed ground (ik.ts `footPlant`), grips, aim.',
+  post: 'Post IK: Actions’ effector solve, grips, aim, and last the feet on the floor (footPlant.ts `FootPlant`).',
   physics: 'The physics blend: a ragdoll’s bodies blended in (WP 10.2).',
   secondary: 'Secondary motion: chains (cape, hair, tail) and the squash spring (WP 6.2).',
 } as const;
@@ -62,6 +62,8 @@ export interface AnimLayer {
   apply(animator: Animator): void;
   /** What `inspect()` shows of it beside its name and weight: plain JSON. */
   inspect?(): Record<string, unknown>;
+  /** Whether it stays at the end of its slot when layers are added after it (the foot plant, engine/anim/footPlant.ts). */
+  readonly last?: boolean;
 }
 
 /** The detail levels `pose({ lod })` takes, by index: how often it re-solves, in ticks, and which slots run. */

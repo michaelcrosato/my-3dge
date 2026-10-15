@@ -20,7 +20,7 @@ import {
 } from '../../../tests/unit/anim/clip-parity';
 import { bakeClip, BAKE_FPS, bakeTimes, frameAt, keyRotations, sampleBaked, travelAt } from './bake';
 import { decodePose, keyAt, POINT_INDEX, POSE_POINTS, type ClipKey } from './readable';
-import { restPoints, restSkeleton } from './retarget';
+import { restPoints, restSkeleton } from './rest';
 
 /** FK of key `k` on REST's own skeleton, as decode points (mm, rig frame), and the world pose. */
 function bakedPoints(k: ClipKey) {

@@ -34,6 +34,7 @@ import { Vector3 } from '../../engine/core/math';
 import { getBuild } from '../../engine/anim/builds';
 import { actionCheck } from '../../engine/anim/actions-check';
 import { Animator } from '../../engine/anim/character';
+import { FootPlant } from '../../engine/anim/footPlant';
 import { loadClipLibrary, type ClipLibrary } from '../../engine/anim/clip/library';
 import { animCheckBody, type AnimCheckName } from '../../engine/anim/check';
 import {
@@ -51,8 +52,8 @@ import { SAMPLE_STATES } from '../../engine/anim/states';
 import { Attack } from '../../engine/anim/attack';
 import { Blob, BLOB_MOVES, blobMoveTimes, type BlobInput } from '../../engine/anim/blob';
 import { Floater, FLOATER } from '../../engine/anim/floater';
-import { readSet } from '../anim/repack';
 import { defineActions } from '../anim/library';
+import { readSet } from '../anim/repack';
 import type { QaFamily, QaViolation } from '../cmd/qa';
 import {
   ANIM_QA,
@@ -75,11 +76,14 @@ export const HUMANOIDS: readonly { build: string; weapon: Weapon }[] = [
   { build: 'build:skeleton', weapon: 'sword' },
 ];
 
-/** A humanoid of `HUMANOIDS`, made at a step: what the matrix drives. */
+/** A humanoid of `HUMANOIDS`, made at a step, its feet planted on the floor (`FootPlant`): what the matrix drives. */
 export const makeHumanoid =
   ({ build, weapon }: { build: string; weapon: Weapon }) =>
-  (dt: number) =>
-    new Animator({ build, weapon, clock: 1, dt });
+  (dt: number) => {
+    const animator = new Animator({ build, weapon, clock: 1, dt });
+    new FootPlant().attach(animator); // last in the post slot, as the view's puppets have it (after G9)
+    return animator;
+  };
 
 const WALK = new Vector3(0, 0, 2.5);
 const [AHEAD, BEHIND, LEFT] = [new Vector3(0, 0, 1), new Vector3(0, 0, -1), new Vector3(1, 0, 0)];

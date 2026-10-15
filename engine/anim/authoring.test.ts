@@ -86,8 +86,9 @@ describe('the feet on the floor', () => {
   };
   /**
    * Feet allowed below the floor, with the worst depth measured on the four builds and why. my-3d2dge stood its
-   * foot point on the floor under a steep shin; a foot with a length then has its ball below it. WP 6.6's QA family
-   * and the post-IK foot plant (WP 3.5's `footPlant`, in the animator's stack, WP 3.7) settle it.
+   * foot point on the floor under a steep shin; a foot with a length then has its ball below it. The humanoid alone
+   * keeps them; through an animator the foot plant (engine/anim/footPlant.ts's `FootPlant`, after G9) stands every one
+   * on the floor (engine/anim/footPlant.test.ts).
    */
   const KNOWN: Record<string, [HumanoidInput, number]> = {
     kneel: [{ pose: 'kneel' }, 0.115], // the back foot's ball, its shin almost flat on the floor

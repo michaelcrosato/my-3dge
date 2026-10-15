@@ -23,7 +23,7 @@ import { isAbsolute, join, relative } from 'node:path';
 import { Vector3 } from 'three';
 import { bakeClip, sampleBaked, type BakedClip } from '../../engine/anim/clip/bake';
 import { POSE_POINTS, samplePose, type Clip } from '../../engine/anim/clip/readable';
-import { restPoints, restSkeleton } from '../../engine/anim/clip/retarget';
+import { restPoints, restSkeleton } from '../../engine/anim/clip/rest';
 import { parseClip, type ClipSet, type RestBody } from '../../engine/anim/clip/validate';
 import { createWorldPose, forwardKinematics } from '../../engine/anim/fk';
 import { Pose } from '../../engine/anim/pose';

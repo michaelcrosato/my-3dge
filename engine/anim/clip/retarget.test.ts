@@ -20,13 +20,22 @@ import { bakeClip } from './bake';
 import { ClipLayer } from './layer';
 import { loadClipLibrary } from './library';
 import type { ClipKey } from './readable';
-import { clipJSON, hipRatio, RETARGET, restBuild, restSkeleton, retargetPose, standingHipHeight } from './retarget';
+import { restBuild, restSkeleton } from './rest';
+import { clipJSON, hipRatio, RETARGET, retargetPose, standingHipHeight } from './retarget';
 
 const heroic = createSkeleton('build:heroic');
 const stand = bakeClip(clipOf([standing(0), standing(1)]), REST);
 /** The height of a foot's lowest point: its sole, its ball or its toe's tip. */
 const footLow = (k: Skeleton, w: WorldPose, s: 'L' | 'R') =>
   Math.min(socketPosition(k, w, `contact${s}`).y, jointPosition(w, `toe${s}`).y, tipPosition(k, w, `toe${s}`).y);
+/** The height of a pose's lowest point: a joint, a foot's, or a hand's or the head's tip. */
+const lowest = (k: Skeleton, w: WorldPose) =>
+  Math.min(
+    ...JOINTS.map((_, j) => w.positions[j * 3 + 1]),
+    footLow(k, w, 'L'),
+    footLow(k, w, 'R'),
+    ...(['handL', 'handR', 'head'] as const).map((j) => tipPosition(k, w, j).y),
+  );
 
 describe('restSkeleton and restBuild', () => {
   it('measures the rest body’s bones, stands its pelvis at H0, and is made once', () => {
@@ -105,21 +114,20 @@ describe('retargetPose', () => {
     expect(jointPosition(free, 'footR').distanceTo(jointPosition(world, 'footR'))).toBeGreaterThan(0.005);
   });
 
-  it('reaches with a hand inside a contacts interval, and lifts a pose that dips below the floor', () => {
+  it('reaches with a hand inside a contacts interval, and keeps a pose that dips below the floor as deep as its source', () => {
     const baked = bakeClip(clipOf([{ ...busy(0), hips: [0, 0, 20] }]), REST);
     const [world, source] = [createWorldPose(), createWorldPose()];
     retargetPose(baked, 0, restSkeleton(REST), new Pose(), { world: source, ik: false, lift: false });
     const contacts = [{ part: 'handL', from: 0, to: 1 }];
     retargetPose(baked, 0, heroic, new Pose(), { world, contacts });
     const ratio = hipRatio(baked, heroic);
-    const lifted = jointPosition(world, 'handL').y - jointPosition(source, 'handL').y * ratio;
-    expect(lifted).toBeGreaterThan(0);
+    // after G9 the lift raises a pose only as far as it sinks below its source's lowest point, scaled: this source dips
+    // below its floor, so its hand stays where the source's is (it was lifted to stand on the floor before)
     const reach = jointPosition(world, 'handL').sub(jointPosition(source, 'handL').multiplyScalar(ratio));
-    expect(Math.hypot(reach.x, reach.z)).toBeLessThan(1e-6);
-    let low = Infinity;
-    for (let j = 0; j < JOINTS.length; j++) low = Math.min(low, world.positions[j * 3 + 1]);
-    for (const j of ['toeL', 'toeR', 'handL', 'handR', 'head'] as const) low = Math.min(low, tipPosition(heroic, world, j).y); // prettier-ignore
-    expect(low).toBeGreaterThan(-1e-9);
+    expect(reach.length()).toBeLessThan(1e-6);
+    const own = lowest(restSkeleton(REST), source) * ratio;
+    expect(own).toBeLessThan(0);
+    expect(lowest(heroic, world)).toBeGreaterThan(own - 1e-9);
   });
 
   it('keeps a held blade’s tip above the floor: lowered only to lie along it, its heading kept, the wrist still', () => {
@@ -159,8 +167,11 @@ describe('the libraries’ clips on builds: the feet on the floor, whatever the 
   const builds = { heroic, chibi: createSkeleton('build:chibi') };
   const SETS = ['cmu', 'mesh2motion', 'quaternius'] as const;
 
-  it('puts every foot the source stands on (within 1 mm of the floor) on it, scaled, at every 60 Hz tick', () => {
-    const [pose, world, source] = [new Pose(), createWorldPose(), createWorldPose()];
+  // The lift on (after G9; it was off here): it raises a pose only where the build's proportions would sink it below the
+  // source's own lowest point (a hand or the head on the floor), and then by just that much.
+  it('puts every foot the source stands on (within 1 mm of the floor) on it, scaled, at every 60 Hz tick, lifted only where a lower point needs it', () => {
+    const [pose, world, source, unlifted] = [new Pose(), createWorldPose(), createWorldPose(), createWorldPose()];
+    const lifted = new Set<string>();
     for (const dir of SETS) {
       const set = setOf(dir);
       let [planted, worst] = [0, 0];
@@ -171,10 +182,16 @@ describe('the libraries’ clips on builds: the feet on the floor, whatever the 
           retargetPose(baked, k / 60, rest, pose, { world: source, ik: false, lift: false });
           const on = (['L', 'R'] as const).filter((s) => Math.abs(footLow(rest, source, s)) <= 0.001);
           for (const skeleton of on.length ? Object.values(builds) : []) {
-            retargetPose(baked, k / 60, skeleton, pose, { world, lift: false });
             const ratio = hipRatio(baked, skeleton);
+            retargetPose(baked, k / 60, skeleton, pose, { world: unlifted, lift: false });
+            const lift = Math.max(0, Math.min(0, lowest(rest, source) * ratio) - lowest(skeleton, unlifted));
+            if (lift > 0) {
+              lifted.add(`${dir}/${name}`); // a hand or the head is what sank, never a planted foot
+              expect(lowest(skeleton, unlifted)).toBeLessThan(Math.min(footLow(skeleton, unlifted, 'L'), footLow(skeleton, unlifted, 'R'))); // prettier-ignore
+            }
+            retargetPose(baked, k / 60, skeleton, pose, { world });
             for (const s of on) {
-              const want = Math.max(0, footLow(rest, source, s) * ratio);
+              const want = Math.max(0, footLow(rest, source, s) * ratio) + lift;
               [planted, worst] = [planted + 1, Math.max(worst, Math.abs(footLow(skeleton, world, s) - want))];
             }
           }
@@ -183,6 +200,9 @@ describe('the libraries’ clips on builds: the feet on the floor, whatever the 
       expect(planted, dir).toBeGreaterThan(1000);
       expect(worst, dir).toBeLessThan(1e-5);
     }
+    // the clips on hands or knees: a push-up, harvesting, kneeling, the get-ups, a breakdance (15 when written)
+    expect(lifted.size).toBeGreaterThan(0);
+    expect(lifted.size).toBeLessThanOrEqual(15);
   });
 
   it('stands and walks them on the floor through the clip layer: CMU’s Shrug was 197 mm up on heroic', () => {

@@ -118,7 +118,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 
 ## 5. Animation
 
-- [ ] 5.1 **The post-IK foot plant** (WP 6.2; open since WP 3.7, passed on at WP 3.10, never built; PROGRESS.md
+- [x] 5.1 **The post-IK foot plant** (WP 6.2; open since WP 3.7, passed on at WP 3.10, never built; PROGRESS.md
       lists it).
   - Now: `footPlant` (engine/anim/ik.ts:303-329) takes a probe but no floor height and reads the floor from
     `pose.rootPos.y` (:337-338); only ik.test.ts calls it. The animator's `post` slot (engine/anim/weights.ts:41) holds
@@ -146,12 +146,12 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
     writes only when Node and Chromium agree, then `--browser page`. List the setting in labs/box/README.md and the
     replay in tests/e2e/parity.spec.ts; labs/box/scenes/fight.test.ts checks the trail is not empty mid-swing.
   - Prove: the replay's goldens agree in Node and Chromium, and parity.spec.ts passes with it.
-- [ ] 5.3 **The clip lift raises some clips' feet** (WP 8.4). engine/anim/clip/retarget.ts:358-365 lifts a pose by the
+- [x] 5.3 **The clip lift raises some clips' feet** (WP 8.4). engine/anim/clip/retarget.ts:358-365 lifts a pose by the
       lowest of its joints, feet, hand and head tips, so swims and jumps hover (worst Swim_Idle_Loop, 1,813 mm; the
       `mannequin` entry of tests/baselines/anim-clips.json, held by engine/gfx/puppets/bodies/mannequin.test.ts). Try
       lifting only by how far the pose sinks below the scaled source's own lowest point. Prove: retarget.test.ts's
       planted-feet case run with the lift on; the mannequin baseline re-recorded with the reason.
-- [ ] 5.4 **Contact IK swings a knee through at deep folds** (WP 8.6). plantFeet's two-bone solve passes no pole
+- [x] 5.4 **Contact IK swings a knee through at deep folds** (WP 8.6). plantFeet's two-bone solve passes no pole
       (engine/anim/clip/retarget.ts:307), so it takes the thigh frame's default. Pass the source knee's direction as
       the pole. Prove: `node x qa anim --only clip:CMU/Get_Up_From_Side,clip:MESH2MOTION/Slide_Exit,clip:MESH2MOTION/Zombie_Rise`
       reports their 4 entries in tests/baselines/qa-anim-library.json as stale; remove them with the reason.

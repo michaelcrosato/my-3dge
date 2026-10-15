@@ -135,42 +135,42 @@
     }
   },
   "mannequin": {
-    "reason": "The clip layer’s pose on build:mannequin (rotation copy aligned at rest, the hip joints placed by the hip-height ratio, contact IK, the lift) against the format-1 decode scaled by the same ratio, over the 22 points its joints stand for, at 30 fps and the 60 Hz midpoints. A build lays its bones out straight: its hip joints sit level with its pelvis and its spine stands on them, and its shoulders sit level with the neck, where the libraries’ sit 4–6 cm lower and behind it. Retargeting puts the hip joints where the source’s are (as my-3d2dge’s drive did), so the legs follow the source’s and the torso moves by the source’s own hip layout: on Quaternius’ clips (its lifted swims and jumps left out) the hips match to 0 mm and the knees and ankles to 6–7 mm on average, while the pelvis and spine stand 4 cm ahead, since its hips sit 5 cm ahead of its pelvis point (mesh2motion’s too); on CMU’s, whose hips sit 10 cm under the pelvis point, the pelvis stands 13 cm lower than the decode’s on average. The other sets’ bodies have other proportions than the mannequin’s. The worst cases are clips that lie on the floor or dip below it (the lift raises them) and the parity’s own fast pole swings.",
+    "reason": "The clip layer’s pose on build:mannequin (rotation copy aligned at rest, the hip joints placed by the hip-height ratio, contact IK, the lift) against the format-1 decode scaled by the same ratio, over the 22 points its joints stand for, at 30 fps and the 60 Hz midpoints. A build lays its bones out straight: its hip joints sit level with its pelvis and its spine stands on them, and its shoulders sit level with the neck, where the libraries’ sit 4–6 cm lower and behind it. Retargeting puts the hip joints where the source’s are (as my-3d2dge’s drive did), so the legs follow the source’s and the torso moves by the source’s own hip layout: on Quaternius’ clips the hips match to 0 mm and the knees and ankles to 6–7 mm on average, while the pelvis and spine stand 4 cm ahead, since its hips sit 5 cm ahead of its pelvis point (mesh2motion’s too); on CMU’s, whose hips sit 10 cm under the pelvis point, the pelvis stands 13 cm lower than the decode’s on average. The other sets’ bodies have other proportions than the mannequin’s. The worst cases are clips that lie on the floor or dip below it and the parity’s own fast pole swings. Re-recorded after G9: the lift raises a pose only as far as it sinks below its source’s own lowest point (Quaternius’ swims stood up to 1,813 mm up, Swim_Idle_Loop), and contact IK bends each knee toward the source’s once it stands 2 cm off its hip–ankle line.",
     "sets": {
       "cmu": {
         "clips": 60,
         "samples": 312554,
-        "mean": 92.762,
-        "worst": { "clip": "Get_Up_From_Side", "t": 5.133, "point": "kneeL", "mm": 816.1 },
+        "mean": 92.183,
+        "worst": { "clip": "Cartwheel", "t": 1.533, "point": "kneeR", "mm": 283.8 },
         "worstClips": [
-          { "clip": "Get_Up_From_Side", "t": 5.133, "point": "kneeL", "mm": 816.1 },
-          { "clip": "Get_Up_From_Back", "t": 3.933, "point": "kneeR", "mm": 800.3 },
-          { "clip": "Fall_On_Face", "t": 1.333, "point": "kneeR", "mm": 650 },
-          { "clip": "Breakdance_Helicopter", "t": 4.8, "point": "ankleL", "mm": 365.7 },
-          { "clip": "Cartwheel", "t": 1.533, "point": "kneeR", "mm": 306.6 }
+          { "clip": "Cartwheel", "t": 1.533, "point": "kneeR", "mm": 283.8 },
+          { "clip": "Get_Up_From_Back", "t": 2.4, "point": "wristR", "mm": 281.1 },
+          { "clip": "Curtsey", "t": 0.117, "point": "pelvis", "mm": 280.8 },
+          { "clip": "Dive_Roll", "t": 1.15, "point": "wristL", "mm": 276.6 },
+          { "clip": "Run_Jump_Over", "t": 0.267, "point": "wristL", "mm": 275.9 }
         ]
       },
       "mesh2motion": {
         "clips": 177,
         "samples": 427526,
-        "mean": 59.872,
-        "worst": { "clip": "Zombie_Rise", "t": 1.067, "point": "ankleL", "mm": 968.6 },
+        "mean": 58.077,
+        "worst": { "clip": "Zombie_Rise", "t": 1.8, "point": "kneeL", "mm": 711.6 },
         "worstClips": [
-          { "clip": "Zombie_Rise", "t": 1.067, "point": "ankleL", "mm": 968.6 },
-          { "clip": "NinjaJump_Idle", "t": 0, "point": "kneeL", "mm": 568.2 },
-          { "clip": "NinjaJump_Land", "t": 0, "point": "kneeL", "mm": 568.2 },
-          { "clip": "NinjaJump_Start", "t": 0.95, "point": "kneeL", "mm": 557.6 },
-          { "clip": "Hit_Knockback", "t": 0.767, "point": "kneeL", "mm": 451 }
+          { "clip": "Zombie_Rise", "t": 1.8, "point": "kneeL", "mm": 711.6 },
+          { "clip": "Hit_Knockback", "t": 0.767, "point": "kneeL", "mm": 451 },
+          { "clip": "Sword_Regular_B", "t": 0.517, "point": "wristR", "mm": 373.7 },
+          { "clip": "Slide_Start", "t": 0.8, "point": "ballR", "mm": 334.4 },
+          { "clip": "Victory", "t": 1.25, "point": "elbowR", "mm": 321.4 }
         ]
       },
       "quaternius": {
         "clips": 103,
         "samples": 214566,
-        "mean": 72.444,
-        "worst": { "clip": "Swim_Idle_Loop", "t": 1.533, "point": "ballL", "mm": 1813.3 },
+        "mean": 62.715,
+        "worst": { "clip": "Swim_Idle_Loop", "t": 1.533, "point": "ballL", "mm": 1397.2 },
         "worstClips": [
-          { "clip": "Swim_Idle_Loop", "t": 1.533, "point": "ballL", "mm": 1813.3 },
-          { "clip": "Swim_Fwd_Loop", "t": 1.117, "point": "kneeL", "mm": 1086.9 },
+          { "clip": "Swim_Idle_Loop", "t": 1.533, "point": "ballL", "mm": 1397.2 },
+          { "clip": "Swim_Fwd_Loop", "t": 0.133, "point": "ballL", "mm": 413.9 },
           { "clip": "Sword_Dash", "t": 0.35, "point": "wristR", "mm": 246.5 },
           { "clip": "Sword_Dash_RM", "t": 0.35, "point": "wristR", "mm": 246.5 },
           { "clip": "Sprint_Loop", "t": 0.017, "point": "ballL", "mm": 230.6 }
@@ -179,7 +179,7 @@
       "style100": {
         "clips": 98,
         "samples": 182050,
-        "mean": 53.048,
+        "mean": 53.063,
         "worst": { "clip": "Rushed_Walk", "t": 2.033, "point": "kneeL", "mm": 197 },
         "worstClips": [
           { "clip": "Rushed_Walk", "t": 2.033, "point": "kneeL", "mm": 197 },
@@ -192,7 +192,7 @@
       "style100_back": {
         "clips": 98,
         "samples": 175802,
-        "mean": 53.002,
+        "mean": 53.014,
         "worst": { "clip": "KarateChop_WalkBack", "t": 0.4, "point": "wristL", "mm": 150.9 },
         "worstClips": [
           { "clip": "KarateChop_WalkBack", "t": 0.4, "point": "wristL", "mm": 150.9 },
@@ -205,7 +205,7 @@
       "style100_backrun": {
         "clips": 98,
         "samples": 107294,
-        "mean": 53.362,
+        "mean": 53.387,
         "worst": { "clip": "KarateChop_RunBack", "t": 0.783, "point": "wristL", "mm": 151.1 },
         "worstClips": [
           { "clip": "KarateChop_RunBack", "t": 0.783, "point": "wristL", "mm": 151.1 },
@@ -218,7 +218,7 @@
       "style100_idle": {
         "clips": 98,
         "samples": 345268,
-        "mean": 51.345,
+        "mean": 51.352,
         "worst": { "clip": "Dinosaur_Idle", "t": 0, "point": "wristR", "mm": 144.9 },
         "worstClips": [
           { "clip": "Dinosaur_Idle", "t": 0, "point": "wristR", "mm": 144.9 },
@@ -231,7 +231,7 @@
       "style100_run": {
         "clips": 98,
         "samples": 121792,
-        "mean": 53.366,
+        "mean": 53.392,
         "worst": { "clip": "KarateChop_Run", "t": 0.933, "point": "wristR", "mm": 148.3 },
         "worstClips": [
           { "clip": "KarateChop_Run", "t": 0.933, "point": "wristR", "mm": 148.3 },
@@ -244,7 +244,7 @@
       "style100_side": {
         "clips": 194,
         "samples": 356510,
-        "mean": 52.637,
+        "mean": 52.649,
         "worst": { "clip": "KarateChop_SideLeft", "t": 0.667, "point": "wristL", "mm": 149.9 },
         "worstClips": [
           { "clip": "KarateChop_SideLeft", "t": 0.667, "point": "wristL", "mm": 149.9 },
@@ -257,7 +257,7 @@
       "style100_siderun": {
         "clips": 194,
         "samples": 219758,
-        "mean": 52.852,
+        "mean": 52.869,
         "worst": { "clip": "OnPhoneRight_SideRunRight", "t": 1.133, "point": "wristR", "mm": 148.1 },
         "worstClips": [
           { "clip": "OnPhoneRight_SideRunRight", "t": 1.133, "point": "wristR", "mm": 148.1 },

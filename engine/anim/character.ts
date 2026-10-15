@@ -220,13 +220,17 @@ export class Animator {
     return this.step(states).pose(options);
   }
 
-  /** Adds `layer` at the end of `slot`. Throws `ANIM_BAD_LAYER` for a slot that takes no layers or a name in use. */
+  /**
+   * Adds `layer` at the end of `slot`, before a layer marked `last` (the foot plant) that ends it. Throws
+   * `ANIM_BAD_LAYER` for a slot that takes no layers or a name in use.
+   */
   use(slot: LayerSlot, layer: AnimLayer): this {
     const slots = LAYER_SLOTS.join(', ');
     const fail = (problem: string) => codeError('ANIM_BAD_LAYER', { name: JSON.stringify(layer.name), problem, slots });
     if (!Object.hasOwn(this.#layers, slot)) throw fail(`slot ${JSON.stringify(slot)} takes no layers`);
     if (this.layer(layer.name)) throw fail('the name is in use');
-    this.#layers[slot].push(layer);
+    const list = this.#layers[slot];
+    list.splice(list.at(-1)?.last && !layer.last ? list.length - 1 : list.length, 0, layer);
     return this;
   }
 
