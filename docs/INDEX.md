@@ -1307,7 +1307,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `amcFrames`, `applyRates`, `c3dEvidence`, `c3dHeader`, `RateEvidence`, `twinCandidates`, `verifyRates`
   - Tests: [`tools/anim/rates.test.ts`](../tools/anim/rates.test.ts)
 - [`repack.ts`](../tools/anim/repack.ts): The repacker (PLAN.md §10.3 and §10.5 step 4, WP 8.3): a set of clips stored as a directory, `data/anim/sets/<set>/`, one file per clip, so an agent opens only the clips it uses.
-  - Exports: `ALT_TAG`, `CATALOG_COLUMNS`, `CATALOG_FILE`, `catalogTsv`, `clipSlug`, `joinSet`, `legacySetFiles`, `main`, `readPlainSet`, `readSet`, `readSetDir`, `repackSets`, `SET_FILE`, `setDirName`, `SetFiles`, `SETS_DIR`, `splitSet`, `tagAlternates`, `withCmuTerms`, `writeSetDir`
+  - Exports: `ALT_TAG`, `CATALOG_COLUMNS`, `CATALOG_FILE`, `catalogTsv`, `clipSlug`, `CMU_CREDIT`, `joinSet`, `legacySetFiles`, `main`, `readPlainSet`, `readSet`, `readSetDir`, `repackSets`, `SET_FILE`, `setDirName`, `SetFiles`, `SETS_DIR`, `splitSet`, `tagAlternates`, `withCmuTerms`, `writeSetDir`
   - Tests: [`tests/unit/data/anim/sets/sets.test.ts`](../tests/unit/data/anim/sets/sets.test.ts), [`tools/anim/repack.test.ts`](../tools/anim/repack.test.ts)
 - [`rigs.ts`](../tools/anim/rigs.ts): The rig maps (PLAN.md §5.3, WP 8.5): which bone of a known humanoid rig gives each of the 36 body points the readable format measures (engine/anim/clip/readable.ts `POSE_POINTS`).
   - Exports: `bonesFor`, `BoneSpot`, `PointBone`, `recogniseRig`, `Rig`, `RIGS`, `Segment`
@@ -1316,7 +1316,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `adoptSet`, `CATALOGS_DIR`, `main`, `markVia`, `readShardfallSet`, `readV1Set`, `SHARDFALL_CATALOGS`, `SHARDFALL_SETS`, `shardfallCatalogFiles`, `shardfallSet`, `shardfallSetFiles`, `V1_KEPT`, `V1_SETS`
   - Tests: [`tests/unit/data/anim/sets/sets.test.ts`](../tests/unit/data/anim/sets/sets.test.ts), [`tests/unit/data/anim/shardfall.test.ts`](../tests/unit/data/anim/shardfall.test.ts)
 - [`survey.ts`](../tools/anim/survey.ts): The CMU survey (PLAN.md §5.3, WP 8.5): every downloaded take converted the way the importer would (whole takes, 30 frames a second, fitted within 30 mm) and measured into its ledger row (tools/anim/ledger.ts): its fit, the stretch where it moves, how far it travels, how high and low the hips go, and its flags (upside down, feet off the floor, loose, short, an assumed rate).
-  - Exports: `CMU_CATALOG`, `CMU_CREDIT`, `flagsOf`, `LIBRARY_DIR`, `surveyCmu`, `SurveyOptions`, `usedBy`
+  - Exports: `CMU_CATALOG`, `flagsOf`, `LIBRARY_DIR`, `surveyCmu`, `SurveyOptions`, `usedBy`
   - Tests: [`tools/anim/survey.test.ts`](../tools/anim/survey.test.ts)
 - [`view.ts`](../tools/anim/view.ts): One clip of the library, looked at without a browser (PLAN.md §10.3 and §10.4, WP 8.5): `resolveClip` finds `<set>/<clip>` (or a clip name only one set has) in `data/anim/sets/` or another directory of sets (`x anim … --sets`, such as `.cache/anim/cmu-lib/`); `bakeReport` bakes it on its own source's rest body (engine/anim/clip/bake.ts) and measures FK parity against the format-1 decode at every frame and the midpoints between; `clipSheet` draws it as a contact sheet of stick figures in SVG (engine/anim/sheet.ts).
   - Exports: `bakedPoints`, `bakeReport`, `ClipRef`, `clipSheet`, `resolveClip`, `shownDir`

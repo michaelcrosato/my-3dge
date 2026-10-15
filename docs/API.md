@@ -5487,6 +5487,7 @@ For the agents who maintain the engine.
 - `CATALOG_FILE` (const): The generated index of a set's clips.
 - `catalogTsv` (function): The set's `catalog.tsv`: three `#` comment lines, the columns, then one row per clip in the set's order, each stopping at its last field (`.editorconfig` trims trailing tabs).
 - `clipSlug` (function): The file name of a clip, without `.json`: its name with each run of characters other than letters, digits, `_` and `-` made one `_`, and `_` and `-` trimmed from the ends.
+- `CMU_CREDIT` (const): The credit every CMU set carries: CMU's terms in short (data/anim/SOURCES.md has them verbatim) and the acknowledgment the database asks for, verbatim.
 - `joinSet` (function): Reads a set's directory files back into the set it was split from (`where` names it in errors): the clips in the order `_set.json`'s `fit` lists them, then any others by file name.
 - `legacySetFiles` (function): The files of my-3d2dge's three curated sets (HERO dropped), from the checkout at `sourcePath`, by directory.
 - `main` (function): The command line (see the file comment).
@@ -5500,7 +5501,7 @@ For the agents who maintain the engine.
 - `SETS_DIR` (const): The sets' directory, `data/anim/sets/`: one directory per set, named by `setDirName`.
 - `splitSet` (function): Writes a set as its directory's files: one `text()` per clip, `_set.json` and `catalog.tsv` (the file comment).
 - `tagAlternates` (function): The set with `alt` added last to the tags of each clip made from another set's clip (one with an `orig`).
-- `withCmuTerms` (function): The CMU set with CMU's terms in each of its source records, as the CMU catalog states them: my-3d2dge's set said "free for all uses"; WP 8.1 corrected the catalog, and the importer (`x anim import --cmu`) writes what it says.
+- `withCmuTerms` (function): The CMU set with CMU's terms in each of its source records, as the CMU catalog states them, and `CMU_CREDIT` as its credit: my-3d2dge's set said "free for all uses" in both; WP 8.1 corrected the catalog, and the importer (`x anim import --cmu`) writes what it says.
 - `writeSetDir` (function): Writes a set's files into `dir`, made if missing, and removes the files it no longer has; lists what changed.
 
 ### [`tools/anim/rigs.ts`](../tools/anim/rigs.ts)
@@ -5532,7 +5533,6 @@ For the agents who maintain the engine.
 ### [`tools/anim/survey.ts`](../tools/anim/survey.ts)
 
 - `CMU_CATALOG` (const): The CMU catalog, whose `$pick` names the take each clip of the CMU set was cut from.
-- `CMU_CREDIT` (const): The credit every CMU set carries (data/anim/SOURCES.md has the terms).
 - `flagsOf` (function): The flags a take's measurements earn: upside down (over 2 frames), feet off the floor (60%), short, loose.
 - `LIBRARY_DIR` (const): The converted library's directory, `.cache/anim/cmu-lib/`.
 - `surveyCmu` (function): Surveys the downloaded takes (see the file comment); returns how many it converted and the seconds of motion.

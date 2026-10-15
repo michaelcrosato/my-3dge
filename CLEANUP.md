@@ -158,11 +158,11 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 - [x] 5.5 **`x describe action` lists no ids** (WP 8.7): tools/cmd/describe.ts:235 calls only `defineLibrary()`, and
       the engine cannot import data/. Add a tools-side `defineActions()` beside it (after 2.1's actions.ts split).
       Prove: tools/cmd/describe.test.ts lists the action ids.
-- [ ] 5.6 **The CMU set's credit line** (WP 8.1). The 25 `license` fields are corrected, but `credit` in
+- [x] 5.6 **The CMU set's credit line** (WP 8.1). The 25 `license` fields are corrected, but `credit` in
       data/anim/sets/cmu/_set.json:5 still says "free for all uses" (`CMU_CREDIT`, tools/anim/survey.ts:38-39). Reword
       it, map the old wording in tests/unit/data/anim/sets/sets.test.ts's legacy compare, and regenerate the set
       through the importer. Prove: `node x anim import --cmu --legacy --check` (network, about 23 MB).
-- [ ] 5.7 **The cold CMU import check** (WP 8.5's deferred proof): the run in 5.6 is it; record the result in WP 8.5's
+- [x] 5.7 **The cold CMU import check** (WP 8.5's deferred proof): the run in 5.6 is it; record the result in WP 8.5's
       row. Add it to `LONG_RUNS` (tools/lib/tiers.ts) only if a 23 MB download at every gate is acceptable, and record
       the call.
 - [x] 5.8 **Notes:** WP 8.10's "deferred without the checkouts" is done (the oracle decode and parity tests run with

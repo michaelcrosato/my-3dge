@@ -208,15 +208,24 @@ const SHARDFALL_WRITES = new Set(['quaternius']);
 const CMU_CATALOG = join(ROOT, 'data', 'anim', 'catalogs', 'cmu.json');
 
 /**
- * The CMU set with CMU's terms in each of its source records, as the CMU catalog states them: my-3d2dge's set said
- * "free for all uses"; WP 8.1 corrected the catalog, and the importer (`x anim import --cmu`) writes what it says.
+ * The credit every CMU set carries: CMU's terms in short (data/anim/SOURCES.md has them verbatim) and the
+ * acknowledgment the database asks for, verbatim. my-3d2dge's said "free for all uses", which the terms are not: the
+ * data may not be resold.
+ */
+export const CMU_CREDIT =
+  'CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu), under CMU\'s terms: free to use and redistribute, never to resell as data. "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217."';
+
+/**
+ * The CMU set with CMU's terms in each of its source records, as the CMU catalog states them, and `CMU_CREDIT` as its
+ * credit: my-3d2dge's set said "free for all uses" in both; WP 8.1 corrected the catalog, and the importer (`x anim
+ * import --cmu`) writes what it says.
  */
 export function withCmuTerms(set: ClipSet, catalog: string = CMU_CATALOG): ClipSet {
   const license = (JSON.parse(readFileSync(catalog, 'utf8')) as { $sources?: { CMU?: { license?: string } } }).$sources
     ?.CMU?.license;
   if (!license) throw new Error(`${catalog} has no "$sources".CMU.license: restore CMU's terms there`);
   const sources = Object.entries(set.sources ?? {}).map(([id, source]) => [id, { ...source, license }]);
-  return { ...set, sources: Object.fromEntries(sources) };
+  return { ...set, credit: CMU_CREDIT, sources: Object.fromEntries(sources) };
 }
 
 /** The files of my-3d2dge's three curated sets (HERO dropped), from the checkout at `sourcePath`, by directory. */

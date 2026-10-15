@@ -38,7 +38,7 @@ import { cmuGet, cmuIndex, CMU_CACHE, type IndexedTake } from './cmu';
 import { readCmu, type Pick as TakePick } from './cmu-capture';
 import { readGlbLibrary, type GlbLibrary } from './glb-library';
 import { readLedger, type Ledger } from './ledger';
-import { CMU_CREDIT } from './survey';
+import { CMU_CREDIT } from './repack';
 
 /** A catalog: each clip's `[tags, desc, orig?]`, plus `$sources`, `$skip` and (CMU) `$pick`. */
 export type Catalog = Record<string, unknown> & {
