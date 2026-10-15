@@ -10,9 +10,8 @@ whole. `grep -n '^#### WP-<id> ' PLAN.md`, then read only the sections the entry
 
 ## Before the first edit
 
-- `node x deps --update`: adopt compatible releases first, in a commit of their own.
-- Read the file comments (`@file`) of the modules you touch, not whole files. `node x help <cmd>` prints a command's
-  manual; docs/INDEX.md lists every module, docs/API.md every export.
+Read the file comments (`@file`) of the modules you touch, not whole files. `node x help <cmd>` prints a command's
+manual; docs/INDEX.md lists every module, docs/API.md every export.
 
 ## After each edit
 
@@ -40,12 +39,5 @@ The Stop hook runs `npm run check` when you end a turn and sends you back once i
 
 ## Finishing
 
-1. Every new module has its `@file` comment, every export its doc comment; then `node x docs --write` and
-   `node x docs --check`.
-2. The WP's Verify commands exit 0, exactly as written, from the repository root; `npm run check` and `npm test`
-   are green.
-3. L-size WPs and every gate: the `verifier` subagent reviews the diff; fix or answer every finding.
-4. A deviation from PLAN.md: an ADR amendment in docs/decisions/ and the WP entry edited, in the same commit.
-   Owner approval needed: the `escalation` skill.
-5. Update the WP's row in PLAN.md §14 (an ultracode lane reports it instead), then commit
-   `<area>: <what> (WP-x.y)`. Report the commit, the report.json paths and any escalation ids.
+After a new `@file` comment or export doc: `node x docs --write`, then `node x docs --check`. The rest is AGENTS.md's
+"Done means"; owner approval: the `escalation` skill.
