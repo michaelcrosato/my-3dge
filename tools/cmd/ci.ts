@@ -6,8 +6,9 @@
  * - **Steps:** `npm ci`, `x src`, `npm run check` (with `x deps --check` and `x docs --check`), `npm test`,
  *   `x port refs --check`, `x new --test-all` and `npm run e2e`, each from the root with its output kept in
  *   `out/ci/logs/<n>-<step>.log`, never printed. A failed `npm ci` skips the rest; after any other failure the next
- *   steps still run, so one run names every failure. The GitHub workflow, once the owner enables Actions, runs the
- *   same list: its unit test compares against `CI_STEPS`. The Vercel build is not a step (ADR-0021).
+ *   steps still run, so one run names every failure. The GitHub workflow (.github/workflows/ci.yml, after G9) runs the
+ *   same `node x ci --local`, and its unit test keeps it so (tools/cmd/ci-workflow.test.ts). The Vercel build is not a
+ *   step (ADR-0021).
  * - **T2** runs in full while its last full run (`out/ci/t2-full.json`) stayed within its budget (tiers.ts), and when
  *   no full run was measured yet; otherwise it runs what tiers.ts's `plan()` selects, and nothing when that selects
  *   nothing.
@@ -21,7 +22,7 @@
  * - `--long` also runs tiers.ts's `LONG_RUNS` after the steps (at each gate).
  *
  * Usage: node x ci --local [--long]. Exit 0 when every step passed; 1 otherwise; 2 on a usage
- * error, `--local` missing included (the GitHub workflow waits for the owner).
+ * error, `--local` missing included (the GitHub workflow runs `node x ci --local` too).
  *
  * @example
  * CI_STEPS.map((step) => step.name); // ['npm ci', 'x src', 'npm run check', 'npm test', …, 'npm run e2e']
@@ -295,7 +296,9 @@ export function createCiCommand(overrides: Partial<CiDeps> = {}): Command {
     maxPositionals: 0,
     async run({ values, root }) {
       if (values.local !== true) {
-        throw new UsageError('x ci runs only with --local: the GitHub workflow waits for the owner (PLAN.md §8.9)');
+        throw new UsageError(
+          'x ci runs only with --local: the GitHub workflow runs node x ci --local too (PLAN.md §8.9)',
+        );
       }
       return toResult(await runCi(root, deps, { long: values.long === true }));
     },

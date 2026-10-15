@@ -257,7 +257,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
       (tools/cmd/src.ts:24; step 2 of `CI_STEPS`, tools/cmd/ci.ts:63-71). Correct the stale "shardfall is private"
       notes: CLAUDE.md:15, PLAN.md §9's WP 0.2 (`x src`) and §11.5's table, tools/cmd/src.ts:8. If a clone is
       refused after all, escalate once (`node x esc open`) and go on.
-- [ ] 8.2 **.github/workflows/ci.yml** (WP 0.9's Build): on pull requests and pushes to main, plus a manual dispatch; a
+- [x] 8.2 **.github/workflows/ci.yml** (WP 0.9's Build): on pull requests and pushes to main, plus a manual dispatch; a
       120-minute timeout. Chromium 141 either from the Playwright image whose browser it is
       (`mcr.microsoft.com/playwright:v1.56.1-noble`, its chromium-1194 as `CHROMIUM_PATH`; check it reports
       141.0.7390.37, and install git if the image lacks it) or on ubuntu-24.04
@@ -269,7 +269,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
       T2 in full (no t2-full.json, tools/cmd/ci.ts:234-244), about an hour and a quarter in all. Box 4's chase replay
       ran at 165.5 s of its 240 s timeout on one worker here: a timeout on the runner is a finding to record, never a
       reason to loosen the test quietly.
-- [ ] 8.3 **Its unit test** (beside tools/cmd/ci.test.ts): reads ci.yml as text (no YAML dependency) and asserts that
+- [x] 8.3 **Its unit test** (beside tools/cmd/ci.test.ts): reads ci.yml as text (no YAML dependency) and asserts that
       its commands equal `x ci --local`'s (`CI_STEPS`), its source commits equal the pinned ones (`sourceSpecs()`,
       tools/lib/source.ts), it takes Node from .nvmrc, and its Chromium matches tools/deps.json's pin.
 - [ ] 8.4 **Push ci.yml in a commit of its own, last.** GitHub refuses a push holding a workflow file without the
