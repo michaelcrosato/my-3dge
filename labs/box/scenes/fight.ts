@@ -43,6 +43,8 @@ import { setupCrowd, type CrowdComponents } from './crowd-1000';
 import { fightRigs, flyShots, steerFoes } from './fight-foes';
 import { heroFight } from './fight-hero';
 import { type FightComponents, type FightEvents, type FightWorld } from './fight-rules';
+import { boxSounds } from '../sounds/events';
+import { HALL_LEVEL } from './hall';
 
 /** The fight's setting: whether the hero's hit points hold. */
 export const FIGHT_SETTINGS = defineSettings({
@@ -98,6 +100,7 @@ export const fight = defineScene<FightComponents, FightEvents>('box:fight', {
   description:
     'Box 5: the hall, its hero with a sword, and 36 walkers, slimes and wisps that swing, pounce and shoot at him, telegraphed, as he cuts them down.',
   level: 'level:hall',
+  sounds: boxSounds(HALL_LEVEL),
   physics: true,
   settings: { 'box.crowd.count': 36 },
   setup(w) {

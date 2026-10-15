@@ -10,6 +10,9 @@
  * `step(w, intents)` runs every sim step as the system `scene`, first in the phase `intents`, ahead of the systems
  * setup adds there; `actions` are its dev actions, `(w, args) => void` by name (WP 5.6 adds the engine's own).
  * `level` names the level it loads (WP 2.2 compiles it); `physics: true` gives it a physics world (physicsOf, WP 3.1).
+ * `sounds(record, w)` says which sound a traced sim event plays, `{ sfx, vol?, variant? }` or null, for `x audio
+ * --replay` (WP 9.4): by default the event payload's own (`payloadSound`); a game that maps its events to sounds sets
+ * its map here, so Node hears what its pages play (after G9, ADR-0013 amendment 4).
  * Seeds are whole numbers from 0 (`checkSeed`, `SIM_BAD_SEED`).
  *
  * Invariants: a scene's `settings` are checked against the settings schema when it is defined (`CORE_BAD_SPEC`
@@ -27,7 +30,7 @@
  * [world.count, made]; // [1, 1]
  * @see engine/sim/scene.test.ts
  */
-import type { EventMap } from '../core/events';
+import type { EventMap, TraceRecord } from '../core/events';
 import { codeError, defineCodes, type Log } from '../core/log';
 import { registry as sharedRegistry, type Entry, type Registry } from '../core/registry';
 import { isPlainObject, show, type Schema } from '../core/schema';
@@ -55,6 +58,20 @@ export function checkSeed(seed: unknown, where: string): number {
 /** A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays. */
 export type SceneAction<W> = (w: W, args: unknown) => void;
 
+/** A sound a sim event plays: an `sfx` entry, its gain (1 by default) and its variant (the effect's next by default). */
+export interface SceneSound {
+  readonly sfx: string;
+  readonly vol?: number;
+  readonly variant?: number;
+}
+
+/** The sound a traced event names in its payload, `{ sfx, vol?, variant? }`, or null: a scene's default `sounds`. */
+export function payloadSound(record: TraceRecord): SceneSound | null {
+  const payload = record.payload;
+  if (!isPlainObject(payload) || payload.sfx === undefined) return null;
+  return { sfx: payload.sfx, vol: payload.vol, variant: payload.variant } as SceneSound;
+}
+
 /** How a scene is written: `defineScene(id, spec)`. */
 export interface SceneSpec<C extends object = AnyComponents, E extends EventMap = EventMap> {
   /** What the scene shows or tests, in plain sentences. */
@@ -71,6 +88,8 @@ export interface SceneSpec<C extends object = AnyComponents, E extends EventMap 
   step?: (w: World<C, E>, intents: Intents) => void;
   /** Its dev actions, by name. */
   actions?: Readonly<Record<string, SceneAction<World<C, E>>>>;
+  /** The sound each traced sim event plays, read as the event is delivered (`x audio --replay`); `payloadSound`. */
+  sounds?: (record: TraceRecord, w: World<C, E>) => SceneSound | null;
 }
 
 /** A defined scene: its spec with defaults filled, plus `id` and `kind`. */
@@ -102,6 +121,12 @@ const SCENE_FIELDS = {
     type: 'object',
     default: {},
     description: 'Dev actions by name, (w, args) => void: run between steps by a session and recorded in replays.',
+  },
+  sounds: {
+    type: 'function',
+    default: payloadSound,
+    description:
+      "The sound each traced sim event plays, for x audio --replay: (record, w) => { sfx, vol?, variant? } or null; by default the payload's own sfx.",
   },
 } as const satisfies Schema;
 

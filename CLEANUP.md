@@ -220,7 +220,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
   - Prove: every replay golden holds (`node x replay tests/replays`); a spy test shows no `TextEncoder.encode` on a
     second hash of the same state. Keep it only if hashing is clearly faster (over 10%, ADR-0022); else drop it and
     record that.
-- [ ] 7.2 **`x audio --replay` finds 0 box sounds** (WPs 9.4, 9.5).
+- [x] 7.2 **`x audio --replay` finds 0 box sounds** (WPs 9.4, 9.5).
   - Now: `x audio` reads only `payload.sfx` (tools/cmd/audio.ts:141-166), while the box maps its sim events to sounds
     on the page side (labs/box/sounds/events.ts). `playReplay` has no `onStep` (engine/sim/replay.ts:232-237), so
     audio.ts:193-208 copies the stepping loop.

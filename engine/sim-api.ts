@@ -25,6 +25,7 @@ export { defineScene } from './sim/scene';
 export type { Scene } from './sim/scene';
 export type { SceneSpec } from './sim/scene';
 export type { SceneAction } from './sim/scene';
+export type { SceneSound } from './sim/scene';
 
 // The world: entities, components, systems, timers, events.
 export type { World } from './sim/world';

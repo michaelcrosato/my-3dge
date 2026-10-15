@@ -82,7 +82,7 @@ describe('the box’s sound in its page', () => {
     sound.frame({ ...frame, dt: 0.1 });
     const plays = calls.filter(([name, id]) => name === 'play' && id !== TORCH.sfx);
     expect(plays).toEqual([
-      ['play', 'sfx:boxHit', { vol: expect.closeTo(0.85, 9), position: at, duck: false }],
+      ['play', 'sfx:boxHit', { vol: expect.closeTo(0.45, 9), position: at, duck: false }],
       ['play', 'sfx:boxDeath', { vol: 1, position: at, duck: true }],
     ]);
     expect(calls).toContainEqual(['intensity', 1]);

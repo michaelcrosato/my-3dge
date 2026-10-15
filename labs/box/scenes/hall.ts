@@ -38,6 +38,7 @@ import {
   type World,
 } from '../../../engine/sim-api';
 import { HERO, spawnHero } from '../cast/hero';
+import { boxSounds } from '../sounds/events';
 
 /** labs/box/levels/hall.txt, as it is (see the file comment). */
 export const HALL_TEXT = `---
@@ -145,6 +146,7 @@ export const hall = defineScene('box:hall', {
   description:
     'Box 3: the hall as a physics level, and the hero, who climbs the stairs to the galleries and walks the dais.',
   level: 'level:hall',
+  sounds: boxSounds(HALL_LEVEL),
   physics: true,
   setup(w) {
     setupHall(w);

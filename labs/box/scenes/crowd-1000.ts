@@ -58,6 +58,7 @@ import { SLIME, makeSlime, steerSlime, type SlimeData } from '../cast/slime';
 import { WALKER, makeWalker, steerWalker, type Chase, type WalkerData } from '../cast/walker';
 import { WISP, makeWisp, steerWisp, type WispData } from '../cast/wisp';
 import { HALL_LEVEL, HALL_START, setupHall } from './hall';
+import { boxSounds } from '../sounds/events';
 
 /** The crowd's settings: how many, and the mix. */
 export const CROWD_SETTINGS = defineSettings({
@@ -228,6 +229,7 @@ export const crowd1000 = defineScene<CrowdComponents>('box:crowd-1000', {
   description:
     'Box 4: the hall with its hero and a crowd of 1,000 walkers, slimes and wisps, 25 entering a step, that chase him round the pillars and up the stairs.',
   level: 'level:hall',
+  sounds: boxSounds(HALL_LEVEL),
   physics: true,
   settings: { 'box.crowd.count': 1000 },
   setup(w) {

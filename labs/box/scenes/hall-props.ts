@@ -49,6 +49,7 @@ import {
   type World,
 } from '../../../engine/sim-api';
 import { HALL_LEVEL, HALL_START, setupHall } from './hall';
+import { boxSounds } from '../sounds/events';
 
 /** The prototype's units per metre (PLAN.md Appendix C). */
 const UNITS = 16;
@@ -140,6 +141,7 @@ export const hallProps = defineScene<Components>('box:hall-props', {
   description:
     'Box 3: the hall and the hero with its props: a fire on every brazier, and crates and barrels he pushes and shoves.',
   level: 'level:hall',
+  sounds: boxSounds(HALL_LEVEL),
   physics: true,
   setup(w) {
     w.spawn({ hallSwing: { hero: setupHall(w), left: 0 } });

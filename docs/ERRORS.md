@@ -1061,7 +1061,7 @@ Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step ru
 
 - Message: `{where} got the seed {value}, which a replay cannot hold`
 - Fix: pass a whole number, 0 or more (x sim --seed 3, __engine.seed(3)): record() writes the seed into the replay
-- Registered in: [`engine/sim/scene.ts` line 42](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 45](../engine/sim/scene.ts)
 
 ### SIM_BAD_SYSTEM
 

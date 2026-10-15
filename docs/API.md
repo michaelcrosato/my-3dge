@@ -707,6 +707,7 @@ game agent's manual.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
 - `ScenePropComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `sceneProp`: a prop standing in a scene.
 - `ScenePropComponents` (type from [`engine/sim/props.ts`](../engine/sim/props.ts)): The components this module reads.
+- `SceneSound` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A sound a sim event plays: an `sfx` entry, its gain (1 by default) and its variant (the effect's next by default).
 - `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
 - `Scope` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): A filter's scope.
@@ -1334,6 +1335,7 @@ game agent's manual.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
 - `ScenePropComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `sceneProp`: a prop standing in a scene.
 - `ScenePropComponents` (type from [`engine/sim/props.ts`](../engine/sim/props.ts)): The components this module reads.
+- `SceneSound` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A sound a sim event plays: an `sfx` entry, its gain (1 by default) and its variant (the effect's next by default).
 - `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
 - `Secondary` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The secondary-motion layer: squash, hair, cape and tail on a humanoid.
@@ -4433,11 +4435,13 @@ For the agents who maintain the engine.
 - `defineScene` (function): Registers a scene on `registry` (the shared one by default) and returns it.
 - `getScene` (function): The scene `id` on `registry` (the shared one by default).
 - `isScene` (function): Whether `value` is a defined scene (an entry of kind `scene`), as a module exports it.
+- `payloadSound` (function): The sound a traced event names in its payload, `{ sfx, vol?, variant? }`, or null: a scene's default `sounds`.
 - `Scene` (type): A defined scene: its spec with defaults filled, plus `id` and `kind`.
 - `SCENE_CODES` (const): The codes this module raises, with their fixes.
 - `SceneAction` (type): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
 - `SceneOptions` (interface): How a scene starts.
 - `SceneRun` (interface): A started scene: the scene, its world and its settings store.
+- `SceneSound` (interface): A sound a sim event plays: an `sfx` entry, its gain (1 by default) and its variant (the effect's next by default).
 - `SceneSpec` (interface): How a scene is written: `defineScene(id, spec)`.
 - `startScene` (function): Starts a scene (an id on the registry, or a scene): a new settings store with the scene's settings and then `options.settings` over the defaults, a world seeded with `options.seed`, the scene's `step` as the system `scene`, then its `setup`.
 
@@ -5035,6 +5039,7 @@ For the agents who maintain the engine.
 
 - `BOX_FOOTSTEPS` (const): Footsteps by surface tag (the level legend's `surface`): the effect a step on it plays; `'*'` any other.
 - `BoxSoundEvent` (interface): One sound the box plays for a sim event.
+- `boxSounds` (function): A scene's `sounds` hook for the box's scenes on `level`: each event's effect and gain, as the page plays them.
 - `createSoundReader` (function): A reader that reads each event of a world once (see the file comment).
 - `footstepSfx` (function): The effect a footstep plays at `at` on `level`: its surface's (`BOX_FOOTSTEPS`), the `'*'` one off any level.
 - `Point` (type): A point in the world, metres.
@@ -5603,7 +5608,7 @@ For the agents who maintain the engine.
 - `encodeWav` (function): Encodes samples as a 16-bit mono PCM WAV file, clamped to ±1.
 - `mixSoundEvents` (function): The events' effects rendered (each once per variant, seed 0, at 44,100 Hz) and summed into one mono mix at least `seconds` long, with each event's span in it, `[start, end)` in samples.
 - `Picture` (type): A picture as RGBA bytes, row by row from the top.
-- `replaySoundEvents` (function): Plays `replay` (its scene defined on `registry`) step by step, as `playReplay` does, hashing its checkpoints, and reads the sound events from the sim's event trace after setup, each change-point and each step.
+- `replaySoundEvents` (function): Plays `replay` (its scene defined on `registry`) step by step through `createPlayback` (engine/app/playback.ts, the page's real-time playback), hashing its checkpoints, and reads the sound events from the sim's event trace after setup and after each step, as the box's page does (labs/box/sounds/events.ts).
 - `SoundEvent` (interface): One sound event of a replay: when, from which sim event, which effect at which gain and variant.
 - `SoundTimeline` (interface): A replay's sound events, the problems of those that name no sound, its length and the hashes of its checkpoints.
 - `spectrogram` (function): A spectrogram of `samples` as RGBA bytes (see the file comment for its axes and colours).

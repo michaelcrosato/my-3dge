@@ -25,6 +25,7 @@
  */
 import { addLevelBodies, compileLevel, defineScene, defineSettings, physicsOf } from '../../../engine/sim-api';
 import { HERO, spawnHero } from '../cast/hero';
+import { boxSounds } from '../sounds/events';
 
 /** labs/box/levels/room.txt, as it is (see the file comment). */
 export const ROOM_TEXT = `---
@@ -85,6 +86,7 @@ const START = ROOM_HERO_LEVEL.spawns.find((spawn) => spawn.name === 'hero')!.pos
 export const roomHero = defineScene('box:room-hero', {
   description: 'Box 2: the room as a physics level, and the hero, who walks, dashes and jumps onto the low wall.',
   level: 'level:room',
+  sounds: boxSounds(ROOM_HERO_LEVEL),
   physics: true,
   setup(w) {
     addLevelBodies(physicsOf(w), ROOM_HERO_LEVEL);

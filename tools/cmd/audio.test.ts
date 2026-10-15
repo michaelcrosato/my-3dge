@@ -2,8 +2,8 @@
  * @file Tests for `x audio` (tools/cmd/audio.ts): a sound's metrics within 20 lines, its WAV and spectrogram on
  * request (a valid 16-bit PCM file; a picture whose brightest row is the tone's pitch), usage errors naming the
  * closest; a replay's sound events read from the sim events that name an `sfx`, at their step's time, variants in
- * turn, bad ones reported; their mix, the sum of the rendered effects, judged for clipping; and a real replay played
- * against its goldens.
+ * turn, bad ones reported; their mix, the sum of the rendered effects, judged for clipping; a real replay played
+ * against its goldens; and the box fight's sounds through its scene's `sounds`, the page's timeline step for step.
  * @see tools/cmd/audio.ts
  */
 import { existsSync, readFileSync } from 'node:fs';
@@ -14,6 +14,10 @@ import { createRegistry } from '../../engine/core/registry';
 import { defineScene } from '../../engine/sim/scene';
 import { createSession } from '../../engine/sim/session';
 import { defineFixtureSounds } from '../../fixtures/sounds';
+import '../../labs/box/scenes/fight';
+import { HALL_LEVEL } from '../../labs/box/scenes/hall';
+import '../../labs/box/sounds/effects';
+import { FIGHT_TIMELINE, soundTimeline } from '../../tests/pages/boxAudioTimeline';
 import { dispatch, ROOT } from '../x';
 import { encodeWav, mixSoundEvents, replaySoundEvents, SPECTROGRAM, spectrogram } from './audio';
 
@@ -152,6 +156,16 @@ describe('x audio --replay', () => {
     expect(lines.length).toBeLessThanOrEqual(20);
     expect(lines[0]).toMatch(/^x audio: ok: tests\/replays\/kernel-movers\.replay\.json: 0 sound events in \d+ steps/);
     expect(lines.join('\n')).toMatch(/goldens: match \(linux-x64\)/);
+  });
+
+  it("finds the box fight's sounds through its scene's sounds hook: the page's timeline, step for step", () => {
+    const text = readFileSync(join(ROOT, FIGHT_TIMELINE.replay), 'utf8');
+    const read = (events: readonly { step: number; sfx: string; vol: number }[]) =>
+      events.map(({ step, sfx, vol }) => [step, sfx, vol]);
+    const node = replaySoundEvents(JSON.parse(text));
+    expect(node.problems).toEqual([]);
+    expect(read(node.events)).toEqual(read(soundTimeline(text, HALL_LEVEL).events));
+    expect(node.events).toHaveLength(FIGHT_TIMELINE.sounds);
   });
 
   it('refuses a missing file with exit 2', async () => {
