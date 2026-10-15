@@ -6008,7 +6008,7 @@ For the agents who maintain the engine.
 - `DocComment` (interface): A parsed JSDoc comment.
 - `DocTag` (interface): One `@tag` of a doc comment, its text as written (indentation kept), and its 1-based line in the file.
 - `Example` (interface): One `@example` block.
-- `ExampleHost` (type): Where T2 runs a flagged example: in the box page (`page`: Web Audio, a page's DOM, a Vite-only import), in the Playwright process (`node`: it drives a browser itself), or nowhere (`none`: a suite's own module, whose example is a test the suites run), its reason saying why.
+- `ExampleHost` (type): Where T2 runs a flagged example: in the box page (`page`: Web Audio, a page's DOM, a Vite-only import), in a Node process of its own beside Playwright (`node`: it drives a browser itself), or nowhere (`none`: a suite's own module, whose example is a test the suites run), its reason saying why.
 - `ExportDoc` (interface): One export of a module.
 - `isModulePath` (function): Whether a repository-relative path is a module (not a test, fixture, template or declaration file).
 - `lineOf` (const): 1-based line of character `index` in `text`.

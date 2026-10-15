@@ -9,10 +9,10 @@
  * trap still sees them. Write each example as code that runs on this repository as it is, offline: an expected
  * value goes in a trailing comment.
  *
- * Browser examples are flagged for T2 instead of run, by what their module imports (tools/lib/docs.ts `ExampleHost`):
- * a Vite-only import (`?raw`) or a first line `// browser` runs in the box page (`pageExample` prepares it), a module
- * that imports Playwright runs in the Playwright process, and the suites' own modules (tests/e2e/) are tests, which the
- * suites run; tests/e2e/examples.spec.ts runs them.
+ * Browser examples are flagged for T2 instead of run, by what their module imports (tools/lib/docs.ts `ExampleHost`): a
+ * Vite-only import (`?raw`) or a first line `// browser` runs in the box page (`pageExample` prepares it), a module
+ * that imports Playwright runs in a Node process of its own beside Playwright, and the suites' own modules (tests/e2e/)
+ * are tests, which the suites run; tests/e2e/examples.spec.ts runs them.
  *
  * Invariants: examples run one at a time, in module order, each with a time limit (`EXAMPLE_TIMEOUT_MS`).
  *

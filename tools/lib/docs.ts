@@ -74,9 +74,9 @@ export interface Example {
 }
 
 /**
- * Where T2 runs a flagged example: in the box page (`page`: Web Audio, a page's DOM, a Vite-only import), in the
- * Playwright process (`node`: it drives a browser itself), or nowhere (`none`: a suite's own module, whose example is a
- * test the suites run), its reason saying why.
+ * Where T2 runs a flagged example: in the box page (`page`: Web Audio, a page's DOM, a Vite-only import), in a Node
+ * process of its own beside Playwright (`node`: it drives a browser itself), or nowhere (`none`: a suite's own module,
+ * whose example is a test the suites run), its reason saying why.
  */
 export type ExampleHost = 'page' | 'node' | 'none';
 
