@@ -237,7 +237,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
     the 81-sound golden from before G7: cite the current one. WP 9.5's "fight-1000 event rate vs the 256-record trace"
     was measured in the audit: at most 83 events in one step over fight-1000's 600 steps, none missed (both readers
     count misses); record it in the row.
-- [ ] 7.3 **Chromium coverage** (WPs 4.1, 4.2, 4.3, 5.3).
+- [x] 7.3 **Chromium coverage** (WPs 4.1, 4.2, 4.3, 5.3).
   - Now: tests/e2e/parity.spec.ts replays the box's twelve replays in Chromium; physics-40, physics-props, crowd-1000
     and kernel-crowd were checked in Chromium only when recorded (tools/cmd/replay.ts:22-24). WP 4.2's hulls
     (box-3-climb, box-3-dais) and WP 5.3's atan2 and hypot (tests/e2e/drift.spec.ts, box-4-chase, box-4-hop) are

@@ -105,7 +105,9 @@ export function t2Budget(cores: number): { workers: number; ms: number; measured
  * The long runs (PLAN.md §8.2): no budget, run at each gate. The flake hunt, the kernel's perf budget (WP 1.5; T1
  * never asserts timing), the crowd ladder's (WPs 5.5, 5.7: tests/baselines/perf/box-crowd-1000.json) and the clip
  * library's QA, every clip played on every build (WP 8.6: T1 plays a sample), and clip mode in the box page playing
- * every clip (WP 8.9: T2 plays one of each set). Long replays (WP 1.5) join them.
+ * every clip (WP 8.9: T2 plays one of each set), and every replay once more in Chromium's sim-only page (after G9:
+ * T2's parity plays only the box's stages, so physics-40, physics-props, the crowd and nav fixtures and the lift were
+ * checked in Chromium only when recorded). Long replays (WP 1.5) join them.
  */
 export const LONG_RUNS: readonly { name: string; command: readonly string[] }[] = [
   { name: 'flake hunt', command: ['npm', 'run', 'e2e', '--', '--repeat-each', '3'] },
@@ -123,6 +125,7 @@ export const LONG_RUNS: readonly { name: string; command: readonly string[] }[] 
     name: 'box clips',
     command: ['env', 'BOX_CLIPS=all', 'npm', 'run', 'e2e', '--', 'tests/e2e/box-clips.spec.ts', '--workers=1'],
   },
+  { name: 'replays in Chromium', command: ['node', 'x', 'replay', 'tests/replays', '--browser', 'sim', '--runs', '1'] },
 ];
 
 /** A path whose change runs a whole tier: a file, or a directory when it ends in `/`. */

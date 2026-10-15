@@ -1,0 +1,23 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "The nav-1000 fixture (WP 4.3): 1,000 agents chase the target round the hall for 300 steps, each asking the way every step (the flow field near it, an A* path planned by findPath farther off, replanned every 2 s), so navigation's queries give the same hashes in Node and in Chromium.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "nav-1000",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 300,
+  "inputs": [],
+  "hashes": {
+    "linux-x64": {
+      "0": "efe7bbad50af3dc9",
+      "60": "0b316c5f12f595bb",
+      "120": "840a704594327b20",
+      "180": "95e6e16e01a62221",
+      "240": "234e876155e493b7",
+      "300": "7f7deaa63e6e4dc4"
+    }
+  }
+}

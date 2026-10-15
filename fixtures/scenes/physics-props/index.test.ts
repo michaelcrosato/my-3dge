@@ -4,7 +4,8 @@
  * they are the uninterrupted run's, so the in-place restore at step 90 (mid-ride, crates in the air) continues
  * exactly; the platform carries the hero, and whole-sim captures taken mid-ride and while the crates fall restore and
  * continue with the replay's hashes; the swing topples both stacks the same way every run; the zones report who
- * entered and left; the rescue puts the sunk barrel back on its walkable tile.
+ * entered and left; the rescue puts the sunk barrel back on its walkable tile; and with `props.lift` the platform is a
+ * lift the hero rides up and back down, sinking with it (tests/replays/physics-props-lift.replay.json).
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -91,6 +92,31 @@ describe('the physics-props fixture', () => {
     expect(worst).toBeLessThan(0.01);
     expect(east).toBeCloseTo(6, 2);
     expect(air).toBeLessThanOrEqual(1); // the first step, before it first stands
+  });
+
+  it('rides the lift (props.lift) 2 m up and back down, its feet on the platform’s top all the way down: the sink path', () => {
+    const LIFT = checkReplay(
+      JSON.parse(readFileSync(join(import.meta.dirname, '../../../tests/replays/physics-props-lift.replay.json'), 'utf8')), // prettier-ignore
+    );
+    expect(LIFT.settings).toEqual({ 'props.lift': true });
+    const { session } = playReplay(LIFT, { until: 0, checkpoints: [] });
+    const w = session.world;
+    const physics = physicsOf(w);
+    const platform = (w.query('platform')[0].platform as { body: number }).body;
+    let [worst, high, down] = [0, 0, 0];
+    for (let k = 0; k < LIFT.steps; k++) {
+      const before = physics.readBody(platform).position.y;
+      session.step({});
+      const hero = w.query('actor')[0].actor as { x: number; y: number; z: number };
+      const top = physics.readBody(platform).position.add({ x: 0, y: 0.2, z: 0 });
+      if (k > 0) worst = Math.max(worst, Math.hypot(hero.x - top.x, hero.y - top.y, hero.z - top.z));
+      high = Math.max(high, hero.y);
+      if (top.y - 0.2 < before - 1e-6) down++; // a step the lift went down, taking him with it
+    }
+    expect(worst).toBeLessThan(0.01);
+    expect(high).toBeCloseTo(2.4, 2);
+    expect(down).toBeGreaterThan(60);
+    expect(playReplay(LIFT).hashes).toEqual(LIFT.hashes[PLATFORM]);
   });
 
   it('restores whole-sim captures taken mid-ride and while the crates fall, and continues with the replay’s hashes', () => {
