@@ -26,8 +26,8 @@ three.js API names its replacement (the `three-webgpu` skill).
 | T0 | `npm run check` | | tsc, ESLint, Prettier, `node x check` (assets, deps, docs, escalations, port vectors) |
 | T1 | `npm test` | | one area: `npm test -- <path>`; what a change reaches: `npx vitest related --run <files>` |
 | T2 | `npm run e2e` | none: nobody waits on it | while working, only the specs for what only it checks, or a failure you are fixing (`npm run e2e -- <spec>`); a background task; a lane sets its own `PORT` first |
-| Gate | `node x ci --local` | 5 min | the quick gate before every merge: `npm ci`, `x src`, T0, T1, `x port refs --check`, `x new --test-all` |
-| Full run | `node x ci --local --full` | none | the gate's steps and T2 in full (`--long` adds the long runs): GitHub runs it after each merge; `node x ci --status` says how main's last one went (ADR-0023) |
+| Gate | `node x ci --local` | 5 min | the quick gate before every merge: `npm ci`, `x src`, T0, T1, `x port refs --check` |
+| Full run | `node x ci --local --full` | none | the gate's steps, `x new --test-all` and T2 in full (`--long` adds the long runs): GitHub runs it after each merge; `node x ci --status` says how main's last one went (ADR-0023) |
 
 The Stop hook runs `npm run check` when you end a turn and sends you back once if it is red.
 

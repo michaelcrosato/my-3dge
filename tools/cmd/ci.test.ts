@@ -71,8 +71,8 @@ function fakeDeps(fakes: Record<string, Fake> = {}, runs: WorkflowRun[] = [ghRun
 
 /** The argv each step runs, as the runner receives it. */
 const STEP_COMMANDS = CI_STEPS.map((step) => step.command.join(' '));
-/** The quick gate's: every step but T2. */
-const QUICK_COMMANDS = STEP_COMMANDS.slice(0, -1);
+/** The quick gate's: every step but x new --test-all and T2. */
+const QUICK_COMMANDS = STEP_COMMANDS.slice(0, -2);
 const read = (root: string, path: string) => readFileSync(join(root, path), 'utf8');
 
 describe('CI_STEPS', () => {
@@ -93,7 +93,7 @@ describe('CI_STEPS', () => {
       ['T1', TIERS.T1.command],
       ['T2', TIERS.T2.command],
     ]);
-    expect(CI_STEPS.filter((step) => step.full).map((step) => step.name)).toEqual(['npm run e2e']);
+    expect(CI_STEPS.filter((step) => step.full).map((step) => step.name)).toEqual(['x new --test-all', 'npm run e2e']);
   });
 
   it('leave the Vercel build out (ADR-0021)', () => {
@@ -102,19 +102,22 @@ describe('CI_STEPS', () => {
 });
 
 describe('runCi', () => {
-  it('runs the quick gate in order without T2, logs each step, and records the green commit', async () => {
+  it('runs the quick gate in order without x new --test-all and T2, logs each step, and records the green commit', async () => {
     const root = sandbox();
     const { deps, calls } = fakeDeps();
     const run = await runCi(root, deps);
     expect(run.ok).toBe(true);
     expect(run.full).toBe(false);
     expect(calls).toEqual(QUICK_COMMANDS);
-    expect(run.steps.at(-1)).toMatchObject({ name: 'npm run e2e', status: 'skipped', note: FULL_ONLY });
+    expect(run.steps.slice(-2).map(({ name, status, note }) => [name, status, note])).toEqual([
+      ['x new --test-all', 'skipped', FULL_ONLY],
+      ['npm run e2e', 'skipped', FULL_ONLY],
+    ]);
     expect(read(root, LAST_GREEN)).toBe(`${SHA}\n`);
-    const logs = ['npm-ci', 'x-src', 'npm-run-check', 'npm-test', 'x-port-refs-check', 'x-new-test-all'].map(
+    const logs = ['npm-ci', 'x-src', 'npm-run-check', 'npm-test', 'x-port-refs-check'].map(
       (name, i) => `${CI_OUT.logs}/${i + 1}-${name}.log`,
     );
-    expect(run.steps.map((step) => step.log)).toEqual([...logs, undefined]);
+    expect(run.steps.map((step) => step.log)).toEqual([...logs, undefined, undefined]);
     expect(read(root, `${CI_OUT.logs}/4-npm-test.log`)).toBe('npm test\nall good\n');
     expect(read(root, CI_OUT.summary)).toContain('# x ci --local: ok');
   });
@@ -187,17 +190,17 @@ describe('runCi', () => {
 
 describe("the quick gate's budget", () => {
   it('holds the quick steps together to five minutes: over warns and never fails the gate (ADR-0023)', async () => {
-    const within = await runCi(sandbox(), fakeDeps({ 'npm test': { ms: 295_000 } }).deps);
+    const within = await runCi(sandbox(), fakeDeps({ 'npm test': { ms: 296_000 } }).deps);
     expect(within.budget).toMatchObject({ ms: 300_000, budgetMs: 300_000, status: 'ok' });
-    const over = await runCi(sandbox(), fakeDeps({ 'npm test': { ms: 296_000 } }).deps);
+    const over = await runCi(sandbox(), fakeDeps({ 'npm test': { ms: 297_000 } }).deps);
     expect(over.ok).toBe(true);
     expect(over.budget).toMatchObject({ ms: 301_000, status: 'warn' });
   });
 
-  it('leaves T2 and the long runs out of it: nobody waits on them', async () => {
-    const slow = { 'npm run e2e': { ms: 3_900_000 }, ...Object.fromEntries(LONG_RUNS.map((entry) => [entry.command.join(' '), { ms: 600_000 }])) }; // prettier-ignore
+  it('leaves x new --test-all, T2 and the long runs out of it: nobody waits on them', async () => {
+    const slow = { 'node x new --test-all': { ms: 150_000 }, 'npm run e2e': { ms: 3_900_000 }, ...Object.fromEntries(LONG_RUNS.map((entry) => [entry.command.join(' '), { ms: 600_000 }])) }; // prettier-ignore
     const run = await runCi(sandbox(), fakeDeps(slow).deps, { full: true, long: true });
-    expect(run.budget).toMatchObject({ ms: 6000, status: 'ok' });
+    expect(run.budget).toMatchObject({ ms: 5000, status: 'ok' });
   });
 });
 
@@ -208,7 +211,7 @@ describe('renderSummary', () => {
     const summary = renderSummary({ ...run, head: { ...run.head, dirty: [' M a.ts'] } });
     expect(summary).toContain('# x ci --local: FAIL');
     expect(summary).toContain('- Commit: c0ffee0 on work with 1 uncommitted changes\n');
-    expect(summary).toContain('- Budget: the quick gate took 6 s, within its 5 min budget\n');
+    expect(summary).toContain('- Budget: the quick gate took 5 s, within its 5 min budget\n');
     expect(summary).toContain('| `npm ci` | ok | 1 s | out/ci/logs/1-npm-ci.log |  |');
     expect(summary).toContain('| `npm test` | FAIL (exit 1) | 1 s | out/ci/logs/4-npm-test.log |  |');
     expect(summary).toContain(`| \`npm run e2e\` | skipped |  |  | ${FULL_ONLY} |`);
@@ -250,8 +253,8 @@ describe('node x ci through the dispatcher', () => {
     const root = sandbox();
     const { code, lines } = await x(root, ['--local'], fakeDeps().deps);
     expect(code).toBe(0);
-    expect(lines[0]).toBe(`x ci: ok: 6 steps passed in 6 s; c0ffee0 recorded in ${LAST_GREEN}`);
-    expect(lines).toContain('all passed in 6 s');
+    expect(lines[0]).toBe(`x ci: ok: 5 steps passed in 5 s; c0ffee0 recorded in ${LAST_GREEN}`);
+    expect(lines).toContain('all passed in 5 s');
     expect(lines).toContain(`summary: ${CI_OUT.summary}`);
     expect(lines.at(-1)).toBe('report: out/ci/local/report.json');
     expect(lines.length).toBeLessThanOrEqual(MAX_LINES);
@@ -269,7 +272,7 @@ describe('node x ci through the dispatcher', () => {
     );
     const slow = await x(sandbox(), ['--local'], fakeDeps({ 'npm test': { ms: 300_000 } }).deps);
     expect(slow.code).toBe(0);
-    expect(slow.lines.some((line) => line.startsWith('CI_BUDGET: the quick gate took 5 min 5 s, over its'))).toBe(true); // prettier-ignore
+    expect(slow.lines.some((line) => line.startsWith('CI_BUDGET: the quick gate took 5 min 4 s, over its'))).toBe(true); // prettier-ignore
     expect(slow.lines.length).toBeLessThanOrEqual(MAX_LINES);
   });
 

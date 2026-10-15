@@ -1,8 +1,9 @@
 # .github/workflows/ci.yml: the full run on GitHub Actions (PLAN.md §8.9, WP 0.9; ESC-0001, answered 2026-10-14;
 # ADR-0023). After each merge to main, and by hand, it runs `node x ci --local --full` (tools/cmd/ci.ts, `CI_STEPS`):
 # npm ci, x src, T0, T1, x port refs --check, x new --test-all and T2 in full. Nobody waits on it: agents merge on the
-# quick gate (`node x ci --local`), and `node x ci --status`, which the SessionStart hook runs, reads these runs, so a
-# red main is fixed before other work. Each merge gets a run of its own, none cancelled, so a failure names its merge.
+# quick gate (`node x ci --local`, without x new --test-all and T2), and `node x ci --status`, which the SessionStart
+# hook runs, reads these runs, so a red main is fixed before other work. Each merge gets a run of its own, none
+# cancelled, so a failure names its merge.
 #
 # The platform, as scripts/setup.sh builds it: both read-only sources at their pinned commits in .cache/src-*, fetched
 # with the job's read-only token and no secret (both repositories are public; LFS off), Node from .nvmrc, and Chrome for
