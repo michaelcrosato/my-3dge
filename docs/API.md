@@ -5972,6 +5972,7 @@ For the agents who maintain the engine.
 - `lockFor` (function): The lock for the engine files of `items` (hashed from the source), with the engine's identity, the package.json entries the game got from it, and the root files written from its templates (`templates`: path → hash or null).
 - `NPM_FIELDS` (const): The package.json fields a game shares with the engine: the engine's entries in each, the game's own beside them.
 - `npmClashes` (function): The game's own package.json entries (in `previous`, not named by `before`, its lock's `npm`) that the engine's package.json sets otherwise, as `field.key`: what an update would replace.
+- `npmLost` (function): The entries of `previous` (a game's package.json) that `next` (what an update writes) drops, or sets back to the engine's where the game had edited one the engine gave (`before`, its lock's `npm`), as `field.key`: what an update names, since the engine's entries win.
 - `ownerOf` (function): Whose a source path is: 'engine', 'game' (the starter) or 'skip'; null when no rule names it.
 - `plan` (function): What a game gets from `source`: each file to copy, from its source path to its path in the game, and whose it is.
 - `RENAMED` (const): Engine files a game gets under another path: the engine's license travels with its code.

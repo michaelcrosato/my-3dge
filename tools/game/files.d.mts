@@ -83,6 +83,7 @@ export function gamePackage(
   before?: NpmEntries,
 ): PackageJson;
 export function npmClashes(previous: PackageJson, engine: PackageJson, before?: NpmEntries): string[];
+export function npmLost(previous: PackageJson, next: PackageJson, before?: NpmEntries): string[];
 export function gameLockfile<T extends { name: string; packages: Record<string, object> }>(
   engineLock: T,
   name: string,

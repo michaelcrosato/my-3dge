@@ -29,8 +29,9 @@ and WP 12.4 (built as the guide's generated section); amends §6.2
    instead of the box's scene kind; scripts/setup.sh skips the source checkouts; `npm run build` ships the game's pages
    without the box. `--update` replaces nothing of the game's: it stops, having written nothing, on a file or a
    package.json entry of the game's where the newer engine brings its own (`--force` lets the engine's win), keeps
-   declared patches, and brings the root files the game never edited to the new templates, naming the edited ones
-   whose templates changed (the lock records what new-game.mjs wrote).
+   declared patches, names the package.json entries it drops or sets back to the engine's (the engine's pins win, as
+   its files do), and brings the root files the game never edited to the new templates, naming the edited ones whose
+   templates changed (the lock records what new-game.mjs wrote).
 5. **The starter game lives here as labs/game/**, at the path it has in every game, so the engine's suites check it on
    every change and a new game needs no renaming. It is sample content, like the box (§5.7), not the game: a scene
    (a level as text, settings, components, systems in the phase `rules`, a named random stream, events), a player, a

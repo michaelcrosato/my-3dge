@@ -205,8 +205,8 @@ describe('the lock', () => {
       ['<<<<<<< HEAD', /is not JSON .*restore it from git/],
       ['{}', /has no "format"/],
       ['{"format":"my3dge-engine-lock/1"}', /lacks its engine or its files/],
+      ['{"format":"my3dge-engine-lock/1","engine":{"commit":"a"},"files":[]}', /lacks its engine or its files/],
     ] as const) {
-      // prettier-ignore
       writeFileSync(join(target, LOCK_FILE), text);
       expect(() => verifyGame(target)).toThrow(error);
     }
@@ -268,6 +268,7 @@ describe('updateGame', () => {
     const done = updateGame({ target, source: next });
     expect([done.kept, existsSync(join(target, 'engine/b.ts'))]).toEqual([['engine/b.ts'], false]);
     expect(JSON.parse(read(target, 'package.json')).scripts).toEqual({ play: 'vite', check: 'node c' });
+    expect(done.npm).toEqual(['scripts.test']); // the engine dropped it: named
   });
 
   it('stops on an engine file the game changed without declaring it, unless forced', () => {
@@ -295,6 +296,9 @@ describe('updateGame', () => {
     expect(read(target, 'engine/a.ts')).toBe('export const a = 1;\n'); // nothing written
     expect(updateGame({ target, source: next, force: true }).forced).toEqual(['scripts.preview', 'dependencies.howler', 'allowScripts.esbuild']); // prettier-ignore
     expect(JSON.parse(read(target, 'package.json'))).toMatchObject({ scripts: { preview: 'vite preview' }, dependencies: { howler: '2.2.3' }, allowScripts: { esbuild: false } }); // prettier-ignore
+    const edited = JSON.parse(read(target, 'package.json'));
+    writeFileSync(join(target, 'package.json'), JSON.stringify({ ...edited, scripts: { ...edited.scripts, test: 'vitest' } })); // prettier-ignore
+    expect(updateGame({ target, source: next }).npm).toEqual(['scripts.test']); // the game's edit of the engine's: named
   });
 
   it('brings the root files the game never edited to the new templates, and names the edited ones that changed', () => {

@@ -18,7 +18,8 @@
  * game's is replaced or removed: it stops, having written nothing, on an engine file the game changed without
  * declaring it under "Local engine patches" in ENGINE-FEEDBACK.md (a declared one is kept), on a file of the game's
  * where the newer engine adds one, and on a package.json entry of the game's that the newer engine sets otherwise
- * (`npmClashes`); `--force` lets the engine's replace them.
+ * (`npmClashes`); `--force` lets the engine's replace them. It names the package.json entries it drops, or sets back
+ * where the game had edited the engine's (`npmLost`): the engine's pins win, as its files do.
  *
  * `--verify <dir>` prints `verifyGame` (tools/game/files.mjs) as JSON. Exit codes: 0 done, 1 stopped (the message says
  * why and what to do), 2 a usage error.
@@ -45,6 +46,7 @@ import {
   LOCK_FILE,
   lockFor,
   npmClashes,
+  npmLost,
   plan,
   sameDependencies,
   SOURCE,
@@ -204,6 +206,7 @@ export function updateGame({ target, source = SOURCE, force = false }) {
   for (const { from, to } of items) if (!keep.has(to)) copyInto(source, from, root, to);
   const pkg = gamePackage(engine, previous.name, previous, before.lock.npm);
   writeJson(join(root, 'package.json'), pkg);
+  const npm = npmLost(previous, pkg, before.lock.npm);
   const lockfileFits = sameDependencies(pkg, engine);
   if (lockfileFits) {
     writeJson(join(root, 'package-lock.json'), gameLockfile(readJson(join(source, 'package-lock.json')), pkg.name));
@@ -211,7 +214,7 @@ export function updateGame({ target, source = SOURCE, force = false }) {
   const { templates, refreshed, diverged } = refreshTemplates(root, source, before.lock, identity);
   writeJson(join(root, LOCK_FILE), lockFor(source, items, identity, before.lock.game, engine, templates));
   const forced = [...blocked, ...clashes];
-  return { root, from: before.lock.engine, to: identity, added, removed, replaced, kept: [...keep], forced, refreshed, diverged, lockfileFits }; // prettier-ignore
+  return { root, from: before.lock.engine, to: identity, added, removed, replaced, kept: [...keep], forced, npm, refreshed, diverged, lockfileFits }; // prettier-ignore
 }
 
 /** Why an update stops on engine files the game changed or added without declaring them, with the fixes. */
@@ -321,6 +324,7 @@ export function main(argv = process.argv.slice(2), out = console.log, err = cons
       const counts = `${done.replaced.length} engine files changed, ${done.added.length} added, ${done.removed.length} removed`; // prettier-ignore
       out(`new-game: moved from my-3dge@${done.from.commit.slice(0, 7)} to my-3dge@${done.to.commit.slice(0, 7)}: ${counts}${patches}`); // prettier-ignore
       if (done.forced.length > 0) out(`replaced the game's own (--force): ${done.forced.join(', ')}`);
+      if (done.npm.length > 0) out(`package.json: the engine's entries win, so these went or are the engine's again: ${done.npm.join(', ')}; put back what the game needs under a name of its own`); // prettier-ignore
       if (done.refreshed.length > 0) out(`root files brought to the engine's templates: ${done.refreshed.join(', ')}`);
       const template = (to) => `${to} (tools/game/template/${TEMPLATES.find(([, path]) => path === to)[0]})`;
       if (done.diverged.length > 0) out(`the engine's templates changed for root files the game edited: compare ${done.diverged.map(template).join(', ')} and take what applies`); // prettier-ignore

@@ -1,7 +1,7 @@
 /**
  * @file What a game made from the engine holds, and the lock that pins it (PLAN.md WP 10.7, ADR-0024): which of the
  * engine's files a game gets and as whose (`RULES`, `ownerOf`, `plan`), the engine's identity (`engineIdentity`), its
- * package.json and package-lock.json from the engine's (`gamePackage`, `gameLockfile`, `npmClashes`), and
+ * package.json and package-lock.json from the engine's (`gamePackage`, `gameLockfile`, `npmClashes`, `npmLost`), and
  * engine-lock.json, the game's record of the engine commit and every engine file's SHA-256 (`lockFor`, `verifyGame`).
  * tools/game/new-game.mjs makes and updates games with it; `node x engine` and `x check`'s `engine` plugin read it in
  * a game. Plain JavaScript for any Node from 18, as new-game.mjs runs before anything is installed.
@@ -210,6 +210,23 @@ export function npmClashes(previous, engine, before = {}) {
   );
 }
 
+/**
+ * The entries of `previous` (a game's package.json) that `next` (what an update writes) drops, or sets back to the
+ * engine's where the game had edited one the engine gave (`before`, its lock's `npm`), as `field.key`: what an update
+ * names, since the engine's entries win.
+ */
+export function npmLost(previous, next, before = {}) {
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  return NPM_FIELDS.flatMap((field) =>
+    Object.entries(previous[field] ?? {})
+      .filter(([key, value]) => {
+        const [now, given] = [next[field]?.[key], before[field]?.[key]];
+        return now === undefined || (given !== undefined && !same(given, value) && !same(now, value));
+      })
+      .map(([key]) => `${field}.${key}`),
+  );
+}
+
 /** The engine's package-lock.json for a game named `name`: the same tree, the root renamed. */
 export function gameLockfile(engineLock, name) {
   const lock = structuredClone(engineLock);
@@ -282,7 +299,12 @@ export function verifyGame(target) {
   if (lock.format !== LOCK_FORMAT) {
     throw new Error(`${LOCK_FILE} says "${lock.format}", not ${LOCK_FORMAT}: move the game to a newer engine`);
   }
-  if (typeof lock.files !== 'object' || lock.files === null || typeof lock.engine?.commit !== 'string') {
+  if (
+    typeof lock.files !== 'object' ||
+    lock.files === null ||
+    Array.isArray(lock.files) ||
+    typeof lock.engine?.commit !== 'string'
+  ) {
     throw new Error(`${LOCK_FILE} lacks its engine or its files: ${restore}`);
   }
   const [changed, missing] = [[], []];
