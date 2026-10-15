@@ -19,6 +19,8 @@ and ADR-0016 (amendment 1's merge gate)
 4. **No branch protection** (PLAN.md §11.5): the workflow's `ci` check stays optional, and runs on pull requests no
    more.
 5. **The `game/*` branches** were deleted on GitHub by the owner, on purpose (noted in docs/HANDOFF.md).
+6. **Vercel is paused** by the owner from 2026-10-15 until they test. Until they say it is back on, agents skip the
+   look at a PR's Vercel status and ignore Vercel's statuses and errors (AGENTS.md, PLAN.md §8.9 and §11.5).
 
 ## Why
 The owner's direction of 2026-10-15: a ten-minute fix took about two and a half hours to merge, since the local gate

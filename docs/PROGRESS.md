@@ -28,7 +28,8 @@ ledger's row C1):
   WP 8.8), and the anim QA's foot slides on a stepping rule for stance locks (ADR-0009 amendment 8).
 - Not verifiable in this container: speakers and headphones, Firefox and Safari, touch on phones (ADR-0021),
   physical pads, real-GPU performance (Phase H, or the owner).
-- The owner's: the first-game trial (docs/HANDOFF.md).
+- The owner's: the first-game trial (docs/HANDOFF.md). Vercel is paused until the owner tests: ignore its statuses
+  and errors (ADR-0023).
 
 ## Open issues
 
