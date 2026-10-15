@@ -612,7 +612,7 @@ Raised by the camera factories, `makePose` and `placeCamera` (engine/gfx/cameras
 ### GFX_BAD_CAMERA_CODE
 
 - Message: `"{code}" is not a camera code: {problems}`
-- Fix: write cam=<view>[,<turn>,<zoom>[,<x>,<y>,<z>]] (views: iso, threequarter, topdown, brawler, side), cam=<azimuth>,<elevation>,<zoom>,<height>,<boost>[,<x>,<z>] (a custom view), either with ,persp at the end for a perspective lens, or cam3=orbit[,<azimuth>,<elevation>,<distance>[,<x>,<y>,<z>]], cam3=fly or cam3=fixed[,<x>,<y>,<z>,<yaw>,<pitch>[,<fov>]]; angles in degrees, lengths in metres
+- Fix: write cam=<view>[,<turn>,<zoom>[,<x>,<y>,<z>]] (views: iso, threequarter, topdown, brawler, side), cam=<azimuth>,<elevation>,<zoom>,<height>,<boost>[,<x>,<z>] (a custom view), either with ,persp at the end for a perspective lens, or cam3=orbit[,<azimuth>,<elevation>,<distance>[,<x>,<y>,<z>]], cam3=fly or cam3=fixed[,<x>,<y>,<z>,<yaw>,<pitch>[,<fov>]], or the follow cameras cam3=chase, cam3=first and cam3=rail (engine/gfx/cameras/chase.ts, first.ts and rail.ts give theirs); angles in degrees, lengths in metres
 - Registered in: [`engine/gfx/cameras/codes.ts` line 42](../engine/gfx/cameras/codes.ts)
 
 Raised by `parseCameraCode` (engine/gfx/cameras/codes.ts) for an empty part, a word where a number belongs, the wrong count of numbers, or a number out of its range (each range is named). Every problem is listed at once.
@@ -850,7 +850,7 @@ Raised by `bakeTexture` (engine/gfx/textures/bake.ts) and by `defineTexture` for
 ### GFX_UNKNOWN_CAMERA
 
 - Message: `{name} is not a camera{suggestion}`
-- Fix: use one of {names}: the classic views in cam=, the 3D cameras in cam3= (engine/gfx/cameras/codes.ts gives the grammar)
+- Fix: use one of {names}: the classic views in cam=, the 3D and follow cameras in cam3= (engine/gfx/cameras/codes.ts gives the grammar)
 - Registered in: [`engine/gfx/cameras/codes.ts` line 47](../engine/gfx/cameras/codes.ts)
 
 Raised by `parseCameraCode` and the camera factories (engine/gfx/cameras/) for a view or camera name they do not know, with the closest names.

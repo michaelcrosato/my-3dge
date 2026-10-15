@@ -2869,6 +2869,7 @@ For the agents who maintain the engine.
 - `CameraSpec` (type): A camera code as data.
 - `CameraType` (type): The kinds of camera: a classic view, an orbit round a target, a free fly camera, a fixed one.
 - `describeCamera` (function): `spec` in words, as the prototype's `camDesc`: `Isometric view, orthographic, zoom 1x, following`.
+- `FOLLOW_CAMERAS` (const): WP 3.9's cameras, which follow the hero and read their own codes (`readCameraCode`): chase, first person, the rail.
 - `formatCameraCode` (function): The canonical code of `spec`: `cam=…` or `cam3=…`, numbers rounded (0.001 m, 0.01°), defaults left out.
 - `FreeSpec` (interface): A fly or fixed camera's code as data: without a position it starts from the camera before it.
 - `OrbitSpec` (interface): An orbit camera's code as data.
@@ -2954,7 +2955,7 @@ For the agents who maintain the engine.
 - `createCamera` (function): The camera `code` names (a code, or its data from `readCameraCode`): `cam=iso`, `cam3=orbit,…`, `cam3=chase`.
 - `CreateCameraOptions` (interface): What `createCamera` may start from beyond the code.
 - `createCameraPair` (function): A perspective and an orthographic camera, made once (see the file comment).
-- `FOLLOW_CAMERAS` (const): WP 3.9's cameras, which follow the hero and read their own codes: chase, first person, the depth rail.
+- `FOLLOW_CAMERAS` (re-export): (undocumented)
 - `placeCamera` (function): Puts `pose` on `camera` for a picture `aspect` (width / height) wide, boost included (see the file comment).
 - `readCameraCode` (function): Reads any camera's code: `cam3=chase…`, `cam3=first…` and `cam3=rail…` by their modules, every other by `parseCameraCode`.
 

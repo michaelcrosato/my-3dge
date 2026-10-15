@@ -31,7 +31,7 @@ import { OrthographicCamera, PerspectiveCamera, WebGPUCoordinateSystem } from 't
 import { MathUtils } from '../../core/math';
 import { BoostedOrthographicCamera, BoostedPerspectiveCamera, boost } from './boost';
 import { createChaseCamera, parseChaseCode, type ChaseSpec } from './chase';
-import { parseCameraCode, type CameraSpec } from './codes';
+import { FOLLOW_CAMERAS, parseCameraCode, type CameraSpec } from './codes';
 import { createFirstCamera, parseFirstCode, type FirstSpec } from './first';
 import { createFixedCamera } from './fixed';
 import { createFlyCamera, type FlyBounds } from './fly';
@@ -40,8 +40,7 @@ import { poseTarget, rangeProblems, refuse, type Camera, type CameraPose } from 
 import { createViewCamera } from './presets';
 import { createRailCamera, parseRailCode, type RailSpec } from './rail';
 
-/** WP 3.9's cameras, which follow the hero and read their own codes: chase, first person, the depth rail. */
-export const FOLLOW_CAMERAS = Object.freeze(['chase', 'first', 'rail'] as const);
+export { FOLLOW_CAMERAS };
 
 /** The code data of any camera: codes.ts's, or a WP 3.9 camera's. */
 export type AnyCameraSpec = CameraSpec | ChaseSpec | FirstSpec | RailSpec;

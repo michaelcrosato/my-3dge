@@ -171,7 +171,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 
 ## 6. Rendering, input, tools and docs
 
-- [ ] 6.1 **Camera codes** (WP 3.9). engine/gfx/cameras/codes.ts knows 9 of the 12 camera names (:86, :186; pinned
+- [x] 6.1 **Camera codes** (WP 3.9). engine/gfx/cameras/codes.ts knows 9 of the 12 camera names (:86, :186; pinned
       by codes.test.ts:112), so a typo such as `cam3=chasee` gets an error naming none of chase, first and rail, and
       its fix texts (:44, :49) leave them out. Check all 12 (`FOLLOW_CAMERAS`, `didYouMean`; engine/gfx/cameras/
       place.ts:60-66 already reads them). Prove: a test of the typo's message; codes.test.ts moves to 12, with the
