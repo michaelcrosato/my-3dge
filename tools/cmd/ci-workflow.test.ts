@@ -3,8 +3,9 @@
  * YAML dependency), it runs on pull requests, pushes to main and by hand within 120 minutes; its gate is `node x ci
  * --local`, so its commands are `CI_STEPS` (tools/cmd/ci.ts) and nothing runs a step of its own; it checks out both
  * read-only sources at the commits scripts/setup.sh pins (tools/lib/source.ts `sourceSpecs`) into their `.cache/`
- * clones, with the job's read-only token (no secret) and without LFS; it takes Node from .nvmrc; and its Chromium is tools/deps.json's pin, the one
- * scripts/setup.sh downloads and tools/lib/browser.ts looks for. It always publishes the summary and out/.
+ * clones, with the job's read-only token (no secret) and without LFS; it takes Node from .nvmrc; and its Chromium is
+ * tools/deps.json's pin, the one scripts/setup.sh downloads and tools/lib/browser.ts looks for. It always publishes the
+ * summary (to the step summary and the job's log) and out/.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -90,8 +91,8 @@ describe('the GitHub Actions workflow', () => {
     );
   });
 
-  it('always writes the summary to the step summary and uploads out/', () => {
-    expect(runs()).toContain('if [ -f out/ci/summary.md ]; then cat out/ci/summary.md >> "$GITHUB_STEP_SUMMARY"; fi');
+  it("always writes the summary to the step summary and the job's log, and uploads out/", () => {
+    expect(runs()).toContain('if [ -f out/ci/summary.md ]; then tee -a "$GITHUB_STEP_SUMMARY" < out/ci/summary.md; fi');
     expect(text).toMatch(/- name: Summary\n {8}if: always\(\)/);
     expect(text).toMatch(
       /- name: Upload out\/\n {8}if: always\(\)\n {8}uses: actions\/upload-artifact@v4\n {8}with:\n {10}name: out\n {10}path: out\/\*\*/,

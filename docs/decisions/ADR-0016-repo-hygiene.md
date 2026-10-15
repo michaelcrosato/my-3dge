@@ -23,9 +23,11 @@ In my-3d2dge, 136 of 301 files were build output, and a version bump touched 10 
   read-only sources at their pinned commits (with the job's read-only token, no secret, LFS off), takes Node from
   `.nvmrc`, runs `scripts/setup.sh` (its Chrome for Testing is tools/deps.json's Chromium, 141.0.7390.37, checked by
   `--version`) and Playwright's system libraries, then `node x ci --local`: the same seven steps (`CI_STEPS`), T2 in
-  full on a fresh runner. It writes out/ci/summary.md to the step summary and uploads `out/**`, always; a new push to a
-  pull request cancels its run in progress, never one on main. The actions follow §6.10's rule: actions/checkout v5
-  (v5.0.0, 2025-08-11), actions/setup-node v6 (v6.0.0, 2025-10-14) and actions/upload-artifact v4 (v4.6.2, 2025-03-19).
+  full on a fresh runner. It writes out/ci/summary.md to the step summary and to the job's log (GitHub's API serves an
+  agent the log, not the step summary; added after the first run, whose failure only the summary named) and uploads
+  `out/**`, always; a new push to a pull request cancels its run in progress, never one on main. The actions follow
+  §6.10's rule: actions/checkout v5 (v5.0.0, 2025-08-11), actions/setup-node v6 (v6.0.0, 2025-10-14) and
+  actions/upload-artifact v4 (v4.6.2, 2025-03-19).
   The newer majors (upload-artifact v5 and v6, checkout v6) are not taken under rule 3: whether they work the same way
   only a run of theirs would show, so they wait for their dates (upload-artifact v5 on 2026-10-24, checkout v6 on
   2026-11-20).
