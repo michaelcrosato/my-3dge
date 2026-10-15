@@ -14,8 +14,12 @@
  * (`capturable`), refusing an object held in two places (`SIM_SHARED_DATA`), which a capture would bring back as two.
  * The keys inside a field's object value are a dictionary: the hash reads them sorted and text restores them sorted.
  *
+ * `feedData` feeds plain data to the hash as `Fnv64.value` would, checking as it goes (after G9: one walk where the
+ * hash took two, `notData`'s and `value`'s), and says whether it was all plain data; the caller names a refusal.
+ *
  * Invariants: nothing here changes an entity except `placeComponent`; every refusal names the entity, component and
- * field; paths are built only for a refusal, so the checks cost little on the hash's hot path.
+ * field; paths are built only for a refusal, so the checks cost little on the hash's hot path; `feedData` refuses
+ * exactly what `notData` refuses and feeds exactly the bytes of `Fnv64.value`.
  *
  * @example
  * import { createRegistry } from '../core/registry';
@@ -30,7 +34,7 @@
  * @see engine/sim/state.test.ts, engine/sim/restore.test.ts
  */
 import { codeError, defineCodes, didYouMean } from '../core/log';
-import { MAX_DEPTH } from '../core/hash';
+import { MAX_DEPTH, TAG, type Fnv64 } from '../core/hash';
 import { isPlainObject, show } from '../core/schema';
 import type { ComponentData, ComponentTable, EntityData } from './state';
 
@@ -102,6 +106,27 @@ export function notData(value: unknown, depth = 0): NotData | undefined {
     const bad = notData(value[key], depth + 1);
     if (bad) return { path: `.${key}${bad.path}`, what: bad.what };
   }
+}
+
+/**
+ * Feeds `value` into `h` as `h.value(value)` does when it is plain data (as `notData` checks it), and returns true;
+ * returns false at the first piece that is not, with `h` part-fed (the caller throws, naming it by `notData`).
+ */
+export function feedData(h: Fnv64, value: unknown, depth = 0): boolean {
+  if (value === null) h.byte(TAG.null);
+  else if (typeof value === 'number') h.byte(TAG.number).number(value);
+  else if (typeof value === 'string') h.byte(TAG.string).text(value);
+  else if (typeof value === 'boolean') h.byte(value ? TAG.true : TAG.false);
+  else if (typeof value !== 'object' || depth >= MAX_DEPTH) return false;
+  else if (Array.isArray(value)) {
+    h.byte(TAG.array).uint32(value.length);
+    for (let i = 0; i < value.length; i++) if (!feedData(h, value[i], depth + 1)) return false;
+  } else if (isPlainObject(value)) {
+    const keys = Object.keys(value).sort();
+    h.byte(TAG.object).uint32(keys.length);
+    for (const key of keys) if (!feedData(h.text(key), value[key], depth + 1)) return false;
+  } else return false;
+  return true;
 }
 
 /**

@@ -2611,6 +2611,7 @@ For the agents who maintain the engine.
 - `MAX_DEPTH` (const): How deep the canonical form nests before it is refused as a cycle.
 - `mix32` (function): murmur3's 32-bit finaliser: spreads every bit of an int over every bit of the unsigned result.
 - `serialize` (function): The canonical text of a value: JSON with object keys sorted, no spaces, numbers exact (the shortest round-trip form, `-0` kept), typed arrays and `toArray()` values as arrays.
+- `TAG` (const): Type tags of the canonical byte stream, one byte before each value (engine/sim/entities.ts `feedData` feeds them too).
 
 ### [`engine/core/log.ts`](../engine/core/log.ts)
 
@@ -4353,6 +4354,7 @@ For the agents who maintain the engine.
 - `componentNames` (function): The component names of an entity, in name order, after checking each is a declared kind (`SIM_UNKNOWN_COMPONENT`) holding a plain object (`SIM_NOT_DATA`).
 - `eachField` (function): Calls `visit(key, value)` for each field of the entity's component `name`, in declared order, after checking it holds exactly the declared `fields`, each defined (`SIM_UNDECLARED_FIELD`, `SIM_BAD_COMPONENT`); a `live` component must also hold them in declared order, while a stored one is read in that order whatever its key order.
 - `ENTITY_CODES` (const): The codes this module raises, with their fixes.
+- `feedData` (function): Feeds `value` into `h` as `h.value(value)` does when it is plain data (as `notData` checks it), and returns true; returns false at the first piece that is not, with `h` part-fed (the caller throws, naming it by `notData`).
 - `LiveEntity` (type): A live entity: its id fixed, its components writable.
 - `makeEntity` (function): A live entity with `id` (read-only) and the components of `data` (all but its id), in `data`'s order.
 - `notData` (function): Checks that `value` is plain data (null, booleans, numbers, strings, arrays and plain objects all the way down) and says where it is not; the path is built only for a refusal.

@@ -329,7 +329,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createEvents`, `EVENT_CODES`, `EventMap`, `Events`, `EventsOptions`, `EventsSnapshot`, `Listener`, `RegistrationInfo`, `Scope`, `TraceRecord`
   - Tests: [`engine/core/events.test.ts`](../engine/core/events.test.ts)
 - [`hash.ts`](../engine/core/hash.ts): The state hash (PLAN.md §6.5, I-05): 64-bit FNV-1a over the float64 bits of numbers, and the canonical form that turns structured state into one exact byte stream and one exact text.
-  - Exports: `Canonical`, `deserialize`, `Fnv64`, `HASH_CODES`, `hashNumbers`, `hashValue`, `MAX_DEPTH`, `mix32`, `serialize`
+  - Exports: `Canonical`, `deserialize`, `Fnv64`, `HASH_CODES`, `hashNumbers`, `hashValue`, `MAX_DEPTH`, `mix32`, `serialize`, `TAG`
   - Tests: [`engine/core/hash.test.ts`](../engine/core/hash.test.ts)
 - [`log.ts`](../engine/core/log.ts): Error and advice codes, warn-once advice and structured errors (PLAN.md WP 1.2, §6.8; doctrine: Agent-operable): every message the engine prints carries a stable code and names its fix in public-API terms.
   - Exports: `AdviceRecord`, `closest`, `codeError`, `codeInfo`, `CodeInfo`, `CodeText`, `CodeValues`, `createLog`, `defineCodes`, `didYouMean`, `EngineError`, `ErrorRecord`, `fill`, `listCodes`, `log`, `Log`, `LOG_CODES`, `LogConsole`, `LogOptions`
@@ -880,7 +880,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `damage`, `DamageEvent`, `DamageEvents`, `DamageTarget`, `Health`, `HEALTH`, `HEALTH_FIELDS`, `HitSpec`, `requestHitStop`, `takeHitStop`
   - Tests: [`engine/sim/damage.test.ts`](../engine/sim/damage.test.ts)
 - [`entities.ts`](../engine/sim/entities.ts): The shape of an entity's data (PLAN.md §6.5 items 4, 6 and 7, WP 1.4; doctrine: Reproducible): the rules the hash (engine/sim/state.ts), captures and restores (engine/sim/capture.ts) and the world (engine/sim/world.ts) share, so a restored entity is the live one, field for field and in the same order (ADR-0006 amendment 3).
-  - Exports: `capturable`, `componentNames`, `eachField`, `ENTITY_CODES`, `LiveEntity`, `makeEntity`, `notData`, `NotData`, `placeComponent`
+  - Exports: `capturable`, `componentNames`, `eachField`, `ENTITY_CODES`, `feedData`, `LiveEntity`, `makeEntity`, `notData`, `NotData`, `placeComponent`
 - [`entityTable.ts`](../engine/sim/entityTable.ts): The sim world's entity table (PLAN.md §6.5 item 4, WP 1.4): the live entities of engine/sim/world.ts `createWorld`, in id order, with an id → entity map for lookups.
   - Exports: `createEntityTable`, `EntityTable`
   - Tests: [`engine/sim/world.test.ts`](../engine/sim/world.test.ts)

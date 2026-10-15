@@ -7,7 +7,9 @@
  * - `Fnv64` is standard FNV-1a 64 (offset basis 0xcbf29ce484222325, prime 0x100000001b3), byte by byte, computed in two
  *   32-bit lanes because JavaScript has no fast 64-bit integers. A number feeds its 8 float64 bytes, little-endian,
  *   so `0` and `-0` differ and every last bit counts; every NaN feeds the one canonical NaN. Strings feed their UTF-8
- *   bytes, so `new Fnv64().string('a').hex()` is the published test vector `'af63dc4c8601ec8c'`.
+ *   bytes, so `new Fnv64().string('a').hex()` is the published test vector `'af63dc4c8601ec8c'`. `text` feeds a
+ *   string behind its byte count, as `value` feeds keys and strings; a short string's bytes are encoded once and kept
+ *   (after G9: a hash of the same state again encodes nothing), which never changes what is fed.
  * - The canonical model: `null`, booleans, numbers, strings, arrays, typed arrays (as arrays of their numbers),
  *   plain objects (keys sorted, so insertion order never matters) and values with `toArray()` (three.js's math
  *   classes: a `Vector3` counts as `[x, y, z]`). `undefined`, functions, symbols, bigints, Maps, other class instances
@@ -59,8 +61,28 @@ const TWO_32 = 4294967296;
 const scratch = new DataView(new ArrayBuffer(8));
 const utf8 = new TextEncoder();
 
-/** Type tags of the canonical byte stream, one byte before each value. */
-const TAG = { null: 0, false: 1, true: 2, number: 3, string: 4, array: 5, object: 6 } as const;
+/** Type tags of the canonical byte stream, one byte before each value (engine/sim/entities.ts `feedData` feeds them too). */
+export const TAG = Object.freeze({ null: 0, false: 1, true: 2, number: 3, string: 4, array: 5, object: 6 } as const);
+
+/** The strings `text` keeps the bytes of: at most this long, and this many before the store starts again. */
+const KEPT = { length: 256, count: 65_536 } as const;
+/** Each kept string's UTF-8 bytes behind their count (4 bytes, little-endian): what `text` feeds. */
+const kept = new Map<string, Uint8Array>();
+
+/** `s`'s UTF-8 byte count (4 bytes, little-endian) and bytes, kept when it is short (see `KEPT`). */
+function textBytes(s: string): Uint8Array {
+  let record = kept.get(s);
+  if (record) return record;
+  const bytes = utf8.encode(s);
+  record = new Uint8Array(4 + bytes.length);
+  new DataView(record.buffer).setUint32(0, bytes.length, true);
+  record.set(bytes, 4);
+  if (s.length <= KEPT.length) {
+    if (kept.size >= KEPT.count) kept.clear();
+    kept.set(s, record);
+  }
+  return record;
+}
 
 /** Where a piece sits in the value: object keys and array indices from the top. */
 type Trail = (string | number)[];
@@ -194,28 +216,27 @@ export class Fnv64 {
     return this.bytes(utf8.encode(s));
   }
 
+  /** Feeds a string's UTF-8 byte count (4 bytes, little-endian), then its bytes: a key, or a string after its tag. */
+  text(s: string): this {
+    return this.bytes(textBytes(s));
+  }
+
+  /** `value`'s visitor, made once per hasher. */
+  #visit: Visitor | undefined;
+
   /** Feeds any canonical value, type-tagged and length-prefixed, so `[1, [2]]` and `[[1], 2]` differ. */
   value(value: Canonical): this {
-    /** A string as its tag (none for a key), its UTF-8 byte count, then its bytes. */
-    const prefixed = (s: string, tag?: number) => {
-      const bytes = utf8.encode(s);
-      if (tag !== undefined) this.byte(tag);
-      this.uint32(bytes.length).bytes(bytes);
-    };
-    walk(
-      value,
-      {
-        scalar: (v) => {
-          if (v === null || typeof v === 'boolean') this.byte(v === null ? TAG.null : v ? TAG.true : TAG.false);
-          else if (typeof v === 'number') this.byte(TAG.number).number(v);
-          else prefixed(v, TAG.string);
-        },
-        open: (kind, length) => this.byte(TAG[kind]).uint32(length),
-        key: (key) => prefixed(key),
-        close: () => {},
+    this.#visit ??= {
+      scalar: (v) => {
+        if (v === null || typeof v === 'boolean') this.byte(v === null ? TAG.null : v ? TAG.true : TAG.false);
+        else if (typeof v === 'number') this.byte(TAG.number).number(v);
+        else this.byte(TAG.string).text(v);
       },
-      [],
-    );
+      open: (kind, length) => this.byte(TAG[kind]).uint32(length),
+      key: (key) => this.text(key),
+      close: () => {},
+    };
+    walk(value, this.#visit, []);
     return this;
   }
 

@@ -507,7 +507,7 @@ Raised by `get` and `describe` (engine/core/registry.ts) for an id the kind lack
 
 - Message: `{path} is {what}, which the canonical form cannot hold`
 - Fix: keep hashed and captured state to null, booleans, finite numbers, strings, arrays, typed arrays, plain objects and three.js math classes; store an id instead of an object reference
-- Registered in: [`engine/core/hash.ts` line 32](../engine/core/hash.ts)
+- Registered in: [`engine/core/hash.ts` line 34](../engine/core/hash.ts)
 
 Raised by `Fnv64.value`, `hashValue` and `serialize` (engine/core/hash.ts) for `undefined`, functions, symbols, bigints, Maps, Sets, class instances without `toArray()`, nesting deeper than 100 levels (usually a cycle), and, in `serialize` only, NaN or ±Infinity. Nothing is skipped silently, so two states that differ always hash differently.
 
@@ -1047,7 +1047,7 @@ Raised by `restore` (engine/sim/capture.ts, engine/sim/world.ts) before anything
 
 - Message: `entity {id}{problem}`
 - Fix: give components with spawn() or w.add(id, '<name>', values), which keep them in name order with every declared field in declared order, then write fields one by one (e.mods.z = 1); never delete a field or assign undefined, and take a component away with w.remove: a restore rebuilds entities in that order, so code iterating one sees the same order
-- Registered in: [`engine/sim/entities.ts` line 44](../engine/sim/entities.ts)
+- Registered in: [`engine/sim/entities.ts` line 48](../engine/sim/entities.ts)
 
 ### SIM_BAD_REPLAY
 
@@ -1117,7 +1117,7 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `{path} is {what}; component fields hold plain data`
 - Fix: store numbers, strings, booleans, null, arrays or plain objects (a direction as x, y, z numbers or an [x, y, z] list) and build the Vector3 or typed array inside the system that uses it; hold another entity by its id, never the object
-- Registered in: [`engine/sim/entities.ts` line 39](../engine/sim/entities.ts)
+- Registered in: [`engine/sim/entities.ts` line 43](../engine/sim/entities.ts)
 
 Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities.ts, engine/sim/state.ts, engine/sim/capture.ts) for a component field holding a class instance (a three.js `Vector3`, a `Map`), a typed array, a function, `undefined` or a cycle: captures copy plain data and text restores it, so such a value would come back changed or shared (ADR-0006 amendment 3). `defineComponent` refuses such a default as `CORE_BAD_SPEC`.
 
@@ -1131,7 +1131,7 @@ Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities
 
 - Message: `{path} is the same object as {other}`
 - Fix: give each place its own data: copy it ({ ...values }, [...list]) or hold the other entity by its id and read it through w.get(id); a capture copies each place separately, so a shared object would come back as two
-- Registered in: [`engine/sim/entities.ts` line 48](../engine/sim/entities.ts)
+- Registered in: [`engine/sim/entities.ts` line 52](../engine/sim/entities.ts)
 
 ### SIM_UNDECLARED_FIELD
 

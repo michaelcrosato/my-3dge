@@ -36,12 +36,12 @@
  * @see engine/sim/state.test.ts
  */
 import { codeError, defineCodes, didYouMean } from '../core/log';
-import { Fnv64, type Canonical } from '../core/hash';
+import { Fnv64, TAG, type Canonical } from '../core/hash';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
 import { checkField, isPlainObject, parse, show, type EntryOf, type Schema } from '../core/schema';
 import type { SettingValue } from '../core/settings';
 import type { TimersState } from '../core/timers';
-import { componentNames, eachField, notData } from './entities';
+import { componentNames, eachField, feedData, notData } from './entities';
 
 /** The codes this module raises, with their fixes. */
 export const STATE_CODES = defineCodes('sim', {
@@ -258,44 +258,20 @@ export function componentTable(registry: Registry = sharedRegistry): ComponentTa
   };
 }
 
-/** The canonical tag `Fnv64.value` feeds before a number (engine/core/hash.ts), for the number fast path. */
-const NUMBER_TAG = 3;
-/** Each component name as the bytes `Fnv64.value(name)` feeds (tag 4, UTF-8 length, UTF-8), made once per name. */
-const nameBytes = new Map<string, Uint8Array>();
-
-/** Feeds `name` exactly as `h.value(name)` would, from its recorded bytes. */
-function feedName(h: Fnv64, name: string): void {
-  let record = nameBytes.get(name);
-  if (!record) {
-    const utf8 = new TextEncoder().encode(name);
-    record = new Uint8Array(5 + utf8.length);
-    record[0] = 4;
-    new DataView(record.buffer).setUint32(1, utf8.length, true);
-    record.set(utf8, 5);
-    nameBytes.set(name, record);
-  }
-  h.bytes(record);
-}
-
 /** Feeds one entity: its id, then its components in name order, each with its declared fields in order. */
 function feedEntity(h: Fnv64, entity: EntityData, table: ComponentTable, live: boolean): void {
   const names = componentNames(entity, table, live);
   h.number(entity.id).uint32(names.length);
   for (const name of names) {
-    feedName(h, name);
+    h.byte(TAG.string).text(name); // the bytes h.value(name) feeds
     eachField(
       entity,
       name,
       table.fields(name),
       (key, value) => {
-        if (typeof value === 'number') {
-          h.byte(NUMBER_TAG).number(value); // the bytes h.value(value) feeds, without its walk
-          return;
-        }
-        const bad = notData(value);
-        if (bad)
-          throw codeError('SIM_NOT_DATA', { path: `entity ${entity.id}'s ${name}.${key}${bad.path}`, what: bad.what });
-        h.value(value as Canonical);
+        if (feedData(h, value)) return; // the bytes h.value(value) feeds, checked as plain data on the way
+        const bad = notData(value) ?? { path: '', what: 'not plain data' };
+        throw codeError('SIM_NOT_DATA', { path: `entity ${entity.id}'s ${name}.${key}${bad.path}`, what: bad.what });
       },
       live,
     );

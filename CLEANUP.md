@@ -210,7 +210,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 
 ## 7. Sim, audio and Chromium coverage
 
-- [ ] 7.1 **The state hash's slow path** (WPs 5.1, 5.7: 326 ms a hash at 5,000 walkers).
+- [x] 7.1 **The state hash's slow path** (WPs 5.1, 5.7: 326 ms a hash at 5,000 walkers).
   - Now: only numbers take the fast path (engine/sim/state.ts:291-293). Every other value goes through `notData`
     (engine/sim/entities.ts:89-105) and `Fnv64.value` (engine/core/hash.ts:198-220), which allocates closures per call,
     UTF-8-encodes every key and string and sorts every object's keys. At crowd-1000 the slow path carries 34,100 keys
