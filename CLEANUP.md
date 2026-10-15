@@ -283,10 +283,10 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 - [x] 9.1 **Branches:** delete `box-menu` (its menu is on main, newer, through PR #13); merge `origin/main` into
       `integration` and push it (docs/HANDOFF.md: it mirrors main with every lane's commit). Leave the owner's
       `game/cold-relay-20261014` and `game/silent-relay-20261014` alone.
-- [ ] 9.2 **PLAN.md §14:** a row for this cleanup, like the gate-fix rows; no row still carries an open clause this
+- [x] 9.2 **PLAN.md §14:** a row for this cleanup, like the gate-fix rows; no row still carries an open clause this
       list closed. The rows of WPs 6.3 and 6.4 are stale too: hit-stop in a live page and `text` particles were closed
       by WPs 6.7 and 6.5.
-- [ ] 9.3 **docs/PROGRESS.md**, rewritten (at most 40 lines, `x docs --check`): where things stand after the cleanup,
+- [x] 9.3 **docs/PROGRESS.md**, rewritten (at most 40 lines, `x docs --check`): where things stand after the cleanup,
       what waits (below), and any "Owner:" issue this list left. Today its line 32 runs two bullets together and says
       T2 runs in full while over its budget (while over, `selectT2` picks specs by what changed); its line 14 cites
       the old fight golden (7.2); and the G4 rewrite dropped three issues that were still open (6.2, 6.3, 6.4).
