@@ -11,14 +11,16 @@
  * override material, and the clear colour transparent black; the scene itself is never touched. `decodeIds` turns
  * the RGBA readback into the result, `visible: [{ id, name, px, share, bbox, centre }]` (largest first) and
  * `unseen: [{ id, name, reason }]` (`hidden`, `outside`, or `covered`: in view, 0 px), so every object is reported.
- * `marksOf` numbers what the pass sees and `drawMarks` draws the numbers onto a frame, for `x shot --marks`
- * (shardfall's `see`, `shardfall:crates/pav_tools/src/agent_tools.rs:26-224`, marking only what is seen).
+ * engine/gfx/idmarks.ts numbers what the pass sees for `x shot --marks` (split from here after G9).
  *
  * The ID material is a `MeshBasicNodeMaterial` whose `fragmentNode` is the object's colour, a per-object uniform set
  * through `onObjectUpdate`, so lighting, fog, tone mapping and colour space never touch it; it is drawn double-sided
  * and discards the faces the object's own material culls, and three.js gives it the object's `positionNode`,
  * `transparent` and alpha test, so displaced, instanced and skinned geometry covers what it covers in the frame.
  * Colours are `idColour(n)`, an odd multiple of `n` modulo 2^24: distinct, never black, and far apart for neighbours.
+ * An instanced mesh takes one `n` per instance, the shader adding `instanceIndex` (after G9, gate G2's note): its
+ * entry still sums its instances' pixels, and says how many of them it sees (`instances`), so a crowd batch is no
+ * longer one object.
  *
  * Invariants: GPU results never reach the sim; the pass changes nothing the frame draws (the stand-in scene and the
  * clear colour are put back); a pixel either is empty space (transparent black), belongs to exactly one object, or
@@ -39,7 +41,6 @@ import {
   Matrix4,
   MeshBasicNodeMaterial,
   Scene,
-  Vector3,
   type Camera,
   type InstancedMesh,
   type Material,
@@ -48,7 +49,7 @@ import {
   type Sprite,
   type WebGPURenderer,
 } from 'three/webgpu';
-import { Discard, Fn, frontFacing, uniform, vec4 } from 'three/tsl';
+import { Discard, float, Fn, frontFacing, instanceIndex, uint, uniform, vec4 } from 'three/tsl';
 import { STRAY } from './thumbnail';
 
 /** Why a drawable object covers no pixel. */
@@ -60,8 +61,12 @@ export interface Drawable {
   /** three.js's object id (unique in the page). */
   id: number;
   name: string;
-  /** The ID colour, `0xrrggbb`. */
+  /** The ID colour, `0xrrggbb`: `idColour(n)`, the first of its instances' for an instanced mesh. */
   colour: number;
+  /** Its `n` (1-based): an instanced mesh's instance `i` is drawn in `idColour(n + i)` (after G9). */
+  n: number;
+  /** An instanced mesh's instances drawn (its `count`); absent for any other object. */
+  instances?: number;
   /** The sim entity it stands for, if any. */
   entity?: number;
   /** The protagonist's name when this object is (part of) the protagonist. */
@@ -73,8 +78,10 @@ export interface Drawable {
 /** The drawables of a scene, with their colours. */
 export interface IdTable {
   drawables: Drawable[];
-  /** ID colour → index in `drawables`. */
+  /** ID colour → index in `drawables` (each instance's colour → its mesh's). */
   byColour: Map<number, number>;
+  /** An instance's ID colour → its index in its mesh. */
+  instanceOf: Map<number, number>;
 }
 
 /** One visible object: its pixels, share of the frame, bounding box `[x0, y0, x1, y1]` (inclusive, from the top left). */
@@ -88,6 +95,8 @@ export interface IdEntry {
   centre: [number, number];
   entity?: number;
   protagonist?: boolean;
+  /** For an instanced mesh: how many of its instances cover a pixel, each in its own colour (after G9). */
+  instances?: number;
 }
 
 /** One object drawn in no pixel, and why. */
@@ -117,19 +126,12 @@ export interface IdPass {
   protagonist: { name: string; px: number } | null;
 }
 
-/** A numbered mark on what the ID pass sees, for the legend. */
-export interface Mark {
-  n: number;
-  id: number;
-  name: string;
-  px: number;
-  /** Where the mark is drawn: the object's `centre`. */
-  at: [number, number];
-}
+/** The odd step between ID colours: `idColour(n)` is `n` times it modulo 2^24. */
+const ID_STEP = 0x5bd1e9;
 
 /** The ID colour of the `n`-th drawable (1-based): an odd multiple modulo 2^24, so distinct and never 0. */
 export function idColour(n: number): number {
-  return Math.imul(n, 0x5bd1e9) & 0xffffff;
+  return Math.imul(n, ID_STEP) & 0xffffff;
 }
 
 type Drawn = Object3D & { isMesh?: boolean; isLine?: boolean; isPoints?: boolean; isSprite?: boolean };
@@ -153,6 +155,8 @@ export function listDrawables(scene: Object3D, camera: Camera, options: { protag
   );
   const drawables: Drawable[] = [];
   const byColour = new Map<number, number>();
+  const instanceOf = new Map<number, number>();
+  let next = 1;
   scene.traverse((node) => {
     const object = node as Drawn;
     if (!(object.isMesh || object.isLine || object.isPoints || object.isSprite)) return;
@@ -166,14 +170,16 @@ export function listDrawables(scene: Object3D, camera: Camera, options: { protag
     const inView = object.isSprite
       ? frustum.intersectsSprite(object as unknown as Sprite)
       : frustum.intersectsObject(object as unknown as Mesh);
-    const colour = idColour(drawables.length + 1);
-    const drawable: Drawable = {
-      object,
-      id: object.id,
-      name,
-      colour,
-      reason: hidden ? 'hidden' : inView ? null : 'outside',
-    };
+    const [n, colour] = [next, idColour(next)];
+    const drawable: Drawable = { object, id: object.id, name, colour, n, reason: hidden ? 'hidden' : inView ? null : 'outside' }; // prettier-ignore
+    if (instanced.isInstancedMesh === true) {
+      drawable.instances = instanced.count;
+      for (let i = 0; i < instanced.count; i++) {
+        byColour.set(idColour(n + i), drawables.length);
+        instanceOf.set(idColour(n + i), i);
+      }
+    }
+    next += Math.max(1, drawable.instances ?? 1);
     const entity = lookUp(object, (up) => (typeof up.userData.entity === 'number' ? up.userData.entity : undefined));
     if (entity !== undefined) drawable.entity = entity;
     const protagonist = lookUp(object, (up) =>
@@ -185,7 +191,7 @@ export function listDrawables(scene: Object3D, camera: Camera, options: { protag
     byColour.set(colour, drawables.length);
     drawables.push(drawable);
   });
-  return { drawables, byColour };
+  return { drawables, byColour, instanceOf };
 }
 
 /** A renderer's ID material, its stand-in scene, and the table the material reads while a pass runs. */
@@ -206,11 +212,11 @@ function kitOf(renderer: WebGPURenderer): IdKit {
     const material = (object as Mesh).material as Material | Material[] | undefined;
     return (Array.isArray(material) ? material[0] : material)?.side ?? FrontSide;
   };
-  const colour = uniform(new Vector3());
-  colour.onObjectUpdate(({ object }) => {
-    const value = object ? (current.get(object)?.colour ?? 0) : 0;
-    colour.value.set(((value >> 16) & 255) / 255, ((value >> 8) & 255) / 255, (value & 255) / 255);
-  });
+  // `idColour(n + instance)` in the shader: the object's n, plus the instance's index on an instanced mesh
+  const base = uniform(0, 'uint');
+  base.onObjectUpdate(({ object }) => (base.value = object ? (current.get(object)?.n ?? 0) : 0));
+  const instanced = uniform(0, 'uint');
+  instanced.onObjectUpdate(({ object }) => (instanced.value = (object as InstancedMesh | null)?.isInstancedMesh ? 1 : 0)); // prettier-ignore
   const side = uniform(FrontSide as number);
   side.onObjectUpdate(({ object }) => void (side.value = object ? sideOf(object) : FrontSide));
   const material = new MeshBasicNodeMaterial({ side: DoubleSide, fog: false });
@@ -220,7 +226,9 @@ function kitOf(renderer: WebGPURenderer): IdKit {
   material.fragmentNode = Fn(() => {
     Discard(side.equal(FrontSide).and(frontFacing.not()));
     Discard(side.equal(BackSide).and(frontFacing));
-    return vec4(colour, 1);
+    const colour = base.add(instanceIndex.mul(instanced)).mul(uint(ID_STEP)).bitAnd(uint(0xffffff));
+    const channel = (shift: number) => float(colour.shiftRight(uint(shift)).bitAnd(uint(255))).div(255);
+    return vec4(channel(16), channel(8), channel(0), 1);
   })();
   const scene = new Scene();
   scene.name = 'IdPass.scene';
@@ -268,8 +276,9 @@ export function decodeIds(
   height: number,
   table: IdTable,
 ): { pass: IdPass; pixels: Uint32Array } {
-  const { drawables, byColour } = table;
+  const { drawables, byColour, instanceOf } = table;
   const count = drawables.length;
+  const seen = drawables.map((d) => (d.instances === undefined ? null : new Set<number>()));
   const total = width * height;
   const owner = new Uint32Array(total);
   const px = new Uint32Array(count);
@@ -291,6 +300,7 @@ export function decodeIds(
       continue;
     }
     owner[p] = index + 1;
+    seen[index]?.add(instanceOf.get(key) ?? 0);
     const [x, y] = [p % width, Math.floor(p / width)];
     sum[index * 2] += x;
     sum[index * 2 + 1] += y;
@@ -324,6 +334,7 @@ export function decodeIds(
     bbox: [box[i * 4], box[i * 4 + 1], box[i * 4 + 2], box[i * 4 + 3]],
     centre: [centre[i * 2], centre[i * 2 + 1]],
     ...tags(drawables[i]),
+    ...(seen[i] ? { instances: seen[i].size } : {}),
   }));
   const unseen: IdUnseen[] = drawables
     .map((d, i) => ({ d, i }))
@@ -340,59 +351,4 @@ export function decodeIds(
       }
     : null;
   return { pass: { width, height, objects: count, visible, unseen, empty, stray, protagonist }, pixels };
-}
-
-/** Numbers the visible objects, largest first: at most `max` (40), each covering at least `minPx` (4) pixels. */
-export function marksOf(pass: IdPass, options: { max?: number; minPx?: number } = {}): Mark[] {
-  const { max = 40, minPx = 4 } = options;
-  return pass.visible
-    .filter((entry) => entry.px >= minPx)
-    .slice(0, max)
-    .map((entry, i) => ({ n: i + 1, id: entry.id, name: entry.name, px: entry.px, at: entry.centre }));
-}
-
-/** The digits 0–9 in a 3 × 5 pixel font, each 15 bits row by row, separated by spaces. */
-const DIGITS =
-  '111101101101111 010110010010111 111001111100111 111001111001111 101101111001001 111100111001111 111100111101111 111001001001001 111101111101111 111101111001111'.split(
-    ' ',
-  );
-const MARK_COLOUR = [255, 230, 120];
-const INK = [10, 10, 14];
-
-/**
- * Draws each mark onto a frame of RGBA bytes (top row first): a ring around `at` and the number in a dark box above
- * it (below it at the top edge), at 2 × scale. Pixels outside the frame are skipped.
- */
-export function drawMarks(rgba: Uint8Array, width: number, height: number, marks: readonly Mark[]): void {
-  const put = (x: number, y: number, colour: number[], alpha = 1) => {
-    if (x < 0 || y < 0 || x >= width || y >= height) return;
-    const i = (Math.round(y) * width + Math.round(x)) * 4;
-    for (let c = 0; c < 3; c++) rgba[i + c] = Math.round(rgba[i + c] * (1 - alpha) + colour[c] * alpha);
-    rgba[i + 3] = 255;
-  };
-  for (const { n, at } of marks) {
-    const [cx, cy] = at;
-    for (let dy = -9; dy <= 9; dy++) {
-      for (let dx = -9; dx <= 9; dx++) {
-        const d = Math.hypot(dx, dy);
-        if (d >= 5.5 && d <= 7.5) put(cx + dx, cy + dy, MARK_COLOUR);
-        else if (d > 7.5 && d <= 8.5) put(cx + dx, cy + dy, INK, 0.7);
-      }
-    }
-    const text = String(n);
-    const [scale, glyph] = [2, 8];
-    const textWidth = text.length * glyph - 2;
-    const left = Math.round(cx - textWidth / 2);
-    const top = cy - 12 - 5 * scale >= 2 ? cy - 12 - 5 * scale : cy + 12;
-    for (let y = top - 2; y < top + 5 * scale + 2; y++)
-      for (let x = left - 2; x < left + textWidth + 2; x++) put(x, y, INK, 0.8);
-    [...text].forEach((digit, k) => {
-      const bits = DIGITS[Number(digit)];
-      for (let bit = 0; bit < 15; bit++) {
-        if (bits[bit] !== '1') continue;
-        const [gx, gy] = [left + k * glyph + (bit % 3) * scale, top + Math.floor(bit / 3) * scale];
-        for (let sy = 0; sy < scale; sy++) for (let sx = 0; sx < scale; sx++) put(gx + sx, gy + sy, MARK_COLOUR);
-      }
-    });
-  }
 }

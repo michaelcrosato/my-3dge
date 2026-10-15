@@ -3,7 +3,8 @@
  * (tests/pages/instancing.html): a 2,000-instance batch on two pages of 1,024 slots, seen from above so each instance
  * covers exactly 36 pixels of a 400 × 320 shot. The ID pass's counts follow the moved instances: each page covers 36
  * pixels per instance in view, the counts drop by 36 for each instance moved out of view, its box shrinks to the
- * rows still there, and both come back when the instances return. No shader is built per page: growing the batch to
+ * rows still there, and both come back when the instances return; each instance has an ID colour of its own, so each
+ * page counts the instances it shows (after G9, gate G2's note). No shader is built per page: growing the batch to
  * five pages after the warm-up builds no pipeline (the device's counter, engine/gfx/pipelines.ts), the later pages
  * show their instance colours and per-instance tints (set before their first render: magenta times yellow draws red,
  * which neither factor alone gives), while a plain InstancedMesh of 1,000 slots or fewer builds pipelines of its own
@@ -56,12 +57,14 @@ test('a 2,000-instance batch updates: the ID-pass counts follow the moved instan
   let seen = await ids(page);
   expect(seen.byName.get('crowd/page0')).toMatchObject({ px: 1024 * PX, bbox: [1, 1, 398, 166] });
   expect(seen.byName.get('crowd/page1')).toMatchObject({ px: 976 * PX, bbox: [1, 161, 398, 318] });
+  // each instance in its own ID colour (after G9): the pages count the instances they show
+  expect([seen.byName.get('crowd/page0')?.instances, seen.byName.get('crowd/page1')?.instances]).toEqual([1024, 976]);
 
   // The first 500 slots (rows 0–9, page 0) leave the view: page 0 loses 500 × 36 pixels and its top 10 rows.
   const moved = await place(page, { count: 2000, away: [0, 500] });
   expect(moved.uploadedPages, 'only the page that changed uploads').toBe(1);
   seen = await ids(page);
-  expect(seen.byName.get('crowd/page0')).toMatchObject({ px: 524 * PX, bbox: [1, 81, 398, 166] });
+  expect(seen.byName.get('crowd/page0')).toMatchObject({ px: 524 * PX, bbox: [1, 81, 398, 166], instances: 524 });
   expect(seen.byName.get('crowd/page1')?.px).toBe(976 * PX);
 
   // The last 500 slots (page 1's) leave instead: page 0 is whole again, page 1 keeps 476 instances. The frame drawn
@@ -76,7 +79,7 @@ test('a 2,000-instance batch updates: the ID-pass counts follow the moved instan
   ]);
   seen = await ids(page);
   expect(seen.byName.get('crowd/page0')?.px).toBe(1024 * PX);
-  expect(seen.byName.get('crowd/page1')).toMatchObject({ px: 476 * PX, bbox: [1, 161, 398, 238] });
+  expect(seen.byName.get('crowd/page1')).toMatchObject({ px: 476 * PX, bbox: [1, 161, 398, 238], instances: 476 });
 
   // Fewer instances: page 1 empties and leaves the ID pass; all back: both pages as at first.
   await place(page, { count: 1000 });

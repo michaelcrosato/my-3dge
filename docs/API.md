@@ -3208,19 +3208,22 @@ For the agents who maintain the engine.
 - `Vec3` (type): A point or direction in metres: `[x, y, z]`.
 - `Writer` (interface): What the builders write with.
 
+### [`engine/gfx/idmarks.ts`](../engine/gfx/idmarks.ts)
+
+- `drawMarks` (function): Draws each mark onto a frame of RGBA bytes (top row first): a ring around `at` and the number in a dark box above it (below it at the top edge), at 2 × scale.
+- `Mark` (interface): A numbered mark on what the ID pass sees, for the legend.
+- `marksOf` (function): Numbers the visible objects, largest first: at most `max` (40), each covering at least `minPx` (4) pixels.
+
 ### [`engine/gfx/idpass.ts`](../engine/gfx/idpass.ts)
 
 - `decodeIds` (function): Decodes an ID-pass readback (RGBA, top row first) into the result, and each pixel's visible object (1-based).
 - `Drawable` (interface): A drawable object of the scene, as the ID pass knows it.
-- `drawMarks` (function): Draws each mark onto a frame of RGBA bytes (top row first): a ring around `at` and the number in a dark box above it (below it at the top edge), at 2 × scale.
 - `idColour` (function): The ID colour of the `n`-th drawable (1-based): an odd multiple modulo 2^24, so distinct and never 0.
 - `IdEntry` (interface): One visible object: its pixels, share of the frame, bounding box `[x0, y0, x1, y1]` (inclusive, from the top left).
 - `IdPass` (interface): The ID pass's result: every drawable object, visible or not.
 - `IdTable` (interface): The drawables of a scene, with their colours.
 - `IdUnseen` (interface): One object drawn in no pixel, and why.
 - `listDrawables` (function): Lists the scene's drawable objects with their colours, and why the hidden and out-of-view ones cannot be seen.
-- `Mark` (interface): A numbered mark on what the ID pass sees, for the legend.
-- `marksOf` (function): Numbers the visible objects, largest first: at most `max` (40), each covering at least `minPx` (4) pixels.
 - `UnseenReason` (type): Why a drawable object covers no pixel.
 - `withIdScene` (function): Runs `draw(root)` with `root` a stand-in for `scene` that draws the ID pass: it shares the scene's children, has no background, and overrides every material with the ID material reading `table`; the clear colour is transparent black meanwhile.
 

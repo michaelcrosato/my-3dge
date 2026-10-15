@@ -635,7 +635,7 @@ Raised by the geometry kit (engine/gfx/geometry/) when a builder gets sizes it c
 
 - Message: `a shot must be at least 1 × 1 whole pixels, not {width} × {height}`
 - Fix: pass size: { width, height } in whole pixels of at least 1, or leave it out to shoot at the drawing buffer's size
-- Registered in: [`engine/gfx/shot.ts` line 49](../engine/gfx/shot.ts)
+- Registered in: [`engine/gfx/shot.ts` line 41](../engine/gfx/shot.ts)
 
 ### GFX_COLD_PIPELINE
 

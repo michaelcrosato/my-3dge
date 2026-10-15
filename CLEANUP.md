@@ -176,7 +176,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
       its fix texts (:44, :49) leave them out. Check all 12 (`FOLLOW_CAMERAS`, `didYouMean`; engine/gfx/cameras/
       place.ts:60-66 already reads them). Prove: a test of the typo's message; codes.test.ts moves to 12, with the
       reason.
-- [ ] 6.2 **The ID pass sees an InstancedMesh as one object** (gate G2): engine/gfx/idpass.ts gives each object one
+- [x] 6.2 **The ID pass sees an InstancedMesh as one object** (gate G2): engine/gfx/idpass.ts gives each object one
       colour (:169, :210), so a crowd batch counts once. Give each instance its own id (colour by `instanceIndex` in
       TSL). idpass.ts is at 398 lines. Prove: engine/gfx/idpass.test.ts; re-record any ID-pass count baseline with
       the reason.

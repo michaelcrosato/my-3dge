@@ -1,12 +1,13 @@
 /**
  * @file Unit tests for engine/gfx/idpass.ts in Node: the ID colours (distinct, never black), the drawables a scene
  * lists with their names, entities, protagonist and the reasons known before drawing (hidden, outside), decoding a
- * readback into visible and unseen objects (pixels, box, centre, stray, empty, the protagonist's pixels), the marks,
- * and drawing them. The GPU half is proven by tests/e2e/shot.spec.ts.
+ * readback into visible and unseen objects (pixels, box, centre, stray, empty, the protagonist's pixels), an
+ * instanced mesh's instances each in its own colour and counted (after G9), the marks, and drawing them. The GPU half is proven by tests/e2e/shot.spec.ts.
  */
 import { BoxGeometry, Group, InstancedMesh, Mesh, MeshBasicNodeMaterial, PerspectiveCamera, Scene } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
-import { decodeIds, drawMarks, idColour, listDrawables, marksOf, type IdTable } from './idpass';
+import { drawMarks, marksOf } from './idmarks';
+import { decodeIds, idColour, listDrawables, type IdTable } from './idpass';
 import { STRAY } from './thumbnail';
 
 /** A scene with one object for each case, seen by a camera at z = 5 looking down -Z. */
@@ -125,6 +126,36 @@ describe('decodeIds', () => {
     expect(pass.protagonist).toEqual({ name: 'hero', px: 4 });
     // Per pixel: 1 the floor (largest), 2 the body, 0 empty space, STRAY unclaimed.
     expect([pixels[0], pixels[3], pixels[9], pixels[20]]).toEqual([0, 2, STRAY, 1]);
+  });
+});
+
+describe('instances', () => {
+  it('each take a colour of their own, the next object after them; their mesh sums their pixels and counts them', () => {
+    const scene = new Scene();
+    const crowd = new InstancedMesh(new BoxGeometry(0.2, 0.2, 0.2), new MeshBasicNodeMaterial(), 8);
+    crowd.name = 'crowd/page0';
+    crowd.count = 3;
+    const floor = new Mesh(new BoxGeometry(), new MeshBasicNodeMaterial());
+    floor.name = 'floor';
+    scene.add(crowd, floor);
+    const camera = new PerspectiveCamera(50, 1, 0.1, 100);
+    camera.position.set(0, 0, 5);
+    camera.updateMatrixWorld();
+    const table = listDrawables(scene, camera);
+    expect(table.drawables.map(({ name, n, instances }) => [name, n, instances])).toEqual([
+      ['crowd/page0', 1, 3],
+      ['floor', 4, undefined],
+    ]);
+    expect([1, 2, 3, 4].map((n) => table.byColour.get(idColour(n)))).toEqual([0, 0, 0, 1]);
+    expect([1, 2, 3].map((n) => table.instanceOf.get(idColour(n)))).toEqual([0, 1, 2]);
+    // 4 × 1: instance 0, instance 2 twice, the floor
+    const rgba = new Uint8Array(16);
+    [idColour(1), idColour(3), idColour(3), idColour(4)].forEach((c, i) => rgba.set([c >> 16, (c >> 8) & 255, c & 255, 255], i * 4)); // prettier-ignore
+    const { pass } = decodeIds(rgba, 4, 1, table);
+    expect(pass.visible.map(({ name, px, instances }) => [name, px, instances])).toEqual([
+      ['crowd/page0', 3, 2],
+      ['floor', 1, undefined],
+    ]);
   });
 });
 

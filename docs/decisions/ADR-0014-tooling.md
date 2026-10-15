@@ -308,7 +308,9 @@ Core proposal accepted at integration. Calls made where PLAN.md §9 WP 5.5 and �
 ## Amendment 17 (2026-10-14, after G9's cleanup): files the cleanup added
 - **Split:** engine/anim/clip/retarget.ts (400 lines, and 5.3–5.4 add to it) → engine/anim/clip/rest.ts (the rest
   body's skeleton, build and decode points: `restSkeleton`, `restBuild`, `restPoints`), WP 8.4. engine/anim/ik.ts's
-  `footPlant` moved to engine/anim/footPlant.ts with its layer (ADR-0009 amendment 8), WP 6.2.
+  `footPlant` moved to engine/anim/footPlant.ts with its layer (ADR-0009 amendment 8), WP 6.2. engine/gfx/idpass.ts (398
+  lines, and gate G2's per-instance ids add to it) → engine/gfx/idmarks.ts (`marksOf`, `drawMarks`, `Mark`: the marks
+  `x shot --marks` draws), WP 2.6.
 - **Unchanged:** the names engine/anim/api.ts exported, now from the new files (it adds `FootPlant` and its options),
   and every replay golden; the retargeter's own changes (the lift, the knee pole) are WP 8.4's and 8.6's rows.
-- **Plan edit:** the Owns of WPs 6.2 and 8.4.
+- **Plan edit:** the Owns of WPs 2.6, 6.2 and 8.4.
