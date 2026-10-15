@@ -4977,7 +4977,7 @@ For the agents who maintain the engine.
 
 - `default` (default): The fight, Box 5 (PLAN.md §9.0, WP 6.7): the hall with its hero and a crowd (labs/box/scenes/crowd-1000.ts), fighting.
 - `fight` (const): The fight, 36 mixed.
-- `FIGHT_SETTINGS` (const): The fight's setting: whether the hero's hit points hold.
+- `FIGHT_SETTINGS` (const): The fight's settings: whether the hero's hit points hold, and whether his sword's trail is sim data.
 - `fightStep` (function): The fight's step: joined at the first, then the hero's fight (labs/box/scenes/fight-hero.ts).
 - `joinFight` (function): The fight joined, once, at the first step (spawns made in the setup join at its end): the hero's sword and his components, each member's (see the file comment).
 - `setupFight` (function): The fight's setup: the crowd's, and the fight's systems (see the file comment); returns the hero's id.

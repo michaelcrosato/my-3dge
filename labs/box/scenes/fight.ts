@@ -23,7 +23,9 @@
  * warm-up builds his cape, rather than a second one at the first step that holds the first frames back.
  *
  * Settings: the crowd's (`box.crowd.count`, 36 here; `box.crowd.mix`), the hall's for the hero (`box.hall.*`), and
- * `box.fight.god` (`FIGHT_SETTINGS`: what it does is fight-rules.ts's `hurtHero`).
+ * `box.fight.god` (`FIGHT_SETTINGS`: what it does is fight-rules.ts's `hurtHero`) and `box.fight.precise` (off by
+ * default, so box-5-fight's goldens hold: on, the hero is posed in the sim every step from his first, and his sword's
+ * trail is sim data; tests/replays/box-5-precise.replay.json, after G9).
  *
  * Game code, sim-side: it imports only engine/sim-api.ts and the box's own files.
  *
@@ -46,13 +48,20 @@ import { type FightComponents, type FightEvents, type FightWorld } from './fight
 import { boxSounds } from '../sounds/events';
 import { HALL_LEVEL } from './hall';
 
-/** The fight's setting: whether the hero's hit points hold. */
+/** The fight's settings: whether the hero's hit points hold, and whether his sword's trail is sim data. */
 export const FIGHT_SETTINGS = defineSettings({
   'box.fight.god': {
     type: 'boolean',
     default: true,
     when: 'scene',
     description: 'Foes’ blows flinch and push the hero but take no hit points (off: they do, and he rallies at none).',
+  },
+  'box.fight.precise': {
+    type: 'boolean',
+    default: false,
+    when: 'scene',
+    description:
+      'The hero is posed in the sim every step (anim.preciseHits), so his sword’s trail is sim data, hashed: box-5-precise proves it holds in Node and Chromium.',
   },
 });
 
@@ -76,6 +85,7 @@ export function joinFight(w: FightWorld): void {
   const [hero] = w.query('actor', 'animator');
   if (!hero || hero.fightHero) return;
   hero.animator.weapon = HERO_FIGHT.weapon;
+  hero.animator.preciseHits = w.settings.get<boolean>('box.fight.precise');
   w.add(hero.id, 'fightHero');
   w.add(hero.id, 'fightHealth', { hp: HERO_FIGHT.health });
   w.add(hero.id, 'fightTokens');

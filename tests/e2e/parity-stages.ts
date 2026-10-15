@@ -165,7 +165,7 @@ export const STAGES: Stage[] = [
     stage: 'Box 5',
     scene: 'fight',
     component: 'actor',
-    replays: ['box-5-fight'].map(replay),
+    replays: ['box-5-fight', 'box-5-precise'].map(replay),
     live: () => {
       const tick = (frames: number) => window.__clock.tick(frames);
       tick(1);

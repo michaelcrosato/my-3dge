@@ -135,7 +135,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
     qa-anim.json: 38 footSlide entries cite the missing foot plant, 21 underFloor entries ADR-0009 amendment 3's
     sinks): remove them, with the reason. The box's replay goldens stay unchanged when the plant is view-side;
     thumbnails may move: re-record them with the reason.
-- [ ] 5.2 **preciseHits parity, Node against Chromium** (WP 6.1; deferred at WP 3.7 to Box 5's replays, which never
+- [x] 5.2 **preciseHits parity, Node against Chromium** (WP 6.1; deferred at WP 3.7 to Box 5's replays, which never
       set it). Record it after §4 and 5.1, so its goldens carry both.
   - Now: only Node unit tests set `preciseHits` (engine/anim/character.test.ts, engine/anim/moves.test.ts,
     fixtures/rigs/dummy/index.test.ts); the box's hero (labs/box/cast/hero.ts:90) does not.
