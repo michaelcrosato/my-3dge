@@ -110,7 +110,7 @@ The box (labs/box/, its README says which scene shows what) has a working use of
 | Sound                          | Effects and songs as data (`defineSfx`, `defineSong`), the page's `createAudio`; a scene's `sounds` maps events to sounds | labs/box/sounds/effects.ts, labs/box/sounds/page.ts |
 | Cameras                        | `?cam=iso` (`threequarter`, `topdown`, `brawler`, `side`), `?cam3=chase` (`orbit`, `fly`, `fixed`, `first`, `rail`); `__engine.camera.set(code)` | labs/game/main.ts |
 | Touch controls                 | `defineTouchLayout`, `createEngine({ touchLayout })` (built, not yet tested on phones)   | labs/box/touch.ts                  |
-| A new entry of a kind          | `node x new <kind> labs/game/<dir>/<name>`: the module and its test from a template      | tools/templates/                    |
+| A new entry of a kind          | `node x new <kind> labs/game/<dir>/<name>`: the module and its test from a template (`node x new` lists the kinds; a new scene starts as a copy of play.ts instead) | tools/templates/                    |
 
 Saves and high scores have no engine store yet: keep them in the page (`localStorage`), outside the sim.
 
@@ -118,13 +118,20 @@ Saves and high scores have no engine store yet: keep them in the page (`localSto
 
 - Sim-side code (labs/game/scenes/, labs/game/cast/) imports only engine/sim-api.ts; pages only engine/index.ts.
   Never import three.js or Rapier directly: the public API re-exports what a game needs.
-- No clocks, timers, `Math.random`, `crypto`, DOM, storage or network in sim-side code; no dynamic `import()`. Lint
-  refuses each, and its message names the fix. Write `Math.pow`, not `**`. Use the standard `Math`: the sim swaps in
+- No clocks, timers, `Math.random`, `crypto`, DOM, storage, Web Audio or Node built-ins in sim-side code, and no
+  dynamic `import()`: lint refuses each, and its message names the fix. No network either: what the sim needs from
+  outside arrives as intents or settings. Write `Math.pow`, not `**`. Use the standard `Math`: the sim swaps in
   portable ports while it steps, so the results match in Node and Chromium.
 - Time in steps; randomness from named streams; entities in `w.query`'s id order.
 - A sim-side module reads no files: a level's text lives in a string in the scene module.
 - Presentation never writes the sim: cameras, looks, particles, sound and the HUD change freely without changing a hash.
 - Units: metres, seconds, radians; +Y up, x east, z south; characters face +Z.
+
+**Assets.** Make them with code and data first: geometry, textures and materials as generators with parameters,
+sounds as voices and tracker notes, levels as text. A binary file (an image, a recorded sound, a model) needs the
+owner's approval: ask, and once they approve, list it in APPROVED-BINARIES.json at the game's root as
+`{ "path", "reason" }`, the reason their answer, who and when; `npm run check` fails a binary listed nowhere. Fonts
+are approved: anywhere in labs/game/, each with its license file beside it.
 
 ## 6. Seeing it without a screen
 
@@ -142,6 +149,7 @@ Every command prints its verdict first, about 20 lines at most, and writes `out/
 | `node x inspect --page labs/game`, then `node x eval "<js>"`, `node x dump`, `node x set <key> <value>` | A live headless page to question: the HUD through DOM queries, `__engine` |
 | `node x perf labs/game [--scene id]`                        | Performance as counters (ms per step and frame, draw calls), never frames per second |
 | `node x describe [kind [id]]`                               | The registries: every kind's fields and entries (materials, moves, looks, sounds…) |
+| `node x qa geo tex audio`                                   | Content QA by numbers: the engine's and the game's geometry, props, textures and sounds (the modules in a geometry, props, textures or sounds folder of labs/game/); a new or worse violation fails, and one the game accepts goes in its own `tests/baselines/qa-<family>-game.json` with the reason |
 | `node x new <kind> <id>`                                    | A new entry from its template, with its test                                     |
 | `node x audio sfx:<id>` · `node x anim find <words>`        | A sound rendered in Node, as numbers · the clip library searched                 |
 | `node x engine`                                             | Which engine the game is on, and whether its files are as shipped                |
@@ -160,8 +168,12 @@ settings })`) has the same members but the rendering ones: `__engine.help()` lis
   and finds the seeds that softlock.
 - Check the UI through the DOM: the overlay's elements are `[data-ui]` (`node x inspect`, then `node x eval`).
 - When play changes on purpose, record the goldens again (`node x replay labs/game/replays --browser sim --update`) and
-  say why in the commit. When a hash changes by surprise, `node x replay <file> --bisect` names the first step, entity
-  and field where the runs part; the skill .claude/skills/determinism-debugging/SKILL.md lists the usual causes.
+  say why in the commit. When a hash changes by surprise, `node x replay <file> --browser sim --bisect` narrows it
+  down: to the step, entity and field where two runs part (Node and Chromium, or Node and Node again), or, when every
+  run agrees but they all left the goldens, to the checkpoints between which they did (then the code, data or a
+  dependency changed what the sim does). The usual causes of runs that part: a `Math` function held in a variable or
+  destructured, `**` (lint bans both sim-side), iteration over something whose order is not fixed, state kept in a
+  module between runs, view settings or presentation reaching the sim, and `async` code in a step.
 
 ## 8. Looking things up
 

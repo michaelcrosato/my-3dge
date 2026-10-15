@@ -101,6 +101,11 @@ export const CHILD_TIMEOUT_MS = 120_000;
 /** The engine repository's own commands, which a game made from it does not have (see the file comment). */
 export const ENGINE_ONLY_COMMANDS: readonly string[] = ['ci', 'deps', 'docs', 'esc', 'port', 'src'];
 
+/** What naming one of the engine's own commands in a game says: what a game runs instead. */
+export function engineOnly(name: string): string {
+  return `x ${name} belongs to the engine's own repository, not a game: here npm run check and npm test are the gate, node x engine says which engine the game is on (AGENTS.md)`;
+}
+
 /** Whether `root` is a game made from the engine (it holds engine-lock.json), not the engine's own repository. */
 export function isGame(root: string = ROOT): boolean {
   return existsSync(join(root, 'engine-lock.json'));
@@ -267,8 +272,7 @@ export async function dispatch(argv: readonly string[], options: DispatchOptions
   }
   const load = commands[name];
   if (!load && isGame(root) && ENGINE_ONLY_COMMANDS.includes(name)) {
-    const message = `x ${name} belongs to the engine's own repository, not a game: here npm run check and npm test are the gate, node x engine says which engine the game is on (AGENTS.md)`;
-    return usage('x', 'x', { id: 'X_ENGINE_ONLY', message });
+    return usage('x', 'x', { id: 'X_ENGINE_ONLY', message: engineOnly(name) });
   }
   if (!load) {
     const near = closest(name, Object.keys(commands));

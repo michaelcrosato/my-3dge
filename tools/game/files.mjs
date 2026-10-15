@@ -80,8 +80,8 @@ export const RULES = Object.freeze([
   { owner: 'skip', why: 'the engine’s tests stay in its repository', test: (p) => p.endsWith('.test.ts') },
   { owner: 'engine', why: 'the engine, its tools and data', test: (p) => /^(engine|tools|data)\//.test(p) },
   { owner: 'engine', why: 'the box: the engine’s worked example', test: (p) => p.startsWith('labs/box/') },
-  { owner: 'engine', why: 'the advice trap’s allow list', test: (p) => p.startsWith('tests/baselines/advice/') },
-  { owner: 'engine', why: 'a skill games use', test: (p) => p.startsWith('.claude/skills/determinism-debugging/') },
+  { owner: 'skip', why: 'the port’s reference vectors: x port is the engine’s', test: (p) => p.startsWith('tests/baselines/port/') }, // prettier-ignore
+  { owner: 'engine', why: 'the baselines its tools read (QA, advice, perf, thumbnails)', test: (p) => p.startsWith('tests/baselines/') }, // prettier-ignore
   { owner: 'engine', why: 'configs, setup and docs a game reads', test: (p) => ENGINE_FILES.has(p) || p in RENAMED },
   { owner: 'skip', why: 'the engine’s own: plan, records, CI, suites', test: (p) => ENGINE_ONLY.test(p) },
 ]);
@@ -151,11 +151,35 @@ export function plan(source = SOURCE) {
     .filter((item) => item.owner === 'engine' || item.owner === 'game');
 }
 
+/** The npm scripts a game gets from the engine's package.json: all but `e2e`, since no browser specs ship. */
+export function gameScripts(engine) {
+  const { e2e: _e2e, ...scripts } = engine.scripts ?? {};
+  return scripts;
+}
+
 /** The lock for the engine files of `items` (hashed from the source), with the engine's identity and npm pins. */
 export function lockFor(source, items, identity, game, engine) {
   const files = Object.fromEntries(items.map(({ from, to }) => [to, hashFile(join(source, from))]));
-  const npm = { dependencies: engine.dependencies, devDependencies: engine.devDependencies };
+  const npm = { dependencies: engine.dependencies, devDependencies: engine.devDependencies, scripts: gameScripts(engine) }; // prettier-ignore
   return { format: LOCK_FORMAT, game, engine: identity, npm, files };
+}
+
+/** The engine's folders in a game: a file there that the lock does not name was added by the game. */
+export const ENGINE_DIRS = Object.freeze(['engine/', 'tools/', 'data/', 'labs/box/']);
+
+/** The files under the engine's folders in a game (`ENGINE_DIRS`), with `/`. */
+function engineDirFiles(target) {
+  const files = [];
+  const walk = (dir) => {
+    if (!existsSync(join(target, dir))) return;
+    for (const entry of readdirSync(join(target, dir), { withFileTypes: true })) {
+      const path = `${dir}${entry.name}`;
+      if (entry.isDirectory()) walk(`${path}/`);
+      else if (entry.isFile() && entry.name !== '.DS_Store') files.push(path);
+    }
+  };
+  ENGINE_DIRS.forEach(walk);
+  return files;
 }
 
 /** The engine files ENGINE-FEEDBACK.md lists under "Local engine patches", outside comments. */
@@ -167,7 +191,10 @@ export function declaredPatches(target) {
   return [...section.matchAll(/^\s*[-*]\s+`([^`]+)`/gm)].map((match) => match[1]);
 }
 
-/** Compares a game's engine files with its lock: those changed, those missing, and the patches it declares. */
+/**
+ * Compares a game's engine files with its lock: those changed, those missing, files the game added in the engine's
+ * folders, and the patches it declares; `undeclared` is every one of the first three that the game does not declare.
+ */
 export function verifyGame(target) {
   const lockFile = join(target, LOCK_FILE);
   if (!existsSync(lockFile)) {
@@ -183,7 +210,8 @@ export function verifyGame(target) {
     if (!existsSync(file)) missing.push(path);
     else if (hashFile(file) !== hash) changed.push(path);
   }
+  const added = engineDirFiles(target).filter((path) => !(path in lock.files));
   const declared = declaredPatches(target);
-  const undeclared = [...changed, ...missing].filter((path) => !declared.includes(path));
-  return { lock, changed, missing, declared, undeclared };
+  const undeclared = [...changed, ...missing, ...added].filter((path) => !declared.includes(path));
+  return { lock, changed, missing, added, declared, undeclared };
 }

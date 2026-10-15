@@ -13,9 +13,9 @@ and WP 12.4 (built as the guide's generated section); amends §6.2
    18, run straight after a shallow clone. It copies the engine's files byte for byte and pins them in
    engine-lock.json (the commit, each file's SHA-256), copies the starter game (labs/game/), and writes the game's root
    files (AGENTS.md, CLAUDE.md, GEMINI.md, README.md, ENGINE-FEEDBACK.md, package.json with the engine's pins,
-   .claude/settings.json). It keeps this repository's layout, so every `x` command, lint rule, template and config
-   works unchanged. The plan, records, CI, suites and fixtures stay here (tools/game/files.mjs `RULES`; a test makes
-   every new file at the root a decision).
+   .claude/settings.json). It keeps this repository's layout, so the `x` commands, lint rules, templates, baselines
+   and configs work unchanged, but for the few that are the engine's own (item 4). The plan, records, CI, suites,
+   fixtures and port references stay here (tools/game/files.mjs `RULES`; a test makes every new root file a decision).
 3. **The engine is vendored, not a submodule or an npm dependency** (WP 10.7 named either): cloud agents often clone
    without submodules and trip on detached heads; a vendored engine works offline, needs nothing at install time
    beyond npm, and stays searchable (ripgrep skips node_modules, so a dependency's sources and comments would vanish
@@ -23,8 +23,11 @@ and WP 12.4 (built as the guide's generated section); amends §6.2
    unless ENGINE-FEEDBACK.md declares the patch, and `node x engine --update` moves a game to a newer engine, keeping
    the game's files and its declared patches.
 4. **A game is a game mode of the same tools.** With engine-lock.json at the root, the engine's own commands (ci,
-   deps, docs, esc, port, src) are not commands, `x check` runs the asset scan and the `engine` plugin,
-   scripts/setup.sh skips the source checkouts, and `npm run build` ships the game's pages without the box.
+   deps, docs, esc, port, src) are not commands; `x check` runs the asset scan (its approvals the game's own
+   APPROVED-BINARIES.json, the owner's answer as the reason, with no escalation record; fonts in labs/game/) and the
+   `engine` plugin, which also catches a file the game adds in the engine's folders; `x new` says what a game does
+   instead of the box's scene kind; scripts/setup.sh skips the source checkouts; `npm run build` ships the game's pages
+   without the box. `--update` never overwrites a file of the game's: it stops, or keeps a declared patch.
 5. **The starter game lives here as labs/game/**, at the path it has in every game, so the engine's suites check it on
    every change and a new game needs no renaming. It is sample content, like the box (§5.7), not the game: a scene
    (a level as text, settings, components, systems in the phase `rules`, a named random stream, events), a player, a
@@ -36,7 +39,8 @@ and WP 12.4 (built as the guide's generated section); amends §6.2
    the barrels' area comments and `x docs --check` keeps current; the whole is held to 60 KB (43 KB, about 11,000
    tokens, written).
 7. **The proof runs in the full run**: `node x engine --test` makes a game from the checkout and runs its gate (npm
-   ci, npm run check, npm test, x sim, x replay, x shot, x help): 53 s here. The quick gate is unchanged.
+   ci, npm run check, npm test, x sim, x replay in Node and Chromium, x shot, x qa of every family, x help): 2.5 min
+   here, 96 s of it x qa. The quick gate is unchanged.
 8. **Feedback at scale**: each game keeps ENGINE-FEEDBACK.md (requests, friction, declared patches), which the owner
    collects across games and an engine agent works from.
 9. **The store is split off** as WP 10.9, on demand until the first game saves: no game needs it to start.
@@ -58,7 +62,9 @@ the least hassle; one file or archive when files are handed, else a URL; package
 ## Enforced by
 
 tools/game/files.mjs, tools/game/new-game.mjs and tools/game/new-game.test.ts; tools/cmd/engine.ts (`x engine`, the
-`engine` plugin, `--test`) and its test; tools/x.ts (`ENGINE_ONLY_COMMANDS`, `isGame`); tools/lib/docsGameApi.ts (the
-guide's API section and its budget); scripts/setup.sh; tools/cmd/ci.ts (`x engine --test` in the full run);
-labs/game/scenes/play.test.ts and tests/e2e/game.spec.ts; vite.config.ts (a game's build); tools/eslint/publicApi.ts
-and tools/eslint/simSide.ts (`labs/*/scenes/`, `labs/*/cast/`).
+`engine` plugin, `--test`) and its test; tools/x.ts (`ENGINE_ONLY_COMMANDS`, `isGame`) and tools/cmd/help.ts (the
+engine's own commands, no commands in a game); tools/cmd/check.ts (a game's binary approvals); tools/cmd/new.ts (the
+kinds that make no entry in a game); tools/lib/docsGameApi.ts and tools/cmd/docs.ts (the guide's API section and its
+budget); scripts/setup.sh; tools/cmd/ci.ts (`x engine --test` in the full run); labs/game/scenes/play.test.ts and
+tests/e2e/game.spec.ts; vite.config.ts (a game's build); tools/eslint/publicApi.ts and tools/eslint/simSide.ts
+(`labs/*/scenes/`, `labs/*/cast/`).

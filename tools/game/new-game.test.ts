@@ -143,6 +143,12 @@ describe('createGame', () => {
     const target = write(folder(), { 'package.json': '{}', 'engine/a.ts': 'mine' });
     expect(() => createGame({ target, source: fakeEngine() })).toThrow(/already holds engine\/a\.ts, package\.json/);
     expect([existsSync(join(target, 'AGENTS.md')), read(target, 'engine/a.ts')]).toEqual([false, 'mine']);
+    const tools = write(folder(), { tools: 'a file where a folder must go' });
+    expect(() => createGame({ target: tools, source: fakeEngine() })).toThrow(/already holds tools\/game\//);
+    expect(existsSync(join(tools, 'engine'))).toBe(false);
+    expect(() => createGame({ target: join(tools, 'tools'), source: fakeEngine() })).toThrow(
+      /is a file: name a folder/,
+    );
   });
 
   it('names games as npm names them, and refuses a name it cannot use', () => {
@@ -159,15 +165,16 @@ describe('createGame', () => {
 });
 
 describe('the lock', () => {
-  it('finds a changed or missing engine file, and lets a declared patch pass', () => {
+  it('finds a changed, missing or added engine file, and lets a declared patch pass', () => {
     const target = folder();
     createGame({ target, name: 'g', source: fakeEngine(), git: false });
     writeFileSync(join(target, 'engine/a.ts'), 'export const a = 2;\n');
     rmSync(join(target, 'engine/b.ts'));
-    expect(verifyGame(target)).toMatchObject({ changed: ['engine/a.ts'], missing: ['engine/b.ts'], undeclared: ['engine/a.ts', 'engine/b.ts'] }); // prettier-ignore
+    write(target, { 'data/levels/mine.txt': 'the game’s, in an engine folder', 'labs/game/mine.ts': 'its own' });
+    expect(verifyGame(target)).toMatchObject({ changed: ['engine/a.ts'], missing: ['engine/b.ts'], added: ['data/levels/mine.txt'], undeclared: ['engine/a.ts', 'engine/b.ts', 'data/levels/mine.txt'] }); // prettier-ignore
     const feedback = read(target, 'ENGINE-FEEDBACK.md');
     writeFileSync(join(target, 'ENGINE-FEEDBACK.md'), `${feedback}\n- \`engine/a.ts\`: the fix the engine needs.\n`);
-    expect(verifyGame(target)).toMatchObject({ declared: ['engine/a.ts'], undeclared: ['engine/b.ts'] });
+    expect(verifyGame(target)).toMatchObject({ declared: ['engine/a.ts'], undeclared: ['engine/b.ts', 'data/levels/mine.txt'] }); // prettier-ignore
   });
 
   it('reads declared patches only from their section, outside comments', () => {
@@ -203,6 +210,37 @@ describe('updateGame', () => {
     expect(verifyGame(target)).toMatchObject({ lock: { engine: { commit: 'c'.repeat(40) } }, undeclared: [] });
   });
 
+  it('never overwrites a game’s file where the newer engine adds one: it stops, or keeps a declared patch', () => {
+    const next = fakeEngine({ 'engine/c.ts': 'the engine’s c\n', 'tests/baselines/advice/area.json': '[]\n' });
+    const inEngine = folder();
+    createGame({ target: inEngine, name: 'g', source: fakeEngine(), git: false });
+    write(inEngine, { 'engine/c.ts': 'the game’s c\n' });
+    expect(() => updateGame({ target: inEngine, source: next })).toThrow(/does not declare: engine\/c\.ts/);
+    write(inEngine, { 'ENGINE-FEEDBACK.md': '## Local engine patches\n- `engine/c.ts`: why\n' });
+    expect(updateGame({ target: inEngine, source: next })).toMatchObject({ kept: ['engine/c.ts'] });
+    expect(read(inEngine, 'engine/c.ts')).toBe('the game’s c\n');
+    const outside = folder();
+    createGame({ target: outside, name: 'g', source: fakeEngine(), git: false });
+    write(outside, { 'tests/baselines/advice/area.json': '[{"code":"MINE","reason":"the game’s"}]\n' });
+    expect(() => updateGame({ target: outside, source: next })).toThrow(/adds tests\/baselines\/advice\/area\.json, where the game has files of its own/); // prettier-ignore
+    expect(read(outside, 'engine/a.ts')).toBe('export const a = 1;\n'); // nothing written
+    updateGame({ target: outside, source: next, force: true });
+    expect(read(outside, 'tests/baselines/advice/area.json')).toBe('[]\n');
+  });
+
+  it('keeps a declared patch that deletes an engine file, and drops the scripts the engine dropped', () => {
+    const target = folder();
+    createGame({ target, name: 'g', source: fakeEngine(), git: false });
+    rmSync(join(target, 'engine/b.ts'));
+    writeFileSync(join(target, 'ENGINE-FEEDBACK.md'), '## Local engine patches\n- `engine/b.ts`: not wanted\n');
+    const pkg = JSON.parse(read(target, 'package.json'));
+    writeFileSync(join(target, 'package.json'), JSON.stringify({ ...pkg, scripts: { ...pkg.scripts, play: 'vite' } }));
+    const next = fakeEngine({ 'package.json': JSON.stringify({ name: 'my-3dge', scripts: { check: 'node c' }, dependencies: { three: '0.182.0' } }) }); // prettier-ignore
+    const done = updateGame({ target, source: next });
+    expect([done.kept, existsSync(join(target, 'engine/b.ts'))]).toEqual([['engine/b.ts'], false]);
+    expect(JSON.parse(read(target, 'package.json')).scripts).toEqual({ play: 'vite', check: 'node c' });
+  });
+
   it('stops on an engine file the game changed without declaring it, unless forced', () => {
     const target = folder();
     createGame({ target, name: 'g', source: fakeEngine(), git: false });
@@ -214,8 +252,11 @@ describe('updateGame', () => {
 
   it('moves package.json to the engine’s pins and keeps the game’s own scripts and dependencies', () => {
     const engine = { name: 'my-3dge', scripts: { test: 'vitest run', e2e: 'x' }, dependencies: { three: '2' } };
-    const previous = { name: 'g', scripts: { test: 'old', play: 'vite' }, dependencies: { three: '1', howler: '2' } };
-    expect(gamePackage(engine, 'g', previous, { dependencies: { three: '1' } })).toMatchObject({
+    const previous = { name: 'g', scripts: { test: 'old', lint: 'gone', play: 'vite' }, dependencies: { three: '1', howler: '2' } }; // prettier-ignore
+    expect(
+      gamePackage(engine, 'g', previous, { dependencies: { three: '1' }, scripts: { test: 'old', lint: 'gone' } }),
+    ).toMatchObject({
+      // prettier-ignore
       name: 'g',
       scripts: { play: 'vite', test: 'vitest run' },
       dependencies: { howler: '2', three: '2' },

@@ -27,7 +27,11 @@ export interface EngineLock {
   format: string;
   game: string;
   engine: EngineIdentity;
-  npm: { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+  npm: {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+    scripts?: Record<string, string>;
+  };
   files: Record<string, string>;
 }
 
@@ -36,6 +40,8 @@ export interface GameCheck {
   lock: EngineLock;
   changed: string[];
   missing: string[];
+  /** Files the game added in the engine's folders (`ENGINE_DIRS`). */
+  added: string[];
   declared: string[];
   undeclared: string[];
 }
@@ -53,12 +59,18 @@ export function sourceFiles(source?: string): string[];
 export function engineIdentity(source?: string): EngineIdentity;
 export function hashFile(file: string): string;
 export function plan(source?: string): PlanItem[];
+export const ENGINE_DIRS: readonly string[];
+export function gameScripts(engine: { scripts?: Record<string, string> }): Record<string, string>;
 export function lockFor(
   source: string,
   items: readonly PlanItem[],
   identity: EngineIdentity,
   game: string,
-  engine: { dependencies?: Record<string, string>; devDependencies?: Record<string, string> },
+  engine: {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+    scripts?: Record<string, string>;
+  },
 ): EngineLock;
 export function declaredPatches(target: string): string[];
 export function verifyGame(target: string): GameCheck;

@@ -14,7 +14,7 @@
  * @example
  * apiMap(process.cwd()).includes('`defineScene`'); // true
  * withApiMap('a\n<!-- api-map:start -->\nold\n<!-- api-map:end -->\n', 'new'); // 'a\n<!-- api-map:start -->\nnew\n<!-- api-map:end -->\n'
- * @see tools/cmd/docs.test.ts
+ * @see tools/lib/docsGameApi.test.ts
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, posix } from 'node:path';

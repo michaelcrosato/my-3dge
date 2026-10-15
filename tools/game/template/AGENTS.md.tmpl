@@ -22,8 +22,9 @@ It installs Node 24 when missing (Linux x64), Chromium for the browser commands 
 2. `npm run check`: types, lint, format, the asset rules, and the engine unchanged.
 3. `npm test`: the game's tests (its replay's golden hashes, capture and restore, the bot wins on 10 seeds).
 4. See it without a screen: `node x sim labs/game/scenes/play.ts` (the hash and the events), `node x shot labs/game`
-   (what the page draws, as numbers and a text thumbnail), `node x replay labs/game/replays` (goldens in Node and
-   Chromium). `node x help` lists every command; each prints its verdict first and writes out/<cmd>/…/report.json.
+   (what the page draws, as numbers and a text thumbnail), `node x replay labs/game/replays --browser sim` (the
+   goldens, in Node and Chromium). `node x help` lists every command; each prints its verdict first and writes
+   out/<cmd>/…/report.json.
 5. Commit, and keep labs/game/README.md current: what the game is, how it plays, the calls you made.
 
 `npm run dev` serves the game at http://127.0.0.1:5173/labs/game/ for a person to play.
@@ -38,7 +39,8 @@ It installs Node 24 when missing (Linux x64), Chromium for the browser commands 
 - **Reproducible play.** Sim-side code reads no clock, no `Math.random`, no DOM: randomness comes from named streams
   (`w.rng('loot')`), time is whole 60 Hz steps. The same intents and seed give the same hashes, in Node and Chromium.
 - **Assets are code or text first**: geometry, textures, materials and sounds as data. A binary file only with the
-  owner's approval (fonts are approved).
+  owner's approval, listed in APPROVED-BINARIES.json with their answer (`npm run check` fails one unlisted); fonts are
+  approved, anywhere in labs/game/ with their license beside them.
 - SI units, +Y up, characters face +Z. Every file opens with a `@file` comment and stays under 400 lines.
 - **Ask the owner** before anything outward or costly: a binary asset, a new npm dependency, spending money,
   publishing. No answer within 15 minutes: take the safer choice, note it in labs/game/README.md, carry on.

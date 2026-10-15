@@ -13,11 +13,13 @@
  *
  * In the engine's own repository: `node x engine` says how to make a game, and `--test` makes one in a temporary
  * folder from this checkout, installs it (`npm ci --prefer-offline`) and runs its gate as a game agent would:
- * `npm run check`, `npm test`, `x sim` and `x replay` of the starter, `x shot` of its page, and `x help`, which must
- * leave the engine's own commands out. `x ci --local --full` runs it (`--keep` keeps the folder to look into).
+ * `npm run check`, `npm test`, `x sim` of the starter, `x replay` of its replay in Node and Chromium, `x shot` of its
+ * page, `x qa` of every family against the baselines a game gets, and `x help`, which must leave the engine's own
+ * commands out. Each step's time is a metric (`install.ms`, …). `x ci --local --full` runs it (`--keep` keeps the
+ * folder to look into).
  *
  * @example
- * // node x engine                → my-3dge@d2435e0 (2026-10-15): 1808 engine files, as shipped
+ * // node x engine                → my-3dge@d2435e0 (2026-10-15): 1834 engine files, as shipped
  * // node x engine --update       → the game on the engine's latest main; then npm ci, npm run check, npm test
  * // node x engine --test         → (in the engine) a new game passes its own gate
  * @see tools/cmd/engine.test.ts
@@ -38,11 +40,20 @@ const STEP_MS = 600_000;
 /** A game's engine check: each engine file changed or missing that ENGINE-FEEDBACK.md does not declare. */
 export function engineFindings(found: GameCheck): Finding[] {
   const short = found.lock.engine.commit.slice(0, 7);
-  return found.undeclared.map((path) => ({
-    id: found.missing.includes(path) ? 'ENGINE_MISSING' : 'ENGINE_EDITED',
-    message: `${path} is not the engine's (my-3dge@${short}): the engine is read-only in a game. Undo it (git checkout -- ${path}) and write what you needed in ${FEEDBACK_FILE}; only when no workaround exists, keep the patch and list it there under "Local engine patches"`,
-    file: path,
-  }));
+  const patch = `write what you needed in ${FEEDBACK_FILE}; only when no workaround exists, keep the patch and list it there under "Local engine patches"`; // prettier-ignore
+  return found.undeclared.map((path) =>
+    found.added.includes(path)
+      ? {
+          id: 'ENGINE_ADDED',
+          message: `${path} is in the engine's folders (my-3dge@${short}), read-only in a game: move it into labs/game/, where the game's files live, or ${patch}`,
+          file: path,
+        }
+      : {
+          id: found.missing.includes(path) ? 'ENGINE_MISSING' : 'ENGINE_EDITED',
+          message: `${path} is not the engine's (my-3dge@${short}): the engine is read-only in a game. Undo it (git checkout -- ${path}) and ${patch}`,
+          file: path,
+        },
+  );
 }
 
 /** What `x engine` says about the game in `root`. */
@@ -51,7 +62,8 @@ function status(root: string, check: boolean): CommandResult {
   const { engine } = found.lock;
   const failures = engineFindings(found);
   const files = Object.keys(found.lock.files).length;
-  const patches = found.declared.filter((path) => found.changed.includes(path) || found.missing.includes(path));
+  const patched = [...found.changed, ...found.missing, ...found.added];
+  const patches = found.declared.filter((path) => patched.includes(path));
   const state =
     failures.length > 0
       ? `${failures.length} changed and not declared`
@@ -68,7 +80,13 @@ function status(root: string, check: boolean): CommandResult {
       ...(check ? [] : ['update it only when the owner asks: node x engine --update']),
     ],
     failures,
-    metrics: { files, changed: found.changed.length, missing: found.missing.length, declared: patches.length },
+    metrics: {
+      files,
+      changed: found.changed.length,
+      missing: found.missing.length,
+      added: found.added.length,
+      declared: patches.length,
+    },
   };
 }
 
@@ -98,21 +116,25 @@ function testGame(root: string, keep: boolean): CommandResult {
   const target = join(folder, 'game-test');
   const lines: string[] = [];
   const failures: Finding[] = [];
+  const metrics: Record<string, number> = {};
   try {
     const made = createGame({ target, name: 'game-test', source: root });
     lines.push(`made: ${made.engineFiles} engine files and ${made.starterFiles} starter files in ${target}`);
+    Object.assign(metrics, { engineFiles: made.engineFiles, starterFiles: made.starterFiles });
     const steps: [string, string, string[]][] = [
       ['install', 'npm', ['ci', '--prefer-offline', '--no-audit', '--no-fund']],
       ['check', 'npm', ['run', 'check']],
       ['test', 'npm', ['test']],
       ['sim', process.execPath, ['x', 'sim', 'labs/game/scenes/play.ts', '--steps', '600']],
-      ['replay', process.execPath, ['x', 'replay', 'labs/game/replays']],
+      ['replay', process.execPath, ['x', 'replay', 'labs/game/replays', '--browser', 'sim']],
       ['shot', process.execPath, ['x', 'shot', 'labs/game']],
+      ['qa', process.execPath, ['x', 'qa', 'anim', 'geo', 'tex', 'audio', 'level']],
       ['help', process.execPath, ['x', 'help']],
     ];
     for (const [name, command, args] of steps) {
       const done = step(target, command, args);
       const leaked = name === 'help' ? engineOnlyListed(target, done.output) : [];
+      metrics[`${name}.ms`] = Math.round(done.ms);
       lines.push(`${name}: ${done.ok && leaked.length === 0 ? 'ok' : 'FAIL'} (${(done.ms / 1000).toFixed(1)} s)`);
       if (leaked.length > 0) failures.push({ id: 'ENGINE_TEST_HELP', message: `a game's x help lists the engine's own commands: ${leaked.join(', ')}` }); // prettier-ignore
       if (!done.ok) failures.push({ id: `ENGINE_TEST_${name.toUpperCase()}`, message: `${command} ${args.join(' ')} failed in the new game: ${done.tail}` }); // prettier-ignore
@@ -128,6 +150,7 @@ function testGame(root: string, keep: boolean): CommandResult {
     target: 'test',
     lines,
     failures,
+    metrics,
   };
 }
 

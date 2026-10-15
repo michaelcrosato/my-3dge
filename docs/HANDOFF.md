@@ -39,7 +39,10 @@ https://github.com/michaelcrosato/my-3dge/archive/refs/heads/main.zip, and "run
 - Games share nothing while they run (each carries its own pinned engine, about 15 MB), so ten or a hundred agents
   work in parallel without touching each other.
 - An agent's sandbox must reach github.com once (the clone) and npm's registry (the install); most coding-agent
-  sandboxes allow both. Where a platform cuts the network while the agent works, put the command in its setup step.
+  sandboxes allow both. scripts/setup.sh also downloads, only when missing, Node 24 from nodejs.org and Chromium
+  (Chrome for Testing) from storage.googleapis.com; without them a game runs on Node 22.12 or newer (Vite's floor),
+  all but the browser commands. Where a platform cuts the network while the agent works, put the command in its setup
+  step.
 - Every game made the same day is on the same engine (main, as it was). A game moves to a newer engine only when you
   ask its agent: `node x engine --update`, then `npm ci`, `npm run check`, `npm test`, and its replays' goldens
   recorded again where play changed.

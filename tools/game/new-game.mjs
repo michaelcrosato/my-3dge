@@ -29,10 +29,20 @@
  * @see tools/game/new-game.test.ts
  */
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { engineIdentity, FEEDBACK_FILE, hashFile, LOCK_FILE, lockFor, plan, SOURCE, verifyGame } from './files.mjs';
+import {
+  engineIdentity,
+  FEEDBACK_FILE,
+  gameScripts,
+  hashFile,
+  LOCK_FILE,
+  lockFor,
+  plan,
+  SOURCE,
+  verifyGame,
+} from './files.mjs';
 
 /** The game's root files: template (in tools/game/template/) → where it goes. */
 export const TEMPLATES = Object.freeze([
@@ -70,27 +80,28 @@ export function render(text, values) {
   });
 }
 
-/** A game's package.json: the engine's pins and scripts; with `previous`, the game's own fields and dependencies. */
+/**
+ * A game's package.json: the engine's pins and scripts. With `previous` (the game's) and `before` (the engine's that
+ * the game had, its lock's `npm`), the game keeps its own fields, and the scripts and dependencies the engine it had
+ * did not give it; the new engine's win over the rest, and those it dropped go.
+ */
 export function gamePackage(engine, name, previous, before = {}) {
-  const scripts = { ...engine.scripts };
-  delete scripts.e2e; // no browser specs ship
+  const scripts = gameScripts(engine);
   const { engines, dependencies, devDependencies, allowScripts } = engine;
   if (!previous) {
     const description = 'A game made with the my-3dge engine.';
     return { name, version: '0.0.0', private: true, description, type: 'module', engines, scripts, dependencies, devDependencies, allowScripts }; // prettier-ignore
   }
-  // the game's own dependencies are those the engine it had did not pin; the engine's pins win over the rest
-  const merged = (kind) => {
-    const own = Object.entries(previous[kind] ?? {}).filter(([dep]) => !(dep in (before[kind] ?? {})));
-    return { ...Object.fromEntries(own), ...engine[kind] };
+  const merged = (kind, next) => {
+    const own = Object.entries(previous[kind] ?? {}).filter(([key]) => !(key in (before[kind] ?? {})));
+    return { ...Object.fromEntries(own), ...next };
   };
-  const ownScripts = Object.fromEntries(Object.entries(previous.scripts ?? {}).filter(([key]) => !(key in scripts)));
   return {
     ...previous,
     engines,
-    scripts: { ...ownScripts, ...scripts },
-    dependencies: merged('dependencies'),
-    devDependencies: merged('devDependencies'),
+    scripts: merged('scripts', scripts),
+    dependencies: merged('dependencies', dependencies),
+    devDependencies: merged('devDependencies', devDependencies),
     allowScripts,
   };
 }
@@ -120,6 +131,15 @@ function writeJson(file, value) {
   writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+/** Whether writing `to` under `root` meets something there: the file itself, or a file where a folder must go. */
+function inTheWay(root, to) {
+  const parts = to.split('/');
+  return parts.some((_, i) => {
+    const path = join(root, ...parts.slice(0, i + 1));
+    return existsSync(path) && (i === parts.length - 1 || !statSync(path).isDirectory());
+  });
+}
+
 /** Copies one file, making its folder. */
 function copyInto(source, from, root, to) {
   mkdirSync(dirname(join(root, to)), { recursive: true });
@@ -129,6 +149,7 @@ function copyInto(source, from, root, to) {
 /** Makes a game in `target` from the engine at `source`; on a clash it throws, having written nothing. */
 export function createGame({ target, name, source = SOURCE, git = true }) {
   const root = resolve(target);
+  if (existsSync(root) && !statSync(root).isDirectory()) throw new Error(`${root} is a file: name a folder`);
   const game = gameName(root, name);
   const identity = engineIdentity(source);
   const items = plan(source);
@@ -138,7 +159,7 @@ export function createGame({ target, name, source = SOURCE, git = true }) {
     'package.json',
     'package-lock.json',
   ];
-  const clashes = [...writes, LOCK_FILE].filter((to) => !KEPT.has(to) && existsSync(join(root, to)));
+  const clashes = [...writes, LOCK_FILE].filter((to) => !KEPT.has(to) && inTheWay(root, to));
   if (clashes.length > 0) {
     const named = clashes.slice(0, 5).join(', ') + (clashes.length > 5 ? ` and ${clashes.length - 5} more` : '');
     throw new Error(
@@ -176,7 +197,10 @@ export function createGame({ target, name, source = SOURCE, git = true }) {
   return { root, name: game, identity, engineFiles: engineItems.length, starterFiles, kept, initialized };
 }
 
-/** Moves the game in `target` to the engine at `source`; returns what changed. Throws on undeclared engine edits. */
+/**
+ * Moves the game in `target` to the engine at `source`; returns what changed. Throws, having written nothing, on an
+ * engine file the game changed without declaring it, or on a file of the game's where the new engine adds one.
+ */
 export function updateGame({ target, source = SOURCE, force = false }) {
   const root = resolve(target);
   const before = verifyGame(root);
@@ -186,14 +210,23 @@ export function updateGame({ target, source = SOURCE, force = false }) {
         `-- <path>), list it under "Local engine patches" in ${FEEDBACK_FILE} to keep it, or pass --force to replace it`,
     );
   }
-  const keep = new Set(force ? [] : before.declared.filter((path) => before.changed.includes(path)));
+  const patched = [...before.changed, ...before.missing, ...before.added];
+  const keep = new Set(force ? [] : before.declared.filter((path) => patched.includes(path)));
   const identity = engineIdentity(source);
   const items = plan(source).filter((item) => item.owner === 'engine');
-  const next = new Set(items.map((item) => item.to));
-  const removed = Object.keys(before.lock.files).filter((path) => !next.has(path) && !keep.has(path));
-  for (const path of removed) rmSync(join(root, path), { force: true });
   const old = before.lock.files;
-  const added = items.filter((item) => !(item.to in old)).map((item) => item.to);
+  const fresh = items.filter((item) => !(item.to in old));
+  const blocked = fresh.filter((item) => !keep.has(item.to) && inTheWay(root, item.to)).map((item) => item.to);
+  if (blocked.length > 0 && !force) {
+    throw new Error(
+      `the newer engine adds ${blocked.join(', ')}, where the game has files of its own: move them (the game's files ` +
+        "live in labs/game/ and at its root), or pass --force to let the engine's replace them",
+    );
+  }
+  const next = new Set(items.map((item) => item.to));
+  const removed = Object.keys(old).filter((path) => !next.has(path) && !keep.has(path));
+  for (const path of removed) rmSync(join(root, path), { force: true });
+  const added = fresh.map((item) => item.to);
   const replaced = items.filter((item) => item.to in old && old[item.to] !== hashFile(join(source, item.from)));
   for (const { from, to } of items) if (!keep.has(to)) copyInto(source, from, root, to);
   const engine = readJson(join(source, 'package.json'));
@@ -265,7 +298,7 @@ export function main(argv = process.argv.slice(2), out = console.log, err = cons
     const where = near.startsWith('..') ? done.root : (near || '.').split(sep).join('/');
     const extra = `${done.kept.length > 0 ? `; kept your ${done.kept.join(', ')}` : ''}${done.initialized ? '; git init' : ''}`; // prettier-ignore
     out(`new-game: made the game "${done.name}" in ${where}: the engine at my-3dge@${done.identity.commit.slice(0, 7)} (${done.engineFiles} files, read-only, pinned by ${LOCK_FILE}) and the starter game in labs/game/${extra}`); // prettier-ignore
-    out(`next: cd ${where} && bash scripts/setup.sh && npm test`);
+    out(`next: ${where === '.' ? '' : `cd ${where} && `}bash scripts/setup.sh && npm test`);
     out('then: read AGENTS.md and docs/GAME-GUIDE.md, make the game in labs/game/, and commit as you go');
     return 0;
   } catch (error) {

@@ -5646,6 +5646,7 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/check.ts`](../tools/cmd/check.ts)
 
+- `assetRules` (function): The engine repository's rules; in a game, its approvals stand without their records, which stayed behind.
 - `assetScan` (const): The asset scan (doctrine: Assets).
 - `binaryKind` (function): What binary format `bytes` (a file named `path`) is, or undefined for text.
 - `CheckContext` (interface): What a plugin is given: the repository root, and whether this checkout is an ultracode lane.
@@ -5957,9 +5958,11 @@ For the agents who maintain the engine.
 ### [`tools/game/files.mjs`](../tools/game/files.mjs)
 
 - `declaredPatches` (function): The engine files ENGINE-FEEDBACK.md lists under "Local engine patches", outside comments.
+- `ENGINE_DIRS` (const): The engine's folders in a game: a file there that the lock does not name was added by the game.
 - `ENGINE_REPOSITORY` (const): Where the engine lives on GitHub: what a game's lock names and `x engine --update` clones.
 - `engineIdentity` (function): The engine's identity: its repository, commit and commit date, and whether the checkout had changes.
 - `FEEDBACK_FILE` (const): Where a game writes what it needed from the engine, and declares the engine files it patched.
+- `gameScripts` (function): The npm scripts a game gets from the engine's package.json: all but `e2e`, since no browser specs ship.
 - `hashFile` (function): A file's SHA-256, as the lock writes it.
 - `LOCK_FILE` (const): The lock a game keeps at its root: the engine's commit and every engine file's hash.
 - `LOCK_FORMAT` (const): The lock's format.
@@ -5971,14 +5974,14 @@ For the agents who maintain the engine.
 - `SOURCE` (const): This checkout's root: two levels above this file.
 - `sourceFiles` (function): The source's files, as git tracks or would track them (or, in an archive, every file), sorted, with `/`.
 - `STARTER` (const): The starter game: copied into a new game, then the game's own.
-- `verifyGame` (function): Compares a game's engine files with its lock: those changed, those missing, and the patches it declares.
+- `verifyGame` (function): Compares a game's engine files with its lock: those changed, those missing, files the game added in the engine's folders, and the patches it declares; `undeclared` is every one of the first three that the game does not declare.
 
 ### [`tools/game/new-game.mjs`](../tools/game/new-game.mjs)
 
 - `createGame` (function): Makes a game in `target` from the engine at `source`; on a clash it throws, having written nothing.
 - `gameLockfile` (function): The engine's package-lock.json for a game named `name`: the same tree, the root renamed.
 - `gameName` (function): A game's name: an npm package name, from the folder's name by default (`Dragon Run!` → `dragon-run`).
-- `gamePackage` (function): A game's package.json: the engine's pins and scripts; with `previous`, the game's own fields and dependencies.
+- `gamePackage` (function): A game's package.json: the engine's pins and scripts.
 - `main` (function): The command line; returns the exit code.
 - `render` (function): Fills a template's `{{name}}` and `{{engine.*}}`; any other placeholder is an error.
 - `TEMPLATES` (const): The game's root files: template (in tools/game/template/) → where it goes.
@@ -6458,6 +6461,7 @@ For the agents who maintain the engine.
 - `dispatch` (function): Runs `node x <argv…>`: dispatches to the command, prints its verdict and findings (about 20 lines at most), writes its report, and resolves to the exit code (0 pass, 1 fail, 2 usage error).
 - `DispatchOptions` (interface): Where `dispatch` finds commands and sends output; tests replace the parts they need.
 - `ENGINE_ONLY_COMMANDS` (const): The engine repository's own commands, which a game made from it does not have (see the file comment).
+- `engineOnly` (function): What naming one of the engine's own commands in a game says: what a game runs instead.
 - `fileComment` (function): Returns the text of a module's `@file` comment, without the comment markers and the `@file` tag.
 - `firstSentence` (function): The first sentence of a command's file comment: its one-line description in `x help`.
 - `isGame` (function): Whether `root` is a game made from the engine (it holds engine-lock.json), not the engine's own repository.

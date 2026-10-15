@@ -8,5 +8,6 @@
     "scene.test.ts.tmpl": "{{id}}.test.ts"
   },
   "checks": ["types", "lint", "test", "docs"],
-  "next": "make it show what its stage needs; keep a replay of it as {{id}}.test.ts's file comment says (x sim, copy to tests/replays/box-<stage>-{{name}}.replay.json, x replay <file> --browser sim --update, then --browser page); list it in labs/box/README.md's Scenes and, for a stage, in tests/e2e/parity-stages.ts's STAGES; then node x docs --write"
+  "next": "make it show what its stage needs; keep a replay of it as {{id}}.test.ts's file comment says (x sim, copy to tests/replays/box-<stage>-{{name}}.replay.json, x replay <file> --browser sim --update, then --browser page); list it in labs/box/README.md's Scenes and, for a stage, in tests/e2e/parity-stages.ts's STAGES; then node x docs --write",
+  "games": "this kind makes the box's scenes, on the box room's level; a game's new scene starts as a copy of labs/game/scenes/play.ts and its test, with a scene id of its own, and the page lists it in createEngine({ scenes })"
 }

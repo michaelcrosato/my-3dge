@@ -1,10 +1,11 @@
 /**
  * @file Unit tests for the guide's public API section (tools/lib/docsGameApi.ts; PLAN.md WP 12.4): the barrels' areas
- * are read in order with `export *` followed, every public value of the real barrels is named, the block between the
- * markers is replaced and nothing else, and the drift check fails a stale block or missing markers.
+ * are read in order with `export *` followed, every value the public API exports at run time is named, the block
+ * between the markers is replaced and nothing else, and the drift check fails a stale block, missing markers or a
+ * guide over its budget.
  * @see tools/lib/docsGameApi.ts
  */
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -45,11 +46,9 @@ describe('the public API by area', () => {
     expect(map.match(/defineMove/g)).toHaveLength(1);
   });
 
-  it('names every value the real barrels export', () => {
+  it('names every value the public API exports at run time', async () => {
     const map = apiMap(ROOT);
-    const names = ['engine/sim-api.ts', 'engine/anim/api.ts', 'engine/index.ts'].flatMap((file) =>
-      [...readFileSync(join(ROOT, file), 'utf8').matchAll(/^export \{ (\w+) \}/gm)].map((match) => match[1]),
-    );
+    const names = Object.keys(await import('../../engine/index'));
     expect(names.length).toBeGreaterThan(300);
     expect(names.filter((name) => !map.includes(`\`${name}\``))).toEqual([]);
   });

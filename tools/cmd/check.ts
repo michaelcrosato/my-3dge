@@ -7,9 +7,13 @@
  * The asset scan (doctrine: Assets) reads every file git tracks or would track. A binary file (by extension, magic
  * bytes or a NUL byte) passes only if `data/APPROVED-BINARIES.json` lists it, `{ path, escalation: "ESC-NNNN",
  * reason }`, with its record in `docs/escalations/`, or if it is a font (WOFF2, TTF, OTF) under `data/fonts/` with
- * its license beside it. A base64 run or `data:` URI over 1 KB fails too. Else: `x esc open --principle Assets`. A
- * file deleted between the listing and its read is skipped (`scanAssets`): at gate G6's review, `x new module --test`
- * wrote and removed its sample in the repository while a parallel `x check` scanned, which crashed on the read.
+ * its license beside it. A base64 run or `data:` URI over 1 KB fails too. Else: `x esc open --principle Assets`.
+ * In a game made from the engine (`isGame`, ADR-0024), which has no `x esc` and keeps the engine's files read-only, the
+ * game's own approvals are `APPROVED-BINARIES.json` at its root, `{ path, reason }` (the reason: the owner's answer),
+ * its fonts go anywhere in labs/game/ with their license beside them, and the engine's approvals stand as its
+ * repository checked them. A file deleted between the listing and its read is skipped (`scanAssets`): at gate G6's
+ * review, `x new module --test` wrote and removed its sample in the repository while a parallel `x check` scanned,
+ * which crashed on the read.
  *
  * Lane mode is detected: in a linked git worktree (`--git-dir` differs from `--git-common-dir`), an ultracode lane,
  * a `warnInLane` plugin (docs drift) only warns (§11.3). `X_LANE=0|1` overrides the detection.
@@ -22,7 +26,7 @@ import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, dirname, extname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { Finding } from '../lib/report';
-import { closest, commandNames, type Command, type CommandResult } from '../x';
+import { closest, commandNames, isGame, type Command, type CommandResult } from '../x';
 
 /** What a plugin is given: the repository root, and whether this checkout is an ultracode lane. */
 export interface CheckContext {
@@ -89,6 +93,31 @@ const APPROVALS = 'data/APPROVED-BINARIES.json';
 const APPROVAL_KEYS = ['path', 'escalation', 'reason'];
 const ASK =
   "needs the owner's approval: x esc open --principle Assets; once approved, list it in data/APPROVED-BINARIES.json with its escalation record. Meanwhile generate it, or keep it as readable text (doctrine: Assets)";
+/** A game's own approvals, and their keys (see the file comment). */
+const GAME_APPROVALS = 'APPROVED-BINARIES.json';
+const GAME_APPROVAL_KEYS = ['path', 'reason'];
+/** Where a game's fonts go: anywhere in the game's own folder, each with its license beside it. */
+const GAME_FONTS = 'labs/game/';
+const GAME_ASK =
+  'needs the owner\'s approval (AGENTS.md): ask them; once approved, list it in APPROVED-BINARIES.json as { "path", "reason" }, the reason their answer, who and when. Meanwhile generate it, or keep it as readable text (doctrine: Assets)';
+
+/** Where a repository keeps its approvals and fonts, and what a binary needs: the engine's own, or a game's. */
+interface AssetRules {
+  /** Approval files, each with its keys and whether an entry needs its escalation record. */
+  approvals: { file: string; keys: string[]; record: boolean }[];
+  fonts: string[];
+  ask: string;
+}
+
+/** The engine repository's rules; in a game, its approvals stand without their records, which stayed behind. */
+export function assetRules(game: boolean): AssetRules {
+  if (!game) return { approvals: [{ file: APPROVALS, keys: APPROVAL_KEYS, record: true }], fonts: ['data/fonts/'], ask: ASK }; // prettier-ignore
+  const approvals = [
+    { file: APPROVALS, keys: APPROVAL_KEYS, record: false },
+    { file: GAME_APPROVALS, keys: GAME_APPROVAL_KEYS, record: false },
+  ];
+  return { approvals, fonts: ['data/fonts/', GAME_FONTS], ask: GAME_ASK };
+}
 
 /** What binary format `bytes` (a file named `path`) is, or undefined for text. */
 export function binaryKind(path: string, bytes: Buffer): string | undefined {
@@ -114,52 +143,54 @@ export function repositoryFiles(root: string): string[] {
 /** The 1-based line of character `index` in `text`. */
 const lineAt = (text: string, index: number) => text.slice(0, index).split('\n').length;
 
-/** Reads the approved binaries: path → escalation id, plus a finding for each malformed entry. */
-function readApprovals(root: string): { approved: Map<string, string>; failures: Finding[]; warnings: Finding[] } {
+/** Reads one approvals file: path → its approval, plus a finding for each malformed entry. */
+function readApprovals(
+  root: string,
+  { file, keys, record }: AssetRules['approvals'][number],
+): { approved: Map<string, string>; failures: Finding[]; warnings: Finding[] } {
   const approved = new Map<string, string>();
   const failures: Finding[] = [];
   const warnings: Finding[] = [];
-  const fail = (message: string) => failures.push({ id: 'ASSET_APPROVALS', message, file: APPROVALS });
-  if (!existsSync(join(root, APPROVALS))) return { approved, failures, warnings };
+  const fail = (message: string) => failures.push({ id: 'ASSET_APPROVALS', message, file });
+  if (!existsSync(join(root, file))) return { approved, failures, warnings };
   let entries: unknown;
   try {
-    entries = JSON.parse(readFileSync(join(root, APPROVALS), 'utf8'));
+    entries = JSON.parse(readFileSync(join(root, file), 'utf8'));
   } catch (error) {
-    fail(`${APPROVALS} is not valid JSON: ${(error as Error).message}`);
+    fail(`${file} is not valid JSON: ${(error as Error).message}`);
     return { approved, failures, warnings };
   }
   if (!Array.isArray(entries)) {
-    fail(`${APPROVALS} must be a JSON array of { path, escalation, reason }`);
+    fail(`${file} must be a JSON array of { ${keys.join(', ')} }`);
     return { approved, failures, warnings };
   }
   entries.forEach((entry: Record<string, unknown>, i) => {
-    const at = `${APPROVALS}[${i}]`;
+    const at = `${file}[${i}]`;
     for (const key of Object.keys(entry ?? {})) {
-      if (!APPROVAL_KEYS.includes(key)) {
-        const near = closest(key, APPROVAL_KEYS);
-        fail(
-          `${at} has an unknown key "${key}"${near ? `: did you mean "${near}"?` : ''} (keys: path, escalation, reason)`,
-        );
+      if (!keys.includes(key)) {
+        const near = closest(key, keys);
+        fail(`${at} has an unknown key "${key}"${near ? `: did you mean "${near}"?` : ''} (keys: ${keys.join(', ')})`);
       }
     }
     const { path, escalation, reason } = entry ?? {};
-    if (typeof path !== 'string' || typeof reason !== 'string' || !reason || typeof escalation !== 'string') {
-      return fail(`${at} needs a path, an escalation ("ESC-NNNN") and a reason`);
+    const needsRecord = keys.includes('escalation');
+    if (
+      typeof path !== 'string' ||
+      typeof reason !== 'string' ||
+      !reason ||
+      (needsRecord && typeof escalation !== 'string')
+    ) {
+      return fail(`${at} needs ${needsRecord ? 'a path, an escalation ("ESC-NNNN") and a reason' : 'a path and a reason (the owner\'s answer)'}`); // prettier-ignore
     }
     const records = existsSync(join(root, 'docs/escalations')) ? readdirSync(join(root, 'docs/escalations')) : [];
-    if (!/^ESC-\d{4}$/.test(escalation) || !records.some((name) => name.startsWith(`${escalation}-`))) {
-      return fail(
-        `${at} approves ${path} with "${escalation}", but no record docs/escalations/${escalation}-*.md exists`,
-      );
+    const id = String(escalation);
+    if (record && (!/^ESC-\d{4}$/.test(id) || !records.some((name) => name.startsWith(`${id}-`)))) {
+      return fail(`${at} approves ${path} with "${id}", but no record docs/escalations/${id}-*.md exists`);
     }
     if (!existsSync(join(root, path))) {
-      warnings.push({
-        id: 'ASSET_STALE',
-        message: `${at} approves ${path}, which no longer exists: remove the entry`,
-        file: APPROVALS,
-      });
+      warnings.push({ id: 'ASSET_STALE', message: `${at} approves ${path}, which no longer exists: remove the entry`, file }); // prettier-ignore
     }
-    approved.set(path, escalation);
+    approved.set(path, typeof escalation === 'string' ? escalation : reason);
   });
   return { approved, failures, warnings };
 }
@@ -194,7 +225,11 @@ export const assetScan: CheckPlugin = {
  * skipped, never counted: it is no asset, and reading it would crash the scan (see the file comment).
  */
 export function scanAssets(root: string, files: readonly string[]): CheckOutcome {
-  const { approved, failures, warnings } = readApprovals(root);
+  const rules = assetRules(isGame(root));
+  const read = rules.approvals.map((file) => readApprovals(root, file));
+  const approved = new Map(read.flatMap((one) => [...one.approved]));
+  const failures = read.flatMap((one) => one.failures);
+  const warnings = read.flatMap((one) => one.warnings);
   let scanned = 0;
   let binaries = 0;
   let fonts = 0;
@@ -207,7 +242,7 @@ export function scanAssets(root: string, files: readonly string[]): CheckOutcome
       binaries++;
       const extension = extname(file).slice(1).toLowerCase();
       if (approved.has(file)) continue;
-      if (FONT_EXTENSIONS.has(extension) && file.startsWith('data/fonts/')) {
+      if (FONT_EXTENSIONS.has(extension) && rules.fonts.some((dir) => file.startsWith(dir))) {
         const beside = readdirSync(join(root, dirname(file))).filter((name) => name !== basename(file));
         if (beside.some((name) => LICENSE_NAME.test(name))) fonts++;
         else {
@@ -215,21 +250,21 @@ export function scanAssets(root: string, files: readonly string[]): CheckOutcome
           failures.push({ id: 'ASSET_FONT_LICENSE', message, file });
         }
       } else if (FONT_EXTENSIONS.has(extension)) {
-        const message = `${file} is a font outside data/fonts/: fonts are pre-approved only there, each with its license file beside it`;
+        const message = `${file} is a font outside ${rules.fonts.join(' and ')}: fonts are pre-approved only there, each with its license file beside it`;
         failures.push({ id: 'ASSET_FONT_PLACE', message, file });
       } else {
-        failures.push({ id: 'ASSET_BINARY', message: `${file} is ${kind}: it ${ASK}`, file });
+        failures.push({ id: 'ASSET_BINARY', message: `${file} is ${kind}: it ${rules.ask}`, file });
       }
       continue;
     }
     const text = bytes.toString('utf8');
     for (const match of text.matchAll(DATA_URI)) {
       if (match[1].length <= MAX_EMBEDDED) continue;
-      const message = `${file} embeds a data: URI of ${match[1].length} characters (over 1 KB): an embedded binary ${ASK}`;
+      const message = `${file} embeds a data: URI of ${match[1].length} characters (over 1 KB): an embedded binary ${rules.ask}`;
       failures.push({ id: 'ASSET_DATA_URI', message, file, line: lineAt(text, match.index) });
     }
     for (const match of text.replace(DATA_URI, (uri) => ' '.repeat(uri.length)).matchAll(BASE64_RUN)) {
-      const message = `${file} holds a base64 run of ${match[0].length} characters (over 1 KB): an embedded binary ${ASK}`;
+      const message = `${file} holds a base64 run of ${match[0].length} characters (over 1 KB): an embedded binary ${rules.ask}`;
       failures.push({ id: 'ASSET_BASE64', message, file, line: lineAt(text, match.index) });
     }
   }

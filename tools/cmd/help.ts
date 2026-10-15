@@ -17,7 +17,10 @@ import {
   closest,
   commandHelp,
   commandNames,
+  ENGINE_ONLY_COMMANDS,
+  engineOnly,
   firstSentence,
+  isGame,
   loadCommand,
   MAX_LINES,
   UsageError,
@@ -55,6 +58,7 @@ export default {
       };
     }
     if (!names.includes(wanted)) {
+      if (isGame(root) && ENGINE_ONLY_COMMANDS.includes(wanted)) throw new UsageError(engineOnly(wanted));
       const near = closest(wanted, names);
       throw new UsageError(`there is no command "${wanted}": ${near ? `did you mean ${near}?` : names.join(', ')}`);
     }

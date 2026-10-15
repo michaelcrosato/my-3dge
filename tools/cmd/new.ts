@@ -6,7 +6,8 @@
  * `describe` (one sentence), `id` (what an id looks like), `pattern` (a regular expression every id must match),
  * `sample` (the id `--test` writes), `files` (template file → target path), `checks`, and optionally `next` (what to
  * do after writing one, printed in place of the generic "replace the placeholder text, then node x docs --write"; in a
- * game, where `x docs` is the engine's own, `nextIn` names the game's checks instead).
+ * game, where `x docs` is the engine's own, `nextIn` names the game's checks instead) and `games` (for a kind that
+ * makes no entry in a game, ADR-0024, what a game does instead: `x new` says it there and writes nothing).
  * Template files, targets and `next` hold `{{id}}` (the id as given), `{{name}}` (its last segment) and `{{dir}}`
  * (the rest); any other placeholder, or any other manifest key, is an error. Written files are formatted by Prettier,
  * and each doc comment paragraph a filled-in id runs past 120 columns is rewrapped, since Prettier never rewraps one.
@@ -58,9 +59,11 @@ export interface Kind {
   checks: CheckName[];
   /** What to do after writing one, when the generic `NEXT` is not enough (the scene's replay steps). */
   next?: string;
+  /** For a kind that makes no entry in a game (ADR-0024: the box's scenes), what a game does instead. */
+  games?: string;
 }
 
-const KEYS = ['describe', 'id', 'pattern', 'sample', 'files', 'checks', 'next'];
+const KEYS = ['describe', 'id', 'pattern', 'sample', 'files', 'checks', 'next', 'games'];
 /** What to do after writing an entry of a kind whose manifest has no `next`. */
 export const NEXT = 'replace the placeholder text, then node x docs --write';
 
@@ -91,8 +94,10 @@ export function listKinds(root: string): Kind[] {
       for (const key of ['describe', 'id', 'pattern', 'sample']) {
         if (typeof manifest[key] !== 'string' || !manifest[key]) fail(`"${key}" must be a non-empty string`);
       }
-      if ('next' in manifest && (typeof manifest.next !== 'string' || !manifest.next))
-        fail('"next", when present, must be a non-empty string');
+      for (const key of ['next', 'games']) {
+        if (key in manifest && (typeof manifest[key] !== 'string' || !manifest[key]))
+          fail(`"${key}", when present, must be a non-empty string`);
+      }
       const files = manifest.files as Record<string, unknown>;
       if (!files || typeof files !== 'object' || !Object.keys(files).length)
         fail('"files" maps template files to targets');
@@ -367,6 +372,7 @@ export default {
         target: kind.kind,
       };
     }
+    if (isGame(root) && kind.games) throw new UsageError(`x new ${kind.kind} makes no entry in a game: ${kind.games}`);
     if (!id) throw new UsageError(`name the new ${kind.kind}: ${kind.id}`);
     const written = writeFiles(root, await render(root, kind, id));
     const result = await runChecks(root, kind, written);

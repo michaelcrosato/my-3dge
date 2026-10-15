@@ -37,12 +37,16 @@ const manifest = (extra: object = {}) =>
     ...extra,
   });
 
-describe('nextIn', () => {
-  it('names the game’s checks in a game, where x docs is the engine’s own command', () => {
+describe('in a game', () => {
+  it('names the game’s checks where x docs is the engine’s own command, and refuses a kind made for the box', async () => {
     const game = mkdtempSync(join(tmpdir(), 'x-new-game-'));
     writeFileSync(join(game, 'engine-lock.json'), '{}');
+    cpSync(join(ROOT, 'tools', 'templates'), join(game, 'tools', 'templates'), { recursive: true });
     expect(nextIn(ROOT, NEXT)).toBe(NEXT);
     expect(nextIn(game, NEXT)).toBe('replace the placeholder text, then npm run check and npm test');
+    const run = command.run({ root: game, values: {}, positionals: ['scene', 'labs/game/scenes/level2'] });
+    await expect(run).rejects.toThrow(/x new scene makes no entry in a game: .*copy of labs\/game\/scenes\/play\.ts/);
+    expect(existsSync(join(game, 'labs'))).toBe(false);
     rmSync(game, { recursive: true, force: true });
   });
 });

@@ -14,6 +14,7 @@ import {
   commandNames,
   dispatch,
   ENGINE_ONLY_COMMANDS,
+  engineOnly,
   firstSentence,
   isGame,
   loadCommand,
@@ -198,6 +199,8 @@ describe('in a game made from the engine', () => {
     const game = root(true);
     expect(await dispatch(['ci'], { root: game, print: (line) => lines.push(line) })).toBe(2);
     expect(lines[1]).toMatch(/^X_ENGINE_ONLY: x ci belongs to the engine's own repository.*npm run check and npm test/);
+    const help = await loadCommand(ROOT, 'help');
+    await expect(help.run({ root: game, values: {}, positionals: ['docs'] })).rejects.toThrow(engineOnly('docs'));
   });
 });
 

@@ -164,14 +164,19 @@ function endRound(w: World<GameComponents>, round: Round, state: 'won' | 'lost')
   w.emit(state, { collected: round.collected, gems: round.gems, left: round.left });
 }
 
-/** Spins the gems, collects those the player's feet reach, and ends the round when the last one goes. */
+/**
+ * Spins the gems, collects those an actor's feet reach, and ends the round when the last one goes. A despawn waits for
+ * the end of the step, so a gem taken this step is remembered: two actors never count it twice.
+ */
 function collect(w: World<GameComponents>): void {
   const [{ round }] = w.query('round');
   for (const gem of w.query('gem')) gem.gem.yaw += 2 * w.dt;
   if (round.state !== 'playing') return;
+  const taken = new Set<number>();
   for (const { actor } of w.query('actor')) {
     for (const gem of w.query('gem')) {
-      if (Math.hypot(gem.gem.x - actor.x, gem.gem.z - actor.z) > REACH) continue;
+      if (taken.has(gem.id) || Math.hypot(gem.gem.x - actor.x, gem.gem.z - actor.z) > REACH) continue;
+      taken.add(gem.id);
       w.despawn(gem.id);
       round.collected += 1;
       w.emit('gem', { id: gem.id, x: gem.gem.x, z: gem.gem.z, collected: round.collected });

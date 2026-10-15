@@ -44,7 +44,11 @@ export function gamePackage(
   engine: PackageJson,
   name: string,
   previous?: PackageJson,
-  before?: { dependencies?: Record<string, string>; devDependencies?: Record<string, string> },
+  before?: {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+    scripts?: Record<string, string>;
+  },
 ): PackageJson;
 export function gameLockfile<T extends { name: string; packages: Record<string, object> }>(
   engineLock: T,
