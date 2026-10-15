@@ -14,8 +14,7 @@ ledger's row C1):
 - Proofs: preciseHits parity (box-5-precise), the steps, nav-1000 and lift replays, every replay in Chromium at each
   gate (`LONG_RUNS`), browser examples run in T2 (tests/e2e/examples.spec.ts), the cold CMU import.
 - The fight's sound timeline: 77 sounds, 288bca340783f86f, in Node and Chromium.
-- CI: T2's budget goes by machine size (60 min on 1 worker here, 9 min from 16 cores; ADR-0022 amendment 2), and
-  .github/workflows/ci.yml runs the same `node x ci --local` on pull requests and pushes to main (ESC-0001).
+- CI: T2's budget goes by machine size (60 min on 1 worker here, 9 min from 16 cores; ADR-0022 amendment 2).
 
 ## What waits, by design
 

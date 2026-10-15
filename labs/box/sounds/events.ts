@@ -10,8 +10,8 @@
  *   `sfx:whoosh` under it;
  * - the fight's (labs/box/scenes/fight-rules.ts): `hit`, `sfx:boxHit`, louder the bigger the blow, at most 0.5 (after
  *   G9: a sweep's four hits and a death at once, box-5-fight at 9.3 s, peaked at 1.54 in `x audio --replay`'s
- *   unspatialized mix and now at 0.80, −2 dBFS); `shot`, a bolt launched, `sfx:boxLaunch`; `slam`, a pounce landing, `sfx:boxThud`; `slain`, `sfx:boxDeath`, which ducks the music
- *   and ambience while it plays;
+ *   unspatialized mix and now at 0.80, −2 dBFS); `shot`, a bolt launched, `sfx:boxLaunch`; `slam`, a pounce landing,
+ *   `sfx:boxThud`; `slain`, `sfx:boxDeath`, which ducks the music and ambience while it plays;
  * - every other event (`damage`, `lap`…) plays nothing.
  *
  * `createSoundReader().read(world, level)` maps the events a world has delivered since the last read, in order, each
@@ -19,7 +19,7 @@
  * each event at the frame's last step. A new world (a restart, a replay) is read from its first event.
  * `timelineHash` hashes a timeline (FNV-1a, 64 bits, over its JSON), the one number Node and the browser compare.
  * `boxSounds(level)` is the same map as a scene's `sounds` hook (engine/sim/scene.ts), so `x audio --replay` mixes in
- * Node what the page plays (after G9, ADR-0013 amendment 4): sim-side, it imports only engine/sim-api.ts.
+ * Node what the page plays (after G9, ADR-0013 amendment 3): sim-side, it imports only engine/sim-api.ts.
  *
  * Invariants: pure reads: the world and its events are never changed, and nothing here plays a sound. Positions are
  * world space, metres, as the sim gives them, so the same run gives the same bits everywhere. An actor's events

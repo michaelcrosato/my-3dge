@@ -142,7 +142,7 @@ Differential tests against the ported reference vectors (WP 0.11); the animation
   fixes than it saved, so the layer is plain: it keeps no state and gives the same pose at any step.
 - **What it settled.** Amendment 3's floor sinks (kneel, crouch, dash, guard, on every build) are 0 through an
   animator with the layer; 29 of the 30 underFloor entries of tests/baselines/qa-anim.json went stale and were
-  removed, 11 entries tightened. Three moved, each with its reason: action:roll's footSlide (0.2418 → 0.5843: the soles
+  removed, 14 entries tightened. Three moved, each with its reason: action:roll's footSlide (0.2418 → 0.5843: the soles
   now stand on the floor through the dip and the rise, inside the slide check), reaction:fallFront's underFloor
   (+0.1 mm) and a new rateDrift for action:techRoll (0.039 m at one frame as it rolls up from lying).
 - Evidence: `engine/anim/footPlant.test.ts`, `engine/anim/authoring.test.ts`, `node x qa anim`.

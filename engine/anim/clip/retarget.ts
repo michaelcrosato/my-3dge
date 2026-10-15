@@ -4,12 +4,12 @@
  * (ik.ts `twoBoneRot`) and lifts a pose that dips below the floor; `clipJSON` makes the same tracks three.js's
  * `AnimationClip` JSON for one skeleton, so a page can play them with an `AnimationMixer`, for presentation only.
  *
- * The rest body's own skeleton (engine/anim/clip/rest.ts's `restSkeleton`, split from here after G9) is the source
- * the copy reads. On another skeleton the copy is aligned at rest: each spine bone, the neck, the head and each foot
- * and toe turns so its bone points where the rest body's does (a build's straight spine takes the library's curve);
- * the limbs' bones run the same way on both, so their rotations copy unchanged. What a build's layout still moves (shoulders in line with the
- * neck; hips level with the pelvis, so its spine stands on its hips, 10 cm under CMU's pelvis and 5 cm ahead of
- * Quaternius') is measured on the mannequin in tests/baselines/anim-clips.json.
+ * The rest body's own skeleton (engine/anim/clip/rest.ts's `restSkeleton`, split from here after G9) is the source the
+ * copy reads. On another skeleton the copy is aligned at rest: each spine bone, the neck, the head and each foot and
+ * toe turns so its bone points where the rest body's does (a build's straight spine takes the library's curve); the
+ * limbs' bones run the same way on both, so their rotations copy unchanged. What a build's layout still moves
+ * (shoulders in line with the neck; hips level with the pelvis, so its spine stands on its hips, 10 cm under CMU's
+ * pelvis and 5 cm ahead of Quaternius') is measured on the mannequin in tests/baselines/anim-clips.json.
  *
  * From my-3d2dge's `drive` (`my-3d2dge:src/mocap/mocap.js`), its ideas on the rotation skeleton: the legs hang from
  * the hip joints' centre, scaled (`hipC`, `mocap.js:200`); the sole, not the ankle, goes to the floor; a clip that

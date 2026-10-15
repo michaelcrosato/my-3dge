@@ -3,11 +3,11 @@
  * with shardfall's WebGPU flags, against a Vite dev server it starts itself.
  *
  * Invariants: the launch options come from `tools/lib/browser.ts`, so `x` commands open pages the same way. Vite
- * listens on `$PORT` (default 5173; each ultracode lane sets its own) and is never shared with another run. One
- * worker per 4 cores, from 1 to 4 (tools/lib/tiers.ts `t2Workers`, which also sets T2's budget; ADR-0014 amendment
- * 15): SwiftShader draws on the CPU, so Chromiums that share too few cores push the parity replays past their
- * timeouts, and parallel lanes don't starve Chromium. A lane's `--workers` overrides it. The `line` reporter prints; the `json` reporter writes `out/e2e/report.json`.
- * Suites import `test` and `expect` from `tests/e2e/fixtures.ts`.
+ * listens on `$PORT` (default 5173; each ultracode lane sets its own) and is never shared with another run. One worker
+ * per 4 cores, from 1 to 4 (tools/lib/tiers.ts `t2Workers`, which also sets T2's budget; ADR-0014 amendment 15):
+ * SwiftShader draws on the CPU, so Chromiums that share too few cores push the parity replays past their timeouts, and
+ * parallel lanes don't starve Chromium. A lane's `--workers` overrides it. The `line` reporter prints; the `json`
+ * reporter writes `out/e2e/report.json`. Suites import `test` and `expect` from `tests/e2e/fixtures.ts`.
  *
  * @see tests/e2e/fixtures.ts
  */

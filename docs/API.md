@@ -3437,7 +3437,7 @@ For the agents who maintain the engine.
 ### [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)
 
 - `chainOf` (function): A whole chain from part of one: every filter and field `spec` leaves out at its default (off).
-- `colorProblem` (function): Checks an outline colour: '' (the line darkens the surface), hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js knows (`Color.NAMES`), the forms `new Color` reads without a warning.
+- `colorProblem` (function): Checks an outline colour: '' (the line darkens the surface), hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js knows (`Color.NAMES`).
 - `createFilterUniforms` (function): Makes the composite's uniforms, every filter off.
 - `FILTER_FIELDS` (const): The filters of a chain; see the file comment.
 - `FILTER_NAMES` (const): Every filter, in the composite's order (bloom and aa run before it).

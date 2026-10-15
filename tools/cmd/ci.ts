@@ -1,7 +1,7 @@
 /**
- * @file The merge gate (PLAN.md §8.9, WP 0.9): `x ci --local` runs `CI_STEPS` in order on this machine, holds the
- * tiers to their budgets (tools/lib/tiers.ts), writes `out/ci/summary.md` (tools/lib/ciSummary.ts) and, when everything passed, records HEAD
- * in `out/ci/last-green`, the base of the selections until main holds a gate.
+ * @file The merge gate (PLAN.md §8.9, WP 0.9): `x ci --local` runs `CI_STEPS` in order on this machine, holds the tiers
+ * to their budgets (tools/lib/tiers.ts), writes `out/ci/summary.md` (tools/lib/ciSummary.ts) and, when everything
+ * passed, records HEAD in `out/ci/last-green`, the base of the selections until main holds a gate.
  *
  * - **Steps:** `npm ci`, `x src`, `npm run check` (with `x deps --check` and `x docs --check`), `npm test`,
  *   `x port refs --check`, `x new --test-all` and `npm run e2e`, each from the root with its output kept in

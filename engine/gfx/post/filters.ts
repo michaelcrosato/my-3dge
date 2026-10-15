@@ -236,7 +236,8 @@ export function levelsProblem(levels: number, where: string): string | null {
 
 /**
  * Checks an outline colour: '' (the line darkens the surface), hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js
- * knows (`Color.NAMES`), the forms `new Color` reads without a warning.
+ * knows (`Color.NAMES`). `new Color` also reads `rgb()` and `hsl()`; a look writes those as hex, so data keeps one form
+ * of each colour, and they are refused too.
  */
 export function colorProblem(color: string, where: string): string | null {
   const known =

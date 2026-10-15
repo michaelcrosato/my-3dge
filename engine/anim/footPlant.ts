@@ -1,8 +1,8 @@
 /**
- * @file The post-IK foot plant (PLAN.md WP 3.5, I-11; the animator's `post` slot, WP 3.7, built after G9):
- * `footPlant` stands the feet on probed ground (with a `state`, a foot in stance locks where it landed), and `FootPlant`
- * is the layer that runs it last in the animator's `post` slot, after Actions' effector solve (engine/anim/actions.ts),
- * on a flat floor at the body's height. Moved here from engine/anim/ik.ts with the layer (ADR-0009 amendment 8), so the
+ * @file The post-IK foot plant (PLAN.md WP 3.5, I-11; the animator's `post` slot, WP 3.7, built after G9): `footPlant`
+ * stands the feet on probed ground (with a `state`, a foot in stance locks where it landed), and `FootPlant` is the
+ * layer that runs it last in the animator's `post` slot, after Actions' effector solve (engine/anim/actions.ts), on a
+ * flat floor at the body's height. Moved here from engine/anim/ik.ts with the layer (ADR-0009 amendment 8), so the
  * solvers there stay under 400 lines.
  *
  * The layer locks no foot (ADR-0009 amendment 8): locks in stance fixed 30 of the anim QA's foot slides but held feet
@@ -12,11 +12,12 @@
  * and toe on the floor (the kneel's, crouch's, dash's and guard's sinks) and keeps no state.
  *
  * Where it runs (ADR-0009 amendment 8): the view's puppets (engine/gfx/puppets/actors.ts, faded out under an actor's
- * clips, which plant their own feet) and the anim QA family's humanoids (tools/qa/anim.ts) attach it; the sim's precise-hit posing (engine/sim/actors.ts) does not, so the
- * trail it hashes is the animation's own and the plant stays presentation, as LOD 1 already drops the `post` slot.
+ * clips, which plant their own feet) and the anim QA family's humanoids (tools/qa/anim.ts) attach it; the sim's
+ * precise-hit posing (engine/sim/actors.ts) does not, so the trail it hashes is the animation's own and the plant stays
+ * presentation, as LOD 1 already drops the `post` slot.
  *
  * Invariants: it writes `rootPos.y` (the pelvis drop) and the legs' local rotations, then runs FK; it treats the root
- * scale as uniform; nothing reads a clock or a random stream. The layer keeps only its own locks.
+ * scale as uniform; nothing reads a clock or a random stream. The layer keeps nothing between ticks.
  *
  * @example
  * import { Vector3 } from '../core/math';
@@ -104,10 +105,11 @@ const plans = SIDES.map(([foot]) => ({ foot, hit: false, ankle: new Vector3(), r
 const hit: GroundHit = { point: new Vector3(), normal: new Vector3() };
 
 /**
- * Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift
- * above the floor (`options.floor`) over the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot
- * needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it
- * landed. Run it on each tick's fresh pose, after the animation. Runs FK; returns the pelvis drop in metres.
+ * Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above
+ * the floor (`options.floor`) over the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as
+ * far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays
+ * locked where it landed. Run it on each tick's fresh pose, after the animation. Runs FK; returns the pelvis drop in
+ * metres.
  */
 export function footPlant(
   skeleton: Skeleton,

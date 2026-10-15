@@ -12,7 +12,7 @@
  * `level` names the level it loads (WP 2.2 compiles it); `physics: true` gives it a physics world (physicsOf, WP 3.1).
  * `sounds(record, w)` says which sound a traced sim event plays, `{ sfx, vol?, variant? }` or null, for `x audio
  * --replay` (WP 9.4): by default the event payload's own (`payloadSound`); a game that maps its events to sounds sets
- * its map here, so Node hears what its pages play (after G9, ADR-0013 amendment 4).
+ * its map here, so Node hears what its pages play (after G9, ADR-0013 amendment 3).
  * Seeds are whole numbers from 0 (`checkSeed`, `SIM_BAD_SEED`).
  *
  * Invariants: a scene's `settings` are checked against the settings schema when it is defined (`CORE_BAD_SPEC`
