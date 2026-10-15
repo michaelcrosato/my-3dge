@@ -60,6 +60,14 @@ describe('the look kind', () => {
     expect(defineLook('look:fine', { filters: { pixel: { scope: 'all', levels: 24 } } }, registry).filters.pixel.levels).toBe(24); // prettier-ignore
   });
 
+  it('refuses an outline colour that is none, naming the forms it takes (GFX_POST_BAD_COLOR in a layer)', () => {
+    const registry = looks();
+    const typo = () => defineLook('look:inky', { filters: { outline: { scope: 'all', color: 'blakc' } } }, registry);
+    expect(typo).toThrow(/filters\.outline\.color is "blakc", which is no colour: give hex/);
+    for (const color of ['#1a1a2e', '#f00', 'Black', ''])
+      expect(defineLook(`look:ink-${color.replace('#', '') || 'darken'}`, { filters: { outline: { scope: 'all', color } } }, registry).filters.outline.color).toBe(color); // prettier-ignore
+  });
+
   it('falls back to the clean look for a missing id, with a warning naming the fix', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {

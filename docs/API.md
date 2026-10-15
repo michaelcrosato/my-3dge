@@ -3434,6 +3434,7 @@ For the agents who maintain the engine.
 ### [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)
 
 - `chainOf` (function): A whole chain from part of one: every filter and field `spec` leaves out at its default (off).
+- `colorProblem` (function): Checks an outline colour: '' (the line darkens the surface), hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js knows (`Color.NAMES`), the forms `new Color` reads without a warning.
 - `createFilterUniforms` (function): Makes the composite's uniforms, every filter off.
 - `FILTER_FIELDS` (const): The filters of a chain; see the file comment.
 - `FILTER_NAMES` (const): Every filter, in the composite's order (bloom and aa run before it).
@@ -3441,6 +3442,7 @@ For the agents who maintain the engine.
 - `FilterName` (type): A filter's name.
 - `FilterSpec` (type): Part of a chain: some filters, each with some of its fields (a look's `filters`, the setting `post.filters`).
 - `FilterUniforms` (interface): The composite's uniforms: one vec4 per filter (and a second for the long ones), render-group, set up once.
+- `fixColor` (function): `spec` with an outline colour `colorProblem` refuses left out, so the line darkens the surface, and that colour (null when there was none): a layer over a look (the setting `post.filters`) is fixed and reported this way.
 - `fixLevels` (function): `spec` with every level count of 1–7 raised to 8 (see the file comment), and what was raised: a layer over a look (the setting `post.filters`) is fixed and reported this way; looks are checked when they are defined.
 - `isPlain` (function): Whether `chain` has every filter off, so it would leave the picture as the scene draws it (`look:clean`).
 - `layerChain` (function): `chain` with `over` laid on it, filter by filter and field by field.

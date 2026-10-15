@@ -53,6 +53,7 @@ import { AA_CHOICE, createAa, gateUpdates, type Aa, type AaKind } from './aa';
 import { createComposite, POST_SHOW, type PostShow } from './composite';
 import {
   createFilterUniforms,
+  fixColor,
   fixLevels,
   isPlain,
   layerChain,
@@ -196,10 +197,12 @@ export function createPost(gfx: { renderer: WebGPURenderer }, options: PostOptio
     const over = settings.get('post.filters');
     if (resolved && resolved.id === id && resolved.over === over) return resolved;
     const look = registry.get('look', id) as LookEntry;
-    const { spec, raised } = fixLevels(over as FilterSpec);
+    const { spec: levelled, raised } = fixLevels(over as FilterSpec);
     for (const { name, levels } of raised) {
       log.warnOnce('GFX_POST_FEW_LEVELS', { where: `post.filters.${name}.levels`, levels }, name);
     }
+    const { spec, dropped } = fixColor(levelled);
+    if (dropped !== null) log.warnOnce('GFX_POST_BAD_COLOR', { color: JSON.stringify(dropped) }, dropped);
     resolved = { id, over, look, chain: layerChain(look.filters, spec) };
     return resolved;
   };

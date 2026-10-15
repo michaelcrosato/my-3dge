@@ -192,7 +192,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
       compares performance.now ratios; tools/cmd/describe.test.ts:232-237 waits a real 3 s; tools/anim/
       library.test.ts:27-29 asserts under 50 ms. Make each assert a count (calls, reads) or use an injected timer,
       guarding the same thing; the reason goes in the commit.
-- [ ] 6.6 **`outline.color` is not validated** (WP 7.4): `checkLook` checks only the levels
+- [x] 6.6 **`outline.color` is not validated** (WP 7.4): `checkLook` checks only the levels
       (engine/gfx/post/looks.ts:235-241), and engine/gfx/post/filters.ts:324 passes any string to `new Color`. Add a
       colour problem beside `levelsProblem` (filters.ts:227), with its code (GFX_POST_BAD_COLOR, as WP 7.4's note
       proposed). Prove: a looks.test.ts case.

@@ -631,7 +631,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `CompositeInputs`, `createComposite`, `POST_SHOW`, `PostShow`
   - Tests: [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`filters.ts`](../engine/gfx/post/filters.ts): The filters (PLAN.md WP 7.4, §6.7): what each one takes, as data, and the uniforms the composite reads them through.
-  - Exports: `chainOf`, `createFilterUniforms`, `FILTER_FIELDS`, `FILTER_NAMES`, `FilterChain`, `FilterName`, `FilterSpec`, `FilterUniforms`, `fixLevels`, `isPlain`, `layerChain`, `levelsProblem`, `PALETTES`, `partialSchema`, `Scope`, `scopeMask`, `SCOPES`, `SCREEN_SCOPES`, `STYLIZE_KINDS`, `writeFilters`
+  - Exports: `chainOf`, `colorProblem`, `createFilterUniforms`, `FILTER_FIELDS`, `FILTER_NAMES`, `FilterChain`, `FilterName`, `FilterSpec`, `FilterUniforms`, `fixColor`, `fixLevels`, `isPlain`, `layerChain`, `levelsProblem`, `PALETTES`, `partialSchema`, `Scope`, `scopeMask`, `SCOPES`, `SCREEN_SCOPES`, `STYLIZE_KINDS`, `writeFilters`
   - Tests: [`engine/gfx/post/filters.test.ts`](../engine/gfx/post/filters.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`looks.ts`](../engine/gfx/post/looks.ts): Looks (PLAN.md WP 7.4, §6.6 kind `look`): a material style (WP 7.2, engine/gfx/materials/styles.ts) plus a filter chain (engine/gfx/post/filters.ts), as data, and the sky that lights the scene (WP 7.8, a `sky` id, engine/gfx/sky.ts).
   - Exports: `defineLook`, `defineLooks`, `LOOK_FIELDS`, `LOOK_GROUPS`, `LookEntry`, `LOOKS`, `LookSpec`

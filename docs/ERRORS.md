@@ -791,6 +791,14 @@ Advice from an outline shell's push (engine/gfx/materials/outline.ts), once, whe
 
 Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipelines` no longer has r182's shape, usually after a three.js upgrade: the count of pipelines three.js keeps cached is then unknown (null). Builds are counted at the device and stay exact.
 
+### GFX_POST_BAD_COLOR
+
+- Message: `post.filters.outline.color is {color}, which is no colour: the outline darkens the surface instead`
+- Fix: give hex ('#1a1a2e'), a CSS colour name ('black') or '' to darken the surface
+- Registered in: [`engine/gfx/post/settings.ts` line 37](../engine/gfx/post/settings.ts)
+
+Advice from the post chain when `post.filters` sets an outline colour that is none; looks are checked when they are defined.
+
 ### GFX_POST_FEW_LEVELS
 
 - Message: `{where} asks for {levels} levels per channel; the chain draws 8`
@@ -803,7 +811,7 @@ Advice from the post chain when `post.filters` sets 1–7 levels; looks are chec
 
 - Message: `{missed} objects draw as the environment: the flag table has {slots} slots, all taken`
 - Fix: draw fewer separate objects (instance or merge them); slots come back as their objects are collected
-- Registered in: [`engine/gfx/post/settings.ts` line 37](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 42](../engine/gfx/post/settings.ts)
 
 Advice from the post chain: more live drawable objects than the fixed MRT’s flag table holds (engine/gfx/post/mrt.ts).
 
@@ -819,7 +827,7 @@ Advice from the post chain (engine/gfx/post/chain.ts): the look asks for bloom, 
 
 - Message: `{look} asks for the material style {style}, but the chain has no style set: it draws only its filters`
 - Fix: give createPost a style set (createStyleSet, WP 7.2) as options.styles, attached to the warm-up, so looks change the materials too
-- Registered in: [`engine/gfx/post/settings.ts` line 42](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 47](../engine/gfx/post/settings.ts)
 
 Advice from the post chain (engine/gfx/post/chain.ts): a look with a material style, drawn by a chain made without `styles`.
 

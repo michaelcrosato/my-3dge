@@ -34,6 +34,11 @@ export const POST_CODES = defineCodes('gfx', {
     fix: 'posterize with 0 (off) or 8 levels and more: fewer shift the hue of dull colours (shardfall measured a grey floor turning pink)',
     doc: 'Advice from the post chain when `post.filters` sets 1–7 levels; looks are checked when they are defined.',
   },
+  GFX_POST_BAD_COLOR: {
+    template: 'post.filters.outline.color is {color}, which is no colour: the outline darkens the surface instead',
+    fix: "give hex ('#1a1a2e'), a CSS colour name ('black') or '' to darken the surface",
+    doc: 'Advice from the post chain when `post.filters` sets an outline colour that is none; looks are checked when they are defined.',
+  },
   GFX_POST_FLAG_SLOTS: {
     template: '{missed} objects draw as the environment: the flag table has {slots} slots, all taken',
     fix: 'draw fewer separate objects (instance or merge them); slots come back as their objects are collected',

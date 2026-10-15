@@ -151,7 +151,11 @@ export const FILTER_FIELDS = {
     scope: scope(),
     width: int('Line width.', 1, 1, 4, 'px'),
     darken: num('The line is the surface times this (0 is black), unless a colour is given.', 0.35, 0, 1),
-    color: { type: 'string', default: '', description: "The line's colour, hex; '' darkens the surface instead." },
+    color: {
+      type: 'string',
+      default: '',
+      description: "The line's colour: hex ('#1a1a2e') or a CSS colour name ('black'); '' darkens the surface instead.",
+    },
     depth: num('The depth jump that makes an edge, as a share of the distance.', 0.02, 0.001, 1),
     crease: num('Neighbouring normals whose dot product falls below this make an edge.', 0.6, -1, 1),
   }),
@@ -228,6 +232,29 @@ export function levelsProblem(levels: number, where: string): string | null {
   return levels > 0 && levels < 8
     ? `${where} is ${levels}: posterize with 0 (off) or 8 levels and more, so dull colours keep their hue`
     : null;
+}
+
+/**
+ * Checks an outline colour: '' (the line darkens the surface), hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js
+ * knows (`Color.NAMES`), the forms `new Color` reads without a warning.
+ */
+export function colorProblem(color: string, where: string): string | null {
+  const known =
+    color === '' || /^#(?:[\da-f]{3}|[\da-f]{6})$/i.test(color) || Object.hasOwn(Color.NAMES, color.toLowerCase());
+  return known
+    ? null
+    : `${where} is ${JSON.stringify(color)}, which is no colour: give hex ('#1a1a2e'), a CSS colour name ('black') or '' to darken the surface`;
+}
+
+/**
+ * `spec` with an outline colour `colorProblem` refuses left out, so the line darkens the surface, and that colour (null
+ * when there was none): a layer over a look (the setting `post.filters`) is fixed and reported this way.
+ */
+export function fixColor(spec: FilterSpec): { spec: FilterSpec; dropped: string | null } {
+  const color = spec.outline?.color;
+  if (color === undefined || !colorProblem(color, 'color')) return { spec, dropped: null };
+  const { color: _dropped, ...outline } = spec.outline ?? {};
+  return { spec: { ...spec, outline }, dropped: color };
 }
 
 /**
