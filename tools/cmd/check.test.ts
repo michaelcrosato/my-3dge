@@ -118,6 +118,23 @@ describe('the asset scan', () => {
     ]);
   });
 
+  it('in a game, takes its own approvals with the owner’s answer, its fonts in labs/game/, the engine’s as given', async () => {
+    const game = { 'engine-lock.json': '{}' };
+    const unlisted = await scan({ ...game, 'labs/game/art/logo.png': PNG });
+    expect(unlisted.failures).toEqual(['ASSET_BINARY labs/game/art/logo.png']);
+    expect(unlisted.outcome.failures[0].message).toMatch(/ask them; once approved, list it in APPROVED-BINARIES\.json/);
+    expect(unlisted.outcome.failures[0].message).not.toContain('x esc');
+    const answer = JSON.stringify([{ path: 'labs/game/art/logo.png', reason: 'the owner, 2026-10-16: yes' }]);
+    expect((await scan({ ...game, 'labs/game/art/logo.png': PNG, 'APPROVED-BINARIES.json': answer })).failures).toEqual([]); // prettier-ignore
+    expect((await scan({ ...game, 'APPROVED-BINARIES.json': JSON.stringify([{ path: 'a.png' }]) })).failures).toEqual(['ASSET_APPROVALS APPROVED-BINARIES.json']); // prettier-ignore
+    const fonts = { ...game, 'labs/game/fonts/Inter.woff2': WOFF2, 'labs/game/fonts/OFL.txt': 'SIL Open Font License' };
+    expect((await scan(fonts)).failures).toEqual([]);
+    const misplaced = await scan({ ...game, 'public/Inter.woff2': WOFF2, 'public/OFL.txt': 'SIL Open Font License' });
+    expect(misplaced.outcome.failures[0].message).toMatch(/is a font outside labs\/game\/: fonts are pre-approved only there/); // prettier-ignore
+    expect((await scan({ ...game, 'data/APPROVED-BINARIES.json': approval('data/x.png'), 'data/x.png': PNG })).failures).toEqual([]); // prettier-ignore
+    expect((await scan({ 'data/APPROVED-BINARIES.json': approval('data/x.png'), 'data/x.png': PNG })).failures).toEqual(['ASSET_APPROVALS data/APPROVED-BINARIES.json', 'ASSET_BINARY data/x.png']); // prettier-ignore
+  });
+
   it('fails a font outside data/fonts/', async () => {
     expect((await scan({ 'labs/box/Inter.ttf': WOFF2, 'labs/box/LICENSE': 'MIT' })).failures).toEqual([
       'ASSET_FONT_PLACE labs/box/Inter.ttf',

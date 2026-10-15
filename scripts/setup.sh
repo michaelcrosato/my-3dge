@@ -12,6 +12,8 @@
 #    resolved in this order: the environment variable; else an existing local clone, cloned with
 #    `git clone --shared` into .cache/src-3d2dge or .cache/src-shardfall; else a clone from GitHub. Either clone is
 #    then detached at the pinned commit. The resolved paths are printed, and appended to $CLAUDE_ENV_FILE when set.
+#    In a game made from the engine (engine-lock.json at its root, tools/game/new-game.mjs), nothing ports from the
+#    sources, so this step is skipped.
 # 3. Chromium. Outside the cloud container (no /opt/pw-browsers/chromium and no $CHROMIUM_PATH), it downloads Chrome for
 #    Testing at the platform's release (tools/deps.json) from Google's official bucket into ~/.cache/my3dge/ (once);
 #    tools/lib/browser.ts finds it there, so no shell state is needed. Offline, it warns and T2 cannot run.
@@ -107,6 +109,7 @@ fi
 # Prints the resolved path and appends `export VAR=<path>` to $CLAUDE_ENV_FILE. Problems only warn.
 resolve_source() {
   local var="$1" dest="$2" commit="$3" local_clone="$4" url="$5" path head
+  [ -f "$repo_root/engine-lock.json" ] && return 0 # a game: nothing ports from the sources (see step 2 above)
   if [ -n "${!var:-}" ]; then
     path="${!var}"
   else
@@ -142,6 +145,7 @@ resolve_source() {
   append_env_line "export ${var}=\"${path}\""
 }
 
+[ -f "$repo_root/engine-lock.json" ] && say "a game made from the engine (engine-lock.json): no source checkouts to resolve"
 resolve_source MY3D2DGE_SRC .cache/src-3d2dge e37e4eedcd23326f3734188b9574a4aa635fcbd3 \
   /home/user/michaelcrosato/my-3d2dge https://github.com/michaelcrosato/my-3d2dge
 GIT_LFS_SKIP_SMUDGE=1 resolve_source SHARDFALL_SRC .cache/src-shardfall fa2dab6cdf97092f8866c6aa6a3faa5f7cd1246a \

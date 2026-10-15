@@ -1,7 +1,8 @@
 # AGENTS.md: rules for every change to my-3dge
 
 my-3dge is a fully 3D web game engine written and maintained only by AI agents. DOCTRINE.md governs everything here:
-read it first. The plan and its ledger are PLAN.md; generated docs start at docs/INDEX.md. The game is not here.
+read it first. The plan and its ledger are PLAN.md; generated docs start at docs/INDEX.md. Making a game? Not here:
+README.md's first section makes it a repository of its own.
 
 ## How to work
 Where the doctrine and the plan are silent, use your judgment and record the call. When going against the doctrine
@@ -90,8 +91,11 @@ updated.
 Task guides (docs/INDEX.md opens with them), each read when the task needs it:
 - docs/PROGRESS.md: read first, every session: where things stand, what is next, the open issues.
 - docs/TESTING.md: the tiers, and which unit tests and specs a change selects.
-- docs/HANDOFF.md: starting in a new environment, handing the engine to an agent to try, and the box against
-  my-3d2dge's stress-world.
+- docs/HANDOFF.md: handing the engine to game agents (the prompt, many games at once), starting in a new environment,
+  and the box against my-3d2dge's stress-world.
+- docs/GAME-GUIDE.md: what every game agent reads, and labs/game/, the starter every game begins as (ADR-0024): keep
+  both true when a public API changes (`x docs --write` regenerates the guide's API section).
+  tools/game/new-game.mjs makes a game; `node x engine --test` proves one passes its own gate.
 - labs/box/README.md: the box's scenes, settings and quick loop; adding a scene or a variant (a variant is a new
   scene file or a settings preset, never a change of meaning in a passing scene).
 - tests/replays/README.md: the replay format; checking, recording and making replays.

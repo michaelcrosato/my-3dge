@@ -8,5 +8,5 @@
     "look.test.ts.tmpl": "{{id}}.test.ts"
   },
   "checks": ["types", "lint", "test", "docs"],
-  "next": "make it look as its file comment says; import {{id}}.ts where the page loads its looks (the box: labs/box/main.ts); see it with node x shot labs/box --set post.look=look:{{name}}, or node x set post.look look:{{name}} in an inspect session; then node x docs --write"
+  "next": "make it look as its file comment says; import {{id}}.ts where the page loads its looks (labs/box/main.ts in the box, labs/game/main.ts in a game); see it with node x shot labs/box (labs/game in a game) --set post.look=look:{{name}}, or node x set post.look look:{{name}} in an inspect session; then node x docs --write"
 }

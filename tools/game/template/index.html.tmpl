@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>{{name}}</title>
+    <!--
+      The landing page: it opens the game (labs/game/), passing on this URL's query and hash, so /?seed=3 reaches the
+      page that reads it. `npm run build` ships it with every labs/<name>/index.html.
+    -->
+    <script>
+      location.replace('labs/game/' + location.search + location.hash);
+    </script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #15171c;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font:
+          18px system-ui,
+          sans-serif;
+        color: #c9ccd4;
+      }
+      a {
+        color: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <p><a href="labs/game/">Play {{name}}</a></p>
+  </body>
+</html>

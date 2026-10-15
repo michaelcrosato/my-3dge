@@ -32,8 +32,8 @@ const GLOBALS = [
   'performance',
 ];
 
-/** A sim-side file for each directory pattern in SIM_SIDE. */
-const simFile = (pattern: string) => pattern.replace('/**', '/spawn.ts');
+/** A sim-side file for each directory pattern in SIM_SIDE (a lab's pattern in the starter game's lab). */
+const simFile = (pattern: string) => pattern.replace('/**', '/spawn.ts').replace('labs/*/', 'labs/game/');
 
 const CASES: Case[] = [
   ...GLOBALS.map((name) => ({

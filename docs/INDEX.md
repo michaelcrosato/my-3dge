@@ -13,7 +13,8 @@ it.
 
 - [`docs/PROGRESS.md`](../docs/PROGRESS.md): read first, every session: where things stand, what is next, the open issues.
 - [`docs/TESTING.md`](../docs/TESTING.md): the tiers, and which unit tests and specs a change selects.
-- [`docs/HANDOFF.md`](../docs/HANDOFF.md): starting in a new environment, handing the engine to an agent to try, and the box against my-3d2dge's stress-world.
+- [`docs/HANDOFF.md`](../docs/HANDOFF.md): handing the engine to game agents (the prompt, many games at once), starting in a new environment, and the box against my-3d2dge's stress-world.
+- [`docs/GAME-GUIDE.md`](../docs/GAME-GUIDE.md): what every game agent reads, and labs/game/, the starter every game begins as (ADR-0024): keep both true when a public API changes (`x docs --write` regenerates the guide's API section). tools/game/new-game.mjs makes a game; `node x engine --test` proves one passes its own gate.
 - [`labs/box/README.md`](../labs/box/README.md): the box's scenes, settings and quick loop; adding a scene or a variant (a variant is a new scene file or a settings preset, never a change of meaning in a passing scene).
 - [`tests/replays/README.md`](../tests/replays/README.md): the replay format; checking, recording and making replays.
 - [`tools/templates/`](../tools/templates/): `node x new <kind> <id>` writes a module, scene, material… from its kind's template and checks it (`node x new` lists the kinds).
@@ -1124,6 +1125,24 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `BOX_ROOMS`, `BoxSound`, `BoxSoundInfo`, `createBoxSound`, `LOG_SIZE`, `MUSIC`, `nearestTorches`, `SoundFrame`, `TORCH`
   - Tests: [`labs/box/sounds/page.test.ts`](../labs/box/sounds/page.test.ts)
 
+## labs/game
+
+- [`bot.ts`](../labs/game/bot.ts): The starter game's bot: game code that plays `game:play` (labs/game/scenes/play.ts) through intents, the way a player's keys do, so a test or an agent plays the game with nobody at the keys.
+  - Exports: `botIntents`, `BotView`, `GroundSpot`, `HEADINGS`, `playBot`, `roundOf`, `viewOf`
+  - Tests: [`labs/game/scenes/play.test.ts`](../labs/game/scenes/play.test.ts)
+- [`main.ts`](../labs/game/main.ts): The starter game's page (labs/game/index.html): it starts the engine (`createEngine`, engine/app/engine.ts) on the scene `game:play` (labs/game/scenes/play.ts) with the arena's text registered for the view, offers the bot's replay to `?replay=bot`, and shows the round each drawn frame in the HTML/CSS overlay's HUD: the gems, the clock, the controls and, when the round ends, how it ended.
+
+## labs/game/cast
+
+- [`player.ts`](../labs/game/cast/player.ts): The starter game's player: the character the keys move (the character controller's numbers: how it runs, jumps and dashes) and the body it is drawn as, and `spawnPlayer`, which stands it in a scene.
+  - Exports: `JUMP_SPEED`, `PLAYER_BODY`, `playerCharacter`, `spawnPlayer`
+
+## labs/game/scenes
+
+- [`play.ts`](../labs/game/scenes/play.ts): The starter game's scene `game:play`: every new game begins as this one (tools/game/new-game.mjs copies labs/game/ into it), so it is small, plays, and shows the parts a game is made of.
+  - Exports: `ARENA`, `ARENA_TEXT`, `default`, `GAME_SETTINGS`, `GameComponents`, `GEM`, `play`, `REACH`, `Round`, `ROUND`
+  - Tests: [`labs/game/scenes/play.test.ts`](../labs/game/scenes/play.test.ts)
+
 ## labs/hello
 
 - [`boot.ts`](../labs/hello/boot.ts): The hello page's entry (labs/hello/index.html), a harness page proving that three.js r182 draws on WebGPU here: it publishes `window.__engine` with `ready`, `errors` and a minimal `info()` (PLAN.md §8.3), then loads the scene (labs/hello/hello.ts) by dynamic import and draws it on every animation frame.
@@ -1262,7 +1281,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `CACHE_DIRS`, `CHECK_TOOLS`, `checkAll`, `CheckTool`
   - Tests: [`tools/checkAll.test.ts`](../tools/checkAll.test.ts)
 - [`x.ts`](../tools/x.ts): The `node x <cmd>` dispatcher (PLAN.md §8.1): finds `tools/cmd/<cmd>.ts`, parses its arguments with `node:util`'s `parseArgs` in strict mode, runs it, prints at most about 20 lines (the verdict first), writes `out/<cmd>/<target>/report.json` plus `out/latest.json`, and returns the exit code.
-  - Exports: `CHILD_TIMEOUT_MS`, `closest`, `Command`, `CommandContext`, `commandHelp`, `commandNames`, `CommandOptions`, `CommandResult`, `dispatch`, `DispatchOptions`, `fileComment`, `firstSentence`, `loadCommand`, `MAX_LINES`, `ROOT`, `UsageError`, `wholeFlag`
+  - Exports: `CHILD_TIMEOUT_MS`, `closest`, `Command`, `CommandContext`, `commandHelp`, `commandNames`, `CommandOptions`, `CommandResult`, `dispatch`, `DispatchOptions`, `ENGINE_ONLY_COMMANDS`, `engineOnly`, `fileComment`, `firstSentence`, `isGame`, `loadCommand`, `MAX_LINES`, `ROOT`, `UsageError`, `wholeFlag`
   - Tests: [`tools/x.test.ts`](../tools/x.test.ts)
 
 ## tools/anim
@@ -1343,7 +1362,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `default`, `encodeWav`, `mixSoundEvents`, `Picture`, `replaySoundEvents`, `SoundEvent`, `SoundTimeline`, `spectrogram`, `SPECTROGRAM`
   - Tests: [`tools/cmd/audio.test.ts`](../tools/cmd/audio.test.ts)
 - [`check.ts`](../tools/cmd/check.ts): Runs the repository checks no standard tool covers, last in `npm run check` (PLAN.md §8.1).
-  - Exports: `assetScan`, `binaryKind`, `CheckContext`, `CheckOutcome`, `CheckPlugin`, `default`, `discoverPlugins`, `isLane`, `repositoryFiles`, `runChecks`, `scanAssets`
+  - Exports: `assetRules`, `assetScan`, `binaryKind`, `CheckContext`, `CheckOutcome`, `CheckPlugin`, `default`, `discoverPlugins`, `isLane`, `repositoryFiles`, `runChecks`, `scanAssets`
   - Tests: [`tools/cmd/check.test.ts`](../tools/cmd/check.test.ts)
 - [`ci.ts`](../tools/cmd/ci.ts): The merge gate and the full run (PLAN.md §8.9, WP 0.9; ADR-0023).
   - Exports: `CI_STEPS`, `CiDeps`, `CiRun`, `CiStep`, `createCiCommand`, `default`, `FULL_ONLY`, `Head`, `KEPT_CACHES`, `readHead`, `readOrigin`, `runCi`, `spawnStep`, `StepOutcome`, `StepResult`, `StepRunner`
@@ -1360,6 +1379,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`dump.ts`](../tools/cmd/dump.ts): Dumps the scene and the state of the page `x inspect` keeps open, as text (PLAN.md §8.1, §8.3, WP 2.7): `__engine.scene.dump()`, one object a line (name, type, position, size, material, triangles, entity), then the run's tick, hash and entities.
   - Exports: `default`
   - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
+- [`engine.ts`](../tools/cmd/engine.ts): A game's engine (PLAN.md WP 10.7, ADR-0024): in a game made by tools/game/new-game.mjs, which engine it is on and whether its engine files are as shipped; in the engine's own repository, the proof that a new game works.
+  - Exports: `check`, `default`, `engineFindings`, `engineOnlyListed`
+  - Tests: [`tools/cmd/engine.test.ts`](../tools/cmd/engine.test.ts)
 - [`esc.ts`](../tools/cmd/esc.ts): Escalations and the calls made without an answer (DOCTRINE.md, Escalation; PLAN.md §8.14, ADR-0017): writes and lists the records in docs/escalations/ (tools/lib/escalations.ts), and checks them as `x check`'s `esc` plugin.
   - Exports: `check`, `checkEscalations`, `createEscCommand`, `default`, `EscOptions`, `messageFor`, `runId`
   - Tests: [`tools/cmd/esc.test.ts`](../tools/cmd/esc.test.ts)
@@ -1376,7 +1398,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `callSession`, `default`, `findSession`, `Opened`, `pageErrorFinding`, `pageFailures`, `reloadLines`, `SESSION_FILE`, `SessionInfo`, `sessionShot`, `SessionTab`, `shootInSession`
   - Tests: [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts), [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
 - [`new.ts`](../tools/cmd/new.ts): Scaffolds a new entry of a kind from its template (PLAN.md §8.13): `x new <kind> <id>` writes the files of `tools/templates/<kind>/`, filled in for the id, then runs the kind's checks and prints the summary.
-  - Exports: `CheckName`, `CHECKS`, `default`, `fill`, `Kind`, `listKinds`, `NEXT`, `render`, `runCheck`, `runChecks`, `testKind`, `writeFiles`
+  - Exports: `CheckName`, `CHECKS`, `default`, `fill`, `Kind`, `listKinds`, `NEXT`, `nextIn`, `render`, `runCheck`, `runChecks`, `testKind`, `writeFiles`
   - Tests: [`tools/cmd/new.test.ts`](../tools/cmd/new.test.ts)
 - [`perf.ts`](../tools/cmd/perf.ts): Performance as counters against budgets, never frames per second (PLAN.md §8.1, §8.7, WPs 1.5 and 5.5).
   - Exports: `agentsSetting`, `default`, `measure`
@@ -1433,6 +1455,15 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `ALL_ON`, `Case`, `caseProblems`, `CaseResult`, `ConfigModule`, `describeMessages`, `lintCases`, `lintFixtures`, `loadConfigModule`, `Switches`, `uncovered`
   - Tests: [`tools/eslint/config.test.ts`](../tools/eslint/config.test.ts)
 
+## tools/game
+
+- [`files.mjs`](../tools/game/files.mjs): What a game made from the engine holds, and the lock that pins it (PLAN.md WP 10.7, ADR-0024): which of the engine's files a game gets and as whose (`RULES`, `ownerOf`, `plan`), the engine's identity (`engineIdentity`), its package.json and package-lock.json from the engine's (`gamePackage`, `gameLockfile`, `npmClashes`, `npmLost`), and engine-lock.json, the game's record of the engine commit and every engine file's SHA-256 (`lockFor`, `verifyGame`).
+  - Exports: `declaredPatches`, `ENGINE_DIRS`, `ENGINE_REPOSITORY`, `engineIdentity`, `engineNpm`, `FEEDBACK_FILE`, `gameLockfile`, `gamePackage`, `hashFile`, `hashText`, `LOCK_FILE`, `LOCK_FORMAT`, `lockFor`, `NPM_FIELDS`, `npmClashes`, `npmLost`, `ownerOf`, `plan`, `RENAMED`, `RULES`, `sameDependencies`, `SOURCE`, `sourceFiles`, `STARTER`, `verifyGame`
+  - Tests: [`tools/game/new-game.test.ts`](../tools/game/new-game.test.ts)
+- [`new-game.mjs`](../tools/game/new-game.mjs): Makes a game from the my-3dge engine, and moves a game to a newer engine (PLAN.md WP 10.7, ADR-0024): the one command an agent runs to start a game.
+  - Exports: `createGame`, `gameLockfile`, `gameName`, `gamePackage`, `main`, `npmClashes`, `render`, `TEMPLATES`, `updateGame`
+  - Tests: [`tools/game/new-game.test.ts`](../tools/game/new-game.test.ts)
+
 ## tools/lib
 
 - [`browser.ts`](../tools/lib/browser.ts): Chromium for the tools and the e2e fixture, through Playwright: the launch options `playwright.config.ts` also uses, the init script every page gets before its own scripts run (a virtual clock, seeded randomness and a WebGPU probe), and page errors mapped to `.ts` files and lines through Vite's inline source maps (§8.1, §8.8).
@@ -1462,6 +1493,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`docsExamples.ts`](../tools/lib/docsExamples.ts): Runs the `@example` blocks of file and export comments in Node (PLAN.md §8.12, WP 0.6): `x docs --check` runs them, and so does `tests/unit/examples.test.ts` in T1.
   - Exports: `collectExamples`, `compileExample`, `EXAMPLE_TIMEOUT_MS`, `ExampleOutcome`, `pageExample`, `rewriteImports`, `runExample`, `runExamples`
   - Tests: [`tests/unit/examples.test.ts`](../tests/unit/examples.test.ts), [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
+- [`docsGameApi.ts`](../tools/lib/docsGameApi.ts): The public API by area, for docs/GAME-GUIDE.md's last section (PLAN.md WP 12.4, ADR-0024): each area comment of the barrels, in their order (engine/sim-api.ts with the areas engine/anim/api.ts adds in its place, then engine/index.ts), with the names the area exports, values first, then types.
+  - Exports: `ApiArea`, `apiMap`, `barrelAreas`, `currentGuide`, `GUIDE`, `GUIDE_BUDGET_BYTES`, `guideFindings`, `withApiMap`, `writeGuide`
+  - Tests: [`tools/lib/docsGameApi.test.ts`](../tools/lib/docsGameApi.test.ts)
 - [`docsGenerate.ts`](../tools/lib/docsGenerate.ts): Writes the generated docs from what tools/lib/docs.ts reads (PLAN.md §6.8, WP 0.6): `docs/INDEX.md` (the "Start here" task guides and skills of tools/lib/docsStart.ts, a row per registry kind declared with `defineKind`, PLAN.md §6.6, then module → purpose → exports → tests), `docs/API.md` (each export with the first sentence of its doc comment, the public API first) and `docs/ERRORS.md` (every code registered with `defineCodes`, with its message and fix).
   - Exports: `apiMarkdown`, `BARRELS`, `errorsMarkdown`, `formatMarkdown`, `GENERATED`, `generateDocs`, `indexMarkdown`, `kindRows`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)

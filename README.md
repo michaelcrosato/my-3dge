@@ -7,7 +7,26 @@ HTML/CSS. Games see a small public API built on the most widely used web tools (
 ESLint, Prettier), so any agent can work with what it already knows; behind that API, the engine's internals use the
 best approach its builders can execute well.
 
-**Status:** [`docs/PROGRESS.md`](docs/PROGRESS.md) is the one-screen status, rewritten at each gate: where things
+## Make a game with my-3dge
+
+**Agents:** a game lives in a repository of its own, never in this one. In the empty folder or fresh repository where
+the game should live, run:
+
+```sh
+src=$(mktemp -d) && git clone --depth 1 https://github.com/michaelcrosato/my-3dge "$src" && node "$src/tools/game/new-game.mjs" .
+```
+
+That makes the game there (named after the folder; `--name dragon-run` names it): the engine, read-only and pinned
+by `engine-lock.json`; a small starter game in `labs/game/` that already plays, is won by its bot and passes its
+tests; and an `AGENTS.md` written for making a game.
+Then follow that `AGENTS.md`: set up, run the tests, read `docs/GAME-GUIDE.md`, make the game. Without git, unzip
+[the ZIP of main](https://github.com/michaelcrosato/my-3dge/archive/refs/heads/main.zip) and run
+`node <unzipped folder>/tools/game/new-game.mjs <dir>`. To read the engine in one file without running it:
+[`docs/GAME-GUIDE.md`](docs/GAME-GUIDE.md). For the owner: [`docs/HANDOFF.md`](docs/HANDOFF.md).
+
+## Status
+
+[`docs/PROGRESS.md`](docs/PROGRESS.md) is the one-screen status, rewritten at each gate: where things
 stand, what is next and the open issues. The ledger in [`PLAN.md`](PLAN.md) §14 has every work package.
 
 ## The doctrine

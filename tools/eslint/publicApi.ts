@@ -3,9 +3,10 @@
  * only through its barrels, `engine/index.ts` (pages) and `engine/sim-api.ts` (sim-side code), and never three.js or
  * Rapier directly, so game agents never depend on, or need to read, the internals.
  *
- * Game code is `labs/` (the box's pages, scenes and cast) and `fixtures/scenes/`; `labs/hello/` is a harness page and
- * is exempt, and so are `*.test.ts` files. Sim-side game code (`labs/box/scenes/`, `labs/box/cast/`,
- * `fixtures/scenes/`) takes only `engine/sim-api.ts`, so `x sim` runs it in Node. Each report names the import it
+ * Game code is `labs/` (the box's and the starter game's pages, scenes and cast; a game's own, made from the starter)
+ * and `fixtures/scenes/`; `labs/hello/` is a harness page and is exempt, and so are `*.test.ts` files. Sim-side game
+ * code (every lab's `scenes/` and `cast/`, `fixtures/scenes/`) takes only `engine/sim-api.ts`, so `x sim` runs it in
+ * Node. Each report names the import it
  * refused: the barrel re-exports it under the same name, and when it does not, the barrel gains the re-export with its
  * doc comment. Relative sources are matched as resolved from the importing file (`resolvingImports`, family.ts).
  * Side-effect imports (`import 'three/webgpu'`), dynamic ones (`import('…')` with a literal source) and TS import
@@ -84,7 +85,7 @@ export const publicApiPlugin: ESLint.Plugin = {
 };
 
 /** Sim-side game code: the sim barrel only. */
-export const SIM_SIDE_GAME_CODE = ['labs/box/scenes/**', 'labs/box/cast/**', 'fixtures/scenes/**'];
+export const SIM_SIDE_GAME_CODE = ['labs/*/scenes/**', 'labs/*/cast/**', 'fixtures/scenes/**'];
 
 const EVERY_NAME = '^';
 const THREE = {

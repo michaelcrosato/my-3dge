@@ -1,0 +1,53 @@
+# AGENTS.md: {{name}}
+
+{{name}} is a game made with my-3dge, a 3D web game engine built for AI coding agents: TypeScript, three.js on
+WebGPU, Rapier physics, gameplay reproducible on the CPU and checked without a screen, the UI in HTML/CSS. The engine
+is in this repository, pinned to the commit engine-lock.json names; you make the game.
+
+Before your first change, read docs/GAME-GUIDE.md once: how a game is built on this engine, the commands that prove
+it works, and where to look things up. Then grow the game from the starter in labs/game/, which already plays, wins
+through its bot, and passes its tests.
+
+## Set up (once per machine)
+
+    bash scripts/setup.sh
+
+It installs Node 24 when missing (Linux x64), Chromium for the browser commands when missing, then `npm ci`. Plain
+`npm ci` is enough for everything except `x shot`, `x film` and `x replay --browser`.
+
+## The loop
+
+1. Edit the game in labs/game/: sim-side code (the rules) in labs/game/scenes/ and labs/game/cast/, the page in
+   labs/game/main.ts.
+2. `npm run check`: types, lint, format, the asset rules, and the engine unchanged.
+3. `npm test`: the game's tests (its replay's golden hashes, capture and restore, the bot wins on 10 seeds).
+4. See it without a screen: `node x sim labs/game/scenes/play.ts` (the hash and the events), `node x shot labs/game`
+   (what the page draws, as numbers and a text thumbnail), `node x replay labs/game/replays --browser sim` (the
+   goldens, in Node and Chromium). `node x help` lists every command; each prints its verdict first and writes
+   out/<cmd>/…/report.json.
+5. Commit, and keep labs/game/README.md current: what the game is, how it plays, the calls you made.
+
+`npm run dev` serves the game at http://127.0.0.1:5173/labs/game/ for a person to play.
+
+## Rules
+
+- **The engine is read-only.** engine/, tools/, data/, labs/box/ (the engine's worked example), scripts/setup.sh, the
+  configs and the docs it shipped: engine-lock.json lists every one, and `npm run check` fails when one changes. When
+  the engine is in your way, work round it in the game and write what you needed in ENGINE-FEEDBACK.md. Only when no
+  workaround exists, patch the engine file and list it under "Local engine patches" there, with why.
+- **Only the public API.** Pages import engine/index.ts; sim-side code imports engine/sim-api.ts (lint enforces it).
+- **Reproducible play.** Sim-side code reads no clock, no `Math.random`, no DOM: randomness comes from named streams
+  (`w.rng('loot')`), time is whole 60 Hz steps. The same intents and seed give the same hashes, in Node and Chromium.
+- **Assets are code or text first**: geometry, textures, materials and sounds as data. A binary file only with the
+  owner's approval, listed in APPROVED-BINARIES.json with their answer (`npm run check` fails one unlisted); fonts are
+  approved, anywhere in labs/game/ with their license beside them.
+- SI units, +Y up, characters face +Z. Every file opens with a `@file` comment and stays under 400 lines.
+- **Ask the owner** before anything outward or costly: a binary asset, a new npm dependency, spending money,
+  publishing. No answer within 15 minutes: take the safer choice, note it in labs/game/README.md, carry on.
+- Update the engine only when the owner asks: `node x engine --update`.
+
+## Done means
+
+`npm run check` and `npm test` pass; the bot still wins (teach it each new rule); a change that alters play on
+purpose records the replay's goldens again (`node x replay labs/game/replays --browser sim --update`) with the reason
+in the commit; labs/game/README.md says what the game is now.

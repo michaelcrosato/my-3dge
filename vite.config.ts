@@ -10,14 +10,15 @@
  * tools/lib/tiers.ts's `T1_FULL` names.
  *
  * The build (`npm run build`, which Vercel runs through vercel.json) writes dist/ from the landing page (the root's
- * `index.html`) and every `labs/<name>/index.html`; test pages never ship (`harness.html` throws on purpose). A page
+ * `index.html`) and every `labs/<name>/index.html`; test pages never ship (`harness.html` throws on purpose). In a game
+ * made from the engine (engine-lock.json at its root, ADR-0024) the box is the worked example: served, never built. A page
  * ships only what it imports, never a `fetch()` of a repository path (§6.3). Nothing here needs the network, a
  * browser, the source checkouts or an `x` command: Vercel's build and Vitest both read this file.
  *
  * @see tools/lib/vite.test.ts
  */
 /// <reference types="vitest/config" />
-import { globSync } from 'node:fs';
+import { existsSync, globSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { dirname, join } from 'node:path';
 import { defineConfig } from 'vite';
@@ -29,12 +30,14 @@ const PORT = Number(process.env.PORT) || 5173;
 /** The repository root: this file's directory. */
 const ROOT = import.meta.dirname;
 
+/** Whether this is a game made from the engine (tools/game/new-game.mjs), not the engine's own repository. */
+const GAME = existsSync(join(ROOT, 'engine-lock.json'));
+
 /** The pages a build ships, as absolute paths by entry name: `index` (the landing page), then `labs/<name>`. */
 const PAGES = Object.fromEntries(
-  ['index.html', ...globSync('labs/*/index.html', { cwd: ROOT }).sort()].map((page) => [
-    dirname(page) === '.' ? 'index' : dirname(page),
-    join(ROOT, page),
-  ]),
+  ['index.html', ...globSync('labs/*/index.html', { cwd: ROOT }).sort()]
+    .filter((page) => !(GAME && page.startsWith('labs/box/')))
+    .map((page) => [dirname(page) === '.' ? 'index' : dirname(page), join(ROOT, page)]),
 );
 
 export default defineConfig({

@@ -1,6 +1,7 @@
 /**
  * @file The merge gate and the full run (PLAN.md §8.9, WP 0.9; ADR-0023). `x ci --local` is the quick gate an agent
- * runs before every merge: `CI_STEPS` but the `full` ones (x new --test-all and T2), in order on this machine, held to one budget for them together
+ * runs before every merge: `CI_STEPS` but the `full` ones (x new --test-all, x engine --test and T2), in order on this
+ * machine, held to one budget for them together
  * (tools/lib/tierBudgets.ts, five minutes). `x ci --local --full` is the full run: every step, T2 in full. Nobody waits
  * on it: the GitHub workflow (.github/workflows/ci.yml) runs it after each merge to main and by hand, and an agent at
  * the end of a goal or a stage. `x ci --status` says how main's last full run went (tools/lib/ciStatus.ts). Each run
@@ -8,7 +9,8 @@
  * `out/ci/last-green`, the base of the selections until main holds a gate.
  *
  * - **Steps:** `npm ci`, `x src`, `npm run check` (with `x deps --check` and `x docs --check`), `npm test`,
- *   `x port refs --check` and, in the full run, `x new --test-all` and `npm run e2e`, each from the root with its output
+ *   `x port refs --check` and, in the full run, `x new --test-all`, `x engine --test` (a new game passes its own
+ *   gate, tools/cmd/engine.ts) and `npm run e2e`, each from the root with its output
  *   kept in `out/ci/logs/<n>-<step>.log`, never printed. A failed `npm ci` skips the rest; after any other failure the
  *   next steps still run, so one run names every failure. The workflow's unit test keeps it running the full run
  *   (tools/cmd/ci-workflow.test.ts). The Vercel build is not a step (ADR-0021).
@@ -25,7 +27,7 @@
  *
  * @example
  * CI_STEPS.map((step) => step.name); // ['npm ci', 'x src', 'npm run check', 'npm test', …, 'npm run e2e']
- * CI_STEPS.filter((step) => step.full).map((step) => step.name); // ['x new --test-all', 'npm run e2e']: the full run's
+ * CI_STEPS.filter((step) => step.full).map((step) => step.name); // ['x new --test-all', 'x engine --test', 'npm run e2e']
  * @see tools/cmd/ci.test.ts
  */
 import { execFileSync, spawn } from 'node:child_process';
@@ -61,6 +63,7 @@ export const CI_STEPS: readonly CiStep[] = [
   { name: 'npm test', command: TIERS.T1.command, tier: 'T1' },
   { name: 'x port refs --check', command: ['node', 'x', 'port', 'refs', '--check'] },
   { name: 'x new --test-all', command: ['node', 'x', 'new', '--test-all'], full: true },
+  { name: 'x engine --test', command: ['node', 'x', 'engine', '--test'], full: true },
   { name: 'npm run e2e', command: TIERS.T2.command, tier: 'T2', full: true },
 ];
 

@@ -5,7 +5,9 @@
  * A kind is a directory `tools/templates/<kind>/` holding its template files and a manifest, `template.json`:
  * `describe` (one sentence), `id` (what an id looks like), `pattern` (a regular expression every id must match),
  * `sample` (the id `--test` writes), `files` (template file → target path), `checks`, and optionally `next` (what to
- * do after writing one, printed in place of the generic "replace the placeholder text, then node x docs --write").
+ * do after writing one, printed in place of the generic "replace the placeholder text, then node x docs --write"; in a
+ * game, where `x docs` is the engine's own, `nextIn` names the game's checks instead) and `games` (for a kind that
+ * makes no entry in a game, ADR-0024, what a game does instead: `x new` says it there and writes nothing).
  * Template files, targets and `next` hold `{{id}}` (the id as given), `{{name}}` (its last segment) and `{{dir}}`
  * (the rest); any other placeholder, or any other manifest key, is an error. Written files are formatted by Prettier,
  * and each doc comment paragraph a filled-in id runs past 120 columns is rewrapped, since Prettier never rewraps one.
@@ -36,7 +38,7 @@ import { readModule } from '../lib/docs';
 import { runExample } from '../lib/docsExamples';
 import { checkPaths } from '../lib/docsPaths';
 import type { Finding } from '../lib/report';
-import { closest, UsageError, type Command, type CommandResult } from '../x';
+import { closest, isGame, UsageError, type Command, type CommandResult } from '../x';
 import { checkComments } from './docs';
 
 /** The checks a kind may ask for. */
@@ -57,11 +59,18 @@ export interface Kind {
   checks: CheckName[];
   /** What to do after writing one, when the generic `NEXT` is not enough (the scene's replay steps). */
   next?: string;
+  /** For a kind that makes no entry in a game (ADR-0024: the box's scenes), what a game does instead. */
+  games?: string;
 }
 
-const KEYS = ['describe', 'id', 'pattern', 'sample', 'files', 'checks', 'next'];
+const KEYS = ['describe', 'id', 'pattern', 'sample', 'files', 'checks', 'next', 'games'];
 /** What to do after writing an entry of a kind whose manifest has no `next`. */
 export const NEXT = 'replace the placeholder text, then node x docs --write';
+
+/** A `next` as a game reads it: there `x docs` is the engine's own command, and its checks take its place. */
+export function nextIn(root: string, next: string): string {
+  return isGame(root) ? next.replaceAll('node x docs --write', 'npm run check and npm test') : next;
+}
 const TEMPLATES = 'tools/templates';
 
 /** Reads and validates every kind under `tools/templates/`; throws naming the first problem. */
@@ -85,8 +94,10 @@ export function listKinds(root: string): Kind[] {
       for (const key of ['describe', 'id', 'pattern', 'sample']) {
         if (typeof manifest[key] !== 'string' || !manifest[key]) fail(`"${key}" must be a non-empty string`);
       }
-      if ('next' in manifest && (typeof manifest.next !== 'string' || !manifest.next))
-        fail('"next", when present, must be a non-empty string');
+      for (const key of ['next', 'games']) {
+        if (key in manifest && (typeof manifest[key] !== 'string' || !manifest[key]))
+          fail(`"${key}", when present, must be a non-empty string`);
+      }
       const files = manifest.files as Record<string, unknown>;
       if (!files || typeof files !== 'object' || !Object.keys(files).length)
         fail('"files" maps template files to targets');
@@ -361,11 +372,12 @@ export default {
         target: kind.kind,
       };
     }
+    if (isGame(root) && kind.games) throw new UsageError(`x new ${kind.kind} makes no entry in a game: ${kind.games}`);
     if (!id) throw new UsageError(`name the new ${kind.kind}: ${kind.id}`);
     const written = writeFiles(root, await render(root, kind, id));
     const result = await runChecks(root, kind, written);
     const ok = result.failures.length === 0;
-    const next = ok ? `next: ${fill(kind.next ?? NEXT, id, `${kind.dir}/template.json`)}` : 'fix the problems below';
+    const next = ok ? `next: ${nextIn(root, fill(kind.next ?? NEXT, id, `${kind.dir}/template.json`))}` : 'fix the problems below'; // prettier-ignore
     return { ok, summary: `wrote ${written.join(', ')}; ${next}`, ...result, target: kind.kind };
   },
 } satisfies Command;

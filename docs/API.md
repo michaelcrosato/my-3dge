@@ -5065,6 +5065,36 @@ For the agents who maintain the engine.
 
 - `BOX_TOUCH` (const): The box page's touch layout's id.
 
+### [`labs/game/bot.ts`](../labs/game/bot.ts)
+
+- `botIntents` (function): The intents for one step: run toward the nearest gem by walking distance; none when no gem is left.
+- `BotView` (interface): What the bot sees each step: the player's feet and the gems left.
+- `GroundSpot` (interface): A point on the ground, m: x east, z south.
+- `HEADINGS` (const): How many headings the bot steers by: few, so its intents change seldom and its replays stay short.
+- `playBot` (function): Plays the bot until the round ends or `limit` steps pass; returns how the round stands and the steps it took.
+- `roundOf` (function): The round as it stands, read through the inspector.
+- `viewOf` (function): What the bot sees in a running engine: the player's feet and the gems left, read through the inspector.
+
+### [`labs/game/cast/player.ts`](../labs/game/cast/player.ts)
+
+- `JUMP_SPEED` (const): The player's take-off speed, m/s: about 1.27 m up under the controller's gravity, over a 0.75 m low wall.
+- `PLAYER_BODY` (const): The body the player is drawn as: the humanoid in the chibi build, empty-handed.
+- `playerCharacter` (function): The player's character at `speed` m/s; createCharacter's defaults for the rest (its dash among them).
+- `spawnPlayer` (function): Stands the player in `w` (a scene with physics) at `at`, facing `yaw`: an actor the step's intents move.
+
+### [`labs/game/scenes/play.ts`](../labs/game/scenes/play.ts)
+
+- `ARENA` (const): The arena, compiled: its colliders for physics, its tiles for the gems and the bot's paths.
+- `ARENA_TEXT` (const): The arena: 18 × 14 m inside walls 3 m high, two 2 × 2 m pillars, two low walls (0.75 m) to jump, the spawn `@`.
+- `default` (default): The starter game's scene `game:play`: every new game begins as this one (tools/game/new-game.mjs copies labs/game/ into it), so it is small, plays, and shows the parts a game is made of.
+- `GAME_SETTINGS` (const): The game's settings: each is reachable through `x set`, URL parameters (`?game.gems=3`) and `__engine.set`.
+- `GameComponents` (type): The scene's components, typed.
+- `GEM` (const): A gem: where it floats and how it looks (the page draws a component that declares x and z in metres).
+- `play` (const): The starter game: collect every gem before the clock runs out.
+- `REACH` (const): How close the player's feet come to a gem to collect it, m (on the ground plane).
+- `Round` (type): The round, as the component holds it.
+- `ROUND` (const): The round: the score, the clock and how it ended.
+
 ### [`labs/hello/hello.ts`](../labs/hello/hello.ts)
 
 - `HelloView` (interface): A started hello scene.
@@ -5616,6 +5646,7 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/check.ts`](../tools/cmd/check.ts)
 
+- `assetRules` (function): The engine repository's rules; in a game, its approvals stand without their records, which stayed behind.
 - `assetScan` (const): The asset scan (doctrine: Assets).
 - `binaryKind` (function): What binary format `bytes` (a file named `path`) is, or undefined for text.
 - `CheckContext` (interface): What a plugin is given: the repository root, and whether this checkout is an ultracode lane.
@@ -5689,6 +5720,13 @@ For the agents who maintain the engine.
 
 - `default` (default): Dumps the scene and the state of the page `x inspect` keeps open, as text (PLAN.md §8.1, §8.3, WP 2.7): `__engine.scene.dump()`, one object a line (name, type, position, size, material, triangles, entity), then the run's tick, hash and entities.
 
+### [`tools/cmd/engine.ts`](../tools/cmd/engine.ts)
+
+- `check` (const): `x check`'s plugin `engine`: in a game, its engine files as shipped or declared; in the engine, nothing to do.
+- `default` (default): A game's engine (PLAN.md WP 10.7, ADR-0024): in a game made by tools/game/new-game.mjs, which engine it is on and whether its engine files are as shipped; in the engine's own repository, the proof that a new game works.
+- `engineFindings` (function): A game's engine check: each engine file changed or missing that ENGINE-FEEDBACK.md does not declare.
+- `engineOnlyListed` (function): The engine's own commands that a game's `x help` listed: none, when game mode works.
+
 ### [`tools/cmd/esc.ts`](../tools/cmd/esc.ts)
 
 - `check` (const): The `esc` plugin of `x check` (T0): well-formed records, none overdue, a current README.
@@ -5745,6 +5783,7 @@ For the agents who maintain the engine.
 - `Kind` (interface): A kind, as its manifest declares it.
 - `listKinds` (function): Reads and validates every kind under `tools/templates/`; throws naming the first problem.
 - `NEXT` (const): What to do after writing an entry of a kind whose manifest has no `next`.
+- `nextIn` (function): A `next` as a game reads it: there `x docs` is the engine's own command, and its checks take its place.
 - `render` (function): The files an entry of `kind` with `id` consists of: repository path → formatted text.
 - `runCheck` (function): Runs one check on the new files; returns one sentence per problem.
 - `runChecks` (function): Runs a kind's checks on `files`: one line per check, and a finding per problem.
@@ -5916,6 +5955,46 @@ For the agents who maintain the engine.
 - `Switches` (interface): eslint.config.js's switches.
 - `uncovered` (function): The configured messages (from `messages`) that no failing fixture produced.
 
+### [`tools/game/files.mjs`](../tools/game/files.mjs)
+
+- `declaredPatches` (function): The engine files ENGINE-FEEDBACK.md lists under "Local engine patches", outside comments.
+- `ENGINE_DIRS` (const): The engine's folders in a game: a file there that the lock does not name was added by the game.
+- `ENGINE_REPOSITORY` (const): Where the engine lives on GitHub: what a game's lock names and `x engine --update` clones.
+- `engineIdentity` (function): The engine's identity: its repository, commit and commit date, and whether the checkout had changes.
+- `engineNpm` (function): The entries of each of `NPM_FIELDS` a game gets from the engine's package.json: all its scripts but `e2e`, since no browser specs ship, and all its dependencies, devDependencies and allowScripts.
+- `FEEDBACK_FILE` (const): Where a game writes what it needed from the engine, and declares the engine files it patched.
+- `gameLockfile` (function): The engine's package-lock.json for a game named `name`: the same tree, the root renamed.
+- `gamePackage` (function): A game's package.json: the engine's pins and scripts.
+- `hashFile` (function): A file's SHA-256, as the lock writes it.
+- `hashText` (function): A text's or a buffer's SHA-256, as the lock writes it.
+- `LOCK_FILE` (const): The lock a game keeps at its root: the engine's commit and every engine file's hash.
+- `LOCK_FORMAT` (const): The lock's format.
+- `lockFor` (function): The lock for the engine files of `items` (hashed from the source), with the engine's identity, the package.json entries the game got from it, and the root files written from its templates (`templates`: path → hash or null).
+- `NPM_FIELDS` (const): The package.json fields a game shares with the engine: the engine's entries in each, the game's own beside them.
+- `npmClashes` (function): The game's own package.json entries (in `previous`, not named by `before`, its lock's `npm`) that the engine's package.json sets otherwise, as `field.key`: what an update would replace.
+- `npmLost` (function): The entries of `previous` (a game's package.json) that `next` (what an update writes) drops, or sets back to the engine's where the game had edited one the engine gave (`before`, its lock's `npm`), as `field.key`: what an update names, since the engine's entries win.
+- `ownerOf` (function): Whose a source path is: 'engine', 'game' (the starter) or 'skip'; null when no rule names it.
+- `plan` (function): What a game gets from `source`: each file to copy, from its source path to its path in the game, and whose it is.
+- `RENAMED` (const): Engine files a game gets under another path: the engine's license travels with its code.
+- `RULES` (const): Which source files a game gets, and as whose: the first rule whose `test` matches a path decides (`ownerOf`).
+- `sameDependencies` (function): Whether a game's dependencies are exactly the engine's, so the engine's lockfile fits it.
+- `SOURCE` (const): This checkout's root: two levels above this file.
+- `sourceFiles` (function): The source's files, as git tracks or would track them (or, in an archive, every file), sorted, with `/`.
+- `STARTER` (const): The starter game: copied into a new game, then the game's own.
+- `verifyGame` (function): Compares a game's engine files with its lock: those changed, those missing, files the game added in the engine's folders, and the patches it declares; `undeclared` is every one of the first three that the game does not declare.
+
+### [`tools/game/new-game.mjs`](../tools/game/new-game.mjs)
+
+- `createGame` (function): Makes a game in `target` from the engine at `source`; on a clash it throws, having written nothing.
+- `gameLockfile` (re-export): (undocumented)
+- `gameName` (function): A game's name: an npm package name, from the folder's name by default (`Dragon Run!` → `dragon-run`).
+- `gamePackage` (re-export): (undocumented)
+- `main` (function): The command line; returns the exit code.
+- `npmClashes` (re-export): (undocumented)
+- `render` (function): Fills a template's `{{name}}` and `{{engine.*}}`; any other placeholder is an error.
+- `TEMPLATES` (const): The game's root files: template (in tools/game/template/) → where it goes.
+- `updateGame` (function): Moves the game in `target` to the engine at `source`; returns what changed.
+
 ### [`tools/lib/browser.ts`](../tools/lib/browser.ts)
 
 - `AdapterRecord` (interface): One adapter WebGPU returned: its identity and features.
@@ -6048,6 +6127,18 @@ For the agents who maintain the engine.
 - `rewriteImports` (function): Rewrites the `import` declarations of transpiled JavaScript into `await __import(…)` lines.
 - `runExample` (function): Runs one example in this process; never throws.
 - `runExamples` (function): The examples' verdicts: Node examples run in order; browser examples are listed for T2.
+
+### [`tools/lib/docsGameApi.ts`](../tools/lib/docsGameApi.ts)
+
+- `ApiArea` (interface): One area of a barrel: its comment and the names it exports.
+- `apiMap` (function): The section's body: the sim-side barrel's areas, then the page barrel's own.
+- `barrelAreas` (function): The areas of the barrel at `file` (repository path), with `export *` lines replaced by the target's areas.
+- `currentGuide` (function): The guide as `x docs --write` leaves it, or null when this repository has no guide.
+- `GUIDE` (const): The guide whose last section this module writes.
+- `GUIDE_BUDGET_BYTES` (const): The most the guide may weigh, in bytes (about 15,000 tokens): it is read whole, once, by every game agent, and handed as one file to models without the repository.
+- `guideFindings` (function): The drift findings for the guide: its markers missing, its block stale, or the whole over its budget.
+- `withApiMap` (function): `text` with the block between the markers replaced by `map`; throws when the markers are missing.
+- `writeGuide` (function): Writes the guide's block when it differs; returns whether it wrote.
 
 ### [`tools/lib/docsGenerate.ts`](../tools/lib/docsGenerate.ts)
 
@@ -6372,13 +6463,16 @@ For the agents who maintain the engine.
 - `Command` (interface): The shape of a `tools/cmd/<name>.ts` module's default export.
 - `CommandContext` (interface): What a command receives: its parsed flags and positionals, and the repository root.
 - `commandHelp` (function): Reads one command's help text: its file comment.
-- `commandNames` (function): Lists the command names found in `tools/cmd/` (every `<name>.ts` that is not a test).
+- `commandNames` (function): The command names in `tools/cmd/` (every `<name>.ts` that is not a test); in a game, without the engine's own.
 - `CommandOptions` (type): The flags a command accepts, in `parseArgs`'s format.
 - `CommandResult` (interface): What a command returns; the dispatcher turns it into printed lines, a report and an exit code.
 - `dispatch` (function): Runs `node x <argv…>`: dispatches to the command, prints its verdict and findings (about 20 lines at most), writes its report, and resolves to the exit code (0 pass, 1 fail, 2 usage error).
 - `DispatchOptions` (interface): Where `dispatch` finds commands and sends output; tests replace the parts they need.
+- `ENGINE_ONLY_COMMANDS` (const): The engine repository's own commands, which a game made from it does not have (see the file comment).
+- `engineOnly` (function): What naming one of the engine's own commands in a game says: what a game runs instead.
 - `fileComment` (function): Returns the text of a module's `@file` comment, without the comment markers and the `@file` tag.
 - `firstSentence` (function): The first sentence of a command's file comment: its one-line description in `x help`.
+- `isGame` (function): Whether `root` is a game made from the engine (it holds engine-lock.json), not the engine's own repository.
 - `loadCommand` (function): Loads a command module from `tools/cmd/<name>.ts`.
 - `MAX_LINES` (const): The most lines a command prints, the report path included (PLAN.md §8.1: "at most about 20").
 - `ROOT` (const): The repository root: the directory holding `x.js`.

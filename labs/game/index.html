@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="theme-color" content="#15171c" />
+    <link rel="stylesheet" href="../../engine/ui/touch.css" />
+    <link rel="icon" href="data:," />
+    <title>The starter game: my-3dge</title>
+    <!--
+      The starter game's page (labs/game/README.md): labs/game/main.ts starts the engine on the scene game:play and
+      shows the round in the HUD. Ready or error: until the engine publishes window.__engine, the inline script below
+      records a script that fails to load or throws, and shows it in #msg, so a broken page is one line of text,
+      never a blank one; `node x shot labs/game` reports the same headless.
+    -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #15171c;
+      }
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        outline: none;
+        touch-action: none;
+      }
+      #msg {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        font:
+          18px system-ui,
+          sans-serif;
+        color: #c9ccd4;
+        text-align: center;
+        white-space: pre-line;
+        pointer-events: none;
+      }
+      #msg[hidden] {
+        display: none;
+      }
+    </style>
+    <script>
+      window.__engine = { ready: false, errors: [] };
+      function gameFailed(message) {
+        if (!window.__engine || typeof window.__engine.help === 'function') return; // the engine reports now
+        var fix = 'the console names the cause; node x shot labs/game reports it headless';
+        var record = { code: 'APP_START', message: 'the page failed to start: ' + message, fix: fix };
+        if (window.__engine.errors.length === 0) {
+          var msg = document.getElementById('msg');
+          if (msg) msg.textContent = record.code + ': ' + record.message + '\nFix: ' + fix;
+        }
+        window.__engine.errors.push(record);
+      }
+      addEventListener('error', function (event) {
+        gameFailed(event.message || 'a script failed');
+      });
+      addEventListener('unhandledrejection', function (event) {
+        gameFailed(String((event.reason && event.reason.message) || event.reason));
+      });
+    </script>
+  </head>
+  <body>
+    <canvas id="view"></canvas>
+    <div id="msg" role="status" aria-live="polite">Loading…</div>
+    <script type="module" src="./main.ts" onerror="gameFailed('labs/game/main.ts did not load')"></script>
+  </body>
+</html>

@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, posix } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { CHILD_TIMEOUT_MS, ROOT, UsageError } from '../x';
-import command, { CHECKS, fill, listKinds, NEXT, render, testKind, type Kind } from './new';
+import command, { CHECKS, fill, listKinds, NEXT, nextIn, render, testKind, type Kind } from './new';
 
 const made: string[] = [];
 afterAll(() => made.forEach((dir) => rmSync(dir, { recursive: true, force: true })));
@@ -36,6 +36,20 @@ const manifest = (extra: object = {}) =>
     checks: [],
     ...extra,
   });
+
+describe('in a game', () => {
+  it('names the game’s checks where x docs is the engine’s own command, and refuses a kind made for the box', async () => {
+    const game = mkdtempSync(join(tmpdir(), 'x-new-game-'));
+    writeFileSync(join(game, 'engine-lock.json'), '{}');
+    cpSync(join(ROOT, 'tools', 'templates'), join(game, 'tools', 'templates'), { recursive: true });
+    expect(nextIn(ROOT, NEXT)).toBe(NEXT);
+    expect(nextIn(game, NEXT)).toBe('replace the placeholder text, then npm run check and npm test');
+    const run = command.run({ root: game, values: {}, positionals: ['scene', 'labs/game/scenes/level2'] });
+    await expect(run).rejects.toThrow(/x new scene makes no entry in a game: .*copy of labs\/game\/scenes\/play\.ts/);
+    expect(existsSync(join(game, 'labs'))).toBe(false);
+    rmSync(game, { recursive: true, force: true });
+  });
+});
 
 describe('kinds', () => {
   it('discovers the module kind from tools/templates/', () => {
