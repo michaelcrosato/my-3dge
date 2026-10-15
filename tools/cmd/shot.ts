@@ -46,8 +46,7 @@ import { browserRuntime, launchBrowser, preparePage, VIEWPORT } from '../lib/bro
 import { decodePng } from '../lib/png';
 import { targetSlug, type Artifact, type Finding, type Report } from '../lib/report';
 import { startVite } from '../lib/vite';
-import { UsageError, type Command, type CommandResult } from '../x';
-import { wholeFlag } from './sim';
+import { UsageError, wholeFlag, type Command, type CommandResult } from '../x';
 import { waitReady, type Signals } from '../lib/page';
 import { findSession, pageErrorFinding, pageFailures, shootInSession, type Opened } from './inspect';
 

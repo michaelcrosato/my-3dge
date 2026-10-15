@@ -43,8 +43,8 @@ import { replayBrowser, type BrowserMode } from '../lib/page';
 import { stateFile, writeState } from '../lib/replayState';
 import { walk } from '../lib/docs';
 import type { Finding } from '../lib/report';
-import { UsageError, type Command, type CommandResult } from '../x';
-import { nodeRuntime, wholeFlag, writeReplay, type Runtime } from './sim';
+import { UsageError, wholeFlag, type Command, type CommandResult } from '../x';
+import { nodeRuntime, writeReplay, type Runtime } from './sim';
 import { resolveSceneModule } from '../lib/scenes';
 
 /** This platform's golden key: `linux-x64`. */

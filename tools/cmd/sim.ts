@@ -45,7 +45,7 @@ import { NAV_DIRECTIONS, NavGrid } from '../../engine/world/nav';
 import { defineLibrary } from '../anim/library';
 import { targetSlug } from '../lib/report';
 import { loadScene } from '../lib/scenes';
-import { UsageError, type Command, type CommandResult } from '../x';
+import { UsageError, wholeFlag, type Command, type CommandResult } from '../x';
 
 /** `key=value` pairs as path → text; throws `UsageError` for a pair without `=`. */
 export function parseSets(pairs: readonly string[]): Record<string, string> {
@@ -71,15 +71,6 @@ export function typedSets(pairs: readonly string[]): Record<string, SettingValue
     }
   }
   return out;
-}
-
-/** A whole number from a flag, at least `min`, or `fallback` when the flag is absent. */
-export function wholeFlag(value: unknown, name: string, fallback: number, min = 0): number {
-  if (value === undefined) return fallback;
-  const n = Number(value);
-  if (!Number.isInteger(n) || n < min)
-    throw new UsageError(`--${name} takes a whole number, ${min} or more, not ${String(value)}`);
-  return n;
 }
 
 /** One run's view of a step, with the hash its runtime gave. */

@@ -44,10 +44,10 @@ import { browserRuntime, launchBrowser, preparePage, VIEWPORT } from '../lib/bro
 import { READY_MS, waitReady } from '../lib/page';
 import { targetSlug, type Finding } from '../lib/report';
 import { startVite } from '../lib/vite';
-import { UsageError, type Command, type CommandResult } from '../x';
+import { UsageError, wholeFlag, type Command, type CommandResult } from '../x';
 import { pageErrorFinding, pageFailures } from './inspect';
 import { pageUrl, resolvePage } from './shot';
-import { typedSets, wholeFlag } from './sim';
+import { typedSets } from './sim';
 import { loadScene, sceneModules } from '../lib/scenes';
 import {
   BUDGET_KEYS,

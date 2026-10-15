@@ -67,6 +67,18 @@ export class UsageError extends Error {
   override name = 'UsageError';
 }
 
+/**
+ * A whole number from a flag, at least `min`, or `fallback` when the flag is absent. Here, beside `UsageError`, so a
+ * module that parses one imports no command (tools/cmd/sim.ts pulls in the sim and the view).
+ */
+export function wholeFlag(value: unknown, name: string, fallback: number, min = 0): number {
+  if (value === undefined) return fallback;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < min)
+    throw new UsageError(`--${name} takes a whole number, ${min} or more, not ${String(value)}`);
+  return n;
+}
+
 /** The repository root: the directory holding `x.js`. */
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 

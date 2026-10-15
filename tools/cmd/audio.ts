@@ -43,9 +43,8 @@ import type { World } from '../../engine/sim/world';
 import { targetSlug, type Artifact, type Finding } from '../lib/report';
 import { dbfs, frameSpectrum, loadSoundModules, soundMetrics, soundProblems, type SoundMetrics } from '../qa/audio';
 import { compareWithBaselines, readBaselines } from './qa';
-import { wholeFlag } from './sim';
 import { resolveSceneModule } from '../lib/scenes';
-import { closest, UsageError, type Command, type CommandResult } from '../x';
+import { closest, UsageError, wholeFlag, type Command, type CommandResult } from '../x';
 
 /** A command's flag values. */
 type Values = Record<string, unknown>;

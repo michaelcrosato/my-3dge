@@ -1262,7 +1262,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `CACHE_DIRS`, `CHECK_TOOLS`, `checkAll`, `CheckTool`
   - Tests: [`tools/checkAll.test.ts`](../tools/checkAll.test.ts)
 - [`x.ts`](../tools/x.ts): The `node x <cmd>` dispatcher (PLAN.md §8.1): finds `tools/cmd/<cmd>.ts`, parses its arguments with `node:util`'s `parseArgs` in strict mode, runs it, prints at most about 20 lines (the verdict first), writes `out/<cmd>/<target>/report.json` plus `out/latest.json`, and returns the exit code.
-  - Exports: `CHILD_TIMEOUT_MS`, `closest`, `Command`, `CommandContext`, `commandHelp`, `commandNames`, `CommandOptions`, `CommandResult`, `dispatch`, `DispatchOptions`, `fileComment`, `firstSentence`, `loadCommand`, `MAX_LINES`, `ROOT`, `UsageError`
+  - Exports: `CHILD_TIMEOUT_MS`, `closest`, `Command`, `CommandContext`, `commandHelp`, `commandNames`, `CommandOptions`, `CommandResult`, `dispatch`, `DispatchOptions`, `fileComment`, `firstSentence`, `loadCommand`, `MAX_LINES`, `ROOT`, `UsageError`, `wholeFlag`
   - Tests: [`tools/x.test.ts`](../tools/x.test.ts)
 
 ## tools/anim
@@ -1400,7 +1400,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `default`, `encodePng`, `frameMetrics`, `judgeFrame`, `pageUrl`, `READY_TIMEOUT_MS`, `resolvePage`, `shotMetrics`
   - Tests: [`tests/e2e/shot.spec.ts`](../tests/e2e/shot.spec.ts), [`tools/cmd/shot.test.ts`](../tools/cmd/shot.test.ts)
 - [`sim.ts`](../tools/cmd/sim.ts): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5).
-  - Exports: `default`, `feelLines`, `feelOf`, `HashedView`, `levelOf`, `navMap`, `nodeRuntime`, `parseSets`, `replayText`, `Runtime`, `typedSets`, `wholeFlag`, `writeReplay`
+  - Exports: `default`, `feelLines`, `feelOf`, `HashedView`, `levelOf`, `navMap`, `nodeRuntime`, `parseSets`, `replayText`, `Runtime`, `typedSets`, `writeReplay`
   - Tests: [`tools/cmd/sim.test.ts`](../tools/cmd/sim.test.ts)
 - [`src.ts`](../tools/cmd/src.ts): Prints and checks the read-only source checkouts, `$MY3D2DGE_SRC` and `$SHARDFALL_SRC`, at their pins.
   - Exports: `default`

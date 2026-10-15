@@ -5840,7 +5840,6 @@ For the agents who maintain the engine.
 - `replayText` (function): A replay as readable text: its keys in file order, one change-point per line, each platform's hashes one step per line, numbers exact (`-0` kept, engine/core/hash.ts `serialize`).
 - `Runtime` (interface): Where replays play: Node in this process, or Chromium in tests/pages/replay.html.
 - `typedSets` (function): `--set` values typed and checked against the settings schema (after the scene module declared its settings).
-- `wholeFlag` (function): A whole number from a flag, at least `min`, or `fallback` when the flag is absent.
 - `writeReplay` (function): Writes a replay through Prettier with the repository's settings (wherever the file is); true when it changed.
 
 ### [`tools/cmd/src.ts`](../tools/cmd/src.ts)
@@ -6377,6 +6376,7 @@ For the agents who maintain the engine.
 - `MAX_LINES` (const): The most lines a command prints, the report path included (PLAN.md §8.1: "at most about 20").
 - `ROOT` (const): The repository root: the directory holding `x.js`.
 - `UsageError` (class): Thrown by a command for a bad argument: the dispatcher prints the message and exits 2.
+- `wholeFlag` (function): A whole number from a flag, at least `min`, or `fallback` when the flag is absent.
 
 ### [`vite.config.ts`](../vite.config.ts)
 
