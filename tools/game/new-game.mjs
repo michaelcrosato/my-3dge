@@ -7,15 +7,18 @@
  * Create: `node <engine>/tools/game/new-game.mjs <dir> [--name <name>]` writes a game into <dir> (made if missing;
  * an empty folder, or a fresh repository's root): the engine's files, copied as they are and pinned by
  * engine-lock.json; the starter game, labs/game/; the game's root files from tools/game/template/ (`TEMPLATES`); and
- * package.json and package-lock.json with the engine's pins (`gamePackage`, `gameLockfile`). Then `git init` when
- * the folder is in no repository. It never overwrites: a README.md or LICENSE already there is kept, a .gitignore
- * gains the lines it lacks, an AGENTS.md, CLAUDE.md or GEMINI.md gets the game's after its own text, and any other file
- * in the way stops it before it writes anything.
+ * package.json and package-lock.json with the engine's pins (`gamePackage`, `gameLockfile`, from tools/game/files.mjs).
+ * Then `git init` when the folder is in no repository. It never overwrites: a README.md or LICENSE already there is
+ * kept, a .gitignore gains the lines it lacks, an AGENTS.md, CLAUDE.md or GEMINI.md gets the game's after its own
+ * text, and any other file in the way stops it before it writes anything.
  *
  * Update: `node <newer engine>/tools/game/new-game.mjs --update <dir>` (what `node x engine --update` runs) puts this
- * checkout's engine files in place of the game's, removes those it dropped, moves package.json to its pins and writes
- * the new lock; the game's own files are never touched. An engine file the game changed stops it, unless
- * ENGINE-FEEDBACK.md lists it under "Local engine patches" (then it is kept), or `--force` replaces it.
+ * checkout's engine files in place of the game's, removes those it dropped, moves package.json to its pins, brings
+ * the root files the game never edited to its templates (`refreshTemplates`) and writes the new lock. Nothing of the
+ * game's is replaced or removed: it stops, having written nothing, on an engine file the game changed without
+ * declaring it under "Local engine patches" in ENGINE-FEEDBACK.md (a declared one is kept), on a file of the game's
+ * where the newer engine adds one, and on a package.json entry of the game's that the newer engine sets otherwise
+ * (`npmClashes`); `--force` lets the engine's replace them.
  *
  * `--verify <dir>` prints `verifyGame` (tools/game/files.mjs) as JSON. Exit codes: 0 done, 1 stopped (the message says
  * why and what to do), 2 a usage error.
@@ -35,14 +38,20 @@ import { fileURLToPath } from 'node:url';
 import {
   engineIdentity,
   FEEDBACK_FILE,
-  gameScripts,
+  gameLockfile,
+  gamePackage,
   hashFile,
+  hashText,
   LOCK_FILE,
   lockFor,
+  npmClashes,
   plan,
+  sameDependencies,
   SOURCE,
   verifyGame,
 } from './files.mjs';
+
+export { gameLockfile, gamePackage, npmClashes };
 
 /** The game's root files: template (in tools/game/template/) → where it goes. */
 export const TEMPLATES = Object.freeze([
@@ -56,7 +65,7 @@ export const TEMPLATES = Object.freeze([
   ['claude-settings.json.tmpl', '.claude/settings.json'],
 ]);
 
-/** Files a target may already hold: a README.md or LICENSE is kept; a .gitignore gains the template's lines it lacks. */
+/** Files a target may hold: a README.md or LICENSE is kept; a .gitignore gains the template's lines it lacks. */
 const KEPT = new Set(['README.md', 'LICENSE', '.gitignore', 'AGENTS.md', 'CLAUDE.md', 'GEMINI.md']);
 
 /** Instruction files the agents read: one already there keeps its text, and the game's follows it (`appendOnce`). */
@@ -80,47 +89,19 @@ export function render(text, values) {
   });
 }
 
-/**
- * A game's package.json: the engine's pins and scripts. With `previous` (the game's) and `before` (the engine's that
- * the game had, its lock's `npm`), the game keeps its own fields, and the scripts and dependencies the engine it had
- * did not give it; the new engine's win over the rest, and those it dropped go.
- */
-export function gamePackage(engine, name, previous, before = {}) {
-  const scripts = gameScripts(engine);
-  const { engines, dependencies, devDependencies, allowScripts } = engine;
-  if (!previous) {
-    const description = 'A game made with the my-3dge engine.';
-    return { name, version: '0.0.0', private: true, description, type: 'module', engines, scripts, dependencies, devDependencies, allowScripts }; // prettier-ignore
-  }
-  const merged = (kind, next) => {
-    const own = Object.entries(previous[kind] ?? {}).filter(([key]) => !(key in (before[kind] ?? {})));
-    return { ...Object.fromEntries(own), ...next };
-  };
+/** The values of the templates' placeholders for the game `game` on the engine `identity`. */
+function templateValues(game, identity) {
   return {
-    ...previous,
-    engines,
-    scripts: merged('scripts', scripts),
-    dependencies: merged('dependencies', dependencies),
-    devDependencies: merged('devDependencies', devDependencies),
-    allowScripts,
+    name: game,
+    'engine.repository': identity.repository,
+    'engine.commit': identity.commit,
+    'engine.short': identity.commit.slice(0, 7),
+    'engine.date': identity.date,
   };
 }
 
-/** The engine's package-lock.json for a game named `name`: the same tree, the root renamed. */
-export function gameLockfile(engineLock, name) {
-  const lock = structuredClone(engineLock);
-  lock.name = name;
-  const { license: _license, ...root } = lock.packages[''];
-  lock.packages[''] = { ...root, name, version: '0.0.0' };
-  return lock;
-}
-
-/** Whether a game's dependencies are exactly the engine's, so the engine's lockfile fits it. */
-function sameDependencies(pkg, engine) {
-  const same = (a = {}, b = {}) =>
-    JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort());
-  return same(pkg.dependencies, engine.dependencies) && same(pkg.devDependencies, engine.devDependencies);
-}
+/** A template's text in the engine at `source`. */
+const templateText = (source, template) => readFileSync(join(source, 'tools/game/template', template), 'utf8');
 
 /** Reads a JSON file. */
 const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
@@ -131,13 +112,14 @@ function writeJson(file, value) {
   writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
 }
 
-/** Whether writing `to` under `root` meets something there: the file itself, or a file where a folder must go. */
+/** What writing `to` under `root` meets, if anything: the file itself, or a file where one of its folders goes. */
 function inTheWay(root, to) {
   const parts = to.split('/');
-  return parts.some((_, i) => {
-    const path = join(root, ...parts.slice(0, i + 1));
-    return existsSync(path) && (i === parts.length - 1 || !statSync(path).isDirectory());
-  });
+  for (let i = 1; i <= parts.length; i++) {
+    const path = join(root, ...parts.slice(0, i));
+    if (existsSync(path) && (i === parts.length || !statSync(path).isDirectory())) return path;
+  }
+  return undefined;
 }
 
 /** Copies one file, making its folder. */
@@ -168,17 +150,13 @@ export function createGame({ target, name, source = SOURCE, git = true }) {
     );
   }
   for (const { from, to } of items) copyInto(source, from, root, to);
-  const values = {
-    name: game,
-    'engine.repository': identity.repository,
-    'engine.commit': identity.commit,
-    'engine.short': identity.commit.slice(0, 7),
-    'engine.date': identity.date,
-  };
+  const values = templateValues(game, identity);
   const kept = [];
+  const templates = {};
   for (const [template, to] of TEMPLATES) {
-    const text = render(readFileSync(join(source, 'tools/game/template', template), 'utf8'), values);
+    const text = render(templateText(source, template), values);
     const file = join(root, to);
+    templates[to] = existsSync(file) ? null : hashText(text);
     if (to === '.gitignore' && existsSync(file)) mergeLines(file, text);
     else if (APPENDED.has(to) && existsSync(file)) appendOnce(file, text);
     else if (existsSync(file)) kept.push(to);
@@ -191,55 +169,107 @@ export function createGame({ target, name, source = SOURCE, git = true }) {
   writeJson(join(root, 'package.json'), gamePackage(engine, game));
   writeJson(join(root, 'package-lock.json'), gameLockfile(readJson(join(source, 'package-lock.json')), game));
   const engineItems = items.filter((item) => item.owner === 'engine');
-  writeJson(join(root, LOCK_FILE), lockFor(source, engineItems, identity, game, engine));
+  writeJson(join(root, LOCK_FILE), lockFor(source, engineItems, identity, game, engine, templates));
   const initialized = git && initRepository(root);
   const starterFiles = items.length - engineItems.length;
   return { root, name: game, identity, engineFiles: engineItems.length, starterFiles, kept, initialized };
 }
 
 /**
- * Moves the game in `target` to the engine at `source`; returns what changed. Throws, having written nothing, on an
- * engine file the game changed without declaring it, or on a file of the game's where the new engine adds one.
+ * Moves the game in `target` to the engine at `source`; returns what changed. Throws, having written nothing, on
+ * anything of the game's the update would replace (the file comment says what), unless `force`.
  */
 export function updateGame({ target, source = SOURCE, force = false }) {
   const root = resolve(target);
   const before = verifyGame(root);
-  if (before.undeclared.length > 0 && !force) {
-    throw new Error(
-      `the game changed engine files it does not declare: ${before.undeclared.join(', ')}. Undo each (git checkout ` +
-        `-- <path>), list it under "Local engine patches" in ${FEEDBACK_FILE} to keep it, or pass --force to replace it`,
-    );
-  }
+  if (before.undeclared.length > 0 && !force) throw new Error(undeclaredMessage(before));
   const patched = [...before.changed, ...before.missing, ...before.added];
   const keep = new Set(force ? [] : before.declared.filter((path) => patched.includes(path)));
   const identity = engineIdentity(source);
   const items = plan(source).filter((item) => item.owner === 'engine');
   const old = before.lock.files;
-  const fresh = items.filter((item) => !(item.to in old));
-  const blocked = fresh.filter((item) => !keep.has(item.to) && inTheWay(root, item.to)).map((item) => item.to);
-  if (blocked.length > 0 && !force) {
-    throw new Error(
-      `the newer engine adds ${blocked.join(', ')}, where the game has files of its own: move them (the game's files ` +
-        "live in labs/game/ and at its root), or pass --force to let the engine's replace them",
-    );
-  }
+  const added = items.filter((item) => !(item.to in old)).map((item) => item.to);
+  const blocked = added.filter((path) => !keep.has(path) && inTheWay(root, path));
+  const engine = readJson(join(source, 'package.json'));
+  const previous = readJson(join(root, 'package.json'));
+  const clashes = npmClashes(previous, engine, before.lock.npm);
+  if (blocked.length + clashes.length > 0 && !force) throw new Error(clashMessage(blocked, clashes));
   const next = new Set(items.map((item) => item.to));
   const removed = Object.keys(old).filter((path) => !next.has(path) && !keep.has(path));
   for (const path of removed) rmSync(join(root, path), { force: true });
-  const added = fresh.map((item) => item.to);
-  const replaced = items.filter((item) => item.to in old && old[item.to] !== hashFile(join(source, item.from)));
+  for (const way of blocked.map((path) => inTheWay(root, path))) if (way) rmSync(way, { recursive: true, force: true });
+  const replaced = items
+    .filter((item) => item.to in old && !keep.has(item.to) && old[item.to] !== hashFile(join(source, item.from)))
+    .map((item) => item.to);
   for (const { from, to } of items) if (!keep.has(to)) copyInto(source, from, root, to);
-  const engine = readJson(join(source, 'package.json'));
-  const previous = readJson(join(root, 'package.json'));
   const pkg = gamePackage(engine, previous.name, previous, before.lock.npm);
   writeJson(join(root, 'package.json'), pkg);
   const lockfileFits = sameDependencies(pkg, engine);
   if (lockfileFits) {
     writeJson(join(root, 'package-lock.json'), gameLockfile(readJson(join(source, 'package-lock.json')), pkg.name));
   }
-  writeJson(join(root, LOCK_FILE), lockFor(source, items, identity, before.lock.game, engine));
-  const changed = replaced.map((item) => item.to);
-  return { root, from: before.lock.engine, to: identity, added, removed, replaced: changed, kept: [...keep], lockfileFits }; // prettier-ignore
+  const { templates, refreshed, diverged } = refreshTemplates(root, source, before.lock, identity);
+  writeJson(join(root, LOCK_FILE), lockFor(source, items, identity, before.lock.game, engine, templates));
+  const forced = [...blocked, ...clashes];
+  return { root, from: before.lock.engine, to: identity, added, removed, replaced, kept: [...keep], forced, refreshed, diverged, lockfileFits }; // prettier-ignore
+}
+
+/** Why an update stops on engine files the game changed or added without declaring them, with the fixes. */
+function undeclaredMessage({ undeclared, added }) {
+  const declare = `list it under "Local engine patches" in ${FEEDBACK_FILE} to keep it`;
+  const edited = undeclared.filter((path) => !added.includes(path));
+  const own = undeclared.filter((path) => added.includes(path));
+  return [
+    edited.length > 0 &&
+      `the game changed engine files it does not declare: ${edited.join(', ')}. Undo each (git checkout -- <path>), ${declare}, or pass --force to replace it`, // prettier-ignore
+    own.length > 0 &&
+      `the game added files in the engine's folders: ${own.join(', ')}. Move each into labs/game/ (or delete it), or ${declare}`, // prettier-ignore
+  ]
+    .filter(Boolean)
+    .join('; ');
+}
+
+/** Why an update stops on the game's own files and package.json entries where the newer engine has its own. */
+function clashMessage(blocked, clashes) {
+  const parts = [
+    blocked.length > 0 &&
+      `the newer engine adds ${blocked.join(', ')}, where the game has files of its own: move or rename them`,
+    clashes.length > 0 &&
+      `the newer engine sets ${clashes.join(', ')} in package.json, where the game has its own: rename the game's (a script), or drop it (a dependency: the engine's pin then serves)`, // prettier-ignore
+  ];
+  return `${parts.filter(Boolean).join('; ')}; or pass --force to let the engine's replace them`;
+}
+
+/**
+ * Brings the game's root files to the templates of the engine at `source` (`lock` is the game's, `identity` the new
+ * engine's). A file the game never edited (its hash is the lock's) gets the new template; one it edited is named when
+ * its template changed, to compare by hand; one it removed, or had before new-game.mjs, stays as it is; a template new
+ * to the game is written where no file is. Returns the lock's new `templates` and the paths refreshed and named.
+ */
+function refreshTemplates(root, source, lock, identity) {
+  const was = lock.templates ?? {};
+  const [then, now] = [templateValues(lock.game, lock.engine), templateValues(lock.game, identity)];
+  const templates = {};
+  const refreshed = [];
+  const diverged = [];
+  for (const [template, to] of TEMPLATES) {
+    const file = join(root, to);
+    const text = templateText(source, template);
+    const fresh = render(text, now);
+    templates[to] = hashText(fresh);
+    if (!(to in was) && !existsSync(file)) {
+      mkdirSync(dirname(file), { recursive: true });
+      writeFileSync(file, fresh);
+      refreshed.push(to);
+    } else if (!(to in was) || was[to] === null || !existsSync(file)) templates[to] = null;
+    else if (hashFile(file) !== was[to]) {
+      if (hashText(render(text, then)) !== was[to]) diverged.push(to);
+    } else if (templates[to] !== was[to]) {
+      writeFileSync(file, fresh);
+      refreshed.push(to);
+    }
+  }
+  return { templates, refreshed, diverged };
 }
 
 /** Appends `text` after a file's own, once: a repository's instructions stay first, and the game's follow them. */
@@ -290,6 +320,10 @@ export function main(argv = process.argv.slice(2), out = console.log, err = cons
       const patches = done.kept.length > 0 ? `, the local patches kept (${done.kept.join(', ')})` : '';
       const counts = `${done.replaced.length} engine files changed, ${done.added.length} added, ${done.removed.length} removed`; // prettier-ignore
       out(`new-game: moved from my-3dge@${done.from.commit.slice(0, 7)} to my-3dge@${done.to.commit.slice(0, 7)}: ${counts}${patches}`); // prettier-ignore
+      if (done.forced.length > 0) out(`replaced the game's own (--force): ${done.forced.join(', ')}`);
+      if (done.refreshed.length > 0) out(`root files brought to the engine's templates: ${done.refreshed.join(', ')}`);
+      const template = (to) => `${to} (tools/game/template/${TEMPLATES.find(([, path]) => path === to)[0]})`;
+      if (done.diverged.length > 0) out(`the engine's templates changed for root files the game edited: compare ${done.diverged.map(template).join(', ')} and take what applies`); // prettier-ignore
       out(`next: ${done.lockfileFits ? 'npm ci' : 'npm install (the game has dependencies of its own)'}, then npm run check && npm test`); // prettier-ignore
       return 0;
     }

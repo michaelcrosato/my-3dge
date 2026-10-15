@@ -5961,16 +5961,22 @@ For the agents who maintain the engine.
 - `ENGINE_DIRS` (const): The engine's folders in a game: a file there that the lock does not name was added by the game.
 - `ENGINE_REPOSITORY` (const): Where the engine lives on GitHub: what a game's lock names and `x engine --update` clones.
 - `engineIdentity` (function): The engine's identity: its repository, commit and commit date, and whether the checkout had changes.
+- `engineNpm` (function): The entries of each of `NPM_FIELDS` a game gets from the engine's package.json: all its scripts but `e2e`, since no browser specs ship, and all its dependencies, devDependencies and allowScripts.
 - `FEEDBACK_FILE` (const): Where a game writes what it needed from the engine, and declares the engine files it patched.
-- `gameScripts` (function): The npm scripts a game gets from the engine's package.json: all but `e2e`, since no browser specs ship.
+- `gameLockfile` (function): The engine's package-lock.json for a game named `name`: the same tree, the root renamed.
+- `gamePackage` (function): A game's package.json: the engine's pins and scripts.
 - `hashFile` (function): A file's SHA-256, as the lock writes it.
+- `hashText` (function): A text's or a buffer's SHA-256, as the lock writes it.
 - `LOCK_FILE` (const): The lock a game keeps at its root: the engine's commit and every engine file's hash.
 - `LOCK_FORMAT` (const): The lock's format.
-- `lockFor` (function): The lock for the engine files of `items` (hashed from the source), with the engine's identity and npm pins.
+- `lockFor` (function): The lock for the engine files of `items` (hashed from the source), with the engine's identity, the package.json entries the game got from it, and the root files written from its templates (`templates`: path → hash or null).
+- `NPM_FIELDS` (const): The package.json fields a game shares with the engine: the engine's entries in each, the game's own beside them.
+- `npmClashes` (function): The game's own package.json entries (in `previous`, not named by `before`, its lock's `npm`) that the engine's package.json sets otherwise, as `field.key`: what an update would replace.
 - `ownerOf` (function): Whose a source path is: 'engine', 'game' (the starter) or 'skip'; null when no rule names it.
 - `plan` (function): What a game gets from `source`: each file to copy, from its source path to its path in the game, and whose it is.
 - `RENAMED` (const): Engine files a game gets under another path: the engine's license travels with its code.
 - `RULES` (const): Which source files a game gets, and as whose: the first rule whose `test` matches a path decides (`ownerOf`).
+- `sameDependencies` (function): Whether a game's dependencies are exactly the engine's, so the engine's lockfile fits it.
 - `SOURCE` (const): This checkout's root: two levels above this file.
 - `sourceFiles` (function): The source's files, as git tracks or would track them (or, in an archive, every file), sorted, with `/`.
 - `STARTER` (const): The starter game: copied into a new game, then the game's own.
@@ -5979,10 +5985,11 @@ For the agents who maintain the engine.
 ### [`tools/game/new-game.mjs`](../tools/game/new-game.mjs)
 
 - `createGame` (function): Makes a game in `target` from the engine at `source`; on a clash it throws, having written nothing.
-- `gameLockfile` (function): The engine's package-lock.json for a game named `name`: the same tree, the root renamed.
+- `gameLockfile` (re-export): (undocumented)
 - `gameName` (function): A game's name: an npm package name, from the folder's name by default (`Dragon Run!` → `dragon-run`).
-- `gamePackage` (function): A game's package.json: the engine's pins and scripts.
+- `gamePackage` (re-export): (undocumented)
 - `main` (function): The command line; returns the exit code.
+- `npmClashes` (re-export): (undocumented)
 - `render` (function): Fills a template's `{{name}}` and `{{engine.*}}`; any other placeholder is an error.
 - `TEMPLATES` (const): The game's root files: template (in tools/game/template/) → where it goes.
 - `updateGame` (function): Moves the game in `target` to the engine at `source`; returns what changed.

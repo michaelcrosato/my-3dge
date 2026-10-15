@@ -5,14 +5,8 @@
  */
 import type { EngineIdentity } from './files.mjs';
 
-/** A package.json, as far as a game's is read and written. */
-export interface PackageJson {
-  name: string;
-  scripts?: Record<string, string>;
-  dependencies?: Record<string, string>;
-  devDependencies?: Record<string, string>;
-  [key: string]: unknown;
-}
+export { gameLockfile, gamePackage, npmClashes } from './files.mjs';
+export type { PackageJson } from './files.mjs';
 
 /** What `createGame` did. */
 export interface Created {
@@ -34,26 +28,18 @@ export interface Updated {
   removed: string[];
   replaced: string[];
   kept: string[];
+  /** The game's own files and package.json entries (`field.key`) that `force` let the engine's replace. */
+  forced: string[];
+  /** Root files the game never edited, brought to the engine's templates (or written, for a template new to it). */
+  refreshed: string[];
+  /** Root files the game edited whose templates changed: to compare by hand. */
+  diverged: string[];
   lockfileFits: boolean;
 }
 
 export const TEMPLATES: readonly (readonly [string, string])[];
 export function gameName(target: string, name?: string): string;
 export function render(text: string, values: Readonly<Record<string, string>>): string;
-export function gamePackage(
-  engine: PackageJson,
-  name: string,
-  previous?: PackageJson,
-  before?: {
-    dependencies?: Record<string, string>;
-    devDependencies?: Record<string, string>;
-    scripts?: Record<string, string>;
-  },
-): PackageJson;
-export function gameLockfile<T extends { name: string; packages: Record<string, object> }>(
-  engineLock: T,
-  name: string,
-): T;
 export function createGame(options: { target: string; name?: string; source?: string; git?: boolean }): Created;
 export function updateGame(options: { target: string; source?: string; force?: boolean }): Updated;
 export function main(argv?: string[], out?: (line: string) => void, err?: (line: string) => void): number;

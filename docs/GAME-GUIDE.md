@@ -193,8 +193,10 @@ settings })`) has the same members but the rendering ones: `__engine.help()` lis
    (the command, the error code), what you expected, what you did instead. The owner collects these from every game.
 3. Never change the engine quietly: `npm run check` compares every engine file with engine-lock.json. When no
    workaround exists, patch the file and list it under "Local engine patches" in ENGINE-FEEDBACK.md, with why.
-4. The owner decides when a game moves to a newer engine (`node x engine --update`). After one: `npm ci`,
-   `npm run check`, `npm test`, and record the goldens again where play changed.
+4. The owner decides when a game moves to a newer engine (`node x engine --update`). It replaces nothing of the
+   game's (it stops and names what is in the way) and says which root files it brought to the engine's templates,
+   and which ones you edited whose templates changed: compare those with tools/game/template/ and take what applies.
+   After it: `npm ci`, `npm run check`, `npm test`, and record the goldens again where play changed.
 
 ## 10. The public API by area
 

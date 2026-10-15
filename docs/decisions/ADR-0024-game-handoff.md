@@ -27,7 +27,10 @@ and WP 12.4 (built as the guide's generated section); amends §6.2
    APPROVED-BINARIES.json, the owner's answer as the reason, with no escalation record; fonts in labs/game/) and the
    `engine` plugin, which also catches a file the game adds in the engine's folders; `x new` says what a game does
    instead of the box's scene kind; scripts/setup.sh skips the source checkouts; `npm run build` ships the game's pages
-   without the box. `--update` never overwrites a file of the game's: it stops, or keeps a declared patch.
+   without the box. `--update` replaces nothing of the game's: it stops, having written nothing, on a file or a
+   package.json entry of the game's where the newer engine brings its own (`--force` lets the engine's win), keeps
+   declared patches, and brings the root files the game never edited to the new templates, naming the edited ones
+   whose templates changed (the lock records what new-game.mjs wrote).
 5. **The starter game lives here as labs/game/**, at the path it has in every game, so the engine's suites check it on
    every change and a new game needs no renaming. It is sample content, like the box (§5.7), not the game: a scene
    (a level as text, settings, components, systems in the phase `rules`, a named random stream, events), a player, a
@@ -36,7 +39,7 @@ and WP 12.4 (built as the guide's generated section); amends §6.2
    box's.
 6. **docs/GAME-GUIDE.md is the single-file handoff** (WP 12.4, built this way instead of a command of its own):
    hand-written guidance for game agents, ending with the public API by area, which `x docs --write` generates from
-   the barrels' area comments and `x docs --check` keeps current; the whole is held to 60 KB (43 KB, about 11,000
+   the barrels' area comments and `x docs --check` keeps current; the whole is held to 60 KB (45 KB, about 11,000
    tokens, written).
 7. **The proof runs in the full run**: `node x engine --test` makes a game from the checkout and runs its gate (npm
    ci, npm run check, npm test, x sim, x replay in Node and Chromium, x shot, x qa of every family, x help): 2.5 min

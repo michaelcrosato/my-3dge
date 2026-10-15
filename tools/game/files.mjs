@@ -1,6 +1,7 @@
 /**
  * @file What a game made from the engine holds, and the lock that pins it (PLAN.md WP 10.7, ADR-0024): which of the
- * engine's files a game gets and as whose (`RULES`, `ownerOf`, `plan`), the engine's identity (`engineIdentity`), and
+ * engine's files a game gets and as whose (`RULES`, `ownerOf`, `plan`), the engine's identity (`engineIdentity`), its
+ * package.json and package-lock.json from the engine's (`gamePackage`, `gameLockfile`, `npmClashes`), and
  * engine-lock.json, the game's record of the engine commit and every engine file's SHA-256 (`lockFor`, `verifyGame`).
  * tools/game/new-game.mjs makes and updates games with it; `node x engine` and `x check`'s `engine` plugin read it in
  * a game. Plain JavaScript for any Node from 18, as new-game.mjs runs before anything is installed.
@@ -11,8 +12,11 @@
  * repository (its plan, records, CI, deployment, test suites and fixtures). A path no rule names is never copied, and
  * tools/game/new-game.test.ts fails on one, so each new file at the engine's root is a decision.
  *
- * Invariants: lists use `/` and are sorted; the lock's `files` are the game's paths; a declared patch is a path in
- * backticks at the start of a list item under ENGINE-FEEDBACK.md's "## Local engine patches", outside comments.
+ * Invariants: lists use `/` and are sorted; the lock's `files` are the game's paths; its `npm` holds the package.json
+ * entries the engine gave the game (`engineNpm`), so an update tells them from the game's own; its `templates` holds
+ * each root file new-game.mjs wrote from tools/game/template/, with the SHA-256 of what it wrote (null for a file the
+ * game already had); a declared patch is a path in backticks at the start of a list item under ENGINE-FEEDBACK.md's
+ * "## Local engine patches", outside comments.
  *
  * @example
  * ownerOf('engine/sim/world.ts'); // 'engine'
@@ -139,9 +143,14 @@ export function engineIdentity(source = SOURCE) {
   }
 }
 
+/** A text's or a buffer's SHA-256, as the lock writes it. */
+export function hashText(text) {
+  return `sha256:${createHash('sha256').update(text).digest('hex')}`;
+}
+
 /** A file's SHA-256, as the lock writes it. */
 export function hashFile(file) {
-  return `sha256:${createHash('sha256').update(readFileSync(file)).digest('hex')}`;
+  return hashText(readFileSync(file));
 }
 
 /** What a game gets from `source`: each file to copy, from its source path to its path in the game, and whose it is. */
@@ -151,17 +160,79 @@ export function plan(source = SOURCE) {
     .filter((item) => item.owner === 'engine' || item.owner === 'game');
 }
 
-/** The npm scripts a game gets from the engine's package.json: all but `e2e`, since no browser specs ship. */
-export function gameScripts(engine) {
+/** The package.json fields a game shares with the engine: the engine's entries in each, the game's own beside them. */
+export const NPM_FIELDS = Object.freeze(['scripts', 'dependencies', 'devDependencies', 'allowScripts']);
+
+/**
+ * The entries of each of `NPM_FIELDS` a game gets from the engine's package.json: all its scripts but `e2e`, since no
+ * browser specs ship, and all its dependencies, devDependencies and allowScripts.
+ */
+export function engineNpm(engine) {
   const { e2e: _e2e, ...scripts } = engine.scripts ?? {};
-  return scripts;
+  const { dependencies = {}, devDependencies = {}, allowScripts = {} } = engine;
+  return { scripts, dependencies, devDependencies, allowScripts };
 }
 
-/** The lock for the engine files of `items` (hashed from the source), with the engine's identity and npm pins. */
-export function lockFor(source, items, identity, game, engine) {
+/** The entries of `previous` (a game's package.json) in `field` that `before` (its lock's `npm`) does not name. */
+function ownEntries(previous, before, field) {
+  return Object.entries(previous[field] ?? {}).filter(([key]) => !(key in (before[field] ?? {})));
+}
+
+/**
+ * A game's package.json: the engine's pins and scripts. With `previous` (the game's) and `before` (the engine's
+ * entries the game had, its lock's `npm`), the game keeps its own fields and the entries the engine it had did not
+ * give it, the new engine's entries replace the rest, and those it dropped go. Where an entry of the game's own has
+ * the new engine's key, the engine's wins: `updateGame` stops on one first (`npmClashes`), unless forced.
+ */
+export function gamePackage(engine, name, previous, before = {}) {
+  const npm = engineNpm(engine);
+  const { scripts, dependencies, devDependencies, allowScripts } = npm;
+  if (!previous) {
+    const description = 'A game made with the my-3dge engine.';
+    return { name, version: '0.0.0', private: true, description, type: 'module', engines: engine.engines, scripts, dependencies, devDependencies, allowScripts }; // prettier-ignore
+  }
+  const merged = Object.fromEntries(
+    NPM_FIELDS.map((field) => [field, { ...Object.fromEntries(ownEntries(previous, before, field)), ...npm[field] }]),
+  );
+  return { ...previous, engines: engine.engines, ...merged };
+}
+
+/**
+ * The game's own package.json entries (in `previous`, not named by `before`, its lock's `npm`) that the engine's
+ * package.json sets otherwise, as `field.key`: what an update would replace.
+ */
+export function npmClashes(previous, engine, before = {}) {
+  const npm = engineNpm(engine);
+  return NPM_FIELDS.flatMap((field) =>
+    ownEntries(previous, before, field)
+      .filter(([key, value]) => key in npm[field] && JSON.stringify(npm[field][key]) !== JSON.stringify(value))
+      .map(([key]) => `${field}.${key}`),
+  );
+}
+
+/** The engine's package-lock.json for a game named `name`: the same tree, the root renamed. */
+export function gameLockfile(engineLock, name) {
+  const lock = structuredClone(engineLock);
+  lock.name = name;
+  const { license: _license, ...root } = lock.packages[''];
+  lock.packages[''] = { ...root, name, version: '0.0.0' };
+  return lock;
+}
+
+/** Whether a game's dependencies are exactly the engine's, so the engine's lockfile fits it. */
+export function sameDependencies(pkg, engine) {
+  const same = (a = {}, b = {}) =>
+    JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort());
+  return same(pkg.dependencies, engine.dependencies) && same(pkg.devDependencies, engine.devDependencies);
+}
+
+/**
+ * The lock for the engine files of `items` (hashed from the source), with the engine's identity, the package.json
+ * entries the game got from it, and the root files written from its templates (`templates`: path → hash or null).
+ */
+export function lockFor(source, items, identity, game, engine, templates = {}) {
   const files = Object.fromEntries(items.map(({ from, to }) => [to, hashFile(join(source, from))]));
-  const npm = { dependencies: engine.dependencies, devDependencies: engine.devDependencies, scripts: gameScripts(engine) }; // prettier-ignore
-  return { format: LOCK_FORMAT, game, engine: identity, npm, files };
+  return { format: LOCK_FORMAT, game, engine: identity, npm: engineNpm(engine), templates, files };
 }
 
 /** The engine's folders in a game: a file there that the lock does not name was added by the game. */
@@ -200,9 +271,19 @@ export function verifyGame(target) {
   if (!existsSync(lockFile)) {
     throw new Error(`${resolve(target)} has no ${LOCK_FILE}: it is no game made by tools/game/new-game.mjs`);
   }
-  const lock = JSON.parse(readFileSync(lockFile, 'utf8'));
+  const restore = `restore it from git (git checkout -- ${LOCK_FILE}; in a merge, take one side whole): only new-game.mjs writes it`; // prettier-ignore
+  let lock;
+  try {
+    lock = JSON.parse(readFileSync(lockFile, 'utf8'));
+  } catch (error) {
+    throw new Error(`${LOCK_FILE} is not JSON (${error.message}): ${restore}`);
+  }
+  if (typeof lock?.format !== 'string') throw new Error(`${LOCK_FILE} has no "format": ${restore}`);
   if (lock.format !== LOCK_FORMAT) {
     throw new Error(`${LOCK_FILE} says "${lock.format}", not ${LOCK_FORMAT}: move the game to a newer engine`);
+  }
+  if (typeof lock.files !== 'object' || lock.files === null || typeof lock.engine?.commit !== 'string') {
+    throw new Error(`${LOCK_FILE} lacks its engine or its files: ${restore}`);
   }
   const [changed, missing] = [[], []];
   for (const [path, hash] of Object.entries(lock.files)) {

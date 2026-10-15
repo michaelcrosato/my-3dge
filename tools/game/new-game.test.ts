@@ -12,8 +12,20 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { declaredPatches, engineIdentity, ownerOf, plan, SOURCE, sourceFiles, verifyGame } from './files.mjs';
+import {
+  declaredPatches,
+  engineIdentity,
+  hashFile,
+  LOCK_FILE,
+  ownerOf,
+  plan,
+  SOURCE,
+  sourceFiles,
+  verifyGame,
+} from './files.mjs';
 import { createGame, gameLockfile, gameName, gamePackage, main, render, TEMPLATES, updateGame } from './new-game.mjs';
+
+const FEEDBACK = 'ENGINE-FEEDBACK.md';
 
 const folders: string[] = [];
 afterAll(() => folders.forEach((folder) => rmSync(folder, { recursive: true, force: true })));
@@ -137,6 +149,8 @@ describe('createGame', () => {
     expect(read(target, 'engine/LICENSE')).toBe('MIT\n');
     expect(read(target, 'AGENTS.md')).toMatch(/^# The owner’s rules\n\n# AGENTS\.md: mine\n/);
     expect(made.initialized).toBe(existsSync(join(target, '.git')));
+    const { templates } = verifyGame(target).lock;
+    expect([templates?.['README.md'], templates?.['AGENTS.md'], templates?.['CLAUDE.md']]).toEqual([null, null, hashFile(join(target, 'CLAUDE.md'))]); // prettier-ignore
   });
 
   it('stops before writing anything when a file it would write is in the way', () => {
@@ -184,6 +198,20 @@ describe('the lock', () => {
     expect(declaredPatches(target)).toEqual(['engine/z.ts']);
   });
 
+  it('names the fix for a damaged lock', () => {
+    const target = folder();
+    createGame({ target, name: 'g', source: fakeEngine(), git: false });
+    for (const [text, error] of [
+      ['<<<<<<< HEAD', /is not JSON .*restore it from git/],
+      ['{}', /has no "format"/],
+      ['{"format":"my3dge-engine-lock/1"}', /lacks its engine or its files/],
+    ] as const) {
+      // prettier-ignore
+      writeFileSync(join(target, LOCK_FILE), text);
+      expect(() => verifyGame(target)).toThrow(error);
+    }
+  });
+
   it('records the engine’s commit from git, or from an archive’s stamp', () => {
     expect(engineIdentity(fakeEngine({}, 'b'.repeat(40)))).toMatchObject({ commit: 'b'.repeat(40), date: '2026-10-15T00:00:00Z' }); // prettier-ignore
     const head = execFileSync('git', ['-C', SOURCE, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
@@ -200,7 +228,7 @@ describe('updateGame', () => {
     writeFileSync(join(target, 'ENGINE-FEEDBACK.md'), '## Local engine patches\n- `engine/c.ts`: why\n');
     const pkg = JSON.parse(read(target, 'package.json'));
     writeFileSync(join(target, 'package.json'), JSON.stringify({ ...pkg, dependencies: { ...pkg.dependencies, howler: '2.2.4' } })); // prettier-ignore
-    const next = fakeEngine({ 'engine/a.ts': 'export const a = 3;\n', 'engine/b.ts': '', 'engine/d.ts': 'd\n' }, 'c'.repeat(40)); // prettier-ignore
+    const next = fakeEngine({ 'engine/a.ts': 'export const a = 3;\n', 'engine/b.ts': '', 'engine/c.ts': 'c2\n', 'engine/d.ts': 'd\n' }, 'c'.repeat(40)); // prettier-ignore
     rmSync(join(next, 'engine/b.ts'));
     const done = updateGame({ target, source: next });
     expect(done).toMatchObject({ added: ['engine/d.ts'], removed: ['engine/b.ts'], replaced: ['engine/a.ts', 'tools/game/engine-version.txt'], kept: ['engine/c.ts'], lockfileFits: false }); // prettier-ignore
@@ -215,17 +243,18 @@ describe('updateGame', () => {
     const inEngine = folder();
     createGame({ target: inEngine, name: 'g', source: fakeEngine(), git: false });
     write(inEngine, { 'engine/c.ts': 'the game’s c\n' });
-    expect(() => updateGame({ target: inEngine, source: next })).toThrow(/does not declare: engine\/c\.ts/);
+    expect(() => updateGame({ target: inEngine, source: next })).toThrow(/added files in the engine's folders: engine\/c\.ts/); // prettier-ignore
     write(inEngine, { 'ENGINE-FEEDBACK.md': '## Local engine patches\n- `engine/c.ts`: why\n' });
     expect(updateGame({ target: inEngine, source: next })).toMatchObject({ kept: ['engine/c.ts'] });
     expect(read(inEngine, 'engine/c.ts')).toBe('the game’s c\n');
     const outside = folder();
     createGame({ target: outside, name: 'g', source: fakeEngine(), git: false });
-    write(outside, { 'tests/baselines/advice/area.json': '[{"code":"MINE","reason":"the game’s"}]\n' });
-    expect(() => updateGame({ target: outside, source: next })).toThrow(/adds tests\/baselines\/advice\/area\.json, where the game has files of its own/); // prettier-ignore
+    write(outside, { 'tests/baselines/advice/area.json': '[{"code":"MINE","reason":"the game’s"}]\n', 'tests/baselines/x': 'a file' }); // prettier-ignore
+    const pages = fakeEngine({ 'tests/baselines/advice/area.json': '[]\n', 'tests/baselines/x/a.json': 'a', 'tests/baselines/x/b.json': 'b' }); // prettier-ignore
+    expect(() => updateGame({ target: outside, source: pages })).toThrow(/adds tests\/baselines\/advice\/area\.json, tests\/baselines\/x\/a\.json, tests\/baselines\/x\/b\.json, where the game has files of its own/); // prettier-ignore
     expect(read(outside, 'engine/a.ts')).toBe('export const a = 1;\n'); // nothing written
-    updateGame({ target: outside, source: next, force: true });
-    expect(read(outside, 'tests/baselines/advice/area.json')).toBe('[]\n');
+    expect(updateGame({ target: outside, source: pages, force: true }).forced).toHaveLength(3);
+    expect(['tests/baselines/advice/area.json', 'tests/baselines/x/a.json', 'tests/baselines/x/b.json'].map((path) => read(outside, path))).toEqual(['[]\n', 'a', 'b']); // prettier-ignore
   });
 
   it('keeps a declared patch that deletes an engine file, and drops the scripts the engine dropped', () => {
@@ -245,9 +274,45 @@ describe('updateGame', () => {
     const target = folder();
     createGame({ target, name: 'g', source: fakeEngine(), git: false });
     writeFileSync(join(target, 'engine/a.ts'), 'mine\n');
-    expect(() => updateGame({ target, source: fakeEngine() })).toThrow(/does not declare: engine\/a\.ts/);
+    write(target, { 'data/mine.txt': 'the game’s' });
+    expect(() => updateGame({ target, source: fakeEngine() })).toThrow(/does not declare: engine\/a\.ts\. Undo each.*; the game added files in the engine's folders: data\/mine\.txt\. Move each into labs\/game\//); // prettier-ignore
     expect(updateGame({ target, source: fakeEngine(), force: true }).kept).toEqual([]);
-    expect(read(target, 'engine/a.ts')).toBe('export const a = 1;\n');
+    expect([read(target, 'engine/a.ts'), read(target, 'data/mine.txt')]).toEqual([
+      'export const a = 1;\n',
+      'the game’s',
+    ]);
+  });
+
+  it('stops on a package.json entry of the game’s that the newer engine sets otherwise, unless forced', () => {
+    const target = folder();
+    createGame({ target, name: 'g', source: fakeEngine(), git: false });
+    const pkg = JSON.parse(read(target, 'package.json'));
+    const own = { scripts: { ...pkg.scripts, preview: 'vite preview --open' }, dependencies: { ...pkg.dependencies, howler: '2.2.4' }, allowScripts: { esbuild: true } }; // prettier-ignore
+    writeFileSync(join(target, 'package.json'), JSON.stringify({ ...pkg, ...own }));
+    const engine = { name: 'my-3dge', scripts: { test: 'vitest run', preview: 'vite preview' }, dependencies: { three: '0.182.0', howler: '2.2.3' }, allowScripts: { esbuild: false } }; // prettier-ignore
+    const next = fakeEngine({ 'package.json': JSON.stringify(engine), 'engine/a.ts': 'new\n' });
+    expect(() => updateGame({ target, source: next })).toThrow(/sets scripts\.preview, dependencies\.howler, allowScripts\.esbuild in package\.json, where the game has its own/); // prettier-ignore
+    expect(read(target, 'engine/a.ts')).toBe('export const a = 1;\n'); // nothing written
+    expect(updateGame({ target, source: next, force: true }).forced).toEqual(['scripts.preview', 'dependencies.howler', 'allowScripts.esbuild']); // prettier-ignore
+    expect(JSON.parse(read(target, 'package.json'))).toMatchObject({ scripts: { preview: 'vite preview' }, dependencies: { howler: '2.2.3' }, allowScripts: { esbuild: false } }); // prettier-ignore
+  });
+
+  it('brings the root files the game never edited to the new templates, and names the edited ones that changed', () => {
+    const target = folder();
+    createGame({ target, name: 'g', source: fakeEngine(), git: false });
+    write(target, { 'AGENTS.md': `${read(target, 'AGENTS.md')}\n- A rule of the game’s.\n`, [FEEDBACK]: `${read(target, FEEDBACK)}\n- A request.\n` }); // prettier-ignore
+    rmSync(join(target, 'GEMINI.md'));
+    const lock = JSON.parse(read(target, LOCK_FILE));
+    delete lock.templates['.claude/settings.json'];
+    writeFileSync(join(target, LOCK_FILE), JSON.stringify(lock));
+    rmSync(join(target, '.claude/settings.json'));
+    const changed = (template: string) => `${templates[`tools/game/template/${template}`]}\nNew in the template.\n`;
+    const next = fakeEngine({ 'tools/game/template/AGENTS.md.tmpl': changed('AGENTS.md.tmpl'), 'tools/game/template/CLAUDE.md.tmpl': changed('CLAUDE.md.tmpl'), 'tools/game/template/GEMINI.md.tmpl': changed('GEMINI.md.tmpl') }, 'd'.repeat(40)); // prettier-ignore
+    const done = updateGame({ target, source: next });
+    expect([done.refreshed, done.diverged]).toEqual([['CLAUDE.md', 'README.md', '.claude/settings.json'], ['AGENTS.md']]); // prettier-ignore
+    expect([read(target, 'CLAUDE.md'), read(target, 'README.md')]).toEqual([expect.stringContaining('New in the template.'), expect.stringContaining('at ddddddd')]); // prettier-ignore
+    expect([read(target, 'AGENTS.md'), existsSync(join(target, 'GEMINI.md'))]).toEqual([expect.not.stringContaining('New in the template.'), false]); // prettier-ignore
+    expect(updateGame({ target, source: next })).toMatchObject({ refreshed: [], diverged: [] });
   });
 
   it('moves package.json to the engine’s pins and keeps the game’s own scripts and dependencies', () => {

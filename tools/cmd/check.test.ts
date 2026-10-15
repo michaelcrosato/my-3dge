@@ -129,6 +129,8 @@ describe('the asset scan', () => {
     expect((await scan({ ...game, 'APPROVED-BINARIES.json': JSON.stringify([{ path: 'a.png' }]) })).failures).toEqual(['ASSET_APPROVALS APPROVED-BINARIES.json']); // prettier-ignore
     const fonts = { ...game, 'labs/game/fonts/Inter.woff2': WOFF2, 'labs/game/fonts/OFL.txt': 'SIL Open Font License' };
     expect((await scan(fonts)).failures).toEqual([]);
+    const misplaced = await scan({ ...game, 'public/Inter.woff2': WOFF2, 'public/OFL.txt': 'SIL Open Font License' });
+    expect(misplaced.outcome.failures[0].message).toMatch(/is a font outside labs\/game\/: fonts are pre-approved only there/); // prettier-ignore
     expect((await scan({ ...game, 'data/APPROVED-BINARIES.json': approval('data/x.png'), 'data/x.png': PNG })).failures).toEqual([]); // prettier-ignore
     expect((await scan({ 'data/APPROVED-BINARIES.json': approval('data/x.png'), 'data/x.png': PNG })).failures).toEqual(['ASSET_APPROVALS data/APPROVED-BINARIES.json', 'ASSET_BINARY data/x.png']); // prettier-ignore
   });

@@ -22,16 +22,29 @@ export interface PlanItem {
   owner: Owner;
 }
 
+/** The package.json entries a game shares with the engine, by field (`NPM_FIELDS`). */
+export interface NpmEntries {
+  scripts?: Record<string, string>;
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  allowScripts?: Record<string, boolean | string>;
+}
+
+/** A package.json, as far as a game's is read and written. */
+export interface PackageJson extends NpmEntries {
+  name: string;
+  [key: string]: unknown;
+}
+
 /** engine-lock.json. */
 export interface EngineLock {
   format: string;
   game: string;
   engine: EngineIdentity;
-  npm: {
-    dependencies?: Record<string, string>;
-    devDependencies?: Record<string, string>;
-    scripts?: Record<string, string>;
-  };
+  /** The package.json entries the game got from the engine. */
+  npm: NpmEntries;
+  /** Each root file written from the engine's templates: the hash of what was written, or null (the game's own). */
+  templates?: Record<string, string | null>;
   files: Record<string, string>;
 }
 
@@ -57,20 +70,31 @@ export const RULES: readonly { owner: Owner; why: string; test(path: string): bo
 export function ownerOf(path: string): Owner | null;
 export function sourceFiles(source?: string): string[];
 export function engineIdentity(source?: string): EngineIdentity;
+export function hashText(text: string | Uint8Array): string;
 export function hashFile(file: string): string;
 export function plan(source?: string): PlanItem[];
 export const ENGINE_DIRS: readonly string[];
-export function gameScripts(engine: { scripts?: Record<string, string> }): Record<string, string>;
+export const NPM_FIELDS: readonly (keyof NpmEntries)[];
+export function engineNpm(engine: NpmEntries): Required<NpmEntries>;
+export function gamePackage(
+  engine: PackageJson,
+  name: string,
+  previous?: PackageJson,
+  before?: NpmEntries,
+): PackageJson;
+export function npmClashes(previous: PackageJson, engine: PackageJson, before?: NpmEntries): string[];
+export function gameLockfile<T extends { name: string; packages: Record<string, object> }>(
+  engineLock: T,
+  name: string,
+): T;
+export function sameDependencies(pkg: NpmEntries, engine: NpmEntries): boolean;
 export function lockFor(
   source: string,
   items: readonly PlanItem[],
   identity: EngineIdentity,
   game: string,
-  engine: {
-    dependencies?: Record<string, string>;
-    devDependencies?: Record<string, string>;
-    scripts?: Record<string, string>;
-  },
+  engine: NpmEntries,
+  templates?: Record<string, string | null>,
 ): EngineLock;
 export function declaredPatches(target: string): string[];
 export function verifyGame(target: string): GameCheck;

@@ -31,6 +31,7 @@ import { join } from 'node:path';
 import { FEEDBACK_FILE, verifyGame, type GameCheck } from '../game/files.mjs';
 import { createGame } from '../game/new-game.mjs';
 import type { CheckPlugin } from './check';
+import { qaFamilies } from './qa';
 import type { Finding } from '../lib/report';
 import { ENGINE_ONLY_COMMANDS, isGame, UsageError, type Command, type CommandResult } from '../x';
 
@@ -128,7 +129,7 @@ function testGame(root: string, keep: boolean): CommandResult {
       ['sim', process.execPath, ['x', 'sim', 'labs/game/scenes/play.ts', '--steps', '600']],
       ['replay', process.execPath, ['x', 'replay', 'labs/game/replays', '--browser', 'sim']],
       ['shot', process.execPath, ['x', 'shot', 'labs/game']],
-      ['qa', process.execPath, ['x', 'qa', 'anim', 'geo', 'tex', 'audio', 'level']],
+      ['qa', process.execPath, ['x', 'qa', ...qaFamilies(root)]],
       ['help', process.execPath, ['x', 'help']],
     ];
     for (const [name, command, args] of steps) {

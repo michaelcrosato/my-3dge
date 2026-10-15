@@ -5,7 +5,8 @@
  *   checks it: on another platform than the one that recorded them, two runs agree instead;
  * - a run continues exactly after a capture and a restore;
  * - the bot (labs/game/bot.ts) wins on 10 seeds, so the game can be won, however the gems fall;
- * - the clock runs out on a player who stands still, and the settings change play.
+ * - the clock runs out on a player who stands still, and the settings change play;
+ * - two actors that reach a gem in the same step take it once.
  *
  * When the game's play changes on purpose, record the goldens again: `node x replay labs/game/replays/bot.replay.json
  * --browser sim --update` (in Node and Chromium), and say why in the commit.
@@ -14,8 +15,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createHeadless } from '../../../engine';
+import { defineScene, type World } from '../../../engine/sim-api';
 import { botIntents, playBot, roundOf, viewOf } from '../bot';
-import { play } from './play';
+import { spawnPlayer } from '../cast/player';
+import { play, type GameComponents } from './play';
 
 /** The golden replay: the bot's play from seed 1, with the goldens `x replay --update` recorded. */
 const REPLAY = readFileSync(new URL('../replays/bot.replay.json', import.meta.url), 'utf8');
@@ -62,5 +65,25 @@ describe('game:play', () => {
     engine.step(5 * 60);
     expect(roundOf(engine)).toMatchObject({ gems: 3, collected: 0, left: 0, state: 'lost' });
     expect(viewOf(engine).gems).toHaveLength(3);
+  });
+
+  it('counts a gem once when two actors reach it in the same step', async () => {
+    const twin = defineScene<GameComponents>('game:twin', {
+      description: 'The starter, and two more players put on its gem in the first step: both reach it in the next.',
+      level: 'level:arena',
+      physics: true,
+      setup(w) {
+        play.setup(w);
+        const twins = (world: World<GameComponents>) => {
+          if ([...world.query('actor')].length > 1) return;
+          const [{ gem }] = world.query('gem');
+          for (const dx of [-0.3, 0.3]) spawnPlayer(world, [gem.x + dx, 0, gem.z], 6);
+        };
+        w.systems.add('test.twins', twins, { phase: 'rules' });
+      },
+    });
+    const engine = await createHeadless({ scene: twin, settings: { 'game.gems': 1 } }); // no neighbour within reach
+    engine.step(2);
+    expect([roundOf(engine).collected, roundOf(engine).state, engine.state('gem').entities.length]).toEqual([1, 'won', 0]); // prettier-ignore
   });
 });

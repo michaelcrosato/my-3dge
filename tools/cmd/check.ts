@@ -105,18 +105,21 @@ const GAME_ASK =
 interface AssetRules {
   /** Approval files, each with its keys and whether an entry needs its escalation record. */
   approvals: { file: string; keys: string[]; record: boolean }[];
+  /** Where fonts pass, each with its license beside it. */
   fonts: string[];
+  /** Where a new font goes: in a game, its own folder (the engine's fonts in data/fonts/ are the engine's). */
+  newFonts: string;
   ask: string;
 }
 
 /** The engine repository's rules; in a game, its approvals stand without their records, which stayed behind. */
 export function assetRules(game: boolean): AssetRules {
-  if (!game) return { approvals: [{ file: APPROVALS, keys: APPROVAL_KEYS, record: true }], fonts: ['data/fonts/'], ask: ASK }; // prettier-ignore
+  if (!game) return { approvals: [{ file: APPROVALS, keys: APPROVAL_KEYS, record: true }], fonts: ['data/fonts/'], newFonts: 'data/fonts/', ask: ASK }; // prettier-ignore
   const approvals = [
     { file: APPROVALS, keys: APPROVAL_KEYS, record: false },
     { file: GAME_APPROVALS, keys: GAME_APPROVAL_KEYS, record: false },
   ];
-  return { approvals, fonts: ['data/fonts/', GAME_FONTS], ask: GAME_ASK };
+  return { approvals, fonts: ['data/fonts/', GAME_FONTS], newFonts: GAME_FONTS, ask: GAME_ASK };
 }
 
 /** What binary format `bytes` (a file named `path`) is, or undefined for text. */
@@ -250,7 +253,7 @@ export function scanAssets(root: string, files: readonly string[]): CheckOutcome
           failures.push({ id: 'ASSET_FONT_LICENSE', message, file });
         }
       } else if (FONT_EXTENSIONS.has(extension)) {
-        const message = `${file} is a font outside ${rules.fonts.join(' and ')}: fonts are pre-approved only there, each with its license file beside it`;
+        const message = `${file} is a font outside ${rules.newFonts}: fonts are pre-approved only there, each with its license file beside it`;
         failures.push({ id: 'ASSET_FONT_PLACE', message, file });
       } else {
         failures.push({ id: 'ASSET_BINARY', message: `${file} is ${kind}: it ${rules.ask}`, file });
