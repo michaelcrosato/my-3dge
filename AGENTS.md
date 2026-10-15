@@ -88,7 +88,8 @@ stopping. Record every escalation, every later conflict and every call.
   build first), merge it, then wait for main's full run and report it. Start the next stage from the updated main
   (PLAN.md §11.1). None of this needs the owner's approval (ADR-0021).
 - Touch controls and the Vercel deployment have no tests, by the owner's order (ADR-0021): fix a failed Vercel
-  build; fix anything else about them only when the owner reports it.
+  build; fix anything else about them only when the owner reports it. The owner paused Vercel on 2026-10-15 until
+  they test (ADR-0023): until they say it is back on, skip the look and ignore Vercel's statuses and errors.
 - Never downgrade silently: every downgrade emits an advice code.
 - Ask the entry, never the id: shared code reads registry hooks and never compares ids.
 - No game content in the engine; the box's own content stays in labs/box/ (PLAN.md §5.7).
