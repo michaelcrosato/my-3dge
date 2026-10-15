@@ -1,7 +1,8 @@
 /**
  * @file Unit tests for engine/app/headless.ts (T1, PLAN.md §8.3, §6.9, WP 1.6): `createHeadless` starts a scene by id
  * or as a scene, seeded, with settings over the scene's; `step(n, intents)` runs n recorded steps, holding one intents
- * object (its presses on the first step only) or following a script; the recording replays to the same hashes; the
+ * object (its presses on the first step only) or following a script, and without intents takes what the virtual
+ * device holds (`__engine.input`, which a headless engine has too); the recording replays to the same hashes; the
  * kernel fixture gives the same hash through it as through a plain session; a seed is a whole number from 0; a test
  * registry gets the clock's settings; `headlessHost` takes only a headless engine; the hit-stop a step's rules ask
  * reaches the run's clock once per step, through its budget, and never the hash; a replay's stops are dropped, a
@@ -72,6 +73,20 @@ describe('createHeadless', () => {
       [3, { move: null }],
       [4, { b: null }],
       [5, { p: ['jump'] }],
+    ]);
+  });
+
+  it('takes the virtual device each step when given no intents, and records what it held', async () => {
+    const engine = await createHeadless({ scene: 'walk', registry: demo() });
+    const input = engine.input as unknown as Record<string, (...args: unknown[]) => unknown>;
+    input.hold('jump');
+    expect(engine.step(3)).toBe(3);
+    expect(engine.get(1)?.walker).toMatchObject({ held: 3, pressed: 1 });
+    input.hold('jump', false);
+    expect(engine.step(1)).toBe(4);
+    expect(headlessHost(engine).session.record().inputs).toEqual([
+      [0, { b: ['jump'] }],
+      [3, { b: null }],
     ]);
   });
 

@@ -196,17 +196,17 @@ export const CORE_MEMBERS = {
   },
   resume: { help: 'Resumes sim time.', impl: (h) => h.clock.resume() },
   step: {
-    help: 'Runs n sim steps through the clock, recorded in the session; returns the tick after them.',
+    help: 'Runs n sim steps through the clock, recorded in the session (without intents, what the virtual device holds: input.hold, input.axis…); returns the tick after them.',
     args: {
       n: { type: 'integer', default: 1, minimum: 0, description: 'How many steps.' },
       intents: {
         type: 'any',
         description:
-          'One intents object for every step (its pressed buttons, p, on the first only), or a list of one per step (none past its end).',
+          'One intents object for every step (its pressed buttons, p, on the first only), or a list of one per step (none past its end); none samples the virtual device each step (__engine.input).',
       },
     },
     impl: (h, n: number, intents: unknown) => {
-      h.step(n, intents ?? {});
+      h.step(n, intents);
       return h.session.world.tick;
     },
   },

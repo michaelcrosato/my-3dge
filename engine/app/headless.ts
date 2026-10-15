@@ -47,6 +47,8 @@ import { createStatsMeter, type RenderCounts, type StatsMeter } from '../dev/sta
 import { createMaterialLibrary, type MaterialLibrary } from '../gfx/materials/library';
 import type { FrameReport } from '../gfx/renderer';
 import type { ShotJson, ShotOptions } from '../gfx/shot';
+import { virtualDeviceOf } from '../input/devices/inspector'; // registers `__engine.input` too
+import { virtualIntents } from '../input/devices/virtual';
 import { takeHitStop } from '../sim/damage';
 import type { Replay } from '../sim/replay';
 import { checkSeed, getScene, type Scene } from '../sim/scene';
@@ -258,6 +260,12 @@ export function createAppHost<C extends object = AnyComponents, E extends EventM
     view,
     meter,
     step(n, intents) {
+      if (intents === undefined) {
+        // No intents: what the virtual device holds (`__engine.input`), taken each step as the page's input is.
+        const device = virtualDeviceOf(host);
+        for (let k = 0; k < n; k++) stepOnce(virtualIntents(device.take()));
+        return;
+      }
       const script = Array.isArray(intents) ? intents : undefined;
       const later = isPlainObject(intents) ? { ...intents, p: undefined } : intents;
       for (let k = 0; k < n; k++) stepOnce(script ? (script[k] ?? {}) : k === 0 ? intents : later);

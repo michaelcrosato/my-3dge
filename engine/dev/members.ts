@@ -132,7 +132,7 @@ export interface InspectorHost {
   readonly features: readonly string[];
   /** The downgrades taken, as advice codes. */
   readonly downgrades: readonly string[];
-  /** Runs `n` sim steps through the clock, with one intents object for every step or one per step. */
+  /** Runs `n` sim steps through the clock, with one intents object for every step, one per step, or (undefined) the virtual device's. */
   step(n: number, intents: unknown): void;
   /** Starts the scene again with `seed`, keeping the settings changed since it started. */
   restart(seed: number): void;

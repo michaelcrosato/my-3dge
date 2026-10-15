@@ -183,7 +183,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 - [ ] 6.3 **The steps scene has no replay goldens** (gate G2): fixtures/scenes/steps/index.test.ts:44-51 only checks
       that the scene replays itself. Record a steps replay with goldens and check it as
       fixtures/scenes/physics-40/index.test.ts does. Prove: `npm test -- fixtures/scenes/steps`.
-- [ ] 6.4 **Headless `step(n)` ignores the virtual device** (WP 3.3): the inspector's `step` passes `intents ?? {}`
+- [x] 6.4 **Headless `step(n)` ignores the virtual device** (WP 3.3): the inspector's `step` passes `intents ?? {}`
       (engine/dev/inspector.ts:208-210), and an engine from `createHeadless` has no `input` member
       (engine/app/headless.ts:259-263). Load the input members in headless.ts and let `step(n)` sample the virtual
       device when no intents are given. Prove: a headless test where `hold('jump'); step(3)` records the input. Add to
