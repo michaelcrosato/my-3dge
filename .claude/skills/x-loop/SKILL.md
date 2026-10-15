@@ -23,10 +23,11 @@ three.js API names its replacement (the `three-webgpu` skill).
 
 | Tier | Command | Budget | Notes |
 |---|---|---|---|
-| T0 | `npm run check` | 10 s | tsc, ESLint, Prettier, `node x check` (assets, deps, docs, escalations, port vectors) |
-| T1 | `npm test` | 60 s | one area: `npm test -- <path>`; what a change reaches: `npx vitest related --run <files>` |
-| T2 | `npm run e2e` | 9 min from 16 cores, 60 min on 4 (`t2Budget`) | run it as a background task; a lane sets its own `PORT` first |
-| Gate | `node x ci --local` | | the merge gate: `npm ci`, `x src`, T0, T1, `x port refs --check`, `x new --test-all`, T2 (`--long` adds the long runs); a background task |
+| T0 | `npm run check` | | tsc, ESLint, Prettier, `node x check` (assets, deps, docs, escalations, port vectors) |
+| T1 | `npm test` | | one area: `npm test -- <path>`; what a change reaches: `npx vitest related --run <files>` |
+| T2 | `npm run e2e` | none: nobody waits on it | while working, only the specs for what only it checks, or a failure you are fixing (`npm run e2e -- <spec>`); a background task; a lane sets its own `PORT` first |
+| Gate | `node x ci --local` | 5 min | the quick gate before every merge: `npm ci`, `x src`, T0, T1, `x port refs --check` |
+| Full run | `node x ci --local --full` | none | the gate's steps, `x new --test-all` and T2 in full (`--long` adds the long runs): GitHub runs it after each merge; `node x ci --status` says how main's last one went (ADR-0023) |
 
 The Stop hook runs `npm run check` when you end a turn and sends you back once if it is red.
 

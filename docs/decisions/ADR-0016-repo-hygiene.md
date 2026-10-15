@@ -6,7 +6,7 @@ Status: accepted · 2026-10-10 · Records PLAN.md §13.1, §11.1, I-32
 - No committed build output: `out/`, `dist/`, `.cache/`, `node_modules/` and `test-results/` are ignored.
 - A lockfile (`package-lock.json`) and `npm ci`.
 - The version lives in `package.json` only.
-- `x ci --local` is the merge gate until GitHub Actions is enabled (§8.9; amendment 1 says what it is now).
+- `x ci --local` is the merge gate until GitHub Actions is enabled (§8.9; ADR-0023 says what it is now).
 - Pushes at milestones; one PR per stage, squash-merged (the only method the repository allows), its branch deleted
   (ADR-0021).
 
@@ -43,3 +43,8 @@ In my-3d2dge, 136 of 301 files were build output, and a version bump touched 10 
   7d256f3 and 1e5d6dd). ESC-0001 is closed, and the gate is now `x ci --local` green on the PR's head (agents run it
   before every merge, ADR-0021) and the workflow's `ci` check green on the same PR. It is not a required status check:
   branch protection is the owner's switch (PLAN.md §11.5).
+
+## Amendment 2 (2026-10-15, the owner's calls of ADR-0023): the workflow is the full run after each merge
+- The merge gate is the quick gate, `x ci --local` without T2. The workflow runs `x ci --local --full` after each merge
+  to main and by hand, no longer on pull requests, and cancels no run; nobody waits on it, and `x ci --status` reads
+  it. Its `ci` check is not required: the owner declined branch protection (PLAN.md §11.5).

@@ -14,17 +14,27 @@ it cannot drift from them (PLAN.md §8.2, §8.8).
   here too. Run it before every commit, and `npm test -- <path>` while iterating. Nothing in T1 drives a browser.
 - **T2, `npm run e2e`**: Playwright Test suites in tests/e2e/, on the platform's Chromium with WebGPU on SwiftShader,
   and every other test that needs Chromium (the advice trap's Playwright harness test, tests/e2e/adviceTrap.spec.ts).
-  Run it before every push.
+  While working, run only the specs for what only T2 checks that you touched, or a failure you are finding and
+  fixing (`npm run e2e -- <spec>`), never the whole set: that is the full run's (ADR-0023).
 - **Long runs**: long replays, the kernel's perf budget, the crowd ladder, flake hunting; at each gate.
 
-Each tier's command and budget, and the long runs, are `TIERS` and `LONG_RUNS` in tools/lib/tiers.ts. `x ci --local`
-warns when a tier runs over its budget; wall-clock time never fails a gate (ADR-0022).
+Each tier's command, and the long runs, are `TIERS` and `LONG_RUNS` in tools/lib/tiers.ts. Two runs use them
+(tools/cmd/ci.ts):
+
+- **The quick gate**, `node x ci --local`, before every merge: npm ci, x src, T0, T1 and x port refs --check, held
+  to five minutes together (tools/lib/tierBudgets.ts); over them warns, and wall-clock time never
+  fails a gate (ADR-0022).
+- **The full run**, `node x ci --local --full`: the same steps, x new --test-all and T2 in full (`--long` adds the long runs). GitHub
+  runs it after each merge to main and by hand, nobody waiting on it; `node x ci --status`, which the SessionStart
+  hook runs, says how main's last one went, and a red one is fixed before other work. An agent waits on it only at
+  the end of a goal or a stage (AGENTS.md).
 
 ## What a change selects
 
 tools/lib/tiers.ts's file comment is the rule: the base commit, T1 through Vite's module graph (`vitest related`),
 and T2 in full when engine, lab or page code changed, else only the specs that import a change. Its `plan()` returns
-each selection with its reason.
+each selection with its reason. While working, T2's selection is a guide, not an order: run the specs for what only T2
+checks that you touched (above); the full run runs the rest.
 
 ## The browser fixture
 

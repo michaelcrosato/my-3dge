@@ -14,9 +14,9 @@ ledger's row C1):
 - Proofs: preciseHits parity (box-5-precise), the steps, nav-1000 and lift replays, every replay in Chromium at each
   gate (`LONG_RUNS`), browser examples run in T2 (tests/e2e/examples.spec.ts), the cold CMU import.
 - The fight's sound timeline: 77 sounds, 288bca340783f86f, in Node and Chromium.
-- CI: T2's budget goes by machine size (60 min on 1 worker here, 9 min from 16 cores; ADR-0022 amendment 2), and
-  .github/workflows/ci.yml runs the same `node x ci --local` on pull requests and pushes to main; at its first
-  green run ESC-0001 closed, and its `ci` check joined the merge gate (ADR-0016 amendment 1).
+- CI (the owner's calls of 2026-10-15, ADR-0023, row C2): merges wait on the quick gate, `node x ci --local` (about
+  5 minutes, no T2); the workflow runs the full run, `x ci --local --full`, on main after each merge, nobody waiting
+  on it; `node x ci --status`, which the SessionStart hook prints, says how main's last one went: fix a red one first.
 
 ## What waits, by design
 
@@ -32,7 +32,5 @@ ledger's row C1):
 
 ## Open issues
 
-- Owner: on 4 cores T0 and T1 run over their fixed budgets (10 s and 60 s): 20.9 s and 2 min 39 s in x ci --local at
-  1e5d6dd, 37.6 s and 3 min 43 s on the workflow's runner (6.2 s and 31.5 s at G9, on a larger machine), and the
-  runner's T2 took 65 min 44 s of its 60, all CI_BUDGET warnings: scale T0 and T1 by machine size as T2 is (ADR-0022
-  amendment 2), or keep the warnings? (the ledger's row C1)
+- None. C1's Owner: question (T0 and T1 over their budgets on 4 cores) was answered on 2026-10-15: one budget, the
+  quick gate's five minutes (ADR-0023). The owner declined branch protection (PLAN.md §11.5).

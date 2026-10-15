@@ -5630,17 +5630,18 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/ci.ts`](../tools/cmd/ci.ts)
 
-- `CI_STEPS` (const): The steps of `x ci --local`, in order (PLAN.md §8.9).
+- `CI_STEPS` (const): The steps of `x ci --local`, in order (PLAN.md §8.9); the quick gate leaves out the `full` ones.
 - `CiDeps` (interface): What `x ci` reaches outside itself; the tests replace each part.
 - `CiRun` (interface): A whole run of the gate.
 - `CiStep` (interface): One step of the gate.
 - `createCiCommand` (function): Builds the `x ci` command; the tests pass fakes for the step runner, git, the selections and the clock.
-- `default` (default): The merge gate (PLAN.md §8.9, WP 0.9): `x ci --local` runs `CI_STEPS` in order on this machine, holds the tiers to their budgets (tools/lib/tiers.ts), writes `out/ci/summary.md` (tools/lib/ciSummary.ts) and, when everything passed, records HEAD in `out/ci/last-green`, the base of the selections until main holds a gate.
+- `default` (default): The merge gate and the full run (PLAN.md §8.9, WP 0.9; ADR-0023).
+- `FULL_ONLY` (const): Why the quick gate leaves a step out.
 - `Head` (interface): HEAD's commit and branch, and the uncommitted changes (`git status --porcelain` lines).
 - `KEPT_CACHES` (const): What `npm ci` must not wipe, relative to the root: the tools' caches, and Vitest's record of each file's duration, from which it starts the longest files first (without it, T1 took 39 s instead of 36 s).
 - `readHead` (function): Reads `Head` with git.
-- `readT2Full` (function): The duration of the last full T2 run that passed, if one was recorded.
-- `runCi` (function): Runs the gate in `root`: every step, the budgets, the summary and, when green, `out/ci/last-green`.
+- `readOrigin` (function): The repository's `origin` URL, or undefined (no git, no remote).
+- `runCi` (function): Runs the gate in `root`: the quick steps, or every step with `full`; then the long runs with `long`, the budget, the summary and, when green, `out/ci/last-green`.
 - `spawnStep` (const): Runs `command` as a child process, stdout and stderr captured together, colours off.
 - `StepOutcome` (interface): What running one command gave: its exit code (1 when it could not start), its wall time and its output.
 - `StepResult` (interface): One step's result.
@@ -5941,11 +5942,20 @@ For the agents who maintain the engine.
 - `VirtualClock` (interface): The page's virtual clock and seeded streams, installed as `window.__clock`.
 - `WEBGPU_FLAGS` (const): Shardfall's WebGPU flags (PLAN.md §8.8): SwiftShader through Vulkan, presenting to the page's own canvas.
 
+### [`tools/lib/ciStatus.ts`](../tools/lib/ciStatus.ts)
+
+- `mainStatus` (function): How main's last full run went, for `x ci --status`: fails only when the last finished run did not pass.
+- `readRuns` (const): The real reader: GitHub's API through curl, 15 s at most.
+- `repoSlug` (function): `owner/repo` from a GitHub remote URL (https, ssh, or a git proxy's `…/git/owner/repo`), else undefined.
+- `RunsReader` (type): Reads the workflow's runs on main for `slug` (`owner/repo`), newest first; rejects when GitHub cannot be asked.
+- `WORKFLOW` (const): The workflow whose runs are read.
+- `WorkflowRun` (interface): One run of the workflow, as GitHub's API gives it: the fields read here.
+
 ### [`tools/lib/ciSummary.ts`](../tools/lib/ciSummary.ts)
 
 - `CI_OUT` (const): Where `x ci --local` writes, relative to the root.
 - `renderSummary` (function): The run as Markdown, for `out/ci/summary.md` (and the GitHub workflow's step summary).
-- `toResult` (function): The run as the dispatcher's result: the timing table, the T2 selection and one finding per problem.
+- `toResult` (function): The run as the dispatcher's result: the timing table, the T2 note and one finding per problem.
 
 ### [`tools/lib/deps.ts`](../tools/lib/deps.ts)
 
@@ -6236,12 +6246,11 @@ For the agents who maintain the engine.
 
 ### [`tools/lib/tierBudgets.ts`](../tools/lib/tierBudgets.ts)
 
-- `BudgetCheck` (interface): A tier's duration against its budget.
-- `checkBudget` (function): Checks one duration against its tier's budget on `cores` cores: over it warns (ADR-0022: time budgets never fail).
-- `checkReports` (function): Checks each tier's duration on `cores` cores: `measured` first (T0 writes no report, so `x ci --local` times it), else the tier's JSON report under `root`.
-- `reportMs` (function): The wall-clock duration a Vitest or Playwright JSON report records; throws on anything else.
+- `BudgetCheck` (interface): The quick gate's time against its budget.
+- `checkGate` (function): Checks the quick gate's time: over `GATE_BUDGET_MS` warns (ADR-0022: time budgets never fail).
+- `GATE_BUDGET_MS` (const): The quick gate's budget in ms: its steps together, before every merge (the owner's call, ADR-0023).
 - `Timing` (interface): One row of the timing table.
-- `timingTable` (function): The timing table: one line per step (verdict, name, duration, budget), then the total.
+- `timingTable` (function): The timing table: one line per step (verdict, name, duration), then the total.
 
 ### [`tools/lib/tiers.ts`](../tools/lib/tiers.ts)
 
@@ -6254,18 +6263,16 @@ For the agents who maintain the engine.
 - `isVersionOnly` (function): True when every changed line of a unified diff is a `"version": "…"` line, as many removed as added.
 - `LAST_GREEN` (const): Where the last green `x ci --local` records its commit, relative to the root.
 - `LONG_RUNS` (const): The long runs (PLAN.md §8.2): no budget, run at each gate.
-- `plan` (function): The base, the changes and both selections for `root`: what `x ci --local` and an iterating agent run.
+- `plan` (function): The base, the changes and both selections for `root`: what an iterating agent runs.
 - `recordGreen` (function): Records `sha` as the last green `x ci --local`, the base until main holds a gate.
 - `ROOT` (const): The repository root, two levels above this file.
 - `Selection` (interface): What a tier runs for a change, and why.
 - `selectT1` (function): What T1 runs for `changes`; undefined changes (no base) run it all.
 - `selectT2` (function): What T2 runs for `changes`; undefined changes (no base) run it all.
 - `T1_FULL` (const): Changes that run every T1 test: what all of them run under, or read outside their imports.
-- `T2_BUDGETS` (const): T2's measured budgets in ms, by its worker count (ADR-0022 amendment 2): 9 min on 4 workers, from 16 cores (gate G6, ADR-0014 amendment 14); 60 min on 1, on 4 cores (57 min 40 s at caff36a in the cloud container, ADR-0014 amendment 15).
 - `T2_FULL` (const): Changes that run all of T2: code that reaches the browser through the dev server, and what every spec runs under.
-- `t2Budget` (function): T2's budget on `cores` cores: its worker count's measured budget; 2 and 3 workers, unmeasured, are held to 1's.
 - `t2Workers` (function): T2's Playwright workers on a machine of `cores` cores: one per `CORES_PER_WORKER`, from 1 to 4.
-- `Tier` (interface): One tier: its full command, its budget and the JSON report its duration is read from.
+- `Tier` (interface): One tier: its full command and the JSON report it writes.
 - `TierId` (type): A tier with a budget.
 - `TIERS` (const): The tiers of PLAN.md §8.2.
 - `Trigger` (interface): A path whose change runs a whole tier: a file, or a directory when it ends in `/`.

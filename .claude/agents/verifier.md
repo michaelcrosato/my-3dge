@@ -18,9 +18,11 @@ commit or push. Your caller names a work package (`WP-<id>`) or a gate (`G<n>`) 
 ## Verify WP-<id> of my-3dge on branch <b>
 
 Run its Verify commands plus `npm run check` and `npm test`, each exactly as written, from the repository root.
-Long suites (`npm run e2e`, `node x ci --local`) can take minutes: run them in the background and read
-`out/**/report.json` rather than the scrollback. Run a full suite once per commit: when your caller names a green run
-on the same commit, read its report instead (ADR-0022); at a gate, `node x ci --local` already runs the e2e suite.
+Long suites (`npm run e2e`, `node x ci --local --full`) take up to an hour: run them in the background and read
+`out/**/report.json` rather than the scrollback. Never run the whole e2e suite to review: run the specs for what only
+T2 checks that the diff touched. The full run goes on GitHub after the merge, nobody waiting on it, and
+`node x ci --status` says how main's last one went (ADR-0023). When your caller names a green run on the same commit,
+read its report instead (ADR-0022).
 
 Then try to break it against DOCTRINE.md: reproducibility leaks (Math.random, clocks, renderer reads in sim-side
 code), anything reachable only through a page, binary files without approval, versions outside the Mastery rule,

@@ -1345,8 +1345,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`check.ts`](../tools/cmd/check.ts): Runs the repository checks no standard tool covers, last in `npm run check` (PLAN.md §8.1).
   - Exports: `assetScan`, `binaryKind`, `CheckContext`, `CheckOutcome`, `CheckPlugin`, `default`, `discoverPlugins`, `isLane`, `repositoryFiles`, `runChecks`, `scanAssets`
   - Tests: [`tools/cmd/check.test.ts`](../tools/cmd/check.test.ts)
-- [`ci.ts`](../tools/cmd/ci.ts): The merge gate (PLAN.md §8.9, WP 0.9): `x ci --local` runs `CI_STEPS` in order on this machine, holds the tiers to their budgets (tools/lib/tiers.ts), writes `out/ci/summary.md` (tools/lib/ciSummary.ts) and, when everything passed, records HEAD in `out/ci/last-green`, the base of the selections until main holds a gate.
-  - Exports: `CI_STEPS`, `CiDeps`, `CiRun`, `CiStep`, `createCiCommand`, `default`, `Head`, `KEPT_CACHES`, `readHead`, `readT2Full`, `runCi`, `spawnStep`, `StepOutcome`, `StepResult`, `StepRunner`
+- [`ci.ts`](../tools/cmd/ci.ts): The merge gate and the full run (PLAN.md §8.9, WP 0.9; ADR-0023).
+  - Exports: `CI_STEPS`, `CiDeps`, `CiRun`, `CiStep`, `createCiCommand`, `default`, `FULL_ONLY`, `Head`, `KEPT_CACHES`, `readHead`, `readOrigin`, `runCi`, `spawnStep`, `StepOutcome`, `StepResult`, `StepRunner`
   - Tests: [`tools/cmd/ci.test.ts`](../tools/cmd/ci.test.ts)
 - [`deps.ts`](../tools/cmd/deps.ts): Checks the dependency pins against `tools/deps.json` (offline), and asks the registry for compatible releases to adopt and for lines that have qualified (PLAN.md §6.10; doctrine: Mastery, Common ground).
   - Exports: `check`, `createDepsCommand`, `default`
@@ -1438,7 +1438,10 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`browser.ts`](../tools/lib/browser.ts): Chromium for the tools and the e2e fixture, through Playwright: the launch options `playwright.config.ts` also uses, the init script every page gets before its own scripts run (a virtual clock, seeded randomness and a WebGPU probe), and page errors mapped to `.ts` files and lines through Vite's inline source maps (§8.1, §8.8).
   - Exports: `AdapterRecord`, `browserRuntime`, `cachedChromium`, `CHROMIUM_VERSION`, `chromiumPath`, `ConsoleRecord`, `DEFAULT_CHROMIUM`, `describePageError`, `GpuLog`, `initScript`, `launchBrowser`, `launchOptions`, `mapPageError`, `mapStack`, `PageError`, `PageWatch`, `parseStack`, `preparePage`, `servedPath`, `SourceFrame`, `VIEWPORT`, `VirtualClock`, `WEBGPU_FLAGS`
   - Tests: [`tests/e2e/harness.spec.ts`](../tests/e2e/harness.spec.ts), [`tools/lib/browser.test.ts`](../tools/lib/browser.test.ts)
-- [`ciSummary.ts`](../tools/lib/ciSummary.ts): The merge gate's report (PLAN.md §8.9, WP 0.9): where `x ci --local` (tools/cmd/ci.ts) writes (`CI_OUT`), its run as Markdown for `out/ci/summary.md` and the GitHub workflow's step summary (`renderSummary`: the commit, the steps with their times against their budgets, the T2 selection, a failed step's last lines), and as the dispatcher's result (`toResult`: the timing table, the T2 selection and one finding per problem).
+- [`ciStatus.ts`](../tools/lib/ciStatus.ts): Where main's full run stands (ADR-0023): `x ci --status` reads the GitHub workflow's runs on main (.github/workflows/ci.yml, which runs `node x ci --local --full` after each merge) through GitHub's REST API, with curl, which honours the environment's proxy, and no token: the repository is public.
+  - Exports: `mainStatus`, `readRuns`, `repoSlug`, `RunsReader`, `WORKFLOW`, `WorkflowRun`
+  - Tests: [`tools/lib/ciStatus.test.ts`](../tools/lib/ciStatus.test.ts)
+- [`ciSummary.ts`](../tools/lib/ciSummary.ts): The gate's report (PLAN.md §8.9, WP 0.9): where `x ci --local` (tools/cmd/ci.ts) writes (`CI_OUT`), its run as Markdown for `out/ci/summary.md` and the GitHub workflow's step summary (`renderSummary`: the commit, the steps with their times, the quick gate against its budget, a failed step's last lines), and as the dispatcher's result (`toResult`: the timing table and one finding per problem).
   - Exports: `CI_OUT`, `renderSummary`, `toResult`
   - Tests: [`tools/cmd/ci.test.ts`](../tools/cmd/ci.test.ts)
 - [`deps.ts`](../tools/lib/deps.ts): The dependency record (`tools/deps.json`) and the model behind `x deps` (PLAN.md §6.10, doctrine: Mastery): versions and their lines, the 12-month rule, registry answers, and the lockfile's types packages.
@@ -1510,11 +1513,11 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`source.ts`](../tools/lib/source.ts): The read-only source checkouts: my-3d2dge at `$MY3D2DGE_SRC` and shardfall at `$SHARDFALL_SRC` (PLAN.md WP 0.1).
   - Exports: `repoSlug`, `requireSource`, `ResolvedSource`, `ResolveOptions`, `resolveSource`, `SkippableTest`, `SourceSpec`, `sourceSpecs`
   - Tests: [`tools/lib/source.test.ts`](../tools/lib/source.test.ts)
-- [`tierBudgets.ts`](../tools/lib/tierBudgets.ts): The tiers' budget checks (PLAN.md §8.2, ADR-0022): each tier's wall-clock duration against its budget on the machine's cores (tools/lib/tiers.ts `TIERS`; T2's goes by the cores, `t2Budget`), read from the JSON reports the tiers write (`reportMs`, `checkReports`) or measured by the caller (T0 writes none), and the timing table `x ci --local` prints (`timingTable`).
-  - Exports: `BudgetCheck`, `checkBudget`, `checkReports`, `reportMs`, `Timing`, `timingTable`
+- [`tierBudgets.ts`](../tools/lib/tierBudgets.ts): The quick gate's time budget (PLAN.md §8.2, ADR-0023): the steps `x ci --local` runs before every merge, together, against `GATE_BUDGET_MS`, the owner's five minutes (`checkGate`), and the timing table `x ci --local` prints (`timingTable`).
+  - Exports: `BudgetCheck`, `checkGate`, `GATE_BUDGET_MS`, `Timing`, `timingTable`
   - Tests: [`tools/lib/tiers.test.ts`](../tools/lib/tiers.test.ts)
-- [`tiers.ts`](../tools/lib/tiers.ts): The test tiers (PLAN.md §8.2): their commands and budgets, and what a change selects in T1 and T2 and why (the budget checks over the JSON reports: tools/lib/tierBudgets.ts).
-  - Exports: `Base`, `changedFiles`, `Changes`, `CORES_PER_WORKER`, `duration`, `findBase`, `isVersionOnly`, `LAST_GREEN`, `LONG_RUNS`, `plan`, `recordGreen`, `ROOT`, `Selection`, `selectT1`, `selectT2`, `T1_FULL`, `T2_BUDGETS`, `T2_FULL`, `t2Budget`, `t2Workers`, `Tier`, `TierId`, `TIERS`, `Trigger`, `vitestRerunTriggers`
+- [`tiers.ts`](../tools/lib/tiers.ts): The test tiers (PLAN.md §8.2): their commands, and what a change selects in T1 and T2 and why (the quick gate's budget: tools/lib/tierBudgets.ts).
+  - Exports: `Base`, `changedFiles`, `Changes`, `CORES_PER_WORKER`, `duration`, `findBase`, `isVersionOnly`, `LAST_GREEN`, `LONG_RUNS`, `plan`, `recordGreen`, `ROOT`, `Selection`, `selectT1`, `selectT2`, `T1_FULL`, `T2_FULL`, `t2Workers`, `Tier`, `TierId`, `TIERS`, `Trigger`, `vitestRerunTriggers`
   - Tests: [`tools/lib/tiers.test.ts`](../tools/lib/tiers.test.ts)
 - [`vite.ts`](../tools/lib/vite.ts): A Vite dev server through Vite's JavaScript API, for the `x` commands that open pages (PLAN.md §8.1).
   - Exports: `DevServer`, `freePort`, `startVite`
