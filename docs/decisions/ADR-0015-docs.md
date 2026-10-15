@@ -61,3 +61,17 @@ AGENTS.md gives under "Where things are" (the bullets after its "Task guides" li
 .claude/skills/ with its description's headline and its "Use when" sentence. The list is written once, in AGENTS.md,
 whose paths x docs already checks; INDEX's own drift check catches a guide or skill added without `x docs --write`. The
 generated docs now depend on AGENTS.md and the skills as well as the code.
+
+## Amendment 4 (2026-10-14, after G9, WP-0.6): browser examples run in T2
+- **Flagged by what they need, not their folder.** An example is browser-only when its module imports a Vite-only
+  path (`?raw`…) or Playwright, when its module is a suite's own (tests/e2e/), or when its first line is
+  `// browser` (Web Audio, a page's DOM); labs/ no longer flags a whole file, so most of the box's examples run in
+  Node with the rest (tests/unit/examples.test.ts).
+- **Each flagged example says where it runs** (`ExampleHost`, tools/lib/docs.ts): `page`, in the box page with its
+  module's exports in scope and its relative imports resolved (tools/lib/docsExamples.ts `pageExample`); `node`, in
+  the Playwright process; `none`, a suite's own module, whose example is a test. tests/e2e/examples.spec.ts (WP 0.6's
+  Owns) runs the first two, a test each, and checks that only the suites' own are left unrun, each naming why. The
+  audio runtime's examples (engine/audio/runtime/) were rewritten to run as they stand, on an `OfflineAudioContext`.
+- **Counted:** 42 of 392 examples were flagged and none ran; now 13 of 411 are, 8 run in the box page, 4 in the
+  Playwright process, and tests/e2e/fixtures.ts's is the one left unrun.
+- Evidence: `tests/e2e/examples.spec.ts`, `tools/cmd/docs.test.ts`, `tests/unit/examples.test.ts`.

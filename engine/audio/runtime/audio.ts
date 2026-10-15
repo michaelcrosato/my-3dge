@@ -28,12 +28,11 @@
  * buses and their levels, `sfx` with its per-sound rule, `music`), on pre-rendered buffers.
  *
  * @example
- * // browser: Web Audio plays only in a page (tests/e2e/audio.spec.ts runs this runtime)
- * const audio = createAudio({ footsteps: { iron: 'sfx:clang', '*': 'sfx:step' } });
+ * // browser: Web Audio plays only in a page (tests/e2e/examples.spec.ts runs it; tests/e2e/audio.spec.ts the rest)
+ * const audio = createAudio({ footsteps: { iron: 'sfx:stomp', '*': 'sfx:step' } });
  * audio.music('song:dungeon', { intensity: 0 }); // starts on the first gesture
  * audio.bind('bossSeen', 'sfx:secret');
- * // each frame, after the render:
- * audio.update(camera.pose, queryViewOf(world));
+ * // each frame, after the render: audio.update(camera.pose, queryViewOf(world));
  * audio.event('hit', { sfx: 'sfx:hit', position: [2, 1, 5] });
  * @see tests/e2e/audio.spec.ts
  */

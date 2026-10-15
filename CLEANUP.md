@@ -199,7 +199,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 - [x] 6.7 **The look spec and the ready wait** (WP 7.8): tests/e2e/box-look.spec.ts is one 600 s test (:87); make it
       one test per look. `x shot` waits 30 s (tools/cmd/shot.ts:51) and pages 60 s (`READY_MS`, tools/lib/page.ts:26),
       short for styled looks under load: add a `--ready-ms` option. Prove: the spec passes; the option is in the help.
-- [ ] 6.8 **Browser `@example`s run nowhere** (WP 0.6's deferred proof; ADR-0015): 42 of 392 examples are flagged
+- [x] 6.8 **Browser `@example`s run nowhere** (WP 0.6's deferred proof; ADR-0015): 42 of 392 examples are flagged
       browser-only, 28 of them under labs/, and tests/unit/examples.test.ts:21-25 only checks that each gives a
       reason. Flag labs/ files by their imports rather than their folder (tools/lib/docs.ts:239-244), so most run in
       Node; run the rest in a new tests/e2e/examples.spec.ts (WP 0.6's Owns, with an ADR-0015 amendment). Prove: no

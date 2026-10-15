@@ -9,8 +9,10 @@
  * trap still sees them. Write each example as code that runs on this repository as it is, offline: an expected
  * value goes in a trailing comment.
  *
- * Browser examples are flagged for T2 instead of run: those of page code (`labs/`, `tests/e2e/`, `tests/pages/`), of
- * modules that import Playwright, and any whose first line is a `// browser` comment.
+ * Browser examples are flagged for T2 instead of run, by what their module imports (tools/lib/docs.ts `ExampleHost`):
+ * a Vite-only import (`?raw`) or a first line `// browser` runs in the box page (`pageExample` prepares it), a module
+ * that imports Playwright runs in the Playwright process, and the suites' own modules (tests/e2e/) are tests, which the
+ * suites run; tests/e2e/examples.spec.ts runs them.
  *
  * Invariants: examples run one at a time, in module order, each with a time limit (`EXAMPLE_TIMEOUT_MS`).
  *
@@ -121,6 +123,24 @@ export async function runExample(
     clearTimeout(timer);
     CAPTURED.forEach((level, i) => (console[level] = saved[i]));
   }
+}
+
+/**
+ * A page example as the box page runs it (tests/e2e/examples.spec.ts): its module's URL, its body (`compileExample`),
+ * and the URL of each module it imports by a relative path. Throws for a bare import: the page cannot resolve one.
+ */
+export function pageExample(
+  root: string,
+  example: Example,
+): { module: string; body: string; imports: Record<string, string> } {
+  const body = compileExample(example.code);
+  const imports: Record<string, string> = {};
+  for (const [, specifier] of body.matchAll(/__import\("([^"]+)"\)/g)) {
+    const target = specifier.startsWith('.') ? resolveSpecifier(root, example.module, specifier) : undefined;
+    if (!target) throw new Error(`${example.module}:${example.line} imports "${specifier}": a page example imports by relative path`); // prettier-ignore
+    imports[specifier] = `/${target}`;
+  }
+  return { module: `/${example.module}`, body, imports };
 }
 
 /** The examples' verdicts: Node examples run in order; browser examples are listed for T2. */

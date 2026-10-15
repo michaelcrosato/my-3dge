@@ -1451,13 +1451,13 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `Adoption`, `NETWORK`, `NetworkOptions`, `planUpdate`, `Qualified`, `qualify`, `Registry`, `Runner`, `SPAWN`, `update`
   - Tests: [`tools/cmd/deps.test.ts`](../tools/cmd/deps.test.ts)
 - [`docs.ts`](../tools/lib/docs.ts): Reads the manual out of the code (PLAN.md §6.8, WP 0.6): each module's file comment, its exports with their doc comments, its `@example` blocks, its tests, the codes it registers and the registry kinds it declares, through the TypeScript compiler API.
-  - Exports: `directoryOf`, `DocComment`, `DocTag`, `Example`, `ExportDoc`, `isModulePath`, `lineOf`, `listModules`, `MODULE_ROOTS`, `ModuleDoc`, `parse`, `parseDocComment`, `readModule`, `readModules`, `ResolvedExport`, `resolveExports`, `resolveSpecifier`, `walk`
+  - Exports: `directoryOf`, `DocComment`, `DocTag`, `Example`, `ExampleHost`, `ExportDoc`, `isModulePath`, `lineOf`, `listModules`, `MODULE_ROOTS`, `ModuleDoc`, `parse`, `parseDocComment`, `readModule`, `readModules`, `ResolvedExport`, `resolveExports`, `resolveSpecifier`, `walk`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
 - [`docsCodes.ts`](../tools/lib/docsCodes.ts): Reads the error and advice codes a module registers with `defineCodes` (PLAN.md WP 1.2, §6.8): `x docs` collects them into `docs/ERRORS.md` and fails a code without its fix.
   - Exports: `CodeDoc`, `codesOf`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
 - [`docsExamples.ts`](../tools/lib/docsExamples.ts): Runs the `@example` blocks of file and export comments in Node (PLAN.md §8.12, WP 0.6): `x docs --check` runs them, and so does `tests/unit/examples.test.ts` in T1.
-  - Exports: `collectExamples`, `compileExample`, `EXAMPLE_TIMEOUT_MS`, `ExampleOutcome`, `rewriteImports`, `runExample`, `runExamples`
+  - Exports: `collectExamples`, `compileExample`, `EXAMPLE_TIMEOUT_MS`, `ExampleOutcome`, `pageExample`, `rewriteImports`, `runExample`, `runExamples`
   - Tests: [`tests/unit/examples.test.ts`](../tests/unit/examples.test.ts), [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
 - [`docsGenerate.ts`](../tools/lib/docsGenerate.ts): Writes the generated docs from what tools/lib/docs.ts reads (PLAN.md §6.8, WP 0.6): `docs/INDEX.md` (the "Start here" task guides and skills of tools/lib/docsStart.ts, a row per registry kind declared with `defineKind`, PLAN.md §6.6, then module → purpose → exports → tests), `docs/API.md` (each export with the first sentence of its doc comment, the public API first) and `docs/ERRORS.md` (every code registered with `defineCodes`, with its message and fix).
   - Exports: `apiMarkdown`, `BARRELS`, `errorsMarkdown`, `formatMarkdown`, `GENERATED`, `generateDocs`, `indexMarkdown`, `kindRows`

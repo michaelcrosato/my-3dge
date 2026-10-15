@@ -309,7 +309,7 @@ Raised by `noteFreq` and `render` (engine/audio/dsp/voice.ts, render.ts) for a p
 
 - Message: `{option} is {value}, not {expected}`
 - Fix: pass {expected} as {option}
-- Registered in: [`engine/audio/runtime/sound.ts` line 26](../engine/audio/runtime/sound.ts)
+- Registered in: [`engine/audio/runtime/sound.ts` line 29](../engine/audio/runtime/sound.ts)
 
 Raised by `audio.play` and `Sound.move` (engine/audio/runtime/sound.ts) for a volume, pitch, variant or position out of range.
 
@@ -365,7 +365,7 @@ Raised by `sfxVoices` and `renderSfx` (engine/audio/data/sfx.ts) when following 
 
 - Message: `sound is off: {reason}`
 - Fix: open the page in a browser with Web Audio (every current one has it); the game runs on in silence
-- Registered in: [`engine/audio/runtime/audio.ts` line 56](../engine/audio/runtime/audio.ts)
+- Registered in: [`engine/audio/runtime/audio.ts` line 55](../engine/audio/runtime/audio.ts)
 
 Advice from `createAudio` (engine/audio/runtime/audio.ts) when there is no Web Audio, or the context could not be made.
 

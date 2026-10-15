@@ -67,9 +67,18 @@ export interface Example {
   /** 1-based line of the `@example` tag. */
   line: number;
   code: string;
-  /** Flagged for T2 instead of run in Node, and why. */
+  /** Flagged for T2 instead of run in T1, and why. */
   browser?: string;
+  /** Where T2 runs a flagged one (tests/e2e/examples.spec.ts), when it is flagged. */
+  host?: ExampleHost;
 }
+
+/**
+ * Where T2 runs a flagged example: in the box page (`page`: Web Audio, a page's DOM, a Vite-only import), in the
+ * Playwright process (`node`: it drives a browser itself), or nowhere (`none`: a suite's own module, whose example is a
+ * test the suites run), its reason saying why.
+ */
+export type ExampleHost = 'page' | 'node' | 'none';
 
 /** Everything `x docs` knows about one module. */
 export interface ModuleDoc {
@@ -89,8 +98,8 @@ export interface ModuleDoc {
 
 /** The directories whose code files are modules. */
 export const MODULE_ROOTS = ['engine', 'tools', 'labs', 'tests'];
-/** Page-side directories: their examples need a browser (T2). */
-const BROWSER_DIRS = ['labs/', 'tests/e2e/', 'tests/pages/'];
+/** The suites' own directory: its modules' examples are tests, which the suites run. */
+const SUITES_DIR = 'tests/e2e/';
 /** Packages whose importers drive a browser, so their examples run in T2. */
 const BROWSER_PACKAGES = ['playwright', 'playwright-core', '@playwright/test'];
 const CODE_FILE = /\.(ts|js|mjs)$/;
@@ -236,12 +245,16 @@ export function parse(root: string, path: string): ts.SourceFile {
   return ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true);
 }
 
-/** Why a module's examples need a browser, or undefined when they run in Node. */
-function browserReason(path: string, imports: readonly string[]): string | undefined {
-  const dir = BROWSER_DIRS.find((prefix) => path.startsWith(prefix));
-  if (dir) return `page code (${dir})`;
+/**
+ * Why a module's examples cannot run in T1 and where T2 runs them, from what it imports (never its folder: the box's
+ * sim-side and look modules run in Node); undefined when they run in Node.
+ */
+function browserFlag(path: string, imports: readonly string[]): Pick<Example, 'browser' | 'host'> | undefined {
+  if (path.startsWith(SUITES_DIR)) return { browser: `a suite's own module (${SUITES_DIR}): its example is a test`, host: 'none' }; // prettier-ignore
+  const vite = imports.find((name) => /\?(raw|url|worker|inline)\b/.test(name));
+  if (vite) return { browser: `it imports ${vite}, which only Vite serves`, host: 'page' };
   const pkg = imports.find((name) => BROWSER_PACKAGES.includes(name));
-  return pkg ? `it imports ${pkg}` : undefined;
+  return pkg ? { browser: `it imports ${pkg}`, host: 'node' } : undefined;
 }
 
 /** Reads one module. */
@@ -249,15 +262,15 @@ export function readModule(root: string, path: string): ModuleDoc {
   const source = parse(root, path);
   const fileComment = fileCommentOf(source.text);
   const { exports, imports } = exportsOf(source);
-  const pageSide = browserReason(path, imports);
+  const flag = browserFlag(path, imports);
   const comments = [fileComment, ...exports.map((item) => item.doc)].filter((doc) => doc !== undefined);
   const examples = comments.flatMap((doc) =>
     doc.tags
       .filter((tag) => tag.name === 'example')
       .map((tag) => {
         const code = tag.text.replace(/^\s*<caption>.*?<\/caption>/, '').replace(/^\s*\n/, '');
-        const marked = /^\s*\/\/\s*browser\b/.test(code) ? 'marked // browser' : undefined;
-        return { module: path, line: tag.line, code, browser: marked ?? pageSide };
+        const marked = /^\s*\/\/\s*browser\b/.test(code) ? { browser: 'marked // browser', host: 'page' as const } : undefined; // prettier-ignore
+        return { module: path, line: tag.line, code, ...(marked ?? flag) };
       }),
   );
   const base = path.replace(CODE_FILE, '');

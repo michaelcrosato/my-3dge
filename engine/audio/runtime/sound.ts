@@ -9,8 +9,11 @@
  * before anything is made: a value out of range throws `AUDIO_BAD_OPTION`.
  *
  * @example
- * // browser: Web Audio's nodes exist only in a page (tests/e2e/audio.spec.ts plays voices)
- * const input = mixer.input('effects');
+ * // browser: Web Audio's nodes exist only in a page (tests/e2e/examples.spec.ts; tests/e2e/audio.spec.ts plays them)
+ * import { createMixer } from './mixer';
+ * const context = new OfflineAudioContext(2, 44100, 44100);
+ * const input = createMixer(context).input('effects');
+ * const buffer = new AudioBuffer({ length: 4410, sampleRate: 44100 });
  * const options = { position: [2, 1, 0] as const };
  * const voice = createVoice(context, { id: 'sfx:hit', bus: 'effects', buffer, input, when: 0, options });
  * voice.move([3, 1, 0]);
