@@ -1748,7 +1748,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm run check && npm test -- tools/eslint tools/cmd/check`
 
 #### WP-0.5 Test tiers, selection and the advice trap
-- **Owns:** `tools/lib/{tiers,tierBudgets}.ts` (tierBudgets.ts split from tiers.ts: (ADR-0014 amendment 16)), `tests/setup/adviceTrap.ts`, `tests/baselines/advice/README.md`; extends `tests/e2e/fixtures.ts` and `vite.config.ts` (from WP 0.2) with the advice trap
+- **Owns:** `tools/lib/{tiers,tierBudgets}.ts` (tierBudgets.ts split from tiers.ts: ADR-0014 amendment 16), `tests/setup/adviceTrap.ts`, `tests/baselines/advice/README.md`; extends `tests/e2e/fixtures.ts` and `vite.config.ts` (from WP 0.2) with the advice trap
 - **Needs:** WP 0.4
 - **Size:** S
 - **Carry:** the ideas of `tools/test-run.mjs`: a reason for each selection, the timing table, and the version-only filter (a commit that changes only `package.json`'s version selects nothing).
@@ -1825,7 +1825,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- tools/cmd/esc && npm run check`
 
 #### WP-0.11 Port reference vectors from my-3d2dge
-- **Owns:** `tools/cmd/port.ts`, `tools/lib/portVectors.ts` (split from it: (ADR-0014 amendment 16)), `tests/baselines/port/**`
+- **Owns:** `tools/cmd/port.ts`, `tools/lib/portVectors.ts` (split from it: ADR-0014 amendment 16), `tests/baselines/port/**`
 - **Needs:** WP 0.2
 - **Size:** M
 - **Build:** `x port refs`:
@@ -1992,7 +1992,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/core/time`
 
 #### WP-1.4 Sim world and canonical state
-- **Owns:** `engine/sim/{world,entityTable,systems,state,capture,entities}.ts` (entityTable.ts split from world.ts: (ADR-0014 amendment 16)); extends `engine/core/{rng,events}.ts` (review fixes, ADR-0006 amendment 3)
+- **Owns:** `engine/sim/{world,entityTable,systems,state,capture,entities}.ts` (entityTable.ts split from world.ts: ADR-0014 amendment 16); extends `engine/core/{rng,events}.ts` (review fixes, ADR-0006 amendment 3)
 - **Needs:** WP 1.3
 - **Size:** M
 - **Build:**
@@ -2013,7 +2013,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/sim`
 
 #### WP-1.5 Intents, scenes, replays, `x sim`, `x replay`
-- **Owns:** `engine/input/intents.ts`, `engine/sim/{scene,session,replay}.ts`, `tools/cmd/{sim,replay,perf}.ts`, `tools/lib/{scenes,perfBudget}.ts` (session.ts, scenes.ts and perfBudget.ts split from scene.ts, sim.ts and perf.ts: (ADR-0014 amendment 16)), `fixtures/scenes/kernel/`, `tests/replays/README.md`, `tests/replays/kernel-*.replay.json`, `tests/pages/replay.html`, `.claude/skills/determinism-debugging/`
+- **Owns:** `engine/input/intents.ts`, `engine/sim/{scene,session,replay}.ts`, `tools/cmd/{sim,replay,perf}.ts`, `tools/lib/{scenes,perfBudget}.ts` (session.ts, scenes.ts and perfBudget.ts split from scene.ts, sim.ts and perf.ts: ADR-0014 amendment 16), `fixtures/scenes/kernel/`, `tests/replays/README.md`, `tests/replays/kernel-*.replay.json`, `tests/pages/replay.html`, `.claude/skills/determinism-debugging/`
 - **Needs:** WP 1.4
 - **Size:** M
 - **Build:**
@@ -2211,7 +2211,7 @@ A WP is done only when all of these hold:
 ### Phase 3: Box 2, a hero (lanes P, I, A, R, T, B)
 
 #### WP-3.1 Rapier adapter and queries
-- **Owns:** `engine/physics/{world,binding,groups,params,capture,queries}.ts` (binding.ts split from world.ts: (ADR-0014 amendment 16)), `engine/sim/{queryView,levelBodies}.ts`, `fixtures/scenes/physics-40/`, `tests/replays/physics-40.replay.json`, `.claude/skills/rapier/`; extends `engine/sim/{scene,world,state}.ts` (from WPs 1.4–1.5) with `physics: true` and the settings part of the hash, and re-records `tests/replays/kernel-*.replay.json`
+- **Owns:** `engine/physics/{world,binding,groups,params,capture,queries}.ts` (binding.ts split from world.ts: ADR-0014 amendment 16), `engine/sim/{queryView,levelBodies}.ts`, `fixtures/scenes/physics-40/`, `tests/replays/physics-40.replay.json`, `.claude/skills/rapier/`; extends `engine/sim/{scene,world,state}.ts` (from WPs 1.4–1.5) with `physics: true` and the settings part of the hash, and re-records `tests/replays/kernel-*.replay.json`
 - **Needs:** WP 2.2
 - **Size:** M
 - **Carry:**
@@ -2726,7 +2726,7 @@ A WP is done only when all of these hold:
 ### Phase 6: Box 5, combat (lanes A, W, R, I, B)
 
 #### WP-6.1 Moves, timelines, hits
-- **Owns:** `engine/anim/{timeline,attack,moves,moves-data,strike}.ts` (attack.ts split from timeline.ts: (ADR-0014 amendment 16)), `fixtures/rigs/dummy/` (a neutral training dummy that takes hits); extends `engine/anim/{humanoid,poses,locomotion,states,weights,character}.ts` for the arm path (ADR-0009 amendment 5)
+- **Owns:** `engine/anim/{timeline,attack,moves,moves-data,strike}.ts` (attack.ts split from timeline.ts: ADR-0014 amendment 16), `fixtures/rigs/dummy/` (a neutral training dummy that takes hits); extends `engine/anim/{humanoid,poses,locomotion,states,weights,character}.ts` for the arm path (ADR-0009 amendment 5)
 - **Needs:** WP 3.7
 - **Size:** L
 - **Carry:**
@@ -2823,7 +2823,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/ui && npm run e2e -- tests/e2e/overlay.spec.ts`
 
 #### WP-6.6 Animation checks, QA and sheets
-- **Owns:** extends `engine/anim/check.ts` (WP 3.4) with the state matrix, `engine/anim/stateMatrix.ts` since its split (ADR-0014 amendment 16); `tools/cmd/sheet.ts` (PNG of `anim.sheet()` through the browser), `tools/qa/anim.ts`, `tools/qa/anim/metrics.ts` (split from it, (ADR-0014 amendment 16)), `tests/baselines/qa-anim.json`
+- **Owns:** extends `engine/anim/check.ts` (WP 3.4) with the state matrix, `engine/anim/stateMatrix.ts` since its split (ADR-0014 amendment 16); `tools/cmd/sheet.ts` (PNG of `anim.sheet()` through the browser), `tools/qa/anim.ts`, `tools/qa/anim/metrics.ts` (split from it, ADR-0014 amendment 16), `tests/baselines/qa-anim.json`
 - **Needs:** WP 5.3, WP 6.2
 - **Size:** M
 - **Carry:**
@@ -2908,7 +2908,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/gfx/textures && node x qa tex`
 
 #### WP-7.4 Post-processing
-- **Owns:** `engine/gfx/post/**`, `tools/templates/look/`, `tests/e2e/post-box.spec.ts` (the box's post tests, split from post.spec.ts: (ADR-0014 amendment 16)); extends `engine/app/engine.ts`, `engine/gfx/props.ts`, `engine/gfx/puppets/crowd.ts` and `tools/cmd/set.ts` (core proposal accepted, ADR-0008 amendment 7)
+- **Owns:** `engine/gfx/post/**`, `tools/templates/look/`, `tests/e2e/post-box.spec.ts` (the box's post tests, split from post.spec.ts: ADR-0014 amendment 16); extends `engine/app/engine.ts`, `engine/gfx/props.ts`, `engine/gfx/puppets/crowd.ts` and `tools/cmd/set.ts` (core proposal accepted, ADR-0008 amendment 7)
 - **Needs:** WP 2.6, WP 3.12, WP 7.2
 - **Size:** L
 - **Carry:**
@@ -3112,7 +3112,7 @@ A WP is done only when all of these hold:
 - **Verify:** `npm test -- engine/anim/clip tests/unit/data/anim && npm run e2e -- tests/e2e/library.spec.ts`
 
 #### WP-8.7 The ACTIONS layer
-- **Owns:** `engine/anim/{actions,actions-data,actions-check}.ts` (the split: (ADR-0014 amendment 16)), `data/anim/actions/*`, `tools/templates/action/`; extends `tools/qa/anim.ts` and `tools/qa/anim.test.ts` (WP 6.6) with the action subjects (ADR-0009 amendment 7)
+- **Owns:** `engine/anim/{actions,actions-data,actions-check}.ts` (the split: ADR-0014 amendment 16), `data/anim/actions/*`, `tools/templates/action/`; extends `tools/qa/anim.ts` and `tools/qa/anim.test.ts` (WP 6.6) with the action subjects (ADR-0009 amendment 7)
 - **Needs:** WP 6.6, WP 8.4
 - **Size:** M
 - **Carry:**
@@ -3127,7 +3127,7 @@ A WP is done only when all of these hold:
 
 #### WP-8.8 Re-import from the sources (format 2; on demand, after G8)
 - **Owns:** updates to `data/anim/sets/**`; `tests/unit/data/anim/upgrade.test.ts`
-- **Needs:** G8
+- **Needs:** G8; a skinned-mesh GLB import test first (tools/anim/glb-library.test.ts's fixture has no mesh, so no test reads a GLB's skin)
 - **Size:** L
 - **Trigger:** a clip needs a degree of freedom format 1 lacks (hands, forearm twist, foot roll, spine, root yaw) to fix a defect that can be seen or measured (§9.1). The WP then upgrades the clips that defect touches first.
 - **Build:**
@@ -4014,7 +4014,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 8.7 | ACTIONS layer | L | done | 4cc8dee (#8) | engine/anim/actions.ts adds the action kind, the Actions player and actionCheck (beats of body states, a motion or a move, clips, IK effectors, flips, squash, events, flags, cancel windows, until-next holds, loops, exit, lockstep pairs, 30 eased channels); data/anim/actions/ holds 28 actions (jump phases, hurt, dizzy, flips, 8 deaths, charge, itemGet, ledgeHang, wallSlide, grab and grabbed, get-ups, idle life); tools/templates/action; core change accepted (4cc8dee, ADR-0009 amendment 7): the anim QA plays every action by its check, 38 baseline entries with reasons (full QA about 5.5 s unloaded); calls: actions are data the reader loads (loadActions), deaths revive on finish, only ground flips are clamped to the floor; integration: sim-api.ts was at 595 of 600 lines, so its Animation area moved verbatim to engine/anim/api.ts, re-exported whole, and the Actions exports were added there (ADR-0020 amendment 8; x new action --test green); docs regenerated; actions.ts's 596 lines split into actions-data.ts and actions-check.ts after G9 (ADR-0014 amendment 16); after G9: x describe action lists the 28 ids through tools/anim/library.ts's defineActions (the engine cannot import data/; describe.test.ts); no escalations; not verified: T2 (no page code touched) |
 | 8.8 | Re-import from sources (after G8) | L | on demand | | |
 | 8.9 | Clip mode in the box | L | done | bf788f2 (#9) | box:clips (labs/box/scenes/clips.ts): the hero and the mannequin play any of the library's 1,218 clips through the clip layer in the room, set by box.clips.* (clip, speed, frame, mirror, mask, cast, ik); commits 1b11767 and 7257ea0 (core), d1b807f (clip mode), c2c49c5 (the `box clips` long run), d36e905 (100STYLE's credit on every box page, a DOM query), merged fd01b19, gate G8 review fixes bf788f2; core accepted as ADR-0010 amendment 5: the clipset kind (`defineClipSet`, `clipSetFromFiles`, `defineSetBuild`), actor clips (`spawnActor` clips/body, components clips and puppet, `actors.clips`, clip events, play/stop/seek/`locomoteClips`), the view and `__engine.anim` posing clips; every host registers the library (tools/anim/library.ts `defineLibrary` for x sim, x perf, x replay, x describe and tests; labs/box/library.ts for the box page, also on `?replay=`, and tests/pages/replay.ts; library.test.ts: the same entries); proofs: clips.test.ts plays all 1,218 clips headless on the mannequin (first, middle and last frame, each pose finite, bones at length), `x anim show` and `box.clips.clip` select the same clip frame for frame, frame stepping, a one-shot's hold, the hero walking under mask=upper, one hash twice; box-clips.spec.ts plays one clip of each set in the page (0 pipelines after the warm-up, both figures in the ID pass) and finds the credit by a DOM query; the BOX_CLIPS=all long run played all 1,218 clips in the page (3/3 passed, 48 s); tests/replays/box-8-clips.replay.json (a clip change, frame stepping, the hero walking under a one-shot on mask=upper; final 900f06cdd21a82a7) gives one golden set in Node (clips.test.ts), the sim page and the rendering page, and is parity.spec.ts's clip-mode stage (goldens drawn, cameras and resolutions swept, GPU features off, live play replayed in Node, ID pass); `x describe clipset` lists the 10 sets; full T2 159/159 (24.4 min on 2 workers at load ~60); verifier: gate G8's adversarial review, round 1 fixed; no escalations; no deferred proofs; tools/cmd/sim.ts 402 and tests/e2e/parity.spec.ts 471 lines, split after G9 (tools/lib/scenes.ts, parity-stages.ts: ADR-0014 amendment 16) |
-| 8.10 | 100STYLE and Quaternius v2 from shardfall | L | done | a044e3d (#5) | tools/anim/shardfall.ts adopts 100STYLE (7 sets, 878 loops, body null) and Quaternius v2 (102 clips plus v1's Punch_Enter and body) with 8 catalogs, every clip marked via; calls: 100STYLE's Set cell names its catalog family, parity runs over the shorter duration (only A_TPose differs); parity on v1 rests 79/87 within fit (8 misses with checked reasons in shardfall.test.ts); no escalations (100STYLE approved, ADR-0021); deferred without the checkouts: the oracle decode and parity tests; INDEX/API regenerated on merge; no verifier review (lane ran it as S-size although the ledger sizes it L); open for WP 8.5: repack.ts with no arguments still rewrites quaternius from v1 (drop it from legacySetFiles) |
+| 8.10 | 100STYLE and Quaternius v2 from shardfall | L | done | a044e3d (#5) | tools/anim/shardfall.ts adopts 100STYLE (7 sets, 878 loops, body null) and Quaternius v2 (102 clips plus v1's Punch_Enter and body) with 8 catalogs, every clip marked via; calls: 100STYLE's Set cell names its catalog family, parity runs over the shorter duration (only A_TPose differs); parity on v1 rests 79/87 within fit (8 misses with checked reasons in shardfall.test.ts); no escalations (100STYLE approved, ADR-0021); deferred without the checkouts: the oracle decode and parity tests (done: they run with the checkouts in npm test, none skipped, checked after G9); INDEX/API regenerated on merge; no verifier review (lane ran it as S-size although the ledger sizes it L); open for WP 8.5: repack.ts with no arguments still rewrites quaternius from v1 (drop it from legacySetFiles) |
 | **G8** | **Gate: animation library** | | done | bb3862f (#10) | x ci --local green at bb3862f on a clean tree, first run, at load average 5-22 (1 min 33 s: check 6.1 s of 10, test 31.8 s of 60 with 3,262 tests in 301 files, x new --test-all 51.9 s; T2 selected nothing, as the stage's code reached main with gate G7's PR #9 and nothing changed since 9a8f6f3; T2 in full last ran at the review: 159/159 at ebd27cc in 14 min 24 s, and 164/164 at G7's 4af3816 in 9 min 25 s, over its 9 min, a CI_BUDGET warning only, ADR-0022); `node x deps --qualify`: no line has qualified beyond the pins (0 upgrades). Proven: the library is intact with provenance (8.1: SOURCES.md, licenses, catalogs, the CMU ledger; 8.10: 100STYLE's 7 sets and Quaternius v2 deep-equal shardfall's files bar the marked fields, every style100 set credited) and parity proofs (8.2: the codec bit-identical to the source, 3 samples and a sha256 per clip in `x port refs --check`; 8.10: 79 of 87 shared Quaternius clips within v1's fit, the 8 misses listed with reasons); the clip layer plays every clip on every build in Node (8.4, 8.6: 1,218 clips in 10 sets on 5 builds, anim QA baselined with reasons in qa-anim-library.json, 32 entries; 8.7's 28 actions by their check); clip mode runs in the box headless (clips.test.ts plays all 1,218 clips on the mannequin; box-8-clips replay, final 900f06cdd21a82a7, one golden set in Node, the sim page and the rendering page) and in the page (box-clips.spec.ts, one clip a set, 0 pipelines after warm-up; the BOX_CLIPS=all long run, 1,218 clips, in G7's --long at c30b552); `x anim import --cmu --legacy --check` passes (62 files byte for byte, 3.8 s). Verifier: review round 1 (gate-G8-r1, its x ci at 6d9fb74 failed 7 parity specs: clip mode registered no library in x sim, x replay and the replay page) fixed in gatefix-G8-r1 (bf788f2: tools/anim/library.ts defineLibrary in every host, box-8-clips replay, `x describe clipset`; ADR-0010 amendment 5's deferral closed); round 2 (gate-G8-r2) passed with x ci --local green at ebd27cc (test 3,240, T2 159/159). No dry run at this gate. Open risks: T2 over its 9 min (warning only); tools/cmd/sim.ts 402 and tests/e2e/parity.spec.ts 471 lines, split after G9 (tools/lib/scenes.ts, parity-stages.ts: ADR-0014 amendment 16); WP 8.8 (re-import, format 2's key fields) on demand; not verified: real-GPU cost of clip mode, touch (ADR-0021). Escalations: none new; ESC-0001 stays decided (Actions off). Calls: the stage's code went to main with gate G7's PR #9, so this gate's PR carries its ledger and progress only; G8's row records bb3862f, the commit x ci checked. |
 | 9.1 | DSP core | X | done | 4d59721 (#5) | engine/audio/dsp: PolyBLEP oscillators, noise, ADSR and the source's fall/hold envelopes, sweep, arpeggio, vibrato, 8 cookbook biquads, echo, 2-operator FM, tuned Karplus-Strong pluck; render(def, seed, rate) → Float32Array under withSimMath, hashed by soundHash, same hashes in Node and Chromium (20 reference + 200 random sounds); calls: goldens in tests/pages/audioDspCases.ts, plucks hold by default, aliasing claim corrected to the measured ~6x (15 dB), linear cookbook Q for every filter; engine/index.ts exports left to WP 9.2/9.3; no escalations, no deferred proofs; duplicate dispatch re-verified on integration 5ee52bf, no new commits |
 | 9.2 | Sound data | X | done | da451ce (#5) | engine/audio/data/{sfx,song,effects,drums,songs}.ts: kinds sfx and song; 33 effects, 6 drums and 5 songs copied from my-3d2dge; validators (tokens, bar lines, track length fills/divides bars and divides the song, ranges, voices via normalizeSound), layers, stratified pitch variants, fixtures/sounds, templates sfx and song, 44 goldens (linux-x64); calls (ADR-0013 amendment 1): 4 variants per effect replace ±3% per-play detune, added fields bus/intensity/kit/beats, drums are sfx, noise tracks refused, public names in engine/index.ts, audio/data a sim-side layer, size M; no escalations; deferred proof: audio QA (clipping/DC/duration) to WP 9.4; integrator: song.ts 2 ** octave → Math.pow (sim-side lint), audio/data layer fixture |

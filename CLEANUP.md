@@ -165,7 +165,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 - [ ] 5.7 **The cold CMU import check** (WP 8.5's deferred proof): the run in 5.6 is it; record the result in WP 8.5's
       row. Add it to `LONG_RUNS` (tools/lib/tiers.ts) only if a 23 MB download at every gate is acceptable, and record
       the call.
-- [ ] 5.8 **Notes:** WP 8.10's "deferred without the checkouts" is done (the oracle decode and parity tests run with
+- [x] 5.8 **Notes:** WP 8.10's "deferred without the checkouts" is done (the oracle decode and parity tests run with
       the checkouts in `npm test`, none skipped): update its row and WP 8.1's. WP 8.8's entry in PLAN.md gains a Need:
       a skinned-mesh GLB import test (tools/anim/glb-library.test.ts's fixture has no mesh).
 
@@ -204,7 +204,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
       reason. Flag labs/ files by their imports rather than their folder (tools/lib/docs.ts:239-244), so most run in
       Node; run the rest in a new tests/e2e/examples.spec.ts (WP 0.6's Owns, with an ADR-0015 amendment). Prove: no
       example is left unrun, or each that is names why.
-- [ ] 6.9 **Stale text:** docs/ANIMATION-LIBRARY.md:50 ("Until WP 8.5", done); docs/ANIMATION-LIBRARY.md:277
+- [x] 6.9 **Stale text:** docs/ANIMATION-LIBRARY.md:50 ("Until WP 8.5", done); docs/ANIMATION-LIBRARY.md:277
       describes an importer that refuses non-redistributable sources, never built: build the refusal if it is small,
       else correct the line; tools/eslint/askTheEntry.test.ts:103 ("until WP 1.2").
 
@@ -280,7 +280,7 @@ engine/anim/clip/retarget.ts are at exactly 400, and items 5.1 and 5.4 add lines
 
 ## 9. Finish
 
-- [ ] 9.1 **Branches:** delete `box-menu` (its menu is on main, newer, through PR #13); merge `origin/main` into
+- [x] 9.1 **Branches:** delete `box-menu` (its menu is on main, newer, through PR #13); merge `origin/main` into
       `integration` and push it (docs/HANDOFF.md: it mirrors main with every lane's commit). Leave the owner's
       `game/cold-relay-20261014` and `game/silent-relay-20261014` alone.
 - [ ] 9.2 **PLAN.md §14:** a row for this cleanup, like the gate-fix rows; no row still carries an open clause this

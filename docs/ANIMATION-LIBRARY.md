@@ -47,7 +47,7 @@ clips, and the CMU library can be regenerated into `.cache/anim/`.
 
 - `x anim find <words> [--cat c] [--max 20]` searches the catalogs, then the ledger; `x anim show <set>/<clip>
   --lens` prints one clip.
-- Until WP 8.5: `grep -i cartwheel data/anim/catalogs/*.json data/anim/cmu/*.tsv`.
+- The catalogs are plain JSON, so `grep -i cartwheel data/anim/catalogs/*.json` finds a clip too.
 - A catalog line costs about 30 tokens; one clip about 2,100. Open only the clips you use.
 - `docs/ANIMATION-RESEARCH.md` maps the famous animations games need to the clips that serve them (its section 7).
 
@@ -274,7 +274,9 @@ where each stands here:
    about 40 clips (PLAN.md §10.3); the ledger is for tools and people, not for a model's context.
 9. **Provenance per clip.** Each clip names its library, each library its license, and SOURCES.md holds the terms,
    so a source with other terms (CMU's no-resale, 100STYLE's credit) is carried by its source, not by a set-wide
-   credit. Still to do: an importer that refuses sources whose terms forbid redistribution.
+   credit. The importer records each source's terms (`$sources`) and does not judge them: whoever adds a source checks
+   that its terms allow redistribution, and SOURCES.md holds each source's terms (CC0 1.0, CC BY 4.0 and CMU's
+   all allow it).
 10. **Loading.** Clips are one file each and bake lazily, cached (PLAN.md §10.4), so a page pays only for the clips
     it plays.
 
