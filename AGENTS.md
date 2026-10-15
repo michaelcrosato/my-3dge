@@ -9,8 +9,9 @@ record the call. When going against the doctrine looks best, escalate with your 
 quietly. Aim for the best expected overall result, not flawless software: solve problems when they surface, not in
 anticipation. On-demand work packages wait for their measured trigger (PLAN.md §9.1).
 Testing budget (ADR-0022): verify with cheap, objective checks (suites, hashes, counts), never wall-clock time on
-this shared machine; run a full suite once per commit. Unclear after a cheap test means no proven benefit: stop,
-record it as an open issue starting "Owner:" and move on.
+this shared machine. Long tests never hold up work (ADR-0023): the full run goes on GitHub after each merge, nobody
+waiting on it. Unclear after a cheap test means no proven benefit: stop, record it as an open issue starting "Owner:"
+and move on.
 
 ## Setup
 bash scripts/setup.sh (idempotent) does three things:
@@ -67,9 +68,9 @@ stopping. Record every escalation, every later conflict and every call.
    modules you touch (not whole files). The sources being ported are read-only at $MY3D2DGE_SRC and $SHARDFALL_SRC
    (node x src).
 3. Edit. The after-edit hook formats and lints the file: fix what it reports.
-4. npm run check (< 10 s once a new checkout's first run filled its caches) → npm test (< 60 s) → npm run e2e
-   (< 9 min from 16 cores, about an hour on 4: tools/lib/tiers.ts `t2Budget`; docs/TESTING.md says what to select,
-   and labs/box/README.md which box specs and replays).
+4. npm run check → npm test. Browser specs (npm run e2e -- <spec>) only for what only they check that you touched
+   (rendering, the page, the DOM) or a failure you are finding and fixing, never the whole set while you work:
+   docs/TESTING.md says what to select, and labs/box/README.md which box specs and replays.
 5. Read out/**/report.json. Open images only when a metric points at one (use the visual-reviewer subagent).
 6. Show it in the box or a fixture test. Update the ledger row in PLAN.md §14 (in ultracode lanes, report it).
 7. Commit "<area>: <what> (WP-x.y)". Report the commit, the report paths and any escalations.
@@ -79,10 +80,13 @@ stopping. Record every escalation, every later conflict and every call.
 - DOCTRINE.md changes only when the owner asks. Never edit out/ or node_modules/ by hand.
 - Versions: only the pins in package.json, as tools/deps.json records them. Upgrades are their own work packages.
 - Never skip, disable or loosen a test to get green. Baselines change only with a written reason.
-- At each gate: push, open the stage's PR, look once at its Vercel status (fix a failed build first), squash-merge
-  it once x ci --local and its `ci` check (the workflow) are green (the repository allows only squash merges, and
-  GitHub then deletes the branch).
-  Start the next stage from the updated main (PLAN.md §11.1). None of this needs the owner's approval (ADR-0021).
+- Merge on the quick gate (ADR-0023): squash-merge a PR once node x ci --local (about 5 minutes) is green on its
+  head (the repository allows only squash merges, and GitHub then deletes the branch). GitHub then runs the full run
+  on main (x ci --local --full); nobody waits on it. node x ci --status, which the SessionStart hook runs, says how
+  main's last one went: a red main is fixed before other work.
+- At each gate and at the end of a goal: push, open the stage's PR, look once at its Vercel status (fix a failed
+  build first), merge it, then wait for main's full run and report it. Start the next stage from the updated main
+  (PLAN.md §11.1). None of this needs the owner's approval (ADR-0021).
 - Touch controls and the Vercel deployment have no tests, by the owner's order (ADR-0021): fix a failed Vercel
   build; fix anything else about them only when the owner reports it.
 - Never downgrade silently: every downgrade emits an advice code.
@@ -94,9 +98,10 @@ stopping. Record every escalation, every later conflict and every call.
 - Say plainly what you did not verify.
 
 ## Done means
-Verify commands green; npm run check and npm test green; T2 green for what you touched; shown in the box or a
-fixture; file comments and docs current; a template for any kind written by hand a third time; QA for kinds with a
-QA family; a verifier review for L-size WPs; no new advice codes; escalations recorded; ledger updated.
+Verify commands green; npm run check and npm test green; the specs for what only T2 checks that you touched green;
+shown in the box or a fixture; file comments and docs current; a template for any kind written by hand a third time;
+QA for kinds with a QA family; a verifier review for L-size WPs; no new advice codes; escalations recorded; ledger
+updated.
 
 ## Where things are
 engine/ (code + unit tests; index.ts and sim-api.ts are the public API) · labs/box/ (the Stress Box) · data/

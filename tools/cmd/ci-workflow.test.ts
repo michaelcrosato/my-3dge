@@ -1,7 +1,8 @@
 /**
- * @file Unit tests for the GitHub Actions workflow (.github/workflows/ci.yml, PLAN.md §8.9, WP 0.9): read as text (no
- * YAML dependency), it runs on pull requests, pushes to main and by hand within 120 minutes; its gate is `node x ci
- * --local`, so its commands are `CI_STEPS` (tools/cmd/ci.ts) and nothing runs a step of its own; it checks out both
+ * @file Unit tests for the GitHub Actions workflow (.github/workflows/ci.yml, PLAN.md §8.9, WP 0.9, ADR-0023): read as
+ * text (no YAML dependency), it runs after each merge to main and by hand, never on pull requests, within 120 minutes,
+ * and cancels no run; it runs the full run, `node x ci --local --full`, so its commands are `CI_STEPS`
+ * (tools/cmd/ci.ts) and nothing runs a step of its own; it checks out both
  * read-only sources at the commits scripts/setup.sh pins (tools/lib/source.ts `sourceSpecs`) into their `.cache/`
  * clones, with the job's read-only token (no secret) and without LFS; it takes Node from .nvmrc; and its Chromium is
  * tools/deps.json's pin, the one scripts/setup.sh downloads and tools/lib/browser.ts looks for. It always publishes the
@@ -45,14 +46,15 @@ function checkoutOf(repository: string): Record<string, string> {
 }
 
 describe('the GitHub Actions workflow', () => {
-  it('runs on pull requests, pushes to main and by hand, within 120 minutes', () => {
-    expect(text).toMatch(/^on:\n {2}pull_request:\n {2}push:\n {4}branches: \[main\]\n {2}workflow_dispatch:$/m);
+  it('runs after each merge to main and by hand, never on pull requests, within 120 minutes, cancelling none', () => {
+    expect(text).toMatch(/^on:\n {2}push:\n {4}branches: \[main\]\n {2}workflow_dispatch:\n\n/m);
+    expect(lines.join('\n')).not.toMatch(/pull_request|concurrency|cancel-in-progress/);
     expect(text).toMatch(/^ {4}timeout-minutes: 120$/m);
   });
 
-  it('gates on node x ci --local, so its commands are CI_STEPS and none runs on its own', () => {
+  it('runs the full run, node x ci --local --full, so its commands are CI_STEPS and none runs on its own', () => {
     const commands = runs();
-    expect(commands.filter((command) => command === 'node x ci --local')).toHaveLength(1);
+    expect(commands.filter((command) => command.startsWith('node x ci'))).toEqual(['node x ci --local --full']);
     for (const step of CI_STEPS) {
       const own = step.command.join(' ');
       expect(

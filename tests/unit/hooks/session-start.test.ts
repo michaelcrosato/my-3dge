@@ -1,12 +1,13 @@
 /**
  * @file The SessionStart hook (.claude/hooks/session-start.sh, WP 0.10), run on a fixture environment: a fixture
  * project holding the real scripts/setup.sh, a fresh $HOME, a fixture $CLAUDE_ENV_FILE, and `npm` and `curl` stubs
- * that record their calls. Its `x.js` runs the real dispatcher with the real `src` and `esc` commands on the fixture,
- * and a `deps` stub instead of the registry.
+ * that record their calls. Its `x.js` runs the real dispatcher with the real `src`, `esc` and `ci` commands on the
+ * fixture, and a `deps` stub instead of the registry.
  *
  * Proves: with Node 24 active it installs nothing (no download, nothing in ~/.cache/my3dge), runs setup.sh (npm ci)
  * and keeps node_modules/.cache across it, writes the PATH, MY3D2DGE_SRC and SHARDFALL_SRC lines to $CLAUDE_ENV_FILE once each, lists the open escalations,
- * prints at most 20 lines, and exits 0 even when setup fails.
+ * says how main's last full run went (unknown here: the fixture has no GitHub origin), prints at most 20 lines, and
+ * exits 0 even when setup fails.
  */
 import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -18,7 +19,7 @@ import { runHook, tempDir, writeFiles } from './harness';
 let base = '';
 let project = '';
 
-/** The fixture's x.js: the real dispatcher on the fixture root, the real src and esc commands, a deps stub. */
+/** The fixture's x.js: the real dispatcher on the fixture root, the real src, esc and ci commands, a deps stub. */
 const X_JS = `import { register } from 'tsx/esm/api';
 register();
 const real = ${JSON.stringify(ROOT)};
@@ -29,7 +30,7 @@ const deps = async () => ({
   run: async () => ({ ok: process.env.FIXTURE_DEPS !== 'fail', summary: 'fixture registry: nothing to adopt' }),
 });
 process.exitCode = await dispatch(process.argv.slice(2), {
-  root: import.meta.dirname, commands: { src: load('src'), esc: load('esc'), deps },
+  root: import.meta.dirname, commands: { src: load('src'), esc: load('esc'), ci: load('ci'), deps },
 });
 `;
 
@@ -143,6 +144,7 @@ describe('the SessionStart hook', () => {
     expect(run.stdout).toContain('x esc: ok: 1 record still needing review');
     expect(run.stdout).toMatch(/ESC-0001 open .*OVERDUE/);
     expect(run.stdout).not.toContain('ESC-0002');
+    expect(run.stdout).toContain("x ci: ok: main's last full run is unknown: origin is not a GitHub repository");
     expect(run.stdout).toContain('x deps: ok: fixture registry: nothing to adopt');
 
     expect(start('resume').code).toBe(0);
@@ -156,6 +158,7 @@ describe('the SessionStart hook', () => {
     expect(run.stdout).not.toContain('scripts/setup.sh');
     expect(run.stdout).not.toContain('x deps');
     expect(run.stdout).toContain('ESC-0001');
+    expect(run.stdout).toContain("main's last full run");
     expect(envLines()).toContain(`export PATH="${nodeDir}:$PATH"`);
   });
 

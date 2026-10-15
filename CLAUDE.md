@@ -13,8 +13,8 @@
   `playwright install`. Outbound HTTPS goes through the environment's proxy: never disable TLS verification. If the
   sources cannot be resolved, the session must reach GitHub (both are public since 2026-10-14, so they clone with no
   token) or include `michaelcrosato/my-3d2dge` and `michaelcrosato/shardfall`: escalate once (PLAN.md §11.5).
-- **Long suites** (`npm run e2e`, `node x ci --local`) run as background tasks. Read `out/**/report.json` instead of
-  scrolling their output.
+- **Long suites** (`npm run e2e`, `node x ci --local --full`) run as background tasks, and only where AGENTS.md
+  allows them (ADR-0023). Read `out/**/report.json` instead of scrolling their output.
 - **API questions** are answered by the pinned packages' own types and sources in `node_modules` (three.js's `src/`
   carries its JSDoc), never by memory of another release: `tsc` rejects a name the pinned release lacks.
 - **Subagents** (WP 0.10): `verifier` reviews L-size WPs and every gate against DOCTRINE.md and the WP's Done-when

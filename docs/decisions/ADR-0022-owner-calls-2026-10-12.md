@@ -31,7 +31,7 @@ input-equivalent tokens): 37% went to review, fix and gate agents; agents launch
 with three suites sharing the CPU.
 
 ## Enforced by
-tools/lib/tiers.ts (`checkBudget`), tools/cmd/ci.ts, tools/cmd/perf.ts; AGENTS.md's "How to work"; the `verifier`.
+tools/lib/tierBudgets.ts (`checkGate`, since ADR-0023), tools/cmd/ci.ts, tools/cmd/perf.ts; AGENTS.md's "How to work"; the `verifier`.
 
 ## Amendment 1 (2026-10-12): the audit behind it, and how stage runs apply it
 - **Measured** on the owner's machine from 2026-10-10 15:39 to 2026-10-12 (about 44 h; the planning and Phases 0–1
@@ -74,3 +74,10 @@ tools/lib/tiers.ts (`checkBudget`), tools/cmd/ci.ts, tools/cmd/perf.ts; AGENTS.m
 - **Proved:** tools/lib/tiers.test.ts (`t2Workers` from 1 to 64 cores; `t2Budget` at 4, 8, 16 and 20 cores; T2's
   57 min 40 s within budget on 4 cores and over it on 16; `selectT2` running in full on 4 cores and narrowing on 16)
   and tools/cmd/ci.test.ts (the summary's budget column and budget line at 4 and 16 cores).
+
+## Amendment 3 (2026-10-15, the owner's calls of ADR-0023): the full suite runs after the merge
+- **Replaced:** decision 6's "a full suite runs once per commit" now reads once per merge, on GitHub after it, nobody
+  waiting on it; reviewers read that run's report. Amendment 2's T2 budget by machine size and its selection in the
+  gate are gone: the quick gate runs no T2, the full run all of it, and only the quick gate has a budget (five
+  minutes, a warning). `t2Workers` stays: playwright.config.ts reads it.
+- **Plan edit:** PLAN.md §1 item 8, I-27, §8.2's tier table, §8.9, §11.1 and Appendix E's loop.
