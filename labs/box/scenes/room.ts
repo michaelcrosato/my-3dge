@@ -21,6 +21,7 @@
  * ROOM_PATHS.length; // 3: one path per mover
  */
 import { defineComponent, defineScene, defineSettings, type World } from '../../../engine/sim-api';
+import { boxSounds } from '../sounds/events';
 
 /** The room's settings. */
 export const ROOM_SETTINGS = defineSettings({
@@ -158,6 +159,7 @@ export const room = defineScene<Room, RoomEvents>('box:room', {
   description:
     'Box 1: the room (16 × 12 m: walls, a low wall, a pillar) with three crates on fixed paths, no physics yet.',
   level: 'level:room',
+  sounds: boxSounds(null), // its events (the movers' laps) play nothing
   setup(w) {
     const count = w.settings.get<number>('box.room.movers');
     for (let path = 0; path < count; path++) {

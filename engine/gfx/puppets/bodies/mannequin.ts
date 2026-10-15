@@ -27,7 +27,7 @@
  * @see engine/gfx/puppets/bodies/mannequin.test.ts
  */
 import { buildKind, defineBuild, getBuild, type Build } from '../../../anim/builds';
-import { restBuild } from '../../../anim/clip/retarget';
+import { restBuild } from '../../../anim/clip/rest';
 import type { RestBody } from '../../../anim/clip/validate';
 import { createSkeleton, jointIndex, PARENTS, JOINTS, type JointName } from '../../../anim/skeleton';
 import { codeError, defineCodes } from '../../../core/log';

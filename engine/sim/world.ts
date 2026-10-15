@@ -11,8 +11,7 @@
  * reach listeners only through `w.emit` (`w.events` lists, never emits); a step's intents are a frozen copy.
  *
  * Invariants (the ordered world, §6.5 item 4): ids count up from 1, never reused in a timeline (a restore rewinds them
- * with the rest). Entities iterate in id order: the list is kept sorted, and the id → entity `Map` serves lookups
- * only. During an entry point, `spawn`, `despawn` and `emit` queue; at its end (the boundary) the spawns join in id
+ * with the rest). Entities iterate in id order (engine/sim/entityTable.ts). During an entry point, `spawn`, `despawn` and `emit` queue; at its end (the boundary) the spawns join in id
  * order, the despawns leave, then the events reach their listeners in emit order, repeated while listeners queue
  * more (1,000 rounds at most: `SIM_EVENT_STORM`), so a system sees the entities the step began with. `add` and
  * `remove` act at once; spawn and `add` copy their values and keep components in name order (engine/sim/entities.ts).
@@ -49,6 +48,7 @@ import { SIM_HZ } from '../core/time';
 import { createTimers, type Timers } from '../core/timers';
 import { cloneData, makeCapture, readCapture, scheduleOf, type WorldCapture } from './capture';
 import { makeEntity, placeComponent, type LiveEntity } from './entities';
+import { createEntityTable } from './entityTable';
 import { componentTable, hashState, traceState } from './state';
 import type { AnyComponents, Entity, PhysicsHook, SpawnSpec, StateView, With, WorldState, WorldTrace } from './state';
 import { createSystems, phaseIndex, type Intents, type Phase, type SystemSpec, type Systems } from './systems';
@@ -200,33 +200,17 @@ export function createWorld<C extends object = AnyComponents, E extends EventMap
   const { probe } = options;
   const streams = new RngStreams(firstSeed);
   const fx = new RngStreams(derive(firstSeed, 'fx'));
-  let nextId = 1;
-  /** Live entities in id order: what every iteration walks. */
-  let order: LiveEntity[] = [];
-  /** id → live entity, for lookups only (never iterated). */
-  const byId = new Map<number, LiveEntity>();
+  const entities = createEntityTable();
   /** The queues an entry point fills and its boundary empties. */
   const spawns: LiveEntity[] = [];
   const despawns: number[] = [];
   const queued: [keyof E & string, unknown][] = [];
   let busy = false;
-  const insert = (entity: LiveEntity): void => {
-    let at = order.length;
-    if (at > 0 && order[at - 1].id > entity.id) at = order.findIndex((other) => other.id > entity.id);
-    order.splice(at, 0, entity);
-    byId.set(entity.id, entity);
-  };
-  const removeAll = (ids: readonly number[]): void => {
-    const gone = new Set(ids.filter((id) => byId.delete(id)));
-    if (!gone.size) return;
-    order = order.filter((entity) => !gone.has(entity.id));
-    for (const id of gone) streams.dropEntity(id);
-  };
   const boundary = (): void => {
     for (let round = 0; spawns.length || despawns.length || queued.length; round++) {
       if (round >= MAX_ROUNDS) throw codeError('SIM_EVENT_STORM', { tick: timers.ticks, rounds: MAX_ROUNDS });
-      spawns.splice(0).forEach(insert);
-      removeAll(despawns.splice(0));
+      spawns.splice(0).forEach(entities.insert);
+      for (const id of entities.removeAll(despawns.splice(0))) streams.dropEntity(id);
       for (const [type, payload] of queued.splice(0)) emitter.emit(type, payload as E[typeof type]);
     }
   };
@@ -248,21 +232,12 @@ export function createWorld<C extends object = AnyComponents, E extends EventMap
     });
   };
   const pending = (id: number) => spawns.some((entity) => entity.id === id);
-  const live = (id: number): LiveEntity => {
-    const entity = byId.get(id);
-    if (entity) return entity;
-    const why = pending(id)
-      ? ': it was spawned during this step and joins the world at its end'
-      : Number.isInteger(id) && id >= 1 && id < nextId
-        ? ': it was despawned'
-        : ': no spawn made it';
-    throw codeError('SIM_NO_ENTITY', { id: show(id), why });
-  };
+  const live = (id: number): LiveEntity => entities.live(id, pending);
   const view = (): StateView => ({
     seed: streams.seed,
-    nextId,
+    nextId: entities.nextId,
     hz,
-    entities: order,
+    entities: entities.order,
     timers: timers.state(),
     // Only what differs from its default: declaring another setting (any scene module does) never changes the hash.
     settings: Object.fromEntries(Object.entries(store.values({ view: false })).filter(([path]) => store.differs(path))),
@@ -271,7 +246,7 @@ export function createWorld<C extends object = AnyComponents, E extends EventMap
   });
   const rng = Object.assign((...keys: readonly (string | number)[]) => streams.stream(...keys), {
     entity(id: number, ...keys: readonly (string | number)[]) {
-      if (!byId.has(id) && !pending(id)) live(id); // a dropped stream never comes back
+      if (!entities.has(id) && !pending(id)) live(id); // a dropped stream never comes back
       return streams.entity(id, ...keys);
     },
   });
@@ -289,7 +264,7 @@ export function createWorld<C extends object = AnyComponents, E extends EventMap
       return timers.ticks / hz;
     },
     get count() {
-      return order.length;
+      return entities.order.length;
     },
     rng,
     fxRng: (...keys) => fx.stream(...keys),
@@ -306,19 +281,19 @@ export function createWorld<C extends object = AnyComponents, E extends EventMap
     spawn(components = {}) {
       if (!busy) return enter('spawn()', () => world.spawn(components));
       check(isPlainObject(components), 'spawn(components)', components, 'components by kind, { position: { x: 0 } }');
-      const id = nextId;
+      const id = entities.nextId;
       const entity = makeEntity(id, {});
       for (const name of Object.keys(components).sort()) {
         check(name !== 'id', 'spawn(components)', 'an id', 'components only: the world gives each entity its id');
         const values = (components as Record<string, unknown>)[name];
         if (values !== undefined) entity[name] = table.make(name, values, `spawn() of entity ${id}`);
       }
-      nextId++;
+      entities.nextId++;
       spawns.push(entity);
       return id;
     },
     despawn(id) {
-      if (!(Number.isInteger(id) && id >= 1 && id < nextId)) live(id);
+      if (!(Number.isInteger(id) && id >= 1 && id < entities.nextId)) live(id);
       if (!busy) return enter('despawn()', () => world.despawn(id));
       despawns.push(id);
     },
@@ -333,12 +308,12 @@ export function createWorld<C extends object = AnyComponents, E extends EventMap
       table.fields(name);
       delete entity[name];
     },
-    get: (id) => byId.get(id) as Entity<C> | undefined,
-    has: (id) => byId.has(id),
+    get: (id) => entities.get(id) as Entity<C> | undefined,
+    has: (id) => entities.has(id),
     query(...names) {
       for (const name of names) table.fields(name);
       const out: LiveEntity[] = [];
-      for (const entity of order) if (names.every((name) => entity[name] !== undefined)) out.push(entity);
+      for (const entity of entities.order) if (names.every((name) => entity[name] !== undefined)) out.push(entity);
       return out as unknown as With<C, (typeof names)[number]>[];
     },
     emit(type, payload) {
@@ -374,8 +349,8 @@ export function createWorld<C extends object = AnyComponents, E extends EventMap
           table,
           seed: streams.seed,
           hz,
-          nextId,
-          entities: order,
+          nextId: entities.nextId,
+          entities: entities.order,
           timers: timers.capture(),
           settings: store.values({ view: false }),
           rng: streams.state(),
@@ -394,11 +369,10 @@ export function createWorld<C extends object = AnyComponents, E extends EventMap
         physics?.restore(restored.physics);
         if (!Object.is(restored.seed, streams.seed)) fx.setState({}, derive(restored.seed, 'fx'));
         streams.setState(restored.rng, restored.seed);
-        nextId = restored.nextId;
-        order = [];
-        byId.clear();
-        for (const data of restored.entities) insert(makeEntity(data.id, data));
-        streams.keepEntities((id) => byId.has(id));
+        entities.nextId = restored.nextId;
+        entities.clear();
+        for (const data of restored.entities) entities.insert(makeEntity(data.id, data));
+        streams.keepEntities((id) => entities.has(id));
         timers.restore(restored.timers);
         if (restored.systems) systems.restore(restored.systems as readonly never[]);
         if (restored.listeners) emitter.restore(restored.listeners);

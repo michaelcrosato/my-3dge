@@ -2,16 +2,18 @@
  * @file Unit tests for engine/sim/state.ts (T1): component kinds validated on declaration, the hash independent of
  * the order spawn is given components in, but not of ids, fields read in declared order, undeclared components and
  * fields, missing fields and values that are not plain data refused with the entity named, the world's step rate
- * hashed, view settings and visual streams left out, `hashState` of `state()` equal to `hash()`, `trace()` naming the
- * entity, and `diffStates` naming the field.
+ * hashed, view settings and visual streams left out, `hashState` of `state()` equal to `hash()`, plain data fed with
+ * `Fnv64.value`'s bytes in one walk that refuses what `notData` refuses, a second hash of the same state encoding no
+ * text (after G9), `trace()` naming the entity, and `diffStates` naming the field.
  * @see engine/sim/state.ts
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { deserialize, Fnv64, serialize } from '../core/hash';
 import { Vector3 } from '../core/math';
 import { createLog, EngineError } from '../core/log';
 import { createRegistry } from '../core/registry';
 import { createSettings, defineSettings } from '../core/settings';
+import { feedData, notData } from './entities';
 import { componentTable, defineComponent, diffStates, hashState, STATE_FORMAT, traceState } from './state';
 import { createWorld } from './world';
 
@@ -133,6 +135,36 @@ describe('the hash', () => {
       .value(view.settings as never);
     slow.value('rng').value(view.rng);
     expect(hashState(view, componentTable(registry))).toBe(slow.hex());
+  });
+
+  it("feeds plain data with Fnv64.value's bytes in one walk, refusing what notData refuses", () => {
+    const deep: unknown[] = [];
+    let at = deep;
+    for (let i = 0; i < 120; i++) at.push((at = []));
+    const plain = [null, true, false, -0, 'é ☃', [], {}, { b: [1, { z: 'x', a: null }], a: 'y', é: false }, [[1], 2]];
+    for (const value of plain) {
+      const fed = new Fnv64();
+      expect(feedData(fed, value)).toBe(true);
+      expect(fed.hex()).toBe(new Fnv64().value(value as never).hex());
+    }
+    const refused = [undefined, () => 1, new Map(), new Vector3(), new Float32Array(2), [1, { a: undefined }], deep];
+    for (const value of refused) {
+      expect(notData(value)).toBeDefined();
+      expect(feedData(new Fnv64(), value)).toBe(false);
+    }
+  });
+
+  it('encodes no text on a second hash of the same state: key and string bytes are kept', () => {
+    const { w } = makeWorld();
+    for (let i = 0; i < 20; i++) w.spawn({ body: { note: `walker ${i}`, dir: [{ state: 'chase', 'gait-é': i }] } });
+    const first = w.hash();
+    const encode = vi.spyOn(TextEncoder.prototype, 'encode');
+    try {
+      expect(w.hash()).toBe(first);
+      expect(encode).not.toHaveBeenCalled();
+    } finally {
+      encode.mockRestore();
+    }
   });
 
   it('reads fields in declared order, so swapping two values changes it', () => {

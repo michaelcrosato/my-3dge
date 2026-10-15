@@ -30,18 +30,6 @@
     "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): its importer unwinds each angle from the key before, and the right leg, nearly straight (bent 0–15°, where its twist barely shows), winds its twist through whole turns to 861°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
   },
   {
-    "id": "clip:CMU/Get_Up_From_Side",
-    "metric": "pop",
-    "value": 0.7875,
-    "reason": "contact IK on the build (retarget.ts: the feet planted through ik.ts twoBoneRot) swings the left knee through at 5.1 s, folded 145°, on build:mannequin (0.79 m in a step): the format-1 decode's knee and the baked tracks stay put, and the same clip without contact IK plays clean; open for the retargeter's IK (WP 8.6 note)"
-  },
-  {
-    "id": "clip:CMU/Get_Up_From_Side",
-    "metric": "twistJump",
-    "value": 3.073,
-    "reason": "contact IK on the build (retarget.ts: the feet planted through ik.ts twoBoneRot) swings the left knee through at 5.1 s, folded 145°, on build:mannequin: the shin rolls half a turn in that step: the format-1 decode's knee and the baked tracks stay put, and the same clip without contact IK plays clean; open for the retargeter's IK (WP 8.6 note)"
-  },
-  {
     "id": "clip:CMU/Jump_Kick",
     "metric": "angleRange",
     "value": 10.1578,
@@ -72,12 +60,6 @@
     "reason": "my-3d2dge's data, carried byte for byte (WP 8.3), a Quaternius re-export: the v1 pop pattern (PLAN.md §10.2), the left arm folded fully (180°) while its twist jumps 141° at 0.7 s; WP 8.8's re-import from the source is where it gets fixed"
   },
   {
-    "id": "clip:MESH2MOTION/Slide_Exit",
-    "metric": "twistJump",
-    "value": 3.0272,
-    "reason": "contact IK on the build (retarget.ts: the feet planted through ik.ts twoBoneRot) swings the left knee through at 0.2 s, folded 150°, on build:skeleton: the thigh rolls half a turn in that step: the format-1 decode's knee and the baked tracks stay put, and the same clip without contact IK plays clean; open for the retargeter's IK (WP 8.6 note)"
-  },
-  {
     "id": "clip:MESH2MOTION/Victory",
     "metric": "twistPop",
     "value": 3.0543,
@@ -87,13 +69,25 @@
     "id": "clip:MESH2MOTION/Zombie_Rise",
     "metric": "belowFloor",
     "value": 0.3667,
-    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): the zombie rises out of the ground, its hips starting at 40% of standing hip height under the floor, by design; the retargeter lifts the pose by its lowest point, so on a build it rises from the floor"
+    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): the zombie rises out of the ground, its hips starting at 40% of standing hip height under the floor, by design; after G9 the retargeter lifts a pose only as far as it sinks below its source's own lowest point, scaled (engine/anim/clip/retarget.ts), so on a build it rises out of the floor as the source does"
   },
   {
     "id": "clip:MESH2MOTION/Zombie_Rise",
     "metric": "pop",
-    "value": 0.7215,
-    "reason": "contact IK on the build (retarget.ts: the feet planted through ik.ts twoBoneRot) swings the left knee through at 1.5 s, folded 136° as it rises with its hips under the floor, on build:mannequin (0.72 m in a step): the format-1 decode's knee and the baked tracks stay put, and the same clip without contact IK plays clean; open for the retargeter's IK (WP 8.6 note)"
+    "value": 0.7119,
+    "reason": "contact IK on the build (retarget.ts: the feet planted through ik.ts twoBoneRot) swings the left knee through at 1.5 s, folded 136° as it rises with its hips under the floor, on build:mannequin (0.72 m in a step): the format-1 decode's knee and the baked tracks stay put, and the same clip without contact IK plays clean; open for the retargeter's IK (WP 8.6 note); after G9 contact IK bends the knee toward the source's (KNEE_POLE), which cleared the get-up's and the slide's swings but not this one, its hips under the floor: 0.7215 → 0.7119"
+  },
+  {
+    "id": "clip:MESH2MOTION/Zombie_Rise",
+    "metric": "twistJump",
+    "value": 2.8065,
+    "reason": "after G9 contact IK bends the knee toward the source's knee (retarget.ts KNEE_POLE), and as the zombie rises with its hips under the floor, folded 151°, the source's knee crosses its hip–ankle line: build:skeleton's left thigh rolls 2.81 rad in one step at frame 106, where the pole flips with it"
+  },
+  {
+    "id": "clip:MESH2MOTION/Zombie_Rise",
+    "metric": "underFloor",
+    "value": 0.0494,
+    "reason": "by design (see its belowFloor entry): after G9 the retargeter keeps the source's depth, so the build's right foot starts 4.9 cm under the floor, as the source's does, for 32 frames on build:mannequin"
   },
   {
     "id": "clip:QUATERNIUS/Roll",
@@ -123,13 +117,19 @@
     "id": "clip:QUATERNIUS/Swim_Fwd_Loop",
     "metric": "belowFloor",
     "value": 0.0825,
-    "reason": "WP 8.10's known case (PLAN.md §10.5 step 5): swimming, the hips at −7% to −9% of standing hip height, under the floor that stands in for the water's surface; the retargeter lifts the pose by its lowest point, so on a build it swims above the floor"
+    "reason": "WP 8.10's known case (PLAN.md §10.5 step 5): swimming, the hips at −7% to −9% of standing hip height, under the floor that stands in for the water's surface; after G9 the retargeter lifts a pose only as far as it sinks below its source's own lowest point, scaled (engine/anim/clip/retarget.ts), so on a build it swims at the source's depth, not above the floor"
+  },
+  {
+    "id": "clip:QUATERNIUS/Swim_Fwd_Loop",
+    "metric": "underFloor",
+    "value": 0.008,
+    "reason": "after G9 the retargeter keeps a swim at its source's depth (see its belowFloor entry) instead of lifting it off the floor, and the clip layer's blend between two lifted frames tips the right toe up to 8 mm under it for 2 frames on build:mannequin"
   },
   {
     "id": "clip:QUATERNIUS/Swim_Idle_Loop",
     "metric": "belowFloor",
     "value": 0.4308,
-    "reason": "WP 8.10's known case (PLAN.md §10.5 step 5): treading water, the hips at −36% to −47% of standing hip height, under the floor that stands in for the water's surface; the retargeter lifts the pose by its lowest point, so on a build it treads above the floor"
+    "reason": "WP 8.10's known case (PLAN.md §10.5 step 5): treading water, the hips at −36% to −47% of standing hip height, under the floor that stands in for the water's surface; after G9 the retargeter lifts a pose only as far as it sinks below its source's own lowest point, scaled (engine/anim/clip/retarget.ts), so on a build it treads at the source's depth (it stood 1,813 mm up on the mannequin)"
   },
   {
     "id": "clip:STYLE100/HandsBetweenLegs_Walk",

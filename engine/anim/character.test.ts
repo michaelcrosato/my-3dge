@@ -15,7 +15,7 @@ import { parse } from '../core/schema';
 import { SIM_DT } from '../core/time';
 import type { Intents } from '../input/intents';
 import { createCharacter } from '../physics/character';
-import { physicsOf } from '../physics/world';
+import { physicsOf } from '../physics/binding';
 import { defineActorKinds, spawnActor, type ActorComponents } from '../sim/actors';
 import type { WorldCapture } from '../sim/capture';
 import { defineScene, startScene } from '../sim/scene';

@@ -211,6 +211,23 @@ describe('the fight', () => {
     expect((engine.get(1) as unknown as FightComponents).secondary).toMatchObject({ cape: true });
   });
 
+  it('poses the hero in the sim with box.fight.precise, so his sword trails as sim data mid-swing (box-5-precise)', async () => {
+    const precise = JSON.parse(readFileSync('tests/replays/box-5-precise.replay.json', 'utf8')) as Replay & { settings: Record<string, unknown> }; // prettier-ignore
+    expect(precise.settings).toEqual({ 'box.fight.precise': true });
+    expect(precise.inputs).toEqual(REPLAY.inputs);
+    const engine = await createHeadless({ scene: fight, settings: precise.settings });
+    const trails: number[] = [];
+    drive(engine, precise, () => {
+      const { animator } = engine.get(1) as unknown as { animator: { preciseHits: boolean; trail: number[] } };
+      if (animator.preciseHits) trails.push(animator.trail.length);
+    });
+    expect(trails.length).toBe(precise.steps); // from the first step on
+    expect(Math.max(...trails)).toBeGreaterThan(0); // a swing's samples
+    const plain = await createHeadless({ scene: fight });
+    plain.step(2);
+    expect((plain.get(1) as unknown as { animator: { preciseHits: boolean } }).animator.preciseHits).toBe(false);
+  });
+
   it('has a preset for 1,000, the same fight with more', async () => {
     expect(fight1000.settings).toEqual({ 'box.crowd.count': 1000 });
     const engine = await createHeadless({ scene: fight1000 });

@@ -27,8 +27,8 @@
  * parseSets(['kernel.speed=2', 'kernel.movers=3']); // { 'kernel.speed': '2', 'kernel.movers': '3' }
  * @see tools/cmd/sim.test.ts
  */
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { format, resolveConfig } from 'prettier';
 import { pathToFileURL } from 'node:url';
 import { serialize, type Canonical } from '../../engine/core/hash';
@@ -37,77 +37,15 @@ import { createSettings, type SettingValue } from '../../engine/core/settings';
 import type { Registry } from '../../engine/core/registry';
 import { checkpointsOf, playReplay, REPLAY_KEYS, type Replay, type StepView } from '../../engine/sim/replay';
 import { createHeadless, headlessHost } from '../../engine/app/headless';
-import { getScene, isScene, type Scene } from '../../engine/sim/scene';
+import type { Scene } from '../../engine/sim/scene';
 import type { FeelReport } from '../../engine/physics/feel';
 import { defineLevel, getLevel } from '../../engine/world/level/level';
 import type { CompiledLevel } from '../../engine/world/level/types';
 import { NAV_DIRECTIONS, NavGrid } from '../../engine/world/nav';
 import { defineLibrary } from '../anim/library';
-import { walk } from '../lib/docs';
 import { targetSlug } from '../lib/report';
-import { UsageError, type Command, type CommandResult } from '../x';
-
-/** Where scene modules live: `fixtures/scenes/` and every `labs/<name>/scenes/` (tests/pages/replay.ts globs the same). */
-export function sceneRoots(root: string): string[] {
-  const labs = existsSync(join(root, 'labs')) ? walk(root, 'labs') : [];
-  const dirs = new Set(labs.map((file) => /^labs\/[^/]+\/scenes\//.exec(file)?.[0]).filter((dir) => dir !== undefined));
-  return ['fixtures/scenes/', ...[...dirs].sort()];
-}
-
-/** `defineScene('<id>'` (type arguments allowed), the literal id captured. */
-const DEFINES = /\bdefineScene\s*(?:<[^(]*?>)?\s*\(\s*(['"`])([^'"`]+)\1/g;
-
-/** Scene id → the module that defines it, from the modules' text (tests aside). */
-export function sceneModules(root: string): Map<string, string> {
-  const found = new Map<string, string>();
-  for (const dir of sceneRoots(root)) {
-    for (const file of walk(root, dir.replace(/\/$/, ''))) {
-      if (!file.endsWith('.ts') || file.endsWith('.test.ts')) continue;
-      for (const match of readFileSync(join(root, file), 'utf8').matchAll(DEFINES)) found.set(match[2], file);
-    }
-  }
-  return found;
-}
-
-/** The module a target names: a `.ts` file (its extension optional), a directory's `index.ts`, or a scene id's module. */
-export function resolveSceneModule(root: string, target: string): string {
-  const path = resolve(root, target);
-  if (existsSync(path) && statSync(path).isDirectory() && existsSync(join(path, 'index.ts'))) {
-    return relative(root, join(path, 'index.ts'));
-  }
-  if (existsSync(path) && path.endsWith('.ts')) return relative(root, path);
-  if (existsSync(`${path}.ts`)) return relative(root, `${path}.ts`); // extensionless, as imports name it
-  const modules = sceneModules(root);
-  const file = modules.get(target);
-  if (file) return file;
-  const known = [...modules.keys()].sort().join(', ') || 'none';
-  throw new UsageError(
-    `${target} is neither a scene module (a .ts file or a directory with index.ts) nor a scene id (scenes: ${known})`,
-  );
-}
-
-/** Imports a scene module and picks its scene: `id`, else the one scene it exports. */
-export async function loadScene(root: string, target: string, id?: string): Promise<{ file: string; scene: Scene }> {
-  const file = resolveSceneModule(root, target);
-  defineLibrary(); // the sim reads no files: clip mode's sets come first, as in the box page
-  const module = (await import(pathToFileURL(join(root, file)).href)) as Record<string, unknown>;
-  const exported = [...new Set(Object.values(module).filter(isScene))];
-  if (id !== undefined) {
-    try {
-      return { file, scene: getScene(id) };
-    } catch (error) {
-      if (error instanceof EngineError) throw new UsageError(error.message);
-      throw error;
-    }
-  }
-  if (exported.length === 1) return { file, scene: exported[0] };
-  const ids = exported.map((scene) => scene.id).join(', ');
-  throw new UsageError(
-    exported.length
-      ? `${file} defines ${ids}: name one with --scene <id>`
-      : `${file} exports no scene (export default defineScene(…))`,
-  );
-}
+import { loadScene } from '../lib/scenes';
+import { UsageError, wholeFlag, type Command, type CommandResult } from '../x';
 
 /** `key=value` pairs as path → text; throws `UsageError` for a pair without `=`. */
 export function parseSets(pairs: readonly string[]): Record<string, string> {
@@ -133,15 +71,6 @@ export function typedSets(pairs: readonly string[]): Record<string, SettingValue
     }
   }
   return out;
-}
-
-/** A whole number from a flag, at least `min`, or `fallback` when the flag is absent. */
-export function wholeFlag(value: unknown, name: string, fallback: number, min = 0): number {
-  if (value === undefined) return fallback;
-  const n = Number(value);
-  if (!Number.isInteger(n) || n < min)
-    throw new UsageError(`--${name} takes a whole number, ${min} or more, not ${String(value)}`);
-  return n;
 }
 
 /** One run's view of a step, with the hash its runtime gave. */

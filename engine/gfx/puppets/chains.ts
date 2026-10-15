@@ -26,7 +26,8 @@
  * @see engine/gfx/puppets/chains.test.ts
  */
 import { BufferAttribute, BufferGeometry, DynamicDrawUsage, Mesh, Vector3, type Material } from 'three/webgpu';
-import type { Chain, Secondary } from '../../anim/secondary';
+import type { Chain } from '../../anim/chain';
+import type { Secondary } from '../../anim/secondary';
 import { toLinear } from '../../core/color';
 
 /** A strand's width, metres: hair's and a tail's square tube. */

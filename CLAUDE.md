@@ -7,12 +7,12 @@
 - **Session setup.** The SessionStart hook (`.claude/hooks/session-start.sh`) runs `bash scripts/setup.sh` (log in
   `out/hooks/session-start.log`), appends Node 24's `PATH` and the `MY3D2DGE_SRC` and `SHARDFALL_SRC` exports to
   `$CLAUDE_ENV_FILE`, so every later Bash call sees them, and lists the open escalations. `node --version` should print
-  v24.21.0; if not, run `bash scripts/setup.sh`. The owner can make Node 24 permanent through the environment's setup
+  v24.22.0; if not, run `bash scripts/setup.sh`. The owner can make Node 24 permanent through the environment's setup
   script (PLAN.md §11.5).
 - **Cloud container.** Chromium 141 is at `/opt/pw-browsers/chromium` (`$CHROMIUM_PATH` when set); never run
   `playwright install`. Outbound HTTPS goes through the environment's proxy: never disable TLS verification. If the
-  sources cannot be resolved, the session must include `michaelcrosato/my-3d2dge` and `michaelcrosato/shardfall`
-  (shardfall is private): escalate once (PLAN.md §11.5).
+  sources cannot be resolved, the session must reach GitHub (both are public since 2026-10-14, so they clone with no
+  token) or include `michaelcrosato/my-3d2dge` and `michaelcrosato/shardfall`: escalate once (PLAN.md §11.5).
 - **Long suites** (`npm run e2e`, `node x ci --local`) run as background tasks. Read `out/**/report.json` instead of
   scrolling their output.
 - **API questions** are answered by the pinned packages' own types and sources in `node_modules` (three.js's `src/`

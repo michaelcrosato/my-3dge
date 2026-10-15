@@ -28,15 +28,12 @@ import { ROOT } from '../x';
 import { ANIM_CACHE, asfOf, CMU_CACHE, cmuIndex, type IndexedTake } from './cmu';
 import { readCmu, type CmuCapture, type Pick } from './cmu-capture';
 import { categoryOf, readLedger, writeLedger, type Ledger, type Take } from './ledger';
-import { splitSet, writeSetDir } from './repack';
+import { CMU_CREDIT, splitSet, writeSetDir } from './repack';
 
 /** The converted library's directory, `.cache/anim/cmu-lib/`. */
 export const LIBRARY_DIR = join(ANIM_CACHE, 'cmu-lib');
 /** The CMU catalog, whose `$pick` names the take each clip of the CMU set was cut from. */
 export const CMU_CATALOG = join(ROOT, 'data', 'anim', 'catalogs', 'cmu.json');
-/** The credit every CMU set carries (data/anim/SOURCES.md has the terms). */
-export const CMU_CREDIT =
-  'CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu), free for all uses; created with funding from NSF EIA-0196217.';
 
 /** What the survey does: which subjects, legacy reading, the ledger and library tolerances, and where things go. */
 export interface SurveyOptions {

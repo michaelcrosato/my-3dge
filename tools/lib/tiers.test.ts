@@ -11,20 +11,20 @@ import { dirname, join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   changedFiles,
-  checkBudget,
-  checkReports,
   duration,
   findBase,
   isVersionOnly,
   plan,
   recordGreen,
-  reportMs,
   selectT1,
   selectT2,
-  timingTable,
+  t2Budget,
+  t2Workers,
   TIERS,
   vitestRerunTriggers,
+  CORES_PER_WORKER,
 } from './tiers';
+import { checkBudget, checkReports, reportMs, timingTable } from './tierBudgets';
 import { CHILD_TIMEOUT_MS } from '../x';
 
 const ROOT = join(import.meta.dirname, '..', '..');
@@ -241,22 +241,69 @@ describe('selections without git', () => {
       expect(selectT2(changes(file)).mode).toBe('all');
     }
     expect(selectT2(changes('tools/cmd/qa.ts')).mode).toBe('some');
-    expect(selectT2(changes('tools/cmd/qa.ts'), { lastFullMs: 200_000 })).toMatchObject({
+    expect(selectT2(changes('tools/cmd/qa.ts'), { lastFull: { ms: 200_000, cores: 16 } })).toMatchObject({
       mode: 'all',
-      reason: 'T2 runs in full: its full set last took 3 min 20 s, within its budget (§8.9)',
+      reason:
+        'T2 runs in full: its full set last took 3 min 20 s, within its 9 min budget (4 workers on 16 cores) (§8.9)',
     });
-    expect(selectT2(changes('tools/cmd/qa.ts'), { lastFullMs: TIERS.T2.budgetMs + 1 }).mode).toBe('some');
+    const over = { ms: TIERS.T2.budgetMs(16) + 1, cores: 16 };
+    expect(selectT2(changes('tools/cmd/qa.ts'), { lastFull: over }).mode).toBe('some');
+  });
+
+  it('runs T2 in full on 4 cores while its last full run fit the hour it gets there, never on 16 (ADR-0022 amendment 2)', () => {
+    const cloud = { ms: 3_460_000, cores: 4 }; // 57 min 40 s, x ci --local at caff36a
+    expect(selectT2(changes('tools/cmd/qa.ts'), { lastFull: cloud })).toMatchObject({
+      mode: 'all',
+      reason:
+        'T2 runs in full: its full set last took 57 min 40 s, within its 60 min budget (1 worker on 4 cores) (§8.9)',
+    });
+    expect(selectT2(changes('tools/cmd/qa.ts'), { lastFull: { ...cloud, cores: 16 } }).mode).toBe('some');
+  });
+});
+
+describe("T2's workers and budget by machine size", () => {
+  it('runs one worker per 4 cores, from 1 to 4', () => {
+    expect([1, 4, 7, 8, 12, 15, 16, 20, 64].map(t2Workers)).toEqual([1, 1, 1, 2, 3, 3, 4, 4, 4]);
+    expect(CORES_PER_WORKER).toBe(4);
+  });
+
+  it('gives 9 minutes from 16 cores and an hour on 4, and says when a worker count is unmeasured', () => {
+    expect(t2Budget(4)).toEqual({ workers: 1, ms: 3_600_000, measured: true, note: '1 worker on 4 cores' });
+    expect(t2Budget(16)).toEqual({ workers: 4, ms: 540_000, measured: true, note: '4 workers on 16 cores' });
+    expect(t2Budget(20).ms).toBe(540_000);
+    expect(t2Budget(8)).toEqual({
+      workers: 2,
+      ms: 3_600_000,
+      measured: false,
+      note: "2 workers on 8 cores, unmeasured: held to 1 worker's",
+    });
+    expect([TIERS.T0.budgetMs(4), TIERS.T0.budgetMs(16), TIERS.T1.budgetMs(4), TIERS.T1.budgetMs(16)]).toEqual([
+      10_000, 10_000, 60_000, 60_000,
+    ]);
+    expect([TIERS.T2.budgetMs(4), TIERS.T2.budgetMs(16)]).toEqual([3_600_000, 540_000]);
   });
 });
 
 describe('budgets', () => {
   it('warns over the budget and never fails', () => {
-    expect(checkBudget('T1', 60_000)).toMatchObject({ status: 'ok', message: 'T1 took 60 s, within its 60 s budget' });
-    expect(checkBudget('T1', 61_000).status).toBe('warn');
-    expect(checkBudget('T1', 89_999).status).toBe('warn');
-    expect(checkBudget('T1', 900_000).status).toBe('warn');
-    expect(checkBudget('T0', 12_000).message).toBe(`T0 took 12 s, over its 10 s budget: ${TIERS.T0.fix}`);
-    expect(checkBudget('T2', 810_000).message).toBe(`T2 took 13 min 30 s, over its 9 min budget: ${TIERS.T2.fix}`);
+    expect(checkBudget('T1', 60_000, 16)).toMatchObject({ status: 'ok', message: 'T1 took 60 s, within its 60 s budget' }); // prettier-ignore
+    expect(checkBudget('T1', 61_000, 16).status).toBe('warn');
+    expect(checkBudget('T1', 89_999, 4).status).toBe('warn');
+    expect(checkBudget('T1', 900_000, 4).status).toBe('warn');
+    expect(checkBudget('T0', 12_000, 16).message).toBe(`T0 took 12 s, over its 10 s budget: ${TIERS.T0.fix}`);
+    expect(checkBudget('T2', 810_000, 16).message).toBe(
+      `T2 took 13 min 30 s, over its 9 min budget (4 workers on 16 cores): ${TIERS.T2.fix}`,
+    );
+  });
+
+  it("holds T2 to its machine's budget: 57 min 40 s is within the hour on 4 cores, over 9 min on 16", () => {
+    expect(checkBudget('T2', 3_460_000, 4)).toMatchObject({
+      status: 'ok',
+      budgetMs: 3_600_000,
+      message: 'T2 took 57 min 40 s, within its 60 min budget (1 worker on 4 cores)',
+    });
+    expect(checkBudget('T2', 3_460_000, 16)).toMatchObject({ status: 'warn', budgetMs: 540_000 });
+    expect(checkBudget('T2', 3_700_000, 12).message).toContain("3 workers on 12 cores, unmeasured: held to 1 worker's");
   });
 
   it('reads the durations of Vitest and Playwright JSON reports: over budget warns', () => {
@@ -268,19 +315,20 @@ describe('budgets', () => {
       writeFileSync(join(root, 'out/test/report.json'), JSON.stringify(vitest));
       writeFileSync(join(root, 'out/e2e/report.json'), JSON.stringify({ suites: [], stats: { duration: 810_000 } }));
       expect(reportMs(join(root, 'out/test/report.json'))).toBe(70_000);
-      const checks = checkReports(root, { T0: 4_000 });
+      const checks = checkReports(root, { T0: 4_000 }, 16);
       expect(checks.map(({ tier, ms, status }) => [tier, ms, status])).toEqual([
         ['T0', 4_000, 'ok'],
         ['T1', 70_000, 'warn'],
         ['T2', 810_000, 'warn'],
       ]);
-      expect(checkReports(root, { T1: 1_000 }).map((check) => check.status)).toEqual(['ok', 'warn']);
+      expect(checkReports(root, { T1: 1_000 }, 16).map((check) => check.status)).toEqual(['ok', 'warn']);
+      expect(checkReports(root, { T1: 1_000 }, 4).map((check) => check.status)).toEqual(['ok', 'ok']);
       writeFileSync(join(root, 'out/test/report.json'), '{"x":1}');
       expect(() => reportMs(join(root, 'out/test/report.json'))).toThrow(
         /neither a Vitest nor a Playwright JSON report/,
       );
       rmSync(join(root, 'out'), { recursive: true });
-      expect(checkReports(root)).toEqual([]);
+      expect(checkReports(root, {}, 4)).toEqual([]);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

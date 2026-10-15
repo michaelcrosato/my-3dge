@@ -53,3 +53,24 @@ tools/lib/tiers.ts (`checkBudget`), tools/cmd/ci.ts, tools/cmd/perf.ts; AGENTS.m
   agent calls, so after any edited prompt every later agent runs live again; start a fresh run that skips the
   integrated WPs instead. A gate closer removes only its own gate worktrees (one removed every lane's). When project
   agents are not loaded, an agent takes the verifier's role by reading `.claude/agents/verifier.md`.
+
+## Amendment 2 (2026-10-14, the owner's decision 3 of CLEANUP.md): T2's budget goes by machine size
+- **Found:** T2's budget was a flat 9 minutes (`TIERS.T2.budgetMs`, 540,000 ms), measured on the owner's 20-core box
+  with 4 workers. Since ADR-0014 amendment 15 the workers follow the cores (one per 4), so on the 4-core cloud
+  container T2 runs on 1 worker and took 57 min 40 s at caff36a: every gate there warned `CI_BUDGET`, and `selectT2`,
+  which runs T2 in full while its last full run fit the budget, never did.
+- **Call (the owner's):** T2's budget goes by machine size, and no test is weakened. tools/lib/tiers.ts exports one
+  worker count (`t2Workers(cores)`, which playwright.config.ts uses) and T2's budget from it (`t2Budget(cores)`,
+  `T2_BUDGETS`): 9 minutes on 4 workers (from 16 cores), 60 minutes on 1 (4 cores: the 57 min 40 s measured). 2 and
+  3 workers are unmeasured: they are held to 1 worker's budget and the message says so. Every tier's budget is a
+  function of the cores (`TIERS[t].budgetMs(cores)`); `x ci --local` takes the core count from its deps (`CiDeps.cores`,
+  `availableParallelism()`), so the tests never depend on the host.
+- **Call (mine, PLAN.md §8.9):** within its budget `selectT2` runs T2 in full, so on 4 cores `x ci --local` runs the
+  whole hour. That is what §8.9 intends: the gate runs every spec whenever the full set fits the machine's budget, and
+  narrows only when T2 has outgrown it; the hour is measured there, as the 9 minutes are on 16 cores. An agent
+  iterating still runs the specs its change selects (docs/TESTING.md).
+- **Plan edit:** PLAN.md §1 item 8, I-27, §8.2's tier table, §8.9 and Appendix E's loop; AGENTS.md's loop; the x-loop
+  skill; ADR-0014 amendments 14 and 15 point here.
+- **Proved:** tools/lib/tiers.test.ts (`t2Workers` from 1 to 64 cores; `t2Budget` at 4, 8, 16 and 20 cores; T2's
+  57 min 40 s within budget on 4 cores and over it on 16; `selectT2` running in full on 4 cores and narrowing on 16)
+  and tools/cmd/ci.test.ts (the summary's budget column and budget line at 4 and 16 cores).

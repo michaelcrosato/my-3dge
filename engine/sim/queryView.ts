@@ -20,7 +20,7 @@
  * @see engine/sim/queryView.test.ts
  */
 import type { Physics } from '../physics/world';
-import { physicsOf } from '../physics/world';
+import { physicsOf } from '../physics/binding';
 
 /** The physics queries, read-only: what presentation code may ask of the sim's physics. */
 export type QueryView = Readonly<Pick<Physics, 'raycast' | 'shapeCast' | 'overlap' | 'probe'>>;

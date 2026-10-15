@@ -4,9 +4,11 @@
  * engine/anim/clip/clipsets.ts; labs/box/library.ts `loadLibrary`), sorted by directory, then the mannequin, its build
  * and body, from the Quaternius set (engine/gfx/puppets/bodies/mannequin.ts). The sim reads no files, so the Node hosts
  * that run scenes call it before they load one, as the box page does before clip mode (labs/box/scenes/clips.ts):
- * `x sim` and `x perf` (tools/cmd/sim.ts `loadScene`), `x replay`'s Node runtime (`nodeRuntime`), `x describe`'s
+ * `x sim` and `x perf` (tools/lib/scenes.ts `loadScene`), `x replay`'s Node runtime (`nodeRuntime`), `x describe`'s
  * listing, and tests/e2e/parity.spec.ts, which replays clip mode's live play in Node. The other scenes never read the
- * sets, so registering them changes no other hash.
+ * sets, so registering them changes no other hash. `defineActions()` does the same for the engine's actions,
+ * data/anim/actions/ (engine/anim/actions-data.ts `loadActions`): `x describe action` lists them, and the `anim` QA
+ * plays them.
  *
  * Invariants: the registry ends with the page's entries (the same sets, ids and clips; `clipSetIds` the same order),
  * so a replay of clip mode gives one set of goldens in Node, in tests/pages/replay.html and in the box page. Reading
@@ -17,14 +19,33 @@
  * libraryDirs().length; // 10: cmu, mesh2motion, quaternius, style100 and its six gaits
  * defineLibrary(); // ['clipset:cmu', 'clipset:mesh2motion', 'clipset:quaternius', 'clipset:style100', …]
  * getClipSet('clipset:quaternius').clips.Sword_Attack.dur; // 1.533, as x anim show quaternius/Sword_Attack prints it
+ * defineActions().map((action) => action.id).includes('action:backflip'); // true
  * @see tools/anim/library.test.ts
  */
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { loadActions, type Action } from '../../engine/anim/actions-data';
 import { clipSetFromFiles, clipSetIds, defineClipSet, getClipSet } from '../../engine/anim/clip/clipsets';
 import { registry as sharedRegistry, type Registry } from '../../engine/core/registry';
 import { defineMannequin } from '../../engine/gfx/puppets/bodies/mannequin';
 import { readSetDir, SET_FILE, SETS_DIR } from './repack';
+
+/** The engine's actions, one file each (`{ "action": "<name>", …spec }`). */
+export const ACTIONS_DIR = join(SETS_DIR, '..', 'actions');
+
+/**
+ * Defines every action of `ACTIONS_DIR`, in file order, into `registry` (the shared one) and returns them: a file
+ * defined before with the same spec is kept (`loadActions`), so a second call changes nothing.
+ */
+export function defineActions(registry: Registry = sharedRegistry): Action[] {
+  const files = readdirSync(ACTIONS_DIR)
+    .filter((file) => file.endsWith('.json'))
+    .sort();
+  return loadActions(
+    files.map((file) => JSON.parse(readFileSync(join(ACTIONS_DIR, file), 'utf8')) as unknown),
+    registry,
+  );
+}
 
 /** The registries the library is in already. */
 const defined = new WeakSet<Registry>();
@@ -36,11 +57,14 @@ export function libraryDirs(root: string = SETS_DIR): string[] {
     .sort();
 }
 
-/** Registers every set of the library, then the mannequin, into `registry` (once); returns the sets' ids. */
-export function defineLibrary(registry: Registry = sharedRegistry): string[] {
+/**
+ * Registers every set of the library, then the mannequin, into `registry` (once); returns the sets' ids. `read` reads
+ * a set's directory (repack.ts `readSetDir`; the tests count its calls).
+ */
+export function defineLibrary(registry: Registry = sharedRegistry, read = readSetDir): string[] {
   if (defined.has(registry)) return clipSetIds(registry);
   for (const dir of libraryDirs()) {
-    defineClipSet(clipSetFromFiles(readSetDir(join(SETS_DIR, dir)), `data/anim/sets/${dir}`), { registry });
+    defineClipSet(clipSetFromFiles(read(join(SETS_DIR, dir)), `data/anim/sets/${dir}`), { registry });
   }
   defineMannequin(getClipSet('clipset:quaternius', registry), { registry });
   defined.add(registry);

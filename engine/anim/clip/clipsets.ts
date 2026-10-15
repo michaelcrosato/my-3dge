@@ -39,7 +39,7 @@ import { codeError } from '../../core/log';
 import { buildKind, defineBuild, getBuild, type Build } from '../builds';
 import { ClipLayer, type ClipLayerState } from './layer';
 import { loadClipLibrary, type ClipLibrary } from './library';
-import { restBuild } from './retarget';
+import { restBuild } from './rest';
 import type { Clip } from './readable';
 import { parseClip, parseClipSet, type ClipSet } from './validate';
 

@@ -5,8 +5,9 @@
  * missing checkout is cloned and detached exactly as that script does: `.cache/src-*`, cloned from the local clone,
  * else from GitHub. A checkout named by its variable is only checked, never changed.
  *
- * Usage: node x src. Fails when a source cannot be resolved; shardfall is private, so the failure names the
- * repository the session must include, and the agent escalates once (PLAN.md §11.5). The sources are read-only.
+ * Usage: node x src. Fails when a source cannot be resolved; the failure names the repository the session must reach
+ * or include (both are public since 2026-10-14, so GitHub clones them with no token), and the agent escalates once
+ * (PLAN.md §11.5). The sources are read-only.
  *
  * @see tools/lib/source.ts
  */

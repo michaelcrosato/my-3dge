@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { deserialize, serialize, type Canonical } from '../core/hash';
 import { createClock, createVirtualClock } from '../core/time';
 import { CROWD_AGENT_FIELDS, updateCrowd, type CrowdAgent } from '../physics/crowd';
-import { physicsOf } from '../physics/world';
+import { physicsOf } from '../physics/binding';
 import * as simApi from '../sim-api';
 import { SpatialHash } from '../world/spatial';
 import type { WorldCapture } from './capture';

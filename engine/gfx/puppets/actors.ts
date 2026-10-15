@@ -21,7 +21,8 @@
  *
  * WP 6.2 in the box (WP 7.8): an actor's `reactions` (engine/sim/reactions.ts) are a `Reactions` layer on its puppet's
  * animator, loaded at every pose (its flinch bends its spine; a body down on its face is drawn so), its `secondary` a
- * `Secondary` layer whose chains hang under the puppet as meshes (engine/gfx/puppets/chains.ts: `actor#<id>/cape`…).
+ * `Secondary` layer whose chains hang under the puppet as meshes (engine/gfx/puppets/chains.ts: `actor#<id>/cape`…),
+ * and its `post` slot ends with a `FootPlant` (engine/anim/footPlant.ts), faded out as the actor's clips show.
  *
  * Invariants: presentation only (doctrine: WebGPU only): its animators and their layers are its own, loaded from the
  * sim's data at every pose and never writing it, so drawing, culling or not drawing never changes the hash (the
@@ -41,6 +42,7 @@ import { Group } from 'three/webgpu';
 import { AnimatorPool, type Animator, type AnimatorData, type TrailSample } from '../../anim/character';
 import { ClipLayerPool, type ClipsData } from '../../anim/clip/clipsets';
 import type { WorldPose } from '../../anim/fk';
+import { FootPlant } from '../../anim/footPlant';
 import { Reactions, type ReactionState } from '../../anim/reactions';
 import { Secondary } from '../../anim/secondary';
 import type { JointName, Skeleton } from '../../anim/skeleton';
@@ -89,6 +91,8 @@ interface Layers {
   reactions: Reactions | null;
   secondary: Secondary | null;
   chains: ChainMeshes | null;
+  /** The feet on the floor, last in the post slot (engine/anim/footPlant.ts, after G9). */
+  plant: FootPlant;
 }
 
 /** What an actor's layers are made for: whether it has reactions, and its secondary motion. */
@@ -103,6 +107,7 @@ const layersKey = (held: Held) => {
 function dropLayers(layers: Layers): void {
   if (layers.reactions) layers.animator.drop(layers.reactions.name).drop(layers.reactions.lyingLayer.name);
   if (layers.secondary) layers.animator.drop(layers.secondary.name);
+  layers.animator.drop(layers.plant.name);
   layers.chains?.dispose();
 }
 
@@ -190,7 +195,8 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
         secondary && wanted
           ? createChainMeshes(secondary, { material, color: wanted.color, name: `actor#${id}` })
           : null;
-      own = { animator, key, reactions, secondary, chains };
+      const plant = new FootPlant({ name: 'view:footPlant' }).attach(animator);
+      own = { animator, key, reactions, secondary, chains, plant };
       layers.set(id, own);
     }
     const meshes = own.chains?.meshes ?? [];
@@ -254,6 +260,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
           if (animator.layer('clips') !== (layer ?? undefined)) animator.drop('clips');
           if (layer && !animator.layer('clips')) animator.use('clips', layer);
           const own = layersFor(id, animator, actor, puppet);
+          own.plant.weight = 1 - Math.min(1, layer?.weight ?? 0); // a clip plants its own feet (retarget.ts's contact IK)
           if (own.reactions && actor.reactions) own.reactions.load(actor.reactions);
           animator.pose({ at, yaw: lerpAng(a.yaw, b.yaw, k) });
           puppet.setPose(animator.body.pose);

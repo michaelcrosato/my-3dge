@@ -11,7 +11,8 @@ import { createSettings, defineSettings } from '../core/settings';
 import { createWorld } from '../sim/world';
 import { restorePhysics } from './capture';
 import { INTEGRATION_PARAMETERS, PHYSICS_SETTINGS } from './params';
-import { attachPhysics, bindPhysics, createPhysics, physicsOf, scenePhysics, type Physics } from './world';
+import { createPhysics, type Physics } from './world';
+import { attachPhysics, bindPhysics, physicsOf, scenePhysics } from './binding';
 
 /** A sim stand-in for `step`: 60 Hz under `gravity`. */
 function sim(gravity = 9.81) {

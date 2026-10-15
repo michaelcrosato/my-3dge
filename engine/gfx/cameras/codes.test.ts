@@ -8,7 +8,7 @@ import { describeCamera, formatCameraCode, parseCameraCode, type FreeSpec } from
 import { createFixedCamera } from './fixed';
 import { createFlyCamera } from './fly';
 import { createOrbitCamera } from './orbit';
-import { createCamera } from './place';
+import { createCamera, readCameraCode } from './place';
 import type { Camera, CameraPose } from './pose';
 import { createViewCamera } from './presets';
 
@@ -109,7 +109,13 @@ describe('parseCameraCode', () => {
     expect(() => parseCameraCode('cam=isso')).toThrow(
       /\[GFX_UNKNOWN_CAMERA\] "isso" is not a camera \(did you mean "iso"\?\)/,
     );
-    expect(() => parseCameraCode('cam3=chase')).toThrow(/"chase" is not a camera.*use one of iso, threequarter/);
+    // All 12 names (after G9; it named 9, the follow cameras left out): a typo of one finds it.
+    const all = 'iso, threequarter, topdown, brawler, side, custom, orbit, fly, fixed, chase, first, rail';
+    expect(() => readCameraCode('cam3=chasee')).toThrow(`"chasee" is not a camera (did you mean "chase"?)`);
+    expect(() => readCameraCode('cam3=chasee')).toThrow(`use one of ${all}: the classic views in cam=, the 3D and follow cameras in cam3=`); // prettier-ignore
+    expect(() => parseCameraCode('cam3=chase')).toThrow(
+      /chase follows the hero and reads its own code: readCameraCode/,
+    );
   });
 
   it.each([

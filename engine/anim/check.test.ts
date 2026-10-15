@@ -7,12 +7,13 @@
 import { describe, expect, it } from 'vitest';
 import { Quaternion, Vector3 } from '../core/math';
 import { Animator } from './character';
-import { animCheck, animCheckBody, rateDrift, runPoints, SHEET_CAMERAS, STATE_MATRIX, stateMatrix } from './check';
+import { animCheck, animCheckBody } from './check';
+import { rateDrift, runPoints, SHEET_CAMERAS, STATE_MATRIX, stateMatrix } from './stateMatrix';
 import { Pose } from './pose';
 import { SHEET_VIEWS } from './sheet';
 import { createSkeleton, jointIndex, JOINTS } from './skeleton';
 import { SAMPLE_STATES } from './states';
-import { Attack } from './timeline';
+import { Attack } from './attack';
 import type { AnimLayer } from './weights';
 
 /** A rotation of `angle` radians about `axis`. */

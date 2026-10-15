@@ -19,9 +19,8 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { targetSlug } from '../lib/report';
-import { UsageError, type Command, type CommandResult } from '../x';
+import { UsageError, wholeFlag, type Command, type CommandResult } from '../x';
 import { callSession, findSession, reloadLines } from './inspect';
-import { wholeFlag } from './sim';
 
 /** Tree lines printed; the rest are in scene.txt. */
 const SHOWN = 14;

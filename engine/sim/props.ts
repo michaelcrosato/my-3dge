@@ -21,7 +21,7 @@
  *
  * @example
  * import { defineScene } from './scene';
- * import { physicsOf } from '../physics/world';
+ * import { physicsOf } from '../physics/binding';
  * import { addLevelBodies } from './levelBodies';
  * defineScene('yard', {
  *   physics: true,
@@ -37,7 +37,7 @@
 import { codeError } from '../core/log';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
 import { knock } from '../physics/bodies';
-import { physicsOf } from '../physics/world';
+import { physicsOf } from '../physics/binding';
 import { propBody, propPose, type PropPlacement } from '../world/props/place';
 import { getProp, type PropKnock } from '../world/props/prop';
 import { defineComponent } from './state';

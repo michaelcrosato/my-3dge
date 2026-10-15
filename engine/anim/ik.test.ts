@@ -1,34 +1,14 @@
 /**
  * @file Unit tests for inverse kinematics (engine/anim/ik.ts), PLAN.md WP 3.5's Done when: `twoBone` gives `ik3`'s
- * bits; reach, poles and limits hold for `twoBoneRot`, `aim` and `handTo`; and on a 10° slope and a 0.2 m step
- * `footPlant` keeps the soles within 5 mm of the surface.
+ * bits; reach, poles and limits hold for `twoBoneRot`, `aim` and `handTo` (`footPlant`'s are engine/anim/footPlant.test.ts).
  */
 import { describe, expect, it } from 'vitest';
 import { Euler, Quaternion, Vector3 } from '../core/math';
 import { Rng } from '../core/rng';
-import {
-  createWorldPose,
-  forwardKinematics,
-  jointPosition,
-  jointRotation,
-  jointToWorld,
-  socketPosition,
-  tipPosition,
-} from './fk';
-import {
-  aim,
-  AIM_CHAIN,
-  createFootPlantState,
-  footPlant,
-  handTo,
-  LIMBS,
-  twoBone,
-  twoBoneRot,
-  type GroundProbe,
-  type LimbEnd,
-} from './ik';
+import { createWorldPose, forwardKinematics, jointPosition, jointRotation, jointToWorld, socketPosition } from './fk';
+import { aim, AIM_CHAIN, handTo, LIMBS, twoBone, twoBoneRot, type LimbEnd } from './ik';
 import { Pose } from './pose';
-import { createSkeleton, jointIndex, PROPORTIONS, type JointName, type Skeleton } from './skeleton';
+import { createSkeleton, jointIndex, type JointName, type Skeleton } from './skeleton';
 
 type V = [number, number, number];
 /** my-3d2dge's `V3` helpers and `ik3`, transcribed from `engine/my-3d2dge.js:117-140`: the reference. */
@@ -248,100 +228,6 @@ describe('handTo', () => {
         );
         expect(between(jointRotation(world, hand), rotation)).toBeLessThan(1e-6);
       }
-    }
-  });
-});
-
-describe('footPlant: soles within 5 mm of the surface', () => {
-  const SLOPE = (10 * Math.PI) / 180;
-  /** The height and normal of a ground at (x, z). */
-  type Ground = (x: number, z: number, normal: Vector3) => number;
-  const slope: Ground = (x, _z, n) => (n.set(-Math.sin(SLOPE), Math.cos(SLOPE), 0), Math.tan(SLOPE) * x);
-  const step: Ground = (_x, z, n) => (n.set(0, 1, 0), z >= 0 ? 0.2 : 0);
-  /** A probe of `ground`: a ray straight down from `origin`. */
-  const probeOf =
-    (ground: Ground): GroundProbe =>
-    (origin, distance, hit) => {
-      const y = ground(origin.x, origin.z, hit.normal);
-      hit.point.set(origin.x, y, origin.z);
-      return y <= origin.y && origin.y - y <= distance;
-    };
-  /** The sole points of one foot: heel, contact and toe tip. */
-  const sole = (skeleton: Skeleton, world: ReturnType<typeof createWorldPose>, side: 'L' | 'R') => {
-    const b = skeleton.build;
-    const heel = new Vector3(0, -b.ankleHeight * b.size, -PROPORTIONS.heel * b.footLength * b.size);
-    return [
-      jointToWorld(world, `foot${side}`, heel),
-      socketPosition(skeleton, world, `contact${side}`),
-      tipPosition(skeleton, world, `toe${side}`),
-    ];
-  };
-  const gap = (ground: Ground, p: Vector3) => Math.abs(p.y - ground(p.x, p.z, new Vector3()));
-
-  for (const id of BUILDS) {
-    it(`${id} on a 10° slope, facing every way: every sole point`, () => {
-      const skeleton = createSkeleton(id);
-      for (let yaw = 0; yaw < 2 * Math.PI; yaw += Math.PI / 6) {
-        const { pose, world } = placed(skeleton, yaw);
-        pose.rootPos.y = slope(pose.rootPos.x, pose.rootPos.z, new Vector3());
-        forwardKinematics(skeleton, pose, world);
-        footPlant(skeleton, pose, world, probeOf(slope));
-        for (const side of ['L', 'R'] as const) {
-          for (const p of sole(skeleton, world, side)) expect(gap(slope, p)).toBeLessThan(0.005);
-        }
-      }
-    });
-
-    it(`${id} across a 0.2 m step, walking over its edge`, () => {
-      const skeleton = createSkeleton(id);
-      for (const yaw of [0, Math.PI / 2, 0.4, Math.PI]) {
-        for (let z = -0.4; z <= 0.4; z += 0.025) {
-          const { pose, world } = placed(skeleton, yaw);
-          pose.rootPos.set(0.3, step(0.3, z, new Vector3()), z);
-          forwardKinematics(skeleton, pose, world);
-          const drop = footPlant(skeleton, pose, world, probeOf(step));
-          expect(drop).toBeGreaterThanOrEqual(0);
-          expect(drop).toBeLessThan(0.25);
-          for (const side of ['L', 'R'] as const) {
-            const points = sole(skeleton, world, side);
-            expect(gap(step, points[1])).toBeLessThan(0.005);
-            const level = points.every((p) => p.z >= 0) || points.every((p) => p.z < 0);
-            if (level) for (const p of points) expect(gap(step, p)).toBeLessThan(0.005);
-          }
-        }
-      }
-    });
-  }
-
-  it('drops the pelvis so a foot can reach a lower level', () => {
-    const skeleton = createSkeleton('build:heroic');
-    const { pose, world } = placed(skeleton, Math.PI / 2); // facing +X: the left foot at −Z, over the low side
-    pose.rootPos.set(0, 0.2, 0.02);
-    forwardKinematics(skeleton, pose, world);
-    const drop = footPlant(skeleton, pose, world, probeOf(step));
-    expect(drop).toBeGreaterThan(0.15);
-    expect(pose.rootPos.y).toBeCloseTo(0.2 - drop, 12);
-    expect(socketPosition(skeleton, world, 'contactL').y).toBeCloseTo(0, 3);
-    expect(socketPosition(skeleton, world, 'contactR').y).toBeCloseTo(0.2, 3);
-  });
-
-  it('locks a foot during stance, releases it after', () => {
-    const skeleton = createSkeleton('build:chibi');
-    const state = createFootPlantState();
-    const probe = probeOf(slope);
-    let locked = new Vector3();
-    for (let tick = 0; tick < 40; tick++) {
-      const { pose, world } = placed(skeleton, 0.3);
-      pose.rootPos.set(0.01 * tick, 0, 0.004 * tick);
-      pose.rootPos.y = slope(pose.rootPos.x, pose.rootPos.z, new Vector3());
-      forwardKinematics(skeleton, pose, world);
-      const stance = [tick < 20, true] as const;
-      footPlant(skeleton, pose, world, probe, { state, stance });
-      const contact = socketPosition(skeleton, world, 'contactL');
-      if (tick === 0) locked = contact.clone();
-      if (tick < 20) expect(contact.distanceTo(locked)).toBeLessThan(1e-5);
-      if (tick >= 30) expect(contact.distanceTo(locked)).toBeGreaterThan(0.2);
-      expect(gap(slope, contact)).toBeLessThan(0.005);
     }
   });
 });

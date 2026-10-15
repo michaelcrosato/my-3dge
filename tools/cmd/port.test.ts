@@ -14,20 +14,8 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { CURATED_SETS, legacyClipVectors, loadLegacyReadable, readLegacySet } from '../anim/legacy-readable';
 import { requireSource } from '../lib/source';
 import { dispatch, ROOT } from '../x';
-import port, {
-  blobScript,
-  check,
-  CHECKSUMS,
-  checkVectors,
-  colorVectors,
-  coreVectors,
-  humanoidRun,
-  layout,
-  loadEngine,
-  moveRecord,
-  PORT_DIR,
-  writeVectors,
-} from './port';
+import port, { check, CHECKSUMS, checkVectors, layout, PORT_DIR, writeVectors } from './port';
+import { blobScript, colorVectors, coreVectors, humanoidRun, loadEngine, moveRecord } from '../lib/portVectors';
 
 const made: string[] = [];
 afterAll(() => made.forEach((dir) => rmSync(dir, { recursive: true, force: true })));

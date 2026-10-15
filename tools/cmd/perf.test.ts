@@ -24,7 +24,7 @@ import {
   regressions,
   TREND_FILE,
   withinBudget,
-} from './perf';
+} from '../lib/perfBudget';
 
 const temporary: string[] = [];
 afterEach(() => {

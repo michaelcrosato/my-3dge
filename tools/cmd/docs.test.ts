@@ -281,15 +281,16 @@ describe('x docs on fixture repositories', () => {
     ]);
   });
 
-  it('flags browser examples for T2 instead of running them', async () => {
-    const page = `/**\n * @file A page module.\n *\n * @example\n * document.body.append('x');\n */\n/** One. */\nexport const one = 1;\n`;
+  it('flags browser examples for T2 instead of running them, by their mark or imports, never by their folder', async () => {
+    const page = `/**\n * @file A page module.\n *\n * @example\n * // browser: it touches the page\n * document.body.append('x');\n */\n/** One. */\nexport const one = 1;\n`; // prettier-ignore
+    const plain = `/**\n * @file A lab's sum.\n *\n * @example\n * two; // 2\n */\n/** Two. */\nexport const two = 2;\n`;
     const marked = MODULE.replace('add(1, 2); // 3', '// browser: it draws\nwindow.alert(add(1, 2));');
-    const root = repo({ 'labs/demo/page.ts': page, 'engine/core/add.ts': marked });
+    const root = repo({ 'labs/demo/page.ts': page, 'labs/demo/sum.ts': plain, 'engine/core/add.ts': marked });
     await docs(root, 'write');
     const check = await docs(root, 'check');
     expect(check.failures).toEqual([]);
     expect(check.metrics).toMatchObject({
-      'examples.ran': 0,
+      'examples.ran': 1, // labs/demo/sum.ts's, in Node (after G9: labs/ was flagged whole)
       'examples.t2': 2,
       'examples.t2List': 'engine/core/add.ts:4, labs/demo/page.ts:4',
     });

@@ -2,7 +2,9 @@
  * @file The physics-props fixture scene (PLAN.md WP 4.1): the props, movers, triggers and rescue of
  * engine/physics/bodies.ts in a walled room, proven against golden hashes in Node and in Chromium.
  *
- * - The hero stands on a `platform`, a mover that carries it 6 m east and back every 8 s, waiting 1 s at each end.
+ * - The hero stands on a `platform`, a mover that carries it 6 m east and back every 8 s, waiting 1 s at each end;
+ *   with `props.lift` on, 2 m up and back down instead (`LIFT`), so he rides a vertical mover and sinks with it
+ *   (engine/physics/move.ts `sink`; tests/replays/physics-props-lift.replay.json).
  * - Two stacks of crates (0.75 m, the prototype's) stand on the floor, four high and three high. A `knock` intent is
  *   a swing west of them, at `SWING`: it knocks every prop within `REACH` of it (the taller stack) with the
  *   prototype's sword hit, each twist drawn from the sim stream `knock`, and both stacks topple east.
@@ -30,6 +32,7 @@ import {
   createCharacter,
   defineComponent,
   defineScene,
+  defineSettings,
   driveMover,
   knock,
   MOVER_FIELDS,
@@ -72,6 +75,20 @@ export const RIDE: Omit<Mover, 'body'> = {
   yaw: 0,
   spin: 0,
 };
+
+/** The lift: the same platform riding 2 m up and back down instead (`props.lift`). */
+export const LIFT: Omit<Mover, 'body'> = { ...RIDE, offset: [0, 2, 0] };
+
+/** The scene's settings. */
+export const PROPS_SETTINGS = defineSettings({
+  'props.lift': {
+    type: 'boolean',
+    default: false,
+    when: 'scene',
+    description:
+      'The platform rides 2 m up and back down instead of east (LIFT): the hero rides a vertical mover, down through the controller’s sink. Off by default, so the replay physics-props keeps its goldens.',
+  },
+});
 
 /** The stacks: where each stands (x, z) and how high. The swing reaches the taller one. */
 export const STACKS = [
@@ -146,13 +163,14 @@ export default defineScene<Components>('physics-props', {
   setup(w) {
     const physics = physicsOf(w);
     addLevelBodies(physics, ROOM);
-    const start = moverPose({ ...RIDE, body: -1 }, 0).position;
+    const path = w.settings.get<boolean>('props.lift') ? LIFT : RIDE;
+    const start = moverPose({ ...path, body: -1 }, 0).position;
     const ride = physics.addBody({
       type: 'kinematic',
       position: start,
       colliders: [{ shape: { type: 'box', size: [2, 0.4, 2] } }],
     });
-    w.spawn({ platform: { ...RIDE, body: ride } });
+    w.spawn({ platform: { ...path, body: ride } });
     const gate = addSensor(physics, { type: 'box', size: [2, 2, 2] }, { position: [9, 1, 3] });
     const pit = addSensor(physics, { type: 'box', size: [3.5, 2, 4] }, { position: [15.25, 1, 6.5] });
     w.spawn({ zone: { name: 'gate', body: gate } });

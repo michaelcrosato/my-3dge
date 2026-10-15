@@ -1,12 +1,14 @@
 /**
  * @file Tests for the nav-1000 fixture (PLAN.md WP 4.3): its level is the hall, character for character; runs agree
- * hash for hash; navigation is derived data, so a capture restores and continues exactly; agents stay on open tiles
- * and close in on the target. Its budget: `node x perf fixtures/scenes/nav-1000 --budget`.
+ * hash for hash, and its replay gives its goldens (`node x replay tests/replays/nav-1000.replay.json --browser sim` is
+ * Chromium's, with findPath); navigation is derived data, so a capture restores and continues exactly; agents stay on
+ * open tiles and close in on the target. Its budget: `node x perf fixtures/scenes/nav-1000 --budget`.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { createSession } from '../../../engine/sim/scene';
+import { checkReplay, playReplay } from '../../../engine/sim/replay';
+import { createSession } from '../../../engine/sim/session';
 import { getLevel } from '../../../engine/world/level/level';
 import { NavGrid } from '../../../engine/world/nav';
 import scene, { NAV_1000_LEVEL, targetAt } from './index';
@@ -24,6 +26,15 @@ describe('the nav-1000 fixture', () => {
     const file = readFileSync(join(import.meta.dirname, '../../../labs/box/levels/hall.txt'), 'utf8');
     expect(HALL_TEXT, 'copy labs/box/levels/hall.txt into fixtures/scenes/nav-1000/hall.ts').toBe(file);
     expect(scene.level).toBe(NAV_1000_LEVEL);
+  });
+
+  it('gives its replay’s goldens (tests/replays/nav-1000.replay.json), findPath included, as Chromium does', () => {
+    const replay = checkReplay(
+      JSON.parse(readFileSync(join(import.meta.dirname, '../../../tests/replays/nav-1000.replay.json'), 'utf8')),
+    );
+    const golden = replay.hashes[`${process.platform}-${process.arch}`];
+    expect(golden, 'goldens: node x replay tests/replays/nav-1000.replay.json --browser sim --update').toBeDefined();
+    expect(playReplay(replay).hashes).toEqual(golden);
   });
 
   it('gives the same hashes on every run', () => {

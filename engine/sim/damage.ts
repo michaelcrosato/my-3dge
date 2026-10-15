@@ -27,13 +27,13 @@
  * the budget of `src/emberdeep/10-combat.js:45-76` (engine/core/time.ts).
  *
  * @example
- * import { createPhysics, attachPhysics } from '../physics/world';
+ * import { createPhysics } from '../physics/world';
+ * import { attachPhysics } from '../physics/binding';
  * import { createWorld } from './world';
  * const w = createWorld({ seed: 1 });
  * attachPhysics(w, createPhysics()); // a scene with physics: true has this
  * const health = { ...HEALTH, hp: 3 };
- * damage(w, { id: 4, health }, { amount: 5, from: [0, 0, 0], stop: 0.06 }); // { killed: true, hp: -2, … }
- * // a crowd agent's body would also be knocked, launched and turned into a corpse: { id, health, agent }
+ * damage(w, { id: 4, health }, { amount: 5, from: [0, 0, 0], stop: 0.06 }); // { killed: true, hp: -2, … }; an agent's body is also knocked
  * takeHitStop(w); // 0.06: the host hands it to its frame clock (clock.hitStop), once
  * takeHitStop(w); // 0: taken
  * @see engine/sim/damage.test.ts
@@ -43,7 +43,7 @@ import { codeError } from '../core/log';
 import { copyValue, defineSchema, freezeValue, isPlainObject, show } from '../core/schema';
 import { killAgent, knockback, launch, type CrowdAgent } from '../physics/crowd';
 import type { Vec3Like } from '../physics/queries';
-import { physicsOf } from '../physics/world';
+import { physicsOf } from '../physics/binding';
 import type { World } from './world';
 
 /** A target's health, for a scene's component: `defineComponent('health', { description, fields: HEALTH_FIELDS })`. */

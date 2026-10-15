@@ -3,7 +3,7 @@
  * (labs/box/scenes/fight.ts), first in each step, before the controller moves him. His numbers are `HERO_FIGHT`
  * (labs/box/cast/hero.ts).
  *
- * - **Attack** presses his combo (engine/anim/timeline.ts `Combo`: slash, backslash, spin, each press within its
+ * - **Attack** presses his combo (engine/anim/attack.ts `Combo`: slash, backslash, spin, each press within its
  *   window flowing into the next); during a dash it starts the thrust instead and cuts the dash. As a hit's strike
  *   begins he lunges along his heading (its `push`), and while its hit window is open every living foe its cone
  *   holds from his feet (engine/sim/hits.ts `coneHits`) is struck once a swing (labs/box/scenes/fight-rules.ts

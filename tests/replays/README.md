@@ -85,3 +85,9 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   struck carry the component `reactions` (hashed), a big blow knocks a walker down to lie and get up, attacking
   nothing meanwhile, and the hero carries his cape (`secondary`, drawn by the view only). The run itself changed: it
   still kills 5 foes and throws a body 1.72 m up, and the walkers it knocks down near the end still lie at step 600.
+- The goldens of the eleven replays with the box's hero (box-2-dash, -jump, -walk, box-3-climb, -dais, -knock,
+  box-4-chase, -hop, box-5-fight, box-8-clips, and the new box-4-stairs) were re-recorded (`--update`, Node ×3 and
+  Chromium ×3 agreeing) after G9, when his character gained `shoves: ['crowd']` (WP 5.7, ADR-0020 amendment 9): his
+  controller passes the crowd, which his capsule shoves aside. The runs without a crowd did not change: with `shoves`
+  left out of the hashed state, every checkpoint gave its earlier golden. box-4-chase, box-4-hop and box-5-fight did:
+  he walks through the crowd rather than round it.

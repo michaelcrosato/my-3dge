@@ -41,7 +41,7 @@ import { createStyleSet, MATERIAL_STYLES, type MaterialStyle } from '../../engin
 import { gradientToonMaterial, toonGradientMap } from '../../engine/gfx/materials/toon';
 import { createRenderer, type FrameReport, type FrameView, type Gfx, type GfxError } from '../../engine/gfx/renderer';
 import { shot, shotForJson, type ShotJson } from '../../engine/gfx/shot';
-import { createSession } from '../../engine/sim/scene';
+import { createSession } from '../../engine/sim/session';
 import { defineLevel } from '../../engine/world/level/level';
 
 /** One structured error record, as `window.__engine.errors` holds them (PLAN.md §8.3). */

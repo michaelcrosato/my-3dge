@@ -1,0 +1,36 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Box 4, a crowd of 1,000 walkers, slimes and wisps enters the hall and presses in on the hero as he walks off the dais north-west through it to the foot of the west stairs, waits there 5 s while the crowd closes round him, then climbs the stairs to the west gallery: his capsule shoves the crowd aside (the character option shoves: ['crowd'], WP 5.7).",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "box:crowd-1000",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 780,
+  "inputs": [
+    [20, { "move": [-0.8, -0.6] }],
+    [320, { "move": null }],
+    [620, { "move": [0, -1] }],
+    [704, { "move": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "6becc80671682cd7",
+      "60": "b55e6f1ff05b3bd0",
+      "120": "0d38cb01be4873ea",
+      "180": "2da9cd0d9957e98e",
+      "240": "1e0be6dc17a83b20",
+      "300": "8eb39760d64015f8",
+      "360": "8ecfd2873f2ae3e6",
+      "420": "3d298c7bd95abc7c",
+      "480": "56c4544e47403081",
+      "540": "da5567008dbe9688",
+      "600": "02be987866ca2c7c",
+      "660": "f03bfc6812bd52ea",
+      "720": "5d5eea241966b04a",
+      "780": "012838a6cd6be695"
+    }
+  }
+}

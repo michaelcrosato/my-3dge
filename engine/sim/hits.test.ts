@@ -9,7 +9,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { inArc, measureMove, type HitShape } from '../anim/moves';
-import { Attack, type Sweep } from '../anim/timeline';
+import { Attack, type Sweep } from '../anim/attack';
 import { Vector3 } from '../core/math';
 import { Rng } from '../core/rng';
 import { createPhysics } from '../physics/world';

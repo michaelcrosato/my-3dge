@@ -1,18 +1,20 @@
 /**
- * @file The merge gate (PLAN.md §8.9, WP 0.9): `x ci --local` runs `CI_STEPS` in order on this machine, holds the
- * tiers to their budgets (tools/lib/tiers.ts), writes `out/ci/summary.md` and, when everything passed, records HEAD
- * in `out/ci/last-green`, the base of the selections until main holds a gate.
+ * @file The merge gate (PLAN.md §8.9, WP 0.9): `x ci --local` runs `CI_STEPS` in order on this machine, holds the tiers
+ * to their budgets (tools/lib/tiers.ts), writes `out/ci/summary.md` (tools/lib/ciSummary.ts) and, when everything
+ * passed, records HEAD in `out/ci/last-green`, the base of the selections until main holds a gate.
  *
  * - **Steps:** `npm ci`, `x src`, `npm run check` (with `x deps --check` and `x docs --check`), `npm test`,
  *   `x port refs --check`, `x new --test-all` and `npm run e2e`, each from the root with its output kept in
  *   `out/ci/logs/<n>-<step>.log`, never printed. A failed `npm ci` skips the rest; after any other failure the next
- *   steps still run, so one run names every failure. The GitHub workflow, once the owner enables Actions, runs the
- *   same list: its unit test compares against `CI_STEPS`. The Vercel build is not a step (ADR-0021).
+ *   steps still run, so one run names every failure. The GitHub workflow (.github/workflows/ci.yml, after G9) runs the
+ *   same `node x ci --local`, and its unit test keeps it so (tools/cmd/ci-workflow.test.ts). The Vercel build is not a
+ *   step (ADR-0021).
  * - **T2** runs in full while its last full run (`out/ci/t2-full.json`) stayed within its budget (tiers.ts), and when
  *   no full run was measured yet; otherwise it runs what tiers.ts's `plan()` selects, and nothing when that selects
  *   nothing.
  * - **Budgets:** T0 is timed; T1 and T2 take the duration their JSON report records when the step rewrote it, else
- *   the step's time. Over a budget warns and never fails the gate (tiers.ts's `checkBudget`, ADR-0022).
+ *   the step's time. Over a budget warns and never fails the gate (tierBudgets.ts's `checkBudget`, ADR-0022). T2's
+ *   budget goes by the machine's cores (`CiDeps.cores`, tiers.ts's `t2Budget`): on 4 cores T2 runs in full, an hour.
  * - **`npm ci` reinstalls node_modules under this running process.** That is safe, measured: everything this command
  *   runs is imported before it starts, and every later step is a new process. `KEPT_CACHES` survive it:
  *   `node_modules/.cache/` (the ESLint and Prettier caches, and tsc's declarations and build info), so T0 is timed
@@ -20,7 +22,7 @@
  * - `--long` also runs tiers.ts's `LONG_RUNS` after the steps (at each gate).
  *
  * Usage: node x ci --local [--long]. Exit 0 when every step passed; 1 otherwise; 2 on a usage
- * error, `--local` missing included (the GitHub workflow waits for the owner).
+ * error, `--local` missing included (the GitHub workflow runs `node x ci --local` too).
  *
  * @example
  * CI_STEPS.map((step) => step.name); // ['npm ci', 'x src', 'npm run check', 'npm test', …, 'npm run e2e']
@@ -28,23 +30,13 @@
  */
 import { execFileSync, spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { availableParallelism } from 'node:os';
 import { dirname, join } from 'node:path';
-import { runtime, type Artifact, type Finding } from '../lib/report';
-import {
-  checkBudget,
-  duration,
-  LAST_GREEN,
-  LONG_RUNS,
-  plan as tiersPlan,
-  recordGreen,
-  reportMs,
-  TIERS,
-  timingTable,
-  type BudgetCheck,
-  type Selection,
-  type TierId,
-} from '../lib/tiers';
-import { UsageError, type Command, type CommandResult } from '../x';
+import { runtime } from '../lib/report';
+import { LONG_RUNS, plan as tiersPlan, recordGreen, TIERS, type Selection, type TierId } from '../lib/tiers';
+import { checkBudget, reportMs, type BudgetCheck } from '../lib/tierBudgets';
+import { CI_OUT, renderSummary, toResult } from '../lib/ciSummary';
+import { UsageError, type Command } from '../x';
 
 /** One step of the gate. */
 export interface CiStep {
@@ -68,16 +60,6 @@ export const CI_STEPS: readonly CiStep[] = [
   { name: 'x new --test-all', command: ['node', 'x', 'new', '--test-all'] },
   { name: 'npm run e2e', command: TIERS.T2.command, tier: 'T2' },
 ];
-
-/** Where `x ci --local` writes, relative to the root. */
-export const CI_OUT = {
-  summary: 'out/ci/summary.md',
-  logs: 'out/ci/logs',
-  /** The duration of the last full T2 run that passed, `{ ms, commit }`. */
-  t2Full: 'out/ci/t2-full.json',
-  /** Where `node_modules/.cache/` waits while `npm ci` runs. */
-  keptCache: 'out/ci/kept-cache',
-} as const;
 
 /** What running one command gave: its exit code (1 when it could not start), its wall time and its output. */
 export interface StepOutcome {
@@ -131,6 +113,8 @@ export interface CiDeps {
   plan: typeof tiersPlan;
   head: (root: string) => Head;
   now: () => Date;
+  /** The machine's cores, which set T2's workers and budget (`availableParallelism()`). */
+  cores: number;
 }
 
 /** One step's result. */
@@ -159,6 +143,8 @@ export interface CiRun {
   runtime: string;
   /** Why the base is what it is (tiers.ts's `Base.reason`). */
   base: string;
+  /** The machine's cores: T2's budget goes by them. */
+  cores: number;
   steps: StepResult[];
   budgets: BudgetCheck[];
 }
@@ -232,7 +218,7 @@ export async function runCi(root: string, deps: CiDeps, options: { long?: boolea
   const started = deps.now().toISOString();
   const head = deps.head(root);
   const lastFull = readT2Full(root);
-  const { base, t2: selected } = deps.plan(root, { lastFullT2Ms: lastFull });
+  const { base, t2: selected } = deps.plan(root, { lastFullT2Ms: lastFull, cores: deps.cores });
   const t2: Selection =
     lastFull === undefined
       ? {
@@ -292,108 +278,27 @@ export async function runCi(root: string, deps: CiDeps, options: { long?: boolea
     if (!ok && step.required) stop = `skipped: ${step.name} failed`;
   }
 
-  const budgets = measured.map(([tier, ms]) => checkBudget(tier, ms));
+  const budgets = measured.map(([tier, ms]) => checkBudget(tier, ms, deps.cores));
   const ok = steps.every((step) => step.status !== 'fail');
-  const run: CiRun = { ok, head, started, runtime: runtime(), base: base.reason, steps, budgets };
+  const run: CiRun = { ok, head, started, runtime: runtime(), base: base.reason, cores: deps.cores, steps, budgets };
   if (ok) recordGreen(head.sha, root);
   writeFileSync(join(root, CI_OUT.summary), renderSummary(run));
   return run;
 }
 
-/** The run as Markdown, for `out/ci/summary.md` (and the GitHub workflow's step summary). */
-export function renderSummary(run: CiRun): string {
-  const { head } = run;
-  const dirty = head.dirty.length ? ` with ${head.dirty.length} uncommitted changes` : '';
-  const out = [
-    `# x ci --local: ${run.ok ? 'ok' : 'FAIL'}`,
-    '',
-    `- Commit: ${head.sha.slice(0, 7)} on ${head.branch}${dirty}${run.ok ? `, recorded in ${LAST_GREEN}` : ''}`,
-    `- Started: ${run.started} on ${run.runtime}`,
-    `- Base: ${run.base}`,
-    '',
-    '| Step | Result | Time | Budget | Log | Note |',
-    '| --- | --- | --- | --- | --- | --- |',
-  ];
-  for (const step of run.steps) {
-    const budget = step.tier ? duration(TIERS[step.tier].budgetMs) : '';
-    const result = step.status === 'fail' ? `FAIL (exit ${step.code})` : step.status;
-    const time = step.status === 'skipped' ? '' : duration(step.ms);
-    out.push(`| \`${step.name}\` | ${result} | ${time} | ${budget} | ${step.log ?? ''} | ${step.note ?? ''} |`);
-  }
-  if (run.budgets.length) out.push('', '## Budgets', '', ...run.budgets.map((check) => `- ${check.message}`));
-  const failed = run.steps.filter((step) => step.status === 'fail');
-  if (failed.length) out.push('', '## Failures');
-  for (const step of failed) {
-    out.push('', `### \`${step.command.join(' ')}\` exited ${step.code}`, '', `The last lines of ${step.log}:`);
-    out.push('', '```text', ...(step.tail ?? []), '```');
-  }
-  return `${out.join('\n')}\n`;
-}
-
-/** The run as the dispatcher's result: the timing table, the T2 selection and one finding per problem. */
-export function toResult(run: CiRun): CommandResult {
-  const failed = run.steps.filter((step) => step.status === 'fail');
-  const total = run.steps.reduce((sum, step) => sum + step.ms, 0);
-  const t2 = run.steps.find((step) => step.tier === 'T2');
-  const failures: Finding[] = failed.map((step) => ({
-    id: 'CI_STEP_FAILED',
-    message: `${step.command.join(' ')} exited ${step.code} after ${duration(step.ms)}: read ${step.log} (its last lines are in ${CI_OUT.summary})`,
-  }));
-  const warnings: Finding[] = [];
-  for (const check of run.budgets) {
-    if (check.status !== 'ok') warnings.push({ id: 'CI_BUDGET', message: check.message });
-  }
-  if (run.head.dirty.length) {
-    const message = `${run.head.dirty.length} uncommitted changes (${run.head.dirty[0].trim()}…): this run covers them, not ${run.head.sha.slice(0, 7)} alone; commit and run it again before merging`;
-    warnings.push({ id: 'CI_DIRTY', message });
-  }
-  const artifacts: Artifact[] = [
-    {
-      path: CI_OUT.summary,
-      kind: 'text',
-      describes: 'the steps, their times and budgets, and the failed steps’ last lines',
-    },
-    ...run.steps.flatMap((step) =>
-      step.log ? [{ path: step.log, kind: 'text', describes: `the output of ${step.name}` }] : [],
-    ),
-  ];
-  if (run.ok) artifacts.push({ path: LAST_GREEN, kind: 'text', describes: 'the commit of this green run' });
-  const rows = run.steps.map((step) => ({
-    name: step.status === 'skipped' ? `${step.name} (skipped)` : step.name,
-    ms: step.ms,
-    ok: step.status !== 'fail',
-    budgetMs: step.tier && TIERS[step.tier].budgetMs,
-  }));
-  return {
-    ok: run.ok,
-    summary: run.ok
-      ? `${run.steps.length} steps passed in ${duration(total)}; ${run.head.sha.slice(0, 7)} recorded in ${LAST_GREEN}`
-      : `${failures.length} problem${failures.length === 1 ? '' : 's'}: ${failed.map((step) => step.name).join(', ')}`,
-    lines: [...timingTable(rows), ...(t2?.note ? [t2.note] : []), `summary: ${CI_OUT.summary}`],
-    target: 'local',
-    failures,
-    warnings,
-    metrics: {
-      commit: run.head.sha,
-      dirty: run.head.dirty.length,
-      ...Object.fromEntries(
-        run.steps.map((step) => [step.name, step.status === 'skipped' ? 'skipped' : Math.round(step.ms)]),
-      ),
-    },
-    artifacts,
-  };
-}
-
 /** Builds the `x ci` command; the tests pass fakes for the step runner, git, the selections and the clock. */
 export function createCiCommand(overrides: Partial<CiDeps> = {}): Command {
-  const deps: CiDeps = { runStep: spawnStep, plan: tiersPlan, head: readHead, now: () => new Date(), ...overrides };
+  const defaults = { runStep: spawnStep, plan: tiersPlan, head: readHead, now: () => new Date(), cores: availableParallelism() }; // prettier-ignore
+  const deps: CiDeps = { ...defaults, ...overrides };
   return {
     usage: 'ci --local [--long]',
     options: { local: { type: 'boolean' }, long: { type: 'boolean' } },
     maxPositionals: 0,
     async run({ values, root }) {
       if (values.local !== true) {
-        throw new UsageError('x ci runs only with --local: the GitHub workflow waits for the owner (PLAN.md §8.9)');
+        throw new UsageError(
+          'x ci runs only with --local: the GitHub workflow runs node x ci --local too (PLAN.md §8.9)',
+        );
       }
       return toResult(await runCi(root, deps, { long: values.long === true }));
     },

@@ -12,7 +12,8 @@ import { describe, expect, it } from 'vitest';
 import { checkReplay, playReplay, type Replay } from '../../engine/sim/replay';
 import { dispatch, ROOT } from '../x';
 import { compileLevel } from '../../engine/world/level/compile';
-import { navMap, replayText, resolveSceneModule, sceneModules, sceneRoots } from './sim';
+import { navMap, replayText } from './sim';
+import { resolveSceneModule, sceneModules, sceneRoots } from '../lib/scenes';
 
 /** Runs `node x sim …` in this repository; resolves to the exit code and printed lines. */
 async function sim(...args: string[]): Promise<{ code: number; lines: string[] }> {

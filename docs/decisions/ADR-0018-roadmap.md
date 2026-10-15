@@ -63,3 +63,10 @@ outside Phase H, except ADR-0021's.
 - **Plan edit:** WP 7.8's Owns adds engine/sim/reactions{,.test}.ts, engine/gfx/puppets/chains{,.test}.ts,
   engine/sim/actors.ts (the reactions step, ActorSpec.components), labs/box/cast/hero.ts and
   tests/pages/boxAudioTimeline.ts; the ledger rows of WP 7.8 and gate G7 record it.
+
+## Amendment 3 (2026-10-14, after G9): the owner accepts amendment 2's two calls
+
+- **Answer:** the owner accepts both calls as they are (CLEANUP.md's decision 2, 2026-10-14): crowd walkers show
+  their knockdowns but not the flinch lean, since their batches run no view layers; the cape is a sim component that
+  only the view draws.
+- **Plan edit:** WP 7.8's ledger row says "accepted by the owner, 2026-10-14" in place of its two "Owner:" clauses.

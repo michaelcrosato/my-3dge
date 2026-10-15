@@ -41,12 +41,12 @@ import type { CameraPose, Projection, Vec3 } from './pose';
 export const CAMERA_CODES = defineCodes('gfx', {
   GFX_BAD_CAMERA_CODE: {
     template: '"{code}" is not a camera code: {problems}',
-    fix: 'write cam=<view>[,<turn>,<zoom>[,<x>,<y>,<z>]] (views: iso, threequarter, topdown, brawler, side), cam=<azimuth>,<elevation>,<zoom>,<height>,<boost>[,<x>,<z>] (a custom view), either with ,persp at the end for a perspective lens, or cam3=orbit[,<azimuth>,<elevation>,<distance>[,<x>,<y>,<z>]], cam3=fly or cam3=fixed[,<x>,<y>,<z>,<yaw>,<pitch>[,<fov>]]; angles in degrees, lengths in metres',
+    fix: 'write cam=<view>[,<turn>,<zoom>[,<x>,<y>,<z>]] (views: iso, threequarter, topdown, brawler, side), cam=<azimuth>,<elevation>,<zoom>,<height>,<boost>[,<x>,<z>] (a custom view), either with ,persp at the end for a perspective lens, or cam3=orbit[,<azimuth>,<elevation>,<distance>[,<x>,<y>,<z>]], cam3=fly or cam3=fixed[,<x>,<y>,<z>,<yaw>,<pitch>[,<fov>]], or the follow cameras cam3=chase, cam3=first and cam3=rail (engine/gfx/cameras/chase.ts, first.ts and rail.ts give theirs); angles in degrees, lengths in metres',
     doc: 'Raised by `parseCameraCode` (engine/gfx/cameras/codes.ts) for an empty part, a word where a number belongs, the wrong count of numbers, or a number out of its range (each range is named). Every problem is listed at once.',
   },
   GFX_UNKNOWN_CAMERA: {
     template: '{name} is not a camera{suggestion}',
-    fix: 'use one of {names}: the classic views in cam=, the 3D cameras in cam3= (engine/gfx/cameras/codes.ts gives the grammar)',
+    fix: 'use one of {names}: the classic views in cam=, the 3D and follow cameras in cam3= (engine/gfx/cameras/codes.ts gives the grammar)',
     doc: 'Raised by `parseCameraCode` and the camera factories (engine/gfx/cameras/) for a view or camera name they do not know, with the closest names.',
   },
   GFX_BAD_CAMERA: {
@@ -84,6 +84,9 @@ export const VIEW_LABELS: Readonly<Record<ViewName, string>> = Object.freeze({
 
 /** The 3D cameras of `cam3=`. */
 export const CAMERA_3D: readonly CameraType[] = Object.freeze(['orbit', 'fly', 'fixed']);
+
+/** WP 3.9's cameras, which follow the hero and read their own codes (`readCameraCode`): chase, first person, the rail. */
+export const FOLLOW_CAMERAS = Object.freeze(['chase', 'first', 'rail'] as const);
 
 /** A classic view's code as data: missing fields take the camera's defaults. */
 export interface ViewSpec {
@@ -183,13 +186,19 @@ export function parseCameraCode(code: string): CameraSpec {
   }
   const head = tokens[0] ?? '';
   const numeric = NUMBER.test(head);
-  const names = [...VIEW_NAMES, ...CAMERA_3D];
-  if (!numeric && !names.includes(head as ViewName)) {
+  const names: readonly string[] = [...VIEW_NAMES, ...CAMERA_3D, ...FOLLOW_CAMERAS];
+  if (!numeric && !names.includes(head)) {
     throw codeError('GFX_UNKNOWN_CAMERA', {
       name: JSON.stringify(head),
       suggestion: didYouMean(head, names),
       names: names.join(', '),
     });
+  }
+  if ((FOLLOW_CAMERAS as readonly string[]).includes(head)) {
+    problems.push(
+      `${head} follows the hero and reads its own code: readCameraCode (engine/gfx/cameras/place.ts) takes it`,
+    );
+    fail();
   }
   const is3d = CAMERA_3D.includes(head as CameraType);
   if (keyed && (keyed[1] === 'cam3') !== is3d) {

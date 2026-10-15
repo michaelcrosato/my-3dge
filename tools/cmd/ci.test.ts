@@ -12,7 +12,8 @@ import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { LAST_GREEN, LONG_RUNS, TIERS, type Selection } from '../lib/tiers';
 import { dispatch, MAX_LINES } from '../x';
-import { CI_OUT, CI_STEPS, createCiCommand, renderSummary, runCi, type CiDeps, type StepOutcome } from './ci';
+import { CI_STEPS, createCiCommand, runCi, type CiDeps, type StepOutcome } from './ci';
+import { CI_OUT, renderSummary } from '../lib/ciSummary';
 
 const temporary: string[] = [];
 afterEach(() => {
@@ -39,7 +40,7 @@ type Fake = Partial<StepOutcome> & { effect?: (root: string) => void };
 /** Fake parts: every command passes in 1 s unless `fakes` (by argv joined) says otherwise; calls are recorded. */
 function fakeDeps(fakes: Record<string, Fake> = {}, t2: Partial<Selection> = {}) {
   const calls: string[] = [];
-  const plans: { lastFullT2Ms?: number }[] = [];
+  const plans: { lastFullT2Ms?: number; cores?: number }[] = [];
   const deps: CiDeps = {
     runStep: async (command, root) => {
       const key = command.join(' ');
@@ -48,6 +49,7 @@ function fakeDeps(fakes: Record<string, Fake> = {}, t2: Partial<Selection> = {})
       effect?.(root);
       return { code: 0, ms: 1000, output: `${key}\nall good\n`, ...outcome };
     },
+    cores: 16,
     plan: (_root, options = {}) => {
       plans.push(options);
       return {
@@ -106,7 +108,7 @@ describe('runCi', () => {
     const run = await runCi(root, deps);
     expect(run.ok).toBe(true);
     expect(calls).toEqual(STEP_COMMANDS);
-    expect(plans).toEqual([{ lastFullT2Ms: 6000 }]);
+    expect(plans).toEqual([{ lastFullT2Ms: 6000, cores: 16 }]);
     expect(read(root, LAST_GREEN)).toBe(`${SHA}\n`);
     expect(JSON.parse(read(root, CI_OUT.t2Full))).toEqual({ ms: 1000, commit: SHA });
     expect(run.steps.map((step) => step.log)).toEqual(
@@ -131,7 +133,7 @@ describe('runCi', () => {
     const root = measured(400_000);
     const some = fakeDeps({}, { mode: 'some', command: selected, reason: 'T2 runs the specs that import a.spec.ts' });
     const run = await runCi(root, some.deps);
-    expect(some.plans).toEqual([{ lastFullT2Ms: 400_000 }]);
+    expect(some.plans).toEqual([{ lastFullT2Ms: 400_000, cores: 16 }]);
     expect(some.calls.at(-1)).toBe(selected.join(' '));
     expect(run.ok).toBe(true);
     expect(JSON.parse(read(root, CI_OUT.t2Full)).ms).toBe(400_000);
@@ -254,6 +256,17 @@ describe('renderSummary', () => {
     expect(summary).toContain('### `npm test` exited 1\n\nThe last lines of out/ci/logs/4-npm-test.log:\n\n```text\n');
     expect(summary).toContain('FAIL a.test.ts\n1 failed\n```\n');
     expect(read(root, CI_OUT.summary)).toBe(renderSummary(run));
+  });
+
+  it("holds T2 to the machine's budget: an hour on 4 cores, 9 minutes from 16 (ADR-0022 amendment 2)", async () => {
+    const { deps } = fakeDeps({ 'npm run e2e': { ms: 3_460_000 } });
+    const cloud = renderSummary(await runCi(measured(6000), { ...deps, cores: 4 }));
+    expect(cloud).toContain(', 4 cores (T2 on 1 worker on 4 cores)\n');
+    expect(cloud).toContain('| `npm run e2e` | ok | 57 min 40 s | 60 min |');
+    expect(cloud).toContain('- T2 took 57 min 40 s, within its 60 min budget (1 worker on 4 cores)\n');
+    const big = renderSummary(await runCi(measured(6000), deps));
+    expect(big).toContain('| `npm run e2e` | ok | 57 min 40 s | 9 min |');
+    expect(big).toContain('- T2 took 57 min 40 s, over its 9 min budget (4 workers on 16 cores): ');
   });
 
   it('names the green commit as recorded', async () => {

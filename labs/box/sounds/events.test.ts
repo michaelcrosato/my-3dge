@@ -42,11 +42,11 @@ describe('the box’s sound events', () => {
       step: 7,
       type: 'hit',
       sfx: 'sfx:boxHit',
-      vol: 1,
+      vol: 0.5,
       position: at,
       duck: false,
     });
-    expect(sound('hit', { position: at, size: 0.5 })?.vol).toBeCloseTo(0.575, 9); // a bolt on a wall, softer
+    expect(sound('hit', { position: at, size: 0.5 })?.vol).toBeCloseTo(0.3, 9); // a bolt on a wall, softer
     expect(sound('shot', { position: at, size: 1 })).toMatchObject({ sfx: 'sfx:boxLaunch', vol: 0.8, position: at });
     expect(sound('slam', { position: at, size: 0.6 })).toMatchObject({ sfx: 'sfx:boxThud', position: at });
     expect(sound('slain', { position: at, size: 1 })).toMatchObject({ sfx: 'sfx:boxDeath', vol: 1, duck: true });

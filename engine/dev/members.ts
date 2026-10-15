@@ -35,7 +35,7 @@ import type { Log } from '../core/log';
 import { registry as sharedRegistry, type Entry, type Registry } from '../core/registry';
 import { checkField, copyValue, freezeValue, show, type Field, type Schema } from '../core/schema';
 import type { Clock } from '../core/time';
-import type { Session } from '../sim/scene';
+import type { Session } from '../sim/session';
 import type { EntityData } from '../sim/state';
 import type { World, WorldEvents } from '../sim/world';
 
@@ -132,7 +132,7 @@ export interface InspectorHost {
   readonly features: readonly string[];
   /** The downgrades taken, as advice codes. */
   readonly downgrades: readonly string[];
-  /** Runs `n` sim steps through the clock, with one intents object for every step or one per step. */
+  /** Runs `n` sim steps through the clock, with one intents object for every step, one per step, or (undefined) the virtual device's. */
   step(n: number, intents: unknown): void;
   /** Starts the scene again with `seed`, keeping the settings changed since it started. */
   restart(seed: number): void;

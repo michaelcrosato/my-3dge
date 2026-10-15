@@ -1,17 +1,18 @@
 /**
  * @file Inverse kinematics for the humanoid skeleton (PLAN.md WP 3.5, I-11): `twoBone` (my-3d2dge's `ik3`) places a
  * limb's middle joint, `twoBoneRot` turns a leg or an arm to a target with a pole, `aim` spreads a look-at over chest,
- * neck and head within limits, `footPlant` stands the feet on probed ground, and `handTo` puts a grip in a hand.
+ * neck and head within limits, and `handTo` puts a grip in a hand; `GroundProbe` is how a solver asks for the ground
+ * (engine/anim/footPlant.ts's `footPlant`, moved there after G9, stands the feet on it).
  *
  * Invariants:
- * - Each solver takes a pose and its FK and keeps them in step: it writes local rotations (`footPlant` also lowers
- *   `rootPos.y`) and runs FK again. Targets, poles and rotations are world space. Fade a solve with `blendPoses`.
+ * - Each solver takes a pose and its FK and keeps them in step: it writes local rotations and runs FK again. Targets,
+ *   poles and rotations are world space. Fade a solve with `blendPoses`.
  * - Limbs solve in model space (the root transform undone), so bone lengths hold under any root position, turn and
  *   squash. Knees and elbows are hinges: the middle joint turns about its `LIMBS` hinge only, by 0 to π, and keeps
  *   its twist; the upper joint's roll follows the pole, and without a pole the bend keeps its direction.
  * - `twoBone` is `ik3` verbatim in metres, in the source's axis order: the source's bits under (x, y, z)/16 →
  *   (x, z, y). One fix: a pole along the limb falls back to a unit horizontal (the source's was not unit length).
- * - `footPlant` treats the root scale as uniform. Nothing reads a clock or a random stream.
+ * - Nothing reads a clock or a random stream.
  *
  * Carried from `my-3d2dge:engine/my-3d2dge.js:129-140` (`ik3`).
  *
@@ -31,8 +32,7 @@
  */
 import { codeError, defineCodes, didYouMean } from '../core/log';
 import { angDiff, MathUtils, Matrix4, Quaternion, swingTwist, Vector3 } from '../core/math';
-import { SIM_DT } from '../core/time';
-import { forwardKinematics, jointPosition, jointRotation, jointToWorld, socketPosition, type WorldPose } from './fk';
+import { forwardKinematics, jointToWorld, socketPosition, type WorldPose } from './fk';
 import type { Pose } from './pose';
 import { JOINT_COUNT, jointIndex, PARENTS, socketIndex, type JointName, type Skeleton } from './skeleton';
 
@@ -63,7 +63,7 @@ export const LIMBS: Readonly<Record<LimbEnd, Limb>> = {
 };
 
 /** `ik3`'s 0.01-unit margin in metres: a limb stops this short of straight, and a target is never nearer. */
-const SLACK = 0.01 / 16;
+export const SLACK = 0.01 / 16;
 
 /** Scratch objects, so the solvers allocate nothing. */
 const v = Array.from({ length: 16 }, () => new Vector3());
@@ -276,107 +276,6 @@ export type GroundHit = { readonly point: Vector3; readonly normal: Vector3 };
 
 /** Casts a ray straight down from `origin`, at most `distance` metres; on a hit it fills `hit` and returns true. */
 export type GroundProbe = (origin: Vector3, distance: number, hit: GroundHit) => boolean;
-
-/** A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0). */
-export type FootLock = { weight: number; readonly point: Vector3; readonly normal: Vector3 };
-
-/** What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`. */
-export type FootPlantState = { readonly feet: readonly [FootLock, FootLock]; drop: number };
-
-/** A new, unlocked `FootPlantState`. */
-export function createFootPlantState(): FootPlantState {
-  const lock = (): FootLock => ({ weight: 0, point: new Vector3(), normal: new Vector3(0, 1, 0) });
-  return { feet: [lock(), lock()], drop: 0 };
-}
-
-/** `footPlant`'s tuning, in metres and seconds. */
-export const FOOT_PLANT = {
-  up: 0.5, // how far above the sole the probe starts: the highest step a foot finds
-  down: 0.6, // how far below the root the probe reaches: the deepest drop a foot follows
-  liftFade: 0.1, // the sole height over which a lifting foot stops turning to the ground and pulling the pelvis down
-  release: 0.15, // seconds a lock takes to let go once the stance ends
-  maxSlide: 0.3, // how far a locked sole may trail its animation before it locks again where the animation is
-  rise: 1, // metres per second the pelvis rises back after a drop (it drops at once)
-} as const;
-
-/** How `footPlant` plants. */
-export interface FootPlantOptions {
-  /** Locks and the pelvis drop kept between ticks; without it, nothing locks and nothing is smoothed. */
-  state?: FootPlantState;
-  /** Whether each foot (left, right) is in stance this tick: a foot in stance locks where it lands. */
-  stance?: readonly [boolean, boolean];
-  /** The tick's length in seconds; `SIM_DT` by default. */
-  dt?: number;
-}
-
-const SIDES = (['L', 'R'] as const).map((s) => [`foot${s}`, `contact${s}`, `thigh${s}`, `shin${s}`] as const);
-/** Each foot's plan for this tick: whether the probe hit, the ankle's target and the foot's world rotation. */
-const plans = SIDES.map(([foot]) => ({ foot, hit: false, ankle: new Vector3(), rotation: new Quaternion() }));
-const hit: GroundHit = { point: new Vector3(), normal: new Vector3() };
-
-/**
- * Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift
- * above the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot
- * needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it
- * landed. Run it on each tick's fresh pose, after the animation. Runs FK; returns the pelvis drop in metres.
- */
-export function footPlant(
-  skeleton: Skeleton,
-  pose: Pose,
-  world: WorldPose,
-  probe: GroundProbe,
-  options: FootPlantOptions = {},
-): number {
-  const { state, stance, dt = SIM_DT } = options;
-  const [sole, ankle, hip, knee, at, normal, turnUp] = v;
-  let drop = 0;
-  for (let side = 0; side < 2; side++) {
-    const [foot, contact, thigh, shin] = SIDES[side];
-    const plan = plans[side];
-    socketPosition(skeleton, world, contact, sole);
-    const lift = Math.max(0, sole.y - pose.rootPos.y);
-    at.set(sole.x, Math.max(sole.y, pose.rootPos.y) + FOOT_PLANT.up, sole.z);
-    plan.hit = probe(at, FOOT_PLANT.up + lift + FOOT_PLANT.down, hit);
-    if (!plan.hit) continue;
-    at.set(sole.x, hit.point.y + lift, sole.z);
-    normal.copy(hit.normal).normalize();
-    let align = 1 - MathUtils.clamp(lift / FOOT_PLANT.liftFade, 0, 1);
-    const lock = state?.feet[side];
-    if (lock) {
-      if (stance?.[side]) {
-        if (lock.weight < 1 || lock.point.distanceTo(at) > FOOT_PLANT.maxSlide) {
-          lock.point.copy(at);
-          lock.normal.copy(normal);
-        }
-        lock.weight = 1;
-      } else lock.weight = Math.max(0, lock.weight - dt / FOOT_PLANT.release);
-      at.lerp(lock.point, lock.weight);
-      normal.lerp(lock.normal, lock.weight).normalize();
-      align = Math.max(align, lock.weight);
-    }
-    // the foot turns about its sole onto the ground, and the ankle follows
-    jointRotation(world, foot, plan.rotation);
-    const onto = q[6].setFromUnitVectors(turnUp.copy(UP).applyQuaternion(plan.rotation), normal);
-    onto.slerp(q[7].identity(), 1 - align);
-    plan.rotation.premultiply(onto);
-    jointPosition(world, foot, ankle);
-    plan.ankle.subVectors(ankle, sole).applyQuaternion(onto).add(at);
-    // the drop this foot needs to reach its ankle target, as straight as the animation has it
-    jointPosition(world, thigh, hip);
-    jointPosition(world, shin, knee);
-    const reach = hip.distanceTo(knee) + knee.distanceTo(ankle) - 2 * SLACK;
-    const extent = Math.min(hip.distanceTo(ankle), reach);
-    const across = Math.hypot(plan.ankle.x - hip.x, plan.ankle.z - hip.z);
-    const below = hip.y - plan.ankle.y;
-    drop = Math.max(drop, align * (across < extent ? below - Math.sqrt(extent * extent - across * across) : below));
-  }
-  drop = state ? Math.max(drop, state.drop - FOOT_PLANT.rise * dt) : drop;
-  if (state) state.drop = drop;
-  pose.rootPos.y -= drop;
-  forwardKinematics(skeleton, pose, world);
-  for (const plan of plans) if (plan.hit) twoBoneRot(skeleton, pose, world, plan.foot, plan.ankle, plan);
-  return drop;
-}
 
 /** `handTo`'s scratch: the weapon socket's offset in the hand's frame. */
 const grasp = new Vector3();

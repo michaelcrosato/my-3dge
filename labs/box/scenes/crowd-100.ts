@@ -13,12 +13,15 @@
  */
 import { defineScene } from '../../../engine/sim-api';
 import { setupCrowd, type CrowdComponents } from './crowd-1000';
+import { boxSounds } from '../sounds/events';
+import { HALL_LEVEL } from './hall';
 
 /** The crowd at 100. */
 export const crowd100 = defineScene<CrowdComponents>('box:crowd-100', {
   description:
     'Box 4: the hall with its hero and a crowd of 100 walkers, slimes and wisps that chase him round the pillars and up the stairs.',
   level: 'level:hall',
+  sounds: boxSounds(HALL_LEVEL),
   physics: true,
   settings: { 'box.crowd.count': 100 },
   setup(w) {

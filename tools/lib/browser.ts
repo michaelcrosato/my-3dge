@@ -9,9 +9,11 @@
  * canvases, queue submits, lost devices); it is measured, never reported by the page.
  *
  * @example
+ * import { chromium } from '@playwright/test';
  * const browser = await chromium.launch(launchOptions());
  * const page = await browser.newPage({ viewport: VIEWPORT });
- * const watch = await preparePage(page, { seed: 1 });
+ * const watch = await preparePage(page, { seed: 1 }); // the virtual clock and the console, before the first goto
+ * await browser.close();
  * @see tests/e2e/harness.spec.ts
  */
 /// <reference types="@webgpu/types" />

@@ -9,10 +9,12 @@ import {
   createFilterUniforms,
   FILTER_FIELDS,
   FILTER_NAMES,
+  fixColor,
   fixLevels,
   isPlain,
   layerChain,
   levelsProblem,
+  colorProblem,
   partialSchema,
   SCOPES,
   scopeMask,
@@ -64,6 +66,18 @@ describe('levels', () => {
     const fixed = fixLevels({ palette: { levels: 4, dither: 0.8 }, pixel: { levels: 24 } });
     expect(fixed.spec).toEqual({ palette: { levels: 8, dither: 0.8 }, pixel: { levels: 24 } });
     expect(fixed.raised).toEqual([{ name: 'palette', levels: 4 }]);
+  });
+});
+
+describe('outline colours', () => {
+  it("are hex, a CSS colour name or '' (darken): a layer drops another, so the line darkens", () => {
+    expect(['', '#000', '#1A1a2e', 'black', 'RebeccaPurple'].map((c) => colorProblem(c, 'color'))).toEqual(Array(5).fill(null)); // prettier-ignore
+    for (const bad of ['blakc', '#12', '#1234567', 'rgb(0, 0, 0)'])
+      expect(colorProblem(bad, 'filters.outline.color')).toContain('which is no colour');
+    const fixed = fixColor({ outline: { scope: 'all', color: 'blakc', width: 2 }, pixel: { size: 6 } });
+    expect(fixed).toEqual({ spec: { outline: { scope: 'all', width: 2 }, pixel: { size: 6 } }, dropped: 'blakc' });
+    const kept = { outline: { color: '#ff0000' } };
+    expect(fixColor(kept)).toEqual({ spec: kept, dropped: null });
   });
 });
 

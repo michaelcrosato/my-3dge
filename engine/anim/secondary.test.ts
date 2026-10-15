@@ -1,5 +1,5 @@
 /**
- * @file Unit tests for secondary motion (engine/anim/secondary.ts), PLAN.md WP 6.2's Done when: chains are stable
+ * @file Unit tests for secondary motion (engine/anim/secondary.ts, chain.ts), PLAN.md WP 6.2's Done when: chains are stable
  * at 60 and 120 Hz (they hang still, agree between the rates, survive violent anchors and settle again) and collide
  * with body capsules and the floor (a fixed capsule, a flat floor, a probed slope, and a hero's own capsules while
  * it runs, snaps round and spins). Also: the cape's width, flutter and back plane, the rest shape's stiffness, a
@@ -11,19 +11,8 @@ import { Rng } from '../core/rng';
 import { Animator } from './character';
 import type { GroundHit } from './ik';
 import type { MoveInput } from './moves-data';
-import {
-  bodyCapsules,
-  BODY_CAPSULES,
-  Cape,
-  CAPE,
-  Chain,
-  CHAIN,
-  Secondary,
-  SQUASH,
-  squashScale,
-  type BoneCapsule,
-  type ChainOptions,
-} from './secondary';
+import { bodyCapsules, BODY_CAPSULES, Secondary, SQUASH, squashScale } from './secondary';
+import { Cape, CAPE, Chain, CHAIN, type BoneCapsule, type ChainOptions } from './chain';
 
 const HAIR: ChainOptions = { n: 6, seg: 0.12, gravity: 12.5, drag: 3.66 };
 const RATES = [60, 120] as const;

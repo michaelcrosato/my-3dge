@@ -51,7 +51,7 @@ prefix a scene's own (`pathMover`, `spinnersCrate`); a scene's settings are `box
    `<stage>`: labs/box/README.md, "Adding a scene or a variant", step 2.
 4. List it in labs/box/README.md's demo index and settings (tests/unit/box-readme.test.ts fails a scene or a `box.*`
    setting left out) and extend the box suite. When it belongs to a stage, add it to `STAGES` in
-   tests/e2e/parity.spec.ts: T2's rendering-page check plays only those.
+   tests/e2e/parity-stages.ts: T2's rendering-page check plays only those.
 
 ## Add a prop
 

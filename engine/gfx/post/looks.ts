@@ -34,7 +34,7 @@ import { registry as sharedRegistry, type Entry, type Registry } from '../../cor
 import type { EntryOf, Schema } from '../../core/schema';
 import { MATERIAL_STYLES } from '../materials/styles';
 import { TOON_LOOK } from '../materials/toon';
-import { FILTER_FIELDS, FILTER_NAMES, levelsProblem, type FilterSpec } from './filters';
+import { colorProblem, FILTER_FIELDS, FILTER_NAMES, levelsProblem, type FilterSpec } from './filters';
 import { PRESETS } from './presets';
 
 /** Where a menu lists a look: `look` for a whole look, else the filter it presets, or `shading` for a style. */
@@ -231,12 +231,13 @@ export const LOOKS: Record<string, LookSpec> = {
   },
 };
 
-/** The levels a look sets that break the posterize rule, as problems. */
+/** The levels a look sets that break the posterize rule, and an outline colour that is none, as problems. */
 function checkLook(entry: LookEntry): string[] {
-  const { pixel, palette } = entry.filters;
+  const { pixel, palette, outline } = entry.filters;
   return [
     levelsProblem(pixel.levels, 'filters.pixel.levels'),
     levelsProblem(palette.levels, 'filters.palette.levels'),
+    colorProblem(outline.color, 'filters.outline.color'),
   ].filter((problem): problem is string => problem !== null);
 }
 

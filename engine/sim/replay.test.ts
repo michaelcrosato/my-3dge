@@ -20,7 +20,8 @@ import { defineSettings } from '../core/settings';
 import { TIME_SETTINGS } from '../core/time';
 import '../../fixtures/scenes/kernel';
 import { checkpointsOf, checkReplay, firstDifference, judgeRuns, partingOf, playReplay, type Replay } from './replay';
-import { createSession, defineScene } from './scene';
+import { defineScene } from './scene';
+import { createSession } from './session';
 import { defineComponent } from './state';
 import type { World } from './world';
 

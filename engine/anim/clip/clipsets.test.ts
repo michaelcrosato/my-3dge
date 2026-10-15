@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { createRegistry } from '../../core/registry';
-import { restBuild } from './retarget';
+import { restBuild } from './rest';
 import { readSet, readSetDir, SETS_DIR } from '../../../tools/anim/repack';
 import { busy, REST, standing } from '../../../tests/unit/anim/clip-fixtures';
 import {

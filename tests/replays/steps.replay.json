@@ -1,0 +1,27 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "The steps fixture (WP 3.2), the script of its test: on the one-box floor the box hero stands 10 steps, runs east, jumps at step 70 holding jump 40 steps, lands, runs on and dashes at step 130, then stands while the shuttle turns round: the character controller's run, jump, landing and dash give the same hashes in Node and in Chromium.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "steps",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 180,
+  "inputs": [
+    [10, { "move": [1, 0] }],
+    [70, { "b": ["jump"] }],
+    [110, { "b": null }],
+    [130, { "b": ["dash"], "move": null }],
+    [131, { "b": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "711859847cb6b283",
+      "60": "0e339ade87758be6",
+      "120": "d69219dc79cac1e5",
+      "180": "e74d4ae748f77a91"
+    }
+  }
+}

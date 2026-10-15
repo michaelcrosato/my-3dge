@@ -125,7 +125,7 @@ rejoins to its source, apart from the changes named here.
 | Set | From | Changes |
 |---|---|---|
 | `sets/mesh2motion/` | `my-3d2dge:src/mocap/sets/mesh2motion.js` | the tag `alt` on the 84 clips with an `orig` |
-| `sets/cmu/` | `my-3d2dge:src/mocap/sets/cmu.js` | `/sources/*/license` in its 25 source records: CMU's terms, as `catalogs/cmu.json` states them, where the source said "free for all uses" (WP 8.5) |
+| `sets/cmu/` | `my-3d2dge:src/mocap/sets/cmu.js` | `/sources/*/license` in its 25 source records: CMU's terms, as `catalogs/cmu.json` states them, where the source said "free for all uses" (WP 8.5); and `/credit`: the terms in short and CMU's acknowledgment, verbatim (tools/anim/repack.ts `CMU_CREDIT`, after G9), where the source said "free for all uses" too |
 | `sets/quaternius/` | `shardfall:anim/quaternius.json` | each clip `"via": "shardfall"`; `body` from `my-3d2dge:src/mocap/sets/quaternius.js`; its `Punch_Enter` and that clip's `fit`, `"via": "v1"` |
 | `sets/style100/` | `shardfall:anim/style100.json` | each clip `"via": "shardfall"`; `"body": null` |
 | `sets/style100_<gait>/` | `shardfall:anim/100style/style100_<gait>.json` (`back`, `backrun`, `idle`, `run`, `side`, `siderun`) | each clip `"via": "shardfall"`; `"body": null` |

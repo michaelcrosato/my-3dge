@@ -8,15 +8,18 @@
  *   under the actor's feet to (engine/world/level `surfaceAt`), louder the faster it moves;
  * - `land`: `sfx:boxThud` under the actor, louder the harder it came down; `jump` and `dash`: the engine's
  *   `sfx:whoosh` under it;
- * - the fight's (labs/box/scenes/fight-rules.ts): `hit`, `sfx:boxHit`, louder the bigger the blow; `shot`, a bolt
- *   launched, `sfx:boxLaunch`; `slam`, a pounce landing, `sfx:boxThud`; `slain`, `sfx:boxDeath`, which ducks the music
- *   and ambience while it plays;
+ * - the fight's (labs/box/scenes/fight-rules.ts): `hit`, `sfx:boxHit`, louder the bigger the blow, at most 0.5 (after
+ *   G9: a sweep's four hits and a death at once, box-5-fight at 9.3 s, peaked at 1.54 in `x audio --replay`'s
+ *   unspatialized mix and now at 0.80, −2 dBFS); `shot`, a bolt launched, `sfx:boxLaunch`; `slam`, a pounce landing,
+ *   `sfx:boxThud`; `slain`, `sfx:boxDeath`, which ducks the music and ambience while it plays;
  * - every other event (`damage`, `lap`…) plays nothing.
  *
  * `createSoundReader().read(world, level)` maps the events a world has delivered since the last read, in order, each
  * once by its `seq`: called after every step it gives a run's timeline, each event at its step; called once a frame,
  * each event at the frame's last step. A new world (a restart, a replay) is read from its first event.
  * `timelineHash` hashes a timeline (FNV-1a, 64 bits, over its JSON), the one number Node and the browser compare.
+ * `boxSounds(level)` is the same map as a scene's `sounds` hook (engine/sim/scene.ts), so `x audio --replay` mixes in
+ * Node what the page plays (after G9, ADR-0013 amendment 3): sim-side, it imports only engine/sim-api.ts.
  *
  * Invariants: pure reads: the world and its events are never changed, and nothing here plays a sound. Positions are
  * world space, metres, as the sim gives them, so the same run gives the same bits everywhere. An actor's events
@@ -28,7 +31,7 @@
  * timelineHash([]); // '09612b07b5ecb5a5': the JSON '[]' hashed
  * @see labs/box/sounds/events.test.ts
  */
-import { surfaceAt, type CompiledLevel, type TraceRecord } from '../../../engine';
+import { surfaceAt, type CompiledLevel, type SceneSound, type TraceRecord } from '../../../engine/sim-api';
 
 /** A point in the world, metres. */
 export type Point = readonly [number, number, number];
@@ -101,7 +104,7 @@ const SOUNDS: Readonly<Record<string, (p: Payload, world: SoundWorld, level: Com
   land: (p, world) => sound('sfx:boxThud', clamp((p.speed ?? 0) / 8, 0.3, 1), feetOf(world, p.id)),
   jump: (p, world) => sound('sfx:whoosh', 0.5, feetOf(world, p.id)),
   dash: (p, world) => sound('sfx:whoosh', 0.9, feetOf(world, p.id)),
-  hit: (p) => sound('sfx:boxHit', clamp(0.3 + 0.55 * (p.size ?? 1), 0.3, 1), p.position),
+  hit: (p) => sound('sfx:boxHit', clamp(0.15 + 0.3 * (p.size ?? 1), 0.15, 0.5), p.position),
   shot: (p) => sound('sfx:boxLaunch', clamp(0.8 * (p.size ?? 1), 0.3, 1), p.position),
   slam: (p) => sound('sfx:boxThud', 0.8, p.position),
   slain: (p) => sound('sfx:boxDeath', 1, p.position, true),
@@ -116,6 +119,14 @@ export function soundOf(record: TraceRecord, world: SoundWorld, level: CompiledL
   const payload = record.payload;
   const made = map && typeof payload === 'object' && payload !== null ? map(payload as Payload, world, level) : null;
   return made && { step: world.tick, type: record.type, ...made };
+}
+
+/** A scene's `sounds` hook for the box's scenes on `level`: each event's effect and gain, as the page plays them. */
+export function boxSounds(level: CompiledLevel | null): (record: TraceRecord, world: SoundWorld) => SceneSound | null {
+  return (record, world) => {
+    const made = soundOf(record, world, level);
+    return made && { sfx: made.sfx, vol: made.vol };
+  };
 }
 
 /** Reads a world's new events as sounds (see the file comment). */

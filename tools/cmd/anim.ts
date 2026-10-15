@@ -36,7 +36,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { normalizedLens, clipText } from '../../engine/anim/clip/lens';
-import { restSkeleton, clipJSON } from '../../engine/anim/clip/retarget';
+import { restSkeleton } from '../../engine/anim/clip/rest';
+import { clipJSON } from '../../engine/anim/clip/retarget';
 import { validateClip } from '../../engine/anim/clip/validate';
 import { SHEET_VIEWS, type SheetView } from '../../engine/anim/sheet';
 import { CMU_SUBCOMMANDS, cmuTargets, runCmu } from '../anim/cmu-cli';

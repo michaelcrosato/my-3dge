@@ -53,6 +53,7 @@ import {
 } from '../../../engine/sim-api';
 import { HERO_BODY, heroCharacter } from '../cast/hero';
 import { ROOM_HERO_LEVEL } from './room-hero';
+import { boxSounds } from '../sounds/events';
 
 /** The scene's settings (see the file comment). */
 export const CLIPS_SETTINGS = defineSettings({
@@ -189,6 +190,7 @@ export const clips = defineScene('box:clips', {
   description:
     'Clip mode: the hero and the mannequin play any clip of the animation library through the clip layer, in the room.',
   level: 'level:room',
+  sounds: boxSounds(ROOM_HERO_LEVEL),
   physics: true,
   setup(w) {
     addLevelBodies(physicsOf(w), ROOM_HERO_LEVEL);

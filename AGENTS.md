@@ -14,7 +14,7 @@ record it as an open issue starting "Owner:" and move on.
 
 ## Setup
 bash scripts/setup.sh (idempotent) does three things:
-- Node 24.21.0 (.nvmrc): when the active node differs, it downloads the official build from nodejs.org, checks it
+- Node 24.22.0 (.nvmrc): when the active node differs, it downloads the official build from nodejs.org, checks it
   against SHASUMS256.txt and keeps it in ~/.cache/my3dge/. Offline, it keeps the container's Node 22: everything runs
   there too, but Node goldens are recorded on 24.
 - The read-only sources: MY3D2DGE_SRC (my-3d2dge@e37e4ee) and SHARDFALL_SRC (shardfall@fa2dab6) are absolute paths.
@@ -68,7 +68,8 @@ stopping. Record every escalation, every later conflict and every call.
    (node x src).
 3. Edit. The after-edit hook formats and lints the file: fix what it reports.
 4. npm run check (< 10 s once a new checkout's first run filled its caches) → npm test (< 60 s) → npm run e2e
-   (< 9 min; docs/TESTING.md says what to select, and labs/box/README.md which box specs and replays).
+   (< 9 min from 16 cores, about an hour on 4: tools/lib/tiers.ts `t2Budget`; docs/TESTING.md says what to select,
+   and labs/box/README.md which box specs and replays).
 5. Read out/**/report.json. Open images only when a metric points at one (use the visual-reviewer subagent).
 6. Show it in the box or a fixture test. Update the ledger row in PLAN.md §14 (in ultracode lanes, report it).
 7. Commit "<area>: <what> (WP-x.y)". Report the commit, the report paths and any escalations.
@@ -79,7 +80,8 @@ stopping. Record every escalation, every later conflict and every call.
 - Versions: only the pins in package.json, as tools/deps.json records them. Upgrades are their own work packages.
 - Never skip, disable or loosen a test to get green. Baselines change only with a written reason.
 - At each gate: push, open the stage's PR, look once at its Vercel status (fix a failed build first), squash-merge
-  it once x ci --local is green (the repository allows only squash merges, and GitHub then deletes the branch).
+  it once x ci --local and its `ci` check (the workflow) are green (the repository allows only squash merges, and
+  GitHub then deletes the branch).
   Start the next stage from the updated main (PLAN.md §11.1). None of this needs the owner's approval (ADR-0021).
 - Touch controls and the Vercel deployment have no tests, by the owner's order (ADR-0021): fix a failed Vercel
   build; fix anything else about them only when the owner reports it.

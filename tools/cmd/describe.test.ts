@@ -3,11 +3,20 @@
  * their calls (comments, strings, declarations, tests, `defineCodes`, `defineProperty` and `defineConfig` aside), a
  * module that fails to load is a warning, kinds declared in fixture modules are listed by a child process without
  * editing the command (a module's timers and side effects never reach the command; one that never finishes loading
- * is named), the three listings print and write `describe.json`, an entry is found as `kind:name` alone or by its
+ * is named), the three listings print and write `describe.json`, the engine's actions are listed (tools define them), an entry is found as `kind:name` alone or by its
  * name without the kind's prefix, a listing with a line cut short ends naming `describe.json`, and an unknown kind or
  * id is a usage error naming the closest.
  */
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -20,7 +29,7 @@ import {
   idsLine,
   loadRegistrations,
   registrationModules,
-  WORKER_TIMEOUT_MS,
+  type HangWatch,
 } from './describe';
 
 /** Imports the shared registry from a fixture module in a temporary directory. */
@@ -189,6 +198,15 @@ defineKind('testShort', { description: 'Short.', fields: { size: { type: 'number
     expect([short.code, short.lines.some((line) => line.includes('cut short'))]).toEqual([0, false]);
   });
 
+  it("lists the engine's actions, which tools define from data/anim/actions/ (the engine cannot import data/)", async () => {
+    const { code } = await run(ROOT, 'action');
+    expect(code).toBe(0);
+    const data = JSON.parse(readFileSync(join(ROOT, 'out/describe/action/describe.json'), 'utf8')) as { ids: string[] };
+    const files = readdirSync(join(ROOT, 'data/anim/actions')).filter((file) => file.endsWith('.json'));
+    expect(data.ids).toEqual(expect.arrayContaining(['action:backflip', 'action:charge', 'action:deathSpin']));
+    expect(data.ids).toHaveLength(files.length);
+  });
+
   it('describes a setting from the schema it was declared with', async () => {
     const root = repository({
       'engine/speed.ts': `import { defineSettings } from ${SETTINGS};
@@ -208,11 +226,11 @@ setInterval(() => {}, 1000);
 defineKind('testTicker', { description: 'Ticks.', fields: {} });
 `,
     });
-    const started = Date.now();
-    const { code, lines } = await run(root);
-    expect(code).toBe(0);
+    const never: HangWatch = () => ({ loading: () => undefined, done: () => undefined }); // only the child ends it
+    const { code, lines } = await runWith(async () => createDescribeCommand({ hang: never }), root);
+    const stopped = lines.some((line) => line.startsWith('DESCRIBE_HUNG'));
+    expect([code, stopped]).toEqual([0, false]); // it ended by itself, its interval timer running
     expect(lines).toContain('testTicker (0): Ticks.');
-    expect(Date.now() - started).toBeLessThan(WORKER_TIMEOUT_MS); // it ended by itself, not stopped as hung
     expect((globalThis as Record<string, unknown>).describeSideEffect).toBeUndefined();
   });
 
@@ -229,7 +247,12 @@ defineKind('testTicker', { description: 'Ticks.', fields: {} });
     const root = repository({
       'labs/stuck/main.ts': "setInterval(() => {}, 1000);\nawait new Promise(() => {});\ndef('x', 'y', {});\n",
     });
-    const { code, lines } = await runWith(async () => createDescribeCommand({ timeoutMs: 3000 }), root);
+    /** Stops the child as hung once it starts loading the stuck module: a count of messages, not a wait. */
+    const atStuck: HangWatch = (stop) => ({
+      loading: (file) => file === 'labs/stuck/main.ts' && stop(),
+      done: () => {},
+    });
+    const { code, lines } = await runWith(async () => createDescribeCommand({ timeoutMs: 3000, hang: atStuck }), root);
     expect(code).toBe(1);
     expect(lines[0]).toBe('x describe: FAIL: no listing: the child process did not finish');
     expect(lines[1]).toBe(

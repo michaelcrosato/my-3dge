@@ -18,7 +18,7 @@ import { inArc, inHitShape, knockbackVelocity, measureMove, moveAt, strikePart, 
 import { Animator } from './character';
 import { Humanoid } from './humanoid';
 import { hashPose, type Pose } from './pose';
-import { Attack, Combo } from './timeline';
+import { Attack, Combo } from './attack';
 
 /** One reference record (tools/cmd/port.ts `moveRecord`): a move in a phase on a build, 21 samples over u. */
 interface MoveRecord {

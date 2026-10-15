@@ -250,7 +250,8 @@ Core proposal accepted at integration. Calls made where PLAN.md §9 WP 5.5 and �
   (the GPU process; the page's own frame work is 0.6–2.2 ms). parity.spec.ts alone is 1,500–1,600 s of the sum with
   the fix (2,000–2,250 s without), over 6 minutes on 4 workers. T2 grew from 114 tests at G4 (5 min 38 s) and 122
   at G5 (6 min 28 s, over budget) to 146.
-- **Call:** T2's budget is 9 minutes (`TIERS.T2`, fails at 13 min 30 s): over it warns, as at G5; 6 minutes would fail
+- **Call:** T2's budget is 9 minutes (`TIERS.T2`, fails at 13 min 30 s; since ADR-0022 it only warns, and since its
+  amendment 2 the 9 minutes hold from 16 cores, an hour on 4): over it warns, as at G5; 6 minutes would fail
   every gate from here at this load. Rejected: drawing fewer frames or smaller ones in parity.spec.ts (the contract is
   a frame after every step), cheaper shadows (a look change to speed up tests), more Playwright workers (a shared
   setting; up to 6 lanes share the box's 20 cores). Box 6 (WP 7.8) adds its looks to parity.spec.ts: its gate
@@ -274,4 +275,46 @@ Core proposal accepted at integration. Calls made where PLAN.md §9 WP 5.5 and �
   Rejected: longer timeouts (they would hide a real slowdown), 2 workers on 4 cores (measured: 3 timeouts).
 - **Plan edit:** PLAN.md WP 0.2's `playwright.config.ts` item.
 - **Proved:** `x ci --local` green at caff36a in the cloud container, every step: T2 165/165 on 1 worker in
-  57 min 40 s (over its 9 min, a warning only), 0 timeouts.
+  57 min 40 s (over its 9 min, a warning only), 0 timeouts. That run became T2's budget on 4 cores (ADR-0022
+  amendment 2).
+
+## Amendment 16 (2026-10-14, after G9's cleanup): the 17 files over 400 lines split at their second concept
+
+- **Found:** 17 files over the 400-line warning (DOCTRINE.md 1; eslint.config.js's `max-lines`), none past the
+  600-line cap: `npm run lint` listed them since the WPs that grew them.
+- **Call:** each is split at its second concept, behaviour unchanged; each new file has its own file comment, and the
+  WP that owns the old file owns the new one:
+  - engine/anim: actions.ts → actions-data.ts (the kind `action`, its fields and `defineAction`/`loadActions`) and
+    actions-check.ts (`actionCheck`, which plays `Actions` and so cannot sit with the data without a cycle), WP 8.7;
+    secondary.ts → chain.ts (`Chain`, `Cape`, `CAPE`), WP 6.2; timeline.ts → attack.ts (`Attack`, `Combo`, their
+    codes), WP 6.1; check.ts → stateMatrix.ts (the state matrix, `hashRun`, `rateDrift`, `SHEET_CAMERAS`), WP 6.6.
+  - engine/app/engine.ts → drawing.ts (the page's frame, settle, warm-up and the rendering members' `Drawing`, over a
+    `PageParts` object the engine fills as it starts), WP 2.7; engine/physics/world.ts → binding.ts (`physicsOf`,
+    `bindPhysics`, `scenePhysics`, `attachPhysics`, `PHYSICS_NONE`), WP 3.1; engine/sim/world.ts → entityTable.ts
+    (the live entities in id order), WP 1.4; engine/sim/scene.ts → session.ts (`createSession` and its four codes),
+    WP 1.5; engine/gfx/post/chain.ts → settings.ts (`POST_CODES`, `POST_SETTINGS`, `definePostSettings`), WP 7.4.
+  - tools: qa/anim.ts → qa/anim/metrics.ts (the motion metrics and `ANIM_QA`), WP 6.6; cmd/perf.ts →
+    lib/perfBudget.ts (the budget files and the trend), cmd/sim.ts → lib/scenes.ts (scene lookup), WP 1.5;
+    lib/tiers.ts → lib/tierBudgets.ts (the budget checks), WP 0.5; cmd/port.ts → lib/portVectors.ts (the builders),
+    WP 0.11; cmd/ci.ts → lib/ciSummary.ts (`CI_OUT`, the summary and the result), WP 0.9.
+  - tests/e2e: parity.spec.ts → parity-stages.ts (`STAGES`: a box replay joins a stage there), WP 2.7; post.spec.ts →
+    post-box.spec.ts (the box drawing through the chain, its drawers' parts), WP 7.4.
+- **Unchanged:** the public API (engine/index.ts, engine/sim-api.ts and engine/anim/api.ts export the same names, now
+  from the new files), every code and its text, every test and replay golden in Node and Chromium.
+- **Plan edit:** the Owns of WPs 0.5, 0.9, 0.11, 1.4, 1.5, 2.7, 3.1, 6.1, 6.2, 6.6, 7.4 and 8.7; WP 7.4's Verify adds
+  post-box.spec.ts. labs/box/README.md, the stress-box skill, the scene template and docs/TESTING.md name
+  parity-stages.ts for `STAGES`.
+
+## Amendment 17 (2026-10-14, after G9's cleanup): files the cleanup added
+- **Split:** engine/anim/clip/retarget.ts (400 lines, and 5.3–5.4 add to it) → engine/anim/clip/rest.ts (the rest
+  body's skeleton, build and decode points: `restSkeleton`, `restBuild`, `restPoints`), WP 8.4. engine/anim/ik.ts's
+  `footPlant` moved to engine/anim/footPlant.ts with its layer (ADR-0009 amendment 8), WP 6.2. engine/gfx/idpass.ts (398
+  lines, and gate G2's per-instance ids add to it) → engine/gfx/idmarks.ts (`marksOf`, `drawMarks`, `Mark`: the marks
+  `x shot --marks` draws), WP 2.6.
+- **Added:** tests/replays/steps.replay.json (gate G2's note: the steps fixture's run with goldens), WP 3.2;
+  tests/replays/nav-1000.replay.json (findPath in Chromium), WP 4.3; tests/replays/physics-props-lift.replay.json (the
+  sink path on a vertical mover, the fixture's setting `props.lift`), WP 4.1. `LONG_RUNS` (tools/lib/tiers.ts) plays
+  every replay once more in Chromium's sim-only page at each gate, since T2's parity plays only the box's stages.
+- **Unchanged:** the names engine/anim/api.ts exported, now from the new files (it adds `FootPlant` and its options),
+  and every replay golden; the retargeter's own changes (the lift, the knee pole) are WP 8.4's and 8.6's rows.
+- **Plan edit:** the Owns of WPs 2.6, 3.2, 4.1, 4.3, 6.2 and 8.4.

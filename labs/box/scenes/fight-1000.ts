@@ -14,12 +14,15 @@
 import { defineScene } from '../../../engine/sim-api';
 import { fightStep, setupFight } from './fight';
 import type { FightComponents, FightEvents } from './fight-rules';
+import { boxSounds } from '../sounds/events';
+import { HALL_LEVEL } from './hall';
 
 /** The fight at 1,000. */
 export const fight1000 = defineScene<FightComponents, FightEvents>('box:fight-1000', {
   description:
     'Box 5: the hall, its hero with a sword, and a crowd of 1,000 walkers, slimes and wisps fighting him, three at a time.',
   level: 'level:hall',
+  sounds: boxSounds(HALL_LEVEL),
   physics: true,
   settings: { 'box.crowd.count': 1000 },
   setup(w) {

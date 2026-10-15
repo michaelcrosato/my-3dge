@@ -2,9 +2,10 @@
  * @file The sets' checks (PLAN.md §10.3 and §10.5 steps 4 and 5, WPs 8.3 and 8.10): `data/anim/sets/` holds ten
  * sets, each a directory of one `<Clip_Slug>.json` per clip, `_set.json` and a generated `catalog.tsv` (repack.ts):
  * - my-3d2dge's two curated sets left after WP 8.10, `mesh2motion` and `cmu` (HERO dropped). Rejoined, each is the
- *   source's object, apart from the `alt` tag on each of Mesh2Motion's 84 Quaternius re-exports, and the license in
- *   each of `cmu`'s 25 source records: CMU's terms, as the CMU catalog states them (WP 8.5; my-3d2dge's said "free for
- *   all uses"), which `x anim import --cmu --legacy` writes;
+ *   source's object, apart from the `alt` tag on each of Mesh2Motion's 84 Quaternius re-exports, and in `cmu` the
+ *   license in each of its 25 source records (CMU's terms, as the CMU catalog states them: WP 8.5) and the set's credit
+ *   (repack.ts `CMU_CREDIT`, after G9), where my-3d2dge's said "free for all uses", which `x anim import --cmu --legacy`
+ *   writes;
  * - shardfall's eight (tools/anim/shardfall.ts): 100STYLE's seven `style100*` sets and Quaternius v2's `quaternius`,
  *   which replaced v1's. Rejoined, each is shardfall's file, apart from its `body`, the `via` marks and, in
  *   `quaternius`, `Punch_Enter`, kept from v1 (its clip and its `fit` entry).
@@ -31,6 +32,7 @@ import {
   CATALOG_FILE,
   catalogTsv,
   clipSlug,
+  CMU_CREDIT,
   joinSet,
   legacySetFiles,
   readSet,
@@ -127,6 +129,9 @@ function withoutAltTags(set: ClipSet): ClipSet {
 
 /** my-3d2dge's license in the CMU set's source records, which CMU's terms replaced (WP 8.5). */
 const LEGACY_CMU_LICENSE = 'free for all uses (may be copied, modified, or redistributed without permission)';
+/** my-3d2dge's credit for the CMU set, which `CMU_CREDIT` replaced (after G9): the terms forbid resale. */
+const LEGACY_CMU_CREDIT =
+  'CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu), free for all uses; created with funding from NSF EIA-0196217.';
 
 /** CMU's terms, as the CMU catalog states them (`"$sources".CMU.license`): what each CMU source record says. */
 const CMU_LICENSE = readCatalogs()['cmu.json']?.$sources.CMU?.license;
@@ -140,7 +145,11 @@ function withLegacyLicense(set: ClipSet): ClipSet {
     id,
     s.license === CMU_LICENSE ? { ...s, license: LEGACY_CMU_LICENSE } : s,
   ]);
-  return { ...set, sources: Object.fromEntries(sources) };
+  return {
+    ...set,
+    ...(set.credit === CMU_CREDIT && { credit: LEGACY_CMU_CREDIT }),
+    sources: Object.fromEntries(sources),
+  };
 }
 
 /** The set as shardfall wrote it: its `body`, each clip's `via`, and the clips kept from v1 and their fit taken off. */

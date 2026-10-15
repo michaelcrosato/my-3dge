@@ -1,0 +1,83 @@
+# .github/workflows/ci.yml: the merge gate on GitHub Actions (PLAN.md §8.9, WP 0.9; ESC-0001, answered 2026-10-14).
+# It runs the same `node x ci --local` as the development platform (tools/cmd/ci.ts, `CI_STEPS`): npm ci, x src, T0,
+# T1, x port refs --check, x new --test-all and T2, in full on a fresh runner (no out/ci/t2-full.json yet).
+#
+# The platform, as scripts/setup.sh builds it: both read-only sources at their pinned commits in .cache/src-*, fetched
+# with the job's read-only token and no secret (both repositories are public; LFS off), Node from .nvmrc, and Chrome for
+# Testing at tools/deps.json's Chromium (setup.sh downloads it; Playwright installs its system libraries).
+# tools/cmd/ci-workflow.test.ts keeps this file equal to them: the command, the commits, .nvmrc and the Chromium
+# release. The summary goes to the step summary, for people, and to the job's log, for agents: GitHub's API serves logs
+# but not step summaries.
+#
+# The actions follow PLAN.md §6.10's version rule (the newest release compatible with the newest one at least 12 months
+# old, on 2026-10-14): actions/checkout v5 (v5.0.0, 2025-08-11), actions/setup-node v6 (v6.0.0, 2025-10-14) and
+# actions/upload-artifact v4 (v4.6.2, 2025-03-19). Newer majors wait for their dates (rule 3 would take them at once
+# only if they work the same way, which no run here shows): upload-artifact v5 on 2026-10-24, checkout v6 on 2026-11-20.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ci:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      CHROMIUM: 141.0.7390.37
+    steps:
+      - name: Check out my-3dge
+        uses: actions/checkout@v5
+
+      - name: Check out my-3d2dge (read-only source)
+        uses: actions/checkout@v5
+        with:
+          repository: michaelcrosato/my-3d2dge
+          ref: e37e4eedcd23326f3734188b9574a4aa635fcbd3
+          path: .cache/src-3d2dge
+          lfs: false
+          persist-credentials: false
+
+      - name: Check out shardfall (read-only source)
+        uses: actions/checkout@v5
+        with:
+          repository: michaelcrosato/shardfall
+          ref: fa2dab6cdf97092f8866c6aa6a3faa5f7cd1246a
+          path: .cache/src-shardfall
+          lfs: false
+          persist-credentials: false
+
+      - name: Node from .nvmrc
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: The platform (scripts/setup.sh) and Chromium's system libraries
+        run: |
+          bash scripts/setup.sh
+          npx playwright install-deps chromium
+          "$HOME/.cache/my3dge/chrome-$CHROMIUM/chrome-linux64/chrome" --version | grep -F "$CHROMIUM"
+
+      - name: x ci --local
+        run: node x ci --local
+
+      - name: Summary
+        if: always()
+        run: if [ -f out/ci/summary.md ]; then tee -a "$GITHUB_STEP_SUMMARY" < out/ci/summary.md; fi
+
+      - name: Upload out/
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: out
+          path: out/**
+          if-no-files-found: warn

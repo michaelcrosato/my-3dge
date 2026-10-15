@@ -10,7 +10,8 @@ import { describe, expect, it } from 'vitest';
 import { createLog } from '../core/log';
 import { createRegistry } from '../core/registry';
 import { playReplay } from './replay';
-import { createSession, defineScene } from './scene';
+import { defineScene } from './scene';
+import { createSession } from './session';
 import { defineComponent } from './state';
 import { createWorld } from './world';
 

@@ -27,14 +27,14 @@ that runs, is measured and is proved. The game that will run on the engine lives
 ## How to start
 
 ```sh
-bash scripts/setup.sh           # Node 24.21.0 if missing (SHA-256 checked), the read-only sources, then npm ci
+bash scripts/setup.sh           # Node 24.22.0 if missing (SHA-256 checked), the read-only sources, then npm ci
 npm run typecheck               # tsc -b over tsconfig.check.json's projects (incremental), on the pinned types
 npm test                        # vitest run
 node x ci --local               # the merge gate: every tier, summary in out/ci/summary.md
 ```
 
 `scripts/setup.sh` is idempotent and prints the `export` lines for `PATH`, `MY3D2DGE_SRC` and `SHARDFALL_SRC` (it
-appends them to `$CLAUDE_ENV_FILE` in Claude Code). The development platform is Linux x64 with Node 24.21.0 and
+appends them to `$CLAUDE_ENV_FILE` in Claude Code). The development platform is Linux x64 with Node 24.22.0 and
 Chromium 141 (WebGPU on SwiftShader). The rest of the toolchain is `npm run check` (types, lint, format and the
 repository checks), `npm run e2e` (the browser suites) and the `node x` command line (`node x help`).
 

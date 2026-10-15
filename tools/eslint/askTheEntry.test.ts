@@ -1,6 +1,6 @@
 /**
  * @file Proves the local rule "ask the entry, never the id" (tools/eslint/askTheEntry.ts, PLAN.md §6.6) with failing
- * and passing fixtures linted from a temporary directory, switched on (as WP 1.2 will) and off (as it is until then).
+ * and passing fixtures linted from a temporary directory, switched on (as it is since WP 1.2) and off (its switch false).
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { ALL_ON, caseProblems, lintCases, type Case, type CaseResult } from './testing';
@@ -100,7 +100,7 @@ describe('ask the entry, never the id: switched on', () => {
   });
 });
 
-describe('ask the entry, never the id: switched off (until WP 1.2)', () => {
+describe('ask the entry, never the id: switched off (askTheEntry: false)', () => {
   it('reports nothing', () => {
     expect(off.flatMap((result) => result.bad.filter((item) => item.ruleId === RULE))).toEqual([]);
   });

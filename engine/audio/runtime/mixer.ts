@@ -20,7 +20,7 @@
  * master, sfx and music buses and their levels, the 0.35 duck; `ui`, `ambience`, timed ducks and the reverb added.
  *
  * @example
- * // browser: Web Audio's nodes exist only in a page (tests/e2e/audio.spec.ts renders the mix)
+ * // browser: Web Audio's nodes exist only in a page (tests/e2e/examples.spec.ts; tests/e2e/audio.spec.ts mixes)
  * const mixer = createMixer(new OfflineAudioContext(2, 44100, 44100));
  * mixer.volume('music', 0.8);
  * mixer.duck(0.5); // music and ambience at 0.35 for half a second

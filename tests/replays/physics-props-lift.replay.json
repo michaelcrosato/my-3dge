@@ -1,0 +1,28 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "The physics-props fixture with props.lift on (WP 4.1): the hero stands on the platform as it rides 2 m up and back down every 8 s, waiting 1 s at each end; he goes down with it through the controller's sink path, his feet on its top all the way, in Node and in Chromium.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "physics-props",
+  "settings": { "props.lift": true },
+  "seed": 1,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [],
+  "hashes": {
+    "linux-x64": {
+      "0": "134c01556f9392f4",
+      "60": "47ffb8d520d02e79",
+      "120": "f8bb3b3e957386f6",
+      "180": "87cfbe3fff848ae2",
+      "240": "9cd9a9a723d626ef",
+      "300": "410a45168189bcde",
+      "360": "6293b7eb13c7197d",
+      "420": "6a8d25799327b8db",
+      "480": "56b37f1448668569",
+      "540": "07a7fcee32d09383",
+      "600": "f6fe439cc88dd8d2"
+    }
+  }
+}

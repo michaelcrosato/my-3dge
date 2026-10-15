@@ -29,7 +29,7 @@ import { walk } from '../lib/docs';
 import { UsageError, type Command, type CommandResult } from '../x';
 import { callSession, findSession, reloadLines } from './inspect';
 import { pageUrl } from './shot';
-import { resolveSceneModule, sceneModules } from './sim';
+import { resolveSceneModule, sceneModules } from '../lib/scenes';
 
 /** The module of `scene`: a module path, a scene id, or the name after an id's colon (`room` for `box:room`). */
 export function sceneModuleOf(root: string, scene: string): string {

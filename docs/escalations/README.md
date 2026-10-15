@@ -7,13 +7,11 @@ Every escalation, every later conflict and every call made without the owner's a
 PLAN.md §8.14), one record per file, written by `node x esc`. `node x esc list --open` lists what still needs
 review; the owner closes a record with `node x esc close ESC-NNNN`, keeping or reversing its call.
 
-## Calls awaiting the owner's review (1)
+## Calls awaiting the owner's review (0)
 
 Made without an answer after the deadline: keep or reverse each, then `node x esc close ESC-NNNN`.
 
-| Record                                                                   | Principle  | Raised               | Question                                                                                                                                     | Call                                                                                                                                                                                                                                      | Commit  |
-| ------------------------------------------------------------------------ | ---------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| [ESC-0001](ESC-0001-enable-github-actions-for-michaelcrosato-my-3dge.md) | Escalation | 2026-10-10T08:59:31Z | Enable GitHub Actions for michaelcrosato/my-3dge and grant the agent token the workflow scope, so WP 0.9 can write .github/workflows/ci.yml? | No answer in 15 minutes: Actions stays off, nothing is written under .github/workflows/, and node x ci --local remains the merge gate; the workflow and its unit test follow once the owner enables Actions and grants the workflow scope | a8970b0 |
+None.
 
 ## Open (0)
 
@@ -27,8 +25,10 @@ The owner answered: the agent acts on it, then closes the record.
 
 None.
 
-## Closed (0)
+## Closed (1)
 
 Reviewed and settled.
 
-None.
+| Record                                                                   | Principle  | Raised               | Question                                                                                                                                     | Outcome                                                                                                                                                                                                                  | Follow-up                                                                                            |
+| ------------------------------------------------------------------------ | ---------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| [ESC-0001](ESC-0001-enable-github-actions-for-michaelcrosato-my-3dge.md) | Escalation | 2026-10-10T08:59:31Z | Enable GitHub Actions for michaelcrosato/my-3dge and grant the agent token the workflow scope, so WP 0.9 can write .github/workflows/ci.yml? | Yes, recorded from owner decision 1 of CLEANUP.md (2026-10-14), which the owner's goal for this run says to follow: Actions is on and the repository is public; write .github/workflows/ci.yml running node x ci --local | Optional, the owner's: branch protection that makes the workflow's ci check required (PLAN.md §11.5) |

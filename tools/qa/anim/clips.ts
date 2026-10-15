@@ -15,7 +15,7 @@
  *
  * As played (`CLIP_PLAY_METRICS`): the clip layer (engine/anim/clip/layer.ts) plays the clip at once, with no fade
  * and no rest before or after, in an animator of each build of `HUMANOIDS` and of the mannequin (`build:mannequin`,
- * the Quaternius set's rest body), through the state matrix (engine/anim/check.ts) at one facing (a clip plays in the
+ * the Quaternius set's rest body), through the state matrix (engine/anim/stateMatrix.ts) at one facing (a clip plays in the
  * body's frame, so a turn changes no number): a one-shot to its end, holding it; a loop a quarter second past its seam.
  * Then `animCheckBody`'s checks (`nan`, `stretch`, `underFloor`, `reach`; on the first build, the run again
  * (`unstableHash`) and at half the step (`rateDrift`)), and `pop`, `jointLimit` and `twistJump` as the family
@@ -35,8 +35,9 @@ import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { getBuild } from '../../../engine/anim/builds';
 import { Animator } from '../../../engine/anim/character';
-import { animCheckBody, RUN_POINTS, runPoints, STATE_MATRIX, type AnimCheckName } from '../../../engine/anim/check';
-import type { MatrixState } from '../../../engine/anim/check';
+import { animCheckBody, type AnimCheckName } from '../../../engine/anim/check';
+import { RUN_POINTS, runPoints, STATE_MATRIX } from '../../../engine/anim/stateMatrix';
+import type { MatrixState } from '../../../engine/anim/stateMatrix';
 import { ClipLayer } from '../../../engine/anim/clip/layer';
 import { ANGLE_ENTRIES, foldAngle } from '../../../engine/anim/clip/lens';
 import { loadClipLibrary, type ClipLibrary } from '../../../engine/anim/clip/library';
@@ -45,7 +46,8 @@ import { poseError, validateClip, type ClipCode, type ClipSet } from '../../../e
 import { defineMannequin } from '../../../engine/gfx/puppets/bodies/mannequin';
 import { readSet } from '../../anim/repack';
 import type { QaViolation } from '../../cmd/qa';
-import { ANIM_QA, HUMANOIDS, limbs, motionTrack, pops, type Found } from '../anim';
+import { HUMANOIDS } from '../anim';
+import { ANIM_QA, limbs, motionTrack, pops, type Found } from './metrics';
 
 /** The limits: a clip's fit (mean and worst) and a set's mean fit, mm; the seconds a loop plays past its seam. */
 export const CLIP_QA = { fit: { mean: 40, worst: 300, set: 20 }, seam: 0.25 } as const;

@@ -2,7 +2,7 @@
   "set": "CMU",
   "title": "CMU",
   "format": 1,
-  "credit": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu), free for all uses; created with funding from NSF EIA-0196217.",
+  "credit": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu), under CMU's terms: free to use and redistribute, never to resell as data. \"The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217.\"",
   "fps": 30,
   "sources": {
     "CMU_02": {

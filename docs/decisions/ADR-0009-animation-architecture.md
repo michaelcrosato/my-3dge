@@ -124,3 +124,25 @@ Differential tests against the ported reference vectors (WP 0.11); the animation
   subjects (`actionStates()`), with 38 entries in tests/baselines/qa-anim.json, each with its reason; it also owns
   tools/templates/action/ (PLAN.md WP 8.7 edited).
 - Evidence: `engine/anim/actions.test.ts`, `tools/qa/anim.test.ts`, `node x qa anim --only action:`.
+
+## Amendment 8 (2026-10-14, WP-6.2, after G9): the foot plant, built
+- **What it is.** `footPlant` moves from engine/anim/ik.ts to engine/anim/footPlant.ts (ik.ts was at 400 lines) and
+  takes `floor`: a sole's lift is measured from it, not from `pose.rootPos.y`, which a crouch or a kneel lowers. It
+  keeps the heel and the toe tip, turned with the foot, on or above the ground. The `FootPlant` layer runs it last in
+  the `post` slot (a layer marked `last` stays at the end of its slot, `Animator.use`), on a flat floor at the body's
+  height, closing amendment 4's empty slot.
+- **Where it runs.** The view's puppets (engine/gfx/puppets/actors.ts; faded out as an actor's clips show, since a
+  clip plants its own feet by contact IK) and the anim QA's humanoids (tools/qa/anim.ts).
+  The sim's precise-hit posing (engine/sim/actors.ts) does not: the trail it hashes stays the animation's own, the
+  plant stays presentation (LOD 1 already drops the `post` slot), and no replay golden changes.
+- **No stance locks.** Locks in stance (the function's `state`) fixed 30 of the QA's foot slides but broke 75 other
+  entries: feet held where an action left them (35 loops no longer closed at rest), drift with the step (19), knees
+  flipped and popping in deaths and flips (16). A lock needs a rule for stepping out of it; it waits for a measured
+  need, and the 57 footSlide entries say so. Fading the plant as the pelvis tips over (rolls, falls) cost more floor
+  fixes than it saved, so the layer is plain: it keeps no state and gives the same pose at any step.
+- **What it settled.** Amendment 3's floor sinks (kneel, crouch, dash, guard, on every build) are 0 through an
+  animator with the layer; 29 of the 30 underFloor entries of tests/baselines/qa-anim.json went stale and were
+  removed, 14 entries tightened. Three moved, each with its reason: action:roll's footSlide (0.2418 → 0.5843: the soles
+  now stand on the floor through the dip and the rise, inside the slide check), reaction:fallFront's underFloor
+  (+0.1 mm) and a new rateDrift for action:techRoll (0.039 m at one frame as it rolls up from lying).
+- Evidence: `engine/anim/footPlant.test.ts`, `engine/anim/authoring.test.ts`, `node x qa anim`.

@@ -24,7 +24,7 @@ import '../../labs/box/scenes/room';
 import type { IdEntry } from '../../engine/gfx/idpass';
 import type { ShotJson } from '../../engine/gfx/shot';
 import { compareThumbnails, type Thumbnail } from '../../engine/gfx/thumbnail';
-import { createSession } from '../../engine/sim/scene';
+import { createSession } from '../../engine/sim/session';
 import { expect, test, type Frame, type Harness } from './fixtures';
 
 /** What the page publishes as `window.__materialsPage` (tests/pages/materials-v2.ts), as far as this suite uses it. */

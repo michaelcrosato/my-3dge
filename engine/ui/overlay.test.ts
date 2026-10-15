@@ -15,7 +15,7 @@ import { asDom, fakePage, type FakeElement } from '../../tests/unit/ui/fakeDom';
 import { createRunView } from '../app/view';
 import { registry } from '../core/registry';
 import { createMaterialLibrary } from '../gfx/materials/library';
-import { createSession } from '../sim/scene';
+import { createSession } from '../sim/session';
 import { defineLevel } from '../world/level/level';
 import { DAMAGE_NUMBERS } from './labels';
 import { createOverlay } from './overlay';

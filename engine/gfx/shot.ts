@@ -29,16 +29,8 @@
  */
 import { RenderTarget, Vector2, type PerspectiveCamera, type WebGPURenderer } from 'three/webgpu';
 import { codeError, defineCodes } from '../core/log';
-import {
-  decodeIds,
-  drawMarks,
-  listDrawables,
-  marksOf,
-  withIdScene,
-  type IdPass,
-  type IdTable,
-  type Mark,
-} from './idpass';
+import { drawMarks, marksOf, type Mark } from './idmarks';
+import { decodeIds, listDrawables, withIdScene, type IdPass, type IdTable } from './idpass';
 import { judgeLook, lookMetrics, type LookMetrics, type LookNote } from './lookMetrics';
 import { advanceFrame, type PipelineCounter } from './pipelines';
 import { thumbnail, type Thumbnail } from './thumbnail';

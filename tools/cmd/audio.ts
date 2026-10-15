@@ -13,9 +13,10 @@
  * orange to pale yellow (0 dBFS). Files go in `out/audio/<id>/`, beside the report.
  *
  * `--replay` plays a replay (engine/sim/replay.ts) in Node, step by step, against its goldens, and reads its sound
- * events: the sim events whose payload names an `sfx` entry, `{ sfx, vol?, variant? }` (the event keeps its own type
- * and fields; `vol` is a gain, 1 by default; without `variant` an effect plays its variants in turn). An event
- * delivered at step k plays at k / hz seconds. It mixes them offline into one mono mix, unspatialized (every source at
+ * events: the sound its scene's `sounds` gives each traced sim event, `{ sfx, vol?, variant? }` (engine/sim/scene.ts:
+ * by default the event payload's own `sfx`; the box maps its events as its page does, labs/box/sounds/events.ts). `vol`
+ * is a gain, 1 by default; without `variant` an effect plays its variants in turn. The events are read after setup
+ * and after each step, as the page reads them, so an event read at step k plays at k / hz seconds. It mixes them offline into one mono mix, unspatialized (every source at
  * the listener: the loudest the mix can be), and fails when the mix clips, naming the sounds playing at its peak, when
  * an event names no sfx entry, or when the run parts from its goldens. After shardfall's offline audio capture
  * (`crates/pav_tools/src/tools.rs:1270-1309`, §5.8).
@@ -27,6 +28,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { createPlayback } from '../../engine/app/playback';
 import { getSfx, renderSfx, sfxKind } from '../../engine/audio/data/sfx';
 import { renderSong } from '../../engine/audio/data/song';
 import { DEFAULT_RATE, soundHash } from '../../engine/audio/dsp/render';
@@ -34,15 +36,15 @@ import type { TraceRecord } from '../../engine/core/events';
 import { hashValue, type Canonical } from '../../engine/core/hash';
 import { EngineError } from '../../engine/core/log';
 import { registry as sharedRegistry, type Registry } from '../../engine/core/registry';
-import { isPlainObject, show } from '../../engine/core/schema';
-import { applyIntents, NO_INTENTS, type IntentChanges } from '../../engine/input/intents';
+import { show } from '../../engine/core/schema';
 import { checkpointsOf, checkReplay, judgeRuns, playReplay, type Replay } from '../../engine/sim/replay';
+import { getScene, type Scene } from '../../engine/sim/scene';
 import type { World } from '../../engine/sim/world';
 import { targetSlug, type Artifact, type Finding } from '../lib/report';
 import { dbfs, frameSpectrum, loadSoundModules, soundMetrics, soundProblems, type SoundMetrics } from '../qa/audio';
 import { compareWithBaselines, readBaselines } from './qa';
-import { resolveSceneModule, wholeFlag } from './sim';
-import { closest, UsageError, type Command, type CommandResult } from '../x';
+import { resolveSceneModule } from '../lib/scenes';
+import { closest, UsageError, wholeFlag, type Command, type CommandResult } from '../x';
 
 /** A command's flag values. */
 type Values = Record<string, unknown>;
@@ -135,13 +137,19 @@ export function spectrogram(samples: ArrayLike<number>, rate: number): Picture {
 }
 
 /**
- * The sound event a traced sim event makes when its payload names an `sfx`, its variant the one given or the effect's
- * next in turn (`turns`); or the problem with it.
+ * The sound event a traced sim event makes when its scene's `sounds` gives it one (by default its payload's sfx, engine/
+ * sim/scene.ts), its variant the one given or the effect's next in turn (`turns`); or the problem with it.
  */
-function soundEventOf(record: TraceRecord, world: World, registry: Registry, turns: Map<string, number>) {
-  const payload = record.payload;
-  if (!isPlainObject(payload) || payload.sfx === undefined) return undefined;
-  const { sfx, vol = 1, variant } = payload;
+function soundEventOf(
+  record: TraceRecord,
+  world: World,
+  scene: Scene,
+  registry: Registry,
+  turns: Map<string, number>,
+): SoundEvent | string | undefined {
+  const made = scene.sounds(record, world) as { sfx: unknown; vol?: unknown; variant?: unknown } | null;
+  if (!made) return undefined;
+  const { sfx, vol = 1, variant } = made;
   const where = `step ${world.tick}, event ${record.type}`;
   if (typeof sfx !== 'string' || !registry.has('sfx', sfx)) {
     const near = closest(
@@ -159,17 +167,19 @@ function soundEventOf(record: TraceRecord, world: World, registry: Registry, tur
   const turn = turns.get(sfx) ?? 0;
   turns.set(sfx, turn + 1);
   const chosen = (variant as number | undefined) ?? turn % variants;
-  return { step: world.tick, time: world.tick / world.hz, type: record.type, sfx, vol, variant: chosen } as SoundEvent;
+  return { step: world.tick, time: world.tick / world.hz, type: record.type, sfx, vol, variant: chosen };
 }
 
 /**
- * Plays `replay` (its scene defined on `registry`) step by step, as `playReplay` does, hashing its checkpoints, and
- * reads the sound events from the sim's event trace after setup, each change-point and each step.
+ * Plays `replay` (its scene defined on `registry`) step by step through `createPlayback` (engine/app/playback.ts, the
+ * page's real-time playback), hashing its checkpoints, and reads the sound events from the sim's event trace after
+ * setup and after each step, as the box's page does (labs/box/sounds/events.ts).
  */
 export function replaySoundEvents(replay: Replay, registry: Registry = sharedRegistry): SoundTimeline {
   sfxKind(registry);
-  const { session } = playReplay(replay, { registry, until: 0, checkpoints: [] });
-  const world = session.world;
+  const playback = createPlayback(replay);
+  const { session } = playReplay(replay, { registry, until: 0, checkpoints: [] }); // its checks, its setup
+  const [world, scene] = [session.world, getScene(replay.scene, registry)];
   const marks = new Set(checkpointsOf(replay));
   const hashes: Record<string, string> = {};
   const problems: string[] = [];
@@ -182,27 +192,17 @@ export function replaySoundEvents(replay: Replay, registry: Registry = sharedReg
       problems.push(`step ${world.tick}: ${trace[0].seq - seen - 1} events left the trace (256) before they were read`);
     }
     for (const record of trace.filter((item) => item.seq > seen)) {
-      const event = soundEventOf(record, world, registry, turns);
+      const event = soundEventOf(record, world, scene, registry, turns);
       if (typeof event === 'string') problems.push(event);
       else if (event) events.push(event);
     }
     seen = trace.at(-1)?.seq ?? seen;
   };
   read();
-  let [at, intents] = [0, NO_INTENTS];
-  for (let k = 0; k <= replay.steps; k++) {
-    if (marks.has(k)) hashes[k] = world.hash();
-    if (k === replay.steps) break;
-    let change: IntentChanges = {};
-    for (; at < replay.inputs.length && replay.inputs[at][0] === k; at++) {
-      const { set, dev, args, ...keys } = replay.inputs[at][1];
-      for (const [path, setting] of Object.entries(set ?? {})) session.set(path, setting);
-      if (dev !== undefined) session.act(dev, args);
-      change = { ...change, ...keys };
-    }
-    read();
-    intents = applyIntents(intents, change, `the replay's inputs at step ${k}`);
-    session.step(intents);
+  for (;;) {
+    if (marks.has(world.tick)) hashes[world.tick] = world.hash();
+    if (playback.done) break;
+    playback.step(session);
     read();
   }
   return { events, problems, hashes, seconds: replay.steps / world.hz };

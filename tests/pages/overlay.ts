@@ -29,7 +29,7 @@ import { registry } from '../../engine/core/registry';
 import { createMaterialLibrary } from '../../engine/gfx/materials/library';
 import { createRenderer, type Gfx, type GfxError } from '../../engine/gfx/renderer';
 import type { Replay } from '../../engine/sim/replay';
-import { createSession } from '../../engine/sim/scene';
+import { createSession } from '../../engine/sim/session';
 import { createOverlay } from '../../engine/ui/overlay';
 import { defineLevel } from '../../engine/world/level/level';
 

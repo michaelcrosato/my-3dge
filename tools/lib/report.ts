@@ -51,7 +51,7 @@ export interface Report {
   ms: number;
   /** The verdict: true exactly when the command exits 0. */
   ok: boolean;
-  /** Where it ran, from `runtime()`: `linux-x64 node24.21.0`, plus the browser when one was used. */
+  /** Where it ran, from `runtime()`: `linux-x64 node24.22.0`, plus the browser when one was used. */
   runtime: string;
   /** What failed; empty when `ok`. */
   failures: Finding[];
@@ -78,7 +78,7 @@ const REPORT_KEYS: readonly (keyof Report)[] = [
 const FINDING_KEYS = ['id', 'message', 'file', 'line', 'entity'];
 const ARTIFACT_KEYS = ['path', 'kind', 'describes'];
 
-/** Names the platform: `linux-x64 node24.21.0`, followed by `browser` (such as `chromium141`) when one was used. */
+/** Names the platform: `linux-x64 node24.22.0`, followed by `browser` (such as `chromium141`) when one was used. */
 export function runtime(browser?: string): string {
   const base = `${process.platform}-${process.arch} node${process.versions.node}`;
   return browser ? `${base} ${browser}` : base;

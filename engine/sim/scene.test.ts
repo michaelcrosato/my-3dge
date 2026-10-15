@@ -17,8 +17,9 @@ import { createRegistry } from '../core/registry';
 import { defineSettings } from '../core/settings';
 import { inSimMath } from '../core/simMath';
 import { checkReplay, playReplay, type Replay } from './replay';
-import { checkSeed, createSession, defineScene, getScene, isScene, startScene } from './scene';
-import { physicsOf } from '../physics/world';
+import { checkSeed, defineScene, getScene, isScene, startScene } from './scene';
+import { createSession } from './session';
+import { physicsOf } from '../physics/binding';
 import { defineComponent } from './state';
 
 /** The message of the EngineError `fn` throws, after its code. */

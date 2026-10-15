@@ -92,3 +92,20 @@ The library's tests and QA (WP 8.6); the asset scan in `x check`.
   loads it for `?replay=` a clip-mode replay too. `tests/replays/box-8-clips.replay.json` (a clip change, frame stepping,
   the hero walking under a one-shot masked to his upper body) gives one set of goldens in Node, the sim page and the
   rendering page; it is a `STAGES` entry of tests/e2e/parity.spec.ts. Cost: about 0.5 s more per Node host run.
+
+## Amendment 6 (2026-10-14, after G9, WPs 8.4 and 8.6): the lift and the knee, retargeted
+- **The lift follows the source.** `retargetPose` raises a pose only as far as it sinks below its source's own lowest
+  point, scaled by the hip-height ratio (engine/anim/clip/retarget.ts), where it raised every pose to stand on the
+  floor: a swim or a clip rising out of the ground keeps its depth instead of hovering (Quaternius' Swim_Idle_Loop
+  stood 1,813 mm up on the mannequin). Feet the source stands on stay put, except where a hand or the head would sink
+  through the floor on the build's proportions: the pose then rises by just that much (15 clips, retarget.test.ts).
+- **The knee follows the source.** Contact IK passes the source's knee, seen from the middle of its hip and ankle, as
+  the pole once it stands 2 cm off that line (`KNEE_POLE`), where it took the thigh frame's default and swung the
+  knee through at deep folds.
+- **Call, with the baselines' reasons:** Zombie_Rise, which rises with its hips under the floor by design, keeps its
+  pop (0.7215 → 0.7119), gains a twistJump (build:skeleton's thigh rolls 2.81 rad at frame 106, as the source's knee
+  crosses its hip–ankle line) and an underFloor of 4.9 cm (it now keeps its source's depth); Swim_Fwd_Loop gains an
+  underFloor of 8 mm for 2 frames. Both are the clips' own motion followed more closely, so they are accepted in
+  tests/baselines/qa-anim-library.json rather than special-cased: a fold limit for the pole would trade one clip's
+  flip for every deep get-up's swing.
+- Evidence: `engine/anim/clip/retarget.test.ts`, `engine/gfx/puppets/bodies/mannequin.test.ts`, `node x qa anim`.

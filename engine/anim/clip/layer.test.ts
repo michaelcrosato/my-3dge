@@ -18,7 +18,8 @@ import { setOf } from '../../../tests/unit/anim/clip-parity';
 import { CLIP_LAYER, ClipLayer, type ClipLayerEvent, type ClipStepInput } from './layer';
 import { clipPace, GROUND_SPEED, loadClipLibrary } from './library';
 import type { ClipKey } from './readable';
-import { hipRatio, restSkeleton, retargetPose } from './retarget';
+import { restSkeleton } from './rest';
+import { hipRatio, retargetPose } from './retarget';
 
 const raise = (t: number, up: number): ClipKey => ({ ...standing(t), armR: [20, 40, up, 10, 0] });
 const reach = (t: number): ClipKey => ({ ...standing(t), armL: [100, -20, 0, 10, 0], armR: [100, 20, 0, 10, 0] });

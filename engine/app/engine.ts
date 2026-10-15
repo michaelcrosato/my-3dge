@@ -16,9 +16,8 @@
  * an error record too.
  *
  * Every frame drawn is timed by the run's stats meter, which reads the renderer's counts (`__engine.stats()`,
- * engine/dev/stats.ts). The rendering members (engine/app/viewMembers.ts) get their drawing here: `render(n)` draws
- * frames now, `shot` shoots the view (engine/gfx/shot.ts), and `replay(text)` plays a replay drawing a frame after
- * every step (the CPU-only contract's proof, §6.7: `x replay --browser page`, tests/e2e/parity.spec.ts).
+ * engine/dev/stats.ts). The rendering members (engine/app/viewMembers.ts) draw through the page's drawing
+ * (engine/app/drawing.ts: `render(n)`, `shot`, and `replay(text)` drawing a frame after every step, §6.7).
  * `?replay=<name>` plays one of `options.replays` in real time from step 0 (without `?scene`, in its own scene if the
  * page has it), then hands back to the devices. The overlay (engine/ui/overlay.ts, `engine.ui`, WP 6.7) shows the
  * sim's hits as damage numbers (engine/app/damageNumbers.ts); `onFrame` runs a page's own presentation (`EngineFrame`).
@@ -49,35 +48,34 @@ import {
   type Log,
 } from '../core/log';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
-import type { Settings, SettingValue } from '../core/settings';
+import type { Settings } from '../core/settings';
 import { createOverlay } from '../dev/overlay';
 import { createMaterialLibrary } from '../gfx/materials/library';
 import { createStyleSet } from '../gfx/materials/styles';
 import { qualityBudget, type QualitySetting } from '../gfx/quality';
-import { keepWidth } from '../gfx/resolution';
-import { createPost, definePostSettings, type Post } from '../gfx/post/chain';
-import { createRenderer, type FrameReport, type FrameView, type Gfx } from '../gfx/renderer';
-import { shot, shotForJson } from '../gfx/shot';
+import { createPost } from '../gfx/post/chain';
+import { definePostSettings } from '../gfx/post/settings';
+import { createRenderer } from '../gfx/renderer';
 import { connectVirtualDevice } from '../input/devices/inspector';
-import { createInput, type Input } from '../input/input';
+import { createInput } from '../input/input';
 import type { TouchSetting } from '../input/devices/touch';
 import { createChrome } from '../ui/chrome';
 import { attachSwipes } from '../ui/swipe';
-import { createTouchLayer, getTouchLayout, type TouchLayer, type TouchLayout } from '../ui/touch';
+import { createTouchLayer, getTouchLayout, type TouchLayout } from '../ui/touch';
 import type { Inspector } from '../dev/inspector';
 import { createOverlay as createUi, type Overlay } from '../ui/overlay';
 import type { CameraPose } from '../gfx/cameras/pose';
-import { queryViewOf, type QueryView } from '../sim/queryView';
+import type { QueryView } from '../sim/queryView';
 import type { Scene } from '../sim/scene';
 import type { World, WorldEvents } from '../sim/world';
-import { createDamageNumbers, type DamageNumbers } from './damageNumbers';
-import { createPageLook, type PageLook } from './look';
-import { createAppHost, type AppRun, type Drawing } from './headless';
+import { createDamageNumbers } from './damageNumbers';
+import { createPageDrawing, type PageParts } from './drawing';
+import { createPageLook } from './look';
+import { createAppHost, type AppRun } from './headless';
 import { createLoop, type Loop } from './loop';
 import { createPlayback, type Playback } from './playback';
 import { defineLevel } from '../world/level/level';
 import { parseRoutes, type Routes } from './routes';
-import { HEADLESS_ASPECT } from './view';
 
 /** The codes this module raises, with their fixes. */
 export const ENGINE_CODES = defineCodes('app', {
@@ -160,11 +158,6 @@ export interface Engine {
   stop(): void;
 }
 
-/** GPU frames drawn while a replay plays before the queue is drained, so it never runs far ahead. */
-const DRAIN_EVERY = 10;
-/** Frames tried before a warm-up counts as stuck. */
-const TRIES = 10;
-
 /** What `?replay=<name>` asked for: the replay, ready to play, or why there is none (raised once the page is up). */
 interface Asked {
   playback?: Playback;
@@ -221,13 +214,9 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   const registry = options.registry ?? sharedRegistry;
   const overlay = createOverlay(document);
   overlay.status('Loading…');
-  let ready = false;
   let routes: Routes | null = null;
-  let run: AppRun | null = null;
-  let gfx: Gfx | null = null;
-  let post: Post | null = null;
-  let look: PageLook | null = null;
   let loop: Loop | null = null;
+  const parts: PageParts = { run: null, gfx: null, post: null, look: null, input: null, layer: null, ui: null, numbers: null, ready: false }; // prettier-ignore
   const fail = (error: unknown, code = 'APP_START'): ErrorRecord => {
     const record = log.error(...recordOf(error, code), error);
     overlay.error(record);
@@ -245,117 +234,29 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   Object.assign(window, { __engine: signals });
   const engine: Engine = {
     get inspector() {
-      return run?.inspector ?? null;
+      return parts.run?.inspector ?? null;
     },
     get ready() {
-      return ready;
+      return parts.ready;
     },
     get routes() {
       return routes;
     },
     get ui() {
-      return ui;
+      return parts.ui;
     },
     stop: () => loop?.stop(),
   };
 
-  let input: Input | null = null;
   let layout: TouchLayout | null = null;
-  let layer: TouchLayer | null = null;
   let playback: Playback | null = null;
-  let draws = 0;
-  let ui: Overlay | null = null;
-  let numbers: DamageNumbers | null = null;
-  const aspect = () => {
-    const css = gfx?.resolution.current?.css;
-    return css && css.width > 0 && css.height > 0 ? css.width / css.height : HEADLESS_ASPECT;
-  };
-  const viewNow = () => run!.view!;
-  const settingsNow = currentSettings(() => run!);
+  const viewNow = () => parts.run!.view!;
+  const settingsNow = currentSettings(() => parts.run!);
   const chrome = createChrome(document);
-  /** Touch mode this frame: the page's class and layer, and the quality tier's pixel caps. */
-  const touchFrame = () => {
-    const touch = input?.touch;
-    const on = touch?.active ?? false;
-    chrome.setTouch(on);
-    const covered = on && chrome.topPanel() !== null;
-    const { innerWidth: width, innerHeight: height } = window;
-    layer?.update({ on, stick: touch?.stickView() ?? null, down: touch?.down() ?? [], covered, width, height });
-    gfx!.resolution.cap(qualityBudget(settingsNow.get<QualitySetting>('quality'), on));
-  };
-  /** `view` drawn through the post chain in the page's look (engine/app/look.ts), once there is one. */
-  const through = (view: FrameView): FrameView => (post ? post.view(look!.sync(viewNow().stage, view)) : view);
-  /** Warms up through both cameras, so switching projection later builds nothing. */
-  const warmBoth = async () => {
-    const view = viewNow();
-    for (const camera of view.cameras) await gfx!.warmup.run(through({ scene: view.stage.scene, camera }));
-  };
-  const frameNow = (alpha: number, dt: number): FrameReport =>
-    run!.meter.time('render', () => {
-      touchFrame();
-      gfx!.resolution.update();
-      const cameraInput = input?.camera();
-      const view = viewNow().frame({ alpha, dt, aspect: aspect(), input: cameraInput });
-      keepWidth(view.camera, aspect());
-      const { shake } = viewNow().stage.fx.effects;
-      shake.apply(view.camera);
-      const report = gfx!.frame(through(view));
-      shake.restore(view.camera);
-      numbers?.frame(run!.session.world);
-      ui?.update(view.camera, dt);
-      if (options.onFrame) {
-        const { world, scene } = run!.session;
-        const queries = scene.physics ? queryViewOf(world) : null;
-        options.onFrame({ world, scene, camera: viewNow().camera.pose(), queries, dt });
-      }
-      return report;
-    });
-  const settle = async (alpha: number, dt: number): Promise<FrameReport> => {
-    for (let tries = 0; tries < TRIES; tries++) {
-      const report = frameNow(alpha, dt);
-      if (report.drawn) {
-        await gfx!.device.queue.onSubmittedWorkDone();
-        return report;
-      }
-      await warmBoth().catch(() => undefined);
-    }
-    throw codeError('APP_NO_FRAME', { tries: TRIES });
-  };
+  const { drawing, frame, settle, warmBoth } = createPageDrawing(parts, { chrome, settings: settingsNow, onFrame: options.onFrame }); // prettier-ignore
   let warming: Promise<void> | null = null;
   let asked: Asked | null = null;
   let materials: ReturnType<typeof createMaterialLibrary> | null = null;
-  const drawing: Drawing = {
-    active: () => gfx !== null,
-    get adapter() {
-      return gfx ? { ...gfx.info.adapter, backend: gfx.info.backend, three: gfx.info.three } : null;
-    },
-    get features() {
-      return gfx?.info.enabled ?? [];
-    },
-    get downgrades() {
-      return gfx?.info.downgrades ?? [];
-    },
-    ready: () => ready,
-    async render(frames) {
-      let report: FrameReport | null = null;
-      for (let k = 0; k < frames; k++) report = await settle(1, 1 / 60);
-      return report!;
-    },
-    async shot(shotOptions) {
-      const view = viewNow().frame({ alpha: 1, dt: 0, aspect: aspect() });
-      keepWidth(view.camera, aspect());
-      return shotForJson(await shot(gfx!, through(view), shotOptions));
-    },
-    async draw() {
-      if (!gfx) return;
-      if (!frameNow(1, 1 / 60).drawn) await settle(1, 1 / 60);
-      if (++draws % DRAIN_EVERY === 0) await gfx.device.queue.onSubmittedWorkDone();
-    },
-    setView(path: string, value: SettingValue) {
-      run!.session.set(path, value);
-    },
-    counts: () => gfx?.stats() ?? null,
-  };
 
   try {
     definePostSettings(registry);
@@ -374,12 +275,12 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     if (options.touchLayout !== undefined) layout = getTouchLayout(options.touchLayout, registry);
     materials = createMaterialLibrary({ registry });
     const { scene, seed, settings, cam } = routes;
-    run = createAppHost({ scene, seed, settings, cam, registry, log, drawing, materials });
+    parts.run = createAppHost({ scene, seed, settings, cam, registry, log, drawing, materials });
   } catch (error) {
     fail(error);
     return engine;
   }
-  const started = run;
+  const started = parts.run;
   Object.assign(window, { __engine: started.inspector });
   const onTap = (name: string) => {
     if (name === 'game') chrome.closeTopPanel();
@@ -388,23 +289,24 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     options.onMenu?.();
   };
   const touchMode = () => settingsNow.get<TouchSetting>('touch');
-  input = createInput({ window, document, element: options.canvas, registry, log, touchMode, onTap });
-  layer = createTouchLayer(document, layout);
+  const input = (parts.input = createInput({ window, document, element: options.canvas, registry, log, touchMode, onTap })); // prettier-ignore
+  parts.layer = createTouchLayer(document, layout);
   attachSwipes(document);
   connectVirtualDevice(started.host, input.virtual);
   try {
-    gfx = await createRenderer(options.canvas, { settings: currentSettings(() => started), registry, log });
+    parts.gfx = await createRenderer(options.canvas, { settings: currentSettings(() => started), registry, log });
   } catch (error) {
     fail(error);
     return engine;
   }
-  numbers = createDamageNumbers((ui = createUi({ canvas: options.canvas })));
+  const gfx = parts.gfx;
+  parts.numbers = createDamageNumbers((parts.ui = createUi({ canvas: options.canvas })));
   try {
     gfx.renderer.shadowMap.enabled = true;
     const styles = createStyleSet({ library: materials!, registry });
-    post = createPost(gfx, { settings: currentSettings(() => started), registry, log, styles });
-    const budget = () => qualityBudget(settingsNow.get<QualitySetting>('quality'), input?.touch?.active ?? false);
-    look = createPageLook({ post, styles, warmup: gfx.warmup, quality: budget });
+    const post = (parts.post = createPost(gfx, { settings: currentSettings(() => started), registry, log, styles }));
+    const budget = () => qualityBudget(settingsNow.get<QualitySetting>('quality'), input.touch?.active ?? false);
+    parts.look = createPageLook({ post, styles, warmup: gfx.warmup, quality: budget });
     post.attach(gfx.warmup);
     viewNow().stage.register(gfx.warmup);
     await warmBoth();
@@ -424,18 +326,18 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   };
   loop = createLoop({
     clock: () => started.clock,
-    sample: (now) => input!.sample({ yaw: () => viewNow().camera.yaw() }, now),
+    sample: (now) => input.sample({ yaw: () => viewNow().camera.yaw() }, now),
     step,
     draw: ({ alpha, dt }) => {
       if (warming) return;
-      const report = frameNow(alpha, dt);
+      const report = frame(alpha, dt);
       if (!report.drawn && report.warming) warming = warmBoth().finally(() => (warming = null));
     },
     hold: () => started.playing,
-    cap: () => input?.touch?.active ?? false,
+    cap: () => input.touch?.active ?? false,
     onError: (error) => fail(error, 'APP_FRAME'),
   });
-  ready = true;
+  parts.ready = true;
   overlay.hide();
   loop.start();
   const replay = asked?.playback;

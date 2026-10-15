@@ -11,14 +11,14 @@ game agent's manual.
 
 ### [`engine/index.ts`](../engine/index.ts)
 
-- `Action` (type from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): An `action` entry.
-- `ACTION` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Every constant: `out`, the seconds the channels ease back to rest after an action; `pivot`, the flip's pivot above the ground, a share of the hip height (`heroRoll`'s `cz`); `arm` and `leg`, the metres hand and foot targets are written for (the reference arm, moves-data.ts; `build:chibi`'s thigh and shin).
-- `actionCheck` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The action's check: a state of the matrix (check.ts) that plays it as `check` says, on the animator's build with a clip layer over `libraries` (its clip beats' sets), signalling at its times and lifting the body by `lift` (times the build's size).
+- `Action` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): An `action` entry.
+- `ACTION` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Every constant: `out`, the seconds the channels ease back to rest after an action; `pivot`, the flip's pivot above the ground, a share of the hip height (`heroRoll`'s `cz`); `arm` and `leg`, the metres hand and foot targets are written for (the reference arm, moves-data.ts; `build:chibi`'s thigh and shin).
+- `actionCheck` (function from [`engine/anim/actions-check.ts`](../engine/anim/actions-check.ts)): The action's check: a state of the matrix (check.ts) that plays it as `check` says, on the animator's build with a clip layer over `libraries` (its clip beats' sets), signalling at its times and lifting the body by `lift` (times the build's size).
 - `ActionMap` (type from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): An action map entry.
 - `ActionMapSpec` (interface from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): How an action map is written.
 - `Actions` (class from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): A body's actions, one playing at a time.
 - `ActionsOptions` (interface from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What `new Actions` takes.
-- `ActionSpec` (type from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What `defineAction` takes: `desc` and `beats`, each beat's `name` and `seconds`; the rest as it likes.
+- `ActionSpec` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): What `defineAction` takes: `desc` and `beats`, each beat's `name` and `seconds`; the rest as it likes.
 - `ActionsState` (interface from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): An `Actions`' state, plain data.
 - `ActorComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `actor`: an entity the character controller moves.
 - `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, `animator`, `puppet`, and `oneWay` for one-way platforms.
@@ -65,10 +65,10 @@ game agent's manual.
 - `approachRing` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way to wait round `to` on a ring of `ring.radius` metres: beyond `radius + band`, in by `followFlow` (straight when `field` is null); inside `radius − band`, straight out at `backoff` of full speed; on the ring, round it at `circle × sway` of full speed (`sway` in [−1, 1]; positive turns about +Y, anticlockwise seen from above).
 - `ApproachRingOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): What `approachRing` takes: the ring's radius, and how an agent moves in, out and round.
 - `ArmState` (interface from [`engine/anim/strike.ts`](../engine/anim/strike.ts)): The arm's state: plain numbers, stepped by `stepArm`, read by `layArm` and `armBlade`.
-- `Attack` (class from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): One move played on a timeline: `start` a swing, `update` it one fixed step (its events: `wind`, `active`, `hitOpen`, `hitClose`, `recover`, `end`), tell the body `body`, connect with `hits` once per target per swing while the hit window is open, and read the strike's `sweep` there.
+- `Attack` (class from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): One move played on a timeline: `start` a swing, `update` it one fixed step (its events: `wind`, `active`, `hitOpen`, `hitClose`, `recover`, `end`), tell the body `body`, connect with `hits` once per target per swing while the hit window is open, and read the strike's `sweep` there.
 - `ATTACK_TOKENS` (const from [`engine/world/ai.ts`](../engine/world/ai.ts)): Attack tokens with every field at its default: 3 tokens, none held.
 - `ATTACK_TOKENS_FIELDS` (const from [`engine/world/ai.ts`](../engine/world/ai.ts)): The attack tokens' fields, for a scene's component: `defineComponent('tokens', { description, fields: … })`.
-- `AttackState` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): An attack as plain data: its timeline, the targets it hit this swing, its last segment, its window.
+- `AttackState` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): An attack as plain data: its timeline, the targets it hit this swing, its last segment, its window.
 - `AttackTokens` (interface from [`engine/world/ai.ts`](../engine/world/ai.ts)): Attack tokens: who holds one and when the next may be granted (`ATTACK_TOKENS_FIELDS` says what each means).
 - `Audio` (interface from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): A page's sound (see the file comment).
 - `AudioBus` (type from [`engine/audio/runtime/mixer.ts`](../engine/audio/runtime/mixer.ts)): One of the buses.
@@ -80,7 +80,7 @@ game agent's manual.
 - `bakeClip` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): Bakes `clip` on its source's rest body `R` (see the file comment).
 - `BakedClip` (interface from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): A clip baked to rotation tracks (see the file comment).
 - `bakeTexture` (function from [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)): Bakes `ref` on `registry` (the shared one by default).
-- `Beat` (type from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): One beat of an action.
+- `Beat` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): One beat of an action.
 - `Bindings` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): An action map with the player's changes.
 - `BindingsFile` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): A saved bindings file.
 - `BindingsOptions` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): How bindings are made.
@@ -126,7 +126,7 @@ game agent's manual.
 - `BodyStateName` (type from [`engine/anim/states.ts`](../engine/anim/states.ts)): A body state's name.
 - `BodyType` (type from [`engine/physics/world.ts`](../engine/physics/world.ts)): How a body moves: pushed by forces and contacts, never, or by the velocity code gives it.
 - `BOLT` (const from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): How a bolt looks: the Stress test's hero bolt by default.
-- `BoneCapsule` (type from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A bone capsule: the segment `a`–`b` with a `radius`, world metres (a sphere when `a` equals `b`).
+- `BoneCapsule` (type from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A bone capsule: the segment `a`–`b` with a `radius`, world metres (a sphere when `a` equals `b`).
 - `boneMask` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A bone mask: a preset (`'upper'`: spine0 and everything above it; `'lower'`: the pelvis, the legs and the root; `'arms'`, `'legs'`, one limb, `'head'`, `'full'`), a list of joints and presets (each listed joint alone; `'root'` for the root's channels), or weights by joint (`{ chest: 0.5, root: 1 }`).
 - `BoneMask` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): How much of a blend or layer reaches each joint (0–1, in `JOINTS` order) and the root's channels.
 - `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
@@ -146,15 +146,15 @@ game agent's manual.
 - `CameraLike` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A camera as the input reads it (engine/gfx/cameras/pose.ts `Camera`): its heading, and its pitch for first person.
 - `CameraPose` (interface from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): Where a camera is, where it looks and its lens, in a frame: plain, frozen data (see the file comment).
 - `canSee` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Whether an agent with its feet at `from` is aware of a target with its feet at `to`: within `range` metres on the ground, and either within `near` metres or in a clear sight line from its eye to the target's `aim`.
-- `Cape` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape: two chains, its left and right edges, held `width` apart (wider toward the hem by `flare`).
-- `CAPE` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
-- `CapeOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What a cape is made of: its edges' chain options, `width` metres apart at the top, and `CAPE`'s flare and flutter.
+- `Cape` (class from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A cape: two chains, its left and right edges, held `width` apart (wider toward the hem by `flare`).
+- `CAPE` (const from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
+- `CapeOptions` (interface from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): What a cape is made of: its edges' chain options, `width` metres apart at the top, and `CAPE`'s flare and flutter.
 - `capsuleCast` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Where a ball of `radius` moving from `from` by `delta` (m) first touches `target`: the share of the move, 0 to 1 (0 when it touches already), or −1 when it never does.
 - `cellHash` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A seeded value in [0, 1) for the integer point (x, y), with `salt` telling apart uses of one seed (a stone's tone, its crack).
-- `Chain` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): One verlet strand.
-- `CHAIN` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The chains' shared tuning.
-- `ChainOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What a chain is made of: `n` points (2 or more, the anchor first) `seg` metres apart, and its tuning.
-- `ChainTuning` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A chain's tuning, which may change between steps; the defaults are `CHAIN`'s (stiffness 0, wind none).
+- `Chain` (class from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): One verlet strand.
+- `CHAIN` (const from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): The chains' shared tuning.
+- `ChainOptions` (interface from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): What a chain is made of: `n` points (2 or more, the anchor first) `seg` metres apart, and its tuning.
+- `ChainTuning` (interface from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A chain's tuning, which may change between steps; the defaults are `CHAIN`'s (stiffness 0, wind none).
 - `CHANNELS` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The channels' layout: motion (5), each effector's target and weight (4 × 5), the flip's angle and axis, scale (3).
 - `Character` (type from [`engine/physics/character.ts`](../engine/physics/character.ts)): A character's settings, filled: what `createCharacter` returns and an actor's component holds.
 - `CHARACTER_FIELDS` (const from [`engine/physics/character.ts`](../engine/physics/character.ts)): A character's settings: `createCharacter` checks a spec against these and fills the defaults.
@@ -197,8 +197,8 @@ game agent's manual.
 - `ColliderSpec` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): One collider of a body: a shape where the body puts it, and its material.
 - `COLLISION_GROUPS` (const from [`engine/physics/groups.ts`](../engine/physics/groups.ts)): The collision groups: each one's membership bit and the groups it touches.
 - `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
-- `Combo` (class from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A chain of attacks (a 3-hit punch string, a sword combo): `press` during one hit's recover, or within `window` seconds after it ends, flows into the next; otherwise the chain starts over.
-- `ComboState` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A combo as plain data: the hit playing (−1 none), seconds since the last hit ended, the hit's own state.
+- `Combo` (class from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A chain of attacks (a 3-hit punch string, a sword combo): `press` during one hit's recover, or within `window` seconds after it ends, flows into the next; otherwise the chain starts over.
+- `ComboState` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A combo as plain data: the hit playing (−1 none), seconds since the last hit ended, the hit's own state.
 - `compileBody` (function from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): Compiles `body` (or its id) for `build` (a skeleton, a build or a build id; `build:chibi` by default).
 - `CompiledBody` (interface from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): A body compiled for one build (see the file comment).
 - `CompiledLevel` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A compiled level: the map, its legend, per-tile grids and descriptors; see the file comment.
@@ -220,7 +220,7 @@ game agent's manual.
 - `createCutaway` (function from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): Gives `meshes`' cutting parts their twins (see the file comment).
 - `createEffects` (function from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): Makes the effects; see the file comment.
 - `createEngine` (function from [`engine/app/engine.ts`](../engine/app/engine.ts)): Starts the engine in a page (see the file comment); resolves once it is up or has failed.
-- `createFootPlantState` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A new, unlocked `FootPlantState`.
+- `createFootPlantState` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A new, unlocked `FootPlantState`.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
 - `createInput` (function from [`engine/input/input.ts`](../engine/input/input.ts)): Makes the page's input.
 - `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
@@ -278,7 +278,7 @@ game agent's manual.
 - `DamageTarget` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): What a hit lands on: the entity (named in the events), its health and its crowd body, either optional.
 - `decodePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
-- `defineAction` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Defines an action on `registry` (the shared one).
+- `defineAction` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Defines an action on `registry` (the shared one).
 - `defineActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Registers an action map (on the shared registry by default).
 - `defineBody` (function from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): Defines a body on `registry` (the shared one by default).
 - `defineBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
@@ -294,7 +294,7 @@ game agent's manual.
 - `defineMannequin` (function from [`engine/gfx/puppets/bodies/mannequin.ts`](../engine/gfx/puppets/bodies/mannequin.ts)): Registers `build:mannequin` (rest body `source` of `set`, its first by default) and `body:mannequin` (its `body`) on `registry` (the shared one), once; returns both.
 - `defineMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): Defines a material on `registry` (the shared one by default) and returns it.
 - `defineMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): Defines a move on `registry` (the shared one by default) and returns it; absent fields keep a plain strike's values.
-- `definePostSettings` (function from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): Declares the chain's settings (`POST_SETTINGS`) and the setting `quality` it reads on `registry` (the shared one by default), unless it has them: on the shared one when this module loads, so `node x set post.look look:game-boy` knows them in Node (tools/cmd/set.ts imports the modules that declare settings), and on any other when `createPost` or `createEngine` runs.
+- `definePostSettings` (function from [`engine/gfx/post/settings.ts`](../engine/gfx/post/settings.ts)): Declares the chain's settings (`POST_SETTINGS`) and the setting `quality` it reads on `registry` (the shared one by default), unless it has them: on the shared one when this module loads, so `node x set post.look look:game-boy` knows them in Node (tools/cmd/set.ts imports the modules that declare settings), and on any other when `createPost` or `createEngine` runs.
 - `defineProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): Defines a prop on `registry` (the shared one by default) and returns it.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
 - `defineSetBuild` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Registers build `id` with the proportions clip set `setId`'s clips were captured on (retarget.ts `restBuild` of its first source's rest body, or `source`'s), once, and returns it: `build:mannequin` from `clipset:quaternius` is the build engine/gfx/puppets/bodies/mannequin.ts draws, which the sim's animator needs before the view's body exists.
@@ -311,7 +311,7 @@ game agent's manual.
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
 - `easeWeight` (function from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): One fixed step of easing: `value` moves toward `target` at `rates[0]` (+ `gain` × value) rising, `rates[1]` falling.
 - `Effectors` (interface from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The effector stage's targets: rig-local metres before `size`, in the model frame (+Z forward, +Y up).
-- `EFFECTORS` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The effectors a beat may pull, in channel order.
+- `EFFECTORS` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): The effectors a beat may pull, in channel order.
 - `Effects` (interface from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): The effects of a view: see the file comment.
 - `EffectsOptions` (interface from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): What `createEffects` takes.
 - `Emitter` (type from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): An `emitter` entry: see the file comment.
@@ -336,7 +336,7 @@ game agent's manual.
 - `FilterName` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): A filter's name.
 - `FilterSpec` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Part of a chain: some filters, each with some of its fields (a look's `filters`, the setting `post.filters`).
 - `FLICKER` (const from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): A flame's flicker at time `t` (s): about 0.77 to 1.03, the 2D hall's (my-3d2dge's `FLICKER`).
-- `FLIP_AXES` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What a flip turns about, in the body's frame: the top of the body goes forward, back, left, right; or it spins left.
+- `FLIP_AXES` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): What a flip turns about, in the body's frame: the top of the body goes forward, back, left, right; or it spins left.
 - `Floater` (class from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater: its state, its pose.
 - `FLOATER` (const from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's tuning: the source's numbers, lengths ÷ 16 in metres, and the bank's.
 - `FLOATER_BODY` (const from [`engine/gfx/puppets/bodies/floater.ts`](../engine/gfx/puppets/bodies/floater.ts)): The wisp (see the file comment).
@@ -352,11 +352,13 @@ game agent's manual.
 - `FOLLOW` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): `followFlow`'s defaults: straight within 4 m in a clear line (emberdeep's 64 units), full speed to the target.
 - `followFlow` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way to walk from `from` to `to` along `field` (a flow field toward the target's tile): straight at `to` within `near` metres when the grid has a clear line for a body (`NavGrid.lineOfSight`), else the field's look-ahead direction (`FlowField.direction`), else, where the field has no way (beyond its reach, or arrived at the goal tile's centre), straight at `to`, as the prototype does.
 - `FollowOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): How `followFlow` steers.
-- `FOOT_PLANT` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `footPlant`'s tuning, in metres and seconds.
-- `FootLock` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
-- `footPlant` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
-- `FootPlantOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `footPlant` plants.
-- `FootPlantState` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
+- `FOOT_PLANT` (const from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): `footPlant`'s tuning, in metres and seconds.
+- `FootLock` (type from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
+- `footPlant` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the floor (`options.floor`) over the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
+- `FootPlant` (class from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The foot plant as the animator's last `post` layer (see the file comment): each tick, the feet stand on a flat floor at the body's height.
+- `FootPlantLayerOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The `FootPlant` layer's options.
+- `FootPlantOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): How `footPlant` plants.
+- `FootPlantState` (type from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
 - `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
 - `FrameWorld` (type from [`engine/app/engine.ts`](../engine/app/engine.ts)): The read side of the run's world a page gets each frame: its step, rate, entities and the trace of its events.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
@@ -374,7 +376,7 @@ game agent's manual.
 - `GeometryReport` (interface from [`engine/gfx/geometry/inspect.ts`](../engine/gfx/geometry/inspect.ts)): What `inspectGeometry` measured.
 - `GeometrySpec` (interface from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): What `defineGeometry` takes: the entry's fields (`params` and `budget` have defaults), `create` typed by `params`.
 - `GestureTarget` (type from [`engine/audio/runtime/gesture.ts`](../engine/audio/runtime/gesture.ts)): Where gestures arrive: `window`, or any `EventTarget`.
-- `getAction` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The action `id` (`action:jump`, or `jump`); a missing one throws `CORE_NO_ENTRY`, naming the closest.
+- `getAction` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): The action `id` (`action:jump`, or `jump`); a missing one throws `CORE_NO_ENTRY`, naming the closest.
 - `getActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The action map `id`.
 - `getBody` (function from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): The body `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `body:humanoid`.
 - `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
@@ -499,7 +501,7 @@ game agent's manual.
 - `listActionMaps` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Every action map, sorted by id.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
 - `ListenerPose` (interface from [`engine/audio/runtime/spatial.ts`](../engine/audio/runtime/spatial.ts)): Where the listener is and where it looks: the engine's camera pose (engine/gfx/cameras/pose.ts) satisfies it.
-- `loadActions` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Defines the actions of files read from data/anim/actions/ (each `{ "action": "<name>", …spec }`, as `action:<name>`) and returns them.
+- `loadActions` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Defines the actions of files read from data/anim/actions/ (each `{ "action": "<name>", …spec }`, as `action:<name>`) and returns them.
 - `loadClipLibrary` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Loads a set (its text or object, read by validate.ts `parseClipSet`, which throws its `ANIM_CLIP_*` codes).
 - `locomoteClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `loops.idle`, `walk` or `run` on actor `id` by its ground speed, each at that speed; null stops them.
 - `LOD` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The detail levels `pose({ lod })` takes, by index: how often it re-solves, in ticks, and which slots run.
@@ -521,8 +523,8 @@ game agent's manual.
 - `MaterialStyle` (type from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): A material style (see `MATERIAL_STYLES`).
 - `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
-- `MatrixRun` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): One run of the matrix: a state held at a facing, from rest and back to rest, one pose per step.
-- `MatrixState` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): A state the matrix holds: the body states told every step, or a script, for so many seconds.
+- `MatrixRun` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): One run of the matrix: a state held at a facing, from rest and back to rest, one pose per step.
+- `MatrixState` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): A state the matrix holds: the body states told every step, or a script, for so many seconds.
 - `measureFeel` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `measureMove` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Measures where `move`'s strike point (the blade's tip, the fist, the foot's sole) goes through its hit window, on a spare body of `options.build` holding `options.weapon` (`build:chibi` with a sword by default): the hit cone and height window to test targets against (`inHitShape`).
 - `mergeGeometries` (function from [`engine/gfx/geometry/groups.ts`](../engine/gfx/geometry/groups.ts)): Joins `geometries` into one, in order: their attributes end to end, their indices offset.
@@ -574,7 +576,7 @@ game agent's manual.
 - `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
 - `Physics` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A physics world: bodies, stepping, queries, and the sim's physics hook (`state`, `capture`, `restore`).
 - `PHYSICS_SETTINGS` (const from [`engine/physics/params.ts`](../engine/physics/params.ts)): The physics settings, path → field; `defineSettings(PHYSICS_SETTINGS, registry)` declares them on another registry.
-- `physicsOf` (function from [`engine/physics/world.ts`](../engine/physics/world.ts)): The physics world of a sim world: its bodies and queries.
+- `physicsOf` (function from [`engine/physics/binding.ts`](../engine/physics/binding.ts)): The physics world of a sim world: its bodies and queries.
 - `physicsWalls` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
 - `pickTone` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): One of `colors`, picked by `value` in [0, 1).
 - `PieceShape` (type from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): A unit shape a piece draws (see the file comment).
@@ -600,7 +602,7 @@ game agent's manual.
 - `PoseOptions` (interface from [`engine/anim/character.ts`](../engine/anim/character.ts)): Where and how `pose` draws the body.
 - `POSES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The held poses, each with what it shows.
 - `Post` (interface from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): A post-processing chain (see the file comment).
-- `POST_SETTINGS` (const from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): The view settings the chain reads, declared by `definePostSettings`: `post.look` (a `look` id, engine/gfx/post/looks.ts), `post.filters` (part of a filter chain laid over the look's, filter by filter and field by field) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
+- `POST_SETTINGS` (const from [`engine/gfx/post/settings.ts`](../engine/gfx/post/settings.ts)): The view settings the chain reads, declared by `definePostSettings`: `post.look` (a `look` id, engine/gfx/post/looks.ts), `post.filters` (part of a filter chain laid over the look's, filter by filter and field by field) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
 - `PostOptions` (interface from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): How `createPost` makes a chain.
 - `PostShow` (type from [`engine/gfx/post/composite.ts`](../engine/gfx/post/composite.ts)): What the composite draws.
 - `PostTag` (interface from [`engine/gfx/post/mrt.ts`](../engine/gfx/post/mrt.ts)): What `setPart` records on an object (`userData.post`).
@@ -673,9 +675,9 @@ game agent's manual.
 - `RESERVED_CODES` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Codes no action map binds: the pause buttons, and keys the browser or the system keeps.
 - `resolveMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `move` names, with `over` laid on it (`time` and `body` field by field): an id (a bare name gets the `move:` prefix), a `Move` entry, or a spec, parsed once and frozen.
 - `RestBody` (type from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): A body's rest measurements (mm and degrees), measured by the importer from the library's own clips: `H0`, the standing pelvis height (the unit of `hips` and `root`); `Pr`, `Cr` and `Hr`, the rest frames of the pelvis, chest and head (`[forward, right, up]` axes); the four `spine` bones from the pelvis to the neck, and `spineW`, how much of the pelvis-to-chest turn each takes (the library's own), as `neckW` is the neck's share of the chest-to-head turn; `cv`, each collarbone from its pivot to the shoulder; and the segments' lengths (`up`, `fore`, `thigh`, `shin`…).
-- `restBuild` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The proportions of rest body `R` as a build's fields (metres, size 1): the mannequin's, for the quaternius set.
-- `restPoints` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The 36 decode points of `world` (FK on `restSkeleton(R)`), written into `out` as the decode writes them: mm in the rig frame, `[forward, right, up]` in `POSE_POINTS` order.
-- `restSkeleton` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The humanoid skeleton of rest body `R`: its bones measured, its rest curve kept (see the file comment).
+- `restBuild` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The proportions of rest body `R` as a build's fields (metres, size 1): the mannequin's, for the quaternius set.
+- `restPoints` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The 36 decode points of `world` (FK on `restSkeleton(R)`), written into `out` as the decode writes them: mm in the rig frame, `[forward, right, up]` in `POSE_POINTS` order.
+- `restSkeleton` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The humanoid skeleton of rest body `R`: its bones measured, its rest curve kept (see the file comment).
 - `RETARGET` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units).
 - `RetargetOptions` (interface from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): What `retargetPose` does beyond the rotation copy.
 - `retargetPose` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): `baked` at `t` seconds on `skeleton`, written into `out` (a new pose by default): the rotations copied and aligned at rest, the hip joints where the clip's are times the hip-height ratio, the root at the origin unturned; then the feet planted, the pose lifted and a held blade kept above the floor (`options`).
@@ -705,6 +707,7 @@ game agent's manual.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
 - `ScenePropComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `sceneProp`: a prop standing in a scene.
 - `ScenePropComponents` (type from [`engine/sim/props.ts`](../engine/sim/props.ts)): The components this module reads.
+- `SceneSound` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A sound a sim event plays: an `sfx` entry, its gain (1 by default) and its variant (the effect's next by default).
 - `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
 - `Scope` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): A filter's scope.
@@ -732,7 +735,7 @@ game agent's manual.
 - `Shape` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A shape, sized like three.js's geometries (see the file comment).
 - `ShapeCastOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A shape cast's options.
 - `Sheet` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A drawn sheet: the SVG text, its hash, and its size in pixels.
-- `SHEET_CAMERAS` (const from [`engine/anim/check.ts`](../engine/anim/check.ts)): The cameras sheets of the matrix draw each frame from: presets of `anim.sheet()`'s views (engine/anim/sheet.ts).
+- `SHEET_CAMERAS` (const from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The cameras sheets of the matrix draw each frame from: presets of `anim.sheet()`'s views (engine/anim/sheet.ts).
 - `SheetFrame` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): One frame of a sheet: a pose, and its label (`#<index>` when absent).
 - `SheetOptions` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): What a sheet draws, and how.
 - `SheetView` (type from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A view's name.
@@ -776,9 +779,9 @@ game agent's manual.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
 - `STANCES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The stances, held while moving.
 - `standingHipHeight` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): A skeleton's standing hip height, metres: its hip joints' rest height (straight legs; for a build, its pelvis's, `legUpper + legLower` times `size`).
-- `STATE_MATRIX` (const from [`engine/anim/check.ts`](../engine/anim/check.ts)): The state matrix's defaults.
-- `stateMatrix` (function from [`engine/anim/check.ts`](../engine/anim/check.ts)): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
-- `StateMatrixOptions` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `stateMatrix` runs.
+- `STATE_MATRIX` (const from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The state matrix's defaults.
+- `stateMatrix` (function from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
+- `StateMatrixOptions` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): What `stateMatrix` runs.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
@@ -795,7 +798,7 @@ game agent's manual.
 - `StyleSetOptions` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): How `createStyleSet` makes a set.
 - `STYLIZE_KINDS` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): The painterly and print styles.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
-- `Sweep` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
+- `Sweep` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
 - `sweepHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets the swept quad touches (`sweepTouches`), by id, ascending.
 - `sweepTouches` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
@@ -881,12 +884,12 @@ game agent's manual.
 
 ### [`engine/sim-api.ts`](../engine/sim-api.ts)
 
-- `Action` (type from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): An `action` entry.
-- `ACTION` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Every constant: `out`, the seconds the channels ease back to rest after an action; `pivot`, the flip's pivot above the ground, a share of the hip height (`heroRoll`'s `cz`); `arm` and `leg`, the metres hand and foot targets are written for (the reference arm, moves-data.ts; `build:chibi`'s thigh and shin).
-- `actionCheck` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The action's check: a state of the matrix (check.ts) that plays it as `check` says, on the animator's build with a clip layer over `libraries` (its clip beats' sets), signalling at its times and lifting the body by `lift` (times the build's size).
+- `Action` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): An `action` entry.
+- `ACTION` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Every constant: `out`, the seconds the channels ease back to rest after an action; `pivot`, the flip's pivot above the ground, a share of the hip height (`heroRoll`'s `cz`); `arm` and `leg`, the metres hand and foot targets are written for (the reference arm, moves-data.ts; `build:chibi`'s thigh and shin).
+- `actionCheck` (function from [`engine/anim/actions-check.ts`](../engine/anim/actions-check.ts)): The action's check: a state of the matrix (check.ts) that plays it as `check` says, on the animator's build with a clip layer over `libraries` (its clip beats' sets), signalling at its times and lifting the body by `lift` (times the build's size).
 - `Actions` (class from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): A body's actions, one playing at a time.
 - `ActionsOptions` (interface from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What `new Actions` takes.
-- `ActionSpec` (type from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What `defineAction` takes: `desc` and `beats`, each beat's `name` and `seconds`; the rest as it likes.
+- `ActionSpec` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): What `defineAction` takes: `desc` and `beats`, each beat's `name` and `seconds`; the rest as it likes.
 - `ActionsState` (interface from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): An `Actions`' state, plain data.
 - `ActorComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `actor`: an entity the character controller moves.
 - `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, `animator`, `puppet`, and `oneWay` for one-way platforms.
@@ -930,16 +933,16 @@ game agent's manual.
 - `approachRing` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way to wait round `to` on a ring of `ring.radius` metres: beyond `radius + band`, in by `followFlow` (straight when `field` is null); inside `radius − band`, straight out at `backoff` of full speed; on the ring, round it at `circle × sway` of full speed (`sway` in [−1, 1]; positive turns about +Y, anticlockwise seen from above).
 - `ApproachRingOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): What `approachRing` takes: the ring's radius, and how an agent moves in, out and round.
 - `ArmState` (interface from [`engine/anim/strike.ts`](../engine/anim/strike.ts)): The arm's state: plain numbers, stepped by `stepArm`, read by `layArm` and `armBlade`.
-- `Attack` (class from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): One move played on a timeline: `start` a swing, `update` it one fixed step (its events: `wind`, `active`, `hitOpen`, `hitClose`, `recover`, `end`), tell the body `body`, connect with `hits` once per target per swing while the hit window is open, and read the strike's `sweep` there.
+- `Attack` (class from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): One move played on a timeline: `start` a swing, `update` it one fixed step (its events: `wind`, `active`, `hitOpen`, `hitClose`, `recover`, `end`), tell the body `body`, connect with `hits` once per target per swing while the hit window is open, and read the strike's `sweep` there.
 - `ATTACK_TOKENS` (const from [`engine/world/ai.ts`](../engine/world/ai.ts)): Attack tokens with every field at its default: 3 tokens, none held.
 - `ATTACK_TOKENS_FIELDS` (const from [`engine/world/ai.ts`](../engine/world/ai.ts)): The attack tokens' fields, for a scene's component: `defineComponent('tokens', { description, fields: … })`.
-- `AttackState` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): An attack as plain data: its timeline, the targets it hit this swing, its last segment, its window.
+- `AttackState` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): An attack as plain data: its timeline, the targets it hit this swing, its last segment, its window.
 - `AttackTokens` (interface from [`engine/world/ai.ts`](../engine/world/ai.ts)): Attack tokens: who holds one and when the next may be granted (`ATTACK_TOKENS_FIELDS` says what each means).
 - `B` (function from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): `f` metres forward, `r` right and `u` up, in the model frame (+Z forward, −X right, +Y up).
 - `BAKE_FPS` (const from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): Frames a second of a baked clip.
 - `bakeClip` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): Bakes `clip` on its source's rest body `R` (see the file comment).
 - `BakedClip` (interface from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): A clip baked to rotation tracks (see the file comment).
-- `Beat` (type from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): One beat of an action.
+- `Beat` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): One beat of an action.
 - `BlendOptions` (interface from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): How `blendPoses` blends.
 - `blendPoses` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), each joint's share scaled by `options.mask`, written into `out` (a new pose by default; `a` or `b` may be `out`).
 - `Blob` (class from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A blob: its state, its skeleton's pose.
@@ -969,7 +972,7 @@ game agent's manual.
 - `BodyState` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A body's state, copied: changing it changes nothing.
 - `BodyStateName` (type from [`engine/anim/states.ts`](../engine/anim/states.ts)): A body state's name.
 - `BodyType` (type from [`engine/physics/world.ts`](../engine/physics/world.ts)): How a body moves: pushed by forces and contacts, never, or by the velocity code gives it.
-- `BoneCapsule` (type from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A bone capsule: the segment `a`–`b` with a `radius`, world metres (a sphere when `a` equals `b`).
+- `BoneCapsule` (type from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A bone capsule: the segment `a`–`b` with a `radius`, world metres (a sphere when `a` equals `b`).
 - `boneMask` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A bone mask: a preset (`'upper'`: spine0 and everything above it; `'lower'`: the pelvis, the legs and the root; `'arms'`, `'legs'`, one limb, `'head'`, `'full'`), a list of joints and presets (each listed joint alone; `'root'` for the root's channels), or weights by joint (`{ chest: 0.5, root: 1 }`).
 - `BoneMask` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): How much of a blend or layer reaches each joint (0–1, in `JOINTS` order) and the root's channels.
 - `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
@@ -979,14 +982,14 @@ game agent's manual.
 - `Build` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): A `build` entry: one body's proportions, in metres before `size`.
 - `BuildSpec` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): What `defineBuild` takes: any field; the others keep `build:chibi`'s values.
 - `canSee` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Whether an agent with its feet at `from` is aware of a target with its feet at `to`: within `range` metres on the ground, and either within `near` metres or in a clear sight line from its eye to the target's `aim`.
-- `Cape` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape: two chains, its left and right edges, held `width` apart (wider toward the hem by `flare`).
-- `CAPE` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
-- `CapeOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What a cape is made of: its edges' chain options, `width` metres apart at the top, and `CAPE`'s flare and flutter.
+- `Cape` (class from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A cape: two chains, its left and right edges, held `width` apart (wider toward the hem by `flare`).
+- `CAPE` (const from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
+- `CapeOptions` (interface from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): What a cape is made of: its edges' chain options, `width` metres apart at the top, and `CAPE`'s flare and flutter.
 - `capsuleCast` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Where a ball of `radius` moving from `from` by `delta` (m) first touches `target`: the share of the move, 0 to 1 (0 when it touches already), or −1 when it never does.
-- `Chain` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): One verlet strand.
-- `CHAIN` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The chains' shared tuning.
-- `ChainOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What a chain is made of: `n` points (2 or more, the anchor first) `seg` metres apart, and its tuning.
-- `ChainTuning` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A chain's tuning, which may change between steps; the defaults are `CHAIN`'s (stiffness 0, wind none).
+- `Chain` (class from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): One verlet strand.
+- `CHAIN` (const from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): The chains' shared tuning.
+- `ChainOptions` (interface from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): What a chain is made of: `n` points (2 or more, the anchor first) `seg` metres apart, and its tuning.
+- `ChainTuning` (interface from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A chain's tuning, which may change between steps; the defaults are `CHAIN`'s (stiffness 0, wind none).
 - `CHANNELS` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The channels' layout: motion (5), each effector's target and weight (4 × 5), the flip's angle and axis, scale (3).
 - `Character` (type from [`engine/physics/character.ts`](../engine/physics/character.ts)): A character's settings, filled: what `createCharacter` returns and an actor's component holds.
 - `CHARACTER_FIELDS` (const from [`engine/physics/character.ts`](../engine/physics/character.ts)): A character's settings: `createCharacter` checks a spec against these and fills the defaults.
@@ -1028,8 +1031,8 @@ game agent's manual.
 - `ColliderSpec` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): One collider of a body: a shape where the body puts it, and its material.
 - `COLLISION_GROUPS` (const from [`engine/physics/groups.ts`](../engine/physics/groups.ts)): The collision groups: each one's membership bit and the groups it touches.
 - `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
-- `Combo` (class from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A chain of attacks (a 3-hit punch string, a sword combo): `press` during one hit's recover, or within `window` seconds after it ends, flows into the next; otherwise the chain starts over.
-- `ComboState` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A combo as plain data: the hit playing (−1 none), seconds since the last hit ended, the hit's own state.
+- `Combo` (class from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A chain of attacks (a 3-hit punch string, a sword combo): `press` during one hit's recover, or within `window` seconds after it ends, flows into the next; otherwise the chain starts over.
+- `ComboState` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A combo as plain data: the hit playing (−1 none), seconds since the last hit ended, the hit's own state.
 - `CompiledLevel` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A compiled level: the map, its legend, per-tile grids and descriptors; see the file comment.
 - `compileLevel` (function from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): Compiles a level's text against the legend of `options.registry` (the shared one by default) into plain data; see the file comment.
 - `CompileOptions` (interface from [`engine/world/level/compile.ts`](../engine/world/level/compile.ts)): What `compileLevel` takes beside the text.
@@ -1039,7 +1042,7 @@ game agent's manual.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
 - `createCharacter` (function from [`engine/physics/character.ts`](../engine/physics/character.ts)): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
-- `createFootPlantState` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A new, unlocked `FootPlantState`.
+- `createFootPlantState` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A new, unlocked `FootPlantState`.
 - `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
@@ -1066,7 +1069,7 @@ game agent's manual.
 - `DamageTarget` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): What a hit lands on: the entity (named in the events), its health and its crowd body, either optional.
 - `decodePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
-- `defineAction` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Defines an action on `registry` (the shared one).
+- `defineAction` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Defines an action on `registry` (the shared one).
 - `defineBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
 - `defineClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Parses `input` (a set's text or object, `parseClipSet`) and registers it on `registry` as `clipSetId(set)`; a set registered already is returned when it is the same, and refused (`CORE_DUPLICATE_ID`) when it differs.
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
@@ -1084,7 +1087,7 @@ game agent's manual.
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
 - `easeWeight` (function from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): One fixed step of easing: `value` moves toward `target` at `rates[0]` (+ `gain` × value) rising, `rates[1]` falling.
 - `Effectors` (interface from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The effector stage's targets: rig-local metres before `size`, in the model frame (+Z forward, +Y up).
-- `EFFECTORS` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The effectors a beat may pull, in channel order.
+- `EFFECTORS` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): The effectors a beat may pull, in channel order.
 - `emptyClipState` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): An empty clip layer's state: nothing plays.
 - `Entity` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity: its id and the components it holds, by kind name (`e.position`).
 - `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
@@ -1093,7 +1096,7 @@ game agent's manual.
 - `FeelOptions` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
-- `FLIP_AXES` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What a flip turns about, in the body's frame: the top of the body goes forward, back, left, right; or it spins left.
+- `FLIP_AXES` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): What a flip turns about, in the body's frame: the top of the body goes forward, back, left, right; or it spins left.
 - `Floater` (class from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater: its state, its pose.
 - `FLOATER` (const from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's tuning: the source's numbers, lengths ÷ 16 in metres, and the bank's.
 - `FloaterInput` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is told each step; every field is optional.
@@ -1106,16 +1109,18 @@ game agent's manual.
 - `FOLLOW` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): `followFlow`'s defaults: straight within 4 m in a clear line (emberdeep's 64 units), full speed to the target.
 - `followFlow` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way to walk from `from` to `to` along `field` (a flow field toward the target's tile): straight at `to` within `near` metres when the grid has a clear line for a body (`NavGrid.lineOfSight`), else the field's look-ahead direction (`FlowField.direction`), else, where the field has no way (beyond its reach, or arrived at the goal tile's centre), straight at `to`, as the prototype does.
 - `FollowOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): How `followFlow` steers.
-- `FOOT_PLANT` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `footPlant`'s tuning, in metres and seconds.
-- `FootLock` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
-- `footPlant` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
-- `FootPlantOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `footPlant` plants.
-- `FootPlantState` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
+- `FOOT_PLANT` (const from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): `footPlant`'s tuning, in metres and seconds.
+- `FootLock` (type from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
+- `footPlant` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the floor (`options.floor`) over the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
+- `FootPlant` (class from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The foot plant as the animator's last `post` layer (see the file comment): each tick, the feet stand on a flat floor at the body's height.
+- `FootPlantLayerOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The `FootPlant` layer's options.
+- `FootPlantOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): How `footPlant` plants.
+- `FootPlantState` (type from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
 - `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
 - `fromLegacy` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A legacy `E.MOVES` spec in the new fields (Appendix C, `LEGACY_FIELDS`); defaults are written out only when needed.
 - `FRU` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A rig-local point or direction: metres (or a direction's parts) forward, right and up.
-- `getAction` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The action `id` (`action:jump`, or `jump`); a missing one throws `CORE_NO_ENTRY`, naming the closest.
+- `getAction` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): The action `id` (`action:jump`, or `jump`); a missing one throws `CORE_NO_ENTRY`, naming the closest.
 - `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
 - `getClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The registered set `id` (`clipset:quaternius`); a missing one throws `CORE_NO_ENTRY`, naming the closest ids.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
@@ -1201,7 +1206,7 @@ game agent's manual.
 - `LIMBS` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The skeleton's four limbs, by their end joint.
 - `LimbSide` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A side of the body.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
-- `loadActions` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Defines the actions of files read from data/anim/actions/ (each `{ "action": "<name>", …spec }`, as `action:<name>`) and returns them.
+- `loadActions` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Defines the actions of files read from data/anim/actions/ (each `{ "action": "<name>", …spec }`, as `action:<name>`) and returns them.
 - `loadClipLibrary` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Loads a set (its text or object, read by validate.ts `parseClipSet`, which throws its `ANIM_CLIP_*` codes).
 - `locomoteClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `loops.idle`, `walk` or `run` on actor `id` by its ground speed, each at that speed; null stops them.
 - `LOD` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The detail levels `pose({ lod })` takes, by index: how often it re-solves, in ticks, and which slots run.
@@ -1213,8 +1218,8 @@ game agent's manual.
 - `MASKS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The preset bone masks.
 - `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
-- `MatrixRun` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): One run of the matrix: a state held at a facing, from rest and back to rest, one pose per step.
-- `MatrixState` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): A state the matrix holds: the body states told every step, or a script, for so many seconds.
+- `MatrixRun` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): One run of the matrix: a state held at a facing, from rest and back to rest, one pose per step.
+- `MatrixState` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): A state the matrix holds: the body states told every step, or a script, for so many seconds.
 - `measureFeel` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `measureMove` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Measures where `move`'s strike point (the blade's tip, the fist, the foot's sole) goes through its hit window, on a spare body of `options.build` holding `options.weapon` (`build:chibi` with a sword by default): the hit cone and height window to test targets against (`inHitShape`).
 - `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
@@ -1244,7 +1249,7 @@ game agent's manual.
 - `PHASES` (const from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): The phases systems run in, in order; the engine's `timers` stage runs between `readback` and `rules`.
 - `Physics` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): A physics world: bodies, stepping, queries, and the sim's physics hook (`state`, `capture`, `restore`).
 - `PHYSICS_SETTINGS` (const from [`engine/physics/params.ts`](../engine/physics/params.ts)): The physics settings, path → field; `defineSettings(PHYSICS_SETTINGS, registry)` declares them on another registry.
-- `physicsOf` (function from [`engine/physics/world.ts`](../engine/physics/world.ts)): The physics world of a sim world: its bodies and queries.
+- `physicsOf` (function from [`engine/physics/binding.ts`](../engine/physics/binding.ts)): The physics world of a sim world: its bodies and queries.
 - `physicsWalls` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `playClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `clip` (`SET/Clip`, or bare) on actor `id`, fading in over what plays (the layer's `play`).
@@ -1312,9 +1317,9 @@ game agent's manual.
 - `rescueLost` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
 - `resolveMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `move` names, with `over` laid on it (`time` and `body` field by field): an id (a bare name gets the `move:` prefix), a `Move` entry, or a spec, parsed once and frozen.
 - `RestBody` (type from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): A body's rest measurements (mm and degrees), measured by the importer from the library's own clips: `H0`, the standing pelvis height (the unit of `hips` and `root`); `Pr`, `Cr` and `Hr`, the rest frames of the pelvis, chest and head (`[forward, right, up]` axes); the four `spine` bones from the pelvis to the neck, and `spineW`, how much of the pelvis-to-chest turn each takes (the library's own), as `neckW` is the neck's share of the chest-to-head turn; `cv`, each collarbone from its pivot to the shoulder; and the segments' lengths (`up`, `fore`, `thigh`, `shin`…).
-- `restBuild` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The proportions of rest body `R` as a build's fields (metres, size 1): the mannequin's, for the quaternius set.
-- `restPoints` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The 36 decode points of `world` (FK on `restSkeleton(R)`), written into `out` as the decode writes them: mm in the rig frame, `[forward, right, up]` in `POSE_POINTS` order.
-- `restSkeleton` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The humanoid skeleton of rest body `R`: its bones measured, its rest curve kept (see the file comment).
+- `restBuild` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The proportions of rest body `R` as a build's fields (metres, size 1): the mannequin's, for the quaternius set.
+- `restPoints` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The 36 decode points of `world` (FK on `restSkeleton(R)`), written into `out` as the decode writes them: mm in the rig frame, `[forward, right, up]` in `POSE_POINTS` order.
+- `restSkeleton` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The humanoid skeleton of rest body `R`: its bones measured, its rest curve kept (see the file comment).
 - `RETARGET` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units).
 - `RetargetOptions` (interface from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): What `retargetPose` does beyond the rotation copy.
 - `retargetPose` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): `baked` at `t` seconds on `skeleton`, written into `out` (a new pose by default): the rotations copied and aligned at rest, the hip joints where the clip's are times the hip-height ratio, the root at the origin unturned; then the feet planted, the pose lifted and a held blade kept above the floor (`options`).
@@ -1330,6 +1335,7 @@ game agent's manual.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
 - `ScenePropComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `sceneProp`: a prop standing in a scene.
 - `ScenePropComponents` (type from [`engine/sim/props.ts`](../engine/sim/props.ts)): The components this module reads.
+- `SceneSound` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A sound a sim event plays: an `sfx` entry, its gain (1 by default) and its variant (the effect's next by default).
 - `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
 - `Secondary` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The secondary-motion layer: squash, hair, cape and tail on a humanoid.
@@ -1345,7 +1351,7 @@ game agent's manual.
 - `Shape` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A shape, sized like three.js's geometries (see the file comment).
 - `ShapeCastOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A shape cast's options.
 - `Sheet` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A drawn sheet: the SVG text, its hash, and its size in pixels.
-- `SHEET_CAMERAS` (const from [`engine/anim/check.ts`](../engine/anim/check.ts)): The cameras sheets of the matrix draw each frame from: presets of `anim.sheet()`'s views (engine/anim/sheet.ts).
+- `SHEET_CAMERAS` (const from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The cameras sheets of the matrix draw each frame from: presets of `anim.sheet()`'s views (engine/anim/sheet.ts).
 - `SheetFrame` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): One frame of a sheet: a pose, and its label (`#<index>` when absent).
 - `SheetOptions` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): What a sheet draws, and how.
 - `SheetView` (type from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A view's name.
@@ -1376,9 +1382,9 @@ game agent's manual.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
 - `STANCES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The stances, held while moving.
 - `standingHipHeight` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): A skeleton's standing hip height, metres: its hip joints' rest height (straight legs; for a build, its pelvis's, `legUpper + legLower` times `size`).
-- `STATE_MATRIX` (const from [`engine/anim/check.ts`](../engine/anim/check.ts)): The state matrix's defaults.
-- `stateMatrix` (function from [`engine/anim/check.ts`](../engine/anim/check.ts)): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
-- `StateMatrixOptions` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `stateMatrix` runs.
+- `STATE_MATRIX` (const from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The state matrix's defaults.
+- `stateMatrix` (function from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
+- `StateMatrixOptions` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): What `stateMatrix` runs.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
@@ -1391,7 +1397,7 @@ game agent's manual.
 - `strikeSegment` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Where `part` spans on a body's pose now, world metres, into `base` and `tip`: a sword from near the grip to its tip (another weapon strikes as the right fist), a forearm from the elbow to the wrist, the right shin from the knee to the sole.
 - `strikeTime` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): When `clip`'s strike lands, seconds from its start, decoded on rest body `R` (see the file comment).
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
-- `Sweep` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
+- `Sweep` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
 - `sweepHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets the swept quad touches (`sweepTouches`), by id, ascending.
 - `sweepTouches` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
@@ -1449,35 +1455,41 @@ game agent's manual.
 
 For the agents who maintain the engine.
 
-### [`engine/anim/actions.ts`](../engine/anim/actions.ts)
+### [`engine/anim/actions-check.ts`](../engine/anim/actions-check.ts)
+
+- `actionCheck` (function): The action's check: a state of the matrix (check.ts) that plays it as `check` says, on the animator's build with a clip layer over `libraries` (its clip beats' sets), signalling at its times and lifting the body by `lift` (times the build's size).
+
+### [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)
 
 - `Action` (type): An `action` entry.
 - `ACTION` (const): Every constant: `out`, the seconds the channels ease back to rest after an action; `pivot`, the flip's pivot above the ground, a share of the hip height (`heroRoll`'s `cz`); `arm` and `leg`, the metres hand and foot targets are written for (the reference arm, moves-data.ts; `build:chibi`'s thigh and shin).
-- `ACTION_CODES` (const): The codes this module raises, with their fixes.
 - `ACTION_FIELDS` (const): The fields of an `action` entry.
-- `actionCheck` (function): The action's check: a state of the matrix (check.ts) that plays it as `check` says, on the animator's build with a clip layer over `libraries` (its clip beats' sets), signalling at its times and lifting the body by `lift` (times the build's size).
 - `actionKind` (function): Declares the kind `action` on `registry`, unless it has it.
-- `Actions` (class): A body's actions, one playing at a time.
-- `ActionsOptions` (interface): What `new Actions` takes.
 - `ActionSpec` (type): What `defineAction` takes: `desc` and `beats`, each beat's `name` and `seconds`; the rest as it likes.
-- `ActionsState` (interface): An `Actions`' state, plain data.
 - `Beat` (type): One beat of an action.
 - `BEAT_FIELDS` (const): The fields of a beat.
-- `CHANNELS` (const): The channels' layout: motion (5), each effector's target and weight (4 × 5), the flip's angle and axis, scale (3).
 - `defineAction` (function): Defines an action on `registry` (the shared one).
 - `EFFECTORS` (const): The effectors a beat may pull, in channel order.
 - `FLIP_AXES` (const): What a flip turns about, in the body's frame: the top of the body goes forward, back, left, right; or it spins left.
 - `getAction` (function): The action `id` (`action:jump`, or `jump`); a missing one throws `CORE_NO_ENTRY`, naming the closest.
 - `loadActions` (function): Defines the actions of files read from data/anim/actions/ (each `{ "action": "<name>", …spec }`, as `action:<name>`) and returns them.
 
+### [`engine/anim/actions.ts`](../engine/anim/actions.ts)
+
+- `ACTION_CODES` (const): The codes this module raises, with their fixes.
+- `Actions` (class): A body's actions, one playing at a time.
+- `ActionsOptions` (interface): What `new Actions` takes.
+- `ActionsState` (interface): An `Actions`' state, plain data.
+- `CHANNELS` (const): The channels' layout: motion (5), each effector's target and weight (4 × 5), the flip's angle and axis, scale (3).
+
 ### [`engine/anim/api.ts`](../engine/anim/api.ts)
 
-- `Action` (type from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): An `action` entry.
-- `ACTION` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Every constant: `out`, the seconds the channels ease back to rest after an action; `pivot`, the flip's pivot above the ground, a share of the hip height (`heroRoll`'s `cz`); `arm` and `leg`, the metres hand and foot targets are written for (the reference arm, moves-data.ts; `build:chibi`'s thigh and shin).
-- `actionCheck` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The action's check: a state of the matrix (check.ts) that plays it as `check` says, on the animator's build with a clip layer over `libraries` (its clip beats' sets), signalling at its times and lifting the body by `lift` (times the build's size).
+- `Action` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): An `action` entry.
+- `ACTION` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Every constant: `out`, the seconds the channels ease back to rest after an action; `pivot`, the flip's pivot above the ground, a share of the hip height (`heroRoll`'s `cz`); `arm` and `leg`, the metres hand and foot targets are written for (the reference arm, moves-data.ts; `build:chibi`'s thigh and shin).
+- `actionCheck` (function from [`engine/anim/actions-check.ts`](../engine/anim/actions-check.ts)): The action's check: a state of the matrix (check.ts) that plays it as `check` says, on the animator's build with a clip layer over `libraries` (its clip beats' sets), signalling at its times and lifting the body by `lift` (times the build's size).
 - `Actions` (class from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): A body's actions, one playing at a time.
 - `ActionsOptions` (interface from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What `new Actions` takes.
-- `ActionSpec` (type from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What `defineAction` takes: `desc` and `beats`, each beat's `name` and `seconds`; the rest as it likes.
+- `ActionSpec` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): What `defineAction` takes: `desc` and `beats`, each beat's `name` and `seconds`; the rest as it likes.
 - `ActionsState` (interface from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): An `Actions`' state, plain data.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
@@ -1499,13 +1511,13 @@ For the agents who maintain the engine.
 - `AnimProblem` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): One problem: the check, the point, the first frame that has it, how many frames do, and a plain sentence.
 - `animSheet` (function from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): Draws `frames` (poses, or `{ pose, label }`) as an SVG contact sheet: one card per frame, holding one panel per view, all at one scale.
 - `ArmState` (interface from [`engine/anim/strike.ts`](../engine/anim/strike.ts)): The arm's state: plain numbers, stepped by `stepArm`, read by `layArm` and `armBlade`.
-- `Attack` (class from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): One move played on a timeline: `start` a swing, `update` it one fixed step (its events: `wind`, `active`, `hitOpen`, `hitClose`, `recover`, `end`), tell the body `body`, connect with `hits` once per target per swing while the hit window is open, and read the strike's `sweep` there.
-- `AttackState` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): An attack as plain data: its timeline, the targets it hit this swing, its last segment, its window.
+- `Attack` (class from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): One move played on a timeline: `start` a swing, `update` it one fixed step (its events: `wind`, `active`, `hitOpen`, `hitClose`, `recover`, `end`), tell the body `body`, connect with `hits` once per target per swing while the hit window is open, and read the strike's `sweep` there.
+- `AttackState` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): An attack as plain data: its timeline, the targets it hit this swing, its last segment, its window.
 - `B` (function from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): `f` metres forward, `r` right and `u` up, in the model frame (+Z forward, −X right, +Y up).
 - `BAKE_FPS` (const from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): Frames a second of a baked clip.
 - `bakeClip` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): Bakes `clip` on its source's rest body `R` (see the file comment).
 - `BakedClip` (interface from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): A clip baked to rotation tracks (see the file comment).
-- `Beat` (type from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): One beat of an action.
+- `Beat` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): One beat of an action.
 - `BlendOptions` (interface from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): How `blendPoses` blends.
 - `blendPoses` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), each joint's share scaled by `options.mask`, written into `out` (a new pose by default; `a` or `b` may be `out`).
 - `Blob` (class from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A blob: its state, its skeleton's pose.
@@ -1531,18 +1543,18 @@ For the agents who maintain the engine.
 - `BodyCheckReport` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `animCheckBody` found, with the runs it checked.
 - `BodyMotion` (interface from [`engine/anim/locomotion.ts`](../engine/anim/locomotion.ts)): A move's body motion now, eased toward its targets (a move's arm path asks for them, strike.ts `stepArm`).
 - `BodyStateName` (type from [`engine/anim/states.ts`](../engine/anim/states.ts)): A body state's name.
-- `BoneCapsule` (type from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A bone capsule: the segment `a`–`b` with a `radius`, world metres (a sphere when `a` equals `b`).
+- `BoneCapsule` (type from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A bone capsule: the segment `a`–`b` with a `radius`, world metres (a sphere when `a` equals `b`).
 - `boneMask` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A bone mask: a preset (`'upper'`: spine0 and everything above it; `'lower'`: the pelvis, the legs and the root; `'arms'`, `'legs'`, one limb, `'head'`, `'full'`), a list of joints and presets (each listed joint alone; `'root'` for the root's channels), or weights by joint (`{ chest: 0.5, root: 1 }`).
 - `BoneMask` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): How much of a blend or layer reaches each joint (0–1, in `JOINTS` order) and the root's channels.
 - `Build` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): A `build` entry: one body's proportions, in metres before `size`.
 - `BuildSpec` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): What `defineBuild` takes: any field; the others keep `build:chibi`'s values.
-- `Cape` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape: two chains, its left and right edges, held `width` apart (wider toward the hem by `flare`).
-- `CAPE` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
-- `CapeOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What a cape is made of: its edges' chain options, `width` metres apart at the top, and `CAPE`'s flare and flutter.
-- `Chain` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): One verlet strand.
-- `CHAIN` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The chains' shared tuning.
-- `ChainOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What a chain is made of: `n` points (2 or more, the anchor first) `seg` metres apart, and its tuning.
-- `ChainTuning` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A chain's tuning, which may change between steps; the defaults are `CHAIN`'s (stiffness 0, wind none).
+- `Cape` (class from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A cape: two chains, its left and right edges, held `width` apart (wider toward the hem by `flare`).
+- `CAPE` (const from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
+- `CapeOptions` (interface from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): What a cape is made of: its edges' chain options, `width` metres apart at the top, and `CAPE`'s flare and flutter.
+- `Chain` (class from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): One verlet strand.
+- `CHAIN` (const from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): The chains' shared tuning.
+- `ChainOptions` (interface from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): What a chain is made of: `n` points (2 or more, the anchor first) `seg` metres apart, and its tuning.
+- `ChainTuning` (interface from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A chain's tuning, which may change between steps; the defaults are `CHAIN`'s (stiffness 0, wind none).
 - `CHANNELS` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The channels' layout: motion (5), each effector's target and weight (4 × 5), the flip's angle and axis, scale (3).
 - `checkBodyStates` (function from [`engine/anim/states.ts`](../engine/anim/states.ts)): Checks `input`'s words against the vocabulary: warns once per word outside it (`ANIM_UNKNOWN_STATE`) and once per word whose value is of the wrong kind (`ANIM_BAD_STATE`), adding each such word to `ignored`.
 - `Clip` (interface from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): One clip: its header, then its keys in time order.
@@ -1573,37 +1585,39 @@ For the agents who maintain the engine.
 - `ClipStepInput` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): What `step` reads.
 - `clipText` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): The text an agent reads and edits: the clip's header on one line, then each key as three short lines.
 - `ClipWarning` (interface from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): One warning about a clip: the code, the key (from 1) and its time, the field, and the sentence naming the fix.
-- `Combo` (class from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A chain of attacks (a 3-hit punch string, a sword combo): `press` during one hit's recover, or within `window` seconds after it ends, flows into the next; otherwise the chain starts over.
-- `ComboState` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A combo as plain data: the hit playing (−1 none), seconds since the last hit ended, the hit's own state.
-- `createFootPlantState` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A new, unlocked `FootPlantState`.
+- `Combo` (class from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A chain of attacks (a 3-hit punch string, a sword combo): `press` during one hit's recover, or within `window` seconds after it ends, flows into the next; otherwise the chain starts over.
+- `ComboState` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A combo as plain data: the hit playing (−1 none), seconds since the last hit ended, the hit's own state.
+- `createFootPlantState` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A new, unlocked `FootPlantState`.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
 - `decodePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it.
-- `defineAction` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Defines an action on `registry` (the shared one).
+- `defineAction` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Defines an action on `registry` (the shared one).
 - `defineBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
 - `defineClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Parses `input` (a set's text or object, `parseClipSet`) and registers it on `registry` as `clipSetId(set)`; a set registered already is returned when it is the same, and refused (`CORE_DUPLICATE_ID`) when it differs.
 - `defineMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): Defines a move on `registry` (the shared one by default) and returns it; absent fields keep a plain strike's values.
 - `defineSetBuild` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Registers build `id` with the proportions clip set `setId`'s clips were captured on (retarget.ts `restBuild` of its first source's rest body, or `source`'s), once, and returns it: `build:mannequin` from `clipset:quaternius` is the build engine/gfx/puppets/bodies/mannequin.ts draws, which the sim's animator needs before the view's body exists.
 - `easeWeight` (function from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): One fixed step of easing: `value` moves toward `target` at `rates[0]` (+ `gain` × value) rising, `rates[1]` falling.
 - `Effectors` (interface from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The effector stage's targets: rig-local metres before `size`, in the model frame (+Z forward, +Y up).
-- `EFFECTORS` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The effectors a beat may pull, in channel order.
+- `EFFECTORS` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): The effectors a beat may pull, in channel order.
 - `emptyClipState` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): An empty clip layer's state: nothing plays.
-- `FLIP_AXES` (const from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What a flip turns about, in the body's frame: the top of the body goes forward, back, left, right; or it spins left.
+- `FLIP_AXES` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): What a flip turns about, in the body's frame: the top of the body goes forward, back, left, right; or it spins left.
 - `Floater` (class from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater: its state, its pose.
 - `FLOATER` (const from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's tuning: the source's numbers, lengths ÷ 16 in metres, and the bank's.
 - `FloaterInput` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is told each step; every field is optional.
 - `FloaterOptions` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is made from.
 - `FloaterPose` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater's pose: the core's world matrix and the motes' world positions.
 - `FloaterState` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's state: what `step` eases and `pose` reads, plain numbers.
-- `FOOT_PLANT` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `footPlant`'s tuning, in metres and seconds.
-- `FootLock` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
-- `footPlant` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
-- `FootPlantOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `footPlant` plants.
-- `FootPlantState` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
+- `FOOT_PLANT` (const from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): `footPlant`'s tuning, in metres and seconds.
+- `FootLock` (type from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
+- `footPlant` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the floor (`options.floor`) over the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
+- `FootPlant` (class from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The foot plant as the animator's last `post` layer (see the file comment): each tick, the feet stand on a flat floor at the body's height.
+- `FootPlantLayerOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The `FootPlant` layer's options.
+- `FootPlantOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): How `footPlant` plants.
+- `FootPlantState` (type from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
 - `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
 - `fromLegacy` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A legacy `E.MOVES` spec in the new fields (Appendix C, `LEGACY_FIELDS`); defaults are written out only when needed.
 - `FRU` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A rig-local point or direction: metres (or a direction's parts) forward, right and up.
-- `getAction` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): The action `id` (`action:jump`, or `jump`); a missing one throws `CORE_NO_ENTRY`, naming the closest.
+- `getAction` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): The action `id` (`action:jump`, or `jump`); a missing one throws `CORE_NO_ENTRY`, naming the closest.
 - `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
 - `getClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The registered set `id` (`clipset:quaternius`); a missing one throws `CORE_NO_ENTRY`, naming the closest ids.
 - `getMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`, naming the closest) and gives `move:slash`.
@@ -1641,7 +1655,7 @@ For the agents who maintain the engine.
 - `LimbPose` (type from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): A limb: `[forward, out, up]` as percentages (need not add up), then the bend and twist in degrees.
 - `LIMBS` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The skeleton's four limbs, by their end joint.
 - `LimbSide` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A side of the body.
-- `loadActions` (function from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): Defines the actions of files read from data/anim/actions/ (each `{ "action": "<name>", …spec }`, as `action:<name>`) and returns them.
+- `loadActions` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Defines the actions of files read from data/anim/actions/ (each `{ "action": "<name>", …spec }`, as `action:<name>`) and returns them.
 - `loadClipLibrary` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Loads a set (its text or object, read by validate.ts `parseClipSet`, which throws its `ANIM_CLIP_*` codes).
 - `LOD` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The detail levels `pose({ lod })` takes, by index: how often it re-solves, in ticks, and which slots run.
 - `Lying` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body lies: on its back (`up`) or on its face (`down`).
@@ -1649,8 +1663,8 @@ For the agents who maintain the engine.
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
 - `MaskName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A preset bone mask's name.
 - `MASKS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The preset bone masks.
-- `MatrixRun` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): One run of the matrix: a state held at a facing, from rest and back to rest, one pose per step.
-- `MatrixState` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): A state the matrix holds: the body states told every step, or a script, for so many seconds.
+- `MatrixRun` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): One run of the matrix: a state held at a facing, from rest and back to rest, one pose per step.
+- `MatrixState` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): A state the matrix holds: the body states told every step, or a script, for so many seconds.
 - `measureMove` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Measures where `move`'s strike point (the blade's tip, the fist, the foot's sole) goes through its hit window, on a spare body of `options.build` holding `options.weapon` (`build:chibi` with a sword by default): the hit cone and height window to test targets against (`inHitShape`).
 - `mirrorClip` (function from [`engine/anim/clip/mirror.ts`](../engine/anim/clip/mirror.ts)): The same clip on the other side, named `<clip>_Mirror` (see the file comment).
 - `Move` (type from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A `move` entry: one named strike.
@@ -1680,9 +1694,9 @@ For the agents who maintain the engine.
 - `ReactionState` (interface from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): Reactions as plain data.
 - `resolveMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `move` names, with `over` laid on it (`time` and `body` field by field): an id (a bare name gets the `move:` prefix), a `Move` entry, or a spec, parsed once and frozen.
 - `RestBody` (type from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): A body's rest measurements (mm and degrees), measured by the importer from the library's own clips: `H0`, the standing pelvis height (the unit of `hips` and `root`); `Pr`, `Cr` and `Hr`, the rest frames of the pelvis, chest and head (`[forward, right, up]` axes); the four `spine` bones from the pelvis to the neck, and `spineW`, how much of the pelvis-to-chest turn each takes (the library's own), as `neckW` is the neck's share of the chest-to-head turn; `cv`, each collarbone from its pivot to the shoulder; and the segments' lengths (`up`, `fore`, `thigh`, `shin`…).
-- `restBuild` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The proportions of rest body `R` as a build's fields (metres, size 1): the mannequin's, for the quaternius set.
-- `restPoints` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The 36 decode points of `world` (FK on `restSkeleton(R)`), written into `out` as the decode writes them: mm in the rig frame, `[forward, right, up]` in `POSE_POINTS` order.
-- `restSkeleton` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The humanoid skeleton of rest body `R`: its bones measured, its rest curve kept (see the file comment).
+- `restBuild` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The proportions of rest body `R` as a build's fields (metres, size 1): the mannequin's, for the quaternius set.
+- `restPoints` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The 36 decode points of `world` (FK on `restSkeleton(R)`), written into `out` as the decode writes them: mm in the rig frame, `[forward, right, up]` in `POSE_POINTS` order.
+- `restSkeleton` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The humanoid skeleton of rest body `R`: its bones measured, its rest curve kept (see the file comment).
 - `RETARGET` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units).
 - `RetargetOptions` (interface from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): What `retargetPose` does beyond the rotation copy.
 - `retargetPose` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): `baked` at `t` seconds on `skeleton`, written into `out` (a new pose by default): the rotations copied and aligned at rest, the hip joints where the clip's are times the hip-height ratio, the root at the origin unturned; then the feet planted, the pose lifted and a held blade kept above the floor (`options`).
@@ -1695,7 +1709,7 @@ For the agents who maintain the engine.
 - `Secondary` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The secondary-motion layer: squash, hair, cape and tail on a humanoid.
 - `SecondaryOptions` (interface from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): What `Secondary` runs: each part is off unless given (the squash is on unless `false`).
 - `Sheet` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A drawn sheet: the SVG text, its hash, and its size in pixels.
-- `SHEET_CAMERAS` (const from [`engine/anim/check.ts`](../engine/anim/check.ts)): The cameras sheets of the matrix draw each frame from: presets of `anim.sheet()`'s views (engine/anim/sheet.ts).
+- `SHEET_CAMERAS` (const from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The cameras sheets of the matrix draw each frame from: presets of `anim.sheet()`'s views (engine/anim/sheet.ts).
 - `SheetFrame` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): One frame of a sheet: a pose, and its label (`#<index>` when absent).
 - `SheetOptions` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): What a sheet draws, and how.
 - `SheetView` (type from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A view's name.
@@ -1711,16 +1725,16 @@ For the agents who maintain the engine.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
 - `STANCES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The stances, held while moving.
 - `standingHipHeight` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): A skeleton's standing hip height, metres: its hip joints' rest height (straight legs; for a build, its pelvis's, `legUpper + legLower` times `size`).
-- `STATE_MATRIX` (const from [`engine/anim/check.ts`](../engine/anim/check.ts)): The state matrix's defaults.
-- `stateMatrix` (function from [`engine/anim/check.ts`](../engine/anim/check.ts)): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
-- `StateMatrixOptions` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): What `stateMatrix` runs.
+- `STATE_MATRIX` (const from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The state matrix's defaults.
+- `stateMatrix` (function from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
+- `StateMatrixOptions` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): What `stateMatrix` runs.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
 - `StrikeAnimator` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of an animator: its body, which the sim poses only with `preciseHits`.
 - `StrikeBody` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of a body.
 - `strikePart` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): The part of a body that strikes in `move`: the right foot, the left fist, a held weapon's blade, or the right fist.
 - `strikeSegment` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Where `part` spans on a body's pose now, world metres, into `base` and `tip`: a sword from near the grip to its tip (another weapon strikes as the right fist), a forearm from the elbow to the wrist, the right shin from the knee to the sole.
 - `strikeTime` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): When `clip`'s strike lands, seconds from its start, decoded on rest body `R` (see the file comment).
-- `Sweep` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
+- `Sweep` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
 - `TAIL` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A tail from the back of the pelvis, holding its curve back and up (chosen here: the source had none).
 - `Timeline` (class from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): Phases played in order, one fixed step at a time.
 - `TimelineEvent` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): An event a timeline fired.
@@ -1743,6 +1757,16 @@ For the agents who maintain the engine.
 - `WeightInfo` (interface from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): What drives a weight and how it eases.
 - `WeightRates` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A weight's easing rates, per second: `[rising, falling]`.
 - `WorldPose` (interface from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): A pose in world space: each joint's matrix (16 numbers), position (3) and rotation (4), in `JOINTS` order.
+
+### [`engine/anim/attack.ts`](../engine/anim/attack.ts)
+
+- `Attack` (class): One move played on a timeline: `start` a swing, `update` it one fixed step (its events: `wind`, `active`, `hitOpen`, `hitClose`, `recover`, `end`), tell the body `body`, connect with `hits` once per target per swing while the hit window is open, and read the strike's `sweep` there.
+- `ATTACK_CODES` (const): The codes this module raises, with their fixes.
+- `AttackState` (interface): An attack as plain data: its timeline, the targets it hit this swing, its last segment, its window.
+- `Combo` (class): A chain of attacks (a 3-hit punch string, a sword combo): `press` during one hit's recover, or within `window` seconds after it ends, flows into the next; otherwise the chain starts over.
+- `ComboState` (interface): A combo as plain data: the hit playing (−1 none), seconds since the last hit ended, the hit's own state.
+- `movePhases` (function): A move's timeline: wind, active (the hit window from `hitAt` to its end), recover.
+- `Sweep` (interface): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
 
 ### [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)
 
@@ -1793,6 +1817,19 @@ For the agents who maintain the engine.
 - `defineBuild` (function): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
 - `getBuild` (function): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
 
+### [`engine/anim/chain.ts`](../engine/anim/chain.ts)
+
+- `BoneCapsule` (type): A bone capsule: the segment `a`–`b` with a `radius`, world metres (a sphere when `a` equals `b`).
+- `Cape` (class): A cape: two chains, its left and right edges, held `width` apart (wider toward the hem by `flare`).
+- `CAPE` (const): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
+- `CapeOptions` (interface): What a cape is made of: its edges' chain options, `width` metres apart at the top, and `CAPE`'s flare and flutter.
+- `Chain` (class): One verlet strand.
+- `CHAIN` (const): The chains' shared tuning.
+- `ChainOptions` (interface): What a chain is made of: `n` points (2 or more, the anchor first) `seg` metres apart, and its tuning.
+- `ChainTuning` (interface): A chain's tuning, which may change between steps; the defaults are `CHAIN`'s (stiffness 0, wind none).
+- `innerSteps` (const): The inner steps a step of `dt` seconds takes.
+- `SECONDARY_CODES` (const): The codes this module raises, with their fixes.
+
 ### [`engine/anim/character.ts`](../engine/anim/character.ts)
 
 - `Animator` (class): The character animator: a body, its layer stack and the two update paths.
@@ -1819,18 +1856,8 @@ For the agents who maintain the engine.
 - `BodyCheckOptions` (interface): What `animCheckBody` checks: the matrix, `animCheck`'s spec, the hash and the rate.
 - `BodyCheckReport` (interface): What `animCheckBody` found, with the runs it checked.
 - `CHECK_CODES` (const): The codes this module raises, with their fixes.
-- `hashRun` (function): A run's 64-bit FNV-1a digest over every pose, 16 hex digits: the same run, the same hash.
-- `MatrixRun` (interface): One run of the matrix: a state held at a facing, from rest and back to rest, one pose per step.
-- `MatrixState` (interface): A state the matrix holds: the body states told every step, or a script, for so many seconds.
 - `PointName` (type): A point a rigid pair can name: a joint, a socket, or the root.
-- `rateDrift` (function): How far points stray between a run (`coarse`, points per step) and the same run at half the step, beyond what each moves in one coarse step either side (two discretizations of a fast motion may lie a step apart): the worst excess, its step and its point's index.
 - `RigidPair` (type): Two points whose distance must not change: from the first frame, or the distance given third (metres).
-- `RUN_POINTS` (const): The points `runPoints` measures, in order: the joints, then the sockets.
-- `runPoints` (function): Each step's joints and sockets (`RUN_POINTS`), measured from the body's position: what a rate or a pop compares.
-- `SHEET_CAMERAS` (const): The cameras sheets of the matrix draw each frame from: presets of `anim.sheet()`'s views (engine/anim/sheet.ts).
-- `STATE_MATRIX` (const): The state matrix's defaults.
-- `stateMatrix` (function): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
-- `StateMatrixOptions` (interface): What `stateMatrix` runs.
 
 ### [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)
 
@@ -1956,14 +1983,17 @@ For the agents who maintain the engine.
 - `samplePose` (function): The 36 body points at time `t` on rest body `R`, written into `out` (a new Float32Array, as the source's, unless given; pass a Float64Array for full precision).
 - `Triple` (type): Three numbers: a point or direction `[f, r, z]`, or `[turn, lean, tilt]` in degrees.
 
+### [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)
+
+- `restBuild` (function): The proportions of rest body `R` as a build's fields (metres, size 1): the mannequin's, for the quaternius set.
+- `restPoints` (function): The 36 decode points of `world` (FK on `restSkeleton(R)`), written into `out` as the decode writes them: mm in the rig frame, `[forward, right, up]` in `POSE_POINTS` order.
+- `restSkeleton` (function): The humanoid skeleton of rest body `R`: its bones measured, its rest curve kept (see the file comment).
+
 ### [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)
 
 - `AnimationClipJSON` (interface): What three.js's `AnimationClip.parse` reads: the clip's name, length and tracks.
 - `clipJSON` (function): `baked` as three.js `AnimationClip` JSON for `skeleton`: a `<joint>.quaternion` track per joint (the rotation copy) and `root.position` (the hip joints by the hip-height ratio; with `travel`, plus the clip's travel), keyed on bones named as the puppets' are (`root` and the joints).
 - `hipRatio` (const): The hip-height ratio of `skeleton` to the rest body `baked` was measured on (their standing hip joints): the clip's places scale by it on that skeleton (the hip joints, the feet's goals, the travel).
-- `restBuild` (function): The proportions of rest body `R` as a build's fields (metres, size 1): the mannequin's, for the quaternius set.
-- `restPoints` (function): The 36 decode points of `world` (FK on `restSkeleton(R)`), written into `out` as the decode writes them: mm in the rig frame, `[forward, right, up]` in `POSE_POINTS` order.
-- `restSkeleton` (function): The humanoid skeleton of rest body `R`: its bones measured, its rest curve kept (see the file comment).
 - `RETARGET` (const): Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units).
 - `RetargetOptions` (interface): What `retargetPose` does beyond the rotation copy.
 - `retargetPose` (function): `baked` at `t` seconds on `skeleton`, written into `out` (a new pose by default): the rotations copied and aligned at rest, the hip joints where the clip's are times the hip-height ratio, the root at the origin unturned; then the feet planted, the pose lifted and a held blade kept above the floor (`options`).
@@ -2004,6 +2034,17 @@ For the agents who maintain the engine.
 - `FloaterPose` (interface): A floater's pose: the core's world matrix and the motes' world positions.
 - `FloaterState` (interface): The floater's state: what `step` eases and `pose` reads, plain numbers.
 
+### [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)
+
+- `createFootPlantState` (function): A new, unlocked `FootPlantState`.
+- `FOOT_PLANT` (const): `footPlant`'s tuning, in metres and seconds.
+- `FootLock` (type): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
+- `footPlant` (function): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the floor (`options.floor`) over the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
+- `FootPlant` (class): The foot plant as the animator's last `post` layer (see the file comment): each tick, the feet stand on a flat floor at the body's height.
+- `FootPlantLayerOptions` (interface): The `FootPlant` layer's options.
+- `FootPlantOptions` (interface): How `footPlant` plants.
+- `FootPlantState` (type): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
+
 ### [`engine/anim/humanoid.ts`](../engine/anim/humanoid.ts)
 
 - `Humanoid` (class): A procedural humanoid: state, effectors, pose.
@@ -2019,12 +2060,6 @@ For the agents who maintain the engine.
 - `AIM_CHAIN` (const): The default chain, from the body up: about 103° of yaw and 69° of pitch in all.
 - `AimLink` (type): One joint of an aim chain: the `joint`, its `share` of the turn (a chain's shares need not add up to 1), and the most it turns the gaze left or right (`yaw`) and up or down (`pitch`), in radians.
 - `AimOptions` (interface): How `aim` turns.
-- `createFootPlantState` (function): A new, unlocked `FootPlantState`.
-- `FOOT_PLANT` (const): `footPlant`'s tuning, in metres and seconds.
-- `FootLock` (type): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
-- `footPlant` (function): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
-- `FootPlantOptions` (interface): How `footPlant` plants.
-- `FootPlantState` (type): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
 - `GroundHit` (type): Where a ground probe hit, in world space: the `point`, and the surface's unit `normal` there.
 - `GroundProbe` (type): Casts a ray straight down from `origin`, at most `distance` metres; on a hit it fills `hit` and returns true.
 - `handTo` (function): `twoBoneRot` for the arm of `hand`, bringing its weapon socket (`weaponL`, `weaponR`) to `grip`: returns how far the socket stays from it (0 in reach).
@@ -2032,6 +2067,7 @@ For the agents who maintain the engine.
 - `Limb` (type): A two-bone limb: the joint it hangs from (`upper`: hip or shoulder), its hinge (`middle`: knee or elbow), and the hinge's axis in the upper joint's frame (`hinge`; a positive turn bends the shin back and the forearm forward).
 - `LimbEnd` (type): A joint that ends a two-bone limb: an ankle or a wrist.
 - `LIMBS` (const): The skeleton's four limbs, by their end joint.
+- `SLACK` (const): `ik3`'s 0.01-unit margin in metres: a limb stops this short of straight, and a target is never nearer.
 - `twoBone` (function): Two-bone IK on positions (`ik3`): the middle joint (knee, elbow) and the end of a limb of bone lengths `upper` and `lower` from `root` toward `target`, bent toward the direction `pole`; out of reach, the end stops on the line to the target.
 - `TwoBoneOptions` (interface): How `twoBoneRot` and `handTo` solve.
 - `twoBoneRot` (function): Turns the limb ending at `end` (an ankle or a wrist) through its three joints' local rotations so the end reaches `target`, then runs FK.
@@ -2136,17 +2172,8 @@ For the agents who maintain the engine.
 
 - `BODY_CAPSULES` (const): The capsules `bodyCapsules` builds: joint to joint, `trunk` (half the chestDepth) or `limb` thick, and the head.
 - `bodyCapsules` (function): The body's bone capsules in `world` (`BODY_CAPSULES`, then the head as a ball), written into `out`.
-- `BoneCapsule` (type): A bone capsule: the segment `a`–`b` with a `radius`, world metres (a sphere when `a` equals `b`).
-- `Cape` (class): A cape: two chains, its left and right edges, held `width` apart (wider toward the hem by `flare`).
-- `CAPE` (const): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
-- `CapeOptions` (interface): What a cape is made of: its edges' chain options, `width` metres apart at the top, and `CAPE`'s flare and flutter.
-- `Chain` (class): One verlet strand.
-- `CHAIN` (const): The chains' shared tuning.
-- `ChainOptions` (interface): What a chain is made of: `n` points (2 or more, the anchor first) `seg` metres apart, and its tuning.
-- `ChainTuning` (interface): A chain's tuning, which may change between steps; the defaults are `CHAIN`'s (stiffness 0, wind none).
 - `HAIR` (const): Hair from behind the head (`behind` and `lift` head radii from its centre), the source's numbers.
 - `Secondary` (class): The secondary-motion layer: squash, hair, cape and tail on a humanoid.
-- `SECONDARY_CODES` (const): The codes this module raises, with their fixes.
 - `SecondaryOptions` (interface): What `Secondary` runs: each part is off unless given (the squash is on unless `false`).
 - `SQUASH` (const): The squash spring (my-3d2dge's numbers): its pull and damping per second, and its bound either way.
 - `squashScale` (function): The root scale of a squash: 1 + `squash` tall, 1 / √(1 + `squash`) wide and deep, so the volume stays.
@@ -2183,6 +2210,19 @@ For the agents who maintain the engine.
 - `SocketName` (type): A socket's name.
 - `SOCKETS` (const): The sockets: attachment points that turn with their joint (`SOCKET_JOINTS`).
 
+### [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)
+
+- `hashRun` (function): A run's 64-bit FNV-1a digest over every pose, 16 hex digits: the same run, the same hash.
+- `MatrixRun` (interface): One run of the matrix: a state held at a facing, from rest and back to rest, one pose per step.
+- `MatrixState` (interface): A state the matrix holds: the body states told every step, or a script, for so many seconds.
+- `rateDrift` (function): How far points stray between a run (`coarse`, points per step) and the same run at half the step, beyond what each moves in one coarse step either side (two discretizations of a fast motion may lie a step apart): the worst excess, its step and its point's index.
+- `RUN_POINTS` (const): The points `runPoints` measures, in order: the joints, then the sockets.
+- `runPoints` (function): Each step's joints and sockets (`RUN_POINTS`), measured from the body's position: what a rate or a pop compares.
+- `SHEET_CAMERAS` (const): The cameras sheets of the matrix draw each frame from: presets of `anim.sheet()`'s views (engine/anim/sheet.ts).
+- `STATE_MATRIX` (const): The state matrix's defaults.
+- `stateMatrix` (function): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
+- `StateMatrixOptions` (interface): What `stateMatrix` runs.
+
 ### [`engine/anim/states.ts`](../engine/anim/states.ts)
 
 - `AnimatorInput` (interface): What a body is told each step: the humanoid's words and the trail.
@@ -2211,15 +2251,8 @@ For the agents who maintain the engine.
 
 ### [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)
 
-- `Attack` (class): One move played on a timeline: `start` a swing, `update` it one fixed step (its events: `wind`, `active`, `hitOpen`, `hitClose`, `recover`, `end`), tell the body `body`, connect with `hits` once per target per swing while the hit window is open, and read the strike's `sweep` there.
-- `AttackState` (interface): An attack as plain data: its timeline, the targets it hit this swing, its last segment, its window.
-- `Combo` (class): A chain of attacks (a 3-hit punch string, a sword combo): `press` during one hit's recover, or within `window` seconds after it ends, flows into the next; otherwise the chain starts over.
-- `ComboState` (interface): A combo as plain data: the hit playing (−1 none), seconds since the last hit ended, the hit's own state.
-- `movePhases` (function): A move's timeline: wind, active (the hit window from `hitAt` to its end), recover.
-- `Sweep` (interface): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
 - `TICK_EPSILON` (const): Seconds within which a phase counts as finished: far below a tick, far above a float sum's error.
 - `Timeline` (class): Phases played in order, one fixed step at a time.
-- `TIMELINE_CODES` (const): The codes this module raises, with their fixes.
 - `TimelineEvent` (interface): An event a timeline fired.
 - `TimelineMark` (interface): An event placed in a phase: its type and the share of the phase where it fires (0 to 1).
 - `TimelinePhase` (interface): One phase of a timeline.
@@ -2246,6 +2279,14 @@ For the agents who maintain the engine.
 - `DAMAGE_RISE` (const): How far above where a hit struck its number appears, m: about a head above a body's middle.
 - `DamageNumbers` (interface): Damage numbers from a world's trace (see the file comment).
 - `TracedWorld` (interface): What the numbers read: a world's event trace.
+
+### [`engine/app/drawing.ts`](../engine/app/drawing.ts)
+
+- `createPageDrawing` (function): The page's drawing over `parts` (see the file comment).
+- `DRAWING` (const): GPU frames drawn while a replay plays before the queue is drained (`drain`); frames tried before a warm-up counts as stuck (`tries`).
+- `PageDrawing` (interface): The page's drawing (see the file comment).
+- `PageDrawingOptions` (interface): What `createPageDrawing` draws with besides the parts.
+- `PageParts` (interface): What the page has started so far, read at each call: each part is null until the engine starts it.
 
 ### [`engine/app/engine.ts`](../engine/app/engine.ts)
 
@@ -2572,6 +2613,7 @@ For the agents who maintain the engine.
 - `MAX_DEPTH` (const): How deep the canonical form nests before it is refused as a cycle.
 - `mix32` (function): murmur3's 32-bit finaliser: spreads every bit of an int over every bit of the unsigned result.
 - `serialize` (function): The canonical text of a value: JSON with object keys sorted, no spaces, numbers exact (the shortest round-trip form, `-0` kept), typed arrays and `toArray()` values as arrays.
+- `TAG` (const): Type tags of the canonical byte stream, one byte before each value (engine/sim/entities.ts `feedData` feeds them too).
 
 ### [`engine/core/log.ts`](../engine/core/log.ts)
 
@@ -2830,6 +2872,7 @@ For the agents who maintain the engine.
 - `CameraSpec` (type): A camera code as data.
 - `CameraType` (type): The kinds of camera: a classic view, an orbit round a target, a free fly camera, a fixed one.
 - `describeCamera` (function): `spec` in words, as the prototype's `camDesc`: `Isometric view, orthographic, zoom 1x, following`.
+- `FOLLOW_CAMERAS` (const): WP 3.9's cameras, which follow the hero and read their own codes (`readCameraCode`): chase, first person, the rail.
 - `formatCameraCode` (function): The canonical code of `spec`: `cam=…` or `cam3=…`, numbers rounded (0.001 m, 0.01°), defaults left out.
 - `FreeSpec` (interface): A fly or fixed camera's code as data: without a position it starts from the camera before it.
 - `OrbitSpec` (interface): An orbit camera's code as data.
@@ -2915,7 +2958,7 @@ For the agents who maintain the engine.
 - `createCamera` (function): The camera `code` names (a code, or its data from `readCameraCode`): `cam=iso`, `cam3=orbit,…`, `cam3=chase`.
 - `CreateCameraOptions` (interface): What `createCamera` may start from beyond the code.
 - `createCameraPair` (function): A perspective and an orthographic camera, made once (see the file comment).
-- `FOLLOW_CAMERAS` (const): WP 3.9's cameras, which follow the hero and read their own codes: chase, first person, the depth rail.
+- `FOLLOW_CAMERAS` (re-export): (undocumented)
 - `placeCamera` (function): Puts `pose` on `camera` for a picture `aspect` (width / height) wide, boost included (see the file comment).
 - `readCameraCode` (function): Reads any camera's code: `cam3=chase…`, `cam3=first…` and `cam3=rail…` by their modules, every other by `parseCameraCode`.
 
@@ -3168,19 +3211,22 @@ For the agents who maintain the engine.
 - `Vec3` (type): A point or direction in metres: `[x, y, z]`.
 - `Writer` (interface): What the builders write with.
 
+### [`engine/gfx/idmarks.ts`](../engine/gfx/idmarks.ts)
+
+- `drawMarks` (function): Draws each mark onto a frame of RGBA bytes (top row first): a ring around `at` and the number in a dark box above it (below it at the top edge), at 2 × scale.
+- `Mark` (interface): A numbered mark on what the ID pass sees, for the legend.
+- `marksOf` (function): Numbers the visible objects, largest first: at most `max` (40), each covering at least `minPx` (4) pixels.
+
 ### [`engine/gfx/idpass.ts`](../engine/gfx/idpass.ts)
 
 - `decodeIds` (function): Decodes an ID-pass readback (RGBA, top row first) into the result, and each pixel's visible object (1-based).
 - `Drawable` (interface): A drawable object of the scene, as the ID pass knows it.
-- `drawMarks` (function): Draws each mark onto a frame of RGBA bytes (top row first): a ring around `at` and the number in a dark box above it (below it at the top edge), at 2 × scale.
 - `idColour` (function): The ID colour of the `n`-th drawable (1-based): an odd multiple modulo 2^24, so distinct and never 0.
 - `IdEntry` (interface): One visible object: its pixels, share of the frame, bounding box `[x0, y0, x1, y1]` (inclusive, from the top left).
 - `IdPass` (interface): The ID pass's result: every drawable object, visible or not.
 - `IdTable` (interface): The drawables of a scene, with their colours.
 - `IdUnseen` (interface): One object drawn in no pixel, and why.
 - `listDrawables` (function): Lists the scene's drawable objects with their colours, and why the hidden and out-of-view ones cannot be seen.
-- `Mark` (interface): A numbered mark on what the ID pass sees, for the legend.
-- `marksOf` (function): Numbers the visible objects, largest first: at most `max` (40), each covering at least `minPx` (4) pixels.
 - `UnseenReason` (type): Why a drawable object covers no pixel.
 - `withIdScene` (function): Runs `draw(root)` with `root` a stand-in for `scene` that draws the ID pass: it shares the scene's children, has no background, and overrides every material with the ID material reading `table`; the clear colour is transparent black meanwhile.
 
@@ -3377,10 +3423,7 @@ For the agents who maintain the engine.
 ### [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)
 
 - `createPost` (function): Makes the chain on `gfx.renderer` (see the file comment).
-- `definePostSettings` (function): Declares the chain's settings (`POST_SETTINGS`) and the setting `quality` it reads on `registry` (the shared one by default), unless it has them: on the shared one when this module loads, so `node x set post.look look:game-boy` knows them in Node (tools/cmd/set.ts imports the modules that declare settings), and on any other when `createPost` or `createEngine` runs.
 - `Post` (interface): A post-processing chain (see the file comment).
-- `POST_CODES` (const): The codes this module raises, with their fixes.
-- `POST_SETTINGS` (const): The view settings the chain reads, declared by `definePostSettings`: `post.look` (a `look` id, engine/gfx/post/looks.ts), `post.filters` (part of a filter chain laid over the look's, filter by filter and field by field) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
 - `PostOptions` (interface): How `createPost` makes a chain.
 - `snapBlock` (function): The block grid the camera snaps to for `chain`: pixel art's when it covers the environment and snaps (characters and objects in pixel art move on their own, and a snapping camera would make a sharp world jump), else the whole screen's low resolution; 1 for none.
 
@@ -3394,6 +3437,7 @@ For the agents who maintain the engine.
 ### [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)
 
 - `chainOf` (function): A whole chain from part of one: every filter and field `spec` leaves out at its default (off).
+- `colorProblem` (function): Checks an outline colour: '' (the line darkens the surface), hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js knows (`Color.NAMES`).
 - `createFilterUniforms` (function): Makes the composite's uniforms, every filter off.
 - `FILTER_FIELDS` (const): The filters of a chain; see the file comment.
 - `FILTER_NAMES` (const): Every filter, in the composite's order (bloom and aa run before it).
@@ -3401,6 +3445,7 @@ For the agents who maintain the engine.
 - `FilterName` (type): A filter's name.
 - `FilterSpec` (type): Part of a chain: some filters, each with some of its fields (a look's `filters`, the setting `post.filters`).
 - `FilterUniforms` (interface): The composite's uniforms: one vec4 per filter (and a second for the long ones), render-group, set up once.
+- `fixColor` (function): `spec` with an outline colour `colorProblem` refuses left out, so the line darkens the surface, and that colour (null when there was none): a layer over a look (the setting `post.filters`) is fixed and reported this way.
 - `fixLevels` (function): `spec` with every level count of 1–7 raised to 8 (see the file comment), and what was raised: a layer over a look (the setting `post.filters`) is fixed and reported this way; looks are checked when they are defined.
 - `isPlain` (function): Whether `chain` has every filter off, so it would leave the picture as the scene draws it (`look:clean`).
 - `layerChain` (function): `chain` with `over` laid on it, filter by filter and field by field.
@@ -3449,6 +3494,12 @@ For the agents who maintain the engine.
 ### [`engine/gfx/post/presets.ts`](../engine/gfx/post/presets.ts)
 
 - `PRESETS` (const): The presets, by id (see the file comment).
+
+### [`engine/gfx/post/settings.ts`](../engine/gfx/post/settings.ts)
+
+- `definePostSettings` (function): Declares the chain's settings (`POST_SETTINGS`) and the setting `quality` it reads on `registry` (the shared one by default), unless it has them: on the shared one when this module loads, so `node x set post.look look:game-boy` knows them in Node (tools/cmd/set.ts imports the modules that declare settings), and on any other when `createPost` or `createEngine` runs.
+- `POST_CODES` (const): The codes this module raises, with their fixes.
+- `POST_SETTINGS` (const): The view settings the chain reads, declared by `definePostSettings`: `post.look` (a `look` id, engine/gfx/post/looks.ts), `post.filters` (part of a filter chain laid over the look's, filter by filter and field by field) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
 
 ### [`engine/gfx/post/shaders/common.ts`](../engine/gfx/post/shaders/common.ts)
 
@@ -4078,6 +4129,14 @@ For the agents who maintain the engine.
 - `ScriptLine` (interface): One line of a script: how many frames or steps it lasts, its values by key, and its line number (from 1).
 - `ValueReader` (type): Reads one value, or returns a problem as a string.
 
+### [`engine/physics/binding.ts`](../engine/physics/binding.ts)
+
+- `attachPhysics` (function): Binds `physics` to a sim world and steps it there: the system `physics`, in the phase of that name.
+- `BINDING_CODES` (const): The codes this module raises, with their fixes.
+- `bindPhysics` (function): Binds a physics world to a sim world, so `physicsOf(w)` finds it (the scene does this when it starts).
+- `physicsOf` (function): The physics world of a sim world: its bodies and queries.
+- `scenePhysics` (function): For a scene that asks for physics: a new physics world, with `physics.gravity` declared on `registry` if it lacks it.
+
 ### [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)
 
 - `addBall` (function): Adds a ball prop; returns its id.
@@ -4169,6 +4228,7 @@ For the agents who maintain the engine.
 ### [`engine/physics/groups.ts`](../engine/physics/groups.ts)
 
 - `COLLISION_GROUPS` (const): The collision groups: each one's membership bit and the groups it touches.
+- `dropGroups` (function): Rapier's interaction groups `bits` (a collider's `groupBits`) with the groups named taken out of what they touch: a character controller's query that passes through them (engine/physics/character.ts `shoves`), the collider itself still touching them in the solver.
 - `GROUP_CODES` (const): The codes this module raises, with their fixes.
 - `GROUP_NAMES` (const): The group names, in table order.
 - `groupBits` (function): Rapier's interaction groups for a collider of `group`: its membership bit and the bits of what it touches.
@@ -4218,8 +4278,6 @@ For the agents who maintain the engine.
 
 ### [`engine/physics/world.ts`](../engine/physics/world.ts)
 
-- `attachPhysics` (function): Binds `physics` to a sim world and steps it there: the system `physics`, in the phase of that name.
-- `bindPhysics` (function): Binds a physics world to a sim world, so `physicsOf(w)` finds it (the scene does this when it starts).
 - `BodyChange` (interface): The changes `setBody` makes; each wakes the body.
 - `BodySpec` (interface): A body as `addBody` takes it.
 - `BodyState` (interface): A body's state, copied: changing it changes nothing.
@@ -4227,10 +4285,8 @@ For the agents who maintain the engine.
 - `ColliderSpec` (interface): One collider of a body: a shape where the body puts it, and its material.
 - `createPhysics` (function): Makes a physics world (Rapier initialized at import): empty, with the pinned integration parameters.
 - `Physics` (interface): A physics world: bodies, stepping, queries, and the sim's physics hook (`state`, `capture`, `restore`).
-- `physicsOf` (function): The physics world of a sim world: its bodies and queries.
 - `PhysicsStepper` (interface): What `step` reads from the sim: the step length and the settings (`physics.gravity`).
 - `rapierOf` (function): The Rapier world behind `physics` now (a restore replaces it): for the modules beside this one only.
-- `scenePhysics` (function): For a scene that asks for physics: a new physics world, with `physics.gravity` declared on `registry` if it lacks it.
 - `WORLD_CODES` (const): The codes this module raises, with their fixes.
 
 ### [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)
@@ -4300,11 +4356,17 @@ For the agents who maintain the engine.
 - `componentNames` (function): The component names of an entity, in name order, after checking each is a declared kind (`SIM_UNKNOWN_COMPONENT`) holding a plain object (`SIM_NOT_DATA`).
 - `eachField` (function): Calls `visit(key, value)` for each field of the entity's component `name`, in declared order, after checking it holds exactly the declared `fields`, each defined (`SIM_UNDECLARED_FIELD`, `SIM_BAD_COMPONENT`); a `live` component must also hold them in declared order, while a stored one is read in that order whatever its key order.
 - `ENTITY_CODES` (const): The codes this module raises, with their fixes.
+- `feedData` (function): Feeds `value` into `h` as `h.value(value)` does when it is plain data (as `notData` checks it), and returns true; returns false at the first piece that is not, with `h` part-fed (the caller throws, naming it by `notData`).
 - `LiveEntity` (type): A live entity: its id fixed, its components writable.
 - `makeEntity` (function): A live entity with `id` (read-only) and the components of `data` (all but its id), in `data`'s order.
 - `notData` (function): Checks that `value` is plain data (null, booleans, numbers, strings, arrays and plain objects all the way down) and says where it is not; the path is built only for a refusal.
 - `NotData` (interface): Where a value stops being plain data, and what is there; undefined when it is all plain data.
 - `placeComponent` (function): Puts `component` on a live `entity` as `name`, keeping components in name order (later ones are put back after).
+
+### [`engine/sim/entityTable.ts`](../engine/sim/entityTable.ts)
+
+- `createEntityTable` (function): An empty entity table, its next id 1.
+- `EntityTable` (interface): The live entities of a world (see the file comment).
 
 ### [`engine/sim/hits.ts`](../engine/sim/hits.ts)
 
@@ -4370,18 +4432,24 @@ For the agents who maintain the engine.
 ### [`engine/sim/scene.ts`](../engine/sim/scene.ts)
 
 - `checkSeed` (function): Returns `seed` (1 when absent; -0 as 0); throws `SIM_BAD_SEED` naming `where` unless it is a whole number from 0.
-- `createSession` (function): Starts a scene as a recorded session: `startScene`, plus the recording.
 - `defineScene` (function): Registers a scene on `registry` (the shared one by default) and returns it.
 - `getScene` (function): The scene `id` on `registry` (the shared one by default).
 - `isScene` (function): Whether `value` is a defined scene (an entry of kind `scene`), as a module exports it.
+- `payloadSound` (function): The sound a traced event names in its payload, `{ sfx, vol?, variant? }`, or null: a scene's default `sounds`.
 - `Scene` (type): A defined scene: its spec with defaults filled, plus `id` and `kind`.
 - `SCENE_CODES` (const): The codes this module raises, with their fixes.
 - `SceneAction` (type): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
 - `SceneOptions` (interface): How a scene starts.
 - `SceneRun` (interface): A started scene: the scene, its world and its settings store.
+- `SceneSound` (interface): A sound a sim event plays: an `sfx` entry, its gain (1 by default) and its variant (the effect's next by default).
 - `SceneSpec` (interface): How a scene is written: `defineScene(id, spec)`.
-- `Session` (interface): A started scene that records its inputs from step 0, so `record()` returns it as a replay.
 - `startScene` (function): Starts a scene (an id on the registry, or a scene): a new settings store with the scene's settings and then `options.settings` over the defaults, a world seeded with `options.seed`, the scene's `step` as the system `scene`, then its `setup`.
+
+### [`engine/sim/session.ts`](../engine/sim/session.ts)
+
+- `createSession` (function): Starts a scene as a recorded session: `startScene`, plus the recording.
+- `Session` (interface): A started scene that records its inputs from step 0, so `record()` returns it as a replay.
+- `SESSION_CODES` (const): The codes this module raises, with their fixes.
 
 ### [`engine/sim/state.ts`](../engine/sim/state.ts)
 
@@ -4909,7 +4977,7 @@ For the agents who maintain the engine.
 
 - `default` (default): The fight, Box 5 (PLAN.md §9.0, WP 6.7): the hall with its hero and a crowd (labs/box/scenes/crowd-1000.ts), fighting.
 - `fight` (const): The fight, 36 mixed.
-- `FIGHT_SETTINGS` (const): The fight's setting: whether the hero's hit points hold.
+- `FIGHT_SETTINGS` (const): The fight's settings: whether the hero's hit points hold, and whether his sword's trail is sim data.
 - `fightStep` (function): The fight's step: joined at the first, then the hero's fight (labs/box/scenes/fight-hero.ts).
 - `joinFight` (function): The fight joined, once, at the first step (spawns made in the setup join at its end): the hero's sword and his components, each member's (see the file comment).
 - `setupFight` (function): The fight's setup: the crowd's, and the fight's systems (see the file comment); returns the hero's id.
@@ -4971,6 +5039,7 @@ For the agents who maintain the engine.
 
 - `BOX_FOOTSTEPS` (const): Footsteps by surface tag (the level legend's `surface`): the effect a step on it plays; `'*'` any other.
 - `BoxSoundEvent` (interface): One sound the box plays for a sim event.
+- `boxSounds` (function): A scene's `sounds` hook for the box's scenes on `level`: each event's effect and gain, as the page plays them.
 - `createSoundReader` (function): A reader that reads each event of a world once (see the file comment).
 - `footstepSfx` (function): The effect a footstep plays at `at` on `level`: its surface's (`BOX_FOOTSTEPS`), the `'*'` one off any level.
 - `Point` (type): A point in the world, metres.
@@ -5013,6 +5082,12 @@ For the agents who maintain the engine.
 - `Harness` (interface): What each test gets as `harness`.
 - `test` (const): Playwright's `test` with the `seed` option (default 1) and the `harness` fixture, set up for every test.
 - `WebGPUProof` (interface): What WebGPU did in the page, as `assertWebGPU` measured it.
+
+### [`tests/e2e/parity-stages.ts`](../tests/e2e/parity-stages.ts)
+
+- `replay` (const): A replay file's name and text.
+- `Stage` (interface): A box stage's scene and its replays, and live play to record in it (inside `evaluate`, ticking the virtual clock).
+- `STAGES` (const): The stages and what each proves the contract with.
 
 ### [`tests/e2e/post-cases.ts`](../tests/e2e/post-cases.ts)
 
@@ -5418,6 +5493,8 @@ For the agents who maintain the engine.
 
 ### [`tools/anim/library.ts`](../tools/anim/library.ts)
 
+- `ACTIONS_DIR` (const): The engine's actions, one file each (`{ "action": "<name>", …spec }`).
+- `defineActions` (function): Defines every action of `ACTIONS_DIR`, in file order, into `registry` (the shared one) and returns them: a file defined before with the same spec is kept (`loadActions`), so a second call changes nothing.
 - `defineLibrary` (function): Registers every set of the library, then the mannequin, into `registry` (once); returns the sets' ids.
 - `libraryDirs` (function): The library's set directories (`cmu`, `quaternius`…): each directory of `root` with a set header, sorted.
 
@@ -5438,6 +5515,7 @@ For the agents who maintain the engine.
 - `CATALOG_FILE` (const): The generated index of a set's clips.
 - `catalogTsv` (function): The set's `catalog.tsv`: three `#` comment lines, the columns, then one row per clip in the set's order, each stopping at its last field (`.editorconfig` trims trailing tabs).
 - `clipSlug` (function): The file name of a clip, without `.json`: its name with each run of characters other than letters, digits, `_` and `-` made one `_`, and `_` and `-` trimmed from the ends.
+- `CMU_CREDIT` (const): The credit every CMU set carries: CMU's terms in short (data/anim/SOURCES.md has them verbatim) and the acknowledgment the database asks for, verbatim.
 - `joinSet` (function): Reads a set's directory files back into the set it was split from (`where` names it in errors): the clips in the order `_set.json`'s `fit` lists them, then any others by file name.
 - `legacySetFiles` (function): The files of my-3d2dge's three curated sets (HERO dropped), from the checkout at `sourcePath`, by directory.
 - `main` (function): The command line (see the file comment).
@@ -5451,7 +5529,7 @@ For the agents who maintain the engine.
 - `SETS_DIR` (const): The sets' directory, `data/anim/sets/`: one directory per set, named by `setDirName`.
 - `splitSet` (function): Writes a set as its directory's files: one `text()` per clip, `_set.json` and `catalog.tsv` (the file comment).
 - `tagAlternates` (function): The set with `alt` added last to the tags of each clip made from another set's clip (one with an `orig`).
-- `withCmuTerms` (function): The CMU set with CMU's terms in each of its source records, as the CMU catalog states them: my-3d2dge's set said "free for all uses"; WP 8.1 corrected the catalog, and the importer (`x anim import --cmu`) writes what it says.
+- `withCmuTerms` (function): The CMU set with CMU's terms in each of its source records, as the CMU catalog states them, and `CMU_CREDIT` as its credit: my-3d2dge's set said "free for all uses" in both; WP 8.1 corrected the catalog, and the importer (`x anim import --cmu`) writes what it says.
 - `writeSetDir` (function): Writes a set's files into `dir`, made if missing, and removes the files it no longer has; lists what changed.
 
 ### [`tools/anim/rigs.ts`](../tools/anim/rigs.ts)
@@ -5483,7 +5561,6 @@ For the agents who maintain the engine.
 ### [`tools/anim/survey.ts`](../tools/anim/survey.ts)
 
 - `CMU_CATALOG` (const): The CMU catalog, whose `$pick` names the take each clip of the CMU set was cut from.
-- `CMU_CREDIT` (const): The credit every CMU set carries (data/anim/SOURCES.md has the terms).
 - `flagsOf` (function): The flags a take's measurements earn: upside down (over 2 frames), feet off the floor (60%), short, loose.
 - `LIBRARY_DIR` (const): The converted library's directory, `.cache/anim/cmu-lib/`.
 - `surveyCmu` (function): Surveys the downloaded takes (see the file comment); returns how many it converted and the seconds of motion.
@@ -5531,7 +5608,7 @@ For the agents who maintain the engine.
 - `encodeWav` (function): Encodes samples as a 16-bit mono PCM WAV file, clamped to ±1.
 - `mixSoundEvents` (function): The events' effects rendered (each once per variant, seed 0, at 44,100 Hz) and summed into one mono mix at least `seconds` long, with each event's span in it, `[start, end)` in samples.
 - `Picture` (type): A picture as RGBA bytes, row by row from the top.
-- `replaySoundEvents` (function): Plays `replay` (its scene defined on `registry`) step by step, as `playReplay` does, hashing its checkpoints, and reads the sound events from the sim's event trace after setup, each change-point and each step.
+- `replaySoundEvents` (function): Plays `replay` (its scene defined on `registry`) step by step through `createPlayback` (engine/app/playback.ts, the page's real-time playback), hashing its checkpoints, and reads the sound events from the sim's event trace after setup and after each step, as the box's page does (labs/box/sounds/events.ts).
 - `SoundEvent` (interface): One sound event of a replay: when, from which sim event, which effect at which gain and variant.
 - `SoundTimeline` (interface): A replay's sound events, the problems of those that name no sound, its length and the hashes of its checkpoints.
 - `spectrogram` (function): A spectrogram of `samples` as RGBA bytes (see the file comment for its axes and colours).
@@ -5553,24 +5630,21 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/ci.ts`](../tools/cmd/ci.ts)
 
-- `CI_OUT` (const): Where `x ci --local` writes, relative to the root.
 - `CI_STEPS` (const): The steps of `x ci --local`, in order (PLAN.md §8.9).
 - `CiDeps` (interface): What `x ci` reaches outside itself; the tests replace each part.
 - `CiRun` (interface): A whole run of the gate.
 - `CiStep` (interface): One step of the gate.
 - `createCiCommand` (function): Builds the `x ci` command; the tests pass fakes for the step runner, git, the selections and the clock.
-- `default` (default): The merge gate (PLAN.md §8.9, WP 0.9): `x ci --local` runs `CI_STEPS` in order on this machine, holds the tiers to their budgets (tools/lib/tiers.ts), writes `out/ci/summary.md` and, when everything passed, records HEAD in `out/ci/last-green`, the base of the selections until main holds a gate.
+- `default` (default): The merge gate (PLAN.md §8.9, WP 0.9): `x ci --local` runs `CI_STEPS` in order on this machine, holds the tiers to their budgets (tools/lib/tiers.ts), writes `out/ci/summary.md` (tools/lib/ciSummary.ts) and, when everything passed, records HEAD in `out/ci/last-green`, the base of the selections until main holds a gate.
 - `Head` (interface): HEAD's commit and branch, and the uncommitted changes (`git status --porcelain` lines).
 - `KEPT_CACHES` (const): What `npm ci` must not wipe, relative to the root: the tools' caches, and Vitest's record of each file's duration, from which it starts the longest files first (without it, T1 took 39 s instead of 36 s).
 - `readHead` (function): Reads `Head` with git.
 - `readT2Full` (function): The duration of the last full T2 run that passed, if one was recorded.
-- `renderSummary` (function): The run as Markdown, for `out/ci/summary.md` (and the GitHub workflow's step summary).
 - `runCi` (function): Runs the gate in `root`: every step, the budgets, the summary and, when green, `out/ci/last-green`.
 - `spawnStep` (const): Runs `command` as a child process, stdout and stderr captured together, colours off.
 - `StepOutcome` (interface): What running one command gave: its exit code (1 when it could not start), its wall time and its output.
 - `StepResult` (interface): One step's result.
 - `StepRunner` (type): Runs one command from `cwd`; the tests inject a fake.
-- `toResult` (function): The run as the dispatcher's result: the timing table, the T2 selection and one finding per problem.
 
 ### [`tools/cmd/deps.ts`](../tools/cmd/deps.ts)
 
@@ -5580,11 +5654,13 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/describe.ts`](../tools/cmd/describe.ts)
 
-- `createDescribeCommand` (function): Builds the command; tests shorten the child process's time limit.
+- `afterMs` (const): A watch that stops the child `ms` after it started.
+- `createDescribeCommand` (function): Builds the command; tests give the child process's watch (`hang`) and the time limit its message names.
 - `default` (default): Lists the registries from their schemas (PLAN.md §8.1, §6.6): `x describe` names every kind with its entry count, `x describe <kind>` gives its fields (type, default, range, unit, docs) and ids, and `x describe <kind> <id>` one entry's values, `*` marking those that differ from the default.
 - `describeFile` (function): Where `x describe [kind [id]]` writes the whole description: `describe.json` beside its report.
-- `describeInWorker` (function): Runs the listing in a child Node process over `root`'s registrations; resolves to what it sent, or to the failure when it hung (stopped after `timeoutMs`) or ended without a listing, naming the module it was loading.
+- `describeInWorker` (function): Runs the listing in a child Node process over `root`'s registrations; resolves to what it sent, or to the failure when it hung (stopped by `hang`, after `timeoutMs` by default) or ended without a listing, naming the module it was loading.
 - `fieldLine` (function): One line for a field: name, type, default, range, unit, values, flags, then its description.
+- `HangWatch` (type): When the child process counts as hung: `watch(stop)` arms the watch, hears each module the child starts loading (`loading`), and is `done` when the child ends.
 - `idsLine` (function): A kind's ids as one line of at most `IDS_LINE` characters; a cut list says how many there are and where.
 - `listing` (function): What one listing prints, from the shared registry, ending with where the whole description is when a line was cut; throws the registry's error for an unknown kind or id.
 - `Listing` (interface): What one listing prints, besides the verdict, and the data `describe.json` holds.
@@ -5677,48 +5753,18 @@ For the agents who maintain the engine.
 ### [`tools/cmd/perf.ts`](../tools/cmd/perf.ts)
 
 - `agentsSetting` (function): The setting `asked` (`--agents`, else the budget's): an integer setting that allows the top rung's agents.
-- `BUDGET_KEYS` (const): What a Node run and a ladder rung measure: milliseconds per step, per hash and per capture.
-- `budgetPath` (function): A scene's budget file, repository-relative: `:` in the id becomes `-`.
 - `default` (default): Performance as counters against budgets, never frames per second (PLAN.md §8.1, §8.7, WPs 1.5 and 5.5).
-- `DEFAULT_STEPS` (const): The steps each way takes unless its budget section or `--steps` says otherwise.
-- `LADDER` (const): The crowd ladder's rungs, in agents.
 - `measure` (function): One run's timings: ms per step, then per hash and per capture of the state it reached (10 of each).
-- `median` (function): The middle value (the mean of the two middle ones for an even count).
-- `PAGE_KEYS` (const): What a page measures: `__engine.stats()`'s means, then its counts.
-- `PageKey` (type): One quantity a page measures.
-- `PerfBudget` (interface): A budget file, `tests/baselines/perf/<scene id>.json` (see the file comment).
-- `PerfKey` (type): One quantity a Node run measures.
-- `readBudget` (function): Reads and checks a budget file; throws `UsageError` naming each problem (an unknown key with the closest).
-- `recordTrend` (function): Appends `measured` under `key` to the trend file (the last 20 kept); warns for each regression since the last.
-- `regressions` (function): The metrics that grew over `limit` (a fraction) from `before` to `after`, as text.
-- `TREND_FILE` (const): The trend file, under the repository.
-- `TREND_LIMIT` (const): Growth since the run before that `PERF_TREND` warns about: 15%.
-- `Way` (type): A way of measuring (see the file comment).
-- `withinBudget` (function): Whether `value` is within `limit`, `tolerance` (a fraction) over it allowed.
 
 ### [`tools/cmd/port.ts`](../tools/cmd/port.ts)
 
-- `BLOB_SCRIPTS` (const): The Blob scripts: the stress world's slime hop, kicks to the squash spring, and look turns.
-- `blobScript` (function): One Blob script from a fresh `new E.Blob()`, sampled after every step.
 - `buildFiles` (function): Every file of `PORT_DIR` but the checksums and `clips/`, by name, generated from the checkout at `sourcePath`.
-- `BUILDS` (const): The builds of the humanoid matrix and of the moves.
 - `check` (const): The `port` plugin of `x check`: the committed vectors still match their checksums.
 - `CHECKSUMS` (const): The file in `PORT_DIR` that records every other file's sha256.
 - `checkVectors` (function): Compares the vectors under `root` with their checksums, offline: a changed, missing or unlisted file fails.
-- `colorVectors` (function): `color.json`: the colour helpers over a fixed list of colours, 24 of them drawn from `E.rng(0x5eed)`.
-- `coreVectors` (function): `core.json`: `rng`, `hash2`, `noise2`, and the math helpers WP 1.1 ports.
 - `default` (default): Records the reference vectors the ports from my-3d2dge are tested against (PLAN.md WP 0.11, §9.0): the old engine's own outputs as text JSON in `tests/baselines/port/`, with a generated README that says what each file holds, the source commit, the sampling and the conversion to my-3dge's frame (Appendix C).
-- `everyNth` (const): The steps sampled: every 4th at facing 0, every 40th (among those) at the other seven, which differ only by the turn.
-- `humanoidRun` (function): One run of the humanoid matrix: a fresh rig of `build` in `state`, facing `facing`·π/4, for 120 steps.
-- `humanoidVectors` (function): `humanoid-<build>.json`: every state at every facing.
 - `layout` (function): Writes JSON in a stable layout: a container that fits in 120 columns stays on one line, and so does any array of scalars (one sample per line); the others open one item per line, indented by two spaces.
-- `LoadedEngine` (type): The old engine in its own `vm` context: `E`, what it printed (must stay empty), and `seed(id)` for each record.
-- `loadEngine` (function): Loads `my-3d2dge:engine/my-3d2dge.js` from the checkout at `sourcePath` into a fresh `vm` context.
-- `moveRecord` (function): `E.move(name, u, phase)` for u = i/20 on `build`, each sample on a fresh rig at rest at t = 0 (see the README).
-- `moveVectors` (function): `moves.json`: every move of `E.MOVES`, its spec as `E.move` builds it, in every phase on every build.
 - `PORT_DIR` (const): Where the vectors live, relative to the repository root.
-- `SourceEngine` (type): The parts of the old engine's `E` (`My3D2dge`) the vectors call.
-- `STATES` (const): The humanoid state matrix (WP 0.11): locomotion, every pose, and both stances (while walking).
 - `writeVectors` (function): Writes `files` (names may hold `/`) and their checksums into `dir`, and removes the files an earlier run wrote that are gone now; of the files this run does not `own`, it keeps the recorded checksums.
 
 ### [`tools/cmd/qa.ts`](../tools/cmd/qa.ts)
@@ -5763,7 +5809,7 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/sheet.ts`](../tools/cmd/sheet.ts)
 
-- `default` (default): Draws a body's state matrix as a contact sheet, plus its numeric checks (PLAN.md WP 6.6, §8.5): `node x sheet <subject>` runs the humanoid through the states a QA id or prefix names, as the `anim` QA family does (tools/qa/anim.ts `humanoidStates`), draws them with `anim.sheet()` (engine/anim/sheet.ts) from the cameras of a `SHEET_CAMERAS` preset (engine/anim/check.ts), and turns the SVG into a PNG in the platform's Chromium.
+- `default` (default): Draws a body's state matrix as a contact sheet, plus its numeric checks (PLAN.md WP 6.6, §8.5): `node x sheet <subject>` runs the humanoid through the states a QA id or prefix names, as the `anim` QA family does (tools/qa/anim.ts `humanoidStates`), draws them with `anim.sheet()` (engine/anim/sheet.ts) from the cameras of a `SHEET_CAMERAS` preset (engine/anim/stateMatrix.ts), and turns the SVG into a PNG in the platform's Chromium.
 - `MAX_WIDTH` (const): The widest sheet, pixels (§8.5: contact sheets are capped at 1,600 px).
 - `qaPrefixes` (function): The `only` prefixes of `subject`'s `anim` QA: itself, or for `humanoid` its kinds (never the library's clips).
 - `sheetFrames` (function): The frames a sheet of `subject` draws, and whether they are moves (for the cameras).
@@ -5788,17 +5834,12 @@ For the agents who maintain the engine.
 - `feelOf` (function): The feel meter's report for a run's first player actor (the inspector member `feel`); a usage error without one.
 - `HashedView` (interface): One run's view of a step, with the hash its runtime gave.
 - `levelOf` (function): The level a scene loads, for `--map`: registered by its module, else read from its lab's or the fixtures' levels.
-- `loadScene` (function): Imports a scene module and picks its scene: `id`, else the one scene it exports.
 - `navMap` (function): The text map of `level`'s nav grid under `climb` (the crowd's by default), as `--map` writes it: a key, then one row per map row, and an A* route from the hero's spawn (else the first spawn) to the tile it reaches in the most steps.
 - `nodeRuntime` (function): Replays in Node, in this process, on `registry` (the shared one by default): `x replay`'s first runtime.
 - `parseSets` (function): `key=value` pairs as path → text; throws `UsageError` for a pair without `=`.
 - `replayText` (function): A replay as readable text: its keys in file order, one change-point per line, each platform's hashes one step per line, numbers exact (`-0` kept, engine/core/hash.ts `serialize`).
-- `resolveSceneModule` (function): The module a target names: a `.ts` file (its extension optional), a directory's `index.ts`, or a scene id's module.
 - `Runtime` (interface): Where replays play: Node in this process, or Chromium in tests/pages/replay.html.
-- `sceneModules` (function): Scene id → the module that defines it, from the modules' text (tests aside).
-- `sceneRoots` (function): Where scene modules live: `fixtures/scenes/` and every `labs/<name>/scenes/` (tests/pages/replay.ts globs the same).
 - `typedSets` (function): `--set` values typed and checked against the settings schema (after the scene module declared its settings).
-- `wholeFlag` (function): A whole number from a flag, at least `min`, or `fallback` when the flag is absent.
 - `writeReplay` (function): Writes a replay through Prettier with the repository's settings (wherever the file is); true when it changed.
 
 ### [`tools/cmd/src.ts`](../tools/cmd/src.ts)
@@ -5900,6 +5941,12 @@ For the agents who maintain the engine.
 - `VirtualClock` (interface): The page's virtual clock and seeded streams, installed as `window.__clock`.
 - `WEBGPU_FLAGS` (const): Shardfall's WebGPU flags (PLAN.md §8.8): SwiftShader through Vulkan, presenting to the page's own canvas.
 
+### [`tools/lib/ciSummary.ts`](../tools/lib/ciSummary.ts)
+
+- `CI_OUT` (const): Where `x ci --local` writes, relative to the root.
+- `renderSummary` (function): The run as Markdown, for `out/ci/summary.md` (and the GitHub workflow's step summary).
+- `toResult` (function): The run as the dispatcher's result: the timing table, the T2 selection and one finding per problem.
+
 ### [`tools/lib/deps.ts`](../tools/lib/deps.ts)
 
 - `compareVersions` (function): Orders two versions: negative when `a` is older.
@@ -5960,6 +6007,7 @@ For the agents who maintain the engine.
 - `DocComment` (interface): A parsed JSDoc comment.
 - `DocTag` (interface): One `@tag` of a doc comment, its text as written (indentation kept), and its 1-based line in the file.
 - `Example` (interface): One `@example` block.
+- `ExampleHost` (type): Where T2 runs a flagged example: in the box page (`page`: Web Audio, a page's DOM, a Vite-only import), in a Node process of its own beside Playwright (`node`: it drives a browser itself), or nowhere (`none`: a suite's own module, whose example is a test the suites run), its reason saying why.
 - `ExportDoc` (interface): One export of a module.
 - `isModulePath` (function): Whether a repository-relative path is a module (not a test, fixture, template or declaration file).
 - `lineOf` (const): 1-based line of character `index` in `text`.
@@ -5986,6 +6034,7 @@ For the agents who maintain the engine.
 - `compileExample` (function): Transpiles an example (TypeScript allowed) to the JavaScript body `runExample` executes.
 - `EXAMPLE_TIMEOUT_MS` (const): The longest an example may run, in milliseconds.
 - `ExampleOutcome` (interface): How one example went.
+- `pageExample` (function): A page example as the box page runs it (tests/e2e/examples.spec.ts): its module's URL, its body (`compileExample`), and the URL of each module it imports by a relative path.
 - `rewriteImports` (function): Rewrites the `import` declarations of transpiled JavaScript into `await __import(…)` lines.
 - `runExample` (function): Runs one example in this process; never throws.
 - `runExamples` (function): The examples' verdicts: Node examples run in order; browser examples are listed for T2.
@@ -6102,9 +6151,51 @@ For the agents who maintain the engine.
 - `Signals` (interface): A page's ready-or-error signal (PLAN.md §8.3), read once.
 - `waitReady` (function): Waits until `tab` signals ready or an error, or throws an uncaught error, or `ms` pass; returns the last signal.
 
+### [`tools/lib/perfBudget.ts`](../tools/lib/perfBudget.ts)
+
+- `BUDGET_KEYS` (const): What a Node run and a ladder rung measure: milliseconds per step, per hash and per capture.
+- `BUDGET_SHAPE` (const): A budget file's shape, for messages.
+- `budgetPath` (function): A scene's budget file, repository-relative: `:` in the id becomes `-`.
+- `Budgets` (type): Budgets by key, each optional.
+- `DEFAULT_STEPS` (const): The steps each way takes unless its budget section or `--steps` says otherwise.
+- `LADDER` (const): The crowd ladder's rungs, in agents.
+- `median` (function): The middle value (the mean of the two middle ones for an even count).
+- `PAGE_KEYS` (const): What a page measures: `__engine.stats()`'s means, then its counts.
+- `PageKey` (type): One quantity a page measures.
+- `PerfBudget` (interface): A budget file, `tests/baselines/perf/<scene id>.json` (see the file comment).
+- `PerfKey` (type): One quantity a Node run measures.
+- `readBudget` (function): Reads and checks a budget file; throws `UsageError` naming each problem (an unknown key with the closest).
+- `recordTrend` (function): Appends `measured` under `key` to the trend file (the last 20 kept); warns for each regression since the last.
+- `regressions` (function): The metrics that grew over `limit` (a fraction) from `before` to `after`, as text.
+- `Section` (type): A section of a budget file, as a way of measuring is held to it.
+- `TREND_FILE` (const): The trend file, under the repository.
+- `TREND_LIMIT` (const): Growth since the run before that `PERF_TREND` warns about: 15%.
+- `Way` (type): A way of measuring (see the file comment).
+- `withinBudget` (function): Whether `value` is within `limit`, `tolerance` (a fraction) over it allowed.
+
 ### [`tools/lib/png.ts`](../tools/lib/png.ts)
 
 - `decodePng` (function): Decodes a non-interlaced 8-bit RGB or RGBA PNG (what Chromium's screenshots are) into RGBA bytes.
+
+### [`tools/lib/portVectors.ts`](../tools/lib/portVectors.ts)
+
+- `BLOB_SCRIPTS` (const): The Blob scripts: the stress world's slime hop, kicks to the squash spring, and look turns.
+- `blobScript` (function): One Blob script from a fresh `new E.Blob()`, sampled after every step.
+- `BUILDS` (const): The builds of the humanoid matrix and of the moves.
+- `colorVectors` (function): `color.json`: the colour helpers over a fixed list of colours, 24 of them drawn from `E.rng(0x5eed)`.
+- `coreVectors` (function): `core.json`: `rng`, `hash2`, `noise2`, and the math helpers WP 1.1 ports.
+- `DT` (const): The fixed step, seconds.
+- `ENGINE` (const): The engine file inside the source checkout.
+- `everyNth` (const): The steps sampled: every 4th at facing 0, every 40th (among those) at the other seven, which differ only by the turn.
+- `humanoidRun` (function): One run of the humanoid matrix: a fresh rig of `build` in `state`, facing `facing`·π/4, for 120 steps.
+- `humanoidVectors` (function): `humanoid-<build>.json`: every state at every facing.
+- `LoadedEngine` (type): The old engine in its own `vm` context: `E`, what it printed (must stay empty), and `seed(id)` for each record.
+- `loadEngine` (function): Loads `my-3d2dge:engine/my-3d2dge.js` from the checkout at `sourcePath` into a fresh `vm` context.
+- `moveRecord` (function): `E.move(name, u, phase)` for u = i/20 on `build`, each sample on a fresh rig at rest at t = 0 (see the README).
+- `moveVectors` (function): `moves.json`: every move of `E.MOVES`, its spec as `E.move` builds it, in every phase on every build.
+- `SourceEngine` (type): The parts of the old engine's `E` (`My3D2dge`) the vectors call.
+- `STATES` (const): The humanoid state matrix (WP 0.11): locomotion, every pose, and both stances (while walking).
+- `STEPS` (const): The steps of each humanoid run.
 
 ### [`tools/lib/replayState.ts`](../tools/lib/replayState.ts)
 
@@ -6120,10 +6211,17 @@ For the agents who maintain the engine.
 - `packageVersion` (function): Reads the engine's version from `package.json` under `root`.
 - `Report` (interface): The fixed schema of `out/<cmd>/<target>/report.json`.
 - `reportPath` (function): The repository-relative path of a command's report: `out/<cmd>/<target>/report.json`.
-- `runtime` (function): Names the platform: `linux-x64 node24.21.0`, followed by `browser` (such as `chromium141`) when one was used.
+- `runtime` (function): Names the platform: `linux-x64 node24.22.0`, followed by `browser` (such as `chromium141`) when one was used.
 - `targetSlug` (function): Turns a command's target (a page, a scene, a file) into one safe directory name; no target gives `all`.
 - `validateReport` (function): Checks a parsed report against the schema; returns one sentence per problem, or an empty list.
 - `writeReport` (function): Validates `report`, writes it to `out/<cmd>/<target>/report.json` under `root`, copies it to `out/latest.json` (with its `report` path) and returns the repository-relative path.
+
+### [`tools/lib/scenes.ts`](../tools/lib/scenes.ts)
+
+- `loadScene` (function): Imports a scene module and picks its scene: `id`, else the one scene it exports.
+- `resolveSceneModule` (function): The module a target names: a `.ts` file (its extension optional), a directory's `index.ts`, or a scene id's module.
+- `sceneModules` (function): Scene id → the module that defines it, from the modules' text (tests aside).
+- `sceneRoots` (function): Where scene modules live: `fixtures/scenes/` and every `labs/<name>/scenes/` (tests/pages/replay.ts globs the same).
 
 ### [`tools/lib/source.ts`](../tools/lib/source.ts)
 
@@ -6136,14 +6234,21 @@ For the agents who maintain the engine.
 - `SourceSpec` (interface): One source checkout, as `scripts/setup.sh` declares it.
 - `sourceSpecs` (function): Parses the `resolve_source VAR DEST COMMIT LOCAL_CLONE URL` lines of `scripts/setup.sh` under `root`.
 
+### [`tools/lib/tierBudgets.ts`](../tools/lib/tierBudgets.ts)
+
+- `BudgetCheck` (interface): A tier's duration against its budget.
+- `checkBudget` (function): Checks one duration against its tier's budget on `cores` cores: over it warns (ADR-0022: time budgets never fail).
+- `checkReports` (function): Checks each tier's duration on `cores` cores: `measured` first (T0 writes no report, so `x ci --local` times it), else the tier's JSON report under `root`.
+- `reportMs` (function): The wall-clock duration a Vitest or Playwright JSON report records; throws on anything else.
+- `Timing` (interface): One row of the timing table.
+- `timingTable` (function): The timing table: one line per step (verdict, name, duration, budget), then the total.
+
 ### [`tools/lib/tiers.ts`](../tools/lib/tiers.ts)
 
 - `Base` (interface): The commit a selection compares against, and why it is that one.
-- `BudgetCheck` (interface): A tier's duration against its budget.
 - `changedFiles` (function): What differs from `base` in `root`'s working tree (see the file comment).
 - `Changes` (interface): What changed since a base.
-- `checkBudget` (function): Checks one duration against its tier's budget: over it warns (ADR-0022: time budgets never fail).
-- `checkReports` (function): Checks each tier's duration: `measured` first (T0 writes no report, so `x ci --local` times it), else the tier's JSON report under `root`.
+- `CORES_PER_WORKER` (const): The cores each T2 worker's Chromium gets: SwiftShader draws on the CPU (ADR-0014 amendment 15).
 - `duration` (function): `8.1 s`, `2 min 5 s`, `6 min`.
 - `findBase` (function): The base for selections in `root` (see the file comment).
 - `isVersionOnly` (function): True when every changed line of a unified diff is a `"version": "…"` line, as many removed as added.
@@ -6151,17 +6256,18 @@ For the agents who maintain the engine.
 - `LONG_RUNS` (const): The long runs (PLAN.md §8.2): no budget, run at each gate.
 - `plan` (function): The base, the changes and both selections for `root`: what `x ci --local` and an iterating agent run.
 - `recordGreen` (function): Records `sha` as the last green `x ci --local`, the base until main holds a gate.
-- `reportMs` (function): The wall-clock duration a Vitest or Playwright JSON report records; throws on anything else.
+- `ROOT` (const): The repository root, two levels above this file.
 - `Selection` (interface): What a tier runs for a change, and why.
 - `selectT1` (function): What T1 runs for `changes`; undefined changes (no base) run it all.
 - `selectT2` (function): What T2 runs for `changes`; undefined changes (no base) run it all.
 - `T1_FULL` (const): Changes that run every T1 test: what all of them run under, or read outside their imports.
+- `T2_BUDGETS` (const): T2's measured budgets in ms, by its worker count (ADR-0022 amendment 2): 9 min on 4 workers, from 16 cores (gate G6, ADR-0014 amendment 14); 60 min on 1, on 4 cores (57 min 40 s at caff36a in the cloud container, ADR-0014 amendment 15).
 - `T2_FULL` (const): Changes that run all of T2: code that reaches the browser through the dev server, and what every spec runs under.
+- `t2Budget` (function): T2's budget on `cores` cores: its worker count's measured budget; 2 and 3 workers, unmeasured, are held to 1's.
+- `t2Workers` (function): T2's Playwright workers on a machine of `cores` cores: one per `CORES_PER_WORKER`, from 1 to 4.
 - `Tier` (interface): One tier: its full command, its budget and the JSON report its duration is read from.
 - `TierId` (type): A tier with a budget.
 - `TIERS` (const): The tiers of PLAN.md §8.2.
-- `Timing` (interface): One row of the timing table.
-- `timingTable` (function): The timing table: one line per step (verdict, name, duration, budget), then the total.
 - `Trigger` (interface): A path whose change runs a whole tier: a file, or a directory when it ends in `/`.
 - `vitestRerunTriggers` (function): `T1_FULL` as Vitest's `forceRerunTriggers` globs, so `vitest --changed` and `vitest related` agree with `selectT1`.
 
@@ -6174,20 +6280,12 @@ For the agents who maintain the engine.
 ### [`tools/qa/anim.ts`](../tools/qa/anim.ts)
 
 - `actionStates` (function): Each action of data/anim/actions/ (WP 8.7) played by its own check, by QA id (its id, `action:<name>`).
-- `ANIM_QA` (const): The thresholds, in metres and radians for a body of `size` 1.
 - `animViolations` (function): Every violation of the bodies whose ids `keep` keeps, the worst per id and metric, in id order.
-- `closure` (function): Loop closure: the last pose against a body that rested all along, at the same step (the first `count` points).
 - `default` (default): The `anim` QA family (PLAN.md §8.6, WP 6.6, I-29): `node x qa anim` drives every body the engine animates through its state matrix and measures the motion, in Node.
-- `footSlide` (function): Foot slide: a sole on the floor moving over the ground, the most in one contact.
-- `Found` (type): What a metric found: the worst value and its sentence.
 - `humanoidPrefixes` (function): The kinds of the humanoid's QA ids (`state:`, `pose:`, …), from its matrix: as `only`, the humanoid without clips.
 - `HUMANOIDS` (const): The humanoid bodies the family drives through the whole matrix; the first also runs it twice and at half the step.
 - `humanoidStates` (function): The humanoid's matrix: every sample state, pose, stance, move, reaction and action, by QA id.
-- `limbs` (function): Joint limits and twist jumps of the limbs (ik.ts `LIMBS`): hinges kept, folded bones never flipping about themselves.
-- `makeHumanoid` (const): A humanoid of `HUMANOIDS`, made at a step: what the matrix drives.
-- `motionTrack` (function): A track from its points (world metres) and the body's position at each step.
-- `pops` (function): Pops: a point that jumps in one step while the steps either side are much shorter (ed-sheet.mjs:122-125).
-- `Track` (interface): One run as the metrics read it: points per step, world and measured from the body, and what they need besides.
+- `makeHumanoid` (const): A humanoid of `HUMANOIDS`, made at a step, its feet planted on the floor (`FootPlant`): what the matrix drives.
 
 ### [`tools/qa/anim/clips.ts`](../tools/qa/anim/clips.ts)
 
@@ -6201,6 +6299,19 @@ For the agents who maintain the engine.
 - `clipState` (function): Clip `name` of `library` as a state of the matrix: played at once, a one-shot held at its end.
 - `clipViolations` (function): Every violation of the library's clips and sets whose ids `keep` keeps, the worst per id and metric, in id order; only the clips `play` picks are played (see the file comment).
 - `librarySets` (function): The sets under `<root>/data/anim/sets/`, in directory order.
+
+### [`tools/qa/anim/metrics.ts`](../tools/qa/anim/metrics.ts)
+
+- `ANIM_QA` (const): The thresholds, in metres and radians for a body of `size` 1.
+- `closure` (function): Loop closure: the last pose against a body that rested all along, at the same step (the first `count` points).
+- `footSlide` (function): Foot slide: a sole on the floor moving over the ground, the most in one contact.
+- `Found` (type): What a metric found: the worst value and its sentence.
+- `limbs` (function): Joint limits and twist jumps of the limbs (ik.ts `LIMBS`): hinges kept, folded bones never flipping about themselves.
+- `m` (const): A metre (or radian) value for messages: up to 4 decimals.
+- `motionTrack` (function): A track from its points (world metres) and the body's position at each step.
+- `pops` (function): Pops: a point that jumps in one step while the steps either side are much shorter (ed-sheet.mjs:122-125).
+- `Track` (interface): One run as the metrics read it: points per step, world and measured from the body, and what they need besides.
+- `worse` (const): The worse of two findings.
 
 ### [`tools/qa/audio.ts`](../tools/qa/audio.ts)
 
@@ -6265,6 +6376,7 @@ For the agents who maintain the engine.
 - `MAX_LINES` (const): The most lines a command prints, the report path included (PLAN.md §8.1: "at most about 20").
 - `ROOT` (const): The repository root: the directory holding `x.js`.
 - `UsageError` (class): Thrown by a command for a bad argument: the dispatcher prints the message and exits 2.
+- `wholeFlag` (function): A whole number from a flag, at least `min`, or `fallback` when the flag is absent.
 
 ### [`vite.config.ts`](../vite.config.ts)
 

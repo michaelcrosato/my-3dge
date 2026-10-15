@@ -6,7 +6,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import { loadClipLibrary } from '../../../anim/clip/library';
-import { restBuild, retargetPose } from '../../../anim/clip/retarget';
+import { restBuild } from '../../../anim/clip/rest';
+import { retargetPose } from '../../../anim/clip/retarget';
 import { createWorldPose, jointPosition, socketPosition, tipPosition } from '../../../anim/fk';
 import { Pose } from '../../../anim/pose';
 import { createSkeleton, jointIndex, JOINTS } from '../../../anim/skeleton';
@@ -83,7 +84,7 @@ describe('what retargeting onto the mannequin moves, every set (the baseline)', 
     writeBaseline(
       'mannequin',
       measured,
-      'The clip layer’s pose on build:mannequin (rotation copy aligned at rest, the hip joints placed by the hip-height ratio, contact IK, the lift) against the format-1 decode scaled by the same ratio, over the 22 points its joints stand for, at 30 fps and the 60 Hz midpoints. A build lays its bones out straight: its hip joints sit level with its pelvis and its spine stands on them, and its shoulders sit level with the neck, where the libraries’ sit 4–6 cm lower and behind it. Retargeting puts the hip joints where the source’s are (as my-3d2dge’s drive did), so the legs follow the source’s and the torso moves by the source’s own hip layout: on Quaternius’ clips (its lifted swims and jumps left out) the hips match to 0 mm and the knees and ankles to 6–7 mm on average, while the pelvis and spine stand 4 cm ahead, since its hips sit 5 cm ahead of its pelvis point (mesh2motion’s too); on CMU’s, whose hips sit 10 cm under the pelvis point, the pelvis stands 13 cm lower than the decode’s on average. The other sets’ bodies have other proportions than the mannequin’s. The worst cases are clips that lie on the floor or dip below it (the lift raises them) and the parity’s own fast pole swings.',
+      'The clip layer’s pose on build:mannequin (rotation copy aligned at rest, the hip joints placed by the hip-height ratio, contact IK, the lift) against the format-1 decode scaled by the same ratio, over the 22 points its joints stand for, at 30 fps and the 60 Hz midpoints. A build lays its bones out straight: its hip joints sit level with its pelvis and its spine stands on them, and its shoulders sit level with the neck, where the libraries’ sit 4–6 cm lower and behind it. Retargeting puts the hip joints where the source’s are (as my-3d2dge’s drive did), so the legs follow the source’s and the torso moves by the source’s own hip layout: on Quaternius’ clips the hips match to 0 mm and the knees and ankles to 6–7 mm on average, while the pelvis and spine stand 4 cm ahead, since its hips sit 5 cm ahead of its pelvis point (mesh2motion’s too); on CMU’s, whose hips sit 10 cm under the pelvis point, the pelvis stands 13 cm lower than the decode’s on average. The other sets’ bodies have other proportions than the mannequin’s. The worst cases are clips that lie on the floor or dip below it and the parity’s own fast pole swings. Re-recorded after G9: the lift raises a pose only as far as it sinks below its source’s own lowest point (Quaternius’ swims stood up to 1,813 mm up, Swim_Idle_Loop), and contact IK bends each knee toward the source’s once it stands 2 cm off its hip–ankle line.',
     );
   }
   it.each(SET_DIRS)('%s', (dir) => {

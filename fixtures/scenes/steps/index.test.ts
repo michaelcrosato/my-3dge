@@ -1,16 +1,25 @@
 /**
  * @file Tests for the steps fixture (PLAN.md WP 3.2; the box rule's fixture test for the character controller): the
  * scene runs in a recorded session with the box hero driven by intents across the one-box floor (it runs, jumps,
- * lands and dashes, each an event), gives the same hashes on every run and when its recording is played back, and
- * turns its shuttle round every 2 s; the course is built in a fixed order, so its bodies keep their ids.
+ * lands and dashes, each an event), gives the same hashes on every run and when its recording is played back, its
+ * recording is tests/replays/steps.replay.json and gives that replay's goldens (`node x replay
+ * tests/replays/steps.replay.json --browser sim` is Chromium's half), and it turns its shuttle round every 2 s; the
+ * course is built in a fixed order, so its bodies keep their ids.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { physicsOf } from '../../../engine/physics/world';
-import { playReplay } from '../../../engine/sim/replay';
-import { createSession } from '../../../engine/sim/scene';
+import { physicsOf } from '../../../engine/physics/binding';
+import { checkReplay, playReplay } from '../../../engine/sim/replay';
+import { createSession } from '../../../engine/sim/session';
 import type { ActorComponents } from '../../../engine/sim/actors';
 import { createPhysics } from '../../../engine/physics/world';
 import { buildCourse, HERO } from './index';
+
+const REPLAY = checkReplay(
+  JSON.parse(readFileSync(join(import.meta.dirname, '../../../tests/replays/steps.replay.json'), 'utf8')),
+);
+const PLATFORM = `${process.platform}-${process.arch}`;
 
 /** Steps the scene: stand, run east, jump (held), run on, dash, stand. */
 function play(seed = 1) {
@@ -50,6 +59,14 @@ describe('the steps fixture', () => {
     const played = playReplay(replay, { checkpoints: 'every' }).hashes;
     expect(played[String(first.hashes.length)]).toBe(first.hashes.at(-1));
     expect(played['70']).toBe(first.hashes[69]);
+  });
+
+  it('records the steps replay, which gives its goldens three times', () => {
+    const { session } = play();
+    expect(session.record().inputs).toEqual(REPLAY.inputs);
+    const golden = REPLAY.hashes[PLATFORM];
+    expect(golden, `goldens for ${PLATFORM}`).toBeDefined();
+    for (let run = 0; run < 3; run++) expect(playReplay(REPLAY).hashes).toEqual(golden);
   });
 
   it('turns its shuttle round every 2 s, and builds its course with the same ids every time', () => {
