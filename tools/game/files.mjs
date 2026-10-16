@@ -74,9 +74,9 @@ const ENGINE_FILES = new Set([
 /** Engine files a game gets under another path: the engine's license travels with its code. */
 export const RENAMED = Object.freeze({ LICENSE: 'engine/LICENSE' });
 
-/** The engine's own, at its root: its plan, records, CI, deployment, test suites and fixtures. */
+/** The engine's own, at its root: its plan, records, CI, deployment, test suites, fixtures and the lean package. */
 const ENGINE_ONLY =
-  /^(PLAN\.md|AGENTS\.md|CLAUDE\.md|README\.md|index\.html|package(-lock)?\.json|playwright\.config\.ts|vercel\.json|\.vercelignore|\.gitignore|\.gitattributes|\.github\/|\.claude\/|fixtures\/|tests\/|docs\/|scripts\/|labs\/hello\/)/;
+  /^(PLAN\.md|AGENTS\.md|CLAUDE\.md|README\.md|index\.html|package(-lock)?\.json|playwright\.config\.ts|vercel\.json|\.vercelignore|\.gitignore|\.gitattributes|\.github\/|\.claude\/|fixtures\/|tests\/|docs\/|scripts\/|labs\/hello\/|lean\/)/;
 
 /** Which source files a game gets, and as whose: the first rule whose `test` matches a path decides (`ownerOf`). */
 export const RULES = Object.freeze([

@@ -74,16 +74,27 @@ function areaMarkdown(area: ApiArea): string {
   return `${text}\n${names.join('; ')}.`;
 }
 
-/** The section's body: the sim-side barrel's areas, then the page barrel's own. */
-export function apiMap(root: string): string {
+/** How the guide introduces the API's two parts: what the sim side imports, then what only pages do. */
+const GUIDE_WORDS = {
+  intro: [
+    'Sim-side code imports these from engine/sim-api.ts; pages get them from engine/index.ts as well. Each name has the',
+    'first sentence of its doc comment in docs/API.md, and its whole manual where it is declared.',
+  ],
+  pages: 'Pages only, from engine/index.ts:',
+};
+
+/**
+ * The section's body: the sim-side barrel's areas, then the page barrel's own, introduced by `words` (the guide's by
+ * default; the lean package's README says where its names come from, tools/lib/lean.ts).
+ */
+export function apiMap(root: string, words: { intro: string[]; pages: string } = GUIDE_WORDS): string {
   const sim = barrelAreas(root, 'engine/sim-api.ts');
   const page = barrelAreas(root, 'engine/index.ts').filter((area) => !sim.some((other) => other.text === area.text));
   return [
-    'Sim-side code imports these from engine/sim-api.ts; pages get them from engine/index.ts as well. Each name has the',
-    'first sentence of its doc comment in docs/API.md, and its whole manual where it is declared.',
+    ...words.intro,
     '',
     ...sim.flatMap((area) => [areaMarkdown(area), '']),
-    'Pages only, from engine/index.ts:',
+    words.pages,
     '',
     ...page.flatMap((area) => [areaMarkdown(area), '']),
   ]

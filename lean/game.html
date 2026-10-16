@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>Gem run: a my-3dge game</title>
+    <!--
+      A whole game in one page: run round an arena collecting the gems before the clock runs out. Make your game by
+      changing this file (lean/README.md says how). Open it in a browser with WebGPU: double-click it, or serve its
+      folder. The block below loads the engine, three.js and Rapier from jsDelivr; keep it as it is.
+    -->
+    <!-- lean:head:start -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/michaelcrosato/my-3dge@main/lean/my3dge.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "my3dge": "https://cdn.jsdelivr.net/gh/michaelcrosato/my-3dge@main/lean/my3dge.js",
+          "three": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.webgpu.js",
+          "three/webgpu": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.webgpu.js",
+          "three/tsl": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.tsl.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/",
+          "@dimforge/rapier3d-simd-compat": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-simd-compat@0.21.0/dist/rapier.mjs"
+        }
+      }
+    </script>
+    <!-- lean:head:end -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #15171c;
+      }
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100dvh;
+        outline: none;
+        touch-action: none;
+      }
+      #msg {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        font:
+          18px system-ui,
+          sans-serif;
+        color: #c9ccd4;
+        text-align: center;
+        white-space: pre-line;
+        pointer-events: none;
+      }
+    </style>
+    <script>
+      // Until the engine starts, a script that fails shows here in one line, never as a blank page.
+      window.__engine = { ready: false, errors: [] };
+      function failed(message) {
+        if (typeof window.__engine.help === 'function') return; // the engine shows its own errors
+        window.__engine.errors.push({
+          code: 'APP_START',
+          message: message,
+          fix: 'the browser console names the cause',
+        });
+        document.getElementById('msg').textContent = 'The game failed to start: ' + message;
+      }
+      addEventListener('error', (event) => failed(event.message || 'a script failed to load'));
+      addEventListener('unhandledrejection', (event) => failed(String(event.reason?.message ?? event.reason)));
+    </script>
+  </head>
+  <body>
+    <canvas id="view"></canvas>
+    <div id="msg" role="status">Loading…</div>
+    <script type="module">
+      import {
+        addLevelBodies,
+        compileLevel,
+        createCharacter,
+        createEngine,
+        defineComponent,
+        defineScene,
+        defineSettings,
+        physicsOf,
+        spawnActor,
+      } from 'my3dge';
+
+      // ---- The sim: everything that decides play. It runs 60 steps a second, the same on every machine. ----
+
+      // The arena as text: # wall, . floor, P pillar, w low wall (jump it), @ the player's spawn. 1 m a character.
+      const ARENA_TEXT = `---
+description: The arena. 18 × 14 m inside walls, two pillars, two low walls to jump, the player's spawn.
+---
+##################
+#................#
+#..@.............#
+#.......PP.......#
+#.......PP.......#
+#................#
+#....w......w....#
+#....w......w....#
+#................#
+#.......PP.......#
+#.......PP.......#
+#................#
+#................#
+##################
+`;
+      const ARENA = compileLevel(ARENA_TEXT, { file: 'game.html', name: 'arena' });
+
+      // Settings: change them from the URL (?game.gems=20) or the console (__engine.set('game.gems', 20)).
+      defineSettings({
+        'game.gems': {
+          type: 'integer', default: 10, minimum: 1, maximum: 40, when: 'scene', description: 'How many gems.',
+        },
+        'game.seconds': {
+          type: 'number', default: 30, minimum: 5, maximum: 600, unit: 's', when: 'scene', description: 'The clock.',
+        },
+        'game.speed': {
+          type: 'number', default: 6, minimum: 1, maximum: 20, unit: 'm/s', when: 'scene', description: 'Run speed.',
+        },
+      });
+
+      // Components: data on entities. A component with x and z in metres and a material is drawn by the page.
+      defineComponent('gem', {
+        description: 'A gem to collect.',
+        fields: {
+          x: { type: 'number', default: 0, unit: 'm', description: 'East.' },
+          y: { type: 'number', default: 0.5, unit: 'm', description: 'Up.' },
+          z: { type: 'number', default: 0, unit: 'm', description: 'South.' },
+          yaw: { type: 'number', default: 0, unit: 'rad', description: 'Its spin.' },
+          size: { type: 'number', default: 0.4, unit: 'm', description: 'Its size.' },
+          material: { type: 'string', default: 'material:glow', description: 'How it is drawn.' },
+        },
+      });
+      defineComponent('round', {
+        description: 'The round: gems collected, steps left on the clock, and whether it is playing, won or lost.',
+        fields: {
+          gems: { type: 'integer', default: 0, description: 'How many gems.' },
+          collected: { type: 'integer', default: 0, description: 'How many are collected.' },
+          left: { type: 'integer', default: 0, description: 'Steps left on the clock (60 a second).' },
+          state: { type: 'string', default: 'playing', description: "'playing', 'won' or 'lost'." },
+        },
+      });
+
+      const REACH = 0.8; // how close the player's feet come to a gem to collect it, m
+      const START = ARENA.spawns.find((spawn) => spawn.name === 'hero').position;
+
+      // Scatters the gems over floor tiles at least 3 m from the spawn, drawn from the named random stream 'gems'.
+      function scatterGems(w, count) {
+        const tiles = [];
+        ARENA.tiles.forEach((char, i) => {
+          const [x, z] = [((i % ARENA.cols) + 0.5) * ARENA.tile, (Math.floor(i / ARENA.cols) + 0.5) * ARENA.tile];
+          if (char === '.' && Math.hypot(x - START[0], z - START[2]) >= 3) tiles.push([x, z]);
+        });
+        const rng = w.rng('gems');
+        for (let k = 0; k < count && tiles.length > 0; k++) {
+          const [[x, z]] = tiles.splice(rng.int(0, tiles.length - 1), 1);
+          w.spawn({ gem: { x, z, yaw: rng.range(0, Math.PI) } });
+        }
+      }
+
+      // Ends the round: the player stops, and the event says how it ended.
+      function endRound(w, round, state) {
+        round.state = state;
+        for (const e of w.query('actor')) {
+          e.actor.player = false;
+          e.actor.intents = {};
+        }
+        w.emit(state, { collected: round.collected, gems: round.gems });
+      }
+
+      // A system: spins the gems and collects those an actor reaches (a despawn waits for the step's end).
+      function collect(w) {
+        const [{ round }] = w.query('round');
+        for (const gem of w.query('gem')) gem.gem.yaw += 2 * w.dt;
+        if (round.state !== 'playing') return;
+        const taken = new Set();
+        for (const { actor } of w.query('actor')) {
+          for (const gem of w.query('gem')) {
+            if (taken.has(gem.id) || Math.hypot(gem.gem.x - actor.x, gem.gem.z - actor.z) > REACH) continue;
+            taken.add(gem.id);
+            w.despawn(gem.id);
+            round.collected += 1;
+            w.emit('gem', { id: gem.id, collected: round.collected });
+          }
+        }
+        if (round.collected >= round.gems) endRound(w, round, 'won');
+      }
+
+      // A system: the clock counts whole steps, never summed seconds; at 0 the round is lost.
+      function clock(w) {
+        const [{ round }] = w.query('round');
+        if (round.state !== 'playing') return;
+        round.left = Math.max(0, round.left - 1);
+        if (round.left === 0) endRound(w, round, 'lost');
+      }
+
+      // The scene: the level, its physics, and what happens when it starts.
+      const play = defineScene('game:play', {
+        description: 'Run round the arena collecting the gems before the clock runs out.',
+        level: 'level:arena',
+        physics: true,
+        setup(w) {
+          addLevelBodies(physicsOf(w), ARENA);
+          const gems = w.settings.get('game.gems');
+          w.spawn({ round: { gems, left: Math.round(w.settings.get('game.seconds') * w.hz) } });
+          scatterGems(w, gems);
+          const character = createCharacter({ speed: w.settings.get('game.speed'), jumpSpeed: 9 });
+          const anim = { build: 'build:chibi', weapon: 'none' }; // a humanoid that animates itself
+          spawnActor(w, { at: [START[0], START[1], START[2]], character, player: true, anim });
+          w.systems.add('game.collect', collect, { phase: 'rules' });
+          w.systems.add('game.clock', clock, { phase: 'rules' });
+        },
+      });
+
+      // ---- The page: draws the run and shows the HUD. It only reads the sim, never changes it. ----
+
+      const search = new URLSearchParams(location.search);
+      if (!search.has('cam') && !search.has('cam3')) search.set('cam3', 'chase'); // the camera follows the player
+      let engine = null;
+      let ended = false;
+
+      // Each drawn frame: the gems, the clock, the keys, and how the round ended.
+      function showRound({ world }) {
+        const entity = world.query('round')[0];
+        if (!engine || !entity) return;
+        const { gems, collected, left, state } = entity.round;
+        engine.ui.hud('gems', `Gems ${collected} / ${gems}`, { at: 'top-left' });
+        const color = left < 10 * world.hz ? '#ff8f6b' : '';
+        engine.ui.hud('clock', `${Math.ceil(left / world.hz)} s`, { at: 'top-right', color });
+        engine.ui.hud('keys', 'WASD: run · Space: jump · Shift: dash', { at: 'bottom', keys: true });
+        ended = state !== 'playing';
+        engine.ui.hud('end', ended ? `${state === 'won' ? 'Every gem!' : 'Time!'} Enter: play again` : null, {
+          at: 'top',
+        });
+      }
+
+      engine = await createEngine({
+        canvas: document.querySelector('#view'),
+        scenes: [play.id],
+        levels: { 'level:arena': { text: ARENA_TEXT, file: 'game.html' } },
+        search: `?${search}`,
+        onFrame: showRound,
+      });
+      document.getElementById('msg').hidden = true;
+
+      // Enter after a round: the next round, on the next seed.
+      addEventListener('keydown', (event) => {
+        if (event.code === 'Enter' && ended) engine.inspector.seed(engine.inspector.seed() + 1);
+      });
+    </script>
+  </body>
+</html>

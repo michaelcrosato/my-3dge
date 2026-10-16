@@ -72,3 +72,33 @@ kinds that make no entry in a game); tools/lib/docsGameApi.ts and tools/cmd/docs
 budget); scripts/setup.sh; tools/cmd/ci.ts (`x engine --test` in the full run); labs/game/scenes/play.test.ts and
 tests/e2e/game.spec.ts; vite.config.ts (a game's build); tools/eslint/publicApi.ts and tools/eslint/simSide.ts
 (`labs/*/scenes/`, `labs/*/cast/`).
+
+## Amendment 1 (2026-10-16, the owner's call): the lean package is the default handoff
+
+The owner, after about a dozen trials of handing the engine to agents: there should be a lean package. Libraries such
+as three.js, Rapier and Babylon.js ship without their tests and checks, and a model building in a chat in a browser
+answers in minutes, often with no sandbox at all: it cannot run an hour of tests, and many such agents never make a
+cloud environment. Decision 6's one-file tier could be read but not run, and decision 1's workspace asked every agent
+for a shell, npm and the engine's checks.
+
+- **lean/ is the default handoff** (README.md's first section, docs/HANDOFF.md's first prompt): lean/README.md, one
+  file of about 10,000 tokens (the model, the rules worth keeping, every public name by area, and the starter as one
+  page), and the game as one HTML page whose import map loads lean/my3dge.js, the engine as one ES module (1.07 MB,
+  346 KB gzipped), with three.js and Rapier from jsDelivr at the versions package.json pins. Nothing is installed,
+  built or tested; the page runs from a double-click in a browser with WebGPU.
+- **The engine's repository tests the package, and none of it ships**: `x docs --write` writes lean/ (a deterministic
+  build of about 3 s), `x docs --check` fails while any file differs, so every engine change carries its rebuilt bundle
+  (git history grows by up to about 350 KB, compressed, per change: accepted); tools/lib/lean.test.ts checks that the
+  import map names every import the bundle makes and that each file it maps is in node_modules at the pinned version;
+  tests/e2e/lean.spec.ts opens lean/game.html as a file and plays it on WebGPU with the CDN's URLs served from
+  node_modules and lean/. On 2026-10-16 jsDelivr's copies of the seven three.js and Rapier files a page loads were byte
+  for byte the ones in node_modules.
+- **Hosting is jsDelivr's copy of this repository**, `@main`: no account and no publishing step; jsDelivr refreshes a
+  branch within 12 hours, and a game pins today's engine with a commit in place of `main`. Publishing to npm would let
+  more sandboxes load it (some allow only jsDelivr's npm path or unpkg) and needs the owner's npm account: their call.
+- **No type declarations ship yet**: one bundled .d.ts needs a new dev dependency (the owner's call); the README's API
+  map names every export, and a TypeScript game uses the full workspace.
+- The full workspace (decisions 1 to 5) stays, for coding agents that should check their work as the engine does.
+
+Enforced by tools/lib/lean.ts and its test, tools/cmd/docs.ts (`x docs --write` and `--check`), tests/e2e/lean.spec.ts,
+and tools/game/files.mjs (lean/ is the engine repository's own: a game made by new-game.mjs does not get it).

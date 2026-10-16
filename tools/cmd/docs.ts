@@ -12,7 +12,8 @@
  *   registered twice; or a kind declared with `defineKind` cannot be read, or is declared twice (tools/lib/docs.ts
  *   gives the forms);
  * - INDEX, API or ERRORS differ from what `--write` would write, or docs/GAME-GUIDE.md's public API section does
- *   (tools/lib/docsGameApi.ts: the rest of the guide is hand-written);
+ *   (tools/lib/docsGameApi.ts: the rest of the guide is hand-written), or a file of the lean package, lean/, does
+ *   (tools/lib/lean.ts: the engine as one module, built in about 3 s, and the generated parts of its page and README);
  * - `__engine.help()` differs from the inspector's real members (tools/lib/docsHelp.ts);
  * - `docs/PROGRESS.md` is missing or longer than 40 lines (it is one screen, read first by every session).
  *
@@ -32,6 +33,7 @@ import { readModules, resolveExports, type ModuleDoc } from '../lib/docs';
 import { runExamples } from '../lib/docsExamples';
 import { BARRELS, GENERATED, generateDocs } from '../lib/docsGenerate';
 import { GUIDE, guideFindings, writeGuide } from '../lib/docsGameApi';
+import { leanFindings, writeLean } from '../lib/lean';
 import { checkHelp } from '../lib/docsHelp';
 import { checkPaths, type PathOptions } from '../lib/docsPaths';
 import type { Finding } from '../lib/report';
@@ -134,7 +136,7 @@ export async function driftChecks(
       file,
     });
   }
-  const guide = guideFindings(root);
+  const guide = [...guideFindings(root), ...(await leanFindings(root))];
   failures.push(...guide);
   const progress = join(root, PROGRESS);
   const progressLines = existsSync(progress) ? readFileSync(progress, 'utf8').trimEnd().split('\n').length : 0;
@@ -191,8 +193,11 @@ export function createDocsCommand(options: DocsOptions = {}): Command {
           written.push(file);
         }
         if (writeGuide(root)) written.push(GUIDE);
+        written.push(...(await writeLean(root)));
         lines.push(
-          written.length ? `wrote ${written.join(', ')}` : 'INDEX, API, ERRORS and the guide were already current',
+          written.length
+            ? `wrote ${written.join(', ')}`
+            : 'INDEX, API, ERRORS, the guide and lean/ were already current',
         );
       }
       const outcome = await driftChecks(root, options, modules);

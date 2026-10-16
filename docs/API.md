@@ -6131,7 +6131,7 @@ For the agents who maintain the engine.
 ### [`tools/lib/docsGameApi.ts`](../tools/lib/docsGameApi.ts)
 
 - `ApiArea` (interface): One area of a barrel: its comment and the names it exports.
-- `apiMap` (function): The section's body: the sim-side barrel's areas, then the page barrel's own.
+- `apiMap` (function): The section's body: the sim-side barrel's areas, then the page barrel's own, introduced by `words` (the guide's by default; the lean package's README says where its names come from, tools/lib/lean.ts).
 - `barrelAreas` (function): The areas of the barrel at `file` (repository path), with `export *` lines replaced by the target's areas.
 - `currentGuide` (function): The guide as `x docs --write` leaves it, or null when this repository has no guide.
 - `GUIDE` (const): The guide whose last section this module writes.
@@ -6238,6 +6238,19 @@ For the agents who maintain the engine.
 
 - `fnv1a` (function): Hashes a string (as UTF-8) or bytes with 32-bit FNV-1a, continuing from `seed` (the FNV offset basis by default).
 - `fnv1aHex` (function): `fnv1a` as eight lowercase hex digits, the form reports and logs print.
+
+### [`tools/lib/lean.ts`](../tools/lib/lean.ts)
+
+- `EXTERNAL` (const): The imports the bundle leaves to the page's import map: three.js and Rapier, by their npm names.
+- `LEAN` (const): The package's folder.
+- `LEAN_URL` (const): Where pages load the package from: jsDelivr's copy of this repository's main branch.
+- `leanBundle` (function): The engine as one ES module, with its banner: Vite's library mode on engine/index.ts, in memory.
+- `leanFiles` (function): Every file of the package as `x docs --write` leaves it, by repository path.
+- `leanFindings` (function): The package's stale files, as findings; none when this checkout has no lean/ (a game made from the engine).
+- `leanHead` (function): game.html's generated head: the engine's CSS and the import map, indented as the page's head is.
+- `leanImports` (function): The import map a page needs, by specifier: the engine, and three.js and Rapier at the versions package.json pins.
+- `withBlock` (function): `text` with the block between `<!-- lean:<name>:start -->` and its end marker replaced by `body`.
+- `writeLean` (function): Writes the package's files that differ; returns their paths.
 
 ### [`tools/lib/page.ts`](../tools/lib/page.ts)
 
