@@ -95,9 +95,10 @@ for a shell, npm and the engine's checks.
   for byte the ones in node_modules.
 - **Hosting is jsDelivr's copy of this repository**, `@main`: no account and no publishing step; jsDelivr refreshes a
   branch within 12 hours, and a game pins today's engine with a commit in place of `main`. Publishing to npm would let
-  more sandboxes load it (some allow only jsDelivr's npm path or unpkg) and needs the owner's npm account: their call.
-- **No type declarations ship yet**: one bundled .d.ts needs a new dev dependency (the owner's call); the README's API
-  map names every export, and a TypeScript game uses the full workspace.
+  more sandboxes load it (some allow only jsDelivr's npm path or unpkg) and needs the owner's npm account: their call,
+  no for now (2026-10-16).
+- **No type declarations ship yet**: one bundled .d.ts needs a new dev dependency (the owner's call, no for now,
+  2026-10-16); the README's API map names every export, and a TypeScript game uses the full workspace.
 - The full workspace (decisions 1 to 5) stays, for coding agents that should check their work as the engine does.
 
 Enforced by tools/lib/lean.ts and its test, tools/cmd/docs.ts (`x docs --write` and `--check`), tests/e2e/lean.spec.ts,

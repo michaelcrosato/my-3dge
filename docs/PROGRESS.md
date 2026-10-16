@@ -30,8 +30,8 @@ The plan's phases 0–9 are done (PR #2–#11), and the cleanup after G9 closed 
   wait on two (WP 10.2, WP 8.8), and the anim QA's foot slides on a rule for stance locks (ADR-0009 amendment 8).
 - Not verifiable in this container: speakers and headphones, Firefox and Safari, touch on phones (ADR-0021),
   physical pads, real-GPU performance (Phase H, or the owner).
-- The owner's: the first games, and the engine work their ENGINE-FEEDBACK.md files ask for; whether lean/ goes to npm
-  and gets type declarations (ADR-0024 amendment 1: an account, a new dev dependency). Vercel is paused until the
+- The owner's: the first games, and the engine work their ENGINE-FEEDBACK.md files ask for. lean/ stays off npm and
+  ships no type declarations: the owner's call of 2026-10-16 (ADR-0024 amendment 1). Vercel is paused until the
   owner tests: ignore its statuses and errors (ADR-0023).
 
 ## Open issues
