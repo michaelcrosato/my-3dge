@@ -5,16 +5,30 @@ decision behind this page is ADR-0024.
 
 ## Handing the engine to game agents
 
-**The prompt.** Give every agent, from any lab, the same lines, with the game changed:
+**The prompt, lean (the default).** Give every agent, from any lab, the same lines, with the game changed:
 
 ```text
-Make <the game> with the my-3dge game engine: https://github.com/michaelcrosato/my-3dge
+Make <the game> with the my-3dge game engine. Read this first:
+https://github.com/michaelcrosato/my-3dge/blob/main/lean/README.md
+```
+
+That is all, for a chat in a browser as much as for a coding agent. lean/README.md is one file of about 10,000 tokens
+(ADR-0024 amendment 1): the model, the rules worth keeping, every public name by area, and game.html, a small game
+that plays. The agent writes the game as one HTML page that loads the engine (lean/my3dge.js) from jsDelivr, as a page
+loads three.js; the page runs when it is opened in a browser with WebGPU. Nothing is installed, built or tested: the
+engine's repository tests the package before every merge, so a game does not have to. An agent that cannot open
+links gets the same file attached (lean/README.md).
+
+**The prompt, full workspace.** For a coding agent in a sandbox that should check its work as the engine does
+(headless tests, replays, renders read as numbers):
+
+```text
+Make <the game> with the my-3dge game engine, in its full workspace: https://github.com/michaelcrosato/my-3dge
 Start with the "Make a game with my-3dge" section of its README.
 ```
 
-That is all. The agent reads the README's first section and runs one command in its workspace (an empty repository
-you made for the game, or a folder): a shallow clone of the engine into a temporary folder, then
-tools/game/new-game.mjs, which writes the game:
+The agent runs one command in its workspace (an empty repository you made for the game, or a folder): a shallow
+clone of the engine into a temporary folder, then tools/game/new-game.mjs, which writes the game:
 
 - the engine, copied byte for byte and pinned by `engine-lock.json` (the commit and every file's SHA-256);
 - the starter game, labs/game/: a small game that plays, is won by its bot on 10 seeds and passes its tests;
@@ -24,25 +38,22 @@ tools/game/new-game.mjs, which writes the game:
 
 Then the agent sets up (`bash scripts/setup.sh`, or `npm ci`), runs `npm test`, and grows the game from the starter,
 checking its work with `npm run check`, `npm test`, `node x sim` and `node x shot`. The engine is read-only in a game:
-`npm run check` fails when an engine file changes without a declared patch.
-
-**When you can only hand over a file.** A model without a shell: attach docs/GAME-GUIDE.md, the model, the rules, the
-commands and every public name in one file; it can design the game and write its code, not run it. An agent that
-cannot reach GitHub but can take a file: the ZIP of main (about 7 MB),
-https://github.com/michaelcrosato/my-3dge/archive/refs/heads/main.zip, and "run
-`node <unzipped folder>/tools/game/new-game.mjs <dir>`"; installing still needs npm's registry.
+`npm run check` fails when an engine file changes without a declared patch. An agent that cannot reach GitHub but can
+take a file: the ZIP of main (about 7 MB), https://github.com/michaelcrosato/my-3dge/archive/refs/heads/main.zip, and
+"run `node <unzipped folder>/tools/game/new-game.mjs <dir>`"; installing still needs npm's registry.
 
 **Many games at once.**
 
-- One repository per game. Agents in cloud sandboxes need somewhere to push, and this repository takes no games: its
-  AGENTS.md sends a game agent to the README.
-- Games share nothing while they run (each carries its own pinned engine, about 15 MB), so ten or a hundred agents
-  work in parallel without touching each other.
-- An agent's sandbox must reach github.com once (the clone) and npm's registry (the install); most coding-agent
-  sandboxes allow both. scripts/setup.sh also downloads, only when missing, Node 24 from nodejs.org and Chromium
-  (Chrome for Testing) from storage.googleapis.com; without them a game runs on Node 22.12 or newer (Vite's floor),
-  all but the browser commands. Where a platform cuts the network while the agent works, put the command in its setup
-  step.
+- Lean games need nothing but a browser that reaches jsDelivr: a chat can write one, and you open it. They take the
+  engine at `@main`; a game pins today's engine by putting a commit in place of `main` in its two engine URLs.
+- One repository per game in the full workspace. Agents in cloud sandboxes need somewhere to push, and this repository
+  takes no games: its AGENTS.md sends a game agent to the README.
+- Games share nothing while they run (a workspace carries its own pinned engine, about 15 MB), so ten or a hundred
+  agents work in parallel without touching each other.
+- A workspace agent's sandbox must reach github.com once (the clone) and npm's registry (the install); most coding-agent
+  sandboxes allow both. scripts/setup.sh also downloads, only when missing, Node 24 from nodejs.org and Chromium (Chrome
+  for Testing) from storage.googleapis.com; without them a game runs on Node 22.12 or newer (Vite's floor), all but the
+  browser commands. Where a platform cuts the network while the agent works, put the command in its setup step.
 - Every game made the same day is on the same engine (main, as it was). A game moves to a newer engine only when you
   ask its agent: `node x engine --update`, then `npm ci`, `npm run check`, `npm test`, and its replays' goldens
   recorded again where play changed.
@@ -64,10 +75,16 @@ Why not the engine's own repository, with the game inside it: a game agent there
 packages, the ledger, escalation records), a setup hook that clones the projects the engine was ported from, an
 hour-long CI and 3,380 engine tests, and ten agents pushing games into one repository would collide.
 
-Why not hand-made packages (bare, recommended, complete): each would need rebuilding and retesting at every engine
-change, and would go stale. Here each comes from the same checkout by rule, and is tested: the guide is the one-file
-tier, its API section generated by `node x docs --write`; the game is the recommended tier, made by one command and
-proved after every merge (`node x engine --test`, in the full run); the repository, or its ZIP, is the complete one.
+Why lean is the default (the owner's call of 2026-10-16, after a dozen trials): a library ships as three.js, Rapier
+or Babylon.js do, as code and docs, without its tests and checks; and a model building in a chat answers in minutes,
+often with no sandbox at all, so it cannot run an hour of tests or a toolchain. The engine's repository keeps the
+checks for itself and runs them on the package before every merge.
+
+Why not hand-made packages: each would need rebuilding and retesting at every engine change, and would go stale. Here
+each comes from the same checkout by rule, and is tested: the lean package is written by `node x docs --write`, held
+current by `x docs --check` and played in Chromium by tests/e2e/lean.spec.ts; the full workspace is made by one
+command and proved after every merge (`node x engine --test`, in the full run); the repository, or its ZIP, is the
+complete one.
 
 Why the engine is copied into each game, not linked: it works offline, with no submodule for a cloud agent to trip
 on, and it stays searchable (agents' search tools skip node_modules). The lock does what a pin would.

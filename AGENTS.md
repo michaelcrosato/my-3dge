@@ -2,7 +2,7 @@
 
 my-3dge is a fully 3D web game engine written and maintained only by AI agents. DOCTRINE.md governs everything here:
 read it first. The plan and its ledger are PLAN.md; generated docs start at docs/INDEX.md. Making a game? Not here:
-README.md's first section makes it a repository of its own.
+read lean/README.md, or README.md's first section for a repository of its own.
 
 ## How to work
 Where the doctrine and the plan are silent, use your judgment and record the call. When going against the doctrine
@@ -93,8 +93,9 @@ Task guides (docs/INDEX.md opens with them), each read when the task needs it:
 - docs/TESTING.md: the tiers, and which unit tests and specs a change selects.
 - docs/HANDOFF.md: handing the engine to game agents (the prompt, many games at once), starting in a new environment,
   and the box against my-3d2dge's stress-world.
-- docs/GAME-GUIDE.md: what every game agent reads, and labs/game/, the starter every game begins as (ADR-0024): keep
-  both true when a public API changes (`x docs --write` regenerates the guide's API section).
+- lean/: the default handoff, the engine as a library (ADR-0024 amendment 1); docs/GAME-GUIDE.md and labs/game/, the
+  full workspace's guide and starter. Keep lean/README.md, lean/game.html, the guide and the starter true when a
+  public API changes (`x docs --write` rebuilds lean/my3dge.js and writes the generated blocks).
   tools/game/new-game.mjs makes a game; `node x engine --test` proves one passes its own gate.
 - labs/box/README.md: the box's scenes, settings and quick loop; adding a scene or a variant (a variant is a new
   scene file or a settings preset, never a change of meaning in a passing scene).

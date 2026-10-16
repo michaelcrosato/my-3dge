@@ -14,7 +14,7 @@ it.
 - [`docs/PROGRESS.md`](../docs/PROGRESS.md): read first, every session: where things stand, what is next, the open issues.
 - [`docs/TESTING.md`](../docs/TESTING.md): the tiers, and which unit tests and specs a change selects.
 - [`docs/HANDOFF.md`](../docs/HANDOFF.md): handing the engine to game agents (the prompt, many games at once), starting in a new environment, and the box against my-3d2dge's stress-world.
-- [`docs/GAME-GUIDE.md`](../docs/GAME-GUIDE.md): what every game agent reads, and labs/game/, the starter every game begins as (ADR-0024): keep both true when a public API changes (`x docs --write` regenerates the guide's API section). tools/game/new-game.mjs makes a game; `node x engine --test` proves one passes its own gate.
+- [`lean/`](../lean/): the default handoff, the engine as a library (ADR-0024 amendment 1); docs/GAME-GUIDE.md and labs/game/, the full workspace's guide and starter. Keep lean/README.md, lean/game.html, the guide and the starter true when a public API changes (`x docs --write` rebuilds lean/my3dge.js and writes the generated blocks). tools/game/new-game.mjs makes a game; `node x engine --test` proves one passes its own gate.
 - [`labs/box/README.md`](../labs/box/README.md): the box's scenes, settings and quick loop; adding a scene or a variant (a variant is a new scene file or a settings preset, never a change of meaning in a passing scene).
 - [`tests/replays/README.md`](../tests/replays/README.md): the replay format; checking, recording and making replays.
 - [`tools/templates/`](../tools/templates/): `node x new <kind> <id>` writes a module, scene, material… from its kind's template and checks it (`node x new` lists the kinds).
@@ -1523,6 +1523,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`hash.ts`](../tools/lib/hash.ts): The FNV-1a hash (32-bit), shared by the tools: report ids, the e2e fixture's named random streams, and the proof hashes later WPs print.
   - Exports: `fnv1a`, `fnv1aHex`
   - Tests: [`tools/lib/hash.test.ts`](../tools/lib/hash.test.ts)
+- [`lean.ts`](../tools/lib/lean.ts): The lean package, lean/ (ADR-0024 amendment 1, the owner's call of 2026-10-16): the engine shipped the way three.js, Rapier or Babylon.js ship, as a library and nothing else, with no tests, checks, tools or install.
+  - Exports: `EXTERNAL`, `LEAN`, `LEAN_URL`, `leanBundle`, `leanFiles`, `leanFindings`, `leanHead`, `leanImports`, `withBlock`, `writeLean`
+  - Tests: [`tools/lib/lean.test.ts`](../tools/lib/lean.test.ts)
 - [`page.ts`](../tools/lib/page.ts): Pages for the `x` commands (PLAN.md §8.1, §8.3, WP 2.7): reading a page's ready-or-error signal (`window.__engine`), waiting for it, finding the page that draws a scene module's scenes, and playing replays in that page, opened on each replay's scene, for `x replay --browser page` (`pageRuntime`: `__engine.replay`, engine/app/playback.ts, which draws a frame after every step), or in tests/pages/replay.html for `--browser sim` (`replayBrowser`).
   - Exports: `BrowserMode`, `labPageOf`, `PageEngine`, `pageRuntime`, `readSignals`, `READY_MS`, `replayBrowser`, `scenePath`, `Signals`, `waitReady`
   - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)

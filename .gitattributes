@@ -1,2 +1,4 @@
 # GitHub fills in the engine's commit and date when it serves an archive (tools/game/new-game.mjs reads them).
 tools/game/engine-version.txt export-subst
+# The lean package's engine, one generated module (tools/lib/lean.ts): diffs show it as changed, not line by line.
+lean/my3dge.js linguist-generated=true -diff

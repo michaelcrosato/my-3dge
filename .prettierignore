@@ -12,3 +12,6 @@ tests/baselines/port/
 data/anim/sets/
 # Written by npm.
 package-lock.json
+# The lean package: the engine built as one module, and its page and README, hand-written but for the blocks
+# tools/lib/lean.ts writes (ADR-0024 amendment 1).
+lean/
