@@ -3,11 +3,14 @@
  * profile (engine/physics/movement/profile.ts) gives a character in `character.movement`, and what each such
  * character keeps between ticks, the component `motion` (engine/sim/actors.ts). The model is Apex Legends', which is
  * Titanfall 2's, as er-apex reconstructs it from the game's own code (`umiiii/er-apex`,
- * `deps/er-apex-move/src/params.rs` and `controller.rs`) and the Apex Movement Wiki measures it; steer.ts runs it.
+ * `deps/er-apex-move/src/params.rs` and `controller.rs`; MIT, engine/physics/movement/NOTICE) and the Apex Movement
+ * Wiki measures it; steer.ts runs it.
  *
  * `MODEL_FIELDS`' defaults are the reference values, so a profile states only what it changes. They are Apex's
  * numbers converted from its units (1 u = 0.0254 m, as Respawn's own scripts convert): each description gives the
- * source value. Values marked "ours" have no source and are starting values for the owner's playtests.
+ * source value. Values marked "ours" have no source and are starting values for the owner's playtests. The gaits'
+ * `side` and `back` are 1 in Apex (no strafe or backpedal penalty), there for games that slow either. A move's keys'
+ * frame is the camera's heading (the intent `cam`), so the lurch tells a new key from a turning view.
  *
  * Invariants: data only; seconds, metres and radians as the fields say, never ticks (steer.ts converts at its step);
  * `createMotionState()` is a character at rest on the ground, standing, holstered.
@@ -49,6 +52,8 @@ export const MODEL_FIELDS = defineSchema({
     walk: num(2.2035, 0, 100, 'The walk, ours: Apex walks only aiming down sights, at the run × 0.5.', 'm/s'),
     crouch: num(2.032, 0, 100, 'The crouch-walk: 80 u/s.', 'm/s'),
     holstered: num(1.15, 0, 10, 'Every gait’s speed times this with no weapon out.'),
+    side: num(1, 0, 10, 'A gait’s speed times this moving straight across the view (er-apex’s `speed_scale_side`).'),
+    back: num(1, 0, 10, 'A gait’s speed times this moving straight back from the view (`speed_scale_back`).'),
   }),
   accel: group('Ground acceleration toward the wished speed (Apex’s GetAccel), by the speed at the tick’s start.', {
     low: num(63.5, 0, 1e4, 'Below `lowSpeed`: 2,500 u/s².', 'm/s²'),
@@ -140,8 +145,8 @@ export const MOTION_FIELDS = defineSchema({
   landAge: { type: 'integer', default: -1, minimum: -1, description: 'Ticks since it last landed; −1: not yet.' },
   fall: num(0, 0, 1e6, 'The fall height its last landing counts for the stun, fading as it recovers.', 'm'),
   flight: { type: 'integer', default: -1, minimum: -1, description: 'Ticks since its jump took off, in the air; −1: none.' }, // prettier-ignore
-  wishX: num(0, -1, 1, 'Last tick’s move, east (a new key lurches).'),
-  wishZ: num(0, -1, 1, 'Last tick’s move, south.'),
+  keyRight: num(0, -1, 1, 'Last tick’s move in its keys’ frame, to the right (a new key lurches).'),
+  keyForward: num(0, -1, 1, 'Last tick’s move in its keys’ frame, forward.'),
 });
 
 /** The component `motion`: a character's state in the model (`MOTION_FIELDS` documents each field). */

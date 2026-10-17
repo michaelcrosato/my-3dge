@@ -195,6 +195,8 @@ export interface CharacterInput {
   crouch?: boolean;
   /** The shooter model's: the view's yaw (rad; forward = (sin, 0, cos)), which the sprint keeps within 45° of. */
   view?: number;
+  /** The shooter model's: the yaw the move's keys are turned by (the camera's heading); absent, the world's. */
+  frame?: number;
   /** The shooter model's: a yaw to face (the look's or the aim's); absent, it faces where it moves. */
   face?: number;
 }
@@ -252,7 +254,8 @@ const PROBE_DEPTH = 0.15;
  * going into them, it pushes what it walked into (both leave at (push·v + m·u)/(push + m)), probes the ground under it
  * and presses a dynamic floor with push × world gravity. A kinematic floor it stands on carries it (`carried`); idle on
  * fixed ground it skips the controller. Changes `state` and sets the body's velocity, so the body gets there when the
- * world steps: call it before (actors.ts: the phase `anim`).
+ * world steps: call it before (actors.ts: the phase `anim`). A character with a movement model steers by it
+ * (engine/physics/movement/steer.ts) and needs its `motion`, else `PHYSICS_BAD_ARGUMENT`.
  */
 export function stepCharacter(
   physics: Physics,
@@ -271,8 +274,9 @@ export function stepCharacter(
   const { rigid } = partsOf(world, body, 'stepCharacter(body)');
   const g = character.characterGravity ?? options.gravity;
   const wasGrounded = state.grounded;
-  const model = character.movement && motion;
-  const plan = model ? steerMotion(character, state, motion, input, dt, g) : steer(character, state, input, dt, g);
+  const model = character.movement !== undefined;
+  check(!model || motion !== undefined, 'stepCharacter(motion)', motion, 'the character’s MotionState (createMotionState(), the component motion an actor keeps): it has a movement model'); // prettier-ignore
+  const plan = model ? steerMotion(character, state, motion!, input, dt, g) : steer(character, state, input, dt, g);
   const still = Math.hypot(state.vx, state.vz) < 1e-3 && state.vy <= 0 && state.vy > -g * dt * 1.5;
   const idle = wasGrounded && still && !plan.jumped && !plan.dashing && fixedBody(world, state.ground);
   const grounded = wasGrounded && !plan.jumped && state.vy <= 0;
@@ -282,7 +286,7 @@ export function stepCharacter(
         moveCharacter(physics, body, character, carry.add(plan.desired), { grounded, oneWay: options.oneWay }),
       );
   const landed = model
-    ? settleMotion(character, state, motion, input, plan, move, g, dt)
+    ? settleMotion(character, state, motion!, input, plan, move, g, dt)
     : settle(character, state, plan, move.moved, move.grounded);
   for (const hit of [...move.across, ...move.vertical]) {
     if (!isWall(character, hit.normal) || world.bodies.get(handleOf(hit.body))?.isDynamic()) continue;

@@ -1,17 +1,18 @@
 /**
  * @file One tick of the shooter model (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2), in the order of Apex's own tick
- * (er-apex's `controller.rs` `tick`, lines 551-700): the timers and the stance, the sprint, the jump, then the walk
- * on the ground (engine/physics/movement/ground.ts) or the lurch and the air move in the air (air.ts), then gravity,
- * integrated exactly; after the controller's move, `settleMotion` lands (the fall stun, by the impact speed along the
- * floor's normal), keeps the flight's count and turns the character toward where it faces at the model's turn rate.
- * engine/physics/character.ts's `stepCharacter` runs these in place of engine/physics/feel.ts's `steer` and `settle`
- * for a character with a model (`character.movement`); the controller's move, walls, pushes and the ground probe are
- * the same for both.
+ * (er-apex's `controller.rs` `tick`, lines 551-700; MIT, engine/physics/movement/NOTICE): the timers and the stance,
+ * the sprint, the jump, then the walk on the ground (engine/physics/movement/ground.ts) or the lurch and the air move
+ * in the air (air.ts), then gravity, integrated exactly; after the controller's move, `settleMotion` lands (the fall
+ * stun, by the impact speed along the floor's normal), keeps the flight's count and turns the character toward where it
+ * faces at the model's turn rate. engine/physics/character.ts's `stepCharacter` runs these in place of
+ * engine/physics/feel.ts's `steer` and `settle` for a character with a model (`character.movement`); the controller's
+ * move, walls, pushes and the ground probe are the same for both.
  *
  * Its input beyond the platformer's (`CharacterInput`): `sprint` and `sprintPressed`, `walk`, `crouch`, `view` (the
- * view's yaw: the sprint's 45°) and `face` (a yaw to face: the look's or the aim's; without it, it faces where it
- * moves). Jumps keep the controller's coyote time and buffer (`feel.coyote`, `feel.buffer`), so a press is never lost
- * (docs/PLAYGROUND.md §3.4); a jump after a jump gets no coyote time, and there is no variable jump and no dash.
+ * view's yaw: the sprint's 45°), `frame` (the yaw the move's keys are turned by, the camera's: the lurch's new key) and
+ * `face` (a yaw to face: the look's or the aim's; without it, it faces where it moves). Jumps keep the controller's
+ * coyote time and buffer (`feel.coyote`, `feel.buffer`), so a press is never lost (docs/PLAYGROUND.md §3.4); a jump
+ * after a jump gets no coyote time, and there is no variable jump and no dash.
  *
  * Invariants: reads and writes only the states it is given; same states and input, same tick.
  *
@@ -23,7 +24,7 @@ import { Vector3 } from '../../core/math';
 import type { Character, CharacterInput, CharacterState } from '../character';
 import type { Steering } from '../feel';
 import type { CharacterMove } from '../move';
-import { airMove, hopSpeed, jumpScale, land, landSlowdown, lurch } from './air';
+import { airMove, hopSpeed, jumpScale, land, landSlowdown, lurch, newKey } from './air';
 import { gaitSpeed, updateSprint, walkMove } from './ground';
 import type { MotionState } from './model';
 
@@ -32,6 +33,12 @@ function clampMove(move: CharacterInput['move']): [number, number] {
   const [x, z] = move ?? [0, 0];
   const length = Math.hypot(x, z);
   return length > 1 ? [x / length, z / length] : [x, z];
+}
+
+/** The move in its keys' frame, `[right, forward]`: engine/input/intents.ts's `fromCamera` undone at yaw `frame`. */
+function keysOf(wish: readonly [number, number], frame: number): [number, number] {
+  const [s, c] = [Math.sin(frame), Math.cos(frame)];
+  return [wish[1] * s - wish[0] * c, wish[0] * s + wish[1] * c];
 }
 
 /** Seconds since the last landing, from its age in ticks; −1 before the first. */
@@ -56,6 +63,7 @@ export function steerMotion(
   motion.stickyLeft = Math.max(0, motion.stickyLeft - 1);
   motion.stance = input.crouch ? 'crouch' : 'stand';
   const wish = clampMove(input.move);
+  const keys = keysOf(wish, input.frame ?? 0);
   const view = input.view === undefined ? null : ([Math.sin(input.view), Math.cos(input.view)] as const);
   const since = sinceLanding(motion, dt);
   const slowdown = landSlowdown(m, motion.fall, since < 0 ? Infinity : since);
@@ -79,10 +87,10 @@ export function steerMotion(
     const moving = Math.hypot(h[0], h[1]) > 0.1 || Math.hypot(wish[0], wish[1]) > 0.1;
     motion.gait = !moving ? 'idle' : motion.stance === 'crouch' ? 'crouch' : motion.sprinting ? 'sprint' : sprint.blocked ? 'walk' : 'run'; // prettier-ignore
   } else {
-    if (motion.flight >= 1) lurch(m, h, wish, [motion.wishX, motion.wishZ], motion.flight * dt);
+    if (motion.flight >= 1 && newKey(m, keys, [motion.keyRight, motion.keyForward])) lurch(m, h, wish, motion.flight * dt); // prettier-ignore
     airMove(m, h, wish, scale, dt);
   }
-  [motion.wishX, motion.wishZ] = wish;
+  [motion.keyRight, motion.keyForward] = keys;
   [state.vx, state.vz] = h;
   const v0 = state.vy;
   state.vy = Math.max(v0 - g * dt, -character.maxFall);

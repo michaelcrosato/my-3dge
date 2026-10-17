@@ -4,14 +4,15 @@
  * sprint held (er-apex's trial A: 2,500 u/s² to 120 u/s, 450 to the run, 100 to the sprint, the sprint from the second
  * tick), the run, the walk, the crouch-walk and the holstered bonus at their speeds, the stop from a sprint at
  * 1,250 u/s², the deceleration of only the part of the velocity the input does not push for, the sprint only within
- * 45° of the view (dipping to 4.80 m/s at 45°) and kept by a press while the move goes on, and the stick curve.
+ * 45° of the view (dipping to 4.80 m/s at 45°) and kept by a press while the move goes on, the stick curve, and the
+ * gaits' side and back scales (1 in Apex, so it backpedals and strafes at the run).
  * @see engine/physics/movement/ground.ts
  */
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../../core/math';
 import { parse } from '../../core/schema';
 import { createCharacter, createCharacterState, type CharacterInput } from '../character';
-import { accelerate, decelerate, groundAccel, walkMove } from './ground';
+import { accelerate, decelerate, directionShare, gaitSpeed, groundAccel, walkMove } from './ground';
 import { createMotionState, MODEL_FIELDS } from './model';
 import { settleMotion, steerMotion } from './steer';
 
@@ -120,6 +121,19 @@ describe('the ground model', () => {
 
   it('sprints toward any direction when nothing gives a view (the screen-relative cameras)', () => {
     expect(after(standing(), { move: [-1, 0], sprint: true }, 300)).toBeCloseTo(6.604, 3);
+  });
+
+  it('goes at `gaits.side` of its speed across the view and `gaits.back` back from it (both 1 in Apex)', () => {
+    const tuned = parse(MODEL_FIELDS, { gaits: { side: 0.8, back: 0.5 } });
+    const east = [1, 0] as const; // the view
+    const share = (wish: readonly [number, number], m = tuned) => directionShare(m, wish, east);
+    expect([share([1, 0]), share([0, 1]), share([0, -1]), share([-1, 0])]).toEqual([1, expect.closeTo(0.8, 12), expect.closeTo(0.8, 12), expect.closeTo(0.5, 12)]); // prettier-ignore
+    expect(share([-Math.SQRT1_2, Math.SQRT1_2])).toBeCloseTo(0.65, 12); // half across, half back
+    expect(directionShare(tuned, [0, 1], null)).toBe(1); // no view: the screen-relative cameras
+    const ways = [[1, 0], [0, 1], [-1, 0], [-0.6, 0.8]] as const; // prettier-ignore
+    for (const wish of ways) expect(share(wish, model)).toBe(1);
+    expect(gaitSpeed(tuned, createMotionState(), false, [-1, 0], east)).toBeCloseTo(4.4069 * 0.5, 12);
+    expect(after(standing(), { move: [-1, 0], view: Math.PI / 2 }, 120)).toBeCloseTo(4.4069, 3); // Apex backpedals at the run
   });
 
   it('reads a half-pushed stick as three quarters (the stick curve) and picks the acceleration by speed', () => {

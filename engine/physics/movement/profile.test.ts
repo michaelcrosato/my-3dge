@@ -26,9 +26,10 @@ describe('movement profiles', () => {
   it('gives movement:apex Apex’s hull, steps, slope, gravity, jump and grace, within the reference tolerances', () => {
     const apex = createCharacter({ movement: 'movement:apex' });
     const { radius, height } = apex.capsule;
-    expect(radius).toBeCloseTo(0.41, 1); // ±2 cm: 16 u
-    expect(height + 2 * radius).toBeCloseTo(1.83, 1); // 72 u
-    expect(Math.abs(apex.autostep.height - 0.56)).toBeLessThanOrEqual(0.02); // 22 u
+    const cm2 = (value: number, reference: number) => expect(Math.abs(value - reference), `${value} against ${reference}`).toBeLessThanOrEqual(0.02); // prettier-ignore
+    cm2(radius, 0.41); // 16 u
+    cm2(height + 2 * radius, 1.83); // 72 u
+    cm2(apex.autostep.height, 0.56); // 22 u
     expect(Math.abs(apex.maxSlope / DEG - 45.57)).toBeLessThanOrEqual(1); // a floor normal 0.7 up
     expect(apex.characterGravity).toBe(19.05);
     expect(apex.jumpSpeed ** 2 / (2 * 19.05)).toBeCloseTo(1.4224, 6); // a 56 u jump
@@ -43,7 +44,9 @@ describe('movement profiles', () => {
     for (const [value, reference] of [[m.gaits.run, 4.41], [m.gaits.sprint, 6.6], [m.gaits.walk, 2.2], [m.gaits.crouch, 2.03], [m.gaits.run * m.gaits.holstered, 5.07], [m.gaits.sprint * m.gaits.holstered, 7.59], [m.gaits.sprintSide, 4.8], [m.accel.lowSpeed, 3.05], [m.air.speed, 1.52], [m.hop.cost, 2.54], [m.lurch.max, 4.6]] as const) within(value, reference, 0.02); // prettier-ignore
     for (const [value, reference] of [[m.accel.low, 63.5], [m.accel.run, 11.4], [m.accel.sprint, 2.54], [m.decel.stand, 31.8], [m.decel.crouch, 38.1], [m.air.accel, 12.7]] as const) within(value, reference, 0.05); // prettier-ignore
     expect([m.fatigue.height, m.fatigue.from, m.fatigue.to, m.hop.window, m.lurch.window, m.lurch.full, m.lurch.strength]).toEqual([0.3, 0.15, 0.75, 1, 0.4, 0.2, 0.7]); // prettier-ignore
-    expect([m.land.from, m.land.full, m.land.recover, m.land.sprint]).toEqual([expect.closeTo(7.6, 1), expect.closeTo(20.3, 1), 1, 0.7]); // prettier-ignore
+    for (const [value, reference] of [[m.land.from, 7.62], [m.land.full, 20.32]] as const) expect(Math.abs(value - reference)).toBeLessThanOrEqual(0.02); // prettier-ignore
+    expect([m.land.recover, m.land.sprint]).toEqual([1, 0.7]);
+    expect([m.gaits.side, m.gaits.back]).toEqual([1, 1]);
     expect(m.sprint.angle / DEG).toBeCloseTo(45, 9);
   });
 

@@ -4,7 +4,8 @@
  * at 1.42 m; a jump on the tick a jump lands goes 0.3 as high, walking off the ledge clears that, and so does waiting
  * 0.75 s; a high fall lands to a stop and keeps the sprint off until it has recovered to 0.7, a low one keeps its
  * speed; a bunny hop costs 2.54 m/s down to the sprint's speed; coyote time lets a jump off the ledge's edge but not a
- * second jump; and it turns toward where it faces at 720°/s.
+ * second jump; a new key lurches, a view turning alone never does; it turns toward where it faces at 720°/s; and a
+ * character with a model stepped without its motion state is refused, naming the fix.
  * @see engine/physics/movement/steer.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -100,6 +101,26 @@ describe('the shooter model through the controller', () => {
     const landed = r.state.vx;
     r.tick({ move: [1, 0], jump: true, jumpPressed: true });
     expect(r.state.vx).toBeCloseTo(Math.max(6.604, landed - 2.54), 1);
+  });
+
+  it('lurches on a new key in its keys’ frame (the camera’s), never for the view turning alone', () => {
+    const turn = (frames: boolean) => {
+      const r = rig([-60, 0, 0]); // 70 m of floor before the ledge
+      const ahead = (yaw: number): CharacterInput => ({ move: [Math.sin(yaw), Math.cos(yaw)], view: yaw, ...(frames ? { frame: yaw } : {}) }); // prettier-ignore
+      r.until({ ...ahead(Math.PI / 2), sprint: true }, () => false, 120);
+      r.tick({ ...ahead(Math.PI / 2), jump: true, jumpPressed: true });
+      r.tick(ahead(Math.PI / 2));
+      const before = Math.atan2(r.state.vx, r.state.vz);
+      r.tick(ahead(Math.PI / 2 - Math.PI / 6)); // W held as the camera turns 30° in one tick
+      return Math.abs(Math.atan2(r.state.vx, r.state.vz) - before);
+    };
+    expect(turn(true)).toBeLessThan(0.01); // the keys stayed W: air control alone, a hair
+    expect(turn(false)).toBeGreaterThan(0.3); // no frame: the move turned 30° in the world, a new key
+  });
+
+  it('refuses a character with a model stepped without its motion state, naming the fix', () => {
+    const r = rig();
+    expect(() => stepCharacter(r.physics, r.body, apex, r.state, {}, { dt: DT, gravity: 32 })).toThrow(/PHYSICS_BAD_ARGUMENT[\s\S]*MotionState/); // prettier-ignore
   });
 
   it('turns toward where it faces at 720°/s', () => {

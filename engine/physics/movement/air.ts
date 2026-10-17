@@ -2,15 +2,16 @@
  * @file The shooter model off the ground (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2): air control, the lurch, the jump
  * and the landing. Ported from er-apex's reconstruction of Apex's code (`umiiii/er-apex`,
  * `deps/er-apex-move/src/controller.rs`: `air_move` 1369-1395, `check_jump` 1132-1228, `land_slowdown` 812-828 and
- * `land` 1397-1425), in metres and seconds; the lurch from the Apex Movement Wiki's measurements (Apex added it after
- * the season er-apex reconstructs).
+ * `land` 1397-1425; MIT, engine/physics/movement/NOTICE), in metres and seconds; the lurch from the Apex Movement
+ * Wiki's measurements (er-apex's reconstruction has none).
  *
  * - `airMove`: Quake's air acceleration. Along the input it accelerates toward a capped wished speed (`air.speed`), so
  *   a move across the velocity turns it and adds a little speed each tick (air strafing); past the cap, `air.extra`
  *   still pushes along the input without making it faster. No air friction.
- * - `lurch`: within `lurch.window` of the take-off, a new move key (the move turning by `lurch.turn` or more in a
- *   tick, ours, since a stick turns smoothly) turns the velocity toward the same speed in the new direction, by
- *   `lurch.strength` until `lurch.full`, then less, to nothing at the window's end; never by more than `lurch.max`.
+ * - `newKey` and `lurch`: within `lurch.window` of the take-off, a new move key (the move in its keys' frame, the
+ *   camera's, turning by `lurch.turn` or more in a tick, ours, since a stick turns smoothly; a view turning alone never
+ *   lurches) turns the velocity toward the same speed in the new direction, by `lurch.strength` until `lurch.full`,
+ *   then less, to nothing at the window's end; never by more than `lurch.max`.
  * - `jumpScale` and `hopSpeed`: a jump within `fatigue.to` of landing from a jump goes lower (`fatigue.height` of the
  *   height until `fatigue.from`, then linearly more); one within `hop.window` of any landing, faster than `hop.floor`
  *   (times the move scale), loses `hop.cost`, never below the floor.
@@ -67,23 +68,24 @@ export function lurchStrength(m: MovementModel, t: number): number {
 }
 
 /**
- * The lurch: when the move `wish` turned from `before` by `lurch.turn` or more, `t` seconds after the take-off, turns
- * `h` toward the same speed along the new move. Returns the change it made (m/s), 0 when none.
+ * Whether the move's `keys` (`[right, forward]` in their frame) are a new key against last tick's `before`: pressed
+ * from none, or turned by `lurch.turn` or more. No keys is never one.
  */
-export function lurch(
-  m: MovementModel,
-  h: [number, number],
-  wish: readonly [number, number],
-  before: readonly [number, number],
-  t: number,
-): number {
+export function newKey(m: MovementModel, keys: readonly [number, number], before: readonly [number, number]): boolean {
+  const length = Math.hypot(keys[0], keys[1]);
+  const was = Math.hypot(before[0], before[1]);
+  if (length <= 1e-6) return false;
+  return was <= 1e-6 || (keys[0] * before[0] + keys[1] * before[1]) / (length * was) <= Math.cos(m.lurch.turn) + 1e-9;
+}
+
+/**
+ * The lurch of a new key (`newKey`) `t` seconds after the take-off: turns `h` toward the same speed along the move
+ * `wish`. Returns the change it made (m/s), 0 when none.
+ */
+export function lurch(m: MovementModel, h: [number, number], wish: readonly [number, number], t: number): number {
   const length = Math.hypot(wish[0], wish[1]);
   const strength = lurchStrength(m, t);
   if (length <= 1e-6 || strength <= 0) return 0;
-  const was = Math.hypot(before[0], before[1]);
-  const turned =
-    was <= 1e-6 || (wish[0] * before[0] + wish[1] * before[1]) / (length * was) <= Math.cos(m.lurch.turn) + 1e-9;
-  if (!turned) return 0;
   const speed = Math.hypot(h[0], h[1]);
   const [dx, dz] = [(wish[0] / length) * speed - h[0], (wish[1] / length) * speed - h[1]];
   const change = Math.min(Math.hypot(dx, dz) * strength, m.lurch.max);

@@ -5,14 +5,15 @@
  * speed, never past the larger of the old speed and the wished one (`accelerate`), at a rate set by the speed at the
  * tick's start (`groundAccel`). Ported from er-apex's reconstruction of Apex's code (`umiiii/er-apex`,
  * `deps/er-apex-move/src/controller.rs`: `update_sprint` 1077-1130, `acceleration` 1247-1265, `decelerate` 1267-1323,
- * `walk_move` 1325-1354, `accelerate` 1690-1702), in metres and seconds.
+ * `walk_move` 1325-1354, `accelerate` 1690-1702; MIT, engine/physics/movement/NOTICE), in metres and seconds.
  *
  * The sprint: it holds while the button is held, or after a press while the move stays within `sprint.keep` of the
  * view (the sticky sprint), and only on the ground (or within `sprint.air` of leaving it without a jump), standing,
  * moving on, the move at least `sprint.input` long and within `sprint.angle` of the view, and not stunned below
  * `land.sprint`. With no view (the cameras that move relative to the screen) the view is the move itself, so it
  * sprints in every direction. Ours: walking blocks the sprint, as Apex's aiming does; the sprint dips toward
- * `gaits.sprintSide` as the move turns 45° off the view.
+ * `gaits.sprintSide` as the move turns 45° off the view. Every other gait goes at `gaits.side` and `gaits.back` of its
+ * speed across and back from the view (`directionShare`; both 1 in Apex).
  *
  * Invariants: pure functions of their arguments, but `updateSprint`, which writes only the motion state it is given;
  * velocities are `[x, z]` in m/s; `scale` is the move scale (the stun times the holstered bonus).
@@ -164,8 +165,26 @@ export function updateSprint(m: MovementModel, motion: MotionState, input: Sprin
 }
 
 /**
+ * The share of its gait's speed a move gets by its direction from the view: `gaits.side` straight across it,
+ * `gaits.back` straight back, blended by the squares of the move's parts across and back (so exactly 1 when both
+ * are 1, as in Apex); 1 with no view.
+ */
+export function directionShare(
+  m: MovementModel,
+  wish: readonly [number, number],
+  view: readonly [number, number] | null,
+): number {
+  const length = len(wish);
+  if (!view || length === 0) return 1;
+  const ahead = (wish[0] * view[0] + wish[1] * view[1]) / length;
+  const across = (wish[0] * view[1] - wish[1] * view[0]) / length;
+  return 1 + (m.gaits.side - 1) * across * across + (ahead < 0 ? (m.gaits.back - 1) * ahead * ahead : 0);
+}
+
+/**
  * The speed its gait goes at, before the move scale: the crouch-walk crouched, the walk walking, the sprint sprinting
- * (dipping toward `gaits.sprintSide` as the move turns 45° off the view), else the run.
+ * (dipping toward `gaits.sprintSide` as the move turns 45° off the view), else the run; every gait but the sprint
+ * times its `directionShare`.
  */
 export function gaitSpeed(
   m: MovementModel,
@@ -174,12 +193,12 @@ export function gaitSpeed(
   wish: readonly [number, number],
   view: readonly [number, number] | null,
 ): number {
-  if (motion.stance === 'crouch') return m.gaits.crouch;
-  if (motion.sprinting) {
+  if (motion.sprinting && motion.stance !== 'crouch') {
     const length = len(wish);
     const along = view && length > 0 ? (wish[0] * view[0] + wish[1] * view[1]) / length : 1;
     const off = Math.min(Math.acos(Math.min(Math.max(along, -1), 1)) / (Math.PI / 4), 1);
     return m.gaits.sprint + (m.gaits.sprintSide - m.gaits.sprint) * off;
   }
-  return walking ? m.gaits.walk : m.gaits.run;
+  const gait = motion.stance === 'crouch' ? m.gaits.crouch : walking ? m.gaits.walk : m.gaits.run;
+  return gait * directionShare(m, wish, view);
 }
