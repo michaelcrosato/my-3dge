@@ -5,7 +5,7 @@
  *
  * `createCharacter(spec)` checks settings against `CHARACTER_FIELDS` and fills the defaults (shardfall's movement, the
  * stress test's capsule: PLAN.md Appendix C); `addCharacter` adds the body (group `actor`), its bottom just outside the
- * skin, so it does not stick at seams. `stepCharacter` is one tick: `steer` (engine/physics/feel.ts), the controller's
+ * skin, so it does not stick at seams (engine/physics/characterBody.ts, re-exported here). `stepCharacter` is one tick: `steer` (engine/physics/feel.ts), the controller's
  * move (engine/physics/move.ts's `moveCharacter`: across then down, its own steps and snap), `settle`, then walls,
  * pushes and the ground probe. Its `state` (`CHARACTER_STATE_FIELDS`) is plain data. Pushing shares momentum (an
  * inelastic collision of a `push`-kg mass); walls stop the velocity going into them, slopes do not; kinematic floors
@@ -41,6 +41,7 @@ import type { Registry } from '../core/registry';
 import { defineSchema, freezeValue, parse, type EntryOf, type Field, type Schema } from '../core/schema';
 import { defineSettings } from '../core/settings';
 import { handleOf } from './capture';
+import { feetOf } from './characterBody';
 import { GROUP_NAMES } from './groups';
 import { settle, steer } from './feel';
 import { isWall, moveCharacter, partsOf, sink, type CharacterMove } from './move';
@@ -48,8 +49,10 @@ import { MODEL_FIELDS, type MotionState } from './movement/model';
 import { applyMovement } from './movement/profile';
 import './movement/profiles';
 import { settleMotion, steerMotion } from './movement/steer';
-import { check, vec, type Vec3Like } from './queries';
+import { check, type Vec3Like } from './queries';
 import { rapierOf, type Physics } from './world';
+
+export { addCharacter, bodyAt, feetOf } from './characterBody';
 
 /** One degree, in radians. */
 const DEG = Math.PI / 180;
@@ -199,24 +202,6 @@ export interface CharacterInput {
   frame?: number;
   /** The shooter model's: a yaw to face (the look's or the aim's); absent, it faces where it moves. */
   face?: number;
-}
-
-/** Adds a character's body (a kinematic capsule, group `actor`), its bottom just outside the skin above `feet`. */
-export function addCharacter(physics: Physics, character: Character, feet: Vec3Like): number {
-  const at = vec(feet, 'addCharacter(feet)');
-  const { radius, height } = character.capsule;
-  return physics.addBody({
-    type: 'kinematic',
-    position: [at.x, at.y + character.offset + 0.005 + radius + height / 2, at.z],
-    colliders: [{ shape: { type: 'capsule', radius, height }, group: 'actor' }],
-    group: 'actor',
-  });
-}
-
-/** Where a character's feet are: the bottom of its capsule, less the skin (on flat ground, the ground's height). */
-export function feetOf(physics: Physics, body: number, character: Character): Vector3 {
-  const { position } = physics.readBody(body);
-  return position.setY(position.y - character.capsule.height / 2 - character.capsule.radius - character.offset);
 }
 
 /** What `stepCharacter` needs beside the character: the step length, the gravities and the one-way platforms. */
