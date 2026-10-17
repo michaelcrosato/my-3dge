@@ -6,11 +6,15 @@
  * entity it stands for (`userData.entity` on it or an ancestor), whether it is the protagonist (`userData.protagonist`
  * on it or an ancestor, or the name `options.protagonist`), its ID colour, and why it cannot be seen when that is
  * known before drawing: `hidden` (it or an ancestor is invisible, its layers miss the camera's, an instanced mesh
- * with no instances) or `outside` (its bounds miss the view frustum). `withIdScene(renderer, scene, table, draw)`
+ * with no instances), `background` (it or an ancestor carries `userData.background`: the sky's dome and backdrop,
+ * which the frame draws at the far plane, behind everything, so the pass leaves them out as it leaves out the scene's
+ * background; it would draw their real shapes, a 100 m box and a cylinder round the camera, over whatever lies
+ * beyond them) or `outside` (its bounds miss the view frustum). `withIdScene(renderer, scene, table, draw)`
  * hands `draw` a stand-in scene sharing the scene's children, with no background and the ID material as its
  * override material, and the clear colour transparent black; the scene itself is never touched. `decodeIds` turns
  * the RGBA readback into the result, `visible: [{ id, name, px, share, bbox, centre }]` (largest first) and
- * `unseen: [{ id, name, reason }]` (`hidden`, `outside`, or `covered`: in view, 0 px), so every object is reported.
+ * `unseen: [{ id, name, reason }]` (`hidden`, `background`, `outside`, or `covered`: in view, 0 px), so every object
+ * is reported.
  * engine/gfx/idmarks.ts numbers what the pass sees for `x shot --marks` (split from here after G9).
  *
  * The ID material is a `MeshBasicNodeMaterial` whose `fragmentNode` is the object's colour, a per-object uniform set
@@ -53,7 +57,7 @@ import { Discard, float, Fn, frontFacing, instanceIndex, uint, uniform, vec4 } f
 import { STRAY } from './thumbnail';
 
 /** Why a drawable object covers no pixel. */
-export type UnseenReason = 'hidden' | 'outside' | 'covered';
+export type UnseenReason = 'hidden' | 'outside' | 'covered' | 'background';
 
 /** A drawable object of the scene, as the ID pass knows it. */
 export interface Drawable {
@@ -72,7 +76,7 @@ export interface Drawable {
   /** The protagonist's name when this object is (part of) the protagonist. */
   protagonist?: string;
   /** Why it cannot be seen, when known before drawing. */
-  reason: 'hidden' | 'outside' | null;
+  reason: 'hidden' | 'outside' | 'background' | null;
 }
 
 /** The drawables of a scene, with their colours. */
@@ -170,8 +174,10 @@ export function listDrawables(scene: Object3D, camera: Camera, options: { protag
     const inView = object.isSprite
       ? frustum.intersectsSprite(object as unknown as Sprite)
       : frustum.intersectsObject(object as unknown as Mesh);
+    const background = lookUp(object, (up) => (up.userData.background === true ? true : undefined)) === true;
     const [n, colour] = [next, idColour(next)];
-    const drawable: Drawable = { object, id: object.id, name, colour, n, reason: hidden ? 'hidden' : inView ? null : 'outside' }; // prettier-ignore
+    const reason = hidden ? 'hidden' : background ? 'background' : inView ? null : 'outside';
+    const drawable: Drawable = { object, id: object.id, name, colour, n, reason };
     if (instanced.isInstancedMesh === true) {
       drawable.instances = instanced.count;
       for (let i = 0; i < instanced.count; i++) {
@@ -219,11 +225,14 @@ function kitOf(renderer: WebGPURenderer): IdKit {
   instanced.onObjectUpdate(({ object }) => (instanced.value = (object as InstancedMesh | null)?.isInstancedMesh ? 1 : 0)); // prettier-ignore
   const side = uniform(FrontSide as number);
   side.onObjectUpdate(({ object }) => void (side.value = object ? sideOf(object) : FrontSide));
+  const background = uniform(0, 'uint');
+  background.onObjectUpdate(({ object }) => (background.value = object && current.get(object)?.reason === 'background' ? 1 : 0)); // prettier-ignore
   const material = new MeshBasicNodeMaterial({ side: DoubleSide, fog: false });
   material.name = 'IdPass.material';
   material.lights = false;
   material.forceSinglePass = true;
   material.fragmentNode = Fn(() => {
+    Discard(background.equal(uint(1)));
     Discard(side.equal(FrontSide).and(frontFacing.not()));
     Discard(side.equal(BackSide).and(frontFacing));
     const colour = base.add(instanceIndex.mul(instanced)).mul(uint(ID_STEP)).bitAnd(uint(0xffffff));

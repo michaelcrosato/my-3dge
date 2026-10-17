@@ -11,7 +11,7 @@
  * ±2,047, integers a half-float target holds exactly (r182's `pass()` targets are `HalfFloatType`); shardfall folded
  * groups into 1..1023 and had no characters bit, so telling characters from objects takes the 512 bit here. The
  * target is cleared to (0, 0, 0, 1), as r182 clears every attachment after the first, so the background reads as a
- * zero normal with `w` = 1: the environment, never outlined from inside.
+ * zero normal with `w` = 1: the environment, never outlined from inside; the sky writes the same (`sceneMrt`).
  *
  * Each object's flags come from its tag (`setPart`, read by `flagsOf`). They live in a table the chain writes before
  * each frame (`writeFlags`), which the GPU reads at the object's slot (`createFlagTable` says why: a per-object uniform
@@ -194,7 +194,20 @@ export function createFlagTable(): FlagTable {
   };
 }
 
-/** The MRT the scene pass draws: the colour, and the view normal with the object's packed flags (from `table`) in `w`. */
+/** Whether `object` or an ancestor is drawn behind everything (`userData.background`: the sky's dome and backdrop). */
+function behindEverything(object: Object3D | undefined): boolean {
+  if (object === undefined) return false;
+  return lookUp(object, (node) => (node.userData.background === true ? true : undefined)) === true;
+}
+
+/**
+ * The MRT the scene pass draws: the colour, and the view normal with the object's packed flags (from `table`) in `w`.
+ * Lines and points have no normals: they read as facing the camera, and keep their flags. What the frame draws behind
+ * everything (`behindEverything`: engine/gfx/sky.ts's dome and backdrop) writes the cleared background's (0, 0, 0, 1),
+ * so no filter finds an edge in it: the outline inked the dome's box edges across the sky (WP 13.2's review). That is
+ * decided as the object's program is built, which holds because such an object's material is its own (it draws it at
+ * the far plane) and r182 keys a program by material and geometry, never by object.
+ */
 function sceneMrt(table: FlagTable): Node {
   const slot = uniform(0);
   slot.onObjectUpdate(({ object }) => (object ? table.slotOf(object) : 0));
@@ -202,9 +215,12 @@ function sceneMrt(table: FlagTable): Node {
   const lane = slot.sub(row.mul(4));
   const pick = (k: number) => select(lane.equal(k), float(1), float(0));
   const flags = dot(table.node.element(row.toInt()), vec4(pick(0), pick(1), pick(2), pick(3)));
-  // Lines and points have no normals: they read as facing the camera, and keep their flags.
   const normal = Fn((builder: NodeBuilder) =>
-    builder.geometry?.hasAttribute('normal') ? vec4(normalView, flags) : vec4(vec3(0, 0, 1), flags),
+    behindEverything(builder.object)
+      ? vec4(0, 0, 0, 1)
+      : builder.geometry?.hasAttribute('normal')
+        ? vec4(normalView, flags)
+        : vec4(vec3(0, 0, 1), flags),
   )();
   return mrt({ output, normal });
 }
