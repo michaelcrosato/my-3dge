@@ -2,10 +2,10 @@
  * @file The playground's controls (docs/PLAYGROUND.md §3.3, PLAN.md WP 13.3): the action map `actionMap:playground`,
  * Apex Legends' default movement keys where the browser allows them. W A S D or the arrows move, Space jumps, Left
  * Shift sprints (held, or a press that keeps the sprint while the player moves on), Left Alt walks (ours: Apex walks
- * only aiming down sights) and Left Ctrl crouches while held; a pad's left stick moves, A jumps, a click of the left
- * stick sprints and B crouches. The page binds it (labs/playground/main.ts) and the menu lists it
- * (labs/playground/menu.ts). WP 13.9 adds the rest of §3.3's table (use, melee, fire, aim, reload, holster, the
- * toggled crouch on C) and rebinding.
+ * only aiming down sights) and C crouches while held, not Apex's Left Ctrl: Ctrl with W closes the browser's tab, and
+ * no page can stop it. A pad's left stick moves, A jumps, a click of the left stick sprints and B crouches. The page
+ * binds it (labs/playground/main.ts) and the menu lists it (labs/playground/menu.ts). WP 13.9 adds the rest of §3.3's
+ * table (use, melee, fire, aim, reload, holster, the crouch's toggle) and rebinding.
  *
  * Invariants: data only; its actions are the buttons the player's intents carry (`jump`, `sprint`, `walk`,
  * `crouch`), which the shooter model reads (engine/sim/actors.ts).
@@ -40,6 +40,6 @@ defineActionMap(PLAYGROUND_ACTION_MAP, {
     jump: ['Space', 'PadSouth'],
     sprint: ['ShiftLeft', 'PadLeftStick'],
     walk: ['AltLeft'],
-    crouch: ['ControlLeft', 'PadEast'],
+    crouch: ['KeyC', 'PadEast'],
   },
 });

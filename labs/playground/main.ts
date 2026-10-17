@@ -110,7 +110,7 @@ function showFrame({ world, scene }: EngineFrame): void {
   if (!showing.camera) showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? 'custom' };
   const look = showing.look.replace(/^look:playground-/, '');
   ui.hud('mode', `Camera: ${showing.camera} · Look: ${look}`, { at: 'top-right' });
-  const keys = 'WASD: move · Space: jump · Shift: sprint · Alt: walk · Ctrl: crouch · Click: mouse look · T: camera · P: look · M: menu'; // prettier-ignore
+  const keys = 'WASD: move · Space: jump · Shift: sprint · Alt: walk · C: crouch · Click: mouse look · T: camera · P: look · M: menu'; // prettier-ignore
   ui.hud('keys', keys, { at: 'bottom', keys: true });
 }
 

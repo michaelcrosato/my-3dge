@@ -9,7 +9,10 @@
  *    in both looks, its accent showing on it in each (`accentOnPlayer`: the isometric and top-down cameras draw it 11
  *    to 15 px tall), the sky's dome and backdrop left out as background, and the MRT reads the sky as the background
  *    too (the parts view is black where the ID pass finds nothing), so no outline inks the dome's edges;
- * 5. the menu for humans (`?playground.menu=on`) lists the scene, the five cameras, the two looks and the replay.
+ * 5. the menu for humans (`?playground.menu=on`) lists the scene, the five cameras, the two looks and the replays;
+ * 6. the keyboard reaches the player through the playground's action map (WP 13.3): D runs and Shift sprints, the
+ *    shooter model's gaits read off the player's `motion`, the page's frame loop sampling the keys on the virtual
+ *    clock's frames (`harness.tick`).
  *
  * Invariants: the page is read through `[data-ui]` elements, the menu's links and `__engine` only; the sim is stepped
  * with `__engine.step`, then frames are drawn (`__engine.render`), so the HUD and the signs show what the run holds.
@@ -192,7 +195,7 @@ test.describe('the playground', () => {
     expect(harness.advice()).toEqual([]);
   });
 
-  test('shows the menu for humans when asked: the scene, five cameras, two looks and the replay', async ({
+  test('shows the menu for humans when asked: the scene, five cameras, two looks and the replays', async ({
     page,
     harness,
   }) => {
@@ -202,10 +205,32 @@ test.describe('the playground', () => {
     expect(await links('scenes')).toEqual(['gym']);
     expect(await links('cameras')).toEqual(PLAYGROUND_CAMERAS.map((mode) => mode.name));
     expect(await links('looks')).toEqual(['cel', 'pixel']);
-    expect(await links('replays')).toEqual(['gym']);
+    expect(await links('replays')).toEqual(['gym', 'moves']);
     expect(await page.locator('#playground-menu [data-menu=controls] tr').count()).toBeGreaterThanOrEqual(8);
     await page.keyboard.press('KeyM');
     expect(await page.locator('#playground-menu').isHidden()).toBe(true);
+    expect(harness.advice()).toEqual([]);
+  });
+
+  test('runs on D and sprints on Shift: the keyboard reaches the player through the playground’s action map', async ({
+    page,
+    harness,
+  }) => {
+    await open(page, harness);
+    type Player = { actor: { vx: number; vz: number }; motion: { gait: string } };
+    const player = () => call<Player>(page, 'get', 1);
+    await call(page, 'resume');
+    await page.keyboard.down('KeyD'); // west: the camera looks south, and the north wall's side is clear for 10 m
+    await harness.tick(31); // the first frame sets the virtual clock's origin, then half a second of steps
+    expect((await player()).motion.gait).toBe('run');
+    await page.keyboard.down('ShiftLeft');
+    await harness.tick(30);
+    const { actor, motion } = await player();
+    expect(motion.gait).toBe('sprint');
+    expect(Math.hypot(actor.vx, actor.vz)).toBeGreaterThan(5.2); // past the holstered run's 5.07 m/s
+    await page.keyboard.up('ShiftLeft');
+    await page.keyboard.up('KeyD');
+    await call(page, 'pause');
     expect(harness.advice()).toEqual([]);
   });
 });

@@ -14,11 +14,13 @@ that does not exist fails it.
    http://127.0.0.1:5173/labs/playground/. If another program holds port 5173, `PORT=5174 npm run dev` serves it on
    5174 instead.
 2. Click the game to look around with the mouse (Esc lets go of it). WASD or the arrows move, Space jumps, Shift
-   sprints (hold it, or press it once), Left Alt walks and Left Ctrl crouches.
+   sprints (hold it, or press it once), Left Alt walks and C crouches while held (not Apex's Left Ctrl: Ctrl with W
+   closes the browser's tab).
 3. T steps through the five cameras, P switches between the cel and the pixel look, M shows and hides the menu.
 
 A link can open any of them: `labs/playground/?cam3=first&post.look=look:playground-pixel` is first person in the
-pixel look, and `labs/playground/?replay=playground-gym` plays the recorded run, then hands you the controls.
+pixel look, and `labs/playground/?replay=playground-gym` plays the recorded run (`?replay=playground-moves` the moves),
+then hands you the controls.
 
 ## The demo index
 
@@ -28,7 +30,7 @@ test (`tests/unit/playground-readme.test.ts`) fails when a scene of `labs/playgr
 
 | Scene | What it proves | The command that shows it |
 |---|---|---|
-| `labs/playground/scenes/gym.ts` | The gym (`playground:gym`): every feature at the height, slope or gap its sign shows, the player moving by Apex's model (`node x sim labs/playground/scenes/gym --feel` prints its numbers), its golden replay the same in Node and in the page while it renders, in either look, with no pipeline built after the warm-up. | `node x replay tests/replays/playground-gym.replay.json --browser page` |
+| `labs/playground/scenes/gym.ts` | The gym (`playground:gym`): every feature at the height, slope or gap its sign shows, the player moving by Apex's model (`node x sim labs/playground/scenes/gym --feel` prints its numbers), its golden replays the same in Node and in the page while it renders, in either look, with no pipeline built after the warm-up: the gym's run over its features, and its moves (`tests/replays/playground-moves.replay.json`: the sprint held and kept by a press, a tired hop, the walk, the crouch-walk, a lurch, an air strafe and the bunny hop's cost). | `node x replay tests/replays/playground-gym.replay.json tests/replays/playground-moves.replay.json --browser page` |
 
 ## The gym
 
@@ -76,7 +78,7 @@ settings: they never change play or a hash.
 | Jump | Space | A (south) |
 | Sprint (hold, or press once to keep it) | Left Shift | a click of the left stick |
 | Walk | Left Alt | |
-| Crouch (hold) | Left Ctrl | B (east) |
+| Crouch (hold) | C | B (east) |
 | Look around | click the game, then the mouse; Esc lets go | right stick |
 | Camera mode | T | |
 | Cel or pixel look | P | |
