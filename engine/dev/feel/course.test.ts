@@ -2,7 +2,8 @@
  * @file Unit tests for feel courses (engine/dev/feel/course.ts): a course is checked when defined, its measures
  * filled (from step 1, the course's last step as the end), and each problem named at once: a measure ending before it
  * starts or after the course, a time without its end or its speed, a camera metric without its camera or a move metric
- * with one, a hand gap without its point, a measure without a tolerance, two measures of one name; courses list by id.
+ * with one, a hand gap without its point, a measure without a tolerance, two measures of one name, change-points out
+ * of step order or past the end; courses list by id.
  * @see engine/dev/feel/course.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -56,5 +57,21 @@ describe('courses', () => {
       'two measures are named "loose"',
     ])
       expect(message).toContain(problem);
+  });
+
+  it('refuse change-points out of step order, or past the course’s end', () => {
+    const registry = createRegistry();
+    const measures = [{ name: 'run', metric: 'speed', reference: 5.07, tolerance: { share: 0.02 } }];
+    const inputs = [
+      [0, { move: [0, 1] }],
+      [60, { b: ['crouch'] }],
+      [30, { b: null }],
+    ];
+    expect(() => defineCourse('course:late', { scene: 'playground:gym', steps: 120, inputs, measures }, registry)).toThrow(/inputs\[2\] at step 30 comes after step 60/); // prettier-ignore
+    const past = [
+      [0, { move: [0, 1] }],
+      [120, { b: null }],
+    ];
+    expect(() => defineCourse('course:past', { scene: 'playground:gym', steps: 120, inputs: past, measures }, registry)).toThrow(/inputs\[1\] is not \[step, change\] with a step from 0 to 119/); // prettier-ignore
   });
 });

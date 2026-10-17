@@ -11,7 +11,8 @@
  *   the speed across the ground at `to` less that at `from`, and `velocityChange`, how far the velocity across the
  *   ground moved between them (a lurch's, m/s); `apex`, how far the feet rise above where they were at `from`; `height`, the feet's height at `to`; `distance`, across the
  *   ground from the feet at `from` to the feet at `to`; `time`, seconds from `from` to the first sample that meets
- *   `until` (`speedAbove` or `speedBelow` `value`, `grounded` or `airborne`); `grounded`, 1 when it stands at `to`;
+ *   `until` (`speedAbove` or `speedBelow` `value`, `grounded` or `airborne`; on the shooter model `crouched` or
+ *   `standing`, its hull, and `sliding` or `stopsSliding`); `grounded`, 1 when it stands at `to`;
  * - its animation, posed as the page poses it (engine/dev/feel/anim.ts): `footSlide`, the most a sole slides in one
  *   contact, and `pop`, the farthest a point jumps in one step against its neighbours (the anim QA's rules); `handGap`,
  *   the closest either hand comes to `point`;
@@ -26,7 +27,8 @@
  * report tracks the number on the way.
  *
  * Invariants: data only, checked when defined (each metric's own fields, `from` ≤ `to` ≤ `steps`, a tolerance, names
- * unique); a course never touches a running world: each runs in a session of its own.
+ * unique, change-points in step order within the run); a course never touches a running world: each runs in a
+ * session of its own.
  *
  * @example
  * defineCourse('course:test-run', { scene: 'playground:gym', steps: 120, inputs: [[0, { move: [0, 1] }]], measures: [{ name: 'run', metric: 'speed', from: 60, reference: 5.07, tolerance: { share: 0.02 } }] }); // prettier-ignore
@@ -53,7 +55,7 @@ export const METRICS = [...MOVE_METRICS, ...ANIM_METRICS, ...CAMERA_METRICS] as 
 export type Metric = (typeof METRICS)[number];
 
 /** When a `time` measure stops: the first sample at which this holds. */
-export const UNTILS = ['speedAbove', 'speedBelow', 'grounded', 'airborne'] as const;
+export const UNTILS = ['speedAbove', 'speedBelow', 'grounded', 'airborne', 'crouched', 'standing', 'sliding', 'stopsSliding'] as const; // prettier-ignore
 
 /** One number a course measures (see the file comment). */
 export const MEASURE_FIELDS = defineSchema({
@@ -139,6 +141,11 @@ function measureProblems(m: Measure, steps: number, at: string): string[] {
 /** The problems of a parsed course beyond its fields: each measure's, and two measures of one name. */
 function courseProblems(course: Course): string[] {
   const problems = course.measures.flatMap((m, i) => measureProblems(m, course.steps, `measures[${i}] (${m.name})`));
+  const steps = course.inputs.map((entry) => (Array.isArray(entry) ? entry[0] : NaN));
+  const odd = steps.findIndex((step) => !Number.isInteger(step) || step < 0 || step >= course.steps);
+  if (odd >= 0) problems.push(`inputs[${odd}] is not [step, change] with a step from 0 to ${course.steps - 1}`);
+  const late = steps.findIndex((step, i) => i > 0 && step < steps[i - 1]);
+  if (late > 0) problems.push(`inputs[${late}] at step ${steps[late]} comes after step ${steps[late - 1]}: give change-points in step order`); // prettier-ignore
   const names = course.measures.map((m) => m.name);
   for (const name of new Set(names.filter((n, i) => names.indexOf(n) !== i))) problems.push(`two measures are named ${JSON.stringify(name)}`); // prettier-ignore
   return problems;

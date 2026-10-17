@@ -48,8 +48,10 @@ export interface CourseSample {
   grounded: boolean;
   /** Where it faces (rad). */
   yaw: number;
-  /** Its gait on the shooter model (`run`, `sprint`…), else absent. */
+  /** On the shooter model: its gait (`run`, `sprint`, `slide`…), its hull (`stand`, `crouch`) and whether it slides. */
   gait?: string;
+  stance?: string;
+  sliding?: boolean;
 }
 
 /** What a run recorded, which `measure` reads: the samples, the posed animation, each camera measure's track. */
@@ -92,7 +94,7 @@ type Player = Partial<ActorComponents> & { id: number; actor: ActorComponents['a
 /** The sample of `player`. */
 function sampleOf({ actor, motion }: Player): CourseSample {
   const sample = { feet: [actor.x, actor.y, actor.z], velocity: [actor.vx, actor.vy, actor.vz], grounded: actor.grounded, yaw: actor.yaw } as const; // prettier-ignore
-  return motion ? { ...sample, gait: motion.gait } : sample;
+  return motion ? { ...sample, gait: motion.gait, stance: motion.stance, sliding: motion.sliding } : sample;
 }
 
 /** Plays `course` in a session of its own and judges its measures (see the file comment). */
@@ -148,6 +150,8 @@ const across = (s: CourseSample) => Math.hypot(s.velocity[0], s.velocity[2]);
 function reached(m: Measure, s: CourseSample): boolean {
   if (m.until === 'grounded') return s.grounded;
   if (m.until === 'airborne') return !s.grounded;
+  if (m.until === 'crouched' || m.until === 'standing') return s.stance === (m.until === 'crouched' ? 'crouch' : 'stand'); // prettier-ignore
+  if (m.until === 'sliding' || m.until === 'stopsSliding') return s.sliding === (m.until === 'sliding');
   return m.until === 'speedAbove' ? across(s) > m.value! : across(s) < m.value!;
 }
 
