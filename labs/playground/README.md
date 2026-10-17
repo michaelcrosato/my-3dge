@@ -4,8 +4,8 @@ my-3dge's second integration target (PLAN.md Phase 13, ADR-0025), designed in `d
 the character, the cameras and the looks are made to move, feel and look right, and where everything a player can do
 in the engine is shown. It grows in four stages, each ending at a gate: the gym (G10), the house (G11), a living site
 (G12) and the tech demo (G13). Today it holds the gym: calibrated features as a physics level, the player at its
-north end with Apex Legends' gravity, jump height and run speed, five camera modes and two looks, cel-shaded and pixel
-art. Every claim below is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here
+north end with Apex Legends' gravity, jump height, run speed and hull, five camera modes and two looks, cel-shaded and
+pixel art. Every claim below is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here
 that does not exist fails it.
 
 ## Play it
@@ -38,6 +38,16 @@ is there). From the north end, where the player starts: a strip down the west si
 0.5 to 2.1 m; fences from 0.6 to 1.2 m; climb walls from 3 to 7.2 m; slide ramps of 5°, 10°, 20° and 30°, 12 m long,
 each with a deck at its top; steps of 0.25 m; slope tests of 45° and 51°; a 6 m tower; and, down the east side, a
 lane of 1.5 m platforms across gaps from 2 to 9 m. A sign floats over each feature, shown when the player is near.
+
+## The player
+
+`labs/playground/cast/player.ts` stands the player in a scene: today's character controller with Apex's gravity
+(19.05 m/s²), jump (1.42 m), run (4.41 m/s) and hull (a capsule 1.83 m tall, 0.41 m in radius), drawn as
+`body:player` (`labs/playground/bodies/player.ts`) on `build:adult`: 1.80 m standing, an adult's proportions, its
+gait planting each sole at full stride. The body is a teal jacket with dark upper sleeves and collar, charcoal cargo
+trousers with knee pads and a belt, boots, gloves, short hair, a face and an olive pack, every garment in two tones, so
+both looks read it, and one orange accent (the yoke and its shoulder caps, the pack's top flap, the cuffs) that marks
+the player from every camera, top-down too. Its slots are what the neighbours will vary.
 
 ## Cameras and looks
 

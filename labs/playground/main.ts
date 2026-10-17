@@ -1,11 +1,11 @@
 /**
  * @file The playground's page (labs/playground/index.html, docs/PLAYGROUND.md, PLAN.md WP 13.1): it imports every
- * module under `labs/playground/scenes/` and `labs/playground/looks/`, so a scene added there opens at `?scene=<name>`
- * and a look at `?post.look=<id>` with no change here, registers the playground's levels as text, and starts the
- * engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`gym` by default), in the shooter camera
- * and the cel look unless the query names others, with the playground's replays (tests/replays/playground-*) offered to
- * `?replay=<name>`. Before the engine starts, the menu for humans (labs/playground/menu.ts) lists the scenes, cameras,
- * looks, replays and controls.
+ * module under `labs/playground/scenes/`, `looks/` and `bodies/`, so a scene added there opens at `?scene=<name>`, a
+ * look at `?post.look=<id>` and a body draws, with no change here, registers the playground's levels as text, and
+ * starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`gym` by default), in the
+ * shooter camera and the cel look unless the query names others, with the playground's replays
+ * (tests/replays/playground-*) offered to `?replay=<name>`. Before the engine starts, the menu for humans
+ * (labs/playground/menu.ts) lists the scenes, cameras, looks, replays and controls.
  *
  * Live switches (labs/playground/views.ts): T cycles the five camera modes, P switches the two looks, and a click on
  * the game takes the pointer for mouse look in the three perspective cameras (Esc gives it back; isometric and
@@ -48,8 +48,9 @@ function exported(modules: Record<string, Record<string, unknown>>, kind: string
     .filter((entry, i, all) => all.findIndex((other) => other.id === entry.id) === i);
 }
 
-// every look module, imported now so its look registers: ?post.look=look:playground-pixel opens it
-import.meta.glob(['./looks/*.ts', '!./looks/*.test.ts'], { eager: true });
+// every look and body module, imported now so each registers: ?post.look=look:playground-pixel opens a look, and the
+// player is drawn as body:player (labs/playground/bodies/player.ts)
+import.meta.glob(['./looks/*.ts', '!./looks/*.test.ts', './bodies/*.ts', '!./bodies/*.test.ts'], { eager: true });
 
 /** Every playground scene module, imported now so each registers its scene; the gym comes first, the default. */
 const modules = import.meta.glob<Record<string, unknown>>(['./scenes/*.ts', '!./scenes/*.test.ts'], { eager: true });
