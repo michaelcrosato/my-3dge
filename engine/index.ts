@@ -377,3 +377,23 @@ export { TRAIL_TINTS } from './gfx/fx/ribbons';
 export type { TrailSampleLike } from './gfx/fx/ribbons';
 export { ScreenShake } from './gfx/fx/shake';
 export { SHAKE } from './gfx/fx/shake';
+
+// The feel kit (WP 13.4): courses, scripted runs of a scene and the numbers measured on them (`node x feel`); the
+// runner and its verdicts; the owner's feel panel and copy as profile.
+export { defineCourse } from './dev/feel/course';
+export { getCourse } from './dev/feel/course';
+export { listCourses } from './dev/feel/course';
+export { METRICS } from './dev/feel/course';
+export type { Course } from './dev/feel/course';
+export type { Measure } from './dev/feel/course';
+export type { Metric } from './dev/feel/course';
+export { runCourse } from './dev/feel/run';
+export type { CourseResult } from './dev/feel/run';
+export type { CourseSample } from './dev/feel/run';
+export type { MeasureResult } from './dev/feel/run';
+export { createFeelPanel } from './dev/feel/panel';
+export type { FeelPanel } from './dev/feel/panel';
+export type { FeelRow } from './dev/feel/panel';
+export type { FeelInspector } from './dev/feel/panel';
+export { tunedSpec } from './dev/feel/profile';
+export { profileText } from './dev/feel/profile';
