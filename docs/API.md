@@ -559,7 +559,7 @@ game agent's manual.
 - `MOVEMENT_SETTINGS` (const from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): The settings, path → field: each the model's number with its group's description first, live.
 - `MovementModel` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers, filled: what `character.movement` holds.
 - `MovementModelSpec` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers as a profile writes them: any group, and any number in one, left out is Apex's.
-- `MovementOverride` (type from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): One setting off its default: the model's group (none for `turnRate`), the number's key, and its value.
+- `MovementOverride` (type from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): One setting off its default: the model's group (none for `turnRate`), the number's or switch's key, and its value.
 - `movementOverrides` (function from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): The settings `get` reads off their defaults, as overrides (none when every one is at its default).
 - `MovementProfile` (type from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): A movement profile, as the registry holds it.
 - `MovementSpec` (interface from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): How a movement profile is written (`MOVEMENT_FIELDS`).
@@ -878,7 +878,7 @@ game agent's manual.
 - `travelAt` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): How far `baked` has carried the root by `t` seconds, `(x, z)` metres on the source body (a loop's laps added).
 - `Trigger` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A trigger: its sensor body and the bodies inside it.
 - `TRIGGER_FIELDS` (const from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A trigger's fields, for a scene's component: `defineComponent('zone', { description, fields: TRIGGER_FIELDS })`.
-- `tuneCharacter` (function from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): `character` with `overrides` over its model's numbers; itself when it has no model or nothing is overridden.
+- `tuneCharacter` (function from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): `character` with `overrides` over its model's values; itself when it has no model or nothing is overridden.
 - `tunedSpec` (function from [`engine/dev/feel/profile.ts`](../engine/dev/feel/profile.ts)): `base` with `overrides` over its model, as a spec that states only what differs from Apex's numbers.
 - `turnRight` (function from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A turn of `angle` radians about the up axis toward the right hand (my-3d2dge's `rz`), written into `out`.
 - `twoBone` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Two-bone IK on positions (`ik3`): the middle joint (knee, elbow) and the end of a limb of bone lengths `upper` and `lower` from `root` toward `target`, bent toward the direction `pole`; out of reach, the end stops on the line to the target.
@@ -1271,7 +1271,7 @@ game agent's manual.
 - `MOVEMENT_SETTINGS` (const from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): The settings, path → field: each the model's number with its group's description first, live.
 - `MovementModel` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers, filled: what `character.movement` holds.
 - `MovementModelSpec` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers as a profile writes them: any group, and any number in one, left out is Apex's.
-- `MovementOverride` (type from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): One setting off its default: the model's group (none for `turnRate`), the number's key, and its value.
+- `MovementOverride` (type from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): One setting off its default: the model's group (none for `turnRate`), the number's or switch's key, and its value.
 - `movementOverrides` (function from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): The settings `get` reads off their defaults, as overrides (none when every one is at its default).
 - `MovementProfile` (type from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): A movement profile, as the registry holds it.
 - `MovementSpec` (interface from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): How a movement profile is written (`MOVEMENT_FIELDS`).
@@ -1474,7 +1474,7 @@ game agent's manual.
 - `travelAt` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): How far `baked` has carried the root by `t` seconds, `(x, z)` metres on the source body (a loop's laps added).
 - `Trigger` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A trigger: its sensor body and the bodies inside it.
 - `TRIGGER_FIELDS` (const from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A trigger's fields, for a scene's component: `defineComponent('zone', { description, fields: TRIGGER_FIELDS })`.
-- `tuneCharacter` (function from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): `character` with `overrides` over its model's numbers; itself when it has no model or nothing is overridden.
+- `tuneCharacter` (function from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): `character` with `overrides` over its model's values; itself when it has no model or nothing is overridden.
 - `turnRight` (function from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A turn of `angle` radians about the up axis toward the right hand (my-3d2dge's `rz`), written into `out`.
 - `twoBone` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Two-bone IK on positions (`ik3`): the middle joint (knee, elbow) and the end of a limb of bone lengths `upper` and `lower` from `root` toward `target`, bent toward the direction `pole`; out of reach, the end stops on the line to the target.
 - `TwoBoneOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `twoBoneRot` and `handTo` solve.
@@ -4382,6 +4382,15 @@ For the agents who maintain the engine.
 - `matchHull` (function): Gives `character`'s body the hull of straight middle `height` unless it has it: on the ground keeping the feet; in the `air` growing about the centre where that fits, else from the feet, and shrinking about the centre when the crouch began in the air (`tuck`: the feet tucked up), else from the top.
 - `setHull` (function): Gives `character`'s body a capsule of straight middle `height`, its feet or its centre kept where they are.
 
+### [`engine/physics/ledge.ts`](../engine/physics/ledge.ts)
+
+- `findLedge` (function): A ledge on top of `wall` that `character` can mantle onto, within `search.reach` above its feet, or null.
+- `findWall` (function): A wall ahead of `character` along `dir` (a unit `[x, z]`) within `probe` of its hull, steeper than it walks, or null.
+- `Ledge` (interface): A ledge `findLedge` found (see the file comment).
+- `ledgePath` (function): The mantle's path for a ledge, the feet's (see the file comment): from `feet` across to the column `rise`, up it until the feet stand two skins over the lip and the landing, across to over `landing`, then down onto it.
+- `LedgeSearch` (interface): How `findLedge` looks: how high a lip it takes above the feet (m).
+- `Wall` (interface): A wall `findWall` found ahead.
+
 ### [`engine/physics/move.ts`](../engine/physics/move.ts)
 
 - `CharacterHit` (interface): One obstacle the controller met: the body, the point it touched and that surface's outward normal.
@@ -4407,6 +4416,13 @@ For the agents who maintain the engine.
 - `lurch` (function): The lurch of a new key (`newKey`) `t` seconds after the take-off: turns `h` toward the same speed along the move `wish`.
 - `lurchStrength` (function): The lurch's strength `t` seconds after the take-off (see the file comment).
 - `newKey` (function): Whether the move's `keys` (`[right, forward]` in their frame) are a new key against last tick's `before`: pressed from none, or turned by `lurch.turn` or more.
+
+### [`engine/physics/movement/climb.ts`](../engine/physics/movement/climb.ts)
+
+- `keepSpace` (function): Keeps the climb space's foot: the feet's height on the ground, dragged down by a fall below it off the ground.
+- `stepClimb` (function): One tick of a climb (see the file comment): `'climb'` when it climbs on (its velocity set), `'mantle'` when it topped out (the grab started), `'air'` when it let go, bounced off or ended in the end boost.
+- `tryClimb` (function): Starts a climb if one takes (see the file comment); true when it did.
+- `wallBounce` (function): A jump off the wall (see the file comment): by the zone the feet at `feet` stand in over the climb space's foot.
 
 ### [`engine/physics/movement/crouch.ts`](../engine/physics/movement/crouch.ts)
 
@@ -4434,13 +4450,24 @@ For the agents who maintain the engine.
 - `updateSprint` (function): Apex's sticky sprint (see the file comment): updates `motion.sticky`, `stickyLeft` and `sprinting`.
 - `walkMove` (function): Apex's WalkMove: one tick of `h` across the ground toward `wish` (at most length 1) at `maxSpeed`: the stick curve (a move shorter than 1 counts as length × (2 − length), a sprinting move 1.25 times longer, capped at 1), then `decelerate`, then `accelerate` at `groundAccel` of the speed it started with.
 
+### [`engine/physics/movement/mantle.ts`](../engine/physics/movement/mantle.ts)
+
+- `crouchPressed` (const): Whether the crouch went down this tick: the held button's press or the toggle's.
+- `glide` (function): The superglide (see the file comment), or with `boost` the mantle boost: across the ground at `mantle.glide` times the exit speed along the push (else over the ledge), less the slide's boost within its cooldown unless `boost`.
+- `MantleTick` (interface): What a mantle's tick reads beside the states: the tick's own numbers, as steerMotion has them.
+- `MantleTry` (interface): What `tryMantle` reads beside a tick's numbers.
+- `startMantle` (function): Starts a mantle up `ledge` from the feet at `feet`: a grab, or for a low ledge only the pull (see the file comment).
+- `stepMantle` (function): One tick of a mantle (see the file comment): the feet's next point on the path, or null once it hopped out or let go (the tick goes on in the air).
+- `tryMantle` (function): Starts a mantle if one takes (see the file comment); true when it did.
+
 ### [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)
 
 - `createMotionState` (function): A character at rest on the ground, standing and holstered: every field at its default.
 - `DUCKS` (const): Apex's duck: standing, going down, down, or getting up.
 - `GAITS` (const): How a character moves on the ground this tick: a slide is a gait.
+- `MANTLES` (const): A mantle's phase: none, the grab up to the lip, hanging from it, the pull over it.
 - `MODEL_FIELDS` (const): The model's numbers (see the file comment): what `character.movement` holds.
-- `MODES` (const): Where a character is in the model: on the ground or in the air (WP 13.6 and 13.7 add mantles, climbs and rides).
+- `MODES` (const): Where a character is in the model: on the ground, in the air, mantling or climbing (WP 13.7 adds rides).
 - `MOTION_FIELDS` (const): What a character on the model keeps between ticks: the component `motion`'s fields, hashed and captured.
 - `MotionState` (type): The component `motion`: a character's state in the model (`MOTION_FIELDS` documents each field).
 - `MovementModel` (type): The model's numbers, filled: what `character.movement` holds.
@@ -4465,13 +4492,13 @@ For the agents who maintain the engine.
 ### [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)
 
 - `MOVEMENT_SETTINGS` (const): The settings, path → field: each the model's number with its group's description first, live.
-- `MovementOverride` (type): One setting off its default: the model's group (none for `turnRate`), the number's key, and its value.
+- `MovementOverride` (type): One setting off its default: the model's group (none for `turnRate`), the number's or switch's key, and its value.
 - `movementOverrides` (function): The settings `get` reads off their defaults, as overrides (none when every one is at its default).
-- `tuneCharacter` (function): `character` with `overrides` over its model's numbers; itself when it has no model or nothing is overridden.
+- `tuneCharacter` (function): `character` with `overrides` over its model's values; itself when it has no model or nothing is overridden.
 
 ### [`engine/physics/movement/steer.ts`](../engine/physics/movement/steer.ts)
 
-- `Room` (interface): What the model asks the world: whether the standing hull fits where the character is, its feet kept.
+- `Room` (interface): What the model asks the world (engine/physics/room.ts answers from the physics).
 - `settleMotion` (function): The tick after the move (see the file comment): a slide's step-up cost (`slide.step` a metre climbed), landing (the stun applied to the velocity across the ground; ducked, a landing slides; returns the landing speed when above 2 m/s, else 0), a head bump ending a rise, walking off a ledge clearing the jump's fatigue, the floor under it, the mode, and the turn toward `input.face`, else the move.
 - `steerMotion` (function): The tick before the move (see the file comment).
 - `turnToward` (function): `yaw` turned toward `target` by at most `step` radians, kept within (−π, π].
@@ -4504,6 +4531,11 @@ For the agents who maintain the engine.
 - `ShapeCastOptions` (interface): A shape cast's options.
 - `vec` (function): A vector as Rapier's `{ x, y, z }`, checked.
 - `Vec3Like` (type): A vector: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`.
+
+### [`engine/physics/room.ts`](../engine/physics/room.ts)
+
+- `fitHull` (function): Gives the body the hull `motion`'s stance has: in the `air` about its middle where hull.ts says, else (and mantling) keeping the feet.
+- `roomOf` (function): The room `character`'s body `body` stands in now (see the file comment).
 
 ### [`engine/physics/world.ts`](../engine/physics/world.ts)
 

@@ -887,6 +887,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`hull.ts`](../engine/physics/hull.ts): A character's hull (PLAN.md WP 13.5, docs/PLAYGROUND.md §3.2): the capsule its body has now.
   - Exports: `hullFits`, `hullHeight`, `HullKeep`, `matchHull`, `setHull`
   - Tests: [`engine/physics/hull.test.ts`](../engine/physics/hull.test.ts)
+- [`ledge.ts`](../engine/physics/ledge.ts): Walls and ledges (PLAN.md WP 13.6, docs/PLAYGROUND.md §3.2): what the shooter model mantles onto and climbs, by casts of the character's hull and rays, after er-apex's `detect_ledge` (`umiiii/er-apex`, `deps/er-apex-move/src/controller.rs` 1575-1668; MIT, engine/physics/movement/NOTICE).
+  - Exports: `findLedge`, `findWall`, `Ledge`, `ledgePath`, `LedgeSearch`, `Wall`
+  - Tests: [`engine/physics/ledge.test.ts`](../engine/physics/ledge.test.ts)
 - [`move.ts`](../engine/physics/move.ts): The character controller's moves (PLAN.md WP 3.2, §4.8; doctrine: Quality under the hood): `moveCharacter` moves a character's capsule through Rapier's kinematic character controller, across then down, climbing steps and snapping to the ground itself, and `sink` takes it down with a sinking floor.
   - Exports: `CharacterHit`, `CharacterMove`, `halfHeightOf`, `isWalkable`, `isWall`, `moveCharacter`, `MoveOptions`, `oneWayFilter`, `partsOf`, `QUERY_FLAGS`, `queryGroups`, `sink`
   - Tests: [`engine/physics/character.test.ts`](../engine/physics/character.test.ts)
@@ -896,6 +899,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`queries.ts`](../engine/physics/queries.ts): Queries (PLAN.md WP 3.1, §6.1; doctrine: Common ground): raycasts, shape casts, overlaps and the ground `probe(x, z)` over a Rapier world, in plain terms, and the plain-data shapes and vectors that bodies and queries share.
   - Exports: `check`, `Ground`, `Hit`, `hullPoints`, `HullShape`, `overlap`, `OverlapOptions`, `probe`, `ProbeOptions`, `quat`, `QuatLike`, `QUERY_CODES`, `QueryOptions`, `raycast`, `RayOptions`, `Shape`, `shapeArgs`, `shapeCast`, `ShapeCastOptions`, `vec`, `Vec3Like`
   - Tests: [`engine/physics/queries.test.ts`](../engine/physics/queries.test.ts)
+- [`room.ts`](../engine/physics/room.ts): The shooter model's world (PLAN.md WP 13.5, WP 13.6): `roomOf` answers what the model asks the physics (engine/physics/movement/steer.ts's `Room`): whether the standing hull fits where the character is (engine/physics/hull.ts), where its feet are, and the walls and ledges ahead (engine/physics/ledge.ts); `fitHull` gives its body the hull its stance has, keeping the feet while it mantles, since the mantle's path is the feet's.
+  - Exports: `fitHull`, `roomOf`
+  - Tests: [`engine/physics/movement/mantle.test.ts`](../engine/physics/movement/mantle.test.ts)
 - [`world.ts`](../engine/physics/world.ts): The physics world (PLAN.md WP 3.1, §6.1, §6.5 items 4–7; doctrines: Reproducible, Quality under the hood): Rapier behind plain terms.
   - Exports: `BodyChange`, `BodySpec`, `BodyState`, `BodyType`, `ColliderSpec`, `createPhysics`, `Physics`, `PhysicsStepper`, `rapierOf`, `WORLD_CODES`
   - Tests: [`engine/physics/world.test.ts`](../engine/physics/world.test.ts)
@@ -905,14 +911,20 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`air.ts`](../engine/physics/movement/air.ts): The shooter model off the ground (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2): air control, the lurch, the jump and the landing.
   - Exports: `airMove`, `hopSpeed`, `jumpScale`, `land`, `landSlowdown`, `lurch`, `lurchStrength`, `newKey`
   - Tests: [`engine/physics/movement/air.test.ts`](../engine/physics/movement/air.test.ts)
+- [`climb.ts`](../engine/physics/movement/climb.ts): The shooter model's wall-climb and wall-bounce (PLAN.md WP 13.6, docs/PLAYGROUND.md §3.2), as the Apex Movement Wiki's climb fundamentals measure them, through the controller's own move up the wall.
+  - Exports: `keepSpace`, `stepClimb`, `tryClimb`, `wallBounce`
+  - Tests: [`engine/physics/movement/climb.test.ts`](../engine/physics/movement/climb.test.ts)
 - [`crouch.ts`](../engine/physics/movement/crouch.ts): The shooter model's crouch and slide (PLAN.md WP 13.5, docs/PLAYGROUND.md §3.2): the duck, and the slide a crouch at speed starts.
   - Exports: `crouchBlocks`, `ducking`, `DuckInput`, `endSlide`, `FloorNormal`, `hullFor`, `slideJump`, `SlideStart`, `slopePull`, `tryStartSlide`, `updateDuck`
   - Tests: [`engine/physics/movement/crouch.test.ts`](../engine/physics/movement/crouch.test.ts)
 - [`ground.ts`](../engine/physics/movement/ground.ts): The shooter model on the ground (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2): when it sprints, how fast its gait goes, and one tick of the velocity across the ground, as Apex's WalkMove does it: the stick curve, the deceleration of only the part of the velocity the input does not push for (`decelerate`), then the acceleration toward the wished speed, never past the larger of the old speed and the wished one (`accelerate`), at a rate set by the speed at the tick's start (`groundAccel`); a slide (WP 13.5) only steers, at `slide.accel`, and brakes by its own friction, then decays.
   - Exports: `accelerate`, `decelerate`, `directionShare`, `gaitSpeed`, `groundAccel`, `SlideBrake`, `SprintInput`, `updateSprint`, `walkMove`
   - Tests: [`engine/physics/movement/ground.test.ts`](../engine/physics/movement/ground.test.ts)
+- [`mantle.ts`](../engine/physics/movement/mantle.ts): The shooter model's mantle and superglide (PLAN.md WP 13.6, docs/PLAYGROUND.md §3.2), as the Apex Movement Wiki measures them: up a ledge engine/physics/ledge.ts found, along its path, the feet moved straight along it (engine/physics/character.ts's `stepCharacter`: the path is clear, so no controller), in two timed phases.
+  - Exports: `crouchPressed`, `glide`, `MantleTick`, `MantleTry`, `startMantle`, `stepMantle`, `tryMantle`
+  - Tests: [`engine/physics/movement/mantle.test.ts`](../engine/physics/movement/mantle.test.ts)
 - [`model.ts`](../engine/physics/movement/model.ts): The shooter movement model's numbers and state (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2): what a movement profile (engine/physics/movement/profile.ts) gives a character in `character.movement`, and what each such character keeps between ticks, the component `motion` (engine/sim/actors.ts).
-  - Exports: `createMotionState`, `DUCKS`, `GAITS`, `MODEL_FIELDS`, `MODES`, `MOTION_FIELDS`, `MotionState`, `MovementModel`, `MovementModelSpec`, `STANCES`
+  - Exports: `createMotionState`, `DUCKS`, `GAITS`, `MANTLES`, `MODEL_FIELDS`, `MODES`, `MOTION_FIELDS`, `MotionState`, `MovementModel`, `MovementModelSpec`, `STANCES`
   - Tests: [`engine/physics/movement/model.test.ts`](../engine/physics/movement/model.test.ts)
 - [`profile.ts`](../engine/physics/movement/profile.ts): Movement profiles (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2): the registry kind `movement`.
   - Exports: `applyMovement`, `defineMovement`, `getMovement`, `listMovements`, `MOVEMENT_FIELDS`, `movementKind`, `MovementProfile`, `MovementSpec`
@@ -920,10 +932,10 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`profiles.ts`](../engine/physics/movement/profiles.ts): The movement profiles every game gets (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2), registered on the shared registry when this module loads (engine/physics/character.ts loads it): - `movement:apex`, Apex Legends' movement: its medium legends' hull, steps and slopes, gravity, jump and grace period, and the shooter model at its defaults, which are Apex's numbers (engine/physics/movement/model.ts).
   - Exports: `MOVEMENT_PROFILES`
   - Tests: [`engine/physics/movement/profile.test.ts`](../engine/physics/movement/profile.test.ts)
-- [`settings.ts`](../engine/physics/movement/settings.ts): The shooter model's live tuning (PLAN.md WP 13.4, docs/PLAYGROUND.md §3.4): a setting for every number of the model, `movement.<group>.<field>` (`movement.gaits.sprint`, `movement.air.speed`) and `movement.turnRate`, its default, range, unit and description the model's own (engine/physics/movement/model.ts), taking effect at once.
+- [`settings.ts`](../engine/physics/movement/settings.ts): The shooter model's live tuning (PLAN.md WP 13.4, docs/PLAYGROUND.md §3.4): a setting for every number and switch of the model, `movement.<group>.<field>` (`movement.gaits.sprint`, `movement.mantle.boost`) and `movement.turnRate`, its default, range, unit and description the model's own (engine/physics/movement/model.ts), taking effect at once (the feel panel's sliders take the numbers).
   - Exports: `MOVEMENT_SETTINGS`, `MovementOverride`, `movementOverrides`, `tuneCharacter`
   - Tests: [`engine/physics/movement/settings.test.ts`](../engine/physics/movement/settings.test.ts)
-- [`steer.ts`](../engine/physics/movement/steer.ts): One tick of the shooter model (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2), in the order of Apex's own tick (er-apex's `controller.rs` `tick`, lines 551-700; MIT, engine/physics/movement/NOTICE): the timers, the duck and the slide it starts (engine/physics/movement/crouch.ts), the sprint, the jump, then the walk on the ground (engine/physics/movement/ground.ts; a slide's between the halves of its pull along the floor) or the lurch and the air move in the air (air.ts), then gravity, integrated exactly; after the controller's move, `settleMotion` takes a slide's step-up cost, lands (the fall stun, by the impact speed along the floor's normal; ducked, a landing slides), keeps the floor, the flight's count and turns the character toward where it faces at the model's turn rate.
+- [`steer.ts`](../engine/physics/movement/steer.ts): One tick of the shooter model (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2), in the order of Apex's own tick (er-apex's `controller.rs` `tick`, lines 551-700; MIT, engine/physics/movement/NOTICE): the timers and the climb space; a mantle's tick (engine/physics/movement/mantle.ts: the feet moved along its path, no controller), the superglide's crouch, a climb's tick (climb.ts); the duck and the slide it starts (crouch.ts), the sprint, a mantle or a climb starting (a jump at a ledge mantles instead), the jump, then the walk on the ground (engine/physics/movement/ground.ts; a slide's between the halves of its pull along the floor) or the lurch and the air move in the air (air.ts), then gravity, integrated exactly; after the controller's move, `settleMotion` takes a slide's step-up cost, lands (the fall stun, by the impact speed along the floor's normal; ducked, a landing slides), keeps the floor, the flight's count and turns the character toward where it faces at the model's turn rate (toward the wall while it mantles or climbs).
   - Exports: `Room`, `settleMotion`, `steerMotion`, `turnToward`
   - Tests: [`engine/physics/movement/steer.test.ts`](../engine/physics/movement/steer.test.ts)
 

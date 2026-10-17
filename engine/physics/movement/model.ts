@@ -161,6 +161,41 @@ export const MODEL_FIELDS = defineSchema({
     longFrom: num(0.85, 0, 1, 'Where the long jump’s band starts, a share of `long`.'),
     step: num(10, 0, 1e4, 'A step up while sliding costs this much speed a metre climbed (Apex’s 10 a unit).', '1/s'),
   }),
+  mantle: group('The mantle (the Apex Movement Wiki’s measures, and er-apex’s ledge test): a grab, then a pull.', {
+    reach: num(2.4892, 0, 20, 'The highest ledge it mantles from the air, its lip above the feet: the highest a climb reaches less its cutoff and end boost (273 − 147 − 28), 98 u.', 'm'), // prettier-ignore
+    auto: num(2.032, 0, 20, 'Holding jump on the ground, the highest ledge it mantles without leaving the ground: 80 u.', 'm'), // prettier-ignore
+    probe: num(0.6096, 0, 10, 'How far ahead of its hull it finds the wall: 24 u.', 'm'),
+    angle: num(50 * DEG, 0, Math.PI, 'Its move and its view within this of the wall, facing it.', 'rad'),
+    low: num(1.0668, 0, 20, 'A ledge this low over the feet or lower is pulled over with no grab: 42 u.', 'm'),
+    grab: num(0.45, 0, 5, 'The grab: up to the lip, hands on it (out of a climb, measured).', 's'),
+    pull: num(0.3, 0, 5, 'The pull over the lip onto the top (contested: 0.45 s).', 's'),
+    hang: num(1.524, 0, 20, 'Letting go of forward in the grab hangs if the lip stands this high over the ground below: 60 u.', 'm'), // prettier-ignore
+    cooldown: num(0.25, 0, 5, 'No mantle within this of the last one’s end.', 's'),
+    window: num(0.15, 0, 5, 'The pull’s last part, when a superglide or a mantle boost takes.', 's'),
+    glide: num(1.8, 0, 10, 'A superglide’s speed, times the speed it mantled at: +80% over the holstered sprint.'),
+    glideJump: num(1.27, 0, 100, 'Ours: a superglide’s rise, the slide-jump’s.', 'm'),
+    boost: { type: 'boolean', default: false, description: 'The mantle boost: a crouch press in the window glides too, rising a full jump, with no cooldown of its own (it starts the slide boost’s).' }, // prettier-ignore
+  }),
+  climb: group('The wall-climb (the Apex Movement Wiki’s climb fundamentals): up a steep wall, in the air.', {
+    angle: num(Math.acos(0.7), 0, Math.PI / 2, 'Walls steeper than this (a normal under 0.7 up), the view within this of facing one: 45.57°.', 'rad'), // prettier-ignore
+    attach: num(2.54, 0, 100, 'It climbs until its feet are this far above where it caught: 100 u.', 'm'),
+    cutoff: num(3.7338, 0, 100, 'Or this far above the climb space’s foot, the last ground’s: 147 u.', 'm'),
+    end: num(0.7112, 0, 100, 'Then the end boost throws it this much higher: 28 u.', 'm'),
+    up: num(5.715, 0, 100, 'Its speed up the wall: 225 u/s.', 'm/s'),
+    across: num(6.5532, 0, 100, 'Across the wall, not climbing up: 258 u/s.', 'm/s'),
+    acrossUp: num(2.921, 0, 100, 'Across the wall while climbing up: 115 u/s.', 'm/s'),
+    accel: num(30, 0, 1e4, 'Ours: how fast it reaches those speeds.', 'm/s²'),
+    rising: num(0.254, 0, 100, 'Rising this fast or faster it climbs on with no timer: 10 u/s.', 'm/s'),
+    timer: num(1, 0, 60, 'Rising slower, it lets go this long after it caught.', 's'),
+    mini: num(0.4826, 0, 100, 'A jump off below this over the climb space’s foot is a mini-bounce: 19 u.', 'm'),
+    green: num(1.1938, 0, 100, 'Below this, a wall-bounce, its lift a full jump at the zone’s foot to none at its top (ours, the measures say only that it falls): 47 u.', 'm'), // prettier-ignore
+    miniLift: num(0.716534, 0, 100, 'A mini-bounce’s rise: 28.21 u.', 'm'),
+    miniAway: num(4.7752, 0, 100, 'Its speed away from the wall: 188 u/s.', 'm/s'),
+    away: num(6.5532, 0, 100, 'A wall-bounce’s, or a jump off higher up (a wall push, no lift): 258 u/s.', 'm/s'),
+    drop: num(3.2512, 0, 100, 'Letting go lowers the climb space this much: 128 u.', 'm'),
+    dropJump: num(6.5024, 0, 100, 'A jump off above the mini zone lowers it this much: 256 u.', 'm'),
+    turn: num(25.842 * DEG, 0, Math.PI, 'A new climb starts above the last one’s catch only on a wall turned this far from it.', 'rad'), // prettier-ignore
+  }),
   turnRate: num(720 * DEG, 0, 1e3, 'Ours: how fast it turns to face where it moves, looks or aims (720°/s).', 'rad/s'),
 });
 
@@ -172,8 +207,11 @@ export type MovementModelSpec = {
   [K in keyof MovementModel]?: MovementModel[K] extends object ? Partial<MovementModel[K]> : MovementModel[K];
 };
 
-/** Where a character is in the model: on the ground or in the air (WP 13.6 and 13.7 add mantles, climbs and rides). */
-export const MODES = ['ground', 'air'] as const;
+/** Where a character is in the model: on the ground, in the air, mantling or climbing (WP 13.7 adds rides). */
+export const MODES = ['ground', 'air', 'mantle', 'climb'] as const;
+
+/** A mantle's phase: none, the grab up to the lip, hanging from it, the pull over it. */
+export const MANTLES = ['none', 'grab', 'hang', 'pull'] as const;
 
 /** How a character moves on the ground this tick: a slide is a gait. */
 export const GAITS = ['idle', 'walk', 'run', 'sprint', 'crouch', 'slide'] as const;
@@ -186,7 +224,12 @@ export const DUCKS = ['standing', 'ducking', 'ducked', 'unducking'] as const;
 
 /** What a character on the model keeps between ticks: the component `motion`'s fields, hashed and captured. */
 export const MOTION_FIELDS = defineSchema({
-  mode: { type: 'string', enum: MODES, default: 'ground', description: 'On the ground or in the air.' },
+  mode: {
+    type: 'string',
+    enum: MODES,
+    default: 'ground',
+    description: 'On the ground, in the air, mantling or climbing.',
+  },
   gait: { type: 'string', enum: GAITS, default: 'idle', description: 'How it moved on the ground this tick.' },
   stance: { type: 'string', enum: STANCES, default: 'stand', description: 'Its hull: standing or crouched.' },
   duck: { type: 'string', enum: DUCKS, default: 'standing', description: 'Its duck: the hull shrinks as `ducking` ends and stands as `unducking` starts.' }, // prettier-ignore
@@ -211,6 +254,31 @@ export const MOTION_FIELDS = defineSchema({
   landAge: { type: 'integer', default: -1, minimum: -1, description: 'Ticks since it last landed; −1: not yet.' },
   fall: num(0, 0, 1e6, 'The fall height its last landing counts for the stun, fading as it recovers.', 'm'),
   flight: { type: 'integer', default: -1, minimum: -1, description: 'Ticks since its jump took off, in the air; −1: none.' }, // prettier-ignore
+  mantle: { type: 'string', enum: MANTLES, default: 'none', description: 'Its mantle’s phase.' },
+  mantleLeft: { type: 'integer', default: 0, minimum: 0, description: 'Ticks left of the phase.' },
+  mantleTotal: { type: 'integer', default: 0, minimum: 0, description: 'Ticks the phase takes.' },
+  mantleCool: { type: 'integer', default: 0, minimum: 0, description: 'Ticks until it may mantle again.' },
+  fromX: num(0, -1e6, 1e6, 'Where its mantle began, the feet, east.', 'm'),
+  fromY: num(0, -1e6, 1e6, 'Where its mantle began, up.', 'm'),
+  fromZ: num(0, -1e6, 1e6, 'Where its mantle began, south.', 'm'),
+  toX: num(0, -1e6, 1e6, 'Where its mantle lands, the feet on the ledge’s top, east.', 'm'),
+  toY: num(0, -1e6, 1e6, 'Where its mantle lands, up.', 'm'),
+  toZ: num(0, -1e6, 1e6, 'Where its mantle lands, south.', 'm'),
+  lipX: num(0, -1e6, 1e6, 'The ledge’s lip, where the hands go, east.', 'm'),
+  lipY: num(0, -1e6, 1e6, 'The lip, up.', 'm'),
+  lipZ: num(0, -1e6, 1e6, 'The lip, south.', 'm'),
+  riseX: num(0, -1e6, 1e6, 'The column its feet rise up at the wall, the hull against it, east.', 'm'),
+  riseZ: num(0, -1e6, 1e6, 'The column its feet rise up, south.', 'm'),
+  wallX: num(0, -1, 1, 'The wall it mantles or climbs, its normal across the ground, east.'),
+  wallZ: num(0, -1, 1, 'The wall’s normal, south.'),
+  landCrouch: { type: 'boolean', default: false, description: 'Only the crouched hull fits on the ledge’s top.' },
+  hangRoom: { type: 'boolean', default: false, description: 'The lip stands high enough over the ground below to hang from.' }, // prettier-ignore
+  exitGait: { type: 'string', enum: GAITS, default: 'run', description: 'The gait it mantles out at: the one it came in at.' }, // prettier-ignore
+  glideAge: { type: 'integer', default: -1, minimum: -1, description: 'Ticks since a jump in the pull’s window hopped it out; −1: none.' }, // prettier-ignore
+  climbAge: { type: 'integer', default: -1, minimum: -1, description: 'Ticks since its climb caught; −1: not climbing.' }, // prettier-ignore
+  attachY: num(0, -1e6, 1e6, 'Where its last climb caught, the feet’s height.', 'm'),
+  spaceY: num(0, -1e6, 1e6, 'The climb space’s foot: the last ground’s height, lowered by each letting go, dragged down by a fall below it.', 'm'), // prettier-ignore
+  reattach: { type: 'boolean', default: false, description: 'It climbed since it last stood: a new climb catches below the last unless the wall turned.' }, // prettier-ignore
   keyRight: num(0, -1, 1, 'Last tick’s move in its keys’ frame, to the right (a new key lurches).'),
   keyForward: num(0, -1, 1, 'Last tick’s move in its keys’ frame, forward.'),
 });

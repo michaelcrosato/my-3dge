@@ -223,6 +223,8 @@ export interface Steering {
   /** Where it was told to go, `[x, z]`, at most length 1. */
   wish: readonly [number, number];
   wasGrounded: boolean;
+  /** The shooter model's mantle: the feet go straight to `to` (m), through nothing, standing there if it `lands`. */
+  path?: { to: readonly [number, number, number]; lands: boolean };
 }
 
 /**

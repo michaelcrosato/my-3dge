@@ -1,11 +1,14 @@
 /**
  * @file One tick of the shooter model (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2), in the order of Apex's own tick
- * (er-apex's `controller.rs` `tick`, lines 551-700; MIT, engine/physics/movement/NOTICE): the timers, the duck and the
- * slide it starts (engine/physics/movement/crouch.ts), the sprint, the jump, then the walk on the ground
+ * (er-apex's `controller.rs` `tick`, lines 551-700; MIT, engine/physics/movement/NOTICE): the timers and the climb
+ * space; a mantle's tick (engine/physics/movement/mantle.ts: the feet moved along its path, no controller), the
+ * superglide's crouch, a climb's tick (climb.ts); the duck and the slide it starts (crouch.ts), the sprint, a mantle
+ * or a climb starting (a jump at a ledge mantles instead), the jump, then the walk on the ground
  * (engine/physics/movement/ground.ts; a slide's between the halves of its pull along the floor) or the lurch and the
  * air move in the air (air.ts), then gravity, integrated exactly; after the controller's move, `settleMotion` takes a
  * slide's step-up cost, lands (the fall stun, by the impact speed along the floor's normal; ducked, a landing slides),
- * keeps the floor, the flight's count and turns the character toward where it faces at the model's turn rate.
+ * keeps the floor, the flight's count and turns the character toward where it faces at the model's turn rate (toward
+ * the wall while it mantles or climbs).
  * engine/physics/character.ts's `stepCharacter` runs these in place of engine/physics/feel.ts's `steer` and `settle`
  * for a character with a model (`character.movement`), and gives its body the hull its stance has
  * (engine/physics/hull.ts); the controller's move, walls, pushes and the ground probe are the same for both.
@@ -13,10 +16,10 @@
  * Its input beyond the platformer's (`CharacterInput`): `sprint` and `sprintPressed`, `walk`, `crouch` and
  * `crouchToggle`, `view` (the view's yaw: the sprint's 45°, the slide's 53°), `frame` (the yaw the move's keys are
  * turned by, the camera's: the lurch's new key) and `face` (a yaw to face: the look's or the aim's; without it, it
- * faces where it moves); and the world's answer to whether it may stand (`Room`). Jumps keep the controller's coyote
- * time and buffer (`feel.coyote`, `feel.buffer`), so a press is never lost (docs/PLAYGROUND.md §3.4); a jump after a
- * jump gets no coyote time, and there is no variable jump and no dash. A slide's jump goes `slide.jump` high and ends
- * it.
+ * faces where it moves); and the world's answers (`Room`: whether it may stand, its feet, walls and ledges ahead,
+ * engine/physics/room.ts). Jumps keep the controller's coyote time and buffer (`feel.coyote`, `feel.buffer`), so a
+ * press is never lost (docs/PLAYGROUND.md §3.4); a jump after a jump gets no coyote time, and there is no variable
+ * jump and no dash. A slide's jump goes `slide.jump` high and ends it.
  *
  * Invariants: reads and writes only the states it is given; same states and input, same tick.
  *
@@ -27,19 +30,42 @@
 import { Vector3 } from '../../core/math';
 import type { Character, CharacterInput, CharacterState } from '../character';
 import type { Steering } from '../feel';
+import type { Ledge, Wall } from '../ledge';
 import type { CharacterMove } from '../move';
 import { airMove, hopSpeed, jumpScale, land, landSlowdown, lurch, newKey } from './air';
+import { keepSpace, stepClimb, tryClimb } from './climb';
 import { crouchBlocks, ducking, endSlide, slideJump, slopePull, tryStartSlide, updateDuck, type FloorNormal } from './crouch'; // prettier-ignore
 import { gaitSpeed, updateSprint, walkMove } from './ground';
+import { crouchPressed, glide, stepMantle, tryMantle, type MantleTick } from './mantle';
 import type { MotionState } from './model';
 
-/** What the model asks the world: whether the standing hull fits where the character is, its feet kept. */
+/** What the model asks the world (engine/physics/room.ts answers from the physics). */
 export interface Room {
+  /** Whether the standing hull fits where the character is, its feet kept. */
   stand(): boolean;
+  /** Where its feet are (m). */
+  feet(): readonly [number, number, number];
+  /** A wall ahead along `dir` (a unit `[x, z]`) within `probe` of the hull, steeper than it walks, or null. */
+  wall(dir: readonly [number, number], probe: number): Wall | null;
+  /** A ledge on top of `wall`, its lip within `reach` above the feet, that the hull can mantle onto, or null. */
+  ledge(wall: Wall, reach: number): Ledge | null;
 }
 
-/** A world with headroom everywhere: what a tick with no physics (a test's) stands up in. */
-const OPEN: Room = { stand: () => true };
+/** A world with headroom everywhere and no walls: what a tick with no physics (a test's) runs in. */
+const OPEN: Room = { stand: () => true, feet: () => [0, 0, 0], wall: () => null, ledge: () => null };
+
+/** The steering of a tick that moves the feet along a mantle's path, or that climbs at the velocity it set. */
+function steered(
+  state: CharacterState,
+  wish: readonly [number, number],
+  wasGrounded: boolean,
+  dt: number,
+  path?: Steering['path'],
+): Steering {
+  // prettier-ignore
+  const desired = path ? new Vector3() : new Vector3(state.vx * dt, state.vy * dt, state.vz * dt);
+  return { desired, jumped: false, dashed: false, dashing: false, wish, wasGrounded, ...(path ? { path } : {}) };
+}
 
 /** The move, at most length 1. */
 function clampMove(move: CharacterInput['move']): [number, number] {
@@ -78,7 +104,9 @@ export function steerMotion(
   if (motion.landAge >= 0) motion.landAge = Math.min(motion.landAge + 1, 1e6);
   if (motion.flight >= 0) motion.flight = Math.min(motion.flight + 1, 1e6);
   if (motion.slideAge >= 0) motion.slideAge = Math.min(motion.slideAge + 1, 1e6);
+  if (motion.glideAge >= 0) motion.glideAge = Math.min(motion.glideAge + 1, 1e6);
   motion.stickyLeft = Math.max(0, motion.stickyLeft - 1);
+  motion.mantleCool = Math.max(0, motion.mantleCool - 1);
   const wish = clampMove(input.move);
   const keys = keysOf(wish, input.frame ?? 0);
   const view = input.view === undefined ? null : ([Math.sin(input.view), Math.cos(input.view)] as const);
@@ -86,6 +114,21 @@ export function steerMotion(
   const slowdown = landSlowdown(m, motion.fall, since < 0 ? Infinity : since);
   const scale = slowdown * (motion.holstered ? m.gaits.holstered : 1);
   const h: [number, number] = [state.vx, state.vz];
+  const tick: MantleTick = { wish, view, scale, dt, g };
+  keepSpace(motion, room.feet()[1], wasGrounded);
+  if (motion.mode === 'mantle') {
+    const path = stepMantle(character, state, motion, input, tick);
+    if (path) return steered(state, wish, wasGrounded, dt, path);
+    [h[0], h[1]] = [state.vx, state.vz];
+  }
+  if (motion.glideAge === 1 && crouchPressed(input, motion)) glide(character, state, motion, tick, false);
+  if (motion.glideAge >= 1) motion.glideAge = -1;
+  if (motion.mode === 'climb') {
+    const next = stepClimb(character, state, motion, input, room, tick);
+    if (next === 'mantle') return steered(state, wish, wasGrounded, dt, stepMantle(character, state, motion, input, tick, true)!); // prettier-ignore
+    if (next === 'climb') return steered(state, wish, wasGrounded, dt);
+  }
+  [h[0], h[1]] = [state.vx, state.vz];
   const start = motion.stance;
   const crouch = { held: input.crouch === true, toggled: input.crouchToggle === true };
   updateDuck(m, motion, { ...crouch, h, vertical: state.vy, floor: wasGrounded ? floorOf(motion) : null, wish, view, scale, dt, canStand: () => room.stand() }); // prettier-ignore
@@ -93,6 +136,14 @@ export function steerMotion(
   const sprint = { held: input.sprint === true, pressed: input.sprintPressed === true, blocked: input.walk === true };
   if (sprint.pressed && !sprint.blocked) motion.crouchToggle = false;
   updateSprint(m, motion, { ...sprint, wish, view, velocity: h, footing, slowdown, dt });
+  const jump = state.jumpAge >= 0 || input.jump === true;
+  if (tryMantle(character, state, motion, input, room, { ...tick, grounded: wasGrounded, h, jump })) {
+    return steered(state, wish, wasGrounded, dt, stepMantle(character, state, motion, input, tick, true)!);
+  }
+  if (!wasGrounded && tryClimb(character, state, motion, input, room, tick)) {
+    if (stepClimb(character, state, motion, input, room, tick) === 'climb') return steered(state, wish, wasGrounded, dt); // prettier-ignore
+    [h[0], h[1]] = [state.vx, state.vz];
+  }
   let jumped = false;
   const near = wasGrounded || (state.air <= coyote && !motion.jumped);
   if (state.jumpAge >= 0 && near && !crouchBlocks(m, motion, near)) {
@@ -168,6 +219,14 @@ export function settleMotion(
   dt: number,
 ): number {
   const m = character.movement!;
+  const wall = Math.atan2(-motion.wallX, -motion.wallZ);
+  if (steering.path) {
+    const { lands } = steering.path;
+    Object.assign(state, { grounded: lands, vy: 0, jumping: false, air: lands ? 0 : Math.min(state.air + 1, 1e6) });
+    if (lands) Object.assign(motion, { flight: -1, floorX: 0, floorY: 1, floorZ: 0 });
+    state.yaw = turnToward(state.yaw, wall, m.turnRate * dt);
+    return 0;
+  }
   let landed = 0;
   const grounded = move.grounded && state.vy <= 0;
   const speed = Math.hypot(state.vx, state.vz);
@@ -201,9 +260,11 @@ export function settleMotion(
     if (state.vy > 0 && move.moved.y < steering.desired.y * 0.5) [state.vy, state.jumping] = [0, false];
   }
   if (state.vy <= 0) state.jumping = false;
-  motion.mode = grounded ? 'ground' : 'air';
+  const climbing = !grounded && motion.mode === 'climb';
+  if (grounded) motion.climbAge = -1;
+  motion.mode = grounded ? 'ground' : climbing ? 'climb' : 'air';
   const [wx, wz] = steering.wish;
-  const target = input.face ?? (Math.hypot(wx, wz) > 0.1 ? Math.atan2(wx, wz) : undefined);
+  const target = climbing ? wall : (input.face ?? (Math.hypot(wx, wz) > 0.1 ? Math.atan2(wx, wz) : undefined));
   if (target !== undefined) state.yaw = turnToward(state.yaw, target, m.turnRate * dt);
   return landed;
 }

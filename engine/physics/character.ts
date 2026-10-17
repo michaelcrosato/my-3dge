@@ -13,7 +13,8 @@
  * character that `shoves` a group (the box's hero, the crowd) moves as if those bodies were not there, and its capsule
  * pushes them aside in the physics step, as the prototype's hero shoved monsters (ADR-0020 amendment 9). A character
  * given a movement profile, `createCharacter({ movement: 'movement:apex' })`, takes its settings and, with a model,
- * steers by the shooter model instead (engine/physics/movement/), its state in a `MotionState` beside this one.
+ * steers by the shooter model instead (engine/physics/movement/), its state in a `MotionState` beside this one, asking
+ * the world through engine/physics/room.ts; a mantle's tick moves its feet straight along the mantle's path.
  *
  * Invariants: it keeps nothing between ticks but `state` (move.ts's controller keeps nothing either), so a restored
  * world steps on alike. Same state, input and world: same tick, in Node and Chromium.
@@ -44,14 +45,13 @@ import { handleOf } from './capture';
 import { feetOf } from './characterBody';
 import { GROUP_NAMES } from './groups';
 import { settle, steer } from './feel';
-import { hullFits, matchHull } from './hull';
 import { halfHeightOf, isWall, moveCharacter, partsOf, sink, type CharacterMove } from './move';
-import { hullFor } from './movement/crouch';
 import { MODEL_FIELDS, type MotionState } from './movement/model';
 import { applyMovement } from './movement/profile';
 import './movement/profiles';
 import { settleMotion, steerMotion } from './movement/steer';
 import { check, type Vec3Like } from './queries';
+import { fitHull, roomOf } from './room';
 import { rapierOf, type Physics } from './world';
 
 export { addCharacter, bodyAt, feetOf } from './characterBody';
@@ -268,21 +268,22 @@ export function stepCharacter(
   const model = character.movement !== undefined;
   check(!model || motion !== undefined, 'stepCharacter(motion)', motion, 'the character’s MotionState (createMotionState(), the component motion an actor keeps): it has a movement model'); // prettier-ignore
   const { oneWay } = options;
-  const room = { stand: () => hullFits(physics, body, character, character.capsule.height, 'feet', oneWay) };
-  const plan = model ? steerMotion(character, state, motion!, input, dt, g, room) : steer(character, state, input, dt, g); // prettier-ignore
-  if (model) matchHull(physics, body, character, hullFor(character, motion!), { air: !wasGrounded, tuck: motion!.airDuck, oneWay }); // prettier-ignore
+  const plan = model ? steerMotion(character, state, motion!, input, dt, g, roomOf(physics, body, character, oneWay)) : steer(character, state, input, dt, g); // prettier-ignore
+  if (model) fitHull(physics, body, character, motion!, !wasGrounded, oneWay);
   const still = Math.hypot(state.vx, state.vz) < 1e-3 && state.vy <= 0 && state.vy > -g * dt * 1.5;
   const idle = wasGrounded && still && !plan.jumped && !plan.dashing && fixedBody(world, state.ground);
   const grounded = wasGrounded && !plan.jumped && state.vy <= 0;
-  const move = idle
-    ? { moved: new Vector3(), grounded: true, climbed: 0, across: [], vertical: [] }
-    : carried(physics, body, character, grounded ? state.ground : -1, options, (carry) =>
-        moveCharacter(physics, body, character, carry.add(plan.desired), { grounded, oneWay: options.oneWay }),
-      );
+  const move = plan.path
+    ? { moved: new Vector3(...plan.path.to).sub(feetOf(physics, body, character)), grounded: plan.path.lands, climbed: 0, across: [], vertical: [] } // prettier-ignore
+    : idle
+      ? { moved: new Vector3(), grounded: true, climbed: 0, across: [], vertical: [] }
+      : carried(physics, body, character, grounded ? state.ground : -1, options, (carry) =>
+          moveCharacter(physics, body, character, carry.add(plan.desired), { grounded, oneWay: options.oneWay }),
+        );
   const landed = model
     ? settleMotion(character, state, motion!, input, plan, move, g, dt)
     : settle(character, state, plan, move.moved, move.grounded);
-  if (model) matchHull(physics, body, character, hullFor(character, motion!), { air: !state.grounded, tuck: motion!.airDuck, oneWay }); // prettier-ignore
+  if (model) fitHull(physics, body, character, motion!, !state.grounded, oneWay);
   for (const hit of [...move.across, ...move.vertical]) {
     if (!isWall(character, hit.normal) || world.bodies.get(handleOf(hit.body))?.isDynamic()) continue;
     const across = Math.hypot(hit.normal.x, hit.normal.z);

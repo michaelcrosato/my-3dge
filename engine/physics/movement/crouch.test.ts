@@ -91,7 +91,7 @@ describe('the crouch', () => {
 
   it('waits for headroom to get up, then gets up', () => {
     const run = standing();
-    const room = { open: false, stand: () => room.open };
+    const room = { open: false, stand: () => room.open, feet: () => [0, 0, 0] as const, wall: () => null, ledge: () => null }; // prettier-ignore
     after(run, { crouch: true }, 40, room);
     after(run, {}, 30, room);
     expect([run.motion.stance, run.motion.duck]).toEqual(['crouch', 'ducked']);
