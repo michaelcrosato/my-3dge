@@ -7,12 +7,14 @@
  * where the lip stands lower than 1.52 m over the ground; a top under a low roof mantled crouched; a jump hops out at
  * full height with no fatigue; the superglide (a jump in the pull's last 9 ticks, then crouch the next tick) leaves at
  * 1.8 × the holstered sprint, a crouch on the same tick or two ticks late none, within the slide boost's cooldown less
- * the boost; the mantle boost (its setting on) glides on a crouch press alone; no mantle within 0.25 s of the last.
+ * the boost; the mantle boost (its setting on) glides on a crouch press alone; no mantle within 0.25 s of the last; a
+ * hop from the wall with forward held flies, neither climb nor mantle catching it; the hands go on the lip.
  * @see engine/physics/movement/mantle.ts
  */
 import { describe, expect, it } from 'vitest';
 import { addCharacter, createCharacter, createCharacterState, feetOf, stepCharacter, type Character, type CharacterInput } from '../character'; // prettier-ignore
 import { createPhysics } from '../world';
+import { handsOf } from './mantle';
 import { createMotionState } from './model';
 import { tuneCharacter } from './settings';
 
@@ -168,6 +170,37 @@ describe('the mantle', () => {
     );
     expect([r.motion.stance, r.motion.gait]).toEqual(['crouch', 'crouch']);
     expect(feetOf(r.physics, r.body, APEX).y).toBeCloseTo(1, 2);
+  });
+
+  it('hops out at full height from the wall with forward held, in the grab and in the pull, caught by nothing', () => {
+    for (const [phase, left] of [
+      ['grab', 14],
+      ['pull', 12],
+    ] as const) {
+      const r = rig([block(2)]);
+      r.until(
+        () => ({ ...EAST, jump: true }),
+        () => r.motion.mantle === phase && r.motion.mantleLeft <= left,
+      );
+      r.tick({ ...EAST, jump: true, jumpPressed: true });
+      expect([r.motion.mode, r.motion.mantle], phase).toEqual(['air', 'none']);
+      expect(r.state.vy, phase).toBeCloseTo(APEX.jumpSpeed - APEX.characterGravity! * DT, 6);
+      for (let k = 0; k < 10; k++) r.tick(EAST); // forward held at the wall: no climb, no mantle within the cooldown
+      expect(r.motion.mode, phase).toBe('air');
+      expect(r.state.vy, phase).toBeCloseTo(APEX.jumpSpeed - 11 * APEX.characterGravity! * DT, 6);
+    }
+  });
+
+  it('puts the hands on the lip, a shoulder width apart along the edge', () => {
+    const r = rig([block(1.5)]);
+    r.until(
+      () => ({ ...EAST, jump: true }),
+      () => r.motion.mode === 'mantle',
+    );
+    const [left, right] = handsOf(r.motion, 0.4);
+    expect([left[0], right[0]]).toEqual([r.motion.lipX, r.motion.lipX]); // the wall faces west: the edge runs north-south
+    expect(right[2] - left[2]).toBeCloseTo(0.4, 9); // facing east, its left is north (−z), its right south
+    expect([left[1], right[1]]).toEqual([r.motion.lipY, r.motion.lipY]);
   });
 
   it('hops out with a jump at full height, arming no fatigue, and waits 0.25 s before the next mantle', () => {

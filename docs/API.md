@@ -556,7 +556,7 @@ game agent's manual.
 - `MOVE_PHASES` (const from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The phases of a move, in order.
 - `moveAt` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Move `name` at share `u` of `phase`: what a body is told for a preview, a sheet or a cutscene.
 - `MoveInput` (interface from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A move as a body is told it: the move (an id, or a spec of its own) and where it is, a phase and a share of it.
-- `MOVEMENT_SETTINGS` (const from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): The settings, path → field: each the model's number with its group's description first, live.
+- `MOVEMENT_SETTINGS` (const from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): The settings, path → field: each the model's number or switch with its group's description first, live.
 - `MovementModel` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers, filled: what `character.movement` holds.
 - `MovementModelSpec` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers as a profile writes them: any group, and any number in one, left out is Apex's.
 - `MovementOverride` (type from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): One setting off its default: the model's group (none for `turnRate`), the number's or switch's key, and its value.
@@ -1268,7 +1268,7 @@ game agent's manual.
 - `MOVE_PHASES` (const from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The phases of a move, in order.
 - `moveAt` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Move `name` at share `u` of `phase`: what a body is told for a preview, a sheet or a cutscene.
 - `MoveInput` (interface from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A move as a body is told it: the move (an id, or a spec of its own) and where it is, a phase and a share of it.
-- `MOVEMENT_SETTINGS` (const from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): The settings, path → field: each the model's number with its group's description first, live.
+- `MOVEMENT_SETTINGS` (const from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): The settings, path → field: each the model's number or switch with its group's description first, live.
 - `MovementModel` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers, filled: what `character.movement` holds.
 - `MovementModelSpec` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers as a profile writes them: any group, and any number in one, left out is Apex's.
 - `MovementOverride` (type from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): One setting off its default: the model's group (none for `turnRate`), the number's or switch's key, and its value.
@@ -4454,6 +4454,7 @@ For the agents who maintain the engine.
 
 - `crouchPressed` (const): Whether the crouch went down this tick: the held button's press or the toggle's.
 - `glide` (function): The superglide (see the file comment), or with `boost` the mantle boost: across the ground at `mantle.glide` times the exit speed along the push (else over the ledge), less the slide's boost within its cooldown unless `boost`.
+- `handsOf` (function): Where each hand goes on the lip, left then right as it faces the wall, `shoulder` metres apart along the edge: the contacts the animation reads (WP 13.11), from the lip and the wall's normal the motion state holds.
 - `MantleTick` (interface): What a mantle's tick reads beside the states: the tick's own numbers, as steerMotion has them.
 - `MantleTry` (interface): What `tryMantle` reads beside a tick's numbers.
 - `startMantle` (function): Starts a mantle up `ledge` from the feet at `feet`: a grab, or for a low ledge only the pull (see the file comment).
@@ -4491,7 +4492,7 @@ For the agents who maintain the engine.
 
 ### [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)
 
-- `MOVEMENT_SETTINGS` (const): The settings, path → field: each the model's number with its group's description first, live.
+- `MOVEMENT_SETTINGS` (const): The settings, path → field: each the model's number or switch with its group's description first, live.
 - `MovementOverride` (type): One setting off its default: the model's group (none for `turnRate`), the number's or switch's key, and its value.
 - `movementOverrides` (function): The settings `get` reads off their defaults, as overrides (none when every one is at its default).
 - `tuneCharacter` (function): `character` with `overrides` over its model's values; itself when it has no model or nothing is overridden.

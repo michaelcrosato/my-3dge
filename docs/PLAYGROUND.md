@@ -88,7 +88,7 @@ its heights given by the playground's own glyphs; from WP 13.18 it stands in its
 | Feature | Sizes | What it measures |
 |---|---|---|
 | Sprint strip | 60 m, marks every 5 m | walk, run and sprint speeds; starting and stopping |
-| Mantle walls | 0.5, 1.0, 1.5 and 2.0 m high, and 2.1 m (just past the reach), 2 m wide | the mantle's reach and time, and the refusal above it |
+| Mantle walls | 0.5, 1.0, 1.5 and 2.0 m high, and 2.1 m (just past the auto mantle's reach), 2 m wide | the mantle's reach and time; the auto mantle's refusal above it, taken from the jump instead; 0.5 m is a step for Apex |
 | Fences | 0.6, 0.9 and 1.2 m high, thin | mantling over at a sprint, sprinting out |
 | Slide ramps | 5°, 10°, 20° and 30°, 12 m long, flat run-outs | the slide on the flat and the gain downhill |
 | Crawl | a tunnel 1.4 m clear and 8 m long; a bar 1.3 m up (the crouched hull, 1.19 m, fits under both; the standing one, 1.83 m, under neither) | crouching and sliding under |

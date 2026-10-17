@@ -7,14 +7,16 @@
  * space's foot: from the mini zone 0.72 m up and 4.78 m/s away, from the green zone a lift falling with the height and
  * 6.55 m/s away, higher a push of 6.55 m/s keeping the rise, landing fatigued. With a world of plain data: the space's
  * foot follows the ground and a fall, letting go lowers it 3.25 m, a bounce from above the mini zone 6.5 m; a new
- * climb catches only below the last catch, unless the wall turned 25.84° or more.
+ * climb catches only below the last catch, unless the wall turned 25.84° or more (a chimney's far wall, 180°, too); no
+ * catch on a push too weak to climb on or within the mantle's cooldown; across, 2.92 m/s by the push along the wall,
+ * what it carried in kept up to 6.55 m/s.
  * @see engine/physics/movement/climb.ts
  */
 import { describe, expect, it } from 'vitest';
 import { addCharacter, createCharacter, createCharacterState, feetOf, stepCharacter, type CharacterInput } from '../character'; // prettier-ignore
 import type { Wall } from '../ledge';
 import { createPhysics } from '../world';
-import { keepSpace, tryClimb, wallBounce } from './climb';
+import { keepSpace, stepClimb, tryClimb, wallBounce } from './climb';
 import { createMotionState } from './model';
 import type { Room } from './steer';
 
@@ -171,5 +173,27 @@ describe('the climb space', () => {
     expect(again(0.8, 0)).toBe(true);
     expect(again(1.2, (20 * Math.PI) / 180)).toBe(false);
     expect(again(1.2, (26 * Math.PI) / 180)).toBe(true);
+    const turned = (from: number, by: number) => tryClimb(APEX, state, Object.assign(createMotionState(), { mode: 'air', spaceY: -1, reattach: true, attachY: 1, wallX: -Math.cos(from), wallZ: Math.sin(from) }), {}, room(1.2, from + by), { ...tick, wish: [Math.cos(from + by), -Math.sin(from + by)], view: null }); // prettier-ignore
+    for (const from of [3.2469, 4.8087]) expect(turned(from, Math.PI), `${from}`).toBe(true); // a chimney's far wall: the dot −1 − 2e-16
+  });
+
+  it('never catches with a push too weak to climb on, nor within the mantle’s cooldown', () => {
+    const state = createCharacterState();
+    const air = () => Object.assign(createMotionState(), { mode: 'air', spaceY: 0 });
+    const weak = { ...tick, wish: [0.35 * Math.SQRT1_2, 0.35 * Math.SQRT1_2] as const, view: null };
+    expect(tryClimb(APEX, state, air(), {}, room(1), weak)).toBe(false); // 0.25 into the wall: it would let go at once
+    expect(tryClimb(APEX, state, Object.assign(air(), { mantleCool: 3 }), {}, room(1), tick)).toBe(false);
+  });
+
+  it('goes across at 2.92 m/s by the push along the wall, keeping what it carried in up to 6.55 m/s', () => {
+    const climbing = () => Object.assign(createMotionState(), { mode: 'climb', climbAge: 0, attachY: 1, spaceY: 0, wallX: -1, wallZ: 0 }); // prettier-ignore
+    const fast = Object.assign(createCharacterState(), { vz: -8 }); // north along the wall, faster than it keeps
+    stepClimb(APEX, fast, climbing(), {}, room(1.5), tick);
+    expect(fast.vz).toBeCloseTo(-(6.5532 - 30 * DT), 9); // cut to 6.55, then slowed toward no push along
+    const motion = climbing();
+    const diagonal = Object.assign(createCharacterState(), { vz: 0 });
+    const push = { ...tick, wish: [Math.SQRT1_2, -Math.SQRT1_2] as const, view: null }; // into it and north along it
+    for (let k = 0; k < 12; k++) stepClimb(APEX, diagonal, motion, {}, room(1.5), push);
+    expect(diagonal.vz).toBeCloseTo(-Math.SQRT1_2 * 2.921, 9);
   });
 });

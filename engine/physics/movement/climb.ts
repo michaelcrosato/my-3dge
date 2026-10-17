@@ -5,9 +5,10 @@
  * - The climb space: its foot (`spaceY`) is the feet's height on the ground; off it, a fall below drags it down; each
  *   letting go lowers it by `climb.drop`, a jump off above the mini zone by `climb.dropJump`; a climb into a mantle
  *   leaves it be. The zones over it: mini to `climb.mini`, green to `climb.green`, neutral to `climb.cutoff`.
- * - `tryClimb`: in the air, pushing into a wall touching it, steeper than `climb.angle`, the push and the view within
- *   `climb.angle` of facing it, the feet within the space; after a climb since it stood, only below the last catch,
- *   unless the wall turned `climb.turn` from that one's.
+ * - `tryClimb`: in the air, out of the mantle's cooldown (so a mantle hop flies), pushing into a wall touching it (at
+ *   least as hard as a climb needs to go on), steeper than `climb.angle`, the push and the view within `climb.angle`
+ *   of facing it, the feet within the space; after a climb since it stood, only below the last catch, unless the wall
+ *   turned `climb.turn` from that one's.
  * - `stepClimb`: a ledge within the mantle's reach tops it out (the grab, no detach); the feet at the catch plus
  *   `climb.attach` or the space's foot plus `climb.cutoff` (the tick reaching it stops there) end it, the end boost
  *   throwing it `climb.end` higher; back, no forward, crouch, the view off the wall, the wall gone or `climb.timer`
@@ -63,16 +64,18 @@ export function tryClimb(
 ): boolean {
   const c = character.movement!.climb;
   const push = Math.hypot(tick.wish[0], tick.wish[1]);
-  if (push < 0.3 || input.crouch === true || motion.crouchToggle) return false;
+  if (push < 0.3 || input.crouch === true || motion.crouchToggle || motion.mantleCool > 0) return false;
   const dir: [number, number] = [tick.wish[0] / push, tick.wish[1] / push];
   const wall = room.wall(dir, character.offset * TOUCH);
   const cos = Math.cos(c.angle);
   if (!wall || wall.up >= cos) return false;
   const facing = (d: readonly [number, number]) => -(d[0] * wall.normal[0] + d[1] * wall.normal[1]) >= cos - 1e-9;
   if (!facing(dir) || (tick.view && !facing(tick.view))) return false;
+  if (-(tick.wish[0] * wall.normal[0] + tick.wish[1] * wall.normal[1]) < 0.3) return false; // as stepClimb lets go
   const feet = room.feet()[1];
   if (feet - motion.spaceY > c.cutoff) return false;
-  const turned = Math.acos(Math.min(1, wall.normal[0] * motion.wallX + wall.normal[1] * motion.wallZ)) >= c.turn;
+  const dot = Math.min(1, Math.max(-1, wall.normal[0] * motion.wallX + wall.normal[1] * motion.wallZ));
+  const turned = Math.acos(dot) >= c.turn;
   if (motion.reattach && feet >= motion.attachY && !turned) return false;
   const [nx, nz] = wall.normal;
   const into = state.vx * -nx + state.vz * -nz;

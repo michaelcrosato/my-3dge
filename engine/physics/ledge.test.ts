@@ -3,8 +3,8 @@
  * ahead is a wall, its normal out of it, and a ramp it walks up is none; a 1.5 m block is a ledge 1.5 m up, its lip
  * on the block's near face, its landing on the top, its rise column against the face and its drop the floor's; a block
  * past the reach, a step it walks up, a wall with no top in reach, a ceiling over the character and nothing ahead are
- * none; a top under a low roof takes only the crouched hull; the path goes to the wall, up past the lip, across and
- * down onto the landing.
+ * none, and so is one whose landing the hull reaches only through a cap over a thin wall; a top under a low roof
+ * takes only the crouched hull; the path goes to the wall, up past the lip, across and down onto the landing.
  * @see engine/physics/ledge.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -66,6 +66,16 @@ describe('walls and ledges', () => {
     expect(ledgeEast(box([2, 8, 4], [1.5, 4, 0]))).toBeNull();
     expect(ledgeEast(box([2, 1.5, 4], [1.5, 0.75, 0]), box([4, 0.2, 4], [0, 2.5, 0]))).toBeNull(); // a ceiling over it
     expect(ledgeEast()).toBeNull();
+  });
+
+  it('find none where the hull, going down onto the landing, would pass through a cap over a thin wall', () => {
+    const wall = box([0.03, 2.7, 4], [0.515, 1.35, 0]);
+    const cap = box([0.3, 0.03, 4], [0.65, 2.715, 0]); // its top 2.73 m up: the lip
+    const platform = box([3.5, 0.6, 4], [2.28, 0.3, 0]); // the landing, 0.6 m up, under the cap's edge
+    const { physics, body } = world(wall, cap, platform);
+    const found = findWall(physics, body, apex, [1, 0], 0.61);
+    expect(found).not.toBeNull();
+    expect(findLedge(physics, body, apex, found!, { reach: 3, crouched: SEARCH.crouched })).toBeNull();
   });
 
   it('take a top only the crouched hull fits on, under a low roof', () => {

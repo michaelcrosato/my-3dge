@@ -921,7 +921,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `accelerate`, `decelerate`, `directionShare`, `gaitSpeed`, `groundAccel`, `SlideBrake`, `SprintInput`, `updateSprint`, `walkMove`
   - Tests: [`engine/physics/movement/ground.test.ts`](../engine/physics/movement/ground.test.ts)
 - [`mantle.ts`](../engine/physics/movement/mantle.ts): The shooter model's mantle and superglide (PLAN.md WP 13.6, docs/PLAYGROUND.md §3.2), as the Apex Movement Wiki measures them: up a ledge engine/physics/ledge.ts found, along its path, the feet moved straight along it (engine/physics/character.ts's `stepCharacter`: the path is clear, so no controller), in two timed phases.
-  - Exports: `crouchPressed`, `glide`, `MantleTick`, `MantleTry`, `startMantle`, `stepMantle`, `tryMantle`
+  - Exports: `crouchPressed`, `glide`, `handsOf`, `MantleTick`, `MantleTry`, `startMantle`, `stepMantle`, `tryMantle`
   - Tests: [`engine/physics/movement/mantle.test.ts`](../engine/physics/movement/mantle.test.ts)
 - [`model.ts`](../engine/physics/movement/model.ts): The shooter movement model's numbers and state (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2): what a movement profile (engine/physics/movement/profile.ts) gives a character in `character.movement`, and what each such character keeps between ticks, the component `motion` (engine/sim/actors.ts).
   - Exports: `createMotionState`, `DUCKS`, `GAITS`, `MANTLES`, `MODEL_FIELDS`, `MODES`, `MOTION_FIELDS`, `MotionState`, `MovementModel`, `MovementModelSpec`, `STANCES`

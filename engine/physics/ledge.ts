@@ -10,8 +10,10 @@
  * mantles along the path (engine/physics/movement/mantle.ts) and climbs the walls (climb.ts).
  *
  * Invariants: queries only, through the physics world's own casts and rays (engine/physics/queries.ts), never moving
- * anything; sensors, the character's own body and the groups it shoves never count (its controller's filter); points
- * are world metres, a normal the wall's across the ground, a unit `[x, z]` pointing out of the wall.
+ * anything; they meet the world's bodies and the props, never sensors or the character's own body (so a one-way
+ * platform counts as solid and another character is not seen: WP 13.7's and G12's to refine); the path is checked
+ * once, as the mantle starts; points are world metres, a normal the wall's across the ground, a unit `[x, z]` pointing
+ * out of the wall.
  *
  * @example
  * import { addCharacter, createCharacter } from './character';
@@ -144,14 +146,14 @@ export function findLedge(
   return null;
 }
 
-/** Whether a hull of straight middle `middle` moves along `path` (the feet's) through nothing and fits at its end. */
+/** Whether a hull of straight middle `middle` moves along every leg of `path` (the feet's) through nothing and fits at its end. */ // prettier-ignore
 function passes(physics: Physics, body: number, character: Character, path: Point[], middle: number): boolean {
   const { radius } = character.capsule;
   const lift = character.offset + 0.005 + radius + middle / 2;
   const shape: Shape = { type: 'capsule', radius, height: middle };
   const centre = (p: Point) => [p[0], p[1] + lift, p[2]] as const;
   if (physics.overlap(shape, centre(path[0]), near(body)).length) return false;
-  for (let k = 1; k < path.length - 1; k++) {
+  for (let k = 1; k < path.length; k++) {
     const [a, b] = [path[k - 1], path[k]];
     const along = [b[0] - a[0], b[1] - a[1], b[2] - a[2]] as const;
     const length = Math.hypot(...along);

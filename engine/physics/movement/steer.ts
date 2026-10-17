@@ -140,7 +140,9 @@ export function steerMotion(
     return steered(state, wish, wasGrounded, dt, stepMantle(character, state, motion, input, tick, true)!);
   }
   if (!wasGrounded && tryClimb(character, state, motion, input, room, tick)) {
-    if (stepClimb(character, state, motion, input, room, tick) === 'climb') return steered(state, wish, wasGrounded, dt); // prettier-ignore
+    const next = stepClimb(character, state, motion, input, room, tick);
+    if (next === 'mantle') return steered(state, wish, wasGrounded, dt, stepMantle(character, state, motion, input, tick, true)!); // prettier-ignore
+    if (next === 'climb') return steered(state, wish, wasGrounded, dt);
     [h[0], h[1]] = [state.vx, state.vz];
   }
   let jumped = false;

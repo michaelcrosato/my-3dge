@@ -20,8 +20,8 @@
  *   the window glides at full speed rising a full jump, the lurch off until it lands.
  *
  * Invariants: phases count whole ticks; the motion holds the whole path (where it began, the rise column, the lip, the
- * landing) and each phase starts its path where the last left the feet, so a restored state goes on alike; they change
- * only the states they are given.
+ * landing) and each phase starts its path where the last left the feet, so a restored state goes on alike, and the
+ * contacts (`handsOf`: the hands on the lip) follow from it; they change only the states they are given.
  *
  * @example
  * // in steerMotion: if (motion.mode === 'mantle') { const path = stepMantle(character, state, motion, input, tick); … }
@@ -45,6 +45,18 @@ export interface MantleTick {
   scale: number;
   dt: number;
   g: number;
+}
+
+/**
+ * Where each hand goes on the lip, left then right as it faces the wall, `shoulder` metres apart along the edge: the
+ * contacts the animation reads (WP 13.11), from the lip and the wall's normal the motion state holds.
+ */
+export function handsOf(motion: MotionState, shoulder: number): [Point, Point] {
+  const [rx, rz] = [motion.wallZ * (shoulder / 2), -motion.wallX * (shoulder / 2)]; // its right, facing the wall
+  return [
+    [motion.lipX - rx, motion.lipY, motion.lipZ - rz],
+    [motion.lipX + rx, motion.lipY, motion.lipZ + rz],
+  ];
 }
 
 /** The ticks `seconds` take, at least one. */

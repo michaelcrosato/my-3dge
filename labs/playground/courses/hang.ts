@@ -50,6 +50,7 @@ defineCourse('course:playground-hang', {
   measures: [
     { name: 'hangs', metric: 'duration', until: 'hanging', from: 2, to: RUN - 1, reference: HANG * DT, tolerance: { ticks: 0 } }, // prettier-ignore
     { name: 'holds still', metric: 'apex', from: LET_GO + 1, to: LET_GO + HANG, reference: 0, tolerance: { abs: 0.001 } }, // prettier-ignore
+    { name: 'holds still across', metric: 'distance', from: LET_GO + 1, to: LET_GO + HANG, reference: 0, tolerance: { abs: 0.001 } }, // prettier-ignore
     { name: 'pulls up after', metric: 'standHeight', from: 2, to: RUN - 1, reference: 3, tolerance: { abs: 0.02 } },
     { name: 'too low: no hang', metric: 'duration', until: 'hanging', from: RUN + 2, to: 2 * RUN - 1, reference: 0, tolerance: { ticks: 0 } }, // prettier-ignore
     { name: 'too low: stands on top', metric: 'standHeight', from: RUN + 2, to: 2 * RUN - 1, reference: 1.5, tolerance: { abs: 0.02 } }, // prettier-ignore

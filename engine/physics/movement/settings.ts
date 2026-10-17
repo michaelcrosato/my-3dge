@@ -39,7 +39,7 @@ const VALUES: readonly ModelValue[] = Object.entries(MODEL_FIELDS).flatMap(([gro
   });
 });
 
-/** The settings, path → field: each the model's number with its group's description first, live. */
+/** The settings, path → field: each the model's number or switch with its group's description first, live. */
 export const MOVEMENT_SETTINGS: Readonly<Record<string, Field>> = Object.fromEntries(
   VALUES.map(([path, , , field]) => [path, { ...field, when: 'now' }]),
 );

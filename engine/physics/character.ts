@@ -269,10 +269,10 @@ export function stepCharacter(
   check(!model || motion !== undefined, 'stepCharacter(motion)', motion, 'the character’s MotionState (createMotionState(), the component motion an actor keeps): it has a movement model'); // prettier-ignore
   const { oneWay } = options;
   const plan = model ? steerMotion(character, state, motion!, input, dt, g, roomOf(physics, body, character, oneWay)) : steer(character, state, input, dt, g); // prettier-ignore
-  if (model) fitHull(physics, body, character, motion!, !wasGrounded, oneWay);
+  if (model) fitHull(physics, body, character, motion!, !wasGrounded && !state.grounded, oneWay);
   const still = Math.hypot(state.vx, state.vz) < 1e-3 && state.vy <= 0 && state.vy > -g * dt * 1.5;
   const idle = wasGrounded && still && !plan.jumped && !plan.dashing && fixedBody(world, state.ground);
-  const grounded = wasGrounded && !plan.jumped && state.vy <= 0;
+  const grounded = (wasGrounded || state.grounded) && !plan.jumped && state.vy <= 0; // a mantle stepped off onto its top
   const move = plan.path
     ? { moved: new Vector3(...plan.path).sub(feetOf(physics, body, character)), grounded: false, climbed: 0, across: [], vertical: [] } // prettier-ignore
     : idle

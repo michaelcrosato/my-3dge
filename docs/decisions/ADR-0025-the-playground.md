@@ -274,6 +274,16 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **Watched until WP 13.8:** topping out the 4, 5 and 6 m climb walls the shooter's camera jumps 1.1 to 1.2 m in a
   frame (its collision); the other cameras keep every bound. A placed player spends the tick it is placed airborne
   (`placeActor` resets its state), so a course places it clear of walls it means to catch.
+- **The verifier's review** found two bugs, fixed with tests that fail without them: a mantle hop from the wall with
+  forward held was caught again at once by the climb, which topped out into a new mantle (no climb now within the
+  mantle's cooldown, and a catch that tops out at once mantles); and the ledge's casts left the path's last leg, down
+  onto the landing, unswept, so the hull could pass through a cap over a thin wall (every leg is swept now). Its notes,
+  done: the reattach rule's dot clamped (a chimney's far wall read as no turn), no catch on a push too weak to climb on
+  (it let go on the same tick, lowering the space), the tick that steps off onto the top a ground move for the
+  controller too (its step and its floor's carry). Its notes, left as they are: the casts meet the world and the
+  props, so a one-way platform counts as solid and another character is not seen, and the path is checked once as
+  the mantle starts (WP 13.7's lifts and G12's crowds are where these matter); the checked hull stands 5 mm above the
+  moving one, within its two skins of clearance.
 - **Left to the view's WPs:** the motion state holds the contacts as plain data (the lip, the wall's normal, the rise
-  column, the landing, the phase and its ticks): WP 13.11 puts the hands on the lip and plays the grab, the pull and
-  the hang; WP 13.8 frames them.
+  column, the landing, the phase and its ticks; `handsOf` puts the hands on the lip a shoulder apart): WP 13.11 plays
+  the grab, the pull and the hang on them; WP 13.8 frames them.
