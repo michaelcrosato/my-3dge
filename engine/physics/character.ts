@@ -44,7 +44,9 @@ import { handleOf } from './capture';
 import { feetOf } from './characterBody';
 import { GROUP_NAMES } from './groups';
 import { settle, steer } from './feel';
-import { isWall, moveCharacter, partsOf, sink, type CharacterMove } from './move';
+import { hullFits, matchHull } from './hull';
+import { halfHeightOf, isWall, moveCharacter, partsOf, sink, type CharacterMove } from './move';
+import { hullFor } from './movement/crouch';
 import { MODEL_FIELDS, type MotionState } from './movement/model';
 import { applyMovement } from './movement/profile';
 import './movement/profiles';
@@ -81,6 +83,8 @@ export const CHARACTER_FIELDS = defineSchema({
     width: num(0.125, 0, 5, 'The room it needs on top of a step.', 'm'),
     dynamic: { type: 'boolean', default: true, description: 'Whether it also steps onto dynamic bodies (planks).' },
   }),
+  stepFrom: { type: 'string', enum: ['start', 'contact'], description: "Where a climb measures its reach from: 'contact', where the step stopped the move, so a fast move steps up without stopping dead (the shooter model's); absent, the tick's start." }, // prettier-ignore
+  stayOnGround: { type: 'boolean', description: 'Whether it also follows the ground down after a leg down that nothing stopped, so it slides over a crest instead of flying off it (the shooter model’s, as Source’s StayOnGround); absent, no.' }, // prettier-ignore
   maxSlope: num(50 * DEG, 0, 89 * DEG, 'The steepest slope it walks up (50°).', 'rad'),
   slideSlope: num(40 * DEG, 0, 90 * DEG, 'Ground steeper than this slides it down (40°).', 'rad'),
   slide: { type: 'boolean', default: true, description: 'Whether it slides along walls and obstacles it walks into.' },
@@ -196,6 +200,8 @@ export interface CharacterInput {
   sprintPressed?: boolean;
   walk?: boolean;
   crouch?: boolean;
+  /** The shooter model's: the crouch toggle went down this tick (it crouches until pressed again or stood up). */
+  crouchToggle?: boolean;
   /** The shooter model's: the view's yaw (rad; forward = (sin, 0, cos)), which the sprint keeps within 45° of. */
   view?: number;
   /** The shooter model's: the yaw the move's keys are turned by (the camera's heading); absent, the world's. */
@@ -261,18 +267,22 @@ export function stepCharacter(
   const wasGrounded = state.grounded;
   const model = character.movement !== undefined;
   check(!model || motion !== undefined, 'stepCharacter(motion)', motion, 'the character’s MotionState (createMotionState(), the component motion an actor keeps): it has a movement model'); // prettier-ignore
-  const plan = model ? steerMotion(character, state, motion!, input, dt, g) : steer(character, state, input, dt, g);
+  const { oneWay } = options;
+  const room = { stand: () => hullFits(physics, body, character, character.capsule.height, 'feet', oneWay) };
+  const plan = model ? steerMotion(character, state, motion!, input, dt, g, room) : steer(character, state, input, dt, g); // prettier-ignore
+  if (model) matchHull(physics, body, character, hullFor(character, motion!), { air: !wasGrounded, tuck: motion!.airDuck, oneWay }); // prettier-ignore
   const still = Math.hypot(state.vx, state.vz) < 1e-3 && state.vy <= 0 && state.vy > -g * dt * 1.5;
   const idle = wasGrounded && still && !plan.jumped && !plan.dashing && fixedBody(world, state.ground);
   const grounded = wasGrounded && !plan.jumped && state.vy <= 0;
   const move = idle
-    ? { moved: new Vector3(), grounded: true, across: [], vertical: [] }
+    ? { moved: new Vector3(), grounded: true, climbed: 0, across: [], vertical: [] }
     : carried(physics, body, character, grounded ? state.ground : -1, options, (carry) =>
         moveCharacter(physics, body, character, carry.add(plan.desired), { grounded, oneWay: options.oneWay }),
       );
   const landed = model
     ? settleMotion(character, state, motion!, input, plan, move, g, dt)
     : settle(character, state, plan, move.moved, move.grounded);
+  if (model) matchHull(physics, body, character, hullFor(character, motion!), { air: !state.grounded, tuck: motion!.airDuck, oneWay }); // prettier-ignore
   for (const hit of [...move.across, ...move.vertical]) {
     if (!isWall(character, hit.normal) || world.bodies.get(handleOf(hit.body))?.isDynamic()) continue;
     const across = Math.hypot(hit.normal.x, hit.normal.z);
@@ -370,10 +380,10 @@ function afterMove(
     }
   }
   state.pushLoad = load > state.pushLoad ? load : state.pushLoad * Math.exp(-8 * options.dt);
-  const { radius, height } = character.capsule;
-  const center = world.bodies.get(handleOf(body))!.translation();
+  const { rigid, collider } = partsOf(world, body, 'stepCharacter(body)');
+  const center = rigid.translation();
   const from: Vec3Like = [center.x + move.moved.x, center.y + move.moved.y, center.z + move.moved.z];
-  const reach = height / 2 + radius + character.offset + PROBE_DEPTH;
+  const reach = halfHeightOf(collider, character) + character.capsule.radius + character.offset + PROBE_DEPTH;
   const ground = physics.raycast(from, [0, -1, 0], { maxDistance: reach, exclude: body, groups: ['world', 'prop'] });
   state.ground = ground ? ground.body : -1;
   state.slope = ground ? Math.acos(Math.min(1, Math.max(-1, ground.normal.y))) : 0;

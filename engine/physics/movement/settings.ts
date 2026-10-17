@@ -28,13 +28,13 @@ export type MovementOverride = readonly [group: string | undefined, key: string,
 /** One number of the model: its setting's path, its group (none for `turnRate`), its key and its field. */
 type ModelNumber = readonly [path: string, group: string | undefined, key: string, field: Field];
 
-/** The model's numbers, each with its group's description before its own. */
+/** The model's numbers (not its switches, `crouch.jump`), each with its group's description before its own. */
 const NUMBERS: readonly ModelNumber[] = Object.entries(MODEL_FIELDS).flatMap(([group, field]): ModelNumber[] => {
   const own = field as Field & { properties?: Record<string, Field> };
   if (!own.properties) return [[`movement.${group}`, undefined, group, own]];
-  return Object.entries(own.properties).map(([key, each]): ModelNumber => {
+  return Object.entries(own.properties).flatMap(([key, each]): ModelNumber[] => {
     const description = `${own.description} ${each.description}`;
-    return [`movement.${group}.${key}`, group, key, { ...each, description }];
+    return each.type === 'number' ? [[`movement.${group}.${key}`, group, key, { ...each, description }]] : [];
   });
 });
 

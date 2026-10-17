@@ -3,13 +3,15 @@
  * goes, and one tick of the velocity across the ground, as Apex's WalkMove does it: the stick curve, the deceleration
  * of only the part of the velocity the input does not push for (`decelerate`), then the acceleration toward the wished
  * speed, never past the larger of the old speed and the wished one (`accelerate`), at a rate set by the speed at the
- * tick's start (`groundAccel`). Ported from er-apex's reconstruction of Apex's code (`umiiii/er-apex`,
- * `deps/er-apex-move/src/controller.rs`: `update_sprint` 1077-1130, `acceleration` 1247-1265, `decelerate` 1267-1323,
- * `walk_move` 1325-1354, `accelerate` 1690-1702; MIT, engine/physics/movement/NOTICE), in metres and seconds.
+ * tick's start (`groundAccel`); a slide (WP 13.5) only steers, at `slide.accel`, and brakes by its own friction, then
+ * decays. Ported from er-apex's reconstruction of Apex's code (`umiiii/er-apex`, `deps/er-apex-move/src/controller.rs`:
+ * `update_sprint` 1077-1130, `acceleration` 1247-1265, `decelerate` 1267-1323, `walk_move` 1325-1354, `accelerate`
+ * 1690-1702; MIT, engine/physics/movement/NOTICE), in metres and seconds.
  *
  * The sprint: it holds while the button is held, or after a press while the move stays within `sprint.keep` of the
- * view (the sticky sprint), and only on the ground (or within `sprint.air` of leaving it without a jump), standing,
- * moving on, the move at least `sprint.input` long and within `sprint.angle` of the view, and not stunned below
+ * view (the sticky sprint, which a duck ends but a slide keeps), and only on the ground (or within `sprint.air` of
+ * leaving it without a jump), not ducking, moving on, the move at least `sprint.input` long and within `sprint.angle`
+ * of the view, and not stunned below
  * `land.sprint`. With no view (the cameras that move relative to the screen) the view is the move itself, so it
  * sprints in every direction. Ours: walking blocks the sprint, as Apex's aiming does; the sprint dips toward
  * `gaits.sprintSide` as the move turns 45° off the view. Every other gait goes at `gaits.side` and `gaits.back` of its
@@ -41,9 +43,14 @@ export function groundAccel(m: MovementModel, speed: number, stance: MotionState
   return (speed >= scale * m.accel.lowSpeed ? m.accel.run : m.accel.low) * scale;
 }
 
+/** How a slide brakes: hard (`slide.brake`) with crouch let go or the move against it, else `slide.decel`. */
+export interface SlideBrake {
+  braking: boolean;
+}
+
 /**
  * Apex's Decelerate: brakes `h` in place, all but the part along `dir` the input pushes for (up to `wishSpeed`), at
- * the standing rate (the sprint's above the run, the crouch's crouched), and never below 0.
+ * the standing rate (the sprint's above the run, the crouch's crouched; a slide's own, then its decay), never below 0.
  */
 export function decelerate(
   m: MovementModel,
@@ -53,6 +60,7 @@ export function decelerate(
   stance: MotionState['stance'],
   scale: number,
   dt: number,
+  slide?: SlideBrake,
 ): void {
   const total = h[0] * h[0] + h[1] * h[1];
   if (total === 0) return;
@@ -61,9 +69,10 @@ export function decelerate(
   const keep = [dir[0] * share, dir[1] * share];
   const rest = [h[0] - keep[0], h[1] - keep[1]];
   const speed = Math.hypot(rest[0], rest[1]);
-  const rate =
+  const ground =
     stance === 'crouch' ? m.decel.crouch : Math.sqrt(total) > scale * m.gaits.run ? m.decel.sprint : m.decel.stand;
-  const reduced = Math.max(speed - rate * dt, 0);
+  const rate = slide ? (slide.braking ? m.slide.brake : m.slide.decel) : ground;
+  const reduced = Math.max(speed - rate * dt, 0) * (slide ? Math.pow(m.slide.decay, dt) : 1);
   if (reduced >= speed) return;
   h[0] = keep[0] + rest[0] * (reduced / speed);
   h[1] = keep[1] + rest[1] * (reduced / speed);
@@ -94,7 +103,8 @@ export function accelerate(
 /**
  * Apex's WalkMove: one tick of `h` across the ground toward `wish` (at most length 1) at `maxSpeed`: the stick curve
  * (a move shorter than 1 counts as length × (2 − length), a sprinting move 1.25 times longer, capped at 1), then
- * `decelerate`, then `accelerate` at `groundAccel` of the speed it started with.
+ * `decelerate`, then `accelerate` at `groundAccel` of the speed it started with. A `slide` only steers: the move's
+ * part along the velocity is dropped, and it accelerates at `slide.accel` (times the move scale).
  */
 export function walkMove(
   m: MovementModel,
@@ -105,16 +115,20 @@ export function walkMove(
   scale: number,
   dt: number,
   sprinting = false,
+  slide?: SlideBrake,
 ): void {
   let w: [number, number] = sprinting ? [wish[0] * 1.25, wish[1] * 1.25] : [wish[0], wish[1]];
   const length = len(w);
   if (length > 1) w = [w[0] / length, w[1] / length];
   else if (length > 0) w = [w[0] * (2 - length), w[1] * (2 - length)];
+  const ahead = h[0] * w[0] + h[1] * w[1];
+  const square = h[0] * h[0] + h[1] * h[1];
+  if (slide && ahead > 0) w = [w[0] - (h[0] * ahead) / square, w[1] - (h[1] * ahead) / square];
   const curved = len(w);
   const dir: [number, number] = curved > 1e-6 ? [w[0] / curved, w[1] / curved] : [0, 0];
   const wishSpeed = Math.min(curved, 1) * maxSpeed;
-  const rate = groundAccel(m, len(h), stance, scale);
-  decelerate(m, h, dir, wishSpeed, stance, scale, dt);
+  const rate = slide ? m.slide.accel * scale : groundAccel(m, len(h), stance, scale);
+  decelerate(m, h, dir, wishSpeed, stance, scale, dt, slide);
   accelerate(h, dir, wishSpeed, rate, dt);
 }
 
@@ -147,8 +161,8 @@ export function updateSprint(m: MovementModel, motion: MotionState, input: Sprin
   const length = len(wish);
   const along = view ? wish[0] * view[0] + wish[1] * view[1] : length;
   const pushed = length >= m.sprint.input;
-  const crouched = motion.stance === 'crouch';
-  const canKeep = pushed && (length === 0 || along / length >= Math.cos(m.sprint.keep)) && !crouched;
+  const ducked = motion.duck === 'ducking' || motion.duck === 'ducked';
+  const canKeep = pushed && (length === 0 || along / length >= Math.cos(m.sprint.keep)) && (!ducked || motion.sliding);
   if (motion.sticky && !canKeep) Object.assign(motion, { sticky: false, stickyLeft: 0 });
   else if (!motion.sticky && motion.stickyLeft > 0 && canKeep && !input.blocked) motion.sticky = true;
   const movingOn = (view ? velocity[0] * view[0] + velocity[1] * view[1] : len(velocity)) > 0;
@@ -157,7 +171,7 @@ export function updateSprint(m: MovementModel, motion: MotionState, input: Sprin
     input.footing &&
     pushed &&
     along / length >= Math.cos(m.sprint.angle) - 1e-9 &&
-    !crouched &&
+    !ducked &&
     input.slowdown >= m.land.sprint &&
     movingOn;
   motion.sprinting = (input.held || motion.sticky) && can;

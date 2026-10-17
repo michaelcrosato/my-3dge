@@ -2,7 +2,7 @@
  * @file Unit tests for the shooter model's numbers and state (engine/physics/movement/model.ts): every default whose
  * description gives a source value in Apex's units is that value converted (1 u = 0.0254 m), the gaits' side and back
  * scales are Apex's 1, a spec fills what it leaves out from the defaults, and a new motion state is a character at rest
- * on the ground, standing and holstered, with every field the component `motion` declares.
+ * on flat ground, standing (its duck too) and holstered, with every field the component `motion` declares.
  * @see engine/physics/movement/model.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -22,7 +22,8 @@ describe('the shooter model’s numbers', () => {
         checked.push(`${group}.${name}`);
       }
     }
-    expect(checked).toHaveLength(17); // the gaits' 3, accel's 5, decel's 3, air's 3, the hop's cost, the stun's 2
+    // the gaits' 3, accel's 5, decel's 3, air's 3, the hop's cost, the stun's 2, the crouched hull, the slide's 12
+    expect(checked).toHaveLength(30);
   });
 
   it('scales no gait by its direction from the view, as Apex does, and fills what a spec leaves out', () => {
@@ -37,6 +38,19 @@ describe('the shooter model’s numbers', () => {
       mode: 'ground',
       gait: 'idle',
       stance: 'stand',
+      duck: 'standing',
+      duckLeft: 0,
+      duckTotal: 0,
+      airDuck: false,
+      crouchHeld: false,
+      crouchToggle: false,
+      sliding: false,
+      slideAge: -1,
+      slideBoost: 0,
+      longJump: false,
+      floorX: 0,
+      floorY: 1,
+      floorZ: 0,
       holstered: true,
       sprinting: false,
       sticky: false,

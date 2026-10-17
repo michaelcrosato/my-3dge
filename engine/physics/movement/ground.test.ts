@@ -34,7 +34,7 @@ function tick(run: ReturnType<typeof standing>, input: CharacterInput) {
   const plan = steerMotion(apex, run.state, run.motion, input, DT, 19.05);
   const moved = plan.desired.clone().setY(0);
   const ground = { body: 0, point: new Vector3(), normal: new Vector3(0, 1, 0) };
-  settleMotion(apex, run.state, run.motion, input, plan, { moved, grounded: true, across: [], vertical: [ground] }, 19.05, DT); // prettier-ignore
+  settleMotion(apex, run.state, run.motion, input, plan, { moved, grounded: true, climbed: 0, across: [], vertical: [ground] }, 19.05, DT); // prettier-ignore
   return Math.hypot(run.state.vx, run.state.vz);
 }
 

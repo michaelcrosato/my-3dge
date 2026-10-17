@@ -16,8 +16,8 @@
  *
  * WP 13.3: an actor whose character has a movement model (engine/physics/movement/) also holds the component
  * `motion`, the model's state (holstered unless spawned with `holstered: false`), and reads `sprint` (held, pressed),
- * `walk` and `crouch` (held), its view from `look`, its keys' frame from `cam` (else `look`) and what it faces from
- * `aim`, else `look`; it steps under the live `movement.*` settings (WP 13.4, engine/physics/movement/settings.ts).
+ * `walk` and `crouch` (held), `crouchToggle` (pressed), its view from `look`, its keys' frame from `cam` (else
+ * `look`) and what it faces from `aim`, else `look`; it steps under the live `movement.*` settings (WP 13.4).
  *
  * Invariants: systems are added once per world, on the first (animated) spawn; all an actor remembers is in its
  * components (the sim's animators are loaded from them). Despawning leaves the body; `removeActor` removes both.
@@ -59,6 +59,7 @@ import {
   type CharacterInput,
   type CharacterState,
 } from '../physics/character';
+import { matchHull } from '../physics/hull';
 import { createMotionState, MOTION_FIELDS, type MotionState } from '../physics/movement/model';
 import { MOVEMENT_SETTINGS, movementOverrides, tuneCharacter } from '../physics/movement/settings';
 import { physicsOf } from '../physics/binding';
@@ -216,9 +217,9 @@ export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): 
 
 /**
  * Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing
- * `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending; on the shooter model its motion
- * state starts again, holstered as it was. For a scene's dev actions: a feel course places its player where it
- * measures (engine/dev/feel/course.ts).
+ * `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the
+ * shooter model its motion state starts again, holstered as it was. For a scene's dev actions: a feel course places
+ * its player where it measures (engine/dev/feel/course.ts).
  */
 export function placeActor<C extends object>(world: World<C>, id: number, at: Vec3Like, yaw?: number): void {
   const w = world as unknown as World;
@@ -226,6 +227,7 @@ export function placeActor<C extends object>(world: World<C>, id: number, at: Ve
   if (!e?.actor) throw codeError('SIM_BAD_ARGUMENT', { where: 'placeActor(w, id)', value: String(id), expected: 'an actor’s id' }); // prettier-ignore
   const { actor, motion } = e;
   const physics = physicsOf(w);
+  matchHull(physics, actor.body, actor.character, actor.character.capsule.height, { air: false, tuck: false });
   physics.setBody(actor.body, { position: bodyAt(actor.character, at, 'placeActor(at)'), velocity: [0, 0, 0] });
   const { x, y, z } = feetOf(physics, actor.body, actor.character);
   Object.assign(actor, createCharacterState(), { yaw: yaw ?? actor.yaw, x, y, z });
@@ -262,6 +264,7 @@ function motionInput(actor: ActorComponent, wants: Intents): CharacterInput {
     sprintPressed: pressed(wants, 'sprint'),
     walk: held(wants, 'walk'),
     crouch: held(wants, 'crouch'),
+    crouchToggle: pressed(wants, 'crouchToggle'),
     ...(wants.look ? { view: wants.look[0] } : {}),
     ...(frame !== undefined ? { frame } : {}),
     ...(face !== undefined ? { face } : {}),

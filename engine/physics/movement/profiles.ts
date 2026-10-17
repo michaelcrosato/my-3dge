@@ -29,6 +29,8 @@ export const MOVEMENT_PROFILES: Readonly<Record<string, MovementSpec>> = {
     character: {
       capsule: { radius: 0.4064, height: 1.8288 - 2 * 0.4064 }, // 16 u wide, 72 u tall
       autostep: { height: 0.5588 }, // 22 u
+      stepFrom: 'contact', // a slide or a sprint steps up a stair, never stopping dead at it
+      stayOnGround: true, // over a ramp's crest it keeps to the ground, as Source's StayOnGround snaps it
       maxSlope: 0.7953988301841436, // acos(0.7): walkable while the floor's normal is at least 0.7 up (45.57°)
       slideSlope: 0.7953988301841436,
       characterGravity: GRAVITY,

@@ -10,7 +10,8 @@
  * numbers converted from its units (1 u = 0.0254 m, as Respawn's own scripts convert): each description gives the
  * source value. Values marked "ours" have no source and are starting values for the owner's playtests. The gaits'
  * `side` and `back` are 1 in Apex (no strafe or backpedal penalty), there for games that slow either. A move's keys'
- * frame is the camera's heading (the intent `cam`), so the lurch tells a new key from a turning view.
+ * frame is the camera's heading (the intent `cam`), so the lurch tells a new key from a turning view. The crouch (its
+ * hull and its duck's timing) and the slide are WP 13.5's (engine/physics/movement/crouch.ts).
  *
  * Invariants: data only; seconds, metres and radians as the fields say, never ticks (steer.ts converts at its step);
  * `createMotionState()` is a character at rest on the ground, standing, holstered.
@@ -111,6 +112,55 @@ export const MODEL_FIELDS = defineSchema({
     power: num(2, 0, 10, 'The recovery’s curve: the share recovered is (time / recover) ^ power.'),
     sprint: num(0.7, 0, 1, 'No sprint while the speed’s share is below this.'),
   }),
+  crouch: group(
+    'Crouching: the hull it shrinks to, and the duck’s timing (Apex’s update_duck, in whole milliseconds).',
+    {
+      height: num(1.1938, 0.1, 20, 'The crouched hull, top to bottom: 47 u (the standing hull is the character’s capsule).', 'm'), // prettier-ignore
+      down: num(0.4, 0, 5, 'The duck: the hull shrinks as it ends, so crouch spam never shrinks it.', 's'),
+      fast: num(0.2, 0, 5, 'The duck that starts a slide, or that the hull, unable to stand, takes.', 's'),
+      up: num(0.2, 0, 5, 'Getting up: the hull stands as it starts, once the standing hull fits.', 's'),
+      jump: { type: 'boolean', default: false, description: 'A toggled crouch jumps (Apex’s: no, the jump stands it up); a held one always does.' }, // prettier-ignore
+    },
+  ),
+  slide: group('The slide (Apex’s TryStartSlide, and its parts of WalkMove and the jump): a crouch at speed.', {
+    speed: num(5.08, 0, 100, 'The least speed across the ground a crouch slides at: 200 u/s.', 'm/s'),
+    air: num(2.286, 0, 100, 'Landing ducked while falling at least `fall`, the least speed across the ground: 90 u/s.', 'm/s'), // prettier-ignore
+    fall: num(5.08, 0, 100, 'The fall speed from which a landing slides from `air`: 200 u/s.', 'm/s'),
+    angle: num(Math.acos(0.6), 0, Math.PI, 'On the ground, the move’s part along the view is at least this angle’s cosine (0.6: 53° at a full push).', 'rad'), // prettier-ignore
+    slope: num(
+      Math.acos(0.7),
+      0,
+      Math.PI / 2,
+      'The steepest ground it starts on (a floor normal at least 0.7 up).',
+      'rad',
+    ),
+    boost: num(3.81, 0, 100, 'Added to its speed as it starts, times the move scale: 150 u/s.', 'm/s'),
+    cap: num(10.16, 0, 100, 'The boost never takes it past this, times the move scale: 400 u/s.', 'm/s'),
+    cooldown: num(2, 0, 60, 'No boost until this long after the last slide began (every slide starts it again).', 's'),
+    accel: num(1.27, 0, 1e4, 'Steering: its acceleration across the slide, times the move scale: 50 u/s².', 'm/s²'),
+    decel: num(2.54, 0, 1e4, 'Its friction with crouch held: 100 u/s².', 'm/s²'),
+    brake: num(10.16, 0, 1e4, 'Its friction with crouch let go, or the move against it: 400 u/s².', 'm/s²'),
+    decay: num(0.7, 0, 1, 'Then its velocity times this a second.'),
+    end: num(3.175, 0, 100, 'It ends, crouched, below this speed: 125 u/s.', 'm/s'),
+    hold: num(8.89, 0, 100, 'Faster than this it slides on with crouch let go: 350 u/s.', 'm/s'),
+    jump: num(1.27, 0, 100, 'The slide-jump’s height: 50 u.', 'm'),
+    dead: num(
+      0.4,
+      0,
+      5,
+      'A jump this soon after a boosted slide began, its duck still going, takes the boost back.',
+      's',
+    ),
+    long: num(
+      8.89,
+      0,
+      100,
+      'A boosted slide jumping between `longFrom` of this and this jumps at this: 350 u/s.',
+      'm/s',
+    ),
+    longFrom: num(0.85, 0, 1, 'Where the long jump’s band starts, a share of `long`.'),
+    step: num(10, 0, 1e4, 'A step up while sliding costs this much speed a metre climbed (Apex’s 10 a unit).', '1/s'),
+  }),
   turnRate: num(720 * DEG, 0, 1e3, 'Ours: how fast it turns to face where it moves, looks or aims (720°/s).', 'rad/s'),
 });
 
@@ -122,20 +172,36 @@ export type MovementModelSpec = {
   [K in keyof MovementModel]?: MovementModel[K] extends object ? Partial<MovementModel[K]> : MovementModel[K];
 };
 
-/** Where a character is in the model: on the ground or in the air (WP 13.5–13.7 add slides, mantles and climbs). */
+/** Where a character is in the model: on the ground or in the air (WP 13.6 and 13.7 add mantles, climbs and rides). */
 export const MODES = ['ground', 'air'] as const;
 
-/** How a character moves on the ground this tick. */
-export const GAITS = ['idle', 'walk', 'run', 'sprint', 'crouch'] as const;
+/** How a character moves on the ground this tick: a slide is a gait. */
+export const GAITS = ['idle', 'walk', 'run', 'sprint', 'crouch', 'slide'] as const;
 
-/** How a character stands (WP 13.5 adds the crouch's timing and its capsule). */
+/** Its hull: standing, or crouched (the model's `crouch.height`). */
 export const STANCES = ['stand', 'crouch'] as const;
+
+/** Apex's duck: standing, going down, down, or getting up. */
+export const DUCKS = ['standing', 'ducking', 'ducked', 'unducking'] as const;
 
 /** What a character on the model keeps between ticks: the component `motion`'s fields, hashed and captured. */
 export const MOTION_FIELDS = defineSchema({
   mode: { type: 'string', enum: MODES, default: 'ground', description: 'On the ground or in the air.' },
   gait: { type: 'string', enum: GAITS, default: 'idle', description: 'How it moved on the ground this tick.' },
-  stance: { type: 'string', enum: STANCES, default: 'stand', description: 'Standing or crouched.' },
+  stance: { type: 'string', enum: STANCES, default: 'stand', description: 'Its hull: standing or crouched.' },
+  duck: { type: 'string', enum: DUCKS, default: 'standing', description: 'Its duck: the hull shrinks as `ducking` ends and stands as `unducking` starts.' }, // prettier-ignore
+  duckLeft: { type: 'integer', default: 0, minimum: 0, description: 'Milliseconds left of the duck or the getting up, counted whole (16 a tick at 60 Hz).' }, // prettier-ignore
+  duckTotal: { type: 'integer', default: 0, minimum: 0, description: 'The milliseconds the duck going on takes (the view’s crouch share).' }, // prettier-ignore
+  airDuck: { type: 'boolean', default: false, description: 'Its duck began in the air: the hull shrinks about its middle, the feet tucked up.' }, // prettier-ignore
+  crouchHeld: { type: 'boolean', default: false, description: 'Its crouch button was held last tick: a change ends a toggled crouch.' }, // prettier-ignore
+  crouchToggle: { type: 'boolean', default: false, description: 'A toggled crouch is on.' },
+  sliding: { type: 'boolean', default: false, description: 'It slides.' },
+  slideAge: { type: 'integer', default: -1, minimum: -1, description: 'Ticks since its last slide began; −1: none yet.' }, // prettier-ignore
+  slideBoost: num(0, 0, 1e4, 'What its last slide’s boost added (a dead slide takes it back).', 'm/s'),
+  longJump: { type: 'boolean', default: false, description: 'Its slide was boosted and has not jumped yet: the long jump.' }, // prettier-ignore
+  floorX: num(0, -1, 1, 'The ground’s normal under it after its last move, east (straight up off the ground).'),
+  floorY: num(1, -1, 1, 'The ground’s normal, up.'),
+  floorZ: num(0, -1, 1, 'The ground’s normal, south.'),
   holstered: { type: 'boolean', default: true, description: 'No weapon out: every gait is the model’s `holstered` times faster.' }, // prettier-ignore
   sprinting: { type: 'boolean', default: false, description: 'It sprints this tick.' },
   sticky: { type: 'boolean', default: false, description: 'A press keeps its sprint on (the sticky sprint).' },
