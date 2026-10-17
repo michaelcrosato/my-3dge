@@ -179,7 +179,7 @@ Apex's default bindings where the browser allows; every action rebinds (WP 13.9,
 | Move | W A S D | left stick |
 | Look | the mouse, under pointer lock | right stick |
 | Jump | Space | A |
-| Crouch and slide | Left Ctrl (hold), C (toggle) | B |
+| Crouch and slide | C (hold; the toggle a setting): Apex's Left Ctrl closes the tab with W | B |
 | Sprint | Left Shift (hold or toggle) | left stick click |
 | Walk (ours, §3.2) | Left Alt (hold) | a light tilt of the stick |
 | Use | E | X |

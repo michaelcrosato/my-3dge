@@ -118,8 +118,9 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   The gym replay, whose player now moves by the model, was re-recorded (Node and Chromium ×3 agree).
 - **Calls where the sources are silent or disagree:**
   - The jump launches at √(2gh), the table's 1.42 m, not er-apex's half a step lower (1.36 m in R5Reloaded).
-  - The lurch, which Apex added after er-apex's season: a new key is the move turning by 22.5° or more in one tick,
-    so a stick turning smoothly never lurches.
+  - The lurch, which er-apex's reconstruction has none of (the Apex Movement Wiki's numbers): a new key is the move in
+    its keys' frame (the camera's heading, the intent `cam`) turning by 22.5° or more in one tick, so neither a stick
+    turning smoothly nor the view turning alone lurches.
   - The sprint's dip to 4.80 m/s with a side key (measured) runs linearly over the move's first 45° off the view.
   - Walking, ours (a held key), blocks the sprint, as Apex's aiming does.
   - The coyote time and the jump buffer stay (docs/PLAYGROUND.md §3.4: no press is lost); the coyote time is Apex's
@@ -130,10 +131,18 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   - With no view (the screen-relative cameras), the sprint's 45° is measured from the move, so it sprints in every
     direction; a `look` intent gives the view, an `aim` or a `look` what it faces, turning at 720°/s (ours).
   - The motion state starts holstered: the playground's player is empty-handed, so it runs 5.07 and sprints 7.59 m/s.
+    `spawnActor({ holstered: false })` arms one, and `__engine.feel()` measures an actor as it is.
+  - er-apex's side and back speed scales are model fields too (`gaits.side`, `gaits.back`), 1 as in Apex.
+  - A character with a model stepped without its motion state is an error (`PHYSICS_BAD_ARGUMENT`), never the
+    platformer's steering in its place.
   - The table's "about 0.87 s" from the run to the sprint is 0.83 s: Apex's run band overshoots the run by a tick
     (R5Reloaded's trial); docs/PLAYGROUND.md says so now.
 - **The keys, ahead of WP 13.9.** createEngine takes an `actionMap`, and the playground binds `actionMap:playground`
-  (labs/playground/controls.ts): Shift sprints, Left Alt walks, Left Ctrl crouches. WP 13.9 adds the rest of §3.3's
-  table and rebinding.
+  (labs/playground/controls.ts): Shift sprints, Left Alt walks, C crouches while held. Not Apex's Left Ctrl: Ctrl with
+  W closes the browser's tab, and no page can stop it (WP 13.3's review). WP 13.9 adds the rest of §3.3's
+  table, the crouch's toggle as a setting, and rebinding. The page sends no `look` yet, so the sprint has no view
+  there and runs in every direction; WP 13.8's aiming cameras (first person, the shooter's) send it.
+- **The port's license.** er-apex is MIT (© 2026 umi): its notice is engine/physics/movement/NOTICE, and lean/LICENSE
+  carries it, as the bundle carries the model.
 - **The feel course moved** to engine/sim/feelCourse.ts (engine/sim/actors.ts was at its 400 lines) and measures the
   model (`FeelReport.motion`), which `node x sim <scene> --feel` prints.

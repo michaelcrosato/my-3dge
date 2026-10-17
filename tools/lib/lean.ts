@@ -12,7 +12,8 @@
  *   (`leanHead`), which this module writes between the `lean:head` markers.
  * - lean/README.md: the one file an agent reads, hand-written but for two blocks this module writes: game.html whole
  *   (`lean:game`) and the public API by area (`lean:api`, tools/lib/docsGameApi.ts's map).
- * - lean/LICENSE: the engine's license, then the notice and license of the @stdlib functions the bundle carries.
+ * - lean/LICENSE: the engine's license, then the notice and license of the @stdlib functions the bundle carries and
+ *   the notice of its movement model's port of er-apex (MIT).
  *
  * `x docs --write` writes the files that differ (`writeLean`); `x docs --check`, and so `npm run check`, fails while
  * one does (`leanFindings`): the build takes about 3 s and gives the same bytes every time. The repository proves the
@@ -118,7 +119,10 @@ export async function leanBundle(root: string): Promise<string> {
   return `${BANNER}\n${chunk.code}`;
 }
 
-/** lean/LICENSE: the engine's license, then the @stdlib functions' notice and license, copied from node_modules. */
+/**
+ * lean/LICENSE: the engine's license, then the @stdlib functions' notice and license, copied from node_modules, then
+ * the notice of the movement model's port of er-apex (engine/physics/movement/NOTICE).
+ */
 function leanLicense(root: string): string {
   const stdlib = join(root, 'node_modules/@stdlib/math-base-special-sin');
   return [
@@ -132,6 +136,12 @@ function leanLicense(root: string): string {
     readFileSync(join(stdlib, 'NOTICE'), 'utf8').trim(),
     '',
     readFileSync(join(stdlib, 'LICENSE'), 'utf8').trim(),
+    '',
+    '---',
+    '',
+    'lean/my3dge.js carries the shooter movement model of engine/physics/movement/. Its notice:',
+    '',
+    readFileSync(join(root, 'engine/physics/movement/NOTICE'), 'utf8').trim(),
     '',
   ].join('\n');
 }

@@ -329,7 +329,7 @@ game agent's manual.
 - `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
 - `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
-- `FeelOptions` (interface from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
+- `FeelOptions` (interface from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): How `measureFeel` runs: the sim's rate, the gravity a character falls under unless its settings name one.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
 - `FILTER_NAMES` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Every filter, in the composite's order (bloom and aa run before it).
@@ -1105,7 +1105,7 @@ game agent's manual.
 - `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
 - `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
-- `FeelOptions` (interface from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
+- `FeelOptions` (interface from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): How `measureFeel` runs: the sim's rate, the gravity a character falls under unless its settings name one.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
 - `FLIP_AXES` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): What a flip turns about, in the body's frame: the top of the body goes forward, back, left, right; or it spins left.
@@ -4285,14 +4285,16 @@ For the agents who maintain the engine.
 - `jumpScale` (function): The share of the jump's height a jump `sinceLand` seconds after landing gets (`fatigued`: that flight began with a jump).
 - `land` (function): A landing: the fall height it counts (the impact `velocity`'s speed along the floor's unit `normal`, as v²/2g, at least what is left of the last landing's), written to `motion` with the landing's age reset; returns the share of speed the stun leaves at once, which the caller applies to the velocity across the ground.
 - `landSlowdown` (function): The stun's share of speed `t` seconds after a landing that counted `fall` metres (see the file comment).
-- `lurch` (function): The lurch: when the move `wish` turned from `before` by `lurch.turn` or more, `t` seconds after the take-off, turns `h` toward the same speed along the new move.
+- `lurch` (function): The lurch of a new key (`newKey`) `t` seconds after the take-off: turns `h` toward the same speed along the move `wish`.
 - `lurchStrength` (function): The lurch's strength `t` seconds after the take-off (see the file comment).
+- `newKey` (function): Whether the move's `keys` (`[right, forward]` in their frame) are a new key against last tick's `before`: pressed from none, or turned by `lurch.turn` or more.
 
 ### [`engine/physics/movement/ground.ts`](../engine/physics/movement/ground.ts)
 
 - `accelerate` (function): Apex's Accelerate: adds along `dir` up to `wishSpeed`, at most `rate × dt`, never past max(old speed, wished).
 - `decelerate` (function): Apex's Decelerate: brakes `h` in place, all but the part along `dir` the input pushes for (up to `wishSpeed`), at the standing rate (the sprint's above the run, the crouch's crouched), and never below 0.
-- `gaitSpeed` (function): The speed its gait goes at, before the move scale: the crouch-walk crouched, the walk walking, the sprint sprinting (dipping toward `gaits.sprintSide` as the move turns 45° off the view), else the run.
+- `directionShare` (function): The share of its gait's speed a move gets by its direction from the view: `gaits.side` straight across it, `gaits.back` straight back, blended by the squares of the move's parts across and back (so exactly 1 when both are 1, as in Apex); 1 with no view.
+- `gaitSpeed` (function): The speed its gait goes at, before the move scale: the crouch-walk crouched, the walk walking, the sprint sprinting (dipping toward `gaits.sprintSide` as the move turns 45° off the view), else the run; every gait but the sprint times its `directionShare`.
 - `groundAccel` (function): Apex's GetAccel: the acceleration at horizontal speed `speed`, by the speed at the tick's start (m/s²).
 - `SprintInput` (interface): What `updateSprint` reads beside the model and the state.
 - `updateSprint` (function): Apex's sticky sprint (see the file comment): updates `motion.sticky`, `stickyLeft` and `sprinting`.
@@ -4452,7 +4454,7 @@ For the agents who maintain the engine.
 
 ### [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)
 
-- `FeelOptions` (interface): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
+- `FeelOptions` (interface): How `measureFeel` runs: the sim's rate, the gravity a character falls under unless its settings name one.
 - `measureFeel` (function): Measures a character's feel on the standard course (the file comment says what each number is).
 
 ### [`engine/sim/hits.ts`](../engine/sim/hits.ts)
