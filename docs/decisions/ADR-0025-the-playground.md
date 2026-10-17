@@ -104,3 +104,36 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   its lit and middle bands (the ink's tint of it reads as brown), the accent shows at least 8 pixels in every camera
   of both looks. tests/e2e/playground.spec.ts holds it at 6 or more; WP 13.24's ink scaled to the resolution replaces
   these numbers.
+
+## Amendment 3 (2026-10-17, WP 13.3): movement profiles and the shooter model
+
+- **A profile is data, and the model is Apex's code, ported.** The registry kind `movement`
+  (engine/physics/movement/profile.ts) sets the controller's settings (`character`) and, for the shooter model, its
+  numbers (`model`, whose defaults are Apex's: model.ts); `movement:apex` and `movement:platformer` ship. The model
+  ports er-apex's reconstruction of Apex's movement code (`umiiii/er-apex`: GetAccel, Decelerate, Accelerate, the
+  sticky sprint, the air move, CheckJumpButton's fatigue and skip, the landing slowdown), which gives R5Reloaded's
+  measured acceleration tick for tick (engine/physics/movement/ground.test.ts).
+- **Every golden stands.** A character without a model is today's controller, and the model's state is a component of
+  its own (`motion`), held only by actors on a model: new fields in the actor's state would have changed every hash.
+  The gym replay, whose player now moves by the model, was re-recorded (Node and Chromium ×3 agree).
+- **Calls where the sources are silent or disagree:**
+  - The jump launches at √(2gh), the table's 1.42 m, not er-apex's half a step lower (1.36 m in R5Reloaded).
+  - The lurch, which Apex added after er-apex's season: a new key is the move turning by 22.5° or more in one tick,
+    so a stick turning smoothly never lurches.
+  - The sprint's dip to 4.80 m/s with a side key (measured) runs linearly over the move's first 45° off the view.
+  - Walking, ours (a held key), blocks the sprint, as Apex's aiming does.
+  - The coyote time and the jump buffer stay (docs/PLAYGROUND.md §3.4: no press is lost); the coyote time is Apex's
+    0.2 s grace, never after a jump.
+  - The fall stun counts the impact speed along the floor's normal (v²/2g), as the table says.
+  - The hull is the exact conversion (16 u, 72 u: 0.4064 and 1.8288 m), and `maxFall` Source's 3,500 u/s, so a 20 m
+    fall reaches the full stun.
+  - With no view (the screen-relative cameras), the sprint's 45° is measured from the move, so it sprints in every
+    direction; a `look` intent gives the view, an `aim` or a `look` what it faces, turning at 720°/s (ours).
+  - The motion state starts holstered: the playground's player is empty-handed, so it runs 5.07 and sprints 7.59 m/s.
+  - The table's "about 0.87 s" from the run to the sprint is 0.83 s: Apex's run band overshoots the run by a tick
+    (R5Reloaded's trial); docs/PLAYGROUND.md says so now.
+- **The keys, ahead of WP 13.9.** createEngine takes an `actionMap`, and the playground binds `actionMap:playground`
+  (labs/playground/controls.ts): Shift sprints, Left Alt walks, Left Ctrl crouches. WP 13.9 adds the rest of §3.3's
+  table and rebinding.
+- **The feel course moved** to engine/sim/feelCourse.ts (engine/sim/actors.ts was at its 400 lines) and measures the
+  model (`FeelReport.motion`), which `node x sim <scene> --feel` prints.

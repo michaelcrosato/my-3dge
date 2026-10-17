@@ -21,7 +21,7 @@ game agent's manual.
 - `ActionSpec` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): What `defineAction` takes: `desc` and `beats`, each beat's `name` and `seconds`; the rest as it likes.
 - `ActionsState` (interface from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): An `Actions`' state, plain data.
 - `ActorComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `actor`: an entity the character controller moves.
-- `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, `animator`, `puppet`, and `oneWay` for one-way platforms.
+- `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, `animator`, `puppet`, `motion` (the shooter model's) and `oneWay`.
 - `ActorSpec` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): What `spawnActor` takes.
 - `addAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds a queued agent's body now (`updateCrowd` does it through the queue), its feet at `x`, `y`, `z`, moving at `vx`, `vy`, `vz`; returns its id.
 - `addBall` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a ball prop; returns its id.
@@ -294,6 +294,7 @@ game agent's manual.
 - `defineMannequin` (function from [`engine/gfx/puppets/bodies/mannequin.ts`](../engine/gfx/puppets/bodies/mannequin.ts)): Registers `build:mannequin` (rest body `source` of `set`, its first by default) and `body:mannequin` (its `body`) on `registry` (the shared one), once; returns both.
 - `defineMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): Defines a material on `registry` (the shared one by default) and returns it.
 - `defineMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): Defines a move on `registry` (the shared one by default) and returns it; absent fields keep a plain strike's values.
+- `defineMovement` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): Registers a movement profile (on the shared registry by default).
 - `definePostSettings` (function from [`engine/gfx/post/settings.ts`](../engine/gfx/post/settings.ts)): Declares the chain's settings (`POST_SETTINGS`) and the setting `quality` it reads on `registry` (the shared one by default), unless it has them: on the shared one when this module loads, so `node x set post.look look:game-boy` knows them in Node (tools/cmd/set.ts imports the modules that declare settings), and on any other when `createPost` or `createEngine` runs.
 - `defineProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): Defines a prop on `registry` (the shared one by default) and returns it.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
@@ -328,7 +329,7 @@ game agent's manual.
 - `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
 - `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
-- `FeelOptions` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
+- `FeelOptions` (interface from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
 - `FILTER_NAMES` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Every filter, in the composite's order (bloom and aa run before it).
@@ -386,6 +387,7 @@ game agent's manual.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
 - `getMaterial` (function from [`engine/gfx/materials/material.ts`](../engine/gfx/materials/material.ts)): The material `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `material:default`.
 - `getMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`, naming the closest) and gives `move:slash`.
+- `getMovement` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): The movement profile `id`.
 - `getProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): The prop `id` of `registry` (the shared one by default); a missing id gives `prop:crate`, with a warning.
 - `getSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
 - `getSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): The song `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
@@ -501,6 +503,7 @@ game agent's manual.
 - `listActionMaps` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Every action map, sorted by id.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
 - `ListenerPose` (interface from [`engine/audio/runtime/spatial.ts`](../engine/audio/runtime/spatial.ts)): Where the listener is and where it looks: the engine's camera pose (engine/gfx/cameras/pose.ts) satisfies it.
+- `listMovements` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): Every movement profile, sorted by id.
 - `loadActions` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Defines the actions of files read from data/anim/actions/ (each `{ "action": "<name>", …spec }`, as `action:<name>`) and returns them.
 - `loadClipLibrary` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Loads a set (its text or object, read by validate.ts `parseClipSet`, which throws its `ANIM_CLIP_*` codes).
 - `locomoteClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `loops.idle`, `walk` or `run` on actor `id` by its ground speed, each at that speed; null stops them.
@@ -525,16 +528,24 @@ game agent's manual.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
 - `MatrixRun` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): One run of the matrix: a state held at a facing, from rest and back to rest, one pose per step.
 - `MatrixState` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): A state the matrix holds: the body states told every step, or a script, for so many seconds.
-- `measureFeel` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
+- `measureFeel` (function from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `measureMove` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Measures where `move`'s strike point (the blade's tip, the fist, the foot's sole) goes through its hit window, on a spare body of `options.build` holding `options.weapon` (`build:chibi` with a sword by default): the hit cone and height window to test targets against (`inHitShape`).
 - `mergeGeometries` (function from [`engine/gfx/geometry/groups.ts`](../engine/gfx/geometry/groups.ts)): Joins `geometries` into one, in order: their attributes end to end, their indices offset.
 - `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
 - `mirrorClip` (function from [`engine/anim/clip/mirror.ts`](../engine/anim/clip/mirror.ts)): The same clip on the other side, named `<clip>_Mirror` (see the file comment).
 - `MixerInfo` (interface from [`engine/audio/runtime/mixer.ts`](../engine/audio/runtime/mixer.ts)): What `info()` reports.
+- `MODEL_FIELDS` (const from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers (see the file comment): what `character.movement` holds.
+- `MOTION_FIELDS` (const from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): What a character on the model keeps between ticks: the component `motion`'s fields, hashed and captured.
+- `MotionFeel` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): The shooter model's feel numbers (engine/sim/feelCourse.ts): speeds in m/s, times in s, heights in m.
+- `MotionState` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The component `motion`: a character's state in the model (`MOTION_FIELDS` documents each field).
 - `Move` (type from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A `move` entry: one named strike.
 - `MOVE_PHASES` (const from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The phases of a move, in order.
 - `moveAt` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Move `name` at share `u` of `phase`: what a body is told for a preview, a sheet or a cutscene.
 - `MoveInput` (interface from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A move as a body is told it: the move (an id, or a spec of its own) and where it is, a phase and a share of it.
+- `MovementModel` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers, filled: what `character.movement` holds.
+- `MovementModelSpec` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers as a profile writes them: any group, and any number in one, left out is Apex's.
+- `MovementProfile` (type from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): A movement profile, as the registry holds it.
+- `MovementSpec` (interface from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): How a movement profile is written (`MOVEMENT_FIELDS`).
 - `MovePhase` (type from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A phase of a move.
 - `Mover` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A mover: a kinematic body's path as a function of time (`MOVER_FIELDS` says what each field means).
 - `MOVER` (const from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A mover with every field at its default (no body).
@@ -892,7 +903,7 @@ game agent's manual.
 - `ActionSpec` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): What `defineAction` takes: `desc` and `beats`, each beat's `name` and `seconds`; the rest as it likes.
 - `ActionsState` (interface from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): An `Actions`' state, plain data.
 - `ActorComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `actor`: an entity the character controller moves.
-- `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, `animator`, `puppet`, and `oneWay` for one-way platforms.
+- `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, `animator`, `puppet`, `motion` (the shooter model's) and `oneWay`.
 - `ActorSpec` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): What `spawnActor` takes.
 - `addAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds a queued agent's body now (`updateCrowd` does it through the queue), its feet at `x`, `y`, `z`, moving at `vx`, `vy`, `vz`; returns its id.
 - `addBall` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a ball prop; returns its id.
@@ -1077,6 +1088,7 @@ game agent's manual.
 - `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
 - `defineLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): Registers a level on `registry` (the shared one by default) after checking its text compiles against that registry's legend; returns the entry.
 - `defineMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): Defines a move on `registry` (the shared one by default) and returns it; absent fields keep a plain strike's values.
+- `defineMovement` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): Registers a movement profile (on the shared registry by default).
 - `defineProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): Defines a prop on `registry` (the shared one by default) and returns it.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
 - `defineSetBuild` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Registers build `id` with the proportions clip set `setId`'s clips were captured on (retarget.ts `restBuild` of its first source's rest body, or `source`'s), once, and returns it: `build:mannequin` from `clipset:quaternius` is the build engine/gfx/puppets/bodies/mannequin.ts draws, which the sim's animator needs before the view's body exists.
@@ -1093,7 +1105,7 @@ game agent's manual.
 - `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
 - `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
-- `FeelOptions` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
+- `FeelOptions` (interface from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
 - `FLIP_AXES` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): What a flip turns about, in the body's frame: the top of the body goes forward, back, left, right; or it spins left.
@@ -1125,6 +1137,7 @@ game agent's manual.
 - `getClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The registered set `id` (`clipset:quaternius`); a missing one throws `CORE_NO_ENTRY`, naming the closest ids.
 - `getLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): The level `id` of `registry` (the shared one by default), compiled: its name is the id without `level:`.
 - `getMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`, naming the closest) and gives `move:slash`.
+- `getMovement` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): The movement profile `id`.
 - `getProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): The prop `id` of `registry` (the shared one by default); a missing id gives `prop:crate`, with a warning.
 - `getTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The telegraph `id` of `registry` (the shared one by default); a missing id gives `telegraph:arc`, with a warning.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
@@ -1206,6 +1219,7 @@ game agent's manual.
 - `LIMBS` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The skeleton's four limbs, by their end joint.
 - `LimbSide` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A side of the body.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
+- `listMovements` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): Every movement profile, sorted by id.
 - `loadActions` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Defines the actions of files read from data/anim/actions/ (each `{ "action": "<name>", …spec }`, as `action:<name>`) and returns them.
 - `loadClipLibrary` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Loads a set (its text or object, read by validate.ts `parseClipSet`, which throws its `ANIM_CLIP_*` codes).
 - `locomoteClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `loops.idle`, `walk` or `run` on actor `id` by its ground speed, each at that speed; null stops them.
@@ -1220,14 +1234,22 @@ game agent's manual.
 - `Matrix4` (re-export from `three/webgpu`): three.js's 4×4 matrix: transforms.
 - `MatrixRun` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): One run of the matrix: a state held at a facing, from rest and back to rest, one pose per step.
 - `MatrixState` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): A state the matrix holds: the body states told every step, or a script, for so many seconds.
-- `measureFeel` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
+- `measureFeel` (function from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `measureMove` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Measures where `move`'s strike point (the blade's tip, the fist, the foot's sole) goes through its hit window, on a spare body of `options.build` holding `options.weapon` (`build:chibi` with a sword by default): the hit cone and height window to test targets against (`inHitShape`).
 - `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
 - `mirrorClip` (function from [`engine/anim/clip/mirror.ts`](../engine/anim/clip/mirror.ts)): The same clip on the other side, named `<clip>_Mirror` (see the file comment).
+- `MODEL_FIELDS` (const from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers (see the file comment): what `character.movement` holds.
+- `MOTION_FIELDS` (const from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): What a character on the model keeps between ticks: the component `motion`'s fields, hashed and captured.
+- `MotionFeel` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): The shooter model's feel numbers (engine/sim/feelCourse.ts): speeds in m/s, times in s, heights in m.
+- `MotionState` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The component `motion`: a character's state in the model (`MOTION_FIELDS` documents each field).
 - `Move` (type from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A `move` entry: one named strike.
 - `MOVE_PHASES` (const from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The phases of a move, in order.
 - `moveAt` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Move `name` at share `u` of `phase`: what a body is told for a preview, a sheet or a cutscene.
 - `MoveInput` (interface from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A move as a body is told it: the move (an id, or a spec of its own) and where it is, a phase and a share of it.
+- `MovementModel` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers, filled: what `character.movement` holds.
+- `MovementModelSpec` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers as a profile writes them: any group, and any number in one, left out is Apex's.
+- `MovementProfile` (type from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): A movement profile, as the registry holds it.
+- `MovementSpec` (interface from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): How a movement profile is written (`MOVEMENT_FIELDS`).
 - `MovePhase` (type from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A phase of a move.
 - `Mover` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A mover: a kinematic body's path as a function of time (`MOVER_FIELDS` says what each field means).
 - `MOVER` (const from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A mover with every field at its default (no body).
@@ -4228,6 +4250,7 @@ For the agents who maintain the engine.
 - `FeelMeter` (interface): A meter: the report so far and what it is in the middle of measuring.
 - `FeelReport` (interface): What `measureFeel` reports.
 - `FeelSample` (interface): One tick of a character, as the meter reads it.
+- `MotionFeel` (interface): The shooter model's feel numbers (engine/sim/feelCourse.ts): speeds in m/s, times in s, heights in m.
 - `settle` (function): The feel of one tick, after the move: landing ends a fall (returns the landing speed when above 2 m/s, else 0), a head bump ends a rise, a dash's last tick leaves at most the run speed, and it faces where it dashes or is told to go.
 - `steer` (function): The feel of one tick, before the move: timers count, a dash starts, the velocity across the ground follows the momentum model (acceleration, deceleration when let go, skid against its motion, `airControl` in the air), jumps start (coyote time, buffer, wall jump), letting go cuts a rise (`variableJump`), and gravity acts, integrated exactly.
 - `Steering` (interface): What `steer` decided for a tick: the move it asks for, and what it started.
@@ -4254,6 +4277,59 @@ For the agents who maintain the engine.
 - `MoveOptions` (interface): How `moveCharacter` moves: whether it stands on the ground (and is not rising), and the one-way platforms.
 - `partsOf` (function): The Rapier body of a character, with its capsule (its first collider); throws `PHYSICS_BAD_ARGUMENT`.
 - `sink` (function): How far a character goes down `by` (< 0) with its sinking `floor`, from where its last move left the capsule: a controller move that leaves the floor out, so a ledge it overhangs holds it up rather than taking it in.
+
+### [`engine/physics/movement/air.ts`](../engine/physics/movement/air.ts)
+
+- `airMove` (function): Quake's air acceleration (see the file comment): one tick of `h` toward `wish`, at most length 1.
+- `hopSpeed` (function): The speed a jump `sinceLand` seconds after landing leaves of `speed` (m/s): the bunny-hop cost (see the file comment).
+- `jumpScale` (function): The share of the jump's height a jump `sinceLand` seconds after landing gets (`fatigued`: that flight began with a jump).
+- `land` (function): A landing: the fall height it counts (the impact `velocity`'s speed along the floor's unit `normal`, as v²/2g, at least what is left of the last landing's), written to `motion` with the landing's age reset; returns the share of speed the stun leaves at once, which the caller applies to the velocity across the ground.
+- `landSlowdown` (function): The stun's share of speed `t` seconds after a landing that counted `fall` metres (see the file comment).
+- `lurch` (function): The lurch: when the move `wish` turned from `before` by `lurch.turn` or more, `t` seconds after the take-off, turns `h` toward the same speed along the new move.
+- `lurchStrength` (function): The lurch's strength `t` seconds after the take-off (see the file comment).
+
+### [`engine/physics/movement/ground.ts`](../engine/physics/movement/ground.ts)
+
+- `accelerate` (function): Apex's Accelerate: adds along `dir` up to `wishSpeed`, at most `rate × dt`, never past max(old speed, wished).
+- `decelerate` (function): Apex's Decelerate: brakes `h` in place, all but the part along `dir` the input pushes for (up to `wishSpeed`), at the standing rate (the sprint's above the run, the crouch's crouched), and never below 0.
+- `gaitSpeed` (function): The speed its gait goes at, before the move scale: the crouch-walk crouched, the walk walking, the sprint sprinting (dipping toward `gaits.sprintSide` as the move turns 45° off the view), else the run.
+- `groundAccel` (function): Apex's GetAccel: the acceleration at horizontal speed `speed`, by the speed at the tick's start (m/s²).
+- `SprintInput` (interface): What `updateSprint` reads beside the model and the state.
+- `updateSprint` (function): Apex's sticky sprint (see the file comment): updates `motion.sticky`, `stickyLeft` and `sprinting`.
+- `walkMove` (function): Apex's WalkMove: one tick of `h` across the ground toward `wish` (at most length 1) at `maxSpeed`: the stick curve (a move shorter than 1 counts as length × (2 − length), a sprinting move 1.25 times longer, capped at 1), then `decelerate`, then `accelerate` at `groundAccel` of the speed it started with.
+
+### [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)
+
+- `createMotionState` (function): A character at rest on the ground, standing and holstered: every field at its default.
+- `GAITS` (const): How a character moves on the ground this tick.
+- `MODEL_FIELDS` (const): The model's numbers (see the file comment): what `character.movement` holds.
+- `MODES` (const): Where a character is in the model: on the ground or in the air (WP 13.5–13.7 add slides, mantles and climbs).
+- `MOTION_FIELDS` (const): What a character on the model keeps between ticks: the component `motion`'s fields, hashed and captured.
+- `MotionState` (type): The component `motion`: a character's state in the model (`MOTION_FIELDS` documents each field).
+- `MovementModel` (type): The model's numbers, filled: what `character.movement` holds.
+- `MovementModelSpec` (type): The model's numbers as a profile writes them: any group, and any number in one, left out is Apex's.
+- `STANCES` (const): How a character stands (WP 13.5 adds the crouch's timing and its capsule).
+
+### [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)
+
+- `applyMovement` (function): The character spec `spec` means once its profile is applied (see the file comment): unchanged without a `movement`; with a profile's id, that profile's `character` under the spec's own fields and its model, the spec's `model` over it, as `movement`, or no `movement` at all for a profile without a model.
+- `defineMovement` (function): Registers a movement profile (on the shared registry by default).
+- `getMovement` (function): The movement profile `id`.
+- `listMovements` (function): Every movement profile, sorted by id.
+- `MOVEMENT_FIELDS` (const): A profile's fields: what `defineMovement` takes.
+- `movementKind` (function): Declares the kind `movement` on `registry`, once.
+- `MovementProfile` (type): A movement profile, as the registry holds it.
+- `MovementSpec` (interface): How a movement profile is written (`MOVEMENT_FIELDS`).
+
+### [`engine/physics/movement/profiles.ts`](../engine/physics/movement/profiles.ts)
+
+- `MOVEMENT_PROFILES` (const): The profiles, by id.
+
+### [`engine/physics/movement/steer.ts`](../engine/physics/movement/steer.ts)
+
+- `settleMotion` (function): The tick after the move (see the file comment): landing (the stun applied to the velocity across the ground; returns the landing speed when above 2 m/s, else 0), a head bump ending a rise, walking off a ledge clearing the jump's fatigue, the mode, and the turn toward `input.face`, else the move.
+- `steerMotion` (function): The tick before the move (see the file comment).
+- `turnToward` (function): `yaw` turned toward `target` by at most `step` radians, kept within (−π, π].
 
 ### [`engine/physics/params.ts`](../engine/physics/params.ts)
 
@@ -4312,12 +4388,10 @@ For the agents who maintain the engine.
 ### [`engine/sim/actors.ts`](../engine/sim/actors.ts)
 
 - `ActorComponent` (interface): The component `actor`: an entity the character controller moves.
-- `ActorComponents` (type): The components this module reads: `actor`, `animator`, `puppet`, and `oneWay` for one-way platforms.
+- `ActorComponents` (type): The components this module reads: `actor`, `animator`, `puppet`, `motion` (the shooter model's) and `oneWay`.
 - `ActorSpec` (interface): What `spawnActor` takes.
 - `AnimatorComponent` (interface): The component `animator`: an actor's character animator as plain data, and what its game code tells its body.
 - `defineActorKinds` (function): Declares the components `actor`, `animator`, `puppet`, `clips` (engine/sim/actorClips.ts), `oneWay`, `reactions` and `secondary` (engine/sim/reactions.ts) and the setting `physics.characterGravity` on `registry`.
-- `FeelOptions` (interface): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
-- `measureFeel` (function): Measures a character's feel on the standard course (the file comment says what each number is).
 - `PuppetComponent` (interface): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
 - `removeActor` (function): Removes an actor and its body.
 - `spawnActor` (function): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
@@ -4375,6 +4449,11 @@ For the agents who maintain the engine.
 
 - `createEntityTable` (function): An empty entity table, its next id 1.
 - `EntityTable` (interface): The live entities of a world (see the file comment).
+
+### [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)
+
+- `FeelOptions` (interface): How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one.
+- `measureFeel` (function): Measures a character's feel on the standard course (the file comment says what each number is).
 
 ### [`engine/sim/hits.ts`](../engine/sim/hits.ts)
 
@@ -5115,14 +5194,18 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/cast/player.ts`](../labs/playground/cast/player.ts)
 
-- `APEX_CAPSULE` (const): Apex's hull for its medium legends (m): 72 units standing and 32 across, as a capsule (docs/PLAYGROUND.md §3.2).
 - `APEX_GRAVITY` (const): Apex's gravity (m/s²): 750 units/s², an inch a unit (docs/PLAYGROUND.md §3.2).
 - `APEX_JUMP` (const): Apex's jump (m): 56 units.
-- `APEX_RUN` (const): Apex's run with a weapon out (m/s): 173.5 units/s.
+- `APEX_RUN` (const): Apex's run with a weapon out (m/s): 173.5 units/s; holstered, the player runs 1.15 times as fast.
 - `PLAYER_LOOK` (const): How the player is drawn: `body:player` on the adult build, empty-handed.
-- `playerCharacter` (function): The player's character: Apex's gravity, a take-off of √(2 g h) for the jump's height, the run speed.
-- `PlayerTuning` (interface): What a scene may tune: the run speed (m/s) and the jump's height (m).
+- `playerCharacter` (function): The player's character: `movement:apex`, its run and its jump's height (a take-off of √(2 g h)) as tuned.
+- `PlayerTuning` (interface): What a scene may tune: the run with a weapon out (m/s) and the jump's height (m).
 - `spawnPlayer` (function): Stands the player in `w` (a scene with physics) at `at`, facing `yaw`: an actor the step's intents move.
+
+### [`labs/playground/controls.ts`](../labs/playground/controls.ts)
+
+- `PLAYGROUND_ACTION_MAP` (const): The action map the page's input binds.
+- `PLAYGROUND_ACTIONS` (const): The actions the player answers, with what each does, in the menu's order.
 
 ### [`labs/playground/levels/gym.ts`](../labs/playground/levels/gym.ts)
 
@@ -5152,8 +5235,6 @@ For the agents who maintain the engine.
 - `MENU_STORAGE_KEY` (const): The `localStorage` key that remembers whether the reader left the menu `open` or `closed`.
 - `MenuEntry` (interface): A listed scene, as its module exports it.
 - `menuShown` (function): Whether `setting` (the query's `playground.menu`) shows the menu in a browser automation does or does not drive.
-- `PLAYGROUND_ACTION_MAP` (const): The action map the page's input binds: createEngine's default (engine/input/input.ts).
-- `PLAYGROUND_ACTIONS` (const): The actions the player answers, with what each does, in the menu's order.
 - `PLAYGROUND_MENU_SETTINGS` (const): The menu's view setting (see the file comment).
 - `PlaygroundMenuOptions` (interface): What the menu lists.
 
@@ -5954,7 +6035,8 @@ For the agents who maintain the engine.
 ### [`tools/cmd/sim.ts`](../tools/cmd/sim.ts)
 
 - `default` (default): Runs a scene headless in Node and prints its hash and events (PLAN.md §8.1, WP 1.5).
-- `feelLines` (function): The feel report as two lines of text, rounded for reading (the metrics keep every digit).
+- `feelLines` (function): The feel report as two lines of text, a third on the shooter model, rounded for reading (the metrics keep every digit).
+- `feelMetrics` (function): The feel report as metrics, `feel.<name>`, the shooter model's as `feel.motion.<name>`.
 - `feelOf` (function): The feel meter's report for a run's first player actor (the inspector member `feel`); a usage error without one.
 - `HashedView` (interface): One run's view of a step, with the hash its runtime gave.
 - `levelOf` (function): The level a scene loads, for `--map`: registered by its module, else read from its lab's or the fixtures' levels.

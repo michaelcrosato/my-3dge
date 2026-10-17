@@ -10,7 +10,7 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   its design and its reference values; PLAN.md Phase 13 holds its WPs in four stages: feel (G10), the house (G11),
   alive (G12), the tech demo (G13). The character comes first: WP 13.1 built the lab and its gym (`npm run dev`,
   then /labs/playground/; labs/playground/README.md), WP 13.2 the player (`body:player` on the 1.80 m
-  `build:adult`); WP 13.3, the movement profiles and Apex's model, is next.
+  `build:adult`), WP 13.3 Apex's movement (`movement:apex`); WP 13.4, the feel kit, is next.
 - The playground fires all 21 on-demand WPs (each Trigger line names its need); Phase 13's table places them.
 - The owner's, within it: the Quaternius GLBs (WP 8.8 runs without them) and model access for WP 12.2's live evals.
 
