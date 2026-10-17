@@ -52,6 +52,9 @@ export interface CourseSample {
   gait?: string;
   stance?: string;
   sliding?: boolean;
+  /** On the shooter model: its mode (`ground`, `air`, `mantle`, `climb`) and its mantle's phase. */
+  mode?: string;
+  mantle?: string;
 }
 
 /** What a run recorded, which `measure` reads: the samples, the posed animation, each camera measure's track. */
@@ -94,7 +97,7 @@ type Player = Partial<ActorComponents> & { id: number; actor: ActorComponents['a
 /** The sample of `player`. */
 function sampleOf({ actor, motion }: Player): CourseSample {
   const sample = { feet: [actor.x, actor.y, actor.z], velocity: [actor.vx, actor.vy, actor.vz], grounded: actor.grounded, yaw: actor.yaw } as const; // prettier-ignore
-  return motion ? { ...sample, gait: motion.gait, stance: motion.stance, sliding: motion.sliding } : sample;
+  return motion ? { ...sample, gait: motion.gait, stance: motion.stance, sliding: motion.sliding, mode: motion.mode, mantle: motion.mantle } : sample; // prettier-ignore
 }
 
 /** Plays `course` in a session of its own and judges its measures (see the file comment). */
@@ -152,6 +155,8 @@ function reached(m: Measure, s: CourseSample): boolean {
   if (m.until === 'airborne') return !s.grounded;
   if (m.until === 'crouched' || m.until === 'standing') return s.stance === (m.until === 'crouched' ? 'crouch' : 'stand'); // prettier-ignore
   if (m.until === 'sliding' || m.until === 'stopsSliding') return s.sliding === (m.until === 'sliding');
+  if (m.until === 'mantling' || m.until === 'climbing') return s.mode === (m.until === 'mantling' ? 'mantle' : 'climb');
+  if (m.until === 'grabbing' || m.until === 'hanging' || m.until === 'pulling') return s.mantle === { grabbing: 'grab', hanging: 'hang', pulling: 'pull' }[m.until]; // prettier-ignore
   return m.until === 'speedAbove' ? across(s) > m.value! : across(s) < m.value!;
 }
 
@@ -185,6 +190,15 @@ export function measure(m: Measure, run: CourseRecord, steps: number, dt: number
       const hit = span.findIndex((s) => reached(m, s));
       return hit < 0 ? Infinity : hit * dt;
     }
+    case 'duration': {
+      const hit = span.findIndex((s) => reached(m, s));
+      const end = hit < 0 ? -1 : span.findIndex((s, k) => k > hit && !reached(m, s));
+      return hit < 0 ? 0 : ((end < 0 ? span.length : end) - hit) * dt;
+    }
+    case 'topRise':
+      return Math.max(...span.map((s) => s.velocity[1]));
+    case 'standHeight':
+      return Math.max(...span.filter((s) => s.grounded).map((s) => s.feet[1]), -Infinity);
     case 'footSlide':
       return run.anim!.footSlide(m.from, to);
     case 'pop':

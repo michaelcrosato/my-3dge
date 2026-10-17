@@ -47,7 +47,6 @@ function centreFor(
   keep: HullKeep,
   where: string,
 ) {
-  // prettier-ignore
   const { rigid, collider } = partsOf(rapierOf(physics), body, where);
   const at = rigid.translation();
   const y = keep === 'feet' ? at.y - halfHeightOf(collider, character) + height / 2 : at.y;

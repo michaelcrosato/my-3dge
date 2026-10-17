@@ -9,8 +9,9 @@
  * The gym's own glyphs, registered here on import (a game's glyphs live with the game, engine/world/level/glyph.ts):
  * a block per calibrated height (solid at ground level, a body may stand on its top: the mantle walls, fences, climb
  * walls, steps and the tower), a smooth ramp per slope (the `ramp` recipe, engine/gfx/level/ramp.ts) with the deck
- * it climbs to (a gallery at the ramp's top: the slide ramps, the gaps' approach and the two slope tests), and the gap
- * platforms. Heights are metres; a ramp's height is its length times the tangent of its slope.
+ * it climbs to (a gallery at the ramp's top: the slide ramps, the gaps' approach and the two slope tests), the gap
+ * platforms, and the crawl's walls and posts (WP 13.5), whose roof slab and bar are fixed props (`GYM_PROPS`) since a
+ * format-1 level has no overhangs. Heights are metres; a ramp's height is its length times the tangent of its slope.
  *
  * Invariants: every rectangle lies inside the perimeter and on whole tiles; no two features overlap; each ramp has
  * exactly one deck at its top, on the side it rises to (engine/world/level/shapes.ts); the spawn `@` stands at the

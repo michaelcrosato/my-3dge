@@ -2,8 +2,8 @@
  * @file Unit tests for running feel courses (engine/dev/feel/run.ts): a course runs as its replay plays, to the same
  * hash, and measuring it never changes the run; its move, animation and camera measures read the run; a measure
  * passes within any one tolerance it names (a share, an amount or whole ticks); a time runs from its step to the first
- * sample that meets its end; a scene without a player, or an animation measure on a player without an animator, is
- * refused naming the fix.
+ * sample that meets its end, a duration as long as a state lasts from its first sample; a scene without a player, or
+ * an animation measure on a player without an animator, is refused naming the fix.
  * @see engine/dev/feel/run.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -82,6 +82,22 @@ describe('running a course', () => {
     expect(time('speedAbove', 2, 2.5)).toBe(0.5);
     expect(time('speedBelow', 0, 0.5)).toBe(0);
     expect(time('airborne', 0)).toBe(Infinity);
+  });
+
+  it('times how long a state lasts from its first sample, and reads the fastest rise and the highest stand', () => {
+    const sample = (mode: string, mantle: string, vy = 0): CourseSample => ({ feet: [0, 0, 0], velocity: [0, vy, 0], grounded: false, yaw: 0, mode, mantle }); // prettier-ignore
+    const samples = [sample('air', 'none'), sample('mantle', 'grab'), sample('mantle', 'grab', 2), sample('mantle', 'pull'), sample('ground', 'none', -1), sample('mantle', 'grab')]; // prettier-ignore
+    const run = { samples, cameras: {} };
+    const duration = (until: Measure['until'], from = 0) =>
+      measure({ name: 'd', metric: 'duration', from, until, reference: 0, tolerance: { ticks: 0 } }, run, 5, 0.5);
+    expect(duration('mantling')).toBe(1.5); // samples 1 to 3, not the later one
+    expect(duration('grabbing')).toBe(1);
+    expect(duration('pulling')).toBe(0.5);
+    expect(duration('hanging')).toBe(0);
+    expect(duration('grabbing', 5)).toBe(0.5); // to the run's end
+    expect(measure({ name: 'r', metric: 'topRise', from: 0, reference: 0, tolerance: { abs: 0 } }, run, 5, 0.5)).toBe(2); // prettier-ignore
+    const stood = [true, false, true].map((grounded, k): CourseSample => ({ feet: [0, [0, 3, 1.5][k], 0], velocity: [0, 0, 0], grounded, yaw: 0 })); // prettier-ignore
+    expect(measure({ name: 's', metric: 'standHeight', from: 0, reference: 0, tolerance: { abs: 0 } }, { samples: stood, cameras: {} }, 2, 0.5)).toBe(1.5); // prettier-ignore
   });
 
   it('refuses a scene without a player, and an animation measure on a player without an animator', () => {

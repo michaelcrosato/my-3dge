@@ -112,7 +112,6 @@ export function tryMantle(
   room: Room,
   at: MantleTry,
 ): boolean {
-  // prettier-ignore
   const m = character.movement!;
   if (motion.mantleCool > 0 || (at.grounded && !at.jump)) return false;
   const dir = headingOf(at.wish, at.grounded ? null : at.h);
@@ -156,7 +155,6 @@ function leave(
   hop: boolean,
   dt: number,
 ): void {
-  // prettier-ignore
   const m = character.movement!;
   Object.assign(motion, { mode: 'air', mantle: 'none', mantleLeft: 0, mantleCool: ticksOf(m.mantle.cooldown, dt) });
   Object.assign(state, { vx: h[0], vz: h[1], vy: hop ? character.jumpSpeed : 0, jumping: hop, jumpAge: -1 });
@@ -165,7 +163,8 @@ function leave(
 
 /**
  * One tick of a mantle (see the file comment): the feet's next point on the path, or null once it hopped out or let
- * go (the tick goes on in the air). `starting`: the tick it began, whose presses started it.
+ * go (the tick goes on in the air) or, its pull done the tick before, stepped off onto the top (it goes on there).
+ * `starting`: the tick it began, whose presses started it.
  */
 export function stepMantle(
   character: Character,
@@ -174,16 +173,21 @@ export function stepMantle(
   input: CharacterInput,
   tick: MantleTick,
   starting = false,
-): { to: Point; lands: boolean } | null {
-  // prettier-ignore
+): Point | null {
   const m = character.movement!;
   const { dt } = tick;
   const into: [number, number] = [-motion.wallX, -motion.wallZ];
+  const speed = exitSpeed(m, motion.exitGait, tick.scale);
+  if (motion.mantle === 'pull' && motion.mantleLeft === 0) {
+    const cool = ticksOf(m.mantle.cooldown, dt);
+    Object.assign(motion, { mode: 'ground', mantle: 'none', mantleCool: cool, gait: motion.exitGait, sprinting: motion.exitGait === 'sprint', flight: -1 }); // prettier-ignore
+    Object.assign(state, { vx: into[0] * speed, vy: 0, vz: into[1] * speed, grounded: true, air: 0 });
+    return null;
+  }
   const push = tick.wish[0] * into[0] + tick.wish[1] * into[1];
   const [forward, back] = [push >= 0.3, push <= -0.3];
   const jump = input.jumpPressed === true && !starting;
   const crouch = crouchPressed(input, motion) && !starting;
-  const speed = exitSpeed(m, motion.exitGait, tick.scale);
   const windowed = motion.mantle === 'pull' && motion.mantleLeft <= ticksOf(m.mantle.window, dt);
   if (jump) {
     const out = motion.mantle === 'pull' ? ([into[0] * speed, into[1] * speed] as const) : ([0, 0] as const);
@@ -208,13 +212,8 @@ export function stepMantle(
     Object.assign(motion, { mantle: 'pull', mantleLeft: total, mantleTotal: total, fromX: at[0], fromY: at[1], fromZ: at[2] }); // prettier-ignore
   }
   if (motion.mantle !== 'hang') motion.mantleLeft = Math.max(motion.mantleLeft - 1, 0);
-  const to = placeOf(character, motion);
   [state.vx, state.vy, state.vz] = [0, 0, 0];
-  if (motion.mantle !== 'pull' || motion.mantleLeft > 0) return { to, lands: false };
-  const cool = ticksOf(m.mantle.cooldown, dt);
-  Object.assign(motion, { mode: 'ground', mantle: 'none', mantleCool: cool, gait: motion.exitGait, sprinting: motion.exitGait === 'sprint' }); // prettier-ignore
-  [state.vx, state.vz] = [into[0] * speed, into[1] * speed];
-  return { to, lands: true };
+  return placeOf(character, motion);
 }
 
 /**
@@ -228,7 +227,6 @@ export function glide(
   tick: MantleTick,
   boost: boolean,
 ): void {
-  // prettier-ignore
   const m = character.movement!;
   const ready = motion.slideAge < 0 || motion.slideAge >= Math.round(m.slide.cooldown / tick.dt);
   const full = m.mantle.glide * exitSpeed(m, motion.exitGait, tick.scale);

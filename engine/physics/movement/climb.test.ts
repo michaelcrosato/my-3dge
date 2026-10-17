@@ -85,12 +85,11 @@ describe('the wall-climb', () => {
     const caught = first(r, (s) => s.mode === 'climb');
     expect(caught.y).toBeGreaterThan(1.1938 - 2.54 + 2.54); // caught high: the cutoff, not the catch, ends it
     const end = first(r, (s) => s.mode === 'air' && r.log.indexOf(s) > caught.k);
-    expect(r.log[end.k - 1].y).toBeGreaterThanOrEqual(3.7338); // the tick after the feet crossed it
-    expect(r.log[end.k - 2].y).toBeLessThan(3.7338);
+    expect(r.log[end.k - 1].y).toBeCloseTo(3.7338, 3); // the climb stops at it, the end boost the tick after
     expect(end.vy).toBeCloseTo(Math.sqrt(2 * G * 0.7112) - G * DT, 6);
     expect(first(r, (s) => s.mode === 'ground' && s.y > 6).y).toBeCloseTo(6.9, 2);
     const high = climbRun(7.2);
-    expect(Math.max(...high.log.map((s) => s.y))).toBeLessThan(4.6); // 3.73 + 0.71 and a little: no ledge in reach
+    expect(Math.max(...high.log.map((s) => s.y))).toBeCloseTo(3.7338 + 0.7112, 2); // no ledge within reach of it
     expect(high.log.at(-1)?.y).toBeCloseTo(0, 2);
   });
 

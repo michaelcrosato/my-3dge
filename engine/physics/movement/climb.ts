@@ -8,11 +8,12 @@
  * - `tryClimb`: in the air, pushing into a wall touching it, steeper than `climb.angle`, the push and the view within
  *   `climb.angle` of facing it, the feet within the space; after a climb since it stood, only below the last catch,
  *   unless the wall turned `climb.turn` from that one's.
- * - `stepClimb`: a ledge within the mantle's reach tops it out (the grab, no detach); the feet past the catch plus
- *   `climb.attach` or the space's foot plus `climb.cutoff` end it, the end boost throwing it `climb.end` higher; back,
- *   no forward, crouch, the view off the wall, the wall gone or `climb.timer` after the catch rising slower than
- *   `climb.rising` let go; else it climbs: up at `climb.up`, across at `climb.acrossUp` by the push's part along the
- *   wall, what it carried in along the wall kept up to `climb.across`, each reached at `climb.accel`, gravity off.
+ * - `stepClimb`: a ledge within the mantle's reach tops it out (the grab, no detach); the feet at the catch plus
+ *   `climb.attach` or the space's foot plus `climb.cutoff` (the tick reaching it stops there) end it, the end boost
+ *   throwing it `climb.end` higher; back, no forward, crouch, the view off the wall, the wall gone or `climb.timer`
+ *   after the catch rising slower than `climb.rising` let go; else it climbs: up at `climb.up`, across at
+ *   `climb.acrossUp` by the push's part along the wall, what it carried in along the wall kept up to `climb.across`,
+ *   each reached at `climb.accel`, gravity off.
  * - `wallBounce`, a jump off it: from the mini zone `climb.miniLift` up and `climb.miniAway` away; from the green
  *   zone a lift from a full jump at the zone's foot to none at its top (ours: the measures say only that it falls)
  *   and `climb.away` away; higher, `climb.away` away, keeping its rise (a wall push). It lands fatigued.
@@ -60,7 +61,6 @@ export function tryClimb(
   room: Room,
   tick: MantleTick,
 ): boolean {
-  // prettier-ignore
   const c = character.movement!.climb;
   const push = Math.hypot(tick.wish[0], tick.wish[1]);
   if (push < 0.3 || input.crouch === true || motion.crouchToggle) return false;
@@ -100,7 +100,6 @@ export function stepClimb(
   room: Room,
   tick: MantleTick,
 ): 'climb' | 'mantle' | 'air' {
-  // prettier-ignore
   const m = character.movement!;
   const c = m.climb;
   const { nx, nz, into, along, view } = frameOf(motion, tick);
@@ -123,7 +122,8 @@ export function stepClimb(
     letGo(motion, c.drop);
     return 'air';
   }
-  if (feet[1] >= motion.attachY + c.attach || feet[1] >= motion.spaceY + c.cutoff) {
+  const limit = Math.min(motion.attachY + c.attach, motion.spaceY + c.cutoff);
+  if (feet[1] >= limit - 1e-4) {
     state.vy = Math.sqrt(2 * tick.g * c.end);
     letGo(motion, c.drop);
     return 'air';
@@ -131,7 +131,7 @@ export function stepClimb(
   const step = c.accel * tick.dt;
   const sideways = Math.max(-c.across, Math.min(c.across, state.vx * -nz + state.vz * nx));
   const across = approach(sideways, along * c.acrossUp, step);
-  state.vy = approach(state.vy, c.up, step);
+  state.vy = Math.min(approach(state.vy, c.up, step), (limit - feet[1]) / tick.dt); // up to the limit, not past it
   [state.vx, state.vz] = [-nz * across - nx, nx * across - nz]; // and 1 m/s into the wall, keeping it touched
   return 'climb';
 }
@@ -144,7 +144,6 @@ export function wallBounce(
   feet: number,
   tick: MantleTick,
 ): void {
-  // prettier-ignore
   const c = character.movement!.climb;
   const z = feet - motion.spaceY;
   const { nx, nz } = frameOf(motion, tick);

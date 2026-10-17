@@ -102,7 +102,7 @@ it; `?playground.menu=on` shows it there.
 | `playground.gym.jump` | How high the player jumps in the gym, m (1.42, Apex's), when the scene starts. Changes play: recorded in replays. |
 | `playground.menu` | The page's menu for humans: `auto` shows it unless automation drives the browser, `on` and `off` force it, when the page opens. A view setting. |
 | `playground.feel` | The feel panel: `on` shows it when the page opens (F shows and hides it). A view setting. |
-| `movement.gaits.run` | One of the shooter model's numbers, live: every number of the model has its setting, `movement.<group>.<field>` (`node x describe setting` lists them), Apex's by default; off its default it replaces that number for every character on the model from the next step. Changes play: recorded in replays. |
+| `movement.gaits.run` | One of the shooter model's numbers, live: every number and switch of the model has its setting, `movement.<group>.<field>` (`node x describe setting` lists them; `movement.mantle.boost` turns on the mantle boost), Apex's by default; off its default it replaces that number for every character on the model from the next step. Changes play: recorded in replays. |
 | `post.look` | The look drawn (`look:playground-cel` by default). A view setting: never in the hash. |
 | `quality` | The quality tier: `auto`, `high`, `medium` or `low`. A view setting. |
 | `time.scale` | Sim seconds per real second (1). A view setting. |
@@ -118,13 +118,19 @@ and the stop), `labs/playground/courses/jumps.ts` (a jump, a tired one off its l
 crouch-walk), `labs/playground/courses/air.ts` (a lurch, an air strafe and the bunny hop's cost),
 `labs/playground/courses/slideFlat.ts` (the slide's boost and its cooldown, letting go fast, a slide held into the
 crouch-walk), `labs/playground/courses/slideRamps.ts` (down each slide ramp and up the 30° one),
-`labs/playground/courses/slideJump.ts` (the slide-jump, a dead slide, the long jump) and
-`labs/playground/courses/crawl.ts` (crouched through the tunnel and up out of it, a slide under the bar). Each starts
-with the gym's dev action `place` (`{ at, yaw, speed }`) and checks the bounds of `labs/playground/courses/bounds.ts`
-too, each run's: the body's and every camera's. `node x feel labs/playground` runs them all headless, `--course
-slide-flat` one, each into `out/feel/<lab>-<name>/report.json`. A bound its WP has yet to meet is watched, reported
-and never failing a course: the feet's slide until WP 13.10 plants them, the shooter camera in the crawl until WP
-13.8's collision keeps it out of the tunnel's roof.
+`labs/playground/courses/slideJump.ts` (the slide-jump, a dead slide, the long jump),
+`labs/playground/courses/crawl.ts` (crouched through the tunnel and up out of it, a slide under the bar),
+`labs/playground/courses/mantle.ts` (the auto mantle at each mantle wall: a step, a pull, the grab and the pull, the
+2.1 m wall refused from the ground), `labs/playground/courses/fences.ts` (each fence mantled over at a sprint,
+sprinting out), `labs/playground/courses/climb.ts` (each climb wall climbed and topped out, the 6.9 m one by the end
+boost, the 7.2 m one refused; a wall-bounce from each zone), `labs/playground/courses/hang.ts` (the mantle hang, none
+where the lip is too low, letting go) and `labs/playground/courses/superglide.ts` (the superglide and three near
+misses; the mantle boost, its setting `movement.mantle.boost` on). Each starts with the gym's dev action `place`
+(`{ at, yaw, speed }`) and checks the bounds of `labs/playground/courses/bounds.ts` too, each run's: the body's and
+every camera's. `node x feel labs/playground` runs them all headless, `--course slide-flat` one, each into
+`out/feel/<lab>-<name>/report.json`. A bound its WP has yet to meet is watched, reported and never failing a course:
+the feet's slide until WP 13.10 plants them, the shooter camera in the crawl and topping out the 4 to 6 m climbs
+until WP 13.8's collision keeps it clear of the level.
 
 The feel panel (F, or `?playground.feel=on`) puts a slider on every `movement.*` setting, live; Copy as profile shows
 the tuning as a `defineMovement` call to paste into a game, and Save the replay downloads the run so far for

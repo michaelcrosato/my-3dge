@@ -11,6 +11,11 @@
  * @see labs/playground/courses/slideRamps.ts
  * @see labs/playground/courses/slideJump.ts
  * @see labs/playground/courses/crawl.ts
+ * @see labs/playground/courses/mantle.ts
+ * @see labs/playground/courses/fences.ts
+ * @see labs/playground/courses/climb.ts
+ * @see labs/playground/courses/hang.ts
+ * @see labs/playground/courses/superglide.ts
  * @see labs/playground/courses/bounds.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -19,12 +24,17 @@ import { topHeight } from '../../../engine/sim-api';
 import { GYM } from '../scenes/gym';
 import { AIR_START } from './air';
 import { bodyBounds, cameraBounds } from './bounds';
+import { BOUNCE_RUNS, CLIMB_RUNS } from './climb';
 import { CRAWL_STARTS } from './crawl';
+import { FENCE_RUNS } from './fences';
+import { HANG_STARTS } from './hang';
 import { JUMPS_START } from './jumps';
+import { MANTLE_RUNS } from './mantle';
 import { SLIDE_FLAT_START } from './slideFlat';
 import { SLIDE_JUMPS } from './slideJump';
 import { SLIDE_RAMPS, SLIDE_UPHILL } from './slideRamps';
 import { STRIP_START } from './strip';
+import { GLIDE_START } from './superglide';
 
 /** Each course's starts on the gym's floor, where nothing stands. */
 const STARTS: Readonly<Record<string, readonly (readonly [number, number, number])[]>> = {
@@ -35,6 +45,12 @@ const STARTS: Readonly<Record<string, readonly (readonly [number, number, number
   'slide-ramps': [SLIDE_UPHILL],
   'slide-jump': SLIDE_JUMPS.map(([z]) => [2.25, 0, z] as const),
   crawl: [CRAWL_STARTS.tunnel, CRAWL_STARTS.bar],
+  mantle: MANTLE_RUNS.map(([, x]) => [x, 0, 8.5] as const),
+  fences: FENCE_RUNS.map(([, x]) => [x, 0, 14.5] as const),
+  climb: [...CLIMB_RUNS.map(([, x]) => [x, 0, 19.4] as const), ...BOUNCE_RUNS.map(([, z]) => [19, 0, z] as const)],
+  hang: [HANG_STARTS.high, HANG_STARTS.low],
+  superglide: [GLIDE_START],
+  'mantle-boost': [GLIDE_START],
 };
 
 describe('the playground’s courses', () => {

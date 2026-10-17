@@ -274,7 +274,7 @@ export function stepCharacter(
   const idle = wasGrounded && still && !plan.jumped && !plan.dashing && fixedBody(world, state.ground);
   const grounded = wasGrounded && !plan.jumped && state.vy <= 0;
   const move = plan.path
-    ? { moved: new Vector3(...plan.path.to).sub(feetOf(physics, body, character)), grounded: plan.path.lands, climbed: 0, across: [], vertical: [] } // prettier-ignore
+    ? { moved: new Vector3(...plan.path).sub(feetOf(physics, body, character)), grounded: false, climbed: 0, across: [], vertical: [] } // prettier-ignore
     : idle
       ? { moved: new Vector3(), grounded: true, climbed: 0, across: [], vertical: [] }
       : carried(physics, body, character, grounded ? state.ground : -1, options, (carry) =>

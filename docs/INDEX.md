@@ -1265,11 +1265,23 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`bounds.ts`](../labs/playground/courses/bounds.ts): The bounds every playground course checks beside its own numbers (docs/PLAYGROUND.md §4, §5.1 and §9.1, PLAN.md WP 13.4): from the step after a course places the player, its body's (a planted foot slides at most 5 cm in one contact, the anim QA's limit; no point jumps past the QA's pop of 9/16 m in a step) and, for each of the playground's five cameras (labs/playground/views.ts), §4's: no frame moves the camera more than 0.3 m beyond the player's own move or turns it more than 4°, none stands it inside the level, and none loses the player (but first person, whose arms come with WP 13.12).
   - Exports: `bodyBounds`, `BOUNDS`, `BoundsSpan`, `cameraBounds`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`climb.ts`](../labs/playground/courses/climb.ts): The climb course, `course:playground-climb` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.6): the player, empty-handed, sprints at each of the gym's climb walls and jumps 2.6 m short of its face, holding forward.
+  - Exports: `BOUNCE_RUNS`, `CLIMB_RUNS`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`crawl.ts`](../labs/playground/courses/crawl.ts): The crawl course, `course:playground-crawl` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.5): the player, empty-handed, crouch-walks into the crawl tunnel (1.4 m clear, 8 m long), lets crouch go inside and goes on crouched under the roof, standing up and running once out; then slides under the bar (1.3 m up) from a sprint.
   - Exports: `CRAWL_STARTS`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`fences.ts`](../labs/playground/courses/fences.ts): The fences course, `course:playground-fences` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.6): the player, empty-handed, sprints at each of the gym's fences (half a metre thick) from 1.5 m short of its face, pressing and holding jump once within the ledge probe of it: Apex has no vault, so a fence is mantled over.
+  - Exports: `FENCE_RUNS`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`hang.ts`](../labs/playground/courses/hang.ts): The hang course, `course:playground-hang` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.6): the mantle hang.
+  - Exports: `HANG_STARTS`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`jumps.ts`](../labs/playground/courses/jumps.ts): The jumps course, `course:playground-jumps` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.4): the player, empty-handed, placed in the open floor between the slide ramps and the slope tests, jumps from standing, jumps again as it lands (the press buffered just before), then once more after a rest, then walks and crouch-walks south; its numbers against §3.2's, then the bounds (labs/playground/courses/bounds.ts).
   - Exports: `JUMPS_START`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`mantle.ts`](../labs/playground/courses/mantle.ts): The mantle course, `course:playground-mantle` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.6): the player, empty-handed, runs at each of the gym's mantle walls from 1.5 m short of its face, pressing and holding jump once its hull is within the ledge probe's 0.61 m of it, on the ground: Apex's auto mantle.
+  - Exports: `MANTLE_RUNS`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`slideFlat.ts`](../labs/playground/courses/slideFlat.ts): The flat slide course, `course:playground-slide-flat` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.5): the player, empty-handed, sprints south down the open lane beside the sprint strip and slides four times: a boosted slide let go fast, two inside the boost's cooldown, and a boosted one held to its end; its numbers against §3.2's, then the bounds (labs/playground/courses/bounds.ts).
   - Exports: `SLIDE_FLAT_START`
@@ -1282,6 +1294,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`strip.ts`](../labs/playground/courses/strip.ts): The strip course, `course:playground-strip` (docs/PLAYGROUND.md §2.3 and §3.2, PLAN.md WP 13.4): the player, empty-handed (holstered: every speed ×1.15), placed at the strip's north end, runs south from standing for 1.5 s, sprints on a press (the sticky sprint keeps it), then lets go and stops; its numbers against §3.2's, then the bounds (labs/playground/courses/bounds.ts).
   - Exports: `STRIP_START`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`superglide.ts`](../labs/playground/courses/superglide.ts): The superglide courses (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.6): `course:playground-superglide` sprints at the 1.5 m mantle wall holding jump (the auto mantle: the grab, 27 ticks, then the pull, 18) and, in the pull's last 0.15 s (its last 9 ticks), lets jump go and presses it, then presses crouch the very next tick: the superglide, about 13.7 m/s out of the mantle (Apex's 540 u/s; ours 1.8 × the holstered sprint, 13.67).
+  - Exports: `GLIDE_START`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 
 ## labs/playground/levels

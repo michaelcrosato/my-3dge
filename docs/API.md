@@ -4457,7 +4457,7 @@ For the agents who maintain the engine.
 - `MantleTick` (interface): What a mantle's tick reads beside the states: the tick's own numbers, as steerMotion has them.
 - `MantleTry` (interface): What `tryMantle` reads beside a tick's numbers.
 - `startMantle` (function): Starts a mantle up `ledge` from the feet at `feet`: a grab, or for a low ledge only the pull (see the file comment).
-- `stepMantle` (function): One tick of a mantle (see the file comment): the feet's next point on the path, or null once it hopped out or let go (the tick goes on in the air).
+- `stepMantle` (function): One tick of a mantle (see the file comment): the feet's next point on the path, or null once it hopped out or let go (the tick goes on in the air) or, its pull done the tick before, stepped off onto the top (it goes on there).
 - `tryMantle` (function): Starts a mantle if one takes (see the file comment); true when it did.
 
 ### [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)
@@ -5396,13 +5396,30 @@ For the agents who maintain the engine.
 - `BoundsSpan` (interface): Where a run of bounds reads: from step `from` to `to` (the course's end when absent), its names after `label`.
 - `cameraBounds` (function): Every camera's bounds, from step `from` (see the file comment and `BoundsSpan`).
 
+### [`labs/playground/courses/climb.ts`](../labs/playground/courses/climb.ts)
+
+- `BOUNCE_RUNS` (const): Each bounce off the 6 m wall: its zone, where it starts (z), its speed (m/s), and when it jumps and jumps off.
+- `CLIMB_RUNS` (const): Each climb: its wall's height (m) and the x of its middle; each starts at z 19.4, 2.6 m short of the faces.
+
 ### [`labs/playground/courses/crawl.ts`](../labs/playground/courses/crawl.ts)
 
 - `CRAWL_STARTS` (const): Where the tunnel run starts (4 m north of the tunnel, in its middle) and where the bar's does (facing south).
 
+### [`labs/playground/courses/fences.ts`](../labs/playground/courses/fences.ts)
+
+- `FENCE_RUNS` (const): Each run: its fence's height (m) and the x of its middle; each starts at z 14.5, 1.5 m short of the faces.
+
+### [`labs/playground/courses/hang.ts`](../labs/playground/courses/hang.ts)
+
+- `HANG_STARTS` (const): Where the runs start: at the 3 m climb wall, 2.6 m short of it, and at the 1.5 m mantle wall, 1.5 m short of it.
+
 ### [`labs/playground/courses/jumps.ts`](../labs/playground/courses/jumps.ts)
 
 - `JUMPS_START` (const): Where the jumps start: the open floor south of the slide ramps, facing south.
+
+### [`labs/playground/courses/mantle.ts`](../labs/playground/courses/mantle.ts)
+
+- `MANTLE_RUNS` (const): Each run: its wall's height (m) and the x of its middle; each starts at z 8.5, 1.5 m short of the walls' faces.
 
 ### [`labs/playground/courses/slideFlat.ts`](../labs/playground/courses/slideFlat.ts)
 
@@ -5420,6 +5437,10 @@ For the agents who maintain the engine.
 ### [`labs/playground/courses/strip.ts`](../labs/playground/courses/strip.ts)
 
 - `STRIP_START` (const): Where the strip starts: its north end, on the lane west of the features, facing south.
+
+### [`labs/playground/courses/superglide.ts`](../labs/playground/courses/superglide.ts)
+
+- `GLIDE_START` (const): Where every run starts: 1.5 m short of the 1.5 m mantle wall's face.
 
 ### [`labs/playground/feel.ts`](../labs/playground/feel.ts)
 

@@ -62,7 +62,6 @@ function steered(
   dt: number,
   path?: Steering['path'],
 ): Steering {
-  // prettier-ignore
   const desired = path ? new Vector3() : new Vector3(state.vx * dt, state.vy * dt, state.vz * dt);
   return { desired, jumped: false, dashed: false, dashing: false, wish, wasGrounded, ...(path ? { path } : {}) };
 }
@@ -98,7 +97,7 @@ export function steerMotion(
 ): Steering {
   const m = character.movement!;
   const ticks = (seconds: number) => Math.round(seconds / dt);
-  const wasGrounded = state.grounded;
+  let wasGrounded = state.grounded;
   const [coyote, buffer] = [ticks(character.feel.coyote), ticks(character.feel.buffer)];
   state.jumpAge = input.jumpPressed ? 0 : state.jumpAge >= 0 && state.jumpAge < buffer ? state.jumpAge + 1 : -1;
   if (motion.landAge >= 0) motion.landAge = Math.min(motion.landAge + 1, 1e6);
@@ -119,7 +118,7 @@ export function steerMotion(
   if (motion.mode === 'mantle') {
     const path = stepMantle(character, state, motion, input, tick);
     if (path) return steered(state, wish, wasGrounded, dt, path);
-    [h[0], h[1]] = [state.vx, state.vz];
+    wasGrounded = state.grounded; // stepped off onto the top: a ground tick from here
   }
   if (motion.glideAge === 1 && crouchPressed(input, motion)) glide(character, state, motion, tick, false);
   if (motion.glideAge >= 1) motion.glideAge = -1;
@@ -221,9 +220,7 @@ export function settleMotion(
   const m = character.movement!;
   const wall = Math.atan2(-motion.wallX, -motion.wallZ);
   if (steering.path) {
-    const { lands } = steering.path;
-    Object.assign(state, { grounded: lands, vy: 0, jumping: false, air: lands ? 0 : Math.min(state.air + 1, 1e6) });
-    if (lands) Object.assign(motion, { flight: -1, floorX: 0, floorY: 1, floorZ: 0 });
+    Object.assign(state, { grounded: false, vy: 0, jumping: false, air: Math.min(state.air + 1, 1e6) });
     state.yaw = turnToward(state.yaw, wall, m.turnRate * dt);
     return 0;
   }

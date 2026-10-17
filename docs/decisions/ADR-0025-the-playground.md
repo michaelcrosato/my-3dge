@@ -230,3 +230,50 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **Left to the view's WPs:** the crouched eye and pose (WP 13.8's effects, WP 13.10's poses): the first-person eye
   sits at the rig's eye socket, which crouches with WP 13.10's crouch pose; the motion state carries the duck, its
   milliseconds left and their total for the view's crouch share. The toggle's binding is WP 13.9's.
+
+## Amendment 6 (2026-10-17, WP 13.6): the mantle, the wall-climb and the superglide
+
+- **Two mantle reaches.** Apex's 80 u (2.03 m) is the auto mantle's, holding jump on the ground. From the air it
+  mantles ledges up to 2.49 m over the feet: no source states it, but Apex's highest ledge, 273 u, less the climb's
+  147 u cutoff and 28 u end boost leaves 98 u, and the wiki's mantles of 97 u with the gun out and 106 u crouched need
+  more than 80. So the 2.1 m mantle wall is refused from the ground (the press jumps) and taken from the jump a tick
+  later, and the 6.9 m climb wall is reached only by the end boost of a climb that caught 1.19 m or more up.
+- **Ledges by casts, the path through nothing.** engine/physics/ledge.ts finds the wall by a cast of the hull, the lip
+  and the landing by rays, and casts the hull, standing else crouched, along the mantle's path: across to the wall, up
+  until the feet clear the lip by two skins, across over the landing, down onto it. The mantle then moves the feet
+  straight along that path (`Steering.path`, no controller), each phase from where the last left the feet, so a
+  restored state goes on alike. A top narrower than the hull's landing (a radius and two skins in) is no ledge: the
+  gym's fences are half a metre thick; a thin picket fence's vault is WP 13.15's, if its fence needs one.
+- **Times, not speeds.** The grab takes 0.45 s and the pull 0.3 s whatever the height, as §3.2 gives them; a ledge up
+  to 42 u (1.07 m) over the feet is only pulled. Each phase ends at the start of the tick after its last, so a course
+  sees 27 ticks of grab and 18 of pull, and the tick that steps off onto the top is a ground tick. The hang holds the
+  grab where it is (the lip 1.52 m or more over the ground below), forward going on, back or crouch letting go; a
+  jump in any phase hops out at full height, arming no fatigue, forward over the ledge out of the pull.
+- **The superglide is a hop then a glide.** A jump in the pull's last 9 ticks hops out; a crouch press the very next
+  tick turns the hop into the glide, 1.8 × the speed it mantled at (13.67 m/s from a holstered sprint, Apex's 540 u/s
+  within 0.3%), rising the slide-jump's 1.27 m (ours), starting the slide boost's cooldown, and within that cooldown
+  less the slide's boost (ours). The mantle boost is a crouch press alone in the window, a full jump's rise, the
+  lurch off until it lands. Its switch is a setting, `movement.mantle.boost`: the model's switches are settings now
+  (amendment 5 left `crouch.jump` a profile's); the feel panel's sliders still take only the numbers.
+- **The climb.** It catches a wall touched (four skins) in the air with the push and the view within 45.57°, climbs at
+  up to 5.72 m/s reached at 30 m/s² (ours), with no gravity, stops at the catch + 2.54 m or the climb space's foot +
+  3.73 m (the tick reaching it stops there, so the end boost's apex is exactly 4.44 m), then the end boost; across,
+  2.92 m/s by the push along the wall, what it carried in kept up to 6.55 m/s. The climb space's foot is the last
+  ground's height, dragged down by a fall below it, lowered 3.25 m by letting go and 6.5 m by a jump above the mini
+  zone; a new catch must be below the last unless the wall turned 25.84°. The wall-bounce's green-zone lift is ours: a
+  full jump at the zone's foot to none at its top (the wiki says only that it falls with the height); higher up a jump
+  keeps the climb's rise (the wall push). §3.2's wall-bounce row said the zones stood "above where it caught": they
+  stand above the climb space's foot, and the row says so.
+- **The 0.5 m mantle wall is a step.** `movement:apex` steps 22 u (0.56 m), so it runs up the 0.5 m wall; the course
+  checks that it stands on its top without a mantle. The mantle walls start at 1 m for Apex.
+- **The feel kit gained** `duration` (how long a state lasts from its first sample), `topRise` and `standHeight`
+  metrics, a sample's mode and mantle phase, and `until` states for the mantle's phases and the climb; the courses
+  `mantle`, `fences`, `climb`, `hang`, `superglide` and `mantle-boost` (its setting on) pass, and
+  tests/replays/playground-climb.replay.json (a superglide, the 6.9 m climb, a hang, a green-zone bounce) holds one
+  golden in Node and Chromium.
+- **Watched until WP 13.8:** topping out the 4, 5 and 6 m climb walls the shooter's camera jumps 1.1 to 1.2 m in a
+  frame (its collision); the other cameras keep every bound. A placed player spends the tick it is placed airborne
+  (`placeActor` resets its state), so a course places it clear of walls it means to catch.
+- **Left to the view's WPs:** the motion state holds the contacts as plain data (the lip, the wall's normal, the rise
+  column, the landing, the phase and its ticks): WP 13.11 puts the hands on the lip and plays the grab, the pull and
+  the hang; WP 13.8 frames them.

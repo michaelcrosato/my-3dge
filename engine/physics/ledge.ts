@@ -103,7 +103,6 @@ export function ledgePath(
   edge: Point,
   landing: Point,
 ): Point[] {
-  // prettier-ignore
   const top = Math.max(edge[1], landing[1]) + character.offset * 2;
   return [feet, [rise[0], feet[1], rise[1]], [rise[0], top, rise[1]], [landing[0], top, landing[2]], landing];
 }
@@ -116,7 +115,6 @@ export function findLedge(
   wall: Wall,
   search: LedgeSearch,
 ): Ledge | null {
-  // prettier-ignore
   const { at, feet } = bodyAt(physics, body, character, 'findLedge(body)');
   const { radius } = character.capsule;
   const skin = character.offset;

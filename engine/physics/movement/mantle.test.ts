@@ -72,7 +72,7 @@ describe('the mantle', () => {
       () => ({ ...EAST, jump: true }),
       () => r.motion.mode !== 'mantle',
     );
-    expect([grab, pull + 1]).toEqual([27, 18]); // the grab's first tick began it, the pull's first ended `grab`
+    expect([grab, pull]).toEqual([27, 18]); // the grab's first tick began it, the pull's first ended `grab`, the exit `pull`
     expect(r.motion.mode).toBe('ground');
     expect(feetOf(r.physics, r.body, APEX).y).toBeCloseTo(1.5, 2);
     expect(Math.hypot(r.state.vx, r.state.vz)).toBeCloseTo(RUN, 6);
@@ -90,8 +90,8 @@ describe('the mantle', () => {
       r.until(
         () => ({ ...EAST, jump: true, sprint: true }),
         () => r.motion.mode !== 'mantle',
-      ) + 1,
-    ).toBe(18);
+      ),
+    ).toBe(18); // the pull's 17 ticks after its first, then the exit
     expect(Math.hypot(r.state.vx, r.state.vz)).toBeCloseTo(SPRINT, 6);
     expect(r.motion.gait).toBe('sprint');
   });
