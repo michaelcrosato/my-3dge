@@ -12,7 +12,8 @@ import { deserialize, serialize, type Canonical } from '../core/hash';
 import { createRegistry } from '../core/registry';
 import { createCharacter } from '../physics/character';
 import { physicsOf } from '../physics/binding';
-import { defineActorKinds, measureFeel, removeActor, spawnActor, type ActorComponents } from './actors';
+import { defineActorKinds, removeActor, spawnActor, type ActorComponents } from './actors';
+import { measureFeel } from './feelCourse';
 import { defineScene, startScene } from './scene';
 import type { WorldCapture } from './capture';
 

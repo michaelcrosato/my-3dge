@@ -130,7 +130,7 @@ distances ±2 cm, angles ±1°. Where sources disagree, the row says so and give
 | Sprint | held or toggled; only while moving within 45° of the view; a side key dips it to 4.80 m/s | 6.60 m/s armed (260 u/s); 7.59 m/s holstered | ERA-p, AMW-G, TF2 |
 | Walk | ours: Apex walks only while aiming down sights; a held key or a light stick tilt gives the rifle's aiming speed | 2.20 m/s (the run × 0.5) | R5W (`ads_move_speed_scale`) |
 | Crouch-walk | | 2.03 m/s armed (80 u/s); 2.34 m/s holstered | ERA-p, AMW-G |
-| Acceleration | linear, in m/s², toward the wished velocity; the speed is capped at the larger of the current speed and the wished one | 63.5 m/s² below 3.05 m/s; 11.4 m/s² up to the run; 2.54 m/s² from the run to the sprint (about 0.87 s) | ERA-p, ERA-c, TF2 (one datamine: medium confidence) |
+| Acceleration | linear, in m/s², toward the wished velocity; the speed is capped at the larger of the current speed and the wished one | 63.5 m/s² below 3.05 m/s; 11.4 m/s² up to the run; 2.54 m/s² from the run to the sprint (0.83 s: the run's band overshoots it by a tick, as R5Reloaded's trial shows) | ERA-p, ERA-c, TF2 (one datamine: medium confidence) |
 | Deceleration | only the part of the velocity away from the input slows; the input's own direction keeps up to the wished speed | 31.8 m/s² standing (sprint to a stop in about 0.21 s); crouched 38.1 m/s² | ERA-p, TF2 |
 | Capsule | radius and heights of Apex's medium legends | radius 0.41 m; 1.83 m standing; 1.19 m crouched; eyes at 1.52 m and 0.81 m | AMW-EN, ERA-p |
 | Steps and slopes | | steps up to 0.56 m; walkable up to 45.57° (a floor normal at least 0.7 up) | ERA-p, AMW-EN |

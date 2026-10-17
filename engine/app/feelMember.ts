@@ -1,6 +1,6 @@
 /**
  * @file The inspector member `feel(id?)` (PLAN.md §8.3, WP 3.2): an actor's feel meter report, `measureFeel`
- * (engine/sim/actors.ts) over the actor's character at the run's rate and `physics.characterGravity`; the first player
+ * (engine/sim/feelCourse.ts) over the actor's character at the run's rate and `physics.characterGravity`; the first player
  * when `id` is absent, else `SIM_BAD_ARGUMENT` naming the actors' ids (`none` in a scene without one).
  *
  * Registered from here, an app module that imports engine/dev/members.ts (which declares the kind) and that
@@ -34,10 +34,11 @@
 import { codeError } from '../core/log';
 import { defineMember } from '../dev/members';
 import type { FeelReport } from '../physics/feel';
-import { measureFeel, type ActorComponents } from '../sim/actors';
+import type { ActorComponents } from '../sim/actors';
+import { measureFeel } from '../sim/feelCourse';
 
 defineMember('feel', {
-  help: "An actor's feel measured on a flat course: response, acceleration, stop, turn, jump apex, air time, reach.",
+  help: "An actor's feel measured on a flat course: response, acceleration, stop, turn, jump apex, air time, reach; the shooter model's gaits, sprint, fatigue, strafe and lurch.",
   args: {
     id: { type: 'integer', minimum: 1, description: 'The actor’s entity id; the first player when absent.' },
   },

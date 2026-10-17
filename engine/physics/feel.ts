@@ -62,6 +62,31 @@ export interface FeelReport {
   reach: number;
   /** A dash from standing still: the distance it covers while it dashes (m); 0 without a dash. */
   dashDistance: number;
+  /** On the shooter model only: what docs/PLAYGROUND.md §3.2 measures (engine/sim/feelCourse.ts says how). */
+  motion?: MotionFeel;
+}
+
+/** The shooter model's feel numbers (engine/sim/feelCourse.ts): speeds in m/s, times in s, heights in m. */
+export interface MotionFeel {
+  run: number;
+  sprint: number;
+  walk: number;
+  crouch: number;
+  runHolstered: number;
+  sprintHolstered: number;
+  crouchHolstered: number;
+  /** From rest to 90% of the run. */
+  accelerationTime: number;
+  /** From the first tick past the run to the full sprint. */
+  sprintTime: number;
+  /** From a steady sprint, let go, to standing still. */
+  stopTime: number;
+  /** A jump pressed on the tick after a jump lands: its height. */
+  fatigueApex: number;
+  /** What a sprint jump gains air strafing. */
+  strafeGain: number;
+  /** The change of velocity a side key makes 0.1 s into a sprint jump. */
+  lurch: number;
 }
 
 /** One tick of a character, as the meter reads it. */

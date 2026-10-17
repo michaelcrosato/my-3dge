@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createRegistry } from '../core/registry';
-import { measureFeel } from '../sim/actors';
+import { measureFeel } from '../sim/feelCourse';
 import { HERO } from '../../fixtures/scenes/steps/index';
 import { compileLevel } from './level/compile';
 import { defineGlyph } from './level/glyph';

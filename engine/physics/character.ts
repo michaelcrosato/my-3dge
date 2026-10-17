@@ -11,7 +11,9 @@
  * inelastic collision of a `push`-kg mass); walls stop the velocity going into them, slopes do not; kinematic floors
  * carry it exactly (`carried`); idle on fixed ground it skips the controller (ADR-0020 amendments 3 and 5). A
  * character that `shoves` a group (the box's hero, the crowd) moves as if those bodies were not there, and its capsule
- * pushes them aside in the physics step, as the prototype's hero shoved monsters (ADR-0020 amendment 9).
+ * pushes them aside in the physics step, as the prototype's hero shoved monsters (ADR-0020 amendment 9). A character
+ * given a movement profile, `createCharacter({ movement: 'movement:apex' })`, takes its settings and, with a model,
+ * steers by the shooter model instead (engine/physics/movement/), its state in a `MotionState` beside this one.
  *
  * Invariants: it keeps nothing between ticks but `state` (move.ts's controller keeps nothing either), so a restored
  * world steps on alike. Same state, input and world: same tick, in Node and Chromium.
@@ -35,12 +37,17 @@
  */
 import type RAPIER from '@dimforge/rapier3d-simd-compat';
 import { Vector3 } from '../core/math';
+import type { Registry } from '../core/registry';
 import { defineSchema, freezeValue, parse, type EntryOf, type Field, type Schema } from '../core/schema';
 import { defineSettings } from '../core/settings';
 import { handleOf } from './capture';
 import { GROUP_NAMES } from './groups';
 import { settle, steer } from './feel';
 import { isWall, moveCharacter, partsOf, sink, type CharacterMove } from './move';
+import { MODEL_FIELDS, type MotionState } from './movement/model';
+import { applyMovement } from './movement/profile';
+import './movement/profiles';
+import { settleMotion, steerMotion } from './movement/steer';
 import { check, vec, type Vec3Like } from './queries';
 import { rapierOf, type Physics } from './world';
 
@@ -106,6 +113,12 @@ export const CHARACTER_FIELDS = defineSchema({
       cooldown: num(0.45, 0, 60, 'From one dash’s start to the next.', 's'),
     }),
   }),
+  movement: {
+    type: 'object',
+    properties: MODEL_FIELDS,
+    description:
+      'The shooter model’s numbers (engine/physics/movement/model.ts), from a movement profile: createCharacter({ movement: "movement:apex" }); absent: the platformer model of the fields above.',
+  },
 });
 
 /** A character's settings, filled: what `createCharacter` returns and an actor's component holds. */
@@ -123,9 +136,13 @@ export const CHARACTER_SETTINGS = {
 } as const satisfies Record<string, Field>;
 defineSettings(CHARACTER_SETTINGS);
 
-/** Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem. */
-export function createCharacter(spec: Record<string, unknown> = {}): Character {
-  return freezeValue(parse(CHARACTER_FIELDS, spec, 'createCharacter(spec)'));
+/**
+ * Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem. A `movement`
+ * profile's id applies that profile first, the spec's own fields winning, and a `model` beside it changes the
+ * profile's model field by field (engine/physics/movement/profile.ts).
+ */
+export function createCharacter(spec: Record<string, unknown> = {}, registry?: Registry): Character {
+  return freezeValue(parse(CHARACTER_FIELDS, applyMovement(spec, registry), 'createCharacter(spec)'));
 }
 
 /** What a character remembers between ticks: plain data in its actor's component, hashed and captured with the sim. */
@@ -171,6 +188,15 @@ export interface CharacterInput {
   jumpPressed?: boolean;
   /** The dash button went down this tick. */
   dashPressed?: boolean;
+  /** The shooter model's: the sprint button is held, went down this tick, the walk or the crouch button is held. */
+  sprint?: boolean;
+  sprintPressed?: boolean;
+  walk?: boolean;
+  crouch?: boolean;
+  /** The shooter model's: the view's yaw (rad; forward = (sin, 0, cos)), which the sprint keeps within 45° of. */
+  view?: number;
+  /** The shooter model's: a yaw to face (the look's or the aim's); absent, it faces where it moves. */
+  face?: number;
 }
 
 /** Adds a character's body (a kinematic capsule, group `actor`), its bottom just outside the skin above `feet`. */
@@ -235,6 +261,7 @@ export function stepCharacter(
   state: CharacterState,
   input: CharacterInput,
   options: StepOptions,
+  motion?: MotionState,
 ): CharacterStep {
   const { dt } = options;
   check(Number.isFinite(dt) && dt > 0, 'stepCharacter({ dt })', dt, 'a step length above 0');
@@ -244,7 +271,8 @@ export function stepCharacter(
   const { rigid } = partsOf(world, body, 'stepCharacter(body)');
   const g = character.characterGravity ?? options.gravity;
   const wasGrounded = state.grounded;
-  const plan = steer(character, state, input, dt, g);
+  const model = character.movement && motion;
+  const plan = model ? steerMotion(character, state, motion, input, dt, g) : steer(character, state, input, dt, g);
   const still = Math.hypot(state.vx, state.vz) < 1e-3 && state.vy <= 0 && state.vy > -g * dt * 1.5;
   const idle = wasGrounded && still && !plan.jumped && !plan.dashing && fixedBody(world, state.ground);
   const grounded = wasGrounded && !plan.jumped && state.vy <= 0;
@@ -253,7 +281,9 @@ export function stepCharacter(
     : carried(physics, body, character, grounded ? state.ground : -1, options, (carry) =>
         moveCharacter(physics, body, character, carry.add(plan.desired), { grounded, oneWay: options.oneWay }),
       );
-  const landed = settle(character, state, plan, move.moved, move.grounded);
+  const landed = model
+    ? settleMotion(character, state, motion, input, plan, move, g, dt)
+    : settle(character, state, plan, move.moved, move.grounded);
   for (const hit of [...move.across, ...move.vertical]) {
     if (!isWall(character, hit.normal) || world.bodies.get(handleOf(hit.body))?.isDynamic()) continue;
     const across = Math.hypot(hit.normal.x, hit.normal.z);

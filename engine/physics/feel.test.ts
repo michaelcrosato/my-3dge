@@ -1,12 +1,12 @@
 /**
- * @file Tests for the feel (engine/physics/feel.ts) and its course (`measureFeel`, engine/sim/actors.ts): the meter's
+ * @file Tests for the feel (engine/physics/feel.ts) and its course (`measureFeel`, engine/sim/feelCourse.ts): the meter's
  * rules on made-up ticks (a run-up's top speed and acceleration, a stop, a turn, a jump from where it took off, hops
  * too short to count), `steer` counting coyote time and the buffer in ticks at any step rate, and WP 3.2's Done-when:
  * the meter reports every number for the box hero's settings, each where the settings put it.
  */
 import { describe, expect, it } from 'vitest';
 import { HERO } from '../../fixtures/scenes/steps';
-import { measureFeel } from '../sim/actors';
+import { measureFeel } from '../sim/feelCourse';
 import { createCharacter, createCharacterState } from './character';
 import { createFeelMeter, steer, updateFeelMeter, type FeelReport, type FeelSample } from './feel';
 
