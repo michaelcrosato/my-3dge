@@ -2,8 +2,9 @@
  * @file Unit tests for the feel course's motion numbers (engine/sim/feelCourse.ts, PLAN.md WP 13.3's Done-when): under
  * `movement:apex` the feel meter's run, sprint, walk and crouch-walk speeds (armed and holstered), its acceleration,
  * sprint and stop times, the jump's height, a fatigued jump's, the air-strafe gain and the lurch match
- * docs/PLAYGROUND.md §3.2 within its tolerances (speeds ±2%, accelerations ±5%, times ±1 tick, heights ±2 cm); a
- * platformer character's report has no motion part, and every number is the same twice.
+ * docs/PLAYGROUND.md §3.2 within its tolerances (speeds ±2%, accelerations ±5%, times ±1 tick, heights ±2 cm); the
+ * course runs holstered when asked; a platformer character's report has no motion part, and every number is the same
+ * twice.
  * @see engine/sim/feelCourse.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -31,6 +32,7 @@ describe('the feel course under movement:apex', () => {
     ] as const)
       within(name, value, reference, 0.02);
     expect(apex.topSpeed).toBeCloseTo(motion.run, 2);
+    expect(measureFeel(createCharacter({ movement: 'movement:apex' }), { holstered: true }).topSpeed).toBeCloseTo(motion.runHolstered, 2); // prettier-ignore
   });
 
   it('takes the times the table’s accelerations give, within a tick: to the run, run to sprint, sprint to a stop', () => {

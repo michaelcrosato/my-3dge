@@ -2,8 +2,8 @@
  * @file Tests for `x sim` and its scene helpers (tools/cmd/sim.ts): scene modules are found by path or by id, the
  * command prints the hash and events within 20 lines, records `--set` values in its report, writes a replay of the
  * run that plays back to the same hash, gives the same hash on every run, adds the feel meter's report with `--feel`
- * and a text map of the level's nav grid with `--map` (WP 4.3), and refuses unknown settings, scenes and flags with
- * exit 2 naming the closest; `replayText` writes readable, exact text.
+ * (and the shooter model's line, WP 13.3) and a text map of the level's nav grid with `--map` (WP 4.3), and refuses
+ * unknown settings, scenes and flags with exit 2 naming the closest; `replayText` writes readable, exact text.
  * @see tools/cmd/sim.ts
  */
 import { existsSync, readFileSync } from 'node:fs';
@@ -78,6 +78,17 @@ describe('x sim', () => {
     const none = await sim('kernel', '--steps', '1', '--feel');
     expect(none.code).toBe(2);
     expect(none.lines.join('\n')).toMatch(/--feel: the scene kernel has no actor/);
+  });
+
+  it('adds the shooter model’s line with --feel, measuring the actor holstered or armed as it is (WP 13.3)', async () => {
+    const { code, lines } = await sim('labs/playground/scenes/gym', '--steps', '1', '--feel');
+    expect(code).toBe(0);
+    expect(lines.length).toBeLessThanOrEqual(20);
+    expect(lines.filter((line) => line.startsWith('feel: '))).toHaveLength(2);
+    expect(lines.find((line) => line.startsWith('motion: '))).toMatch(/^motion: runs 4\.41 m\/s \(5\.07 holstered\), sprints 6\.60 \(7\.59\), walks 2\.20, crouch-walks 2\.03 .* lurches 4\.60 m\/s$/); // prettier-ignore
+    const report = JSON.parse(readFileSync(join(ROOT, 'out/sim/playground-gym/report.json'), 'utf8'));
+    expect(report.metrics['feel.motion.sprint']).toBeCloseTo(6.604, 3);
+    expect(report.metrics['feel.topSpeed']).toBeCloseTo(4.4069 * 1.15, 2); // the gym's player is empty-handed
   });
 
   it('draws the level as navigation sees it with --map (WP 4.3), reading an unregistered level from its lab', async () => {

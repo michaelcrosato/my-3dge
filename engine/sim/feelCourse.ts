@@ -11,8 +11,9 @@
  * gait's speed is its speed after 5 s of it; `accelerationTime` runs from rest to 90% of the run, `sprintTime` from the
  * first tick at the run to the full sprint, sprint held from rest, and `stopTime` from letting go of a
  * steady sprint to standing still; `fatigueApex` is the height of a jump pressed on the tick after a jump lands;
- * `strafeGain` is what a sprint jump gains air strafing, the move turned across the velocity every tick; `lurch` is
- * the change of velocity in the tick a side key is pressed 0.1 s into a sprint jump.
+ * `strafeGain` is what a sprint jump gains air strafing (a side key held, the view turning with the velocity); `lurch`
+ * is the change of velocity in the tick a side key replaces the forward one 0.1 s into a sprint jump. With `holstered`,
+ * the first part runs with no weapon out (an actor's state: `__engine.feel()` passes it).
  *
  * Invariants: it never touches a scene's world; equal characters measure equal reports.
  * Moved out of engine/sim/actors.ts (WP 13.3, which keeps under its 400 lines).
@@ -36,10 +37,12 @@ import { createFeelMeter, updateFeelMeter, type FeelReport, type MotionFeel } fr
 import { createMotionState } from '../physics/movement/model';
 import { createPhysics } from '../physics/world';
 
-/** How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one. */
+/** How `measureFeel` runs: the sim's rate, the gravity a character falls under unless its settings name one. */
 export interface FeelOptions {
   hz?: number;
   gravity?: number;
+  /** A character on the shooter model runs the course with no weapon out (an actor's `motion.holstered`); else armed. */
+  holstered?: boolean;
 }
 
 /** A flat course: the character on a long floor, ticked with the meter reading every tick. */
@@ -95,7 +98,7 @@ export function measureFeel(character: Character, options: FeelOptions = {}): Fe
     const gravity = character.characterGravity ?? options.gravity ?? 32;
     const east = { move: [1, 0] as const };
     const west = { move: [-1, 0] as const };
-    const c = course(character, dt, gravity);
+    const c = course(character, dt, gravity, undefined, options.holstered ?? false);
     const still = () => c.state.grounded && c.speed() < 0.01;
     const top = () => c.speed() >= c.meter.report.topSpeed * 0.999;
     c.until(east, () => c.meter.steady);
@@ -124,7 +127,7 @@ export function measureFeel(character: Character, options: FeelOptions = {}): Fe
 
 /** The motion course (see the file comment). */
 function measureMotion(character: Character, dt: number, gravity: number): MotionFeel {
-  const ahead: CharacterInput = { move: [1, 0], view: Math.PI / 2 };
+  const ahead: CharacterInput = { move: [1, 0], view: Math.PI / 2, frame: Math.PI / 2 };
   const sprint = { ...ahead, sprint: true };
   const run = (input: CharacterInput, holstered = false) => {
     const c = course(character, dt, gravity, undefined, holstered);
@@ -157,19 +160,22 @@ function measureMotion(character: Character, dt: number, gravity: number): Motio
   const strafe = course(character, dt, gravity);
   strafe.until(sprint, () => false, 300);
   const launch = strafe.speed();
-  const across = (): [number, number] => [-strafe.state.vz / strafe.speed(), strafe.state.vx / strafe.speed()];
-  strafe.step({ move: across(), jump: true, jumpPressed: true }); // the key with the jump: no lurch
+  const across = (): CharacterInput => {
+    const [vx, vz] = [strafe.state.vx / strafe.speed(), strafe.state.vz / strafe.speed()];
+    return { move: [-vz, vx], view: Math.atan2(vx, vz), frame: Math.atan2(vx, vz) }; // the right key, the view on the velocity
+  };
+  strafe.step({ ...across(), jump: true, jumpPressed: true }); // the key with the jump: no lurch
   for (let i = 0; i < 600 && !strafe.state.grounded; i++) {
-    strafe.step({ move: across() });
+    strafe.step(across());
   }
   const strafeGain = strafe.speed() - launch;
   strafe.physics.dispose();
   const lurching = course(character, dt, gravity);
   lurching.until(sprint, () => false, 300);
   lurching.step({ ...sprint, jump: true, jumpPressed: true });
-  for (let i = 0; i < 6; i++) lurching.step({ move: [1, 0] });
+  for (let i = 0; i < 6; i++) lurching.step(ahead);
   const [vx, vz] = [lurching.state.vx, lurching.state.vz];
-  lurching.step({ move: [0, 1] });
+  lurching.step({ ...ahead, move: [0, 1] }); // the right key, facing east
   const lurch = Math.hypot(lurching.state.vx - vx, lurching.state.vz - vz);
   lurching.physics.dispose();
   return {

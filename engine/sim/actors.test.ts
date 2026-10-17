@@ -4,18 +4,23 @@
  * of `b`; the systems run in their phases (`anim` before `physics`, then `readback`); the same run gives the same hash;
  * a capture taken mid-jump restores (from text too) and continues with the uninterrupted run's hashes, Rapier's
  * controller rebuilt; `oneWay` entities make one-way platforms; `removeActor` removes body and entity; `measureFeel`
- * is the same number for number on every run and `__engine.feel()` reports it.
+ * is the same number for number on every run and `__engine.feel()` reports it. On the shooter model (WP 13.3): an
+ * actor holds `motion`, holstered unless spawned armed, reads `sprint`, `walk` and `crouch` as its buttons and `look`
+ * as the sprint's view, faces the aim point, else the look, takes its keys' frame from `cam`, else `look` (so a turning
+ * view never lurches), and `__engine.feel()` measures it holstered or armed as it is.
  */
 import { describe, expect, it } from 'vitest';
 import { createHeadless } from '../app/headless';
 import { deserialize, serialize, type Canonical } from '../core/hash';
 import { createRegistry } from '../core/registry';
+import type { Intents } from '../input/intents';
 import { createCharacter } from '../physics/character';
 import { physicsOf } from '../physics/binding';
 import { defineActorKinds, removeActor, spawnActor, type ActorComponents } from './actors';
 import { measureFeel } from './feelCourse';
 import { defineScene, startScene } from './scene';
 import type { WorldCapture } from './capture';
+import type { World } from './world';
 
 /** A registry with the actor kinds and a scene `yard`: a 60 × 60 m floor, a player at the origin, an AI at x 5. */
 function yard() {
@@ -134,5 +139,76 @@ describe('the feel', () => {
     const report = (engine as unknown as { feel(id?: number): unknown }).feel();
     expect(report).toEqual(measureFeel(createCharacter(), { gravity: 32 }));
     expect(() => (engine as unknown as { feel(id?: number): unknown }).feel(9)).toThrow(/SIM_BAD_ARGUMENT.*1, 2/);
+  });
+});
+
+/**
+ * A registry with the actor kinds and a scene `track`: a 400 × 60 m floor, a `movement:apex` player at the origin
+ * (holstered) and an armed one 20 m south, an AI.
+ */
+function track() {
+  const registry = createRegistry();
+  defineActorKinds(registry);
+  const apex = createCharacter({ movement: 'movement:apex' });
+  const floor = { type: 'fixed', colliders: [{ shape: { type: 'box', size: [400, 1, 60] }, position: [0, -0.5, 0] }] } as const; // prettier-ignore
+  const setup = (w: World) => {
+    physicsOf(w).addBody(floor);
+    spawnActor(w, { at: [0, 0, 0], character: apex });
+    spawnActor(w, { at: [0, 0, 20], character: apex, player: false, holstered: false });
+  };
+  defineScene('track', { physics: true, setup }, registry);
+  return registry;
+}
+
+/** Steps `track` `n` times with `intents`, the AI wanting the same; returns the world and its two actors. */
+function onTrack(intents: Intents, n: number) {
+  const { world } = startScene('track', { registry: track() });
+  const [player, ai] = actors(world);
+  for (let i = 0; i < n; i++) {
+    ai.actor.intents = { ...intents };
+    world.step(intents);
+  }
+  return { world, player, ai };
+}
+
+/** An actor's speed across the ground. */
+const speed = (e: ActorComponents) => Math.hypot(e.actor.vx, e.actor.vz);
+
+describe('actors on the shooter model', () => {
+  it('hold its state, holstered unless armed, and read sprint, walk and crouch as its buttons, look as the view', () => {
+    const east = { move: [1, 0], look: [Math.PI / 2, 0] } as const;
+    const sprinting = onTrack({ ...east, b: ['sprint'] }, 300);
+    expect(sprinting.player.motion).toMatchObject({ holstered: true, gait: 'sprint', sprinting: true });
+    expect(speed(sprinting.player)).toBeCloseTo(6.604 * 1.15, 2); // the holstered sprint, 7.59 m/s
+    expect(sprinting.ai.motion.holstered).toBe(false);
+    expect(speed(sprinting.ai)).toBeCloseTo(6.604, 2); // armed
+    expect(speed(onTrack({ ...east, b: ['walk'] }, 120).player)).toBeCloseTo(2.2035 * 1.15, 2);
+    expect(speed(onTrack({ ...east, b: ['crouch'] }, 120).player)).toBeCloseTo(2.032 * 1.15, 2);
+    const across = onTrack({ ...east, look: [0, 0], b: ['sprint'] }, 300); // looking south, moving east: no sprint
+    expect(across.player.motion.gait).toBe('run');
+    expect(speed(across.player)).toBeCloseTo(4.4069 * 1.15, 2);
+  });
+
+  it('face the aim point, else the look, at 720°/s, and take their keys’ frame from cam, else look', () => {
+    expect(Math.abs(onTrack({ aim: [0, 0, -10] }, 60).player.actor.yaw)).toBeCloseTo(Math.PI, 6); // north of it
+    expect(onTrack({ look: [Math.PI / 2, 0] }, 60).player.actor.yaw).toBeCloseTo(Math.PI / 2, 6);
+    const turn = (frame: (yaw: number) => Intents) => {
+      const { world, player } = onTrack({ move: [1, 0], ...frame(Math.PI / 2), b: ['sprint'] }, 120);
+      world.step({ move: [1, 0], ...frame(Math.PI / 2), b: ['jump'], p: ['jump'] });
+      world.step({ move: [1, 0], ...frame(Math.PI / 2) });
+      const before = Math.atan2(player.actor.vx, player.actor.vz);
+      const yaw = Math.PI / 2 - Math.PI / 6; // W held as the view turns 30° in one step
+      world.step({ move: [Math.sin(yaw), Math.cos(yaw)], ...frame(yaw) });
+      return Math.abs(Math.atan2(player.actor.vx, player.actor.vz) - before);
+    };
+    expect(turn((yaw) => ({ cam: yaw }))).toBeLessThan(0.01);
+    expect(turn((yaw) => ({ look: [yaw, 0] }))).toBeLessThan(0.01);
+    expect(turn(() => ({}))).toBeGreaterThan(0.3); // no frame: a 30° turn of the move is a new key, a lurch
+  });
+
+  it('are measured by __engine.feel() holstered or armed, as each is', async () => {
+    const engine = (await createHeadless({ scene: 'track', registry: track() })) as unknown as { feel(id?: number): { topSpeed: number } }; // prettier-ignore
+    expect(engine.feel().topSpeed).toBeCloseTo(4.4069 * 1.15, 2);
+    expect(engine.feel(2).topSpeed).toBeCloseTo(4.4069, 2);
   });
 });

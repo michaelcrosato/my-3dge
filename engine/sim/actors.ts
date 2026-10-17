@@ -15,8 +15,9 @@
  * WP 8.9: `body` adds the component `puppet` (the body drawn) and `clips` the clip layer (engine/sim/actorClips.ts).
  *
  * WP 13.3: an actor whose character has a movement model (engine/physics/movement/) also holds the component
- * `motion`, the model's state, and reads `sprint` (held, pressed), `walk` and `crouch` (held), its view from `look`
- * and what it faces from `aim` (the point's direction), else `look`. Its feel course is engine/sim/feelCourse.ts.
+ * `motion`, the model's state (holstered unless spawned with `holstered: false`), and reads `sprint` (held, pressed),
+ * `walk` and `crouch` (held), its view from `look`, its keys' frame from `cam` (else `look`) and what it faces from
+ * `aim` (the point's direction), else `look`. Its feel course is engine/sim/feelCourse.ts.
  *
  * Invariants: systems are added once per world, on the first (animated) spawn; all an actor remembers is in its
  * components (the sim's animators are loaded from them). Despawning leaves the body; `removeActor` removes both.
@@ -176,6 +177,8 @@ export interface ActorSpec {
   body?: string;
   /** With `anim`, the clip layer in its animator, playing from these sets (engine/sim/actorClips.ts); none when absent. */
   clips?: ClipsSpec;
+  /** With a movement model, whether it starts with no weapon out (true: the model's holstered speeds). */
+  holstered?: boolean;
   /**
    * Further components it spawns with, by name (its `reactions`, its `secondary`: engine/sim/reactions.ts), so they
    * are there from its first step, and a page's first warm-up builds what they draw.
@@ -195,7 +198,7 @@ export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): 
     w.systems.add('actors.readback', readActors, { phase: 'readback' });
   }
   const actor = { body, player: spec.player ?? true, character: spec.character, x, y, z, ...state };
-  const motion = spec.character.movement ? { motion: createMotionState() } : {};
+  const motion = spec.character.movement ? { motion: { ...createMotionState(), holstered: spec.holstered ?? true } } : {}; // prettier-ignore
   if (!spec.anim) return w.spawn({ ...spec.components, ...motion, actor });
   if (!w.systems.has('actors.anim')) {
     w.systems.add('actors.anim', stepAnimators, { phase: 'anim' });
@@ -227,17 +230,19 @@ function intentsOf(actor: ActorComponent, intents: Intents): Intents {
   return own;
 }
 
-/** The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view and what it faces. */
+/** The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it faces. */ // prettier-ignore
 function motionInput(actor: ActorComponent, wants: Intents): CharacterInput {
   const [aimX, , aimZ] = wants.aim ?? [];
   const aimed = aimX !== undefined && Math.hypot(aimX - actor.x, aimZ! - actor.z) > 0.05;
   const face = aimed ? Math.atan2(aimX - actor.x, aimZ! - actor.z) : wants.look?.[0];
+  const frame = wants.cam ?? wants.look?.[0];
   return {
     sprint: held(wants, 'sprint'),
     sprintPressed: pressed(wants, 'sprint'),
     walk: held(wants, 'walk'),
     crouch: held(wants, 'crouch'),
     ...(wants.look ? { view: wants.look[0] } : {}),
+    ...(frame !== undefined ? { frame } : {}),
     ...(face !== undefined ? { face } : {}),
   };
 }

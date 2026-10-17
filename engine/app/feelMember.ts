@@ -1,7 +1,8 @@
 /**
  * @file The inspector member `feel(id?)` (PLAN.md §8.3, WP 3.2): an actor's feel meter report, `measureFeel`
- * (engine/sim/feelCourse.ts) over the actor's character at the run's rate and `physics.characterGravity`; the first player
- * when `id` is absent, else `SIM_BAD_ARGUMENT` naming the actors' ids (`none` in a scene without one).
+ * (engine/sim/feelCourse.ts) over the actor's character at the run's rate and `physics.characterGravity`, holstered as
+ * the actor is (WP 13.3); the first player when `id` is absent, else `SIM_BAD_ARGUMENT` naming the actors' ids (`none`
+ * in a scene without one).
  *
  * Registered from here, an app module that imports engine/dev/members.ts (which declares the kind) and that
  * engine/app/headless.ts loads, so `createHeadless` in Node and `window.__engine` in a page (engine/app/engine.ts
@@ -45,12 +46,13 @@ defineMember('feel', {
   impl(host, id?: number): FeelReport {
     const { world, settings } = host.session;
     const actors = world.query('actor') as unknown as (ActorComponents & { id: number })[];
-    const actor = actors.find((e) => (id === undefined ? e.actor.player : e.id === id))?.actor;
+    const found = actors.find((e) => (id === undefined ? e.actor.player : e.id === id));
+    const actor = found?.actor;
     if (!actor) {
       const ids = actors.map((e) => e.id).join(', ') || 'none';
       throw codeError('SIM_BAD_ARGUMENT', { where: 'feel(id)', value: String(id), expected: `an actor’s id (${ids})` });
     }
     const gravity = settings.get('physics.characterGravity') as number;
-    return measureFeel(actor.character, { hz: world.hz, gravity });
+    return measureFeel(actor.character, { hz: world.hz, gravity, holstered: found.motion?.holstered });
   },
 });
