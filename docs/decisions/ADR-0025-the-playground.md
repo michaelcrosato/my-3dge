@@ -185,3 +185,48 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   check waits for WP 13.12's arms.
 - **The character's body** (addCharacter, feetOf and the new bodyAt) moved to engine/physics/characterBody.ts,
   re-exported by engine/physics/character.ts, which was at its 400 lines.
+
+## Amendment 5 (2026-10-17, WP 13.5): crouch and slide
+
+- **The duck and the slide are er-apex's.** engine/physics/movement/crouch.ts ports `update_duck`, `try_start_slide`,
+  `end_slide` and `slope_gravity`, and ground.ts, steer.ts and air.ts their parts of WalkMove, Decelerate, the jump and
+  the landing (`umiiii/er-apex`, MIT): the duck counted in whole milliseconds, 16 a tick, so a 0.4 s duck shrinks the
+  hull 25 ticks after the press and crouch spam never finishes one; standing up waits for headroom; a toggled crouch
+  (`crouchToggle`, pressed) stands up for a jump or a sprint press; a slide boosts at its start (+3.81 × the move
+  scale, capped at 10.16 ×), only 2 s after the last slide's start, brakes at 2.54 m/s² (10.16 let go or pushed
+  against) then decays × 0.7 a second, steers only sideways, gains g · n_y along the floor in two halves, loses 10 m/s
+  a metre climbed, ends below 3.18 m/s into a crouch, and slides on with crouch let go above 8.89 m/s. Its jump goes
+  1.27 m, gives back a boost jumped while the slide's crouch still goes down (a dead slide) and leaves a boosted slide
+  slowing through 7.56 to 8.89 m/s at 8.89 (the long jump); a landing ducked at speed slides. Ours: a slide without a
+  boost has none for a dead slide to take back (er-apex keeps the last boost's). The model's numbers are new
+  `crouch` and `slide` groups of MODEL_FIELDS, each a live setting but the one switch, `crouch.jump`, a profile's.
+- **The hull is the capsule's own.** A crouch resizes the body's capsule with Rapier's `setHalfHeight`
+  (engine/physics/hull.ts), the feet kept on the ground and the centre in the air (the feet tucked 0.32 m), once
+  `stepCharacter` has the model's stance, before the move and after it (a landing's slide); `feetOf`, the controller's
+  legs and the ground probe read the half height the capsule has, and the standing one reads back exactly
+  (`halfHeightOf`), so a character that never crouches moves, hashes and replays as before: every golden outside the
+  playground holds. Headroom is a capsule a tenth of the skin wider overlapping nothing the controller collides with.
+  Rapier's snapshot keeps the shape, so captures restore the hull.
+- **Two controller options for the shooter model, opt-in.** A sprint or a slide at a step stopped dead: the climb's
+  reach was measured from the tick's start, and a fast move met the step before getting its round bottom over the
+  edge, so the wall clipped all its speed. A slide over a ramp's crest flew off it: a leg down that nothing stopped
+  ended within Rapier's skin of the floor, which Rapier calls grounded, so no snap followed and the character counted
+  as airborne. `stepFrom: 'contact'` measures the reach from where the step stopped the move, and `stayOnGround`
+  snaps after such a leg (Source's StayOnGround); `movement:apex` sets both. Both are absent from every other
+  character: made everyone's, the snap alone moved three goldens (box-5-fight, box-5-precise, steps).
+- **The crawl fits the hull.** docs/PLAYGROUND.md's tunnel (1.0 m) and bar (1.2 m) were lower than Apex's crouched
+  hull, 1.19 m: the tunnel is 1.4 m clear and the bar 1.3 m up, and the house's crawlspace 1.4 m. A format-1 level
+  has no overhangs, so the tunnel's roof slab and the bar are fixed props on glyph walls and posts until WP 13.13.
+- **References stepped as a tick.** §3.2's slide rules are Apex's per tick, so the courses' references step them at
+  60 Hz in a tick's order (half the pull, the friction then the decay, half the pull) over the features' geometry,
+  restating only §3.2's numbers; the continuous slide's ends come 1 to 2 ticks early over 2 to 3 s. The runs come
+  within a tick or 1% of a speed. The feel kit gained what the courses needed: `place` takes a speed; a sample
+  carries the stance and the slide, and `time` ends on `crouched`, `standing`, `sliding` or `stopsSliding`; bounds
+  cover a labelled run and watch one camera by name; and a course's change-points out of step order are refused (they
+  were skipped without a word).
+- **Watched until WP 13.8:** in the crawl the shooter's camera (the chase camera for now) stands in the tunnel's roof
+  (208 frames inside, 224 without the player, a 5.7 m jump) and snaps in by 5 m under the bar; the other four keep
+  every bound.
+- **Left to the view's WPs:** the crouched eye and pose (WP 13.8's effects, WP 13.10's poses): the first-person eye
+  sits at the rig's eye socket, which crouches with WP 13.10's crouch pose; the motion state carries the duck, its
+  milliseconds left and their total for the view's crouch share. The toggle's binding is WP 13.9's.

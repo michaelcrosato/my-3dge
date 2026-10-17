@@ -56,7 +56,7 @@ wide. Floors are 0.3 m slabs.
 
 | Storey | Floor | Clear height | Rooms and features |
 |---|---|---|---|
-| Basement | −3.0 m | 2.7 m | workshop, laundry and boiler room, storage (shelves, crates); a crawlspace 1.1 m high under the deck, crouch and slide only, to the bulkhead doors in the backyard; the stairs up; a light switch at the stairs |
+| Basement | −3.0 m | 2.7 m | workshop, laundry and boiler room, storage (shelves, crates); a crawlspace 1.4 m high under the deck (the crouched hull, 1.19 m, fits; the standing one does not), crouch and slide only, to the bulkhead doors in the backyard; the stairs up; a light switch at the stairs |
 | Ground floor | 0.0 m | 2.7 m | the front door onto the porch; the hall, with stairs up and down; the living room (sofa, TV, fireplace, rug); the dining room; the kitchen, with an island to vault; a bathroom; the back door onto the deck; the door into the garage; windows on every side |
 | Upper floor | 3.0 m | 2.7 m | the landing over the stairwell, with a railing; two bedrooms (a bunk bed to mantle onto); the study; a bathroom; a door onto the garage's roof deck; a door onto the porch roof; the attic hatch and its ladder |
 | Attic | 6.0 m | 0 at the eaves to 4.2 m at the ridge | crouch at the edges, stand in the middle; a roof window out |
@@ -91,7 +91,7 @@ its heights given by the playground's own glyphs; from WP 13.18 it stands in its
 | Mantle walls | 0.5, 1.0, 1.5 and 2.0 m high, and 2.1 m (just past the reach), 2 m wide | the mantle's reach and time, and the refusal above it |
 | Fences | 0.6, 0.9 and 1.2 m high, thin | mantling over at a sprint, sprinting out |
 | Slide ramps | 5°, 10°, 20° and 30°, 12 m long, flat run-outs | the slide on the flat and the gain downhill |
-| Crawl | a tunnel 1.0 m high and 8 m long; a bar at 1.2 m | crouching and sliding under |
+| Crawl | a tunnel 1.4 m clear and 8 m long; a bar 1.3 m up (the crouched hull, 1.19 m, fits under both; the standing one, 1.83 m, under neither) | crouching and sliding under |
 | Gaps | 2 to 9 m between platforms 1.5 m up | the jump's reach: running, sprinting, slide-jumping, superglided |
 | Climb walls | 3, 4, 5, 6 and 6.9 m high, and 7.2 m (just past the reach) | the wall-climb's reach, topping out into a mantle; wall-bounces |
 | Stairs and slopes | risers 0.10, 0.15, 0.20 and 0.25 m; ramps at the slope limit and above it | steps and slopes |
@@ -140,7 +140,7 @@ distances ±2 cm, angles ±1°. Where sources disagree, the row says so and give
 | Slide: friction | the slowing, then a decay of the velocity | 2.54 m/s² (10.2 m/s² when crouch is released or the input opposes the slide), then × 0.7 per second | ERA-p, TF2 |
 | Slide: steering, slopes, steps | sideways only; gravity along the floor (half before the move, half after); a step up costs speed | 1.27 m/s² sideways; the pull g · n_y along the slope; 10 m/s lost per metre climbed | ERA-c, TF2 |
 | Slide: end | into a crouch; releasing crouch ends it only when slow | below 3.18 m/s; release ends it at or under 8.89 m/s | ERA-p, TF2 |
-| Slide-jump | the jump keeps the slide's speed, but a boost jumped in its first 0.24 s above 8.89 m/s is taken back (a "dead slide") | a jump of 1.27 m | AMW-S, ERA-c |
+| Slide-jump | the jump keeps the slide's speed, but a boost jumped while the slide's crouch still goes down is taken back (a "dead slide"); a boosted slide jumped between 0.85 of 8.89 m/s and 8.89 m/s leaves at 8.89 (the long jump) | a jump of 1.27 m; the dead slide's window 0.2 s, the crouch's (AMW measures 0.24 s) | AMW-S, ERA-c |
 | Jump | gravity, height and grace | g = 19.05 m/s² (750 u/s²); 1.42 m high (7.36 m/s up); coyote time 0.2 s | CVAR, AMW-G, ERA-p |
 | Jump fatigue | a jump soon after landing goes lower; a mantle, walking off a ledge or the coyote time clears it | 0.15 s after landing: 0.3 of the height, back to full by 0.75 s | AMW-G, ERA-p |
 | Air control | Quake's air acceleration (strafing turns and gains speed); no air friction | wished speed capped at 1.52 m/s; 12.7 m/s² | AMW-A, ERA-c, CVAR |

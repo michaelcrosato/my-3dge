@@ -872,7 +872,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`character.ts`](../engine/physics/character.ts): The character controller (PLAN.md WP 3.2, §4.8, §5.8; doctrines: Common ground, Quality under the hood): a capsule on a kinematic body moved by Rapier's kinematic character controller, with an action game's movement on top.
   - Exports: `addCharacter`, `bodyAt`, `Character`, `CHARACTER_FIELDS`, `CHARACTER_SETTINGS`, `CHARACTER_STATE_FIELDS`, `CharacterInput`, `CharacterState`, `CharacterStep`, `createCharacter`, `createCharacterState`, `feetOf`, `stepCharacter`, `StepOptions`
   - Tests: [`engine/physics/character.test.ts`](../engine/physics/character.test.ts)
-- [`characterBody.ts`](../engine/physics/characterBody.ts): A character's body in the physics world (PLAN.md WP 3.2; WP 13.4 split it from engine/physics/character.ts, which re-exports it, to keep that file under 400 lines): `addCharacter` adds the kinematic capsule (group `actor`), `bodyAt` is where it stands for given feet, its bottom just outside the skin above them, so it does not stick at seams, and `feetOf` reads its feet back: the bottom of the capsule, less the skin.
+- [`characterBody.ts`](../engine/physics/characterBody.ts): A character's body in the physics world (PLAN.md WP 3.2; WP 13.4 split it from engine/physics/character.ts, which re-exports it, to keep that file under 400 lines): `addCharacter` adds the kinematic capsule (group `actor`), `bodyAt` is where it stands for given feet, its bottom just outside the skin above them, so it does not stick at seams, and `feetOf` reads its feet back: the bottom of the capsule it has now, less the skin (a crouch shrinks it: engine/physics/hull.ts).
   - Exports: `addCharacter`, `bodyAt`, `feetOf`
   - Tests: [`engine/physics/character.test.ts`](../engine/physics/character.test.ts)
 - [`crowd.ts`](../engine/physics/crowd.ts): Crowd bodies (PLAN.md WP 5.1, §4.7; doctrines: Common ground, Reproducible, Quality under the hood): a crowd of dynamic bodies driven by the velocities its AI wants, so the solver resolves the crowd and no separation code is needed.
@@ -884,8 +884,11 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`groups.ts`](../engine/physics/groups.ts): Collision groups (PLAN.md WP 3.1, §5.1): the one table of what touches what, by name.
   - Exports: `COLLISION_GROUPS`, `dropGroups`, `GROUP_CODES`, `GROUP_NAMES`, `groupBits`, `GroupName`, `queryBits`, `touches`
   - Tests: [`engine/physics/groups.test.ts`](../engine/physics/groups.test.ts)
+- [`hull.ts`](../engine/physics/hull.ts): A character's hull (PLAN.md WP 13.5, docs/PLAYGROUND.md §3.2): the capsule its body has now.
+  - Exports: `hullFits`, `hullHeight`, `HullKeep`, `matchHull`, `setHull`
+  - Tests: [`engine/physics/hull.test.ts`](../engine/physics/hull.test.ts)
 - [`move.ts`](../engine/physics/move.ts): The character controller's moves (PLAN.md WP 3.2, §4.8; doctrine: Quality under the hood): `moveCharacter` moves a character's capsule through Rapier's kinematic character controller, across then down, climbing steps and snapping to the ground itself, and `sink` takes it down with a sinking floor.
-  - Exports: `CharacterHit`, `CharacterMove`, `isWalkable`, `isWall`, `moveCharacter`, `MoveOptions`, `partsOf`, `sink`
+  - Exports: `CharacterHit`, `CharacterMove`, `halfHeightOf`, `isWalkable`, `isWall`, `moveCharacter`, `MoveOptions`, `oneWayFilter`, `partsOf`, `QUERY_FLAGS`, `queryGroups`, `sink`
   - Tests: [`engine/physics/character.test.ts`](../engine/physics/character.test.ts)
 - [`params.ts`](../engine/physics/params.ts): The physics parameters (PLAN.md WP 3.1, §6.5 item 5; doctrine: Reproducible): the one table of Rapier's integration parameters, pinned rather than left to the release's defaults, and the world's gravity as a setting.
   - Exports: `INTEGRATION_PARAMETERS`, `PHYSICS_SETTINGS`
@@ -902,11 +905,14 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`air.ts`](../engine/physics/movement/air.ts): The shooter model off the ground (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2): air control, the lurch, the jump and the landing.
   - Exports: `airMove`, `hopSpeed`, `jumpScale`, `land`, `landSlowdown`, `lurch`, `lurchStrength`, `newKey`
   - Tests: [`engine/physics/movement/air.test.ts`](../engine/physics/movement/air.test.ts)
-- [`ground.ts`](../engine/physics/movement/ground.ts): The shooter model on the ground (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2): when it sprints, how fast its gait goes, and one tick of the velocity across the ground, as Apex's WalkMove does it: the stick curve, the deceleration of only the part of the velocity the input does not push for (`decelerate`), then the acceleration toward the wished speed, never past the larger of the old speed and the wished one (`accelerate`), at a rate set by the speed at the tick's start (`groundAccel`).
-  - Exports: `accelerate`, `decelerate`, `directionShare`, `gaitSpeed`, `groundAccel`, `SprintInput`, `updateSprint`, `walkMove`
+- [`crouch.ts`](../engine/physics/movement/crouch.ts): The shooter model's crouch and slide (PLAN.md WP 13.5, docs/PLAYGROUND.md §3.2): the duck, and the slide a crouch at speed starts.
+  - Exports: `crouchBlocks`, `ducking`, `DuckInput`, `endSlide`, `FloorNormal`, `hullFor`, `slideJump`, `SlideStart`, `slopePull`, `tryStartSlide`, `updateDuck`
+  - Tests: [`engine/physics/movement/crouch.test.ts`](../engine/physics/movement/crouch.test.ts)
+- [`ground.ts`](../engine/physics/movement/ground.ts): The shooter model on the ground (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2): when it sprints, how fast its gait goes, and one tick of the velocity across the ground, as Apex's WalkMove does it: the stick curve, the deceleration of only the part of the velocity the input does not push for (`decelerate`), then the acceleration toward the wished speed, never past the larger of the old speed and the wished one (`accelerate`), at a rate set by the speed at the tick's start (`groundAccel`); a slide (WP 13.5) only steers, at `slide.accel`, and brakes by its own friction, then decays.
+  - Exports: `accelerate`, `decelerate`, `directionShare`, `gaitSpeed`, `groundAccel`, `SlideBrake`, `SprintInput`, `updateSprint`, `walkMove`
   - Tests: [`engine/physics/movement/ground.test.ts`](../engine/physics/movement/ground.test.ts)
 - [`model.ts`](../engine/physics/movement/model.ts): The shooter movement model's numbers and state (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2): what a movement profile (engine/physics/movement/profile.ts) gives a character in `character.movement`, and what each such character keeps between ticks, the component `motion` (engine/sim/actors.ts).
-  - Exports: `createMotionState`, `GAITS`, `MODEL_FIELDS`, `MODES`, `MOTION_FIELDS`, `MotionState`, `MovementModel`, `MovementModelSpec`, `STANCES`
+  - Exports: `createMotionState`, `DUCKS`, `GAITS`, `MODEL_FIELDS`, `MODES`, `MOTION_FIELDS`, `MotionState`, `MovementModel`, `MovementModelSpec`, `STANCES`
   - Tests: [`engine/physics/movement/model.test.ts`](../engine/physics/movement/model.test.ts)
 - [`profile.ts`](../engine/physics/movement/profile.ts): Movement profiles (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2): the registry kind `movement`.
   - Exports: `applyMovement`, `defineMovement`, `getMovement`, `listMovements`, `MOVEMENT_FIELDS`, `movementKind`, `MovementProfile`, `MovementSpec`
@@ -917,8 +923,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`settings.ts`](../engine/physics/movement/settings.ts): The shooter model's live tuning (PLAN.md WP 13.4, docs/PLAYGROUND.md §3.4): a setting for every number of the model, `movement.<group>.<field>` (`movement.gaits.sprint`, `movement.air.speed`) and `movement.turnRate`, its default, range, unit and description the model's own (engine/physics/movement/model.ts), taking effect at once.
   - Exports: `MOVEMENT_SETTINGS`, `MovementOverride`, `movementOverrides`, `tuneCharacter`
   - Tests: [`engine/physics/movement/settings.test.ts`](../engine/physics/movement/settings.test.ts)
-- [`steer.ts`](../engine/physics/movement/steer.ts): One tick of the shooter model (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2), in the order of Apex's own tick (er-apex's `controller.rs` `tick`, lines 551-700; MIT, engine/physics/movement/NOTICE): the timers and the stance, the sprint, the jump, then the walk on the ground (engine/physics/movement/ground.ts) or the lurch and the air move in the air (air.ts), then gravity, integrated exactly; after the controller's move, `settleMotion` lands (the fall stun, by the impact speed along the floor's normal), keeps the flight's count and turns the character toward where it faces at the model's turn rate.
-  - Exports: `settleMotion`, `steerMotion`, `turnToward`
+- [`steer.ts`](../engine/physics/movement/steer.ts): One tick of the shooter model (PLAN.md WP 13.3, docs/PLAYGROUND.md §3.2), in the order of Apex's own tick (er-apex's `controller.rs` `tick`, lines 551-700; MIT, engine/physics/movement/NOTICE): the timers, the duck and the slide it starts (engine/physics/movement/crouch.ts), the sprint, the jump, then the walk on the ground (engine/physics/movement/ground.ts; a slide's between the halves of its pull along the floor) or the lurch and the air move in the air (air.ts), then gravity, integrated exactly; after the controller's move, `settleMotion` takes a slide's step-up cost, lands (the fall stun, by the impact speed along the floor's normal; ducked, a landing slides), keeps the floor, the flight's count and turns the character toward where it faces at the model's turn rate.
+  - Exports: `Room`, `settleMotion`, `steerMotion`, `turnToward`
   - Tests: [`engine/physics/movement/steer.test.ts`](../engine/physics/movement/steer.test.ts)
 
 ## engine/sim
@@ -1245,10 +1251,22 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `AIR_START`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`bounds.ts`](../labs/playground/courses/bounds.ts): The bounds every playground course checks beside its own numbers (docs/PLAYGROUND.md §4, §5.1 and §9.1, PLAN.md WP 13.4): from the step after a course places the player, its body's (a planted foot slides at most 5 cm in one contact, the anim QA's limit; no point jumps past the QA's pop of 9/16 m in a step) and, for each of the playground's five cameras (labs/playground/views.ts), §4's: no frame moves the camera more than 0.3 m beyond the player's own move or turns it more than 4°, none stands it inside the level, and none loses the player (but first person, whose arms come with WP 13.12).
-  - Exports: `bodyBounds`, `BOUNDS`, `cameraBounds`
+  - Exports: `bodyBounds`, `BOUNDS`, `BoundsSpan`, `cameraBounds`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`crawl.ts`](../labs/playground/courses/crawl.ts): The crawl course, `course:playground-crawl` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.5): the player, empty-handed, crouch-walks into the crawl tunnel (1.4 m clear, 8 m long), lets crouch go inside and goes on crouched under the roof, standing up and running once out; then slides under the bar (1.3 m up) from a sprint.
+  - Exports: `CRAWL_STARTS`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`jumps.ts`](../labs/playground/courses/jumps.ts): The jumps course, `course:playground-jumps` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.4): the player, empty-handed, placed in the open floor between the slide ramps and the slope tests, jumps from standing, jumps again as it lands (the press buffered just before), then once more after a rest, then walks and crouch-walks south; its numbers against §3.2's, then the bounds (labs/playground/courses/bounds.ts).
   - Exports: `JUMPS_START`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`slideFlat.ts`](../labs/playground/courses/slideFlat.ts): The flat slide course, `course:playground-slide-flat` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.5): the player, empty-handed, sprints south down the open lane beside the sprint strip and slides four times: a boosted slide let go fast, two inside the boost's cooldown, and a boosted one held to its end; its numbers against §3.2's, then the bounds (labs/playground/courses/bounds.ts).
+  - Exports: `SLIDE_FLAT_START`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`slideJump.ts`](../labs/playground/courses/slideJump.ts): The slide-jump course, `course:playground-slide-jump` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.5): the player, empty-handed, sprints south down the open lane, slides, and jumps out of the slide three times: once its crouch is down, once while it is still going down (a dead slide), and once as the slide slows through the long jump's band; each run's numbers against §3.2's, then each run's bounds (labs/playground/courses/bounds.ts).
+  - Exports: `SLIDE_JUMPS`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`slideRamps.ts`](../labs/playground/courses/slideRamps.ts): The slide ramps course, `course:playground-slide-ramps` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.5): the player, empty-handed, is put on the deck of each slide ramp (5°, 10°, 20° and 30°, 12 m long) at a holstered sprint's 7.59 m/s, crouching, so it slides off the deck, down the ramp and out across the run-out; then at the 30° ramp's foot, sliding up it.
+  - Exports: `SLIDE_RAMPS`, `SLIDE_UPHILL`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`strip.ts`](../labs/playground/courses/strip.ts): The strip course, `course:playground-strip` (docs/PLAYGROUND.md §2.3 and §3.2, PLAN.md WP 13.4): the player, empty-handed (holstered: every speed ×1.15), placed at the strip's north end, runs south from standing for 1.5 s, sprints on a press (the sticky sprint keeps it), then lets go and stops; its numbers against §3.2's, then the bounds (labs/playground/courses/bounds.ts).
   - Exports: `STRIP_START`
@@ -1257,7 +1275,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 ## labs/playground/levels
 
 - [`gym.ts`](../labs/playground/levels/gym.ts): The gym (docs/PLAYGROUND.md §2.3, PLAN.md WP 13.1): the playground's calibrated features, as data, and the level they make.
-  - Exports: `GYM_FEATURES`, `GYM_SIZE`, `GYM_SPAWN`, `GYM_TEXT`, `GYM_TILE`, `GymFeature`, `GymKind`, `GymRect`
+  - Exports: `GYM_CRAWL`, `GYM_FEATURES`, `GYM_PROPS`, `GYM_SIZE`, `GYM_SPAWN`, `GYM_TEXT`, `GYM_TILE`, `GymFeature`, `GymKind`, `GymRect`
   - Tests: [`labs/playground/scenes/gym.test.ts`](../labs/playground/scenes/gym.test.ts)
 
 ## labs/playground/looks

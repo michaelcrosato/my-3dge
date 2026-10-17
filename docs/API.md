@@ -612,7 +612,7 @@ game agent's manual.
 - `PillarOptions` (interface from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's footprint and height in metres.
 - `PillarPart` (interface from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): One part of a pillar: a square slab `width` across, from height `from` to `to` (m).
 - `pillarParts` (function from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's parts, bottom to top (see the file comment).
-- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending; on the shooter model its motion state starts again, holstered as it was.
+- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was.
 - `planCutaway` (function from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): For each target, for each cell: whether `pose`, looking at `focus`, cuts it.
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `playClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `clip` (`SET/Clip`, or bare) on actor `id`, fading in over what plays (the layer's `play`).
@@ -1298,7 +1298,7 @@ game agent's manual.
 - `PHYSICS_SETTINGS` (const from [`engine/physics/params.ts`](../engine/physics/params.ts)): The physics settings, path → field; `defineSettings(PHYSICS_SETTINGS, registry)` declares them on another registry.
 - `physicsOf` (function from [`engine/physics/binding.ts`](../engine/physics/binding.ts)): The physics world of a sim world: its bodies and queries.
 - `physicsWalls` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
-- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending; on the shooter model its motion state starts again, holstered as it was.
+- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was.
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `playClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `clip` (`SET/Clip`, or bare) on actor `id`, fading in over what plays (the layer's `play`).
 - `POINT_INDEX` (const from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Each point's position in `POSE_POINTS`.
@@ -4320,7 +4320,7 @@ For the agents who maintain the engine.
 - `CharacterStep` (interface): What one tick did.
 - `createCharacter` (function): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
 - `createCharacterState` (function): A character's state at rest, every field at its default.
-- `feetOf` (function from [`engine/physics/characterBody.ts`](../engine/physics/characterBody.ts)): Where a character's feet are: the bottom of its capsule, less the skin (on flat ground, the ground's height).
+- `feetOf` (function from [`engine/physics/characterBody.ts`](../engine/physics/characterBody.ts)): Where a character's feet are: the bottom of its capsule as it is now (a crouch shrinks it, engine/physics/hull.ts), less the skin (on flat ground, the ground's height).
 - `stepCharacter` (function): One sim tick of a character: `steer` turns its intents into a velocity and a move (engine/physics/feel.ts), the controller makes the move (`moveCharacter`), `settle` fixes the velocity from what happened, walls stop the velocity going into them, it pushes what it walked into (both leave at (push·v + m·u)/(push + m)), probes the ground under it and presses a dynamic floor with push × world gravity.
 - `StepOptions` (interface): What `stepCharacter` needs beside the character: the step length, the gravities and the one-way platforms.
 
@@ -4328,7 +4328,7 @@ For the agents who maintain the engine.
 
 - `addCharacter` (function): Adds a character's body (a kinematic capsule, group `actor`), its bottom just outside the skin above `feet`.
 - `bodyAt` (function): Where a character's body stands for its feet at `feet`: its capsule's bottom just outside the skin above them.
-- `feetOf` (function): Where a character's feet are: the bottom of its capsule, less the skin (on flat ground, the ground's height).
+- `feetOf` (function): Where a character's feet are: the bottom of its capsule as it is now (a crouch shrinks it, engine/physics/hull.ts), less the skin (on flat ground, the ground's height).
 
 ### [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)
 
@@ -4374,15 +4374,27 @@ For the agents who maintain the engine.
 - `queryBits` (function): Rapier's interaction groups for a query that hits the groups named (all of them when none are).
 - `touches` (function): Whether colliders of groups `a` and `b` touch.
 
+### [`engine/physics/hull.ts`](../engine/physics/hull.ts)
+
+- `hullFits` (function): Whether a capsule of straight middle `height` fits where `character`'s body is, its feet or its centre kept (see the file comment): what standing up asks before it stands.
+- `hullHeight` (function): A character's capsule's straight middle now (m): its standing one, or what a crouch made it.
+- `HullKeep` (type): What a new hull keeps where it is: the feet (on the ground) or the centre (in the air).
+- `matchHull` (function): Gives `character`'s body the hull of straight middle `height` unless it has it: on the ground keeping the feet; in the `air` growing about the centre where that fits, else from the feet, and shrinking about the centre when the crouch began in the air (`tuck`: the feet tucked up), else from the top.
+- `setHull` (function): Gives `character`'s body a capsule of straight middle `height`, its feet or its centre kept where they are.
+
 ### [`engine/physics/move.ts`](../engine/physics/move.ts)
 
 - `CharacterHit` (interface): One obstacle the controller met: the body, the point it touched and that surface's outward normal.
 - `CharacterMove` (interface): What `moveCharacter` did: the translation it made, whether it ended grounded, and what it hit.
+- `halfHeightOf` (function): The half height of a character's capsule now: its standing one, exactly, unless a crouch changed it (engine/physics/hull.ts), when the capsule's own, which Rapier keeps as a float32.
 - `isWalkable` (function): Whether `character` can stand on a surface: no steeper than it climbs.
 - `isWall` (function): Whether a surface is a wall to `character`: steeper than it climbs, not a ceiling.
 - `moveCharacter` (function): Moves a character's capsule by `desired` as far as it can: across first (sliding along walls, up slopes it climbs, pushing props), then down or up alone.
 - `MoveOptions` (interface): How `moveCharacter` moves: whether it stands on the ground (and is not rising), and the one-way platforms.
+- `oneWayFilter` (function): The filter that makes one-way platforms solid only to feet at or above their top, less a grace.
 - `partsOf` (function): The Rapier body of a character, with its capsule (its first collider); throws `PHYSICS_BAD_ARGUMENT`.
+- `QUERY_FLAGS` (const): Sensors never block a character: the flags of every query its controller makes.
+- `queryGroups` (function): The groups a character's controller queries: its collider's, less the groups it `shoves` (groups.ts `dropGroups`).
 - `sink` (function): How far a character goes down `by` (< 0) with its sinking `floor`, from where its last move left the capsule: a controller move that leaves the floor out, so a ledge it overhangs holds it up rather than taking it in.
 
 ### [`engine/physics/movement/air.ts`](../engine/physics/movement/air.ts)
@@ -4396,13 +4408,28 @@ For the agents who maintain the engine.
 - `lurchStrength` (function): The lurch's strength `t` seconds after the take-off (see the file comment).
 - `newKey` (function): Whether the move's `keys` (`[right, forward]` in their frame) are a new key against last tick's `before`: pressed from none, or turned by `lurch.turn` or more.
 
+### [`engine/physics/movement/crouch.ts`](../engine/physics/movement/crouch.ts)
+
+- `crouchBlocks` (function): Whether its crouch keeps a jump from happening this tick (Apex's CheckJumpButton): a toggled crouch stands up instead (and ends, unless `crouch.jump`), and getting up never jumps; out of a slide, both jump.
+- `ducking` (const): Whether the duck is down or going down (Apex's `ducking()`).
+- `DuckInput` (interface): What `updateDuck` reads beside the model and the state: the crouch buttons, and the slide's start.
+- `endSlide` (function): Ends the slide (Apex's EndSlide).
+- `FloorNormal` (type): A floor's normal, `[x, y, z]`, unit.
+- `hullFor` (function): The straight middle of the hull its stance has (m): the character's capsule standing, the model's crouched.
+- `slideJump` (function): A boosted slide's jump (Apex's CheckJumpButton): jumped while its duck still goes, within `slide.dead` of its start, the boost comes back off (a dead slide); between `slide.longFrom` of `slide.long` and `slide.long`, the speed jumps at `slide.long` (the long jump).
+- `SlideStart` (interface): What `tryStartSlide` reads beside the model and the state.
+- `slopePull` (function): Part of the slide's pull along the floor (see the file comment): `h` gains `share · g · dt · n_y` of its slant.
+- `tryStartSlide` (function): Apex's TryStartSlide (see the file comment).
+- `updateDuck` (function): Apex's update_duck (see the file comment): updates the duck, the stance and the slide in `motion`.
+
 ### [`engine/physics/movement/ground.ts`](../engine/physics/movement/ground.ts)
 
 - `accelerate` (function): Apex's Accelerate: adds along `dir` up to `wishSpeed`, at most `rate × dt`, never past max(old speed, wished).
-- `decelerate` (function): Apex's Decelerate: brakes `h` in place, all but the part along `dir` the input pushes for (up to `wishSpeed`), at the standing rate (the sprint's above the run, the crouch's crouched), and never below 0.
+- `decelerate` (function): Apex's Decelerate: brakes `h` in place, all but the part along `dir` the input pushes for (up to `wishSpeed`), at the standing rate (the sprint's above the run, the crouch's crouched; a slide's own, then its decay), never below 0.
 - `directionShare` (function): The share of its gait's speed a move gets by its direction from the view: `gaits.side` straight across it, `gaits.back` straight back, blended by the squares of the move's parts across and back (so exactly 1 when both are 1, as in Apex); 1 with no view.
 - `gaitSpeed` (function): The speed its gait goes at, before the move scale: the crouch-walk crouched, the walk walking, the sprint sprinting (dipping toward `gaits.sprintSide` as the move turns 45° off the view), else the run; every gait but the sprint times its `directionShare`.
 - `groundAccel` (function): Apex's GetAccel: the acceleration at horizontal speed `speed`, by the speed at the tick's start (m/s²).
+- `SlideBrake` (interface): How a slide brakes: hard (`slide.brake`) with crouch let go or the move against it, else `slide.decel`.
 - `SprintInput` (interface): What `updateSprint` reads beside the model and the state.
 - `updateSprint` (function): Apex's sticky sprint (see the file comment): updates `motion.sticky`, `stickyLeft` and `sprinting`.
 - `walkMove` (function): Apex's WalkMove: one tick of `h` across the ground toward `wish` (at most length 1) at `maxSpeed`: the stick curve (a move shorter than 1 counts as length × (2 − length), a sprinting move 1.25 times longer, capped at 1), then `decelerate`, then `accelerate` at `groundAccel` of the speed it started with.
@@ -4410,14 +4437,15 @@ For the agents who maintain the engine.
 ### [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)
 
 - `createMotionState` (function): A character at rest on the ground, standing and holstered: every field at its default.
-- `GAITS` (const): How a character moves on the ground this tick.
+- `DUCKS` (const): Apex's duck: standing, going down, down, or getting up.
+- `GAITS` (const): How a character moves on the ground this tick: a slide is a gait.
 - `MODEL_FIELDS` (const): The model's numbers (see the file comment): what `character.movement` holds.
-- `MODES` (const): Where a character is in the model: on the ground or in the air (WP 13.5–13.7 add slides, mantles and climbs).
+- `MODES` (const): Where a character is in the model: on the ground or in the air (WP 13.6 and 13.7 add mantles, climbs and rides).
 - `MOTION_FIELDS` (const): What a character on the model keeps between ticks: the component `motion`'s fields, hashed and captured.
 - `MotionState` (type): The component `motion`: a character's state in the model (`MOTION_FIELDS` documents each field).
 - `MovementModel` (type): The model's numbers, filled: what `character.movement` holds.
 - `MovementModelSpec` (type): The model's numbers as a profile writes them: any group, and any number in one, left out is Apex's.
-- `STANCES` (const): How a character stands (WP 13.5 adds the crouch's timing and its capsule).
+- `STANCES` (const): Its hull: standing, or crouched (the model's `crouch.height`).
 
 ### [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)
 
@@ -4443,7 +4471,8 @@ For the agents who maintain the engine.
 
 ### [`engine/physics/movement/steer.ts`](../engine/physics/movement/steer.ts)
 
-- `settleMotion` (function): The tick after the move (see the file comment): landing (the stun applied to the velocity across the ground; returns the landing speed when above 2 m/s, else 0), a head bump ending a rise, walking off a ledge clearing the jump's fatigue, the mode, and the turn toward `input.face`, else the move.
+- `Room` (interface): What the model asks the world: whether the standing hull fits where the character is, its feet kept.
+- `settleMotion` (function): The tick after the move (see the file comment): a slide's step-up cost (`slide.step` a metre climbed), landing (the stun applied to the velocity across the ground; ducked, a landing slides; returns the landing speed when above 2 m/s, else 0), a head bump ending a rise, walking off a ledge clearing the jump's fatigue, the floor under it, the mode, and the turn toward `input.face`, else the move.
 - `steerMotion` (function): The tick before the move (see the file comment).
 - `turnToward` (function): `yaw` turned toward `target` by at most `step` radians, kept within (−π, π].
 
@@ -4508,7 +4537,7 @@ For the agents who maintain the engine.
 - `ActorSpec` (interface): What `spawnActor` takes.
 - `AnimatorComponent` (interface): The component `animator`: an actor's character animator as plain data, and what its game code tells its body.
 - `defineActorKinds` (function): Declares the components `actor`, `animator`, `puppet`, `clips` (engine/sim/actorClips.ts), `oneWay`, `reactions` and `secondary` (engine/sim/reactions.ts) and the setting `physics.characterGravity` on `registry`.
-- `placeActor` (function): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending; on the shooter model its motion state starts again, holstered as it was.
+- `placeActor` (function): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was.
 - `PuppetComponent` (interface): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
 - `removeActor` (function): Removes an actor and its body.
 - `spawnActor` (function): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
@@ -5330,13 +5359,31 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/courses/bounds.ts`](../labs/playground/courses/bounds.ts)
 
-- `bodyBounds` (function): The body's bounds, from step `from`.
+- `bodyBounds` (function): The body's bounds, from step `from` (see `BoundsSpan`).
 - `BOUNDS` (const): §4's and §5.1's bounds: the camera's move (m) and turn (rad) in a frame, a sole's slide (m), a point's pop (m).
-- `cameraBounds` (function): Every camera's bounds, from step `from` (see the file comment).
+- `BoundsSpan` (interface): Where a run of bounds reads: from step `from` to `to` (the course's end when absent), its names after `label`.
+- `cameraBounds` (function): Every camera's bounds, from step `from` (see the file comment and `BoundsSpan`).
+
+### [`labs/playground/courses/crawl.ts`](../labs/playground/courses/crawl.ts)
+
+- `CRAWL_STARTS` (const): Where the tunnel run starts (4 m north of the tunnel, in its middle) and where the bar's does (facing south).
 
 ### [`labs/playground/courses/jumps.ts`](../labs/playground/courses/jumps.ts)
 
 - `JUMPS_START` (const): Where the jumps start: the open floor south of the slide ramps, facing south.
+
+### [`labs/playground/courses/slideFlat.ts`](../labs/playground/courses/slideFlat.ts)
+
+- `SLIDE_FLAT_START` (const): Where the flat slides start: the open lane west of the features, facing south.
+
+### [`labs/playground/courses/slideJump.ts`](../labs/playground/courses/slideJump.ts)
+
+- `SLIDE_JUMPS` (const): Each run: where it starts on the open lane (z), and how many ticks into its slide it jumps.
+
+### [`labs/playground/courses/slideRamps.ts`](../labs/playground/courses/slideRamps.ts)
+
+- `SLIDE_RAMPS` (const): The runs: each ramp's slope (°), its lane's middle (x), its deck's height (m) and how long the slide lasts (s).
+- `SLIDE_UPHILL` (const): Where the uphill run starts: the 30° ramp's run-out, 6 m south of its foot, facing north.
 
 ### [`labs/playground/courses/strip.ts`](../labs/playground/courses/strip.ts)
 
@@ -5351,7 +5398,9 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/levels/gym.ts`](../labs/playground/levels/gym.ts)
 
+- `GYM_CRAWL` (const): The crawl (m): a tunnel `clear` high inside, `long` and `wide`, its walls `wall` high with the roof slab (`slab` thick) laid on them, and a bar whose underside is `bar` up, on two posts `post` high.
 - `GYM_FEATURES` (const): The features, north to south (see the file comment and docs/PLAYGROUND.md §2.3).
+- `GYM_PROPS` (const): The crawl's slab and bar: fixed boxes the gym stands on its walls and posts (the level's blocks start at the floor).
 - `GYM_SIZE` (const): The gym's floor (m): west to east and north to south, inside its perimeter wall.
 - `GYM_SPAWN` (const): The spawn: the tile `@` marks, at the north end of the gym, its centre (m).
 - `GYM_TEXT` (const): The gym's level text (format 1), drawn from `GYM_FEATURES`.
