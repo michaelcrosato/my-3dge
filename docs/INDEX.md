@@ -13,6 +13,7 @@ it.
 
 - [`docs/PROGRESS.md`](../docs/PROGRESS.md): read first, every session: where things stand, what is next, the open issues.
 - [`docs/TESTING.md`](../docs/TESTING.md): the tiers, and which unit tests and specs a change selects.
+- [`docs/PLAYGROUND.md`](../docs/PLAYGROUND.md): the playground (Phase 13): the site, the move set and its reference values, the five cameras, the two looks, and how feel and looks are checked.
 - [`docs/HANDOFF.md`](../docs/HANDOFF.md): handing the engine to game agents (the prompt, many games at once), starting in a new environment, and the box against my-3d2dge's stress-world.
 - [`lean/`](../lean/): the default handoff, the engine as a library (ADR-0024 amendment 1); docs/GAME-GUIDE.md and labs/game/, the full workspace's guide and starter. Keep lean/README.md, lean/game.html, the guide and the starter true when a public API changes (`x docs --write` rebuilds lean/my3dge.js and writes the generated blocks). tools/game/new-game.mjs makes a game; `node x engine --test` proves one passes its own gate.
 - [`labs/box/README.md`](../labs/box/README.md): the box's scenes, settings and quick loop; adding a scene or a variant (a variant is a new scene file or a settings preset, never a change of meaning in a passing scene).

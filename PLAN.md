@@ -116,7 +116,8 @@ Around it:
 | 0–1 | Foundation and kernel | Sequential |
 | 2–7 | Box 1 to Box 6. Gate G7 is the **Stress Box**: the foundation is set | Parallel lanes inside each stage |
 | 8–9 | The animation library and audio | Parallel lanes; they may start early, without delaying a box stage |
-| On demand | World and animation extras, advanced GPU features, more agent tooling, and a few box-stage tools (Phases 10–12; WPs 5.6, 7.5–7.7, 8.8) | Each WP starts only when its trigger is measured |
+| On demand | World and animation extras, advanced GPU features, more agent tooling, and a few box-stage tools (Phases 10–12; WPs 5.6, 7.5–7.7, 8.8) | Each WP starts only when its trigger is measured; the playground fires all 21 (Phase 13, ADR-0025) |
+| 13 | **The Playground**: a house on a block where the player moves as in Apex Legends, in five cameras and two looks, with the on-demand WPs it needs | Four stages, G10 to G13: the character first, then the house, then the life in it, then the tech demo |
 | H | Production hardening: other browsers, testing on phones, a native build, releases | Only when a game goes to production |
 
 Each scheduled phase ends at a gate: a fixed set of commands that must pass.
@@ -156,12 +157,12 @@ The full list of 54 is in §7.
 - **G6. Leave the engine ready for a separate game.** Games use its public API and extend it through registries, events and scenes. They never edit the internals, and never need to read them.
 
 **Non-goals**
-- **No game.** Emberdeep (`src/emberdeep/`) does not come over in any form, and it is not to be remade (§5.7). The Stress Box is a test scene: its monsters, waves and numbers are sample content in `labs/box/`.
+- **No game.** Emberdeep (`src/emberdeep/`) does not come over in any form, and it is not to be remade (§5.7). The Stress Box is a test scene: its monsters, waves and numbers are sample content in `labs/box/`. The Playground (Phase 13) is a test site in the same way: its house, cast and numbers are sample content in `labs/playground/`.
 - **No copy of the stress test's behaviour or feel.** "Similar" means the same job: a hall, a hero, a crowd, physics, combat, cameras and looks, measured.
 - **No 2D engine.** Pixel-art world rendering, the depth-sorted 2D renderer, the 2D views, TileMap and PlatformMap drawing, the genre starter kits, the 2D agent edition and Card mode do not come over.
 - **No GUI-only feature** (doctrine: Agent-operable). Pages and panels exist so that anyone watching can see the work; each is a view over a machine interface.
 - **No WebGL 2 renderer** (doctrine: WebGPU only). This supersedes the original goal of WebGL 2 compatibility. Whether players without WebGPU are served is a production question for Phase H.
-- **Nothing in anticipation** (doctrine: North Star). Expansions, extra tooling and advanced GPU features wait for a measured trigger (§9.1).
+- **Nothing in anticipation** (doctrine: North Star). Expansions, extra tooling and advanced GPU features wait for a measured trigger (§9.1); the Playground (Phase 13, ADR-0025) is the consumer that fires them.
 - **No binary assets without the owner's approval** (doctrine: Assets). Fonts are pre-approved.
 - **No hardening before production** (doctrines: Reproducible, Discovery first): no Firefox, Safari or phone test runs, no cross-platform determinism, no release machinery. Phase H lists them for later. The owner made two exceptions (ADR-0021): touch controls (WP 3.12) and a Vercel deployment of every push (WP 0.12) come early, and neither is tested. A failed Vercel build is fixed when it shows; any other problem with them, when the owner reports it.
 
@@ -853,6 +854,8 @@ my-3dge/
                             levels/*.txt, cast/ (sample monsters and behaviours), bodies/, README.md
     hello/                  the harness smoke page (WP 0.8)
     game/                   the starter game every game made from the engine begins as (WP 10.7, ADR-0024)
+    playground/             THE PLAYGROUND (Phase 13, ADR-0025): index.html, main.ts, scenes/, levels/, cast/,
+                            bodies/, looks/, sounds/, courses/, weapons/, README.md
     (on demand, WP 10.8: optional views for anim, materials, props, fx, cameras, physics and the animation library)
   data/
     fonts/                  approved fonts only (doctrine: Assets), each with its license; empty until one is needed
@@ -1546,7 +1549,8 @@ Everything else is decided by the agent and recorded as an ADR amendment (§11.4
 | 7 Box 6: the look | Lights and shadows, materials v2 (toon, outlines), textures v2, post | R, W, B | **G7: the Stress Box** | Parallel lanes |
 | 8 Animation library | Provenance, codec, sets (with 100STYLE and Quaternius v2 from shardfall), baker and clip layer, tools, tests, actions, clip mode in the box | L | **G8** | May start after G0 (8.1) and WP 1.1 (8.2); never delays a box stage |
 | 9 Audio | DSP, data, runtime, tools, sound in the box | X | **G9** | May start after G1; never delays a box stage |
-| On demand | 21 WPs: the bot and dev actions, the governor, MCP, the gallery, the source re-import, and Phases 10–12 (expansions, advanced GPU features, more agent tooling) | as each phase | Each WP's own **Done when** | Each starts only when its trigger is measured (below) |
+| On demand | 21 WPs: the bot and dev actions, the governor, MCP, the gallery, the source re-import, and Phases 10–12 (expansions, advanced GPU features, more agent tooling) | as each phase | Each WP's own **Done when** | Each starts only when its trigger is measured (below); Phase 13's playground fires all 21 (ADR-0025) |
+| 13 The Playground | A house on a block where the player moves as in Apex Legends, in five cameras and two looks (docs/PLAYGROUND.md), with the on-demand WPs it fires | B, P, A, R, I, W, X, T, and R2 and L for the fired WPs | **G10** feel, **G11** the house, **G12** alive, **G13: the tech demo** | Four stages in Phase 13's order; parallel lanes inside each stage |
 | H Production hardening | Other browsers, testing on phones, a native WebGPU build, releases, cross-platform determinism | — | — | Only when a game goes to production |
 
 Lanes: **T** tooling, **C** core, **R** render, **W** world, **P** physics, **A** animation, **I** input, UI and dev, **B** the box (the integrator), **L** library, **X** audio, **R2** advanced GPU features.
@@ -1555,28 +1559,28 @@ Lanes: **T** tooling, **C** core, **R** render, **W** world, **P** physics, **A*
 
 | WP | Start it when… |
 |---|---|
-| 5.6 The bot and dev actions | a test needs play longer or more varied than a scripted replay can express (soak runs, navigation smoke over many levels), or reaching a state by replay costs more than a dev action would |
-| 7.5 The performance governor | a scene must hold a frame budget on hardware that varies (Phase H), a measured scene misses its GPU budget and a quality tier would fix it, or the owner reports a scene running slowly on a phone (ADR-0021) |
-| 7.6 MCP server | an agent that cannot run `node x` needs to drive the engine |
-| 7.7 The gallery | reviewing a kind's entries one `x shot` at a time costs more than one contact sheet would: about 20 entries of a kind that need visual review |
-| 8.8 Re-import from the sources | a clip needs a degree of freedom format 1 lacks (hands, forearm twist, foot roll, spine, root yaw) to fix a defect that can be seen or measured |
-| 10.1 Procedural building blocks | the box or the game needs a creature beyond the humanoid, blob and floater rigs |
-| 10.2 Ragdolls | deaths or launches need physical bodies that reactions and get-ups cannot fake |
-| 10.3 The props library | the box or the game needs props beyond crates and barrels |
-| 10.4 Generic gameplay kits | the game needs hittable things, projectile patterns or awareness beyond WP 5.2's basics |
-| 10.5 Terrain | the game needs outdoor ground |
-| 10.6 UI widgets | the game needs menus, dialogs or HUD widgets beyond the overlay's |
+| 5.6 The bot and dev actions | a test needs play longer or more varied than a scripted replay can express (soak runs, navigation smoke over many levels), or reaching a state by replay costs more than a dev action would (fired 2026-10-17 by the playground: the gym's courses and the house need soak runs, and tuning needs teleports and slow motion; ADR-0025) |
+| 7.5 The performance governor | a scene must hold a frame budget on hardware that varies (Phase H), a measured scene misses its GPU budget and a quality tier would fix it, or the owner reports a scene running slowly on a phone (ADR-0021) (fired 2026-10-17 by the playground: the playground must hold its frame budget on the owner's hardware with WPs 11.3 and 11.5 on; ADR-0025) |
+| 7.6 MCP server | an agent that cannot run `node x` needs to drive the engine (fired 2026-10-17 by the playground: the owner's order: an agent playtester drives the playground through MCP; ADR-0025) |
+| 7.7 The gallery | reviewing a kind's entries one `x shot` at a time costs more than one contact sheet would: about 20 entries of a kind that need visual review (fired 2026-10-17 by the playground: about 40 props and the building materials need visual review; ADR-0025) |
+| 8.8 Re-import from the sources | a clip needs a degree of freedom format 1 lacks (hands, forearm twist, foot roll, spine, root yaw) to fix a defect that can be seen or measured (fired 2026-10-17 by the playground: the playground's mantles, climbs, ladders and ziplines need hands on their contacts, and its locomotion foot roll; ADR-0025) |
+| 10.1 Procedural building blocks | the box or the game needs a creature beyond the humanoid, blob and floater rigs (fired 2026-10-17 by the playground: the playground's dog; ADR-0025) |
+| 10.2 Ragdolls | deaths or launches need physical bodies that reactions and get-ups cannot fake (fired 2026-10-17 by the playground: dummies and neighbours fall to hard hits and kicks; ADR-0025) |
+| 10.3 The props library | the box or the game needs props beyond crates and barrels (fired 2026-10-17 by the playground: the house needs doors, windows and furniture; ADR-0025) |
+| 10.4 Generic gameplay kits | the game needs hittable things, projectile patterns or awareness beyond WP 5.2's basics (fired 2026-10-17 by the playground: the range's targets and the neighbours' awareness; ADR-0025) |
+| 10.5 Terrain | the game needs outdoor ground (fired 2026-10-17 by the playground: the yard and the hill; ADR-0025) |
+| 10.6 UI widgets | the game needs menus, dialogs or HUD widgets beyond the overlay's (fired 2026-10-17 by the playground: the playground's settings, prompts and HUD; ADR-0025) |
 | 10.7 The game template | the owner starts the game (fired 2026-10-15, done: ADR-0024) |
-| 10.8 Lab pages | someone watching needs a view that the `x` commands and the box do not give |
-| 10.9 The store | a game saves state across sessions: high scores, progress, its settings |
-| 11.1 Completing the feature framework | the first of WPs 11.2–11.5 is triggered: it is their common Need |
-| 11.2 GPU timing | a performance question needs GPU time (the platform's adapter has `timestamp-query`, §4.7) |
-| 11.3 GPU particles | the CPU particles of WP 6.4 exceed their budget in the box's densest fight, or a look needs more particles than the CPU path carries |
-| 11.4 GPU-driven crowds | the crowd ladder's render cost at 5,000 misses its budget (WP 5.7's numbers) |
-| 11.5 Lighting and shading upgrades | a look the box needs is beyond the light pool and the standard passes: more lights, ambient occlusion, reflections, cascaded shadows |
-| 12.1 Scaffolds and skills, completed | agents keep writing by hand a kind that has no template, or keep repeating work no skill covers |
-| 12.2 Agent-usability evals and mutation testing | a regression slips past the suites, or agents repeatedly misuse an API |
-| 12.3 Agent eye | image review costs more than it gives, and the ID pass cannot answer the question in Node |
+| 10.8 Lab pages | someone watching needs a view that the `x` commands and the box do not give (fired 2026-10-17 by the playground: the owner tunes animation and feel in pages; ADR-0025) |
+| 10.9 The store | a game saves state across sessions: high scores, progress, its settings (fired 2026-10-17 by the playground: the playground keeps its settings and bindings across sessions; ADR-0025) |
+| 11.1 Completing the feature framework | the first of WPs 11.2–11.5 is triggered: it is their common Need (fired 2026-10-17 by the playground: the first of WPs 11.2–11.5 fired; ADR-0025) |
+| 11.2 GPU timing | a performance question needs GPU time (the platform's adapter has `timestamp-query`, §4.7) (fired 2026-10-17 by the playground: the owner's GPU frame time in the playground; ADR-0025) |
+| 11.3 GPU particles | the CPU particles of WP 6.4 exceed their budget in the box's densest fight, or a look needs more particles than the CPU path carries (fired 2026-10-17 by the playground: rain, dust and debris beyond the CPU particles; ADR-0025) |
+| 11.4 GPU-driven crowds | the crowd ladder's render cost at 5,000 misses its budget (WP 5.7's numbers) (fired 2026-10-17 by the playground: the street's crowd variant at 1,000 to 5,000 people; ADR-0025) |
+| 11.5 Lighting and shading upgrades | a look the box needs is beyond the light pool and the standard passes: more lights, ambient occlusion, reflections, cascaded shadows (fired 2026-10-17 by the playground: the house's lights beyond the pool, cascaded shadows over the yard, ambient occlusion indoors; ADR-0025) |
+| 12.1 Scaffolds and skills, completed | agents keep writing by hand a kind that has no template, or keep repeating work no skill covers (fired 2026-10-17 by the playground: the new kinds (movement profiles, camera modes, storey levels, interactables, weapons) and the playground's skills; ADR-0025) |
+| 12.2 Agent-usability evals and mutation testing | a regression slips past the suites, or agents repeatedly misuse an API (fired 2026-10-17 by the playground: the owner's order: usability tasks over the playground, and mutation testing; ADR-0025) |
+| 12.3 Agent eye | image review costs more than it gives, and the ID pass cannot answer the question in Node (fired 2026-10-17 by the playground: whether the player is in view from each camera in every room, asked in Node; ADR-0025) |
 | 12.4 Reading edition | an agent without the repository needs the engine's API in one file (fired 2026-10-15, done as docs/GAME-GUIDE.md: ADR-0024) |
 
 **How a trigger fires.** The agent that meets a trigger records the measurement in the WP's ledger note, and schedules the WP after the current one (never mid-WP). A triggered WP builds its unbuilt **Needs** first. It is then done like any other WP; on-demand work has no phase gates. A trigger that never fires means the WP was not needed, which is the expected outcome for several of them.
@@ -1605,11 +1609,18 @@ Audio:    G1 → 9.1 → 9.2 → 9.4 ; [3.1, 4.2] + 9.2 → 9.3 ; [7.8] + {9.3, 
 On demand: [3.3, 4.3] → 5.6 ; [5.4, 7.1] → 7.5 ; [2.7, 3.3] + 5.6 → 7.6 ; [3.11] → 7.7 ; G8 → 8.8 ;
           G7 → {10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8} ; 10.7 → 10.9 ; G7 → 11.1 → {11.2, 11.4, 11.5} ; {11.1, 11.2} → 11.3 ;
           G7 → {12.1, 12.2, 12.3, 12.4}
+Playground: G9 → 13.1 → {13.2, 13.3, 13.8} ; 13.3 → 13.4 → {13.5, 13.7} ; 13.5 → 13.6 ; 13.8 → 13.9 ; {13.2, 13.5} → 13.10 ;
+          {13.6, 13.7, 13.10} → 13.11 ; {13.8, 13.11} → 13.12 ⇒ G10 ;
+          G9 → 13.13 → 13.14 ; {13.14, 10.5, 13.8} → 13.15 ; {10.3, 13.13, 13.9} → 13.16 ; G9 → 13.17 ;
+          {13.15, 13.16, 13.17, 13.6, 13.7} → 13.18 ⇒ G11 ;
+          {13.16, 13.11, 10.4} → 13.19 ; {10.4, 13.9, 13.12} → 13.20 ; {13.15, 10.4, 10.2, 10.1, 13.2} → 13.21 ;
+          {13.15, 13.16, 13.6} → 13.22 ; {11.5, 13.15, 13.16} → 13.23 ; {13.8, 13.17, 13.23} → 13.24 ⇒ G12 ;
+          {10.6, 10.9, 13.9, 13.20} → 13.25 → 13.26 ⇒ G13
 Upgrades (each when it qualifies or measures better, between stages): U-1 Vitest 4 ; U-2 the lint majors ; U-3 three r183 ;
           U-4 Vite 8, TypeScript 6 ; U-5 Node 26 ; U-6 Rapier after 0.21 ; U-7 three r184 and later ; U-8 the platform's Chromium
 ```
 
-The **On demand** edges belong to WPs that are not scheduled: each starts only on its trigger (§9.1), and a triggered WP builds its unbuilt Needs first.
+The **On demand** edges belong to WPs that are not scheduled: each starts only on its trigger (§9.1), and a triggered WP builds its unbuilt Needs first. Phase 13 schedules all 21 in its stages, since the playground needs each (ADR-0025).
 
 ### 9.3 Definition of done for every work package
 
@@ -2700,7 +2711,7 @@ A WP is done only when all of these hold:
 - **Owns:** `engine/dev/{bot,actions}.ts`
 - **Needs:** WP 3.3, WP 4.3
 - **Size:** M
-- **Trigger:** a test needs play longer or more varied than a scripted replay can express (soak runs, navigation smoke over many levels), or reaching a state by replay costs more than a dev action would (§9.1).
+- **Trigger:** a test needs play longer or more varied than a scripted replay can express (soak runs, navigation smoke over many levels), or reaching a state by replay costs more than a dev action would (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the gym's courses and the house need soak runs, and tuning needs teleports and slow motion.
 - **Carry:** the autopilot (`ed/93-autopilot.js`) and the developer sandbox (`ed/62-developer.js`), mechanisms only.
 - **Build:**
   - **The bot:** a virtual device, navigation over the flow field, a watchdog, and stuck detection measured along the wanted direction. Its runs are reproducible. Its report has one row per level or scene, and it takes seed sweeps, a stop condition and a sampled trace (shardfall's `crates/pav_tools/src/agent_tools.rs:226-307` and `pavilion-lite/src/tools.rs:1076-1185`, §5.8).
@@ -2945,7 +2956,7 @@ A WP is done only when all of these hold:
 - **Owns:** `engine/dev/governor.ts`
 - **Needs:** WP 5.4, WP 7.1
 - **Size:** S
-- **Trigger:** a scene must hold a frame budget on hardware that varies (Phase H), a measured scene misses its GPU budget and a quality tier would fix it, or the owner reports a scene running slowly on a phone (§9.1).
+- **Trigger:** a scene must hold a frame budget on hardware that varies (Phase H), a measured scene misses its GPU budget and a quality tier would fix it, or the owner reports a scene running slowly on a phone (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the playground must hold its frame budget on the owner's hardware with WPs 11.3 and 11.5 on.
 - **Carry:** the mechanism of `ed/95-perf.js`.
 - **Build:**
   - Adaptive quality with hysteresis, moving between WP 3.12's `quality` tiers, plus dynamic resolution on phones, both only while `quality` is `auto`, so a tier set by hand is kept (shardfall's `crates/pav_app/src/quality.rs:89-113`).
@@ -2959,7 +2970,7 @@ A WP is done only when all of these hold:
 - **Owns:** `tools/mcp/**`, `tools/cmd/mcp.ts`
 - **Needs:** WP 2.7, WP 3.3, WP 5.6
 - **Size:** M
-- **Trigger:** an agent that cannot run `node x` needs to drive the engine (§9.1).
+- **Trigger:** an agent that cannot run `node x` needs to drive the engine (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the owner's order: an agent playtester drives the playground through MCP.
 - **Build:** the tools in §8.11, generated from the inspector members' argument schemas (WP 1.6), on the official `@modelcontextprotocol/sdk` (pinned by §6.10's rule when the WP starts, with its reason in `tools/deps.json`), over `x inspect`. The server restarts when engine sources change.
 - **Improves:** I-35.
 - **Done when:** an MCP client test opens the box room, steps it, injects input, takes a shot with the ID pass, runs a dev action and replays a file.
@@ -2969,7 +2980,7 @@ A WP is done only when all of these hold:
 - **Owns:** `engine/dev/gallery.ts`, `tools/cmd/gallery.ts`
 - **Needs:** WP 3.11
 - **Size:** M
-- **Trigger:** reviewing a kind's entries one `x shot` at a time costs more than one contact sheet would: about 20 entries of a kind that need visual review (§9.1).
+- **Trigger:** reviewing a kind's entries one `x shot` at a time costs more than one contact sheet would: about 20 entries of a kind that need visual review (§9.1). Fired 2026-10-17 by the playground (ADR-0025): about 40 props and the building materials need visual review.
 - **Carry:** the gallery of `ed/92-gallery.js` (mechanism).
 - **Build:**
   - **The `gallery` hook** in the schema language (camera, duration, states), added to the kinds that need review and to their templates.
@@ -3137,7 +3148,7 @@ A WP is done only when all of these hold:
 - **Owns:** updates to `data/anim/sets/**`; `tests/unit/data/anim/upgrade.test.ts`
 - **Needs:** G8; a skinned-mesh GLB import test first (tools/anim/glb-library.test.ts's fixture has no mesh, so no test reads a GLB's skin)
 - **Size:** L
-- **Trigger:** a clip needs a degree of freedom format 1 lacks (hands, forearm twist, foot roll, spine, root yaw) to fix a defect that can be seen or measured (§9.1). The WP then upgrades the clips that defect touches first.
+- **Trigger:** a clip needs a degree of freedom format 1 lacks (hands, forearm twist, foot roll, spine, root yaw) to fix a defect that can be seen or measured (§9.1). The WP then upgrades the clips that defect touches first. Fired 2026-10-17 by the playground (ADR-0025): the playground's mantles, climbs, ladders and ziplines need hands on their contacts, and its locomotion foot roll.
 - **Build:**
   - Fetch the sources into `.cache/`: Mesh2Motion via git, CMU over HTTP, and 100STYLE's takes by HTTP range requests from its Zenodo archive (1.47 GB, never committed), as shardfall's importer reads them.
   - The owner supplies the four GLBs of the Quaternius Universal Animation Library's version 2 once (`UAL1_Standard.glb`, `UAL1_Standard_RM.glb`, `UAL2_Standard.glb`, `UAL2_Standard_RM.glb`): an escalation (§11.5). Until then, Quaternius clips stay as WP 8.10 brought them and are listed as blocked. Their parity reference is v2's format-1 decode.
@@ -3271,7 +3282,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** `engine/anim/proc/*.ts`, `fixtures/rigs/{biped,hexapod,serpent,floater,multiarm,tentacle}/`, `fixtures/rigs/README.md`, `tools/templates/rig/`
 - **Needs:** G7
 - **Size:** L (split into 10.1a, b and c if needed)
-- **Trigger:** the box or the game needs a creature beyond the humanoid, blob and floater rigs (§9.1).
+- **Trigger:** the box or the game needs a creature beyond the humanoid, blob and floater rigs (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the playground's dog.
 - **Carry:** the techniques of §5.6, as mechanisms only. The game's characters are not ported. From shardfall (§5.8): the planted gait for N legs and the verlet chains of `crates/pav_core/src/rig.rs`, and the rule that a generator's later additions draw from their own RNG streams, so old seeds stay stable.
 - **Build:**
   - The blocks:
@@ -3301,7 +3312,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** `engine/physics/ragdoll.ts`, `engine/anim/ragdoll.ts`, `tests/replays/ragdoll-*.replay.json`
 - **Needs:** G7
 - **Size:** M
-- **Trigger:** deaths or launches need physical bodies that reactions and get-ups cannot fake (§9.1).
+- **Trigger:** deaths or launches need physical bodies that reactions and get-ups cannot fake (§9.1). Fired 2026-10-17 by the playground (ADR-0025): dummies and neighbours fall to hard hits and kicks.
 - **Build:**
   - A ragdoll builder from bone capsules (physics), with joints as data after shardfall's `joints.rs` (§5.8).
   - The animation side: descriptors, a blend weight, and the choice of get-up.
@@ -3314,7 +3325,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** extends `engine/world/props/**` (from WP 4.5) with the first library set
 - **Needs:** G7
 - **Size:** M
-- **Trigger:** the box or the game needs props beyond crates and barrels (§9.1).
+- **Trigger:** the box or the game needs props beyond crates and barrels (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the house needs doors, windows and furniture.
 - **Build:** torch sconce, banner, chest, door, table, bench, statue and lantern, each with geometry, material, body, optional light and interaction hooks.
 - **Done when:** every prop passes the geometry and texture QA checks, and renders in `tests/e2e/props.spec.ts` with ID-pass coverage above 0.
 - **Verify:** `node x qa geo tex --only prop: && npm run e2e -- tests/e2e/props.spec.ts`
@@ -3323,7 +3334,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** `engine/world/{things,patterns,awareness}.ts`
 - **Needs:** G7
 - **Size:** M
-- **Trigger:** the game needs hittable things, projectile patterns or awareness beyond WP 5.2's basics (§9.1).
+- **Trigger:** the game needs hittable things, projectile patterns or awareness beyond WP 5.2's basics (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the range's targets and the neighbours' awareness.
 - **Carry:** `E.pattern` (`engine:3553-3625`), moved to 3D.
 - **Build:**
   - **Things** that can be hit, with hooks.
@@ -3336,7 +3347,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** `engine/world/terrain.ts`, `engine/physics/heightfield.ts`, `engine/gfx/terrain.ts`, `tests/replays/terrain-*.replay.json`
 - **Needs:** G7
 - **Size:** M
-- **Trigger:** the game needs outdoor ground (§9.1).
+- **Trigger:** the game needs outdoor ground (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the yard and the hill.
 - **Build:**
   - A seeded fbm heightfield **descriptor** in `world/`, made into a Rapier heightfield collider by `physics/heightfield.ts`. Shardfall's terrain (ridges, terraces, flattened footprints, stateless placement) is the reference (§5.8).
   - A chunked mesh with LOD.
@@ -3351,7 +3362,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** `engine/ui/{widgets,dialog,menu}.ts`
 - **Needs:** G7
 - **Size:** M
-- **Trigger:** the game needs menus, dialogs or HUD widgets beyond the overlay's (§9.1).
+- **Trigger:** the game needs menus, dialogs or HUD widgets beyond the overlay's (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the playground's settings, prompts and HUD.
 - **Carry:** `ui.box/bar/hearts`, `Dialog`, `Menu` (`engine` §21).
 - **Build:** HTML/CSS widgets on the overlay (WP 6.5): bars, hearts and boxes; Dialog and Menu as DOM elements, with input and sound injected; `ui.state()` covering them. Gamepads drive menus through a virtual cursor, and menu actions are sent as input, so they replay (shardfall's, §5.8). Mind (after G9): the system layer's actions (pause, the menu's accept, cancel and directions; engine/input/actionMaps.ts's `SYSTEM_ACTIONS`) never enter the intents, so a menu action that changes play must be recorded another way (a dev action or a custom intent), never by adding system actions to the intents.
 - **Improves:** I-50.
@@ -3374,7 +3385,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** `labs/{anim,materials,props,fx,cameras,physics,library}/**`, `labs/index/**`, `labs/labs.json`, `tools/cmd/lab.ts`
 - **Needs:** G7
 - **Size:** M
-- **Trigger:** someone watching needs a view that the `x` commands and the box do not give (§9.1).
+- **Trigger:** someone watching needs a view that the `x` commands and the box do not give (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the owner tunes animation and feel in pages.
 - **Carry:** the animlab UX (`src/starter/60-animlab.js`: lineup, skins, phase timeline, frozen key poses, dummy); the Mocap Lab's UX for the Library Lab (`src/mocap.game.js`: catalog search, the clip as text with Apply, Reset, Mirror and Copy for model, deep links, frame stepping, a retarget preview across the builds); `src/labs.json` and `tools/labs-test.mjs` (PORT, adding `answer` and `expires`).
 - **Build:**
   - Pages driven by the registries, each a view over `x describe`, `__engine` and, if it is built, `x gallery` (doctrine: Agent-operable). The Animation Lab adds the lineup, timeline scrubbing and a bone overlay.
@@ -3386,7 +3397,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** `engine/app/store.ts`
 - **Needs:** WP 10.7
 - **Size:** S
-- **Trigger:** a game saves state across sessions: high scores, progress, its settings (§9.1). Split from WP 10.7 on 2026-10-15 (ADR-0024): no game needs it to start, and until then a page keeps its saves in `localStorage`, outside the sim.
+- **Trigger:** a game saves state across sessions: high scores, progress, its settings (§9.1). Split from WP 10.7 on 2026-10-15 (ADR-0024): no game needs it to start, and until then a page keeps its saves in `localStorage`, outside the sim. Fired 2026-10-17 by the playground (ADR-0025): the playground keeps its settings and bindings across sessions.
 - **Carry:** `E.store` (`engine:198-202`), extended with a configurable prefix (replacing the fixed `my3d2dge:`), a memory backend, versioning, and isolation in demo, sandbox and gallery modes.
 - **Build:** the store. It writes a format version and checks it on load (shardfall writes one and never checks it).
 - **Done when:** the store is unit-tested, and the starter game keeps its best round through it.
@@ -3400,7 +3411,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** extends `engine/gfx/features.ts` (from WP 2.1); `tests/e2e/features.spec.ts`; extends `tools/cmd/perf.ts` with `--feature`
 - **Needs:** G7
 - **Size:** S
-- **Trigger:** the first of WPs 11.2–11.5 is triggered, since it is their common Need (§9.1).
+- **Trigger:** the first of WPs 11.2–11.5 is triggered, since it is their common Need (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the first of WPs 11.2–11.5 fired.
 - **Build:**
   - Per-feature tests: with the feature on and off, the hash is unchanged and the gameplay entities in view appear in the ID pass (the downgraded look is playable).
   - `__engine.info().features`, and governor integration if WP 7.5 is built.
@@ -3412,7 +3423,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** `engine/gfx/enhanced/timing.ts`
 - **Needs:** WP 11.1
 - **Size:** S
-- **Trigger:** a performance question needs GPU time (§9.1).
+- **Trigger:** a performance question needs GPU time (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the owner's GPU frame time in the playground.
 - **Build:** `trackTimestamp`, and `resolveTimestampsAsync` feeding `stats().gpuMs`, where `timestamp-query` exists. The platform's SwiftShader adapter has it (§4.7), though its times are a CPU's emulating a GPU. Where it is missing, `gpuMs` is absent and an advice code says why.
 - **Done when:** GPU time appears in `stats().gpuMs` and in `x perf` on adapters that support it, and is reported as unavailable elsewhere.
 - **Verify:** `npm run e2e -- tests/e2e/timing.spec.ts`
@@ -3421,7 +3432,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** `engine/gfx/enhanced/particles.ts`
 - **Needs:** WP 11.1, WP 11.2
 - **Size:** M
-- **Trigger:** the CPU particles of WP 6.4 exceed their budget in the box's densest fight, or a look needs more particles than the CPU path carries (§9.1).
+- **Trigger:** the CPU particles of WP 6.4 exceed their budget in the box's densest fight, or a look needs more particles than the CPU path carries (§9.1). Fired 2026-10-17 by the playground (ADR-0025): rain, dust and debris beyond the CPU particles.
 - **Build:** compute particles (`instancedArray` plus `Fn().compute`), decorative only, falling back to the CPU particles of WP 6.4. The design is shardfall's: CPU births into a 65,536-slot ring, integration in compute, one premultiplied blend, no normal writes (§5.8).
 - **Done when:**
   - The hash is unchanged, and particles stay out of the ID pass.
@@ -3432,7 +3443,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** `engine/gfx/enhanced/crowds.ts`
 - **Needs:** WP 11.1
 - **Size:** L
-- **Trigger:** the crowd ladder's render cost at 5,000 misses its budget on the standard path (WP 5.7's numbers) (§9.1).
+- **Trigger:** the crowd ladder's render cost at 5,000 misses its budget on the standard path (WP 5.7's numbers) (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the street's crowd variant at 1,000 to 5,000 people.
 - **Build,** in stages:
   1. Compute frustum culling plus indirect draws over the instancing service's batches.
   2. Only if the 2× target is still missed: compute skinning and occlusion culling.
@@ -3445,7 +3456,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** `engine/gfx/enhanced/{lighting,ao,ssr,aa,csm}.ts`, using three.js's `TiledLighting`, `GTAONode`, `SSRNode`, `TRAANode` and `CSMShadowNode` addons
 - **Needs:** WP 11.1
 - **Size:** L
-- **Trigger:** a look the box needs that the standard path cannot give: more lights than the pool, ambient occlusion, reflections, or cascaded shadows outdoors (§9.1).
+- **Trigger:** a look the box needs that the standard path cannot give: more lights than the pool, ambient occlusion, reflections, or cascaded shadows outdoors (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the house's lights beyond the pool, cascaded shadows over the yard, ambient occlusion indoors.
 - **Build:**
   - Tiled lighting (r182's `TiledLighting` addon, on compute), lifting the light pool's limit.
   - GTAO, SSR, and TRAA with deterministic jitter in tests.
@@ -3464,7 +3475,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** extends `.claude/skills/**` and `.claude/agents/**` (from WP 0.10); `tools/templates/README.md`; the templates of §8.13's kinds that are still missing
 - **Needs:** G7
 - **Size:** M
-- **Trigger:** agents keep writing by hand a kind that has no template, or keep repeating work no skill covers (§9.1).
+- **Trigger:** agents keep writing by hand a kind that has no template, or keep repeating work no skill covers (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the new kinds (movement profiles, camera modes, storey levels, interactables, weapons) and the playground's skills.
 - **Build:**
   - `x new` for every kind §8.13 names that still lacks a template, each with `--test` in `x ci --local`; `tools/templates/README.md` lists them all.
   - The skills §8.10 lists that are still missing, and any subagent a measured need asks for.
@@ -3476,7 +3487,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** `evals/**`, `tools/cmd/evals.ts`, `stryker.config.json`
 - **Needs:** G7
 - **Size:** M
-- **Trigger:** a regression slips past the suites, or agents repeatedly misuse an API (§9.1).
+- **Trigger:** a regression slips past the suites, or agents repeatedly misuse an API (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the owner's order: usability tasks over the playground, and mutation testing.
 - **Build:**
   - At least 12 small tasks with automated acceptance, for example:
     - add a prop;
@@ -3494,7 +3505,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Owns:** `tools/cmd/eye.ts`, `engine/dev/eye.ts`
 - **Needs:** G7
 - **Size:** S
-- **Trigger:** image review costs more than it gives, and the ID pass cannot answer the question in Node (§9.1).
+- **Trigger:** image review costs more than it gives, and the ID pass cannot answer the question in Node (§9.1). Fired 2026-10-17 by the playground (ADR-0025): whether the player is in view from each camera in every room, asked in Node.
 - **Build:** a coarse visibility raster in Node, built from physics shapes and camera poses. It answers "is X visible from camera C" and draws ASCII thumbnails with a legend, with no GPU (after Pavilion Lite's `ascii`, §5.8).
 - **Done when:** its answers agree with the ID pass on the box's cameras for at least 95% of cases.
 - **Verify:** `npm test -- engine/dev/eye && npm run e2e -- tests/e2e/eye.spec.ts`
@@ -3507,6 +3518,305 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Built** as docs/GAME-GUIDE.md, not `x edition` (ADR-0024): the game agent's guide, and the one file handed to a model without the repository. Its last section, the public API by area, is generated by `x docs --write` from the barrels' area comments: **generated and tested where it names the API, never written by hand there.**
 - **Done when:** the section regenerates in `x docs --write`, `x docs --check` fails it when stale, and the guide stays within its budget (`GUIDE_BUDGET_BYTES`, 60 KB; 45 KB written).
 - **Verify:** `node x docs --check && npm test -- tools/lib/docsGameApi`
+
+### Phase 13: The Playground (lanes B, P, A, R, I, W, X, T, with the on-demand WPs it fires)
+
+**What it is** (the owner's direction of 2026-10-17, ADR-0025). The engine's second integration target after the Stress Box: `labs/playground/`, a house with a basement, two floors, an attic and a walkable roof, a yard, a street, a gym of calibrated features, a hill, a firing range and a sparring ring, where the player moves as in Apex Legends, in five cameras (first person, third-person shooter, third-person platformer, isometric, top-down) and two looks (cel-shaded and pixel art). docs/PLAYGROUND.md is its design: the site, the move set with its Apex reference values, the cameras, the looks, what a player can do there, and how feel and looks are measured. Every capability this phase builds is shown there, as the box shows Phases 2–7's, and the on-demand WPs the playground needs fire through it (§9.1: their Trigger lines name the need).
+
+**How it runs.** Four stages, each ending at a gate, the character first: if the core character does not feel and look good, nothing after it matters.
+
+| Stage | WPs, in order | Gate |
+|---|---|---|
+| Feel: the gym | 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9, 13.10, 13.11, 13.12, 5.6, 10.6, 10.9 | **G10** |
+| The house | 13.13, 13.14, 10.5, 13.15, 10.3, 13.16, 13.17, 7.7, 13.18, 12.3 | **G11** |
+| Alive | 10.4, 13.19, 13.20, 10.2, 10.1, 13.21, 13.22, 11.1, 11.2, 11.5, 13.23, 11.3, 13.24, 8.8, 10.8 | **G12** |
+| The tech demo | 13.25, 7.5, 11.4, 12.1, 12.2, 7.6, 13.26 | **G13** |
+
+**Rules for the playground** (the box's rules, §9.0, hold too):
+- **Engine, not game.** The site, the cast, the player's body and every tuned number stay in `labs/playground/`; a mechanism enters `engine/` only through a WP that names it, in a generic form (§5.7).
+- **Opt-in, never a changed golden.** New movement, cameras, level formats and looks are opt-in: `movement:platformer` is today's controller, a format-1 level compiles as before, so every existing replay keeps its goldens.
+- **Sim-side play, view-side feel.** Movement, traversal, doors, hits and AI are sim-side, hashed and replayable; cameras, viewmodels, camera effects and looks are view-side and reach the sim only through recorded intents (`look`, `aim`, `cam`).
+- **Numbers first, then the owner's hands.** Every move, camera and look has numbers an agent checks headless (`node x feel`, docs/PLAYGROUND.md §9); the owner's playtest at each gate is the final word on feel, and its notes become tuning, never a blocker.
+
+#### WP-13.1 The playground lab
+- **Owns:** `labs/playground/`, `tests/unit/playground-readme.test.ts`, `tests/e2e/playground.spec.ts`, `tests/replays/playground-*.replay.json`, `tests/pages/playground.html`
+- **Needs:** G9
+- **Size:** M
+- **Build:**
+  - `labs/playground/`, organized as the box is (§9.0): `index.html` and `main.ts` (the page imports every module under `scenes/` and `looks/`, its levels as `?raw` text, its sounds, and the menu for humans), `scenes/`, `levels/`, `cast/`, `bodies/`, `looks/`, `sounds/`, and `README.md` with the demo index, the settings table and the controls, checked by `tests/unit/playground-readme.test.ts` as `tests/unit/box-readme.test.ts` checks the box's.
+  - The first scene, `playground:gym`: the gym of docs/PLAYGROUND.md §2.3 as a format-1 level (the playground's own glyphs give the calibrated heights, ramps and gaps), the player spawned on today's controller, the five cameras reachable as far as today's codes reach them (`cam3=first`, `cam3=chase`, `cam3=orbit`, `cam=iso`, `cam=topdown`).
+  - Playable on the owner's machine from this WP on: `npm run dev`, then `/labs/playground/`.
+- **Done when:**
+  - The gym steps headless with a golden replay that holds in Node and in the rendering page.
+  - The page renders on WebGPU with 0 pipelines built after the warm-up, and its README test passes.
+- **Verify:** `npm test -- tests/unit/playground-readme.test.ts && node x sim labs/playground/scenes/gym && node x replay tests/replays/playground-gym.replay.json --browser page && npm run e2e -- tests/e2e/playground.spec.ts`
+
+#### WP-13.2 The player's body
+- **Owns:** `labs/playground/bodies/`, extends `engine/anim/builds.ts` (an adult build), `engine/gfx/puppets/grammar.ts` (only if a part the outfit needs is missing)
+- **Needs:** WP 13.1
+- **Size:** M
+- **Build:**
+  - `build:adult`: an adult's proportions (1.80 m standing, the leg reach to plant at full stride, so ADR-0009 amendment 4's short feet do not return), its capsule sized to it.
+  - The player's body in the body grammar (docs/PLAYGROUND.md §3.1): jacket, trousers, boots, gloves, hair and a face, with a silhouette and a two-tone palette that read in the cel and the pixel look from every camera, and slots the neighbours vary (§7.4).
+- **Done when:** the adult build passes `node x qa anim`; the body's state matrix sheet and its thumbnails in both looks are reviewed (visual-reviewer); the ID pass shows every part.
+- **Verify:** `npm test -- engine/anim/builds && node x qa anim && node x sheet humanoid --build build:adult`
+
+#### WP-13.3 Movement profiles and the Apex model
+- **Owns:** `engine/physics/movement/`, extends `engine/physics/{character,feel}.ts`, `engine/sim/actors.ts`
+- **Needs:** WP 13.1
+- **Size:** L
+- **Build:**
+  - The registry kind `movement`: a profile is data, every number of docs/PLAYGROUND.md §3.2 (speeds, accelerations, frictions, the jump, air control, gravity, step and slope limits, and which moves it allows with their numbers). `movement:apex` holds the Apex reference values; `movement:platformer` is today's controller, exactly, so every existing scene and golden stays as it is.
+  - Apex's model, Titanfall 2's as the community's reconstructions and measurements give it (docs/PLAYGROUND.md §3.2): acceleration in m/s² toward the wished velocity (fast from a standstill, slower to the run, slow into the sprint), linear deceleration of only the velocity's part away from the input, Quake's air acceleration with the wished speed capped (air strafing, the best-known model of its kind: Common ground), no air friction, jump fatigue, lurch and the bunny-hop penalty, all tunable per profile.
+  - Gaits: run (the default), sprint (held or toggled, within 45° of the view), crouch-walk, and a walk (a held key or a light tilt) at the aiming speed; holstered ×1.15; backpedal and strafe multipliers (1 for Apex); the turn rate and the facing rule (toward the move, the look or the aim: §4's camera modes choose).
+  - Landings soft and hard: Apex's fall stun by impact speed (none below a 7.6 m fall, full from 20.3 m, recovering over 1 s), no fall damage; the landing speed fed to the body.
+  - The character's state gains its mode, gait and stance as plain data (hashed, captured, restored).
+- **Done when:**
+  - Under `movement:apex` the feel meter's run, sprint, walk and crouch-walk speeds, acceleration and stop times, the jump's height, jump fatigue, the air-strafe gain and the lurch match docs/PLAYGROUND.md §3.2 within its tolerances.
+  - Every existing replay gives its golden hashes, the box's included.
+- **Verify:** `npm test -- engine/physics && node x sim labs/playground/scenes/gym --feel && node x replay tests/replays/*.replay.json`
+
+#### WP-13.4 The feel kit
+- **Owns:** `engine/dev/feel/`, `tools/cmd/feel.ts`, `labs/playground/courses/`, extends `engine/physics/feel.ts`, `engine/app/feelMember.ts`
+- **Needs:** WP 13.3
+- **Size:** M
+- **Build:**
+  - Courses: a course is data (a gym feature, a scripted run of intents over it, the numbers to measure and the profile values they must meet). `node x feel <lab> --course <name|all>` runs them headless and writes each number against its reference and tolerance to `out/feel/<course>/report.json`; a miss exits 1.
+  - Animation metrics on the same runs: foot slide (a planted foot's drift per contact), pops (a joint's angular speed jump at a transition), hands at their contacts (the distance to a ledge, a rung, a cable).
+  - Camera metrics on the same runs: continuity (no jump in the camera's position or turn between frames beyond §4's bound), never inside geometry, the player in view.
+  - The owner's feel panel in the page: sliders over `movement.*` and `cam.*` settings, live, with copy-as-profile and save-the-replay, so a playtest's tuning comes back as data.
+  - Each movement WP after this one adds its courses (extends `labs/playground/courses/`).
+- **Done when:** `node x feel labs/playground --course all` passes every course built so far; the panel changes a setting live (DOM check).
+- **Verify:** `npm test -- engine/dev/feel && node x feel labs/playground --course all && npm run e2e -- tests/e2e/playground.spec.ts`
+
+#### WP-13.5 Crouch and slide
+- **Owns:** extends `engine/physics/movement/`, `labs/playground/courses/`
+- **Needs:** WP 13.4
+- **Size:** M
+- **Build:**
+  - Stances: crouch shrinks the capsule in place (Rapier's `setHalfHeight`) on the profile's timing (Apex: 0.4 s down, 0.2 s up, crouch spam ignored), from the top on the ground and from both ends in the air; standing waits for headroom; hold or toggle.
+  - The slide (docs/PLAYGROUND.md §3.2): entered from a sprint or above the profile's slide speed when crouch is pressed; its boost and the boost's cooldown; low friction; gravity along the slope (downhill gains, uphill stops); the slide-jump keeping the speed; its end into a crouch below the exit speed; cancelled by standing or jumping; under any gap the crouched capsule fits.
+- **Done when:** the courses slide-flat, slide-ramps (5°, 10°, 20°, 30°), slide-jump and crawl pass against §3.2; their replays give their goldens.
+- **Verify:** `npm test -- engine/physics/movement && node x feel labs/playground --course slide`
+
+#### WP-13.6 Mantle, wall-climb and the superglide
+- **Owns:** extends `engine/physics/movement/`, `labs/playground/courses/`
+- **Needs:** WP 13.5
+- **Size:** L
+- **Build:**
+  - Ledge finding by shape casts: a wall within reach ahead, its top within the profile's mantle heights, and room for the capsule standing or crouched on it.
+  - The mantle as a timed path (the grab, then the pull), into a crouch where only that fits; sprinting in, sprinting out; fences mantled over at a sprint; the mantle hang (letting go of forward during the grab).
+  - The wall-climb: airborne into a steep wall, facing it within the profile's angle and holding forward, up it within the profile's two height limits, topping out into a mantle, or letting go; climbing again starts lower; the wall-bounce by zone.
+  - The superglide (a jump, then a crouch one tick later, in the pull's last window) and the mantle boost, its one-button form, as in Apex.
+  - The contacts (the ledge point, the edge's normal, where each hand goes) as plain data in the state, for the animation.
+- **Done when:** the courses mantle (each wall of the gym: mantles within the reach, refuses past it), fences, climb (each wall, and the wall-bounces), hang and superglide pass against §3.2; replays golden.
+- **Verify:** `npm test -- engine/physics/movement && node x feel labs/playground --course mantle,fences,climb,hang,superglide`
+
+#### WP-13.7 Ziplines, ladders and launchers
+- **Owns:** `engine/world/traverse.ts`, extends `engine/physics/movement/`, `engine/world/level/legend.ts` (the ladder glyph), `labs/playground/courses/`
+- **Needs:** WP 13.4
+- **Size:** M
+- **Build:**
+  - Ziplines: a cable between two anchors as world data, sloped or vertical; caught with use or by jumping into it within the profile's angles; ridden either way, accelerating to the profile's speed, keeping momentum along it; left by a jump that keeps the speed, or dropped with crouch.
+  - The redeploy balloon: a vertical zipline to the balloon, then a skydive (its speeds and the landing pose's height from the profile).
+  - Ladders: a level glyph and a prop; up and down, jump off, a mantle at the top.
+  - Launchers: jump pads and the trampoline, a sensor that sets the velocity.
+  - The gym's tower with its ladder and zipline (docs/PLAYGROUND.md §2.3).
+- **Done when:** the courses zipline, ladder, launcher and skydive pass; replays golden.
+- **Verify:** `npm test -- engine/world/traverse engine/physics/movement && node x feel labs/playground --course zipline,ladder,launcher,skydive`
+
+#### WP-13.8 Camera modes
+- **Owns:** `engine/gfx/cameras/{shoulder,follow,blend,effects,collide}.ts`, extends `engine/gfx/cameras/{first,chase,orbit,presets,codes,place}.ts`, `engine/app/{view,viewMembers}.ts`, `tests/e2e/playground-cameras.spec.ts`
+- **Needs:** WP 13.1
+- **Size:** L
+- **Build** (docs/PLAYGROUND.md §4):
+  - The five modes as codes: first person `cam3=first`; the shooter `cam3=shoulder` (over the shoulder, the shoulder swap, aim-down-sights); the platformer `cam3=follow` (orbit and follow with recentring, look-ahead and a vertical dead zone for jumps); isometric `cam=iso` (orthographic, 90° turns from keys, whole-number zooms); top-down `cam=overhead` (straight down, orthographic, pixel-exact).
+  - Switching blends (position, turn, field of view, orthographic to perspective) instead of cutting; `__engine.camera.set` and a key cycle them.
+  - Collision for every follow camera: ball casts through the query view, pulling in and easing out; the occluder fade (a wall between camera and player turns transparent); the camera never inside geometry.
+  - Effects, view-only, driven by the character's state, Apex's (docs/PLAYGROUND.md §4): the sprint's eye drop and roll into turns, the boosted slide's wider field of view and roll, the view punch of jumps and landings, the weapon's bob, the mantle's path, screen shake, the aim-down-sights zoom and recoil kick; the field of view as Apex measures it (horizontal at 4:3).
+  - The camera factories public, so a game adds its own mode without editing the engine (Common ground: a camera is a function of input and time).
+- **Done when:** each mode renders the gym with the player in view; over a soak run no frame puts the camera inside geometry and every switch is continuous (§4's bounds, measured by `x feel`'s camera metrics); no camera changes the hash.
+- **Verify:** `npm test -- engine/gfx/cameras && npm run e2e -- tests/e2e/playground-cameras.spec.ts`
+
+#### WP-13.9 Controls for every camera
+- **Owns:** `engine/input/aim.ts`, extends `engine/input/{actionMaps,input,intents}.ts`, `engine/input/devices/mouse.ts`, `engine/app/engine.ts`, `engine/sim/actors.ts`
+- **Needs:** WP 13.8
+- **Size:** M
+- **Build:**
+  - An action map per mode, Apex's default bindings where the browser allows (docs/PLAYGROUND.md §3.3); `createEngine` takes the map and the input settings, and the page gets the input (prompts, rebinding).
+  - Mouse look under pointer lock (lock on click, unlock on pause), with sensitivity, aim-down-sights sensitivity and invert as `input.*` view settings; the right stick likewise.
+  - `look` with its pitch, and `aim`: the screen centre's ray in first person and the shooter, the pointer's ray onto the player's floor in isometric and top-down (twin-stick on a pad), recorded every step so live play replays.
+  - Movement relative to the look (first person, shooter), to the camera (platformer) or to the screen (isometric, top-down); actors face their move, look or aim as the mode's rule says, at the profile's turn rate.
+  - Sprint and crouch, hold or toggle.
+- **Done when:** every map passes the bindings tests; in each mode, live play recorded in the page replays in Node to the same hashes.
+- **Verify:** `npm test -- engine/input && npm run e2e -- tests/e2e/playground-cameras.spec.ts`
+
+#### WP-13.10 Locomotion animation
+- **Owns:** `engine/anim/locomotion/`, extends `engine/anim/{character,footPlant,weights,humanoid}.ts`, `engine/anim/clip/{layer,library}.ts`, `engine/gfx/puppets/actors.ts`
+- **Needs:** WP 13.2, WP 13.5
+- **Size:** L
+- **Build** (docs/PLAYGROUND.md §5):
+  - Blend sets by speed and direction: idle, walk, run, sprint and crouch-walk in eight directions from the library (100STYLE's neutral and crouched sets, Quaternius's jog, sprint and crouch, Mesh2Motion's strafes), phase-synced on their foot contacts, each loop's speed measured where its set has none; the procedural humanoid fills what no clip covers.
+  - Stride warping (a loop's stride scaled to the speed) and orientation warping (legs toward the movement, the chest toward the aim).
+  - Starts, stops and pivots matched to distance; turning in place; leaning from the turn rate and the acceleration.
+  - Stance locks with the rule ADR-0009 amendment 8 asked for: a planted foot stays put until its contact window ends.
+  - Foot IK on stairs and slopes from the physics ground (the view probes it through the query view).
+  - Poses for crouch, slide (pelvis to the slope), rise, apex, fall and the soft and hard landings (chosen by the landing speed); the head and eyes toward the aim.
+  - The foot plant's weight from what the clips cover: today the view drops the plant for every actor with a clip layer, even an idle one (`engine/gfx/puppets/actors.ts`, the plant's weight from `ClipLayer.weight`, which is always 1).
+- **Done when:** over every course, foot slide stays within §5's bound and no transition pops; the anim QA's foot-slide entries for the player's states pass without a baseline change; the state matrix covers every movement state; contact sheets reviewed (visual-reviewer).
+- **Verify:** `npm test -- engine/anim && node x qa anim && node x feel labs/playground --course all`
+
+#### WP-13.11 Traversal animation
+- **Owns:** `engine/anim/traversal/`, extends `engine/anim/{actions,actions-data}.ts`, `engine/sim/actors.ts`, `engine/gfx/puppets/actors.ts`
+- **Needs:** WP 13.6, WP 13.7, WP 13.10
+- **Size:** L
+- **Build:**
+  - The actions system wired into the sim and the view (a component, a view layer), so its 28 actions play on actors.
+  - Mantle (the hands planted on the sim's contact points, the body over; Quaternius's climb warped to the height), a fence's top under one hand at a sprint, the mantle hang (Mesh2Motion's ledge hang), wall-climb (hand over hand, the feet pushing), zipline (both hands on the cable, legs swinging), ladder (the climb cycle locked to the vertical speed, hands and feet on rungs), the skydive, the hard landing, the slide-jump.
+  - Holding: the weapon carried, lowered when sprinting, the support hand on the grip (two-hand IK); the aim offsets by pitch and yaw.
+- **Done when:** in every course the hands stay within §5's bound of their contacts and nothing pops; contact sheets reviewed.
+- **Verify:** `npm test -- engine/anim && node x feel labs/playground --course all && node x qa anim`
+
+#### WP-13.12 First person
+- **Owns:** `engine/gfx/viewmodel/`, extends `engine/gfx/cameras/first.ts`, `engine/app/view.ts`
+- **Needs:** WP 13.8, WP 13.11
+- **Size:** M
+- **Build:**
+  - Viewmodel arms: the player's arms and hands drawn in their own pass, with their own field of view and near plane, so they never clip a wall; sway with the look, bob with the gait, the sprint's and slide's poses, the hands on the ledge in a mantle and on the wall in a climb, the kick's leg.
+  - The full body under the camera when looking down, as an option; the culled body still casts its shadow.
+- **Done when:** in every course the arms render without clipping (the depth check), move with the state, and show in the ID pass.
+- **Verify:** `npm test -- engine/gfx/viewmodel && npm run e2e -- tests/e2e/playground-cameras.spec.ts`
+
+**Gate G10, Feel:** under `movement:apex` every course passes against docs/PLAYGROUND.md §3.2; the gym plays in the five cameras with blended switches; foot slide, pops and hand contacts within §5's bounds; every replay gives its goldens in Node and in the page; 0 pipelines after warm-up in every camera and look; the owner's playtest checklist (docs/PLAYGROUND.md §9.3) goes out with the stage's PR.
+
+#### WP-13.13 Storeys: the level format and its colliders
+- **Owns:** `engine/world/level/{storeys,rooms,openings,roofs}.ts`, extends `engine/world/level/{parse,compile,colliders,heights,validate,walk,legend,glyph,types}.ts`, `fixtures/levels/storeys/`
+- **Needs:** G9
+- **Size:** L
+- **Build** (docs/PLAYGROUND.md §6):
+  - Level format 2 (`my3dge-level/2`), a superset (a format-1 file is one storey at height 0): storeys with their base and height; void (no floor: stairwells, double heights, the outside); walls, doors, windows, railings, stairs between storeys, ladders, roof areas (gable, hip, flat; pitch), room markers, tiles down to 0.25 m; floors below ground (basements).
+  - The compiler's colliders: walls per storey, slabs with their openings, stair hulls, roofs.
+  - Queries in 3D: `floorBelow(level, x, y, z)`, the storey, the room and the surface at a point; validation (a door wider than the capsule, stairs within the climb, headroom) and `node x qa level`.
+- **Done when:** fixture storeys compile to their expected colliders and heights; the controller climbs the stairs between storeys and stands on the roofs; every format-1 level compiles to the same data and hash as before.
+- **Verify:** `npm test -- engine/world/level && node x qa level`
+
+#### WP-13.14 Storeys drawn
+- **Owns:** `engine/gfx/level/{walls,roofs,slabs,openings,flights}.ts`, extends `engine/gfx/level/{meshes,recipes}.ts`
+- **Needs:** WP 13.13
+- **Size:** L
+- **Build:** walls with door and window openings (frames, lintels, sills), floor and ceiling slabs with their openings, stair flights, railings, roofs (gable, hip, flat, eaves, a chimney), materials per room and glyph, instanced where repeated.
+- **Done when:** the fixtures render in both looks, the ID pass tells walls, slabs, roofs and openings apart, and no pipeline is built after warm-up.
+- **Verify:** `npm test -- engine/gfx/level && npm run e2e -- tests/e2e/level-meshes.spec.ts`
+
+#### WP-13.15 Sites: storeys and terrain in play
+- **Owns:** `engine/world/site.ts`, extends `engine/world/nav.ts`, `engine/gfx/cutaway.ts`, `engine/sim/{scene,levelBodies}.ts`, `engine/world/ai.ts`
+- **Needs:** WP 13.14, WP 10.5, WP 13.8
+- **Size:** L
+- **Build:**
+  - Sites: a scene stands any number of levels (structures) on its terrain, each placed at an offset and a turn of 90°; the terrain is cut under them (basements, window wells); `floorBelow`, `surfaceAt`, sight and the rescue answer over all of them.
+  - Navigation over storeys and terrain: a grid per storey and the terrain, linked through stairs, ladders and doorways, for the bot and the neighbours.
+  - The cutaway by storey (isometric and top-down hide what is above the player's storey, and the roof when indoors) and the occluder fade for third person indoors.
+  - Rooms as data for sound (reverb), light groups and the HUD.
+- **Done when:** in a fixture site the bot reaches every room from its spawn and back; the cutaway hides the right storeys in every room (ID pass); no third-person frame puts the camera inside a wall over a soak.
+- **Verify:** `npm test -- engine/world engine/gfx/cutaway && npm run e2e -- tests/e2e/playground-cameras.spec.ts`
+
+#### WP-13.16 Interaction: doors, windows, switches and pickups
+- **Owns:** `engine/sim/{interact,doors,breakables}.ts`, extends `engine/world/props/prop.ts`, `engine/sim/{props,damage}.ts`, `engine/physics/bodies.ts`
+- **Needs:** WP 10.3, WP 13.13, WP 13.9
+- **Size:** L
+- **Build** (docs/PLAYGROUND.md §7.1):
+  - Use: the `interact` action finds the usable thing in reach and in view (the crosshair's ray in first person and the shooter, the nearest in front otherwise), with its prompt; the prop's `use` hook gets the world and the entity; a body-to-entity index for uses and hits.
+  - Doors: kinematic props on a hinge (props gain the kinematic type), opened away from the player and closed with use, as Apex's are; locked; blocked by bodies; the first melee hit bursts a door open and the second breaks it (Apex's rule, counted only when the player faced it), explosives and shots too, into a falling slab and splinters.
+  - Windows: panes that break and leave the opening passable; switches (room lights, the garage door) as sim state the view reads; pickups and throws (carry a light prop, throw it along the aim).
+  - `damage` for props with health; bolts and shots knock props.
+- **Done when:** fixture tests for each; a replay opens, kicks in and breaks a door, breaks a window, throws a prop and switches a light, golden in Node and in the page.
+- **Verify:** `npm test -- engine/sim && node x replay tests/replays/playground-interact.replay.json --browser page`
+
+#### WP-13.17 Building materials
+- **Owns:** `engine/gfx/textures/generators/{wood,tiles,carpet,wallpaper,shingles,asphalt,concrete,siding,glass}.ts`, `engine/gfx/textures/v3.ts`, extends `engine/gfx/materials/builtins.ts`
+- **Needs:** G9
+- **Size:** M
+- **Build:** the generators a house, a yard and a street need, and their materials, with palettes tuned for the toon and pixel styles.
+- **Done when:** every generator tiles without seams (`node x qa tex`), thumbnails in both looks reviewed.
+- **Verify:** `npm test -- engine/gfx/textures && node x qa tex`
+
+#### WP-13.18 The site
+- **Owns:** extends `labs/playground/`, `tests/replays/playground-*.replay.json`
+- **Needs:** WP 13.15, WP 13.16, WP 13.17, WP 13.6, WP 13.7
+- **Size:** L
+- **Build:** the site of docs/PLAYGROUND.md §2: the house's storeys and rooms, the garage and its deck, the yards, the street, the gym in its final place, the hill, the range and the ring; furnished; lit; spawn points per area; `playground:site` and a scene per area; the README's demo index.
+- **Done when:** the bot reaches every room and area from the spawn; every scene renders in the five cameras and both looks with 0 pipelines after warm-up; the site's replays give their goldens in Node and in the page.
+- **Verify:** `node x replay tests/replays/playground-site*.replay.json --browser page && npm run e2e -- tests/e2e/playground.spec.ts`
+
+**Gate G11, The house:** the bot reaches every room of every storey and every outdoor area from the spawn and back; doors, windows, switches and pickups work in replays; the cutaway is right in every room in isometric and top-down; no third-person frame inside a wall over the soak; the five cameras and both looks render the site with 0 pipelines after warm-up; the gallery's sheets of the house's props and materials reviewed.
+
+#### WP-13.19 Melee and the door kick
+- **Owns:** extends `engine/anim/moves-data.ts`, `engine/sim/hits.ts`, `labs/playground/cast/dummies.ts`
+- **Needs:** WP 13.16, WP 13.11, WP 10.4
+- **Size:** M
+- **Build:** the punch and the kick (docs/PLAYGROUND.md §3.2: reach, cone, damage, the lunge, the uppercut from a slide), their hits on props, doors, dummies and people; the door kick (Mesh2Motion's `Kick_Breach`, the hit at its strike): the first bursts a door open, the second breaks it off its hinges; hit-stop, shake and sound; seen from both first and third person.
+- **Done when:** replays golden; a door bursts open at the first kick and breaks at the second; the leg shows in first person.
+- **Verify:** `npm test -- engine/sim/hits engine/anim && node x replay tests/replays/playground-melee.replay.json --browser page`
+
+#### WP-13.20 Firearms
+- **Owns:** `engine/sim/weapons.ts`, `engine/gfx/weapons.ts`, `labs/playground/weapons/`
+- **Needs:** WP 10.4, WP 13.9, WP 13.12
+- **Size:** L
+- **Build** (docs/PLAYGROUND.md §7.2): the registry kind `weapon` (fire rate, damage, spread, recoil pattern, magazine, reload, aim-down-sights zoom, range); hitscan through the sim's raycasts; hip fire and aim-down-sights; recoil (the kick in the view, the spread in the sim); reload; holstering (holstered runs faster, as in Apex); impacts (decals, particles, sounds) and tracers; a pistol and a rifle built from parts; the range's pop-up and moving targets, with hits and accuracy on the HUD; aim in every camera.
+- **Done when:** the range's replays give their goldens; spread and recoil follow the weapon's data; every camera aims (isometric and top-down by the pointer).
+- **Verify:** `npm test -- engine/sim/weapons && node x replay tests/replays/playground-range.replay.json --browser page`
+
+#### WP-13.21 The neighbours and the dog
+- **Owns:** `labs/playground/cast/{neighbours,dog}.ts`, extends `engine/world/ai.ts`
+- **Needs:** WP 13.15, WP 10.4, WP 10.2, WP 10.1, WP 13.2
+- **Size:** M
+- **Build** (docs/PLAYGROUND.md §7.4): neighbours on routes and schedules (the sidewalk, the porch, the garden bench) over the site's navigation; reactions (look at the player, step aside, flinch when shoved, startle at a kick or a shot, ragdoll on a hard hit, get up); varied bodies and outfits from seeded slots; the dog on WP 10.1's planted gait (following, sitting, fetching a thrown ball).
+- **Done when:** replays golden; each reaction fires on its scripted event; the dog fetches the ball in a replay; a soak finds no neighbour or dog stuck.
+- **Verify:** `npm test -- engine/world/ai && node x replay tests/replays/playground-street.replay.json --browser page`
+
+#### WP-13.22 The playground's sound
+- **Owns:** `engine/audio/runtime/footsteps.ts`, extends `engine/audio/runtime/{reverb,spatial,mixer}.ts`, `engine/audio/data/effects.ts`, `labs/playground/sounds/`
+- **Needs:** WP 13.15, WP 13.16, WP 13.6
+- **Size:** M
+- **Build** (docs/PLAYGROUND.md §8.1): footsteps by surface and gait; movement foley (slide, landings, mantle, climb, zipline, ladder, crouch); doors, windows, switches, impacts and weapons; reverb from the room the listener is in; indoor and outdoor ambience; occlusion through walls; wind with speed.
+- **Done when:** the site's sound timeline hashes the same in Node and in Chromium; every sim event the playground emits has a sound (a coverage test).
+- **Verify:** `npm test -- engine/audio && node x audio --replay tests/replays/playground-site.replay.json`
+
+#### WP-13.23 Light and time
+- **Owns:** `engine/gfx/daylight.ts`, `engine/sim/lights.ts`, extends `engine/gfx/{lights,sky,atmosphere,stageSky}.ts`
+- **Needs:** WP 11.5, WP 13.15, WP 13.16
+- **Size:** M
+- **Build** (docs/PLAYGROUND.md §8.2): the time of day as sim state a scene sets and runs; the sky, sun, fog and ambience following it in the view (blended presets); switchable lights as sim components the light pool reads each frame (room lights, streetlights at dusk, the porch light); shadows indoors and out.
+- **Done when:** look metrics at noon, dusk and night in both looks; a switch changes the view's lights and the hash only through the switch's state.
+- **Verify:** `npm test -- engine/gfx/daylight engine/sim/lights && npm run e2e -- tests/e2e/lights.spec.ts`
+
+#### WP-13.24 The two looks, finished
+- **Owns:** `labs/playground/looks/`, extends `engine/gfx/post/{looks,presets,snap,filters,composite}.ts`, `engine/gfx/materials/{toon,outline,styles}.ts`, `engine/gfx/resolution.ts`
+- **Needs:** WP 13.8, WP 13.17, WP 13.23
+- **Size:** L
+- **Build** (docs/PLAYGROUND.md §5.2): the cel look (a ramp per material, hue-shifted shadows, a rim, ink from depth and normals at a width scaled to the resolution, the outline shell wired to the stage and to skinned bodies) and the pixel look (a low-resolution render at a whole-number scale, 1-pixel ink, palette ramps with dither fixed to the world, the orthographic cameras snapped to the pixel grid in translation with sub-pixel smoothing, whole-number zooms, and a perspective variant for first person and the shooter); each tuned for the five cameras, by day and by night.
+- **Done when:** look metrics and thumbnails per look and camera; the shimmer metric (pixels changed by a sub-pixel orthographic pan) is 0 in the pixel look; visual-reviewer verdicts pass.
+- **Verify:** `npm test -- engine/gfx/post engine/gfx/materials && npm run e2e -- tests/e2e/post.spec.ts tests/e2e/playground-cameras.spec.ts`
+
+**Gate G12, Alive:** melee, the door kick and both firearms work in every camera, golden in Node and in the page; the neighbours, the dog and the dummies react; every event has its sound; day and night in both looks; GPU features each with its downgrade playable and the hash unchanged; hands and feet within §5's bounds with the re-imported clips.
+
+#### WP-13.25 The front end
+- **Owns:** `labs/playground/ui/`, extends `labs/playground/main.ts`, `tests/e2e/playground.spec.ts`
+- **Needs:** WP 10.6, WP 10.9, WP 13.9, WP 13.20
+- **Size:** M
+- **Build** (docs/PLAYGROUND.md §8.3): the title screen; the spawn picker (each area and room); pause; settings (camera mode and field of view, controls with rebinding, sensitivity, the movement profile, the look, audio levels, graphics and quality); the HUD per camera mode (crosshair, prompts, ammo, the feel readout); photo mode (the free camera, the looks).
+- **Done when:** every screen through DOM queries; settings and bindings survive a reload (the store); menu choices that change play are recorded and replay.
+- **Verify:** `npm run e2e -- tests/e2e/playground.spec.ts`
+
+#### WP-13.26 The tour and the hand-over
+- **Owns:** extends `labs/playground/`, `docs/GAME-GUIDE.md`, `labs/game/`, `tests/replays/playground-tour.replay.json`
+- **Needs:** WP 13.25, and every WP of the stages before it
+- **Size:** M
+- **Build:** the tour (a replay through every feature, in every camera and both looks: the attract mode, a film per look, a T2 check); the owner's playtest checklist (docs/PLAYGROUND.md §9.3); the guide, lean/ and the starter game brought up to the new public API (movement profiles, camera modes, storeys and sites, interaction, weapons).
+- **Done when:** the tour's replay gives its goldens in Node and in the page; `node x docs --check` and `node x engine --test` pass; the films go out with the stage's PR.
+- **Verify:** `node x replay tests/replays/playground-tour.replay.json --browser page && node x docs --check && node x engine --test`
+
+**Gate G13, The tech demo:** every row of Phase 13 and every WP it fired is done or blocked only on the owner (named in docs/PROGRESS.md); the tour plays through; the quick gate and main's full run are green; the owner's checklist goes out.
 
 ### Phase H: Production hardening (not scheduled)
 
@@ -3729,7 +4039,8 @@ clip.json ─parse/validate─▶ keys (format 1/2)
 | Box 6 (G7) | 7.1 → 7.4, then 7.8 |
 | Library (G8) | 8.1 → 8.2 → 8.3 → 8.10 → 8.4 → 8.5 → 8.6 → 8.7 → 8.9 |
 | Audio (G9) | 9.1 → 9.5 |
-| On demand, each when its trigger fires | 5.6, 7.5, 7.6, 7.7, 8.8, 10.1 → 10.9, 11.1 → 11.5, 12.1 → 12.4 |
+| The Playground (G10 → G13) | Phase 13's four stages, in the order its table gives, with the on-demand WPs it fires in their places |
+| On demand, each when its trigger fires | 5.6, 7.5, 7.6, 7.7, 8.8, 10.1 → 10.9, 11.1 → 11.5, 12.1 → 12.4; Phase 13 fires every one not yet done (ADR-0025) |
 
 A range such as `2.1 → 2.7` means every WP of the stage in numeric order. On-demand WPs run in the order their triggers fire; the last row only lists them. Upgrades (U-1…U-8) slot in between stages when they qualify.
 
@@ -3758,6 +4069,7 @@ A range such as `2.1 → 2.7` means every WP of the stage in numeric order. On-d
 - **A lane may start a later stage's WP early**, when its Needs are green and an agent is free. It never delays the current stage's gate.
 - **Lanes L and X** (Phases 8 and 9) may run in the background from G1 when there is room under the agent cap.
 - **After G7**, Phases 8 and 9 finish as parallel lanes (L and X), and on-demand WPs start as their triggers fire, each in its phase's lane.
+- **Phase 13** runs as the box stages did: each stage's lanes in parallel under the agent cap, the integrator (lane B) running `labs/playground/` and the stage's gate, and the on-demand WPs it fires in their own phases' lanes.
 
 **Isolation.**
 - Each lane runs in its own git worktree (`isolation: "worktree"`). Before its first Verify, the lane:
@@ -3770,7 +4082,7 @@ A range such as `2.1 → 2.7` means every WP of the stage in numeric order. On-d
   - `eslint.config.js`, `package.json`, `tools/deps.json`, `tsconfig.json`, `vite.config.ts`, `playwright.config.ts`, the generated docs, the ledger.
   - `package-lock.json` is regenerated: on a conflict, take either side and run `npm install`.
   - `engine/index.ts`, `engine/sim-api.ts` and its Animation area `engine/anim/api.ts` (ADR-0020 amendment 8) are append-only: a lane appends its own export lines, and a merge keeps both sides.
-  - After G7, `labs/box/main.ts` and `labs/box/README.md`: Phases 8–9 and the on-demand WPs request their wiring there.
+  - After G7, `labs/box/main.ts` and `labs/box/README.md`: Phases 8–9 and the on-demand WPs request their wiring there; in Phase 13, `labs/playground/main.ts` and `labs/playground/README.md` likewise.
 - Lanes request changes to shared files through their final report.
 
 **Content as data goes to helpers.** Levels, props, looks and box variants are data, so the integrator can hand them to helper agents (a cheaper model is fine) with a brief that names the coordinates, the tools and the check, each helper in its own scratch directory, and each result accepted only after a headless run. Shardfall's helpers built 27 rooms this way (§4.8).
@@ -3911,6 +4223,10 @@ Humans give direction remotely; agents fly the plane. The owner's part is small,
 | 0019 | **Common ground** (doctrine: Common ground): what game agents touch (the toolchain, the public API, the data formats, the `x` commands) uses established tools, libraries and patterns. The bespoke game-facing parts, each because nothing established does the job: the `x` commands (engine operations), the escalation log, the ID pass and look metrics, replays and hashing, content QA, the animation system being ported, and the local ESLint rules. Internals follow ADR-0020. Dependencies in `node_modules`, Rapier's inlined WASM included, are code, not source assets (doctrine: Assets) |
 | 0020 | **Quality under the hood, behind a public API** (doctrines: Quality under the hood, Common ground): game code imports only `engine/index.ts` and `engine/sim-api.ts`, enforced by ESLint; every public export is documented and every error names its fix in API terms, so game agents never need to read the internals; behind that boundary, the internals use the highest-quality approach their builder can execute well, newer releases included when measured (§6.10, rule 7) |
 | 0021 | **The owner's calls of 2026-10-10:** (1) mobile support modelled on shardfall's (WP 3.12: its touch controls, its page set up for phones, and its lighter defaults on phones) and a Vercel deployment of every push (WP 0.12) are built now, ahead of Phase H, and **not tested**: no specs, device emulation, phones, deployment tests or CI steps for them. A stage PR's Vercel status gets one look before merging, so a failed build is fixed when it shows (§11.1). That look is not a test. Any other problem with them is fixed only when the owner reports it, and may then be reproduced by whatever it needs (touch emulation included), without adding a standing suite. The `verifier` does not flag their missing tests (an exception to the doctrines Verifiable and Discovery first, made by the owner). (2) 100STYLE (CC BY 4.0) is adopted, with its credit (WP 8.10). (3) Pushes (at milestones, and the session's branch whenever that protects work), stage PRs squash-merged, their branches deleted, and the Vercel deployments that pushes trigger need no approval (§8.14, §11.1) |
+| 0022 | **The owner's calls of 2026-10-12:** the testing budget: cheap, objective checks, never wall-clock time on the shared machine |
+| 0023 | **The owner's calls of 2026-10-15:** long tests never hold up work: merges wait on the quick gate, and the full run goes on main after each merge |
+| 0024 | **Handing the engine to game agents:** one URL, one command, one guide; lean/ is the default handoff (amendment 1) |
+| 0025 | **The owner's direction of 2026-10-17, the Playground** (Phase 13): a character-first vertical slice, a house on a block where the player moves as in Apex Legends in five cameras and two looks; it fires the on-demand WPs it needs; the gameplay of RDR2, GTA V, Apex Legends and Cyberpunk 2077 as the long aim |
 
 ### 13.2 Open questions, each with a default (proceed with the default; revisit only through an ADR amendment)
 
@@ -3996,7 +4312,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 5.3 | Blob and floater rigs | A | done | a6da2bc (#6) | engine/anim/{blob,floater}.ts plus tests and 24 sim-api exports; blob: source update ported exactly, width R/sqrt(1+sq) so volume is kept (det = R^3 to 1e-12), minimal skeleton (root, body, eyeL/R, mouth, wingL/R as Matrix4), BLOB_MOVES bite/leap/pounce/spit on BlobLeap plus blobMove and blobMoveTimes; floater: wisp hover, new bank, motes; differential vs WP 0.11 mean 3.7 mm, worst 3.66 cm, 9 EXCEPTIONS from the volume fix; calls: move timings from the lab's jab/slash/overhead/cast, blob reads its own words (body-state mapping left to WP 5.7), slimeParts placement now joints, source `walk` dropped and beat wraps at 2π, floater heading/bank (atan(a/15), max 0.6 rad, smoothDamp 0.2 s)/mote frame new; not verified: crowd-scale performance, Node vs Chromium bit equality (atan2/hypot not swapped; covered after G9: tests/e2e/drift.spec.ts and box-4-chase and box-4-hop's goldens in Chromium); deferred: shown in the box WP 5.7, drawn WP 5.4; no escalations |
 | 5.4 | Crowd rendering and pose LOD | R | done | 1b5e7fe (#6) | engine/gfx/puppets/{crowd,lod}.ts and bodies/{blob,floater}.ts with tests, the crowd-render page, scene module and spec, 21 index exports; 5,000 agents (walkers, slimes, wisps) drawn with 0 pipelines built while growing, ball pages 1 to 11, 16/20/46 draw calls at 100/1,000/5,000 against a budget of 64 (33.8M triangles at 5,000), sim hash identical with LOD on/off/undrawn and in Node, all 11 batches seen by the ID pass; humanoids through createPuppetBatches, capes dropped by sharing pieces without strips, LOD bands at 15/30/60/200 m set animator pose level 0-3 and capes, culling by frustum and near; calls: RigBody/RigPart a data format of its own, not a registry kind; halo drawn see-through at 35 % instead of additive; pages of 8,192 instances; draw-call budget 64; rigs draw the same in every band; new codes GFX_CROWD_LOD, GFX_RIG_BODY; not verified: look quality beyond three self-reviewed screenshots, real-GPU performance; deferred: shown in the box WP 5.7, dropping limb end balls far away; no escalations |
 | 5.5 | Performance counters and crowd ladder | T | done | dff959a (#6) | engine/dev/stats.ts (stats meter, __engine.stats(): means of the last 60 steps or frames plus the renderer's counts); x perf extended (browser counters, --ladder in Node: 0.51/4.9/22.7 ms per step at 100/1,000/5,000 agents, budget sections with tolerance, out/perf/trend.json); tests/baselines/perf/box-room.json; core proposal accepted (6ccfa51, ADR-0014 amendment 12): world/scene system probe, app meter wiring; calls: means not medians, explicit --agents, budget file named after the scene id; no escalations; gpuMs: WP 11.2 (on demand, §8.3), renderMs CPU only; WP 1.5 kernel budget test flaky under load (0.209 ms vs 0.2); G3f: the kernel's --budget run left T1, where its timing flaked at load 47, for LONG_RUNS (x ci --long). |
-| 5.6 | Bot and dev actions | I | on demand | | |
+| 5.6 | Bot and dev actions | I | todo | | Fired 2026-10-17 by the playground (ADR-0025): the gym's courses and the house need soak runs, and tuning needs teleports and slow motion. |
 | 5.7 | Box 4: a crowd | B | done | 89495b6 (#7) | walker, slime and wisp cast with flow-field and ring steering, hops and hover; box:crowd-100/1000/5000 (box.crowd.count, box.crowd.mix), 25 bodies entering per step; replays box-4-chase and box-4-hop (walkers and slimes reach the west gallery), box-crowd.spec, Box 4 in parity, ladder budgets 2.06/17.8/77.6 ms per step at 100/1,000/5,000, 0 pipelines growing to 5,000; core proposal accepted (ADR-0008 amendment 6): crowdBody and stepCrowdBody (sim), stageCrowd (gfx); calls: rigs step in the sim (ADR-0009), crowd climb 0.06 m (settled after G9: the stairs are a 1:5 ramp the crowd climbs), parity reads each replay's steps, no crowd-1000 page replay; after G9: at 1,000 the crowd blocked the hero at the stairs' foot, closed by the character option `shoves` (his controller passes the crowd, his capsule shoves it aside, as the prototype's HERO_QUERY): box-4-stairs (crowd-1000: he waits 5 s at the foot, then stands on the gallery at step 704; its goldens agree in Node ×3, the sim page ×3 and the rendering page ×3), box-4-chase, box-4-hop and box-5-fight re-recorded, FIGHT_TIMELINE 79 → 77 sounds (ADR-0020 amendment 9); after G9: hashing at 326 ms a hash at 5,000 is gone, the same bytes made cheaper (key and string bytes kept as encoded, `Fnv64.text`; `value`'s visitor made once per hasher; plain data fed and checked in one walk, entities.ts `feedData`, where notData and value walked twice): box:crowd-1000's hash 55.4 → 18.0 ms, 67% faster (one process, old and new interleaved), every replay's goldens unchanged (22 in Node ×3), and a second hash of the same state encodes no text (state.test.ts); not verified: real-GPU performance; no escalations, no deferred proofs |
 | **G5** | **Gate: Box 4** | | done | 3cdfb32 (#7) | x ci --local --long green at 3cdfb32 on a clean tree, first run, at load average 19–46 from other lanes (27 min 58 s: check 6.0 s of 10, test 28.6 s of 60 with 2,554 tests in 227 files, x new --test-all 42.5 s, e2e 6 min 28 s with 122 tests, T2 in full; flake hunt 366 of 366 (122 × 3) in 18 min 56 s; crowd ladder within budget); proven: the crowd chases the hero by flow field and ring steering round the pillars and up the west stairs, walkers and slimes reaching the gallery (box-4-chase, 720 steps → 832b86cf9951bc46; box-4-hop, 780 steps → cd0346ec04508aa9), each to one golden set in Node and in the rendering page (parity.spec.ts: drawing every step, the chase through every camera and resolution mode, the hop with the GPU features off; box-crowd.spec.ts); 0 pipelines built as the crowd grows to 5,000, every crowd batch in the ID pass; crowd ladder (box:crowd-1000, 300 steps, medians of 5, Node) step 0.83/8.5/28.5 ms, hash 3.0/40.8/152 ms, capture 0.39/3.6/23.8 ms at 100/1,000/5,000 agents against budgets 4/36/160, 14/130/650, 3/20/125; calls: x ci --local runs with --long at the gate, as ci.ts says (flake hunt and crowd ladder); WPs 6.5, 7.1, 7.2 and lane L/X WPs merged with Box 3 already rode in #6, so #7 carries 5.7 and the gate fixes only; verifier review of the gate passed after one fix round (WP-G5-fix-r1, ed2e1de: Box 4 sweeps each replay once in parity, the longest tests queued first, box-crowd and box-hall read end states without drawing, the crowd ladder joins LONG_RUNS); x deps --qualify: nothing qualified beyond the pins; no new escalations (ESC-0001 decided in the owner's absence, Actions off); open risks: T2 at 6 min 28 s, over its 6 min budget (fails at 9 min) under load 36–46, parity.spec.ts's render tests 133–146 s each are the longest, so the gate keeps selecting T2 in full; the files then over 400 lines are split (sim-api.ts at WP 8.7; the rest after G9, ADR-0014 amendment 16); at 1,000 the crowd blocks the hero at the stairs' foot (he passes it after G9: `shoves`, box-4-stairs, ADR-0020 amendment 9); the state hash dominates the step (152 ms at 5,000; after G9 the same bytes 67% faster, 55.4 → 18.0 ms at crowd-1000, WP 5.7's row); the post-IK foot plant (6.2; built after G9, ADR-0009 amendment 8) and preciseHits parity (6.1; recorded after G9, box-5-precise) open; not verified: real-GPU performance; Vitest 4 qualifies 2026-10-22 |
 | 6.1 | Moves, timelines, hits | A | done | fabf4c0 (#8) | engine/anim/{timeline,moves,moves-data,strike}.ts, fixtures/rigs/dummy/, the move template; core proposal accepted (5e5ee9e, ADR-0009 amendment 5): the humanoid plays moves through its body state `body` (HumanoidState.arm), eight hero replays' goldens re-recorded for that state only; round-4 review fix (fabf4c0): Combo.load treats a saved step outside the combo's attacks as idle, as Timeline.load does, instead of throwing a bare TypeError, covered by a timeline.test.ts case loading a 3-hit save into a 2-hit combo; new codes ANIM_BAD_HIT_KEY, ANIM_EMPTY_COMBO, ANIM_NOT_PRECISE; integration: sim-api exports of WP 8.4 and WP 6.1 kept side by side, docs regenerated; no escalations; not verified: T2 (npm run e2e) in the lane; verifier: pass after 2 fix rounds; after G9 (CLEANUP 5.2): the preciseHits parity Box 5 never set is box-5-precise, box-5-fight's inputs with box.fight.precise on, its goldens agreeing in Node ×3 and Chromium ×3 and in the rendering page ×3; the setting box.fight.precise (off by default, so box-5-fight's goldens hold) poses the hero in the sim from his first step, and fight.test.ts checks his trail fills mid-swing |
@@ -4011,9 +4327,9 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 7.2 | Materials (v2): toon, outlines, styles | R | done | 1f26ebc (#6) | engine/gfx/materials/{styles,toon,outline}.ts: four styles (lambert, toon, flat, pbr) switched at run time with 0 pipelines built and the hash unchanged; toon as a TSL lighting model (smoothed bands, gated rim) over the MeshToonMaterial+gradient baseline (thumbs materials-v2-toon-{bands,gradient}); outline shells on instanced parts centred within 1 px; shown in tests/pages/materials-v2.html (box wiring is WP 7.8's); calls made (ADR-0008 Amendment 3): style is a style set's view state and bands/rim its uniforms (material schema unchanged), lambert kept as a 4th style, warm-up swaps drawn meshes per style via ~styles/* entries, toon and flat drop the normal map, skinned meshes get no shell; no escalations; no deferred proofs |
 | 7.3 | Texture library (v2) | W | done | dfb88c1 (#8) | engine/gfx/textures/generators/{runes,moss,metal,plaster,dirt,grass,water}.ts and {tslNoise,contactShadow}.ts; v2.ts registers the seven after v1 (13 generators per registry); `node x qa tex` writes out/qa/tex/sheet.png (colour, normal, emissive, tiled 2 × 2, row 0 at the panel's bottom, proved by a ramp and grass/staves test); core change accepted (ADR-0020 amendment 7: Owns widens to textures/{v1,v2,texture,texture.test}.ts and tools/qa/tex{,.test}.ts); merge kept WP 4.5's prop texture checks beside the sheet; escalations: none; nothing deferred; not verified: T2 (npm run e2e) after the review fix; verifier: pass after 1 fix round |
 | 7.4 | Post-processing | R | done | c9f9dc9 (#8) | One fixed MRT with part flags, every filter a uniform in one composite, bloom and FXAA, looks as data from shardfall's presets; createEngine draws every frame and shot through the chain; core proposal (ADR-0008 amendment 7): props tagged objects and crowd batches characters, one outline group per drawer; look template tools/templates/look/. Calls: one outline group per drawer, template pattern allows camelCase, starter look sets no style. Full T2 137/137; no escalations, no deferred proofs. Closed after G9: outline.color is validated (filters.ts `colorProblem`: hex or a CSS colour name three.js knows, or '' to darken): a look with another is refused when defined, and `post.filters` drops it with the advice GFX_POST_BAD_COLOR (`fixColor`), the line darkening the surface (looks.test.ts, filters.test.ts). verifier: pass after 2 fix rounds |
-| 7.5 | Performance governor | I | on demand | | |
-| 7.6 | MCP server | T | on demand | | |
-| 7.7 | Gallery | I | on demand | | |
+| 7.5 | Performance governor | I | todo | | Fired 2026-10-17 by the playground (ADR-0025): the playground must hold its frame budget on the owner's hardware with WPs 11.3 and 11.5 on. |
+| 7.6 | MCP server | T | todo | | Fired 2026-10-17 by the playground (ADR-0025): the owner's order: an agent playtester drives the playground through MCP. |
+| 7.7 | Gallery | I | todo | | Fired 2026-10-17 by the playground (ADR-0025): about 40 props and the building materials need visual review. |
 | 7.8 | Box 6: the Stress Box | B | done | 4ba3afc (#9) | Box 6: looks/torch-{lit,toon,cel,pixel,bloom,fxaa} (sky:hall + style/filters), hall floor = its rune bake (level material swap), README demo index, fight-1000/crowd-5000 ladders within budget (box-fight-1000.json, box-crowd-5000.json; fight ladder added to LONG_RUNS); core proposal accepted (ADR-0008 amendment 10): look.sky, engine/gfx/stageSky.ts, engine/app/look.ts, the style set in createEngine, level `materials`, chain warm-frame fix; box-hall-iso thumbs re-recorded (floor bake); calls: toon ink = composite edge outline, not shells; no box-6 replay (looks are view state); budget files named per scene; parity looks on hall-props; x ci --local red only on T2's budget (19.5 min at load 40-70 from 6 lanes, 147/147 green); after G9: box-look.spec.ts is one test per look (8 tests, each with its own time limit; all 8 passed on their first try in x ci --local at 1e5d6dd, 12.8 to 109.9 s each, out/e2e/report.json), x shot takes --ready-ms (how long the page has to signal ready, 30 s by default; its whole-number parser, `wholeFlag`, moved to tools/x.ts, since importing tools/cmd/sim.ts for it loaded the view into the Playwright worker through hello.spec.ts's `frameMetrics` import, and the view's materials failed materials.spec.ts in the full T2), engine.ts 422 and parity.spec.ts 440 lines split (drawing.ts, parity-stages.ts: ADR-0014 amendment 16); not verified: real-GPU cost; no escalations; built at gate G7's review (lane gatefix-G7-r1, ADR-0018 amendment 2): engine/sim/reactions.ts (components `reactions`, hashed, and `secondary`; reactTo, stepReactions; actors.anim steps an actor's reactions; ActorSpec.components), engine/gfx/puppets/actors.ts view-side Reactions and Secondary layers with engine/gfx/puppets/chains.ts (actor#1/cape in the ID pass, counted as the hero's); the fight's blows flinch, knock walkers down to get up the way they lie and fell the slain, the hero spawns with his reactions and cape; box-5-fight's goldens and FIGHT_TIMELINE (81 → 79 sounds) re-recorded with that reason; proved by fight.test.ts, actors.test.ts, chains.test.ts, reactions.test.ts, box-fight.spec.ts; the cape is a sim component only the view draws, and crowd walkers show knockdowns, not the flinch lean (their batches run no view layers): both accepted by the owner, 2026-10-14 (ADR-0018 amendment 3) |
 | **G7** | **Gate: the Stress Box (foundation)** | | done | 4af3816 (#9) | x ci --local green at 4af3816 on a clean tree, first run, at load average 16-31 from other lanes (10 min 54 s: check 5.9 s of 10, test 30.1 s of 60 with 3,262 tests in 301 files, x new --test-all 50.3 s, e2e 9 min 25 s with 164 tests, 0 flaky; T2 over its 9 min, a CI_BUDGET warning only, ADR-0022; T2 ran in full as engine/anim/api.ts changed); `node x deps --qualify`: no line has qualified beyond the pins (0 upgrades; Vitest 4 qualifies 2026-10-22). Proven: the box does the stress test's job (the hall, the hero, crowds to 5,000, props, combat with reactions and the cape, effects, cameras, looks torch-lit/toon/cel/pixel/bloom/FXAA with 0 pipelines after warm-up and box-3-knock's goldens kept; clip mode and sound from lanes L and X); Gates G0-G6 hold (all of T0-T2 green); every on-demand row (7.5-7.7 and later phases) is still `on demand`. Benchmark (x perf --ladder, 300 steps, medians, within tests/baselines/perf/box-{fight-1000,crowd-5000}.json): fight step 1.74 / 13.4 / 50.8 ms at 100 / 1,000 / 5,000, hash 7.6 / 79.5 / 410 ms; crowd step 0.94 / 9.95 / 50.5 ms, hash 3.4 / 54.6 / 294 ms; the review's `x ci --local --long` green at c30b552 in 51 min 27 s (flake hunt 477/477, ladders, clip QA, box clips). Verifier: review rounds 1-2 passed (gate-G7-r1..r3). Dry-run friction (16 items): 1 the scene template cites `x sim <id>.ts` and x new's docs check runs the path check (2450217); 2 README "Adding a prop" steps 3-4 (physics, addLevelBodies, spawnProp) (2450217); 3 spawnProp/PropPlacement name their fields in API.md (2450217); 4 README step 2 and the skill's Layout row: the page reaches labs/box/props/ only through a scene's import (2450217, ff5c618); 5 x qa counts what it checked, and an --only that keeps nothing is X_USAGE with the closest ids (2450217); 6 x describe kind:name and bare names; the cut line names describe.json (2450217, 6c31cb4); 7 tests/replays/README.md "Coordinates and inputs" (move is world [x, z], +Z south; intents.ts's keys listed) (2450217); 8 x replay --state / --until n (tools/lib/replayState.ts) (2450217); 9 README step 2: <stage> is the stage the scene proves, else the highest box-<n>- and out of STAGES (2450217, ff5c618); 10 README's demo index says box-look runs on hall-props with every look and a new scene is covered by parity through its replay; each test annotates the scene and looks it covered (2450217); 11 box-readme.test.ts requires every box scene and setting in the README (2450217); 12 the prop template measures each part where it stands (buildPropPart, partMatrix public) (2450217); 13 README "Adding a prop" step 5: defineGlyph with a spawn and levelProps (2450217); 14 docs/PROGRESS.md rewritten at the review (4bf5ef9, bae833f) and at this gate; 15 stays: docs/INDEX.md is generated and read through its "Start here" section and grep (the export lists are its API index, G3 item 2); 16 tests/replays/README.md and labs/box/README.md give the tile centre (col + 0.5, row + 0.5) × tile, rows +Z (2450217). Open risks: T2 at 9 min 25 s, over its 9 min (warning only); files over the 400-line warning (PROGRESS); crowd batches draw no flinch lean (accepted by the owner, 2026-10-14: ADR-0018 amendment 3); post-IK foot plant (built after G9, ADR-0009 amendment 8) and preciseHits parity (recorded after G9, box-5-precise) open; real-GPU cost, touch (ADR-0021) and physical pads not verified. Escalations: none new; ESC-0001 stays decided (Actions off). Calls: no box-6 replay (looks are view state); the INDEX stays one generated file. Review history: review round 1 (gatefix-G7-r1, bae833f): 14 findings fixed (WP 6.2 in the box, T2: parity one replay per test and one look per material style, x replay --state/--until, x describe kind:name, x qa checked counts and X_USAGE on an empty --only, x new path check, prop and scene templates, README Adding a prop and Coordinates and inputs, box-readme coverage test, PROGRESS); node x ci --local --long green at c30b552 (lane 9e154c0 + generated docs) in 51 min 27 s at load 6–83: check 13.9 s (CI_BUDGET warning), test 46.2 s with 3,258 tests, x new --test-all 1 min, T2 9 min 32 s with 159 tests (CI_BUDGET warning only, ADR-0022), flake hunt 477/477 in 35 min 9 s, kernel budget, crowd and fight ladders, clip QA, box clips green; after merging integration b5acdc1, 57 e2e (parity, box-fight, box-clips, box-audio, box-look, box-hero) green; review round 2 (gatefix-G7-r2, ff5c618): dry-run item 9's <stage> rule kept only in labs/box/README.md step 2 (the skill points to it), and the skill's props Layout row given a full path (labs/<lab>/props/*.ts) |
 | 8.1 | Provenance, catalogs, ledger, docs | L | done | ea27caf (#5) | data/anim/{SOURCES.md,LICENSES/,catalogs/,cmu/} (ledger split into 17 categories plus subjects.tsv, fallback fixed), docs/ANIMATION-LIBRARY.md (from MOCAP.md), docs/ANIMATION-RESEARCH.md (Engine column and 2D inventory dropped, coverage map added), tests in tests/unit/data/anim/{catalogs,ledger,sources}; call: kept the research doc's Build/Size columns, labelled as the 2D engine's proposals; INDEX/API regenerated on merge; no escalations, no deferred proofs; re-dispatch on integration 5ee52bf re-checked every claim (CMU terms against the live site, CC0 hash, ledger join-back 2548/2548, catalogs) and dropped a leftover 2D-engine mark "topple (✅)" from ANIMATION-RESEARCH item 6; after G9: the set's `credit` (data/anim/sets/cmu/_set.json, `CMU_CREDIT` in tools/anim/repack.ts) states CMU's terms (free to use and redistribute, never to resell as data) where it said "free for all uses", regenerated through the importer (`x anim import --cmu --legacy`: 1 file written, the 61 others as they were), the old wording mapped in sets.test.ts's legacy compare |
@@ -4023,7 +4339,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 8.5 | Tools port | L | done | 562b9cd (#8) | x anim (cmu, import, find, show, bake, sheet, cut) reproduces the CMU set byte for byte (import --cmu --legacy --check, 62 files), find punch in 20 lines; review round 2: readMany skips unwanted gaps over MAX_GAP 256 KiB (13_29 cold 1.53 MB, was 24.78 MB; cold import --cmu about 23 MB), import --cmu fetches all picks in one cmuGet, find/show/bake/sheet/cut take --sets <dir>; core change accepted (lane/wp-8.5-frames, ADR-0010 amendment 4): the codec's frame math and torso moved to engine/anim/clip/frames.ts (encode.ts 449 to 350 lines; decode bit-identical, oracle green); integration: WP 8.6's takes.test.ts flag list taught WP 8.5's fps:c3d and twin:<id> evidence flags; docs regenerated on merge; open (triaged, not blocking): no test on the GLB importer's skinned-mesh/Rigify paths (must land before WP 8.8 imports UAL1), no --json test on x anim cmu/find; no escalations; after G9: the cold `x anim import --cmu --legacy --check` passed (60 clips, all 62 files as the tool writes them, 27 s with an empty .cache/anim, its 69 MB of takes fetched again); call: not in LONG_RUNS, since every gate would then hang on CMU's server and a 23 MB download while T1's legacy compare already pins the set; not verified: T2 (tools/ and engine/anim/clip only); verifier: pass after 2 fix rounds |
 | 8.6 | Library tests and QA | L | done | c0b7e60 (#8) | Library tests (format, provenance, takes, ledger completeness), the browser smoke test with mixer parity, and the anim QA family over 1,218 clips on 5 builds (qa-anim-library.json, 32 entries); core change accepted (ADR-0010 amendment 3): baker fold fix (87 clips, anim-clips.json rewritten), library replace() parses first, x sheet humanoid keeps the humanoid's own QA ids (humanoidPrefixes / qaPrefixes, includes WP 8.7's action:) and never plays the library; calls: clip QA in tools/qa/anim/, T1 plays a sample and the full sweep (about 40 s) is a LONG_RUNS entry, foot slide deferred to contacts (WP 8.8), x anim sheet left to WP 8.5; integration: tools/qa/anim{,.test}.ts merged with WP 8.7's actions, file comment trimmed to 40 lines, the bake fold fix cures action:deathBlown jointLimit so its qa-anim.json entry is removed, docs regenerated, replays unchanged; after G9: contact IK bends each knee toward the source's once it stands 2 cm off its hip–ankle line (retarget.ts KNEE_POLE): Get_Up_From_Side's pop and twistJump and Slide_Exit's twistJump left the baseline; Zombie_Rise, rising with its hips under the floor, keeps its pop (0.7215 → 0.7119) and gains a twistJump at frame 106 and an underFloor of 4.9 cm by design, baselined with their reasons, bare x qa anim about 50 s; no escalations; verifier: pass after 1 fix round; not verified: full T2 rerun after the review fixes |
 | 8.7 | ACTIONS layer | L | done | 4cc8dee (#8) | engine/anim/actions.ts adds the action kind, the Actions player and actionCheck (beats of body states, a motion or a move, clips, IK effectors, flips, squash, events, flags, cancel windows, until-next holds, loops, exit, lockstep pairs, 30 eased channels); data/anim/actions/ holds 28 actions (jump phases, hurt, dizzy, flips, 8 deaths, charge, itemGet, ledgeHang, wallSlide, grab and grabbed, get-ups, idle life); tools/templates/action; core change accepted (4cc8dee, ADR-0009 amendment 7): the anim QA plays every action by its check, 38 baseline entries with reasons (full QA about 5.5 s unloaded); calls: actions are data the reader loads (loadActions), deaths revive on finish, only ground flips are clamped to the floor; integration: sim-api.ts was at 595 of 600 lines, so its Animation area moved verbatim to engine/anim/api.ts, re-exported whole, and the Actions exports were added there (ADR-0020 amendment 8; x new action --test green); docs regenerated; actions.ts's 596 lines split into actions-data.ts and actions-check.ts after G9 (ADR-0014 amendment 16); after G9: x describe action lists the 28 ids through tools/anim/library.ts's defineActions (the engine cannot import data/; describe.test.ts); no escalations; not verified: T2 (no page code touched) |
-| 8.8 | Re-import from sources (after G8) | L | on demand | | |
+| 8.8 | Re-import from sources (after G8) | L | todo | | Fired 2026-10-17 by the playground (ADR-0025): the playground's mantles, climbs, ladders and ziplines need hands on their contacts, and its locomotion foot roll. |
 | 8.9 | Clip mode in the box | L | done | bf788f2 (#9) | box:clips (labs/box/scenes/clips.ts): the hero and the mannequin play any of the library's 1,218 clips through the clip layer in the room, set by box.clips.* (clip, speed, frame, mirror, mask, cast, ik); commits 1b11767 and 7257ea0 (core), d1b807f (clip mode), c2c49c5 (the `box clips` long run), d36e905 (100STYLE's credit on every box page, a DOM query), merged fd01b19, gate G8 review fixes bf788f2; core accepted as ADR-0010 amendment 5: the clipset kind (`defineClipSet`, `clipSetFromFiles`, `defineSetBuild`), actor clips (`spawnActor` clips/body, components clips and puppet, `actors.clips`, clip events, play/stop/seek/`locomoteClips`), the view and `__engine.anim` posing clips; every host registers the library (tools/anim/library.ts `defineLibrary` for x sim, x perf, x replay, x describe and tests; labs/box/library.ts for the box page, also on `?replay=`, and tests/pages/replay.ts; library.test.ts: the same entries); proofs: clips.test.ts plays all 1,218 clips headless on the mannequin (first, middle and last frame, each pose finite, bones at length), `x anim show` and `box.clips.clip` select the same clip frame for frame, frame stepping, a one-shot's hold, the hero walking under mask=upper, one hash twice; box-clips.spec.ts plays one clip of each set in the page (0 pipelines after the warm-up, both figures in the ID pass) and finds the credit by a DOM query; the BOX_CLIPS=all long run played all 1,218 clips in the page (3/3 passed, 48 s); tests/replays/box-8-clips.replay.json (a clip change, frame stepping, the hero walking under a one-shot on mask=upper; final 900f06cdd21a82a7) gives one golden set in Node (clips.test.ts), the sim page and the rendering page, and is parity.spec.ts's clip-mode stage (goldens drawn, cameras and resolutions swept, GPU features off, live play replayed in Node, ID pass); `x describe clipset` lists the 10 sets; full T2 159/159 (24.4 min on 2 workers at load ~60); verifier: gate G8's adversarial review, round 1 fixed; no escalations; no deferred proofs; tools/cmd/sim.ts 402 and tests/e2e/parity.spec.ts 471 lines, split after G9 (tools/lib/scenes.ts, parity-stages.ts: ADR-0014 amendment 16) |
 | 8.10 | 100STYLE and Quaternius v2 from shardfall | L | done | a044e3d (#5) | tools/anim/shardfall.ts adopts 100STYLE (7 sets, 878 loops, body null) and Quaternius v2 (102 clips plus v1's Punch_Enter and body) with 8 catalogs, every clip marked via; calls: 100STYLE's Set cell names its catalog family, parity runs over the shorter duration (only A_TPose differs); parity on v1 rests 79/87 within fit (8 misses with checked reasons in shardfall.test.ts); no escalations (100STYLE approved, ADR-0021); deferred without the checkouts: the oracle decode and parity tests (done: they run with the checkouts in npm test, none skipped, checked after G9); INDEX/API regenerated on merge; no verifier review (lane ran it as S-size although the ledger sizes it L); open for WP 8.5: repack.ts with no arguments still rewrites quaternius from v1 (drop it from legacySetFiles) |
 | **G8** | **Gate: animation library** | | done | bb3862f (#10) | x ci --local green at bb3862f on a clean tree, first run, at load average 5-22 (1 min 33 s: check 6.1 s of 10, test 31.8 s of 60 with 3,262 tests in 301 files, x new --test-all 51.9 s; T2 selected nothing, as the stage's code reached main with gate G7's PR #9 and nothing changed since 9a8f6f3; T2 in full last ran at the review: 159/159 at ebd27cc in 14 min 24 s, and 164/164 at G7's 4af3816 in 9 min 25 s, over its 9 min, a CI_BUDGET warning only, ADR-0022); `node x deps --qualify`: no line has qualified beyond the pins (0 upgrades). Proven: the library is intact with provenance (8.1: SOURCES.md, licenses, catalogs, the CMU ledger; 8.10: 100STYLE's 7 sets and Quaternius v2 deep-equal shardfall's files bar the marked fields, every style100 set credited) and parity proofs (8.2: the codec bit-identical to the source, 3 samples and a sha256 per clip in `x port refs --check`; 8.10: 79 of 87 shared Quaternius clips within v1's fit, the 8 misses listed with reasons); the clip layer plays every clip on every build in Node (8.4, 8.6: 1,218 clips in 10 sets on 5 builds, anim QA baselined with reasons in qa-anim-library.json, 32 entries; 8.7's 28 actions by their check); clip mode runs in the box headless (clips.test.ts plays all 1,218 clips on the mannequin; box-8-clips replay, final 900f06cdd21a82a7, one golden set in Node, the sim page and the rendering page) and in the page (box-clips.spec.ts, one clip a set, 0 pipelines after warm-up; the BOX_CLIPS=all long run, 1,218 clips, in G7's --long at c30b552); `x anim import --cmu --legacy --check` passes (62 files byte for byte, 3.8 s). Verifier: review round 1 (gate-G8-r1, its x ci at 6d9fb74 failed 7 parity specs: clip mode registered no library in x sim, x replay and the replay page) fixed in gatefix-G8-r1 (bf788f2: tools/anim/library.ts defineLibrary in every host, box-8-clips replay, `x describe clipset`; ADR-0010 amendment 5's deferral closed); round 2 (gate-G8-r2) passed with x ci --local green at ebd27cc (test 3,240, T2 159/159). No dry run at this gate. Open risks: T2 over its 9 min (warning only); tools/cmd/sim.ts 402 and tests/e2e/parity.spec.ts 471 lines, split after G9 (tools/lib/scenes.ts, parity-stages.ts: ADR-0014 amendment 16); WP 8.8 (re-import, format 2's key fields) on demand; not verified: real-GPU cost of clip mode, touch (ADR-0021). Escalations: none new; ESC-0001 stays decided (Actions off). Calls: the stage's code went to main with gate G7's PR #9, so this gate's PR carries its ledger and progress only; G8's row records bb3862f, the commit x ci checked. |
@@ -4037,24 +4353,54 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | **C2** | **Long tests never hold up work (the owner's calls of 2026-10-15)** | | done | PR "Long tests never hold up work" | ADR-0023: `x ci --local` is the quick gate before every merge (npm ci, x src, T0, T1, x port refs --check: 4 min 19 s at c2d1333, where x new --test-all took 2 min 33 s more, so it moved to the full run), `x ci --local --full` the full run with x new --test-all and T2 in full, which the workflow runs after each merge to main and by hand (no longer on PRs, no run cancelled), nobody waiting on it; `x ci --status` (tools/lib/ciStatus.ts, GitHub's REST API through curl, no token) reads main's last full run, the SessionStart hook prints it, and a red main is fixed first; one budget, the quick gate's five minutes (`GATE_BUDGET_MS`), answering C1's Owner: issue; T2's budget by machine size and its selection in the gate gone (ADR-0022 amendment 3, ADR-0016 amendment 2); the owner declined branch protection (§11.5), deleted the `game/*` branches on purpose (docs/HANDOFF.md) and paused Vercel until they test (its statuses and errors ignored meanwhile); proved by tools/cmd/ci.test.ts, tools/lib/ciStatus.test.ts, tools/cmd/ci-workflow.test.ts, tests/unit/hooks/session-start.test.ts and `x ci --status` against GitHub; the first full run on main after the merge is the one `x ci --status` reports |
 | **C3** | **The agent files pruned (the owner's ask of 2026-10-15)** | | done | PR "Agent instruction files: pruned to what agents need" | against current guidance (Claude Code's CLAUDE.md docs: under 200 lines, only what applies every session, prune what tools enforce or agents do anyway; ETH Zurich's AGENTS.md study, arXiv 2602.11988: repository overviews do not help and context files cost over 20% more inference): what loads every session went from 149 lines to 115 (AGENTS.md 124 → 101, CLAUDE.md 25 → 14); cut: the directory overview, setup detail the hook and scripts/setup.sh carry, sentences DOCTRINE.md already says, the Phase 0 note, CLAUDE.md's lists of the subagents, skills and pre-approved actions that Claude Code or AGENTS.md already shows, and the x-loop skill's repeats of AGENTS.md; every owner call, rule and check stays; the Vercel rules made one bullet |
 | **C4** | **The lean package (the owner's call of 2026-10-16)** | | done | PR "The lean package: the engine as a library, the default handoff" | ADR-0024 amendment 1: after about a dozen trials the owner asked for a lean package, shipped as libraries ship, without tests or checks, for agents down to a chat in a browser. lean/: my3dge.js, the engine as one ES module (1.07 MB, 346 KB gzipped; three.js r182 and Rapier 0.21 stay imports, which the page's import map loads from jsDelivr at the pinned versions), my3dge.css, game.html (the starter as one page: 256 lines), README.md (one file, 42 KB, about 10,000 tokens: the model, the rules worth keeping, the page, the API by area) and LICENSE (MIT, and @stdlib's Apache-2.0). `x docs --write` writes it (tools/lib/lean.ts; a 2.6 s build, the same bytes every time) and `x docs --check` fails it stale; tools/lib/lean.test.ts maps every import the bundle makes to a file node_modules holds at the pinned version; tests/e2e/lean.spec.ts opens game.html as a file and plays it on WebGPU from its CDN URLs served locally (23 s); jsDelivr's copies of the seven files a page loads were byte for byte node_modules' (2026-10-16). README.md's first section and docs/HANDOFF.md now lead with it; the full workspace stays for coding agents that want the checks. Not done: npm publishing and type declarations; the owner said no to both for now (2026-10-16) |
-| 10.1 | Building blocks and fixture rigs | A | on demand | | |
-| 10.2 | Ragdolls | P | on demand | | |
-| 10.3 | Props library | W | on demand | | |
-| 10.4 | Generic gameplay kits | W | on demand | | |
-| 10.5 | Terrain | W | on demand | | |
-| 10.6 | UI widgets | I | on demand | | |
+| 10.1 | Building blocks and fixture rigs | A | todo | | Fired 2026-10-17 by the playground (ADR-0025): the playground's dog. |
+| 10.2 | Ragdolls | P | todo | | Fired 2026-10-17 by the playground (ADR-0025): dummies and neighbours fall to hard hits and kicks. |
+| 10.3 | Props library | W | todo | | Fired 2026-10-17 by the playground (ADR-0025): the house needs doors, windows and furniture. |
+| 10.4 | Generic gameplay kits | W | todo | | Fired 2026-10-17 by the playground (ADR-0025): the range's targets and the neighbours' awareness. |
+| 10.5 | Terrain | W | todo | | Fired 2026-10-17 by the playground (ADR-0025): the yard and the hill. |
+| 10.6 | UI widgets | I | todo | | Fired 2026-10-17 by the playground (ADR-0025): the playground's settings, prompts and HUD. |
 | 10.7 | Game template | B | done | PR "Games from one URL: new-game.mjs, the starter game, the guide" | Fired by the owner's ask of 2026-10-15 (hand the engine to many agents from different labs at once, one game each; ADR-0024). `node tools/game/new-game.mjs <dir>` makes a game in 0.5 s (1,834 engine files pinned by engine-lock.json, 8 starter files, the game's root files); `node x engine --test` made one from the checkout and passed its gate in 2.5 min (npm ci 4.5 s, check 21.8 s, test 7.0 s, sim 4.1 s, replay in Node and Chromium 10.2 s, shot 6.2 s, x qa of every family 96.0 s, help 0.3 s; each a metric of out/engine/test/report.json), now a full-run step; the starter's bot wins seeds 1–10 in 324–425 steps of the 1,800 its clock allows; the replay's goldens recorded in Node ×3 and Chromium ×3, and they hold while the page renders (`x replay --browser page`, Chromium page ×3); tests/e2e/game.spec.ts reads the HUD through the DOM (the round, its end, Enter's next round) in 7.9 s; a game's build ships only itself (6.0 MB, 3 assets). Calls: the engine vendored, not a submodule (cloud agents clone without submodules; a dependency's sources would be invisible to ripgrep); the starter at labs/game/ in this repository, checked by its suites; docs/THREE-DELTA.md not shipped (it cites a reference file games lack, and game code reaches three.js only through the barrels); sim-side lint now covers every lab's scenes/ and cast/; the store split off as WP 10.9. The verifier's review failed it, and the fixes followed: `--update` never overwrites or deletes a game's own files (a file of the game's where the newer engine adds one stops the update and names it; a declared patch is kept unless `--force`), and it carries the game's own npm scripts and dependencies across; a game's binary assets are approved in its own APPROVED-BINARIES.json (the engine's list stays the engine's); `x new` kinds that make the box's entries (a scene) say what a game does instead; tests/baselines/ ships (not port/), so `x qa` runs in a game; the determinism skill is not shipped (it cites the engine's sources; docs/GAME-GUIDE.md §7 holds what a game needs); the starter counts a gem once when two actors reach it in one step. Its second review failed it on one point, fixed: `--update` also stops on a package.json entry of the game's that the newer engine sets otherwise (scripts, dependencies, allowScripts; the lock records the engine's), unless `--force`; and it brings the root files the game never edited to the new templates and names the edited ones whose templates changed (the lock records what new-game.mjs wrote); a damaged lock names its fix. Not covered: `x qa level` reads level files only, so a game's levels written inline in a scene are not QA'd; tools/game/*.d.mts are written by hand; a root file the game had before new-game.mjs (an AGENTS.md appended to, a README.md kept) is the game's, so an update never names its template's changes. The third review passed it; its notes since: an update names the package.json entries it drops or sets back to the engine's, and a lock whose files are a list names its fix |
-| 10.8 | Lab pages (optional views) | B | on demand | | |
-| 10.9 | The store | B | on demand | | |
-| 11.1 | Completing the feature framework | R2 | on demand | | |
-| 11.2 | GPU timing | R2 | on demand | | |
-| 11.3 | GPU particles | R2 | on demand | | |
-| 11.4 | GPU-driven crowds | R2 | on demand | | |
-| 11.5 | Lighting and shading upgrades | R2 | on demand | | |
-| 12.1 | Scaffolds and skills completed | T | on demand | | |
-| 12.2 | Agent-usability evals and mutation testing | T | on demand | | |
-| 12.3 | Agent eye | T | on demand | | |
+| 10.8 | Lab pages (optional views) | B | todo | | Fired 2026-10-17 by the playground (ADR-0025): the owner tunes animation and feel in pages. |
+| 10.9 | The store | B | todo | | Fired 2026-10-17 by the playground (ADR-0025): the playground keeps its settings and bindings across sessions. |
+| 11.1 | Completing the feature framework | R2 | todo | | Fired 2026-10-17 by the playground (ADR-0025): the first of WPs 11.2–11.5 fired. |
+| 11.2 | GPU timing | R2 | todo | | Fired 2026-10-17 by the playground (ADR-0025): the owner's GPU frame time in the playground. |
+| 11.3 | GPU particles | R2 | todo | | Fired 2026-10-17 by the playground (ADR-0025): rain, dust and debris beyond the CPU particles. |
+| 11.4 | GPU-driven crowds | R2 | todo | | Fired 2026-10-17 by the playground (ADR-0025): the street's crowd variant at 1,000 to 5,000 people. |
+| 11.5 | Lighting and shading upgrades | R2 | todo | | Fired 2026-10-17 by the playground (ADR-0025): the house's lights beyond the pool, cascaded shadows over the yard, ambient occlusion indoors. |
+| 12.1 | Scaffolds and skills completed | T | todo | | Fired 2026-10-17 by the playground (ADR-0025): the new kinds (movement profiles, camera modes, storey levels, interactables, weapons) and the playground's skills. |
+| 12.2 | Agent-usability evals and mutation testing | T | todo | | Fired 2026-10-17 by the playground (ADR-0025): the owner's order: usability tasks over the playground, and mutation testing. |
+| 12.3 | Agent eye | T | todo | | Fired 2026-10-17 by the playground (ADR-0025): whether the player is in view from each camera in every room, asked in Node. |
 | 12.4 | Reading edition (optional) | T | done | PR "Games from one URL: new-game.mjs, the starter game, the guide" | Fired with WP 10.7 (ADR-0024): docs/GAME-GUIDE.md, 45 KB (about 11,000 tokens) of a 60 KB budget, against 704 KB for docs/API.md: the guide, then the public API by area (about 870 names in 52 areas) generated by `x docs --write` and checked by `x docs --check`; built in place of `x edition` |
+| 13.1 | The playground lab | B | todo | | |
+| 13.2 | The player's body | A | todo | | |
+| 13.3 | Movement profiles and the Apex model | P | todo | | |
+| 13.4 | The feel kit | T | todo | | |
+| 13.5 | Crouch and slide | P | todo | | |
+| 13.6 | Mantle, wall-climb and the superglide | P | todo | | |
+| 13.7 | Ziplines, ladders and launchers | P | todo | | |
+| 13.8 | Camera modes | R | todo | | |
+| 13.9 | Controls for every camera | I | todo | | |
+| 13.10 | Locomotion animation | A | todo | | |
+| 13.11 | Traversal animation | A | todo | | |
+| 13.12 | First person | R | todo | | |
+| **G10** | **Gate: feel** | | todo | | |
+| 13.13 | Storeys: the level format and its colliders | W | todo | | |
+| 13.14 | Storeys drawn | R | todo | | |
+| 13.15 | Sites: storeys and terrain in play | W | todo | | |
+| 13.16 | Interaction: doors, windows, switches and pickups | W | todo | | |
+| 13.17 | Building materials | R | todo | | |
+| 13.18 | The site | B | todo | | |
+| **G11** | **Gate: the house** | | todo | | |
+| 13.19 | Melee and the door kick | P | todo | | |
+| 13.20 | Firearms | W | todo | | |
+| 13.21 | The neighbours and the dog | W | todo | | |
+| 13.22 | The playground's sound | X | todo | | |
+| 13.23 | Light and time | R | todo | | |
+| 13.24 | The two looks, finished | R | todo | | |
+| **G12** | **Gate: alive** | | todo | | |
+| 13.25 | The front end | I | todo | | |
+| 13.26 | The tour and the hand-over | B | todo | | |
+| **G13** | **Gate: the tech demo** | | todo | | |
 | U-1 | Vitest 4 (from 2026-10-22) | T | todo | | |
 | U-2 | The lint majors (from 2027-01-01 to 2027-02-06) | T | todo | | |
 | U-3 | three r183 (from 2027-02-18, or when it measures better) | R | todo | | |
