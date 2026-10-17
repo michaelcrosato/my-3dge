@@ -7,7 +7,7 @@ read lean/README.md, or README.md's first section for a repository of its own.
 ## How to work
 Where the doctrine and the plan are silent, use your judgment and record the call. When going against the doctrine
 looks best, escalate with your reasoning (below); never deviate quietly. On-demand work packages wait for their
-measured trigger (PLAN.md §9.1).
+measured trigger (PLAN.md §9.1); the playground (Phase 13, ADR-0025) is what fires them now.
 Testing budget (ADR-0022): verify with cheap, objective checks (suites, hashes, counts), never wall-clock time on
 this shared machine. Long tests never hold up work (ADR-0023): the full run goes on GitHub after each merge, nobody
 waiting on it. Unclear after a cheap test means no proven benefit: stop, record it as an open issue starting "Owner:"
@@ -75,7 +75,8 @@ continue, and report later conflicts without stopping. Record every escalation, 
   fix a failed build; fix anything else about either only when the owner reports it.
 - Never downgrade silently: every downgrade emits an advice code.
 - Ask the entry, never the id: shared code reads registry hooks and never compares ids.
-- No game content in the engine; the box's own content stays in labs/box/ (PLAN.md §5.7).
+- No game content in the engine; the box's own content stays in labs/box/, the playground's in labs/playground/
+  (PLAN.md §5.7).
 - Docs are generated from comments: never restate a fact in prose (x docs --check).
 - Deviations from PLAN.md become ADR amendments in docs/decisions/, with the plan edited in the same commit (§11.4).
 - Blocked by the core? Write the smallest core change as a proposal in your WP notes. Don't widen your WP.
@@ -91,6 +92,8 @@ updated.
 Task guides (docs/INDEX.md opens with them), each read when the task needs it:
 - docs/PROGRESS.md: read first, every session: where things stand, what is next, the open issues.
 - docs/TESTING.md: the tiers, and which unit tests and specs a change selects.
+- docs/PLAYGROUND.md: the playground (Phase 13): the site, the move set and its reference values, the five cameras,
+  the two looks, and how feel and looks are checked.
 - docs/HANDOFF.md: handing the engine to game agents (the prompt, many games at once), starting in a new environment,
   and the box against my-3d2dge's stress-world.
 - lean/: the default handoff, the engine as a library (ADR-0024 amendment 1); docs/GAME-GUIDE.md and labs/game/, the

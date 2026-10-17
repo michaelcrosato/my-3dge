@@ -70,3 +70,11 @@ outside Phase H, except ADR-0021's.
   their knockdowns but not the flinch lean, since their batches run no view layers; the cape is a sim component that
   only the view draws.
 - **Plan edit:** WP 7.8's ledger row says "accepted by the owner, 2026-10-14" in place of its two "Owner:" clauses.
+
+## Amendment 4 (2026-10-17, the owner's direction): Phase 13, the Playground
+
+- **Change:** after G9 the roadmap gains a scheduled phase, Phase 13 (ADR-0025): the Playground, in four stages with
+  the gates G10 to G13, the character first. The on-demand WPs keep their trigger rule; the playground is the consumer
+  that fires all 21, each Trigger line naming its need.
+- **Plan edit:** PLAN.md §1, §2, §6.2, §9.1, §9.2, §11.2, §11.3, §13.1 and §14; the Phase 13 section; the Trigger lines
+  and ledger rows of the 21 on-demand WPs.
