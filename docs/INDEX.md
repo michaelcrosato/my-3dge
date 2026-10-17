@@ -93,7 +93,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `Attack`, `ATTACK_CODES`, `AttackState`, `Combo`, `ComboState`, `movePhases`, `Sweep`
   - Tests: [`engine/anim/timeline.test.ts`](../engine/anim/timeline.test.ts)
 - [`authoring.ts`](../engine/anim/authoring.ts): Effector-space authoring (PLAN.md WP 3.6, ADR-0009, Appendix C): a pose is written as targets in the character's own terms and solved onto the rotation skeleton.
-  - Exports: `B`, `fromFRU`, `fru`, `FRU`, `holdAlong`, `LimbSide`, `Rig`, `rigFromWorld`, `rigToWorld`, `Sided`, `SIDES`, `sideSign`, `SOLVE`, `solveArm`, `solveLeg`, `solveSpine`, `SpineTargets`, `turnRight`
+  - Exports: `B`, `fromFRU`, `fru`, `FRU`, `holdAlong`, `LimbSide`, `relaxHand`, `Rig`, `rigFromWorld`, `rigToWorld`, `Sided`, `SIDES`, `sideSign`, `SOLVE`, `solveArm`, `solveLeg`, `solveSpine`, `SpineTargets`, `turnRight`
   - Tests: [`engine/anim/authoring.test.ts`](../engine/anim/authoring.test.ts)
 - [`blob.ts`](../engine/anim/blob.ts): The blob rig (PLAN.md WP 5.3): my-3d2dge's `Blob`, the squash-and-stretch ball of slimes, jellies and bats, on a minimal skeleton.
   - Exports: `Blob`, `BLOB`, `BLOB_JOINTS`, `BLOB_LEAP`, `BLOB_MOVES`, `BlobInput`, `BlobJoint`, `BlobLeap`, `blobMove`, `BlobMove`, `BlobMoveFrame`, `BlobMoveName`, `blobMoveTimes`, `BlobOptions`, `BlobPose`, `BlobState`
@@ -126,7 +126,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `aim`, `AIM_CHAIN`, `AimLink`, `AimOptions`, `GroundHit`, `GroundProbe`, `handTo`, `IK_CODES`, `Limb`, `LimbEnd`, `LIMBS`, `SLACK`, `twoBone`, `TwoBoneOptions`, `twoBoneRot`
   - Tests: [`engine/anim/ik.test.ts`](../engine/anim/ik.test.ts)
 - [`locomotion.ts`](../engine/anim/locomotion.ts): Procedural locomotion for the humanoid (PLAN.md WP 3.6, §5.2): my-3d2dge's gait, idle, lean and arm-swing formulas as effector targets in the character's own terms (`B(f, r, u)`, authoring.ts): where the pelvis rides, where each foot and hand swings, which way the spine and the head lean, where the shoulders sit.
-  - Exports: `BodyMotion`, `crouchShare`, `EffectorContext`, `GAIT`, `gaitFoot`, `gaitHand`, `headDirection`, `hipTarget`, `HumanoidWeights`, `pelvisTarget`, `restContext`, `shoulderTarget`, `spineDirection`
+  - Exports: `BodyMotion`, `crouchShare`, `EffectorContext`, `GAIT`, `gaitFoot`, `gaitHand`, `headDirection`, `hipTarget`, `HumanoidWeights`, `pelvisTarget`, `plantedHeight`, `restContext`, `shoulderTarget`, `spineDirection`
   - Tests: [`engine/anim/poses.test.ts`](../engine/anim/poses.test.ts)
 - [`moves-data.ts`](../engine/anim/moves-data.ts): Moves as data (PLAN.md WP 6.1, §6.6, Appendix C; I-10): the registry kind `move`, one entry per named strike, in self-describing fields in metres, radians and seconds.
   - Exports: `defineMove`, `ENGINE_MOVES`, `fromLegacy`, `getMove`, `LEGACY_FIELDS`, `LegacyMove`, `Move`, `MOVE_FIELDS`, `MOVE_PHASES`, `MoveInput`, `moveKind`, `MovePhase`, `MoveSpec`, `REFERENCE_ARM`, `resolveMove`, `rootTravel`
@@ -1157,17 +1157,23 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## labs/playground
 
-- [`main.ts`](../labs/playground/main.ts): The playground's page (labs/playground/index.html, docs/PLAYGROUND.md, PLAN.md WP 13.1): it imports every module under `labs/playground/scenes/` and `labs/playground/looks/`, so a scene added there opens at `?scene=<name>` and a look at `?post.look=<id>` with no change here, registers the playground's levels as text, and starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`gym` by default), in the shooter camera and the cel look unless the query names others, with the playground's replays (tests/replays/playground-*) offered to `?replay=<name>`.
+- [`main.ts`](../labs/playground/main.ts): The playground's page (labs/playground/index.html, docs/PLAYGROUND.md, PLAN.md WP 13.1): it imports every module under `labs/playground/scenes/`, `looks/` and `bodies/`, so a scene added there opens at `?scene=<name>`, a look at `?post.look=<id>` and a body draws, with no change here, registers the playground's levels as text, and starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`gym` by default), in the shooter camera and the cel look unless the query names others, with the playground's replays (tests/replays/playground-*) offered to `?replay=<name>`.
 - [`menu.ts`](../labs/playground/menu.ts): The playground page's menu for humans (labs/playground/index.html): what the playground offers and how to play it, as a small HTML/CSS panel in the top-left corner over the game.
   - Exports: `controlRows`, `createPlaygroundMenu`, `linkQuery`, `MENU_KEY`, `MENU_STORAGE_KEY`, `MenuEntry`, `menuShown`, `PLAYGROUND_ACTION_MAP`, `PLAYGROUND_ACTIONS`, `PLAYGROUND_MENU_SETTINGS`, `PlaygroundMenuOptions`
 - [`views.ts`](../labs/playground/views.ts): The playground's views (docs/PLAYGROUND.md §4, §5; PLAN.md WP 13.1): its five camera modes and its two looks, in the order the keys step through them, and the keys: T (`CAMERA_KEY`) cycles the cameras and P (`LOOK_KEY`) switches the looks, live, on the page (labs/playground/main.ts); the menu (labs/playground/menu.ts) links each.
   - Exports: `CAMERA_KEY`, `cameraMode`, `CameraMode`, `LOOK_KEY`, `nextCamera`, `nextLook`, `PLAYGROUND_CAMERAS`, `PLAYGROUND_LOOKS`
   - Tests: [`labs/playground/views.test.ts`](../labs/playground/views.test.ts)
 
+## labs/playground/bodies
+
+- [`player.ts`](../labs/playground/bodies/player.ts): The player's body, `body:player` (docs/PLAYGROUND.md §3.1, PLAN.md WP 13.2), in the body grammar (engine/gfx/puppets/grammar.ts), worn on `build:adult` (engine/anim/builds.ts): a jacket with darker upper sleeves and collar, cargo trousers with knee pads and a belt, boots with dark soles, gloves, short hair and a face, and a small pack on the back.
+  - Exports: `PLAYER`, `PLAYER_BODY`
+  - Tests: [`labs/playground/bodies/player.test.ts`](../labs/playground/bodies/player.test.ts)
+
 ## labs/playground/cast
 
-- [`player.ts`](../labs/playground/cast/player.ts): The playground's player (docs/PLAYGROUND.md §3, PLAN.md WP 13.1): the character the keys move, the body it is drawn as, and `spawnPlayer`, which stands it in a scene.
-  - Exports: `APEX_GRAVITY`, `APEX_JUMP`, `APEX_RUN`, `PLAYER_BODY`, `playerCharacter`, `PlayerTuning`, `spawnPlayer`
+- [`player.ts`](../labs/playground/cast/player.ts): The playground's player (docs/PLAYGROUND.md §3, PLAN.md WP 13.1, WP 13.2): the character the keys move, the body it is drawn as, and `spawnPlayer`, which stands it in a scene.
+  - Exports: `APEX_CAPSULE`, `APEX_GRAVITY`, `APEX_JUMP`, `APEX_RUN`, `PLAYER_LOOK`, `playerCharacter`, `PlayerTuning`, `spawnPlayer`
   - Tests: [`labs/playground/scenes/gym.test.ts`](../labs/playground/scenes/gym.test.ts)
 
 ## labs/playground/levels
@@ -1461,7 +1467,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `checkSetting`, `default`, `loadSettings`, `sceneModuleOf`, `settingModules`, `settingParam`
   - Tests: [`tools/cmd/set.test.ts`](../tools/cmd/set.test.ts)
 - [`sheet.ts`](../tools/cmd/sheet.ts): Draws a body's state matrix as a contact sheet, plus its numeric checks (PLAN.md WP 6.6, §8.5): `node x sheet <subject>` runs the humanoid through the states a QA id or prefix names, as the `anim` QA family does (tools/qa/anim.ts `humanoidStates`), draws them with `anim.sheet()` (engine/anim/sheet.ts) from the cameras of a `SHEET_CAMERAS` preset (engine/anim/stateMatrix.ts), and turns the SVG into a PNG in the platform's Chromium.
-  - Exports: `default`, `MAX_WIDTH`, `qaPrefixes`, `sheetFrames`, `SheetFramesOptions`, `subjectIds`
+  - Exports: `default`, `MAX_WIDTH`, `qaPrefixes`, `sheetFor`, `sheetFrames`, `SheetFramesOptions`, `subjectIds`
   - Tests: [`tools/cmd/sheet.test.ts`](../tools/cmd/sheet.test.ts)
 - [`shot.ts`](../tools/cmd/shot.ts): Renders a page on WebGPU in the platform's Chromium and reports what it drew as numbers and text: the look metrics, the ID pass (which object covers which pixels) and a 48 × 27 text thumbnail; images only on demand.
   - Exports: `default`, `encodePng`, `frameMetrics`, `judgeFrame`, `pageUrl`, `READY_TIMEOUT_MS`, `resolvePage`, `shotMetrics`

@@ -1776,6 +1776,7 @@ For the agents who maintain the engine.
 - `FRU` (type): A rig-local point or direction: metres (or a direction's parts) forward, right and up.
 - `holdAlong` (function): The right hand turned so its weapon socket's +Z runs along `blade` (a rig-frame direction), its length along the forearm as near as that allows; unchanged when the blade lies along the forearm.
 - `LimbSide` (type): A side of the body.
+- `relaxHand` (function): A hand that holds nothing, in line with its forearm: the wrist straight, as at rest.
 - `Rig` (interface): What the solvers work on: a skeleton, a pose and its FK, and where the root sits in the rig frame.
 - `rigFromWorld` (function): A world point in the rig frame, metres after `size`: `rigToWorld`'s inverse, but for the scale.
 - `rigToWorld` (function): A rig-local point (metres before `size`, the floor at y = 0) in world space, through the root.
@@ -2084,6 +2085,7 @@ For the agents who maintain the engine.
 - `hipTarget` (function): The hip joint of `side`: the pelvis plus `hipHalf` sideways, turned with the hips' share of the twist.
 - `HumanoidWeights` (interface): The weights the effector stage reads: each 0 (off) to 1 (full), eased toward its input by the humanoid.
 - `pelvisTarget` (function): The pelvis: stance height, bob, breathing and sway, a flinch, a dash, the held poses' drops, a lunge and a hop.
+- `plantedHeight` (function): The highest a pelvis at `f` forward and `r` right may ride for each sole the gait plants (its lift 0) to be in reach of its hip, `plantReach` of the straight leg: what a `plantedStride` build's gait drops to as its feet spread.
 - `restContext` (function): A context for `build` at rest: every weight 0, the clock and phase at 0, the anchors placed.
 - `shoulderTarget` (function): The shoulder joint of `side`: `shoulderHalf` out from the shoulder centre, turned by the twist, level.
 - `spineDirection` (function): The spine's direction, pelvis to shoulder centre: the build's lean, speed, a dash, a move, a flinch, a crouch.
@@ -5106,12 +5108,18 @@ For the agents who maintain the engine.
 - `HelloView` (interface): A started hello scene.
 - `startHello` (function): Starts the renderer on `canvas` (rejecting with `GfxError` `GFX_NO_WEBGPU` without WebGPU), builds the scene, and draws the first frame, directly or through the post pass; resolves once the GPU has finished it.
 
+### [`labs/playground/bodies/player.ts`](../labs/playground/bodies/player.ts)
+
+- `PLAYER` (const): `body:player`, registered with the shared registry once this module loads.
+- `PLAYER_BODY` (const): The player's body (see the file comment).
+
 ### [`labs/playground/cast/player.ts`](../labs/playground/cast/player.ts)
 
+- `APEX_CAPSULE` (const): Apex's hull for its medium legends (m): 72 units standing and 32 across, as a capsule (docs/PLAYGROUND.md §3.2).
 - `APEX_GRAVITY` (const): Apex's gravity (m/s²): 750 units/s², an inch a unit (docs/PLAYGROUND.md §3.2).
 - `APEX_JUMP` (const): Apex's jump (m): 56 units.
 - `APEX_RUN` (const): Apex's run with a weapon out (m/s): 173.5 units/s.
-- `PLAYER_BODY` (const): The body the player is drawn as, until WP 13.2: the humanoid in the heroic build, empty-handed.
+- `PLAYER_LOOK` (const): How the player is drawn: `body:player` on the adult build, empty-handed.
 - `playerCharacter` (function): The player's character: Apex's gravity, a take-off of √(2 g h) for the jump's height, the run speed.
 - `PlayerTuning` (interface): What a scene may tune: the run speed (m/s) and the jump's height (m).
 - `spawnPlayer` (function): Stands the player in `w` (a scene with physics) at `at`, facing `yaw`: an actor the step's intents move.
@@ -5129,7 +5137,7 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/looks/cel.ts`](../labs/playground/looks/cel.ts)
 
-- `look` (const): The look `look:playground-cel`: three bands of daylight with a rim, everything inked.
+- `look` (const): The look `look:playground-cel`: three bands of daylight with a rim, everything inked in a dark tint.
 
 ### [`labs/playground/looks/pixel.ts`](../labs/playground/looks/pixel.ts)
 
@@ -5927,6 +5935,7 @@ For the agents who maintain the engine.
 - `default` (default): Draws a body's state matrix as a contact sheet, plus its numeric checks (PLAN.md WP 6.6, §8.5): `node x sheet <subject>` runs the humanoid through the states a QA id or prefix names, as the `anim` QA family does (tools/qa/anim.ts `humanoidStates`), draws them with `anim.sheet()` (engine/anim/sheet.ts) from the cameras of a `SHEET_CAMERAS` preset (engine/anim/stateMatrix.ts), and turns the SVG into a PNG in the platform's Chromium.
 - `MAX_WIDTH` (const): The widest sheet, pixels (§8.5: contact sheets are capped at 1,600 px).
 - `qaPrefixes` (function): The `only` prefixes of `subject`'s `anim` QA: itself, or for `humanoid` its kinds (never the library's clips).
+- `sheetFor` (function): The sheet of `subject`: its frames (`sheetFrames`) drawn by `animSheet` from the cameras `cams` names (`move` for moves, else `body`) on the skeleton of `build`, so a build's own proportions are what the sheet shows.
 - `sheetFrames` (function): The frames a sheet of `subject` draws, and whether they are moves (for the cameras).
 - `SheetFramesOptions` (interface): What `sheetFrames` draws.
 - `subjectIds` (function): The QA ids `subject` names: itself, or every id it prefixes (`humanoid`: all of them).
@@ -6468,7 +6477,7 @@ For the agents who maintain the engine.
 - `actionStates` (function): Each action of data/anim/actions/ (WP 8.7) played by its own check, by QA id (its id, `action:<name>`).
 - `animViolations` (function): Every violation of the bodies whose ids `keep` keeps, the worst per id and metric, in id order.
 - `default` (default): The `anim` QA family (PLAN.md §8.6, WP 6.6, I-29): `node x qa anim` drives every body the engine animates through its state matrix and measures the motion, in Node.
-- `humanoidPrefixes` (function): The kinds of the humanoid's QA ids (`state:`, `pose:`, …), from its matrix: as `only`, the humanoid without clips.
+- `humanoidPrefixes` (function): The kinds of the humanoid's QA ids (`state:`, `pose:`, …), from its matrix, then the kinds of the builds that have ids of their own (`adult/`): as `only`, the humanoid without clips.
 - `HUMANOIDS` (const): The humanoid bodies the family drives through the whole matrix; the first also runs it twice and at half the step.
 - `humanoidStates` (function): The humanoid's matrix: every sample state, pose, stance, move, reaction and action, by QA id.
 - `makeHumanoid` (const): A humanoid of `HUMANOIDS`, made at a step, its feet planted on the floor (`FootPlant`): what the matrix drives.

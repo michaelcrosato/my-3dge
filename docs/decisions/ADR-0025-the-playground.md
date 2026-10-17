@@ -68,3 +68,39 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   worked example, not the playground, whose mechanisms reach games through the engine as each WP adds them.
 - **Shared README checks.** The box's README test's checks moved to tests/unit/readmeClaims.ts, which the playground's
   README test runs too.
+
+## Amendment 2 (2026-10-17, WP 13.2): the player's body
+
+- **`build:adult`, and a gait that plants.** The adult build stands 1.80 m on Drillis and Contini's shares of height
+  for the legs and the trunk (thigh 0.44 m, shin and ankle 0.51 m, the stance hip at 0.93 m with the knees a little
+  bent), its arm's two segments nearly equal (0.30 and 0.29 m, where theirs are 0.33 and 0.26), so the moves and
+  grips written for the source's builds, whose segments are equal, never fold an elbow flat. The source's gait raises
+  the pelvis as the feet spread, so at full stride no natural leg reaches its planted sole (ADR-0009 amendment 4's
+  hanging feet). The new build field `plantedStride` (false for the source's builds, so the port's reference vectors
+  and every golden stand) lowers the pelvis just enough for each planted sole to be in reach
+  (engine/anim/locomotion.ts `plantedHeight`).
+- **The adult's own QA ids.** The anim QA keys an accepted exception by state and metric, the worst over its builds, so
+  an exception for the adult would loosen the check for every build. The adult reports under `adult/…` ids with its own
+  baseline (tests/baselines/qa-anim-adult.json, each entry's reason the source builds' cause; 13 are worse, from the
+  planted soles and longer feet). WP 13.10's stance locks are to tighten them.
+- **Apex's hull now.** The player's capsule is Apex's (1.83 m by 0.82 m) from this WP, so the gym's gaps read as they
+  will; WP 13.3's profile takes the same numbers, and the gym replay's goldens were re-recorded for it.
+- **Free hands follow their forearms.** `twoBoneRot` keeps a wrist's world rotation, and nothing set it for a hand
+  holding nothing, so every build's free hand pointed out sideways as at rest, whatever its forearm did (the review's
+  find: the player's gloves jutted from the hips). The humanoid now straightens each free wrist (engine/anim/authoring.ts
+  `relaxHand`); only the free hand's grip socket moves (the inspector snapshots, re-recorded), no golden changes.
+- **The sheet draws the build it is given.** `node x sheet --build` posed the build but drew chibi's bones; it draws the
+  build's own skeleton now (tools/cmd/sheet.ts `sheetFor`).
+- **The sky is the ID pass's background.** The daylight sky (the playground's first look with a dome and a backdrop)
+  showed that the ID pass drew them at their real size, a 100 m box and a cylinder round the camera, over whatever lay
+  beyond them, though the frame draws them at the far plane; from above, the whole gym was "covered". Objects marked
+  `userData.background` (the dome and the backdrop) are now left out of the ID pass, as the scene's background is, and
+  listed as `background`. They also write the cleared background's zero normal into the post chain's MRT
+  (engine/gfx/post/mrt.ts), so the cel look's outline no longer inks the dome's box edges across the sky.
+- **The accent at 11 px, and the cel look's ink, ahead of WP 13.24.** The isometric and top-down cameras draw the
+  player 11 to 15 px tall, and the cel look's 2 px black line at every crease covered its whole accent there (1 and 0
+  orange pixels on the player; the pixel look kept 27 and 21). `look:playground-cel` now inks 1 px, in a dark tint of
+  the surface (0.35), at sharp creases only (0.2), and the yoke grew flattened orange shoulder caps; counted only in
+  its lit and middle bands (the ink's tint of it reads as brown), the accent shows at least 8 pixels in every camera
+  of both looks. tests/e2e/playground.spec.ts holds it at 6 or more; WP 13.24's ink scaled to the resolution replaces
+  these numbers.
