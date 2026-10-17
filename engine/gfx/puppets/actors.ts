@@ -15,7 +15,6 @@
  * `cull(eye)` hides the player's body from a first-person camera at `eye` (`nearBodyCull`: all but the hands, and any
  * part near the eye) and returns the joints it hid; `cull(null)` shows it whole. `trails()` is each puppet's trail as
  * its last pose sampled it (WP 6.7: what its strike sweeps, oldest first), which the stage's effects draw as ribbons.
- *
  * A puppet is named `actor#<id>`, as its stand-in would be, and carries `userData.entity`; the player's also carries
  * `userData.protagonist`, so the ID pass reports "the hero" (engine/gfx/idpass.ts).
  *
@@ -26,9 +25,10 @@
  *
  * Invariants: presentation only (doctrine: WebGPU only): its animators and their layers are its own, loaded from the
  * sim's data at every pose and never writing it, so drawing, culling or not drawing never changes the hash (the
- * animator's own invariant, engine/anim/character.test.ts); one puppet per actor, made again only when its build
- * changes, its layers when its animator or their components do; every object it makes is under `root`. A puppet is a
- * skinned mesh of two draw calls: right for heroes and a few foes; crowds draw through instanced batches (WP 5.4).
+ * animator's own invariant, engine/anim/character.test.ts); one puppet per actor, its layers made again when its
+ * animator or their components do; every object it draws is under `root`, and a puppet given up waits as a spare for
+ * the next actor of its build and body (`createActorPuppets` says why). A puppet is a skinned mesh of two draw calls:
+ * right for heroes and a few foes; crowds draw through instanced batches (WP 5.4).
  *
  * @example
  * // const actors = createActorPuppets({ materials: library });
@@ -146,7 +146,14 @@ export interface ActorPuppets {
   dispose(): void;
 }
 
-/** Draws actors as puppets (see the file comment); `registry` holds the bodies and gets the puppets' materials. */
+/**
+ * Draws actors as puppets (see the file comment); `registry` holds the bodies and gets the puppets' materials.
+ *
+ * Spares: a puppet an actor gives up (it despawned, a restart read the world afresh, its build changed) leaves `root`
+ * and waits, shown whole, for the next actor of the same build and body, who wears it; only `dispose` frees them. So a
+ * restart or a respawn makes no new skinned mesh: r182 names a skinned mesh's bone buffer in its shader, so a new one
+ * would build its shadow pipeline in a drawn frame after the warm-up (found by the playground, PLAN.md WP 13.1).
+ */
 export function createActorPuppets(options: { materials: PuppetMaterials; registry?: Registry }): ActorPuppets {
   const registry = options.registry ?? sharedRegistry;
   puppetMaterials(registry);
@@ -163,14 +170,25 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
   let shown: PlayerView | null = null;
   let players = 0;
 
+  /** Puppets no actor wears now, by the build and body they were made for (see the file comment). */
+  const spares = new Map<string, Puppet[]>();
+  const madeFor = new WeakMap<Puppet, string>();
+  /** Takes `puppet` off the stage, shown whole, into the spares. */
+  const retire = (puppet: Puppet) => {
+    puppet.hide([]);
+    puppet.mesh.removeFromParent();
+    const key = madeFor.get(puppet)!;
+    spares.set(key, [...(spares.get(key) ?? []), puppet]);
+  };
+
   const puppetFor = (id: number, data: AnimatorData, player: boolean, body: string): Puppet => {
     let puppet = puppets.get(id);
     if (puppet && puppet.compiled.skeleton.build.id === data.build && puppet.compiled.body.id === body) return puppet;
-    puppet?.dispose();
-    puppet = createPuppet(compileBody(body, data.build, { registry }), {
-      materials: options.materials,
-      name: `actor#${id}`,
-    });
+    if (puppet) retire(puppet);
+    const key = `${data.build}|${body}`;
+    puppet = spares.get(key)?.pop() ?? createPuppet(compileBody(body, data.build, { registry }), { materials: options.materials, name: `actor#${id}` }); // prettier-ignore
+    madeFor.set(puppet, key);
+    puppet.mesh.name = `actor#${id}`;
     Object.assign(puppet.mesh.userData, { entity: id, component: 'actor', protagonist: player });
     root.add(puppet.mesh);
     puppets.set(id, puppet);
@@ -232,7 +250,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
       players = [...held.values()].filter((actor) => actor.player).length;
       for (const [id, puppet] of puppets) {
         if (drawn.has(id)) continue;
-        puppet.dispose();
+        retire(puppet);
         puppets.delete(id);
         trails.delete(id);
       }
@@ -302,8 +320,9 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
     dispose() {
       for (const own of layers.values()) dropLayers(own);
       layers.clear();
-      for (const puppet of puppets.values()) puppet.dispose();
+      for (const puppet of [...puppets.values(), ...[...spares.values()].flat()]) puppet.dispose();
       puppets.clear();
+      spares.clear();
       held.clear();
       trails.clear();
       shown = null;
