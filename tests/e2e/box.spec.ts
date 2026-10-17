@@ -266,6 +266,8 @@ test.describe('the box, stage 1', () => {
           out[member] = (error as Error).message;
         }
       }
+      out['tune.settings'] = e.tune.settings().some((row: { path: string }) => row.path === 'movement.gaits.sprint');
+      out['tune.profile'] = e.tune.profile().startsWith('defineMovement("movement:playtest", {');
       out.render = (await e.render(1)).drawn;
       const stats = e.stats(); // the virtual clock holds time, so only the counts are checked here
       out.stats = { frames: stats.frames > 0, drawCalls: stats.drawCalls > 0, after: stats.pipelinesAfterWarmUp };
@@ -304,6 +306,8 @@ test.describe('the box, stage 1', () => {
       'input.record': 12,
       feel: '[SIM_BAD_ARGUMENT] feel(id) got undefined: pass an actor’s id (none)',
       anim: '[SIM_BAD_ARGUMENT] anim(id) got undefined: pass an animated actor’s id (none)',
+      'tune.settings': true, // the feel panel's rows: every number of the shooter model, even with no actor on it
+      'tune.profile': true,
       render: true,
       stats: { frames: true, drawCalls: true, after: 0 },
       shot: 18, // the room's 11 drawables and its effects' 7 (five sprite pages, the decals' page, the ribbons)
