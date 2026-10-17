@@ -3,8 +3,8 @@
  * the 1.5 m mantle wall holding jump (the auto mantle: the grab, 27 ticks, then the pull, 18) and, in the pull's last
  * 0.15 s (its last 9 ticks), lets jump go and presses it, then presses crouch the very next tick: the superglide,
  * about 13.7 m/s out of the mantle (Apex's 540 u/s; ours 1.8 × the holstered sprint, 13.67). With the crouch a tick
- * late, on the jump's own tick, or the jump before the window, it only hops out at the sprint (in the air, not
- * finishing the mantle on the top). The mantle boost,
+ * late, on the jump's own tick, or the jump before the window, it only hops out at the sprint (still in the air 15
+ * ticks after the crouch, past where a pull that never hopped would have ended on the top). The mantle boost,
  * `course:playground-mantle-boost` (its setting on): a crouch press alone in the window, let go the tick after (held,
  * the duck would tuck the feet up 0.32 m), glides at the same speed, rising a full jump, 1.42 m. Then the bounds (labs/playground/courses/bounds.ts) of each run.
  *
@@ -61,7 +61,7 @@ defineCourse('course:playground-superglide', {
     const glides = name === 'superglide';
     return [
       { name: `${name}: speed`, metric: 'speed', from: at + crouch + 2, to: at + crouch + 12, reference: glides ? GLIDE : SPRINT, tolerance: { share: 0.02 } }, // prettier-ignore
-      { name: `${name}: hopped out`, metric: 'grounded', from: at + crouch + 10, to: at + crouch + 10, reference: 0, tolerance: { abs: 0 } }, // prettier-ignore
+      { name: `${name}: hopped out`, metric: 'grounded', from: at + crouch + 15, to: at + crouch + 15, reference: 0, tolerance: { abs: 0 } }, // prettier-ignore
       ...bodyBounds(at + 2, { to: at + RUN - 1, label: name }),
       ...cameraBounds(at + 2, { to: at + RUN - 1, label: name }),
     ];
