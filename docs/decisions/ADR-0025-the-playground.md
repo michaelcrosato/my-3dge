@@ -146,3 +146,42 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   carries it, as the bundle carries the model.
 - **The feel course moved** to engine/sim/feelCourse.ts (engine/sim/actors.ts was at its 400 lines) and measures the
   model (`FeelReport.motion`), which `node x sim <scene> --feel` prints.
+
+## Amendment 4 (2026-10-17, WP 13.4): the feel kit
+
+- **A course is a replay with numbers.** The registry kind `course` (engine/dev/feel/course.ts) holds a scene, its
+  settings, seed and change-point inputs, as a replay does, and the measures to read off the run, each against its
+  reference and tolerance; `runCourse` (run.ts) plays it in a session of its own, so its hash is the replay's and
+  measuring never changes it (the animation is posed as the page poses it, the cameras stepped as the page steps them,
+  both presentation). `node x feel <lab>` (tools/cmd/feel.ts) runs a lab's courses into `out/feel/<lab>-<name>/`.
+- **Courses start where they measure** through a scene's dev action, the gym's `place` over the engine's new
+  `placeActor` (an actor at rest, its motion state started again), so a course stays a replay; each camera measure
+  steps its own camera from its first frame, so the placing is never counted as the camera's jump.
+- **Bounds not yet met are watched, never loosened.** A measure that `watch`es names the WP that will make it pass:
+  its number is reported against the bound, as a warning, and never fails its course. The feet are watched until WP
+  13.10: the procedural run holds a stance foot within 3 cm mid-stance but slides it at the touchdown and the lift-off,
+  0.36 m a contact at a 5 m/s run and 0.53 to 0.73 m sprinting. Everything else passes from the first run: §3.2's
+  numbers (the holstered run 5.07 m/s and sprint 7.59, 1.42 m jumps, the tired 0.43 m, the lurch's 4.6 m/s, the
+  strafe's 0.20 m/s, the hop back to 7.59), no pop, and every camera's bounds (at most 7 cm a frame against §4's 30 cm,
+  no turn, never inside, never losing the player).
+- **The courses' references, holstered.** The playground's player is empty-handed, so each reference is §3.2's
+  holstered value or follows from its rules: the run to 90% in 0.13 s as armed (speeds and accelerations both scale by
+  1.15); a steady run to the sprint in 0.865 s (2.54 m/s² × 1.15; §3.2's 0.83 s is from rest); the stop in 0.24 s
+  (31.75 m/s² does not scale); the walk 2.53 m/s and the crouch-walk 2.34 (×1.15).
+- **One set of motion rules.** The anim QA's `Track`, `pops` and `footSlide` moved from tools/qa/anim/metrics.ts to
+  engine/anim/motionMetrics.ts (re-exported there), with `worstPop` and `worstSlide`, their values of any size, so the
+  feel kit and the QA read motion alike.
+- **Live tuning is settings.** Every number of the shooter model has a setting, `movement.<group>.<field>`
+  (engine/physics/movement/settings.ts), live: off its default it replaces that number for every character on the
+  model from the next step, at its default it leaves each character's own. Settings are hashed and replayed, so a
+  tuned run is a replay; the actor's character is never changed.
+- **The panel is the page's.** engine/dev/feel/panel.ts draws a slider for each number under `movement.` and `cam.`
+  (WP 13.8 declares the cameras'), reading `__engine.tune.settings()` and writing through `__engine.set`; Copy as
+  profile is `__engine.tune.profile()` (a `defineMovement` call of the numbers off Apex's, and the camera settings
+  that differ as a preset), Save the replay `__engine.input.record()`. The playground opens it on F or
+  `?playground.feel=on` (labs/playground/feel.ts). The members are `tune.*`: `feel` is a member already, and a name is
+  a member or a namespace, never both.
+- **First person has no `lost` check yet:** its body is culled but the hands, and the chest sits below its view; the
+  check waits for WP 13.12's arms.
+- **The character's body** (addCharacter, feetOf and the new bodyAt) moved to engine/physics/characterBody.ts,
+  re-exported by engine/physics/character.ts, which was at its 400 lines.

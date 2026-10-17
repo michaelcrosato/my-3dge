@@ -571,6 +571,18 @@ Raised by the settings store (engine/core/settings.ts) for an unknown path in `g
 
 Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when an argument does not match the schema its member declares: a wrong type, a value out of range, a missing required argument or one too many. Nothing has happened yet.
 
+### DEV_COURSE_NO_ANIMATOR
+
+- Message: `the course {course} measures {measure}, but the player of {scene} has no animator to pose`
+- Fix: spawn the player with an animator (spawnActor with anim: { build }), or drop the animation measure
+- Registered in: [`engine/dev/feel/run.ts` line 36](../engine/dev/feel/run.ts)
+
+### DEV_COURSE_NO_PLAYER
+
+- Message: `the course {course} runs {scene}, which has no player actor to measure`
+- Fix: run a scene that spawns a player actor (spawnActor with player: true), or measure another course
+- Registered in: [`engine/dev/feel/run.ts` line 32](../engine/dev/feel/run.ts)
+
 ### DEV_NO_METER
 
 - Message: `__engine.stats() has no meter to read on this host ({runtime})`

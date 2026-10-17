@@ -189,6 +189,7 @@ Apex's default bindings where the browser allows; every action rebinds (WP 13.9,
 | Camera mode, shoulder swap | T, X | view button, d-pad left |
 | Isometric turn | Q and E (isometric only) | d-pad right |
 | Pause, menu | Escape | menu button |
+| The feel panel (ours, WP 13.4) | F | |
 
 ### 3.4 Feel beyond the numbers
 
