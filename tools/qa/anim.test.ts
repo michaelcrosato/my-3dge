@@ -52,7 +52,7 @@ describe('the anim QA family', () => {
     const { entries, failures } = readBaselines(ROOT, 'anim');
     expect(failures).toEqual([]);
     expect(result.accepted).toBe(entries.filter((entry) => bodies.some((kind) => entry.id.startsWith(kind))).length);
-  });
+  }, 60_000); // every body's runs: about 20 s alone, over 30 s within the whole T1 on a 4-core runner
 
   it('holds every sample state, pose, stance, move, reaction and action the engine names', () => {
     const ids = Object.keys(humanoidStates());
