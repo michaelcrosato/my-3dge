@@ -1,50 +1,51 @@
 /**
- * @file The playground's player (docs/PLAYGROUND.md §3, PLAN.md WP 13.1, WP 13.2): the character the keys move, the
- * body it is drawn as, and `spawnPlayer`, which stands it in a scene. Until WP 13.3 gives the playground Apex's
- * movement model (`movement:apex`), the player runs on today's character controller with four of Apex's numbers
- * (docs/PLAYGROUND.md §3.2): its gravity, its jump's height, its run speed and its hull, a capsule 1.83 m tall and
- * 0.41 m in radius, so the gym's heights and gaps already read as they will. It is drawn as `body:player`
+ * @file The playground's player (docs/PLAYGROUND.md §3, PLAN.md WP 13.1–13.3): the character the keys move, the body
+ * it is drawn as, and `spawnPlayer`, which stands it in a scene. It moves as in Apex Legends, on the profile
+ * `movement:apex` (engine/physics/movement/profiles.ts): a medium legend's hull (1.83 m tall, 0.41 m in radius), its
+ * steps, slopes, gravity and jump, and the shooter model at Apex's numbers (docs/PLAYGROUND.md §3.2). It is
+ * empty-handed, so holstered: every gait 1.15 times faster than with a weapon out. It is drawn as `body:player`
  * (labs/playground/bodies/player.ts, which the page registers) on `build:adult`, 1.80 m standing.
  *
  * Game code, sim-side: it imports only engine/sim-api.ts.
  *
  * @example
  * playerCharacter().characterGravity; // 19.05: m/s², Apex's 750 units/s²
- * playerCharacter().jumpSpeed; // 7.355…: m/s at take-off, 1.42 m up
- * playerCharacter().capsule; // { radius: 0.41, height: 1.01 }: 1.83 m standing
+ * playerCharacter().movement?.gaits.sprint; // 6.604: m/s with a weapon out, 260 units/s
+ * playerCharacter({ speed: 5 }).movement?.gaits.run; // 5
  * @see labs/playground/scenes/gym.test.ts
  */
-import { createCharacter, spawnActor, type Character, type World } from '../../../engine/sim-api';
+import { createCharacter, getMovement, spawnActor, type Character, type World } from '../../../engine/sim-api';
+
+/** The profile the player moves by. */
+const APEX = getMovement('movement:apex');
 
 /** Apex's gravity (m/s²): 750 units/s², an inch a unit (docs/PLAYGROUND.md §3.2). */
-export const APEX_GRAVITY = 19.05;
+export const APEX_GRAVITY = APEX.character.characterGravity as number;
 
 /** Apex's jump (m): 56 units. */
-export const APEX_JUMP = 1.42;
+export const APEX_JUMP = Math.pow(APEX.character.jumpSpeed as number, 2) / (2 * APEX_GRAVITY);
 
-/** Apex's run with a weapon out (m/s): 173.5 units/s. */
-export const APEX_RUN = 4.41;
-
-/** Apex's hull for its medium legends (m): 72 units standing and 32 across, as a capsule (docs/PLAYGROUND.md §3.2). */
-export const APEX_CAPSULE = Object.freeze({ radius: 0.41, height: 1.83 - 2 * 0.41 });
+/** Apex's run with a weapon out (m/s): 173.5 units/s; holstered, the player runs 1.15 times as fast. */
+export const APEX_RUN = APEX.model!.gaits.run;
 
 /** How the player is drawn: `body:player` on the adult build, empty-handed. */
 export const PLAYER_LOOK = Object.freeze({ body: 'body:player', build: 'build:adult', weapon: 'none' });
 
-/** What a scene may tune: the run speed (m/s) and the jump's height (m). */
+/** What a scene may tune: the run with a weapon out (m/s) and the jump's height (m). */
 export interface PlayerTuning {
   readonly speed?: number;
   readonly jump?: number;
 }
 
-/** The player's character: Apex's gravity, a take-off of √(2 g h) for the jump's height, the run speed. */
+/** The player's character: `movement:apex`, its run and its jump's height (a take-off of √(2 g h)) as tuned. */
 export function playerCharacter(tuning: PlayerTuning = {}): Character {
+  const run = tuning.speed ?? APEX_RUN;
   const jump = tuning.jump ?? APEX_JUMP;
   return createCharacter({
-    speed: tuning.speed ?? APEX_RUN,
+    movement: 'movement:apex',
+    speed: run,
     jumpSpeed: Math.sqrt(2 * APEX_GRAVITY * jump),
-    characterGravity: APEX_GRAVITY,
-    capsule: { ...APEX_CAPSULE },
+    model: { gaits: { run } },
   });
 }
 

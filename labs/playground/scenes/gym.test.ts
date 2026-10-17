@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { createHeadless } from '../../../engine';
 import { floorHeight, topHeight } from '../../../engine/sim-api';
-import { APEX_JUMP, APEX_RUN } from '../cast/player';
+import { APEX_JUMP, APEX_RUN, playerCharacter } from '../cast/player';
 import { GYM_FEATURES, GYM_SPAWN, GYM_TILE, type GymFeature, type GymRect } from '../levels/gym';
 import { GYM, GYM_START, gym } from './gym';
 
@@ -93,10 +93,11 @@ describe('the gym', () => {
     expect(feet.y).toBeCloseTo(0, 3);
   });
 
-  it('runs at Apex’s run speed and jumps Apex’s height by default; the settings change both', async () => {
+  it('runs at Apex’s holstered run and jumps Apex’s height by default; the settings change both', async () => {
+    const holstered = APEX_RUN * playerCharacter().movement!.gaits.holstered; // empty-handed: 5.07 m/s
     const run = await after(60, { move: [-1, 0] }); // west along the open floor north of the features
-    expect(GYM_SPAWN[0] - run.x).toBeGreaterThan(APEX_RUN * 0.8);
-    expect(GYM_SPAWN[0] - run.x).toBeLessThan(APEX_RUN * 1.01);
+    expect(GYM_SPAWN[0] - run.x).toBeGreaterThan(holstered * 0.8);
+    expect(GYM_SPAWN[0] - run.x).toBeLessThan(holstered * 1.01);
     const faster = await after(60, { move: [-1, 0] }, { 'playground.gym.speed': 6 });
     expect(GYM_SPAWN[0] - faster.x).toBeGreaterThan(GYM_SPAWN[0] - run.x);
     const jump = await after(60, { jump: true });

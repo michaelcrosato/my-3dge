@@ -4,8 +4,8 @@
  * (labs/playground/scenes/, the README's demo index) as a link to `?scene=<name>`, the five camera modes and the two
  * looks (labs/playground/views.ts) as links that keep the scene, the playground's replays as links to
  * `?replay=<name>`, and the controls: the actions the player answers, with the keys and pad buttons of the map the
- * page's input binds (`PLAYGROUND_ACTION_MAP`, createEngine's default, until WP 13.9 gives the playground Apex's),
- * labelled by the engine's `codeLabel` in the reader's keyboard layout, then the page's own keys.
+ * page's input binds (`actionMap:playground`, labs/playground/controls.ts), labelled by the engine's `codeLabel` in
+ * the reader's keyboard layout, then the page's own keys.
  *
  * Toggle: the button in the corner, or M (`MENU_KEY`). The panel is a page panel (`data-panel`, engine/ui/chrome.ts):
  * in touch mode a tap on the game closes it. It opens unless the reader closed it last (`MENU_STORAGE_KEY` in
@@ -32,6 +32,7 @@
  */
 import { codeLabel, getActionMap, readKeyboardLayout } from '../../engine';
 import { defineSettings } from '../../engine/sim-api';
+import { PLAYGROUND_ACTION_MAP, PLAYGROUND_ACTIONS } from './controls';
 import { CAMERA_KEY, LOOK_KEY, PLAYGROUND_CAMERAS, PLAYGROUND_LOOKS } from './views';
 
 /** The menu's view setting (see the file comment). */
@@ -52,12 +53,6 @@ export const MENU_KEY = 'KeyM';
 
 /** The `localStorage` key that remembers whether the reader left the menu `open` or `closed`. */
 export const MENU_STORAGE_KEY = 'my3dge:playground:menu';
-
-/** The action map the page's input binds: createEngine's default (engine/input/input.ts). */
-export const PLAYGROUND_ACTION_MAP = 'actionMap:thirdPerson';
-
-/** The actions the player answers, with what each does, in the menu's order. */
-export const PLAYGROUND_ACTIONS: Readonly<Record<string, string>> = { jump: 'Jump', dash: 'Dash' };
 
 /** A listed scene, as its module exports it. */
 export interface MenuEntry {

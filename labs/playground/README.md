@@ -4,8 +4,8 @@ my-3dge's second integration target (PLAN.md Phase 13, ADR-0025), designed in `d
 the character, the cameras and the looks are made to move, feel and look right, and where everything a player can do
 in the engine is shown. It grows in four stages, each ending at a gate: the gym (G10), the house (G11), a living site
 (G12) and the tech demo (G13). Today it holds the gym: calibrated features as a physics level, the player at its
-north end with Apex Legends' gravity, jump height, run speed and hull, five camera modes and two looks, cel-shaded and
-pixel art. Every claim below is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here
+north end moving by Apex Legends' numbers (its run and sprint, air strafing, jump fatigue, the lurch and the fall
+stun, on its hull), five camera modes and two looks, cel-shaded and pixel art. Every claim below is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here
 that does not exist fails it.
 
 ## Play it
@@ -14,7 +14,7 @@ that does not exist fails it.
    http://127.0.0.1:5173/labs/playground/. If another program holds port 5173, `PORT=5174 npm run dev` serves it on
    5174 instead.
 2. Click the game to look around with the mouse (Esc lets go of it). WASD or the arrows move, Space jumps, Shift
-   dashes.
+   sprints (hold it, or press it once), Left Alt walks and Left Ctrl crouches.
 3. T steps through the five cameras, P switches between the cel and the pixel look, M shows and hides the menu.
 
 A link can open any of them: `labs/playground/?cam3=first&post.look=look:playground-pixel` is first person in the
@@ -28,7 +28,7 @@ test (`tests/unit/playground-readme.test.ts`) fails when a scene of `labs/playgr
 
 | Scene | What it proves | The command that shows it |
 |---|---|---|
-| `labs/playground/scenes/gym.ts` | The gym (`playground:gym`): every feature at the height, slope or gap its sign shows, the player running and jumping by Apex's numbers, its golden replay the same in Node and in the page while it renders, in either look, with no pipeline built after the warm-up. | `node x replay tests/replays/playground-gym.replay.json --browser page` |
+| `labs/playground/scenes/gym.ts` | The gym (`playground:gym`): every feature at the height, slope or gap its sign shows, the player moving by Apex's model (`node x sim labs/playground/scenes/gym --feel` prints its numbers), its golden replay the same in Node and in the page while it renders, in either look, with no pipeline built after the warm-up. | `node x replay tests/replays/playground-gym.replay.json --browser page` |
 
 ## The gym
 
@@ -41,8 +41,9 @@ lane of 1.5 m platforms across gaps from 2 to 9 m. A sign floats over each featu
 
 ## The player
 
-`labs/playground/cast/player.ts` stands the player in a scene: today's character controller with Apex's gravity
-(19.05 m/s²), jump (1.42 m), run (4.41 m/s) and hull (a capsule 1.83 m tall, 0.41 m in radius), drawn as
+`labs/playground/cast/player.ts` stands the player in a scene on the movement profile `movement:apex`: Apex's hull (a
+capsule 1.83 m tall, 0.41 m in radius), gravity (19.05 m/s²), jump (1.42 m) and its shooter model, a run of 4.41 m/s
+and a sprint of 6.60 m/s with a weapon out, 1.15 times faster empty-handed, as the player is; drawn as
 `body:player` (`labs/playground/bodies/player.ts`) on `build:adult`: 1.80 m standing, an adult's proportions, its
 gait planting each sole at full stride. The body is a teal jacket with dark upper sleeves and collar, charcoal cargo
 trousers with knee pads and a belt, boots, gloves, short hair, a face and an olive pack, every garment in two tones, so
@@ -73,7 +74,9 @@ settings: they never change play or a hash.
 |---|---|---|
 | Move | W A S D, or the arrows | left stick, d-pad |
 | Jump | Space | A (south) |
-| Dash | Shift, or K | B (east), left trigger |
+| Sprint (hold, or press once to keep it) | Left Shift | a click of the left stick |
+| Walk | Left Alt | |
+| Crouch (hold) | Left Ctrl | B (east) |
 | Look around | click the game, then the mouse; Esc lets go | right stick |
 | Camera mode | T | |
 | Cel or pixel look | P | |
@@ -81,7 +84,8 @@ settings: they never change play or a hash.
 | The menu | M | |
 
 The menu for humans (`labs/playground/menu.ts`) lists the scenes, cameras, looks, replays and these controls, read
-from the action map the page binds (`actionMap:thirdPerson`, until WP 13.9 gives the playground Apex's). A browser
+from the action map the page binds (`actionMap:playground`, `labs/playground/controls.ts`; WP 13.9 adds the rest of
+Apex's bindings and rebinding). A browser
 that automation drives (the tests, every `x` command that opens the page) gets no menu, so no test's screenshot holds
 it; `?playground.menu=on` shows it there.
 
@@ -89,7 +93,7 @@ it; `?playground.menu=on` shows it there.
 
 | Setting | What it tunes |
 |---|---|
-| `playground.gym.speed` | The player's run speed in the gym, m/s (4.41, Apex's run with a weapon out), when the scene starts. Changes play: recorded in replays. |
+| `playground.gym.speed` | The player's run speed in the gym with a weapon out, m/s (4.41, Apex's; empty-handed, the player runs 1.15 times as fast), when the scene starts. Changes play: recorded in replays. |
 | `playground.gym.jump` | How high the player jumps in the gym, m (1.42, Apex's), when the scene starts. Changes play: recorded in replays. |
 | `playground.menu` | The page's menu for humans: `auto` shows it unless automation drives the browser, `on` and `off` force it, when the page opens. A view setting. |
 | `post.look` | The look drawn (`look:playground-cel` by default). A view setting: never in the hash. |

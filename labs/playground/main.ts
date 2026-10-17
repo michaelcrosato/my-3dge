@@ -26,6 +26,7 @@
  */
 /// <reference types="vite/client" />
 import { createEngine, type Engine, type EngineFrame, type Label } from '../../engine';
+import { PLAYGROUND_ACTION_MAP } from './controls';
 import { GYM_FEATURES, GYM_TEXT } from './levels/gym';
 import { createPlaygroundMenu, type MenuEntry } from './menu';
 import { gym } from './scenes/gym';
@@ -109,13 +110,14 @@ function showFrame({ world, scene }: EngineFrame): void {
   if (!showing.camera) showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? 'custom' };
   const look = showing.look.replace(/^look:playground-/, '');
   ui.hud('mode', `Camera: ${showing.camera} · Look: ${look}`, { at: 'top-right' });
-  const keys = 'WASD: move · Space: jump · Shift: dash · Click: mouse look · T: camera · P: look · M: menu';
+  const keys = 'WASD: move · Space: jump · Shift: sprint · Alt: walk · Ctrl: crouch · Click: mouse look · T: camera · P: look · M: menu'; // prettier-ignore
   ui.hud('keys', keys, { at: 'bottom', keys: true });
 }
 
 const canvas = document.querySelector<HTMLCanvasElement>('#view')!;
 engine = await createEngine({
   canvas,
+  actionMap: PLAYGROUND_ACTION_MAP,
   scenes: sceneEntries.map((entry) => entry.id),
   levels,
   replays,

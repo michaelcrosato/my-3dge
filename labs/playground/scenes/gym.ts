@@ -1,8 +1,9 @@
 /**
  * @file The gym, `playground:gym` (docs/PLAYGROUND.md §2.3, PLAN.md WP 13.1): the playground's first scene, the
  * calibrated features of labs/playground/levels/gym.ts as a physics level, and the player (labs/playground/cast/
- * player.ts) at the spawn `@` at its north end, facing the features to the south. The step's intents walk the player
- * (`move`), `jump` jumps and `dash` dashes, on today's character controller until WP 13.3 brings Apex's.
+ * player.ts) at the spawn `@` at its north end, facing the features to the south. The step's intents move the player
+ * by Apex's model (`movement:apex`): `move` runs, `jump` jumps, `sprint` sprints (held, or a press that keeps it),
+ * `walk` walks and `crouch` crouch-walks.
  *
  * Settings (`playground.gym.*`, read when the scene starts, so they change play and go in replays): the player's run
  * speed and jump height, Apex's by default (docs/PLAYGROUND.md §3.2).
@@ -37,7 +38,8 @@ export const GYM_SETTINGS = defineSettings({
     maximum: 20,
     unit: 'm/s',
     when: 'scene',
-    description: "The player's run speed in the gym: Apex's run with a weapon out by default.",
+    description:
+      "The player's run speed in the gym with a weapon out: Apex's by default; empty-handed it is 1.15 times faster.",
   },
   'playground.gym.jump': {
     type: 'number',
