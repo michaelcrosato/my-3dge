@@ -85,6 +85,12 @@ const CALLS: Record<string, Call> = {
   'step()': (e) => expect(e.step(10)).toBe(10),
   'timeScale()': (e) => expect(e.timeScale(0.5)).toBe(0.5),
   'trace()': (e) => expect(e.trace().tick).toBe(0),
+  'tune.profile()': (e, call) => {
+    e.set('movement.gaits.sprint', 8);
+    expect(call('tune.profile')).toMatch(/^defineMovement\("movement:playtest", [\s\S]*"sprint": 8/);
+  },
+  'tune.settings()': (_e, call) =>
+    expect(call('tune.settings')).toContainEqual(expect.objectContaining({ path: 'movement.gaits.run', value: 4.4069, default: 4.4069 })), // prettier-ignore
 };
 
 describe('every inspector member, headless', () => {

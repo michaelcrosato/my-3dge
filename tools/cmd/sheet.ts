@@ -27,7 +27,8 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { SHEET_CAMERAS, stateMatrix } from '../../engine/anim/stateMatrix';
-import { animSheet, type SheetFrame } from '../../engine/anim/sheet';
+import { animSheet, type Sheet, type SheetFrame, type SheetOptions } from '../../engine/anim/sheet';
+import { createSkeleton } from '../../engine/anim/skeleton';
 import { browserRuntime, launchBrowser } from '../lib/browser';
 import { targetSlug, type Artifact } from '../lib/report';
 import { HUMANOIDS, humanoidPrefixes, humanoidStates, makeHumanoid } from '../qa/anim';
@@ -86,6 +87,24 @@ export function sheetFrames(subject: string, options: SheetFramesOptions): { fra
   return { frames, moves };
 }
 
+/**
+ * The sheet of `subject`: its frames (`sheetFrames`) drawn by `animSheet` from the cameras `cams` names (`move` for
+ * moves, else `body`) on the skeleton of `build`, so a build's own proportions are what the sheet shows.
+ */
+export function sheetFor(
+  subject: string,
+  options: SheetFramesOptions & { cams?: keyof typeof SHEET_CAMERAS },
+): { frames: SheetFrame[]; sheet: Sheet; drawn: SheetOptions } {
+  const { build, facing } = options;
+  const { frames, moves } = sheetFrames(subject, options);
+  const views = SHEET_CAMERAS[options.cams ?? (moves ? 'move' : 'body')];
+  const cell = 160;
+  const columns = Math.max(1, Math.floor((MAX_WIDTH - 6) / (views.length * cell + 6)));
+  const title = `${subject}: ${build}, facing ${facing} rad, ${views.join(' · ')}`;
+  const drawn: SheetOptions = { views, cell, columns, title, skeleton: createSkeleton(build) };
+  return { frames, sheet: animSheet(frames, drawn), drawn };
+}
+
 /** The PNG of `svg` (`width` × `height` pixels), drawn by the platform's Chromium; with the browser's runtime. */
 async function rasterize(svg: string, width: number, height: number): Promise<{ png: Buffer; runtime: string }> {
   const browser = await launchBrowser();
@@ -130,12 +149,9 @@ export default {
     if (!Number.isFinite(facing)) throw new UsageError(`--facing takes radians, not "${values.facing as string}"`);
     if (!Number.isInteger(count) || count < 1) throw new UsageError(`--frames takes a whole number above 0, not "${values.frames as string}"`); // prettier-ignore
     const build = (values.build as string | undefined) ?? HUMANOIDS[0].build;
-    const { frames, moves } = sheetFrames(subject, { build, facing, count });
-    const views = SHEET_CAMERAS[(cams ?? (moves ? 'move' : 'body')) as keyof typeof SHEET_CAMERAS];
-    const cell = 160;
-    const columns = Math.max(1, Math.floor((MAX_WIDTH - 6) / (views.length * cell + 6)));
-    const title = `${subject}: ${build}, facing ${facing} rad, ${views.join(' · ')}`;
-    const sheet = animSheet(frames, { views, cell, columns, title });
+    const asked = cams as keyof typeof SHEET_CAMERAS | undefined;
+    const { frames, sheet, drawn } = sheetFor(subject, { build, facing, count, cams: asked });
+    const views = drawn.views!;
     const target = targetSlug(subject);
     const dir = join(root, 'out', 'sheet', target);
     mkdirSync(dir, { recursive: true });
@@ -157,7 +173,7 @@ export default {
     const qa = await runQa(root, 'anim', qaPrefixes(subject));
     const lines = [
       `${frames.length} frames × ${views.length} cameras, ${sheet.width} × ${sheet.height} px, hash ${sheet.hash}`,
-      `anim QA: ${qa.violations} violations, ${qa.accepted} accepted by tests/baselines/qa-anim.json`,
+      `anim QA: ${qa.violations} violations, ${qa.accepted} accepted by tests/baselines/qa-anim*.json`,
     ];
     return {
       ok: qa.failures.length === 0,

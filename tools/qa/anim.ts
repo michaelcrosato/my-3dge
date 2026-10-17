@@ -5,9 +5,12 @@
  * (`stance:<name>`), move (`move:<name>`, played by an `Attack`), reaction (`reaction:<name>`) and action
  * (`action:<name>`, each of data/anim/actions/ played by its own check, engine/anim/actions-check.ts `actionCheck`, WP 8.7)
  * at both facings, from rest and back to rest; the blob (`blob:<state>`) and the floater (`floater:<state>`) hold
- * theirs. The first build also runs its matrix twice and at half the step, and so do the blob and the floater. Then
- * every library clip (`clip:<SET>/<Clip>`, `set:<SET>`), as data and on every build (tools/qa/anim/clips.ts, WP 8.6,
- * with its metrics; baseline tests/baselines/qa-anim-library.json): about 40 s, so T1 plays a sample.
+ * theirs. A build with a `kind` reports under ids of its own (`adult/state:run`, the playground's player), so its
+ * accepted exceptions (tests/baselines/qa-anim-adult.json) never loosen the others'; the rest share each id, valued
+ * by their worst. The first build also runs its matrix twice and at half the step, and so do the blob and the
+ * floater. Then every library clip (`clip:<SET>/<Clip>`, `set:<SET>`), as data and on every build
+ * (tools/qa/anim/clips.ts, WP 8.6, with its metrics; baseline tests/baselines/qa-anim-library.json): about 40 s, so T1
+ * plays a sample.
  *
  * Metrics, one violation per id and metric, valued by the worst case (larger is worse) and naming where it happened:
  * - `nan` (1), `stretch`, `underFloor`, `reach` (metres): `animCheck`'s finite values, bone lengths, feet at or
@@ -69,11 +72,13 @@ import {
 } from './anim/metrics';
 
 /** The humanoid bodies the family drives through the whole matrix; the first also runs it twice and at half the step. */
-export const HUMANOIDS: readonly { build: string; weapon: Weapon }[] = [
+export const HUMANOIDS: readonly { build: string; weapon: Weapon; kind?: string }[] = [
   { build: 'build:heroic', weapon: 'sword' },
   { build: 'build:chibi', weapon: 'none' },
   { build: 'build:bulky', weapon: 'staff' },
   { build: 'build:skeleton', weapon: 'sword' },
+  // the playground's player (WP 13.2), under ids of its own, so what it is accepted never loosens the source builds'
+  { build: 'build:adult', weapon: 'none', kind: 'adult/' },
 ];
 
 /** A humanoid of `HUMANOIDS`, made at a step, its feet planted on the floor (`FootPlant`): what the matrix drives. */
@@ -161,9 +166,13 @@ export function humanoidStates(): Record<string, MatrixState> {
   return { ...states, ...actionStates() };
 }
 
-/** The kinds of the humanoid's QA ids (`state:`, `pose:`, …), from its matrix: as `only`, the humanoid without clips. */
+/**
+ * The kinds of the humanoid's QA ids (`state:`, `pose:`, …), from its matrix, then the kinds of the builds that have
+ * ids of their own (`adult/`): as `only`, the humanoid without clips.
+ */
 export function humanoidPrefixes(): string[] {
-  return [...new Set(Object.keys(humanoidStates()).map((id) => id.slice(0, id.indexOf(':') + 1)))];
+  const kinds = Object.keys(humanoidStates()).map((id) => id.slice(0, id.indexOf(':') + 1));
+  return [...new Set([...kinds, ...HUMANOIDS.flatMap((body) => (body.kind ? [body.kind] : []))])];
 }
 
 /** A humanoid run as a track: its joints and sockets (stateMatrix.ts `RUN_POINTS`), standing on its soles. */
@@ -367,8 +376,13 @@ export function animViolations(keep: (id: string) => boolean = () => true): QaVi
       found.set(key, { id, metric, value: Math.round(value.value * 1e4) / 1e4, message: value.message });
     }
   };
-  const states = Object.fromEntries(Object.entries(humanoidStates()).filter(([id]) => keep(id)));
-  if (Object.keys(states).length) HUMANOIDS.forEach((body, i) => checkHumanoid(body, states, i === 0, report));
+  const matrix = Object.entries(humanoidStates());
+  HUMANOIDS.forEach((body, i) => {
+    const kind = body.kind ?? '';
+    const states = Object.fromEntries(matrix.filter(([id]) => keep(kind + id)));
+    if (Object.keys(states).length === 0) return;
+    checkHumanoid(body, states, i === 0, (id, metric, found) => report(kind + id, metric, found));
+  });
   for (const rig of [BLOB_RIG, FLOATER_RIG]) checkPointRig(rig, keep, report);
   return [...found.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : a.metric < b.metric ? -1 : 1));
 }

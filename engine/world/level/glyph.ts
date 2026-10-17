@@ -88,7 +88,7 @@ export const GLYPH_FIELDS = {
     type: 'string',
     default: 'none',
     description:
-      "The mesh recipe the level meshes (WP 2.4) build for its tiles: 'floor', 'wall', 'lowWall', 'pillar', 'gallery', 'stairs', 'dais', 'brazier'; 'none' for nothing.",
+      "The mesh recipe the level meshes (WP 2.4) build for its tiles: 'floor', 'wall', 'lowWall', 'pillar', 'gallery', 'stairs', 'ramp', 'dais', 'brazier'; 'none' for nothing.",
   },
   nav: {
     type: 'object',

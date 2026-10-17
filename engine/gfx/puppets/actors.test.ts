@@ -2,8 +2,9 @@
  * @file Unit tests for actors on the stage (engine/gfx/puppets/actors.ts, PLAN.md WP 3.10), in Node: an actor with an
  * animator gets a puppet of the humanoid in its build, named and tagged for the ID pass, and one without gets none;
  * a draw puts the player's feet and puppet `alpha` of the way between its last two steps; his eye is the head socket;
- * first-person culling hides every part but the hands and shows them all again; a despawned actor's puppet goes; and
- * drawing, posing and culling never change the sim's hash. WP 8.9: an actor with clips is drawn posed by its clip
+ * first-person culling hides every part but the hands and shows them all again; a despawned actor's puppet goes, kept
+ * for the next actor of its build and body (a restart or a respawn makes no new mesh); and drawing, posing and culling
+ * never change the sim's hash. WP 8.9: an actor with clips is drawn posed by its clip
  * layer, as the clip is retargeted, in the body its component `puppet` names (the mannequin). WP 7.8: an actor's
  * `secondary` hangs its cape and hair under its puppet, named for the ID pass and counted as the actor's, and they go
  * with the component; its `reactions` bend its spine with the flinch and lay a body knocked forward on its face, read
@@ -111,6 +112,24 @@ describe('actors drawn as puppets', () => {
     world.despawn(1);
     expect([...actors.capture(world.query('actor'), world.dt)]).toEqual([]);
     expect([actors.puppets.size, actors.root.children.length]).toEqual([0, 0]);
+  });
+
+  it('keeps a puppet given up for the next actor of its build and body: a restart makes no new skinned mesh', () => {
+    const { world, actors } = start();
+    actors.capture(world.query('actor'), world.dt);
+    const worn = actors.puppets.get(1)!.mesh;
+    actors.capture([]); // a restart reads the world afresh (engine/app/view.ts)
+    expect([actors.puppets.size, actors.root.children.length]).toEqual([0, 0]);
+    actors.capture(world.query('actor'), world.dt);
+    expect(actors.puppets.get(1)!.mesh).toBe(worn);
+    expect([worn.parent, worn.name]).toEqual([actors.root, 'actor#1']);
+    world.despawn(1);
+    actors.capture(world.query('actor'), world.dt);
+    const next = spawnActor(world, { at: [2, 0, 2], character: createCharacter(), anim: { build: 'build:heroic' } });
+    world.step({});
+    actors.capture(world.query('actor'), world.dt);
+    expect(actors.puppets.get(next)!.mesh).toBe(worn); // the respawned actor wears it, named for him
+    expect([worn.name, worn.userData.entity]).toEqual([`actor#${next}`, next]);
   });
 
   it('draws an actor with clips posed by its clip layer, in the body its puppet names (WP 8.9)', () => {

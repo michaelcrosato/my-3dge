@@ -14,10 +14,10 @@
  * 7.8) and, with `preciseHits`, posed by `actors.pose` after `actors.readback`. Event: `footstep` `{ id, side, speed }`.
  * WP 8.9: `body` adds the component `puppet` (the body drawn) and `clips` the clip layer (engine/sim/actorClips.ts).
  *
- * `measureFeel(character)` drives a character over a flat course in a world of its own through the feel meter
- * (engine/physics/feel.ts) and adds the reach (the highest ledge it jumps onto, WP 4.3's climb limit) and the dash's
- * distance; it runs under the sim's maths, so the numbers match in Node and Chromium. `__engine.feel(id?)`
- * (engine/app/feelMember.ts) reports it for an actor, the first player by default; `node x sim <scene> --feel` prints it.
+ * WP 13.3: an actor whose character has a movement model (engine/physics/movement/) also holds the component
+ * `motion`, the model's state (holstered unless spawned with `holstered: false`), and reads `sprint` (held, pressed),
+ * `walk` and `crouch` (held), `crouchToggle` (pressed), its view from `look`, its keys' frame from `cam` (else
+ * `look`) and what it faces from `aim`, else `look`; it steps under the live `movement.*` settings (WP 13.4).
  *
  * Invariants: systems are added once per world, on the first (animated) spawn; all an actor remembers is in its
  * components (the sim's animators are loaded from them). Despawning leaves the body; `removeActor` removes both.
@@ -45,10 +45,10 @@ import { codeError } from '../core/log';
 import { Vector3 } from '../core/math';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
 import { defineSettings } from '../core/settings';
-import { withSimMath } from '../core/simMath';
 import { held, normalizeIntents, pressed, type Intents } from '../input/intents';
 import {
   addCharacter,
+  bodyAt,
   CHARACTER_SETTINGS,
   CHARACTER_STATE_FIELDS,
   createCharacter,
@@ -59,8 +59,9 @@ import {
   type CharacterInput,
   type CharacterState,
 } from '../physics/character';
-import { createFeelMeter, updateFeelMeter, type FeelReport } from '../physics/feel';
-import { createPhysics } from '../physics/world';
+import { matchHull } from '../physics/hull';
+import { createMotionState, MOTION_FIELDS, type MotionState } from '../physics/movement/model';
+import { MOVEMENT_SETTINGS, movementOverrides, tuneCharacter } from '../physics/movement/settings';
 import { physicsOf } from '../physics/binding';
 import type { Vec3Like } from '../physics/queries';
 import { clipsFor, defineClipKinds, type ClipsSpec } from './actorClips';
@@ -103,11 +104,12 @@ export interface PuppetComponent {
   body: string;
 }
 
-/** The components this module reads: `actor`, `animator`, `puppet`, and `oneWay` for one-way platforms. */
+/** The components this module reads: `actor`, `animator`, `puppet`, `motion` (the shooter model's) and `oneWay`. */
 export type ActorComponents = {
   actor: ActorComponent;
   animator: AnimatorComponent;
   puppet: PuppetComponent;
+  motion: MotionState;
   oneWay: { body: number };
 };
 
@@ -120,6 +122,7 @@ export function defineActorKinds(registry: Registry = sharedRegistry): void {
   if (!registry.kinds().includes('setting') || !registry.has('setting', 'physics.characterGravity')) {
     defineSettings(CHARACTER_SETTINGS, registry);
   }
+  if (!registry.has('setting', 'movement.turnRate')) defineSettings(MOVEMENT_SETTINGS, registry);
   if (!registry.kinds().includes('component') || !registry.has('component', 'animator')) {
     const states = { type: 'object', default: {}, description: 'The body states its game code holds on.' } as const;
     const description = 'A character animator (engine/anim/character.ts): what it keeps, and what its body is told.';
@@ -140,6 +143,14 @@ export function defineActorKinds(registry: Registry = sharedRegistry): void {
     {
       description: 'An entity the character controller moves.',
       fields: { ...ACTOR_FIELDS, ...CHARACTER_STATE_FIELDS },
+    },
+    registry,
+  );
+  defineComponent(
+    'motion',
+    {
+      description: 'An actor’s state in the shooter movement model (engine/physics/movement/model.ts).',
+      fields: MOTION_FIELDS,
     },
     registry,
   );
@@ -170,6 +181,8 @@ export interface ActorSpec {
   body?: string;
   /** With `anim`, the clip layer in its animator, playing from these sets (engine/sim/actorClips.ts); none when absent. */
   clips?: ClipsSpec;
+  /** With a movement model, whether it starts with no weapon out (true: the model's holstered speeds). */
+  holstered?: boolean;
   /**
    * Further components it spawns with, by name (its `reactions`, its `secondary`: engine/sim/reactions.ts), so they
    * are there from its first step, and a page's first warm-up builds what they draw.
@@ -189,7 +202,8 @@ export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): 
     w.systems.add('actors.readback', readActors, { phase: 'readback' });
   }
   const actor = { body, player: spec.player ?? true, character: spec.character, x, y, z, ...state };
-  if (!spec.anim) return w.spawn({ ...spec.components, actor });
+  const motion = spec.character.movement ? { motion: { ...createMotionState(), holstered: spec.holstered ?? true } } : {}; // prettier-ignore
+  if (!spec.anim) return w.spawn({ ...spec.components, ...motion, actor });
   if (!w.systems.has('actors.anim')) {
     w.systems.add('actors.anim', stepAnimators, { phase: 'anim' });
     w.systems.add('actors.pose', poseAnimators, { phase: 'readback' });
@@ -198,7 +212,26 @@ export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): 
   const animator = { build: typeof build === 'string' ? build : build.id, weapon, preciseHits };
   const puppet = spec.body !== undefined ? { body: spec.body } : undefined;
   const clips = spec.clips && (clipsFor(w, spec.clips, animator.build) as unknown as Record<string, unknown>);
-  return w.spawn({ ...spec.components, actor, animator, puppet, clips });
+  return w.spawn({ ...spec.components, ...motion, actor, animator, puppet, clips });
+}
+
+/**
+ * Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing
+ * `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the
+ * shooter model its motion state starts again, holstered as it was. For a scene's dev actions: a feel course places
+ * its player where it measures (engine/dev/feel/course.ts).
+ */
+export function placeActor<C extends object>(world: World<C>, id: number, at: Vec3Like, yaw?: number): void {
+  const w = world as unknown as World;
+  const e = w.get(id) as Partial<ActorComponents> | undefined;
+  if (!e?.actor) throw codeError('SIM_BAD_ARGUMENT', { where: 'placeActor(w, id)', value: String(id), expected: 'an actor’s id' }); // prettier-ignore
+  const { actor, motion } = e;
+  const physics = physicsOf(w);
+  matchHull(physics, actor.body, actor.character, actor.character.capsule.height, { air: false, tuck: false });
+  physics.setBody(actor.body, { position: bodyAt(actor.character, at, 'placeActor(at)'), velocity: [0, 0, 0] });
+  const { x, y, z } = feetOf(physics, actor.body, actor.character);
+  Object.assign(actor, createCharacterState(), { yaw: yaw ?? actor.yaw, x, y, z });
+  if (motion) Object.assign(motion, createMotionState(), { holstered: motion.holstered });
 }
 
 /** Removes an actor and its body. */
@@ -220,27 +253,43 @@ function intentsOf(actor: ActorComponent, intents: Intents): Intents {
   return own;
 }
 
+/** The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it faces. */ // prettier-ignore
+function motionInput(actor: ActorComponent, wants: Intents): CharacterInput {
+  const [aimX, , aimZ] = wants.aim ?? [];
+  const aimed = aimX !== undefined && Math.hypot(aimX - actor.x, aimZ! - actor.z) > 0.05;
+  const face = aimed ? Math.atan2(aimX - actor.x, aimZ! - actor.z) : wants.look?.[0];
+  const frame = wants.cam ?? wants.look?.[0];
+  return {
+    sprint: held(wants, 'sprint'),
+    sprintPressed: pressed(wants, 'sprint'),
+    walk: held(wants, 'walk'),
+    crouch: held(wants, 'crouch'),
+    crouchToggle: pressed(wants, 'crouchToggle'),
+    ...(wants.look ? { view: wants.look[0] } : {}),
+    ...(frame !== undefined ? { frame } : {}),
+    ...(face !== undefined ? { face } : {}),
+  };
+}
+
 /** The system `actors`: every actor's tick, in id order. */
 function moveActors(w: World, intents: Intents): void {
   const physics = physicsOf(w);
   const gravity = w.settings.get('physics.characterGravity') as number;
   const worldGravity = w.settings.get('physics.gravity') as number;
   const oneWay = new Set((w.query('oneWay') as unknown as ActorComponents[]).map((e) => e.oneWay.body));
+  const tuning = movementOverrides((path) => w.settings.get(path));
   for (const e of w.query('actor') as unknown as (ActorComponents & { id: number })[]) {
-    const { actor } = e;
+    const { actor, motion } = e;
     const wants = intentsOf(actor, intents);
-    const input = {
+    const input: CharacterInput = {
       move: wants.move,
       jump: held(wants, 'jump'),
       jumpPressed: pressed(wants, 'jump'),
       dashPressed: pressed(wants, 'dash'),
+      ...(motion ? motionInput(actor, wants) : {}),
     };
-    const step = stepCharacter(physics, actor.body, actor.character, actor, input, {
-      dt: w.dt,
-      gravity,
-      worldGravity,
-      oneWay,
-    });
+    const character = motion ? tuneCharacter(actor.character, tuning) : actor.character;
+    const step = stepCharacter(physics, actor.body, character, actor, input, { dt: w.dt, gravity, worldGravity, oneWay }, motion); // prettier-ignore
     if (step.jumped) w.emit('jump', { id: e.id });
     if (step.landed) w.emit('land', { id: e.id, speed: step.landed });
     if (step.dashed) w.emit('dash', { id: e.id });
@@ -295,106 +344,4 @@ function readActors(w: World): void {
     const feet = feetOf(physics, actor.body, actor.character);
     [actor.x, actor.y, actor.z] = [feet.x, feet.y, feet.z];
   }
-}
-
-/** How `measureFeel` runs: the sim's rate, and the gravity a character falls under unless its settings name one. */
-export interface FeelOptions {
-  hz?: number;
-  gravity?: number;
-}
-
-/** A flat course: the character on a long floor, ticked with the meter reading every tick. */
-function course(character: Character, dt: number, gravity: number, ledge?: number) {
-  const physics = createPhysics();
-  physics.addBody({
-    type: 'fixed',
-    colliders: [{ shape: { type: 'box', size: [400, 1, 40] }, position: [0, -0.5, 0] }],
-  });
-  const { radius } = character.capsule;
-  if (ledge !== undefined && ledge > 0) {
-    const face = radius + character.offset + 0.02;
-    physics.addBody({
-      type: 'fixed',
-      colliders: [{ shape: { type: 'box', size: [4, ledge, 40] }, position: [face + 2, ledge / 2, 0] }],
-    });
-  }
-  const body = addCharacter(physics, character, [0, 0, 0]);
-  const state = createCharacterState();
-  const meter = createFeelMeter(dt);
-  const settings = { get: (path: string) => (path === 'physics.gravity' ? 9.81 : undefined) };
-  let tick = 0;
-  const step = (input: CharacterInput) => {
-    stepCharacter(physics, body, character, state, input, { dt, gravity });
-    physics.step({ dt, settings });
-    const feet = feetOf(physics, body, character);
-    const sample = {
-      tick: ++tick,
-      wish: input.move ?? [0, 0],
-      velocity: [state.vx, state.vy, state.vz],
-      feet: [feet.x, feet.y, feet.z],
-      grounded: state.grounded,
-    } as const;
-    updateFeelMeter(meter, sample);
-    return sample;
-  };
-  /** Steps with `input` until `done` (or `most` ticks). */
-  const until = (input: CharacterInput, done: () => boolean, most = 600) => {
-    for (let i = 0; i < most && !done(); i++) step(input);
-  };
-  return { physics, state, meter, step, until, feet: () => feetOf(physics, body, character) };
-}
-
-/** Measures a character's feel on the standard course (the file comment says what each number is). */
-export function measureFeel(character: Character, options: FeelOptions = {}): FeelReport {
-  return withSimMath(() => {
-    const dt = 1 / (options.hz ?? 60);
-    const gravity = character.characterGravity ?? options.gravity ?? 32;
-    const east = { move: [1, 0] as const };
-    const west = { move: [-1, 0] as const };
-    const c = course(character, dt, gravity);
-    const still = () => c.state.grounded && Math.hypot(c.state.vx, c.state.vz) < 0.01;
-    const top = () => Math.hypot(c.state.vx, c.state.vz) >= c.meter.report.topSpeed * 0.999;
-    c.until({}, () => c.state.grounded && c.state.air === 0, 30);
-    c.until(east, () => c.meter.steady);
-    c.until({}, still);
-    c.until(east, top);
-    c.until(west, () => c.meter.turn === null && c.meter.report.turnTime > 0, 300);
-    c.until({}, still);
-    c.step({ jump: true, jumpPressed: true });
-    c.until({ jump: true }, () => c.state.grounded);
-    const { apex, airTime } = c.meter.report;
-    c.until({}, still);
-    c.until(east, top);
-    c.step({ ...east, jump: true, jumpPressed: true });
-    c.until({ ...east, jump: true }, () => c.state.grounded);
-    c.until({}, still);
-    const before = c.feet();
-    c.step({ dashPressed: true });
-    c.until({}, () => c.state.dash === 0, 600);
-    const after = c.feet();
-    const dashDistance = character.feel.dash.speed > 0 ? Math.hypot(after.x - before.x, after.z - before.z) : 0;
-    c.physics.dispose();
-    return { ...c.meter.report, apex, airTime, reach: reachOf(character, dt, gravity, apex), dashDistance };
-  });
-}
-
-/** The highest ledge the character jumps up onto from standing at its foot, to the millimetre. */
-function reachOf(character: Character, dt: number, gravity: number, apex: number): number {
-  const onto = (ledge: number) => {
-    const c = course(character, dt, gravity, ledge);
-    c.until({}, () => c.state.grounded && c.state.air === 0, 30);
-    c.step({ move: [1, 0], jump: true, jumpPressed: true });
-    c.until({ move: [1, 0], jump: true }, () => c.state.grounded, 600);
-    c.until({ move: [1, 0] }, () => false, 20);
-    const sample = c.step({});
-    c.physics.dispose();
-    return sample.grounded && sample.feet[1] > ledge - 0.01;
-  };
-  let [low, high] = [0, apex + character.capsule.radius + 0.5];
-  while (high - low > 0.001) {
-    const mid = (low + high) / 2;
-    if (onto(mid)) low = mid;
-    else high = mid;
-  }
-  return Math.round(low * 1000) / 1000;
 }

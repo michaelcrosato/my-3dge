@@ -5,13 +5,16 @@
  *
  * `createCharacter(spec)` checks settings against `CHARACTER_FIELDS` and fills the defaults (shardfall's movement, the
  * stress test's capsule: PLAN.md Appendix C); `addCharacter` adds the body (group `actor`), its bottom just outside the
- * skin, so it does not stick at seams. `stepCharacter` is one tick: `steer` (engine/physics/feel.ts), the controller's
+ * skin, so it does not stick at seams (engine/physics/characterBody.ts, re-exported here). `stepCharacter` is one tick: `steer` (engine/physics/feel.ts), the controller's
  * move (engine/physics/move.ts's `moveCharacter`: across then down, its own steps and snap), `settle`, then walls,
  * pushes and the ground probe. Its `state` (`CHARACTER_STATE_FIELDS`) is plain data. Pushing shares momentum (an
  * inelastic collision of a `push`-kg mass); walls stop the velocity going into them, slopes do not; kinematic floors
  * carry it exactly (`carried`); idle on fixed ground it skips the controller (ADR-0020 amendments 3 and 5). A
  * character that `shoves` a group (the box's hero, the crowd) moves as if those bodies were not there, and its capsule
- * pushes them aside in the physics step, as the prototype's hero shoved monsters (ADR-0020 amendment 9).
+ * pushes them aside in the physics step, as the prototype's hero shoved monsters (ADR-0020 amendment 9). A character
+ * given a movement profile, `createCharacter({ movement: 'movement:apex' })`, takes its settings and, with a model,
+ * steers by the shooter model instead (engine/physics/movement/), its state in a `MotionState` beside this one, asking
+ * the world through engine/physics/room.ts; a mantle's tick moves its feet straight along the mantle's path.
  *
  * Invariants: it keeps nothing between ticks but `state` (move.ts's controller keeps nothing either), so a restored
  * world steps on alike. Same state, input and world: same tick, in Node and Chromium.
@@ -35,14 +38,23 @@
  */
 import type RAPIER from '@dimforge/rapier3d-simd-compat';
 import { Vector3 } from '../core/math';
+import type { Registry } from '../core/registry';
 import { defineSchema, freezeValue, parse, type EntryOf, type Field, type Schema } from '../core/schema';
 import { defineSettings } from '../core/settings';
 import { handleOf } from './capture';
+import { feetOf } from './characterBody';
 import { GROUP_NAMES } from './groups';
 import { settle, steer } from './feel';
-import { isWall, moveCharacter, partsOf, sink, type CharacterMove } from './move';
-import { check, vec, type Vec3Like } from './queries';
+import { halfHeightOf, isWall, moveCharacter, partsOf, sink, type CharacterMove } from './move';
+import { MODEL_FIELDS, type MotionState } from './movement/model';
+import { applyMovement } from './movement/profile';
+import './movement/profiles';
+import { settleMotion, steerMotion } from './movement/steer';
+import { check, type Vec3Like } from './queries';
+import { fitHull, roomOf } from './room';
 import { rapierOf, type Physics } from './world';
+
+export { addCharacter, bodyAt, feetOf } from './characterBody';
 
 /** One degree, in radians. */
 const DEG = Math.PI / 180;
@@ -71,6 +83,8 @@ export const CHARACTER_FIELDS = defineSchema({
     width: num(0.125, 0, 5, 'The room it needs on top of a step.', 'm'),
     dynamic: { type: 'boolean', default: true, description: 'Whether it also steps onto dynamic bodies (planks).' },
   }),
+  stepFrom: { type: 'string', enum: ['start', 'contact'], description: "Where a climb measures its reach from: 'contact', where the step stopped the move, so a fast move steps up without stopping dead (the shooter model's); absent, the tick's start." }, // prettier-ignore
+  stayOnGround: { type: 'boolean', description: 'Whether it also follows the ground down after a leg down that nothing stopped, so it slides over a crest instead of flying off it (the shooter model’s, as Source’s StayOnGround); absent, no.' }, // prettier-ignore
   maxSlope: num(50 * DEG, 0, 89 * DEG, 'The steepest slope it walks up (50°).', 'rad'),
   slideSlope: num(40 * DEG, 0, 90 * DEG, 'Ground steeper than this slides it down (40°).', 'rad'),
   slide: { type: 'boolean', default: true, description: 'Whether it slides along walls and obstacles it walks into.' },
@@ -106,6 +120,12 @@ export const CHARACTER_FIELDS = defineSchema({
       cooldown: num(0.45, 0, 60, 'From one dash’s start to the next.', 's'),
     }),
   }),
+  movement: {
+    type: 'object',
+    properties: MODEL_FIELDS,
+    description:
+      'The shooter model’s numbers (engine/physics/movement/model.ts), from a movement profile: createCharacter({ movement: "movement:apex" }); absent: the platformer model of the fields above.',
+  },
 });
 
 /** A character's settings, filled: what `createCharacter` returns and an actor's component holds. */
@@ -123,9 +143,13 @@ export const CHARACTER_SETTINGS = {
 } as const satisfies Record<string, Field>;
 defineSettings(CHARACTER_SETTINGS);
 
-/** Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem. */
-export function createCharacter(spec: Record<string, unknown> = {}): Character {
-  return freezeValue(parse(CHARACTER_FIELDS, spec, 'createCharacter(spec)'));
+/**
+ * Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem. A `movement`
+ * profile's id applies that profile first, the spec's own fields winning, and a `model` beside it changes the
+ * profile's model field by field (engine/physics/movement/profile.ts).
+ */
+export function createCharacter(spec: Record<string, unknown> = {}, registry?: Registry): Character {
+  return freezeValue(parse(CHARACTER_FIELDS, applyMovement(spec, registry), 'createCharacter(spec)'));
 }
 
 /** What a character remembers between ticks: plain data in its actor's component, hashed and captured with the sim. */
@@ -171,24 +195,19 @@ export interface CharacterInput {
   jumpPressed?: boolean;
   /** The dash button went down this tick. */
   dashPressed?: boolean;
-}
-
-/** Adds a character's body (a kinematic capsule, group `actor`), its bottom just outside the skin above `feet`. */
-export function addCharacter(physics: Physics, character: Character, feet: Vec3Like): number {
-  const at = vec(feet, 'addCharacter(feet)');
-  const { radius, height } = character.capsule;
-  return physics.addBody({
-    type: 'kinematic',
-    position: [at.x, at.y + character.offset + 0.005 + radius + height / 2, at.z],
-    colliders: [{ shape: { type: 'capsule', radius, height }, group: 'actor' }],
-    group: 'actor',
-  });
-}
-
-/** Where a character's feet are: the bottom of its capsule, less the skin (on flat ground, the ground's height). */
-export function feetOf(physics: Physics, body: number, character: Character): Vector3 {
-  const { position } = physics.readBody(body);
-  return position.setY(position.y - character.capsule.height / 2 - character.capsule.radius - character.offset);
+  /** The shooter model's: the sprint button is held, went down this tick, the walk or the crouch button is held. */
+  sprint?: boolean;
+  sprintPressed?: boolean;
+  walk?: boolean;
+  crouch?: boolean;
+  /** The shooter model's: the crouch toggle went down this tick (it crouches until pressed again or stood up). */
+  crouchToggle?: boolean;
+  /** The shooter model's: the view's yaw (rad; forward = (sin, 0, cos)), which the sprint keeps within 45° of. */
+  view?: number;
+  /** The shooter model's: the yaw the move's keys are turned by (the camera's heading); absent, the world's. */
+  frame?: number;
+  /** The shooter model's: a yaw to face (the look's or the aim's); absent, it faces where it moves. */
+  face?: number;
 }
 
 /** What `stepCharacter` needs beside the character: the step length, the gravities and the one-way platforms. */
@@ -226,7 +245,8 @@ const PROBE_DEPTH = 0.15;
  * going into them, it pushes what it walked into (both leave at (push·v + m·u)/(push + m)), probes the ground under it
  * and presses a dynamic floor with push × world gravity. A kinematic floor it stands on carries it (`carried`); idle on
  * fixed ground it skips the controller. Changes `state` and sets the body's velocity, so the body gets there when the
- * world steps: call it before (actors.ts: the phase `anim`).
+ * world steps: call it before (actors.ts: the phase `anim`). A character with a movement model steers by it
+ * (engine/physics/movement/steer.ts) and needs its `motion`, else `PHYSICS_BAD_ARGUMENT`.
  */
 export function stepCharacter(
   physics: Physics,
@@ -235,6 +255,7 @@ export function stepCharacter(
   state: CharacterState,
   input: CharacterInput,
   options: StepOptions,
+  motion?: MotionState,
 ): CharacterStep {
   const { dt } = options;
   check(Number.isFinite(dt) && dt > 0, 'stepCharacter({ dt })', dt, 'a step length above 0');
@@ -244,16 +265,25 @@ export function stepCharacter(
   const { rigid } = partsOf(world, body, 'stepCharacter(body)');
   const g = character.characterGravity ?? options.gravity;
   const wasGrounded = state.grounded;
-  const plan = steer(character, state, input, dt, g);
+  const model = character.movement !== undefined;
+  check(!model || motion !== undefined, 'stepCharacter(motion)', motion, 'the character’s MotionState (createMotionState(), the component motion an actor keeps): it has a movement model'); // prettier-ignore
+  const { oneWay } = options;
+  const plan = model ? steerMotion(character, state, motion!, input, dt, g, roomOf(physics, body, character, oneWay)) : steer(character, state, input, dt, g); // prettier-ignore
+  if (model) fitHull(physics, body, character, motion!, !wasGrounded && !state.grounded, oneWay);
   const still = Math.hypot(state.vx, state.vz) < 1e-3 && state.vy <= 0 && state.vy > -g * dt * 1.5;
   const idle = wasGrounded && still && !plan.jumped && !plan.dashing && fixedBody(world, state.ground);
-  const grounded = wasGrounded && !plan.jumped && state.vy <= 0;
-  const move = idle
-    ? { moved: new Vector3(), grounded: true, across: [], vertical: [] }
-    : carried(physics, body, character, grounded ? state.ground : -1, options, (carry) =>
-        moveCharacter(physics, body, character, carry.add(plan.desired), { grounded, oneWay: options.oneWay }),
-      );
-  const landed = settle(character, state, plan, move.moved, move.grounded);
+  const grounded = (wasGrounded || state.grounded) && !plan.jumped && state.vy <= 0; // a mantle stepped off onto its top
+  const move = plan.path
+    ? { moved: new Vector3(...plan.path).sub(feetOf(physics, body, character)), grounded: false, climbed: 0, across: [], vertical: [] } // prettier-ignore
+    : idle
+      ? { moved: new Vector3(), grounded: true, climbed: 0, across: [], vertical: [] }
+      : carried(physics, body, character, grounded ? state.ground : -1, options, (carry) =>
+          moveCharacter(physics, body, character, carry.add(plan.desired), { grounded, oneWay: options.oneWay }),
+        );
+  const landed = model
+    ? settleMotion(character, state, motion!, input, plan, move, g, dt)
+    : settle(character, state, plan, move.moved, move.grounded);
+  if (model) fitHull(physics, body, character, motion!, !state.grounded, oneWay);
   for (const hit of [...move.across, ...move.vertical]) {
     if (!isWall(character, hit.normal) || world.bodies.get(handleOf(hit.body))?.isDynamic()) continue;
     const across = Math.hypot(hit.normal.x, hit.normal.z);
@@ -351,10 +381,10 @@ function afterMove(
     }
   }
   state.pushLoad = load > state.pushLoad ? load : state.pushLoad * Math.exp(-8 * options.dt);
-  const { radius, height } = character.capsule;
-  const center = world.bodies.get(handleOf(body))!.translation();
+  const { rigid, collider } = partsOf(world, body, 'stepCharacter(body)');
+  const center = rigid.translation();
   const from: Vec3Like = [center.x + move.moved.x, center.y + move.moved.y, center.z + move.moved.z];
-  const reach = height / 2 + radius + character.offset + PROBE_DEPTH;
+  const reach = halfHeightOf(collider, character) + character.capsule.radius + character.offset + PROBE_DEPTH;
   const ground = physics.raycast(from, [0, -1, 0], { maxDistance: reach, exclude: body, groups: ['world', 'prop'] });
   state.ground = ground ? ground.body : -1;
   state.slope = ground ? Math.acos(Math.min(1, Math.max(-1, ground.normal.y))) : 0;

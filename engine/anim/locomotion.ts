@@ -45,6 +45,8 @@ export const GAIT = {
   swayReach: 0.01875,
   /** How far the pelvis leads forward along the movement at full speed, metres. */
   pelvisLead: 0.025,
+  /** Share of the straight leg a planted sole may take (`plantedStride` builds): the knee never locks (new). */
+  plantReach: 0.985,
   /** How far the pelvis leads sideways along the movement at full speed, metres. */
   pelvisSide: 0.01875,
   /** How far a flinch pushes the pelvis back, metres. */
@@ -206,7 +208,27 @@ export function pelvisTarget(ctx: EffectorContext, out: Vector3): Vector3 {
   const r = ctx.moveR * G.pelvisSide * sp + sway;
   let u = b.hipHeight + bob + breathe * G.breatheLift - w.dash * G.dashDrop - w.hurt * G.hurtDrop;
   u = u - w.kneel * b.hipHeight * G.kneelDrop - w.guard * G.guardDrop - ctx.crouch * b.hipHeight * G.crouchDrop;
+  if (b.plantedStride) u = Math.min(u, plantedHeight(ctx, f, r));
   return B(f, r, u + body.hop, out);
+}
+
+/**
+ * The highest a pelvis at `f` forward and `r` right may ride for each sole the gait plants (its lift 0) to be in
+ * reach of its hip, `plantReach` of the straight leg: what a `plantedStride` build's gait drops to as its feet spread.
+ */
+export function plantedHeight(ctx: EffectorContext, f: number, r: number): number {
+  const { build: b } = ctx;
+  const reach = (b.legUpper + b.legLower) * GAIT.plantReach;
+  let top = Infinity;
+  for (const side of ['L', 'R'] as const) {
+    const sole = gaitFoot(ctx, side, planted);
+    if (sole.y > 0) continue; // lifted: it swings free
+    const dx = sole.x - (-r - sideSign(side) * b.hipHalf);
+    const dz = sole.z - f;
+    const flat = dx * dx + dz * dz;
+    if (flat < reach * reach) top = Math.min(top, sole.y + Math.sqrt(reach * reach - flat));
+  }
+  return top;
 }
 
 /** The hip joint of `side`: the pelvis plus `hipHalf` sideways, turned with the hips' share of the twist. */
@@ -311,3 +333,5 @@ export function restContext(build: Build): EffectorContext {
 /** Scratch objects. */
 const q = new Quaternion();
 const v = new Vector3();
+/** `plantedHeight`'s sole, a scratch of its own. */
+const planted = new Vector3();

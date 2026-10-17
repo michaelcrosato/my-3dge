@@ -8,7 +8,7 @@
  * edge climb gently, while a gallery's edge is a wall from below and a drop from above: steps are one-way where
  * floors differ (one-way ledges). A diagonal also needs both ways round its corner, so no route cuts a corner past a
  * wall or up a ledge. The climb limit is data: the crowd's `NAV_CLIMB` by default, or a hero's jump reach from the
- * feel meter (`measureFeel(hero).reach`, engine/sim/actors.ts), since `world` never imports `physics`. Queries take
+ * feel meter (`measureFeel(hero).reach`, engine/sim/feelCourse.ts), since `world` never imports `physics`. Queries take
  * metres on the ground (x east, z south) and answer with tiles (row-major indices) or points.
  *
  * Invariants: navigation is derived data, a pure function of the level and the options: never saved, and rebuilt the

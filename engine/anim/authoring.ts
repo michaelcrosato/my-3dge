@@ -98,6 +98,8 @@ export interface Rig {
 /** Scratch objects, so a solve allocates little. */
 const v = Array.from({ length: 10 }, () => new Vector3());
 const q = Array.from({ length: 8 }, () => new Quaternion());
+/** A joint's rotation at rest: none. */
+const STRAIGHT = new Quaternion();
 const basis = new Matrix4();
 const pair: [Vector3, Vector3] = [new Vector3(), new Vector3()];
 
@@ -172,6 +174,15 @@ export function solveArm(rig: Rig, side: LimbSide, hand: Vector3): void {
   const a = SOLVE.armPole;
   const pole = B(a[0], sideSign(side) * a[1], a[2], v[0]).applyQuaternion(rig.pose.rootRot);
   twoBoneRot(rig.skeleton, rig.pose, rig.world, `hand${side}`, rigToWorld(rig, hand, v[1]), { pole });
+}
+
+/**
+ * A hand that holds nothing, in line with its forearm: the wrist straight, as at rest. `twoBoneRot` keeps a wrist's
+ * world rotation, and an arm solve that never sets it would leave a free hand pointing where the rest pose points it,
+ * out sideways, whatever the forearm does (found by WP 13.2's review). Leaves FK to the caller.
+ */
+export function relaxHand(rig: Rig, side: LimbSide): void {
+  rig.pose.setRotation(`hand${side}`, STRAIGHT);
 }
 
 /**

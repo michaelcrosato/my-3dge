@@ -56,7 +56,7 @@ wide. Floors are 0.3 m slabs.
 
 | Storey | Floor | Clear height | Rooms and features |
 |---|---|---|---|
-| Basement | −3.0 m | 2.7 m | workshop, laundry and boiler room, storage (shelves, crates); a crawlspace 1.1 m high under the deck, crouch and slide only, to the bulkhead doors in the backyard; the stairs up; a light switch at the stairs |
+| Basement | −3.0 m | 2.7 m | workshop, laundry and boiler room, storage (shelves, crates); a crawlspace 1.4 m high under the deck (the crouched hull, 1.19 m, fits; the standing one does not), crouch and slide only, to the bulkhead doors in the backyard; the stairs up; a light switch at the stairs |
 | Ground floor | 0.0 m | 2.7 m | the front door onto the porch; the hall, with stairs up and down; the living room (sofa, TV, fireplace, rug); the dining room; the kitchen, with an island to vault; a bathroom; the back door onto the deck; the door into the garage; windows on every side |
 | Upper floor | 3.0 m | 2.7 m | the landing over the stairwell, with a railing; two bedrooms (a bunk bed to mantle onto); the study; a bathroom; a door onto the garage's roof deck; a door onto the porch roof; the attic hatch and its ladder |
 | Attic | 6.0 m | 0 at the eaves to 4.2 m at the ridge | crouch at the edges, stand in the middle; a roof window out |
@@ -88,10 +88,10 @@ its heights given by the playground's own glyphs; from WP 13.18 it stands in its
 | Feature | Sizes | What it measures |
 |---|---|---|
 | Sprint strip | 60 m, marks every 5 m | walk, run and sprint speeds; starting and stopping |
-| Mantle walls | 0.5, 1.0, 1.5 and 2.0 m high, and 2.1 m (just past the reach), 2 m wide | the mantle's reach and time, and the refusal above it |
+| Mantle walls | 0.5, 1.0, 1.5 and 2.0 m high, and 2.1 m (just past the auto mantle's reach), 2 m wide | the mantle's reach and time; the auto mantle's refusal above it, taken from the jump instead; 0.5 m is a step for Apex |
 | Fences | 0.6, 0.9 and 1.2 m high, thin | mantling over at a sprint, sprinting out |
 | Slide ramps | 5°, 10°, 20° and 30°, 12 m long, flat run-outs | the slide on the flat and the gain downhill |
-| Crawl | a tunnel 1.0 m high and 8 m long; a bar at 1.2 m | crouching and sliding under |
+| Crawl | a tunnel 1.4 m clear and 8 m long; a bar 1.3 m up (the crouched hull, 1.19 m, fits under both; the standing one, 1.83 m, under neither) | crouching and sliding under |
 | Gaps | 2 to 9 m between platforms 1.5 m up | the jump's reach: running, sprinting, slide-jumping, superglided |
 | Climb walls | 3, 4, 5, 6 and 6.9 m high, and 7.2 m (just past the reach) | the wall-climb's reach, topping out into a mantle; wall-bounces |
 | Stairs and slopes | risers 0.10, 0.15, 0.20 and 0.25 m; ramps at the slope limit and above it | steps and slopes |
@@ -130,7 +130,7 @@ distances ±2 cm, angles ±1°. Where sources disagree, the row says so and give
 | Sprint | held or toggled; only while moving within 45° of the view; a side key dips it to 4.80 m/s | 6.60 m/s armed (260 u/s); 7.59 m/s holstered | ERA-p, AMW-G, TF2 |
 | Walk | ours: Apex walks only while aiming down sights; a held key or a light stick tilt gives the rifle's aiming speed | 2.20 m/s (the run × 0.5) | R5W (`ads_move_speed_scale`) |
 | Crouch-walk | | 2.03 m/s armed (80 u/s); 2.34 m/s holstered | ERA-p, AMW-G |
-| Acceleration | linear, in m/s², toward the wished velocity; the speed is capped at the larger of the current speed and the wished one | 63.5 m/s² below 3.05 m/s; 11.4 m/s² up to the run; 2.54 m/s² from the run to the sprint (about 0.87 s) | ERA-p, ERA-c, TF2 (one datamine: medium confidence) |
+| Acceleration | linear, in m/s², toward the wished velocity; the speed is capped at the larger of the current speed and the wished one | 63.5 m/s² below 3.05 m/s; 11.4 m/s² up to the run; 2.54 m/s² from the run to the sprint (0.83 s: the run's band overshoots it by a tick, as R5Reloaded's trial shows) | ERA-p, ERA-c, TF2 (one datamine: medium confidence) |
 | Deceleration | only the part of the velocity away from the input slows; the input's own direction keeps up to the wished speed | 31.8 m/s² standing (sprint to a stop in about 0.21 s); crouched 38.1 m/s² | ERA-p, TF2 |
 | Capsule | radius and heights of Apex's medium legends | radius 0.41 m; 1.83 m standing; 1.19 m crouched; eyes at 1.52 m and 0.81 m | AMW-EN, ERA-p |
 | Steps and slopes | | steps up to 0.56 m; walkable up to 45.57° (a floor normal at least 0.7 up) | ERA-p, AMW-EN |
@@ -140,19 +140,19 @@ distances ±2 cm, angles ±1°. Where sources disagree, the row says so and give
 | Slide: friction | the slowing, then a decay of the velocity | 2.54 m/s² (10.2 m/s² when crouch is released or the input opposes the slide), then × 0.7 per second | ERA-p, TF2 |
 | Slide: steering, slopes, steps | sideways only; gravity along the floor (half before the move, half after); a step up costs speed | 1.27 m/s² sideways; the pull g · n_y along the slope; 10 m/s lost per metre climbed | ERA-c, TF2 |
 | Slide: end | into a crouch; releasing crouch ends it only when slow | below 3.18 m/s; release ends it at or under 8.89 m/s | ERA-p, TF2 |
-| Slide-jump | the jump keeps the slide's speed, but a boost jumped in its first 0.24 s above 8.89 m/s is taken back (a "dead slide") | a jump of 1.27 m | AMW-S, ERA-c |
+| Slide-jump | the jump keeps the slide's speed, but a boost jumped while the slide's crouch still goes down is taken back (a "dead slide"); a boosted slide jumped between 0.85 of 8.89 m/s and 8.89 m/s leaves at 8.89 (the long jump) | a jump of 1.27 m; the dead slide's window 0.2 s, the crouch's (AMW measures 0.24 s) | AMW-S, ERA-c |
 | Jump | gravity, height and grace | g = 19.05 m/s² (750 u/s²); 1.42 m high (7.36 m/s up); coyote time 0.2 s | CVAR, AMW-G, ERA-p |
 | Jump fatigue | a jump soon after landing goes lower; a mantle, walking off a ledge or the coyote time clears it | 0.15 s after landing: 0.3 of the height, back to full by 0.75 s | AMW-G, ERA-p |
 | Air control | Quake's air acceleration (strafing turns and gains speed); no air friction | wished speed capped at 1.52 m/s; 12.7 m/s² | AMW-A, ERA-c, CVAR |
 | Lurch | a move key pressed soon after a jump turns the velocity toward it (keyboard only) | within 0.4 s: strength 0.7 to 0.2 s, falling to 0 at 0.4 s; at most 4.6 m/s of change (contested: 0.5 s) | AMW-L, CVAR |
 | Bunny hops | jumping again just after landing above the sprint speed costs speed | 2.54 m/s per hop (contested window: 1 s or 0.1 s; `movement:apex` starts with 1 s) | AMW-G, AMW-BH |
 | Landing | no fall damage; a fall stun by the impact speed along the floor's normal (slopes cancel it), recovering over 1 s, no sprint below 0.7 of speed | none below a 7.6 m fall, full stun from 20.3 m | AMW-A, ERA-p |
-| Mantle | holding jump at a ledge within reach; push and view within 50° of the wall; a 0.25 s cooldown; sprinting in, sprinting out (a slide may follow at once); low obstacles are mantled, as Apex has no separate vault | ledges up to 2.03 m; the grab 0.45 s (from a climb), the pull 0.3 s (contested: 0.45 s) | CVAR, AMW-M |
-| Mantle hang | letting go of forward during the grab hangs from the ledge | needs 1.52 m of clearance below | AMW-M, CVAR |
-| Superglide | at a sprint: a jump, then a crouch exactly one tick later, within the pull's last 0.15 s; uses the slide's boost and its cooldown | about 13.7 m/s out of the mantle | AMW-SG, AMW-LT |
+| Mantle | holding jump at a ledge within reach (on the ground: the auto mantle), or moving at one in the air; push and view within 50° of the wall; a 0.25 s cooldown; sprinting in, sprinting out (a slide may follow at once); low obstacles are mantled, as Apex has no separate vault; a jump in it hops out at full height, fatigue cleared | from the ground ledges up to 2.03 m; from the air up to 2.49 m over the feet *(derived: the highest ledge's 273 u less the climb's 147 u cutoff and 28 u end boost)*; up to 1.07 m only the pull; the grab 0.45 s (from a climb), the pull 0.3 s (contested: 0.45 s) | CVAR, AMW-M, AMW-EN |
+| Mantle hang | letting go of forward during the grab hangs from the ledge; forward goes on, back or crouch lets go | the lip 1.52 m or more over the ground below | AMW-M, CVAR |
+| Superglide | at a sprint: a jump, then a crouch exactly one tick later, within the pull's last 0.15 s; uses the slide's boost and its cooldown | about 13.7 m/s out of the mantle (1.8 × the speed it mantled at; within the slide boost's cooldown less the boost, *ours*), rising 1.27 m *(ours: the slide-jump's)* | AMW-SG, AMW-LT |
 | Mantle boost | Apex's one-button superglide (Season 27): the same window, no cooldown of its own, a slightly higher arc; an option in the settings | as the superglide | AMW-MB |
-| Wall-climb | airborne, moving and facing a wall steeper than 45.57° within 45.57°; forward held keeps it going; tops out into a mantle | up to 2.54 m above where it caught or 3.73 m above the last ground, then +0.71 m; up at 5.72 m/s, sideways at 6.55 m/s; it ends 1 s after it stops rising; the highest ledge reached 6.93 m | AMW-C, AMW-AC, AMW-EN |
-| Wall-bounce | a jump off a climb | from 0.48 to 1.19 m above where it caught: a big lift and 6.55 m/s away; below 0.48 m: +0.72 m and 4.78 m/s; higher: a push away only | AMW-C |
+| Wall-climb | airborne, moving and facing a wall steeper than 45.57° within 45.57°; forward held keeps it going; tops out into a mantle; back, crouch or the view off the wall lets go | up to 2.54 m above where it caught or 3.73 m above the last ground, then +0.71 m; up at 5.72 m/s, across at 2.92 m/s climbing, up to 6.55 m/s carried in; it ends 1 s after it stops rising; the highest ledge reached 6.93 m | AMW-C, AMW-AC, AMW-EN |
+| Wall-bounce | a jump off a climb, by the zone of the climb space it leaves from: its height over the last ground (the space's foot), which each letting go lowers | from 0.48 to 1.19 m: a big lift, more the lower (*ours*: a full jump at 0.48 m to none at 1.19 m), and 6.55 m/s away; below 0.48 m: +0.72 m and 4.78 m/s; higher: a push away only, 6.55 m/s; it lands fatigued | AMW-C |
 | Climb again | a new climb starts lower than the last | 3.25 m lower after letting go, 6.50 m after a jump, unless the wall turns by 25.84° or more | AMW-C |
 | Ziplines | caught by use or by jumping into them while looking within 35° (90° in the air); momentum along the line kept; three catches per jump | 15.24 m/s top (12.19 m/s vertical); 10.16 m/s² to it (25.4 m/s² when jumping on); off at up to 11.3 m/s by a jump (10.16 m/s added) | AMW-Z |
 | Redeploy balloon | a vertical zipline up to a balloon, then a skydive | skydiving at 20 to 35 m/s; the landing pose about 30 m up | AMW-Z, AMW-A |
@@ -179,7 +179,7 @@ Apex's default bindings where the browser allows; every action rebinds (WP 13.9,
 | Move | W A S D | left stick |
 | Look | the mouse, under pointer lock | right stick |
 | Jump | Space | A |
-| Crouch and slide | Left Ctrl (hold), C (toggle) | B |
+| Crouch and slide | C (hold; the toggle a setting): Apex's Left Ctrl closes the tab with W | B |
 | Sprint | Left Shift (hold or toggle) | left stick click |
 | Walk (ours, §3.2) | Left Alt (hold) | a light tilt of the stick |
 | Use | E | X |
@@ -189,6 +189,7 @@ Apex's default bindings where the browser allows; every action rebinds (WP 13.9,
 | Camera mode, shoulder swap | T, X | view button, d-pad left |
 | Isometric turn | Q and E (isometric only) | d-pad right |
 | Pause, menu | Escape | menu button |
+| The feel panel (ours, WP 13.4) | F | |
 
 ### 3.4 Feel beyond the numbers
 

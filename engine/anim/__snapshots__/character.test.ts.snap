@@ -119,9 +119,9 @@ exports[`inspect() > reports cast as plain JSON, as recorded 1`] = `
       0,
     ],
     "weaponL": [
-      0.146,
-      1.4252,
-      0.5586,
+      0.0361,
+      1.4397,
+      0.6102,
     ],
     "weaponR": [
       -0.0416,
@@ -274,9 +274,9 @@ exports[`inspect() > reports cheer as plain JSON, as recorded 1`] = `
       0,
     ],
     "weaponL": [
-      0.3689,
-      2.0861,
-      0.0375,
+      0.2893,
+      2.1453,
+      0.0689,
     ],
     "weaponR": [
       -0.2743,
@@ -429,9 +429,9 @@ exports[`inspect() > reports death as plain JSON, as recorded 1`] = `
       -1.2012,
     ],
     "weaponL": [
-      0.3271,
-      0.1746,
-      -0.1404,
+      0.2455,
+      0.2026,
+      -0.0799,
     ],
     "weaponR": [
       -0.2666,
@@ -586,9 +586,9 @@ exports[`inspect() > reports dodge as plain JSON, as recorded 1`] = `
       0.6408,
     ],
     "weaponL": [
-      0.3868,
-      0.9432,
-      0.0875,
+      0.2962,
+      0.8791,
+      0.0853,
     ],
     "weaponR": [
       -0.2742,
@@ -741,9 +741,9 @@ exports[`inspect() > reports followThrough as plain JSON, as recorded 1`] = `
       0.301,
     ],
     "weaponL": [
-      0.1931,
-      1.2265,
-      0.1857,
+      0.1,
+      1.2392,
+      0.2812,
     ],
     "weaponR": [
       0.2594,
@@ -896,9 +896,9 @@ exports[`inspect() > reports guard as plain JSON, as recorded 1`] = `
       0,
     ],
     "weaponL": [
-      0.1272,
-      1.5252,
-      0.2375,
+      0.0286,
+      1.5856,
+      0.2437,
     ],
     "weaponR": [
       -0.1019,
@@ -1051,9 +1051,9 @@ exports[`inspect() > reports hurt as plain JSON, as recorded 1`] = `
       -0.3936,
     ],
     "weaponL": [
-      0.4274,
-      1.2136,
-      -0.3307,
+      0.3554,
+      1.1585,
+      -0.2912,
     ],
     "weaponR": [
       -0.1184,
@@ -1202,9 +1202,9 @@ exports[`inspect() > reports idle as plain JSON, as recorded 1`] = `
       0,
     ],
     "weaponL": [
-      0.3376,
-      0.9182,
-      0.0312,
+      0.256,
+      0.8595,
+      0.0629,
     ],
     "weaponR": [
       -0.2187,
@@ -1357,9 +1357,9 @@ exports[`inspect() > reports jump as plain JSON, as recorded 1`] = `
       0,
     ],
     "weaponL": [
-      0.4184,
-      1.8884,
-      0.0619,
+      0.3332,
+      1.8649,
+      0.1233,
     ],
     "weaponR": [
       -0.3034,
@@ -1512,9 +1512,9 @@ exports[`inspect() > reports knockedDown as plain JSON, as recorded 1`] = `
       -1.2367,
     ],
     "weaponL": [
-      0.3302,
-      0.1769,
-      -0.1759,
+      0.2486,
+      0.2048,
+      -0.1154,
     ],
     "weaponR": [
       -0.2634,
@@ -1667,9 +1667,9 @@ exports[`inspect() > reports run as plain JSON, as recorded 1`] = `
       0.1963,
     ],
     "weaponL": [
-      0.343,
-      0.9594,
-      0.3412,
+      0.2585,
+      0.9178,
+      0.3924,
     ],
     "weaponR": [
       -0.2293,
@@ -1825,9 +1825,9 @@ exports[`inspect() > reports strike as plain JSON, as recorded 1`] = `
       0.1572,
     ],
     "weaponL": [
-      0.0548,
-      1.2311,
-      0.2341,
+      -0.0487,
+      1.2483,
+      0.2895,
     ],
     "weaponR": [
       0.0013,
@@ -2107,9 +2107,9 @@ exports[`inspect() > reports wave as plain JSON, as recorded 1`] = `
       0,
     ],
     "weaponL": [
-      0.4101,
-      2.049,
-      0.0545,
+      0.332,
+      2.1055,
+      0.091,
     ],
     "weaponR": [
       -0.2187,
@@ -2262,9 +2262,9 @@ exports[`inspect() > reports windUp as plain JSON, as recorded 1`] = `
       -0.1227,
     ],
     "weaponL": [
-      0.1657,
-      1.3248,
-      0.0612,
+      0.0671,
+      1.3336,
+      0.0807,
     ],
     "weaponR": [
       -0.533,

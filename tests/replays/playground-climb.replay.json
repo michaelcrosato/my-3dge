@@ -1,0 +1,69 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "The playground's mantles and climbs on Apex's model: a sprint at the 1.5 m wall holding jump (the auto mantle, the grab then the pull) superglides out of the pull's last 0.15 s at 13.67 m/s; a sprint jump climbs the 6.9 m wall to the climb space's cutoff, the end boost lifts it 0.71 m and it mantles onto the top; a jump at the 3 m wall mantles from the air, hangs from the lip half a second with forward let go, and pulls up; a jump at the 6 m wall catches 0.64 m up and bounces off the green zone, 6.55 m/s away.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "playground:gym",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 600,
+  "inputs": [
+    [
+      0,
+      {
+        "args": { "at": [15, 0, 8.5], "speed": 7.5946, "yaw": 0 },
+        "b": ["sprint"],
+        "cam": 0,
+        "dev": "place",
+        "look": [0, 0],
+        "move": [0, 1]
+      }
+    ],
+    [4, { "b": ["sprint", "jump"] }],
+    [34, { "b": ["sprint"] }],
+    [43, { "b": ["sprint", "jump"] }],
+    [44, { "b": ["sprint", "jump", "crouch"] }],
+    [100, { "b": null, "move": null }],
+    [
+      160,
+      { "args": { "at": [23, 0, 19.4], "speed": 7.5946, "yaw": 0 }, "b": ["sprint"], "dev": "place", "move": [0, 1] }
+    ],
+    [161, { "b": ["sprint", "jump"] }],
+    [162, { "b": ["sprint"] }],
+    [300, { "b": null, "move": null }],
+    [
+      340,
+      { "args": { "at": [7, 0, 19.4], "speed": 7.5946, "yaw": 0 }, "b": ["sprint"], "dev": "place", "move": [0, 1] }
+    ],
+    [341, { "b": ["sprint", "jump"] }],
+    [342, { "b": ["sprint"] }],
+    [356, { "move": null }],
+    [386, { "move": [0, 1] }],
+    [470, { "b": null, "move": null }],
+    [
+      520,
+      { "args": { "at": [19, 0, 20.8], "speed": 7.5946, "yaw": 0 }, "b": ["sprint"], "dev": "place", "move": [0, 1] }
+    ],
+    [521, { "b": ["sprint", "jump"] }],
+    [522, { "b": ["sprint"] }],
+    [527, { "b": ["jump"], "move": null }],
+    [528, { "b": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "72809e5ffeab6f8f",
+      "60": "b74696b867849a0a",
+      "120": "68619e6e81cff289",
+      "180": "37817a181164d681",
+      "240": "8b37da6a1afb6131",
+      "300": "5eb1d91c3141483c",
+      "360": "0a7c6dafac6e6794",
+      "420": "3380c2f7e18f91c8",
+      "480": "95d047ee9a81727d",
+      "540": "52e67b1da3583ce2",
+      "600": "e02889aed99430d8"
+    }
+  }
+}
