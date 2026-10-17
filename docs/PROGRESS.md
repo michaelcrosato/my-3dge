@@ -8,7 +8,8 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 - `labs/playground/`: a house (basement, two floors, attic, roof) on a block with a yard, a street, a gym, a hill, a
   range and a ring, where the player moves as in Apex Legends, in five cameras and two looks. docs/PLAYGROUND.md is
   its design and its reference values; PLAN.md Phase 13 holds its WPs in four stages: feel (G10), the house (G11),
-  alive (G12), the tech demo (G13). The character comes first: WP 13.1 starts it.
+  alive (G12), the tech demo (G13). The character comes first: WP 13.1 built the lab and its gym (`npm run dev`,
+  then /labs/playground/; labs/playground/README.md); WP 13.2, the player's body, is next.
 - The playground fires all 21 on-demand WPs (each Trigger line names its need); Phase 13's table places them.
 - The owner's, within it: the Quaternius GLBs (WP 8.8 runs without them) and model access for WP 12.2's live evals.
 

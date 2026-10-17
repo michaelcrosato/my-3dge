@@ -3275,6 +3275,10 @@ For the agents who maintain the engine.
 - `LevelMeshPart` (interface): One level mesh: its descriptor's recipe and glyphs, the mesh, and for an instanced shape one cell per instance.
 - `meshDrawCalls` (function): The draw calls `mesh` costs a frame: its groups (one with a single material), once in colour and once per shadow map when it casts; none while it is hidden or an instanced mesh with no instances.
 
+### [`engine/gfx/level/ramp.ts`](../engine/gfx/level/ramp.ts)
+
+- `rampGeometry` (function): The wedges of `ramps`, standing on the ground at `ground` (m), tiles `tile` metres wide (see the file comment).
+
 ### [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)
 
 - `CutWhen` (type): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars).
@@ -3299,6 +3303,8 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/level/stairs.ts`](../engine/gfx/level/stairs.ts)
 
+- `frameOf` (function): A ramp's frame on the ground: the point `s` metres up its run and `w` metres across it (from its left side, seen climbing), so the flight is written once for the four ways a ramp can rise (engine/gfx/level/ramp.ts's wedge too).
+- `runOf` (function): The ramp's run (m), along the way it rises.
 - `stairsGeometry` (function): The flights of `ramps`, standing on the ground at `ground` (m), tiles `tile` metres wide (see the file comment).
 - `STEP_RUN` (const): The run of one step (m): two steps per metre, as the prototype's two per tile.
 - `stepsOf` (function): How many steps a ramp's flight has: its run in `STEP_RUN`s, at least one.
@@ -5100,6 +5106,68 @@ For the agents who maintain the engine.
 - `HelloView` (interface): A started hello scene.
 - `startHello` (function): Starts the renderer on `canvas` (rejecting with `GfxError` `GFX_NO_WEBGPU` without WebGPU), builds the scene, and draws the first frame, directly or through the post pass; resolves once the GPU has finished it.
 
+### [`labs/playground/cast/player.ts`](../labs/playground/cast/player.ts)
+
+- `APEX_GRAVITY` (const): Apex's gravity (m/s²): 750 units/s², an inch a unit (docs/PLAYGROUND.md §3.2).
+- `APEX_JUMP` (const): Apex's jump (m): 56 units.
+- `APEX_RUN` (const): Apex's run with a weapon out (m/s): 173.5 units/s.
+- `PLAYER_BODY` (const): The body the player is drawn as, until WP 13.2: the humanoid in the heroic build, empty-handed.
+- `playerCharacter` (function): The player's character: Apex's gravity, a take-off of √(2 g h) for the jump's height, the run speed.
+- `PlayerTuning` (interface): What a scene may tune: the run speed (m/s) and the jump's height (m).
+- `spawnPlayer` (function): Stands the player in `w` (a scene with physics) at `at`, facing `yaw`: an actor the step's intents move.
+
+### [`labs/playground/levels/gym.ts`](../labs/playground/levels/gym.ts)
+
+- `GYM_FEATURES` (const): The features, north to south (see the file comment and docs/PLAYGROUND.md §2.3).
+- `GYM_SIZE` (const): The gym's floor (m): west to east and north to south, inside its perimeter wall.
+- `GYM_SPAWN` (const): The spawn: the tile `@` marks, at the north end of the gym, its centre (m).
+- `GYM_TEXT` (const): The gym's level text (format 1), drawn from `GYM_FEATURES`.
+- `GYM_TILE` (const): The gym's tile (m): half a metre, so a fence is half a metre thick.
+- `GymFeature` (interface): A calibrated feature of the gym.
+- `GymKind` (type): What a feature measures (docs/PLAYGROUND.md §2.3).
+- `GymRect` (interface): A rectangle of a feature in level metres (0, 0 is the perimeter's north-west corner), on whole tiles, of `char`.
+
+### [`labs/playground/looks/cel.ts`](../labs/playground/looks/cel.ts)
+
+- `look` (const): The look `look:playground-cel`: three bands of daylight with a rim, everything inked.
+
+### [`labs/playground/looks/pixel.ts`](../labs/playground/looks/pixel.ts)
+
+- `look` (const): The look `look:playground-pixel`: daylight in 3-pixel blocks, 24 shades a channel, lightly dithered.
+
+### [`labs/playground/menu.ts`](../labs/playground/menu.ts)
+
+- `controlRows` (function): The controls' rows, [what, keys, pad]: moving, the player's actions in `PLAYGROUND_ACTION_MAP`, the page's keys.
+- `createPlaygroundMenu` (function): Builds the menu in `document` when `playground.menu` shows it, and returns its panel; null when it stays out.
+- `linkQuery` (function): A link's query: `changes` (null removes a key) over `search`, or over only its `keep` keys; `:` and `,` readable.
+- `MENU_KEY` (const): The key that shows and hides the menu: M, which no action map binds.
+- `MENU_STORAGE_KEY` (const): The `localStorage` key that remembers whether the reader left the menu `open` or `closed`.
+- `MenuEntry` (interface): A listed scene, as its module exports it.
+- `menuShown` (function): Whether `setting` (the query's `playground.menu`) shows the menu in a browser automation does or does not drive.
+- `PLAYGROUND_ACTION_MAP` (const): The action map the page's input binds: createEngine's default (engine/input/input.ts).
+- `PLAYGROUND_ACTIONS` (const): The actions the player answers, with what each does, in the menu's order.
+- `PLAYGROUND_MENU_SETTINGS` (const): The menu's view setting (see the file comment).
+- `PlaygroundMenuOptions` (interface): What the menu lists.
+
+### [`labs/playground/scenes/gym.ts`](../labs/playground/scenes/gym.ts)
+
+- `default` (default): The gym, `playground:gym` (docs/PLAYGROUND.md §2.3, PLAN.md WP 13.1): the playground's first scene, the calibrated features of labs/playground/levels/gym.ts as a physics level, and the player (labs/playground/cast/ player.ts) at the spawn `@` at its north end, facing the features to the south.
+- `gym` (const): The gym: its features, and the player at its north end.
+- `GYM` (const): The gym, compiled: its colliders for the physics, its tiles and spawn for the scene.
+- `GYM_SETTINGS` (const): The gym's settings: each reachable through `x set`, URL parameters and `__engine.set`.
+- `GYM_START` (const): Where the player starts: the spawn `@` the gym's map marks.
+
+### [`labs/playground/views.ts`](../labs/playground/views.ts)
+
+- `CAMERA_KEY` (const): The key that cycles the camera modes: T, as docs/PLAYGROUND.md §3.3 binds it.
+- `cameraMode` (function): The camera mode a code opens, by its type and view (`cam3=chase` of `cam3=chase,0,-20.63,5.5`); else undefined.
+- `CameraMode` (interface): A camera mode: its name, the camera code that opens it, and what it is for.
+- `LOOK_KEY` (const): The key that switches the looks: P, which no action map binds.
+- `nextCamera` (function): The code of the camera mode after the one `code` opens (the first after an unknown code).
+- `nextLook` (function): The look after `id` (the first after an unknown id).
+- `PLAYGROUND_CAMERAS` (const): The five camera modes, in the order T steps through them; the shooter is the page's default.
+- `PLAYGROUND_LOOKS` (const): The two looks, in the order P switches them; the cel look is the page's default.
+
 ### [`playwright.config.ts`](../playwright.config.ts)
 
 - `default` (default): Playwright Test's settings for T2 (PLAN.md §6.10, §8.8): one project, `webgpu`, on the platform's Chromium with shardfall's WebGPU flags, against a Vite dev server it starts itself.
@@ -5376,6 +5444,13 @@ For the agents who maintain the engine.
 - `RunOptions` (interface): How to run a hook.
 - `tempDir` (function): A new temporary directory, as a real path.
 - `writeFiles` (function): Writes each file (path relative to `root` → content), creating directories; `mode` applies to all of them.
+
+### [`tests/unit/readmeClaims.ts`](../tests/unit/readmeClaims.ts)
+
+- `missingProblems` (function): What the README leaves out of `scenes` (`<lab>:<name>` ids) and `settings` (paths), one sentence each: a scene needs a row in the demo index naming its file or id, a setting a row in the settings table.
+- `ReadmeLab` (interface): A lab whose README is checked: its name (`box`, the scenes' prefix) and a scene that lists the members.
+- `readmeProblems` (function): Every problem with the claims in `text`'s code spans, one sentence each ([] when all hold).
+- `section` (function): The text under the heading `heading` in `markdown` (up to the next `##` heading); '' without it.
 
 ### [`tests/unit/ui/fakeDom.ts`](../tests/unit/ui/fakeDom.ts)
 

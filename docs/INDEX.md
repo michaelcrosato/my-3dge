@@ -581,17 +581,20 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`meshes.ts`](../engine/gfx/level/meshes.ts): The level meshes (PLAN.md WP 2.4, WP 4.4, §6.1 "data descriptors"): `createLevelMeshes(level, { materials })` draws a compiled level (engine/world/level/compile.ts) from its mesh descriptors: one mesh per descriptor, built in the shape of the recipe its glyphs name (engine/gfx/level/recipes.ts, shapes.ts).
   - Exports: `createLevelMeshes`, `LEVEL_MESH_CODES`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `meshDrawCalls`
   - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`tests/e2e/hall.spec.ts`](../tests/e2e/hall.spec.ts), [`tests/e2e/level-meshes.spec.ts`](../tests/e2e/level-meshes.spec.ts)
+- [`ramp.ts`](../engine/gfx/level/ramp.ts): Smooth ramps (PLAN.md WP 13.1; docs/PLAYGROUND.md §2.3): `rampGeometry(tile, ramps, ground)` draws each ramp (engine/world/level/types.ts, `RampDescriptor`) as the smooth wedge its hull collider is (engine/world/level/shapes.ts, `wedgePoints`): the slope from the ramp's bottom to its top toward the side it `rises` to, its two sides, its back where it meets what it climbs to, and its front when it starts above the ground.
+  - Exports: `rampGeometry`
+  - Tests: [`engine/gfx/level/ramp.test.ts`](../engine/gfx/level/ramp.test.ts), [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
 - [`recipes.ts`](../engine/gfx/level/recipes.ts): Level mesh recipes (PLAN.md WP 2.4, WP 4.4): how the level meshes (engine/gfx/level/meshes.ts) draw the tiles of a glyph whose `mesh` names a recipe (engine/world/level/legend.ts).
   - Exports: `CutWhen`, `FALLBACK_RECIPE`, `LEVEL_RECIPES`, `LevelCut`, `LevelRecipe`, `LevelShape`
   - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
-- [`shapes.ts`](../engine/gfx/level/shapes.ts): The level's shapes (PLAN.md WP 2.4, WP 4.4): `buildShape(level, descriptor, recipe, materials)` builds the mesh of one mesh descriptor (engine/world/level/types.ts) in its recipe's shape (engine/gfx/level/recipes.ts): a welded surface (the floor), instanced blocks (walls, low walls) or pillars (plinth, shaft and capital, engine/gfx/geometry/pillar.ts), or one mesh for a slab (a gallery, slab.ts), the stairs (stairs.ts), a dais (dais.ts) or brazier stands (brazier.ts).
+- [`shapes.ts`](../engine/gfx/level/shapes.ts): The level's shapes (PLAN.md WP 2.4, WP 4.4): `buildShape(level, descriptor, recipe, materials)` builds the mesh of one mesh descriptor (engine/world/level/types.ts) in its recipe's shape (engine/gfx/level/recipes.ts): a welded surface (the floor), instanced blocks (walls, low walls) or pillars (plinth, shaft and capital, engine/gfx/geometry/pillar.ts), or one mesh for a slab (a gallery, slab.ts), the stairs (stairs.ts), smooth ramps (ramp.ts), a dais (dais.ts) or brazier stands (brazier.ts).
   - Exports: `buildShape`, `BuiltShape`, `instanced`, `instanceSlots`, `PartCut`, `placeInstances`
   - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
 - [`slab.ts`](../engine/gfx/level/slab.ts): Slabs (PLAN.md WP 4.4): `slabGeometry(tile, pieces, bottom, top)` draws a raised block of tiles as one solid, a gallery: its walk, one welded surface over every tile at `top` (engine/gfx/level/surface.ts), and its sides, upright faces from `bottom` to `top` along the outline only, where a piece's tile meets a tile that is not one of the pieces' (or the map's edge).
   - Exports: `slabGeometry`
   - Tests: [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
 - [`stairs.ts`](../engine/gfx/level/stairs.ts): Stairs (PLAN.md WP 4.4): `stairsGeometry(tile, ramps, ground)` draws each ramp (engine/world/level/types.ts, `RampDescriptor`) as a flight of steps standing on the ground at height `ground`: `stepsOf(ramp)` steps, two per metre of run, rising evenly from the ramp's bottom to its top toward the side it `rises` to.
-  - Exports: `stairsGeometry`, `STEP_RUN`, `stepsOf`
+  - Exports: `frameOf`, `runOf`, `stairsGeometry`, `STEP_RUN`, `stepsOf`
   - Tests: [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
 - [`surface.ts`](../engine/gfx/level/surface.ts): Level surfaces (PLAN.md WP 2.4): `surfaceGeometry(tile, pieces, y)` lays one flat surface over a level's pieces at height `y`, facing up: the floor.
   - Exports: `surfaceGeometry`
@@ -1152,6 +1155,42 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `HelloView`, `startHello`
   - Tests: [`tests/e2e/hello.spec.ts`](../tests/e2e/hello.spec.ts)
 
+## labs/playground
+
+- [`main.ts`](../labs/playground/main.ts): The playground's page (labs/playground/index.html, docs/PLAYGROUND.md, PLAN.md WP 13.1): it imports every module under `labs/playground/scenes/` and `labs/playground/looks/`, so a scene added there opens at `?scene=<name>` and a look at `?post.look=<id>` with no change here, registers the playground's levels as text, and starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`gym` by default), in the shooter camera and the cel look unless the query names others, with the playground's replays (tests/replays/playground-*) offered to `?replay=<name>`.
+- [`menu.ts`](../labs/playground/menu.ts): The playground page's menu for humans (labs/playground/index.html): what the playground offers and how to play it, as a small HTML/CSS panel in the top-left corner over the game.
+  - Exports: `controlRows`, `createPlaygroundMenu`, `linkQuery`, `MENU_KEY`, `MENU_STORAGE_KEY`, `MenuEntry`, `menuShown`, `PLAYGROUND_ACTION_MAP`, `PLAYGROUND_ACTIONS`, `PLAYGROUND_MENU_SETTINGS`, `PlaygroundMenuOptions`
+- [`views.ts`](../labs/playground/views.ts): The playground's views (docs/PLAYGROUND.md §4, §5; PLAN.md WP 13.1): its five camera modes and its two looks, in the order the keys step through them, and the keys: T (`CAMERA_KEY`) cycles the cameras and P (`LOOK_KEY`) switches the looks, live, on the page (labs/playground/main.ts); the menu (labs/playground/menu.ts) links each.
+  - Exports: `CAMERA_KEY`, `cameraMode`, `CameraMode`, `LOOK_KEY`, `nextCamera`, `nextLook`, `PLAYGROUND_CAMERAS`, `PLAYGROUND_LOOKS`
+  - Tests: [`labs/playground/views.test.ts`](../labs/playground/views.test.ts)
+
+## labs/playground/cast
+
+- [`player.ts`](../labs/playground/cast/player.ts): The playground's player (docs/PLAYGROUND.md §3, PLAN.md WP 13.1): the character the keys move, the body it is drawn as, and `spawnPlayer`, which stands it in a scene.
+  - Exports: `APEX_GRAVITY`, `APEX_JUMP`, `APEX_RUN`, `PLAYER_BODY`, `playerCharacter`, `PlayerTuning`, `spawnPlayer`
+  - Tests: [`labs/playground/scenes/gym.test.ts`](../labs/playground/scenes/gym.test.ts)
+
+## labs/playground/levels
+
+- [`gym.ts`](../labs/playground/levels/gym.ts): The gym (docs/PLAYGROUND.md §2.3, PLAN.md WP 13.1): the playground's calibrated features, as data, and the level they make.
+  - Exports: `GYM_FEATURES`, `GYM_SIZE`, `GYM_SPAWN`, `GYM_TEXT`, `GYM_TILE`, `GymFeature`, `GymKind`, `GymRect`
+  - Tests: [`labs/playground/scenes/gym.test.ts`](../labs/playground/scenes/gym.test.ts)
+
+## labs/playground/looks
+
+- [`cel.ts`](../labs/playground/looks/cel.ts): The look `look:playground-cel`, the playground's cel-shaded look as it starts (docs/PLAYGROUND.md §5.2, PLAN.md WP 13.1): daylight, every material banded in three steps of light with a rim, everything inked.
+  - Exports: `look`
+  - Tests: [`labs/playground/looks/looks.test.ts`](../labs/playground/looks/looks.test.ts)
+- [`pixel.ts`](../labs/playground/looks/pixel.ts): The look `look:playground-pixel`, the playground's pixel-art look as it starts (docs/PLAYGROUND.md §5.2, PLAN.md WP 13.1): daylight, toon bands, then the picture cut into 3-pixel blocks with a one-block rim and 24 shades a channel, lightly dithered.
+  - Exports: `look`
+  - Tests: [`labs/playground/looks/looks.test.ts`](../labs/playground/looks/looks.test.ts)
+
+## labs/playground/scenes
+
+- [`gym.ts`](../labs/playground/scenes/gym.ts): The gym, `playground:gym` (docs/PLAYGROUND.md §2.3, PLAN.md WP 13.1): the playground's first scene, the calibrated features of labs/playground/levels/gym.ts as a physics level, and the player (labs/playground/cast/ player.ts) at the spawn `@` at its north end, facing the features to the south.
+  - Exports: `default`, `gym`, `GYM`, `GYM_SETTINGS`, `GYM_START`
+  - Tests: [`labs/playground/scenes/gym.test.ts`](../labs/playground/scenes/gym.test.ts)
+
 ## tests/e2e
 
 - [`fixtures.ts`](../tests/e2e/fixtures.ts): The shared e2e fixture (PLAN.md §8.8): every suite imports `test` and `expect` from here.
@@ -1236,6 +1275,11 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Tests: [`tests/e2e/adviceTrap.spec.ts`](../tests/e2e/adviceTrap.spec.ts), [`tests/setup/adviceTrap.test.ts`](../tests/setup/adviceTrap.test.ts), [`tests/setup/harnesses.test.ts`](../tests/setup/harnesses.test.ts)
 - [`trapOutcomes.ts`](../tests/setup/trapOutcomes.ts): What the advice trap's fixture tests must give in either harness (WP 0.5): every `passes:` test passed, and every `fails:` test failed through the trap, naming what it printed and the allow-list fix.
   - Exports: `expectTrapOutcomes`, `PRINTED`, `TrapExpect`, `TrapOutcome`
+
+## tests/unit
+
+- [`readmeClaims.ts`](../tests/unit/readmeClaims.ts): The README checks a lab's README test runs (PLAN.md §9.0, §5.8: shardfall's station guides held to the code; WP 2.7, WP 13.1): every claim a lab's README makes in code spans must hold, and every scene and setting of the lab has its row.
+  - Exports: `missingProblems`, `ReadmeLab`, `readmeProblems`, `section`
 
 ## tests/unit/anim
 

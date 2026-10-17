@@ -2,10 +2,10 @@
  * @file The level's shapes (PLAN.md WP 2.4, WP 4.4): `buildShape(level, descriptor, recipe, materials)` builds the
  * mesh of one mesh descriptor (engine/world/level/types.ts) in its recipe's shape (engine/gfx/level/recipes.ts):
  * a welded surface (the floor), instanced blocks (walls, low walls) or pillars (plinth, shaft and capital,
- * engine/gfx/geometry/pillar.ts), or one mesh for a slab (a gallery, slab.ts), the stairs (stairs.ts), a dais
- * (dais.ts) or brazier stands (brazier.ts). An instanced shape has one instance per piece, standing at its cell's
- * centre (engine/gfx/level/cells.ts), and for a recipe with `cut` the geometry of its cut twin, which the cutaway
- * (engine/gfx/cutaway.ts) shows in a piece's place: a block `cut.height` tall, or a pillar's parts up to it.
+ * engine/gfx/geometry/pillar.ts), or one mesh for a slab (a gallery, slab.ts), the stairs (stairs.ts), smooth ramps
+ * (ramp.ts), a dais (dais.ts) or brazier stands (brazier.ts). An instanced shape has one instance per piece, standing
+ * at its cell's centre (engine/gfx/level/cells.ts), and for a recipe with `cut` the geometry of its cut twin, which the
+ * cutaway (engine/gfx/cutaway.ts) shows in a piece's place: a block `cut.height` tall, or a pillar's parts up to it.
  *
  * An instanced shape, and a cut twin, has at least `PAGE_SLOTS` (1,024) slots, its count its pieces (`instanceSlots`):
  * r182 reads the matrices of a mesh of 1,000 slots or fewer from a uniform buffer named after it, compiling a shader
@@ -41,6 +41,7 @@ import { levelCells, type LevelCell } from './cells';
 import { daisGeometry } from './dais';
 import type { CutWhen, LevelRecipe } from './recipes';
 import { slabGeometry } from './slab';
+import { rampGeometry } from './ramp';
 import { stairsGeometry } from './stairs';
 import { surfaceGeometry } from './surface';
 
@@ -140,9 +141,10 @@ export function buildShape(
   if (recipe.shape === 'slab') return single(slabGeometry(level.tile, pieces, bottom, top));
   if (recipe.shape === 'surface' || height <= 0) return single(surfaceGeometry(level.tile, pieces, bottom));
   if (recipe.shape === 'brazier') return single(brazierGeometry(level, pieces, bottom, top));
-  if (recipe.shape === 'stairs') {
+  if (recipe.shape === 'stairs' || recipe.shape === 'ramp') {
     const ramps = level.ramps.filter((ramp) => holdsTile(pieces, ramp.tiles[0], ramp.tiles[1]));
-    return single(stairsGeometry(level.tile, ramps, bottom));
+    const draw = recipe.shape === 'ramp' ? rampGeometry : stairsGeometry;
+    return single(draw(level.tile, ramps, bottom));
   }
   if (recipe.shape === 'dais') {
     const daises = level.daises.filter((dais) => holdsTile(pieces, ...firstTile(level, dais.tiles, dais.glyph)));

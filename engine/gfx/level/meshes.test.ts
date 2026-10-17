@@ -244,7 +244,7 @@ describe('the recipes', () => {
       ['level:garden/hedge', 'instanced', 'block'],
       ['level:garden/wall', 'instanced', 'block'],
     ]);
-    const known = 'brazier, dais, floor, gallery, lowWall, pillar, stairs, wall';
+    const known = 'brazier, dais, floor, gallery, lowWall, pillar, ramp, stairs, wall';
     expect(printed).toEqual([
       expect.stringMatching(/^\[GFX_LEVEL_RECIPE\] level garden uses the mesh recipe arch, which no level recipe/),
       expect.stringContaining(`level garden uses the mesh recipe hedge, which no level recipe defines`),

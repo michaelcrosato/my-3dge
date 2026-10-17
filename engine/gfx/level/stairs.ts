@@ -33,7 +33,7 @@ import { polygon, slotted, tread, upright, type Ground } from './faces';
 export const STEP_RUN = 0.5;
 
 /** The ramp's run (m), along the way it rises. */
-function runOf(ramp: Pick<RampDescriptor, 'tiles' | 'rises'>, tile: number): number {
+export function runOf(ramp: Pick<RampDescriptor, 'tiles' | 'rises'>, tile: number): number {
   const [c0, r0, c1, r1] = ramp.tiles;
   return (ramp.rises === 'north' || ramp.rises === 'south' ? r1 - r0 + 1 : c1 - c0 + 1) * tile;
 }
@@ -45,9 +45,9 @@ export function stepsOf(ramp: Pick<RampDescriptor, 'tiles' | 'rises'>, tile: num
 
 /**
  * A ramp's frame on the ground: the point `s` metres up its run and `w` metres across it (from its left side, seen
- * climbing), so the flight is written once for the four ways a ramp can rise.
+ * climbing), so the flight is written once for the four ways a ramp can rise (engine/gfx/level/ramp.ts's wedge too).
  */
-function frameOf(ramp: RampDescriptor, tile: number): { at: (s: number, w: number) => Ground; width: number } {
+export function frameOf(ramp: RampDescriptor, tile: number): { at: (s: number, w: number) => Ground; width: number } {
   const [c0, r0, c1, r1] = ramp.tiles;
   const [x0, z0, x1, z1] = [c0 * tile, r0 * tile, (c1 + 1) * tile, (r1 + 1) * tile];
   switch (ramp.rises) {

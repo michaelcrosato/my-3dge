@@ -39,12 +39,14 @@
  *   (a gallery). [sides, top]
  * - `stairs`: each ramp (level.ramps) under the pieces drawn as a flight of steps, two per metre of run, the ramp's
  *   slope through the middle of every tread; one mesh for the descriptor's flights. [risers and sides, treads]
+ * - `ramp`: each ramp under the pieces drawn as the smooth wedge its hull collider is (engine/gfx/level/ramp.ts),
+ *   for slopes a body slides down; one mesh for the descriptor's ramps. [sides and back, slope]
  * - `dais`: each dais (level.daises) under the pieces drawn as its octagonal frustum, the very corners its hull
  *   collider has, with the ground under its tiles where the octagon leaves them bare. [sloped edge, top and ground]
  * - `brazier`: a stone foot and a bowl of glowing coals on each piece, sized to its glyph's radius and top, with the
  *   ground under its tile. [foot and bowl, coals, ground]
  */
-export type LevelShape = 'surface' | 'block' | 'pillar' | 'slab' | 'stairs' | 'dais' | 'brazier';
+export type LevelShape = 'surface' | 'block' | 'pillar' | 'slab' | 'stairs' | 'ramp' | 'dais' | 'brazier';
 
 /**
  * When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls);
@@ -102,6 +104,7 @@ export const LEVEL_RECIPES: Readonly<Record<string, LevelRecipe>> = {
     receiveShadow: true,
   },
   stairs: { shape: 'stairs', materials: ['material:stone'], castShadow: true, receiveShadow: true },
+  ramp: { shape: 'ramp', materials: ['material:stone', 'material:flagstone'], castShadow: true, receiveShadow: true },
   dais: { shape: 'dais', materials: ['material:stone', 'material:flagstone'], castShadow: false, receiveShadow: true },
   brazier: {
     shape: 'brazier',
