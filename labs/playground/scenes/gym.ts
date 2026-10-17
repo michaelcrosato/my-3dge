@@ -62,10 +62,10 @@ export const gym = defineScene('playground:gym', {
   physics: true,
   setup(w) {
     addLevelBodies(physicsOf(w), GYM);
-    for (const { prop, at, yaw } of GYM_PROPS) spawnProp(w, { prop, at: [...at], yaw });
     const speed = w.settings.get<number>('playground.gym.speed');
     const jump = w.settings.get<number>('playground.gym.jump');
-    spawnPlayer(w, [GYM_START[0], GYM_START[1], GYM_START[2]], 0, { speed, jump });
+    spawnPlayer(w, [GYM_START[0], GYM_START[1], GYM_START[2]], 0, { speed, jump }); // first: the player is entity 1
+    for (const { prop, at, yaw } of GYM_PROPS) spawnProp(w, { prop, at: [...at], yaw });
   },
   actions: {
     /** Puts the player at `at`, facing `yaw`, at rest or moving `speed` m/s that way: a feel course's start. */
