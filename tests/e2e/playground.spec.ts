@@ -12,7 +12,9 @@
  * 5. the menu for humans (`?playground.menu=on`) lists the scene, the five cameras, the two looks and the replays;
  * 6. the keyboard reaches the player through the playground's action map (WP 13.3): D runs and Shift sprints, the
  *    shooter model's gaits read off the player's `motion`, the page's frame loop sampling the keys on the virtual
- *    clock's frames (`harness.tick`).
+ *    clock's frames (`harness.tick`);
+ * 7. the feel panel (`?playground.feel=on`, WP 13.4) tunes the run live: its run slider set, the player runs that fast
+ *    (holstered, ×1.15), and Copy as profile shows a `defineMovement` call holding the new number.
  *
  * Invariants: the page is read through `[data-ui]` elements, the menu's links and `__engine` only; the sim is stepped
  * with `__engine.step`, then frames are drawn (`__engine.render`), so the HUD and the signs show what the run holds.
@@ -231,6 +233,27 @@ test.describe('the playground', () => {
     await page.keyboard.up('ShiftLeft');
     await page.keyboard.up('KeyD');
     await call(page, 'pause');
+    expect(harness.advice()).toEqual([]);
+  });
+
+  test('tunes the run live from the feel panel, and copies the tuning as a profile', async ({ page, harness }) => {
+    await open(page, harness, '?playground.feel=on');
+    const panel = page.locator('[data-ui=feel]');
+    await expect(panel).toBeVisible();
+    const run = panel.locator('[data-path="movement.gaits.run"] input');
+    await run.evaluate((input: HTMLInputElement) => {
+      input.value = '5';
+      input.dispatchEvent(new Event('input'));
+    });
+    const rows = await call<{ path: string; value: number }[]>(page, 'tune.settings');
+    expect(rows.find((row) => row.path === 'movement.gaits.run')?.value).toBe(5);
+    await call(page, 'step', 60, { move: [-1, 0] }); // west along the north wall: clear for 10 m
+    const { actor } = await call<{ actor: { vx: number; vz: number } }>(page, 'get', 1);
+    expect(Math.hypot(actor.vx, actor.vz)).toBeCloseTo(5 * 1.15, 2); // the tuned run, empty-handed
+    await panel.locator('[data-feel=copy]').click();
+    await expect(panel.locator('[data-feel=profile]')).toHaveValue(
+      /defineMovement\("movement:playtest"[\s\S]*"run": 5/,
+    );
     expect(harness.advice()).toEqual([]);
   });
 });

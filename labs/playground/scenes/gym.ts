@@ -6,7 +6,8 @@
  * `walk` walks and `crouch` crouch-walks.
  *
  * Settings (`playground.gym.*`, read when the scene starts, so they change play and go in replays): the player's run
- * speed and jump height, Apex's by default (docs/PLAYGROUND.md §3.2).
+ * speed and jump height, Apex's by default (docs/PLAYGROUND.md §3.2). Its dev action `place` (`{ at, yaw }`) puts the
+ * player somewhere at rest: where a feel course (labs/playground/courses/) starts.
  *
  * The level's text is computed from the gym's features (labs/playground/levels/gym.ts), so sim-side code reads no
  * file; the page registers the same text for the view (labs/playground/main.ts).
@@ -19,7 +20,7 @@
  * GYM_START; // [20.25, 0, 3.25]: the spawn, at the gym's north end
  * @see labs/playground/scenes/gym.test.ts
  */
-import { addLevelBodies, compileLevel, defineScene, defineSettings, physicsOf } from '../../../engine/sim-api';
+import { addLevelBodies, compileLevel, defineScene, defineSettings, physicsOf, placeActor, type ActorComponents } from '../../../engine/sim-api'; // prettier-ignore
 import { APEX_JUMP, APEX_RUN, spawnPlayer } from '../cast/player';
 import { GYM_TEXT } from '../levels/gym';
 
@@ -63,6 +64,14 @@ export const gym = defineScene('playground:gym', {
     const speed = w.settings.get<number>('playground.gym.speed');
     const jump = w.settings.get<number>('playground.gym.jump');
     spawnPlayer(w, [GYM_START[0], GYM_START[1], GYM_START[2]], 0, { speed, jump });
+  },
+  actions: {
+    /** Puts the player at `at`, facing `yaw`, at rest: a feel course's start (labs/playground/courses/). */
+    place(w, args) {
+      const { at, yaw } = (args ?? {}) as { at?: [number, number, number]; yaw?: number };
+      const player = (w.query('actor') as unknown as (ActorComponents & { id: number })[]).find((e) => e.actor.player);
+      if (player && at) placeActor(w, player.id, at, yaw);
+    },
   },
 });
 

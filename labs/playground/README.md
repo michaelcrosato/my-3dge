@@ -83,6 +83,7 @@ settings: they never change play or a hash.
 | Camera mode | T | |
 | Cel or pixel look | P | |
 | Zoom | the wheel | |
+| The feel panel | F | |
 | The menu | M | |
 
 The menu for humans (`labs/playground/menu.ts`) lists the scenes, cameras, looks, replays and these controls, read
@@ -98,12 +99,29 @@ it; `?playground.menu=on` shows it there.
 | `playground.gym.speed` | The player's run speed in the gym with a weapon out, m/s (4.41, Apex's; empty-handed, the player runs 1.15 times as fast), when the scene starts. Changes play: recorded in replays. |
 | `playground.gym.jump` | How high the player jumps in the gym, m (1.42, Apex's), when the scene starts. Changes play: recorded in replays. |
 | `playground.menu` | The page's menu for humans: `auto` shows it unless automation drives the browser, `on` and `off` force it, when the page opens. A view setting. |
+| `playground.feel` | The feel panel: `on` shows it when the page opens (F shows and hides it). A view setting. |
+| `movement.gaits.run` | One of the shooter model's numbers, live: every number of the model has its setting, `movement.<group>.<field>` (`node x describe setting` lists them), Apex's by default; off its default it replaces that number for every character on the model from the next step. Changes play: recorded in replays. |
 | `post.look` | The look drawn (`look:playground-cel` by default). A view setting: never in the hash. |
 | `quality` | The quality tier: `auto`, `high`, `medium` or `low`. A view setting. |
 | `time.scale` | Sim seconds per real second (1). A view setting. |
 
 Set one with `node x set playground.gym.speed 6`, as a URL parameter (`labs/playground/?playground.gym.speed=6`), or
 with `__engine.set('playground.gym.speed', 6)`.
+
+## Feel courses and the feel panel
+
+A feel course (`labs/playground/courses/`) is a scripted run of the gym and the numbers measured on it, each against
+docs/PLAYGROUND.md §3.2's reference and tolerance: `labs/playground/courses/strip.ts` (the run, the sprint on a press
+and the stop), `labs/playground/courses/jumps.ts` (a jump, a tired one off its landing, a rested one, the walk and the
+crouch-walk) and `labs/playground/courses/air.ts` (a lurch, an air strafe and the bunny hop's cost). Each starts with
+the gym's dev action `place` and checks the bounds of `labs/playground/courses/bounds.ts` too: the body's and every
+camera's. `node x feel labs/playground` runs them all headless,
+`--course strip` one, each into `out/feel/<lab>-<name>/report.json`. The feet's slide is watched until WP 13.10
+plants them: reported against its 5 cm, never failing a course.
+
+The feel panel (F, or `?playground.feel=on`) puts a slider on every `movement.*` setting, live; Copy as profile shows
+the tuning as a `defineMovement` call to paste into a game, and Save the replay downloads the run so far for
+`tests/replays/`.
 
 ## The quick loop
 
@@ -112,6 +130,7 @@ with `__engine.set('playground.gym.speed', 6)`.
    inputs to edit (tests/replays/README.md, "Coordinates and inputs").
 2. See it as numbers: `node x shot labs/playground --scene gym --cam iso` (the ID pass and the look metrics; `--png`
    for a picture).
-3. Prove play: `node x replay tests/replays/playground-gym.replay.json --browser page`.
-4. Keep a page open: `node x inspect --page labs/playground --scene gym`, then `node x eval "__engine.hash()"`.
-5. Commit with the page's suite green: `npm run e2e -- tests/e2e/playground.spec.ts`.
+3. Check the numbers: `node x feel labs/playground` (every course; `--course air` for one).
+4. Prove play: `node x replay tests/replays/playground-gym.replay.json --browser page`.
+5. Keep a page open: `node x inspect --page labs/playground --scene gym`, then `node x eval "__engine.hash()"`.
+6. Commit with the page's suite green: `npm run e2e -- tests/e2e/playground.spec.ts`.

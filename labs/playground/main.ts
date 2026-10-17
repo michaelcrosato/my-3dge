@@ -9,7 +9,8 @@
  *
  * Live switches (labs/playground/views.ts): T cycles the five camera modes, P switches the two looks, and a click on
  * the game takes the pointer for mouse look in the three perspective cameras (Esc gives it back; isometric and
- * top-down keep the cursor). They are view state, so no camera, look or switch changes the hash.
+ * top-down keep the cursor). They are view state, so no camera, look or switch changes the hash. F shows and hides
+ * the feel panel (labs/playground/feel.ts, WP 13.4), whose sliders tune the run through recorded settings.
  *
  * Each drawn frame (`onFrame`) it shows the gym's signs (labs/playground/levels/gym.ts) as labels over their features,
  * those within `SIGN_RANGE` of the player, and the HUD: the camera mode and the look in use, and the keys. It reads the
@@ -27,6 +28,7 @@
 /// <reference types="vite/client" />
 import { createEngine, type Engine, type EngineFrame, type Label } from '../../engine';
 import { PLAYGROUND_ACTION_MAP } from './controls';
+import { mountFeelPanel } from './feel';
 import { GYM_FEATURES, GYM_TEXT } from './levels/gym';
 import { createPlaygroundMenu, type MenuEntry } from './menu';
 import { gym } from './scenes/gym';
@@ -110,7 +112,7 @@ function showFrame({ world, scene }: EngineFrame): void {
   if (!showing.camera) showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? 'custom' };
   const look = showing.look.replace(/^look:playground-/, '');
   ui.hud('mode', `Camera: ${showing.camera} · Look: ${look}`, { at: 'top-right' });
-  const keys = 'WASD: move · Space: jump · Shift: sprint · Alt: walk · C: crouch · Click: mouse look · T: camera · P: look · M: menu'; // prettier-ignore
+  const keys = 'WASD: move · Space: jump · Shift: sprint · Alt: walk · C: crouch · Click: mouse look · T: camera · P: look · F: feel · M: menu'; // prettier-ignore
   ui.hud('keys', keys, { at: 'bottom', keys: true });
 }
 
@@ -124,6 +126,7 @@ engine = await createEngine({
   search: `?${search}`,
   onFrame: showFrame,
 });
+if (engine.inspector) mountFeelPanel(document, engine.inspector, search);
 
 addEventListener('keydown', (event) => {
   const inspector = engine?.inspector;

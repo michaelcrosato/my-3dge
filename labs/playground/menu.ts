@@ -32,6 +32,7 @@
  */
 import { codeLabel, getActionMap, readKeyboardLayout } from '../../engine';
 import { defineSettings } from '../../engine/sim-api';
+import { FEEL_KEY } from './feel';
 import { PLAYGROUND_ACTION_MAP, PLAYGROUND_ACTIONS } from './controls';
 import { CAMERA_KEY, LOOK_KEY, PLAYGROUND_CAMERAS, PLAYGROUND_LOOKS } from './views';
 
@@ -110,6 +111,7 @@ export function controlRows(layout?: ReadonlyMap<string, string>): [string, stri
     ['Camera mode', label(CAMERA_KEY), ''],
     ['Cel or pixel look', label(LOOK_KEY), ''],
     ['Zoom', 'Wheel', ''],
+    ['The feel panel: the numbers, live', label(FEEL_KEY), ''],
     ['This menu', label(MENU_KEY), ''],
   ];
 }
