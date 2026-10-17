@@ -5,8 +5,9 @@
  * device holds (`__engine.input`, which a headless engine has too); the recording replays to the same hashes; the
  * kernel fixture gives the same hash through it as through a plain session; a seed is a whole number from 0; a test
  * registry gets the clock's settings; `headlessHost` takes only a headless engine; the hit-stop a step's rules ask
- * reaches the run's clock once per step, through its budget, and never the hash; a replay's stops are dropped, a
- * real-time playback's reach the clock (`stepped`), and a dev action's goes with the next step.
+ * reaches the run's clock once per step, through its budget, and never the hash; a replay's run keeps the view
+ * settings and none of the play settings changed before it; a replay's stops are dropped, a real-time playback's reach
+ * the clock (`stepped`), and a dev action's goes with the next step.
  * @see engine/app/headless.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -141,6 +142,20 @@ describe('createHeadless', () => {
     expect(clock.state().hitStop).toEqual({ seconds: 0.06, debt: 0.06 }); // 12 hits: one full stop, counted once
     engine.step(1);
     expect(clock.state().hitStop).toEqual({ seconds: 0.06, debt: 0.06 }); // the next at once: shrunk inside it
+  });
+
+  it("keeps the page's view settings through a replay's run, never the play settings it changed", async () => {
+    const registry = demo();
+    defineSettings({ 'demo.look': { type: 'string', default: 'plain', view: true, description: 'A view.' } }, registry);
+    const run = createAppHost({ scene: 'walk', settings: { 'demo.look': 'ink' }, registry });
+    const replay = JSON.stringify(run.session.record());
+    run.session.set('demo.step', 3);
+    run.session.set('time.scale', 0.5);
+    await run.host.replay(replay, {}); // __engine.replay(text)
+    const { settings } = run.session;
+    expect([settings.get('demo.look'), settings.get('time.scale')]).toEqual(['ink', 0.5]);
+    expect(settings.get('demo.step')).toBe(1); // the replay's, not the run's before it
+    expect(run.session.record().settings).toEqual({}); // view settings never go in a replay
   });
 
   it('drops the stops a replay asks for, so none freezes the first live step after it', async () => {

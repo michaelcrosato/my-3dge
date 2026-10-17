@@ -14,10 +14,11 @@
  * `takeHitStop`) to its clock, whose budget shrinks stops that follow closely, so a page's frames stop and a crowd hit
  * stutters once; a page's real-time `?replay=` playback hands them over the same way (`stepped`), and a dev action's
  * goes with the next step, as in that playback. `seed(n)` starts the scene again with seed n, a new session and clock,
- * keeping every setting that differs from what a fresh start gives; `replay(text)` starts the replay's run and plays
- * it, with a page's loop held, so it drops the stops it asks for (none is left to freeze a later frame). The run's
- * stats meter (engine/dev/stats.ts, `__engine.stats()`) times every step it runs, and the world's systems through the
- * world's probe; a page times its frames through it and gives it the renderer's counts (`Drawing.counts`).
+ * keeping every setting that differs from what a fresh start gives; `replay(text)` starts the replay's run (its
+ * scene, seed and settings, keeping the view settings that differ, which never change play: a page's look stays) and
+ * plays it, with a page's loop held, so it drops the stops it asks for (none is left to freeze a later frame). The
+ * run's stats meter (engine/dev/stats.ts, `__engine.stats()`) times every step it runs, and the world's systems
+ * through the world's probe; a page times its frames through it and gives it the renderer's counts (`Drawing.counts`).
  *
  * `createAppHost` is the run behind both engines: engine/app/engine.ts adds a page's drawing to it. Invariants:
  * everything runs synchronously after the promise resolves (the fdlibm swap holds only through synchronous entry
@@ -159,6 +160,12 @@ function changedSettings(session: Session, registry: Registry): Record<string, S
   return Object.fromEntries(changed.map((path) => [path, now[path]]));
 }
 
+/** Of the settings a restart keeps, those marked view: what a replay's run keeps, since none of them changes play. */
+function changedViewSettings(session: Session, registry: Registry): Record<string, SettingValue> {
+  const changed = Object.entries(changedSettings(session, registry));
+  return Object.fromEntries(changed.filter(([path]) => registry.get('setting', path).view === true));
+}
+
 /** Makes the run behind an engine (see the file comment). Throws as `createHeadless` does, and `APP_NO_LEVEL`. */
 export function createAppHost<C extends object = AnyComponents, E extends EventMap = EventMap>(
   options: AppHostOptions<C, E>,
@@ -218,7 +225,10 @@ export function createAppHost<C extends object = AnyComponents, E extends EventM
     view?.restarted();
   };
   const begin = (replay: Replay) => {
-    restart(getScene(replay.scene, registry), replay.seed, replay.settings);
+    // The replay holds the run's play; the page keeps its view (its look, quality, resolution, speed…), none of which
+    // changes play, so a replay neither changes the picture nor makes the renderer warm up again.
+    const settings = { ...changedViewSettings(run.session, registry), ...replay.settings };
+    restart(getScene(replay.scene, registry), replay.seed, settings);
     return run.session;
   };
   // After a step of the run's: the clock gets the hit-stop the step's rules asked for, and the view reads the world.
