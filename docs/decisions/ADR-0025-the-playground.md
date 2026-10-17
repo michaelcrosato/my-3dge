@@ -49,3 +49,22 @@ are known and emulating it is common ground rather than invention.
 ## Enforced by
 PLAN.md Phase 13 and the ledger (§14); docs/PLAYGROUND.md, the design and its reference values; `node x feel` (WP 13.4)
 and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
+
+## Amendment 1 (2026-10-17, WP 13.1): the lab as built
+
+- **The gym's level is TypeScript data, not a `.txt` file.** labs/playground/levels/gym.ts holds the features (each a
+  number, a sign and its rectangles of tiles) and writes the format-1 text from them; the scene compiles that text and
+  the page registers it, as the starter game registers its arena. So a number moves the block, its sign and its test
+  together, and nothing is restated. Later levels (the house's storeys, WP 13.13) may be text files read through `?raw`.
+- **Slide ramps are drawn as their collider.** A ramp glyph's mesh was a flight of stairs over the slope; a slide down
+  a staircase lies about the surface the body slides on. The recipe `ramp` (engine/gfx/level/ramp.ts) draws the smooth
+  wedge its hull collider is; stairs keep `stairs`.
+- **Two engine fixes the playground found.** A restart (a seed, a replay, a restore) disposed every puppet and made it
+  again, and r182 names a skinned mesh's bone buffer in its shader, so the new mesh built its shadow pipelines in a
+  drawn frame: puppets given up now wait as spares (engine/gfx/puppets/actors.ts). And `__engine.replay` dropped the
+  page's view settings, so a replay snapped the look to `look:clean`: a replay's run now keeps them
+  (engine/app/headless.ts).
+- **The playground stays in this repository.** A game made from the engine (tools/game/files.mjs) gets the box as its
+  worked example, not the playground, whose mechanisms reach games through the engine as each WP adds them.
+- **Shared README checks.** The box's README test's checks moved to tests/unit/readmeClaims.ts, which the playground's
+  README test runs too.
