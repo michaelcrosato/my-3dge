@@ -387,3 +387,12 @@ export { seekClip } from './sim/actorClips';
 export { locomoteClips } from './sim/actorClips';
 export { clipLayerOf } from './sim/actorClips';
 export type { PuppetComponent } from './sim/actors';
+
+// The feel kit, sim-side (WP 13.4): the shooter model's live tuning, `movement.<group>.<field>` (a setting off its
+// default replaces that number in every model character's model, from the next step), and an actor placed at rest
+// (a scene's dev action: a feel course's start).
+export { MOVEMENT_SETTINGS } from './physics/movement/settings';
+export { movementOverrides } from './physics/movement/settings';
+export { tuneCharacter } from './physics/movement/settings';
+export type { MovementOverride } from './physics/movement/settings';
+export { placeActor } from './sim/actors';

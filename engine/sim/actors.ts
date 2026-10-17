@@ -17,7 +17,7 @@
  * WP 13.3: an actor whose character has a movement model (engine/physics/movement/) also holds the component
  * `motion`, the model's state (holstered unless spawned with `holstered: false`), and reads `sprint` (held, pressed),
  * `walk` and `crouch` (held), its view from `look`, its keys' frame from `cam` (else `look`) and what it faces from
- * `aim` (the point's direction), else `look`. Its feel course is engine/sim/feelCourse.ts.
+ * `aim`, else `look`; it steps under the live `movement.*` settings (WP 13.4, engine/physics/movement/settings.ts).
  *
  * Invariants: systems are added once per world, on the first (animated) spawn; all an actor remembers is in its
  * components (the sim's animators are loaded from them). Despawning leaves the body; `removeActor` removes both.
@@ -48,6 +48,7 @@ import { defineSettings } from '../core/settings';
 import { held, normalizeIntents, pressed, type Intents } from '../input/intents';
 import {
   addCharacter,
+  bodyAt,
   CHARACTER_SETTINGS,
   CHARACTER_STATE_FIELDS,
   createCharacter,
@@ -59,6 +60,7 @@ import {
   type CharacterState,
 } from '../physics/character';
 import { createMotionState, MOTION_FIELDS, type MotionState } from '../physics/movement/model';
+import { MOVEMENT_SETTINGS, movementOverrides, tuneCharacter } from '../physics/movement/settings';
 import { physicsOf } from '../physics/binding';
 import type { Vec3Like } from '../physics/queries';
 import { clipsFor, defineClipKinds, type ClipsSpec } from './actorClips';
@@ -119,6 +121,7 @@ export function defineActorKinds(registry: Registry = sharedRegistry): void {
   if (!registry.kinds().includes('setting') || !registry.has('setting', 'physics.characterGravity')) {
     defineSettings(CHARACTER_SETTINGS, registry);
   }
+  if (!registry.has('setting', 'movement.turnRate')) defineSettings(MOVEMENT_SETTINGS, registry);
   if (!registry.kinds().includes('component') || !registry.has('component', 'animator')) {
     const states = { type: 'object', default: {}, description: 'The body states its game code holds on.' } as const;
     const description = 'A character animator (engine/anim/character.ts): what it keeps, and what its body is told.';
@@ -211,6 +214,24 @@ export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): 
   return w.spawn({ ...spec.components, ...motion, actor, animator, puppet, clips });
 }
 
+/**
+ * Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing
+ * `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending; on the shooter model its motion
+ * state starts again, holstered as it was. For a scene's dev actions: a feel course places its player where it
+ * measures (engine/dev/feel/course.ts).
+ */
+export function placeActor<C extends object>(world: World<C>, id: number, at: Vec3Like, yaw?: number): void {
+  const w = world as unknown as World;
+  const e = w.get(id) as Partial<ActorComponents> | undefined;
+  if (!e?.actor) throw codeError('SIM_BAD_ARGUMENT', { where: 'placeActor(w, id)', value: String(id), expected: 'an actor’s id' }); // prettier-ignore
+  const { actor, motion } = e;
+  const physics = physicsOf(w);
+  physics.setBody(actor.body, { position: bodyAt(actor.character, at, 'placeActor(at)'), velocity: [0, 0, 0] });
+  const { x, y, z } = feetOf(physics, actor.body, actor.character);
+  Object.assign(actor, createCharacterState(), { yaw: yaw ?? actor.yaw, x, y, z });
+  if (motion) Object.assign(motion, createMotionState(), { holstered: motion.holstered });
+}
+
 /** Removes an actor and its body. */
 export function removeActor<C extends object>(world: World<C>, id: number): void {
   const w = world as unknown as World;
@@ -253,6 +274,7 @@ function moveActors(w: World, intents: Intents): void {
   const gravity = w.settings.get('physics.characterGravity') as number;
   const worldGravity = w.settings.get('physics.gravity') as number;
   const oneWay = new Set((w.query('oneWay') as unknown as ActorComponents[]).map((e) => e.oneWay.body));
+  const tuning = movementOverrides((path) => w.settings.get(path));
   for (const e of w.query('actor') as unknown as (ActorComponents & { id: number })[]) {
     const { actor, motion } = e;
     const wants = intentsOf(actor, intents);
@@ -263,7 +285,8 @@ function moveActors(w: World, intents: Intents): void {
       dashPressed: pressed(wants, 'dash'),
       ...(motion ? motionInput(actor, wants) : {}),
     };
-    const step = stepCharacter(physics, actor.body, actor.character, actor, input, { dt: w.dt, gravity, worldGravity, oneWay }, motion); // prettier-ignore
+    const character = motion ? tuneCharacter(actor.character, tuning) : actor.character;
+    const step = stepCharacter(physics, actor.body, character, actor, input, { dt: w.dt, gravity, worldGravity, oneWay }, motion); // prettier-ignore
     if (step.jumped) w.emit('jump', { id: e.id });
     if (step.landed) w.emit('land', { id: e.id, speed: step.landed });
     if (step.dashed) w.emit('dash', { id: e.id });
