@@ -6,8 +6,9 @@
  * `walk` walks and `crouch` crouch-walks.
  *
  * Settings (`playground.gym.*`, read when the scene starts, so they change play and go in replays): the player's run
- * speed and jump height, Apex's by default (docs/PLAYGROUND.md §3.2). Its dev action `place` (`{ at, yaw }`) puts the
- * player somewhere at rest: where a feel course (labs/playground/courses/) starts.
+ * speed and jump height, Apex's by default (docs/PLAYGROUND.md §3.2). Its dev action `place` (`{ at, yaw, speed }`)
+ * puts the player somewhere, at rest or moving `speed` m/s where it faces: where a feel course
+ * (labs/playground/courses/) starts. The crawl's slab and bar stand on their walls and posts as fixed props.
  *
  * The level's text is computed from the gym's features (labs/playground/levels/gym.ts), so sim-side code reads no
  * file; the page registers the same text for the view (labs/playground/main.ts).
@@ -20,9 +21,9 @@
  * GYM_START; // [20.25, 0, 3.25]: the spawn, at the gym's north end
  * @see labs/playground/scenes/gym.test.ts
  */
-import { addLevelBodies, compileLevel, defineScene, defineSettings, physicsOf, placeActor, type ActorComponents } from '../../../engine/sim-api'; // prettier-ignore
+import { addLevelBodies, compileLevel, defineScene, defineSettings, physicsOf, placeActor, spawnProp, type ActorComponents } from '../../../engine/sim-api'; // prettier-ignore
 import { APEX_JUMP, APEX_RUN, spawnPlayer } from '../cast/player';
-import { GYM_TEXT } from '../levels/gym';
+import { GYM_PROPS, GYM_TEXT } from '../levels/gym';
 
 /** The gym, compiled: its colliders for the physics, its tiles and spawn for the scene. */
 export const GYM = compileLevel(GYM_TEXT, { file: 'labs/playground/levels/gym.ts', name: 'gym' });
@@ -61,16 +62,19 @@ export const gym = defineScene('playground:gym', {
   physics: true,
   setup(w) {
     addLevelBodies(physicsOf(w), GYM);
+    for (const { prop, at, yaw } of GYM_PROPS) spawnProp(w, { prop, at: [...at], yaw });
     const speed = w.settings.get<number>('playground.gym.speed');
     const jump = w.settings.get<number>('playground.gym.jump');
     spawnPlayer(w, [GYM_START[0], GYM_START[1], GYM_START[2]], 0, { speed, jump });
   },
   actions: {
-    /** Puts the player at `at`, facing `yaw`, at rest: a feel course's start (labs/playground/courses/). */
+    /** Puts the player at `at`, facing `yaw`, at rest or moving `speed` m/s that way: a feel course's start. */
     place(w, args) {
-      const { at, yaw } = (args ?? {}) as { at?: [number, number, number]; yaw?: number };
+      const { at, yaw = 0, speed = 0 } = (args ?? {}) as { at?: [number, number, number]; yaw?: number; speed?: number }; // prettier-ignore
       const player = (w.query('actor') as unknown as (ActorComponents & { id: number })[]).find((e) => e.actor.player);
-      if (player && at) placeActor(w, player.id, at, yaw);
+      if (!player || !at) return;
+      placeActor(w, player.id, at, yaw);
+      [player.actor.vx, player.actor.vz] = [speed * Math.sin(yaw), speed * Math.cos(yaw)];
     },
   },
 });

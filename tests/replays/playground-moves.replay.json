@@ -1,6 +1,6 @@
 {
   "format": "my3dge-replay/1",
-  "description": "The playground's moves on Apex's model: the player sprints west holding sprint, turns south down the west lane on the sticky sprint a press keeps, sprint-jumps and hops on landing (a tired jump, 0.43 m), walks, crouch-walks and sprints again on a press; turns east, lurches north-east 0.1 s into a sprint jump, air-strafes a full jump with a side key held from the take-off (7.59 to 7.79 m/s), bunny-hops off its landing (the hop's cost takes it back to the sprint's 7.59 m/s), and stops.",
+  "description": "The playground's moves on Apex's model: the player sprints west holding sprint, turns south down the west lane on the sticky sprint a press keeps, sprint-jumps and hops on landing (a tired jump, 0.43 m), walks, crouch-walks and sprints again on a press; turns east, lurches north-east 0.1 s into a sprint jump, air-strafes a full jump with a side key held from the take-off (7.59 to 7.79 m/s), bunny-hops off its landing (the hop's cost takes it back to the sprint's 7.59 m/s), and stops; then sprints south, slides (boosted to 11.6 m/s), slide-jumps 1.27 m out of it once its crouch is down, slides on from the landing, ducked (no boost: within 2 s of the last), stands as it lets crouch go, and stops.",
   "engine": "0.0.0",
   "three": "0.182.0",
   "rapier": "simd-compat 0.21.0",
@@ -8,7 +8,7 @@
   "settings": {},
   "seed": 1,
   "hz": 60,
-  "steps": 960,
+  "steps": 1200,
   "inputs": [
     [0, { "b": ["sprint"], "cam": -1.5707963267948966, "look": [-1.5707963267948966, 0], "move": [-1, 0] }],
     [142, { "b": null, "cam": 0, "look": [0, 0], "move": [0, 1] }],
@@ -28,27 +28,33 @@
     [834, { "b": null }],
     [872, { "b": ["jump"], "move": [1, 0] }],
     [878, { "b": null }],
-    [915, { "move": null }]
+    [915, { "move": null }],
+    [960, { "b": ["sprint"], "cam": 0, "look": [0, 0], "move": [0, 1] }],
+    [1040, { "b": ["crouch"] }],
+    [1056, { "b": ["crouch", "jump"] }],
+    [1062, { "b": ["crouch"] }],
+    [1150, { "b": null, "move": null }]
   ],
   "hashes": {
     "linux-x64": {
-      "0": "847226480ff17f94",
-      "60": "fa4bbfe5e41e6985",
-      "120": "74d91bc4ffc4efc4",
-      "180": "d89c84ffb01931b5",
-      "240": "79518f72c09c5e69",
-      "300": "102d7000506be10a",
-      "360": "40a217ed679b25ca",
-      "420": "61b96458bd9ad4ad",
-      "480": "30000253619c8b39",
-      "540": "fbd77ba503ced7b8",
-      "600": "7b26eea4a990b282",
-      "660": "2821a2f29945a2d1",
-      "720": "324b8060dc96362c",
-      "780": "38d2310148d41e83",
-      "840": "96adb7635fce1e3a",
-      "900": "b71b75054185d10f",
-      "960": "6ea2e3ee44f9d7cc"
+      "0": "daa9e774fb6f99db",
+      "60": "c582491b5948298f",
+      "120": "af481788b581c842",
+      "180": "020f22847ce942dd",
+      "240": "fa955f04974a6211",
+      "300": "438dd4bda62e94d1",
+      "360": "9ea97bc5815eb445",
+      "420": "017dc5827f4d52bb",
+      "480": "977d9f33c29d39ae",
+      "540": "fe8bb2e44d446bd0",
+      "600": "7736cca3b4e8455e",
+      "660": "927a1ba777e00c87",
+      "720": "127bb1be1780c757",
+      "780": "7c69e54751d2631a",
+      "840": "847ed4074b167de8",
+      "900": "bdb9b3511f5967d6",
+      "960": "be5fa0a0f3d2c324",
+      "1200": "6c6b5b164b76368e"
     }
   }
 }

@@ -4,8 +4,8 @@ my-3dge's second integration target (PLAN.md Phase 13, ADR-0025), designed in `d
 the character, the cameras and the looks are made to move, feel and look right, and where everything a player can do
 in the engine is shown. It grows in four stages, each ending at a gate: the gym (G10), the house (G11), a living site
 (G12) and the tech demo (G13). Today it holds the gym: calibrated features as a physics level, the player at its
-north end moving by Apex Legends' numbers (its run and sprint, air strafing, jump fatigue, the lurch and the fall
-stun, on its hull), five camera modes and two looks, cel-shaded and pixel art. Every claim below is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here
+north end moving by Apex Legends' numbers (its run and sprint, air strafing, jump fatigue, the lurch, the fall
+stun, the crouch and the slide, on its hull), five camera modes and two looks, cel-shaded and pixel art. Every claim below is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here
 that does not exist fails it.
 
 ## Play it
@@ -15,7 +15,7 @@ that does not exist fails it.
    5174 instead.
 2. Click the game to look around with the mouse (Esc lets go of it). WASD or the arrows move, Space jumps, Shift
    sprints (hold it, or press it once), Left Alt walks and C crouches while held (not Apex's Left Ctrl: Ctrl with W
-   closes the browser's tab).
+   closes the browser's tab); C at a sprint slides, and Space out of a slide slide-jumps.
 3. T steps through the five cameras, P switches between the cel and the pixel look, M shows and hides the menu.
 
 A link can open any of them: `labs/playground/?cam3=first&post.look=look:playground-pixel` is first person in the
@@ -30,7 +30,7 @@ test (`tests/unit/playground-readme.test.ts`) fails when a scene of `labs/playgr
 
 | Scene | What it proves | The command that shows it |
 |---|---|---|
-| `labs/playground/scenes/gym.ts` | The gym (`playground:gym`): every feature at the height, slope or gap its sign shows, the player moving by Apex's model (`node x sim labs/playground/scenes/gym --feel` prints its numbers), its golden replays the same in Node and in the page while it renders, in either look, with no pipeline built after the warm-up: the gym's run over its features, and its moves (`tests/replays/playground-moves.replay.json`: the sprint held and kept by a press, a tired hop, the walk, the crouch-walk, a lurch, an air strafe and the bunny hop's cost). | `node x replay tests/replays/playground-gym.replay.json tests/replays/playground-moves.replay.json --browser page` |
+| `labs/playground/scenes/gym.ts` | The gym (`playground:gym`): every feature at the height, slope or gap its sign shows, the player moving by Apex's model (`node x sim labs/playground/scenes/gym --feel` prints its numbers), its golden replays the same in Node and in the page while it renders, in either look, with no pipeline built after the warm-up: the gym's run over its features, and its moves (`tests/replays/playground-moves.replay.json`: the sprint held and kept by a press, a tired hop, the walk, the crouch-walk, a lurch, an air strafe, the bunny hop's cost, a slide and a slide-jump). | `node x replay tests/replays/playground-gym.replay.json tests/replays/playground-moves.replay.json --browser page` |
 
 ## The gym
 
@@ -38,8 +38,10 @@ test (`tests/unit/playground-readme.test.ts`) fails when a scene of `labs/playgr
 inside a 3 m wall, so a feature's number, its block and its sign never disagree (`docs/PLAYGROUND.md` §2.3 says why each
 is there). From the north end, where the player starts: a strip down the west side marked every 5 m; mantle walls from
 0.5 to 2.1 m; fences from 0.6 to 1.2 m; climb walls from 3 to 7.2 m; slide ramps of 5°, 10°, 20° and 30°, 12 m long,
-each with a deck at its top; steps of 0.25 m; slope tests of 45° and 51°; a 6 m tower; and, down the east side, a
-lane of 1.5 m platforms across gaps from 2 to 9 m. A sign floats over each feature, shown when the player is near.
+each with a deck at its top; steps of 0.25 m; slope tests of 45° and 51°; a 6 m tower; down the east side, a lane of
+1.5 m platforms across gaps from 2 to 9 m; and at the south end the crawl, a tunnel 1.4 m clear and 8 m long and a bar
+1.3 m up to slide under, whose roof slab and bar are fixed props (`prop:gym-slab`, `prop:gym-bar`) on their walls and
+posts. A sign floats over each feature, shown when the player is near.
 
 ## The player
 
@@ -113,11 +115,16 @@ with `__engine.set('playground.gym.speed', 6)`.
 A feel course (`labs/playground/courses/`) is a scripted run of the gym and the numbers measured on it, each against
 docs/PLAYGROUND.md §3.2's reference and tolerance: `labs/playground/courses/strip.ts` (the run, the sprint on a press
 and the stop), `labs/playground/courses/jumps.ts` (a jump, a tired one off its landing, a rested one, the walk and the
-crouch-walk) and `labs/playground/courses/air.ts` (a lurch, an air strafe and the bunny hop's cost). Each starts with
-the gym's dev action `place` and checks the bounds of `labs/playground/courses/bounds.ts` too: the body's and every
-camera's. `node x feel labs/playground` runs them all headless,
-`--course strip` one, each into `out/feel/<lab>-<name>/report.json`. The feet's slide is watched until WP 13.10
-plants them: reported against its 5 cm, never failing a course.
+crouch-walk), `labs/playground/courses/air.ts` (a lurch, an air strafe and the bunny hop's cost),
+`labs/playground/courses/slideFlat.ts` (the slide's boost and its cooldown, letting go fast, a slide held into the
+crouch-walk), `labs/playground/courses/slideRamps.ts` (down each slide ramp and up the 30° one),
+`labs/playground/courses/slideJump.ts` (the slide-jump, a dead slide, the long jump) and
+`labs/playground/courses/crawl.ts` (crouched through the tunnel and up out of it, a slide under the bar). Each starts
+with the gym's dev action `place` (`{ at, yaw, speed }`) and checks the bounds of `labs/playground/courses/bounds.ts`
+too, each run's: the body's and every camera's. `node x feel labs/playground` runs them all headless, `--course
+slide-flat` one, each into `out/feel/<lab>-<name>/report.json`. A bound its WP has yet to meet is watched, reported
+and never failing a course: the feet's slide until WP 13.10 plants them, the shooter camera in the crawl until WP
+13.8's collision keeps it out of the tunnel's roof.
 
 The feel panel (F, or `?playground.feel=on`) puts a slider on every `movement.*` setting, live; Copy as profile shows
 the tuning as a `defineMovement` call to paste into a game, and Save the replay downloads the run so far for

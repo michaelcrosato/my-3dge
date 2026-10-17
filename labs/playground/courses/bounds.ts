@@ -21,18 +21,32 @@ import { PLAYGROUND_CAMERAS } from '../views';
 /** §4's and §5.1's bounds: the camera's move (m) and turn (rad) in a frame, a sole's slide (m), a point's pop (m). */
 export const BOUNDS = { jump: 0.3, turn: (4 * Math.PI) / 180, slide: 0.05, pop: 9 / 16 } as const;
 
-/** The body's bounds, from step `from`. */
-export function bodyBounds(from: number): Record<string, unknown>[] {
+/** Where a run of bounds reads: from step `from` to `to` (the course's end when absent), its names after `label`. */
+export interface BoundsSpan {
+  to?: number;
+  label?: string;
+  /** By camera name, the WP that will make its numbers pass (`watch`) where a course asks more of it than it has yet. */
+  watch?: Readonly<Record<string, string>>;
+}
+
+/** A measure's name in `span`. */
+const named = (span: BoundsSpan, name: string) => (span.label ? `${span.label}: ${name}` : name);
+
+/** The body's bounds, from step `from` (see `BoundsSpan`). */
+export function bodyBounds(from: number, span: BoundsSpan = {}): Record<string, unknown>[] {
+  const { to } = span;
   return [
-    { name: 'feet planted', metric: 'footSlide', from, reference: 0, tolerance: { abs: BOUNDS.slide }, watch: 'WP 13.10' }, // prettier-ignore
-    { name: 'no pops', metric: 'pop', from, reference: 0, tolerance: { abs: BOUNDS.pop } },
+    { name: named(span, 'feet planted'), metric: 'footSlide', from, to, reference: 0, tolerance: { abs: BOUNDS.slide }, watch: 'WP 13.10' }, // prettier-ignore
+    { name: named(span, 'no pops'), metric: 'pop', from, to, reference: 0, tolerance: { abs: BOUNDS.pop } },
   ];
 }
 
-/** Every camera's bounds, from step `from` (see the file comment). */
-export function cameraBounds(from: number): Record<string, unknown>[] {
+/** Every camera's bounds, from step `from` (see the file comment and `BoundsSpan`). */
+export function cameraBounds(from: number, span: BoundsSpan = {}): Record<string, unknown>[] {
+  const { to } = span;
   return PLAYGROUND_CAMERAS.flatMap(({ name, code }) => {
-    const measure = (what: string, metric: string, abs: number) => ({ name: `${name}: ${what}`, metric, camera: code, from, reference: 0, tolerance: { abs } }); // prettier-ignore
+    const watch = span.watch?.[name];
+    const measure = (what: string, metric: string, abs: number) => ({ name: named(span, `${name}: ${what}`), metric, camera: code, from, to, reference: 0, tolerance: { abs }, ...(watch ? { watch } : {}) }); // prettier-ignore
     const lost = name === 'first' ? [] : [measure('lost', 'cameraLost', 0)];
     return [measure('jump', 'cameraJump', BOUNDS.jump), measure('turn', 'cameraTurn', BOUNDS.turn), measure('inside', 'cameraInside', 0), ...lost]; // prettier-ignore
   });

@@ -24,7 +24,7 @@
  * GYM_SPAWN; // [20.25, 0, 3.25]: the tile the spawn marks, its centre
  * @see labs/playground/scenes/gym.test.ts
  */
-import { defineGlyph } from '../../../engine/sim-api';
+import { defineGlyph, defineProp } from '../../../engine/sim-api';
 
 /** The gym's tile (m): half a metre, so a fence is half a metre thick. */
 export const GYM_TILE = 0.5;
@@ -42,7 +42,7 @@ export interface GymRect {
 }
 
 /** What a feature measures (docs/PLAYGROUND.md §2.3). */
-export type GymKind = 'strip' | 'mantle' | 'fence' | 'climb' | 'slide' | 'steps' | 'slope' | 'tower' | 'gap';
+export type GymKind = 'strip' | 'mantle' | 'fence' | 'climb' | 'slide' | 'steps' | 'slope' | 'tower' | 'gap' | 'crawl';
 
 /** A calibrated feature of the gym. */
 export interface GymFeature {
@@ -141,6 +141,13 @@ const GAPS = [2, 3, 4, 5, 6, 7, 8, 9] as const;
 /** The gap lane's platforms' height (m), and the tower's. */
 const [GAP_TOP, TOWER_TOP] = [1.5, 6];
 
+/**
+ * The crawl (m): a tunnel `clear` high inside, `long` and `wide`, its walls `wall` high with the roof slab (`slab`
+ * thick) laid on them, and a bar whose underside is `bar` up, on two posts `post` high. Apex's crouched hull is 1.19 m
+ * and its standing one 1.83 m, so only the crouched one fits under either.
+ */
+export const GYM_CRAWL = { clear: 1.4, slab: 0.2, long: 8, wide: 2, bar: 1.3, thick: 0.15, post: 2 } as const;
+
 for (const [height, char] of MANTLES)
   block(char, `mantle${height * 10}`, height, `A mantle wall ${height} m high, 2 m wide and deep.`);
 for (const [height, char] of FENCES)
@@ -150,6 +157,8 @@ for (const [height, char] of CLIMBS)
 for (const [height, char] of STEPS)
   block(char, `step${height * 100}`, height, `A step ${height} m high: the stairs' risers are 0.25 m.`);
 block('T', 'tower', TOWER_TOP, `The tower: a block ${TOWER_TOP} m high, 4 m square.`);
+block('W', 'tunnelWall', GYM_CRAWL.clear + GYM_CRAWL.slab, 'A wall of the crawl tunnel, its roof slab laid on top.');
+block('H', 'barPost', GYM_CRAWL.post, `A post of the bar to slide under, ${GYM_CRAWL.post} m high.`);
 for (const [degrees, rampChar, deckChar] of [...SLIDES, ...SLOPES]) {
   const length = degrees <= 30 ? 12 : 4;
   const top = rise(length, degrees);
@@ -200,7 +209,30 @@ export const GYM_FEATURES: readonly GymFeature[] = [
   ),
   feature('tower', TOWER_TOP, `Tower ${TOWER_TOP} m`, TOWER_TOP, [{ char: 'T', x: 27, z: 60, w: 4, d: 4 }]),
   ...gapLane(),
+  feature('crawl', GYM_CRAWL.clear, `Crawl ${GYM_CRAWL.clear} m`, GYM_CRAWL.clear + GYM_CRAWL.slab, [
+    { char: 'W', x: 6, z: 70, w: 0.5, d: GYM_CRAWL.long },
+    { char: 'W', x: 6.5 + GYM_CRAWL.wide, z: 70, w: 0.5, d: GYM_CRAWL.long },
+  ]),
+  feature('crawl', GYM_CRAWL.bar, `Bar ${GYM_CRAWL.bar} m`, GYM_CRAWL.post, [
+    { char: 'H', x: 13, z: 72, w: 0.5, d: 0.5 },
+    { char: 'H', x: 15.5, z: 72, w: 0.5, d: 0.5 },
+  ]),
 ];
+
+/** The crawl's slab and bar: fixed boxes the gym stands on its walls and posts (the level's blocks start at the floor). */
+export const GYM_PROPS = [
+  { prop: 'prop:gym-slab', at: [7.5, GYM_CRAWL.clear, 70 + GYM_CRAWL.long / 2], yaw: 0 },
+  { prop: 'prop:gym-bar', at: [14.5, GYM_CRAWL.bar, 72.25], yaw: 0 },
+] as const;
+
+for (const [id, [width, height, depth], description] of [
+  ['prop:gym-slab', [GYM_CRAWL.wide + 1, GYM_CRAWL.slab, GYM_CRAWL.long], 'The crawl tunnel’s roof: a stone slab on its walls.'], // prettier-ignore
+  ['prop:gym-bar', [GYM_CRAWL.wide + 1, GYM_CRAWL.thick, GYM_CRAWL.thick], 'The bar to slide under: a stone beam on its posts.'], // prettier-ignore
+] as const) {
+  const box = { width, height, depth };
+  const part = { geometry: 'geometry:box', params: box, material: 'material:stone' };
+  defineProp(id, { description, parts: [part], body: { type: 'fixed', shape: 'box', size: [width, height, depth] } });
+}
 
 /** The gap lane along the east side: a ramp up to the first platform, then platforms 3 m long across each gap. */
 function gapLane(): GymFeature[] {
