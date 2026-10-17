@@ -1,0 +1,356 @@
+[
+  {
+    "id": "adult/action:bored",
+    "metric": "footSlide",
+    "value": 1.1299,
+    "reason": "The source builds' cause (action:bored in tests/baselines/qa-anim.json): it lies down to sleep (down 1) and kneels before and after: the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "adult/action:charge",
+    "metric": "footSlide",
+    "value": 0.8735,
+    "reason": "The source builds' cause (action:charge in tests/baselines/qa-anim.json): the release is move:spin, which turns the whole body about its root, the planted feet swinging round with it (move:spin's own entry); a stance lock in the foot plant would hold them (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/action:deathBlown",
+    "metric": "footSlide",
+    "value": 0.3762,
+    "reason": "The adult's gait plants its soles at full stride (plantedStride, engine/anim/locomotion.ts plantedHeight) and its feet are 0.27 m long, so the slide that the source builds' soles leave off the floor, hanging, counts here in full; WP 13.10's stance locks remove it. The source builds' cause (action:deathBlown in tests/baselines/qa-anim.json): Death_B and the LayToIdle revive: a format-1 library clip on the clip layer (WP 8.4) plants its feet only inside format-2 contacts, which Mesh2Motion's and Quaternius' clips lack until WP 8.8 re-imports them, so the feet slide as captured and as the clip fades in over the body and out; tightened after G9: the retargeter moves it a little"
+  },
+  {
+    "id": "adult/action:deathCrush",
+    "metric": "footSlide",
+    "value": 0.1033,
+    "reason": "The source builds' cause (action:deathCrush in tests/baselines/qa-anim.json): the squash scales the body about its root (pose.rootScale), keeping its lowest point, so the soles spread with its 1.4 times width as it goes flat"
+  },
+  {
+    "id": "adult/action:deathShock",
+    "metric": "footSlide",
+    "value": 0.9107,
+    "reason": "The source builds' cause (action:deathShock in tests/baselines/qa-anim.json): it collapses onto its back and its revive kneels: the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "adult/action:deathShrink",
+    "metric": "footSlide",
+    "value": 0.134,
+    "reason": "The source builds' cause (action:deathShrink in tests/baselines/qa-anim.json): the shrink scales the body about its root toward its lowest point, so the soles gather as it spins to nothing (a pit fall); tightened after G9: the foot plant (engine/anim/footPlant.ts) moves it a little"
+  },
+  {
+    "id": "adult/action:deathSink",
+    "metric": "footSlide",
+    "value": 0.3802,
+    "reason": "The adult's gait plants its soles at full stride (plantedStride, engine/anim/locomotion.ts plantedHeight) and its feet are 0.27 m long, so the slide that the source builds' soles leave off the floor, hanging, counts here in full; WP 13.10's stance locks remove it. The source builds' cause (action:deathSink in tests/baselines/qa-anim.json): Death_A and the LayToIdle revive: a format-1 library clip on the clip layer (WP 8.4) plants its feet only inside format-2 contacts, which Mesh2Motion's and Quaternius' clips lack until WP 8.8 re-imports them, so the feet slide as captured and as the clip fades in over the body and out; tightened after G9: the retargeter moves it a little"
+  },
+  {
+    "id": "adult/action:deathSpin",
+    "metric": "footSlide",
+    "value": 2.5184,
+    "reason": "The source builds' cause (action:deathSpin in tests/baselines/qa-anim.json): three whole turns about the root (ALttP's death spin, no steps in it) swing the planted feet round with the body, then the collapse slides it (KNOCKDOWN.shift); a stance lock in the foot plant would hold them (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/action:deathTopple",
+    "metric": "footSlide",
+    "value": 0.91,
+    "reason": "The source builds' cause (action:deathTopple in tests/baselines/qa-anim.json): the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "adult/action:dizzy",
+    "metric": "footSlide",
+    "value": 0.2383,
+    "reason": "The adult's gait plants its soles at full stride (plantedStride, engine/anim/locomotion.ts plantedHeight) and its feet are 0.27 m long, so the slide that the source builds' soles leave off the floor, hanging, counts here in full; WP 13.10's stance locks remove it. The source builds' cause (action:dizzy in tests/baselines/qa-anim.json): Mesh2Motion's Dizzy: a format-1 library clip on the clip layer (WP 8.4) plants its feet only inside format-2 contacts, which Mesh2Motion's and Quaternius' clips lack until WP 8.8 re-imports them, so the feet slide as captured and as the clip fades in over the body and out; tightened after G9: the retargeter moves it a little"
+  },
+  {
+    "id": "adult/action:getUp",
+    "metric": "footSlide",
+    "value": 0.9121,
+    "reason": "The source builds' cause (action:getUp in tests/baselines/qa-anim.json): it lies (down 1), then sits up and kneels: the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "adult/action:grab",
+    "metric": "footSlide",
+    "value": 0.2192,
+    "reason": "The source builds' cause (action:grab in tests/baselines/qa-anim.json): the reach lunges and the throw twists the body as a strike does (a motion like move:cross's), moving the planted feet along the floor; a stance lock in the foot plant would hold them (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/action:grabbed",
+    "metric": "footSlide",
+    "value": 0.0806,
+    "reason": "The source builds' cause (action:grabbed in tests/baselines/qa-anim.json): thrown flat (down 1) and left lying: the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "adult/action:groundPound",
+    "metric": "footSlide",
+    "value": 0.1054,
+    "reason": "The source builds' cause (action:groundPound in tests/baselines/qa-anim.json): the impact's crouch (0.9): the procedural body has no foot lock (my-3d2dge's effector layers): its soles slide to the crouch's stance and back as the beat's motion eases in and out; a stance lock in the foot plant would hold them (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/action:jump",
+    "metric": "footSlide",
+    "value": 0.063,
+    "reason": "The source builds' cause (action:jump in tests/baselines/qa-anim.json): the take-off squat and the landing squash: the procedural body has no foot lock (my-3d2dge's effector layers): its soles slide to the crouch's stance and back as the beat's motion eases in and out; a stance lock in the foot plant would hold them (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/action:landHeavy",
+    "metric": "footSlide",
+    "value": 0.5925,
+    "reason": "The adult's gait plants its soles at full stride (plantedStride, engine/anim/locomotion.ts plantedHeight) and its feet are 0.27 m long, so the slide that the source builds' soles leave off the floor, hanging, counts here in full; WP 13.10's stance locks remove it. The source builds' cause (action:landHeavy in tests/baselines/qa-anim.json): Mesh2Motion's Land_Three_Point: a format-1 library clip on the clip layer (WP 8.4) plants its feet only inside format-2 contacts, which Mesh2Motion's and Quaternius' clips lack until WP 8.8 re-imports them, so the feet slide as captured and as the clip fades in over the body and out; 0.3 mm more after G9, the retargeter's knee pole and source-relative lift (retarget.ts)"
+  },
+  {
+    "id": "adult/action:rise",
+    "metric": "footSlide",
+    "value": 0.666,
+    "reason": "The adult's gait plants its soles at full stride (plantedStride, engine/anim/locomotion.ts plantedHeight) and its feet are 0.27 m long, so the slide that the source builds' soles leave off the floor, hanging, counts here in full; WP 13.10's stance locks remove it. The source builds' cause (action:rise in tests/baselines/qa-anim.json): rise is played on a body lying after a death or a respawn (my-3d2dge's hero revive); its check starts standing, so the 0.15 s fade into LayToIdle's lying pose slides the feet; and a format-1 library clip on the clip layer (WP 8.4) plants its feet only inside format-2 contacts, which Mesh2Motion's and Quaternius' clips lack until WP 8.8 re-imports them, so the feet slide as captured and as the clip fades in over the body and out; tightened after G9: the foot plant (engine/anim/footPlant.ts) moves it a little"
+  },
+  {
+    "id": "adult/action:roll",
+    "metric": "footSlide",
+    "value": 0.6021,
+    "reason": "The adult's gait plants its soles at full stride (plantedStride, engine/anim/locomotion.ts plantedHeight) and its feet are 0.27 m long, so the slide that the source builds' soles leave off the floor, hanging, counts here in full; WP 13.10's stance locks remove it. The source builds' cause (action:roll in tests/baselines/qa-anim.json): the dip and the rise crouch on the floor before and after the roll: the procedural body has no foot lock (my-3d2dge's effector layers): its soles slide to the crouch's stance and back as the beat's motion eases in and out; a stance lock in the foot plant would hold them (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8); after G9 the foot plant (engine/anim/footPlant.ts) holds the soles on the floor through the dip and the rise, where they sank below it before, out of the slide check, so more of the slide counts: 0.2418 → 0.5843"
+  },
+  {
+    "id": "adult/action:techRoll",
+    "metric": "footSlide",
+    "value": 0.0805,
+    "reason": "The source builds' cause (action:techRoll in tests/baselines/qa-anim.json): it rolls back from lying (down 1) onto its feet: the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "adult/move:axekick",
+    "metric": "footSlide",
+    "value": 0.0635,
+    "reason": "The source builds' cause (move:axekick in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:axekick",
+    "metric": "twistJump",
+    "value": 2.5186,
+    "reason": "The adult's knee folds past 140° in the wind, as chibi's does, its longer shin rolling the thigh a little more. The source builds' cause (move:axekick in tests/baselines/qa-anim.json): the axe kick's wind lifts the leg from rest in two steps (my-3d2dge's kick path, WP 6.1) and the thigh rolls about itself as the knee folds past 140°, on build:chibi; tightened after G9: the foot plant (engine/anim/footPlant.ts) moves it a little"
+  },
+  {
+    "id": "adult/move:backslash",
+    "metric": "footSlide",
+    "value": 0.1388,
+    "reason": "The source builds' cause (move:backslash in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:bash",
+    "metric": "footSlide",
+    "value": 0.2587,
+    "reason": "The source builds' cause (move:bash in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:cast",
+    "metric": "footSlide",
+    "value": 0.114,
+    "reason": "The source builds' cause (move:cast in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:claw",
+    "metric": "footSlide",
+    "value": 0.3004,
+    "reason": "The source builds' cause (move:claw in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:cross",
+    "metric": "footSlide",
+    "value": 0.2881,
+    "reason": "The source builds' cause (move:cross in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:elbow",
+    "metric": "footSlide",
+    "value": 0.1643,
+    "reason": "The source builds' cause (move:elbow in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:flyingkick",
+    "metric": "footSlide",
+    "value": 0.284,
+    "reason": "The source builds' cause (move:flyingkick in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:haymaker",
+    "metric": "footSlide",
+    "value": 0.435,
+    "reason": "The source builds' cause (move:haymaker in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:hook",
+    "metric": "footSlide",
+    "value": 0.218,
+    "reason": "The source builds' cause (move:hook in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:jab",
+    "metric": "footSlide",
+    "value": 0.1359,
+    "reason": "The source builds' cause (move:jab in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:kick",
+    "metric": "footSlide",
+    "value": 0.0632,
+    "reason": "The source builds' cause (move:kick in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:knee",
+    "metric": "footSlide",
+    "value": 0.1564,
+    "reason": "The source builds' cause (move:knee in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:overhead",
+    "metric": "footSlide",
+    "value": 0.3564,
+    "reason": "The source builds' cause (move:overhead in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:rising",
+    "metric": "footSlide",
+    "value": 0.0651,
+    "reason": "The source builds' cause (move:rising in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:roundhouse",
+    "metric": "footSlide",
+    "value": 0.0643,
+    "reason": "The source builds' cause (move:roundhouse in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:slash",
+    "metric": "footSlide",
+    "value": 0.204,
+    "reason": "The source builds' cause (move:slash in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:spin",
+    "metric": "footSlide",
+    "value": 0.8694,
+    "reason": "The source builds' cause (move:spin in tests/baselines/qa-anim.json): the spin turns the whole body about its root (my-3d2dge's spin), the planted feet swinging round with it; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:sweep",
+    "metric": "footSlide",
+    "value": 0.1533,
+    "reason": "The source builds' cause (move:sweep in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:throw",
+    "metric": "footSlide",
+    "value": 0.3007,
+    "reason": "The source builds' cause (move:throw in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:thrust",
+    "metric": "footSlide",
+    "value": 0.4841,
+    "reason": "The source builds' cause (move:thrust in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:twohand",
+    "metric": "footSlide",
+    "value": 0.4436,
+    "reason": "The source builds' cause (move:twohand in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/move:uppercut",
+    "metric": "footSlide",
+    "value": 0.0985,
+    "reason": "The source builds' cause (move:uppercut in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/pose:crouch",
+    "metric": "footSlide",
+    "value": 0.1411,
+    "reason": "The source builds' cause (pose:crouch in tests/baselines/qa-anim.json): the soles slide to the pose's stance as its weight eases in and back out (my-3d2dge's effector layers move them along the floor, never stepping); a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/pose:die",
+    "metric": "footSlide",
+    "value": 0.5973,
+    "reason": "The source builds' cause (pose:die in tests/baselines/qa-anim.json): the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "adult/pose:down",
+    "metric": "footSlide",
+    "value": 0.0806,
+    "reason": "The source builds' cause (pose:down in tests/baselines/qa-anim.json): the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "adult/pose:guard",
+    "metric": "footSlide",
+    "value": 0.2966,
+    "reason": "The adult's gait plants its soles at full stride (plantedStride, engine/anim/locomotion.ts plantedHeight) and its feet are 0.27 m long, so the slide that the source builds' soles leave off the floor, hanging, counts here in full; WP 13.10's stance locks remove it. The source builds' cause (pose:guard in tests/baselines/qa-anim.json): the soles slide to the pose's stance as its weight eases in and back out (my-3d2dge's effector layers move them along the floor, never stepping); a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/pose:kneel",
+    "metric": "footSlide",
+    "value": 0.4758,
+    "reason": "The source builds' cause (pose:kneel in tests/baselines/qa-anim.json): the soles slide to the pose's stance as its weight eases in and back out (my-3d2dge's effector layers move them along the floor, never stepping); a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/reaction:die",
+    "metric": "footSlide",
+    "value": 0.9102,
+    "reason": "The source builds' cause (reaction:die in tests/baselines/qa-anim.json): the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "adult/reaction:fallBack",
+    "metric": "footSlide",
+    "value": 0.911,
+    "reason": "The source builds' cause (reaction:fallBack in tests/baselines/qa-anim.json): the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "adult/reaction:fallFront",
+    "metric": "footSlide",
+    "value": 1.1173,
+    "reason": "The adult's gait plants its soles at full stride (plantedStride, engine/anim/locomotion.ts plantedHeight) and its feet are 0.27 m long, so the slide that the source builds' soles leave off the floor, hanging, counts here in full; WP 13.10's stance locks remove it. The source builds' cause (reaction:fallFront in tests/baselines/qa-anim.json): the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it; tightened after G9: the foot plant (engine/anim/footPlant.ts) moves it a little"
+  },
+  {
+    "id": "adult/reaction:fallFront",
+    "metric": "underFloor",
+    "value": 0.3503,
+    "reason": "The adult's 0.27 m feet dig deeper than the source builds' through the face-down turn. The source builds' cause (reaction:fallFront in tests/baselines/qa-anim.json): WP 6.2's face-down turn (reactions.ts lyingLayer) points the feet only at full down: through the fall and the push-up (down 0.5) the toe tips dig up to 0.3 m into the floor on build:heroic; reported to the integrator for reactions.ts; 0.1 mm more after G9, the foot plant (engine/anim/footPlant.ts) dropping the pelvis through the push-up"
+  },
+  {
+    "id": "adult/stance:guard",
+    "metric": "footSlide",
+    "value": 0.4503,
+    "reason": "The adult's gait plants its soles at full stride (plantedStride, engine/anim/locomotion.ts plantedHeight) and its feet are 0.27 m long, so the slide that the source builds' soles leave off the floor, hanging, counts here in full; WP 13.10's stance locks remove it. The source builds' cause (stance:guard in tests/baselines/qa-anim.json): my-3d2dge's gait has no foot lock: a planted sole drifts through its stance and slides to the standing stance as the walk stops (or, running in place, as the gait catches up with the belt); a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/stance:ready",
+    "metric": "footSlide",
+    "value": 0.4503,
+    "reason": "The adult's gait plants its soles at full stride (plantedStride, engine/anim/locomotion.ts plantedHeight) and its feet are 0.27 m long, so the slide that the source builds' soles leave off the floor, hanging, counts here in full; WP 13.10's stance locks remove it. The source builds' cause (stance:ready in tests/baselines/qa-anim.json): my-3d2dge's gait has no foot lock: a planted sole drifts through its stance and slides to the standing stance as the walk stops (or, running in place, as the gait catches up with the belt); a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/state:dodge",
+    "metric": "footSlide",
+    "value": 0.0644,
+    "reason": "The source builds' cause (state:dodge in tests/baselines/qa-anim.json): the dash drags the trailing foot along the floor (my-3d2dge's dash, ADR-0009 amendment 3); a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/state:followThrough",
+    "metric": "footSlide",
+    "value": 0.1625,
+    "reason": "The source builds' cause (state:followThrough in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/state:knockedDown",
+    "metric": "footSlide",
+    "value": 0.0806,
+    "reason": "The source builds' cause (state:knockedDown in tests/baselines/qa-anim.json): the knockdown slides the whole body along the floor to lie centred on its position (humanoid.ts KNOCKDOWN.shift, my-3d2dge's rigid turn), the feet with it; a ragdoll hand-off (WP 10.2) replaces it"
+  },
+  {
+    "id": "adult/state:run",
+    "metric": "footSlide",
+    "value": 0.8062,
+    "reason": "The adult's gait plants its soles at full stride (plantedStride, engine/anim/locomotion.ts plantedHeight) and its feet are 0.27 m long, so the slide that the source builds' soles leave off the floor, hanging, counts here in full; WP 13.10's stance locks remove it. The source builds' cause (state:run in tests/baselines/qa-anim.json): my-3d2dge's gait has no foot lock: a planted sole drifts through its stance and slides to the standing stance as the walk stops (or, running in place, as the gait catches up with the belt); a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  },
+  {
+    "id": "adult/state:strike",
+    "metric": "footSlide",
+    "value": 0.1681,
+    "reason": "The source builds' cause (state:strike in tests/baselines/qa-anim.json): my-3d2dge's strike (WP 6.1's arm path, held to the source within 1 cm) moves the planted feet along the floor as the body lunges, twists and recovers; a stance lock in the foot plant would hold it (engine/anim/footPlant.ts: the layer locks none, ADR-0009 amendment 8)"
+  }
+]

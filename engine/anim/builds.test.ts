@@ -108,6 +108,7 @@ describe('defineBuild', () => {
     expect(imp.legUpper).toBe(0.375);
     expect(imp.headRadius).toBe(0.25);
     expect(reg.list('build').map((entry) => entry.id)).toEqual([
+      'build:adult',
       'build:bulky',
       'build:chibi',
       'build:heroic',
