@@ -1,0 +1,35 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "The playground's gym: the player runs west along the north wall, turns south, jumps onto the 1 m mantle wall, crosses it and drops off the far side, runs south between the fences to the 4 m climb wall, steps east round it and runs on between the climb walls, then stands.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "playground:gym",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 540,
+  "inputs": [
+    [0, { "move": [-1, 0] }],
+    [120, { "move": [0, 1] }],
+    [190, { "b": ["jump"], "p": ["jump"] }],
+    [230, { "b": null }],
+    [380, { "move": [1, 0] }],
+    [402, { "move": [0, 1] }],
+    [470, { "move": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "d974cadaaa2fec6d",
+      "60": "04b0b46a41107fe7",
+      "120": "20a22c683f6e29eb",
+      "180": "4f44754409129d92",
+      "240": "844029011428d86e",
+      "300": "6c371635608dd715",
+      "360": "950f90c6ee538b1f",
+      "420": "306c68c566199369",
+      "480": "73d3465426a37093",
+      "540": "b10a125d0e739644"
+    }
+  }
+}

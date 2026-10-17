@@ -13,7 +13,8 @@
  * Output, at most about 20 lines: the hash; the entities, systems and events (by type, counted from the trace after
  * every step); the settings changed; the trace's per-part digests; the files written. `state.json` holds the final
  * state and trace. `--feel` adds the feel meter's report for the scene's first player actor (`__engine.feel()`,
- * engine/sim/actors.ts; WP 3.2): two lines, and every number as a `feel.<name>` metric. `--map` (WP 4.3) writes
+ * engine/sim/feelCourse.ts; WP 3.2): two lines, a third for the shooter model's numbers (WP 13.3), and every number as
+ * a `feel.<name>` metric, the shooter model's as `feel.motion.<name>`. `--map` (WP 4.3) writes
  * `map.txt`, the scene's level as navigation sees it (engine/world/nav.ts; shardfall's `levelmap nav=true` as text):
  * blocked tiles, raised floors, tiles never reached, and a route from the hero's spawn; one line and `map.*` metrics
  * sum it up. Its climb limit is the crowd's, or with `--feel` the actor's jump reach. A level no module registered is
@@ -222,7 +223,7 @@ export default {
         ...Object.fromEntries(
           Object.entries(sets).map(([path, value]) => [`set.${path}`, serialize(value as Canonical)]),
         ),
-        ...Object.fromEntries(Object.entries(feel ?? {}).map(([name, value]) => [`feel.${name}`, value])),
+        ...Object.fromEntries(feelMetrics(feel)),
         ...Object.fromEntries(Object.entries(map?.metrics ?? {}).map(([name, value]) => [`map.${name}`, value])),
       },
       artifacts: [
@@ -252,14 +253,33 @@ export function feelOf(engine: Record<string, unknown>, scene: string): FeelRepo
   return feel();
 }
 
-/** The feel report as two lines of text, rounded for reading (the metrics keep every digit). */
+/** The feel report as metrics, `feel.<name>`, the shooter model's as `feel.motion.<name>`. */
+export function feelMetrics(feel: FeelReport | undefined): [string, number][] {
+  const { motion, ...rest } = feel ?? ({} as Partial<FeelReport>);
+  const own = Object.entries(rest).map(([name, value]): [string, number] => [`feel.${name}`, value as number]);
+  return [
+    ...own,
+    ...Object.entries(motion ?? {}).map(([name, value]): [string, number] => [`feel.motion.${name}`, value]),
+  ];
+}
+
+/** The feel report as two lines of text, a third on the shooter model, rounded for reading (the metrics keep every digit). */
 export function feelLines(feel: FeelReport): string[] {
   const n = (value: number, digits = 2) => value.toFixed(digits);
+  const m = feel.motion;
   return [
     `feel: responds in ${feel.responseTicks} ticks; ${n(feel.topSpeed)} m/s in ${n(feel.accelerationTime)} s; ` +
       `stops in ${n(feel.stopTime)} s over ${n(feel.stopDistance)} m; turns in ${n(feel.turnTime)} s`,
     `feel: jumps ${n(feel.apex, 3)} m, ${n(feel.airTime)} s in the air, ${n(feel.jumpDistance)} m running; ` +
       `reaches ${n(feel.reach, 3)} m; dashes ${n(feel.dashDistance)} m`,
+    ...(m
+      ? [
+          `motion: runs ${n(m.run)} m/s (${n(m.runHolstered)} holstered), sprints ${n(m.sprint)} (${n(m.sprintHolstered)}), ` +
+            `walks ${n(m.walk)}, crouch-walks ${n(m.crouch)} (${n(m.crouchHolstered)}); to the run ${n(m.accelerationTime)} s, ` +
+            `run to sprint ${n(m.sprintTime)} s, stops ${n(m.stopTime)} s; a tired jump ${n(m.fatigueApex, 3)} m; ` +
+            `strafing gains ${n(m.strafeGain, 3)} m/s; lurches ${n(m.lurch)} m/s`,
+        ]
+      : []),
   ];
 }
 

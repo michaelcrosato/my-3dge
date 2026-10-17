@@ -10,7 +10,8 @@
  * - `post_art_rim`, pixel art's one-block rim: a block whose neighbour block is another pixel-art object in front of
  *   it turns dark (`post.wgsl:761-804`).
  *
- * Invariants: pure functions of their arguments; a pixel with a zero normal (the cleared background) has no edge.
+ * Invariants: pure functions of their arguments; a pixel with a zero normal (the cleared background, the sky) has no
+ * edge.
  *
  * @see engine/gfx/post/composite.ts
  * @see tests/e2e/post.spec.ts

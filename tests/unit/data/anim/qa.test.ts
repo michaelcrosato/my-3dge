@@ -75,11 +75,11 @@ describe('the anim QA family over the library', () => {
     for (const entry of accepted) expect(CLIP_DATA_METRICS.has(entry.metric) || CLIP_PLAY_METRICS.has(entry.metric), entry.id).toBe(true); // prettier-ignore
   });
 
-  it('plays a sample with every set in it, on HUMANOIDS’ four builds and the mannequin', () => {
+  it('plays a sample with every set in it, on HUMANOIDS’ five builds (the adult’s since WP 13.2) and the mannequin', () => {
     const sampled = new Set([...SAMPLE].map((id) => id.slice('clip:'.length, id.indexOf('/'))));
     expect([...sampled].sort()).toEqual(sets.map((set) => set.set).sort());
     expect(SAMPLE.size).toBeGreaterThan(60);
-    expect(clipBuilds(sets)).toEqual(['build:heroic', 'build:chibi', 'build:bulky', 'build:skeleton', 'build:mannequin']); // prettier-ignore
+    expect(clipBuilds(sets)).toEqual(['build:heroic', 'build:chibi', 'build:bulky', 'build:skeleton', 'build:adult', 'build:mannequin']); // prettier-ignore
   });
 
   it('is what `node x qa anim` runs: a clip through the family, against the same baseline', async () => {

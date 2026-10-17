@@ -409,6 +409,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Characters (WP 3.2)**: actors moved by the character controller (Rapier's, moved across then down), with an action game's feel: acceleration and skid, coyote time, a jump buffer, a variable jump, a wall jump, a dash, pushing props; the feel meter measures how one handles. A body's reactions and an actor's secondary motion as components (WP 7.8).
 `createCharacter`, `CHARACTER_FIELDS`, `CHARACTER_STATE_FIELDS`, `spawnActor`, `removeActor`, `measureFeel`, `reactTo`, `stepReactions`, `REACTION_FIELDS`, `SECONDARY_FIELDS`; types `Character`, `CharacterState`, `ActorSpec`, `ActorComponent`, `ActorComponents`, `FeelReport`, `FeelOptions`, `AnimatorComponent`, `SecondaryComponent`, `ReactionComponents`.
 
+**Movement profiles (WP 13.3)**: the registry kind `movement`, and the shooter model (Apex's) a profile gives a character.
+`defineMovement`, `getMovement`, `listMovements`, `MODEL_FIELDS`, `MOTION_FIELDS`; types `MovementProfile`, `MovementSpec`, `MovementModel`, `MovementModelSpec`, `MotionState`, `MotionFeel`.
+
 **Levels v2 (WP 4.2)**: the hall's glyphs (gallery =, stairs ^, dais o, brazier t), ramps and daises, hull and cylinder colliders, and the surface tag underfoot.
 `surfaceAt`; types `HullCollider`, `CylinderCollider`, `RampDescriptor`, `DaisDescriptor`, `Side`.
 
@@ -441,6 +444,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 
 **Clips on actors (WP 8.9)**: the clip layer in an actor's animator as sim data, the component clips, stepped at the actor's ground speed and drawn over its body by the view; its events come as `clip`. spawnActor's `body` names the body it is drawn as (body:mannequin).
 `addClips`, `playClip`, `stopClip`, `seekClip`, `locomoteClips`, `clipLayerOf`; types `ClipsSpec`, `PuppetComponent`.
+
+**The feel kit, sim-side (WP 13.4)**: the shooter model's live tuning, `movement.<group>.<field>` (a setting off its default replaces that number in every model character's model, from the next step), and an actor placed at rest (a scene's dev action: a feel course's start).
+`MOVEMENT_SETTINGS`, `movementOverrides`, `tuneCharacter`, `placeActor`; types `MovementOverride`.
 
 For the page (the browser side), not for code that runs in the sim:
 
@@ -506,4 +512,7 @@ types `EngineStats`.
 
 **Effects (WP 6.4)**: particles as data (emitters: shardfall's presets, the 2D engine's kinds, event effects), drawn with telegraphs on the floor, socket trails, bolts and camera shake by a view's effects; never part of the hash.
 `createEffects`, `FX_BUDGET`, `BOLT`, `defineEmitter`, `getEmitter`, `TRAIL_TINTS`, `ScreenShake`, `SHAKE`; types `Effects`, `EffectsOptions`, `FxEventPayload`, `FxStats`, `Emitter`, `EmitterSpec`, `EmitterLayer`, `ParticleFields`, `FxLight`, `BurstOptions`, `ParticleStats`, `TrailSampleLike`.
+
+**The feel kit (WP 13.4)**: courses, scripted runs of a scene and the numbers measured on them (`node x feel`); the runner and its verdicts; the owner's feel panel and copy as profile.
+`defineCourse`, `getCourse`, `listCourses`, `METRICS`, `runCourse`, `createFeelPanel`, `tunedSpec`, `profileText`; types `Course`, `Measure`, `Metric`, `CourseResult`, `CourseSample`, `MeasureResult`, `FeelPanel`, `FeelRow`, `FeelInspector`.
 <!-- lean:api:end -->

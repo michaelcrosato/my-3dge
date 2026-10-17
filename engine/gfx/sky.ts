@@ -301,6 +301,7 @@ export function createSky(
   const exposure = uniform(1).setGroup(renderGroup);
   dome.material.colorNode = vec4((dome.material.colorNode as Node).rgb.mul(exposure), 1);
   Object.assign(dome, { frustumCulled: false, renderOrder: -2 });
+  dome.userData.background = true; // drawn at the far plane, behind everything: the ID pass's empty space (idpass.ts)
   const strip = new DataTexture(bakeBackdrop({ haze: '#000000', layers: [] }), BACKDROP.width, BACKDROP.height);
   Object.assign(strip, { format: RGBAFormat, type: UnsignedByteType, colorSpace: SRGBColorSpace });
   Object.assign(strip, { wrapS: RepeatWrapping, wrapT: ClampToEdgeWrapping, magFilter: LinearFilter });
@@ -315,6 +316,7 @@ export function createSky(
   backdrop.name = 'sky/backdrop';
   backdrop.scale.set(BACKDROP.radius, BACKDROP.band, BACKDROP.radius);
   Object.assign(backdrop, { frustumCulled: false, renderOrder: -1 });
+  backdrop.userData.background = true;
   // In id order (the pool's lights, the ambient light, the sun): see the file comment.
   scene.add(pool.group);
   atmosphere.install(scene);

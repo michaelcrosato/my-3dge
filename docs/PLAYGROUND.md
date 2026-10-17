@@ -56,7 +56,7 @@ wide. Floors are 0.3 m slabs.
 
 | Storey | Floor | Clear height | Rooms and features |
 |---|---|---|---|
-| Basement | −3.0 m | 2.7 m | workshop, laundry and boiler room, storage (shelves, crates); a crawlspace 1.1 m high under the deck, crouch and slide only, to the bulkhead doors in the backyard; the stairs up; a light switch at the stairs |
+| Basement | −3.0 m | 2.7 m | workshop, laundry and boiler room, storage (shelves, crates); a crawlspace 1.4 m high under the deck (the crouched hull, 1.19 m, fits; the standing one does not), crouch and slide only, to the bulkhead doors in the backyard; the stairs up; a light switch at the stairs |
 | Ground floor | 0.0 m | 2.7 m | the front door onto the porch; the hall, with stairs up and down; the living room (sofa, TV, fireplace, rug); the dining room; the kitchen, with an island to vault; a bathroom; the back door onto the deck; the door into the garage; windows on every side |
 | Upper floor | 3.0 m | 2.7 m | the landing over the stairwell, with a railing; two bedrooms (a bunk bed to mantle onto); the study; a bathroom; a door onto the garage's roof deck; a door onto the porch roof; the attic hatch and its ladder |
 | Attic | 6.0 m | 0 at the eaves to 4.2 m at the ridge | crouch at the edges, stand in the middle; a roof window out |
@@ -91,7 +91,7 @@ its heights given by the playground's own glyphs; from WP 13.18 it stands in its
 | Mantle walls | 0.5, 1.0, 1.5 and 2.0 m high, and 2.1 m (just past the reach), 2 m wide | the mantle's reach and time, and the refusal above it |
 | Fences | 0.6, 0.9 and 1.2 m high, thin | mantling over at a sprint, sprinting out |
 | Slide ramps | 5°, 10°, 20° and 30°, 12 m long, flat run-outs | the slide on the flat and the gain downhill |
-| Crawl | a tunnel 1.0 m high and 8 m long; a bar at 1.2 m | crouching and sliding under |
+| Crawl | a tunnel 1.4 m clear and 8 m long; a bar 1.3 m up (the crouched hull, 1.19 m, fits under both; the standing one, 1.83 m, under neither) | crouching and sliding under |
 | Gaps | 2 to 9 m between platforms 1.5 m up | the jump's reach: running, sprinting, slide-jumping, superglided |
 | Climb walls | 3, 4, 5, 6 and 6.9 m high, and 7.2 m (just past the reach) | the wall-climb's reach, topping out into a mantle; wall-bounces |
 | Stairs and slopes | risers 0.10, 0.15, 0.20 and 0.25 m; ramps at the slope limit and above it | steps and slopes |
@@ -130,7 +130,7 @@ distances ±2 cm, angles ±1°. Where sources disagree, the row says so and give
 | Sprint | held or toggled; only while moving within 45° of the view; a side key dips it to 4.80 m/s | 6.60 m/s armed (260 u/s); 7.59 m/s holstered | ERA-p, AMW-G, TF2 |
 | Walk | ours: Apex walks only while aiming down sights; a held key or a light stick tilt gives the rifle's aiming speed | 2.20 m/s (the run × 0.5) | R5W (`ads_move_speed_scale`) |
 | Crouch-walk | | 2.03 m/s armed (80 u/s); 2.34 m/s holstered | ERA-p, AMW-G |
-| Acceleration | linear, in m/s², toward the wished velocity; the speed is capped at the larger of the current speed and the wished one | 63.5 m/s² below 3.05 m/s; 11.4 m/s² up to the run; 2.54 m/s² from the run to the sprint (about 0.87 s) | ERA-p, ERA-c, TF2 (one datamine: medium confidence) |
+| Acceleration | linear, in m/s², toward the wished velocity; the speed is capped at the larger of the current speed and the wished one | 63.5 m/s² below 3.05 m/s; 11.4 m/s² up to the run; 2.54 m/s² from the run to the sprint (0.83 s: the run's band overshoots it by a tick, as R5Reloaded's trial shows) | ERA-p, ERA-c, TF2 (one datamine: medium confidence) |
 | Deceleration | only the part of the velocity away from the input slows; the input's own direction keeps up to the wished speed | 31.8 m/s² standing (sprint to a stop in about 0.21 s); crouched 38.1 m/s² | ERA-p, TF2 |
 | Capsule | radius and heights of Apex's medium legends | radius 0.41 m; 1.83 m standing; 1.19 m crouched; eyes at 1.52 m and 0.81 m | AMW-EN, ERA-p |
 | Steps and slopes | | steps up to 0.56 m; walkable up to 45.57° (a floor normal at least 0.7 up) | ERA-p, AMW-EN |
@@ -140,7 +140,7 @@ distances ±2 cm, angles ±1°. Where sources disagree, the row says so and give
 | Slide: friction | the slowing, then a decay of the velocity | 2.54 m/s² (10.2 m/s² when crouch is released or the input opposes the slide), then × 0.7 per second | ERA-p, TF2 |
 | Slide: steering, slopes, steps | sideways only; gravity along the floor (half before the move, half after); a step up costs speed | 1.27 m/s² sideways; the pull g · n_y along the slope; 10 m/s lost per metre climbed | ERA-c, TF2 |
 | Slide: end | into a crouch; releasing crouch ends it only when slow | below 3.18 m/s; release ends it at or under 8.89 m/s | ERA-p, TF2 |
-| Slide-jump | the jump keeps the slide's speed, but a boost jumped in its first 0.24 s above 8.89 m/s is taken back (a "dead slide") | a jump of 1.27 m | AMW-S, ERA-c |
+| Slide-jump | the jump keeps the slide's speed, but a boost jumped while the slide's crouch still goes down is taken back (a "dead slide"); a boosted slide jumped between 0.85 of 8.89 m/s and 8.89 m/s leaves at 8.89 (the long jump) | a jump of 1.27 m; the dead slide's window 0.2 s, the crouch's (AMW measures 0.24 s) | AMW-S, ERA-c |
 | Jump | gravity, height and grace | g = 19.05 m/s² (750 u/s²); 1.42 m high (7.36 m/s up); coyote time 0.2 s | CVAR, AMW-G, ERA-p |
 | Jump fatigue | a jump soon after landing goes lower; a mantle, walking off a ledge or the coyote time clears it | 0.15 s after landing: 0.3 of the height, back to full by 0.75 s | AMW-G, ERA-p |
 | Air control | Quake's air acceleration (strafing turns and gains speed); no air friction | wished speed capped at 1.52 m/s; 12.7 m/s² | AMW-A, ERA-c, CVAR |
@@ -179,7 +179,7 @@ Apex's default bindings where the browser allows; every action rebinds (WP 13.9,
 | Move | W A S D | left stick |
 | Look | the mouse, under pointer lock | right stick |
 | Jump | Space | A |
-| Crouch and slide | Left Ctrl (hold), C (toggle) | B |
+| Crouch and slide | C (hold; the toggle a setting): Apex's Left Ctrl closes the tab with W | B |
 | Sprint | Left Shift (hold or toggle) | left stick click |
 | Walk (ours, §3.2) | Left Alt (hold) | a light tilt of the stick |
 | Use | E | X |
@@ -189,6 +189,7 @@ Apex's default bindings where the browser allows; every action rebinds (WP 13.9,
 | Camera mode, shoulder swap | T, X | view button, d-pad left |
 | Isometric turn | Q and E (isometric only) | d-pad right |
 | Pause, menu | Escape | menu button |
+| The feel panel (ours, WP 13.4) | F | |
 
 ### 3.4 Feel beyond the numbers
 

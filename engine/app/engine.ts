@@ -118,6 +118,8 @@ export interface EngineOptions {
   log?: Log;
   /** The page's touch buttons, a `touchlayout` id (engine/ui/touch.ts); without it, only the touch stick shows. */
   touchLayout?: string;
+  /** The action map the devices read (`actionMap:thirdPerson` by default): its actions are the intents' buttons. */
+  actionMap?: string;
   /** Opens the page's menu, called after the touch menu button has paused the game. */
   onMenu?: () => void;
   /** The page's own presentation (its sound): called once per drawn frame, after the draw, with the run to read. */
@@ -289,7 +291,8 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     options.onMenu?.();
   };
   const touchMode = () => settingsNow.get<TouchSetting>('touch');
-  const input = (parts.input = createInput({ window, document, element: options.canvas, registry, log, touchMode, onTap })); // prettier-ignore
+  const map = options.actionMap;
+  const input = (parts.input = createInput({ window, document, element: options.canvas, registry, log, touchMode, onTap, map })); // prettier-ignore
   parts.layer = createTouchLayer(document, layout);
   attachSwipes(document);
   connectVirtualDevice(started.host, input.virtual);

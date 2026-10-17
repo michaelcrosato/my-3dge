@@ -9,7 +9,8 @@
  * Whose a file is: 'engine' files are copied into every game byte for byte and never edited there (engine/, tools/,
  * data/, the box as the worked example, the configs, scripts/setup.sh, DOCTRINE.md and the docs a game reads); the
  * starter game (labs/game/) is copied once and is the game's own from then on; 'skip' stays in the engine's
- * repository (its plan, records, CI, deployment, test suites and fixtures). A path no rule names is never copied, and
+ * repository (its plan, records, CI, deployment, test suites, fixtures and the playground, labs/playground/, whose
+ * mechanisms a game reaches through the engine). A path no rule names is never copied, and
  * tools/game/new-game.test.ts fails on one, so each new file at the engine's root is a decision.
  *
  * Invariants: lists use `/` and are sorted; the lock's `files` are the game's paths; its `npm` holds the package.json
@@ -74,9 +75,9 @@ const ENGINE_FILES = new Set([
 /** Engine files a game gets under another path: the engine's license travels with its code. */
 export const RENAMED = Object.freeze({ LICENSE: 'engine/LICENSE' });
 
-/** The engine's own, at its root: its plan, records, CI, deployment, test suites, fixtures and the lean package. */
+/** The engine's own: its plan, records, CI, deployment, test suites, fixtures, the playground and the lean package. */
 const ENGINE_ONLY =
-  /^(PLAN\.md|AGENTS\.md|CLAUDE\.md|README\.md|index\.html|package(-lock)?\.json|playwright\.config\.ts|vercel\.json|\.vercelignore|\.gitignore|\.gitattributes|\.github\/|\.claude\/|fixtures\/|tests\/|docs\/|scripts\/|labs\/hello\/|lean\/)/;
+  /^(PLAN\.md|AGENTS\.md|CLAUDE\.md|README\.md|index\.html|package(-lock)?\.json|playwright\.config\.ts|vercel\.json|\.vercelignore|\.gitignore|\.gitattributes|\.github\/|\.claude\/|fixtures\/|tests\/|docs\/|scripts\/|labs\/hello\/|labs\/playground\/|lean\/)/;
 
 /** Which source files a game gets, and as whose: the first rule whose `test` matches a path decides (`ownerOf`). */
 export const RULES = Object.freeze([

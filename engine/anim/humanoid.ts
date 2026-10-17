@@ -42,7 +42,7 @@ import { log as engineLog, type Log } from '../core/log';
 import { approach, MathUtils, Quaternion, Vector3 } from '../core/math';
 import { Rng } from '../core/rng';
 import { SIM_DT } from '../core/time';
-import { B, holdAlong, SIDES, sideSign, solveArm, solveLeg, solveSpine, type Rig, type LimbSide } from './authoring';
+import { B, holdAlong, relaxHand, SIDES, sideSign, solveArm, solveLeg, solveSpine, type Rig, type LimbSide } from './authoring'; // prettier-ignore
 import { getBuild, type Build } from './builds';
 import { createWorldPose, forwardKinematics, type WorldPose } from './fk';
 import { crouchShare, GAIT, type BodyMotion, type EffectorContext, type HumanoidWeights } from './locomotion';
@@ -316,6 +316,7 @@ export class Humanoid implements Rig {
     solveSpine(this, E, this.state.body.twist * GAIT.hipTwist, this.state.body.twist);
     for (const side of SIDES) solveArm(this, side, E.hands[side]);
     for (const side of SIDES) solveLeg(this, side, E.feet[side]);
+    for (const side of SIDES) if (side === 'L' || this.weapon === 'none') relaxHand(this, side);
     if (this.weapon !== 'none') holdAlong(this, E.blade);
     forwardKinematics(this.skeleton, this.pose, this.world);
     return this;

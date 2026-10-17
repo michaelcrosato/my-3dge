@@ -55,6 +55,8 @@ export interface CharacterHit {
 export interface CharacterMove {
   moved: Vector3;
   grounded: boolean;
+  /** How much higher a step it climbed left it (m); 0 when it climbed none. */
+  climbed: number;
   /** Obstacles met moving across (pushed props among them). */
   across: CharacterHit[];
   /** Obstacles met moving down or up. */
@@ -80,8 +82,8 @@ const SLOPE_TOLERANCE = 1e-3;
 const LIFT = 1;
 /** One-way platforms hold feet down to this far below their top (m). */
 const ONE_WAY_GRACE = 0.08;
-/** Sensors never block a character. */
-const FLAGS = RAPIER.QueryFilterFlags.EXCLUDE_SENSORS;
+/** Sensors never block a character: the flags of every query its controller makes. */
+export const QUERY_FLAGS = RAPIER.QueryFilterFlags.EXCLUDE_SENSORS;
 
 /** The controller for `world` with a skin of `offset`, made once. */
 function controllerOf(world: RAPIER.World, offset: number): RAPIER.KinematicCharacterController {
@@ -104,6 +106,15 @@ export function partsOf(world: RAPIER.World, body: number, where: string) {
   const capsule = collider?.shapeType() === RAPIER.ShapeType.Capsule;
   check(capsule, where, body, 'a character’s body id (addCharacter)');
   return { rigid: rigid!, collider: collider! };
+}
+
+/**
+ * The half height of a character's capsule now: its standing one, exactly, unless a crouch changed it
+ * (engine/physics/hull.ts), when the capsule's own, which Rapier keeps as a float32.
+ */
+export function halfHeightOf(collider: RAPIER.Collider, character: Character): number {
+  const [live, standing] = [collider.halfHeight(), character.capsule.height / 2];
+  return live === Math.fround(standing) ? standing : live;
 }
 
 /** Sets the controller up for one move: Rapier's own autostep and snap are off (`moveCharacter` does both). */
@@ -142,7 +153,7 @@ export function isWall(character: Character, normal: Vector3): boolean {
 }
 
 /** The groups a character's controller queries: its collider's, less the groups it `shoves` (groups.ts `dropGroups`). */
-function queryGroups(collider: RAPIER.Collider, character: Character): number {
+export function queryGroups(collider: RAPIER.Collider, character: Character): number {
   const groups = collider.collisionGroups();
   return character.shoves?.length ? dropGroups(groups, character.shoves) : groups;
 }
@@ -156,8 +167,11 @@ export function isWalkable(character: Character, normal: Vector3): boolean {
  * Moves a character's capsule by `desired` as far as it can: across first (sliding along walls, up slopes it climbs,
  * pushing props), then down or up alone. A `grounded` character moves across lifted off the floor by its skin (so the
  * move never grazes the floor it stands on), climbs steps (a move across that a wall stops is tried again up by
- * `autostep.height`, across and down, and kept when it gets further and lands no higher than that on ground it can
- * stand on, with `autostep.width` of room), and follows the ground down by up to `snap`. Returns the translation made;
+ * `autostep.height`, across (from where the step stopped it with `stepFrom: 'contact'`) and down, and kept when it
+ * gets further and lands no higher than that on ground it can stand on, with `autostep.width` of room, reporting the
+ * rise as `climbed`), and follows the ground down by up to `snap` (with `stayOnGround`, also after a leg down that
+ * nothing stopped, over a crest: Rapier calls it grounded within its skin, and it would fly off). Returns the
+ * translation made;
  * the body gets there when the world steps (`stepCharacter` sets its velocity). Throws `PHYSICS_BAD_ARGUMENT`.
  */
 export function moveCharacter(
@@ -173,13 +187,12 @@ export function moveCharacter(
   const start = new Vector3().copy(rigid.translation());
   const controller = controllerOf(world, character.offset);
   const groups = queryGroups(collider, character);
-  const { radius, height } = character.capsule;
-  const ground = start.y - height / 2 - radius - character.offset;
+  const ground = start.y - halfHeightOf(collider, character) - character.capsule.radius - character.offset;
   const solid = oneWayFilter(world, options.oneWay, ground + character.offset);
   const leg: LegMove = (from, x, y, z, slide = character.slide) => {
     configure(controller, character, slide);
     collider.setTranslation(from);
-    controller.computeColliderMovement(collider, { x, y, z }, FLAGS, groups, solid);
+    controller.computeColliderMovement(collider, { x, y, z }, QUERY_FLAGS, groups, solid);
     const m = controller.computedMovement();
     return { moved: new Vector3(m.x, m.y, m.z), grounded: controller.computedGrounded(), hits: hitsOf(controller) };
   };
@@ -187,17 +200,20 @@ export function moveCharacter(
   const lift = grounded ? leg(start, 0, character.offset * LIFT, 0).moved : new Vector3();
   const from = start.clone().add(lift);
   let across = leg(from, want.x, 0, want.z);
-  if (grounded) across = stepUp(world, character, collider, rigid, leg, from, ground, want, across, groups) ?? across;
+  const step = grounded ? stepUp(world, character, collider, rigid, leg, from, ground, want, across, groups) : null;
+  if (step) across = step;
   const mid = from.clone().add(across.moved);
   let down = leg(mid, 0, want.y - lift.y, 0);
-  if (grounded && !down.grounded && character.snap > 0) {
+  const landed = (got: Leg) => got.grounded && got.hits.some((hit) => isWalkable(character, hit.normal));
+  if (grounded && !(character.stayOnGround ? landed(down) : down.grounded) && character.snap > 0) {
     const snap = leg(mid.clone().add(down.moved), 0, -character.snap, 0, false);
     if (snap.grounded) down = { moved: down.moved.add(snap.moved), grounded: true, hits: [...down.hits, ...snap.hits] };
   }
   const moved = lift.add(across.moved).add(down.moved);
   collider.setTranslation(start.clone().add(moved));
-  const standing = down.grounded && down.hits.some((hit) => isWalkable(character, hit.normal));
-  return { moved, grounded: standing, across: across.hits, vertical: down.hits };
+  const standing = landed(down);
+  const climbed = step ? Math.max(moved.y, 0) : 0;
+  return { moved, grounded: standing, climbed, across: across.hits, vertical: down.hits };
 }
 
 /** A controller move from a point by `(x, y, z)`, sliding along what it meets or not. */
@@ -227,8 +243,9 @@ function stepUp(
   const dir = { x: want.x / reach, y: 0, z: want.z / reach };
   const { radius } = character.capsule;
   const lean = Math.min(character.slideSlope, character.maxSlope);
-  const onto = Math.max(reach, width, radius + character.offset - radius * Math.sin(lean) + 0.005);
-  const room = [collider.shape, 0, onto, true, FLAGS, groups, undefined, rigid] as const;
+  const ahead = character.stepFrom === 'contact' ? Math.max(across.moved.x * dir.x + across.moved.z * dir.z, 0) : 0;
+  const onto = Math.max(reach, width, ahead + radius + character.offset - radius * Math.sin(lean) + 0.005);
+  const room = [collider.shape, 0, onto, true, QUERY_FLAGS, groups, undefined, rigid] as const;
   if (world.castShape(top, collider.rotation(), dir, ...room)) return null;
   const over = leg(top, dir.x * onto, 0, dir.z * onto);
   const fall = leg(top.clone().add(over.moved), 0, ground - top.y, 0, false);
@@ -242,7 +259,7 @@ function stepUp(
  * The filter that makes one-way platforms solid only to feet at or above their top, less a grace. Their tops are read
  * first: Rapier calls the filter in the middle of a move, when no collider may be asked anything.
  */
-function oneWayFilter(world: RAPIER.World, oneWay: ReadonlySet<number> | undefined, feet: number) {
+export function oneWayFilter(world: RAPIER.World, oneWay: ReadonlySet<number> | undefined, feet: number) {
   if (!oneWay?.size) return undefined;
   const tops = new Map<number, number>();
   for (const id of oneWay) {
@@ -271,11 +288,17 @@ export function sink(
   const { collider } = partsOf(world, body, 'stepCharacter(body)');
   const at = collider.translation();
   const own = new Set(Array.from({ length: floor.numColliders() }, (_, i) => floor.collider(i).handle));
-  const solid = oneWayFilter(world, oneWay, at.y - character.capsule.height / 2 - character.capsule.radius);
+  const solid = oneWayFilter(world, oneWay, at.y - halfHeightOf(collider, character) - character.capsule.radius);
   const controller = controllerOf(world, character.offset);
   configure(controller, character, false);
   const keep = (other: RAPIER.Collider) => !own.has(other.handle) && (solid?.(other) ?? true);
-  controller.computeColliderMovement(collider, { x: 0, y: by, z: 0 }, FLAGS, queryGroups(collider, character), keep);
+  controller.computeColliderMovement(
+    collider,
+    { x: 0, y: by, z: 0 },
+    QUERY_FLAGS,
+    queryGroups(collider, character),
+    keep,
+  );
   const y = controller.computedMovement().y;
   collider.setTranslation({ x: at.x, y: at.y + y, z: at.z });
   return y;

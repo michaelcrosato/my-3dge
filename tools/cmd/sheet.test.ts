@@ -9,7 +9,9 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ENGINE_MOVES } from '../../engine/anim/moves-data';
 import { dispatch, loadCommand, ROOT } from '../x';
-import { qaPrefixes, sheetFrames, subjectIds } from './sheet';
+import { animSheet } from '../../engine/anim/sheet';
+import { createSkeleton } from '../../engine/anim/skeleton';
+import { qaPrefixes, sheetFor, sheetFrames, subjectIds } from './sheet';
 
 const commands = { sheet: () => loadCommand(ROOT, 'sheet') };
 
@@ -53,6 +55,13 @@ describe('sheetFrames', () => {
 });
 
 describe('x sheet', () => {
+  it("draws on the build's own skeleton: build:adult's bones, not the chibi default", () => {
+    const { frames, sheet, drawn } = sheetFor('pose:cheer', { build: 'build:adult', facing: 0, count: 3 });
+    expect(drawn.skeleton?.build.id).toBe('build:adult');
+    expect(sheet.svg).toBe(animSheet(frames, { ...drawn, skeleton: createSkeleton('build:adult') }).svg);
+    expect(sheet.svg).not.toBe(animSheet(frames, { ...drawn, skeleton: createSkeleton('build:chibi') }).svg);
+  });
+
   it('writes the SVG sheet with --svg and reports it, with the subject within its anim QA baseline', async () => {
     const printed: string[] = [];
     const code = await dispatch(['sheet', 'pose:cheer', '--svg', '--frames', '3'], {

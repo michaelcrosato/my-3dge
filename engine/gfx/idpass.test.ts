@@ -1,8 +1,9 @@
 /**
  * @file Unit tests for engine/gfx/idpass.ts in Node: the ID colours (distinct, never black), the drawables a scene
- * lists with their names, entities, protagonist and the reasons known before drawing (hidden, outside), decoding a
- * readback into visible and unseen objects (pixels, box, centre, stray, empty, the protagonist's pixels), an
- * instanced mesh's instances each in its own colour and counted (after G9), the marks, and drawing them. The GPU half is proven by tests/e2e/shot.spec.ts.
+ * lists with their names, entities, protagonist and the reasons known before drawing (hidden, background, outside),
+ * decoding a readback into visible and unseen objects (pixels, box, centre, stray, empty, the protagonist's pixels),
+ * an instanced mesh's instances each in its own colour and counted (after G9), the marks, and drawing them. The GPU
+ * half is proven by tests/e2e/shot.spec.ts.
  */
 import { BoxGeometry, Group, InstancedMesh, Mesh, MeshBasicNodeMaterial, PerspectiveCamera, Scene } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
@@ -65,6 +66,19 @@ describe('listDrawables', () => {
     expect(drawables[1]).toMatchObject({ entity: 7, protagonist: 'hero' });
     expect(drawables[0].entity).toBeUndefined();
     expect(drawables.map((d) => byColour.get(d.colour))).toEqual([0, 1, 2, 3, 4, 5, 6]);
+  });
+
+  it('leaves out what the frame draws behind everything (userData.background: the sky), as the scene background', () => {
+    const { scene, camera } = fixture();
+    const sky = new Group();
+    sky.userData.background = true;
+    const dome = new Mesh(new BoxGeometry(100, 100, 100), new MeshBasicNodeMaterial());
+    dome.name = 'sky/dome';
+    sky.add(dome);
+    scene.add(sky);
+    const { drawables } = listDrawables(scene, camera);
+    expect(drawables.find((d) => d.name === 'sky/dome')?.reason).toBe('background');
+    expect(drawables.find((d) => d.name === 'floor')?.reason).toBeNull();
   });
 
   it('takes the protagonist by name when no object carries userData.protagonist', () => {

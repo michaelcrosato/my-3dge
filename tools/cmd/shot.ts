@@ -9,11 +9,12 @@
  * thumbnail). report.json gets the look metrics (coverage, luma P5 and P95 and their spread, the dark and blown-out
  * shares, colours, palette, flat share, dithering, edge density, the largest object and its share, whether the
  * protagonist is visible), the ID-pass list (`px.<name>`, `share.<name>`, `bbox.<name>` as `x0,y0,x1,y1` from the
- * top left, `unseen.<name>`: `hidden`, `outside` or `covered`; a repeated name gets `#<id>`), and each look note as
- * a warning with its number and fix; `out/shot/<target>/shot.json` holds the whole result, thumbnail and object map
- * included (out/ is never committed). A page without `__engine.shot` (labs/hello) is screenshotted instead: look
- * metrics and thumbnail, no ID pass. While `x inspect` runs, the shot is taken in its browser instead of a new one:
- * on its open page when that shows the URL asked (so what `x set` changed shows), else in a new tab (§8.1).
+ * top left, `unseen.<name>`: `hidden`, `background`, `outside` or `covered`; a repeated name gets `#<id>`), and each
+ * look note as a warning with its number and fix; `out/shot/<target>/shot.json` holds the whole result, thumbnail
+ * and object map included (out/ is never committed). A page without `__engine.shot` (labs/hello) is screenshotted
+ * instead: look metrics and thumbnail, no ID pass. While `x inspect` runs, the shot is taken in its browser instead
+ * of a new one: on its open page when that shows the URL asked (so what `x set` changed shows), else in a new tab
+ * (§8.1).
  *
  * Flags: `--ids` (the ID pass only) and `--metrics` (the look only), both when neither is given; `--marks` numbers
  * what the ID pass sees on `marks.png`, the legend as `mark.<n>` (shardfall's `see`); `--png` writes `frame.png`;

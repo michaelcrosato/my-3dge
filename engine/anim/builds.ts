@@ -1,8 +1,11 @@
 /**
  * @file Body builds (PLAN.md WP 3.4, §5.2, I-08): the registry kind `build`, one entry per body proportion set, in
  * metres. `build:chibi` (the default: a big head), `build:heroic` (tall), `build:bulky` (brawlers, bosses) and
- * `build:skeleton` come from my-3d2dge; a game adds its own with `defineBuild`. `createSkeleton` (skeleton.ts) turns
- * a build into rest-pose bone offsets; locomotion (WP 3.6) reads the stance and gait fields.
+ * `build:skeleton` come from my-3d2dge; `build:adult` (WP 13.2) is an adult's, 1.80 m standing, its legs and trunk on
+ * Drillis and Contini's shares of height (thigh 0.245, shin and ankle 0.285, the knees a little bent in the stance),
+ * its arm's two segments nearly equal, as the moves and grips written for the source's builds need, and its gait
+ * planting its soles at full stride (`plantedStride`); a game adds its own with `defineBuild`. `createSkeleton` (skeleton.ts) turns a build into rest-pose bone offsets; locomotion (WP 3.6)
+ * reads the stance and gait fields.
  *
  * Invariants: every length is in metres before `size`, which scales them all (a 0.5 build is half as tall). The
  * carried fields keep the source's names and are its numbers / 16, except `hipZ` → `hipHeight` and `headR` →
@@ -58,6 +61,12 @@ export const BUILD_FIELDS = {
     unit: 'm/s',
     description: 'The speed the stride is tuned for.',
   },
+  plantedStride: {
+    type: 'boolean',
+    default: false,
+    description:
+      "Whether the gait lowers the pelvis so a planted sole reaches its target at full stride (new: the source's builds keep its gait, whose soles hang at full stride, ADR-0009 amendment 4).",
+  },
 } as const satisfies Schema;
 
 /** A `build` entry: one body's proportions, in metres before `size`. */
@@ -105,6 +114,28 @@ const ENGINE_BUILDS: Record<string, BuildSpec> = {
     footLength: 0.21,
     handLength: 0.18,
     chestDepth: 0.3,
+  },
+  'build:adult': {
+    legUpper: 0.44,
+    legLower: 0.51,
+    hipHeight: 0.93,
+    hipHalf: 0.09,
+    footSpread: 0.11,
+    torso: 0.55,
+    shoulderHalf: 0.2,
+    neck: 0.1,
+    headRadius: 0.11,
+    armUpper: 0.3,
+    armLower: 0.29,
+    ankleHeight: 0.075,
+    footLength: 0.27,
+    handLength: 0.19,
+    chestDepth: 0.24,
+    stride: 0.42,
+    lift: 0.17,
+    swing: 0.28,
+    speedRef: 4.41,
+    plantedStride: true,
   },
   'build:skeleton': {
     legUpper: 0.4375,

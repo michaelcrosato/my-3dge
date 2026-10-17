@@ -1,7 +1,9 @@
 /**
  * @file Unit tests for the humanoid's poses and effector layers (engine/anim/poses.ts, locomotion.ts; PLAN.md WP 3.6,
  * I-09): misspelt pose, stance and weapon names warn once with the closest name and are ignored; the layer tables
- * list every layer with its weight; the free hand waves; the gait at rest stands where my-3d2dge stood.
+ * list every layer with its weight; the free hand waves; the gait at rest stands where my-3d2dge stood; a
+ * `plantedStride` build's gait (build:adult) drops the pelvis so its planted soles are in reach at full stride and
+ * stay on the floor through the solve, while the source's builds keep their gait, whose soles hang.
  */
 import { describe, expect, it } from 'vitest';
 import { createLog, type Log } from '../core/log';
@@ -9,7 +11,8 @@ import { Vector3 } from '../core/math';
 import { fru } from './authoring';
 import { getBuild } from './builds';
 import { Humanoid, type HumanoidInput } from './humanoid';
-import { gaitFoot, pelvisTarget, restContext, spineDirection } from './locomotion';
+import { socketPosition } from './fk';
+import { GAIT, gaitFoot, pelvisTarget, plantedHeight, restContext, spineDirection } from './locomotion';
 import { hashPose } from './pose';
 import { FOOT_LAYERS, HAND_LAYERS, layerWeights, poseName, stanceName, weaponName } from './poses';
 
@@ -87,5 +90,54 @@ describe('the gait (locomotion.ts)', () => {
     expect(pelvisTarget(ctx, new Vector3()).y).toBe(0.89375);
     expect(fru(gaitFoot(ctx, 'R', new Vector3()))).toEqual([0.05, 0.11875, 0]);
     expect(spineDirection(ctx, new Vector3()).toArray()).toEqual([-0, 1, 0]);
+  });
+
+  /** For each phase over a cycle at full stride: the farthest a planted sole lies from its hip, and the pelvis. */
+  function spread(build: string): { reach: number; worst: number; low: number } {
+    const b = getBuild(build);
+    let [worst, low] = [0, Infinity];
+    for (let k = 0; k < 64; k++) {
+      const ctx = { ...restContext(b), sp: 1, phase: (k / 64) * 2 * Math.PI };
+      const pelvis = pelvisTarget(ctx, new Vector3());
+      low = Math.min(low, pelvis.y);
+      for (const [side, s] of [
+        ['L', -1],
+        ['R', 1],
+      ] as const) {
+        const sole = gaitFoot(ctx, side, new Vector3());
+        if (sole.y > 0) continue; // lifted
+        const hip = new Vector3(pelvis.x - s * b.hipHalf, pelvis.y, pelvis.z);
+        worst = Math.max(worst, hip.distanceTo(sole));
+      }
+    }
+    return { reach: b.legUpper + b.legLower, worst, low };
+  }
+
+  it("plants a plantedStride build's soles in reach at full stride; the source's builds keep their gait", () => {
+    const adult = spread('build:adult');
+    expect(adult.worst).toBeLessThanOrEqual(adult.reach * GAIT.plantReach + 1e-9); // the knee never locks
+    expect(adult.low).toBeLessThan(getBuild('build:adult').hipHeight - 0.05); // the pelvis drops as the feet spread
+    const heroic = spread('build:heroic');
+    expect(heroic.worst).toBeGreaterThan(heroic.reach + 0.05); // ADR-0009 amendment 4: its soles hang
+    expect(plantedHeight({ ...restContext(getBuild('build:adult')), sp: 0 }, 0, 0)).toBeGreaterThan(0.93); // at rest
+  });
+
+  it("puts the adult's soles on the floor through the solve while they are planted, running at full stride", () => {
+    const highest = (build: string) => {
+      const hero = new Humanoid({ build, clock: 0 });
+      const velocity = new Vector3(0, 0, getBuild(build).speedRef);
+      let high = 0;
+      for (let step = 0; step < 240; step++) {
+        hero.update({ velocity });
+        if (step < 60) continue; // up to speed
+        for (const side of ['L', 'R'] as const) {
+          if (hero.effectors.feet[side].y > 0) continue; // the gait lifts it
+          high = Math.max(high, socketPosition(hero.skeleton, hero.world, `contact${side}`, new Vector3()).y);
+        }
+      }
+      return high;
+    };
+    expect(highest('build:adult')).toBeLessThan(0.02); // planted: on the floor, give or take the toe's bend
+    expect(highest('build:heroic')).toBeGreaterThan(0.05); // the soles hang above their targets
   });
 });
