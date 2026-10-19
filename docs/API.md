@@ -29,10 +29,14 @@ game agent's manual.
 - `addCapsule` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a capsule prop, standing up (`height` is its straight middle, as CapsuleGeometry's); returns its id.
 - `addClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Gives the live animated actor `id` the component `clips` (`clipsFor`); an actor spawned in the same step takes them from `spawnActor`'s `clips`.
 - `addCylinder` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a cylinder prop, standing up (a barrel); returns its id.
+- `addLadder` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a ladder (see the file comment); returns its entity.
+- `addLauncher` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a jump pad or a trampoline (see the file comment); returns its entity.
 - `addLevelBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id.
+- `addLevelLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders `level`'s ladder glyphs stand (engine/world/traverse.ts's `levelLadders`); returns their entities.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `addProp` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a dynamic body of one `shape` (a hull too: a rock), of `PROP_MATERIAL` unless `spec` says otherwise; its id.
 - `addSensor` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a body whose one collider is a sensor of `shape`: it blocks nothing and detects bodies.
+- `addZipline` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a zipline and its poles (see the file comment); returns its entity.
 - `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
 - `AIM_CHAIN` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The default chain, from the body up: about 103° of yaw and 69° of pitch in all.
@@ -477,7 +481,9 @@ game agent's manual.
 - `KnockOptions` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): How hard `knock` hits: speeds, the same for every mass.
 - `Label` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): A world-anchored label: change its text, anchor or visibility at any time; it shows them at the next frame.
 - `LabelOptions` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): How a label is made.
+- `LadderSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A ladder, parsed: every field of `LADDER_FIELDS`, its defaults filled.
 - `launch` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Throws an agent or corpse up: its upward speed becomes at least `up` (m/s) and its speed across the ground is multiplied by `carry` (1; the prototype's kill launch: 1.3).
+- `LauncherSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A jump pad or a trampoline, parsed: every field of `LAUNCHER_FIELDS`, its defaults filled.
 - `LAYER_SLOTS` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The slots that take layers: those after the solve, each changing the solved pose.
 - `LayerSlot` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A slot that takes layers.
 - `LEGACY_FIELDS` (const from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): Appendix C's table: each old field of `E.MOVES` and the new field it becomes (`fromLegacy` applies it).
@@ -491,6 +497,7 @@ game agent's manual.
 - `LevelFloorOptions` (interface from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): What a level's floor is baked from; every part may be left out.
 - `levelFloorTexture` (function from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): A texture generator for `level`'s whole floor: its base texture with moss at the walls' feet, rune circles on the daises and contact shadows along every block's foot (see the file comment).
 - `LevelGlyph` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
+- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order.
 - `LevelMeshes` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): A level's meshes (see the file comment).
 - `LevelMeshesOptions` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): What `createLevelMeshes` needs: where materials come from, and optionally more recipes and a log.
 - `LevelMeshPart` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): One level mesh: its descriptor's recipe and glyphs, the mesh, and for an instanced shape one cell per instance.
@@ -711,6 +718,11 @@ game agent's manual.
 - `RETARGET` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units).
 - `RetargetOptions` (interface from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): What `retargetPose` does beyond the rotation copy.
 - `retargetPose` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): `baked` at `t` seconds on `skeleton`, written into `out` (a new pose by default): the rotations copied and aligned at rest, the hip joints where the clip's are times the hip-height ratio, the root at the origin unturned; then the feet planted, the pose lifted and a held blade kept above the floor (`options`).
+- `RideCable` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A zipline as the model rides it: its cable from `from` to `to` (m); a balloon's top launches a skydive.
+- `RideLadder` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A ladder: the foot of its face (m), its top's height, its normal across the ground (out of the wall), its width.
+- `RideLauncher` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A launcher: the volume the feet set it off in, its top, the velocity it gives, its bounce and whether it keeps the speed across.
+- `Rides` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): The world's rides, as the sim gives them to a tick (engine/sim/rides.ts).
+- `ridesOf` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing.
 - `RigBody` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A rig body (see the file comment).
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
 - `RigJoints` (type from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A rig's pose: each joint a world matrix, a point, or a list of points.
@@ -914,6 +926,7 @@ game agent's manual.
 - `WorldPose` (interface from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): A pose in world space: each joint's matrix (16 numbers), position (3) and rotation (4), in `JOINTS` order.
 - `WorldTimers` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
 - `wrapIndex` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): `i` folded into [0, n) (n a positive integer): -1 → n − 1.
+- `ZiplineSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A zipline, parsed: every field of `ZIPLINE_FIELDS`, its defaults filled.
 
 ### [`engine/sim-api.ts`](../engine/sim-api.ts)
 
@@ -933,10 +946,14 @@ game agent's manual.
 - `addCapsule` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a capsule prop, standing up (`height` is its straight middle, as CapsuleGeometry's); returns its id.
 - `addClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Gives the live animated actor `id` the component `clips` (`clipsFor`); an actor spawned in the same step takes them from `spawnActor`'s `clips`.
 - `addCylinder` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a cylinder prop, standing up (a barrel); returns its id.
+- `addLadder` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a ladder (see the file comment); returns its entity.
+- `addLauncher` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a jump pad or a trampoline (see the file comment); returns its entity.
 - `addLevelBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id.
+- `addLevelLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders `level`'s ladder glyphs stand (engine/world/traverse.ts's `levelLadders`); returns their entities.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `addProp` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a dynamic body of one `shape` (a hull too: a rock), of `PROP_MATERIAL` unless `spec` says otherwise; its id.
 - `addSensor` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a body whose one collider is a sensor of `shape`: it blocks nothing and detects bodies.
+- `addZipline` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a zipline and its poles (see the file comment); returns its entity.
 - `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
 - `AIM_CHAIN` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The default chain, from the body up: about 103° of yaw and 69° of pitch in all.
@@ -1222,7 +1239,9 @@ game agent's manual.
 - `knockback` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds `velocity` (m/s) to an agent or corpse in the world, the same for every mass, waking it.
 - `knockbackVelocity` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): The velocity a hit gives `target` away from `from`: `speed` m/s along the ground, plus `up` m/s upward, into `out` (nothing along the ground when they stand on the same spot).
 - `KnockOptions` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): How hard `knock` hits: speeds, the same for every mass.
+- `LadderSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A ladder, parsed: every field of `LADDER_FIELDS`, its defaults filled.
 - `launch` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Throws an agent or corpse up: its upward speed becomes at least `up` (m/s) and its speed across the ground is multiplied by `carry` (1; the prototype's kill launch: 1.3).
+- `LauncherSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A jump pad or a trampoline, parsed: every field of `LAUNCHER_FIELDS`, its defaults filled.
 - `LAYER_SLOTS` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The slots that take layers: those after the solve, each changing the solved pose.
 - `LayerSlot` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A slot that takes layers.
 - `LEGACY_FIELDS` (const from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): Appendix C's table: each old field of `E.MOVES` and the new field it becomes (`fromLegacy` applies it).
@@ -1231,6 +1250,7 @@ game agent's manual.
 - `LEVEL_FORMAT` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level.
 - `LevelEntry` (type from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): A `level` entry: a level's text and where it came from.
 - `LevelGlyph` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
+- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order.
 - `LevelProblem` (interface from [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
 - `levelProps` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): The placements `level` makes for the props of `registry` (the shared one by default); see the file comment.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
@@ -1371,6 +1391,11 @@ game agent's manual.
 - `RETARGET` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units).
 - `RetargetOptions` (interface from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): What `retargetPose` does beyond the rotation copy.
 - `retargetPose` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): `baked` at `t` seconds on `skeleton`, written into `out` (a new pose by default): the rotations copied and aligned at rest, the hip joints where the clip's are times the hip-height ratio, the root at the origin unturned; then the feet planted, the pose lifted and a held blade kept above the floor (`options`).
+- `RideCable` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A zipline as the model rides it: its cable from `from` to `to` (m); a balloon's top launches a skydive.
+- `RideLadder` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A ladder: the foot of its face (m), its top's height, its normal across the ground (out of the wall), its width.
+- `RideLauncher` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A launcher: the volume the feet set it off in, its top, the velocity it gives, its bounce and whether it keeps the speed across.
+- `Rides` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): The world's rides, as the sim gives them to a tick (engine/sim/rides.ts).
+- `ridesOf` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing.
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
 - `runOverWalk` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Whether the run, not the walk, keeps pace with `groundSpeed` (m/s): above √(w·r) × 1.15, or × 0.87 while the run is `running`.
@@ -1499,6 +1524,7 @@ game agent's manual.
 - `WorldEvents` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
 - `WorldPose` (interface from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): A pose in world space: each joint's matrix (16 numbers), position (3) and rotation (4), in `JOINTS` order.
 - `WorldTimers` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The timers a world offers game code: `after` and `every` in sim seconds; the world steps them.
+- `ZiplineSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A zipline, parsed: every field of `ZIPLINE_FIELDS`, its defaults filled.
 
 ## Engine internals and tools
 
@@ -2866,7 +2892,7 @@ For the agents who maintain the engine.
 - `MEASURE_FIELDS` (const): One number a course measures (see the file comment).
 - `Metric` (type): A measure's metric.
 - `METRICS` (const): Everything a measure reads off the run (see the file comment).
-- `MOVE_METRICS` (const): The metrics of the move, read off the player's samples.
+- `MOVE_METRICS` (const): The metrics of the move, read off the player's samples: `speed`, the mean speed across the ground from `from` to `to`, and `topSpeed`, the highest; `speedGain`, the speed across the ground at `to` less that at `from`, and `velocityChange`, how far the velocity across the ground moved between them (a lurch's, m/s); `apex`, how far the feet rise above where they were at `from`; `height`, the feet's height at `to`; `distance`, across the ground from the feet at `from` to the feet at `to`; `time`, seconds from `from` to the first sample that meets `until` (`speedAbove` or `speedBelow` `value`, `grounded` or `airborne`; on the shooter model `crouched` or `standing`, its hull, `sliding` or `stopsSliding`, `mantling`, `grabbing`, `hanging`, `pulling` or `climbing`, and `riding` a zipline, `onLadder`, `skydiving` or in its `landingPose`), and `duration`, how long from the first sample that meets it it goes on meeting it (0 if none does); `top`, the highest its feet go; `heightAt`, the feet's height at the first sample that meets `until`; `topRise` and `topFall`, the fastest it rises and falls (m/s); `standHeight`, the highest its feet stand on the ground (what it mantled or climbed onto); `grounded`, 1 when it stands at `to`; `rideSpeed`, its speed along a zipline or up a ladder at `to`, and `rideGain`, that at `to` less that at `from`; `catches`, the most zipline catches it made since it last stood.
 - `UNTILS` (const): When a `time` measure stops: the first sample at which this holds.
 
 ### [`engine/dev/feel/panel.ts`](../engine/dev/feel/panel.ts)
@@ -3922,6 +3948,13 @@ For the agents who maintain the engine.
 - `StageProps` (interface): Props drawn on the stage (see the file comment).
 - `StagePropsOptions` (interface): What `createStageProps` takes.
 
+### [`engine/gfx/stageRides.ts`](../engine/gfx/stageRides.ts)
+
+- `createStageRides` (function): Makes the rides of a stage (see the file comment).
+- `RUNG` (const): A rung every this many metres up a ladder.
+- `StageRides` (interface): The rides on a stage (see the file comment).
+- `StageRidesOptions` (interface): What `createStageRides` takes.
+
 ### [`engine/gfx/stageSky.ts`](../engine/gfx/stageSky.ts)
 
 - `createStageSky` (function): Makes the stage's lights on `scene` (see the file comment); the stage's own show until a sky is asked for.
@@ -4307,6 +4340,10 @@ For the agents who maintain the engine.
 - `restorePhysics` (function): A new world from a capture (checked first: `PHYSICS_BAD_CAPTURE`); the capture is left as it was.
 - `STATE_STRIDE` (const): Numbers a body takes in the hashed state: id, translation (3), rotation (4), linear and angular velocity (3 each).
 
+### [`engine/physics/carry.ts`](../engine/physics/carry.ts)
+
+- `carried` (function): Runs `move` with the carry of the kinematic body `floor` (where the step takes the point under the feet: turned about its centre of mass and moved, as Rapier integrates it; zero for any other floor or none), that body's velocities held at zero meanwhile, so Rapier's kinematic friction adds nothing.
+
 ### [`engine/physics/character.ts`](../engine/physics/character.ts)
 
 - `addCharacter` (function from [`engine/physics/characterBody.ts`](../engine/physics/characterBody.ts)): Adds a character's body (a kinematic capsule, group `actor`), its bottom just outside the skin above `feet`.
@@ -4450,6 +4487,11 @@ For the agents who maintain the engine.
 - `updateSprint` (function): Apex's sticky sprint (see the file comment): updates `motion.sticky`, `stickyLeft` and `sprinting`.
 - `walkMove` (function): Apex's WalkMove: one tick of `h` across the ground toward `wish` (at most length 1) at `maxSpeed`: the stick curve (a move shorter than 1 counts as length × (2 − length), a sprinting move 1.25 times longer, capped at 1), then `decelerate`, then `accelerate` at `groundAccel` of the speed it started with.
 
+### [`engine/physics/movement/ladder.ts`](../engine/physics/movement/ladder.ts)
+
+- `stepLadder` (function): One tick on a ladder (see the file comment): the feet's next point on it; `'mantle'` when it starts the mantle over its top (the caller steps the mantle); null once it let go or stepped off at its foot (the tick goes on in the air).
+- `tryLadder` (function): Takes hold of a ladder in reach if one takes (see the file comment); true when it did.
+
 ### [`engine/physics/movement/mantle.ts`](../engine/physics/movement/mantle.ts)
 
 - `crouchPressed` (const): Whether the crouch went down this tick: the held button's press or the toggle's.
@@ -4468,7 +4510,7 @@ For the agents who maintain the engine.
 - `GAITS` (const): How a character moves on the ground this tick: a slide is a gait.
 - `MANTLES` (const): A mantle's phase: none, the grab up to the lip, hanging from it, the pull over it.
 - `MODEL_FIELDS` (const): The model's numbers (see the file comment): what `character.movement` holds.
-- `MODES` (const): Where a character is in the model: on the ground, in the air, mantling or climbing (WP 13.7 adds rides).
+- `MODES` (const): Where a character is in the model: on the ground, in the air, mantling, climbing, on a zipline, on a ladder, skydiving.
 - `MOTION_FIELDS` (const): What a character on the model keeps between ticks: the component `motion`'s fields, hashed and captured.
 - `MotionState` (type): The component `motion`: a character's state in the model (`MOTION_FIELDS` documents each field).
 - `MovementModel` (type): The model's numbers, filled: what `character.movement` holds.
@@ -4489,6 +4531,25 @@ For the agents who maintain the engine.
 ### [`engine/physics/movement/profiles.ts`](../engine/physics/movement/profiles.ts)
 
 - `MOVEMENT_PROFILES` (const): The profiles, by id.
+
+### [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)
+
+- `cableAxis` (function): `cable`'s length (m) and its unit axis from its first anchor to its second.
+- `cablePoint` (function): The point `at` metres along `cable` from its first anchor.
+- `launch` (function): Sets a character off a launcher its feet stand in (see the file comment), on a model or not, under gravity `g`: true when one did.
+- `letGo` (function): Leaves a zipline or a ladder into the air at `v`, `zipline.cooldown` before the next; a jump arms the lurch.
+- `nearestOnCable` (function): The point of `cable`'s ride span (`end` short of each anchor) nearest `p`, how far along and how far off; null for a span too short to ride.
+- `NO_RIDES` (const): A world without rides.
+- `RideCable` (interface): A zipline as the model rides it: its cable from `from` to `to` (m); a balloon's top launches a skydive.
+- `RideLadder` (interface): A ladder: the foot of its face (m), its top's height, its normal across the ground (out of the wall), its width.
+- `RideLauncher` (interface): A launcher: the volume the feet set it off in, its top, the velocity it gives, its bounce and whether it keeps the speed across.
+- `Rides` (interface): The world's rides, as the sim gives them to a tick (engine/sim/rides.ts).
+- `RideTick` (type): A tick's numbers beside the states: the mantle's (the move, the view across the ground, dt, g).
+- `RIDING` (const): What a ride takes from the motion it starts in: no slide, sprint, duck, mantle or climb.
+- `spent` (const): A coyote time already spent: no coyote jump off a ride.
+- `stepSkydive` (function): One tick of a skydive (see the file comment): sets the velocity and returns the move to make, through the controller.
+- `stepZipline` (function): One tick on a zipline (see the file comment): the feet's next point along the cable, or null once it let go (jumped, dropped, reached an end or lost the cable: the tick goes on in the air, or skydiving).
+- `tryZipline` (function): Catches a zipline in reach if one takes (see the file comment); true when it did.
 
 ### [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)
 
@@ -4535,7 +4596,7 @@ For the agents who maintain the engine.
 
 ### [`engine/physics/room.ts`](../engine/physics/room.ts)
 
-- `fitHull` (function): Gives the body the hull `motion`'s stance has: in the `air` about its middle where hull.ts says, else (and mantling) keeping the feet.
+- `fitHull` (function): Gives the body the hull `motion`'s stance has: in the `air` about its middle where hull.ts says, else (and on a path) keeping the feet.
 - `roomOf` (function): The room `character`'s body `body` stands in now (see the file comment).
 
 ### [`engine/physics/world.ts`](../engine/physics/world.ts)
@@ -4647,6 +4708,38 @@ For the agents who maintain the engine.
 - `addLevelBodies` (function): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id.
 - `LEVEL_FRICTION` (const): The level's friction: the prototype's hall.
 
+### [`engine/sim/movementApi.ts`](../engine/sim/movementApi.ts)
+
+- `addLadder` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a ladder (see the file comment); returns its entity.
+- `addLauncher` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a jump pad or a trampoline (see the file comment); returns its entity.
+- `addLevelLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders `level`'s ladder glyphs stand (engine/world/traverse.ts's `levelLadders`); returns their entities.
+- `addZipline` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a zipline and its poles (see the file comment); returns its entity.
+- `defineMovement` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): Registers a movement profile (on the shared registry by default).
+- `getMovement` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): The movement profile `id`.
+- `LadderSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A ladder, parsed: every field of `LADDER_FIELDS`, its defaults filled.
+- `LauncherSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A jump pad or a trampoline, parsed: every field of `LAUNCHER_FIELDS`, its defaults filled.
+- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order.
+- `listMovements` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): Every movement profile, sorted by id.
+- `MODEL_FIELDS` (const from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers (see the file comment): what `character.movement` holds.
+- `MOTION_FIELDS` (const from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): What a character on the model keeps between ticks: the component `motion`'s fields, hashed and captured.
+- `MotionFeel` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): The shooter model's feel numbers (engine/sim/feelCourse.ts): speeds in m/s, times in s, heights in m.
+- `MotionState` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The component `motion`: a character's state in the model (`MOTION_FIELDS` documents each field).
+- `MOVEMENT_SETTINGS` (const from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): The settings, path → field: each the model's number or switch with its group's description first, live.
+- `MovementModel` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers, filled: what `character.movement` holds.
+- `MovementModelSpec` (type from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers as a profile writes them: any group, and any number in one, left out is Apex's.
+- `MovementOverride` (type from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): One setting off its default: the model's group (none for `turnRate`), the number's or switch's key, and its value.
+- `movementOverrides` (function from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): The settings `get` reads off their defaults, as overrides (none when every one is at its default).
+- `MovementProfile` (type from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): A movement profile, as the registry holds it.
+- `MovementSpec` (interface from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): How a movement profile is written (`MOVEMENT_FIELDS`).
+- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was.
+- `RideCable` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A zipline as the model rides it: its cable from `from` to `to` (m); a balloon's top launches a skydive.
+- `RideLadder` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A ladder: the foot of its face (m), its top's height, its normal across the ground (out of the wall), its width.
+- `RideLauncher` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A launcher: the volume the feet set it off in, its top, the velocity it gives, its bounce and whether it keeps the speed across.
+- `Rides` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): The world's rides, as the sim gives them to a tick (engine/sim/rides.ts).
+- `ridesOf` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing.
+- `tuneCharacter` (function from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): `character` with `overrides` over its model's values; itself when it has no model or nothing is overridden.
+- `ZiplineSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A zipline, parsed: every field of `ZIPLINE_FIELDS`, its defaults filled.
+
 ### [`engine/sim/props.ts`](../engine/sim/props.ts)
 
 - `definePropKinds` (function): Declares the component `sceneProp` on `registry` (once).
@@ -4694,6 +4787,16 @@ For the agents who maintain the engine.
 - `REPLAY_KEYS` (const): The keys a replay has, in file order.
 - `StepView` (interface): One run's view of a step, as `x replay --bisect` compares two.
 - `Verdict` (type): The verdict on runs of a replay (§6.5 item 8): against this platform's goldens when it has them (`mismatch` names the first run and step that miss), else, when another platform recorded it, the runs against each other (`other platform`, or `unstable` naming the first run that parts from run 0), else `none`.
+
+### [`engine/sim/rides.ts`](../engine/sim/rides.ts)
+
+- `addLadder` (function): Places a ladder (see the file comment); returns its entity.
+- `addLauncher` (function): Places a jump pad or a trampoline (see the file comment); returns its entity.
+- `addLevelLadders` (function): Places the ladders `level`'s ladder glyphs stand (engine/world/traverse.ts's `levelLadders`); returns their entities.
+- `addZipline` (function): Places a zipline and its poles (see the file comment); returns its entity.
+- `defineRideKinds` (function): Declares the components `zipline`, `ladder` and `launcher` on `registry`, once.
+- `ridesOf` (function): What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing.
+- `ZIPLINE_POLE` (const): A zipline pole's radius (m).
 
 ### [`engine/sim/scene.ts`](../engine/sim/scene.ts)
 
@@ -4887,6 +4990,7 @@ For the agents who maintain the engine.
 
 - `V1_GLYPHS` (const): The v1 glyphs by id, as `defineGlyph` specs (the kind's defaults fill the rest).
 - `V2_GLYPHS` (const): The v2 glyphs by id (WP 4.2): the hall's gallery, stairs, dais and brazier.
+- `V3_GLYPHS` (const): The v3 glyphs by id (WP 13.7): the ladder, which engine/world/traverse.ts's `levelLadders` stands.
 
 ### [`engine/world/level/level.ts`](../engine/world/level/level.ts)
 
@@ -5063,6 +5167,21 @@ For the agents who maintain the engine.
 - `telegraphKind` (function): Declares the kind `telegraph` on `registry`, with its four shapes, unless it has it.
 - `TelegraphPlace` (interface): A telegraph where it stands: plain data, as a component or a frame's list holds it.
 - `TelegraphSpec` (type): What `defineTelegraph` takes: any field.
+
+### [`engine/world/traverse.ts`](../engine/world/traverse.ts)
+
+- `LADDER_DEPTH` (const): How far a ladder's rungs stand off the wall it leans on (m).
+- `LADDER_FIELDS` (const): A ladder's fields (see the file comment).
+- `LadderSpec` (type): A ladder, parsed: every field of `LADDER_FIELDS`, its defaults filled.
+- `LAUNCHER_FIELDS` (const): A launcher's fields (see the file comment).
+- `LauncherSpec` (type): A jump pad or a trampoline, parsed: every field of `LAUNCHER_FIELDS`, its defaults filled.
+- `launcherVolume` (function): A launcher's volume: from its top's corner a little below it to `reach` above, `[min, max]` (m).
+- `levelLadders` (function): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order.
+- `parseTraverse` (function): `spec` parsed and checked as a `kind` (see `traverseProblems`); throws `CORE_BAD_SPEC` naming each problem.
+- `TRAVERSE_FIELDS` (const): The kinds of traversal, by their fields.
+- `traverseProblems` (function): The problems of a spec of `kind` beyond its fields (its fields' own are `parse`'s): sizes, lengths, directions.
+- `ZIPLINE_FIELDS` (const): A zipline's fields (see the file comment).
+- `ZiplineSpec` (type): A zipline, parsed: every field of `ZIPLINE_FIELDS`, its defaults filled.
 
 ### [`eslint.config.js`](../eslint.config.js)
 
@@ -5418,9 +5537,21 @@ For the agents who maintain the engine.
 
 - `JUMPS_START` (const): Where the jumps start: the open floor south of the slide ramps, facing south.
 
+### [`labs/playground/courses/ladder.ts`](../labs/playground/courses/ladder.ts)
+
+- `LADDER_STARTS` (const): Where the runs start: on the floor 3 m north of the ladder, and on the tower's top half a metre in from it.
+
+### [`labs/playground/courses/launcher.ts`](../labs/playground/courses/launcher.ts)
+
+- `LAUNCHER_STARTS` (const): Where the runs start: 2.75 m north of the pad; on the trampoline's mat; on the tower's top, 0.5 m in from its west edge.
+
 ### [`labs/playground/courses/mantle.ts`](../labs/playground/courses/mantle.ts)
 
 - `MANTLE_RUNS` (const): Each run: its wall's height (m) and the x of its middle; each starts at z 8.5, 1.5 m short of the walls' faces.
+
+### [`labs/playground/courses/skydive.ts`](../labs/playground/courses/skydive.ts)
+
+- `SKYDIVE_START` (const): Where the run starts: on the floor a metre north of the balloon's line, facing it.
 
 ### [`labs/playground/courses/slideFlat.ts`](../labs/playground/courses/slideFlat.ts)
 
@@ -5443,6 +5574,10 @@ For the agents who maintain the engine.
 
 - `GLIDE_START` (const): Where every run starts: 1.5 m short of the 1.5 m mantle wall's face.
 
+### [`labs/playground/courses/zipline.ts`](../labs/playground/courses/zipline.ts)
+
+- `ZIPLINE_STARTS` (const): Where the runs start: on the tower's top by its pulley, under the cable near its low end, by the balloon's line.
+
 ### [`labs/playground/feel.ts`](../labs/playground/feel.ts)
 
 - `FEEL_KEY` (const): The key that shows and hides the panel.
@@ -5452,13 +5587,16 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/levels/gym.ts`](../labs/playground/levels/gym.ts)
 
+- `GYM_BALLOON` (const): The redeploy balloon: a vertical line from the floor up to the balloon (docs/PLAYGROUND.md §2.2's stands 60 m up on the hill; the gym's 90 m, so a course glides, then dives to 35 m/s, before the landing pose takes over at 30 m).
 - `GYM_CRAWL` (const): The crawl (m): a tunnel `clear` high inside, `long` and `wide`, its walls `wall` high with the roof slab (`slab` thick) laid on them, and a bar whose underside is `bar` up, on two posts `post` high.
 - `GYM_FEATURES` (const): The features, north to south (see the file comment and docs/PLAYGROUND.md §2.3).
+- `GYM_LAUNCHERS` (const): The launchers and the heights they throw to (m): a jump pad flush with the floor, and a trampoline whose mat stands 0.5 m up against the tower's west face, so a walk off the tower's top drops onto it from 5.5 m.
 - `GYM_PROPS` (const): The crawl's slab and bar: fixed boxes the gym stands on its walls and posts (the level's blocks start at the floor).
 - `GYM_SIZE` (const): The gym's floor (m): west to east and north to south, inside its perimeter wall.
 - `GYM_SPAWN` (const): The spawn: the tile `@` marks, at the north end of the gym, its centre (m).
 - `GYM_TEXT` (const): The gym's level text (format 1), drawn from `GYM_FEATURES`.
 - `GYM_TILE` (const): The gym's tile (m): half a metre, so a fence is half a metre thick.
+- `GYM_ZIPLINE` (const): The tower's zipline, from its top's pulley to the south one (engine/world/traverse.ts's spec).
 - `GymFeature` (interface): A calibrated feature of the gym.
 - `GymKind` (type): What a feature measures (docs/PLAYGROUND.md §2.3).
 - `GymRect` (interface): A rectangle of a feature in level metres (0, 0 is the perimeter's north-west corner), on whole tiles, of `char`.

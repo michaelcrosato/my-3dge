@@ -287,3 +287,61 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **Left to the view's WPs:** the motion state holds the contacts as plain data (the lip, the wall's normal, the rise
   column, the landing, the phase and its ticks; `handsOf` puts the hands on the lip a shoulder apart): WP 13.11 plays
   the grab, the pull and the hang on them; WP 13.8 frames them.
+
+## Amendment 7 (2026-10-19, WP 13.7): ziplines, ladders, launchers and the balloon
+
+- **Rides are world data the sim hands the model.** The physics may import only the core and Rapier, so the model
+  cannot read the world's entities: it defines what it asks (engine/physics/movement/ride.ts's `Rides`: cables,
+  ladders and launchers as plain data), the sim answers from the scene's entities (engine/sim/rides.ts: the components
+  `zipline`, `ladder` and `launcher`, hashed and captured; `addZipline`, `addLadder`, `addLauncher`,
+  `addLevelLadders`, `ridesOf`), whose specs and checks are engine/world/traverse.ts's, and the stage draws the
+  components (engine/gfx/stageRides.ts). The model gains the modes `zipline`, `ladder` and `skydive` and their state
+  (`ride`, `rideAt`, `rideDir`, `rideSpeed`, `rideAccel`, `rideEnd`, `catches`, `rideCool`, `landing`), and the groups
+  `zipline`, `skydive` and `ladder`; its input the look's pitch and the `interact` button's press (`usePressed`).
+- **A ladder is a glyph or `addLadder`, not a prop entry.** A prop stands by a yaw alone; a ladder needs its face, its
+  top and the wall's normal. The glyph field `ladder` (the engine's `|`) stands one on each run of its tiles along a
+  face, against the neighbour standing highest; anywhere else `addLadder` places one, drawn by the stage. The field
+  changed the compiled level's shape: the fixtures' and the hall's compiled hashes were re-recorded, and with `ladder`
+  left out of their glyphs each gives its old hash.
+- **Calls where §3.2 is silent (ours):** the hands 2.03 m over the feet on a cable; use's reach 1.52 m from the hands
+  and the air's unasked catch 0.61 m; a ride ends 0.61 m short of each anchor, or where a cast of the hull along the
+  line, made as it catches, meets something; the way along a cable is the view's (its pitch too), else the velocity's,
+  else down a sloped line and up a vertical one (within 10° of straight up); catching stands the hull up; a catch from
+  the air speeds up at the jump-on's 25.4 m/s² for the whole ride; the catches count resets on the ground; no catch or
+  ladder within 0.25 s of letting go of either. The WP's "a jump keeps the speed" and §3.2's "off at up to 11.3 m/s"
+  meet thus: a jump off goes up a full jump with 10.16 m/s added along the view across the ground, capped at 11.3 m/s
+  or at the ride's own speed across, whichever is higher. At an end a ride lets go keeping half its speed; a vertical
+  line's top hops it 1 m up and on along the view at the run's speed; a balloon's throws it up at 15.24 m/s into the
+  skydive.
+- **The skydive (ours, from §3.2's two numbers):** the view's pitch sets the fall from 20 m/s (level or up) to 35 m/s
+  (straight down), reached under gravity and braked at 21 m/s² when faster; the push steers it across at up to 12 m/s
+  (8 m/s²); the landing pose takes over from the tick whose move ends within 30 m of the ground below, slows the fall
+  to 6.1 m/s (21 m/s² brings a 35 m/s dive there with a tick to spare: 20 did not) and lands with no stun.
+- **Ladders (ours, tuned):** taken hold of standing, running into one within 45° and 0.3 m of its face or with use,
+  or from its top with use, the feet 1 m down; climbed at 2.20 m/s, the hull 0.1 m off the face, moved straight; over
+  the top by the mantle's pull alone, once the lip stands within the pull's 1.07 m (the climb stops there); at the
+  foot it steps off; a jump goes 3.05 m/s away rising 0.5 m; crouch lets go.
+- **Launchers set off any character,** on the model or not, without a field in the character's state (it would have
+  changed every golden): its feet in the launcher's volume, not rising. The speed up is the one that leaves the
+  launcher's top at its own (or `bounce` times the speed it falls onto the top at), whatever height in the volume
+  caught it, so a pad's and a trampoline's heights hold to the millimetre. A `solid` one stands on a fixed box from the
+  ground: the trampoline's frame. The event `launch` `{ id }` tells the view and the sound.
+- **Pole feet are given, not found.** Rapier's queries see bodies only from the first step on, so a ray in `setup`
+  missed the tower the scene had just stood: a zipline's spec names where its poles stand (`feet`, the ground by
+  default).
+- **The gym** (docs/PLAYGROUND.md §2.3): the tower's ladder up its north face, its 40 m zipline from a pole on its top
+  to the south wall, the trampoline against its west face (so a jump off the top measures the bounce: a walk off the
+  edge rolls the capsule 17 cm down the corner first), the jump pad in the open, and the redeploy balloon 90 m up
+  (the hill's stands at 60 m: the gym's leaves room for a glide and a dive before the landing pose).
+- **The feel kit gained** the states `riding`, `onLadder`, `skydiving` and `landingPose`, the metrics `top`,
+  `heightAt`, `topFall`, `rideSpeed`, `rideGain` and `catches`, and a sample's ride speed, catches and landing pose;
+  the courses `zipline`, `ladder`, `launcher` and `skydive` pass, and tests/replays/playground-rides.replay.json (the
+  ladder and over the top, the zipline down, the pad, the balloon and its skydive) holds one golden in Node and
+  Chromium. The playground's three other replays were re-recorded (the motion state grew; the gym's rides are
+  entities); the other 22 goldens hold. A whole-number field of the model is a setting too (`movement.zipline.catches`).
+- **Watched until WP 13.8:** in the zipline course the shooter's camera snaps in by the tower's pole (4.9 m) and, after
+  the 20 m fall from the balloon's line, every camera catches up with the stop 0.33 to 0.36 m a frame; in the skydive
+  every camera keeps its bounds.
+- **For the owner's playtest:** a ride down to the far pulley lets go at half its speed and bumps the pole; whether a
+  ride should end in a dismount, and the tuned numbers above, are the playtest's to say.
+- **engine/physics/carry.ts:** the kinematic floor's carry moved out of engine/physics/character.ts, at its 400 lines.

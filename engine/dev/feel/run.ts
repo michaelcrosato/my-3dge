@@ -52,9 +52,13 @@ export interface CourseSample {
   gait?: string;
   stance?: string;
   sliding?: boolean;
-  /** On the shooter model: its mode (`ground`, `air`, `mantle`, `climb`) and its mantle's phase. */
+  /** On the shooter model: its mode (`ground`, `air`, `mantle`, `climb`, `zipline`, `ladder`, `skydive`) and its mantle's phase. */ // prettier-ignore
   mode?: string;
   mantle?: string;
+  /** On the shooter model: its speed along a ride (m/s), its zipline catches since it last stood, its skydive's landing pose. */ // prettier-ignore
+  rideSpeed?: number;
+  catches?: number;
+  landing?: boolean;
 }
 
 /** What a run recorded, which `measure` reads: the samples, the posed animation, each camera measure's track. */
@@ -97,7 +101,9 @@ type Player = Partial<ActorComponents> & { id: number; actor: ActorComponents['a
 /** The sample of `player`. */
 function sampleOf({ actor, motion }: Player): CourseSample {
   const sample = { feet: [actor.x, actor.y, actor.z], velocity: [actor.vx, actor.vy, actor.vz], grounded: actor.grounded, yaw: actor.yaw } as const; // prettier-ignore
-  return motion ? { ...sample, gait: motion.gait, stance: motion.stance, sliding: motion.sliding, mode: motion.mode, mantle: motion.mantle } : sample; // prettier-ignore
+  if (!motion) return sample;
+  const { gait, stance, sliding, mode, mantle, rideSpeed, catches, landing } = motion;
+  return { ...sample, gait, stance, sliding, mode, mantle, rideSpeed, catches, landing };
 }
 
 /** Plays `course` in a session of its own and judges its measures (see the file comment). */
@@ -157,6 +163,8 @@ function reached(m: Measure, s: CourseSample): boolean {
   if (m.until === 'sliding' || m.until === 'stopsSliding') return s.sliding === (m.until === 'sliding');
   if (m.until === 'mantling' || m.until === 'climbing') return s.mode === (m.until === 'mantling' ? 'mantle' : 'climb');
   if (m.until === 'grabbing' || m.until === 'hanging' || m.until === 'pulling') return s.mantle === { grabbing: 'grab', hanging: 'hang', pulling: 'pull' }[m.until]; // prettier-ignore
+  if (m.until === 'riding' || m.until === 'onLadder' || m.until === 'skydiving') return s.mode === { riding: 'zipline', onLadder: 'ladder', skydiving: 'skydive' }[m.until]; // prettier-ignore
+  if (m.until === 'landingPose') return s.mode === 'skydive' && s.landing === true;
   return m.until === 'speedAbove' ? across(s) > m.value! : across(s) < m.value!;
 }
 
@@ -180,8 +188,14 @@ export function measure(m: Measure, run: CourseRecord, steps: number, dt: number
     }
     case 'apex':
       return Math.max(...span.map((s) => s.feet[1])) - start.feet[1];
+    case 'top':
+      return Math.max(...span.map((s) => s.feet[1]));
     case 'height':
       return samples[to].feet[1];
+    case 'heightAt': {
+      const hit = span.find((s) => reached(m, s));
+      return hit ? hit.feet[1] : Infinity;
+    }
     case 'distance':
       return Math.hypot(samples[to].feet[0] - start.feet[0], samples[to].feet[2] - start.feet[2]);
     case 'grounded':
@@ -197,6 +211,14 @@ export function measure(m: Measure, run: CourseRecord, steps: number, dt: number
     }
     case 'topRise':
       return Math.max(...span.map((s) => s.velocity[1]));
+    case 'topFall':
+      return Math.max(...span.map((s) => -s.velocity[1]));
+    case 'rideSpeed':
+      return samples[to].rideSpeed ?? 0;
+    case 'rideGain':
+      return (samples[to].rideSpeed ?? 0) - (start.rideSpeed ?? 0);
+    case 'catches':
+      return Math.max(...span.map((s) => s.catches ?? 0));
     case 'standHeight':
       return Math.max(...span.filter((s) => s.grounded).map((s) => s.feet[1]), -Infinity);
     case 'footSlide':

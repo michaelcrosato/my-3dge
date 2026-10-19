@@ -207,7 +207,7 @@ test.describe('the playground', () => {
     expect(await links('scenes')).toEqual(['gym']);
     expect(await links('cameras')).toEqual(PLAYGROUND_CAMERAS.map((mode) => mode.name));
     expect(await links('looks')).toEqual(['cel', 'pixel']);
-    expect(await links('replays')).toEqual(['climb', 'gym', 'moves']);
+    expect(await links('replays')).toEqual(['climb', 'gym', 'moves', 'rides']);
     expect(await page.locator('#playground-menu [data-menu=controls] tr').count()).toBeGreaterThanOrEqual(8);
     await page.keyboard.press('KeyM');
     expect(await page.locator('#playground-menu').isHidden()).toBe(true);

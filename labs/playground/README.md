@@ -5,7 +5,8 @@ the character, the cameras and the looks are made to move, feel and look right, 
 in the engine is shown. It grows in four stages, each ending at a gate: the gym (G10), the house (G11), a living site
 (G12) and the tech demo (G13). Today it holds the gym: calibrated features as a physics level, the player at its
 north end moving by Apex Legends' numbers (its run and sprint, air strafing, jump fatigue, the lurch, the fall
-stun, the crouch and the slide, on its hull), five camera modes and two looks, cel-shaded and pixel art. Every claim below is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here
+stun, the crouch and the slide, the mantle, the wall-climb and the superglide, on its hull), its ladder, zipline,
+redeploy balloon and launchers, five camera modes and two looks, cel-shaded and pixel art. Every claim below is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here
 that does not exist fails it.
 
 ## Play it
@@ -15,12 +16,13 @@ that does not exist fails it.
    5174 instead.
 2. Click the game to look around with the mouse (Esc lets go of it). WASD or the arrows move, Space jumps, Shift
    sprints (hold it, or press it once), Left Alt walks and C crouches while held (not Apex's Left Ctrl: Ctrl with W
-   closes the browser's tab); C at a sprint slides, and Space out of a slide slide-jumps.
+   closes the browser's tab); C at a sprint slides, and Space out of a slide slide-jumps. E uses: it catches a zipline
+   in reach (Space in the air catches one unasked) or takes hold of a ladder (running into one does too).
 3. T steps through the five cameras, P switches between the cel and the pixel look, M shows and hides the menu.
 
 A link can open any of them: `labs/playground/?cam3=first&post.look=look:playground-pixel` is first person in the
-pixel look, and `labs/playground/?replay=playground-gym` plays the recorded run (`?replay=playground-moves` the moves),
-then hands you the controls.
+pixel look, and `labs/playground/?replay=playground-gym` plays the recorded run (`?replay=playground-moves` the moves,
+`?replay=playground-rides` the rides), then hands you the controls.
 
 ## The demo index
 
@@ -30,7 +32,7 @@ test (`tests/unit/playground-readme.test.ts`) fails when a scene of `labs/playgr
 
 | Scene | What it proves | The command that shows it |
 |---|---|---|
-| `labs/playground/scenes/gym.ts` | The gym (`playground:gym`): every feature at the height, slope or gap its sign shows, the player moving by Apex's model (`node x sim labs/playground/scenes/gym --feel` prints its numbers), its golden replays the same in Node and in the page while it renders, in either look, with no pipeline built after the warm-up: the gym's run over its features, and its moves (`tests/replays/playground-moves.replay.json`: the sprint held and kept by a press, a tired hop, the walk, the crouch-walk, a lurch, an air strafe, the bunny hop's cost, a slide and a slide-jump). | `node x replay tests/replays/playground-gym.replay.json tests/replays/playground-moves.replay.json --browser page` |
+| `labs/playground/scenes/gym.ts` | The gym (`playground:gym`): every feature at the height, slope or gap its sign shows, the player moving by Apex's model (`node x sim labs/playground/scenes/gym --feel` prints its numbers), its golden replays the same in Node and in the page while it renders, in either look, with no pipeline built after the warm-up: the gym's run over its features, its moves (`tests/replays/playground-moves.replay.json`: the sprint held and kept by a press, a tired hop, the walk, the crouch-walk, a lurch, an air strafe, the bunny hop's cost, a slide and a slide-jump), its climbs (`tests/replays/playground-climb.replay.json`) and its rides (`tests/replays/playground-rides.replay.json`: up the tower's ladder and over its top, down its zipline, the jump pad, the balloon's line up 90 m, the glide, the dive and the landing). | `node x replay tests/replays/playground-gym.replay.json tests/replays/playground-moves.replay.json tests/replays/playground-rides.replay.json --browser page` |
 
 ## The gym
 
@@ -38,10 +40,13 @@ test (`tests/unit/playground-readme.test.ts`) fails when a scene of `labs/playgr
 inside a 3 m wall, so a feature's number, its block and its sign never disagree (`docs/PLAYGROUND.md` §2.3 says why each
 is there). From the north end, where the player starts: a strip down the west side marked every 5 m; mantle walls from
 0.5 to 2.1 m; fences from 0.6 to 1.2 m; climb walls from 3 to 7.2 m; slide ramps of 5°, 10°, 20° and 30°, 12 m long,
-each with a deck at its top; steps of 0.25 m; slope tests of 45° and 51°; a 6 m tower; down the east side, a lane of
-1.5 m platforms across gaps from 2 to 9 m; and at the south end the crawl, a tunnel 1.4 m clear and 8 m long and a bar
-1.3 m up to slide under, whose roof slab and bar are fixed props (`prop:gym-slab`, `prop:gym-bar`) on their walls and
-posts. A sign floats over each feature, shown when the player is near.
+each with a deck at its top; steps of 0.25 m; slope tests of 45° and 51°; a 6 m tower with a ladder up its north face
+(the engine's ladder glyph, `|`), a zipline 40 m long from a pole on its top down to the south wall, and a trampoline
+against its west face (2 m, and 0.9 of a fall's speed back); a jump pad (6.5 m) in the open south of it; the redeploy
+balloon's line, 90 m up; down the east side, a lane of 1.5 m platforms across gaps from 2 to 9 m; and at the south end
+the crawl, a tunnel 1.4 m clear and 8 m long and a bar 1.3 m up to slide under, whose roof slab and bar are fixed props
+(`prop:gym-slab`, `prop:gym-bar`) on their walls and posts. The rides are the scene's (engine/sim/rides.ts: a zipline's
+poles stand on what their spec names). A sign floats over each feature, shown when the player is near.
 
 ## The player
 
@@ -81,6 +86,7 @@ settings: they never change play or a hash.
 | Sprint (hold, or press once to keep it) | Left Shift | a click of the left stick |
 | Walk | Left Alt | |
 | Crouch (hold) | C | B (east) |
+| Use: a zipline or a ladder | E | X (west) |
 | Look around | click the game, then the mouse; Esc lets go | right stick |
 | Camera mode | T | |
 | Cel or pixel look | P | |
@@ -124,13 +130,19 @@ crouch-walk), `labs/playground/courses/slideRamps.ts` (down each slide ramp and 
 2.1 m wall refused from the ground), `labs/playground/courses/fences.ts` (each fence mantled over at a sprint,
 sprinting out), `labs/playground/courses/climb.ts` (each climb wall climbed and topped out, the 6.9 m one by the end
 boost, the 7.2 m one refused; a wall-bounce from each zone), `labs/playground/courses/hang.ts` (the mantle hang, none
-where the lip is too low, letting go) and `labs/playground/courses/superglide.ts` (the superglide and three near
-misses; the mantle boost, its setting `movement.mantle.boost` on). Each starts with the gym's dev action `place`
+where the lip is too low, letting go), `labs/playground/courses/superglide.ts` (the superglide and three near misses;
+the mantle boost, its setting `movement.mantle.boost` on), `labs/playground/courses/zipline.ts` (use from the tower,
+the speed-ups to the top speed, jumping on, jumping off keeping the speed or at 11.3 m/s, a crouch's drop, three
+catches a jump), `labs/playground/courses/ladder.ts` (run into it and up it, over its top; down it from the top; a jump
+off; a crouch letting go), `labs/playground/courses/launcher.ts` (the pad's 6.5 m, the trampoline's 2 m and its bounce
+from a fall) and `labs/playground/courses/skydive.ts` (up the balloon's line, the glide, the dive, the landing pose at
+30 m, no stun). Each starts with the gym's dev action `place`
 (`{ at, yaw, speed }`) and checks the bounds of `labs/playground/courses/bounds.ts` too, each run's: the body's and
 every camera's. `node x feel labs/playground` runs them all headless, `--course slide-flat` one, each into
 `out/feel/<lab>-<name>/report.json`. A bound its WP has yet to meet is watched, reported and never failing a course:
-the feet's slide until WP 13.10 plants them, the shooter camera in the crawl and topping out the 4 to 6 m climbs
-until WP 13.8's collision keeps it clear of the level.
+the feet's slide until WP 13.10 plants them; the shooter camera in the crawl, topping out the 4 to 6 m climbs and by the
+zipline's tower pole, and every camera catching up after the zipline course's 20 m fall, until WP 13.8's rigs keep them
+within §4's bounds.
 
 The feel panel (F, or `?playground.feel=on`) puts a slider on every `movement.*` setting, live; Copy as profile shows
 the tuning as a `defineMovement` call to paste into a game, and Save the replay downloads the run so far for

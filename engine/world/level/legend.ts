@@ -4,7 +4,8 @@
  * floor `.`, wall `#`, low wall `w`, pillar `P` (2 × 2 tiles), the hero's spawn `@` and the numbered spawn markers
  * `1`–`9`. v2, the hall's: the gallery `=` (a walkway 1 m up), stairs `^` (a ramp up to a gallery, rising toward
  * whichever side the gallery is on), the dais `o` (an octagonal platform half a metre up, its edge a slope) and the
- * brazier `t` (an iron bowl on a stone foot: a cylinder, and a torch spot).
+ * brazier `t` (an iron bowl on a stone foot: a cylinder, and a torch spot). v3 (WP 13.7): the ladder `|`, open floor with a
+ * ladder against the neighbouring tile that stands highest, up to its top.
  *
  * Heights are the prototype hall's, converted to metres (PLAN.md Appendix C): a wall 3 m, a pillar 3.5 m, a low wall
  * 0.75 m (the hero jumps onto it), a gallery 1 m, the dais 0.5 m, one character per metre. They are starting values
@@ -19,6 +20,7 @@
  * V1_GLYPHS['glyph:wall'].char; // '#'
  * V1_GLYPHS['glyph:pillar'].footprint; // 2: a pillar is PP over PP
  * V2_GLYPHS['glyph:stairs'].floorShape; // 'ramp'
+ * V3_GLYPHS['glyph:ladder'].char; // '|'
  * @see engine/world/level/glyph.test.ts
  */
 
@@ -133,5 +135,16 @@ export const V2_GLYPHS = {
     light: 'torch',
     lightHeight: 0.25,
     surface: 'iron',
+  },
+} as const;
+
+/** The v3 glyphs by id (WP 13.7): the ladder, which engine/world/traverse.ts's `levelLadders` stands. */
+export const V3_GLYPHS = {
+  'glyph:ladder': {
+    char: '|',
+    description:
+      'A ladder: open floor with a ladder against the neighbouring tile that stands highest (a wall, a tower), up to its top. Draw it along the face it climbs.',
+    mesh: 'floor',
+    ladder: true,
   },
 } as const;

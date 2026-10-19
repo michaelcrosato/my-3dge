@@ -3,12 +3,13 @@
  * Apex Legends' default movement keys where the browser allows them. W A S D or the arrows move, Space jumps, Left
  * Shift sprints (held, or a press that keeps the sprint while the player moves on), Left Alt walks (ours: Apex walks
  * only aiming down sights) and C crouches while held, not Apex's Left Ctrl: Ctrl with W closes the browser's tab, and
- * no page can stop it. A pad's left stick moves, A jumps, a click of the left stick sprints and B crouches. The page
- * binds it (labs/playground/main.ts) and the menu lists it (labs/playground/menu.ts). WP 13.9 adds the rest of §3.3's
- * table (use, melee, fire, aim, reload, holster, the crouch's toggle) and rebinding.
+ * no page can stop it; E uses (catches a zipline, takes hold of a ladder: WP 13.7). A pad's left stick moves, A jumps,
+ * a click of the left stick sprints, B crouches and X uses. The page binds it (labs/playground/main.ts) and the menu
+ * lists it (labs/playground/menu.ts). WP 13.9 adds the rest of §3.3's table (melee, fire, aim, reload, holster, the
+ * crouch's toggle) and rebinding.
  *
  * Invariants: data only; its actions are the buttons the player's intents carry (`jump`, `sprint`, `walk`,
- * `crouch`), which the shooter model reads (engine/sim/actors.ts).
+ * `crouch`, `interact`), which the shooter model reads (engine/sim/actors.ts).
  *
  * Game code, a page's: it imports only the engine's public API (engine/index.ts).
  *
@@ -28,6 +29,7 @@ export const PLAYGROUND_ACTIONS: Readonly<Record<string, string>> = {
   sprint: 'Sprint: hold, or press once to keep it',
   walk: 'Walk',
   crouch: 'Crouch: hold',
+  interact: 'Use: a zipline or a ladder',
 };
 
 defineActionMap(PLAYGROUND_ACTION_MAP, {
@@ -41,5 +43,6 @@ defineActionMap(PLAYGROUND_ACTION_MAP, {
     sprint: ['ShiftLeft', 'PadLeftStick'],
     walk: ['AltLeft'],
     crouch: ['KeyC', 'PadEast'],
+    interact: ['KeyE', 'PadWest'],
   },
 });

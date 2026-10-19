@@ -12,15 +12,15 @@
  * Actors with an animator draw themselves as puppets (engine/gfx/puppets/actors.ts, WP 3.10: `actors`), props standing
  * in the scene (`sceneProp`, engine/sim/props.ts) as their props (engine/gfx/stageProps.ts, WP 4.6: `props`), crowd
  * bodies (`crowdBody`) through a crowd (engine/gfx/stageCrowd.ts, WP 5.7: `crowd`), which the view draws once the
- * frame's camera is placed (`crowd.draw(alpha, camera)`), and projectiles as bolts (engine/gfx/stageFx.ts, WP 6.7:
- * `fx`, with telegraphs, trails and bursts, handed each frame by the view). Stand-ins: any other entity is drawn as a
- * box when one of its components declares `x` and `z` as numbers in metres (`placeableKinds`: asked of the component
- * entries, never of a name). The first such component in registry order places it: `x`, `y` (the box's bottom, 0 by
- * default) and `z`, `yaw` (rad), `size` (the box's side, m; 0.5 by default) and `material` (an id from the material
- * library; `material:default` otherwise). A stand-in is named `<component>#<id>` and carries `userData.entity`, so the
- * ID pass and the inspector say which entity it is. `capture(entities, dt)` after each sim step (of `dt` seconds) keeps
- * the last two places; `draw(alpha)` puts every stand-in, puppet and prop `alpha` of the way from the one before to the
- * last (the frame's interpolation, §6.4; the shorter way round for yaw).
+ * frame's camera is placed (`crowd.draw(alpha, camera)`), rides as themselves (engine/gfx/stageRides.ts, WP 13.7:
+ * `rides`), and projectiles as bolts (engine/gfx/stageFx.ts, WP 6.7: `fx`, with telegraphs, trails and bursts, handed
+ * each frame by the view). Stand-ins: any other entity is drawn as a box when one of its components declares `x` and
+ * `z` as numbers in metres (`placeableKinds`: asked of the component entries, never of a name). The first such
+ * component in registry order places it: `x`, `y` (the box's bottom, 0 by default) and `z`, `yaw` (rad), `size` (the
+ * box's side, m; 0.5 by default) and `material` (an id from the material library; `material:default` otherwise). A
+ * stand-in is named `<component>#<id>` and carries `userData.entity`, so the ID pass and the inspector say which entity
+ * it is. `capture(entities, dt)` after each sim step keeps the last two places; `draw(alpha)` puts every stand-in,
+ * puppet and prop `alpha` of the way from the one before to the last (§6.4's interpolation; yaw the shorter way).
  *
  * The level's cutaway (engine/gfx/cutaway.ts, `cutaway`) is made when a player actor first stands on it, and the view
  * runs it while it follows him (engine/app/view.ts); a stage with no player never has one.
@@ -52,6 +52,7 @@ import { createActorPuppets, type ActorPuppets } from './puppets/actors';
 import { createStageCrowd, type StageCrowd } from './stageCrowd';
 import { createStageFx, type StageFx } from './stageFx';
 import { createStageProps, type StageProps } from './stageProps';
+import { createStageRides, type StageRides } from './stageRides';
 import { createStageSky, type StageSky } from './stageSky';
 import type { Warmup } from './warmup';
 
@@ -101,6 +102,8 @@ export interface Stage {
   readonly actors: ActorPuppets;
   /** The props standing in the scene, drawn as their props. */
   readonly props: StageProps;
+  /** The rides: ziplines, ladders and launchers (engine/gfx/stageRides.ts). */
+  readonly rides: StageRides;
   /** The crowd bodies, drawn through a crowd from the frame's camera (`crowd.draw(alpha, camera)`, after `draw`). */
   readonly crowd: StageCrowd;
   /**
@@ -250,6 +253,7 @@ export function createStage(options: StageOptions): Stage {
   const actors = createActorPuppets({ materials: options.materials, registry: options.registry });
   scene.add(boxes, actors.root);
   const props = createStageProps({ scene, materials: options.materials, registry: options.registry });
+  const rides = createStageRides({ scene, materials: options.materials });
   const crowd = createStageCrowd({ scene, materials: options.materials, level, registry: options.registry });
 
   const fx = createStageFx({
@@ -282,6 +286,7 @@ export function createStage(options: StageOptions): Stage {
     standIns,
     actors,
     props,
+    rides,
     crowd,
     fx,
     capture(entities, dt) {
@@ -290,6 +295,7 @@ export function createStage(options: StageOptions): Stage {
       const puppets = actors.capture(list, dt);
       const drawn = props.capture(list, dt);
       const crowded = crowd.capture(list, dt);
+      rides.capture(list);
       const bolts = fx.capture(list);
       if (meshes && !cutaway && actors.hasPlayer()) cutaway = createCutaway(meshes);
       for (const entity of list) {
@@ -343,6 +349,7 @@ export function createStage(options: StageOptions): Stage {
         warmup.keyPart('stage:stand-ins', () => [...looks].sort().join(';')),
         actors.register(warmup),
         props.register(warmup),
+        rides.register(warmup),
         crowd.register(warmup),
         fx.register(warmup),
         lights.register(warmup),
@@ -355,6 +362,7 @@ export function createStage(options: StageOptions): Stage {
       meshes?.dispose();
       actors.dispose();
       props.dispose();
+      rides.dispose();
       crowd.dispose();
       fx.dispose();
       lights.dispose();

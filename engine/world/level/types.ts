@@ -57,6 +57,8 @@ export interface LevelGlyph {
   /** The light spot's height above the tile's top (m). */
   readonly lightHeight: number;
   readonly surface: string;
+  /** A ladder stands on its tiles (WP 13.7: engine/world/traverse.ts's `levelLadders`). */
+  readonly ladder: boolean;
   /** Its footprint in tiles (a pillar 2). */
   readonly footprint: number;
 }

@@ -1,18 +1,18 @@
 /**
  * @file The legend registry (PLAN.md WP 2.2, §6.6, I-22): the registry kind `glyph`, one entry per character a level
  * map may hold, saying what that character means: its floor and top heights and how its floor runs (flat, a ramp, a
- * dais), whether it is solid, its collider and mesh recipes, nav flags, a spawn point, a light spot, a surface tag
- * and its footprint. The level compiler
+ * dais), whether it is solid, its collider and mesh recipes, nav flags, a spawn point, a light spot, a surface tag,
+ * whether a ladder stands on it and its footprint. The level compiler
  * (engine/world/level/compile.ts) reads only these fields, never an id (ask the entry, §6.6), so a new glyph works in
  * every level without editing the compiler.
  *
  * `defineGlyph(id, spec)` adds one (a game's own glyphs live with the game: `labs/box/`, never the engine).
- * `legendOf(registry)` maps each character to its glyph. A registry gets the kind, and the engine's v1 and v2 glyphs
+ * `legendOf(registry)` maps each character to its glyph. A registry gets the kind, and the engine's v1 to v3 glyphs
  * (engine/world/level/legend.ts), the first time anything here touches it; the shared registry gets them on import.
  *
  * Invariants: a glyph's `char` is one character (one code point), not whitespace, and no other glyph's; `top` is at
  * least `floor`; a solid glyph is not walkable (`nav.walkable: false`); spawn names and light tags are words
- * (letters, digits, `_`, `-`). A ramp or a dais rises (`top` above `floor`), is walked on (not solid) and has a hull
+ * (letters, digits, `_`, `-`); a ladder is not solid. A ramp or a dais rises (`top` above `floor`), is walked on (not solid) and has a hull
  * collider or none, a dais an `edge` above 0; a hull collider follows a ramp or a dais; a cylinder collider has a
  * `radius` and a `top` above `floor`. Problems raise `CORE_BAD_SPEC` naming each, as every registry kind does.
  *
@@ -26,7 +26,7 @@
  */
 import { registry as sharedRegistry, type Entry, type Registry } from '../../core/registry';
 import type { Schema, SpecOf } from '../../core/schema';
-import { V1_GLYPHS, V2_GLYPHS } from './legend';
+import { V1_GLYPHS, V2_GLYPHS, V3_GLYPHS } from './legend';
 
 /** The fields of a `glyph` entry. */
 export const GLYPH_FIELDS = {
@@ -130,6 +130,12 @@ export const GLYPH_FIELDS = {
     default: 'stone',
     description: 'The surface tag of its tiles, for footsteps, particles and friction.',
   },
+  ladder: {
+    type: 'boolean',
+    default: false,
+    description:
+      "A ladder stands on its tiles against the neighbouring tile that stands highest, up to that tile's top, climbed from its tiles (engine/world/traverse.ts's levelLadders, WP 13.7). Not solid.",
+  },
   footprint: {
     type: 'integer',
     default: 1,
@@ -164,6 +170,7 @@ function glyphProblems(glyph: Glyph, registry: Registry): string[] {
     if (other) problems.push(`char "${glyph.char}" already writes ${other.id}; pick another character`);
   }
   if (glyph.top < glyph.floor) problems.push(`top ${glyph.top} is below floor ${glyph.floor}; top is at least floor`);
+  if (glyph.ladder && glyph.solid) problems.push('a ladder is climbed from its tiles: make it solid: false');
   if (glyph.solid && glyph.nav.walkable) {
     problems.push('a solid glyph is not walkable: add nav: { walkable: false } (or make it solid: false)');
   }
@@ -218,7 +225,8 @@ export function glyphKind(registry: Registry): void {
     defineWith: "defineGlyph('<id>', { char: '<one character>', description: '…', … })",
     check: (entry) => glyphProblems(entry as Glyph, registry),
   });
-  for (const [id, spec] of Object.entries({ ...V1_GLYPHS, ...V2_GLYPHS })) registry.def('glyph', id, spec);
+  for (const [id, spec] of Object.entries({ ...V1_GLYPHS, ...V2_GLYPHS, ...V3_GLYPHS }))
+    registry.def('glyph', id, spec);
 }
 glyphKind(sharedRegistry);
 

@@ -196,6 +196,45 @@ export const MODEL_FIELDS = defineSchema({
     dropJump: num(6.5024, 0, 100, 'A jump off above the mini zone lowers it this much: 256 u.', 'm'),
     turn: num(25.842 * DEG, 0, Math.PI, 'A new climb starts above the last one’s catch only on a wall turned this far from it.', 'rad'), // prettier-ignore
   }),
+  zipline: group('Ziplines (the Apex Movement Wiki’s): a cable between two anchors, caught and ridden either way.', {
+    speed: num(15.24, 0, 100, 'Its top speed along a sloped cable: 600 u/s.', 'm/s'),
+    vertical: num(12.192, 0, 100, 'Its top speed along a vertical one: 480 u/s.', 'm/s'),
+    steep: num(10 * DEG, 0, Math.PI / 2, 'Ours: a cable this close to straight up or closer is vertical.', 'rad'),
+    accel: num(10.16, 0, 1e4, 'How fast it gets there: 400 u/s².', 'm/s²'),
+    jumpOn: num(25.4, 0, 1e4, 'How fast, on a ride caught from the air (jumping on): 1,000 u/s².', 'm/s²'),
+    look: num(35 * DEG, 0, Math.PI, 'Use catches a cable with the view within this of it.', 'rad'),
+    lookAir: num(90 * DEG, 0, Math.PI, 'In the air, within this.', 'rad'),
+    reach: num(1.524, 0, 20, 'Ours: use catches a cable this close to the hands: 60 u.', 'm'),
+    grab: num(0.6096, 0, 20, 'Ours: in the air, a cable this close to the hands catches it unasked: 24 u.', 'm'),
+    hang: num(2.032, 0, 20, 'Ours: the hands, on the cable, stand this high over the feet: 80 u.', 'm'),
+    catches: { type: 'integer', default: 3, minimum: 0, maximum: 100, description: 'Catches between two touches of the ground.' }, // prettier-ignore
+    jump: num(10.16, 0, 100, 'A jump off adds this along the view, across the ground: 400 u/s.', 'm/s'),
+    jumpMax: num(11.303, 0, 100, 'A jump off leaves no faster across than this, unless the ride was: 445 u/s.', 'm/s'),
+    exit: num(0.5, 0, 1, 'Ours: at a cable’s end it lets go keeping this share of its speed.'),
+    end: num(0.6096, 0, 20, 'Ours: a ride ends this far short of an anchor: 24 u.', 'm'),
+    topHop: num(1, 0, 20, 'Ours: a vertical cable’s top hops it this high...', 'm'),
+    topPush: num(4.4069, 0, 100, 'Ours: ...and on along the view at this, the run.', 'm/s'),
+    cooldown: num(0.25, 0, 5, 'Ours: no catch this soon after letting go of a zipline or a ladder.', 's'),
+  }),
+  skydive: group('The skydive (ours, from Apex’s redeploy balloon): falling with the view’s pitch, then the landing.', {
+    glide: num(20, 0, 1e3, 'Its fall with the view level or up.', 'm/s'),
+    dive: num(35, 0, 1e3, 'Its fall with the view straight down; between, by the view’s pitch.', 'm/s'),
+    across: num(12, 0, 1e3, 'Ours: the push moves it across the ground at up to this.', 'm/s'),
+    accel: num(8, 0, 1e4, 'Ours: how fast it gets there.', 'm/s²'),
+    brake: num(21, 0, 1e4, 'Ours: falling faster than it should (a glide after a dive, the landing), it slows at this: from a 35 m/s dive to the touch speed within the landing’s 30 m, a tick to spare.', 'm/s²'), // prettier-ignore
+    land: num(30, 0, 1e4, 'The landing pose takes over with the ground this close below.', 'm'),
+    touch: num(6.096, 0, 1e3, 'Ours: the landing slows its fall to this: 240 u/s.', 'm/s'),
+    launch: num(15.24, 0, 1e3, 'Ours: a balloon’s top throws it up at this.', 'm/s'),
+  }),
+  ladder: group('Ladders (ours, from GTA V and Red Dead Redemption 2: Apex has none).', {
+    speed: num(2.2035, 0, 100, 'Tuned: up and down at this, the run × 0.5.', 'm/s'),
+    reach: num(0.3048, 0, 10, 'It takes hold with its hull within this of the ladder’s face: 12 u.', 'm'),
+    angle: num(45 * DEG, 0, Math.PI, 'A push within this of straight into the ladder takes hold.', 'rad'),
+    gap: num(0.1016, 0, 10, 'Its hull stands this far off the ladder’s face as it climbs: 4 u.', 'm'),
+    top: num(1, 0, 20, 'Taking hold from the top, its feet start this far below it.', 'm'),
+    away: num(3.048, 0, 100, 'A jump off pushes it away from the ladder at this: 120 u/s...', 'm/s'),
+    jump: num(0.5, 0, 20, '...rising this high.', 'm'),
+  }),
   turnRate: num(720 * DEG, 0, 1e3, 'Ours: how fast it turns to face where it moves, looks or aims (720°/s).', 'rad/s'),
 });
 
@@ -207,8 +246,8 @@ export type MovementModelSpec = {
   [K in keyof MovementModel]?: MovementModel[K] extends object ? Partial<MovementModel[K]> : MovementModel[K];
 };
 
-/** Where a character is in the model: on the ground, in the air, mantling or climbing (WP 13.7 adds rides). */
-export const MODES = ['ground', 'air', 'mantle', 'climb'] as const;
+/** Where a character is in the model: on the ground, in the air, mantling, climbing, on a zipline, on a ladder, skydiving. */ // prettier-ignore
+export const MODES = ['ground', 'air', 'mantle', 'climb', 'zipline', 'ladder', 'skydive'] as const;
 
 /** A mantle's phase: none, the grab up to the lip, hanging from it, the pull over it. */
 export const MANTLES = ['none', 'grab', 'hang', 'pull'] as const;
@@ -281,6 +320,15 @@ export const MOTION_FIELDS = defineSchema({
   reattach: { type: 'boolean', default: false, description: 'It climbed since it last stood: a new climb catches below the last unless the wall turned.' }, // prettier-ignore
   keyRight: num(0, -1, 1, 'Last tick’s move in its keys’ frame, to the right (a new key lurches).'),
   keyForward: num(0, -1, 1, 'Last tick’s move in its keys’ frame, forward.'),
+  ride: { type: 'integer', default: -1, minimum: -1, description: 'The zipline or ladder it rides, its entity; −1: none.' }, // prettier-ignore
+  rideAt: num(0, -1e6, 1e6, 'How far along: on a zipline from its first anchor, on a ladder the feet over its foot.', 'm'), // prettier-ignore
+  rideDir: { type: 'integer', default: 0, minimum: -1, maximum: 1, description: 'Which way along a zipline: 1 toward its second anchor, −1 toward its first.' }, // prettier-ignore
+  rideSpeed: num(0, -1e3, 1e3, 'Its speed along the zipline, or up the ladder (down below 0).', 'm/s'),
+  rideAccel: num(0, 0, 1e4, 'The ride’s acceleration: the zipline’s, or its jump-on’s caught from the air.', 'm/s²'),
+  rideEnd: num(0, -1e6, 1e6, 'Where along the zipline the ride ends: short of its far anchor, or where the hull meets something.', 'm'), // prettier-ignore
+  catches: { type: 'integer', default: 0, minimum: 0, description: 'Zipline catches since it last stood.' },
+  rideCool: { type: 'integer', default: 0, minimum: 0, description: 'Ticks until it may catch a zipline or take a ladder again.' }, // prettier-ignore
+  landing: { type: 'boolean', default: false, description: 'Skydiving, the landing pose has taken over: it slows to the touch speed.' }, // prettier-ignore
 });
 
 /** The component `motion`: a character's state in the model (`MOTION_FIELDS` documents each field). */

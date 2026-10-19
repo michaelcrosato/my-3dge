@@ -33,12 +33,14 @@ const hash = (level: CompiledLevel) => hashValue(level as unknown as Canonical);
  * Each fixture's compiled hash: a change here is a change of the compiled shape or of a v1 glyph. Re-recorded in
  * WP 4.2, which added fields (per-tile `tiles`, `ramps`, `daises`; the glyphs' `floorShape`, `edge`, `radius`): with
  * those fields left out, each fixture still gives its WP 2.2 hash (0f8fead48e003460, 87e43d7f346d34f7,
- * e67a59b6ffdfc096), so no v1 value moved.
+ * e67a59b6ffdfc096), so no v1 value moved. Re-recorded in WP 13.7, which added the glyphs' `ladder`: with it left
+ * out of the legend, each gives its WP 4.2 hash (a3d27feb414efb3b, 1304ac3722f266ec, 17ca7ff6df095bd9; the hall
+ * 1388c149cdefd2fb).
  */
 const GOLDEN: Record<string, string> = {
-  'hall-v1.txt': 'a3d27feb414efb3b',
-  'heights.txt': '1304ac3722f266ec',
-  'room.txt': '17ca7ff6df095bd9',
+  'hall-v1.txt': '5a0986e2208bed91',
+  'heights.txt': '35b301d1dfb2ee62',
+  'room.txt': '2f9e675348efa089',
 };
 
 describe('compileLevel on the fixtures', () => {
@@ -81,7 +83,7 @@ describe('the hall (labs/box/levels/hall.txt, WP 4.2)', () => {
   const file = 'labs/box/levels/hall.txt';
   const hallText = readFileSync(join(import.meta.dirname, '..', '..', '..', file), 'utf8');
   /** The hall's compiled hash: a change here is a change of the hall, of a glyph it uses or of the compiled shape. */
-  const HALL_GOLDEN = '1388c149cdefd2fb';
+  const HALL_GOLDEN = 'cee47c75670a45ab';
 
   it('compiles to its golden hash, again, under the fdlibm swap and on a fresh registry', () => {
     const hall = compileLevel(hallText, { file });

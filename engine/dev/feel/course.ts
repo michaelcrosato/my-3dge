@@ -7,15 +7,7 @@
  *
  * A measure reads the first player actor, once per step (after it): `from` and `to` are steps (sample k is the state
  * after step k, sample 0 the state before the first), `to` the course's last by default. The metrics:
- * - the move: `speed`, the mean speed across the ground from `from` to `to`, and `topSpeed`, the highest; `speedGain`,
- *   the speed across the ground at `to` less that at `from`, and `velocityChange`, how far the velocity across the
- *   ground moved between them (a lurch's, m/s); `apex`, how far the feet rise above where they were at `from`; `height`, the feet's height at `to`; `distance`, across the
- *   ground from the feet at `from` to the feet at `to`; `time`, seconds from `from` to the first sample that meets
- *   `until` (`speedAbove` or `speedBelow` `value`, `grounded` or `airborne`; on the shooter model `crouched` or
- *   `standing`, its hull, `sliding` or `stopsSliding`, and `mantling`, `grabbing`, `hanging`, `pulling` or
- *   `climbing`), and `duration`, how long from the first sample that meets it it goes on meeting it (0 if none does);
- *   `topRise`, the fastest it rises (m/s); `standHeight`, the highest its feet stand on the ground (what it mantled or
- *   climbed onto); `grounded`, 1 when it stands at `to`;
+ * - the move (`MOVE_METRICS` says what each reads): its speeds, heights, distances and times, and its rides';
  * - its animation, posed as the page poses it (engine/dev/feel/anim.ts): `footSlide`, the most a sole slides in one
  *   contact, and `pop`, the farthest a point jumps in one step against its neighbours (the anim QA's rules); `handGap`,
  *   the closest either hand comes to `point`;
@@ -42,8 +34,22 @@ import { registry as sharedRegistry, type Entry, type Registry } from '../../cor
 import { defineSchema } from '../../core/schema';
 import type { InputEntry } from '../../sim/replay';
 
-/** The metrics of the move, read off the player's samples. */
-export const MOVE_METRICS = ['speed', 'topSpeed', 'speedGain', 'velocityChange', 'apex', 'height', 'distance', 'time', 'duration', 'topRise', 'standHeight', 'grounded'] as const; // prettier-ignore
+/**
+ * The metrics of the move, read off the player's samples: `speed`, the mean speed across the ground from `from` to
+ * `to`, and `topSpeed`, the highest; `speedGain`, the speed across the ground at `to` less that at `from`, and
+ * `velocityChange`, how far the velocity across the ground moved between them (a lurch's, m/s); `apex`, how far the
+ * feet rise above where they were at `from`; `height`, the feet's height at `to`; `distance`, across the ground from
+ * the feet at `from` to the feet at `to`; `time`, seconds from `from` to the first sample that meets `until`
+ * (`speedAbove` or `speedBelow` `value`, `grounded` or `airborne`; on the shooter model `crouched` or `standing`, its
+ * hull, `sliding` or `stopsSliding`, `mantling`, `grabbing`, `hanging`, `pulling` or `climbing`, and `riding` a
+ * zipline, `onLadder`, `skydiving` or in its `landingPose`), and `duration`, how long from the first sample that meets
+ * it it goes on meeting it (0 if none does); `top`, the highest its feet go; `heightAt`, the feet's height at the
+ * first sample that meets `until`; `topRise` and `topFall`, the fastest it rises and falls (m/s); `standHeight`, the
+ * highest its feet stand on the ground (what it mantled or climbed onto); `grounded`, 1 when it stands at `to`;
+ * `rideSpeed`, its speed along a zipline or up a ladder at `to`, and `rideGain`, that at `to` less that at `from`;
+ * `catches`, the most zipline catches it made since it last stood.
+ */
+export const MOVE_METRICS = ['speed', 'topSpeed', 'speedGain', 'velocityChange', 'apex', 'top', 'height', 'heightAt', 'distance', 'time', 'duration', 'topRise', 'topFall', 'standHeight', 'grounded', 'rideSpeed', 'rideGain', 'catches'] as const; // prettier-ignore
 
 /** The metrics of the player's animation, posed as the page poses it. */
 export const ANIM_METRICS = ['footSlide', 'pop', 'handGap'] as const;
@@ -58,7 +64,7 @@ export const METRICS = [...MOVE_METRICS, ...ANIM_METRICS, ...CAMERA_METRICS] as 
 export type Metric = (typeof METRICS)[number];
 
 /** When a `time` measure stops: the first sample at which this holds. */
-export const UNTILS = ['speedAbove', 'speedBelow', 'grounded', 'airborne', 'crouched', 'standing', 'sliding', 'stopsSliding', 'mantling', 'grabbing', 'hanging', 'pulling', 'climbing'] as const; // prettier-ignore
+export const UNTILS = ['speedAbove', 'speedBelow', 'grounded', 'airborne', 'crouched', 'standing', 'sliding', 'stopsSliding', 'mantling', 'grabbing', 'hanging', 'pulling', 'climbing', 'riding', 'onLadder', 'skydiving', 'landingPose'] as const; // prettier-ignore
 
 /** One number a course measures (see the file comment). */
 export const MEASURE_FIELDS = defineSchema({
@@ -66,7 +72,7 @@ export const MEASURE_FIELDS = defineSchema({
   metric: { type: 'string', enum: METRICS, required: true, description: 'What it reads off the run.' },
   from: { type: 'integer', default: 1, minimum: 0, description: 'The first sample it reads (0: before the first step).' }, // prettier-ignore
   to: { type: 'integer', minimum: 0, description: 'The last sample it reads; absent: the course’s last.' },
-  until: { type: 'string', enum: UNTILS, description: 'For `time`: the sample that ends it; for `duration`: the state it times.' }, // prettier-ignore
+  until: { type: 'string', enum: UNTILS, description: 'For `time`: the sample that ends it; for `duration`: the state it times; for `heightAt`: the state it waits for.' }, // prettier-ignore
   value: { type: 'number', description: 'For `time` with `speedAbove` or `speedBelow`: the speed, m/s.' },
   camera: { type: 'string', description: 'For a camera metric: the camera’s code (`cam3=chase`, `cam=iso`).' },
   point: { type: 'array', items: { type: 'number' }, description: 'For `handGap`: the point, world [x, y, z], m.' },
@@ -131,6 +137,7 @@ function measureProblems(m: Measure, steps: number, at: string): string[] {
   if (to > steps) problems.push(`${at}: to ${to} is past the course's ${steps} steps`);
   if (m.metric === 'time' && !m.until) problems.push(`${at}: a time measure names when it ends (until)`);
   if (m.metric === 'duration' && !m.until) problems.push(`${at}: a duration measure names the state it times (until)`);
+  if (m.metric === 'heightAt' && !m.until) problems.push(`${at}: a heightAt measure names the state it waits for (until)`); // prettier-ignore
   if (m.until?.startsWith('speed') && m.value === undefined) problems.push(`${at}: ${m.until} needs a value (m/s)`);
   const camera = (CAMERA_METRICS as readonly string[]).includes(m.metric);
   if (camera !== (m.camera !== undefined)) problems.push(camera ? `${at}: ${m.metric} names its camera (camera: 'cam3=chase')` : `${at}: only a camera metric names a camera`); // prettier-ignore

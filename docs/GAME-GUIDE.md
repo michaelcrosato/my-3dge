@@ -265,9 +265,6 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Characters (WP 3.2)**: actors moved by the character controller (Rapier's, moved across then down), with an action game's feel: acceleration and skid, coyote time, a jump buffer, a variable jump, a wall jump, a dash, pushing props; the feel meter measures how one handles. A body's reactions and an actor's secondary motion as components (WP 7.8).
 `createCharacter`, `CHARACTER_FIELDS`, `CHARACTER_STATE_FIELDS`, `spawnActor`, `removeActor`, `measureFeel`, `reactTo`, `stepReactions`, `REACTION_FIELDS`, `SECONDARY_FIELDS`; types `Character`, `CharacterState`, `ActorSpec`, `ActorComponent`, `ActorComponents`, `FeelReport`, `FeelOptions`, `AnimatorComponent`, `SecondaryComponent`, `ReactionComponents`.
 
-**Movement profiles (WP 13.3)**: the registry kind `movement`, and the shooter model (Apex's) a profile gives a character.
-`defineMovement`, `getMovement`, `listMovements`, `MODEL_FIELDS`, `MOTION_FIELDS`; types `MovementProfile`, `MovementSpec`, `MovementModel`, `MovementModelSpec`, `MotionState`, `MotionFeel`.
-
 **Levels v2 (WP 4.2)**: the hall's glyphs (gallery =, stairs ^, dais o, brazier t), ramps and daises, hull and cylinder colliders, and the surface tag underfoot.
 `surfaceAt`; types `HullCollider`, `CylinderCollider`, `RampDescriptor`, `DaisDescriptor`, `Side`.
 
@@ -301,8 +298,14 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Clips on actors (WP 8.9)**: the clip layer in an actor's animator as sim data, the component clips, stepped at the actor's ground speed and drawn over its body by the view; its events come as `clip`. spawnActor's `body` names the body it is drawn as (body:mannequin).
 `addClips`, `playClip`, `stopClip`, `seekClip`, `locomoteClips`, `clipLayerOf`; types `ClipsSpec`, `PuppetComponent`.
 
+**Movement profiles (WP 13.3)**: the registry kind `movement`, and the shooter model (Apex's) a profile gives a character.
+`defineMovement`, `getMovement`, `listMovements`, `MODEL_FIELDS`, `MOTION_FIELDS`; types `MovementProfile`, `MovementSpec`, `MovementModel`, `MovementModelSpec`, `MotionState`, `MotionFeel`.
+
 **The feel kit, sim-side (WP 13.4)**: the shooter model's live tuning, `movement.<group>.<field>` (a setting off its default replaces that number in every model character's model, from the next step), and an actor placed at rest (a scene's dev action: a feel course's start).
 `MOVEMENT_SETTINGS`, `movementOverrides`, `tuneCharacter`, `placeActor`; types `MovementOverride`.
+
+**Rides (WP 13.7)**: ziplines, ladders and launchers as world data (engine/world/traverse.ts), placed in a scene (engine/sim/rides.ts) and ridden by the shooter model (engine/physics/movement/ride.ts, ladder.ts): a zipline and the poles under its anchors, the redeploy balloon's line and its skydive, a ladder (or every ladder a level's ladder glyph `|` stands), a jump pad or a trampoline. Use is the button `interact`; the look's pitch picks a vertical zipline's way and a skydive's dive.
+`addZipline`, `addLadder`, `addLauncher`, `addLevelLadders`, `ridesOf`, `levelLadders`; types `ZiplineSpec`, `LadderSpec`, `LauncherSpec`, `Rides`, `RideCable`, `RideLadder`, `RideLauncher`.
 
 Pages only, from engine/index.ts:
 

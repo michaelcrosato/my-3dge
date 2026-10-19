@@ -35,7 +35,7 @@ const VALUES: readonly ModelValue[] = Object.entries(MODEL_FIELDS).flatMap(([gro
   if (!own.properties) return [[`movement.${group}`, undefined, group, own]];
   return Object.entries(own.properties).flatMap(([key, each]): ModelValue[] => {
     const description = `${own.description} ${each.description}`;
-    return each.type === 'number' || each.type === 'boolean' ? [[`movement.${group}.${key}`, group, key, { ...each, description }]] : []; // prettier-ignore
+    return each.type === 'number' || each.type === 'integer' || each.type === 'boolean' ? [[`movement.${group}.${key}`, group, key, { ...each, description }]] : []; // prettier-ignore
   });
 });
 

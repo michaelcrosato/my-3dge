@@ -35,6 +35,7 @@ describe('courses', () => {
       { name: 'no camera', metric: 'cameraJump', reference: 0, tolerance: { abs: 0.3 } },
       { name: 'stray camera', metric: 'speed', camera: 'cam3=chase', reference: 5, tolerance: { share: 0.02 } },
       { name: 'no point', metric: 'handGap', reference: 0, tolerance: { abs: 0.03 } },
+      { name: 'height when', metric: 'heightAt', reference: 30, tolerance: { abs: 0.5 } },
       { name: 'loose', metric: 'apex', reference: 1.42 },
       { name: 'loose', metric: 'apex', reference: 1.42, tolerance: { abs: 0.02 } },
     ];
@@ -53,6 +54,7 @@ describe('courses', () => {
       'cameraJump names its camera',
       'only a camera metric names a camera',
       'handGap names its point',
+      'a heightAt measure names the state it waits for (until)',
       'give a tolerance',
       'two measures are named "loose"',
     ])

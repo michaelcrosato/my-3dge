@@ -7,17 +7,15 @@
  * The step (shardfall's order): movers set their velocities (`intents`, `ai`), the system `actors` moves every actor in
  * id order (`anim`), the world steps (`physics`), and `actors.readback` copies the feet into `x`, `y`, `z`
  * (`readback`). A player actor reads the step's intents: `move`, `jump` (held, pressed) and `dash` (pressed); any other
- * the intents its AI writes into `actor.intents`, its presses taken from the edges of `b`. Events: `jump` `{ id }`,
- * `land` `{ id, speed }`, `dash` `{ id }`. Gravity: `physics.characterGravity` unless the settings name one; the weight
- * on dynamic floors uses `physics.gravity`. Entities with the component `oneWay` make their body a one-way platform.
- * WP 3.7: `anim` adds the component `animator`, stepped by `actors.anim` after `actors` (its `reactions` first, WP
- * 7.8) and, with `preciseHits`, posed by `actors.pose` after `actors.readback`. Event: `footstep` `{ id, side, speed }`.
- * WP 8.9: `body` adds the component `puppet` (the body drawn) and `clips` the clip layer (engine/sim/actorClips.ts).
+ * the intents its AI writes into `actor.intents`, its presses from the edges of `b`. Events: `jump` `{ id }`, `land` `{
+ * id, speed }`, `dash` `{ id }`. Gravity: `physics.characterGravity` unless the settings name one; the weight on
+ * dynamic floors uses `physics.gravity`. The component `oneWay` makes its body a one-way platform. WP 3.7: `anim` adds
+ * the component `animator`, stepped by `actors.anim` after `actors` (its `reactions` first, WP 7.8) and, with
+ * `preciseHits`, posed by `actors.pose` after `actors.readback` (event `footstep` `{ id, side, speed }`). WP 8.9:
+ * `body` adds the component `puppet` (the body drawn), `clips` the clip layer (engine/sim/actorClips.ts).
  *
- * WP 13.3: an actor whose character has a movement model (engine/physics/movement/) also holds the component
- * `motion`, the model's state (holstered unless spawned with `holstered: false`), and reads `sprint` (held, pressed),
- * `walk` and `crouch` (held), `crouchToggle` (pressed), its view from `look`, its keys' frame from `cam` (else
- * `look`) and what it faces from `aim`, else `look`; it steps under the live `movement.*` settings (WP 13.4).
+ * WP 13.3 and 13.7: an actor on a movement model also holds `motion`, the model's state, and reads its buttons, view
+ * and rides (`spawnActor` says which); launchers set off any actor: event `launch` `{ id }`.
  *
  * Invariants: systems are added once per world, on the first (animated) spawn; all an actor remembers is in its
  * components (the sim's animators are loaded from them). Despawning leaves the body; `removeActor` removes both.
@@ -66,6 +64,7 @@ import { physicsOf } from '../physics/binding';
 import type { Vec3Like } from '../physics/queries';
 import { clipsFor, defineClipKinds, type ClipsSpec } from './actorClips';
 import { defineReactionKinds, stepReactions, type ReactionComponents } from './reactions';
+import { defineRideKinds, ridesOf } from './rides';
 import { defineComponent } from './state';
 import type { World } from './world';
 
@@ -119,6 +118,7 @@ export type ActorComponents = {
  */
 export function defineActorKinds(registry: Registry = sharedRegistry): void {
   defineReactionKinds(registry);
+  defineRideKinds(registry);
   if (!registry.kinds().includes('setting') || !registry.has('setting', 'physics.characterGravity')) {
     defineSettings(CHARACTER_SETTINGS, registry);
   }
@@ -190,7 +190,14 @@ export interface ActorSpec {
   components?: Readonly<Record<string, object>>;
 }
 
-/** Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`. Returns the id. */
+/**
+ * Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`. Returns the id.
+ * An actor on a movement model (engine/physics/movement/, WP 13.3) also holds `motion`, the model's state (holstered
+ * unless spawned `holstered: false`), and reads `sprint` (held, pressed), `walk` and `crouch` (held), `crouchToggle`
+ * (pressed), the view from `look`, the keys' frame from `cam` (else `look`) and what it faces from `aim` (else
+ * `look`), under the live `movement.*` settings (WP 13.4); WP 13.7: the look's pitch and `interact` (pressed) too,
+ * riding the scene's ziplines and ladders (engine/sim/rides.ts).
+ */
 export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): number {
   const w = world as unknown as World;
   const physics = physicsOf(w);
@@ -265,7 +272,8 @@ function motionInput(actor: ActorComponent, wants: Intents): CharacterInput {
     walk: held(wants, 'walk'),
     crouch: held(wants, 'crouch'),
     crouchToggle: pressed(wants, 'crouchToggle'),
-    ...(wants.look ? { view: wants.look[0] } : {}),
+    usePressed: pressed(wants, 'interact'),
+    ...(wants.look ? { view: wants.look[0], pitch: wants.look[1] } : {}),
     ...(frame !== undefined ? { frame } : {}),
     ...(face !== undefined ? { face } : {}),
   };
@@ -278,6 +286,7 @@ function moveActors(w: World, intents: Intents): void {
   const worldGravity = w.settings.get('physics.gravity') as number;
   const oneWay = new Set((w.query('oneWay') as unknown as ActorComponents[]).map((e) => e.oneWay.body));
   const tuning = movementOverrides((path) => w.settings.get(path));
+  const rides = ridesOf(w);
   for (const e of w.query('actor') as unknown as (ActorComponents & { id: number })[]) {
     const { actor, motion } = e;
     const wants = intentsOf(actor, intents);
@@ -289,10 +298,11 @@ function moveActors(w: World, intents: Intents): void {
       ...(motion ? motionInput(actor, wants) : {}),
     };
     const character = motion ? tuneCharacter(actor.character, tuning) : actor.character;
-    const step = stepCharacter(physics, actor.body, character, actor, input, { dt: w.dt, gravity, worldGravity, oneWay }, motion); // prettier-ignore
+    const step = stepCharacter(physics, actor.body, character, actor, input, { dt: w.dt, gravity, worldGravity, oneWay, rides }, motion); // prettier-ignore
     if (step.jumped) w.emit('jump', { id: e.id });
     if (step.landed) w.emit('land', { id: e.id, speed: step.landed });
     if (step.dashed) w.emit('dash', { id: e.id });
+    if (step.launched) w.emit('launch', { id: e.id });
   }
 }
 

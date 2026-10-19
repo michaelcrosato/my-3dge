@@ -150,7 +150,7 @@ describe('the climb space', () => {
   /** A world of plain data: the feet at `feet`, a sheer wall east (or turned by `turn` rad). */
   const room = (feet: number, turn = 0): Room => {
     const wall: Wall = { point: [1, feet, 0], normal: [-Math.cos(turn), Math.sin(turn)], up: 0 };
-    return { stand: () => true, feet: () => [0, feet, 0], wall: () => wall, ledge: () => null };
+    return { stand: () => true, feet: () => [0, feet, 0], wall: () => wall, ledge: () => null, sweep: () => 0, below: () => null }; // prettier-ignore
   };
   const tick = { wish: [1, 0] as const, view: [1, 0] as const, scale: 1.15, dt: DT, g: G };
 

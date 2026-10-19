@@ -87,7 +87,7 @@ describe('createStage', () => {
     stage.dispose();
   });
 
-  it("registers the ground, the level, the stand-ins and the effects, with the stand-ins' looks in the shader key", () => {
+  it("registers the ground, the level, the stand-ins, the rides and the effects, with the stand-ins' looks in the shader key", () => {
     const registry = kinds();
     const stage = createStage({ level: room, materials: createMaterialLibrary(), registry });
     const ids: string[] = [];
@@ -103,6 +103,7 @@ describe('createStage', () => {
       'stage:cutaway',
       'stage:stand-ins',
       'stage:actors',
+      'stage:rides',
       'fx:sprites',
       'fx:decals',
       'fx:ribbons',

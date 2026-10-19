@@ -10,7 +10,7 @@
  * Invariants: a flat list of `export … from` lines, one name per line, grouped by area, and append-only: each WP adds
  * its public names at the end of their area, so parallel lanes merge cleanly (§11.3). The Animation area lives in
  * engine/anim/api.ts, re-exported here whole so this file stays under its line cap (ADR-0020 amendment 8): append
- * animation names there. Only sim-side modules are re-exported (ESLint's layer rule for this file). Each name is
+ * animation names there; Phase 13's movement areas likewise in engine/sim/movementApi.ts (ADR-0025 amendment 7). Only sim-side modules are re-exported (ESLint's layer rule for this file). Each name is
  * documented where it is declared, and `x docs --check` fails a public export without its doc comment. Game code
  * reaches three.js only through these re-exports.
  *
@@ -182,18 +182,6 @@ export { REACTION_FIELDS } from './sim/reactions';
 export { SECONDARY_FIELDS } from './sim/reactions';
 export type { SecondaryComponent } from './sim/reactions';
 export type { ReactionComponents } from './sim/reactions';
-// Movement profiles (WP 13.3): the registry kind `movement`, and the shooter model (Apex's) a profile gives a character.
-export { defineMovement } from './physics/movement/profile';
-export { getMovement } from './physics/movement/profile';
-export { listMovements } from './physics/movement/profile';
-export type { MovementProfile } from './physics/movement/profile';
-export type { MovementSpec } from './physics/movement/profile';
-export { MODEL_FIELDS } from './physics/movement/model';
-export type { MovementModel } from './physics/movement/model';
-export type { MovementModelSpec } from './physics/movement/model';
-export { MOTION_FIELDS } from './physics/movement/model';
-export type { MotionState } from './physics/movement/model';
-export type { MotionFeel } from './physics/feel';
 
 // Levels v2 (WP 4.2): the hall's glyphs (gallery =, stairs ^, dais o, brazier t), ramps and daises, hull and cylinder
 // colliders, and the surface tag underfoot.
@@ -388,11 +376,6 @@ export { locomoteClips } from './sim/actorClips';
 export { clipLayerOf } from './sim/actorClips';
 export type { PuppetComponent } from './sim/actors';
 
-// The feel kit, sim-side (WP 13.4): the shooter model's live tuning, `movement.<group>.<field>` (a setting off its
-// default replaces that number in every model character's model, from the next step), and an actor placed at rest
-// (a scene's dev action: a feel course's start).
-export { MOVEMENT_SETTINGS } from './physics/movement/settings';
-export { movementOverrides } from './physics/movement/settings';
-export { tuneCharacter } from './physics/movement/settings';
-export type { MovementOverride } from './physics/movement/settings';
-export { placeActor } from './sim/actors';
+// Movement (Phase 13): movement profiles and the shooter model, its live tuning and placing (the feel kit), and the
+// rides; listed in engine/sim/movementApi.ts, re-exported whole so this file stays under its line cap.
+export * from './sim/movementApi';
