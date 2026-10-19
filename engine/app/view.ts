@@ -170,7 +170,7 @@ export function createRunView(options: RunViewOptions): RunView {
   const reread = () => {
     const run = options.run();
     stage.capture([]);
-    stage.capture(placed(run, stage.kinds), run.world.dt);
+    stage.capture(placed(run, stage.kinds), run.world.dt, queries());
   };
   /** The world whose trace the effects read: only a new one is read from its first event. */
   let fxWorld: object | null = null;
@@ -189,7 +189,7 @@ export function createRunView(options: RunViewOptions): RunView {
     crowdStale = false;
   };
   const views = new WeakMap<object, QueryView>();
-  /** The sim's read-only queries, for the follow cameras' walls; none without physics. */
+  /** The sim's read-only queries, for the follow cameras' walls and the puppets' ground; none without physics. */
   const queries = (): QueryView | undefined => {
     const run = options.run();
     if (!run.scene.physics) return undefined;
@@ -251,7 +251,7 @@ export function createRunView(options: RunViewOptions): RunView {
     stepped() {
       const run = options.run();
       syncEffects(); // off, the bolts this step reads draw as stand-ins at once
-      stage.capture(placed(run, stage.kinds), run.world.dt);
+      stage.capture(placed(run, stage.kinds), run.world.dt, queries());
       stage.draw((alpha = 1)); // the latest state until a frame interpolates: what a headless dump shows
       crowdStale = true; // posed by the next frame or dump, not every step
       readPlayer();

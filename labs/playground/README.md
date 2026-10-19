@@ -152,8 +152,8 @@ from a fall) and `labs/playground/courses/skydive.ts` (up the balloon's line, th
 30 m, no stun). Each starts with the gym's dev action `place`
 (`{ at, yaw, speed }`) and checks the bounds of `labs/playground/courses/bounds.ts` too, each run's: the body's and
 every camera's. `node x feel labs/playground` runs them all headless, `--course slide-flat` one, each into
-`out/feel/<lab>-<name>/report.json`. A bound its WP has yet to meet is watched, reported and never failing a course:
-the feet's slide until WP 13.10 plants them. Every camera keeps §4's bounds on every course, and
+`out/feel/<lab>-<name>/report.json`. A bound its WP has yet to meet is watched, reported and never failing a course
+(none now: the feet's slide was, until WP 13.10 planted them). Every camera keeps §4's bounds on every course, and
 `labs/playground/courses/cameras.ts` blends through the five modes while the player runs a square by the north wall.
 
 The feel panel (F, or `?playground.feel=on`) puts a slider on every `movement.*` setting, live; Copy as profile shows

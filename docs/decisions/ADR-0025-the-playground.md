@@ -455,3 +455,96 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **Isometric's keys**: Q and E turn the view by 90°, blended, so its Use moves to G; the d-pad's right turns it on a
   pad, the d-pad's left swaps the shooter's shoulder, so the d-pad no longer moves.
 - **Deferred**: the pad's reload and holster (Apex's X and Y held) wait for a held binding with WP 13.19 and 13.20.
+
+## Amendment 10 (2026-10-19, WP 13.10): locomotion animation
+
+- **The planted stride, not the library's blend sets yet** (engine/anim/locomotion/planted.ts): the player walks, runs,
+  sprints and crouch-walks on the procedural humanoid's gait, planted: a foot stands its duty (0.62 of its cycle
+  walking, 0.3 running, 0.24 sprinting, so a run has its flight), travelling back exactly as far as the body goes
+  meanwhile, and swings on a half cosine; its touchdowns stay at the phase the sim hashes. Measured first: the library's
+  loops were captured at 0.7 to 1.9 m/s (100STYLE's) against the playground's 2.3 to 7.6, past what a stride warp holds,
+  and format 1 carries no contacts until WP 8.8 re-imports them. The blend sets wait for a measured need (the owner's
+  playtest) and those contacts; the stride is matched to the speed by construction, the legs follow the movement and the
+  chest the facing, with no hip turn yet (a strafe steps sideways, its crossing foot passing ahead).
+- **The visual review's changes** (the movement states' sheets, three rounds): the steps were short and quick and the
+  arms swung with the legs on their side, so the adult's stride grows from 0.42 to 0.5 m and a planted sprint's share
+  past 1 to 1.25 (locomotion.ts `strideShare`), a planted build's arms swing against its legs (the source builds keep
+  the source rig's swing, pinned by their reference vectors) and a sprint leans further forward. The crouch-walk lunged
+  at each double support: a planted stride is 30% shorter crouched (`GAIT.crouchStride`), at a quicker cadence (0.58 m
+  steps at 240 a minute), which the sim's phase needs to know, so the sim tells an actor's animator its movement model's
+  duck as the pose `crouch` (engine/sim/actors.ts). Both move the hashed phase: the four playground replays were
+  re-recorded, their runs unchanged (tests/replays/README.md). The walk back lunged as it started: the humanoid eases
+  its movement components toward the velocity, so a reversal shrank the first step to half; a planted stride steps along
+  their unit vector once they are half long (planted.ts `plantedMove`). The push-off bent the ankle 44° with the toes
+  flipped up: a planted foot on its feet now rolls on its ball as the heel lifts and on its heel as the toes rise, in
+  the leg's solve (authoring.ts `solveLeg`) and the plant alike, its toes flat, its ankle allowed 15° up and in a stride
+  a quarter of the knee's bend more, 25° at most (`ankleLimit`: a bent knee frees the calf, so a standing foot stays as
+  it stood), and the pelvis rides as high as a trailing foot reaches with its heel lifted (`plantedHeight`), a lifted
+  foot holding it as far as the solve plants it: it dropped 12 cm in a tick at each touchdown, and now eases in and out.
+  The third round: a swinging toe dragged on the floor in every gait and a run never flew (the swing lifted on a half
+  sine, so a trailing foot stayed on its ball and its knee straightened after toe-off). A planted swing now lifts early
+  (`PLANTED.kick`, its top at 0.38 of the swing) with its knee bent at least as far as the gait's heel kick (55°
+  walking, 90° running, 110° sprinting, `plantedKnee`), its foot as level as the ankle allows and its toes kept 1.5 cm
+  over the floor (the ankle bending up to 30° further, authoring.ts `clearToes`), a crouched swing twice as high
+  (`GAIT.crouchLift`): every gait's toes clear the floor, a run flies 41% of its frames and a sprint 51%. A run's pelvis
+  sank lowest at its toe-off, the source's bob: a planted run's rides 10 cm low through each stance and rises 7.5 cm
+  into its flight (`plantedBob`). A strafe spread its legs 0.62 m and its pelvis sank 16 cm: a planted stride's steps
+  are 35% shorter straight sideways (`GAIT.sideStride`), which moves the hashed phase, so the four playground replays
+  were re-recorded again. The slide's left hand went through the floor: its wrist rides 19 cm up. The fall's feet
+  hovered after the landing: a stance foot whose heel the dip lifts past 10° stands on its ball (`FOOT_PLANT.heelUp`).
+  The fourth round: the crouch-walk's stop set a foot a few ticks into its swing back down 15 cm ahead, its stance
+  lengthening as the body slowed; a crouched stride keeps the walk's stance share at any pace (`plantedDuty`'s
+  `crouch`).
+- **Stance locks, with the rule ADR-0009 amendment 8 asked for** (locomotion/locks.ts): only a `plantedStride` build
+  locks (its `stance()`), and only on its feet (`onFeet`: not lying, climbing, striking, flying or early in a dash; a
+  kneel keeps its feet). A foot locks where it lands, keeping its heading (a turn about the vertical), and lets go over
+  0.05 s when its stance ends, lifting as its animation lifts it and taking its roll at once (the two rolls agree); at
+  once when an action takes the feet or lifts a sole over 2 cm (on its feet, its ball: a heel lifting off it leaves the
+  foot down), but for a toe-off in a stride on the level it locked on (a body speeding away had left the lock 17 cm
+  ahead of its animation, and it snapped); a sole kept on the floor holds up to 0.1 s past its stance (the push-off, the
+  touchdown), on the level it locked on. Standing or slowing below a step's pace, a foot astray steps back under the
+  body, one at a time: at once past 12 cm (a stop, a turn in place), past 1.5 cm once its animation has held still
+  0.05 s (the feet back to rest after an action). A held sole stays on the ground under it as that moves, on the physics
+  ground never onto another level (a body stepping up leaves it on the floor below), rides the ground's velocity (the
+  state matrix's run in place) and drops when the body is put over 1 m away or 0.6 m above it (past the plant's reach).
+  With locks the knee bends as the animation bends it, the leg longer by as far as a lock holds its foot out from its
+  animation (a body braking past a held foot sank to 15 cm, the knee under the floor), and a held foot lies flat and
+  rolls as above (engine/anim/footRoll.ts). The pelvis drop is no longer smoothed: its 1 m/s rise cost slides and a pop,
+  and a stair needs none (the floor and the drop change together).
+- **The physics ground**: the view's puppets and the feel kit's track get the sim's query view, and the foot plant
+  stands each sole on the physics ground within a band of the body's floor (a metre a metre out, ± 0.15 m: a ramp, a
+  stair), else, and in the air, on the flat floor at the body's height (a ledge, a sole inside a wall); over ground
+  below the floor, a lifting sole follows the body (a trailing foot clears the step it leaves), and a free foot out of
+  the leg's reach rises over its place to where the leg reaches, never dragged along the leg's line through a riser. The
+  feel kit reads a sole's height from that ground, so a foot on a ramp is on its floor.
+- **What the view shows** (locomotion/motion.ts `MovementPose`, locomotion/shown.ts): the sim's animator is hashed, so
+  the movement's crouch, slide, air, landing and lean are the view's, eased from the movement model's state and the
+  actor's velocity and set on the humanoid before each pose (`Humanoid.shown`, never stepped or saved): the crouch; the
+  slide, seated low and leaned back, the right leg out ahead, the left hand low by the hip, the spine tilted to the
+  slope; the rise and the fall by the vertical speed; the landing's dip by the landing speed, soft from 4 m/s (a jump
+  lands at 7.4), hard from 9 (deep, leaning forward, the right hand reaching for the floor, held 0.3 s), unwinding as
+  the body leaves the ground again; the lean into the acceleration and the bank into a turn. Procedural: Quaternius's
+  slide and Mesh2Motion's three-point landing are clips for WP 13.11's actions on actors.
+- **The foot plant's weight from what the clips hold** (clipsets.ts `legsHeld`): a full-body clip as its fade shows, a
+  masked one by its mask on the thighs, an added one none; an idle clip layer leaves the plant whole.
+- **Movement states in the matrix** (locomotion/matrix.ts, `motion:<name>` for a `plantedStride` build): the walk, run,
+  sprint, walk back, strafe, crouch-walk, slide, a running jump, the tower's 6 m fall, a stop and a whole turn in place,
+  in the anim QA family and `x sheet`; a script may turn the body (`yaw`). They pass with no baseline entry.
+- **The adult's baseline**: 11 entries go (the run's, the stances', the guard's, crouch's and kneel's, the dodge's, four
+  clip actions'), the rest tighten (some twice, as the review's roll lowered them again), none loosens; every foot-slide
+  entry is at or under the source builds'.
+- **Deferred**: the head and eyes toward the aim, to WP 13.11 with its aim offsets (the look's pitch reaching the view's
+  body); starts and stops matched to distance, with the blend sets; the hip's turn toward the movement. A foot leaving
+  the floor within a toe's length of a riser crosses its edge in its first frame (up to 16 cm deep in
+  footPlant.test.ts's run onto a 0.4 m box, then 2 at most): the capsule steps up at once and the swing cannot see the
+  riser ahead; easing that step in the view is the fix when a playtest shows it. A hard stop from a run, a sprint or a
+  strafe can set a foot a tick or two into its swing back down as its stance lengthens with the falling speed (a
+  re-plant a few centimetres on, then the stop's step): telling a swing from a stance across that needs each foot's
+  memory of its swing, a new hashed field in every animator, so it waits with the starts and stops matched to distance.
+  The crouch-walk's rear knee still comes within 23 cm of the floor at a double support: the crouch is as deep as the
+  crouched hull (its eye at 0.81 m), and a 35 cm clearance would need the walking crouch 25 cm shallower.
+- **Beyond Owns**: poses.ts (a planted stride's crouch stance fades as it walks; the shown layers), stateMatrix.ts (a
+  script's yaw), builds.ts (the adult's stride), authoring.ts (the roll in `solveLeg`), engine/sim/actors.ts (the duck
+  as the crouch pose), engine/dev/feel/{anim,run}.ts, engine/gfx/stage.ts and engine/app/view.ts (the queries),
+  tools/qa/anim.ts and tools/cmd/sheet.ts (the movement states), clipsets.ts, labs/playground/courses/bounds.ts, the
+  playground replays' goldens.

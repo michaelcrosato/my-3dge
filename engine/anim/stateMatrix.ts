@@ -39,8 +39,8 @@ export interface MatrixState {
   readonly states?: Readonly<AnimatorInput>;
   /**
    * Or a script: given the fresh animator and the facing (it may add layers), what to tell the body at each step, in
-   * the body's frame, called once per step with the step's seconds, from the hold to the end of the run, so what it
-   * plays (an attack, a reaction) ends and settles on its own.
+   * the body's frame (its `yaw` a turn from the facing), called once per step with the step's seconds, from the hold
+   * to the end of the run, so what it plays (an attack, a reaction, a movement) ends and settles on its own.
    */
   readonly script?: (animator: Animator, facing: number) => (dt: number) => AnimatorInput;
   /** How long it holds, seconds. */
@@ -117,7 +117,7 @@ function runState(
     const told: AnimatorInput = i < lead ? {} : script ? script(dt) : i < end ? { ...state.states } : {};
     const position = (told.position?.clone() ?? new Vector3()).applyQuaternion(turn).add(ground);
     const velocity = told.velocity?.clone().applyQuaternion(turn);
-    animator.update({ ...told, velocity, position, yaw: facing });
+    animator.update({ ...told, velocity, position, yaw: facing + (told.yaw ?? 0) }); // a script may turn it
     if (velocity) ground.addScaledVector(velocity, dt).setY(0);
     run.poses.push(animator.body.pose.clone());
     run.positions.push(position);

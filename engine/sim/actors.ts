@@ -16,7 +16,8 @@
  *
  * WP 13.3 and 13.7: an actor on a movement model also holds `motion`, the model's state, and reads its buttons, view
  * and rides (`spawnActor` says which); launchers set off any actor: event `launch` `{ id }`. WP 13.9: a player's sprint
- * and crouch work as the recorded settings `input.sprint` and `input.crouch` say (held, or toggled by a press).
+ * and crouch work as the recorded settings `input.sprint` and `input.crouch` say (held, or toggled by a press); WP
+ * 13.10: an animated actor's duck is its animator's pose `crouch` (a planted stride's shorter step).
  *
  * Invariants: systems are added once per world, on the first (animated) spawn; all an actor remembers is in its
  * components (the sim's animators are loaded from them). Despawning leaves the body; `removeActor` removes both.
@@ -353,18 +354,21 @@ function animated(w: World) {
 
 /**
  * The system `actors.anim`: each animator's step in id order, told its `states` and the controller's (`velocity`, `yaw`,
- * `air`, `dash`), its breathing phase drawn from `rng.entity(id, 'anim')` at its first step; emits its events. An
- * actor's `reactions` step first, what their phase tells the body laid over its `states`.
+ * `air`, `dash`; a movement model's duck as the pose `crouch` where the states hold no pose), its breathing phase drawn
+ * from `rng.entity(id, 'anim')` at its first step; emits its events. An actor's `reactions` step first, what their phase
+ * tells the body laid over its `states`.
  */
 function stepAnimators(w: World): void {
   const [actors, pool] = animated(w);
-  for (const { id, actor, animator: data, reactions } of actors) {
+  for (const { id, actor, animator: data, reactions, motion } of actors) {
     const rng = w.rng.entity(id, 'anim');
     if (!data.started) [data.state.clock, data.started] = [rng.next() * STEP.clockSpread, true]; // as a humanoid does
     const animator = pool.get(id, data, { rng, dt: w.dt });
     velocity.set(actor.vx, actor.vy, actor.vz);
     const told = reactions ? { ...data.states, ...stepReactions(reactions, w.dt) } : data.states;
-    animator.step({ ...told, velocity, yaw: actor.yaw, air: !actor.grounded, dash: actor.dash > 0 }).save(data);
+    const ducked = motion?.duck === 'ducking' || motion?.duck === 'ducked'; // the movement model's crouch
+    const pose = told.pose ?? (ducked ? 'crouch' : undefined);
+    animator.step({ ...told, pose, velocity, yaw: actor.yaw, air: !actor.grounded, dash: actor.dash > 0 }).save(data);
     for (const { type, ...event } of animator.events) w.emit(type, { id, ...event });
   }
 }

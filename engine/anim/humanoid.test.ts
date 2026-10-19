@@ -247,3 +247,36 @@ describe('the seeded stream', () => {
     }
   });
 });
+
+describe('the humanoid’s stance and what the view shows (WP 13.10)', () => {
+  it('says when a planted build’s feet stand: both standing, in turn walking, neither while it strikes; null for others', () => {
+    expect(new Humanoid({ build: 'build:heroic', clock: 0 }).update({}).stance()).toBeNull();
+    const adult = new Humanoid({ build: 'build:adult', clock: 0 });
+    expect(adult.update({}).stance()).toEqual([true, true]);
+    const seen = new Set<string>();
+    for (let i = 0; i < 90; i++) {
+      const stance = adult.update({ velocity: new Vector3(0, 0, 4.4) }).stance();
+      if (i >= 30) seen.add(JSON.stringify(stance)); // up to speed: below a step's pace both stand
+    }
+    expect(seen).toEqual(new Set(['[true,false]', '[false,true]', '[false,false]'])); // a run's flight between steps
+    for (let i = 0; i < 3; i++) adult.update({ body: { move: 'move:slash', phase: 'wind', u: 0.5 } });
+    expect(adult.stance()).toEqual([false, false]);
+  });
+
+  it('tells the ground’s velocity under a body running in place, and none otherwise', () => {
+    const adult = new Humanoid({ build: 'build:adult', clock: 0 });
+    adult.update({ run: 1, yaw: Math.PI / 2 });
+    const belt = adult.treadmill();
+    expect(belt.x).toBeCloseTo(-adult.build.speedRef, 12);
+    expect(Math.abs(belt.z)).toBeLessThan(1e-12);
+    expect(adult.update({}).treadmill().length()).toBe(0);
+  });
+
+  it('poses what the view shows but never steps or hashes it', () => {
+    const [plain, shown] = [new Humanoid({ build: 'build:adult', clock: 0 }), new Humanoid({ build: 'build:adult', clock: 0 })]; // prettier-ignore
+    shown.shown.crouch = 1;
+    for (let i = 0; i < 30; i++) [plain, shown].forEach((h) => h.update({ velocity: new Vector3(0, 0, 2) }));
+    expect(JSON.stringify(shown.state)).toBe(JSON.stringify(plain.state));
+    expect(jointPosition(shown.world, 'pelvis').y).toBeLessThan(jointPosition(plain.world, 'pelvis').y - 0.1);
+  });
+});

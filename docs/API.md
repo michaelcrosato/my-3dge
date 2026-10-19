@@ -255,7 +255,7 @@ game agent's manual.
 - `createFeelPanel` (function from [`engine/dev/feel/panel.ts`](../engine/dev/feel/panel.ts)): Builds the feel panel on `document` over `inspector` (see the file comment).
 - `createFirstCamera` (function from [`engine/gfx/cameras/first.ts`](../engine/gfx/cameras/first.ts)): A first-person camera: at the hero's eyes (`input.eye`), turned by the devices; it takes every view effect.
 - `createFollowCamera` (function from [`engine/gfx/cameras/follow.ts`](../engine/gfx/cameras/follow.ts)): A follow camera: orbiting the hero and following him (see the file comment).
-- `createFootPlantState` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A new, unlocked `FootPlantState`.
+- `createFootPlantState` (function from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): A new, unlocked `FootPlantState`.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
 - `createInput` (function from [`engine/input/input.ts`](../engine/input/input.ts)): Makes the page's input.
 - `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
@@ -405,13 +405,14 @@ game agent's manual.
 - `FollowOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): How `followFlow` steers.
 - `FollowSpec` (interface from [`engine/gfx/cameras/follow.ts`](../engine/gfx/cameras/follow.ts)): A follow camera's code as data: without the numbers it keeps the heading of the camera before it.
 - `FollowSteps` (interface from [`engine/gfx/cameras/chase.ts`](../engine/gfx/cameras/chase.ts)): What a WP 3.9 camera gives `followCamera`: its pure steps, as `CameraSteps`, and its code and words.
-- `FOOT_PLANT` (const from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): `footPlant`'s tuning, in metres and seconds.
-- `FootLock` (type from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
-- `footPlant` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the floor (`options.floor`) over the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
-- `FootPlant` (class from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The foot plant as the animator's last `post` layer (see the file comment): each tick, the feet stand on a flat floor at the body's height.
+- `FOOT_LOCK` (const from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): The locks' tuning, in metres and seconds.
+- `FOOT_PLANT` (const from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): `footPlant`'s tuning, in metres and seconds; the locks' is `FOOT_LOCK` (engine/anim/locomotion/locks.ts).
+- `FootLock` (type from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds (the point NaN until the foot is first placed), its `weight` (1 locked, easing to 0), whether it is `stepping` back under the body and that step's `span` (its share of a full step), the seconds its animation has held the sole `still` and on the floor outside its stance (`touch`), and where the animation put it `last`.
+- `footPlant` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the floor (`options.floor`) over the ground (over ground below it, as it nears it: lifting, it follows the body) and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
+- `FootPlant` (class from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The foot plant as the animator's last `post` layer (see the file comment): each tick, the feet stand on a flat floor at the body's height, or on `ground`.
 - `FootPlantLayerOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The `FootPlant` layer's options.
 - `FootPlantOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): How `footPlant` plants.
-- `FootPlantState` (type from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
+- `FootPlantState` (type from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks.
 - `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
 - `FrameWorld` (type from [`engine/app/engine.ts`](../engine/app/engine.ts)): The read side of the run's world a page gets each frame: its step, rate, entities and the trace of its events.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
@@ -454,6 +455,7 @@ game agent's manual.
 - `GroundHit` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Where a ground probe hit, in world space: the `point`, and the surface's unit `normal` there.
 - `GroundPoint` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): A point on the ground (m): x east, z south.
 - `GroundProbe` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Casts a ray straight down from `origin`, at most `distance` metres; on a hit it fills `hit` and returns true.
+- `GroundQueries` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): What the foot plant asks of the physics ground: the sim's read-only `QueryView` (engine/sim/queryView.ts) has it.
 - `GroupName` (type from [`engine/physics/groups.ts`](../engine/physics/groups.ts)): A collision group's name.
 - `HAIR` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): Hair from behind the head (`behind` and `lift` head radii from its centre), the source's numbers.
 - `handTo` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `twoBoneRot` for the arm of `hand`, bringing its weapon socket (`weaponL`, `weaponR`) to `grip`: returns how far the socket stays from it (0 in reach).
@@ -725,6 +727,7 @@ game agent's manual.
 - `Quantize` (type from [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)): Where a change lands: the next bar line, the next beat, or at once.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `QuatLike` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A rotation: three.js's `Quaternion`, `{ x, y, z, w }` or `[x, y, z, w]`.
+- `queryGround` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A `GroundProbe` over the physics ground, through `queries.probe` (the level and props, never an actor): a ray that starts inside a body finds no ground, so a sole inside a wall never climbs onto it.
 - `QueryOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What every query takes: the groups it hits, and a body it skips.
 - `QueryView` (type from [`engine/sim/queryView.ts`](../engine/sim/queryView.ts)): The physics queries, read-only: what presentation code may ask of the sim's physics.
 - `queryViewOf` (function from [`engine/sim/queryView.ts`](../engine/sim/queryView.ts)): The read-only view of a sim world's physics.
@@ -1154,7 +1157,7 @@ game agent's manual.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
 - `createCharacter` (function from [`engine/physics/character.ts`](../engine/physics/character.ts)): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
-- `createFootPlantState` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A new, unlocked `FootPlantState`.
+- `createFootPlantState` (function from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): A new, unlocked `FootPlantState`.
 - `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
@@ -1222,13 +1225,14 @@ game agent's manual.
 - `FOLLOW` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): `followFlow`'s defaults: straight within 4 m in a clear line (emberdeep's 64 units), full speed to the target.
 - `followFlow` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way to walk from `from` to `to` along `field` (a flow field toward the target's tile): straight at `to` within `near` metres when the grid has a clear line for a body (`NavGrid.lineOfSight`), else the field's look-ahead direction (`FlowField.direction`), else, where the field has no way (beyond its reach, or arrived at the goal tile's centre), straight at `to`, as the prototype does.
 - `FollowOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): How `followFlow` steers.
-- `FOOT_PLANT` (const from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): `footPlant`'s tuning, in metres and seconds.
-- `FootLock` (type from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
-- `footPlant` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the floor (`options.floor`) over the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
-- `FootPlant` (class from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The foot plant as the animator's last `post` layer (see the file comment): each tick, the feet stand on a flat floor at the body's height.
+- `FOOT_LOCK` (const from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): The locks' tuning, in metres and seconds.
+- `FOOT_PLANT` (const from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): `footPlant`'s tuning, in metres and seconds; the locks' is `FOOT_LOCK` (engine/anim/locomotion/locks.ts).
+- `FootLock` (type from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds (the point NaN until the foot is first placed), its `weight` (1 locked, easing to 0), whether it is `stepping` back under the body and that step's `span` (its share of a full step), the seconds its animation has held the sole `still` and on the floor outside its stance (`touch`), and where the animation put it `last`.
+- `footPlant` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the floor (`options.floor`) over the ground (over ground below it, as it nears it: lifting, it follows the body) and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
+- `FootPlant` (class from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The foot plant as the animator's last `post` layer (see the file comment): each tick, the feet stand on a flat floor at the body's height, or on `ground`.
 - `FootPlantLayerOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The `FootPlant` layer's options.
 - `FootPlantOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): How `footPlant` plants.
-- `FootPlantState` (type from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
+- `FootPlantState` (type from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks.
 - `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
 - `fromLegacy` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A legacy `E.MOVES` spec in the new fields (Appendix C, `LEGACY_FIELDS`); defaults are written out only when needed.
@@ -1249,6 +1253,7 @@ game agent's manual.
 - `GroundHit` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Where a ground probe hit, in world space: the `point`, and the surface's unit `normal` there.
 - `GroundPoint` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): A point on the ground (m): x east, z south.
 - `GroundProbe` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Casts a ray straight down from `origin`, at most `distance` metres; on a hit it fills `hit` and returns true.
+- `GroundQueries` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): What the foot plant asks of the physics ground: the sim's read-only `QueryView` (engine/sim/queryView.ts) has it.
 - `GroupName` (type from [`engine/physics/groups.ts`](../engine/physics/groups.ts)): A collision group's name.
 - `HAIR` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): Hair from behind the head (`behind` and `lift` head radii from its centre), the source's numbers.
 - `handTo` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `twoBoneRot` for the arm of `hand`, bringing its weapon socket (`weaponL`, `weaponR`) to `grip`: returns how far the socket stays from it (0 in reach).
@@ -1418,6 +1423,7 @@ game agent's manual.
 - `PuppetComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `QuatLike` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A rotation: three.js's `Quaternion`, `{ x, y, z, w }` or `[x, y, z, w]`.
+- `queryGround` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A `GroundProbe` over the physics ground, through `queries.probe` (the level and props, never an actor): a ray that starts inside a body finds no ground, so a sole inside a wall never climbs onto it.
 - `QueryOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What every query takes: the groups it hits, and a body it skips.
 - `QueryView` (type from [`engine/sim/queryView.ts`](../engine/sim/queryView.ts)): The physics queries, read-only: what presentation code may ask of the sim's physics.
 - `queryViewOf` (function from [`engine/sim/queryView.ts`](../engine/sim/queryView.ts)): The read-only view of a sim world's physics.
@@ -1724,7 +1730,7 @@ For the agents who maintain the engine.
 - `ClipWarning` (interface from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): One warning about a clip: the code, the key (from 1) and its time, the field, and the sentence naming the fix.
 - `Combo` (class from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A chain of attacks (a 3-hit punch string, a sword combo): `press` during one hit's recover, or within `window` seconds after it ends, flows into the next; otherwise the chain starts over.
 - `ComboState` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A combo as plain data: the hit playing (−1 none), seconds since the last hit ended, the hit's own state.
-- `createFootPlantState` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A new, unlocked `FootPlantState`.
+- `createFootPlantState` (function from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): A new, unlocked `FootPlantState`.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
 - `decodePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it.
@@ -1744,13 +1750,14 @@ For the agents who maintain the engine.
 - `FloaterOptions` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is made from.
 - `FloaterPose` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater's pose: the core's world matrix and the motes' world positions.
 - `FloaterState` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's state: what `step` eases and `pose` reads, plain numbers.
-- `FOOT_PLANT` (const from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): `footPlant`'s tuning, in metres and seconds.
-- `FootLock` (type from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
-- `footPlant` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the floor (`options.floor`) over the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
-- `FootPlant` (class from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The foot plant as the animator's last `post` layer (see the file comment): each tick, the feet stand on a flat floor at the body's height.
+- `FOOT_LOCK` (const from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): The locks' tuning, in metres and seconds.
+- `FOOT_PLANT` (const from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): `footPlant`'s tuning, in metres and seconds; the locks' is `FOOT_LOCK` (engine/anim/locomotion/locks.ts).
+- `FootLock` (type from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds (the point NaN until the foot is first placed), its `weight` (1 locked, easing to 0), whether it is `stepping` back under the body and that step's `span` (its share of a full step), the seconds its animation has held the sole `still` and on the floor outside its stance (`touch`), and where the animation put it `last`.
+- `footPlant` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the floor (`options.floor`) over the ground (over ground below it, as it nears it: lifting, it follows the body) and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
+- `FootPlant` (class from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The foot plant as the animator's last `post` layer (see the file comment): each tick, the feet stand on a flat floor at the body's height, or on `ground`.
 - `FootPlantLayerOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The `FootPlant` layer's options.
 - `FootPlantOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): How `footPlant` plants.
-- `FootPlantState` (type from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
+- `FootPlantState` (type from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks.
 - `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
 - `fromLegacy` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A legacy `E.MOVES` spec in the new fields (Appendix C, `LEGACY_FIELDS`); defaults are written out only when needed.
 - `FRU` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A rig-local point or direction: metres (or a direction's parts) forward, right and up.
@@ -1761,6 +1768,7 @@ For the agents who maintain the engine.
 - `GROUND_SPEED` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): shardfall's ground-speed numbers (`clips.rs:441-476`).
 - `GroundHit` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Where a ground probe hit, in world space: the `point`, and the surface's unit `normal` there.
 - `GroundProbe` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Casts a ray straight down from `origin`, at most `distance` metres; on a hit it fills `hit` and returns true.
+- `GroundQueries` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): What the foot plant asks of the physics ground: the sim's read-only `QueryView` (engine/sim/queryView.ts) has it.
 - `HAIR` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): Hair from behind the head (`behind` and `lift` head radii from its centre), the source's numbers.
 - `handTo` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `twoBoneRot` for the arm of `hand`, bringing its weapon socket (`weaponL`, `weaponR`) to `grip`: returns how far the socket stays from it (0 in reach).
 - `hashPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose's 64-bit FNV-1a digest (16 hex digits) over the numbers `toArray` gives: equal numbers, equal hash.
@@ -1822,6 +1830,7 @@ For the agents who maintain the engine.
 - `PoseName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A pose's name.
 - `PoseOptions` (interface from [`engine/anim/character.ts`](../engine/anim/character.ts)): Where and how `pose` draws the body.
 - `POSES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The held poses, each with what it shows.
+- `queryGround` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A `GroundProbe` over the physics ground, through `queries.probe` (the level and props, never an actor): a ray that starts inside a body finds no ground, so a sole inside a wall never climbs onto it.
 - `REACTION` (const from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): Every constant of the reactions: rates per second, times in seconds.
 - `ReactionBody` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): What a reaction's phase tells the humanoid: a pose, how far down.
 - `ReactionName` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): A reaction timeline's name.
@@ -1907,6 +1916,7 @@ For the agents who maintain the engine.
 
 ### [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)
 
+- `ankleLimit` (function): The most a `plantedStride` build's foot bends up from its shin before the heel lifts, its knee bent `knee` rad.
 - `B` (function): `f` metres forward, `r` right and `u` up, in the model frame (+Z forward, −X right, +Y up).
 - `fromFRU` (function): `B` of an `FRU` tuple, written into `out`.
 - `fru` (function): A model-frame vector back in rig-local terms: [forward, right, up].
@@ -1922,7 +1932,7 @@ For the agents who maintain the engine.
 - `sideSign` (function): +1 for the right side, −1 for the left: the sign of `r` on that side (my-3d2dge's `s`).
 - `SOLVE` (const): Every constant of the solvers.
 - `solveArm` (function): One arm: the wrist onto `hand` (rig-local, before `size`), the elbow bent toward `SOLVE.armPole`.
-- `solveLeg` (function): One leg, the sole under its ankle onto `sole` (rig-local, before `size`).
+- `solveLeg` (function): One leg, the sole under its ankle onto `target` (rig-local, before `size`), drawn toward the hip as far as the knee's least bend `kick` takes (a planted swing's heel kick, locomotion.ts `gaitKnee`).
 - `solveSpine` (function): The spine of a cleared pose: the pelvis turns `hips` toward the right hand; spine0 takes the lean, up to `spine`; spine1, spine2 and the chest spread a turn of `twist` (the shoulder line as near level as the lean allows); the neck points the head along `head`, facing forward; the clavicles lift the shoulder joints onto `shoulders` as near as their length allows.
 - `SpineTargets` (interface): Where a spine points: rig-frame directions and rig-local shoulder points (`solveSpine`).
 - `turnRight` (function): A turn of `angle` radians about the up axis toward the right hand (my-3d2dge's `rz`), written into `out`.
@@ -2025,6 +2035,7 @@ For the agents who maintain the engine.
 - `defineSetBuild` (function): Registers build `id` with the proportions clip set `setId`'s clips were captured on (retarget.ts `restBuild` of its first source's rest body, or `source`'s), once, and returns it: `build:mannequin` from `clipset:quaternius` is the build engine/gfx/puppets/bodies/mannequin.ts draws, which the sim's animator needs before the view's body exists.
 - `emptyClipState` (function): An empty clip layer's state: nothing plays.
 - `getClipSet` (function): The registered set `id` (`clipset:quaternius`); a missing one throws `CORE_NO_ENTRY`, naming the closest ids.
+- `legsHeld` (function): How much of the legs `layer`'s clips hold now, 0 to 1: a full-body clip as its fade shows (smoothstepped), a masked one by its mask's weight on the thighs, an added one none; an idle layer holds nothing.
 
 ### [`engine/anim/clip/encode.ts`](../engine/anim/clip/encode.ts)
 
@@ -2174,14 +2185,23 @@ For the agents who maintain the engine.
 
 ### [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)
 
-- `createFootPlantState` (function): A new, unlocked `FootPlantState`.
-- `FOOT_PLANT` (const): `footPlant`'s tuning, in metres and seconds.
-- `FootLock` (type): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
-- `footPlant` (function): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the floor (`options.floor`) over the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
-- `FootPlant` (class): The foot plant as the animator's last `post` layer (see the file comment): each tick, the feet stand on a flat floor at the body's height.
+- `FOOT_PLANT` (const): `footPlant`'s tuning, in metres and seconds; the locks' is `FOOT_LOCK` (engine/anim/locomotion/locks.ts).
+- `footPlant` (function): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the floor (`options.floor`) over the ground (over ground below it, as it nears it: lifting, it follows the body) and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
+- `FootPlant` (class): The foot plant as the animator's last `post` layer (see the file comment): each tick, the feet stand on a flat floor at the body's height, or on `ground`.
 - `FootPlantLayerOptions` (interface): The `FootPlant` layer's options.
 - `FootPlantOptions` (interface): How `footPlant` plants.
-- `FootPlantState` (type): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks, and the last `drop`.
+- `GroundQueries` (interface): What the foot plant asks of the physics ground: the sim's read-only `QueryView` (engine/sim/queryView.ts) has it.
+- `queryGround` (function): A `GroundProbe` over the physics ground, through `queries.probe` (the level and props, never an actor): a ray that starts inside a body finds no ground, so a sole inside a wall never climbs onto it.
+
+### [`engine/anim/footRoll.ts`](../engine/anim/footRoll.ts)
+
+- `FootRoll` (interface): What the roll reads and writes of a foot's plan in footPlant.ts: its foot joint, the ankle's target, its world rotation and the knee's pole, how far it is held (1 held), and its roll: its rotation lying flat, its pitch (rad: + the heel up about the ball, − the toes up about the heel), and the ball's and the heel's places on the ground.
+- `heading` (function): Where a foot turned by `rotation` points, about the vertical (rad; 0 along +Z).
+- `heelPosition` (function): Where the back of a foot's sole is (world, m), as the anim checks read it: under the ankle, behind it; or the sole `along` of the foot from its heel (`PROPORTIONS.ball`: under the ball).
+- `kneePole` (function): The knee's pole for the foot `foot` on the ground on `side`: the way the animation bends it, off the line from the hip to the ankle, leaning toward the leg solve's pole (authoring.ts `SOLVE.legPole`) by `bend` metres as the leg straightens.
+- `layToes` (function): A held foot's toes lie flat on the ground as its heel lifts, their tips on it.
+- `liftHeel` (function): A held foot's roll settled on the plant's leg after its solve, by the animation's ankle (authoring.ts `ankleLimit`, `SOLVE`, loosened by the knee as far as the body is in its `stride`): past its bend up (the shin leaning forward over the foot) its heel lifts further off the ball, past its bend down its toes further off the heel, the leg solving again after each turn (the shin moves as the ankle does: a few turns settle it).
+- `pitchHeel` (function): Turns the plan's foot and ankle target `angle` radians: + the heel up about the ball, − the toes up about the heel.
 
 ### [`engine/anim/humanoid.ts`](../engine/anim/humanoid.ts)
 
@@ -2218,14 +2238,58 @@ For the agents who maintain the engine.
 - `GAIT` (const): Every constant of the gait, idle, lean and arm swing; lengths in metres (the source's units ÷ 16).
 - `gaitFoot` (function): The sole of the foot on `side` in the gait: a stride along the movement and a lift, or the standing spread.
 - `gaitHand` (function): The hand on `side` in the gait: hanging by the shoulder, swinging against its foot, lifting at each end.
+- `gaitKnee` (function): The least knee bend of the leg on `side` now (rad): a planted build's swing (`plantedKnee`), eased in from the stand.
+- `gaitStance` (function): Whether the foot on `side` stands now: a planted build's foot in its stance share, or both below a step's pace (`PLANTED.start`: standing, or slowing into a stop, where the foot plant steps them under the body); else null.
 - `headDirection` (function): The head's direction from the shoulder centre: the spine's, tipped forward by the build's `hunch`.
 - `hipTarget` (function): The hip joint of `side`: the pelvis plus `hipHalf` sideways, turned with the hips' share of the twist.
 - `HumanoidWeights` (interface): The weights the effector stage reads: each 0 (off) to 1 (full), eased toward its input by the humanoid.
 - `pelvisTarget` (function): The pelvis: stance height, bob, breathing and sway, a flinch, a dash, the held poses' drops, a lunge and a hop.
-- `plantedHeight` (function): The highest a pelvis at `f` forward and `r` right may ride for each sole the gait plants (its lift 0) to be in reach of its hip, `plantReach` of the straight leg: what a `plantedStride` build's gait drops to as its feet spread.
 - `restContext` (function): A context for `build` at rest: every weight 0, the clock and phase at 0, the anchors placed.
 - `shoulderTarget` (function): The shoulder joint of `side`: `shoulderHalf` out from the shoulder centre, turned by the twist, level.
 - `spineDirection` (function): The spine's direction, pelvis to shoulder centre: the build's lean, speed, a dash, a move, a flinch, a crouch.
+- `strideShare` (function): The share of the build's stride the gait's phase advances by at speed weight `speed`: `strideFloor` to 1, or for a `planted` stride to `strideTop`, so a sprint lengthens its steps rather than only quickening them, `crouchStride` shorter as far as it is crouched (`crouch`, the humanoid's crouch weight) and `sideStride` as far as it steps sideways (`side`, the unit move's right share, squared: a strafe's quicker, shorter steps, its legs spreading less).
+
+### [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)
+
+- `createFootPlantState` (function): A new, unlocked `FootPlantState`.
+- `FOOT_LOCK` (const): The locks' tuning, in metres and seconds.
+- `FootLock` (type): A foot's stance lock: the sole `point` and ground `normal` it holds (the point NaN until the foot is first placed), its `weight` (1 locked, easing to 0), whether it is `stepping` back under the body and that step's `span` (its share of a full step), the seconds its animation has held the sole `still` and on the floor outside its stance (`touch`), and where the animation put it `last`.
+- `FootPlantState` (type): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks.
+- `holdFoot` (function): Holds the foot whose lock is `lock` (the other foot's `other`): moves `at`, where its animation puts the sole on the ground, and `normal`, the ground's there, to where the lock holds them; returns the lock's weight (1 held).
+- `HoldOptions` (interface): What `holdFoot` is told about a foot this tick.
+- `onFeet` (function): Whether a body with weights `w` is on its feet, so its locks may hold: not lying, climbing or striking at all, nor flying or in a dash's first half (its locks let go at once, as the move begins to carry the feet).
+
+### [`engine/anim/locomotion/matrix.ts`](../engine/anim/locomotion/matrix.ts)
+
+- `MOVEMENT_STATES` (const): The movement states, by matrix id (see the file comment).
+
+### [`engine/anim/locomotion/motion.ts`](../engine/anim/locomotion/motion.ts)
+
+- `BodyView` (interface): The actor's velocity (m/s) and heading (rad), as the sim left them: what the lean and the air read.
+- `MotionView` (interface): The part of the shooter model's state the animation reads (engine/physics/movement/model.ts `MotionState`).
+- `MOVEMENT_POSE` (const): The view's eases: rates a second, angles in radians, speeds in m/s.
+- `MovementPose` (class): The view's eased movement of one body (see the file comment).
+- `plantsFeet` (function): Whether the foot plant may lock a foot in stance for a body moving as `motion` says (see the file comment).
+
+### [`engine/anim/locomotion/planted.ts`](../engine/anim/locomotion/planted.ts)
+
+- `footCycle` (function): Where a foot is in its cycle at gait phase `phase`, 0 at its touchdown to 1: the left lands at π/2, the right at 3π/2.
+- `PLANTED` (const): The planted stride's numbers: duty shares by speed share (the humanoid's speed weight, up to 1.25).
+- `plantedBob` (function): A planted run's bob at gait phase `phase` and speed share `share` (m, before `size`), what it takes over from the source's as the walk becomes a run (`share` past `walkShare` up to 1, none crouched (`crouch`), the weight it returns): the pelvis rides `runDrop` low through each stance (the leg's spring) and rises `runRise` into its flight, a half sine between a toe-off and the next touchdown, where the source's sank lowest at the toe-off.
+- `plantedDuty` (function): A foot's stance share of its cycle at speed share `share`: the walk's to the run's to the sprint's, eased linearly; a walk's as far as it is crouched (`crouch`: a crouch never flies, nor lengthens its stance as it slows to a stop).
+- `plantedEase` (function): How far into the stride a body at speed share `sp` is, 0 standing to 1 from `PLANTED.start` up (a smoothstep): the stride's reach and the standing stance (and a crouch's, poses.ts) trade places over it.
+- `plantedHeight` (function): How high a pelvis at `f` forward and `r` right (rig metres before `size`), riding `free` with nothing holding it, may ride for each sole the gait puts down (`soles`, left and right) to be in reach of its hip, `PLANTED.reach` of the straight leg: what a `plantedStride` build's gait drops to as its feet spread.
+- `plantedKnee` (function): The least bend of a planted foot's knee at cycle `c` with duty `d` and speed share `share` (rad): none in its stance, then over the first `kneeSwing` of its swing a half sine begun `kneeLead` early, from about the push-off's bend up to the gait's (`kneeWalk` to `kneeSprint`, eased as the duty is) and down, the heel kicked up behind.
+- `plantedMove` (function): A planted stride's direction from the humanoid's movement components (forward, right): its unit vector once they are half long or more.
+- `plantedStep` (function): A planted foot at cycle `c` with duty `d`: its place along the move as a share of the reach (+1 a reach ahead of the hip, −1 behind) and its lift as a share of the step's height (0 on the ground, 1 at the swing's top).
+
+### [`engine/anim/locomotion/shown.ts`](../engine/anim/locomotion/shown.ts)
+
+- `createShown` (function): A body that shows nothing beyond the sim's state.
+- `SHOWN` (const): The pelvis's and the spine's share: drops as shares of the stance height, the hard landing's lean in radians.
+- `SHOWN_FOOT_LAYERS` (const): The soles' movement layers, in priority order (poses.ts lays them after the crouch).
+- `SHOWN_HAND_LAYERS` (const): The wrists' movement layers, in priority order (poses.ts lays them after the flinch).
+- `ShownMovement` (interface): What the view shows of a body's movement now (see the file comment): weights 0 to 1, angles in radians.
 
 ### [`engine/anim/motionMetrics.ts`](../engine/anim/motionMetrics.ts)
 
@@ -2928,7 +2992,7 @@ For the agents who maintain the engine.
 ### [`engine/dev/feel/anim.ts`](../engine/dev/feel/anim.ts)
 
 - `AnimTrack` (type): An animation track: what `createAnimTrack` returns.
-- `createAnimTrack` (function): An animator posed once a step as the page poses it, and the anim QA's numbers over its frames.
+- `createAnimTrack` (function): An animator posed once a step as the page poses it, and the anim QA's numbers over its frames; with the sim's read-only `queries`, its feet stand on their ground as the page's do, and a sole's height is from the ground under it.
 - `HAND_SOCKETS` (const): The hands, as sockets: what `handGap` measures from.
 
 ### [`engine/dev/feel/camera.ts`](../engine/dev/feel/camera.ts)
@@ -6722,7 +6786,7 @@ For the agents who maintain the engine.
 - `sheetFor` (function): The sheet of `subject`: its frames (`sheetFrames`) drawn by `animSheet` from the cameras `cams` names (`move` for moves, else `body`) on the skeleton of `build`, so a build's own proportions are what the sheet shows.
 - `sheetFrames` (function): The frames a sheet of `subject` draws, and whether they are moves (for the cameras).
 - `SheetFramesOptions` (interface): What `sheetFrames` draws.
-- `subjectIds` (function): The QA ids `subject` names: itself, or every id it prefixes (`humanoid`: all of them).
+- `subjectIds` (function): The QA ids `subject` names on `build`: itself, or every id it prefixes (`humanoid`: all of them).
 
 ### [`tools/cmd/shot.ts`](../tools/cmd/shot.ts)
 
@@ -7264,7 +7328,7 @@ For the agents who maintain the engine.
 - `default` (default): The `anim` QA family (PLAN.md §8.6, WP 6.6, I-29): `node x qa anim` drives every body the engine animates through its state matrix and measures the motion, in Node.
 - `humanoidPrefixes` (function): The kinds of the humanoid's QA ids (`state:`, `pose:`, …), from its matrix, then the kinds of the builds that have ids of their own (`adult/`): as `only`, the humanoid without clips.
 - `HUMANOIDS` (const): The humanoid bodies the family drives through the whole matrix; the first also runs it twice and at half the step.
-- `humanoidStates` (function): The humanoid's matrix: every sample state, pose, stance, move, reaction and action, by QA id.
+- `humanoidStates` (function): The humanoid's matrix by QA id: every sample state, pose, stance, move, reaction, action, and for a `plantedStride` `build` (the playground's player) every movement state (engine/anim/locomotion/matrix.ts).
 - `makeHumanoid` (const): A humanoid of `HUMANOIDS`, made at a step, its feet planted on the floor (`FootPlant`): what the matrix drives.
 
 ### [`tools/qa/anim/clips.ts`](../tools/qa/anim/clips.ts)

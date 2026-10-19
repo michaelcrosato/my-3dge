@@ -6,11 +6,12 @@
  * the subject's `anim` QA violations against tests/baselines/qa-anim.json beside it (`humanoid`: every kind of the
  * humanoid's ids, `qaPrefixes`; the library's clips are `node x qa anim --only clip:`'s).
  *
- * Frames: one state (`move:slash`, `pose:kneel`, `reaction:fallBack`) gives `--frames` steps spread over its hold,
- * then the last step, back at rest, each labelled with its time; a prefix (`move:`, `pose:`, `state:`) or `humanoid`
- * (every state) gives one frame per state: a move or a reaction halfway through, a held state at its last held step.
- * The cameras are `--cams` (`move` for moves, else `body`). Each camera frames every pose: `anim.sheet()` draws all
- * the frames orthographically at one scale, fitted to every point of every pose in every view (sheet.ts).
+ * Frames: one state (`move:slash`, `pose:kneel`, `reaction:fallBack`) gives `--frames` steps spread over its hold, then
+ * the last step, back at rest, each labelled with its time; a prefix (`move:`, `pose:`, `state:`, and on a
+ * `plantedStride` `--build` its movement states, `motion:`, WP 13.10) or `humanoid` (every state) gives one frame per
+ * state: a move or a reaction halfway through, a held state at its last held step. The cameras are `--cams` (`move` for
+ * moves, else `body`). Each camera frames every pose: `anim.sheet()` draws all the frames orthographically at one
+ * scale, fitted to every point of every pose in every view (sheet.ts).
  *
  * Images on demand only (§8.5): the sheet is at most `MAX_WIDTH` pixels wide, and `--svg` writes the SVG alone,
  * without a browser. Files: out/sheet/<target>/sheet.svg and sheet.png; report.json has the sheet's hash, frames and
@@ -46,9 +47,9 @@ export interface SheetFramesOptions {
   count: number;
 }
 
-/** The QA ids `subject` names: itself, or every id it prefixes (`humanoid`: all of them). */
-export function subjectIds(subject: string): string[] {
-  const ids = Object.keys(humanoidStates());
+/** The QA ids `subject` names on `build`: itself, or every id it prefixes (`humanoid`: all of them). */
+export function subjectIds(subject: string, build?: string): string[] {
+  const ids = Object.keys(humanoidStates(build));
   if (subject === 'humanoid') return ids;
   if (ids.includes(subject)) return [subject];
   return ids.filter((id) => id.startsWith(subject));
@@ -61,8 +62,8 @@ export function qaPrefixes(subject: string): string[] {
 
 /** The frames a sheet of `subject` draws, and whether they are moves (for the cameras). */
 export function sheetFrames(subject: string, options: SheetFramesOptions): { frames: SheetFrame[]; moves: boolean } {
-  const ids = subjectIds(subject);
-  const all = humanoidStates();
+  const ids = subjectIds(subject, options.build);
+  const all = humanoidStates(options.build);
   const body = HUMANOIDS.find((entry) => entry.build === options.build) ?? { build: options.build, weapon: 'sword' };
   const states = Object.fromEntries(ids.map((id) => [id, all[id]]));
   const runs = stateMatrix(makeHumanoid(body), { states, facings: [options.facing] });
@@ -130,15 +131,16 @@ export default {
   maxPositionals: 1,
   async run({ positionals, values, root }): Promise<CommandResult> {
     const [subject] = positionals;
-    const ids = Object.keys(humanoidStates());
+    const build = (values.build as string | undefined) ?? HUMANOIDS[0].build;
+    const ids = Object.keys(humanoidStates(build));
     if (!subject)
       throw new UsageError(`name a subject: a QA id such as move:slash, a prefix such as pose:, or humanoid`);
     if (subject.startsWith('blob:') || subject.startsWith('floater:')) {
       throw new UsageError(`${subject} has no humanoid skeleton to draw: run node x qa anim --only ${subject}`);
     }
-    if (subjectIds(subject).length === 0) {
+    if (subjectIds(subject, build).length === 0) {
       const near = closest(subject, ids);
-      throw new UsageError(`no state matches "${subject}"${near ? `: did you mean ${near}?` : ''} (try move:, pose:, state:, stance:, reaction: or humanoid)`); // prettier-ignore
+      throw new UsageError(`no state matches "${subject}"${near ? `: did you mean ${near}?` : ''} (try move:, pose:, state:, stance:, reaction:, motion: on a planted build, or humanoid)`); // prettier-ignore
     }
     const cams = (values.cams as string | undefined) ?? undefined;
     if (cams !== undefined && !Object.hasOwn(SHEET_CAMERAS, cams)) {
@@ -148,7 +150,6 @@ export default {
     const [facing, count] = [Number(values.facing ?? 0), Number(values.frames ?? 8)];
     if (!Number.isFinite(facing)) throw new UsageError(`--facing takes radians, not "${values.facing as string}"`);
     if (!Number.isInteger(count) || count < 1) throw new UsageError(`--frames takes a whole number above 0, not "${values.frames as string}"`); // prettier-ignore
-    const build = (values.build as string | undefined) ?? HUMANOIDS[0].build;
     const asked = cams as keyof typeof SHEET_CAMERAS | undefined;
     const { frames, sheet, drawn } = sheetFor(subject, { build, facing, count, cams: asked });
     const views = drawn.views!;

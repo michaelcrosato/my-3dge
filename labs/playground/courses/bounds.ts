@@ -4,9 +4,9 @@
  * contact, the anim QA's limit; no point jumps past the QA's pop of 9/16 m in a step) and, for each of the
  * playground's five cameras (labs/playground/views.ts), §4's: no frame moves the camera more than 0.3 m or turns it
  * more than 4° beyond what the player's own move, the look and a blend account for (engine/dev/feel/camera.ts), none
- * stands it inside the level, and none loses the player (but first person, whose arms come with WP 13.12). The feet are watched until WP 13.10, the locomotion's animation, plants them:
- * at WP 13.4 the procedural run held a stance foot within 3 cm mid-stance but slid it about 16 cm at the touchdown and
- * 19 cm at the lift-off, 0.36 m a contact at a 5 m/s run and 0.53 to 0.73 m sprinting (out/feel/<course>/report.json).
+ * stands it inside the level, and none loses the player (but first person, whose arms come with WP 13.12). The feet
+ * were watched until WP 13.10 planted them (the procedural run slid 0.36 m a contact at a 5 m/s run, 0.53 to 0.73 m
+ * sprinting); a sole's height is from the ground under it (engine/dev/feel/anim.ts), so a foot on a ramp is on its floor.
  *
  * Invariants: data only; a course spreads these into its own measures.
  *
@@ -36,7 +36,7 @@ const named = (span: BoundsSpan, name: string) => (span.label ? `${span.label}: 
 export function bodyBounds(from: number, span: BoundsSpan = {}): Record<string, unknown>[] {
   const { to } = span;
   return [
-    { name: named(span, 'feet planted'), metric: 'footSlide', from, to, reference: 0, tolerance: { abs: BOUNDS.slide }, watch: 'WP 13.10' }, // prettier-ignore
+    { name: named(span, 'feet planted'), metric: 'footSlide', from, to, reference: 0, tolerance: { abs: BOUNDS.slide } }, // prettier-ignore
     { name: named(span, 'no pops'), metric: 'pop', from, to, reference: 0, tolerance: { abs: BOUNDS.pop } },
   ];
 }

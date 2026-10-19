@@ -78,7 +78,7 @@ export const MEASURE_FIELDS = defineSchema({
   camera: { type: 'string', description: 'For a camera metric: the camera’s code (`cam3=chase`, `cam=iso`).' },
   point: { type: 'array', items: { type: 'number' }, description: 'For `handGap`: the point, world [x, y, z], m.' },
   reference: { type: 'number', required: true, description: 'What it should be (docs/PLAYGROUND.md §3.2), or 0 for a bound.' }, // prettier-ignore
-  watch: { type: 'string', description: 'Reported against its bound but never judged until the WP it names makes it pass: "WP 13.10".' }, // prettier-ignore
+  watch: { type: 'string', description: 'Reported against its bound but never judged until the WP it names makes it pass: "WP 13.12".' }, // prettier-ignore
   tolerance: {
     type: 'object',
     default: {},

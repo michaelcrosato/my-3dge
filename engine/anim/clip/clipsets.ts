@@ -17,6 +17,7 @@
  *   view made, and the reverse.
  * - `CLIPS_FIELDS` are the fields of an actor's component `clips` (engine/sim/actors.ts): the sets it plays from, its
  *   contact IK and blade, and the layer's state (`ClipLayerState`), which the sim's step changes and the hash covers.
+ * - `legsHeld(layer)`: how much of the legs a layer's clips hold now, which the view's foot plant leaves them (WP 13.10).
  *
  * Invariants: an entry is the parsed set, frozen; clip names are the set's own, played as `SET/Clip` (or bare: the
  * first set's with that name, layer.ts). A pool's layer is made again only when its make (build, sets, IK, blade,
@@ -36,7 +37,9 @@
 import { registry as sharedRegistry, sameValue, type Registry } from '../../core/registry';
 import { defineSchema } from '../../core/schema';
 import { codeError } from '../../core/log';
+import { MathUtils } from '../../core/math';
 import { buildKind, defineBuild, getBuild, type Build } from '../builds';
+import { boneMask, jointIndex } from '../skeleton';
 import { ClipLayer, type ClipLayerState } from './layer';
 import { loadClipLibrary, type ClipLibrary } from './library';
 import { restBuild } from './rest';
@@ -204,6 +207,23 @@ export interface ClipsData {
   ik: boolean;
   blade: number;
   state: ClipLayerState;
+}
+
+/** The thighs, whose mask weight says how much of the legs a masked clip holds. */
+const THIGHS = [jointIndex('thighL'), jointIndex('thighR')];
+
+/**
+ * How much of the legs `layer`'s clips hold now, 0 to 1: a full-body clip as its fade shows (smoothstepped), a masked
+ * one by its mask's weight on the thighs, an added one none; an idle layer holds nothing.
+ */
+export function legsHeld(layer: ClipLayer): number {
+  let free = 1;
+  for (const slot of layer.state.slots) {
+    if (slot.play.additive) continue;
+    const mask = slot.play.mask ? boneMask(slot.play.mask).weights : null;
+    free *= 1 - MathUtils.smoothstep(slot.w, 0, 1) * (mask ? Math.max(mask[THIGHS[0]], mask[THIGHS[1]]) : 1);
+  }
+  return 1 - free;
 }
 
 /** Clip layers by entity id, each loaded from its entity's `clips` data at every `get` (see the file comment). */

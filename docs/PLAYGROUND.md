@@ -251,7 +251,7 @@ planted so that feet and hands stay where they touch (WP 13.10, WP 13.11, WP 8.8
 
 | Move | Its motion |
 |---|---|
-| Idle, walk, run, sprint, crouch-walk | blend sets in eight directions: 100STYLE's neutral and crouched sets, Quaternius's jog, sprint and crouch, Mesh2Motion's strafes; phase-synced on foot contacts, stride- and orientation-warped |
+| Idle, walk, run, sprint, crouch-walk | blend sets in eight directions: 100STYLE's neutral and crouched sets, Quaternius's jog, sprint and crouch, Mesh2Motion's strafes; phase-synced on foot contacts, stride- and orientation-warped (until a measured need calls them in, the procedural planted stride with stance locks: ADR-0025 amendment 10) |
 | Starts, stops, pivots, turning in place | matched to distance; Mesh2Motion's turns and CMU's quick stop where they fit, procedural otherwise |
 | Slide | Quaternius's slide start, loop and exit; the pelvis to the slope; a hand trailing on the ground |
 | Jump, fall, landings | rise, apex and fall poses by vertical speed; the soft and the hard landing (Mesh2Motion's three-point landing) by landing speed |

@@ -27,6 +27,7 @@ import { cameraPlayer } from '../../gfx/cameras/effects';
 import { rigOptions } from '../../gfx/cameras/rig';
 import { queryViewOf } from '../../sim/queryView';
 import { createSession } from '../../sim/session';
+import type { BodyView, MotionView } from '../../anim/locomotion/motion';
 import { createAnimTrack, type AnimTrack } from './anim';
 import { createCameraTrack, type CameraMetrics, type CameraTrack } from './camera';
 import { ANIM_METRICS, type Course, type Measure } from './course';
@@ -121,16 +122,16 @@ export function runCourse(course: Course, options: { registry?: Registry } = {})
   const animated = course.measures.find((m) => (ANIM_METRICS as readonly string[]).includes(m.metric));
   if (animated && !first.animator) throw codeError('DEV_COURSE_NO_ANIMATOR', { course: course.id, measure: animated.name, scene: course.scene }); // prettier-ignore
   const eyes = first.animator && !first.motion && course.measures.some((m) => m.camera?.startsWith('cam3=first'));
-  const anim = animated || eyes ? createAnimTrack(course.id) : undefined;
-  const cameras = course.measures.filter((m) => m.camera !== undefined).map((m) => ({ m, track: undefined as CameraTrack | undefined })); // prettier-ignore
   const queries = queryViewOf(world);
+  const anim = animated || eyes ? createAnimTrack(course.id, queries) : undefined;
+  const cameras = course.measures.filter((m) => m.camera !== undefined).map((m) => ({ m, track: undefined as CameraTrack | undefined })); // prettier-ignore
   const declared = (path: string) => registry.kinds().includes('setting') && registry.has('setting', path);
   const rig = rigOptions((path) => (declared(path) ? session.settings.get(path) : undefined));
   let [at, intents]: [number, Intents] = [0, NO_INTENTS];
   const record = (k: number) => {
     const e = player()!;
     const sample = sampleOf(e);
-    if (anim && e.animator) anim.frame(e.id, e.animator, sample.feet, sample.yaw, world.dt);
+    if (anim && e.animator) anim.frame(e.id, e.animator, sample.feet, sample.yaw, world.dt, e.motion as MotionView | undefined, e.actor as unknown as BodyView); // prettier-ignore
     const doing = cameras.length ? cameraPlayer(e as unknown as EntityData, (intents.b ?? []).includes('aim')) : null;
     const [x, y, z] = sample.feet;
     const eye = doing?.eye !== undefined ? ([x, y + doing.eye, z] as const) : anim?.eye(k);

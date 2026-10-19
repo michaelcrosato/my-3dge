@@ -43,6 +43,7 @@ import type { Log } from '../core/log';
 import type { Registry } from '../core/registry';
 import type { Rng } from '../core/rng';
 import type { Field } from '../core/schema';
+import type { QueryView } from '../sim/queryView';
 import type { EntityData } from '../sim/state';
 import type { CompiledLevel, MeshDescriptor, TileRect } from '../world/level/types';
 import { createCutaway, type Cutaway } from './cutaway';
@@ -111,8 +112,11 @@ export interface Stage {
    * Turned off, they claim no bolt, so bolts draw as stand-ins.
    */
   readonly fx: StageFx;
-  /** Reads where the entities are after a sim step of `dt` s (keeps the place before for `draw`); adds and removes. */
-  capture(entities: Iterable<EntityData>, dt?: number): void;
+  /**
+   * Reads where the entities are after a sim step of `dt` s (keeps the place before for `draw`); adds and removes. The
+   * sim's read-only `queries` give the puppets' feet the ground (none without physics).
+   */
+  capture(entities: Iterable<EntityData>, dt?: number, queries?: QueryView | null): void;
   /** Puts every stand-in and puppet `alpha` (0 to 1) of the way from its place a step ago to its last. */
   draw(alpha: number): void;
   /** Registers the level and the stand-ins with `warmup` (see the file comment); `dispose()` undoes it. */
@@ -291,10 +295,10 @@ export function createStage(options: StageOptions): Stage {
     rides,
     crowd,
     fx,
-    capture(entities, dt) {
+    capture(entities, dt, queries) {
       const list = [...entities];
       const seen = new Set<number>();
-      const puppets = actors.capture(list, dt);
+      const puppets = actors.capture(list, dt, queries);
       const drawn = props.capture(list, dt);
       const crowded = crowd.capture(list, dt);
       rides.capture(list);

@@ -10,6 +10,9 @@
  * - Targets are rig-local metres before `size`, in the model frame, written `[forward, right, up]` (authoring.ts);
  *   blade directions are unit-free. Each row is the source's numbers ÷ 16 where they are lengths.
  * - The poses `die` and `down` have no layer here: they drive the down weight and the die timeline (humanoid.ts).
+ * - What the view shows of the movement (WP 13.10) lies in both tables (locomotion/shown.ts `SHOWN_FOOT_LAYERS`, after
+ *   the crouch, which a planted stride walks on through, and `SHOWN_HAND_LAYERS`, after the air): it weighs nothing on
+ *   a body that shows nothing.
  * - Pure functions of the `EffectorContext`; the warnings go through the engine's log, once per name.
  *
  * Carried from `my-3d2dge:engine/my-3d2dge.js:1924-1937` (the feet's pose targets) and `:1955-1968` (the hands'),
@@ -39,6 +42,8 @@ import {
   spineDirection,
 } from './locomotion';
 import type { EffectorContext } from './locomotion';
+import { plantedEase } from './locomotion/planted';
+import { SHOWN_FOOT_LAYERS, SHOWN_HAND_LAYERS } from './locomotion/shown';
 import { armBlade, layArm } from './strike';
 
 /** The codes this module raises, with their fixes. */
@@ -168,13 +173,18 @@ export const FOOT_LAYERS: readonly EffectorLayer[] = [
     weight: (c) => c.w.guard * (1 - c.sp),
     at: fixed({ L: [-0.175, -0.1625, 0], R: [0.1625, 0.1625, 0] }),
   },
-  /** Crouch: feet 0.04375 m wider, right 0.1 m ahead, left 0.0875 m behind, lifted feet lowered; half at full speed. */
+  /**
+   * Crouch: feet 0.04375 m wider, right 0.1 m ahead, left 0.0875 m behind, lifted feet lowered; half at full speed. A
+   * planted stride (locomotion/planted.ts) walks on through it: the stance fades out as the stride eases in.
+   */
   {
     name: 'crouch',
-    weight: (c) => c.crouch * (1 - c.sp * 0.5),
+    weight: (c) => c.crouch * (c.build.plantedStride ? 1 - plantedEase(c.sp) : 1 - c.sp * 0.5),
     at: (c, side, cur, out) =>
       B(side === 'R' ? 0.1 : -0.0875, sideSign(side) * (c.build.footSpread + 0.04375), cur.y * (1 - c.crouch), out),
   },
+  /** What the view shows of the movement (WP 13.10): the slide, the rise and the fall, the landing. */
+  ...SHOWN_FOOT_LAYERS,
   /** Lunge: the lead foot steps 1.3 × the lunge into it, the other slides back 0.15 ×, standing still only. */
   {
     name: 'lunge',
@@ -215,6 +225,8 @@ export const HAND_LAYERS: readonly EffectorLayer[] = [
     weight: (c) => c.w.air * 0.7,
     at: fromShoulder({ L: [0.075, -0.1625, -0.075], R: [0.075, 0.1625, -0.075] }),
   },
+  /** What the view shows of the movement (WP 13.10): the slide, the fall, the hard landing. */
+  ...SHOWN_HAND_LAYERS,
   /** Point: the weapon hand held out at 0.92 of the arm's length along the aim, 0.0375 m in and 0.025 m low. */
   {
     name: 'point',

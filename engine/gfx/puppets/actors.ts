@@ -1,27 +1,27 @@
 /**
  * @file Actors on the stage (PLAN.md WP 3.10, §6.4's view; I-21): every actor with an animator (engine/sim/actors.ts:
  * an entity with the components `actor` and `animator`) drawn as a puppet (engine/gfx/puppets/draw.ts) of the neutral
- * humanoid (`ACTOR_BODY`), or of the body its component `puppet` names (`body:mannequin`, WP 8.9), in its animator's
- * build, posed every frame by the presentation's half of its animator (engine/anim/character.ts's `pose`) where its
- * feet are at the frame's alpha, so it walks, dashes and jumps as the sim steps it; an actor with clips (the component
- * `clips`, engine/sim/actorClips.ts) has its clip layer laid over the body, loaded from the same data (a
- * `ClipLayerPool` of the view's own, engine/anim/clip/clipsets.ts). The stage (engine/gfx/stage.ts) draws these
- * instead of stand-ins.
+ * humanoid (`ACTOR_BODY`) or the body its component `puppet` names (`body:mannequin`, WP 8.9), in its animator's build,
+ * posed every frame by its animator's presentation half (engine/anim/character.ts `pose`) at the frame's alpha; an
+ * actor with clips (`clips`, engine/sim/actorClips.ts) has its clip layer laid over the body, loaded from the same data
+ * (a `ClipLayerPool` of the view's own, engine/anim/clip/clipsets.ts). The stage (engine/gfx/stage.ts) draws these.
  *
- * `capture(entities, dt)` after each sim step keeps each actor's last two places (feet and heading) and its animator's
- * data; `draw(alpha)` poses each puppet `alpha` of the way from the one before to the last. `player()` is the first
- * player actor (in id order) as the last draw put it: its feet and, with a puppet, its skeleton, world pose and eye
- * (the head socket, engine/gfx/cameras/first.ts's `eyePoint`), which the cameras follow (engine/app/view.ts).
+ * `capture(entities, dt, queries)` after each sim step keeps each actor's last two places (feet and heading) and its
+ * animator's data; `draw(alpha)` poses each puppet `alpha` of the way from the one before to the last. `player()` is
+ * the first player actor (in id order) as the last draw put it: its feet and, with a puppet, its skeleton, world pose
+ * and eye (the head socket, engine/gfx/cameras/first.ts's `eyePoint`), which the cameras follow (engine/app/view.ts).
  * `cull(eye)` hides the player's body from a first-person camera at `eye` (`nearBodyCull`: all but the hands, and any
  * part near the eye) and returns the joints it hid; `cull(null)` shows it whole. `trails()` is each puppet's trail as
- * its last pose sampled it (WP 6.7: what its strike sweeps, oldest first), which the stage's effects draw as ribbons.
- * A puppet is named `actor#<id>`, as its stand-in would be, and carries `userData.entity`; the player's also carries
+ * its last pose sampled it (WP 6.7: what its strike sweeps, oldest first), which the stage's effects draw as ribbons. A
+ * puppet is named `actor#<id>`, as its stand-in would be, and carries `userData.entity`; the player's also carries
  * `userData.protagonist`, so the ID pass reports "the hero" (engine/gfx/idpass.ts).
  *
  * WP 6.2 in the box (WP 7.8): an actor's `reactions` (engine/sim/reactions.ts) are a `Reactions` layer on its puppet's
  * animator, loaded at every pose (its flinch bends its spine; a body down on its face is drawn so), its `secondary` a
  * `Secondary` layer whose chains hang under the puppet as meshes (engine/gfx/puppets/chains.ts: `actor#<id>/cape`…),
- * and its `post` slot ends with a `FootPlant` (engine/anim/footPlant.ts), faded out as the actor's clips show.
+ * and its `post` slot ends with a `FootPlant` (engine/anim/footPlant.ts) on the ground the sim's `queries` find,
+ * faded out as far as its clips hold its legs (clipsets.ts `legsHeld`). WP 13.10: an actor's movement (`motion`) shows
+ * on its body (engine/anim/locomotion/motion.ts `MovementPose`), and locks its feet only as `plantsFeet` lets it.
  *
  * Invariants: presentation only (doctrine: WebGPU only): its animators and their layers are its own, loaded from the
  * sim's data at every pose and never writing it, so drawing, culling or not drawing never changes the hash (the
@@ -40,14 +40,17 @@
  */
 import { Group } from 'three/webgpu';
 import { AnimatorPool, type Animator, type AnimatorData, type TrailSample } from '../../anim/character';
-import { ClipLayerPool, type ClipsData } from '../../anim/clip/clipsets';
+import { ClipLayerPool, legsHeld, type ClipsData } from '../../anim/clip/clipsets';
 import type { WorldPose } from '../../anim/fk';
-import { FootPlant } from '../../anim/footPlant';
+import { FootPlant, queryGround } from '../../anim/footPlant';
+import type { GroundProbe } from '../../anim/ik';
+import { MovementPose, plantsFeet, type BodyView, type MotionView } from '../../anim/locomotion/motion';
 import { Reactions, type ReactionState } from '../../anim/reactions';
 import { Secondary } from '../../anim/secondary';
 import type { JointName, Skeleton } from '../../anim/skeleton';
 import { lerpAng, Vector3 } from '../../core/math';
 import { registry as sharedRegistry, type Registry } from '../../core/registry';
+import type { QueryView } from '../../sim/queryView';
 import type { SecondaryComponent } from '../../sim/reactions';
 import type { EntityData } from '../../sim/state';
 import { eyePoint, nearBodyCull } from '../cameras/first';
@@ -82,6 +85,10 @@ interface Held {
   puppet: Puppet | null;
   reactions: ReactionState | null;
   secondary: SecondaryComponent | null;
+  /** Its movement model's state (the component `motion`), which gates the foot plant's locks; null without one. */
+  motion: MotionView | null;
+  /** Its movement as the view shows it (the crouch, the slide, the air, the landing, the lean), eased once a step. */
+  shown: MovementPose;
 }
 
 /** The view's own layers on one actor's puppet animator: its reactions, its secondary motion and their meshes. */
@@ -126,8 +133,11 @@ export interface ActorPuppets {
   readonly root: Group;
   /** The puppets, by entity id. */
   readonly puppets: ReadonlyMap<number, Puppet>;
-  /** Reads the actors after a sim step (the sim's step `dt`, s); returns the ids it draws as puppets. */
-  capture(entities: Iterable<EntityData>, dt?: number): ReadonlySet<number>;
+  /**
+   * Reads the actors after a sim step (the sim's step `dt`, s) and the sim's read-only `queries`, whose ground the feet
+   * stand on (null without physics: a flat floor at each actor's feet); returns the ids it draws as puppets.
+   */
+  capture(entities: Iterable<EntityData>, dt?: number, queries?: QueryView | null): ReadonlySet<number>;
   /** Poses every puppet `alpha` (0 to 1) of the way from its place a step ago to its last. */
   draw(alpha: number): void;
   /** The first player actor at the last draw, or null. */
@@ -167,6 +177,8 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
   const layers = new Map<number, Layers>();
   const at = new Vector3();
   let step = 1 / 60;
+  /** The physics ground the feet stand on, made once for each world's queries. */
+  let ground: { of: QueryView | null; probe: GroundProbe | null } = { of: null, probe: null };
   let shown: PlayerView | null = null;
   let players = 0;
 
@@ -225,8 +237,9 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
   return {
     root,
     puppets,
-    capture(entities, dt = step) {
+    capture(entities, dt = step, queries = null) {
       step = dt;
+      if (ground.of !== queries) ground = { of: queries, probe: queries && queryGround(queries) };
       const seen = new Set<number>();
       const drawn = new Set<number>();
       for (const entity of entities) {
@@ -242,8 +255,10 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
         const puppet = data ? puppetFor(entity.id, data, player, body) : null;
         const reactions = (entity.reactions as ReactionState | undefined) ?? null;
         const secondary = (entity.secondary as SecondaryComponent | undefined) ?? null;
+        const motion = (entity.motion as MotionView | undefined) ?? null;
+        const shown = (last?.shown ?? new MovementPose()).update(motion, dt, entity.actor as unknown as BodyView);
         const before = last ? last.after : place;
-        held.set(entity.id, { before, after: place, player, data, clips, puppet, reactions, secondary });
+        held.set(entity.id, { before, after: place, player, data, clips, puppet, reactions, secondary, motion, shown });
         if (puppet) drawn.add(entity.id);
       }
       for (const id of [...held.keys()]) if (!seen.has(id)) held.delete(id);
@@ -278,7 +293,10 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
           if (animator.layer('clips') !== (layer ?? undefined)) animator.drop('clips');
           if (layer && !animator.layer('clips')) animator.use('clips', layer);
           const own = layersFor(id, animator, actor, puppet);
-          own.plant.weight = 1 - Math.min(1, layer?.weight ?? 0); // a clip plants its own feet (retarget.ts's contact IK)
+          own.plant.weight = 1 - (layer ? Math.min(1, layer.weight) * legsHeld(layer) : 0); // a clip plants the feet it holds (retarget.ts's contact IK)
+          own.plant.locks = plantsFeet(actor.motion); // never while it slides, flies, mantles, climbs or rides (WP 13.10)
+          own.plant.ground = ground.probe; // on stairs and slopes
+          actor.shown.apply(animator); // its crouch, slide, air, landing and lean (WP 13.10)
           if (own.reactions && actor.reactions) own.reactions.load(actor.reactions);
           animator.pose({ at, yaw: lerpAng(a.yaw, b.yaw, k) });
           puppet.setPose(animator.body.pose);

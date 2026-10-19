@@ -13,13 +13,13 @@
  *   (`rng`); `clock` sets the phase instead (the differential tests inject the reference rig's).
  * - `effectors` are rig-local metres before `size`, in the model frame (+Z forward, +Y up), placed by the root:
  *   `rootRot` is the yaw (times the knockdown's turn), `rootPos` carries the pelvis's offset (`rootOffset`).
- * - Where the joints land (humanoid.test.ts checks it against the reference vectors): the pelvis on the old `hipC`,
- *   the neck joint on `shC`, the head's centre on `head`, the upper arms on `shL`/`shR`, the elbows, wrists and hips
- *   on theirs, the blade from the right wrist along the weapon socket's +Z, and the sole under each ankle on the old
- *   foot point. The old leg had no ankle: where a planted foot lies flat or its heel lifts (authoring.ts
- *   `solveLeg`), the knee and the sole move, about 3 mm on average and 2 cm at worst; elsewhere the joints match to
- *   float32 rounding.
+ * - Where the joints land (humanoid.test.ts checks it against the reference vectors): on the old rig's points (`hipC`,
+ *   `shC`, `head`, the shoulders, elbows, wrists, hips, the blade, the sole under each ankle); the old leg had no
+ *   ankle, so where a planted foot lies flat or its heel lifts (authoring.ts `solveLeg`) the knee and the sole move,
+ *   3 mm on average and 2 cm at worst; elsewhere the joints match to float32 rounding.
  * - The removed view hacks (`_cheat`, `_pitch`, `_camSide`) have no counterpart: the camera never feeds animation.
+ *   What the view shows of the movement (`shown`, WP 13.10) is presentation, never stepped or saved; `stance()` and
+ *   `treadmill()` tell the foot plant's locks when the feet stand and how the ground moves under them.
  * - A move plays through `input.body` (WP 6.1): `step` steps its arm path (strike.ts, `state.arm`), the effector
  *   stage lays it, a spin turns the root. A swing's start comes from the effector stage of the state before the step,
  *   never from a pose, so posing or not leaves the state as it is. A body motion given instead is taken as it is.
@@ -45,11 +45,13 @@ import { SIM_DT } from '../core/time';
 import { B, holdAlong, relaxHand, SIDES, sideSign, solveArm, solveLeg, solveSpine, type Rig, type LimbSide } from './authoring'; // prettier-ignore
 import { getBuild, type Build } from './builds';
 import { createWorldPose, forwardKinematics, type WorldPose } from './fk';
-import { crouchShare, GAIT, type BodyMotion, type EffectorContext, type HumanoidWeights } from './locomotion';
+import { crouchShare, GAIT, gaitKnee, gaitStance, strideShare, type BodyMotion, type EffectorContext, type HumanoidWeights } from './locomotion'; // prettier-ignore
+import { onFeet } from './locomotion/locks';
+import { plantedEase, plantedMove } from './locomotion/planted';
+import { createShown, type ShownMovement } from './locomotion/shown';
 import { Pose } from './pose';
 import type { MoveInput } from './moves-data';
-import { createEffectors, effectorStage, poseName, stanceName, weaponName, type Effectors } from './poses';
-import type { PoseName, StanceName, Weapon } from './poses';
+import { createEffectors, effectorStage, poseName, stanceName, weaponName, type Effectors, type PoseName, type StanceName, type Weapon } from './poses'; // prettier-ignore
 import { createSkeleton, jointIndex, type Skeleton } from './skeleton';
 import { createArmState, stepArm, type ArmState } from './strike';
 
@@ -63,8 +65,6 @@ export const STEP = {
   turnSpeed: 0.1875,
   /** Share of the way the movement direction follows the velocity, per second (at most all of it per step). */
   turnRate: 10,
-  /** Floor of the speed weight in the stride's length: slow steps are short, not slow. */
-  strideFloor: 0.4,
   /** Rates a dash eases in and out. */
   dash: [24, 8],
   /** Rate a flinch eases in and out. */
@@ -218,7 +218,15 @@ export class Humanoid implements Rig {
   readonly effectors: Effectors = createEffectors();
   /** Where the root sits in the rig frame, metres after `size`: the pelvis's target less its rest offset. */
   readonly rootOffset = new Vector3();
+  /**
+   * What the view shows beyond the sim's state (WP 13.10, engine/anim/locomotion/shown.ts): the movement's crouch,
+   * slide, air, landing and lean, which the view eases (locomotion/motion.ts) and sets before each pose. Presentation
+   * only: never stepped or saved, so no hash sees it.
+   */
+  readonly shown: ShownMovement = createShown();
   readonly #rng: Rng;
+  /** The last step's `run`: running in place. */
+  #run = 0;
   readonly #log: Log;
   /** The effectors of the state before a step, for a swing's start. */
   readonly #before: Effectors = createEffectors();
@@ -263,6 +271,7 @@ export class Humanoid implements Rig {
     if (input.position) this.position.copy(input.position);
     if (input.yaw !== undefined) this.yaw = input.yaw;
     const vel = input.velocity ?? ZERO;
+    this.#run = input.run ?? 0;
     const speed = input.run ? input.run * b.speedRef : Math.hypot(vel.x, vel.z);
     w.speed = approach(w.speed, MathUtils.clamp(speed / b.speedRef, 0, S.speedShareMax), dt * S.speed);
     if (speed > S.turnSpeed && !input.run) {
@@ -271,7 +280,7 @@ export class Humanoid implements Rig {
       st.moveF = MathUtils.lerp(st.moveF, (vel.x * sin + vel.z * cos) / speed, k);
       st.moveR = MathUtils.lerp(st.moveR, (vel.z * sin - vel.x * cos) / speed, k);
     }
-    st.phase += (dt * speed) / (b.stride * b.size * Math.max(S.strideFloor, Math.min(1, w.speed)));
+    st.phase += (dt * speed) / (b.stride * b.size * strideShare(w.speed, b.plantedStride, w.crouch, plantedMove(st.moveF, st.moveR)[1])); // prettier-ignore
     const ease = (now: number, on: boolean | undefined, [up, down]: readonly [number, number]) =>
       approach(now, on ? 1 : 0, dt * (on ? up : down));
     w.dash = ease(w.dash, input.dash, S.dash);
@@ -310,16 +319,35 @@ export class Humanoid implements Rig {
 
   /** The effector stage, then the solve stage: writes `effectors`, `pose` and `world`. */
   solve(): this {
-    const E = this.effectors;
-    effectorStage(this.#context(), this.weapon, E);
+    const [E, ctx] = [this.effectors, this.#context()];
+    effectorStage(ctx, this.weapon, E);
     this.#placeRoot();
     solveSpine(this, E, this.state.body.twist * GAIT.hipTwist, this.state.body.twist);
     for (const side of SIDES) solveArm(this, side, E.hands[side]);
-    for (const side of SIDES) solveLeg(this, side, E.feet[side]);
+    const roll = this.build.plantedStride && onFeet(this.state.weights); // a planted foot rolls on its ball and heel
+    for (const side of SIDES) solveLeg(this, side, E.feet[side], roll, roll ? plantedEase(ctx.sp) : 0, roll ? gaitKnee(ctx, side) : 0); // prettier-ignore
     for (const side of SIDES) if (side === 'L' || this.weapon === 'none') relaxHand(this, side);
     if (this.weapon !== 'none') holdAlong(this, E.blade);
     forwardKinematics(this.skeleton, this.pose, this.world);
     return this;
+  }
+
+  /**
+   * Whether each foot (left, right) stands now, for the foot plant's stance locks (footPlant.ts): a `plantedStride`
+   * build on its feet (locomotion/locks.ts `onFeet`), walking or standing (locomotion.ts `gaitStance`). Null for another
+   * build: its feet lock nowhere.
+   */
+  stance(): [boolean, boolean] | null {
+    const ctx = this.#context();
+    const left = gaitStance(ctx, 'L');
+    if (left === null) return null;
+    return onFeet(this.state.weights) ? [left, gaitStance(ctx, 'R') === true] : [false, false];
+  }
+
+  /** The ground's own velocity under a body told to `run` in place (a treadmill), m/s, world; zero otherwise. */
+  treadmill(out = new Vector3()): Vector3 {
+    const speed = this.#run * this.build.speedRef;
+    return out.set(-Math.sin(this.yaw) * speed, 0, -Math.cos(this.yaw) * speed);
   }
 
   /** `step(input)`, then `solve()`. */
@@ -342,8 +370,10 @@ export class Humanoid implements Rig {
       w: st.weights,
       body: st.body,
       lead: st.lead > 0 ? 'R' : 'L',
-      sp: Math.min(1, st.weights.speed),
-      crouch: crouchShare(st.weights, st.body),
+      sp: Math.min(1, st.weights.speed) * (1 - this.shown.slide), // a slide glides: no stride
+      crouch: Math.max(crouchShare(st.weights, st.body), this.shown.crouch),
+      slide: this.shown.slide,
+      shown: this.shown,
       armLength: b.armUpper + b.armLower,
       pelvis: E.pelvis,
       chest: E.chest,

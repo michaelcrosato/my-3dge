@@ -8,7 +8,7 @@
  * layer, as the clip is retargeted, in the body its component `puppet` names (the mannequin). WP 7.8: an actor's
  * `secondary` hangs its cape and hair under its puppet, named for the ID pass and counted as the actor's, and they go
  * with the component; its `reactions` bend its spine with the flinch and lay a body knocked forward on its face, read
- * from the sim and never written.
+ * from the sim and never written. WP 13.10: the feet stand on the ground the sim's queries find.
  * @see engine/gfx/puppets/actors.ts
  */
 import { PerspectiveCamera, Quaternion, type Mesh } from 'three/webgpu';
@@ -96,6 +96,18 @@ describe('actors drawn as puppets', () => {
     expect([...shown].sort()).toEqual(['handL', 'handR']);
     expect(actors.cull(null)).toEqual([]);
     for (let v = 0; v < index.count; v++) expect(weight.getX(v)).toBe(1);
+  });
+
+  it('stands the puppets’ feet on the ground the sim’s queries find (WP 13.10)', () => {
+    const step = { probe: (_x: number, _z: number) => ({ y: 0.1, normal: { x: 0, y: 1, z: 0 } }) }; // a 10 cm step
+    const sole = (queries: typeof step | null) => {
+      const { world, actors } = start();
+      actors.capture(world.query('actor'), world.dt, queries as never);
+      actors.draw(1);
+      const { skeleton, world: pose } = actors.player()!.posed!;
+      return socketPosition(skeleton, pose, 'contactL').y;
+    };
+    expect(sole(step) - sole(null)).toBeGreaterThan(0.07); // up on the step
   });
 
   it('lets a despawned actor’s puppet go, and never changes the sim', () => {

@@ -1,18 +1,21 @@
 /**
  * @file Unit tests for the foot plant (engine/anim/footPlant.ts), PLAN.md WP 3.5's Done when: on a 10° slope and a
- * 0.2 m step `footPlant` keeps the soles within 5 mm of the surface, drops the pelvis to a lower level and locks a
- * foot in stance; after G9, with `floor` given, a root below the floor still stands the soles on it, and the
- * `FootPlant` layer, last in an animator's `post` slot, stands a kneel, a crouch, a dash and a guard on the floor
- * (engine/anim/authoring.test.ts's known sinks), toes and heels included, without sinking a walk, and stays last in
- * the slot, keeping nothing between ticks.
+ * 0.2 m step `footPlant` keeps the soles within 5 mm of the surface, drops the pelvis to a lower level and locks a foot
+ * in stance; after G9, with `floor` given, a root below the floor still stands the soles on it, and the `FootPlant`
+ * layer, last in an animator's `post` slot, stands a kneel, a crouch, a dash and a guard on the floor
+ * (engine/anim/authoring.test.ts's known sinks), toes and heels included, without sinking a walk, and stays last in the
+ * slot, keeping nothing between ticks; WP 13.10: through the query view's ground (`queryGround`) it stands the soles on
+ * a ramp, and on the body's floor past the slope band; a sole in stance stays put, on the floor below as the body steps
+ * up onto a box, and rides a treadmill.
  */
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../core/math';
 import { animCheck } from './check';
 import { Animator } from './character';
-import { createWorldPose, forwardKinematics, jointToWorld, socketPosition, tipPosition } from './fk';
-import { createFootPlantState, footPlant, FootPlant } from './footPlant';
+import { createWorldPose, forwardKinematics, jointPosition, jointToWorld, socketPosition, tipPosition } from './fk';
+import { footPlant, FootPlant, queryGround } from './footPlant';
 import type { GroundProbe } from './ik';
+import { createFootPlantState } from './locomotion/locks';
 import { Pose } from './pose';
 import { createSkeleton, PROPORTIONS, type Skeleton } from './skeleton';
 import type { AnimatorInput } from './states';
@@ -112,10 +115,11 @@ describe('footPlant: soles within 5 mm of the surface', () => {
       const stance = [tick < 20, true] as const;
       footPlant(skeleton, pose, world, probe, { state, stance });
       const contact = socketPosition(skeleton, world, 'contactL');
-      if (tick === 0) locked = contact.clone();
-      if (tick < 20) expect(contact.distanceTo(locked)).toBeLessThan(1e-5);
-      if (tick >= 30) expect(contact.distanceTo(locked)).toBeGreaterThan(0.2);
-      expect(gap(slope, contact)).toBeLessThan(0.005);
+      const ball = jointPosition(world, 'toeL'); // what stays put: the heel may lift off it as the body leans away
+      if (tick === 0) locked = ball.clone();
+      if (tick < 20) expect(ball.distanceTo(locked)).toBeLessThan(1e-5);
+      if (tick >= 30) expect(ball.distanceTo(locked)).toBeGreaterThan(0.2);
+      expect(contact.y - slope(contact.x, contact.z, new Vector3())).toBeGreaterThan(-0.005); // never in the ground
     }
   });
 });
@@ -177,5 +181,105 @@ describe('footPlant on a given floor, and the FootPlant layer (after G9)', () =>
     for (let i = 0; i < 60; i++) animator.update({ pose: 'kneel', position: new Vector3(0, 0.3, 0) });
     expect(plant.inspect().drop).toBeGreaterThanOrEqual(0);
     for (const side of ['L', 'R'] as const) expect(animator.socket(`contact${side}`).y).toBeGreaterThan(0.3 - 0.001);
+  });
+});
+
+describe('the FootPlant layer on the physics ground, with the stance locks (WP 13.10)', () => {
+  /** A ground of `height(x, z)`, as the sim's query view would probe it: none for a ray starting inside it. */
+  const queries = (height: (x: number, z: number) => number, normal = new Vector3(0, 1, 0)) => ({
+    probe: (x: number, z: number, o: { from?: number; depth?: number } = {}) => {
+      const y = height(x, z);
+      return y <= (o.from ?? 1e3) && y >= -(o.depth ?? 1e3) ? { y, normal } : null;
+    },
+  });
+  /**
+   * The adult planted on `ground`, walked `ticks` steps at `velocity` from `start`, its body's floor at `floor(z)`: each
+   * tick's soles, and the left foot's ball and heel (it rolls on its heel as it lands, on its ball as it pushes off).
+   */
+  const walk = (ground: GroundProbe | null, ticks: number, velocity: Vector3, floor = (_z: number) => 0) => {
+    const animator = new Animator({ build: 'build:adult', clock: 1 });
+    const plant = new FootPlant().attach(animator);
+    plant.ground = ground;
+    const position = new Vector3();
+    const soles: { L: Vector3; R: Vector3; ball: Vector3; heel: Vector3; low: number; lowR: number; stance: readonly [boolean, boolean] | null }[] = []; // prettier-ignore
+    const b = animator.body.build;
+    for (let i = 0; i < ticks; i++) {
+      position.addScaledVector(velocity, 1 / 60).setY(floor(position.z));
+      animator.update({ position: position.clone(), velocity });
+      const { world, skeleton } = animator.body;
+      const [L, R, ball] = [animator.socket('contactL'), animator.socket('contactR'), jointPosition(world, 'toeL')]; // prettier-ignore
+      const heel = jointToWorld(world, 'footL', new Vector3(0, -b.ankleHeight * b.size, -PROPORTIONS.heel * b.footLength * b.size)); // prettier-ignore
+      const lowest = (s: 'L' | 'R', sole: Vector3) => Math.min(sole.y, tipPosition(skeleton, world, `toe${s}`).y, jointToWorld(world, `foot${s}`, new Vector3(0, -b.ankleHeight * b.size, -PROPORTIONS.heel * b.footLength * b.size)).y); // prettier-ignore
+      soles.push({ L, R, ball, heel, low: lowest('L', L), lowR: lowest('R', R), stance: animator.body.stance() });
+    }
+    return { animator, plant, soles };
+  };
+  /** How far the point a held foot rolls on moved between two ticks: its heel or its ball, whichever stayed. */
+  const rolled = (now: { ball: Vector3; heel: Vector3 }, then: { ball: Vector3; heel: Vector3 }) =>
+    Math.min(now.ball.distanceTo(then.ball), now.heel.distanceTo(then.heel));
+
+  it('queryGround probes the query view straight down, and finds no ground from inside a body', () => {
+    const probe = queryGround(queries(() => 0.4));
+    const hit = { point: new Vector3(), normal: new Vector3() };
+    expect(probe(new Vector3(1, 1, 2), 1, hit)).toBe(true);
+    expect(hit.point.toArray()).toEqual([1, 0.4, 2]);
+    expect(probe(new Vector3(1, 0.3, 2), 1, hit)).toBe(false); // the ray starts inside it
+    expect(probe(new Vector3(1, 2, 2), 1, hit)).toBe(false); // out of reach
+  });
+
+  it('stands the soles on a ramp the body walks up, and on its floor where the ground falls away past the slope band', () => {
+    const slope = Math.tan((20 * Math.PI) / 180);
+    const ramp = walk(queryGround(queries((_x, z) => z * slope)), 120, new Vector3(0, 0, 1.5), (z) => z * slope);
+    for (const { L, R } of ramp.soles.slice(30)) {
+      for (const sole of [L, R]) expect(sole.y - sole.z * slope).toBeGreaterThan(-0.005); // on or over the ramp
+    }
+    const grounded = ramp.soles.slice(30).filter(({ low, ball }) => low - ball.z * slope < 0.01);
+    expect(grounded.length).toBeGreaterThan(40); // the left foot does stand on it, heel or toes down
+    const ledge = walk(queryGround(queries(() => -1)), 60, new Vector3());
+    expect(ledge.plant.floorAt(0.1, 0)).toBe(0); // a metre down is past the band: the body's floor
+    const { low, lowR } = ledge.soles.at(-1)!;
+    for (const y of [low, lowR]) expect(Math.abs(y)).toBeLessThan(0.005); // standing on it, heel or toes down
+  });
+
+  it('runs up onto a box: a sole in stance stays on the floor it stood on as the body steps up, the trailing one lifting after', () => {
+    for (let edge = 4; edge < 4.8; edge += 0.05) {
+      const box = (_x: number, z: number) => (z >= edge ? 0.4 : 0);
+      const up = walk(queryGround(queries(box)), 75, new Vector3(0, 0, 5), (z) => (z >= edge - 0.25 ? 0.4 : 0));
+      for (const [i, { L, low, stance }] of up.soles.entries()) {
+        const [height, before] = [L.y - box(L.x, L.z), up.soles[i - 1]];
+        if (stance?.[0] && before?.stance?.[0])
+          expect(rolled(up.soles[i], before)).toBeLessThan(1e-6); // held there
+        else if (stance?.[0] && i > 30) expect(Math.abs(low - box(L.x, L.z))).toBeLessThan(0.005); // landing on its floor
+        const leaving = !stance?.[0] && before?.stance?.[0]; // its first frame off the floor below
+        expect(height).toBeGreaterThan(leaving ? -0.2 : -0.07); // one leaving right at the riser crosses its edge (deferred)
+      }
+    }
+  });
+
+  it('holds a sole in stance where it landed as the body walks on, and lets it go when its stance ends', () => {
+    const { soles } = walk(null, 150, new Vector3(0, 0, 2.5));
+    let held = 0;
+    for (let i = 31; i < soles.length; i++) {
+      if (!soles[i].stance?.[0] || !soles[i - 1].stance?.[0]) continue;
+      expect(rolled(soles[i], soles[i - 1])).toBeLessThan(1e-6); // rolling on its heel, then on its ball
+      held++;
+    }
+    expect(held).toBeGreaterThan(30);
+    expect(soles.at(-1)!.L.z - soles[30].L.z).toBeGreaterThan(2); // and steps on with the body
+  });
+
+  it('rides a treadmill: a body told to run in place carries its stance sole back at the belt’s speed', () => {
+    const animator = new Animator({ build: 'build:adult', clock: 1 });
+    new FootPlant().attach(animator);
+    const belt = animator.body.build.speedRef;
+    let carried = 0;
+    let last = new Vector3();
+    for (let i = 0; i < 90; i++) {
+      animator.update({ position: new Vector3(), run: 1 });
+      const sole = animator.socket('contactL');
+      if (i > 30 && animator.body.stance()?.[0] && sole.y < 0.001) carried = Math.max(carried, (last.z - sole.z) * 60);
+      last = sole;
+    }
+    expect(carried).toBeCloseTo(belt, 1);
   });
 });

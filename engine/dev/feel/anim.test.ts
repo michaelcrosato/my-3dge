@@ -1,7 +1,8 @@
 /**
  * @file Unit tests for the feel kit's animation metrics (engine/dev/feel/anim.ts): an adult standing still slides and
  * pops nothing; on a run the track reads the foot slide and the pops over the frames asked, the same twice; the hands'
- * gap grows with a point's distance; and posing never changes the run's hash.
+ * gap grows with a point's distance; posing never changes the run's hash; and with the sim's query view (WP 13.10)
+ * the feet stand on its ground, their slide read from it.
  * @see engine/dev/feel/anim.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -11,6 +12,7 @@ import { physicsOf } from '../../physics/binding';
 import { defineActorKinds, spawnActor, type ActorComponents } from '../../sim/actors';
 import { defineScene, startScene } from '../../sim/scene';
 import type { World } from '../../sim/world';
+import { queryViewOf } from '../../sim/queryView';
 import { createAnimTrack } from './anim';
 
 /** A registry with a scene `yard`: a 200 m floor and an animated adult at the origin, running at 5 m/s when told. */
@@ -26,9 +28,9 @@ function yard() {
 }
 
 /** Runs `yard` for `n` steps with `move`, posing the actor after each into a track; returns the track and the hash. */
-function run(move: readonly [number, number] | undefined, n: number, pose = true) {
+function run(move: readonly [number, number] | undefined, n: number, pose = true, ground = false) {
   const { world } = startScene('yard', { registry: yard() });
-  const track = createAnimTrack('test');
+  const track = createAnimTrack('test', ground ? queryViewOf(world) : undefined);
   for (let k = 0; k < n; k++) {
     world.step(move ? { move } : {});
     const [e] = world.query('actor') as unknown as (ActorComponents & { id: number })[];
@@ -52,6 +54,12 @@ describe('animation metrics', () => {
     expect(Number.isFinite(a.track.footSlide(30, 149))).toBe(true);
     expect(a.track.footSlide(30, 30)).toBe(0); // one frame: no contact to slide in
     expect(run([1, 0], 150, false).hash).toBe(a.hash);
+  });
+
+  it('with the sim’s query view, stand the feet on its ground and read their slide from it: none on a flat run', () => {
+    const { track } = run([1, 0], 150, true, true);
+    expect(track.footSlide(30, 149)).toBeLessThan(0.05);
+    expect(track.pop(30, 149)).toBeLessThan(9 / 16);
   });
 
   it('measure the closest a hand comes to a point', () => {
