@@ -531,20 +531,28 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   sprint, walk back, strafe, crouch-walk, slide, a running jump, the tower's 6 m fall, a stop and a whole turn in place,
   in the anim QA family and `x sheet`; a script may turn the body (`yaw`). They pass with no baseline entry.
 - **The adult's baseline**: 11 entries go (the run's, the stances', the guard's, crouch's and kneel's, the dodge's, four
-  clip actions'), the rest tighten (some twice, as the review's roll lowered them again), none loosens; every foot-slide
-  entry is at or under the source builds'.
+  clip actions'), 38 tighten (some twice, as the review's roll lowered them again), 10 stand as they were, none loosens
+  and none is added. Of the 13 that WP 13.2 left above the source builds', eight go, two tighten under them, and three
+  stay above, accepted against the Done-when's "to the source builds'": `action:roll`'s foot slide, 0.6009 against
+  0.5843 (the dip and the rise crouch on the floor outside the locks, which hold only a body on its feet, `onFeet`; the
+  playground never rolls, so it waits for a game that plays the roll on the adult), and `move:axekick`'s twist jump,
+  2.5186 against 2.4568, and `reaction:fallFront`'s under-floor, 0.3503 against 0.2975 (the adult's longer shin in the
+  kick's wind and its 0.27 m feet in the face-down turn: its proportions, not its locomotion; for WP 13.19, which plays
+  the kicks and the falls on the adult, and WP 10.2's ragdoll for the fall).
 - **Deferred**: the head and eyes toward the aim, to WP 13.11 with its aim offsets (the look's pitch reaching the view's
-  body); starts and stops matched to distance, with the blend sets; the hip's turn toward the movement. A foot leaving
-  the floor within a toe's length of a riser crosses its edge in its first frame (up to 16 cm deep in
-  footPlant.test.ts's run onto a 0.4 m box, then 2 at most): the capsule steps up at once and the swing cannot see the
-  riser ahead; easing that step in the view is the fix when a playtest shows it. A hard stop from a run, a sprint or a
+  body); starts and stops matched to distance, with the blend sets; the hip's turn toward the movement. A foot set
+  down at a riser's base pokes its toes into it, and a swing from there passes through it (up to 17 cm past the riser
+  in footPlant.test.ts's run onto a 0.4 m box, which holds it under 18 cm; the soles never go under a floor): the
+  capsule steps up at once and the gait cannot see the riser ahead; easing that step in the view, and a stance foot
+  set short of the riser, are the fix when a playtest shows it. A hard stop from a run, a sprint or a
   strafe can set a foot a tick or two into its swing back down as its stance lengthens with the falling speed (a
   re-plant a few centimetres on, then the stop's step): telling a swing from a stance across that needs each foot's
   memory of its swing, a new hashed field in every animator, so it waits with the starts and stops matched to distance.
   The crouch-walk's rear knee still comes within 23 cm of the floor at a double support: the crouch is as deep as the
   crouched hull (its eye at 0.81 m), and a 35 cm clearance would need the walking crouch 25 cm shallower.
 - **Beyond Owns**: poses.ts (a planted stride's crouch stance fades as it walks; the shown layers), stateMatrix.ts (a
-  script's yaw), builds.ts (the adult's stride), authoring.ts (the roll in `solveLeg`), engine/sim/actors.ts (the duck
+  script's yaw), builds.ts (the adult's stride), authoring.ts (the roll in `solveLeg`), locomotion.ts (the planted
+  stride's share, the knee in a swing), api.ts (`queryGround`, `GroundQueries`, `FOOT_LOCK`), engine/sim/actors.ts (the duck
   as the crouch pose), engine/dev/feel/{anim,run}.ts, engine/gfx/stage.ts and engine/app/view.ts (the queries),
   tools/qa/anim.ts and tools/cmd/sheet.ts (the movement states), clipsets.ts, labs/playground/courses/bounds.ts, the
   playground replays' goldens.

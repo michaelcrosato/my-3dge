@@ -143,7 +143,7 @@ describe('the gait (locomotion.ts)', () => {
 
   it("plants a plantedStride build's soles in reach at full stride; the source's builds keep their gait", () => {
     const adult = stride('build:adult');
-    expect(adult.stretch).toBeLessThan(0.999); // the knee never locks, the trailing heel lifting off the ball
+    expect(adult.stretch).toBeLessThan(0.99); // the knee never locks, the trailing heel lifting off the ball
     expect(adult.low).toBeLessThan(getBuild('build:adult').hipHeight - 0.05); // the pelvis drops as the feet spread
     const heroic = spread('build:heroic');
     expect(heroic.worst).toBeGreaterThan(heroic.reach + 0.05); // ADR-0009 amendment 4: its soles hang

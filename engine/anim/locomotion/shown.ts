@@ -2,7 +2,7 @@
  * @file The view's movement poses (PLAN.md WP 13.10, docs/PLAYGROUND.md §5.1): what the body shows of its movement
  * beyond the sim's state (`ShownMovement`, `Humanoid.shown`, eased by engine/anim/locomotion/motion.ts
  * `MovementPose`), as effector layers the pose tables take in (engine/anim/poses.ts: `SHOWN_FOOT_LAYERS` after the
- * crouch, `SHOWN_HAND_LAYERS` after the flinch) and as the pelvis's and the spine's share (`SHOWN`, read by
+ * crouch, `SHOWN_HAND_LAYERS` after the air) and as the pelvis's and the spine's share (`SHOWN`, read by
  * engine/anim/locomotion.ts):
  * - the slide: the right leg out ahead, the left folded under, both soles a few centimetres off the floor; the left
  *   hand trailing behind, its fingertips just over the ground, the right forward for balance; the pelvis low and leaned
@@ -81,7 +81,7 @@ export const SHOWN_FOOT_LAYERS: readonly EffectorLayer[] = [
   },
 ];
 
-/** The wrists' movement layers, in priority order (poses.ts lays them after the flinch). */
+/** The wrists' movement layers, in priority order (poses.ts lays them after the air). */
 export const SHOWN_HAND_LAYERS: readonly EffectorLayer[] = [
   {
     name: 'slide',

@@ -2261,6 +2261,7 @@ For the agents who maintain the engine.
 
 ### [`engine/anim/locomotion/matrix.ts`](../engine/anim/locomotion/matrix.ts)
 
+- `MATRIX_MOVE` (const): The playground's numbers the states move at, written out (the anim layer never imports physics; matrix.test.ts holds them to `movement:apex`): m/s, m/s², m.
 - `MOVEMENT_STATES` (const): The movement states, by matrix id (see the file comment).
 
 ### [`engine/anim/locomotion/motion.ts`](../engine/anim/locomotion/motion.ts)
@@ -2288,7 +2289,7 @@ For the agents who maintain the engine.
 - `createShown` (function): A body that shows nothing beyond the sim's state.
 - `SHOWN` (const): The pelvis's and the spine's share: drops as shares of the stance height, the hard landing's lean in radians.
 - `SHOWN_FOOT_LAYERS` (const): The soles' movement layers, in priority order (poses.ts lays them after the crouch).
-- `SHOWN_HAND_LAYERS` (const): The wrists' movement layers, in priority order (poses.ts lays them after the flinch).
+- `SHOWN_HAND_LAYERS` (const): The wrists' movement layers, in priority order (poses.ts lays them after the air).
 - `ShownMovement` (interface): What the view shows of a body's movement now (see the file comment): weights 0 to 1, angles in radians.
 
 ### [`engine/anim/motionMetrics.ts`](../engine/anim/motionMetrics.ts)

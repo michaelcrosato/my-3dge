@@ -106,7 +106,7 @@ describe('footPlant: soles within 5 mm of the surface', () => {
     const skeleton = createSkeleton('build:chibi');
     const state = createFootPlantState();
     const probe = probeOf(slope);
-    let locked = new Vector3();
+    let [locked, lockedBall] = [new Vector3(), new Vector3()];
     for (let tick = 0; tick < 40; tick++) {
       const { pose, world } = placed(skeleton, 0.3);
       pose.rootPos.set(0.01 * tick, 0, 0.004 * tick);
@@ -115,11 +115,12 @@ describe('footPlant: soles within 5 mm of the surface', () => {
       const stance = [tick < 20, true] as const;
       footPlant(skeleton, pose, world, probe, { state, stance });
       const contact = socketPosition(skeleton, world, 'contactL');
-      const ball = jointPosition(world, 'toeL'); // what stays put: the heel may lift off it as the body leans away
-      if (tick === 0) locked = ball.clone();
-      if (tick < 20) expect(ball.distanceTo(locked)).toBeLessThan(1e-5);
-      if (tick >= 30) expect(ball.distanceTo(locked)).toBeGreaterThan(0.2);
-      expect(contact.y - slope(contact.x, contact.z, new Vector3())).toBeGreaterThan(-0.005); // never in the ground
+      const ball = jointPosition(world, 'toeL'); // a build that locks no heel roll keeps its ball put too
+      if (tick === 0) [locked, lockedBall] = [contact.clone(), ball.clone()];
+      if (tick < 20) expect(contact.distanceTo(locked)).toBeLessThan(1e-5);
+      if (tick < 20) expect(ball.distanceTo(lockedBall)).toBeLessThan(1e-5);
+      if (tick >= 30) expect(contact.distanceTo(locked)).toBeGreaterThan(0.2);
+      expect(gap(slope, contact)).toBeLessThan(0.005);
     }
   });
 });
@@ -201,7 +202,7 @@ describe('the FootPlant layer on the physics ground, with the stance locks (WP 1
     const plant = new FootPlant().attach(animator);
     plant.ground = ground;
     const position = new Vector3();
-    const soles: { L: Vector3; R: Vector3; ball: Vector3; heel: Vector3; low: number; lowR: number; stance: readonly [boolean, boolean] | null }[] = []; // prettier-ignore
+    const soles: { L: Vector3; R: Vector3; ball: Vector3; heel: Vector3; low: number; lowR: number; tips: Vector3[]; stance: readonly [boolean, boolean] | null }[] = []; // prettier-ignore
     const b = animator.body.build;
     for (let i = 0; i < ticks; i++) {
       position.addScaledVector(velocity, 1 / 60).setY(floor(position.z));
@@ -210,7 +211,8 @@ describe('the FootPlant layer on the physics ground, with the stance locks (WP 1
       const [L, R, ball] = [animator.socket('contactL'), animator.socket('contactR'), jointPosition(world, 'toeL')]; // prettier-ignore
       const heel = jointToWorld(world, 'footL', new Vector3(0, -b.ankleHeight * b.size, -PROPORTIONS.heel * b.footLength * b.size)); // prettier-ignore
       const lowest = (s: 'L' | 'R', sole: Vector3) => Math.min(sole.y, tipPosition(skeleton, world, `toe${s}`).y, jointToWorld(world, `foot${s}`, new Vector3(0, -b.ankleHeight * b.size, -PROPORTIONS.heel * b.footLength * b.size)).y); // prettier-ignore
-      soles.push({ L, R, ball, heel, low: lowest('L', L), lowR: lowest('R', R), stance: animator.body.stance() });
+      const tips = [tipPosition(skeleton, world, 'toeL'), tipPosition(skeleton, world, 'toeR')];
+      soles.push({ L, R, ball, heel, low: lowest('L', L), lowR: lowest('R', R), tips, stance: animator.body.stance() });
     }
     return { animator, plant, soles };
   };
@@ -245,13 +247,13 @@ describe('the FootPlant layer on the physics ground, with the stance locks (WP 1
     for (let edge = 4; edge < 4.8; edge += 0.05) {
       const box = (_x: number, z: number) => (z >= edge ? 0.4 : 0);
       const up = walk(queryGround(queries(box)), 75, new Vector3(0, 0, 5), (z) => (z >= edge - 0.25 ? 0.4 : 0));
-      for (const [i, { L, low, stance }] of up.soles.entries()) {
+      for (const [i, { L, low, tips, stance }] of up.soles.entries()) {
         const [height, before] = [L.y - box(L.x, L.z), up.soles[i - 1]];
         if (stance?.[0] && before?.stance?.[0])
           expect(rolled(up.soles[i], before)).toBeLessThan(1e-6); // held there
         else if (stance?.[0] && i > 30) expect(Math.abs(low - box(L.x, L.z))).toBeLessThan(0.005); // landing on its floor
-        const leaving = !stance?.[0] && before?.stance?.[0]; // its first frame off the floor below
-        expect(height).toBeGreaterThan(leaving ? -0.2 : -0.07); // one leaving right at the riser crosses its edge (deferred)
+        expect(height).toBeGreaterThan(-0.005); // its contact never under the floor or the box, leaving or not
+        for (const tip of tips) if (tip.y < 0.39) expect(tip.z - edge).toBeLessThan(0.18); // toes into the riser (deferred)
       }
     }
   });

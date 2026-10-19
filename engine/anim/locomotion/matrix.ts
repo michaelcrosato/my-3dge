@@ -24,8 +24,12 @@ import type { MatrixState } from '../stateMatrix';
 import type { AnimatorInput } from '../states';
 import { MovementPose, plantsFeet, type MotionView } from './motion';
 
-/** The playground's numbers the states move at: m/s, m/s², m. */
-const MOVE = { walk: 2.534, run: 5.068, sprint: 7.595, crouch: 2.337, slide: 7.7, gravity: 19.05, jump: 7.36, fall: 6 };
+/**
+ * The playground's numbers the states move at, written out (the anim layer never imports physics; matrix.test.ts holds
+ * them to `movement:apex`): m/s, m/s², m.
+ */
+export const MATRIX_MOVE = { walk: 2.534, run: 5.068, sprint: 7.595, crouch: 2.337, slide: 7.7, gravity: 19.05, jump: 7.36, fall: 6 }; // prettier-ignore
+const MOVE = MATRIX_MOVE;
 
 /** What a state does at time `t` (s): its velocity in the body's frame (m/s), height (m), how it moves and its turn. */
 interface Moment {

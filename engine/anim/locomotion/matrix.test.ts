@@ -11,7 +11,8 @@ import { FootPlant } from '../footPlant';
 import { stateMatrix } from '../stateMatrix';
 import { jointPosition, socketPosition, tipPosition } from '../fk';
 import { PROPORTIONS } from '../skeleton';
-import { MOVEMENT_STATES } from './matrix';
+import { createCharacter } from '../../physics/character';
+import { MATRIX_MOVE, MOVEMENT_STATES } from './matrix';
 import { footCycle, plantedDuty } from './planted';
 
 /** The adult with its feet planted, as the anim QA makes it (tools/qa/anim.ts `makeHumanoid`). */
@@ -24,6 +25,14 @@ const adult = (dt: number) => {
 describe('the movement states', () => {
   it('cover every way the player moves', () => {
     expect(Object.keys(MOVEMENT_STATES)).toEqual(['motion:walk', 'motion:run', 'motion:sprint', 'motion:back', 'motion:strafe', 'motion:crouchWalk', 'motion:slide', 'motion:jump', 'motion:fall', 'motion:stop', 'motion:turn']); // prettier-ignore
+  });
+
+  it('move at movement:apex’s holstered gaits, gravity and jump', () => {
+    const apex = createCharacter({ movement: 'movement:apex' });
+    const [model, holstered] = [apex.movement!, apex.movement!.gaits.holstered];
+    for (const gait of ['walk', 'run', 'sprint', 'crouch'] as const) expect(MATRIX_MOVE[gait]).toBeCloseTo(model.gaits[gait] * holstered, 2); // prettier-ignore
+    expect(MATRIX_MOVE.gravity).toBeCloseTo(apex.characterGravity!, 2);
+    expect(MATRIX_MOVE.jump).toBeCloseTo(apex.jumpSpeed, 2);
   });
 
   it('move the body as fast as they say, and end at rest where they stopped', () => {
@@ -76,9 +85,9 @@ describe('the movement states', () => {
         if (state.weights.speed > 0.9) g.pelvis = Math.min(g.pelvis, pelvis - g.rest);
       },
     });
-    for (const g of gaits) expect(seen[g].toe, g).toBeGreaterThan(0.005); // the swing's toes 5 mm over the floor or more
-    expect(seen.run.flight / seen.run.held).toBeGreaterThan(0.25); // both feet off the floor
-    expect(seen.sprint.flight / seen.sprint.held).toBeGreaterThan(0.35);
+    for (const g of gaits) expect(seen[g].toe, g).toBeGreaterThan(0.008); // the swing's toes 8 mm over the floor or more
+    expect(seen.run.flight / seen.run.held).toBeGreaterThan(0.35); // both feet off the floor
+    expect(seen.sprint.flight / seen.sprint.held).toBeGreaterThan(0.45);
     expect(seen.strafe.pelvis).toBeGreaterThan(seen.run.pelvis - 0.01); // its legs spread no further than a run's sink it
   });
 
