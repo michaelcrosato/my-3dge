@@ -2261,7 +2261,7 @@ For the agents who maintain the engine.
 
 ### [`engine/anim/locomotion/matrix.ts`](../engine/anim/locomotion/matrix.ts)
 
-- `MATRIX_MOVE` (const): The playground's numbers the states move at, written out (the anim layer never imports physics; matrix.test.ts holds them to `movement:apex`): m/s, m/s², m.
+- `MATRIX_MOVE` (const): The playground's numbers the states move at, written out (the anim layer never imports physics; matrix.test.ts holds the gaits, gravity and jump to `movement:apex`): m/s, m/s², m.
 - `MOVEMENT_STATES` (const): The movement states, by matrix id (see the file comment).
 
 ### [`engine/anim/locomotion/motion.ts`](../engine/anim/locomotion/motion.ts)

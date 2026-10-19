@@ -26,7 +26,8 @@ import { MovementPose, plantsFeet, type MotionView } from './motion';
 
 /**
  * The playground's numbers the states move at, written out (the anim layer never imports physics; matrix.test.ts holds
- * them to `movement:apex`): m/s, m/s², m.
+ * the gaits, gravity and jump to `movement:apex`): m/s, m/s², m. The slide's 7.7 m/s is the script's own start (a
+ * sprint's slide, before its boost) and the fall's 6 m the gym tower's height.
  */
 export const MATRIX_MOVE = { walk: 2.534, run: 5.068, sprint: 7.595, crouch: 2.337, slide: 7.7, gravity: 19.05, jump: 7.36, fall: 6 }; // prettier-ignore
 const MOVE = MATRIX_MOVE;

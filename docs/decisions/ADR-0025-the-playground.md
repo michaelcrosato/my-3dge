@@ -484,9 +484,9 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   The third round: a swinging toe dragged on the floor in every gait and a run never flew (the swing lifted on a half
   sine, so a trailing foot stayed on its ball and its knee straightened after toe-off). A planted swing now lifts early
   (`PLANTED.kick`, its top at 0.38 of the swing) with its knee bent at least as far as the gait's heel kick (55°
-  walking, 90° running, 110° sprinting, `plantedKnee`), its foot as level as the ankle allows and its toes kept 1.5 cm
+  walking, 90° running, 110° sprinting, `plantedKnee`), its foot as level as the ankle allows and its toes aimed 1.5 cm
   over the floor (the ankle bending up to 30° further, authoring.ts `clearToes`), a crouched swing twice as high
-  (`GAIT.crouchLift`): every gait's toes clear the floor, a run flies 41% of its frames and a sprint 51%. A run's pelvis
+  (`GAIT.crouchLift`): every gait's toes clear the floor (0.9 cm the least, walking back), a run flies 41% of its frames and a sprint 51%. A run's pelvis
   sank lowest at its toe-off, the source's bob: a planted run's rides 10 cm low through each stance and rises 7.5 cm
   into its flight (`plantedBob`). A strafe spread its legs 0.62 m and its pelvis sank 16 cm: a planted stride's steps
   are 35% shorter straight sideways (`GAIT.sideStride`), which moves the hashed phase, so the four playground replays
@@ -552,7 +552,8 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   crouched hull (its eye at 0.81 m), and a 35 cm clearance would need the walking crouch 25 cm shallower.
 - **Beyond Owns**: poses.ts (a planted stride's crouch stance fades as it walks; the shown layers), stateMatrix.ts (a
   script's yaw), builds.ts (the adult's stride), authoring.ts (the roll in `solveLeg`), locomotion.ts (the planted
-  stride's share, the knee in a swing), api.ts (`queryGround`, `GroundQueries`, `FOOT_LOCK`), engine/sim/actors.ts (the duck
-  as the crouch pose), engine/dev/feel/{anim,run}.ts, engine/gfx/stage.ts and engine/app/view.ts (the queries),
-  tools/qa/anim.ts and tools/cmd/sheet.ts (the movement states), clipsets.ts, labs/playground/courses/bounds.ts, the
-  playground replays' goldens.
+  stride's share, the knee in a swing), api.ts (`queryGround`, `GroundQueries`, `FOOT_LOCK`), footRoll.ts (new: the roll
+  on the ball and the heel), engine/sim/actors.ts (the duck
+  as the crouch pose), engine/dev/feel/{anim,run,course}.ts, engine/gfx/stage.ts and engine/app/view.ts (the queries),
+  tools/qa/anim.ts and tools/cmd/sheet.ts (the movement states), clipsets.ts, labs/playground/courses/bounds.ts and
+  README.md, the playground replays' goldens and tests/replays/README.md (their reasons).

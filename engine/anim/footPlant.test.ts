@@ -247,8 +247,9 @@ describe('the FootPlant layer on the physics ground, with the stance locks (WP 1
     for (let edge = 4; edge < 4.8; edge += 0.05) {
       const box = (_x: number, z: number) => (z >= edge ? 0.4 : 0);
       const up = walk(queryGround(queries(box)), 75, new Vector3(0, 0, 5), (z) => (z >= edge - 0.25 ? 0.4 : 0));
-      for (const [i, { L, low, tips, stance }] of up.soles.entries()) {
+      for (const [i, { L, R, low, tips, stance }] of up.soles.entries()) {
         const [height, before] = [L.y - box(L.x, L.z), up.soles[i - 1]];
+        expect(R.y - box(R.x, R.z)).toBeGreaterThan(-0.005); // the right contact too
         if (stance?.[0] && before?.stance?.[0])
           expect(rolled(up.soles[i], before)).toBeLessThan(1e-6); // held there
         else if (stance?.[0] && i > 30) expect(Math.abs(low - box(L.x, L.z))).toBeLessThan(0.005); // landing on its floor
