@@ -48,7 +48,7 @@ const press = (k: number, button: string, change: Record<string, unknown> = {}) 
 /** Each run's bounds, under its label. */
 const bounds = (k: number, label: string) => {
   const span = { to: (k + 1) * RUN - 1, label };
-  return [...bodyBounds(k * RUN + 2, span), ...cameraBounds(k * RUN + 2, span)];
+  return [...bodyBounds(k * RUN + 2, { ...span, holds: true }), ...cameraBounds(k * RUN + 2, span)];
 };
 
 defineCourse('course:playground-ladder', {

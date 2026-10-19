@@ -161,7 +161,8 @@ export type { QueryView } from './sim/queryView';
 
 // Characters (WP 3.2): actors moved by the character controller (Rapier's, moved across then down), with an action
 // game's feel: acceleration and skid, coyote time, a jump buffer, a variable jump, a wall jump, a dash, pushing props;
-// the feel meter measures how one handles. A body's reactions and an actor's secondary motion as components (WP 7.8).
+// the feel meter measures how one handles. A body's reactions and an actor's secondary motion as components (WP 7.8),
+// and its actions (`actOn`, WP 13.11).
 export { createCharacter } from './physics/character';
 export type { Character } from './physics/character';
 export { CHARACTER_FIELDS } from './physics/character';
@@ -182,6 +183,9 @@ export { REACTION_FIELDS } from './sim/reactions';
 export { SECONDARY_FIELDS } from './sim/reactions';
 export type { SecondaryComponent } from './sim/reactions';
 export type { ReactionComponents } from './sim/reactions';
+export { actOn } from './sim/actorActions';
+export { ACTIONS_FIELDS } from './sim/actorActions';
+export type { ActionComponents } from './sim/actorActions';
 
 // Levels v2 (WP 4.2): the hall's glyphs (gallery =, stairs ^, dais o, brazier t), ramps and daises, hull and cylinder
 // colliders, and the surface tag underfoot.

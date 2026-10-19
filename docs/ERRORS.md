@@ -575,13 +575,13 @@ Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when
 
 - Message: `the course {course} measures {measure}, but the player of {scene} has no animator to pose`
 - Fix: spawn the player with an animator (spawnActor with anim: { build }), or drop the animation measure
-- Registered in: [`engine/dev/feel/run.ts` line 41](../engine/dev/feel/run.ts)
+- Registered in: [`engine/dev/feel/run.ts` line 43](../engine/dev/feel/run.ts)
 
 ### DEV_COURSE_NO_PLAYER
 
 - Message: `the course {course} runs {scene}, which has no player actor to measure`
 - Fix: run a scene that spawns a player actor (spawnActor with player: true), or measure another course
-- Registered in: [`engine/dev/feel/run.ts` line 37](../engine/dev/feel/run.ts)
+- Registered in: [`engine/dev/feel/run.ts` line 39](../engine/dev/feel/run.ts)
 
 ### DEV_NO_METER
 
@@ -1046,6 +1046,14 @@ Raised by bodies and queries (engine/physics/world.ts, engine/physics/queries.ts
 - Registered in: [`engine/physics/groups.ts` line 34](../engine/physics/groups.ts)
 
 ## sim
+
+### SIM_ACTION_NO_CLIPS
+
+- Message: `actor {id} cannot play action {action}: it plays clips ({clips}) and the actor has no clip layer`
+- Fix: give the actor clips first, with the sets those clips come from: addClips(w, id, { sets }) (engine/sim/actorClips.ts)
+- Registered in: [`engine/sim/actorActions.ts` line 44](../engine/sim/actorActions.ts)
+
+Raised by `actOn` (engine/sim/actorActions.ts) when an action with a `clip` beat is played on an actor without the component `clips`: the beat would play nothing.
 
 ### SIM_BAD_ARGUMENT
 

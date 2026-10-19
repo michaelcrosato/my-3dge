@@ -8,7 +8,8 @@
  *
  * Frames: one state (`move:slash`, `pose:kneel`, `reaction:fallBack`) gives `--frames` steps spread over its hold, then
  * the last step, back at rest, each labelled with its time; a prefix (`move:`, `pose:`, `state:`, and on a
- * `plantedStride` `--build` its movement states, `motion:`, WP 13.10) or `humanoid` (every state) gives one frame per
+ * `plantedStride` `--build` its movement states, `motion:`, WP 13.10, its traversal and holding states, `traversal:`
+ * and `hold:`, WP 13.11) or `humanoid` (every state) gives one frame per
  * state: a move or a reaction halfway through, a held state at its last held step. The cameras are `--cams` (`move` for
  * moves, else `body`). Each camera frames every pose: `anim.sheet()` draws all the frames orthographically at one
  * scale, fitted to every point of every pose in every view (sheet.ts).
@@ -140,7 +141,7 @@ export default {
     }
     if (subjectIds(subject, build).length === 0) {
       const near = closest(subject, ids);
-      throw new UsageError(`no state matches "${subject}"${near ? `: did you mean ${near}?` : ''} (try move:, pose:, state:, stance:, reaction:, motion: on a planted build, or humanoid)`); // prettier-ignore
+      throw new UsageError(`no state matches "${subject}"${near ? `: did you mean ${near}?` : ''} (try move:, pose:, state:, stance:, reaction:, motion:, traversal: or hold: on a planted build, or humanoid)`); // prettier-ignore
     }
     const cams = (values.cams as string | undefined) ?? undefined;
     if (cams !== undefined && !Object.hasOwn(SHEET_CAMERAS, cams)) {

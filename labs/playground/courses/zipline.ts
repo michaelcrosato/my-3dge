@@ -71,7 +71,7 @@ const press = (k: number, button: string) => [
  * up the balloon's line and catching up after a fall of 20 m (the stand-ins before it snapped in by the pole, lost the
  * player on the line and caught up 0.33 to 0.36 m a frame).
  */
-const bounds = (from: number, to: number, label: string) => [...bodyBounds(from, { to, label }), ...cameraBounds(from, { to, label })]; // prettier-ignore
+const bounds = (from: number, to: number, label: string) => [...bodyBounds(from, { to, label, holds: true }), ...cameraBounds(from, { to, label })]; // prettier-ignore
 
 defineCourse('course:playground-zipline', {
   description: 'Ziplines: caught by use or jumping on, ridden either way at their speed-ups to their top speeds, left by a jump, a drop or an end, three catches a jump (docs/PLAYGROUND.md §3.2).', // prettier-ignore

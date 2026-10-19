@@ -206,8 +206,11 @@ export function createRunView(options: RunViewOptions): RunView {
     const run = options.run();
     if (fresh) rig.step(null);
     const entity = run.world.query('actor').find((e) => (e.actor as { player?: boolean }).player === true);
-    doing = entity ? cameraPlayer(entity, (run.intents.b ?? []).includes('aim')) : null;
+    const aiming = (run.intents.b ?? []).includes('aim');
+    doing = entity ? cameraPlayer(entity, aiming) : null;
     body = entity ? Number((entity.actor as { body?: number }).body ?? -1) : -1;
+    const look = run.intents.look; // his head, and his gun, along it (WP 13.11)
+    if (entity) stage.actors.look(entity.id, look ? { yaw: look[0], pitch: look[1], aiming } : null);
     rig.step(doing);
   };
   /** Whether the run's registry declares the view setting `path`. */

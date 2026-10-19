@@ -48,7 +48,8 @@ const start = (k: number, at: readonly number[], yaw: number) => [
 /** Each run's bounds, under its label. */
 const bounds = (k: number, label: string) => {
   const span = { to: (k + 1) * RUN - 1, label };
-  return [...bodyBounds(k * RUN + 2, span), ...cameraBounds(k * RUN + 2, span)];
+  const holds = label !== 'trampoline'; // the pad's and the drop's hard landings put a hand on the floor
+  return [...bodyBounds(k * RUN + 2, { ...span, holds }), ...cameraBounds(k * RUN + 2, span)];
 };
 
 defineCourse('course:playground-launcher', {

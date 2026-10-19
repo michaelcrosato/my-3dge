@@ -288,7 +288,7 @@ export class FootPlant implements AnimLayer {
   /** How much the physics ground counts now: 1 on the ground, 0 in the air. */
   #settle = 1;
   /** The stance locks, for a body that says when its feet stand. */
-  readonly #state = createFootPlantState();
+  #state = createFootPlantState();
   /** The ground as the plant stands a sole on it (see `ground`): hit when a ray starting on or above it reaches it. */
   readonly #probe: GroundProbe = (origin, distance, ground) => {
     const { x, z } = this.#at;
@@ -336,6 +336,15 @@ export class FootPlant implements AnimLayer {
   floorAt(x: number, z: number): number {
     const top = this.#floor + FOOT_PLANT.up + FOOT_PLANT.slope * Math.hypot(x - this.#at.x, z - this.#at.z);
     return this.#probe(new Vector3(x, top, z), top - this.#floor + FOOT_PLANT.down, hit) ? hit.point.y : this.#floor;
+  }
+
+  /**
+   * Forgets its locks: what holds the legs while it is skipped (its weight 0: a traversal, WP 13.11) calls it, so it
+   * never comes back holding a foot where it stood before.
+   */
+  reset(): this {
+    this.#state = createFootPlantState();
+    return this;
   }
 
   /** The last pelvis drop, m. */

@@ -12,16 +12,16 @@
  * and eye (the head socket, engine/gfx/cameras/first.ts's `eyePoint`), which the cameras follow (engine/app/view.ts).
  * `cull(eye)` hides the player's body from a first-person camera at `eye` (`nearBodyCull`: all but the hands, and any
  * part near the eye) and returns the joints it hid; `cull(null)` shows it whole. `trails()` is each puppet's trail as
- * its last pose sampled it (WP 6.7: what its strike sweeps, oldest first), which the stage's effects draw as ribbons. A
- * puppet is named `actor#<id>`, as its stand-in would be, and carries `userData.entity`; the player's also carries
- * `userData.protagonist`, so the ID pass reports "the hero" (engine/gfx/idpass.ts).
+ * its last pose sampled it (WP 6.7, oldest first), which the stage's effects draw as ribbons. A puppet is named
+ * `actor#<id>` and carries `userData.entity`; the player's `userData.protagonist`, "the hero" to engine/gfx/idpass.ts.
  *
  * WP 6.2 in the box (WP 7.8): an actor's `reactions` (engine/sim/reactions.ts) are a `Reactions` layer on its puppet's
- * animator, loaded at every pose (its flinch bends its spine; a body down on its face is drawn so), its `secondary` a
- * `Secondary` layer whose chains hang under the puppet as meshes (engine/gfx/puppets/chains.ts: `actor#<id>/cape`…),
- * and its `post` slot ends with a `FootPlant` (engine/anim/footPlant.ts) on the ground the sim's `queries` find,
- * faded out as far as its clips hold its legs (clipsets.ts `legsHeld`). WP 13.10: an actor's movement (`motion`) shows
- * on its body (engine/anim/locomotion/motion.ts `MovementPose`), and locks its feet only as `plantsFeet` lets it.
+ * animator, loaded at every pose (its flinch bends its spine; a body down on its face is drawn so), its `actions` (WP
+ * 13.11, engine/sim/actorActions.ts) an `Actions` layer on its clip layer, its `secondary` a `Secondary` layer whose
+ * chains hang under the puppet (engine/gfx/puppets/chains.ts: `actor#<id>/cape`…), and its `post` slot ends with a
+ * `FootPlant` (engine/anim/footPlant.ts) on the ground the sim's `queries` find, faded out as far as its clips hold its
+ * legs (clipsets.ts `legsHeld`). WP 13.10: an actor's movement (`motion`) shows on its body
+ * (engine/anim/locomotion/motion.ts `MovementPose`), and locks its feet only as `plantsFeet` lets it.
  *
  * Invariants: presentation only (doctrine: WebGPU only): its animators and their layers are its own, loaded from the
  * sim's data at every pose and never writing it, so drawing, culling or not drawing never changes the hash (the
@@ -39,13 +39,20 @@
  * @see engine/gfx/puppets/actors.test.ts
  */
 import { Group } from 'three/webgpu';
+import { Actions, type ActionsState } from '../../anim/actions';
+import { getBuild } from '../../anim/builds';
 import { AnimatorPool, type Animator, type AnimatorData, type TrailSample } from '../../anim/character';
 import { ClipLayerPool, legsHeld, type ClipsData } from '../../anim/clip/clipsets';
+import type { ClipLayer } from '../../anim/clip/layer';
 import type { WorldPose } from '../../anim/fk';
 import { FootPlant, queryGround } from '../../anim/footPlant';
 import type { GroundProbe } from '../../anim/ik';
 import { MovementPose, plantsFeet, type BodyView, type MotionView } from '../../anim/locomotion/motion';
 import { Reactions, type ReactionState } from '../../anim/reactions';
+import { hullOf, rideOf, type TraversalView } from '../../anim/traversal/contacts';
+import { HoldPlant, LookPose, type Look } from '../../anim/traversal/hold';
+import { TraversalPlant } from '../../anim/traversal/plant';
+import { TraversalPose } from '../../anim/traversal/pose';
 import { Secondary } from '../../anim/secondary';
 import type { JointName, Skeleton } from '../../anim/skeleton';
 import { lerpAng, Vector3 } from '../../core/math';
@@ -55,6 +62,7 @@ import type { SecondaryComponent } from '../../sim/reactions';
 import type { EntityData } from '../../sim/state';
 import { eyePoint, nearBodyCull } from '../cameras/first';
 import type { Vec3 } from '../cameras/pose';
+import { RUNG } from '../stageRides';
 import type { Warmup } from '../warmup';
 import { createChainMeshes, type ChainMeshes } from './chains';
 import { compileBody } from './compile';
@@ -84,11 +92,17 @@ interface Held {
   clips: ClipsData | null;
   puppet: Puppet | null;
   reactions: ReactionState | null;
+  /** Its actions (the component `actions`, engine/sim/actorActions.ts), or null. */
+  actions: ActionsState | null;
   secondary: SecondaryComponent | null;
   /** Its movement model's state (the component `motion`), which gates the foot plant's locks; null without one. */
   motion: MotionView | null;
   /** Its movement as the view shows it (the crouch, the slide, the air, the landing, the lean), eased once a step. */
   shown: MovementPose;
+  /** Its traversal as the view shows it (a mantle, a climb, a ladder, a zipline, a skydive), eased once a step. */
+  traversal: TraversalPose;
+  /** Its look as the view shows it (`look`), eased once a step. */
+  look: LookPose;
 }
 
 /** The view's own layers on one actor's puppet animator: its reactions, its secondary motion and their meshes. */
@@ -96,25 +110,33 @@ interface Layers {
   animator: Animator;
   key: string;
   reactions: Reactions | null;
+  /** Its actions' effectors, flip and squash, on the clip layer they were made with. */
+  actions: Actions | null;
+  clips: ClipLayer | null;
   secondary: Secondary | null;
   chains: ChainMeshes | null;
   /** The feet on the floor, last in the post slot (engine/anim/footPlant.ts, after G9). */
   plant: FootPlant;
+  /** The hands and feet on what it traverses, after the plant (engine/anim/traversal/plant.ts, WP 13.11). */
+  traversal: TraversalPlant;
+  /** Its head toward its look and its gun held, last (engine/anim/traversal/hold.ts, WP 13.11). */
+  hold: HoldPlant;
 }
 
-/** What an actor's layers are made for: whether it has reactions, and its secondary motion. */
+/** What an actor's layers are made for: whether it has reactions and actions, and its secondary motion. */
 const layersKey = (held: Held) => {
   const look = held.secondary;
   const parts = look ? [look.hair, look.cape ? 'cape' : '', look.tail ? 'tail' : ''].filter(Boolean) : [];
   const drawn = look && parts.length ? `${parts.join('+')}@${look.color}` : '';
-  return `${held.reactions ? 'reactions' : ''}|${drawn}`;
+  return `${held.reactions ? 'reactions' : ''}|${held.actions ? 'actions' : ''}|${drawn}`;
 };
 
 /** Takes `layers` off their animator and frees their meshes. */
 function dropLayers(layers: Layers): void {
   if (layers.reactions) layers.animator.drop(layers.reactions.name).drop(layers.reactions.lyingLayer.name);
+  if (layers.actions) layers.animator.drop(layers.actions.name).drop(layers.actions.flipLayer.name);
   if (layers.secondary) layers.animator.drop(layers.secondary.name);
-  layers.animator.drop(layers.plant.name);
+  layers.animator.drop(layers.plant.name).drop(layers.traversal.name).drop(layers.hold.name);
   layers.chains?.dispose();
 }
 
@@ -148,6 +170,8 @@ export interface ActorPuppets {
   trails(): ReadonlyMap<number, readonly TrailSample[]>;
   /** The view's layers on each puppet's animator, by entity id: its `Reactions` and `Secondary`, when it has them. */
   layers(): ReadonlyMap<number, { readonly reactions: Reactions | null; readonly secondary: Secondary | null }>;
+  /** Points actor `id`'s head, and its gun, along `look` from the next draw (the page gives the player's); null: none. */
+  look(id: number, look: Look | null): void;
   /** Hides from a first-person camera at `eye` the player's body but its hands; null shows it. Returns what it hid. */
   cull(eye: Vec3 | null): JointName[];
   /** Registers the puppets with `warmup`, and their builds with its shader key. */
@@ -175,6 +199,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
   const clipPool = new ClipLayerPool(registry);
   const trails = new Map<number, readonly TrailSample[]>();
   const layers = new Map<number, Layers>();
+  const looks = new Map<number, Look>();
   const at = new Vector3();
   let step = 1 / 60;
   /** The physics ground the feet stand on, made once for each world's queries. */
@@ -208,13 +233,14 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
   };
 
   /** The layers of actor `id`, whose puppet animator is `animator`: made again when what they are made for changed. */
-  const layersFor = (id: number, animator: Animator, held: Held, puppet: Puppet): Layers => {
+  const layersFor = (id: number, animator: Animator, held: Held, puppet: Puppet, clips: ClipLayer | null): Layers => {
     const key = layersKey(held);
     let own = layers.get(id);
-    if (own?.animator !== animator || own.key !== key) {
+    if (own?.animator !== animator || own.key !== key || (own.actions && own.clips !== clips)) {
       if (own) dropLayers(own);
       const look = held.secondary;
       const reactions = held.reactions ? new Reactions({ name: 'view:reactions' }).attach(animator) : null;
+      const actions = held.actions ? new Actions({ name: 'view:actions', ...(clips ? { clips } : {}) }).attach(animator) : null; // prettier-ignore
       const wanted = look && (look.hair || look.cape || look.tail) ? look : null;
       const secondary = wanted
         ? new Secondary({ name: 'view:secondary', squash: false, cape: wanted.cape, tail: wanted.tail, ...(wanted.hair ? { hair: wanted.hair } : {}) }) // prettier-ignore
@@ -226,7 +252,9 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
           ? createChainMeshes(secondary, { material, color: wanted.color, name: `actor#${id}` })
           : null;
       const plant = new FootPlant({ name: 'view:footPlant' }).attach(animator);
-      own = { animator, key, reactions, secondary, chains, plant };
+      const traversal = new TraversalPlant({ name: 'view:traversal' }).attach(animator);
+      const hold = Object.assign(new HoldPlant({ name: 'view:hold' }).attach(animator), { contacts: traversal });
+      own = { animator, key, reactions, actions, clips, secondary, chains, plant, traversal, hold };
       layers.set(id, own);
     }
     const meshes = own.chains?.meshes ?? [];
@@ -242,7 +270,9 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
       if (ground.of !== queries) ground = { of: queries, probe: queries && queryGround(queries) };
       const seen = new Set<number>();
       const drawn = new Set<number>();
-      for (const entity of entities) {
+      const list = [...entities];
+      const byId = new Map(list.map((entity) => [entity.id, entity]));
+      for (const entity of list) {
         const actor = entity.actor as (Place & { player?: boolean }) | undefined;
         if (!actor || seen.has(entity.id)) continue;
         seen.add(entity.id);
@@ -254,14 +284,24 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
         const player = actor.player === true;
         const puppet = data ? puppetFor(entity.id, data, player, body) : null;
         const reactions = (entity.reactions as ReactionState | undefined) ?? null;
+        const actions = (entity.actions as ActionsState | undefined) ?? null;
         const secondary = (entity.secondary as SecondaryComponent | undefined) ?? null;
         const motion = (entity.motion as MotionView | undefined) ?? null;
-        const shown = (last?.shown ?? new MovementPose()).update(motion, dt, entity.actor as unknown as BodyView);
+        const moving = entity.actor as unknown as BodyView;
+        const shown = (last?.shown ?? new MovementPose()).update(motion, dt, moving);
+        const traversal = last?.traversal ?? new TraversalPose();
+        if (data) {
+          const ride = rideOf(byId.get((motion as { ride?: number } | null)?.ride ?? -1) as Record<string, unknown> | undefined); // prettier-ignore
+          const hull = hullOf((actor as { character?: Parameters<typeof hullOf>[0] }).character, RUNG);
+          traversal.update(motion as TraversalView | null, ride, hull, getBuild(data.build), at.set(place.x, place.y, place.z), moving, dt); // prettier-ignore
+        }
+        const look = (last?.look ?? new LookPose()).update(looks.get(entity.id) ?? null, dt);
         const before = last ? last.after : place;
-        held.set(entity.id, { before, after: place, player, data, clips, puppet, reactions, secondary, motion, shown });
+        held.set(entity.id, { before, after: place, player, data, clips, puppet, reactions, actions, secondary, motion, shown, traversal, look }); // prettier-ignore
         if (puppet) drawn.add(entity.id);
       }
       for (const id of [...held.keys()]) if (!seen.has(id)) held.delete(id);
+      for (const id of [...looks.keys()]) if (!seen.has(id)) looks.delete(id);
       players = [...held.values()].filter((actor) => actor.player).length;
       for (const [id, puppet] of puppets) {
         if (drawn.has(id)) continue;
@@ -292,12 +332,17 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
           const layer = clips ? clipPool.get(id, clips, animator.body.build, step) : null;
           if (animator.layer('clips') !== (layer ?? undefined)) animator.drop('clips');
           if (layer && !animator.layer('clips')) animator.use('clips', layer);
-          const own = layersFor(id, animator, actor, puppet);
-          own.plant.weight = 1 - (layer ? Math.min(1, layer.weight) * legsHeld(layer) : 0); // a clip plants the feet it holds (retarget.ts's contact IK)
+          const own = layersFor(id, animator, actor, puppet, layer);
+          own.plant.weight =
+            (1 - (layer ? Math.min(1, layer.weight) * legsHeld(layer) : 0)) * actor.traversal.plantShare; // a clip plants the feet it holds (retarget.ts's contact IK), a traversal its own off the ground (WP 13.11)
+          if (own.plant.weight === 0) own.plant.reset(); // skipped, it keeps no stale lock
           own.plant.locks = plantsFeet(actor.motion); // never while it slides, flies, mantles, climbs or rides (WP 13.10)
           own.plant.ground = ground.probe; // on stairs and slopes
           actor.shown.apply(animator); // its crouch, slide, air, landing and lean (WP 13.10)
+          own.traversal.pose = actor.traversal; // its hands and feet on what it traverses (WP 13.11)
+          [own.hold.look, own.hold.busy] = [actor.look.look, actor.traversal.weight]; // its look and its gun
           if (own.reactions && actor.reactions) own.reactions.load(actor.reactions);
+          if (own.actions && actor.actions) own.actions.load(actor.actions); // its effectors, flip and squash (WP 13.11)
           animator.pose({ at, yaw: lerpAng(a.yaw, b.yaw, k) });
           puppet.setPose(animator.body.pose);
           own.chains?.update();
@@ -310,6 +355,10 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
       root.updateMatrixWorld(true);
     },
     player: () => shown,
+    look(id, look) {
+      if (look) looks.set(id, look);
+      else looks.delete(id);
+    },
     trails: () => trails,
     layers: () => layers,
     hasPlayer: () => players > 0,

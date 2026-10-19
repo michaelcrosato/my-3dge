@@ -77,7 +77,7 @@ const ON_THE_TOWER = [ZIPLINE_STARTS.top, LADDER_STARTS.top, LAUNCHER_STARTS.tow
 
 describe('the playground’s courses', () => {
   it('check the body’s bounds and four of each camera’s, three of first person’s, a run’s under its label', () => {
-    expect(bodyBounds(2).map((m) => m.metric)).toEqual(['footSlide', 'pop']);
+    expect(bodyBounds(2).map((m) => m.metric)).toEqual(['footSlide', 'pop', 'handContact']);
     expect(cameraBounds(2)).toHaveLength(19);
     const run = cameraBounds(2, { to: 90, label: 'run 1', watch: { shooter: 'WP 13.12' } });
     expect(run[0]).toMatchObject({ name: 'run 1: shooter: jump', to: 90, watch: 'WP 13.12' });

@@ -14,12 +14,15 @@ game agent's manual.
 - `Action` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): An `action` entry.
 - `ACTION` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Every constant: `out`, the seconds the channels ease back to rest after an action; `pivot`, the flip's pivot above the ground, a share of the hip height (`heroRoll`'s `cz`); `arm` and `leg`, the metres hand and foot targets are written for (the reference arm, moves-data.ts; `build:chibi`'s thigh and shin).
 - `actionCheck` (function from [`engine/anim/actions-check.ts`](../engine/anim/actions-check.ts)): The action's check: a state of the matrix (check.ts) that plays it as `check` says, on the animator's build with a clip layer over `libraries` (its clip beats' sets), signalling at its times and lifting the body by `lift` (times the build's size).
+- `ActionComponents` (type from [`engine/sim/actorActions.ts`](../engine/sim/actorActions.ts)): The components this module declares.
 - `ActionMap` (type from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): An action map entry.
 - `ActionMapSpec` (interface from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): How an action map is written.
 - `Actions` (class from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): A body's actions, one playing at a time.
+- `ACTIONS_FIELDS` (const from [`engine/sim/actorActions.ts`](../engine/sim/actorActions.ts)): The component `actions`' fields: `Actions.save()`'s, at rest by default.
 - `ActionsOptions` (interface from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What `new Actions` takes.
 - `ActionSpec` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): What `defineAction` takes: `desc` and `beats`, each beat's `name` and `seconds`; the rest as it likes.
 - `ActionsState` (interface from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): An `Actions`' state, plain data.
+- `actOn` (function from [`engine/sim/actorActions.ts`](../engine/sim/actorActions.ts)): Runs `act` on actor `id`'s actions (the component `actions`, added at rest when it has none and the call changes them) and saves them back, with its clip layer, emitting the call's events as `action`; returns the component (a state at rest when nothing changed on an actor without one).
 - `ActorComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `actor`: an entity the character controller moves.
 - `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, `animator`, `puppet`, `motion` (the shooter model's) and `oneWay`.
 - `ActorSpec` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): What `spawnActor` takes.
@@ -998,10 +1001,13 @@ game agent's manual.
 - `Action` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): An `action` entry.
 - `ACTION` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Every constant: `out`, the seconds the channels ease back to rest after an action; `pivot`, the flip's pivot above the ground, a share of the hip height (`heroRoll`'s `cz`); `arm` and `leg`, the metres hand and foot targets are written for (the reference arm, moves-data.ts; `build:chibi`'s thigh and shin).
 - `actionCheck` (function from [`engine/anim/actions-check.ts`](../engine/anim/actions-check.ts)): The action's check: a state of the matrix (check.ts) that plays it as `check` says, on the animator's build with a clip layer over `libraries` (its clip beats' sets), signalling at its times and lifting the body by `lift` (times the build's size).
+- `ActionComponents` (type from [`engine/sim/actorActions.ts`](../engine/sim/actorActions.ts)): The components this module declares.
 - `Actions` (class from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): A body's actions, one playing at a time.
+- `ACTIONS_FIELDS` (const from [`engine/sim/actorActions.ts`](../engine/sim/actorActions.ts)): The component `actions`' fields: `Actions.save()`'s, at rest by default.
 - `ActionsOptions` (interface from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): What `new Actions` takes.
 - `ActionSpec` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): What `defineAction` takes: `desc` and `beats`, each beat's `name` and `seconds`; the rest as it likes.
 - `ActionsState` (interface from [`engine/anim/actions.ts`](../engine/anim/actions.ts)): An `Actions`' state, plain data.
+- `actOn` (function from [`engine/sim/actorActions.ts`](../engine/sim/actorActions.ts)): Runs `act` on actor `id`'s actions (the component `actions`, added at rest when it has none and the call changes them) and saves them back, with its clip layer, emitting the call's events as `action`; returns the component (a state at rest when nothing changed on an actor without one).
 - `ActorComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `actor`: an entity the character controller moves.
 - `ActorComponents` (type from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The components this module reads: `actor`, `animator`, `puppet`, `motion` (the shooter model's) and `oneWay`.
 - `ActorSpec` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): What `spawnActor` takes.
@@ -2475,6 +2481,63 @@ For the agents who maintain the engine.
 - `TimelinePhase` (interface): One phase of a timeline.
 - `TimelineState` (type): A timeline's state: the phase index (−1 when idle) and the seconds into that phase.
 
+### [`engine/anim/traversal/clear.ts`](../engine/anim/traversal/clear.ts)
+
+- `CLEAR` (const): The clearances: metres off the wall, a share of the leg, and how far a fix may go.
+- `clearArm` (function): Keeps arm `side`, solved with its elbow toward `pole`, out of `face` (see the file comment): swings the elbow down, out and back and re-solves with `solve` as it needs, leaving an arm that clears it alone.
+- `clearLeg` (function): Keeps leg `side`, solved to `target` with its knee toward `pole`, out of `face` under its top (see the file comment): moves `target` and re-solves with `solve` as it needs, leaving a leg that clears it alone.
+- `Face` (interface): A wall the legs keep out of: a point on its face, its normal across the ground out toward the body, its top.
+- `faceOf` (function): The wall a traversal's legs keep out of now, written into `out`: a mantle's face under its lip, a climb's; else null.
+- `inside` (function): How far `p` stands inside `face`, short of `margin` off it, under its top and `rise` over it: 0 when clear.
+- `keepOff` (function): Moves `p` out to `margin` off `face` where it stands inside that under the top; returns it.
+
+### [`engine/anim/traversal/contacts.ts`](../engine/anim/traversal/contacts.ts)
+
+- `cableGrips` (function): Where the hands go on a zipline's cable over the feet at `feet`, left then right: `hull.hang` over them, the right one `TRAVERSAL.cable` ahead along the ride, the left as far behind.
+- `climbCycle` (function): A wall-climb's hold for `limb` (see the file comment): the cycle `n` it holds in (a new one every `TRAVERSAL.climbStep` metres climbed), whether it holds now (else it moves to the next), and how far it is through its move (0 to 1, 1 holding).
+- `climbHoldHeight` (function): The height over the catch at which `limb`'s hold of cycle `n` is taken, and so how high on the wall it is (m).
+- `hullOf` (function): The hull traversal reads from a character's settings, a ladder's rungs `rung` metres apart.
+- `HullView` (interface): The body's hull and its rides' numbers: the capsule's radius and skin, a zipline's hang, a ladder's rung spacing (m).
+- `ladderLimb` (function): Where `limb` is on `ladder` with the body's feet at `feet` and the shoulders `shoulder` over them, written into `out`: on its rung (true) or moving between two (false, arcing out from them).
+- `Limb` (type): The limbs a cycle moves, in order: left hand, right hand, left foot, right foot.
+- `lowPull` (function): Whether a mantle's pull is a low ledge's (only the pull, from under the lip) rather than the end of a grab.
+- `mantleGrips` (function): Where the hands go on the lip: left then right as the body faces the wall, `width` metres apart along the edge.
+- `mantleHold` (function): How much each hand holds the lip now, left then right: 0 to 1 (see the file comment); `vault` for a vaulted ledge, the shoulders `shoulder` metres over the feet.
+- `mantleShare` (function): How far through its mantle phase the body is, 0 to 1.
+- `rideOf` (function): The ride an entity's components describe (its `zipline` or its `ladder`), or null for another entity or none.
+- `RideView` (interface): The ride a body is on, as the view reads its entity's component (engine/world/traverse.ts's fields).
+- `TRAVERSAL` (const): The contacts' numbers: shares of a phase or a cycle, metres, m/s.
+- `TraversalView` (interface): The part of the shooter model's state traversal reads beyond the movement's (`MotionState`'s fields of the name).
+- `wallPoint` (function): The point on the wall for `limb` at `height` (world, m), the body's feet at `feet` and the wall's normal `wall` (across the ground, out toward the body): a skin off the hull's front, out by a palm, to the limb's side; a foot out by its toes' reach too (`toes`, ahead of its contact socket), so its toes, not its sole, rest on the face.
+
+### [`engine/anim/traversal/hold.ts`](../engine/anim/traversal/hold.ts)
+
+- `HeldLook` (interface): A look as the hold poses it: eased once a step by `LookPose`, `raised` how far the sights are up, `weight` how much it counts.
+- `HOLD` (const): The hold's numbers: angles in radians, lengths in metres before the build's size.
+- `HoldPlant` (class): The holding and aiming layer (see the file comment).
+- `Look` (interface): Where the body looks: its heading and pitch (rad, world, up above 0), and whether it aims down the sights.
+- `LookPose` (class): The view's eased look of one body: it follows the look the view gives it once a sim step, raising and lowering the sights over `HOLD.raise` and fading in and out as the look comes and goes, so a button never snaps the arms.
+
+### [`engine/anim/traversal/matrix.ts`](../engine/anim/traversal/matrix.ts)
+
+- `TRAVERSAL_STATES` (const): The traversal and holding states, by matrix id (see the file comment).
+
+### [`engine/anim/traversal/plant.ts`](../engine/anim/traversal/plant.ts)
+
+- `swingGrip` (function): Where hand `side`'s grip is `k` (0 to 1) of the way from where it is to `point`, written into `out`: swung about the shoulder (its direction turned and its distance eased) rather than straight across, so a reach overhead or across the body never folds the arm through the shoulder; a turn of nearly half a circle goes through the body's front.
+- `TRAVERSAL_PLANT` (const): The plant's numbers: angles in radians, lengths as shares of the limb's or in metres.
+- `TraversalPlant` (class): The traversal plant (see the file comment).
+
+### [`engine/anim/traversal/pose.ts`](../engine/anim/traversal/pose.ts)
+
+- `createLimbTargets` (function): Four limb targets at weight 0, for `TraversalPose.targets`.
+- `layTarget` (function): Lays `point` into `target` at `weight` (0 to 1) beside what it holds: the points blend by their weights, which add up to at most 1; it is on its contact (`held`) only when this point alone holds it fully, nothing blended in (a way easing out under another easing in holds nothing).
+- `LimbTarget` (interface): Where one hand or foot goes now: a world point, how much (0 to 1), and whether it is on its contact.
+- `Traversal` (type): One of `TRAVERSALS`.
+- `TRAVERSAL_POSE` (const): The poses' rates (per second) and speeds (m/s).
+- `TraversalPose` (class): The view's eased traversal of one body (see the file comment).
+- `TRAVERSALS` (const): The ways a body traverses, each with its own eased weight.
+
 ### [`engine/anim/weights.ts`](../engine/anim/weights.ts)
 
 - `activeWeights` (function): The weights above zero, in `HUMANOID_WEIGHTS` order, rounded by `round`; only `slot`'s when given.
@@ -2995,6 +3058,7 @@ For the agents who maintain the engine.
 - `AnimTrack` (type): An animation track: what `createAnimTrack` returns.
 - `createAnimTrack` (function): An animator posed once a step as the page poses it, and the anim QA's numbers over its frames; with the sim's read-only `queries`, its feet stand on their ground as the page's do, and a sole's height is from the ground under it.
 - `HAND_SOCKETS` (const): The hands, as sockets: what `handGap` measures from.
+- `TrackTraverse` (interface): What a traversing body is on (the ride, its component: engine/anim/traversal/contacts.ts `rideOf`), its hull and its look.
 
 ### [`engine/dev/feel/camera.ts`](../engine/dev/feel/camera.ts)
 
@@ -4976,6 +5040,15 @@ For the agents who maintain the engine.
 - `rapierOf` (function): The Rapier world behind `physics` now (a restore replaces it): for the modules beside this one only.
 - `WORLD_CODES` (const): The codes this module raises, with their fixes.
 
+### [`engine/sim/actorActions.ts`](../engine/sim/actorActions.ts)
+
+- `ActionComponents` (type): The components this module declares.
+- `ACTIONS_FIELDS` (const): The component `actions`' fields: `Actions.save()`'s, at rest by default.
+- `actOn` (function): Runs `act` on actor `id`'s actions (the component `actions`, added at rest when it has none and the call changes them) and saves them back, with its clip layer, emitting the call's events as `action`; returns the component (a state at rest when nothing changed on an actor without one).
+- `ACTOR_ACTION_CODES` (const): The codes this module raises.
+- `defineActionKinds` (function): Declares the component `actions` on `registry` (the shared one by default), once.
+- `stepActorActions` (function): Steps actor `entity`'s (id `id`) actions one tick, in place, and emits their events as `action`; returns what the beat tells the body, to lay over its states.
+
 ### [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)
 
 - `addClips` (function): Gives the live animated actor `id` the component `clips` (`clipsFor`); an actor spawned in the same step takes them from `spawnActor`'s `clips`.
@@ -5879,7 +5952,7 @@ For the agents who maintain the engine.
 ### [`labs/playground/courses/bounds.ts`](../labs/playground/courses/bounds.ts)
 
 - `bodyBounds` (function): The body's bounds, from step `from` (see `BoundsSpan`).
-- `BOUNDS` (const): §4's and §5.1's bounds: the camera's move (m) and turn (rad) in a frame, a sole's slide (m), a point's pop (m).
+- `BOUNDS` (const): §4's and §5.1's bounds: the camera's move (m) and turn (rad) in a frame, a sole's slide (m), a point's pop (m), a held hand's gap (m).
 - `BoundsSpan` (interface): Where a run of bounds reads: from step `from` to `to` (the course's end when absent), its names after `label`.
 - `cameraBounds` (function): Every camera's bounds, from step `from` (see the file comment and `BoundsSpan`).
 
@@ -7329,7 +7402,7 @@ For the agents who maintain the engine.
 - `default` (default): The `anim` QA family (PLAN.md §8.6, WP 6.6, I-29): `node x qa anim` drives every body the engine animates through its state matrix and measures the motion, in Node.
 - `humanoidPrefixes` (function): The kinds of the humanoid's QA ids (`state:`, `pose:`, …), from its matrix, then the kinds of the builds that have ids of their own (`adult/`): as `only`, the humanoid without clips.
 - `HUMANOIDS` (const): The humanoid bodies the family drives through the whole matrix; the first also runs it twice and at half the step.
-- `humanoidStates` (function): The humanoid's matrix by QA id: every sample state, pose, stance, move, reaction, action, and for a `plantedStride` `build` (the playground's player) every movement state (engine/anim/locomotion/matrix.ts).
+- `humanoidStates` (function): The humanoid's matrix by QA id: every sample state, pose, stance, move, reaction, action, and for a `plantedStride` `build` (the playground's player) every movement, traversal and holding state (engine/anim/locomotion/matrix.ts, engine/anim/traversal/matrix.ts).
 - `makeHumanoid` (const): A humanoid of `HUMANOIDS`, made at a step, its feet planted on the floor (`FootPlant`): what the matrix drives.
 
 ### [`tools/qa/anim/clips.ts`](../tools/qa/anim/clips.ts)

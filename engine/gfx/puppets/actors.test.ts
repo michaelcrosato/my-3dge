@@ -8,7 +8,8 @@
  * layer, as the clip is retargeted, in the body its component `puppet` names (the mannequin). WP 7.8: an actor's
  * `secondary` hangs its cape and hair under its puppet, named for the ID pass and counted as the actor's, and they go
  * with the component; its `reactions` bend its spine with the flinch and lay a body knocked forward on its face, read
- * from the sim and never written. WP 13.10: the feet stand on the ground the sim's queries find.
+ * from the sim and never written. WP 13.10: the feet stand on the ground the sim's queries find. WP 13.11: an actor's
+ * `actions` turn its puppet over mid-roll, read from the sim and never written; one riding a zipline holds its cable.
  * @see engine/gfx/puppets/actors.ts
  */
 import { PerspectiveCamera, Quaternion, type Mesh } from 'three/webgpu';
@@ -27,6 +28,8 @@ import { createCharacter } from '../../physics/character';
 import { physicsOf } from '../../physics/binding';
 import { spawnActor } from '../../sim/actors';
 import { reactTo } from '../../sim/reactions';
+import { actOn } from '../../sim/actorActions';
+import { defineActions } from '../../../tools/anim/library';
 import { defineScene, startScene } from '../../sim/scene';
 import { eyePoint } from '../cameras/first';
 import { listDrawables } from '../idpass';
@@ -234,6 +237,41 @@ describe('an actor’s reactions and secondary motion drawn (WP 7.8)', () => {
     }
     const chest = actors.puppets.get(1)!.mesh.skeleton.bones[JOINTS.indexOf('chest') + 1];
     expect(lyingOf(chest.getWorldQuaternion(new Quaternion()))).toBe('down'); // on his face, as the sim says
+    expect(world.hash()).toBe(alone.hash());
+  });
+
+  it('puts the hands of an actor riding a zipline on its cable, over his drawn feet, as the sim says (WP 13.11)', () => {
+    const { world, actors } = start();
+    const [hero] = world.query('actor') as unknown as (Record<string, unknown> & { id: number; actor: { x: number; y: number; z: number } })[]; // prettier-ignore
+    const { x, z } = hero.actor;
+    const hang = 2.032;
+    const riding = { ...hero, actor: { ...hero.actor, y: 3 }, motion: { mode: 'zipline', ride: 99, rideDir: 1 } };
+    const cable = { id: 99, zipline: { from: [x, 3 + hang, z - 10], to: [x, 3 + hang, z + 10] } };
+    for (let i = 0; i < 20; i++) actors.capture([riding, cable], world.dt); // the hands reaching up as the ride's weight eases in
+    actors.draw(1);
+    const puppet = actors.puppets.get(1)!;
+    const [left, right] = [puppet.socketPosition('weaponL'), puppet.socketPosition('weaponR')];
+    expect(right.distanceTo(new Vector3(x, 3 + hang, z + 0.07))).toBeLessThan(0.01); // ahead along the ride
+    expect(left.distanceTo(new Vector3(x, 3 + hang, z - 0.07))).toBeLessThan(0.01);
+  });
+
+  it('turns an actor rolling as its actions say: his head under his hips mid-roll, never changing the sim (WP 13.11)', () => {
+    defineActions();
+    const { world, actors } = start();
+    const { world: alone } = startScene(scene);
+    alone.step({});
+    for (const w of [world, alone]) actOn(w, 1, (a) => a.play('roll'));
+    let under = false;
+    for (let i = 0; i < 60; i++) {
+      for (const w of [world, alone]) w.step({});
+      actors.capture(world.query('actor'), world.dt);
+      actors.draw(1);
+      const puppet = actors.puppets.get(1)!;
+      const pelvis = puppet.mesh.skeleton.bones[JOINTS.indexOf('pelvis') + 1].getWorldPosition(new Vector3());
+      under ||= puppet.socketPosition('headTop').y < pelvis.y;
+    }
+    expect(under).toBe(true);
+    expect(actors.layers().get(1)).toBeDefined();
     expect(world.hash()).toBe(alone.hash());
   });
 });

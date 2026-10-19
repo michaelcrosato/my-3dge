@@ -65,6 +65,7 @@ import { MOVEMENT_SETTINGS, movementOverrides, tuneCharacter } from '../physics/
 import { physicsOf } from '../physics/binding';
 import type { Vec3Like } from '../physics/queries';
 import { clipsFor, defineClipKinds, type ClipsSpec } from './actorClips';
+import { defineActionKinds, stepActorActions } from './actorActions';
 import { defineReactionKinds, stepReactions, type ReactionComponents } from './reactions';
 import { defineRideKinds, ridesOf } from './rides';
 import { defineComponent } from './state';
@@ -140,6 +141,7 @@ export const CONTROL_SETTING_FIELDS = {
  */
 export function defineActorKinds(registry: Registry = sharedRegistry): void {
   defineReactionKinds(registry);
+  defineActionKinds(registry);
   defineRideKinds(registry);
   if (!registry.kinds().includes('setting') || !registry.has('setting', 'physics.characterGravity')) {
     defineSettings(CHARACTER_SETTINGS, registry);
@@ -356,16 +358,19 @@ function animated(w: World) {
  * The system `actors.anim`: each animator's step in id order, told its `states` and the controller's (`velocity`, `yaw`,
  * `air`, `dash`; a movement model's duck as the pose `crouch` where the states hold no pose), its breathing phase drawn
  * from `rng.entity(id, 'anim')` at its first step; emits its events. An actor's `reactions` step first, what their phase
- * tells the body laid over its `states`.
+ * tells the body laid over its `states`, then its `actions` (engine/sim/actorActions.ts), what their beat tells it laid
+ * over those.
  */
 function stepAnimators(w: World): void {
   const [actors, pool] = animated(w);
-  for (const { id, actor, animator: data, reactions, motion } of actors) {
+  for (const entity of actors) {
+    const { id, actor, animator: data, reactions, motion } = entity;
     const rng = w.rng.entity(id, 'anim');
     if (!data.started) [data.state.clock, data.started] = [rng.next() * STEP.clockSpread, true]; // as a humanoid does
     const animator = pool.get(id, data, { rng, dt: w.dt });
     velocity.set(actor.vx, actor.vy, actor.vz);
-    const told = reactions ? { ...data.states, ...stepReactions(reactions, w.dt) } : data.states;
+    const reacted = reactions ? { ...data.states, ...stepReactions(reactions, w.dt) } : data.states;
+    const told = { ...reacted, ...stepActorActions(w, id, entity) };
     const ducked = motion?.duck === 'ducking' || motion?.duck === 'ducked'; // the movement model's crouch
     const pose = told.pose ?? (ducked ? 'crouch' : undefined);
     animator.step({ ...told, pose, velocity, yaw: actor.yaw, air: !actor.grounded, dash: actor.dash > 0 }).save(data);

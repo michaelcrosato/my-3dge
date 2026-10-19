@@ -10,7 +10,8 @@
  * - the move (`MOVE_METRICS` says what each reads): its speeds, heights, distances and times, and its rides';
  * - its animation, posed as the page poses it (engine/dev/feel/anim.ts): `footSlide`, the most a sole slides in one
  *   contact, and `pop`, the farthest a point jumps in one step against its neighbours (the anim QA's rules); `handGap`,
- *   the closest either hand comes to `point`;
+ *   the closest either hand comes to `point`; `handContact`, the farthest a hand held on its contact (a lip, a rung, a
+ *   hold, a cable, the floor) is from it (WP 13.11), past any bound (the largest number) for a span that `holds` and never held one;
  * - a camera's (engine/dev/feel/camera.ts), the code in `camera`: `cameraJump`, the most one frame moves it beyond the
  *   player's own move, and `cameraTurn`, the most it turns (rad); `cameraInside`, the frames it stands inside the
  *   level; `cameraLost`, the frames the player is out of its view.
@@ -53,7 +54,7 @@ import type { InputEntry } from '../../sim/replay';
 export const MOVE_METRICS = ['speed', 'topSpeed', 'speedGain', 'velocityChange', 'apex', 'top', 'height', 'heightAt', 'distance', 'time', 'duration', 'topRise', 'topFall', 'standHeight', 'grounded', 'rideSpeed', 'rideGain', 'catches'] as const; // prettier-ignore
 
 /** The metrics of the player's animation, posed as the page poses it. */
-export const ANIM_METRICS = ['footSlide', 'pop', 'handGap'] as const;
+export const ANIM_METRICS = ['footSlide', 'pop', 'handGap', 'handContact'] as const;
 
 /** The metrics of a camera following the player. */
 export const CAMERA_METRICS = ['cameraJump', 'cameraTurn', 'cameraInside', 'cameraLost'] as const;
@@ -77,6 +78,7 @@ export const MEASURE_FIELDS = defineSchema({
   value: { type: 'number', description: 'For `time` with `speedAbove` or `speedBelow`: the speed, m/s.' },
   camera: { type: 'string', description: 'For a camera metric: the camera’s code (`cam3=chase`, `cam=iso`).' },
   point: { type: 'array', items: { type: 'number' }, description: 'For `handGap`: the point, world [x, y, z], m.' },
+  holds: { type: 'boolean', description: 'For `handContact`: the span traverses, so one in which no hand ever holds its contact fails it.' }, // prettier-ignore
   reference: { type: 'number', required: true, description: 'What it should be (docs/PLAYGROUND.md §3.2), or 0 for a bound.' }, // prettier-ignore
   watch: { type: 'string', description: 'Reported against its bound but never judged until the WP it names makes it pass: "WP 13.12".' }, // prettier-ignore
   tolerance: {
@@ -126,6 +128,8 @@ export interface Measure {
   readonly value?: number;
   readonly camera?: string;
   readonly point?: readonly [number, number, number];
+  /** For `handContact`: a hand holds a contact somewhere in the span, or it fails. */
+  readonly holds?: boolean;
   readonly reference: number;
   readonly tolerance: { readonly share?: number; readonly abs?: number; readonly ticks?: number };
   /** The WP that will make it pass; until then it is reported, never judged. */
@@ -150,6 +154,7 @@ function measureProblems(m: Measure, steps: number, at: string): string[] {
   const point = m.point;
   if ((m.metric === 'handGap') !== (point !== undefined)) problems.push(m.metric === 'handGap' ? `${at}: handGap names its point ([x, y, z])` : `${at}: only handGap names a point`); // prettier-ignore
   if (point && (point.length !== 3 || !point.every(Number.isFinite))) problems.push(`${at}: point is [x, y, z] in metres`); // prettier-ignore
+  if (m.holds !== undefined && m.metric !== 'handContact') problems.push(`${at}: only handContact holds`);
   const { share, abs, ticks } = m.tolerance;
   if (share === undefined && abs === undefined && ticks === undefined) problems.push(`${at}: give a tolerance (share, abs or ticks)`); // prettier-ignore
   return problems;

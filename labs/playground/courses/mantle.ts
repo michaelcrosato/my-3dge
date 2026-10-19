@@ -59,7 +59,7 @@ defineCourse('course:playground-mantle', {
       ...(height === 0.5 ? [{ name: `${label}: no mantle`, metric: 'duration', until: 'mantling', ...span, reference: 0, tolerance: { ticks: 0 } }] : []), // prettier-ignore
       ...(height >= 2 ? [{ name: `${label}: mantles after`, metric: 'time', until: 'mantling', from: at + PRESS, to: at + PRESS + 4, reference: (height === 2 ? 1 : 2) * DT, tolerance: { ticks: 0 } }] : []), // prettier-ignore
       ...mantled,
-      ...bodyBounds(at + 2, { to: at + RUN - 1, label }),
+      ...bodyBounds(at + 2, { to: at + RUN - 1, label, holds: height > 0.5 }), // the 0.5 m wall is a step
       ...cameraBounds(at + 2, { to: at + RUN - 1, label }),
     ];
   }),

@@ -53,7 +53,7 @@ defineCourse('course:playground-skydive', {
     { name: 'the landing pose 30 m up', metric: 'heightAt', until: 'landingPose', from: STEP.push, reference: SKY.land, tolerance: { abs: SKY.dive * DT } }, // prettier-ignore
     { name: 'touches down slowed', metric: 'topFall', from: STEP.run - 40, to: STEP.run, reference: SKY.touch, tolerance: { share: 0.02 } }, // prettier-ignore
     { name: 'runs off at once: no stun', metric: 'speed', from: STEP.run + 40, to: STEP.end, reference: 4.4069 * 1.15, tolerance: { share: 0.02 } }, // prettier-ignore
-    ...bodyBounds(STEP.use, { label: 'skydive' }),
+    ...bodyBounds(STEP.use, { label: 'skydive', holds: true }), // the balloon's line
     ...cameraBounds(STEP.use, { label: 'skydive' }),
   ],
 });

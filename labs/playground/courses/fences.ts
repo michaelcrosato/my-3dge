@@ -48,7 +48,7 @@ defineCourse('course:playground-fences', {
       { name: `${label}: pull`, metric: 'duration', until: 'pulling', ...span, reference: PULL * DT, tolerance: { ticks: 0 } }, // prettier-ignore
       { name: `${label}: grab`, metric: 'duration', until: 'grabbing', ...span, reference: grab * DT, tolerance: { ticks: 0 } }, // prettier-ignore
       { name: `${label}: sprints out`, metric: 'speed', from: exit + 1, to: exit + 30, reference: SPRINT, tolerance: { share: 0.02 } }, // prettier-ignore
-      ...bodyBounds(at + 2, { to: at + RUN - 1, label }),
+      ...bodyBounds(at + 2, { to: at + RUN - 1, label, holds: height > 0.75 }), // a fence under half the shoulders' height is hurdled, no hand on it
       ...cameraBounds(at + 2, { to: at + RUN - 1, label }),
     ];
   }),

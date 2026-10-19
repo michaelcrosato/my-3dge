@@ -28,6 +28,8 @@ import { rigOptions } from '../../gfx/cameras/rig';
 import { queryViewOf } from '../../sim/queryView';
 import { createSession } from '../../sim/session';
 import type { BodyView, MotionView } from '../../anim/locomotion/motion';
+import { hullOf, rideOf } from '../../anim/traversal/contacts';
+import { RUNG } from '../../gfx/stageRides';
 import { createAnimTrack, type AnimTrack } from './anim';
 import { createCameraTrack, type CameraMetrics, type CameraTrack } from './camera';
 import { ANIM_METRICS, type Course, type Measure } from './course';
@@ -131,7 +133,9 @@ export function runCourse(course: Course, options: { registry?: Registry } = {})
   const record = (k: number) => {
     const e = player()!;
     const sample = sampleOf(e);
-    if (anim && e.animator) anim.frame(e.id, e.animator, sample.feet, sample.yaw, world.dt, e.motion as MotionView | undefined, e.actor as unknown as BodyView); // prettier-ignore
+    const look = intents.look ? { yaw: intents.look[0], pitch: intents.look[1], aiming: (intents.b ?? []).includes('aim') } : null; // prettier-ignore
+    const traverse = { ride: e.motion && e.motion.ride >= 0 ? rideOf(world.get(e.motion.ride) as Record<string, unknown> | undefined) : null, hull: hullOf(e.actor.character, RUNG), look }; // prettier-ignore
+    if (anim && e.animator) anim.frame(e.id, e.animator, sample.feet, sample.yaw, world.dt, e.motion as MotionView | undefined, e.actor as unknown as BodyView, traverse); // prettier-ignore
     const doing = cameras.length ? cameraPlayer(e as unknown as EntityData, (intents.b ?? []).includes('aim')) : null;
     const [x, y, z] = sample.feet;
     const eye = doing?.eye !== undefined ? ([x, y + doing.eye, z] as const) : anim?.eye(k);
@@ -238,6 +242,10 @@ export function measure(m: Measure, run: CourseRecord, steps: number, dt: number
       return run.anim!.pop(m.from, to);
     case 'handGap':
       return run.anim!.handGap(m.point!, m.from, to);
+    case 'handContact': {
+      const { gap, held } = run.anim!.handContact(m.from, to);
+      return m.holds === true && held === 0 ? Number.MAX_VALUE : gap; // a traversal never posed: as far off as JSON writes
+    }
     case 'cameraJump':
       return camera.jump;
     case 'cameraTurn':

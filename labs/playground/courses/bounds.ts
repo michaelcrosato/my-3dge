@@ -18,8 +18,8 @@
  */
 import { PLAYGROUND_CAMERAS } from '../views';
 
-/** §4's and §5.1's bounds: the camera's move (m) and turn (rad) in a frame, a sole's slide (m), a point's pop (m). */
-export const BOUNDS = { jump: 0.3, turn: (4 * Math.PI) / 180, slide: 0.05, pop: 9 / 16 } as const;
+/** §4's and §5.1's bounds: the camera's move (m) and turn (rad) in a frame, a sole's slide (m), a point's pop (m), a held hand's gap (m). */ // prettier-ignore
+export const BOUNDS = { jump: 0.3, turn: (4 * Math.PI) / 180, slide: 0.05, pop: 9 / 16, hand: 0.03 } as const;
 
 /** Where a run of bounds reads: from step `from` to `to` (the course's end when absent), its names after `label`. */
 export interface BoundsSpan {
@@ -27,6 +27,8 @@ export interface BoundsSpan {
   label?: string;
   /** By camera name, the WP that will make its numbers pass (`watch`) where a course asks more of it than it has yet. */
   watch?: Readonly<Record<string, string>>;
+  /** The span traverses, holding a contact: no hand held in it fails its `hands held` (a traversal never posed). */
+  holds?: boolean;
 }
 
 /** A measure's name in `span`. */
@@ -38,6 +40,7 @@ export function bodyBounds(from: number, span: BoundsSpan = {}): Record<string, 
   return [
     { name: named(span, 'feet planted'), metric: 'footSlide', from, to, reference: 0, tolerance: { abs: BOUNDS.slide } }, // prettier-ignore
     { name: named(span, 'no pops'), metric: 'pop', from, to, reference: 0, tolerance: { abs: BOUNDS.pop } },
+    { name: named(span, 'hands held'), metric: 'handContact', from, to, reference: 0, tolerance: { abs: BOUNDS.hand }, ...(span.holds ? { holds: true } : {}) }, // prettier-ignore
   ];
 }
 

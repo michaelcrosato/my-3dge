@@ -82,7 +82,7 @@ defineCourse('course:playground-climb', {
         { name: `${label}: stands on top`, metric: 'standHeight', ...span, reference: refused ? 0 : height, tolerance: { abs: 0.02 } }, // prettier-ignore
         ...(height >= 5 ? [{ name: `${label}: climbs at`, metric: 'topRise', from: at + 20, to: at + RUN - 1, reference: 5.715, tolerance: { share: 0.02 } }] : []), // prettier-ignore
         ...(refused ? [{ name: `${label}: the end boost's apex`, metric: 'apex', from: at + 1, to: at + RUN - 1, reference: 3.7338 + 0.7112, tolerance: { abs: 0.02 } }] : []), // prettier-ignore
-        ...bodyBounds(at + 2, { to: at + RUN - 1, label }),
+        ...bodyBounds(at + 2, { to: at + RUN - 1, label, holds: true }),
         ...cameraBounds(at + 2, { to: at + RUN - 1, label }),
       ];
     }),
@@ -93,7 +93,7 @@ defineCourse('course:playground-climb', {
       return [
         { name: `${label}: away`, metric: 'speed', from: at + off + 2, to: at + off + 10, reference: away, tolerance: { share: 0.02 } }, // prettier-ignore
         { name: `${label}: rise`, metric: 'apex', from: at + off, to: at + off + 60, reference: rise, tolerance: { abs: 0.02 } }, // prettier-ignore
-        ...bodyBounds(at + 2, { to: at + RUN - 1, label }),
+        ...bodyBounds(at + 2, { to: at + RUN - 1, label, holds: zone === 'neutral' }), // the neutral zone climbs before it jumps off
         ...cameraBounds(at + 2, { to: at + RUN - 1, label }),
       ];
     }),

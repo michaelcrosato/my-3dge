@@ -4,8 +4,8 @@
  * passes within any one tolerance it names (a share, an amount or whole ticks); a time runs from its step to the first
  * sample that meets its end, a duration as long as a state lasts from its first sample; a ride's states, the
  * highest the feet go, the fastest fall, the height a state begins at, the ride's speed and its catches read as their
- * samples hold them; a scene without a player, or an animation measure on a player without an animator, is refused
- * naming the fix.
+ * samples hold them; a span that `holds` and never held a hand fails its `handContact`; a scene without a player, or
+ * an animation measure on a player without an animator, is refused naming the fix.
  * @see engine/dev/feel/run.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -111,6 +111,15 @@ describe('running a course', () => {
     expect([read('time', 'riding'), read('time', 'skydiving'), read('time', 'landingPose'), read('time', 'onLadder')]).toEqual([0.5, 1.5, 2, 2.5]); // prettier-ignore
     expect([read('top'), read('topFall'), read('heightAt', 'landingPose'), read('heightAt', 'climbing')]).toEqual([9, 20, 5, Infinity]); // prettier-ignore
     expect([read('rideSpeed', undefined, 0, 2), read('rideGain', undefined, 1, 2), read('catches')]).toEqual([6, 4, 2]);
+  });
+
+  it('fails a span that holds when no hand ever held a contact in it', () => {
+    const registry = scenes();
+    const held = (holds: boolean) => ({ name: 'hands held', metric: 'handContact', from: 30, reference: 0, tolerance: { abs: 0.03 }, ...(holds ? { holds } : {}) }); // prettier-ignore
+    const course = defineCourse('course:sprint-held', { ...SPRINT, measures: [held(false), { ...held(true), name: 'holding' }] }, registry); // prettier-ignore
+    const [free, holding] = runCourse(course, { registry }).results;
+    expect([free.value, free.pass]).toEqual([0, true]); // a sprint holds nothing: nothing off its contact
+    expect([holding.value, holding.pass]).toEqual([Number.MAX_VALUE, false]); // …so a span that should hold fails
   });
 
   it('refuses a scene without a player, and an animation measure on a player without an animator', () => {

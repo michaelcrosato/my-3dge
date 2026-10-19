@@ -557,3 +557,84 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   as the crouch pose), engine/dev/feel/{anim,run,course}.ts, engine/gfx/stage.ts and engine/app/view.ts (the queries),
   tools/qa/anim.ts and tools/cmd/sheet.ts (the movement states), clipsets.ts, labs/playground/courses/bounds.ts and
   README.md, the playground replays' goldens and tests/replays/README.md (their reasons).
+
+## Amendment 11 (2026-10-19, WP 13.11): traversal animation
+
+- **Actions on actors** (engine/sim/actorActions.ts): the component `actions` holds an actor's `Actions` as the plain
+  data `save()` writes, so the sim hashes, captures and restores what plays; `actOn(w, id, act)` plays on it (the
+  component added at rest the first time a call changes it; in the sim API for game code), the call's own events
+  going out as `action` from the call, at once between steps and at the step's end inside one; the system
+  `actors.anim` steps it before the animator, lays the beat's body over the input and emits each event as `action`;
+  clip beats play on the actor's clip layer (`SIM_ACTION_NO_CLIPS` without one). An `Actions` is made afresh for every
+  call and step (the verifier found a cached one carrying a call's events into the next step: a capture taken between
+  them restored without them). The puppets load the same data into a view `Actions` layer (its effectors, flip and
+  squash). All 28 actions play on an actor to their ends, as their checks signal them.
+- **Traversal on the procedural body, not the clips** (engine/anim/traversal/): the WP named Quaternius's climb warped
+  to the height and Mesh2Motion's ledge hang and three-point landing; the player is the procedural humanoid
+  (amendment 10) and the clips wait for WP 8.8's contacts. Built instead: the view's `TraversalPose` (eased once a
+  step from the shooter model's state as plain data, its own copy, as the sim changes its state in place) and the
+  `TraversalPlant` at the end of the `post` slot put the hands and feet on contacts: a mantle's lip (both hands; a low
+  ledge taken faster than 3 m/s vaulted with the left hand, the body leaning in 0.9 rad; one under half the shoulders'
+  height over where the feet began hurdled with none), the grab's legs hanging near straight (tucked back off a floor
+  still under them), its right foot up the wall's face and the pull's left after it, each onto the top as the hip rises
+  past the lip, lifted over its edge; the hang under the hands (the shoulders over the feet 0.3 m out from the lip, the
+  arms at 0.95 of their reach to the grip); the wall-climb's holds hand over hand, locked where taken, the feet pushing
+  below a toe's reach off the face, level (a climb not rising, one that caught a fall, slides its limbs down the wall); the ladder's rungs,
+  two at a move, the right hand with the left foot, the stage's 0.3 m spacing, rung 0 the ground under the body; the
+  zipline's cable over the feet, the legs swinging back as it speeds up; the skydive's glide on its front, its dive
+  head down, its arms back along it, and its landing pose upright (the body turned about the pelvis: the root stands
+  at the feet); the slide-jump's legs out ahead near straight, reaching down as it falls, its arms forward and up; the
+  hard landing's right hand flat on the floor, the spine bending at its base just far enough to reach it.
+  Presentation only: no golden changes.
+- **Clear of the wall** (engine/anim/traversal/clear.ts): each solved leg, and one blended with the body's own, keeps
+  its knee 6 cm and its toes' tip 1 cm off a mantle's face under its lip and off a climb's wall, the toes moved out
+  with the foot, a knee that would touch swung out to its side (up over the lip once its hip is over it) no further
+  than that takes; an elbow 3 cm, swung down, out and back; a hand on its way to a lip kept in front of the face and
+  its fingers up it until it rises over the top, then hooked over it. A wall reaches 0.45 m past its face, so a
+  fence's far side, open ground, is never in it (the gym's are 0.5 m thick: holding the feet off it had made a 0.7 m
+  pop); a climb's wall stays the body's while it is within 0.35 m of it and takes no other way (kept on as it topped
+  out, the climb's endless wall held a foot back till it jumped 0.57 m). The elbows point down and out under a hand
+  over its shoulder and back and out behind one under it, never along the arm (the balloon catch's elbow flipped 0.54 m
+  a step with one fixed pole).
+- **Reaching and letting go**: a hand moves to its contact swung about its shoulder, never straight through it; a leg
+  blends from its animation by weight (its knee as the animation has it, then square to the leg on its front), its
+  target never nearer the hip than a third of the leg; a way easing out keeps its last contacts (a zipline's following
+  the feet), and a body placed more than 1 m away lets go of all at once. The body is drawn toward a lip as far as its
+  hands need (`TraversalPose.reach`: at once as they need more, back with its speed changing at most 150 m/s², so a hop
+  out of the pull never snaps it up); the reach a rung, a hold or a cable needs is solved on the skeleton.
+- **The foot plant**: off the ground the traversal takes the legs (the plant's weight `plantShare`, its locks
+  forgotten while it is skipped, `FootPlant.reset`), on the ground the plant keeps them and the free leg poses stop.
+- **Holding and aiming** (engine/anim/traversal/hold.ts, ahead of WP 13.20's weapons): the head and eyes toward the
+  look the page's intents give the player (the feel kit's inputs), the neck and the head sharing it (the chest would
+  carry held hands off their contacts); a gun (`carry`, as the view will say once weapons are drawn) at low ready,
+  raised down the sights (its grip 0.17 m along and 0.13 m under the sight line through the right eye), lowered and
+  turned 0.7 rad across the body to its left at a sprint, the hands low; the support hand on the handguard in line
+  with its arm (two-hand IK), slid back along it to stay within 0.92 of its reach and the gun drawn in past that; the
+  chest turning 70% toward an aim heading up to 0.9 rad off the body's, the muzzle within §5.1's 2° of the aim; the
+  sights and the look eased over 0.2 s (`LookPose`); it yields to every hand the traversal holds. A run is not a
+  sprint: the gait's speed share (of the adult's 4.41 m/s `speedRef`, capped at 1.25) turns to a sprint from 1.17 to
+  1.24, the playground's run being 1.15 of it.
+- **Measured**: `handContact` (engine/dev/feel/course.ts) in every course's body bounds (labs/playground/courses/
+  bounds.ts, `hands held`, 3 cm), a span that traverses marked `holds`, so one in which no hand held fails it (a pose
+  never wired up would otherwise pass at 0): the 19 courses' 1321 measures pass, the held hands on their contacts to
+  the IK's precision, a limb held only when one way lays it alone (a way easing out under another holds nothing); a sole off the ground (traversing, flying) is measured against the physics ground under it, not the
+  plant's flat floor at the body's feet. Ten states `traversal:*` and `hold:*` for a planted build
+  (engine/anim/traversal/matrix.ts) in the anim QA (the adult's 99 checks: no new violation) and `x sheet` (the
+  slide-jump's script slides until the step it jumps: a ground step between left its way unplayed). Leg joints more
+  than 2 cm inside the gym's solids (a scratch probe of its heights; the first build, then with the clearance): the
+  mantles' 170 to 8, the climb's 417 to 2, the hang's 106 to 0, the fences' 61 to 5, the superglide's 236 to 34, the
+  ladder's 5 to 0: 49 in all against WP 13.10's 83, every one left WP 13.10's already. The ten sheets passed the
+  visual review on its third round; left for the playtest: the stepping knees swung wide (a frog squat), the pull's
+  hands off the top as the hips reach the lip, a ladder knee at the rung plane at a stop, the hang's elbows bent 34°
+  under a 2 m lip (the hooked hand stands higher; the feet are already 0.1 m over the floor).
+- **Deferred**: the clips (WP 8.8 and a measured need); the gun's mesh, recoil and the weapon state, WP 13.20's
+  (`carry`); the eyes as their own joints; a climb moving sideways takes each new hold where the body is, its held
+  hand stretching till then; the step-up, the vault's lean and the reach are tuned on the gym's walls; clipping as a
+  course measure (the probe above reads heights, so an overhang needs a solid query). Left as WP 13.10 built them: the
+  first ground step after a long fall shows the feet still tucked as the airborne tuck eases out (18/s), and a medium
+  landing's hand goes partway down (its land layer); the plant puts the hand flat on the floor only past 0.55 of land
+  × hard (from 0.3 it fell 8 to 10 cm short of the floor in the launcher and zipline courses).
+- **Beyond Owns**: engine/sim/actorActions.ts (new) and engine/sim-api.ts (its names), engine/anim/footPlant.ts
+  (`reset`), engine/dev/feel/{anim,course,run}.ts (the measure, `holds`, the floor off the ground), labs/playground/
+  courses/ (the bounds, the traversal spans that hold), engine/app/view.ts (the player's look), tools/qa/anim.ts and
+  tools/cmd/sheet.ts (the states), docs/PLAYGROUND.md §5.1 and docs/GAME-GUIDE.md (`actOn`).
