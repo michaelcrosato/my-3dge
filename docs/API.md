@@ -99,6 +99,7 @@ game agent's manual.
 - `bakeClip` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): Bakes `clip` on its source's rest body `R` (see the file comment).
 - `BakedClip` (interface from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): A clip baked to rotation tracks (see the file comment).
 - `bakeTexture` (function from [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)): Bakes `ref` on `registry` (the shared one by default).
+- `BarOptions` (interface from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): How `createBar` makes a bar.
 - `Beat` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): One beat of an action.
 - `Bindings` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): An action map with the player's changes.
 - `BindingsFile` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): A saved bindings file.
@@ -243,8 +244,10 @@ game agent's manual.
 - `CourseResult` (interface from [`engine/dev/feel/run.ts`](../engine/dev/feel/run.ts)): What `runCourse` gives: every measure's verdict, whether all but the watched passed, the final hash and the samples.
 - `CourseSample` (interface from [`engine/dev/feel/run.ts`](../engine/dev/feel/run.ts)): The first player actor's state after a step: what a move measure reads.
 - `createAudio` (function from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): Makes a page's sound (see the file comment).
+- `createBar` (function from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): A filled bar in `parent` (see the file comment); `set(value)` moves its fill.
 - `createBindings` (function from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Makes the bindings of the action map `map` (an id or an entry), loading saved changes from `options.storage`.
 - `createBlobShadows` (function from [`engine/gfx/puppets/blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts)): Makes the blob-shadow batch, drawn with the library's `material:blobShadow` (see the file comment).
+- `createBox` (function from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): A window frame in `parent` (see the file comment); `set(text)` changes its body.
 - `createCamera` (function from [`engine/gfx/cameras/place.ts`](../engine/gfx/cameras/place.ts)): The camera `code` names (a code, or its data from `readCameraCode`): `cam=iso`, `cam3=orbit,…`, `cam3=chase`.
 - `createCameraEffects` (function from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): The effects' springs and phases (see the file comment).
 - `createCameraRig` (function from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): Makes a rig on the camera `code` names (see the file comment).
@@ -253,6 +256,7 @@ game agent's manual.
 - `createCrowd` (function from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): Makes a crowd's batches and level of detail (see the file comment).
 - `createCrowdLod` (function from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): Makes a crowd's level of detail (see the file comment).
 - `createCutaway` (function from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): Gives `meshes`' cutting parts their twins (see the file comment), and fades `options.objects` too.
+- `createDialog` (function from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): Makes a closed dialog box in `parent` (see the file comment).
 - `createEffects` (function from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): Makes the effects; see the file comment.
 - `createEngine` (function from [`engine/app/engine.ts`](../engine/app/engine.ts)): Starts the engine in a page (see the file comment); resolves once it is up or has failed.
 - `createFeelPanel` (function from [`engine/dev/feel/panel.ts`](../engine/dev/feel/panel.ts)): Builds the feel panel on `document` over `inspector` (see the file comment).
@@ -260,13 +264,16 @@ game agent's manual.
 - `createFollowCamera` (function from [`engine/gfx/cameras/follow.ts`](../engine/gfx/cameras/follow.ts)): A follow camera: orbiting the hero and following him (see the file comment).
 - `createFootPlantState` (function from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): A new, unlocked `FootPlantState`.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
+- `createHearts` (function from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): A row of hearts in `parent` (see the file comment); `set([hp, max])` changes them.
 - `createInput` (function from [`engine/input/input.ts`](../engine/input/input.ts)): Makes the page's input.
 - `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
 - `createInstancedBatch` (function from [`engine/gfx/instancing.ts`](../engine/gfx/instancing.ts)): Makes an instanced batch (see the file comment).
 - `createLevelMeshes` (function from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): Draws `level`'s mesh descriptors (see the file comment).
 - `createMaterialLibrary` (function from [`engine/gfx/materials/library.ts`](../engine/gfx/materials/library.ts)): Makes a material library over `registry` (the shared one by default).
+- `createMenu` (function from [`engine/ui/menu.ts`](../engine/ui/menu.ts)): Makes an open menu of `items` in `parent` (see the file comment).
 - `createOutline` (function from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): Makes an outline (see the file comment).
 - `createOverlay` (function from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): Builds the overlay over `options.canvas` (see the file comment).
+- `createPadCursor` (function from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): The pad's cursor over `root` (see the file comment), from `input`.
 - `createPost` (function from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): Makes the chain on `gfx.renderer` (see the file comment).
 - `createPropMeshes` (function from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): Makes the prop meshes; see the file comment.
 - `createPuppet` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Draws `compiled` as one rigid-skinned mesh (see the file comment), at rest until `setPose`.
@@ -350,6 +357,9 @@ game agent's manual.
 - `defineTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): Registers a touch layout (on the shared registry by default).
 - `DEGREES_PER_COUNT` (const from [`engine/input/look.ts`](../engine/input/look.ts)): One mouse count at sensitivity 1, degrees: Source's and Apex's `m_yaw` and `m_pitch`.
 - `DeviceKind` (type from [`engine/input/codes.ts`](../engine/input/codes.ts)): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
+- `Dialog` (interface from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): The dialog box (see the file comment).
+- `DialogOptions` (interface from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): How a dialog box is made.
+- `DialogPlace` (type from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): Where the dialog box stands.
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
 - `driveMover` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Drives a mover's body toward its pose at `sim.time` (the end of the step being run): `driveMover(physics, m, w)`.
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
@@ -468,6 +478,7 @@ game agent's manual.
 - `Health` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health (`HEALTH_FIELDS` says what each field means).
 - `HEALTH` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Health with every field at its default: 1 hit point, never hit.
 - `HEALTH_FIELDS` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health, for a scene's component: `defineComponent('health', { description, fields: HEALTH_FIELDS })`.
+- `HeartsOptions` (interface from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): How `createHearts` makes a row of hearts.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
 - `hipRatio` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The hip-height ratio of `skeleton` to the rest body `baked` was measured on (their standing hip joints): the clip's places scale by it on that skeleton (the hip joints, the feet's goals, the travel).
 - `Hit` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What a raycast or shape cast struck.
@@ -599,6 +610,10 @@ game agent's manual.
 - `measureFeel` (function from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `measureMove` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Measures where `move`'s strike point (the blade's tip, the fist, the foot's sole) goes through its hit window, on a spare body of `options.build` holding `options.weapon` (`build:chibi` with a sword by default): the hit cone and height window to test targets against (`inHitShape`).
 - `MeasureResult` (interface from [`engine/dev/feel/run.ts`](../engine/dev/feel/run.ts)): One measure's verdict.
+- `Menu` (interface from [`engine/ui/menu.ts`](../engine/ui/menu.ts)): The menu (see the file comment).
+- `MenuItem` (type from [`engine/ui/menu.ts`](../engine/ui/menu.ts)): One menu item: its label, or `{ label, id, disabled }` (an `id` is sent when picked).
+- `MenuOptions` (interface from [`engine/ui/menu.ts`](../engine/ui/menu.ts)): How a menu is made.
+- `MenuPlace` (type from [`engine/ui/menu.ts`](../engine/ui/menu.ts)): Where the menu stands.
 - `mergeGeometries` (function from [`engine/gfx/geometry/groups.ts`](../engine/gfx/geometry/groups.ts)): Joins `geometries` into one, in order: their attributes end to end, their indices offset.
 - `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
 - `Metric` (type from [`engine/dev/feel/course.ts`](../engine/dev/feel/course.ts)): A measure's metric.
@@ -646,6 +661,7 @@ game agent's manual.
 - `Overlay` (interface from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): The overlay over one canvas (see the file comment).
 - `OverlayCamera` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): What the overlay reads of a camera: any three.js camera (without `near` and `far`, it culls only behind it).
 - `OverlayOptions` (interface from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): How an overlay is made.
+- `PadCursor` (interface from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): A gamepad's cursor over a page (see the file comment).
 - `palette` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A palette's hex colours as sRGB bytes; throws `GFX_EMPTY_PALETTE` naming `what` when it has none.
 - `PALETTES` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): The fixed palettes (sRGB): Game Boy greens, PICO-8's sixteen, CGA, 1-bit, an amber terminal.
 - `parseClip` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Reads a clip of format 1 or 2 from its text (`//` comment lines allowed) or an object, which is not changed: the result is a copy, its keys sorted by time and `dur` filled in.
@@ -806,6 +822,7 @@ game agent's manual.
 - `sampleBaked` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): Samples `baked` at `t` seconds: its 23 local rotations into `rotations` (slerped between frames, as three.js's mixer does) and its pelvis into `hips` (lerped).
 - `samplePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): The 36 body points at time `t` on rest body `R`, written into `out` (a new Float32Array, as the source's, unless given; pass a Float64Array for full precision).
 - `SampleState` (interface from [`engine/anim/states.ts`](../engine/anim/states.ts)): A named body state and how long it is held, seconds: a body stepped through it shows it.
+- `SayOptions` (interface from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): What one `say` shows.
 - `ScaledLook` (interface from [`engine/input/look.ts`](../engine/input/look.ts)): What the camera takes (engine/gfx/cameras/pose.ts `CameraInput`): look `[right, up]` in rad, turn as rates.
 - `scaleLook` (function from [`engine/input/look.ts`](../engine/input/look.ts)): What the camera takes from `raw` under `options`, aiming down sights or not (see the file comment).
 - `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
@@ -964,7 +981,11 @@ game agent's manual.
 - `twoBone` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Two-bone IK on positions (`ik3`): the middle joint (knee, elbow) and the end of a limb of bone lengths `upper` and `lower` from `root` toward `target`, bent toward the direction `pole`; out of reach, the end stops on the line to the target.
 - `TwoBoneOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `twoBoneRot` and `handTo` solve.
 - `twoBoneRot` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the limb ending at `end` (an ankle or a wrist) through its three joints' local rotations so the end reaches `target`, then runs FK.
+- `UiBoxOptions` (interface from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): How `createBox` makes a window frame.
+- `UiCue` (type from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): A cue a widget asks the page to play.
 - `UiElementState` (interface from [`engine/ui/state.ts`](../engine/ui/state.ts)): One overlay element (see the file comment).
+- `UiInput` (interface from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): What a widget reads of a page's input (engine/input/input.ts's `Input` is one): the system layer's actions.
+- `UiSound` (type from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): Plays a cue (the page's audio); widgets without one stay silent.
 - `uiState` (function from [`engine/ui/state.ts`](../engine/ui/state.ts)): The overlay under `root` as plain data (see the file comment).
 - `UiState` (interface from [`engine/ui/state.ts`](../engine/ui/state.ts)): The overlay as plain data (see the file comment).
 - `updateCrowd` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): The crowd's step, after the physics step (the phase `readback`), over every agent in id order: reads each body back (feet, velocity, `grounded`); brakes grounded corpses and removes those `corpseTime` old, then the oldest beyond `corpseCap`; removes `leaving` agents; adds the bodies of up to `spawnLimit` queued agents.
@@ -987,6 +1008,7 @@ game agent's manual.
 - `WEAPONS` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): What the right hand holds, by the direction its blade rests in: `[forward, right, up]`, normalised when used.
 - `WeightInfo` (interface from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): What drives a weight and how it eases.
 - `WeightRates` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A weight's easing rates, per second: `[rising, falling]`.
+- `Widget` (interface from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): A widget made by this module: its element, an update and its removal.
 - `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
 - `World` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): The sim world: entities, components, systems, events, RNG, timers, state, hash, capture and restore.
 - `WorldEvents` (type from [`engine/sim/world.ts`](../engine/sim/world.ts)): The listeners a world offers game code: `on`, `once`, `off`, scopes and the trace; events go through `w.emit`.
@@ -5397,6 +5419,15 @@ For the agents who maintain the engine.
 - `createChrome` (function): Makes the touch-mode chrome of `document` (off until `setTouch(true)`).
 - `TURN_HINT` (const): The hint shown to a phone held upright.
 
+### [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)
+
+- `createDialog` (function): Makes a closed dialog box in `parent` (see the file comment).
+- `Dialog` (interface): The dialog box (see the file comment).
+- `DIALOG_CODES` (const): The codes this module raises, with their fixes.
+- `DialogOptions` (interface): How a dialog box is made.
+- `DialogPlace` (type): Where the dialog box stands.
+- `SayOptions` (interface): What one `say` shows.
+
 ### [`engine/ui/labels.ts`](../engine/ui/labels.ts)
 
 - `Anchor` (type): Where a label is: a point read every frame (a `Vector3` the caller moves follows), or a function giving one.
@@ -5415,6 +5446,15 @@ For the agents who maintain the engine.
 - `WorldLayer` (interface): The labels and damage numbers of one overlay.
 - `worldPoint` (function): `point` as `[x, y, z]`, or `UI_BAD_POINT` naming `what`.
 - `WorldPoint` (type): A point in the world, m: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]` (physics' `Vec3Like`).
+
+### [`engine/ui/menu.ts`](../engine/ui/menu.ts)
+
+- `createMenu` (function): Makes an open menu of `items` in `parent` (see the file comment).
+- `Menu` (interface): The menu (see the file comment).
+- `MENU_CODES` (const): The codes this module raises, with their fixes.
+- `MenuItem` (type): One menu item: its label, or `{ label, id, disabled }` (an `id` is sent when picked).
+- `MenuOptions` (interface): How a menu is made.
+- `MenuPlace` (type): Where the menu stands.
 
 ### [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)
 
@@ -5456,6 +5496,26 @@ For the agents who maintain the engine.
 - `TouchLayoutSpec` (interface): How a touch layout is written.
 - `touchScale` (function): The scale of the touch controls for a screen `width` × `height` CSS px: `--touch-k`.
 - `TouchSlot` (interface): Where a button sits: its centre's distance from the right and bottom edges, and its diameter, in k CSS px.
+
+### [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)
+
+- `BarOptions` (interface): How `createBar` makes a bar.
+- `createBar` (function): A filled bar in `parent` (see the file comment); `set(value)` moves its fill.
+- `createBox` (function): A window frame in `parent` (see the file comment); `set(text)` changes its body.
+- `createHearts` (function): A row of hearts in `parent` (see the file comment); `set([hp, max])` changes them.
+- `createPadCursor` (function): The pad's cursor over `root` (see the file comment), from `input`.
+- `createRepeat` (function): A held direction's repeat: `(input, action, dt)` is true on the press and on each repeat while held.
+- `HeartsOptions` (interface): How `createHearts` makes a row of hearts.
+- `PadCursor` (interface): A gamepad's cursor over a page (see the file comment).
+- `REPEAT` (const): How long a held direction waits before it repeats, then between repeats (s).
+- `setText` (function): Sets `el`'s text when it differs.
+- `UiBoxOptions` (interface): How `createBox` makes a window frame.
+- `UiCue` (type): A cue a widget asks the page to play.
+- `uiElement` (function): An element `tag` of `className` in `parent`'s document, marked `data-ui=kind` (and `data-id`) when given.
+- `UiInput` (interface): What a widget reads of a page's input (engine/input/input.ts's `Input` is one): the system layer's actions.
+- `UiSound` (type): Plays a cue (the page's audio); widgets without one stay silent.
+- `Widget` (interface): A widget made by this module: its element, an update and its removal.
+- `widgetStyle` (function): Adds the widgets' stylesheet to `doc` once.
 
 ### [`engine/world/ai.ts`](../engine/world/ai.ts)
 
@@ -6464,7 +6524,14 @@ For the agents who maintain the engine.
 - `CanvasRect` (interface): A canvas's client rect, CSS px.
 - `FakeDocument` (class): A fake document: a `<html>` with `<head>` and `<body>`, and an optional window.
 - `FakeElement` (class): A fake element (see the file comment).
+- `FakeEvent` (interface): An event as the fake fires it: its type and the element it was fired at.
 - `fakePage` (function): A fake page and a canvas (not yet in it) whose client rect is `rect`, which a test may change.
+
+### [`tests/unit/ui/uiKit.ts`](../tests/unit/ui/uiKit.ts)
+
+- `fakeInput` (function): A page input on `device` (see the file comment).
+- `FakeInput` (interface): A test's page input (see the file comment).
+- `overlay` (function): An overlay over a 640 × 360 canvas in a fresh fake page.
 
 ### [`tools/anim/asf-amc-fixture.ts`](../tools/anim/asf-amc-fixture.ts)
 

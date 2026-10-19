@@ -221,6 +221,19 @@ export { DAMAGE_NUMBERS } from './ui/labels';
 export { uiState } from './ui/state';
 export type { UiState } from './ui/state';
 export type { UiElementState } from './ui/state';
+// The widgets (WP 10.6): bars, hearts and boxes, the dialog box and the menu as HTML/CSS over the overlay, reading the
+// page's input (its system layer) and asking the page for sound cues; a gamepad's cursor over any panel. A menu sends
+// the picks that change play as input (`send`), so replays hold them.
+export { createBar } from './ui/widgets';
+export { createHearts } from './ui/widgets';
+export { createBox } from './ui/widgets';
+export { createPadCursor } from './ui/widgets';
+export type { Widget, BarOptions, HeartsOptions, UiBoxOptions, PadCursor } from './ui/widgets';
+export type { UiInput, UiCue, UiSound } from './ui/widgets';
+export { createDialog } from './ui/dialog';
+export type { Dialog, DialogOptions, DialogPlace, SayOptions } from './ui/dialog';
+export { createMenu } from './ui/menu';
+export type { Menu, MenuItem, MenuOptions, MenuPlace } from './ui/menu';
 // Lights, shadows, atmosphere and sky (WP 7.1): light kinds for a level's light spots, a fixed pool of point lights
 // near the focus with a shadow budget by quality tier, and sky presets (background, dome, backdrop, sun, ambient
 // light, fog) that a sky puts on a scene.

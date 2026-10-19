@@ -1,8 +1,9 @@
 /**
- * @file A stand-in for the few DOM calls the overlay makes (engine/ui/{overlay,labels,state}.ts), for their unit
- * tests in Node (T1), where there is no page: elements with attributes, `dataset`, `hidden`, `style` (properties and
- * custom properties), classes, text and children; `querySelector(All)` for class, attribute and descendant
- * selectors; and a canvas whose client rect a test sets. Nothing lays the page out, so only the canvas has a
+ * @file A stand-in for the few DOM calls the overlay makes (engine/ui/{overlay,labels,state}.ts, and WP 10.6's
+ * widgets.ts, dialog.ts and menu.ts), for their unit tests in Node (T1), where there is no page: elements with
+ * attributes, `dataset`, `hidden`, `style` (properties and custom properties), classes, text and children;
+ * `querySelector(All)` and `closest` for class, attribute and descendant selectors; listeners, `dispatch(type)` (every
+ * event bubbles) and `click()`; and a canvas whose client rect a test sets. Nothing lays the page out, so only the canvas has a
  * `getBoundingClientRect`, and `ui.state()` gives null boxes (the browser half is tests/e2e/overlay.spec.ts).
  *
  * Invariants: it models only what those modules use; anything else is missing, so a new DOM call fails loudly.
@@ -53,6 +54,12 @@ function parse(selector: string): Simple[] {
         (m) => [m[1], m[2]] as [string, string | undefined],
       ),
     }));
+}
+
+/** An event as the fake fires it: its type and the element it was fired at. */
+export interface FakeEvent {
+  type: string;
+  target: FakeElement;
 }
 
 /** A fake element (see the file comment). */
@@ -148,6 +155,35 @@ export class FakeElement {
     if (!parent) return;
     parent.children.splice(parent.children.indexOf(this), 1);
     this.parentElement = null;
+  }
+  private readonly listeners = new Map<string, ((event: FakeEvent) => void)[]>();
+  addEventListener(type: string, listener: (event: FakeEvent) => void): void {
+    this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
+  }
+  removeEventListener(type: string, listener: (event: FakeEvent) => void): void {
+    this.listeners.set(
+      type,
+      (this.listeners.get(type) ?? []).filter((own) => own !== listener),
+    );
+  }
+  /** Fires `type` at this element and its ancestors in turn (every event bubbles here), as a page's would. */
+  dispatch(type: string): void {
+    const event = { type, target: this as FakeElement };
+    for (const at of this.lineage()) for (const listener of at.listeners.get(type) ?? []) listener(event);
+  }
+  click(): void {
+    this.dispatch('click');
+  }
+  /** The nearest of this element and its ancestors matching one simple selector, or null. */
+  closest(selector: string): FakeElement | null {
+    const [simple] = parse(selector);
+    return this.lineage().find((at) => at.matches(simple)) ?? null;
+  }
+  /** This element and its ancestors, innermost first. */
+  private lineage(): FakeElement[] {
+    const out: FakeElement[] = [];
+    for (let at = this.parentElement; at; at = at.parentElement) out.push(at);
+    return [this as FakeElement, ...out];
   }
   /** Whether this element matches one simple selector. */
   matches(simple: Simple): boolean {

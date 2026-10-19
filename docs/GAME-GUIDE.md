@@ -351,6 +351,9 @@ types `EngineFrame`, `FrameWorld`, `CameraPose`.
 **The HTML/CSS overlay (WP 6.5)**: world-anchored labels and damage numbers placed from projected coordinates each frame (three.js's CSS2DRenderer pattern), HUD lines and a crosshair over the canvas; ui.state() for tests.
 `createOverlay`, `DAMAGE_NUMBERS`, `uiState`; types `Overlay`, `OverlayOptions`, `HudOptions`, `HudPlace`, `Label`, `LabelOptions`, `DamageOptions`, `WorldPoint`, `Anchor`, `OverlayCamera`, `UiState`, `UiElementState`.
 
+**The widgets (WP 10.6)**: bars, hearts and boxes, the dialog box and the menu as HTML/CSS over the overlay, reading the page's input (its system layer) and asking the page for sound cues; a gamepad's cursor over any panel. A menu sends the picks that change play as input (`send`), so replays hold them.
+`createBar`, `createHearts`, `createBox`, `createPadCursor`, `createDialog`, `createMenu`.
+
 **Lights, shadows, atmosphere and sky (WP 7.1)**: light kinds for a level's light spots, a fixed pool of point lights near the focus with a shadow budget by quality tier, and sky presets (background, dome, backdrop, sun, ambient light, fog) that a sky puts on a scene.
 `defineLight`, `defineSky`, `createSky`; types `LightEntry`, `LightSource`, `SkyEntry`, `SkySpec`, `Sky`.
 

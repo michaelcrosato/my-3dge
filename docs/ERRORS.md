@@ -1193,17 +1193,33 @@ Raised by the world (engine/sim/world.ts) and the hash (engine/sim/state.ts) for
 
 ## ui
 
+### UI_BAD_DIALOG
+
+- Message: `dialog.{call}: {problem}`
+- Fix: say(text, { choices }) takes a string or a list of strings, and choices as a list of strings; update(dt) takes the frame's seconds, 0 or more
+- Registered in: [`engine/ui/dialog.ts` line 35](../engine/ui/dialog.ts)
+
+Raised by the dialog box (engine/ui/dialog.ts) for text that is not a string or a list of them, choices that are not, or a frame time that is not a number of seconds from 0.
+
 ### UI_BAD_DT
 
 - Message: `update(camera, dt) got dt {dt}`
 - Fix: pass the seconds since the last frame, 0 or more (the frame loop's dt)
-- Registered in: [`engine/ui/overlay.ts` line 56](../engine/ui/overlay.ts)
+- Registered in: [`engine/ui/overlay.ts` line 57](../engine/ui/overlay.ts)
+
+### UI_BAD_MENU
+
+- Message: `menu: {problem}`
+- Fix: give items as strings or { label, id?, disabled? }, and update(dt) the frame's seconds, 0 or more
+- Registered in: [`engine/ui/menu.ts` line 36](../engine/ui/menu.ts)
+
+Raised by the menu (engine/ui/menu.ts) for an item that is neither a string nor `{ label, id?, disabled? }`, or a frame time that is not a number of seconds from 0.
 
 ### UI_BAD_PLACE
 
 - Message: `hud "{id}" asks for the place {got}`
 - Fix: use one of top-left, top, top-right, bottom-left, bottom, bottom-right
-- Registered in: [`engine/ui/overlay.ts` line 52](../engine/ui/overlay.ts)
+- Registered in: [`engine/ui/overlay.ts` line 53](../engine/ui/overlay.ts)
 
 ### UI_BAD_POINT
 

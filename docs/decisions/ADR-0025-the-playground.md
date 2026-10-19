@@ -733,3 +733,19 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **Beyond Owns**: engine/sim/devActions.ts (new), engine/sim/{session,world,systems,damage}.ts (the hooks: the
   session's fallback, the frozen phase, the setting, the invulnerable target), engine/app/headless.ts (loads the
   members), engine/app/viewMembers.test.ts and tests/e2e/box.spec.ts (every member's check).
+
+## Amendment 14 (2026-10-19, WP 10.6): the UI widgets
+
+- **Placed on the overlay** (engine/ui/widgets.ts): bars, hearts and boxes go in the HUD's places through a new
+  `overlay.attach(element, at)` (engine/ui/overlay.ts, beyond the WP's files), stacking with the HUD's lines; the
+  dialog and the menu stand over the root as panels that take the pointer. One stylesheet serves them all.
+- **Input and sound injected**: the UI layer may not import the input devices or the audio, so a widget reads a
+  `UiInput` (the page input's `held`, `pressed`, `strength` and `lastDevice`, over the system layer) and asks a
+  `UiSound` for cues (`move`, `pick`, `cancel`, `type`). Held directions repeat after 0.35 s and every 0.1 s.
+- **Gamepads**: the menu and the dialog take the pad's D-pad and left stick through the system layer's directions;
+  any other panel through the pad's cursor (`createPadCursor`: shardfall's speeds, accept clicking what it is over),
+  shown only with a gamepad used last and a panel open. **Picks as input**: a menu item with an `id` is handed to
+  `send(id)`, which the page turns into a dev action or a custom intent, so the replay holds the pick
+  (tests/e2e/ui.spec.ts: the menu's pick recorded as the scene's dev action).
+- **Pages are strings**: the source wrapped a page to the box's width in its pixel font; here each string is a page and
+  CSS wraps it. The box's and the playground's own menus stay theirs until a WP needs the widget's.
