@@ -234,6 +234,11 @@ export { createDialog } from './ui/dialog';
 export type { Dialog, DialogOptions, DialogPlace, SayOptions } from './ui/dialog';
 export { createMenu } from './ui/menu';
 export type { Menu, MenuItem, MenuOptions, MenuPlace } from './ui/menu';
+// The store (WP 10.9): what a game keeps across sessions (high scores, progress, its settings) in the page's
+// localStorage under the game's prefix, versioned and checked on load; memory in Node and in the isolated modes.
+export { createStore } from './app/store';
+export { memoryBackend } from './app/store';
+export type { Store, StoreOptions, StoreBackend, StoreMode } from './app/store';
 // Lights, shadows, atmosphere and sky (WP 7.1): light kinds for a level's light spots, a fixed pool of point lights
 // near the focus with a shadow budget by quality tier, and sky presets (background, dome, backdrop, sun, ambient
 // light, fog) that a sky puts on a scene.

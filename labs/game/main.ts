@@ -2,8 +2,9 @@
  * @file The starter game's page (labs/game/index.html): it starts the engine (`createEngine`, engine/app/engine.ts) on
  * the scene `game:play` (labs/game/scenes/play.ts) with the arena's text registered for the view, offers the bot's
  * replay to `?replay=bot`, and shows the round each drawn frame in the HTML/CSS overlay's HUD: the gems, the clock,
- * the controls and, when the round ends, how it ended. Enter then starts a new round on the next seed. The camera
- * is the chase camera unless the URL names one (`?cam=iso`, `?cam3=orbit`).
+ * the controls, the best round kept across sessions (labs/game/best.ts, through the engine's store) and, when the
+ * round ends, how it ended. Enter then starts a new round on the next seed. The camera is the chase camera unless the
+ * URL names one (`?cam=iso`, `?cam3=orbit`).
  *
  * Everything else a page does (routes, the renderer, the frame loop, the devices, `window.__engine`, the error
  * overlay, the touch controls) is the engine's, so this file is the game's own presentation only. It reads the run
@@ -15,7 +16,8 @@
  * `?replay=bot` the bot's, `?cam=iso` another camera. Headless, `node x shot labs/game` reports what it draws.
  */
 /// <reference types="vite/client" />
-import { createEngine, type Engine, type EngineFrame } from '../../engine';
+import { createEngine, createStore, type Engine, type EngineFrame } from '../../engine';
+import { bestOf, recordBest } from './best';
 import { ARENA_TEXT, play, type Round } from './scenes/play';
 
 /** The page's query, with the chase camera when it names none: it follows the player round the arena. */
@@ -31,16 +33,27 @@ let engine: Engine | null = null;
 /** Whether the round on screen has ended, so Enter starts the next. */
 let ended = false;
 
+/** The game's store: its best round across sessions; a replay's page plays in its demo mode, so it sets none. */
+const store = createStore({ prefix: 'my3dge-game:', mode: search.has('replay') ? 'demo' : 'play' });
+
+/** The fastest won round kept (s), and the run whose clock the page saw running, with the steps it started with. */
+let best = bestOf(store);
+let seen: { world: object; steps: number } | null = null;
+
 /** Shows the round in the HUD: the gems, the clock, the controls, and how the round ended. */
 function showRound({ world }: EngineFrame): void {
   const ui = engine?.ui;
   const entity = world.query('round')[0] as unknown as { round: Round } | undefined;
   if (!ui || !entity) return;
   const { gems, collected, left, state } = entity.round;
+  if (seen?.world !== world) seen = state === 'playing' ? { world, steps: left + world.tick } : null;
+  const was = ended;
   ui.hud('gems', `Gems ${collected} / ${gems}`, { at: 'top-left' });
   ui.hud('clock', `${Math.ceil(left / world.hz)} s`, { at: 'top-right', color: left < 10 * world.hz ? '#ff8f6b' : '' });
   ui.hud('keys', 'WASD: run · Space: jump · Shift: dash', { at: 'bottom', keys: true });
   ended = state !== 'playing';
+  if (ended && !was && state === 'won' && seen) best = recordBest(store, (seen.steps - left) / world.hz);
+  ui.hud('best', best === null ? null : `Best ${best.toFixed(1)} s`, { at: 'top-left' });
   const end = state === 'won' ? 'Every gem! Enter: play again' : 'Time! Enter: play again';
   ui.hud('end', ended ? end : null, { at: 'top' });
 }

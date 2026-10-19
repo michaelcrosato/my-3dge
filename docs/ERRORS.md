@@ -241,6 +241,14 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 - Fix: {fix}
 - Registered in: [`engine/app/routes.ts` line 37](../engine/app/routes.ts)
 
+### APP_BAD_STORE
+
+- Message: `{where}: {problem}`
+- Fix: give a prefix and keys as non-empty strings, a version as a whole number from 1, a mode of play, demo, sandbox or gallery, and values that are plain data (JSON)
+- Registered in: [`engine/app/store.ts` line 49](../engine/app/store.ts)
+
+Raised by the store (engine/app/store.ts) for a bad option, key or value; storage itself never makes it throw.
+
 ### APP_FRAME
 
 - Message: `a frame threw, so the loop stopped: {message}`
@@ -294,6 +302,22 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
 - Registered in: [`engine/app/engine.ts` line 84](../engine/app/engine.ts)
+
+### APP_STORE_BLOCKED
+
+- Message: `the page refused its storage ({reason}), so the store {prefix} keeps its values in memory for this page only`
+- Fix: allow the site's storage (a private window or a blocked cookie setting refuses it); the game still runs, and forgets on reload
+- Registered in: [`engine/app/store.ts` line 43](../engine/app/store.ts)
+
+Advice from the store (engine/app/store.ts), once: `localStorage` threw when touched, so nothing is kept across sessions.
+
+### APP_STORE_VERSION
+
+- Message: `the store {prefix} holds {key} at {found}; this game reads version {version}`
+- Fix: give createStore a migrate(data, version) that turns the old value into the current one, or let the reader fall back to its default (the old value stays until set replaces it)
+- Registered in: [`engine/app/store.ts` line 38](../engine/app/store.ts)
+
+Advice from the store (engine/app/store.ts), once per key: a kept value written in another format or version is not handed back as it is.
 
 ## audio
 

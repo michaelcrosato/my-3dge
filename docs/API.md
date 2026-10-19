@@ -282,6 +282,7 @@ game agent's manual.
 - `createShoulderCamera` (function from [`engine/gfx/cameras/shoulder.ts`](../engine/gfx/cameras/shoulder.ts)): A shoulder camera: over the hero's shoulder (`input.eye`), turned by the devices, in front of the walls.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Puts a sky on `scene`: the light pool lit from `level`'s light spots (phases from `rng`, a visual stream), the sun, the dome, the backdrop and the atmosphere; shows `sky:daylight` until `set` names another preset.
+- `createStore` (function from [`engine/app/store.ts`](../engine/app/store.ts)): Makes a store (see the file comment).
 - `createStyleSet` (function from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): Makes a style set (see the file comment).
 - `createViewCamera` (function from [`engine/gfx/cameras/presets.ts`](../engine/gfx/cameras/presets.ts)): A classic view as a `Camera` (`options.view` names it; codes.ts's `VIEW_LABELS` has the names in words).
 - `createVirtualDevice` (function from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): Makes a virtual device, holding nothing.
@@ -610,6 +611,7 @@ game agent's manual.
 - `measureFeel` (function from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `measureMove` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Measures where `move`'s strike point (the blade's tip, the fist, the foot's sole) goes through its hit window, on a spare body of `options.build` holding `options.weapon` (`build:chibi` with a sword by default): the hit cone and height window to test targets against (`inHitShape`).
 - `MeasureResult` (interface from [`engine/dev/feel/run.ts`](../engine/dev/feel/run.ts)): One measure's verdict.
+- `memoryBackend` (function from [`engine/app/store.ts`](../engine/app/store.ts)): A backend in memory: what Node, refused storage and the isolated modes write to.
 - `Menu` (interface from [`engine/ui/menu.ts`](../engine/ui/menu.ts)): The menu (see the file comment).
 - `MenuItem` (type from [`engine/ui/menu.ts`](../engine/ui/menu.ts)): One menu item: its label, or `{ label, id, disabled }` (an `id` is sent when picked).
 - `MenuOptions` (interface from [`engine/ui/menu.ts`](../engine/ui/menu.ts)): How a menu is made.
@@ -916,6 +918,10 @@ game agent's manual.
 - `STICK_REACH` (const from [`engine/input/aim.ts`](../engine/input/aim.ts)): How far from the player a right stick pushed all the way aims (m): twin sticks aim by direction.
 - `StickView` (interface from [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)): Where the stick is drawn, in client CSS px: its centre and its knob.
 - `stopClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Fades out the clip on top of actor `id` over `fade` seconds (its `out`), with what it covers.
+- `Store` (interface from [`engine/app/store.ts`](../engine/app/store.ts)): A store (see the file comment).
+- `StoreBackend` (interface from [`engine/app/store.ts`](../engine/app/store.ts)): Where a store writes: the Web Storage calls it uses (`localStorage` is one).
+- `StoreMode` (type from [`engine/app/store.ts`](../engine/app/store.ts)): One of `STORE_MODES`: whose play a store keeps.
+- `StoreOptions` (interface from [`engine/app/store.ts`](../engine/app/store.ts)): How a store is made (see the file comment).
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
 - `StrikeAnimator` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of an animator: its body, which the sim poses only with `preciseHits`.
 - `StrikeBody` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of a body.
@@ -2649,6 +2655,18 @@ For the agents who maintain the engine.
 - `RouteOptions` (interface): What the routes are checked against: the page's scenes and the registry that declares them and the settings.
 - `routeQuery` (function): A query for these routes: `?scene=room&cam=iso&time.scale=0.5` (keys in this order, settings last).
 - `Routes` (interface): What a page's query asks for.
+
+### [`engine/app/store.ts`](../engine/app/store.ts)
+
+- `createStore` (function): Makes a store (see the file comment).
+- `memoryBackend` (function): A backend in memory: what Node, refused storage and the isolated modes write to.
+- `Store` (interface): A store (see the file comment).
+- `STORE_CODES` (const): The codes this module raises, with their fixes.
+- `STORE_FORMAT` (const): The envelope's format tag.
+- `STORE_MODES` (const): Whose play a store keeps: `play` the player's; the others keep nothing past the page (see the file comment).
+- `StoreBackend` (interface): Where a store writes: the Web Storage calls it uses (`localStorage` is one).
+- `StoreMode` (type): One of `STORE_MODES`: whose play a store keeps.
+- `StoreOptions` (interface): How a store is made (see the file comment).
 
 ### [`engine/app/view.ts`](../engine/app/view.ts)
 
@@ -6031,6 +6049,12 @@ For the agents who maintain the engine.
 ### [`labs/box/touch.ts`](../labs/box/touch.ts)
 
 - `BOX_TOUCH` (const): The box page's touch layout's id.
+
+### [`labs/game/best.ts`](../labs/game/best.ts)
+
+- `BEST_KEY` (const): The key the best round is kept under.
+- `bestOf` (function): The fastest won round kept (s), or null: none yet, or a value that is no time.
+- `recordBest` (function): Keeps `seconds` when it beats the best kept; returns the best after.
 
 ### [`labs/game/bot.ts`](../labs/game/bot.ts)
 
