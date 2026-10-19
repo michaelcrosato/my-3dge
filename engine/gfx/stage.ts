@@ -22,8 +22,8 @@
  * it is. `capture(entities, dt)` after each sim step keeps the last two places; `draw(alpha)` puts every stand-in,
  * puppet and prop `alpha` of the way from the one before to the last (§6.4's interpolation; yaw the shorter way).
  *
- * The level's cutaway (engine/gfx/cutaway.ts, `cutaway`) is made when a player actor first stands on it, and the view
- * runs it while it follows him (engine/app/view.ts); a stage with no player never has one.
+ * The level's cutaway (engine/gfx/cutaway.ts, its fade taking the rides too) is made when a player actor first stands
+ * on it, and the view runs it while it follows him (engine/app/view.ts); a stage with no player never has one.
  *
  * Warm-up: `register(warmup)` registers the ground, the level meshes, the cutaway's twins, the puppets, the props' and
  * the crowd's batches and the stand-ins, and adds the stand-ins' looks (side and material), the puppets' builds, the
@@ -297,7 +297,7 @@ export function createStage(options: StageOptions): Stage {
       const crowded = crowd.capture(list, dt);
       rides.capture(list);
       const bolts = fx.capture(list);
-      if (meshes && !cutaway && actors.hasPlayer()) cutaway = createCutaway(meshes);
+      if (meshes && !cutaway && actors.hasPlayer()) cutaway = createCutaway(meshes, { objects: () => rides.root.children }); // prettier-ignore
       for (const entity of list) {
         const placed = placeOf(entity, standing);
         const other = puppets.has(entity.id) || drawn.has(entity.id) || crowded.has(entity.id) || bolts.has(entity.id);

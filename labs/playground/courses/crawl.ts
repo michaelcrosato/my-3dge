@@ -7,10 +7,9 @@
  *
  * The references, from §3.2: the crouch-walk 2.34 m/s and the run 5.07 m/s, holstered; and the slide's speed just
  * past the bar, 38 to 42 ticks after its boost to 10.16 × 1.15 m/s, by its friction (2.54 m/s² then × 0.7 a second,
- * stepped at 60 Hz): 7.89 to 7.53 m/s, 7.71 on average, so the bar took nothing. The shooter's camera (the chase
- * camera for now) is watched in both runs until WP 13.8's collision for every camera: in the tunnel its arm's pivot
- * stands in the roof (at WP 13.5, 208 frames inside and 224 without the player in sight, a 5.7 m jump), and passing
- * under the bar it snaps in by 5 m and loses the player for 6 frames; the other four keep every bound.
+ * stepped at 60 Hz): 7.89 to 7.53 m/s, 7.71 on average, so the bar took nothing. Every camera keeps every bound: the
+ * shooter's stays under the roof behind the crouched eye and draws in to it with the wall behind the bar's start (WP
+ * 13.8; the chase camera that stood in for it stood in the roof, 208 frames, and snapped in by 5 m under the bar).
  *
  * Game code (labs/playground/): it imports only the engine's public API and the playground's own files.
  *
@@ -43,8 +42,8 @@ defineCourse('course:playground-crawl', {
     { name: 'tunnel: out and running', metric: 'speed', from: LET_GO + 140, to: BAR - 1, reference: 5.07, tolerance: { share: 0.02 } }, // prettier-ignore
     { name: 'bar: slides under', metric: 'speed', from: BAR + 40, to: BAR + 44, reference: 7.71, tolerance: { share: 0.02 } }, // prettier-ignore
     ...bodyBounds(2, { to: BAR - 1, label: 'tunnel' }),
-    ...cameraBounds(2, { to: BAR - 1, label: 'tunnel', watch: { shooter: 'WP 13.8' } }),
+    ...cameraBounds(2, { to: BAR - 1, label: 'tunnel' }),
     ...bodyBounds(BAR + 2, { label: 'bar' }),
-    ...cameraBounds(BAR + 2, { label: 'bar', watch: { shooter: 'WP 13.8' } }),
+    ...cameraBounds(BAR + 2, { label: 'bar' }),
   ],
 });

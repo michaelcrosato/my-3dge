@@ -1,6 +1,7 @@
 /**
  * @file The classic views (PLAN.md WP 2.5; doctrine: Common ground): the 2D engine's isometric, three-quarter,
- * top-down, brawler and side views, and custom ones, as 3D cameras that follow a point with the 2D camera's lag.
+ * top-down, brawler and side views, WP 13.8's overhead view (straight down, north up, whole-number zooms, the camera
+ * on the pixel grid) and custom ones, as 3D cameras that follow a point with the 2D camera's lag.
  * Each preset is the 2D view's angles, scale and height boost (`VIEW_PRESETS`); the camera frames as many metres as
  * the 2D engine showed in `PIXEL_LINES` lines (engine/gfx/resolution.ts), orthographic by default (the 2D look) or
  * through a perspective lens that frames the same height at the target. `stepView` and `viewPose` are the pure
@@ -10,14 +11,17 @@
  * above it (engine/gfx/cameras/codes.ts says the angles). Orthographic: the frustum is `lines / pixelsPerMetre`
  * metres tall at zoom 1, the camera stands `ORTHO_DISTANCE` back. Perspective: the camera stands as far back as its
  * `fov` lens frames that height, and zoom narrows the lens (three.js's `zoom`). The side view is always orthographic
- * (the 2D engine's flat side scrolling; the depth rail is WP 3.9) and never turns, nor does any view under 5°.
- * Heights are boosted in the picture by the view's `boost` (engine/gfx/cameras/boost.ts) in either projection.
+ * (the 2D engine's flat side scrolling; the depth rail is WP 3.9) and never turns, nor does any view under 5°, nor
+ * the overhead view (north stays up). Heights are boosted in the picture by the view's `boost`
+ * (engine/gfx/cameras/boost.ts) in either projection. `input.zoom` steps through `input.zooms`, else the preset's own
+ * steps (the overhead view's `WHOLE_STEPS`), else `VIEW_ZOOMS`. A preset with `snap` stands its target on the grid
+ * of its pixels at the zoom (`1 / (pixelsPerMetre × zoom)` m), so a pixel look's pixels never swim as it follows.
  *
  * Invariants: with the boost, an orthographic view draws every point where the 2D engine's `View.p()` drew it, at the
  * frame's scale (engine/gfx/cameras/boost.test.ts checks a 1 m cube in every view within 1%). The target follows
  * `input.follow` (raised by `VIEW_LIFT`) with a time constant of `VIEW_LAG` real seconds, snaps to it the first
- * time (unless it started on another camera's target), and stays put while `fixed`. Pure: each step returns a new
- * state.
+ * time (unless it started on another camera's target), never trails it by more than `VIEW_TRAIL` once within it, and
+ * stays put while `fixed`. Pure: each step returns a new state; a snapped view's target is on its pixel grid.
  *
  * Carried from `my-3d2dge:engine/my-3d2dge.js:379-386` (`E.VIEWS`: angles, scales, boosts),
  * `my-3d2dge:src/stress-world/40-cameras.js:27-81` (the view poses, the zoom steps, the focus lag) and
@@ -68,7 +72,14 @@ export interface ViewPreset {
   readonly flat?: boolean;
   /** Takes its azimuth, elevation and boost from the camera's options (these numbers are the defaults). */
   readonly custom?: boolean;
+  /** Its own zoom steps (`VIEW_ZOOMS` when absent). */
+  readonly zooms?: readonly number[];
+  /** Its target stands on the grid of its pixels (see the file comment). */
+  readonly snap?: boolean;
 }
+
+/** The overhead view's zoom steps: whole numbers, so its pixels stay square. */
+export const WHOLE_STEPS: readonly number[] = Object.freeze([1, 2, 3, 4]);
 
 /** The classic views, from the 2D engine's `E.VIEWS`; `custom` holds a custom view's defaults. */
 export const VIEW_PRESETS: Readonly<Record<ViewName, ViewPreset>> = Object.freeze({
@@ -77,6 +88,15 @@ export const VIEW_PRESETS: Readonly<Record<ViewName, ViewPreset>> = Object.freez
   topdown: { azimuth: 0, elevation: 80 * DEG, pixelsPerMetre: 24, boost: 1.3 },
   brawler: { azimuth: 0, elevation: 25 * DEG, pixelsPerMetre: 24, boost: 1 },
   side: { azimuth: 0, elevation: 0, pixelsPerMetre: 24, boost: 1, flat: true },
+  overhead: {
+    azimuth: 0,
+    elevation: 90 * DEG,
+    pixelsPerMetre: 24,
+    boost: 1,
+    flat: true,
+    zooms: WHOLE_STEPS,
+    snap: true,
+  },
   custom: { azimuth: 30 * DEG, elevation: 40 * DEG, pixelsPerMetre: 24, boost: 1, custom: true },
 });
 
@@ -88,6 +108,8 @@ export const VIEW_FOV = 40;
 export const VIEW_LIFT = 0.5;
 /** The time constant of a view's follow, real seconds (the 2D camera's lag). */
 export const VIEW_LAG = 0.18;
+/** The most a view's target trails the followed point, m: a fall is followed, and a stop never overshot. */
+export const VIEW_TRAIL = 2;
 /** How far back an orthographic view stands from its target, m, and how far it sees. */
 export const ORTHO_DISTANCE = 60;
 /** An orthographic view's far plane, m. */
@@ -116,6 +138,8 @@ export interface ViewState {
   readonly target: Vec3 | null;
   /** The target stays put. */
   readonly fixed: boolean;
+  /** The target has come within `VIEW_TRAIL` of the followed point (at once, unless it started elsewhere). */
+  readonly settled: boolean;
 }
 
 /** Options for a view beyond its code: the lens and the frame. */
@@ -161,6 +185,7 @@ export function viewState(options: ViewOptions = { view: 'iso' }): ViewState {
     lift: options.height ?? VIEW_LIFT,
     target: options.target ? [...options.target] : options.start ? [...options.start] : null,
     fixed: options.target !== undefined,
+    settled: options.start === undefined,
   };
   refuse(`the ${options.view} view`, [
     ...rangeProblems({
@@ -178,22 +203,26 @@ export function viewState(options: ViewOptions = { view: 'iso' }): ViewState {
   return state;
 }
 
-/** The next zoom step from `zoom`, `steps` up (+) or down (−) `VIEW_ZOOMS`. */
-export function stepZoom(zoom: number, steps: number): number {
-  const at = VIEW_ZOOMS.findIndex((z) => z >= zoom - 1e-6);
-  const i = (at < 0 ? VIEW_ZOOMS.length - 1 : at) + Math.trunc(steps);
-  return VIEW_ZOOMS[MathUtils.clamp(i, 0, VIEW_ZOOMS.length - 1)];
+/** The next zoom step from `zoom`, `steps` up (+) or down (−) `zooms` (`VIEW_ZOOMS`). */
+export function stepZoom(zoom: number, steps: number, zooms: readonly number[] = VIEW_ZOOMS): number {
+  const at = zooms.findIndex((z) => z >= zoom - 1e-6);
+  const i = (at < 0 ? zooms.length - 1 : at) + Math.trunc(steps);
+  return zooms[MathUtils.clamp(i, 0, zooms.length - 1)];
 }
 
 /** Steps a view by one rendered frame: zoom steps, 45° turns, and the target following `input.follow`. */
 export function stepView(state: ViewState, input: CameraInput, dt: number): ViewState {
   let next = state;
-  if (input.zoom) next = { ...next, zoom: stepZoom(next.zoom, input.zoom) };
+  if (input.zoom) next = { ...next, zoom: stepZoom(next.zoom, input.zoom, input.zooms ?? VIEW_PRESETS[next.view].zooms) }; // prettier-ignore
   if (input.turnSteps) next = { ...next, turn: wrapTurn(next.turn + Math.trunc(input.turnSteps) * (Math.PI / 4)) };
   if (input.follow && !next.fixed) {
     const [x, y, z] = input.follow;
     const want: Vec3 = [x, y + next.lift, z];
-    next = { ...next, target: next.target ? approach(next.target, want, 1 - Math.exp(-dt / VIEW_LAG)) : want };
+    let target = next.target ? approach(next.target, want, 1 - Math.exp(-dt / VIEW_LAG)) : want;
+    const gap = Math.hypot(target[0] - want[0], target[1] - want[1], target[2] - want[2]);
+    const settled = next.settled || gap <= VIEW_TRAIL;
+    if (settled && gap > VIEW_TRAIL) target = approach(want, target, VIEW_TRAIL / gap);
+    next = { ...next, target, settled };
   }
   return next;
 }
@@ -205,7 +234,10 @@ export function viewPose(state: ViewState): CameraPose {
   const ortho = flat || state.projection === 'orthographic';
   const frustumSize = state.lines / state.pixelsPerMetre;
   const distance = ortho ? ORTHO_DISTANCE : frustumSize / 2 / Math.tan((state.fov / 2) * DEG);
-  const target = state.target ?? [0, state.lift, 0];
+  const at = state.target ?? [0, state.lift, 0];
+  const grid = 1 / (state.pixelsPerMetre * state.zoom);
+  const snap = (v: number) => Math.round(v / grid) * grid;
+  const target: Vec3 = VIEW_PRESETS[state.view].snap ? [snap(at[0]), at[1], snap(at[2])] : at;
   return makePose({
     position: orbitPoint(target, azimuth, state.elevation, distance),
     yaw: headingOf(azimuth),

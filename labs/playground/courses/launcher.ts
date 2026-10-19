@@ -3,7 +3,8 @@
  * pad and trampoline (labs/playground/levels/gym.ts). The player, empty-handed, runs onto the jump pad: it throws it
  * 6.5 m up, keeping its run across. Standing on the trampoline's mat, 0.5 m up, it is thrown 2 m above the mat, again
  * and again. Jumping off the tower's top, walking west, it falls from the jump's apex (6 + 1.42 m) onto the mat and
- * bounces back 0.9 of the speed it fell in at: 0.81 of the fall, 5.61 m above the mat. (Walking off the edge, the
+ * bounces back 0.9 of the speed it fell in at: 0.81 of the fall, 5.61 m above the mat, looking down at it once it has
+ * jumped (the shooter's camera looks where the player aims). (Walking off the edge, the
  * capsule rolls over the corner, 17 cm down, before it falls: a jump falls from a height known to the millimetre.)
  * Then the bounds (labs/playground/courses/bounds.ts) of each run.
  *
@@ -36,6 +37,9 @@ export const LAUNCHER_STARTS = {
 /** How long each run is (steps). */
 const RUN = 240;
 
+/** How far down the drop looks once it has jumped, rad: at the mat, as a player would, so the shooter's camera (its view the aim) sees it land. */ // prettier-ignore
+const LOOK_DOWN = -0.9;
+
 /** A run's start: placed at `at` facing `yaw`, nothing held. */
 const start = (k: number, at: readonly number[], yaw: number) => [
   [k, { dev: 'place', args: { at, yaw, speed: 0 }, move: [0, 0], look: [yaw, 0], cam: yaw, b: [] }],
@@ -59,7 +63,7 @@ defineCourse('course:playground-launcher', {
     ...start(2 * RUN, LAUNCHER_STARTS.tower, -Math.PI / 2),
     [2 * RUN + 1, { move: [-1, 0], b: ['walk'] }],
     [2 * RUN + 4, { b: ['jump', 'walk'] }],
-    [2 * RUN + 10, { move: [0, 0], b: [] }],
+    [2 * RUN + 10, { move: [0, 0], look: [-Math.PI / 2, LOOK_DOWN], b: [] }],
   ],
   measures: [
     { name: 'the jump pad throws 6.5 m', metric: 'top', from: 1, to: RUN - 1, reference: PAD.height, tolerance: { abs: 0.02 } }, // prettier-ignore

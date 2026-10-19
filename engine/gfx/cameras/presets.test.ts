@@ -1,7 +1,8 @@
 /**
  * @file Unit tests for the classic views (`engine/gfx/cameras/presets.ts`): each view's position, look direction and
  * orthographic frame size, the perspective lens framing the same height, zoom steps, 45° turns (never for the side
- * view), the follow's snap, lag and fixed target, custom views, and the errors that name the fix.
+ * view), the follow's snap, lag, trail and fixed target, the overhead view (straight down, north up, whole zooms, on
+ * its pixel grid), custom views, and the errors that name the fix.
  */
 import { describe, expect, it } from 'vitest';
 import { PIXEL_LINES } from '../resolution';
@@ -16,8 +17,10 @@ import {
   VIEW_LAG,
   VIEW_LIFT,
   VIEW_PRESETS,
+  VIEW_TRAIL,
   viewPose,
   viewState,
+  WHOLE_STEPS,
 } from './presets';
 
 const DEG = Math.PI / 180;
@@ -118,6 +121,26 @@ describe('stepView', () => {
     const started = createViewCamera({ view: 'topdown', start: [5, 0, 5] });
     started.update({ follow: [0, 0, 0] }, VIEW_LAG);
     expect(poseTarget(started.pose())[0]).toBeCloseTo(5 * Math.exp(-1), 9);
+  });
+
+  it('never trails the followed point by more than VIEW_TRAIL once within it', () => {
+    let state = stepView(viewState({ view: 'iso' }), { follow: [0, 0, 0] }, 1 / 60);
+    for (let k = 1; k <= 60; k++) state = stepView(state, { follow: [0, -k * 0.5, 0] }, 1 / 60); // a 30 m/s fall
+    expect(Math.abs(state.target![1] - (-30 + VIEW_LIFT))).toBeCloseTo(VIEW_TRAIL, 9);
+  });
+
+  it('the overhead view looks straight down, north up, zooms in whole steps and stands on its pixel grid', () => {
+    const overhead = createViewCamera({ view: 'overhead' });
+    const pose = overhead.update({ follow: [1.01, 0, 2.03] }, 1 / 60);
+    close(poseForward(pose), [0, -1, 0]);
+    expect(pose.projection).toBe('orthographic');
+    const grid = 1 / VIEW_PRESETS.overhead.pixelsPerMetre;
+    const [x, , z] = poseTarget(pose);
+    expect([x / grid, z / grid].map((v) => Math.abs(v - Math.round(v)) < 1e-9)).toEqual([true, true]);
+    expect(overhead.update({ follow: [1.01, 0, 2.03], turnSteps: 2 }).yaw).toBeCloseTo(pose.yaw, 12); // north stays up
+    expect([1, 2, 3].map(() => overhead.update({ zoom: 1 }).zoom)).toEqual([2, 3, 4]);
+    expect(overhead.update({ zoom: 1 }).zoom).toBe(WHOLE_STEPS.at(-1));
+    expect(createViewCamera({ view: 'iso' }).update({ zoom: 1, zooms: WHOLE_STEPS }).zoom).toBe(2);
   });
 
   it('zoom steps through VIEW_ZOOMS and stops at either end', () => {

@@ -3,7 +3,8 @@
  * up its north face to its 6 m top. The player, empty-handed, runs at the ladder and takes hold of it, climbs at
  * 2.20 m/s (ours, tuned: the run × 0.5; Apex has no ladders) and mantles over the top, the lip within the pull's
  * reach: no grab. From the tower's top, use takes hold of the ladder's top, the feet 1 m below it, and back climbs
- * it down at 2.20 m/s until it steps off at its foot. A jump a second up the ladder pushes it away at 3.05 m/s,
+ * it down at 2.20 m/s, looking down the ladder (the shooter's camera looks where the player aims), until it steps off
+ * at its foot. A jump a second up the ladder pushes it away at 3.05 m/s,
  * rising 0.5 m; a crouch there lets go, and it drops to the floor. Then the bounds (labs/playground/courses/bounds.ts)
  * of each run.
  *
@@ -29,6 +30,9 @@ export const LADDER_STARTS = { floor: [29, 0, 57], top: [29, TOP, 60.5] } as con
 
 /** How long each run is (steps), and when the presses come, from each run's start. */
 const [RUN, USE, OFF] = [240, 2, 90];
+
+/** How far down the climb from the top looks, rad: down the ladder, so the shooter's camera (its view the aim) sees it. */ // prettier-ignore
+const LOOK_DOWN = -1.1;
 
 /** A run's start: placed at `at` facing `yaw`, nothing held. */
 const start = (k: number, at: readonly number[], yaw: number) => [
@@ -56,7 +60,7 @@ defineCourse('course:playground-ladder', {
     [1, { move: [0, 1] }],
     ...start(RUN, LADDER_STARTS.top, Math.PI),
     ...press(RUN + USE, 'interact'),
-    [RUN + USE + 1, { move: [0, -1], b: [] }],
+    [RUN + USE + 1, { move: [0, -1], look: [Math.PI, LOOK_DOWN], b: [] }],
     ...start(2 * RUN, LADDER_STARTS.floor, 0),
     [2 * RUN + 1, { move: [0, 1] }],
     ...press(2 * RUN + OFF, 'jump', { move: [0, 0] }),

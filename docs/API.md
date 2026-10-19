@@ -62,6 +62,10 @@ game agent's manual.
 - `AnimLayer` (interface from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A layer in a slot after the solve.
 - `AnimProblem` (interface from [`engine/anim/check.ts`](../engine/anim/check.ts)): One problem: the check, the point, the first frame that has it, how many frames do, and a plain sentence.
 - `animSheet` (function from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): Draws `frames` (poses, or `{ pose, label }`) as an SVG contact sheet: one card per frame, holding one panel per view, all at one scale.
+- `AnyCamera` (type from [`engine/gfx/cameras/place.ts`](../engine/gfx/cameras/place.ts)): Any camera `createCamera` makes: codes.ts's (`Camera`), or a follow camera, whose inputs add the hero's.
+- `AnyCameraSpec` (type from [`engine/gfx/cameras/place.ts`](../engine/gfx/cameras/place.ts)): The code data of any camera: codes.ts's, a follow camera's, or a game camera's.
+- `apexFov` (function from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): The lens (vertical degrees) of Apex's field of view `h`: horizontal degrees at 4:3.
+- `applyEffects` (function from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): `pose` with the effects of `frame` on it, each part scaled by `weights` (see the file comment).
 - `applyTorqueImpulse` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Turns a body: an angular impulse (N·m·s) about its centre of mass, waking it.
 - `approach` (function from [`engine/core/math.ts`](../engine/core/math.ts)): `a` moved toward `b` by at most `step` (≥ 0), never past it.
 - `APPROACH_RING` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): `approachRing`'s defaults: the prototype's walker (3 units either side, back at half speed, round at 0.4).
@@ -89,6 +93,8 @@ game agent's manual.
 - `BindingsFile` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): A saved bindings file.
 - `BindingsOptions` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): How bindings are made.
 - `BindingsStorage` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Where bindings are saved: the `localStorage` shape.
+- `BLEND_TIME` (const from [`engine/gfx/cameras/blend.ts`](../engine/gfx/cameras/blend.ts)): How long a switch blends, real seconds.
+- `blendCameras` (function from [`engine/gfx/cameras/blend.ts`](../engine/gfx/cameras/blend.ts)): The pose `w` (0 to 1) of the way from `a` to `b` (see the file comment).
 - `BlendOptions` (interface from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): How `blendPoses` blends.
 - `blendPoses` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), each joint's share scaled by `options.mask`, written into `out` (a new pose by default; `a` or `b` may be `out`).
 - `Blob` (class from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A blob: its state, its skeleton's pose.
@@ -145,10 +151,17 @@ game agent's manual.
 - `BuildSpec` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): What `defineBuild` takes: any field; the others keep `build:chibi`'s values.
 - `BurstOptions` (interface from [`engine/gfx/fx/particles.ts`](../engine/gfx/fx/particles.ts)): How a burst differs from its spec.
 - `BUS_VOLUMES` (const from [`engine/audio/runtime/mixer.ts`](../engine/audio/runtime/mixer.ts)): The starting volumes, the master's included.
+- `Camera` (interface from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): A camera: its state, stepped once per rendered frame, and its pose.
+- `CAMERA_SETTINGS` (const from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): The view settings the rig reads, declared on the shared registry.
 - `CameraInfo` (interface from [`engine/app/view.ts`](../engine/app/view.ts)): What `camera.get()` and `camera.set(code)` return: the camera as a code, in words, and its pose.
+- `CameraInput` (interface from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): What the devices give a camera in a frame; every field is optional (orbit and fly turn, fly moves, views zoom).
 - `CameraInputSample` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): What the camera takes each frame: mouse look `[right, up]` rad, the right stick `[right, up]`, wheel notches.
+- `CameraKindSpec` (interface from [`engine/gfx/cameras/define.ts`](../engine/gfx/cameras/define.ts)): What `defineCamera` takes: `create` makes the camera from its code and the camera before it.
 - `CameraLike` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A camera as the input reads it (engine/gfx/cameras/pose.ts `Camera`): its heading, and its pitch for first person.
+- `cameraPlayer` (function from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): What the cameras read of the player actor `entity` (`actor`, and `motion` on the shooter model); null for another.
+- `CameraPlayer` (interface from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): What the effects and the follow cameras read of the player after a sim step: plain data.
 - `CameraPose` (interface from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): Where a camera is, where it looks and its lens, in a frame: plain, frozen data (see the file comment).
+- `CameraRig` (interface from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): The camera rig (see the file comment).
 - `canSee` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Whether an agent with its feet at `from` is aware of a target with its feet at `to`: within `range` metres on the ground, and either within `near` metres or in a clear sight line from its eye to the target's `aim`.
 - `Cape` (class from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A cape: two chains, its left and right edges, held `width` apart (wider toward the hem by `flare`).
 - `CAPE` (const from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
@@ -221,13 +234,19 @@ game agent's manual.
 - `createAudio` (function from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): Makes a page's sound (see the file comment).
 - `createBindings` (function from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Makes the bindings of the action map `map` (an id or an entry), loading saved changes from `options.storage`.
 - `createBlobShadows` (function from [`engine/gfx/puppets/blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts)): Makes the blob-shadow batch, drawn with the library's `material:blobShadow` (see the file comment).
+- `createCamera` (function from [`engine/gfx/cameras/place.ts`](../engine/gfx/cameras/place.ts)): The camera `code` names (a code, or its data from `readCameraCode`): `cam=iso`, `cam3=orbit,…`, `cam3=chase`.
+- `createCameraEffects` (function from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): The effects' springs and phases (see the file comment).
+- `createCameraRig` (function from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): Makes a rig on the camera `code` names (see the file comment).
 - `createCharacter` (function from [`engine/physics/character.ts`](../engine/physics/character.ts)): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
+- `createChaseCamera` (function from [`engine/gfx/cameras/chase.ts`](../engine/gfx/cameras/chase.ts)): A chase camera: behind the hero on its arm, following `input.follow`, in front of the walls `input.queries` sees.
 - `createCrowd` (function from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): Makes a crowd's batches and level of detail (see the file comment).
 - `createCrowdLod` (function from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): Makes a crowd's level of detail (see the file comment).
-- `createCutaway` (function from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): Gives `meshes`' cutting parts their twins (see the file comment).
+- `createCutaway` (function from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): Gives `meshes`' cutting parts their twins (see the file comment), and fades `options.objects` too.
 - `createEffects` (function from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): Makes the effects; see the file comment.
 - `createEngine` (function from [`engine/app/engine.ts`](../engine/app/engine.ts)): Starts the engine in a page (see the file comment); resolves once it is up or has failed.
 - `createFeelPanel` (function from [`engine/dev/feel/panel.ts`](../engine/dev/feel/panel.ts)): Builds the feel panel on `document` over `inspector` (see the file comment).
+- `createFirstCamera` (function from [`engine/gfx/cameras/first.ts`](../engine/gfx/cameras/first.ts)): A first-person camera: at the hero's eyes (`input.eye`), turned by the devices; it takes every view effect.
+- `createFollowCamera` (function from [`engine/gfx/cameras/follow.ts`](../engine/gfx/cameras/follow.ts)): A follow camera: orbiting the hero and following him (see the file comment).
 - `createFootPlantState` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A new, unlocked `FootPlantState`.
 - `createHeadless` (function from [`engine/app/headless.ts`](../engine/app/headless.ts)): Starts a scene headless, in this process, and returns its inspector: the members a page's `window.__engine` has (`step`, `hash`, `state`, `set`…; `help()` lists them all), minus a renderer.
 - `createInput` (function from [`engine/input/input.ts`](../engine/input/input.ts)): Makes the page's input.
@@ -242,9 +261,11 @@ game agent's manual.
 - `createPuppet` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Draws `compiled` as one rigid-skinned mesh (see the file comment), at rest until `setPose`.
 - `createPuppetBatches` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Makes instanced puppet batches (see the file comment).
 - `createScriptedGamepad` (function from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
+- `createShoulderCamera` (function from [`engine/gfx/cameras/shoulder.ts`](../engine/gfx/cameras/shoulder.ts)): A shoulder camera: over the hero's shoulder (`input.eye`), turned by the devices, in front of the walls.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Puts a sky on `scene`: the light pool lit from `level`'s light spots (phases from `rng`, a visual stream), the sun, the dome, the backdrop and the atmosphere; shows `sky:daylight` until `set` names another preset.
 - `createStyleSet` (function from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): Makes a style set (see the file comment).
+- `createViewCamera` (function from [`engine/gfx/cameras/presets.ts`](../engine/gfx/cameras/presets.ts)): A classic view as a `Camera` (`options.view` names it; codes.ts's `VIEW_LABELS` has the names in words).
 - `createVirtualDevice` (function from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): Makes a virtual device, holding nothing.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
 - `Crowd` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A crowd's batches and level of detail (see the file comment).
@@ -273,7 +294,7 @@ game agent's manual.
 - `CrowdStepper` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What the crowd's calls read from the sim: the step length (s).
 - `CustomIntentKey` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A namespaced key for game code's own intents: `'game:charge'`.
 - `Cutaway` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): A level's cutaway (see the file comment).
-- `CutawayReport` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): How many of each cutting part's pieces are cut, after an `update`.
+- `CutawayReport` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): How many of each cutting part's pieces are cut, after an `update`, and what the fade took out of the picture.
 - `CutTarget` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): What the cutaway decides over: the pieces of one part, how they cut, and their heights (m).
 - `CutWhen` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars).
 - `CylinderCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An upright cylinder collider (Rapier's cylinder, three.js's CylinderGeometry): one per tile, at its centre.
@@ -290,6 +311,7 @@ game agent's manual.
 - `defineActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Registers an action map (on the shared registry by default).
 - `defineBody` (function from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): Defines a body on `registry` (the shared one by default).
 - `defineBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
+- `defineCamera` (function from [`engine/gfx/cameras/define.ts`](../engine/gfx/cameras/define.ts)): Adds a game's camera mode on `registry` (the shared one by default).
 - `defineClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Parses `input` (a set's text or object, `parseClipSet`) and registers it on `registry` as `clipSetId(set)`; a set registered already is returned when it is the same, and refused (`CORE_DUPLICATE_ID`) when it differs.
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
 - `defineCourse` (function from [`engine/dev/feel/course.ts`](../engine/dev/feel/course.ts)): Registers a course (on the shared registry by default).
@@ -323,7 +345,10 @@ game agent's manual.
 - `Effectors` (interface from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The effector stage's targets: rig-local metres before `size`, in the model frame (+Z forward, +Y up).
 - `EFFECTORS` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): The effectors a beat may pull, in channel order.
 - `Effects` (interface from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): The effects of a view: see the file comment.
+- `EFFECTS` (const from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): The effects' numbers (see the file comment): metres, radians, seconds.
+- `EffectsFrame` (interface from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): One frame of the effects (see the file comment).
 - `EffectsOptions` (interface from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): What `createEffects` takes.
+- `EffectWeights` (interface from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): How much of each effect a camera takes, 0 to 1 (see the file comment).
 - `Emitter` (type from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): An `emitter` entry: see the file comment.
 - `EmitterLayer` (interface from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): One layer of an emitter, filled.
 - `EmitterSpec` (type from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): What `defineEmitter` takes: any field; of `ring` and `light`, any key.
@@ -363,8 +388,14 @@ game agent's manual.
 - `FlowField` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): Every tile's walking distance to a goal set: walk downhill to get there.
 - `FlowOptions` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `flowField` takes.
 - `FOLLOW` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): `followFlow`'s defaults: straight within 4 m in a clear line (emberdeep's 64 units), full speed to the target.
+- `FOLLOW_RIG` (const from [`engine/gfx/cameras/follow.ts`](../engine/gfx/cameras/follow.ts)): The rig's numbers (see the file comment): metres, seconds, rad/s; `lens` its lens, degrees.
+- `followCamera` (function from [`engine/gfx/cameras/chase.ts`](../engine/gfx/cameras/chase.ts)): Wraps a camera's pure steps and first state in a camera, as `cameraFrom` does for the cameras codes.ts lists; it takes the view `effects` (engine/gfx/cameras/effects.ts) and `fade` (see `FollowCamera`) when given.
+- `FollowCamera` (interface from [`engine/gfx/cameras/chase.ts`](../engine/gfx/cameras/chase.ts)): A WP 3.9 camera: a `Camera` (engine/gfx/cameras/pose.ts) whose type and code data codes.ts does not list yet.
 - `followFlow` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way to walk from `from` to `to` along `field` (a flow field toward the target's tile): straight at `to` within `near` metres when the grid has a clear line for a body (`NavGrid.lineOfSight`), else the field's look-ahead direction (`FlowField.direction`), else, where the field has no way (beyond its reach, or arrived at the goal tile's centre), straight at `to`, as the prototype does.
+- `FollowInput` (interface from [`engine/gfx/cameras/follow.ts`](../engine/gfx/cameras/follow.ts)): A follow camera's input: the devices', the hero (his eye and what he does) and the walls.
 - `FollowOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): How `followFlow` steers.
+- `FollowSpec` (interface from [`engine/gfx/cameras/follow.ts`](../engine/gfx/cameras/follow.ts)): A follow camera's code as data: without the numbers it keeps the heading of the camera before it.
+- `FollowSteps` (interface from [`engine/gfx/cameras/chase.ts`](../engine/gfx/cameras/chase.ts)): What a WP 3.9 camera gives `followCamera`: its pure steps, as `CameraSteps`, and its code and words.
 - `FOOT_PLANT` (const from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): `footPlant`'s tuning, in metres and seconds.
 - `FootLock` (type from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds, and its `weight` (1 locked, easing to 0).
 - `footPlant` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): Stands the feet on the ground `probe` finds under each sole (the `contact` sockets): each foot keeps its lift above the floor (`options.floor`) over the ground and turns to its normal as it nears it, the pelvis drops (`rootPos.y`) as far as the lower foot needs to reach with the animation's knee bend, and with a `state`, a foot in `stance` stays locked where it landed.
@@ -531,6 +562,7 @@ game agent's manual.
 - `Lying` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body lies: on its back (`up`) or on its face (`down`).
 - `lyingOf` (function from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body whose chest turned by `chest` (a world rotation) lies: face up when the chest's front looks up.
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
+- `makePose` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): A checked, frozen pose: `fields` over `POSE_DEFAULTS`.
 - `MANNEQUIN_SLOTS` (const from [`engine/gfx/puppets/bodies/mannequin.ts`](../engine/gfx/puppets/bodies/mannequin.ts)): The source model's two materials: the body, and its joint rings.
 - `mannequinBody` (function from [`engine/gfx/puppets/bodies/mannequin.ts`](../engine/gfx/puppets/bodies/mannequin.ts)): `body` (a set's measured figure) as a body for `build`, the rest body `R`'s own (see the file comment).
 - `MannequinData` (interface from [`engine/gfx/puppets/bodies/mannequin.ts`](../engine/gfx/puppets/bodies/mannequin.ts)): A set's `body`, as the importer measured it (mm).
@@ -633,10 +665,14 @@ game agent's manual.
 - `Pose` (class from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): A skeleton pose: the root transform plus each joint's local rotation.
 - `POSE_POINTS` (const from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): The 36 body points a pose rebuilds, in order: three numbers each (f, r, z) in the decoded array.
 - `poseError` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): The largest distance (mm) between matching body points of two decoded poses, the finger helpers left out.
+- `poseForward` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): The unit view direction (three.js's `camera.getWorldDirection()`).
 - `poseMeanError` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): The average distance (mm) between matching body points of two decoded poses, the finger helpers left out.
 - `PoseName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A pose's name.
 - `PoseOptions` (interface from [`engine/anim/character.ts`](../engine/anim/character.ts)): Where and how `pose` draws the body.
+- `poseRight` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): The unit right direction on screen: forward × up, level whatever the pitch, tipped down by a `roll` (if any).
 - `POSES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The held poses, each with what it shows.
+- `poseTarget` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): The point the camera looks at: `distance` along its view direction.
+- `poseUp` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): The unit up direction on screen: right × forward (the heading when the camera looks straight down), tipped right by a `roll`.
 - `Post` (interface from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): A post-processing chain (see the file comment).
 - `POST_SETTINGS` (const from [`engine/gfx/post/settings.ts`](../engine/gfx/post/settings.ts)): The view settings the chain reads, declared by `definePostSettings`: `post.look` (a `look` id, engine/gfx/post/looks.ts), `post.filters` (part of a filter chain laid over the look's, filter by filter and field by field) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
 - `PostOptions` (interface from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): How `createPost` makes a chain.
@@ -693,6 +729,7 @@ game agent's manual.
 - `REACTIONS` (const from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): The reactions' timelines: each phase's name, seconds and body states.
 - `ReactionState` (interface from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): Reactions as plain data.
 - `reactTo` (function from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): Runs `act` on entity `id`'s reactions (the component `reactions`, added at rest when it has none) and saves them back; returns the component.
+- `readCameraCode` (function from [`engine/gfx/cameras/place.ts`](../engine/gfx/cameras/place.ts)): Reads any camera's code: a follow camera's (`cam3=chase…`, `cam3=first…`, `cam3=rail…`, `cam3=shoulder…`, `cam3=follow…`) by its module, a game camera's (`defineCamera`) as its name and code, every other by `parseCameraCode`.
 - `readKeyboardLayout` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The page's keyboard layout (`navigator.keyboard.getLayoutMap()`, Chromium), or undefined where it is missing.
 - `RebindResult` (type from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): What `rebind` did: the action's codes now, or why it refused and which action holds the code.
 - `recolor` (function from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): `compiled` with its slots' colours replaced by `palette`'s (hex), the pieces shared.
@@ -725,7 +762,10 @@ game agent's manual.
 - `ridesOf` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing.
 - `RigBody` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A rig body (see the file comment).
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
+- `RigInput` (interface from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): What the rig's cameras take each frame: the devices', the hero (his eye, his look, his state) and the walls.
 - `RigJoints` (type from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A rig's pose: each joint a world matrix, a point, or a list of points.
+- `rigOptions` (function from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): The rig's options from the view settings `cam.*`, read by `get` (a settings store's).
+- `RigOptions` (interface from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): The rig's options (see the file comment).
 - `RigPart` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point or a list of points (one part on each).
 - `RigShape` (type from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A unit shape a rig part draws: any but the limb.
 - `ringGeometry` (function from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring lying on the ground (see the file comment).
@@ -782,6 +822,9 @@ game agent's manual.
 - `SheetFrame` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): One frame of a sheet: a pose, and its label (`#<index>` when absent).
 - `SheetOptions` (interface from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): What a sheet draws, and how.
 - `SheetView` (type from [`engine/anim/sheet.ts`](../engine/anim/sheet.ts)): A view's name.
+- `SHOULDER` (const from [`engine/gfx/cameras/shoulder.ts`](../engine/gfx/cameras/shoulder.ts)): The rig's numbers (see the file comment): metres and real seconds; `lens` its own lens, degrees (Apex's 90 at 4:3).
+- `ShoulderInput` (interface from [`engine/gfx/cameras/shoulder.ts`](../engine/gfx/cameras/shoulder.ts)): A shoulder camera's input: the devices', the hero's eye and the walls.
+- `ShoulderSpec` (interface from [`engine/gfx/cameras/shoulder.ts`](../engine/gfx/cameras/shoulder.ts)): A shoulder camera's code as data: without the numbers it looks where the camera before it looked.
 - `Side` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A compass side of a block: north is −Z (row 0's edge), south +Z, west −X, east +X.
 - `Sided` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): One value for each side.
 - `sidesThenTops` (function from [`engine/gfx/geometry/groups.ts`](../engine/gfx/geometry/groups.ts)): Sorts the triangles of `geometry` into its sides (group 0, material 0) then its tops and bottoms (group 1, material 1), and returns it (changed in place).
@@ -907,7 +950,7 @@ game agent's manual.
 - `Vec3Like` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A vector: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`.
 - `Vector3` (re-export from `three/webgpu`): three.js's 3D vector: positions, directions, velocities (metres, +Y up).
 - `VelocityOptions` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): How `setVelocity` steers.
-- `ViewChange` (interface from [`engine/app/playback.ts`](../engine/app/playback.ts)): A view change during a replay: a camera code, and view settings by path.
+- `ViewChange` (interface from [`engine/app/playback.ts`](../engine/app/playback.ts)): A view change during a replay: a camera code (blended into, with `blend`, as a page's live switch), and view settings by path.
 - `VirtualDevice` (interface from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): The virtual device.
 - `Voice` (interface from [`engine/audio/dsp/voice.ts`](../engine/audio/dsp/voice.ts)): One voice of a sound: every field is optional.
 - `VOICE_LIMITS` (const from [`engine/audio/runtime/voices.ts`](../engine/audio/runtime/voices.ts)): The default limits.
@@ -2427,7 +2470,7 @@ For the agents who maintain the engine.
 - `PlayIntoOptions` (interface): How `playInto` plays.
 - `PlayResult` (interface): What a played replay gave.
 - `PlayTarget` (interface): What a replay plays into: an engine that can start a run, step it, and draw it.
-- `ViewChange` (interface): A view change during a replay: a camera code, and view settings by path.
+- `ViewChange` (interface): A view change during a replay: a camera code (blended into, with `blend`, as a page's live switch), and view settings by path.
 
 ### [`engine/app/routes.ts`](../engine/app/routes.ts)
 
@@ -2872,11 +2915,12 @@ For the agents who maintain the engine.
 ### [`engine/dev/feel/camera.ts`](../engine/dev/feel/camera.ts)
 
 - `CAMERA_CHECK` (const): What the frames are checked with: the picture's aspect, the camera's ball (m) and where the player's chest is (m).
-- `CameraFrame` (interface): One frame of a camera track: its pose, the player's feet, and what the frame found.
+- `CameraFrame` (interface): One frame of a camera track: its pose, the player's feet, what the frame found, and what it may move and turn.
 - `CameraMetrics` (interface): A camera track's numbers (see the file comment).
 - `CameraTrack` (type): A camera track: what `createCameraTrack` returns.
 - `createCameraTrack` (function): A camera stepped once a sim step behind the player, and its frames (see the file comment).
 - `inPicture` (function): Whether `point` is in the picture of `pose`, a frame of `aspect`: in front of it, within its lens or frustum.
+- `TrackFrame` (interface): What a frame of the track takes beside the feet.
 
 ### [`engine/dev/feel/course.ts`](../engine/dev/feel/course.ts)
 
@@ -2975,6 +3019,61 @@ For the agents who maintain the engine.
 - `FogReport` (interface): What the fog does now.
 - `FogSpec` (interface): The fog a sky preset gives; see the file comment.
 
+### [`engine/gfx/cameras/api.ts`](../engine/gfx/cameras/api.ts)
+
+- `AnyCamera` (type from [`engine/gfx/cameras/place.ts`](../engine/gfx/cameras/place.ts)): Any camera `createCamera` makes: codes.ts's (`Camera`), or a follow camera, whose inputs add the hero's.
+- `AnyCameraSpec` (type from [`engine/gfx/cameras/place.ts`](../engine/gfx/cameras/place.ts)): The code data of any camera: codes.ts's, a follow camera's, or a game camera's.
+- `apexFov` (function from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): The lens (vertical degrees) of Apex's field of view `h`: horizontal degrees at 4:3.
+- `applyEffects` (function from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): `pose` with the effects of `frame` on it, each part scaled by `weights` (see the file comment).
+- `BLEND_TIME` (const from [`engine/gfx/cameras/blend.ts`](../engine/gfx/cameras/blend.ts)): How long a switch blends, real seconds.
+- `blendCameras` (function from [`engine/gfx/cameras/blend.ts`](../engine/gfx/cameras/blend.ts)): The pose `w` (0 to 1) of the way from `a` to `b` (see the file comment).
+- `Camera` (interface from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): A camera: its state, stepped once per rendered frame, and its pose.
+- `CAMERA_SETTINGS` (const from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): The view settings the rig reads, declared on the shared registry.
+- `CameraInput` (interface from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): What the devices give a camera in a frame; every field is optional (orbit and fly turn, fly moves, views zoom).
+- `CameraKindSpec` (interface from [`engine/gfx/cameras/define.ts`](../engine/gfx/cameras/define.ts)): What `defineCamera` takes: `create` makes the camera from its code and the camera before it.
+- `cameraPlayer` (function from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): What the cameras read of the player actor `entity` (`actor`, and `motion` on the shooter model); null for another.
+- `CameraPlayer` (interface from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): What the effects and the follow cameras read of the player after a sim step: plain data.
+- `CameraRig` (interface from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): The camera rig (see the file comment).
+- `createCamera` (function from [`engine/gfx/cameras/place.ts`](../engine/gfx/cameras/place.ts)): The camera `code` names (a code, or its data from `readCameraCode`): `cam=iso`, `cam3=orbit,…`, `cam3=chase`.
+- `createCameraEffects` (function from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): The effects' springs and phases (see the file comment).
+- `createCameraRig` (function from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): Makes a rig on the camera `code` names (see the file comment).
+- `createChaseCamera` (function from [`engine/gfx/cameras/chase.ts`](../engine/gfx/cameras/chase.ts)): A chase camera: behind the hero on its arm, following `input.follow`, in front of the walls `input.queries` sees.
+- `createFirstCamera` (function from [`engine/gfx/cameras/first.ts`](../engine/gfx/cameras/first.ts)): A first-person camera: at the hero's eyes (`input.eye`), turned by the devices; it takes every view effect.
+- `createFollowCamera` (function from [`engine/gfx/cameras/follow.ts`](../engine/gfx/cameras/follow.ts)): A follow camera: orbiting the hero and following him (see the file comment).
+- `createShoulderCamera` (function from [`engine/gfx/cameras/shoulder.ts`](../engine/gfx/cameras/shoulder.ts)): A shoulder camera: over the hero's shoulder (`input.eye`), turned by the devices, in front of the walls.
+- `createViewCamera` (function from [`engine/gfx/cameras/presets.ts`](../engine/gfx/cameras/presets.ts)): A classic view as a `Camera` (`options.view` names it; codes.ts's `VIEW_LABELS` has the names in words).
+- `defineCamera` (function from [`engine/gfx/cameras/define.ts`](../engine/gfx/cameras/define.ts)): Adds a game's camera mode on `registry` (the shared one by default).
+- `EFFECTS` (const from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): The effects' numbers (see the file comment): metres, radians, seconds.
+- `EffectsFrame` (interface from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): One frame of the effects (see the file comment).
+- `EffectWeights` (interface from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): How much of each effect a camera takes, 0 to 1 (see the file comment).
+- `FOLLOW_RIG` (const from [`engine/gfx/cameras/follow.ts`](../engine/gfx/cameras/follow.ts)): The rig's numbers (see the file comment): metres, seconds, rad/s; `lens` its lens, degrees.
+- `followCamera` (function from [`engine/gfx/cameras/chase.ts`](../engine/gfx/cameras/chase.ts)): Wraps a camera's pure steps and first state in a camera, as `cameraFrom` does for the cameras codes.ts lists; it takes the view `effects` (engine/gfx/cameras/effects.ts) and `fade` (see `FollowCamera`) when given.
+- `FollowCamera` (interface from [`engine/gfx/cameras/chase.ts`](../engine/gfx/cameras/chase.ts)): A WP 3.9 camera: a `Camera` (engine/gfx/cameras/pose.ts) whose type and code data codes.ts does not list yet.
+- `FollowInput` (interface from [`engine/gfx/cameras/follow.ts`](../engine/gfx/cameras/follow.ts)): A follow camera's input: the devices', the hero (his eye and what he does) and the walls.
+- `FollowSpec` (interface from [`engine/gfx/cameras/follow.ts`](../engine/gfx/cameras/follow.ts)): A follow camera's code as data: without the numbers it keeps the heading of the camera before it.
+- `FollowSteps` (interface from [`engine/gfx/cameras/chase.ts`](../engine/gfx/cameras/chase.ts)): What a WP 3.9 camera gives `followCamera`: its pure steps, as `CameraSteps`, and its code and words.
+- `makePose` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): A checked, frozen pose: `fields` over `POSE_DEFAULTS`.
+- `poseForward` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): The unit view direction (three.js's `camera.getWorldDirection()`).
+- `poseRight` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): The unit right direction on screen: forward × up, level whatever the pitch, tipped down by a `roll` (if any).
+- `poseTarget` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): The point the camera looks at: `distance` along its view direction.
+- `poseUp` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): The unit up direction on screen: right × forward (the heading when the camera looks straight down), tipped right by a `roll`.
+- `readCameraCode` (function from [`engine/gfx/cameras/place.ts`](../engine/gfx/cameras/place.ts)): Reads any camera's code: a follow camera's (`cam3=chase…`, `cam3=first…`, `cam3=rail…`, `cam3=shoulder…`, `cam3=follow…`) by its module, a game camera's (`defineCamera`) as its name and code, every other by `parseCameraCode`.
+- `RigInput` (interface from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): What the rig's cameras take each frame: the devices', the hero (his eye, his look, his state) and the walls.
+- `rigOptions` (function from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): The rig's options from the view settings `cam.*`, read by `get` (a settings store's).
+- `RigOptions` (interface from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): The rig's options (see the file comment).
+- `SHOULDER` (const from [`engine/gfx/cameras/shoulder.ts`](../engine/gfx/cameras/shoulder.ts)): The rig's numbers (see the file comment): metres and real seconds; `lens` its own lens, degrees (Apex's 90 at 4:3).
+- `ShoulderInput` (interface from [`engine/gfx/cameras/shoulder.ts`](../engine/gfx/cameras/shoulder.ts)): A shoulder camera's input: the devices', the hero's eye and the walls.
+- `ShoulderSpec` (interface from [`engine/gfx/cameras/shoulder.ts`](../engine/gfx/cameras/shoulder.ts)): A shoulder camera's code as data: without the numbers it looks where the camera before it looked.
+
+### [`engine/gfx/cameras/blend.ts`](../engine/gfx/cameras/blend.ts)
+
+- `BLEND_LENS` (const): The lens an orthographic pose blends with, degrees: narrow, so the swap of projections barely shows.
+- `BLEND_TIME` (const): How long a switch blends, real seconds.
+- `blendCameras` (function): The pose `w` (0 to 1) of the way from `a` to `b` (see the file comment).
+- `blendGap` (function): How far (m) and how much (rad) the blend from `a` to `b` moves the picture from weight `from` to weight `to`.
+- `blendWeight` (function): The eased share of a blend `t` seconds into `time` (a smoothstep; 1 when `time` is 0).
+- `turnBetween` (function): The angle between two poses' view directions, rad.
+
 ### [`engine/gfx/cameras/boost.ts`](../engine/gfx/cameras/boost.ts)
 
 - `applyBoost` (function): Multiplies `camera`'s projection by V·S·V⁻¹ (S: world y × `k`), with its current matrices.
@@ -2990,11 +3089,11 @@ For the agents who maintain the engine.
 - `CHASE_HEIGHT` (const): The pivot's height above the followed point, m: the hero's head.
 - `CHASE_LAG` (const): The time constant of the pivot's follow, real seconds.
 - `CHASE_LIMITS` (const): The range of the pitch (rad) and the arm's length (m).
-- `CHASE_RADIUS` (const): The radius of the ball cast along the arm, m: wider than the near plane's corners (0.09 m at 60° and 21:9).
-- `CHASE_RETURN` (const): The time constant of the arm easing back out after a wall, real seconds.
-- `CHASE_SKIN` (const): How far short of a surface the ball stops, m.
+- `CHASE_RADIUS` (const): The radius of the ball cast along the arm, m: collide.ts's `COLLIDE_RADIUS`.
+- `CHASE_RETURN` (const): The time constant of the arm easing back out after a wall, real seconds: collide.ts's `COLLIDE_RETURN`.
+- `CHASE_SKIN` (const): How far short of a surface the ball stops, m: collide.ts's `COLLIDE_SKIN`.
 - `CHASE_TURN_SPEED` (const): Turn rates at full `input.turn`, rad/s: `[right, up]` (the prototype's [ ] keys turn 2.2).
-- `ChaseInput` (interface): A chase camera's input: the devices' and the hero's, and the sim's queries for its walls.
+- `ChaseInput` (interface): A chase camera's input: the devices' and the hero's, and the walls it keeps out of (collide.ts).
 - `ChaseOptions` (interface): Options for a chase camera: its code's data, the lens, and the camera before it.
 - `chasePose` (function): The chase camera's pose: `arm` metres back from the pivot along its view direction, looking at the pivot.
 - `chaseSpec` (function): The chase camera's code data.
@@ -3006,12 +3105,11 @@ For the agents who maintain the engine.
 - `CodePart` (type): One number of a code: its name and the range it must be in, as written (degrees, metres).
 - `createChaseCamera` (function): A chase camera: behind the hero on its arm, following `input.follow`, in front of the walls `input.queries` sees.
 - `describeChase` (function): A chase camera in words.
-- `followCamera` (function): Wraps a camera's pure steps and first state in a camera, as `cameraFrom` does for the cameras codes.ts lists.
+- `followCamera` (function): Wraps a camera's pure steps and first state in a camera, as `cameraFrom` does for the cameras codes.ts lists; it takes the view `effects` (engine/gfx/cameras/effects.ts) and `fade` (see `FollowCamera`) when given.
 - `FollowCamera` (interface): A WP 3.9 camera: a `Camera` (engine/gfx/cameras/pose.ts) whose type and code data codes.ts does not list yet.
 - `FollowSteps` (interface): What a WP 3.9 camera gives `followCamera`: its pure steps, as `CameraSteps`, and its code and words.
 - `formatChaseCode` (function): The canonical code of a chase camera's data (numbers rounded: 0.01°, 0.001 m).
 - `parseChaseCode` (function): Reads a chase camera's code: `cam3=chase[,<yaw>,<pitch>,<distance>]`.
-- `QueryGroups` (type): The collision groups a query hits, as the `QueryView` names them.
 - `readCode` (function): The numbers of `cam3=<name>[,…]` (with or without the `?` and the key): as many as one of `counts`, each within its `parts` range.
 - `stepChase` (function): Steps a chase camera by one rendered frame: turned by `look` and `turn`, `zoom` on the arm, following, walls.
 
@@ -3022,19 +3120,63 @@ For the agents who maintain the engine.
 - `CameraSpec` (type): A camera code as data.
 - `CameraType` (type): The kinds of camera: a classic view, an orbit round a target, a free fly camera, a fixed one.
 - `describeCamera` (function): `spec` in words, as the prototype's `camDesc`: `Isometric view, orthographic, zoom 1x, following`.
-- `FOLLOW_CAMERAS` (const): WP 3.9's cameras, which follow the hero and read their own codes (`readCameraCode`): chase, first person, the rail.
+- `FOLLOW_CAMERAS` (const): The cameras that follow the hero and read their own codes (`readCameraCode`): WP 3.9's chase, first person and the rail, and WP 13.8's shooter (`shoulder`) and platformer (`follow`).
 - `formatCameraCode` (function): The canonical code of `spec`: `cam=…` or `cam3=…`, numbers rounded (0.001 m, 0.01°), defaults left out.
 - `FreeSpec` (interface): A fly or fixed camera's code as data: without a position it starts from the camera before it.
 - `OrbitSpec` (interface): An orbit camera's code as data.
 - `parseCameraCode` (function): Reads a camera code (see the file comment for the grammar): `cam=…`, `cam3=…`, with or without a leading `?`, or a bare value (`iso`, `orbit`, `30,40,1,0.5,1`).
 - `VIEW_LABELS` (const): Each view's name in words.
-- `VIEW_NAMES` (const): Every view name, in the order the 2D engine cycles them (`custom` last).
+- `VIEW_NAMES` (const): Every view name, in the order the 2D engine cycles them, then WP 13.8's `overhead` (`custom` last).
 - `ViewName` (type): The classic views (engine/gfx/cameras/presets.ts has their numbers), and `custom` (any azimuth and elevation).
 - `ViewSpec` (interface): A classic view's code as data: missing fields take the camera's defaults.
 
+### [`engine/gfx/cameras/collide.ts`](../engine/gfx/cameras/collide.ts)
+
+- `ArmFrame` (interface): Where an arm's base stands and which way its view looks: what carries a `moveCamera` camera.
+- `CameraBall` (interface): A `moveCamera` camera's state: where it stood, and how long it has stood more than a metre from where it wants.
+- `carry` (function): Where `at`, placed relative to the arm `from` (its base and view), stands relative to the arm `to`.
+- `COLLIDE_PULL` (const): The fastest a `moveCamera` camera closes in on its arm's end beyond what carries it, m/s: 1/6 m a frame at 60 Hz.
+- `COLLIDE_RADIUS` (const): The radius of the ball cast, m: wider than the near plane's corners (0.09 m at 60° and 21:9).
+- `COLLIDE_RETURN` (const): The time constant of an arm easing back out after a wall, real seconds.
+- `COLLIDE_SKIN` (const): How far short of a surface the ball stops, m.
+- `COLLIDE_STUCK` (const): How long a `moveCamera` camera may stand more than a metre from where it wants before it goes there, s.
+- `COLLIDE_TELEPORT` (const): A carry longer than this in one frame is the player put somewhere else, m: the camera goes with him at once.
+- `easeArm` (function): An arm's length after the walls (see the file comment): `arm` eased toward `want`, never past `clear`.
+- `follow` (function): A point that follows `to` and never passes through a wall: slid from where it was (`last`), or swept from `from` (the hero's eye, clear of the walls) on the first frame or when `to` is further than `COLLIDE_TELEPORT` from it.
+- `moveCamera` (function): Moves a camera on by a frame (see the file comment): from `ball` (null on the first frame), carried to `carried`, then toward `want`, the arm's end, where the ball fits there, else as far along the arm as a sweep from `base` clears.
+- `QueryGroups` (type): The collision groups a query hits, as the `QueryView` names them.
+- `reach` (function): How far a ball of `COLLIDE_RADIUS` gets from `from` along the unit `dir`, up to `max`: `COLLIDE_SKIN` short of a hit.
+- `slide` (function): Where a ball of `COLLIDE_RADIUS` gets from `from` toward `to`, sliding along up to three surfaces it meets: it stops `COLLIDE_SKIN` short of each and moves on along it; a ball already within the skin of one is first lifted off it.
+- `sweep` (function): Where a ball of `COLLIDE_RADIUS` gets from `from` toward `to`: `to`, or twice the skin short of the first surface.
+- `Walls` (interface): The walls a camera keeps out of: the sim's queries, the groups that stop it and a body it passes through.
+
+### [`engine/gfx/cameras/define.ts`](../engine/gfx/cameras/define.ts)
+
+- `CAMERA_FIELDS` (const): A game camera's fields.
+- `CAMERA_NAMES` (const): Every name the engine's cameras and views take: a game's camera takes another.
+- `cameraEntry` (function): The game camera named `name` on `registry`, or undefined.
+- `CameraKindSpec` (interface): What `defineCamera` takes: `create` makes the camera from its code and the camera before it.
+- `defineCamera` (function): Adds a game's camera mode on `registry` (the shared one by default).
+
+### [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)
+
+- `apexFov` (function): The lens (vertical degrees) of Apex's field of view `h`: horizontal degrees at 4:3.
+- `applyEffects` (function): `pose` with the effects of `frame` on it, each part scaled by `weights` (see the file comment).
+- `CAMERA_EYE` (const): The eye's height over the feet on the shooter model, m: Apex's, standing and crouched.
+- `CameraEffects` (interface): The effects' state (see the file comment).
+- `cameraPlayer` (function): What the cameras read of the player actor `entity` (`actor`, and `motion` on the shooter model); null for another.
+- `CameraPlayer` (interface): What the effects and the follow cameras read of the player after a sim step: plain data.
+- `createCameraEffects` (function): The effects' springs and phases (see the file comment).
+- `crouchShare` (function): How far a shooter model's duck has gone down, 0 standing to 1 crouched, from its `motion` (WP 13.5's duck).
+- `EFFECTS` (const): The effects' numbers (see the file comment): metres, radians, seconds.
+- `EffectsFrame` (interface): One frame of the effects (see the file comment).
+- `EffectWeights` (interface): How much of each effect a camera takes, 0 to 1 (see the file comment).
+- `FIRST_EFFECTS` (const): First person's: every effect.
+- `NO_EFFECTS` (const): None: the views, the orbit, the free cameras.
+
 ### [`engine/gfx/cameras/first.ts`](../engine/gfx/cameras/first.ts)
 
-- `createFirstCamera` (function): A first-person camera: at the hero's eyes (`input.eye`), turned by the devices.
+- `createFirstCamera` (function): A first-person camera: at the hero's eyes (`input.eye`), turned by the devices; it takes every view effect.
 - `CullOptions` (interface): Options for `nearBodyCull`.
 - `describeFirst` (function): A first-person camera in words.
 - `eyePoint` (function): The head socket: the midpoint of the eye sockets of `skeleton` posed as `world` (engine/anim/fk.ts), m.
@@ -3043,6 +3185,7 @@ For the agents who maintain the engine.
 - `FIRST_EYE_HEIGHT` (const): The eye's height above the followed point without a rig, m.
 - `FIRST_NEAR_BODY` (const): A shown part closer to the eye than this is culled too, m.
 - `FIRST_SHOWN` (const): The joints whose parts the camera shows (unless near the eye): the hands, which hold the weapons.
+- `FIRST_TRAIL` (const): The most the eye's height trails the eye, m: a fall or a climb is followed, and a stop never overshot.
 - `FIRST_TURN_SPEED` (const): Turn rates at full `input.turn`, rad/s: `[right, up]`.
 - `FirstInput` (interface): A first-person camera's input: the devices', and the hero's eye.
 - `FirstOptions` (interface): Options for a first-person camera: its code's data, and the camera before it.
@@ -3083,6 +3226,25 @@ For the agents who maintain the engine.
 - `FlyState` (interface): A fly camera's state: plain data, replaced by each step.
 - `stepFly` (function): Steps a fly camera by one rendered frame: turned by `look` and `turn`, moved by `move`, its lens by `zoom`.
 
+### [`engine/gfx/cameras/follow.ts`](../engine/gfx/cameras/follow.ts)
+
+- `createFollowCamera` (function): A follow camera: orbiting the hero and following him (see the file comment).
+- `describeFollow` (function): A follow camera in words.
+- `FOLLOW_EFFECTS` (const): The effects it takes (engine/gfx/cameras/effects.ts): a little of the punch.
+- `FOLLOW_LIMITS` (const): The range of the pitch (rad) and the arm (m).
+- `FOLLOW_RIG` (const): The rig's numbers (see the file comment): metres, seconds, rad/s; `lens` its lens, degrees.
+- `FOLLOW_TURN_SPEED` (const): Turn rates at full `input.turn`, rad/s: `[right, up]`.
+- `FollowInput` (interface): A follow camera's input: the devices', the hero (his eye and what he does) and the walls.
+- `FollowOptions` (interface): Options for a follow camera: its code's data, the lens, and the camera before it.
+- `followPose` (function): The follow camera's pose: where its ball stands (the arm back from the pivot), looking along its view.
+- `followSpec` (function): The follow camera's code data.
+- `FollowSpec` (interface): A follow camera's code as data: without the numbers it keeps the heading of the camera before it.
+- `followState` (function): A checked follow state for `options`.
+- `FollowState` (interface): A follow camera's state: plain data, replaced by each step.
+- `formatFollowCode` (function): The canonical code of a follow camera's data (numbers rounded: 0.01°, 0.001 m).
+- `parseFollowCode` (function): Reads a follow camera's code: `cam3=follow[,<yaw>,<pitch>,<distance>]`.
+- `stepFollow` (function): Steps a follow camera by one rendered frame (see the file comment).
+
 ### [`engine/gfx/cameras/orbit.ts`](../engine/gfx/cameras/orbit.ts)
 
 - `createOrbitCamera` (function): An orbit camera (a target given makes it fixed there; without one it follows `input.follow`).
@@ -3102,15 +3264,16 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/cameras/place.ts`](../engine/gfx/cameras/place.ts)
 
-- `AnyCamera` (type): Any camera `createCamera` makes: codes.ts's (`Camera`), or a WP 3.9 camera, whose inputs add the hero's.
-- `AnyCameraSpec` (type): The code data of any camera: codes.ts's, or a WP 3.9 camera's.
+- `AnyCamera` (type): Any camera `createCamera` makes: codes.ts's (`Camera`), or a follow camera, whose inputs add the hero's.
+- `AnyCameraSpec` (type): The code data of any camera: codes.ts's, a follow camera's, or a game camera's.
 - `CameraPair` (interface): One three.js camera per projection, and `place`, which aims the one a pose needs.
 - `createCamera` (function): The camera `code` names (a code, or its data from `readCameraCode`): `cam=iso`, `cam3=orbit,…`, `cam3=chase`.
 - `CreateCameraOptions` (interface): What `createCamera` may start from beyond the code.
 - `createCameraPair` (function): A perspective and an orthographic camera, made once (see the file comment).
 - `FOLLOW_CAMERAS` (re-export): (undocumented)
+- `GameCameraSpec` (interface): A game's own camera's code (engine/gfx/cameras/define.ts): its name and the code its `create` reads.
 - `placeCamera` (function): Puts `pose` on `camera` for a picture `aspect` (width / height) wide, boost included (see the file comment).
-- `readCameraCode` (function): Reads any camera's code: `cam3=chase…`, `cam3=first…` and `cam3=rail…` by their modules, every other by `parseCameraCode`.
+- `readCameraCode` (function): Reads any camera's code: a follow camera's (`cam3=chase…`, `cam3=first…`, `cam3=rail…`, `cam3=shoulder…`, `cam3=follow…`) by its module, a game camera's (`defineCamera`) as its name and code, every other by `parseCameraCode`.
 
 ### [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)
 
@@ -3129,9 +3292,9 @@ For the agents who maintain the engine.
 - `pointProblems` (function): A finite point, or a problem.
 - `POSE_DEFAULTS` (const): Defaults for the fields `makePose` is not given (the lens is three.js's `PerspectiveCamera` default).
 - `poseForward` (function): The unit view direction (three.js's `camera.getWorldDirection()`).
-- `poseRight` (function): The unit right direction on screen: forward × up, level whatever the pitch.
+- `poseRight` (function): The unit right direction on screen: forward × up, level whatever the pitch, tipped down by a `roll` (if any).
 - `poseTarget` (function): The point the camera looks at: `distance` along its view direction.
-- `poseUp` (function): The unit up direction on screen: right × forward (the heading when the camera looks straight down).
+- `poseUp` (function): The unit up direction on screen: right × forward (the heading when the camera looks straight down), tipped right by a `roll`.
 - `Projection` (type): The two projections three.js has: `PerspectiveCamera` and `OrthographicCamera`.
 - `rangeProblems` (function): A problem for each value that is missing, not finite, or outside `[min, max]`.
 - `refuse` (function): Throws `GFX_BAD_CAMERA` for `where` when `problems` is not empty.
@@ -3144,11 +3307,12 @@ For the agents who maintain the engine.
 - `ORTHO_DISTANCE` (const): How far back an orthographic view stands from its target, m, and how far it sees.
 - `ORTHO_FAR` (const): An orthographic view's far plane, m.
 - `stepView` (function): Steps a view by one rendered frame: zoom steps, 45° turns, and the target following `input.follow`.
-- `stepZoom` (function): The next zoom step from `zoom`, `steps` up (+) or down (−) `VIEW_ZOOMS`.
+- `stepZoom` (function): The next zoom step from `zoom`, `steps` up (+) or down (−) `zooms` (`VIEW_ZOOMS`).
 - `VIEW_FOV` (const): A view's perspective lens, degrees (`PerspectiveCamera.fov`).
 - `VIEW_LAG` (const): The time constant of a view's follow, real seconds (the 2D camera's lag).
 - `VIEW_LIFT` (const): How high above the followed point a view looks, m.
 - `VIEW_PRESETS` (const): The classic views, from the 2D engine's `E.VIEWS`; `custom` holds a custom view's defaults.
+- `VIEW_TRAIL` (const): The most a view's target trails the followed point, m: a fall is followed, and a stop never overshot.
 - `VIEW_ZOOMS` (const): The zoom steps `input.zoom` moves through.
 - `ViewOptions` (interface): Options for a view beyond its code: the lens and the frame.
 - `viewPose` (function): A view's pose (see the file comment for the framing).
@@ -3156,6 +3320,7 @@ For the agents who maintain the engine.
 - `viewSpec` (function): A view's code data: a custom view's angles and boost, or a preset's name and turn.
 - `viewState` (function): A checked view state for `options` (a view's code data, plus the lens and frame).
 - `ViewState` (interface): A view camera's state: plain data, replaced (never changed) by each step.
+- `WHOLE_STEPS` (const): The overhead view's zoom steps: whole numbers, so its pixels stay square.
 
 ### [`engine/gfx/cameras/rail.ts`](../engine/gfx/cameras/rail.ts)
 
@@ -3176,6 +3341,36 @@ For the agents who maintain the engine.
 - `RailState` (interface): A depth rail's state: plain data, replaced by each step.
 - `stepRail` (function): Steps a depth rail by one rendered frame: `zoom`, then following along, in height, and in depth.
 
+### [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)
+
+- `CAMERA_SETTING_FIELDS` (const): The view settings the rig reads (see the file comment), as fields; never in the hash.
+- `CAMERA_SETTINGS` (const): The view settings the rig reads, declared on the shared registry.
+- `CameraRig` (interface): The camera rig (see the file comment).
+- `createCameraRig` (function): Makes a rig on the camera `code` names (see the file comment).
+- `RigBlend` (interface): A frame's blend: how far into it (1: none), and what it moved the picture on its own (m, rad).
+- `RigInput` (interface): What the rig's cameras take each frame: the devices', the hero (his eye, his look, his state) and the walls.
+- `rigOptions` (function): The rig's options from the view settings `cam.*`, read by `get` (a settings store's).
+- `RigOptions` (interface): The rig's options (see the file comment).
+
+### [`engine/gfx/cameras/shoulder.ts`](../engine/gfx/cameras/shoulder.ts)
+
+- `createShoulderCamera` (function): A shoulder camera: over the hero's shoulder (`input.eye`), turned by the devices, in front of the walls.
+- `describeShoulder` (function): A shoulder camera in words.
+- `formatShoulderCode` (function): The canonical code of a shoulder camera's data (numbers rounded: 0.01°, 0.001 m; the side only when left).
+- `parseShoulderCode` (function): Reads a shoulder camera's code: `cam3=shoulder[,<yaw>,<pitch>,<distance>[,<side>]]`.
+- `SHOULDER` (const): The rig's numbers (see the file comment): metres and real seconds; `lens` its own lens, degrees (Apex's 90 at 4:3).
+- `SHOULDER_EFFECTS` (const): The effects it takes (engine/gfx/cameras/effects.ts): the lens, the sights, half the roll and the punch.
+- `SHOULDER_LIMITS` (const): The range of the pitch (rad) and of the arm (m).
+- `SHOULDER_TURN_SPEED` (const): Turn rates at full `input.turn`, rad/s: `[right, up]`.
+- `ShoulderInput` (interface): A shoulder camera's input: the devices', the hero's eye and the walls.
+- `ShoulderOptions` (interface): Options for a shoulder camera: its code's data, the lens, and the camera before it.
+- `shoulderPose` (function): The shoulder camera's pose: where its ball stands (the arm back from the shoulder point), looking along the view.
+- `shoulderSpec` (function): The shoulder camera's code data.
+- `ShoulderSpec` (interface): A shoulder camera's code as data: without the numbers it looks where the camera before it looked.
+- `shoulderState` (function): A checked shoulder state for `options`.
+- `ShoulderState` (interface): A shoulder camera's state: plain data, replaced by each step.
+- `stepShoulder` (function): Steps a shoulder camera by one rendered frame (see the file comment).
+
 ### [`engine/gfx/caps.ts`](../engine/gfx/caps.ts)
 
 - `adapterLimits` (function): The adapter's limits, by name: what `requestDevice` asks for.
@@ -3187,16 +3382,19 @@ For the agents who maintain the engine.
 ### [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)
 
 - `AIM_STEEP` (const): Looking down at least this steeply (rad, 60°), only the hero's head and feet are aimed at, not the floor round him.
-- `createCutaway` (function): Gives `meshes`' cutting parts their twins (see the file comment).
+- `createCutaway` (function): Gives `meshes`' cutting parts their twins (see the file comment), and fades `options.objects` too.
 - `CUT_AIMS` (const): The points aimed at (m): the head and the feet above the focus, and the floor this far round it.
 - `CUT_FACING` (const): A wall is cut when the cosine between its outward direction and the way to the camera is above this.
 - `CUT_MARGIN` (const): How far round a blocking piece's box a line of sight still counts as through it (m): 4 prototype units.
 - `CUT_STEEP` (const): Looking down steeper than this (rad, 85°), the camera sees over every wall: none is cut.
 - `Cutaway` (interface): A level's cutaway (see the file comment).
 - `cutawayAims` (function): The points the camera must see, round `focus`, for a camera at `pitch` (rad): the hero's head and feet, and unless it looks down `AIM_STEEP` or more, the floor `CUT_AIMS.around` metres round him, where the fight is.
-- `CutawayReport` (interface): How many of each cutting part's pieces are cut, after an `update`.
+- `CutawayOptions` (interface): What `createCutaway` takes beside the meshes.
+- `CutawayReport` (interface): How many of each cutting part's pieces are cut, after an `update`, and what the fade took out of the picture.
 - `CutTarget` (interface): What the cutaway decides over: the pieces of one part, how they cut, and their heights (m).
+- `FADE_AIMS` (const): The points the fade keeps in sight above the focus (m), and how far inside a box a line must pass to fade it.
 - `planCutaway` (function): For each target, for each cell: whether `pose`, looking at `focus`, cuts it.
+- `planFade` (function): For each target, for each cell, whether a line from `pose` to the head or the chest over `focus` (`FADE_AIMS`) passes through the cell's box, shrunk by `FADE_AIMS.inset`: an orthographic camera looks from its plane, as in `planCutaway`.
 - `segmentHitsBox` (function): Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`).
 
 ### [`engine/gfx/features.ts`](../engine/gfx/features.ts)
@@ -5516,6 +5714,10 @@ For the agents who maintain the engine.
 - `BoundsSpan` (interface): Where a run of bounds reads: from step `from` to `to` (the course's end when absent), its names after `label`.
 - `cameraBounds` (function): Every camera's bounds, from step `from` (see the file comment and `BoundsSpan`).
 
+### [`labs/playground/courses/cameras.ts`](../labs/playground/courses/cameras.ts)
+
+- `CAMERAS_START` (const): Where the square starts: between the north wall and the mantle walls, facing east.
+
 ### [`labs/playground/courses/climb.ts`](../labs/playground/courses/climb.ts)
 
 - `BOUNCE_RUNS` (const): Each bounce off the 6 m wall: its zone, where it starts (z), its speed (m/s), and when it jumps and jumps off.
@@ -5639,6 +5841,8 @@ For the agents who maintain the engine.
 - `nextLook` (function): The look after `id` (the first after an unknown id).
 - `PLAYGROUND_CAMERAS` (const): The five camera modes, in the order T steps through them; the shooter is the page's default.
 - `PLAYGROUND_LOOKS` (const): The two looks, in the order P switches them; the cel look is the page's default.
+- `SWAP_KEY` (const): The key that swaps the shooter's shoulder: X, as docs/PLAYGROUND.md §3.3 binds it.
+- `swapShoulder` (function): The shooter camera's code `code` over the other shoulder (`cam3=shoulder,<yaw>,<pitch>,<distance>[,-1]`); another code as it is.
 
 ### [`playwright.config.ts`](../playwright.config.ts)
 

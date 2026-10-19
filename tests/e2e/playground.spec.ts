@@ -111,10 +111,10 @@ test.describe('the playground', () => {
   }) => {
     await open(page, harness);
     await harness.assertWebGPU();
-    expect((await call<{ code: string }>(page, 'camera.get')).code).toMatch(/^cam3=chase(,|$)/);
+    expect((await call<{ code: string }>(page, 'camera.get')).code).toMatch(/^cam3=shoulder(,|$)/);
     expect(await hud(page)).toMatchObject({
       mode: 'Camera: shooter · Look: cel',
-      keys: expect.stringContaining('T: camera · P: look'),
+      keys: expect.stringContaining('T: camera · X: shoulder · P: look'),
     });
     expect(await signShown(page, 'mantle-1')).toBe(true); // 12 m south of the spawn, in front of the camera
     expect(await signShown(page, 'tower-6')).toBe(false); // 59 m away

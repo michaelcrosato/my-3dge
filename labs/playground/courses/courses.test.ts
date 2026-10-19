@@ -21,6 +21,7 @@
  * @see labs/playground/courses/ladder.ts
  * @see labs/playground/courses/launcher.ts
  * @see labs/playground/courses/skydive.ts
+ * @see labs/playground/courses/cameras.ts
  * @see labs/playground/courses/bounds.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -29,6 +30,7 @@ import { topHeight } from '../../../engine/sim-api';
 import { GYM } from '../scenes/gym';
 import { AIR_START } from './air';
 import { bodyBounds, cameraBounds } from './bounds';
+import { CAMERAS_START } from './cameras';
 import { BOUNCE_RUNS, CLIMB_RUNS } from './climb';
 import { CRAWL_STARTS } from './crawl';
 import { FENCE_RUNS } from './fences';
@@ -64,6 +66,7 @@ const STARTS: Readonly<Record<string, readonly (readonly [number, number, number
   ladder: [LADDER_STARTS.floor],
   launcher: [LAUNCHER_STARTS.pad, LAUNCHER_STARTS.mat],
   skydive: [SKYDIVE_START],
+  cameras: [CAMERAS_START],
 };
 
 /** The starts on the tower's top (6 m): the zipline's pulley, the ladder's top, the drop onto the trampoline. */
@@ -73,8 +76,8 @@ describe('the playground’s courses', () => {
   it('check the body’s bounds and four of each camera’s, three of first person’s, a run’s under its label', () => {
     expect(bodyBounds(2).map((m) => m.metric)).toEqual(['footSlide', 'pop']);
     expect(cameraBounds(2)).toHaveLength(19);
-    const run = cameraBounds(2, { to: 90, label: 'run 1', watch: { shooter: 'WP 13.8' } });
-    expect(run[0]).toMatchObject({ name: 'run 1: shooter: jump', to: 90, watch: 'WP 13.8' });
+    const run = cameraBounds(2, { to: 90, label: 'run 1', watch: { shooter: 'WP 13.12' } });
+    expect(run[0]).toMatchObject({ name: 'run 1: shooter: jump', to: 90, watch: 'WP 13.12' });
     expect(run.filter((m) => m.watch)).toHaveLength(4); // the shooter's four, the others judged
   });
 

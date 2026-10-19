@@ -518,4 +518,10 @@ types `EngineStats`.
 
 **The feel kit (WP 13.4)**: courses, scripted runs of a scene and the numbers measured on them (`node x feel`); the runner and its verdicts; the owner's feel panel and copy as profile.
 `defineCourse`, `getCourse`, `listCourses`, `METRICS`, `runCourse`, `createFeelPanel`, `tunedSpec`, `profileText`; types `Course`, `Measure`, `Metric`, `CourseResult`, `CourseSample`, `MeasureResult`, `FeelPanel`, `FeelRow`, `FeelInspector`.
+
+**Camera modes (WP 2.5, WP 3.9, WP 13.8)**: a code to a camera, each mode's factory, and a game's own.
+`readCameraCode`, `createCamera`, `createShoulderCamera`, `SHOULDER`, `createFollowCamera`, `FOLLOW_RIG`, `createFirstCamera`, `createChaseCamera`, `createViewCamera`, `followCamera`, `defineCamera`, `makePose`, `poseForward`, `poseRight`, `poseUp`, `poseTarget`; types `AnyCamera`, `AnyCameraSpec`, `ShoulderInput`, `ShoulderSpec`, `FollowInput`, `FollowSpec`, `FollowCamera`, `FollowSteps`, `CameraKindSpec`, `Camera`, `CameraInput`.
+
+**The rig a view steps (WP 13.8)**: blends on live switches, the view effects, the view settings cam.*.
+`createCameraRig`, `rigOptions`, `CAMERA_SETTINGS`, `blendCameras`, `BLEND_TIME`, `createCameraEffects`, `applyEffects`, `cameraPlayer`, `apexFov`, `EFFECTS`; types `CameraRig`, `RigOptions`, `RigInput`, `CameraPlayer`, `EffectWeights`, `EffectsFrame`.
 <!-- lean:api:end -->

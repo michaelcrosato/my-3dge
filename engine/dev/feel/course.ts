@@ -32,6 +32,7 @@
  */
 import { registry as sharedRegistry, type Entry, type Registry } from '../../core/registry';
 import { defineSchema } from '../../core/schema';
+import { readCameraCode } from '../../gfx/cameras/place';
 import type { InputEntry } from '../../sim/replay';
 
 /**
@@ -102,6 +103,11 @@ export const COURSE_FIELDS = defineSchema({
     default: [],
     description: 'Change-points [step, change], as a replay’s (engine/sim/replay.ts): after that many steps, before the next.', // prettier-ignore
   },
+  views: {
+    type: 'array',
+    default: [],
+    description: 'Camera switches [step, code] for its camera measures, after that many steps, blended as the page’s live switches (WP 13.8).', // prettier-ignore
+  },
   measures: {
     type: 'array',
     required: true,
@@ -127,7 +133,7 @@ export interface Measure {
 }
 
 /** A course, as the registry holds it. */
-export type Course = Omit<Entry<typeof COURSE_FIELDS>, 'inputs' | 'measures'> & { readonly inputs: readonly InputEntry[]; readonly measures: readonly Measure[] }; // prettier-ignore
+export type Course = Omit<Entry<typeof COURSE_FIELDS>, 'inputs' | 'measures' | 'views'> & { readonly inputs: readonly InputEntry[]; readonly views: readonly (readonly [number, string])[]; readonly measures: readonly Measure[] }; // prettier-ignore
 
 /** The problems of one measure beyond its fields: its steps, its metric's own fields and its tolerance. */
 function measureProblems(m: Measure, steps: number, at: string): string[] {
@@ -159,6 +165,15 @@ function courseProblems(course: Course): string[] {
   if (late > 0) problems.push(`inputs[${late}] at step ${steps[late]} comes after step ${steps[late - 1]}: give change-points in step order`); // prettier-ignore
   const names = course.measures.map((m) => m.name);
   for (const name of new Set(names.filter((n, i) => names.indexOf(n) !== i))) problems.push(`two measures are named ${JSON.stringify(name)}`); // prettier-ignore
+  course.views.forEach((view, i) => {
+    const [step, code] = Array.isArray(view) ? view : [NaN, undefined];
+    if (!Number.isInteger(step) || step < 0 || step > course.steps || typeof code !== 'string') return problems.push(`views[${i}] is not [step, camera code] with a step from 0 to ${course.steps}`); // prettier-ignore
+    try {
+      readCameraCode(code);
+    } catch (error) {
+      problems.push(`views[${i}]: ${(error as Error).message}`);
+    }
+  });
   return problems;
 }
 

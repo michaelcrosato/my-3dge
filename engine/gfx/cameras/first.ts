@@ -3,11 +3,13 @@
  * and the near-body culling that hides his own body from them. `stepFirst` and `firstPose` are the pure steps;
  * `createFirstCamera` wraps them in a camera.
  *
- * It sits at the head socket: `input.eye`, the midpoint of the rig's eye sockets (`eyePoint(skeleton, world)` on the
- * animated pose's FK, engine/anim/fk.ts), or `FIRST_EYE_HEIGHT` above `input.follow` without a rig. It follows the eye
- * across at once, and up and down with a time constant of `FIRST_BOB_LAG` real seconds, which softens the head's bob.
- * `input.look` and `input.turn` turn it right and up (its yaw is the hero's aim), `input.zoom` narrows the lens 5° a
- * step within `FLY_FOV_RANGE`.
+ * It sits at the eye: `input.eye`, the midpoint of the rig's eye sockets (`eyePoint(skeleton, world)` on the animated
+ * pose's FK, engine/anim/fk.ts) or the shooter model's eye height (engine/gfx/cameras/effects.ts), or
+ * `FIRST_EYE_HEIGHT` above `input.follow` without either. It follows the eye across at once, and up and down with a
+ * time constant of `FIRST_BOB_LAG` real seconds, which softens the head's bob, never more than `FIRST_TRAIL` behind.
+ * `input.look` and `input.turn` turn it right and up (its yaw is the hero's aim), or `input.view` sets the view (the
+ * sim's look, when no device turns the camera); `input.zoom` narrows the lens 5° a step within `FLY_FOV_RANGE`, from
+ * `input.lens` when given (the player's field of view, engine/gfx/cameras/rig.ts).
  *
  * Near-body culling (`nearBodyCull`): the joints whose body parts a renderer hides from this camera. That is the whole
  * body but the hands (`FIRST_SHOWN`; a held weapon rides their sockets), as first-person games show it, and also any
@@ -15,8 +17,7 @@
  * part runs from its joint to its children (a leaf's, to its tip). `show: JOINTS` keeps the whole body but what is
  * near the eye ("true first person").
  *
- * Invariants: the pitch stays within ±`FLY_MAX_PITCH`; the head is always culled (the eyes are on it). Pure: each
- * step returns a new state.
+ * Invariants: the pitch stays within ±`FLY_MAX_PITCH`; the head is always culled (the eyes are on it); pure.
  *
  * Codes: `cam3=first[,<yaw>,<pitch>[,<fov>]]` (degrees); a bare one looks where the camera before it looked. The
  * reader and the camera wrapper are engine/gfx/cameras/chase.ts's, shared by WP 3.9's cameras.
@@ -41,6 +42,7 @@ import { socketPosition, tipPosition, type WorldPose } from '../../anim/fk';
 import { JOINTS, PARENTS, type JointName, type Skeleton } from '../../anim/skeleton';
 import { MathUtils, Vector3 } from '../../core/math';
 import { codeDegrees, codeNumber, followCamera, readCode, type CodePart, type FollowCamera } from './chase';
+import { FIRST_EFFECTS } from './effects';
 import { FLY_FOV_RANGE, FLY_MAX_PITCH } from './fly';
 import { makePose, rangeProblems, refuse, wrapAngle, type CameraInput, type CameraPose, type Vec3 } from './pose';
 
@@ -52,6 +54,8 @@ export const FIRST_DEFAULTS = Object.freeze({ pitch: -0.08, fov: 75 });
 export const FIRST_EYE_HEIGHT = 1.5;
 /** The time constant of the eye's height, real seconds: it softens the head's bob. */
 export const FIRST_BOB_LAG = 1 / 16;
+/** The most the eye's height trails the eye, m: a fall or a climb is followed, and a stop never overshot. */
+export const FIRST_TRAIL = 0.2;
 /** The joints whose parts the camera shows (unless near the eye): the hands, which hold the weapons. */
 export const FIRST_SHOWN: readonly JointName[] = Object.freeze(['handL', 'handR']);
 /** A shown part closer to the eye than this is culled too, m. */
@@ -63,6 +67,10 @@ export const FIRST_TURN_SPEED = Object.freeze([2.2, 1.2] as const);
 export interface FirstInput extends CameraInput {
   /** The hero's eye, m: `eyePoint(skeleton, world)`. Without it, `FIRST_EYE_HEIGHT` above `follow`. */
   readonly eye?: Vec3;
+  /** The view to look along, `[yaw, pitch]` rad, when no device turns the camera (the sim's look). */
+  readonly view?: readonly [number, number];
+  /** The lens before the wheel's zoom, vertical degrees: the player's field of view. */
+  readonly lens?: number;
 }
 
 /** A first-person camera's code as data: without the numbers it looks where the camera before it looked. */
@@ -81,6 +89,8 @@ export interface FirstState {
   readonly yaw: number;
   readonly pitch: number;
   readonly fov: number;
+  /** Degrees the wheel has narrowed the lens by. */
+  readonly narrow: number;
   /** Where it is, m; null until the first eye or follow. */
   readonly eye: Vec3 | null;
 }
@@ -97,6 +107,7 @@ export function firstState(options: FirstOptions = {}): FirstState {
     yaw: options.yaw ?? options.from?.yaw ?? 0,
     pitch: options.pitch ?? options.from?.pitch ?? FIRST_DEFAULTS.pitch,
     fov: options.fov ?? FIRST_DEFAULTS.fov,
+    narrow: 0,
     eye: null,
   };
   refuse('the first-person camera', [
@@ -110,14 +121,18 @@ export function firstState(options: FirstOptions = {}): FirstState {
 export function stepFirst(state: FirstState, input: FirstInput, dt: number): FirstState {
   const right = (input.look?.[0] ?? 0) + (input.turn?.[0] ?? 0) * FIRST_TURN_SPEED[0] * dt;
   const up = (input.look?.[1] ?? 0) + (input.turn?.[1] ?? 0) * FIRST_TURN_SPEED[1] * dt;
-  const yaw = wrapAngle(state.yaw - right);
-  const pitch = MathUtils.clamp(state.pitch + up, -FLY_MAX_PITCH, FLY_MAX_PITCH);
-  const fov = input.zoom ? MathUtils.clamp(state.fov - input.zoom * 5, ...FLY_FOV_RANGE) : state.fov;
+  const yaw = input.view ? wrapAngle(input.view[0]) : wrapAngle(state.yaw - right);
+  const pitch = MathUtils.clamp(input.view ? input.view[1] : state.pitch + up, -FLY_MAX_PITCH, FLY_MAX_PITCH);
+  const base = input.lens ?? state.fov + state.narrow;
+  const fov = MathUtils.clamp(base - state.narrow - (input.zoom ?? 0) * 5, ...FLY_FOV_RANGE);
   const f = input.follow;
   const to: Vec3 | null = input.eye ?? (f ? [f[0], f[1] + FIRST_EYE_HEIGHT, f[2]] : null);
   let eye = state.eye;
-  if (to) eye = eye ? [to[0], eye[1] + (to[1] - eye[1]) * (1 - Math.exp(-dt / FIRST_BOB_LAG)), to[2]] : [...to];
-  return { yaw, pitch, fov, eye };
+  if (to && eye) {
+    const y = eye[1] + (to[1] - eye[1]) * (1 - Math.exp(-dt / FIRST_BOB_LAG));
+    eye = [to[0], MathUtils.clamp(y, to[1] - FIRST_TRAIL, to[1] + FIRST_TRAIL), to[2]];
+  } else if (to) eye = [...to];
+  return { yaw, pitch, fov, narrow: base - fov, eye };
 }
 
 /** The first-person camera's pose: at the eye, looking along its yaw and pitch. */
@@ -201,13 +216,8 @@ export function describeFirst(_spec: FirstSpec, pose: CameraPose): string {
   return `${lens}, heading ${codeDegrees(pose.yaw, true)}°, pitch ${codeDegrees(pose.pitch)}°`;
 }
 
-/** A first-person camera: at the hero's eyes (`input.eye`), turned by the devices. */
+/** A first-person camera: at the hero's eyes (`input.eye`), turned by the devices; it takes every view effect. */
 export function createFirstCamera(options: FirstOptions = {}): FollowCamera<'first', FirstSpec, FirstInput> {
-  return followCamera('first', firstState(options), {
-    step: stepFirst,
-    pose: firstPose,
-    spec: firstSpec,
-    code: formatFirstCode,
-    describe: describeFirst,
-  });
+  const steps = { step: stepFirst, pose: firstPose, spec: firstSpec, code: formatFirstCode, describe: describeFirst };
+  return followCamera('first', firstState(options), steps, { effects: FIRST_EFFECTS });
 }

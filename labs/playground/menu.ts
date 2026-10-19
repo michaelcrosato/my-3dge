@@ -161,9 +161,9 @@ export function createPlaygroundMenu(document: Document, options: PlaygroundMenu
     );
     return el('section', { 'data-menu': name }, el('h2', {}, title), el('p', { class: 'pg-menu-chips' }, ...list));
   };
-  const kept = ['post.look', 'cam', 'cam3', 'playground.menu'];
+  const kept = ['post.look', 'cam', 'cam3', 'cam.wholeZoom', 'playground.menu'];
   const scene = nameOf(options.scene || options.scenes[0]?.id || '');
-  const camera = query.has('cam') ? `cam=${query.get('cam')}` : `cam3=${query.get('cam3') ?? 'chase'}`;
+  const camera = query.has('cam') ? `cam=${query.get('cam')}` : `cam3=${query.get('cam3') ?? 'shoulder'}`;
   const look = query.get('post.look') ?? PLAYGROUND_LOOKS[0];
   const replay = query.get('replay');
   const scenes = options.scenes.map(({ id, description }): [string, boolean, string, string] => {

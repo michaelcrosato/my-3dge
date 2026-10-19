@@ -5,18 +5,20 @@
  * view) and stumps the pillar between it and the hero; turned 180° it cuts the north and west walls; from straight
  * above, from inside the hall and for a camera the walls face away from, it cuts none; a perspective camera outside
  * the south wall cuts the south walls round it; the height boost decides in the picture's heights. Then the meshes:
- * the twins, pieces moving between a part and its twin, the draw calls, `clear`, the warm-up and `dispose`. The GPU
- * half (0 pipelines while the camera turns, the draw-call budget) is tests/e2e/hall.spec.ts.
+ * the twins, pieces moving between a part and its twin, the draw calls, `clear`, the warm-up and `dispose`. The fade
+ * (WP 13.8): the pieces a line to the hero's head or chest crosses, and the objects, leave the picture with `fade` and
+ * come back without. The GPU half (0 pipelines while the camera turns, the draw-call budget) is
+ * tests/e2e/hall.spec.ts.
  * @see engine/gfx/cutaway.ts
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { MeshBasicMaterial, type InstancedMesh, type Object3D } from 'three/webgpu';
+import { BoxGeometry, Mesh, MeshBasicMaterial, type InstancedMesh, type Object3D } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { compileLevel } from '../world/level/compile';
 import { createCamera } from './cameras/place';
 import { makePose, type CameraPose, type Vec3 } from './cameras/pose';
-import { CUT_AIMS, createCutaway, cutawayAims, planCutaway, segmentHitsBox, type CutTarget } from './cutaway';
+import { CUT_AIMS, FADE_AIMS, createCutaway, cutawayAims, planCutaway, planFade, segmentHitsBox, type CutTarget } from './cutaway'; // prettier-ignore
 import { instancePath } from './instancing';
 import { createLevelMeshes } from './level/meshes';
 import type { Warmup } from './warmup';
@@ -229,5 +231,43 @@ describe('createCutaway', () => {
     const open = compileLevel('.....\n.@...\n.....\n', { file: 'open.txt' });
     const none = createCutaway(createLevelMeshes(open, { materials: { get: () => material } }));
     expect([none.twins.length, none.update(pose).changed, none.drawCalls(1)]).toEqual([0, false, 0]);
+  });
+});
+
+describe('the occluder fade', () => {
+  /** An open floor with the hero's spawn and one low wall piece, 0.75 m high at (3.5, 3.5). */
+  function low() {
+    const material = new MeshBasicMaterial();
+    const level = compileLevel('.......\n.@.....\n.......\n...w...\n.......\n.......\n', { file: 'low.txt' });
+    const meshes = createLevelMeshes(level, { materials: { get: () => material } });
+    const wall = meshes.parts.find((part) => part.cells.length === 1)!;
+    return { meshes, wall: wall.mesh as InstancedMesh, name: wall.name };
+  }
+  const focus: Vec3 = [1.5, 0, 1.5];
+  const below = makePose({ position: [5.5, 0.2, 5.5], yaw: -0.75 * Math.PI, pitch: 0 }); // the wall between, low
+
+  it('plans the pieces a line to the head or the chest crosses, inside their box by its inset', () => {
+    const cell = { centre: [3.5, 0, 3.5], size: [1, 1], out: [0, 0] } as unknown as CutTarget['cells'][number];
+    const target = { cells: [cell], bottom: 0, top: 0.75 };
+    expect(planFade([target], below, focus)).toEqual([[true]]);
+    expect(planFade([target], makePose({ position: [5.5, 3, 5.5], yaw: -0.75 * Math.PI }), focus)).toEqual([[false]]); // over it
+    expect(planFade([{ ...target, top: 0.5 }], below, focus)).toEqual([[false]]); // the line passes above a lower piece
+    expect(FADE_AIMS.head).toBeGreaterThan(FADE_AIMS.chest);
+  });
+
+  it('takes a piece and an object out of the picture with fade, and puts them back without', () => {
+    const { meshes, wall, name } = low();
+    const pole = new Mesh(new BoxGeometry(0.2, 3, 0.2));
+    pole.position.set(4.5, 1.5, 4.5);
+    pole.name = 'pole';
+    pole.updateMatrixWorld(true);
+    const cutaway = createCutaway(meshes, { objects: () => [pole] });
+    expect(cutaway.update(below, focus).faded).toEqual({ parts: {}, objects: [] }); // no fade asked
+    const faded = cutaway.update(below, focus, { fade: true });
+    expect(faded).toMatchObject({ changed: true, faded: { parts: { [name]: 1 }, objects: ['pole'] } });
+    expect([wall.count, pole.visible]).toEqual([0, false]);
+    expect(cutaway.update(below, focus, { fade: true }).changed).toBe(false);
+    cutaway.update(below, focus);
+    expect([wall.count, pole.visible]).toEqual([1, true]);
   });
 });

@@ -63,14 +63,16 @@ the player from every camera, top-down too. Its slots are what the neighbours wi
 
 | Mode | Code | What it is now |
 |---|---|---|
-| Third-person shooter (the default) | `cam3=chase` | behind the player on a spring arm that stays in front of the walls |
-| First person | `cam3=first` | through the player's eyes; the body hidden but the hands |
-| Third-person platformer | `cam3=orbit` | round the player |
-| Isometric | `cam=iso` | orthographic, 45° round and 30° down |
-| Top-down | `cam=topdown` | looking down, the classic top-down view |
+| Third-person shooter (the default) | `cam3=shoulder` | over the right shoulder, 3.8 m back, looking along the aim; X swaps the shoulder |
+| First person | `cam3=first` | at the eye (1.52 m standing, 0.81 m crouched), the body hidden but the hands; Apex's view effects |
+| Third-person platformer | `cam3=follow` | orbit and follow: 5.5 m back, 20° down, recentring, look-ahead, a dead zone for jumps |
+| Isometric | `cam=iso` | orthographic, 45° round and 30° down, whole zoom steps |
+| Top-down | `cam=overhead` | straight down, north up, whole zoom steps on the pixel grid |
 
-T steps through them in this order; `labs/playground/views.ts` lists them and `__engine.camera.set('cam=iso')` sets
-one. WP 13.8 gives each mode its own rig (docs/PLAYGROUND.md §4).
+T steps through them in this order, each switch blended over 0.35 s; `labs/playground/views.ts` lists them and
+`__engine.camera.set('cam=iso')` sets one (`{ blend: true }` blends). The shooter and the platformer never jump or
+stand in a wall, and what stands between them and the player fades (WP 13.8, docs/PLAYGROUND.md §4); the field of view
+is the view setting `cam.fov` (Apex's degrees, 90).
 
 The looks (`labs/playground/looks/`): `look:playground-cel` (the default: three bands of daylight with a rim, every
 edge inked) and `look:playground-pixel` (the same light cut into 3-pixel blocks with a dark rim, 24 shades a channel,
@@ -140,9 +142,8 @@ from a fall) and `labs/playground/courses/skydive.ts` (up the balloon's line, th
 (`{ at, yaw, speed }`) and checks the bounds of `labs/playground/courses/bounds.ts` too, each run's: the body's and
 every camera's. `node x feel labs/playground` runs them all headless, `--course slide-flat` one, each into
 `out/feel/<lab>-<name>/report.json`. A bound its WP has yet to meet is watched, reported and never failing a course:
-the feet's slide until WP 13.10 plants them; the shooter camera in the crawl, topping out the 4 to 6 m climbs and by the
-zipline's tower pole, and every camera catching up after the zipline course's 20 m fall, until WP 13.8's rigs keep them
-within §4's bounds.
+the feet's slide until WP 13.10 plants them. Every camera keeps §4's bounds on every course, and
+`labs/playground/courses/cameras.ts` blends through the five modes while the player runs a square by the north wall.
 
 The feel panel (F, or `?playground.feel=on`) puts a slider on every `movement.*` setting, live; Copy as profile shows
 the tuning as a `defineMovement` call to paste into a game, and Save the replay downloads the run so far for

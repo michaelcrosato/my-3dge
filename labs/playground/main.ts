@@ -7,7 +7,8 @@
  * (tests/replays/playground-*) offered to `?replay=<name>`. Before the engine starts, the menu for humans
  * (labs/playground/menu.ts) lists the scenes, cameras, looks, replays and controls.
  *
- * Live switches (labs/playground/views.ts): T cycles the five camera modes, P switches the two looks, and a click on
+ * Live switches (labs/playground/views.ts): T cycles the five camera modes (blending), X swaps the shooter's
+ * shoulder, P switches the two looks, and a click on
  * the game takes the pointer for mouse look in the three perspective cameras (Esc gives it back; isometric and
  * top-down keep the cursor). They are view state, so no camera, look or switch changes the hash. F shows and hides
  * the feel panel (labs/playground/feel.ts, WP 13.4), whose sliders tune the run through recorded settings.
@@ -32,7 +33,7 @@ import { mountFeelPanel } from './feel';
 import { GYM_FEATURES, GYM_TEXT } from './levels/gym';
 import { createPlaygroundMenu, type MenuEntry } from './menu';
 import { gym } from './scenes/gym';
-import { CAMERA_KEY, LOOK_KEY, PLAYGROUND_LOOKS, cameraMode, nextCamera, nextLook } from './views';
+import { CAMERA_KEY, LOOK_KEY, PLAYGROUND_LOOKS, SWAP_KEY, cameraMode, nextCamera, nextLook, swapShoulder } from './views'; // prettier-ignore
 
 /** How near the player a sign shows (m): the features around him, not the whole gym at once. */
 const SIGN_RANGE = 24;
@@ -66,10 +67,11 @@ const replays = Object.fromEntries(
   ).map(([path, load]) => [path.replace(/^.*\/|\.replay\.json$/g, ''), load]),
 );
 
-/** The page's query, with the shooter camera and the cel look when it names neither. */
+/** The page's query, with the shooter camera, the cel look and whole-number zooms when it names none of them. */
 const search = new URLSearchParams(location.search);
-if (!search.has('cam') && !search.has('cam3')) search.set('cam3', 'chase');
+if (!search.has('cam') && !search.has('cam3')) search.set('cam3', 'shoulder');
 if (!search.has('post.look')) search.set('post.look', PLAYGROUND_LOOKS[0]);
+if (!search.has('cam.wholeZoom')) search.set('cam.wholeZoom', 'true');
 createPlaygroundMenu(document, {
   scenes: sceneEntries,
   replays: Object.keys(replays),
@@ -79,7 +81,7 @@ createPlaygroundMenu(document, {
 /** The camera member of the inspector (engine/app/viewMembers.ts). */
 interface CameraMember {
   get(): { code: string };
-  set(code: string): { code: string };
+  set(code: string, options?: { blend?: boolean }): { code: string };
 }
 
 /** The started engine; null until `createEngine` resolves (its first frames are drawn before that). */
@@ -112,7 +114,7 @@ function showFrame({ world, scene }: EngineFrame): void {
   if (!showing.camera) showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? 'custom' };
   const look = showing.look.replace(/^look:playground-/, '');
   ui.hud('mode', `Camera: ${showing.camera} · Look: ${look}`, { at: 'top-right' });
-  const keys = 'WASD: move · Space: jump · Shift: sprint · Alt: walk · C: crouch · Click: mouse look · T: camera · P: look · F: feel · M: menu'; // prettier-ignore
+  const keys = 'WASD: move · Space: jump · Shift: sprint · Alt: walk · C: crouch · Click: mouse look · T: camera · X: shoulder · P: look · F: feel · M: menu'; // prettier-ignore
   ui.hud('keys', keys, { at: 'bottom', keys: true });
 }
 
@@ -132,9 +134,11 @@ addEventListener('keydown', (event) => {
   const inspector = engine?.inspector;
   if (!inspector || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
   if (event.code === CAMERA_KEY && camera()) {
-    const code = camera()!.set(nextCamera(camera()!.get().code)).code;
+    const code = camera()!.set(nextCamera(camera()!.get().code), { blend: true }).code;
     showing = { ...showing, camera: cameraMode(code)?.name ?? 'custom' };
     if (!LOOKING.has(showing.camera) && document.pointerLockElement) document.exitPointerLock();
+  } else if (event.code === SWAP_KEY && camera()) {
+    camera()!.set(swapShoulder(camera()!.get().code), { blend: true });
   } else if (event.code === LOOK_KEY) {
     const look = nextLook(showing.look);
     inspector.set('post.look', look);

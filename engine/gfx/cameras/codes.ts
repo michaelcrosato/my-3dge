@@ -5,9 +5,9 @@
  * writes the canonical code back, `describeCamera` puts a spec in words. The codes the cameras raise are here too.
  *
  * The grammar (angles in degrees, lengths in metres, +Y up; `?` and the key may be left out, as in `iso`):
- * - `cam=<view>[,<turn>,<zoom>[,<x>,<y>,<z>]]`: a classic view (iso, threequarter, topdown, brawler, side; their
- *   numbers are in engine/gfx/cameras/presets.ts), turned round its target by `turn`, zoomed, fixed on (x, y, z) when
- *   given, else following.
+ * - `cam=<view>[,<turn>,<zoom>[,<x>,<y>,<z>]]`: a classic view (iso, threequarter, topdown, brawler, side,
+ *   overhead; their numbers are in engine/gfx/cameras/presets.ts), turned round its target by `turn`, zoomed, fixed on
+ *   (x, y, z) when given, else following.
  * - `cam=<azimuth>,<elevation>,<zoom>,<height>,<boost>[,<x>,<z>]`: a custom view, the 2D pages' `?cam=`. `height` is
  *   the target's height: above the followed point, or the fixed target's y when x and z are given.
  * - Either `cam=` form may end with `,persp`: a perspective lens instead of the 2D engine's orthographic projection.
@@ -41,7 +41,7 @@ import type { CameraPose, Projection, Vec3 } from './pose';
 export const CAMERA_CODES = defineCodes('gfx', {
   GFX_BAD_CAMERA_CODE: {
     template: '"{code}" is not a camera code: {problems}',
-    fix: 'write cam=<view>[,<turn>,<zoom>[,<x>,<y>,<z>]] (views: iso, threequarter, topdown, brawler, side), cam=<azimuth>,<elevation>,<zoom>,<height>,<boost>[,<x>,<z>] (a custom view), either with ,persp at the end for a perspective lens, or cam3=orbit[,<azimuth>,<elevation>,<distance>[,<x>,<y>,<z>]], cam3=fly or cam3=fixed[,<x>,<y>,<z>,<yaw>,<pitch>[,<fov>]], or the follow cameras cam3=chase, cam3=first and cam3=rail (engine/gfx/cameras/chase.ts, first.ts and rail.ts give theirs); angles in degrees, lengths in metres',
+    fix: 'write cam=<view>[,<turn>,<zoom>[,<x>,<y>,<z>]] (views: iso, threequarter, topdown, brawler, side, overhead), cam=<azimuth>,<elevation>,<zoom>,<height>,<boost>[,<x>,<z>] (a custom view), either with ,persp at the end for a perspective lens, or cam3=orbit[,<azimuth>,<elevation>,<distance>[,<x>,<y>,<z>]], cam3=fly or cam3=fixed[,<x>,<y>,<z>,<yaw>,<pitch>[,<fov>]], or the follow cameras cam3=chase, cam3=first, cam3=rail, cam3=shoulder and cam3=follow (engine/gfx/cameras/chase.ts, first.ts, rail.ts, shoulder.ts and follow.ts give theirs); angles in degrees, lengths in metres',
     doc: 'Raised by `parseCameraCode` (engine/gfx/cameras/codes.ts) for an empty part, a word where a number belongs, the wrong count of numbers, or a number out of its range (each range is named). Every problem is listed at once.',
   },
   GFX_UNKNOWN_CAMERA: {
@@ -60,15 +60,16 @@ export const CAMERA_CODES = defineCodes('gfx', {
 export type CameraType = 'view' | 'orbit' | 'fly' | 'fixed';
 
 /** The classic views (engine/gfx/cameras/presets.ts has their numbers), and `custom` (any azimuth and elevation). */
-export type ViewName = 'iso' | 'threequarter' | 'topdown' | 'brawler' | 'side' | 'custom';
+export type ViewName = 'iso' | 'threequarter' | 'topdown' | 'brawler' | 'side' | 'overhead' | 'custom';
 
-/** Every view name, in the order the 2D engine cycles them (`custom` last). */
+/** Every view name, in the order the 2D engine cycles them, then WP 13.8's `overhead` (`custom` last). */
 export const VIEW_NAMES: readonly ViewName[] = Object.freeze([
   'iso',
   'threequarter',
   'topdown',
   'brawler',
   'side',
+  'overhead',
   'custom',
 ]);
 
@@ -79,14 +80,18 @@ export const VIEW_LABELS: Readonly<Record<ViewName, string>> = Object.freeze({
   topdown: 'Top-down',
   brawler: 'Brawler',
   side: 'Side scrolling',
+  overhead: 'Overhead',
   custom: 'Custom',
 });
 
 /** The 3D cameras of `cam3=`. */
 export const CAMERA_3D: readonly CameraType[] = Object.freeze(['orbit', 'fly', 'fixed']);
 
-/** WP 3.9's cameras, which follow the hero and read their own codes (`readCameraCode`): chase, first person, the rail. */
-export const FOLLOW_CAMERAS = Object.freeze(['chase', 'first', 'rail'] as const);
+/**
+ * The cameras that follow the hero and read their own codes (`readCameraCode`): WP 3.9's chase, first person and the
+ * rail, and WP 13.8's shooter (`shoulder`) and platformer (`follow`).
+ */
+export const FOLLOW_CAMERAS = Object.freeze(['chase', 'first', 'rail', 'shoulder', 'follow'] as const);
 
 /** A classic view's code as data: missing fields take the camera's defaults. */
 export interface ViewSpec {

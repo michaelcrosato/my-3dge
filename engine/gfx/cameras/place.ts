@@ -1,7 +1,8 @@
 /**
  * @file Cameras into three.js (PLAN.md WP 2.5, §8.3): `createCamera` makes the camera a code names
- * (engine/gfx/cameras/codes.ts, and WP 3.9's `FOLLOW_CAMERAS`, the chase camera, first person and the depth rail,
- * whose modules read their own codes: `readCameraCode` reads them all) from the camera before it, and
+ * (engine/gfx/cameras/codes.ts, and the `FOLLOW_CAMERAS`, WP 3.9's chase camera, first person and depth rail and WP
+ * 13.8's shooter and platformer, whose modules read their own codes: `readCameraCode` reads them all) from the camera
+ * before it, and
  * `placeCamera` puts a pose on a three.js camera each
  * frame, so the renderer draws it (`gfx.frame({ scene, camera })`, engine/gfx/renderer.ts). `createCameraPair` holds
  * one `PerspectiveCamera` and one `OrthographicCamera` (both keeping their height boost, engine/gfx/cameras/boost.ts)
@@ -9,9 +10,9 @@
  * builds no pipeline either is WP 2.7's measurement).
  *
  * `placeCamera` sets the position, the rotation (Euler `YXZ`: pitch about X, then yaw + π about Y, since a three.js
- * camera looks down its −Z), `near`, `far`, `zoom`, then the lens: `fov` and `aspect`, or the frustum `top = −bottom
- * = frustumSize / 2`, `right = −left = top × aspect`. It sets `coordinateSystem` to WebGPU's (depth 0 to 1) before the
- * projection, as the renderer would on its first frame, and applies the boost last.
+ * camera looks down its −Z, and −roll about its view axis), `near`, `far`, `zoom`, then the lens: `fov` and `aspect`,
+ * or the frustum `top = −bottom = frustumSize / 2`, `right = −left = top × aspect`. It sets `coordinateSystem` to
+ * WebGPU's (depth 0 to 1) before the projection, as the renderer would on its first frame, and applies the boost last.
  *
  * Invariants: a placed camera's `getWorldDirection()` is `poseForward(pose)` and its up on screen `poseUp(pose)`;
  * the aspect is width / height, positive and finite (`GFX_BAD_CAMERA` otherwise, and for a pose of the other
@@ -32,35 +33,57 @@ import { MathUtils } from '../../core/math';
 import { BoostedOrthographicCamera, BoostedPerspectiveCamera, boost } from './boost';
 import { createChaseCamera, parseChaseCode, type ChaseSpec } from './chase';
 import { FOLLOW_CAMERAS, parseCameraCode, type CameraSpec } from './codes';
+import { cameraEntry } from './define';
 import { createFirstCamera, parseFirstCode, type FirstSpec } from './first';
 import { createFixedCamera } from './fixed';
 import { createFlyCamera, type FlyBounds } from './fly';
 import { createOrbitCamera, ORBIT_LIMITS } from './orbit';
 import { poseTarget, rangeProblems, refuse, type Camera, type CameraPose } from './pose';
 import { createViewCamera } from './presets';
+import { createFollowCamera, parseFollowCode, type FollowSpec } from './follow';
 import { createRailCamera, parseRailCode, type RailSpec } from './rail';
+import { createShoulderCamera, parseShoulderCode, type ShoulderSpec } from './shoulder';
 
 export { FOLLOW_CAMERAS };
 
-/** The code data of any camera: codes.ts's, or a WP 3.9 camera's. */
-export type AnyCameraSpec = CameraSpec | ChaseSpec | FirstSpec | RailSpec;
+/** A game's own camera's code (engine/gfx/cameras/define.ts): its name and the code its `create` reads. */
+export interface GameCameraSpec {
+  readonly type: 'game';
+  readonly name: string;
+  readonly code: string;
+}
 
-/** Any camera `createCamera` makes: codes.ts's (`Camera`), or a WP 3.9 camera, whose inputs add the hero's. */
+/** The code data of any camera: codes.ts's, a follow camera's, or a game camera's. */
+export type AnyCameraSpec = CameraSpec | ChaseSpec | FirstSpec | RailSpec | ShoulderSpec | FollowSpec | GameCameraSpec;
+
+/** Any camera `createCamera` makes: codes.ts's (`Camera`), or a follow camera, whose inputs add the hero's. */
 export type AnyCamera =
   | Camera
   | ReturnType<typeof createChaseCamera>
   | ReturnType<typeof createFirstCamera>
-  | ReturnType<typeof createRailCamera>;
+  | ReturnType<typeof createRailCamera>
+  | ReturnType<typeof createShoulderCamera>
+  | ReturnType<typeof createFollowCamera>;
+
+/** Each follow camera's code reader, by its name. */
+const READERS: Readonly<Record<(typeof FOLLOW_CAMERAS)[number], (code: string) => AnyCameraSpec>> = {
+  chase: parseChaseCode,
+  first: parseFirstCode,
+  rail: parseRailCode,
+  shoulder: parseShoulderCode,
+  follow: parseFollowCode,
+};
 
 /**
- * Reads any camera's code: `cam3=chase…`, `cam3=first…` and `cam3=rail…` by their modules, every other by
+ * Reads any camera's code: a follow camera's (`cam3=chase…`, `cam3=first…`, `cam3=rail…`, `cam3=shoulder…`,
+ * `cam3=follow…`) by its module, a game camera's (`defineCamera`) as its name and code, every other by
  * `parseCameraCode`. Throws `GFX_BAD_CAMERA_CODE` or `GFX_UNKNOWN_CAMERA`.
  */
 export function readCameraCode(code: string): AnyCameraSpec {
-  const head = /^\??(?:cam3?=)?([^,]*)/.exec(String(code).trim())?.[1].trim();
-  if (head === 'chase') return parseChaseCode(code);
-  if (head === 'first') return parseFirstCode(code);
-  if (head === 'rail') return parseRailCode(code);
+  const text = String(code).trim();
+  const head = /^\??(?:cam3?=)?([^,]*)/.exec(text)?.[1].trim() ?? '';
+  if (Object.hasOwn(READERS, head)) return READERS[head as keyof typeof READERS](code);
+  if (cameraEntry(head)) return { type: 'game', name: head, code: text.replace(/^\?/, '') };
   return parseCameraCode(code);
 }
 
@@ -77,7 +100,7 @@ export function placeCamera(pose: CameraPose, camera: PerspectiveCamera | Orthog
   ]);
   camera.coordinateSystem = WebGPUCoordinateSystem;
   camera.position.set(pose.position[0], pose.position[1], pose.position[2]);
-  camera.rotation.set(pose.pitch, pose.yaw + Math.PI, 0, 'YXZ');
+  camera.rotation.set(pose.pitch, pose.yaw + Math.PI, -pose.roll, 'YXZ');
   camera.near = pose.near;
   camera.far = pose.far;
   camera.zoom = pose.zoom;
@@ -131,8 +154,8 @@ export interface CreateCameraOptions {
  * The camera `code` names (a code, or its data from `readCameraCode`): `cam=iso`, `cam3=orbit,…`, `cam3=chase`.
  * Switching from `from`, the camera before it: a following view or orbit starts on its target (until the first
  * follow), an orbit without angles looks the same way, a bare `fly` or `fixed` starts at its place (the prototype's
- * switching), and a bare chase or first person keeps its heading. Throws `GFX_BAD_CAMERA_CODE` or
- * `GFX_UNKNOWN_CAMERA` for a bad code.
+ * switching), and a bare chase, first person, shooter or platformer camera keeps its heading. Throws
+ * `GFX_BAD_CAMERA_CODE` or `GFX_UNKNOWN_CAMERA` for a bad code.
  */
 export function createCamera(code: string | AnyCameraSpec, options: CreateCameraOptions = {}): AnyCamera {
   const spec = typeof code === 'string' ? readCameraCode(code) : code;
@@ -140,6 +163,9 @@ export function createCamera(code: string | AnyCameraSpec, options: CreateCamera
   if (spec.type === 'chase') return createChaseCamera({ ...spec, from });
   if (spec.type === 'first') return createFirstCamera({ ...spec, from });
   if (spec.type === 'rail') return createRailCamera(spec);
+  if (spec.type === 'game') return cameraEntry(spec.name)!.create(spec.code, { from }) as AnyCamera;
+  if (spec.type === 'shoulder') return createShoulderCamera({ ...spec, from });
+  if (spec.type === 'follow') return createFollowCamera({ ...spec, from });
   const start = from && !('target' in spec && spec.target) ? poseTarget(from) : undefined;
   switch (spec.type) {
     case 'view': {

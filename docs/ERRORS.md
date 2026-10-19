@@ -257,7 +257,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the scene {scene} loads the level {level}, which is not registered, so its view cannot be built`
 - Fix: register the level's text before the view starts: in a page, import text from './levels/<name>.txt?raw' and call defineLevel('{level}', { text, file }); in Node, read the file and do the same
-- Registered in: [`engine/app/view.ts` line 57](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 59](../engine/app/view.ts)
 
 ### APP_NO_REPLAY
 
@@ -269,7 +269,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `{member} needs the scene drawn as a view, and this engine has none`
 - Fix: start it with createHeadless({ scene, view: true }) in Node; a page always has one
-- Registered in: [`engine/app/view.ts` line 61](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 63](../engine/app/view.ts)
 
 ### APP_NOT_HEADLESS
 
@@ -575,13 +575,13 @@ Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when
 
 - Message: `the course {course} measures {measure}, but the player of {scene} has no animator to pose`
 - Fix: spawn the player with an animator (spawnActor with anim: { build }), or drop the animation measure
-- Registered in: [`engine/dev/feel/run.ts` line 36](../engine/dev/feel/run.ts)
+- Registered in: [`engine/dev/feel/run.ts` line 40](../engine/dev/feel/run.ts)
 
 ### DEV_COURSE_NO_PLAYER
 
 - Message: `the course {course} runs {scene}, which has no player actor to measure`
 - Fix: run a scene that spawns a player actor (spawnActor with player: true), or measure another course
-- Registered in: [`engine/dev/feel/run.ts` line 32](../engine/dev/feel/run.ts)
+- Registered in: [`engine/dev/feel/run.ts` line 36](../engine/dev/feel/run.ts)
 
 ### DEV_NO_METER
 
@@ -624,7 +624,7 @@ Raised by the camera factories, `makePose` and `placeCamera` (engine/gfx/cameras
 ### GFX_BAD_CAMERA_CODE
 
 - Message: `"{code}" is not a camera code: {problems}`
-- Fix: write cam=<view>[,<turn>,<zoom>[,<x>,<y>,<z>]] (views: iso, threequarter, topdown, brawler, side), cam=<azimuth>,<elevation>,<zoom>,<height>,<boost>[,<x>,<z>] (a custom view), either with ,persp at the end for a perspective lens, or cam3=orbit[,<azimuth>,<elevation>,<distance>[,<x>,<y>,<z>]], cam3=fly or cam3=fixed[,<x>,<y>,<z>,<yaw>,<pitch>[,<fov>]], or the follow cameras cam3=chase, cam3=first and cam3=rail (engine/gfx/cameras/chase.ts, first.ts and rail.ts give theirs); angles in degrees, lengths in metres
+- Fix: write cam=<view>[,<turn>,<zoom>[,<x>,<y>,<z>]] (views: iso, threequarter, topdown, brawler, side, overhead), cam=<azimuth>,<elevation>,<zoom>,<height>,<boost>[,<x>,<z>] (a custom view), either with ,persp at the end for a perspective lens, or cam3=orbit[,<azimuth>,<elevation>,<distance>[,<x>,<y>,<z>]], cam3=fly or cam3=fixed[,<x>,<y>,<z>,<yaw>,<pitch>[,<fov>]], or the follow cameras cam3=chase, cam3=first, cam3=rail, cam3=shoulder and cam3=follow (engine/gfx/cameras/chase.ts, first.ts, rail.ts, shoulder.ts and follow.ts give theirs); angles in degrees, lengths in metres
 - Registered in: [`engine/gfx/cameras/codes.ts` line 42](../engine/gfx/cameras/codes.ts)
 
 Raised by `parseCameraCode` (engine/gfx/cameras/codes.ts) for an empty part, a word where a number belongs, the wrong count of numbers, or a number out of its range (each range is named). Every problem is listed at once.

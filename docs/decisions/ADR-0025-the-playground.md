@@ -345,3 +345,58 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **For the owner's playtest:** a ride down to the far pulley lets go at half its speed and bumps the pole; whether a
   ride should end in a dismount, and the tuned numbers above, are the playtest's to say.
 - **engine/physics/carry.ts:** the kinematic floor's carry moved out of engine/physics/character.ts, at its 400 lines.
+
+## Amendment 8 (2026-10-19, WP 13.8): the camera modes
+
+- **A rig between the view and its camera** (engine/gfx/cameras/rig.ts, beyond the WP's list: the view and the feel
+  kit's camera metrics both step it, so the page and the numbers see one picture): the camera a code names, the one
+  before it still stepped while a switch blends, the view effects with each camera's share, and the view settings
+  `cam.fov` (Apex's horizontal degrees at 4:3, 90: first person's and the shooter's lens, so the box's first person is
+  73.7° now, not 75°), `cam.blend` (0.35 s), `cam.effects` and `cam.wholeZoom` (the playground's page sets it: the
+  classic views zoom 1, 2, 3, 4).
+- **Live switches blend; others cut.** A blend's first frame is the old camera's picture, so an agent's set-then-shot
+  would show the old camera: `camera.set(code)` cuts and `camera.set(code, { blend: true })` blends, as T, X and a
+  view's turn do; a replay's view changes take `blend` too.
+- **Blends** (blend.ts) go about the target: the target on a straight line, the heading the short way, pitch, roll,
+  distance, lens, zoom, boost and planes in step, a smoothstep over the time. An orthographic pose blends as the
+  perspective one with a 20° lens framing its picture at its target, so the projections swap where the pictures
+  agree; two orthographic poses blend orthographic. The feel kit's camera metrics allow a blend's own move and turn,
+  and the look's for a camera that looks along it (first person and the shooter follow a course's look).
+- **The shooter** (shoulder.ts): §4's 0.5 m right, 0.3 m up and 3.8 m back from the eye, lagged 0.05 s and never
+  0.5 m behind, looking along the aim. X swaps by the code (`cam3=shoulder,…,-1`, blended); a swap input eases in the
+  camera over 0.12 s. The sights pull the arm in to 1.5 m by the effects' share (the aim button is WP 13.9's: the view
+  reads `aim` from the step's held buttons). Under 1.2 m of room behind the eye draws the shoulder point in, across by
+  the share and up by its square, so a camera backed against a wall still sees him.
+- **The platformer** (follow.ts): §4's arm, pitch, recentring, look-ahead and dead zone, and ours: recentring eased
+  over 0.6 s and at most 1.5 rad/s; the look-ahead full at 5 m/s, eased over 0.5 s; the dead zone's ground settling
+  in 0.3 s; the lift (an arm cut 0.25 m short by a slope or a wall tilts the camera down at 1.5 rad/s, up to 50°, and
+  back at 0.6 rad/s once clear); a 60° lens.
+- **Collision that never jumps** (collide.ts). The chase keeps WP 3.9's spring arm; the shooter and the platformer
+  move their camera on as a ball: carried with the arm, then toward the arm's end where the ball fits there (else as
+  far as a sweep from the arm's base clears), in at up to 10 m/s and out eased over 0.3 s no faster, each leg slid
+  along the walls; carried over 2 m in a frame (the player put elsewhere), or a second stuck over a metre off, it goes
+  at once. The arm's base follows by sliding too. §4's 0.3 m bound rules the spring arm out: on the courses it snapped
+  0.7 m dropping off the hang's wall, 3.3 m at the tunnel's mouth, 3.2 m at the ladder's top, 10 to 13 m stuck on the
+  ramps.
+- **The occluder fade hides** (cutaway.ts): with a camera that may stand behind a wall (the shooter's, the
+  platformer's), the block pieces and the rides that a line from it to the player's head or chest crosses leave the
+  picture until the line clears; cut pieces stay cut; parts drawn as one mesh (ramps, floors) and props (instanced
+  batches, with no hiding per instance yet) are not faded. Hidden rather than see-through: a translucent twin of every
+  look's materials would add materials and pipelines. A partial fade, and the props, are the playtest's to ask for.
+- **Effects** (effects.ts): Apex's eye heights (1.524 and 0.8128 m, the duck's share between) are the cameras' until
+  the sim needs the eye (WP 13.9's aim): in the model's profile now they would re-record every playground golden for
+  numbers the sim never reads. Ours where §4 gives none: the punch's spring at 2.5 Hz and 0.6 damping, a landing 0.4°
+  per m/s over 3 m/s up to 5°, a jump 1°, a grab 1.5°; the bob 1.2 cm down and 0.6 cm across at 5 m/s; the sights
+  55° at a 70° lens in 0.25 s; screen shake 4 mm per m/s of a landing over 10 m/s. First person takes them all, the
+  shooter its lens, the sights and half the roll and punch, the platformer 0.3 of the punch, the views none.
+- **The overhead view** is a classic view: straight down, north up (never turned), orthographic, in whole zoom steps,
+  its target on its pixel grid (1/(24 × zoom) m). Views never trail the followed point more than 2 m once within it,
+  nor first person's eye 0.2 m, so a 20 m fall's stop is never overshot.
+- **A game's own camera:** the registry kind `camera` (`defineCamera(name, { create })`, its code `cam3=<name>[,…]`)
+  and `followCamera(type, state, steps, { effects, fade })`; the factories are public (engine/gfx/cameras/api.ts,
+  re-exported whole by engine/index.ts at its line cap).
+- **The courses:** the playground's modes are the rigs (`cam3=shoulder`, `cam3=first`, `cam3=follow`, `cam=iso`,
+  `cam=overhead`); every course keeps every camera's bounds, the watches of amendments 5 to 7 lifted. The launcher's
+  drop and the ladder's climb down look down: the shooter's view is the aim, and looking level off the tower no camera
+  behind the player sees him below. The soak course `cameras` blends through the five modes twice round a square by
+  the north wall: 0.08 m and 1.3° at worst, never inside, never lost outside first person.

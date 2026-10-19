@@ -109,8 +109,8 @@ describe('parseCameraCode', () => {
     expect(() => parseCameraCode('cam=isso')).toThrow(
       /\[GFX_UNKNOWN_CAMERA\] "isso" is not a camera \(did you mean "iso"\?\)/,
     );
-    // All 12 names (after G9; it named 9, the follow cameras left out): a typo of one finds it.
-    const all = 'iso, threequarter, topdown, brawler, side, custom, orbit, fly, fixed, chase, first, rail';
+    // All 15 names (WP 13.8 added overhead, shoulder and follow): a typo of one finds it.
+    const all = 'iso, threequarter, topdown, brawler, side, overhead, custom, orbit, fly, fixed, chase, first, rail, shoulder, follow'; // prettier-ignore
     expect(() => readCameraCode('cam3=chasee')).toThrow(`"chasee" is not a camera (did you mean "chase"?)`);
     expect(() => readCameraCode('cam3=chasee')).toThrow(`use one of ${all}: the classic views in cam=, the 3D and follow cameras in cam3=`); // prettier-ignore
     expect(() => parseCameraCode('cam3=chase')).toThrow(

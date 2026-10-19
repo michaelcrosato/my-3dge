@@ -1,0 +1,163 @@
+/**
+ * @file T2 for the playground's camera modes (PLAN.md WP 13.8, docs/PLAYGROUND.md §4), by `window.__engine` and keys:
+ * 1. each mode renders the gym with the player in view: the ID pass sees him from the shooter, the platformer,
+ *    isometric and top-down cameras; first person stands at the shooter model's eye height (1.52 m) and sees the gym;
+ * 2. a live switch blends: T's first frame is the old camera's picture, each frame moves it on a little, and 0.35 s
+ *    later it is the new camera's; X swaps the shooter's shoulder the same way; a plain `camera.set` cuts;
+ * 3. no camera changes the hash: the rides replay keeps its goldens while the page blends through every mode;
+ * 4. blending through every mode while the player runs builds 0 pipelines after the warm-up, raising no advice;
+ * 5. the effects: a sprint lowers first person's eye 0.15 m, and stopping raises it again.
+ *
+ * Invariants: the page is read through `__engine` only; the sim is stepped with `__engine.step` (or the keys on the
+ * virtual clock's frames), then frames drawn with `__engine.render` (1/60 s each), so a blend's frames are counted.
+ */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import type { Page } from '@playwright/test';
+import { PLAYGROUND_CAMERAS } from '../../labs/playground/views';
+import { expect, test } from './fixtures';
+
+/** The page's engine, inside `evaluate`. */
+declare const __engine: Record<string, unknown> & { [name: string]: (...args: unknown[]) => unknown };
+
+/** The rides replay. */
+const RIDES = readFileSync(join(import.meta.dirname, '../replays/playground-rides.replay.json'), 'utf8');
+
+/** A camera's pose, as `camera.get` gives it. */
+type Pose = { position: [number, number, number]; yaw: number; pitch: number; projection: string; fov: number };
+
+/** Calls the `__engine` member at `path` (`camera.get`) with `args`. */
+function call<T = unknown>(page: Page, path: string, ...args: unknown[]): Promise<T> {
+  return page.evaluate(
+    ([name, rest]) => {
+      const fn = name.split('.').reduce<unknown>((at, part) => (at as Record<string, unknown>)[part], __engine);
+      return (fn as (...a: unknown[]) => unknown)(...rest) as T;
+    },
+    [path, args] as const,
+  );
+}
+
+/** The camera now: its code and pose. */
+const camera = (page: Page) => call<{ code: string; pose: Pose }>(page, 'camera.get');
+
+/** The player's feet. */
+async function feet(page: Page): Promise<[number, number, number]> {
+  const { actor } = await call<{ actor: { x: number; y: number; z: number } }>(page, 'get', 1);
+  return [actor.x, actor.y, actor.z];
+}
+
+const far = (a: readonly number[], b: readonly number[]) => Math.hypot(...a.map((v, i) => v - b[i]));
+
+/** Opens the playground at `query` and waits for it, paused. */
+async function open(page: Page, harness: { ready(o: { timeout: number }): Promise<unknown> }, query = '') {
+  await page.goto(`labs/playground/${query}`);
+  await harness.ready({ timeout: 120_000 });
+  await call(page, 'pause');
+  await call(page, 'render', 2);
+}
+
+test.describe('the playground’s cameras', () => {
+  test.setTimeout(600_000);
+
+  test('render the gym with the player in view in every mode: first person at the eye height', async ({
+    page,
+    harness,
+  }) => {
+    await open(page, harness);
+    await harness.assertWebGPU();
+    const at = await feet(page);
+    for (const mode of PLAYGROUND_CAMERAS) {
+      await call(page, 'camera.set', mode.code);
+      await call(page, 'render', 3);
+      type Ids = { ids: { visible: { name: string; px: number }[] } };
+      const shot = await call<Ids>(page, 'shot', { ids: true, metrics: false, thumbnail: false });
+      const player = shot.ids.visible.find((entry) => entry.name === 'actor#1')?.px ?? 0;
+      if (mode.name === 'first') {
+        expect((await camera(page)).pose.position[1] - at[1], 'the eye height').toBeCloseTo(1.524, 1);
+        expect(shot.ids.visible.length, 'first person sees the gym').toBeGreaterThan(3);
+      } else expect(player, mode.name).toBeGreaterThan(50);
+    }
+    expect(harness.advice()).toEqual([]);
+  });
+
+  test('blend a live switch over 0.35 s, the shoulder swap too, and cut a plain one', async ({ page, harness }) => {
+    await open(page, harness);
+    const from = (await camera(page)).pose;
+    await page.keyboard.press('KeyT'); // shooter → first person, blended
+    expect((await camera(page)).code.split(',')[0]).toBe('cam3=first');
+    expect(far((await camera(page)).pose.position, from.position)).toBeLessThan(1e-6); // the first frame is the old one's
+    const path = [from.position];
+    for (let k = 0; k < 24; k++) {
+      await call(page, 'render', 1);
+      path.push((await camera(page)).pose.position);
+    }
+    const total = far(path[0], path.at(-1)!);
+    const steps = path.slice(1).map((p, k) => far(p, path[k]));
+    expect(total).toBeGreaterThan(3); // 3.8 m back over the shoulder to the eye
+    expect(Math.max(...steps) / total, 'no frame takes a big share of the move').toBeLessThan(0.12);
+    expect(far(path[22], path[24])).toBeLessThan(1e-3); // there by 0.35 s
+    await page.keyboard.press('KeyT');
+    await page.keyboard.press('KeyT');
+    await page.keyboard.press('KeyT');
+    await page.keyboard.press('KeyT'); // round to the shooter again
+    await call(page, 'render', 30);
+    const right = (await camera(page)).pose.position;
+    await page.keyboard.press('KeyX');
+    expect((await camera(page)).code).toMatch(/^cam3=shoulder,.*,-1$/);
+    await call(page, 'render', 1);
+    const moved = far((await camera(page)).pose.position, right);
+    await call(page, 'render', 30);
+    const left = (await camera(page)).pose.position;
+    expect(far(left, right)).toBeCloseTo(1, 1); // a metre across, the shoulder's ±0.5 m
+    expect(moved).toBeLessThan(0.2); // eased
+    await call(page, 'camera.set', 'cam=overhead');
+    expect((await camera(page)).pose).toMatchObject({ projection: 'orthographic', pitch: expect.closeTo(-Math.PI / 2, 6) }); // prettier-ignore
+    expect(harness.advice()).toEqual([]);
+  });
+
+  test('keep the rides replay’s goldens while blending through every mode', async ({ page, harness }) => {
+    await open(page, harness);
+    const views = PLAYGROUND_CAMERAS.map((mode, i) => [100 + i * 250, { cam: mode.code, blend: true }] as const);
+    const run = await call<{ hashes: Record<string, string> }>(page, 'replay', RIDES, { views, draw: 5 });
+    const goldens = (JSON.parse(RIDES) as { hashes: Record<string, Record<string, string>> }).hashes['linux-x64'];
+    expect(run.hashes).toEqual(goldens);
+    expect(harness.advice()).toEqual([]);
+  });
+
+  test('build 0 pipelines after the warm-up blending through every mode while the player runs', async ({
+    page,
+    harness,
+  }) => {
+    await open(page, harness);
+    for (const _round of [1, 2]) {
+      for (const _mode of PLAYGROUND_CAMERAS) {
+        await page.keyboard.press('KeyT');
+        for (let k = 0; k < 4; k++) {
+          await call(page, 'step', 3, { move: [-0.6, 0.8], b: ['sprint'] });
+          await call(page, 'render', 4);
+        }
+      }
+    }
+    expect((await call<{ pipelinesAfterWarmUp: number }>(page, 'stats')).pipelinesAfterWarmUp).toBe(0);
+    const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
+    expect(advice).not.toContain('GFX_COLD_PIPELINE');
+    expect(harness.advice()).toEqual([]);
+  });
+
+  test('lower first person’s eye 0.15 m in a sprint, and raise it again on a stop', async ({ page, harness }) => {
+    await open(page, harness, '?cam3=first');
+    const eye = async () => (await camera(page)).pose.position[1] - (await feet(page))[1];
+    const standing = await eye();
+    for (let k = 0; k < 40; k++) {
+      await call(page, 'step', 1, { move: [-1, 0], look: [-Math.PI / 2, 0], cam: -Math.PI / 2, b: ['sprint'] });
+      await call(page, 'render', 1);
+    }
+    expect(standing - (await eye())).toBeCloseTo(0.15, 1);
+    for (let k = 0; k < 60; k++) {
+      await call(page, 'step', 1, {});
+      await call(page, 'render', 1);
+    }
+    expect(Math.abs((await eye()) - standing)).toBeLessThan(0.02);
+    expect(harness.advice()).toEqual([]);
+  });
+});

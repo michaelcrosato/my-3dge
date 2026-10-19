@@ -11,13 +11,21 @@
  * The prototype cut only for its classic views and never for its 3D cameras; this asks the geometry instead, so an
  * orbit camera outside the hall cuts the walls in front of it and a chase camera inside cuts none.
  *
+ * The occluder fade (WP 13.8, docs/PLAYGROUND.md §4): for a camera that may stand behind a wall (`update`'s `fade`:
+ * the shooter's and the platformer's, engine/gfx/cameras/collide.ts), every block piece of any part, and every object
+ * `objects` gives (the stage's rides), whose box a line from the camera to the hero's head or chest (`FADE_AIMS`)
+ * crosses is taken out of the picture until the line clears (`planFade`): a piece leaves its part's instances, an
+ * object hides. A piece the cutaway cut stays as cut; a part drawn as one mesh (a ramp, a floor) is never faded, its
+ * box no measure of its shape. It hides rather than drawing a see-through twin, so it adds no material and no pipeline
+ * (ADR-0025 amendment 8).
+ *
  * Carried from `my-3d2dge:src/stress-world/40-cameras.js:166-181` (`placeCut`: walls by their outward direction
  * against the view's, `> .3`, none from above 85°; pillars on the lines from the camera to the hero's head and feet
  * and, below 60°, four points 40 units round him, the pillar's box widened by 4 units) and `10-hall.js:302-370`
  * (`placeWalls`, the cut twins, `placePillars`, `segBox`), in metres.
  *
- * Invariants: presentation only, never read by the sim; pure decisions (equal poses give equal cuts); `update` writes
- * instances only when a cut changes; `dispose` puts every piece back in its part and removes the twins.
+ * Invariants: presentation only, never read by the sim; pure decisions (equal poses give equal cuts and fades);
+ * `update` writes instances only when a cut or a fade changes; `dispose` puts every piece back and removes the twins.
  *
  * @example
  * // const cutaway = createCutaway(meshes);
@@ -30,7 +38,7 @@
  * @see engine/gfx/cutaway.test.ts
  * @see tests/e2e/hall.spec.ts
  */
-import { InstancedMesh } from 'three/webgpu';
+import { Box3, InstancedMesh, type Object3D } from 'three/webgpu';
 import { poseForward, poseTarget, type CameraPose, type Vec3 } from './cameras/pose';
 import type { LevelCell } from './level/cells';
 import { meshDrawCalls, type LevelMeshes, type LevelMeshPart } from './level/meshes';
@@ -48,6 +56,8 @@ export const AIM_STEEP = (60 * Math.PI) / 180;
 export const CUT_MARGIN = 0.25;
 /** The points aimed at (m): the head and the feet above the focus, and the floor this far round it. */
 export const CUT_AIMS = Object.freeze({ head: 1.625, feet: 0.125, around: 2.5 });
+/** The points the fade keeps in sight above the focus (m), and how far inside a box a line must pass to fade it. */
+export const FADE_AIMS = Object.freeze({ head: 1.5, chest: 1, inset: 0.05 });
 
 /** What the cutaway decides over: the pieces of one part, how they cut, and their heights (m). */
 export interface CutTarget {
@@ -137,19 +147,52 @@ export function planCutaway(targets: readonly CutTarget[], pose: CameraPose, foc
   );
 }
 
-/** How many of each cutting part's pieces are cut, after an `update`. */
+/**
+ * For each target, for each cell, whether a line from `pose` to the head or the chest over `focus` (`FADE_AIMS`)
+ * passes through the cell's box, shrunk by `FADE_AIMS.inset`: an orthographic camera looks from its plane, as in
+ * `planCutaway`.
+ */
+export function planFade(targets: readonly Omit<CutTarget, 'when'>[], pose: CameraPose, focus: Vec3): boolean[][] {
+  const [x, y, z] = focus;
+  const lines = fadeLines(pose, [[x, y + FADE_AIMS.head, z], [x, y + FADE_AIMS.chest, z]]); // prettier-ignore
+  const n = FADE_AIMS.inset;
+  return targets.map(({ cells, bottom, top }) =>
+    cells.map(({ centre: [cx, , cz], size: [w, d] }) => {
+      const [min, max]: [Vec3, Vec3] = [[cx - w / 2 + n, bottom + n, cz - d / 2 + n], [cx + w / 2 - n, top - n, cz + d / 2 - n]]; // prettier-ignore
+      return lines.some(([a, b]) => segmentHitsBox(a, b, min, max));
+    }),
+  );
+}
+
+/** The lines of sight from `pose` to each of `aims`: from its position, or back along an orthographic view. */
+function fadeLines(pose: CameraPose, aims: readonly Vec3[]): [Vec3, Vec3][] {
+  const f = poseForward(pose);
+  const [px, py, pz] = pose.position;
+  return aims.map((aim) => {
+    if (pose.projection !== 'orthographic') return [aim, pose.position];
+    const back = Math.max(0, (aim[0] - px) * f[0] + (aim[1] - py) * f[1] + (aim[2] - pz) * f[2]);
+    return [aim, [aim[0] - f[0] * back, aim[1] - f[1] * back, aim[2] - f[2] * back]];
+  });
+}
+
+/** How many of each cutting part's pieces are cut, after an `update`, and what the fade took out of the picture. */
 export interface CutawayReport {
-  /** Whether any piece moved between its part and its twin. */
+  /** Whether any piece moved between its part and its twin, or in or out of the picture. */
   changed: boolean;
   parts: { name: string; cut: number; of: number }[];
+  /** The pieces faded, by part name, and the objects faded, by name. */
+  faded: { parts: Record<string, number>; objects: string[] };
 }
 
 /** A level's cutaway (see the file comment). */
 export interface Cutaway {
   /** The twins, one per part that cuts, in the parts' order: `<part name>:cut`. */
   readonly twins: readonly InstancedMesh[];
-  /** Cuts what `pose` needs cut to see `focus` (the pose's target by default), and says what is cut. */
-  update(pose: CameraPose, focus?: Vec3): CutawayReport;
+  /**
+   * Cuts what `pose` needs cut to see `focus` (the pose's target by default), and with `fade` takes out of the picture
+   * what still stands between them (see the file comment); says what is cut and faded.
+   */
+  update(pose: CameraPose, focus?: Vec3, options?: { fade?: boolean }): CutawayReport;
   /** Puts every piece back whole. */
   clear(): CutawayReport;
   /** The tiles of each part's cut pieces, by part name. */
@@ -162,18 +205,27 @@ export interface Cutaway {
   dispose(): void;
 }
 
-/** One cutting part, its twin and what is cut now. */
+/** One part whose pieces the cutaway or the fade moves: its twin (a cutting part's), what is cut and what faded. */
 interface Entry {
-  part: LevelMeshPart & { mesh: InstancedMesh; cut: NonNullable<LevelMeshPart['cut']> };
-  twin: InstancedMesh;
+  part: LevelMeshPart & { mesh: InstancedMesh };
+  twin: InstancedMesh | null;
   cuts: boolean[];
+  fades: boolean[];
 }
 
-/** Gives `meshes`' cutting parts their twins (see the file comment). */
-export function createCutaway(meshes: Pick<LevelMeshes, 'root' | 'parts'>): Cutaway {
+/** What `createCutaway` takes beside the meshes. */
+export interface CutawayOptions {
+  /** More objects the fade hides when they stand in the way (the stage's rides), read each update. */
+  objects?: () => readonly Object3D[];
+}
+
+/** Gives `meshes`' cutting parts their twins (see the file comment), and fades `options.objects` too. */
+export function createCutaway(meshes: Pick<LevelMeshes, 'root' | 'parts'>, options: CutawayOptions = {}): Cutaway {
   const entries: Entry[] = meshes.parts
-    .filter((part): part is Entry['part'] => part.cut !== null && (part.mesh as InstancedMesh).isInstancedMesh)
+    .filter((part): part is Entry['part'] => (part.mesh as InstancedMesh).isInstancedMesh && part.cells.length > 0)
     .map((part) => {
+      const none = part.cells.map(() => false);
+      if (!part.cut) return { part, twin: null, cuts: none, fades: none };
       const twin = new InstancedMesh(part.cut.geometry(), part.mesh.material, instanceSlots(part.cells.length));
       twin.name = `${part.name}:cut`;
       twin.castShadow = part.mesh.castShadow;
@@ -181,48 +233,103 @@ export function createCutaway(meshes: Pick<LevelMeshes, 'root' | 'parts'>): Cuta
       Object.assign(twin.userData, part.mesh.userData, { cut: part.cut.height });
       placeInstances(twin, []);
       (part.mesh.parent ?? meshes.root).add(twin);
-      return { part, twin, cuts: part.cells.map(() => false) };
+      return { part, twin, cuts: none, fades: none };
     });
-  const targets: CutTarget[] = entries.map(({ part }) => ({ ...part, when: part.cut.when }));
+  const cutting = entries.filter((entry) => entry.twin !== null);
+  const targets: CutTarget[] = cutting.map(({ part }) => ({ ...part, when: part.cut!.when }));
+  const boxes = new WeakMap<Object3D, Box3>();
+  const hidden = new Set<Object3D>();
   const registrations = new Set<{ dispose(): void }>();
   const report = (changed: boolean): CutawayReport => ({
     changed,
-    parts: entries.map(({ part, cuts }) => ({ name: part.name, cut: cuts.filter(Boolean).length, of: cuts.length })),
+    parts: cutting.map(({ part, cuts }) => ({ name: part.name, cut: cuts.filter(Boolean).length, of: cuts.length })),
+    faded: {
+      parts: Object.fromEntries(entries.filter((e) => e.fades.some(Boolean)).map((e) => [e.part.name, e.fades.filter(Boolean).length])), // prettier-ignore
+      objects: [...hidden].map((object) => object.name),
+    },
   });
-  const apply = (plan: readonly (readonly boolean[])[]) => {
-    let changed = false;
-    entries.forEach((entry, i) => {
-      if (plan[i].every((cut, j) => cut === entry.cuts[j])) return;
-      changed = true;
-      entry.cuts = [...plan[i]];
-      placeInstances(
-        entry.part.mesh,
-        entry.part.cells.filter((_, j) => !entry.cuts[j]),
-      );
+  /** Places `entry`'s pieces: the part holds the whole ones, the twin the cut ones, and neither the faded. */
+  const place = (entry: Entry) => {
+    const { cells } = entry.part;
+    placeInstances(
+      entry.part.mesh,
+      cells.filter((_, j) => !entry.cuts[j] && !entry.fades[j]),
+    );
+    if (entry.twin)
       placeInstances(
         entry.twin,
-        entry.part.cells.filter((_, j) => entry.cuts[j]),
+        cells.filter((_, j) => entry.cuts[j] && !entry.fades[j]),
       );
+  };
+  const apply = (
+    cuts: readonly (readonly boolean[])[],
+    fades: readonly (readonly boolean[])[],
+    hide: ReadonlySet<Object3D>,
+  ) => {
+    // prettier-ignore
+    let changed = false;
+    entries.forEach((entry, i) => {
+      const cut = entry.twin ? cuts[cutting.indexOf(entry)] : entry.cuts;
+      const fade = fades[i].map((faded, j) => faded && !cut[j]); // a cut piece stays as cut
+      if (cut.every((c, j) => c === entry.cuts[j]) && fade.every((f, j) => f === entry.fades[j])) return;
+      changed = true;
+      [entry.cuts, entry.fades] = [[...cut], fade];
+      place(entry);
     });
+    for (const object of [...hidden]) if (!hide.has(object)) [object.visible, changed] = [true, hidden.delete(object)];
+    for (const object of hide) if (!hidden.has(object)) [object.visible, changed] = [false, !!hidden.add(object)];
     return report(changed);
   };
-  const clear = () => apply(entries.map(({ part }) => part.cells.map(() => false)));
+  const none = () => entries.map(({ part }) => part.cells.map(() => false));
+  const clear = () =>
+    apply(
+      cutting.map(({ part }) => part.cells.map(() => false)),
+      none(),
+      new Set(),
+    );
+  /** The objects standing between `pose` and `focus` (their world boxes, as `planFade` tests a piece's). */
+  const blocking = (pose: CameraPose, focus: Vec3): Set<Object3D> => {
+    const [x, y, z] = focus;
+    const lines = fadeLines(pose, [[x, y + FADE_AIMS.head, z], [x, y + FADE_AIMS.chest, z]]); // prettier-ignore
+    const out = new Set<Object3D>();
+    for (const object of options.objects?.() ?? []) {
+      if (!boxes.has(object)) boxes.set(object, new Box3().setFromObject(object).expandByScalar(-FADE_AIMS.inset));
+      const box = boxes.get(object)!;
+      if (box.isEmpty()) continue;
+      const [min, max]: [Vec3, Vec3] = [
+        [box.min.x, box.min.y, box.min.z],
+        [box.max.x, box.max.y, box.max.z],
+      ];
+      if (lines.some(([a, b]) => segmentHitsBox(a, b, min, max))) out.add(object);
+    }
+    return out;
+  };
   return {
-    twins: entries.map(({ twin }) => twin),
-    update(pose, focus = poseTarget(pose)) {
-      return apply(planCutaway(targets, pose, focus));
+    twins: cutting.map(({ twin }) => twin!),
+    update(pose, focus = poseTarget(pose), { fade = false } = {}) {
+      const cuts = planCutaway(targets, pose, focus);
+      if (!fade) return apply(cuts, none(), new Set());
+      return apply(
+        cuts,
+        planFade(
+          entries.map(({ part }) => part),
+          pose,
+          focus,
+        ),
+        blocking(pose, focus),
+      );
     },
     clear,
     cut() {
       return Object.fromEntries(
-        entries.map(({ part, cuts }) => [part.name, part.cells.filter((_, j) => cuts[j]).map((cell) => cell.tiles)]),
+        cutting.map(({ part, cuts }) => [part.name, part.cells.filter((_, j) => cuts[j]).map((cell) => cell.tiles)]),
       );
     },
     drawCalls(shadowMaps = 0) {
-      return entries.reduce((sum, { part, twin }) => sum + meshDrawCalls(twin, part.castShadow, shadowMaps), 0);
+      return cutting.reduce((sum, { part, twin }) => sum + meshDrawCalls(twin!, part.castShadow, shadowMaps), 0);
     },
     register(warmup, id = `${meshes.root.name}:cutaway`) {
-      const entry = warmup.register(id, { objects: () => entries.map(({ twin }) => twin) });
+      const entry = warmup.register(id, { objects: () => cutting.map(({ twin }) => twin!) });
       const registration = {
         dispose() {
           registrations.delete(registration);
@@ -235,9 +342,9 @@ export function createCutaway(meshes: Pick<LevelMeshes, 'root' | 'parts'>): Cuta
     dispose() {
       for (const registration of [...registrations]) registration.dispose();
       clear();
-      for (const { twin } of entries) {
-        twin.removeFromParent();
-        twin.geometry.dispose();
+      for (const { twin } of cutting) {
+        twin!.removeFromParent();
+        twin!.geometry.dispose();
       }
     },
   };

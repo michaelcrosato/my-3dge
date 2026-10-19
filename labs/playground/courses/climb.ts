@@ -8,7 +8,8 @@
  * 6 m wall, one from each zone of the climb space: from the mini zone (a jump at the wall, caught at once) 0.72 m up and
  * 4.78 m/s away; from low in the green zone (caught 0.64 m up from a jump 1.2 m short) a big lift, 6.55 m/s away; from
  * the neutral zone (2 m up) 6.55 m/s away, keeping only the climb's rise. Then the bounds
- * (labs/playground/courses/bounds.ts) of each run.
+ * (labs/playground/courses/bounds.ts) of each run, every camera's kept topping out since WP 13.8 (the chase camera that
+ * stood in for the shooter's jumped 1.1 to 1.2 m a frame there).
  *
  * The green zone's lift is ours (a full jump at the zone's foot, falling to none at its top: the measures say only
  * that it falls): caught at 0.645 m and jumping off from there the tick after, it rises 1.4224 × (1.1938 − 0.645) /
@@ -82,7 +83,7 @@ defineCourse('course:playground-climb', {
         ...(height >= 5 ? [{ name: `${label}: climbs at`, metric: 'topRise', from: at + 20, to: at + RUN - 1, reference: 5.715, tolerance: { share: 0.02 } }] : []), // prettier-ignore
         ...(refused ? [{ name: `${label}: the end boost's apex`, metric: 'apex', from: at + 1, to: at + RUN - 1, reference: 3.7338 + 0.7112, tolerance: { abs: 0.02 } }] : []), // prettier-ignore
         ...bodyBounds(at + 2, { to: at + RUN - 1, label }),
-        ...cameraBounds(at + 2, { to: at + RUN - 1, label, watch: { shooter: 'WP 13.8' } }),
+        ...cameraBounds(at + 2, { to: at + RUN - 1, label }),
       ];
     }),
     ...BOUNCE_RUNS.flatMap(([zone, , , , off], k) => {

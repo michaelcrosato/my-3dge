@@ -67,17 +67,11 @@ const press = (k: number, button: string) => [
 ];
 
 /**
- * The bounds from step `from` to `to`, under `label`; the cameras that WP 13.8 is to bring within them watched: the
- * shooter's (the chase camera's collision snaps in by the tower's pole, and loses the player riding up the line),
- * and after a fall of 20 m every camera's catching up with the stop (0.33 to 0.36 m a frame).
+ * The bounds from step `from` to `to`, under `label`. Every camera keeps them since WP 13.8: by the tower's pole, riding
+ * up the balloon's line and catching up after a fall of 20 m (the stand-ins before it snapped in by the pole, lost the
+ * player on the line and caught up 0.33 to 0.36 m a frame).
  */
-const bounds = (from: number, to: number, label: string, watch: readonly string[] = ['shooter']) => {
-  const watched = Object.fromEntries(watch.map((name) => [name, 'WP 13.8']));
-  return [...bodyBounds(from, { to, label }), ...cameraBounds(from, { to, label, watch: watched })];
-};
-
-/** Every camera's name. */
-const ALL = ['shooter', 'first', 'platformer', 'isometric', 'top-down'];
+const bounds = (from: number, to: number, label: string) => [...bodyBounds(from, { to, label }), ...cameraBounds(from, { to, label })]; // prettier-ignore
 
 defineCourse('course:playground-zipline', {
   description: 'Ziplines: caught by use or jumping on, ridden either way at their speed-ups to their top speeds, left by a jump, a drop or an end, three catches a jump (docs/PLAYGROUND.md §3.2).', // prettier-ignore
@@ -120,6 +114,6 @@ defineCourse('course:playground-zipline', {
     ...bounds(RUN + 2, 2 * RUN - 1, 'jump on'),
     ...bounds(2 * RUN + 2, 2 * RUN + 119, 'jump off'),
     ...bounds(2 * RUN + 122, 3 * RUN - 1, 'drop'),
-    ...bounds(3 * RUN + 2, 4 * RUN - 1, 'three catches', ALL),
+    ...bounds(3 * RUN + 2, 4 * RUN - 1, 'three catches'),
   ],
 });

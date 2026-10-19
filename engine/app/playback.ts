@@ -78,9 +78,10 @@ export function createPlayback(value: unknown): Playback {
   };
 }
 
-/** A view change during a replay: a camera code, and view settings by path. */
+/** A view change during a replay: a camera code (blended into, with `blend`, as a page's live switch), and view settings by path. */ // prettier-ignore
 export interface ViewChange {
   cam?: string;
+  blend?: boolean;
   set?: Record<string, SettingValue>;
 }
 
@@ -120,8 +121,8 @@ export interface PlayTarget {
   stepped(): void;
   /** Draws a frame of the run now (a page); absent headless. */
   draw?(): Promise<void>;
-  /** Switches the camera to `code` (a view change). */
-  camera?(code: string): void;
+  /** Switches the camera to `code` (a view change), blending with `blend`. */
+  camera?(code: string, blend?: boolean): void;
   /** Sets a view setting. */
   setView(path: string, value: SettingValue): void;
 }
@@ -155,7 +156,7 @@ export async function playInto(target: PlayTarget, text: string, options: PlayIn
     if (!marks || marks.has(k)) hashes[k] = session.world.hash();
     if (k === until) break;
     for (const [, change] of (options.views ?? []).filter(([step]) => step === k)) {
-      if (change.cam !== undefined) target.camera?.(change.cam);
+      if (change.cam !== undefined) target.camera?.(change.cam, change.blend === true);
       for (const [path, value] of Object.entries(change.set ?? {})) target.setView(path, value);
     }
     playback.step(session);

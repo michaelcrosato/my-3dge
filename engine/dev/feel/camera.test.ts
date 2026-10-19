@@ -1,8 +1,9 @@
 /**
  * @file Unit tests for the feel kit's camera metrics (engine/dev/feel/camera.ts): a point is in the picture only in
  * front of the camera and within its lens or its frustum; a chase camera following a steady run never jumps past the
- * player's move, never turns and never loses the player; a fixed camera inside a wall counts its frames inside, one
- * looking away counts them lost, and one standing still while the player stands still never jumps.
+ * player's move, never turns and never loses the player; a blended switch and the sim's look move the camera only as
+ * far as they account for; a fixed camera inside a wall counts its frames inside, one looking away counts them lost,
+ * and one standing still while the player stands still never jumps.
  * @see engine/dev/feel/camera.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -42,6 +43,20 @@ describe('camera metrics', () => {
     const track = createCameraTrack('cam3=chase');
     for (let k = 0; k < 120; k++) track.frame([k * 0.08, 0, -20], { queries });
     expect(track.metrics()).toEqual({ jump: 0, turn: expect.closeTo(0, 9), inside: 0, lost: 0 });
+  });
+
+  it('allow what a blended switch and the sim’s look move the camera, and nothing else', () => {
+    const track = createCameraTrack('cam=iso');
+    for (let k = 0; k < 120; k++) {
+      if (k === 40) track.set('cam3=shoulder');
+      track.frame([k * 0.08, 0, 0], { look: [k < 80 ? 0 : Math.PI / 2, 0] }); // a quarter turn of the look at 80
+    }
+    const switching = track.frames.slice(41, 62);
+    expect(Math.max(...switching.map((f) => f.allowed.move))).toBeGreaterThan(1); // the blend swept it far
+    expect(track.frames[80].allowed.turn).toBeCloseTo(Math.PI / 2, 6);
+    expect(track.metrics()).toMatchObject({ jump: expect.any(Number), lost: 0 });
+    expect(track.metrics().jump).toBeLessThan(0.3);
+    expect(track.metrics().turn).toBeLessThan(0.01);
   });
 
   it('count the frames a camera stands inside the level, or loses the player, and a still camera never jumps', () => {

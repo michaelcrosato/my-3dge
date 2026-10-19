@@ -12,6 +12,8 @@
  * cameras follow him, the chase camera stays inside the room, first person hides his body but the hands, and the
  * cutaway cuts the wall before a side view. WP 7.8: a level entry's material swaps reach the stage's level meshes, and
  * the stage's sky, once shown, follows the frames: its pool's lights picked near the focus, flickering as they go.
+ * WP 13.8: on the playground's shooter model first person stands at its eye height, a live switch blends (its first
+ * frame the old camera's, halfway far from both) and a plain one cuts.
  * @see engine/app/view.ts
  */
 import { readFileSync } from 'node:fs';
@@ -25,6 +27,12 @@ import { defineScene } from '../sim/scene';
 import { defineComponent } from '../sim/state';
 import { defineLevel } from '../world/level/level';
 import { PROJECTILE, PROJECTILE_FIELDS } from '../world/projectiles';
+import { GYM_TEXT } from '../../labs/playground/levels/gym';
+import '../../labs/playground/bodies/player';
+import '../../labs/playground/scenes/gym';
+import { BLEND_TIME } from '../gfx/cameras/blend';
+import { CAMERA_EYE } from '../gfx/cameras/effects';
+import { SHOULDER } from '../gfx/cameras/shoulder';
 import { createHeadless, headlessHost } from './headless';
 import type { AppHost } from './viewMembers';
 
@@ -256,5 +264,29 @@ describe('createHeadless({ view: true })', () => {
     expect(cameras.set('cam=iso').culled).toBeUndefined();
     cameras.set('cam=side'); // from the south, level with him: the south wall cuts low so the view sees him
     expect((engine.scene as Dumps).dump({ filter: ':cut' })).toMatch(/wall@1,11-14,11:cut InstancedMesh .*×14/);
+  });
+
+  it('stands first person at the shooter model’s eye height, and blends a live switch where a plain one cuts', async () => {
+    if (!registry.has('level', 'level:gym')) defineLevel('level:gym', { text: GYM_TEXT, file: 'labs/playground/levels/gym.ts' }); // prettier-ignore
+    const engine = await createHeadless({ scene: 'playground:gym', view: true, cam: 'cam3=first' });
+    const view = (headlessHost(engine) as AppHost).view!;
+    const frame = (dt: number) => view.frame({ alpha: 1, dt, aspect: 16 / 9 });
+    engine.step(2);
+    frame(1 / 60);
+    const actor = engine.get(1)!.actor as { x: number; y: number; z: number };
+    expect(view.cameraInfo().pose.position[1] - actor.y).toBeCloseTo(CAMERA_EYE.stand, 2); // not the body's eyes
+    const before = view.cameraInfo().pose;
+    const blended = view.setCamera('cam3=shoulder', { blend: true });
+    expect(blended.code).toMatch(/^cam3=shoulder/);
+    expect(blended.pose.position).toEqual(before.position); // the blend's first frame is the old camera's
+    frame(BLEND_TIME / 2);
+    const half = view.cameraInfo().pose.position;
+    frame(BLEND_TIME);
+    const end = view.cameraInfo().pose.position;
+    expect(Math.hypot(...half.map((v, i) => v - before.position[i]))).toBeGreaterThan(0.5);
+    expect(Math.hypot(...half.map((v, i) => v - end[i]))).toBeGreaterThan(0.5); // halfway: far from both ends
+    const { pitch } = view.cameraInfo().pose; // first person's, kept
+    expect(end[1] - actor.y).toBeCloseTo(CAMERA_EYE.stand + SHOULDER.up - SHOULDER.back * Math.sin(pitch), 1);
+    expect(view.setCamera('cam=overhead').pose.pitch).toBeCloseTo(-Math.PI / 2, 9); // a plain set cuts
   });
 });

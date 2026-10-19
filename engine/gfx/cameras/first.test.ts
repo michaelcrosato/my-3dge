@@ -1,8 +1,9 @@
 /**
  * @file Unit tests for the first-person camera (`engine/gfx/cameras/first.ts`): it sits at the head socket (the eye
  * sockets' midpoint, through FK) or eye height without a rig, follows the eye across at once and up and down with its
- * lag, turns and zooms within its limits, starts from the camera before it, drives the intents' `fromCamera`; the
- * near-body culling hides the body but the hands, and anything near the eye; its codes round-trip.
+ * lag (never more than `FIRST_TRAIL` behind), turns and zooms within its limits, looks along the sim's look and takes
+ * the player's lens when given, starts from the camera before it, drives the intents' `fromCamera`; the near-body
+ * culling hides the body but the hands, and anything near the eye; its codes round-trip.
  */
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../../core/math';
@@ -17,6 +18,7 @@ import {
   FIRST_DEFAULTS,
   FIRST_EYE_HEIGHT,
   FIRST_NEAR_BODY,
+  FIRST_TRAIL,
   firstState,
   formatFirstCode,
   nearBodyCull,
@@ -63,6 +65,16 @@ describe('the first-person camera', () => {
 
   it('stands FIRST_EYE_HEIGHT above the followed point without a rig', () => {
     close(createFirstCamera().update({ follow: [2, 0.5, -1] }).position, [2, 0.5 + FIRST_EYE_HEIGHT, -1]);
+  });
+
+  it('never trails the eye by more than FIRST_TRAIL, looks along the sim’s look, and takes the player’s lens', () => {
+    const first = createFirstCamera();
+    first.update({ eye: [0, 1.5, 0] }, 1 / 60);
+    expect(first.update({ eye: [0, 0.5, 0] }, 1 / 60).position[1]).toBeCloseTo(0.5 + FIRST_TRAIL, 12); // a fall
+    expect(first.update({ eye: [0, 0.5, 0], view: [1, -0.4] }, 1 / 60)).toMatchObject({ yaw: 1, pitch: -0.4 });
+    expect(first.update({ eye: [0, 0.5, 0], lens: 80 }, 1 / 60).fov).toBe(80);
+    expect(first.update({ eye: [0, 0.5, 0], lens: 80, zoom: 1 }, 1 / 60).fov).toBe(75); // the wheel narrows it still
+    expect(first.update({ eye: [0, 0.5, 0], lens: 90 }, 1 / 60).fov).toBe(85);
   });
 
   it('turns right and up with look and turn, narrows its lens with zoom, within its limits', () => {

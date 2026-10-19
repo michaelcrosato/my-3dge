@@ -3,7 +3,7 @@
  * filled (from step 1, the course's last step as the end), and each problem named at once: a measure ending before it
  * starts or after the course, a time without its end or its speed, a camera metric without its camera or a move metric
  * with one, a hand gap without its point, a measure without a tolerance, two measures of one name, change-points out
- * of step order or past the end; courses list by id.
+ * of step order or past the end, a camera switch past the end or without a camera code; courses list by id.
  * @see engine/dev/feel/course.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -75,5 +75,13 @@ describe('courses', () => {
       [120, { b: null }],
     ];
     expect(() => defineCourse('course:past', { scene: 'playground:gym', steps: 120, inputs: past, measures }, registry)).toThrow(/inputs\[1\] is not \[step, change\] with a step from 0 to 119/); // prettier-ignore
+  });
+
+  it('take camera switches for its camera measures, and refuse one past its end or with no camera code', () => {
+    const registry = createRegistry();
+    const measures = [{ name: 'jump', metric: 'cameraJump', camera: 'cam=iso', reference: 0, tolerance: { abs: 0.3 } }];
+    const spec = { scene: 'playground:gym', steps: 120, measures };
+    expect(defineCourse('course:switch', { ...spec, views: [[60, 'cam3=shoulder']] }, registry).views).toEqual([[60, 'cam3=shoulder']]); // prettier-ignore
+    expect(() => defineCourse('course:views', { ...spec, views: [[130, 'cam=iso'], [10, 'cam3=chasee']] }, registry)).toThrow(/views\[0\] is not \[step, camera code\] with a step from 0 to 120.*views\[1\]: .*GFX_UNKNOWN_CAMERA/); // prettier-ignore
   });
 });
