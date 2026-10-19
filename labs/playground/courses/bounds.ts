@@ -2,9 +2,9 @@
  * @file The bounds every playground course checks beside its own numbers (docs/PLAYGROUND.md §4, §5.1 and §9.1, PLAN.md
  * WP 13.4): from the step after a course places the player, its body's (a planted foot slides at most 5 cm in one
  * contact, the anim QA's limit; no point jumps past the QA's pop of 9/16 m in a step) and, for each of the
- * playground's five cameras (labs/playground/views.ts), §4's: no frame moves the camera more than 0.3 m beyond the
- * player's own move or turns it more than 4°, none stands it inside the level, and none loses the player (but first
- * person, whose arms come with WP 13.12). The feet are watched until WP 13.10, the locomotion's animation, plants them:
+ * playground's five cameras (labs/playground/views.ts), §4's: no frame moves the camera more than 0.3 m or turns it
+ * more than 4° beyond what the player's own move, the look and a blend account for (engine/dev/feel/camera.ts), none
+ * stands it inside the level, and none loses the player (but first person, whose arms come with WP 13.12). The feet are watched until WP 13.10, the locomotion's animation, plants them:
  * at WP 13.4 the procedural run held a stance foot within 3 cm mid-stance but slid it about 16 cm at the touchdown and
  * 19 cm at the lift-off, 0.36 m a contact at a 5 m/s run and 0.53 to 0.73 m sprinting (out/feel/<course>/report.json).
  *

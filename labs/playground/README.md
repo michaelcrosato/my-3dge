@@ -70,8 +70,8 @@ the player from every camera, top-down too. Its slots are what the neighbours wi
 | Top-down | `cam=overhead` | straight down, north up, whole zoom steps on the pixel grid |
 
 T steps through them in this order, each switch blended over 0.35 s; `labs/playground/views.ts` lists them and
-`__engine.camera.set('cam=iso')` sets one (`{ blend: true }` blends). The shooter and the platformer never jump or
-stand in a wall, and what stands between them and the player fades (WP 13.8, docs/PLAYGROUND.md §4); the field of view
+`__engine.camera.set('cam=iso')` sets one (`{ blend: true }` blends). The shooter and the platformer move at a pace
+and never stand in a wall, and what stands between them and the player fades (WP 13.8, docs/PLAYGROUND.md §4); the field of view
 is the view setting `cam.fov` (Apex's degrees, 90).
 
 The looks (`labs/playground/looks/`): `look:playground-cel` (the default: three bands of daylight with a rim, every

@@ -160,6 +160,9 @@ function launcherParts(c: Record<string, unknown>): Part[] {
 /** The kinds of ride it draws, by component, with their parts. */
 const KINDS = { zipline: ziplineParts, ladder: ladderParts, launcher: launcherParts } as const;
 
+/** The components it draws rides from: the stage reads these entities beside those it places. */
+export const RIDE_KINDS: readonly string[] = Object.freeze(Object.keys(KINDS));
+
 /** Makes the rides of a stage (see the file comment). */
 export function createStageRides(options: StageRidesOptions): StageRides {
   const root = new Group();

@@ -115,8 +115,12 @@ export interface CameraRig {
   readonly camera: AnyCamera;
   /** The pose the last update drew. */
   pose(): CameraPose;
-  /** The effects' last frame (the screen shake to add, the bob for the weapon), or null with the effects off. */
+  /** The effects' last frame (the bob for the weapon), or null with the effects off. */
   effects(): EffectsFrame | null;
+  /** The screen shake this frame's camera takes, m: the effects' landing shake by its share of the punch (views none). */
+  shake(): number;
+  /** A weapon's recoil, rad (+ up, + left): kicks the view on the punch's spring (WP 13.20's firearms fire it). */
+  kick(pitch: number, yaw?: number): void;
   /** This frame's blend. */
   blend(): RigBlend;
   /** How much of the picture is first person's, 0 to 1 (its body hides past a half). */
@@ -154,6 +158,7 @@ export function createCameraRig(
   let base = camera.pose();
   let drawn = base;
   let frame: EffectsFrame | null = null;
+  let shaken = 0;
   let last: RigBlend = { weight: 1, move: 0, turn: 0 };
   let first = firstOf(camera);
   let updated = false;
@@ -163,6 +168,8 @@ export function createCameraRig(
     },
     pose: () => drawn,
     effects: () => frame,
+    shake: () => shaken,
+    kick: (pitch, yaw) => effects.kick(pitch, yaw),
     blend: () => last,
     firstShare: () => first,
     set(next, { blend = false, ...create } = {}) {
@@ -212,6 +219,7 @@ export function createCameraRig(
         if (w >= 1) blending = null;
       }
       base = pose;
+      shaken = frame ? frame.shake * weights.punch : 0;
       drawn = frame ? applyEffects(pose, frame, weights) : pose;
       return drawn;
     },

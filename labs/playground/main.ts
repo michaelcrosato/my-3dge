@@ -138,7 +138,8 @@ addEventListener('keydown', (event) => {
     showing = { ...showing, camera: cameraMode(code)?.name ?? 'custom' };
     if (!LOOKING.has(showing.camera) && document.pointerLockElement) document.exitPointerLock();
   } else if (event.code === SWAP_KEY && camera()) {
-    camera()!.set(swapShoulder(camera()!.get().code), { blend: true });
+    const code = camera()!.get().code;
+    if (swapShoulder(code) !== code) camera()!.set(swapShoulder(code), { blend: true }); // the shooter's alone
   } else if (event.code === LOOK_KEY) {
     const look = nextLook(showing.look);
     inspector.set('post.look', look);

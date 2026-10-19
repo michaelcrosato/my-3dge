@@ -16,8 +16,8 @@
  *
  * Walls (engine/gfx/cameras/collide.ts): the ball is swept from the eye to the pivot's lag, then to the shoulder
  * point; the camera moves on as `moveCamera` moves it (carried with the arm, then toward the arm's end as far as a
- * sweep back from the shoulder point clears, in at up to `COLLIDE_PULL`, out eased), so it never jumps or stands in a
- * wall.
+ * sweep back from the shoulder point clears, in at up to `COLLIDE_PULL`, out eased), so it moves at a pace (two cuts
+ * left, collide.ts's) and never stands in a wall.
  *
  * Invariants: with `queries` and the eye at least `COLLIDE_RADIUS` from every wall, the camera's ball never ends
  * inside one (shoulder.test.ts); the pitch stays within `SHOULDER_LIMITS.pitch`. Pure: each step returns a new state.
@@ -34,7 +34,7 @@
  */
 import { MathUtils } from '../../core/math';
 import { codeDegrees, codeNumber, followCamera, readCode, type CodePart, type FollowCamera } from './chase';
-import { carry, COLLIDE_TELEPORT, follow, moveCamera, reach, sweep, type CameraBall, type Walls } from './collide';
+import { carry, COLLIDE_PULL, COLLIDE_TELEPORT, follow, moveCamera, reach, sweep, type CameraBall, type Walls } from './collide'; // prettier-ignore
 import type { EffectWeights } from './effects';
 import { approach, makePose, poseForward, poseRight, rangeProblems, refuse, wrapAngle, type CameraInput, type CameraPose, type Vec3 } from './pose'; // prettier-ignore
 
@@ -172,7 +172,8 @@ export function stepShoulder(state: ShoulderState, input: ShoulderInput, dt: num
   const room = MathUtils.clamp(reach(input, held, [-fx, -fy, -fz], want) / SHOULDER.close, 0, 1);
   const jumped = !state.shoulder || Math.hypot(...held.map((v, i) => v - state.shoulder![i])) > COLLIDE_TELEPORT;
   const near = jumped ? room : state.near + (room - state.near) * (1 - Math.exp(-dt / SHOULDER.draw));
-  const shoulder = follow(input, state.shoulder, held, shoulderOf(held, yaw, shown, near));
+  const step = (state.pivot ? Math.hypot(...pivot.map((v, i) => v - state.pivot![i])) : Infinity) + COLLIDE_PULL * dt; // prettier-ignore
+  const shoulder = follow(input, state.shoulder, held, shoulderOf(held, yaw, shown, near), step);
   const end: Vec3 = [shoulder[0] - fx * want, shoulder[1] - fy * want, shoulder[2] - fz * want];
   const before = state.ball && state.shoulder ? { base: state.shoulder, yaw: state.yaw, pitch: state.pitch } : null;
   const carried = before && state.ball ? carry(state.ball.at, before, { base: shoulder, yaw, pitch }) : end;

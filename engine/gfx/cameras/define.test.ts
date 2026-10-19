@@ -1,12 +1,13 @@
 /**
  * @file Unit tests for a game's own cameras (engine/gfx/cameras/define.ts): `defineCamera` adds a mode whose code
  * `cam3=<name>[,…]` `readCameraCode` and `createCamera` hand to its `create`, with the camera before it, so the rig
- * switches to it and blends into it; a name an engine camera has, or one that is not a word, is refused.
+ * switches to it and blends into it; a name an engine camera has, or one that is not a word, is refused, and so is a
+ * `create` that returns no camera (`GFX_BAD_GAME_CAMERA`).
  * @see engine/gfx/cameras/define.ts
  */
 import { describe, expect, it } from 'vitest';
 import { createRegistry, registry } from '../../core/registry';
-import { cameraEntry, CAMERA_NAMES, defineCamera } from './define';
+import { cameraEntry, CAMERA_NAMES, defineCamera, madeCamera } from './define';
 import { createCamera, readCameraCode } from './place';
 import { createCameraRig } from './rig';
 import { createShoulderCamera } from './shoulder';
@@ -40,5 +41,12 @@ describe('a game’s own cameras', () => {
     expect(() => defineCamera('shoulder', { create }, own)).toThrow(/CORE_BAD_SPEC.*engine camera's name/);
     expect(() => defineCamera('two words', { create }, own)).toThrow(/CORE_BAD_SPEC.*not a word/);
     expect(cameraEntry('mine', own)).toBeUndefined();
+  });
+
+  it('refuse a create that returns no camera, naming the camera and the fix, when it is made', () => {
+    defineCamera('broken', { create: () => ({ position: [0, 0, 0] }) });
+    expect(() => createCamera('cam3=broken')).toThrow(/GFX_BAD_GAME_CAMERA.*broken's create returned an object with position, not a camera/); // prettier-ignore
+    expect(() => madeCamera('none', undefined)).toThrow(/returned undefined/);
+    expect(madeCamera('ok', createShoulderCamera()).type).toBe('shoulder');
   });
 });

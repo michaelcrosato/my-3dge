@@ -361,42 +361,65 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   distance, lens, zoom, boost and planes in step, a smoothstep over the time. An orthographic pose blends as the
   perspective one with a 20° lens framing its picture at its target, so the projections swap where the pictures
   agree; two orthographic poses blend orthographic. The feel kit's camera metrics allow a blend's own move and turn,
-  and the look's for a camera that looks along it (first person and the shooter follow a course's look).
+  and the look's turn, read off the sim's look intents, for the cameras that look along it (`LOOK_CAMERAS`: first
+  person and the shooter), so a cut between two views counts whatever the look (the review found the overhead view,
+  heading north, taking the look's allowance); the look's swing is allowed at the camera's new distance, stricter
+  when the arm pulls in.
 - **The shooter** (shoulder.ts): §4's 0.5 m right, 0.3 m up and 3.8 m back from the eye, lagged 0.05 s and never
-  0.5 m behind, looking along the aim. X swaps by the code (`cam3=shoulder,…,-1`, blended); a swap input eases in the
-  camera over 0.12 s. The sights pull the arm in to 1.5 m by the effects' share (the aim button is WP 13.9's: the view
+  0.5 m behind, looking along the aim. X swaps by the code (`cam3=shoulder,…,-1`, blended; on another camera it does
+  nothing); a swap input eases in the camera over 0.12 s. The sights pull the arm in to 1.5 m by the effects' share (the aim button is WP 13.9's: the view
   reads `aim` from the step's held buttons). Under 1.2 m of room behind the eye draws the shoulder point in, across by
   the share and up by its square, so a camera backed against a wall still sees him.
 - **The platformer** (follow.ts): §4's arm, pitch, recentring, look-ahead and dead zone, and ours: recentring eased
   over 0.6 s and at most 1.5 rad/s; the look-ahead full at 5 m/s, eased over 0.5 s; the dead zone's ground settling
   in 0.3 s; the lift (an arm cut 0.25 m short by a slope or a wall tilts the camera down at 1.5 rad/s, up to 50°, and
   back at 0.6 rad/s once clear); a 60° lens.
-- **Collision that never jumps** (collide.ts). The chase keeps WP 3.9's spring arm; the shooter and the platformer
-  move their camera on as a ball: carried with the arm, then toward the arm's end where the ball fits there (else as
-  far as a sweep from the arm's base clears), in at up to 10 m/s and out eased over 0.3 s no faster, each leg slid
-  along the walls; carried over 2 m in a frame (the player put elsewhere), or a second stuck over a metre off, it goes
-  at once. The arm's base follows by sliding too. §4's 0.3 m bound rules the spring arm out: on the courses it snapped
-  0.7 m dropping off the hang's wall, 3.3 m at the tunnel's mouth, 3.2 m at the ladder's top, 10 to 13 m stuck on the
-  ramps.
+- **Collision at a pace** (collide.ts), reworked after the review. The chase keeps WP 3.9's spring arm; the shooter
+  and the platformer move their camera on as a ball: carried with the arm (the base's move and the look's turns, not
+  a camera's own recentring or lift, which go at its pace), then toward the arm's end where the ball fits there and a
+  sweep from the arm's base meets no floor or ceiling on the way (else as far as that sweep clears), in at up to
+  10 m/s and out eased over 0.3 s, no faster, each leg slid along the walls and stopped where the base would lose
+  sight of it with 0.2 m to spare; a camera already out of the base's sight (over a wall's top) never comes down
+  behind it. A second stuck over a metre off, it homes to the clear point at that pace, level first, never through a
+  wall. Two cuts are left: carried over 2 m in a frame (the player put elsewhere), it goes with him; found inside a
+  wall (the level moved into it), it goes to the clear point. The arm's base follows by sliding, no further a frame
+  than the player moved plus 10 m/s. §4's 0.3 m bound rules the spring arm out: on the courses it snapped 0.7 m
+  dropping off the hang's wall, 3.3 m at the tunnel's mouth, 3.2 m at the ladder's top, 10 to 13 m stuck on the ramps.
+  The first build's "never jumps" held only on the courses: the review's fuzz (80 random 3 s runs a seed anywhere in
+  the gym, the look within ±0.8 rad, up to 3 rad/s) found 1.3 to 11.3 m jumps and a camera outside the perimeter
+  wall, and the look held 1.2 rad up sent the arm's end under the floor. Over four seeds now: 0.26 m at worst for the
+  shooter, 0.28 m for the platformer, 2.1°, never inside. The shooter still loses the player's chest in 4 to 5% of
+  those frames, two-thirds of them with a wall within 1.5 m behind the eye (the arm pulled in to his head, the chest
+  under the lens), the platformer in 0.2 to 1.6%: every course keeps "never lost", and the rest is the playtest's
+  (docs/PROGRESS.md).
 - **The occluder fade hides** (cutaway.ts): with a camera that may stand behind a wall (the shooter's, the
   platformer's), the block pieces and the rides that a line from it to the player's head or chest crosses leave the
-  picture until the line clears; cut pieces stay cut; parts drawn as one mesh (ramps, floors) and props (instanced
-  batches, with no hiding per instance yet) are not faded. Hidden rather than see-through: a translucent twin of every
+  picture until the line clears, a ride by its own meshes 0.25 m thick or more (`FADE_THIN`: a pad, a platform; a
+  cable, a pole or a rung hides nothing and stays, so the line a player rides never goes); cut pieces stay cut; parts
+  drawn as one mesh (ramps, floors) and props (instanced batches, with no hiding per instance yet) are not faded. The
+  rides were never drawn in a run view before the review (WP 13.7's: the stage drew only the kinds a scene places);
+  the stage now draws the ride kinds a game declares too (stage.ts). Hidden rather than see-through: a translucent twin of every
   look's materials would add materials and pipelines. A partial fade, and the props, are the playtest's to ask for.
 - **Effects** (effects.ts): Apex's eye heights (1.524 and 0.8128 m, the duck's share between) are the cameras' until
   the sim needs the eye (WP 13.9's aim): in the model's profile now they would re-record every playground golden for
   numbers the sim never reads. Ours where §4 gives none: the punch's spring at 2.5 Hz and 0.6 damping, a landing 0.4°
   per m/s over 3 m/s up to 5°, a jump 1°, a grab 1.5°; the bob 1.2 cm down and 0.6 cm across at 5 m/s; the sights
   55° at a 70° lens in 0.25 s; screen shake 4 mm per m/s of a landing over 10 m/s. First person takes them all, the
-  shooter its lens, the sights and half the roll and punch, the platformer 0.3 of the punch, the views none.
+  shooter its lens, the sights and half the roll and punch, the platformer 0.3 of the punch, the views none; the
+  shake goes by the punch's share (the rig's `shake()`), and a weapon's kick is WP 13.20's, through the rig's `kick`.
 - **The overhead view** is a classic view: straight down, north up (never turned), orthographic, in whole zoom steps,
   its target on its pixel grid (1/(24 × zoom) m). Views never trail the followed point more than 2 m once within it,
   nor first person's eye 0.2 m, so a 20 m fall's stop is never overshot.
 - **A game's own camera:** the registry kind `camera` (`defineCamera(name, { create })`, its code `cam3=<name>[,…]`)
   and `followCamera(type, state, steps, { effects, fade })`; the factories are public (engine/gfx/cameras/api.ts,
-  re-exported whole by engine/index.ts at its line cap).
+  re-exported whole by engine/index.ts at its line cap). A `create` that returns no camera is refused at once
+  (`GFX_BAD_GAME_CAMERA`). Q and E, the isometric view's turns, are WP 13.9's, with its action maps.
 - **The courses:** the playground's modes are the rigs (`cam3=shoulder`, `cam3=first`, `cam3=follow`, `cam=iso`,
   `cam=overhead`); every course keeps every camera's bounds, the watches of amendments 5 to 7 lifted. The launcher's
   drop and the ladder's climb down look down: the shooter's view is the aim, and looking level off the tower no camera
   behind the player sees him below. The soak course `cameras` blends through the five modes twice round a square by
-  the north wall: 0.08 m and 1.3° at worst, never inside, never lost outside first person.
+  the north wall: 0.08 m and 1.3° at worst, never inside, never lost outside first person, the lost spans measured
+  by cameras started a second after each first person (one that goes the whole way loses him for 3 frames of each
+  blend out of the eyes, which starts from a picture with no body in it). The course `camera-walls` holds the shooter
+  and the platformer to the four bounds where they meet the level: the look tilted ±1.2 rad on open floor, a sprint
+  and a jump along the east perimeter wall, a run past the climb walls' edges.

@@ -227,7 +227,8 @@ inside geometry; the player in view in every frame (the arms in first person).
 
 As built (WP 13.8, ADR-0025 amendment 8): the page's switches blend (T, X, a view's turn) and `__engine.camera.set`
 blends when asked (`{ blend: true }`), else cuts, so a shot after a set shows the set camera; the shooter's and the
-platformer's cameras move on as a ball that never jumps (the 0.3 m bound rules out pulling in at once) and the fade
+platformer's cameras move on as a ball at a pace (the 0.3 m bound rules out pulling in at once), keep the arm's base
+in sight, home when stuck and cut only when the player is put elsewhere or the level moves into them, and the fade
 hides what stands between, the platformer tilting down over a slope that cuts its arm; isometric and top-down zoom in
 whole steps with the view setting `cam.wholeZoom`, which the page sets; Q and E are WP 13.9's keys.
 

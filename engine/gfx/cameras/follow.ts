@@ -20,7 +20,7 @@
  *
  * Walls (engine/gfx/cameras/collide.ts): the ball is swept from his eye to the pivot; the camera moves on as
  * `moveCamera` moves it (carried with the arm, then toward the arm's end as far as a sweep back from the pivot clears),
- * so it never jumps or stands in a wall.
+ * so it moves at a pace (two cuts left, collide.ts's) and never stands in a wall.
  *
  * Invariants: with `queries` and the eye at least `COLLIDE_RADIUS` from every wall, the camera's ball never ends
  * inside one; the pivot's height is within `FOLLOW_RIG.zone` of the feet's ground; the pitch within `FOLLOW_LIMITS.pitch`.
@@ -36,7 +36,7 @@
  */
 import { MathUtils } from '../../core/math';
 import { codeDegrees, codeNumber, followCamera, readCode, type CodePart, type FollowCamera } from './chase';
-import { carry, follow, moveCamera, reach, type CameraBall, type Walls } from './collide';
+import { carry, COLLIDE_PULL, follow, moveCamera, reach, type CameraBall, type Walls } from './collide';
 import type { CameraPlayer, EffectWeights } from './effects';
 import { ORBIT_ZOOM_STEP } from './orbit';
 import { approach, makePose, poseForward, rangeProblems, refuse, wrapAngle, type CameraInput, type CameraPose, type Vec3 } from './pose'; // prettier-ignore
@@ -175,7 +175,8 @@ export function stepFollow(state: FollowState, input: FollowInput, dt: number): 
   if (gap > FOLLOW_RIG.trail) pivot = approach(want, pivot, FOLLOW_RIG.trail / gap); // never more than `trail` behind
   pivot = [pivot[0], want[1], pivot[2]]; // the height has its own easing: the dead zone's
   const eye: Vec3 = input.eye ?? [f[0], f[1] + height, f[2]];
-  const base = follow(input, state.base, eye, pivot);
+  const step = (state.pivot ? Math.hypot(...pivot.map((v, i) => v - state.pivot![i])) : Infinity) + COLLIDE_PULL * dt; // prettier-ignore
+  const base = follow(input, state.base, eye, pivot, step);
   const tilted = (lift: number) => MathUtils.clamp(pitch - lift, ...FOLLOW_LIMITS.pitch);
   const cut = (lift: number) => {
     const [x, y, z] = poseForward({ yaw, pitch: tilted(lift) });
@@ -189,7 +190,8 @@ export function stepFollow(state: FollowState, input: FollowInput, dt: number): 
   const [fx, fy, fz] = poseForward({ yaw, pitch: view });
   const end: Vec3 = [base[0] - fx * distance, base[1] - fy * distance, base[2] - fz * distance];
   const before = state.ball && state.base ? { base: state.base, yaw: state.yaw, pitch: MathUtils.clamp(state.pitch - state.lift, ...FOLLOW_LIMITS.pitch) } : null; // prettier-ignore
-  const carried = before && state.ball ? carry(state.ball.at, before, { base, yaw, pitch: view }) : end;
+  const turned = { base, yaw: wrapAngle(state.yaw - right), pitch: MathUtils.clamp(pitch - state.lift, ...FOLLOW_LIMITS.pitch) }; // prettier-ignore
+  const carried = before && state.ball ? carry(state.ball.at, before, turned) : end; // its own turns (recentre, lift): to `end` at its pace
   const ball = moveCamera(input, state.ball, base, carried, end, dt);
   return { ...state, yaw, pitch, idle, distance, lead, ground, pivot, base, lift, ball };
 }

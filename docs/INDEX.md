@@ -392,7 +392,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `AnimTrack`, `createAnimTrack`, `HAND_SOCKETS`
   - Tests: [`engine/dev/feel/anim.test.ts`](../engine/dev/feel/anim.test.ts)
 - [`camera.ts`](../engine/dev/feel/camera.ts): Camera metrics on a feel course (PLAN.md WP 13.4 and WP 13.8, docs/PLAYGROUND.md §4 and §9.1): `createCameraTrack(code)` makes the camera rig the page draws through (engine/gfx/cameras/rig.ts: the camera a code names, its blends and effects), steps it once a sim step at the sim's rate, as the page steps it each frame (following the player's feet, his eye, what he does, the sim's look, the run's query view for the walls; a course gives no device input), switches it with a blend where the course says (`set`), and keeps a frame of each pose.
-  - Exports: `CAMERA_CHECK`, `CameraFrame`, `CameraMetrics`, `CameraTrack`, `createCameraTrack`, `inPicture`, `TrackFrame`
+  - Exports: `CAMERA_CHECK`, `CameraFrame`, `CameraMetrics`, `CameraTrack`, `createCameraTrack`, `inPicture`, `LOOK_CAMERAS`, `TrackFrame`
   - Tests: [`engine/dev/feel/camera.test.ts`](../engine/dev/feel/camera.test.ts)
 - [`course.ts`](../engine/dev/feel/course.ts): Feel courses (PLAN.md WP 13.4, docs/PLAYGROUND.md §9.1): the registry kind `course`.
   - Exports: `ANIM_METRICS`, `CAMERA_METRICS`, `Course`, `COURSE_FIELDS`, `courseKind`, `defineCourse`, `getCourse`, `listCourses`, `Measure`, `MEASURE_FIELDS`, `Metric`, `METRICS`, `MOVE_METRICS`, `UNTILS`
@@ -416,7 +416,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `adapterLimits`, `CAPS_CODES`, `GfxCaps`, `readCaps`, `requestDevice`
   - Tests: [`engine/gfx/caps.test.ts`](../engine/gfx/caps.test.ts)
 - [`cutaway.ts`](../engine/gfx/cutaway.ts): The cutaway (PLAN.md WP 4.4): what keeps a level's walls and pillars from hiding the play.
-  - Exports: `AIM_STEEP`, `createCutaway`, `CUT_AIMS`, `CUT_FACING`, `CUT_MARGIN`, `CUT_STEEP`, `Cutaway`, `cutawayAims`, `CutawayOptions`, `CutawayReport`, `CutTarget`, `FADE_AIMS`, `planCutaway`, `planFade`, `segmentHitsBox`
+  - Exports: `AIM_STEEP`, `createCutaway`, `CUT_AIMS`, `CUT_FACING`, `CUT_MARGIN`, `CUT_STEEP`, `Cutaway`, `cutawayAims`, `CutawayOptions`, `CutawayReport`, `CutTarget`, `FADE_AIMS`, `FADE_THIN`, `planCutaway`, `planFade`, `segmentHitsBox`
   - Tests: [`engine/gfx/cutaway.test.ts`](../engine/gfx/cutaway.test.ts), [`tests/e2e/hall.spec.ts`](../tests/e2e/hall.spec.ts)
 - [`features.ts`](../engine/gfx/features.ts): The feature registry (PLAN.md §6.7, I-16; doctrine: WebGPU only): optional adapter features and GPU techniques as entries of the registry kind `feature`, each saying what it needs (adapter features, least device limits), what is lost without it and which advice code says so.
   - Exports: `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `resolveFeatures`
@@ -475,7 +475,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createStageProps`, `StageProps`, `StagePropsOptions`
   - Tests: [`engine/gfx/stageProps.test.ts`](../engine/gfx/stageProps.test.ts)
 - [`stageRides.ts`](../engine/gfx/stageRides.ts): Rides on the stage (PLAN.md WP 13.7): every entity holding the component `zipline`, `ladder` or `launcher` (engine/sim/rides.ts) drawn from it.
-  - Exports: `createStageRides`, `RUNG`, `StageRides`, `StageRidesOptions`
+  - Exports: `createStageRides`, `RIDE_KINDS`, `RUNG`, `StageRides`, `StageRidesOptions`
   - Tests: [`engine/gfx/stageRides.test.ts`](../engine/gfx/stageRides.test.ts)
 - [`stageSky.ts`](../engine/gfx/stageSky.ts): The stage's lights (PLAN.md §6.4's view, WP 7.8, ADR-0008 amendment 10): the stage's own, a hemisphere light and one shadow-casting sun fitted to the level under a plain background, and a sky on demand (engine/gfx/sky.ts: the light pool lit from the level's light spots and flickering, the sky's sun, its dome and backdrop, the ambient light and the fog).
   - Exports: `createStageSky`, `StageSky`, `StageSkyOptions`
@@ -507,7 +507,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `ArmFrame`, `CameraBall`, `carry`, `COLLIDE_PULL`, `COLLIDE_RADIUS`, `COLLIDE_RETURN`, `COLLIDE_SKIN`, `COLLIDE_STUCK`, `COLLIDE_TELEPORT`, `easeArm`, `follow`, `moveCamera`, `QueryGroups`, `reach`, `slide`, `sweep`, `Walls`
   - Tests: [`engine/gfx/cameras/collide.test.ts`](../engine/gfx/cameras/collide.test.ts)
 - [`define.ts`](../engine/gfx/cameras/define.ts): A game's own cameras (PLAN.md WP 13.8; doctrine: Common ground: a camera is a function of input and time): the registry kind `camera`.
-  - Exports: `CAMERA_FIELDS`, `CAMERA_NAMES`, `cameraEntry`, `CameraKindSpec`, `defineCamera`
+  - Exports: `CAMERA_FIELDS`, `CAMERA_NAMES`, `cameraEntry`, `CameraKindSpec`, `defineCamera`, `GAME_CAMERA_CODES`, `madeCamera`
   - Tests: [`engine/gfx/cameras/define.test.ts`](../engine/gfx/cameras/define.test.ts)
 - [`effects.ts`](../engine/gfx/cameras/effects.ts): Camera effects (PLAN.md WP 13.8, docs/PLAYGROUND.md §4; doctrine: Common ground): Apex Legends' view effects, driven by the player's state, view only.
   - Exports: `apexFov`, `applyEffects`, `CAMERA_EYE`, `CameraEffects`, `cameraPlayer`, `CameraPlayer`, `createCameraEffects`, `crouchShare`, `EFFECTS`, `EffectsFrame`, `EffectWeights`, `FIRST_EFFECTS`, `NO_EFFECTS`
@@ -1306,8 +1306,11 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`air.ts`](../labs/playground/courses/air.ts): The air course, `course:playground-air` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.4): the player, empty-handed, placed at the west end of the open floor south of the slide ramps, sprints east holding sprint and jumps three times: 0.1 s into the first, a side key replaces forward (a lurch); the second it takes with a side key held from the take-off (an air strafe); the third it presses just before landing (a bunny hop); then it runs on and stops.
   - Exports: `AIR_START`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
-- [`bounds.ts`](../labs/playground/courses/bounds.ts): The bounds every playground course checks beside its own numbers (docs/PLAYGROUND.md §4, §5.1 and §9.1, PLAN.md WP 13.4): from the step after a course places the player, its body's (a planted foot slides at most 5 cm in one contact, the anim QA's limit; no point jumps past the QA's pop of 9/16 m in a step) and, for each of the playground's five cameras (labs/playground/views.ts), §4's: no frame moves the camera more than 0.3 m beyond the player's own move or turns it more than 4°, none stands it inside the level, and none loses the player (but first person, whose arms come with WP 13.12).
+- [`bounds.ts`](../labs/playground/courses/bounds.ts): The bounds every playground course checks beside its own numbers (docs/PLAYGROUND.md §4, §5.1 and §9.1, PLAN.md WP 13.4): from the step after a course places the player, its body's (a planted foot slides at most 5 cm in one contact, the anim QA's limit; no point jumps past the QA's pop of 9/16 m in a step) and, for each of the playground's five cameras (labs/playground/views.ts), §4's: no frame moves the camera more than 0.3 m or turns it more than 4° beyond what the player's own move, the look and a blend account for (engine/dev/feel/camera.ts), none stands it inside the level, and none loses the player (but first person, whose arms come with WP 13.12).
   - Exports: `bodyBounds`, `BOUNDS`, `BoundsSpan`, `cameraBounds`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`camera-walls.ts`](../labs/playground/courses/camera-walls.ts): The cameras' hard places, `course:playground-camera-walls` (docs/PLAYGROUND.md §4, PLAN.md WP 13.8, its review): where a follow camera meets the level, the shooter's and the platformer's cameras held to §4's four bounds in three legs.
+  - Exports: `CAMERA_WALLS`, `PITCH`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`cameras.ts`](../labs/playground/courses/cameras.ts): The cameras' soak course, `course:playground-cameras` (docs/PLAYGROUND.md §4 and §9.1, PLAN.md WP 13.8): the player runs a square of about 10 m on the gym's floor by its north end, twice round (`LOOP`), sprinting and sliding east, jumping south, sprinting west a metre off the fences and running north between the 1.5 and 2 m mantle walls, turning a quarter at each corner as a player turns the view, while the camera cycles through the five modes (labs/playground/views.ts), a switch every `SWITCH` steps, each blended as the page's T blends it (the course's `views`).
   - Exports: `CAMERAS_START`

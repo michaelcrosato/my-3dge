@@ -2920,6 +2920,7 @@ For the agents who maintain the engine.
 - `CameraTrack` (type): A camera track: what `createCameraTrack` returns.
 - `createCameraTrack` (function): A camera stepped once a sim step behind the player, and its frames (see the file comment).
 - `inPicture` (function): Whether `point` is in the picture of `pose`, a frame of `aspect`: in front of it, within its lens or frustum.
+- `LOOK_CAMERAS` (const): The cameras that look along the sim's look (first person, the shooter's): the look's turn swings them.
 - `TrackFrame` (interface): What a frame of the track takes beside the feet.
 
 ### [`engine/dev/feel/course.ts`](../engine/dev/feel/course.ts)
@@ -3142,8 +3143,8 @@ For the agents who maintain the engine.
 - `COLLIDE_STUCK` (const): How long a `moveCamera` camera may stand more than a metre from where it wants before it goes there, s.
 - `COLLIDE_TELEPORT` (const): A carry longer than this in one frame is the player put somewhere else, m: the camera goes with him at once.
 - `easeArm` (function): An arm's length after the walls (see the file comment): `arm` eased toward `want`, never past `clear`.
-- `follow` (function): A point that follows `to` and never passes through a wall: slid from where it was (`last`), or swept from `from` (the hero's eye, clear of the walls) on the first frame or when `to` is further than `COLLIDE_TELEPORT` from it.
-- `moveCamera` (function): Moves a camera on by a frame (see the file comment): from `ball` (null on the first frame), carried to `carried`, then toward `want`, the arm's end, where the ball fits there, else as far along the arm as a sweep from `base` clears.
+- `follow` (function): A point that follows `to` and never passes through a wall: slid from where it was (`last`), at most `step` m this frame (what `to` itself moved plus `COLLIDE_PULL`·dt, so one held at a lip catches up, never jumps), or swept from `from` (the hero's eye, clear of the walls) on the first frame or when `to` is further than `COLLIDE_TELEPORT` from it and the step allows that (the hero put elsewhere).
+- `moveCamera` (function): Moves a camera on by a frame (see the file comment): from `ball` (null on the first frame), carried to `carried`, then toward `want`, the arm's end, where the ball fits there, else as far along the arm as a sweep from `base` clears, keeping in the base's sight.
 - `QueryGroups` (type): The collision groups a query hits, as the `QueryView` names them.
 - `reach` (function): How far a ball of `COLLIDE_RADIUS` gets from `from` along the unit `dir`, up to `max`: `COLLIDE_SKIN` short of a hit.
 - `slide` (function): Where a ball of `COLLIDE_RADIUS` gets from `from` toward `to`, sliding along up to three surfaces it meets: it stops `COLLIDE_SKIN` short of each and moves on along it; a ball already within the skin of one is first lifted off it.
@@ -3157,6 +3158,8 @@ For the agents who maintain the engine.
 - `cameraEntry` (function): The game camera named `name` on `registry`, or undefined.
 - `CameraKindSpec` (interface): What `defineCamera` takes: `create` makes the camera from its code and the camera before it.
 - `defineCamera` (function): Adds a game's camera mode on `registry` (the shared one by default).
+- `GAME_CAMERA_CODES` (const): The codes this module raises, with their fixes.
+- `madeCamera` (function): What a game camera's `create` returned, checked: a camera, else `GFX_BAD_GAME_CAMERA` naming the camera.
 
 ### [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)
 
@@ -3393,6 +3396,7 @@ For the agents who maintain the engine.
 - `CutawayReport` (interface): How many of each cutting part's pieces are cut, after an `update`, and what the fade took out of the picture.
 - `CutTarget` (interface): What the cutaway decides over: the pieces of one part, how they cut, and their heights (m).
 - `FADE_AIMS` (const): The points the fade keeps in sight above the focus (m), and how far inside a box a line must pass to fade it.
+- `FADE_THIN` (const): A ride part thinner than this, m (its geometry's least extent): a cable, a rail, a rung or a pole hides no one.
 - `planCutaway` (function): For each target, for each cell: whether `pose`, looking at `focus`, cuts it.
 - `planFade` (function): For each target, for each cell, whether a line from `pose` to the head or the chest over `focus` (`FADE_AIMS`) passes through the cell's box, shrunk by `FADE_AIMS.inset`: an orthographic camera looks from its plane, as in `planCutaway`.
 - `segmentHitsBox` (function): Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`).
@@ -4149,6 +4153,7 @@ For the agents who maintain the engine.
 ### [`engine/gfx/stageRides.ts`](../engine/gfx/stageRides.ts)
 
 - `createStageRides` (function): Makes the rides of a stage (see the file comment).
+- `RIDE_KINDS` (const): The components it draws rides from: the stage reads these entities beside those it places.
 - `RUNG` (const): A rung every this many metres up a ladder.
 - `StageRides` (interface): The rides on a stage (see the file comment).
 - `StageRidesOptions` (interface): What `createStageRides` takes.
@@ -5713,6 +5718,11 @@ For the agents who maintain the engine.
 - `BOUNDS` (const): §4's and §5.1's bounds: the camera's move (m) and turn (rad) in a frame, a sole's slide (m), a point's pop (m).
 - `BoundsSpan` (interface): Where a run of bounds reads: from step `from` to `to` (the course's end when absent), its names after `label`.
 - `cameraBounds` (function): Every camera's bounds, from step `from` (see the file comment and `BoundsSpan`).
+
+### [`labs/playground/courses/camera-walls.ts`](../labs/playground/courses/camera-walls.ts)
+
+- `CAMERA_WALLS` (const): The legs: where each places the player, facing which way, from which step to which.
+- `PITCH` (const): How far the look tilts up and down on open floor (rad): past where the shooter's arm meets the floor.
 
 ### [`labs/playground/courses/cameras.ts`](../labs/playground/courses/cameras.ts)
 

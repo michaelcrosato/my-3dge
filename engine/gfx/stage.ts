@@ -52,7 +52,7 @@ import { createActorPuppets, type ActorPuppets } from './puppets/actors';
 import { createStageCrowd, type StageCrowd } from './stageCrowd';
 import { createStageFx, type StageFx } from './stageFx';
 import { createStageProps, type StageProps } from './stageProps';
-import { createStageRides, type StageRides } from './stageRides';
+import { createStageRides, RIDE_KINDS, type StageRides } from './stageRides';
 import { createStageSky, type StageSky } from './stageSky';
 import type { Warmup } from './warmup';
 
@@ -94,7 +94,7 @@ export interface Stage {
   readonly cutaway: Cutaway | null;
   /** The point a following camera looks at: the level's middle, on the floor. */
   readonly centre: readonly [number, number, number];
-  /** The component kinds it reads: those that place an entity, in registry order, then the effects'. */
+  /** The component kinds it reads: those that place an entity, in registry order, then the effects', then the rides'. */
   readonly kinds: readonly string[];
   /** The stand-ins, by entity id. */
   readonly standIns: ReadonlyMap<number, Mesh>;
@@ -263,7 +263,9 @@ export function createStage(options: StageOptions): Stage {
   });
   scene.add(fx.effects.root);
   const standing = placeableKinds(options.registry);
-  const kinds = [...standing, ...fx.kinds.filter((kind) => !standing.includes(kind))];
+  const declared = (kind: string) => options.registry.kinds().includes('component') && options.registry.has('component', kind); // prettier-ignore
+  const rideKinds = RIDE_KINDS.filter((kind) => declared(kind) && !standing.includes(kind)); // they stand by their anchors
+  const kinds = [...standing, ...fx.kinds.filter((kind) => !standing.includes(kind)), ...rideKinds];
   const geometries = new Map<number, BufferGeometry>();
   const standIns = new Map<number, Mesh>();
   const places = new Map<number, { before: StandInPlace; after: StandInPlace }>();

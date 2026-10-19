@@ -13,12 +13,12 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { BoxGeometry, Mesh, MeshBasicMaterial, type InstancedMesh, type Object3D } from 'three/webgpu';
+import { BoxGeometry, Group, Mesh, MeshBasicMaterial, type InstancedMesh, type Object3D } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { compileLevel } from '../world/level/compile';
 import { createCamera } from './cameras/place';
 import { makePose, type CameraPose, type Vec3 } from './cameras/pose';
-import { CUT_AIMS, FADE_AIMS, createCutaway, cutawayAims, planCutaway, planFade, segmentHitsBox, type CutTarget } from './cutaway'; // prettier-ignore
+import { CUT_AIMS, FADE_AIMS, FADE_THIN, createCutaway, cutawayAims, planCutaway, planFade, segmentHitsBox, type CutTarget } from './cutaway'; // prettier-ignore
 import { instancePath } from './instancing';
 import { createLevelMeshes } from './level/meshes';
 import type { Warmup } from './warmup';
@@ -255,19 +255,23 @@ describe('the occluder fade', () => {
     expect(FADE_AIMS.head).toBeGreaterThan(FADE_AIMS.chest);
   });
 
-  it('takes a piece and an object out of the picture with fade, and puts them back without', () => {
+  it('takes a piece and an object’s mesh out of the picture with fade, never a thin one, and puts them back without', () => {
     const { meshes, wall, name } = low();
-    const pole = new Mesh(new BoxGeometry(0.2, 3, 0.2));
+    const ride = new Group();
+    const pad = new Mesh(new BoxGeometry(1, 1, 1));
+    const pole = new Mesh(new BoxGeometry(FADE_THIN - 0.05, 3, FADE_THIN - 0.05)); // on the same line: too thin to hide him
+    pad.position.set(4.5, 1, 4.5);
     pole.position.set(4.5, 1.5, 4.5);
-    pole.name = 'pole';
-    pole.updateMatrixWorld(true);
-    const cutaway = createCutaway(meshes, { objects: () => [pole] });
+    [pad.name, pole.name] = ['pad', 'pole'];
+    ride.add(pad, pole);
+    ride.updateMatrixWorld(true);
+    const cutaway = createCutaway(meshes, { objects: () => [ride] });
     expect(cutaway.update(below, focus).faded).toEqual({ parts: {}, objects: [] }); // no fade asked
     const faded = cutaway.update(below, focus, { fade: true });
-    expect(faded).toMatchObject({ changed: true, faded: { parts: { [name]: 1 }, objects: ['pole'] } });
-    expect([wall.count, pole.visible]).toEqual([0, false]);
+    expect(faded).toMatchObject({ changed: true, faded: { parts: { [name]: 1 }, objects: ['pad'] } });
+    expect([wall.count, pad.visible, pole.visible]).toEqual([0, false, true]);
     expect(cutaway.update(below, focus, { fade: true }).changed).toBe(false);
     cutaway.update(below, focus);
-    expect([wall.count, pole.visible]).toEqual([1, true]);
+    expect([wall.count, pad.visible]).toEqual([1, true]);
   });
 });

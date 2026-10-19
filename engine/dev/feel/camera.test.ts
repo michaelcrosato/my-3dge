@@ -59,6 +59,18 @@ describe('camera metrics', () => {
     expect(track.metrics().turn).toBeLessThan(0.01);
   });
 
+  it('allow the look only to the cameras that look along it, so a cut between views is counted whatever the look', () => {
+    const track = createCameraTrack('cam=iso', { blend: 0 });
+    const north: [number, number] = [Math.PI, 0]; // the top-down view's own heading: no look turns it
+    for (let k = 0; k < 20; k++) {
+      if (k === 10) track.set('cam=overhead'); // blend 0: a cut
+      track.frame([0, 0, 0], { look: north });
+    }
+    expect(track.frames.every((f) => f.allowed.turn === 0 && f.allowed.move === 0)).toBe(true);
+    expect(track.metrics().jump).toBeGreaterThan(1); // the cut's move, counted
+    expect(track.metrics().turn).toBeGreaterThan(0.5); // and its turn
+  });
+
   it('count the frames a camera stands inside the level, or loses the player, and a still camera never jumps', () => {
     const queries = walls();
     const inside = createCameraTrack('cam3=fixed,0,2,10,0,0');

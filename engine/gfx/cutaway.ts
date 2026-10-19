@@ -13,9 +13,9 @@
  *
  * The occluder fade (WP 13.8, docs/PLAYGROUND.md §4): for a camera that may stand behind a wall (`update`'s `fade`:
  * the shooter's and the platformer's, engine/gfx/cameras/collide.ts), every block piece of any part, and every object
- * `objects` gives (the stage's rides), whose box a line from the camera to the hero's head or chest (`FADE_AIMS`)
- * crosses is taken out of the picture until the line clears (`planFade`): a piece leaves its part's instances, an
- * object hides. A piece the cutaway cut stays as cut; a part drawn as one mesh (a ramp, a floor) is never faded, its
+ * `objects` gives (the stage's rides: each mesh by its own box, none thinner than `FADE_THIN`), whose box a line from the
+ * camera to the hero's head or chest (`FADE_AIMS`) crosses is taken out of the picture until the line clears
+ * (`planFade`): a piece leaves its part's instances, a mesh hides. A piece the cutaway cut stays as cut; a part drawn as one mesh (a ramp, a floor) is never faded, its
  * box no measure of its shape. It hides rather than drawing a see-through twin, so it adds no material and no pipeline
  * (ADR-0025 amendment 8).
  *
@@ -38,7 +38,7 @@
  * @see engine/gfx/cutaway.test.ts
  * @see tests/e2e/hall.spec.ts
  */
-import { Box3, InstancedMesh, type Object3D } from 'three/webgpu';
+import { Box3, InstancedMesh, Vector3, type Mesh, type Object3D } from 'three/webgpu';
 import { poseForward, poseTarget, type CameraPose, type Vec3 } from './cameras/pose';
 import type { LevelCell } from './level/cells';
 import { meshDrawCalls, type LevelMeshes, type LevelMeshPart } from './level/meshes';
@@ -58,6 +58,18 @@ export const CUT_MARGIN = 0.25;
 export const CUT_AIMS = Object.freeze({ head: 1.625, feet: 0.125, around: 2.5 });
 /** The points the fade keeps in sight above the focus (m), and how far inside a box a line must pass to fade it. */
 export const FADE_AIMS = Object.freeze({ head: 1.5, chest: 1, inset: 0.05 });
+
+/** A ride part thinner than this, m (its geometry's least extent): a cable, a rail, a rung or a pole hides no one. */
+export const FADE_THIN = 0.25;
+
+const size = new Vector3();
+
+/** Whether `mesh` is thinner than `FADE_THIN` (see it): the fade leaves it, and the ride a player holds, in the picture. */
+function thin(mesh: Mesh): boolean {
+  if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+  mesh.geometry.boundingBox!.getSize(size).multiply(mesh.scale);
+  return Math.min(size.x, size.y, size.z) < FADE_THIN;
+}
 
 /** What the cutaway decides over: the pieces of one part, how they cut, and their heights (m). */
 export interface CutTarget {
@@ -287,13 +299,15 @@ export function createCutaway(meshes: Pick<LevelMeshes, 'root' | 'parts'>, optio
       none(),
       new Set(),
     );
-  /** The objects standing between `pose` and `focus` (their world boxes, as `planFade` tests a piece's). */
+  /** The meshes of the objects standing between `pose` and `focus`, each by its own world box, thin ones never. */
   const blocking = (pose: CameraPose, focus: Vec3): Set<Object3D> => {
     const [x, y, z] = focus;
     const lines = fadeLines(pose, [[x, y + FADE_AIMS.head, z], [x, y + FADE_AIMS.chest, z]]); // prettier-ignore
     const out = new Set<Object3D>();
-    for (const object of options.objects?.() ?? []) {
-      if (!boxes.has(object)) boxes.set(object, new Box3().setFromObject(object).expandByScalar(-FADE_AIMS.inset));
+    const meshes: Object3D[] = [];
+    for (const object of options.objects?.() ?? []) object.traverse((o) => void ((o as Mesh).isMesh && meshes.push(o))); // prettier-ignore
+    for (const object of meshes) {
+      if (!boxes.has(object)) boxes.set(object, thin(object as Mesh) ? new Box3() : new Box3().setFromObject(object).expandByScalar(-FADE_AIMS.inset)); // prettier-ignore
       const box = boxes.get(object)!;
       if (box.isEmpty()) continue;
       const [min, max]: [Vec3, Vec3] = [

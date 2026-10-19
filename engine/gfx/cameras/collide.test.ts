@@ -3,8 +3,8 @@
  * a sweep twice that; an arm pulls in at once and eases out; a slide runs along a wall it meets and lifts off one it
  * starts against; a followed point slides, or starts again from the eye when it would jump; a carried camera keeps its
  * place on the arm as the arm moves and turns; and a `moveCamera` camera stands at the arm's end past a pole, closes in
- * on a wall at most `COLLIDE_PULL` a second and never stands in it, goes with a player put elsewhere, and goes where it
- * wants after standing stuck for `COLLIDE_STUCK`.
+ * on a wall at most `COLLIDE_PULL` a second and never stands in it, goes with a player put elsewhere, homes to the clear
+ * point after standing stuck for `COLLIDE_STUCK` without a jump, and keeps the base's sight over a wall's top.
  * @see engine/gfx/cameras/collide.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -26,6 +26,15 @@ import {
   type CameraBall,
 } from './collide';
 import type { Vec3 } from './pose';
+
+/** A floor and a wall 3 m tall whose face is at z = −3 (it runs to −4): one to look over. */
+function low() {
+  const physics = createPhysics();
+  physics.addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size: [40, 1, 40] }, position: [0, -0.5, 0] }] }); // prettier-ignore
+  physics.addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size: [20, 3, 1] }, position: [0, 1.5, -3.5] }] }); // prettier-ignore
+  physics.step({ dt: 1 / 60, settings: createSettings().sim });
+  return { queries: queryView(physics) };
+}
 
 /** A floor, a wall whose face is at z = −3 (it runs to −4) and a pole of radius 0.06 at (0, z = 2). */
 function walls() {
@@ -101,15 +110,44 @@ describe('camera collision', () => {
     expect(at[2]).toBeCloseTo(-3 + COLLIDE_RADIUS + 2 * COLLIDE_SKIN, 2); // in front of the wall, swept from the base
   });
 
-  it('goes with a player put elsewhere, and where it wants after standing stuck', () => {
+  it('goes with a player put elsewhere; stuck, it homes to the clear point at its pace, never through a wall', () => {
     const w = walls();
     const put = moveCamera(w, { at: [0, 1.5, 0], stuck: 0 }, [10, 1.5, 10], [10, 1.5, 6], [10, 1.5, 6], 1 / 60);
     expect(put.at).toEqual([10, 1.5, 6]);
     const want: Vec3 = [5, 1.5, -22]; // past the wall, where the ball fits: it presses on the wall's face
     let ball: CameraBall = { at: [5, 1.5, -2], stuck: 0 };
-    let k = 0;
-    for (; k < 120 && ball.at[2] > -3; k++) ball = moveCamera(w, ball, [5, 1.5, -20], ball.at, want, 1 / 60);
-    expect(Math.abs(k - COLLIDE_STUCK * 60)).toBeLessThanOrEqual(1); // stuck a second at the face, then there
-    expect(ball.at).toEqual(want);
+    for (let k = 0; k < 180; k++) {
+      const next = moveCamera(w, ball, [5, 1.5, -20], ball.at, want, 1 / 60);
+      expect(far(next.at, ball.at)).toBeLessThanOrEqual(COLLIDE_PULL / 60 + 2 * COLLIDE_SKIN); // no jump, even stuck (a lift off a face aside)
+      expect(next.at[2]).toBeGreaterThan(-3 + COLLIDE_RADIUS); // never through the wall
+      ball = next;
+    }
+    expect(ball.stuck).toBeGreaterThan(COLLIDE_STUCK); // still short of it: homing, never cut there
+  });
+
+  it('keeps the base’s sight: over a wall’s top, it never comes down behind it, and comes back over', () => {
+    const w = low();
+    const base: Vec3 = [5, 1.8, 0];
+    const want: Vec3 = [5, 1, -5.5]; // behind the wall and below its top, where the ball fits
+    let ball: CameraBall = { at: [5, 4.5, -4.5], stuck: 0 }; // above and past the top: the base sees it over it
+    let front = false;
+    for (let k = 0; k < 240; k++) {
+      const next = moveCamera(w, ball, base, ball.at, want, 1 / 60);
+      expect(far(next.at, ball.at)).toBeLessThanOrEqual(COLLIDE_PULL / 60 + 2 * COLLIDE_SKIN);
+      if (next.at[2] < -3 + COLLIDE_RADIUS) expect(next.at[1]).toBeGreaterThan(3); // behind it only above its top
+      front ||= next.at[2] > -3;
+      ball = next;
+    }
+    expect(front).toBe(true); // stuck above it for a while, then home over the top to the clear point
+    let lost: CameraBall = { at: [5, 3.4, -4.4], stuck: 0 }; // the base below its sight line now: lost
+    for (let k = 0; k < 30; k++) lost = moveCamera(w, lost, [5, 1.2, 0], [lost.at[0], 2, lost.at[2]], want, 1 / 60);
+    expect(lost.at[1]).toBeGreaterThanOrEqual(3.4 - 1e-9); // carried down, it never sinks out of sight
+  });
+
+  it('follows a point held at a lip no faster than the step it is given', () => {
+    const w = walls();
+    const held = follow(w, [5, 1.5, 0], [5, 1.5, 4], [5, 1.5, 3], 0.2); // 3 m behind, a 0.2 m step: it creeps
+    expect(far(held, [5, 1.5, 0])).toBeCloseTo(0.2, 9);
+    expect(follow(w, [5, 1.5, 0], [5, 1.5, 4], [5, 1.5, 3], 2.5)).toEqual([5, 1.5, 3]); // put elsewhere: from the eye
   });
 });

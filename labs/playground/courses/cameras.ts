@@ -4,9 +4,11 @@
  * east, jumping south, sprinting west a metre off the fences and running north between the 1.5 and 2 m mantle walls,
  * turning a quarter at each corner as a player turns the view, while the camera cycles through the five modes
  * (labs/playground/views.ts), a switch every `SWITCH` steps, each blended as the page's T blends it (the course's
- * `views`). One camera goes the whole way, so its numbers are every mode's and every switch's: no frame moves it more
- * than 0.3 m or turns it 4° beyond what the player, the look and a blend account for, and none stands it inside the
- * level; outside first person (and a second after it, the blend out of the eyes), none loses the player.
+ * `views`). One camera goes the whole way, so its jump, turn and inside numbers are every mode's and every switch's:
+ * no frame moves it more than 0.3 m or turns it 4° beyond what the player, the look and a blend account for, and none
+ * stands it inside the level. Outside first person, none loses the player: the camera that goes the whole way while
+ * the shooter's, then cameras started in the platformer's mode a second after each first person (the feel kit starts a
+ * measure's camera at its first step), since the blend out of the eyes starts from a picture with no body in it.
  *
  * Game code (labs/playground/): it imports only the engine's public API and the playground's own files.
  *

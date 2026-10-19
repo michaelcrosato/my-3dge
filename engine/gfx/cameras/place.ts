@@ -33,7 +33,7 @@ import { MathUtils } from '../../core/math';
 import { BoostedOrthographicCamera, BoostedPerspectiveCamera, boost } from './boost';
 import { createChaseCamera, parseChaseCode, type ChaseSpec } from './chase';
 import { FOLLOW_CAMERAS, parseCameraCode, type CameraSpec } from './codes';
-import { cameraEntry } from './define';
+import { cameraEntry, madeCamera } from './define';
 import { createFirstCamera, parseFirstCode, type FirstSpec } from './first';
 import { createFixedCamera } from './fixed';
 import { createFlyCamera, type FlyBounds } from './fly';
@@ -163,7 +163,8 @@ export function createCamera(code: string | AnyCameraSpec, options: CreateCamera
   if (spec.type === 'chase') return createChaseCamera({ ...spec, from });
   if (spec.type === 'first') return createFirstCamera({ ...spec, from });
   if (spec.type === 'rail') return createRailCamera(spec);
-  if (spec.type === 'game') return cameraEntry(spec.name)!.create(spec.code, { from }) as AnyCamera;
+  if (spec.type === 'game')
+    return madeCamera(spec.name, cameraEntry(spec.name)!.create(spec.code, { from })) as AnyCamera;
   if (spec.type === 'shoulder') return createShoulderCamera({ ...spec, from });
   if (spec.type === 'follow') return createFollowCamera({ ...spec, from });
   const start = from && !('target' in spec && spec.target) ? poseTarget(from) : undefined;

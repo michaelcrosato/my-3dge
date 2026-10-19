@@ -13,7 +13,7 @@
  * cutaway cuts the wall before a side view. WP 7.8: a level entry's material swaps reach the stage's level meshes, and
  * the stage's sky, once shown, follows the frames: its pool's lights picked near the focus, flickering as they go.
  * WP 13.8: on the playground's shooter model first person stands at its eye height, a live switch blends (its first
- * frame the old camera's, halfway far from both) and a plain one cuts.
+ * frame the old camera's, halfway far from both) and a plain one cuts; the gym's rides are drawn (WP 13.7).
  * @see engine/app/view.ts
  */
 import { readFileSync } from 'node:fs';
@@ -288,5 +288,17 @@ describe('createHeadless({ view: true })', () => {
     const { pitch } = view.cameraInfo().pose; // first person's, kept
     expect(end[1] - actor.y).toBeCloseTo(CAMERA_EYE.stand + SHOULDER.up - SHOULDER.back * Math.sin(pitch), 1);
     expect(view.setCamera('cam=overhead').pose.pitch).toBeCloseTo(-Math.PI / 2, 9); // a plain set cuts
+  });
+
+  it('draws the gym’s rides: its ziplines, its ladder and its launchers, read with the entities it places', async () => {
+    if (!registry.has('level', 'level:gym')) defineLevel('level:gym', { text: GYM_TEXT, file: 'labs/playground/levels/gym.ts' }); // prettier-ignore
+    const engine = await createHeadless({ scene: 'playground:gym', view: true, cam: 'cam3=shoulder' });
+    const view = (headlessHost(engine) as AppHost).view!;
+    engine.step(1);
+    const rides = ['zipline', 'ladder', 'launcher'].flatMap((kind) => engine.entities(kind) as { id: number }[]);
+    expect(rides.length).toBeGreaterThan(3);
+    const drawn = view.stage.rides.root.children.map((group) => group.name).sort();
+    expect(drawn).toEqual(rides.map(({ id }) => drawn.find((name) => name.endsWith(`#${id}`))).sort());
+    expect(drawn.every((name) => /^(zipline|ladder|launcher)#\d+$/.test(name))).toBe(true);
   });
 });

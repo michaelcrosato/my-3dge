@@ -629,6 +629,14 @@ Raised by the camera factories, `makePose` and `placeCamera` (engine/gfx/cameras
 
 Raised by `parseCameraCode` (engine/gfx/cameras/codes.ts) for an empty part, a word where a number belongs, the wrong count of numbers, or a number out of its range (each range is named). Every problem is listed at once.
 
+### GFX_BAD_GAME_CAMERA
+
+- Message: `the camera {name}'s create returned {value}, not a camera`
+- Fix: return a camera from create: one of the engine's factories (createShoulderCamera, createFollowCamera, createViewCamera, …) or followCamera(type, state, steps) over your own pure steps (engine/gfx/cameras/define.ts)
+- Registered in: [`engine/gfx/cameras/define.ts` line 28](../engine/gfx/cameras/define.ts)
+
+Raised by `createCamera` (engine/gfx/cameras/place.ts) when a game camera's `create` (`defineCamera`) returns something without a camera's `update`, `pose`, `yaw`, `spec`, `code` and `describe`.
+
 ### GFX_BAD_GEOMETRY
 
 - Message: `cannot build the {shape}: {problem}`

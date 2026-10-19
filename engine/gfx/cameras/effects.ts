@@ -15,8 +15,9 @@
  * - the bob, one dip each `bob.period` at a run on the ground, a sway every two: the eye's, and its phase and share for
  *   the weapon (WP 13.12);
  * - aiming down sights zooms to the weapon's lens (Apex's rifles: 55° at a 70° lens) in `ads.time`, as `zoom`;
- * - a landing faster than `shake.from` shakes the screen (`frame.shake`: the view adds it to engine/gfx/fx/shake.ts);
- * - `kick(pitch, yaw)`, a weapon's recoil (WP 13.11), on the punch's spring.
+ * - a landing faster than `shake.from` shakes the screen (`frame.shake`, by the camera's share of the punch: the rig's
+ *   `shake()`, which the view adds to engine/gfx/fx/shake.ts);
+ * - `kick(pitch, yaw)`, a weapon's recoil (WP 13.20's firearms, through the rig's `kick`), on the punch's spring.
  * The drop, the rolls and the lens ease with a time constant of `ease`, so no effect cuts. `apexFov(h)` is the lens
  * Apex's slider makes (`h` horizontal degrees at 4:3), in the vertical degrees three.js takes.
  *

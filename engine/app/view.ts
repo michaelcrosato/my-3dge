@@ -218,7 +218,7 @@ export function createRunView(options: RunViewOptions): RunView {
     const run = options.run();
     rig.configure(rigOptions((path) => (declared(path) ? run.settings.get(path) : undefined)));
     const pose = rig.update({ ...follow(), ...input }, dt);
-    stage.fx.effects.shake.add(rig.effects()?.shake ?? 0);
+    stage.fx.effects.shake.add(rig.shake());
     culled = stage.actors.cull(rig.firstShare() > 0.5 ? pose.position : null);
     const player = stage.actors.player();
     const fade = (rig.camera as { fade?: boolean }).fade === true; // a camera that may stand behind a wall

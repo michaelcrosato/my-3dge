@@ -6,9 +6,9 @@
  * gives no device input), switches it with a blend where the course says (`set`), and keeps a frame of each pose.
  * `metrics()` reads four numbers off the frames:
  * - `jump`: the most one frame moves the camera beyond what the player's own move, the look and a blend account for (m:
- *   the look swings a camera that looks along it round the player by the turn times its distance from his eye);
- * - `turn`: the most one frame turns the view beyond what the look (for a camera that looks along it) and a blend
- *   account for (rad);
+ *   the look's turn, read off the sim's look intents, swings a camera that looks along it, `LOOK_CAMERAS`, round the
+ *   player by the turn times its distance from his eye);
+ * - `turn`: the most one frame turns the view beyond what the look (for those cameras) and a blend account for (rad);
  * - `inside`: the frames whose camera stands inside the level (a `CAMERA_CHECK.ball` ball overlapping `world`);
  * - `lost`: the frames whose player (its chest, `CAMERA_CHECK.chest` above the feet) is out of the picture, a frame of
  *   `CAMERA_CHECK.aspect`.
@@ -29,6 +29,9 @@ import type { CameraPlayer } from '../../gfx/cameras/effects';
 import { makePose, poseForward, poseRight, poseUp, type CameraPose, type Vec3 } from '../../gfx/cameras/pose';
 import { createCameraRig, type RigOptions } from '../../gfx/cameras/rig';
 import type { QueryView } from '../../sim/queryView';
+
+/** The cameras that look along the sim's look (first person, the shooter's): the look's turn swings them. */
+export const LOOK_CAMERAS: readonly string[] = Object.freeze(['first', 'shoulder']);
 
 /** What the frames are checked with: the picture's aspect, the camera's ball (m) and where the player's chest is (m). */
 export const CAMERA_CHECK = { aspect: 16 / 9, ball: 0.05, chest: 1.2 } as const;
@@ -90,14 +93,17 @@ export function inPicture(pose: CameraPose, point: Vec3, aspect: number = CAMERA
 export function createCameraTrack(code: string, options: RigOptions = {}) {
   const rig = createCameraRig(code, options);
   const frames: CameraFrame[] = [];
-  /** The camera's own heading and pitch at the last frame: a camera that looks along the sim's look turns with it. */
+  /** The sim's look at the last frame: a camera that looks along it (`LOOK_CAMERAS`) turns as it turns. */
   let last: readonly [number, number] | undefined;
+  /** The camera's own view at the last frame, where no look came before (the look's first turns it from there); none after a switch. */ // prettier-ignore
+  let own: readonly [number, number] | undefined;
   return {
     code,
     frames: frames as readonly CameraFrame[],
     /** Switches the camera to `code`, blending as the page's live switch does. */
     set(next: string) {
       rig.set(next, { blend: true });
+      own = undefined;
     },
     /** Steps the camera `dt` seconds after the player, whose feet are at `feet` (see `TrackFrame`), and keeps the frame. */
     frame(feet: Vec3, options: TrackFrame = {}): CameraFrame {
@@ -108,10 +114,12 @@ export function createCameraTrack(code: string, options: RigOptions = {}) {
       const ball = { type: 'ball', radius: CAMERA_CHECK.ball } as const;
       const inside = queries ? queries.overlap(ball, pose.position, { groups: 'world' }).length > 0 : false;
       const seen = inPicture(pose, [feet[0], feet[1] + CAMERA_CHECK.chest, feet[2]]);
-      const own = rig.camera.pose();
-      const follows = view !== undefined && Math.abs(Math.atan2(Math.sin(own.yaw - view[0]), Math.cos(own.yaw - view[0]))) < 1e-6; // prettier-ignore
-      const looked = follows && last ? turnBetween(makePose({ position: own.position, yaw: last[0], pitch: last[1] }), own) : 0; // prettier-ignore
-      last = [own.yaw, own.pitch];
+      const along = (look: readonly [number, number]) =>
+        makePose({ position: [0, 0, 0], yaw: look[0], pitch: look[1] });
+      const from = last ?? own;
+      const looked = view && from && LOOK_CAMERAS.includes(rig.camera.type) ? turnBetween(along(from), along(view)) : 0;
+      const mine = rig.camera.pose();
+      [last, own] = [view, [mine.yaw, mine.pitch]];
       const pivot = eye ?? [feet[0], feet[1] + CAMERA_CHECK.chest, feet[2]];
       const blend = rig.blend();
       const allowed = { move: blend.move + looked * length(sub(pose.position, pivot)), turn: blend.turn + looked };

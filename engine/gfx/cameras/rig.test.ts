@@ -12,6 +12,7 @@ import { BLEND_TIME } from './blend';
 import { apexFov, EFFECTS, type CameraPlayer } from './effects';
 import { poseTarget } from './pose';
 import { CAMERA_SETTING_FIELDS, createCameraRig, rigOptions } from './rig';
+import { SHOULDER_EFFECTS } from './shoulder';
 
 const at = { follow: [0, 0, 0] as const };
 const far = (a: readonly number[], b: readonly number[]) => Math.hypot(...a.map((v, i) => v - b[i]));
@@ -64,6 +65,23 @@ describe('the camera rig', () => {
     expect(iso.pose()).toEqual(iso.camera.pose());
     first.configure({ effects: false });
     expect(first.update(eye, 1 / 60).position[1]).toBeCloseTo(1.524, 6);
+  });
+
+  it('shakes first person on a hard landing, the shooter by half, the views not at all', () => {
+    const air: CameraPlayer = { velocity: [0, -20, 0], grounded: false, mode: 'air', sprinting: false, sliding: false, boosted: false, aiming: false }; // prettier-ignore
+    const landed: CameraPlayer = { ...air, velocity: [0, 0, 0], grounded: true, mode: 'ground' };
+    const eye = { follow: [0, 0, 0] as const, eye: [0, 1.524, 0] as const };
+    const shakes = ['cam3=first', 'cam3=shoulder', 'cam=iso'].map((code) => {
+      const rig = createCameraRig(code);
+      for (const player of [air, landed]) {
+        rig.step(player);
+        rig.update(eye, 1 / 60);
+      }
+      return rig.shake();
+    });
+    expect(shakes[0]).toBeGreaterThan(0.01); // 20 m/s, 10 over the shake's threshold
+    expect(shakes[1]).toBeCloseTo(shakes[0] * SHOULDER_EFFECTS.punch, 9);
+    expect(shakes[2]).toBe(0);
   });
 
   it('takes its options from the view settings: the player’s lens, the blend, whole zoom steps', () => {
