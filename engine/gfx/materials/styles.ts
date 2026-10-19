@@ -12,7 +12,8 @@
  * changes what is drawn, never what is played, so it is view state: `setStyle(style, root)` re-points every visible
  * mesh under `root` drawn with a registry material (it reads `material.userData.material`, the entry's id) to that
  * material in the new style, and `apply(root)` does it again for meshes shown since (call it before a frame that
- * may show new objects; hidden ones keep theirs until they show).
+ * may show new objects; hidden ones keep theirs until they show). A mesh drawing its materials its own way wraps each
+ * it is given, here and in the warm-up (`userData.restyle`: first person's player, engine/gfx/viewmodel/body.ts).
  *
  * The warm-up (engine/gfx/warmup.ts): a pipeline depends on the mesh as much as on its material (its attributes,
  * its instancing; r182 even compiles a shader per instanced mesh of 1,000 slots or fewer, as the level's walls are),
@@ -218,6 +219,12 @@ export function createStyleSet(options: StyleSetOptions = {}): StyleSet {
     return typeof id === 'string' ? set.get(id, style) : material;
   };
 
+  /** `material` as `mesh` draws it: wrapped by its `userData.restyle`, when it has one (see the file comment). */
+  const worn = (mesh: Mesh, material: Material): Material => {
+    const wrap = mesh.userData.restyle as ((material: Material) => Material) | undefined;
+    return typeof wrap === 'function' ? wrap(material) : material;
+  };
+
   /** Points every visible mesh under `root` drawn with a registry material at `pick(material)`; counts the changes. */
   const repoint = (root: Object3D, pick: (mesh: Mesh, material: Material, i: number) => Material): number => {
     let changed = 0;
@@ -267,7 +274,7 @@ export function createStyleSet(options: StyleSetOptions = {}): StyleSet {
       return root ? set.apply(root) : 0;
     },
     apply(root) {
-      return repoint(root, (_, material) => restyled(material, current));
+      return repoint(root, (mesh, material) => worn(mesh, restyled(material, current)));
     },
     attach(warmup, scene) {
       // What each mesh drew with before the warm-up swapped it, put back by the last entry.
@@ -285,7 +292,7 @@ export function createStyleSet(options: StyleSetOptions = {}): StyleSet {
           objects: () => {
             keep();
             for (const [mesh, materials] of kept) {
-              const next = materials.map((material) => restyled(material, style));
+              const next = materials.map((material) => worn(mesh, restyled(material, style)));
               mesh.material = Array.isArray(mesh.material) ? next : next[0];
             }
             return [];

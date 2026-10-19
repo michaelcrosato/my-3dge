@@ -3062,6 +3062,8 @@ For the agents who maintain the engine.
 
 ### [`engine/dev/feel/camera.ts`](../engine/dev/feel/camera.ts)
 
+- `armsClipped` (function): Whether `arms`, drawn by their lens for `pose`, are covered by the world along their rays or cut by its near plane: any of their points that lands in the picture (across and up, in front of the eye) nearer than the near plane, or with a wall between it and the eye.
+- `ArmsFrame` (interface): First person's arms in a frame: their grips, the points along their shown parts (world, m), and their lens.
 - `CAMERA_CHECK` (const): What the frames are checked with: the picture's aspect, the camera's ball (m) and where the player's chest is (m).
 - `CameraFrame` (interface): One frame of a camera track: its pose, the player's feet, what the frame found, and what it may move and turn.
 - `CameraMetrics` (interface): A camera track's numbers (see the file comment).
@@ -3331,13 +3333,16 @@ For the agents who maintain the engine.
 - `CullOptions` (interface): Options for `nearBodyCull`.
 - `describeFirst` (function): A first-person camera in words.
 - `eyePoint` (function): The head socket: the midpoint of the eye sockets of `skeleton` posed as `world` (engine/anim/fk.ts), m.
+- `FIRST_ARMS` (const): The joints first person's viewmodel draws as the arms (engine/gfx/viewmodel/).
 - `FIRST_BOB_LAG` (const): The time constant of the eye's height, real seconds: it softens the head's bob.
 - `FIRST_DEFAULTS` (const): The starting pitch (rad, + up) and lens (degrees, `PerspectiveCamera.fov`).
 - `FIRST_EYE_HEIGHT` (const): The eye's height above the followed point without a rig, m.
+- `FIRST_KICK` (const): The joints it draws as a kick's leg, while the body kicks.
 - `FIRST_NEAR_BODY` (const): A shown part closer to the eye than this is culled too, m.
 - `FIRST_SHOWN` (const): The joints whose parts the camera shows (unless near the eye): the hands, which hold the weapons.
 - `FIRST_TRAIL` (const): The most the eye's height trails the eye, m: a fall or a climb is followed, and a stop never overshot.
 - `FIRST_TURN_SPEED` (const): Turn rates at full `input.turn`, rad/s: `[right, up]`.
+- `firstBodyCull` (function): The joints the body hides from a first-person camera at `eye`, whose arms the viewmodel draws (see the file comment): every one; with `fullBody`, the head, the arms and those near the eye (`nearBodyCull`).
 - `FirstInput` (interface): A first-person camera's input: the devices', and the hero's eye.
 - `FirstOptions` (interface): Options for a first-person camera: its code's data, and the camera before it.
 - `firstPose` (function): The first-person camera's pose: at the eye, looking along its yaw and pitch.
@@ -4061,6 +4066,14 @@ For the agents who maintain the engine.
 - `PropMeshPose` (interface): A prop's pose: its centre (its body's origin) and its turn.
 - `tongueMatrices` (function): Tongue `k`'s outer flame and core in its part's frame at `t` (s): the 2D hall's dance, in metres.
 
+### [`engine/gfx/puppets/actorLayers.ts`](../engine/gfx/puppets/actorLayers.ts)
+
+- `dropLayers` (function): Takes `layers` off their animator and frees their meshes.
+- `Held` (interface): What the actor puppets keep of one actor.
+- `Layers` (interface): The view's own layers on one actor's puppet animator: its reactions, its secondary motion and their meshes.
+- `layersFor` (function): The layers in `layers` of actor `id`, whose puppet animator is `animator` (its clip layer `clips`): made again when what they are made for changed (see the file comment), their chain meshes on `puppet`, drawn with `materials`.
+- `Place` (interface): Where an actor stands: its feet (m) and heading (rad).
+
 ### [`engine/gfx/puppets/actors.ts`](../engine/gfx/puppets/actors.ts)
 
 - `ACTOR_BODY` (const): The body every animated actor wears (engine/gfx/puppets/bodies/humanoid.ts).
@@ -4483,6 +4496,42 @@ For the agents who maintain the engine.
 - `Thumbnail` (interface): A text thumbnail.
 - `ThumbnailDiff` (interface): How two thumbnails differ.
 - `ThumbnailIds` (interface): The ID pass's objects per pixel: 0 empty space, k the k-th name of `names` (1-based), `STRAY` unclaimed.
+
+### [`engine/gfx/viewmodel/body.ts`](../engine/gfx/viewmodel/body.ts)
+
+- `Animated` (interface): What the arms are posed from: the body's animator, posed this frame, and its traversal plant.
+- `armsBody` (function): `compiled` with its arm and kicking-leg pieces alone (no glow): what the arms draw.
+- `createViewmodel` (function): Gives `puppet` (the player's) its first-person arms and look (see the file comment).
+- `FirstPersonParts` (interface): What a frame hid of the body and showed of the arms.
+- `Viewmodel` (interface): First person's player on a puppet (see the file comment).
+- `ViewmodelFrame` (interface): A frame drawn by a first-person camera: its pose, the frame's real seconds and aspect, the player and the effects.
+
+### [`engine/gfx/viewmodel/lens.ts`](../engine/gfx/viewmodel/lens.ts)
+
+- `armsDepth` (function): The depth (m, along the view) the arms draw a point of theirs `z` deep at, in a picture whose near plane is `near`.
+- `armsLens` (function): The arms' lens of the setting `cam.armsFov` (`h`, Apex's horizontal degrees at 4:3), vertical degrees.
+- `armsSpread` (function): How far out across the picture the arms' lens `fov` (vertical degrees) moves a point beyond `pose`'s lens.
+- `drawnPoint` (function): Where the arms draw their point `p` (world, m) for `pose`, with their lens `fov` (see the file comment).
+- `inArmsFrame` (function): Whether the arms' frame (their lens `fov`, a picture of `aspect`) shows their point `p`, and their depth keeps it.
+- `intoArmsFrame` (function): `p` kept within `margin` of the arms' half-frame (their lens `fov`, a picture of `aspect`), as far from the eye as it was: a point outside moves to the frame's nearest edge, one behind the eye to the edge it is beyond.
+- `VIEWMODEL` (const): The arms' lens and depth (see the file comment): degrees, metres, shares.
+- `VIEWMODEL_SETTING_FIELDS` (const): The view settings the viewmodel reads; never in the hash.
+- `VIEWMODEL_SETTINGS` (const): The view settings the viewmodel reads, declared on the shared registry.
+
+### [`engine/gfx/viewmodel/material.ts`](../engine/gfx/viewmodel/material.ts)
+
+- `createViewmodelLook` (function): Makes the viewmodel's materials (see the file comment); `log` takes the advice.
+- `VIEWMODEL_MATERIAL_CODES` (const): The codes this module raises, with their fixes.
+- `ViewmodelLook` (interface): The viewmodel's materials (see the file comment).
+
+### [`engine/gfx/viewmodel/rig.ts`](../engine/gfx/viewmodel/rig.ts)
+
+- `ARMS` (const): The rig's numbers (see the file comment): places, metres, seconds.
+- `ArmsInput` (interface): What the rig poses the arms from, beside the camera (see `armsInputOf`).
+- `armsInputOf` (function): What the rig reads off the player's `animator` (its traversal plant `contacts`), with the frame's camera inputs.
+- `ArmsRig` (class): First person's arms posed against the camera (see the file comment).
+- `HeldHand` (interface): A hand the body holds on something: where its grip is (world), its world rotation, and how much it holds (0 to 1).
+- `vec3Of` (const): The world point of `p` (a `Vector3`) as a `Vec3`.
 
 ### [`engine/gfx/warmup.ts`](../engine/gfx/warmup.ts)
 

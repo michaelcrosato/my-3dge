@@ -7,6 +7,8 @@
  * 3. no camera changes the hash: the rides replay keeps its goldens while the page blends through every mode;
  * 4. blending through every mode while the player runs builds 0 pipelines after the warm-up, raising no advice;
  * 5. the effects: a sprint lowers first person's eye 0.15 m, and stopping raises it again;
+ * 5b. first person's arms (WP 13.12): the ID pass sees them and not the body, as many pixels of them standing at a
+ *    wall as in the open (their lens draws them in front of it), and they move with the state (a sprint, a jump);
  * 6. the controls (WP 13.9): in each mode, live play through its own map (keys, the mouse turning the view under the
  *    pointer lock a click takes, or aiming as a free pointer) records the look and the aim the map's rule gives, and
  *    the recording replays in Node to the page's hash.
@@ -165,6 +167,42 @@ test.describe('the playground’s cameras', () => {
       await call(page, 'render', 1);
     }
     expect(Math.abs((await eye()) - standing)).toBeLessThan(0.02);
+    expect(harness.advice()).toEqual([]);
+  });
+
+  test('draw first person’s arms in the ID pass, whole at a wall, moving with the state', async ({ page, harness }) => {
+    await open(page, harness, '?cam3=first');
+    type Seen = { name: string; px: number; centre: [number, number] };
+    const seen = async () => {
+      await call(page, 'render', 2);
+      const shot = await call<{ ids: { visible: Seen[] } }>(page, 'shot', { ids: true, metrics: false, thumbnail: false }); // prettier-ignore
+      const find = (name: string) => shot.ids.visible.find((entry) => entry.name === name);
+      return { arms: find('actor#1/arms'), body: find('actor#1') };
+    };
+    const south = { look: [Math.PI, 0], cam: Math.PI }; // the perimeter wall 2.75 m off the spawn
+    await call(page, 'step', 30, south);
+    const clear = await seen();
+    expect(clear.body, 'the body hidden from first person').toBeUndefined();
+    expect(clear.arms?.px ?? 0, 'the arms drawn').toBeGreaterThan(1000);
+    for (let k = 0; k < 12; k++) await call(page, 'step', 10, { ...south, move: [0, -1] }); // into the wall (move is world [x, z])
+    await call(page, 'step', 60, south); // stood still against it
+    const wall = await seen(); // drawn: the camera stands where the frame put it
+    expect((await camera(page)).pose.position[2], 'the eye at the wall').toBeLessThan(1);
+    expect(wall.arms!.px / clear.arms!.px, 'as many pixels at the wall: drawn in front of it').toBeGreaterThan(0.9);
+    const north = { look: [0, 0], cam: 0 };
+    await call(page, 'step', 30, north);
+    const still = (await seen()).arms!.centre;
+    const heights: number[] = [];
+    for (let k = 0; k < 8; k++) {
+      await call(page, 'step', 4, { ...north, move: [0, 1], b: ['sprint'] });
+      heights.push((await seen()).arms!.centre[1]);
+    }
+    expect(Math.max(...heights) - Math.min(...heights), 'the fists pump in a sprint').toBeGreaterThan(8);
+    await call(page, 'step', 40, north);
+    await call(page, 'step', 1, { ...north, b: ['jump'] });
+    await call(page, 'step', 12, north);
+    const jumped = (await seen()).arms!.centre;
+    expect(still[1] - jumped[1], 'raised in the air').toBeGreaterThan(4); // picture rows run down
     expect(harness.advice()).toEqual([]);
   });
 

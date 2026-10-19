@@ -4,7 +4,8 @@
  * contact, the anim QA's limit; no point jumps past the QA's pop of 9/16 m in a step) and, for each of the
  * playground's five cameras (labs/playground/views.ts), §4's: no frame moves the camera more than 0.3 m or turns it
  * more than 4° beyond what the player's own move, the look and a blend account for (engine/dev/feel/camera.ts), none
- * stands it inside the level, and none loses the player (but first person, whose arms come with WP 13.12). The feet
+ * stands it inside the level, and none loses the player (first person: its arms); and no frame lets a wall cover first
+ * person's arms or its near plane cut them (WP 13.12, `clip`). The feet
  * were watched until WP 13.10 planted them (the procedural run slid 0.36 m a contact at a 5 m/s run, 0.53 to 0.73 m
  * sprinting); a sole's height is from the ground under it (engine/dev/feel/anim.ts), so a foot on a ramp is on its floor.
  *
@@ -13,7 +14,7 @@
  * Game code (labs/playground/): it imports only the engine's public API and the playground's own files.
  *
  * @example
- * cameraBounds(2).length; // 19: four numbers for each camera, three for first person
+ * cameraBounds(2).length; // 21: four numbers for each camera, and first person's arms never cut
  * @see labs/playground/courses/courses.test.ts
  */
 import { PLAYGROUND_CAMERAS } from '../views';
@@ -50,7 +51,7 @@ export function cameraBounds(from: number, span: BoundsSpan = {}): Record<string
   return PLAYGROUND_CAMERAS.flatMap(({ name, code }) => {
     const watch = span.watch?.[name];
     const measure = (what: string, metric: string, abs: number) => ({ name: named(span, `${name}: ${what}`), metric, camera: code, from, to, reference: 0, tolerance: { abs }, ...(watch ? { watch } : {}) }); // prettier-ignore
-    const lost = name === 'first' ? [] : [measure('lost', 'cameraLost', 0)];
-    return [measure('jump', 'cameraJump', BOUNDS.jump), measure('turn', 'cameraTurn', BOUNDS.turn), measure('inside', 'cameraInside', 0), ...lost]; // prettier-ignore
+    const clip = name === 'first' ? [measure('arms never cut', 'cameraClip', 0)] : [];
+    return [measure('jump', 'cameraJump', BOUNDS.jump), measure('turn', 'cameraTurn', BOUNDS.turn), measure('inside', 'cameraInside', 0), measure('lost', 'cameraLost', 0), ...clip]; // prettier-ignore
   });
 }

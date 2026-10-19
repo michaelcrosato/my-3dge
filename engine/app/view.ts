@@ -12,19 +12,19 @@
  * engine/gfx/renderer.ts's `FrameView`). A frame that finds `gfx.effects` switched since the last read reads the
  * entities again first, so a flying bolt is the effects' or its stand-in from that frame, with or without a step.
  *
- * The camera is a rig (engine/gfx/cameras/rig.ts: a code's camera, blends, the view effects, the settings `cam.*`)
- * that follows the player (WP 3.10): the first player actor's feet as the frame draws them, else the level's middle;
- * so does the stage's sky (engine/gfx/stageSky.ts, flickering at the frames' time, WP 7.8), and the level entry's
- * material swaps (`materials`) reach the stage. The rig also gets the sim's read-only `QueryView` in a physics scene
- * (the follow cameras keep out of the walls), the player's eye (the shooter model's height, else his head socket) and
- * what he does each step (`cameraPlayer`); first person hides his body but the hands from itself (near-body culling,
- * `cameraInfo().culled`), and hard landings shake the screen. Following a player, the level's cutaway runs
- * (engine/gfx/cutaway.ts); `aim(rule, devices)` is his aim from the camera drawn last (WP 13.9, engine/input/aim.ts:
- * the centre's ray through the sim's queries, his body skipped, or the pointer's onto his floor), which the page's
- * input records. `restarted()` after the run starts again (a new seed, a replay) or its world changes between steps (a
- * restore, a dev action) reads the entities afresh: the stand-ins and bolts snap to them, so no dump, shot or frame
- * shows the places they had before. The effects forget what ran only for a new world, read from its first event; the
- * same world keeps its trace read (history, never restored), so no event plays twice.
+ * The camera is a rig (engine/gfx/cameras/rig.ts: a code's camera, blends, the view effects, the settings `cam.*`) that
+ * follows the player (WP 3.10): the first player actor's feet as the frame draws them, else the level's middle; so does
+ * the stage's sky (engine/gfx/stageSky.ts, flickering at the frames' time, WP 7.8), and the level entry's material
+ * swaps (`materials`) reach the stage. The rig also gets the sim's read-only `QueryView` in a physics scene (the follow
+ * cameras keep out of the walls), the player's eye (the shooter model's height, else his head socket) and what he does
+ * each step (`cameraPlayer`); first person draws his arms by their own lens and hides his body, its shadow kept
+ * (engine/gfx/viewmodel/, WP 13.12; `cameraInfo().culled`, `.arms`); hard landings shake the screen. Following a
+ * player, the level's cutaway runs (engine/gfx/cutaway.ts); `aim(rule, devices)` is his aim from the camera drawn last
+ * (WP 13.9, engine/input/aim.ts: the centre's ray through the sim's queries, his body skipped, or the pointer's onto
+ * his floor), which the page's input records. `restarted()` after the run starts again (a new seed, a replay) or its
+ * world changes between steps (a restore, a dev action) reads the entities afresh: the stand-ins and bolts snap to
+ * them, so no dump, shot or frame shows the places they had before. The effects forget what ran only for a new world,
+ * read from its first event; the same world keeps its trace read (history, never restored), so no event plays twice.
  *
  * The level comes from the scene's `level` id (engine/world/level/level.ts), registered before the view starts
  * (`APP_NO_LEVEL`). Cameras are view state: switching one (`setCamera(code)`, `__engine.camera.set`; with `{ blend:
@@ -50,6 +50,8 @@ import type { FrameView } from '../gfx/renderer';
 import { aimPoint, type AimDevices, type AimRule } from '../input/aim';
 import { dumpScene, type DumpOptions } from '../gfx/sceneDump';
 import { createStage, type Stage } from '../gfx/stage';
+import type { FirstPersonParts } from '../gfx/viewmodel/body';
+import { armsLens } from '../gfx/viewmodel/lens';
 import { queryViewOf, type QueryView } from '../sim/queryView';
 import type { Session } from '../sim/session';
 import type { EntityData } from '../sim/state';
@@ -81,8 +83,9 @@ export interface CameraInfo {
   /** The heading it looks along, rad: the intents' `cam`. */
   yaw: number;
   pose: CameraPose;
-  /** First person: the player's joints whose body parts it hides from itself (near-body culling). */
+  /** First person: the player's joints whose body parts it hides from itself, and the ones his arms show. */
   culled?: string[];
+  arms?: string[];
 }
 
 /** What a view is made from. */
@@ -178,7 +181,7 @@ export function createRunView(options: RunViewOptions): RunView {
   const rig = createCameraRig(options.cam ?? DEFAULT_CAMERA);
   let drawn: BoostedPerspectiveCamera | BoostedOrthographicCamera = pair.perspective;
   let aspect = HEADLESS_ASPECT;
-  let culled: string[] = [];
+  let parts: FirstPersonParts = { hidden: [], arms: [] };
   let alpha = 1;
   let crowdStale = false;
   /** Seconds of frames drawn: the lights' flicker clock (presentation only). */
@@ -222,13 +225,16 @@ export function createRunView(options: RunViewOptions): RunView {
     const eye: Vec3 | undefined = doing?.eye !== undefined ? [feet[0], feet[1] + doing.eye, feet[2]] : player?.posed?.eye; // prettier-ignore
     return { follow: feet, eye, queries: queries(), player: doing };
   };
-  /** Steps the camera by `dt` with `input`, then hides the player's body from a first-person camera. */
+  /** Steps the camera by `dt` with `input`, then draws the player for a first-person camera: his arms, his body hidden. */
   const move = (input: CameraInput | undefined, dt: number): CameraPose => {
     const run = options.run();
-    rig.configure(rigOptions((path) => (declared(path) ? run.settings.get(path) : undefined)));
+    const setting = (path: string) => (declared(path) ? run.settings.get(path) : undefined);
+    rig.configure(rigOptions(setting));
     const pose = rig.update({ ...follow(), ...input }, dt);
     stage.fx.effects.shake.add(rig.shake());
-    culled = stage.actors.cull(rig.firstShare() > 0.5 ? pose.position : null);
+    const lens = { fov: armsLens(setting('cam.armsFov')), fullBody: setting('cam.fullBody') === true };
+    const first = rig.firstShare() > 0.5 ? { pose, dt, aspect, player: doing, effects: rig.effects(), ...lens } : null;
+    parts = stage.actors.firstPerson(first);
     const player = stage.actors.player();
     const fade = (rig.camera as { fade?: boolean }).fade === true; // a camera that may stand behind a wall
     if (player) stage.cutaway?.update(pose, player.feet, { fade });
@@ -240,7 +246,7 @@ export function createRunView(options: RunViewOptions): RunView {
     type: rig.camera.type,
     yaw: rig.camera.yaw(),
     pose: rig.pose(),
-    ...(rig.camera.type === 'first' ? { culled: [...culled] } : {}),
+    ...(rig.camera.type === 'first' ? { culled: [...parts.hidden], arms: [...parts.arms] } : {}),
   });
   const view: RunView = {
     stage,

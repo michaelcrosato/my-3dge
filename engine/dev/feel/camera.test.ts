@@ -3,17 +3,18 @@
  * front of the camera and within its lens or its frustum; a chase camera following a steady run never jumps past the
  * player's move, never turns and never loses the player; a blended switch and the sim's look move the camera only as
  * far as they account for; a fixed camera inside a wall counts its frames inside, one looking away counts them lost,
- * and one standing still while the player stands still never jumps.
+ * and one standing still while the player stands still never jumps; first person loses its arms when neither hand is in
+ * their frame, and counts them cut only where their lens leaves a wall in front of them or the near plane past them.
  * @see engine/dev/feel/camera.ts
  */
 import { describe, expect, it } from 'vitest';
 import { createRegistry } from '../../core/registry';
-import { makePose } from '../../gfx/cameras/pose';
+import { makePose, type CameraPose, type Vec3 } from '../../gfx/cameras/pose';
 import { physicsOf } from '../../physics/binding';
 import { queryViewOf } from '../../sim/queryView';
 import { defineScene, startScene } from '../../sim/scene';
 import type { World } from '../../sim/world';
-import { createCameraTrack, inPicture } from './camera';
+import { armsClipped, createCameraTrack, inPicture, type ArmsFrame } from './camera';
 
 /** The query view of a world with a floor and a 4 m cube whose centre is at (0, 2, 10). */
 function walls() {
@@ -42,7 +43,7 @@ describe('camera metrics', () => {
     const queries = walls();
     const track = createCameraTrack('cam3=chase');
     for (let k = 0; k < 120; k++) track.frame([k * 0.08, 0, -20], { queries });
-    expect(track.metrics()).toEqual({ jump: 0, turn: expect.closeTo(0, 9), inside: 0, lost: 0 });
+    expect(track.metrics()).toEqual({ jump: 0, turn: expect.closeTo(0, 9), inside: 0, lost: 0, clip: 0 });
   });
 
   it('allow what a blended switch and the sim’s look move the camera, and nothing else', () => {
@@ -81,5 +82,24 @@ describe('camera metrics', () => {
     }
     expect(inside.metrics()).toMatchObject({ inside: 30, jump: 0, turn: 0 });
     expect(away.metrics()).toMatchObject({ inside: 0, lost: 30, jump: 0 });
+  });
+
+  it('read first person’s arms: lost with neither hand in their frame, cut where the drawn arms meet a wall', () => {
+    const queries = walls(); // the cube's face at z 8, 1.5 m ahead of the eye
+    const eye = [0, 1.5, 6.5] as const;
+    const ahead = (z: number): Vec3 => [0.15, 1.35, z];
+    const run = (arms: (pose: CameraPose) => ArmsFrame | null) => {
+      const track = createCameraTrack('cam3=first,0,0');
+      for (let k = 0; k < 10; k++) track.frame([0, 0, 6.5], { queries, eye, arms });
+      return track.metrics();
+    };
+    expect(run(() => ({ hands: [ahead(6.9)], points: [ahead(6.9)] }))).toMatchObject({ lost: 0, clip: 0 });
+    expect(run(() => null)).toMatchObject({ lost: 10, clip: 0 }); // no arms: lost
+    expect(run(() => ({ hands: [[0, 3, 6.6]], points: [] }))).toMatchObject({ lost: 10 }); // overhead, out of their frame
+    // a hand 2 m ahead stands behind the cube's face, but its lens draws it 0.3 m off the eye: never cut
+    expect(run(() => ({ hands: [ahead(8.5)], points: [ahead(8.5)] }))).toMatchObject({ lost: 0, clip: 0 });
+    const pose = makePose({ position: eye, fov: 74, near: 0.05 });
+    expect(armsClipped(pose, { hands: [], points: [ahead(8.5)] }, queries)).toBe(false);
+    expect(armsClipped(pose, { hands: [], points: [[0, 1.5, 6.55]] }, queries)).toBe(true); // 5 cm off the eye: the near plane cuts it
   });
 });

@@ -257,7 +257,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the scene {scene} loads the level {level}, which is not registered, so its view cannot be built`
 - Fix: register the level's text before the view starts: in a page, import text from './levels/<name>.txt?raw' and call defineLevel('{level}', { text, file }); in Node, read the file and do the same
-- Registered in: [`engine/app/view.ts` line 60](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 62](../engine/app/view.ts)
 
 ### APP_NO_REPLAY
 
@@ -269,7 +269,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `{member} needs the scene drawn as a view, and this engine has none`
 - Fix: start it with createHeadless({ scene, view: true }) in Node; a page always has one
-- Registered in: [`engine/app/view.ts` line 64](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 66](../engine/app/view.ts)
 
 ### APP_NOT_HEADLESS
 
@@ -575,13 +575,13 @@ Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when
 
 - Message: `the course {course} measures {measure}, but the player of {scene} has no animator to pose`
 - Fix: spawn the player with an animator (spawnActor with anim: { build }), or drop the animation measure
-- Registered in: [`engine/dev/feel/run.ts` line 43](../engine/dev/feel/run.ts)
+- Registered in: [`engine/dev/feel/run.ts` line 47](../engine/dev/feel/run.ts)
 
 ### DEV_COURSE_NO_PLAYER
 
 - Message: `the course {course} runs {scene}, which has no player actor to measure`
 - Fix: run a scene that spawns a player actor (spawnActor with player: true), or measure another course
-- Registered in: [`engine/dev/feel/run.ts` line 39](../engine/dev/feel/run.ts)
+- Registered in: [`engine/dev/feel/run.ts` line 43](../engine/dev/feel/run.ts)
 
 ### DEV_NO_METER
 
@@ -887,9 +887,17 @@ Raised by `parseCameraCode` and the camera factories (engine/gfx/cameras/) for a
 
 - Message: `there is no material style {style}`
 - Fix: use one of {styles}
-- Registered in: [`engine/gfx/materials/styles.ts` line 67](../engine/gfx/materials/styles.ts)
+- Registered in: [`engine/gfx/materials/styles.ts` line 68](../engine/gfx/materials/styles.ts)
 
 Raised by a style set (engine/gfx/materials/styles.ts) for a style name it does not have.
+
+### GFX_VIEWMODEL_MATERIAL
+
+- Message: `first person cannot draw {material} for the viewmodel: three.js has no node material for a {type}`
+- Fix: give the player's body a mesh material three.js turns into a node material (Lambert, Phong, standard, toon, basic, or a node material)
+- Registered in: [`engine/gfx/viewmodel/material.ts` line 65](../engine/gfx/viewmodel/material.ts)
+
+Advice from the viewmodel (engine/gfx/viewmodel/material.ts), once per material: a material it cannot copy into a node material is drawn as it is, so first person shows the body, or the arms are no longer drawn at their own depth and a wall may cut them.
 
 ### GFX_WARMUP_FAILED
 

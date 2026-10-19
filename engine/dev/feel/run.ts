@@ -2,9 +2,10 @@
  * @file Running a feel course (PLAN.md WP 13.4): `runCourse(course)` plays the course's inputs in a session of its own,
  * as a replay plays (engine/sim/replay.ts: setting values, dev actions, then intents, at each change-point), samples
  * the first player actor after every step, and judges each measure (engine/dev/feel/course.ts) against its reference
- * and tolerance. A course with animation measures, or a first-person camera on a player off the shooter model, poses
- * the player's animator every step (engine/dev/feel/anim.ts: the eyes are where that camera stands; on the model they
- * stand at its eye height); each camera measure steps its own camera rig from its first frame, so a dev action that
+ * and tolerance. A course with animation measures, or a first-person camera, poses the player's animator every step
+ * (engine/dev/feel/anim.ts: off the shooter model the eyes are where that camera stands; on it they stand at its eye
+ * height), and first person's arms against each frame's camera (engine/gfx/viewmodel/rig.ts, an arms rig per camera
+ * measure, which its `cameraLost` and `cameraClip` read); each camera measure steps its own camera rig from its first frame, so a dev action that
  * moves the player before it is never counted as the camera's jump, with what the player does, the step's look, the
  * view settings `cam.*` and the course's camera switches (`views`) (engine/dev/feel/camera.ts). `measure` and `judge`
  * are the arithmetic, so a test can check a measure on samples it makes.
@@ -23,15 +24,18 @@ import { registry as sharedRegistry, type Registry } from '../../core/registry';
 import { applyIntents, NO_INTENTS, type IntentChanges, type Intents } from '../../input/intents';
 import type { ActorComponents } from '../../sim/actors';
 import type { EntityData } from '../../sim/state';
-import { cameraPlayer } from '../../gfx/cameras/effects';
+import { cameraPlayer, type EffectsFrame } from '../../gfx/cameras/effects';
+import type { CameraPose } from '../../gfx/cameras/pose';
 import { rigOptions } from '../../gfx/cameras/rig';
 import { queryViewOf } from '../../sim/queryView';
 import { createSession } from '../../sim/session';
 import type { BodyView, MotionView } from '../../anim/locomotion/motion';
 import { hullOf, rideOf } from '../../anim/traversal/contacts';
 import { RUNG } from '../../gfx/stageRides';
+import { armsLens } from '../../gfx/viewmodel/lens';
+import { ArmsRig, vec3Of } from '../../gfx/viewmodel/rig';
 import { createAnimTrack, type AnimTrack } from './anim';
-import { createCameraTrack, type CameraMetrics, type CameraTrack } from './camera';
+import { CAMERA_CHECK, createCameraTrack, type ArmsFrame, type CameraMetrics, type CameraTrack } from './camera';
 import { ANIM_METRICS, type Course, type Measure } from './course';
 
 /** The codes this module raises, with their fixes. */
@@ -123,12 +127,15 @@ export function runCourse(course: Course, options: { registry?: Registry } = {})
   if (!first) throw codeError('DEV_COURSE_NO_PLAYER', { course: course.id, scene: course.scene });
   const animated = course.measures.find((m) => (ANIM_METRICS as readonly string[]).includes(m.metric));
   if (animated && !first.animator) throw codeError('DEV_COURSE_NO_ANIMATOR', { course: course.id, measure: animated.name, scene: course.scene }); // prettier-ignore
-  const eyes = first.animator && !first.motion && course.measures.some((m) => m.camera?.startsWith('cam3=first'));
+  const firsts = [...course.measures.map((m) => m.camera ?? ''), ...course.views.map(([, code]) => code)];
+  const arms = first.animator !== undefined && firsts.some((code) => code.startsWith('cam3=first'));
   const queries = queryViewOf(world);
-  const anim = animated || eyes ? createAnimTrack(course.id, queries) : undefined;
-  const cameras = course.measures.filter((m) => m.camera !== undefined).map((m) => ({ m, track: undefined as CameraTrack | undefined })); // prettier-ignore
+  const anim = animated || arms ? createAnimTrack(course.id, queries) : undefined;
+  const cameras = course.measures.filter((m) => m.camera !== undefined).map((m) => ({ m, track: undefined as CameraTrack | undefined, arms: undefined as ArmsRig | undefined })); // prettier-ignore
   const declared = (path: string) => registry.kinds().includes('setting') && registry.has('setting', path);
-  const rig = rigOptions((path) => (declared(path) ? session.settings.get(path) : undefined));
+  const setting = (path: string) => (declared(path) ? session.settings.get(path) : undefined);
+  const rig = rigOptions(setting);
+  const fov = armsLens(setting('cam.armsFov'));
   let [at, intents]: [number, Intents] = [0, NO_INTENTS];
   const record = (k: number) => {
     const e = player()!;
@@ -143,7 +150,15 @@ export function runCourse(course: Course, options: { registry?: Registry } = {})
       if (k < c.m.from || k > (c.m.to ?? course.steps)) continue;
       if (c.track) for (const [step, code] of course.views) if (step === k) c.track.set(code);
       c.track ??= createCameraTrack(c.m.camera!, rig);
-      c.track.frame(sample.feet, { queries, dt: world.dt, player: doing, look: intents.look, ...(eye ? { eye } : {}) }); // prettier-ignore
+      /** First person's arms against this camera's pose, posed by its own arms rig (see the file comment). */
+      const posed = (pose: CameraPose, effects: EffectsFrame | null): ArmsFrame | null => {
+        const input = anim?.armsInput({ player: doing, effects, aspect: CAMERA_CHECK.aspect, fov });
+        if (!input || !e.animator) return null;
+        c.arms ??= new ArmsRig(e.animator.build);
+        c.arms.update(pose, input, world.dt);
+        return { hands: c.arms.hands.map(vec3Of), points: c.arms.points(), fov };
+      };
+      c.track.frame(sample.feet, { queries, dt: world.dt, player: doing, look: intents.look, arms: posed, ...(eye ? { eye } : {}) }); // prettier-ignore
     }
     return sample;
   };
@@ -160,7 +175,7 @@ export function runCourse(course: Course, options: { registry?: Registry } = {})
     session.step(intents);
     samples.push(record(k + 1));
   }
-  const tracks = Object.fromEntries(cameras.map((c) => [c.m.name, c.track?.metrics() ?? { jump: 0, turn: 0, inside: 0, lost: 0 }])); // prettier-ignore
+  const tracks = Object.fromEntries(cameras.map((c) => [c.m.name, c.track?.metrics() ?? { jump: 0, turn: 0, inside: 0, lost: 0, clip: 0 }])); // prettier-ignore
   const run: CourseRecord = { samples, anim, cameras: tracks };
   const results = course.measures.map((m) => judge(m, measure(m, run, course.steps, world.dt), world.dt));
   const pass = results.every((r) => r.pass || r.watch !== undefined);
@@ -254,6 +269,8 @@ export function measure(m: Measure, run: CourseRecord, steps: number, dt: number
       return camera.inside;
     case 'cameraLost':
       return camera.lost;
+    case 'cameraClip':
+      return camera.clip;
   }
 }
 

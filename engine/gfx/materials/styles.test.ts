@@ -4,7 +4,8 @@
  * the normal map; toon sharing the set's uniforms), `lambert` and unlit entries are the library's own materials, an
  * unknown style is `GFX_UNKNOWN_STYLE`; `setStyle` and `apply` re-point visible meshes (arrays too) and leave hidden ones and other
  * materials alone; the warm-up entries sort after every other, swap every drawn mesh to each style in turn and put
- * each material back, and the shader key names what was compiled; `dispose` frees what the set made. That switching
+ * each material back, and the shader key names what was compiled; a mesh's `userData.restyle` wraps what it is given,
+ * live and in the warm-up; `dispose` frees what the set made. That switching
  * styles builds no pipeline on the GPU is tests/e2e/materials-v2.spec.ts.
  * @see engine/gfx/materials/styles.ts
  */
@@ -155,6 +156,34 @@ describe('style sets', () => {
     expect(parts.get('styles')!()).toBe(styles.ids.join(','));
     attached.dispose();
     expect(entries.size + parts.size).toBe(0);
+  });
+
+  it('wrap what they give a mesh that draws its materials its own way, live and in the warm-up (WP 13.12)', () => {
+    const registry = registryWithMaterials();
+    const library = createMaterialLibrary({ registry });
+    const styles = createStyleSet({ library, registry });
+    const wrapped = new Map<Material, Material>();
+    const restyle = (material: Material) => {
+      if ([...wrapped.values()].includes(material)) return material;
+      if (!wrapped.has(material)) wrapped.set(material, Object.assign(material.clone(), { name: 'wrapped' }));
+      return wrapped.get(material)!;
+    };
+    const scene = new Group();
+    const mesh = new Mesh(new BoxGeometry(), restyle(library.get('material:test-metal')));
+    mesh.userData.restyle = restyle;
+    scene.add(mesh);
+    expect(styles.setStyle('pbr', scene)).toBe(1);
+    expect(mesh.material).toBe(wrapped.get(styles.get('material:test-metal', 'pbr')));
+    expect(styles.apply(scene)).toBe(0); // its own copy kept
+    const { warmup, entries } = fakeWarmup();
+    styles.attach(warmup, scene);
+    const seen: Material[] = [];
+    for (const id of [...entries.keys()].sort()) {
+      entries.get(id)!();
+      seen.push(mesh.material as Material);
+    }
+    const each = ['flat', 'lambert', 'pbr', 'toon'].map((style) => wrapped.get(styles.get('material:test-metal', style as 'toon'))); // prettier-ignore
+    expect(seen).toEqual([...each, wrapped.get(styles.get('material:test-metal', 'pbr'))]);
   });
 
   it('free the materials they made, and the library when it is their own', () => {

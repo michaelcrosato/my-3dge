@@ -434,7 +434,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `AnimTrack`, `createAnimTrack`, `HAND_SOCKETS`, `TrackTraverse`
   - Tests: [`engine/dev/feel/anim.test.ts`](../engine/dev/feel/anim.test.ts)
 - [`camera.ts`](../engine/dev/feel/camera.ts): Camera metrics on a feel course (PLAN.md WP 13.4 and WP 13.8, docs/PLAYGROUND.md §4 and §9.1): `createCameraTrack(code)` makes the camera rig the page draws through (engine/gfx/cameras/rig.ts: the camera a code names, its blends and effects), steps it once a sim step at the sim's rate, as the page steps it each frame (following the player's feet, his eye, what he does, the sim's look, the run's query view for the walls; a course gives no device input), switches it with a blend where the course says (`set`), and keeps a frame of each pose.
-  - Exports: `CAMERA_CHECK`, `CameraFrame`, `CameraMetrics`, `CameraTrack`, `createCameraTrack`, `inPicture`, `LOOK_CAMERAS`, `TrackFrame`
+  - Exports: `armsClipped`, `ArmsFrame`, `CAMERA_CHECK`, `CameraFrame`, `CameraMetrics`, `CameraTrack`, `createCameraTrack`, `inPicture`, `LOOK_CAMERAS`, `TrackFrame`
   - Tests: [`engine/dev/feel/camera.test.ts`](../engine/dev/feel/camera.test.ts)
 - [`course.ts`](../engine/dev/feel/course.ts): Feel courses (PLAN.md WP 13.4, docs/PLAYGROUND.md §9.1): the registry kind `course`.
   - Exports: `ANIM_METRICS`, `CAMERA_METRICS`, `Course`, `COURSE_FIELDS`, `courseKind`, `defineCourse`, `getCourse`, `listCourses`, `Measure`, `MEASURE_FIELDS`, `Metric`, `METRICS`, `MOVE_METRICS`, `UNTILS`
@@ -555,7 +555,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `apexFov`, `applyEffects`, `CAMERA_EYE`, `CameraEffects`, `cameraPlayer`, `CameraPlayer`, `createCameraEffects`, `crouchShare`, `EFFECTS`, `EffectsFrame`, `EffectWeights`, `FIRST_EFFECTS`, `NO_EFFECTS`
   - Tests: [`engine/gfx/cameras/effects.test.ts`](../engine/gfx/cameras/effects.test.ts)
 - [`first.ts`](../engine/gfx/cameras/first.ts): The first-person camera (PLAN.md WP 3.9; doctrine: Common ground): the hero's eyes, turned by the devices, and the near-body culling that hides his own body from them.
-  - Exports: `createFirstCamera`, `CullOptions`, `describeFirst`, `eyePoint`, `FIRST_BOB_LAG`, `FIRST_DEFAULTS`, `FIRST_EYE_HEIGHT`, `FIRST_NEAR_BODY`, `FIRST_SHOWN`, `FIRST_TRAIL`, `FIRST_TURN_SPEED`, `FirstInput`, `FirstOptions`, `firstPose`, `firstSpec`, `FirstSpec`, `firstState`, `FirstState`, `formatFirstCode`, `nearBodyCull`, `parseFirstCode`, `stepFirst`
+  - Exports: `createFirstCamera`, `CullOptions`, `describeFirst`, `eyePoint`, `FIRST_ARMS`, `FIRST_BOB_LAG`, `FIRST_DEFAULTS`, `FIRST_EYE_HEIGHT`, `FIRST_KICK`, `FIRST_NEAR_BODY`, `FIRST_SHOWN`, `FIRST_TRAIL`, `FIRST_TURN_SPEED`, `firstBodyCull`, `FirstInput`, `FirstOptions`, `firstPose`, `firstSpec`, `FirstSpec`, `firstState`, `FirstState`, `formatFirstCode`, `nearBodyCull`, `parseFirstCode`, `stepFirst`
   - Tests: [`engine/gfx/cameras/first.test.ts`](../engine/gfx/cameras/first.test.ts)
 - [`fixed.ts`](../engine/gfx/cameras/fixed.ts): The fixed camera (PLAN.md WP 2.5): a perspective camera that stays where it is put, the prototype's "Fix" (F): the hero is the devices' again while the camera watches.
   - Exports: `createFixedCamera`, `FixedOptions`, `fixedPose`, `fixedSpec`, `fixedState`, `FixedState`, `stepFixed`
@@ -764,6 +764,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/gfx/puppets
 
+- [`actorLayers.ts`](../engine/gfx/puppets/actorLayers.ts): What the actor puppets keep of each actor, and the view's own layers on its puppet animator (PLAN.md WP 3.10, split from engine/gfx/puppets/actors.ts at WP 13.12): `Held`, an actor's last two places and the components its pose loads; `Layers`, what the view lays on the animator (its reactions, its actions, its secondary motion and their chain meshes, the foot plant, the traversal plant and the hold, the last three ending the `post` slot), made again by `layersFor` when what they are made for changes (`layersKey`: reactions, actions, the secondary look, or the clip layer actions ride), and taken off with their meshes freed by `dropLayers`.
+  - Exports: `dropLayers`, `Held`, `Layers`, `layersFor`, `Place`
+  - Tests: [`engine/gfx/puppets/actors.test.ts`](../engine/gfx/puppets/actors.test.ts)
 - [`actors.ts`](../engine/gfx/puppets/actors.ts): Actors on the stage (PLAN.md WP 3.10, §6.4's view; I-21): every actor with an animator (engine/sim/actors.ts: an entity with the components `actor` and `animator`) drawn as a puppet (engine/gfx/puppets/draw.ts) of the neutral humanoid (`ACTOR_BODY`) or the body its component `puppet` names (`body:mannequin`, WP 8.9), in its animator's build, posed every frame by its animator's presentation half (engine/anim/character.ts `pose`) at the frame's alpha; an actor with clips (`clips`, engine/sim/actorClips.ts) has its clip layer laid over the body, loaded from the same data (a `ClipLayerPool` of the view's own, engine/anim/clip/clipsets.ts).
   - Exports: `ACTOR_BODY`, `ActorPuppets`, `createActorPuppets`, `PlayerView`
   - Tests: [`engine/gfx/puppets/actors.test.ts`](../engine/gfx/puppets/actors.test.ts)
@@ -882,6 +885,21 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`water.ts`](../engine/gfx/textures/generators/water.ts): The water generator (`texture:water`, PLAN.md WP 7.3): still water in two blue tones in broad patches, with ripple lines running across it (along x), bent by a slow swell and dithered on every other texel, as the 2D games paint a pond.
   - Exports: `WATER`, `wave`
   - Tests: [`engine/gfx/textures/generators/v2.test.ts`](../engine/gfx/textures/generators/v2.test.ts)
+
+## engine/gfx/viewmodel
+
+- [`body.ts`](../engine/gfx/viewmodel/body.ts): First person's player (PLAN.md WP 13.12, docs/PLAYGROUND.md §4): the body and the arms a first-person camera sees.
+  - Exports: `Animated`, `armsBody`, `createViewmodel`, `FirstPersonParts`, `Viewmodel`, `ViewmodelFrame`
+  - Tests: [`engine/gfx/viewmodel/body.test.ts`](../engine/gfx/viewmodel/body.test.ts)
+- [`lens.ts`](../engine/gfx/viewmodel/lens.ts): The viewmodel's lens (PLAN.md WP 13.12, docs/PLAYGROUND.md §4): first person draws the player's arms with a field of view and a depth range of their own, so they never clip a wall and keep their shape when the picture's lens changes (the cam.fov slider, a slide's wider lens, the sights).
+  - Exports: `armsDepth`, `armsLens`, `armsSpread`, `drawnPoint`, `inArmsFrame`, `intoArmsFrame`, `VIEWMODEL`, `VIEWMODEL_SETTING_FIELDS`, `VIEWMODEL_SETTINGS`
+  - Tests: [`engine/gfx/viewmodel/lens.test.ts`](../engine/gfx/viewmodel/lens.test.ts)
+- [`material.ts`](../engine/gfx/viewmodel/material.ts): The viewmodel's materials (PLAN.md WP 13.12): first person's player is drawn by two meshes in the materials the stage gives them (engine/gfx/viewmodel/body.ts: the body and the arms), each in a node material copy of its own: - the body's (`body(material)`), on its skinned mesh, folds to a point every vertex whose `viewmodel` attribute is 1, so the camera sees none of the body, and draws its shadow from every vertex where skinning puts it (`castShadowPositionNode`), so the shadow stays whole; - the arms' (`arms(material)`), on a mesh the CPU poses, draws each vertex by the arms' lens (engine/gfx/viewmodel/ lens.ts: on its ray from the eye, at their own depth, spread by their own field of view) and takes the shadows falling where it really is (`receivedShadowPositionNode`), not where it is drawn, inside the body's own head.
+  - Exports: `createViewmodelLook`, `VIEWMODEL_MATERIAL_CODES`, `ViewmodelLook`
+  - Tests: [`engine/gfx/viewmodel/material.test.ts`](../engine/gfx/viewmodel/material.test.ts), [`tests/e2e/playground-cameras.spec.ts`](../tests/e2e/playground-cameras.spec.ts)
+- [`rig.ts`](../engine/gfx/viewmodel/rig.ts): The viewmodel's arms rig (PLAN.md WP 13.12, docs/PLAYGROUND.md §4): first person's arms posed against the camera, as games pose a viewmodel.
+  - Exports: `ARMS`, `ArmsInput`, `armsInputOf`, `ArmsRig`, `HeldHand`, `vec3Of`
+  - Tests: [`engine/gfx/viewmodel/rig.test.ts`](../engine/gfx/viewmodel/rig.test.ts)
 
 ## engine/input
 
@@ -1359,7 +1377,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`air.ts`](../labs/playground/courses/air.ts): The air course, `course:playground-air` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.4): the player, empty-handed, placed at the west end of the open floor south of the slide ramps, sprints east holding sprint and jumps three times: 0.1 s into the first, a side key replaces forward (a lurch); the second it takes with a side key held from the take-off (an air strafe); the third it presses just before landing (a bunny hop); then it runs on and stops.
   - Exports: `AIR_START`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
-- [`bounds.ts`](../labs/playground/courses/bounds.ts): The bounds every playground course checks beside its own numbers (docs/PLAYGROUND.md §4, §5.1 and §9.1, PLAN.md WP 13.4): from the step after a course places the player, its body's (a planted foot slides at most 5 cm in one contact, the anim QA's limit; no point jumps past the QA's pop of 9/16 m in a step) and, for each of the playground's five cameras (labs/playground/views.ts), §4's: no frame moves the camera more than 0.3 m or turns it more than 4° beyond what the player's own move, the look and a blend account for (engine/dev/feel/camera.ts), none stands it inside the level, and none loses the player (but first person, whose arms come with WP 13.12).
+- [`bounds.ts`](../labs/playground/courses/bounds.ts): The bounds every playground course checks beside its own numbers (docs/PLAYGROUND.md §4, §5.1 and §9.1, PLAN.md WP 13.4): from the step after a course places the player, its body's (a planted foot slides at most 5 cm in one contact, the anim QA's limit; no point jumps past the QA's pop of 9/16 m in a step) and, for each of the playground's five cameras (labs/playground/views.ts), §4's: no frame moves the camera more than 0.3 m or turns it more than 4° beyond what the player's own move, the look and a blend account for (engine/dev/feel/camera.ts), none stands it inside the level, and none loses the player (first person: its arms); and no frame lets a wall cover first person's arms or its near plane cut them (WP 13.12, `clip`).
   - Exports: `bodyBounds`, `BOUNDS`, `BoundsSpan`, `cameraBounds`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`camera-walls.ts`](../labs/playground/courses/camera-walls.ts): The cameras' hard places, `course:playground-camera-walls` (docs/PLAYGROUND.md §4, PLAN.md WP 13.8, its review): where a follow camera meets the level, the shooter's and the platformer's cameras held to §4's four bounds in four legs.

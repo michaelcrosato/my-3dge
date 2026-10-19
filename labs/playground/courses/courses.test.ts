@@ -76,9 +76,10 @@ const STARTS: Readonly<Record<string, readonly (readonly [number, number, number
 const ON_THE_TOWER = [ZIPLINE_STARTS.top, LADDER_STARTS.top, LAUNCHER_STARTS.tower];
 
 describe('the playground’s courses', () => {
-  it('check the body’s bounds and four of each camera’s, three of first person’s, a run’s under its label', () => {
+  it('check the body’s bounds and four of each camera’s, first person’s arms never cut, a run’s under its label', () => {
     expect(bodyBounds(2).map((m) => m.metric)).toEqual(['footSlide', 'pop', 'handContact']);
-    expect(cameraBounds(2)).toHaveLength(19);
+    expect(cameraBounds(2)).toHaveLength(21);
+    expect(cameraBounds(2).filter((m) => String(m.name).startsWith('first:')).map((m) => m.metric)).toEqual(['cameraJump', 'cameraTurn', 'cameraInside', 'cameraLost', 'cameraClip']); // prettier-ignore
     const run = cameraBounds(2, { to: 90, label: 'run 1', watch: { shooter: 'WP 13.12' } });
     expect(run[0]).toMatchObject({ name: 'run 1: shooter: jump', to: 90, watch: 'WP 13.12' });
     expect(run.filter((m) => m.watch)).toHaveLength(4); // the shooter's four, the others judged

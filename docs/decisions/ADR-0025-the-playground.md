@@ -638,3 +638,54 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   (`reset`), engine/dev/feel/{anim,course,run}.ts (the measure, `holds`, the floor off the ground), labs/playground/
   courses/ (the bounds, the traversal spans that hold), engine/app/view.ts (the player's look), tools/qa/anim.ts and
   tools/cmd/sheet.ts (the states), docs/PLAYGROUND.md §5.1 and docs/GAME-GUIDE.md (`actOn`).
+
+## Amendment 12 (2026-10-19, WP 13.12): first person
+
+- **The arms by a lens of their own, in the frame's own pass** (engine/gfx/viewmodel/lens.ts, material.ts): the WP
+  drew the arms "in their own pass, with their own field of view and near plane". Built instead: each of their
+  vertices is drawn by the arms' lens in the vertex shader, on its ray from the eye, its depth past their near plane
+  (0.1 m) squeezed 0.15 m per metre into the centimetres in front of the picture's near plane (from 1.2 of it), and
+  spread across the picture by the ratio of the picture's lens to theirs (Apex's 70 at 4:3; the view setting
+  `cam.armsFov`). A wall stands at least the capsule's radius off the eye, so none covers them, and they keep their
+  shape through the cam.fov slider, the slide's wider lens and the sights' zoom. A second pass would have cost a render
+  target, its compositing and every look's pipelines again; this one costs neither, and the ID pass and the post
+  chain see what the frame draws (Unreal 5.5's first-person rendering scales its first-person primitives toward the
+  camera the same way).
+- **Two meshes** (engine/gfx/viewmodel/body.ts, rig.ts): measured first, the camera's eye (the profile's 1.52 m over
+  the feet) leaves the body's shoulders 0.08 to 1.39 m off it (a slide's 0.86, a mantle's 0.93, a skydive's 1.39), so
+  hands posed from the body's own shoulders could not reach the picture. The arms are a second mesh of the body's arm
+  and right-leg pieces (one draw call, casting no shadow) posed by a rig of its build stood upright under the camera,
+  its eyes at the camera's eye and its heading the camera's: fists up at rest, pumping with the gait's phase in a
+  sprint, spread in a slide, raised in the air, a breath, the view effects' weapon bob (Apex's 0.4 s) and a sway
+  behind the look's turn; a hand the body holds on a contact (a ledge in a mantle, the wall in a climb, a rung, the
+  cable) drawn on the contact's ray, a carried gun where the body holds it from its eyes; every hand kept within 0.95
+  of the arms' half-frame (a zipline's cable overhead: at the frame's top) and within 0.95 of the arm's reach along
+  its ray, the wrist's reach checked for the hand's final turn; a kick shows the body's kicking leg under the rig's
+  hips. Measured on r182 in the page: a skinned mesh's `positionNode` is handed the vertex before skinning and what it
+  returns is skinned (the lens on the arms' skinned mesh drew a 53-pixel speck), so the arms' mesh is posed on the CPU
+  each frame, every vertex by the one bone it rides (about 1,400 vertices), and the lens sees it posed.
+- **The body hidden from the camera, its shadow whole**: WP 3.9's culling gave the hidden parts no skin weight, which
+  took their shadow with them. Now the body folds to a point, for the camera only, the vertices an attribute marks
+  (`viewmodel`), through a node material copy of each of its materials whose `castShadowPositionNode` leaves the
+  shadow pass every vertex where skinning puts it; the arms' copies take their shadows where a vertex really is
+  (`receivedShadowPositionNode`; the drawn arms stand inside the body's own head). A copy is made once per source
+  with every property carried (r182's `NodeMaterial.copy`, so `clone`, keeps only the node properties: a cloned
+  standard material lost its roughness). The style set wraps what it gives such a mesh (`userData.restyle`), live
+  and in the warm-up, so a look switch builds nothing; the toon material's `copy` keeps its look's uniforms. With the
+  view setting `cam.fullBody` the body shows under the camera beside the arms, its head, its arms and what is near
+  the eye folded.
+- **Measured**: first person's `cameraLost` reads the arms (neither hand in the arms' frame) and `cameraClip`
+  (engine/dev/feel/camera.ts) counts the frames a wall covers the drawn arms or the near plane cuts them, both in every
+  course's camera bounds (21 a span): the 19 courses' 1,425 measures pass, both 0 everywhere. A scratch probe with the same rigs, the arms at their true depth: the
+  climb's arms covered in 184 of its 1,531 first-person frames, the mantles' 13, the camera walls' 9, the ladder's 1;
+  through the lens none, the drawn arms at least 0.306 m short of the nearest wall. In the page (tests/e2e/
+  playground-cameras.spec.ts): the ID pass sees the arms and not the body, as many of their pixels standing against
+  the spawn's south wall as in the open, the fists pump in a sprint and rise in a jump; 0 pipelines after the warm-up
+  blending through every mode.
+- **Deferred**: the gun's viewmodel and the punch's arm, WP 13.20's and WP 13.19's (the rig takes a carried gun's
+  grips from the body until then, and draws a kick's leg); the arms' pose numbers are Apex-like, tuned by eye on the
+  playtest (docs/PLAYGROUND.md §9.3).
+- **Beyond Owns**: engine/gfx/puppets/actors.ts (`firstPerson` for `cull`; what it keeps of each actor split into
+  actorLayers.ts), engine/gfx/materials/{styles,toon}.ts (the restyle hook; the toon copy),
+  engine/dev/feel/{anim,camera,course,run}.ts (the arms' input, `cameraLost` and `cameraClip`), labs/playground/
+  courses/bounds.ts (the two first-person measures).

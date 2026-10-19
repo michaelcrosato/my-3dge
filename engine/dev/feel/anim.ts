@@ -9,7 +9,8 @@
  * most a sole slides on the floor in one contact, and `pop`, the largest one-step jump of a point against its
  * neighbours (m; 0 when nothing qualifies); and `handGap(point)`, the closest either hand comes to a point (m). §5.1's
  * bounds: 5 cm of slide, no pop past the QA's 9/16 m, 3 cm from a contact. Each frame keeps the eyes too (`eye(k)`),
- * where the first-person camera stands.
+ * where the first-person camera stands, and the last frame's body gives first person's arms their input (`armsInput`,
+ * engine/gfx/viewmodel/rig.ts `armsInputOf`: the hands it holds on contacts, a carried gun, a kick).
  *
  * Invariants: posing never writes what the sim saves (engine/anim/character.ts), so measuring leaves a run's hash as it
  * is; the track keeps animators of its own, never the world's.
@@ -19,7 +20,7 @@
  * // track.footSlide(1, 300); // the most a sole slid in one contact over frames 1–300, m
  * @see engine/dev/feel/anim.test.ts
  */
-import { AnimatorPool, type AnimatorData } from '../../anim/character';
+import { AnimatorPool, type Animator, type AnimatorData } from '../../anim/character';
 import { getBuild } from '../../anim/builds';
 import { jointPosition, socketPosition } from '../../anim/fk';
 import { FOOT_PLANT, FootPlant, queryGround, type GroundQueries } from '../../anim/footPlant';
@@ -34,6 +35,7 @@ import { RUN_POINTS } from '../../anim/stateMatrix';
 import { Vector3 } from '../../core/math';
 import { eyePoint } from '../../gfx/cameras/first';
 import type { Vec3 } from '../../gfx/cameras/pose';
+import { armsInputOf, type ArmsInput } from '../../gfx/viewmodel/rig';
 
 /** The hands, as sockets: what `handGap` measures from. */
 export const HAND_SOCKETS = ['weaponR', 'weaponL'] as const;
@@ -72,6 +74,8 @@ export function createAnimTrack(where = 'feel', queries?: GroundQueries) {
   const ground = queries ? queryGround(queries) : null;
   const frames: AnimFrame[] = [];
   let size = 1;
+  /** The last frame's animator and its traversal plant: what first person's arms are posed from. */
+  let last: { animator: Animator; traversal: TraversalPlant } | null = null;
   const hit = { point: new Vector3(), normal: new Vector3() };
   /** The ground under a sole, as the plant looks for it (`FOOT_PLANT.up` over it to `FOOT_PLANT.down` under); none: far below. */ // prettier-ignore
   const floorUnder = (p: Vector3) => {
@@ -132,6 +136,7 @@ export function createAnimTrack(where = 'feel', queries?: GroundQueries) {
       moving.set(id, pose.update(motion, dt, body));
       pose.apply(animator);
       animator.pose({ at, yaw });
+      last = { animator, traversal };
       const { skeleton, world } = animator.body;
       const joints = JOINTS.map((_, j) => jointPosition(world, j));
       const sockets = SOCKETS.map((name) => socketPosition(skeleton, world, name));
@@ -143,6 +148,10 @@ export function createAnimTrack(where = 'feel', queries?: GroundQueries) {
       const points = [...joints, ...sockets].map((p) => p.setY(p.y - feet[1]));
       frames.push({ points, soles, position: new Vector3(feet[0], 0, feet[2]), hands, held, eye: eyePoint(skeleton, world) }); // prettier-ignore
       size = getBuild(data.build).size;
+    },
+    /** First person's arms' input off the last frame's body, for a frame with `frame`'s camera inputs; null before one. */
+    armsInput(frame: Pick<ArmsInput, 'player' | 'effects' | 'aspect' | 'fov'>): ArmsInput | null {
+      return last ? armsInputOf(last.animator, last.traversal, frame) : null;
     },
     /** Where frame `k`'s eyes are (world, m): where the first-person camera stands. */
     eye(k: number): Vec3 {

@@ -11,11 +11,10 @@
  * sim's look, when no device turns the camera); `input.zoom` narrows the lens 5° a step within `FLY_FOV_RANGE`, from
  * `input.lens` when given (the player's field of view, engine/gfx/cameras/rig.ts).
  *
- * Near-body culling (`nearBodyCull`): the joints whose body parts a renderer hides from this camera. That is the whole
- * body but the hands (`FIRST_SHOWN`; a held weapon rides their sockets), as first-person games show it, and also any
- * shown part that comes within `FIRST_NEAR_BODY` of the eye, so nothing fills the frame or cuts the near plane. A
- * part runs from its joint to its children (a leaf's, to its tip). `show: JOINTS` keeps the whole body but what is
- * near the eye ("true first person").
+ * Near-body culling (`nearBodyCull`): the joints whose parts a renderer hides from this camera: all but those in `show`
+ * (the hands, `FIRST_SHOWN`) and any shown part within `FIRST_NEAR_BODY` of the eye, a part running from its joint to
+ * its children or its tip. The view draws first person's arms apart (`FIRST_ARMS`, a kick's leg `FIRST_KICK`: WP 13.12),
+ * so the body hides every part (`firstBodyCull`), or with the full body on, its head, its arms and what is near the eye.
  *
  * Invariants: the pitch stays within ±`FLY_MAX_PITCH`; the head is always culled (the eyes are on it); pure.
  *
@@ -34,6 +33,7 @@
  * const first = createFirstCamera();
  * first.update({ eye: eyePoint(skeleton, world) }).position; // [0, 1.83…, 0.18…]: at his eyes (the first eye snaps)
  * nearBodyCull(skeleton, world, first.pose().position); // ['pelvis', 'spine0', …, 'toeR']: all but the hands
+ * firstBodyCull(skeleton, world, first.pose().position, true).includes('thighL'); // false: the full body's legs show
  * first.code(); // 'cam3=first,0,-4.58,75'
  * createFirstCamera().update({ follow: [2, 0, 3] }).position; // [2, 1.5, 3]: eye height, without a rig
  * @see engine/gfx/cameras/first.test.ts
@@ -60,6 +60,10 @@ export const FIRST_TRAIL = 0.2;
 export const FIRST_SHOWN: readonly JointName[] = Object.freeze(['handL', 'handR']);
 /** A shown part closer to the eye than this is culled too, m. */
 export const FIRST_NEAR_BODY = 0.3;
+/** The joints first person's viewmodel draws as the arms (engine/gfx/viewmodel/). */
+export const FIRST_ARMS: readonly JointName[] = Object.freeze(['upperArmL', 'forearmL', 'handL', 'upperArmR', 'forearmR', 'handR']); // prettier-ignore
+/** The joints it draws as a kick's leg, while the body kicks. */
+export const FIRST_KICK: readonly JointName[] = Object.freeze(['thighR', 'shinR', 'footR', 'toeR']);
 /** Turn rates at full `input.turn`, rad/s: `[right, up]`. */
 export const FIRST_TURN_SPEED = Object.freeze([2.2, 1.2] as const);
 
@@ -188,6 +192,15 @@ export function nearBodyCull(skeleton: Skeleton, world: WorldPose, eye: Vec3, op
     const ends = CHILDREN[j].length ? CHILDREN[j].map(at) : [tipPosition(skeleton, world, j)];
     return ends.some((end) => segmentDistance(eye, at(j), end) < near);
   });
+}
+
+/**
+ * The joints the body hides from a first-person camera at `eye`, whose arms the viewmodel draws (see the file comment):
+ * every one; with `fullBody`, the head, the arms and those near the eye (`nearBodyCull`).
+ */
+export function firstBodyCull(skeleton: Skeleton, world: WorldPose, eye: Vec3, fullBody = false): JointName[] {
+  if (!fullBody) return [...JOINTS];
+  return nearBodyCull(skeleton, world, eye, { show: JOINTS.filter((joint) => !FIRST_ARMS.includes(joint)) });
 }
 
 const PARTS: readonly CodePart[] = [

@@ -33,6 +33,7 @@ import '../../labs/playground/bodies/player';
 import '../../labs/playground/scenes/gym';
 import { BLEND_TIME } from '../gfx/cameras/blend';
 import { CAMERA_EYE } from '../gfx/cameras/effects';
+import { FIRST_ARMS } from '../gfx/cameras/first';
 import { SHOULDER } from '../gfx/cameras/shoulder';
 import { createHeadless, headlessHost } from './headless';
 import type { AppHost } from './viewMembers';
@@ -246,7 +247,7 @@ describe('createHeadless({ view: true })', () => {
 
   it('draws the hero as a puppet and follows him: chase inside the room, first person without his body', async () => {
     const engine = await createHeadless({ scene: 'box:room-hero', view: true });
-    type Info = { code: string; pose: CameraPose; culled?: string[] };
+    type Info = { code: string; pose: CameraPose; culled?: string[]; arms?: string[] };
     const cameras = engine.camera as { get(): Info; set(code: string): Info };
     const start = poseTarget(cameras.get().pose); // the first follow snaps to him, not to the room's middle (8, 6)
     expect(start[0]).toBeCloseTo(3.5, 9);
@@ -259,7 +260,8 @@ describe('createHeadless({ view: true })', () => {
     const [x, y, z] = chase.pose.position;
     expect(x > 1 && x < 15 && z > 1 && z < 11 && y > hero.y).toBe(true); // in front of the north wall, not in it
     const first = cameras.set('cam3=first');
-    expect(first.culled).toEqual(JOINTS.filter((joint) => joint !== 'handL' && joint !== 'handR'));
+    expect(first.culled).toEqual([...JOINTS]); // his body hidden from the camera, its shadow kept (WP 13.12)
+    expect(first.arms).toEqual(FIRST_ARMS); // and his arms drawn against it
     expect(Math.hypot(first.pose.position[0] - hero.x, first.pose.position[2] - hero.z)).toBeLessThan(0.5); // eyes ahead of the feet, leaning into the walk
     expect(first.pose.position[1] - hero.y).toBeGreaterThan(0.8); // at his eyes
     expect(cameras.set('cam=iso').culled).toBeUndefined();

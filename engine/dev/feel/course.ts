@@ -14,7 +14,8 @@
  *   hold, a cable, the floor) is from it (WP 13.11), past any bound (the largest number) for a span that `holds` and never held one;
  * - a camera's (engine/dev/feel/camera.ts), the code in `camera`: `cameraJump`, the most one frame moves it beyond the
  *   player's own move, and `cameraTurn`, the most it turns (rad); `cameraInside`, the frames it stands inside the
- *   level; `cameraLost`, the frames the player is out of its view.
+ *   level; `cameraLost`, the frames the player (in first person, its arms) is out of its view; `cameraClip`, the frames
+ *   first person's arms are covered or cut (WP 13.12).
  * A tolerance is a share of the reference (`share`), an amount (`abs`, in the metric's unit) or whole steps (`ticks`,
  * for times); a measure passes within any one it names. A bound is a reference of 0 with the bound as `abs`: the
  * camera's 0.3 m. docs/PLAYGROUND.md §3.2's are the playground's: speeds ±2%, accelerations ±5%, times ±1 tick,
@@ -57,7 +58,7 @@ export const MOVE_METRICS = ['speed', 'topSpeed', 'speedGain', 'velocityChange',
 export const ANIM_METRICS = ['footSlide', 'pop', 'handGap', 'handContact'] as const;
 
 /** The metrics of a camera following the player. */
-export const CAMERA_METRICS = ['cameraJump', 'cameraTurn', 'cameraInside', 'cameraLost'] as const;
+export const CAMERA_METRICS = ['cameraJump', 'cameraTurn', 'cameraInside', 'cameraLost', 'cameraClip'] as const;
 
 /** Everything a measure reads off the run (see the file comment). */
 export const METRICS = [...MOVE_METRICS, ...ANIM_METRICS, ...CAMERA_METRICS] as const;
