@@ -7,8 +7,7 @@
  * - `reach`: how far the ball gets from a point along a direction, `COLLIDE_SKIN` short of the first surface;
  * - `sweep`: where the ball gets from one point toward another, stopped twice the skin short of a surface, so a cast
  *   that starts there starts clear (a pivot's lag never takes it through a wall);
- * - `easeArm`: an arm's length after the walls, in at once and out with a time constant of `COLLIDE_RETURN` s (the
- *   chase camera's spring arm);
+ * - `easeArm`: an arm's length after the walls, in at once, out with a time constant of `COLLIDE_RETURN` s (chase's);
  * - `slide`: where the ball gets from one point toward another, sliding along what it meets, as a character does;
  *   `follow`, an arm's base that follows a point so, at a pace (held at a lip, it catches up at `COLLIDE_PULL`);
  * - `moveCamera`: a camera that moves on at a pace (the shooter's and the platformer's): carried with its arm (what
@@ -17,11 +16,12 @@
  *   time constant of `COLLIDE_RETURN`, no faster, each leg slid along the walls; so a ledge, a roof or a pole that
  *   crosses the arm is passed over, under or round, never through, and the camera is never inside a wall, while one
  *   may stand between it and the player (the view fades it). A camera the base sees (a ball swept from it gets there)
- *   keeps it in sight with `SIGHT_ROOM` to spare, stopping short of where its own legs would lose it; one that lost it
- *   (the player moved) never sinks below what cuts the sight, so it never ends behind the top of a wall it rose over.
- *   One that stood more than a metre from where it wants for `COLLIDE_STUCK` seconds homes to the clear point instead,
- *   level until over it. Two cuts are left: a camera carried further than `COLLIDE_TELEPORT` in a frame (the
- *   player put elsewhere) goes with him, and one found inside a wall (moved into it) goes to the clear point.
+ *   keeps it in sight, with `SIGHT_ROOM` to spare when it had it (a floor or a ceiling grazing that room aside),
+ *   stopping short of where its legs would lose it; one that lost it (the player moved) goes down only to where it
+ *   sees the base again, so it never ends behind the top of a wall it rose over. One that stood more than a metre from
+ *   where it wants for `COLLIDE_STUCK` seconds homes to the clear point instead, level until over it. Two cuts are
+ *   left: carried further than `COLLIDE_TELEPORT` in a frame (the player put elsewhere), a camera goes with him, and
+ *   one found inside a wall (moved into it) goes to the clear point.
  *
  * Invariants: pure (equal walls and inputs give equal answers); a ball that starts clear and stops where `reach` or
  * `sweep` says never overlaps the groups cast against (chase.test.ts walks fixtures/scenes/chase-walls/ to prove it);
@@ -198,7 +198,10 @@ export function moveCamera(
     const eased = far(to, base) > far(from, base) ? gap * (1 - Math.exp(-dt / COLLIDE_RETURN)) : gap; // out: eased
     return lerp(from, to, gap < 1e-9 ? 0 : Math.min(eased, COLLIDE_PULL * dt) / gap);
   };
-  /** Whether a ball `SIGHT_ROOM` wider than the camera's gets from the base to within that room of `at`. */
+  /**
+   * Whether a ball `SIGHT_ROOM` wider than the camera's gets from the base to within that room of `at`, or meets only a
+   * floor or a ceiling on the way while the camera's own ball still `sees` it (the look tipped up over open floor).
+   */
   const wide = (at: Vec3) => {
     const d: Vec3 = [at[0] - base[0], at[1] - base[1], at[2] - base[2]];
     const gap = Math.hypot(...d);
@@ -206,23 +209,26 @@ export function moveCamera(
     const ball = { type: 'ball', radius: COLLIDE_RADIUS + SIGHT_ROOM } as const;
     const dir: Vec3 = [d[0] / gap, d[1] / gap, d[2] / gap];
     const hit = queries.shapeCast(ball, base, dir, { maxDistance: gap, margin: COLLIDE_SKIN, groups, exclude });
-    return !hit || hit.distance >= gap - SIGHT_ROOM - 2 * COLLIDE_SKIN;
+    if (!hit || hit.distance >= gap - SIGHT_ROOM - 2 * COLLIDE_SKIN) return true;
+    return Math.abs(hit.normal.y) > LEVEL_NORMAL && sees(at);
   };
   /**
-   * Slid from `from` toward `to`: a camera in the base's sight keeps it with `SIGHT_ROOM` to spare (stopped short), and
-   * one out of it never goes down (so it never sinks behind a wall's top it rose over).
+   * Slid from `from` toward `to`: a camera in the base's sight keeps it, with `SIGHT_ROOM` to spare when it had that
+   * (stopped short), and one out of it goes down only to where it sees the base again, so it never sinks behind a
+   * wall's top it rose over.
    */
   const leg = (from: Vec3, to: Vec3, keep = false): Vec3 => {
     const at = slide(walls, from, to, keep);
     if (!sees(from)) {
-      const top = sweep(walls, base, from)[1] < from[1] - SIGHT_ROOM; // what cuts the sight lies below it: a wall's top
-      return !top || at[1] >= from[1] ? at : slide(walls, from, [to[0], Math.max(to[1], from[1]), to[2]], keep);
+      return at[1] >= from[1] || sees(at) ? at : slide(walls, from, [to[0], Math.max(to[1], from[1]), to[2]], keep);
     }
-    if (wide(at) || !wide(from)) return at;
+    if (wide(at)) return at;
+    const held = wide(from) ? wide : sees;
+    if (held(at)) return at;
     let [inside, outside] = [0, 1];
     for (let k = 0; k < SIGHT_STEPS; k++) {
       const half = (inside + outside) / 2;
-      if (wide(slide(walls, from, lerp(from, to, half), keep))) inside = half;
+      if (held(slide(walls, from, lerp(from, to, half), keep))) inside = half;
       else outside = half;
     }
     return slide(walls, from, lerp(from, to, inside), keep);

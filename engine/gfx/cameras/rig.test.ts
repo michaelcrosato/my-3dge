@@ -1,7 +1,8 @@
 /**
  * @file Unit tests for the camera rig (engine/gfx/cameras/rig.ts): a switch cuts unless it asks for a blend; a blend
  * starts at the old camera's picture, is halfway at half its time, ends at the new one's and says what it moved; a view's
- * turn swings round its target; the effects reach the camera that takes them, mixed through a blend; the options from
+ * turn swings round its target; the effects reach the camera that takes them, mixed through a blend (a hard landing's
+ * shake, a weapon's kick, by each camera's punch share); the options from
  * the view settings `cam.*` give first person and the shooter the player's lens and the views whole zoom steps.
  * @see engine/gfx/cameras/rig.ts
  */
@@ -82,6 +83,23 @@ describe('the camera rig', () => {
     expect(shakes[0]).toBeGreaterThan(0.01); // 20 m/s, 10 over the shake's threshold
     expect(shakes[1]).toBeCloseTo(shakes[0] * SHOULDER_EFFECTS.punch, 9);
     expect(shakes[2]).toBe(0);
+  });
+
+  it('kicks first person’s view up on a weapon’s recoil, the shooter’s by half, the views’ not at all', () => {
+    const still: CameraPlayer = { velocity: [0, 0, 0], grounded: true, mode: 'ground', sprinting: false, sliding: false, boosted: false, aiming: false }; // prettier-ignore
+    const eye = { follow: [0, 0, 0] as const, eye: [0, 1.524, 0] as const };
+    const lifts = ['cam3=first', 'cam3=shoulder', 'cam=iso'].map((code) => {
+      const rig = createCameraRig(code);
+      rig.step(still);
+      const before = rig.update(eye, 1 / 60).pitch;
+      rig.kick(0.05);
+      let top = 0;
+      for (let k = 0; k < 20; k++) top = Math.max(top, rig.update(eye, 1 / 60).pitch - before);
+      return top;
+    });
+    expect(lifts[0]).toBeGreaterThan(0.02); // the punch's spring, up
+    expect(lifts[1]).toBeCloseTo(lifts[0] * SHOULDER_EFFECTS.punch, 3);
+    expect(lifts[2]).toBe(0);
   });
 
   it('takes its options from the view settings: the player’s lens, the blend, whole zoom steps', () => {

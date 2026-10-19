@@ -1,12 +1,15 @@
 /**
  * @file The cameras' hard places, `course:playground-camera-walls` (docs/PLAYGROUND.md §4, PLAN.md WP 13.8, its review):
- * where a follow camera meets the level, the shooter's and the platformer's cameras held to §4's four bounds in three
- * legs. On open floor (`OPEN`) the player stands, then walks, while the look tilts up to `PITCH` (the arm's end under
- * the floor), down to −`PITCH` and back. Along the east perimeter wall (`WALL`), in the corridor between it and the
- * features, he sprints south looking a little away from it (the arm grazing it), jumps looking down (the arm's end over
- * its top, outside) and lands looking up, so the camera comes back over the top, never down behind it. Past the climb
- * walls (`EDGES`), five blocks with gaps between them, he runs west looking south, so the arm swings across their faces
- * and edges.
+ * where a follow camera meets the level, the shooter's and the platformer's cameras held to §4's four bounds in four
+ * legs. On open floor by the spawn (`OPEN`) the player stands, then walks, while the look tilts up to `PITCH` (the arm's
+ * end under the floor), down to −`PITCH` and back. Along the east perimeter wall (`WALL`), in the corridor between it
+ * and the features, he sprints south looking a little away from it (the arm grazing it), jumps looking down (the arm's
+ * end over its top, outside) and lands looking up, so the camera comes back over the top, never down behind it. Past
+ * the climb walls (`EDGES`), five blocks with gaps between them, he runs west looking south, so the arm swings across
+ * their faces and edges. Two metres from the east wall, his back to it (`TOP`), he looks down until the camera stands
+ * over its top, jumps and looks up as he falls: the camera stays over the top, never sinking behind it (the review),
+ * and keeps him in sight until he lands (`LANDED`); then the shooter's loses him for about a second, until it comes
+ * back over the top to the clear point (the open issue in docs/PROGRESS.md).
  *
  * Game code (labs/playground/): it imports only the engine's public API and the playground's own files.
  *
@@ -20,9 +23,10 @@ import { BOUNDS } from './bounds';
 
 /** The legs: where each places the player, facing which way, from which step to which. */
 export const CAMERA_WALLS = {
-  OPEN: { at: [20.25, 0, 10], yaw: 0, from: 0, to: 360 },
+  OPEN: { at: [20.25, 0, 6], yaw: 0, from: 0, to: 360 },
   WALL: { at: [39.2, 0, 44], yaw: 0, from: 360, to: 660 },
   EDGES: { at: [30, 0, 26.5], yaw: 0, from: 660, to: 960 },
+  TOP: { at: [38.046, 0, 52.229], yaw: -2.042, from: 960, to: 1200 },
 } as const;
 
 /** How far the look tilts up and down on open floor (rad): past where the shooter's arm meets the floor. */
@@ -39,7 +43,7 @@ const ramp = (from: number, to: number, yaw: number, a: number, b: number) =>
 const place = (leg: { at: readonly number[]; yaw: number; from: number }) =>
   [leg.from, { dev: 'place', args: { at: leg.at, yaw: leg.yaw, speed: 0 } }] as const;
 
-const { OPEN, WALL, EDGES } = CAMERA_WALLS;
+const { OPEN, WALL, EDGES, TOP } = CAMERA_WALLS;
 
 /** Change-points in step order, those on one step merged (a ramp's look beside a key). */
 const merged = (points: readonly (readonly [number, Record<string, unknown>])[]) => {
@@ -69,26 +73,35 @@ const INPUTS = merged([
   [EDGES.from + 1, { look: [0, 0], cam: 0, move: [-1, 0], b: [] }],
   [EDGES.from + 150, { look: [0.4, 0.2], cam: 0.4 }],
   [EDGES.from + 240, { move: null }],
+  place(TOP),
+  [TOP.from + 1, { look: [TOP.yaw, 0], cam: TOP.yaw, move: null, b: [] }],
+  ...ramp(TOP.from + 2, TOP.from + 32, TOP.yaw, 0, -0.7),
+  [TOP.from + 60, { b: ['jump'] }],
+  [TOP.from + 61, { b: [] }],
+  ...ramp(TOP.from + 76, TOP.from + 106, TOP.yaw, -0.7, 0.3),
 ]);
 
-/** §4's four bounds for `camera` over steps `from` to `to`. */
-const bounds = (camera: string, label: string, from: number, to: number) => [
+/** The step `TOP`'s player lands, from which its camera comes back over the wall's top (`LANDED`, the file comment). */
+const LANDED = TOP.from + 102;
+
+/** §4's four bounds for `camera` over steps `from` to `to`, `never lost` to `seen` (`to` by default). */
+const bounds = (camera: string, label: string, from: number, to: number, seen = to) => [
   { name: `${label}: no jump`, metric: 'cameraJump', camera, from, to, reference: 0, tolerance: { abs: BOUNDS.jump } },
   { name: `${label}: no turn`, metric: 'cameraTurn', camera, from, to, reference: 0, tolerance: { abs: BOUNDS.turn } },
   { name: `${label}: never inside`, metric: 'cameraInside', camera, from, to, reference: 0, tolerance: { abs: 0 } },
-  { name: `${label}: never lost`, metric: 'cameraLost', camera, from, to, reference: 0, tolerance: { abs: 0 } },
+  { name: `${label}: never lost`, metric: 'cameraLost', camera, from, to: seen, reference: 0, tolerance: { abs: 0 } },
 ];
 
 /** The two cameras measured: the shooter's and the platformer's, the ones that collide. */
 const CAMERAS = [PLAYGROUND_CAMERAS[0], PLAYGROUND_CAMERAS[2]];
 
 defineCourse('course:playground-camera-walls', {
-  description: 'The shooter’s and the platformer’s cameras where they meet the level: the look tilted up and down on open floor, a run and a jump along the perimeter wall, a run past the climb walls’ edges: §4’s four bounds (docs/PLAYGROUND.md §4).', // prettier-ignore
+  description: 'The shooter’s and the platformer’s cameras where they meet the level: the look tilted up and down on open floor, a run and a jump along the perimeter wall, a run past the climb walls’ edges, a jump with the camera over the wall’s top: §4’s four bounds (docs/PLAYGROUND.md §4).', // prettier-ignore
   scene: 'playground:gym',
-  steps: EDGES.to,
+  steps: TOP.to,
   inputs: INPUTS,
   measures: CAMERAS.flatMap(
     (mode) =>
-    Object.entries(CAMERA_WALLS).flatMap(([leg, { from, to }]) => bounds(mode.code, `${mode.name}, ${leg.toLowerCase()}`, from + 2, to - 1)), // prettier-ignore
+    Object.entries(CAMERA_WALLS).flatMap(([leg, { from, to }]) => bounds(mode.code, `${mode.name}, ${leg.toLowerCase()}`, from + 2, to - 1, leg === 'TOP' ? LANDED : to - 1)), // prettier-ignore
   ),
 });

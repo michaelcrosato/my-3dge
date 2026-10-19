@@ -379,8 +379,9 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   a camera's own recentring or lift, which go at its pace), then toward the arm's end where the ball fits there and a
   sweep from the arm's base meets no floor or ceiling on the way (else as far as that sweep clears), in at up to
   10 m/s and out eased over 0.3 s, no faster, each leg slid along the walls and stopped where the base would lose
-  sight of it with 0.2 m to spare; a camera already out of the base's sight (over a wall's top) never comes down
-  behind it. A second stuck over a metre off, it homes to the clear point at that pace, level first, never through a
+  sight of it, with 0.2 m to spare when it had that (a floor or a ceiling grazing that room aside, so a look tipped up
+  over open floor brings the camera down to the clear point); a camera already out of the base's sight (over a wall's
+  top) goes down only to where it sees the base again, so it never ends behind the wall. A second stuck over a metre off, it homes to the clear point at that pace, level first, never through a
   wall. Two cuts are left: carried over 2 m in a frame (the player put elsewhere), it goes with him; found inside a
   wall (the level moved into it), it goes to the clear point. The arm's base follows by sliding, no further a frame
   than the player moved plus 10 m/s. §4's 0.3 m bound rules the spring arm out: on the courses it snapped 0.7 m
@@ -388,10 +389,11 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   The first build's "never jumps" held only on the courses: the review's fuzz (80 random 3 s runs a seed anywhere in
   the gym, the look within ±0.8 rad, up to 3 rad/s) found 1.3 to 11.3 m jumps and a camera outside the perimeter
   wall, and the look held 1.2 rad up sent the arm's end under the floor. Over four seeds now: 0.26 m at worst for the
-  shooter, 0.28 m for the platformer, 2.1°, never inside. The shooter still loses the player's chest in 4 to 5% of
-  those frames, two-thirds of them with a wall within 1.5 m behind the eye (the arm pulled in to his head, the chest
-  under the lens), the platformer in 0.2 to 1.6%: every course keeps "never lost", and the rest is the playtest's
-  (docs/PROGRESS.md).
+  shooter, 0.28 m for the platformer, 2.1°, never inside, and (after the second review) no frame behind a perimeter
+  wall. The shooter still loses the player's chest in 4 to 5% of those frames, most with a wall within 1.5 m behind
+  the eye (the arm pulled in to his head, the chest under the lens) or the camera held over a wall's top (a fall from
+  beside a wall: about a second, until the stuck rule homes it), the platformer in 0.2 to 1.6%: every course keeps
+  "never lost" (camera-walls' jump by the wall until the landing), and the rest is the playtest's (docs/PROGRESS.md).
 - **The occluder fade hides** (cutaway.ts): with a camera that may stand behind a wall (the shooter's, the
   platformer's), the block pieces and the rides that a line from it to the player's head or chest crosses leave the
   picture until the line clears, a ride by its own meshes 0.25 m thick or more (`FADE_THIN`: a pad, a platform; a
@@ -421,5 +423,6 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   the north wall: 0.08 m and 1.3° at worst, never inside, never lost outside first person, the lost spans measured
   by cameras started a second after each first person (one that goes the whole way loses him for 3 frames of each
   blend out of the eyes, which starts from a picture with no body in it). The course `camera-walls` holds the shooter
-  and the platformer to the four bounds where they meet the level: the look tilted ±1.2 rad on open floor, a sprint
-  and a jump along the east perimeter wall, a run past the climb walls' edges.
+  and the platformer to the four bounds where they meet the level: the look tilted ±1.2 rad on open floor by the
+  spawn, a sprint and a jump along the east perimeter wall, a run past the climb walls' edges, and a jump two metres
+  from that wall with the camera over its top (never lost until the landing).

@@ -22,6 +22,7 @@
  * @see labs/playground/courses/launcher.ts
  * @see labs/playground/courses/skydive.ts
  * @see labs/playground/courses/cameras.ts
+ * @see labs/playground/courses/camera-walls.ts
  * @see labs/playground/courses/bounds.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -30,6 +31,7 @@ import { topHeight } from '../../../engine/sim-api';
 import { GYM } from '../scenes/gym';
 import { AIR_START } from './air';
 import { bodyBounds, cameraBounds } from './bounds';
+import { CAMERA_WALLS } from './camera-walls';
 import { CAMERAS_START } from './cameras';
 import { BOUNCE_RUNS, CLIMB_RUNS } from './climb';
 import { CRAWL_STARTS } from './crawl';
@@ -67,6 +69,7 @@ const STARTS: Readonly<Record<string, readonly (readonly [number, number, number
   launcher: [LAUNCHER_STARTS.pad, LAUNCHER_STARTS.mat],
   skydive: [SKYDIVE_START],
   cameras: [CAMERAS_START],
+  'camera-walls': Object.values(CAMERA_WALLS).map((leg) => leg.at),
 };
 
 /** The starts on the tower's top (6 m): the zipline's pulley, the ladder's top, the drop onto the trampoline. */

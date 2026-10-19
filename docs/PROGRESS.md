@@ -37,4 +37,4 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 
 ## Open issues
 
-- Owner: in random play the shooter's camera loses the chest in 4–5% of frames, most against a wall (courses: never).
+- Owner: in random play the shooter's camera loses the chest in 4–5% of frames, against or over a wall (not courses).
