@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { dispatch, ROOT } from '../x';
+import { CHILD_TIMEOUT_MS, dispatch, ROOT } from '../x';
 import { labOf, missText, toleranceText } from './feel';
 
 /** Runs `node x feel …` in this repository; resolves to the exit code and printed lines. */
@@ -27,15 +27,20 @@ describe('x feel', () => {
     expect(missText('strip', miss)).toBe('strip: sprint (topSpeed) is 7.123 against 7.59 ±2%');
   });
 
-  it('runs the playground’s courses within their tolerances, each with its own report', async () => {
-    const { code, lines } = await feel('labs/playground');
-    expect(lines.join('\n'), lines.join('\n')).toMatch(/^x feel: ok: labs\/playground: \d+ courses, \d+ measures, all within their tolerances/); // prettier-ignore
-    expect(code).toBe(0);
-    expect(lines.length).toBeLessThanOrEqual(20);
-    const report = JSON.parse(readFileSync(join(ROOT, 'out/feel/playground-strip/report.json'), 'utf8'));
-    expect(report.ok).toBe(true);
-    expect(report.metrics['run.pass']).toBe(true);
-  });
+  // The whole command's work, every course with its five cameras (WP 13.8): 15 s alone, over 30 s in a full run.
+  it(
+    'runs the playground’s courses within their tolerances, each with its own report',
+    { timeout: CHILD_TIMEOUT_MS },
+    async () => {
+      const { code, lines } = await feel('labs/playground');
+      expect(lines.join('\n'), lines.join('\n')).toMatch(/^x feel: ok: labs\/playground: \d+ courses, \d+ measures, all within their tolerances/); // prettier-ignore
+      expect(code).toBe(0);
+      expect(lines.length).toBeLessThanOrEqual(20);
+      const report = JSON.parse(readFileSync(join(ROOT, 'out/feel/playground-strip/report.json'), 'utf8'));
+      expect(report.ok).toBe(true);
+      expect(report.metrics['run.pass']).toBe(true);
+    },
+  );
 
   it('refuses a missing lab and an unknown course, naming what there is', async () => {
     const none = await feel('labs/nothing');
