@@ -3,9 +3,9 @@
  * it, as a small HTML/CSS panel in the top-left corner over the game. It lists every scene the page imports
  * (labs/playground/scenes/, the README's demo index) as a link to `?scene=<name>`, the five camera modes and the two
  * looks (labs/playground/views.ts) as links that keep the scene, the playground's replays as links to
- * `?replay=<name>`, and the controls: the actions the player answers, with the keys and pad buttons of the map the
- * page's input binds (`actionMap:playground`, labs/playground/controls.ts), labelled by the engine's `codeLabel` in
- * the reader's keyboard layout, then the page's own keys.
+ * `?replay=<name>`, and the controls: the actions the player answers, with the keys and pad buttons of the map of the
+ * camera the page opens in (`playgroundMap`, labs/playground/controls.ts: each mode has its own, and the HUD shows the
+ * one in use), labelled by the engine's `codeLabel` in the reader's keyboard layout, then the page's own keys.
  *
  * Toggle: the button in the corner, or M (`MENU_KEY`). The panel is a page panel (`data-panel`, engine/ui/chrome.ts):
  * in touch mode a tap on the game closes it. It opens unless the reader closed it last (`MENU_STORAGE_KEY` in
@@ -33,8 +33,8 @@
 import { codeLabel, getActionMap, readKeyboardLayout } from '../../engine';
 import { defineSettings } from '../../engine/sim-api';
 import { FEEL_KEY } from './feel';
-import { PLAYGROUND_ACTION_MAP, PLAYGROUND_ACTIONS } from './controls';
-import { CAMERA_KEY, LOOK_KEY, PLAYGROUND_CAMERAS, PLAYGROUND_LOOKS } from './views';
+import { PLAYGROUND_ACTIONS, PLAYGROUND_MAPS, playgroundMap } from './controls';
+import { LOOK_KEY, PLAYGROUND_CAMERAS, PLAYGROUND_LOOKS } from './views';
 
 /** The menu's view setting (see the file comment). */
 export const PLAYGROUND_MENU_SETTINGS = defineSettings({
@@ -91,24 +91,37 @@ export function linkQuery(search: string, changes: Record<string, string | null>
   return text ? `?${text}` : './';
 }
 
-/** The controls' rows, [what, keys, pad]: moving, the player's actions in `PLAYGROUND_ACTION_MAP`, the page's keys. */
-export function controlRows(layout?: ReadonlyMap<string, string>): [string, string, string][] {
-  const map = getActionMap(PLAYGROUND_ACTION_MAP);
+/** What each view action does, in the order the rows list them. */
+const VIEW_ROWS: Readonly<Record<string, string>> = {
+  camera: 'Camera mode',
+  shoulder: 'Swap the shoulder',
+  turnLeft: 'Turn the view left',
+  turnRight: 'Turn the view right',
+};
+
+/** The controls' rows, [what, keys, pad], of the map `id` (the shooter's by default): moving, the player's actions, the look or the aim, the map's view actions, the page's keys. */ // prettier-ignore
+export function controlRows(layout?: ReadonlyMap<string, string>, id: string = PLAYGROUND_MAPS.shooter): [string, string, string][] { // prettier-ignore
+  const map = getActionMap(id);
   const label = (code: string) => codeLabel(code, { layout }).replace(/^[LR] (?=Shift)/, '');
   const keys = (codes: readonly string[]) => [...new Set(codes.filter((c) => !c.startsWith('Pad')).map(label))];
   const pad = (codes: readonly string[]) => [...new Set(codes.filter((c) => c.startsWith('Pad')).map(label))];
+  const row = (words: string, action: string): [string, string, string] => {
+    const codes = map.actions[action] ?? [];
+    return [words, keys(codes).join(' / '), pad(codes).join(' / ')];
+  };
   const ways = map.move.map((action) => keys(map.actions[action] ?? []));
   const [forward, back, left, right] = ways;
   const move = forward.map((key, i) => [key, left[i], back[i], right[i]].join(' ')).join(' / ');
-  const actions = Object.entries(PLAYGROUND_ACTIONS).map(([action, words]): [string, string, string] => {
-    const codes = map.actions[action] ?? [];
-    return [words, keys(codes).join(' / '), pad(codes).join(' / ')];
-  });
+  const actions = Object.entries(PLAYGROUND_ACTIONS).map(([action, words]) => row(words, action));
+  const look: [string, string, string] = map.lock
+    ? ['Look around', 'Click the game, then the mouse (Esc lets go)', 'R Stick']
+    : ['Aim', 'The pointer, onto the floor', 'R Stick'];
+  const views = Object.entries(VIEW_ROWS).filter(([action]) => map.view.includes(action));
   return [
-    ['Move', move, 'L Stick / D-pad'],
+    ['Move', move, 'L Stick'],
     ...actions,
-    ['Look around', 'Click the game, then the mouse (Esc lets go)', 'R Stick'],
-    ['Camera mode', label(CAMERA_KEY), ''],
+    look,
+    ...views.map(([action, words]) => row(words, action)),
     ['Cel or pixel look', label(LOOK_KEY), ''],
     ['Zoom', 'Wheel', ''],
     ['The feel panel: the numbers, live', label(FEEL_KEY), ''],
@@ -181,9 +194,12 @@ export function createPlaygroundMenu(document: Document, options: PlaygroundMenu
     const hint = `${name}: the recorded run, then you play`;
     return [linkQuery(search, { replay: name }, kept), name === replay, hint, name.replace(/^playground-/, '')];
   });
+  const map = playgroundMap(camera);
   const rows = el('tbody');
   const fill = (layout?: ReadonlyMap<string, string>) =>
-    rows.replaceChildren(...controlRows(layout).map((row) => el('tr', {}, ...row.map((cell) => el('td', {}, cell)))));
+    rows.replaceChildren(
+      ...controlRows(layout, map).map((row) => el('tr', {}, ...row.map((cell) => el('td', {}, cell)))),
+    );
   fill();
   void readKeyboardLayout().then((layout) => layout && fill(layout)); // the keys the reader's layout prints
 
@@ -192,7 +208,7 @@ export function createPlaygroundMenu(document: Document, options: PlaygroundMenu
     { id: 'playground-menu', class: 'pg-menu', 'data-panel': true, 'aria-label': 'The Playground' },
     el('p', {}, "The Playground: my-3dge's character, cameras and looks. Pick a camera, then move."),
     chips('scenes', 'Scenes', scenes),
-    chips('cameras', `Camera (${codeLabel(CAMERA_KEY)})`, cameras),
+    chips('cameras', `Camera (${codeLabel(getActionMap(map).actions.camera?.[0] ?? 'KeyT')})`, cameras),
     chips('looks', `Look (${codeLabel(LOOK_KEY)})`, looks),
     chips('replays', 'Replays', replays),
     el('section', { 'data-menu': 'controls', 'data-keyboard': true }, el('h2', {}, 'Controls'), el('table', {}, rows)),

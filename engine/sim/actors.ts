@@ -15,7 +15,8 @@
  * `body` adds the component `puppet` (the body drawn), `clips` the clip layer (engine/sim/actorClips.ts).
  *
  * WP 13.3 and 13.7: an actor on a movement model also holds `motion`, the model's state, and reads its buttons, view
- * and rides (`spawnActor` says which); launchers set off any actor: event `launch` `{ id }`.
+ * and rides (`spawnActor` says which); launchers set off any actor: event `launch` `{ id }`. WP 13.9: a player's sprint
+ * and crouch work as the recorded settings `input.sprint` and `input.crouch` say (held, or toggled by a press).
  *
  * Invariants: systems are added once per world, on the first (animated) spawn; all an actor remembers is in its
  * components (the sim's animators are loaded from them). Despawning leaves the body; `removeActor` removes both.
@@ -113,8 +114,28 @@ export type ActorComponents = {
 };
 
 /**
+ * How a player's sprint and crouch buttons work, as a shooter's options set them (WP 13.9, docs/PLAYGROUND.md §3.3):
+ * recorded settings, since they change how the same presses move him, read by the system `actors` for player actors.
+ */
+export const CONTROL_SETTING_FIELDS = {
+  'input.sprint': {
+    type: 'string',
+    enum: ['toggle', 'hold'],
+    default: 'toggle',
+    description: "The sprint button on the shooter model: toggle, Apex's sticky sprint (a press keeps it on while the player moves on); hold, only while held. Recorded: it changes how a player moves.", // prettier-ignore
+  },
+  'input.crouch': {
+    type: 'string',
+    enum: ['hold', 'toggle'],
+    default: 'hold',
+    description: 'The crouch button on the shooter model: hold, crouched while held; toggle, a press crouches until pressed again (a jump or a sprint stands it up). Recorded: it changes how a player moves.', // prettier-ignore
+  },
+} as const;
+
+/**
  * Declares the components `actor`, `animator`, `puppet`, `clips` (engine/sim/actorClips.ts), `oneWay`, `reactions` and
- * `secondary` (engine/sim/reactions.ts) and the setting `physics.characterGravity` on `registry`.
+ * `secondary` (engine/sim/reactions.ts), the setting `physics.characterGravity` and the controls' `input.sprint` and
+ * `input.crouch` on `registry`.
  */
 export function defineActorKinds(registry: Registry = sharedRegistry): void {
   defineReactionKinds(registry);
@@ -123,6 +144,7 @@ export function defineActorKinds(registry: Registry = sharedRegistry): void {
     defineSettings(CHARACTER_SETTINGS, registry);
   }
   if (!registry.has('setting', 'movement.turnRate')) defineSettings(MOVEMENT_SETTINGS, registry);
+  if (!registry.has('setting', 'input.sprint')) defineSettings(CONTROL_SETTING_FIELDS, registry);
   if (!registry.kinds().includes('component') || !registry.has('component', 'animator')) {
     const states = { type: 'object', default: {}, description: 'The body states its game code holds on.' } as const;
     const description = 'A character animator (engine/anim/character.ts): what it keeps, and what its body is told.';
@@ -196,7 +218,8 @@ export interface ActorSpec {
  * unless spawned `holstered: false`), and reads `sprint` (held, pressed), `walk` and `crouch` (held), `crouchToggle`
  * (pressed), the view from `look`, the keys' frame from `cam` (else `look`) and what it faces from `aim` (else
  * `look`), under the live `movement.*` settings (WP 13.4); WP 13.7: the look's pitch and `interact` (pressed) too,
- * riding the scene's ziplines and ladders (engine/sim/rides.ts).
+ * riding the scene's ziplines and ladders (engine/sim/rides.ts); WP 13.9: a player's sprint held only while held with
+ * `input.sprint` at `hold`, and his crouch toggled by its press with `input.crouch` at `toggle`.
  */
 export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): number {
   const w = world as unknown as World;
@@ -260,18 +283,26 @@ function intentsOf(actor: ActorComponent, intents: Intents): Intents {
   return own;
 }
 
+/** A player's controls (the settings `input.sprint` and `input.crouch`): a held sprint, a toggled crouch. */
+interface Controls {
+  readonly holdSprint: boolean;
+  readonly toggleCrouch: boolean;
+}
+
 /** The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it faces. */ // prettier-ignore
-function motionInput(actor: ActorComponent, wants: Intents): CharacterInput {
+function motionInput(actor: ActorComponent, wants: Intents, controls: Controls): CharacterInput {
   const [aimX, , aimZ] = wants.aim ?? [];
   const aimed = aimX !== undefined && Math.hypot(aimX - actor.x, aimZ! - actor.z) > 0.05;
   const face = aimed ? Math.atan2(aimX - actor.x, aimZ! - actor.z) : wants.look?.[0];
   const frame = wants.cam ?? wants.look?.[0];
+  const toggle = actor.player && controls.toggleCrouch;
   return {
     sprint: held(wants, 'sprint'),
     sprintPressed: pressed(wants, 'sprint'),
+    ...(actor.player && controls.holdSprint ? { sprintHold: true } : {}),
     walk: held(wants, 'walk'),
-    crouch: held(wants, 'crouch'),
-    crouchToggle: pressed(wants, 'crouchToggle'),
+    crouch: !toggle && held(wants, 'crouch'),
+    crouchToggle: pressed(wants, 'crouchToggle') || (toggle && pressed(wants, 'crouch')),
     usePressed: pressed(wants, 'interact'),
     ...(wants.look ? { view: wants.look[0], pitch: wants.look[1] } : {}),
     ...(frame !== undefined ? { frame } : {}),
@@ -287,6 +318,7 @@ function moveActors(w: World, intents: Intents): void {
   const oneWay = new Set((w.query('oneWay') as unknown as ActorComponents[]).map((e) => e.oneWay.body));
   const tuning = movementOverrides((path) => w.settings.get(path));
   const rides = ridesOf(w);
+  const controls = { holdSprint: w.settings.get('input.sprint') === 'hold', toggleCrouch: w.settings.get('input.crouch') === 'toggle' }; // prettier-ignore
   for (const e of w.query('actor') as unknown as (ActorComponents & { id: number })[]) {
     const { actor, motion } = e;
     const wants = intentsOf(actor, intents);
@@ -295,7 +327,7 @@ function moveActors(w: World, intents: Intents): void {
       jump: held(wants, 'jump'),
       jumpPressed: pressed(wants, 'jump'),
       dashPressed: pressed(wants, 'dash'),
-      ...(motion ? motionInput(actor, wants) : {}),
+      ...(motion ? motionInput(actor, wants, controls) : {}),
     };
     const character = motion ? tuneCharacter(actor.character, tuning) : actor.character;
     const step = stepCharacter(physics, actor.body, character, actor, input, { dt: w.dt, gravity, worldGravity, oneWay, rides }, motion); // prettier-ignore

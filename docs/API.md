@@ -40,8 +40,16 @@ game agent's manual.
 - `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
 - `AIM_CHAIN` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The default chain, from the body up: about 103° of yaw and 69° of pitch in all.
+- `AIM_RANGE` (const from [`engine/input/aim.ts`](../engine/input/aim.ts)): How far the centre's ray looks (m): one that meets nothing aims this far along it.
+- `AIM_RULES` (const from [`engine/input/aim.ts`](../engine/input/aim.ts)): The aim rules, in the order the docs list them.
+- `AimDevices` (type from [`engine/input/aim.ts`](../engine/input/aim.ts)): What the devices give aiming: the pointer and the right stick (see `AimView`).
 - `AimLink` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): One joint of an aim chain: the `joint`, its `share` of the turn (a chain's shares need not add up to 1), and the most it turns the gaze left or right (`yaw`) and up or down (`pitch`), in radians.
 - `AimOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `aim` turns.
+- `aimPoint` (function from [`engine/input/aim.ts`](../engine/input/aim.ts)): The point the rule aims at this frame (see the file comment), or undefined.
+- `AimPose` (interface from [`engine/input/aim.ts`](../engine/input/aim.ts)): A camera's pose as aiming reads it: engine/gfx/cameras/pose.ts's `CameraPose` fits it.
+- `AimRay` (interface from [`engine/input/aim.ts`](../engine/input/aim.ts)): A ray: where it starts and its unit direction.
+- `AimRule` (type from [`engine/input/aim.ts`](../engine/input/aim.ts)): What aims a player's look or pointer, by an action map's `aim`: see the file comment.
+- `AimView` (interface from [`engine/input/aim.ts`](../engine/input/aim.ts)): What `aimPoint` aims from: the camera drawn, the picture's aspect, the devices and the world.
 - `airTime` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): How long (s) a body thrown up at `up` m/s flies under `gravity` (m/s², above 0) until it comes down to `rise` metres above where it left (below for a drop): the later root of `rise = up·t − gravity·t²/2`.
 - `Anchor` (type from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): Where a label is: a point read every frame (a `Vector3` the caller moves follows), or a function giving one.
 - `angDiff` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The signed angle from `a` to `b` the short way round, in [−π, π).
@@ -157,7 +165,7 @@ game agent's manual.
 - `CameraInput` (interface from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): What the devices give a camera in a frame; every field is optional (orbit and fly turn, fly moves, views zoom).
 - `CameraInputSample` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): What the camera takes each frame: mouse look `[right, up]` rad, the right stick `[right, up]`, wheel notches.
 - `CameraKindSpec` (interface from [`engine/gfx/cameras/define.ts`](../engine/gfx/cameras/define.ts)): What `defineCamera` takes: `create` makes the camera from its code and the camera before it.
-- `CameraLike` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A camera as the input reads it (engine/gfx/cameras/pose.ts `Camera`): its heading, and its pitch for first person.
+- `CameraLike` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A camera as the input reads it (the app's, over its view): its heading, its pitch for the look, and the aim.
 - `cameraPlayer` (function from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): What the cameras read of the player actor `entity` (`actor`, and `motion` on the shooter model); null for another.
 - `CameraPlayer` (interface from [`engine/gfx/cameras/effects.ts`](../engine/gfx/cameras/effects.ts)): What the effects and the follow cameras read of the player after a sim step: plain data.
 - `CameraPose` (interface from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): Where a camera is, where it looks and its lens, in a frame: plain, frozen data (see the file comment).
@@ -337,6 +345,7 @@ game agent's manual.
 - `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
 - `defineTexture` (function from [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)): Defines a texture generator on `registry` (the shared one by default) and returns it.
 - `defineTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): Registers a touch layout (on the shared registry by default).
+- `DEGREES_PER_COUNT` (const from [`engine/input/look.ts`](../engine/input/look.ts)): One mouse count at sensitivity 1, degrees: Source's and Apex's `m_yaw` and `m_pitch`.
 - `DeviceKind` (type from [`engine/input/codes.ts`](../engine/input/codes.ts)): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
 - `driveMover` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Drives a mover's body toward its pose at `sim.time` (the end of the step being run): `driveMover(physics, m, w)`.
@@ -557,7 +566,11 @@ game agent's manual.
 - `locomoteClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `loops.idle`, `walk` or `run` on actor `id` by its ground speed, each at that speed; null stops them.
 - `LOD` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The detail levels `pose({ lod })` takes, by index: how often it re-solves, in ticks, and which slots run.
 - `LOOK_AHEAD` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many tiles downhill `FlowField.direction` looks ahead (shardfall's 3).
+- `LOOK_SETTING_FIELDS` (const from [`engine/input/look.ts`](../engine/input/look.ts)): The view settings the input reads (see the file comment), as fields; never in the hash.
+- `LOOK_SETTINGS` (const from [`engine/input/look.ts`](../engine/input/look.ts)): The view settings the input reads, declared on the shared registry.
 - `LookEntry` (type from [`engine/gfx/post/looks.ts`](../engine/gfx/post/looks.ts)): A `look` entry.
+- `lookOptions` (function from [`engine/input/look.ts`](../engine/input/look.ts)): The look settings through `get` (a settings store's `get`); a value it lacks is the field's default.
+- `LookOptions` (interface from [`engine/input/look.ts`](../engine/input/look.ts)): The look settings, read: what `scaleLook` takes.
 - `LookSpec` (type from [`engine/gfx/post/looks.ts`](../engine/gfx/post/looks.ts)): What `defineLook` takes: any of the fields, the filters as part of a chain.
 - `Lying` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body lies: on its back (`up`) or on its face (`down`).
 - `lyingOf` (function from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body whose chest turned by `chest` (a world rotation) lies: face up when the chest's front looks up.
@@ -618,6 +631,7 @@ game agent's manual.
 - `NEAREST_RINGS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
 - `nearMiss` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` stands outside telegraph `t` but within its `near` metres (scaled).
 - `normalizedLens` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): `clip` with every angle of every key folded to (−180°, 180°], for reading (see the file comment).
+- `onFloor` (function from [`engine/input/aim.ts`](../engine/input/aim.ts)): Where `ray` meets the level plane at height `y` ahead of its start, or null (level with it, or pointing away).
 - `Outline` (interface from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): An outline: its material and the shells it gives (see the file comment).
 - `OUTLINE_MODES` (const from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): How a shell's vertices are pushed: along their normals, or away from the part's centre.
 - `OutlineMode` (type from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): An outline mode (see `OUTLINE_MODES`).
@@ -717,6 +731,7 @@ game agent's manual.
 - `RampDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A ramp: a filled rectangle of a ramp glyph's tiles (stairs) whose floor rises in a straight slope from `bottom` along the side opposite `rises` to `top` along `rises`, the side whose neighbours stand at its top (a gallery).
 - `rampGeometry` (function from [`engine/gfx/geometry/ramp.ts`](../engine/gfx/geometry/ramp.ts)): A ramp or wedge standing on the ground, rising towards +Z (see the file comment).
 - `RampOptions` (interface from [`engine/gfx/geometry/ramp.ts`](../engine/gfx/geometry/ramp.ts)): A ramp's sizes in metres.
+- `RawLook` (interface from [`engine/input/look.ts`](../engine/input/look.ts)): A frame's raw look: mouse counts `[right, up]` (up for a push away) and the right stick `[x, y]` (y down).
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
 - `RayOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A raycast's options.
 - `REACTION` (const from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): Every constant of the reactions: rates per second, times in seconds.
@@ -785,6 +800,8 @@ game agent's manual.
 - `sampleBaked` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): Samples `baked` at `t` seconds: its 23 local rotations into `rotations` (slerped between frames, as three.js's mixer does) and its pelvis into `hips` (lerped).
 - `samplePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): The 36 body points at time `t` on rest body `R`, written into `out` (a new Float32Array, as the source's, unless given; pass a Float64Array for full precision).
 - `SampleState` (interface from [`engine/anim/states.ts`](../engine/anim/states.ts)): A named body state and how long it is held, seconds: a body stepped through it shows it.
+- `ScaledLook` (interface from [`engine/input/look.ts`](../engine/input/look.ts)): What the camera takes (engine/gfx/cameras/pose.ts `CameraInput`): look `[right, up]` in rad, turn as rates.
+- `scaleLook` (function from [`engine/input/look.ts`](../engine/input/look.ts)): What the camera takes from `raw` under `options`, aiming down sights or not (see the file comment).
 - `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
 - `SCENE_PROP_FIELDS` (const from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `sceneProp`'s fields.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
@@ -795,6 +812,7 @@ game agent's manual.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
 - `Scope` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): A filter's scope.
 - `SCOPES` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Where a filter applies: nowhere, everywhere, or one or two parts of the scene (engine/gfx/post/mrt.ts).
+- `screenRay` (function from [`engine/input/aim.ts`](../engine/input/aim.ts)): The ray through the point `at` of the picture (`[x, y]`, −1 to 1, +y up), in true heights (see the file comment).
 - `ScreenShake` (class from [`engine/gfx/fx/shake.ts`](../engine/gfx/fx/shake.ts)): Camera shake: see the file comment.
 - `ScriptedGamepad` (interface from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): A pad that a script moves frame by frame.
 - `Secondary` (class from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The secondary-motion layer: squash, hair, cape and tail on a humanoid.
@@ -872,6 +890,7 @@ game agent's manual.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
 - `stepReactions` (function from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): Steps reactions `state` one tick of `dt` s, in place; returns what the phase playing tells the body.
+- `STICK_REACH` (const from [`engine/input/aim.ts`](../engine/input/aim.ts)): How far from the player a right stick pushed all the way aims (m): twin sticks aim by direction.
 - `StickView` (interface from [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)): Where the stick is drawn, in client CSS px: its centre and its knob.
 - `stopClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Fades out the clip on top of actor `id` over `fade` seconds (its `out`), with what it covers.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
@@ -4359,6 +4378,71 @@ For the agents who maintain the engine.
 - `RESERVED_CODES` (const): Codes no action map binds: the pause buttons, and keys the browser or the system keeps.
 - `SYSTEM_ACTIONS` (const): The system layer: action → codes.
 
+### [`engine/input/aim.ts`](../engine/input/aim.ts)
+
+- `AIM_RANGE` (const): How far the centre's ray looks (m): one that meets nothing aims this far along it.
+- `AIM_RULES` (const): The aim rules, in the order the docs list them.
+- `AimDevices` (type): What the devices give aiming: the pointer and the right stick (see `AimView`).
+- `aimPoint` (function): The point the rule aims at this frame (see the file comment), or undefined.
+- `AimPose` (interface): A camera's pose as aiming reads it: engine/gfx/cameras/pose.ts's `CameraPose` fits it.
+- `AimRay` (interface): A ray: where it starts and its unit direction.
+- `AimRule` (type): What aims a player's look or pointer, by an action map's `aim`: see the file comment.
+- `AimView` (interface): What `aimPoint` aims from: the camera drawn, the picture's aspect, the devices and the world.
+- `onFloor` (function): Where `ray` meets the level plane at height `y` ahead of its start, or null (level with it, or pointing away).
+- `screenRay` (function): The ray through the point `at` of the picture (`[x, y]`, −1 to 1, +y up), in true heights (see the file comment).
+- `STICK_REACH` (const): How far from the player a right stick pushed all the way aims (m): twin sticks aim by direction.
+- `Vec3` (type): A point or direction, m.
+
+### [`engine/input/api.ts`](../engine/input/api.ts)
+
+- `ActionMap` (type from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): An action map entry.
+- `ActionMapSpec` (interface from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): How an action map is written.
+- `AIM_RANGE` (const from [`engine/input/aim.ts`](../engine/input/aim.ts)): How far the centre's ray looks (m): one that meets nothing aims this far along it.
+- `AIM_RULES` (const from [`engine/input/aim.ts`](../engine/input/aim.ts)): The aim rules, in the order the docs list them.
+- `AimDevices` (type from [`engine/input/aim.ts`](../engine/input/aim.ts)): What the devices give aiming: the pointer and the right stick (see `AimView`).
+- `aimPoint` (function from [`engine/input/aim.ts`](../engine/input/aim.ts)): The point the rule aims at this frame (see the file comment), or undefined.
+- `AimPose` (interface from [`engine/input/aim.ts`](../engine/input/aim.ts)): A camera's pose as aiming reads it: engine/gfx/cameras/pose.ts's `CameraPose` fits it.
+- `AimRay` (interface from [`engine/input/aim.ts`](../engine/input/aim.ts)): A ray: where it starts and its unit direction.
+- `AimRule` (type from [`engine/input/aim.ts`](../engine/input/aim.ts)): What aims a player's look or pointer, by an action map's `aim`: see the file comment.
+- `AimView` (interface from [`engine/input/aim.ts`](../engine/input/aim.ts)): What `aimPoint` aims from: the camera drawn, the picture's aspect, the devices and the world.
+- `Bindings` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): An action map with the player's changes.
+- `BindingsFile` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): A saved bindings file.
+- `BindingsOptions` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): How bindings are made.
+- `BindingsStorage` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Where bindings are saved: the `localStorage` shape.
+- `CameraInputSample` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): What the camera takes each frame: mouse look `[right, up]` rad, the right stick `[right, up]`, wheel notches.
+- `CameraLike` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A camera as the input reads it (the app's, over its view): its heading, its pitch for the look, and the aim.
+- `codeLabel` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): What a prompt shows for `code`: `W`, `Space`, `LMB`, `A` / `Cross`, `L Stick Up`.
+- `connectVirtualDevice` (function from [`engine/input/devices/inspector.ts`](../engine/input/devices/inspector.ts)): Gives `host` (the app's inspector host) the page input's virtual device, so `__engine.input` drives the page.
+- `createBindings` (function from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Makes the bindings of the action map `map` (an id or an entry), loading saved changes from `options.storage`.
+- `createInput` (function from [`engine/input/input.ts`](../engine/input/input.ts)): Makes the page's input.
+- `createScriptedGamepad` (function from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
+- `createVirtualDevice` (function from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): Makes a virtual device, holding nothing.
+- `defineActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Registers an action map (on the shared registry by default).
+- `DEGREES_PER_COUNT` (const from [`engine/input/look.ts`](../engine/input/look.ts)): One mouse count at sensitivity 1, degrees: Source's and Apex's `m_yaw` and `m_pitch`.
+- `DeviceKind` (type from [`engine/input/codes.ts`](../engine/input/codes.ts)): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
+- `GamepadLike` (interface from [`engine/input/devices/gamepad.ts`](../engine/input/devices/gamepad.ts)): The Gamepad API's `Gamepad`, as far as the device reads it (a test stub gives just this).
+- `getActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The action map `id`.
+- `Input` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A page's input.
+- `InputOptions` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): How an input is made; in a page every field has its default.
+- `isCode` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): Whether `code` is one a binding may name.
+- `listActionMaps` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Every action map, sorted by id.
+- `LOOK_SETTING_FIELDS` (const from [`engine/input/look.ts`](../engine/input/look.ts)): The view settings the input reads (see the file comment), as fields; never in the hash.
+- `LOOK_SETTINGS` (const from [`engine/input/look.ts`](../engine/input/look.ts)): The view settings the input reads, declared on the shared registry.
+- `lookOptions` (function from [`engine/input/look.ts`](../engine/input/look.ts)): The look settings through `get` (a settings store's `get`); a value it lacks is the field's default.
+- `LookOptions` (interface from [`engine/input/look.ts`](../engine/input/look.ts)): The look settings, read: what `scaleLook` takes.
+- `onFloor` (function from [`engine/input/aim.ts`](../engine/input/aim.ts)): Where `ray` meets the level plane at height `y` ahead of its start, or null (level with it, or pointing away).
+- `RawLook` (interface from [`engine/input/look.ts`](../engine/input/look.ts)): A frame's raw look: mouse counts `[right, up]` (up for a push away) and the right stick `[x, y]` (y down).
+- `readKeyboardLayout` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The page's keyboard layout (`navigator.keyboard.getLayoutMap()`, Chromium), or undefined where it is missing.
+- `RebindResult` (type from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): What `rebind` did: the action's codes now, or why it refused and which action holds the code.
+- `RESERVED_CODES` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Codes no action map binds: the pause buttons, and keys the browser or the system keeps.
+- `ScaledLook` (interface from [`engine/input/look.ts`](../engine/input/look.ts)): What the camera takes (engine/gfx/cameras/pose.ts `CameraInput`): look `[right, up]` in rad, turn as rates.
+- `scaleLook` (function from [`engine/input/look.ts`](../engine/input/look.ts)): What the camera takes from `raw` under `options`, aiming down sights or not (see the file comment).
+- `screenRay` (function from [`engine/input/aim.ts`](../engine/input/aim.ts)): The ray through the point `at` of the picture (`[x, y]`, −1 to 1, +y up), in true heights (see the file comment).
+- `ScriptedGamepad` (interface from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): A pad that a script moves frame by frame.
+- `STICK_REACH` (const from [`engine/input/aim.ts`](../engine/input/aim.ts)): How far from the player a right stick pushed all the way aims (m): twin sticks aim by direction.
+- `SYSTEM_ACTIONS` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The system layer: action → codes.
+- `VirtualDevice` (interface from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): The virtual device.
+
 ### [`engine/input/bindings.ts`](../engine/input/bindings.ts)
 
 - `Bindings` (interface): An action map with the player's changes.
@@ -4413,6 +4497,7 @@ For the agents who maintain the engine.
 - `attachMouse` (function): Listens to the mouse over `targets.element`; `lookSpeed` rad/px, `invertY` for flight-style look.
 - `LOOK_SPEED` (const): Mouse look speed by default, radians per pixel (about 0.14° a pixel).
 - `MouseDevice` (interface): The mouse device.
+- `MousePointer` (interface): Where the pointer is: client pixels, over the element or not, locked or not; `at` on the element (see the file comment).
 - `MouseTargets` (interface): Where the mouse device listens.
 
 ### [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)
@@ -4453,7 +4538,7 @@ For the agents who maintain the engine.
 ### [`engine/input/input.ts`](../engine/input/input.ts)
 
 - `CameraInputSample` (interface): What the camera takes each frame: mouse look `[right, up]` rad, the right stick `[right, up]`, wheel notches.
-- `CameraLike` (interface): A camera as the input reads it (engine/gfx/cameras/pose.ts `Camera`): its heading, and its pitch for first person.
+- `CameraLike` (interface): A camera as the input reads it (the app's, over its view): its heading, its pitch for the look, and the aim.
 - `createInput` (function): Makes the page's input.
 - `Input` (interface): A page's input.
 - `InputOptions` (interface): How an input is made; in a page every field has its default.
@@ -4485,6 +4570,17 @@ For the agents who maintain the engine.
 - `REPEAT_RATE` (const): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
 - `repeated` (function): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
 - `updateInputBuffer` (function): Records one step's intents in `buffer` (changed in place, and returned): call it once per step, with the world's `tick`, before reading `released`, `buffered` or `repeated`.
+
+### [`engine/input/look.ts`](../engine/input/look.ts)
+
+- `DEGREES_PER_COUNT` (const): One mouse count at sensitivity 1, degrees: Source's and Apex's `m_yaw` and `m_pitch`.
+- `LOOK_SETTING_FIELDS` (const): The view settings the input reads (see the file comment), as fields; never in the hash.
+- `LOOK_SETTINGS` (const): The view settings the input reads, declared on the shared registry.
+- `lookOptions` (function): The look settings through `get` (a settings store's `get`); a value it lacks is the field's default.
+- `LookOptions` (interface): The look settings, read: what `scaleLook` takes.
+- `RawLook` (interface): A frame's raw look: mouse counts `[right, up]` (up for a push away) and the right stick `[x, y]` (y down).
+- `ScaledLook` (interface): What the camera takes (engine/gfx/cameras/pose.ts `CameraInput`): look `[right, up]` in rad, turn as rates.
+- `scaleLook` (function): What the camera takes from `raw` under `options`, aiming down sights or not (see the file comment).
 
 ### [`engine/input/script.ts`](../engine/input/script.ts)
 
@@ -4833,7 +4929,8 @@ For the agents who maintain the engine.
 - `ActorComponents` (type): The components this module reads: `actor`, `animator`, `puppet`, `motion` (the shooter model's) and `oneWay`.
 - `ActorSpec` (interface): What `spawnActor` takes.
 - `AnimatorComponent` (interface): The component `animator`: an actor's character animator as plain data, and what its game code tells its body.
-- `defineActorKinds` (function): Declares the components `actor`, `animator`, `puppet`, `clips` (engine/sim/actorClips.ts), `oneWay`, `reactions` and `secondary` (engine/sim/reactions.ts) and the setting `physics.characterGravity` on `registry`.
+- `CONTROL_SETTING_FIELDS` (const): How a player's sprint and crouch buttons work, as a shooter's options set them (WP 13.9, docs/PLAYGROUND.md §3.3): recorded settings, since they change how the same presses move him, read by the system `actors` for player actors.
+- `defineActorKinds` (function): Declares the components `actor`, `animator`, `puppet`, `clips` (engine/sim/actorClips.ts), `oneWay`, `reactions` and `secondary` (engine/sim/reactions.ts), the setting `physics.characterGravity` and the controls' `input.sprint` and `input.crouch` on `registry`.
 - `placeActor` (function): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was.
 - `PuppetComponent` (interface): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
 - `removeActor` (function): Removes an actor and its body.
@@ -5705,8 +5802,10 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/controls.ts`](../labs/playground/controls.ts)
 
-- `PLAYGROUND_ACTION_MAP` (const): The action map the page's input binds.
-- `PLAYGROUND_ACTIONS` (const): The actions the player answers, with what each does, in the menu's order.
+- `keysLine` (function): The HUD's keys: the map in use's, as its prompts label them (rebound, or on a pad), then the page's own.
+- `PLAYGROUND_ACTIONS` (const): The actions the player answers, with what each does, in the menu's order; the rest are bound for later WPs.
+- `PLAYGROUND_MAPS` (const): The action maps, by camera mode (labs/playground/views.ts `PLAYGROUND_CAMERAS`' names).
+- `playgroundMap` (function): The action map for the camera `code` (`cam3=first,…`): its mode's, the shooter's for a camera no mode opens.
 
 ### [`labs/playground/courses/air.ts`](../labs/playground/courses/air.ts)
 
@@ -5823,7 +5922,7 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/menu.ts`](../labs/playground/menu.ts)
 
-- `controlRows` (function): The controls' rows, [what, keys, pad]: moving, the player's actions in `PLAYGROUND_ACTION_MAP`, the page's keys.
+- `controlRows` (function): The controls' rows, [what, keys, pad], of the map `id` (the shooter's by default): moving, the player's actions, the look or the aim, the map's view actions, the page's keys.
 - `createPlaygroundMenu` (function): Builds the menu in `document` when `playground.menu` shows it, and returns its panel; null when it stays out.
 - `linkQuery` (function): A link's query: `changes` (null removes a key) over `search`, or over only its `keep` keys; `:` and `,` readable.
 - `MENU_KEY` (const): The key that shows and hides the menu: M, which no action map binds.
@@ -5843,7 +5942,6 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/views.ts`](../labs/playground/views.ts)
 
-- `CAMERA_KEY` (const): The key that cycles the camera modes: T, as docs/PLAYGROUND.md §3.3 binds it.
 - `cameraMode` (function): The camera mode a code opens, by its type and view (`cam3=chase` of `cam3=chase,0,-20.63,5.5`); else undefined.
 - `CameraMode` (interface): A camera mode: its name, the camera code that opens it, and what it is for.
 - `LOOK_KEY` (const): The key that switches the looks: P, which no action map binds.
@@ -5851,8 +5949,8 @@ For the agents who maintain the engine.
 - `nextLook` (function): The look after `id` (the first after an unknown id).
 - `PLAYGROUND_CAMERAS` (const): The five camera modes, in the order T steps through them; the shooter is the page's default.
 - `PLAYGROUND_LOOKS` (const): The two looks, in the order P switches them; the cel look is the page's default.
-- `SWAP_KEY` (const): The key that swaps the shooter's shoulder: X, as docs/PLAYGROUND.md §3.3 binds it.
 - `swapShoulder` (function): The shooter camera's code `code` over the other shoulder (`cam3=shoulder,<yaw>,<pitch>,<distance>[,-1]`); another code as it is.
+- `turnView` (function): A classic view's code `code` turned round its target by `steps` × 90° (`cam=iso,<turn>,<zoom>`); another code as it is.
 
 ### [`playwright.config.ts`](../playwright.config.ts)
 

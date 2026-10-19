@@ -200,6 +200,8 @@ export interface CharacterInput {
   /** The shooter model's: the sprint button is held, went down this tick, the walk or the crouch button is held. */
   sprint?: boolean;
   sprintPressed?: boolean;
+  /** The shooter model's: the sprint lasts only while held, no press keeping it on (a player's held sprint, WP 13.9). */
+  sprintHold?: boolean;
   walk?: boolean;
   crouch?: boolean;
   /** The shooter model's: the crouch toggle went down this tick (it crouches until pressed again or stood up). */

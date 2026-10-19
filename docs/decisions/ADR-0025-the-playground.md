@@ -426,3 +426,32 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   and the platformer to the four bounds where they meet the level: the look tilted ±1.2 rad on open floor by the
   spawn, a sprint and a jump along the east perimeter wall, a run past the climb walls' edges, and a jump two metres
   from that wall with the camera over its top (never lost until the landing).
+
+## Amendment 9 (2026-10-19, WP 13.9): controls for every camera
+
+- **A map per camera mode** (labs/playground/controls.ts): `createEngine({ actionMap })` also takes a function from
+  the camera's code to its map, and the engine swaps the input's map (`input.use`) at the frame after a switch. Each
+  map keeps its own bindings (a rebind in one mode stays in that mode, saved under that map's id); the playtest may ask
+  for one shared set.
+- **View actions** (an action map's `view`): the camera's switch, the shoulder and isometric's turns are bound and
+  rebound like any action but never sent to the sim: the page hears each press as it happens (`onView`), every press,
+  so none is lost between two frames. P, F and M stay the page's own keys, reserved in every map.
+- **Aiming** (engine/input/aim.ts): a map's `aimWith` names the rule. The page works the point out each frame from the
+  camera it drew (the view's `aim`) and records it with the step's intents; the sim reads only the point, so live
+  play replays without a camera. `centre`: the screen centre's ray through the sim's read-only queries, the player's
+  own body skipped and nothing between the camera and his eye counted, out to 100 m; `pointer`: the free pointer's ray
+  onto the plane of his feet, or a pushed right stick 5 m along the floor from him, the picture's up as up (twin
+  sticks), the stick ahead of the pointer. The eye heights stay the cameras' (amendment 8): the sim needs no eye.
+- **The look settings** (engine/input/look.ts), Apex's units: 0.022° a count times `input.sensitivity` (5: 0.11° a
+  count), times `input.adsSensitivity` with the sights up (the map's `aim` held); the right stick turns each camera at
+  its own rate times `input.stickSensitivity`; each inverts by a setting. They replace `createInput`'s `lookSpeed` and
+  `invertY`, which no game passed. View settings, never hashed.
+- **Sprint and crouch, hold or toggle**: the recorded settings `input.sprint` (`toggle` by default, Apex's sticky
+  sprint; `hold`, only while held) and `input.crouch` (`hold` by default; `toggle`, a press crouches until pressed
+  again), read by the actors for players only, so the AI keeps Apex's. Recorded, because the same presses move the
+  player differently; the defaults change no golden.
+- **Pointer lock**: a click takes it in the maps that look with the mouse (`lock`: first person, the shooter, the
+  platformer); pause and a map without it give it back; isometric and top-down keep the cursor to aim.
+- **Isometric's keys**: Q and E turn the view by 90°, blended, so its Use moves to G; the d-pad's right turns it on a
+  pad, the d-pad's left swaps the shooter's shoulder, so the d-pad no longer moves.
+- **Deferred**: the pad's reload and holster (Apex's X and Y held) wait for a held binding with WP 13.19 and 13.20.

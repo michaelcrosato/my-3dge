@@ -68,8 +68,11 @@ so a level select reloads the page with another `?scene`.
 direction `[x, z]`), `b` (buttons held), `p` (pressed this step), `aim`, `look`, `cam`, and the game's own
 `'game:<name>'` keys. A player actor reads the step's intents itself; systems get them as their second argument
 (`held(intents, 'jump')`, `pressed(intents, 'attack')`). In a page, devices make intents through an action map
-(`actionMap:thirdPerson` by default: WASD or the arrows run, Space jumps, Shift dashes). A bot or a test writes them
-directly: `engine.step(1, { move: [1, 0] })`. A replay is the intents of a run, recorded.
+(`actionMap:thirdPerson` by default: WASD or the arrows run, Space jumps, Shift dashes); a map with `look: true` sends
+the camera's view as `look`, and its `aimWith` fills `aim` (`centre`: what the screen's middle points at; `pointer`:
+the pointer on the player's floor), and a game with several camera modes gives `createEngine` a map per camera
+(`actionMap: (code) => …`). A bot or a test writes them directly: `engine.step(1, { move: [1, 0] })`. A replay is the
+intents of a run, recorded.
 
 **Proof.** `engine.hash()` digests the whole sim. A replay file (labs/game/replays/bot.replay.json) holds a scene,
 seed, settings, the intents at each step that changed them, and the golden hashes at its checkpoints, per platform
@@ -317,6 +320,9 @@ Pages only, from engine/index.ts:
 
 **Input (WP 3.3)**: the devices of a page sampled into intents (keys by physical code, mouse with pointer lock and the wheel, gamepads in any slot), action maps and their presets, bindings players change and keep, prompts per device, the virtual device that __engine.input drives, and the scripted gamepad for tests.
 `createInput`, `defineActionMap`, `getActionMap`, `listActionMaps`, `SYSTEM_ACTIONS`, `RESERVED_CODES`, `createBindings`, `codeLabel`, `readKeyboardLayout`, `isCode`, `createVirtualDevice`, `connectVirtualDevice`, `createScriptedGamepad`; types `Input`, `InputOptions`, `CameraLike`, `CameraInputSample`, `ActionMap`, `ActionMapSpec`, `Bindings`, `BindingsOptions`, `BindingsStorage`, `BindingsFile`, `RebindResult`, `DeviceKind`, `VirtualDevice`, `ScriptedGamepad`, `GamepadLike`.
+
+**Aiming and look (WP 13.9)**: the point the intents' aim carries by a map's rule, and the look settings input.*.
+`aimPoint`, `screenRay`, `onFloor`, `AIM_RULES`, `AIM_RANGE`, `STICK_REACH`, `lookOptions`, `scaleLook`, `LOOK_SETTING_FIELDS`, `LOOK_SETTINGS`, `DEGREES_PER_COUNT`; types `AimRule`, `AimPose`, `AimView`, `AimDevices`, `AimRay`, `LookOptions`, `RawLook`, `ScaledLook`.
 
 **Geometry kit and level meshes (WP 2.4)**: shapes standing on the ground with UVs in metres, the geometry registry (props and levels name geometry by id), their QA measures, and a compiled level drawn as meshes.
 `boxGeometry`, `roundedBoxGeometry`, `limbGeometry`, `rampGeometry`, `frustumGeometry`, `pillarGeometry`, `pillarParts`, `ringGeometry`, `sidesThenTops`, `mergeGeometries`, `defineGeometry`, `getGeometry`, `buildGeometry`, `inspectGeometry`, `createLevelMeshes`, `LEVEL_RECIPES`; types `BoxOptions`, `RoundedBoxOptions`, `LimbOptions`, `RampOptions`, `FrustumOptions`, `PillarOptions`, `PillarPart`, `RingOptions`, `GeometryEntry`, `GeometrySpec`, `GeometryRef`, `GeometryReport`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `LevelCell`, `LevelRecipe`, `LevelShape`.

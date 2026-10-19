@@ -7,15 +7,17 @@
  * (tests/replays/playground-*) offered to `?replay=<name>`. Before the engine starts, the menu for humans
  * (labs/playground/menu.ts) lists the scenes, cameras, looks, replays and controls.
  *
- * Live switches (labs/playground/views.ts): T cycles the five camera modes (blending), X swaps the shooter's
- * shoulder, P switches the two looks, and a click on
- * the game takes the pointer for mouse look in the three perspective cameras (Esc gives it back; isometric and
- * top-down keep the cursor). They are view state, so no camera, look or switch changes the hash. F shows and hides
- * the feel panel (labs/playground/feel.ts, WP 13.4), whose sliders tune the run through recorded settings.
+ * Controls (labs/playground/controls.ts, WP 13.9): each camera mode reads its own action map (`playgroundMap`), and
+ * the maps' view actions switch the views live (`onView`, labs/playground/views.ts): T cycles the five camera modes
+ * (blending), X swaps the shooter's shoulder, Q and E turn isometric; P switches the two looks. A click on the game
+ * takes the pointer for mouse look in the three perspective cameras (the engine's, by the map; Esc gives it back;
+ * isometric and top-down keep the cursor to aim). They are view state, so no camera, look or switch changes the hash.
+ * F shows and hides the feel panel (labs/playground/feel.ts, WP 13.4), whose sliders tune the run through recorded
+ * settings.
  *
  * Each drawn frame (`onFrame`) it shows the gym's signs (labs/playground/levels/gym.ts) as labels over their features,
- * those within `SIGN_RANGE` of the player, and the HUD: the camera mode and the look in use, and the keys. It reads the
- * run and never changes it.
+ * those within `SIGN_RANGE` of the player, and the HUD: the camera mode and the look in use, and the keys of the map in
+ * use as its prompts give them (`keysLine`). It reads the run and never changes it.
  *
  * The gym's text is computed from its features, so the page registers the text the scene compiles (`GYM_TEXT`), as the
  * starter game registers its arena's; a level written as a file would come in as `?raw` text, as the box's do.
@@ -28,18 +30,15 @@
  */
 /// <reference types="vite/client" />
 import { createEngine, type Engine, type EngineFrame, type Label } from '../../engine';
-import { PLAYGROUND_ACTION_MAP } from './controls';
+import { keysLine, playgroundMap } from './controls';
 import { mountFeelPanel } from './feel';
 import { GYM_FEATURES, GYM_TEXT } from './levels/gym';
 import { createPlaygroundMenu, type MenuEntry } from './menu';
 import { gym } from './scenes/gym';
-import { CAMERA_KEY, LOOK_KEY, PLAYGROUND_LOOKS, SWAP_KEY, cameraMode, nextCamera, nextLook, swapShoulder } from './views'; // prettier-ignore
+import { LOOK_KEY, PLAYGROUND_LOOKS, cameraMode, nextCamera, nextLook, swapShoulder, turnView } from './views';
 
 /** How near the player a sign shows (m): the features around him, not the whole gym at once. */
 const SIGN_RANGE = 24;
-
-/** The modes that take the pointer for mouse look: the perspective cameras. */
-const LOOKING = new Set(['shooter', 'first', 'platformer']);
 
 /** The playground's levels, by id, as text: the engine registers them for the view. */
 const levels = { 'level:gym': { text: GYM_TEXT, file: 'labs/playground/levels/gym.ts' } };
@@ -114,14 +113,29 @@ function showFrame({ world, scene }: EngineFrame): void {
   if (!showing.camera) showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? 'custom' };
   const look = showing.look.replace(/^look:playground-/, '');
   ui.hud('mode', `Camera: ${showing.camera} · Look: ${look}`, { at: 'top-right' });
-  const keys = 'WASD: move · Space: jump · Shift: sprint · Alt: walk · C: crouch · Click: mouse look · T: camera · X: shoulder · P: look · F: feel · M: menu'; // prettier-ignore
-  ui.hud('keys', keys, { at: 'bottom', keys: true });
+  if (engine?.input) ui.hud('keys', keysLine(engine.input), { at: 'bottom', keys: true });
+}
+
+/** A view action of the map in use (labs/playground/controls.ts): the camera's switch, the shoulder, a view's turn. */
+function onView(action: string): void {
+  const member = camera();
+  if (!member) return;
+  const code = member.get().code;
+  const next =
+    action === 'camera'
+      ? nextCamera(code)
+      : action === 'shoulder'
+        ? swapShoulder(code)
+        : turnView(code, action === 'turnLeft' ? -1 : action === 'turnRight' ? 1 : 0);
+  if (next === code) return;
+  showing = { ...showing, camera: cameraMode(member.set(next, { blend: true }).code)?.name ?? 'custom' };
 }
 
 const canvas = document.querySelector<HTMLCanvasElement>('#view')!;
 engine = await createEngine({
   canvas,
-  actionMap: PLAYGROUND_ACTION_MAP,
+  actionMap: playgroundMap,
+  onView,
   scenes: sceneEntries.map((entry) => entry.id),
   levels,
   replays,
@@ -133,22 +147,9 @@ if (engine.inspector) mountFeelPanel(document, engine.inspector, search);
 addEventListener('keydown', (event) => {
   const inspector = engine?.inspector;
   if (!inspector || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
-  if (event.code === CAMERA_KEY && camera()) {
-    const code = camera()!.set(nextCamera(camera()!.get().code), { blend: true }).code;
-    showing = { ...showing, camera: cameraMode(code)?.name ?? 'custom' };
-    if (!LOOKING.has(showing.camera) && document.pointerLockElement) document.exitPointerLock();
-  } else if (event.code === SWAP_KEY && camera()) {
-    const code = camera()!.get().code;
-    if (swapShoulder(code) !== code) camera()!.set(swapShoulder(code), { blend: true }); // the shooter's alone
-  } else if (event.code === LOOK_KEY) {
+  if (event.code === LOOK_KEY) {
     const look = nextLook(showing.look);
     inspector.set('post.look', look);
     showing = { ...showing, look };
-  }
-});
-
-canvas.addEventListener('click', () => {
-  if (LOOKING.has(showing.camera) && document.pointerLockElement !== canvas) {
-    void Promise.resolve(canvas.requestPointerLock()).catch(() => undefined); // refused: the cursor stays
   }
 });

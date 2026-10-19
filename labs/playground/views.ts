@@ -1,8 +1,9 @@
 /**
  * @file The playground's views (docs/PLAYGROUND.md §4, §5; PLAN.md WP 13.1): its five camera modes and its two looks,
- * in the order the keys step through them, and the keys: T (`CAMERA_KEY`) cycles the cameras, X (`SWAP_KEY`) swaps the
- * shooter's shoulder (`swapShoulder`) and P (`LOOK_KEY`) switches the looks, live, on the page
- * (labs/playground/main.ts), each camera switch blended; the menu (labs/playground/menu.ts) links each.
+ * in the order the keys step through them: the maps' view actions (labs/playground/controls.ts, WP 13.9) cycle the
+ * cameras (T, `nextCamera`), swap the shooter's shoulder (X, `swapShoulder`) and turn isometric by 90° (Q and E,
+ * `turnView`), and P (`LOOK_KEY`) switches the looks, live, on the page (labs/playground/main.ts), each camera switch
+ * blended; the menu (labs/playground/menu.ts) links each.
  *
  * Each mode is its rig (WP 13.8, engine/gfx/cameras/): the shooter over the shoulder (`cam3=shoulder`), first person
  * at the eye (`cam3=first`), the platformer's orbit and follow (`cam3=follow`), isometric (`cam=iso`) and top-down
@@ -41,14 +42,8 @@ export const PLAYGROUND_CAMERAS: readonly CameraMode[] = [
 /** The two looks, in the order P switches them; the cel look is the page's default. */
 export const PLAYGROUND_LOOKS: readonly string[] = ['look:playground-cel', 'look:playground-pixel'];
 
-/** The key that cycles the camera modes: T, as docs/PLAYGROUND.md §3.3 binds it. */
-export const CAMERA_KEY = 'KeyT';
-
 /** The key that switches the looks: P, which no action map binds. */
 export const LOOK_KEY = 'KeyP';
-
-/** The key that swaps the shooter's shoulder: X, as docs/PLAYGROUND.md §3.3 binds it. */
-export const SWAP_KEY = 'KeyX';
 
 /** The camera mode a code opens, by its type and view (`cam3=chase` of `cam3=chase,0,-20.63,5.5`); else undefined. */
 export function cameraMode(code: string): CameraMode | undefined {
@@ -67,6 +62,14 @@ export function swapShoulder(code: string): string {
   const parts = code.split(',');
   if (parts[0] !== 'cam3=shoulder' || parts.length < 4) return code;
   return parts.length === 5 ? parts.slice(0, 4).join(',') : `${code},-1`;
+}
+
+/** A classic view's code `code` turned round its target by `steps` × 90° (`cam=iso,<turn>,<zoom>`); another code as it is. */ // prettier-ignore
+export function turnView(code: string, steps: number): string {
+  const [head, turn = '0', zoom = '1', ...target] = code.split(',');
+  if (!head.startsWith('cam=') || !/^cam=[a-z]+$/.test(head)) return code;
+  const turned = (((Number(turn) + steps * 90) % 360) + 360) % 360;
+  return [head, String(turned), zoom, ...target].join(',');
 }
 
 /** The look after `id` (the first after an unknown id). */

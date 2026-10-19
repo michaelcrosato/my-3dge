@@ -10,7 +10,7 @@
  *    to 15 px tall), the sky's dome and backdrop left out as background, and the MRT reads the sky as the background
  *    too (the parts view is black where the ID pass finds nothing), so no outline inks the dome's edges;
  * 5. the menu for humans (`?playground.menu=on`) lists the scene, the five cameras, the two looks and the replays;
- * 6. the keyboard reaches the player through the playground's action map (WP 13.3): D runs and Shift sprints, the
+ * 6. the keyboard reaches the player through the playground's action map (WP 13.3): W runs and Shift sprints, the
  *    shooter model's gaits read off the player's `motion`, the page's frame loop sampling the keys on the virtual
  *    clock's frames (`harness.tick`);
  * 7. the feel panel (`?playground.feel=on`, WP 13.4) tunes the run live: its run slider set, the player runs that fast
@@ -214,7 +214,7 @@ test.describe('the playground', () => {
     expect(harness.advice()).toEqual([]);
   });
 
-  test('runs on D and sprints on Shift: the keyboard reaches the player through the playground’s action map', async ({
+  test('runs on W and sprints on Shift: the keyboard reaches the player through the playground’s action map', async ({
     page,
     harness,
   }) => {
@@ -222,7 +222,7 @@ test.describe('the playground', () => {
     type Player = { actor: { vx: number; vz: number }; motion: { gait: string } };
     const player = () => call<Player>(page, 'get', 1);
     await call(page, 'resume');
-    await page.keyboard.down('KeyD'); // west: the camera looks south, and the north wall's side is clear for 10 m
+    await page.keyboard.down('KeyW'); // south, along the view the shooter sends (WP 13.9): open floor for 10 m
     await harness.tick(31); // the first frame sets the virtual clock's origin, then half a second of steps
     expect((await player()).motion.gait).toBe('run');
     await page.keyboard.down('ShiftLeft');
@@ -231,7 +231,7 @@ test.describe('the playground', () => {
     expect(motion.gait).toBe('sprint');
     expect(Math.hypot(actor.vx, actor.vz)).toBeGreaterThan(5.2); // past the holstered run's 5.07 m/s
     await page.keyboard.up('ShiftLeft');
-    await page.keyboard.up('KeyD');
+    await page.keyboard.up('KeyW');
     await call(page, 'pause');
     expect(harness.advice()).toEqual([]);
   });

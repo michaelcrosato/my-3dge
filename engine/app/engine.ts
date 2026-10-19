@@ -7,7 +7,8 @@
  * `post.look`, `post.filters` and `post.show`; the look's sky and style, engine/app/look.ts), warms up every pipeline
  * the view needs through both cameras (perspective and orthographic), draws the first frame, then runs the frame loop
  * (engine/app/loop.ts): the devices sampled into intents (engine/input/input.ts; `__engine.input` drives the same
- * session), fixed steps from the clock, the view drawn at the clock's alpha.
+ * session), fixed steps from the clock, the view drawn at the clock's alpha; the map follows the camera, the look the
+ * view settings `input.*`, the aim the view, and a click takes the pointer lock where the map's mouse looks (WP 13.9).
  *
  * Ready or error (§8.3): `__engine.ready` turns true once the first frame is done on the GPU, never after a startup
  * error; every failure is one record in `__engine.errors` (the log's), shown as page text by the error overlay
@@ -57,7 +58,8 @@ import { createPost } from '../gfx/post/chain';
 import { definePostSettings } from '../gfx/post/settings';
 import { createRenderer } from '../gfx/renderer';
 import { connectVirtualDevice } from '../input/devices/inspector';
-import { createInput } from '../input/input';
+import { createInput, type CameraLike, type Input } from '../input/input';
+import { lookOptions } from '../input/look';
 import type { TouchSetting } from '../input/devices/touch';
 import { createChrome } from '../ui/chrome';
 import { attachSwipes } from '../ui/swipe';
@@ -118,8 +120,13 @@ export interface EngineOptions {
   log?: Log;
   /** The page's touch buttons, a `touchlayout` id (engine/ui/touch.ts); without it, only the touch stick shows. */
   touchLayout?: string;
-  /** The action map the devices read (`actionMap:thirdPerson` by default): its actions are the intents' buttons. */
-  actionMap?: string;
+  /**
+   * The action map the devices read (`actionMap:thirdPerson` by default): its actions are the intents' buttons. A
+   * function gives the map for the camera now (its code, `cam3=first,…`), so each camera mode has its own (WP 13.9).
+   */
+  actionMap?: string | ((camera: string) => string);
+  /** A view action of the map pressed (its `view`: a camera switch, a view's turn), as it happens (WP 13.9). */
+  onView?: (action: string) => void;
   /** Opens the page's menu, called after the touch menu button has paused the game. */
   onMenu?: () => void;
   /** The page's own presentation (its sound): called once per drawn frame, after the draw, with the run to read. */
@@ -156,6 +163,8 @@ export interface Engine {
   readonly routes: Routes | null;
   /** The game's HTML/CSS overlay over the canvas (engine/ui/overlay.ts); null until the renderer started. */
   readonly ui: Overlay | null;
+  /** The devices (engine/input/input.ts): prompts, rebinding, the map in use; null when the scene could not start. */
+  readonly input: Input | null;
   /** Stops the frame loop. */
   stop(): void;
 }
@@ -247,6 +256,9 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     get ui() {
       return parts.ui;
     },
+    get input() {
+      return parts.input;
+    },
     stop: () => loop?.stop(),
   };
 
@@ -291,8 +303,29 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     options.onMenu?.();
   };
   const touchMode = () => settingsNow.get<TouchSetting>('touch');
-  const map = options.actionMap;
-  const input = (parts.input = createInput({ window, document, element: options.canvas, registry, log, touchMode, onTap, map })); // prettier-ignore
+  const mapFor = () => {
+    const asked = options.actionMap;
+    return (typeof asked === 'function' ? asked(viewNow().camera.code()) : asked) ?? 'actionMap:thirdPerson';
+  };
+  const declared = (path: string) => registry.kinds().includes('setting') && registry.has('setting', path);
+  const look = () => lookOptions((path) => (declared(path) ? settingsNow.get(path) : undefined));
+  const input = (parts.input = createInput({ window, document, element: options.canvas, registry, log, touchMode, onTap, map: mapFor(), look, onView: options.onView })); // prettier-ignore
+  /** The camera the devices read: its heading, its look, and the aim from the view (engine/input/aim.ts). */
+  const camera: CameraLike = {
+    yaw: () => viewNow().camera.yaw(),
+    pose: () => viewNow().camera.pose(),
+    aim: (rule, devices) => viewNow().aim(rule, devices),
+  };
+  /** The map for the camera now, and the pointer lock: a click takes it where the map's mouse looks; pause gives it back. */ // prettier-ignore
+  const sample = (now: number) => {
+    const id = mapFor();
+    if (id !== input.bindings.map.id) input.use(id);
+    if (input.mouse?.locked && (!input.bindings.map.lock || started.clock.paused)) input.mouse.unlock();
+    return input.sample(camera, now);
+  };
+  options.canvas.addEventListener('click', () => {
+    if (input.bindings.map.lock && !started.clock.paused && !input.mouse?.locked) input.mouse?.lock();
+  });
   parts.layer = createTouchLayer(document, layout);
   attachSwipes(document);
   connectVirtualDevice(started.host, input.virtual);
@@ -329,7 +362,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   };
   loop = createLoop({
     clock: () => started.clock,
-    sample: (now) => input.sample({ yaw: () => viewNow().camera.yaw() }, now),
+    sample,
     step,
     draw: ({ alpha, dt }) => {
       if (warming) return;

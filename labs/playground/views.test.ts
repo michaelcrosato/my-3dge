@@ -1,18 +1,18 @@
 /**
  * @file Unit tests for the playground's views (labs/playground/views.ts): every mode's code is a camera code the page's
- * cameras read, the five modes are the five of docs/PLAYGROUND.md §4, every look is registered, the keys are bound by
- * no action map (X by no system action and not the page's own map), T and P step round in order from any camera code
- * or look id, and X swaps the shooter's shoulder.
+ * cameras read, the five modes are the five of docs/PLAYGROUND.md §4, every look is registered, P is bound by no action
+ * map and kept from the page's own (the camera keys are their view actions, labs/playground/controls.test.ts), T and P
+ * step round in order from any camera code or look id, X swaps the shooter's shoulder and Q and E turn isometric.
  * @see labs/playground/views.ts
  */
 import { describe, expect, it } from 'vitest';
 import { getActionMap, listActionMaps, RESERVED_CODES, SYSTEM_ACTIONS } from '../../engine/input/actionMaps';
-import { PLAYGROUND_ACTION_MAP } from './controls';
+import { PLAYGROUND_MAPS } from './controls';
 import { registry } from '../../engine/core/registry';
 import { readCameraCode } from '../../engine/gfx/cameras/place';
 import './looks/cel';
 import './looks/pixel';
-import { CAMERA_KEY, LOOK_KEY, PLAYGROUND_CAMERAS, PLAYGROUND_LOOKS, SWAP_KEY, cameraMode, nextCamera, nextLook, swapShoulder } from './views'; // prettier-ignore
+import { LOOK_KEY, PLAYGROUND_CAMERAS, PLAYGROUND_LOOKS, cameraMode, nextCamera, nextLook, swapShoulder, turnView } from './views'; // prettier-ignore
 
 describe('the playground views', () => {
   it('opens each of the five modes with a camera code, and every look is registered', () => {
@@ -27,16 +27,22 @@ describe('the playground views', () => {
     for (const id of PLAYGROUND_LOOKS) expect(registry.has('look', id), id).toBe(true);
   });
 
-  it('switches with keys no action map, system action or reserved code takes', () => {
+  it('switches the looks with a key no action map, system action or reserved code takes, and the page’s maps keep', () => {
     const taken = new Set([
       ...RESERVED_CODES,
       ...Object.values(SYSTEM_ACTIONS).flat(),
       ...listActionMaps().flatMap((map) => Object.values(map.actions).flat()),
     ]);
-    expect(taken.has(CAMERA_KEY)).toBe(false);
     expect(taken.has(LOOK_KEY)).toBe(false);
-    const page = new Set([...RESERVED_CODES, ...Object.values(SYSTEM_ACTIONS).flat(), ...Object.values(getActionMap(PLAYGROUND_ACTION_MAP).actions).flat()]); // prettier-ignore
-    expect(page.has(SWAP_KEY)).toBe(false); // §3.3's X: the box's map attacks with it, the page's leaves it free
+    for (const id of Object.values(PLAYGROUND_MAPS)) expect(getActionMap(id).reserved, id).toContain(LOOK_KEY);
+  });
+
+  it('turns a classic view by quarters round its target, its zoom and target kept, and leaves another code', () => {
+    expect(turnView('cam=iso', 1)).toBe('cam=iso,90,1');
+    expect(turnView('cam=iso,270,2', 1)).toBe('cam=iso,0,2');
+    expect(turnView('cam=iso,0,2,1,0,3', -1)).toBe('cam=iso,270,2,1,0,3');
+    expect(readCameraCode(turnView('cam=iso,0,2', 1))).toMatchObject({ type: 'view', view: 'iso', zoom: 2 });
+    expect(turnView('cam3=first,0,0,74', 1)).toBe('cam3=first,0,0,74');
   });
 
   it('swaps the shooter’s shoulder by its code, and leaves another camera’s code', () => {

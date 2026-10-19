@@ -6,13 +6,17 @@
  * touch play replays like any other (WP 3.12: every action also binds `touch:<action>`, and the touch stick adds to
  * the move axes before `fromCamera` clamps them to length 1).
  *
- * What a sample holds: `b`, the map's actions held, sorted; `p`, those pressed since the last sample (an action whose code went
- * down, so a tap shorter than a frame still presses); `move`, the strengths of the map's four move actions as
- * `[right − left, forward − back]` turned by `fromCamera(camera.yaw(), …)`, so W walks away from the camera; `cam`, the
- * camera's heading; `look` for first-person maps; the map's `values` as custom intents. The move actions and the
- * system layer (pause, menus) are never buttons in it: `held`, `pressed` and `strength` give every action, both
- * layers, to the app and the UI. `camera()` gives what the camera itself takes each frame (mouse look under pointer
- * lock, the right stick, the wheel), and `prompt(action)` the label of its binding on the device used last.
+ * What a sample holds: `b`, the map's actions held, sorted; `p`, those pressed since the last sample (a code that went
+ * down, so a tap shorter than a frame still presses); `move`, the map's four move actions as `[right − left, forward −
+ * back]` turned by `fromCamera(camera.yaw(), …)`, so W walks away from the camera; `cam`, the camera's heading; `look`
+ * (its yaw and pitch) for maps with `look`; `aim`, the camera's point for the map's `aimWith` rule from the free
+ * pointer and the right stick (engine/input/aim.ts); the map's `values` as custom intents. The move actions, the map's
+ * `view` actions and the system layer (pause, menus) are never buttons in it: `held`, `pressed` and `strength` give
+ * every action to the app and the UI, and `onView` hears a view action as it is pressed (a key at once, a pad button at
+ * its poll, the virtual device's at the sample). `camera()` gives what the camera takes each frame (mouse look under
+ * pointer lock and the right stick, scaled by the view settings `input.*`, engine/input/look.ts; the wheel; a map that
+ * aims with the pointer keeps the stick for aiming). `prompt(action)` labels a binding on the device used last;
+ * `use(map)` switches the map live (one per camera mode, WP 13.9), what is held read through it from the next sample.
  *
  * Clearing: a page blur, the page going hidden and `clear()` let go of every held code and drop pending presses, so
  * nothing stays held after alt-tab; a gamepad that disconnects lets go of its own. `listen(device)` waits for the next
@@ -21,17 +25,14 @@
  * Invariants: nothing here reads a clock; edges are counted per sample; a code is held only between its press and
  * release reports. Without `window` and `document` (Node), only the gamepad source given and the virtual device feed it.
  *
- * Carried from `my-3d2dge:engine/my-3d2dge.js:482-512, 542-555, 594-622` (the input object, press and release, blur
- * and visibility, `move`, `tick`), now sampled per frame into recorded intents; shardfall's taps shorter than a frame
- * and prompts that follow the last device (`shardfall:crates/pav_app/src/input.rs:590-610`).
+ * Carried from `my-3d2dge:engine/my-3d2dge.js:482-512, 542-555, 594-622` (the input object, blur, `move`, `tick`),
+ * sampled per frame; shardfall's short taps and prompts (`shardfall:crates/pav_app/src/input.rs:590-610`).
  *
  * @example
  * const window = new EventTarget();
  * const input = createInput({ window, document: new EventTarget(), element: new EventTarget() });
  * const key = (type: string, code: string) => window.dispatchEvent(Object.assign(new Event(type), { code }));
- * key('keydown', 'KeyW');
- * key('keydown', 'Space');
- * key('keyup', 'Space'); // a tap between two frames
+ * ['KeyW', 'Space'].forEach((code) => key('keydown', code)), key('keyup', 'Space'); // a tap between two frames
  * input.sample({ yaw: () => Math.PI / 2 }); // { move: [1, 6.1e-17], cam: 1.5707963267948966, p: ['jump'] }
  * input.prompt('jump'); // 'Space'
  * input.sample({ yaw: () => 0 }).move; // [0, 1]: still held; the camera turned, so W walks +Z now
@@ -44,15 +45,19 @@ import { createBindings, pickLabel, type Bindings, type BindingsStorage } from '
 import { deviceOf, PAD_BUTTONS, touchCode, type DeviceKind, type InputSink } from './codes';
 import { createGamepadDevice, type GamepadDevice, type GamepadSource } from './devices/gamepad';
 import { attachKeyboard } from './devices/keyboard';
+import type { AimDevices, AimRule } from './aim';
 import { attachMouse, type MouseDevice, type MouseTargets } from './devices/mouse';
 import { attachTouch, type TouchDevice, type TouchSetting } from './devices/touch';
 import { createVirtualDevice, type VirtualDevice } from './devices/virtual';
 import { fromCamera } from './intents';
+import { lookOptions, scaleLook, type LookOptions } from './look';
 
-/** A camera as the input reads it (engine/gfx/cameras/pose.ts `Camera`): its heading, and its pitch for first person. */
+/** A camera as the input reads it (the app's, over its view): its heading, its pitch for the look, and the aim. */
 export interface CameraLike {
   yaw(): number;
   pose?(): { readonly pitch: number };
+  /** The point `rule` aims at this frame from the devices' pointer and stick (engine/input/aim.ts), or undefined. */
+  aim?(rule: AimRule, devices: AimDevices): readonly [number, number, number] | undefined;
 }
 
 /** How an input is made; in a page every field has its default. */
@@ -71,10 +76,10 @@ export interface InputOptions {
   gamepads?: GamepadSource;
   /** The stick deadzone (0.18), clamped to [0.05, 0.5]. */
   deadzone?: number;
-  /** Mouse look, rad per pixel (0.0025). */
-  lookSpeed?: number;
-  /** Mouse and right-stick look upside down (flight style). */
-  invertY?: boolean;
+  /** A view action pressed (the map's `view`: a camera switch, a view's turn), as it happens (see the file comment). */
+  onView?: (action: string) => void;
+  /** The look settings now (`lookOptions` over the view settings `input.*`), read every frame; defaults when absent. */
+  look?: () => LookOptions;
   /** The keyboard layout for prompts (`readKeyboardLayout()`). */
   layout?: ReadonlyMap<string, string>;
   /** The `touch` setting now (`auto`, `on`, `off`): touch mode follows the screen unless forced. */
@@ -96,8 +101,10 @@ export interface CameraInputSample {
 
 /** A page's input. */
 export interface Input {
-  /** The bindings: rebind, reset, labels. */
+  /** The bindings of the map in use: rebind, reset, labels. */
   readonly bindings: Bindings;
+  /** Switches to the action map `map` (an id, its bindings made and saved as the first's, or bindings); returns them. */
+  use(map: string | Bindings): Bindings;
   /** The virtual device, merged into every sample (`__engine.input` drives it). */
   readonly virtual: VirtualDevice;
   /** The mouse (pointer lock, pointer), when there is a page. */
@@ -126,10 +133,14 @@ export interface Input {
   dispose(): void;
 }
 
+/** The look settings' defaults: what `camera()` scales by without `options.look`. */
+const DEFAULT_LOOK = lookOptions(() => undefined);
+
 /** Makes the page's input. */
 export function createInput(options: InputOptions = {}): Input {
-  const bindings =
-    typeof options.map === 'object' ? options.map : createBindings(options.map ?? 'actionMap:thirdPerson', options);
+  const made = (map: string | Bindings) => (typeof map === 'object' ? map : createBindings(map, options));
+  let bindings = made(options.map ?? 'actionMap:thirdPerson');
+  const known = new Map<string, Bindings>([[bindings.map.id, bindings]]);
   const scope = globalThis as { window?: EventTarget; document?: InputOptions['document'] & { body?: EventTarget } };
   const win = options.window ?? scope.window;
   const doc = options.document ?? scope.document;
@@ -144,16 +155,26 @@ export function createInput(options: InputOptions = {}): Input {
   let pressedNow = new Set<string>();
   let strengths = new Map<string, number>();
   let listening: { family: 'keyboard' | 'gamepad'; resolve: (code: string | null) => void } | null = null;
-  let table = { version: -1, codes: new Map<string, readonly string[]>(), bound: new Set<string>() };
+  let table = { of: bindings, version: -1, codes: new Map<string, readonly string[]>(), bound: new Set<string>() };
 
   const codesOf = (action: string): readonly string[] => {
-    if (table.version !== bindings.version) {
+    if (table.of !== bindings || table.version !== bindings.version) {
       const codes = new Map<string, readonly string[]>();
       for (const [name, own] of Object.entries(SYSTEM_ACTIONS)) codes.set(name, [...own, touchCode(name)]);
       for (const name of bindings.actions()) codes.set(name, [...bindings.codes(name), touchCode(name)]);
-      table = { version: bindings.version, codes, bound: new Set([...codes.values()].flat()) };
+      table = { of: bindings, version: bindings.version, codes, bound: new Set([...codes.values()].flat()) };
     }
     return table.codes.get(action) ?? [];
+  };
+  /** The view actions told as their codes went down since the last sample, which tells only the others (virtual). */
+  const told = new Set<string>();
+  /** Tells `onView` of each view action of the map that `code` is bound to: every press (auto-repeat never comes). */
+  const tell = (code: string) => {
+    for (const action of bindings.map.view) {
+      if (!codesOf(action).includes(code)) continue;
+      told.add(action);
+      options.onView?.(action);
+    }
   };
   const hear = (code: string | null) => {
     const wait = listening;
@@ -173,6 +194,7 @@ export function createInput(options: InputOptions = {}): Input {
       down.add(code);
       taps.add(code);
       values.set(code, 1);
+      tell(code);
     },
     release(code) {
       down.delete(code);
@@ -194,7 +216,8 @@ export function createInput(options: InputOptions = {}): Input {
   const pads: GamepadDevice = createGamepadDevice(sink, source, options.deadzone);
   const virtual = createVirtualDevice();
   const detachKeyboard = win ? attachKeyboard(win, sink) : () => {};
-  const mouse = element && win ? attachMouse({ element, target: win, document: doc }, sink, options) : undefined;
+  const mouse =
+    element && win ? attachMouse({ element, target: win, document: doc }, sink, { lookSpeed: 1 }) : undefined; // counts
   const touchOptions = { mode: options.touchMode, onTap: options.onTap };
   const touch = element && win ? attachTouch({ element, target: win }, sink, touchOptions) : undefined;
   const clear = () => {
@@ -215,9 +238,25 @@ export function createInput(options: InputOptions = {}): Input {
   win?.addEventListener('blur', clear);
   win?.addEventListener('gamepaddisconnected', unplugged);
   doc?.addEventListener('visibilitychange', hidden);
+  /** What aiming reads of the devices: the pointer's place when it is free over the game, the right stick pushed. */
+  const aimDevices = (): AimDevices => {
+    const pointer = mouse?.pointer();
+    const [x, y] = pads.rightStick();
+    return {
+      ...(pointer?.at && pointer.inside && !pointer.locked ? { pointer: pointer.at } : {}),
+      ...(x !== 0 || y !== 0 ? { stick: [x, -y] as const } : {}),
+    };
+  };
 
   return {
-    bindings,
+    get bindings() {
+      return bindings;
+    },
+    use(map) {
+      bindings = typeof map === 'string' ? (known.get(map) ?? made(map)) : map;
+      known.set(bindings.map.id, bindings);
+      return bindings;
+    },
     virtual,
     mouse,
     touch,
@@ -244,6 +283,8 @@ export function createInput(options: InputOptions = {}): Input {
       }
       [heldNow, pressedNow, strengths] = [nextHeld, nextPressed, nextStrength];
       taps.clear();
+      for (const action of bindings.map.view) if (pressedNow.has(action) && !told.has(action)) options.onView?.(action);
+      told.clear();
       const map = bindings.map;
       const level = (action: string) => strengths.get(action) ?? 0;
       const [forward, back, left, right] = map.move;
@@ -258,9 +299,13 @@ export function createInput(options: InputOptions = {}): Input {
       if (own.axes.look) out.look = own.axes.look;
       else if (map.look && camera && yaw !== undefined) out.look = [yaw, camera.pose?.().pitch ?? 0];
       if (own.axes.aim) out.aim = own.axes.aim;
+      else if (map.aimWith !== 'none' && camera?.aim) {
+        const at = camera.aim(map.aimWith, aimDevices());
+        if (at?.every(Number.isFinite)) out.aim = [...at];
+      }
       const buttons = bindings
         .actions()
-        .filter((action) => !map.move.includes(action))
+        .filter((action) => !map.move.includes(action) && !map.view.includes(action))
         .sort();
       const b = buttons.filter((action) => heldNow.has(action));
       const p = buttons.filter((action) => pressedNow.has(action));
@@ -274,8 +319,11 @@ export function createInput(options: InputOptions = {}): Input {
     pressed: (action) => pressedNow.has(action),
     strength: (action) => strengths.get(action) ?? 0,
     camera() {
-      const [x, y] = pads.rightStick();
-      return { look: mouse?.takeLook() ?? [0, 0], turn: [x, options.invertY ? y : -y], zoom: mouse?.takeZoom() ?? 0 };
+      const twin = bindings.map.aimWith === 'pointer'; // the right stick aims (twin sticks), not the camera
+      const stick: [number, number] = twin ? [0, 0] : pads.rightStick();
+      const raw = { counts: mouse?.takeLook() ?? [0, 0], stick } as const;
+      const { look, turn } = scaleLook(raw, options.look?.() ?? DEFAULT_LOOK, heldNow.has('aim'));
+      return { look, turn, zoom: mouse?.takeZoom() ?? 0 };
     },
     prompt(action) {
       const device = last === 'gamepad' || last === 'mouse' ? last : 'keyboard';

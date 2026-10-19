@@ -13,7 +13,7 @@
  * for a character with a model (`character.movement`), and gives its body the hull its stance has
  * (engine/physics/hull.ts); the controller's move, walls, pushes and the ground probe are the same for both.
  *
- * Its input beyond the platformer's (`CharacterInput`): `sprint` and `sprintPressed`, `walk`, `crouch` and
+ * Its input beyond the platformer's (`CharacterInput`): `sprint`, `sprintPressed` and `sprintHold`, `walk`, `crouch` and
  * `crouchToggle`, `view` (the view's yaw: the sprint's 45°, the slide's 53°), `frame` (the yaw the move's keys are
  * turned by, the camera's: the lurch's new key) and `face` (a yaw to face: the look's or the aim's; without it, it
  * faces where it moves); and the world's answers (`Room`: whether it may stand, its feet, walls and ledges ahead,
@@ -156,7 +156,7 @@ export function steerMotion(
   const crouch = { held: input.crouch === true, toggled: input.crouchToggle === true };
   updateDuck(m, motion, { ...crouch, h, vertical: state.vy, floor: wasGrounded ? floorOf(motion) : null, wish, view, scale, dt, canStand: () => room.stand() }); // prettier-ignore
   const footing = wasGrounded || (state.air * dt <= m.sprint.air && !motion.jumped);
-  const sprint = { held: input.sprint === true, pressed: input.sprintPressed === true, blocked: input.walk === true };
+  const sprint = { held: input.sprint === true, pressed: input.sprintPressed === true, hold: input.sprintHold === true, blocked: input.walk === true }; // prettier-ignore
   if (sprint.pressed && !sprint.blocked) motion.crouchToggle = false;
   updateSprint(m, motion, { ...sprint, wish, view, velocity: h, footing, slowdown, dt });
   if (tryLadder(character, state, motion, input, rides, room, tick)) {

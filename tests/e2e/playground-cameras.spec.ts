@@ -6,7 +6,10 @@
  *    later it is the new camera's; X swaps the shooter's shoulder the same way; a plain `camera.set` cuts;
  * 3. no camera changes the hash: the rides replay keeps its goldens while the page blends through every mode;
  * 4. blending through every mode while the player runs builds 0 pipelines after the warm-up, raising no advice;
- * 5. the effects: a sprint lowers first person's eye 0.15 m, and stopping raises it again.
+ * 5. the effects: a sprint lowers first person's eye 0.15 m, and stopping raises it again;
+ * 6. the controls (WP 13.9): in each mode, live play through its own map (keys, the mouse turning the view under the
+ *    pointer lock a click takes, or aiming as a free pointer) records the look and the aim the map's rule gives, and
+ *    the recording replays in Node to the page's hash.
  *
  * Invariants: the page is read through `__engine` only; the sim is stepped with `__engine.step` (or the keys on the
  * virtual clock's frames), then frames drawn with `__engine.render` (1/60 s each), so a blend's frames are counted.
@@ -14,6 +17,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
+import { getActionMap } from '../../engine/input/actionMaps';
+import { playReplay, type Replay } from '../../engine/sim/replay';
+import { playgroundMap } from '../../labs/playground/controls';
+import '../../labs/playground/scenes/gym';
 import { PLAYGROUND_CAMERAS } from '../../labs/playground/views';
 import { expect, test } from './fixtures';
 
@@ -160,4 +167,53 @@ test.describe('the playground’s cameras', () => {
     expect(Math.abs((await eye()) - standing)).toBeLessThan(0.02);
     expect(harness.advice()).toEqual([]);
   });
+
+  for (const mode of PLAYGROUND_CAMERAS) {
+    test(`play live in the ${mode.name} camera through its own map, and replay the recording in Node to its hash`, async ({
+      page,
+      harness,
+    }) => {
+      const [key, value] = mode.code.split('=');
+      await open(page, harness, `?${key}=${value}`);
+      const map = getActionMap(playgroundMap(mode.code));
+      const box = (await page.locator('#view').boundingBox())!;
+      const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
+      await page.mouse.move(x, y);
+      await call(page, 'resume');
+      if (map.lock) {
+        await page.mouse.click(x, y); // a click takes the pointer lock: the mouse turns the view
+        await expect.poll(() => page.evaluate(() => document.pointerLockElement !== null)).toBe(true);
+      }
+      await page.keyboard.down('KeyW');
+      await harness.tick(31); // the first frame sets the virtual clock's origin
+      const before = (await camera(page)).pose.yaw;
+      await page.mouse.move(x + 120, y - 40, { steps: 4 }); // under the lock it turns the view; free, it aims
+      await harness.tick(30);
+      const turned = Math.abs((await camera(page)).pose.yaw - before);
+      await page.keyboard.down('ShiftLeft');
+      await harness.tick(20);
+      await page.keyboard.press('Space');
+      await harness.tick(30);
+      await page.keyboard.up('ShiftLeft');
+      await page.keyboard.up('KeyW');
+      await harness.tick(10);
+      await call(page, 'pause');
+      const recorded = await page.evaluate(() => ({
+        replay: (__engine.input as unknown as { record(): unknown }).record() as Replay,
+        hash: __engine.hash() as unknown as string,
+      }));
+      const changes = recorded.replay.inputs.map(([, change]) => change as Record<string, unknown>);
+      expect(
+        changes.some((change) => Array.isArray(change.look)),
+        'the view sent',
+      ).toBe(map.look);
+      expect(
+        changes.some((change) => Array.isArray(change.aim)),
+        'the aim sent',
+      ).toBe(map.aimWith !== 'none');
+      if (map.lock) expect(turned, 'the mouse turned the view').toBeGreaterThan(0.1);
+      expect(playReplay(recorded.replay).hashes[String(recorded.replay.steps)]).toBe(recorded.hash);
+      expect(harness.advice()).toEqual([]);
+    });
+  }
 });

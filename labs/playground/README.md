@@ -14,11 +14,13 @@ that does not exist fails it.
 1. Run `npm run dev` (on Node 24, which `scripts/setup.sh` installs), then open
    http://127.0.0.1:5173/labs/playground/. If another program holds port 5173, `PORT=5174 npm run dev` serves it on
    5174 instead.
-2. Click the game to look around with the mouse (Esc lets go of it). WASD or the arrows move, Space jumps, Shift
-   sprints (hold it, or press it once), Left Alt walks and C crouches while held (not Apex's Left Ctrl: Ctrl with W
-   closes the browser's tab); C at a sprint slides, and Space out of a slide slide-jumps. E uses: it catches a zipline
-   in reach (Space in the air catches one unasked) or takes hold of a ladder (running into one does too).
-3. T steps through the five cameras, P switches between the cel and the pixel look, M shows and hides the menu.
+2. Click the game to look around with the mouse (Esc lets go of it); in isometric and top-down the pointer aims
+   instead. WASD or the arrows move, Space jumps, Shift sprints (hold it, or press it once), Left Alt walks and C
+   crouches while held (not Apex's Left Ctrl: Ctrl with W closes the browser's tab); C at a sprint slides, and Space
+   out of a slide slide-jumps. E uses (G in isometric): it catches a zipline in reach (Space in the air catches one
+   unasked) or takes hold of a ladder (running into one does too).
+3. T steps through the five cameras (X swaps the shooter's shoulder, Q and E turn isometric), P switches between the
+   cel and the pixel look, M shows and hides the menu.
 
 A link can open any of them: `labs/playground/?cam3=first&post.look=look:playground-pixel` is first person in the
 pixel look, and `labs/playground/?replay=playground-gym` plays the recorded run (`?replay=playground-moves` the moves,
@@ -83,24 +85,30 @@ settings: they never change play or a hash.
 
 | Action | Keys and mouse | Pad |
 |---|---|---|
-| Move | W A S D, or the arrows | left stick, d-pad |
+| Move | W A S D, or the arrows | left stick |
 | Jump | Space | A (south) |
-| Sprint (hold, or press once to keep it) | Left Shift | a click of the left stick |
+| Sprint (press once to keep it, or hold: `input.sprint`) | Left Shift | a click of the left stick |
 | Walk | Left Alt | |
-| Crouch (hold) | C | B (east) |
-| Use: a zipline or a ladder | E | X (west) |
-| Look around | click the game, then the mouse; Esc lets go | right stick |
-| Camera mode | T | |
+| Crouch (hold, or toggle: `input.crouch`) | C | B (east) |
+| Use: a zipline or a ladder | E (G in isometric) | X (west) |
+| Melee, fire, aim down sights | V, the left and right buttons | a click of the right stick, RT, LT |
+| Reload, holster | R, 3 | |
+| Look around (first person, shooter, platformer) | click the game, then the mouse; Esc lets go | right stick |
+| Aim (isometric, top-down) | the pointer, onto the player's floor | right stick |
+| Camera mode | T | view button |
+| Swap the shoulder (shooter) | X | d-pad left |
+| Turn the view (isometric) | Q, E | d-pad right |
 | Cel or pixel look | P | |
 | Zoom | the wheel | |
 | The feel panel | F | |
 | The menu | M | |
 
-The menu for humans (`labs/playground/menu.ts`) lists the scenes, cameras, looks, replays and these controls, read
-from the action map the page binds (`actionMap:playground`, `labs/playground/controls.ts`; WP 13.9 adds the rest of
-Apex's bindings and rebinding). A browser
-that automation drives (the tests, every `x` command that opens the page) gets no menu, so no test's screenshot holds
-it; `?playground.menu=on` shows it there.
+Each camera mode has its own action map (`labs/playground/controls.ts`, WP 13.9), which the page swaps as the camera
+changes: first person and the shooter send the view and aim at what the screen's middle points at, the platformer
+faces where it moves, and isometric and top-down aim with the pointer. The HUD shows the keys of the map in use; the
+menu for humans (`labs/playground/menu.ts`) lists the scenes, cameras, looks, replays and the controls of the camera
+the page opens in. A browser that automation drives (the tests, every `x` command that opens the page) gets no menu,
+so no test's screenshot holds it; `?playground.menu=on` shows it there.
 
 ## Settings
 
@@ -111,6 +119,9 @@ it; `?playground.menu=on` shows it there.
 | `playground.menu` | The page's menu for humans: `auto` shows it unless automation drives the browser, `on` and `off` force it, when the page opens. A view setting. |
 | `playground.feel` | The feel panel: `on` shows it when the page opens (F shows and hides it). A view setting. |
 | `movement.gaits.run` | One of the shooter model's numbers, live: every number and switch of the model has its setting, `movement.<group>.<field>` (`node x describe setting` lists them; `movement.mantle.boost` turns on the mantle boost), Apex's by default; off its default it replaces that number for every character on the model from the next step. Changes play: recorded in replays. |
+| `input.sprint` | The sprint button: `toggle` (Apex's: a press keeps the sprint while the player moves on) or `hold`. Changes play: recorded in replays. |
+| `input.crouch` | The crouch button: `hold` or `toggle` (a press crouches until pressed again). Changes play: recorded in replays. |
+| `input.sensitivity` | Mouse look in Apex's units (5: 0.11° a count); `input.adsSensitivity`, `input.invert` and the stick's `input.stickSensitivity`, `input.stickAdsSensitivity` and `input.stickInvert` beside it. View settings. |
 | `post.look` | The look drawn (`look:playground-cel` by default). A view setting: never in the hash. |
 | `quality` | The quality tier: `auto`, `high`, `medium` or `low`. A view setting. |
 | `time.scale` | Sim seconds per real second (1). A view setting. |

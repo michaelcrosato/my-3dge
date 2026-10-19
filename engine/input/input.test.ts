@@ -3,7 +3,9 @@
  * scripted gamepad: intents are camera-relative (W walks away from the camera at every heading), a tap shorter than a
  * frame presses without holding, a hold presses once, sticks walk at their strength with the deadzone applied, keys and
  * pads are bound by code, the move actions and the system layer stay out of the buttons, blur and a hidden page let go,
- * prompts follow the last device used, `listen` captures a code for rebinding, and the virtual device merges in.
+ * prompts follow the last device used, `listen` captures a code for rebinding, and the virtual device merges in; WP
+ * 13.9: the map switches live, view actions are heard at once and never sent, the aim follows the map's rule from the
+ * free pointer and the right stick, and the camera's look is scaled by the look settings.
  * @see engine/input/input.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -14,6 +16,10 @@ import type { GamepadLike } from './devices/gamepad';
 import { createScriptedGamepad } from './devices/padScript';
 import { createInput, type InputOptions } from './input';
 import { fromCamera, normalizeIntents, NO_INTENTS, type Intents } from './intents';
+import { lookOptions } from './look';
+
+/** A point, m. */
+type Vec3 = readonly [number, number, number];
 
 /** A fake page: window, document and canvas as event targets, gamepad slots, and helpers to press keys. */
 function page(options: InputOptions = {}) {
@@ -196,7 +202,7 @@ describe('createInput', () => {
   });
 
   it('gives the camera mouse look, the right stick and the wheel once', () => {
-    const { input, slots, element, fire } = page({ invertY: true });
+    const { input, slots, element, fire } = page({ look: () => ({ ...lookOptions(() => undefined), stickInvert: true }) }); // prettier-ignore
     const pad = createScriptedGamepad('1 right=1,0.5');
     slots[0] = pad.gamepad as GamepadLike;
     pad.next();
@@ -208,5 +214,81 @@ describe('createInput', () => {
     expect(zoom).toBe(1);
     expect(input.camera().zoom).toBe(0);
     input.dispose();
+  });
+
+  it('switches its map live, keeping each map’s bindings, and hears a view action at once, never as a button', () => {
+    const registry = createRegistry();
+    const actions = PRESETS['actionMap:thirdPerson'].actions;
+    defineActionMap('actionMap:a', { actions: { ...actions, camera: ['KeyT'], shoulder: ['KeyX'] }, view: ['camera', 'shoulder'] }, registry); // prettier-ignore
+    defineActionMap('actionMap:b', { actions: { ...actions, jump: ['KeyN'], camera: ['KeyT'] }, view: ['camera'] }, registry); // prettier-ignore
+    const heard: string[] = [];
+    const { input, down, up } = page({ map: 'actionMap:a', registry, onView: (action) => heard.push(action) });
+    const first = input.bindings;
+    down('KeyT');
+    expect(heard).toEqual(['camera']); // as the key goes down, before the frame samples
+    expect(input.sample()).toEqual({}); // never a button in the intents
+    expect([input.held('camera'), heard]).toEqual([true, ['camera']]); // the app still reads it; told once
+    up('KeyT');
+    down('KeyX');
+    input.virtual.press('camera'); // the virtual device's press, heard at the sample
+    input.sample();
+    expect(heard).toEqual(['camera', 'shoulder', 'camera']);
+    for (const step of ['up', 'down', 'up', 'down'] as const) (step === 'up' ? up : down)('KeyX'); // twice in a frame
+    expect(heard.slice(3)).toEqual(['shoulder', 'shoulder']);
+    up('KeyX');
+    expect(input.use('actionMap:b').map.id).toBe('actionMap:b');
+    down('KeyN');
+    expect(input.sample()).toMatchObject({ b: ['jump'], p: ['jump'] });
+    down('KeyX'); // the shoulder is the first map's
+    input.sample();
+    expect(heard).toHaveLength(5);
+    input.use('actionMap:a');
+    expect(input.bindings).toBe(first); // the same bindings, rebinds and all
+  });
+
+  it('aims by the map’s rule from the free pointer and the right stick, and leaves the stick to the aim', () => {
+    const registry = createRegistry();
+    const actions = PRESETS['actionMap:thirdPerson'].actions;
+    defineActionMap('actionMap:centre', { actions, aimWith: 'centre' }, registry);
+    defineActionMap('actionMap:pointer', { actions, aimWith: 'pointer' }, registry);
+    defineActionMap('actionMap:plain', { actions }, registry);
+    const asked: unknown[] = [];
+    let point: number[] = [1, 0, 2];
+    const aimer = { yaw: () => 0, aim: (...args: unknown[]) => (asked.push(args), point as unknown as Vec3) };
+    const box = () => ({ left: 0, top: 0, width: 200, height: 100 });
+    const element = Object.assign(new EventTarget(), { getBoundingClientRect: box });
+    const { input, fire, slots } = page({ map: 'actionMap:centre', registry, element });
+    expect(input.sample(aimer)).toMatchObject({ aim: [1, 0, 2] });
+    expect(asked.pop()).toEqual(['centre', {}]);
+    fire(element, 'pointermove', { pointerType: 'mouse', clientX: 150, clientY: 25 });
+    input.use('actionMap:pointer');
+    const pad = createScriptedGamepad('1 right=0,-1');
+    slots[0] = pad.gamepad as GamepadLike;
+    pad.next();
+    input.sample(aimer);
+    expect(asked.pop()).toEqual(['pointer', { pointer: [0.5, 0.5], stick: [0, 1] }]); // the stick pushed up the picture
+    expect(input.camera().turn).toEqual([0, 0]); // twin sticks: the right stick aims, it turns no camera
+    point = [NaN, 0, 0];
+    expect(input.sample(aimer).aim).toBeUndefined(); // nothing to aim at: no aim sent
+    input.use('actionMap:plain');
+    expect(input.sample(aimer).aim).toBeUndefined(); // aimWith none
+    expect(asked).toHaveLength(1);
+  });
+
+  it('turns the camera by the look settings: Apex’s 0.022° a count times the sensitivity, the sights’ share aiming', () => {
+    const registry = createRegistry();
+    defineActionMap('actionMap:sights', { actions: { ...PRESETS['actionMap:thirdPerson'].actions, aim: ['KeyZ'] } }, registry); // prettier-ignore
+    let options = lookOptions(() => undefined);
+    const element = Object.assign(new EventTarget(), { requestPointerLock: () => undefined });
+    const document = Object.assign(new EventTarget(), { visibilityState: 'visible', pointerLockElement: element as unknown }); // prettier-ignore
+    const { input, fire } = page({ map: 'actionMap:sights', registry, element, document, look: () => options });
+    fire(document, 'pointerlockchange', {});
+    fire(element, 'pointermove', { pointerType: 'mouse', movementX: 100, movementY: 0 });
+    expect(input.camera().look[0]).toBeCloseTo(100 * 5 * 0.022 * (Math.PI / 180), 12); // Apex's default 5
+    options = { ...options, ads: 0.5, invert: true };
+    input.virtual.hold('aim'); // the sights up (the map's aim action)
+    input.sample();
+    fire(element, 'pointermove', { pointerType: 'mouse', movementX: 0, movementY: -10 });
+    expect(input.camera().look[1]).toBeCloseTo(-10 * 5 * 0.5 * 0.022 * (Math.PI / 180), 12); // pushed away: down, inverted
   });
 });

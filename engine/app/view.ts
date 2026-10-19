@@ -19,22 +19,22 @@
  * (the follow cameras keep out of the walls), the player's eye (the shooter model's height, else his head socket) and
  * what he does each step (`cameraPlayer`); first person hides his body but the hands from itself (near-body culling,
  * `cameraInfo().culled`), and hard landings shake the screen. Following a player, the level's cutaway runs
- * (engine/gfx/cutaway.ts). `restarted()` after the run starts again (a new seed, a replay) or its world changes
- * between steps (a restore, a dev action) reads the entities afresh: the stand-ins and bolts snap to them, so no dump,
- * shot or frame shows the places they had before. The effects forget what ran only for a new world, read from its
- * first event; the same world keeps its trace read (history, never restored), so no event plays twice.
+ * (engine/gfx/cutaway.ts); `aim(rule, devices)` is his aim from the camera drawn last (WP 13.9, engine/input/aim.ts:
+ * the centre's ray through the sim's queries, his body skipped, or the pointer's onto his floor), which the page's
+ * input records. `restarted()` after the run starts again (a new seed, a replay) or its world changes between steps (a
+ * restore, a dev action) reads the entities afresh: the stand-ins and bolts snap to them, so no dump, shot or frame
+ * shows the places they had before. The effects forget what ran only for a new world, read from its first event; the
+ * same world keeps its trace read (history, never restored), so no event plays twice.
  *
- * The level comes from the scene's `level` id (engine/world/level/level.ts): its text must be registered before the
- * view starts (`APP_NO_LEVEL`), by the page or a Node test. Cameras are view state: switching one (`setCamera(code)`,
- * `__engine.camera.set`; with `{ blend: true }`, the page's live switch, it blends) never reaches the sim.
- *
- * Invariants: presentation only (doctrine: WebGPU only): it reads the run and never writes it (the `QueryView` has
- * no way in); one stage per view and one three.js camera per projection, so switching makes no new object.
+ * The level comes from the scene's `level` id (engine/world/level/level.ts), registered before the view starts
+ * (`APP_NO_LEVEL`). Cameras are view state: switching one (`setCamera(code)`, `__engine.camera.set`; with `{ blend:
+ * true }`, the page's live switch, it blends) never reaches the sim. Invariants: presentation only (doctrine: WebGPU
+ * only): it reads the run and never writes it (the `QueryView` has no way in); one stage per view and one three.js
+ * camera per projection, so switching makes no new object.
  *
  * @example
  * // const view = createRunView({ run: () => session, registry, materials: createMaterialLibrary() });
- * // view.stepped(); // after each sim step
- * // gfx.frame(view.frame({ alpha, dt, aspect }));
+ * // view.stepped(); // after each sim step; then gfx.frame(view.frame({ alpha, dt, aspect }))
  * // view.setCamera('cam=topdown').describe; // what the camera now shows, in words
  * @see engine/app/view.test.ts
  */
@@ -47,6 +47,7 @@ import type { CameraInput, CameraPose, Vec3 } from '../gfx/cameras/pose';
 import { createCameraRig, rigOptions } from '../gfx/cameras/rig';
 import type { MaterialLibrary } from '../gfx/materials/library';
 import type { FrameView } from '../gfx/renderer';
+import { aimPoint, type AimDevices, type AimRule } from '../input/aim';
 import { dumpScene, type DumpOptions } from '../gfx/sceneDump';
 import { createStage, type Stage } from '../gfx/stage';
 import { queryViewOf, type QueryView } from '../sim/queryView';
@@ -123,6 +124,8 @@ export interface RunView {
   frame(frame: ViewFrame): FrameView;
   /** The camera now. */
   cameraInfo(): CameraInfo;
+  /** The point `rule` aims at from the camera drawn last (see the file comment); undefined without a player. */
+  aim(rule: AimRule, devices?: AimDevices): Vec3 | undefined;
   /** Switches to the camera `code` names, from the current one (blending with `blend`); returns it. Throws for a bad code. */
   setCamera(code: string, options?: { blend?: boolean }): CameraInfo;
   /** The stage as text (engine/gfx/sceneDump.ts). */
@@ -196,12 +199,15 @@ export function createRunView(options: RunViewOptions): RunView {
   };
   /** What the player did last step, for the rig (`cameraPlayer`); null without one. */
   let doing: CameraPlayer | null = null;
+  /** The player's body, which his aim's ray skips; -1 without one. */
+  let body = -1;
   /** Reads the player after a step (`fresh`: after a restart, so nothing he did before counts as a landing). */
   const readPlayer = (fresh = false) => {
     const run = options.run();
     if (fresh) rig.step(null);
     const entity = run.world.query('actor').find((e) => (e.actor as { player?: boolean }).player === true);
     doing = entity ? cameraPlayer(entity, (run.intents.b ?? []).includes('aim')) : null;
+    body = entity ? Number((entity.actor as { body?: number }).body ?? -1) : -1;
     rig.step(doing);
   };
   /** Whether the run's registry declares the view setting `path`. */
@@ -278,6 +284,15 @@ export function createRunView(options: RunViewOptions): RunView {
       return { scene: stage.scene, camera: drawn, alpha: frame.alpha };
     },
     cameraInfo: info,
+    aim(rule, devices = {}) {
+      if (!stage.actors.player()) return undefined;
+      const { follow: feet, eye, queries: walls } = follow();
+      const lens = 'isPerspectiveCamera' in drawn && drawn.isPerspectiveCamera ? { fov: drawn.fov } : {}; // as the page widened it
+      const skip = body >= 0 ? { exclude: body } : {};
+      const cast = (origin: Vec3, direction: Vec3, max: number) =>
+        walls?.raycast(origin, direction, { maxDistance: max, ...skip })?.distance ?? null;
+      return aimPoint(rule, { pose: { ...rig.pose(), ...lens }, aspect, feet, eye, ...devices, cast });
+    },
     setCamera(code, setOptions = {}) {
       rig.set(code, { blend: setOptions.blend === true });
       drawn = pair.place(move(undefined, 0), aspect);

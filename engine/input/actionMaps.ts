@@ -7,7 +7,13 @@
  * (engine/input/intents.ts). The four actions a map names in `move` (forward, back, left, right) are not buttons:
  * their strengths make the move axes `[right − left, forward − back]`, so keys walk at full speed and a half-pushed
  * stick at half, and `fromCamera` turns the axes into a world direction. `values` writes an action's analog strength
- * (a trigger) as a custom intent. `look: true` (first person) adds the camera's view direction as `look`.
+ * (a trigger) as a custom intent. `look: true` (first person, the shooter) adds the camera's view direction as `look`,
+ * `aimWith` names the rule that gives the intents' `aim` its point (engine/input/aim.ts: the screen centre's ray, the
+ * pointer's onto the floor, or none; the action `aim`, where a map has one, raises the sights), and `lock: true` takes
+ * the pointer lock on a click so the mouse turns the view (with the cursor free, it points and aims). The actions a
+ * map names in `view` (a camera switch, a view's turn) are the page's: bound and rebound like the others, never
+ * buttons in the intents (`createEngine({ onView })`). A game with several camera modes gives each its own map
+ * (`createEngine({ actionMap })`, WP 13.9).
  *
  * The system layer (`SYSTEM_ACTIONS`): pause, and the menu's accept, cancel and directions. It is always active
  * beside the map, never rebound, and never part of the intents: the app and the UI read it (`input.pressed('pause')`),
@@ -15,8 +21,8 @@
  * pause buttons, and keys the browser or system keeps) and a map's own `reserved` codes are refused by rebinding.
  *
  * Invariants (`CORE_BAD_SPEC` when broken): every code is valid (`isCode`), action names are lower-case words
- * (`jump`, `skill2`) and none is a system action, `move` names four actions of the map, `values` keys are namespaced
- * custom intents naming actions of the map, and no action binds a reserved code. The presets are registered on the
+ * (`jump`, `skill2`) and none is a system action, `move` names four actions of the map and `view` others, `values` keys
+ * are namespaced custom intents naming actions of the map, and no action binds a reserved code. The presets are registered on the
  * shared registry when this module loads.
  *
  * Carried from `my-3d2dge:engine/my-3d2dge.js:670-693` (`Input.DEFAULT`, `PLATFORMER`, `SHMUP`, `MENU_KEYS`) with 3D
@@ -32,6 +38,7 @@
  */
 import { registry as sharedRegistry, type Entry, type Registry } from '../core/registry';
 import { show, type Schema } from '../core/schema';
+import { AIM_RULES, type AimRule } from './aim';
 import { isCode } from './codes';
 
 /** The system layer: action → codes. Always active, never rebound, never in the intents. */
@@ -81,7 +88,27 @@ const ACTION_MAP_FIELDS = {
   look: {
     type: 'boolean',
     default: false,
-    description: "True for first person: the intents carry look = [the camera's yaw, its pitch].",
+    description: "True for first person and the shooter: the intents carry look = [the camera's yaw, its pitch].",
+  },
+  aimWith: {
+    type: 'string',
+    enum: AIM_RULES,
+    default: 'none',
+    description:
+      "What the intents' aim holds: none; centre, the point the screen centre's ray meets (first person, the shooter); pointer, the pointer's ray onto the player's floor or a right stick's push (isometric, top-down).",
+  },
+  lock: {
+    type: 'boolean',
+    default: false,
+    description:
+      'True when the mouse turns the view: a click on the game takes the pointer lock, which pause and Escape give back.',
+  },
+  view: {
+    type: 'array',
+    items: { type: 'string' },
+    default: [],
+    description:
+      "Actions the page reads for its view (a camera switch, a view's turn): bound and rebound like the others, never buttons in the intents.",
   },
   reserved: {
     type: 'array',
@@ -98,6 +125,9 @@ export type ActionMap = Entry & {
   readonly move: readonly string[];
   readonly values: Readonly<Record<string, string>>;
   readonly look: boolean;
+  readonly aimWith: AimRule;
+  readonly lock: boolean;
+  readonly view: readonly string[];
   readonly reserved: readonly string[];
 };
 
@@ -123,6 +153,10 @@ function mapProblems(map: ActionMap): string[] {
   if (map.move.length !== 4) problems.push(`move names ${map.move.length} actions: give forward, back, left, right`);
   for (const action of map.move) {
     if (!Object.hasOwn(map.actions, action)) problems.push(`move names ${show(action)}, which actions lacks`);
+  }
+  for (const action of map.view) {
+    if (!Object.hasOwn(map.actions, action)) problems.push(`view names ${show(action)}, which actions lacks`);
+    else if (map.move.includes(action)) problems.push(`view names ${action}, a move action`);
   }
   for (const [key, action] of Object.entries(map.values)) {
     if (!/^[a-z][A-Za-z0-9]*:[A-Za-z0-9_.-]+$/.test(key)) problems.push(`values key ${show(key)} must be "game:name"`);
@@ -153,6 +187,9 @@ export interface ActionMapSpec {
   move?: readonly [string, string, string, string];
   values?: Readonly<Record<string, string>>;
   look?: boolean;
+  aimWith?: AimRule;
+  lock?: boolean;
+  view?: readonly string[];
   reserved?: readonly string[];
 }
 
@@ -208,6 +245,8 @@ export const PRESETS: Readonly<Record<string, ActionMapSpec>> = {
       interact: ['KeyE', 'PadNorth'],
     },
     look: true,
+    aimWith: 'centre',
+    lock: true,
   },
   'actionMap:platformer': {
     description: 'Side-scrollers: Space, Z or K jump, X or J attack, Shift or C dash.',

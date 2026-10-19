@@ -1,48 +1,136 @@
 /**
- * @file The playground's controls (docs/PLAYGROUND.md §3.3, PLAN.md WP 13.3): the action map `actionMap:playground`,
- * Apex Legends' default movement keys where the browser allows them. W A S D or the arrows move, Space jumps, Left
- * Shift sprints (held, or a press that keeps the sprint while the player moves on), Left Alt walks (ours: Apex walks
- * only aiming down sights) and C crouches while held, not Apex's Left Ctrl: Ctrl with W closes the browser's tab, and
- * no page can stop it; E uses (catches a zipline, takes hold of a ladder: WP 13.7). A pad's left stick moves, A jumps,
- * a click of the left stick sprints, B crouches and X uses. The page binds it (labs/playground/main.ts) and the menu
- * lists it (labs/playground/menu.ts). WP 13.9 adds the rest of §3.3's table (melee, fire, aim, reload, holster, the
- * crouch's toggle) and rebinding.
+ * @file The playground's controls (docs/PLAYGROUND.md §3.3, PLAN.md WP 13.3, WP 13.9): an action map per camera mode,
+ * Apex Legends' default bindings where the browser allows them. W A S D or the arrows move, Space jumps, Left Shift
+ * sprints (a press keeps the sprint while the player moves on; the setting `input.sprint` makes it hold only), Left Alt
+ * walks (ours: Apex walks only aiming down sights), C crouches (held; `input.crouch` toggles it), not Apex's Left
+ * Ctrl, since Ctrl with W closes the browser's tab and no page can stop it; E uses (a zipline, a ladder), V kicks, the
+ * left and right buttons fire and raise the sights, R reloads and 3 holsters; T switches the camera mode, X swaps the
+ * shooter's shoulder, and in isometric Q and E turn the view, so there G uses. A pad's left stick moves, its right
+ * stick looks, A jumps, B crouches, X uses, a click of the left stick sprints and of the right one kicks, the
+ * triggers fire and aim, View switches the camera, the d-pad's left swaps the shoulder and its right turns isometric.
  *
- * Invariants: data only; its actions are the buttons the player's intents carry (`jump`, `sprint`, `walk`,
- * `crouch`, `interact`), which the shooter model reads (engine/sim/actors.ts).
+ * Each mode's map (`PLAYGROUND_MAPS`, picked by the camera in use: `playgroundMap(code)`): first person and the shooter
+ * send the view (`look`, so the sprint keeps within 45° of it) and aim with the screen's centre, the mouse looking
+ * under pointer lock; the platformer moves relative to the camera, the mouse turning it, and faces its move;
+ * isometric and top-down move relative to the screen and aim with the free pointer onto the player's floor (the right
+ * stick on a pad). The camera keys are view actions (`view`): rebound like the others, never in the intents, and the
+ * page hears them (`onView`, labs/playground/main.ts). The page keeps P, F and M for itself (`reserved`).
  *
- * Game code, a page's: it imports only the engine's public API (engine/index.ts).
+ * Invariants: data only; the buttons the intents carry are the actions the shooter model reads (`jump`, `sprint`,
+ * `walk`, `crouch`, `interact`, engine/sim/actors.ts), and `aim`, which raises the sights (the camera's zoom), plus
+ * `melee`, `fire`, `reload` and `holster`, bound for WP 13.19 and 13.20. The pad's reload and holster (Apex's X and Y
+ * held) wait for a held binding with those WPs (ADR-0025 amendment 9).
+ *
+ * Game code, a page's: it imports only the engine's public API (engine/index.ts) and the playground's files.
  *
  * @example
  * import { getActionMap } from '../../engine';
- * getActionMap(PLAYGROUND_ACTION_MAP).actions.sprint; // ['ShiftLeft', 'PadLeftStick']
+ * playgroundMap('cam=iso,90,1'); // 'actionMap:playground-isometric'
+ * getActionMap(PLAYGROUND_MAPS.isometric).actions.interact; // ['KeyG', 'PadWest']: Q and E turn the view there
  * @see labs/playground/controls.test.ts
  */
-import { defineActionMap } from '../../engine';
+import { defineActionMap, type ActionMapSpec, type Input } from '../../engine';
+import { cameraMode } from './views';
 
-/** The action map the page's input binds. */
-export const PLAYGROUND_ACTION_MAP = 'actionMap:playground';
+/** The action maps, by camera mode (labs/playground/views.ts `PLAYGROUND_CAMERAS`' names). */
+export const PLAYGROUND_MAPS = {
+  shooter: 'actionMap:playground-shooter',
+  first: 'actionMap:playground-first',
+  platformer: 'actionMap:playground-platformer',
+  isometric: 'actionMap:playground-isometric',
+  'top-down': 'actionMap:playground-top-down',
+} as const;
 
-/** The actions the player answers, with what each does, in the menu's order. */
+/** The actions the player answers, with what each does, in the menu's order; the rest are bound for later WPs. */
 export const PLAYGROUND_ACTIONS: Readonly<Record<string, string>> = {
   jump: 'Jump',
   sprint: 'Sprint: hold, or press once to keep it',
   walk: 'Walk',
   crouch: 'Crouch: hold',
   interact: 'Use: a zipline or a ladder',
+  aim: 'Aim down sights',
 };
 
-defineActionMap(PLAYGROUND_ACTION_MAP, {
-  description: 'The playground: Apex Legends’ default movement keys (docs/PLAYGROUND.md §3.3).',
-  actions: {
-    forward: ['KeyW', 'ArrowUp', 'PadUp', 'PadLeftStickUp'],
-    back: ['KeyS', 'ArrowDown', 'PadDown', 'PadLeftStickDown'],
-    left: ['KeyA', 'ArrowLeft', 'PadLeft', 'PadLeftStickLeft'],
-    right: ['KeyD', 'ArrowRight', 'PadRight', 'PadLeftStickRight'],
-    jump: ['Space', 'PadSouth'],
-    sprint: ['ShiftLeft', 'PadLeftStick'],
-    walk: ['AltLeft'],
-    crouch: ['KeyC', 'PadEast'],
-    interact: ['KeyE', 'PadWest'],
+/** The keys the page keeps for itself: the look (P), the feel panel (F) and the menu (M). */
+const PAGE_KEYS = ['KeyP', 'KeyF', 'KeyM'];
+
+/** Every mode's bindings (see the file comment). */
+const ACTIONS: Readonly<Record<string, readonly string[]>> = {
+  forward: ['KeyW', 'ArrowUp', 'PadLeftStickUp'],
+  back: ['KeyS', 'ArrowDown', 'PadLeftStickDown'],
+  left: ['KeyA', 'ArrowLeft', 'PadLeftStickLeft'],
+  right: ['KeyD', 'ArrowRight', 'PadLeftStickRight'],
+  jump: ['Space', 'PadSouth'],
+  sprint: ['ShiftLeft', 'PadLeftStick'],
+  walk: ['AltLeft'],
+  crouch: ['KeyC', 'PadEast'],
+  interact: ['KeyE', 'PadWest'],
+  melee: ['KeyV', 'PadRightStick'],
+  fire: ['MouseLeft', 'PadRightTrigger'],
+  aim: ['MouseRight', 'PadLeftTrigger'],
+  reload: ['KeyR'],
+  holster: ['Digit3'],
+  camera: ['KeyT', 'PadSelect'],
+};
+
+/** Each mode's map, written once here and registered below. */
+const SPECS: Readonly<Record<keyof typeof PLAYGROUND_MAPS, ActionMapSpec>> = {
+  shooter: {
+    description: 'The playground’s shooter camera: the view sent, aimed at the screen’s centre, X swaps the shoulder.',
+    actions: { ...ACTIONS, shoulder: ['KeyX', 'PadLeft'] },
+    view: ['camera', 'shoulder'],
+    look: true,
+    aimWith: 'centre',
+    lock: true,
   },
-});
+  first: {
+    description: 'The playground’s first person: the view sent, aimed at the screen’s centre.',
+    actions: ACTIONS,
+    view: ['camera'],
+    look: true,
+    aimWith: 'centre',
+    lock: true,
+  },
+  platformer: {
+    description: 'The playground’s platformer camera: moving relative to it, the mouse turning it, facing the move.',
+    actions: ACTIONS,
+    view: ['camera'],
+    lock: true,
+  },
+  isometric: {
+    description: 'The playground’s isometric view: aimed with the pointer, Q and E turning the view, so G uses.',
+    actions: { ...ACTIONS, interact: ['KeyG', 'PadWest'], turnLeft: ['KeyQ'], turnRight: ['KeyE', 'PadRight'] },
+    view: ['camera', 'turnLeft', 'turnRight'],
+    aimWith: 'pointer',
+  },
+  'top-down': {
+    description: 'The playground’s top-down view: aimed with the pointer.',
+    actions: ACTIONS,
+    view: ['camera'],
+    aimWith: 'pointer',
+  },
+};
+
+for (const [mode, spec] of Object.entries(SPECS)) {
+  defineActionMap(PLAYGROUND_MAPS[mode as keyof typeof PLAYGROUND_MAPS], { ...spec, reserved: PAGE_KEYS });
+}
+
+/** The action map for the camera `code` (`cam3=first,…`): its mode's, the shooter's for a camera no mode opens. */
+export function playgroundMap(code: string): string {
+  const mode = cameraMode(code)?.name as keyof typeof PLAYGROUND_MAPS | undefined;
+  return PLAYGROUND_MAPS[mode ?? 'shooter'];
+}
+
+/** The HUD's keys: the map in use's, as its prompts label them (rebound, or on a pad), then the page's own. */
+export function keysLine(input: Pick<Input, 'prompt' | 'bindings' | 'lastDevice'>): string {
+  const key = (action: string) => input.prompt(action);
+  const { lock, view } = input.bindings.map;
+  const pad = input.lastDevice === 'gamepad';
+  const move = pad ? 'L Stick' : ['forward', 'left', 'back', 'right'].map(key).join('');
+  const lines = [`${move}: move`, ...['jump', 'sprint', 'walk', 'crouch'].map((action) => `${key(action)}: ${action}`)];
+  lines.push(`${key('interact')}: use`, pad ? 'R Stick: look' : lock ? 'Click: mouse look' : 'Mouse: aim');
+  lines.push(`${key('camera')}: camera`);
+  if (view.includes('shoulder')) lines.push(`${key('shoulder')}: shoulder`);
+  if (view.includes('turnLeft')) lines.push(`${key('turnLeft')} ${key('turnRight')}: turn`);
+  return [...lines, 'P: look', 'F: feel', 'M: menu'].join(' · ');
+}

@@ -193,6 +193,16 @@ Apex's default bindings where the browser allows; every action rebinds (WP 13.9,
 | Pause, menu | Escape | menu button |
 | The feel panel (ours, WP 13.4) | F | |
 
+As built (WP 13.9, ADR-0025 amendment 9): each camera mode has its own action map, which the page swaps as the camera
+changes. First person and the shooter send the view (`look`, so the sprint keeps within 45° of it) and aim at what the
+screen's middle points at; the platformer moves relative to its camera and faces its move; isometric and top-down move
+relative to the screen and aim with the free pointer on the player's floor, or the right stick (twin sticks), and in
+isometric G uses, since Q and E turn the view. A click takes the pointer lock in the three perspective modes (pause
+gives it back). The look settings `input.sensitivity` (Apex's units: 0.022° a count times it, 5 by default),
+`input.adsSensitivity`, `input.invert` and the stick's three are view settings; the sprint and the crouch hold or
+toggle by the recorded settings `input.sprint` and `input.crouch`. The camera keys are the maps' view actions, rebound
+like the others and never sent to the sim. The pad's reload and holster wait for a held binding (WP 13.19, WP 13.20).
+
 ### 3.4 Feel beyond the numbers
 
 - Presses are never lost: a jump, a crouch or a mantle pressed up to the buffer before it can happen still happens, and

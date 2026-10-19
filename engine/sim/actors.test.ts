@@ -7,7 +7,9 @@
  * is the same number for number on every run and `__engine.feel()` reports it. On the shooter model (WP 13.3): an
  * actor holds `motion`, holstered unless spawned armed, reads `sprint`, `walk` and `crouch` as its buttons and `look`
  * as the sprint's view, faces the aim point, else the look, takes its keys' frame from `cam`, else `look` (so a turning
- * view never lurches), and `__engine.feel()` measures it holstered or armed as it is.
+ * view never lurches), and `__engine.feel()` measures it holstered or armed as it is; WP 13.9: a player's sprint and
+ * crouch follow the recorded settings `input.sprint` (Apex's sticky sprint, or held) and `input.crouch` (held, or
+ * toggled), and the AI keeps Apex's.
  */
 import { describe, expect, it } from 'vitest';
 import { createHeadless } from '../app/headless';
@@ -160,9 +162,9 @@ function track() {
   return registry;
 }
 
-/** Steps `track` `n` times with `intents`, the AI wanting the same; returns the world and its two actors. */
-function onTrack(intents: Intents, n: number) {
-  const { world } = startScene('track', { registry: track() });
+/** Steps `track` `n` times with `intents`, the AI wanting the same, under `settings`; returns the world and its two actors. */ // prettier-ignore
+function onTrack(intents: Intents, n: number, settings: Record<string, unknown> = {}) {
+  const { world } = startScene('track', { registry: track(), settings });
   const [player, ai] = actors(world);
   for (let i = 0; i < n; i++) {
     ai.actor.intents = { ...intents };
@@ -204,6 +206,30 @@ describe('actors on the shooter model', () => {
     expect(turn((yaw) => ({ cam: yaw }))).toBeLessThan(0.01);
     expect(turn((yaw) => ({ look: [yaw, 0] }))).toBeLessThan(0.01);
     expect(turn(() => ({}))).toBeGreaterThan(0.3); // no frame: a 30° turn of the move is a new key, a lurch
+  });
+
+  it('sprint and crouch as the player’s recorded settings say: held, or kept by a press; the AI as Apex', () => {
+    const east = { move: [1, 0], look: [Math.PI / 2, 0] } as const;
+    /** Runs east, presses `button` once at step 60, lets go, and gives the player and the AI 60 steps on. */
+    const pressOnce = (button: string, settings: Record<string, unknown> = {}) => {
+      const run = onTrack(east, 60, settings);
+      run.ai.actor.intents = { ...east, b: [button], p: [button] };
+      run.world.step({ ...east, b: [button], p: [button] });
+      for (let i = 0; i < 60; i++) {
+        run.ai.actor.intents = { ...east };
+        run.world.step(east);
+      }
+      return run;
+    };
+    expect(pressOnce('sprint').player.motion.sprinting).toBe(true); // Apex's sticky sprint, the default
+    const held = pressOnce('sprint', { 'input.sprint': 'hold' });
+    expect([held.player.motion.sprinting, held.ai.motion.sprinting]).toEqual([false, true]); // the AI keeps Apex's
+    expect(pressOnce('crouch').player.motion.duck).toBe('standing'); // held, the default: let go, it stands
+    const toggled = pressOnce('crouch', { 'input.crouch': 'toggle' });
+    expect([toggled.player.motion.duck, speed(toggled.player)]).toEqual(['ducked', expect.closeTo(2.032 * 1.15, 2)]);
+    toggled.world.step({ ...east, b: ['crouch'], p: ['crouch'] }); // pressed again: up
+    for (let i = 0; i < 30; i++) toggled.world.step(east);
+    expect(toggled.player.motion.duck).toBe('standing');
   });
 
   it('are measured by __engine.feel() holstered or armed, as each is', async () => {

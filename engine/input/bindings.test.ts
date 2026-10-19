@@ -1,7 +1,7 @@
 /**
  * @file Unit tests for the codes, action maps and bindings of engine/input/ (T1, WP 3.3): codes and their labels per
  * device and pad family; the presets are valid, conflict-free and keep the system layer's reserved codes; a bad map
- * names every problem; rebinding refuses reserved codes and conflicts (naming the holder), replaces one device family
+ * names every problem (WP 13.9: its view actions and aim rule too); rebinding refuses reserved codes and conflicts (naming the holder), replaces one device family
  * or one code, and survives a reload through storage; a bad saved file loads what it can, with advice.
  * @see engine/input/codes.ts
  * @see engine/input/actionMaps.ts
@@ -68,7 +68,24 @@ describe('action maps', () => {
       expect(Object.keys(map.actions)).toEqual(expect.arrayContaining([...map.move]));
     }
     expect(Object.values(SYSTEM_ACTIONS).flat().every(isCode)).toBe(true);
-    expect(getActionMap('actionMap:firstPerson').look).toBe(true);
+    expect(getActionMap('actionMap:firstPerson')).toMatchObject({ look: true, aimWith: 'centre', lock: true });
+    expect(getActionMap('actionMap:thirdPerson')).toMatchObject({
+      look: false,
+      aimWith: 'none',
+      lock: false,
+      view: [],
+    });
+  });
+
+  it('refuses view actions it lacks or moves with, and an aim rule it does not know', () => {
+    const registry = createRegistry();
+    const actions = { forward: ['KeyW'], back: ['KeyS'], left: ['KeyA'], right: ['KeyD'], camera: ['KeyT'] };
+    expect(() => defineActionMap('actionMap:views', { actions, view: ['camera'], aimWith: 'pointer' }, registry)).not.toThrow(); // prettier-ignore
+    const views = () => defineActionMap('actionMap:bad-views', { actions, view: ['forward', 'zoom'] }, registry);
+    expect(views).toThrow(/view names forward, a move action/);
+    expect(views).toThrow(/view names "zoom", which actions lacks/);
+    const rule = { actions, aimWith: 'mouse' } as unknown as Parameters<typeof defineActionMap>[1];
+    expect(() => defineActionMap('actionMap:bad-aim', rule, registry)).toThrow(/aimWith/);
   });
 
   it('names every problem of a bad map', () => {
