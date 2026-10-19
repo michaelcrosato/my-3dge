@@ -3053,6 +3053,27 @@ For the agents who maintain the engine.
 - `TimersCapture` (interface): The timers with their callbacks, for `restore` in the same process.
 - `TimersState` (interface): The timers as plain numbers, for the hash, in firing order: `[id, due tick, period in ticks (0 for one-shot), start tick, firings so far]`.
 
+### [`engine/dev/actions.ts`](../engine/dev/actions.ts)
+
+- `ActionRow` (interface): One dev action as `actions.list()` shows it.
+
+### [`engine/dev/bot.ts`](../engine/dev/bot.ts)
+
+- `Bot` (class): The bot: one goal at a time, the intents for each step (see the file comment).
+- `BOT_FIELDS` (const): How the bot moves and when it gives up: `new Bot(level, options)` and every run take them.
+- `BotOptions` (type): What `new Bot` takes: each field of `BOT_FIELDS`, optional.
+- `BotPlan` (interface): What a run plays (see the file comment), with the bot's options.
+- `BotReport` (interface): What a run did.
+- `BotRow` (interface): One row of the bot's report: a scene, its seeds' runs and their sums.
+- `BotRun` (interface): What the bot plays: a world to read and a recorded step.
+- `BotSample` (interface): One sample of a run's trace.
+- `BotStatus` (type): Where a bot stands with its goal.
+- `BotWorld` (type): The world as the bot reads it: the session's, or the inspector's read-only view of it.
+- `parseSeeds` (function): Seeds as a sweep takes them: `1-20`, `5` (1 to 5), `3,7,9`, a count or a list; 1 to 500 whole numbers from 0.
+- `runBot` (function): Plays `run` with the bot over `level` (see the file comment) and reports what happened.
+- `sweepBot` (function): Plays `plan` from a fresh session of `scene` per seed (see the file comment): one row for the scene.
+- `SweepOptions` (interface): How a sweep starts each run: the scene's settings over its own, its registry and its level.
+
 ### [`engine/dev/feel/anim.ts`](../engine/dev/feel/anim.ts)
 
 - `AnimTrack` (type): An animation track: what `createAnimTrack` returns.
@@ -5159,6 +5180,18 @@ For the agents who maintain the engine.
 - `requestHitStop` (function): Asks the frame clock for a hit-stop of `seconds` (real seconds, before its budget): kept until the run's host takes it after the step (`takeHitStop`), the longest of the step winning.
 - `takeHitStop` (function): For the run's host (the page's or a headless run's step, never sim code, so not in engine/sim-api.ts): the longest hit-stop asked since the last take (s; 0 for none), forgotten once taken.
 
+### [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)
+
+- `changesSim` (function): Whether `action` changes the sim (a `run` of its own): only then does a session record it as a dev action.
+- `defineDevAction` (function): Registers a dev action on `registry` (the shared one by default).
+- `defineDevActionKinds` (function): Declares on `registry` (once): the kind `devAction`, the component `invulnerable` (damage takes no hit on its holder), the setting `ai.frozen` (engine/sim/systems.ts), and the engine's five actions (see the file comment).
+- `DEV_ACTION_CODES` (const): The codes this module raises, with their fixes.
+- `DevAction` (type): A registered dev action: its spec, plus `id` (its name) and `kind`.
+- `DevActionSpec` (interface): How a dev action is written: `defineDevAction(name, spec)`.
+- `devArgs` (function): `args` checked against `action`'s schema, defaults filled; throws `CORE_BAD_SPEC` naming each problem.
+- `findDevAction` (function): The dev action `name` on `registry`, or undefined (the kind undeclared there too).
+- `listDevActions` (function): The dev actions on `registry`, by name.
+
 ### [`engine/sim/entities.ts`](../engine/sim/entities.ts)
 
 - `capturable` (function): The entities copied for a capture: plain data only (`SIM_NOT_DATA`) and no object in two places (`SIM_SHARED_DATA`): a capture copies each place separately, so a shared object would come back as two.
@@ -5333,6 +5366,8 @@ For the agents who maintain the engine.
 
 ### [`engine/sim/systems.ts`](../engine/sim/systems.ts)
 
+- `AI_FROZEN` (const): The setting that freezes the AI: while it is on, the step skips the phase `ai` (engine/sim/world.ts).
+- `AI_FROZEN_SETTINGS` (const): `ai.frozen`'s declaration, made with the dev actions (engine/sim/devActions.ts: `freeze`).
 - `createSystems` (function): Makes an empty schedule.
 - `Intents` (re-export): What the sim reads from outside in one step, recorded by replays (the vocabulary: engine/input/intents.ts).
 - `Phase` (type): A phase of the step.

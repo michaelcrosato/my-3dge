@@ -5,10 +5,11 @@
  * boundaries, named seeded RNG streams, sim-time timers, and the state, hash, trace, capture and restore of all of
  * it (engine/sim/state.ts, engine/sim/capture.ts). It runs in Node and in a page alike; no ECS framework.
  *
- * Entry points: `step(intents)`, `run(fn)` (setup, dev actions), and `spawn`, `despawn` and `emit` called between
- * steps. Each runs synchronously inside `withSimMath` (engine/core/simMath.ts), as do `capture`, `restore`, `state`,
- * `hash` and `trace`: `Math.sin` in a system, timer or listener is the fdlibm port, native again afterwards. Events
- * reach listeners only through `w.emit` (`w.events` lists, never emits); a step's intents are a frozen copy.
+ * Entry points: `step(intents)` (the systems of the phase `ai` skipped while the setting `ai.frozen` is on: the dev
+ * action `freeze`), `run(fn)` (setup, dev actions), and `spawn`, `despawn` and `emit` called between steps. Each runs
+ * synchronously inside `withSimMath` (engine/core/simMath.ts), as do `capture`, `restore`, `state`, `hash` and
+ * `trace`: `Math.sin` in a system, timer or listener is the fdlibm port, native again afterwards. Events reach
+ * listeners only through `w.emit` (`w.events` lists, never emits); a step's intents are a frozen copy.
  *
  * Invariants (the ordered world, §6.5 item 4): ids count up from 1, never reused in a timeline (a restore rewinds them
  * with the rest). Entities iterate in id order (engine/sim/entityTable.ts). During an entry point, `spawn`, `despawn` and `emit` queue; at its end (the boundary) the spawns join in id
@@ -51,7 +52,15 @@ import { makeEntity, placeComponent, type LiveEntity } from './entities';
 import { createEntityTable } from './entityTable';
 import { componentTable, hashState, traceState } from './state';
 import type { AnyComponents, Entity, PhysicsHook, SpawnSpec, StateView, With, WorldState, WorldTrace } from './state';
-import { createSystems, phaseIndex, type Intents, type Phase, type SystemSpec, type Systems } from './systems';
+import {
+  AI_FROZEN,
+  createSystems,
+  phaseIndex,
+  type Intents,
+  type Phase,
+  type SystemSpec,
+  type Systems,
+} from './systems';
 
 /** The codes this module raises, with their fixes. */
 export const WORLD_CODES = defineCodes('sim', {
@@ -325,7 +334,8 @@ export function createWorld<C extends object = AnyComponents, E extends EventMap
       const intents = given === NO_INTENTS ? given : freezeValue(copyValue(given));
       enter('step()', () => {
         timers.tick(); // the step's number from its first phase, so a timer made in any phase waits a step
-        const list = systems.list();
+        const frozen = registry.has('setting', AI_FROZEN) && store.sim.get<boolean>(AI_FROZEN); // `freeze`
+        const list = frozen ? systems.list().filter((system) => system.phase !== 'ai') : systems.list();
         const run = (system: (typeof list)[number]) =>
           probe ? probe(system, () => system.run(world, intents)) : system.run(world, intents);
         let at = 0;

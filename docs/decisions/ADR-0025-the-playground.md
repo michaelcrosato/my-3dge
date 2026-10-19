@@ -689,3 +689,47 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   actorLayers.ts), engine/gfx/materials/{styles,toon}.ts (the restyle hook; the toon copy),
   engine/dev/feel/{anim,camera,course,run}.ts (the arms' input, `cameraLost` and `cameraClip`), labs/playground/
   courses/bounds.ts (the two first-person measures).
+
+## Amendment 13 (2026-10-19, WP 5.6): the bot and the dev actions
+
+- **The dev actions live sim-side** (engine/sim/devActions.ts): the WP put the kind and `registerDevAction` in
+  engine/dev/actions.ts. A replay records a dev action by name and plays it through the session, in every host
+  (`x replay` in Node, the replay page, parity's Node playback), and the sim may not import `dev/`; so the kind
+  `devAction` (`defineDevAction`, the registry's verb) and the engine's five live beside the session, which reads them
+  after the scene's own actions (a scene's action of the same name wins), and their code falls under the sim-side
+  bans like any change to the sim. engine/dev/actions.ts registers `__engine.actions.list()` and `.run(name, args)`.
+- **What an action changes**: an entry has a `run(w, args)` (the sim, inside the session's capture, recorded as the
+  change-point's `dev`), `settings(args)` (recorded as `set`, a view setting never), or both, its args a schema checked
+  before anything changes, and a throw puts back the sim and the recorded settings with it. Time scale is the frame
+  clock's view setting `time.scale`, so it never reaches the sim or a replay.
+- **God mode** is the component `invulnerable`: `damage` takes no hit on its holder (the source's `dealDamage`
+  returned 0 for the hero), on the player or any entity.
+- **Freeze AI** is the recorded setting `ai.frozen` (engine/sim/systems.ts): while it is on, the step skips the systems
+  of the phase `ai` (engine/sim/world.ts). The source stopped its foes' whole update; here the phase holds decisions
+  alone, and Rapier keeps a crowd agent's velocity, so turning it on also stands the movers the AI drives: each actor
+  that is not a player lets go of its AI's intents, and each living crowd agent (a component holding every field of
+  `CROWD_AGENT_FIELDS`) stops across the ground.
+- **Spawn N** makes props of an entry, fanned 0.4 rad apart (the source's) `distance` m before the player, each on the
+  floor probed from 2 m over its feet: props are the engine's one generic spawnable (an actor needs a character, and
+  the plan's `actor` template kind was never built); a scene spawns its own kinds with its own `spawn`. **Travel** is
+  within the scene (`placeActor`): the engine has no level sequence to travel along.
+- **The bot** (engine/dev/bot.ts): the autopilot's mechanisms (stuck measured along the way navigation wants, not the
+  sidestep's: measured along the sidestep, the blocked maze's body slid 3 m down a wall counting itself held; the
+  sidesteps of 1.3 and 2.2 rad at 0.45 and 0.9 s held, a jump and the other side at 1.5 s; held 5 s in all, stuck; a
+  watchdog wanting 1 m of walking distance every 6 s; no route, stuck at once) and shardfall's run report (the stop
+  condition `component.field`, a trace every n steps up to 120 samples, events by type, a sweep of seeds from fresh
+  sessions as one row for the scene). Its sums run under the sim's math and its moves snap to 16 headings (two
+  decimals, as the starter game's bot), so a run's intents are the same in Node and Chromium and its recording short
+  (the maze run: 15 change-points in 251 steps). A tour draws its goals from its own stream, `derive(seed, 'bot')`,
+  never the world's.
+- **Reached from `x`** through `x eval` in an `x inspect` page: `__engine.actions` and the new `__engine.bot(plan)`
+  (§8.3's table gains its row: doctrine 2 wants the bot reachable beyond code); tests/e2e/box.spec.ts calls the three
+  in the page, engine/app/viewMembers.test.ts headless. No x command of its own: the member and the API cover a sweep.
+- **Measured**: in the maze fixture (engine/dev/bot.test.ts) the bot reaches the far corner round four walls in 251
+  steps, never over a solid tile; a box navigation does not know in the middle corridor gets three jumps and then
+  `stuck` (`no progress`) at step 495; a goal in a closed pocket is `stuck` (`no route`) at step 0; two runs agree
+  and the recording replays to the run's hash. Each of the five actions has its test (engine/dev/actions.test.ts),
+  and the four the sim records replay to the same hash.
+- **Beyond Owns**: engine/sim/devActions.ts (new), engine/sim/{session,world,systems,damage}.ts (the hooks: the
+  session's fallback, the frozen phase, the setting, the invulnerable target), engine/app/headless.ts (loads the
+  members), engine/app/viewMembers.test.ts and tests/e2e/box.spec.ts (every member's check).

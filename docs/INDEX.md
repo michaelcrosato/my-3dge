@@ -41,6 +41,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 | `clipset`         | A set of readable clips loaded for playing (PLAN.md §10): its header and its clips. The library is data/anim/sets/, one directory a set, which a page or tool reads and registers (defineClipSet).                                 | [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)             |
 | `component`       | Component kinds: the plain-object data entities hold (e.position), with their fields. The canonical state and the hash read every component's declared fields, in order.                                                           | [`engine/sim/state.ts`](../engine/sim/state.ts)                               |
 | `course`          | A feel course: a scripted run of a scene (a replay’s inputs) and the numbers to measure on it, each against its reference and tolerance (node x feel).                                                                             | [`engine/dev/feel/course.ts`](../engine/dev/feel/course.ts)                   |
+| `devAction`       | Dev actions: changes made to a running scene between steps (god mode, freeze, spawn, travel, time scale), recorded in replays.                                                                                                     | [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)                     |
 | `emitter`         | Emitters: particle effects as data (how particles start, move and look), burst where something happens, answering event types, or running at a rate with a flickering light.                                                       | [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)                   |
 | `feature`         | Optional GPU features and techniques: what each needs, what is lost without it, and its advice code.                                                                                                                               | [`engine/gfx/features.ts`](../engine/gfx/features.ts)                         |
 | `geometry`        | Shapes props, levels and bodies name by id: a builder of a three.js BufferGeometry with its parameters and a vertex budget.                                                                                                        | [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)       |
@@ -415,6 +416,12 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/dev
 
+- [`actions.ts`](../engine/dev/actions.ts): `__engine.actions` and `__engine.bot` (PLAN.md §8.3, WP 5.6; doctrine: Agent-operable): the developer's tools on the inspector, registered from this file as `inspectorMember` entries (engine/dev/members.ts), so a page (`x eval "__engine.actions.run('travel', { at: [3, 0, 5] })"`) and `createHeadless` reach the same calls.
+  - Exports: `ActionRow`
+  - Tests: [`engine/dev/actions.test.ts`](../engine/dev/actions.test.ts)
+- [`bot.ts`](../engine/dev/bot.ts): The bot (PLAN.md WP 5.6, §5.6, I-38; doctrines: Agent-operable, Reproducible): plays a scene's player through intents, as a virtual device would, so a test or an agent gets play longer and more varied than a scripted replay (soak runs, navigation smoke over many levels).
+  - Exports: `Bot`, `BOT_FIELDS`, `BotOptions`, `BotPlan`, `BotReport`, `BotRow`, `BotRun`, `BotSample`, `BotStatus`, `BotWorld`, `parseSeeds`, `runBot`, `sweepBot`, `SweepOptions`
+  - Tests: [`engine/dev/bot.test.ts`](../engine/dev/bot.test.ts)
 - [`inspector.ts`](../engine/dev/inspector.ts): The inspector (PLAN.md §8.3, WP 1.6; doctrines: Agent-operable, Verifiable): `window.__engine` in a page and the object `createHeadless` returns in Node are one API, which `createInspector` assembles from the entries of the registry kind `inspectorMember` (engine/dev/members.ts).
   - Exports: `CORE_MEMBERS`, `CoreMembers`, `createInspector`, `EngineInfo`, `EntitySummary`, `Inspector`, `INSPECTOR_CODES`
   - Tests: [`engine/dev/inspector.test.ts`](../engine/dev/inspector.test.ts)
@@ -1063,6 +1070,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`damage.ts`](../engine/sim/damage.ts): Damage (PLAN.md WP 6.3, §6.4): what a hit does once the rules have decided it, generic and without formulas, stats or balance: `damage(w, target, hit)` takes `hit.amount` from the target's health, pushes its crowd body away from the blow as momentum the solver carries on, throws it up, kills it into the corpse group with the kill launch, asks for a hit-stop and emits the event `damage` for the view (numbers, sparks, sounds).
   - Exports: `damage`, `DamageEvent`, `DamageEvents`, `DamageTarget`, `Health`, `HEALTH`, `HEALTH_FIELDS`, `HitSpec`, `requestHitStop`, `takeHitStop`
   - Tests: [`engine/sim/damage.test.ts`](../engine/sim/damage.test.ts)
+- [`devActions.ts`](../engine/sim/devActions.ts): The engine's dev actions (PLAN.md WP 5.6, §5.6; doctrines: Agent-operable, Reproducible): the registry kind `devAction`, a change a developer makes to a running scene between steps, recorded so that a replay makes it again, and the engine's own five.
+  - Exports: `changesSim`, `defineDevAction`, `defineDevActionKinds`, `DEV_ACTION_CODES`, `DevAction`, `DevActionSpec`, `devArgs`, `findDevAction`, `listDevActions`
+  - Tests: [`engine/dev/actions.test.ts`](../engine/dev/actions.test.ts)
 - [`entities.ts`](../engine/sim/entities.ts): The shape of an entity's data (PLAN.md §6.5 items 4, 6 and 7, WP 1.4; doctrine: Reproducible): the rules the hash (engine/sim/state.ts), captures and restores (engine/sim/capture.ts) and the world (engine/sim/world.ts) share, so a restored entity is the live one, field for field and in the same order (ADR-0006 amendment 3).
   - Exports: `capturable`, `componentNames`, `eachField`, `ENTITY_CODES`, `feedData`, `LiveEntity`, `makeEntity`, `notData`, `NotData`, `placeComponent`
 - [`entityTable.ts`](../engine/sim/entityTable.ts): The sim world's entity table (PLAN.md §6.5 item 4, WP 1.4): the live entities of engine/sim/world.ts `createWorld`, in id order, with an id → entity map for lookups.
@@ -1104,7 +1114,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `AnyComponents`, `ComponentData`, `ComponentKind`, `ComponentOf`, `componentTable`, `ComponentTable`, `defineComponent`, `diffStates`, `Entity`, `EntityData`, `hashState`, `PhysicsHook`, `SpawnSpec`, `STATE_CODES`, `STATE_FORMAT`, `StateDifference`, `StateView`, `traceState`, `With`, `WorldState`, `WorldTrace`
   - Tests: [`engine/sim/state.test.ts`](../engine/sim/state.test.ts)
 - [`systems.ts`](../engine/sim/systems.ts): The step's systems (PLAN.md §6.4, Q13; doctrine: Common ground): plain functions `(w, intents) => void` that the world runs once per sim step in a fixed, documented order.
-  - Exports: `createSystems`, `Intents`, `Phase`, `phaseIndex`, `PHASES`, `STEP_ORDER`, `System`, `SYSTEM_CODES`, `SystemFn`, `Systems`, `SystemSpec`
+  - Exports: `AI_FROZEN`, `AI_FROZEN_SETTINGS`, `createSystems`, `Intents`, `Phase`, `phaseIndex`, `PHASES`, `STEP_ORDER`, `System`, `SYSTEM_CODES`, `SystemFn`, `Systems`, `SystemSpec`
   - Tests: [`engine/sim/systems.test.ts`](../engine/sim/systems.test.ts)
 - [`world.ts`](../engine/sim/world.ts): The sim world (PLAN.md §6.4, §6.5, Q13, WP 1.4, I-03; doctrines: Reproducible, Common ground): entities as plain objects with monotonic ids, components as plain-data properties of declared kinds (`e.position`), systems as functions in a fixed order (engine/sim/systems.ts), spawn, despawn and event queues that apply at step boundaries, named seeded RNG streams, sim-time timers, and the state, hash, trace, capture and restore of all of it (engine/sim/state.ts, engine/sim/capture.ts).
   - Exports: `createWorld`, `SimRng`, `SystemProbe`, `World`, `WORLD_CODES`, `WorldEvents`, `WorldOptions`, `WorldTimers`

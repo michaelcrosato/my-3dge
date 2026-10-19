@@ -15,8 +15,8 @@
  *   `clock.hitStop`, whose leaky budget shrinks stops that follow closely, so a crowd hit stops time once however many
  *   it strikes. The clock is outside the hash: a stop changes how many steps a frame runs, never what a step does.
  *
- * Invariants: a dead or absent target (health at 0 or below, a body no longer `alive`) takes no hit: `damage` returns
- * null and changes nothing. Everything a hit changes is in the target's components and its body, and the events are
+ * Invariants: a dead or absent target (health at 0 or below, a body no longer `alive`), or an entity holding the
+ * component `invulnerable` (god mode: engine/sim/devActions.ts), takes no hit: `damage` returns null and changes nothing. Everything a hit changes is in the target's components and its body, and the events are
  * plain data, so a capture restores it. The asked stop waits in a side table by world, an outbox the sim never reads
  * (no listener: a listener would join the world's captured schedule), so it never changes the hash. Only hosts take it:
  * engine/sim-api.ts leaves `takeHitStop` out. No clock, no random stream: a rule that wants randomness draws from a
@@ -213,6 +213,7 @@ export function damage<C extends object, E extends EventMap>(
   const struck = hit.at ? xyz(hit.at, 'damage(…, { at })') : null;
   const along = hit.direction ? xyz(hit.direction, 'damage(…, { direction })') : null;
   if ((health && !(health.hp > 0)) || (agent && agent.state !== 'alive')) return null;
+  if ((w.get(target.id) as { invulnerable?: object } | undefined)?.invulnerable) return null; // god mode
 
   let killed = false;
   if (health) {

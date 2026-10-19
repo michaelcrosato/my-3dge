@@ -6,8 +6,9 @@
  *
  * A session logs, each at the step it happens (merged in play order: set, then dev, then intents), what its intents
  * change (a step the world does not count logs nothing), every non-view setting change (through `set` or its own store,
- * `session.settings`), and its dev actions (`act`, all or nothing: one that throws is rolled back; an unknown one is
- * `SIM_NO_ACTION`). `record()` returns the replay from step 0; change-points no step has followed yet wait for it.
+ * `session.settings`), and its dev actions (`act`: the scene's own, else the engine's, engine/sim/devActions.ts; all or
+ * nothing: one that throws is rolled back; an unknown one is `SIM_NO_ACTION`). `record()` returns the replay from step
+ * 0; change-points no step has followed yet wait for it.
  * Step, capture and restore through the session, never the world (`SIM_OFF_RECORD`): `session.restore` takes the
  * recording back to the capture's step with the sim, so `record()` replays the run as it stands; it refuses a capture
  * it did not take (`SIM_FOREIGN_CAPTURE`) or one changed since (`SIM_EDITED_CAPTURE`). `Session` says the rest.
@@ -35,6 +36,7 @@ import type { SettingChange, SettingValue } from '../core/settings';
 import { diffIntents, INTENT_KEYS, NO_INTENTS, normalizeIntents, type Intents } from '../input/intents';
 import type { WorldCapture } from './capture';
 import type { InputChange, InputEntry, Replay } from './replay';
+import { changesSim, devArgs, findDevAction, listDevActions } from './devActions';
 import { checkSeed, startScene, type SceneOptions, type SceneRun } from './scene';
 import type { AnyComponents } from './state';
 
@@ -42,7 +44,7 @@ import type { AnyComponents } from './state';
 export const SESSION_CODES = defineCodes('sim', {
   SIM_NO_ACTION: {
     template: 'the scene {scene} has no dev action {name} ({suggestion})',
-    fix: "add it to the scene: defineScene('{scene}', { actions: { {name}(w, args) { … } } }), or call one it has",
+    fix: "add it to the scene, defineScene('{scene}', { actions: { {name}(w, args) { … } } }), or to the engine's, defineDevAction('{name}', { help, run }) (engine/sim/devActions.ts); or call one there is",
   },
   SIM_OFF_RECORD: {
     template: 'the world took {count} steps outside its session, so the recording misses their intents',
@@ -76,7 +78,11 @@ export interface Session<C extends object = AnyComponents, E extends EventMap = 
   step(intents?: unknown): Intents;
   /** Sets a setting between steps; a non-view change is recorded at this step (as is any change through `settings`). */
   set(path: string, value: unknown): SettingChange;
-  /** Runs the scene's dev action `name` between steps, all or nothing, then records it. Throws `SIM_NO_ACTION`. */
+  /**
+   * Runs the dev action `name` between steps, the scene's own or else the engine's (engine/sim/devActions.ts: its args
+   * checked, its settings set, then its run), all or nothing, then records it. Throws `SIM_NO_ACTION`, or
+   * `CORE_BAD_SPEC` for args its schema refuses.
+   */
   act(name: string, args?: unknown): void;
   /** The whole sim, copied (`world.capture()`), with where the recording stands: what `restore` takes. */
   capture(): WorldCapture;
@@ -171,22 +177,29 @@ export function createSession<C extends object = AnyComponents, E extends EventM
     },
     act(name, args) {
       const actions = run.scene.actions as Record<string, (w: unknown, a: unknown) => void>;
-      const action = Object.hasOwn(actions, name) ? actions[name] : undefined;
-      if (typeof action !== 'function') {
-        const names = Object.keys(actions).sort();
+      const own = Object.hasOwn(actions, name) && typeof actions[name] === 'function' ? actions[name] : undefined;
+      const engine = own ? undefined : findDevAction(registry, name);
+      if (!own && !engine) {
+        const names = [...new Set([...Object.keys(actions), ...listDevActions(registry).map((a) => a.id)])].sort();
         const near = didYouMean(name, names).trim().slice(1, -1);
         const suggestion = near || (names.length ? `its actions: ${names.map(show).join(', ')}` : 'it has none');
         throw codeError('SIM_NO_ACTION', { scene: run.scene.id, name: show(name), suggestion });
       }
       const text = args === undefined ? undefined : serialize(args as Canonical);
+      const given = () => (text === undefined ? undefined : deserialize(text));
+      const checked = engine ? devArgs(engine, given(), name) : {}; // before anything changes
       sync();
-      const before = world.capture();
+      const before = world.capture(); // the sim and its recorded settings: a throw puts both back
       try {
-        world.run((w) => action(w, text === undefined ? undefined : deserialize(text)));
+        for (const [path, value] of Object.entries(engine?.settings(checked) ?? {})) settings.set(path, value);
+        if (own) world.run((w) => own(w, given()));
+        else if (engine && changesSim(engine)) world.run((w) => engine.run(w as never, checked));
       } catch (error) {
         world.restore(before);
         throw error;
       }
+      sync();
+      if (!own && !changesSim(engine!)) return; // settings alone: recorded as set (view ones never)
       Object.assign(pointFor('dev'), { dev: name }, text === undefined ? {} : { args: deserialize(text) });
     },
     capture() {

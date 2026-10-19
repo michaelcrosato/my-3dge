@@ -275,13 +275,13 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `headlessHost was given {value}, not a headless engine`
 - Fix: pass the object createHeadless resolved to
-- Registered in: [`engine/app/headless.ts` line 67](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 68](../engine/app/headless.ts)
 
 ### APP_OTHER_SCENE
 
 - Message: `this engine draws {shown}, so it cannot start {scene}`
 - Fix: play {scene} in its own page (labs/<name>/?scene=<name>), or headless: createHeadless({ scene: '{scene}' })
-- Registered in: [`engine/app/headless.ts` line 71](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 72](../engine/app/headless.ts)
 
 ### APP_PLAY_SETTING
 
@@ -1067,7 +1067,7 @@ Raised by `actOn` (engine/sim/actorActions.ts) when an action with a `clip` beat
 
 - Message: `{where} got {value}`
 - Fix: pass {expected}
-- Registered in: [`engine/sim/world.ts` line 66](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 75](../engine/sim/world.ts)
 
 Raised by the world (engine/sim/world.ts) for a seed or step rate that is not a number of the right kind, a spawn that is not a plain object of components, or an `id` given among the components.
 
@@ -1111,31 +1111,39 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `{what} was called during a step`
 - Fix: call step(), run(), capture() and restore() between steps; inside a system, change the world directly (spawn, despawn and emit queue to the end of the step)
-- Registered in: [`engine/sim/world.ts` line 62](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 71](../engine/sim/world.ts)
 
 ### SIM_EDITED_CAPTURE
 
 - Message: `the capture the session of {scene} took at step {step} was changed since (it hashes {now}, not {then})`
 - Fix: restore it unchanged, then make the change through the session so record() replays it: session.set(path, value) (__engine.set) for a setting, a dev action (session.act(name, args)) for components
-- Registered in: [`engine/sim/session.ts` line 55](../engine/sim/session.ts)
+- Registered in: [`engine/sim/session.ts` line 57](../engine/sim/session.ts)
 
 ### SIM_EVENT_STORM
 
 - Message: `the end of step {tick} was still delivering events and spawns after {rounds} rounds`
 - Fix: break the loop: a listener that emits the event it listens to, or spawns what spawns it again, never settles; act on such chains one step at a time (store a pending flag in a component and let a system handle it next step)
-- Registered in: [`engine/sim/world.ts` line 71](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 80](../engine/sim/world.ts)
 
 ### SIM_FOREIGN_CAPTURE
 
 - Message: `restore() was given a capture the session of {scene} did not take`
 - Fix: restore what this session's capture() (__engine.capture()) returned, the object itself: the session knows where its recording stood then; the world's own captures, another session's and copies have no place in it, so reach other state by starting the scene again (__engine.seed(n)) or playing a replay
-- Registered in: [`engine/sim/session.ts` line 51](../engine/sim/session.ts)
+- Registered in: [`engine/sim/session.ts` line 53](../engine/sim/session.ts)
 
 ### SIM_NO_ACTION
 
 - Message: `the scene {scene} has no dev action {name} ({suggestion})`
-- Fix: add it to the scene: defineScene('{scene}', { actions: { {name}(w, args) { … } } }), or call one it has
-- Registered in: [`engine/sim/session.ts` line 43](../engine/sim/session.ts)
+- Fix: add it to the scene, defineScene('{scene}', { actions: { {name}(w, args) { … } } }), or to the engine's, defineDevAction('{name}', { help, run }) (engine/sim/devActions.ts); or call one there is
+- Registered in: [`engine/sim/session.ts` line 45](../engine/sim/session.ts)
+
+### SIM_NO_ACTOR
+
+- Message: `{what} has no actor to work on: {problem}`
+- Fix: give the id of an actor ({ id }), or spawn a player actor in the scene (spawnActor, player: true)
+- Registered in: [`engine/sim/devActions.ts` line 53](../engine/sim/devActions.ts)
+
+Raised by the engine's dev actions that work on an actor (engine/sim/devActions.ts: god, spawn, travel) and by the bot (engine/dev/bot.ts) when the id given is no live actor, or none is given and the scene has no player actor. Nothing has changed.
 
 ### SIM_NO_CALLBACKS
 
@@ -1147,7 +1155,7 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `there is no entity {id}{why}`
 - Fix: use an id spawn() returned while its entity lives (w.has(id) tells): a spawned entity joins the world at the end of the step that spawned it, so give it its components in spawn(); a despawned one leaves at the end of its step
-- Registered in: [`engine/sim/world.ts` line 58](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 67](../engine/sim/world.ts)
 
 ### SIM_NOT_DATA
 
@@ -1161,7 +1169,7 @@ Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities
 
 - Message: `the world took {count} steps outside its session, so the recording misses their intents`
 - Fix: step a recorded scene through session.step(intents), never world.step(); capture and restore it through session.capture() and session.restore(capture), never the world
-- Registered in: [`engine/sim/session.ts` line 47](../engine/sim/session.ts)
+- Registered in: [`engine/sim/session.ts` line 49](../engine/sim/session.ts)
 
 ### SIM_SHARED_DATA
 
