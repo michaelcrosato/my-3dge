@@ -19,6 +19,7 @@ import { EngineError } from '../../core/log';
 import { createRegistry } from '../../core/registry';
 import { withSimMath } from '../../core/simMath';
 import { compileLevel } from './compile';
+import { defineGlyph } from './glyph';
 import { floorBelow, floorHeight, roomAt, storeyAt, storeyBelow, surfaceBelow, topHeight } from './heights';
 import { roofHeight } from './roofs';
 import { storeyView } from './storeys';
@@ -237,6 +238,45 @@ describe('the queries in 3D', () => {
     expect([storeyAt(HOUSE, hall), storeyBelow(HOUSE, 0.75, hall, 1.6), roomAt(HOUSE, 0.75, hall, 1.6)?.name]).toEqual([2, 1, 'hall']); // prettier-ignore
     expect([storeyAt(HOUSE, cellar), storeyBelow(HOUSE, 7, cellar, 1.6), roomAt(HOUSE, 7, cellar, 1.6)?.name]).toEqual([1, 0, 'cellar']); // prettier-ignore
     expect([storeyAt(HOUSE, 9), storeyBelow(HOUSE, 4, 9, 3), roomAt(HOUSE, 4, 9, 3)]).toEqual([3, -1, null]); // on the roof
+  });
+
+  it.each([...Object.keys(GOLDEN), 'annex'])(
+    'storeyBelow and roomAt give every walkable tile of the %s its own storey and room',
+    (name) => {
+      // prettier-ignore
+      const level = compile(name);
+      const wrong: string[] = [];
+      level.storeys!.forEach((storey, k) => {
+        storey.walkable.forEach((open, i) => {
+          if (!open) return;
+          const [x, z] = [((i % level.cols) + 0.5) * t, (Math.floor(i / level.cols) + 0.5) * t];
+          const y = storey.floor[i] + 0.01;
+          const room = level.rooms![storey.room[i]]?.name ?? null;
+          if (storeyBelow(level, x, y, z) !== k || (roomAt(level, x, y, z)?.name ?? null) !== room)
+            wrong.push(`${k}:${i}`);
+        });
+      });
+      expect(wrong).toEqual([]);
+    },
+  );
+
+  it("reads an upper floor over a lower storey's wall as the upper storey's, its surface too", () => {
+    const registry = rooms();
+    defineGlyph(
+      'glyph:test-boards',
+      { char: 'f', description: 'Floorboards.', mesh: 'floor', surface: 'wood' },
+      registry,
+    );
+    const text = ['---', 'storey: ground', 'base: 0', 'height: 2.7', '---', '#######', '#@.#..#', '#..#..#', '#######', '---', 'storey: upper', 'base: 3', 'height: 2.7', '---', '#######', '#kffff#', '#fffff#', '#######'].join('\n'); // prettier-ignore
+    const level = compileLevel(text, { file: 'loft.txt', registry });
+    const over = [storeyBelow(level, 3.5, 3.01, 1.5), surfaceBelow(level, 3.5, 3.01, 1.5), roomAt(level, 3.5, 3.01, 1.5)?.name]; // prettier-ignore
+    expect(over).toEqual([1, 'wood', 'kitchen']); // over the wall at x 3 to 4 (1 m tiles), its top 3 m up
+  });
+
+  it("counts a head's top only where its solid stands: none under a storey too low for the head", () => {
+    const text = ['---', 'storey: ground', 'base: 0', 'height: 1.5', '---', '#######', '#@....#', '#.....#', '##++###', '#.....#', '#######', '---', 'storey: upper', 'base: 1.8', 'height: 2.7', '---', '#######', '#.....#', '#.....#', '#~~~~~#', '#~~~~~#', '#######'].join('\n'); // prettier-ignore
+    const level = compileLevel(text, { file: 'low.txt' });
+    expect([level.colliders.filter((c) => c.part === 'head').length, floorBelow(level, 2.5, 5, 3.5)]).toEqual([0, 0]); // the doorway's floor
   });
 
   it('roomAt: the room of the storey and tile at a point', () => {

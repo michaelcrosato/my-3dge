@@ -134,7 +134,9 @@ type Underfoot = { height: number; surface: string; storey: number };
 function underfoot(level: CompiledLevel, x: number, y: number, z: number): Underfoot | null {
   let best: Underfoot | null = null;
   const consider = (height: number, surface: string, storey: number) => {
-    if (Number.isFinite(height) && height <= y + REACH && (!best || height > best.height)) best = { height, surface, storey }; // prettier-ignore
+    // Of equal heights the higher storey's: an upper floor over a lower storey's wall, whose top it meets exactly.
+    const higher = !best || height > best.height || (height === best.height && storey > best.storey);
+    if (Number.isFinite(height) && height <= y + REACH && higher) best = { height, surface, storey };
   };
   const [min, max] = [level.ground.min, level.ground.max];
   if (x >= min[0] && x <= max[0] && z >= min[2] && z <= max[2]) consider(max[1], '', -1);
@@ -143,7 +145,9 @@ function underfoot(level: CompiledLevel, x: number, y: number, z: number): Under
     if (!here || here.glyph.void) return;
     consider(here.floor, here.dais?.surface ?? here.glyph.surface, k);
     if (here.glyph.solid) consider(topHeight(source, x, z), here.glyph.surface, k);
-    if ((here.glyph.head ?? 0) > 0 && source.fullTop !== undefined) consider(fullTopAt(source, x, z), here.glyph.surface, k); // prettier-ignore
+    const head = (source.base ?? 0) + (here.glyph.head ?? 0);
+    const headTop = here.glyph.head && source.fullTop !== undefined ? fullTopAt(source, x, z) : -Infinity;
+    if (headTop > head) consider(headTop, here.glyph.surface, k); // a head's top, where its solid stands
   });
   for (const roof of level.roofs ?? []) consider(roofHeight(roof, x, z), roof.surface, -1);
   return best;
