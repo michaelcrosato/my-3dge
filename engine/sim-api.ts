@@ -239,8 +239,8 @@ export { sensorHits } from './physics/bodies';
 export { TRIGGER_FIELDS } from './physics/bodies';
 export type { Trigger } from './physics/bodies';
 export { updateTrigger } from './physics/bodies';
-export { rescueLost } from './physics/bodies';
-export type { RescueLevel } from './physics/bodies';
+export { rescueLost } from './physics/rescue';
+export type { RescueLevel } from './physics/rescue';
 // Props as data (WP 4.5): the registry kind `prop` (meshes by geometry and material id, a body, a light spot, where a
 // level places it, the hit and use hooks), the engine's crate, barrel, brazier fire and pillar, the library's sconce,
 // banner, chest, door, table, bench, statue and lantern (WP 10.3), and their placement.

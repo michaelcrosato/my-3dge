@@ -801,8 +801,8 @@ game agent's manual.
 - `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
 - `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
 - `requestHitStop` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Asks the frame clock for a hit-stop of `seconds` (real seconds, before its budget): kept until the run's host takes it after the step (`takeHitStop`), the longest of the step winning.
-- `RescueLevel` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
-- `rescueLost` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
+- `RescueLevel` (interface from [`engine/physics/rescue.ts`](../engine/physics/rescue.ts)): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
+- `rescueLost` (function from [`engine/physics/rescue.ts`](../engine/physics/rescue.ts)): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
 - `RESERVED_CODES` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Codes no action map binds: the pause buttons, and keys the browser or the system keeps.
 - `resolveMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `move` names, with `over` laid on it (`time` and `body` field by field): an id (a bare name gets the `move:` prefix), a `Move` entry, or a spec, parsed once and frozen.
 - `RestBody` (type from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): A body's rest measurements (mm and degrees), measured by the importer from the library's own clips: `H0`, the standing pelvis height (the unit of `hips` and `root`); `Pr`, `Cr` and `Hr`, the rest frames of the pelvis, chest and head (`[forward, right, up]` axes); the four `spine` bones from the pelvis to the neck, and `spineW`, how much of the pelvis-to-chest turn each takes (the library's own), as `neckW` is the neck's share of the chest-to-head turn; `cv`, each collarbone from its pivot to the shoulder; and the segments' lengths (`up`, `fore`, `thigh`, `shin`…).
@@ -906,7 +906,7 @@ game agent's manual.
 - `SiteNav` (interface from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): A site's navigation (see the file comment).
 - `SiteNavOptions` (interface from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): How `createSiteNav` builds: the climb limit (m), the steepest ground (m a metre), and the body it walks (m; the shooter's hull, `LEVEL_BODY`, by default, the largest the engine ships): its radius, the clear height a step needs (crouched, with a margin) and the height it stands (a step lower costs `CROUCH_COST` times its length, crouched).
 - `siteRescueGrid` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The site's rescue grid, `tile` metres a tile, over its terrain and its structures (see the file comment).
-- `SiteRescueGrid` (interface from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The lost-body rescue's grid (engine/physics/bodies.ts's `RescueLevel`): see the file comment.
+- `SiteRescueGrid` (interface from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The lost-body rescue's grid (engine/physics/rescue.ts's `RescueLevel`): see the file comment.
 - `siteSolidAt` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): Whether (x, y, z) is in something solid on the site (see the file comment).
 - `SiteSpec` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): What `defineSite` takes.
 - `SiteStructure` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A structure placed: its level, in its own frame, and where it stands (see the file comment).
@@ -1563,8 +1563,8 @@ game agent's manual.
 - `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
 - `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
 - `requestHitStop` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Asks the frame clock for a hit-stop of `seconds` (real seconds, before its budget): kept until the run's host takes it after the step (`takeHitStop`), the longest of the step winning.
-- `RescueLevel` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
-- `rescueLost` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
+- `RescueLevel` (interface from [`engine/physics/rescue.ts`](../engine/physics/rescue.ts)): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
+- `rescueLost` (function from [`engine/physics/rescue.ts`](../engine/physics/rescue.ts)): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
 - `resolveMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `move` names, with `over` laid on it (`time` and `body` field by field): an id (a bare name gets the `move:` prefix), a `Move` entry, or a spec, parsed once and frozen.
 - `RestBody` (type from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): A body's rest measurements (mm and degrees), measured by the importer from the library's own clips: `H0`, the standing pelvis height (the unit of `hips` and `root`); `Pr`, `Cr` and `Hr`, the rest frames of the pelvis, chest and head (`[forward, right, up]` axes); the four `spine` bones from the pelvis to the neck, and `spineW`, how much of the pelvis-to-chest turn each takes (the library's own), as `neckW` is the neck's share of the chest-to-head turn; `cv`, each collarbone from its pivot to the shoulder; and the segments' lengths (`up`, `fore`, `thigh`, `shin`…).
 - `restBuild` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The proportions of rest body `R` as a build's fields (metres, size 1): the mannequin's, for the quaternius set.
@@ -1628,7 +1628,7 @@ game agent's manual.
 - `SiteNav` (interface from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): A site's navigation (see the file comment).
 - `SiteNavOptions` (interface from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): How `createSiteNav` builds: the climb limit (m), the steepest ground (m a metre), and the body it walks (m; the shooter's hull, `LEVEL_BODY`, by default, the largest the engine ships): its radius, the clear height a step needs (crouched, with a margin) and the height it stands (a step lower costs `CROUCH_COST` times its length, crouched).
 - `siteRescueGrid` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The site's rescue grid, `tile` metres a tile, over its terrain and its structures (see the file comment).
-- `SiteRescueGrid` (interface from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The lost-body rescue's grid (engine/physics/bodies.ts's `RescueLevel`): see the file comment.
+- `SiteRescueGrid` (interface from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The lost-body rescue's grid (engine/physics/rescue.ts's `RescueLevel`): see the file comment.
 - `siteSolidAt` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): Whether (x, y, z) is in something solid on the site (see the file comment).
 - `SiteSpec` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): What `defineSite` takes.
 - `SiteStructure` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A structure placed: its level, in its own frame, and where it stands (see the file comment).
@@ -5068,8 +5068,6 @@ For the agents who maintain the engine.
 - `moverPose` (function): Where a mover is at `time` (s): back and forth along its offset, turning at its spin (shardfall's `amount`).
 - `PROP_MATERIAL` (const): The props' material: a hollow wooden crate's (24 kg at 0.75 m), Coulomb friction, a little bounce, and damping that lets a knocked prop slide and roll to rest.
 - `PropSpec` (interface): A prop as `addProp` takes it: a body's pose, velocities and options, and its material.
-- `RescueLevel` (interface): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
-- `rescueLost` (function): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
 - `sensorHits` (function): The dynamic and kinematic bodies a body's sensors overlapped at the last step, in id order.
 - `SensorSpec` (interface): Where a sensor goes and how it moves.
 - `Trigger` (interface): A trigger: its sensor body and the bodies inside it.
@@ -5347,6 +5345,11 @@ For the agents who maintain the engine.
 - `ShapeCastOptions` (interface): A shape cast's options.
 - `vec` (function): A vector as Rapier's `{ x, y, z }`, checked.
 - `Vec3Like` (type): A vector: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`.
+
+### [`engine/physics/rescue.ts`](../engine/physics/rescue.ts)
+
+- `RescueLevel` (interface): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
+- `rescueLost` (function): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
 
 ### [`engine/physics/room.ts`](../engine/physics/room.ts)
 
@@ -5633,7 +5636,7 @@ For the agents who maintain the engine.
 - `SiteNav` (interface from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): A site's navigation (see the file comment).
 - `SiteNavOptions` (interface from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): How `createSiteNav` builds: the climb limit (m), the steepest ground (m a metre), and the body it walks (m; the shooter's hull, `LEVEL_BODY`, by default, the largest the engine ships): its radius, the clear height a step needs (crouched, with a margin) and the height it stands (a step lower costs `CROUCH_COST` times its length, crouched).
 - `siteRescueGrid` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The site's rescue grid, `tile` metres a tile, over its terrain and its structures (see the file comment).
-- `SiteRescueGrid` (interface from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The lost-body rescue's grid (engine/physics/bodies.ts's `RescueLevel`): see the file comment.
+- `SiteRescueGrid` (interface from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The lost-body rescue's grid (engine/physics/rescue.ts's `RescueLevel`): see the file comment.
 - `siteSolidAt` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): Whether (x, y, z) is in something solid on the site (see the file comment).
 - `SiteSpec` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): What `defineSite` takes.
 - `SiteStructure` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A structure placed: its level, in its own frame, and where it stands (see the file comment).
@@ -6111,7 +6114,7 @@ For the agents who maintain the engine.
 - `siteClearSight` (function): Whether the straight line from `from` to `to` (m) meets nothing solid, sampled every `step` metres and at both ends.
 - `siteFloorBelow` (function): The height (m) of the highest surface at or under (x, y, z) on the site; null where nothing is.
 - `siteRescueGrid` (function): The site's rescue grid, `tile` metres a tile, over its terrain and its structures (see the file comment).
-- `SiteRescueGrid` (interface): The lost-body rescue's grid (engine/physics/bodies.ts's `RescueLevel`): see the file comment.
+- `SiteRescueGrid` (interface): The lost-body rescue's grid (engine/physics/rescue.ts's `RescueLevel`): see the file comment.
 - `siteSolidAt` (function): Whether (x, y, z) is in something solid on the site (see the file comment).
 - `siteStructureAt` (function): Where (x, y, z) is in a structure: the first whose box holds it, its storey there and its room; null outside them.
 - `siteSurfaceBelow` (function): The surface tag of `siteFloorBelow`'s surface at (x, y, z): '' where nothing is.

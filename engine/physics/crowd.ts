@@ -11,7 +11,7 @@
  * - **Corpses**: `killAgent` moves an agent to the group `corpse`; `updateCrowd` brakes it and removes it on time.
  * - **Readback**: `updateCrowd`, after the physics step, copies feet and velocity and decides `grounded`.
  * - **Wake and sleep**: still bodies sleep (Rapier 0.21: after about half a second, measured); `setVelocity` keeps
- *   a sleeping agent asleep while it wants to stay still. The lost-body rescue is `rescueLost` (physics/bodies.ts).
+ *   a sleeping agent asleep while it wants to stay still. The lost-body rescue is `rescueLost` (physics/rescue.ts).
  *
  * Invariants: no state beside Rapier's and the agents' (a restore continues exactly); bodies enter Rapier in list
  * order; agents not in the world (`queued`, `gone`) are left alone: the calls return false.

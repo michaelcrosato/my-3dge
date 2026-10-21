@@ -1010,7 +1010,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `attachPhysics`, `BINDING_CODES`, `bindPhysics`, `physicsOf`, `scenePhysics`
   - Tests: [`engine/physics/world.test.ts`](../engine/physics/world.test.ts)
 - [`bodies.ts`](../engine/physics/bodies.ts): Bodies and props (PLAN.md WP 4.1; doctrines: Common ground, Reproducible): what scenes build props, movers and triggers with, on the physics world (engine/physics/world.ts), in plain terms.
-  - Exports: `addBall`, `addBox`, `addCapsule`, `addCylinder`, `addProp`, `addSensor`, `applyTorqueImpulse`, `driveBody`, `driveMover`, `knock`, `KnockOptions`, `Mover`, `MOVER`, `MOVER_FIELDS`, `moverPose`, `PROP_MATERIAL`, `PropSpec`, `RescueLevel`, `rescueLost`, `sensorHits`, `SensorSpec`, `Trigger`, `TRIGGER_FIELDS`, `updateTrigger`
+  - Exports: `addBall`, `addBox`, `addCapsule`, `addCylinder`, `addProp`, `addSensor`, `applyTorqueImpulse`, `driveBody`, `driveMover`, `knock`, `KnockOptions`, `Mover`, `MOVER`, `MOVER_FIELDS`, `moverPose`, `PROP_MATERIAL`, `PropSpec`, `sensorHits`, `SensorSpec`, `Trigger`, `TRIGGER_FIELDS`, `updateTrigger`
   - Tests: [`engine/physics/bodies.test.ts`](../engine/physics/bodies.test.ts)
 - [`capture.ts`](../engine/physics/capture.ts): The physics part of the sim's state (PLAN.md WP 3.1, §6.5 items 5–7; doctrine: Reproducible): how bodies are named (ids from Rapier's handles), what the hash covers, and the capture that restores the world exactly.
   - Exports: `bodyId`, `bodyIds`, `CAPTURE_CODES`, `capturePhysics`, `handleOf`, `PhysicsCapture`, `physicsState`, `rapierBuild`, `restorePhysics`, `STATE_STRIDE`
@@ -1051,6 +1051,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`queries.ts`](../engine/physics/queries.ts): Queries (PLAN.md WP 3.1, §6.1; doctrine: Common ground): raycasts, shape casts, overlaps and the ground `probe(x, z)` over a Rapier world, in plain terms, and the plain-data shapes and vectors that bodies and queries share.
   - Exports: `check`, `Ground`, `Hit`, `hullPoints`, `HullShape`, `overlap`, `OverlapOptions`, `probe`, `ProbeOptions`, `quat`, `QuatLike`, `QUERY_CODES`, `QueryOptions`, `raycast`, `RayOptions`, `Shape`, `shapeArgs`, `shapeCast`, `ShapeCastOptions`, `vec`, `Vec3Like`
   - Tests: [`engine/physics/queries.test.ts`](../engine/physics/queries.test.ts)
+- [`rescue.ts`](../engine/physics/rescue.ts): The lost-body rescue (PLAN.md WP 4.1; split from engine/physics/bodies.ts at its cap, WP 13.16): `rescueLost(physics, level)` puts every dynamic body that fell `depth` (3.75 m) below its tile's floor, or left the level across the ground, back on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still and turned as it was, so it drops onto the floor.
+  - Exports: `RescueLevel`, `rescueLost`
+  - Tests: [`engine/physics/rescue.test.ts`](../engine/physics/rescue.test.ts)
 - [`room.ts`](../engine/physics/room.ts): The shooter model's world (PLAN.md WP 13.5, WP 13.6, WP 13.7): `roomOf` answers what the model asks the physics (engine/physics/movement/steer.ts's `Room`): whether the standing hull fits where the character is (engine/physics/hull.ts), where its feet are, the walls and ledges ahead (engine/physics/ledge.ts), how far the hull moves along a ride before it meets anything (a cast of the hull as it is) and how far below the feet the ground is (a ray); `fitHull` gives its body the hull its stance has, keeping the feet while a path moves them (a mantle, a zipline, a ladder), since the path is the feet's.
   - Exports: `fitHull`, `roomOf`
   - Tests: [`engine/physics/movement/mantle.test.ts`](../engine/physics/movement/mantle.test.ts)

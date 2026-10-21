@@ -12,7 +12,7 @@
  *   ground slab.
  * - `siteClearSight(site, from, to)`: whether the straight line between two points meets nothing solid, sampled every
  *   `step` metres (0.1 by default) and at both ends: what an agent sees, and the cameras' sight of the player.
- * - `siteRescueGrid(site)`: the grid the lost-body rescue reads (engine/physics/bodies.ts `rescueLost`): a 1 m tile
+ * - `siteRescueGrid(site)`: the grid the lost-body rescue reads (engine/physics/rescue.ts `rescueLost`): a 1 m tile
  *   over the site, walkable where any floor is, its floor the ground there (the terrain, or a structure's lowest
  *   floor where the terrain is cut).
  *
@@ -144,7 +144,7 @@ export function siteClearSight(site: Site, from: Point3, to: Point3, step = 0.1)
   return true;
 }
 
-/** The lost-body rescue's grid (engine/physics/bodies.ts's `RescueLevel`): see the file comment. */
+/** The lost-body rescue's grid (engine/physics/rescue.ts's `RescueLevel`): see the file comment. */
 export interface SiteRescueGrid {
   readonly tile: number;
   readonly cols: number;
