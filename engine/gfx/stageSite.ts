@@ -7,6 +7,7 @@
  * `update(pose, feet, { fade, view })` carries the camera's pose and the player's feet into each structure's frame
  * (`toLocal`, the yaw less its turns), cuts and fades there, and in a classic view (`view`) hides, in the structure
  * the player stands in, the storeys above the player's and the roof while indoors (`cutPlace`): the others stay whole.
+ * The objects `follow` hands it (the stage's rides) stand in the world, so they fade once, in the world's frame.
  *
  * Names: a structure's group `site:<site>/<index>` holding its level's meshes (`level:<name>/…`, so the ID pass shows
  * which building and storey a pixel is), the terrain's chunks `terrain:<name>/…`.
@@ -83,11 +84,13 @@ export function createStageSite(site: Site, options: { materials: { get(id: stri
     return { structure, group, meshes, storeys: createStoreyCut(meshes), cutaway: null as Cutaway | null };
   });
   root.updateMatrixWorld(true);
+  /** The rides' fade: world objects, so a cutaway of no parts of its own, run in the world's frame. */
+  let rides: Cutaway | null = null;
   const where = (feet: Vec3) => {
     for (const { structure } of drawn) {
       const [x, y, z] = localFeet(structure, feet);
       const { level } = structure;
-      if (x < 0 || z < 0 || x > level.cols * level.tile || z > level.rows * level.tile) continue;
+      if (x < 0 || z < 0 || x >= level.cols * level.tile || z >= level.rows * level.tile) continue; // as a tile's edges
       const place = cutPlace(level, x, y, z);
       if (place.storey >= 0) return { structure, ...place };
     }
@@ -98,10 +101,12 @@ export function createStageSite(site: Site, options: { materials: { get(id: stri
     structures: drawn,
     terrain,
     follow(objects) {
-      for (const each of drawn) each.cutaway ??= createCutaway(each.meshes, objects ? { objects } : {});
+      for (const each of drawn) each.cutaway ??= createCutaway(each.meshes);
+      if (objects) rides ??= createCutaway({ root, parts: [] }, { objects });
     },
     update(pose, feet, { fade = false, view = false } = {}) {
       const inside = view ? where(feet) : null;
+      rides?.update(pose, feet, { fade });
       for (const each of drawn) {
         each.cutaway?.update(localPose(each.structure, pose), localFeet(each.structure, feet), { fade });
         if (inside?.structure === each.structure) each.storeys.set(inside.storey, inside.indoors);
@@ -118,6 +123,7 @@ export function createStageSite(site: Site, options: { materials: { get(id: stri
       return { dispose: () => registrations.forEach((registration) => registration.dispose()) };
     },
     dispose() {
+      rides?.dispose();
       for (const each of drawn) {
         each.cutaway?.dispose();
         each.meshes.dispose();

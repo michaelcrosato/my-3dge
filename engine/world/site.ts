@@ -93,8 +93,8 @@ export function toWorld(s: Pick<SiteStructure, 'at' | 'turn'>, lx: number, lz: n
 
 /** A direction (x, z) turned `turn` quarter turns about +Y, as `toWorld` turns a structure's; never −0 (state holds it). */
 export function turnVector(turn: QuarterTurns, x: number, z: number): [number, number] {
-  const [nx, nz] = [-x || 0, -z || 0]; // never −0
-  return ([[x, z], [z, nx], [nx, nz], [nz, x]] as [number, number][])[turn]; // prettier-ignore
+  const [px, pz, nx, nz] = [x || 0, z || 0, -x || 0, -z || 0]; // never −0, whatever comes in
+  return ([[px, pz], [pz, nx], [nx, nz], [nz, px]] as [number, number][])[turn]; // prettier-ignore
 }
 
 /** A structure's own (x, z) from world (wx, wz): `toWorld` undone. */

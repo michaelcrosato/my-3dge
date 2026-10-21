@@ -55,9 +55,9 @@ function groundAt(site: Site, x: number, z: number): number | null {
   return site.terrain && !cutAt(site, x, z) ? terrainHeight(site.terrain, x, z) : null;
 }
 
-/** Whether structure `s`'s box, widened by `pad`, holds world (x, z). */
+/** Whether structure `s`'s box, widened by `pad`, holds world (x, z): its west and north edges, not its east and south. */
 const over = (s: SiteStructure, x: number, z: number, pad = 0) =>
-  x >= s.bounds.min[0] - pad && x <= s.bounds.max[0] + pad && z >= s.bounds.min[2] - pad && z <= s.bounds.max[2] + pad;
+  x >= s.bounds.min[0] - pad && x < s.bounds.max[0] + pad && z >= s.bounds.min[2] - pad && z < s.bounds.max[2] + pad;
 
 /** The highest surface under (x, y, z) and its tag (see the file comment), or null. */
 function underfoot(site: Site, x: number, y: number, z: number): { height: number; surface: string } | null {

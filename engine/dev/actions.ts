@@ -83,7 +83,7 @@ defineMember('bot', {
       type: 'object',
       default: {},
       description:
-        "What it plays (engine/dev/bot.ts BotPlan): to ([{ x, z }]), tour, back, until ('component.field'), steps, trace, actor, its options, and seeds for a sweep.",
+        "What it plays (engine/dev/bot.ts BotPlan): to ([{ x, z }], and y on a site: a goal a storey up is not one under it), tour, back, until ('component.field'), steps, trace, actor, its options, and seeds for a sweep.",
     },
   },
   impl(h, plan: BotPlan & { seeds?: unknown }) {

@@ -6,7 +6,11 @@
  * labs/playground/courses/bounds.ts, the others watched for WP 13.18's house).
  * @see labs/playground/scenes/lot.ts
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { defineStoreyFixtureGlyphs } from '../../../fixtures/levels/storeys/glyphs';
+import { createRegistry } from '../../../engine/core/registry';
 import { defineCourse, runCourse } from '../../../engine';
 import { createSession } from '../../../engine/sim/session';
 import { runBot, type BotRun } from '../../../engine/dev/bot';
@@ -16,6 +20,9 @@ import { LOT_HOUSE, LOT_ROOMS, LOT_SHED } from '../levels/lot';
 import { LOT, LOT_START, lot } from './lot';
 
 const [house, shed] = LOT.structures;
+/** The storey fixtures' glyphs: their room markers, to read the fixtures' maps with. */
+const registry = createRegistry();
+defineStoreyFixtureGlyphs(registry);
 
 /** Each room of the house as a goal: its marker's tile centre on its floor, in the world. */
 const ROOMS = house.level.rooms!.map((room) => {
@@ -29,6 +36,13 @@ describe('the lot', () => {
     expect(ROOMS.map((room) => room.name).sort()).toEqual(Object.values(LOT_ROOMS).sort());
     expect(LOT.cut?.some((cell) => cell === 1)).toBe(true);
     expect(siteStructureAt(LOT, 12, 0.5, 14)?.room?.name).toBe('hall');
+    // The storey fixtures' house and shed, room markers aside (the engine's tests run on those), until WP 13.18.
+    const markers = new Map((registry.list('glyph') as unknown as { char: string; room: string }[]).filter((g) => g.room).map((g) => [g.char, Object.entries(LOT_ROOMS).find(([, room]) => room === g.room)?.[0] ?? g.char])); // prettier-ignore
+    const lotOf = (name: string) => readFileSync(join(import.meta.dirname, `../../../fixtures/levels/storeys/${name}.txt`), 'utf8').split('\n').map((line) => (line.includes(':') || line === '---' ? line : [...line].map((c) => markers.get(c) ?? c).join(''))); // prettier-ignore
+    const lines = (text: string) => text.split('\n').filter((line) => !line.startsWith('description:'));
+    expect([lines(LOT_HOUSE), lines(LOT_SHED)]).toEqual(
+      [lotOf('house'), lotOf('shed')].map((text) => lines(text.join('\n'))),
+    );
     // Both levels clean: doors the hull fits, headroom, flights within the slope, every room reachable.
     const file = 'labs/playground/levels/lot.ts';
     expect([validateLevel(LOT_HOUSE, { file }), validateLevel(LOT_SHED, { file })]).toEqual([[], []]);

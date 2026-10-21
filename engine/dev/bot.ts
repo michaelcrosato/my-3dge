@@ -87,7 +87,12 @@ const JUMP_STEPS = 12;
 /** The trace's most samples. */
 const MAX_SAMPLES = 120;
 
-/** The bot: one goal at a time, the intents for each step (see the file comment). */
+/**
+ * The bot: one goal at a time, the intents for each step (see the file comment). On a site (engine/dev/botNav.ts) it
+ * crouches where its way runs under a low ceiling, lets go of a ladder (crouch) whose way goes down, and pushes
+ * nowhere while it falls, so it lands rather than catching the ladder again; a goal there counts only within 1 m of
+ * its height.
+ */
 export class Bot {
   /** What it navigates by: the level's grid or the site's graph. */
   readonly nav: BotNav;

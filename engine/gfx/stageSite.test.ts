@@ -3,10 +3,11 @@
  * each structure drawn in a group at its place and turn, its level's meshes inside; the terrain with the cut left out,
  * its chunk holding the cut at its finest level only; in a classic view the storeys above the player's and the roof
  * indoors hidden in the structure the player stands in, the others whole, nothing hidden in another camera or with
- * the player outside; the cutaways made once a player stands, their twins registered with the warm-up.
+ * the player outside; the cutaways made once a player stands, their twins registered with the warm-up; a ride faded
+ * in the world's frame, when it stands between the camera and the player and never off their line.
  * @see engine/gfx/stageSite.ts
  */
-import { MeshBasicMaterial, type Mesh } from 'three/webgpu';
+import { BoxGeometry, Mesh, MeshBasicMaterial } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { defineFixtureSite } from '../../fixtures/levels/storeys/site';
 import { createRegistry } from '../core/registry';
@@ -69,6 +70,19 @@ describe('a site drawn', () => {
     drawn.update(pose, hall, { fade: true, view: true });
     expect(registered).toEqual(['site:fixture-lot/0:level', 'site:fixture-lot/1:level', 'site:fixture-lot:cutaway', 'site:fixture-lot:terrain']); // prettier-ignore
     registration.dispose();
+    drawn.dispose();
+  });
+
+  it('fades a ride in the world’s frame: one between the camera and the player, never one off their line', () => {
+    const drawn = createStageSite(site, { materials });
+    const ride = Object.assign(new Mesh(new BoxGeometry(1, 3, 1), new MeshBasicMaterial()), { name: 'ride' });
+    ride.position.set(6, 1.5, 22); // in the yard, 4 m west of the house, whose own frame starts at (10, 12)
+    ride.updateMatrixWorld(true);
+    drawn.follow(() => [ride]);
+    drawn.update(makePose({ position: [6, 1.6, 27] }), [6, 0, 17], { fade: true }); // the ride between them
+    expect(ride.visible).toBe(false);
+    drawn.update(makePose({ position: [16, 1.6, 36.5] }), [16, 0, 31.5], { fade: true }); // 10 m east of it
+    expect(ride.visible).toBe(true); // in the house's frame that line runs through it: never read there
     drawn.dispose();
   });
 });

@@ -943,6 +943,12 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   the Done-when; the cameras' other bounds are watched for WP 13.18's house, whose rooms are roomier: the shooter loses
   sight of the player 931 of 1,398 frames and the platformer 255, and first person and the platformer jump 0.42 m and
   0.52 m in one frame.
+- **From the review** (the verifier passed it, with notes, all taken): the rides fade once, in the world's frame (each
+  structure's cutaway had read their world boxes against its local lines, so a ride off the camera's line could hide);
+  a point on an edge two structures share is the east or south one's, as a tile's edge is (`siteStructureAt`, the
+  stage's `where`); `turnVector` gives no −0 whatever comes in; `__engine.bot`'s help names a site goal's height, and
+  a test plays it on the fixture site; a test holds the lot's copies to the storey fixtures, markers aside; WP 13.18's
+  entry carries the watched camera bounds and amendment 15's leftovers.
 - **Beyond Owns**: engine/world/{siteQueries,siteNav,siteNavGrids}.ts,
   engine/world/level/{heights,compile,types,validate}.ts, engine/physics/{trimesh,world,bodies}.ts,
   engine/sim/{rides,siteApi}.ts, engine/gfx/{stageSite,storeyCut,stageGround,stage,terrain}.ts, engine/app/view.ts,

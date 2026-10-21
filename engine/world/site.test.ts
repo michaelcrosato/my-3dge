@@ -1,6 +1,6 @@
 /**
  * @file Unit tests for engine/world/site.ts (T1; WP 13.15): quarter turns carry points both ways exactly and match the
- * bodies' rotation; a structure's footprint and box turn with it; the terrain is flattened round each footprint to
+ * bodies' rotation, never giving −0; a structure's footprint and box turn with it; the terrain is flattened round each footprint to
  * its height and cut under a basement and where a structure names a cut; a bad spec is refused, naming each problem.
  * @see engine/world/site.ts
  */
@@ -23,6 +23,8 @@ describe('quarter turns', () => {
       expect([x - 10, z + 4]).toEqual([dx, dz]);
       const turned = new Vector3(1.25, 0, 3.5).applyQuaternion(new Quaternion(...quarterTurn(turn)));
       expect([turned.x, turned.z].map((v) => Math.round(v * 1e12) / 1e12)).toEqual([dx, dz]);
+      // A direction turned is never −0, whatever comes in: state holds it (a ladder's normal), and text drops the sign.
+      for (const [x0, z0] of [[0, 1], [-0, 1], [1, -0], [-0, -0]]) expect(turnVector(turn, x0, z0).map((v) => Object.is(v, -0))).toEqual([false, false]); // prettier-ignore
     }
   });
 

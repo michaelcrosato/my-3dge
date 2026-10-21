@@ -1,7 +1,8 @@
 /**
  * @file Unit tests for engine/world/siteQueries.ts (T1; WP 13.15) on the fixture site (fixtures/levels/storeys/
  * site.ts): the highest surface under a point is the terrain's outside and a storey's floor, a roof's or the cellar's
- * inside (the terrain cut over it), with their tags; a point's structure, storey (a flight's to its top) and room;
+ * inside (the terrain cut over it), with their tags; a point's structure (on a shared edge the east or south one),
+ * storey (a flight's to its top) and room;
  * what is solid (the ground, a wall, a slab, a door's head; not a doorway or a room's air) and what a sight line
  * meets; the rescue's grid, on the cellar's floor where the ground is cut.
  * @see engine/world/siteQueries.ts
@@ -9,6 +10,8 @@
 import { describe, expect, it } from 'vitest';
 import { defineFixtureSite } from '../../fixtures/levels/storeys/site';
 import { createRegistry } from '../core/registry';
+import { defineLevel } from './level/level';
+import { defineSite, getSite } from './site';
 import { siteClearSight, siteFloorBelow, siteRescueGrid, siteSolidAt, siteStructureAt, siteSurfaceBelow } from './siteQueries'; // prettier-ignore
 import { terrainHeight, terrainSurface } from './terrain';
 
@@ -33,6 +36,16 @@ describe('the fixture site’s queries', () => {
     expect([at(12, 1, 14), at(12, 4, 14), at(14, -2, 15), at(2, 1, 2)]).toEqual([['fixture-house', 1, 'hall'], ['fixture-house', 2, 'bedroom'], ['fixture-house', 0, 'cellar'], null]); // prettier-ignore
     const top = (3 * (5 - 1.6)) / 3.5; // the hall's flight 0.1 m short of its top
     expect(at(10.75, top, 13.6)).toEqual(['fixture-house', 1, 'hall']);
+  });
+
+  it('give a point on an edge two structures share to the one east or south of it, as a tile’s edge', () => {
+    const registry = createRegistry();
+    defineLevel('level:hut', { text: '#####\n#...#\n#...#\n#####\n', file: 'hut.txt' }, registry);
+    defineSite('site:row', { structures: [{ level: 'level:hut', at: [0, 0, 0] }, { level: 'level:hut', at: [5, 0, 0] }] }, registry); // prettier-ignore
+    const row = getSite('site:row', registry);
+    const at = (x: number, z: number) => row.structures.indexOf(siteStructureAt(row, x, 0.5, z)!.structure);
+    expect([at(4.99, 2), at(5, 2), at(5.01, 2), at(0, 2)]).toEqual([0, 1, 1, 0]);
+    expect(siteStructureAt(row, 10, 0.5, 2)).toBeNull(); // the east hut's east edge: outside
   });
 
   it('find the ground, a wall, a slab and a door’s head solid, and a doorway and a room’s air open', () => {
