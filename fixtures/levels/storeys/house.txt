@@ -1,5 +1,5 @@
 ---
-description: A house on 0.5 m tiles, 8 × 6 m (WP 13.13). A cellar 3 m down, a ground floor with the hall and the kitchen, an upper floor with a bedroom and a study, an attic under a gable roof (35°, the ridge east to west). Flights of stairs (seven tiles, 40.6°) from the cellar to the kitchen and from the hall to the landing, each landing two tiles deep and reached along the railing’s end a metre wide, a ladder from the study through the attic's hatch; doors, windows, railings round the stairwells, and a room marker in each room.
+description: A house on 0.5 m tiles, 8 × 6 m (WP 13.13). A cellar 3 m down, a ground floor with the hall and the kitchen, an upper floor with a bedroom and a study, an attic under a gable roof (35°, the ridge east to west). Flights of stairs (seven tiles, 40.6°) from the cellar to the kitchen and from the hall to the landing, each landing two tiles deep and reached along the railing’s end a metre wide, a ladder against the study's west wall up through the attic's hatch, 1.5 m square; doors, windows, railings round the stairwells, and a room marker in each room.
 tile: 0.5
 ---
 ---
@@ -46,8 +46,8 @@ height: 2.7
 #......#.......#
 #~~!...#.......#
 #~~!...+.......#
-#~~!...+......|#
-#~~!...#.......#
+#~~!...+.......#
+#~~!...#|......#
 #~~!...#.......#
 #~~!...#.......#
 #~~!...#.......#
@@ -65,9 +65,9 @@ eaves: 0.5
 ################
 ################
 #a.............#
-#.............~#
-#..............#
-#..............#
+#.......~~~....#
+#.......~~~....#
+#.......~~~....#
 ################
 ################
 ################

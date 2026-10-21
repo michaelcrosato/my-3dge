@@ -45,7 +45,7 @@ const hash = (level: CompiledLevel) => hashValue(level as unknown as Canonical);
  * Re-recorded in WP 13.14, which gave the railing and the flight recipes of their own and the bounds the eaves.
  */
 const GOLDEN: Record<string, string> = {
-  house: '0c954bd7620ff99e', // its flights a tile shorter, each landing two tiles deep (WP 13.13's review)
+  house: 'f3b1585415bee4a1', // its flights a tile shorter, its landings two tiles deep, its ladder on the study's wall (WP 13.13's review, WP 13.15)
   pavilion: '893392706f51530f',
   shed: 'facdd95952ad89f3',
 };
