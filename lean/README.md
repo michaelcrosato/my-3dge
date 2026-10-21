@@ -350,7 +350,7 @@ Every name below is an export of `my3dge` (`import { createEngine, defineScene }
 first sentence of its doc comment in docs/API.md, and its whole manual where engine/ declares it.
 
 **Scenes**: defined as data with a setup and a step, run by x sim, x replay and createHeadless.
-`defineScene`; types `Scene`, `SceneSpec`, `SceneAction`, `SceneSound`.
+`defineScene`, `defineDevAction`; types `Scene`, `SceneSpec`, `SceneAction`, `SceneSound`, `DevActionSpec`.
 
 **The world**: entities, components, systems, timers, events.
 `defineComponent`, `PHASES`; types `World`, `SimRng`, `WorldTimers`, `WorldEvents`, `Entity`, `With`, `SpawnSpec`, `ComponentOf`, `Phase`, `SystemFn`.

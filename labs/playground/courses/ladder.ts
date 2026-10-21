@@ -69,7 +69,7 @@ defineCourse('course:playground-ladder', {
     ...press(3 * RUN + OFF, 'crouch', { move: [0, 0] }),
   ],
   measures: [
-    { name: 'takes hold running in, climbs to where the top’s pull takes over', metric: 'duration', until: 'onLadder', from: 2, to: RUN - 1, reference: (TOP - 1.0668 + 0.011) / LADDER.speed, tolerance: { ticks: 2 } }, // prettier-ignore
+    { name: 'takes hold running in, climbs to where the top’s pull takes over', metric: 'duration', until: 'onLadder', from: 2, to: RUN - 1, reference: (TOP - 1.0668 + 0.011) / LADDER.speed, tolerance: { ticks: 1 } }, // prettier-ignore
     { name: 'climbs at 2.20 m/s', metric: 'topRise', from: 2, to: RUN - 1, reference: LADDER.speed, tolerance: { share: 0.02 } }, // prettier-ignore
     { name: 'the top: pulled over, no grab', metric: 'duration', until: 'grabbing', from: 2, to: RUN - 1, reference: 0, tolerance: { ticks: 0 } }, // prettier-ignore
     { name: 'stands on the tower’s top', metric: 'standHeight', from: 2, to: RUN - 1, reference: TOP, tolerance: { abs: 0.02 } }, // prettier-ignore

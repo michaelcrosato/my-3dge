@@ -39,6 +39,7 @@ describe('x feel', () => {
       const report = JSON.parse(readFileSync(join(ROOT, 'out/feel/playground-strip/report.json'), 'utf8'));
       expect(report.ok).toBe(true);
       expect(report.metrics['run.pass']).toBe(true);
+      expect(report.metrics['run.tolerance']).toBe('±2%');
     },
   );
 

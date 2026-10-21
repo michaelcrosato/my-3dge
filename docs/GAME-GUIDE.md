@@ -209,7 +209,7 @@ Sim-side code imports these from engine/sim-api.ts; pages get them from engine/i
 first sentence of its doc comment in docs/API.md, and its whole manual where it is declared.
 
 **Scenes**: defined as data with a setup and a step, run by x sim, x replay and createHeadless.
-`defineScene`; types `Scene`, `SceneSpec`, `SceneAction`, `SceneSound`.
+`defineScene`, `defineDevAction`; types `Scene`, `SceneSpec`, `SceneAction`, `SceneSound`, `DevActionSpec`.
 
 **The world**: entities, components, systems, timers, events.
 `defineComponent`, `PHASES`; types `World`, `SimRng`, `WorldTimers`, `WorldEvents`, `Entity`, `With`, `SpawnSpec`, `ComponentOf`, `Phase`, `SystemFn`.

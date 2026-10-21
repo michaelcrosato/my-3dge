@@ -82,7 +82,9 @@ wide. Floors are 0.3 m slabs.
 ### 2.3 The gym
 
 The west strip (x 0 to 36, z 12 to 82): calibrated features, each with a sign showing its number, so the owner reads
-what a feature tests, and each with a course `node x feel` runs (§9.1). In Stage 1 it is a format-1 level of its own,
+what a feature tests, most with a course `node x feel` runs (§9.1; the gaps and the steps and slopes wait for WP 13.18,
+which also measures there §3.2's crouch timing, landing stun and climbing again, unit-tested only so far). In Stage 1
+it is a format-1 level of its own,
 its heights given by the playground's own glyphs; from WP 13.18 it stands in its place on the site.
 
 | Feature | Sizes | What it measures |
@@ -261,7 +263,8 @@ planted so that feet and hands stay where they touch (WP 13.10, WP 13.11, WP 8.8
 | Holding and aiming | the weapon lowered at a sprint; the support hand on the grip; aim offsets by pitch and yaw; the head and eyes toward the aim (ahead of WP 13.20's weapons, the gun carried as the view says, down the sights through the right eye: ADR-0025 amendment 11) |
 
 The bounds, over every course (§9.1): a planted foot drifts at most 5 cm per contact (the anim QA's limit, ADR-0009
-amendment 6); a hand stays within 3 cm of its contact; no transition pops (the anim QA's twist-pop bound); the muzzle
+amendment 6); a hand stays within 3 cm of its contact; no point pops (the anim QA's positional pop: 9/16 m in a step
+against its neighbours, engine/anim/motionMetrics.ts); the muzzle
 points within 2° of the aim.
 
 ### 5.2 The two looks
@@ -375,7 +378,7 @@ kept across sessions by the store; the HUD for each camera (crosshair, prompts, 
 ### 9.1 Numbers agents check
 
 - **Courses** (`node x feel <lab> --course <name|all>`, WP 13.4): each gym feature driven by scripted intents, its
-  numbers checked against §3.2's reference values and tolerances, the report at `out/feel/<course>/report.json`.
+  numbers checked against §3.2's reference values and tolerances, the report at `out/feel/<lab>-<course>/report.json`.
 - **Animation metrics** on the same runs: foot slide, pops, hands at their contacts, aim error (§5.1's bounds).
 - **Camera metrics** on the same runs: continuity, never inside geometry, the player in view (§4's bounds).
 - **Look metrics**: thumbnails, the shimmer metric and the look metrics per look and camera (§5.2).
@@ -386,7 +389,9 @@ kept across sessions by the store; the HUD for each camera (crosshair, prompts, 
 
 ### 9.2 Replays and the tour
 
-Every move, every course and every interaction has a replay with golden hashes in Node and in the rendering page. The
+The moves and the rides have replays with golden hashes in Node and in the rendering page
+(tests/replays/playground-*.replay.json), as each interaction will from WP 13.16; a course is judged by its numbers and
+reports its final hash, which no golden holds. The
 tour (WP 13.26) is one replay through every feature in every camera and both looks: the attract mode, a film per look,
 and a check in T2.
 

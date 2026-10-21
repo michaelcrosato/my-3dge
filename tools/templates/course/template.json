@@ -1,0 +1,13 @@
+{
+  "describe": "A playground feel course (docs/PLAYGROUND.md §9.1, PLAN.md WP 13.4): recorded inputs on the gym from a start on its open floor, its numbers against §3.2's references with the body's and the cameras' bounds, and its unit test, which runs it and judges every number as x feel does.",
+  "id": "the module's path, labs/playground/courses/<name> (its id is course:playground-<name>; node x feel labs/playground --course <name> runs it): labs/playground/courses/stairs",
+  "pattern": "^(labs/playground/courses|tools/templates/course)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/course/sampleCourse",
+  "files": {
+    "course.ts.tmpl": "{{id}}.ts",
+    "course.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"],
+  "next": "make it play and measure what it is for, each number against docs/PLAYGROUND.md §3.2 (node x feel labs/playground --course {{name}} prints them); add its start to labs/playground/courses/courses.test.ts's STARTS and a @see to it there; then node x docs --write",
+  "games": "this kind makes the playground's courses, on its gym; a game's course is a defineCourse('course:<game>-<name>', …) on one of its own scenes, beside them, and a unit test that expects runCourse(getCourse(id)).pass"
+}

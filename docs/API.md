@@ -334,6 +334,7 @@ game agent's manual.
 - `defineClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Parses `input` (a set's text or object, `parseClipSet`) and registers it on `registry` as `clipSetId(set)`; a set registered already is returned when it is the same, and refused (`CORE_DUPLICATE_ID`) when it differs.
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
 - `defineCourse` (function from [`engine/dev/feel/course.ts`](../engine/dev/feel/course.ts)): Registers a course (on the shared registry by default).
+- `defineDevAction` (function from [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)): Registers a dev action on `registry` (the shared one by default).
 - `defineEmitter` (function from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): Defines an emitter on `registry` (the shared one by default) and returns it.
 - `defineGeometry` (function from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): Defines a geometry on `registry` (the shared one by default) and returns it.
 - `defineGlyph` (function from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): Defines a glyph on `registry` (the shared one by default) and returns it.
@@ -357,6 +358,7 @@ game agent's manual.
 - `defineTexture` (function from [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)): Defines a texture generator on `registry` (the shared one by default) and returns it.
 - `defineTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): Registers a touch layout (on the shared registry by default).
 - `DEGREES_PER_COUNT` (const from [`engine/input/look.ts`](../engine/input/look.ts)): One mouse count at sensitivity 1, degrees: Source's and Apex's `m_yaw` and `m_pitch`.
+- `DevActionSpec` (interface from [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)): How a dev action is written: `defineDevAction(name, spec)`.
 - `DeviceKind` (type from [`engine/input/codes.ts`](../engine/input/codes.ts)): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
 - `Dialog` (interface from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): The dialog box (see the file comment).
 - `DialogOptions` (interface from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): How a dialog box is made.
@@ -1222,6 +1224,7 @@ game agent's manual.
 - `defineBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): Defines a build on `registry` (the shared one by default) and returns it; absent fields keep `build:chibi`'s values.
 - `defineClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Parses `input` (a set's text or object, `parseClipSet`) and registers it on `registry` as `clipSetId(set)`; a set registered already is returned when it is the same, and refused (`CORE_DUPLICATE_ID`) when it differs.
 - `defineComponent` (function from [`engine/sim/state.ts`](../engine/sim/state.ts)): Declares a component kind on `registry` (the shared one by default): `name` is the entity property that holds it, `fields` its schema.
+- `defineDevAction` (function from [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)): Registers a dev action on `registry` (the shared one by default).
 - `defineGlyph` (function from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): Defines a glyph on `registry` (the shared one by default) and returns it.
 - `defineKind` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Declares a kind on the shared registry (`Registry.defineKind`).
 - `defineLevel` (function from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): Registers a level on `registry` (the shared one by default) after checking its text compiles against that registry's legend; returns the entry.
@@ -1232,6 +1235,7 @@ game agent's manual.
 - `defineSetBuild` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Registers build `id` with the proportions clip set `setId`'s clips were captured on (retarget.ts `restBuild` of its first source's rest body, or `source`'s), once, and returns it: `build:mannequin` from `clipset:quaternius` is the build engine/gfx/puppets/bodies/mannequin.ts draws, which the sim's animator needs before the view's body exists.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
 - `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
+- `DevActionSpec` (interface from [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)): How a dev action is written: `defineDevAction(name, spec)`.
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
 - `driveMover` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Drives a mover's body toward its pose at `sim.time` (the end of the step being run): `driveMover(physics, m, w)`.
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).

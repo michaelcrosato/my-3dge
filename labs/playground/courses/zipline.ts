@@ -105,7 +105,7 @@ defineCourse('course:playground-zipline', {
     { name: 'jumping on: speeds up at 25.4 m/s²', metric: 'rideGain', from: RUN + JUMP + 8, to: RUN + JUMP + 23, reference: 15 * ZIP.jumpOn * DT, tolerance: { share: 0.05 } }, // prettier-ignore
     { name: 'up the line as it looks', metric: 'topRise', from: RUN + JUMP + 30, to: RUN + OFF, reference: ZIP.speed * Math.sqrt(1 - ACROSS * ACROSS), tolerance: { share: 0.02 } }, // prettier-ignore
     { name: 'jumps off keeping its speed', metric: 'speed', from: RUN + OFF + 1, to: RUN + OFF + 1, reference: ZIP.speed * ACROSS, tolerance: { share: 0.02 } }, // prettier-ignore
-    { name: 'a full jump high', metric: 'apex', from: RUN + OFF, to: RUN + OFF + 60, reference: 1.4224, tolerance: { abs: 0.03 } }, // prettier-ignore
+    { name: 'a full jump high', metric: 'apex', from: RUN + OFF, to: RUN + OFF + 60, reference: 1.4224, tolerance: { abs: 0.02 } }, // prettier-ignore
     { name: 'jumps off a slow ride at 11.3 m/s', metric: 'speed', from: 2 * RUN + 33, to: 2 * RUN + 33, reference: ZIP.jumpMax, tolerance: { share: 0.02 } }, // prettier-ignore
     { name: 'a crouch drops it at the ride’s speed', metric: 'speed', from: 2 * RUN + 123 + CROUCH, to: 2 * RUN + 123 + CROUCH, reference: byUse(CROUCH) * ACROSS, tolerance: { share: 0.02 } }, // prettier-ignore
     { name: 'three catches a jump', metric: 'catches', from: 3 * RUN + 1, to: 4 * RUN - 1, reference: 3, tolerance: { abs: 0 } }, // prettier-ignore

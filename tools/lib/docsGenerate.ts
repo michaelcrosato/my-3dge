@@ -11,8 +11,9 @@
  * directory, in path order; the root's files come first.
  *
  * @example
- * import { readModules } from './docs';
- * const docs = await generateDocs(process.cwd(), readModules(process.cwd()));
+ * import { readModule } from './docs';
+ * const modules = ['engine/core/log.ts', 'engine/core/registry.ts'].map((path) => readModule(process.cwd(), path));
+ * const docs = await generateDocs(process.cwd(), modules); // two modules' docs (x docs reads them all)
  * Object.keys(docs); // ['docs/INDEX.md', 'docs/API.md', 'docs/ERRORS.md']
  * @see tools/cmd/docs.test.ts
  */
