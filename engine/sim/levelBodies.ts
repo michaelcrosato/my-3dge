@@ -1,13 +1,16 @@
 /**
- * @file Level bodies (PLAN.md WP 3.1, WP 4.2, §5.1 "colliders from text"): a compiled level's collider descriptors
- * (engine/world/level/colliders.ts) become one fixed body in the physics world, so the level is solid exactly where
- * its text says, and as high as its glyphs stand.
+ * @file Level bodies (PLAN.md WP 3.1, WP 4.2, WP 10.5, §5.1 "colliders from text"): a compiled level's collider
+ * descriptors (engine/world/level/colliders.ts) become one fixed body in the physics world, so the level is solid
+ * exactly where its text says, and as high as its glyphs stand.
  *
  * `addLevelBodies(physics, level)` adds one fixed body in the collision group `world`: the ground slab under the whole
  * map (one tile wider all round, its top at y 0), one box per merged collider, from the ground to its glyph's top, one
  * convex hull per hull collider (a flight of stairs' wedge, the dais's frustum), whose top is the floor floorHeight
  * gives, and one upright cylinder per cylinder collider (a brazier). It returns the body's id. Queries see the level
  * from the next physics step on (engine/physics/queries.ts).
+ *
+ * `addTerrainBody(physics, terrain)` stands a terrain (engine/world/terrain.ts) as one fixed body in `world` too: one
+ * heightfield collider over its grid (engine/physics/heightfield.ts), its surface exactly `terrainHeight`'s.
  *
  * Invariants: colliders enter in the level's own order (the slab, then the descriptors as `compileLevel` lists them),
  * so the same level gives the same Rapier state and hash; the level is never changed. Friction is the prototype's 0.6.
@@ -26,6 +29,7 @@
  */
 import type { ColliderSpec, Physics } from '../physics/world';
 import type { ColliderDescriptor, CompiledLevel, Point3 } from '../world/level/types';
+import type { Terrain } from '../world/terrain';
 
 /** The level's friction: the prototype's hall. */
 export const LEVEL_FRICTION = 0.6;
@@ -51,4 +55,13 @@ function collider(part: ColliderDescriptor): ColliderSpec {
 export function addLevelBodies(physics: Physics, level: Pick<CompiledLevel, 'ground' | 'colliders'>): number {
   const colliders = [box(level.ground.min, level.ground.max), ...level.colliders.map(collider)];
   return physics.addBody({ type: 'fixed', group: 'world', colliders });
+}
+
+/** Adds a terrain's body (one fixed body: its heightfield) and returns the body's id. */
+export function addTerrainBody(physics: Physics, terrain: Terrain): number {
+  const { cols, rows, cell, origin, heights } = terrain;
+  const size = [cols * cell, rows * cell] as const;
+  const shape = { type: 'heightfield', cols, rows, size, heights } as const;
+  const position = [origin[0] + size[0] / 2, 0, origin[2] + size[1] / 2] as const;
+  return physics.addBody({ type: 'fixed', group: 'world', colliders: [{ shape, position, friction: LEVEL_FRICTION }] });
 }

@@ -27,10 +27,10 @@
  * read from its first event; the same world keeps its trace read (history, never restored), so no event plays twice.
  *
  * The level comes from the scene's `level` id (engine/world/level/level.ts), registered before the view starts
- * (`APP_NO_LEVEL`). Cameras are view state: switching one (`setCamera(code)`, `__engine.camera.set`; with `{ blend:
- * true }`, the page's live switch, it blends) never reaches the sim. Invariants: presentation only (doctrine: WebGPU
- * only): it reads the run and never writes it (the `QueryView` has no way in); one stage per view and one three.js
- * camera per projection, so switching makes no new object.
+ * (`APP_NO_LEVEL`), the terrain from its `terrain` id (WP 10.5). Cameras are view state: switching one
+ * (`setCamera(code)`, `__engine.camera.set`; with `{ blend: true }`, the page's live switch, it blends) never reaches
+ * the sim. Invariants: presentation only (doctrine: WebGPU only): it reads the run and never writes it (the `QueryView`
+ * has no way in); one stage per view, one three.js camera per projection (switching makes none).
  *
  * @example
  * // const view = createRunView({ run: () => session, registry, materials: createMaterialLibrary() });
@@ -56,6 +56,7 @@ import { queryViewOf, type QueryView } from '../sim/queryView';
 import type { Session } from '../sim/session';
 import type { EntityData } from '../sim/state';
 import { getLevel, type LevelEntry } from '../world/level/level';
+import { getTerrain } from '../world/terrain';
 
 /** The codes this module raises, with their fixes. */
 export const VIEW_CODES = defineCodes('app', {
@@ -156,8 +157,9 @@ export function createRunView(options: RunViewOptions): RunView {
   const entry = scene.level === undefined ? null : (registry.get('level', scene.level) as LevelEntry);
   const levelMaterials = (entry?.materials ?? {}) as Readonly<Record<string, string>>; // strings: the kind checks
   const levelRooms = (entry?.rooms ?? {}) as Readonly<Record<string, string>>;
+  const terrain = scene.terrain === undefined ? null : getTerrain(scene.terrain, registry);
   const fxRng = (...keys: readonly (string | number)[]) => options.run().world.fxRng(...keys);
-  const stage = createStage({ level, materials: options.materials, registry, log: options.log, fxRng, levelMaterials, levelRooms }); // prettier-ignore
+  const stage = createStage({ level, terrain, materials: options.materials, registry, log: options.log, fxRng, levelMaterials, levelRooms }); // prettier-ignore
   /**
    * Turns the effects on or off by the view setting `gfx.effects` (a registry without it: on), before they read;
    * returns whether that changed them.

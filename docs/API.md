@@ -39,6 +39,7 @@ game agent's manual.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `addProp` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a dynamic body of one `shape` (a hull too: a rock), of `PROP_MATERIAL` unless `spec` says otherwise; its id.
 - `addSensor` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a body whose one collider is a sensor of `shape`: it blocks nothing and detects bodies.
+- `addTerrainBody` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a terrain's body (one fixed body: its heightfield) and returns the body's id.
 - `addZipline` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a zipline and its poles (see the file comment); returns its entity.
 - `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
@@ -284,6 +285,7 @@ game agent's manual.
 - `createSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Puts a sky on `scene`: the light pool lit from `level`'s light spots (phases from `rng`, a visual stream), the sun, the dome, the backdrop and the atmosphere; shows `sky:daylight` until `set` names another preset.
 - `createStore` (function from [`engine/app/store.ts`](../engine/app/store.ts)): Makes a store (see the file comment).
 - `createStyleSet` (function from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): Makes a style set (see the file comment).
+- `createTerrainMeshes` (function from [`engine/gfx/terrain.ts`](../engine/gfx/terrain.ts)): Draws `terrain` (see the file comment).
 - `createViewCamera` (function from [`engine/gfx/cameras/presets.ts`](../engine/gfx/cameras/presets.ts)): A classic view as a `Camera` (`options.view` names it; codes.ts's `VIEW_LABELS` has the names in words).
 - `createVirtualDevice` (function from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): Makes a virtual device, holding nothing.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
@@ -355,6 +357,7 @@ game agent's manual.
 - `defineSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`.
 - `defineSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): Defines a song on `registry` (the shared one by default) and returns it.
 - `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
+- `defineTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Registers a terrain on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
 - `defineTexture` (function from [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)): Defines a texture generator on `registry` (the shared one by default) and returns it.
 - `defineTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): Registers a touch layout (on the shared registry by default).
 - `DEGREES_PER_COUNT` (const from [`engine/input/look.ts`](../engine/input/look.ts)): One mouse count at sensitivity 1, degrees: Source's and Apex's `m_yaw` and `m_pitch`.
@@ -463,6 +466,7 @@ game agent's manual.
 - `getSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
 - `getSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): The song `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
 - `getTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The telegraph `id` of `registry` (the shared one by default); a missing id gives `telegraph:arc`, with a warning.
+- `getTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The terrain `id` of `registry` (the shared one by default), made afresh: its name is the id without `terrain:`.
 - `getTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): The touch layout `id`.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
@@ -597,6 +601,7 @@ game agent's manual.
 - `lyingOf` (function from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body whose chest turned by `chest` (a world rotation) lies: face up when the chest's front looks up.
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
 - `makePose` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): A checked, frozen pose: `fields` over `POSE_DEFAULTS`.
+- `makeTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Makes `spec`'s terrain, named `name` (see the file comment); throws `CORE_BAD_SPEC` naming its problems.
 - `MANNEQUIN_SLOTS` (const from [`engine/gfx/puppets/bodies/mannequin.ts`](../engine/gfx/puppets/bodies/mannequin.ts)): The source model's two materials: the body, and its joint rings.
 - `mannequinBody` (function from [`engine/gfx/puppets/bodies/mannequin.ts`](../engine/gfx/puppets/bodies/mannequin.ts)): `body` (a set's measured figure) as a body for `build`, the rest body `R`'s own (see the file comment).
 - `MannequinData` (interface from [`engine/gfx/puppets/bodies/mannequin.ts`](../engine/gfx/puppets/bodies/mannequin.ts)): A set's `body`, as the importer measured it (mm).
@@ -654,6 +659,8 @@ game agent's manual.
 - `NAV_GRID_FIELDS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): The options of `new NavGrid(level, options)`.
 - `NavGrid` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): The walkable grid of a compiled level, and the searches over it (see the file comment).
 - `NavGridOptions` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
+- `NavSource` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid is built from: a compiled level, or a surface.
+- `NavSurface` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid walks besides a compiled level: `cols` × `rows` tiles `tile` metres wide from `origin` ([x, z], [0, 0] by default), which are `walkable`, each one's `floor` (m), and whether a body on tile (col, row) steps to (col + dc, row + dr) climbing at most `climb` metres on the way.
 - `NEAREST_RINGS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
 - `nearMiss` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` stands outside telegraph `t` but within its `near` metres (scaled).
 - `normalizedLens` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): `clip` with every angle of every key folded to (−180°, 180°], for reading (see the file comment).
@@ -835,6 +842,8 @@ game agent's manual.
 - `SayOptions` (interface from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): What one `say` shows.
 - `ScaledLook` (interface from [`engine/input/look.ts`](../engine/input/look.ts)): What the camera takes (engine/gfx/cameras/pose.ts `CameraInput`): look `[right, up]` in rad, turn as rates.
 - `scaleLook` (function from [`engine/input/look.ts`](../engine/input/look.ts)): What the camera takes from `raw` under `options`, aiming down sights or not (see the file comment).
+- `ScatterRule` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How `scatterTerrain` places (see its comment).
+- `scatterTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Stateless placement (shardfall's decor): each cell holds one place with the chance `density`, jittered inside it, turned and sized, by hashes of the terrain's seed, the rule's `salt` and the cell, never a stream; so a cell's place never depends on another's, and the same rule gives the same places.
 - `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
 - `SCENE_PROP_FIELDS` (const from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `sceneProp`'s fields.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
@@ -958,6 +967,24 @@ game agent's manual.
 - `telegraphGap` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): How far a body at `point` (its feet, metres) with `radius` stands outside telegraph `t` placed at `place`, minus the radius: between its heights, the signed distance to its shape on the floor (below 0 inside); above or below them, the distance to the extruded shape.
 - `TelegraphPlace` (interface from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A telegraph where it stands: plain data, as a component or a frame's list holds it.
 - `TelegraphSpec` (type from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): What `defineTelegraph` takes: any field.
+- `Terrain` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A made terrain: its grid, its heights and what the queries and the drawing read (see the file comment).
+- `TERRAIN_FIELDS` (const from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The fields of a `terrain` entry (see the file comment).
+- `TerrainEntry` (type from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A `terrain` entry: its spec.
+- `TerrainFlat` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A footprint a terrain flattens.
+- `terrainGrade` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How steep the ground is at (x, z): metres risen a metre along its slope (1 is 45°); null outside the grid.
+- `terrainGradient` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How the ground rises at (x, z), as metres a metre east and south: its triangle's; null outside the grid.
+- `terrainHeight` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The ground's height (m) at (x, z): the collider's surface (see the file comment); null outside the grid.
+- `TerrainHill` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A dome added to a terrain.
+- `TerrainMeshes` (interface from [`engine/gfx/terrain.ts`](../engine/gfx/terrain.ts)): A terrain's meshes (see the file comment).
+- `TerrainMeshesOptions` (interface from [`engine/gfx/terrain.ts`](../engine/gfx/terrain.ts)): What `createTerrainMeshes` needs: where materials come from.
+- `terrainNavGrid` (function from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): A navigation grid over `terrain`'s cells (see the file comment).
+- `TerrainNavOptions` (interface from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): What `terrainNavGrid` takes: a grid's options, and the steepest ground it walks (m a metre; 1 by default).
+- `terrainNavSurface` (function from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): The walkable surface of `terrain`'s cells (see the file comment).
+- `terrainNormal` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The ground's upward unit normal at (x, z): its triangle's; null outside the grid.
+- `TerrainPlace` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A place `scatterTerrain` picks: on the ground, a turn about +Y (rad) and a size factor.
+- `terrainProblems` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The problems with a terrain spec's shape (beyond its fields' types); none when it makes a terrain.
+- `TerrainSpec` (type from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): What `defineTerrain` and `makeTerrain` take: each field of `TERRAIN_FIELDS` (`size` required).
+- `terrainSurface` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The surface tag underfoot at (x, z): `steepSurface` where it is steep, else `surface`; '' outside the grid.
 - `Texel` (interface from [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)): One texel as a generator writes it.
 - `TextureBake` (interface from [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)): A baked texture: its source, its maps and its hash.
 - `TextureContext` (interface from [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)): What `create` is given: the parameters (defaults filled), the seed, and the size the texture bakes at.
@@ -1064,6 +1091,7 @@ game agent's manual.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `addProp` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a dynamic body of one `shape` (a hull too: a rock), of `PROP_MATERIAL` unless `spec` says otherwise; its id.
 - `addSensor` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a body whose one collider is a sensor of `shape`: it blocks nothing and detects bodies.
+- `addTerrainBody` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a terrain's body (one fixed body: its heightfield) and returns the body's id.
 - `addZipline` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a zipline and its poles (see the file comment); returns its entity.
 - `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
@@ -1245,6 +1273,7 @@ game agent's manual.
 - `defineSetBuild` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Registers build `id` with the proportions clip set `setId`'s clips were captured on (retarget.ts `restBuild` of its first source's rest body, or `source`'s), once, and returns it: `build:mannequin` from `clipset:quaternius` is the build engine/gfx/puppets/bodies/mannequin.ts draws, which the sim's animator needs before the view's body exists.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
 - `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
+- `defineTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Registers a terrain on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
 - `DevActionSpec` (interface from [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)): How a dev action is written: `defineDevAction(name, spec)`.
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
 - `driveMover` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Drives a mover's body toward its pose at `sim.time` (the end of the step being run): `driveMover(physics, m, w)`.
@@ -1294,6 +1323,7 @@ game agent's manual.
 - `getMovement` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): The movement profile `id`.
 - `getProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): The prop `id` of `registry` (the shared one by default); a missing id gives `prop:crate`, with a warning.
 - `getTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The telegraph `id` of `registry` (the shared one by default); a missing id gives `telegraph:arc`, with a warning.
+- `getTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The terrain `id` of `registry` (the shared one by default), made afresh: its name is the id without `terrain:`.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `Ground` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): The ground under a point: its height, its normal and the body it belongs to.
@@ -1387,6 +1417,7 @@ game agent's manual.
 - `Lying` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body lies: on its back (`up`) or on its face (`down`).
 - `lyingOf` (function from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body whose chest turned by `chest` (a world rotation) lies: face up when the chest's front looks up.
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
+- `makeTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Makes `spec`'s terrain, named `name` (see the file comment); throws `CORE_BAD_SPEC` naming its problems.
 - `MaskName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A preset bone mask's name.
 - `MASKS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The preset bone masks.
 - `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
@@ -1423,6 +1454,8 @@ game agent's manual.
 - `NAV_GRID_FIELDS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): The options of `new NavGrid(level, options)`.
 - `NavGrid` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): The walkable grid of a compiled level, and the searches over it (see the file comment).
 - `NavGridOptions` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
+- `NavSource` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid is built from: a compiled level, or a surface.
+- `NavSurface` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid walks besides a compiled level: `cols` × `rows` tiles `tile` metres wide from `origin` ([x, z], [0, 0] by default), which are `walkable`, each one's `floor` (m), and whether a body on tile (col, row) steps to (col + dc, row + dr) climbing at most `climb` metres on the way.
 - `NEAREST_RINGS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
 - `nearMiss` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` stands outside telegraph `t` but within its `near` metres (scaled).
 - `normalizedLens` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): `clip` with every angle of every key folded to (−180°, 180°], for reading (see the file comment).
@@ -1525,6 +1558,8 @@ game agent's manual.
 - `sampleBaked` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): Samples `baked` at `t` seconds: its 23 local rotations into `rotations` (slerped between frames, as three.js's mixer does) and its pelvis into `hips` (lerped).
 - `samplePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): The 36 body points at time `t` on rest body `R`, written into `out` (a new Float32Array, as the source's, unless given; pass a Float64Array for full precision).
 - `SampleState` (interface from [`engine/anim/states.ts`](../engine/anim/states.ts)): A named body state and how long it is held, seconds: a body stepped through it shows it.
+- `ScatterRule` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How `scatterTerrain` places (see its comment).
+- `scatterTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Stateless placement (shardfall's decor): each cell holds one place with the chance `density`, jittered inside it, turned and sized, by hashes of the terrain's seed, the rule's `salt` and the cell, never a stream; so a cell's place never depends on another's, and the same rule gives the same places.
 - `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
 - `SCENE_PROP_FIELDS` (const from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `sceneProp`'s fields.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
@@ -1609,6 +1644,22 @@ game agent's manual.
 - `telegraphGap` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): How far a body at `point` (its feet, metres) with `radius` stands outside telegraph `t` placed at `place`, minus the radius: between its heights, the signed distance to its shape on the floor (below 0 inside); above or below them, the distance to the extruded shape.
 - `TelegraphPlace` (interface from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A telegraph where it stands: plain data, as a component or a frame's list holds it.
 - `TelegraphSpec` (type from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): What `defineTelegraph` takes: any field.
+- `Terrain` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A made terrain: its grid, its heights and what the queries and the drawing read (see the file comment).
+- `TERRAIN_FIELDS` (const from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The fields of a `terrain` entry (see the file comment).
+- `TerrainEntry` (type from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A `terrain` entry: its spec.
+- `TerrainFlat` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A footprint a terrain flattens.
+- `terrainGrade` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How steep the ground is at (x, z): metres risen a metre along its slope (1 is 45°); null outside the grid.
+- `terrainGradient` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How the ground rises at (x, z), as metres a metre east and south: its triangle's; null outside the grid.
+- `terrainHeight` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The ground's height (m) at (x, z): the collider's surface (see the file comment); null outside the grid.
+- `TerrainHill` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A dome added to a terrain.
+- `terrainNavGrid` (function from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): A navigation grid over `terrain`'s cells (see the file comment).
+- `TerrainNavOptions` (interface from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): What `terrainNavGrid` takes: a grid's options, and the steepest ground it walks (m a metre; 1 by default).
+- `terrainNavSurface` (function from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): The walkable surface of `terrain`'s cells (see the file comment).
+- `terrainNormal` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The ground's upward unit normal at (x, z): its triangle's; null outside the grid.
+- `TerrainPlace` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A place `scatterTerrain` picks: on the ground, a turn about +Y (rad) and a size factor.
+- `terrainProblems` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The problems with a terrain spec's shape (beyond its fields' types); none when it makes a terrain.
+- `TerrainSpec` (type from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): What `defineTerrain` and `makeTerrain` take: each field of `TERRAIN_FIELDS` (`size` required).
+- `terrainSurface` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The surface tag underfoot at (x, z): `steepSurface` where it is steep, else `surface`; '' outside the grid.
 - `tileAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The tile under (x, z) metres, or null outside the map.
 - `TileRect` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A rectangle of tiles, inclusive: `[col0, row0, col1, row1]`.
 - `Timeline` (class from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): Phases played in order, one fixed step at a time.
@@ -3897,6 +3948,12 @@ For the agents who maintain the engine.
 
 - `roofGeometry` (function): The roof's slab (see the file comment): tops in slot 0, undersides and edges in slot 1.
 
+### [`engine/gfx/level/runs.ts`](../engine/gfx/level/runs.ts)
+
+- `runMeshes` (function): The level's meshes, each run named by its tiles (see the file comment).
+- `RunMeshesOptions` (interface): How `runMeshes` draws: the materials, the level's swaps and its rooms' floors, and where advice goes.
+- `splitRuns` (function): The level with each block descriptor split into one descriptor per run (merged rectangle), surfaces whole, and for each descriptor the run it draws (null for one that was not split).
+
 ### [`engine/gfx/level/shapes.ts`](../engine/gfx/level/shapes.ts)
 
 - `buildShape` (function): Builds `descriptor`'s mesh in `recipe`'s shape, with `materials` (the recipe's, compiled).
@@ -3989,6 +4046,10 @@ For the agents who maintain the engine.
 - `materialKind` (function): Declares the kind `material` (and `texture`, which maps need) on `registry`, with the built-ins, unless it has it.
 - `MaterialSpec` (type): What `defineMaterial` takes: any of the fields, each with its default.
 - `textureRefOf` (function): A material's `map` filled (null for none).
+
+### [`engine/gfx/materials/nodeCopy.ts`](../engine/gfx/materials/nodeCopy.ts)
+
+- `nodeCopy` (function): A node material drawn as `material` is, with an id of its own (null when three.js has none for it).
 
 ### [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)
 
@@ -4402,7 +4463,6 @@ For the agents who maintain the engine.
 - `createStage` (function): Builds a stage (see the file comment).
 - `placeableKinds` (function): The component kinds whose entities stand somewhere: they declare `x` and `z` as numbers in metres.
 - `placeOf` (function): Where `entity` stands, from the first of `kinds` it holds; undefined when it holds none.
-- `splitRuns` (function): The level with each block descriptor split into one descriptor per run (merged rectangle), surfaces whole, and for each descriptor the run it draws (null for one that was not split).
 - `Stage` (interface): A running scene's presentation graph (see the file comment).
 - `StageOptions` (interface): What a stage is made of: the level (none for an empty stage), where materials come from, and its registry.
 - `StandInPlace` (interface): Where a stand-in stands and how it looks, read from its entity's placing component.
@@ -4440,6 +4500,25 @@ For the agents who maintain the engine.
 - `createStageSky` (function): Makes the stage's lights on `scene` (see the file comment); the stage's own show until a sky is asked for.
 - `StageSky` (interface): The stage's lights (see the file comment).
 - `StageSkyOptions` (interface): What the stage's lights are made from.
+
+### [`engine/gfx/terrain.ts`](../engine/gfx/terrain.ts)
+
+- `CHUNK` (const): A chunk's side, in cells, at most.
+- `chunkGeometry` (function): One level of a chunk: cells `c0`… and `r0`… of `terrain`, `cols` × `rows` of them, taking every `step`-th corner, positions from `middle` (m), with its skirt (see the file comment).
+- `createTerrainMeshes` (function): Draws `terrain` (see the file comment).
+- `levelDistance` (function): How far `camera` stands from a chunk whose middle is `at`, as its level of detail reads it: the distance, from a perspective camera; from an orthographic one, how far a 50° lens stands to frame its height (m).
+- `LOD_DISTANCES` (const): From how far (m) each level shows.
+- `LOD_STEPS` (const): The levels of detail: the corners each takes, every one, every second, every fourth.
+- `SKIRT` (const): How far a chunk's skirt hangs below its edge (m).
+- `TerrainMeshes` (interface): A terrain's meshes (see the file comment).
+- `TerrainMeshesOptions` (interface): What `createTerrainMeshes` needs: where materials come from.
+- `terrainNormals` (function): Every corner's smooth normal: central differences of the heights (one-sided at the edges).
+
+### [`engine/gfx/terrainSplat.ts`](../engine/gfx/terrainSplat.ts)
+
+- `BAND` (const): How far either side of the steep grade (m a metre) the steep layer blends in.
+- `createTerrainSplat` (function): Makes the splat of `terrain`, `layers` the steep and the high layers' materials (see the file comment).
+- `TerrainSplat` (interface): The terrain's splat: its materials (see the file comment).
 
 ### [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)
 
@@ -5004,6 +5083,11 @@ For the agents who maintain the engine.
 - `queryBits` (function): Rapier's interaction groups for a query that hits the groups named (all of them when none are).
 - `touches` (function): Whether colliders of groups `a` and `b` touch.
 
+### [`engine/physics/heightfield.ts`](../engine/physics/heightfield.ts)
+
+- `heightfieldDesc` (function): Rapier's collider description of `shape`, checked (see the file comment); `where` names it in errors.
+- `HeightfieldShape` (interface): A heightfield, for bodies only (see the file comment).
+
 ### [`engine/physics/hull.ts`](../engine/physics/hull.ts)
 
 - `hullFits` (function): Whether a capsule of straight middle `height` fits where `character`'s body is, its feet or its centre kept (see the file comment): what standing up asks before it stands.
@@ -5321,6 +5405,7 @@ For the agents who maintain the engine.
 ### [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)
 
 - `addLevelBodies` (function): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id.
+- `addTerrainBody` (function): Adds a terrain's body (one fixed body: its heightfield) and returns the body's id.
 - `LEVEL_FRICTION` (const): The level's friction: the prototype's hall.
 
 ### [`engine/sim/movementApi.ts`](../engine/sim/movementApi.ts)
@@ -5434,6 +5519,33 @@ For the agents who maintain the engine.
 - `createSession` (function): Starts a scene as a recorded session: `startScene`, plus the recording.
 - `Session` (interface): A started scene that records its inputs from step 0, so `record()` returns it as a replay.
 - `SESSION_CODES` (const): The codes this module raises, with their fixes.
+
+### [`engine/sim/siteApi.ts`](../engine/sim/siteApi.ts)
+
+- `addTerrainBody` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a terrain's body (one fixed body: its heightfield) and returns the body's id.
+- `defineTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Registers a terrain on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
+- `getTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The terrain `id` of `registry` (the shared one by default), made afresh: its name is the id without `terrain:`.
+- `makeTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Makes `spec`'s terrain, named `name` (see the file comment); throws `CORE_BAD_SPEC` naming its problems.
+- `NavSource` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid is built from: a compiled level, or a surface.
+- `NavSurface` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid walks besides a compiled level: `cols` × `rows` tiles `tile` metres wide from `origin` ([x, z], [0, 0] by default), which are `walkable`, each one's `floor` (m), and whether a body on tile (col, row) steps to (col + dc, row + dr) climbing at most `climb` metres on the way.
+- `ScatterRule` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How `scatterTerrain` places (see its comment).
+- `scatterTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Stateless placement (shardfall's decor): each cell holds one place with the chance `density`, jittered inside it, turned and sized, by hashes of the terrain's seed, the rule's `salt` and the cell, never a stream; so a cell's place never depends on another's, and the same rule gives the same places.
+- `Terrain` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A made terrain: its grid, its heights and what the queries and the drawing read (see the file comment).
+- `TERRAIN_FIELDS` (const from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The fields of a `terrain` entry (see the file comment).
+- `TerrainEntry` (type from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A `terrain` entry: its spec.
+- `TerrainFlat` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A footprint a terrain flattens.
+- `terrainGrade` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How steep the ground is at (x, z): metres risen a metre along its slope (1 is 45°); null outside the grid.
+- `terrainGradient` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How the ground rises at (x, z), as metres a metre east and south: its triangle's; null outside the grid.
+- `terrainHeight` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The ground's height (m) at (x, z): the collider's surface (see the file comment); null outside the grid.
+- `TerrainHill` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A dome added to a terrain.
+- `terrainNavGrid` (function from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): A navigation grid over `terrain`'s cells (see the file comment).
+- `TerrainNavOptions` (interface from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): What `terrainNavGrid` takes: a grid's options, and the steepest ground it walks (m a metre; 1 by default).
+- `terrainNavSurface` (function from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): The walkable surface of `terrain`'s cells (see the file comment).
+- `terrainNormal` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The ground's upward unit normal at (x, z): its triangle's; null outside the grid.
+- `TerrainPlace` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A place `scatterTerrain` picks: on the ground, a turn about +Y (rad) and a size factor.
+- `terrainProblems` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The problems with a terrain spec's shape (beyond its fields' types); none when it makes a terrain.
+- `TerrainSpec` (type from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): What `defineTerrain` and `makeTerrain` take: each field of `TERRAIN_FIELDS` (`size` required).
+- `terrainSurface` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The surface tag underfoot at (x, z): `steepSurface` where it is steep, else `surface`; '' outside the grid.
 
 ### [`engine/sim/state.ts`](../engine/sim/state.ts)
 
@@ -5787,6 +5899,8 @@ For the agents who maintain the engine.
 - `NAV_GRID_FIELDS` (const): The options of `new NavGrid(level, options)`.
 - `NavGrid` (class): The walkable grid of a compiled level, and the searches over it (see the file comment).
 - `NavGridOptions` (type): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
+- `NavSource` (type): What a grid is built from: a compiled level, or a surface.
+- `NavSurface` (interface): What a grid walks besides a compiled level: `cols` × `rows` tiles `tile` metres wide from `origin` ([x, z], [0, 0] by default), which are `walkable`, each one's `floor` (m), and whether a body on tile (col, row) steps to (col + dc, row + dr) climbing at most `climb` metres on the way.
 - `NEAREST_RINGS` (const): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
 
 ### [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)
@@ -5876,6 +5990,37 @@ For the agents who maintain the engine.
 - `telegraphKind` (function): Declares the kind `telegraph` on `registry`, with its four shapes, unless it has it.
 - `TelegraphPlace` (interface): A telegraph where it stands: plain data, as a component or a frame's list holds it.
 - `TelegraphSpec` (type): What `defineTelegraph` takes: any field.
+
+### [`engine/world/terrain.ts`](../engine/world/terrain.ts)
+
+- `defineTerrain` (function): Registers a terrain on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
+- `getTerrain` (function): The terrain `id` of `registry` (the shared one by default), made afresh: its name is the id without `terrain:`.
+- `makeTerrain` (function): Makes `spec`'s terrain, named `name` (see the file comment); throws `CORE_BAD_SPEC` naming its problems.
+- `ScatterRule` (interface): How `scatterTerrain` places (see its comment).
+- `scatterTerrain` (function): Stateless placement (shardfall's decor): each cell holds one place with the chance `density`, jittered inside it, turned and sized, by hashes of the terrain's seed, the rule's `salt` and the cell, never a stream; so a cell's place never depends on another's, and the same rule gives the same places.
+- `Terrain` (interface): A made terrain: its grid, its heights and what the queries and the drawing read (see the file comment).
+- `TERRAIN_FIELDS` (const): The fields of a `terrain` entry (see the file comment).
+- `TerrainEntry` (type): A `terrain` entry: its spec.
+- `TerrainFlat` (interface): A footprint a terrain flattens.
+- `terrainGrade` (function): How steep the ground is at (x, z): metres risen a metre along its slope (1 is 45°); null outside the grid.
+- `terrainGradient` (function): How the ground rises at (x, z), as metres a metre east and south: its triangle's; null outside the grid.
+- `terrainHeight` (function): The ground's height (m) at (x, z): the collider's surface (see the file comment); null outside the grid.
+- `TerrainHill` (interface): A dome added to a terrain.
+- `terrainNormal` (function): The ground's upward unit normal at (x, z): its triangle's; null outside the grid.
+- `TerrainPlace` (interface): A place `scatterTerrain` picks: on the ground, a turn about +Y (rad) and a size factor.
+- `terrainProblems` (function): The problems with a terrain spec's shape (beyond its fields' types); none when it makes a terrain.
+- `TerrainSpec` (type): What `defineTerrain` and `makeTerrain` take: each field of `TERRAIN_FIELDS` (`size` required).
+- `terrainSurface` (function): The surface tag underfoot at (x, z): `steepSurface` where it is steep, else `surface`; '' outside the grid.
+
+### [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)
+
+- `terrainNavGrid` (function): A navigation grid over `terrain`'s cells (see the file comment).
+- `TerrainNavOptions` (interface): What `terrainNavGrid` takes: a grid's options, and the steepest ground it walks (m a metre; 1 by default).
+- `terrainNavSurface` (function): The walkable surface of `terrain`'s cells (see the file comment).
+
+### [`engine/world/tileHeap.ts`](../engine/world/tileHeap.ts)
+
+- `TileHeap` (class): An indexed binary min-heap of tiles keyed by `keys[tile]`, ties to the lower tile; pushing a held tile re-sorts it.
 
 ### [`engine/world/traverse.ts`](../engine/world/traverse.ts)
 
@@ -6311,6 +6456,10 @@ For the agents who maintain the engine.
 - `mountFeelPanel` (function): Mounts the panel on `document` over `inspector`: open when the query asks, F toggling it.
 - `PLAYGROUND_FEEL_SETTINGS` (const): The playground's feel setting: whether the panel shows when the page opens.
 
+### [`labs/playground/ground.ts`](../labs/playground/ground.ts)
+
+- `PLAYGROUND_GROUND` (const): The ground's materials: the hill's turf, then its rock.
+
 ### [`labs/playground/levels/gym.ts`](../labs/playground/levels/gym.ts)
 
 - `GYM_BALLOON` (const): The redeploy balloon: a vertical line from the floor up to the balloon (docs/PLAYGROUND.md §2.2's stands 60 m up on the hill; the gym's 90 m, so a course glides, then dives to 35 m/s, before the landing pose takes over at 30 m).
@@ -6354,6 +6503,13 @@ For the agents who maintain the engine.
 - `GYM` (const): The gym, compiled: its colliders for the physics, its tiles and spawn for the scene.
 - `GYM_SETTINGS` (const): The gym's settings: each reachable through `x set`, URL parameters and `__engine.set`.
 - `GYM_START` (const): Where the player starts: the spawn `@` the gym's map marks.
+
+### [`labs/playground/scenes/hill.ts`](../labs/playground/scenes/hill.ts)
+
+- `default` (default): The hill, `playground:hill` (docs/PLAYGROUND.md §2.2, PLAN.md WP 10.5): the block's ground as terrain, before WP 13.18 stands the site's levels on it: 96 × 96 m on a 1 m grid, rolling 0.6 m, and in the east the hill (x 72 to 96) rising to 10 m over the east edge's middle in slopes up to 29° (10° to 30° over most of its flank: slides gain speed down it), turf over rock where it is steepest; the player at its foot facing up it, east.
+- `hill` (const): The hill: its terrain, and the player at its foot facing up it.
+- `HILL` (const): The block's ground, made: the hill is its east quarter.
+- `HILL_START` (const): Where the player starts: at the hill's foot on its west edge's middle, on the ground.
 
 ### [`labs/playground/views.ts`](../labs/playground/views.ts)
 

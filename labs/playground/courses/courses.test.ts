@@ -4,7 +4,8 @@
  * bounds (labs/playground/courses/bounds.ts) besides its own numbers, a run's under its label, and passes, every
  * number within its tolerance: the run `node x feel labs/playground` makes (tools/cmd/feel.test.ts runs it through
  * the command). The bounds take four numbers for each
- * camera, three for first person, and watch a camera's where a course names the WP that will make it pass.
+ * camera, three for first person, and watch a camera's where a course names the WP that will make it pass. The hill's
+ * course runs on the hill's terrain (WP 10.5).
  * @see labs/playground/courses/strip.ts
  * @see labs/playground/courses/jumps.ts
  * @see labs/playground/courses/air.ts
@@ -37,6 +38,7 @@ import { BOUNCE_RUNS, CLIMB_RUNS } from './climb';
 import { CRAWL_STARTS } from './crawl';
 import { FENCE_RUNS } from './fences';
 import { HANG_STARTS } from './hang';
+import './hill';
 import { JUMPS_START } from './jumps';
 import { LADDER_STARTS } from './ladder';
 import { LAUNCHER_STARTS } from './launcher';
@@ -102,4 +104,12 @@ describe('the playground’s courses', () => {
       expect(result.pass).toBe(true);
     });
   }
+
+  it('hill: keeps every number within its tolerance, on the hill’s terrain', () => {
+    const course = getCourse('course:playground-hill');
+    expect(course.scene).toBe('playground:hill');
+    const result = runCourse(course);
+    expect(result.results.filter((r) => !r.pass)).toEqual([]);
+    expect(result.pass).toBe(true);
+  });
 });

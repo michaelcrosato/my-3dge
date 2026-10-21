@@ -5,7 +5,8 @@
  * wide as its glyph says; the hall's hulls (its stairs and the dais) stand within 1 cm of floorHeight, probed. A level
  * written as storeys (WP 13.13, fixtures/levels/storeys/): the bodies stand each storey's floors where floorBelow says;
  * the controller walks up the house's flights from the cellar to the upper floor, and stands on the gable's slope and
- * on the shed's flat roof.
+ * on the shed's flat roof. A terrain (WP 10.5): its body stands where terrainHeight says, and the controller walks up
+ * a hillside and down it again on the ground.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -21,8 +22,9 @@ import { compileLevel } from '../world/level/compile';
 import { floorBelow, floorHeight } from '../world/level/heights';
 import { roofHeight } from '../world/level/roofs';
 import type { CompiledLevel } from '../world/level/types';
+import { makeTerrain, terrainHeight, type Terrain } from '../world/terrain';
 import { spawnActor } from './actors';
-import { addLevelBodies, LEVEL_FRICTION } from './levelBodies';
+import { addLevelBodies, addTerrainBody, LEVEL_FRICTION } from './levelBodies';
 import { defineScene } from './scene';
 import { createSession } from './session';
 
@@ -215,5 +217,58 @@ describe('a level written as storeys (fixtures/levels/storeys/, WP 13.13)', () =
     const flat = onLevel('storeys-test:shed', STOREYS.shed, [1.5, 4, 2]);
     for (let i = 0; i < 120; i++) flat.session.step({});
     expect(flat.feet().y).toBeCloseTo(2.7, 2);
+  });
+});
+
+describe('a terrain’s body (WP 10.5)', () => {
+  // A hillside rising east to 6 m over 20 m (about 20° on its flank), with gentle noise, from a corner off the origin.
+  const HILL: Terrain = makeTerrain({ size: [32, 16], origin: [-6, 1, -8], seed: 2, height: 0.4, scale: 12, hills: [{ at: [26, 0], radius: 24, height: 6 }] }); // prettier-ignore
+
+  it('stands the terrain where terrainHeight says, one fixed body', () => {
+    const physics = createPhysics();
+    const id = addTerrainBody(physics, HILL);
+    physics.step({ dt: 1 / 60, settings: createSettings().sim });
+    expect([physics.bodies(), physics.readBody(id).type]).toEqual([[id], 'fixed']);
+    let worst = 0;
+    for (let x = -5.9; x < 26; x += 0.37) {
+      for (let z = -7.9; z < 8; z += 0.41) {
+        worst = Math.max(worst, Math.abs(physics.probe(x, z)!.y - terrainHeight(HILL, x, z)!));
+      }
+    }
+    expect(worst).toBeLessThan(2e-4); // a float32 ray from 1 km up
+    physics.dispose();
+  });
+
+  it('carries the controller up the hillside and down it again, on the ground', () => {
+    const scene = defineScene('terrain-test:hillside', {
+      physics: true,
+      setup(w) {
+        addTerrainBody(physicsOf(w), HILL);
+        spawnActor(w, { at: [-4, terrainHeight(HILL, -4, 0)!, 0], character: createCharacter({}) });
+      },
+    });
+    const session = createSession(scene, { seed: 1 });
+    const feet = () => (session.world.query('actor') as unknown as { actor: { x: number; y: number; z: number } }[])[0].actor; // prettier-ignore
+    const onGround = () => feet().y - terrainHeight(HILL, feet().x, feet().z)!;
+    const [up, down] = [
+      [Infinity, -Infinity],
+      [Infinity, -Infinity],
+    ];
+    for (let i = 0; i < 300; i++) {
+      session.step({ move: [1, 0] });
+      if (i > 30) [up[0], up[1]] = [Math.min(up[0], onGround()), Math.max(up[1], onGround())];
+    }
+    const top = { ...feet() };
+    expect(top.x).toBeGreaterThan(15);
+    expect(top.y).toBeGreaterThan(4);
+    for (let i = 0; i < 300; i++) {
+      session.step({ move: [-1, 0] });
+      [down[0], down[1]] = [Math.min(down[0], onGround()), Math.max(down[1], onGround())];
+    }
+    expect(feet().x).toBeLessThan(0);
+    // Up it, the feet rest on the slope: the capsule's r (1 / cos θ − 1) and its 2 cm skin, under 7 cm. Running down a
+    // 23° stretch at 6 m/s the controller's across-then-down move hops it up to 13 cm off (measured); never under it.
+    expect([up[0], up[1]].map((v) => v >= -0.01 && v < 0.07)).toEqual([true, true]);
+    expect([down[0], down[1]].map((v) => v >= -0.01 && v < 0.15)).toEqual([true, true]);
   });
 });

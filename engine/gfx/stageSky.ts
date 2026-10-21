@@ -40,6 +40,8 @@ import type { Warmup } from './warmup';
 export interface StageSkyOptions {
   /** The level they light (its size places the sun, its light spots feed the pool), or null. */
   level: CompiledLevel | null;
+  /** Without a level, the ground they light (a terrain's): its north-west corner [x, z] and its size [x, z] (m). */
+  area?: { readonly corner: readonly [number, number]; readonly size: readonly [number, number] };
   /** Where the sky presets and light kinds are declared. */
   registry: Registry;
   /** The background the stage's own lights stand under, hex. */
@@ -70,8 +72,8 @@ export interface StageSky {
   dispose(): void;
 }
 
-/** The stage's own lights, fitted to `level` (16 × 16 m without one); added to `scene` in this order. */
-function ownLights(scene: Scene, level: CompiledLevel | null): StageSky['own'] {
+/** The stage's own lights, fitted to `level` (else `area`, else 16 × 16 m); added to `scene` in this order. */
+function ownLights(scene: Scene, level: CompiledLevel | null, area?: StageSkyOptions['area']): StageSky['own'] {
   const ambient = new HemisphereLight('#c8d4ff', '#4a3f30', 1.6);
   ambient.name = 'light:sky';
   const sun = new DirectionalLight('#fff0d8', 2.6);
@@ -81,11 +83,14 @@ function ownLights(scene: Scene, level: CompiledLevel | null): StageSky['own'] {
   sun.shadow.bias = -0.0005;
   sun.target.name = 'light:sun/target';
   scene.add(ambient, sun, sun.target);
-  const [w, d] = level ? [level.cols * level.tile, level.rows * level.tile] : [16, 16];
-  sun.position.set(w / 2 - w * 0.4, 14, d / 2 - d * 0.6);
-  sun.target.position.set(w / 2, 0, d / 2);
+  const [w, d] = level ? [level.cols * level.tile, level.rows * level.tile] : (area?.size ?? [16, 16]);
+  const [x0, z0] = level ? [0, 0] : (area?.corner ?? [0, 0]);
+  sun.position.set(x0 + w / 2 - w * 0.4, 14, z0 + d / 2 - d * 0.6);
+  sun.target.position.set(x0 + w / 2, 0, z0 + d / 2);
   const half = Math.hypot(w, d) / 2 + 2;
-  Object.assign(sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, near: 0.5, far: 60 });
+  // A level's sun reaches 60 m; a terrain's as far as its far corner.
+  const far = level || !area ? 60 : sun.position.distanceTo(sun.target.position) + half;
+  Object.assign(sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, near: 0.5, far });
   sun.shadow.camera.updateProjectionMatrix();
   return { ambient, sun };
 }
@@ -95,7 +100,7 @@ const skyParts = (sky: Sky): Object3D[] => [sky.pool.group, sky.atmosphere.ambie
 
 /** Makes the stage's lights on `scene` (see the file comment); the stage's own show until a sky is asked for. */
 export function createStageSky(scene: Scene, options: StageSkyOptions): StageSky {
-  const own = ownLights(scene, options.level);
+  const own = ownLights(scene, options.level, options.area);
   let sky: Sky | null = null;
   let shown = '';
   let budget: Pick<QualityBudget, 'shadowCasters'> = { shadowCasters: null };

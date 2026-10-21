@@ -823,3 +823,53 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   (runs per storey, the ground under the lowest slab, `levelRooms`), engine/app/view.ts and engine/world/level/level.ts
   (the entry's `rooms`), engine/world/level/{legend,compile,types}.ts (the recipes, the bounds), tools/qa/geo.ts,
   tests/pages/level-meshes.ts.
+
+## Amendment 17 (2026-10-21, WP 10.5): terrain
+
+- **A heightfield, not terraced tiles** (engine/world/terrain.ts): shardfall's terrain is terraced tiles with side
+  faces in triangle-mesh chunks; the playground's hill needs smooth slopes of 10° to 30° (docs/PLAYGROUND.md §2.2), so
+  heights stand at a grid's corners and Rapier's heightfield is the collider (engine/physics/heightfield.ts, its
+  internal edges fixed: a box sliding over a flat field's seams stays within 5 mm). Shardfall's fbm (5 octaves,
+  lacunarity 2.03), ridge term, terraces and flattened footprints carry over as the spec's fields; smooth domes
+  (`hills`) are new, to shape a designed rise; a footprint blends as `h·w + flat·(1 − w)`, exact at both ends. Its
+  stateless placement is `scatterTerrain` (hashes of the seed, a salt and the cell).
+- **The split, measured on 0.21**: the heightfield takes its heights column by column (`nrows` along z), centred on
+  the collider, each cell split from its north-east corner to its south-west one. `terrainHeight` interpolates the same
+  triangles and the finest drawn level is wound on them, so queries, collider and picture agree: probed from 1 km up
+  (a float32 ray) within 2e-4 m, normals within 5e-7.
+- **Navigation over a surface** (engine/world/terrainNav.ts): `NavGrid` takes a `NavSurface` (tiles from an `origin`,
+  which are walkable, their floors, a step test) besides a compiled level; a level's origin is 0 and its arithmetic
+  unchanged (x − 0 is x), so no golden moved. A terrain's cell is open up to a grade of 1 (45°); its heap moved to
+  engine/world/tileHeap.ts (nav.ts at its line cap). On a heightfield a terrace's riser is a cell's slope, so the grade,
+  not the climb, closes a high one.
+- **The drawing** (engine/gfx/terrain.ts): chunks of 32 cells, each three's `LOD` of every corner, every second and
+  every fourth from 0, 48 and 96 m, with 2 m skirts against cracks; normals of the full grid at every level, so the
+  light holds as levels switch. An orthographic camera stands 60 m back (engine/gfx/cameras/presets.ts), so a chunk
+  picks its level for one by what it frames (`levelDistance`: as far as a 50° lens stands to frame its height), and the
+  ground under the player is the finest in every camera.
+- **The splat** (engine/gfx/terrainSplat.ts): a node material copy of the ground layer's material in each style
+  (through the style set's `userData.restyle`; the copier is shared with the viewmodel, engine/gfx/materials/
+  nodeCopy.ts) whose colour mixes the steep layer in by the fragment's world normal (from the terrain's `steep` grade,
+  0.7: 35°) and the high one by its height, the edges wavering by fractal noise. A game names the layers' materials:
+  `material:default` alone by default (WP 13.17's building materials may give the engine turf and rock).
+- **Scenes**: a scene's `terrain` names its terrain; the view draws it (engine/app/view.ts, engine/gfx/stage.ts: with no
+  level, the stage's plane at its origin's height and the sun fitted to its area, reaching its far corner) and the
+  scene's setup stands its body (`addTerrainBody`, engine/sim/levelBodies.ts), as with a level. The names game code
+  takes are in engine/sim/siteApi.ts (sim-api.ts at its cap), WP 13.15's sites to follow there.
+- **The playground's hill** (labs/playground/scenes/hill.ts): `terrain:block`, the whole block's ground (96 × 96 m,
+  rolling 0.6 m) with the hill a 10 m dome of radius 30 m over the east edge's middle (slopes up to 28.9°, 10° to 30° on
+  most of its flank), in the playground's turf and rock (labs/playground/ground.ts); `playground:hill` takes the gym's
+  settings and `place`. A first strip of only the hill (x 72 to 96) let the replay's slide carry the player off its west
+  edge into nothing: the block's ground holds him, and is what WP 13.18's site stands on. The course `hill` (25
+  measures: the feet planted, no pops, every camera's bounds) passes; tests/replays/terrain-hill.replay.json (up the
+  flank, across it, down it in a slide gaining from 6.1 to 10.2 m/s, back up) gives one golden set in Node ×3 and
+  Chromium ×3.
+- **Measured, the controller's own**: up a 20° hillside its feet stay 0 to 7 cm over the slope (its capsule's
+  r (1 / cos θ − 1) and its skin); running down a 23° stretch at 6 m/s its across-then-down move hops it up to 13 cm off
+  the slope and back (engine/sim/levelBodies.test.ts holds both bounds). The feet's plant reads the ground under each
+  foot, so the course's planted feet pass.
+- **Beyond Owns**: engine/world/{terrainNav,tileHeap,nav}.ts, engine/gfx/{terrainSplat,stage,stageSky}.ts,
+  engine/gfx/materials/nodeCopy.ts and engine/gfx/viewmodel/material.ts (the copier), engine/gfx/level/runs.ts (split
+  from the stage at its cap), engine/physics/world.ts (the shape), engine/sim/{levelBodies,scene,siteApi}.ts,
+  engine/sim-api.ts, engine/index.ts, engine/app/view.ts, labs/playground/{ground,main}.ts, its scene and course,
+  tests/e2e/terrain.spec.ts.

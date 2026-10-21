@@ -10,7 +10,7 @@
  * Measured on r182 (WP 13.12): a skinned mesh's `positionNode` is handed the vertex before skinning, and what it
  * returns is skinned, so a lens there would act on the bind pose; the arms are therefore posed on the CPU. The ID pass
  * and the post chain's scene pass take a copy's position, so they see what the frame draws. A copy is made once per
- * source, carrying every property (`nodeCopy`) and its source's `userData` (the style set re-points it by its entry,
+ * source, carrying every property (engine/gfx/materials/nodeCopy.ts) and its source's `userData` (the style set re-points it by its entry,
  * engine/gfx/materials/styles.ts, and the meshes wrap what it gives them through this look).
  *
  * The lens's uniforms (`frame(pose, fov)`: the spread, the near plane and the camera's view, all from the frame's pose,
@@ -45,18 +45,9 @@ import {
   vec3,
   vec4,
 } from 'three/tsl';
-import {
-  Matrix4,
-  MeshBasicNodeMaterial,
-  MeshLambertNodeMaterial,
-  MeshPhongNodeMaterial,
-  MeshStandardNodeMaterial,
-  MeshToonNodeMaterial,
-  type Material,
-  type Node,
-  type NodeMaterial,
-} from 'three/webgpu';
+import { Matrix4, type Material, type Node } from 'three/webgpu';
 import { defineCodes, log as sharedLog, type Log } from '../../core/log';
+import { nodeCopy } from '../materials/nodeCopy';
 import { poseForward, poseRight, poseUp, type CameraPose } from '../cameras/pose';
 import { armsSpread, VIEWMODEL } from './lens';
 
@@ -68,35 +59,6 @@ export const VIEWMODEL_MATERIAL_CODES = defineCodes('gfx', {
     doc: 'Advice from the viewmodel (engine/gfx/viewmodel/material.ts), once per material: a material it cannot copy into a node material is drawn as it is, so first person shows the body, or the arms are no longer drawn at their own depth and a wall may cut them.', // prettier-ignore
   },
 });
-
-/** The node material three.js draws each classic material type as (its standard library's). */
-const NODE_CLASSES: Readonly<Record<string, new () => NodeMaterial>> = {
-  MeshLambertMaterial: MeshLambertNodeMaterial,
-  MeshBasicMaterial: MeshBasicNodeMaterial,
-  MeshStandardMaterial: MeshStandardNodeMaterial,
-  MeshPhongMaterial: MeshPhongNodeMaterial,
-  MeshToonMaterial: MeshToonNodeMaterial,
-};
-
-/** What a copy keeps of its own: its identity, its version and its `userData` (a deep copy of the source's). */
-const OWN = new Set(['uuid', 'version', 'userData']);
-
-/**
- * A node material drawn as `material` is, with an id of its own (null when three.js has none for it): every property
- * of the source, as three.js's `NodeLibrary.fromMaterial` turns a classic material into its node material (r182's
- * `NodeMaterial.copy`, and so `clone`, keeps the node properties alone: a cloned standard material lost its roughness).
- */
-function nodeCopy(material: Material): NodeMaterial | null {
-  const node = (material as NodeMaterial).isNodeMaterial === true;
-  const Class = node ? null : NODE_CLASSES[material.type];
-  if (!node && !Class) return null;
-  const fresh = material.clone() as unknown as Record<string, unknown>; // an id, a uuid and userData of its own
-  const copy = (Class ? new Class() : fresh) as unknown as Record<string, unknown>;
-  const source = material as unknown as Record<string, unknown>;
-  for (const key in source) if (!OWN.has(key) && !key.startsWith('_')) copy[key] = source[key];
-  [copy.uuid, copy.userData] = [fresh.uuid, fresh.userData];
-  return copy as unknown as NodeMaterial;
-}
 
 /** The viewmodel's materials (see the file comment). */
 export interface ViewmodelLook {

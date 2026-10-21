@@ -3,16 +3,20 @@
  * are split into one mesh per merged rectangle, named by their tiles, with every piece kept once; the placeable
  * component kinds are those that declare `x` and `z` in metres; stand-ins appear, move between their last two places
  * by `draw(alpha)` (the shorter way round for yaw) and leave with their entities; the warm-up registration adds the
- * stand-ins' looks to the shader key.
+ * stand-ins' looks to the shader key. A terrain with no level (WP 10.5) is the stage's ground: its chunks drawn and
+ * registered, the stage's plane under it at its origin's height, the sun and the centre fitted to its area.
  * @see engine/gfx/stage.ts
  */
 import { readFileSync } from 'node:fs';
+import { Box3, Vector3 } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { createRegistry } from '../core/registry';
 import { defineComponent } from '../sim/state';
 import { compileLevel } from '../world/level/compile';
+import { makeTerrain } from '../world/terrain';
+import { splitRuns } from './level/runs';
 import { createMaterialLibrary } from './materials/library';
-import { createStage, placeableKinds, placeOf, splitRuns } from './stage';
+import { createStage, placeableKinds, placeOf } from './stage';
 
 const room = compileLevel(readFileSync('fixtures/levels/room.txt', 'utf8'), { file: 'room.txt' });
 
@@ -112,5 +116,35 @@ describe('createStage', () => {
     expect(parts.get('stage:stand-ins')!()).toBe('0.5|material:default');
     registration.dispose();
     expect([ids, parts.size]).toEqual([[], 0]);
+  });
+
+  it('stands a terrain as the ground: its chunks drawn and registered, the plane, the sun and the centre on its area', () => {
+    const terrain = makeTerrain({ size: [24, 40], origin: [72, 1.5, 8], hills: [{ at: [96, 28], radius: 20, height: 8 }] }, 'hill'); // prettier-ignore
+    const stage = createStage({ level: null, terrain, materials: createMaterialLibrary(), registry: kinds() });
+    expect(stage.terrain?.chunks.map((lod) => lod.name)).toEqual(['terrain:hill/0,0', 'terrain:hill/0,32']);
+    expect(stage.terrain!.root.parent).toBe(stage.scene);
+    expect(stage.centre).toEqual([84, 0, 28]);
+    const ground = stage.scene.getObjectByName('stage/ground')!;
+    ground.updateMatrixWorld(true);
+    const box = new Box3().setFromObject(ground);
+    expect([box.min.y, box.getCenter(new Vector3()).x, box.getCenter(new Vector3()).z].map((v) => +v.toFixed(3))).toEqual([1.48, 84, 28]); // prettier-ignore
+    const sun = stage.sky.own.sun;
+    expect([sun.target.position.x, sun.target.position.z]).toEqual([84, 28]);
+    const along = new Vector3().subVectors(sun.target.position, sun.position).normalize();
+    for (const [x, z] of [
+      [72, 8],
+      [96, 8],
+      [72, 48],
+      [96, 48],
+    ]) {
+      const depth = new Vector3(x, 0, z).sub(sun.position).dot(along);
+      expect(depth).toBeLessThan(sun.shadow.camera.far); // its shadows reach every corner
+    }
+    const ids: string[] = [];
+    const warmup = { register: (id: string) => (ids.push(id), { dispose: () => {} }), keyPart: () => ({ dispose: () => {} }) }; // prettier-ignore
+    stage.register(warmup);
+    expect(ids.slice(0, 3)).toEqual(['stage:ground', 'stage:terrain', 'stage:cutaway']);
+    stage.dispose();
+    expect(stage.terrain!.root.parent).toBeNull();
   });
 });

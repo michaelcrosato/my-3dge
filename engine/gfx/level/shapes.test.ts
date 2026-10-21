@@ -15,8 +15,8 @@ import { compileLevel } from '../../world/level/compile';
 import { floorHeight } from '../../world/level/heights';
 import { frustumPoints } from '../../world/level/shapes';
 import { inspectGeometry } from '../geometry/inspect';
-import { splitRuns } from '../stage';
 import { createLevelMeshes } from './meshes';
+import { splitRuns } from './runs';
 import { slabGeometry } from './slab';
 import { STEP_RUN, stepsOf } from './stairs';
 

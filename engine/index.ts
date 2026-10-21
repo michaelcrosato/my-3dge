@@ -92,6 +92,9 @@ export type { LevelCell } from './gfx/level/cells';
 export { LEVEL_RECIPES } from './gfx/level/recipes';
 export type { LevelRecipe } from './gfx/level/recipes';
 export type { LevelShape } from './gfx/level/recipes';
+export { createTerrainMeshes } from './gfx/terrain';
+export type { TerrainMeshes } from './gfx/terrain';
+export type { TerrainMeshesOptions } from './gfx/terrain';
 // Sound data (WP 9.2): effects and songs as registry entries (voices, layers, variants; tracker-notation tracks),
 // rendered offline by the DSP core into reproducible samples.
 export { defineSfx } from './audio/data/sfx';

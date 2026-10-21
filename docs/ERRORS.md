@@ -265,7 +265,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `the scene {scene} loads the level {level}, which is not registered, so its view cannot be built`
 - Fix: register the level's text before the view starts: in a page, import text from './levels/<name>.txt?raw' and call defineLevel('{level}', { text, file }); in Node, read the file and do the same
-- Registered in: [`engine/app/view.ts` line 62](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 63](../engine/app/view.ts)
 
 ### APP_NO_REPLAY
 
@@ -277,7 +277,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `{member} needs the scene drawn as a view, and this engine has none`
 - Fix: start it with createHeadless({ scene, view: true }) in Node; a page always has one
-- Registered in: [`engine/app/view.ts` line 66](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 67](../engine/app/view.ts)
 
 ### APP_NOT_HEADLESS
 
@@ -919,7 +919,7 @@ Raised by a style set (engine/gfx/materials/styles.ts) for a style name it does 
 
 - Message: `first person cannot draw {material} for the viewmodel: three.js has no node material for a {type}`
 - Fix: give the player's body a mesh material three.js turns into a node material (Lambert, Phong, standard, toon, basic, or a node material)
-- Registered in: [`engine/gfx/viewmodel/material.ts` line 65](../engine/gfx/viewmodel/material.ts)
+- Registered in: [`engine/gfx/viewmodel/material.ts` line 56](../engine/gfx/viewmodel/material.ts)
 
 Advice from the viewmodel (engine/gfx/viewmodel/material.ts), once per material: a material it cannot copy into a node material is drawn as it is, so first person shows the body, or the arms are no longer drawn at their own depth and a wall may cut them.
 
@@ -1151,7 +1151,7 @@ Raised by bodies and queries (engine/physics/world.ts, engine/physics/queries.ts
 
 - Message: `there is no body {id}{why}`
 - Fix: use an id addBody() returned while its body exists (hasBody(id) tells); bodies() lists them
-- Registered in: [`engine/physics/world.ts` line 81](../engine/physics/world.ts)
+- Registered in: [`engine/physics/world.ts` line 83](../engine/physics/world.ts)
 
 ### PHYSICS_NONE
 
@@ -1209,7 +1209,7 @@ Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step ru
 
 - Message: `{where} got the seed {value}, which a replay cannot hold`
 - Fix: pass a whole number, 0 or more (x sim --seed 3, __engine.seed(3)): record() writes the seed into the replay
-- Registered in: [`engine/sim/scene.ts` line 45](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 46](../engine/sim/scene.ts)
 
 ### SIM_BAD_SYSTEM
 

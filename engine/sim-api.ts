@@ -395,3 +395,7 @@ export type { PuppetComponent } from './sim/actors';
 // Movement (Phase 13): movement profiles and the shooter model, its live tuning and placing (the feel kit), and the
 // rides; listed in engine/sim/movementApi.ts, re-exported whole so this file stays under its line cap.
 export * from './sim/movementApi';
+
+// Sites (Phase 13): terrain, its queries, its body and its navigation; listed in engine/sim/siteApi.ts, re-exported
+// whole so this file stays under its line cap.
+export * from './sim/siteApi';

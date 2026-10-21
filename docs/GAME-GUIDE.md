@@ -310,6 +310,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Rides (WP 13.7)**: ziplines, ladders and launchers as world data (engine/world/traverse.ts), placed in a scene (engine/sim/rides.ts) and ridden by the shooter model (engine/physics/movement/ride.ts, ladder.ts): a zipline and the poles under its anchors, the redeploy balloon's line and its skydive, a ladder (or every ladder a level's ladder glyph `|` stands), a jump pad or a trampoline. Use is the button `interact`; the look's pitch picks a vertical zipline's way and a skydive's dive.
 `addZipline`, `addLadder`, `addLauncher`, `addLevelLadders`, `ridesOf`, `levelLadders`; types `ZiplineSpec`, `LadderSpec`, `LauncherSpec`, `Rides`, `RideCable`, `RideLadder`, `RideLauncher`.
 
+**Terrain (WP 10.5)**: the registry kind `terrain`, a seeded heightfield, its queries, its body and its navigation.
+`defineTerrain`, `getTerrain`, `makeTerrain`, `terrainProblems`, `TERRAIN_FIELDS`, `terrainHeight`, `terrainGradient`, `terrainNormal`, `terrainGrade`, `terrainSurface`, `scatterTerrain`, `addTerrainBody`, `terrainNavGrid`, `terrainNavSurface`; types `Terrain`, `TerrainSpec`, `TerrainEntry`, `TerrainHill`, `TerrainFlat`, `ScatterRule`, `TerrainPlace`, `TerrainNavOptions`, `NavSurface`, `NavSource`.
+
 Pages only, from engine/index.ts:
 
 **Headless**: the engine without a page, and its inspector (window.__engine in a page).
@@ -325,7 +328,7 @@ Pages only, from engine/index.ts:
 `aimPoint`, `screenRay`, `onFloor`, `AIM_RULES`, `AIM_RANGE`, `STICK_REACH`, `lookOptions`, `scaleLook`, `LOOK_SETTING_FIELDS`, `LOOK_SETTINGS`, `DEGREES_PER_COUNT`; types `AimRule`, `AimPose`, `AimView`, `AimDevices`, `AimRay`, `LookOptions`, `RawLook`, `ScaledLook`.
 
 **Geometry kit and level meshes (WP 2.4)**: shapes standing on the ground with UVs in metres, the geometry registry (props and levels name geometry by id), their QA measures, and a compiled level drawn as meshes.
-`boxGeometry`, `roundedBoxGeometry`, `limbGeometry`, `rampGeometry`, `frustumGeometry`, `pillarGeometry`, `pillarParts`, `ringGeometry`, `sidesThenTops`, `mergeGeometries`, `defineGeometry`, `getGeometry`, `buildGeometry`, `inspectGeometry`, `createLevelMeshes`, `LEVEL_RECIPES`; types `BoxOptions`, `RoundedBoxOptions`, `LimbOptions`, `RampOptions`, `FrustumOptions`, `PillarOptions`, `PillarPart`, `RingOptions`, `GeometryEntry`, `GeometrySpec`, `GeometryRef`, `GeometryReport`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `LevelCell`, `LevelRecipe`, `LevelShape`.
+`boxGeometry`, `roundedBoxGeometry`, `limbGeometry`, `rampGeometry`, `frustumGeometry`, `pillarGeometry`, `pillarParts`, `ringGeometry`, `sidesThenTops`, `mergeGeometries`, `defineGeometry`, `getGeometry`, `buildGeometry`, `inspectGeometry`, `createLevelMeshes`, `LEVEL_RECIPES`, `createTerrainMeshes`; types `BoxOptions`, `RoundedBoxOptions`, `LimbOptions`, `RampOptions`, `FrustumOptions`, `PillarOptions`, `PillarPart`, `RingOptions`, `GeometryEntry`, `GeometrySpec`, `GeometryRef`, `GeometryReport`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `LevelCell`, `LevelRecipe`, `LevelShape`, `TerrainMeshes`, `TerrainMeshesOptions`.
 
 **Sound data (WP 9.2)**: effects and songs as registry entries (voices, layers, variants; tracker-notation tracks), rendered offline by the DSP core into reproducible samples.
 `defineSfx`, `getSfx`, `renderSfx`, `sfxVoices`, `defineSong`, `getSong`, `renderSong`, `songVoices`, `songTiming`; types `Sfx`, `SfxSpec`, `SfxLayer`, `SfxBus`, `SfxRenderOptions`, `Song`, `SongSpec`, `SongTrack`, `SongTiming`, `SongRenderOptions`, `Voice`, `SoundDef`.

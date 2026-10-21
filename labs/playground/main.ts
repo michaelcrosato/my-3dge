@@ -20,7 +20,8 @@
  * use as its prompts give them (`keysLine`). It reads the run and never changes it.
  *
  * The gym's text is computed from its features, so the page registers the text the scene compiles (`GYM_TEXT`), as the
- * starter game registers its arena's; a level written as a file would come in as `?raw` text, as the box's do.
+ * starter game registers its arena's; a level written as a file would come in as `?raw` text, as the box's do. The
+ * ground's materials (labs/playground/ground.ts) register when it loads: the hill's terrain draws in them.
  *
  * Game code: it imports only the engine's public API (engine/index.ts) and the playground's own files.
  *
@@ -32,6 +33,7 @@
 import { createEngine, type Engine, type EngineFrame, type Label } from '../../engine';
 import { keysLine, playgroundMap } from './controls';
 import { mountFeelPanel } from './feel';
+import './ground';
 import { GYM_FEATURES, GYM_TEXT } from './levels/gym';
 import { createPlaygroundMenu, type MenuEntry } from './menu';
 import { gym } from './scenes/gym';

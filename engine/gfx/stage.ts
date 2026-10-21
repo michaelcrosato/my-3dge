@@ -3,11 +3,9 @@
  * no GPU, so a page draws it and a headless engine dumps it (`createHeadless({ view: true })`). `createStage` makes a
  * three.js `Scene` with a sky colour, the stage's ground (a textured plane under the level reaching well past it,
  * `stage/ground`), its lights (`sky`, engine/gfx/stageSky.ts: a hemisphere light and a sun fitted to the level, or the
- * sky a look names), the level's meshes (engine/gfx/level/meshes.ts) and one stand-in per placeable entity.
- *
- * Level meshes: each block descriptor is split into its runs (its merged rectangles), so the ID pass names every wall
- * run on its own (`level:room/wall@0,0-15,0`: tiles from column 0, row 0 to column 15, row 0); a run costs two draw
- * groups, in colour and in each shadow map. The floor stays one surface. All take the level's swaps (WP 7.8).
+ * sky a look names), the level's meshes by runs (engine/gfx/level/runs.ts: `level:room/wall@0,0-15,0`, each wall run
+ * on its own in the ID pass, with the level's swaps), the terrain's chunks (engine/gfx/terrain.ts, WP 10.5: they
+ * stand for the ground, and the sun fits them when there is no level) and one stand-in per placeable entity.
  *
  * Actors with an animator draw themselves as puppets (engine/gfx/puppets/actors.ts, WP 3.10: `actors`), props standing
  * in the scene (`sceneProp`, engine/sim/props.ts) as their props (engine/gfx/stageProps.ts, WP 4.6: `props`), crowd
@@ -25,10 +23,10 @@
  * The level's cutaway (engine/gfx/cutaway.ts, its fade taking the rides too) is made when a player actor first stands
  * on it, and the view runs it while it follows him (engine/app/view.ts); a stage with no player never has one.
  *
- * Warm-up: `register(warmup)` registers the ground, the level meshes, the cutaway's twins, the puppets, the props' and
- * the crowd's batches and the stand-ins, and adds the stand-ins' looks (side and material), the puppets' builds, the
- * crowd's looks and whether there are a cutaway and props to the shader key, so a new look makes the next frame warm up
- * first instead of stalling.
+ * Warm-up: `register(warmup)` registers the ground, the level meshes, the terrain's every level of detail, the
+ * cutaway's twins, the puppets, the props' and the crowd's batches and the stand-ins, and adds the stand-ins' looks
+ * (side and material), the puppets' builds, the crowd's looks and whether there are a cutaway and props to the shader
+ * key, so a new look makes the next frame warm up first instead of stalling.
  *
  * Invariants: presentation only: it reads sim data and never writes it (doctrine: WebGPU only); every object it makes
  * is under `scene`; equal inputs make equal graphs; materials belong to the library and are never disposed here.
@@ -45,22 +43,27 @@ import type { Rng } from '../core/rng';
 import type { Field } from '../core/schema';
 import type { QueryView } from '../sim/queryView';
 import type { EntityData } from '../sim/state';
-import type { CompiledLevel, MeshDescriptor, TileRect } from '../world/level/types';
+import type { CompiledLevel } from '../world/level/types';
+import type { Terrain } from '../world/terrain';
 import { createCutaway, type Cutaway } from './cutaway';
 import { boxGeometry } from './geometry/box';
-import { createLevelMeshes, type LevelMeshes } from './level/meshes';
+import type { LevelMeshes } from './level/meshes';
+import { runMeshes } from './level/runs';
 import { createActorPuppets, type ActorPuppets } from './puppets/actors';
 import { createStageCrowd, type StageCrowd } from './stageCrowd';
 import { createStageFx, type StageFx } from './stageFx';
 import { createStageProps, type StageProps } from './stageProps';
 import { createStageRides, RIDE_KINDS, type StageRides } from './stageRides';
 import { createStageSky, type StageSky } from './stageSky';
+import { createTerrainMeshes, type TerrainMeshes } from './terrain';
 import type { Warmup } from './warmup';
 
 /** What a stage is made of: the level (none for an empty stage), where materials come from, and its registry. */
 export interface StageOptions {
   /** The compiled level to draw, or null. */
   level: CompiledLevel | null;
+  /** The terrain to draw (WP 10.5), or none. */
+  terrain?: Terrain | null;
   /** The materials by id: the page's material library (engine/gfx/materials/library.ts). */
   materials: { get(id: string): Material };
   /** Where the component kinds are declared: which ones place an entity (the shared registry by default). */
@@ -91,6 +94,8 @@ export interface Stage {
   readonly scene: Scene;
   /** The level's meshes, or null. */
   readonly level: LevelMeshes | null;
+  /** The terrain's chunks, or null. */
+  readonly terrain: TerrainMeshes | null;
   /** Its lights: its own, or the sky a look names (engine/gfx/stageSky.ts). */
   readonly sky: StageSky;
   /** The level's cutaway, made when a player first stands on it; null until then (see the file comment). */
@@ -179,61 +184,19 @@ export function placeOf(
   return undefined;
 }
 
-/** `rect` holds `piece` whole. */
-const holds = (rect: TileRect, piece: TileRect) =>
-  piece[0] >= rect[0] && piece[2] <= rect[2] && piece[1] >= rect[1] && piece[3] <= rect[3];
-
-/**
- * The level with each block descriptor split into one descriptor per run (merged rectangle), surfaces whole, and for
- * each descriptor the run it draws (null for one that was not split).
- */
-export function splitRuns(level: CompiledLevel): { level: CompiledLevel; runs: (TileRect | null)[] } {
-  const runs: (TileRect | null)[] = [];
-  const split = (meshes: readonly MeshDescriptor[]) =>
-    meshes.flatMap((descriptor): MeshDescriptor[] => {
-      if (descriptor.top - descriptor.bottom <= 0 || descriptor.rects.length < 2) {
-        runs.push(null);
-        return [descriptor];
-      }
-      return descriptor.rects.map((rect) => {
-        runs.push(rect);
-        return { ...descriptor, pieces: descriptor.pieces.filter((piece) => holds(rect, piece)), rects: [rect] };
-      });
-    });
-  // A level written as storeys draws each storey's descriptors, bottom first (engine/gfx/level/meshes.ts).
-  if (level.storeys) return { level: { ...level, storeys: level.storeys.map((s) => ({ ...s, meshes: split(s.meshes) })) }, runs }; // prettier-ignore
-  return { level: { ...level, meshes: split(level.meshes) }, runs };
-}
-
 /** The shorter way from angle `a` to `b`, `k` of the way. */
 function lerpAngle(a: number, b: number, k: number): number {
   const turn = Math.atan2(Math.sin(b - a), Math.cos(b - a));
   return a + turn * k;
 }
 
-/** The level's meshes, each run named by its tiles: `level:room/wall@0,0-15,0`. */
-function levelMeshes(level: CompiledLevel, options: StageOptions): LevelMeshes {
-  const split = splitRuns(level);
-  const swaps = options.levelMaterials ?? {};
-  const materials = { get: (id: string) => options.materials.get(Object.hasOwn(swaps, id) ? swaps[id] : id) };
-  const meshes = createLevelMeshes(split.level, { materials, rooms: options.levelRooms, log: options.log });
-  split.runs.forEach((run, i) => {
-    if (!run) return;
-    const [c0, r0, c1, r1] = run;
-    const part = meshes.parts[i];
-    const storey = part.storey === undefined ? '' : `${level.storeys![part.storey].name}/`;
-    part.name = part.mesh.name = `level:${level.name}/${storey}${part.recipe}@${c0},${r0}-${c1},${r1}`;
-  });
-  return meshes;
-}
-
 /**
  * The stage's ground: a plane just under the level's floor, `y` (m), reaching `GROUND_MARGIN` past it, UVs in metres;
  * under a level written as storeys, under its lowest slab.
  */
-function groundMesh(width: number, depth: number, material: Material, y = 0): Mesh {
+function groundMesh(width: number, depth: number, material: Material, y = 0, [x0, z0] = [0, 0]): Mesh {
   const [w, d] = [width + 2 * GROUND_MARGIN, depth + 2 * GROUND_MARGIN];
-  const geometry = new PlaneGeometry(w, d).rotateX(-Math.PI / 2).translate(width / 2, y - 0.02, depth / 2);
+  const geometry = new PlaneGeometry(w, d).rotateX(-Math.PI / 2).translate(x0 + width / 2, y - 0.02, z0 + depth / 2);
   const uv = geometry.getAttribute('uv');
   for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * w, uv.getY(i) * d);
   const ground = new Mesh(geometry, material);
@@ -246,20 +209,27 @@ export function createStage(options: StageOptions): Stage {
   const scene = new Scene();
   scene.name = options.level ? `stage:${options.level.name}` : 'stage';
   scene.background = new Color(SKY);
-  const { level } = options;
+  const { level, terrain: land } = options;
+  // Without a level, a terrain is the ground: its area places the sun and the stage's ground, at its origin's height.
+  const area = !level && land ? { corner: [land.origin[0], land.origin[2]] as const, size: [land.cols * land.cell, land.rows * land.cell] as const } : undefined; // prettier-ignore
   const lights = createStageSky(scene, {
     level,
+    area,
     registry: options.registry,
     background: SKY,
     rng: () => options.fxRng?.('stage', 'lights'),
   });
-  const [w, d] = level ? [level.cols * level.tile, level.rows * level.tile] : [16, 16];
-  const centre = [w / 2, 0, d / 2] as const;
+  const [w, d] = level ? [level.cols * level.tile, level.rows * level.tile] : (area?.size ?? [16, 16]);
+  const [x0, z0] = area?.corner ?? [0, 0];
+  const centre = [x0 + w / 2, 0, z0 + d / 2] as const;
 
-  const ground = groundMesh(w, d, options.materials.get(GROUND_MATERIAL), level?.storeys ? level.bounds.min[1] : 0);
+  const height = level?.storeys ? level.bounds.min[1] : area ? land!.origin[1] : 0;
+  const ground = groundMesh(w, d, options.materials.get(GROUND_MATERIAL), height, [x0, z0]);
   scene.add(ground);
-  const meshes = level ? levelMeshes(level, options) : null;
+  const meshes = level ? runMeshes(level, options) : null;
   if (meshes) scene.add(meshes.root);
+  const terrain = land ? createTerrainMeshes(land, { materials: options.materials }) : null;
+  if (terrain) scene.add(terrain.root);
   let cutaway: Cutaway | null = null;
   const boxes = new Group();
   boxes.name = 'stand-ins';
@@ -292,6 +262,7 @@ export function createStage(options: StageOptions): Stage {
   const stage: Stage = {
     scene,
     level: meshes,
+    terrain,
     sky: lights,
     get cutaway() {
       return cutaway;
@@ -358,6 +329,7 @@ export function createStage(options: StageOptions): Stage {
       const registrations = [
         warmup.register('stage:ground', { objects: () => [ground] }),
         ...(meshes ? [meshes.register(warmup, 'stage:level')] : []),
+        ...(terrain ? [terrain.register(warmup, 'stage:terrain')] : []),
         warmup.register('stage:cutaway', { objects: (): Object3D[] => [...(cutaway?.twins ?? [])] }),
         warmup.keyPart('stage:cutaway', () => (cutaway ? 'cut' : '')),
         warmup.register('stage:stand-ins', { objects: (): Object3D[] => [...standIns.values()] }),
@@ -375,6 +347,7 @@ export function createStage(options: StageOptions): Stage {
       cutaway?.dispose();
       cutaway = null;
       meshes?.dispose();
+      terrain?.dispose();
       actors.dispose();
       props.dispose();
       rides.dispose();

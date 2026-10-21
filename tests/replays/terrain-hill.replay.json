@@ -1,0 +1,49 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "The playground's hill (WP 10.5): the player runs up its flank east and sprints on (the sticky sprint) to 9.6 m up, turns south across the slope, then west down it, slides from a crouch gaining from 6.1 to 10.2 m/s down the steepest stretch, jumps out of the slide at the hill's foot, sprints north-east back up, walks and stops 5.9 m up: the character on a heightfield's slopes.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "playground:hill",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 900,
+  "inputs": [
+    [0, { "cam": 1.5707963267948966, "look": [1.5707963267948966, 0], "move": [1, 0] }],
+    [120, { "b": ["sprint"] }],
+    [122, { "b": null }],
+    [200, { "cam": 0, "look": [0, 0], "move": [0, 1] }],
+    [300, { "b": ["sprint"], "cam": -1.5707963267948966, "look": [-1.5707963267948966, 0], "move": [-1, 0] }],
+    [302, { "b": null }],
+    [340, { "b": ["crouch"] }],
+    [420, { "b": ["jump"] }],
+    [426, { "b": null }],
+    [
+      500,
+      { "cam": 2.356194490192345, "look": [2.356194490192345, 0], "move": [0.7071067811865475, -0.7071067811865476] }
+    ],
+    [700, { "b": ["walk"] }],
+    [800, { "b": null, "move": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "241191f5dc515d16",
+      "60": "6cb20732e82ac271",
+      "120": "a83c29beebb4ea9c",
+      "180": "e7af51e71087b653",
+      "240": "ce27aac907da6123",
+      "300": "153ca30ecf4cde3e",
+      "360": "b3a8815267b8a604",
+      "420": "cb8a802202922ebc",
+      "480": "4febbab8df6bc767",
+      "540": "8417cc920280584e",
+      "600": "189d1554891d0412",
+      "660": "9511ab0a5f6aceaa",
+      "720": "34020dbba24921e4",
+      "780": "8ac611b2d206215b",
+      "840": "818cf7c36b6e6d79",
+      "900": "532cc08a1a85b79c"
+    }
+  }
+}
