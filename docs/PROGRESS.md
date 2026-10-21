@@ -5,11 +5,11 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 
 ## Next: gate G10, then stages G11–G13 of Phase 13, the Playground (ADR-0025)
 
-- Handed off on 2026-10-19 (the owner's weekly limit) with every WP of stage G10 done on the branch
-  `claude/pensive-cray-9pa1n6`, draft PR #26: 13.7–13.12, then 5.6 (the bot, the dev actions), 10.6 (the UI widgets)
-  and 10.9 (the store). The gate itself has not run. Its steps, in order: the verifier on G10; rewrite this page;
-  PR #26's body with docs/PLAYGROUND.md §9.3's playtest checklist; `node x ci --local` green; squash-merge; wait for
-  main's full run (`node x ci --status`) and fix it if red; then start G11 from the updated main (PLAN.md §11.1).
+- Every WP of stage G10 is done on `claude/pensive-cray-9pa1n6`, draft PR #26 (handed off 2026-10-19; rechecked
+  2026-10-21: check, 3,914 unit tests, the hello spec). First a `deps:` commit: `x deps --update` (typescript-eslint
+  8.72.0), Node 24.22.1 (.nvmrc, tools/deps.json, the docs naming 24.22.0, setup.sh). Then the gate, in order: the
+  verifier on G10; rewrite this page; PR #26's body with docs/PLAYGROUND.md §9.3's playtest checklist; `x ci --local`
+  green; squash-merge; main's full run (`x ci --status`), fixed if red; G11 from the updated main (PLAN.md §11.1).
 - After G10, in Phase 13's table order: G11 the house (13.13, 13.14, 10.5, 13.15, 10.3, 13.16, 13.17, 7.7, 13.18,
   12.3), G12 alive (10.4, 13.19, 13.20, 10.2, 10.1, 13.21, 13.22, 11.1, 11.2, 11.5, 13.23, 11.3, 13.24, 8.8, 10.8),
   G13 the tech demo (13.25, 7.5, 11.4, 12.1, 12.2, 7.6, 13.26). Upgrades fit between stages once they qualify: U-1
