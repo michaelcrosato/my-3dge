@@ -9,7 +9,8 @@
  * its walls, slabs, roof and openings as parts the ID pass tells apart (outside: the roof, the walls, the frames and
  * the heads; storey by storey with what stands above hidden: its floor, walls, railings and flight; from the cellar:
  * the ground floor's ceiling), builds 0 pipelines after the warm-up, in the lambert style and in the toon style both
- * playground looks draw with.
+ * playground looks draw with; so do the shed (its flat roof, walls, the head and frames of its door) and the pavilion
+ * (its hip roof, its pillars and the crawlspace's head under the eaves, seen low from the west).
  *
  * Invariants: the level's text is read in Node and passed to the page (`__levelPage.show`), which fetches nothing;
  * frames are drawn by calling the page.
@@ -100,7 +101,7 @@ async function idPixels(page: Page): Promise<Record<string, number>> {
     const { gfx, view } = (window as unknown as LevelWindow).__levelPage;
     return (await shot(gfx, view, { metrics: false, thumbnail: false })).ids!;
   }, SHOT);
-  return Object.fromEntries(ids.visible.map((entry) => [entry.name.replace(/^level:house\//, ''), entry.px]));
+  return Object.fromEntries(ids.visible.map((entry) => [entry.name.replace(/^level:[^/]+\//, ''), entry.px]));
 }
 
 /** Shows only storey `k` and those below (the roof hidden past the top one), the camera at `eye` looking at `at`. */
@@ -137,14 +138,7 @@ test('the storey house: walls, slabs, roof and openings apart in the ID pass, st
   }
   expect(await look(page, 1, [4, 9, 6.5], [4, 0, 3])).toMatchObject({ drawn: true, built: 0 });
   const ground = await idPixels(page);
-  for (const part of [
-    'ground/floor',
-    'ground/floor',
-    'ground/flight',
-    'ground/railing',
-    'ground/wall#2',
-    'ground/heads',
-  ]) {
+  for (const part of ['ground/floor', 'ground/flight', 'ground/railing', 'ground/wall#2', 'ground/heads']) {
     expect(ground[part] ?? 0, `${part}, the upper floor and the roof hidden`).toBeGreaterThan(30);
   }
   expect(await look(page, 2, [4, 12, 6.5], [4, 3, 3])).toMatchObject({ drawn: true, built: 0 });
@@ -156,5 +150,44 @@ test('the storey house: walls, slabs, roof and openings apart in the ID pass, st
 
   const toon = await page.evaluate(() => (window as unknown as LevelWindow).__levelPage.style('toon'));
   expect(toon, 'every style warmed up: the toon frame builds nothing').toMatchObject({ drawn: true, built: 0 });
+  expect((await harness.readFrame()).blank).toBe(false);
+});
+
+test("the shed's flat roof, walls, door head and frames apart in the ID pass, 0 pipelines after the warm-up", async ({
+  page,
+  harness,
+}) => {
+  await page.goto(PAGE);
+  await harness.ready();
+  const shed = await show(page, 'storeys/shed');
+  expect(shed.frame, 'the warm-up built every pipeline the shed needs').toMatchObject({ drawn: true, built: 0 });
+  expect(shed.pipelinesAfterWarmUp).toBe(0); // before any ID shot, which builds its own
+  const fromSouth = await idPixels(page);
+  for (const part of ['ground/roof', 'ground/wall#2', 'ground/heads', 'ground/frames']) {
+    expect(fromSouth[part] ?? 0, `the shed's ${part}, from the south`).toBeGreaterThan(30);
+  }
+  const toon = await page.evaluate(() => (window as unknown as LevelWindow).__levelPage.style('toon'));
+  expect(toon, 'the toon frame builds nothing').toMatchObject({ drawn: true, built: 0 });
+});
+
+test("the pavilion's hip roof, pillars and the crawlspace's head apart in the ID pass, 0 pipelines after the warm-up", async ({
+  page,
+  harness,
+}) => {
+  await page.goto(PAGE);
+  await harness.ready();
+  const pavilion = await show(page, 'storeys/pavilion');
+  expect(pavilion.frame, 'the warm-up built every pipeline the pavilion needs').toMatchObject({
+    drawn: true,
+    built: 0,
+  });
+  expect(pavilion.pipelinesAfterWarmUp).toBe(0); // before any ID shot, which builds its own
+  expect(await look(page, 3, [-3, 0.6, 2.5], [2, 1.5, 2.5])).toMatchObject({ drawn: true, built: 0 }); // low, from the west
+  const fromWest = await idPixels(page);
+  for (const part of ['ground/roof', 'ground/pillar', 'ground/heads']) {
+    expect(fromWest[part] ?? 0, `the pavilion's ${part}, under its eaves from the west`).toBeGreaterThan(30);
+  }
+  const toon = await page.evaluate(() => (window as unknown as LevelWindow).__levelPage.style('toon'));
+  expect(toon, 'the toon frame builds nothing').toMatchObject({ drawn: true, built: 0 });
   expect((await harness.readFrame()).blank).toBe(false);
 });

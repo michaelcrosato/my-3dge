@@ -40,7 +40,7 @@ describe('ceilingGeometry', () => {
     expect([...ys].sort((a, b) => a - b)).toEqual([2.7, 3]);
   });
 
-  it("leaves the lowest storey's underside out, and draws nothing for it inside a closed map's edges? only the rim", () => {
+  it("leaves the lowest storey's underside out, drawing only its slab's rim, and nothing for a storey with no floor", () => {
     const [down, out] = faces(ceilingGeometry(LEVEL, storey(0, 0))!);
     expect([down, out]).toEqual([0, 2 * 14]);
     expect(ceilingGeometry(LEVEL, { index: 0, base: 0, slab: 0.3, floored: new Array(12).fill(false) })).toBeNull();
