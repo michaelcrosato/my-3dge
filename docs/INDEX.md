@@ -1111,6 +1111,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`actorClips.ts`](../engine/sim/actorClips.ts): Clips on actors (PLAN.md §10.4, WP 8.9): the clip layer (engine/anim/clip/layer.ts) in an actor's animator, as sim data.
   - Exports: `addClips`, `clipLayerOf`, `clipsFor`, `ClipsSpec`, `defineClipKinds`, `locomoteClips`, `playClip`, `seekClip`, `stopClip`
   - Tests: [`engine/sim/actorClips.test.ts`](../engine/sim/actorClips.test.ts)
+- [`actorInput.ts`](../engine/sim/actorInput.ts): What an actor reads of a step's intents (PLAN.md WP 3.2, WP 13.3, WP 13.9; split from engine/sim/actors.ts at its cap, WP 13.16): `intentsOf(actor, intents)` is the step's intents for a player, else its AI's (`actor.intents`, its presses from the edges of the buttons it held, `actor.held`); `motionInput(actor, wants, controls)` is what an actor on a movement model (engine/physics/movement/) takes of them: the sprint, walk and crouch buttons as a player's controls (`input.sprint`, `input.crouch`) say, the use press, the view, the keys' frame and what it faces (the aim's point, else the view).
+  - Exports: `Controls`, `intentsOf`, `motionInput`
+  - Tests: [`engine/sim/actors.test.ts`](../engine/sim/actors.test.ts)
 - [`actors.ts`](../engine/sim/actors.ts): Actors (PLAN.md WP 3.2; WP 3.7 adds the animator): entities that walk, jump and dash through the character controller (engine/physics/character.ts).
   - Exports: `ActorComponent`, `ActorComponents`, `ActorSpec`, `AnimatorComponent`, `CONTROL_SETTING_FIELDS`, `defineActorKinds`, `placeActor`, `PuppetComponent`, `removeActor`, `spawnActor`
   - Tests: [`engine/sim/actors.test.ts`](../engine/sim/actors.test.ts)

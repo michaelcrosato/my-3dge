@@ -5395,6 +5395,12 @@ For the agents who maintain the engine.
 - `seekClip` (function): Puts the clip on top of actor `id` at `t` clip seconds (kept within 0 and its length), its fade done: a frame step is `seekClip(w, id, frame / BAKE_FPS)`.
 - `stopClip` (function): Fades out the clip on top of actor `id` over `fade` seconds (its `out`), with what it covers.
 
+### [`engine/sim/actorInput.ts`](../engine/sim/actorInput.ts)
+
+- `Controls` (interface): A player's controls (the settings `input.sprint` and `input.crouch`): a held sprint, a toggled crouch.
+- `intentsOf` (function): The intents an actor acts on this step: the step's for a player, else its AI's (with presses from `b`'s edges).
+- `motionInput` (function): The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it faces.
+
 ### [`engine/sim/actors.ts`](../engine/sim/actors.ts)
 
 - `ActorComponent` (interface): The component `actor`: an entity the character controller moves.
