@@ -1,6 +1,6 @@
 {
   "$comment": "The dependency pins and why each is here (PLAN.md §6.10). Every field and rule: tools/cmd/deps.ts's file comment. Dates are npm's and nodejs.org's, UTC. Change pins through node x deps --update, or an upgrade WP.",
-  "measured": "2026-10-17",
+  "measured": "2026-10-21",
   "dependencies": {
     "three": {
       "qualifying": {
@@ -114,8 +114,8 @@
     },
     "@types/node": {
       "qualifying": {
-        "version": "24.8.1",
-        "date": "2025-10-17"
+        "version": "24.9.1",
+        "date": "2025-10-21"
       },
       "pin": {
         "version": "24.19.2",
@@ -180,8 +180,8 @@
     },
     "eslint-plugin-jsdoc": {
       "qualifying": {
-        "version": "61.1.4",
-        "date": "2025-10-15"
+        "version": "61.1.5",
+        "date": "2025-10-20"
       },
       "pin": {
         "version": "61.7.1",
@@ -277,16 +277,16 @@
     },
     "typescript-eslint": {
       "qualifying": {
-        "version": "8.46.1",
-        "date": "2025-10-13"
+        "version": "8.46.2",
+        "date": "2025-10-20"
       },
       "pin": {
-        "version": "8.71.2",
-        "date": "2026-10-12"
+        "version": "8.72.0",
+        "date": "2026-10-19"
       },
       "newest": {
-        "version": "8.71.2",
-        "date": "2026-10-12"
+        "version": "8.72.0",
+        "date": "2026-10-19"
       },
       "rule": "compatible",
       "next": null,
@@ -294,8 +294,8 @@
     },
     "vite": {
       "qualifying": {
-        "version": "7.1.10",
-        "date": "2025-10-14"
+        "version": "7.1.11",
+        "date": "2025-10-20"
       },
       "pin": {
         "version": "7.3.7",
@@ -338,8 +338,8 @@
   "types": {
     "@types/chai": {
       "qualifying": {
-        "version": "5.2.2",
-        "date": "2025-05-05"
+        "version": "5.2.3",
+        "date": "2025-10-20"
       },
       "pin": {
         "version": "5.2.3",
@@ -490,12 +490,12 @@
         "date": "2025-10-08"
       },
       "pin": {
-        "version": "24.22.0",
-        "date": "2026-10-14"
+        "version": "24.22.1",
+        "date": "2026-10-20"
       },
       "newest": {
-        "version": "24.22.0",
-        "date": "2026-10-14"
+        "version": "24.22.1",
+        "date": "2026-10-20"
       },
       "rule": "platform",
       "next": {

@@ -197,7 +197,7 @@ A rule without a check is only a suggestion. Each principle of `DOCTRINE.md` com
 - **Presentation** means everything that draws or plays: `gfx`, the audio runtime, `ui`, and the input devices.
 - **View state** is presentation-only state, such as cape chains, particle positions and camera shake. It may be reproducible for tests, but it is never part of the gameplay hash.
 - **Game code** is code written the way a game would be: the box's scenes, cast and pages, the fixture scenes, and the future game. It sees only the public API (doctrine: Quality under the hood).
-- **The development platform** is the Linux x64 cloud container, with Node 24.22.0 (the newest 24.x LTS; `scripts/setup.sh` installs it while the container ships Node 22.22.0) and the preinstalled Chromium 141.0.7390.37 with WebGPU on SwiftShader, driven by Playwright Test 1.64.1. Golden hashes are recorded for it, and hold in both its runtimes.
+- **The development platform** is the Linux x64 cloud container, with Node 24.22.1 (the newest 24.x LTS; `scripts/setup.sh` installs it while the container ships Node 22.22.0) and the preinstalled Chromium 141.0.7390.37 with WebGPU on SwiftShader, driven by Playwright Test 1.64.1. Golden hashes are recorded for it, and hold in both its runtimes.
 
 ---
 
@@ -387,7 +387,7 @@ Each fact below was measured in this cloud container, the platform development t
 | `globals` | 16.4.0 (2025-09-09) | `16.5.0` (2025-11-01) | The newest 16.x | 17.0.0 (2026-01-01) on 2027-01-01 |
 | Prettier | 3.6.2 (2025-06-27) | `3.9.9` (2026-09-23) | The newest 3.x | None yet |
 | tsx | 4.20.6 (2025-09-26) | `4.23.15` (2026-09-20) | The newest 4.x | None yet |
-| Node | 24.10.0 (2025-10-08) | `24.22.0` (2026-10-14), LTS | The newest 24.x. The container ships 22.22.0, so `scripts/setup.sh` installs it (§6.10) | Node 26 LTS on 2027-05-05. Node 25 qualifies on 2026-10-15 but is already end-of-life (odd lines never get LTS), so it is skipped |
+| Node | 24.10.0 (2025-10-08) | `24.22.1` (2026-10-20), LTS | The newest 24.x. The container ships 22.22.0, so `scripts/setup.sh` installs it (§6.10) | Node 26 LTS on 2027-05-05. Node 25 qualifies on 2026-10-15 but is already end-of-life (odd lines never get LTS), so it is skipped |
 | `@types/node` | 24.7.1 (2025-10-09) | `24.19.2` (2026-10-09) | Matches Node 24 | Follows Node |
 | Chromium | — | 141.0.7390.37, the container's (`chromium-1194`) | The platform's browser (doctrine: Discovery first) | Changes when the environment does |
 
@@ -836,7 +836,7 @@ my-3dge/
   AGENTS.md                 the rules; each one paired with the check that enforces it (Appendix E)
   CLAUDE.md                 "@AGENTS.md" plus Claude Code specifics
   PLAN.md                   this plan (the ledger in §14 is updated as work lands)
-  README.md  LICENSE (MIT)  package.json  package-lock.json  .nvmrc (24.22.0)
+  README.md  LICENSE (MIT)  package.json  package-lock.json  .nvmrc (24.22.1)
   index.html                the landing page: it opens the box (WP 0.12)
   vercel.json  .vercelignore   the Vercel build: npm ci, npm run build, dist/ (WP 0.12)
   tsconfig.json  vite.config.ts (dev server, build, and Vitest's settings)  playwright.config.ts  eslint.config.js
@@ -1120,7 +1120,7 @@ h.step(600, script); h.hash(); h.trace(); h.state();
 **Dependency install scripts.** npm 11 (Node 24) runs an install script that `package.json`'s `allowScripts` does not mention, with a warning, and skips one it denies (measured; npm 10 ignores the field). esbuild's postinstall is the only one that runs on the platform, and Vite works without it, so `allowScripts` denies it.
 
 **The platform:**
-- **Node 24.22.0**, named in `.nvmrc`. The container ships Node 22.22.0, so `scripts/setup.sh` downloads the official 24.22.0 build from nodejs.org, checks its SHA-256, installs it under `~/.cache/my3dge/` and puts it first on `PATH` for the session (the SessionStart hook runs it; §8.10). The owner can make it permanent through the environment's setup script (§11.5). Everything also runs on Node 22 (measured), but Node goldens are recorded on 24.
+- **Node 24.22.1**, named in `.nvmrc`. The container ships Node 22.22.0, so `scripts/setup.sh` downloads the official 24.22.1 build from nodejs.org, checks its SHA-256, installs it under `~/.cache/my3dge/` and puts it first on `PATH` for the session (the SessionStart hook runs it; §8.10). The owner can make it permanent through the environment's setup script (§11.5). Everything also runs on Node 22 (measured), but Node goldens are recorded on 24.
 - **Chromium 141.0.7390.37**, the container's (`/opt/pw-browsers/chromium`, from `CHROMIUM_PATH` when set), with WebGPU on SwiftShader. Playwright 1.64 drives it through `executablePath`; nothing ever runs `playwright install`. It also bounds the internals rule: a three.js release that needs WebGPU features Chromium 141 lacks (r186 does) cannot be adopted here.
 
 **Adopting and upgrading.**
@@ -1406,7 +1406,7 @@ ESLint checks code. `x qa` checks content: motion, meshes, textures, sounds and 
 
   | Hook or setting | Does |
   |---|---|
-  | SessionStart | Runs `scripts/setup.sh`: installs Node 24.22.0 if the container lacks it and appends its `PATH` to `$CLAUDE_ENV_FILE`, so later Bash calls use it; then `npm ci`. Resolves the sources (`x src`) and appends `MY3D2DGE_SRC=<absolute path>` and `SHARDFALL_SRC=<absolute path>` to `$CLAUDE_ENV_FILE`. Lists open escalations, and compatible releases waiting to be adopted (`x deps --update --dry-run`) |
+  | SessionStart | Runs `scripts/setup.sh`: installs Node 24.22.1 if the container lacks it and appends its `PATH` to `$CLAUDE_ENV_FILE`, so later Bash calls use it; then `npm ci`. Resolves the sources (`x src`) and appends `MY3D2DGE_SRC=<absolute path>` and `SHARDFALL_SRC=<absolute path>` to `$CLAUDE_ENV_FILE`. Lists open escalations, and compatible releases waiting to be adopted (`x deps --update --dry-run`) |
   | PostToolUse on `Edit\|Write` | `prettier --write`, then `eslint --cache`, on the edited file. Exits 2 with the errors so the agent sees them at once |
   | PreToolUse | Asks the owner before any edit to `DOCTRINE.md` (`permissionDecision: "ask"`), so the doctrine changes only on the owner's word. Denies hand edits to `out/` and `node_modules/`, and force-pushes to `main` |
   | Stop | Runs `npm run check`. Exit 2 with a short reason if red, honouring `stop_hook_active` to avoid loops. Warns about an open escalation past its deadline with no recorded call |
@@ -1670,7 +1670,7 @@ A WP is done only when all of these hold:
 - **Build:**
   - AGENTS.md (Appendix E), and CLAUDE.md (`@AGENTS.md` plus Claude notes). Both send the reader to `DOCTRINE.md` first. `DOCTRINE.md` already exists; agents change it only when the owner asks (§8.10).
   - ADR-0001…0021 recording §13, each one page or less.
-  - **The platform.** `.nvmrc` names Node 24.22.0. `scripts/setup.sh` is idempotent:
+  - **The platform.** `.nvmrc` names Node 24.22.1. `scripts/setup.sh` is idempotent:
     - when the active `node` is not `.nvmrc`'s version, it downloads the official Linux x64 build from nodejs.org, checks it against `SHASUMS256.txt`, unpacks it under `~/.cache/my3dge/`, puts it first on `PATH`, and appends that `PATH` to `$CLAUDE_ENV_FILE` when the variable is set;
     - then it runs `npm ci`;
     - offline, it says so and leaves the container's Node 22 in place. Everything runs on Node 22 too (§4.7), but Node goldens are recorded on 24.
@@ -1696,7 +1696,7 @@ A WP is done only when all of these hold:
   - **The type smoke test** `tests/unit/ts-smoke.test.ts` (Vitest) imports `three/webgpu`, `three/tsl` and `@dimforge/rapier3d-simd-compat`, and constructs and steps a `World`. A `// @ts-expect-error` above `world.createRigidBody(123)` makes `tsc` fail if Rapier's types ever degrade to `any` (§4.7). `skipLibCheck` stays, to keep T0 fast: the pinned packages' types also check clean without it, in three times the time (§4.7).
 - **Improves:** I-01 (recorded as an ADR), I-31, I-32.
 - **Done when:**
-  - `scripts/setup.sh` installs Node 24.22.0 when it is missing and does nothing when it is active; `npm ci` succeeds; `tsc` runs clean; the smoke test passes. Later shells use Node 24 *(deferred proof: WP 0.10's SessionStart test)*.
+  - `scripts/setup.sh` installs Node 24.22.1 when it is missing and does nothing when it is active; `npm ci` succeeds; `tsc` runs clean; the smoke test passes. Later shells use Node 24 *(deferred proof: WP 0.10's SessionStart test)*.
   - `$MY3D2DGE_SRC` resolves to `e37e4ee`, and `$SHARDFALL_SRC` to `fa2dab6`.
   - AGENTS.md is 150 lines or fewer.
 - **Verify:** `bash scripts/setup.sh && npx tsc --noEmit && npx vitest run tests/unit/ts-smoke.test.ts && test "$(git -C "${MY3D2DGE_SRC:-$PWD/.cache/src-3d2dge}" rev-parse --short=7 HEAD)" = e37e4ee && test "$(git -C "${SHARDFALL_SRC:-$PWD/.cache/src-shardfall}" rev-parse --short=7 HEAD)" = fa2dab6`
@@ -4687,7 +4687,7 @@ In this table, `engine` §N means section N of `engine/my-3d2dge.js`, not a sect
 | `vite build` of a page with three r182, a TSL post pass and Rapier 0.21 | one HTML page and one 5.40 MB script (1.86 MB gzipped), no `.wasm` (§4.8) |
 
 **The platform (October 2026)**
-- The development platform: Linux x64 (4 cores); Node 24.22.0, installed by `scripts/setup.sh` over the container's Node 22.22.0; Chromium 141.0.7390.37 (`/opt/pw-browsers/chromium-1194`, which the container's global Playwright 1.56.1 installed), driven by the project's Playwright 1.64.1; SwiftShader for WebGPU.
+- The development platform: Linux x64 (4 cores); Node 24.22.1, installed by `scripts/setup.sh` over the container's Node 22.22.0; Chromium 141.0.7390.37 (`/opt/pw-browsers/chromium-1194`, which the container's global Playwright 1.56.1 installed), driven by the project's Playwright 1.64.1; SwiftShader for WebGPU.
 - Measured on it (§4.7): Rapier 0.21 gives the same state in Node and Chromium, and restores exactly; stdlib's fdlibm ports make `sin`, `cos` and `pow` identical across Node 22, Node 24 and Chromium 141. Against Node 22, Chromium's `Math.sin` differs in 3.46% of results, `Math.cos` in 3.35% and `Math.pow` in 9.99%, each by 1 ulp; against Node 24, only `sin` and `cos` differ.
 - WebGPU reaches 83.3% of devices and WebGL 2 97.8% (web3dsurvey). By group: Linux 17.8%, Firefox 60.4%, Android 73.6%. This matters for Phase H, not before.
 - Versions: §4.7 has every pin, its qualifying release and its next line. The newest releases today, for reference: three r186.1 (2026-09-24), Rapier JS 0.21.0 (2026-09-25), TypeScript 7.0.2 (2026-07-08), Vite 8.3.4 (2026-10-08), Vitest 5.0.3 (2026-09-30), ESLint 10.12.0 (2026-10-02), Playwright 1.64.1 (2026-10-14), Node 26.11.1 (2026-10-07).
@@ -4789,7 +4789,7 @@ baselines) · docs/ (generated INDEX/API/ERRORS, ADRs, escalations, reference) �
 |---|---|
 | **Stress Box** | The engine's integration target, benchmark and sample in `labs/box/`: the prototype's *Stress test: 3D world*, rebuilt in six stages (§9.0) |
 | **Box stage** | One of the six phases that grow the box, each ending at a gate (Box 1 = G2 … Box 6 = G7) |
-| **Development platform** | The cloud container development targets: Linux x64, Node 24.22.0 (installed by `scripts/setup.sh`), headless Chromium 141 with SwiftShader, driven by Playwright 1.64 (doctrine: Discovery first) |
+| **Development platform** | The cloud container development targets: Linux x64, Node 24.22.1 (installed by `scripts/setup.sh`), headless Chromium 141 with SwiftShader, driven by Playwright 1.64 (doctrine: Discovery first) |
 | **Qualifying release** | A release at least 12 months old (doctrine: Mastery, §6.10) |
 | **Compatible release** | A newer release that is backward compatible with a qualifying one (the same major; the same minor for 0.x packages), or that works the same way. It is adopted at once (§6.10) |
 | **Common ground** | The doctrine's principle of building on the most widely used tools, libraries and patterns (§3, ADR-0019) |

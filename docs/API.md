@@ -7507,7 +7507,7 @@ For the agents who maintain the engine.
 - `packageVersion` (function): Reads the engine's version from `package.json` under `root`.
 - `Report` (interface): The fixed schema of `out/<cmd>/<target>/report.json`.
 - `reportPath` (function): The repository-relative path of a command's report: `out/<cmd>/<target>/report.json`.
-- `runtime` (function): Names the platform: `linux-x64 node24.22.0`, followed by `browser` (such as `chromium141`) when one was used.
+- `runtime` (function): Names the platform: `linux-x64 node24.22.1`, followed by `browser` (such as `chromium141`) when one was used.
 - `targetSlug` (function): Turns a command's target (a page, a scene, a file) into one safe directory name; no target gives `all`.
 - `validateReport` (function): Checks a parsed report against the schema; returns one sentence per problem, or an empty list.
 - `writeReport` (function): Validates `report`, writes it to `out/<cmd>/<target>/report.json` under `root`, copies it to `out/latest.json` (with its `report` path) and returns the repository-relative path.

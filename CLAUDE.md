@@ -2,7 +2,7 @@
 
 # Claude Code notes
 
-- `node --version` should print v24.22.0 (the SessionStart hook puts it first on PATH); if not, run
+- `node --version` should print v24.22.1 (the SessionStart hook puts it first on PATH); if not, run
   `bash scripts/setup.sh`.
 - **Cloud container.** Chromium 141 is at `/opt/pw-browsers/chromium` (`$CHROMIUM_PATH` when set); never run
   `playwright install`. Never disable TLS verification for the environment's proxy. If the sources cannot be
