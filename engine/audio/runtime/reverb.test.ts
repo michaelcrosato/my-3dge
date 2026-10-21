@@ -2,10 +2,11 @@
  * @file Unit tests for the rooms (engine/audio/runtime/reverb.ts): each preset's impulse response decays 60 dB in its
  * `decay` (measured by Schroeder's backward integration, within 5%), starts after its `predelay`, carries unit energy
  * per channel, is darker the lower its `damping`, has uncorrelated channels, and is the same bits for the same seed;
- * a room without reverb has none; unknown names and bad numbers are refused with the fix.
+ * a room without reverb has none; unknown names and bad numbers are refused with the fix; a level's room takes its
+ * preset by its volume.
  */
 import { describe, expect, it } from 'vitest';
-import { ROOMS, impulseResponse, roomSpec, type RoomName } from './reverb';
+import { ROOMS, impulseResponse, roomReverb, roomSpec, type RoomName } from './reverb';
 
 const RATE = 48000;
 
@@ -78,5 +79,19 @@ describe('impulseResponse', () => {
       /AUDIO_BAD_ROOM.*room hal is not a preset \(did you mean "hall"\?\)/,
     );
     expect(() => roomSpec({ decay: 20, predelay: 0, damping: 4000, wet: 0.2 })).toThrow(/decay 20 is not from 0 to 10/);
+  });
+});
+
+describe('roomReverb', () => {
+  it('picks a level room’s preset by its volume: small under 30 m³, room under 200 m³, hall past (WP 13.15)', () => {
+    const volumes = [
+      [4, 2.7],
+      [11, 2.7],
+      [12, 2.5],
+      [74, 2.7],
+      [80, 2.5],
+      [300, 6],
+    ] as const; // 10.8, 29.7, 30, 199.8, 200, 1,800 m³
+    expect(volumes.map(([area, height]) => roomReverb({ area }, height))).toEqual(['small', 'small', 'room', 'room', 'hall', 'hall']); // prettier-ignore
   });
 });

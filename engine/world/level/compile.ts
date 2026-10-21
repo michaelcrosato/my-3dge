@@ -19,7 +19,8 @@
  * did before format 2 existed.
  *
  * Spawns stand on the floor at their tile's centre, and light spots `lightHeight` above the top there, so a spawn on a
- * dais stands on the dais and a torch spot on a brazier sits above its bowl.
+ * dais stands on the dais and a torch spot on a brazier sits above its bowl. In format 2 a light names its room, its
+ * light group: its tile's, else the first room beside it (north, east, south, west), as a sconce in a wall lights one.
  *
  * Carried from `my-3d2dge:src/stress-world/10-hall.js:22-124` (the hall as text: heights, colliders, the walkable grid,
  * the torch spots and meshes all derived from one map) and `my-3d2dge:src/lab3d/20-world.js:12-35`, with the glyph
@@ -343,13 +344,29 @@ function compileStoreys(checked: CheckedStoreys, parsed: ParsedLevel, name: stri
     daises: ground.daises,
     meshes: ground.meshes,
     spawns: compiled.flatMap((c) => c.spawns),
-    lights: compiled.flatMap((c) => c.lights),
+    lights: compiled
+      .flatMap((c) => c.lights)
+      .map((light) => ({ ...light, room: lightRoom(checked, light, cols, rows) })),
     storeys: compiled.map((c) => c.storey),
     rooms: checked.rooms,
     openings,
     roofs: roof ? [roof] : [],
   };
   return freezeValue(level);
+}
+
+/** A tile and its sides, north, east, south, west, in the order a light looks for its room. */
+// prettier-ignore
+const AROUND = [[0, 0], [0, -1], [1, 0], [0, 1], [-1, 0]] as const;
+
+/** The room a light lights (`room:<name>`): its tile's, else the first beside it, north, east, south, west; '' if none. */
+function lightRoom({ rooms, roomOf }: CheckedStoreys, light: LightSpot, cols: number, rows: number): string {
+  for (const [dc, dr] of AROUND) {
+    const [c, r] = [light.col + dc, light.row + dr];
+    const room = c >= 0 && r >= 0 && c < cols && r < rows ? roomOf[light.storey!][r * cols + c] : -1;
+    if (room >= 0) return rooms[room].id;
+  }
+  return '';
 }
 
 /** The level's bounds `[min, max]` (m), widened over a roof's eaves where they reach past the map. */

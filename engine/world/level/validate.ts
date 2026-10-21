@@ -50,9 +50,9 @@ export const NAV_CLIMB = 3.5 / 16;
 
 /**
  * The body format 2's content checks measure against (m): the shooter model's hull (`movement:apex`, 16 Source units
- * in radius: 0.8128 m across; 1.19 m tall crouched), the largest the engine ships.
+ * in radius: 0.8128 m across; 1.8288 m tall standing, 1.19 crouched), the largest the engine ships.
  */
-export const LEVEL_BODY = { width: 0.8128, crouched: 1.19 } as const;
+export const LEVEL_BODY = { width: 0.8128, standing: 1.8288, crouched: 1.19 } as const;
 
 /** The steepest flight of stairs bodies walk (°): the shooter model's walkable slope, 45.57°, rounded down. */
 export const FLIGHT_LIMIT = 45;

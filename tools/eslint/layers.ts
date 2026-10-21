@@ -240,11 +240,11 @@ const LAYERS: Layer[] = [
   },
   {
     name: 'dev/bot.ts',
-    files: ['engine/dev/bot.ts'],
-    may: 'the sim-side layers (core, sim, physics, anim, world, input/intents, audio/dsp)',
+    files: ['engine/dev/bot.ts', 'engine/dev/botNav.ts'],
+    may: 'the sim-side layers (core, sim, physics, anim, world, input/intents, audio/dsp) and its navigation, botNav.ts',
     fix: 'the bot is sim-side: it decides from sim state and emits intents',
     never: ['gfx', 'ui', 'app', 'dev', DEVICES, AUDIO_RUNTIME],
-    notBeside: ['[^/]+'],
+    notBeside: ['(?!botNav(?:\\.ts)?(?:/|$))[^/]+'],
     patterns: [RAPIER],
   },
   {

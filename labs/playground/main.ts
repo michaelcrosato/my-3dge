@@ -16,8 +16,9 @@
  * settings.
  *
  * Each drawn frame (`onFrame`) it shows the gym's signs (labs/playground/levels/gym.ts) as labels over their features,
- * those within `SIGN_RANGE` of the player, and the HUD: the camera mode and the look in use, and the keys of the map in
- * use as its prompts give them (`keysLine`). It reads the run and never changes it.
+ * those within `SIGN_RANGE` of the player, and the HUD: the camera mode and the look in use, the room the player is in
+ * on a scene's site (`whereLine`, a room's data: PLAN.md WP 13.15), and the keys of the map in use as its prompts give
+ * them (`keysLine`). It reads the run and never changes it.
  *
  * The gym's text is computed from its features, so the page registers the text the scene compiles (`GYM_TEXT`), as the
  * starter game registers its arena's; a level written as a file would come in as `?raw` text, as the box's do. The
@@ -30,7 +31,7 @@
  * `node x shot labs/playground --scene gym --cam iso` reports what it draws.
  */
 /// <reference types="vite/client" />
-import { createEngine, type Engine, type EngineFrame, type Label } from '../../engine';
+import { createEngine, getSite, siteStructureAt, type Engine, type EngineFrame, type Label, type Site } from '../../engine'; // prettier-ignore
 import { keysLine, playgroundMap } from './controls';
 import { mountFeelPanel } from './feel';
 import './ground';
@@ -94,6 +95,17 @@ let signs: { label: Label; at: readonly number[] }[] = [];
 /** The camera mode and look on screen, for the HUD. */
 let showing = { camera: '', look: search.get('post.look') ?? '' };
 
+/** The running scene's site, made once a scene (its id and the site, or null without one). */
+let placed: { scene: string; site: Site | null } = { scene: '', site: null };
+
+/** Where the player is on the scene's site, for the HUD: the room's name, indoors, or outdoors; null without a site. */
+function whereLine(scene: EngineFrame['scene'], at: { x: number; y: number; z: number }): string | null {
+  if (placed.scene !== scene.id) placed = { scene: scene.id, site: scene.site ? getSite(scene.site) : null };
+  if (!placed.site) return null;
+  const found = siteStructureAt(placed.site, at.x, at.y + 0.1, at.z); // 10 cm up: resting feet sink a hair into a floor
+  return found?.room ? `Room: ${found.room.name}` : found ? 'Indoors' : 'Outdoors';
+}
+
 /** The inspector's camera member; null before the engine starts. */
 const camera = () => (engine?.inspector?.camera as CameraMember | undefined) ?? null;
 
@@ -107,7 +119,7 @@ function showFrame({ world, scene }: EngineFrame): void {
       at: feature.sign,
     }));
   }
-  const players = world.query('actor') as unknown as { actor: { player: boolean; x: number; z: number } }[];
+  const players = world.query('actor') as unknown as { actor: { player: boolean; x: number; y: number; z: number } }[];
   const player = players.find((entity) => entity.actor.player)?.actor;
   for (const sign of signs) {
     sign.label.visible = !player || Math.hypot(sign.at[0] - player.x, sign.at[2] - player.z) <= SIGN_RANGE;
@@ -115,6 +127,7 @@ function showFrame({ world, scene }: EngineFrame): void {
   if (!showing.camera) showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? 'custom' };
   const look = showing.look.replace(/^look:playground-/, '');
   ui.hud('mode', `Camera: ${showing.camera} · Look: ${look}`, { at: 'top-right' });
+  ui.hud('room', player ? whereLine(scene, player) : null, { at: 'top-left' });
   if (engine?.input) ui.hud('keys', keysLine(engine.input), { at: 'bottom', keys: true });
 }
 

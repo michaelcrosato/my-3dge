@@ -19,18 +19,18 @@
  * cameras keep out of the walls), the player's eye (the shooter model's height, else his head socket) and what he does
  * each step (`cameraPlayer`); first person draws his arms by their own lens and hides his body, its shadow kept
  * (engine/gfx/viewmodel/, WP 13.12; `cameraInfo().culled`, `.arms`); hard landings shake the screen. Following a
- * player, the level's cutaway runs (engine/gfx/cutaway.ts); `aim(rule, devices)` is his aim from the camera drawn last
- * (WP 13.9, engine/input/aim.ts: the centre's ray through the sim's queries, his body skipped, or the pointer's onto
- * his floor), which the page's input records. `restarted()` after the run starts again (a new seed, a replay) or its
- * world changes between steps (a restore, a dev action) reads the entities afresh: the stand-ins and bolts snap to
- * them, so no dump, shot or frame shows the places they had before. The effects forget what ran only for a new world,
- * read from its first event; the same world keeps its trace read (history, never restored), so no event plays twice.
+ * player, the cutaways run (the stage's `frame`); `aim(rule, devices)` is his aim from the camera drawn last (WP 13.9,
+ * engine/input/aim.ts: the centre's ray through the sim's queries, his body skipped, or the pointer's onto his floor),
+ * which the page's input records. `restarted()` after the run starts again (a new seed, a replay) or its world changes
+ * between steps (a restore, a dev action) reads the entities afresh: the stand-ins and bolts snap to them, so no dump,
+ * shot or frame shows the places they had before. The effects forget what ran only for a new world, read from its first
+ * event; the same world keeps its trace read (history, never restored), so no event plays twice.
  *
  * The level comes from the scene's `level` id (engine/world/level/level.ts), registered before the view starts
- * (`APP_NO_LEVEL`), the terrain from its `terrain` id (WP 10.5). Cameras are view state: switching one
- * (`setCamera(code)`, `__engine.camera.set`; with `{ blend: true }`, the page's live switch, it blends) never reaches
- * the sim. Invariants: presentation only (doctrine: WebGPU only): it reads the run and never writes it (the `QueryView`
- * has no way in); one stage per view, one three.js camera per projection (switching makes none).
+ * (`APP_NO_LEVEL`), the terrain from its `terrain` id (WP 10.5), the site from its `site` id (WP 13.15). Cameras are
+ * view state: switching one (`setCamera(code)`, `__engine.camera.set`; with `{ blend: true }`, the page's live switch,
+ * it blends) never reaches the sim. Invariants: presentation only (the doctrine's WebGPU only): it reads the run, never
+ * writes it (the `QueryView` has no way in); one stage per view, one three.js camera per projection, none per switch.
  *
  * @example
  * // const view = createRunView({ run: () => session, registry, materials: createMaterialLibrary() });
@@ -56,6 +56,7 @@ import { queryViewOf, type QueryView } from '../sim/queryView';
 import type { Session } from '../sim/session';
 import type { EntityData } from '../sim/state';
 import { getLevel, type LevelEntry } from '../world/level/level';
+import { getSite } from '../world/site';
 import { getTerrain } from '../world/terrain';
 
 /** The codes this module raises, with their fixes. */
@@ -158,8 +159,9 @@ export function createRunView(options: RunViewOptions): RunView {
   const levelMaterials = (entry?.materials ?? {}) as Readonly<Record<string, string>>; // strings: the kind checks
   const levelRooms = (entry?.rooms ?? {}) as Readonly<Record<string, string>>;
   const terrain = scene.terrain === undefined ? null : getTerrain(scene.terrain, registry);
+  const site = scene.site === undefined ? null : getSite(scene.site, registry);
   const fxRng = (...keys: readonly (string | number)[]) => options.run().world.fxRng(...keys);
-  const stage = createStage({ level, terrain, materials: options.materials, registry, log: options.log, fxRng, levelMaterials, levelRooms }); // prettier-ignore
+  const stage = createStage({ level, terrain, site, materials: options.materials, registry, log: options.log, fxRng, levelMaterials, levelRooms }); // prettier-ignore
   /**
    * Turns the effects on or off by the view setting `gfx.effects` (a registry without it: on), before they read;
    * returns whether that changed them.
@@ -240,7 +242,7 @@ export function createRunView(options: RunViewOptions): RunView {
     parts = stage.actors.firstPerson(first);
     const player = stage.actors.player();
     const fade = (rig.camera as { fade?: boolean }).fade === true; // a camera that may stand behind a wall
-    if (player) stage.cutaway?.update(pose, player.feet, { fade });
+    if (player) stage.frame(pose, player.feet, { fade, view: rig.camera.type === 'view' });
     return pose;
   };
   const info = (): CameraInfo => ({

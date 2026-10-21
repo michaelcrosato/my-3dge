@@ -303,8 +303,9 @@ export function updateTrigger(physics: Physics, trigger: Trigger): { entered: nu
 
 /** A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids. */
 export interface RescueLevel {
-  /** Metres per tile; tiles run along +X (cols) and +Z (rows). */
+  /** Metres per tile; tiles run along +X (cols) and +Z (rows), from `origin` ([x, z], [0, 0] by default: a site's grid). */
   readonly tile: number;
+  readonly origin?: readonly [number, number];
   readonly cols: number;
   readonly rows: number;
   /** Per tile, row by row. */
@@ -354,7 +355,7 @@ function depthOf(b: RAPIER.RigidBody): number {
   return Number.isFinite(most) ? most : 0;
 }
 
-/** The walkable tile whose centre is nearest (x, z), the first in tile order among equals; −1 when none is. */
+/** The walkable tile whose centre is nearest (x, z), from the grid's origin, the first in tile order among equals; −1 if none. */
 function nearestWalkable(level: RescueLevel, x: number, z: number): number {
   let [best, distance] = [-1, Infinity];
   for (let i = 0; i < level.walkable.length; i++) {
@@ -376,18 +377,19 @@ export function rescueLost(physics: Physics, level: RescueLevel, options: { dept
   const { tile, cols, rows } = level;
   check(tile > 0 && level.floor.length === cols * rows, 'rescueLost(level)', level, 'a compiled level');
   const world = rapierOf(physics);
+  const [ox, oz] = level.origin ?? [0, 0];
   const rescued: number[] = [];
   for (const id of physics.bodies()) {
     const b = world.bodies.get(handleOf(id))!;
     if (!b.isDynamic()) continue;
     const p = b.translation();
-    const [col, row] = [Math.floor(p.x / tile), Math.floor(p.z / tile)];
+    const [col, row] = [Math.floor((p.x - ox) / tile), Math.floor((p.z - oz) / tile)];
     const inside = col >= 0 && row >= 0 && col < cols && row < rows;
     if (inside && p.y >= level.floor[row * cols + col] - depth) continue;
-    const i = nearestWalkable(level, p.x, p.z);
+    const i = nearestWalkable(level, p.x - ox, p.z - oz);
     if (i < 0) continue;
     const y = level.floor[i] + depthOf(b) + GAP;
-    b.setTranslation({ x: ((i % cols) + 0.5) * tile, y, z: (Math.floor(i / cols) + 0.5) * tile }, true);
+    b.setTranslation({ x: ((i % cols) + 0.5) * tile + ox, y, z: (Math.floor(i / cols) + 0.5) * tile + oz }, true);
     b.setLinvel({ x: 0, y: 0, z: 0 }, true);
     b.setAngvel({ x: 0, y: 0, z: 0 }, true);
     rescued.push(id);

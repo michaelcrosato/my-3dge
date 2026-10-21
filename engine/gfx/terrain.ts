@@ -4,10 +4,12 @@
  * the chunk's middle holding a mesh per level of detail: every corner, every second, every fourth (`LOD_STEPS`, those
  * that divide the chunk), shown from `LOD_DISTANCES` metres away: three's renderer picks one for each camera, by its
  * distance from a perspective camera, and for an orthographic one (which stands far back: the isometric and top-down
- * views) by what it frames, as far as a 50° lens stands to frame as much (`levelDistance`). The finest mesh is the collider's surface, each cell split as Rapier splits it;
- * coarser ones skip corners, and every mesh hangs a skirt `SKIRT` metres down round its edges, so where neighbours of
- * different detail meet no gap shows the sky. Normals are the full grid's at every level (central differences of the
- * heights), so the light holds still as the levels switch; UVs are world metres (x, z).
+ * views) by what it frames, as far as a 50° lens stands to frame as much (`levelDistance`). The finest mesh is the
+ * collider's surface, each cell split as Rapier splits it; coarser ones skip corners, and every mesh hangs a skirt
+ * `SKIRT` metres down round its edges, so where neighbours of different detail meet no gap shows the sky. A site's cut
+ * (`cut`, WP 13.15) leaves its cells out, and a chunk holding one keeps only its finest level, so the hole is exact.
+ * Normals are the full grid's at every level (central differences of the heights), so the light holds still as the
+ * levels switch; UVs are world metres (x, z).
  *
  * Materials: the terrain's ground layer from `materials` (a registry material, so the style set re-points it), drawn
  * through the splat (engine/gfx/terrainSplat.ts, the meshes' `userData.restyle`) with its steep and high layers.
@@ -71,6 +73,8 @@ class ChunkLOD extends LOD {
 export interface TerrainMeshesOptions {
   /** The materials by id: the page's material library (engine/gfx/materials/library.ts). */
   materials: { get(id: string): Material };
+  /** A site's cut (engine/world/site.ts): a flag per cell, 1 where nothing of the terrain stands (WP 13.15). */
+  cut?: ArrayLike<number> | null;
 }
 
 /** A terrain's meshes (see the file comment). */
@@ -117,6 +121,7 @@ export function chunkGeometry(
   [c0, r0, cols, rows]: readonly [number, number, number, number],
   step: number,
   middle: Vec3,
+  cut?: ArrayLike<number> | null,
 ): BufferGeometry {
   const { cell, origin, heights } = terrain;
   const writer = createWriter();
@@ -133,6 +138,7 @@ export function chunkGeometry(
   const index = (i: number, j: number) => first + j * (across + 1) + i;
   for (let j = 0; j < down; j++) {
     for (let i = 0; i < across; i++) {
+      if (cut?.[(r0 + j) * terrain.cols + c0 + i]) continue; // a cut cell: only the finest level takes a cut
       // Rapier's split, wound to face up: north-west, south-west, north-east; then north-east, south-west, south-east.
       writer.triangle(index(i, j), index(i, j + 1), index(i + 1, j));
       writer.triangle(index(i + 1, j), index(i, j + 1), index(i + 1, j + 1));
@@ -156,6 +162,17 @@ export function chunkGeometry(
   return writer.build();
 }
 
+/** Whether any of a chunk's cells is cut. */
+function cutIn(
+  cut: ArrayLike<number> | null | undefined,
+  across: number,
+  [c0, r0, cols, rows]: readonly number[],
+): boolean {
+  // prettier-ignore
+  for (let r = r0; cut && r < r0 + rows; r++) for (let c = c0; c < c0 + cols; c++) if (cut[r * across + c]) return true;
+  return false;
+}
+
 /** Draws `terrain` (see the file comment). */
 export function createTerrainMeshes(terrain: Terrain, options: TerrainMeshesOptions): TerrainMeshes {
   const root = new Group();
@@ -175,9 +192,11 @@ export function createTerrainMeshes(terrain: Terrain, options: TerrainMeshesOpti
       const lod = new ChunkLOD();
       lod.name = `${root.name}/${c0},${r0}`;
       lod.position.set(...middle);
+      const holed = cutIn(options.cut, terrain.cols, [c0, r0, cols, rows]);
       LOD_STEPS.forEach((step, level) => {
-        if (cols % step || rows % step) return;
-        const mesh = new Mesh(chunkGeometry(terrain, normals, [c0, r0, cols, rows], step, middle), splat.wrap(ground));
+        if (cols % step || rows % step || (holed && step > 1)) return;
+        const geometry = chunkGeometry(terrain, normals, [c0, r0, cols, rows], step, middle, holed ? options.cut : null); // prettier-ignore
+        const mesh = new Mesh(geometry, splat.wrap(ground));
         Object.assign(mesh, { name: `${lod.name}#${level}`, castShadow: true, receiveShadow: true });
         Object.assign(mesh.userData, { terrain: terrain.name, restyle: (material: Material) => splat.wrap(material) });
         lod.addLevel(mesh, LOD_DISTANCES[level]);

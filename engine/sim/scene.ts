@@ -9,8 +9,9 @@
  * A scene is game code: `setup(w)` spawns, adds systems and listeners (inside `w.run`, so under the fdlibm swap);
  * `step(w, intents)` runs every sim step as the system `scene`, first in the phase `intents`, ahead of the systems
  * setup adds there; `actions` are its dev actions, `(w, args) => void` by name (WP 5.6 adds the engine's own).
- * `level` names the level it loads (WP 2.2 compiles it), `terrain` its ground (WP 10.5, engine/world/terrain.ts: the
- * view draws them; its setup adds their bodies); `physics: true` gives it a physics world (physicsOf, WP 3.1).
+ * `level` names the level it loads (WP 2.2 compiles it), `terrain` its ground (WP 10.5, engine/world/terrain.ts) and
+ * `site` the levels standing on a terrain (WP 13.15, engine/world/site.ts): the view draws them; its setup adds their
+ * bodies. `physics: true` gives it a physics world (physicsOf, WP 3.1).
  * `sounds(record, w)` says which sound a traced sim event plays, `{ sfx, vol?, variant? }` or null, for `x audio
  * --replay` (WP 9.4): by default the event payload's own (`payloadSound`); a game that maps its events to sounds sets
  * its map here, so Node hears what its pages play (after G9, ADR-0013 amendment 3).
@@ -81,6 +82,8 @@ export interface SceneSpec<C extends object = AnyComponents, E extends EventMap 
   level?: string;
   /** Its terrain (`terrain:<name>`), when it has one (WP 10.5). */
   terrain?: string;
+  /** Its site (`site:<name>`: levels on a terrain), when it has one (WP 13.15). */
+  site?: string;
   /** Whether it has a physics world (WP 3.1): `physicsOf(w)` reaches it, the system `physics` steps it. */
   physics?: boolean;
   /** Setting values for its lifetime, path → value (schema-checked). */
@@ -97,7 +100,7 @@ export interface SceneSpec<C extends object = AnyComponents, E extends EventMap 
 
 /** A defined scene: its spec with defaults filled, plus `id` and `kind`. */
 export type Scene<C extends object = AnyComponents, E extends EventMap = EventMap> = Readonly<
-  Required<Omit<SceneSpec<C, E>, 'level' | 'terrain'>> & Pick<SceneSpec<C, E>, 'level' | 'terrain'>
+  Required<Omit<SceneSpec<C, E>, 'level' | 'terrain' | 'site'>> & Pick<SceneSpec<C, E>, 'level' | 'terrain' | 'site'>
 > & { readonly id: string; readonly kind: 'scene' };
 
 /** The fields of a `scene` entry. */
@@ -105,6 +108,7 @@ const SCENE_FIELDS = {
   description: { type: 'string', default: '', description: 'What the scene shows or tests, in plain sentences.' },
   level: { type: 'string', description: 'The level it loads (level:<name>, compiled by WP 2.2), when it has one.' },
   terrain: { type: 'string', description: 'Its terrain (terrain:<name>, WP 10.5), when it has one.' },
+  site: { type: 'string', description: 'Its site (site:<name>: levels on a terrain, WP 13.15), when it has one.' },
   physics: { type: 'boolean', default: false, description: 'Whether it has a physics world: physicsOf(w) reaches it.' },
   settings: {
     type: 'object',

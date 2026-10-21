@@ -5,14 +5,14 @@
  * session's step, so its play is recorded and replays as anyone's does; its own sums run under the sim's math
  * (engine/core/simMath.ts), so a run gives the same intents in Node and in a page.
  *
- * - **Navigation** (`Bot`): toward its goal down the level's flow field (engine/world/nav.ts, to the goal's nearest open
- *   tile), the last `near` metres straight at it, as one of `headings` directions (few, so its intents change seldom);
- *   there within `reach`.
- * - **Stuck, measured along the wanted direction**: each step, how far the feet went along the way it asked for. Under
- *   `progress` m/s while it asks to move, the held time grows (else it falls at twice the pace): pressed against a
- *   wall, a body jitters back and forth faster than "not moving" allows, so only the way it wants counts. Held 0.45 s,
- *   it sidesteps 1.3 rad to one side; 0.9 s, 2.2 rad; 1.5 s, it jumps and tries the other side. Held `stuck` seconds in
- *   all on one goal, it is `stuck` (`held`).
+ * - **Navigation** (`Bot`): toward its goal down the level's flow field (engine/world/nav.ts, to the goal's nearest
+ *   open tile) or a site's (engine/dev/botNav.ts), the last `near` metres straight at it, as one of `headings`
+ *   directions (few, so its intents change seldom); there within `reach` (on a site, and 1 m of its height).
+ * - **Stuck, measured along the wanted direction**: each step, how far the feet went along the way it asked for, or up
+ *   (a ladder). Under `progress` m/s while it asks to move, the held time grows (else it falls at twice the pace):
+ *   pressed against a wall, a body jitters back and forth faster than "not moving" allows, so only the way it wants
+ *   counts. Held 0.45 s, it sidesteps 1.3 rad to one side; 0.9 s, 2.2 rad; 1.5 s, it jumps and tries the other side.
+ *   Held `stuck` seconds in all on one goal, it is `stuck` (`held`).
  * - **Watchdog**: a goal whose walking distance has not fallen by `gain` in `patience` seconds is given up (`stuck`,
  *   `no progress`); one no route leads to, at once (`no route`).
  * - **Runs** (`runBot`): the goals `to` in order, or a tour of `tour` open tiles both ways reachable from the start
@@ -41,7 +41,6 @@
 import type { TraceRecord } from '../core/events';
 import { codeError } from '../core/log';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
-import { derive, Rng } from '../core/rng';
 import { defineSchema, parse, show, type SpecOf } from '../core/schema';
 import { withSimMath } from '../core/simMath';
 import type { Intents } from '../input/intents';
@@ -50,7 +49,8 @@ import { createSession } from '../sim/session';
 import type { World } from '../sim/world';
 import { getLevel } from '../world/level/level';
 import type { CompiledLevel } from '../world/level/types';
-import { NavGrid, type FlowField, type GroundPoint } from '../world/nav';
+import { getSite, type Site } from '../world/site';
+import { levelBotNav, siteBotNav, tourStream, type BotNav, type BotPoint, type BotWay } from './botNav';
 
 /** How the bot moves and when it gives up: `new Bot(level, options)` and every run take them. */
 export const BOT_FIELDS = defineSchema({
@@ -80,6 +80,8 @@ export type BotStatus = 'idle' | 'going' | 'arrived' | 'stuck';
 const SIDESTEP = [0.45, 0.9, 1.5] as const;
 /** The sidesteps' turns (rad). */
 const TURN = [1.3, 2.2] as const;
+/** How far above or below a goal (m) its height still counts as there: a slope's or a flight's, not a storey's. */
+const UP_REACH = 1;
 /** Steps a jump is held: a full jump. */
 const JUMP_STEPS = 12;
 /** The trace's most samples. */
@@ -87,14 +89,15 @@ const MAX_SAMPLES = 120;
 
 /** The bot: one goal at a time, the intents for each step (see the file comment). */
 export class Bot {
-  readonly grid: NavGrid;
+  /** What it navigates by: the level's grid or the site's graph. */
+  readonly nav: BotNav;
   readonly options: Readonly<Required<BotOptions>>;
   status: BotStatus = 'idle';
   /** Why it is stuck: `no route`, `held` or `no progress`; null otherwise. */
   reason: string | null = null;
-  #goal: GroundPoint | null = null;
-  #field: FlowField | null = null;
-  #last: GroundPoint | null = null;
+  #goal: BotPoint | null = null;
+  #field: BotWay | null = null;
+  #last: BotPoint | null = null;
   #held = 0;
   #heldAll = 0;
   #side = 1;
@@ -102,21 +105,22 @@ export class Bot {
   #best = Infinity;
   #waited = 0;
 
-  constructor(level: CompiledLevel, options: BotOptions = {}) {
+  /** A bot on `level`, or on a site (engine/world/site.ts): its storeys and terrain. */
+  constructor(level: CompiledLevel | Site, options: BotOptions = {}) {
     this.options = parse(BOT_FIELDS, options, 'new Bot(level, options)') as Required<BotOptions>;
-    this.grid = new NavGrid(level, { climb: this.options.climb });
+    const { climb } = this.options;
+    this.nav = 'structures' in level ? siteBotNav(level, climb) : levelBotNav(level, climb);
   }
 
   /** The goal now, or null. */
-  get goal(): GroundPoint | null {
+  get goal(): BotPoint | null {
     return this.#goal;
   }
 
-  /** Heads for `goal` (m on the ground) from the next step: the counters start again. */
-  goTo(goal: GroundPoint): this {
-    const tile = this.grid.nearestOpen(goal.x, goal.z);
-    this.#goal = { x: goal.x, z: goal.z };
-    this.#field = tile >= 0 ? this.grid.flowField(tile) : null;
+  /** Heads for `goal` (m on the ground; its height on a site) from the next step: the counters start again. */
+  goTo(goal: BotPoint): this {
+    this.#goal = { x: goal.x, y: goal.y, z: goal.z };
+    this.#field = this.nav.wayTo(goal);
     [this.status, this.reason, this.#best, this.#waited, this.#held, this.#heldAll] = [
       'going',
       null,
@@ -130,37 +134,47 @@ export class Bot {
   }
 
   /** The intents for one step of `dt` seconds, for a body whose feet are at `at` (m); none unless going. */
-  next(at: GroundPoint, dt: number): Intents {
+  next(at: BotPoint, dt: number): Intents {
     return withSimMath(() => this.#think(at, dt));
   }
 
-  #think(at: GroundPoint, dt: number): Intents {
+  #think(at: BotPoint, dt: number): Intents {
     const goal = this.#goal;
     if (this.status !== 'going' || !goal) return {};
     const [dx, dz] = [goal.x - at.x, goal.z - at.z];
-    const straight = Math.sqrt(dx * dx + dz * dz);
+    // On a site a goal names its height: one a storey above or below is not there, nor near.
+    const level = goal.y === undefined || at.y === undefined || Math.abs(goal.y - at.y) <= UP_REACH;
+    const straight = level ? Math.sqrt(dx * dx + dz * dz) : Infinity;
     if (straight <= this.options.reach) return this.#end('arrived', null);
-    const walk = this.#field ? this.#field.distanceAt(at.x, at.z) : Infinity;
+    const walk = this.#field ? this.#field.distanceAt(at) : Infinity;
     if (!(walk < Infinity)) return this.#end('stuck', 'no route');
     const left = walk > 0 ? walk : straight;
     if (left < this.#best - this.options.gain) [this.#best, this.#waited] = [left, 0];
     else if ((this.#waited += dt) > this.options.patience) return this.#end('stuck', 'no progress');
-    const way = straight < this.options.near ? null : this.#field!.direction(at.x, at.z);
-    const [wx, wz] = way ? [way.x, way.z] : [dx / straight, dz / straight];
-    // How far it went since the last step along the way navigation wants, not the sidestep's (see the file comment).
+    const way = straight < this.options.near ? null : this.#field!.direction(at);
+    const flat = Math.sqrt(dx * dx + dz * dz) || 1;
+    const [wx, wz] = way ? [way.x, way.z] : [dx / flat, dz / flat];
+    // How far it went since the last step along the way navigation wants, not the sidestep's, or up or down (a ladder).
     const slow = this.options.progress * dt;
-    const moved = this.#last ? (at.x - this.#last.x) * wx + (at.z - this.#last.z) * wz : slow;
+    const rose = Math.abs((at.y ?? 0) - (this.#last?.y ?? 0));
+    const moved = this.#last ? Math.max((at.x - this.#last.x) * wx + (at.z - this.#last.z) * wz, rose) : slow;
     if (moved < slow) [this.#held, this.#heldAll] = [this.#held + dt, this.#heldAll + dt];
     else this.#held = Math.max(0, this.#held - 2 * dt);
-    this.#last = { x: at.x, z: at.z };
+    this.#last = { x: at.x, y: at.y, z: at.z };
     if (this.#heldAll > this.options.stuck) return this.#end('stuck', 'held');
+    // On a ladder whose way goes down it lets go (crouch); falling, it pushes nowhere, so it lands rather than catching a ladder.
+    if (at.mode === 'ladder' && (this.#field?.rise?.(at) ?? 0) < -UP_REACH) return { b: ['crouch'] };
+    if (at.mode === 'air' && this.#jump <= 0 && rose > 0 && (this.#field?.over?.(at) ?? 0) > UP_REACH) return {};
     let angle = Math.atan2(wx, wz);
     if (this.#held > SIDESTEP[2]) [this.#jump, this.#held, this.#side] = [JUMP_STEPS, 0, -this.#side];
     else if (this.#held > SIDESTEP[0]) angle += this.#side * (this.#held > SIDESTEP[1] ? TURN[1] : TURN[0]);
     const move = this.#heading(angle);
-    if (this.#jump <= 0) return { move };
-    this.#jump--;
-    return { move, b: ['jump'] };
+    const b = this.#field?.crouch?.(at) ? ['crouch'] : [];
+    if (this.#jump > 0) {
+      this.#jump--;
+      b.push('jump');
+    }
+    return b.length ? { move, b } : { move };
   }
 
   /** `angle` (rad from +Z toward +X) as `move` takes it: snapped to the headings, two decimals cut toward 0. */
@@ -198,8 +212,8 @@ export interface BotSample {
 
 /** What a run plays (see the file comment), with the bot's options. */
 export interface BotPlan extends BotOptions {
-  /** The goals, in order (m on the ground). */
-  to?: GroundPoint | readonly GroundPoint[];
+  /** The goals, in order (m on the ground; with their heights on a site). */
+  to?: BotPoint | readonly BotPoint[];
   /** Instead: this many open tiles drawn from the bot's own stream, each reachable from the start and back. */
   tour?: number;
   /** Then back to where it started. */
@@ -231,10 +245,10 @@ export interface BotReport {
 }
 
 /** The actor `id`'s component (the first player's when absent), or a coded error naming the fix. */
-function actorFeet(world: BotWorld, id: number | undefined): { x: number; y: number; z: number } {
-  const actors = world.query('actor') as { id: number; actor: { player: boolean; x: number; y: number; z: number } }[];
+function actorFeet(world: BotWorld, id: number | undefined): Required<Omit<BotPoint, 'mode'>> & Pick<BotPoint, 'mode'> {
+  const actors = world.query('actor') as { id: number; actor: { player: boolean; x: number; y: number; z: number }; motion?: { mode?: string } }[]; // prettier-ignore
   const found = actors.find((e) => (id === undefined ? e.actor.player : e.id === id));
-  if (found) return found.actor;
+  if (found) return { x: found.actor.x, y: found.actor.y, z: found.actor.z, mode: found.motion?.mode };
   const problem = id === undefined ? 'the scene has no player actor' : `${show(id)} is no live actor`;
   throw codeError('SIM_NO_ACTOR', { what: 'the bot', problem });
 }
@@ -250,32 +264,15 @@ function stopOf(until: BotPlan['until']): (world: BotWorld) => boolean {
   return (world) => world.query(component).some((e) => Boolean((e as Record<string, Record<string, unknown>>)[component][field])); // prettier-ignore
 }
 
-/** The tour's goals: `n` open tiles reachable from `start` and back, drawn from the bot's stream `derive(seed, 'bot')`. */
-function tourOf(grid: NavGrid, start: GroundPoint, n: number, seed: number): GroundPoint[] {
-  const from = grid.nearestOpen(start.x, start.z);
-  if (from < 0 || n <= 0) return [];
-  const home = grid.flowField(from).distance;
-  const open = [...home.keys()].filter((tile) => tile !== from && home[tile] < Infinity);
-  const rng = new Rng(derive(seed, 'bot'));
-  const out: GroundPoint[] = [];
-  for (let tries = 0; out.length < n && open.length && tries < 8 * n; tries++) {
-    const [tile] = open.splice(rng.int(0, open.length - 1), 1);
-    if (!(grid.flowField(tile).distance[from] < Infinity)) continue; // reachable from the start, not only back
-    const centre = grid.center(tile);
-    out.push({ x: centre.x, z: centre.z });
-  }
-  return out;
-}
-
-/** Plays `run` with the bot over `level` (see the file comment) and reports what happened. */
-export function runBot(run: BotRun, level: CompiledLevel, plan: BotPlan = {}): BotReport {
+/** Plays `run` with the bot over `level` or a site (see the file comment) and reports what happened. */
+export function runBot(run: BotRun, level: CompiledLevel | Site, plan: BotPlan = {}): BotReport {
   const { to, tour, back = false, steps = 3600, until, trace = 0, actor, ...options } = plan;
   const bot = new Bot(level, options);
   const { world } = run;
   const start = actorFeet(world, actor);
-  const given = to === undefined ? [] : 'x' in to ? [to as GroundPoint] : [...(to as readonly GroundPoint[])];
-  const goals = tour ? tourOf(bot.grid, start, tour, world.seed) : given;
-  if (back) goals.push({ x: start.x, z: start.z });
+  const given = to === undefined ? [] : 'x' in to ? [to as BotPoint] : [...(to as readonly BotPoint[])];
+  const goals = tour ? bot.nav.tour(start, tour, tourStream(world.seed)) : given;
+  if (back) goals.push({ x: start.x, y: start.y, z: start.z });
   const stop = stopOf(until);
   const events: Record<string, number> = {};
   const samples: BotSample[] = [];
@@ -351,8 +348,8 @@ export interface BotRow {
 export interface SweepOptions {
   settings?: Readonly<Record<string, unknown>>;
   registry?: Registry;
-  /** The level the bot reads: the scene's own (`getLevel(scene.level)`) when absent. */
-  level?: CompiledLevel;
+  /** The level (or site) the bot reads: the scene's own (`getSite(scene.site)`, else `getLevel(scene.level)`) when absent. */
+  level?: CompiledLevel | Site;
 }
 
 /** Plays `plan` from a fresh session of `scene` per seed (see the file comment): one row for the scene. */
@@ -364,9 +361,9 @@ export function sweepBot(
 ): BotRow {
   const registry = options.registry ?? sharedRegistry;
   const found = typeof scene === 'string' ? getScene(scene, registry) : scene;
-  const levelId = found.level ?? '';
-  if (!options.level && !levelId) throw codeError('SIM_BAD_ARGUMENT', { where: 'sweepBot(scene)', value: found.id, expected: 'a scene with a level (defineScene({ level })), or { level } given' }); // prettier-ignore
-  const level = options.level ?? getLevel(levelId, registry);
+  const levelId = found.site ?? found.level ?? '';
+  if (!options.level && !levelId) throw codeError('SIM_BAD_ARGUMENT', { where: 'sweepBot(scene)', value: found.id, expected: 'a scene with a level or a site (defineScene({ level })), or { level } given' }); // prettier-ignore
+  const level = options.level ?? (found.site ? getSite(found.site, registry) : getLevel(levelId, registry));
   const runs = parseSeeds(seeds).map((seed) => {
     const session = createSession(found, { seed, settings: options.settings, registry });
     return { seed, ...runBot(session, level, plan) };

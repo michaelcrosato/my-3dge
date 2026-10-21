@@ -265,7 +265,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `the scene {scene} loads the level {level}, which is not registered, so its view cannot be built`
 - Fix: register the level's text before the view starts: in a page, import text from './levels/<name>.txt?raw' and call defineLevel('{level}', { text, file }); in Node, read the file and do the same
-- Registered in: [`engine/app/view.ts` line 63](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 64](../engine/app/view.ts)
 
 ### APP_NO_REPLAY
 
@@ -277,7 +277,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `{member} needs the scene drawn as a view, and this engine has none`
 - Fix: start it with createHeadless({ scene, view: true }) in Node; a page always has one
-- Registered in: [`engine/app/view.ts` line 67](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 68](../engine/app/view.ts)
 
 ### APP_NOT_HEADLESS
 
@@ -349,7 +349,7 @@ Raised by `render` (engine/audio/dsp/render.ts).
 
 - Message: `room {room} is not a preset{hint}`
 - Fix: name one of the ROOMS presets ({names}), or pass { decay, predelay, damping, wet }
-- Registered in: [`engine/audio/runtime/reverb.ts` line 28](../engine/audio/runtime/reverb.ts)
+- Registered in: [`engine/audio/runtime/reverb.ts` line 29](../engine/audio/runtime/reverb.ts)
 
 Raised by `impulseResponse` and `audio.room` (engine/audio/runtime/reverb.ts) for a room name that is not in `ROOMS`, or numbers out of range.
 
@@ -1151,7 +1151,7 @@ Raised by bodies and queries (engine/physics/world.ts, engine/physics/queries.ts
 
 - Message: `there is no body {id}{why}`
 - Fix: use an id addBody() returned while its body exists (hasBody(id) tells); bodies() lists them
-- Registered in: [`engine/physics/world.ts` line 83](../engine/physics/world.ts)
+- Registered in: [`engine/physics/world.ts` line 84](../engine/physics/world.ts)
 
 ### PHYSICS_NONE
 
@@ -1209,7 +1209,7 @@ Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step ru
 
 - Message: `{where} got the seed {value}, which a replay cannot hold`
 - Fix: pass a whole number, 0 or more (x sim --seed 3, __engine.seed(3)): record() writes the seed into the replay
-- Registered in: [`engine/sim/scene.ts` line 46](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 47](../engine/sim/scene.ts)
 
 ### SIM_BAD_SYSTEM
 

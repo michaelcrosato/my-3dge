@@ -5,7 +5,8 @@
  * storeys stand where their blocks say, each floor slab under the floored tiles only, walls from each floor to the
  * next, heads over its doors and windows, the flights' wedges from floor to floor, the gable's two planes, walls under
  * it clipped to its underside; its rooms, openings, spawns and ground storey; `storeyView` reads any storey as a
- * format-1 level and refuses a storey it lacks; `floorBelow`, `surfaceBelow`, `storeyAt` and `roomAt` answer in 3D.
+ * format-1 level and refuses a storey it lacks; `floorBelow`, `surfaceBelow`, `storeyAt` and `roomAt` answer in 3D;
+ * each light names the room it lights.
  * @see engine/world/level/storeys.ts
  * @see engine/world/level/compile.ts
  * @see engine/world/level/heights.ts
@@ -271,6 +272,16 @@ describe('the queries in 3D', () => {
     const level = compileLevel(text, { file: 'loft.txt', registry });
     const over = [storeyBelow(level, 3.5, 3.01, 1.5), surfaceBelow(level, 3.5, 3.01, 1.5), roomAt(level, 3.5, 3.01, 1.5)?.name]; // prettier-ignore
     expect(over).toEqual([1, 'wood', 'kitchen']); // over the wall at x 3 to 4 (1 m tiles), its top 3 m up
+  });
+
+  it('names the room each light lights: its tile’s, else the first beside it, north, east, south, west (WP 13.15)', () => {
+    const registry = rooms();
+    defineGlyph('glyph:test-lamp', { char: 'T', description: 'A lamp on a post.', top: 1, solid: true, collider: 'box', nav: { walkable: false }, light: 'lamp', lightHeight: 0.5 }, registry); // prettier-ignore
+    defineGlyph('glyph:test-candle', { char: 'i', description: 'A candle on the floor.', mesh: 'floor', light: 'candle' }, registry); // prettier-ignore
+    const text = ['---', 'storey: ground', 'base: 0', 'height: 2.7', '---', 'T######', '#h.T.k#', '#i.#..#', '#######'].join('\n'); // prettier-ignore
+    const level = compileLevel(text, { file: 'lamps.txt', registry });
+    // In the corner, in no room; between the hall and the kitchen, the kitchen's (east before west); on the hall's floor.
+    expect(level.lights.map((light) => [light.tag, light.room])).toEqual([['lamp', ''], ['lamp', 'room:kitchen'], ['candle', 'room:hall']]); // prettier-ignore
   });
 
   it("counts a head's top only where its solid stands: none under a storey too low for the head", () => {

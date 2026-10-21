@@ -3,7 +3,8 @@
  * entities, each holding its spec (engine/world/traverse.ts) in the component `zipline`, `ladder` or `launcher`, so the
  * sim hashes, captures and restores them. `addZipline(w, spec)` places a zipline and the fixed poles under its
  * anchors (each down to its foot, the spec's `feet`), `addLadder` and `addLauncher` the others (a solid launcher's
- * box from the ground up), and `addLevelLadders(w, level)` the ladders a level's ladder glyphs stand. `ridesOf(w)`
+ * box from the ground up), `addLevelLadders(w, level)` the ladders a level's ladder glyphs stand, and
+ * `addSiteLadders(w, site)` each structure's, at its place and quarter turn (WP 13.15). `ridesOf(w)`
  * gives the shooter model and the launchers what the world holds (engine/physics/movement/ride.ts's `Rides`), which
  * engine/sim/actors.ts hands every character's tick; the stage draws the components (engine/gfx/stageRides.ts).
  *
@@ -28,6 +29,7 @@ import type { Schema } from '../core/schema';
 import { physicsOf } from '../physics/binding';
 import type { Rides } from '../physics/movement/ride';
 import type { CompiledLevel } from '../world/level/types';
+import { toWorld, turnVector, type Site } from '../world/site';
 import { LADDER_FIELDS, LAUNCHER_FIELDS, launcherVolume, levelLadders, parseTraverse, ZIPLINE_FIELDS, type LadderSpec, type LauncherSpec, type ZiplineSpec } from '../world/traverse'; // prettier-ignore
 import { defineComponent } from './state';
 import type { World } from './world';
@@ -91,6 +93,18 @@ export function addLauncher<C extends object>(world: World<C>, spec: Record<stri
 /** Places the ladders `level`'s ladder glyphs stand (engine/world/traverse.ts's `levelLadders`); returns their entities. */ // prettier-ignore
 export function addLevelLadders<C extends object>(world: World<C>, level: CompiledLevel): number[] {
   return levelLadders(level).map((ladder) => addLadder(world, ladder as unknown as Record<string, unknown>));
+}
+
+/** Places the ladders of every structure of `site` (engine/world/site.ts), in the world; returns their entities. */
+export function addSiteLadders<C extends object>(world: World<C>, site: Site): number[] {
+  return site.structures.flatMap((s) =>
+    levelLadders(s.level).map((ladder) => {
+      const [fx, fy, fz] = ladder.foot as readonly number[];
+      const [x, z] = toWorld(s, fx, fz);
+      const normal = turnVector(s.turn, ...(ladder.normal as unknown as [number, number]));
+      return addLadder(world, { ...ladder, foot: [x, fy + s.at[1], z], top: (ladder.top as number) + s.at[1], normal });
+    }),
+  );
 }
 
 /** What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing. */

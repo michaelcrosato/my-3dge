@@ -232,6 +232,8 @@ export interface LightSpot {
   readonly position: Point3;
   /** Format 2: its storey (an index into `storeys`). */
   readonly storey?: number;
+  /** Format 2: the room it stands in (`room:<name>`), its light group (WP 13.15); '' outside every room. */
+  readonly room?: string;
 }
 
 /** One storey of a format-2 level (WP 13.13): its heights and its own grids and descriptors, heights absolute. */

@@ -11,7 +11,10 @@
  *    wall as in the open (their lens draws them in front of it), and they move with the state (a sprint, a jump);
  * 6. the controls (WP 13.9): in each mode, live play through its own map (keys, the mouse turning the view under the
  *    pointer lock a click takes, or aiming as a free pointer) records the look and the aim the map's rule gives, and
- *    the recording replays in Node to the page's hash.
+ *    the recording replays in Node to the page's hash;
+ * 7. the lot's cutaway by storey (WP 13.15): isometric and top-down hide, in the house's every room and in the shed,
+ *    what stands above the player's storey and the roof (the ID pass: hidden, never seen), nothing in the yard; the
+ *    player shows; the HUD names the room; visiting them all builds 0 pipelines after the warm-up.
  *
  * Invariants: the page is read through `__engine` only; the sim is stepped with `__engine.step` (or the keys on the
  * virtual clock's frames), then frames drawn with `__engine.render` (1/60 s each), so a blend's frames are counted.
@@ -23,6 +26,8 @@ import { getActionMap } from '../../engine/input/actionMaps';
 import { playReplay, type Replay } from '../../engine/sim/replay';
 import { playgroundMap } from '../../labs/playground/controls';
 import '../../labs/playground/scenes/gym';
+import { LOT, LOT_START } from '../../labs/playground/scenes/lot';
+import { toWorld } from '../../engine/world/site';
 import { PLAYGROUND_CAMERAS } from '../../labs/playground/views';
 import { expect, test } from './fixtures';
 
@@ -56,6 +61,18 @@ async function feet(page: Page): Promise<[number, number, number]> {
 }
 
 const far = (a: readonly number[], b: readonly number[]) => Math.hypot(...a.map((v, i) => v - b[i]));
+
+/**
+ * The lot's places: each room of the house at its marker (the attic's under its ridge: its marker stands where the roof
+ * leaves 1.4 m), the shed's floor, the yard; the storey and the HUD's line.
+ */
+const [HOUSE, SHED] = LOT.structures;
+const marker = (room: { name: string; position: readonly number[] }) => (room.name === 'attic' ? [2.25, 3] : [room.position[0], room.position[2]]); // prettier-ignore
+const PLACES = [
+  ...HOUSE.level.rooms!.map((room) => ({ name: room.name, at: [...toWorld(HOUSE, marker(room)[0], marker(room)[1])], y: room.position[1], storey: room.storey, in: 'lot-house', hud: `Room: ${room.name}` })), // prettier-ignore
+  { name: 'shed', at: toWorld(SHED, 1.5, 2), y: 0, storey: 0, in: 'lot-shed', hud: 'Indoors' },
+  { name: 'yard', at: [LOT_START[0], LOT_START[2]], y: LOT_START[1], storey: -1, in: '', hud: 'Outdoors' },
+];
 
 /** Opens the playground at `query` and waits for it, paused. */
 async function open(page: Page, harness: { ready(o: { timeout: number }): Promise<unknown> }, query = '') {
@@ -254,4 +271,62 @@ test.describe('the playground’s cameras', () => {
       expect(harness.advice()).toEqual([]);
     });
   }
+});
+
+test.describe('the lot’s cutaway by storey (WP 13.15)', () => {
+  test.setTimeout(600_000);
+
+  test('hides what stands above the player’s storey and the roof indoors in the classic views, building nothing', async ({
+    page,
+    harness,
+  }) => {
+    await open(page, harness, '?scene=lot&cam=iso');
+    const views = PLAYGROUND_CAMERAS.filter((mode) => mode.code.startsWith('cam='));
+    const visit = async (place: (typeof PLACES)[number]) => {
+      await call(page, 'actions.run', 'place', { at: [place.at[0], place.y, place.at[1]] });
+      await call(page, 'step', 2, {});
+      await call(page, 'render', 2);
+    };
+    for (const mode of views) {
+      await call(page, 'camera.set', mode.code);
+      for (const place of PLACES) await visit(place);
+    }
+    expect((await call<{ pipelinesAfterWarmUp: number }>(page, 'stats')).pipelinesAfterWarmUp).toBe(0); // before the ID pass's own
+    type Ids = { ids: { visible: { name: string; px: number }[]; unseen: { name: string; reason: string }[] } };
+    const shown: Record<string, number> = {};
+    for (const mode of views) {
+      await call(page, 'camera.set', mode.code);
+      for (const place of PLACES) {
+        await visit(place);
+        const { ids } = await call<Ids>(page, 'shot', { ids: true, metrics: false, thumbnail: false });
+        // The level's meshes (the cutaway's twins aside), and those the cut hides: `hidden` in the dump, by `visible`.
+        // The ID pass's own `hidden` also counts a wall the cutaway cut down in front of the player (no instances left).
+        const dump = (await call<string>(page, 'scene.dump', { filter: 'level:lot' })).split('\n').map((line) => line.trim().split(/\s+/)); // prettier-ignore
+        const parts = dump.filter(([name, type]) => name.startsWith('level:') && !name.endsWith(':cut') && /Mesh$/.test(type)); // prettier-ignore
+        const cut = parts.filter((line) => line[2] === 'hidden').map(([name]) => name);
+        const seen = ids.visible.map((entry) => entry.name);
+        const storey = (name: string) => (place.in === 'lot-house' ? HOUSE : SHED).level.storeys!.findIndex((s) => s.name === name.split('/')[1]); // prettier-ignore
+        const above = (name: string) => name.startsWith(`level:${place.in}/`) && (name.endsWith('/roof') || storey(name) > place.storey); // prettier-ignore
+        const at = `${mode.name}, ${place.name}`;
+        const all = parts.map(([name]) => name);
+        expect(
+          cut.filter((name) => !above(name)),
+          `${at}: hidden, not above`,
+        ).toEqual([]);
+        expect(
+          all.filter((name) => above(name) && !cut.includes(name)),
+          `${at}: above, not hidden`,
+        ).toEqual([]);
+        expect(seen.filter(above), `${at}: above, seen`).toEqual([]);
+        expect(cut.length > 0, `${at}: anything hidden`).toBe(place.storey >= 0);
+        shown[at] = ids.visible.find((entry) => entry.name === 'actor#1')?.px ?? 0;
+        expect(await page.locator('[data-ui=hud][data-id=room]').textContent(), at).toBe(place.hud);
+      }
+    }
+    expect(
+      Object.entries(shown).filter(([, px]) => px === 0),
+      'the player shows everywhere',
+    ).toEqual([]);
+    expect(harness.advice()).toEqual([]);
+  });
 });

@@ -311,8 +311,8 @@ reverb (§8.1), its light group (§8.2), its name on the HUD, and the cutaway's 
 ### 6.3 Sites
 
 A scene stands any number of levels on its terrain (WP 13.15): each placed at an offset and a turn of 90°, the terrain
-cut under it (basements and window wells; Rapier 0.21's heightfield has no holes, so the terrain is cut into
-triangle-mesh chunks there). `floorBelow`, `surfaceAt`, sight lines and the lost-body rescue answer over all of them;
+cut under it (basements and window wells; Rapier 0.21's heightfield has no holes, so a cut terrain is one triangle mesh
+of its other cells: ADR-0025 amendment 18). `floorBelow`, `surfaceAt`, sight lines and the lost-body rescue answer over all of them;
 navigation is a grid per storey and over the terrain, linked through stairs, ladders and doorways; the cutaway hides
 what is above the player's storey, and the roof when indoors.
 

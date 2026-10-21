@@ -7,8 +7,7 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 
 - Gate G10 passed (PR #26, 2026-10-21; its row in PLAN.md §14). G11 runs on `claude/pensive-cray-9pa1n6` from the
   updated main (PLAN.md §11.1), in Phase 13's table order: 13.13, 13.14, 10.5, 13.15, 10.3, 13.16, 13.17, 7.7, 13.18,
-  12.3. 13.13 (storeys), 13.14 (storeys drawn) and 10.5 (terrain) were built ahead in a side worktree while G10's
-  evidence ran: they land first, with their review's fixes (a head's top under void, the probes, every fixture drawn).
+  12.3. In PR #27, done: 13.13 storeys, 13.14 drawn, 10.5 terrain, 13.15 sites (the lot: `?scene=lot`); 10.3 is next.
 - Then G12, alive, and G13, the tech demo (Phase 13's table). Upgrades go between stages once they qualify: U-1
   Vitest 4 (2026-10-22), upload-artifact v5 (2026-10-24), checkout v6 (2026-11-20).
 - The owner's: the Quaternius GLBs (WP 8.8), model access for WP 12.2's live evals: `node x esc` when reached.
@@ -24,12 +23,13 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 
 ## What waits, by design
 
-- QA baseline entries wait on WPs 10.2 and 8.8; the gun's viewmodel and the punch's arm on WPs 13.20 and 13.19. Not
-  verifiable here: speakers, Firefox and Safari, phones' touch (ADR-0021), pads, real-GPU performance (Phase H). Not
-  run in a browser: the starter game's best-round HUD line (labs/game/main.ts; its logic: labs/game/best.test.ts).
-- At their size cap, split on the next change: anim/traversal/{plant,pose}.ts, sim/actors.ts, tools/qa/anim.ts
-  (392–400 lines), tests/e2e/box.spec.ts (399), engine/sim/world.ts (394). The feel kit poses as the page does, apart
-  (engine/dev/feel/anim.ts beside engine/gfx/puppets/actors.ts): one shared posing on the next change to either.
+- QA baseline entries wait on WPs 10.2 and 8.8; the gun's viewmodel and the punch's arm on WPs 13.20 and 13.19; the
+  cameras indoors on WP 13.18's roomier house (in the lot's 3 m rooms the shooter loses the player in 931 of 1,398
+  frames). Not verifiable here: speakers, Firefox and Safari, phones' touch (ADR-0021), pads, real-GPU performance
+  (Phase H). Not run in a browser: the starter game's best-round HUD line (labs/game/main.ts; labs/game/best.test.ts).
+- At their size cap, split on the next change: anim/traversal/{plant,pose}.ts, sim/actors.ts, tools/qa/anim.ts,
+  physics/bodies.ts (392–400 lines), tests/e2e/box.spec.ts (399), sim/world.ts (394), index.ts (393). The feel kit
+  poses apart from the page (engine/dev/feel/anim.ts, engine/gfx/puppets/actors.ts): share one when either changes.
 
 ## Open issues
 

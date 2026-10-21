@@ -883,3 +883,71 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   from the stage at its cap), engine/physics/world.ts (the shape), engine/sim/{levelBodies,scene,siteApi}.ts,
   engine/sim-api.ts, engine/index.ts, engine/app/view.ts, labs/playground/{ground,main}.ts, its scene and course,
   tests/e2e/terrain.spec.ts.
+
+## Amendment 18 (2026-10-21, WP 13.15): sites
+
+- **A site** (engine/world/site.ts): `defineSite(id, { terrain, structures })` stands levels on a terrain, each with its
+  map's north-west corner at `at` (its storey on 0 at `at`'s height) and turned `turn` quarter turns about +Y. Points
+  cross between a structure's frame and the world by swapping and negating (`toWorld`, `toLocal`), with no
+  trigonometry, so Node and Chromium agree to the bit; `turnVector` never gives −0, since a ladder's normal is state and
+  a capture as text would turn −0 into 0. The terrain is flattened round each footprint (`flatten`, 4 m) and cut, a flag
+  per cell, under a storey below the ground floor and the rectangles a structure names (`cuts`: window wells).
+- **The cut terrain is one triangle mesh, not chunks** (engine/physics/trimesh.ts; `addTerrainBody(physics, terrain,
+  cut)`): docs/PLAYGROUND.md §6.3 planned triangle-mesh chunks where a cut is. One mesh of every uncut cell, split as
+  the heightfield splits them, with Rapier's internal edges fixed (`FIX_INTERNAL_EDGES`: a box slides over its seams
+  within 5 mm) has no seam between a heightfield and a chunk for a body to catch on, where neither collider knows the
+  other's edges, and stays small (the lot's 32 × 32 cells: 2,048 triangles less the cut). Probed over the fixture site
+  it stands where `siteFloorBelow` says within 1 mm, and a capture of a ball rolling down a mesh restores exactly. The
+  drawn terrain leaves the cut cells out, the chunk holding them at its finest level only (engine/gfx/terrain.ts).
+- **Queries over all of it** (engine/world/siteQueries.ts): `siteFloorBelow`, `siteSurfaceBelow`, `siteStructureAt`
+  (the storey by the surface under the point, `storeyBelow`, else by height; the room), `siteSolidAt` (a head only
+  where its solid stands), `siteClearSight` (sampled every 0.1 m) and `siteRescueGrid` (1 m tiles from an origin, the
+  cellar's floor where the ground is cut; `rescueLost` reads a grid's `origin`).
+- **Bodies in their places**: `addLevelBodies(physics, level, { at, turn })` stands a structure's one fixed body turned
+  in its place; `addSiteBodies` stands the terrain, then each structure, in that order (insertion order is identity);
+  `addSiteLadders` carries each structure's ladders' feet, tops and normals into the world.
+- **Navigation over storeys and terrain** (engine/world/siteNav.ts, siteNavGrids.ts): a `NavSurface` for the terrain
+  and each storey, linked through flights (each column), ladders (through the hatch) and doorways. A step needs the
+  crouched hull and 5 cm under the ceiling over the higher floor of its two tiles, read at each tile's four inset
+  corners, so a flight's edge counts; a tile under less than the standing hull (`LEVEL_BODY.standing`, 1.8288 m) and
+  5 cm costs 2.5 times its length, crouched, and `crouch` says when, never across a link (crouching on a ladder lets
+  go). A way walks each tile's clear point, moved off the sides it has no step through as far as the hull's radius and
+  4 cm need, so the 0.81 m hull walks a stairwell of two 0.5 m tiles in its middle. `nodeAt` takes the highest floor at
+  or under the feet within the climb, or, more than a step below them, an open tile beside it within a step of their
+  height (a body on a hatch's rim, its centre over the hole). The neighbours (WP 13.21) take the same graph; ai.ts is
+  unchanged.
+- **The bot on a site** (engine/dev/botNav.ts, bot.ts): `siteBotNav(site, climb)` gives it ways with `crouch`, `rise`
+  and `over`. A goal is reached only within 1 m of its height, so a room above is not reached from under its marker; a
+  climb counts as getting on; on a ladder whose way goes down it crouches to let go, and while it falls it pushes
+  nowhere, so it lands rather than catching the ladder again. `__engine.bot` reads a scene's site.
+- **The cutaway by storey** (engine/gfx/storeyCut.ts; the stage's `frame`): in the classic views (the camera type
+  `view`: isometric and top-down) every storey above the player's, and the roof while the player is indoors (in a
+  room, or under the roof's footprint, as in a shed with no room marked: `cutPlace`, reading the floor up to 10 cm over
+  the feet, since a resting body's feet sink a hair into it), are hidden by `visible`, the cutaway's twins with their
+  parts, so no frame builds a pipeline. The site's structures are drawn in groups at their places and turns
+  (engine/gfx/stageSite.ts, `site:<name>/<index>`), each with its cutaway and its cut by storey run in its own frame:
+  the structure the player is in is cut, the others stay whole. The occluder fade for third person indoors is the
+  existing cutaway's, per structure. Round a terrain the stage's ground is a frame, the terrain filling its own area
+  (engine/gfx/stageGround.ts): its plane at the origin's height hid the cellar under the cut from above.
+- **Rooms as data**: a light names its room (`room:<name>`, its light group: its tile's, else the first beside it,
+  north, east, south, west, as a sconce in a wall); `roomReverb(room, height)` picks `small`, `room` or `hall` by volume
+  (30 and 200 m³) for WP 13.22 to play; the playground's HUD names the room the player is in (`Room: kitchen`,
+  `Indoors`, `Outdoors`).
+- **The lot** (labs/playground/levels/lot.ts, scenes/lot.ts): the fixture house and shed in the playground's room
+  glyphs on a 32 × 32 m terrain, the house at (10, 0, 12), the shed turned a quarter at (24, 0, 6); the fixture site
+  (fixtures/levels/storeys/site.ts) stands the same for the engine's tests. The house's ladder moved from its outer wall
+  under a one-tile hatch, which the hull could not climb through, to the study's west wall under a 1.5 m hatch (the
+  house's golden re-recorded: f3b1585415bee4a1). The bot reaches each of the six rooms from the yard and back, and
+  tours them all in 1,398 steps.
+- **The soak**: a course of the tour's own intents is judged on no camera inside a wall (0 frames in all five cameras),
+  the Done-when; the cameras' other bounds are watched for WP 13.18's house, whose rooms are roomier: the shooter loses
+  sight of the player 931 of 1,398 frames and the platformer 255, and first person and the platformer jump 0.42 m and
+  0.52 m in one frame.
+- **Beyond Owns**: engine/world/{siteQueries,siteNav,siteNavGrids}.ts,
+  engine/world/level/{heights,compile,types,validate}.ts, engine/physics/{trimesh,world,bodies}.ts,
+  engine/sim/{rides,siteApi}.ts, engine/gfx/{stageSite,storeyCut,stageGround,stage,terrain}.ts, engine/app/view.ts,
+  engine/dev/{bot,botNav,actions}.ts, engine/audio/runtime/reverb.ts, engine/index.ts,
+  fixtures/levels/storeys/{site.ts,house.txt}, labs/playground/{levels/lot.ts,scenes/lot.ts,main.ts,README.md},
+  tests/e2e/playground-cameras.spec.ts, tools/eslint/layers.ts (the bot's rule holds its navigation beside it, sim-side
+  too). engine/world/nav.ts and engine/gfx/cutaway.ts, which the WP extends, needed no change: the site's graph is
+  NavGrids over NavSurfaces, and the cut by storey a module of its own.

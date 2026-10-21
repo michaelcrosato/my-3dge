@@ -54,3 +54,28 @@ export { terrainNavSurface } from '../world/terrainNav';
 export type { TerrainNavOptions } from '../world/terrainNav';
 export type { NavSurface } from '../world/nav';
 export type { NavSource } from '../world/nav';
+
+// Sites (WP 13.15): levels standing on a terrain, each placed and turned in quarter turns, the terrain cut under
+// them; the queries over all of it, the bodies, the ladders and the navigation over every storey and the terrain.
+export { defineSite } from '../world/site';
+export { getSite } from '../world/site';
+export { makeSite } from '../world/site';
+export { SITE_FIELDS } from '../world/site';
+export { toWorld } from '../world/site';
+export { toLocal } from '../world/site';
+export type { Site } from '../world/site';
+export type { SiteSpec } from '../world/site';
+export type { SiteStructure } from '../world/site';
+export type { StructureSpec } from '../world/site';
+export { siteFloorBelow } from '../world/siteQueries';
+export { siteSurfaceBelow } from '../world/siteQueries';
+export { siteStructureAt } from '../world/siteQueries';
+export { siteSolidAt } from '../world/siteQueries';
+export { siteClearSight } from '../world/siteQueries';
+export { siteRescueGrid } from '../world/siteQueries';
+export type { SiteRescueGrid } from '../world/siteQueries';
+export { createSiteNav } from '../world/siteNav';
+export type { SiteNav } from '../world/siteNav';
+export type { SiteNavOptions } from '../world/siteNav';
+export { addSiteBodies } from './levelBodies';
+export { addSiteLadders } from './rides';

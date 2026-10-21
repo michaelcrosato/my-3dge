@@ -137,6 +137,7 @@ export type { MusicChange } from './audio/runtime/music';
 export type { MusicPosition } from './audio/runtime/music';
 export type { Quantize } from './audio/runtime/music';
 export { ROOMS } from './audio/runtime/reverb';
+export { roomReverb } from './audio/runtime/reverb';
 export type { RoomName } from './audio/runtime/reverb';
 export type { RoomSpec } from './audio/runtime/reverb';
 export { VOICE_LIMITS } from './audio/runtime/voices';

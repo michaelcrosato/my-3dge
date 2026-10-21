@@ -6,12 +6,14 @@
  * written as storeys (WP 13.13, fixtures/levels/storeys/): the bodies stand each storey's floors where floorBelow says;
  * the controller walks up the house's flights from the cellar to the upper floor, and stands on the gable's slope and
  * on the shed's flat roof. A terrain (WP 10.5): its body stands where terrainHeight says, and the controller walks up
- * a hillside and down it again on the ground.
+ * a hillside and down it again on the ground. A site (WP 13.15, fixtures/levels/storeys/site.ts): its terrain, cut, and
+ * each structure at its place and turn stand where siteFloorBelow says, and no ground covers the cellar's stairwell.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { defineStoreyFixtureGlyphs } from '../../fixtures/levels/storeys/glyphs';
+import { defineFixtureSite } from '../../fixtures/levels/storeys/site';
 import { hashNumbers } from '../core/hash';
 import { createRegistry } from '../core/registry';
 import { createSettings } from '../core/settings';
@@ -22,9 +24,11 @@ import { compileLevel } from '../world/level/compile';
 import { floorBelow, floorHeight } from '../world/level/heights';
 import { roofHeight } from '../world/level/roofs';
 import type { CompiledLevel } from '../world/level/types';
+import { toWorld } from '../world/site';
+import { siteFloorBelow } from '../world/siteQueries';
 import { makeTerrain, terrainHeight, type Terrain } from '../world/terrain';
 import { spawnActor } from './actors';
-import { addLevelBodies, addTerrainBody, LEVEL_FRICTION } from './levelBodies';
+import { addLevelBodies, addSiteBodies, addTerrainBody, LEVEL_FRICTION } from './levelBodies';
 import { defineScene } from './scene';
 import { createSession } from './session';
 
@@ -281,5 +285,31 @@ describe('a terrain’s body (WP 10.5)', () => {
     // 23° stretch at 6 m/s the controller's across-then-down move hops it up to 13 cm off (measured); never under it.
     expect([up[0], up[1]].map((v) => v >= -0.01 && v < 0.07)).toEqual([true, true]);
     expect([down[0], down[1]].map((v) => v >= -0.01 && v < 0.15)).toEqual([true, true]);
+  });
+});
+
+describe('a site’s bodies (WP 13.15)', () => {
+  it('stand its terrain, cut, then each structure at its place and turn, where siteFloorBelow says', () => {
+    const site = defineFixtureSite(createRegistry());
+    const physics = createPhysics();
+    const ids = addSiteBodies(physics, site);
+    physics.step({ dt: 1 / 60, settings: createSettings().sim });
+    expect([ids, ids.length]).toEqual([physics.bodies(), 3]);
+    let [worst, probes] = [0, 0];
+    for (let i = 0; i < 64 * 64; i++) {
+      // A point in each half-metre square, never on an edge of a tile, a terrain cell or a structure's footprint.
+      const [x, z] = [(i % 64) * 0.5 + (i & 1 ? 0.37 : 0.13), Math.floor(i / 64) * 0.5 + (i & 64 ? 0.37 : 0.13)];
+      for (const y of [-2.5, -1, 0.5, 1.5, 3.5, 4.5, 6.5, 50]) {
+        const hit = physics.probe(x, z, { from: y });
+        if (hit?.y === y) continue; // the ray starts inside a solid
+        const below = siteFloorBelow(site, x, y, z);
+        worst = Math.max(worst, hit && below !== null ? Math.abs(hit.y - below) : hit || below !== null ? Infinity : 0); // prettier-ignore
+        probes++;
+      }
+    }
+    expect([worst < 1e-3, probes > 10000]).toEqual([true, true]);
+    const [x, z] = toWorld(site.structures[0], 6.75, 3.25); // halfway down the cellar's flight, under its stairwell
+    expect([physics.probe(x, z, { from: 0.5 })!.y, siteFloorBelow(site, x, 0.5, z)!]).toEqual([expect.closeTo(-1.5, 3), -1.5]); // prettier-ignore
+    physics.dispose();
   });
 });

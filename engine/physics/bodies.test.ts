@@ -4,8 +4,8 @@
  * tips it toward the push; torque impulses turn a ball as I = 2/5·m·r² says; movers follow `moverPose` to float32
  * precision, waiting and easing as shardfall's `amount`; sensors block nothing, list the dynamic and kinematic bodies
  * inside and never the level, and triggers report each entry and exit once; the rescue puts a body that fell through,
- * or left the level, on the nearest walkable tile. The scene-level proofs (the hero carried, the replay) are in
- * fixtures/scenes/physics-props/index.test.ts.
+ * or left the level, on the nearest walkable tile, reading a grid from its origin (a site's). The scene-level proofs
+ * (the hero carried, the replay) are in fixtures/scenes/physics-props/index.test.ts.
  */
 import { describe, expect, it } from 'vitest';
 import { Quaternion, Vector3 } from '../core/math';
@@ -275,6 +275,15 @@ describe('the lost-body rescue', () => {
     expect(rescueLost(p, LEVEL, { depth: 2 })).toEqual([fine]);
     expect(rescueLost(p, { ...LEVEL, walkable: LEVEL.walkable.map(() => false) })).toEqual([]);
     expect(() => rescueLost(p, { ...LEVEL, floor: [] })).toThrow(/rescueLost\(level\)/);
+    p.dispose();
+  });
+
+  it('reads a grid from its origin, as a site’s runs (WP 13.15)', () => {
+    const p = withFloor();
+    const sunk = addBall(p, 0.25, { position: [-9, -6, 5] }); // under its tile (0, 0), which runs from (−10, 4)
+    const out = addBall(p, 0.25, { position: [0, 0.25, 9] }); // east of it, by row 2
+    expect(rescueLost(p, { ...LEVEL, origin: [-10, 4] })).toEqual([sunk, out]);
+    expect([sunk, out].map((id) => p.readBody(id).position.toArray().map((v) => +v.toFixed(3)))).toEqual([[-9, 0.3, 5], [-3, 0.3, 9]]); // prettier-ignore
     p.dispose();
   });
 });

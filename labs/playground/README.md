@@ -6,9 +6,10 @@ in the engine is shown. It grows in four stages, each ending at a gate: the gym 
 (G12) and the tech demo (G13). Today it holds the gym: calibrated features as a physics level, the player at its
 north end moving by Apex Legends' numbers (its run and sprint, air strafing, jump fatigue, the lurch, the fall
 stun, the crouch and the slide, the mantle, the wall-climb and the superglide, on its hull), its ladder, zipline,
-redeploy balloon and launchers, five camera modes and two looks, cel-shaded and pixel art; and the hill, the block's
-ground as terrain (WP 10.5). Every claim below is checked by `tests/unit/playground-readme.test.ts`: a setting, file or
-command named here that does not exist fails it.
+redeploy balloon and launchers, five camera modes and two looks, cel-shaded and pixel art; the hill, the block's
+ground as terrain (WP 10.5); and the lot, a house of four storeys and a shed on a terrain (WP 13.15). Every claim below
+is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here that does not exist fails
+it.
 
 ## Play it
 
@@ -37,6 +38,7 @@ test (`tests/unit/playground-readme.test.ts`) fails when a scene of `labs/playgr
 |---|---|---|
 | `labs/playground/scenes/gym.ts` | The gym (`playground:gym`): every feature at the height, slope or gap its sign shows, the player moving by Apex's model (`node x sim labs/playground/scenes/gym --feel` prints its numbers), its golden replays the same in Node and in the page while it renders, in either look, with no pipeline built after the warm-up: the gym's run over its features, its moves (`tests/replays/playground-moves.replay.json`: the sprint held and kept by a press, a tired hop, the walk, the crouch-walk, a lurch, an air strafe, the bunny hop's cost, a slide and a slide-jump), its climbs (`tests/replays/playground-climb.replay.json`) and its rides (`tests/replays/playground-rides.replay.json`: up the tower's ladder and over its top, down its zipline, the jump pad, the balloon's line up 90 m, the glide, the dive and the landing). | `node x replay tests/replays/playground-gym.replay.json tests/replays/playground-moves.replay.json tests/replays/playground-rides.replay.json --browser page` |
 | `labs/playground/scenes/hill.ts` | The hill (`playground:hill`): the block's ground as terrain (`terrain:block`, 96 × 96 m, rolling 0.6 m), the hill rising to 10 m in its east quarter in slopes up to 29°, turf over rock where it is steepest (`labs/playground/ground.ts`); the player runs, slides and falls on its slopes with his feet planted (`labs/playground/courses/hill.ts`), and its replay (`tests/replays/terrain-hill.replay.json`: up the flank, across it, down it in a slide gaining speed, back up) gives its goldens in Node and in the page while it renders. | `node x replay tests/replays/terrain-hill.replay.json --browser page` |
+| `labs/playground/scenes/lot.ts` | The lot (`playground:lot`, a site: `engine/world/site.ts`): the storey house (a cellar; the hall and the kitchen; the bedroom and the study; an attic under a gable, up a ladder through a hatch) and a shed turned a quarter, on a 32 × 32 m terrain cut over the cellar (`labs/playground/levels/lot.ts`). The bot reaches every room from the yard and back, and over its tour of them all no camera stands in a wall; isometric and top-down hide what stands above the player's storey and the roof indoors, and the HUD names the room. WP 13.18's site takes its place. | `npm run test -- labs/playground/scenes/lot.test.ts` and `npm run e2e -- tests/e2e/playground-cameras.spec.ts` |
 
 ## The gym
 

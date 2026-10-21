@@ -12,9 +12,9 @@
  * … })` returns the body's id (engine/physics/capture.ts), `readBody(id)` copies its pose and velocities into three.js
  * math classes, and `setBody`, `applyImpulse` and `removeBody` change it. Shapes and vectors are those of
  * engine/physics/queries.ts, and a collider may also be a convex hull of points (`{ type: 'hull', points }`: a ramp's
- * wedge, a dais's frustum) or a heightfield (terrain: engine/physics/heightfield.ts); colliders take their group from
- * the body (`prop` for dynamic bodies, `world` otherwise) unless they name one (engine/physics/groups.ts). Densities
- * are in kg/m³ (1,000, water, by default).
+ * wedge, a dais's frustum), a heightfield or a triangle mesh (terrain: heightfield.ts, trimesh.ts); colliders take
+ * their group from the body (`prop` for dynamic bodies, `world` otherwise) unless they name one
+ * (engine/physics/groups.ts). Densities are in kg/m³ (1,000, water, by default).
  *
  * Stepping: `step(sim)` sets the step length to the sim's `dt` and gravity to the `physics.gravity` setting
  * (engine/physics/params.ts), then steps Rapier once. The sim runs it as the system `physics`, in the phase of the
@@ -53,6 +53,7 @@ import {
 } from './capture';
 import { groupBits, type GroupName } from './groups';
 import { heightfieldDesc, type HeightfieldShape } from './heightfield';
+import { trimeshDesc, type TrimeshShape } from './trimesh';
 import { INTEGRATION_PARAMETERS } from './params';
 import {
   check,
@@ -91,8 +92,8 @@ export type BodyType = 'dynamic' | 'fixed' | 'kinematic';
 
 /** One collider of a body: a shape where the body puts it, and its material. */
 export interface ColliderSpec {
-  /** A query shape, or a convex hull of points or a heightfield (bodies only: engine/physics/heightfield.ts). */
-  shape: Shape | HullShape | HeightfieldShape;
+  /** A query shape, or a convex hull of points, a heightfield or a triangle mesh (bodies only: heightfield.ts, trimesh.ts). */
+  shape: Shape | HullShape | HeightfieldShape | TrimeshShape;
   /** Where it sits on the body (the body's origin by default). */
   position?: Vec3Like;
   rotation?: QuatLike;
@@ -235,8 +236,9 @@ function pin(world: RAPIER.World): void {
 }
 
 /** A Rapier collider description of a shape: a hull from its points, a heightfield from its heights, the others from their sizes. */
-function shapeDesc(shape: Shape | HullShape | HeightfieldShape, where: string): RAPIER.ColliderDesc {
+function shapeDesc(shape: Shape | HullShape | HeightfieldShape | TrimeshShape, where: string): RAPIER.ColliderDesc {
   if ((shape as { type?: unknown } | undefined)?.type === 'heightfield') return heightfieldDesc(shape as HeightfieldShape, where); // prettier-ignore
+  if ((shape as { type?: unknown } | undefined)?.type === 'trimesh') return trimeshDesc(shape as TrimeshShape, where);
   if ((shape as { type?: unknown } | undefined)?.type === 'hull') {
     const hull = RAPIER.ColliderDesc.convexHull(hullPoints(shape as HullShape, where));
     check(hull !== null, `${where}.points`, (shape as HullShape).points, 'points Rapier can wrap in a hull');

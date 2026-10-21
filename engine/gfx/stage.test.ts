@@ -1,19 +1,24 @@
 /**
- * @file Unit tests for engine/gfx/stage.ts (T1, PLAN.md WP 2.7): the stage is built in Node with no GPU; block runs
- * are split into one mesh per merged rectangle, named by their tiles, with every piece kept once; the placeable
- * component kinds are those that declare `x` and `z` in metres; stand-ins appear, move between their last two places
- * by `draw(alpha)` (the shorter way round for yaw) and leave with their entities; the warm-up registration adds the
+ * @file Unit tests for engine/gfx/stage.ts (T1, PLAN.md WP 2.7): the stage is built in Node with no GPU; block runs are
+ * split into one mesh per merged rectangle, named by their tiles, with every piece kept once; the placeable component
+ * kinds are those that declare `x` and `z` in metres; stand-ins appear, move between their last two places by
+ * `draw(alpha)` (the shorter way round for yaw) and leave with their entities; the warm-up registration adds the
  * stand-ins' looks to the shader key. A terrain with no level (WP 10.5) is the stage's ground: its chunks drawn and
- * registered, the stage's plane under it at its origin's height, the sun and the centre fitted to its area.
+ * registered, the stage's plane a frame round it at its origin's height, the sun and the centre fitted to its area. A
+ * site (WP 13.15) draws its structures and its cut terrain, registered as the site's; `frame` cuts a storeyed level by
+ * the player's storey in a classic view, and each of the site's structures.
  * @see engine/gfx/stage.ts
  */
 import { readFileSync } from 'node:fs';
-import { Box3, Vector3 } from 'three/webgpu';
+import { Box3, Vector3, type Mesh } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
+import { defineFixtureSite } from '../../fixtures/levels/storeys/site';
 import { createRegistry } from '../core/registry';
 import { defineComponent } from '../sim/state';
 import { compileLevel } from '../world/level/compile';
+import { toWorld } from '../world/site';
 import { makeTerrain } from '../world/terrain';
+import { makePose } from './cameras/pose';
 import { splitRuns } from './level/runs';
 import { createMaterialLibrary } from './materials/library';
 import { createStage, placeableKinds, placeOf } from './stage';
@@ -124,7 +129,8 @@ describe('createStage', () => {
     expect(stage.terrain?.chunks.map((lod) => lod.name)).toEqual(['terrain:hill/0,0', 'terrain:hill/0,32']);
     expect(stage.terrain!.root.parent).toBe(stage.scene);
     expect(stage.centre).toEqual([84, 0, 28]);
-    const ground = stage.scene.getObjectByName('stage/ground')!;
+    const ground = stage.scene.getObjectByName('stage/ground') as Mesh;
+    expect(ground.geometry.getIndex()!.count / 6).toBe(8); // a frame round the terrain, which fills its own area
     ground.updateMatrixWorld(true);
     const box = new Box3().setFromObject(ground);
     expect([box.min.y, box.getCenter(new Vector3()).x, box.getCenter(new Vector3()).z].map((v) => +v.toFixed(3))).toEqual([1.48, 84, 28]); // prettier-ignore
@@ -146,5 +152,28 @@ describe('createStage', () => {
     expect(ids.slice(0, 3)).toEqual(['stage:ground', 'stage:terrain', 'stage:cutaway']);
     stage.dispose();
     expect(stage.terrain!.root.parent).toBeNull();
+  });
+
+  it('stands a site’s structures and cut terrain, and cuts by storey in a classic view, a level and a site (WP 13.15)', () => {
+    const registry = kinds();
+    const site = defineFixtureSite(registry);
+    const stage = createStage({ level: null, site, materials: createMaterialLibrary(), registry });
+    expect([stage.site!.root.parent === stage.scene, stage.terrain === stage.site!.terrain]).toEqual([true, true]);
+    const ids: string[] = [];
+    stage.register({ register: (id: string) => (ids.push(id), { dispose: () => {} }), keyPart: () => ({ dispose: () => {} }) }); // prettier-ignore
+    expect(ids.slice(0, 6)).toEqual(['stage:ground', 'site:fixture-lot/0:level', 'site:fixture-lot/1:level', 'site:fixture-lot:cutaway', 'site:fixture-lot:terrain', 'stage:cutaway']); // prettier-ignore
+    const pose = makePose({ position: [14, 30, 30], pitch: -0.8 });
+    const highest = (root: { children: { visible: boolean; userData: { storey?: number } }[] }) => Math.max(...root.children.filter((c) => c.visible).map((c) => c.userData.storey ?? 0)); // prettier-ignore
+    const [x, z] = toWorld(site.structures[0], 2, 2); // in the hall
+    stage.frame(pose, [x, 0, z], { view: true });
+    expect(highest(stage.site!.structures[0].meshes.root)).toBe(1);
+    const house = site.structures[0].level;
+    const alone = createStage({ level: house, materials: createMaterialLibrary(), registry });
+    alone.frame(pose, [2, 0, 2], { view: true });
+    expect(highest(alone.level!.root)).toBe(1);
+    alone.frame(pose, [2, 0, 2], { view: false }); // another camera: the house whole
+    expect([highest(alone.level!.root), alone.level!.root.children.every((c) => c.visible)]).toEqual([3, true]);
+    for (const each of [stage, alone]) each.dispose();
+    expect(stage.site!.root.parent).toBeNull();
   });
 });

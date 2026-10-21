@@ -183,10 +183,16 @@ const CASES: Case[] = [
     "export { stepWorld } from '../sim/world';\nexport { draw } from '../gfx/draw';",
   ),
   layer(
-    'dev/bot.ts imports only the sim-side layers',
+    'dev/bot.ts imports only the sim-side layers, and its navigation beside it',
     'engine/dev/bot.ts',
     "export { inspector } from './inspector';",
-    "export { stepWorld } from '../sim/world';",
+    "export { stepWorld } from '../sim/world';\nexport { siteBotNav } from './botNav';",
+  ),
+  layer(
+    'dev/botNav.ts, the bot’s navigation, likewise',
+    'engine/dev/botNav.ts',
+    "export { inspector } from './inspector';",
+    "export { NavGrid } from '../world/nav';",
   ),
   layer(
     'app imports every layer, but three.js only through gfx',
