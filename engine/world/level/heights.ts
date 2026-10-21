@@ -4,9 +4,10 @@
  * and nav stand), `topHeight`, the top of whatever stands there (`topH`: a wall's top over its tiles, for shots and
  * particles), `surfaceAt`, the surface tag underfoot (footsteps, particles), `solidAt` and `tileAt`; and in 3D, for
  * levels written as storeys, `floorBelow(level, x, y, z)` and `surfaceBelow`, the highest surface at or under a point
- * (a storey's floor, a solid's top, a roof, the ground), `storeyAt(level, y)` and `roomAt`. The 2D queries read one
- * storey: a format-1 level, a format-2 level's ground storey, or any storey through `storeyView` (storeys.ts). Pure
- * functions of the compiled data, so they run sim-side and in presentation alike.
+ * (a storey's floor, a solid's top, a roof, the ground), `storeyAt(level, y)` by height alone, `storeyBelow` by that
+ * surface, and `roomAt`. The 2D queries read one storey: a format-1 level, a format-2 level's ground storey, or any
+ * storey through `storeyView` (storeys.ts). Pure functions of the compiled data, so they run sim-side and in
+ * presentation alike.
  *
  * The floor: a flat glyph's floor over its tiles (a gallery 1 m up), a ramp's slope over its rectangle (stairs), and
  * a dais's frustum wherever its base reaches, half a tile past its drawn tiles: the highest of these at the point,
@@ -91,11 +92,14 @@ export function topHeight(level: HeightSource, x: number, z: number): number {
     const [dx, dz] = [x - (at.col + 0.5) * level.tile, z - (at.row + 0.5) * level.tile];
     if (dx * dx + dz * dz > glyph.radius * glyph.radius) return floor;
   }
-  if (glyph.full && level.fullTop !== undefined) {
-    const roof = level.roofs?.find((each) => each.kind !== 'flat');
-    return roof ? Math.min(level.fullTop, roofUnder(roof, x, z)) : level.fullTop;
-  }
+  if (glyph.full && level.fullTop !== undefined) return fullTopAt(level, x, z);
   return Math.max(floor, (level.base ?? 0) + glyph.top);
+}
+
+/** Where a storey's full glyphs and heads rise to at (x, z): its full top, or under a pitched roof the roof's underside. */
+function fullTopAt(level: HeightSource, x: number, z: number): number {
+  const roof = level.roofs?.find((each) => each.kind !== 'flat');
+  return roof ? Math.min(level.fullTop!, roofUnder(roof, x, z)) : level.fullTop!;
 }
 
 /** The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map. */
@@ -123,28 +127,33 @@ function storeySources(level: CompiledLevel): HeightSource[] {
   });
 }
 
-/** The highest surface at or under (x, y, z) and its surface tag, or null where nothing is. */
-function underfoot(level: CompiledLevel, x: number, y: number, z: number): { height: number; surface: string } | null {
-  let best: { height: number; surface: string } | null = null;
-  const consider = (height: number, surface: string) => {
-    if (Number.isFinite(height) && height <= y + REACH && (!best || height > best.height)) best = { height, surface };
+/** What `underfoot` finds: the surface's height and tag, and its storey (−1 for the ground slab and a roof). */
+type Underfoot = { height: number; surface: string; storey: number };
+
+/** The highest surface at or under (x, y, z), its surface tag and its storey, or null where nothing is. */
+function underfoot(level: CompiledLevel, x: number, y: number, z: number): Underfoot | null {
+  let best: Underfoot | null = null;
+  const consider = (height: number, surface: string, storey: number) => {
+    if (Number.isFinite(height) && height <= y + REACH && (!best || height > best.height)) best = { height, surface, storey }; // prettier-ignore
   };
   const [min, max] = [level.ground.min, level.ground.max];
-  if (x >= min[0] && x <= max[0] && z >= min[2] && z <= max[2]) consider(max[1], '');
-  for (const source of storeySources(level)) {
+  if (x >= min[0] && x <= max[0] && z >= min[2] && z <= max[2]) consider(max[1], '', -1);
+  storeySources(level).forEach((source, k) => {
     const here = standing(source, x, z);
-    if (!here || here.glyph.void) continue;
-    consider(here.floor, here.dais?.surface ?? here.glyph.surface);
-    if (here.glyph.solid) consider(topHeight(source, x, z), here.glyph.surface);
-  }
-  for (const roof of level.roofs ?? []) consider(roofHeight(roof, x, z), roof.surface);
+    if (!here || here.glyph.void) return;
+    consider(here.floor, here.dais?.surface ?? here.glyph.surface, k);
+    if (here.glyph.solid) consider(topHeight(source, x, z), here.glyph.surface, k);
+    if ((here.glyph.head ?? 0) > 0 && source.fullTop !== undefined) consider(fullTopAt(source, x, z), here.glyph.surface, k); // prettier-ignore
+  });
+  for (const roof of level.roofs ?? []) consider(roofHeight(roof, x, z), roof.surface, -1);
   return best;
 }
 
 /**
  * The height (m) of the highest surface at or under (x, y, z): a storey's floor (flat, a ramp, a flight, a dais, under
- * a solid too), the top of a solid standing there (a low wall, a railing, a wall), a roof's top, or the ground slab
- * under the level; null where nothing is (outside the ground slab). For a format-1 level as for one written as storeys.
+ * a solid too), the top of a solid standing there (a low wall, a railing, a wall, the head over a door, a window or a
+ * low ceiling, even with no floor above it), a roof's top, or the ground slab under the level; null where nothing is
+ * (outside the ground slab). For a format-1 level as for one written as storeys.
  */
 export function floorBelow(level: CompiledLevel, x: number, y: number, z: number): number | null {
   return underfoot(level, x, y, z)?.height ?? null;
@@ -165,9 +174,21 @@ export function storeyAt(level: CompiledLevel, y: number): number {
   return 0;
 }
 
-/** The room at (x, y, z): its storey's room on that tile, or null (outside every room, or a level without rooms). */
+/**
+ * The storey of the surface `floorBelow` finds at (x, y, z), an index into `level.storeys` (0 in a format-1 level): a
+ * flight's tiles are the storey they rise from, all the way to their top, where `storeyAt` already reads the next; −1
+ * on a roof, on the ground slab, or over nothing.
+ */
+export function storeyBelow(level: CompiledLevel, x: number, y: number, z: number): number {
+  return underfoot(level, x, y, z)?.storey ?? -1;
+}
+
+/**
+ * The room at (x, y, z): the room of the tile under it on `storeyBelow`'s storey (a hall's stairs are the hall's to
+ * their top), or null (outside every room, on a roof, or a level without rooms).
+ */
 export function roomAt(level: CompiledLevel, x: number, y: number, z: number): RoomDescriptor | null {
-  const storey = level.storeys?.[storeyAt(level, y)];
+  const storey = level.storeys?.[storeyBelow(level, x, y, z)];
   const at = tileAt(level, x, z);
   if (!storey || !at) return null;
   return level.rooms?.[storey.room[at.row * level.cols + at.col]] ?? null;

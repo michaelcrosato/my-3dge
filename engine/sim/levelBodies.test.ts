@@ -157,7 +157,7 @@ const STOREYS = (() => {
   defineStoreyFixtureGlyphs(registry);
   const read = (name: string) =>
     compileLevel(readFileSync(join(import.meta.dirname, `../../fixtures/levels/storeys/${name}.txt`), 'utf8'), { file: `${name}.txt`, registry }); // prettier-ignore
-  return { house: read('house'), shed: read('shed') };
+  return { house: read('house'), shed: read('shed'), pavilion: read('pavilion'), annex: read('annex') };
 })();
 
 /** A session of `level`'s bodies with a player at `at` (the default character: 0.28 m round, 1.69 m tall). */
@@ -175,20 +175,31 @@ function onLevel(id: string, level: CompiledLevel, at: [number, number, number])
 }
 
 describe('a level written as storeys (fixtures/levels/storeys/, WP 13.13)', () => {
-  it("stands each storey's floors and the roof where floorBelow says, probed down through every storey", () => {
-    const { house } = STOREYS;
-    const physics = createPhysics();
-    addLevelBodies(physics, house);
-    physics.step({ dt: 1 / 60, settings: createSettings().sim });
-    let worst = 0;
-    for (let x = 0.3; x < 8; x += 0.7) {
-      for (let z = 0.3; z < 6; z += 0.7) {
-        const hit = physics.probe(x, z);
-        worst = Math.max(worst, Math.abs((hit?.y ?? Number.NaN) - (floorBelow(house, x, 50, z) ?? Number.NaN)));
+  it("stands every fixture's floors, heads and roofs where floorBelow says, probed from each storey's heights", () => {
+    const heights = [-2.5, -1, 0.5, 1.5, 2.5, 3.5, 4.5, 6.5, 7.5, 50];
+    for (const [name, level] of Object.entries(STOREYS)) {
+      const physics = createPhysics();
+      addLevelBodies(physics, level);
+      physics.step({ dt: 1 / 60, settings: createSettings().sim });
+      let [worst, probes] = [0, 0];
+      for (let i = 0; i < level.cols * level.rows * 4; i++) {
+        // Two points a tile each way, never on a tile's edge, where either side's collider could answer.
+        const [c, r, f, g] = [(i >> 2) % level.cols, Math.floor((i >> 2) / level.cols), i & 1 ? 0.74 : 0.26, i & 2 ? 0.74 : 0.26]; // prettier-ignore
+        const [x, z] = [(c + f) * level.tile, (r + g) * level.tile];
+        for (const y of heights) {
+          const hit = physics.probe(x, z, { from: y });
+          if (hit?.y === y) continue; // the ray starts inside a solid
+          const below = floorBelow(level, x, y, z);
+          worst = Math.max(
+            worst,
+            hit && below !== null ? Math.abs(hit.y - below) : hit || below !== null ? Infinity : 0,
+          );
+          probes++;
+        }
       }
+      expect([name, worst < 1e-3, probes > 1000]).toEqual([name, true, true]);
+      physics.dispose();
     }
-    expect(worst).toBeLessThan(1e-3);
-    physics.dispose();
   });
 
   it("walks up the cellar's flight to the kitchen floor, 3 m up its open stairwell", () => {

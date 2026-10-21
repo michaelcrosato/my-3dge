@@ -118,21 +118,11 @@ export { floorHeight } from './world/level/heights';
 export { topHeight } from './world/level/heights';
 export { solidAt } from './world/level/heights';
 export { tileAt } from './world/level/heights';
-export { floorBelow } from './world/level/heights';
-export { surfaceBelow } from './world/level/heights';
-export { storeyAt } from './world/level/heights';
-export { roomAt } from './world/level/heights';
-export { storeyView } from './world/level/storeys';
 export { LEVEL_FORMAT } from './world/level/types';
-export { LEVEL_FORMAT_2 } from './world/level/types';
 export type { CompiledLevel } from './world/level/types';
 export type { LevelGlyph } from './world/level/types';
 export type { BoxCollider } from './world/level/types';
 export type { ColliderDescriptor } from './world/level/types';
-export type { StoreyDescriptor } from './world/level/types';
-export type { RoomDescriptor } from './world/level/types';
-export type { OpeningDescriptor } from './world/level/types';
-export type { RoofDescriptor } from './world/level/types';
 export type { GroundDescriptor } from './world/level/types';
 export type { MeshDescriptor } from './world/level/types';
 export type { SpawnPoint } from './world/level/types';
@@ -396,6 +386,6 @@ export type { PuppetComponent } from './sim/actors';
 // rides; listed in engine/sim/movementApi.ts, re-exported whole so this file stays under its line cap.
 export * from './sim/movementApi';
 
-// Sites (Phase 13): terrain, its queries, its body and its navigation; listed in engine/sim/siteApi.ts, re-exported
-// whole so this file stays under its line cap.
+// Storeys and sites (Phase 13): levels written as storeys and their 3D queries, terrain, its queries, its body and
+// its navigation; listed in engine/sim/siteApi.ts, re-exported whole so this file stays under its line cap.
 export * from './sim/siteApi';

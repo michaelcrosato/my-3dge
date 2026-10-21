@@ -19,7 +19,7 @@ import { EngineError } from '../../core/log';
 import { createRegistry } from '../../core/registry';
 import { withSimMath } from '../../core/simMath';
 import { compileLevel } from './compile';
-import { floorBelow, floorHeight, roomAt, storeyAt, surfaceBelow, topHeight } from './heights';
+import { floorBelow, floorHeight, roomAt, storeyAt, storeyBelow, surfaceBelow, topHeight } from './heights';
 import { roofHeight } from './roofs';
 import { storeyView } from './storeys';
 import { LEVEL_FORMAT, LEVEL_FORMAT_2, type BoxCollider, type CompiledLevel, type HullCollider } from './types';
@@ -44,7 +44,7 @@ const hash = (level: CompiledLevel) => hashValue(level as unknown as Canonical);
  * Re-recorded in WP 13.14, which gave the railing and the flight recipes of their own and the bounds the eaves.
  */
 const GOLDEN: Record<string, string> = {
-  house: '07dfd1118ce25b2e',
+  house: '0c954bd7620ff99e', // its flights a tile shorter, each landing two tiles deep (WP 13.13's review)
   pavilion: '893392706f51530f',
   shed: 'facdd95952ad89f3',
 };
@@ -139,14 +139,14 @@ describe("the house's storeys (fixtures/levels/storeys/house.txt)", () => {
 
   it("rises each flight in a wedge from its storey's floor to the next one's, toward the floor above", () => {
     expect(HOUSE.storeys!.map((s) => s.ramps.map((ramp) => [ramp.tiles, ramp.rises, ramp.bottom, ramp.top]))).toEqual([
-      [[[13, 2, 14, 9], 'north', -3, 0]],
-      [[[1, 2, 2, 9], 'north', 0, 3]],
+      [[[13, 3, 14, 9], 'north', -3, 0]],
+      [[[1, 3, 2, 9], 'north', 0, 3]],
       [],
       [],
     ]);
     expect(partsOf(HOUSE, 1, 'glyph:flight').map(span)).toEqual([[0, 3]]);
     const view = storeyView(HOUSE, 1);
-    expect(floorHeight(view, 1, 3)).toBeCloseTo(1.5, 9); // halfway up: z 3 between the bottom at z 5 and the top at z 1
+    expect(floorHeight(view, 1, 3.25)).toBeCloseTo(1.5, 9); // halfway up: z 3.25 between the bottom at z 5 and the top at z 1.5
   });
 
   it('roofs the attic with a gable: two planes from the eaves past the walls up to the ridge, east to west', () => {
@@ -215,7 +215,7 @@ describe('the queries in 3D', () => {
     expect(at(4, 1.2, 1.5 * t + 1)).toBe(0); // the kitchen floor under a point 1.2 m up
     expect(at(4, 4, 1.25)).toBe(3); // the study floor
     expect(at(4, -1, 1.25)).toBe(-3); // the cellar floor
-    expect(at(1, 4, 3)).toBeCloseTo(1.5, 9); // halfway up the hall's flight, under the open stairwell
+    expect(at(1, 4, 3.25)).toBeCloseTo(1.5, 9); // halfway up the hall's flight, under the open stairwell
     expect(at(6.25, 0.5, 2)).toBe(0); // the kitchen's floor under the railing round the cellar's stairs
     expect(at(6.25, 1.5, 2)).toBe(1); // ... and the railing's top, 1 m up
     expect(at(4, 20, 3)).toBeCloseTo(HOUSE.roofs![0].peak, 9); // the ridge
@@ -231,13 +231,21 @@ describe('the queries in 3D', () => {
     expect(storeyAt(compileLevel('###\n#.#\n###\n'), 5)).toBe(0);
   });
 
+  it("storeyBelow and roomAt: a flight's storey and room up to its top, where storeyAt reads the next; none on a roof", () => {
+    const on = (bottom: number, z: number) => bottom + (3 * (5 - z)) / 3.5; // a flight's height: 3 m from z 5 to z 1.5
+    const [hall, cellar] = [on(0, 1.6), on(-3, 1.6)];
+    expect([storeyAt(HOUSE, hall), storeyBelow(HOUSE, 0.75, hall, 1.6), roomAt(HOUSE, 0.75, hall, 1.6)?.name]).toEqual([2, 1, 'hall']); // prettier-ignore
+    expect([storeyAt(HOUSE, cellar), storeyBelow(HOUSE, 7, cellar, 1.6), roomAt(HOUSE, 7, cellar, 1.6)?.name]).toEqual([1, 0, 'cellar']); // prettier-ignore
+    expect([storeyAt(HOUSE, 9), storeyBelow(HOUSE, 4, 9, 3), roomAt(HOUSE, 4, 9, 3)]).toEqual([3, -1, null]); // on the roof
+  });
+
   it('roomAt: the room of the storey and tile at a point', () => {
     expect([roomAt(HOUSE, 1, 0.5, 0.75)?.name, roomAt(HOUSE, 5, 3.5, 4)?.name, roomAt(HOUSE, 5, -2, 4)?.name]).toEqual(['hall', 'study', 'cellar']); // prettier-ignore
     expect([roomAt(HOUSE, 1.25, 0.5, 5.75), roomAt(HOUSE, 40, 0, 40), roomAt(compileLevel('###\n#.#\n###\n'), 1.5, 0, 1.5)]).toEqual([null, null, null]); // prettier-ignore
   });
 });
 
-describe('the pavilion and the shed', () => {
+describe('the pavilion, the shed and the annex', () => {
   it('stand a hip roof on the pavilion’s pillars, its eaves at their tops, and clip the pillars and the crawlspace to it', () => {
     const level = compile('pavilion');
     const [roof] = level.roofs!;
@@ -262,5 +270,12 @@ describe('the pavilion and the shed', () => {
     expect(span(partsOf(level, 0, 'roof')[0])).toEqual([2.5, 2.7]);
     expect([floorBelow(level, 1.5, 5, 2), surfaceBelow(level, 1.5, 5, 2)]).toEqual([2.7, 'tar']);
     expect(floorBelow(level, 1.5, 1, 2)).toBe(0);
+  });
+
+  it("stands a body on the heads over the annex's door and window, with no floor over them on the upper storey", () => {
+    const level = compile('annex');
+    expect([floorBelow(level, 6.75, 10, 1.75), floorBelow(level, 6.75, 10, 2.75)]).toEqual([3, 3]); // the heads' tops
+    expect([floorBelow(level, 6.75, 2, 1.75), floorBelow(level, 6.75, 2, 2.75)]).toEqual([0, 0.9]); // the doorway, the sill
+    expect(surfaceBelow(level, 6.75, 10, 1.75)).toBe(level.legend['+'].surface);
   });
 });
