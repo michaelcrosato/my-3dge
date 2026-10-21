@@ -91,3 +91,14 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   controller passes the crowd, which his capsule shoves aside. The runs without a crowd did not change: with `shoves`
   left out of the hashed state, every checkpoint gave its earlier golden. box-4-chase, box-4-hop and box-5-fight did:
   he walks through the crowd rather than round it.
+- The goldens of the four playground replays (playground-climb, -gym, -moves, -rides) were re-recorded (`--update`,
+  Node ×3 and Chromium ×3 agreeing) at WP 13.10's visual review, when the adult's stride grew from 0.42 to 0.5 and a
+  planted stride's share from 1 to 1.25 sprinting (engine/anim/locomotion.ts `strideShare`, ADR-0025 amendment 10):
+  the player's animator phase, hashed, advances more slowly. The runs themselves did not change: with the old stride
+  and share all four gave their earlier goldens, and in playground-moves' and -rides' final states only that phase
+  differs. playground-climb's and -moves' again at the review's second round, when the sim told an actor's animator
+  its movement model's duck as the pose `crouch` (engine/sim/actors.ts), a crouched planted stride 30% shorter
+  (`GAIT.crouchStride`): with the duck left out both gave the goldens above, and in their final states only the
+  player's animator phase differs. All four again at the third round, when a planted stride's steps grew shorter as
+  the move turns sideways (`GAIT.sideStride`, 35% straight across, by the square of the move's sideways share): with
+  it left out all four gave the goldens above, and in their final states only the player's animator phase differs.

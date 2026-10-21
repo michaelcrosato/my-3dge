@@ -95,7 +95,7 @@ on, and it stays searchable (agents' search tools skip node_modules). The lock d
 git clone https://github.com/michaelcrosato/my-3dge && cd my-3dge && bash scripts/setup.sh
 ```
 
-setup.sh installs Node 24.22.0, clones the read-only sources at their pinned commits and runs `npm ci`; CLAUDE.md
+setup.sh installs Node 24.22.1, clones the read-only sources at their pinned commits and runs `npm ci`; CLAUDE.md
 says where Chromium comes from (the cloud container's, or setup.sh's download, ADR-0014 amendment 8). `main` holds
 every stage, one squashed commit per stage PR (the `integration` branch that kept every lane's commit was deleted on
 GitHub on 2026-10-14; the PRs' pages keep each stage's commits; the owner deleted the `game/*` branches, on purpose,

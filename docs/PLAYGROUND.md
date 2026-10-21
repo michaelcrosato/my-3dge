@@ -82,7 +82,9 @@ wide. Floors are 0.3 m slabs.
 ### 2.3 The gym
 
 The west strip (x 0 to 36, z 12 to 82): calibrated features, each with a sign showing its number, so the owner reads
-what a feature tests, and each with a course `node x feel` runs (§9.1). In Stage 1 it is a format-1 level of its own,
+what a feature tests, most with a course `node x feel` runs (§9.1; the gaps and the steps and slopes wait for WP 13.18,
+which also measures there §3.2's crouch timing, landing stun and climbing again, unit-tested only so far). In Stage 1
+it is a format-1 level of its own,
 its heights given by the playground's own glyphs; from WP 13.18 it stands in its place on the site.
 
 | Feature | Sizes | What it measures |
@@ -95,8 +97,9 @@ its heights given by the playground's own glyphs; from WP 13.18 it stands in its
 | Gaps | 2 to 9 m between platforms 1.5 m up | the jump's reach: running, sprinting, slide-jumping, superglided |
 | Climb walls | 3, 4, 5, 6 and 6.9 m high, and 7.2 m (just past the reach) | the wall-climb's reach, topping out into a mantle; wall-bounces |
 | Stairs and slopes | risers 0.10, 0.15, 0.20 and 0.25 m; ramps at the slope limit and above it | steps and slopes |
-| The tower | 6 m, a ladder, a zipline 40 m long | ladders, ziplines, the drop, the mantle hang at its top |
-| Launchers | a jump pad and a trampoline | launch heights |
+| The tower | 6 m, a ladder up its north face, a zipline 40 m long from a pole on its top down to the south wall | ladders, ziplines, the drop, the mantle hang at its top |
+| Launchers | a jump pad (6.5 m) in the open, and a trampoline (2 m, bouncing 0.9 of a fall's speed back) against the tower's west face | launch heights |
+| The balloon | a redeploy balloon's line, 90 m up (the hill's stands 60 m up: the gym's leaves room for a glide and a dive before the landing pose) | the vertical zipline, the skydive |
 | Doors | wood, glass, double, locked | using, kicking and breaking |
 | Movers | a sliding and a turning platform | being carried |
 
@@ -154,9 +157,10 @@ distances ±2 cm, angles ±1°. Where sources disagree, the row says so and give
 | Wall-climb | airborne, moving and facing a wall steeper than 45.57° within 45.57°; forward held keeps it going; tops out into a mantle; back, crouch or the view off the wall lets go | up to 2.54 m above where it caught or 3.73 m above the last ground, then +0.71 m; up at 5.72 m/s, across at 2.92 m/s climbing, up to 6.55 m/s carried in; it ends 1 s after it stops rising; the highest ledge reached 6.93 m | AMW-C, AMW-AC, AMW-EN |
 | Wall-bounce | a jump off a climb, by the zone of the climb space it leaves from: its height over the last ground (the space's foot), which each letting go lowers | from 0.48 to 1.19 m: a big lift, more the lower (*ours*: a full jump at 0.48 m to none at 1.19 m), and 6.55 m/s away; below 0.48 m: +0.72 m and 4.78 m/s; higher: a push away only, 6.55 m/s; it lands fatigued | AMW-C |
 | Climb again | a new climb starts lower than the last | 3.25 m lower after letting go, 6.50 m after a jump, unless the wall turns by 25.84° or more | AMW-C |
-| Ziplines | caught by use or by jumping into them while looking within 35° (90° in the air); momentum along the line kept; three catches per jump | 15.24 m/s top (12.19 m/s vertical); 10.16 m/s² to it (25.4 m/s² when jumping on); off at up to 11.3 m/s by a jump (10.16 m/s added) | AMW-Z |
-| Redeploy balloon | a vertical zipline up to a balloon, then a skydive | skydiving at 20 to 35 m/s; the landing pose about 30 m up | AMW-Z, AMW-A |
-| Ladders | ours, from GTA V and Red Dead Redemption 2: Apex has none | up and down at the run's speed × 0.5 *(tuned)*; a jump off; a mantle at the top | none |
+| Ziplines | caught by use or by jumping into them while looking within 35° (90° in the air); momentum along the line kept; three catches per jump; ridden the way the view looks along the line; a jump off goes up a full jump with 10.16 m/s added along the view across the ground, no faster across than 11.3 m/s unless the ride was (*ours*: it keeps its speed); crouch drops it at the ride's velocity; at an end it lets go keeping half its speed *(ours)* | 15.24 m/s top (12.19 m/s vertical); 10.16 m/s² to it (25.4 m/s² when jumping on); off at up to 11.3 m/s by a jump (10.16 m/s added); use's reach 1.52 m from the hands, 0.61 m in the air, the hands 2.03 m over the feet, the ride 0.61 m short of each anchor *(ours)* | AMW-Z |
+| Redeploy balloon | a vertical zipline up to a balloon, then a skydive: the view's pitch from level (a glide) to straight down (a dive) sets the fall, the push steers it across; the landing pose slows the fall and the landing has no stun | skydiving at 20 to 35 m/s; the landing pose about 30 m up; thrown up 15.24 m/s at the balloon, 12 m/s across at 8 m/s², the landing slowing at 21 m/s² to 6.1 m/s *(ours)* | AMW-Z, AMW-A |
+| Ladders | ours, from GTA V and Red Dead Redemption 2: Apex has none. Taken hold of running into one (within 45° and 0.3 m of its face) or with use, from its top with use; crouch lets go | up and down at the run's speed × 0.5 *(tuned)*; a jump off, 3.05 m/s away and 0.5 m up *(ours)*; a mantle at the top (the pull alone) | none |
+| Launchers | ours: a jump pad sets a body off at its speed up, keeping its speed across; a trampoline throws it up at least 0.9 of the speed it fell onto the mat at | the gym's: the pad 6.5 m, the trampoline 2 m *(tuned)* | none |
 | Doors | use toggles; a door swings away from the player, either way; bodies block it; melee only counts when the player faced it as the swing began | the first melee hit knocks it open, the second breaks it; an explosive breaks it at once | WGD, AMW-IT |
 | Melee | a punch or a kick with a lunge to a target in reach; the weapon comes back after; a melee from a slide is an uppercut | 30 damage; reach 1.52 m in a 30° cone; the lunge 0.35 s; the weapon back after 0.75 s; the view frozen 0.25 s on a hit | DX, R5W |
 
@@ -191,6 +195,16 @@ Apex's default bindings where the browser allows; every action rebinds (WP 13.9,
 | Pause, menu | Escape | menu button |
 | The feel panel (ours, WP 13.4) | F | |
 
+As built (WP 13.9, ADR-0025 amendment 9): each camera mode has its own action map, which the page swaps as the camera
+changes. First person and the shooter send the view (`look`, so the sprint keeps within 45° of it) and aim at what the
+screen's middle points at; the platformer moves relative to its camera and faces its move; isometric and top-down move
+relative to the screen and aim with the free pointer on the player's floor, or the right stick (twin sticks), and in
+isometric G uses, since Q and E turn the view. A click takes the pointer lock in the three perspective modes (pause
+gives it back). The look settings `input.sensitivity` (Apex's units: 0.022° a count times it, 5 by default),
+`input.adsSensitivity`, `input.invert` and the stick's three are view settings; the sprint and the crouch hold or
+toggle by the recorded settings `input.sprint` and `input.crouch`. The camera keys are the maps' view actions, rebound
+like the others and never sent to the sim. The pad's reload and holster wait for a held binding (WP 13.19, WP 13.20).
+
 ### 3.4 Feel beyond the numbers
 
 - Presses are never lost: a jump, a crouch or a mantle pressed up to the buffer before it can happen still happens, and
@@ -212,7 +226,7 @@ perspective meeting at a matched frustum. Cameras are view-only: the sim gets on
 
 | Mode | Code | The rig | Moves relative to | Aims with |
 |---|---|---|---|---|
-| First person | `cam3=first` | the profile's eye height (Apex: 1.52 m standing, 0.81 m crouched), not the body's eyes; the viewmodel arms and weapon in their own pass, never clipping (WP 13.12), as Apex shows them (no legs; the full body as an option); Apex's effects: the sprint lowers the eye 0.15 m and rolls up to 2° into turns, a boosted slide widens the field of view ×1.1 and rolls up to 15°, jumps and landings kick the view on a spring, the weapon bobs on a 0.4 s cycle | the look | the screen centre |
+| First person | `cam3=first` | the profile's eye height (Apex: 1.52 m standing, 0.81 m crouched), not the body's eyes; the viewmodel arms and weapon by a lens of their own, never clipping (WP 13.12, ADR-0025 amendment 12), as Apex shows them (no legs; the full body as an option); Apex's effects: the sprint lowers the eye 0.15 m and rolls up to 2° into turns, a boosted slide widens the field of view ×1.1 and rolls up to 15°, jumps and landings kick the view on a spring, the weapon bobs on a 0.4 s cycle | the look | the screen centre |
 | Shooter | `cam3=shoulder` | over the right shoulder (0.5 m right, 0.3 m up, 3.8 m back, Apex's third-person distance), swapped to the left with X; aiming down sights pulls in to 1.5 m and zooms as first person does | the look | the screen centre's ray: the body aims at its hit point |
 | Platformer | `cam3=follow` | orbit and follow: arm 5.5 m, pitch −20°, recentring behind the movement after 1.5 s without look input, 1 m of look-ahead, a vertical dead zone of ±1.5 m so jumps do not shake the frame | the camera | where the character faces |
 | Isometric | `cam=iso` | orthographic, azimuth 45°, elevation 30°; Q and E turn it by 90°; whole-number zooms; the storeys above the player cut away | the screen | the pointer's ray onto the player's floor; twin sticks on a pad |
@@ -223,6 +237,13 @@ it and the player fades. The bounds the camera metrics check (WP 13.4, §9.1): n
 0.3 m, or turns it more than 4°, beyond what the player's motion, the look input and a blend account for; no frame
 inside geometry; the player in view in every frame (the arms in first person).
 
+As built (WP 13.8, ADR-0025 amendment 8): the page's switches blend (T, X, a view's turn) and `__engine.camera.set`
+blends when asked (`{ blend: true }`), else cuts, so a shot after a set shows the set camera; the shooter's and the
+platformer's cameras move on as a ball at a pace (the 0.3 m bound rules out pulling in at once), keep the arm's base
+in sight, home when stuck and cut only when the player is put elsewhere or the level moves into them, and the fade
+hides what stands between, the platformer tilting down over a slope that cuts its arm; isometric and top-down zoom in
+whole steps with the view setting `cam.wholeZoom`, which the page sets; Q and E are WP 13.9's keys.
+
 ## 5. How it looks
 
 ### 5.1 Animation
@@ -232,17 +253,18 @@ planted so that feet and hands stay where they touch (WP 13.10, WP 13.11, WP 8.8
 
 | Move | Its motion |
 |---|---|
-| Idle, walk, run, sprint, crouch-walk | blend sets in eight directions: 100STYLE's neutral and crouched sets, Quaternius's jog, sprint and crouch, Mesh2Motion's strafes; phase-synced on foot contacts, stride- and orientation-warped |
+| Idle, walk, run, sprint, crouch-walk | blend sets in eight directions: 100STYLE's neutral and crouched sets, Quaternius's jog, sprint and crouch, Mesh2Motion's strafes; phase-synced on foot contacts, stride- and orientation-warped (until a measured need calls them in, the procedural planted stride with stance locks: ADR-0025 amendment 10) |
 | Starts, stops, pivots, turning in place | matched to distance; Mesh2Motion's turns and CMU's quick stop where they fit, procedural otherwise |
 | Slide | Quaternius's slide start, loop and exit; the pelvis to the slope; a hand trailing on the ground |
-| Jump, fall, landings | rise, apex and fall poses by vertical speed; the soft and the hard landing (Mesh2Motion's three-point landing) by landing speed |
-| Mantle, mantle hang | the hands on the sim's contact points, the body over (Quaternius's climb warped to the height); a fence's top under one hand at a sprint; Mesh2Motion's ledge hang |
+| Jump, fall, landings | rise, apex and fall poses by vertical speed; the soft and the hard landing (Mesh2Motion's three-point landing) by landing speed (until WP 8.8's contacts call the clip in, the procedural body's right hand flat on the floor in the hardest: ADR-0025 amendment 11) |
+| Mantle, mantle hang | the hands on the sim's contact points, the body over (Quaternius's climb warped to the height); a fence's top under one hand at a sprint; Mesh2Motion's ledge hang (until WP 8.8's contacts call the clips in, the procedural body: the hands hooked over the lip, the feet up the face and over it, the hang under the hands, every limb off the wall: ADR-0025 amendment 11) |
 | Wall-climb, ladder, zipline, skydive | hand over hand with the feet pushing; the ladder cycle locked to the vertical speed; both hands on the cable; the skydive's spread pose and its dive |
 | Door kick, melee | Mesh2Motion's `Kick_Breach`, its hit at the strike; the engine's 12 fist and kick moves |
-| Holding and aiming | the weapon lowered at a sprint; the support hand on the grip; aim offsets by pitch and yaw; the head and eyes toward the aim |
+| Holding and aiming | the weapon lowered at a sprint; the support hand on the grip; aim offsets by pitch and yaw; the head and eyes toward the aim (ahead of WP 13.20's weapons, the gun carried as the view says, down the sights through the right eye: ADR-0025 amendment 11) |
 
 The bounds, over every course (§9.1): a planted foot drifts at most 5 cm per contact (the anim QA's limit, ADR-0009
-amendment 6); a hand stays within 3 cm of its contact; no transition pops (the anim QA's twist-pop bound); the muzzle
+amendment 6); a hand stays within 3 cm of its contact; no point pops (the anim QA's positional pop: 9/16 m in a step
+against its neighbours, engine/anim/motionMetrics.ts); the muzzle
 points within 2° of the aim.
 
 ### 5.2 The two looks
@@ -356,7 +378,7 @@ kept across sessions by the store; the HUD for each camera (crosshair, prompts, 
 ### 9.1 Numbers agents check
 
 - **Courses** (`node x feel <lab> --course <name|all>`, WP 13.4): each gym feature driven by scripted intents, its
-  numbers checked against §3.2's reference values and tolerances, the report at `out/feel/<course>/report.json`.
+  numbers checked against §3.2's reference values and tolerances, the report at `out/feel/<lab>-<course>/report.json`.
 - **Animation metrics** on the same runs: foot slide, pops, hands at their contacts, aim error (§5.1's bounds).
 - **Camera metrics** on the same runs: continuity, never inside geometry, the player in view (§4's bounds).
 - **Look metrics**: thumbnails, the shimmer metric and the look metrics per look and camera (§5.2).
@@ -367,7 +389,9 @@ kept across sessions by the store; the HUD for each camera (crosshair, prompts, 
 
 ### 9.2 Replays and the tour
 
-Every move, every course and every interaction has a replay with golden hashes in Node and in the rendering page. The
+The moves and the rides have replays with golden hashes in Node and in the rendering page
+(tests/replays/playground-*.replay.json), as each interaction will from WP 13.16; a course is judged by its numbers and
+reports its final hash, which no golden holds. The
 tour (WP 13.26) is one replay through every feature in every camera and both looks: the attract mode, a film per look,
 and a check in T2.
 

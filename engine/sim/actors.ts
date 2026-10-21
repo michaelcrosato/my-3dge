@@ -7,17 +7,17 @@
  * The step (shardfall's order): movers set their velocities (`intents`, `ai`), the system `actors` moves every actor in
  * id order (`anim`), the world steps (`physics`), and `actors.readback` copies the feet into `x`, `y`, `z`
  * (`readback`). A player actor reads the step's intents: `move`, `jump` (held, pressed) and `dash` (pressed); any other
- * the intents its AI writes into `actor.intents`, its presses taken from the edges of `b`. Events: `jump` `{ id }`,
- * `land` `{ id, speed }`, `dash` `{ id }`. Gravity: `physics.characterGravity` unless the settings name one; the weight
- * on dynamic floors uses `physics.gravity`. Entities with the component `oneWay` make their body a one-way platform.
- * WP 3.7: `anim` adds the component `animator`, stepped by `actors.anim` after `actors` (its `reactions` first, WP
- * 7.8) and, with `preciseHits`, posed by `actors.pose` after `actors.readback`. Event: `footstep` `{ id, side, speed }`.
- * WP 8.9: `body` adds the component `puppet` (the body drawn) and `clips` the clip layer (engine/sim/actorClips.ts).
+ * the intents its AI writes into `actor.intents`, its presses from the edges of `b`. Events: `jump` `{ id }`, `land` `{
+ * id, speed }`, `dash` `{ id }`. Gravity: `physics.characterGravity` unless the settings name one; the weight on
+ * dynamic floors uses `physics.gravity`. The component `oneWay` makes its body a one-way platform. WP 3.7: `anim` adds
+ * the component `animator`, stepped by `actors.anim` after `actors` (its `reactions` first, WP 7.8) and, with
+ * `preciseHits`, posed by `actors.pose` after `actors.readback` (event `footstep` `{ id, side, speed }`). WP 8.9:
+ * `body` adds the component `puppet` (the body drawn), `clips` the clip layer (engine/sim/actorClips.ts).
  *
- * WP 13.3: an actor whose character has a movement model (engine/physics/movement/) also holds the component
- * `motion`, the model's state (holstered unless spawned with `holstered: false`), and reads `sprint` (held, pressed),
- * `walk` and `crouch` (held), `crouchToggle` (pressed), its view from `look`, its keys' frame from `cam` (else
- * `look`) and what it faces from `aim`, else `look`; it steps under the live `movement.*` settings (WP 13.4).
+ * WP 13.3 and 13.7: an actor on a movement model also holds `motion`, the model's state, and reads its buttons, view
+ * and rides (`spawnActor` says which); launchers set off any actor: event `launch` `{ id }`. WP 13.9: a player's sprint
+ * and crouch work as the recorded settings `input.sprint` and `input.crouch` say (held, or toggled by a press); WP
+ * 13.10: an animated actor's duck is its animator's pose `crouch` (a planted stride's shorter step).
  *
  * Invariants: systems are added once per world, on the first (animated) spawn; all an actor remembers is in its
  * components (the sim's animators are loaded from them). Despawning leaves the body; `removeActor` removes both.
@@ -65,7 +65,9 @@ import { MOVEMENT_SETTINGS, movementOverrides, tuneCharacter } from '../physics/
 import { physicsOf } from '../physics/binding';
 import type { Vec3Like } from '../physics/queries';
 import { clipsFor, defineClipKinds, type ClipsSpec } from './actorClips';
+import { defineActionKinds, stepActorActions } from './actorActions';
 import { defineReactionKinds, stepReactions, type ReactionComponents } from './reactions';
+import { defineRideKinds, ridesOf } from './rides';
 import { defineComponent } from './state';
 import type { World } from './world';
 
@@ -114,15 +116,38 @@ export type ActorComponents = {
 };
 
 /**
+ * How a player's sprint and crouch buttons work, as a shooter's options set them (WP 13.9, docs/PLAYGROUND.md §3.3):
+ * recorded settings, since they change how the same presses move him, read by the system `actors` for player actors.
+ */
+export const CONTROL_SETTING_FIELDS = {
+  'input.sprint': {
+    type: 'string',
+    enum: ['toggle', 'hold'],
+    default: 'toggle',
+    description: "The sprint button on the shooter model: toggle, Apex's sticky sprint (a press keeps it on while the player moves on); hold, only while held. Recorded: it changes how a player moves.", // prettier-ignore
+  },
+  'input.crouch': {
+    type: 'string',
+    enum: ['hold', 'toggle'],
+    default: 'hold',
+    description: 'The crouch button on the shooter model: hold, crouched while held; toggle, a press crouches until pressed again (a jump or a sprint stands it up). Recorded: it changes how a player moves.', // prettier-ignore
+  },
+} as const;
+
+/**
  * Declares the components `actor`, `animator`, `puppet`, `clips` (engine/sim/actorClips.ts), `oneWay`, `reactions` and
- * `secondary` (engine/sim/reactions.ts) and the setting `physics.characterGravity` on `registry`.
+ * `secondary` (engine/sim/reactions.ts), the setting `physics.characterGravity` and the controls' `input.sprint` and
+ * `input.crouch` on `registry`.
  */
 export function defineActorKinds(registry: Registry = sharedRegistry): void {
   defineReactionKinds(registry);
+  defineActionKinds(registry);
+  defineRideKinds(registry);
   if (!registry.kinds().includes('setting') || !registry.has('setting', 'physics.characterGravity')) {
     defineSettings(CHARACTER_SETTINGS, registry);
   }
   if (!registry.has('setting', 'movement.turnRate')) defineSettings(MOVEMENT_SETTINGS, registry);
+  if (!registry.has('setting', 'input.sprint')) defineSettings(CONTROL_SETTING_FIELDS, registry);
   if (!registry.kinds().includes('component') || !registry.has('component', 'animator')) {
     const states = { type: 'object', default: {}, description: 'The body states its game code holds on.' } as const;
     const description = 'A character animator (engine/anim/character.ts): what it keeps, and what its body is told.';
@@ -190,7 +215,15 @@ export interface ActorSpec {
   components?: Readonly<Record<string, object>>;
 }
 
-/** Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`. Returns the id. */
+/**
+ * Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`. Returns the id.
+ * An actor on a movement model (engine/physics/movement/, WP 13.3) also holds `motion`, the model's state (holstered
+ * unless spawned `holstered: false`), and reads `sprint` (held, pressed), `walk` and `crouch` (held), `crouchToggle`
+ * (pressed), the view from `look`, the keys' frame from `cam` (else `look`) and what it faces from `aim` (else
+ * `look`), under the live `movement.*` settings (WP 13.4); WP 13.7: the look's pitch and `interact` (pressed) too,
+ * riding the scene's ziplines and ladders (engine/sim/rides.ts); WP 13.9: a player's sprint held only while held with
+ * `input.sprint` at `hold`, and his crouch toggled by its press with `input.crouch` at `toggle`.
+ */
 export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): number {
   const w = world as unknown as World;
   const physics = physicsOf(w);
@@ -253,19 +286,28 @@ function intentsOf(actor: ActorComponent, intents: Intents): Intents {
   return own;
 }
 
+/** A player's controls (the settings `input.sprint` and `input.crouch`): a held sprint, a toggled crouch. */
+interface Controls {
+  readonly holdSprint: boolean;
+  readonly toggleCrouch: boolean;
+}
+
 /** The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it faces. */ // prettier-ignore
-function motionInput(actor: ActorComponent, wants: Intents): CharacterInput {
+function motionInput(actor: ActorComponent, wants: Intents, controls: Controls): CharacterInput {
   const [aimX, , aimZ] = wants.aim ?? [];
   const aimed = aimX !== undefined && Math.hypot(aimX - actor.x, aimZ! - actor.z) > 0.05;
   const face = aimed ? Math.atan2(aimX - actor.x, aimZ! - actor.z) : wants.look?.[0];
   const frame = wants.cam ?? wants.look?.[0];
+  const toggle = actor.player && controls.toggleCrouch;
   return {
     sprint: held(wants, 'sprint'),
     sprintPressed: pressed(wants, 'sprint'),
+    ...(actor.player && controls.holdSprint ? { sprintHold: true } : {}),
     walk: held(wants, 'walk'),
-    crouch: held(wants, 'crouch'),
-    crouchToggle: pressed(wants, 'crouchToggle'),
-    ...(wants.look ? { view: wants.look[0] } : {}),
+    crouch: !toggle && held(wants, 'crouch'),
+    crouchToggle: pressed(wants, 'crouchToggle') || (toggle && pressed(wants, 'crouch')),
+    usePressed: pressed(wants, 'interact'),
+    ...(wants.look ? { view: wants.look[0], pitch: wants.look[1] } : {}),
     ...(frame !== undefined ? { frame } : {}),
     ...(face !== undefined ? { face } : {}),
   };
@@ -278,6 +320,8 @@ function moveActors(w: World, intents: Intents): void {
   const worldGravity = w.settings.get('physics.gravity') as number;
   const oneWay = new Set((w.query('oneWay') as unknown as ActorComponents[]).map((e) => e.oneWay.body));
   const tuning = movementOverrides((path) => w.settings.get(path));
+  const rides = ridesOf(w);
+  const controls = { holdSprint: w.settings.get('input.sprint') === 'hold', toggleCrouch: w.settings.get('input.crouch') === 'toggle' }; // prettier-ignore
   for (const e of w.query('actor') as unknown as (ActorComponents & { id: number })[]) {
     const { actor, motion } = e;
     const wants = intentsOf(actor, intents);
@@ -286,13 +330,14 @@ function moveActors(w: World, intents: Intents): void {
       jump: held(wants, 'jump'),
       jumpPressed: pressed(wants, 'jump'),
       dashPressed: pressed(wants, 'dash'),
-      ...(motion ? motionInput(actor, wants) : {}),
+      ...(motion ? motionInput(actor, wants, controls) : {}),
     };
     const character = motion ? tuneCharacter(actor.character, tuning) : actor.character;
-    const step = stepCharacter(physics, actor.body, character, actor, input, { dt: w.dt, gravity, worldGravity, oneWay }, motion); // prettier-ignore
+    const step = stepCharacter(physics, actor.body, character, actor, input, { dt: w.dt, gravity, worldGravity, oneWay, rides }, motion); // prettier-ignore
     if (step.jumped) w.emit('jump', { id: e.id });
     if (step.landed) w.emit('land', { id: e.id, speed: step.landed });
     if (step.dashed) w.emit('dash', { id: e.id });
+    if (step.launched) w.emit('launch', { id: e.id });
   }
 }
 
@@ -311,18 +356,24 @@ function animated(w: World) {
 
 /**
  * The system `actors.anim`: each animator's step in id order, told its `states` and the controller's (`velocity`, `yaw`,
- * `air`, `dash`), its breathing phase drawn from `rng.entity(id, 'anim')` at its first step; emits its events. An
- * actor's `reactions` step first, what their phase tells the body laid over its `states`.
+ * `air`, `dash`; a movement model's duck as the pose `crouch` where the states hold no pose), its breathing phase drawn
+ * from `rng.entity(id, 'anim')` at its first step; emits its events. An actor's `reactions` step first, what their phase
+ * tells the body laid over its `states`, then its `actions` (engine/sim/actorActions.ts), what their beat tells it laid
+ * over those.
  */
 function stepAnimators(w: World): void {
   const [actors, pool] = animated(w);
-  for (const { id, actor, animator: data, reactions } of actors) {
+  for (const entity of actors) {
+    const { id, actor, animator: data, reactions, motion } = entity;
     const rng = w.rng.entity(id, 'anim');
     if (!data.started) [data.state.clock, data.started] = [rng.next() * STEP.clockSpread, true]; // as a humanoid does
     const animator = pool.get(id, data, { rng, dt: w.dt });
     velocity.set(actor.vx, actor.vy, actor.vz);
-    const told = reactions ? { ...data.states, ...stepReactions(reactions, w.dt) } : data.states;
-    animator.step({ ...told, velocity, yaw: actor.yaw, air: !actor.grounded, dash: actor.dash > 0 }).save(data);
+    const reacted = reactions ? { ...data.states, ...stepReactions(reactions, w.dt) } : data.states;
+    const told = { ...reacted, ...stepActorActions(w, id, entity) };
+    const ducked = motion?.duck === 'ducking' || motion?.duck === 'ducked'; // the movement model's crouch
+    const pose = told.pose ?? (ducked ? 'crouch' : undefined);
+    animator.step({ ...told, pose, velocity, yaw: actor.yaw, air: !actor.grounded, dash: actor.dash > 0 }).save(data);
     for (const { type, ...event } of animator.events) w.emit(type, { id, ...event });
   }
 }

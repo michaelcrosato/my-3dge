@@ -287,3 +287,465 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **Left to the view's WPs:** the motion state holds the contacts as plain data (the lip, the wall's normal, the rise
   column, the landing, the phase and its ticks; `handsOf` puts the hands on the lip a shoulder apart): WP 13.11 plays
   the grab, the pull and the hang on them; WP 13.8 frames them.
+
+## Amendment 7 (2026-10-19, WP 13.7): ziplines, ladders, launchers and the balloon
+
+- **Rides are world data the sim hands the model.** The physics may import only the core and Rapier, so the model
+  cannot read the world's entities: it defines what it asks (engine/physics/movement/ride.ts's `Rides`: cables,
+  ladders and launchers as plain data), the sim answers from the scene's entities (engine/sim/rides.ts: the components
+  `zipline`, `ladder` and `launcher`, hashed and captured; `addZipline`, `addLadder`, `addLauncher`,
+  `addLevelLadders`, `ridesOf`), whose specs and checks are engine/world/traverse.ts's, and the stage draws the
+  components (engine/gfx/stageRides.ts). The model gains the modes `zipline`, `ladder` and `skydive` and their state
+  (`ride`, `rideAt`, `rideDir`, `rideSpeed`, `rideAccel`, `rideEnd`, `catches`, `rideCool`, `landing`), and the groups
+  `zipline`, `skydive` and `ladder`; its input the look's pitch and the `interact` button's press (`usePressed`).
+- **A ladder is a glyph or `addLadder`, not a prop entry.** A prop stands by a yaw alone; a ladder needs its face, its
+  top and the wall's normal. The glyph field `ladder` (the engine's `|`) stands one on each run of its tiles along a
+  face, against the neighbour standing highest; anywhere else `addLadder` places one, drawn by the stage. The field
+  changed the compiled level's shape: the fixtures' and the hall's compiled hashes were re-recorded, and with `ladder`
+  left out of their glyphs each gives its old hash.
+- **Calls where §3.2 is silent (ours):** the hands 2.03 m over the feet on a cable; use's reach 1.52 m from the hands
+  and the air's unasked catch 0.61 m; a ride ends 0.61 m short of each anchor, or where a cast of the hull along the
+  line, made as it catches, meets something; the way along a cable is the view's (its pitch too), else the velocity's,
+  else down a sloped line and up a vertical one (within 10° of straight up); catching stands the hull up; a catch from
+  the air speeds up at the jump-on's 25.4 m/s² for the whole ride; the catches count resets on the ground; no catch or
+  ladder within 0.25 s of letting go of either. The WP's "a jump keeps the speed" and §3.2's "off at up to 11.3 m/s"
+  meet thus: a jump off goes up a full jump with 10.16 m/s added along the view across the ground, capped at 11.3 m/s
+  or at the ride's own speed across, whichever is higher. At an end a ride lets go keeping half its speed; a vertical
+  line's top hops it 1 m up and on along the view at the run's speed; a balloon's throws it up at 15.24 m/s into the
+  skydive.
+- **The skydive (ours, from §3.2's two numbers):** the view's pitch sets the fall from 20 m/s (level or up) to 35 m/s
+  (straight down), reached under gravity and braked at 21 m/s² when faster; the push steers it across at up to 12 m/s
+  (8 m/s²); the landing pose takes over from the tick whose move ends within 30 m of the ground below, slows the fall
+  to 6.1 m/s (21 m/s² brings a 35 m/s dive there with a tick to spare: 20 did not) and lands with no stun.
+- **Ladders (ours, tuned):** taken hold of standing, running into one within 45° and 0.3 m of its face or with use,
+  or from its top with use, the feet 1 m down; climbed at 2.20 m/s, the hull 0.1 m off the face, moved straight; over
+  the top by the mantle's pull alone, once the lip stands within the pull's 1.07 m (the climb stops there); at the
+  foot it steps off; a jump goes 3.05 m/s away rising 0.5 m; crouch lets go.
+- **Launchers set off any character,** on the model or not, without a field in the character's state (it would have
+  changed every golden): its feet in the launcher's volume, not rising. The speed up is the one that leaves the
+  launcher's top at its own (or `bounce` times the speed it falls onto the top at), whatever height in the volume
+  caught it, so a pad's and a trampoline's heights hold to the millimetre. A `solid` one stands on a fixed box from the
+  ground: the trampoline's frame. The event `launch` `{ id }` tells the view and the sound.
+- **Pole feet are given, not found.** Rapier's queries see bodies only from the first step on, so a ray in `setup`
+  missed the tower the scene had just stood: a zipline's spec names where its poles stand (`feet`, the ground by
+  default).
+- **The gym** (docs/PLAYGROUND.md §2.3): the tower's ladder up its north face, its 40 m zipline from a pole on its top
+  to the south wall, the trampoline against its west face (so a jump off the top measures the bounce: a walk off the
+  edge rolls the capsule 17 cm down the corner first), the jump pad in the open, and the redeploy balloon 90 m up
+  (the hill's stands at 60 m: the gym's leaves room for a glide and a dive before the landing pose).
+- **The feel kit gained** the states `riding`, `onLadder`, `skydiving` and `landingPose`, the metrics `top`,
+  `heightAt`, `topFall`, `rideSpeed`, `rideGain` and `catches`, and a sample's ride speed, catches and landing pose;
+  the courses `zipline`, `ladder`, `launcher` and `skydive` pass, and tests/replays/playground-rides.replay.json (the
+  ladder and over the top, the zipline down, the pad, the balloon and its skydive) holds one golden in Node and
+  Chromium. The playground's three other replays were re-recorded (the motion state grew; the gym's rides are
+  entities); the other 22 goldens hold. A whole-number field of the model is a setting too (`movement.zipline.catches`).
+- **Watched until WP 13.8:** in the zipline course the shooter's camera snaps in by the tower's pole (4.9 m) and, after
+  the 20 m fall from the balloon's line, every camera catches up with the stop 0.33 to 0.36 m a frame; in the skydive
+  every camera keeps its bounds.
+- **For the owner's playtest:** a ride down to the far pulley lets go at half its speed and bumps the pole; whether a
+  ride should end in a dismount, and the tuned numbers above, are the playtest's to say.
+- **engine/physics/carry.ts:** the kinematic floor's carry moved out of engine/physics/character.ts, at its 400 lines.
+
+## Amendment 8 (2026-10-19, WP 13.8): the camera modes
+
+- **A rig between the view and its camera** (engine/gfx/cameras/rig.ts, beyond the WP's list: the view and the feel
+  kit's camera metrics both step it, so the page and the numbers see one picture): the camera a code names, the one
+  before it still stepped while a switch blends, the view effects with each camera's share, and the view settings
+  `cam.fov` (Apex's horizontal degrees at 4:3, 90: first person's and the shooter's lens, so the box's first person is
+  73.7° now, not 75°), `cam.blend` (0.35 s), `cam.effects` and `cam.wholeZoom` (the playground's page sets it: the
+  classic views zoom 1, 2, 3, 4).
+- **Live switches blend; others cut.** A blend's first frame is the old camera's picture, so an agent's set-then-shot
+  would show the old camera: `camera.set(code)` cuts and `camera.set(code, { blend: true })` blends, as T, X and a
+  view's turn do; a replay's view changes take `blend` too.
+- **Blends** (blend.ts) go about the target: the target on a straight line, the heading the short way, pitch, roll,
+  distance, lens, zoom, boost and planes in step, a smoothstep over the time. An orthographic pose blends as the
+  perspective one with a 20° lens framing its picture at its target, so the projections swap where the pictures
+  agree; two orthographic poses blend orthographic. The feel kit's camera metrics allow a blend's own move and turn,
+  and the look's turn, read off the sim's look intents, for the cameras that look along it (`LOOK_CAMERAS`: first
+  person and the shooter), so a cut between two views counts whatever the look (the review found the overhead view,
+  heading north, taking the look's allowance); the look's swing is allowed at the camera's new distance, stricter
+  when the arm pulls in.
+- **The shooter** (shoulder.ts): §4's 0.5 m right, 0.3 m up and 3.8 m back from the eye, lagged 0.05 s and never
+  0.5 m behind, looking along the aim. X swaps by the code (`cam3=shoulder,…,-1`, blended; on another camera it does
+  nothing); a swap input eases in the camera over 0.12 s. The sights pull the arm in to 1.5 m by the effects' share (the aim button is WP 13.9's: the view
+  reads `aim` from the step's held buttons). Under 1.2 m of room behind the eye draws the shoulder point in, across by
+  the share and up by its square, so a camera backed against a wall still sees him.
+- **The platformer** (follow.ts): §4's arm, pitch, recentring, look-ahead and dead zone, and ours: recentring eased
+  over 0.6 s and at most 1.5 rad/s; the look-ahead full at 5 m/s, eased over 0.5 s; the dead zone's ground settling
+  in 0.3 s; the lift (an arm cut 0.25 m short by a slope or a wall tilts the camera down at 1.5 rad/s, up to 50°, and
+  back at 0.6 rad/s once clear); a 60° lens.
+- **Collision at a pace** (collide.ts), reworked after the review. The chase keeps WP 3.9's spring arm; the shooter
+  and the platformer move their camera on as a ball: carried with the arm (the base's move and the look's turns, not
+  a camera's own recentring or lift, which go at its pace), then toward the arm's end where the ball fits there and a
+  sweep from the arm's base meets no floor or ceiling on the way (else as far as that sweep clears), in at up to
+  10 m/s and out eased over 0.3 s, no faster, each leg slid along the walls and stopped where the base would lose
+  sight of it, with 0.2 m to spare when it had that (a floor or a ceiling grazing that room aside, so a look tipped up
+  over open floor brings the camera down to the clear point); a camera already out of the base's sight (over a wall's
+  top) goes down only to where it sees the base again, so it never ends behind the wall. A second stuck over a metre off, it homes to the clear point at that pace, level first, never through a
+  wall. Two cuts are left: carried over 2 m in a frame (the player put elsewhere), it goes with him; found inside a
+  wall (the level moved into it), it goes to the clear point. The arm's base follows by sliding, no further a frame
+  than the player moved plus 10 m/s. §4's 0.3 m bound rules the spring arm out: on the courses it snapped 0.7 m
+  dropping off the hang's wall, 3.3 m at the tunnel's mouth, 3.2 m at the ladder's top, 10 to 13 m stuck on the ramps.
+  The first build's "never jumps" held only on the courses: the review's fuzz (80 random 3 s runs a seed anywhere in
+  the gym, the look within ±0.8 rad, up to 3 rad/s) found 1.3 to 11.3 m jumps and a camera outside the perimeter
+  wall, and the look held 1.2 rad up sent the arm's end under the floor. Over four seeds now: 0.26 m at worst for the
+  shooter, 0.28 m for the platformer, 2.1°, never inside, and (after the second review) no frame behind a perimeter
+  wall. The shooter still loses the player's chest in 4 to 5% of those frames, most with a wall within 1.5 m behind
+  the eye (the arm pulled in to his head, the chest under the lens) or the camera held over a wall's top (a fall from
+  beside a wall: about a second, until the stuck rule homes it), the platformer in 0.2 to 1.6%: every course keeps
+  "never lost" (camera-walls' jump by the wall until the landing), and the rest is the playtest's (docs/PROGRESS.md).
+- **The occluder fade hides** (cutaway.ts): with a camera that may stand behind a wall (the shooter's, the
+  platformer's), the block pieces and the rides that a line from it to the player's head or chest crosses leave the
+  picture until the line clears, a ride by its own meshes 0.25 m thick or more (`FADE_THIN`: a pad, a platform; a
+  cable, a pole or a rung hides nothing and stays, so the line a player rides never goes); cut pieces stay cut; parts
+  drawn as one mesh (ramps, floors) and props (instanced batches, with no hiding per instance yet) are not faded. The
+  rides were never drawn in a run view before the review (WP 13.7's: the stage drew only the kinds a scene places);
+  the stage now draws the ride kinds a game declares too (stage.ts). Hidden rather than see-through: a translucent twin of every
+  look's materials would add materials and pipelines. A partial fade, and the props, are the playtest's to ask for.
+- **Effects** (effects.ts): Apex's eye heights (1.524 and 0.8128 m, the duck's share between) are the cameras' until
+  the sim needs the eye (WP 13.9's aim): in the model's profile now they would re-record every playground golden for
+  numbers the sim never reads. Ours where §4 gives none: the punch's spring at 2.5 Hz and 0.6 damping, a landing 0.4°
+  per m/s over 3 m/s up to 5°, a jump 1°, a grab 1.5°; the bob 1.2 cm down and 0.6 cm across at 5 m/s; the sights
+  55° at a 70° lens in 0.25 s; screen shake 4 mm per m/s of a landing over 10 m/s. First person takes them all, the
+  shooter its lens, the sights and half the roll and punch, the platformer 0.3 of the punch, the views none; the
+  shake goes by the punch's share (the rig's `shake()`), and a weapon's kick is WP 13.20's, through the rig's `kick`.
+- **The overhead view** is a classic view: straight down, north up (never turned), orthographic, in whole zoom steps,
+  its target on its pixel grid (1/(24 × zoom) m). Views never trail the followed point more than 2 m once within it,
+  nor first person's eye 0.2 m, so a 20 m fall's stop is never overshot.
+- **A game's own camera:** the registry kind `camera` (`defineCamera(name, { create })`, its code `cam3=<name>[,…]`)
+  and `followCamera(type, state, steps, { effects, fade })`; the factories are public (engine/gfx/cameras/api.ts,
+  re-exported whole by engine/index.ts at its line cap). A `create` that returns no camera is refused at once
+  (`GFX_BAD_GAME_CAMERA`). Q and E, the isometric view's turns, are WP 13.9's, with its action maps.
+- **The courses:** the playground's modes are the rigs (`cam3=shoulder`, `cam3=first`, `cam3=follow`, `cam=iso`,
+  `cam=overhead`); every course keeps every camera's bounds, the watches of amendments 5 to 7 lifted. The launcher's
+  drop and the ladder's climb down look down: the shooter's view is the aim, and looking level off the tower no camera
+  behind the player sees him below. The soak course `cameras` blends through the five modes twice round a square by
+  the north wall: 0.08 m and 1.3° at worst, never inside, never lost outside first person, the lost spans measured
+  by cameras started a second after each first person (one that goes the whole way loses him for 3 frames of each
+  blend out of the eyes, which starts from a picture with no body in it). The course `camera-walls` holds the shooter
+  and the platformer to the four bounds where they meet the level: the look tilted ±1.2 rad on open floor by the
+  spawn, a sprint and a jump along the east perimeter wall, a run past the climb walls' edges, and a jump two metres
+  from that wall with the camera over its top (never lost until the landing).
+
+## Amendment 9 (2026-10-19, WP 13.9): controls for every camera
+
+- **A map per camera mode** (labs/playground/controls.ts): `createEngine({ actionMap })` also takes a function from
+  the camera's code to its map, and the engine swaps the input's map (`input.use`) at the frame after a switch. Each
+  map keeps its own bindings (a rebind in one mode stays in that mode, saved under that map's id); the playtest may ask
+  for one shared set.
+- **View actions** (an action map's `view`): the camera's switch, the shoulder and isometric's turns are bound and
+  rebound like any action but never sent to the sim: the page hears each press as it happens (`onView`), every press,
+  so none is lost between two frames. P, F and M stay the page's own keys, reserved in every map.
+- **Aiming** (engine/input/aim.ts): a map's `aimWith` names the rule. The page works the point out each frame from the
+  camera it drew (the view's `aim`) and records it with the step's intents; the sim reads only the point, so live
+  play replays without a camera. `centre`: the screen centre's ray through the sim's read-only queries, the player's
+  own body skipped and nothing between the camera and his eye counted, out to 100 m; `pointer`: the free pointer's ray
+  onto the plane of his feet, or a pushed right stick 5 m along the floor from him, the picture's up as up (twin
+  sticks), the stick ahead of the pointer. The eye heights stay the cameras' (amendment 8): the sim needs no eye.
+- **The look settings** (engine/input/look.ts), Apex's units: 0.022° a count times `input.sensitivity` (5: 0.11° a
+  count), times `input.adsSensitivity` with the sights up (the map's `aim` held); the right stick turns each camera at
+  its own rate times `input.stickSensitivity`; each inverts by a setting. They replace `createInput`'s `lookSpeed` and
+  `invertY`, which no game passed. View settings, never hashed.
+- **Sprint and crouch, hold or toggle**: the recorded settings `input.sprint` (`toggle` by default, Apex's sticky
+  sprint; `hold`, only while held) and `input.crouch` (`hold` by default; `toggle`, a press crouches until pressed
+  again), read by the actors for players only, so the AI keeps Apex's. Recorded, because the same presses move the
+  player differently; the defaults change no golden.
+- **Pointer lock**: a click takes it in the maps that look with the mouse (`lock`: first person, the shooter, the
+  platformer); pause and a map without it give it back; isometric and top-down keep the cursor to aim.
+- **Isometric's keys**: Q and E turn the view by 90°, blended, so its Use moves to G; the d-pad's right turns it on a
+  pad, the d-pad's left swaps the shooter's shoulder, so the d-pad no longer moves.
+- **Deferred**: the pad's reload and holster (Apex's X and Y held) wait for a held binding with WP 13.19 and 13.20.
+
+## Amendment 10 (2026-10-19, WP 13.10): locomotion animation
+
+- **The planted stride, not the library's blend sets yet** (engine/anim/locomotion/planted.ts): the player walks, runs,
+  sprints and crouch-walks on the procedural humanoid's gait, planted: a foot stands its duty (0.62 of its cycle
+  walking, 0.3 running, 0.24 sprinting, so a run has its flight), travelling back exactly as far as the body goes
+  meanwhile, and swings on a half cosine; its touchdowns stay at the phase the sim hashes. Measured first: the library's
+  loops were captured at 0.7 to 1.9 m/s (100STYLE's) against the playground's 2.3 to 7.6, past what a stride warp holds,
+  and format 1 carries no contacts until WP 8.8 re-imports them. The blend sets wait for a measured need (the owner's
+  playtest) and those contacts; the stride is matched to the speed by construction, the legs follow the movement and the
+  chest the facing, with no hip turn yet (a strafe steps sideways, its crossing foot passing ahead).
+- **The visual review's changes** (the movement states' sheets, three rounds): the steps were short and quick and the
+  arms swung with the legs on their side, so the adult's stride grows from 0.42 to 0.5 m and a planted sprint's share
+  past 1 to 1.25 (locomotion.ts `strideShare`), a planted build's arms swing against its legs (the source builds keep
+  the source rig's swing, pinned by their reference vectors) and a sprint leans further forward. The crouch-walk lunged
+  at each double support: a planted stride is 30% shorter crouched (`GAIT.crouchStride`), at a quicker cadence (0.58 m
+  steps at 240 a minute), which the sim's phase needs to know, so the sim tells an actor's animator its movement model's
+  duck as the pose `crouch` (engine/sim/actors.ts). Both move the hashed phase: the four playground replays were
+  re-recorded, their runs unchanged (tests/replays/README.md). The walk back lunged as it started: the humanoid eases
+  its movement components toward the velocity, so a reversal shrank the first step to half; a planted stride steps along
+  their unit vector once they are half long (planted.ts `plantedMove`). The push-off bent the ankle 44° with the toes
+  flipped up: a planted foot on its feet now rolls on its ball as the heel lifts and on its heel as the toes rise, in
+  the leg's solve (authoring.ts `solveLeg`) and the plant alike, its toes flat, its ankle allowed 15° up and in a stride
+  a quarter of the knee's bend more, 25° at most (`ankleLimit`: a bent knee frees the calf, so a standing foot stays as
+  it stood), and the pelvis rides as high as a trailing foot reaches with its heel lifted (`plantedHeight`), a lifted
+  foot holding it as far as the solve plants it: it dropped 12 cm in a tick at each touchdown, and now eases in and out.
+  The third round: a swinging toe dragged on the floor in every gait and a run never flew (the swing lifted on a half
+  sine, so a trailing foot stayed on its ball and its knee straightened after toe-off). A planted swing now lifts early
+  (`PLANTED.kick`, its top at 0.38 of the swing) with its knee bent at least as far as the gait's heel kick (55°
+  walking, 90° running, 110° sprinting, `plantedKnee`), its foot as level as the ankle allows and its toes aimed 1.5 cm
+  over the floor (the ankle bending up to 30° further, authoring.ts `clearToes`), a crouched swing twice as high
+  (`GAIT.crouchLift`): every gait's toes clear the floor (0.9 cm the least, walking back), a run flies 41% of its frames and a sprint 51%. A run's pelvis
+  sank lowest at its toe-off, the source's bob: a planted run's rides 10 cm low through each stance and rises 7.5 cm
+  into its flight (`plantedBob`). A strafe spread its legs 0.62 m and its pelvis sank 16 cm: a planted stride's steps
+  are 35% shorter straight sideways (`GAIT.sideStride`), which moves the hashed phase, so the four playground replays
+  were re-recorded again. The slide's left hand went through the floor: its wrist rides 19 cm up. The fall's feet
+  hovered after the landing: a stance foot whose heel the dip lifts past 10° stands on its ball (`FOOT_PLANT.heelUp`).
+  The fourth round: the crouch-walk's stop set a foot a few ticks into its swing back down 15 cm ahead, its stance
+  lengthening as the body slowed; a crouched stride keeps the walk's stance share at any pace (`plantedDuty`'s
+  `crouch`).
+- **Stance locks, with the rule ADR-0009 amendment 8 asked for** (locomotion/locks.ts): only a `plantedStride` build
+  locks (its `stance()`), and only on its feet (`onFeet`: not lying, climbing, striking, flying or early in a dash; a
+  kneel keeps its feet). A foot locks where it lands, keeping its heading (a turn about the vertical), and lets go over
+  0.05 s when its stance ends, lifting as its animation lifts it and taking its roll at once (the two rolls agree); at
+  once when an action takes the feet or lifts a sole over 2 cm (on its feet, its ball: a heel lifting off it leaves the
+  foot down), but for a toe-off in a stride on the level it locked on (a body speeding away had left the lock 17 cm
+  ahead of its animation, and it snapped); a sole kept on the floor holds up to 0.1 s past its stance (the push-off, the
+  touchdown), on the level it locked on. Standing or slowing below a step's pace, a foot astray steps back under the
+  body, one at a time: at once past 12 cm (a stop, a turn in place), past 1.5 cm once its animation has held still
+  0.05 s (the feet back to rest after an action). A held sole stays on the ground under it as that moves, on the physics
+  ground never onto another level (a body stepping up leaves it on the floor below), rides the ground's velocity (the
+  state matrix's run in place) and drops when the body is put over 1 m away or 0.6 m above it (past the plant's reach).
+  With locks the knee bends as the animation bends it, the leg longer by as far as a lock holds its foot out from its
+  animation (a body braking past a held foot sank to 15 cm, the knee under the floor), and a held foot lies flat and
+  rolls as above (engine/anim/footRoll.ts). The pelvis drop is no longer smoothed: its 1 m/s rise cost slides and a pop,
+  and a stair needs none (the floor and the drop change together).
+- **The physics ground**: the view's puppets and the feel kit's track get the sim's query view, and the foot plant
+  stands each sole on the physics ground within a band of the body's floor (a metre a metre out, ± 0.15 m: a ramp, a
+  stair), else, and in the air, on the flat floor at the body's height (a ledge, a sole inside a wall); over ground
+  below the floor, a lifting sole follows the body (a trailing foot clears the step it leaves), and a free foot out of
+  the leg's reach rises over its place to where the leg reaches, never dragged along the leg's line through a riser. The
+  feel kit reads a sole's height from that ground, so a foot on a ramp is on its floor.
+- **What the view shows** (locomotion/motion.ts `MovementPose`, locomotion/shown.ts): the sim's animator is hashed, so
+  the movement's crouch, slide, air, landing and lean are the view's, eased from the movement model's state and the
+  actor's velocity and set on the humanoid before each pose (`Humanoid.shown`, never stepped or saved): the crouch; the
+  slide, seated low and leaned back, the right leg out ahead, the left hand low by the hip, the spine tilted to the
+  slope; the rise and the fall by the vertical speed; the landing's dip by the landing speed, soft from 4 m/s (a jump
+  lands at 7.4), hard from 9 (deep, leaning forward, the right hand reaching for the floor, held 0.3 s), unwinding as
+  the body leaves the ground again; the lean into the acceleration and the bank into a turn. Procedural: Quaternius's
+  slide and Mesh2Motion's three-point landing are clips for WP 13.11's actions on actors.
+- **The foot plant's weight from what the clips hold** (clipsets.ts `legsHeld`): a full-body clip as its fade shows, a
+  masked one by its mask on the thighs, an added one none; an idle clip layer leaves the plant whole.
+- **Movement states in the matrix** (locomotion/matrix.ts, `motion:<name>` for a `plantedStride` build): the walk, run,
+  sprint, walk back, strafe, crouch-walk, slide, a running jump, the tower's 6 m fall, a stop and a whole turn in place,
+  in the anim QA family and `x sheet`; a script may turn the body (`yaw`). They pass with no baseline entry.
+- **The adult's baseline**: 11 entries go (the run's, the stances', the guard's, crouch's and kneel's, the dodge's, four
+  clip actions'), 38 tighten (some twice, as the review's roll lowered them again), 10 stand as they were, none loosens
+  and none is added. Of the 13 that WP 13.2 left above the source builds', eight go, two tighten under them, and three
+  stay above, accepted against the Done-when's "to the source builds'": `action:roll`'s foot slide, 0.6009 against
+  0.5843 (the dip and the rise crouch on the floor outside the locks, which hold only a body on its feet, `onFeet`; the
+  playground never rolls, so it waits for a game that plays the roll on the adult), and `move:axekick`'s twist jump,
+  2.5186 against 2.4568, and `reaction:fallFront`'s under-floor, 0.3503 against 0.2975 (the adult's longer shin in the
+  kick's wind and its 0.27 m feet in the face-down turn: its proportions, not its locomotion; for WP 13.19, which plays
+  the kicks and the falls on the adult, and WP 10.2's ragdoll for the fall).
+- **Deferred**: the head and eyes toward the aim, to WP 13.11 with its aim offsets (the look's pitch reaching the view's
+  body); starts and stops matched to distance, with the blend sets; the hip's turn toward the movement. A foot set
+  down at a riser's base pokes its toes into it, and a swing from there passes through it (up to 17 cm past the riser
+  in footPlant.test.ts's run onto a 0.4 m box, which holds it under 18 cm; the soles never go under a floor): the
+  capsule steps up at once and the gait cannot see the riser ahead; easing that step in the view, and a stance foot
+  set short of the riser, are the fix when a playtest shows it. A hard stop from a run, a sprint or a
+  strafe can set a foot a tick or two into its swing back down as its stance lengthens with the falling speed (a
+  re-plant a few centimetres on, then the stop's step): telling a swing from a stance across that needs each foot's
+  memory of its swing, a new hashed field in every animator, so it waits with the starts and stops matched to distance.
+  The crouch-walk's rear knee still comes within 23 cm of the floor at a double support: the crouch is as deep as the
+  crouched hull (its eye at 0.81 m), and a 35 cm clearance would need the walking crouch 25 cm shallower.
+- **Beyond Owns**: poses.ts (a planted stride's crouch stance fades as it walks; the shown layers), stateMatrix.ts (a
+  script's yaw), builds.ts (the adult's stride), authoring.ts (the roll in `solveLeg`), locomotion.ts (the planted
+  stride's share, the knee in a swing), api.ts (`queryGround`, `GroundQueries`, `FOOT_LOCK`), footRoll.ts (new: the roll
+  on the ball and the heel), engine/sim/actors.ts (the duck
+  as the crouch pose), engine/dev/feel/{anim,run,course}.ts, engine/gfx/stage.ts and engine/app/view.ts (the queries),
+  tools/qa/anim.ts and tools/cmd/sheet.ts (the movement states), clipsets.ts, labs/playground/courses/bounds.ts and
+  README.md, the playground replays' goldens and tests/replays/README.md (their reasons).
+
+## Amendment 11 (2026-10-19, WP 13.11): traversal animation
+
+- **Actions on actors** (engine/sim/actorActions.ts): the component `actions` holds an actor's `Actions` as the plain
+  data `save()` writes, so the sim hashes, captures and restores what plays; `actOn(w, id, act)` plays on it (the
+  component added at rest the first time a call changes it; in the sim API for game code), the call's own events
+  going out as `action` from the call, at once between steps and at the step's end inside one; the system
+  `actors.anim` steps it before the animator, lays the beat's body over the input and emits each event as `action`;
+  clip beats play on the actor's clip layer (`SIM_ACTION_NO_CLIPS` without one). An `Actions` is made afresh for every
+  call and step (the verifier found a cached one carrying a call's events into the next step: a capture taken between
+  them restored without them). The puppets load the same data into a view `Actions` layer (its effectors, flip and
+  squash). All 28 actions play on an actor to their ends, as their checks signal them.
+- **Traversal on the procedural body, not the clips** (engine/anim/traversal/): the WP named Quaternius's climb warped
+  to the height and Mesh2Motion's ledge hang and three-point landing; the player is the procedural humanoid
+  (amendment 10) and the clips wait for WP 8.8's contacts. Built instead: the view's `TraversalPose` (eased once a
+  step from the shooter model's state as plain data, its own copy, as the sim changes its state in place) and the
+  `TraversalPlant` at the end of the `post` slot put the hands and feet on contacts: a mantle's lip (both hands; a low
+  ledge taken faster than 3 m/s vaulted with the left hand, the body leaning in 0.9 rad; one under half the shoulders'
+  height over where the feet began hurdled with none), the grab's legs hanging near straight (tucked back off a floor
+  still under them), its right foot up the wall's face and the pull's left after it, each onto the top as the hip rises
+  past the lip, lifted over its edge; the hang under the hands (the shoulders over the feet 0.3 m out from the lip, the
+  arms at 0.95 of their reach to the grip); the wall-climb's holds hand over hand, locked where taken, the feet pushing
+  below a toe's reach off the face, level (a climb not rising, one that caught a fall, slides its limbs down the wall); the ladder's rungs,
+  two at a move, the right hand with the left foot, the stage's 0.3 m spacing, rung 0 the ground under the body; the
+  zipline's cable over the feet, the legs swinging back as it speeds up; the skydive's glide on its front, its dive
+  head down, its arms back along it, and its landing pose upright (the body turned about the pelvis: the root stands
+  at the feet); the slide-jump's legs out ahead near straight, reaching down as it falls, its arms forward and up; the
+  hard landing's right hand flat on the floor, the spine bending at its base just far enough to reach it.
+  Presentation only: no golden changes.
+- **Clear of the wall** (engine/anim/traversal/clear.ts): each solved leg, and one blended with the body's own, keeps
+  its knee 6 cm and its toes' tip 1 cm off a mantle's face under its lip and off a climb's wall, the toes moved out
+  with the foot, a knee that would touch swung out to its side (up over the lip once its hip is over it) no further
+  than that takes; an elbow 3 cm, swung down, out and back; a hand on its way to a lip kept in front of the face and
+  its fingers up it until it rises over the top, then hooked over it. A wall reaches 0.45 m past its face, so a
+  fence's far side, open ground, is never in it (the gym's are 0.5 m thick: holding the feet off it had made a 0.7 m
+  pop); a climb's wall stays the body's while it is within 0.35 m of it and takes no other way (kept on as it topped
+  out, the climb's endless wall held a foot back till it jumped 0.57 m). The elbows point down and out under a hand
+  over its shoulder and back and out behind one under it, never along the arm (the balloon catch's elbow flipped 0.54 m
+  a step with one fixed pole).
+- **Reaching and letting go**: a hand moves to its contact swung about its shoulder, never straight through it; a leg
+  blends from its animation by weight (its knee as the animation has it, then square to the leg on its front), its
+  target never nearer the hip than a third of the leg; a way easing out keeps its last contacts (a zipline's following
+  the feet), and a body placed more than 1 m away lets go of all at once. The body is drawn toward a lip as far as its
+  hands need (`TraversalPose.reach`: at once as they need more, back with its speed changing at most 150 m/s², so a hop
+  out of the pull never snaps it up); the reach a rung, a hold or a cable needs is solved on the skeleton.
+- **The foot plant**: off the ground the traversal takes the legs (the plant's weight `plantShare`, its locks
+  forgotten while it is skipped, `FootPlant.reset`), on the ground the plant keeps them and the free leg poses stop.
+- **Holding and aiming** (engine/anim/traversal/hold.ts, ahead of WP 13.20's weapons): the head and eyes toward the
+  look the page's intents give the player (the feel kit's inputs), the neck and the head sharing it (the chest would
+  carry held hands off their contacts); a gun (`carry`, as the view will say once weapons are drawn) at low ready,
+  raised down the sights (its grip 0.17 m along and 0.13 m under the sight line through the right eye), lowered and
+  turned 0.7 rad across the body to its left at a sprint, the hands low; the support hand on the handguard in line
+  with its arm (two-hand IK), slid back along it to stay within 0.92 of its reach and the gun drawn in past that; the
+  chest turning 70% toward an aim heading up to 0.9 rad off the body's, the muzzle within §5.1's 2° of the aim; the
+  sights and the look eased over 0.2 s (`LookPose`); it yields to every hand the traversal holds. A run is not a
+  sprint: the gait's speed share (of the adult's 4.41 m/s `speedRef`, capped at 1.25) turns to a sprint from 1.17 to
+  1.24, the playground's run being 1.15 of it.
+- **Measured**: `handContact` (engine/dev/feel/course.ts) in every course's body bounds (labs/playground/courses/
+  bounds.ts, `hands held`, 3 cm), a span that traverses marked `holds`, so one in which no hand held fails it (a pose
+  never wired up would otherwise pass at 0): the 19 courses' 1321 measures pass, the held hands on their contacts to
+  the IK's precision, a limb held only when one way lays it alone (a way easing out under another holds nothing); a sole off the ground (traversing, flying) is measured against the physics ground under it, not the
+  plant's flat floor at the body's feet. Ten states `traversal:*` and `hold:*` for a planted build
+  (engine/anim/traversal/matrix.ts) in the anim QA (the adult's 99 checks: no new violation) and `x sheet` (the
+  slide-jump's script slides until the step it jumps: a ground step between left its way unplayed). Leg joints more
+  than 2 cm inside the gym's solids (a scratch probe of its heights; the first build, then with the clearance): the
+  mantles' 170 to 8, the climb's 417 to 2, the hang's 106 to 0, the fences' 61 to 5, the superglide's 236 to 34, the
+  ladder's 5 to 0: 49 in all against WP 13.10's 83, every one left WP 13.10's already. The ten sheets passed the
+  visual review on its third round; left for the playtest: the stepping knees swung wide (a frog squat), the pull's
+  hands off the top as the hips reach the lip, a ladder knee at the rung plane at a stop, the hang's elbows bent 34°
+  under a 2 m lip (the hooked hand stands higher; the feet are already 0.1 m over the floor).
+- **Deferred**: the clips (WP 8.8 and a measured need); the gun's mesh, recoil and the weapon state, WP 13.20's
+  (`carry`); the eyes as their own joints; a climb moving sideways takes each new hold where the body is, its held
+  hand stretching till then; the step-up, the vault's lean and the reach are tuned on the gym's walls; clipping as a
+  course measure (the probe above reads heights, so an overhang needs a solid query). Left as WP 13.10 built them: the
+  first ground step after a long fall shows the feet still tucked as the airborne tuck eases out (18/s), and a medium
+  landing's hand goes partway down (its land layer); the plant puts the hand flat on the floor only past 0.55 of land
+  × hard (from 0.3 it fell 8 to 10 cm short of the floor in the launcher and zipline courses).
+- **Beyond Owns**: engine/sim/actorActions.ts (new) and engine/sim-api.ts (its names), engine/anim/footPlant.ts
+  (`reset`), engine/dev/feel/{anim,course,run}.ts (the measure, `holds`, the floor off the ground), labs/playground/
+  courses/ (the bounds, the traversal spans that hold), engine/app/view.ts (the player's look), tools/qa/anim.ts and
+  tools/cmd/sheet.ts (the states), docs/PLAYGROUND.md §5.1 and docs/GAME-GUIDE.md (`actOn`).
+
+## Amendment 12 (2026-10-19, WP 13.12): first person
+
+- **The arms by a lens of their own, in the frame's own pass** (engine/gfx/viewmodel/lens.ts, material.ts): the WP
+  drew the arms "in their own pass, with their own field of view and near plane". Built instead: each of their
+  vertices is drawn by the arms' lens in the vertex shader, on its ray from the eye, its depth past their near plane
+  (0.1 m) squeezed 0.15 m per metre into the centimetres in front of the picture's near plane (from 1.2 of it), and
+  spread across the picture by the ratio of the picture's lens to theirs (Apex's 70 at 4:3; the view setting
+  `cam.armsFov`). A wall stands at least the capsule's radius off the eye, so none covers them, and they keep their
+  shape through the cam.fov slider, the slide's wider lens and the sights' zoom. A second pass would have cost a render
+  target, its compositing and every look's pipelines again; this one costs neither, and the ID pass and the post
+  chain see what the frame draws (Unreal 5.5's first-person rendering scales its first-person primitives toward the
+  camera the same way).
+- **Two meshes** (engine/gfx/viewmodel/body.ts, rig.ts): measured first, the camera's eye (the profile's 1.52 m over
+  the feet) leaves the body's shoulders 0.08 to 1.39 m off it (a slide's 0.86, a mantle's 0.93, a skydive's 1.39), so
+  hands posed from the body's own shoulders could not reach the picture. The arms are a second mesh of the body's arm
+  and right-leg pieces (one draw call, casting no shadow) posed by a rig of its build stood upright under the camera,
+  its eyes at the camera's eye and its heading the camera's: fists up at rest, pumping with the gait's phase in a
+  sprint, spread in a slide, raised in the air, a breath, the view effects' weapon bob (Apex's 0.4 s) and a sway
+  behind the look's turn; a hand the body holds on a contact (a ledge in a mantle, the wall in a climb, a rung, the
+  cable) drawn on the contact's ray, a carried gun where the body holds it from its eyes; every hand kept within 0.95
+  of the arms' half-frame (a zipline's cable overhead: at the frame's top) and within 0.95 of the arm's reach along
+  its ray, the wrist's reach checked for the hand's final turn; a kick shows the body's kicking leg under the rig's
+  hips. Measured on r182 in the page: a skinned mesh's `positionNode` is handed the vertex before skinning and what it
+  returns is skinned (the lens on the arms' skinned mesh drew a 53-pixel speck), so the arms' mesh is posed on the CPU
+  each frame, every vertex by the one bone it rides (about 1,400 vertices), and the lens sees it posed.
+- **The body hidden from the camera, its shadow whole**: WP 3.9's culling gave the hidden parts no skin weight, which
+  took their shadow with them. Now the body folds to a point, for the camera only, the vertices an attribute marks
+  (`viewmodel`), through a node material copy of each of its materials whose `castShadowPositionNode` leaves the
+  shadow pass every vertex where skinning puts it; the arms' copies take their shadows where a vertex really is
+  (`receivedShadowPositionNode`; the drawn arms stand inside the body's own head). A copy is made once per source
+  with every property carried (r182's `NodeMaterial.copy`, so `clone`, keeps only the node properties: a cloned
+  standard material lost its roughness). The style set wraps what it gives such a mesh (`userData.restyle`), live
+  and in the warm-up, so a look switch builds nothing; the toon material's `copy` keeps its look's uniforms. With the
+  view setting `cam.fullBody` the body shows under the camera beside the arms, its head, its arms and what is near
+  the eye folded.
+- **Measured**: first person's `cameraLost` reads the arms (neither hand in the arms' frame) and `cameraClip`
+  (engine/dev/feel/camera.ts) counts the frames a wall covers the drawn arms or the near plane cuts them, both in every
+  course's camera bounds (21 a span): the 19 courses' 1,425 measures pass, both 0 everywhere. A scratch probe with the same rigs, the arms at their true depth: the
+  climb's arms covered in 184 of its 1,531 first-person frames, the mantles' 13, the camera walls' 9, the ladder's 1;
+  through the lens none, the drawn arms at least 0.306 m short of the nearest wall. In the page (tests/e2e/
+  playground-cameras.spec.ts): the ID pass sees the arms and not the body, as many of their pixels standing against
+  the spawn's south wall as in the open, the fists pump in a sprint and rise in a jump; 0 pipelines after the warm-up
+  blending through every mode.
+- **Deferred**: the gun's viewmodel and the punch's arm, WP 13.20's and WP 13.19's (the rig takes a carried gun's
+  grips from the body until then, and draws a kick's leg); the arms' pose numbers are Apex-like, tuned by eye on the
+  playtest (docs/PLAYGROUND.md §9.3).
+- **Beyond Owns**: engine/gfx/puppets/actors.ts (`firstPerson` for `cull`; what it keeps of each actor split into
+  actorLayers.ts), engine/gfx/materials/{styles,toon}.ts (the restyle hook; the toon copy),
+  engine/dev/feel/{anim,camera,course,run}.ts (the arms' input, `cameraLost` and `cameraClip`), labs/playground/
+  courses/bounds.ts (the two first-person measures).
+
+## Amendment 13 (2026-10-19, WP 5.6): the bot and the dev actions
+
+- **The dev actions live sim-side** (engine/sim/devActions.ts): the WP put the kind and `registerDevAction` in
+  engine/dev/actions.ts. A replay records a dev action by name and plays it through the session, in every host
+  (`x replay` in Node, the replay page, parity's Node playback), and the sim may not import `dev/`; so the kind
+  `devAction` (`defineDevAction`, the registry's verb) and the engine's five live beside the session, which reads them
+  after the scene's own actions (a scene's action of the same name wins), and their code falls under the sim-side
+  bans like any change to the sim. engine/dev/actions.ts registers `__engine.actions.list()` and `.run(name, args)`.
+- **What an action changes**: an entry has a `run(w, args)` (the sim, inside the session's capture, recorded as the
+  change-point's `dev`), `settings(args)` (recorded as `set`, a view setting never), or both, its args a schema checked
+  before anything changes, and a throw puts back the sim and the recorded settings with it. Time scale is the frame
+  clock's view setting `time.scale`, so it never reaches the sim or a replay.
+- **God mode** is the component `invulnerable`: `damage` takes no hit on its holder (the source's `dealDamage`
+  returned 0 for the hero), on the player or any entity.
+- **Freeze AI** is the recorded setting `ai.frozen` (engine/sim/systems.ts): while it is on, the step skips the systems
+  of the phase `ai` (engine/sim/world.ts). The source stopped its foes' whole update; here the phase holds decisions
+  alone, and Rapier keeps a crowd agent's velocity, so turning it on also stands the movers the AI drives: each actor
+  that is not a player lets go of its AI's intents, and each living crowd agent (a component holding every field of
+  `CROWD_AGENT_FIELDS`) stops across the ground.
+- **Spawn N** makes props of an entry, fanned 0.4 rad apart (the source's) `distance` m before the player, each on the
+  floor probed from 2 m over its feet: props are the engine's one generic spawnable (an actor needs a character, and
+  the plan's `actor` template kind was never built); a scene spawns its own kinds with its own `spawn`. **Travel** is
+  within the scene (`placeActor`): the engine has no level sequence to travel along.
+- **The bot** (engine/dev/bot.ts): the autopilot's mechanisms (stuck measured along the way navigation wants, not the
+  sidestep's: measured along the sidestep, the blocked maze's body slid 3 m down a wall counting itself held; the
+  sidesteps of 1.3 and 2.2 rad at 0.45 and 0.9 s held, a jump and the other side at 1.5 s; held 5 s in all, stuck; a
+  watchdog wanting 1 m of walking distance every 6 s; no route, stuck at once) and shardfall's run report (the stop
+  condition `component.field`, a trace every n steps up to 120 samples, events by type, a sweep of seeds from fresh
+  sessions as one row for the scene). Its sums run under the sim's math and its moves snap to 16 headings (two
+  decimals, as the starter game's bot), so a run's intents are the same in Node and Chromium and its recording short
+  (the maze run: 15 change-points in 251 steps). A tour draws its goals from its own stream, `derive(seed, 'bot')`,
+  never the world's.
+- **Reached from `x`** through `x eval` in an `x inspect` page: `__engine.actions` and the new `__engine.bot(plan)`
+  (§8.3's table gains its row: doctrine 2 wants the bot reachable beyond code); tests/e2e/box.spec.ts calls the three
+  in the page, engine/app/viewMembers.test.ts headless. No x command of its own: the member and the API cover a sweep.
+- **Measured**: in the maze fixture (engine/dev/bot.test.ts) the bot reaches the far corner round four walls in 251
+  steps, never over a solid tile; a box navigation does not know in the middle corridor gets three jumps and then
+  `stuck` (`no progress`) at step 495; a goal in a closed pocket is `stuck` (`no route`) at step 0; two runs agree
+  and the recording replays to the run's hash. Each of the five actions has its test (engine/dev/actions.test.ts),
+  and the four the sim records replay to the same hash.
+- **Beyond Owns**: engine/sim/devActions.ts (new), engine/sim/{session,world,systems,damage}.ts (the hooks: the
+  session's fallback, the frozen phase, the setting, the invulnerable target), engine/app/headless.ts (loads the
+  members), engine/app/viewMembers.test.ts and tests/e2e/box.spec.ts (every member's check).
+
+## Amendment 14 (2026-10-19, WP 10.6): the UI widgets
+
+- **Placed on the overlay** (engine/ui/widgets.ts): bars, hearts and boxes go in the HUD's places through a new
+  `overlay.attach(element, at)` (engine/ui/overlay.ts, beyond the WP's files), stacking with the HUD's lines; the
+  dialog and the menu stand over the root as panels that take the pointer. One stylesheet serves them all.
+- **Input and sound injected**: the UI layer may not import the input devices or the audio, so a widget reads a
+  `UiInput` (the page input's `held`, `pressed`, `strength` and `lastDevice`, over the system layer) and asks a
+  `UiSound` for cues (`move`, `pick`, `cancel`, `type`). Held directions repeat after 0.35 s and every 0.1 s.
+- **Gamepads**: the menu and the dialog take the pad's D-pad and left stick through the system layer's directions;
+  any other panel through the pad's cursor (`createPadCursor`: shardfall's speeds, accept clicking what it is over),
+  shown only with a gamepad used last and a panel open. **Picks as input**: a menu item with an `id` is handed to
+  `send(id)`, which the page turns into a dev action or a custom intent, so the replay holds the pick
+  (tests/e2e/ui.spec.ts: the menu's pick recorded as the scene's dev action).
+- **Pages are strings**: the source wrapped a page to the box's width in its pixel font; here each string is a page and
+  CSS wraps it. The box's and the playground's own menus stay theirs until a WP needs the widget's.

@@ -12,6 +12,9 @@
  * cameras follow him, the chase camera stays inside the room, first person hides his body but the hands, and the
  * cutaway cuts the wall before a side view. WP 7.8: a level entry's material swaps reach the stage's level meshes, and
  * the stage's sky, once shown, follows the frames: its pool's lights picked near the focus, flickering as they go.
+ * WP 13.8: on the playground's shooter model first person stands at its eye height, a live switch blends (its first
+ * frame the old camera's, halfway far from both) and a plain one cuts; the gym's rides are drawn (WP 13.7). WP 13.9:
+ * the aim from the camera drawn last, the centre's ray past the player's own body and the pointer onto his floor.
  * @see engine/app/view.ts
  */
 import { readFileSync } from 'node:fs';
@@ -25,6 +28,13 @@ import { defineScene } from '../sim/scene';
 import { defineComponent } from '../sim/state';
 import { defineLevel } from '../world/level/level';
 import { PROJECTILE, PROJECTILE_FIELDS } from '../world/projectiles';
+import { GYM_TEXT } from '../../labs/playground/levels/gym';
+import '../../labs/playground/bodies/player';
+import '../../labs/playground/scenes/gym';
+import { BLEND_TIME } from '../gfx/cameras/blend';
+import { CAMERA_EYE } from '../gfx/cameras/effects';
+import { FIRST_ARMS } from '../gfx/cameras/first';
+import { SHOULDER } from '../gfx/cameras/shoulder';
 import { createHeadless, headlessHost } from './headless';
 import type { AppHost } from './viewMembers';
 
@@ -237,7 +247,7 @@ describe('createHeadless({ view: true })', () => {
 
   it('draws the hero as a puppet and follows him: chase inside the room, first person without his body', async () => {
     const engine = await createHeadless({ scene: 'box:room-hero', view: true });
-    type Info = { code: string; pose: CameraPose; culled?: string[] };
+    type Info = { code: string; pose: CameraPose; culled?: string[]; arms?: string[] };
     const cameras = engine.camera as { get(): Info; set(code: string): Info };
     const start = poseTarget(cameras.get().pose); // the first follow snaps to him, not to the room's middle (8, 6)
     expect(start[0]).toBeCloseTo(3.5, 9);
@@ -250,11 +260,73 @@ describe('createHeadless({ view: true })', () => {
     const [x, y, z] = chase.pose.position;
     expect(x > 1 && x < 15 && z > 1 && z < 11 && y > hero.y).toBe(true); // in front of the north wall, not in it
     const first = cameras.set('cam3=first');
-    expect(first.culled).toEqual(JOINTS.filter((joint) => joint !== 'handL' && joint !== 'handR'));
+    expect(first.culled).toEqual([...JOINTS]); // his body hidden from the camera, its shadow kept (WP 13.12)
+    expect(first.arms).toEqual(FIRST_ARMS); // and his arms drawn against it
     expect(Math.hypot(first.pose.position[0] - hero.x, first.pose.position[2] - hero.z)).toBeLessThan(0.5); // eyes ahead of the feet, leaning into the walk
     expect(first.pose.position[1] - hero.y).toBeGreaterThan(0.8); // at his eyes
     expect(cameras.set('cam=iso').culled).toBeUndefined();
     cameras.set('cam=side'); // from the south, level with him: the south wall cuts low so the view sees him
     expect((engine.scene as Dumps).dump({ filter: ':cut' })).toMatch(/wall@1,11-14,11:cut InstancedMesh .*×14/);
+  });
+
+  it('stands first person at the shooter model’s eye height, and blends a live switch where a plain one cuts', async () => {
+    if (!registry.has('level', 'level:gym')) defineLevel('level:gym', { text: GYM_TEXT, file: 'labs/playground/levels/gym.ts' }); // prettier-ignore
+    const engine = await createHeadless({ scene: 'playground:gym', view: true, cam: 'cam3=first' });
+    const view = (headlessHost(engine) as AppHost).view!;
+    const frame = (dt: number) => view.frame({ alpha: 1, dt, aspect: 16 / 9 });
+    engine.step(2);
+    frame(1 / 60);
+    const actor = engine.get(1)!.actor as { x: number; y: number; z: number };
+    expect(view.cameraInfo().pose.position[1] - actor.y).toBeCloseTo(CAMERA_EYE.stand, 2); // not the body's eyes
+    const before = view.cameraInfo().pose;
+    const blended = view.setCamera('cam3=shoulder', { blend: true });
+    expect(blended.code).toMatch(/^cam3=shoulder/);
+    expect(blended.pose.position).toEqual(before.position); // the blend's first frame is the old camera's
+    frame(BLEND_TIME / 2);
+    const half = view.cameraInfo().pose.position;
+    frame(BLEND_TIME);
+    const end = view.cameraInfo().pose.position;
+    expect(Math.hypot(...half.map((v, i) => v - before.position[i]))).toBeGreaterThan(0.5);
+    expect(Math.hypot(...half.map((v, i) => v - end[i]))).toBeGreaterThan(0.5); // halfway: far from both ends
+    const { pitch } = view.cameraInfo().pose; // first person's, kept
+    expect(end[1] - actor.y).toBeCloseTo(CAMERA_EYE.stand + SHOULDER.up - SHOULDER.back * Math.sin(pitch), 1);
+    expect(view.setCamera('cam=overhead').pose.pitch).toBeCloseTo(-Math.PI / 2, 9); // a plain set cuts
+  });
+
+  it('draws the gym’s rides: its ziplines, its ladder and its launchers, read with the entities it places', async () => {
+    if (!registry.has('level', 'level:gym')) defineLevel('level:gym', { text: GYM_TEXT, file: 'labs/playground/levels/gym.ts' }); // prettier-ignore
+    const engine = await createHeadless({ scene: 'playground:gym', view: true, cam: 'cam3=shoulder' });
+    const view = (headlessHost(engine) as AppHost).view!;
+    engine.step(1);
+    const rides = ['zipline', 'ladder', 'launcher'].flatMap((kind) => engine.entities(kind) as { id: number }[]);
+    expect(rides.length).toBeGreaterThan(3);
+    const drawn = view.stage.rides.root.children.map((group) => group.name).sort();
+    expect(drawn).toEqual(rides.map(({ id }) => drawn.find((name) => name.endsWith(`#${id}`))).sort());
+    expect(drawn.every((name) => /^(zipline|ladder|launcher)#\d+$/.test(name))).toBe(true);
+  });
+
+  it('aims from the camera drawn last: the centre’s ray past the player’s own body, the pointer onto his floor', async () => {
+    if (!registry.has('level', 'level:gym')) defineLevel('level:gym', { text: GYM_TEXT, file: 'labs/playground/levels/gym.ts' }); // prettier-ignore
+    const engine = await createHeadless({ scene: 'playground:gym', view: true, cam: 'cam3=first' });
+    const view = (headlessHost(engine) as AppHost).view!;
+    const frame = () => view.frame({ alpha: 1, dt: 1 / 60, aspect: 16 / 9 });
+    engine.step(2);
+    frame();
+    const actor = engine.get(1)!.actor as { x: number; y: number; z: number };
+    const { position, yaw, pitch } = view.cameraInfo().pose;
+    const forward = [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)];
+    const along = view.aim('centre')!.map((v, i) => v - position[i]);
+    const reach = Math.hypot(...along);
+    expect(reach).toBeGreaterThan(0.5); // never his own capsule, which the eye stands in
+    along.forEach((v, i) => expect(v / reach).toBeCloseTo(forward[i], 6)); // straight along the view
+    expect(view.aim('none')).toBeUndefined();
+    view.setCamera('cam=overhead');
+    frame();
+    const top = view.cameraInfo().pose; // straight down, north (−Z) up the picture
+    const half = top.frustumSize / 2 / top.zoom;
+    const at = (pointer: [number, number]) => view.aim('pointer', { pointer })!;
+    at([0, 0]).forEach((v, i) => expect(v).toBeCloseTo([top.position[0], actor.y, top.position[2]][i], 6)); // his floor
+    at([0, 1]).forEach((v, i) => expect(v).toBeCloseTo([top.position[0], actor.y, top.position[2] - half][i], 6));
+    expect(view.aim('pointer')).toBeUndefined(); // no pointer over the picture, no stick
   });
 });

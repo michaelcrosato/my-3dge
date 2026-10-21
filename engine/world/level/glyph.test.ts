@@ -23,7 +23,7 @@ function errorOf(fn: () => unknown): EngineError {
   throw new Error('expected an EngineError');
 }
 
-describe('the v1 and v2 legend', () => {
+describe('the v1 to v3 legend', () => {
   it('is on the shared registry and on any registry the level code touches', () => {
     expect([...legendOf(shared).keys()].sort()).toEqual([
       '#',
@@ -44,8 +44,9 @@ describe('the v1 and v2 legend', () => {
       'o',
       't',
       'w',
+      '|',
     ]);
-    expect(legendOf(createRegistry()).size).toBe(18);
+    expect(legendOf(createRegistry()).size).toBe(19);
   });
 
   it("uses Appendix C's heights, in metres", () => {

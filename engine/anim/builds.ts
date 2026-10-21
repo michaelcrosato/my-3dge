@@ -131,7 +131,7 @@ const ENGINE_BUILDS: Record<string, BuildSpec> = {
     footLength: 0.27,
     handLength: 0.19,
     chestDepth: 0.24,
-    stride: 0.42,
+    stride: 0.5,
     lift: 0.17,
     swing: 0.28,
     speedRef: 4.41,

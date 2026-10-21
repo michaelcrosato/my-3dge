@@ -54,37 +54,8 @@ export { pickTone } from './gfx/textures/tile';
 export { runningBond } from './gfx/textures/tile';
 export { tileNoise } from './gfx/textures/tile';
 
-// Input (WP 3.3): the devices of a page sampled into intents (keys by physical code, mouse with pointer lock and the
-// wheel, gamepads in any slot), action maps and their presets, bindings players change and keep, prompts per device,
-// the virtual device that __engine.input drives, and the scripted gamepad for tests.
-export { createInput } from './input/input';
-export type { Input } from './input/input';
-export type { InputOptions } from './input/input';
-export type { CameraLike } from './input/input';
-export type { CameraInputSample } from './input/input';
-export { defineActionMap } from './input/actionMaps';
-export { getActionMap } from './input/actionMaps';
-export { listActionMaps } from './input/actionMaps';
-export { SYSTEM_ACTIONS } from './input/actionMaps';
-export { RESERVED_CODES } from './input/actionMaps';
-export type { ActionMap } from './input/actionMaps';
-export type { ActionMapSpec } from './input/actionMaps';
-export { createBindings } from './input/bindings';
-export type { Bindings } from './input/bindings';
-export type { BindingsOptions } from './input/bindings';
-export type { BindingsStorage } from './input/bindings';
-export type { BindingsFile } from './input/bindings';
-export type { RebindResult } from './input/bindings';
-export { codeLabel } from './input/codes';
-export { readKeyboardLayout } from './input/codes';
-export { isCode } from './input/codes';
-export type { DeviceKind } from './input/codes';
-export { createVirtualDevice } from './input/devices/virtual';
-export type { VirtualDevice } from './input/devices/virtual';
-export { connectVirtualDevice } from './input/devices/inspector';
-export { createScriptedGamepad } from './input/devices/padScript';
-export type { ScriptedGamepad } from './input/devices/padScript';
-export type { GamepadLike } from './input/devices/gamepad';
+// Input (WP 3.3, WP 13.9): the devices sampled into intents, action maps, bindings, aiming and the look settings.
+export * from './input/api';
 // Geometry kit and level meshes (WP 2.4): shapes standing on the ground with UVs in metres, the geometry registry
 // (props and levels name geometry by id), their QA measures, and a compiled level drawn as meshes.
 export { boxGeometry } from './gfx/geometry/box';
@@ -250,6 +221,24 @@ export { DAMAGE_NUMBERS } from './ui/labels';
 export { uiState } from './ui/state';
 export type { UiState } from './ui/state';
 export type { UiElementState } from './ui/state';
+// The widgets (WP 10.6): bars, hearts and boxes, the dialog box and the menu as HTML/CSS over the overlay, reading the
+// page's input (its system layer) and asking the page for sound cues; a gamepad's cursor over any panel. A menu sends
+// the picks that change play as input (`send`), so replays hold them.
+export { createBar } from './ui/widgets';
+export { createHearts } from './ui/widgets';
+export { createBox } from './ui/widgets';
+export { createPadCursor } from './ui/widgets';
+export type { Widget, BarOptions, HeartsOptions, UiBoxOptions, PadCursor } from './ui/widgets';
+export type { UiInput, UiCue, UiSound } from './ui/widgets';
+export { createDialog } from './ui/dialog';
+export type { Dialog, DialogOptions, DialogPlace, SayOptions } from './ui/dialog';
+export { createMenu } from './ui/menu';
+export type { Menu, MenuItem, MenuOptions, MenuPlace } from './ui/menu';
+// The store (WP 10.9): what a game keeps across sessions (high scores, progress, its settings) in the page's
+// localStorage under the game's prefix, versioned and checked on load; memory in Node and in the isolated modes.
+export { createStore } from './app/store';
+export { memoryBackend } from './app/store';
+export type { Store, StoreOptions, StoreBackend, StoreMode } from './app/store';
 // Lights, shadows, atmosphere and sky (WP 7.1): light kinds for a level's light spots, a fixed pool of point lights
 // near the focus with a shadow budget by quality tier, and sky presets (background, dome, backdrop, sun, ambient
 // light, fog) that a sky puts on a scene.
@@ -397,3 +386,4 @@ export type { FeelRow } from './dev/feel/panel';
 export type { FeelInspector } from './dev/feel/panel';
 export { tunedSpec } from './dev/feel/profile';
 export { profileText } from './dev/feel/profile';
+export * from './gfx/cameras/api';

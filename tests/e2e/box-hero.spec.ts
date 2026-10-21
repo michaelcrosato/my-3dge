@@ -3,8 +3,9 @@
  * WebGPU. The camera suite: from every camera (each classic view in both projections, the orbit, fly and fixed
  * cameras, the chase camera and the depth rail) the ID pass sees the hero, a puppet tagged as the protagonist, with a
  * sane share of the frame (in view, not filling it) and no object filling the frame; first person passes the inverse
- * check: it hides the hero's body but his hands (`camera.get().culled`), so he covers next to nothing where a fly
- * camera at the same pose sees his body, and no wall covers more than 70% of the frame, looking each way. W walks
+ * check: it hides the hero's whole body (`camera.get().culled`), so the body covers nothing where a fly camera at the
+ * same pose sees it, and draws his arms instead (WP 13.12: `actor#1/arms`, in view and never filling it), and no wall
+ * covers more than 70% of the frame, looking each way. W walks
  * away from the camera in every camera mode (the keyboard's W, through the devices and `fromCamera`). Cycling every
  * camera and resolution mode while he walks builds 0 pipelines after the warm-up. The CPU-only contract for these
  * scenes is tests/e2e/parity.spec.ts.
@@ -28,8 +29,6 @@ const CAMERAS = [
   ...CAMERA_3D.map((type) => `cam3=${type}`),
   ...FOLLOW_CAMERAS.filter((type) => type !== 'first').map((type) => `cam3=${type}`),
 ];
-/** The joints first person shows: the hands (engine/gfx/cameras/first.ts's `FIRST_SHOWN`). */
-const SHOWN: readonly string[] = ['handL', 'handR'];
 
 /** The page's engine, inside `evaluate`. */
 declare const __engine: Record<string, unknown> & { [name: string]: (...args: unknown[]) => unknown };
@@ -100,7 +99,7 @@ test.describe('the box, stage 2: a hero', () => {
     }
   });
 
-  test('first person hides the hero but his hands, and no wall covers more than 70% of its frame', async ({
+  test('first person hides the hero’s body and draws his arms, and no wall covers more than 70% of its frame', async ({
     page,
     harness,
   }) => {
@@ -108,7 +107,6 @@ test.describe('the box, stage 2: a hero', () => {
     const jump = readFileSync(join(ROOT, 'tests/replays/box-2-jump.replay.json'), 'utf8');
     await call(page, 'replay', jump, { until: 170, draw: 0 }); // on top of the low wall, in the room's middle
     expect((await feet(page))[1]).toBeCloseTo(0.75, 2);
-    const culled = JOINTS.filter((joint) => !SHOWN.includes(joint));
     let body = 0;
     for (const [yaw, pitch] of [
       [0, -5],
@@ -118,10 +116,16 @@ test.describe('the box, stage 2: a hero', () => {
       [0, -70],
     ]) {
       const code = `cam3=first,${yaw},${pitch}`;
-      expect((await call<{ culled: string[] }>(page, 'camera.set', code)).culled, code).toEqual(culled);
+      expect((await call<{ culled: string[] }>(page, 'camera.set', code)).culled, code).toEqual([...JOINTS]);
       await call(page, 'render', 10);
       const first = await seen(page);
-      expect(first.find((object) => object.entity === 1)?.share ?? 0, code).toBeLessThan(0.01);
+      expect(
+        first.find((object) => object.name === 'actor#1'),
+        code,
+      ).toBeUndefined(); // the body hidden from it
+      const arms = first.find((object) => object.name === 'actor#1/arms')?.share ?? 0; // its arms drawn instead
+      expect(arms, `${code}: the arms`).toBeGreaterThan(0.003);
+      expect(arms, `${code}: the arms`).toBeLessThan(0.25);
       for (const wall of first.filter((object) => object.name.startsWith('level:room/wall')))
         expect(wall.share, `${code}: ${wall.name}`).toBeLessThanOrEqual(0.7);
       await call(page, 'camera.set', 'cam3=fly'); // the same place and lens, culling nothing

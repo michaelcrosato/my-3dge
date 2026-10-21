@@ -13,7 +13,7 @@
  * for a character with a model (`character.movement`), and gives its body the hull its stance has
  * (engine/physics/hull.ts); the controller's move, walls, pushes and the ground probe are the same for both.
  *
- * Its input beyond the platformer's (`CharacterInput`): `sprint` and `sprintPressed`, `walk`, `crouch` and
+ * Its input beyond the platformer's (`CharacterInput`): `sprint`, `sprintPressed` and `sprintHold`, `walk`, `crouch` and
  * `crouchToggle`, `view` (the view's yaw: the sprint's 45°, the slide's 53°), `frame` (the yaw the move's keys are
  * turned by, the camera's: the lurch's new key) and `face` (a yaw to face: the look's or the aim's; without it, it
  * faces where it moves); and the world's answers (`Room`: whether it may stand, its feet, walls and ledges ahead,
@@ -36,8 +36,10 @@ import { airMove, hopSpeed, jumpScale, land, landSlowdown, lurch, newKey } from 
 import { keepSpace, stepClimb, tryClimb } from './climb';
 import { crouchBlocks, ducking, endSlide, slideJump, slopePull, tryStartSlide, updateDuck, type FloorNormal } from './crouch'; // prettier-ignore
 import { gaitSpeed, updateSprint, walkMove } from './ground';
+import { stepLadder, tryLadder } from './ladder';
 import { crouchPressed, glide, stepMantle, tryMantle, type MantleTick } from './mantle';
 import type { MotionState } from './model';
+import { NO_RIDES, stepSkydive, stepZipline, tryZipline, type Rides } from './ride';
 
 /** What the model asks the world (engine/physics/room.ts answers from the physics). */
 export interface Room {
@@ -49,10 +51,21 @@ export interface Room {
   wall(dir: readonly [number, number], probe: number): Wall | null;
   /** A ledge on top of `wall`, its lip within `reach` above the feet, that the hull can mantle onto, or null. */
   ledge(wall: Wall, reach: number): Ledge | null;
+  /** How far the hull as it is moves from feet at `from` toward feet at `to` before it meets anything (m): all the way when clear. */ // prettier-ignore
+  sweep(from: readonly [number, number, number], to: readonly [number, number, number]): number;
+  /** How far below the feet the ground is, looking at most `max` down (m); null when none is that close. */
+  below(max: number): number | null;
 }
 
 /** A world with headroom everywhere and no walls: what a tick with no physics (a test's) runs in. */
-const OPEN: Room = { stand: () => true, feet: () => [0, 0, 0], wall: () => null, ledge: () => null };
+const OPEN: Room = {
+  stand: () => true,
+  feet: () => [0, 0, 0],
+  wall: () => null,
+  ledge: () => null,
+  sweep: (a, b) => Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]),
+  below: () => null,
+};
 
 /** The steering of a tick that moves the feet along a mantle's path, or that climbs at the velocity it set. */
 function steered(
@@ -94,6 +107,7 @@ export function steerMotion(
   dt: number,
   g: number,
   room: Room = OPEN,
+  rides: Rides = NO_RIDES,
 ): Steering {
   const m = character.movement!;
   const ticks = (seconds: number) => Math.round(seconds / dt);
@@ -106,6 +120,7 @@ export function steerMotion(
   if (motion.glideAge >= 0) motion.glideAge = Math.min(motion.glideAge + 1, 1e6);
   motion.stickyLeft = Math.max(0, motion.stickyLeft - 1);
   motion.mantleCool = Math.max(0, motion.mantleCool - 1);
+  motion.rideCool = Math.max(0, motion.rideCool - 1);
   const wish = clampMove(input.move);
   const keys = keysOf(wish, input.frame ?? 0);
   const view = input.view === undefined ? null : ([Math.sin(input.view), Math.cos(input.view)] as const);
@@ -120,6 +135,15 @@ export function steerMotion(
     if (path) return steered(state, wish, wasGrounded, dt, path);
     wasGrounded = state.grounded; // stepped off onto the top: a ground tick from here
   }
+  if (motion.mode === 'zipline' || motion.mode === 'ladder') {
+    const next = motion.mode === 'zipline' ? stepZipline(character, state, motion, input, rides, tick) : stepLadder(character, state, motion, input, rides, room, tick); // prettier-ignore
+    if (next === 'mantle') return steered(state, wish, wasGrounded, dt, stepMantle(character, state, motion, input, tick, true)!); // prettier-ignore
+    if (next) return steered(state, wish, wasGrounded, dt, next);
+  }
+  if (motion.mode === 'skydive') {
+    const desired = stepSkydive(character, state, motion, input, room, tick);
+    return { desired, jumped: false, dashed: false, dashing: false, wish, wasGrounded };
+  }
   if (motion.glideAge === 1 && crouchPressed(input, motion)) glide(character, state, motion, tick, false);
   if (motion.glideAge >= 1) motion.glideAge = -1;
   if (motion.mode === 'climb') {
@@ -132,9 +156,18 @@ export function steerMotion(
   const crouch = { held: input.crouch === true, toggled: input.crouchToggle === true };
   updateDuck(m, motion, { ...crouch, h, vertical: state.vy, floor: wasGrounded ? floorOf(motion) : null, wish, view, scale, dt, canStand: () => room.stand() }); // prettier-ignore
   const footing = wasGrounded || (state.air * dt <= m.sprint.air && !motion.jumped);
-  const sprint = { held: input.sprint === true, pressed: input.sprintPressed === true, blocked: input.walk === true };
+  const sprint = { held: input.sprint === true, pressed: input.sprintPressed === true, hold: input.sprintHold === true, blocked: input.walk === true }; // prettier-ignore
   if (sprint.pressed && !sprint.blocked) motion.crouchToggle = false;
   updateSprint(m, motion, { ...sprint, wish, view, velocity: h, footing, slowdown, dt });
+  if (tryLadder(character, state, motion, input, rides, room, tick)) {
+    const next = stepLadder(character, state, motion, input, rides, room, tick, true);
+    if (next === 'mantle') return steered(state, wish, wasGrounded, dt, stepMantle(character, state, motion, input, tick, true)!); // prettier-ignore
+    if (next) return steered(state, wish, wasGrounded, dt, next);
+  }
+  if (tryZipline(character, state, motion, input, rides, room, tick, wasGrounded)) {
+    const path = stepZipline(character, state, motion, input, rides, tick, true);
+    if (path) return steered(state, wish, wasGrounded, dt, path);
+  }
   const jump = state.jumpAge >= 0 || input.jump === true;
   if (tryMantle(character, state, motion, input, room, { ...tick, grounded: wasGrounded, h, jump })) {
     return steered(state, wish, wasGrounded, dt, stepMantle(character, state, motion, input, tick, true)!);
@@ -222,8 +255,11 @@ export function settleMotion(
   const m = character.movement!;
   const wall = Math.atan2(-motion.wallX, -motion.wallZ);
   if (steering.path) {
-    Object.assign(state, { grounded: false, vy: 0, jumping: false, air: Math.min(state.air + 1, 1e6) });
-    state.yaw = turnToward(state.yaw, wall, m.turnRate * dt);
+    const riding = motion.mode === 'zipline' || motion.mode === 'ladder';
+    Object.assign(state, { grounded: false, vy: riding ? state.vy : 0, jumping: false, air: Math.min(state.air + 1, 1e6) }); // prettier-ignore
+    const across = motion.mode === 'zipline' && Math.hypot(state.vx, state.vz) > 0.1;
+    const face = motion.mode === 'zipline' ? (across ? Math.atan2(state.vx, state.vz) : state.yaw) : wall;
+    state.yaw = turnToward(state.yaw, face, m.turnRate * dt);
     return 0;
   }
   let landed = 0;
@@ -236,7 +272,8 @@ export function settleMotion(
   const floor = groundNormal(move);
   if (grounded && !steering.wasGrounded) {
     const k = land(m, motion, [state.vx, state.vy, state.vz], floor, g, dt);
-    [state.vx, state.vz] = [state.vx * k, state.vz * k];
+    if (motion.mode === 'skydive') [motion.fall, motion.landing] = [0, false]; // a skydive lands with no stun
+    [state.vx, state.vz] = motion.mode === 'skydive' ? [state.vx, state.vz] : [state.vx * k, state.vz * k];
     if (state.vy < -2) landed = -state.vy;
     motion.jumped = false;
     if (ducking(motion)) {
@@ -260,8 +297,8 @@ export function settleMotion(
   }
   if (state.vy <= 0) state.jumping = false;
   const climbing = !grounded && motion.mode === 'climb';
-  if (grounded) motion.climbAge = -1;
-  motion.mode = grounded ? 'ground' : climbing ? 'climb' : 'air';
+  if (grounded) [motion.climbAge, motion.catches] = [-1, 0];
+  motion.mode = grounded ? 'ground' : climbing ? 'climb' : motion.mode === 'skydive' ? 'skydive' : 'air';
   const [wx, wz] = steering.wish;
   const target = climbing ? wall : (input.face ?? (Math.hypot(wx, wz) > 0.1 ? Math.atan2(wx, wz) : undefined));
   if (target !== undefined) state.yaw = turnToward(state.yaw, target, m.turnRate * dt);

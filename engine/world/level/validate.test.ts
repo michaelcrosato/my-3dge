@@ -122,7 +122,7 @@ describe('validateLevel', () => {
   it('names the fix in the level’s own terms', () => {
     const messages = (file: string) => validateLevel(read(file), { file }).map((p) => p.message);
     expect(messages('broken/unknown-glyph.txt')[1]).toBe(
-      `[LEVEL_UNKNOWN_GLYPH] broken/unknown-glyph.txt:6:4: "p" is not in the legend (1 tile): write one of the legend's characters instead (did you mean "P"?) (the legend: # . 1 2 3 4 5 6 7 8 9 = @ P ^ o t w), or define it before compiling: defineGlyph('glyph:<name>', { char: 'p', description: '…' })`,
+      `[LEVEL_UNKNOWN_GLYPH] broken/unknown-glyph.txt:6:4: "p" is not in the legend (1 tile): write one of the legend's characters instead (did you mean "P"?) (the legend: # . 1 2 3 4 5 6 7 8 9 = @ P ^ o t w |), or define it before compiling: defineGlyph('glyph:<name>', { char: 'p', description: '…' })`,
     );
     expect(messages('broken/unknown-glyph.txt')[2]).toContain('a tab is not in the legend');
     expect(validateLevel("#'#\n")[0].message).toContain(`defineGlyph('glyph:<name>', { char: "'", description: '…' })`);

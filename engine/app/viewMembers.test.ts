@@ -28,9 +28,17 @@ const NO_ACTOR = 'pass an actor’s id (none)';
 
 /** Every member's headless check. */
 const CALLS: Record<string, Call> = {
+  'actions.list()': (_e, call) =>
+    expect(call('actions.list')).toContainEqual(expect.objectContaining({ name: 'travel', from: 'engine', changes: 'sim' })), // prettier-ignore
+  'actions.run()': (e, call) => {
+    expect(call('actions.run', 'timeScale', { scale: 0.5 })).toEqual({ name: 'timeScale', tick: 0 });
+    expect(e.timeScale()).toBe(0.5);
+  },
   advice: (e) => expect(Array.isArray(e.advice)).toBe(true),
   'anim()': (_e, call) =>
     expect(() => call('anim')).toThrow('[SIM_BAD_ARGUMENT] anim(id) got undefined: pass an animated actor’s id (none)'),
+  'bot()': (_e, call) =>
+    expect(() => call('bot', { to: [{ x: 1.5, z: 1.5 }] })).toThrow('[SIM_NO_ACTOR] the bot has no actor to work on'),
   'camera.get()': (_e, call) => expect(call('camera.get')).toMatchObject({ code: 'cam=iso' }),
   'camera.set()': (_e, call) => expect(call('camera.set', 'cam=brawler')).toMatchObject({ code: 'cam=brawler' }),
   'capture()': (e, call) => {

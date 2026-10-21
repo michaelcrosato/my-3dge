@@ -221,7 +221,7 @@ Raised by `animCheck` (engine/anim/check.ts) for a rigid pair naming a point the
 
 - Message: `{name} is not a humanoid {what}{suggestion}; it is ignored`
 - Fix: use one of: {names}
-- Registered in: [`engine/anim/poses.ts` line 46](../engine/anim/poses.ts)
+- Registered in: [`engine/anim/poses.ts` line 51](../engine/anim/poses.ts)
 
 Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `stance` or `weapon` it does not know. The message names the closest names; `POSES`, `STANCES` and `WEAPONS` (engine/anim/poses.ts) list them all. An unknown weapon holds nothing.
 
@@ -241,47 +241,55 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 - Fix: {fix}
 - Registered in: [`engine/app/routes.ts` line 37](../engine/app/routes.ts)
 
+### APP_BAD_STORE
+
+- Message: `{where}: {problem}`
+- Fix: give a prefix and keys as non-empty strings, a version as a whole number from 1, a mode of play, demo, sandbox or gallery, and values that are plain data (JSON)
+- Registered in: [`engine/app/store.ts` line 49](../engine/app/store.ts)
+
+Raised by the store (engine/app/store.ts) for a bad option, key or value; storage itself never makes it throw.
+
 ### APP_FRAME
 
 - Message: `a frame threw, so the loop stopped: {message}`
 - Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
-- Registered in: [`engine/app/engine.ts` line 86](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 88](../engine/app/engine.ts)
 
 ### APP_NO_FRAME
 
 - Message: `no frame was drawn in {tries} tries: the warm-up never finished`
 - Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 94](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 96](../engine/app/engine.ts)
 
 ### APP_NO_LEVEL
 
 - Message: `the scene {scene} loads the level {level}, which is not registered, so its view cannot be built`
 - Fix: register the level's text before the view starts: in a page, import text from './levels/<name>.txt?raw' and call defineLevel('{level}', { text, file }); in Node, read the file and do the same
-- Registered in: [`engine/app/view.ts` line 57](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 62](../engine/app/view.ts)
 
 ### APP_NO_REPLAY
 
 - Message: `the page has no replay {name}`
 - Fix: use one of: {names}
-- Registered in: [`engine/app/engine.ts` line 90](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 92](../engine/app/engine.ts)
 
 ### APP_NO_VIEW
 
 - Message: `{member} needs the scene drawn as a view, and this engine has none`
 - Fix: start it with createHeadless({ scene, view: true }) in Node; a page always has one
-- Registered in: [`engine/app/view.ts` line 61](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 66](../engine/app/view.ts)
 
 ### APP_NOT_HEADLESS
 
 - Message: `headlessHost was given {value}, not a headless engine`
 - Fix: pass the object createHeadless resolved to
-- Registered in: [`engine/app/headless.ts` line 67](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 68](../engine/app/headless.ts)
 
 ### APP_OTHER_SCENE
 
 - Message: `this engine draws {shown}, so it cannot start {scene}`
 - Fix: play {scene} in its own page (labs/<name>/?scene=<name>), or headless: createHeadless({ scene: '{scene}' })
-- Registered in: [`engine/app/headless.ts` line 71](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 72](../engine/app/headless.ts)
 
 ### APP_PLAY_SETTING
 
@@ -293,7 +301,23 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 82](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 84](../engine/app/engine.ts)
+
+### APP_STORE_BLOCKED
+
+- Message: `the page refused its storage ({reason}), so the store {prefix} keeps its values in memory for this page only`
+- Fix: allow the site's storage (a private window or a blocked cookie setting refuses it); the game still runs, and forgets on reload
+- Registered in: [`engine/app/store.ts` line 43](../engine/app/store.ts)
+
+Advice from the store (engine/app/store.ts), once: `localStorage` threw when touched, so nothing is kept across sessions.
+
+### APP_STORE_VERSION
+
+- Message: `the store {prefix} holds {key} at {found}; this game reads version {version}`
+- Fix: give createStore a migrate(data, version) that turns the old value into the current one, or let the reader fall back to its default (the old value stays until set replaces it)
+- Registered in: [`engine/app/store.ts` line 38](../engine/app/store.ts)
+
+Advice from the store (engine/app/store.ts), once per key: a kept value written in another format or version is not handed back as it is.
 
 ## audio
 
@@ -575,13 +599,13 @@ Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when
 
 - Message: `the course {course} measures {measure}, but the player of {scene} has no animator to pose`
 - Fix: spawn the player with an animator (spawnActor with anim: { build }), or drop the animation measure
-- Registered in: [`engine/dev/feel/run.ts` line 36](../engine/dev/feel/run.ts)
+- Registered in: [`engine/dev/feel/run.ts` line 47](../engine/dev/feel/run.ts)
 
 ### DEV_COURSE_NO_PLAYER
 
 - Message: `the course {course} runs {scene}, which has no player actor to measure`
 - Fix: run a scene that spawns a player actor (spawnActor with player: true), or measure another course
-- Registered in: [`engine/dev/feel/run.ts` line 32](../engine/dev/feel/run.ts)
+- Registered in: [`engine/dev/feel/run.ts` line 43](../engine/dev/feel/run.ts)
 
 ### DEV_NO_METER
 
@@ -624,10 +648,18 @@ Raised by the camera factories, `makePose` and `placeCamera` (engine/gfx/cameras
 ### GFX_BAD_CAMERA_CODE
 
 - Message: `"{code}" is not a camera code: {problems}`
-- Fix: write cam=<view>[,<turn>,<zoom>[,<x>,<y>,<z>]] (views: iso, threequarter, topdown, brawler, side), cam=<azimuth>,<elevation>,<zoom>,<height>,<boost>[,<x>,<z>] (a custom view), either with ,persp at the end for a perspective lens, or cam3=orbit[,<azimuth>,<elevation>,<distance>[,<x>,<y>,<z>]], cam3=fly or cam3=fixed[,<x>,<y>,<z>,<yaw>,<pitch>[,<fov>]], or the follow cameras cam3=chase, cam3=first and cam3=rail (engine/gfx/cameras/chase.ts, first.ts and rail.ts give theirs); angles in degrees, lengths in metres
+- Fix: write cam=<view>[,<turn>,<zoom>[,<x>,<y>,<z>]] (views: iso, threequarter, topdown, brawler, side, overhead), cam=<azimuth>,<elevation>,<zoom>,<height>,<boost>[,<x>,<z>] (a custom view), either with ,persp at the end for a perspective lens, or cam3=orbit[,<azimuth>,<elevation>,<distance>[,<x>,<y>,<z>]], cam3=fly or cam3=fixed[,<x>,<y>,<z>,<yaw>,<pitch>[,<fov>]], or the follow cameras cam3=chase, cam3=first, cam3=rail, cam3=shoulder and cam3=follow (engine/gfx/cameras/chase.ts, first.ts, rail.ts, shoulder.ts and follow.ts give theirs); angles in degrees, lengths in metres
 - Registered in: [`engine/gfx/cameras/codes.ts` line 42](../engine/gfx/cameras/codes.ts)
 
 Raised by `parseCameraCode` (engine/gfx/cameras/codes.ts) for an empty part, a word where a number belongs, the wrong count of numbers, or a number out of its range (each range is named). Every problem is listed at once.
+
+### GFX_BAD_GAME_CAMERA
+
+- Message: `the camera {name}'s create returned {value}, not a camera`
+- Fix: return a camera from create: one of the engine's factories (createShoulderCamera, createFollowCamera, createViewCamera, …) or followCamera(type, state, steps) over your own pure steps (engine/gfx/cameras/define.ts)
+- Registered in: [`engine/gfx/cameras/define.ts` line 28](../engine/gfx/cameras/define.ts)
+
+Raised by `createCamera` (engine/gfx/cameras/place.ts) when a game camera's `create` (`defineCamera`) returns something without a camera's `update`, `pose`, `yaw`, `spec`, `code` and `describe`.
 
 ### GFX_BAD_GEOMETRY
 
@@ -879,9 +911,17 @@ Raised by `parseCameraCode` and the camera factories (engine/gfx/cameras/) for a
 
 - Message: `there is no material style {style}`
 - Fix: use one of {styles}
-- Registered in: [`engine/gfx/materials/styles.ts` line 67](../engine/gfx/materials/styles.ts)
+- Registered in: [`engine/gfx/materials/styles.ts` line 68](../engine/gfx/materials/styles.ts)
 
 Raised by a style set (engine/gfx/materials/styles.ts) for a style name it does not have.
+
+### GFX_VIEWMODEL_MATERIAL
+
+- Message: `first person cannot draw {material} for the viewmodel: three.js has no node material for a {type}`
+- Fix: give the player's body a mesh material three.js turns into a node material (Lambert, Phong, standard, toon, basic, or a node material)
+- Registered in: [`engine/gfx/viewmodel/material.ts` line 65](../engine/gfx/viewmodel/material.ts)
+
+Advice from the viewmodel (engine/gfx/viewmodel/material.ts), once per material: a material it cannot copy into a node material is drawn as it is, so first person shows the body, or the arms are no longer drawn at their own depth and a wall may cut them.
 
 ### GFX_WARMUP_FAILED
 
@@ -1039,11 +1079,19 @@ Raised by bodies and queries (engine/physics/world.ts, engine/physics/queries.ts
 
 ## sim
 
+### SIM_ACTION_NO_CLIPS
+
+- Message: `actor {id} cannot play action {action}: it plays clips ({clips}) and the actor has no clip layer`
+- Fix: give the actor clips first, with the sets those clips come from: addClips(w, id, { sets }) (engine/sim/actorClips.ts)
+- Registered in: [`engine/sim/actorActions.ts` line 44](../engine/sim/actorActions.ts)
+
+Raised by `actOn` (engine/sim/actorActions.ts) when an action with a `clip` beat is played on an actor without the component `clips`: the beat would play nothing.
+
 ### SIM_BAD_ARGUMENT
 
 - Message: `{where} got {value}`
 - Fix: pass {expected}
-- Registered in: [`engine/sim/world.ts` line 66](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 75](../engine/sim/world.ts)
 
 Raised by the world (engine/sim/world.ts) for a seed or step rate that is not a number of the right kind, a spawn that is not a plain object of components, or an `id` given among the components.
 
@@ -1087,31 +1135,39 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `{what} was called during a step`
 - Fix: call step(), run(), capture() and restore() between steps; inside a system, change the world directly (spawn, despawn and emit queue to the end of the step)
-- Registered in: [`engine/sim/world.ts` line 62](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 71](../engine/sim/world.ts)
 
 ### SIM_EDITED_CAPTURE
 
 - Message: `the capture the session of {scene} took at step {step} was changed since (it hashes {now}, not {then})`
 - Fix: restore it unchanged, then make the change through the session so record() replays it: session.set(path, value) (__engine.set) for a setting, a dev action (session.act(name, args)) for components
-- Registered in: [`engine/sim/session.ts` line 55](../engine/sim/session.ts)
+- Registered in: [`engine/sim/session.ts` line 57](../engine/sim/session.ts)
 
 ### SIM_EVENT_STORM
 
 - Message: `the end of step {tick} was still delivering events and spawns after {rounds} rounds`
 - Fix: break the loop: a listener that emits the event it listens to, or spawns what spawns it again, never settles; act on such chains one step at a time (store a pending flag in a component and let a system handle it next step)
-- Registered in: [`engine/sim/world.ts` line 71](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 80](../engine/sim/world.ts)
 
 ### SIM_FOREIGN_CAPTURE
 
 - Message: `restore() was given a capture the session of {scene} did not take`
 - Fix: restore what this session's capture() (__engine.capture()) returned, the object itself: the session knows where its recording stood then; the world's own captures, another session's and copies have no place in it, so reach other state by starting the scene again (__engine.seed(n)) or playing a replay
-- Registered in: [`engine/sim/session.ts` line 51](../engine/sim/session.ts)
+- Registered in: [`engine/sim/session.ts` line 53](../engine/sim/session.ts)
 
 ### SIM_NO_ACTION
 
 - Message: `the scene {scene} has no dev action {name} ({suggestion})`
-- Fix: add it to the scene: defineScene('{scene}', { actions: { {name}(w, args) { … } } }), or call one it has
-- Registered in: [`engine/sim/session.ts` line 43](../engine/sim/session.ts)
+- Fix: add it to the scene, defineScene('{scene}', { actions: { {name}(w, args) { … } } }), or to the engine's, defineDevAction('{name}', { help, run }) (engine/sim/devActions.ts); or call one there is
+- Registered in: [`engine/sim/session.ts` line 45](../engine/sim/session.ts)
+
+### SIM_NO_ACTOR
+
+- Message: `{what} has no actor to work on: {problem}`
+- Fix: give the id of an actor ({ id }), or spawn a player actor in the scene (spawnActor, player: true)
+- Registered in: [`engine/sim/devActions.ts` line 53](../engine/sim/devActions.ts)
+
+Raised by the engine's dev actions that work on an actor (engine/sim/devActions.ts: god, spawn, travel) and by the bot (engine/dev/bot.ts) when the id given is no live actor, or none is given and the scene has no player actor. Nothing has changed.
 
 ### SIM_NO_CALLBACKS
 
@@ -1123,7 +1179,7 @@ Raised by `systems.add` and `systems.remove` (engine/sim/systems.ts) for an empt
 
 - Message: `there is no entity {id}{why}`
 - Fix: use an id spawn() returned while its entity lives (w.has(id) tells): a spawned entity joins the world at the end of the step that spawned it, so give it its components in spawn(); a despawned one leaves at the end of its step
-- Registered in: [`engine/sim/world.ts` line 58](../engine/sim/world.ts)
+- Registered in: [`engine/sim/world.ts` line 67](../engine/sim/world.ts)
 
 ### SIM_NOT_DATA
 
@@ -1137,7 +1193,7 @@ Raised by `spawn`, `add`, the hash, `capture` and `restore` (engine/sim/entities
 
 - Message: `the world took {count} steps outside its session, so the recording misses their intents`
 - Fix: step a recorded scene through session.step(intents), never world.step(); capture and restore it through session.capture() and session.restore(capture), never the world
-- Registered in: [`engine/sim/session.ts` line 47](../engine/sim/session.ts)
+- Registered in: [`engine/sim/session.ts` line 49](../engine/sim/session.ts)
 
 ### SIM_SHARED_DATA
 
@@ -1161,17 +1217,33 @@ Raised by the world (engine/sim/world.ts) and the hash (engine/sim/state.ts) for
 
 ## ui
 
+### UI_BAD_DIALOG
+
+- Message: `dialog.{call}: {problem}`
+- Fix: say(text, { choices }) takes a string or a list of strings, and choices as a list of strings; update(dt) takes the frame's seconds, 0 or more
+- Registered in: [`engine/ui/dialog.ts` line 35](../engine/ui/dialog.ts)
+
+Raised by the dialog box (engine/ui/dialog.ts) for text that is not a string or a list of them, choices that are not, or a frame time that is not a number of seconds from 0.
+
 ### UI_BAD_DT
 
 - Message: `update(camera, dt) got dt {dt}`
 - Fix: pass the seconds since the last frame, 0 or more (the frame loop's dt)
-- Registered in: [`engine/ui/overlay.ts` line 56](../engine/ui/overlay.ts)
+- Registered in: [`engine/ui/overlay.ts` line 57](../engine/ui/overlay.ts)
+
+### UI_BAD_MENU
+
+- Message: `menu: {problem}`
+- Fix: give items as strings or { label, id?, disabled? }, and update(dt) the frame's seconds, 0 or more
+- Registered in: [`engine/ui/menu.ts` line 36](../engine/ui/menu.ts)
+
+Raised by the menu (engine/ui/menu.ts) for an item that is neither a string nor `{ label, id?, disabled? }`, or a frame time that is not a number of seconds from 0.
 
 ### UI_BAD_PLACE
 
 - Message: `hud "{id}" asks for the place {got}`
 - Fix: use one of top-left, top, top-right, bottom-left, bottom, bottom-right
-- Registered in: [`engine/ui/overlay.ts` line 52](../engine/ui/overlay.ts)
+- Registered in: [`engine/ui/overlay.ts` line 53](../engine/ui/overlay.ts)
 
 ### UI_BAD_POINT
 

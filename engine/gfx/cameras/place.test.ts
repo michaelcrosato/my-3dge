@@ -106,7 +106,7 @@ describe('createCamera', () => {
     close(poseTarget(pinned.pose()), [1, 0, 1] as Vec3);
   });
 
-  it("makes WP 3.9's cameras from their codes, which readCameraCode reads with every other", () => {
+  it('makes the follow cameras from their codes, which readCameraCode reads with every other', () => {
     for (const type of FOLLOW_CAMERAS) {
       const camera = createCamera(`cam3=${type}`);
       expect([camera.type, readCameraCode(camera.code()).type]).toEqual([type, type]);
@@ -122,6 +122,8 @@ describe('createCamera', () => {
     const from = createViewCamera({ view: 'threequarter' }).pose();
     expect(createCamera('cam3=chase', { from }).yaw()).toBeCloseTo(from.yaw, 12); // a bare one keeps the heading
     expect(createCamera('cam3=first', { from }).yaw()).toBeCloseTo(from.yaw, 12);
+    expect(createCamera('cam3=shoulder', { from }).yaw()).toBeCloseTo(from.yaw, 12); // WP 13.8's, likewise
+    expect(createCamera('cam3=follow', { from }).yaw()).toBeCloseTo(from.yaw, 12);
     const chase = createCamera('cam3=chase,0,-20,5');
     const pose = chase.update({ follow: [2, 0, 3] }, 1 / 60);
     expect(pose.position[2]).toBeLessThan(3); // behind the hero, who faces +Z

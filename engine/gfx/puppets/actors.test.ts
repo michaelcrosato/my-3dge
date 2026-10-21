@@ -2,13 +2,14 @@
  * @file Unit tests for actors on the stage (engine/gfx/puppets/actors.ts, PLAN.md WP 3.10), in Node: an actor with an
  * animator gets a puppet of the humanoid in its build, named and tagged for the ID pass, and one without gets none;
  * a draw puts the player's feet and puppet `alpha` of the way between its last two steps; his eye is the head socket;
- * first-person culling hides every part but the hands and shows them all again; a despawned actor's puppet goes, kept
+ * first person draws the player's arms (WP 13.12) and hides his body, shadow kept; a despawned actor's puppet goes, kept
  * for the next actor of its build and body (a restart or a respawn makes no new mesh); and drawing, posing and culling
  * never change the sim's hash. WP 8.9: an actor with clips is drawn posed by its clip
  * layer, as the clip is retargeted, in the body its component `puppet` names (the mannequin). WP 7.8: an actor's
  * `secondary` hangs its cape and hair under its puppet, named for the ID pass and counted as the actor's, and they go
  * with the component; its `reactions` bend its spine with the flinch and lay a body knocked forward on its face, read
- * from the sim and never written.
+ * from the sim and never written. WP 13.10: the feet stand on the ground the sim's queries find. WP 13.11: an actor's
+ * `actions` turn its puppet over mid-roll, read from the sim and never written; one riding a zipline holds its cable.
  * @see engine/gfx/puppets/actors.ts
  */
 import { PerspectiveCamera, Quaternion, type Mesh } from 'three/webgpu';
@@ -27,8 +28,11 @@ import { createCharacter } from '../../physics/character';
 import { physicsOf } from '../../physics/binding';
 import { spawnActor } from '../../sim/actors';
 import { reactTo } from '../../sim/reactions';
+import { actOn } from '../../sim/actorActions';
+import { defineActions } from '../../../tools/anim/library';
 import { defineScene, startScene } from '../../sim/scene';
-import { eyePoint } from '../cameras/first';
+import { eyePoint, FIRST_ARMS } from '../cameras/first';
+import { makePose } from '../cameras/pose';
 import { listDrawables } from '../idpass';
 import { createMaterialLibrary } from '../materials/library';
 import { createActorPuppets } from './actors';
@@ -83,19 +87,36 @@ describe('actors drawn as puppets', () => {
     expect(player.posed!.eye[1] - player.feet[1]).toBeGreaterThan(1.2);
   });
 
-  it('hides every part but the hands from first person, and shows them all again', () => {
+  it('draws the player’s arms for first person and hides his body from it, its shadow kept, then shows it whole', () => {
     const { world, actors } = start();
     actors.capture(world.query('actor'), world.dt);
     actors.draw(1);
-    const hidden = actors.cull(actors.player()!.posed!.eye);
-    expect(hidden).toEqual(JOINTS.filter((joint) => joint !== 'handL' && joint !== 'handR'));
-    const geometry = actors.puppets.get(1)!.mesh.geometry;
-    const [index, weight] = [geometry.getAttribute('skinIndex'), geometry.getAttribute('skinWeight')];
-    const shown = new Set<string>();
-    for (let v = 0; v < index.count; v++) if (weight.getX(v) === 1) shown.add(JOINTS[index.getX(v) - 1] ?? 'root');
-    expect([...shown].sort()).toEqual(['handL', 'handR']);
-    expect(actors.cull(null)).toEqual([]);
-    for (let v = 0; v < index.count; v++) expect(weight.getX(v)).toBe(1);
+    const puppet = actors.puppets.get(1)!;
+    const frame = { pose: makePose({ position: actors.player()!.posed!.eye, fov: 74, near: 0.05 }), dt: 1 / 60, aspect: 16 / 9, player: null, effects: null }; // prettier-ignore
+    const parts = actors.firstPerson(frame);
+    expect(parts.hidden).toEqual([...JOINTS]);
+    expect(parts.arms).toEqual(FIRST_ARMS);
+    const geometry = puppet.mesh.geometry;
+    const [marks, weights] = [geometry.getAttribute('viewmodel'), geometry.getAttribute('skinWeight')];
+    for (let v = 0; v < marks.count; v++) expect([marks.getX(v), weights.getX(v)]).toEqual([1, 1]); // folded, still skinned
+    expect(puppet.mesh.castShadow).toBe(true); // so its shadow stays whole (engine/gfx/viewmodel/material.ts)
+    const arms = puppet.mesh.children.find((child) => child.userData.viewmodel === 'arms')!;
+    expect([arms.name, arms.visible]).toEqual(['actor#1/arms', true]);
+    expect(actors.firstPerson(null)).toEqual({ hidden: [], arms: [] });
+    for (let v = 0; v < marks.count; v++) expect(marks.getX(v)).toBe(0);
+    expect(arms.visible).toBe(false);
+  });
+
+  it('stands the puppets’ feet on the ground the sim’s queries find (WP 13.10)', () => {
+    const step = { probe: (_x: number, _z: number) => ({ y: 0.1, normal: { x: 0, y: 1, z: 0 } }) }; // a 10 cm step
+    const sole = (queries: typeof step | null) => {
+      const { world, actors } = start();
+      actors.capture(world.query('actor'), world.dt, queries as never);
+      actors.draw(1);
+      const { skeleton, world: pose } = actors.player()!.posed!;
+      return socketPosition(skeleton, pose, 'contactL').y;
+    };
+    expect(sole(step) - sole(null)).toBeGreaterThan(0.07); // up on the step
   });
 
   it('lets a despawned actor’s puppet go, and never changes the sim', () => {
@@ -106,7 +127,7 @@ describe('actors drawn as puppets', () => {
       for (const w of [world, alone]) w.step({ move: [0, 1], b: i < 10 ? ['jump'] : [] });
       actors.capture(world.query('actor'), world.dt);
       actors.draw(0.5);
-      actors.cull(actors.player()!.posed!.eye);
+      actors.firstPerson({ pose: makePose({ position: actors.player()!.posed!.eye }), dt: 1 / 60, aspect: 1, player: null, effects: null }); // prettier-ignore
     }
     expect(world.hash()).toBe(alone.hash());
     world.despawn(1);
@@ -168,7 +189,7 @@ describe('actors drawn as puppets', () => {
 });
 
 describe('an actor’s reactions and secondary motion drawn (WP 7.8)', () => {
-  const chainNames = (mesh: Mesh) => mesh.children.filter((child) => (child as Mesh).isMesh).map((child) => child.name);
+  const chainNames = (mesh: Mesh) => mesh.children.filter((child) => (child as Mesh).isMesh && !child.userData.viewmodel).map((child) => child.name); // prettier-ignore
 
   it('hangs its cape and hair under its puppet, named for the ID pass and counted as the actor’s, until they go', () => {
     const { world, actors } = start();
@@ -222,6 +243,41 @@ describe('an actor’s reactions and secondary motion drawn (WP 7.8)', () => {
     }
     const chest = actors.puppets.get(1)!.mesh.skeleton.bones[JOINTS.indexOf('chest') + 1];
     expect(lyingOf(chest.getWorldQuaternion(new Quaternion()))).toBe('down'); // on his face, as the sim says
+    expect(world.hash()).toBe(alone.hash());
+  });
+
+  it('puts the hands of an actor riding a zipline on its cable, over his drawn feet, as the sim says (WP 13.11)', () => {
+    const { world, actors } = start();
+    const [hero] = world.query('actor') as unknown as (Record<string, unknown> & { id: number; actor: { x: number; y: number; z: number } })[]; // prettier-ignore
+    const { x, z } = hero.actor;
+    const hang = 2.032;
+    const riding = { ...hero, actor: { ...hero.actor, y: 3 }, motion: { mode: 'zipline', ride: 99, rideDir: 1 } };
+    const cable = { id: 99, zipline: { from: [x, 3 + hang, z - 10], to: [x, 3 + hang, z + 10] } };
+    for (let i = 0; i < 20; i++) actors.capture([riding, cable], world.dt); // the hands reaching up as the ride's weight eases in
+    actors.draw(1);
+    const puppet = actors.puppets.get(1)!;
+    const [left, right] = [puppet.socketPosition('weaponL'), puppet.socketPosition('weaponR')];
+    expect(right.distanceTo(new Vector3(x, 3 + hang, z + 0.07))).toBeLessThan(0.01); // ahead along the ride
+    expect(left.distanceTo(new Vector3(x, 3 + hang, z - 0.07))).toBeLessThan(0.01);
+  });
+
+  it('turns an actor rolling as its actions say: his head under his hips mid-roll, never changing the sim (WP 13.11)', () => {
+    defineActions();
+    const { world, actors } = start();
+    const { world: alone } = startScene(scene);
+    alone.step({});
+    for (const w of [world, alone]) actOn(w, 1, (a) => a.play('roll'));
+    let under = false;
+    for (let i = 0; i < 60; i++) {
+      for (const w of [world, alone]) w.step({});
+      actors.capture(world.query('actor'), world.dt);
+      actors.draw(1);
+      const puppet = actors.puppets.get(1)!;
+      const pelvis = puppet.mesh.skeleton.bones[JOINTS.indexOf('pelvis') + 1].getWorldPosition(new Vector3());
+      under ||= puppet.socketPosition('headTop').y < pelvis.y;
+    }
+    expect(under).toBe(true);
+    expect(actors.layers().get(1)).toBeDefined();
     expect(world.hash()).toBe(alone.hash());
   });
 });

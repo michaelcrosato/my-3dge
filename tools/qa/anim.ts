@@ -3,11 +3,13 @@
  * through its state matrix and measures the motion, in Node. The humanoid (each build in `HUMANOIDS`, through
  * `animCheckBody`, engine/anim/check.ts) holds every sample state (`state:<name>`), pose (`pose:<name>`), stance
  * (`stance:<name>`), move (`move:<name>`, played by an `Attack`), reaction (`reaction:<name>`) and action
- * (`action:<name>`, each of data/anim/actions/ played by its own check, engine/anim/actions-check.ts `actionCheck`, WP 8.7)
- * at both facings, from rest and back to rest; the blob (`blob:<state>`) and the floater (`floater:<state>`) hold
+ * (`action:<name>`, each of data/anim/actions/ played by its own check, engine/anim/actions-check.ts `actionCheck`, WP
+ * 8.7) at both facings, from rest and back to rest; the blob (`blob:<state>`) and the floater (`floater:<state>`) hold
  * theirs. A build with a `kind` reports under ids of its own (`adult/state:run`, the playground's player), so its
- * accepted exceptions (tests/baselines/qa-anim-adult.json) never loosen the others'; the rest share each id, valued
- * by their worst. The first build also runs its matrix twice and at half the step, and so do the blob and the
+ * accepted exceptions (tests/baselines/qa-anim-adult.json) never loosen the others', and a `plantedStride` build holds
+ * every movement state too (`motion:<name>`, engine/anim/locomotion/matrix.ts, WP 13.10) and every traversal and
+ * holding state (`traversal:<name>`, `hold:<name>`, engine/anim/traversal/matrix.ts, WP 13.11); the rest share each id,
+ * valued by their worst. The first build also runs its matrix twice and at half the step, and so do the blob and the
  * floater. Then every library clip (`clip:<SET>/<Clip>`, `set:<SET>`), as data and on every build
  * (tools/qa/anim/clips.ts, WP 8.6, with its metrics; baseline tests/baselines/qa-anim-library.json): about 40 s, so T1
  * plays a sample.
@@ -39,15 +41,10 @@ import { actionCheck } from '../../engine/anim/actions-check';
 import { Animator } from '../../engine/anim/character';
 import { FootPlant } from '../../engine/anim/footPlant';
 import { loadClipLibrary, type ClipLibrary } from '../../engine/anim/clip/library';
+import { MOVEMENT_STATES } from '../../engine/anim/locomotion/matrix';
+import { TRAVERSAL_STATES } from '../../engine/anim/traversal/matrix';
 import { animCheckBody, type AnimCheckName } from '../../engine/anim/check';
-import {
-  rateDrift,
-  RUN_POINTS,
-  runPoints,
-  STATE_MATRIX,
-  type MatrixRun,
-  type MatrixState,
-} from '../../engine/anim/stateMatrix';
+import { rateDrift, RUN_POINTS, runPoints, STATE_MATRIX, type MatrixRun, type MatrixState } from '../../engine/anim/stateMatrix'; // prettier-ignore
 import { ENGINE_MOVES } from '../../engine/anim/moves-data';
 import { POSES, STANCES, type PoseName, type StanceName, type Weapon } from '../../engine/anim/poses';
 import { Reactions } from '../../engine/anim/reactions';
@@ -144,8 +141,8 @@ export function actionStates(): Record<string, MatrixState> {
   return Object.fromEntries(actions.map((action) => [action.id, actionCheck(action, { libraries: actionClips })]));
 }
 
-/** The humanoid's matrix: every sample state, pose, stance, move, reaction and action, by QA id. */
-export function humanoidStates(): Record<string, MatrixState> {
+/** The humanoid's matrix by QA id: every sample state, pose, stance, move, reaction, action, and for a `plantedStride` `build` (the playground's player) every movement, traversal and holding state (engine/anim/locomotion/matrix.ts, engine/anim/traversal/matrix.ts). */ // prettier-ignore
+export function humanoidStates(build?: string): Record<string, MatrixState> {
   const states: Record<string, MatrixState> = {};
   for (const [name, state] of Object.entries(SAMPLE_STATES)) {
     const words = Object.keys(state.states);
@@ -163,7 +160,7 @@ export function humanoidStates(): Record<string, MatrixState> {
   states['reaction:fallBack'] = reaction(1.8, (r, f) => r.knockDown(facingTurn(BEHIND, f), f));
   states['reaction:fallFront'] = reaction(1.8, (r, f) => r.knockDown(facingTurn(AHEAD, f), f));
   states['reaction:die'] = reaction(2.6, (r) => r.die(), [1.8, (r) => r.getUp()]);
-  return { ...states, ...actionStates() };
+  return { ...states, ...actionStates(), ...(build && getBuild(build).plantedStride ? { ...MOVEMENT_STATES, ...TRAVERSAL_STATES } : {}) }; // prettier-ignore
 }
 
 /**
@@ -376,9 +373,8 @@ export function animViolations(keep: (id: string) => boolean = () => true): QaVi
       found.set(key, { id, metric, value: Math.round(value.value * 1e4) / 1e4, message: value.message });
     }
   };
-  const matrix = Object.entries(humanoidStates());
   HUMANOIDS.forEach((body, i) => {
-    const kind = body.kind ?? '';
+    const [kind, matrix] = [body.kind ?? '', Object.entries(humanoidStates(body.build))];
     const states = Object.fromEntries(matrix.filter(([id]) => keep(kind + id)));
     if (Object.keys(states).length === 0) return;
     checkHumanoid(body, states, i === 0, (id, metric, found) => report(kind + id, metric, found));

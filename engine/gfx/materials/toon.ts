@@ -183,6 +183,13 @@ export class MeshBandedToonNodeMaterial extends MeshLambertNodeMaterial {
     this.toon = toon;
   }
 
+  /** Copies `source`, its toon look's uniforms shared (so a clone, the viewmodel's among them, keeps the look's bands). */
+  copy(source: MeshBandedToonNodeMaterial): this {
+    super.copy(source);
+    (this as { toon: ToonUniforms }).toon = source.toon;
+    return this;
+  }
+
   setupLightingModel(): BandedToonLighting {
     return new BandedToonLighting(this.toon);
   }

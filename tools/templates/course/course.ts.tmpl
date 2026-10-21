@@ -1,0 +1,37 @@
+/**
+ * @file The course `course:playground-{{name}}` (docs/PLAYGROUND.md §2.3 and §3.2): what it plays and measures (replace
+ * this text; `x docs` puts the first sentence in INDEX). As written, the player, placed at rest on the strip's north
+ * end, runs south for 1.5 s and lets go: its run's speed against §3.2's, then the bounds every course checks
+ * (labs/playground/courses/bounds.ts).
+ *
+ * The references: say where each comes from (§3.2's row, and its scaling: empty-handed, every speed ×1.15, so the
+ * run's 4.41 m/s is 5.07 here).
+ *
+ * Game code (labs/playground/): it imports only the engine's public API and the playground's own files.
+ *
+ * @example
+ * // node x feel labs/playground --course {{name}}
+ * @see {{id}}.test.ts
+ */
+import { defineCourse } from '../../../engine';
+import { bodyBounds, cameraBounds } from '../../../labs/playground/courses/bounds';
+
+/** Where the course starts, on the gym's open floor (x, y, z in metres): replace with its feature's. */
+export const {{name}}Start = [2.25, 0, 7.25] as const;
+
+/** The course `course:playground-{{name}}`: replace this sentence with what it measures. */
+export const {{name}} = defineCourse('course:playground-{{name}}', {
+  description: 'Replace: what it plays and measures, against docs/PLAYGROUND.md §3.2.',
+  scene: 'playground:gym',
+  steps: 120,
+  inputs: [
+    [0, { dev: 'place', args: { at: {{name}}Start, yaw: 0 } }],
+    [1, { move: [0, 1], look: [0, 0], cam: 0 }],
+    [90, { move: null }],
+  ],
+  measures: [
+    { name: 'run', metric: 'speed', from: 60, to: 90, reference: 5.07, tolerance: { share: 0.02 } },
+    ...bodyBounds(2),
+    ...cameraBounds(2),
+  ],
+});

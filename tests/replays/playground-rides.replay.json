@@ -1,0 +1,67 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "The playground's rides on Apex's model (WP 13.7): the player runs at the tower's ladder, climbs it at 2.20 m/s and pulls itself over the top; walks to the pulley and uses the zipline looking down the line, riding 40 m down at up to 15.24 m/s to the far pulley; runs onto the jump pad, thrown 6.5 m up; uses the redeploy balloon's line, rides 90 m up at 12.19 m/s, glides at 20 m/s, dives at 35 m/s, takes the landing pose 30 m up and lands with no stun, running off east.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "playground:gym",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 1500,
+  "inputs": [
+    [
+      0,
+      { "args": { "at": [29, 0, 57], "speed": 0, "yaw": 0 }, "cam": 0, "dev": "place", "look": [0, 0], "move": [0, 1] }
+    ],
+    [230, { "cam": -0.462079, "look": [-0.462079, 0], "move": null }],
+    [240, { "b": ["interact"] }],
+    [241, { "b": null }],
+    [
+      520,
+      {
+        "args": { "at": [23.25, 0, 85.5], "speed": 0, "yaw": 0 },
+        "cam": 0,
+        "dev": "place",
+        "look": [0, 0],
+        "move": [0, 1]
+      }
+    ],
+    [560, { "move": null }],
+    [660, { "args": { "at": [16, 0, 51], "speed": 0, "yaw": 0 }, "cam": 0, "dev": "place", "look": [0, 0] }],
+    [662, { "b": ["interact"] }],
+    [663, { "b": null }],
+    [1180, { "look": [0, -1.570796] }],
+    [1400, { "cam": 1.570796, "look": [1.570796, 0], "move": [1, 0] }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "0c737ab6505bf989",
+      "60": "f0419bc19435b66b",
+      "120": "8fc123a8234658b8",
+      "180": "c07602a529644fea",
+      "240": "02a3f50946e5eb79",
+      "300": "a2c30476ac5c16d5",
+      "360": "e7cf81bfa82f410e",
+      "420": "9da6e50140ba31b9",
+      "480": "6c37f0de6461ddd9",
+      "540": "c49d913ae1732b19",
+      "600": "9f5d96c71c86c49b",
+      "660": "07170980534774ad",
+      "720": "d854a0fa47b14cda",
+      "780": "d3d9538b1320980b",
+      "840": "ecad9e2dcbcf5f4e",
+      "900": "94b8f5a6c15777e4",
+      "960": "bf68bc2e0c2270a8",
+      "1020": "5ab67d78adee485b",
+      "1080": "1f2c7e9f1dfd454c",
+      "1140": "0e3fd00c740c3709",
+      "1200": "79a201a4bb3c152e",
+      "1260": "5e44fb15b5be5d3e",
+      "1320": "c4eae03dbdd75b40",
+      "1380": "d46306056bb31b79",
+      "1440": "c6680e44c288beb0",
+      "1500": "61c6bbac10cb3e04"
+    }
+  }
+}

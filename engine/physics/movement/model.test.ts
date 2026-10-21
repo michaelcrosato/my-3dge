@@ -2,7 +2,7 @@
  * @file Unit tests for the shooter model's numbers and state (engine/physics/movement/model.ts): every default whose
  * description gives a source value in Apex's units is that value converted (1 u = 0.0254 m), the gaits' side and back
  * scales are Apex's 1, a spec fills what it leaves out from the defaults, and a new motion state is a character at rest
- * on flat ground, standing (its duck too) and holstered, neither mantling nor climbing, with every field the component
+ * on flat ground, standing (its duck too) and holstered, neither mantling, climbing nor riding, with every field the component
  * `motion` declares.
  * @see engine/physics/movement/model.ts
  */
@@ -24,8 +24,8 @@ describe('the shooter model’s numbers', () => {
       }
     }
     // the gaits' 3, accel's 5, decel's 3, air's 3, the hop's cost, the stun's 2, the crouched hull, the slide's 12,
-    // the mantle's 5 and the climb's 14
-    expect(checked).toHaveLength(49);
+    // the mantle's 5, the climb's 14, the zipline's 10, the skydive's touch and the ladder's 3
+    expect(checked).toHaveLength(63);
   });
 
   it('scales no gait by its direction from the view, as Apex does, and fills what a spec leaves out', () => {
@@ -89,6 +89,15 @@ describe('the shooter model’s numbers', () => {
       reattach: false,
       keyRight: 0,
       keyForward: 0,
+      ride: -1,
+      rideAt: 0,
+      rideDir: 0,
+      rideSpeed: 0,
+      rideAccel: 0,
+      rideEnd: 0,
+      catches: 0,
+      rideCool: 0,
+      landing: false,
     });
     expect(Object.keys(createMotionState())).toEqual(Object.keys(MOTION_FIELDS));
   });

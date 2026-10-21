@@ -2,7 +2,9 @@
  * @file Unit tests for running feel courses (engine/dev/feel/run.ts): a course runs as its replay plays, to the same
  * hash, and measuring it never changes the run; its move, animation and camera measures read the run; a measure
  * passes within any one tolerance it names (a share, an amount or whole ticks); a time runs from its step to the first
- * sample that meets its end, a duration as long as a state lasts from its first sample; a scene without a player, or
+ * sample that meets its end, a duration as long as a state lasts from its first sample; a ride's states, the
+ * highest the feet go, the fastest fall, the height a state begins at, the ride's speed and its catches read as their
+ * samples hold them; a span that `holds` and never held a hand fails its `handContact`; a scene without a player, or
  * an animation measure on a player without an animator, is refused naming the fix.
  * @see engine/dev/feel/run.ts
  */
@@ -98,6 +100,26 @@ describe('running a course', () => {
     expect(measure({ name: 'r', metric: 'topRise', from: 0, reference: 0, tolerance: { abs: 0 } }, run, 5, 0.5)).toBe(2); // prettier-ignore
     const stood = [true, false, true].map((grounded, k): CourseSample => ({ feet: [0, [0, 3, 1.5][k], 0], velocity: [0, 0, 0], grounded, yaw: 0 })); // prettier-ignore
     expect(measure({ name: 's', metric: 'standHeight', from: 0, reference: 0, tolerance: { abs: 0 } }, { samples: stood, cameras: {} }, 2, 0.5)).toBe(1.5); // prettier-ignore
+  });
+
+  it('reads a ride: its states, the highest and the fastest fall, the height a state begins at, its speed and catches', () => {
+    const sample = (y: number, vy: number, mode: string, rideSpeed = 0, catches = 0, landing = false): CourseSample => ({ feet: [0, y, 0], velocity: [0, vy, 0], grounded: false, yaw: 0, mode, rideSpeed, catches, landing }); // prettier-ignore
+    const samples = [sample(0, 0, 'ground'), sample(1, 2, 'zipline', 2, 1), sample(3, 4, 'zipline', 6, 1), sample(9, -20, 'skydive', 0, 2), sample(5, -10, 'skydive', 0, 2, true), sample(4, -2, 'ladder', 1)]; // prettier-ignore
+    const run = { samples, cameras: {} };
+    const read = (metric: Measure['metric'], until?: Measure['until'], from = 0, to?: number) =>
+      measure({ name: 'm', metric, from, ...(to === undefined ? {} : { to }), ...(until ? { until } : {}), reference: 0, tolerance: { abs: 0 } }, run, 5, 0.5); // prettier-ignore
+    expect([read('time', 'riding'), read('time', 'skydiving'), read('time', 'landingPose'), read('time', 'onLadder')]).toEqual([0.5, 1.5, 2, 2.5]); // prettier-ignore
+    expect([read('top'), read('topFall'), read('heightAt', 'landingPose'), read('heightAt', 'climbing')]).toEqual([9, 20, 5, Infinity]); // prettier-ignore
+    expect([read('rideSpeed', undefined, 0, 2), read('rideGain', undefined, 1, 2), read('catches')]).toEqual([6, 4, 2]);
+  });
+
+  it('fails a span that holds when no hand ever held a contact in it', () => {
+    const registry = scenes();
+    const held = (holds: boolean) => ({ name: 'hands held', metric: 'handContact', from: 30, reference: 0, tolerance: { abs: 0.03 }, ...(holds ? { holds } : {}) }); // prettier-ignore
+    const course = defineCourse('course:sprint-held', { ...SPRINT, measures: [held(false), { ...held(true), name: 'holding' }] }, registry); // prettier-ignore
+    const [free, holding] = runCourse(course, { registry }).results;
+    expect([free.value, free.pass]).toEqual([0, true]); // a sprint holds nothing: nothing off its contact
+    expect([holding.value, holding.pass]).toEqual([Number.MAX_VALUE, false]); // …so a span that should hold fails
   });
 
   it('refuses a scene without a player, and an animation measure on a player without an animator', () => {

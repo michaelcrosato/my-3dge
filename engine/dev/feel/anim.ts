@@ -1,13 +1,16 @@
 /**
  * @file Animation metrics on a feel course (PLAN.md WP 13.4, docs/PLAYGROUND.md §5.1 and §9.1): `createAnimTrack()`
  * poses an actor's animator as the page poses it (engine/gfx/puppets/actors.ts: its sim data loaded into an animator of
- * the track's own, the foot plant last in the post slot, at the actor's feet and yaw) once a step, and keeps its joints
- * and sockets (engine/anim/stateMatrix.ts `RUN_POINTS`), with heights from the actor's feet, so a sole on a deck stands
- * on its floor as one on the ground does. Over a range of frames it reads the anim QA's rules
- * (engine/anim/motionMetrics.ts): `footSlide`, the most a sole slides on the floor in one contact, and `pop`, the
- * largest one-step jump of a point against its neighbours (m; 0 when nothing qualifies); and `handGap(point)`, the
- * closest either hand comes to a point (m). §5.1's bounds: 5 cm of slide, no pop past the QA's 9/16 m, 3 cm from a
- * contact. Each frame keeps the eyes too (`eye(k)`), where the first-person camera stands.
+ * the track's own, the foot plant last in the post slot, at the actor's feet and yaw, its movement shown, on the sim's
+ * ground through the query view) once a step, and keeps its joints and sockets (engine/anim/stateMatrix.ts
+ * `RUN_POINTS`) with heights from the actor's feet (for the pops), and its soles with heights from the ground the plant
+ * stood them on (`FootPlant.floorAt`, for the slide), so a sole on a deck or a ramp stands on its floor as one on the
+ * ground does; off the ground (traversing, flying) from the physics ground under them (WP 13.11). Over a range of frames it reads the anim QA's rules (engine/anim/motionMetrics.ts): `footSlide`, the
+ * most a sole slides on the floor in one contact, and `pop`, the largest one-step jump of a point against its
+ * neighbours (m; 0 when nothing qualifies); and `handGap(point)`, the closest either hand comes to a point (m). §5.1's
+ * bounds: 5 cm of slide, no pop past the QA's 9/16 m, 3 cm from a contact. Each frame keeps the eyes too (`eye(k)`),
+ * where the first-person camera stands, and the last frame's body gives first person's arms their input (`armsInput`,
+ * engine/gfx/viewmodel/rig.ts `armsInputOf`: the hands it holds on contacts, a carried gun, a kick).
  *
  * Invariants: posing never writes what the sim saves (engine/anim/character.ts), so measuring leaves a run's hash as it
  * is; the track keeps animators of its own, never the world's.
@@ -17,71 +20,138 @@
  * // track.footSlide(1, 300); // the most a sole slid in one contact over frames 1–300, m
  * @see engine/dev/feel/anim.test.ts
  */
-import { AnimatorPool, type AnimatorData } from '../../anim/character';
+import { AnimatorPool, type Animator, type AnimatorData } from '../../anim/character';
 import { getBuild } from '../../anim/builds';
 import { jointPosition, socketPosition } from '../../anim/fk';
-import { FootPlant } from '../../anim/footPlant';
+import { FOOT_PLANT, FootPlant, queryGround, type GroundQueries } from '../../anim/footPlant';
+import { MovementPose, plantsFeet, type BodyView, type MotionView } from '../../anim/locomotion/motion';
+import type { HullView, RideView, TraversalView } from '../../anim/traversal/contacts';
+import { HoldPlant, LookPose, type Look } from '../../anim/traversal/hold';
+import { TraversalPlant } from '../../anim/traversal/plant';
+import { TraversalPose } from '../../anim/traversal/pose';
 import { motionTrack, worstPop, worstSlide } from '../../anim/motionMetrics';
 import { JOINTS, SOCKETS } from '../../anim/skeleton';
 import { RUN_POINTS } from '../../anim/stateMatrix';
 import { Vector3 } from '../../core/math';
 import { eyePoint } from '../../gfx/cameras/first';
 import type { Vec3 } from '../../gfx/cameras/pose';
+import { armsInputOf, type ArmsInput } from '../../gfx/viewmodel/rig';
 
 /** The hands, as sockets: what `handGap` measures from. */
 export const HAND_SOCKETS = ['weaponR', 'weaponL'] as const;
 
-/** The indices of the soles among `RUN_POINTS`. */
-const SOLES = [RUN_POINTS.indexOf('contactL'), RUN_POINTS.indexOf('contactR')];
+/** The soles, as sockets: what `footSlide` measures. */
+const SOLES = ['contactL', 'contactR'] as const;
 
-/** One posed frame: the points (heights from the feet), the feet, and the hands and the eye in the world. */
+/** One posed frame: the points (heights from the feet), the soles (heights from the ground under them), the feet, and the hands and the eye in the world. */ // prettier-ignore
 interface AnimFrame {
   points: Vector3[];
+  soles: Vector3[];
   position: Vector3;
   hands: Vector3[];
+  /** How far each hand held on its contact was from it (m); NaN for a hand holding none. */
+  held: number[];
   eye: Vec3;
 }
 
-/** An animator posed once a step as the page poses it, and the anim QA's numbers over its frames. */
-export function createAnimTrack(where = 'feel') {
+/** What a traversing body is on (the ride, its component: engine/anim/traversal/contacts.ts `rideOf`), its hull and its look. */ // prettier-ignore
+export interface TrackTraverse {
+  ride: RideView | null;
+  hull: HullView | null;
+  look?: Look | null;
+}
+
+/**
+ * An animator posed once a step as the page poses it, and the anim QA's numbers over its frames; with the sim's
+ * read-only `queries`, its feet stand on their ground as the page's do, and a sole's height is from the ground under it.
+ */
+export function createAnimTrack(where = 'feel', queries?: GroundQueries) {
   const pool = new AnimatorPool();
-  const planted = new WeakSet<object>();
+  const planted = new WeakMap<object, { plant: FootPlant; traversal: TraversalPlant; hold: HoldPlant }>();
+  const moving = new Map<number, MovementPose>();
+  const traversing = new Map<number, TraversalPose>();
+  const looking = new Map<number, LookPose>();
+  const ground = queries ? queryGround(queries) : null;
   const frames: AnimFrame[] = [];
   let size = 1;
-  /** Frames `from` to `to` (inclusive) as a track. */
-  const track = (from: number, to: number) => {
+  /** The last frame's animator and its traversal plant: what first person's arms are posed from. */
+  let last: { animator: Animator; traversal: TraversalPlant } | null = null;
+  const hit = { point: new Vector3(), normal: new Vector3() };
+  /** The ground under a sole, as the plant looks for it (`FOOT_PLANT.up` over it to `FOOT_PLANT.down` under); none: far below. */ // prettier-ignore
+  const floorUnder = (p: Vector3) => {
+    if (!ground) return -Infinity;
+    const from = new Vector3(p.x, p.y + FOOT_PLANT.up, p.z);
+    return ground(from, FOOT_PLANT.up + FOOT_PLANT.down, hit) ? hit.point.y : -Infinity;
+  };
+  /** Frames `from` to `to` (inclusive) as a track: every point, or `soles` only. */
+  const track = (from: number, to: number, soles = false) => {
     const span = frames.slice(from, to + 1);
-    const world = span.map((f) => f.points);
+    const world = span.map((f) => (soles ? f.soles : f.points));
     const positions = span.map((f) => f.position);
-    return motionTrack({ where, size, names: RUN_POINTS, world, positions, feet: SOLES });
+    const names = soles ? SOLES : RUN_POINTS;
+    return motionTrack({ where, size, names, world, positions, feet: soles ? [0, 1] : [] });
   };
   return {
     /** How many frames it holds. */
     get length() {
       return frames.length;
     },
-    /** Poses actor `id`'s animator `data` at `feet`, facing `yaw`, after a step of `dt` seconds, and keeps the frame. */
+    /**
+     * Poses actor `id`'s animator `data` at `feet`, facing `yaw`, after a step of `dt` seconds, and keeps the frame;
+     * `motion`, its movement model's state, and `body`, its velocity, gate the foot plant's locks and show the body's
+     * movement as the page's puppets do (WP 13.10); with `traverse`, the ride it is on and its hull, its hands and
+     * feet go on their contacts as the page's do (WP 13.11).
+     */
     frame(
       id: number,
       data: Readonly<AnimatorData>,
       feet: readonly [number, number, number],
       yaw: number,
       dt: number,
+      motion?: MotionView | null,
+      body?: BodyView | null,
+      traverse?: TrackTraverse,
     ): void {
-      // prettier-ignore
       const animator = pool.get(id, data, { dt });
-      if (!planted.has(animator)) {
-        new FootPlant({ name: 'feel:footPlant' }).attach(animator);
-        planted.add(animator);
+      let own = planted.get(animator);
+      if (!own) {
+        const plant = new FootPlant({ name: 'feel:footPlant' }).attach(animator);
+        const traversal = new TraversalPlant({ name: 'feel:traversal' }).attach(animator);
+        const hold = Object.assign(new HoldPlant({ name: 'feel:hold' }).attach(animator), { contacts: traversal });
+        planted.set(animator, (own = { plant, traversal, hold }));
       }
-      animator.pose({ at: new Vector3(feet[0], feet[1], feet[2]), yaw });
+      const { plant, traversal, hold } = own;
+      const at = new Vector3(feet[0], feet[1], feet[2]);
+      const travels = (traversing.get(id) ?? new TraversalPose()).update((motion as TraversalView | null) ?? null, traverse?.ride ?? null, traverse?.hull ?? null, animator.body.build, at, body ?? null, dt); // prettier-ignore
+      traversing.set(id, travels);
+      traversal.pose = travels;
+      const look = (looking.get(id) ?? new LookPose()).update(traverse?.look ?? null, dt);
+      looking.set(id, look);
+      [hold.look, hold.busy] = [look.look, travels.weight]; // the head along the look, as the page's
+      plant.weight = travels.plantShare; // the traversal holds the legs off the ground (WP 13.11)
+      if (plant.weight === 0) plant.reset();
+      plant.locks = plantsFeet(motion);
+      plant.ground = ground;
+      const pose = moving.get(id) ?? new MovementPose();
+      moving.set(id, pose.update(motion, dt, body));
+      pose.apply(animator);
+      animator.pose({ at, yaw });
+      last = { animator, traversal };
       const { skeleton, world } = animator.body;
       const joints = JOINTS.map((_, j) => jointPosition(world, j));
       const sockets = SOCKETS.map((name) => socketPosition(skeleton, world, name));
       const hands = HAND_SOCKETS.map((name) => socketPosition(skeleton, world, name));
+      const held = [0, 1].map((h) => (traversal.limbs[h].held ? hands[1 - h].distanceTo(traversal.limbs[h].point) : NaN)); // prettier-ignore
+      const grounded = !motion || (motion.mode ?? 'ground') === 'ground';
+      const floor = (p: Vector3) => (grounded && plant.weight > 0 ? plant.floorAt(p.x, p.z) : floorUnder(p)); // off the ground, or the plant skipped: the real one
+      const soles = SOLES.map((name) => socketPosition(skeleton, world, name)).map((p) => p.setY(p.y - floor(p)));
       const points = [...joints, ...sockets].map((p) => p.setY(p.y - feet[1]));
-      frames.push({ points, position: new Vector3(feet[0], 0, feet[2]), hands, eye: eyePoint(skeleton, world) });
+      frames.push({ points, soles, position: new Vector3(feet[0], 0, feet[2]), hands, held, eye: eyePoint(skeleton, world) }); // prettier-ignore
       size = getBuild(data.build).size;
+    },
+    /** First person's arms' input off the last frame's body, for a frame with `frame`'s camera inputs; null before one. */
+    armsInput(frame: Pick<ArmsInput, 'player' | 'effects' | 'aspect' | 'fov'>): ArmsInput | null {
+      return last ? armsInputOf(last.animator, last.traversal, frame) : null;
     },
     /** Where frame `k`'s eyes are (world, m): where the first-person camera stands. */
     eye(k: number): Vec3 {
@@ -89,11 +159,20 @@ export function createAnimTrack(where = 'feel') {
     },
     /** The most a sole slid on the floor in one contact over frames `from` to `to` (m). */
     footSlide(from: number, to: number): number {
-      return worstSlide(track(from, to))?.value ?? 0;
+      return worstSlide(track(from, to, true))?.value ?? 0;
     },
     /** The largest one-step jump of a point against its neighbours over frames `from` to `to` (m). */
     pop(from: number, to: number): number {
       return worstPop(track(from, to))?.value ?? 0;
+    },
+    /**
+     * The farthest a hand held on its contact (a lip, a rung, a hold on a wall, a cable, the floor under a hard
+     * landing's hand) was from it over frames `from` to `to` (m; 0 when none held one), and how many hands' frames held.
+     */
+    handContact(from: number, to: number): { gap: number; held: number } {
+      let [gap, held] = [0, 0];
+      for (const f of frames.slice(from, to + 1)) for (const d of f.held) if (!Number.isNaN(d)) [gap, held] = [Math.max(gap, d), held + 1]; // prettier-ignore
+      return { gap, held };
     },
     /** The closest either hand came to `point` (world, m) over frames `from` to `to` (m). */
     handGap(point: readonly [number, number, number], from: number, to: number): number {

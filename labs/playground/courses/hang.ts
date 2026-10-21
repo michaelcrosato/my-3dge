@@ -58,7 +58,7 @@ defineCourse('course:playground-hang', {
     { name: 'lets go: drops', metric: 'height', from: 2 * RUN + 2, to: 3 * RUN - 1, reference: 0, tolerance: { abs: 0.02 } }, // prettier-ignore
     ...[0, 1, 2].flatMap((k) => {
       const label = ['hang', 'too low', 'lets go'][k];
-      return [...bodyBounds(k * RUN + 2, { to: (k + 1) * RUN - 1, label }), ...cameraBounds(k * RUN + 2, { to: (k + 1) * RUN - 1, label })]; // prettier-ignore
+      return [...bodyBounds(k * RUN + 2, { to: (k + 1) * RUN - 1, label, holds: true }), ...cameraBounds(k * RUN + 2, { to: (k + 1) * RUN - 1, label })]; // prettier-ignore
     }),
   ],
 });

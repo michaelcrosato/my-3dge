@@ -11,10 +11,12 @@ import { Vector3 } from '../core/math';
 import { fru } from './authoring';
 import { getBuild } from './builds';
 import { Humanoid, type HumanoidInput } from './humanoid';
-import { socketPosition } from './fk';
-import { GAIT, gaitFoot, pelvisTarget, plantedHeight, restContext, spineDirection } from './locomotion';
+import { jointPosition, jointToWorld, tipPosition } from './fk';
+import { gaitFoot, pelvisTarget, restContext, spineDirection } from './locomotion';
+import { plantedHeight } from './locomotion/planted';
 import { hashPose } from './pose';
 import { FOOT_LAYERS, HAND_LAYERS, layerWeights, poseName, stanceName, weaponName } from './poses';
+import { jointIndex, PROPORTIONS } from './skeleton';
 
 /** Steps `hero` `steps` times with `input`. */
 function run(hero: Humanoid, input: HumanoidInput, steps: number): Humanoid {
@@ -66,6 +68,9 @@ describe('the layer tables', () => {
       'kneel',
       'guard',
       'crouch',
+      'slide',
+      'rise',
+      'fall',
       'lunge',
       'hop',
       'climb',
@@ -92,14 +97,13 @@ describe('the gait (locomotion.ts)', () => {
     expect(spineDirection(ctx, new Vector3()).toArray()).toEqual([-0, 1, 0]);
   });
 
-  /** For each phase over a cycle at full stride: the farthest a planted sole lies from its hip, and the pelvis. */
-  function spread(build: string): { reach: number; worst: number; low: number } {
+  /** For each phase over a cycle at full stride: the farthest a planted sole lies from its hip (a source build's). */
+  function spread(build: string): { reach: number; worst: number } {
     const b = getBuild(build);
-    let [worst, low] = [0, Infinity];
+    let worst = 0;
     for (let k = 0; k < 64; k++) {
       const ctx = { ...restContext(b), sp: 1, phase: (k / 64) * 2 * Math.PI };
       const pelvis = pelvisTarget(ctx, new Vector3());
-      low = Math.min(low, pelvis.y);
       for (const [side, s] of [
         ['L', -1],
         ['R', 1],
@@ -110,34 +114,47 @@ describe('the gait (locomotion.ts)', () => {
         worst = Math.max(worst, hip.distanceTo(sole));
       }
     }
-    return { reach: b.legUpper + b.legLower, worst, low };
+    return { reach: b.legUpper + b.legLower, worst };
+  }
+
+  /** A body running at full stride, solved: the highest its planted feet's lowest point (heel or toe tip) rises, its
+   * legs' stretch and its lowest pelvis. */
+  function stride(build: string): { tip: number; stretch: number; low: number } {
+    const hero = new Humanoid({ build, clock: 0 });
+    const velocity = new Vector3(0, 0, getBuild(build).speedRef);
+    const [at, w] = [new Vector3(), hero.world];
+    let [tip, stretch, low] = [0, 0, Infinity];
+    for (let step = 0; step < 240; step++) {
+      hero.update({ velocity });
+      if (step < 60) continue; // up to speed
+      low = Math.min(low, jointPosition(w, 'pelvis', at).y);
+      for (const side of ['L', 'R'] as const) {
+        if (hero.effectors.feet[side].y > 0) continue; // the gait lifts it
+        const b = hero.build;
+        const heel = jointToWorld(w, `foot${side}`, at.set(0, -b.ankleHeight * b.size, -PROPORTIONS.heel * b.footLength * b.size), at).y; // prettier-ignore
+        tip = Math.max(tip, Math.min(heel, tipPosition(hero.skeleton, w, `toe${side}`, at).y));
+        const leg = jointPosition(w, `thigh${side}`, at).distanceTo(jointPosition(w, `foot${side}`, new Vector3()));
+        const { lengths } = hero.skeleton;
+        stretch = Math.max(stretch, leg / (lengths[jointIndex(`shin${side}`)] + lengths[jointIndex(`foot${side}`)]));
+      }
+    }
+    return { tip, stretch, low };
   }
 
   it("plants a plantedStride build's soles in reach at full stride; the source's builds keep their gait", () => {
-    const adult = spread('build:adult');
-    expect(adult.worst).toBeLessThanOrEqual(adult.reach * GAIT.plantReach + 1e-9); // the knee never locks
+    const adult = stride('build:adult');
+    expect(adult.stretch).toBeLessThan(0.99); // the knee never locks, the trailing heel lifting off the ball
     expect(adult.low).toBeLessThan(getBuild('build:adult').hipHeight - 0.05); // the pelvis drops as the feet spread
     const heroic = spread('build:heroic');
     expect(heroic.worst).toBeGreaterThan(heroic.reach + 0.05); // ADR-0009 amendment 4: its soles hang
-    expect(plantedHeight({ ...restContext(getBuild('build:adult')), sp: 0 }, 0, 0)).toBeGreaterThan(0.93); // at rest
+    const b = getBuild('build:adult');
+    const rest = { ...restContext(b), sp: 0 };
+    const soles = [gaitFoot(rest, 'L', new Vector3()), gaitFoot(rest, 'R', new Vector3())] as const;
+    expect(plantedHeight(b, 0, 0, soles, 2)).toBeGreaterThan(0.93); // at rest, nothing else holding it down
   });
 
-  it("puts the adult's soles on the floor through the solve while they are planted, running at full stride", () => {
-    const highest = (build: string) => {
-      const hero = new Humanoid({ build, clock: 0 });
-      const velocity = new Vector3(0, 0, getBuild(build).speedRef);
-      let high = 0;
-      for (let step = 0; step < 240; step++) {
-        hero.update({ velocity });
-        if (step < 60) continue; // up to speed
-        for (const side of ['L', 'R'] as const) {
-          if (hero.effectors.feet[side].y > 0) continue; // the gait lifts it
-          high = Math.max(high, socketPosition(hero.skeleton, hero.world, `contact${side}`, new Vector3()).y);
-        }
-      }
-      return high;
-    };
-    expect(highest('build:adult')).toBeLessThan(0.02); // planted: on the floor, give or take the toe's bend
-    expect(highest('build:heroic')).toBeGreaterThan(0.05); // the soles hang above their targets
+  it("puts the adult's planted feet on the floor through the solve, running at full stride", () => {
+    expect(stride('build:adult').tip).toBeLessThan(0.005); // planted: a heel down, or the toes as it lifts off the ball
+    expect(stride('build:heroic').tip).toBeGreaterThan(0.05); // the soles hang above their targets
   });
 });

@@ -3,7 +3,9 @@
  * formulas as effector targets in the character's own terms (`B(f, r, u)`, authoring.ts): where the pelvis rides,
  * where each foot and hand swings, which way the spine and the head lean, where the shoulders sit. `GAIT` holds every
  * constant, in metres and radians, each with its line; poses.ts lays the held poses and stances over these targets,
- * and humanoid.ts solves them onto the skeleton.
+ * and humanoid.ts solves them onto the skeleton. A `plantedStride` build (the playground's player, WP 13.10) steps on
+ * the planted stride (locomotion/planted.ts), its stance windows telling the foot plant's locks (`gaitStance`); what
+ * the view shows of the movement (locomotion/shown.ts) seats the pelvis and leans the spine.
  *
  * Invariants:
  * - Targets are rig-local and unscaled: metres before the build's `size`, the origin on the ground under the
@@ -27,6 +29,18 @@
 import { MathUtils, Quaternion, Vector3 } from '../core/math';
 import { B, sideSign, turnRight, type LimbSide, type Sided } from './authoring';
 import type { Build } from './builds';
+import {
+  footCycle,
+  PLANTED,
+  plantedDuty,
+  plantedEase,
+  plantedBob,
+  plantedHeight,
+  plantedKnee,
+  plantedMove,
+  plantedStep,
+} from './locomotion/planted';
+import { createShown, SHOWN, type ShownMovement } from './locomotion/shown';
 import type { ArmState } from './strike';
 
 /** Every constant of the gait, idle, lean and arm swing; lengths in metres (the source's units ÷ 16). */
@@ -45,8 +59,20 @@ export const GAIT = {
   swayReach: 0.01875,
   /** How far the pelvis leads forward along the movement at full speed, metres. */
   pelvisLead: 0.025,
-  /** Share of the straight leg a planted sole may take (`plantedStride` builds): the knee never locks (new). */
-  plantReach: 0.985,
+  /** Floor of the speed weight in the stride's length: slow steps are short, not slow (the phase's, humanoid.ts). */
+  strideFloor: 0.4,
+  /** A planted stride's share at the top speed weight: its steps lengthen past the run's into a sprint (new). */
+  strideTop: 1.25,
+  /** A planted stride's share given up crouched (the humanoid's crouch weight, new): short quick steps. */
+  crouchStride: 0.3,
+  /** A crouched planted swing lifts this much higher, its shin trailing low (a share of the lift, at a full crouch). */
+  crouchLift: 1,
+  /** A planted stride's steps this much shorter moving straight sideways, at a quicker cadence (a share). */
+  sideStride: 0.35,
+  /** A planted stride's forward lean per speed share past the run (new): a sprint leans further. */
+  leanSprint: 0.4,
+  /** How far a planted stride's crossing foot passes ahead of the other moving sideways, metres (new). */
+  crossAhead: 0.16,
   /** How far the pelvis leads sideways along the movement at full speed, metres. */
   pelvisSide: 0.01875,
   /** How far a flinch pushes the pelvis back, metres. */
@@ -175,8 +201,12 @@ export interface EffectorContext {
   readonly lead: LimbSide;
   /** The speed share, capped at 1 (my-3d2dge's `sp`). */
   readonly sp: number;
-  /** The crouch now: the held pose, a move's, or the knees buckling as the body falls. */
+  /** The crouch now: the held pose, a move's, the knees buckling as the body falls, or the movement's (the view's). */
   readonly crouch: number;
+  /** The slide now, 0 to 1 (the view's, `Humanoid.shown`): the pelvis low and leaned back, the legs out (poses.ts). */
+  readonly slide: number;
+  /** What the view shows of the movement beyond the sim's state (locomotion/shown.ts). */
+  readonly shown: Readonly<ShownMovement>;
   /** The arm's length, shoulder to wrist, metres. */
   readonly armLength: number;
   /** The pelvis (my-3d2dge's `hipC`), placed by `pelvisTarget`. */
@@ -202,33 +232,18 @@ export function pelvisTarget(ctx: EffectorContext, out: Vector3): Vector3 {
   const { build: b, w, sp, body } = ctx;
   const G = GAIT;
   const breathe = Math.sin(ctx.clock * G.breatheRate) * (1 - sp);
-  const bob = (G.bobRest - Math.abs(Math.cos(ctx.phase)) * G.bobDrop) * sp;
+  const [run, ran] = b.plantedStride ? plantedBob(ctx.phase, w.speed, w.crouch) : [0, 0];
+  const bob = MathUtils.lerp(G.bobRest - Math.abs(Math.cos(ctx.phase)) * G.bobDrop, run, ran) * sp;
   const sway = Math.sin(ctx.clock * G.swayRate) * G.swayReach * (1 - sp) * (1 - w.attack);
   const f = ctx.moveF * G.pelvisLead * sp - G.hurtBack * w.hurt + body.lunge * G.lungePelvis;
   const r = ctx.moveR * G.pelvisSide * sp + sway;
   let u = b.hipHeight + bob + breathe * G.breatheLift - w.dash * G.dashDrop - w.hurt * G.hurtDrop;
   u = u - w.kneel * b.hipHeight * G.kneelDrop - w.guard * G.guardDrop - ctx.crouch * b.hipHeight * G.crouchDrop;
-  if (b.plantedStride) u = Math.min(u, plantedHeight(ctx, f, r));
+  u -= ctx.slide * b.hipHeight * (SHOWN.slideDrop - ctx.crouch * G.crouchDrop); // a slide's low seat, the crouch within
+  const { land, hard } = ctx.shown;
+  u -= land * b.hipHeight * (SHOWN.softDrop + (SHOWN.hardDrop - SHOWN.softDrop) * hard); // a landing's dip
+  if (b.plantedStride) u = plantedHeight(b, f, r, [gaitFoot(ctx, 'L', soles[0]), gaitFoot(ctx, 'R', soles[1])], u); // prettier-ignore
   return B(f, r, u + body.hop, out);
-}
-
-/**
- * The highest a pelvis at `f` forward and `r` right may ride for each sole the gait plants (its lift 0) to be in
- * reach of its hip, `plantReach` of the straight leg: what a `plantedStride` build's gait drops to as its feet spread.
- */
-export function plantedHeight(ctx: EffectorContext, f: number, r: number): number {
-  const { build: b } = ctx;
-  const reach = (b.legUpper + b.legLower) * GAIT.plantReach;
-  let top = Infinity;
-  for (const side of ['L', 'R'] as const) {
-    const sole = gaitFoot(ctx, side, planted);
-    if (sole.y > 0) continue; // lifted: it swings free
-    const dx = sole.x - (-r - sideSign(side) * b.hipHalf);
-    const dz = sole.z - f;
-    const flat = dx * dx + dz * dz;
-    if (flat < reach * reach) top = Math.min(top, sole.y + Math.sqrt(reach * reach - flat));
-  }
-  return top;
 }
 
 /** The hip joint of `side`: the pelvis plus `hipHalf` sideways, turned with the hips' share of the twist. */
@@ -239,19 +254,57 @@ export function hipTarget(ctx: EffectorContext, side: LimbSide, out: Vector3): V
     .add(ctx.pelvis);
 }
 
-/** The sole of the foot on `side` in the gait: a stride along the movement and a lift, or the standing spread. */
+/**
+ * The share of the build's stride the gait's phase advances by at speed weight `speed`: `strideFloor` to 1, or for a
+ * `planted` stride to `strideTop`, so a sprint lengthens its steps rather than only quickening them, `crouchStride`
+ * shorter as far as it is crouched (`crouch`, the humanoid's crouch weight) and `sideStride` as far as it steps
+ * sideways (`side`, the unit move's right share, squared: a strafe's quicker, shorter steps, its legs spreading less).
+ */
+export function strideShare(speed: number, planted = false, crouch = 0, side = 0): number {
+  const share = Math.max(GAIT.strideFloor, Math.min(planted ? GAIT.strideTop : 1, speed));
+  return planted ? share * (1 - GAIT.crouchStride * crouch) * (1 - GAIT.sideStride * side * side) : share;
+}
+
+/**
+ * The sole of the foot on `side` in the gait: a stride along the movement and a lift, or the standing spread. A
+ * `plantedStride` build plants it (engine/anim/locomotion/planted.ts): its stance travels back as far as the body goes
+ * in it, `π × duty × stride × strideShare`, so the sole stays put on the ground, easing in from the stand as it starts.
+ */
 export function gaitFoot(ctx: EffectorContext, side: LimbSide, out: Vector3): Vector3 {
   const { build: b, sp } = ctx;
   const s = sideSign(side);
   const p = ctx.phase + (s > 0 ? Math.PI : 0);
-  const along = Math.sin(p) * b.stride * sp;
-  const stand = (s > 0 ? GAIT.standAheadR : GAIT.standAheadL) * (1 - sp);
-  return B(
-    ctx.moveF * along + stand,
-    s * b.footSpread + ctx.moveR * along,
-    Math.max(0, Math.cos(p)) * b.lift * sp,
-    out,
-  );
+  let along = Math.sin(p) * b.stride * sp;
+  let lift = Math.max(0, Math.cos(p)) * b.lift * sp;
+  let stand = (s > 0 ? GAIT.standAheadR : GAIT.standAheadL) * (1 - sp);
+  if (b.plantedStride) {
+    const duty = plantedDuty(ctx.w.speed, ctx.w.crouch);
+    const [ahead, up] = plantedStep(footCycle(ctx.phase, s > 0), duty);
+    const ease = plantedEase(sp);
+    const [, right] = plantedMove(ctx.moveF, ctx.moveR);
+    along = ahead * Math.PI * duty * b.stride * strideShare(ctx.w.speed, true, ctx.w.crouch, right) * ease;
+    lift =
+      up * b.lift * Math.max(sp, PLANTED.start) * (1 + GAIT.crouchLift * ctx.w.crouch) * Math.sqrt(Math.sqrt(ease)); // down only once it has arrived
+    stand = (s > 0 ? GAIT.standAheadR : GAIT.standAheadL) * (1 - ease) - s * right * GAIT.crossAhead * ease; // the crossing foot passes ahead
+  }
+  const [mf, mr] = b.plantedStride ? plantedMove(ctx.moveF, ctx.moveR) : [ctx.moveF, ctx.moveR];
+  return B(mf * along + stand, s * b.footSpread + mr * along, lift, out);
+}
+
+/** The least knee bend of the leg on `side` now (rad): a planted build's swing (`plantedKnee`), eased in from the stand. */
+export function gaitKnee(ctx: EffectorContext, side: LimbSide): number {
+  if (!ctx.build.plantedStride) return 0;
+  const c = footCycle(ctx.phase, sideSign(side) > 0);
+  return plantedKnee(c, plantedDuty(ctx.w.speed, ctx.w.crouch), ctx.w.speed) * plantedEase(ctx.sp);
+}
+
+/**
+ * Whether the foot on `side` stands now: a planted build's foot in its stance share, or both below a step's pace
+ * (`PLANTED.start`: standing, or slowing into a stop, where the foot plant steps them under the body); else null.
+ */
+export function gaitStance(ctx: EffectorContext, side: LimbSide): boolean | null {
+  if (!ctx.build.plantedStride) return null;
+  return ctx.sp < PLANTED.start || footCycle(ctx.phase, sideSign(side) > 0) < plantedDuty(ctx.w.speed, ctx.w.crouch);
 }
 
 /** The spine's direction, pelvis to shoulder centre: the build's lean, speed, a dash, a move, a flinch, a crouch. */
@@ -264,8 +317,13 @@ export function spineDirection(ctx: EffectorContext, out: Vector3): Vector3 {
     G.leanDash * w.dash +
     ctx.body.lean -
     G.leanHurt * w.hurt +
-    ctx.crouch * G.leanCrouch;
-  const side = G.leanSide * sp * ctx.moveR;
+    ctx.crouch * G.leanCrouch * (1 - ctx.slide) -
+    ctx.slide * SHOWN.slideLean +
+    ctx.shown.lean +
+    ctx.shown.pitch +
+    ctx.shown.land * ctx.shown.hard * SHOWN.hardLean +
+    (b.plantedStride ? G.leanSprint * Math.max(0, w.speed - 1) : 0);
+  const side = G.leanSide * sp * ctx.moveR + ctx.shown.bank;
   return B(Math.sin(forward), Math.sin(side), Math.cos(forward), out).normalize();
 }
 
@@ -290,11 +348,13 @@ export function gaitHand(ctx: EffectorContext, side: LimbSide, out: Vector3): Ve
   const { build: b, sp } = ctx;
   const G = GAIT;
   const s = sideSign(side);
-  const p = ctx.phase + (s > 0 ? 0 : Math.PI);
-  const along = -Math.sin(p) * b.swing * sp;
-  const f = ctx.moveF * along + G.handRest * (1 - sp) + b.hunch * G.handHunch;
+  // the source swings each arm with its own leg; a planted stride swings it against, wider at a sprint
+  const p = ctx.phase + (s > 0 ? 0 : Math.PI) + (b.plantedStride ? Math.PI : 0);
+  const [mf, mr] = b.plantedStride ? plantedMove(ctx.moveF, ctx.moveR) : [ctx.moveF, ctx.moveR];
+  const along = -Math.sin(p) * b.swing * sp * (b.plantedStride ? strideShare(ctx.w.speed, true, ctx.w.crouch, mr) / strideShare(ctx.w.speed) : 1); // prettier-ignore
+  const f = mf * along + G.handRest * (1 - sp) + b.hunch * G.handHunch;
   const u = -ctx.armLength * G.handDrop + Math.abs(Math.sin(p)) * G.handLift * sp;
-  return B(f, s * G.handOut + ctx.moveR * along, u, out).add(ctx.shoulders[side]);
+  return B(f, s * G.handOut + mr * along, u, out).add(ctx.shoulders[side]);
 }
 
 /** A context for `build` at rest: every weight 0, the clock and phase at 0, the anchors placed. For tests and docs. */
@@ -315,6 +375,8 @@ export function restContext(build: Build): EffectorContext {
     lead: 'L' as LimbSide,
     sp: 0,
     crouch: 0,
+    slide: 0,
+    shown: createShown(),
     armLength: build.armUpper + build.armLower,
     pelvis: new Vector3(),
     chest: new Vector3(),
@@ -333,5 +395,5 @@ export function restContext(build: Build): EffectorContext {
 /** Scratch objects. */
 const q = new Quaternion();
 const v = new Vector3();
-/** `plantedHeight`'s sole, a scratch of its own. */
-const planted = new Vector3();
+/** `plantedHeight`'s soles, a scratch of their own. */
+const soles = [new Vector3(), new Vector3()] as const;

@@ -4,10 +4,11 @@
  * the lab's scenes (labs/<lab>/scenes/*.ts) and courses (labs/<lab>/courses/*.ts, each a `defineCourse('course:<lab>-
  * <name>', …)`), the animation library first, as the pages load it; `--course` names courses by name (`strip`), several
  * by commas, `all` by default. Each course's verdicts go to `out/feel/<lab>-<name>/report.json`, a measure a metric
- * (its value, reference, how far off and whether it passed); one line per course is printed, and a miss is a failure
- * (`FEEL_MISS`) naming the number, its reference and its tolerance; a watched measure that misses is a warning
- * (`FEEL_WATCHED`, naming the WP that will make it pass). Exit 0 when every judged measure passes, 1 on a miss, 2
- * on a usage error (no such lab, a lab without courses, a course name it lacks, which names the closest).
+ * (its value, reference, how far off, its tolerance as text and whether it passed); one line per course is printed,
+ * and a miss is a failure (`FEEL_MISS`) naming the number, its reference and its tolerance; a watched measure that
+ * misses is a warning (`FEEL_WATCHED`, naming the WP that will make it pass). Exit 0 when every judged measure passes,
+ * 1 on a miss, 2 on a usage error (no such lab, a lab without courses, a course name it lacks, which names the
+ * closest).
  *
  * Invariants: each course runs in a session of its own, so the order of courses never changes a number; the command
  * reads the lab's files and writes only under out/feel/.
@@ -93,7 +94,7 @@ export default {
       const course = own[names.indexOf(name)];
       const started = performance.now();
       const result = runCourse(course);
-      const numbers = Object.fromEntries(result.results.flatMap((r) => [[`${r.name}.value`, r.value], [`${r.name}.reference`, r.reference], [`${r.name}.off`, r.off], [`${r.name}.pass`, r.pass]])); // prettier-ignore
+      const numbers = Object.fromEntries(result.results.flatMap((r) => [[`${r.name}.value`, r.value], [`${r.name}.reference`, r.reference], [`${r.name}.off`, r.off], [`${r.name}.tolerance`, toleranceText(r.tolerance)], [`${r.name}.pass`, r.pass]])); // prettier-ignore
       const misses = result.results.filter((r) => !r.pass && r.watch === undefined);
       const watched = result.results.filter((r) => !r.pass && r.watch !== undefined);
       const findings = misses.map((r): Finding => ({ id: 'FEEL_MISS', message: missText(name, r) }));

@@ -68,8 +68,11 @@ so a level select reloads the page with another `?scene`.
 direction `[x, z]`), `b` (buttons held), `p` (pressed this step), `aim`, `look`, `cam`, and the game's own
 `'game:<name>'` keys. A player actor reads the step's intents itself; systems get them as their second argument
 (`held(intents, 'jump')`, `pressed(intents, 'attack')`). In a page, devices make intents through an action map
-(`actionMap:thirdPerson` by default: WASD or the arrows run, Space jumps, Shift dashes). A bot or a test writes them
-directly: `engine.step(1, { move: [1, 0] })`. A replay is the intents of a run, recorded.
+(`actionMap:thirdPerson` by default: WASD or the arrows run, Space jumps, Shift dashes); a map with `look: true` sends
+the camera's view as `look`, and its `aimWith` fills `aim` (`centre`: what the screen's middle points at; `pointer`:
+the pointer on the player's floor), and a game with several camera modes gives `createEngine` a map per camera
+(`actionMap: (code) => …`). A bot or a test writes them directly: `engine.step(1, { move: [1, 0] })`. A replay is the
+intents of a run, recorded.
 
 **Proof.** `engine.hash()` digests the whole sim. A replay file (labs/game/replays/bot.replay.json) holds a scene,
 seed, settings, the intents at each step that changed them, and the golden hashes at its checkpoints, per platform
@@ -103,7 +106,7 @@ The box (labs/box/, its README says which scene shows what) has a working use of
 | Props                          | `defineProp` (meshes, a body, hooks), `spawnProp`, `hitProp`; the engine's `prop:crate`, `prop:barrel`, `prop:brazier`, `prop:pillar` | labs/box/scenes/hall-props.ts |
 | Enemies and crowds             | Crowd bodies (`addAgent`, `updateCrowd`, `knockback`, `killAgent`), steering (`seek`, `followFlow`, `approachRing`), `NavGrid` and `FlowField`, attack tokens, `canSee` | labs/box/cast/walker.ts, labs/box/scenes/crowd-1000.ts |
 | Combat                         | Moves as data (`defineMove`, `Attack`, `Combo`), hit queries (`coneHits`, `sweepHits`), `damage` and `HEALTH`, projectiles, telegraphs, `reactTo`, `requestHitStop` | labs/box/scenes/fight.ts, labs/box/cast/hero.ts |
-| Animation                      | Actors animate themselves (`spawnActor({ anim: { build } })`); builds, bodies, the animator's body states, actions (`defineAction`), clips from the library (`playClip`) | labs/box/scenes/clips.ts, `node x anim find` |
+| Animation                      | Actors animate themselves (`spawnActor({ anim: { build } })`); builds, bodies, the animator's body states, actions (`defineAction`, played on an actor with `actOn`), clips from the library (`playClip`) | labs/box/scenes/clips.ts, `node x anim find` |
 | How it looks                   | Materials and textures as data (`defineMaterial`, `defineTexture`), looks (`?post.look=look:cartoon`; `defineLook`), skies, lights | labs/box/looks/torch-lit.ts, `node x describe look` |
 | Effects                        | Emitters as data, bursting on sim events (`defineEmitter`); telegraphs; screen shake      | labs/box/scenes/fight.ts           |
 | UI                             | `engine.ui`: `hud(id, text, { at })`, `label`, `damage`, `crosshair`; menus and screens as plain HTML/CSS in the page | labs/game/main.ts, labs/box/menu.ts |
@@ -206,7 +209,7 @@ Sim-side code imports these from engine/sim-api.ts; pages get them from engine/i
 first sentence of its doc comment in docs/API.md, and its whole manual where it is declared.
 
 **Scenes**: defined as data with a setup and a step, run by x sim, x replay and createHeadless.
-`defineScene`; types `Scene`, `SceneSpec`, `SceneAction`, `SceneSound`.
+`defineScene`, `defineDevAction`; types `Scene`, `SceneSpec`, `SceneAction`, `SceneSound`, `DevActionSpec`.
 
 **The world**: entities, components, systems, timers, events.
 `defineComponent`, `PHASES`; types `World`, `SimRng`, `WorldTimers`, `WorldEvents`, `Entity`, `With`, `SpawnSpec`, `ComponentOf`, `Phase`, `SystemFn`.
@@ -230,7 +233,7 @@ types `EventMap`, `Listener`, `TraceRecord`.
 `compileLevel`, `validateLevel`, `defineGlyph`, `defineLevel`, `getLevel`, `floorHeight`, `topHeight`, `solidAt`, `tileAt`, `LEVEL_FORMAT`; types `CompileOptions`, `LevelSource`, `LevelProblem`, `Glyph`, `GlyphSpec`, `LevelEntry`, `CompiledLevel`, `LevelGlyph`, `BoxCollider`, `ColliderDescriptor`, `GroundDescriptor`, `MeshDescriptor`, `SpawnPoint`, `LightSpot`, `TileRect`, `Point3`.
 
 **Animation (WP 3.4)**: the humanoid skeleton (a root plus 23 joints) and its builds, poses with three.js quaternions, blending under bone masks, additive layers, forward kinematics, SVG contact sheets and the pose checks.
-`JOINTS`, `SOCKETS`, `MASKS`, `createSkeleton`, `boneMask`, `defineBuild`, `getBuild`, `Pose`, `blendPoses`, `makeAdditive`, `addPose`, `hashPose`, `forwardKinematics`, `createWorldPose`, `jointPosition`, `jointRotation`, `jointMatrix`, `jointToWorld`, `socketPosition`, `tipPosition`, `animSheet`, `animCheck`, `twoBone`, `twoBoneRot`, `LIMBS`, `aim`, `AIM_CHAIN`, `footPlant`, `createFootPlantState`, `FOOT_PLANT`, `FootPlant`, `handTo`; types `JointName`, `SocketName`, `MaskName`, `Skeleton`, `BoneMask`, `Build`, `BuildSpec`, `JointRef`, `BlendOptions`, `WorldPose`, `Sheet`, `SheetFrame`, `SheetOptions`, `SheetView`, `AnimCheckSpec`, `AnimCheckReport`, `AnimProblem`, `RigidPair`, `PointName`, `TwoBoneOptions`, `LimbEnd`, `Limb`, `AimOptions`, `AimLink`, `FootPlantOptions`, `FootPlantState`, `FootLock`, `FootPlantLayerOptions`, `GroundProbe`, `GroundHit`.
+`JOINTS`, `SOCKETS`, `MASKS`, `createSkeleton`, `boneMask`, `defineBuild`, `getBuild`, `Pose`, `blendPoses`, `makeAdditive`, `addPose`, `hashPose`, `forwardKinematics`, `createWorldPose`, `jointPosition`, `jointRotation`, `jointMatrix`, `jointToWorld`, `socketPosition`, `tipPosition`, `animSheet`, `animCheck`, `twoBone`, `twoBoneRot`, `LIMBS`, `aim`, `AIM_CHAIN`, `footPlant`, `createFootPlantState`, `FOOT_LOCK`, `FOOT_PLANT`, `FootPlant`, `queryGround`, `handTo`; types `JointName`, `SocketName`, `MaskName`, `Skeleton`, `BoneMask`, `Build`, `BuildSpec`, `JointRef`, `BlendOptions`, `WorldPose`, `Sheet`, `SheetFrame`, `SheetOptions`, `SheetView`, `AnimCheckSpec`, `AnimCheckReport`, `AnimProblem`, `RigidPair`, `PointName`, `TwoBoneOptions`, `LimbEnd`, `Limb`, `AimOptions`, `AimLink`, `FootPlantOptions`, `FootPlantState`, `FootLock`, `FootPlantLayerOptions`, `GroundQueries`, `GroundProbe`, `GroundHit`.
 
 **The procedural humanoid (WP 3.6)**: my-3d2dge's gait, idle, lean, arm swing, held poses and stances as effector targets written with B(forward, right, up), solved onto the skeleton; a fixed step and a seeded stream.
 `Humanoid`, `POSES`, `STANCES`, `WEAPONS`, `B`, `turnRight`; types `HumanoidOptions`, `HumanoidInput`, `HumanoidState`, `HumanoidWeights`, `BodyMotion`, `PoseName`, `StanceName`, `Weapon`, `Effectors`, `FRU`, `LimbSide`, `Sided`.
@@ -262,11 +265,8 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Physics (WP 3.1)**: Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id, raycasts, shape casts, overlaps and ground probes, collision groups by name, a level's bodies; presentation reads it through the read-only QueryView.
 `physicsOf`, `COLLISION_GROUPS`, `PHYSICS_SETTINGS`, `addLevelBodies`, `queryViewOf`; types `Physics`, `BodySpec`, `ColliderSpec`, `BodyState`, `BodyChange`, `BodyType`, `Shape`, `Vec3Like`, `QuatLike`, `Hit`, `Ground`, `QueryOptions`, `RayOptions`, `ShapeCastOptions`, `OverlapOptions`, `ProbeOptions`, `GroupName`, `QueryView`.
 
-**Characters (WP 3.2)**: actors moved by the character controller (Rapier's, moved across then down), with an action game's feel: acceleration and skid, coyote time, a jump buffer, a variable jump, a wall jump, a dash, pushing props; the feel meter measures how one handles. A body's reactions and an actor's secondary motion as components (WP 7.8).
-`createCharacter`, `CHARACTER_FIELDS`, `CHARACTER_STATE_FIELDS`, `spawnActor`, `removeActor`, `measureFeel`, `reactTo`, `stepReactions`, `REACTION_FIELDS`, `SECONDARY_FIELDS`; types `Character`, `CharacterState`, `ActorSpec`, `ActorComponent`, `ActorComponents`, `FeelReport`, `FeelOptions`, `AnimatorComponent`, `SecondaryComponent`, `ReactionComponents`.
-
-**Movement profiles (WP 13.3)**: the registry kind `movement`, and the shooter model (Apex's) a profile gives a character.
-`defineMovement`, `getMovement`, `listMovements`, `MODEL_FIELDS`, `MOTION_FIELDS`; types `MovementProfile`, `MovementSpec`, `MovementModel`, `MovementModelSpec`, `MotionState`, `MotionFeel`.
+**Characters (WP 3.2)**: actors moved by the character controller (Rapier's, moved across then down), with an action game's feel: acceleration and skid, coyote time, a jump buffer, a variable jump, a wall jump, a dash, pushing props; the feel meter measures how one handles. A body's reactions and an actor's secondary motion as components (WP 7.8), and its actions (`actOn`, WP 13.11).
+`createCharacter`, `CHARACTER_FIELDS`, `CHARACTER_STATE_FIELDS`, `spawnActor`, `removeActor`, `measureFeel`, `reactTo`, `stepReactions`, `REACTION_FIELDS`, `SECONDARY_FIELDS`, `actOn`, `ACTIONS_FIELDS`; types `Character`, `CharacterState`, `ActorSpec`, `ActorComponent`, `ActorComponents`, `FeelReport`, `FeelOptions`, `AnimatorComponent`, `SecondaryComponent`, `ReactionComponents`, `ActionComponents`.
 
 **Levels v2 (WP 4.2)**: the hall's glyphs (gallery =, stairs ^, dais o, brazier t), ramps and daises, hull and cylinder colliders, and the surface tag underfoot.
 `surfaceAt`; types `HullCollider`, `CylinderCollider`, `RampDescriptor`, `DaisDescriptor`, `Side`.
@@ -301,8 +301,14 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Clips on actors (WP 8.9)**: the clip layer in an actor's animator as sim data, the component clips, stepped at the actor's ground speed and drawn over its body by the view; its events come as `clip`. spawnActor's `body` names the body it is drawn as (body:mannequin).
 `addClips`, `playClip`, `stopClip`, `seekClip`, `locomoteClips`, `clipLayerOf`; types `ClipsSpec`, `PuppetComponent`.
 
+**Movement profiles (WP 13.3)**: the registry kind `movement`, and the shooter model (Apex's) a profile gives a character.
+`defineMovement`, `getMovement`, `listMovements`, `MODEL_FIELDS`, `MOTION_FIELDS`; types `MovementProfile`, `MovementSpec`, `MovementModel`, `MovementModelSpec`, `MotionState`, `MotionFeel`.
+
 **The feel kit, sim-side (WP 13.4)**: the shooter model's live tuning, `movement.<group>.<field>` (a setting off its default replaces that number in every model character's model, from the next step), and an actor placed at rest (a scene's dev action: a feel course's start).
 `MOVEMENT_SETTINGS`, `movementOverrides`, `tuneCharacter`, `placeActor`; types `MovementOverride`.
+
+**Rides (WP 13.7)**: ziplines, ladders and launchers as world data (engine/world/traverse.ts), placed in a scene (engine/sim/rides.ts) and ridden by the shooter model (engine/physics/movement/ride.ts, ladder.ts): a zipline and the poles under its anchors, the redeploy balloon's line and its skydive, a ladder (or every ladder a level's ladder glyph `|` stands), a jump pad or a trampoline. Use is the button `interact`; the look's pitch picks a vertical zipline's way and a skydive's dive.
+`addZipline`, `addLadder`, `addLauncher`, `addLevelLadders`, `ridesOf`, `levelLadders`; types `ZiplineSpec`, `LadderSpec`, `LauncherSpec`, `Rides`, `RideCable`, `RideLadder`, `RideLauncher`.
 
 Pages only, from engine/index.ts:
 
@@ -314,6 +320,9 @@ Pages only, from engine/index.ts:
 
 **Input (WP 3.3)**: the devices of a page sampled into intents (keys by physical code, mouse with pointer lock and the wheel, gamepads in any slot), action maps and their presets, bindings players change and keep, prompts per device, the virtual device that __engine.input drives, and the scripted gamepad for tests.
 `createInput`, `defineActionMap`, `getActionMap`, `listActionMaps`, `SYSTEM_ACTIONS`, `RESERVED_CODES`, `createBindings`, `codeLabel`, `readKeyboardLayout`, `isCode`, `createVirtualDevice`, `connectVirtualDevice`, `createScriptedGamepad`; types `Input`, `InputOptions`, `CameraLike`, `CameraInputSample`, `ActionMap`, `ActionMapSpec`, `Bindings`, `BindingsOptions`, `BindingsStorage`, `BindingsFile`, `RebindResult`, `DeviceKind`, `VirtualDevice`, `ScriptedGamepad`, `GamepadLike`.
+
+**Aiming and look (WP 13.9)**: the point the intents' aim carries by a map's rule, and the look settings input.*.
+`aimPoint`, `screenRay`, `onFloor`, `AIM_RULES`, `AIM_RANGE`, `STICK_REACH`, `lookOptions`, `scaleLook`, `LOOK_SETTING_FIELDS`, `LOOK_SETTINGS`, `DEGREES_PER_COUNT`; types `AimRule`, `AimPose`, `AimView`, `AimDevices`, `AimRay`, `LookOptions`, `RawLook`, `ScaledLook`.
 
 **Geometry kit and level meshes (WP 2.4)**: shapes standing on the ground with UVs in metres, the geometry registry (props and levels name geometry by id), their QA measures, and a compiled level drawn as meshes.
 `boxGeometry`, `roundedBoxGeometry`, `limbGeometry`, `rampGeometry`, `frustumGeometry`, `pillarGeometry`, `pillarParts`, `ringGeometry`, `sidesThenTops`, `mergeGeometries`, `defineGeometry`, `getGeometry`, `buildGeometry`, `inspectGeometry`, `createLevelMeshes`, `LEVEL_RECIPES`; types `BoxOptions`, `RoundedBoxOptions`, `LimbOptions`, `RampOptions`, `FrustumOptions`, `PillarOptions`, `PillarPart`, `RingOptions`, `GeometryEntry`, `GeometrySpec`, `GeometryRef`, `GeometryReport`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `LevelCell`, `LevelRecipe`, `LevelShape`.
@@ -341,6 +350,12 @@ types `EngineFrame`, `FrameWorld`, `CameraPose`.
 
 **The HTML/CSS overlay (WP 6.5)**: world-anchored labels and damage numbers placed from projected coordinates each frame (three.js's CSS2DRenderer pattern), HUD lines and a crosshair over the canvas; ui.state() for tests.
 `createOverlay`, `DAMAGE_NUMBERS`, `uiState`; types `Overlay`, `OverlayOptions`, `HudOptions`, `HudPlace`, `Label`, `LabelOptions`, `DamageOptions`, `WorldPoint`, `Anchor`, `OverlayCamera`, `UiState`, `UiElementState`.
+
+**The widgets (WP 10.6)**: bars, hearts and boxes, the dialog box and the menu as HTML/CSS over the overlay, reading the page's input (its system layer) and asking the page for sound cues; a gamepad's cursor over any panel. A menu sends the picks that change play as input (`send`), so replays hold them.
+`createBar`, `createHearts`, `createBox`, `createPadCursor`, `createDialog`, `createMenu`.
+
+**The store (WP 10.9)**: what a game keeps across sessions (high scores, progress, its settings) in the page's localStorage under the game's prefix, versioned and checked on load; memory in Node and in the isolated modes.
+`createStore`, `memoryBackend`.
 
 **Lights, shadows, atmosphere and sky (WP 7.1)**: light kinds for a level's light spots, a fixed pool of point lights near the focus with a shadow budget by quality tier, and sky presets (background, dome, backdrop, sun, ambient light, fog) that a sky puts on a scene.
 `defineLight`, `defineSky`, `createSky`; types `LightEntry`, `LightSource`, `SkyEntry`, `SkySpec`, `Sky`.
@@ -371,4 +386,10 @@ types `EngineStats`.
 
 **The feel kit (WP 13.4)**: courses, scripted runs of a scene and the numbers measured on them (`node x feel`); the runner and its verdicts; the owner's feel panel and copy as profile.
 `defineCourse`, `getCourse`, `listCourses`, `METRICS`, `runCourse`, `createFeelPanel`, `tunedSpec`, `profileText`; types `Course`, `Measure`, `Metric`, `CourseResult`, `CourseSample`, `MeasureResult`, `FeelPanel`, `FeelRow`, `FeelInspector`.
+
+**Camera modes (WP 2.5, WP 3.9, WP 13.8)**: a code to a camera, each mode's factory, and a game's own.
+`readCameraCode`, `createCamera`, `createShoulderCamera`, `SHOULDER`, `createFollowCamera`, `FOLLOW_RIG`, `createFirstCamera`, `createChaseCamera`, `createViewCamera`, `followCamera`, `defineCamera`, `makePose`, `poseForward`, `poseRight`, `poseUp`, `poseTarget`; types `AnyCamera`, `AnyCameraSpec`, `ShoulderInput`, `ShoulderSpec`, `FollowInput`, `FollowSpec`, `FollowCamera`, `FollowSteps`, `CameraKindSpec`, `Camera`, `CameraInput`.
+
+**The rig a view steps (WP 13.8)**: blends on live switches, the view effects, the view settings cam.*.
+`createCameraRig`, `rigOptions`, `CAMERA_SETTINGS`, `blendCameras`, `BLEND_TIME`, `createCameraEffects`, `applyEffects`, `cameraPlayer`, `apexFov`, `EFFECTS`; types `CameraRig`, `RigOptions`, `RigInput`, `CameraPlayer`, `EffectWeights`, `EffectsFrame`.
 <!-- api-map:end -->

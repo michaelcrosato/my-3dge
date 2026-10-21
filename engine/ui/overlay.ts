@@ -6,7 +6,8 @@
  * and agents read it all through `state()` (engine/ui/state.ts) or DOM queries on `[data-ui]`.
  *
  * Elements: `[data-ui=label]` (`data-id`), `[data-ui=damage]` (`data-value`), `[data-ui=hud]` (`data-id`, and
- * `data-keyboard` for a key hint), `[data-ui=crosshair]` while it shows. Text uses the system font. The overlay's
+ * `data-keyboard` for a key hint), `[data-ui=crosshair]` while it shows; WP 10.6's widgets (engine/ui/widgets.ts,
+ * dialog.ts, menu.ts) in the HUD's places (`attach`) or over the root. Text uses the system font. The overlay's
  * stylesheet is one `<style id="ui-overlay-style">` it adds to the page (no engine module imports a `.css` file: tsx,
  * which runs every `x` command, cannot load one). Damage numbers animate with CSS keyframes, paused and driven by the
  * overlay's clock (`--ui-age`, a negative `animation-delay`), so a frame shows the same look for the same age in
@@ -98,6 +99,8 @@ export interface Overlay {
   damage(value: number | string, options: DamageOptions): void;
   /** Sets the HUD line `id` to `text`; null or '' removes it. */
   hud(id: string, text: string | null, options?: HudOptions): void;
+  /** Puts a widget's element (engine/ui/widgets.ts: a bar, hearts, a box) in the HUD place `at`, after what is there. */
+  attach(element: HTMLElement, at?: HudPlace): void;
   /** Shows or hides the crosshair at the canvas's centre. */
   crosshair(on: boolean): void;
   /** Places everything for this frame: `camera` as drawn, `dt` seconds since the last frame. */
@@ -278,6 +281,10 @@ export function createOverlay(options: OverlayOptions): Overlay {
       el.toggleAttribute('data-keyboard', hudOptions.keys === true);
       const color = hudOptions.color ?? '';
       if (line.color !== color) el.style.color = line.color = color;
+    },
+    attach(element, at = 'top-left') {
+      if (!HUD_PLACES.includes(at)) throw codeError('UI_BAD_PLACE', { id: element.dataset.id ?? '', got: JSON.stringify(at) }); // prettier-ignore
+      block(at).append(element);
     },
     crosshair(on) {
       cross.hidden = !on;

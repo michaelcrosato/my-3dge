@@ -266,6 +266,9 @@ test.describe('the box, stage 1', () => {
           out[member] = (error as Error).message;
         }
       }
+      out['actions.list'] = e.actions.list().map((row: { name: string }) => row.name).join(); // prettier-ignore
+      out['actions.run'] = e.actions.run('timeScale', { scale: 1 }).name;
+      out.bot = await Promise.resolve(() => e.bot({ to: [{ x: 1.5, z: 1.5 }] })).then((bot) => bot()).catch((error: Error) => error.message.split(':')[0]); // prettier-ignore
       out['tune.settings'] = e.tune.settings().some((row: { path: string }) => row.path === 'movement.gaits.sprint');
       out['tune.profile'] = e.tune.profile().startsWith('defineMovement("movement:playtest", {');
       out.render = (await e.render(1)).drawn;
@@ -306,6 +309,9 @@ test.describe('the box, stage 1', () => {
       'input.record': 12,
       feel: '[SIM_BAD_ARGUMENT] feel(id) got undefined: pass an actor’s id (none)',
       anim: '[SIM_BAD_ARGUMENT] anim(id) got undefined: pass an animated actor’s id (none)',
+      'actions.list': 'freeze,god,spawn,timeScale,travel', // the room has no dev action of its own
+      'actions.run': 'timeScale',
+      bot: '[SIM_NO_ACTOR] the bot has no actor to work on',
       'tune.settings': true, // the feel panel's rows: every number of the shooter model, even with no actor on it
       'tune.profile': true,
       render: true,

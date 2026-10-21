@@ -7,7 +7,8 @@
  * state` and a pure `(state) → pose`, wrapped in a `Camera` object; engine/gfx/cameras/place.ts puts a pose on a
  * three.js camera. None of it needs a GPU, so all of it is tested in Node.
  *
- * Conventions (§6.3): metres, radians, +Y up. `yaw` is the heading of the view direction, forward(ψ) = (sin ψ cos θ,
+ * Conventions (§6.3): metres, radians, +Y up. `roll` banks the picture about the view direction (+ tips its top right,
+ * a lean into a right turn; WP 13.8's effects). `yaw` is the heading of the view direction, forward(ψ) = (sin ψ cos θ,
  * sin θ, cos ψ cos θ) with θ the pitch (+ up), the same angle as the intents' `cam` (engine/input/intents.ts), so
  * `camera.yaw()` goes straight to `intents.fromCamera` and W walks away from the camera; three.js's
  * `camera.rotation.y` is ψ + π, since a camera looks down its −Z. right = forward × up = (−cos ψ, 0, sin ψ).
@@ -43,6 +44,8 @@ export interface CameraPose {
   readonly yaw: number;
   /** Up or down from level, rad: + up, −π/2 straight down. */
   readonly pitch: number;
+  /** A bank about the view direction, rad: + tips the picture's top to the right, as a lean into a right turn. */
+  readonly roll: number;
   readonly projection: Projection;
   /** Vertical field of view, degrees (`PerspectiveCamera.fov`). */
   readonly fov: number;
@@ -72,6 +75,8 @@ export interface CameraInput {
   readonly zoom?: number;
   /** 45° turns of a classic view, + raising its azimuth (the prototype's `]` key). */
   readonly turnSteps?: number;
+  /** The zoom steps a classic view's `zoom` moves through (engine/gfx/cameras/presets.ts's when absent). */
+  readonly zooms?: readonly number[];
   /** The point views and orbits follow (the hero's feet, or a point just ahead of his aim), m. */
   readonly follow?: Vec3;
 }
@@ -97,6 +102,7 @@ export interface Camera {
 export const POSE_DEFAULTS = Object.freeze({
   yaw: 0,
   pitch: 0,
+  roll: 0,
   projection: 'perspective' as Projection,
   fov: 50,
   frustumSize: 10,
@@ -138,6 +144,7 @@ export function makePose(fields: Partial<CameraPose> & { position: Vec3 }): Came
     ...rangeProblems({
       yaw: [p.yaw, -1e9, 1e9],
       pitch: [p.pitch, -Math.PI / 2, Math.PI / 2],
+      roll: [p.roll, -Math.PI / 2, Math.PI / 2],
       fov: [p.fov, 1, 179],
       frustumSize: [p.frustumSize, 1e-6, 1e9],
       zoom: [p.zoom, 1e-3, 1e3],
@@ -160,15 +167,25 @@ export function poseForward(pose: Pick<CameraPose, 'yaw' | 'pitch'>): Vec3 {
   return [Math.sin(pose.yaw) * c, Math.sin(pose.pitch), Math.cos(pose.yaw) * c];
 }
 
-/** The unit right direction on screen: forward × up, level whatever the pitch. */
-export function poseRight(pose: Pick<CameraPose, 'yaw'>): Vec3 {
-  return [-Math.cos(pose.yaw), 0, Math.sin(pose.yaw)];
+/** The unit right direction on screen: forward × up, level whatever the pitch, tipped down by a `roll` (if any). */
+export function poseRight(pose: Pick<CameraPose, 'yaw'> & { readonly pitch?: number; readonly roll?: number }): Vec3 {
+  const level: Vec3 = [-Math.cos(pose.yaw), 0, Math.sin(pose.yaw)];
+  const roll = pose.roll ?? 0;
+  if (roll === 0) return level;
+  const up = poseUp({ yaw: pose.yaw, pitch: pose.pitch ?? 0 });
+  const [c, s] = [Math.cos(roll), Math.sin(roll)];
+  return [level[0] * c - up[0] * s, level[1] * c - up[1] * s, level[2] * c - up[2] * s];
 }
 
-/** The unit up direction on screen: right × forward (the heading when the camera looks straight down). */
-export function poseUp(pose: Pick<CameraPose, 'yaw' | 'pitch'>): Vec3 {
+/** The unit up direction on screen: right × forward (the heading when the camera looks straight down), tipped right by a `roll`. */ // prettier-ignore
+export function poseUp(pose: Pick<CameraPose, 'yaw' | 'pitch'> & { readonly roll?: number }): Vec3 {
   const s = Math.sin(pose.pitch);
-  return [-Math.sin(pose.yaw) * s, Math.cos(pose.pitch), -Math.cos(pose.yaw) * s];
+  const up: Vec3 = [-Math.sin(pose.yaw) * s, Math.cos(pose.pitch), -Math.cos(pose.yaw) * s];
+  const roll = pose.roll ?? 0;
+  if (roll === 0) return up;
+  const right = poseRight({ yaw: pose.yaw });
+  const [c, r] = [Math.cos(roll), Math.sin(roll)];
+  return [up[0] * c + right[0] * r, up[1] * c + right[1] * r, up[2] * c + right[2] * r];
 }
 
 /** The point the camera looks at: `distance` along its view direction. */

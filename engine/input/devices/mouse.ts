@@ -6,7 +6,10 @@
  * `lock()` asks for pointer lock (browsers grant it only inside a click or key handler, and let Escape out of it);
  * `locked` follows the document's `pointerlockchange`. `takeLook()` and `takeZoom()` return what gathered since the
  * last call and start again from zero, once per rendered frame: look is `[right, up]` radians (screen y is down, so up
- * is −y unless `invertY`), zoom is wheel notches (+ towards the screen, as a wheel pushed forward zooms in).
+ * is −y unless `invertY`; the page's input takes counts, `lookSpeed` 1, and scales them by the view settings
+ * `input.*`, engine/input/look.ts), zoom is wheel notches (+ towards the screen, as a wheel pushed forward zooms in).
+ * `pointer()` says where the pointer is, and with an element that has a box (a canvas) where on it as `at`, from −1
+ * to 1 with +y up, as three.js's normalized device coordinates: where the pointer aims (engine/input/aim.ts).
  *
  * Invariants: a button is pressed only over the element, and released wherever it is let go; the context menu never
  * opens over the element, so the right button binds; wheel deltas in lines and pages are converted to pixels (40 and
@@ -50,12 +53,25 @@ interface MouseEventLike extends Event {
 
 /** Where the mouse device listens. */
 export interface MouseTargets {
-  /** The game's element (the canvas): presses, wheel and pointer lock happen over it. */
-  element: EventTarget & { requestPointerLock?(): unknown };
+  /** The game's element (the canvas): presses, wheel and pointer lock happen over it; its box places the pointer. */
+  element: EventTarget & {
+    requestPointerLock?(): unknown;
+    getBoundingClientRect?(): { left: number; top: number; width: number; height: number };
+  };
   /** Where releases arrive wherever the pointer is (the window). */
   target: EventTarget;
   /** The document: pointer lock changes (`pointerLockElement`). */
   document?: EventTarget & { pointerLockElement?: unknown; exitPointerLock?(): void };
+}
+
+/** Where the pointer is: client pixels, over the element or not, locked or not; `at` on the element (see the file comment). */ // prettier-ignore
+export interface MousePointer {
+  x: number;
+  y: number;
+  inside: boolean;
+  locked: boolean;
+  /** Where on the element, `[x, y]` from −1 to 1 with +y up; absent when the element has no box. */
+  at?: [number, number];
 }
 
 /** The mouse device. */
@@ -70,8 +86,8 @@ export interface MouseDevice {
   takeLook(): [number, number];
   /** The wheel notches gathered since the last call (+ zooms in); then zero. */
   takeZoom(): number;
-  /** The pointer: client pixels, whether it is over the element, whether it is locked. */
-  pointer(): { x: number; y: number; inside: boolean; locked: boolean };
+  /** The pointer: client pixels, whether it is over the element, whether it is locked, and where on the element. */
+  pointer(): MousePointer;
   /** Forgets gathered look and zoom (a blur). */
   clear(): void;
   /** Removes the listeners. */
@@ -148,7 +164,15 @@ export function attachMouse(
       zoom = 0;
       return out;
     },
-    pointer: () => ({ ...at, locked }),
+    pointer() {
+      const box = element.getBoundingClientRect?.();
+      if (!box || !(box.width > 0 && box.height > 0)) return { ...at, locked };
+      const place: [number, number] = [
+        ((at.x - box.left) / box.width) * 2 - 1,
+        1 - ((at.y - box.top) / box.height) * 2,
+      ];
+      return { ...at, locked, at: place };
+    },
     clear() {
       look = [0, 0];
       zoom = 0;

@@ -14,7 +14,7 @@ waiting on it. Unclear after a cheap test means no proven benefit: stop, record 
 and move on.
 
 ## Setup
-bash scripts/setup.sh (idempotent; the SessionStart hook runs it) installs Node 24.22.0 (.nvmrc), resolves the
+bash scripts/setup.sh (idempotent; the SessionStart hook runs it) installs Node 24.22.1 (.nvmrc), resolves the
 read-only sources, $MY3D2DGE_SRC (my-3d2dge@e37e4ee) and $SHARDFALL_SRC (shardfall@fa2dab6), cloning them into
 .cache/src-* when unset, and runs npm ci. Never edit the sources. Offline it keeps Node 22: everything runs, but Node
 goldens are recorded on 24. npm's warning that an .npmrc allow-scripts setting is ignored is expected.

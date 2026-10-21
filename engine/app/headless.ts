@@ -42,6 +42,7 @@ import { registry as sharedRegistry, sameValue, type Registry } from '../core/re
 import { isPlainObject } from '../core/schema';
 import { createSettings, defineSettings, type SettingValue } from '../core/settings';
 import { createClock, TIME_SETTINGS, type Clock } from '../core/time';
+import '../dev/actions'; // registers `__engine.actions` and `__engine.bot`
 import { createInspector, type Inspector } from '../dev/inspector';
 import { recordedRun, type InspectorHost, type RecordedRun } from '../dev/members';
 import { createStatsMeter, type RenderCounts, type StatsMeter } from '../dev/stats';
@@ -294,7 +295,7 @@ export function createAppHost<C extends object = AnyComponents, E extends EventM
             begin,
             stepped: () => view?.stepped(),
             draw: drawing && (() => drawing.draw()),
-            camera: view ? (code) => void view.setCamera(code) : undefined,
+            camera: view ? (code, blend) => void view.setCamera(code, { blend }) : undefined,
             setView: (path, value) => (drawing ? drawing.setView(path, value) : run.session.set(path, value)),
           },
           text,

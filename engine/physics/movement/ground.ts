@@ -9,10 +9,10 @@
  * 1690-1702; MIT, engine/physics/movement/NOTICE), in metres and seconds.
  *
  * The sprint: it holds while the button is held, or after a press while the move stays within `sprint.keep` of the
- * view (the sticky sprint, which a duck ends but a slide keeps), and only on the ground (or within `sprint.air` of
- * leaving it without a jump), not ducking, moving on, the move at least `sprint.input` long and within `sprint.angle`
- * of the view, and not stunned below
- * `land.sprint`. With no view (the cameras that move relative to the screen) the view is the move itself, so it
+ * view (the sticky sprint, which a duck ends but a slide keeps; none with `hold`, the player's choice of a held sprint,
+ * WP 13.9), and only on the ground (or within `sprint.air` of leaving it without a jump), not ducking, moving on, the
+ * move at least `sprint.input` long and within `sprint.angle` of the view, and not stunned below `land.sprint`. With no
+ * view (the cameras that move relative to the screen) the view is the move itself, so it
  * sprints in every direction. Ours: walking blocks the sprint, as Apex's aiming does; the sprint dips toward
  * `gaits.sprintSide` as the move turns 45° off the view. Every other gait goes at `gaits.side` and `gaits.back` of its
  * speed across and back from the view (`directionShare`; both 1 in Apex).
@@ -142,6 +142,8 @@ export interface SprintInput {
   velocity: readonly [number, number];
   held: boolean;
   pressed: boolean;
+  /** The sprint lasts only while held: no press keeps it on (the setting `input.sprint` at `hold`). */
+  hold?: boolean;
   /** It walks (blocks the sprint, ours) or anything else blocks it. */
   blocked: boolean;
   /** It may sprint off the ground: on it, or within `sprint.air` of leaving it without a jump. */
@@ -155,7 +157,7 @@ export interface SprintInput {
 export function updateSprint(m: MovementModel, motion: MotionState, input: SprintInput): boolean {
   const { wish, view, velocity, dt } = input;
   const ticks = (seconds: number) => Math.round(seconds / dt);
-  if (input.blocked) Object.assign(motion, { sticky: false, stickyLeft: 0 });
+  if (input.blocked || input.hold) Object.assign(motion, { sticky: false, stickyLeft: 0 });
   else if (input.pressed) motion.stickyLeft = Math.max(motion.stickyLeft, ticks(m.sprint.sticky));
   else if (input.held) motion.stickyLeft = Math.max(motion.stickyLeft, ticks(m.sprint.hold));
   const length = len(wish);

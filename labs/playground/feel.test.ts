@@ -6,7 +6,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { getActionMap } from '../../engine';
-import { PLAYGROUND_ACTION_MAP } from './controls';
+import { PLAYGROUND_MAPS } from './controls';
 import { FEEL_KEY, feelOpens, PLAYGROUND_FEEL_SETTINGS } from './feel';
 
 describe('the playground’s feel panel', () => {
@@ -15,6 +15,6 @@ describe('the playground’s feel panel', () => {
     expect(feelOpens(new URLSearchParams('?playground.feel=off'))).toBe(false);
     expect(feelOpens(new URLSearchParams(''))).toBe(false);
     expect(PLAYGROUND_FEEL_SETTINGS[0]).toMatchObject({ id: 'playground.feel', view: true, default: 'off' });
-    expect(Object.values(getActionMap(PLAYGROUND_ACTION_MAP).actions).flat()).not.toContain(FEEL_KEY);
+    for (const id of Object.values(PLAYGROUND_MAPS)) expect(Object.values(getActionMap(id).actions).flat()).not.toContain(FEEL_KEY); // prettier-ignore
   });
 });

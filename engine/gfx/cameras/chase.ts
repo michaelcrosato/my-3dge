@@ -8,11 +8,11 @@
  * of `CHASE_LAG` real seconds, and runs back against the view direction (`yaw`, `pitch`) for `distance`. `input.look`
  * and `input.turn` turn the view right and up; `input.zoom` steps the arm in by `ORBIT_ZOOM_STEP`.
  *
- * Walls: through the sim's read-only `QueryView` (`input.queries`, from its snapshot; gfx never imports physics/), a
- * ball of `CHASE_RADIUS` (wider than the near plane's corners) is cast from the hero's head (the pivot before its lag)
- * to the pivot, then along the arm, and stops `CHASE_SKIN` short of the first surface of `input.groups` (`world`, the
- * level, by default; `input.exclude` skips his own body). The arm snaps in at once and eases back out with a time
- * constant of `CHASE_RETURN`, never past what the casts left clear. Without `queries` nothing shortens it.
+ * Walls (engine/gfx/cameras/collide.ts): through the sim's read-only `QueryView` (`input.queries`), a ball of
+ * `CHASE_RADIUS` is swept from the hero's head (the pivot before its lag) to the pivot, then cast along the arm, and
+ * stops short of the first surface of `input.groups` (`world` by default; `input.exclude` skips his own body). The arm
+ * snaps in at once and eases back out with a time constant of `CHASE_RETURN`, never past what the casts left clear.
+ * Without `queries` nothing shortens it.
  *
  * Invariants: with `queries`, and the hero's head at least `CHASE_RADIUS` from every wall (a character's capsule is
  * wider), the camera's ball, so its near plane, never ends inside a wall, and the line from the head to the camera is
@@ -40,7 +40,8 @@
  */
 import { codeError, didYouMean } from '../../core/log';
 import { MathUtils } from '../../core/math';
-import type { QueryView } from '../../sim/queryView';
+import { COLLIDE_RADIUS, COLLIDE_RETURN, COLLIDE_SKIN, easeArm, reach, sweep, type Walls } from './collide';
+import type { EffectWeights } from './effects';
 import { ORBIT_ZOOM_STEP } from './orbit';
 import {
   approach,
@@ -65,29 +66,19 @@ export const CHASE_LIMITS = Object.freeze({ pitch: [-1.4, 1] as const, distance:
 export const CHASE_HEIGHT = 1.5;
 /** The time constant of the pivot's follow, real seconds. */
 export const CHASE_LAG = 1 / 12;
-/** The time constant of the arm easing back out after a wall, real seconds. */
-export const CHASE_RETURN = 0.3;
-/** The radius of the ball cast along the arm, m: wider than the near plane's corners (0.09 m at 60° and 21:9). */
-export const CHASE_RADIUS = 0.2;
-/** How far short of a surface the ball stops, m. */
-export const CHASE_SKIN = 0.02;
+/** The time constant of the arm easing back out after a wall, real seconds: collide.ts's `COLLIDE_RETURN`. */
+export const CHASE_RETURN = COLLIDE_RETURN;
+/** The radius of the ball cast along the arm, m: collide.ts's `COLLIDE_RADIUS`. */
+export const CHASE_RADIUS = COLLIDE_RADIUS;
+/** How far short of a surface the ball stops, m: collide.ts's `COLLIDE_SKIN`. */
+export const CHASE_SKIN = COLLIDE_SKIN;
 /** Turn rates at full `input.turn`, rad/s: `[right, up]` (the prototype's [ ] keys turn 2.2). */
 export const CHASE_TURN_SPEED = Object.freeze([2.2, 1.2] as const);
 /** The chase camera's near plane, m. */
 const NEAR = 0.05;
 
-/** The collision groups a query hits, as the `QueryView` names them. */
-export type QueryGroups = NonNullable<Parameters<QueryView['raycast']>[2]>['groups'];
-
-/** A chase camera's input: the devices' and the hero's, and the sim's queries for its walls. */
-export interface ChaseInput extends CameraInput {
-  /** The sim's read-only queries (its snapshot's `QueryView`); without them the arm passes through walls. */
-  readonly queries?: QueryView;
-  /** The groups that stop the arm (`world`, the level, by default). */
-  readonly groups?: QueryGroups;
-  /** A body the arm passes through: the hero's own, when `groups` holds his. */
-  readonly exclude?: number;
-}
+/** A chase camera's input: the devices' and the hero's, and the walls it keeps out of (collide.ts). */
+export interface ChaseInput extends CameraInput, Walls {}
 
 /** A chase camera's code as data: without the numbers it keeps the heading of the camera before it. */
 export interface ChaseSpec {
@@ -143,15 +134,6 @@ export function chaseState(options: ChaseOptions = {}): ChaseState {
   return state;
 }
 
-/** How far a ball of `CHASE_RADIUS` gets from `from` along the unit `dir`, up to `max`: `CHASE_SKIN` short of a hit. */
-function reach(input: ChaseInput, queries: QueryView, from: Vec3, dir: Vec3, max: number): number {
-  if (max < 1e-6) return max;
-  const { groups = 'world', exclude } = input;
-  const ball = { type: 'ball', radius: CHASE_RADIUS } as const;
-  const hit = queries.shapeCast(ball, from, dir, { maxDistance: max, margin: CHASE_SKIN, groups, exclude });
-  return hit ? hit.distance : max;
-}
-
 /** Steps a chase camera by one rendered frame: turned by `look` and `turn`, `zoom` on the arm, following, walls. */
 export function stepChase(state: ChaseState, input: ChaseInput, dt: number): ChaseState {
   const right = (input.look?.[0] ?? 0) + (input.turn?.[0] ?? 0) * CHASE_TURN_SPEED[0] * dt;
@@ -164,22 +146,12 @@ export function stepChase(state: ChaseState, input: ChaseInput, dt: number): Cha
   const head: Vec3 | null = f ? [f[0], f[1] + CHASE_HEIGHT, f[2]] : null;
   let pivot = head && state.pivot ? approach(state.pivot, head, 1 - Math.exp(-dt / CHASE_LAG)) : (head ?? state.pivot);
   let clear = distance;
-  const { queries } = input;
-  if (queries && pivot) {
-    if (head) {
-      const lag: Vec3 = [pivot[0] - head[0], pivot[1] - head[1], pivot[2] - head[2]];
-      const gap = Math.hypot(...lag);
-      // The lag never takes the pivot through a wall: it stops where a ball from the head would (twice the skin
-      // short, so the arm's own cast starts clear of the surface).
-      const room = gap > 1e-6 ? reach(input, queries, head, [lag[0] / gap, lag[1] / gap, lag[2] / gap], gap) : gap;
-      const t = gap > 1e-6 ? Math.max(0, room - CHASE_SKIN) / gap : 0;
-      pivot = room < gap ? [head[0] + lag[0] * t, head[1] + lag[1] * t, head[2] + lag[2] * t] : pivot;
-    }
+  if (input.queries && pivot) {
+    if (head) pivot = sweep(input, head, pivot); // the lag never takes the pivot through a wall
     const [fx, fy, fz] = poseForward({ yaw, pitch });
-    clear = reach(input, queries, pivot, [-fx, -fy, -fz], distance);
+    clear = reach(input, pivot, [-fx, -fy, -fz], distance);
   }
-  const eased = state.arm + (distance - state.arm) * (1 - Math.exp(-dt / CHASE_RETURN));
-  return { ...state, yaw, pitch, distance, pivot, arm: Math.min(clear, eased, distance) };
+  return { ...state, yaw, pitch, distance, pivot, arm: easeArm(state.arm, distance, clear, dt) };
 }
 
 /** The chase camera's pose: `arm` metres back from the pivot along its view direction, looking at the pivot. */
@@ -286,6 +258,10 @@ export interface FollowCamera<T extends string, S, I extends CameraInput> extend
   'type' | 'update' | 'spec'
 > {
   readonly type: T;
+  /** The view effects it takes (engine/gfx/cameras/effects.ts); none when absent. */
+  readonly effects?: EffectWeights;
+  /** A wall may stand between it and the hero for a moment (engine/gfx/cameras/collide.ts's `moveCamera`): the view fades it. */ // prettier-ignore
+  readonly fade?: boolean;
   /** Steps the camera by one rendered frame (`dt` real seconds) and returns its new pose. */
   update(input?: I, dt?: number): CameraPose;
   /** The camera as its code's data. */
@@ -301,16 +277,22 @@ export interface FollowSteps<St, S, I> {
   describe(spec: S, pose: CameraPose): string;
 }
 
-/** Wraps a camera's pure steps and first state in a camera, as `cameraFrom` does for the cameras codes.ts lists. */
+/**
+ * Wraps a camera's pure steps and first state in a camera, as `cameraFrom` does for the cameras codes.ts lists; it
+ * takes the view `effects` (engine/gfx/cameras/effects.ts) and `fade` (see `FollowCamera`) when given. A game's own
+ * camera is made this way.
+ */
 export function followCamera<T extends string, St, S, I extends CameraInput>(
   type: T,
   first: St,
   steps: FollowSteps<St, S, I>,
+  extras: { readonly effects?: EffectWeights; readonly fade?: boolean } = {},
 ): FollowCamera<T, S, I> {
   let state = first;
   let pose = steps.pose(state);
   return {
     type,
+    ...extras,
     update(input = {} as I, dt = 0) {
       refuse(`${type} camera update`, rangeProblems({ dt: [dt, 0, 3600] }));
       state = steps.step(state, input, dt);

@@ -4,7 +4,7 @@
  * system is a named function in a phase.
  *
  * The order of one step (`STEP_ORDER`): the systems of the phases `intents` (read the step's intents into
- * components), `ai` (decisions), `anim` (timelines, events, root motion; WP 3.7), `physics` (the Rapier step; WP
+ * components), `ai` (decisions; skipped while the setting `ai.frozen` is on), `anim` (timelines, events, root motion; WP 3.7), `physics` (the Rapier step; WP
  * 3.1), `readback` (physics results into components), then the engine's `timers` stage (due timer callbacks,
  * engine/core/timers.ts), the `rules` phase (hits, damage, spawns, despawns), and the step's boundary: queued spawns,
  * then queued despawns, then the queued events, delivered in emit order (engine/sim/world.ts).
@@ -44,6 +44,19 @@ export const PHASES = ['intents', 'ai', 'anim', 'physics', 'readback', 'rules'] 
 
 /** A phase of the step. */
 export type Phase = (typeof PHASES)[number];
+
+/** The setting that freezes the AI: while it is on, the step skips the phase `ai` (engine/sim/world.ts). */
+export const AI_FROZEN = 'ai.frozen';
+
+/** `ai.frozen`'s declaration, made with the dev actions (engine/sim/devActions.ts: `freeze`). */
+export const AI_FROZEN_SETTINGS = {
+  [AI_FROZEN]: {
+    type: 'boolean',
+    default: false,
+    description:
+      'Freezes the AI: while on, each step skips the systems of the phase ai (the dev action freeze). Recorded: it changes play.',
+  },
+} as const;
 
 /** One step, in order: the phases, the engine's stages (`timers`, `spawns`, `despawns`, `events`) among them. */
 export const STEP_ORDER = [

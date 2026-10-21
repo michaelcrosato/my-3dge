@@ -3,7 +3,7 @@
  * returning it and a different one refused; `describe` lists the kind's fields and ids; a set directory's files join
  * as tools/anim/repack.ts joins them (the Quaternius set, read both ways); `defineSetBuild` registers the build of a
  * set's rest body, once; a `ClipLayerPool` loads each set once, keeps its layers' make, and loads each layer from the
- * data at every `get`.
+ * data at every `get`; `legsHeld` says how much of the legs a layer's clips hold (WP 13.10).
  */
 import { describe, expect, it } from 'vitest';
 import { createRegistry } from '../../core/registry';
@@ -18,6 +18,7 @@ import {
   defineSetBuild,
   emptyClipState,
   getClipSet,
+  legsHeld,
 } from './clipsets';
 import { join } from 'node:path';
 
@@ -96,5 +97,24 @@ describe('ClipLayerPool', () => {
     expect(pool.get(1, { ...data, ik: false }, 'build:heroic')).not.toBe(layer); // another make
     pool.prune(() => false);
     expect(pool.get(1, data, 'build:heroic')).not.toBe(layer);
+  });
+});
+
+describe('legsHeld', () => {
+  it('holds no leg idle or under an upper-body clip, and all of them once a full-body clip is in', () => {
+    const registry = createRegistry();
+    defineClipSet(set(), { registry });
+    const layer = new ClipLayerPool(registry).get(1, { sets: ['clipset:test'], ik: true, blade: 0, state: emptyClipState() }, 'build:heroic'); // prettier-ignore
+    expect(legsHeld(layer)).toBe(0);
+    layer.play('Wave', { mask: 'upper', walk: true });
+    for (let i = 0; i < 12; i++) layer.step({ groundSpeed: 0 });
+    expect(legsHeld(layer)).toBe(0);
+    layer.play('Stand', { loop: true });
+    layer.step({ groundSpeed: 0 });
+    const fading = legsHeld(layer);
+    expect(fading).toBeGreaterThan(0);
+    expect(fading).toBeLessThan(1);
+    for (let i = 0; i < 30; i++) layer.step({ groundSpeed: 0 });
+    expect(legsHeld(layer)).toBe(1);
   });
 });

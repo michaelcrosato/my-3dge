@@ -1,10 +1,11 @@
 /**
  * @file Effector-space authoring (PLAN.md WP 3.6, ADR-0009, Appendix C): a pose is written as targets in the
  * character's own terms and solved onto the rotation skeleton. `B(f, r, u)` writes a point or a direction as metres
- * forward, right and up (a three.js `Vector3` in the model frame), `Sided` holds one value per side, `turnRight`
- * turns toward the right hand. The solvers place a `Rig`'s joints on such targets: `solveSpine` (lean, twist, head,
- * level shoulders), `solveArm`, `solveLeg` (the sole on its target, the foot flat within the ankle's range, the toes
- * on the floor) and `holdAlong` (a held weapon's blade). Effector tables (poses.ts, locomotion.ts) are written with
+ * forward, right and up (a three.js `Vector3` in the model frame), `Sided` holds one value per side, `turnRight` turns
+ * toward the right hand. The solvers place a `Rig`'s joints on such targets: `solveSpine` (lean, twist, head, level
+ * shoulders), `solveArm`, `solveLeg` (the sole on its target, the foot flat within the ankle's range, the toes on the
+ * floor; a `plantedStride` build's foot rolls on its ball and its heel, its ankle freer as its knee bends:
+ * `ankleLimit`) and `holdAlong` (a held weapon's blade). Effector tables (poses.ts, locomotion.ts) are written with
  * `B`, so each number reads as my-3d2dge wrote it; humanoid.ts runs the solvers.
  *
  * Invariants:
@@ -28,7 +29,7 @@ import { MathUtils, Matrix4, Quaternion, Vector3 } from '../core/math';
 import { forwardKinematics, jointPosition, jointRotation, type WorldPose } from './fk';
 import { twoBone, twoBoneRot } from './ik';
 import type { Pose } from './pose';
-import { jointIndex, socketIndex, type Skeleton } from './skeleton';
+import { jointIndex, PROPORTIONS, socketIndex, type Skeleton } from './skeleton';
 
 /** A side of the body. */
 export type LimbSide = 'L' | 'R';
@@ -84,7 +85,21 @@ export const SOLVE = {
   liftHeight: 0.0625,
   /** The most the toes bend up against the floor, radians (60°). */
   toeBend: (60 * Math.PI) / 180,
+  /** A planted build's (builds.ts `plantedStride`) ankle bends up further by this share of its knee's bend (new): a
+   * bent knee frees the calf, so a standing or crouching foot stays flat and a straight leg's push-off lifts the heel… */
+  kneeDorsiflexion: 0.25,
+  /** …up to this, radians (25°). */
+  dorsiflexionMax: (25 * Math.PI) / 180,
+  /** A planted build's swinging toes stay this far over the floor, metres, faded in as the sole lifts… */
+  clearance: 0.015,
+  /** …the ankle bending up for it this far at most, radians (30°). */
+  swingBend: (30 * Math.PI) / 180,
 } as const;
+
+/** The most a `plantedStride` build's foot bends up from its shin before the heel lifts, its knee bent `knee` rad. */
+export function ankleLimit(knee: number): number {
+  return Math.min(SOLVE.dorsiflexionMax, SOLVE.dorsiflexion + SOLVE.kneeDorsiflexion * Math.max(0, knee));
+}
 
 /** What the solvers work on: a skeleton, a pose and its FK, and where the root sits in the rig frame. */
 export interface Rig {
@@ -96,7 +111,7 @@ export interface Rig {
 }
 
 /** Scratch objects, so a solve allocates little. */
-const v = Array.from({ length: 10 }, () => new Vector3());
+const v = Array.from({ length: 14 }, () => new Vector3());
 const q = Array.from({ length: 8 }, () => new Quaternion());
 /** A joint's rotation at rest: none. */
 const STRAIGHT = new Quaternion();
@@ -186,35 +201,71 @@ export function relaxHand(rig: Rig, side: LimbSide): void {
 }
 
 /**
- * One leg, the sole under its ankle onto `sole` (rig-local, before `size`). my-3d2dge's leg (hip to sole, no ankle)
- * gives the shin's direction; a planted foot lies flat while the ankle allows (`SOLVE.dorsiflexion`,
- * `plantarflexion`) and tips with the shin past that, pivoting on its contact socket, and a lifted one follows the
- * shin; the toes bend up so their tips rest on the floor, as far as the ball's height allows. Runs FK.
+ * One leg, the sole under its ankle onto `target` (rig-local, before `size`), drawn toward the hip as far as the knee's
+ * least bend `kick` takes (a planted swing's heel kick, locomotion.ts `gaitKnee`). my-3d2dge's leg (hip to sole, no
+ * ankle) gives the shin's direction; a planted foot lies flat while the ankle allows (`SOLVE.dorsiflexion`,
+ * `plantarflexion`) and tips with the shin past that, pivoting on its contact socket (with `roll`, a `plantedStride`
+ * build on its feet: on its ball as the heel lifts and on its heel as the toes rise, settled over a few solves, its
+ * ankle allowed `ankleLimit` up as far as it is in its `stride`, 0 to 1; lifted, as level as the ankle allows, so a
+ * swing's toes clear the floor), and a lifted one follows the shin; the toes bend up so their tips rest on the floor,
+ * as far as the ball's height allows. Runs FK.
  */
-export function solveLeg(rig: Rig, side: LimbSide, sole: Vector3): void {
+export function solveLeg(rig: Rig, side: LimbSide, target: Vector3, roll = false, stride = 0, kick = 0): void {
   const { pose: P, world: W, skeleton } = rig;
   const b = skeleton.build;
   const s = b.size;
   const L = SOLVE.legPole;
   const pole = B(L[0], sideSign(side) * L[1], L[2], v[0]);
   const hip = rigFromWorld(rig, jointPosition(W, J.thigh[side], v[1]), v[1]);
-  twoBone(hip, v[2].copy(sole).multiplyScalar(s), b.legUpper * s, b.legLower * s, pole, pair);
+  const [upper, lower] = [b.legUpper * s, b.legLower * s];
+  const sole = v[13].copy(target);
+  const leg = v[2].copy(sole).multiplyScalar(s).sub(hip);
+  const most = Math.sqrt(upper * upper + lower * lower + 2 * upper * lower * Math.cos(kick)); // the knee bent `kick`
+  if (kick > 0 && leg.length() > most)
+    sole
+      .copy(hip)
+      .addScaledVector(leg, most / leg.length())
+      .divideScalar(s);
+  twoBone(hip, v[2].copy(sole).multiplyScalar(s), upper, lower, pole, pair);
   const shin = v[3].subVectors(pair[1], pair[0]).normalize();
-  const tilt = Math.atan2(-shin.z, -shin.y);
-  const pitch = tilt - MathUtils.clamp(tilt, -SOLVE.plantarflexion, SOLVE.dorsiflexion);
   const planted = 1 - MathUtils.clamp(sole.y / SOLVE.liftHeight, 0, 1);
-  const flat = q[2].setFromAxisAngle(X_AXIS, pitch);
-  const foot = q[3].setFromUnitVectors(DOWN, shin).slerp(flat, planted);
-  // a heel lifting pivots on the contact socket, not under the ankle: the sole rises by what the socket would sink
-  const contact = v[4].set(0, 0, skeleton.socketOffsets[socketIndex(`contact${side}`) * 3 + 2]).applyQuaternion(foot);
-  const raised = v[9].set(0, (Math.max(0, -contact.y) * planted) / s, 0).add(sole);
-  twoBoneRot(skeleton, P, W, `foot${side}`, rigToWorld(rig, raised, v[9]), {
-    pole: pole.applyQuaternion(P.rootRot),
-    rotation: q[4].copy(P.rootRot).multiply(foot),
-    offset: v[5].set(0, -b.ankleHeight * s, 0),
-  });
-  // the toes bend up against the floor, so their tips rest on it, as far as the ball's height allows
+  const foot = q[3];
+  // a rolling foot turns about its ball or its heel (below), which moves the shin: a few solves settle its bend
+  let [knee, end] = [pair[0], pair[1]];
+  for (let i = 0; i < (roll ? 3 : 1); i++) {
+    const tilt = Math.atan2(-shin.z, -shin.y);
+    const bend = stride > 0 ? v[11].subVectors(knee, hip).angleTo(v[12].subVectors(end, knee)) : 0; // the knee's
+    const up = MathUtils.lerp(SOLVE.dorsiflexion, ankleLimit(bend), stride);
+    const pitch = tilt - MathUtils.clamp(tilt, -SOLVE.plantarflexion, up);
+    const flat = q[2].setFromAxisAngle(X_AXIS, pitch);
+    foot.setFromUnitVectors(DOWN, shin).slerp(flat, roll ? 1 : planted);
+    // a heel lifting pivots on the contact socket, not under the ankle: the sole rises by what the socket would sink;
+    // a rolling foot lifts off the ball and its toes rise off the heel, each staying where it lies with the foot flat
+    const contact = v[4].set(0, 0, skeleton.socketOffsets[socketIndex(`contact${side}`) * 3 + 2]).applyQuaternion(foot); // prettier-ignore
+    const raised = v[9].set(0, (Math.max(0, -contact.y) * planted) / s, 0);
+    if (roll) {
+      const ball = v[10].fromArray(skeleton.offsets, J.toe[side] * 3).sub(v[4].set(0, -b.ankleHeight * s, 0));
+      const pivot = pitch > 0 ? ball : ball.set(0, 0, -PROPORTIONS.heel * b.footLength * s);
+      raised
+        .copy(pivot)
+        .negate()
+        .applyQuaternion(foot)
+        .add(pivot)
+        .multiplyScalar(planted / s);
+    }
+    raised.add(sole);
+    twoBoneRot(skeleton, P, W, `foot${side}`, rigToWorld(rig, raised, v[9]), {
+      pole: v[8].copy(pole).applyQuaternion(P.rootRot),
+      rotation: q[4].copy(P.rootRot).multiply(foot),
+      offset: v[5].set(0, -b.ankleHeight * s, 0),
+    });
+    if (!(planted > 0 && pitch !== 0)) break; // flat: nothing turned about the ball or the heel
+    [end, knee] = [rigFromWorld(rig, jointPosition(W, `foot${side}`, v[6]), v[6]), rigFromWorld(rig, jointPosition(W, `shin${side}`, v[7]), v[7])]; // prettier-ignore
+    shin.subVectors(end, knee).normalize();
+  }
   const toe = J.toe[side];
+  if (roll && planted < 1) clearToes(rig, side, foot, (1 - planted) * SOLVE.clearance);
+  // the toes bend up against the floor, so their tips rest on it, as far as the ball's height allows
   const tip = v[6].fromArray(skeleton.tips, toe * 3);
   const [reach, rest] = [Math.hypot(tip.y, tip.z), Math.atan2(-tip.y, tip.z)];
   const ball = rigFromWorld(rig, jointPosition(W, toe, v[7]), v[7]).y;
@@ -225,6 +276,32 @@ export function solveLeg(rig: Rig, side: LimbSide, sole: Vector3): void {
     P.setRotation(toe, q[5].setFromAxisAngle(X_AXIS, -bend));
     forwardKinematics(skeleton, P, W);
   }
+}
+
+/**
+ * A swinging foot of `rig` on `side`, turned `foot` in the rig frame and placed by `solveLeg`, bends up about its sole
+ * as far as its toe tip needs to stand `need` over the floor, `SOLVE.swingBend` at most. Runs FK when it turns it.
+ */
+function clearToes(rig: Rig, side: LimbSide, foot: Quaternion, need: number): void {
+  const { pose: P, world: W, skeleton } = rig;
+  const s = skeleton.build.size;
+  const toe = J.toe[side];
+  const sole = v[6].set(0, -skeleton.build.ankleHeight * s, 0);
+  const tip = v[7]
+    .fromArray(skeleton.offsets, toe * 3)
+    .add(v[8].fromArray(skeleton.tips, toe * 3))
+    .sub(sole); // from the sole
+  const at = rigFromWorld(rig, v[8].copy(sole).applyQuaternion(jointRotation(W, `foot${side}`, q[5])).add(jointPosition(W, `foot${side}`, v[9])), v[8]); // prettier-ignore
+  const height = (turn: number) => at.y + v[9].copy(tip).applyAxisAngle(X_AXIS, -turn).applyQuaternion(foot).y;
+  if (height(0) >= need) return;
+  let [low, high] = [0, SOLVE.swingBend];
+  for (let i = 0; i < 10; i++) [low, high] = height((low + high) / 2) < need ? [(low + high) / 2, high] : [low, (low + high) / 2]; // prettier-ignore
+  foot.multiply(q[5].setFromAxisAngle(X_AXIS, -high));
+  twoBoneRot(skeleton, P, W, `foot${side}`, rigToWorld(rig, at.divideScalar(s), v[9]), {
+    pole: v[10].copy(B(SOLVE.legPole[0], sideSign(side) * SOLVE.legPole[1], SOLVE.legPole[2], v[10])).applyQuaternion(P.rootRot), // prettier-ignore
+    rotation: q[4].copy(P.rootRot).multiply(foot),
+    offset: sole,
+  });
 }
 
 /**

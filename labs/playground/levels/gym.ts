@@ -43,7 +43,7 @@ export interface GymRect {
 }
 
 /** What a feature measures (docs/PLAYGROUND.md §2.3). */
-export type GymKind = 'strip' | 'mantle' | 'fence' | 'climb' | 'slide' | 'steps' | 'slope' | 'tower' | 'gap' | 'crawl';
+export type GymKind = 'strip' | 'mantle' | 'fence' | 'climb' | 'slide' | 'steps' | 'slope' | 'tower' | 'gap' | 'crawl' | 'zipline' | 'balloon' | 'launcher'; // prettier-ignore
 
 /** A calibrated feature of the gym. */
 export interface GymFeature {
@@ -142,6 +142,37 @@ const GAPS = [2, 3, 4, 5, 6, 7, 8, 9] as const;
 /** The gap lane's platforms' height (m), and the tower's. */
 const [GAP_TOP, TOWER_TOP] = [1.5, 6];
 
+/** Apex's gravity (m/s²), which the launchers' heights are reached under. */
+const G = 19.05;
+
+/**
+ * The tower's zipline (m): from a pulley 2.5 m up a pole on the tower's top, `long` metres down to one 2.5 m up a pole
+ * near the south wall, at `toZ`, falling `fall` metres on the way (docs/PLAYGROUND.md §2.3: 40 m).
+ */
+const ZIP = { from: [29, TOWER_TOP + 2.5, 63.2], long: 40, fall: 6, toZ: 98.6 } as const;
+
+/** The tower's zipline, from its top's pulley to the south one (engine/world/traverse.ts's spec). */
+export const GYM_ZIPLINE = {
+  feet: [TOWER_TOP, 0], // its first pole stands on the tower
+  from: ZIP.from,
+  to: [mm(ZIP.from[0] - Math.sqrt(ZIP.long ** 2 - ZIP.fall ** 2 - (ZIP.toZ - ZIP.from[2]) ** 2)), ZIP.from[1] - ZIP.fall, ZIP.toZ], // prettier-ignore
+} as const;
+
+/**
+ * The redeploy balloon: a vertical line from the floor up to the balloon (docs/PLAYGROUND.md §2.2's stands 60 m up on
+ * the hill; the gym's 90 m, so a course glides, then dives to 35 m/s, before the landing pose takes over at 30 m).
+ */
+export const GYM_BALLOON = { from: [16, 0, 52], to: [16, 90, 52], balloon: true } as const;
+
+/**
+ * The launchers and the heights they throw to (m): a jump pad flush with the floor, and a trampoline whose mat stands
+ * 0.5 m up against the tower's west face, so a walk off the tower's top drops onto it from 5.5 m.
+ */
+export const GYM_LAUNCHERS = [
+  { at: [23.25, 0, 88.25], size: [1.5, 1.5], velocity: [0, Math.sqrt(2 * G * 6.5), 0], mesh: 'pad', height: 6.5 },
+  { at: [25.5, 0.5, 62], size: [3, 3], reach: 0.6, velocity: [0, Math.sqrt(2 * G * 2), 0], bounce: 0.9, mesh: 'trampoline', solid: true, height: 2 }, // prettier-ignore
+] as const;
+
 /**
  * The crawl (m): a tunnel `clear` high inside, `long` and `wide`, its walls `wall` high with the roof slab (`slab`
  * thick) laid on them, and a bar whose underside is `bar` up, on two posts `post` high. Apex's crouched hull is 1.19 m
@@ -208,7 +239,16 @@ export const GYM_FEATURES: readonly GymFeature[] = [
       { char: r, x: 13 + 7 * k, z: 60, w: 3, d: 4 },
     ]),
   ),
-  feature('tower', TOWER_TOP, `Tower ${TOWER_TOP} m`, TOWER_TOP, [{ char: 'T', x: 27, z: 60, w: 4, d: 4 }]),
+  feature('tower', TOWER_TOP, `Tower ${TOWER_TOP} m`, TOWER_TOP, [
+    { char: 'T', x: 27, z: 60, w: 4, d: 4 },
+    { char: '|', x: 28.5, z: 59.5, w: 1, d: 0.5 }, // the ladder up its north face (the engine's ladder glyph)
+  ]),
+  feature('zipline', ZIP.long, `Zipline ${ZIP.long} m`, GYM_ZIPLINE.to[1], [{ char: '', x: Math.floor(GYM_ZIPLINE.to[0] * 2) / 2, z: 98, w: 1, d: 0.5 }]), // prettier-ignore
+  feature('balloon', GYM_BALLOON.to[1], `Balloon ${GYM_BALLOON.to[1]} m`, 2, [{ char: '', x: 15.5, z: 51.5, w: 1, d: 1 }]), // prettier-ignore
+  ...GYM_LAUNCHERS.map(
+    ({ at, size, mesh, height }) =>
+    feature('launcher', height, `${mesh === 'pad' ? 'Jump pad' : 'Trampoline'} ${height} m`, at[1] + 1, [{ char: '', x: at[0] - size[0] / 2, z: at[2] - size[1] / 2, w: size[0], d: size[1] }]), // prettier-ignore
+  ),
   ...gapLane(),
   feature('crawl', GYM_CRAWL.clear, `Crawl ${GYM_CRAWL.clear} m`, GYM_CRAWL.clear + GYM_CRAWL.slab, [
     { char: 'W', x: 6, z: 70, w: 0.5, d: GYM_CRAWL.long },

@@ -84,9 +84,12 @@ defineMember('camera.get', {
 });
 
 defineMember('camera.set', {
-  help: 'Switches to the camera a code names (cam=topdown, cam=iso,45,2, cam3=orbit, cam3=fly); view only, never recorded; returns camera.get().',
-  args: { code: { type: 'string', required: true, description: 'A camera code: cam=<view>[,…] or cam3=<type>[,…].' } },
-  impl: (h, code: string) => viewOf(h, 'camera.set').setCamera(code),
+  help: 'Switches to the camera a code names (cam=topdown, cam=iso,45,2, cam3=shoulder, cam3=fly) at once, or blending over cam.blend seconds with { blend: true } as the page\'s live switches do; view only, never recorded; returns camera.get().', // prettier-ignore
+  args: {
+    code: { type: 'string', required: true, description: 'A camera code: cam=<view>[,…] or cam3=<type>[,…].' },
+    options: { type: 'object', default: {}, description: '{ blend }: true blends into it (the view setting cam.blend’s seconds) instead of cutting.' }, // prettier-ignore
+  },
+  impl: (h, code: string, options: { blend?: boolean }) => viewOf(h, 'camera.set').setCamera(code, options),
 });
 
 defineMember('scene.dump', {
@@ -110,7 +113,7 @@ defineMember('replay', {
       type: 'object',
       default: {},
       description:
-        '{ every, until, draw, views }: hash every step; stop after until steps (with the state and trace); draw every n-th step (0: never); [[step, { cam, set }]] view changes.',
+        "{ every, until, draw, views }: hash every step; stop after until steps (with the state and trace); draw every n-th step (0: never); [[step, { cam, blend, set }]] view changes (blend: as the page's live switch).",
     },
   },
   impl: (h, text: string, options: PlayIntoOptions) => app(h).replay(text, options),

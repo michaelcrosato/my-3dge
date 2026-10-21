@@ -62,7 +62,7 @@ defineCourse('course:playground-superglide', {
     return [
       { name: `${name}: speed`, metric: 'speed', from: at + crouch + 2, to: at + crouch + 12, reference: glides ? GLIDE : SPRINT, tolerance: { share: 0.02 } }, // prettier-ignore
       { name: `${name}: hopped out`, metric: 'grounded', from: at + crouch + 15, to: at + crouch + 15, reference: 0, tolerance: { abs: 0 } }, // prettier-ignore
-      ...bodyBounds(at + 2, { to: at + RUN - 1, label: name }),
+      ...bodyBounds(at + 2, { to: at + RUN - 1, label: name, holds: true }),
       ...cameraBounds(at + 2, { to: at + RUN - 1, label: name }),
     ];
   }),
@@ -77,7 +77,7 @@ defineCourse('course:playground-mantle-boost', {
   measures: [
     { name: 'speed', metric: 'speed', from: LATE + 2, to: LATE + 12, reference: GLIDE, tolerance: { share: 0.02 } },
     { name: 'rise', metric: 'apex', from: LATE, to: RUN - 1, reference: 1.4224, tolerance: { abs: 0.02 } },
-    ...bodyBounds(2, { to: RUN - 1 }),
+    ...bodyBounds(2, { to: RUN - 1, holds: true }),
     ...cameraBounds(2, { to: RUN - 1 }),
   ],
 });

@@ -9,7 +9,7 @@
  * move (engine/physics/move.ts's `moveCharacter`: across then down, its own steps and snap), `settle`, then walls,
  * pushes and the ground probe. Its `state` (`CHARACTER_STATE_FIELDS`) is plain data. Pushing shares momentum (an
  * inelastic collision of a `push`-kg mass); walls stop the velocity going into them, slopes do not; kinematic floors
- * carry it exactly (`carried`); idle on fixed ground it skips the controller (ADR-0020 amendments 3 and 5). A
+ * carry it exactly (engine/physics/carry.ts); idle on fixed ground it skips the controller (ADR-0020 amendments 3 and 5). A
  * character that `shoves` a group (the box's hero, the crowd) moves as if those bodies were not there, and its capsule
  * pushes them aside in the physics step, as the prototype's hero shoved monsters (ADR-0020 amendment 9). A character
  * given a movement profile, `createCharacter({ movement: 'movement:apex' })`, takes its settings and, with a model,
@@ -45,9 +45,11 @@ import { handleOf } from './capture';
 import { feetOf } from './characterBody';
 import { GROUP_NAMES } from './groups';
 import { settle, steer } from './feel';
-import { halfHeightOf, isWall, moveCharacter, partsOf, sink, type CharacterMove } from './move';
+import { carried } from './carry';
+import { halfHeightOf, isWall, moveCharacter, partsOf, type CharacterMove } from './move';
 import { MODEL_FIELDS, type MotionState } from './movement/model';
 import { applyMovement } from './movement/profile';
+import { launch, NO_RIDES, type Rides } from './movement/ride';
 import './movement/profiles';
 import { settleMotion, steerMotion } from './movement/steer';
 import { check, type Vec3Like } from './queries';
@@ -198,6 +200,8 @@ export interface CharacterInput {
   /** The shooter model's: the sprint button is held, went down this tick, the walk or the crouch button is held. */
   sprint?: boolean;
   sprintPressed?: boolean;
+  /** The shooter model's: the sprint lasts only while held, no press keeping it on (a player's held sprint, WP 13.9). */
+  sprintHold?: boolean;
   walk?: boolean;
   crouch?: boolean;
   /** The shooter model's: the crouch toggle went down this tick (it crouches until pressed again or stood up). */
@@ -208,6 +212,10 @@ export interface CharacterInput {
   frame?: number;
   /** The shooter model's: a yaw to face (the look's or the aim's); absent, it faces where it moves. */
   face?: number;
+  /** The shooter model's: the view's pitch (rad, up above 0): which way a vertical zipline goes, how steep a skydive. */
+  pitch?: number;
+  /** The shooter model's: the use button went down this tick (a zipline or a ladder in reach takes it). */
+  usePressed?: boolean;
 }
 
 /** What `stepCharacter` needs beside the character: the step length, the gravities and the one-way platforms. */
@@ -220,6 +228,8 @@ export interface StepOptions {
   worldGravity?: number;
   /** Bodies that are one-way platforms. */
   oneWay?: ReadonlySet<number>;
+  /** The world's ziplines, ladders and launchers (engine/sim/rides.ts); none when absent. */
+  rides?: Rides;
 }
 
 /** What one tick did. */
@@ -234,6 +244,8 @@ export interface CharacterStep {
   dashed: boolean;
   /** False when it stood idle on fixed ground and skipped the controller. */
   moving: boolean;
+  /** A launcher set it off this tick (engine/physics/movement/ride.ts's `launch`). */
+  launched: boolean;
 }
 
 /** How far below the skin the ground probe looks (m). */
@@ -264,11 +276,13 @@ export function stepCharacter(
   const world = rapierOf(physics);
   const { rigid } = partsOf(world, body, 'stepCharacter(body)');
   const g = character.characterGravity ?? options.gravity;
+  const rides = options.rides ?? NO_RIDES;
+  const launched = rides.launchers.length > 0 && launch(rides, feetOf(physics, body, character).toArray(), character, state, motion, dt, g); // prettier-ignore
   const wasGrounded = state.grounded;
   const model = character.movement !== undefined;
   check(!model || motion !== undefined, 'stepCharacter(motion)', motion, 'the character’s MotionState (createMotionState(), the component motion an actor keeps): it has a movement model'); // prettier-ignore
   const { oneWay } = options;
-  const plan = model ? steerMotion(character, state, motion!, input, dt, g, roomOf(physics, body, character, oneWay)) : steer(character, state, input, dt, g); // prettier-ignore
+  const plan = model ? steerMotion(character, state, motion!, input, dt, g, roomOf(physics, body, character, oneWay), rides) : steer(character, state, input, dt, g); // prettier-ignore
   if (model) fitHull(physics, body, character, motion!, !wasGrounded && !state.grounded, oneWay);
   const still = Math.hypot(state.vx, state.vz) < 1e-3 && state.vy <= 0 && state.vy > -g * dt * 1.5;
   const idle = wasGrounded && still && !plan.jumped && !plan.dashing && fixedBody(world, state.ground);
@@ -294,52 +308,7 @@ export function stepCharacter(
   afterMove(physics, world, body, character, state, move, options);
   const { moved } = move;
   rigid.setLinvel({ x: moved.x / dt, y: moved.y / dt, z: moved.z / dt }, true);
-  return { desired: plan.desired, moved, jumped: plan.jumped, landed, dashed: plan.dashed, moving: !idle };
-}
-
-/**
- * Runs `move` with the carry of the kinematic body `floor` (where the step takes the point under the feet: turned
- * about its centre of mass and moved, as Rapier integrates it; zero for any other floor or none), that body's
- * velocities held at zero meanwhile, so Rapier's kinematic friction adds nothing. `move` gets the carry across; its
- * rise or sink is added after, since moving up or down through the controller ends on the floor where it is now: the
- * floor then rose into the rider, or sank away from it. A rising floor lifts it unchecked (a ceiling crushes it, as
- * the floor would anyway); a sinking one takes it down as far as anything else under it allows (`sink`). Rapier's
- * friction alone acts on each leg that ends within its prediction distance of the floor, so it carried 0, 1 or 2
- * times a tick: a rider slipped 0.1 to 0.8 m over a 6 m ride, lost the ground for 47 to 184 ticks of 480 on a lift
- * going down, and was thrown off floors that turned, sank as they went or ran fast (WP 4.1, Rapier 0.21). Carried
- * this way it keeps its place within 0.3 mm and the ground every tick: across, up and down at up to 5 m/s, and
- * turning at up to 3 rad/s (character.test.ts).
- */
-function carried(
-  physics: Physics,
-  body: number,
-  character: Character,
-  floor: number,
-  options: StepOptions,
-  move: (carry: Vector3) => CharacterMove,
-): CharacterMove {
-  const world = rapierOf(physics);
-  const rigid = floor >= 0 ? world.bodies.get(handleOf(floor)) : null;
-  if (!rigid?.isKinematic()) return move(new Vector3());
-  const [linear, angular, com] = [rigid.linvel(), rigid.angvel(), rigid.worldCom()];
-  const carry = new Vector3(linear.x, linear.y, linear.z).multiplyScalar(options.dt);
-  const turn = new Vector3(angular.x, angular.y, angular.z).multiplyScalar(options.dt);
-  const angle = turn.length();
-  if (angle > 0) {
-    const arm = feetOf(physics, body, character).sub(com);
-    carry.add(arm.clone().applyAxisAngle(turn.divideScalar(angle), angle).sub(arm));
-  }
-  const rise = carry.y;
-  rigid.setLinvel({ x: 0, y: 0, z: 0 }, false);
-  rigid.setAngvel({ x: 0, y: 0, z: 0 }, false);
-  try {
-    const made = move(carry.setY(0));
-    made.moved.y += rise < 0 ? sink(world, body, character, rigid, rise, options.oneWay) : rise;
-    return made;
-  } finally {
-    rigid.setLinvel(linear, false);
-    rigid.setAngvel(angular, false);
-  }
+  return { desired: plan.desired, moved, jumped: plan.jumped, landed, dashed: plan.dashed, moving: !idle, launched };
 }
 
 /** Whether `id` names a fixed body of `world`. */

@@ -1,0 +1,22 @@
+/**
+ * @file Unit tests for the course `course:playground-{{name}}` ({{id}}.ts): it starts on the gym's open floor and
+ * keeps every number within its tolerance, as `node x feel labs/playground --course {{name}}` judges it.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { runCourse } from '../../../engine';
+import { topHeight } from '../../../engine/sim-api';
+import { GYM } from '../../../labs/playground/scenes/gym';
+import { {{name}}, {{name}}Start } from './{{name}}';
+
+describe('course:playground-{{name}}', () => {
+  it('starts on the gym’s open floor, where nothing stands', () => {
+    expect(topHeight(GYM, {{name}}Start[0], {{name}}Start[2])).toBe(0);
+  });
+
+  it('keeps every number within its tolerance', () => {
+    const result = runCourse({{name}});
+    expect(result.results.filter((r) => !r.pass && r.watch === undefined)).toEqual([]);
+    expect(result.pass).toBe(true);
+  });
+});

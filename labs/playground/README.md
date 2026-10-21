@@ -5,7 +5,8 @@ the character, the cameras and the looks are made to move, feel and look right, 
 in the engine is shown. It grows in four stages, each ending at a gate: the gym (G10), the house (G11), a living site
 (G12) and the tech demo (G13). Today it holds the gym: calibrated features as a physics level, the player at its
 north end moving by Apex Legends' numbers (its run and sprint, air strafing, jump fatigue, the lurch, the fall
-stun, the crouch and the slide, on its hull), five camera modes and two looks, cel-shaded and pixel art. Every claim below is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here
+stun, the crouch and the slide, the mantle, the wall-climb and the superglide, on its hull), its ladder, zipline,
+redeploy balloon and launchers, five camera modes and two looks, cel-shaded and pixel art. Every claim below is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here
 that does not exist fails it.
 
 ## Play it
@@ -13,14 +14,17 @@ that does not exist fails it.
 1. Run `npm run dev` (on Node 24, which `scripts/setup.sh` installs), then open
    http://127.0.0.1:5173/labs/playground/. If another program holds port 5173, `PORT=5174 npm run dev` serves it on
    5174 instead.
-2. Click the game to look around with the mouse (Esc lets go of it). WASD or the arrows move, Space jumps, Shift
-   sprints (hold it, or press it once), Left Alt walks and C crouches while held (not Apex's Left Ctrl: Ctrl with W
-   closes the browser's tab); C at a sprint slides, and Space out of a slide slide-jumps.
-3. T steps through the five cameras, P switches between the cel and the pixel look, M shows and hides the menu.
+2. Click the game to look around with the mouse (Esc lets go of it); in isometric and top-down the pointer aims
+   instead. WASD or the arrows move, Space jumps, Shift sprints (hold it, or press it once), Left Alt walks and C
+   crouches while held (not Apex's Left Ctrl: Ctrl with W closes the browser's tab); C at a sprint slides, and Space
+   out of a slide slide-jumps. E uses (G in isometric): it catches a zipline in reach (Space in the air catches one
+   unasked) or takes hold of a ladder (running into one does too).
+3. T steps through the five cameras (X swaps the shooter's shoulder, Q and E turn isometric), P switches between the
+   cel and the pixel look, M shows and hides the menu.
 
 A link can open any of them: `labs/playground/?cam3=first&post.look=look:playground-pixel` is first person in the
-pixel look, and `labs/playground/?replay=playground-gym` plays the recorded run (`?replay=playground-moves` the moves),
-then hands you the controls.
+pixel look, and `labs/playground/?replay=playground-gym` plays the recorded run (`?replay=playground-moves` the moves,
+`?replay=playground-rides` the rides), then hands you the controls.
 
 ## The demo index
 
@@ -30,7 +34,7 @@ test (`tests/unit/playground-readme.test.ts`) fails when a scene of `labs/playgr
 
 | Scene | What it proves | The command that shows it |
 |---|---|---|
-| `labs/playground/scenes/gym.ts` | The gym (`playground:gym`): every feature at the height, slope or gap its sign shows, the player moving by Apex's model (`node x sim labs/playground/scenes/gym --feel` prints its numbers), its golden replays the same in Node and in the page while it renders, in either look, with no pipeline built after the warm-up: the gym's run over its features, and its moves (`tests/replays/playground-moves.replay.json`: the sprint held and kept by a press, a tired hop, the walk, the crouch-walk, a lurch, an air strafe, the bunny hop's cost, a slide and a slide-jump). | `node x replay tests/replays/playground-gym.replay.json tests/replays/playground-moves.replay.json --browser page` |
+| `labs/playground/scenes/gym.ts` | The gym (`playground:gym`): every feature at the height, slope or gap its sign shows, the player moving by Apex's model (`node x sim labs/playground/scenes/gym --feel` prints its numbers), its golden replays the same in Node and in the page while it renders, in either look, with no pipeline built after the warm-up: the gym's run over its features, its moves (`tests/replays/playground-moves.replay.json`: the sprint held and kept by a press, a tired hop, the walk, the crouch-walk, a lurch, an air strafe, the bunny hop's cost, a slide and a slide-jump), its climbs (`tests/replays/playground-climb.replay.json`) and its rides (`tests/replays/playground-rides.replay.json`: up the tower's ladder and over its top, down its zipline, the jump pad, the balloon's line up 90 m, the glide, the dive and the landing). | `node x replay tests/replays/playground-gym.replay.json tests/replays/playground-moves.replay.json tests/replays/playground-rides.replay.json --browser page` |
 
 ## The gym
 
@@ -38,10 +42,13 @@ test (`tests/unit/playground-readme.test.ts`) fails when a scene of `labs/playgr
 inside a 3 m wall, so a feature's number, its block and its sign never disagree (`docs/PLAYGROUND.md` §2.3 says why each
 is there). From the north end, where the player starts: a strip down the west side marked every 5 m; mantle walls from
 0.5 to 2.1 m; fences from 0.6 to 1.2 m; climb walls from 3 to 7.2 m; slide ramps of 5°, 10°, 20° and 30°, 12 m long,
-each with a deck at its top; steps of 0.25 m; slope tests of 45° and 51°; a 6 m tower; down the east side, a lane of
-1.5 m platforms across gaps from 2 to 9 m; and at the south end the crawl, a tunnel 1.4 m clear and 8 m long and a bar
-1.3 m up to slide under, whose roof slab and bar are fixed props (`prop:gym-slab`, `prop:gym-bar`) on their walls and
-posts. A sign floats over each feature, shown when the player is near.
+each with a deck at its top; steps of 0.25 m; slope tests of 45° and 51°; a 6 m tower with a ladder up its north face
+(the engine's ladder glyph, `|`), a zipline 40 m long from a pole on its top down to the south wall, and a trampoline
+against its west face (2 m, and 0.9 of a fall's speed back); a jump pad (6.5 m) in the open south of it; the redeploy
+balloon's line, 90 m up; down the east side, a lane of 1.5 m platforms across gaps from 2 to 9 m; and at the south end
+the crawl, a tunnel 1.4 m clear and 8 m long and a bar 1.3 m up to slide under, whose roof slab and bar are fixed props
+(`prop:gym-slab`, `prop:gym-bar`) on their walls and posts. The rides are the scene's (engine/sim/rides.ts: a zipline's
+poles stand on what their spec names). A sign floats over each feature, shown when the player is near.
 
 ## The player
 
@@ -58,14 +65,16 @@ the player from every camera, top-down too. Its slots are what the neighbours wi
 
 | Mode | Code | What it is now |
 |---|---|---|
-| Third-person shooter (the default) | `cam3=chase` | behind the player on a spring arm that stays in front of the walls |
-| First person | `cam3=first` | through the player's eyes; the body hidden but the hands |
-| Third-person platformer | `cam3=orbit` | round the player |
-| Isometric | `cam=iso` | orthographic, 45° round and 30° down |
-| Top-down | `cam=topdown` | looking down, the classic top-down view |
+| Third-person shooter (the default) | `cam3=shoulder` | over the right shoulder, 3.8 m back, looking along the aim; X swaps the shoulder |
+| First person | `cam3=first` | at the eye (1.52 m standing, 0.81 m crouched), the body hidden but the hands; Apex's view effects |
+| Third-person platformer | `cam3=follow` | orbit and follow: 5.5 m back, 20° down, recentring, look-ahead, a dead zone for jumps |
+| Isometric | `cam=iso` | orthographic, 45° round and 30° down, whole zoom steps |
+| Top-down | `cam=overhead` | straight down, north up, whole zoom steps on the pixel grid |
 
-T steps through them in this order; `labs/playground/views.ts` lists them and `__engine.camera.set('cam=iso')` sets
-one. WP 13.8 gives each mode its own rig (docs/PLAYGROUND.md §4).
+T steps through them in this order, each switch blended over 0.35 s; `labs/playground/views.ts` lists them and
+`__engine.camera.set('cam=iso')` sets one (`{ blend: true }` blends). The shooter and the platformer move at a pace
+and never stand in a wall, and what stands between them and the player fades (WP 13.8, docs/PLAYGROUND.md §4); the field of view
+is the view setting `cam.fov` (Apex's degrees, 90).
 
 The looks (`labs/playground/looks/`): `look:playground-cel` (the default: three bands of daylight with a rim, every
 edge inked) and `look:playground-pixel` (the same light cut into 3-pixel blocks with a dark rim, 24 shades a channel,
@@ -76,23 +85,30 @@ settings: they never change play or a hash.
 
 | Action | Keys and mouse | Pad |
 |---|---|---|
-| Move | W A S D, or the arrows | left stick, d-pad |
+| Move | W A S D, or the arrows | left stick |
 | Jump | Space | A (south) |
-| Sprint (hold, or press once to keep it) | Left Shift | a click of the left stick |
+| Sprint (press once to keep it, or hold: `input.sprint`) | Left Shift | a click of the left stick |
 | Walk | Left Alt | |
-| Crouch (hold) | C | B (east) |
-| Look around | click the game, then the mouse; Esc lets go | right stick |
-| Camera mode | T | |
+| Crouch (hold, or toggle: `input.crouch`) | C | B (east) |
+| Use: a zipline or a ladder | E (G in isometric) | X (west) |
+| Melee, fire, aim down sights | V, the left and right buttons | a click of the right stick, RT, LT |
+| Reload, holster | R, 3 | |
+| Look around (first person, shooter, platformer) | click the game, then the mouse; Esc lets go | right stick |
+| Aim (isometric, top-down) | the pointer, onto the player's floor | right stick |
+| Camera mode | T | view button |
+| Swap the shoulder (shooter) | X | d-pad left |
+| Turn the view (isometric) | Q, E | d-pad right |
 | Cel or pixel look | P | |
 | Zoom | the wheel | |
 | The feel panel | F | |
 | The menu | M | |
 
-The menu for humans (`labs/playground/menu.ts`) lists the scenes, cameras, looks, replays and these controls, read
-from the action map the page binds (`actionMap:playground`, `labs/playground/controls.ts`; WP 13.9 adds the rest of
-Apex's bindings and rebinding). A browser
-that automation drives (the tests, every `x` command that opens the page) gets no menu, so no test's screenshot holds
-it; `?playground.menu=on` shows it there.
+Each camera mode has its own action map (`labs/playground/controls.ts`, WP 13.9), which the page swaps as the camera
+changes: first person and the shooter send the view and aim at what the screen's middle points at, the platformer
+faces where it moves, and isometric and top-down aim with the pointer. The HUD shows the keys of the map in use; the
+menu for humans (`labs/playground/menu.ts`) lists the scenes, cameras, looks, replays and the controls of the camera
+the page opens in. A browser that automation drives (the tests, every `x` command that opens the page) gets no menu,
+so no test's screenshot holds it; `?playground.menu=on` shows it there.
 
 ## Settings
 
@@ -103,6 +119,9 @@ it; `?playground.menu=on` shows it there.
 | `playground.menu` | The page's menu for humans: `auto` shows it unless automation drives the browser, `on` and `off` force it, when the page opens. A view setting. |
 | `playground.feel` | The feel panel: `on` shows it when the page opens (F shows and hides it). A view setting. |
 | `movement.gaits.run` | One of the shooter model's numbers, live: every number and switch of the model has its setting, `movement.<group>.<field>` (`node x describe setting` lists them; `movement.mantle.boost` turns on the mantle boost), Apex's by default; off its default it replaces that number for every character on the model from the next step. Changes play: recorded in replays. |
+| `input.sprint` | The sprint button: `toggle` (Apex's: a press keeps the sprint while the player moves on) or `hold`. Changes play: recorded in replays. |
+| `input.crouch` | The crouch button: `hold` or `toggle` (a press crouches until pressed again). Changes play: recorded in replays. |
+| `input.sensitivity` | Mouse look in Apex's units (5: 0.11° a count); `input.adsSensitivity`, `input.invert` and the stick's `input.stickSensitivity`, `input.stickAdsSensitivity` and `input.stickInvert` beside it. View settings. |
 | `post.look` | The look drawn (`look:playground-cel` by default). A view setting: never in the hash. |
 | `quality` | The quality tier: `auto`, `high`, `medium` or `low`. A view setting. |
 | `time.scale` | Sim seconds per real second (1). A view setting. |
@@ -124,13 +143,18 @@ crouch-walk), `labs/playground/courses/slideRamps.ts` (down each slide ramp and 
 2.1 m wall refused from the ground), `labs/playground/courses/fences.ts` (each fence mantled over at a sprint,
 sprinting out), `labs/playground/courses/climb.ts` (each climb wall climbed and topped out, the 6.9 m one by the end
 boost, the 7.2 m one refused; a wall-bounce from each zone), `labs/playground/courses/hang.ts` (the mantle hang, none
-where the lip is too low, letting go) and `labs/playground/courses/superglide.ts` (the superglide and three near
-misses; the mantle boost, its setting `movement.mantle.boost` on). Each starts with the gym's dev action `place`
+where the lip is too low, letting go), `labs/playground/courses/superglide.ts` (the superglide and three near misses;
+the mantle boost, its setting `movement.mantle.boost` on), `labs/playground/courses/zipline.ts` (use from the tower,
+the speed-ups to the top speed, jumping on, jumping off keeping the speed or at 11.3 m/s, a crouch's drop, three
+catches a jump), `labs/playground/courses/ladder.ts` (run into it and up it, over its top; down it from the top; a jump
+off; a crouch letting go), `labs/playground/courses/launcher.ts` (the pad's 6.5 m, the trampoline's 2 m and its bounce
+from a fall) and `labs/playground/courses/skydive.ts` (up the balloon's line, the glide, the dive, the landing pose at
+30 m, no stun). Each starts with the gym's dev action `place`
 (`{ at, yaw, speed }`) and checks the bounds of `labs/playground/courses/bounds.ts` too, each run's: the body's and
 every camera's. `node x feel labs/playground` runs them all headless, `--course slide-flat` one, each into
-`out/feel/<lab>-<name>/report.json`. A bound its WP has yet to meet is watched, reported and never failing a course:
-the feet's slide until WP 13.10 plants them, the shooter camera in the crawl and topping out the 4 to 6 m climbs
-until WP 13.8's collision keeps it clear of the level.
+`out/feel/<lab>-<name>/report.json`. A bound its WP has yet to meet is watched, reported and never failing a course
+(none now: the feet's slide was, until WP 13.10 planted them). Every camera keeps §4's bounds on every course, and
+`labs/playground/courses/cameras.ts` blends through the five modes while the player runs a square by the north wall.
 
 The feel panel (F, or `?playground.feel=on`) puts a slider on every `movement.*` setting, live; Copy as profile shows
 the tuning as a `defineMovement` call to paste into a game, and Save the replay downloads the run so far for

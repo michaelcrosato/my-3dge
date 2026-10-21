@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="data:," />
+    <title>ui</title>
+    <!--
+      The UI widgets page (tests/pages/ui.ts, PLAN.md WP 10.6): a 640 × 360 canvas at the page's top left, the overlay
+      over it with the widgets, a dialog, a menu and a settings panel the gamepad's cursor works. No GPU: the widgets
+      are HTML/CSS.
+    -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #15171c;
+      }
+      canvas {
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 640px;
+        height: 360px;
+        background: #22252c;
+      }
+      #panel {
+        position: absolute;
+        left: 440px;
+        top: 160px;
+        padding: 6px;
+        background: #10143a;
+        border: 2px solid #e8e4ff;
+        z-index: 5;
+      }
+      #panel[hidden] {
+        display: none;
+      }
+      #panel-button {
+        width: 120px;
+        height: 40px;
+        font:
+          14px system-ui,
+          sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="view" width="640" height="360"></canvas>
+    <div id="panel" data-panel hidden><button id="panel-button" type="button">Mute</button></div>
+    <script type="module" src="./ui.ts"></script>
+  </body>
+</html>

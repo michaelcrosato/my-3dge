@@ -7,21 +7,15 @@
  *
  * A measure reads the first player actor, once per step (after it): `from` and `to` are steps (sample k is the state
  * after step k, sample 0 the state before the first), `to` the course's last by default. The metrics:
- * - the move: `speed`, the mean speed across the ground from `from` to `to`, and `topSpeed`, the highest; `speedGain`,
- *   the speed across the ground at `to` less that at `from`, and `velocityChange`, how far the velocity across the
- *   ground moved between them (a lurch's, m/s); `apex`, how far the feet rise above where they were at `from`; `height`, the feet's height at `to`; `distance`, across the
- *   ground from the feet at `from` to the feet at `to`; `time`, seconds from `from` to the first sample that meets
- *   `until` (`speedAbove` or `speedBelow` `value`, `grounded` or `airborne`; on the shooter model `crouched` or
- *   `standing`, its hull, `sliding` or `stopsSliding`, and `mantling`, `grabbing`, `hanging`, `pulling` or
- *   `climbing`), and `duration`, how long from the first sample that meets it it goes on meeting it (0 if none does);
- *   `topRise`, the fastest it rises (m/s); `standHeight`, the highest its feet stand on the ground (what it mantled or
- *   climbed onto); `grounded`, 1 when it stands at `to`;
+ * - the move (`MOVE_METRICS` says what each reads): its speeds, heights, distances and times, and its rides';
  * - its animation, posed as the page poses it (engine/dev/feel/anim.ts): `footSlide`, the most a sole slides in one
  *   contact, and `pop`, the farthest a point jumps in one step against its neighbours (the anim QA's rules); `handGap`,
- *   the closest either hand comes to `point`;
+ *   the closest either hand comes to `point`; `handContact`, the farthest a hand held on its contact (a lip, a rung, a
+ *   hold, a cable, the floor) is from it (WP 13.11), past any bound (the largest number) for a span that `holds` and never held one;
  * - a camera's (engine/dev/feel/camera.ts), the code in `camera`: `cameraJump`, the most one frame moves it beyond the
  *   player's own move, and `cameraTurn`, the most it turns (rad); `cameraInside`, the frames it stands inside the
- *   level; `cameraLost`, the frames the player is out of its view.
+ *   level; `cameraLost`, the frames the player (in first person, its arms) is out of its view; `cameraClip`, the frames
+ *   first person's arms are covered or cut (WP 13.12).
  * A tolerance is a share of the reference (`share`), an amount (`abs`, in the metric's unit) or whole steps (`ticks`,
  * for times); a measure passes within any one it names. A bound is a reference of 0 with the bound as `abs`: the
  * camera's 0.3 m. docs/PLAYGROUND.md §3.2's are the playground's: speeds ±2%, accelerations ±5%, times ±1 tick,
@@ -40,16 +34,31 @@
  */
 import { registry as sharedRegistry, type Entry, type Registry } from '../../core/registry';
 import { defineSchema } from '../../core/schema';
+import { readCameraCode } from '../../gfx/cameras/place';
 import type { InputEntry } from '../../sim/replay';
 
-/** The metrics of the move, read off the player's samples. */
-export const MOVE_METRICS = ['speed', 'topSpeed', 'speedGain', 'velocityChange', 'apex', 'height', 'distance', 'time', 'duration', 'topRise', 'standHeight', 'grounded'] as const; // prettier-ignore
+/**
+ * The metrics of the move, read off the player's samples: `speed`, the mean speed across the ground from `from` to
+ * `to`, and `topSpeed`, the highest; `speedGain`, the speed across the ground at `to` less that at `from`, and
+ * `velocityChange`, how far the velocity across the ground moved between them (a lurch's, m/s); `apex`, how far the
+ * feet rise above where they were at `from`; `height`, the feet's height at `to`; `distance`, across the ground from
+ * the feet at `from` to the feet at `to`; `time`, seconds from `from` to the first sample that meets `until`
+ * (`speedAbove` or `speedBelow` `value`, `grounded` or `airborne`; on the shooter model `crouched` or `standing`, its
+ * hull, `sliding` or `stopsSliding`, `mantling`, `grabbing`, `hanging`, `pulling` or `climbing`, and `riding` a
+ * zipline, `onLadder`, `skydiving` or in its `landingPose`), and `duration`, how long from the first sample that meets
+ * it it goes on meeting it (0 if none does); `top`, the highest its feet go; `heightAt`, the feet's height at the
+ * first sample that meets `until`; `topRise` and `topFall`, the fastest it rises and falls (m/s); `standHeight`, the
+ * highest its feet stand on the ground (what it mantled or climbed onto); `grounded`, 1 when it stands at `to`;
+ * `rideSpeed`, its speed along a zipline or up a ladder at `to`, and `rideGain`, that at `to` less that at `from`;
+ * `catches`, the most zipline catches it made since it last stood.
+ */
+export const MOVE_METRICS = ['speed', 'topSpeed', 'speedGain', 'velocityChange', 'apex', 'top', 'height', 'heightAt', 'distance', 'time', 'duration', 'topRise', 'topFall', 'standHeight', 'grounded', 'rideSpeed', 'rideGain', 'catches'] as const; // prettier-ignore
 
 /** The metrics of the player's animation, posed as the page poses it. */
-export const ANIM_METRICS = ['footSlide', 'pop', 'handGap'] as const;
+export const ANIM_METRICS = ['footSlide', 'pop', 'handGap', 'handContact'] as const;
 
 /** The metrics of a camera following the player. */
-export const CAMERA_METRICS = ['cameraJump', 'cameraTurn', 'cameraInside', 'cameraLost'] as const;
+export const CAMERA_METRICS = ['cameraJump', 'cameraTurn', 'cameraInside', 'cameraLost', 'cameraClip'] as const;
 
 /** Everything a measure reads off the run (see the file comment). */
 export const METRICS = [...MOVE_METRICS, ...ANIM_METRICS, ...CAMERA_METRICS] as const;
@@ -58,7 +67,7 @@ export const METRICS = [...MOVE_METRICS, ...ANIM_METRICS, ...CAMERA_METRICS] as 
 export type Metric = (typeof METRICS)[number];
 
 /** When a `time` measure stops: the first sample at which this holds. */
-export const UNTILS = ['speedAbove', 'speedBelow', 'grounded', 'airborne', 'crouched', 'standing', 'sliding', 'stopsSliding', 'mantling', 'grabbing', 'hanging', 'pulling', 'climbing'] as const; // prettier-ignore
+export const UNTILS = ['speedAbove', 'speedBelow', 'grounded', 'airborne', 'crouched', 'standing', 'sliding', 'stopsSliding', 'mantling', 'grabbing', 'hanging', 'pulling', 'climbing', 'riding', 'onLadder', 'skydiving', 'landingPose'] as const; // prettier-ignore
 
 /** One number a course measures (see the file comment). */
 export const MEASURE_FIELDS = defineSchema({
@@ -66,12 +75,13 @@ export const MEASURE_FIELDS = defineSchema({
   metric: { type: 'string', enum: METRICS, required: true, description: 'What it reads off the run.' },
   from: { type: 'integer', default: 1, minimum: 0, description: 'The first sample it reads (0: before the first step).' }, // prettier-ignore
   to: { type: 'integer', minimum: 0, description: 'The last sample it reads; absent: the course’s last.' },
-  until: { type: 'string', enum: UNTILS, description: 'For `time`: the sample that ends it; for `duration`: the state it times.' }, // prettier-ignore
+  until: { type: 'string', enum: UNTILS, description: 'For `time`: the sample that ends it; for `duration`: the state it times; for `heightAt`: the state it waits for.' }, // prettier-ignore
   value: { type: 'number', description: 'For `time` with `speedAbove` or `speedBelow`: the speed, m/s.' },
   camera: { type: 'string', description: 'For a camera metric: the camera’s code (`cam3=chase`, `cam=iso`).' },
   point: { type: 'array', items: { type: 'number' }, description: 'For `handGap`: the point, world [x, y, z], m.' },
+  holds: { type: 'boolean', description: 'For `handContact`: the span traverses, so one in which no hand ever holds its contact fails it.' }, // prettier-ignore
   reference: { type: 'number', required: true, description: 'What it should be (docs/PLAYGROUND.md §3.2), or 0 for a bound.' }, // prettier-ignore
-  watch: { type: 'string', description: 'Reported against its bound but never judged until the WP it names makes it pass: "WP 13.10".' }, // prettier-ignore
+  watch: { type: 'string', description: 'Reported against its bound but never judged until the WP it names makes it pass: "WP 13.12".' }, // prettier-ignore
   tolerance: {
     type: 'object',
     default: {},
@@ -96,6 +106,11 @@ export const COURSE_FIELDS = defineSchema({
     default: [],
     description: 'Change-points [step, change], as a replay’s (engine/sim/replay.ts): after that many steps, before the next.', // prettier-ignore
   },
+  views: {
+    type: 'array',
+    default: [],
+    description: 'Camera switches [step, code] for its camera measures, after that many steps, blended as the page’s live switches (WP 13.8).', // prettier-ignore
+  },
   measures: {
     type: 'array',
     required: true,
@@ -114,6 +129,8 @@ export interface Measure {
   readonly value?: number;
   readonly camera?: string;
   readonly point?: readonly [number, number, number];
+  /** For `handContact`: a hand holds a contact somewhere in the span, or it fails. */
+  readonly holds?: boolean;
   readonly reference: number;
   readonly tolerance: { readonly share?: number; readonly abs?: number; readonly ticks?: number };
   /** The WP that will make it pass; until then it is reported, never judged. */
@@ -121,7 +138,7 @@ export interface Measure {
 }
 
 /** A course, as the registry holds it. */
-export type Course = Omit<Entry<typeof COURSE_FIELDS>, 'inputs' | 'measures'> & { readonly inputs: readonly InputEntry[]; readonly measures: readonly Measure[] }; // prettier-ignore
+export type Course = Omit<Entry<typeof COURSE_FIELDS>, 'inputs' | 'measures' | 'views'> & { readonly inputs: readonly InputEntry[]; readonly views: readonly (readonly [number, string])[]; readonly measures: readonly Measure[] }; // prettier-ignore
 
 /** The problems of one measure beyond its fields: its steps, its metric's own fields and its tolerance. */
 function measureProblems(m: Measure, steps: number, at: string): string[] {
@@ -131,12 +148,14 @@ function measureProblems(m: Measure, steps: number, at: string): string[] {
   if (to > steps) problems.push(`${at}: to ${to} is past the course's ${steps} steps`);
   if (m.metric === 'time' && !m.until) problems.push(`${at}: a time measure names when it ends (until)`);
   if (m.metric === 'duration' && !m.until) problems.push(`${at}: a duration measure names the state it times (until)`);
+  if (m.metric === 'heightAt' && !m.until) problems.push(`${at}: a heightAt measure names the state it waits for (until)`); // prettier-ignore
   if (m.until?.startsWith('speed') && m.value === undefined) problems.push(`${at}: ${m.until} needs a value (m/s)`);
   const camera = (CAMERA_METRICS as readonly string[]).includes(m.metric);
   if (camera !== (m.camera !== undefined)) problems.push(camera ? `${at}: ${m.metric} names its camera (camera: 'cam3=chase')` : `${at}: only a camera metric names a camera`); // prettier-ignore
   const point = m.point;
   if ((m.metric === 'handGap') !== (point !== undefined)) problems.push(m.metric === 'handGap' ? `${at}: handGap names its point ([x, y, z])` : `${at}: only handGap names a point`); // prettier-ignore
   if (point && (point.length !== 3 || !point.every(Number.isFinite))) problems.push(`${at}: point is [x, y, z] in metres`); // prettier-ignore
+  if (m.holds !== undefined && m.metric !== 'handContact') problems.push(`${at}: only handContact holds`);
   const { share, abs, ticks } = m.tolerance;
   if (share === undefined && abs === undefined && ticks === undefined) problems.push(`${at}: give a tolerance (share, abs or ticks)`); // prettier-ignore
   return problems;
@@ -152,6 +171,15 @@ function courseProblems(course: Course): string[] {
   if (late > 0) problems.push(`inputs[${late}] at step ${steps[late]} comes after step ${steps[late - 1]}: give change-points in step order`); // prettier-ignore
   const names = course.measures.map((m) => m.name);
   for (const name of new Set(names.filter((n, i) => names.indexOf(n) !== i))) problems.push(`two measures are named ${JSON.stringify(name)}`); // prettier-ignore
+  course.views.forEach((view, i) => {
+    const [step, code] = Array.isArray(view) ? view : [NaN, undefined];
+    if (!Number.isInteger(step) || step < 0 || step > course.steps || typeof code !== 'string') return problems.push(`views[${i}] is not [step, camera code] with a step from 0 to ${course.steps}`); // prettier-ignore
+    try {
+      readCameraCode(code);
+    } catch (error) {
+      problems.push(`views[${i}]: ${(error as Error).message}`);
+    }
+  });
   return problems;
 }
 
