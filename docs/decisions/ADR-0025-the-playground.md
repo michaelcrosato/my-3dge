@@ -781,7 +781,10 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   `roofs` beside them. `storeyView(level, k)` reads any storey as a format-1 level (its `base`, `fullTop` and roof
   for the height queries), so navigation, drawing and ladders read it unchanged; `levelLadders` stands each storey's.
 - **In 3D** (heights.ts): `floorBelow(level, x, y, z)` is the highest surface at or under a point (a floor, a ramp, a
-  flight, a dais, a solid's top, a roof, the ground slab), `surfaceBelow` its tag, `storeyAt(level, y)` and `roomAt`.
+  flight, a dais, a solid's top, a head's top even with no floor over it, a roof, the ground slab), `surfaceBelow` its
+  tag; `storeyAt(level, y)` reads a storey by height alone, `storeyBelow` by that surface (a flight's tiles are the
+  storey they rise from up to their top, a roof none), and `roomAt` reads `storeyBelow`'s storey, so a hall's stairs
+  are the hall's all the way up.
 - **Validation** measures against the shooter model's hull, the largest the engine ships (`LEVEL_BODY`: 0.8128 m
   across, 1.19 m crouched), and flights against its walkable slope rounded down, 45°: `LEVEL_NARROW_DOOR`,
   `LEVEL_LOW_HEADROOM`, `LEVEL_STEEP_FLIGHT`, `LEVEL_UNREACHABLE_ROOM`, over the storeys walked as one graph (walk.ts's
@@ -790,7 +793,14 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **Beyond Owns**: engine/world/level/shapes.ts (exports `outside` and `SIDES` for the flights), meshes.ts (full
   glyphs grouped apart in a storey), engine/world/traverse.ts (ladders per storey), engine/sim/levelBodies.test.ts
   (the controller up the flights and on the roofs), tools/qa/level.ts (the storey fixtures, the content codes),
-  engine/sim-api.ts (the queries, `storeyView`, the types), fixtures/levels/storeys/glyphs.ts.
+  engine/world/level/problems.ts (the new codes), engine/sim-api.ts and engine/sim/siteApi.ts (the queries,
+  `storeyView`, the types: the review moved them to the site's part of the API), fixtures/levels/storeys/.
+- **From the review**: the house's landings were reached through one 0.5 m tile between the north wall and the
+  railing's end, narrower than the hull, so each flight is a tile shorter (seven tiles, 40.6°, walkable under 45.57°)
+  and each landing two tiles deep; storeys/annex.txt holds a wall one storey high with a door and a window under
+  void, whose heads' tops bodies stand on. Left for WP 13.18's house: a railing collides over its whole tile while it
+  is drawn as a 6 cm rail down its middle, and a door's frames narrow its drawn opening by 7 cm a side; near the eaves
+  `wallUnder` stands a wall up to 0.18 m over the roof's true underside, inside the roof's slab.
 
 ## Amendment 16 (2026-10-21, WP 13.14): storeys drawn
 
