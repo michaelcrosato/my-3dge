@@ -775,7 +775,7 @@ Advice from `createInstancedBatch` (engine/gfx/instancing.ts), once, when three.
 
 - Message: `level {level} uses the mesh recipe {recipe}, which no level recipe defines: its tiles are grey blocks`
 - Fix: pass createLevelMeshes a recipe named {recipe} in its recipes option (shape, materials, castShadow and receiveShadow, as engine/gfx/level/recipes.ts writes them), or give the glyph a recipe the engine has: {known}
-- Registered in: [`engine/gfx/level/meshes.ts` line 51](../engine/gfx/level/meshes.ts)
+- Registered in: [`engine/gfx/level/meshes.ts` line 58](../engine/gfx/level/meshes.ts)
 
 Advice from `createLevelMeshes` (engine/gfx/level/meshes.ts) when a glyph names a mesh recipe that neither the engine (engine/gfx/level/recipes.ts) nor the `recipes` option defines: its tiles are drawn as grey boxes from their floor to their top, so the level still shows where they are.
 

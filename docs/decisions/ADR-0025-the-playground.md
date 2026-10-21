@@ -791,3 +791,35 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   glyphs grouped apart in a storey), engine/world/traverse.ts (ladders per storey), engine/sim/levelBodies.test.ts
   (the controller up the flights and on the roofs), tools/qa/level.ts (the storey fixtures, the content codes),
   engine/sim-api.ts (the queries, `storeyView`, the types), fixtures/levels/storeys/glyphs.ts.
+
+## Amendment 16 (2026-10-21, WP 13.14): storeys drawn
+
+- **Each storey from its view** (engine/gfx/level/meshes.ts): a level written as storeys draws each storey's
+  descriptors through `storeyView`, bottom first, named `level:<name>/<storey>/<recipe>` with `userData.storey`, then
+  each storey's own parts (`ceiling`, `heads`, `frames`), the rooms' own floors and the roof, after every descriptor's
+  mesh, so the stage's runs still index the descriptors' (engine/gfx/stage.ts splits each storey's).
+- **The parts**: `ceiling` (slabs.ts) is a slab's underside, the ceiling of the storey below (none under the lowest),
+  and its edges where floor meets void or the map's edge; `heads` (openings.ts) the wall over each door, window and low
+  ceiling, from its head up, as the colliders; `frames` two jambs and a head of planks round each opening, a window's
+  sill too, flush with the wall (a frame proud of a wall at the map's edge stood outside the level's bounds); railings
+  are posts at most 1 m apart and two rails; flights climb by a 0.18 m riser (flights.ts: stairs.ts takes the count,
+  `StepCount`, since two steps a metre made a storey's flight 0.375 m risers); a pitched roof's walls are the hulls of
+  their merged runs clipped to its underside (walls.ts, three's `ConvexHull`), and the roof its planes' tops,
+  undersides and edges (roofs.ts), UVs in metres in each face's own plane (`axesOf`).
+- **The v4 railing and flight** draw with recipes of their own (`railing`, `flight`); their compiled glyph changed, so
+  the storey fixtures' goldens were re-recorded (WP 13.13's, never in a replay). New recipes `ceiling`, `heads`,
+  `frames` and `roof` name what no glyph does, overridable by a game as any recipe (`recipes`), their materials the
+  engine's until WP 13.17's building materials.
+- **Rooms' floors**: a level entry's `rooms` (`{ kitchen: 'material:tiles' }`, presentation only, as `materials`)
+  draws each named room's floor tiles in a mesh of their own; the view passes it to the stage (`levelRooms`).
+- **Bounds and budgets**: a format-2 level's bounds reach over its roof's eaves; `x qa geo`'s draw-call and vertex
+  budgets count per storey (20 calls and 32 vertices a tile a storey: the house draws in 59 calls with one shadow map,
+  four storeys) and it compiles each place's levels with its glyphs.
+- **Both looks**: the playground's cel and pixel looks both draw materials in the toon style, their filters post passes
+  over the frame; tests/e2e/level-meshes.spec.ts draws the house in the lambert and toon styles with every style warmed,
+  building nothing after the warm-up, and tells its parts apart in the ID pass from outside, storey by storey with
+  what stands above hidden, and from the cellar. The cutaway by storey is WP 13.15's.
+- **Beyond Owns**: engine/gfx/level/stairs.ts (the step count), shapes.ts (exports `drawnWith`), engine/gfx/stage.ts
+  (runs per storey, the ground under the lowest slab, `levelRooms`), engine/app/view.ts and engine/world/level/level.ts
+  (the entry's `rooms`), engine/world/level/{legend,compile,types}.ts (the recipes, the bounds), tools/qa/geo.ts,
+  tests/pages/level-meshes.ts.

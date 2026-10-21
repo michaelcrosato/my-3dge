@@ -347,7 +347,7 @@ export interface CompiledLevel {
   readonly floor: readonly number[];
   /** Per tile: the top of what stands at its centre (m); topHeight answers anywhere. */
   readonly top: readonly number[];
-  /** The level's extent (m): from the origin to (cols·tile, the highest top, rows·tile). */
+  /** The level's extent (m): from the origin to (cols·tile, the highest top, rows·tile); format 2 from its lowest slab's underside, and over a roof's eaves. */
   readonly bounds: { readonly min: Point3; readonly max: Point3 };
   readonly ground: GroundDescriptor;
   readonly colliders: readonly ColliderDescriptor[];

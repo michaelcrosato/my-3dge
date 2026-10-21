@@ -8,7 +8,7 @@
  * ladder against the neighbouring tile that stands highest, up to its top. v4 (WP 13.13), for levels written as
  * storeys (format 2): void `~`, the door `+`, the window `:`, the railing `!`, the flight of stairs `<` up to the
  * storey above and the low ceiling `_`; the wall and the pillar are `full`, so in a storey they rise to the storey
- * above whatever their top.
+ * above whatever their top. The railing and the flight draw with their own recipes (engine/gfx/level/recipes.ts).
  *
  * Heights are the prototype hall's, converted to metres (PLAN.md Appendix C): a wall 3 m, a pillar 3.5 m, a low wall
  * 0.75 m (the hero jumps onto it), a gallery 1 m, the dais 0.5 m, one character per metre. They are starting values
@@ -197,7 +197,7 @@ export const V4_GLYPHS = {
     top: 1,
     solid: true,
     collider: 'box',
-    mesh: 'lowWall',
+    mesh: 'railing',
     nav: { walkable: false },
   },
   'glyph:flight': {
@@ -206,7 +206,7 @@ export const V4_GLYPHS = {
       'A flight of stairs up to the storey above: a ramp (a hull wedge) from this floor to that one, rising toward the one side that floor meets. Draw a filled rectangle, with void over it on the storey above.',
     floorShape: 'flight',
     collider: 'hull',
-    mesh: 'stairs',
+    mesh: 'flight',
   },
   'glyph:lowCeiling': {
     char: '_',

@@ -39,10 +39,13 @@ const compile = (name: string, registry = REGISTRY) =>
   compileLevel(text(name), { file: `fixtures/levels/storeys/${name}.txt`, registry });
 const hash = (level: CompiledLevel) => hashValue(level as unknown as Canonical);
 
-/** Each storey fixture's compiled hash: a change here is a change of the format-2 shape or of a glyph it uses. */
+/**
+ * Each storey fixture's compiled hash: a change here is a change of the format-2 shape or of a glyph it uses.
+ * Re-recorded in WP 13.14, which gave the railing and the flight recipes of their own and the bounds the eaves.
+ */
 const GOLDEN: Record<string, string> = {
-  house: 'f69c1026cc941903',
-  pavilion: '4c7d95fd47df9a4f',
+  house: '07dfd1118ce25b2e',
+  pavilion: '893392706f51530f',
   shed: 'facdd95952ad89f3',
 };
 

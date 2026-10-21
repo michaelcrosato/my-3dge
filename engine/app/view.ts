@@ -155,8 +155,9 @@ export function createRunView(options: RunViewOptions): RunView {
   const level = scene.level === undefined ? null : getLevel(scene.level, registry);
   const entry = scene.level === undefined ? null : (registry.get('level', scene.level) as LevelEntry);
   const levelMaterials = (entry?.materials ?? {}) as Readonly<Record<string, string>>; // strings: the kind checks
+  const levelRooms = (entry?.rooms ?? {}) as Readonly<Record<string, string>>;
   const fxRng = (...keys: readonly (string | number)[]) => options.run().world.fxRng(...keys);
-  const stage = createStage({ level, materials: options.materials, registry, log: options.log, fxRng, levelMaterials });
+  const stage = createStage({ level, materials: options.materials, registry, log: options.log, fxRng, levelMaterials, levelRooms }); // prettier-ignore
   /**
    * Turns the effects on or off by the view setting `gfx.effects` (a registry without it: on), before they read;
    * returns whether that changed them.

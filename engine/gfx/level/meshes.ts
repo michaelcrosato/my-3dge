@@ -16,18 +16,18 @@
  * runs on from piece to piece, its tones repeating with each piece as the prototype's per-tile wall textures did; the
  * other shapes' UVs are anchored to the world and run on across the whole level.
  *
- * Everything sits under one group, `root`, named `level:<name>`; a mesh is named `level:<name>/<recipe>` (with `#2`…
- * after a second descriptor of the same recipe), and carries `userData.level`, `userData.recipe` and
- * `userData.glyphs`, which the ID pass and the inspector show. Coordinates are the compiled level's: metres, the map's
- * north-west corner at the origin, +X east, +Z south.
+ * Everything sits under one group, `root`, named `level:<name>`; a mesh is named `level:<name>/<recipe>`, or
+ * `level:<name>/<storey>/<recipe>` in a level written as storeys (`createLevelMeshes` says how they draw), with `#2`…
+ * after a second descriptor of the same recipe, and carries `userData.level`, `userData.recipe` and `userData.glyphs`,
+ * which the ID pass and the inspector show. Coordinates are the compiled level's: metres, the map's north-west corner
+ * at the origin, +X east, +Z south.
  *
  * Invariants: pure in the level and the recipes (equal inputs give equal buffers); materials come from
  * `options.materials` (the page's material library) and are never disposed here; `dispose()` frees the geometries,
  * leaves the parent and unregisters; nothing reaches the sim.
  *
- * Carried from the meshes of `my-3d2dge:src/stress-world/10-hall.js:264-405`: the floor, the instanced walls and low
- * walls (`inst`, one instance per tile, `sidesThenTops`), the pillars on plinths under capitals, the galleries, the
- * stairs and the dais, built from WP 2.2's and WP 4.2's descriptors.
+ * Carried from `my-3d2dge:src/stress-world/10-hall.js:264-405`'s meshes: the floor, the instanced walls and low walls
+ * (`inst`, `sidesThenTops`), the pillars, the galleries, the stairs and the dais, from WP 2.2's and 4.2's descriptors.
  *
  * @example
  * // const meshes = createLevelMeshes(getLevel('level:room'), { materials: createMaterialLibrary() });
@@ -38,13 +38,20 @@
  * @see tests/e2e/level-meshes.spec.ts
  * @see tests/e2e/hall.spec.ts
  */
-import { Group, type InstancedMesh, type Material, type Mesh } from 'three/webgpu';
+import { Group, Mesh, type BufferGeometry, type InstancedMesh, type Material } from 'three/webgpu';
 import { defineCodes, log as sharedLog, type Log } from '../../core/log';
-import type { CompiledLevel } from '../../world/level/types';
+import { storeyView } from '../../world/level/storeys';
+import type { CompiledLevel, MeshDescriptor, RoofDescriptor, TileRect } from '../../world/level/types';
 import type { Warmup } from '../warmup';
 import type { LevelCell } from './cells';
+import { flightGeometry } from './flights';
+import { framesGeometry, headsGeometry, railingGeometry } from './openings';
 import { FALLBACK_RECIPE, LEVEL_RECIPES, type LevelRecipe, type LevelShape } from './recipes';
-import { buildShape, type PartCut } from './shapes';
+import { roofGeometry } from './roofs';
+import { buildShape, drawnWith, type BuiltShape, type PartCut } from './shapes';
+import { ceilingGeometry } from './slabs';
+import { surfaceGeometry } from './surface';
+import { underRoofGeometry } from './walls';
 
 /** The codes the level meshes raise, with their fixes. */
 export const LEVEL_MESH_CODES = defineCodes('gfx', {
@@ -61,6 +68,8 @@ export interface LevelMeshesOptions {
   materials: { get(id: string): Material };
   /** Recipes to add or replace, by the name a glyph's `mesh` gives: a game's own glyph meshes. */
   recipes?: Readonly<Record<string, LevelRecipe>>;
+  /** A level written as storeys: the floor material of each room given one, by room name (`{ kitchen: 'material:tile' }`). */
+  rooms?: Readonly<Record<string, string>>;
   /** Where advice goes (the shared log by default). */
   log?: Log;
 }
@@ -81,6 +90,8 @@ export interface LevelMeshPart {
   /** How the cutaway cuts its pieces, and its twin's geometry; null when it never cuts. */
   cut: PartCut | null;
   castShadow: boolean;
+  /** A level written as storeys: the storey it draws (an index into `level.storeys`). */
+  storey?: number;
 }
 
 /** A level's meshes (see the file comment). */
@@ -109,7 +120,20 @@ export function meshDrawCalls(mesh: Mesh | InstancedMesh, castShadow: boolean, s
   return groups * (1 + (castShadow ? shadowMaps : 0));
 }
 
-/** Draws `level`'s mesh descriptors (see the file comment). */
+/** Whether `pieces` holds tile (col, row). */
+const holdsTile = (pieces: readonly TileRect[], col: number, row: number) =>
+  pieces.some(([c0, r0, c1, r1]) => col >= c0 && col <= c1 && row >= r0 && row <= r1);
+
+/**
+ * Draws `level`'s mesh descriptors (see the file comment). A level written as storeys draws each storey's descriptors
+ * from its view (engine/world/level/storeys.ts's `storeyView`), bottom first, each part with `userData.storey`: its
+ * walls up to the storey above or, under a pitched roof, clipped to the roof's underside in merged runs (walls.ts); its
+ * flights of stairs by the riser (flights.ts); its railings as posts and rails (openings.ts). Then each storey's own
+ * parts, `ceiling` (its slab's underside and void edges, slabs.ts), `heads` (the wall over its openings and low
+ * ceilings) and `frames` (round its doors and windows, openings.ts); the floors of the rooms `options.rooms` gives a
+ * material of their own; and the roofs (roofs.ts). They come after every descriptor's mesh, so `parts[i]` is still the
+ * i-th descriptor's, storey by storey, for the stage's runs (engine/gfx/stage.ts).
+ */
 export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOptions): LevelMeshes {
   const recipes = { ...LEVEL_RECIPES, ...options.recipes };
   const log = options.log ?? sharedLog;
@@ -117,36 +141,73 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
   root.name = `level:${level.name}`;
   root.userData.level = level.name;
   const names = new Map<string, number>();
-  const parts: LevelMeshPart[] = level.meshes.map((descriptor) => {
-    let recipe = Object.hasOwn(recipes, descriptor.recipe) ? recipes[descriptor.recipe] : undefined;
-    if (!recipe) {
-      const known = Object.keys(recipes).sort().join(', ');
-      log.warnOnce('GFX_LEVEL_RECIPE', { level: level.name, recipe: descriptor.recipe, known }, descriptor.recipe);
-      recipe = FALLBACK_RECIPE;
-    }
-    const materials = recipe.materials.map((id) => options.materials.get(id));
-    const { mesh, cells, cut } = buildShape(level, descriptor, recipe, materials);
-    const base = `${root.name}/${descriptor.recipe}`;
+  const recipeOf = (name: string): LevelRecipe => {
+    if (Object.hasOwn(recipes, name)) return recipes[name];
+    const known = Object.keys(recipes).sort().join(', ');
+    log.warnOnce('GFX_LEVEL_RECIPE', { level: level.name, recipe: name, known }, name);
+    return FALLBACK_RECIPE;
+  };
+  const materialsOf = (recipe: LevelRecipe) => recipe.materials.map((id) => options.materials.get(id));
+  const single = (geometry: BufferGeometry, recipe: LevelRecipe): BuiltShape => ({
+    mesh: new Mesh(geometry, drawnWith(geometry, materialsOf(recipe))),
+    cells: [],
+    cut: null,
+  });
+  const place = (
+    built: BuiltShape,
+    recipe: string,
+    shape: LevelRecipe,
+    glyphs: readonly string[],
+    heights: [number, number],
+    storey?: number,
+  ): LevelMeshPart => {
+    // prettier-ignore
+    const prefix = storey === undefined ? root.name : `${root.name}/${level.storeys![storey].name}`;
+    const base = `${prefix}/${recipe}`;
     const seen = (names.get(base) ?? 0) + 1;
     names.set(base, seen);
+    const { mesh, cells, cut } = built;
     mesh.name = seen > 1 ? `${base}#${seen}` : base;
-    mesh.castShadow = recipe.castShadow;
-    mesh.receiveShadow = recipe.receiveShadow;
-    Object.assign(mesh.userData, { level: level.name, recipe: descriptor.recipe, glyphs: [...descriptor.glyphs] });
+    mesh.castShadow = shape.castShadow;
+    mesh.receiveShadow = shape.receiveShadow;
+    Object.assign(mesh.userData, { level: level.name, recipe, glyphs: [...glyphs], ...(storey === undefined ? {} : { storey }) }); // prettier-ignore
     root.add(mesh);
-    return {
-      name: mesh.name,
-      recipe: descriptor.recipe,
-      shape: recipe.shape,
-      glyphs: descriptor.glyphs,
-      mesh,
-      cells,
-      bottom: descriptor.bottom,
-      top: descriptor.top,
-      cut,
-      castShadow: recipe.castShadow,
-    };
+    const [bottom, top] = heights;
+    const part: LevelMeshPart = { name: mesh.name, recipe, shape: shape.shape, glyphs, mesh, cells, bottom, top, cut, castShadow: shape.castShadow }; // prettier-ignore
+    return storey === undefined ? part : { ...part, storey };
+  };
+  const views = level.storeys ? level.storeys.map((_, k) => storeyView(level, k)) : [level];
+  const parts: LevelMeshPart[] = [];
+  const roomPieces = new Map<string, { storey: number; base: number; pieces: TileRect[] }>();
+  views.forEach((view, k) => {
+    const storey = level.storeys ? k : undefined;
+    const roof = level.roofs?.find((each) => each.storey === k && each.kind !== 'flat');
+    for (const descriptor of view.meshes) {
+      const recipe = recipeOf(descriptor.recipe);
+      const drawn = storey === undefined ? descriptor : withoutRooms(level, k, descriptor, recipe, options.rooms, roomPieces); // prettier-ignore
+      parts.push(place(buildPart(view, drawn, recipe, materialsOf(recipe), single, roof), descriptor.recipe, recipe, descriptor.glyphs, [descriptor.bottom, descriptor.top], storey)); // prettier-ignore
+    }
   });
+  level.storeys?.forEach((storey, k) => {
+    const roof = level.roofs?.find((each) => each.storey === k && each.kind !== 'flat');
+    const own: [string, BufferGeometry | null, [number, number]][] = [
+      ['ceiling', ceilingGeometry(level, storey), [storey.base - storey.slab, storey.base]],
+      ['heads', headsGeometry(level, storey, roof), [storey.base, storey.fullTop]],
+      ['frames', framesGeometry((level.openings ?? []).filter((opening) => opening.storey === k), level.tile), [storey.base, storey.fullTop]], // prettier-ignore
+    ];
+    for (const [name, geometry, heights] of own) {
+      const recipe = recipeOf(name);
+      if (geometry) parts.push(place(single(geometry, recipe), name, recipe, [], heights, k));
+    }
+  });
+  for (const [room, { storey, base, pieces }] of roomPieces) {
+    const recipe = { ...recipeOf('floor'), materials: [options.rooms![room]] };
+    parts.push(place(single(surfaceGeometry(level.tile, pieces, base), recipe), `floor:${room}`, recipe, [], [base, base], storey)); // prettier-ignore
+  }
+  for (const roof of level.roofs ?? []) {
+    const recipe = recipeOf('roof');
+    parts.push(place(single(roofGeometry(roof), recipe), 'roof', recipe, [], [roof.eave, roof.peak], roof.storey));
+  }
   root.updateMatrixWorld(true);
   const registrations = new Set<{ dispose(): void }>();
   return {
@@ -173,4 +234,64 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
       root.removeFromParent();
     },
   };
+}
+
+/**
+ * One descriptor's mesh: a storey's full blocks under a pitched roof clipped to it, its flights by the riser, its
+ * railings as posts and rails; everything else in its recipe's shape (engine/gfx/level/shapes.ts).
+ */
+function buildPart(
+  view: CompiledLevel,
+  descriptor: MeshDescriptor,
+  recipe: LevelRecipe,
+  materials: readonly Material[],
+  single: (geometry: BufferGeometry, recipe: LevelRecipe) => BuiltShape,
+  roof: RoofDescriptor | undefined,
+): BuiltShape {
+  const t = view.tile;
+  const { pieces, bottom, top } = descriptor;
+  const full = descriptor.glyphs.some((id) => Object.values(view.legend).find((glyph) => glyph.id === id)?.full);
+  if (roof && full && (recipe.shape === 'block' || recipe.shape === 'pillar')) {
+    const merged = recipe.shape === 'block' ? descriptor.rects : pieces;
+    const rects = merged.map(([c0, r0, c1, r1]) => [c0 * t, r0 * t, (c1 + 1) * t, (r1 + 1) * t] as const);
+    const geometry = underRoofGeometry(roof, rects, bottom);
+    if (geometry) return single(geometry, recipe);
+  }
+  if (recipe.shape === 'flight') {
+    const ramps = view.ramps.filter((ramp) => holdsTile(pieces, ramp.tiles[0], ramp.tiles[1]));
+    return single(flightGeometry(t, ramps, bottom), recipe);
+  }
+  if (recipe.shape === 'railing') {
+    const geometry = railingGeometry(t, descriptor.rects, bottom, top);
+    if (geometry) return single(geometry, recipe);
+  }
+  return buildShape(view, descriptor, recipe, materials);
+}
+
+/**
+ * `descriptor` without the floor pieces of rooms `rooms` gives a material of their own, which go to `found` by room
+ * (a surface recipe's only).
+ */
+function withoutRooms(
+  level: CompiledLevel,
+  storey: number,
+  descriptor: MeshDescriptor,
+  recipe: LevelRecipe,
+  rooms: Readonly<Record<string, string>> | undefined,
+  found: Map<string, { storey: number; base: number; pieces: TileRect[] }>,
+): MeshDescriptor {
+  if (!rooms || recipe.shape !== 'surface' || !level.rooms?.length) return descriptor;
+  const grid = level.storeys![storey].room;
+  const kept: TileRect[] = [];
+  for (const piece of descriptor.pieces) {
+    const room = level.rooms[grid[piece[1] * level.cols + piece[0]]]?.name;
+    if (!room || !Object.hasOwn(rooms, room)) {
+      kept.push(piece);
+      continue;
+    }
+    const entry = found.get(room) ?? { storey, base: descriptor.bottom, pieces: [] };
+    entry.pieces.push(piece);
+    found.set(room, entry);
+  }
+  return kept.length === descriptor.pieces.length ? descriptor : { ...descriptor, pieces: kept };
 }

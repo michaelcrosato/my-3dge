@@ -3856,6 +3856,12 @@ For the agents who maintain the engine.
 - `tread` (function): Writes the level rectangle `[x0, z0, x1, z1]` at height `y`, facing up.
 - `upright` (function): Writes the upright quad over the ground edge `a` → `b` from height `y0` to `y1`.
 
+### [`engine/gfx/level/flights.ts`](../engine/gfx/level/flights.ts)
+
+- `flightGeometry` (function): The flights of `ramps`, standing on their storey's floor at `ground` (m), tiles `tile` metres wide.
+- `RISER` (const): A house stair's riser (m): about 7 inches.
+- `risersOf` (function): How many steps a flight climbs: its rise in `RISER`s, at least one.
+
 ### [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)
 
 - `createLevelMeshes` (function): Draws `level`'s mesh descriptors (see the file comment).
@@ -3864,6 +3870,15 @@ For the agents who maintain the engine.
 - `LevelMeshesOptions` (interface): What `createLevelMeshes` needs: where materials come from, and optionally more recipes and a log.
 - `LevelMeshPart` (interface): One level mesh: its descriptor's recipe and glyphs, the mesh, and for an instanced shape one cell per instance.
 - `meshDrawCalls` (function): The draw calls `mesh` costs a frame: its groups (one with a single material), once in colour and once per shadow map when it casts; none while it is hidden or an instanced mesh with no instances.
+
+### [`engine/gfx/level/openings.ts`](../engine/gfx/level/openings.ts)
+
+- `boxBetween` (function): A box from `[x0, y0, z0]` to `[x1, y1, z1]` (m), UVs in metres.
+- `FRAME` (const): A frame's width round an opening (m).
+- `framesGeometry` (function): The frame round each of `openings` (see the file comment); null when there are none.
+- `headsGeometry` (function): The wall over `storey`'s openings and low ceilings (see the file comment), `roof` its pitched roof when it has one; null when it has none.
+- `POST_GAP` (const): How far apart a railing's posts stand, at most (m).
+- `railingGeometry` (function): A railing along each run of `pieces` (tiles `tile` m wide), from `bottom` to `top` (m); null when there are none.
 
 ### [`engine/gfx/level/ramp.ts`](../engine/gfx/level/ramp.ts)
 
@@ -3878,10 +3893,15 @@ For the agents who maintain the engine.
 - `LevelRecipe` (interface): A level mesh recipe: its shape, materials, shadows and cut.
 - `LevelShape` (type): How a recipe draws its pieces, with what each material slot draws: - `surface`: one welded surface over the pieces at their bottom height, facing up, UVs in metres along X and -Z (one draw call): the floor.
 
+### [`engine/gfx/level/roofs.ts`](../engine/gfx/level/roofs.ts)
+
+- `roofGeometry` (function): The roof's slab (see the file comment): tops in slot 0, undersides and edges in slot 1.
+
 ### [`engine/gfx/level/shapes.ts`](../engine/gfx/level/shapes.ts)
 
 - `buildShape` (function): Builds `descriptor`'s mesh in `recipe`'s shape, with `materials` (the recipe's, compiled).
 - `BuiltShape` (interface): One descriptor's mesh, its cells (one per instance; none for a single mesh) and its cut.
+- `drawnWith` (function): Each slot's material: `materials` one per slot, a slot past the last taking the last; the first for the whole when there is one, or the geometry has no slots (a surface).
 - `instanced` (function): One instance per cell, standing at the cell's centre.
 - `instanceSlots` (function): The slots of an instanced level mesh of `count` pieces: at least `PAGE_SLOTS`, so it shares its shader.
 - `PartCut` (interface): How the cutaway cuts a part: its recipe's cut, and the geometry of its twin (a new one each call).
@@ -3891,17 +3911,28 @@ For the agents who maintain the engine.
 
 - `slabGeometry` (function): A raised block over `pieces` from `bottom` to `top` (m), tiles `tile` metres wide (see the file comment).
 
+### [`engine/gfx/level/slabs.ts`](../engine/gfx/level/slabs.ts)
+
+- `ceilingGeometry` (function): The underside and void edges of `storey`'s slab (see the file comment), or null when there is nothing to draw.
+
 ### [`engine/gfx/level/stairs.ts`](../engine/gfx/level/stairs.ts)
 
 - `frameOf` (function): A ramp's frame on the ground: the point `s` metres up its run and `w` metres across it (from its left side, seen climbing), so the flight is written once for the four ways a ramp can rise (engine/gfx/level/ramp.ts's wedge too).
 - `runOf` (function): The ramp's run (m), along the way it rises.
-- `stairsGeometry` (function): The flights of `ramps`, standing on the ground at `ground` (m), tiles `tile` metres wide (see the file comment).
+- `stairsGeometry` (function): The flights of `ramps`, standing on the ground at `ground` (m), tiles `tile` metres wide (see the file comment), each in `steps(ramp, tile)` steps (`stepsOf` by default; a storey's flights rise by the riser: engine/gfx/level/flights.ts).
 - `STEP_RUN` (const): The run of one step (m): two steps per metre, as the prototype's two per tile.
+- `StepCount` (type): How many steps a ramp's flight is drawn in.
 - `stepsOf` (function): How many steps a ramp's flight has: its run in `STEP_RUN`s, at least one.
 
 ### [`engine/gfx/level/surface.ts`](../engine/gfx/level/surface.ts)
 
 - `surfaceGeometry` (function): A flat surface at height `y` over every tile of `pieces`, tiles `tile` metres wide (see the file comment).
+
+### [`engine/gfx/level/walls.ts`](../engine/gfx/level/walls.ts)
+
+- `axesOf` (function): A face's UV axes, `u × v` its `normal`: upright, u along it and v up; level, u along X and v along -Z (or +Z facing down); sloped, u level along it and v across it, in its plane.
+- `underRoofGeometry` (function): The rectangles `rects` (m, `[x0, z0, x1, z1]`) from `bottom` up to `roof`'s underside, or null when none clears it.
+- `writeHull` (function): Writes the convex hull of `points` into `writer`, each face with UVs in metres (see the file comment).
 
 ### [`engine/gfx/lights.ts`](../engine/gfx/lights.ts)
 

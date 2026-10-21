@@ -684,27 +684,42 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`faces.ts`](../engine/gfx/level/faces.ts): Faces for the level's shapes (PLAN.md WP 4.4): what the stairs, gallery, dais and brazier builders (engine/gfx/level/{stairs,slab,dais,brazier}.ts) write their faces with.
   - Exports: `Ground`, `polygon`, `slotted`, `Slotted`, `tread`, `upright`
   - Tests: [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
+- [`flights.ts`](../engine/gfx/level/flights.ts): Flights of stairs between storeys (PLAN.md WP 13.14; docs/PLAYGROUND.md §6.1): `flightGeometry(tile, ramps, ground)` draws each ramp a flight glyph makes (engine/world/level/storeys.ts: a storey's floor to the next one's) as a house's stairs: `risersOf(ramp)` steps rising about `RISER` metres each, so 3 m between floors climb in 17 steps of 0.176 m, the flight's run shared out as their treads.
+  - Exports: `flightGeometry`, `RISER`, `risersOf`
+  - Tests: [`engine/gfx/level/flights.test.ts`](../engine/gfx/level/flights.test.ts)
 - [`meshes.ts`](../engine/gfx/level/meshes.ts): The level meshes (PLAN.md WP 2.4, WP 4.4, §6.1 "data descriptors"): `createLevelMeshes(level, { materials })` draws a compiled level (engine/world/level/compile.ts) from its mesh descriptors: one mesh per descriptor, built in the shape of the recipe its glyphs name (engine/gfx/level/recipes.ts, shapes.ts).
   - Exports: `createLevelMeshes`, `LEVEL_MESH_CODES`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `meshDrawCalls`
   - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`tests/e2e/hall.spec.ts`](../tests/e2e/hall.spec.ts), [`tests/e2e/level-meshes.spec.ts`](../tests/e2e/level-meshes.spec.ts)
+- [`openings.ts`](../engine/gfx/level/openings.ts): Openings drawn (PLAN.md WP 13.14; docs/PLAYGROUND.md §6.1, §7.1): the parts round a storey's doors and windows, and its railings.
+  - Exports: `boxBetween`, `FRAME`, `framesGeometry`, `headsGeometry`, `POST_GAP`, `railingGeometry`
+  - Tests: [`engine/gfx/level/openings.test.ts`](../engine/gfx/level/openings.test.ts)
 - [`ramp.ts`](../engine/gfx/level/ramp.ts): Smooth ramps (PLAN.md WP 13.1; docs/PLAYGROUND.md §2.3): `rampGeometry(tile, ramps, ground)` draws each ramp (engine/world/level/types.ts, `RampDescriptor`) as the smooth wedge its hull collider is (engine/world/level/shapes.ts, `wedgePoints`): the slope from the ramp's bottom to its top toward the side it `rises` to, its two sides, its back where it meets what it climbs to, and its front when it starts above the ground.
   - Exports: `rampGeometry`
   - Tests: [`engine/gfx/level/ramp.test.ts`](../engine/gfx/level/ramp.test.ts), [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
 - [`recipes.ts`](../engine/gfx/level/recipes.ts): Level mesh recipes (PLAN.md WP 2.4, WP 4.4): how the level meshes (engine/gfx/level/meshes.ts) draw the tiles of a glyph whose `mesh` names a recipe (engine/world/level/legend.ts).
   - Exports: `CutWhen`, `FALLBACK_RECIPE`, `LEVEL_RECIPES`, `LevelCut`, `LevelRecipe`, `LevelShape`
   - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
+- [`roofs.ts`](../engine/gfx/level/roofs.ts): Roofs drawn (PLAN.md WP 13.14; docs/PLAYGROUND.md §2.1, §6.1): `roofGeometry(roof)` draws a storey's roof (engine/world/level/roofs.ts) as the slab its colliders are: each plane (a gable's two, a hip's four, a flat roof's one) its top, its underside and its edges, the eaves reaching past the walls.
+  - Exports: `roofGeometry`
+  - Tests: [`engine/gfx/level/roofs.test.ts`](../engine/gfx/level/roofs.test.ts)
 - [`shapes.ts`](../engine/gfx/level/shapes.ts): The level's shapes (PLAN.md WP 2.4, WP 4.4): `buildShape(level, descriptor, recipe, materials)` builds the mesh of one mesh descriptor (engine/world/level/types.ts) in its recipe's shape (engine/gfx/level/recipes.ts): a welded surface (the floor), instanced blocks (walls, low walls) or pillars (plinth, shaft and capital, engine/gfx/geometry/pillar.ts), or one mesh for a slab (a gallery, slab.ts), the stairs (stairs.ts), smooth ramps (ramp.ts), a dais (dais.ts) or brazier stands (brazier.ts).
-  - Exports: `buildShape`, `BuiltShape`, `instanced`, `instanceSlots`, `PartCut`, `placeInstances`
+  - Exports: `buildShape`, `BuiltShape`, `drawnWith`, `instanced`, `instanceSlots`, `PartCut`, `placeInstances`
   - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
 - [`slab.ts`](../engine/gfx/level/slab.ts): Slabs (PLAN.md WP 4.4): `slabGeometry(tile, pieces, bottom, top)` draws a raised block of tiles as one solid, a gallery: its walk, one welded surface over every tile at `top` (engine/gfx/level/surface.ts), and its sides, upright faces from `bottom` to `top` along the outline only, where a piece's tile meets a tile that is not one of the pieces' (or the map's edge).
   - Exports: `slabGeometry`
   - Tests: [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
+- [`slabs.ts`](../engine/gfx/level/slabs.ts): A storey's slab, seen (PLAN.md WP 13.14; docs/PLAYGROUND.md §6.1): `ceilingGeometry(level, storey)` draws what of a storey's floor slab (engine/world/level/storeys.ts) the floor recipe does not: its underside, the ceiling of the storey below, under its floored tiles, and its edges, where a floored tile meets void or the map's edge (a stairwell's rim, an upper floor over the porch).
+  - Exports: `ceilingGeometry`
+  - Tests: [`engine/gfx/level/slabs.test.ts`](../engine/gfx/level/slabs.test.ts)
 - [`stairs.ts`](../engine/gfx/level/stairs.ts): Stairs (PLAN.md WP 4.4): `stairsGeometry(tile, ramps, ground)` draws each ramp (engine/world/level/types.ts, `RampDescriptor`) as a flight of steps standing on the ground at height `ground`: `stepsOf(ramp)` steps, two per metre of run, rising evenly from the ramp's bottom to its top toward the side it `rises` to.
-  - Exports: `frameOf`, `runOf`, `stairsGeometry`, `STEP_RUN`, `stepsOf`
+  - Exports: `frameOf`, `runOf`, `stairsGeometry`, `STEP_RUN`, `StepCount`, `stepsOf`
   - Tests: [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
 - [`surface.ts`](../engine/gfx/level/surface.ts): Level surfaces (PLAN.md WP 2.4): `surfaceGeometry(tile, pieces, y)` lays one flat surface over a level's pieces at height `y`, facing up: the floor.
   - Exports: `surfaceGeometry`
   - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts)
+- [`walls.ts`](../engine/gfx/level/walls.ts): Walls under a pitched roof (PLAN.md WP 13.14; docs/PLAYGROUND.md §2.1, §6.1): `underRoofGeometry(roof, rects, bottom)` draws each rectangle (m) of a storey's full glyph or head from `bottom` up to the roof's underside, the very convex hull its collider is (engine/world/level/roofs.ts's `wallUnder`), so an attic's gable end rises into the gable, the eaves' walls stop under the slope, and nothing stands through the roof.
+  - Exports: `axesOf`, `underRoofGeometry`, `writeHull`
+  - Tests: [`engine/gfx/level/walls.test.ts`](../engine/gfx/level/walls.test.ts)
 
 ## engine/gfx/materials
 

@@ -71,6 +71,8 @@ export interface StageOptions {
   fxRng?: (...keys: readonly (string | number)[]) => Rng;
   /** Material swaps for the level's meshes alone: an id its recipes name → the material drawn instead (WP 7.8). */
   levelMaterials?: Readonly<Record<string, string>>;
+  /** A level written as storeys: each room's floor material, by room name (WP 13.14; the level entry's `rooms`). */
+  levelRooms?: Readonly<Record<string, string>>;
 }
 
 /** Where a stand-in stands and how it looks, read from its entity's placing component. */
@@ -187,17 +189,20 @@ const holds = (rect: TileRect, piece: TileRect) =>
  */
 export function splitRuns(level: CompiledLevel): { level: CompiledLevel; runs: (TileRect | null)[] } {
   const runs: (TileRect | null)[] = [];
-  const meshes = level.meshes.flatMap((descriptor): MeshDescriptor[] => {
-    if (descriptor.top - descriptor.bottom <= 0 || descriptor.rects.length < 2) {
-      runs.push(null);
-      return [descriptor];
-    }
-    return descriptor.rects.map((rect) => {
-      runs.push(rect);
-      return { ...descriptor, pieces: descriptor.pieces.filter((piece) => holds(rect, piece)), rects: [rect] };
+  const split = (meshes: readonly MeshDescriptor[]) =>
+    meshes.flatMap((descriptor): MeshDescriptor[] => {
+      if (descriptor.top - descriptor.bottom <= 0 || descriptor.rects.length < 2) {
+        runs.push(null);
+        return [descriptor];
+      }
+      return descriptor.rects.map((rect) => {
+        runs.push(rect);
+        return { ...descriptor, pieces: descriptor.pieces.filter((piece) => holds(rect, piece)), rects: [rect] };
+      });
     });
-  });
-  return { level: { ...level, meshes }, runs };
+  // A level written as storeys draws each storey's descriptors, bottom first (engine/gfx/level/meshes.ts).
+  if (level.storeys) return { level: { ...level, storeys: level.storeys.map((s) => ({ ...s, meshes: split(s.meshes) })) }, runs }; // prettier-ignore
+  return { level: { ...level, meshes: split(level.meshes) }, runs };
 }
 
 /** The shorter way from angle `a` to `b`, `k` of the way. */
@@ -211,20 +216,24 @@ function levelMeshes(level: CompiledLevel, options: StageOptions): LevelMeshes {
   const split = splitRuns(level);
   const swaps = options.levelMaterials ?? {};
   const materials = { get: (id: string) => options.materials.get(Object.hasOwn(swaps, id) ? swaps[id] : id) };
-  const meshes = createLevelMeshes(split.level, { materials, log: options.log });
+  const meshes = createLevelMeshes(split.level, { materials, rooms: options.levelRooms, log: options.log });
   split.runs.forEach((run, i) => {
     if (!run) return;
     const [c0, r0, c1, r1] = run;
     const part = meshes.parts[i];
-    part.name = part.mesh.name = `level:${level.name}/${part.recipe}@${c0},${r0}-${c1},${r1}`;
+    const storey = part.storey === undefined ? '' : `${level.storeys![part.storey].name}/`;
+    part.name = part.mesh.name = `level:${level.name}/${storey}${part.recipe}@${c0},${r0}-${c1},${r1}`;
   });
   return meshes;
 }
 
-/** The stage's ground: a plane just under the level's floor reaching `GROUND_MARGIN` past it, UVs in metres. */
-function groundMesh(width: number, depth: number, material: Material): Mesh {
+/**
+ * The stage's ground: a plane just under the level's floor, `y` (m), reaching `GROUND_MARGIN` past it, UVs in metres;
+ * under a level written as storeys, under its lowest slab.
+ */
+function groundMesh(width: number, depth: number, material: Material, y = 0): Mesh {
   const [w, d] = [width + 2 * GROUND_MARGIN, depth + 2 * GROUND_MARGIN];
-  const geometry = new PlaneGeometry(w, d).rotateX(-Math.PI / 2).translate(width / 2, -0.02, depth / 2);
+  const geometry = new PlaneGeometry(w, d).rotateX(-Math.PI / 2).translate(width / 2, y - 0.02, depth / 2);
   const uv = geometry.getAttribute('uv');
   for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * w, uv.getY(i) * d);
   const ground = new Mesh(geometry, material);
@@ -247,7 +256,7 @@ export function createStage(options: StageOptions): Stage {
   const [w, d] = level ? [level.cols * level.tile, level.rows * level.tile] : [16, 16];
   const centre = [w / 2, 0, d / 2] as const;
 
-  const ground = groundMesh(w, d, options.materials.get(GROUND_MATERIAL));
+  const ground = groundMesh(w, d, options.materials.get(GROUND_MATERIAL), level?.storeys ? level.bounds.min[1] : 0);
   scene.add(ground);
   const meshes = level ? levelMeshes(level, options) : null;
   if (meshes) scene.add(meshes.root);

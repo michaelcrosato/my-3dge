@@ -9,8 +9,12 @@
  * camera: the prototype's `CUT_H`, 7 units), `lowWall` (dressed stone), `pillar` (dressed stone, with plinth and
  * capital, cut to a 0.875 m stump when blocking: the prototype's 14 units), and v2's `gallery` (brick sides, a
  * flagstone walk), `stairs` (dressed stone), `dais` (a dressed-stone edge, a flagstone top) and `brazier` (a stone
- * stand, glowing coals: WP 4.5's brazier prop adds the flames and the torch). A game's own glyph meshes come as
- * recipes passed to `createLevelMeshes` (`recipes`), never edits here.
+ * stand, glowing coals: WP 4.5's brazier prop adds the flames and the torch). For storeys (WP 13.13's level format
+ * 2, drawn by WP 13.14): `railing` (posts and rails of planks), `flight` (stone risers, plank treads), and the parts
+ * no glyph names, which each storey draws from its descriptors: `ceiling` (a slab's underside and its edges at a
+ * void), `heads` (the wall over doors, windows and low ceilings, as walls), `frames` (the planks round each door and
+ * window) and `roof` (its top, then its underside and edges). A game's own glyph meshes, and its own look for those
+ * parts, come as recipes passed to `createLevelMeshes` (`recipes`), never edits here.
  *
  * Invariants: plain data; `materials` holds at least one id; a recipe nobody defined draws as `FALLBACK_RECIPE`,
  * with advice (`GFX_LEVEL_RECIPE`).
@@ -45,8 +49,28 @@
  *   collider has, with the ground under its tiles where the octagon leaves them bare. [sloped edge, top and ground]
  * - `brazier`: a stone foot and a bowl of glowing coals on each piece, sized to its glyph's radius and top, with the
  *   ground under its tile. [foot and bowl, coals, ground]
+ * - `railing` (WP 13.14): along each run of its pieces, posts at its ends and at most 1 m apart, a top rail and a
+ *   bottom rail, its top the glyph's (engine/gfx/level/openings.ts). [posts and rails]
+ * - `flight` (WP 13.14): each ramp under the pieces drawn as a flight of steps rising about 0.18 m each, as a house's
+ *   stairs do, from its storey's floor to the next one's (engine/gfx/level/flights.ts). [risers and sides, treads]
+ * - `ceiling`, `heads`, `frames`, `roof`: a storey's own parts (engine/gfx/level/{slabs,openings,roofs}.ts), drawn
+ *   from its descriptors rather than a glyph's pieces. [one slot; a roof's: top, underside and edges]
  */
-export type LevelShape = 'surface' | 'block' | 'pillar' | 'slab' | 'stairs' | 'ramp' | 'dais' | 'brazier';
+export type LevelShape =
+  | 'surface'
+  | 'block'
+  | 'pillar'
+  | 'slab'
+  | 'stairs'
+  | 'ramp'
+  | 'dais'
+  | 'brazier'
+  | 'railing'
+  | 'flight'
+  | 'ceiling'
+  | 'heads'
+  | 'frames'
+  | 'roof';
 
 /**
  * When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls);
@@ -112,6 +136,12 @@ export const LEVEL_RECIPES: Readonly<Record<string, LevelRecipe>> = {
     castShadow: false,
     receiveShadow: true,
   },
+  railing: { shape: 'railing', materials: ['material:planks'], castShadow: true, receiveShadow: true },
+  flight: { shape: 'flight', materials: ['material:stone', 'material:planks'], castShadow: true, receiveShadow: true },
+  ceiling: { shape: 'ceiling', materials: ['material:stone'], castShadow: true, receiveShadow: true },
+  heads: { shape: 'heads', materials: ['material:brick'], castShadow: true, receiveShadow: true },
+  frames: { shape: 'frames', materials: ['material:planks'], castShadow: true, receiveShadow: true },
+  roof: { shape: 'roof', materials: ['material:planks', 'material:stone'], castShadow: true, receiveShadow: true },
 };
 
 /** What a recipe nobody defined draws: grey blocks (`material:default`), casting and receiving shadows. */

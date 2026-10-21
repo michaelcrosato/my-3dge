@@ -53,6 +53,7 @@ import {
   type LevelGlyph,
   type LightSpot,
   type Point3,
+  type RoofDescriptor,
   type SpawnPoint,
   type StoreyDescriptor,
 } from './types';
@@ -335,7 +336,7 @@ function compileStoreys(checked: CheckedStoreys, parsed: ParsedLevel, name: stri
     walkable: ground.walkable,
     floor: ground.floor,
     top: ground.top,
-    bounds: { min: [0, bottom, 0], max: [cols * t, highest, rows * t] },
+    bounds: eavesBounds(roof, [0, bottom, 0], [cols * t, highest, rows * t]),
     ground: { min: [slab.min[0], bottom - 1, slab.min[2]], max: [slab.max[0], bottom, slab.max[2]] },
     colliders,
     ramps: ground.ramps,
@@ -349,4 +350,15 @@ function compileStoreys(checked: CheckedStoreys, parsed: ParsedLevel, name: stri
     roofs: roof ? [roof] : [],
   };
   return freezeValue(level);
+}
+
+/** The level's bounds `[min, max]` (m), widened over a roof's eaves where they reach past the map. */
+function eavesBounds(roof: RoofDescriptor | null, min: Point3, max: Point3): { min: Point3; max: Point3 } {
+  if (!roof) return { min, max };
+  const [x0, z0, x1, z1] = roof.footprint;
+  const e = roof.eaves;
+  return {
+    min: [Math.min(min[0], x0 - e), min[1], Math.min(min[2], z0 - e)],
+    max: [Math.max(max[0], x1 + e), max[1], Math.max(max[2], z1 + e)],
+  };
 }

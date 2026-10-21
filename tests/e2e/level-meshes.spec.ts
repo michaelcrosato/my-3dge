@@ -5,7 +5,11 @@
  * walls, low wall and pillar in two groups each, again into the shadow map for those that cast; the frame adds the
  * renderer's output pass, which the empty scene draws too), the count the meshes give themselves; the warm-up builds every pipeline, so the frames after it build none; every level mesh shows in
  * the ID pass; and the frame is not blank. The 64 × 44 hall fixture then draws in the same 13 calls: instancing keeps
- * the cost flat however many pieces a level has.
+ * the cost flat however many pieces a level has. The storey house (fixtures/levels/storeys/house.txt, WP 13.14) draws
+ * its walls, slabs, roof and openings as parts the ID pass tells apart (outside: the roof, the walls, the frames and
+ * the heads; storey by storey with what stands above hidden: its floor, walls, railings and flight; from the cellar:
+ * the ground floor's ceiling), builds 0 pipelines after the warm-up, in the lambert style and in the toon style both
+ * playground looks draw with.
  *
  * Invariants: the level's text is read in Node and passed to the page (`__levelPage.show`), which fetches nothing;
  * frames are drawn by calling the page.
@@ -24,6 +28,9 @@ interface LevelPage {
   view: FrameView;
   show(text: string, file: string): Promise<Shown>;
   settle(): Promise<{ drawn: boolean; built: number }>;
+  style(style: string): Promise<{ drawn: boolean; built: number }>;
+  meshes: { parts: { name: string; storey?: number; mesh: { visible: boolean } }[] };
+  camera: { position: { set(x: number, y: number, z: number): void }; lookAt(x: number, y: number, z: number): void };
 }
 type LevelWindow = { __levelPage: LevelPage };
 type ShotModule = { shot(gfx: Gfx, view: FrameView, options?: ShotOptions): Promise<ShotResult> };
@@ -83,5 +90,71 @@ test('the 64 × 44 hall draws in the same 13 calls: instancing keeps the cost fl
   expect(hall.frame).toMatchObject({ drawn: true, built: 0 });
   expect(hall.pipelinesAfterWarmUp).toBe(0);
   expect([hall.drawCalls - hall.empty, hall.counted]).toEqual([13, 13]);
+  expect((await harness.readFrame()).blank).toBe(false);
+});
+
+/** The ID pass's pixels by part, the level's name dropped: `{ 'attic/roof': 4210, … }`. */
+async function idPixels(page: Page): Promise<Record<string, number>> {
+  const ids = await page.evaluate(async (url) => {
+    const { shot } = (await import(url)) as ShotModule;
+    const { gfx, view } = (window as unknown as LevelWindow).__levelPage;
+    return (await shot(gfx, view, { metrics: false, thumbnail: false })).ids!;
+  }, SHOT);
+  return Object.fromEntries(ids.visible.map((entry) => [entry.name.replace(/^level:house\//, ''), entry.px]));
+}
+
+/** Shows only storey `k` and those below (the roof hidden past the top one), the camera at `eye` looking at `at`. */
+function look(page: Page, k: number, eye: [number, number, number], at: [number, number, number]) {
+  return page.evaluate(
+    ([k, eye, at]) => {
+      const level = (window as unknown as LevelWindow).__levelPage;
+      for (const part of level.meshes.parts) part.mesh.visible = (part.storey ?? 0) <= k && !(k < 3 && part.name.endsWith('/roof')); // prettier-ignore
+      level.camera.position.set(...eye);
+      level.camera.lookAt(...at);
+      return level.settle();
+    },
+    [k, eye, at] as const,
+  );
+}
+
+test('the storey house: walls, slabs, roof and openings apart in the ID pass, storey by storey, 0 pipelines after the warm-up in two styles', async ({
+  page,
+  harness,
+}) => {
+  // prettier-ignore
+  await page.goto(PAGE);
+  await harness.ready();
+  await harness.assertWebGPU();
+  const house = await show(page, 'storeys/house');
+  expect(house.frame, 'the warm-up built every pipeline the house needs').toMatchObject({ drawn: true, built: 0 });
+  expect(house.pipelinesAfterWarmUp).toBe(0);
+  expect(house.drawCalls - house.empty).toBe(house.counted);
+  expect(house.counted).toBeLessThanOrEqual(BUDGET * 4);
+
+  const outside = await idPixels(page);
+  for (const part of ['attic/roof', 'ground/wall#2', 'upper/wall#2', 'ground/frames', 'upper/frames', 'upper/heads']) {
+    expect(outside[part] ?? 0, `${part} from outside`).toBeGreaterThan(30);
+  }
+  expect(await look(page, 1, [4, 9, 6.5], [4, 0, 3])).toMatchObject({ drawn: true, built: 0 });
+  const ground = await idPixels(page);
+  for (const part of [
+    'ground/floor',
+    'ground/floor',
+    'ground/flight',
+    'ground/railing',
+    'ground/wall#2',
+    'ground/heads',
+  ]) {
+    expect(ground[part] ?? 0, `${part}, the upper floor and the roof hidden`).toBeGreaterThan(30);
+  }
+  expect(await look(page, 2, [4, 12, 6.5], [4, 3, 3])).toMatchObject({ drawn: true, built: 0 });
+  const upper = await idPixels(page);
+  for (const part of ['upper/floor', 'upper/railing', 'upper/wall#2'])
+    expect(upper[part] ?? 0, part).toBeGreaterThan(30);
+  expect(await look(page, 3, [4, -2.4, 3.6], [4, 0, 2.5])).toMatchObject({ drawn: true, built: 0 }); // in the cellar
+  expect((await idPixels(page))['ground/ceiling'] ?? 0, "the ground floor's slab, seen from the cellar").toBeGreaterThan(200); // prettier-ignore
+
+  const toon = await page.evaluate(() => (window as unknown as LevelWindow).__levelPage.style('toon'));
+  expect(toon, 'every style warmed up: the toon frame builds nothing').toMatchObject({ drawn: true, built: 0 });
   expect((await harness.readFrame()).blank).toBe(false);
 });

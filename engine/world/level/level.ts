@@ -7,8 +7,9 @@
  * Where the text comes from is the caller's business: a page imports a level file with Vite's `?raw`, and a test or a
  * tool reads it. The entry keeps the text, never the compiled data, so the registry stays small and `getLevel`
  * reflects the legend of the registry it reads. Its `materials` swap the materials its meshes' recipes name for a
- * game's own (WP 7.8: the box draws the hall's flagstones with its floor bake); only the view reads them
- * (engine/app/view.ts), so they never reach the sim or the hash.
+ * game's own (WP 7.8: the box draws the hall's flagstones with its floor bake), and its `rooms` give a storeyed
+ * level's rooms floors of their own (WP 13.14); only the view reads them (engine/app/view.ts), so they never reach the
+ * sim or the hash.
  *
  * Invariants: an entry's text compiles against its registry's legend when it is defined (`CORE_BAD_SPEC` naming each
  * structural problem otherwise), so define a level's own glyphs first. `getLevel` compiles afresh on each call, a
@@ -47,6 +48,12 @@ export const LEVEL_FIELDS = {
     description:
       "Material swaps for drawing it, presentation only: a material id its meshes' recipes name → the game's material drawn instead ({ 'material:flagstone': 'material:hallFloor' }).",
   },
+  rooms: {
+    type: 'object',
+    default: {},
+    description:
+      "A level written as storeys: each room's floor material for drawing it, presentation only, by room name ({ kitchen: 'material:tiles' }).",
+  },
 } as const satisfies Schema;
 
 /** A `level` entry: a level's text and where it came from. */
@@ -59,14 +66,17 @@ function levelKind(registry: Registry): void {
     description:
       'Levels: a level text (front matter and a map in legend characters) that compileLevel turns into data.',
     fields: LEVEL_FIELDS,
-    defineWith: "defineLevel('<id>', { text, file, materials })",
+    defineWith: "defineLevel('<id>', { text, file, materials, rooms })",
     check: (entry) => {
       const level = entry as LevelEntry;
       const { problems } = checkLevel(level.text, { file: level.file || level.id, registry });
       const swaps = Object.entries(level.materials as Record<string, unknown>)
         .filter(([, to]) => typeof to !== 'string')
         .map(([from]) => `materials["${from}"] must be a material id (a string)`);
-      return [...problems.map((problem) => problem.message), ...swaps];
+      const rooms = Object.entries(level.rooms as Record<string, unknown>)
+        .filter(([, to]) => typeof to !== 'string')
+        .map(([room]) => `rooms["${room}"] must be a material id (a string)`);
+      return [...problems.map((problem) => problem.message), ...swaps, ...rooms];
     },
   });
 }
