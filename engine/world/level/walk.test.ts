@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { compileLevel } from './compile';
 import { NAV_CLIMB } from './validate';
-import { canStep, STEP_SAMPLES, walkAreas } from './walk';
+import { canStep, STEP_SAMPLES, walkAreas, walkStoreys } from './walk';
 
 describe('canStep', () => {
   it('climbs stairs to a gallery, never its edge, and drops off it anywhere', () => {
@@ -68,6 +68,40 @@ describe('walkAreas', () => {
       [[1, 1], flat.walkable.filter(Boolean).length - 160],
       [[3, 1], 80],
       [[41, 1], 80],
+    ]);
+  });
+});
+
+describe('walkStoreys (WP 13.13)', () => {
+  /** Each storey of `maps` as a height source (1 m tiles, flat floors). */
+  const sources = (...maps: string[][]) =>
+    maps.map((rows) => {
+      const level = compileLevel(rows.join('\n'));
+      return { ...level, ramps: [], daises: [] };
+    });
+
+  it('joins storeys only through their links, walked both ways, numbering areas storey by storey', () => {
+    const [low, high] = sources(['#####', '#...#', '#####'], ['#####', '#.#.#', '#####']);
+    const n = 15;
+    const apart = walkStoreys([low, high], [], NAV_CLIMB);
+    expect(apart.areas.map((area) => [area.first, area.tiles])).toEqual([[[0, 1, 1], 3], [[1, 1, 1], 1], [[1, 3, 1], 1]]); // prettier-ignore
+    const linked = walkStoreys(
+      [low, high],
+      [
+        [6, n + 6],
+        [8, n + 8],
+      ],
+      NAV_CLIMB,
+    );
+    expect(linked.areas.map((area) => [area.first, area.tiles])).toEqual([[[0, 1, 1], 5]]);
+    expect([linked.areaOf[n + 6], linked.areaOf[n + 7]]).toEqual([0, -1]);
+  });
+
+  it('gives walkAreas the same areas over one storey', () => {
+    const [one] = sources(['#######', '#..#..#', '#######']);
+    expect(walkAreas(one, NAV_CLIMB).areas).toEqual([
+      { first: [1, 1], tiles: 2 },
+      { first: [4, 1], tiles: 2 },
     ]);
   });
 });

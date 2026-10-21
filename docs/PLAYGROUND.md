@@ -292,7 +292,9 @@ compiles to the same data and hash.
 - **Storeys:** a file holds several maps of the same size, each a storey with its base height and its clear height,
   read top to bottom of the file as bottom to top of the building; a base may be below 0 (a basement).
 - **Glyphs:** the legend gains void (no floor: a stairwell, a double height, the outside), doors, windows, railings,
-  stairs from one storey to the next, ladders, roof areas (gable, hip or flat, with a pitch) and room markers.
+  stairs from one storey to the next, a low ceiling and room markers; ladders climb from one storey to the next.
+- **Roofs:** the top storey's block gives its roof, gable, hip or flat, with a pitch, a ridge and eaves (a tile holds
+  one glyph, so a roof drawn in glyphs could not also say what stands under it: ADR-0025 amendment 15).
 - **Colliders:** walls per storey, slabs with their openings, stair hulls and roofs, all fixed bodies in `world`.
 - **Queries in 3D:** `floorBelow(level, x, y, z)`, and the storey, the room and the surface at a point. The 2D queries
   stay for single-storey levels.

@@ -2,17 +2,29 @@
  * @file Tests for the level bodies (engine/sim/levelBodies.ts): fixtures/levels/room.txt's bodies are solid exactly
  * on its solid grid (at each tile's centre and near its corners), stand as high as each tile's top, rest on a ground
  * slab one tile wider than the map, and enter Rapier the same way every time; a brazier is a cylinder as high and as
- * wide as its glyph says; the hall's hulls (its stairs and the dais) stand within 1 cm of floorHeight, probed.
+ * wide as its glyph says; the hall's hulls (its stairs and the dais) stand within 1 cm of floorHeight, probed. A level
+ * written as storeys (WP 13.13, fixtures/levels/storeys/): the bodies stand each storey's floors where floorBelow says;
+ * the controller walks up the house's flights from the cellar to the upper floor, and stands on the gable's slope and
+ * on the shed's flat roof.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { defineStoreyFixtureGlyphs } from '../../fixtures/levels/storeys/glyphs';
 import { hashNumbers } from '../core/hash';
+import { createRegistry } from '../core/registry';
 import { createSettings } from '../core/settings';
+import { physicsOf } from '../physics/binding';
+import { createCharacter } from '../physics/character';
 import { createPhysics } from '../physics/world';
 import { compileLevel } from '../world/level/compile';
-import { floorHeight } from '../world/level/heights';
+import { floorBelow, floorHeight } from '../world/level/heights';
+import { roofHeight } from '../world/level/roofs';
+import type { CompiledLevel } from '../world/level/types';
+import { spawnActor } from './actors';
 import { addLevelBodies, LEVEL_FRICTION } from './levelBodies';
+import { defineScene } from './scene';
+import { createSession } from './session';
 
 const ROOM = compileLevel(readFileSync(join(import.meta.dirname, '../../fixtures/levels/room.txt'), 'utf8'), {
   file: 'room.txt',
@@ -134,5 +146,74 @@ describe('cylinders and hulls', () => {
     const heights = hall.top.map((_, i) => physics.probe((i % hall.cols) + 0.5, Math.floor(i / hall.cols) + 0.5)?.y);
     expect(heights.map((y, i) => Math.abs((y ?? Number.NaN) - hall.top[i]) <= 1e-3)).toEqual(hall.top.map(() => true));
     physics.dispose();
+  });
+});
+
+/** The storey fixtures, compiled with their room markers. */
+const STOREYS = (() => {
+  const registry = createRegistry();
+  defineStoreyFixtureGlyphs(registry);
+  const read = (name: string) =>
+    compileLevel(readFileSync(join(import.meta.dirname, `../../fixtures/levels/storeys/${name}.txt`), 'utf8'), { file: `${name}.txt`, registry }); // prettier-ignore
+  return { house: read('house'), shed: read('shed') };
+})();
+
+/** A session of `level`'s bodies with a player at `at` (the default character: 0.28 m round, 1.69 m tall). */
+function onLevel(id: string, level: CompiledLevel, at: [number, number, number]) {
+  const scene = defineScene(id, {
+    physics: true,
+    setup(w) {
+      addLevelBodies(physicsOf(w), level);
+      spawnActor(w, { at, character: createCharacter({}) });
+    },
+  });
+  const session = createSession(scene, { seed: 1 });
+  const feet = () => (session.world.query('actor') as unknown as { actor: { x: number; y: number; z: number } }[])[0].actor; // prettier-ignore
+  return { session, feet };
+}
+
+describe('a level written as storeys (fixtures/levels/storeys/, WP 13.13)', () => {
+  it("stands each storey's floors and the roof where floorBelow says, probed down through every storey", () => {
+    const { house } = STOREYS;
+    const physics = createPhysics();
+    addLevelBodies(physics, house);
+    physics.step({ dt: 1 / 60, settings: createSettings().sim });
+    let worst = 0;
+    for (let x = 0.3; x < 8; x += 0.7) {
+      for (let z = 0.3; z < 6; z += 0.7) {
+        const hit = physics.probe(x, z);
+        worst = Math.max(worst, Math.abs((hit?.y ?? Number.NaN) - (floorBelow(house, x, 50, z) ?? Number.NaN)));
+      }
+    }
+    expect(worst).toBeLessThan(1e-3);
+    physics.dispose();
+  });
+
+  it("walks up the cellar's flight to the kitchen floor, 3 m up its open stairwell", () => {
+    const { session, feet } = onLevel('storeys-test:cellar', STOREYS.house, [7, -3, 5.25]);
+    for (let i = 0; i < 150; i++) session.step({ move: [0, -1] });
+    expect(feet().y).toBeCloseTo(0, 2);
+    expect(feet().z).toBeLessThan(1);
+  });
+
+  it("walks up the hall's flight from the ground floor to the upper floor's landing", () => {
+    const { session, feet } = onLevel('storeys-test:flight', STOREYS.house, [1, 0, 5.4]);
+    for (let i = 0; i < 150; i++) session.step({ move: [0, -1] });
+    expect(feet().y).toBeCloseTo(3, 2);
+    expect(feet().z).toBeLessThan(1);
+  });
+
+  it("stands on the gable's 35° slope, and on the shed's flat roof", () => {
+    const roof = STOREYS.house.roofs![0];
+    const slope = onLevel('storeys-test:gable', STOREYS.house, [4, 7.5, 1.5]);
+    for (let i = 0; i < 120; i++) slope.session.step({});
+    const at = slope.feet();
+    // Its feet (the capsule's lowest point on its axis) rest r (1 / cos 35° − 1) + its skin above the slope: 8 cm.
+    expect(at.y - roofHeight(roof, at.x, at.z)).toBeGreaterThan(0);
+    expect(at.y - roofHeight(roof, at.x, at.z)).toBeLessThan(0.1);
+    expect(Math.hypot(at.x - 4, at.z - 1.5)).toBeLessThan(0.1); // it stays put: 35° is under its 40° slide
+    const flat = onLevel('storeys-test:shed', STOREYS.shed, [1.5, 4, 2]);
+    for (let i = 0; i < 120; i++) flat.session.step({});
+    expect(flat.feet().y).toBeCloseTo(2.7, 2);
   });
 });

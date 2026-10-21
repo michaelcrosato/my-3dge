@@ -84,3 +84,81 @@ describe('parseLevel', () => {
     expect(parseLevel('').problems.map((p) => [p.code, p.line])).toEqual([['LEVEL_EMPTY', 1]]);
   });
 });
+
+describe('parseLevel: storeys (format 2, WP 13.13)', () => {
+  const house = [
+    '---',
+    'description: Two storeys.',
+    'tile: 0.5',
+    '---',
+    '',
+    '---',
+    'storey: ground   # its name',
+    'base: 0',
+    'height: 2.7',
+    '---',
+    '###',
+    '#.#',
+    '###',
+    '',
+    '---',
+    'storey: attic',
+    "base: '3'",
+    'roof: gable',
+    'pitch: 35',
+    'ridge: x',
+    'eaves: 0.5',
+    'roofSurface: slate',
+    '---',
+    '###',
+    '#.#',
+    '###',
+    '',
+  ].join('\n');
+
+  it('reads the level’s front matter, then a block and a map per storey, bottom first', () => {
+    const parsed = parseLevel(house, { file: 'house.txt' });
+    expect(parsed.problems).toEqual([]);
+    expect([parsed.format, parsed.header, parsed.rows, parsed.firstLine, parsed.width]).toEqual([2, { description: 'Two storeys.', tile: 0.5 }, [], 11, 3]); // prettier-ignore
+    expect(
+      parsed.storeys.map((s) => [s.name, s.line, s.keys, s.rows.map((row) => row.join('')), s.firstLine, s.width]),
+    ).toEqual([
+      // prettier-ignore
+      ['ground', 6, { base: 0, height: 2.7 }, ['###', '#.#', '###'], 11, 3],
+      ['attic', 15, { base: 3, roof: 'gable', pitch: 35, ridge: 'x', eaves: 0.5, roofSurface: 'slate' }, ['###', '#.#', '###'], 24, 3], // prettier-ignore
+    ]);
+  });
+
+  it('takes a first block holding a storey key as a storey, with no front matter', () => {
+    const parsed = parseLevel('---\nstorey: ground\nbase: 0\nheight: 3\n---\n##\n##\n');
+    expect([parsed.format, parsed.header, parsed.storeys.map((s) => [s.name, s.firstLine])]).toEqual([2, { description: '', tile: 1 }, [['ground', 6]]]); // prettier-ignore
+  });
+
+  it('names each bad block at its line and column: an unknown key, a bad value, no storey, never closed', () => {
+    const bad = parseLevel(['---', 'storey: two words', 'base: low', 'roof: dome', 'colour: red', '---', '#', '---', 'base: 3', '---', '#', '---', 'storey: top'].join('\n'), { file: 'x.txt' }); // prettier-ignore
+    expect(bad.problems.map((p) => [p.code, p.line, p.column])).toEqual([
+      ['LEVEL_BAD_STOREY', 2, 9],
+      ['LEVEL_BAD_STOREY', 3, 7],
+      ['LEVEL_BAD_STOREY', 4, 7],
+      ['LEVEL_BAD_STOREY', 5, 1],
+      ['LEVEL_BAD_STOREY', 8, 1],
+      ['LEVEL_BAD_STOREY', 12, 1],
+    ]);
+    [
+      'x.txt:2:9: storey is "two words"; it must be a word (letters, digits, _ and -)',
+      'x.txt:3:7: base is "low"; it must be a number of metres',
+      'x.txt:4:7: roof is "dome"; it is gable, hip or flat',
+      'x.txt:5:1: unknown key "colour"',
+      'x.txt:8:1: this block names no storey: give it a storey key (storey: ground)',
+      'x.txt:12:1: the storey block opened here is never closed by a line holding only ---',
+    ].forEach((said, i) => expect(bad.problems[i].message).toContain(said));
+  });
+
+  it('reports a storey with no map, and the ragged rows of each map, at their lines', () => {
+    const parsed = parseLevel('---\nstorey: a\n---\n\n---\nstorey: b\n---\n###\n##\n', { file: 'y.txt' });
+    expect(parsed.problems.map((p) => [p.code, p.line, p.column])).toEqual([
+      ['LEVEL_EMPTY', 4, 1],
+      ['LEVEL_RAGGED_ROW', 9, 3],
+    ]);
+  });
+});

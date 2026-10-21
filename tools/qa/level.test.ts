@@ -35,7 +35,7 @@ describe('the level QA family', () => {
     expect(result.failures).toEqual([]);
     expect(result.warnings).toEqual([]);
     expect(levelFiles(ROOT).map((level) => level.id)).toEqual(
-      expect.arrayContaining(['level:fixtures/hall-v1', 'level:fixtures/heights', 'level:fixtures/room']),
+      expect.arrayContaining(['level:fixtures/hall-v1', 'level:fixtures/heights', 'level:fixtures/room', 'level:fixtures/storeys/house']), // prettier-ignore
     );
   });
 

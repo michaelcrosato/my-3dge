@@ -3,7 +3,8 @@
  * refuse what cannot be ridden (anchors closer than 2 m, a balloon's line off vertical, a ladder's normal not a unit
  * or its top below its foot, a launcher of no size), each problem named; a launcher's volume stands on its top; a
  * level's ladder glyphs stand one ladder on each run of tiles along a face, against the neighbour standing highest,
- * up to its top, a tenth of a metre off the face, and none where no neighbour rises.
+ * up to its top, a tenth of a metre off the face, and none where no neighbour rises; in a level written as storeys, each
+ * storey's, from its floor to the floor above (WP 13.13).
  * @see engine/world/traverse.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -60,5 +61,15 @@ describe('levelLadders', () => {
       { foot: [1.25, 0, 0.5 + LADDER_DEPTH], top: 3, normal: [0, 1], width: 0.5 }, // the north wall
     ]);
     expect(levelLadders(level('#######', '#@....#', '#..|..#', '#.....#', '#######'))).toEqual([]);
+  });
+
+  it("stands each storey's ladders from its floor to the storey above's, against a full-height wall", () => {
+    const text = [
+      ...['---', 'storey: ground', 'base: 0', 'height: 2.7', '---', '#####', '#@.|#', '#####'],
+      ...['---', 'storey: loft', 'base: 3', 'height: 2', '---', '#####', '#..~#', '#####'],
+    ].join('\n');
+    expect(levelLadders(compileLevel(text, { file: 'loft.txt' }))).toEqual([
+      { foot: [3.5, 0, 1 + LADDER_DEPTH], top: 3, normal: [0, 1], width: 1 }, // up the north wall (first of three as high), through the hatch
+    ]);
   });
 });

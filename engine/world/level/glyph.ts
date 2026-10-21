@@ -1,20 +1,25 @@
 /**
- * @file The legend registry (PLAN.md WP 2.2, §6.6, I-22): the registry kind `glyph`, one entry per character a level
- * map may hold, saying what that character means: its floor and top heights and how its floor runs (flat, a ramp, a
- * dais), whether it is solid, its collider and mesh recipes, nav flags, a spawn point, a light spot, a surface tag,
- * whether a ladder stands on it and its footprint. The level compiler
- * (engine/world/level/compile.ts) reads only these fields, never an id (ask the entry, §6.6), so a new glyph works in
- * every level without editing the compiler.
+ * @file The legend registry (PLAN.md WP 2.2, WP 13.13, §6.6, I-22): the registry kind `glyph`, one entry per
+ * character a level map may hold, saying what that character means: its floor and top heights and how its floor runs
+ * (flat, a ramp, a dais, a flight of stairs to the storey above), whether it is solid, its collider and mesh recipes,
+ * nav flags, a spawn point, a light spot, a surface tag, whether a ladder stands on it and its footprint; and for
+ * levels written as storeys (format 2), void, full height, an opening (a door or a window), a head and a room marker
+ * (`STOREY_FIELDS`, which a format-1 level's legend leaves out). The level compiler (engine/world/level/compile.ts)
+ * reads only these fields, never an id (ask the entry, §6.6), so a new glyph works in every level without editing
+ * the compiler.
  *
  * `defineGlyph(id, spec)` adds one (a game's own glyphs live with the game: `labs/box/`, never the engine).
- * `legendOf(registry)` maps each character to its glyph. A registry gets the kind, and the engine's v1 to v3 glyphs
+ * `legendOf(registry)` maps each character to its glyph. A registry gets the kind, and the engine's v1 to v4 glyphs
  * (engine/world/level/legend.ts), the first time anything here touches it; the shared registry gets them on import.
  *
  * Invariants: a glyph's `char` is one character (one code point), not whitespace, and no other glyph's; `top` is at
- * least `floor`; a solid glyph is not walkable (`nav.walkable: false`); spawn names and light tags are words
- * (letters, digits, `_`, `-`); a ladder is not solid. A ramp or a dais rises (`top` above `floor`), is walked on (not solid) and has a hull
- * collider or none, a dais an `edge` above 0; a hull collider follows a ramp or a dais; a cylinder collider has a
- * `radius` and a `top` above `floor`. Problems raise `CORE_BAD_SPEC` naming each, as every registry kind does.
+ * least `floor`; a solid glyph is not walkable (`nav.walkable: false`); spawn names, light tags and room names are
+ * words (letters, digits, `_`, `-`); a ladder is not solid. A ramp or a dais rises (`top` above `floor`), is walked
+ * on (not solid) and has a hull collider or none, a dais an `edge` above 0; a hull collider follows a ramp, a dais or
+ * a flight; a cylinder collider has a `radius` and a `top` above `floor`. A void tile is neither solid nor walkable
+ * and has no collider; a full glyph is a solid box; a door is walked through under a head, a window is a solid box to
+ * its sill with its head above; a head stands above what stands on its tiles; a room marker is walkable floor.
+ * Problems raise `CORE_BAD_SPEC` naming each, as every registry kind does.
  *
  * @example
  * import { createRegistry } from '../../core/registry';
@@ -26,7 +31,7 @@
  */
 import { registry as sharedRegistry, type Entry, type Registry } from '../../core/registry';
 import type { Schema, SpecOf } from '../../core/schema';
-import { V1_GLYPHS, V2_GLYPHS, V3_GLYPHS } from './legend';
+import { V1_GLYPHS, V2_GLYPHS, V3_GLYPHS, V4_GLYPHS } from './legend';
 
 /** The fields of a `glyph` entry. */
 export const GLYPH_FIELDS = {
@@ -65,10 +70,10 @@ export const GLYPH_FIELDS = {
   },
   floorShape: {
     type: 'string',
-    enum: ['flat', 'ramp', 'dais'],
+    enum: ['flat', 'ramp', 'dais', 'flight'],
     default: 'flat',
     description:
-      "How its floor runs: 'flat' at floor; 'ramp' rising in a straight slope from floor to top across each filled rectangle of its tiles, toward the one side whose neighbours stand at top (stairs up to a gallery); 'dais' an octagonal platform on each square block of its tiles, its edge sloping from floor to top.",
+      "How its floor runs: 'flat' at floor; 'ramp' rising in a straight slope from floor to top across each filled rectangle of its tiles, toward the one side whose neighbours stand at top (stairs up to a gallery); 'dais' an octagonal platform on each square block of its tiles, its edge sloping from floor to top; 'flight' (format 2) stairs rising from floor to the floor of the storey above, toward the one side that floor meets.",
   },
   edge: {
     type: 'number',
@@ -144,7 +149,43 @@ export const GLYPH_FIELDS = {
     description:
       'Its footprint in tiles: a block of it fills whole footprint × footprint squares, each one piece (a pillar is 2: PP over PP).',
   },
+  void: {
+    type: 'boolean',
+    default: false,
+    description:
+      'Format 2: its tiles have no floor on their storey (a stairwell, a double height, the air beside a building). Not solid, not walkable, no collider.',
+  },
+  full: {
+    type: 'boolean',
+    default: false,
+    description:
+      "Format 2: its box rises from its storey's floor to the floor of the storey above (or to the roof over it), whatever its top: a wall, a pillar. A format-1 level reads its top.",
+  },
+  opening: {
+    type: 'string',
+    enum: ['none', 'door', 'window'],
+    default: 'none',
+    description:
+      "Format 2: an opening in a wall, drawn as a filled rectangle one wall thick with the wall at both ends: 'door' walked through under its head; 'window' solid below its sill (its box, from the floor to top) and open up to its head.",
+  },
+  head: {
+    type: 'number',
+    default: 0,
+    minimum: 0,
+    unit: 'm',
+    description:
+      "Format 2: a solid from this height over its floor up to its storey's full top: a door's or a window's head, a low ceiling (a crawlspace); 0 for none.",
+  },
+  room: {
+    type: 'string',
+    default: '',
+    description:
+      "Format 2: a room marker: the room, by name, its tiles' floor inside walls and openings ('' for none). One marker per room.",
+  },
 } as const satisfies Schema;
+
+/** The fields only format 2 reads: a format-1 level's legend leaves them out (engine/world/level/compile.ts). */
+export const STOREY_FIELDS = ['void', 'full', 'opening', 'head', 'room'] as const;
 
 /** A `glyph` entry: what one map character means. */
 export type Glyph = Entry<typeof GLYPH_FIELDS>;
@@ -185,8 +226,44 @@ function glyphProblems(glyph: Glyph, registry: Registry): string[] {
       "a box collider needs a top above 0 (it is a box from the ground to top): set top, or collider: 'none'",
     );
   }
-  problems.push(...shapeProblems(glyph));
+  problems.push(...shapeProblems(glyph), ...storeyProblems(glyph));
   if (!glyph.mesh) problems.push("mesh is empty; name a recipe, or 'none'");
+  return problems;
+}
+
+/** The problems of a glyph's format-2 fields: void, full, an opening, a head and a room marker. */
+function storeyProblems(glyph: Glyph): string[] {
+  const problems: string[] = [];
+  if (glyph.void && (glyph.solid || glyph.nav.walkable || glyph.collider !== 'none' || glyph.floorShape !== 'flat')) {
+    problems.push("a void tile has no floor: make it solid: false, nav: { walkable: false }, collider: 'none', flat");
+  }
+  if (glyph.full && !(glyph.solid && glyph.collider === 'box')) {
+    problems.push("full fills its storey with its box: make it solid: true with collider: 'box'");
+  }
+  if (
+    glyph.opening === 'door' &&
+    (glyph.solid || !glyph.nav.walkable || glyph.collider !== 'none' || !(glyph.head > 0))
+  ) {
+    problems.push(
+      "a door is walked through under its head: make it solid: false, walkable, collider: 'none', with a head above 0",
+    );
+  }
+  if (
+    glyph.opening === 'window' &&
+    !(glyph.solid && glyph.collider === 'box' && glyph.top > 0 && glyph.head > glyph.top)
+  ) {
+    problems.push(
+      "a window is solid to its sill (top) and open up to its head: make it solid, collider: 'box', top above 0 and head above top",
+    );
+  }
+  if (glyph.head > 0 && glyph.head <= Math.max(glyph.floor, glyph.top)) {
+    problems.push(`head ${glyph.head} is not above what stands on its tiles (${Math.max(glyph.floor, glyph.top)} m)`);
+  }
+  if (glyph.room && (glyph.void || glyph.solid || !glyph.nav.walkable)) {
+    problems.push("a room marker stands on the room's floor: make it walkable, not solid and not void");
+  }
+  if (glyph.room && !WORD.test(glyph.room))
+    problems.push(`room "${glyph.room}" must be a word (letters, digits, _ and -)`);
   return problems;
 }
 
@@ -195,7 +272,9 @@ function shapeProblems(glyph: Glyph): string[] {
   const problems: string[] = [];
   const shape = glyph.floorShape;
   if (shape !== 'flat') {
-    if (glyph.top <= glyph.floor) problems.push(`a ${shape} rises: give it a top above its floor (${glyph.floor})`);
+    if (glyph.top <= glyph.floor && shape !== 'flight') {
+      problems.push(`a ${shape} rises: give it a top above its floor (${glyph.floor})`);
+    }
     if (glyph.solid) problems.push(`a ${shape} is walked on: it cannot be solid`);
     if (glyph.collider === 'box' || glyph.collider === 'cylinder') {
       problems.push(`a ${shape}'s collider is 'hull' (under its slope) or 'none', not '${glyph.collider}'`);
@@ -204,7 +283,7 @@ function shapeProblems(glyph: Glyph): string[] {
   if (shape === 'dais' && glyph.edge <= 0) problems.push('a dais needs an edge above 0: its sloped edge, across (m)');
   if (glyph.collider === 'hull' && shape === 'flat') {
     problems.push(
-      "a hull collider follows the floor's slope: give it floorShape: 'ramp' or 'dais', or collider: 'box'",
+      "a hull collider follows the floor's slope: give it floorShape: 'ramp', 'dais' or 'flight', or collider: 'box'",
     );
   }
   if (glyph.collider === 'cylinder') {
@@ -215,17 +294,17 @@ function shapeProblems(glyph: Glyph): string[] {
   return problems;
 }
 
-/** Declares the kind `glyph` on `registry`, with the engine's v1 and v2 glyphs, unless it has it. */
+/** Declares the kind `glyph` on `registry`, with the engine's v1 to v4 glyphs, unless it has it. */
 export function glyphKind(registry: Registry): void {
   if (registry.kinds().includes('glyph')) return;
   registry.defineKind('glyph', {
     description:
-      'Level legend glyphs: what one map character means (heights, floor shape, solid, collider and mesh recipes, nav flags, spawn, light spot, surface, footprint).',
+      'Level legend glyphs: what one map character means (heights, floor shape, solid, collider and mesh recipes, nav flags, spawn, light spot, surface, footprint; in a storey, void, full height, openings, heads and room markers).',
     fields: GLYPH_FIELDS,
     defineWith: "defineGlyph('<id>', { char: '<one character>', description: '…', … })",
     check: (entry) => glyphProblems(entry as Glyph, registry),
   });
-  for (const [id, spec] of Object.entries({ ...V1_GLYPHS, ...V2_GLYPHS, ...V3_GLYPHS }))
+  for (const [id, spec] of Object.entries({ ...V1_GLYPHS, ...V2_GLYPHS, ...V3_GLYPHS, ...V4_GLYPHS }))
     registry.def('glyph', id, spec);
 }
 glyphKind(sharedRegistry);

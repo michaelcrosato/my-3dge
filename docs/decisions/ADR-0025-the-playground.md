@@ -749,3 +749,45 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   (tests/e2e/ui.spec.ts: the menu's pick recorded as the scene's dev action).
 - **Pages are strings**: the source wrapped a page to the box's width in its pixel font; here each string is a page and
   CSS wraps it. The box's and the playground's own menus stay theirs until a WP needs the widget's.
+
+## Amendment 15 (2026-10-21, WP 13.13): storeys, the level format and its colliders
+
+- **The text** (engine/world/level/parse.ts): a map per storey, bottom first, each after a fenced block of its own
+  holding `storey` (its name), `base` (its floor, m) and `height` (its clear height, m); the level's front matter, when
+  it has one, comes first. Every map is the size of the first, and each base stands above the ceiling of the storey
+  below: the gap is that storey's floor slab (0.3 m under the lowest). A format-1 file, with no storey block, is one
+  storey on 0 and compiles to the same data and hash as before: the glyph fields only storeys read (`void`, `full`,
+  `opening`, `head`, `room`) are left out of a format-1 level's legend, and the wall's and the pillar's descriptions,
+  which a compiled legend holds, kept their words (fixtures/levels/*.txt and the hall keep their goldens).
+- **Heights** (storeys.ts): a storey's glyphs stand on its base; a `full` glyph (the v1 wall and pillar) rises to the
+  floor of the storey above, so `#` is a storey's wall; a slab lies under every tile but void ones; a head (a door's
+  2.1 m, a window's, the low ceiling's 1.4 m) is a solid from it up to the full top. A flight of stairs (`<`) rises
+  from its floor to the floor of the storey above, toward the one side that floor meets it, with void over it there.
+- **Roofs are the top storey's keys, not glyphs** (the plan said "roof areas" among the glyphs): a tile holds one
+  glyph, so a roof drawn as glyphs could not also say what stands under it (an attic's floor, its gable walls, a
+  chimney). `roof` (gable, hip, flat), `pitch`, `ridge` (a gable's; a hip's runs along the longer side) and `eaves`
+  over the bounds of the storey's floored tiles; a pitched roof's eaves stand on the storey's ceiling, or its floor
+  when it gives no height (an attic, as the house's); its slab is 0.2 m deep and walked on; the walls under it rise to
+  its underside as convex hulls (roofs.ts). One roof a level, on its top storey; the porch roof and the garage's deck
+  are floor of the upper storey. PLAN.md WP 13.13 and docs/PLAYGROUND.md §6.1 say so.
+- **The v4 glyphs** (legend.ts): void `~`, door `+`, window `:`, railing `!`, flight `<`, low ceiling `_`, picked
+  clear of the gym's letters; they draw with the existing recipes (floor, wall, low wall, stairs) until WP 13.14 draws
+  openings, heads, railings and roofs. Rooms are a game's: the engine names no room marker; a glyph with `room` marks
+  one, and its room is the floor its tile reaches inside walls and openings (rooms.ts). The storey fixtures' markers
+  are fixtures/levels/storeys/glyphs.ts's, which `node x qa level` reads them with.
+- **The compiled level** (`my3dge-level/2`): its per-tile and drawn fields are its ground storey's (the one on 0, else
+  the lowest), so a reader of one storey reads the ground floor; `bounds`, `ground` (under the lowest slab),
+  `colliders`, `spawns` and `lights` cover every storey, each holding its `storey`; `storeys`, `rooms`, `openings` and
+  `roofs` beside them. `storeyView(level, k)` reads any storey as a format-1 level (its `base`, `fullTop` and roof
+  for the height queries), so navigation, drawing and ladders read it unchanged; `levelLadders` stands each storey's.
+- **In 3D** (heights.ts): `floorBelow(level, x, y, z)` is the highest surface at or under a point (a floor, a ramp, a
+  flight, a dais, a solid's top, a roof, the ground slab), `surfaceBelow` its tag, `storeyAt(level, y)` and `roomAt`.
+- **Validation** measures against the shooter model's hull, the largest the engine ships (`LEVEL_BODY`: 0.8128 m
+  across, 1.19 m crouched), and flights against its walkable slope rounded down, 45°: `LEVEL_NARROW_DOOR`,
+  `LEVEL_LOW_HEADROOM`, `LEVEL_STEEP_FLIGHT`, `LEVEL_UNREACHABLE_ROOM`, over the storeys walked as one graph (walk.ts's
+  `walkStoreys`: a flight's top and a ladder link the floors). Structural: `LEVEL_BAD_STOREY`, `LEVEL_NEEDS_STOREY` (a
+  storey's glyph in a format-1 map), `LEVEL_BAD_FLIGHT`, `LEVEL_BAD_OPENING`, `LEVEL_BAD_ROOM`, `LEVEL_BAD_ROOF`.
+- **Beyond Owns**: engine/world/level/shapes.ts (exports `outside` and `SIDES` for the flights), meshes.ts (full
+  glyphs grouped apart in a storey), engine/world/traverse.ts (ladders per storey), engine/sim/levelBodies.test.ts
+  (the controller up the flights and on the roofs), tools/qa/level.ts (the storey fixtures, the content codes),
+  engine/sim-api.ts (the queries, `storeyView`, the types), fixtures/levels/storeys/glyphs.ts.

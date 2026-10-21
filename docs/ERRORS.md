@@ -981,6 +981,14 @@ Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts) fo
 
 Raised by `validateLevel` and `compileLevel` (engine/world/level/shapes.ts) for a block of a dais glyph (o) whose bounding box is not square, or too small for its sloped edge.
 
+### LEVEL_BAD_FLIGHT
+
+- Message: `{at}: this {char} block {why}`
+- Fix: draw {glyph} as a filled rectangle on the lower storey with exactly one side against floor of the storey above, and void (~) over all of it on the storey above: it rises toward that side, to that floor
+- Registered in: [`engine/world/level/problems.ts` line 76](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/storeys.ts) for a flight of stairs between storeys that is not a filled rectangle, stands on the top storey, has no void over it on the storey above, or meets that storey’s floor on no side or on several.
+
 ### LEVEL_BAD_HEADER
 
 - Message: `{at}: {problem}`
@@ -989,6 +997,14 @@ Raised by `validateLevel` and `compileLevel` (engine/world/level/shapes.ts) for 
 
 Raised by `validateLevel` and `compileLevel` (engine/world/level/parse.ts) for an unknown or repeated key, a bad value, a line that is not `key: value`, or front matter that is never closed.
 
+### LEVEL_BAD_OPENING
+
+- Message: `{at}: this {char} block {why}`
+- Fix: draw each {kind} as a filled rectangle in a wall, one wall thick, with the wall (a full-height solid glyph, #) at both of its ends
+- Registered in: [`engine/world/level/problems.ts` line 81](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/openings.ts) for a door or a window that is not a filled rectangle, or has no wall at both ends of its longer side, so the way through it is not clear.
+
 ### LEVEL_BAD_RAMP
 
 - Message: `{at}: this {char} block {why}`
@@ -996,6 +1012,30 @@ Raised by `validateLevel` and `compileLevel` (engine/world/level/parse.ts) for a
 - Registered in: [`engine/world/level/problems.ts` line 46](../engine/world/level/problems.ts)
 
 Raised by `validateLevel` and `compileLevel` (engine/world/level/shapes.ts) for a block of a ramp glyph (stairs, ^) that is not a filled rectangle, or whose neighbours at its top height (walkable, flat, within the climb limit) lie on no side or on several, so the direction it rises is not clear.
+
+### LEVEL_BAD_ROOF
+
+- Message: `{at}: {why}`
+- Fix: give the roof to the top storey only, with a pitch for gable and hip (roof: gable, pitch: 35), and a map holding floor under it
+- Registered in: [`engine/world/level/problems.ts` line 91](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/storeys.ts) for a roof on a storey below the top one, a gable or hip without a pitch, a ridge on a roof that is not a gable, roof keys on a storey with no roof, or a storey with no floor to stand it on.
+
+### LEVEL_BAD_ROOM
+
+- Message: `{at}: {why}`
+- Fix: give each room one marker, each room a name of its own, and close each room off from the next with walls and doors
+- Registered in: [`engine/world/level/problems.ts` line 86](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/rooms.ts) for a room marker on a tile with no floor, two markers of one room, two rooms named alike, or two rooms whose markers share one floor.
+
+### LEVEL_BAD_STOREY
+
+- Message: `{at}: {problem}`
+- Fix: write each storey as a block between two lines holding only --- before its map, bottom storey first: storey (a name), base (its floor, m) and height (its clear height, m), each base above the ceiling of the storey below; the top storey may add roof (gable, hip or flat), pitch (°), ridge (x or z), eaves (m) and roofSurface; every map the size of the first
+- Registered in: [`engine/world/level/problems.ts` line 66](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/parse.ts, storeys.ts) for a storey block that is never closed, names no storey, has an unknown, repeated or bad key, lacks its base or height, does not rise above the storey below (the gap is its floor slab), repeats a name, or whose map is not the size of the first storey’s.
 
 ### LEVEL_EMPTY
 
@@ -1007,9 +1047,41 @@ Raised by `validateLevel` and `compileLevel` (engine/world/level/shapes.ts) for 
 
 - Message: `{where} has {count}: {list}`
 - Fix: fix each at the line and column it names (validateLevel(text) lists them; node x qa level checks every level file)
-- Registered in: [`engine/world/level/problems.ts` line 66](../engine/world/level/problems.ts)
+- Registered in: [`engine/world/level/problems.ts` line 122](../engine/world/level/problems.ts)
 
 Thrown by `compileLevel` and `defineLevel` (engine/world/level/compile.ts) for a level with structural problems; the error carries them as `values.problems`.
+
+### LEVEL_LOW_HEADROOM
+
+- Message: `{at}: {count} walkable, the lowest {headroom} m under what is above, where a crouched body needs {body} m`
+- Fix: raise what is above (the storey’s height, the low ceiling’s head, the storey above), or make the tiles solid if nobody should stand there
+- Registered in: [`engine/world/level/problems.ts` line 101](../engine/world/level/problems.ts)
+
+Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`, once per storey, at its first such tile in reading order: a crouched body (the shooter model’s, 1.19 m) does not fit there.
+
+### LEVEL_NARROW_DOOR
+
+- Message: `{at}: the door is {width} m wide, narrower than a body ({body} m across)`
+- Fix: widen it to at least {need} tiles along its wall
+- Registered in: [`engine/world/level/problems.ts` line 96](../engine/world/level/problems.ts)
+
+Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`: bodies cannot pass a door no wider than the largest standard body (the shooter model’s hull, 0.8128 m).
+
+### LEVEL_NEEDS_STOREY
+
+- Message: `{at}: {char} ({glyph}) {why}, which only a storey has`
+- Fix: write the map as a storey (format 2): a block before it between two lines holding only ---, with storey: ground, base: 0 and height: 2.7
+- Registered in: [`engine/world/level/problems.ts` line 71](../engine/world/level/problems.ts)
+
+Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts) for a format-1 map (no storey blocks) using a glyph that needs a storey: void, a door, a window, a low ceiling, a room marker or a flight of stairs.
+
+### LEVEL_NO_STOREY
+
+- Message: `{level} has {count}; there is no storey {index}`
+- Fix: ask for a storey from 0 (the lowest) to {last}: level.storeys lists them
+- Registered in: [`engine/world/level/problems.ts` line 117](../engine/world/level/problems.ts)
+
+Thrown by `storeyView` (engine/world/level/storeys.ts) for an index the level has no storey at; a format-1 level has one, 0.
 
 ### LEVEL_RAGGED_ROW
 
@@ -1018,6 +1090,14 @@ Thrown by `compileLevel` and `defineLevel` (engine/world/level/compile.ts) for a
 - Registered in: [`engine/world/level/problems.ts` line 31](../engine/world/level/problems.ts)
 
 Raised by `validateLevel` and `compileLevel` (engine/world/level/parse.ts). The map is as wide as most of its rows are; each other row is named at the column where it stops matching.
+
+### LEVEL_STEEP_FLIGHT
+
+- Message: `{at}: the flight rises {rise} m over {run} m, {angle}°, steeper than bodies walk ({limit}°)`
+- Fix: lengthen it to at least {need} tiles along its rise
+- Registered in: [`engine/world/level/problems.ts` line 107](../engine/world/level/problems.ts)
+
+Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`, for a flight of stairs between storeys steeper than the shooter model’s walkable slope (45°).
 
 ### LEVEL_UNKNOWN_GLYPH
 
@@ -1034,6 +1114,14 @@ Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts), o
 - Registered in: [`engine/world/level/problems.ts` line 61](../engine/world/level/problems.ts)
 
 Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`, once per cut-off area without a spawn, at its first tile in reading order.
+
+### LEVEL_UNREACHABLE_ROOM
+
+- Message: `{at}: the room {room} ({count}) is cut off from the main floor ({main})`
+- Fix: give it a door, a flight of stairs or a ladder to the rest
+- Registered in: [`engine/world/level/problems.ts` line 112](../engine/world/level/problems.ts)
+
+Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`: bodies cannot walk from the main floor (the largest area, over every storey, through flights and ladders) into the room and back.
 
 ### LEVEL_UNREACHABLE_SPAWN
 

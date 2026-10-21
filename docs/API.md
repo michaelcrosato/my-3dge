@@ -407,6 +407,7 @@ game agent's manual.
 - `FloaterOptions` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is made from.
 - `FloaterPose` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater's pose: the core's world matrix and the motes' world positions.
 - `FloaterState` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's state: what `step` eases and `pose` reads, plain numbers.
+- `floorBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The height (m) of the highest surface at or under (x, y, z): a storey's floor (flat, a ramp, a flight, a dais, under a solid too), the top of a solid standing there (a low wall, a railing, a wall), a roof's top, or the ground slab under the level; null where nothing is (outside the ground slab).
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): the highest flat floor, ramp or dais there; 0 outside the map.
 - `FloorMossOptions` (interface from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): How moss creeps in from the foot of the blocks.
 - `FloorRuneOptions` (interface from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): The rune circle laid on each dais; sizes in metres.
@@ -549,6 +550,7 @@ game agent's manual.
 - `LegacyMove` (interface from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A my-3d2dge `E.MOVES` spec, as its fields were written (units of 1/16 m, Appendix C).
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
 - `LEVEL_FORMAT` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level.
+- `LEVEL_FORMAT_2` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level written as storeys (WP 13.13).
 - `LEVEL_RECIPES` (const from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): The engine's recipes, by the name a glyph's `mesh` gives.
 - `LevelCell` (interface from [`engine/gfx/level/cells.ts`](../engine/gfx/level/cells.ts)): One piece of a block mesh: its tiles, its centre on the ground (m), its size across (m), and the way it faces out ([x, z], length 1).
 - `LevelCut` (interface from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): How the cutaway cuts a recipe's pieces: to a twin `height` metres tall, `when` the view needs it.
@@ -556,7 +558,7 @@ game agent's manual.
 - `LevelFloorOptions` (interface from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): What a level's floor is baked from; every part may be left out.
 - `levelFloorTexture` (function from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): A texture generator for `level`'s whole floor: its base texture with moss at the walls' feet, rune circles on the daises and contact shadows along every block's foot (see the file comment).
 - `LevelGlyph` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
-- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order.
+- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order; in a level written as storeys, each storey's (bottom first), from its floor up to the top of the wall it leans on, the floor of the storey above.
 - `LevelMeshes` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): A level's meshes (see the file comment).
 - `LevelMeshesOptions` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): What `createLevelMeshes` needs: where materials come from, and optionally more recipes and a log.
 - `LevelMeshPart` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): One level mesh: its descriptor's recipe and glyphs, the mesh, and for an instanced shape one cell per instance.
@@ -656,6 +658,7 @@ game agent's manual.
 - `nearMiss` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` stands outside telegraph `t` but within its `near` metres (scaled).
 - `normalizedLens` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): `clip` with every angle of every key folded to (−180°, 180°], for reading (see the file comment).
 - `onFloor` (function from [`engine/input/aim.ts`](../engine/input/aim.ts)): Where `ray` meets the level plane at height `y` ahead of its start, or null (level with it, or pointing away).
+- `OpeningDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A door or a window: a filled rectangle of an opening glyph's tiles in a wall.
 - `Outline` (interface from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): An outline: its material and the shells it gives (see the file comment).
 - `OUTLINE_MODES` (const from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): How a shell's vertices are pushed: along their normals, or away from the part's centre.
 - `OutlineMode` (type from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): An outline mode (see `OUTLINE_MODES`).
@@ -812,6 +815,9 @@ game agent's manual.
 - `ringGeometry` (function from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring lying on the ground (see the file comment).
 - `RingOptions` (interface from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring's radii and height in metres, and its tessellation.
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
+- `RoofDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A roof over a storey (its block's `roof` key): its shape, footprint and heights.
+- `roomAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The room at (x, y, z): its storey's room on that tile, or null (outside every room, or a level without rooms).
+- `RoomDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A room: the floor a room marker's tile reaches inside walls and doors (docs/PLAYGROUND.md §6.2).
 - `RoomName` (type from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): A preset's name.
 - `ROOMS` (const from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): The room presets, from no reverb to a cave.
 - `RoomSpec` (interface from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): A room's reverb, as numbers.
@@ -924,6 +930,9 @@ game agent's manual.
 - `StoreBackend` (interface from [`engine/app/store.ts`](../engine/app/store.ts)): Where a store writes: the Web Storage calls it uses (`localStorage` is one).
 - `StoreMode` (type from [`engine/app/store.ts`](../engine/app/store.ts)): One of `STORE_MODES`: whose play a store keeps.
 - `StoreOptions` (interface from [`engine/app/store.ts`](../engine/app/store.ts)): How a store is made (see the file comment).
+- `storeyAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The storey a height is in (an index into `level.storeys`): the highest whose floor slab's underside is at or below `y`; 0 below them all, and in a format-1 level, which is one storey.
+- `StoreyDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One storey of a format-2 level (WP 13.13): its heights and its own grids and descriptors, heights absolute.
+- `storeyView` (function from [`engine/world/level/storeys.ts`](../engine/world/level/storeys.ts)): Storey `index` of `level` read as a format-1 level: its grids, ramps, daises, meshes, colliders, spawns and lights, with `base`, `fullTop` and its roof for the height queries (heights.ts), so navigation, drawing and ladders read any storey as they read a level.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
 - `StrikeAnimator` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of an animator: its body, which the sim poses only with `preciseHits`.
 - `StrikeBody` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of a body.
@@ -934,6 +943,7 @@ game agent's manual.
 - `StyleSetOptions` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): How `createStyleSet` makes a set.
 - `STYLIZE_KINDS` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): The painterly and print styles.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
+- `surfaceBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag of `floorBelow`'s surface at (x, y, z): '' on the ground slab or where nothing is.
 - `Sweep` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
 - `sweepHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets the swept quad touches (`sweepTouches`), by id, ascending.
 - `sweepTouches` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
@@ -1257,6 +1267,7 @@ game agent's manual.
 - `FloaterOptions` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is made from.
 - `FloaterPose` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater's pose: the core's world matrix and the motes' world positions.
 - `FloaterState` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's state: what `step` eases and `pose` reads, plain numbers.
+- `floorBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The height (m) of the highest surface at or under (x, y, z): a storey's floor (flat, a ramp, a flight, a dais, under a solid too), the top of a solid standing there (a low wall, a railing, a wall), a roof's top, or the ground slab under the level; null where nothing is (outside the ground slab).
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): the highest flat floor, ramp or dais there; 0 outside the map.
 - `FlowField` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): Every tile's walking distance to a goal set: walk downhill to get there.
 - `FlowOptions` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `flowField` takes.
@@ -1353,9 +1364,10 @@ game agent's manual.
 - `LegacyMove` (interface from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A my-3d2dge `E.MOVES` spec, as its fields were written (units of 1/16 m, Appendix C).
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
 - `LEVEL_FORMAT` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level.
+- `LEVEL_FORMAT_2` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level written as storeys (WP 13.13).
 - `LevelEntry` (type from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): A `level` entry: a level's text and where it came from.
 - `LevelGlyph` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
-- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order.
+- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order; in a level written as storeys, each storey's (bottom first), from its floor up to the top of the wall it leans on, the floor of the storey above.
 - `LevelProblem` (interface from [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
 - `levelProps` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): The placements `level` makes for the props of `registry` (the shared one by default); see the file comment.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
@@ -1414,6 +1426,7 @@ game agent's manual.
 - `NEAREST_RINGS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
 - `nearMiss` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` stands outside telegraph `t` but within its `near` metres (scaled).
 - `normalizedLens` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): `clip` with every angle of every key folded to (−180°, 180°], for reading (see the file comment).
+- `OpeningDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A door or a window: a filled rectangle of an opening glyph's tiles in a wall.
 - `OverlapOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): An overlap's options.
 - `parseClip` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Reads a clip of format 1 or 2 from its text (`//` comment lines allowed) or an object, which is not changed: the result is a copy, its keys sorted by time and `dur` filled in.
 - `parseClipSet` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Reads a set of clips (a set file's text or object): its header, then every clip by `parseClip`.
@@ -1504,6 +1517,9 @@ game agent's manual.
 - `ridesOf` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing.
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
+- `RoofDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A roof over a storey (its block's `roof` key): its shape, footprint and heights.
+- `roomAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The room at (x, y, z): its storey's room on that tile, or null (outside every room, or a level without rooms).
+- `RoomDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A room: the floor a room marker's tile reaches inside walls and doors (docs/PLAYGROUND.md §6.2).
 - `runOverWalk` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Whether the run, not the walk, keeps pace with `groundSpeed` (m/s): above √(w·r) × 1.15, or × 0.87 while the run is `running`.
 - `SAMPLE_STATES` (const from [`engine/anim/states.ts`](../engine/anim/states.ts)): Named body states, my-3d2dge's `CHAR_STATES` in metres (moving along +Z); the wind-up, the strike and the follow-through are a slash told as `body` (WP 6.1, as `moveAt` names it).
 - `sampleBaked` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): Samples `baked` at `t` seconds: its 23 local rotations into `rotations` (slerped between frames, as three.js's mixer does) and its pelvis into `hips` (lerped).
@@ -1569,6 +1585,9 @@ game agent's manual.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
 - `stepReactions` (function from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): Steps reactions `state` one tick of `dt` s, in place; returns what the phase playing tells the body.
 - `stopClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Fades out the clip on top of actor `id` over `fade` seconds (its `out`), with what it covers.
+- `storeyAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The storey a height is in (an index into `level.storeys`): the highest whose floor slab's underside is at or below `y`; 0 below them all, and in a format-1 level, which is one storey.
+- `StoreyDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One storey of a format-2 level (WP 13.13): its heights and its own grids and descriptors, heights absolute.
+- `storeyView` (function from [`engine/world/level/storeys.ts`](../engine/world/level/storeys.ts)): Storey `index` of `level` read as a format-1 level: its grids, ramps, daises, meshes, colliders, spawns and lights, with `base`, `fullTop` and its roof for the height queries (heights.ts), so navigation, drawing and ladders read any storey as they read a level.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
 - `StrikeAnimator` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of an animator: its body, which the sim poses only with `preciseHits`.
 - `StrikeBody` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of a body.
@@ -1576,6 +1595,7 @@ game agent's manual.
 - `strikeSegment` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Where `part` spans on a body's pose now, world metres, into `base` and `tip`: a sword from near the grip to its tip (another weapon strikes as the right fist), a forearm from the elbow to the wrist, the right shin from the knee to the sole.
 - `strikeTime` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): When `clip`'s strike lands, seconds from its start, decoded on rest body `R` (see the file comment).
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
+- `surfaceBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag of `floorBelow`'s surface at (x, y, z): '' on the ground slab or where nothing is.
 - `Sweep` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
 - `sweepHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets the swept quad touches (`sweepTouches`), by id, ascending.
 - `sweepTouches` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
@@ -5282,7 +5302,7 @@ For the agents who maintain the engine.
 - `getMovement` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): The movement profile `id`.
 - `LadderSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A ladder, parsed: every field of `LADDER_FIELDS`, its defaults filled.
 - `LauncherSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A jump pad or a trampoline, parsed: every field of `LAUNCHER_FIELDS`, its defaults filled.
-- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order.
+- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order; in a level written as storeys, each storey's (bottom first), from its floor up to the top of the wall it leans on, the floor of the storey above.
 - `listMovements` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): Every movement profile, sorted by id.
 - `MODEL_FIELDS` (const from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers (see the file comment): what `character.movement` holds.
 - `MOTION_FIELDS` (const from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): What a character on the model keeps between ticks: the component `motion`'s fields, hashed and captured.
@@ -5570,9 +5590,10 @@ For the agents who maintain the engine.
 - `defineGlyph` (function): Defines a glyph on `registry` (the shared one by default) and returns it.
 - `Glyph` (type): A `glyph` entry: what one map character means.
 - `GLYPH_FIELDS` (const): The fields of a `glyph` entry.
-- `glyphKind` (function): Declares the kind `glyph` on `registry`, with the engine's v1 and v2 glyphs, unless it has it.
+- `glyphKind` (function): Declares the kind `glyph` on `registry`, with the engine's v1 to v4 glyphs, unless it has it.
 - `GlyphSpec` (type): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `legendOf` (function): Every glyph of `registry` (the shared one by default), keyed by its character, in id order.
+- `STOREY_FIELDS` (const): The fields only format 2 reads: a format-1 level's legend leaves them out (engine/world/level/compile.ts).
 
 ### [`engine/world/level/grid.ts`](../engine/world/level/grid.ts)
 
@@ -5583,10 +5604,14 @@ For the agents who maintain the engine.
 
 ### [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)
 
+- `floorBelow` (function): The height (m) of the highest surface at or under (x, y, z): a storey's floor (flat, a ramp, a flight, a dais, under a solid too), the top of a solid standing there (a low wall, a railing, a wall), a roof's top, or the ground slab under the level; null where nothing is (outside the ground slab).
 - `floorHeight` (function): The walkable surface's height (m) at (x, z): the highest flat floor, ramp or dais there; 0 outside the map.
-- `HeightSource` (type): What the height queries read: a compiled level, or validate.ts's view of one before it compiles.
+- `HeightSource` (type): What the height queries read: a compiled level, or validate.ts's view of one before it compiles; a storey's view adds its `base` (where its flat floors stand), `fullTop` (where its full glyphs rise to) and its `roofs` (a pitched one clips them).
+- `roomAt` (function): The room at (x, y, z): its storey's room on that tile, or null (outside every room, or a level without rooms).
 - `solidAt` (function): Whether (x, z) is in a solid tile (a wall, a pillar, a low wall, a brazier), or outside the map.
+- `storeyAt` (function): The storey a height is in (an index into `level.storeys`): the highest whose floor slab's underside is at or below `y`; 0 below them all, and in a format-1 level, which is one storey.
 - `surfaceAt` (function): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
+- `surfaceBelow` (function): The surface tag of `floorBelow`'s surface at (x, y, z): '' on the ground slab or where nothing is.
 - `tileAt` (function): The tile under (x, z) metres, or null outside the map.
 - `topHeight` (function): The top (m) of whatever stands at (x, z): a wall's top over its tiles, a brazier's within its radius, the floor elsewhere; 0 outside the map.
 
@@ -5595,6 +5620,7 @@ For the agents who maintain the engine.
 - `V1_GLYPHS` (const): The v1 glyphs by id, as `defineGlyph` specs (the kind's defaults fill the rest).
 - `V2_GLYPHS` (const): The v2 glyphs by id (WP 4.2): the hall's gallery, stairs, dais and brazier.
 - `V3_GLYPHS` (const): The v3 glyphs by id (WP 13.7): the ladder, which engine/world/traverse.ts's `levelLadders` stands.
+- `V4_GLYPHS` (const): The v4 glyphs by id (WP 13.13): what levels written as storeys (format 2) add.
 
 ### [`engine/world/level/level.ts`](../engine/world/level/level.ts)
 
@@ -5605,17 +5631,26 @@ For the agents who maintain the engine.
 
 ### [`engine/world/level/meshes.ts`](../engine/world/level/meshes.ts)
 
-- `levelMeshes` (function): The mesh descriptors: one per recipe, bottom, top, surface and footprint, for every glyph whose mesh is not 'none'.
+- `levelMeshes` (function): The mesh descriptors: one per recipe, bottom, top, surface and footprint, for every glyph whose mesh is not 'none'; with `storey` (a format-2 storey's grid), full glyphs apart from the rest, since they rise to the storey above.
+
+### [`engine/world/level/openings.ts`](../engine/world/level/openings.ts)
+
+- `findOpenings` (function): The openings of a storey's grid and the opening blocks that make none; `storey` gives its index and floor (m).
+- `OpeningProblem` (interface): A block of an opening glyph that makes no opening, and why, for storeys.ts's problems.
+- `sidesOf` (function): The tiles either side of an opening across its wall, the lower x or z first: `[col, row]` each, or null off the map.
 
 ### [`engine/world/level/parse.ts`](../engine/world/level/parse.ts)
 
 - `LevelHeader` (interface): The front matter's values, defaults filled.
-- `ParsedLevel` (interface): A level's text, read: header, map rows (each an array of characters), positions and problems.
-- `parseLevel` (function): Reads a level's text: its front matter, its map rows and their positions, and the problems of the text itself.
+- `ParsedLevel` (interface): A level's text, read: header, map rows (each an array of characters) or storeys, positions and problems.
+- `ParsedStorey` (interface): One storey of a format-2 level, read: its name, keys, map rows and their positions.
+- `parseLevel` (function): Reads a level's text: its front matter, its map rows (or its storeys) and their positions, and the problems of the text itself.
+- `StoreyKeys` (interface): A storey's keys as its block writes them, absent when not given (engine/world/level/storeys.ts reads them).
 
 ### [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)
 
 - `LEVEL_CODES` (const): The level codes, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `LEVEL_CONTENT_CODES` (const): The content codes: `validateLevel` and `node x qa level` report them; `compileLevel` compiles a level that has them.
 - `LevelCode` (type): A level code.
 - `levelProblem` (function): A problem with `code` at `line`:`column`, its message filled from `values` (which name `at`).
 - `LevelProblem` (interface): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
@@ -5627,6 +5662,25 @@ For the agents who maintain the engine.
 - `mergeRects` (function): Rectangles `[col0, row0, col1, row1]` (inclusive) covering every tile of a cols × rows grid that `inside` accepts.
 - `TileBlock` (interface): A 4-connected block of tiles: its first tile in reading order, its bounding rectangle and its tile count.
 
+### [`engine/world/level/roofs.ts`](../engine/world/level/roofs.ts)
+
+- `makeRoof` (function): A storey block's roof keys (`roof`, `pitch`, `ridge`, `eaves`) made into a roof over `site`.
+- `onRoof` (function): Whether (x, z) is under the roof: in its footprint or over its eaves.
+- `ROOF_SURFACE` (const): The default roof surface tag.
+- `ROOF_THICKNESS` (const): A roof slab's depth, measured straight down (m).
+- `roofColliders` (function): The roof's slab as convex hulls' corners (m): each plane's top and the same corners `thickness` lower.
+- `roofHeight` (function): The roof's top (m) at (x, z), the surface bodies stand on; −Infinity off it.
+- `RoofSite` (interface): Where a storey stands, for its roof: its index, floor, ceiling, floored tiles' bounds (m) and surface tag.
+- `roofUnder` (function): The roof's underside (m) at (x, z): its top less its thickness; −Infinity off it.
+- `wallUnder` (function): The corners of the convex hull of a wall under the roof (m): the rectangle `[x0, z0, x1, z1]` from `bottom` up to the roof's underside (see the file comment).
+
+### [`engine/world/level/rooms.ts`](../engine/world/level/rooms.ts)
+
+- `findRooms` (function): The rooms of `storeys` (bottom first), each storey's room index per tile, and the problems; see the file comment.
+- `RoomProblem` (interface): A room problem: where (the storey and tile, in reading order) and why.
+- `roomSides` (function): Each opening with the rooms either side of it filled in from `roomOf` (each storey's room per tile).
+- `RoomSource` (interface): One storey as `findRooms` reads it: its grid, which tiles have a floor, and its floor's height (m).
+
 ### [`engine/world/level/shapes.ts`](../engine/world/level/shapes.ts)
 
 - `daisHeight` (function): A dais's surface height (m) at (x, z), or −Infinity off its base.
@@ -5634,33 +5688,51 @@ For the agents who maintain the engine.
 - `findRamps` (function): The ramps of `grid` and the ramp blocks that make none.
 - `frustumPoints` (function): The corners of a dais's hull (m): its base octagon on the ground (and at its bottom, when above 0) and its top.
 - `octagonRadius` (function): An octagon's "radius" at an offset from its centre: the distance to its nearest face (faces toward the axes and the diagonals).
+- `outside` (function): The tiles just outside side `side` of `rect`, inside a `cols` × `rows` map.
 - `rampHeight` (function): A ramp's surface height (m) at (x, z), on tiles `tile` metres wide; held to its edges' heights past them.
 - `ShapeProblem` (interface): A block of a ramp or dais glyph that makes no ramp or dais, and why, for validate.ts.
+- `SIDES` (const): The four sides, in the order messages list them.
 - `wedgePoints` (function): The corners of a ramp's hull (m): its rectangle on the ground, and over each corner its height there when above 0.
+
+### [`engine/world/level/storeys.ts`](../engine/world/level/storeys.ts)
+
+- `CheckedStorey` (interface): One storey, checked: its numbers, its grid and what stands in it, ramps and daises measured from its floor.
+- `CheckedStoreys` (interface): A format-2 level, checked: its storeys and rooms, or the structural problems that stop it.
+- `checkStoreys` (function): The structural problems of a level written as storeys, and its checked storeys and rooms when it has none.
+- `LOWEST_SLAB` (const): The floor slab under the lowest storey (m).
+- `storeyView` (function): Storey `index` of `level` read as a format-1 level: its grids, ramps, daises, meshes, colliders, spawns and lights, with `base`, `fullTop` and its roof for the height queries (heights.ts), so navigation, drawing and ladders read any storey as they read a level.
 
 ### [`engine/world/level/types.ts`](../engine/world/level/types.ts)
 
 - `BoxCollider` (interface): An axis-aligned box collider (Rapier's cuboid: half extents `(max − min)/2`, centred at `(min + max)/2`).
 - `ColliderDescriptor` (type): A collider descriptor: a merged box, a hull or a cylinder, by `shape`.
+- `ColliderPart` (type): What a format-2 collider holds up beyond its glyph (absent on a glyph's own): `'slab'` a storey's floor (its glyph `''`), `'head'` the wall over an opening or a low ceiling, `'roof'` a roof's slab (its glyph `''`).
 - `CompiledLevel` (interface): A compiled level: the map, its legend, per-tile grids and descriptors; see the file comment.
 - `CylinderCollider` (interface): An upright cylinder collider (Rapier's cylinder, three.js's CylinderGeometry): one per tile, at its centre.
 - `DaisDescriptor` (interface): A dais: an octagonal frustum (faces toward the axes and the diagonals) standing on a block of a dais glyph's tiles.
 - `GroundDescriptor` (interface): The slab under the whole level: the ground's collider, one tile wider than the map all round, 1 m deep.
 - `HullCollider` (interface): A convex hull collider (Rapier's convex hull of its points): a ramp's wedge or a dais's frustum, from the ground.
 - `LEVEL_FORMAT` (const): The format tag of a compiled level.
+- `LEVEL_FORMAT_2` (const): The format tag of a compiled level written as storeys (WP 13.13).
 - `LevelGlyph` (interface): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
 - `LightSpot` (interface): A light spot: a tile's centre, `lightHeight` above its top.
 - `MeshDescriptor` (interface): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
+- `OpeningDescriptor` (interface): A door or a window: a filled rectangle of an opening glyph's tiles in a wall.
 - `Point3` (type): A point in metres: `[x, y, z]`.
 - `RampDescriptor` (interface): A ramp: a filled rectangle of a ramp glyph's tiles (stairs) whose floor rises in a straight slope from `bottom` along the side opposite `rises` to `top` along `rises`, the side whose neighbours stand at its top (a gallery).
+- `RoofDescriptor` (interface): A roof over a storey (its block's `roof` key): its shape, footprint and heights.
+- `RoomDescriptor` (interface): A room: the floor a room marker's tile reaches inside walls and doors (docs/PLAYGROUND.md §6.2).
 - `Side` (type): A compass side of a block: north is −Z (row 0's edge), south +Z, west −X, east +X.
 - `SpawnPoint` (interface): A spawn point: a tile's centre, on its floor.
+- `StoreyDescriptor` (interface): One storey of a format-2 level (WP 13.13): its heights and its own grids and descriptors, heights absolute.
 - `TileRect` (type): A rectangle of tiles, inclusive: `[col0, row0, col1, row1]`.
 
 ### [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)
 
 - `CheckedLevel` (interface): A level read against its legend: the parsed text, the glyph of every tile, its slopes, and the structural problems.
 - `checkLevel` (function): The structural problems of a level's text: the text's own, unknown characters and bad footprint blocks.
+- `FLIGHT_LIMIT` (const): The steepest flight of stairs bodies walk (°): the shooter model's walkable slope, 45.57°, rounded down.
+- `LEVEL_BODY` (const): The body format 2's content checks measure against (m): the shooter model's hull (`movement:apex`, 16 Source units in radius: 0.8128 m across; 1.19 m tall crouched), the largest the engine ships.
 - `LevelSource` (interface): Where a level comes from, for messages, and the legend to read it with.
 - `NAV_CLIMB` (const): The default climb limit between neighbouring tiles' floors (m): the prototype's `CLIMB`, 3.5 units.
 - `validateLevel` (function): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
@@ -5669,8 +5741,10 @@ For the agents who maintain the engine.
 
 - `canStep` (function): Whether a body walks from the centre of tile (col, row) to the centre of tile (col + dc, row + dr), climbing at most `climb` metres between samples.
 - `STEP_SAMPLES` (const): How many points along a step `canStep` samples the floor at.
+- `StoreyArea` (interface): An area over a level's storeys: its first tile (`[storey, col, row]`, storey by storey, in reading order) and size.
 - `WalkArea` (interface): An area of tiles that reach each other both ways: its first tile in reading order and its tile count.
 - `walkAreas` (function): The areas of `level`'s walkable tiles under the climb limit, and the area index of every tile (−1 if unwalkable).
+- `walkStoreys` (function): The areas of the walkable tiles of `storeys` (each storey's height source, one grid size), walking the 4 neighbours within a storey under the climb limit and each of `links` (pairs of tiles, each `storey · cols · rows + index`) both ways; and the area of every tile, so indexed (−1 if unwalkable).
 
 ### [`engine/world/nav.ts`](../engine/world/nav.ts)
 
@@ -5780,7 +5854,7 @@ For the agents who maintain the engine.
 - `LAUNCHER_FIELDS` (const): A launcher's fields (see the file comment).
 - `LauncherSpec` (type): A jump pad or a trampoline, parsed: every field of `LAUNCHER_FIELDS`, its defaults filled.
 - `launcherVolume` (function): A launcher's volume: from its top's corner a little below it to `reach` above, `[min, max]` (m).
-- `levelLadders` (function): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order.
+- `levelLadders` (function): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order; in a level written as storeys, each storey's (bottom first), from its floor up to the top of the wall it leans on, the floor of the storey above.
 - `parseTraverse` (function): `spec` parsed and checked as a `kind` (see `traverseProblems`); throws `CORE_BAD_SPEC` naming each problem.
 - `TRAVERSE_FIELDS` (const): The kinds of traversal, by their fields.
 - `traverseProblems` (function): The problems of a spec of `kind` beyond its fields (its fields' own are `parse`'s): sizes, lengths, directions.
@@ -7642,9 +7716,9 @@ For the agents who maintain the engine.
 
 ### [`tools/qa/level.ts`](../tools/qa/level.ts)
 
-- `default` (default): The `level` QA family (PLAN.md §8.6, WP 2.2, I-29): `node x qa level` validates every level file, the box's (`labs/box/levels/*.txt`, ids `level:<name>`) and the fixtures' (`fixtures/levels/*.txt`, ids `level:fixtures/<name>`; the seeded errors under `fixtures/levels/broken/` are the unit tests' business and are skipped), and runs in T1 through `runQa` (tools/qa/level.test.ts).
-- `LEVEL_DIRS` (const): Where level files live, and the id prefix of each place's levels.
-- `LevelFile` (interface): One level file: its QA id and its path from the repository root.
+- `default` (default): The `level` QA family (PLAN.md §8.6, WP 2.2, WP 13.13, I-29): `node x qa level` validates every level file, the box's (`labs/box/levels/*.txt`, ids `level:<name>`), the fixtures' (`fixtures/levels/*.txt`, ids `level:fixtures/<name>`; the seeded errors under `fixtures/levels/broken/` are the unit tests' business and are skipped) and the storey fixtures' (`fixtures/levels/storeys/*.txt`, ids `level:fixtures/storeys/<name>`, read with their room markers), and runs in T1 through `runQa` (tools/qa/level.test.ts).
+- `LEVEL_DIRS` (const): Where level files live, the id prefix of each place's levels, and the glyphs they need beyond the engine's.
+- `LevelFile` (interface): One level file: its QA id, its path from the repository root, and the registry holding its legend.
 - `levelFiles` (function): Every level file under `root`, in `LEVEL_DIRS` order, then by name.
 
 ### [`tools/qa/tex.ts`](../tools/qa/tex.ts)

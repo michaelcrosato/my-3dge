@@ -1,0 +1,22 @@
+---
+description: A pavilion on 0.5 m tiles, 7 × 5 m under a hip roof (30°, the ridge east to west, 0.5 m eaves) on four pillars a tile in from its edges, with a crawlspace under a low ceiling at its west end (WP 13.13).
+tile: 0.5
+---
+---
+storey: ground
+base: 0
+height: 2.6
+roof: hip
+pitch: 30
+eaves: 0.5
+---
+..............
+.PP........PP.
+.PP@.......PP.
+..............
+___...........
+___...........
+..............
+.PP........PP.
+.PP........PP.
+..............

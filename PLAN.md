@@ -3696,7 +3696,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Needs:** G9
 - **Size:** L
 - **Build** (docs/PLAYGROUND.md §6):
-  - Level format 2 (`my3dge-level/2`), a superset (a format-1 file is one storey at height 0): storeys with their base and height; void (no floor: stairwells, double heights, the outside); walls, doors, windows, railings, stairs between storeys, ladders, roof areas (gable, hip, flat; pitch), room markers, tiles down to 0.25 m; floors below ground (basements).
+  - Level format 2 (`my3dge-level/2`), a superset (a format-1 file is one storey at height 0): storeys with their base and height; void (no floor: stairwells, double heights, the outside); walls, doors, windows, railings, stairs between storeys, ladders, a roof over the top storey (gable, hip, flat; pitch; the storey's keys, not glyphs: ADR-0025 amendment 15), room markers, tiles down to 0.25 m; floors below ground (basements).
   - The compiler's colliders: walls per storey, slabs with their openings, stair hulls, roofs.
   - Queries in 3D: `floorBelow(level, x, y, z)`, the storey, the room and the surface at a point; validation (a door wider than the capsule, stairs within the climb, headroom) and `node x qa level`.
 - **Done when:** fixture storeys compile to their expected colliders and heights; the controller climbs the stairs between storeys and stands on the roofs; every format-1 level compiles to the same data and hash as before.
