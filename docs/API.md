@@ -4292,7 +4292,7 @@ For the agents who maintain the engine.
 - `createPropMeshes` (function): Makes the prop meshes; see the file comment.
 - `FLICKER` (const): A flame's flicker at time `t` (s): about 0.77 to 1.03, the 2D hall's (my-3d2dge's `FLICKER`).
 - `partMatrix` (function): Where `part` stands in its prop's frame (the base at the origin).
-- `PROP_MATERIALS` (const): The props' materials, by id: `material:crate` (texture:crate, my-3d2dge's `crateTex`, a 0.75 m face per tile), `material:barrelStaves` (texture:staves wrapped exactly once round the twelve-sided barrel, a stave per side), `material:barrelLid` and `material:flame` (unlit white, so tints show).
+- `PROP_MATERIALS` (const): The props' materials, by id: `material:crate` (texture:crate, my-3d2dge's `crateTex`, a 0.75 m face per tile), `material:barrelStaves` (texture:staves wrapped exactly once round the twelve-sided barrel, a stave per side), `material:barrelLid`, `material:flame` (unlit white, so tints show), and the library's (WP 10.3) `material:iron` and `material:cloth`.
 - `PropLight` (interface): A prop's light this frame, in world space, as three.js's `PointLight` takes it.
 - `propLooks` (function): Defines the props' texture and materials on `registry`, unless it has them.
 - `PropMeshes` (interface): The props of a scene, drawn: see the file comment.
@@ -6042,6 +6042,10 @@ For the agents who maintain the engine.
 
 - `BUILT_IN_PROPS` (const): The engine's props, by id.
 
+### [`engine/world/props/library.ts`](../engine/world/props/library.ts)
+
+- `LIBRARY_PROPS` (const): The props library's props, by id.
+
 ### [`engine/world/props/place.ts`](../engine/world/props/place.ts)
 
 - `levelProps` (function): The placements `level` makes for the props of `registry` (the shared one by default); see the file comment.
@@ -6844,7 +6848,7 @@ For the agents who maintain the engine.
 ### [`tests/pages/props.ts`](../tests/pages/props.ts)
 
 - `Knocked` (interface): What `knock` reports at one tick.
-- `SCENE` (const): The props the page places itself, beside the level's.
+- `SCENE` (const): The props the page places itself, beside the level's: the catalog's barrel and pillar, then the library's (WP 10.3), the tall ones along the north wall, the sconce on its face, the others in front, clear of the crate's slide east and of what the south wall hides from the camera (a metre and more north of it).
 - `Seen` (type): What the ID pass sees of one batch.
 - `Shown` (interface): What `show` reports.
 - `YARD` (const): The yard: 12 × 7 m, walled; a crate's spawn point (`c`) and a brazier stand (`t`).

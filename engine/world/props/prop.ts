@@ -3,7 +3,8 @@
  * in a level, as data: the meshes it is drawn with (geometry and material by id, §6.1: `world` names them, `gfx`
  * builds them, engine/gfx/props.ts), its body (a shape and a material for the physics world), an optional light
  * spot, where a level places it, and its interaction hooks. The engine's props are the crate, the barrel, the
- * brazier's fire and the pillar (engine/world/props/catalog.ts); a game adds its own with `defineProp` (`x new prop`).
+ * brazier's fire and the pillar (engine/world/props/catalog.ts) and the library's sconce, banner, chest, door, table,
+ * bench, statue and lantern (library.ts, WP 10.3); a game adds its own with `defineProp` (`x new prop`).
  *
  * A prop's frame: its base, where it stands, is the origin, +Y up, and its parts stand on it as the geometry kit's
  * shapes stand on the ground. Its body's shape stands on the base too, so the body's origin, the prop's centre, is
@@ -33,6 +34,7 @@ import { registry as sharedRegistry, type Entry, type Registry } from '../../cor
 import type { EntryOf, Schema } from '../../core/schema';
 import type { Point3 } from '../level/types';
 import { BUILT_IN_PROPS } from './catalog';
+import { LIBRARY_PROPS } from './library';
 
 /** A vector field in metres (or `unit`), three numbers. */
 const vec3 = (value: readonly number[], description: string, unit = 'm') =>
@@ -291,7 +293,8 @@ export function propKind(registry: Registry): void {
     defineWith: "defineProp('<id>', { parts: [{ geometry: '…', material: '…' }], body: { type: 'dynamic', … } })",
     check: (entry) => propProblems(entry as unknown as Prop),
   });
-  for (const [id, spec] of Object.entries(BUILT_IN_PROPS)) registry.def('prop', id, { ...spec });
+  for (const [id, spec] of Object.entries({ ...BUILT_IN_PROPS, ...LIBRARY_PROPS }))
+    registry.def('prop', id, { ...spec });
 }
 propKind(sharedRegistry);
 

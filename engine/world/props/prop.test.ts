@@ -1,6 +1,6 @@
 /**
  * @file Unit tests for the prop registry (engine/world/props/prop.ts, catalog.ts), in Node: every registry gets the
- * engine's four props, filled with their defaults, their bodies of engine/physics/bodies.ts's material; the centre is
+ * engine's props (the catalog's four, the library's eight), filled with their defaults, their bodies of engine/physics/bodies.ts's material; the centre is
  * half the body's height; specs with problems are refused naming each; a missing id gives the crate after a warning;
  * the hooks answer from the entry (a dynamic prop is knocked, others are not) and a game's hooks replace them.
  * @see engine/world/props/prop.ts
@@ -9,6 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createRegistry } from '../../core/registry';
 import { PROP_MATERIAL } from '../../physics/bodies';
 import { BUILT_IN_PROPS } from './catalog';
+import { LIBRARY_PROPS } from './library';
 import { defineProp, getProp, propCentre, type Prop, type PropKnock, type PropTouch } from './prop';
 
 /** A touch of `prop` from the west, recording the knocks it asks for. */
@@ -21,8 +22,9 @@ describe('the prop kind', () => {
   it("lists the engine's props, filled, their bodies of the props' material", () => {
     const reg = createRegistry();
     const crate = getProp('prop:crate', reg);
-    expect(reg.describe('prop').ids).toEqual(Object.keys(BUILT_IN_PROPS).sort());
-    expect(reg.describe('prop').ids).toEqual(['prop:barrel', 'prop:brazier', 'prop:crate', 'prop:pillar']);
+    expect(reg.describe('prop').ids).toEqual([...Object.keys(BUILT_IN_PROPS), ...Object.keys(LIBRARY_PROPS)].sort());
+    // The catalog's four and the library's eight (WP 10.3).
+    expect(reg.describe('prop').ids).toEqual(['prop:banner', 'prop:barrel', 'prop:bench', 'prop:brazier', 'prop:chest', 'prop:crate', 'prop:door', 'prop:lantern', 'prop:pillar', 'prop:sconce', 'prop:statue', 'prop:table']); // prettier-ignore
     const { type, shape, size, density, friction, restitution, linearDamping, angularDamping } = crate.body;
     expect({ type, shape, size }).toEqual({ type: 'dynamic', shape: 'box', size: [0.75, 0.75, 0.75] });
     expect({ density, friction, restitution, linearDamping, angularDamping }).toEqual({ ...PROP_MATERIAL });

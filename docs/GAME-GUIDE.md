@@ -277,7 +277,7 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Bodies and props (WP 4.1)**: props of one shape in the prototype's material, torque impulses and the knock; movers, kinematic bodies whose pose is a function of time, carrying riders; sensors and triggers; the lost-body rescue.
 `PROP_MATERIAL`, `addProp`, `addBox`, `addBall`, `addCapsule`, `addCylinder`, `applyTorqueImpulse`, `knock`, `MOVER_FIELDS`, `MOVER`, `moverPose`, `driveBody`, `driveMover`, `addSensor`, `sensorHits`, `TRIGGER_FIELDS`, `updateTrigger`, `rescueLost`; types `PropSpec`, `KnockOptions`, `Mover`, `SensorSpec`, `Trigger`, `RescueLevel`.
 
-**Props as data (WP 4.5)**: the registry kind `prop` (meshes by geometry and material id, a body, a light spot, where a level places it, the hit and use hooks), the engine's crate, barrel, brazier fire and pillar, and their placement.
+**Props as data (WP 4.5)**: the registry kind `prop` (meshes by geometry and material id, a body, a light spot, where a level places it, the hit and use hooks), the engine's crate, barrel, brazier fire and pillar, the library's sconce, banner, chest, door, table, bench, statue and lantern (WP 10.3), and their placement.
 `defineProp`, `getProp`, `propCentre`, `levelProps`, `propBody`, `propPose`; types `Prop`, `PropDefinition`, `PropPart`, `PropTouch`, `PropKnock`, `PropPlacement`, `PropBody`, `PropPose`.
 
 **Props in a scene (WP 4.6)**: spawnProp stands a prop in a running scene (its body, and an entity with the component sceneProp whose pose is read back after each step, which the view draws as the prop); hitProp calls its hit hook with the means to knock it; removeProp.

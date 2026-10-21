@@ -1309,6 +1309,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`catalog.ts`](../engine/world/props/catalog.ts): The engine's props (PLAN.md WP 4.5): the crate, the barrel, the brazier's fire and the pillar, as plain `prop` specs (engine/world/props/prop.ts declares the kind and registers these with it).
   - Exports: `BUILT_IN_PROPS`
   - Tests: [`engine/world/props/prop.test.ts`](../engine/world/props/prop.test.ts)
+- [`library.ts`](../engine/world/props/library.ts): The props library (PLAN.md WP 10.3; fired by the playground, ADR-0025): eight props beyond the catalog's crate, barrel, fire and pillar (engine/world/props/catalog.ts), as plain `prop` specs the kind registers with them (engine/world/props/prop.ts).
+  - Exports: `LIBRARY_PROPS`
+  - Tests: [`engine/world/props/library.test.ts`](../engine/world/props/library.test.ts)
 - [`place.ts`](../engine/world/props/place.ts): Placing props (PLAN.md WP 4.5): where a level puts them, the bodies they stand in the physics world with, and where those without a body are drawn, as plain data, so a scene spawns props from level glyphs or from its own data the same way.
   - Exports: `levelProps`, `propBody`, `PropBody`, `PropCollider`, `PropPlacement`, `propPose`, `PropPose`
   - Tests: [`engine/world/props/place.test.ts`](../engine/world/props/place.test.ts)
@@ -1637,7 +1640,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`post.ts`](../tests/pages/post.ts): The post page's module (tests/pages/post.html, PLAN.md WP 7.4): the post-processing chain (engine/gfx/post/chain.ts) over the Stress Box's room as the app draws it (engine/app/view.ts: the stage, the movers' stand-ins, the iso camera), stepped by a live session, with two characters (capsules tagged `character`), a glowing orb (an object, for bloom) and the material styles attached to the warm-up, so looks that change the style are warm too.
   - Exports: `CAMERA`, `SLIDE_BLOCK`
   - Tests: [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
-- [`props.ts`](../tests/pages/props.ts): The props page's module (tests/pages/props.html, PLAN.md WP 4.5): the engine's four props in a walled yard on the engine's renderer, standing in Rapier, drawn by engine/gfx/props.ts.
+- [`props.ts`](../tests/pages/props.ts): The props page's module (tests/pages/props.html, PLAN.md WP 4.5): the engine's props in a walled yard on the engine's renderer, standing in Rapier, drawn by engine/gfx/props.ts.
   - Exports: `Knocked`, `SCENE`, `Seen`, `Shown`, `YARD`
   - Tests: [`tests/e2e/props.spec.ts`](../tests/e2e/props.spec.ts)
 - [`puppets.ts`](../tests/pages/puppets.ts): The puppets page's module (tests/pages/puppets.html, PLAN.md WP 3.8): the engine's renderer with a lit scene (a hemisphere light and one shadow-casting sun: one shadow map) and four things to show, one at a time, each registered with the warm-up before the first frame: - the neutral humanoid (`body:humanoid`, build:chibi) as one rigid-skinned puppet (engine/gfx/puppets/draw.ts), in the page's test pose (`testPose`: every joint turned up to 0.5 rad about a seeded axis, the root turned 0.6 rad); - the socket marks (fixtures/bodies/socketMarks.ts) in the same build and pose, as a puppet of their own; - a crowd of instanced humanoids (`createPuppetBatches`) with blob shadows, on a grid 1.5 m apart, each in a seeded pose of its own; - the fixture body `body:everyPart` (fixtures/bodies/everyPart.ts), one part of every type, in the same build: one rigid-skinned puppet and two instanced ones of its own batches (`parts/…`), one facing the camera and one turned away (its cape), so every part type is drawn both ways.

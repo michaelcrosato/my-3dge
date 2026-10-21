@@ -104,7 +104,8 @@ const BARREL_ROUND = 24 * 0.375 * Math.sin(Math.PI / 12);
 /**
  * The props' materials, by id: `material:crate` (texture:crate, my-3d2dge's `crateTex`, a 0.75 m face per tile),
  * `material:barrelStaves` (texture:staves wrapped exactly once round the twelve-sided barrel, a stave per side),
- * `material:barrelLid` and `material:flame` (unlit white, so tints show).
+ * `material:barrelLid`, `material:flame` (unlit white, so tints show), and the library's (WP 10.3) `material:iron`
+ * and `material:cloth`.
  */
 export const PROP_MATERIALS: Readonly<Record<string, Record<string, unknown>>> = {
   'material:crate': {
@@ -121,6 +122,17 @@ export const PROP_MATERIALS: Readonly<Record<string, Record<string, unknown>>> =
   'material:flame': {
     description: 'Flames, unlit white, so each tongue shows its tint: what prop parts with flame tongues use.',
     unlit: true,
+  },
+  'material:iron': {
+    description: 'Dark wrought iron (texture:metal): the library props’ straps, bands, brackets and lanterns.',
+    map: 'texture:metal',
+    color: '#5a5e66',
+    roughness: 0.55,
+    metalness: 0.6,
+  },
+  'material:cloth': {
+    description: 'Woven cloth, white so a part’s tint is its dye: banners and hems.',
+    roughness: 0.95,
   },
 };
 

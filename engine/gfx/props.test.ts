@@ -12,7 +12,7 @@ import { describe, expect, it } from 'vitest';
 import { createRegistry } from '../core/registry';
 import { RngStreams } from '../core/rng';
 import { checkTextures } from '../../tools/qa/tex';
-import { defineProp } from '../world/props/prop';
+import { defineProp, type Prop } from '../world/props/prop';
 import { createMaterialLibrary } from './materials/library';
 import { bakeTexture } from './textures/bake';
 import { createPropMeshes, FLICKER, type PropMeshesOptions } from './props';
@@ -38,7 +38,15 @@ const near = (a: Matrix4, b: Matrix4) => a.elements.every((v, i) => Math.abs(v -
 describe('the props drawn', () => {
   it("defines the props' texture and materials, the crate's face tiling cleanly", () => {
     const { registry } = meshes();
-    for (const id of ['material:crate', 'material:barrelStaves', 'material:barrelLid', 'material:flame']) {
+    for (const id of [
+      'material:crate',
+      'material:barrelStaves',
+      'material:barrelLid',
+      'material:flame',
+      'material:iron',
+      'material:cloth',
+    ]) {
+      // prettier-ignore
       expect(registry.has('material', id), id).toBe(true);
     }
     expect(checkTextures(registry, ['texture:crate'])).toEqual([]);
@@ -51,13 +59,12 @@ describe('the props drawn', () => {
   });
 
   it('makes a batch per prop part and draws a prop where its body is, its base propCentre below', () => {
-    const { props } = meshes();
-    expect(props.batches().map((batch) => batch.name)).toEqual([
-      'prop:barrel/mesh',
-      'prop:brazier/flames',
-      'prop:crate/mesh',
-      'prop:pillar/mesh',
-    ]);
+    const { props, registry } = meshes();
+    // One a part of every prop, in id order: the catalog's (WP 4.5) among the library's (WP 10.3).
+    const parts = (registry.list('prop') as unknown as Prop[]).flatMap((prop) => prop.parts.map((part) => `${prop.id}/${part.name}`)); // prettier-ignore
+    expect(props.batches().map((batch) => batch.name)).toEqual(parts);
+    expect(parts.length).toBe(41);
+    expect(parts.filter((name) => /^prop:(barrel|brazier|crate|pillar)\//.test(name))).toEqual(['prop:barrel/mesh', 'prop:brazier/flames', 'prop:crate/mesh', 'prop:pillar/mesh']); // prettier-ignore
     const position = new Vector3(2, 1.1, -3);
     const rotation = new Quaternion().setFromAxisAngle(new Vector3(1, 2, 0.5).normalize(), 0.8);
     props.begin(0);
