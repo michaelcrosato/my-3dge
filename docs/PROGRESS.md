@@ -10,7 +10,8 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 - G12 runs on `claude/pensive-cray-9pa1n6` from the updated main (PLAN.md §11.1), in Phase 13's table order: 13.27
   (the follow cameras indoors, from WP 13.18), 10.4, 13.19, 13.20, 10.2, 10.1, 13.21, 13.22, 11.1, 11.2, 11.5, 13.23,
   11.3, 13.24, 8.8, 10.8. Then G13, the tech demo.
-- The owner's: the Quaternius GLBs (WP 8.8), model access for WP 12.2's live evals (`node x esc` when reached).
+- The owner's: the Quaternius GLBs (WP 8.8), model access for WP 12.2's live evals (`node x esc` when reached). Their
+  go-ahead (2026-10-22): a bot may play with infinite health and ammo to get through content faster and more surely.
 
 ## Where things stand (2026-10-22)
 
@@ -22,8 +23,7 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 
 ## What waits, by design
 
-- WP 13.27: the shooter and the platformer indoors (in the soak the shooter loses the player in 7% of frames, the
-  platformer in most; settled, both see him in every room). WP 13.23: the crawlspace's light, the street lamps' group.
+- WP 13.27 (the follow cameras indoors) is under way. WP 13.23: the crawlspace's light, the street lamps' group.
   QA baseline entries wait on WPs 10.2 and 8.8. Not verifiable here: speakers, touch (ADR-0021), pads, real GPUs; not
   run in a browser: the starter game's best-round HUD line (labs/game/main.ts).
 - At their size cap (395–400 lines), split on the next change: engine/sim-api.ts, app/engine.ts, world/siteNav.ts,
