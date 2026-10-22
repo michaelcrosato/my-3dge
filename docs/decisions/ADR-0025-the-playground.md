@@ -1162,10 +1162,13 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   the house's 17 rooms (ducked in the crawlspace), the shed and the front yard, every camera but first person sees him,
   first person the room past his body (finding WP 13.18's crawlspace, props and wall cuts, amendment 20's fix);
   tests/e2e/eye.spec.ts, the box's room-hero and hall-props, the hero at his spawn and walked two ways, 22 cameras
-  (each classic view in both projections, the 3D cameras, the follow cameras and first person): the eye and the ID pass
-  agree on 256 of 258 cases (99.2%; the Done-when's bound is 95%), both misses a follow camera still inside the hero's
-  capsule two frames after a switch (from inside an actor's body the eye sees only him; his puppet, slimmer, may not
-  fill the frame). The spec steps once before it looks: a scene's bodies join the queries at the first physics step.
+  (each classic view in both projections, the 3D cameras, the follow cameras and first person) and two each round that
+  must not see him (`AWAY`: a fixed camera behind him looking away, the top-down view zoomed in 6 m east of him): the
+  eye and the ID pass agree on 280 of 282 cases (99.3%; the Done-when's bound is 95%), the 12 that must not see him
+  unseen in both answers; both misses a follow camera still inside the hero's capsule two frames after a switch (from
+  inside an actor's body the eye sees only him; his puppet, slimmer, may not fill the frame). The spec steps once
+  before it looks: a scene's bodies join the queries at the first physics step. In the box a wall or the pillar
+  between a camera and the hero is no negative case: the cutaway cuts it, in the frame and so for the eye.
 - **Beyond its Owns**: engine/app/{view,headless,viewMembers}.ts and their tests (the members `eye` and
   `camera.advance`), tests/e2e/box-members.spec.ts (every member in the page), the tests beside each file, the house
   test, docs/GAME-GUIDE.md's command row and the stress-box skill's quick loop.
