@@ -7,7 +7,7 @@
  * the south wall cuts the south walls round it; the height boost decides in the picture's heights. Then the meshes:
  * the twins, pieces moving between a part and its twin, the draw calls, `clear`, the warm-up and `dispose`. The fade
  * (WP 13.8): the pieces a line to the hero's head or chest crosses, and the objects, leave the picture with `fade` and
- * come back without. The GPU half (0 pipelines while the camera turns, the draw-call budget) is
+ * come back without. `either` (WP 13.18): a piece facing the camera, or between it and the focus. The GPU half (0 pipelines while the camera turns, the draw-call budget) is
  * tests/e2e/hall.spec.ts.
  * @see engine/gfx/cutaway.ts
  */
@@ -139,6 +139,15 @@ describe('planCutaway on the hall', () => {
       );
     expect(plan(1)).toEqual([[false]]);
     expect(plan(1.35)).toEqual([[true]]);
+  });
+
+  it('cuts a piece under `either` when it faces the camera or stands between it and the focus (WP 13.18)', () => {
+    // A wall 4 m north of the focus facing north (away from a camera to the south), then one facing the camera.
+    const wall = (when: CutTarget['when'], out: [number, number]): CutTarget => ({ when, bottom: 0, top: 3, cells: [{ centre: [0, 0, -4], size: [1, 1], out }] }); // prettier-ignore
+    const pose = makePose({ position: [0, 30, -60], yaw: 0, pitch: -Math.PI / 6, projection: 'orthographic' }); // north of it, looking south
+    const plan = (when: CutTarget['when'], out: [number, number]) => planCutaway([wall(when, out)], pose, [0, 0, 0])[0][0]; // prettier-ignore
+    expect([plan('facing', [0, 1]), plan('blocking', [0, 1]), plan('either', [0, 1])]).toEqual([false, true, true]); // between them, facing away
+    expect([plan('either', [0, -1]), plan('facing', [0, -1])]).toEqual([true, true]); // facing the camera
   });
 
   it('tests a segment against a box by slabs, as the prototype did', () => {

@@ -1,8 +1,7 @@
 /**
  * @file The bot through the house's basement and ground floor (PLAN.md WP 13.18, gate G11; engine/dev/bot.ts on labs/playground/scenes/site.ts):
- * from the front yard's spawn it reaches each of their rooms, opening the doors on its way, up and down the flights
- * (crouched through the crawlspace's low door, up the attic's ladder and down through its hatch), and comes back within
- * a metre of where it started. The rooms run in two files, downstairs and upstairs, so the test workers share them.
+ * from the front yard's spawn it reaches each of their rooms, opening the doors on its way, down the flights and up
+ * them (crouched through the crawlspace's low door), and comes back within a metre of where it started. The rooms run in two files, downstairs and upstairs, so the test workers share them.
  * @see labs/playground/scenes/site.ts
  */
 import { describe, expect, it } from 'vitest';

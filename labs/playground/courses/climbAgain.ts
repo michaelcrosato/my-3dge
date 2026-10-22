@@ -5,7 +5,8 @@
  * as it falls. §3.2's rule: a new climb starts lower than the last, letting go lowering the climb space 3.25 m, so the
  * space's cutoff, 3.73 m over the last ground, stands 0.48 m over the floor: it catches the wall again only in the
  * first step that starts with its feet that low, not at the 1.33 m it first caught at, and that step moves it on a
- * tick's fall (9.3 m/s there, from the 2.74 m its let-go rose to). Then the bounds (labs/playground/courses/bounds.ts).
+ * tick's fall (9.3 m/s there, from the 2.74 m its let-go rose to), so the catch lies in the tick-wide window from 0.48 m
+ * less two ticks' falls to 0.48 m less one. Then the bounds (labs/playground/courses/bounds.ts).
  *
  * Game code (labs/playground/): it imports only the engine's public API and the playground's own files.
  *
@@ -41,7 +42,14 @@ defineCourse('course:playground-climb-again', {
     [AGAIN, { move: [0, 1] }],
   ],
   measures: [
-    { name: 'catches again 3.25 m lower', metric: 'heightAt', from: AGAIN, until: 'climbing', reference: AGAIN_AT - TICK_FALL, tolerance: { abs: TICK_FALL } }, // prettier-ignore
+    {
+      name: 'catches again 3.25 m lower',
+      metric: 'heightAt',
+      from: AGAIN,
+      until: 'climbing',
+      reference: AGAIN_AT - 1.5 * TICK_FALL,
+      tolerance: { abs: TICK_FALL / 2 },
+    }, // a tick's window under the cutoff, less that tick's fall // prettier-ignore
     ...bodyBounds(2, { holds: true }),
     ...cameraBounds(2),
   ],

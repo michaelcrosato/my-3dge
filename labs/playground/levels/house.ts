@@ -186,8 +186,11 @@ export const HOUSE_TEXT = levelText(
   ],
 );
 
-/** A recipe of blocks in `sides` and `tops`, cut facing the camera as the engine's walls are. */
-const block = (sides: string, tops: string) => ({ shape: 'block', materials: [sides, tops], castShadow: true, receiveShadow: true, cut: { height: 0.4375, when: 'facing' } }) as const; // prettier-ignore
+/**
+ * A recipe of blocks in `sides` and `tops`, cut facing the camera as the engine's walls are, and where they stand
+ * between it and the player (`'either'`): a wall with rooms on both sides faces no one way out.
+ */
+const block = (sides: string, tops: string, when: 'either' | 'blocking' = 'either') => ({ shape: 'block', materials: [sides, tops], castShadow: true, receiveShadow: true, cut: { height: 0.4375, when } }) as const; // prettier-ignore
 /** A one-slot recipe of `shape` in `material`. */
 const one = (shape: string, ...materials: string[]) => ({ shape, materials, castShadow: true, receiveShadow: true });
 
@@ -213,7 +216,7 @@ defineLevel('level:house', {
   recipes: {
     floor: { ...one('surface', 'material:concrete'), castShadow: false },
     wall: block('material:siding', 'material:paint'),
-    partition: block('material:wallpaper', 'material:paint'),
+    partition: block('material:wallpaper', 'material:paint', 'blocking'), // an inner wall faces no way out
     lowWall: block('material:wood', 'material:tiles'),
     chimney: block('material:brick', 'material:stone'),
     pillar: one('pillar', 'material:paint', 'material:paint'),

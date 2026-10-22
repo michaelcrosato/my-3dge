@@ -3,7 +3,7 @@
  * stage with no prop makes no prop meshes and keeps its scene graph; the first prop makes them, a batch for every
  * prop, under the stage's scene, a lamp its switch turned off giving no light; each prop is drawn where its pose puts
  * it, `alpha` of the way from its pose a step before (the centre along the line, the turn slerped), and a prop that
- * leaves is no longer drawn; the warm-up sees
+ * leaves is no longer drawn, nor one the hide test hides (a storey the cut takes off); the warm-up sees
  * the batches made after it was registered, and the shader key says when props arrive; the stage draws a `sceneProp`
  * entity as its prop, never as a stand-in.
  * @see engine/gfx/stageProps.ts
@@ -98,6 +98,18 @@ describe('props on the stage', () => {
     props.draw(1);
     expect(props.meshes!.batches().find((batch) => batch.name === 'prop:crate/mesh')!.count).toBe(0);
     expect(props.props.size).toBe(0);
+  });
+
+  it('leaves out of every draw the props its hide test says are hidden, until the test is lifted', () => {
+    const props = createStageProps({ scene: new Scene(), materials: createMaterialLibrary() });
+    props.capture([entity(1, 'prop:crate', [0, 0.5, 0]), entity(2, 'prop:crate', [0, 3.5, 0])], 1 / 60);
+    const crates = () => props.meshes!.batches().find((batch) => batch.name === 'prop:crate/mesh')!.count;
+    props.hide((_x, y) => y > 3); // the crate on the storey above
+    props.draw(1);
+    const hidden = crates();
+    props.hide(null);
+    props.draw(1);
+    expect([hidden, crates()]).toEqual([1, 2]);
   });
 
   it('registers batches made after the warm-up, and puts their arrival in the shader key', () => {

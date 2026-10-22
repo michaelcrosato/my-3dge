@@ -330,7 +330,7 @@ game agent's manual.
 - `Cutaway` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): A level's cutaway (see the file comment).
 - `CutawayReport` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): How many of each cutting part's pieces are cut, after an `update`, and what the fade took out of the picture.
 - `CutTarget` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): What the cutaway decides over: the pieces of one part, how they cut, and their heights (m).
-- `CutWhen` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars).
+- `CutWhen` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars); `'either'`, both (a house's walls: a wall with rooms on both sides faces no one way out, so one between the camera and the player is cut too).
 - `CylinderCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An upright cylinder collider (Rapier's cylinder, three.js's CylinderGeometry): one per tile, at its centre.
 - `DaisDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A dais: an octagonal frustum (faces toward the axes and the diagonals) standing on a block of a dais glyph's tiles.
 - `damage` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Lands a hit on `target`: takes `hit.amount` from its health, and on its crowd body (in the scene's physics world) adds the knockback away from `hit.from`, the launch, and when the hit kills, the switch to the corpse group and the kill launch; asks for `hit.stop` of hit-stop; emits `damage` and returns the event.
@@ -4109,7 +4109,7 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)
 
-- `CutWhen` (type): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars).
+- `CutWhen` (type): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars); `'either'`, both (a house's walls: a wall with rooms on both sides faces no one way out, so one between the camera and the player is cut too).
 - `FALLBACK_RECIPE` (const): What a recipe nobody defined draws: grey blocks (`material:default`), casting and receiving shadows.
 - `LEVEL_RECIPES` (const): The engine's recipes, by the name a glyph's `mesh` gives.
 - `LevelCut` (interface): How the cutaway cuts a recipe's pieces: to a twin `height` metres tall, `when` the view needs it.
@@ -4694,11 +4694,12 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/storeyCut.ts`](../engine/gfx/storeyCut.ts)
 
+- `aboveStorey` (function): Whether a thing at (x, y, z) of `level`'s frame stands on a storey above `storey` (≥ 0): the cut hides it too.
 - `createStoreyCut` (function): The cutaway by storey over `meshes` (see the file comment).
-- `cutPlace` (function): Where feet at (x, y, z) of `level`'s own frame stand for the cut: the storey (−1 outside or on a roof), and indoors.
-- `planStoreys` (function): Which of `pieces` show with the player on `storey` (−1 outside or on a roof), `indoors` or not (see the file comment).
+- `cutPlace` (function): Where feet at (x, y, z) of `level`'s own frame stand for the cut: the storey (−1 outside or on a roof), indoors, and `low`, under a low ceiling of that storey.
+- `planStoreys` (function): Which of `pieces` show with the player on `storey` (−1 outside or on a roof), `indoors` or not, under a `low` ceiling or not (see the file comment).
 - `StoreyCut` (interface): A level's cutaway by storey (see the file comment).
-- `StoreyPiece` (interface): What the plan reads of a mesh: its storey (none in a level of one storey) and whether it is a roof.
+- `StoreyPiece` (interface): What the plan reads of a mesh: its storey (none in a level of one storey), whether it is a roof, or its heads.
 
 ### [`engine/gfx/terrain.ts`](../engine/gfx/terrain.ts)
 
@@ -7043,9 +7044,11 @@ For the agents who maintain the engine.
 - `areaStart` (function): Where `area`'s spawn stands: its point, on the highest floor at or under it.
 - `backyard` (const): The block, the player in the backyard.
 - `default` (default): The block's scenes (docs/PLAYGROUND.md §2, PLAN.md WP 13.18): `playground:site`, the whole block with the player in the front yard, and a scene per area (`playground:site-<area>`: the house, the backyard, the street, the gym, the hill, the range, the ring), the same block with the player at that area's spawn (`SITE_AREAS`, labs/playground/levels/site.ts).
+- `HEAD_HEIGHT` (const): How high over his feet a standing player's head reaches, m: where that is solid, he is put ducked.
 - `house` (const): The block, the player in the hall.
 - `range` (const): The block, the player behind the range's counter.
 - `ring` (const): The block, the player at the ring's steps.
+- `roomPlace` (function): Where the `place` action puts the player in one of a structure's rooms: at its marker, on its floor, ducked where a standing player's head would be in something solid (the crawlspace's 1.4 m ceiling).
 - `site` (const): The block, the player in the front yard: `playground:site`, the site's own scene.
 - `SITE_SCENES` (const): The block's scenes by area: the front yard's is `playground:site`, every other `playground:site-<area>`.
 - `siteGym` (const): The block, the player at the gym's spawn.

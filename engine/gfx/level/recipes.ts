@@ -74,9 +74,10 @@ export type LevelShape =
 
 /**
  * When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls);
- * `'blocking'`, when it stands between the camera and what the camera follows (pillars).
+ * `'blocking'`, when it stands between the camera and what the camera follows (pillars); `'either'`, both (a house's
+ * walls: a wall with rooms on both sides faces no one way out, so one between the camera and the player is cut too).
  */
-export type CutWhen = 'facing' | 'blocking';
+export type CutWhen = 'facing' | 'blocking' | 'either';
 
 /**
  * How the cutaway cuts a recipe's pieces: to a twin `height` metres tall, `when` the view needs it. Only the

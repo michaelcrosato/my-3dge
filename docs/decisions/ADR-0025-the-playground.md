@@ -1052,7 +1052,7 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   spawn (`SITE_AREAS`) and a scene (`playground:site` the front yard's, `playground:site-<area>` the others'), each
   `defineScene` call written out with its id, since the tools find a scene by its module's text (tools/lib/scenes.ts).
 - **The house as built** against §2.1: a patio on the backyard side, not a deck, the crawlspace under it; the garage's
-  door an up-and-over door on its switches (a tilt, e981a49), its storey 3 m for the door's travel; a level door hangs
+  door an up-and-over door on its switches (a tilt, e981a49), 2.3 m high under the ground storey's 2.7 m; a level door hangs
   only in an opening its leaf fits. The study's bookshelf stands off its door: with the leaf open the two sealed it.
 - **The lot and the cottage give way** (amendments 18 and 19): labs/playground/levels/{lot,cottage}.ts,
   scenes/{lot,interact}.ts and the interact replay are gone (their inspector glyphs also clashed with the house's). The
@@ -1106,3 +1106,16 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   where structures' floors cover a cell whole (its four quarters' middles), so a deck's posts and a ladder's foot leave
   the ground under them; `sweepBot` moved to engine/dev/botSweep.ts, bot.ts at its cap; the hydrant's cap a 2 cm limb
   (the view refuses a limb of no length; labs/playground/props/props.test.ts builds every part).
+- **The review's fix** (the site's cutaway test failed in the crawlspace): the playground's `place` takes `crouch`,
+  leaving the player ducked from the next step (no standing hull fits under the crawlspace's 1.4 m), and `roomPlace`
+  (labs/playground/scenes/site.ts) puts him at a room's marker, ducked where a standing head would be in something
+  solid; the crawlspace's marker stays against its walls (moving it changes the level's head colliders, merged by
+  glyph, and so the replay's physics), a ducked body nudged 5 cm off them. In a classic view the cut by storey now
+  also lifts the player's own storey's heads under a low ceiling (engine/gfx/storeyCut.ts: `cutPlace`'s `low`; the
+  door heads go with it, one mesh), and hides the props standing on a storey it cuts off (`aboveStorey`, the site's
+  `hides`, engine/gfx/stageProps.ts `hide`): an attic's chest no longer hangs over the hall. The house's walls cut
+  `either` (a new rule beside `facing` and `blocking`, engine/gfx/level/recipes.ts: facing the camera, or between it and
+  the player), since a wall with rooms or open storey on both sides faces no one way out, and its partitions
+  `blocking`. Measured in Node by WP 12.3's eye (amendment 21): every camera sees the player in all 17 rooms, the shed
+  and the front yard, first person the room past his body. The crawlspace has no lamp or switch: its light is WP
+  13.23's.

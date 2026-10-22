@@ -8,7 +8,7 @@
  * - **The range's shelter** (`level:shelter`): a covered bench at the range's west end, 4 × 10 m and 2.5 m high on
  *   four posts under a flat roof, its counter along the lanes' side.
  * - **The ring** (`level:ring`): a canvas 6 × 6 m and 1 m up (the engine's gallery glyph) with steps up its south side
- *   and a post at each corner, on a pad 8 × 9 m; the ropes are props (labs/playground/levels/site.ts).
+ *   and a post at each corner, on a pad 8 × 9 m; the ropes are props (labs/playground/furnish.ts).
  * - **The backstop** (`level:backstop`): a wall 3 m high across the range's east end.
  * The playground's post glyph (`(`, one tile, up to the storey above) holds up the decks and roofs.
  *

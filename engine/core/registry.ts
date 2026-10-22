@@ -136,7 +136,7 @@ export interface Registry {
   /** The kind's entries, sorted by id. */
   list(kind: string): Entry[];
   /** The declared kinds, sorted (a frozen list, the same one until a kind is declared). */
-  kinds(): string[];
+  kinds(): readonly string[];
   /** Every kind; one kind's fields and ids; or one entry's values. */
   describe(): KindsDescription;
   describe(kind: string): KindDescription;
@@ -286,7 +286,7 @@ export function createRegistry(options: { log?: Log } = {}): Registry {
 
     kinds() {
       // Kept sorted until the next kind: asked on every prop and every setting lookup, a sort each time adds up.
-      return (sorted ??= Object.freeze([...kinds.keys()].sort(byText))) as string[];
+      return (sorted ??= Object.freeze([...kinds.keys()].sort(byText)));
     },
 
     describe,

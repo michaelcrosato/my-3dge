@@ -2,8 +2,8 @@
  * @file The block's outdoor props (docs/PLAYGROUND.md §2.2, PLAN.md WP 13.18), the playground's own, built as the
  * house's are (labs/playground/props/house.ts): the patio's grill; the backyard's swing set (no body: walk through it)
  * and the dog's kennel; the front yard's picket fence (a 2 m section, 0.9 m: vault it), hedge (a 4 m run, 1.2 m) and
- * mailbox; trees and rocks for the hill and the yards; the street's lamp (its light the group `street`, which
- * switches at dusk: WP 13.23), its hydrant, and its bus stop's roof (a slab 2.4 m up to mantle onto), posts and back;
+ * mailbox; trees and rocks for the hill and the yards; the street's lamp (always on: no light group yet, WP 13.23
+ * gives the street's its group to switch at dusk), its hydrant, and its bus stop's roof (a slab 2.4 m up to mantle onto), posts and back;
  * the range's targets; the ring's ropes. labs/playground/furnish.ts says where each stands.
  *
  * Game code, sim-side: it imports only engine/sim-api.ts and the playground's own files.
@@ -62,7 +62,8 @@ export const OUTDOOR_PROPS = {
     body: fixed([1.4, 0.8, 1.1]),
   },
   'prop:playground-streetlight': {
-    description: "A street lamp, its pole 4.5 m high and its head over the road; its light the group 'street'. Fixed.",
+    description:
+      'A street lamp, its pole 4.5 m high and its head over the road, always lit (no light group yet: WP 13.23). Fixed.',
     parts: [upright('pole', 0.07, 4.5, IRON, [0, 0, 0], '#3a3f45'), part('arm', [0.08, 0.08, 1.2], IRON, [0, 4.42, 0.6], '#3a3f45'), { ...part('head', [0.35, 0.12, 0.5], GLOW, [0, 4.32, 1.1], '#fff3c8'), shadow: false, lit: true }], // prettier-ignore
     body: { type: 'fixed', shape: 'cylinder', radius: 0.08, height: 4.5 },
     light: { tag: 'streetlight', color: '#ffe8b0', intensity: 10, distance: 14, decay: 1, position: [0, 4.2, 1.1] },

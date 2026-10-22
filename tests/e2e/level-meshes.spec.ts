@@ -133,7 +133,9 @@ test('the storey house: walls, slabs, roof and openings apart in the ID pass, st
   expect(house.counted).toBeLessThanOrEqual(BUDGET * 4);
 
   const outside = await idPixels(page);
-  for (const part of ['attic/roof', 'ground/wall#2', 'upper/wall#2', 'ground/frames', 'upper/frames', 'upper/heads']) {
+  // The upper heads show from here only in a strip under the eaves, which their windows' frames have covered since
+  // they stand round the openings (WP 13.18); the view down onto the upper storey checks them below.
+  for (const part of ['attic/roof', 'ground/wall#2', 'upper/wall#2', 'ground/frames', 'upper/frames', 'ground/heads']) {
     expect(outside[part] ?? 0, `${part} from outside`).toBeGreaterThan(30);
   }
   expect(await look(page, 1, [4, 9, 6.5], [4, 0, 3])).toMatchObject({ drawn: true, built: 0 });
@@ -143,7 +145,7 @@ test('the storey house: walls, slabs, roof and openings apart in the ID pass, st
   }
   expect(await look(page, 2, [4, 12, 6.5], [4, 3, 3])).toMatchObject({ drawn: true, built: 0 });
   const upper = await idPixels(page);
-  for (const part of ['upper/floor', 'upper/railing', 'upper/wall#2'])
+  for (const part of ['upper/floor', 'upper/railing', 'upper/wall#2', 'upper/heads'])
     expect(upper[part] ?? 0, part).toBeGreaterThan(30);
   expect(await look(page, 3, [4, -2.4, 3.6], [4, 0, 2.5])).toMatchObject({ drawn: true, built: 0 }); // in the cellar
   expect((await idPixels(page))['ground/ceiling'] ?? 0, "the ground floor's slab, seen from the cellar").toBeGreaterThan(200); // prettier-ignore

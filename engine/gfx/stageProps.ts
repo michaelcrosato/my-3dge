@@ -8,7 +8,8 @@
  * it draws; `draw(alpha)` draws each `alpha` of the way from the one before to the last (the centre along the line,
  * the turn the shorter way round), at presentation time (the steps captured, `alpha` of a step on), on which the
  * flames dance; each prop is drawn under its entity id, so its flames keep their own phase, and on or off as its
- * `propLight` says (a lamp its switch turned off: WP 13.16). `lights()` lists this frame's light spots in world space
+ * `propLight` says (a lamp its switch turned off: WP 13.16); `hide(test)` leaves out those on a storey the cut takes
+ * off (engine/gfx/storeyCut.ts), lights and all. `lights()` lists this frame's light spots in world space
  * (the brazier's torch, the lamps that are on), for the light pool (WP 7.1).
  *
  * The prop meshes are made when the first prop arrives, with a batch for every registered prop, and added to the
@@ -63,8 +64,10 @@ export interface StageProps {
   readonly props: ReadonlyMap<number, string>;
   /** Reads the props after a sim step of `dt` s (keeps the pose before for `draw`); returns the ids it draws. */
   capture(entities: Iterable<EntityData>, dt?: number): Set<number>;
-  /** Draws every prop `alpha` (0 to 1) of the way from its pose a step ago to its last. */
+  /** Draws every prop `alpha` (0 to 1) of the way from its pose a step ago to its last, but those `hide` leaves out. */
   draw(alpha: number): void;
+  /** From the next draw, leaves out the props whose centre `test` says is hidden (a storey the cut takes off); null: none. */ // prettier-ignore
+  hide(test: ((x: number, y: number, z: number) => boolean) | null): void;
   /** The light spots of the last frame's props, in world space. */
   lights(): PropLight[];
   /** Registers the prop meshes with `warmup`, now or when they are made, and their presence in the shader key. */
@@ -91,6 +94,7 @@ export function createStageProps(options: StagePropsOptions): StageProps {
   const [a, b, at] = [new Quaternion(), new Quaternion(), new Vector3()];
   let meshes: PropMeshes | null = null;
   let [time, step] = [0, 1 / 60];
+  let hidden: ((x: number, y: number, z: number) => boolean) | null = null;
 
   /** The prop meshes, made now if they are not yet, and registered with every warm-up so far. */
   function made(): PropMeshes {
@@ -135,10 +139,14 @@ export function createStageProps(options: StagePropsOptions): StageProps {
       for (const [id, { prop, before, after, on }] of held) {
         const [p0, p1] = [before.p, after.p];
         at.set(p0[0] + (p1[0] - p0[0]) * k, p0[1] + (p1[1] - p0[1]) * k, p0[2] + (p1[2] - p0[2]) * k);
+        if (hidden?.(at.x, at.y, at.z)) continue;
         a.fromArray(before.q).slerp(b.fromArray(after.q), k);
         meshes.add(prop, { position: at, rotation: a, on }, id);
       }
       meshes.end();
+    },
+    hide(test) {
+      hidden = test;
     },
     lights: () => meshes?.lights() ?? [],
     register(warmup) {

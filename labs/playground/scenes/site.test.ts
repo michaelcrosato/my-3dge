@@ -67,6 +67,15 @@ describe('the block', () => {
     expect([doors.length, doors.filter((d) => d.door.tilt).length]).toEqual([17 + 1 + 1, 1]); // the house's, the shed's, the garage's
     const lamps = session.world.query('propLight').filter((e) => (e as unknown as { sceneProp: { prop: string } }).sceneProp.prop === 'prop:lamp'); // prettier-ignore
     expect([lamps.length, count('switch')]).toEqual([Object.values(HOUSE_LIGHTS).filter((l) => l.lamp).length, Object.keys(HOUSE_LIGHTS).length + 2]); // prettier-ignore
+    const groups = lamps.map((e) => (e as unknown as { propLight: { group: string } }).propLight.group).sort();
+    expect(groups).toEqual(
+      Object.entries(HOUSE_LIGHTS)
+        .filter(([, l]) => l.lamp)
+        .map(([room]) => `room:${room}`)
+        .sort(),
+    ); // each its room's group // prettier-ignore
+    const panes = session.world.query('sceneProp').filter((e) => (e as unknown as { sceneProp: { prop: string } }).sceneProp.prop === 'prop:pane'); // prettier-ignore
+    expect(panes.length).toBe(56); // two in each of the house's and the shed's 28 windows
   });
 
   it("plays its replay's story in order, with the HUD's prompts", () => {

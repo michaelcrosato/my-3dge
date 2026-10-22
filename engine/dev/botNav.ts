@@ -14,11 +14,10 @@
  * nav.wayTo({ x: 3.5, z: 3.5 })!.distanceAt({ x: 1.5, z: 1.5 }); // 8: east along the top and round the walls
  * @see engine/dev/botNav.test.ts
  */
-import type { Vector3 } from '../core/math';
+import { Quaternion, Vector3 as Vec3, type Vector3 } from '../core/math';
 import { derive, Rng } from '../core/rng';
 import type { CompiledLevel } from '../world/level/types';
 import { NavGrid } from '../world/nav';
-import { Quaternion, Vector3 as Vec3 } from '../core/math';
 import type { DoorComponent } from '../sim/doors';
 import '../sim/props'; // the component `sceneProp`, which `propObstacles` reads
 import type { ScenePropComponents } from '../sim/props';

@@ -21,9 +21,9 @@
  * it is. `capture(entities, dt)` after each sim step keeps the last two places; `draw(alpha)` puts every stand-in,
  * puppet and prop `alpha` of the way from the one before to the last (§6.4's interpolation; yaw the shorter way).
  *
- * The level's cutaway (engine/gfx/cutaway.ts, its fade taking the rides too) is made when a player actor first stands
- * on it; the view runs it as it follows the player (`frame`), with the cut by storey in a classic view (storeyCut.ts),
- * and a site's per structure (engine/gfx/stageSite.ts). A stage with no player never has a cutaway.
+ * The level's cutaway (engine/gfx/cutaway.ts, its fade taking the rides too) is made when a player first stands on
+ * it, never without one; the view runs it as it follows the player (`frame`), with the cut by storey in a classic view
+ * (storeyCut.ts) and a site's per structure (engine/gfx/stageSite.ts), the props on a storey it takes off with it.
  *
  * Warm-up: `register(warmup)` registers the ground, the level meshes, the terrain's every level of detail, the
  * cutaway's twins, the puppets, the props' and the crowd's batches and the stand-ins, and adds the stand-ins' looks
@@ -62,7 +62,7 @@ import { createStageRides, RIDE_KINDS, type StageRides } from './stageRides';
 import { createStageSite, type StageSite } from './stageSite';
 import { groundMesh } from './stageGround';
 import { createStageSky, type StageSky } from './stageSky';
-import { createStoreyCut, cutPlace } from './storeyCut';
+import { aboveStorey, createStoreyCut, cutPlace } from './storeyCut';
 import { createTerrainMeshes, type TerrainMeshes } from './terrain';
 import type { Warmup } from './warmup';
 
@@ -250,6 +250,8 @@ export function createStage(options: StageOptions): Stage {
     ...(options.fxRng ? { fxRng: options.fxRng } : {}),
   });
   scene.add(fx.effects.root);
+  /** The alpha the stage was last drawn at: a frame's cut draws the props again at it. */
+  let drawnAlpha = 1;
   const standing = placeableKinds(options.registry);
   const declared = (kind: string) => options.registry.kinds().includes('component') && options.registry.has('component', kind); // prettier-ignore
   const rideKinds = RIDE_KINDS.filter((kind) => declared(kind) && !standing.includes(kind)); // they stand by their anchors
@@ -319,6 +321,7 @@ export function createStage(options: StageOptions): Stage {
       }
     },
     draw(alpha) {
+      drawnAlpha = alpha;
       const k = Math.min(1, Math.max(0, alpha));
       for (const [id, mesh] of standIns) {
         const place = places.get(id);
@@ -335,8 +338,11 @@ export function createStage(options: StageOptions): Stage {
     frame(pose, feet, { fade = false, view = false } = {}) {
       cutaway?.update(pose, feet, { fade });
       const place = view && level && storeys ? cutPlace(level, ...feet) : null;
-      storeys?.set(place?.storey ?? -1, place?.indoors ?? false);
+      storeys?.set(place?.storey ?? -1, place?.indoors ?? false, place?.low ?? false);
       site?.update(pose, feet, { fade, view });
+      const own = place && place.storey >= 0 && level ? (x: number, y: number, z: number) => aboveStorey(level, place.storey, x, y, z) : null; // prettier-ignore
+      props.hide(own ?? (site ? site.hides : null));
+      props.draw(drawnAlpha); // what stands on a storey the cut takes off goes with it
     },
     register(warmup) {
       const registrations = [

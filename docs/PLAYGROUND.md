@@ -60,12 +60,12 @@ wide. Floors are 0.3 m slabs.
 
 | Storey | Floor | Clear height | Rooms and features |
 |---|---|---|---|
-| Basement | −3.0 m | 2.7 m | workshop, laundry and boiler room, storage (shelves, crates); a crawlspace 1.4 m high under the patio (the crouched hull, 1.19 m, fits; the standing one does not), crouch and slide only, to the bulkhead doors in the backyard; the stairs up; a light switch at the stairs |
+| Basement | −3.0 m | 2.7 m | workshop, laundry and boiler room, storage (shelves, crates); a crawlspace 1.4 m high under the patio (the crouched hull, 1.19 m, fits; the standing one does not), crouch and slide only (no lamp: its own light is WP 13.23's), to the bulkhead, an open railed flight up into the backyard; the stairs up; a light switch at the stairs |
 | Ground floor | 0.0 m | 2.7 m | the front door onto the porch; the hall, with stairs up and down; the living room (sofa, TV, fireplace, rug); the dining room; the kitchen, with an island to vault; a bathroom; the back door onto the patio; the door into the garage; windows on every side |
 | Upper floor | 3.0 m | 2.7 m | the landing over the stairwell, with a railing; two bedrooms (a bunk bed to mantle onto); the study; a bathroom; a door onto the garage's roof deck; a door onto the porch roof; the attic hatch and its ladder |
 | Attic | 6.0 m | 0 at the eaves to 4.2 m at the ridge | crouch at the edges, stand in the middle; a roof window out |
 | Roof | gable, 35°, ridge 10.2 m, east to west | walkable slopes | the chimney to mantle onto; the porch roof (3.0 m); the garage's deck (3.0 m, a 1.0 m railing) |
-| Garage | 0.0 m | 3.0 m | the roll-up door on its switch; a car (a prop until vehicles arrive, §11); shelves and a workbench |
+| Garage | 0.0 m | 2.7 m | the up-and-over door (2.75 × 2.3 m) on its two switches; a car (a prop until vehicles arrive, §11); shelves and a workbench |
 
 ### 2.2 Outside
 

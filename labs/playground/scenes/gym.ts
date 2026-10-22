@@ -6,7 +6,7 @@
  * `walk` walks and `crouch` crouch-walks.
  *
  * Settings (`playground.gym.*`, read when the scene starts, so they change play and go in replays): the player's run
- * speed and jump height, Apex's by default (docs/PLAYGROUND.md §3.2). Its dev action `place` (`{ at, yaw, speed }`)
+ * speed and jump height, Apex's by default (docs/PLAYGROUND.md §3.2). Its dev action `place` (`{ at, yaw, speed, crouch }`)
  * puts the player somewhere, at rest or moving `speed` m/s where it faces: where a feel course
  * (labs/playground/courses/) starts. The crawl's slab and bar stand on their walls and posts as fixed props. WP 13.7:
  * the tower's ladder (its glyph), its zipline, the redeploy balloon, the jump pad and the trampoline (engine/sim/rides.ts).
@@ -73,13 +73,17 @@ export const gym = defineScene('playground:gym', {
     for (const { height: _height, ...launcher } of GYM_LAUNCHERS) addLauncher(w, launcher);
   },
   actions: {
-    /** Puts the player at `at`, facing `yaw`, at rest or moving `speed` m/s that way: a feel course's start. */
+    /**
+     * Puts the player at `at`, facing `yaw`, at rest or moving `speed` m/s that way: a feel course's start; with
+     * `crouch`, ducked, his hull crouched from the next step on, for a place no standing hull fits (the crawlspace).
+     */
     place(w, args) {
-      const { at, yaw = 0, speed = 0 } = (args ?? {}) as { at?: [number, number, number]; yaw?: number; speed?: number }; // prettier-ignore
-      const player = (w.query('actor') as unknown as (ActorComponents & { id: number })[]).find((e) => e.actor.player);
+      const { at, yaw = 0, speed = 0, crouch = false } = (args ?? {}) as { at?: [number, number, number]; yaw?: number; speed?: number; crouch?: boolean }; // prettier-ignore
+      const player = (w.query('actor') as unknown as (ActorComponents & { id: number; motion?: { stance: string; duck: string } })[]).find((e) => e.actor.player); // prettier-ignore
       if (!player || !at) return;
       placeActor(w, player.id, at, yaw);
       [player.actor.vx, player.actor.vz] = [speed * Math.sin(yaw), speed * Math.cos(yaw)];
+      if (crouch && player.motion) Object.assign(player.motion, { stance: 'crouch', duck: 'ducked' }); // it stays down till it has headroom
     },
   },
 });

@@ -29,7 +29,7 @@ import type { CameraPose, Vec3 } from './cameras/pose';
 import { createCutaway, type Cutaway } from './cutaway';
 import type { LevelMeshes } from './level/meshes';
 import { levelLooks, runMeshes } from './level/runs';
-import { createStoreyCut, cutPlace, type StoreyCut } from './storeyCut';
+import { aboveStorey, createStoreyCut, cutPlace, type StoreyCut } from './storeyCut';
 import { createTerrainMeshes, type TerrainMeshes } from './terrain';
 import type { Warmup } from './warmup';
 
@@ -53,6 +53,8 @@ export interface StageSite {
   update(pose: CameraPose, feet: Vec3, options?: { fade?: boolean; view?: boolean }): void;
   /** The structure and storey `feet` stand on, and whether indoors (`cutPlace` in its frame); null outside them all. */
   where(feet: Vec3): { structure: SiteStructure; storey: number; indoors: boolean } | null;
+  /** Whether world (x, y, z) stands on a storey the last `update` cut off: above the player's, in his structure. */
+  hides(x: number, y: number, z: number): boolean;
   register(warmup: Pick<Warmup, 'register'>): { dispose(): void };
   dispose(): void;
 }
@@ -92,6 +94,8 @@ export function createStageSite(
   root.updateMatrixWorld(true);
   /** The rides' fade: world objects, so a cutaway of no parts of its own, run in the world's frame. */
   let rides: Cutaway | null = null;
+  /** The structure and storey the last update cut above, or null. */
+  let cut: { structure: SiteStructure; storey: number } | null = null;
   const where = (feet: Vec3) => {
     for (const { structure } of drawn) {
       const [x, y, z] = localFeet(structure, feet);
@@ -112,14 +116,22 @@ export function createStageSite(
     },
     update(pose, feet, { fade = false, view = false } = {}) {
       const inside = view ? where(feet) : null;
+      cut = inside ? { structure: inside.structure, storey: inside.storey } : null;
       rides?.update(pose, feet, { fade });
       for (const each of drawn) {
         each.cutaway?.update(localPose(each.structure, pose), localFeet(each.structure, feet), { fade });
-        if (inside?.structure === each.structure) each.storeys.set(inside.storey, inside.indoors);
+        if (inside?.structure === each.structure) each.storeys.set(inside.storey, inside.indoors, inside.low);
         else each.storeys.clear();
       }
     },
     where,
+    hides(x, y, z) {
+      if (!cut) return false;
+      const [lx, ly, lz] = localFeet(cut.structure, [x, y, z]);
+      const { level } = cut.structure;
+      if (lx < 0 || lz < 0 || lx >= level.cols * level.tile || lz >= level.rows * level.tile) return false;
+      return aboveStorey(level, cut.storey, lx, ly, lz);
+    },
     register(warmup) {
       const registrations = [
         ...drawn.map((each) => each.meshes.register(warmup, `${each.group.name}:level`)),

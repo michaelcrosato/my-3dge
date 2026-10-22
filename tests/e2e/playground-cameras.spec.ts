@@ -27,7 +27,7 @@ import { playReplay, type Replay } from '../../engine/sim/replay';
 import { playgroundMap } from '../../labs/playground/controls';
 import '../../labs/playground/scenes/gym';
 import { SITE, SITE_STRUCTURES } from '../../labs/playground/levels/site';
-import { areaStart } from '../../labs/playground/scenes/site';
+import { areaStart, roomPlace } from '../../labs/playground/scenes/site';
 import { toWorld } from '../../engine/world/site';
 import { PLAYGROUND_CAMERAS } from '../../labs/playground/views';
 import { expect, test } from './fixtures';
@@ -63,13 +63,13 @@ async function feet(page: Page): Promise<[number, number, number]> {
 
 const far = (a: readonly number[], b: readonly number[]) => Math.hypot(...a.map((v, i) => v - b[i]));
 
-/** The site's places: each room of the house at its marker, the shed's floor, the front yard; the storey and the HUD's line. */ // prettier-ignore
+/** The site's places: each room of the house at its marker (`roomPlace`: ducked in the crawlspace), the shed's floor, the front yard; the storey and the HUD's line. */ // prettier-ignore
 const [HOUSE, SHED] = (['house', 'shed'] as const).map((name) => SITE.structures[Object.keys(SITE_STRUCTURES).indexOf(name)]); // prettier-ignore
 const YARD = areaStart('frontyard');
 const PLACES = [
-  ...HOUSE.level.rooms!.map((room) => ({ name: room.name, at: [...toWorld(HOUSE, room.position[0], room.position[2])], y: room.position[1], storey: room.storey, in: 'house', hud: `Room: ${room.name}` })), // prettier-ignore
-  { name: 'shed', at: toWorld(SHED, 1.5, 2), y: 0, storey: 0, in: 'shed', hud: 'Indoors' },
-  { name: 'front yard', at: [YARD[0], YARD[2]], y: YARD[1], storey: -1, in: '', hud: 'Outdoors' },
+  ...HOUSE.level.rooms!.map((room) => ({ name: room.name, ...roomPlace(HOUSE, room), storey: room.storey, in: 'house', hud: `Room: ${room.name}` })), // prettier-ignore
+  { name: 'shed', at: [toWorld(SHED, 1.5, 2)[0], 0, toWorld(SHED, 1.5, 2)[1]], crouch: false, storey: 0, in: 'shed', hud: 'Indoors' }, // prettier-ignore
+  { name: 'front yard', at: YARD, crouch: false, storey: -1, in: '', hud: 'Outdoors' },
 ];
 
 /** Opens the playground at `query` and waits for it, paused: the site warms up in about 215 s on SwiftShader. */
@@ -281,7 +281,7 @@ test.describe('the site’s cutaway by storey (WP 13.15, WP 13.18)', () => {
     await open(page, harness, '?scene=site&cam=iso');
     const views = PLAYGROUND_CAMERAS.filter((mode) => mode.code.startsWith('cam='));
     const visit = async (place: (typeof PLACES)[number]) => {
-      await call(page, 'actions.run', 'place', { at: [place.at[0], place.y, place.at[1]] });
+      await call(page, 'actions.run', 'place', { at: place.at, crouch: place.crouch }); // ducked in the crawlspace
       await call(page, 'step', 2, {});
       await call(page, 'render', 2);
     };
@@ -304,7 +304,9 @@ test.describe('the site’s cutaway by storey (WP 13.15, WP 13.18)', () => {
         const cut = parts.filter((line) => line[2] === 'hidden').map(([name]) => name);
         const seen = ids.visible.map((entry) => entry.name);
         const storey = (name: string) => (place.in === 'house' ? HOUSE : SHED).level.storeys!.findIndex((s) => s.name === name.split('/')[1]); // prettier-ignore
-        const above = (name: string) => name.startsWith(`level:${place.in}/`) && (name.endsWith('/roof') || storey(name) > place.storey); // prettier-ignore
+        // Ducked under a low ceiling (the crawlspace), his own storey's heads are lifted too (engine/gfx/storeyCut.ts).
+        const lifted = (name: string) => place.crouch && name.endsWith('/heads') && storey(name) === place.storey;
+        const above = (name: string) => name.startsWith(`level:${place.in}/`) && (name.endsWith('/roof') || storey(name) > place.storey || lifted(name)); // prettier-ignore
         const at = `${mode.name}, ${place.name}`;
         const all = parts.map(([name]) => name);
         expect(

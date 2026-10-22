@@ -71,7 +71,7 @@ export class Plan {
     return this.#rows.map((row) => row.join('')).join('\n');
   }
 
-  /** `metres` as whole tiles, or `CORE_BAD_SPEC` naming `what`. */
+  /** `metres` as whole tiles; else an error naming `what` and the fix. */
   #tiles(metres: number, what: string): number {
     const n = Math.round(metres / this.tile);
     if (Math.abs(n * this.tile - metres) > 1e-9 || n < 0) throw new Error(`a storey plan: its ${what} ${metres} m is not whole ${this.tile} m tiles: give metres on whole tiles`); // prettier-ignore

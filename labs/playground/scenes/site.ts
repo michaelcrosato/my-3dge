@@ -8,7 +8,7 @@
  * furniture, the shed's door and pane; the outdoor things (labs/playground/furnish.ts), trees and rocks on the hill by
  * seed; the gym's own props and rides at its place; the block's ziplines, balloon and trampoline; and use
  * (`addInteraction`). They take the gym's settings (`playground.gym.*`) and its dev action `place`, so a course or a
- * replay places the player as the gym's do.
+ * replay places the player as the gym's do; `roomPlace` says where it puts him in a room, ducked under a low ceiling.
  *
  * The site is data (`site:block`): the view draws it from the scene's `site` (engine/gfx/stageSite.ts), each building
  * in its level's own looks, the terrain in the playground's ground materials.
@@ -21,7 +21,7 @@
  * SITE_SCENES.house.id; // 'playground:site-house'
  * @see labs/playground/scenes/site.test.ts
  */
-import { addDoor, addInteraction, addLauncher, addLevelDoors, addLevelWindows, addSiteBodies, addSiteLadders, addSwitch, addZipline, defineScene, physicsOf, scatterTerrain, siteFloorBelow, spawnProp, terrainHeight, toWorld, type World } from '../../../engine/sim-api'; // prettier-ignore
+import { addDoor, addInteraction, addLauncher, addLevelDoors, addLevelWindows, addSiteBodies, addSiteLadders, addSwitch, addZipline, defineScene, physicsOf, scatterTerrain, siteFloorBelow, siteSolidAt, spawnProp, terrainHeight, toWorld, type World } from '../../../engine/sim-api'; // prettier-ignore
 import { spawnPlayer } from '../cast/player';
 import { GARAGE_SWITCHES, HOUSE_FURNITURE, HOUSE_LIGHTS, OUTDOORS, SITE_RIDES } from '../furnish';
 import { GYM_BALLOON, GYM_LAUNCHERS, GYM_PROPS, GYM_ZIPLINE } from '../levels/gym';
@@ -114,6 +114,23 @@ function furnishOutdoors(w: World): void {
 export function areaStart(area: SiteArea): [number, number, number] {
   const { at } = SITE_AREAS[area];
   return [at[0], siteFloorBelow(SITE, at[0], at[1] + 0.5, at[2])!, at[2]];
+}
+
+/** How high over his feet a standing player's head reaches, m: where that is solid, he is put ducked. */
+export const HEAD_HEIGHT = 1.5;
+
+/**
+ * Where the `place` action puts the player in one of a structure's rooms: at its marker, on its floor, ducked where a
+ * standing player's head would be in something solid (the crawlspace's 1.4 m ceiling).
+ */
+export function roomPlace(
+  structure: (typeof SITE.structures)[number],
+  room: { position: readonly number[] },
+): { at: [number, number, number]; crouch: boolean } {
+  // prettier-ignore
+  const [x, z] = toWorld(structure, room.position[0], room.position[2]);
+  const y = room.position[1] + structure.at[1];
+  return { at: [x, y, z], crouch: siteSolidAt(SITE, x, y + HEAD_HEIGHT, z) };
 }
 
 /** The block with the player at `area`'s spawn (see the file comment): a scene's spec. */
