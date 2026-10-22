@@ -11,9 +11,11 @@
  * its public names at the end of their area, so parallel lanes merge cleanly (§11.3). The Animation area lives in
  * engine/anim/api.ts, re-exported here whole so this file stays under its line cap (ADR-0020 amendment 8): append
  * animation names there; Phase 13's movement areas likewise in engine/sim/movementApi.ts (ADR-0025 amendment 7), its
- * sites' in engine/sim/siteApi.ts and its house's in engine/sim/houseApi.ts (amendment 19). Only sim-side modules are
- * re-exported (ESLint's layer rule for this file). Each name is documented where it is declared, and `x docs --check`
- * fails a public export without its doc comment. Game code reaches three.js only through these re-exports.
+ * sites' in engine/sim/siteApi.ts, its house's in engine/sim/houseApi.ts (amendment 19), and the crowds' and combat's
+ * in engine/sim/combatApi.ts and the gameplay kits' in engine/sim/kitsApi.ts (amendment 23). Only sim-side modules are
+ * re-exported (ESLint's layer rule for this file).
+ * Each name is documented where it is declared, and `x docs --check` fails a public export without its doc comment.
+ * Game code reaches three.js only through these re-exports.
  *
  * @example
  * // fixtures/scenes/kernel/index.ts
@@ -269,108 +271,9 @@ export { SCENE_PROP_FIELDS } from './sim/props';
 export type { ScenePropComponent } from './sim/props';
 export type { ScenePropComponents } from './sim/props';
 
-// Crowd bodies (WP 5.1): agents as dynamic capsules and balls driven by the velocities their AI wants (approach
-// limits, only on their feet), knockback and launches, the corpse group and its timers, spawn and despawn queues.
-export { CROWD_AGENT_FIELDS } from './physics/crowd';
-export { CROWD_AGENT } from './physics/crowd';
-export type { CrowdAgent } from './physics/crowd';
-export type { AgentState } from './physics/crowd';
-export { CROWD_MATERIAL } from './physics/crowd';
-export { CROWD_LIMITS } from './physics/crowd';
-export { CROWD_GROUNDED } from './physics/crowd';
-export { addAgent } from './physics/crowd';
-export { removeAgent } from './physics/crowd';
-export { setVelocity } from './physics/crowd';
-export type { VelocityOptions } from './physics/crowd';
-export { knockback } from './physics/crowd';
-export { launch } from './physics/crowd';
-export { killAgent } from './physics/crowd';
-export { updateCrowd } from './physics/crowd';
-export type { CrowdOptions } from './physics/crowd';
-export type { CrowdChanges } from './physics/crowd';
-export type { CrowdStepper } from './physics/crowd';
-
-// Steering kit (WP 5.2): the velocity a crowd agent wants (seek and arrive, flow-field following, approach rings, a
-// flyer's hover, a jumper's hop), attack tokens that cap the attackers at once, and awareness by distance and sight.
-export { seek } from './world/steer';
-export { followFlow } from './world/steer';
-export { approachRing } from './world/steer';
-export { hover } from './world/steer';
-export { airTime } from './world/steer';
-export { hop } from './world/steer';
-export { FOLLOW } from './world/steer';
-export { APPROACH_RING } from './world/steer';
-export { HOVER } from './world/steer';
-export { HOP } from './world/steer';
-export type { SteerPoint } from './world/steer';
-export type { FollowOptions } from './world/steer';
-export type { ApproachRingOptions } from './world/steer';
-export type { HoverOptions } from './world/steer';
-export { ATTACK_TOKENS_FIELDS } from './world/ai';
-export { ATTACK_TOKENS } from './world/ai';
-export type { AttackTokens } from './world/ai';
-export { takeToken } from './world/ai';
-export { releaseToken } from './world/ai';
-export { holdsToken } from './world/ai';
-export { keepTokens } from './world/ai';
-export { canSee } from './world/ai';
-export { clearSight } from './world/ai';
-export { SIGHT } from './world/ai';
-export type { SightOptions } from './world/ai';
-
-// Crowd bodies (WP 5.7): a crowd member's look and rig (a humanoid in a build, a blob, a floater) in the component
-// crowdBody, its rig stepped in the sim by stepCrowdBody; the stage draws them through a crowd with its level of detail.
-export { CROWD_BODY_FIELDS } from './sim/crowdBodies';
-export { CROWD_BODY } from './sim/crowdBodies';
-export type { CrowdBody } from './sim/crowdBodies';
-export type { CrowdRig } from './sim/crowdBodies';
-export type { CrowdBodyInput } from './sim/crowdBodies';
-export { stepCrowdBody } from './sim/crowdBodies';
-
-// Telegraphs (WP 6.4): an attack's warning shape on the floor as data (an arc, a ring, a line or a cone, in metres),
-// and the geometry sim code tests it with as it goes off: a body inside it is hit, one just outside it a near miss.
-export { TELEGRAPH_SHAPES } from './world/telegraphs';
-export { defineTelegraph } from './world/telegraphs';
-export { getTelegraph } from './world/telegraphs';
-export { telegraphGap } from './world/telegraphs';
-export { inTelegraph } from './world/telegraphs';
-export { nearMiss } from './world/telegraphs';
-export { telegraphFill } from './world/telegraphs';
-export { coneOf } from './world/telegraphs';
-export type { Telegraph } from './world/telegraphs';
-export type { TelegraphSpec } from './world/telegraphs';
-export type { TelegraphPlace } from './world/telegraphs';
-export type { PointLike } from './world/telegraphs';
-
-// Combat helpers (WP 6.3): hit queries against hurt capsules found through a spatial hash (cones with height windows,
-// weapon sweeps), damage on health and crowd bodies (knockback as momentum, launches, death into the corpse group, the
-// event damage), hit-stop handed to the frame clock's budget, and projectiles with swept tests.
-export { PROJECTILE_FIELDS } from './world/projectiles';
-export { PROJECTILE } from './world/projectiles';
-export type { Projectile } from './world/projectiles';
-export type { ProjectileState } from './world/projectiles';
-export type { ProjectileStep } from './world/projectiles';
-export type { ProjectileHit } from './world/projectiles';
-export { stepProjectiles } from './world/projectiles';
-export type { HurtCapsule } from './world/projectiles';
-export type { HurtSet } from './world/projectiles';
-export { capsuleCast } from './world/projectiles';
-export type { WallTest } from './world/projectiles';
-export type { WallContact } from './world/projectiles';
-export { inCone } from './sim/hits';
-export { coneHits } from './sim/hits';
-export { sweepTouches } from './sim/hits';
-export { sweepHits } from './sim/hits';
-export { physicsWalls } from './sim/hits';
-export { HEALTH_FIELDS } from './sim/damage';
-export { HEALTH } from './sim/damage';
-export type { Health } from './sim/damage';
-export type { DamageTarget } from './sim/damage';
-export type { HitSpec } from './sim/damage';
-export type { DamageEvent } from './sim/damage';
-export type { DamageEvents } from './sim/damage';
-export { damage } from './sim/damage';
-export { requestHitStop } from './sim/damage';
+// Crowds and combat (WPs 5.1 to 6.4): crowd bodies, the steering kit, crowd members' looks, telegraphs and the
+// combat helpers; listed in engine/sim/combatApi.ts, re-exported whole so this file stays under its line cap.
+export * from './sim/combatApi';
 
 // Clips on actors (WP 8.9): the clip layer in an actor's animator as sim data, the component clips, stepped at the
 // actor's ground speed and drawn over its body by the view; its events come as `clip`. spawnActor's `body` names the
@@ -395,3 +298,5 @@ export * from './sim/siteApi';
 // The house (Phase 13): using things, carrying and throwing, doors, windows and breakables, switches; listed in
 // engine/sim/houseApi.ts, re-exported whole so this file stays under its line cap.
 export * from './sim/houseApi';
+// Gameplay kits (WP 10.4): things, projectile patterns, awareness; listed in engine/sim/kitsApi.ts, re-exported whole.
+export * from './sim/kitsApi';

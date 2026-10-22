@@ -333,6 +333,15 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Switches (WP 13.16)**: a room's lights and the garage door, as sim state the view reads.
 `addSwitch`, `switchGroup`, `flipSwitch`; types `SwitchSpec`, `SwitchComponent`.
 
+**Things (WP 10.4)**: what can be hit, as a range's targets and a ring's dummies: the kind `thing` (its prop, hit points, rise, track and hooks), a thing's state (hits, down and up, its place on its track), and things in a scene (spawned as their prop, struck as hits, stood back up and driven along their tracks by the system `things`).
+`defineThing`, `getThing`, `thingState`, `hitThing`, `stepThing`, `thingAt`, `THING_FIELDS`, `THING_KIND_FIELDS`, `spawnThing`, `strikeThing`; types `Thing`, `ThingKind`, `ThingSpec`, `ThingTouch`, `ThingHit`, `ThingOutcome`, `ThingStanding`.
+
+**Projectile patterns (WP 10.4)**: a shot emitter's volleys (aimed, forward, ring, spiral, random) and timing (delay, interval, bursts and their pause, range), and the shots it looses over WP 6.3's projectiles.
+`SHOT_EMITTER`, `SHOT_EMITTER_FIELDS`, `PATTERNS`, `MOST_VOLLEYS`, `volley`, `stepVolleys`, `loose`, `direction`, `headingTo`; types `ShotEmitter`, `Pattern`, `VolleyAim`, `LooseOptions`.
+
+**Awareness (WP 10.4)**: beyond WP 5.2's sight, the noises an agent hears and its memory of where it last saw or heard.
+`AWARENESS`, `AWARENESS_FIELDS`, `AWARENESS_STATES`, `sense`, `hears`, `earshot`; types `Awareness`, `AwarenessState`, `Noise`, `SenseInput`, `Sensed`.
+
 Pages only, from engine/index.ts:
 
 **Headless**: the engine without a page, and its inspector (window.__engine in a page).

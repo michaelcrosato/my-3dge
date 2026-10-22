@@ -26,7 +26,7 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 - WP 13.23: the crawlspace's light, the street lamps' group. Amendment 22 proposes terrain as triangle meshes (the
   heightfield misses 11–24% of ball casts' hits). QA baseline entries wait on WPs 10.2 and 8.8. Not verifiable here:
   speakers, touch (ADR-0021), pads, real GPUs; not run in a browser: labs/game/main.ts's best-round HUD line.
-- At their size cap (395–400 lines), split on the next change: engine/sim-api.ts, app/engine.ts, world/siteNav.ts,
+- At their size cap (395–400 lines), split on the next change: engine/app/engine.ts, world/siteNav.ts,
   anim/{poses,humanoid,locomotion,clip/layer,traversal/plant}.ts, gfx/{sky,instancing,puppets/draw,puppets/crowd}.ts,
   labs/box/menu.ts, tools/{cmd/audio,lib/browser,qa/anim}.ts. The feel kit poses apart from the page: share one.
 

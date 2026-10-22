@@ -1210,3 +1210,28 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   terrain as `addTerrainBody`'s triangle mesh (engine/sim/levelBodies.ts), the hill's replay re-recorded.
 - **Beyond its Owns**: engine/physics/queries.ts (`fixed`), engine/dev/feel/camera.ts (`inside` against fixed bodies),
   engine/dev/bot.ts and its test (`LOOK_TURN`, `cam`).
+
+## Amendment 23 (2026-10-22, WP 10.4): the gameplay kits
+
+- **Things** (engine/world/things.ts, engine/sim/things.ts) are props that count their hits, go down and stand back up
+  after their kind's `rise`, or break (`rise` below 0), and slide along a track: the kind `thing` holds the prop, the
+  numbers and the hooks `hit`, `down` and `up` (asked of the entry); a scene's thing is its prop, kinematic, holding the
+  component `thing`, struck through WP 13.16's `defineStrikable` (a melee hit or a shot a point, a blast all it has),
+  its body driven along its track by the system `things` (`driveBody`). The range's pop-up and moving targets (WP 13.20)
+  and the ring's dummies (WP 13.19) are things; a door or a pane stays WP 13.16's.
+- **Projectile patterns** (engine/world/patterns.ts): a shot emitter's volleys (aimed, forward, ring, spiral, random
+  from a named stream) and timing (delay, interval, bursts and their pause, range) over WP 6.3's swept shots, so no
+  pattern tunnels. Its names say *shot* emitter (`ShotEmitter`, `SHOT_EMITTER`, `stepVolleys`): `Emitter` is already
+  the particle effects' kind (engine/gfx/fx/emitters.ts). Volleys fall at the delay and whole intervals after it, each
+  on the step that reaches it, the overshoot kept, so a coarse step keeps the rhythm.
+- **Awareness** (engine/world/awareness.ts): beyond WP 5.2's sight, which the caller still tests (a grid's `canSee`,
+  a ray on a site), the noises an agent hears (each within its loudness times the agent's hearing, half as far through
+  a wall the caller names) and its memory of where it last saw or heard (`memory` seconds), with `alerted` the step it
+  first knows: the neighbours' startle (WP 13.21).
+- **The public API**: their names are listed in engine/sim/kitsApi.ts, and the crowds' and combat's (WPs 5.1 to 6.4)
+  moved to engine/sim/combatApi.ts, both re-exported whole by engine/sim-api.ts (400 lines, at its cap, now 302): the
+  split PROGRESS.md asked for on its next change, the names and their paths unchanged for game code.
+- **Measured**: engine/world/{things,patterns,awareness}.test.ts and engine/sim/things.test.ts, 19 tests; the
+  Done-when's bound in patterns.test.ts: every shot of every pattern, 60 m/s (1 m a step), stopped on the 4 cm post
+  across its way, never past it.
+- **Beyond its Owns**: engine/sim/{things,kitsApi,combatApi}.ts and their tests, engine/sim-api.ts.
