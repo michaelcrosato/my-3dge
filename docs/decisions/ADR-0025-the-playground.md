@@ -1119,6 +1119,13 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   `blocking`. Measured in Node by WP 12.3's eye (amendment 21): every camera sees the player in all 17 rooms, the shed
   and the front yard, first person the room past his body. The crawlspace has no lamp or switch: its light is WP
   13.23's.
+- **The gate's review** (G11): `placeActor` takes `{ crouch }` (engine/sim/actors.ts; the playground's `place` passes
+  it on instead of setting the motion itself) and refuses a place where the level stands over the feet lower than the
+  hull's top, up its axis, with `SIM_BAD_ARGUMENT` and its fix (a place with headroom, or `crouch`): a standing hull
+  put under a 1.4 m slab sank 0.45 m through the floor and stuck there, with no word. Only a ceiling counts, not a wall
+  the hull touches (the camera-walls course puts the player against one), and a one-way platform lets it up through.
+  The stage draws the props again in a frame only when the cut moved (engine/gfx/stageProps.ts `hide(test, key)` says
+  so; the site's `cutKey`), not in every frame as the review's fix had it.
 
 ## Amendment 21 (2026-10-22, WP 12.3): the agent eye
 
@@ -1137,13 +1144,15 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   wherever it is, standing for his puppet, which the GPU skins.
 - **First person** looks from inside the player's capsule, so the eye leaves the player's body out; its frame draws the
   arms, which have no body, and the agreement spec asks it only about the level there.
-- **Headless frames** (`camera.follow(n)`, engine/app/viewMembers.ts and view.ts `follow`): headless runs no frames,
-  so a view's camera stays where a dev action found the player and a follow camera's ball stays at its arm's base;
-  `follow` moves it on by n frames of 1/60 s, drawing nothing and never stepping (view state only, never recorded), as
-  a page's frames would. `x eye` moves the camera on by a second of them before it looks.
+- **Headless frames** (`camera.advance(n)`, engine/app/viewMembers.ts and view.ts `advance`; not `follow`, which names a
+  camera): headless runs no frames, so a view's camera stays where a dev action found the player and a follow camera's
+  ball stays at its arm's base; `advance` moves it on by n frames of 1/60 s, drawing nothing and never stepping (view
+  state only, never recorded), as a page's frames would. `x eye` moves the camera on by a second of them first.
 - **The picture**: `@` the player, `#` a wall, `.` a floor (a face within about 45° of up, `FLOOR_UP`), a letter per
-  kind (upper case for actors), and its legend. `__engine.eye` looks at 96 × 54 cells by default (16:9, as the page);
-  `x eye` prints 56 × 16 (a terminal's characters are about twice as tall as wide) and names six things at most.
+  kind (upper case for actors), and its legend. `__engine.eye` and `x eye` look at 96 × 54 cells by default (16:9, as
+  the page); `x eye` answers at that size (its summary, `eye.txt` and `eye.json`) and prints the picture shrunk to 56 ×
+  16 (`printOf`: a terminal's characters are about twice as tall as wide; a printed character shows the player's `@` if
+  any cell under it does, else the thing most of them show, else a wall over a floor), naming six things at most.
 - **Where it runs**: the member `__engine.eye` reads the view's camera, its scene and its queries (`RunView.queries()`,
   engine/app/view.ts: the QueryView the view already held for its cameras), so a page and a headless run with its view
   (`createHeadless({ view: true })`, which imports the member) both have it; `node x eye <scene>` is the second. The
@@ -1158,5 +1167,5 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   capsule two frames after a switch (from inside an actor's body the eye sees only him; his puppet, slimmer, may not
   fill the frame). The spec steps once before it looks: a scene's bodies join the queries at the first physics step.
 - **Beyond its Owns**: engine/app/{view,headless,viewMembers}.ts and their tests (the members `eye` and
-  `camera.follow`), tests/e2e/box-members.spec.ts (every member in the page), the tests beside each file, the house
+  `camera.advance`), tests/e2e/box-members.spec.ts (every member in the page), the tests beside each file, the house
   test, docs/GAME-GUIDE.md's command row and the stress-box skill's quick loop.

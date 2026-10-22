@@ -9,7 +9,9 @@
  * as the sprint's view, faces the aim point, else the look, takes its keys' frame from `cam`, else `look` (so a turning
  * view never lurches), and `__engine.feel()` measures it holstered or armed as it is; WP 13.9: a player's sprint and
  * crouch follow the recorded settings `input.sprint` (Apex's sticky sprint, or held) and `input.crouch` (held, or
- * toggled), and the AI keeps Apex's.
+ * toggled), and the AI keeps Apex's. `placeActor` with `crouch` puts one ducked under a low ceiling, kept down until it
+ * walks out; a place with a ceiling over its feet lower than its hull, or a crouch for an actor on no movement model,
+ * throws.
  */
 import { describe, expect, it } from 'vitest';
 import { createHeadless } from '../app/headless';
@@ -18,7 +20,7 @@ import { createRegistry } from '../core/registry';
 import type { Intents } from '../input/intents';
 import { createCharacter } from '../physics/character';
 import { physicsOf } from '../physics/binding';
-import { defineActorKinds, removeActor, spawnActor, type ActorComponents } from './actors';
+import { defineActorKinds, placeActor, removeActor, spawnActor, type ActorComponents } from './actors';
 import { measureFeel } from './feelCourse';
 import { defineScene, startScene } from './scene';
 import type { WorldCapture } from './capture';
@@ -173,6 +175,23 @@ function onTrack(intents: Intents, n: number, settings: Record<string, unknown> 
   return { world, player, ai };
 }
 
+/**
+ * A registry with the actor kinds and a scene `roofed`: `track`'s floor under a slab 4 m square at the origin, its
+ * underside 1.4 m up (room for a crouched hull, not a standing one), a `movement:apex` player and an AI beside it.
+ */
+function roofed() {
+  const registry = createRegistry();
+  defineActorKinds(registry);
+  const setup = (w: World) => {
+    physicsOf(w).addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size: [400, 1, 60] }, position: [0, -0.5, 0] }] }); // prettier-ignore
+    physicsOf(w).addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size: [4, 0.2, 4] }, position: [0, 1.5, 0] }] }); // prettier-ignore
+    spawnActor(w, { at: [10, 0, 0], character: createCharacter({ movement: 'movement:apex' }) });
+    spawnActor(w, { at: [10, 0, 10], character: createCharacter(), player: false });
+  };
+  defineScene('roofed', { physics: true, setup }, registry);
+  return registry;
+}
+
 /** An actor's speed across the ground. */
 const speed = (e: ActorComponents) => Math.hypot(e.actor.vx, e.actor.vz);
 
@@ -230,6 +249,25 @@ describe('actors on the shooter model', () => {
     toggled.world.step({ ...east, b: ['crouch'], p: ['crouch'] }); // pressed again: up
     for (let i = 0; i < 30; i++) toggled.world.step(east);
     expect(toggled.player.motion.duck).toBe('standing');
+  });
+
+  it('are placed ducked with crouch where only that hull fits, and stand once out; else a low ceiling throws', () => {
+    // prettier-ignore
+    const { world } = startScene('roofed', { registry: roofed() });
+    world.step({}); // the queries see the slab from the first step on
+    const [player, ai] = actors(world);
+    expect(() => placeActor(world, player.id, [0, 0, 0])).toThrow(/SIM_BAD_ARGUMENT.*placeActor\(at\) got \[0, 0, 0\], where a ceiling 1\.39 m over its feet cuts its standing hull, 1\.83 m tall.*\{ crouch: true \}/); // prettier-ignore
+    expect(() => placeActor(world, ai.id, [0, 0, 0], 0, { crouch: true })).toThrow(/only an actor on a movement model/);
+    placeActor(world, player.id, [0, 0, 0], Math.PI / 2, { crouch: true });
+    for (let i = 0; i < 30; i++) world.step({});
+    expect(player.motion).toMatchObject({ duck: 'ducked', stance: 'crouch' }); // kept down: no headroom
+    expect(Math.hypot(player.actor.x, player.actor.y, player.actor.z)).toBeLessThan(0.01); // where it was put
+    let stood = NaN; // where it stands up, walking east out from under the slab
+    for (let i = 0; i < 120 && Number.isNaN(stood); i++) {
+      world.step({ move: [1, 0], look: [Math.PI / 2, 0] });
+      if (player.motion.stance === 'stand') stood = player.actor.x;
+    }
+    expect(stood).toBeGreaterThan(2); // past the slab's edge
   });
 
   it('are measured by __engine.feel() holstered or armed, as each is', async () => {

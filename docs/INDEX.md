@@ -295,9 +295,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createStore`, `memoryBackend`, `Store`, `STORE_CODES`, `STORE_FORMAT`, `STORE_MODES`, `StoreBackend`, `StoreMode`, `StoreOptions`
   - Tests: [`engine/app/store.test.ts`](../engine/app/store.test.ts)
 - [`view.ts`](../engine/app/view.ts): The view of a run (PLAN.md §6.4's `view.update`, §8.3, WP 2.7): what a running scene looks like, built without a GPU, so a page draws it and `createHeadless({ view: true })` dumps it in Node.
-  - Exports: `CameraInfo`, `createRunView`, `DEFAULT_CAMERA`, `FOLLOW_FRAME`, `HEADLESS_ASPECT`, `RunView`, `RunViewOptions`, `VIEW_CODES`, `ViewFrame`
+  - Exports: `ADVANCE_FRAME`, `CameraInfo`, `createRunView`, `DEFAULT_CAMERA`, `HEADLESS_ASPECT`, `RunView`, `RunViewOptions`, `VIEW_CODES`, `ViewFrame`
   - Tests: [`engine/app/view.test.ts`](../engine/app/view.test.ts)
-- [`viewMembers.ts`](../engine/app/viewMembers.ts): The view's inspector members (PLAN.md §8.3, WP 2.7): `ready`, `render`, `shot`, `camera.get`, `camera.set`, `camera.follow`, `scene.dump` and `replay`, registered from here as entries of the registry kind `inspectorMember` (engine/dev/members.ts), so `window.__engine` in a page and `createHeadless` in Node list the same members.
+- [`viewMembers.ts`](../engine/app/viewMembers.ts): The view's inspector members (PLAN.md §8.3, WP 2.7): `ready`, `render`, `shot`, `camera.get`, `camera.set`, `camera.advance`, `scene.dump` and `replay`, registered from here as entries of the registry kind `inspectorMember` (engine/dev/members.ts), so `window.__engine` in a page and `createHeadless` in Node list the same members.
   - Exports: `AppHost`
   - Tests: [`engine/app/viewMembers.test.ts`](../engine/app/viewMembers.test.ts)
 
@@ -1947,7 +1947,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `default`
   - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
 - [`eye.ts`](../tools/cmd/eye.ts): `node x eye <scene>` (PLAN.md WP 12.3, §5.8): the agent eye in Node, no GPU.
-  - Exports: `default`, `EYE_FRAMES`, `EYE_PRINT`, `seenText`, `SUMMARY_THINGS`, `thingText`
+  - Exports: `default`, `EYE_FRAMES`, `EYE_PRINT`, `printOf`, `seenText`, `SUMMARY_THINGS`, `thingText`
   - Tests: [`tools/cmd/eye.test.ts`](../tools/cmd/eye.test.ts)
 - [`feel.ts`](../tools/cmd/feel.ts): `node x feel <lab> [--course <name,…|all>]` (PLAN.md WP 13.4, docs/PLAYGROUND.md §9.1): runs a lab's feel courses headless and judges every number against its reference and tolerance (engine/dev/feel/run.ts).
   - Exports: `courseName`, `default`, `labOf`, `missText`, `toleranceText`

@@ -60,10 +60,11 @@ import {
   type CharacterState,
 } from '../physics/character';
 import { matchHull } from '../physics/hull';
+import { hullFor } from '../physics/movement/crouch';
 import { createMotionState, MOTION_FIELDS, type MotionState } from '../physics/movement/model';
 import { MOVEMENT_SETTINGS, movementOverrides, tuneCharacter } from '../physics/movement/settings';
 import { physicsOf } from '../physics/binding';
-import type { Vec3Like } from '../physics/queries';
+import { vec, type Vec3Like } from '../physics/queries';
 import { clipsFor, defineClipKinds, type ClipsSpec } from './actorClips';
 import { intentsOf, motionInput } from './actorInput';
 import { defineActionKinds, stepActorActions } from './actorActions';
@@ -252,21 +253,42 @@ export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): 
 /**
  * Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing
  * `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the
- * shooter model its motion state starts again, holstered as it was. For a scene's dev actions: a feel course places
- * its player where it measures (engine/dev/feel/course.ts).
+ * shooter model its motion state starts again, holstered as it was, or ducked with `crouch`, its hull crouched from its
+ * next step on and kept so until it has headroom, for a place no standing hull fits (a crawlspace). A place where the
+ * level (the queries' as of the last step, one-way platforms aside) stands over its feet lower than its hull's top, up
+ * its axis, throws `SIM_BAD_ARGUMENT`: the body would sink through the floor. For a scene's dev actions: a feel
+ * course places its player where it measures (engine/dev/feel/course.ts).
  */
-export function placeActor<C extends object>(world: World<C>, id: number, at: Vec3Like, yaw?: number): void {
+export function placeActor<C extends object>(
+  world: World<C>,
+  id: number,
+  at: Vec3Like,
+  yaw?: number,
+  options: { crouch?: boolean } = {},
+): void {
   const w = world as unknown as World;
   const e = w.get(id) as Partial<ActorComponents> | undefined;
   if (!e?.actor) throw codeError('SIM_BAD_ARGUMENT', { where: 'placeActor(w, id)', value: String(id), expected: 'an actor’s id' }); // prettier-ignore
   const { actor, motion } = e;
+  if (options.crouch && !motion) throw codeError('SIM_BAD_ARGUMENT', { where: 'placeActor(options.crouch)', value: `true for actor ${id}, on no movement model`, expected: 'no crouch: only an actor on a movement model (its component motion) crouches' }); // prettier-ignore
   const physics = physicsOf(w);
   matchHull(physics, actor.body, actor.character, actor.character.capsule.height, { air: false, tuck: false });
   physics.setBody(actor.body, { position: bodyAt(actor.character, at, 'placeActor(at)'), velocity: [0, 0, 0] });
   const { x, y, z } = feetOf(physics, actor.body, actor.character);
   Object.assign(actor, createCharacterState(), { yaw: yaw ?? actor.yaw, x, y, z });
-  if (motion) Object.assign(motion, createMotionState(), { holstered: motion.holstered });
+  if (motion) Object.assign(motion, createMotionState(), { holstered: motion.holstered }, options.crouch ? { stance: 'crouch', duck: 'ducked' } : {}); // prettier-ignore
+  const { offset, capsule } = actor.character;
+  const middle = motion ? hullFor(actor.character, motion) : capsule.height; // its stance's, kept from its feet
+  const up = { maxDistance: middle + capsule.radius, exclude: actor.body, groups: 'world' } as const;
+  const ceiling = physics.raycast([x, y + offset + capsule.radius, z], [0, 1, 0], up); // up its axis to its top
+  if (!ceiling || oneWayOf(w).has(ceiling.body)) return; // a one-way platform lets it up through
+  const given = vec(at, 'placeActor(at)');
+  const [place, over, tall] = [[given.x, given.y, given.z].map((v) => Math.round(v * 100) / 100).join(', '), (offset + capsule.radius + ceiling.distance).toFixed(2), (middle + 2 * capsule.radius).toFixed(2)]; // prettier-ignore
+  throw codeError('SIM_BAD_ARGUMENT', { where: 'placeActor(at)', value: `[${place}], where a ceiling ${over} m over its feet cuts its ${options.crouch ? 'crouched' : 'standing'} hull, ${tall} m tall (it would sink through the floor)`, expected: motion && !options.crouch ? 'a place with headroom, or { crouch: true } under a low ceiling' : 'a place with headroom' }); // prettier-ignore
 }
+
+/** The bodies of the one-way platforms (the component `oneWay`). */
+const oneWayOf = (w: World) => new Set((w.query('oneWay') as unknown as ActorComponents[]).map((e) => e.oneWay.body));
 
 /** Removes an actor and its body. */
 export function removeActor<C extends object>(world: World<C>, id: number): void {
@@ -283,7 +305,7 @@ function moveActors(w: World, intents: Intents): void {
   const physics = physicsOf(w);
   const gravity = w.settings.get('physics.characterGravity') as number;
   const worldGravity = w.settings.get('physics.gravity') as number;
-  const oneWay = new Set((w.query('oneWay') as unknown as ActorComponents[]).map((e) => e.oneWay.body));
+  const oneWay = oneWayOf(w);
   const tuning = movementOverrides((path) => w.settings.get(path));
   const rides = ridesOf(w);
   const controls = { holdSprint: w.settings.get('input.sprint') === 'hold', toggleCrouch: w.settings.get('input.crouch') === 'toggle' }; // prettier-ignore

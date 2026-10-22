@@ -6,12 +6,13 @@
  * stand-ins' looks to the shader key. A terrain with no level (WP 10.5) is the stage's ground: its chunks drawn and
  * registered, the stage's plane a frame round it at its origin's height, the sun and the centre fitted to its area. A
  * site (WP 13.15) draws its structures and its cut terrain, registered as the site's; `frame` cuts a storeyed level by
- * the player's storey in a classic view, and each of the site's structures.
+ * the player's storey in a classic view, and each of the site's structures, drawing the props again only when the cut
+ * moved.
  * @see engine/gfx/stage.ts
  */
 import { readFileSync } from 'node:fs';
 import { Box3, Vector3, type Mesh } from 'three/webgpu';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { defineFixtureSite } from '../../fixtures/levels/storeys/site';
 import { createRegistry } from '../core/registry';
 import { defineComponent } from '../sim/state';
@@ -165,8 +166,10 @@ describe('createStage', () => {
     const pose = makePose({ position: [14, 30, 30], pitch: -0.8 });
     const highest = (root: { children: { visible: boolean; userData: { storey?: number } }[] }) => Math.max(...root.children.filter((c) => c.visible).map((c) => c.userData.storey ?? 0)); // prettier-ignore
     const [x, z] = toWorld(site.structures[0], 2, 2); // in the hall
+    const redraws = vi.spyOn(stage.props, 'draw');
     stage.frame(pose, [x, 0, z], { view: true });
-    expect(highest(stage.site!.structures[0].meshes.root)).toBe(1);
+    stage.frame(pose, [x, 0, z], { view: true }); // the cut unmoved: the props stand as the frame's draw left them
+    expect([highest(stage.site!.structures[0].meshes.root), redraws.mock.calls.length]).toEqual([1, 1]);
     const house = site.structures[0].level;
     const alone = createStage({ level: house, materials: createMaterialLibrary(), registry });
     alone.frame(pose, [2, 0, 2], { view: true });

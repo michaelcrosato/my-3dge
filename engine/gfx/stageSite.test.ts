@@ -1,11 +1,11 @@
 /**
  * @file Unit tests for engine/gfx/stageSite.ts (T1; WP 13.15) on the fixture site (fixtures/levels/storeys/site.ts):
  * each structure drawn in its level entry's looks, in a group at its place and turn, its level's meshes inside; the
- * terrain with the cut left out,
- * its chunk holding the cut at its finest level only; in a classic view the storeys above the player's and the roof
- * indoors hidden in the structure the player stands in, the others whole, nothing hidden in another camera or with
- * the player outside, and what stands on a cut storey said to be hidden (`hides`); the cutaways made once a player stands, their twins registered with the warm-up; a ride faded
- * in the world's frame, when it stands between the camera and the player and never off their line.
+ * terrain with the cut left out, its chunk holding the cut at its finest level only; in a classic view the storeys
+ * above the player's and the roof indoors hidden in the structure the player stands in, the others whole, nothing
+ * hidden in another camera or with the player outside, and what stands on a cut storey said to be hidden (`hides`, its
+ * key `cutKey`); the cutaways made once a player stands, their twins registered with the warm-up; a ride faded in the
+ * world's frame, when it stands between the camera and the player and never off their line.
  * @see engine/gfx/stageSite.ts
  */
 import { BoxGeometry, Mesh, MeshBasicMaterial } from 'three/webgpu';
@@ -81,9 +81,9 @@ describe('a site drawn', () => {
     const above = [hall[0], 3.5, hall[2]] as const; // the upper floor over the hall
     const [x, z] = toWorld(site.structures[1], 1, 1); // in the shed, at the hall's floor height
     drawn.update(pose, hall, { view: true });
-    const cut = [drawn.hides(...above), drawn.hides(...hall), drawn.hides(x, 0.5, z)];
+    const cut = [drawn.hides(...above), drawn.hides(...hall), drawn.hides(x, 0.5, z), drawn.cutKey()];
     drawn.update(pose, hall, { view: false }); // another camera: nothing cut
-    expect([...cut, drawn.hides(...above)]).toEqual([true, false, false, false]);
+    expect([...cut, drawn.hides(...above), drawn.cutKey()]).toEqual([true, false, false, '0:1', false, '']);
     drawn.dispose();
   });
 

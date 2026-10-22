@@ -250,7 +250,7 @@ export function createStage(options: StageOptions): Stage {
     ...(options.fxRng ? { fxRng: options.fxRng } : {}),
   });
   scene.add(fx.effects.root);
-  /** The alpha the stage was last drawn at: a frame's cut draws the props again at it. */
+  /** The alpha the stage was last drawn at: a frame whose cut moved draws the props again at it. */
   let drawnAlpha = 1;
   const standing = placeableKinds(options.registry);
   const declared = (kind: string) => options.registry.kinds().includes('component') && options.registry.has('component', kind); // prettier-ignore
@@ -341,8 +341,8 @@ export function createStage(options: StageOptions): Stage {
       storeys?.set(place?.storey ?? -1, place?.indoors ?? false, place?.low ?? false);
       site?.update(pose, feet, { fade, view });
       const own = place && place.storey >= 0 && level ? (x: number, y: number, z: number) => aboveStorey(level, place.storey, x, y, z) : null; // prettier-ignore
-      props.hide(own ?? (site ? site.hides : null));
-      props.draw(drawnAlpha); // what stands on a storey the cut takes off goes with it
+      const cutKey = own && place ? `${place.storey}` : (site?.cutKey() ?? '');
+      if (props.hide(own ?? (site ? site.hides : null), cutKey)) props.draw(drawnAlpha); // the cut moved: its props go
     },
     register(warmup) {
       const registrations = [

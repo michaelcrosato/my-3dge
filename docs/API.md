@@ -724,7 +724,7 @@ game agent's manual.
 - `PillarOptions` (interface from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's footprint and height in metres.
 - `PillarPart` (interface from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): One part of a pillar: a square slab `width` across, from height `from` to `to` (m).
 - `pillarParts` (function from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's parts, bottom to top (see the file comment).
-- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was.
+- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was, or ducked with `crouch`, its hull crouched from its next step on and kept so until it has headroom, for a place no standing hull fits (a crawlspace).
 - `planCutaway` (function from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): For each target, for each cell: whether `pose`, looking at `focus`, cuts it.
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `playClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `clip` (`SET/Clip`, or bare) on actor `id`, fading in over what plays (the layer's `play`).
@@ -1550,7 +1550,7 @@ game agent's manual.
 - `PHYSICS_SETTINGS` (const from [`engine/physics/params.ts`](../engine/physics/params.ts)): The physics settings, path → field; `defineSettings(PHYSICS_SETTINGS, registry)` declares them on another registry.
 - `physicsOf` (function from [`engine/physics/binding.ts`](../engine/physics/binding.ts)): The physics world of a sim world: its bodies and queries.
 - `physicsWalls` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
-- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was.
+- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was, or ducked with `crouch`, its hull crouched from its next step on and kept so until it has headroom, for a place no standing hull fits (a crawlspace).
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `playClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `clip` (`SET/Clip`, or bare) on actor `id`, fading in over what plays (the layer's `play`).
 - `POINT_INDEX` (const from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Each point's position in `POSE_POINTS`.
@@ -2858,10 +2858,10 @@ For the agents who maintain the engine.
 
 ### [`engine/app/view.ts`](../engine/app/view.ts)
 
+- `ADVANCE_FRAME` (const): A frame `advance` moves the camera on by, real seconds: a 60 Hz page's.
 - `CameraInfo` (interface): What `camera.get()` and `camera.set(code)` return: the camera as a code, in words, and its pose.
 - `createRunView` (function): Builds the view of a run (see the file comment).
 - `DEFAULT_CAMERA` (const): The camera code a view starts with when none is given.
-- `FOLLOW_FRAME` (const): A frame `follow` moves the camera by, real seconds: a 60 Hz page's.
 - `HEADLESS_ASPECT` (const): The aspect a view frames for when nothing draws it (headless): 16:9, the e2e viewport's.
 - `RunView` (interface): The view of a run (see the file comment).
 - `RunViewOptions` (interface): What a view is made from.
@@ -5600,7 +5600,7 @@ For the agents who maintain the engine.
 - `AnimatorComponent` (interface): The component `animator`: an actor's character animator as plain data, and what its game code tells its body.
 - `CONTROL_SETTING_FIELDS` (const): How a player's sprint and crouch buttons work, as a shooter's options set them (WP 13.9, docs/PLAYGROUND.md §3.3): recorded settings, since they change how the same presses move him, read by the system `actors` for player actors.
 - `defineActorKinds` (function): Declares the components `actor`, `animator`, `puppet`, `clips` (engine/sim/actorClips.ts), `oneWay`, `reactions` and `secondary` (engine/sim/reactions.ts), the setting `physics.characterGravity` and the controls' `input.sprint` and `input.crouch` on `registry`.
-- `placeActor` (function): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was.
+- `placeActor` (function): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was, or ducked with `crouch`, its hull crouched from its next step on and kept so until it has headroom, for a place no standing hull fits (a crawlspace).
 - `PuppetComponent` (interface): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
 - `removeActor` (function): Removes an actor and its body.
 - `spawnActor` (function): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
@@ -5786,7 +5786,7 @@ For the agents who maintain the engine.
 - `movementOverrides` (function from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): The settings `get` reads off their defaults, as overrides (none when every one is at its default).
 - `MovementProfile` (type from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): A movement profile, as the registry holds it.
 - `MovementSpec` (interface from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): How a movement profile is written (`MOVEMENT_FIELDS`).
-- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was.
+- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was, or ducked with `crouch`, its hull crouched from its next step on and kept so until it has headroom, for a place no standing hull fits (a crawlspace).
 - `RideCable` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A zipline as the model rides it: its cable from `from` to `to` (m); a balloon's top launches a skydive.
 - `RideLadder` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A ladder: the foot of its face (m), its top's height, its normal across the ground (out of the wall), its width.
 - `RideLauncher` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A launcher: the volume the feet set it off in, its top, the velocity it gives, its bounce and whether it keeps the speed across.
@@ -7753,7 +7753,8 @@ For the agents who maintain the engine.
 
 - `default` (default): `node x eye <scene>` (PLAN.md WP 12.3, §5.8): the agent eye in Node, no GPU.
 - `EYE_FRAMES` (const): The frames the camera is moved on by before the eye looks: a second of a page's, so a follow camera has swung out.
-- `EYE_PRINT` (const): The picture's size by default: 56 × 16 characters, the page's 16:9 in a terminal's tall characters.
+- `EYE_PRINT` (const): The printed picture's size at most: 56 × 16 characters, the page's 16:9 in a terminal's tall characters.
+- `printOf` (function): `map` (the eye's picture, a character a cell) shrunk to at most `size` for a terminal: each printed character stands for the cells under it, the player's `@` if any, else the thing most of them show, else a wall over a floor.
 - `seenText` (function): What the summary says it sees: the first `SUMMARY_THINGS` things (`thingText`), then how many more.
 - `SUMMARY_THINGS` (const): How many things the summary names, most cells first; `eye.json` lists them all.
 - `thingText` (function): One thing seen, as the summary names it: the player, the level, or its kind and entity; its share, or its cells.

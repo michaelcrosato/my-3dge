@@ -100,16 +100,17 @@ describe('props on the stage', () => {
     expect(props.props.size).toBe(0);
   });
 
-  it('leaves out of every draw the props its hide test says are hidden, until the test is lifted', () => {
+  it('leaves out of every draw the props its hide test says are hidden, until lifted, and says when its key moved', () => {
     const props = createStageProps({ scene: new Scene(), materials: createMaterialLibrary() });
     props.capture([entity(1, 'prop:crate', [0, 0.5, 0]), entity(2, 'prop:crate', [0, 3.5, 0])], 1 / 60);
     const crates = () => props.meshes!.batches().find((batch) => batch.name === 'prop:crate/mesh')!.count;
-    props.hide((_x, y) => y > 3); // the crate on the storey above
+    const upper = (_x: number, y: number) => y > 3; // the crate on the storey above
+    const moved = [props.hide(upper, '0'), props.hide(upper, '0')];
     props.draw(1);
     const hidden = crates();
-    props.hide(null);
+    moved.push(props.hide(null));
     props.draw(1);
-    expect([hidden, crates()]).toEqual([1, 2]);
+    expect([hidden, crates(), ...moved]).toEqual([1, 2, true, false, true]);
   });
 
   it('registers batches made after the warm-up, and puts their arrival in the shader key', () => {

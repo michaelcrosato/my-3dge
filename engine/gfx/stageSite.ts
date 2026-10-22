@@ -55,6 +55,8 @@ export interface StageSite {
   where(feet: Vec3): { structure: SiteStructure; storey: number; indoors: boolean } | null;
   /** Whether world (x, y, z) stands on a storey the last `update` cut off: above the player's, in his structure. */
   hides(x: number, y: number, z: number): boolean;
+  /** What `hides` hides as a key: the structure's index and the player's storey, '' when nothing is cut. */
+  cutKey(): string;
   register(warmup: Pick<Warmup, 'register'>): { dispose(): void };
   dispose(): void;
 }
@@ -132,6 +134,7 @@ export function createStageSite(
       if (lx < 0 || lz < 0 || lx >= level.cols * level.tile || lz >= level.rows * level.tile) return false;
       return aboveStorey(level, cut.storey, lx, ly, lz);
     },
+    cutKey: () => (cut ? `${drawn.findIndex((each) => each.structure === cut!.structure)}:${cut.storey}` : ''),
     register(warmup) {
       const registrations = [
         ...drawn.map((each) => each.meshes.register(warmup, `${each.group.name}:level`)),

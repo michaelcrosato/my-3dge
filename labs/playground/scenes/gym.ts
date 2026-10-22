@@ -79,11 +79,10 @@ export const gym = defineScene('playground:gym', {
      */
     place(w, args) {
       const { at, yaw = 0, speed = 0, crouch = false } = (args ?? {}) as { at?: [number, number, number]; yaw?: number; speed?: number; crouch?: boolean }; // prettier-ignore
-      const player = (w.query('actor') as unknown as (ActorComponents & { id: number; motion?: { stance: string; duck: string } })[]).find((e) => e.actor.player); // prettier-ignore
+      const player = (w.query('actor') as unknown as (ActorComponents & { id: number })[]).find((e) => e.actor.player);
       if (!player || !at) return;
-      placeActor(w, player.id, at, yaw);
+      placeActor(w, player.id, at, yaw, { crouch });
       [player.actor.vx, player.actor.vz] = [speed * Math.sin(yaw), speed * Math.cos(yaw)];
-      if (crouch && player.motion) Object.assign(player.motion, { stance: 'crouch', duck: 'ducked' }); // it stays down till it has headroom
     },
   },
 });
