@@ -4354,7 +4354,7 @@ For the agents who maintain the engine.
 ### [`engine/gfx/propLooks.ts`](../engine/gfx/propLooks.ts)
 
 - `CRATE_TEXTURE` (const): The crate's face generator: a dark edge, a frame with a nail in each corner, planks across and a brace.
-- `PROP_MATERIALS` (const): The props' materials, by id: `material:crate` (texture:crate, my-3d2dge's `crateTex`, a 0.75 m face per tile), `material:barrelStaves` (texture:staves wrapped exactly once round the twelve-sided barrel, a stave per side), `material:barrelLid`, `material:flame` (unlit white, so tints show), the library's (WP 10.3) `material:iron` and `material:cloth`, and the fittings' (WP 13.16) `material:pane` and `material:paint`.
+- `PROP_MATERIALS` (const): The props' materials, by id: `material:crate` (texture:crate, my-3d2dge's `crateTex`, a 0.75 m face per tile), `material:barrelStaves` (texture:staves wrapped exactly once round the twelve-sided barrel, a stave per side), `material:barrelLid`, `material:flame` (unlit white, so tints show), the library's (WP 10.3) `material:iron` and `material:cloth`, and the fittings' (WP 13.16) `material:paint`; their pane is the built-in `material:glass`.
 - `propLooks` (function): Defines the props' texture and materials on `registry`, unless it has them.
 
 ### [`engine/gfx/props.ts`](../engine/gfx/props.ts)
@@ -4699,13 +4699,25 @@ For the agents who maintain the engine.
 - `TextureMaps` (interface): A bake's textures, by the material slot each fills.
 - `toDataTextures` (function): The textures of `bake` for a material's slots (see the file comment).
 
+### [`engine/gfx/textures/generators/asphalt.ts`](../engine/gfx/textures/generators/asphalt.ts)
+
+- `ASPHALT` (const): The asphalt generator's spec.
+
 ### [`engine/gfx/textures/generators/brick.ts`](../engine/gfx/textures/generators/brick.ts)
 
 - `BRICK` (const): The brick generator's spec.
 
+### [`engine/gfx/textures/generators/carpet.ts`](../engine/gfx/textures/generators/carpet.ts)
+
+- `CARPET` (const): The carpet generator's spec.
+
 ### [`engine/gfx/textures/generators/checker.ts`](../engine/gfx/textures/generators/checker.ts)
 
 - `CHECKER` (const): The checker generator's spec.
+
+### [`engine/gfx/textures/generators/concrete.ts`](../engine/gfx/textures/generators/concrete.ts)
+
+- `CONCRETE` (const): The concrete generator's spec.
 
 ### [`engine/gfx/textures/generators/dirt.ts`](../engine/gfx/textures/generators/dirt.ts)
 
@@ -4714,6 +4726,10 @@ For the agents who maintain the engine.
 ### [`engine/gfx/textures/generators/flagstone.ts`](../engine/gfx/textures/generators/flagstone.ts)
 
 - `FLAGSTONE` (const): The flagstone generator's spec.
+
+### [`engine/gfx/textures/generators/glass.ts`](../engine/gfx/textures/generators/glass.ts)
+
+- `GLASS` (const): The glass generator's spec.
 
 ### [`engine/gfx/textures/generators/grass.ts`](../engine/gfx/textures/generators/grass.ts)
 
@@ -4745,6 +4761,14 @@ For the agents who maintain the engine.
 - `RUNES` (const): The rune generator's spec.
 - `RuneTones` (interface): The colours of a rune circle and how brightly its lines glow (its runes and centre glow at 1).
 
+### [`engine/gfx/textures/generators/shingles.ts`](../engine/gfx/textures/generators/shingles.ts)
+
+- `SHINGLES` (const): The shingle generator's spec.
+
+### [`engine/gfx/textures/generators/siding.ts`](../engine/gfx/textures/generators/siding.ts)
+
+- `SIDING` (const): The siding generator's spec.
+
 ### [`engine/gfx/textures/generators/staves.ts`](../engine/gfx/textures/generators/staves.ts)
 
 - `STAVES` (const): The barrel-stave generator's spec.
@@ -4753,10 +4777,22 @@ For the agents who maintain the engine.
 
 - `STONE` (const): The dressed-stone generator's spec.
 
+### [`engine/gfx/textures/generators/tiles.ts`](../engine/gfx/textures/generators/tiles.ts)
+
+- `TILES` (const): The tile generator's spec.
+
+### [`engine/gfx/textures/generators/wallpaper.ts`](../engine/gfx/textures/generators/wallpaper.ts)
+
+- `WALLPAPER` (const): The wallpaper generator's spec.
+
 ### [`engine/gfx/textures/generators/water.ts`](../engine/gfx/textures/generators/water.ts)
 
 - `WATER` (const): The water generator's spec.
 - `wave` (function): A smooth wave of period 1 in [−1, 1], 1 at whole numbers: a smoothstepped triangle, close to cos 2πt.
+
+### [`engine/gfx/textures/generators/wood.ts`](../engine/gfx/textures/generators/wood.ts)
+
+- `WOOD` (const): The wood generator's spec.
 
 ### [`engine/gfx/textures/mips.ts`](../engine/gfx/textures/mips.ts)
 
@@ -4785,7 +4821,7 @@ For the agents who maintain the engine.
 - `sizeProblem` (function): Why `entry` cannot bake at `size` with `params` (a sentence), or '' when it can.
 - `TEXTURE_FIELDS` (const): The fields of a `texture` entry.
 - `TextureEntry` (type): A `texture` entry: one generator.
-- `textureKind` (function): Declares the kind `texture` on `registry`, with the engine's v1 and v2 generators, unless it has it.
+- `textureKind` (function): Declares the kind `texture` on `registry`, with the engine's v1, v2 and v3 generators, unless it has it.
 - `textureParams` (function): The parameters of `entry` with `given` set: every parameter filled; throws `CORE_BAD_SPEC` naming each problem.
 
 ### [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)
@@ -4826,6 +4862,10 @@ For the agents who maintain the engine.
 ### [`engine/gfx/textures/v2.ts`](../engine/gfx/textures/v2.ts)
 
 - `V2_TEXTURES` (const): The v2 generators, by id.
+
+### [`engine/gfx/textures/v3.ts`](../engine/gfx/textures/v3.ts)
+
+- `V3_TEXTURES` (const): The v3 generators, by id.
 
 ### [`engine/gfx/thumbnail.ts`](../engine/gfx/thumbnail.ts)
 

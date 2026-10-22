@@ -26,7 +26,7 @@ import type { PropDefinition } from './prop';
 export const FITTING_PROPS = {
   'prop:pane': {
     description: 'A glass pane for a window, 0.5 × 1.2 m: a hit, a shot or a thrown prop breaks it into glass.',
-    parts: [{ name: 'glass', geometry: 'geometry:box', params: { width: 0.5, height: 1.2, depth: 0.01 }, material: 'material:pane' }], // prettier-ignore
+    parts: [{ name: 'glass', geometry: 'geometry:box', params: { width: 0.5, height: 1.2, depth: 0.01 }, material: 'material:glass' }], // prettier-ignore
     body: { type: 'fixed', shape: 'box', size: [0.5, 1.2, 0.02] },
     health: 1,
     breaks: { shards: 'glass' },

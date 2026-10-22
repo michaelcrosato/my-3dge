@@ -46,7 +46,6 @@ describe('the props drawn', () => {
       'material:flame',
       'material:iron',
       'material:cloth',
-      'material:pane',
       'material:paint',
     ]) {
       // prettier-ignore

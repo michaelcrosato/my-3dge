@@ -12,7 +12,7 @@
  * import { createRegistry } from '../core/registry';
  * const reg = createRegistry();
  * propLooks(reg);
- * reg.has('material', 'material:pane'); // true: the fittings' glass
+ * reg.has('material', 'material:paint'); // true: the fittings' plates and shades
  * @see engine/gfx/props.test.ts
  */
 import { registry as sharedRegistry, type Registry } from '../core/registry';
@@ -70,7 +70,7 @@ const BARREL_ROUND = 24 * 0.375 * Math.sin(Math.PI / 12);
  * The props' materials, by id: `material:crate` (texture:crate, my-3d2dge's `crateTex`, a 0.75 m face per tile),
  * `material:barrelStaves` (texture:staves wrapped exactly once round the twelve-sided barrel, a stave per side),
  * `material:barrelLid`, `material:flame` (unlit white, so tints show), the library's (WP 10.3) `material:iron`
- * and `material:cloth`, and the fittings' (WP 13.16) `material:pane` and `material:paint`.
+ * and `material:cloth`, and the fittings' (WP 13.16) `material:paint`; their pane is the built-in `material:glass`.
  */
 export const PROP_MATERIALS: Readonly<Record<string, Record<string, unknown>>> = {
   'material:crate': {
@@ -98,12 +98,6 @@ export const PROP_MATERIALS: Readonly<Record<string, Record<string, unknown>>> =
   'material:cloth': {
     description: 'Woven cloth, white so a part’s tint is its dye: banners and hems.',
     roughness: 0.95,
-  },
-  'material:pane': {
-    description:
-      'A window’s glass, pale and smooth, opaque (WP 13.17’s building materials may give it a see-through one).',
-    color: '#cfe6f2',
-    roughness: 0.1,
   },
   'material:paint': {
     description:

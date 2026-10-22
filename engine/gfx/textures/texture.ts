@@ -7,7 +7,7 @@
  * every material without editing the bake.
  *
  * `defineTexture(id, spec)` adds one (a game's own generators live with the game, never in the engine).
- * `textureKind(registry)` declares the kind with the engine's generators (engine/gfx/textures/v1.ts and v2.ts) the
+ * `textureKind(registry)` declares the kind with the engine's generators (engine/gfx/textures/v1.ts, v2.ts, v3.ts) the
  * first time anything here touches a registry; the shared registry gets them on import.
  *
  * Invariants: every parameter is a valid schema field with a description and a default (a material may leave any
@@ -34,6 +34,7 @@ import './codes';
 import type { TextureSpec } from './types';
 import { V1_TEXTURES } from './v1';
 import { V2_TEXTURES } from './v2';
+import { V3_TEXTURES } from './v3';
 
 /** The fields of a `texture` entry. */
 export const TEXTURE_FIELDS = {
@@ -137,7 +138,7 @@ function textureProblems(entry: TextureEntry): string[] {
   return problems;
 }
 
-/** Declares the kind `texture` on `registry`, with the engine's v1 and v2 generators, unless it has it. */
+/** Declares the kind `texture` on `registry`, with the engine's v1, v2 and v3 generators, unless it has it. */
 export function textureKind(registry: Registry): void {
   if (registry.kinds().includes('texture')) return;
   registry.defineKind('texture', {
@@ -148,7 +149,7 @@ export function textureKind(registry: Registry): void {
       "defineTexture('<id>', { description: '…', params: { … }, create: ({ params, seed }) => (x, y, texel) => { … } })",
     check: (entry) => textureProblems(entry as unknown as TextureEntry),
   });
-  for (const [id, spec] of Object.entries({ ...V1_TEXTURES, ...V2_TEXTURES })) {
+  for (const [id, spec] of Object.entries({ ...V1_TEXTURES, ...V2_TEXTURES, ...V3_TEXTURES })) {
     registry.def('texture', id, spec as unknown as Record<string, unknown>);
   }
 }

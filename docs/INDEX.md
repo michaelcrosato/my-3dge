@@ -751,7 +751,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/gfx/materials
 
-- [`builtins.ts`](../engine/gfx/materials/builtins.ts): The engine's built-in materials (PLAN.md WP 2.3): `material:default`, the neutral grey that stands in for a missing id; one textured material per v1 generator (flagstone, brick, dressed stone, planks, a barrel's staves, checker) with the prototype's palettes; and `material:glow`, an unlit colour for flames, markers and lit windows.
+- [`builtins.ts`](../engine/gfx/materials/builtins.ts): The engine's built-in materials (PLAN.md WP 2.3): `material:default`, the neutral grey that stands in for a missing id; one textured material per v1 generator (flagstone, brick, dressed stone, planks, a barrel's staves, checker) with the prototype's palettes; `material:glow`, an unlit colour for flames, markers and lit windows; and the building materials (WP 13.17), one per v3 generator: wood, tiles, carpet, wallpaper, shingles, asphalt, concrete, siding and glass, in their generators' palettes, tuned for the toon bands and the pixel look.
   - Exports: `BUILT_IN_MATERIALS`
   - Tests: [`engine/gfx/materials/material.test.ts`](../engine/gfx/materials/material.test.ts)
 - [`compile.ts`](../engine/gfx/materials/compile.ts): How a material is drawn (PLAN.md WP 2.3, §6.7): `compileMaterial` turns a `material` entry (engine/gfx/materials/material.ts) and its baked maps into a three.js material.
@@ -899,21 +899,36 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`v2.ts`](../engine/gfx/textures/v2.ts): The engine's v2 texture generators (PLAN.md WP 7.3): runes, moss, metal, plaster, dirt, grass and water, by id.
   - Exports: `V2_TEXTURES`
   - Tests: [`engine/gfx/textures/generators/v2.test.ts`](../engine/gfx/textures/generators/v2.test.ts)
+- [`v3.ts`](../engine/gfx/textures/v3.ts): The engine's v3 texture generators (PLAN.md WP 13.17): the building materials a house, a yard and a street need: asphalt, carpet, concrete, glass, shingles, siding, tiles, wallpaper and wood, by id.
+  - Exports: `V3_TEXTURES`
+  - Tests: [`engine/gfx/textures/generators/v3.test.ts`](../engine/gfx/textures/generators/v3.test.ts)
 
 ## engine/gfx/textures/generators
 
+- [`asphalt.ts`](../engine/gfx/textures/generators/asphalt.ts): The asphalt generator (`texture:asphalt`, PLAN.md WP 13.17): a road's dark grey binder speckled with lighter stone chips and darker pits, in soft lighter patches where traffic has worn it.
+  - Exports: `ASPHALT`
+  - Tests: [`engine/gfx/textures/generators/v3.test.ts`](../engine/gfx/textures/generators/v3.test.ts)
 - [`brick.ts`](../engine/gfx/textures/generators/brick.ts): The brick generator (`texture:brick`, PLAN.md WP 2.3): brick courses in running bond, each brick its own tone, a mortar joint along each course's bottom and each brick's right, a lit top row on every brick, and dark specks.
   - Exports: `BRICK`
   - Tests: [`engine/gfx/textures/generators.test.ts`](../engine/gfx/textures/generators.test.ts)
+- [`carpet.ts`](../engine/gfx/textures/generators/carpet.ts): The carpet generator (`texture:carpet`, PLAN.md WP 13.17): a close pile in its colour, each tuft a shade lighter or darker, mottled in soft patches where it has worn or been brushed the other way.
+  - Exports: `CARPET`
+  - Tests: [`engine/gfx/textures/generators/v3.test.ts`](../engine/gfx/textures/generators/v3.test.ts)
 - [`checker.ts`](../engine/gfx/textures/generators/checker.ts): The checker generator (`texture:checker`, PLAN.md WP 2.3): square tiles of two colours, alternating (castle floors, bonus rooms, and a test pattern that shows how a surface is mapped).
   - Exports: `CHECKER`
   - Tests: [`engine/gfx/textures/generators.test.ts`](../engine/gfx/textures/generators.test.ts)
+- [`concrete.ts`](../engine/gfx/textures/generators/concrete.ts): The concrete generator (`texture:concrete`, PLAN.md WP 13.17): a path's or a foundation's pale grey, mottled at two scales, with small dark pores where air was caught.
+  - Exports: `CONCRETE`
+  - Tests: [`engine/gfx/textures/generators/v3.test.ts`](../engine/gfx/textures/generators/v3.test.ts)
 - [`dirt.ts`](../engine/gfx/textures/generators/dirt.ts): The dirt generator (`texture:dirt`, PLAN.md WP 7.3): bare ground in soft patches of three tones at two scales, with pebbles, small clusters of two or three texels lit along their top and shaded along their bottom.
   - Exports: `DIRT`
   - Tests: [`engine/gfx/textures/generators/v2.test.ts`](../engine/gfx/textures/generators/v2.test.ts)
 - [`flagstone.ts`](../engine/gfx/textures/generators/flagstone.ts): The flagstone generator (`texture:flagstone`, PLAN.md WP 2.3): square stones in running-bond rows, each its own tone from the palette, with a one-texel joint along its left and top, a lit bevel inside the joint and a shaded one along its bottom and right (light from the top left, as pixel art paints it), specks of grit, and a crack across some stones.
   - Exports: `FLAGSTONE`
   - Tests: [`engine/gfx/textures/generators.test.ts`](../engine/gfx/textures/generators.test.ts)
+- [`glass.ts`](../engine/gfx/textures/generators/glass.ts): The glass generator (`texture:glass`, PLAN.md WP 13.17): a window's pane, pale and cool, with soft reflections in diagonal bands across it: a broad one and a narrow one each repeat, as a sky catches in glass.
+  - Exports: `GLASS`
+  - Tests: [`engine/gfx/textures/generators/v3.test.ts`](../engine/gfx/textures/generators/v3.test.ts)
 - [`grass.ts`](../engine/gfx/textures/generators/grass.ts): The grass generator (`texture:grass`, PLAN.md WP 7.3): turf in blotches of light and dark grass at two scales, short blade marks running up (dark where the turf is dark, light where it is light), and clusters of flowers, two-texel spots in yellow or white gathered in a few meadows rather than spread evenly.
   - Exports: `GRASS`
   - Tests: [`engine/gfx/textures/generators/v2.test.ts`](../engine/gfx/textures/generators/v2.test.ts)
@@ -932,15 +947,30 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`runes.ts`](../engine/gfx/textures/generators/runes.ts): The rune generator (`texture:runes`, PLAN.md WP 7.3): flagstones (engine/gfx/textures/generators/ flagstone.ts, every one of its parameters, in the hall's dusky palette) with a rune circle inlaid at the middle of each `cell`: an outer and an inner ring, spokes between them, a rune in each sector between the spokes, and a bright disc at the centre.
   - Exports: `paintRune`, `runeCircle`, `RuneCircleOptions`, `RuneMark`, `RUNES`, `RuneTones`
   - Tests: [`engine/gfx/textures/generators/v2.test.ts`](../engine/gfx/textures/generators/v2.test.ts)
+- [`shingles.ts`](../engine/gfx/textures/generators/shingles.ts): The shingle generator (`texture:shingles`, PLAN.md WP 13.17): a roof's shingles in overlapping courses up the slope (v), each course offset half a shingle: a tone per shingle, a dark slot between shingles, and the shadow the course above throws across each course's top row.
+  - Exports: `SHINGLES`
+  - Tests: [`engine/gfx/textures/generators/v3.test.ts`](../engine/gfx/textures/generators/v3.test.ts)
+- [`siding.ts`](../engine/gfx/textures/generators/siding.ts): The siding generator (`texture:siding`, PLAN.md WP 13.17): painted clapboard, horizontal boards lapped down the wall (v up): a tone per board, its butt along the bottom catching the light, and the shadow the board above throws across its top row.
+  - Exports: `SIDING`
+  - Tests: [`engine/gfx/textures/generators/v3.test.ts`](../engine/gfx/textures/generators/v3.test.ts)
 - [`staves.ts`](../engine/gfx/textures/generators/staves.ts): The barrel-stave generator (`texture:staves`, PLAN.md WP 2.3): staves running up, each its own tone and a dark gap along its right edge, the odd knot, and iron hoops across them (a lit top row, a shaded one under it), for a barrel's side wrapped round a cylinder (x round, y up).
   - Exports: `STAVES`
   - Tests: [`engine/gfx/textures/generators.test.ts`](../engine/gfx/textures/generators.test.ts)
 - [`stone.ts`](../engine/gfx/textures/generators/stone.ts): The dressed-stone generator (`texture:stone`, PLAN.md WP 2.3): big blocks in running bond, bevelled (lit top and left, dark bottom and right) with a joint along the bottom and right, each block its own tone, worn patches from noise.
   - Exports: `STONE`
   - Tests: [`engine/gfx/textures/generators.test.ts`](../engine/gfx/textures/generators.test.ts)
+- [`tiles.ts`](../engine/gfx/textures/generators/tiles.ts): The tile generator (`texture:tiles`, PLAN.md WP 13.17): glazed square tiles for a kitchen's or a bathroom's floor and walls: a tone per tile, a highlight along each tile's top row where the glaze catches the light, and sunk grout along its bottom and left; with `checker` tones, every other tile is of those, as a kitchen floor's checker.
+  - Exports: `TILES`
+  - Tests: [`engine/gfx/textures/generators/v3.test.ts`](../engine/gfx/textures/generators/v3.test.ts)
+- [`wallpaper.ts`](../engine/gfx/textures/generators/wallpaper.ts): The wallpaper generator (`texture:wallpaper`, PLAN.md WP 13.17): a printed paper in vertical stripes, a narrow stripe at the left of each repeat and a small diamond in the middle of the wide band between, printed a little proud.
+  - Exports: `WALLPAPER`
+  - Tests: [`engine/gfx/textures/generators/v3.test.ts`](../engine/gfx/textures/generators/v3.test.ts)
 - [`water.ts`](../engine/gfx/textures/generators/water.ts): The water generator (`texture:water`, PLAN.md WP 7.3): still water in two blue tones in broad patches, with ripple lines running across it (along x), bent by a slow swell and dithered on every other texel, as the 2D games paint a pond.
   - Exports: `WATER`, `wave`
   - Tests: [`engine/gfx/textures/generators/v2.test.ts`](../engine/gfx/textures/generators/v2.test.ts)
+- [`wood.ts`](../engine/gfx/textures/generators/wood.ts): The wood generator (`texture:wood`, PLAN.md WP 13.17): plain wood for doors, furniture and trim, its grain running up (v): dark grain lines a few texels apart, wavering as a sawn board's do, over slow bands of its tones, and now and then a knot, a dark core in a ring that bends the grain round it.
+  - Exports: `WOOD`
+  - Tests: [`engine/gfx/textures/generators/v3.test.ts`](../engine/gfx/textures/generators/v3.test.ts)
 
 ## engine/gfx/viewmodel
 
