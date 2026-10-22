@@ -269,6 +269,9 @@ test.describe('the box, stage 1', () => {
       out['actions.list'] = e.actions.list().map((row: { name: string }) => row.name).join(); // prettier-ignore
       out['actions.run'] = e.actions.run('timeScale', { scale: 1 }).name;
       out.bot = await Promise.resolve(() => e.bot({ to: [{ x: 1.5, z: 1.5 }] })).then((bot) => bot()).catch((error: Error) => error.message.split(':')[0]); // prettier-ignore
+      out['gallery.list'] = e.gallery.list().some((row: { kind: string }) => row.kind === 'prop');
+      out['gallery.frames'] = e.gallery.frames('prop', 'prop:crate').length; // its turntable's four
+      out['gallery.shoot'] = await Promise.resolve().then(() => e.gallery.shoot('prop', 'prop:crate')).catch((error: Error) => error.message.split(':')[0]); // prettier-ignore
       out['tune.settings'] = e.tune.settings().some((row: { path: string }) => row.path === 'movement.gaits.sprint');
       out['tune.profile'] = e.tune.profile().startsWith('defineMovement("movement:playtest", {');
       out.render = (await e.render(1)).drawn;
@@ -312,6 +315,9 @@ test.describe('the box, stage 1', () => {
       'actions.list': 'freeze,god,spawn,timeScale,travel', // the room has no dev action of its own
       'actions.run': 'timeScale',
       bot: '[SIM_NO_ACTOR] the bot has no actor to work on',
+      'gallery.list': true,
+      'gallery.frames': 4,
+      'gallery.shoot': '[DEV_GALLERY_CLOSED] gallery.shoot films the gallery scene, but the page shows box', // box:room
       'tune.settings': true, // the feel panel's rows: every number of the shooter model, even with no actor on it
       'tune.profile': true,
       render: true,

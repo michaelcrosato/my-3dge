@@ -8,10 +8,11 @@
  * the canvas through a look's filters is the whole picture at that size, not its top-left quarter (engine/gfx/shot.ts
  * `atSize`: the gallery's sheets in a look).
  *
- * Invariants: shots are small (96 × 54) since what the ID pass sees is checked, not the picture; no other advice.
+ * Invariants: the kinds' shots are x gallery's size (240 × 135), so the spec judges what the tool's sheets show (a
+ * snowflake is a pixel there and nothing at 96 × 54); no other advice.
  */
 import type { Page } from '@playwright/test';
-import { emptyFrames, type Filmed } from '../../tools/cmd/gallery';
+import { emptyFrames, SIZE, type Filmed } from '../../tools/cmd/gallery';
 import { expect, test } from './fixtures';
 
 /** The page's engine, inside `evaluate`. */
@@ -106,7 +107,7 @@ test.describe('the gallery', () => {
       expect(ids.length).toBe(kinds.find((k) => k.kind === kind)!.count);
       const empty: string[] = [];
       for (const id of ids) {
-        const filmed = await call<Filmed>(page, 'gallery.shoot', kind, id, { width: 96, height: 54 });
+        const filmed = await call<Filmed>(page, 'gallery.shoot', kind, id, SIZE); // x gallery's: what it judges
         expect(filmed.frames.length, `${id}'s frames`).toBe((await call<unknown[]>(page, 'gallery.frames', kind, id)).length); // prettier-ignore
         empty.push(...emptyFrames(filmed).map((frame) => frame.label));
       }
