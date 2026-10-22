@@ -29,7 +29,7 @@
  * The level comes from the scene's `level` id (engine/world/level/level.ts), registered before the view starts
  * (`APP_NO_LEVEL`), the terrain from its `terrain` id (WP 10.5), the site from its `site` id (WP 13.15). Cameras are
  * view state: switching one (`setCamera(code)`, `__engine.camera.set`; with `{ blend: true }`, the page's live switch,
- * it blends) or moving it on by frames headless (`follow`) never reaches the sim. Invariants: presentation only: it
+ * it blends) or moving it on by frames headless (`advance`) never reaches the sim. Invariants: presentation only: it
  * reads the run, never writes it (the `QueryView` has no way in); one stage per view, one camera per projection.
  *
  * @example
@@ -78,8 +78,8 @@ export const DEFAULT_CAMERA = 'cam=iso';
 /** The aspect a view frames for when nothing draws it (headless): 16:9, the e2e viewport's. */
 export const HEADLESS_ASPECT = 16 / 9;
 
-/** A frame `follow` moves the camera by, real seconds: a 60 Hz page's. */
-export const FOLLOW_FRAME = 1 / 60;
+/** A frame `advance` moves the camera on by, real seconds: a 60 Hz page's. */
+export const ADVANCE_FRAME = 1 / 60;
 
 /** What `camera.get()` and `camera.set(code)` return: the camera as a code, in words, and its pose. */
 export interface CameraInfo {
@@ -137,8 +137,8 @@ export interface RunView {
   aim(rule: AimRule, devices?: AimDevices): Vec3 | undefined;
   /** Switches to the camera `code` names, from the current one (blending with `blend`); returns it. Throws for a bad code. */
   setCamera(code: string, options?: { blend?: boolean }): CameraInfo;
-  /** Moves the camera on by `frames` frames of `FOLLOW_FRAME`, drawing nothing, as a page's frames move it; returns it. */
-  follow(frames: number): CameraInfo;
+  /** Moves the camera on by `frames` frames of `ADVANCE_FRAME`, drawing nothing, as a page's frames move it; returns it. */
+  advance(frames: number): CameraInfo;
   /** The stage as text (engine/gfx/sceneDump.ts). */
   dump(options?: DumpOptions): string;
   /** The sim's read-only queries, or undefined without physics: what the agent eye casts through (WP 12.3). */
@@ -320,8 +320,8 @@ export function createRunView(options: RunViewOptions): RunView {
       drawCrowd();
       return info();
     },
-    follow(frames) {
-      for (let i = 0; i < frames; i++) drawn = pair.place(move(undefined, FOLLOW_FRAME), aspect);
+    advance(frames) {
+      for (let i = 0; i < frames; i++) drawn = pair.place(move(undefined, ADVANCE_FRAME), aspect);
       drawCrowd();
       return info();
     },

@@ -54,7 +54,7 @@ test.describe('the box’s inspector', () => {
       out.help = e.help('replay').startsWith('replay(text');
       out['camera.get'] = e.camera.get().code;
       out['camera.set'] = e.camera.set('cam=topdown').code;
-      out['camera.follow'] = e.camera.follow(2).code;
+      out['camera.advance'] = e.camera.advance(2).code;
       out['scene.dump'] = e.scene.dump({ filter: 'pillar' }).includes('level:room/pillar InstancedMesh');
       out.pause = e.pause();
       out.resume = e.resume();
@@ -114,7 +114,7 @@ test.describe('the box’s inspector', () => {
       help: true,
       'camera.get': 'cam=iso',
       'camera.set': 'cam=topdown',
-      'camera.follow': 'cam=topdown',
+      'camera.advance': 'cam=topdown',
       'scene.dump': true,
       pause: undefined,
       resume: undefined,

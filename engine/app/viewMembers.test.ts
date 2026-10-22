@@ -41,7 +41,7 @@ const CALLS: Record<string, Call> = {
     expect(() => call('bot', { to: [{ x: 1.5, z: 1.5 }] })).toThrow('[SIM_NO_ACTOR] the bot has no actor to work on'),
   'camera.get()': (_e, call) => expect(call('camera.get')).toMatchObject({ code: 'cam=iso' }),
   'camera.set()': (_e, call) => expect(call('camera.set', 'cam=brawler')).toMatchObject({ code: 'cam=brawler' }),
-  'camera.follow()': (_e, call) => expect(call('camera.follow', 2)).toMatchObject({ code: 'cam=iso' }),
+  'camera.advance()': (_e, call) => expect(call('camera.advance', 2)).toMatchObject({ code: 'cam=iso' }),
   'capture()': (e, call) => {
     const capture = e.capture();
     const at = call('scene.dump', { filter: 'pathMover#1' });

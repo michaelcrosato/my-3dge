@@ -20,7 +20,7 @@
  * is at least `FLOOR_UP` up), a space nothing, a letter per kind of thing, its first free one (upper case an actor's).
  *
  * `__engine.eye({ cols, rows })` looks through the view's camera as last placed, what it draws counted, in a page or
- * headless (`createHeadless({ view: true })`: `camera.set` places it and runs its cutaways, `camera.follow` moves it
+ * headless (`createHeadless({ view: true })`: `camera.set` places it and runs its cutaways, `camera.advance` moves it
  * on as a page's frames do), past the player's body in first person, as the view hides it; `node x eye <scene>`
  * (tools/cmd/eye.ts) prints it. It sees bodies: what the
  * view draws without one (the sky, a decal, an effect) it cannot see, a collider can differ from its mesh (a railing's

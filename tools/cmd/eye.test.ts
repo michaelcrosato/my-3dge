@@ -1,8 +1,8 @@
 /**
  * @file Tests for `x eye` (tools/cmd/eye.ts, PLAN.md WP 12.3): the box's hero room seen headless from its own camera
- * and from another, the picture printed with its legend in at most 20 lines, the whole answer beside the report; a
- * small thing named by its cells, and the summary naming six things at most; a scene without physics, a bad camera
- * code or no scene is a usage error naming the fix.
+ * and from another, at the eye's raster and finer, the picture printed shrunk with its legend in at most 20 lines, the
+ * player kept, the whole answer beside the report; a small thing named by its cells, and the summary naming six things
+ * at most; a scene without physics, a bad camera code or no scene is a usage error naming the fix.
  * @see tools/cmd/eye.ts
  */
 import { readFileSync } from 'node:fs';
@@ -24,13 +24,19 @@ describe('x eye', () => {
     { timeout: CHILD_TIMEOUT_MS },
     async () => {
       const { code, lines } = await eye('labs/box/scenes/room-hero');
-      expect(lines[0]).toMatch(/^x eye: ok: box:room-hero from cam=iso: the level \d+%, the player \(\d+ cells?\) in 896 cells$/); // prettier-ignore
+      expect(lines[0]).toMatch(/^x eye: ok: box:room-hero from cam=iso: the level \d+%, the player \(\d+ cells?\) in 5184 cells$/); // prettier-ignore
       expect([code, lines.length <= 20]).toEqual([0, true]);
       expect(lines).toContain('legend: # the level: a wall, . the level: a floor, @ the player');
       const json = JSON.parse(readFileSync(join(ROOT, 'out/eye/box-room-hero/eye.json'), 'utf8'));
-      expect([json.camera, json.cols, json.rows, json.map.length]).toEqual(['cam=iso', 56, 16, 16]);
-      const top = await eye('box:room-hero', '--cam', 'cam=topdown', '--cols', '96', '--rows', '54');
-      expect([top.code, top.lines[0]]).toEqual([0, expect.stringMatching(/from cam=topdown: .* in 5184 cells$/)]);
+      expect([json.camera, json.cols, json.rows, json.map.length]).toEqual(['cam=iso', 96, 54, 54]); // the whole picture
+      const top = await eye('box:room-hero', '--cam', 'cam=topdown', '--cols', '192', '--rows', '108');
+      expect([top.code, top.lines[0]]).toEqual([0, expect.stringMatching(/from cam=topdown: .*the player \(\d+ cells\) in 20736 cells$/)]); // prettier-ignore
+      const picture = top.lines.filter((line) => !/^(x eye|legend|report):/.test(line));
+      expect([
+        picture.length <= 16,
+        picture.every((line) => line.length <= 56),
+        picture.some((line) => line.includes('@')),
+      ]).toEqual([true, true, true]); // shrunk, the player kept // prettier-ignore
     },
   );
 

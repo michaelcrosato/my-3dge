@@ -10,7 +10,7 @@
  * `scene.dump` (`APP_NO_VIEW`), and one whose level is not registered refuses to start (`APP_NO_LEVEL`); `replay`
  * plays the box's replays to their goldens headless. WP 3.10: in the room with a hero, the hero is a puppet, the
  * cameras follow him, the chase camera stays inside the room, first person hides his body but the hands, and the
- * cutaway cuts the wall before a side view; `camera.follow` moves a camera on by frames that draw nothing, so it
+ * cutaway cuts the wall before a side view; `camera.advance` moves a camera on by frames that draw nothing, so it
  * catches up with a hero a dev action moved (WP 12.3). WP 7.8: a level entry's material swaps reach the stage's level meshes, and
  * the stage's sky, once shown, follows the frames: its pool's lights picked near the focus, flickering as they go.
  * WP 13.8: on the playground's shooter model first person stands at its eye height, a live switch blends (its first
@@ -247,9 +247,9 @@ describe('createHeadless({ view: true })', () => {
     expect(slots().map((slot) => slot.intensity)).not.toEqual(first.map((slot) => slot.intensity));
   });
 
-  it('moves the camera on by frames that draw nothing (camera.follow): a view catches up with a hero a dev action moved', async () => {
+  it('moves the camera on by frames that draw nothing (camera.advance): a view catches up with a hero a dev action moved', async () => {
     const engine = await createHeadless({ scene: 'box:room-hero', view: true });
-    const cameras = engine.camera as { get(): { pose: CameraPose }; follow(n: number): { code: string; pose: CameraPose } }; // prettier-ignore
+    const cameras = engine.camera as { get(): { pose: CameraPose }; advance(n: number): { code: string; pose: CameraPose } }; // prettier-ignore
     engine.step(1);
     (engine.actions as { run(name: string, args: object): unknown }).run('travel', { at: [12.5, 0, 9.5] });
     engine.step(2);
@@ -257,7 +257,7 @@ describe('createHeadless({ view: true })', () => {
     const off = (pose: CameraPose) => Math.hypot(...poseTarget(pose).map((v, i) => v - [hero.x, hero.y + VIEW_LIFT, hero.z][i])); // prettier-ignore
     expect(off(cameras.get().pose)).toBeGreaterThan(5); // headless, no frame has moved it: still at his spawn
     const hash = engine.hash();
-    const followed = cameras.follow(60); // a second of a page's frames
+    const followed = cameras.advance(60); // a second of a page's frames
     expect([followed.code, off(followed.pose) < 0.02, engine.hash()]).toEqual(['cam=iso', true, hash]);
   });
 
