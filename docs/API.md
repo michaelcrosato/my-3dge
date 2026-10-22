@@ -3618,6 +3618,7 @@ For the agents who maintain the engine.
 
 - `ArmFrame` (interface): Where an arm's base stands and which way its view looks: what carries a `moveCamera` camera.
 - `CameraBall` (interface): A `moveCamera` camera's state: where it stood, and how long it has stood more than a metre from where it wants.
+- `CameraKeep` (interface): How a `moveCamera` camera keeps the base: the sight it keeps, and the trail's points it heads for.
 - `carry` (function): Where `at`, placed relative to the arm `from` (its base and view), stands relative to the arm `to`.
 - `COLLIDE_PULL` (const): The fastest a `moveCamera` camera closes in on its arm's end beyond what carries it, m/s: 1/6 m a frame at 60 Hz.
 - `COLLIDE_RADIUS` (const): The radius of the ball cast, m: wider than the near plane's corners (0.09 m at 60° and 21:9).
@@ -3627,12 +3628,12 @@ For the agents who maintain the engine.
 - `COLLIDE_TELEPORT` (const): A carry longer than this in one frame is the player put somewhere else, m: the camera goes with him at once.
 - `easeArm` (function): An arm's length after the walls (see the file comment): `arm` eased toward `want`, never past `clear`.
 - `follow` (function): A point that follows `to` and never passes through a wall: slid from where it was (`last`), at most `step` m this frame (what `to` itself moved plus `COLLIDE_PULL`·dt, so one held at a lip catches up, never jumps), or swept from `from` (the hero's eye, clear of the walls) on the first frame or when `to` is further than `COLLIDE_TELEPORT` from it and the step allows that (the hero put elsewhere).
-- `moveCamera` (function): Moves a camera on by a frame (see the file comment): from `ball` (null on the first frame), carried to `carried`, then toward `want`, the arm's end, where the ball fits there, else as far along the arm as a sweep from `base` clears, keeping in the base's sight.
+- `moveCamera` (function): Moves a camera on by a frame (see the file comment): from `ball` (null on the first frame), carried to `carried`, then toward `want`, the arm's end, where the ball fits there, else as far along the arm as a sweep from `base` clears, keeping in the base's sight (`keep.room` to spare); out of it, along the base's trail no nearer the base than `keep.trail`.
 - `QueryGroups` (type): The collision groups a query hits, as the `QueryView` names them.
 - `reach` (function): How far a ball of `COLLIDE_RADIUS` gets from `from` along the unit `dir`, up to `max`: `COLLIDE_SKIN` short of a hit.
 - `slide` (function): Where a ball of `COLLIDE_RADIUS` gets from `from` toward `to`, sliding along up to three surfaces it meets: it stops `COLLIDE_SKIN` short of each and moves on along it; a ball already within the skin of one is first lifted off it.
 - `sweep` (function): Where a ball of `COLLIDE_RADIUS` gets from `from` toward `to`: `to`, or twice the skin short of the first surface.
-- `TRAIL_KEEP` (const): The nearest to the base a trail's point a camera heads for stands, m: it never closes in on the player so.
+- `TRAIL_KEEP` (const): The nearest to the base a trail's point a camera heads for stands by default, m: it never closes in on him so.
 - `TRAIL_LENGTH` (const): How much of its base's way a camera's trail keeps, m.
 - `TRAIL_STEP` (const): How far apart the points of a camera's trail of its base stand, m.
 - `Walls` (interface): The walls a camera keeps out of: the sim's queries, the groups that stop it and a body it passes through.
@@ -3852,8 +3853,9 @@ For the agents who maintain the engine.
 - `parseShoulderCode` (function): Reads a shoulder camera's code: `cam3=shoulder[,<yaw>,<pitch>,<distance>[,<side>]]`.
 - `SHOULDER` (const): The rig's numbers (see the file comment): metres and real seconds; `lens` its own lens, degrees (Apex's 90 at 4:3).
 - `SHOULDER_EFFECTS` (const): The effects it takes (engine/gfx/cameras/effects.ts): the lens, the sights, half the roll and the punch.
+- `SHOULDER_KEEP` (const): How its camera keeps the shoulder point (collide.ts's `moveCamera`): in sight of its own ball, its trail however near.
 - `SHOULDER_LIMITS` (const): The range of the pitch (rad) and of the arm (m).
-- `SHOULDER_ROOM` (const): The room the arm reads (see the file comment): the fastest turn of the view it is ready for, rad/s (a body's own 720°/s, `movement.turnRate`), and the directions it reads either side of straight back, rad.
+- `SHOULDER_ROOM` (const): The room the arm reads (see the file comment): the fastest turn of the view it is ready for, rad/s (a body's own 720°/s, `movement.turnRate`), and the directions it reads either side of straight back, rad; the times ahead it reads along its own way, s (half a second), the share of its pace it comes in by then (room to spare for a way that bends: 3.3 m in all), and the most it carries that way's bend on, m/s² (a fall's, about twice a body's gravity at most).
 - `SHOULDER_TURN_SPEED` (const): Turn rates at full `input.turn`, rad/s: `[right, up]`.
 - `ShoulderInput` (interface): A shoulder camera's input: the devices', the hero's eye and the walls.
 - `ShoulderOptions` (interface): Options for a shoulder camera: its code's data, the lens, and the camera before it.

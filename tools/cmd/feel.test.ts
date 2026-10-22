@@ -1,7 +1,8 @@
 /**
  * @file Tests for `x feel` (tools/cmd/feel.ts): a lab is named by its directory or its name; a tolerance and a miss read
- * as sentences; the playground's courses run headless within their tolerances, each with its own report, in at most
- * 20 lines; and a missing lab, a lab without courses or an unknown course name is a usage error naming what there is.
+ * as sentences; courses named by commas run headless within their tolerances, each with its own report, in at most
+ * 20 lines (every course's numbers are labs/playground/courses/courses.test.ts's); and a missing lab, a lab without
+ * courses or an unknown course name is a usage error naming what there is.
  * @see tools/cmd/feel.ts
  */
 import { readFileSync } from 'node:fs';
@@ -27,19 +28,21 @@ describe('x feel', () => {
     expect(missText('strip', miss)).toBe('strip: sprint (topSpeed) is 7.123 against 7.59 ±2%');
   });
 
-  // The whole command's work, every course with its five cameras (WP 13.8): 15 s alone, over 30 s in a full run.
+  // The command's work on two courses, each with its five cameras; every course ran here till WP 13.27 (58 s then, the
+  // same runs courses.test.ts makes course by course).
   it(
-    'runs the playground’s courses within their tolerances, each with its own report',
+    'runs the playground’s courses named within their tolerances, each with its own report',
     { timeout: CHILD_TIMEOUT_MS },
     async () => {
-      const { code, lines } = await feel('labs/playground');
-      expect(lines.join('\n'), lines.join('\n')).toMatch(/^x feel: ok: labs\/playground: \d+ courses, \d+ measures, all within their tolerances/); // prettier-ignore
+      const { code, lines } = await feel('labs/playground', '--course', 'strip,climb');
+      expect(lines.join('\n'), lines.join('\n')).toMatch(/^x feel: ok: labs\/playground: 2 courses, \d+ measures, all within their tolerances/); // prettier-ignore
       expect(code).toBe(0);
       expect(lines.length).toBeLessThanOrEqual(20);
       const report = JSON.parse(readFileSync(join(ROOT, 'out/feel/playground-strip/report.json'), 'utf8'));
       expect(report.ok).toBe(true);
       expect(report.metrics['run.pass']).toBe(true);
       expect(report.metrics['run.tolerance']).toBe('±2%');
+      expect(JSON.parse(readFileSync(join(ROOT, 'out/feel/playground-climb/report.json'), 'utf8')).ok).toBe(true);
     },
   );
 

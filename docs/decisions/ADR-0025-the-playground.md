@@ -1172,3 +1172,41 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **Beyond its Owns**: engine/app/{view,headless,viewMembers}.ts and their tests (the members `eye` and
   `camera.advance`), tests/e2e/box-members.spec.ts (every member in the page), the tests beside each file, the house
   test, docs/GAME-GUIDE.md's command row and the stress-box skill's quick loop.
+
+## Amendment 22 (2026-10-22, WP 13.27): the follow cameras indoors
+
+- **Never cut by what moves** (engine/physics/queries.ts `fixed`, Rapier's `ONLY_FIXED`): the cameras' casts, sweeps and
+  overlaps meet the level's fixed bodies only (engine/gfx/cameras/collide.ts `Walls.fixed`, true by default), so a door
+  that swings, a lift or a prop that moves passes through the camera, faded where it stands between it and the player,
+  as a game's camera channel ignores its doors; the feel check's `inside` counts the same bodies
+  (engine/dev/feel/camera.ts). The 3.45 m cut by the living room's swinging door (amendment 20) is gone.
+- **The shooter** (shoulder.ts): its arm reads the room it will need before it needs it: toward each side, as far as a
+  turn of the view at a body's 720°/s could take it before the arm, coming in, got there (`SHOULDER_ROOM.sides`), and
+  back from where the shoulder point is going, by his velocity, its bend and the pitch turning on, over the next half
+  second (`SHOULDER_ROOM.ahead`, the arm preparing at half its pace: a drop off a ledge, the climb down the attic's
+  hatch, a jamb as he steps past it). A short arm draws the shoulder point in toward his chest at once and lets it out
+  at 3 a second. The camera heads for the arm's end as `moveCamera` moves it (`SHOULDER_KEEP`: in sight of its own
+  ball, along his trail however near once out of his sight), carried with the pivot and the view, not with a turn
+  that would carry it into a wall; where his chest stands past 60% of the picture's half-height it shifts across the
+  view toward him, its own moves held to 1.5 × `COLLIDE_PULL` (0.25 m a frame, under §4's 0.3). Tried and dropped: a
+  camera standing on its arm, never past the first wall, which lost the player in 19 of the soak's frames but popped
+  0.7 to 2.9 m on ten of the gym's courses, wherever the arm sank onto a ledge behind a drop.
+- **The platformer** (follow.ts): `moveCamera` keeps a trail of its base (`CameraBall.trail`) and, out of its sight,
+  goes along it to the newest point it sees (a door, a corner); held off its arm it looks toward its pivot
+  (`FollowState.aim`, at most 120°/s; right over it, straight down at 180°/s); its look-ahead scales by the share of
+  its arm the camera stands out, so a camera held in close looks at him, not a metre past him.
+- **The bot's look** (engine/dev/bot.ts): it turns toward its heading at a body's 720°/s, as a mouse would, its keys in
+  the heading's frame (`cam`), so it walks as it did; the soak's view no longer turns 90° in a frame.
+- **Measured** over the house's soak (labs/playground/scenes/site-soak.test.ts, 5,127 frames, every camera's bounds
+  judged, none watched): the shooter's jump 0.19 m, turn 0.008 rad, inside 0, lost 0 (about 7% before); the
+  platformer's jump 0.19 m, turn 0.054 rad, inside 0, lost 0 (most before); first person, isometric and top-down as
+  before. The gym's 25 courses keep their 1,767 measures (`node x feel labs/playground`).
+- **ESC-0002** (the shooter's bound where less than 0.6 m lies behind his chest): decided in the owner's absence, §4's
+  bound kept as written; no frame needed the unframable count the call allowed.
+- **Found**: Rapier 0.21's heightfield misses ball casts: of the hits a ray finds against a heightfield of 16 to 96
+  cells a side, its ball casts miss 11 to 24% (and a ray up a slope missed at 96); a triangle mesh of the same cells
+  misses none (a probe; the hill's shooter stood in its terrain for 21 frames while its arm trusted those casts). Not
+  needed now (`moveCamera`'s overlap test keeps every camera out of the hill), so proposed, not done: stand every
+  terrain as `addTerrainBody`'s triangle mesh (engine/sim/levelBodies.ts), the hill's replay re-recorded.
+- **Beyond its Owns**: engine/physics/queries.ts (`fixed`), engine/dev/feel/camera.ts (`inside` against fixed bodies),
+  engine/dev/bot.ts and its test (`LOOK_TURN`, `cam`).

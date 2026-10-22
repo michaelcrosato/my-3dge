@@ -12,16 +12,16 @@
  * - `easeArm`: an arm's length after the walls, in at once, out with a time constant of `COLLIDE_RETURN` s (chase's);
  * - `slide`: where the ball gets from one point toward another, sliding along what it meets, as a character does;
  *   `follow`, an arm's base that follows a point so, at a pace (held at a lip, it catches up at `COLLIDE_PULL`);
- * - `moveCamera`: a camera that moves on at a pace (the platformer's): carried with its arm (`carry`), then toward the
- *   arm's end where the ball fits there, else as far along the arm as a ball swept from the base clears, in at up to
- *   `COLLIDE_PULL` m/s and out eased over `COLLIDE_RETURN`, each leg slid along the walls; so what crosses the arm is
- *   passed over, under or round, never through, while one may stand between it and the player (the view fades it).
- *   A camera the base sees (a ball swept from it gets there) keeps it in sight, with `SIGHT_ROOM` to spare when it had
- *   it; one that lost it goes down only to where it sees the base again (never behind a wall's top it rose over), and
- *   along the base's trail (`CameraBall.trail`: round a corner, through a door) toward the newest point of it it sees.
- *   One more than a metre from where it wants for `COLLIDE_STUCK` seconds homes to the clear point, level until over
- *   it. Two cuts are left: carried further than `COLLIDE_TELEPORT` in a frame (the player put elsewhere), or found
- *   inside a wall (moved into it), it goes to the clear point.
+ * - `moveCamera`: a camera that moves on at a pace (the shooter's, the platformer's): carried with its arm (`carry`),
+ *   then toward the arm's end where the ball fits there, else as far along the arm as a ball swept from the base
+ *   clears, in at up to `COLLIDE_PULL` m/s and out eased over `COLLIDE_RETURN`, each leg slid along the walls: what
+ *   crosses the arm is passed over, under or round, never through (one may stand between it and him: the view fades).
+ *   A camera the base sees (a ball swept from it gets there) keeps it in sight (`CameraKeep.room` to spare); one that
+ *   lost it goes down only to where it sees the base again (never behind a wall's top it rose over), and along the
+ *   base's trail (`CameraBall.trail`: round a corner, through a door) to the newest point of it it sees, no nearer the
+ *   base than `CameraKeep.trail`. One more than a metre from where it wants for `COLLIDE_STUCK` seconds homes to the
+ *   clear point, level until over it. Two cuts are left: carried further than `COLLIDE_TELEPORT` in a frame (the
+ *   player put elsewhere), or found inside a wall (moved into it), it goes to the clear point.
  *
  * Invariants: pure (equal walls and inputs give equal answers); a ball that starts clear and stops where `reach` or
  * `sweep` says never overlaps the groups cast against (chase.test.ts walks fixtures/scenes/chase-walls/ to prove it);
@@ -171,7 +171,7 @@ export interface CameraBall {
 export const TRAIL_STEP = 0.25;
 /** How much of its base's way a camera's trail keeps, m. */
 export const TRAIL_LENGTH = 12;
-/** The nearest to the base a trail's point a camera heads for stands, m: it never closes in on the player so. */
+/** The nearest to the base a trail's point a camera heads for stands by default, m: it never closes in on him so. */
 export const TRAIL_KEEP = 1.5;
 
 /** `trail` with `base` added once `TRAIL_STEP` from the last point, its oldest dropped past `TRAIL_LENGTH`. */
@@ -188,10 +188,19 @@ const SIGHT_ROOM = 0.2;
 /** A face whose normal is this near vertical (its y) is a floor or a ceiling: an arm meeting it keeps to its clear point. */
 const LEVEL_NORMAL = 0.7;
 
+/** How a `moveCamera` camera keeps the base: the sight it keeps, and the trail's points it heads for. */
+export interface CameraKeep {
+  /** How much wider than its ball the sight it keeps is, m (`SIGHT_ROOM` by default). */
+  readonly room?: number;
+  /** The nearest to the base a trail's point it heads for stands, m (`TRAIL_KEEP` by default). */
+  readonly trail?: number;
+}
+
 /**
  * Moves a camera on by a frame (see the file comment): from `ball` (null on the first frame), carried to `carried`,
  * then toward `want`, the arm's end, where the ball fits there, else as far along the arm as a sweep from `base`
- * clears, keeping in the base's sight. Without queries it stands at `want`.
+ * clears, keeping in the base's sight (`keep.room` to spare); out of it, along the base's trail no nearer the base than
+ * `keep.trail`. Without queries it stands at `want`.
  */
 export function moveCamera(
   walls: Walls,
@@ -200,7 +209,9 @@ export function moveCamera(
   carried: Vec3,
   want: Vec3,
   dt: number,
+  keep: CameraKeep = {},
 ): CameraBall {
+  const { room = SIGHT_ROOM, trail: near = TRAIL_KEEP } = keep;
   const clear = sweep(walls, base, want);
   const { queries, groups = 'world', exclude, fixed = true } = walls;
   if (!queries || !ball) return { at: clear, stuck: 0, trail: [base] };
@@ -227,11 +238,11 @@ export function moveCamera(
   const wide = (at: Vec3) => {
     const d: Vec3 = [at[0] - base[0], at[1] - base[1], at[2] - base[2]];
     const gap = Math.hypot(...d);
-    if (gap <= SIGHT_ROOM) return true;
-    const ball = { type: 'ball', radius: COLLIDE_RADIUS + SIGHT_ROOM } as const;
+    if (gap <= room) return true;
+    const ball = { type: 'ball', radius: COLLIDE_RADIUS + room } as const;
     const dir: Vec3 = [d[0] / gap, d[1] / gap, d[2] / gap];
     const hit = queries.shapeCast(ball, base, dir, { maxDistance: gap, margin: COLLIDE_SKIN, groups, exclude, fixed });
-    if (!hit || hit.distance >= gap - SIGHT_ROOM - 2 * COLLIDE_SKIN) return true;
+    if (!hit || hit.distance >= gap - room - 2 * COLLIDE_SKIN) return true;
     return Math.abs(hit.normal.y) > LEVEL_NORMAL && sees(at);
   };
   /**
@@ -270,8 +281,7 @@ export function moveCamera(
     // out of the base's sight (the player went round a corner, through a door): along his trail, toward the newest of
     // it the camera sees, at its pace, as he went
     for (let k = trail.length - 1; k >= 0; k--) {
-      if (far(trail[k], base) < TRAIL_KEEP || far(sweep(walls, moved, trail[k]), trail[k]) >= 3 * COLLIDE_SKIN)
-        continue;
+      if (far(trail[k], base) < near || far(sweep(walls, moved, trail[k]), trail[k]) >= 3 * COLLIDE_SKIN) continue;
       return { at: leg(moved, aim(moved, trail[k])), stuck: 0, trail };
     }
   }

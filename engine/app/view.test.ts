@@ -304,8 +304,9 @@ describe('createHeadless({ view: true })', () => {
     const end = view.cameraInfo().pose.position;
     expect(Math.hypot(...half.map((v, i) => v - before.position[i]))).toBeGreaterThan(0.5);
     expect(Math.hypot(...half.map((v, i) => v - end[i]))).toBeGreaterThan(0.5); // halfway: far from both ends
-    const { pitch } = view.cameraInfo().pose; // first person's, kept
-    expect(end[1] - actor.y).toBeCloseTo(CAMERA_EYE.stand + SHOULDER.up - SHOULDER.back * Math.sin(pitch), 1);
+    const { pitch, distance } = view.cameraInfo().pose; // first person's pitch, kept; the arm as the room lets it be
+    expect(distance).toBeGreaterThan(SHOULDER.close); // not drawn in: the shoulder point stands at the eye's height
+    expect(end[1] - actor.y).toBeCloseTo(CAMERA_EYE.stand + SHOULDER.up - distance * Math.sin(pitch), 1);
     expect(view.setCamera('cam=overhead').pose.pitch).toBeCloseTo(-Math.PI / 2, 9); // a plain set cuts
   });
 

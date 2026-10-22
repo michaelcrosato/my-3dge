@@ -602,7 +602,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `CAMERA_3D`, `CAMERA_CODES`, `CameraSpec`, `CameraType`, `describeCamera`, `FOLLOW_CAMERAS`, `formatCameraCode`, `FreeSpec`, `OrbitSpec`, `parseCameraCode`, `VIEW_LABELS`, `VIEW_NAMES`, `ViewName`, `ViewSpec`
   - Tests: [`engine/gfx/cameras/codes.test.ts`](../engine/gfx/cameras/codes.test.ts)
 - [`collide.ts`](../engine/gfx/cameras/collide.ts): Camera collision (PLAN.md WP 13.8, docs/PLAYGROUND.md §4; doctrine: Common ground): what keeps every follow camera (the chase, the shoulder, the platformer's) out of the level, as Unreal's spring arm and Cinemachine's deoccluder do.
-  - Exports: `ArmFrame`, `CameraBall`, `carry`, `COLLIDE_PULL`, `COLLIDE_RADIUS`, `COLLIDE_RETURN`, `COLLIDE_SKIN`, `COLLIDE_STUCK`, `COLLIDE_TELEPORT`, `easeArm`, `follow`, `moveCamera`, `QueryGroups`, `reach`, `slide`, `sweep`, `TRAIL_KEEP`, `TRAIL_LENGTH`, `TRAIL_STEP`, `Walls`
+  - Exports: `ArmFrame`, `CameraBall`, `CameraKeep`, `carry`, `COLLIDE_PULL`, `COLLIDE_RADIUS`, `COLLIDE_RETURN`, `COLLIDE_SKIN`, `COLLIDE_STUCK`, `COLLIDE_TELEPORT`, `easeArm`, `follow`, `moveCamera`, `QueryGroups`, `reach`, `slide`, `sweep`, `TRAIL_KEEP`, `TRAIL_LENGTH`, `TRAIL_STEP`, `Walls`
   - Tests: [`engine/gfx/cameras/collide.test.ts`](../engine/gfx/cameras/collide.test.ts)
 - [`define.ts`](../engine/gfx/cameras/define.ts): A game's own cameras (PLAN.md WP 13.8; doctrine: Common ground: a camera is a function of input and time): the registry kind `camera`.
   - Exports: `CAMERA_FIELDS`, `CAMERA_NAMES`, `cameraEntry`, `CameraKindSpec`, `defineCamera`, `GAME_CAMERA_CODES`, `madeCamera`
@@ -640,8 +640,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`rig.ts`](../engine/gfx/cameras/rig.ts): The camera rig (PLAN.md WP 13.8, docs/PLAYGROUND.md §4; doctrine: Common ground): what a view (engine/app/view.ts) and the feel kit's camera metrics (engine/dev/feel/camera.ts) step each frame, so the page and the numbers see the same pictures.
   - Exports: `CAMERA_SETTING_FIELDS`, `CAMERA_SETTINGS`, `CameraRig`, `createCameraRig`, `RigBlend`, `RigInput`, `rigOptions`, `RigOptions`
   - Tests: [`engine/gfx/cameras/rig.test.ts`](../engine/gfx/cameras/rig.test.ts)
-- [`shoulder.ts`](../engine/gfx/cameras/shoulder.ts): The shooter's camera (PLAN.md WP 13.8, docs/PLAYGROUND.md §4; doctrine: Common ground): over the shoulder, as third-person shooters frame it.
-  - Exports: `createShoulderCamera`, `describeShoulder`, `formatShoulderCode`, `parseShoulderCode`, `SHOULDER`, `SHOULDER_EFFECTS`, `SHOULDER_LIMITS`, `SHOULDER_ROOM`, `SHOULDER_TURN_SPEED`, `ShoulderInput`, `ShoulderOptions`, `shoulderPose`, `shoulderSpec`, `ShoulderSpec`, `shoulderState`, `ShoulderState`, `stepShoulder`
+- [`shoulder.ts`](../engine/gfx/cameras/shoulder.ts): The shooter's camera (PLAN.md WP 13.8 and WP 13.27, docs/PLAYGROUND.md §4; doctrine: Common ground): over the shoulder, as third-person shooters frame it.
+  - Exports: `createShoulderCamera`, `describeShoulder`, `formatShoulderCode`, `parseShoulderCode`, `SHOULDER`, `SHOULDER_EFFECTS`, `SHOULDER_KEEP`, `SHOULDER_LIMITS`, `SHOULDER_ROOM`, `SHOULDER_TURN_SPEED`, `ShoulderInput`, `ShoulderOptions`, `shoulderPose`, `shoulderSpec`, `ShoulderSpec`, `shoulderState`, `ShoulderState`, `stepShoulder`
   - Tests: [`engine/gfx/cameras/shoulder.test.ts`](../engine/gfx/cameras/shoulder.test.ts)
 
 ## engine/gfx/fx

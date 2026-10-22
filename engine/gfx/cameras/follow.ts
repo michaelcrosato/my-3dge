@@ -10,7 +10,7 @@
  * - recentring: after `FOLLOW_RIG.idle` seconds without look input, the view turns behind his movement across the ground
  *   (faster than `FOLLOW_RIG.moving`), eased by `FOLLOW_RIG.ease` and at most `FOLLOW_RIG.recentre` rad/s;
  * - look-ahead: the pivot leads him by up to `FOLLOW_RIG.ahead` along his movement (all of it at `FOLLOW_RIG.run`), eased with
- *   a time constant of `FOLLOW_RIG.lead`;
+ *   a time constant of `FOLLOW_RIG.lead`, by the share of its arm the camera stands out (held in, it looks at him);
  * - the vertical dead zone: the pivot's ground follows the ground he stands on (eased by `FOLLOW_RIG.settle`) and keeps
  *   still while he is in the air within `FOLLOW_RIG.zone` of it, so a jump does not shake the frame; beyond, it is carried
  *   at the zone's edge;
@@ -22,7 +22,8 @@
  * moves on as `moveCamera` moves it (carried with the arm, then toward the arm's end as far as a sweep back from the
  * pivot clears, along the pivot's trail when it lost sight of it), so it moves at a pace (two cuts left, collide.ts's)
  * and never stands in a wall; held off its arm, it looks off its view toward the pivot (`FollowState.aim`), turning
- * that look at most `FOLLOW_RIG.aim` rad/s (WP 13.27: indoors, where the walls keep it from behind him).
+ * that look at most `FOLLOW_RIG.aim` rad/s, right over it straight down and half as fast again (WP 13.27: indoors,
+ * where the walls keep it from behind him).
  *
  * Invariants: with `queries` and the eye at least `COLLIDE_RADIUS` from every wall, the camera's ball never ends
  * inside one; the pivot's height is within `FOLLOW_RIG.zone` of the feet's ground; the pitch within `FOLLOW_LIMITS.pitch`.
@@ -171,7 +172,9 @@ export function stepFollow(state: FollowState, input: FollowInput, dt: number): 
     const most = FOLLOW_RIG.recentre * dt;
     yaw = wrapAngle(yaw + MathUtils.clamp(gap * (1 - Math.exp(-dt / FOLLOW_RIG.ease)), -most, most));
   }
-  const ahead = speed > 1e-3 ? (FOLLOW_RIG.ahead * Math.min(speed / FOLLOW_RIG.run, 1)) / speed : 0;
+  // the look-ahead by the share of the arm the camera stands out: a camera held in close looks at him, not past him
+  const out = state.ball && state.base ? Math.min(1, Math.hypot(...state.ball.at.map((v, i) => v - state.base![i])) / distance) : 1; // prettier-ignore
+  const ahead = speed > 1e-3 ? (FOLLOW_RIG.ahead * out * Math.min(speed / FOLLOW_RIG.run, 1)) / speed : 0;
   const lead = approach(state.lead, [v[0] * ahead, 0, v[2] * ahead], 1 - Math.exp(-dt / FOLLOW_RIG.lead));
   const standing = input.player?.grounded ?? true;
   let ground = state.ground ?? f[1];
@@ -209,7 +212,7 @@ export function stepFollow(state: FollowState, input: FollowInput, dt: number): 
 /**
  * How far off the view `[yaw, pitch]` the camera at `at` looks to look at `base` (its pivot), changed from `aim` by
  * at most `FOLLOW_RIG.aim` rad/s (at once with no `aim`), so the player stays in the picture when the walls keep the
- * ball off its arm; none when the ball stands on the arm, and as it was right over the base.
+ * ball off its arm; none when the ball stands on the arm; right over the base, its heading as it was, looking down.
  */
 function aimAt(
   aim: readonly [number, number] | null,
@@ -221,11 +224,11 @@ function aimAt(
   // prettier-ignore
   const d: Vec3 = [base[0] - at[0], base[1] - at[1], base[2] - at[2]];
   const flat = Math.hypot(d[0], d[2]);
-  if (flat < COLLIDE_RADIUS) return aim ?? [0, 0]; // over it: as it was
-  const pitch = MathUtils.clamp(Math.atan2(d[1], flat), ...FOLLOW_LIMITS.pitch);
-  const want = [wrapAngle(Math.atan2(d[0], d[2]) - view[0]), pitch - view[1]] as const;
+  const over = flat < COLLIDE_RADIUS; // right over it: its heading as it was, looking as far down as it may
+  const pitch = MathUtils.clamp(over ? Math.sign(d[1]) * Math.PI : Math.atan2(d[1], flat), ...FOLLOW_LIMITS.pitch);
+  const want = [over ? (aim?.[0] ?? 0) : wrapAngle(Math.atan2(d[0], d[2]) - view[0]), pitch - view[1]] as const;
   if (!aim) return want;
-  const step = FOLLOW_RIG.aim * dt;
+  const step = FOLLOW_RIG.aim * dt * (over ? 1.5 : 1); // right over it, only its pitch turns: half as fast again
   return [aim[0] + MathUtils.clamp(wrapAngle(want[0] - aim[0]), -step, step), aim[1] + MathUtils.clamp(want[1] - aim[1], -step, step)]; // prettier-ignore
 }
 
