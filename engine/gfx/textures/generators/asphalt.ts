@@ -21,7 +21,7 @@ export const ASPHALT = textureSpec({
   description: 'Asphalt: dark grey binder speckled with lighter chips and darker pits, worn lighter in soft patches.',
   params: {
     base: { type: 'string', default: '#3d3e41', description: 'The binder, hex.' },
-    worn: { type: 'string', default: '#4b4c50', description: 'The worn patches, hex.' },
+    worn: { type: 'string', default: '#4f5054', description: 'The worn patches, hex.' },
     chip: { type: 'string', default: '#5e5f63', description: 'The stone chips, hex.' },
     pit: { type: 'string', default: '#2b2c2e', description: 'The pits, hex.' },
     chips: { type: 'number', default: 0.16, minimum: 0, maximum: 1, description: 'The share of texels a chip.' },

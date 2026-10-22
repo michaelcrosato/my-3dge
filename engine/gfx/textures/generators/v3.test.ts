@@ -24,15 +24,15 @@ const SEEDLESS = ['texture:glass', 'texture:wallpaper'];
 
 /** The golden hash of each v3 generator's default bake (seed 1, its own size). Change only with a written reason. */
 const GOLDEN: Record<string, string> = {
-  'texture:asphalt': '19578da1365aa9fa',
-  'texture:carpet': '0960c7a6a4459490',
-  'texture:concrete': 'fd0654884f221fae',
-  'texture:glass': '34404fa8b2611c30',
-  'texture:shingles': '0e530a1ff77ca0bc',
+  'texture:asphalt': '8f3d3f205264b2a4',
+  'texture:carpet': '0215bf630254550f',
+  'texture:concrete': '8c37614ab87a7206',
+  'texture:glass': '5e9c994af3e466bb',
+  'texture:shingles': '5bac3beab10a1735',
   'texture:siding': '9d8bdc8558541d91',
   'texture:tiles': '83ef85c01ba7c489',
-  'texture:wallpaper': '02297f702eb8f6af',
-  'texture:wood': '027295928c435252',
+  'texture:wallpaper': 'd67e7b400813a855',
+  'texture:wood': '3a3a7ece27ec9cd6',
 };
 
 const reg = createRegistry();
@@ -103,20 +103,21 @@ describe('the patterns', () => {
 
   it('carpet: tufts near the share asked, matte all over', () => {
     const b = bake({ texture: 'texture:carpet', size: [256, 256], params: { worn: 0 } });
-    expect(share(b, (t) => is(b, t, '#682f2f'))).toBeCloseTo(0.15, 2);
+    expect(share(b, (t) => is(b, t, '#64201f'))).toBeCloseTo(0.15, 2);
     expect(share(b, (t) => b.roughnessMap[t] !== 1)).toBe(0);
   });
 
   it('wallpaper: a stripe of its width every repeat, a five-texel diamond in each band', () => {
     const b = bake({ texture: 'texture:wallpaper', size: [64, 64] });
-    expect(share(b, (t) => is(b, t, '#c2b68e'))).toBeCloseTo(2 / 8, 5);
+    expect(share(b, (t) => is(b, t, '#b5a87f'))).toBeCloseTo(3 / 8, 5);
     expect(share(b, (t) => is(b, t, '#9b8b63'))).toBeCloseTo(5 / 64, 5);
   });
 
-  it('shingles: a slot and a shadowed row a course, thickest at each butt', () => {
+  it('shingles: a slot and a shadowed row a course, a lit butt below it, thickest at each butt', () => {
     const b = bake({ texture: 'texture:shingles', size: [64, 64] });
-    expect(share(b, (t) => is(b, t, '#43291f'))).toBeCloseTo(1 / 8 + 1 / 4 - 1 / 32, 3);
-    expect(share(b, (t) => b.heightMap[t] === 1)).toBeCloseTo((1 / 4) * (7 / 8), 3);
+    expect(share(b, (t) => is(b, t, '#3f2c20'))).toBeCloseTo(1 / 16 + 1 / 4 - 1 / 64, 3);
+    expect(share(b, (t) => is(b, t, '#9b785e'))).toBeCloseTo((1 / 4) * (15 / 16), 3);
+    expect(share(b, (t) => b.heightMap[t] === 1)).toBeCloseTo((1 / 4) * (15 / 16), 3);
   });
 
   it('asphalt and concrete: chips, pits and pores near the shares asked, rough all over', () => {
@@ -137,7 +138,7 @@ describe('the patterns', () => {
 
   it('glass: a broad and a narrow reflection every repeat, smooth all over', () => {
     const b = bake({ texture: 'texture:glass', size: [64, 64] });
-    expect(share(b, (t) => is(b, t, '#c9e2ec'))).toBeCloseTo(4 / 16, 5); // three texels broad and one narrow of 16
+    expect(share(b, (t) => is(b, t, '#c9e2ec'))).toBeCloseTo(7 / 32, 5); // six texels broad and one narrow of 32
     expect(share(b, (t) => b.roughnessMap[t] > 0.06)).toBe(0);
   });
 });

@@ -19,9 +19,9 @@ import { textureSpec } from '../types';
 export const CARPET = textureSpec({
   description: 'A close carpet pile: tufts a shade lighter or darker than its colour, soft worn patches.',
   params: {
-    base: { type: 'string', default: '#7c3a3a', description: 'The pile, hex.' },
-    light: { type: 'string', default: '#8f4747', description: 'Lighter tufts and the worn patches, hex.' },
-    dark: { type: 'string', default: '#682f2f', description: 'Darker tufts, hex.' },
+    base: { type: 'string', default: '#7a2a2d', description: 'The pile, a deep red, hex.' },
+    light: { type: 'string', default: '#8d3538', description: 'Lighter tufts and the worn patches, hex.' },
+    dark: { type: 'string', default: '#64201f', description: 'Darker tufts, hex.' },
     tufts: {
       type: 'number',
       default: 0.3,

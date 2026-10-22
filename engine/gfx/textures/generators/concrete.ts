@@ -25,7 +25,7 @@ export const CONCRETE = textureSpec({
     pore: { type: 'string', default: '#6e6c67', description: 'The pores, hex.' },
     mottle: {
       type: 'number',
-      default: 0.25,
+      default: 0.15,
       minimum: 0,
       maximum: 0.5,
       description: 'The share in each of the dark and the light mottling.',

@@ -9,7 +9,7 @@
  * Invariants: tiles at one repeat (`tile`: [repeat, repeat]); the bands run at 45°, so they meet at the wrap.
  *
  * @example
- * GLASS.size; // [64, 64]: four repeats across, four up
+ * GLASS.size; // [64, 64]: two repeats across, two up
  * @see engine/gfx/textures/generators/v3.test.ts
  */
 import { palette, wrapIndex } from '../tile';
@@ -23,11 +23,11 @@ export const GLASS = textureSpec({
     sheen: { type: 'string', default: '#c9e2ec', description: 'The reflections, hex.' },
     repeat: {
       type: 'integer',
-      default: 16,
+      default: 32,
       minimum: 8,
       maximum: 256,
       unit: 'texels',
-      description: 'From one pair of bands to the next, across and up.',
+      description: 'From one pair of bands to the next, across and up: 2 m, so a wide pane shows few.',
     },
   },
   size: [64, 64],

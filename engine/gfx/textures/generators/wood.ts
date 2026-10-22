@@ -56,7 +56,8 @@ export const WOOD = textureSpec({
     const [grain, knot] = palette([params.grain, params.knot], 'texture:wood');
     const size = [width, height] as const;
     const waver = tileNoise(size, { cells: [width / 16, height / 16], seed, octaves: 2, salt: 1 });
-    const band = tileNoise(size, { cells: [width / 16, height / 16], seed, salt: 2 });
+    // The tone bands run up the grain: 8 texels across, the whole bake (64 texels a cell) up, as a board's figure.
+    const band = tileNoise(size, { cells: [width / 8, Math.max(1, Math.round(height / 64))], seed, salt: 2 });
     const { spacing } = params;
     return (x, y, texel) => {
       const [wx, wy] = [wrapIndex(x, width), wrapIndex(y, height)];
@@ -75,7 +76,7 @@ export const WOOD = textureSpec({
         const bend = r < 4 ? Math.sign(dx) * (4 - r) * 0.75 : 0;
         const u = Math.floor(x + (waver(x, y) - 0.5) * 2 * spacing + bend);
         const line = wrapIndex(u, spacing) === spacing >> 1; // half a spacing off the wrap column: never along it
-        const tone = pickTone(tones, Math.min(0.999, Math.max(0, (band(x, y) - 0.3) * 2.5)));
+        const tone = pickTone(tones, Math.min(0.999, Math.max(0, (band(u, y) - 0.3) * 2.5))); // wavering with the grain
         [color, relief, roughness] = line ? [grain, 0.9, 0.7] : [tone, 1, 0.62];
       }
       texel.color[0] = color[0];

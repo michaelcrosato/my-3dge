@@ -21,7 +21,7 @@ export const WALLPAPER = textureSpec({
   description: 'Printed wallpaper: vertical stripes, and a small diamond in each wide band between them.',
   params: {
     base: { type: 'string', default: '#d9cfab', description: 'The paper, hex.' },
-    stripe: { type: 'string', default: '#c2b68e', description: 'The stripes, hex.' },
+    stripe: { type: 'string', default: '#b5a87f', description: 'The stripes, hex: as heavy as the diamonds.' },
     motif: { type: 'string', default: '#9b8b63', description: 'The diamonds, hex.' },
     repeat: {
       type: 'integer',
@@ -33,11 +33,12 @@ export const WALLPAPER = textureSpec({
     },
     width: {
       type: 'integer',
-      default: 2,
+      default: 3,
       minimum: 1,
       maximum: 64,
       unit: 'texels',
-      description: 'A stripe’s width; at most the repeat less 3, so the diamond fits beside it.',
+      description:
+        'A stripe’s width, a diamond’s by default; at most the repeat less 3, so the diamond fits beside it.',
     },
   },
   size: [64, 64],
