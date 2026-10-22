@@ -2,9 +2,9 @@
  * @file Every inspector member, headless (T1, PLAN.md §8.3, WP 2.7's Done-when: "every inspector member is tested in
  * the browser and headless, and help() matches the API"): one call per member `help()` lists, on the box room with
  * its view, each checked for what it gives headless; a member nobody wrote a call for fails the test, so a new member
- * arrives with its check. tests/e2e/box.spec.ts calls the same members in the page.
+ * arrives with its check. tests/e2e/box-members.spec.ts calls the same members in the page.
  * @see engine/app/viewMembers.ts
- * @see tests/e2e/box.spec.ts
+ * @see tests/e2e/box-members.spec.ts
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
