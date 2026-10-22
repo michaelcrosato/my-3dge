@@ -52,6 +52,7 @@ import type { CameraPose, Vec3 } from './cameras/pose';
 import { createCutaway, type Cutaway } from './cutaway';
 import { boxGeometry } from './geometry/box';
 import type { LevelMeshes } from './level/meshes';
+import type { LevelRecipe } from './level/recipes';
 import { runMeshes } from './level/runs';
 import { createActorPuppets, type ActorPuppets } from './puppets/actors';
 import { createStageCrowd, type StageCrowd } from './stageCrowd';
@@ -85,6 +86,8 @@ export interface StageOptions {
   levelMaterials?: Readonly<Record<string, string>>;
   /** A level written as storeys: each room's floor material, by room name (WP 13.14; the level entry's `rooms`). */
   levelRooms?: Readonly<Record<string, string>>;
+  /** The level's own recipes (WP 13.18; the level entry's `recipes`); a site's structures read their entries'. */
+  levelRecipes?: Readonly<Record<string, LevelRecipe>>;
 }
 
 /** Where a stand-in stands and how it looks, read from its entity's placing component. */
@@ -227,7 +230,7 @@ export function createStage(options: StageOptions): Stage {
   scene.add(ground);
   const meshes = level ? runMeshes(level, options) : null;
   if (meshes) scene.add(meshes.root);
-  const site = placed ? createStageSite(placed, options) : null;
+  const site = placed ? createStageSite(placed, { materials: options.materials, registry: options.registry, log: options.log }) : null; // prettier-ignore
   if (site) scene.add(site.root);
   const terrain = site ? site.terrain : land ? createTerrainMeshes(land, { materials: options.materials }) : null;
   if (terrain && !site) scene.add(terrain.root);

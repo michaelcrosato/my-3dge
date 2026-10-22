@@ -3,7 +3,8 @@
  * site's graph over its terrain and every structure's storeys (`siteBotNav`, engine/world/siteNav.ts), behind one face,
  * so the bot (engine/dev/bot.ts) walks a site's yard, doorways, stairs and ladders as it walks a level. `wayTo(goal)`
  * gives the walking distance to the goal and the way down to it from any point (a point's height tells a site's storeys
- * apart); `tour(start, n, rng)` draws `n` goals reachable from the start and back from it.
+ * apart); `tour(start, n, rng)` draws `n` goals reachable from the start and back from it. `closedDoorAhead` says
+ * when the door in front is one to open (WP 13.18).
  *
  * Invariants: pure in the level or site and the climb limit; the tour draws only from the stream it is given.
  *
@@ -106,3 +107,22 @@ export function siteBotNav(site: Site, climb: number): BotNav {
 
 /** The bot's own stream for a run's tour: `derive(seed, 'bot')`, never the world's. */
 export const tourStream = (seed: number): Rng => new Rng(derive(seed, 'bot'));
+
+/** The world as `closedDoorAhead` reads it: an entity's components by its id. */
+type Entities = { get(id: number): object | undefined };
+
+/** A door's state as `closedDoorAhead` reads it (engine/sim/doors.ts's component). */
+type DoorState = { target: number; angle: number; locked: boolean; broken: boolean; slide: readonly number[]; tilt?: boolean }; // prettier-ignore
+
+/**
+ * Whether `actor`'s interactor (engine/sim/interact.ts) is on a closed door it can open: one shut, not locked, not
+ * broken and on no switch (engine/sim/doors.ts). The use picks it as a player's does, in reach and in front, so a
+ * door the bot's way runs into is the one it finds; the bot then presses use (engine/dev/bot.ts).
+ */
+export function closedDoorAhead(world: Entities, actor: number): boolean {
+  const user = world.get(actor) as { interactor?: { target: number } } | undefined;
+  const target = user?.interactor?.target ?? -1;
+  const door = target < 0 ? undefined : (world.get(target) as { door?: DoorState } | undefined)?.door;
+  if (!door || door.locked || door.broken || door.tilt || door.slide.some((v) => v !== 0)) return false;
+  return door.target === 0 && door.angle === 0;
+}

@@ -13,7 +13,8 @@
  * - `degenerate`: triangles with an area below 1e-10 m²;
  * - `normals`: normals not of length 1, and triangles wound against their normals (normal consistency);
  * - `bounds`: for a geometry, the axes longer than 100 m (centimetres taken for metres) or, when fewer than two axes
- *   reach 1 mm, a line or a point; for a level, how far (m) its meshes reach outside the level's bounds;
+ *   reach 1 mm, a line or a point; for a level, how far (m) its meshes reach outside the level's bounds, past the
+ *   1 cm a door's or a window's frame stands out of an outer wall on the map's edge (engine/gfx/level/openings.ts);
  * - `vertices`: a geometry's (or a prop part's) vertices above its entry's `budget`, a level's drawn vertices (each
  *   instance counted) above 32 per map tile a storey;
  * - `reference`: a prop part naming a geometry no entry defines (drawn as a box);
@@ -44,6 +45,7 @@ import { registry as sharedRegistry, type Registry } from '../../engine/core/reg
 import { buildGeometry, geometryKind, type GeometryEntry } from '../../engine/gfx/geometry/geometry';
 import { inspectGeometry } from '../../engine/gfx/geometry/inspect';
 import { createLevelMeshes } from '../../engine/gfx/level/meshes';
+import { PROUD } from '../../engine/gfx/level/openings';
 import { buildPropPart, partMatrix } from '../../engine/gfx/props';
 import { propKind, type Prop } from '../../engine/world/props/prop';
 import { compileLevel } from '../../engine/world/level/compile';
@@ -246,7 +248,7 @@ export function checkLevelMeshes(id: string, level: CompiledLevel, file?: string
       Math.max(level.bounds.min[k] - box.min.getComponent(k), box.max.getComponent(k) - level.bounds.max[k]),
     ),
   );
-  if (reach > MIN_SIZE) {
+  if (reach > MIN_SIZE + PROUD) {
     at({
       metric: 'bounds',
       value: reach,

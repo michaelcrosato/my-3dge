@@ -65,11 +65,18 @@ describe('roofColliders', () => {
 });
 
 describe('wallUnder', () => {
-  it('clips a gable’s end wall to the underside, through the ridge where it crosses', () => {
-    const roof = makeRoof({ roof: 'gable', pitch: 35 }, { ...SITE, ceiling: 0 });
-    const points = wallUnder(roof, [0, 0, 0.5, 6], 0)!;
-    expect(points.length).toBe(10); // 4 on the floor, 4 corners on the underside, 2 where the ridge crosses
-    for (const [x, y, z] of points.slice(4)) expect(y).toBeCloseTo(roofUnder(roof, x, z), 12);
+  it('clips a gable’s end wall to the underside, through the ridge where it crosses, and off where it is under the floor', () => {
+    const roof = makeRoof({ roof: 'gable', pitch: 35 }, { ...SITE, ceiling: 0.2 });
+    const points = wallUnder(roof, [0, 0, 0.5, 6], 0.2)!;
+    // 6 on the floor (the ridge's 2 and where the underside meets the floor on each long edge) and 8 under the roof:
+    // the 4 corners' underside lies below the floor (it starts 0.2 m down at the eaves), so they are clipped away.
+    expect(points.length).toBe(12);
+    const floor = points.filter(([, y]) => y === 0.2);
+    for (const [x, y, z] of points.filter((p) => !floor.includes(p))) expect(y).toBeCloseTo(roofUnder(roof, x, z), 12);
+    for (const [x, y, z] of points) expect(y).toBeLessThanOrEqual(Math.max(0.2, roofUnder(roof, x, z)) + 1e-12);
+    const edge = ROOF_THICKNESS / tan(35); // where the underside rises through the floor, in from each eave
+    expect(Math.min(...points.map(([, , z]) => z))).toBeCloseTo(edge, 12);
+    expect(Math.max(...points.map(([, , z]) => z))).toBeCloseTo(6 - edge, 12);
     expect(Math.max(...points.map((p) => p[1]))).toBeCloseTo(roof.peak - roof.thickness, 12);
   });
 

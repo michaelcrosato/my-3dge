@@ -1,7 +1,8 @@
 /**
  * @file Unit tests for engine/world/site.ts (T1; WP 13.15): quarter turns carry points both ways exactly and match the
  * bodies' rotation, never giving −0; a structure's footprint and box turn with it; the terrain is flattened round each footprint to
- * its height and cut under a basement and where a structure names a cut; a bad spec is refused, naming each problem.
+ * its height and cut under a basement, the floors on the ground and where a structure names a cut; a bad spec is
+ * refused, naming each problem.
  * @see engine/world/site.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -51,23 +52,31 @@ describe('makeSite', () => {
     expect(Math.abs(terrainHeight(terrain, 2, 2)!)).toBeGreaterThan(0.01);
   });
 
-  it('cuts the ground under the cellar, every cell whose centre a basement tile holds, and nowhere else', () => {
+  it('cuts the ground under the cellar and the floors on it, every cell whose centre a floored tile holds, and nowhere else', () => {
     const { cols, cell, origin } = site.terrain!;
     const cut = [...site.cut!.keys()].filter((i) => site.cut![i]);
-    expect(cut.length).toBe(48); // 8 × 6 m of cellar, 1 m cells
+    expect(cut.length).toBe(48 + 12); // the house's 8 × 6 m and the shed's 3 × 4 m, 1 m cells
     for (const i of cut) {
       const [x, z] = [origin[0] + ((i % cols) + 0.5) * cell, origin[2] + (Math.floor(i / cols) + 0.5) * cell];
-      expect(x > 10 && x < 18 && z > 12 && z < 18).toBe(true);
+      expect((x > 10 && x < 18 && z > 12 && z < 18) || (x > 24 && x < 28 && z > 3 && z < 6)).toBe(true);
     }
   });
 
-  it('cuts where a structure names a rectangle, in its own metres, and leaves a site without basements uncut', () => {
+  it('cuts a one-storey level’s whole map, where a structure names a rectangle, and nothing under a storey of void', () => {
     const registry = createRegistry();
     defineLevel('level:hut', { text: '#####\n#...#\n#####\n', file: 'hut.txt' }, registry);
+    const deck = ['---', 'storey: posts', 'base: 0', 'height: 2', '---', '~~~', '~~~', '---', 'storey: deck', 'base: 2.3', 'height: 2', '---', '...', '...'].join('\n'); // prettier-ignore
+    defineLevel('level:deck', { text: deck, file: 'deck.txt' }, registry);
     defineTerrain('terrain:field', { size: [16, 16] }, registry);
-    expect(makeSite({ terrain: 'terrain:field', structures: [{ level: 'level:hut', at: [4, 0, 4] }] }, 'a', registry).cut).toBeNull(); // prettier-ignore
-    const well = makeSite({ terrain: 'terrain:field', structures: [{ level: 'level:hut', at: [4, 0, 4], turn: 2, cuts: [[1, 1, 3, 2]] }] }, 'b', registry); // prettier-ignore
-    expect([...well.cut!.keys()].filter((i) => well.cut![i]).map((i) => [i % 16, Math.floor(i / 16)])).toEqual([[1, 2], [2, 2]]); // prettier-ignore
+    const cells = (site: ReturnType<typeof makeSite>) => [...(site.cut?.keys() ?? [])].filter((i) => site.cut![i]).map((i) => [i % 16, Math.floor(i / 16)]); // prettier-ignore
+    const hut = makeSite({ terrain: 'terrain:field', structures: [{ level: 'level:hut', at: [4, 0, 4] }] }, 'a', registry); // prettier-ignore
+    expect(cells(hut).length).toBe(5 * 3); // its 5 × 3 m map, which its floor covers
+    expect(makeSite({ terrain: 'terrain:field', structures: [{ level: 'level:deck', at: [4, 0, 4] }] }, 'b', registry).cut).toBeNull(); // prettier-ignore
+    const well = makeSite({ terrain: 'terrain:field', structures: [{ level: 'level:deck', at: [4, 0, 4], turn: 2, cuts: [[1, 1, 3, 2]] }] }, 'c', registry); // prettier-ignore
+    expect(cells(well)).toEqual([
+      [1, 2],
+      [2, 2],
+    ]);
   });
 
   it('refuses a bad spec, naming each problem, and reads a site by id without `site:`', () => {

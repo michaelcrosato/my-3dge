@@ -43,10 +43,11 @@ const hash = (level: CompiledLevel) => hashValue(level as unknown as Canonical);
 
 /**
  * Each storey fixture's compiled hash: a change here is a change of the format-2 shape or of a glyph it uses.
- * Re-recorded in WP 13.14, which gave the railing and the flight recipes of their own and the bounds the eaves.
+ * Re-recorded in WP 13.14, which gave the railing and the flight recipes of their own and the bounds the eaves, and in
+ * WP 13.18, which clipped the walls under a pitched roof where its underside falls below the floor (the house's attic).
  */
 const GOLDEN: Record<string, string> = {
-  house: 'f3b1585415bee4a1', // its flights a tile shorter, its landings two tiles deep, its ladder on the study's wall (WP 13.13's review, WP 13.15)
+  house: '669c5988ab76e6ee', // its flights a tile shorter, its landings two tiles deep, its ladder on the study's wall (WP 13.13's review, WP 13.15); its attic's walls off the eaves (WP 13.18)
   pavilion: '893392706f51530f',
   shed: 'facdd95952ad89f3',
 };

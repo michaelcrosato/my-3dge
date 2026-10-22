@@ -9,10 +9,13 @@
  * Strikes (`strikeDoor`, a melee hit while the striker faces it, Apex's rule): the first bursts it open away from the
  * striker, three times as fast, unlocking it; the second breaks it off its hinges: the leaf's body turns dynamic,
  * knocked away, and the event its prop's `breaks.shards` names goes out (`splinters`: engine/sim/breakables.ts). A
- * shot or a blast (`force`) breaks it at once. A sliding door (`slide: [dx, dy, dz]`, the garage's: up 2.2 m) moves
- * along that offset instead, opened and closed by its switch (engine/sim/switches.ts), never struck open.
- * `addLevelDoors(w, level, place?)` hangs `prop:door` (0.9 m) in the middle of each door opening of a level written as
- * storeys (in a site's structure: `place`, its `at` and quarter turns): 5 cm a side in the door glyph's 1 m.
+ * shot or a blast (`force`) breaks it at once. A sliding door (`slide: [dx, dy, dz]`) moves along that offset instead,
+ * and an up-and-over one (`tilt`, the garage's: WP 13.18) turns about its top edge, its foot swinging out along its
+ * −Z face until it lies flat under its head (`DOOR_TILT`), so it opens under a storey's ceiling; both are opened and
+ * closed by their switch (engine/sim/switches.ts), never used or struck. `addLevelDoors(w, level, place?)` hangs
+ * `prop:door` (0.9 m) in the middle of each door opening of a level written as storeys that it fits (in a site's
+ * structure: `place`, its `at` and quarter turns): one as wide as the leaf to 0.2 m wider and as tall, 5 cm a side in
+ * the door glyph's 1 m; a wider or a lower one (a garage's, a crawlspace's) is the scene's.
  *
  * Events: `door` `{ id, open, locked }`, `splinters` `{ id, prop, position, ground }`.
  * Invariants: a leaf's pose is a pure function of its hinge, yaw and angle (or its offset and amount), driven exactly
@@ -34,8 +37,10 @@ import type { World } from './world';
 
 /** A door's swing open (rad): a quarter turn and a little more. */
 export const DOOR_SWING = 1.65;
-/** How fast a door turns (rad/s), or slides (its way open a second), and how much faster a burst is. */
-const SPEED = { turn: 2.6, slide: 0.6, burst: 3 } as const;
+/** An up-and-over door's turn open (rad): a quarter turn, from upright to flat under its head. */
+export const DOOR_TILT = Math.PI / 2;
+/** How fast a door turns (rad/s), slides (its way open a second) or tilts (rad/s), and how much faster a burst is. */
+const SPEED = { turn: 2.6, slide: 0.6, tilt: 1.2, burst: 3 } as const;
 /** What blocks a leaf: actors and props. */
 const BLOCKERS = ['actor', 'prop'] as const;
 
@@ -47,6 +52,8 @@ export interface DoorSpec {
   locked?: boolean;
   /** A sliding door's way open (m), instead of a hinge. */
   slide?: readonly [number, number, number];
+  /** An up-and-over door, instead: it turns about its top edge, its foot swinging out along its −Z face (the garage's). */
+  tilt?: boolean;
 }
 
 /** The component `door`. */
@@ -62,6 +69,7 @@ export interface DoorComponent {
   struck: number;
   broken: boolean;
   slide: [number, number, number];
+  tilt: boolean;
 }
 
 type DoorEntity = ScenePropComponents & { id: number; door: DoorComponent };
@@ -79,16 +87,26 @@ defineComponent('door', {
     struck: { type: 'integer', default: 0, minimum: 0, description: 'Strikes taken: the second breaks it.' },
     broken: { type: 'boolean', default: false, description: 'Off its hinges, a falling body.' },
     slide: vec('A sliding door’s way open (m); none for a hinge.'),
+    tilt: { type: 'boolean', default: false, description: 'An up-and-over door: it turns about its top edge.' },
   },
 });
 
 /** Whether `door` slides rather than swings. */
 const slides = (door: DoorComponent) => door.slide.some((v) => v !== 0);
 
+/** Whether `door` is worked by its switch (it slides or tilts), never used or struck. */
+const switched = (door: DoorComponent) => slides(door) || door.tilt;
+
 /** The leaf's centre and turn at `angle` (see the file comment). */
 function leafPose(door: DoorComponent, prop: string, angle: number): { position: Vector3; rotation: Quaternion } {
   const { size } = getProp(prop).body;
-  const turn = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), door.yaw + (slides(door) ? 0 : angle));
+  const turn = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), door.yaw + (switched(door) ? 0 : angle));
+  if (door.tilt) {
+    // About its top edge: the centre half its height under the edge, turned with the leaf toward −Z.
+    const tilt = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), angle);
+    const below = new Vector3(0, -size[1] / 2, 0).applyQuaternion(tilt).add(new Vector3(size[0] / 2, size[1], 0));
+    return { position: below.applyQuaternion(turn).add(new Vector3(...door.hinge)), rotation: turn.multiply(tilt) };
+  }
   const centre = new Vector3(size[0] / 2, size[1] / 2, 0).applyQuaternion(turn).add(new Vector3(...door.hinge));
   if (slides(door)) centre.addScaledVector(new Vector3(...door.slide), angle);
   return { position: centre, rotation: turn };
@@ -103,7 +121,7 @@ function sideOf(door: DoorComponent, at: readonly number[]): 1 | -1 {
 /** Hangs a door (see the file comment) and returns its entity. */
 export function addDoor<C extends object, E extends EventMap>(world: World<C, E>, spec: DoorSpec): number {
   const w = world as unknown as World;
-  const door: DoorComponent = { hinge: [...spec.hinge], yaw: spec.yaw ?? 0, angle: 0, target: 0, speed: spec.slide ? SPEED.slide : SPEED.turn, locked: spec.locked ?? false, struck: 0, broken: false, slide: [...(spec.slide ?? [0, 0, 0])] }; // prettier-ignore
+  const door: DoorComponent = { hinge: [...spec.hinge], yaw: spec.yaw ?? 0, angle: 0, target: 0, speed: spec.slide ? SPEED.slide : SPEED.turn, locked: spec.locked ?? false, struck: 0, broken: false, slide: [...(spec.slide ?? [0, 0, 0])], tilt: spec.tilt ?? false }; // prettier-ignore
   const prop = spec.prop ?? 'prop:door';
   const { position } = leafPose(door, prop, 0); // the leaf's centre: its base half its height under it, turned `yaw`
   const base = position.setY(position.y - getProp(prop).body.size[1] / 2);
@@ -121,8 +139,8 @@ export function useDoor<C extends object, E extends EventMap>(
   const { door } = (world as unknown as World).get(id) as unknown as DoorEntity;
   if (door.broken) return false;
   if (door.locked) return (void (world as unknown as World).emit('door', { id, open: false, locked: true }), false);
-  door.target = door.target !== 0 ? 0 : slides(door) ? 1 : sideOf(door, from) * DOOR_SWING; // away: +θ swings to −Z
-  door.speed = slides(door) ? SPEED.slide : SPEED.turn;
+  door.target = door.target !== 0 ? 0 : door.tilt ? DOOR_TILT : slides(door) ? 1 : sideOf(door, from) * DOOR_SWING; // away: +θ swings to −Z
+  door.speed = door.tilt ? SPEED.tilt : slides(door) ? SPEED.slide : SPEED.turn;
   (world as unknown as World).emit('door', { id, open: door.target !== 0, locked: false });
   return true;
 }
@@ -158,7 +176,7 @@ export function strikeDoor<C extends object, E extends EventMap>(
   // prettier-ignore
   const w = world as unknown as World;
   const { door } = w.get(id) as unknown as DoorEntity;
-  if (door.broken || slides(door)) return;
+  if (door.broken || switched(door)) return;
   if (force !== 'melee') return breakDoor(w, id, from);
   if (!faced) return;
   door.struck++;
@@ -186,12 +204,19 @@ function swingDoors(w: World): void {
   }
 }
 
-/** The openings of `level` a door hangs in: its door openings, in the level's order. */
-const doorOpenings = (level: CompiledLevel): OpeningDescriptor[] => (level.openings ?? []).filter((o) => o.kind === 'door'); // prettier-ignore
+/** How much wider than its leaf an opening a door hangs in may be (m). */
+const PLAY = 0.2;
+
+/** The openings of `level` that `prop`'s leaf hangs in: its door openings it fits (see the file comment), in order. */
+function doorOpenings(level: CompiledLevel, prop: string): OpeningDescriptor[] {
+  const [width, height] = getProp(prop).body.size;
+  const fits = (o: OpeningDescriptor) => o.width >= width && o.width <= width + PLAY && o.top - o.bottom >= height;
+  return (level.openings ?? []).filter((o) => o.kind === 'door' && fits(o));
+}
 
 /**
- * Hangs a door in each door opening of `level` (a site's structure placed at `place.at`, turned `place.turn`), its hinge
- * at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
+ * Hangs a door in each door opening of `level` it fits (a site's structure placed at `place.at`, turned `place.turn`),
+ * its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
  */
 export function addLevelDoors<C extends object, E extends EventMap>(
   world: World<C, E>,
@@ -199,7 +224,7 @@ export function addLevelDoors<C extends object, E extends EventMap>(
   place?: { at: readonly number[]; turn: QuarterTurns },
 ): number[] {
   // prettier-ignore
-  return doorOpenings(level).map((opening) => {
+  return doorOpenings(level, 'prop:door').map((opening) => {
     const [cx, , cz] = opening.center;
     const along = opening.axis === 'x';
     const end = Math.max(0, opening.width - getProp('prop:door').body.size[0]) / 2 - opening.width / 2; // the leaf centred
@@ -213,7 +238,7 @@ export function addLevelDoors<C extends object, E extends EventMap>(
 defineUsable('door', {
   prompt: (w, id) => {
     const { door } = w.get(id) as unknown as DoorEntity;
-    if (door.broken || slides(door)) return null;
+    if (door.broken || switched(door)) return null;
     return door.locked ? 'Locked' : door.target !== 0 ? 'Close' : 'Open';
   },
   use: (w, id, user) => {

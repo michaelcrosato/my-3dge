@@ -2,12 +2,15 @@
  * @file Tests for the bot (engine/dev/bot.ts) in a maze fixture: it reaches the target tile round the maze's walls,
  * reports "stuck" when a body navigation does not know blocks the corridor (held, sidestepping, jumping, then given
  * up) and at once when no route leads to the goal; it plays the same steps twice, and its recording replays to the
- * same hash; a tour from its own stream comes back; the stop condition, the trace, the sweep's row and the seeds.
+ * same hash; a tour from its own stream comes back; it opens a closed door in its way and walks through; the stop
+ * condition, the trace, the sweep's row and the seeds.
  */
 import { describe, expect, it } from 'vitest';
 import { createCharacter } from '../physics/character';
 import { physicsOf } from '../physics/binding';
 import { spawnActor } from '../sim/actors';
+import { addLevelDoors, type DoorComponent } from '../sim/doors';
+import { addInteraction } from '../sim/interact';
 import { addLevelBodies } from '../sim/levelBodies';
 import { playReplay } from '../sim/replay';
 import { defineScene } from '../sim/scene';
@@ -71,6 +74,22 @@ describe('the bot in a maze', () => {
     expect(at.some(([x, , z]) => x < 2 && z > 4.5)).toBe(true);
     expect(at.some(([x, , z]) => Math.abs(x - 5.5) < 0.5 && z < 2)).toBe(true);
     for (const [x, , z] of at) expect(MAZE.solid[Math.floor(z) * MAZE.cols + Math.floor(x)], `${x}, ${z}`).toBe(false);
+  });
+
+  it('opens a closed door its way runs into, pressing use as a player does, and walks on through it', () => {
+    const hut = compileLevel(['---', 'storey: ground', 'base: 0', 'height: 2.7', '---', '######', '#....#', '##+###', '#....#', '######'].join('\n'), { name: 'hut' }); // prettier-ignore
+    const scene = defineScene('bot-test:door', {
+      physics: true,
+      setup(w) {
+        addLevelBodies(physicsOf(w), hut);
+        spawnActor(w, { at: [1.5, 0, 3.5], character: createCharacter({ speed: 5 }), player: true }); // 1
+        addLevelDoors(w, hut); // 2: shut, between the two rooms
+        addInteraction(w);
+      },
+    });
+    const session = createSession(scene, { seed: 1 });
+    const report = runBot(session, hut, { to: { x: 1.5, z: 1.5 }, steps: 600 });
+    expect([report.status, report.events.door, (session.world.get(2) as unknown as { door: DoorComponent }).door.target !== 0]).toEqual(['arrived', 1, true]); // prettier-ignore
   });
 
   it('reports stuck when a body navigation does not know blocks the corridor', () => {

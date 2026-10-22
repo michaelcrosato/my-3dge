@@ -38,7 +38,7 @@ game agent's manual.
 - `addLadder` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a ladder (see the file comment); returns its entity.
 - `addLauncher` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a jump pad or a trampoline (see the file comment); returns its entity.
 - `addLevelBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id; `place` stands it at a site's place, its map's north-west corner at `at`, turned `turn` quarter turns about +Y.
-- `addLevelDoors` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door in each door opening of `level` (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
+- `addLevelDoors` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door in each door opening of `level` it fits (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
 - `addLevelLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders `level`'s ladder glyphs stand (engine/world/traverse.ts's `levelLadders`); returns their entities.
 - `addLevelWindows` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Stands the panes of `level`'s window openings (see the file comment) and returns their entities.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
@@ -1147,7 +1147,7 @@ game agent's manual.
 - `addLadder` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a ladder (see the file comment); returns its entity.
 - `addLauncher` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a jump pad or a trampoline (see the file comment); returns its entity.
 - `addLevelBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id; `place` stands it at a site's place, its map's north-west corner at `at`, turned `turn` quarter turns about +Y.
-- `addLevelDoors` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door in each door opening of `level` (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
+- `addLevelDoors` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door in each door opening of `level` it fits (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
 - `addLevelLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders `level`'s ladder glyphs stand (engine/world/traverse.ts's `levelLadders`); returns their entities.
 - `addLevelWindows` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Stands the panes of `level`'s window openings (see the file comment) and returns their entities.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
@@ -3315,6 +3315,7 @@ For the agents who maintain the engine.
 - `BotNav` (interface): What the bot navigates by (see the file comment).
 - `BotPoint` (type): A point the bot reads: on the ground (x, z), its height where a site has storeys, and what the body does there (the shooter model's mode: `ladder`, `air`…).
 - `BotWay` (interface): The way to one goal: the walking distance from a point (Infinity where none leads), the unit way to walk, and whether to crouch there (under a low ceiling, or for the next step: a site's attic; never on a level's grid).
+- `closedDoorAhead` (function): Whether `actor`'s interactor (engine/sim/interact.ts) is on a closed door it can open: one shut, not locked, not broken and on no switch (engine/sim/doors.ts).
 - `levelBotNav` (function): A level's grid as the bot reads it, a step climbing at most `climb` metres.
 - `siteBotNav` (function): A site's graph as the bot reads it (see the file comment), a step climbing at most `climb` metres.
 - `tourStream` (const): The bot's own stream for a run's tour: `derive(seed, 'bot')`, never the world's.
@@ -4095,6 +4096,7 @@ For the agents who maintain the engine.
 - `framesGeometry` (function): The frame round each of `openings` (see the file comment); null when there are none.
 - `headsGeometry` (function): The wall over `storey`'s openings and low ceilings (see the file comment), `roof` its pitched roof when it has one; null when it has none.
 - `POST_GAP` (const): How far apart a railing's posts stand, at most (m).
+- `PROUD` (const): How far a frame stands out of the wall's faces (m), so its faces never share the wall's.
 - `railingGeometry` (function): A railing along each run of `pieces` (tiles `tile` m wide), from `bottom` to `top` (m); null when there are none.
 
 ### [`engine/gfx/level/ramp.ts`](../engine/gfx/level/ramp.ts)
@@ -4116,8 +4118,10 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/level/runs.ts`](../engine/gfx/level/runs.ts)
 
+- `levelLooks` (function): The looks the level `id` of `registry` gives its meshes; none for an id it lacks.
+- `LevelLooks` (interface): A level's looks, its entry's presentation fields (engine/world/level/level.ts): swaps, rooms' floors, recipes.
 - `runMeshes` (function): The level's meshes, each run named by its tiles (see the file comment).
-- `RunMeshesOptions` (interface): How `runMeshes` draws: the materials, the level's swaps and its rooms' floors, and where advice goes.
+- `RunMeshesOptions` (interface): How `runMeshes` draws: the materials, the level's looks (`LevelLooks`) and where advice goes.
 - `splitRuns` (function): The level with each block descriptor split into one descriptor per run (merged rectangle), surfaces whole, and for each descriptor the run it draws (null for one that was not split).
 
 ### [`engine/gfx/level/shapes.ts`](../engine/gfx/level/shapes.ts)
@@ -5628,9 +5632,10 @@ For the agents who maintain the engine.
 ### [`engine/sim/doors.ts`](../engine/sim/doors.ts)
 
 - `addDoor` (function): Hangs a door (see the file comment) and returns its entity.
-- `addLevelDoors` (function): Hangs a door in each door opening of `level` (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
+- `addLevelDoors` (function): Hangs a door in each door opening of `level` it fits (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
 - `breakDoor` (function): Breaks `id` off its hinges (see the file comment), knocked away from `from`.
 - `DOOR_SWING` (const): A door's swing open (rad): a quarter turn and a little more.
+- `DOOR_TILT` (const): An up-and-over door's turn open (rad): a quarter turn, from upright to flat under its head.
 - `DoorComponent` (interface): The component `door`.
 - `DoorSpec` (interface): What `addDoor` takes (see the file comment).
 - `strikeDoor` (function): A strike on `id` from `from`: the first bursts it open, the second breaks it; a shot or a blast breaks it at once.
@@ -5672,7 +5677,7 @@ For the agents who maintain the engine.
 - `addBreakables` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Adds the system `breakables` to `w` (once), for panes a scene stands itself.
 - `addDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door (see the file comment) and returns its entity.
 - `addInteraction` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Adds the system `interact` to `w` (once): see the file comment.
-- `addLevelDoors` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door in each door opening of `level` (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
+- `addLevelDoors` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door in each door opening of `level` it fits (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
 - `addLevelWindows` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Stands the panes of `level`'s window openings (see the file comment) and returns their entities.
 - `addSwitch` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Puts a switch on a wall (see the file comment) and returns its entity.
 - `BREAK_SPEED` (const from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): How fast a prop must fly to break a pane it strikes (m/s): a throw, never a nudge.
@@ -6179,7 +6184,7 @@ For the agents who maintain the engine.
 - `roofHeight` (function): The roof's top (m) at (x, z), the surface bodies stand on; −Infinity off it.
 - `RoofSite` (interface): Where a storey stands, for its roof: its index, floor, ceiling, floored tiles' bounds (m) and surface tag.
 - `roofUnder` (function): The roof's underside (m) at (x, z): its top less its thickness; −Infinity off it.
-- `wallUnder` (function): The corners of the convex hull of a wall under the roof (m): the rectangle `[x0, z0, x1, z1]` from `bottom` up to the roof's underside (see the file comment).
+- `wallUnder` (function): The corners of the convex hull of a wall under the roof (m): the rectangle `[x0, z0, x1, z1]` from `bottom` up to the roof's underside (see the file comment), over only the part of it where the underside clears `bottom`, so near the eaves, where the underside falls below the floor, no wall stands into the slab (WP 13.18: it had, up to 0.18 m).
 
 ### [`engine/world/level/rooms.ts`](../engine/world/level/rooms.ts)
 

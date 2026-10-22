@@ -14,8 +14,8 @@
  *
  * The camera is a rig (engine/gfx/cameras/rig.ts: a code's camera, blends, the view effects, the settings `cam.*`) that
  * follows the player (WP 3.10): the first player actor's feet as the frame draws them, else the level's middle; so does
- * the stage's sky (engine/gfx/stageSky.ts, flickering at the frames' time, WP 7.8), and the level entry's material
- * swaps (`materials`) reach the stage. The rig also gets the sim's read-only `QueryView` in a physics scene (the follow
+ * the stage's sky (engine/gfx/stageSky.ts, flickering at the frames' time, WP 7.8), and the level entry's looks (its
+ * swaps, rooms' floors and recipes: `levelLooks`) reach the stage. The rig also gets the sim's read-only `QueryView` in a physics scene (the follow
  * cameras keep out of the walls), the player's eye (the shooter model's height, else his head socket) and what he does
  * each step (`cameraPlayer`); first person draws his arms by their own lens and hides his body, its shadow kept
  * (engine/gfx/viewmodel/, WP 13.12; `cameraInfo().culled`, `.arms`); hard landings shake the screen. Following a
@@ -49,13 +49,14 @@ import type { MaterialLibrary } from '../gfx/materials/library';
 import type { FrameView } from '../gfx/renderer';
 import { aimPoint, type AimDevices, type AimRule } from '../input/aim';
 import { dumpScene, type DumpOptions } from '../gfx/sceneDump';
+import { levelLooks } from '../gfx/level/runs';
 import { createStage, type Stage } from '../gfx/stage';
 import type { FirstPersonParts } from '../gfx/viewmodel/body';
 import { armsLens } from '../gfx/viewmodel/lens';
 import { queryViewOf, type QueryView } from '../sim/queryView';
 import type { Session } from '../sim/session';
 import type { EntityData } from '../sim/state';
-import { getLevel, type LevelEntry } from '../world/level/level';
+import { getLevel } from '../world/level/level';
 import { getSite } from '../world/site';
 import { getTerrain } from '../world/terrain';
 
@@ -155,13 +156,11 @@ export function createRunView(options: RunViewOptions): RunView {
     throw codeError('APP_NO_LEVEL', { scene: scene.id, level: scene.level });
   }
   const level = scene.level === undefined ? null : getLevel(scene.level, registry);
-  const entry = scene.level === undefined ? null : (registry.get('level', scene.level) as LevelEntry);
-  const levelMaterials = (entry?.materials ?? {}) as Readonly<Record<string, string>>; // strings: the kind checks
-  const levelRooms = (entry?.rooms ?? {}) as Readonly<Record<string, string>>;
+  const looks = scene.level === undefined ? {} : levelLooks(registry, scene.level);
   const terrain = scene.terrain === undefined ? null : getTerrain(scene.terrain, registry);
   const site = scene.site === undefined ? null : getSite(scene.site, registry);
   const fxRng = (...keys: readonly (string | number)[]) => options.run().world.fxRng(...keys);
-  const stage = createStage({ level, terrain, site, materials: options.materials, registry, log: options.log, fxRng, levelMaterials, levelRooms }); // prettier-ignore
+  const stage = createStage({ level, terrain, site, materials: options.materials, registry, log: options.log, fxRng, ...looks }); // prettier-ignore
   /**
    * Turns the effects on or off by the view setting `gfx.effects` (a registry without it: on), before they read;
    * returns whether that changed them.

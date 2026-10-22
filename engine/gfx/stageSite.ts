@@ -1,8 +1,8 @@
 /**
  * @file A site drawn (PLAN.md WP 13.15; docs/PLAYGROUND.md §6.3): `createStageSite(site, options)` draws each of a
- * site's structures, its level's meshes by runs (engine/gfx/level/runs.ts) in a group standing at the structure's
- * `at`, turned its quarter turns about +Y as its bodies are (engine/world/site.ts), and the site's terrain with its
- * cut left out (engine/gfx/terrain.ts). Each structure has its cutaway (engine/gfx/cutaway.ts, made once a player
+ * site's structures, its level's meshes by runs (engine/gfx/level/runs.ts) in its level entry's looks (`registry`'s:
+ * its swaps, rooms' floors and recipes), in a group standing at the structure's `at`, turned its quarter turns about
+ * +Y as its bodies are (engine/world/site.ts), and the site's terrain with its cut left out (engine/gfx/terrain.ts). Each structure has its cutaway (engine/gfx/cutaway.ts, made once a player
  * stands on the stage: `follow`) and its cutaway by storey (engine/gfx/storeyCut.ts), both run in its own frame:
  * `update(pose, feet, { fade, view })` carries the camera's pose and the player's feet into each structure's frame
  * (`toLocal`, the yaw less its turns), cuts and fades there, and in a classic view (`view`) hides, in the structure
@@ -16,17 +16,19 @@
  * every structure's meshes, the cutaways' twins and the terrain's levels; `dispose` frees what it made.
  *
  * @example
- * // const drawn = createStageSite(getSite('site:lot'), { materials });
+ * // const drawn = createStageSite(getSite('site:lot'), { materials, registry });
  * // scene.add(drawn.root);
  * // each frame, once a player stands: drawn.follow(); drawn.update(camera.pose(), player.feet, { fade, view });
  * @see engine/gfx/stageSite.test.ts
  */
 import { Group, type Material, type Object3D } from 'three/webgpu';
+import type { Log } from '../core/log';
+import type { Registry } from '../core/registry';
 import { toLocal, type Site, type SiteStructure } from '../world/site';
 import type { CameraPose, Vec3 } from './cameras/pose';
 import { createCutaway, type Cutaway } from './cutaway';
 import type { LevelMeshes } from './level/meshes';
-import { runMeshes } from './level/runs';
+import { levelLooks, runMeshes } from './level/runs';
 import { createStoreyCut, cutPlace, type StoreyCut } from './storeyCut';
 import { createTerrainMeshes, type TerrainMeshes } from './terrain';
 import type { Warmup } from './warmup';
@@ -68,7 +70,10 @@ function localFeet(s: SiteStructure, [x, y, z]: Vec3): Vec3 {
 }
 
 /** Draws `site` (see the file comment). */
-export function createStageSite(site: Site, options: { materials: { get(id: string): Material } }): StageSite {
+export function createStageSite(
+  site: Site,
+  options: { materials: { get(id: string): Material }; registry?: Registry; log?: Log },
+): StageSite {
   const root = new Group();
   root.name = `site:${site.name}`;
   const terrain = site.terrain ? createTerrainMeshes(site.terrain, { materials: options.materials, cut: site.cut }) : null; // prettier-ignore
@@ -78,7 +83,8 @@ export function createStageSite(site: Site, options: { materials: { get(id: stri
     group.name = `${root.name}/${structure.index}`;
     group.position.set(...structure.at);
     group.rotation.y = (structure.turn * Math.PI) / 2;
-    const meshes = runMeshes(structure.level, options);
+    const looks = options.registry ? levelLooks(options.registry, `level:${structure.name}`) : {};
+    const meshes = runMeshes(structure.level, { materials: options.materials, log: options.log, ...looks });
     group.add(meshes.root);
     root.add(group);
     return { structure, group, meshes, storeys: createStoreyCut(meshes), cutaway: null as Cutaway | null };

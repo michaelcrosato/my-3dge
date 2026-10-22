@@ -433,7 +433,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `Bot`, `BOT_FIELDS`, `BotOptions`, `BotPlan`, `BotReport`, `BotRow`, `BotRun`, `BotSample`, `BotStatus`, `BotWorld`, `parseSeeds`, `runBot`, `sweepBot`, `SweepOptions`
   - Tests: [`engine/dev/bot.test.ts`](../engine/dev/bot.test.ts)
 - [`botNav.ts`](../engine/dev/botNav.ts): What the bot navigates by (PLAN.md WP 5.6, WP 13.15): a level's grid (`levelBotNav`, engine/world/nav.ts) or a site's graph over its terrain and every structure's storeys (`siteBotNav`, engine/world/siteNav.ts), behind one face, so the bot (engine/dev/bot.ts) walks a site's yard, doorways, stairs and ladders as it walks a level.
-  - Exports: `BotNav`, `BotPoint`, `BotWay`, `levelBotNav`, `siteBotNav`, `tourStream`
+  - Exports: `BotNav`, `BotPoint`, `BotWay`, `closedDoorAhead`, `levelBotNav`, `siteBotNav`, `tourStream`
   - Tests: [`engine/dev/botNav.test.ts`](../engine/dev/botNav.test.ts)
 - [`gallery.ts`](../engine/dev/gallery.ts): The gallery (PLAN.md WP 7.7): every registered entry of a kind with a `gallery` field (engine/core/gallery.ts) filmed as a few frames, so a kind's twenty entries are reviewed on one contact sheet rather than twenty shots.
   - Exports: `burstLife`, `fitCamera`, `GALLERY_CODES`, `GALLERY_ELEVATION`, `GALLERY_FOV`, `GALLERY_STAGING`, `GalleryFrame`, `galleryFrames`, `galleryKindsOf`, `galleryProblem`, `galleryRoute`, `GalleryRoute`, `galleryStart`
@@ -554,7 +554,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`stageRides.ts`](../engine/gfx/stageRides.ts): Rides on the stage (PLAN.md WP 13.7): every entity holding the component `zipline`, `ladder` or `launcher` (engine/sim/rides.ts) drawn from it.
   - Exports: `createStageRides`, `RIDE_KINDS`, `RUNG`, `StageRides`, `StageRidesOptions`
   - Tests: [`engine/gfx/stageRides.test.ts`](../engine/gfx/stageRides.test.ts)
-- [`stageSite.ts`](../engine/gfx/stageSite.ts): A site drawn (PLAN.md WP 13.15; docs/PLAYGROUND.md §6.3): `createStageSite(site, options)` draws each of a site's structures, its level's meshes by runs (engine/gfx/level/runs.ts) in a group standing at the structure's `at`, turned its quarter turns about +Y as its bodies are (engine/world/site.ts), and the site's terrain with its cut left out (engine/gfx/terrain.ts).
+- [`stageSite.ts`](../engine/gfx/stageSite.ts): A site drawn (PLAN.md WP 13.15; docs/PLAYGROUND.md §6.3): `createStageSite(site, options)` draws each of a site's structures, its level's meshes by runs (engine/gfx/level/runs.ts) in its level entry's looks (`registry`'s: its swaps, rooms' floors and recipes), in a group standing at the structure's `at`, turned its quarter turns about +Y as its bodies are (engine/world/site.ts), and the site's terrain with its cut left out (engine/gfx/terrain.ts).
   - Exports: `createStageSite`, `StageSite`, `StageStructure`
   - Tests: [`engine/gfx/stageSite.test.ts`](../engine/gfx/stageSite.test.ts)
 - [`stageSky.ts`](../engine/gfx/stageSky.ts): The stage's lights (PLAN.md §6.4's view, WP 7.8, ADR-0008 amendment 10): the stage's own, a hemisphere light and one shadow-casting sun fitted to the level under a plain background, and a sky on demand (engine/gfx/sky.ts: the light pool lit from the level's light spots and flickering, the sky's sun, its dome and backdrop, the ambient light and the fog).
@@ -728,7 +728,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createLevelMeshes`, `LEVEL_MESH_CODES`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `meshDrawCalls`
   - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`tests/e2e/hall.spec.ts`](../tests/e2e/hall.spec.ts), [`tests/e2e/level-meshes.spec.ts`](../tests/e2e/level-meshes.spec.ts)
 - [`openings.ts`](../engine/gfx/level/openings.ts): Openings drawn (PLAN.md WP 13.14; docs/PLAYGROUND.md §6.1, §7.1): the parts round a storey's doors and windows, and its railings.
-  - Exports: `boxBetween`, `FRAME`, `framesGeometry`, `headsGeometry`, `POST_GAP`, `railingGeometry`
+  - Exports: `boxBetween`, `FRAME`, `framesGeometry`, `headsGeometry`, `POST_GAP`, `PROUD`, `railingGeometry`
   - Tests: [`engine/gfx/level/openings.test.ts`](../engine/gfx/level/openings.test.ts)
 - [`ramp.ts`](../engine/gfx/level/ramp.ts): Smooth ramps (PLAN.md WP 13.1; docs/PLAYGROUND.md §2.3): `rampGeometry(tile, ramps, ground)` draws each ramp (engine/world/level/types.ts, `RampDescriptor`) as the smooth wedge its hull collider is (engine/world/level/shapes.ts, `wedgePoints`): the slope from the ramp's bottom to its top toward the side it `rises` to, its two sides, its back where it meets what it climbs to, and its front when it starts above the ground.
   - Exports: `rampGeometry`
@@ -740,7 +740,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `roofGeometry`
   - Tests: [`engine/gfx/level/roofs.test.ts`](../engine/gfx/level/roofs.test.ts)
 - [`runs.ts`](../engine/gfx/level/runs.ts): A level's meshes by runs (PLAN.md WP 2.7, WP 7.8): what the stage draws a level with (engine/gfx/stage.ts).
-  - Exports: `runMeshes`, `RunMeshesOptions`, `splitRuns`
+  - Exports: `levelLooks`, `LevelLooks`, `runMeshes`, `RunMeshesOptions`, `splitRuns`
   - Tests: [`engine/gfx/stage.test.ts`](../engine/gfx/stage.test.ts)
 - [`shapes.ts`](../engine/gfx/level/shapes.ts): The level's shapes (PLAN.md WP 2.4, WP 4.4): `buildShape(level, descriptor, recipe, materials)` builds the mesh of one mesh descriptor (engine/world/level/types.ts) in its recipe's shape (engine/gfx/level/recipes.ts): a welded surface (the floor), instanced blocks (walls, low walls) or pillars (plinth, shaft and capital, engine/gfx/geometry/pillar.ts), or one mesh for a slab (a gallery, slab.ts), the stairs (stairs.ts), smooth ramps (ramp.ts), a dais (dais.ts) or brazier stands (brazier.ts).
   - Exports: `buildShape`, `BuiltShape`, `drawnWith`, `instanced`, `instanceSlots`, `PartCut`, `placeInstances`
@@ -1180,7 +1180,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `changesSim`, `defineDevAction`, `defineDevActionKinds`, `DEV_ACTION_CODES`, `DevAction`, `DevActionSpec`, `devArgs`, `findDevAction`, `listDevActions`
   - Tests: [`engine/dev/actions.test.ts`](../engine/dev/actions.test.ts)
 - [`doors.ts`](../engine/sim/doors.ts): Doors (PLAN.md WP 13.16; docs/PLAYGROUND.md §7.1): `addDoor(w, spec)` hangs a door, a kinematic prop (the library's `prop:door` by default) on a hinge: the leaf's foot at its hinged edge stands at `hinge` (m) and, closed, its width runs from there along +X turned `yaw` about +Y, its faces ±Z.
-  - Exports: `addDoor`, `addLevelDoors`, `breakDoor`, `DOOR_SWING`, `DoorComponent`, `DoorSpec`, `strikeDoor`, `useDoor`
+  - Exports: `addDoor`, `addLevelDoors`, `breakDoor`, `DOOR_SWING`, `DOOR_TILT`, `DoorComponent`, `DoorSpec`, `strikeDoor`, `useDoor`
   - Tests: [`engine/sim/doors.test.ts`](../engine/sim/doors.test.ts)
 - [`entities.ts`](../engine/sim/entities.ts): The shape of an entity's data (PLAN.md §6.5 items 4, 6 and 7, WP 1.4; doctrine: Reproducible): the rules the hash (engine/sim/state.ts), captures and restores (engine/sim/capture.ts) and the world (engine/sim/world.ts) share, so a restored entity is the live one, field for field and in the same order (ADR-0006 amendment 3).
   - Exports: `capturable`, `componentNames`, `eachField`, `ENTITY_CODES`, `feedData`, `LiveEntity`, `makeEntity`, `notData`, `NotData`, `placeComponent`

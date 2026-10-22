@@ -3,9 +3,11 @@
  * terrain, structures })` registers one (the registry kind `site`) and `getSite(id)` makes it (`makeSite`): each
  * structure a level placed with its map's north-west corner at `at` (its storey on 0 standing at `at`'s height) and
  * turned `turn` quarter turns about +Y (counter-clockwise from above: east to north). The terrain is flattened round
- * each footprint to that height (`flatten` metres of margin), and cut where a structure reaches under it (the tiles of a
- * storey below its ground floor, a basement, and the rectangles it names in `cuts`: window wells, a bulkhead), so the
- * cutaway can show what is below and nobody walks on ground over a basement.
+ * each footprint to that height (`flatten` metres of margin), and cut where a structure has a floor of its own on or
+ * under it (the floored tiles of its ground floor and of a storey below it, a basement; a one-storey level's whole map)
+ * and the rectangles it names in `cuts` (window wells), so the cutaway can show what is below, nobody walks on ground
+ * over a basement, and no ground shows through a floor at its height (WP 13.18). Stand a structure's floors on whole
+ * cells of the terrain, so the cut is exact: a cell is cut when its middle is under one.
  *
  * Queries over all of it, in world metres (engine/world/siteQueries.ts): the highest surface under a point, its tag,
  * the structure, storey and room a point is in, whether a point is in a solid, and a clear sight line. `toLocal` and
@@ -152,13 +154,17 @@ function place(spec: StructureSpec, index: number, registry: Registry): SiteStru
   return { name: level.name, index, level, at, turn, footprint, bounds, cuts: spec.cuts ?? [] };
 }
 
-/** The local rectangles a structure cuts out of the ground: its storeys' floored tiles below its ground floor, and its own. */
+/**
+ * The local rectangles a structure cuts out of the ground: where it has a floor of its own on or under the ground (its
+ * storeys' floored tiles from its ground floor down, or a level of one storey's whole map), so no ground stands there
+ * to show through a floor at its height, and its own `cuts`.
+ */
 function cutRects(s: SiteStructure): (readonly [number, number, number, number])[] {
   const { level } = s;
   const t = level.tile;
-  const below = (level.storeys ?? []).filter((storey) => storey.base < 0);
+  if (!level.storeys) return [[0, 0, level.cols * t, level.rows * t], ...s.cuts];
   const tiles: [number, number, number, number][] = [];
-  for (const storey of below) {
+  for (const storey of level.storeys.filter((each) => each.base <= 0)) {
     storey.floored.forEach((floored, i) => {
       const [c, r] = [i % level.cols, Math.floor(i / level.cols)];
       if (floored) tiles.push([c * t, r * t, (c + 1) * t, (r + 1) * t]);

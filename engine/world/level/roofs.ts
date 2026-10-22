@@ -268,7 +268,9 @@ function cross(p: [number, number], q: [number, number], axis: 0 | 1, c: number)
 
 /**
  * The corners of the convex hull of a wall under the roof (m): the rectangle `[x0, z0, x1, z1]` from `bottom` up to the
- * roof's underside (see the file comment). Null when the underside never rises above `bottom` over it.
+ * roof's underside (see the file comment), over only the part of it where the underside clears `bottom`, so near the
+ * eaves, where the underside falls below the floor, no wall stands into the slab (WP 13.18: it had, up to 0.18 m). The
+ * floor's corners come first, then the underside's. Null when the underside never rises above `bottom` over it.
  */
 export function wallUnder(
   roof: RoofDescriptor,
@@ -276,29 +278,48 @@ export function wallUnder(
   bottom: number,
 ): Point3[] | null {
   const [x0, z0, x1, z1] = rect;
-  const tops: [number, number][] = [
+  const corners: [number, number][] = [
     [x0, z0],
     [x1, z0],
     [x1, z1],
     [x0, z1],
   ];
-  const add = (point: [number, number] | null) => {
-    const [x, z] = point ?? [NaN, NaN];
-    if (x >= x0 && x <= x1 && z >= z0 && z <= z1 && !tops.some(([a, b]) => a === x && b === z)) tops.push([x, z]);
-  };
+  const inRect = ([x, z]: [number, number]) => x >= x0 && x <= x1 && z >= z0 && z <= z1;
+  const same = (a: [number, number], b: [number, number]) => a[0] === b[0] && a[1] === b[1];
+  // The rectangle's outline, corner by corner with where creases cross each edge, and the creases' ends inside it.
+  const outline: [number, number][] = [];
+  const inner: [number, number][] = [];
+  corners.forEach((from, i) => {
+    const to = corners[(i + 1) % 4];
+    const axis = from[0] === to[0] ? 0 : 1; // the edge runs along z (x fixed) or along x (z fixed)
+    const on: [number, number][] = [];
+    for (const [p, q] of creases(roof)) {
+      const at = cross(p, q, axis, from[axis]);
+      if (at && inRect(at) && !same(at, from) && !same(at, to) && !on.some((o) => same(o, at))) on.push(at);
+    }
+    const along = (point: [number, number]) => Math.abs(point[1 - axis] - from[1 - axis]);
+    outline.push(from, ...on.sort((a, b) => along(a) - along(b)));
+  });
   for (const [p, q] of creases(roof)) {
-    add(p);
-    add(q);
-    for (const [axis, c] of [
-      [0, x0],
-      [0, x1],
-      [1, z0],
-      [1, z1],
-    ] as const)
-      add(cross(p, q, axis, c));
+    for (const end of [p, q]) {
+      if (inRect(end) && !outline.some((o) => same(o, end)) && !inner.some((o) => same(o, end))) inner.push(end);
+    }
   }
-  const top = tops.map(([x, z]): Point3 => [x, roofUnder(roof, x, z), z]);
+  // Clipped where the underside meets `bottom`: it runs straight between the outline's points.
+  const under = ([x, z]: [number, number]) => roofUnder(roof, x, z);
+  const kept: [number, number][] = [];
+  outline.forEach((p, i) => {
+    const q = outline[(i + 1) % outline.length];
+    const [a, b] = [under(p) - bottom, under(q) - bottom];
+    if (a >= 0) kept.push(p);
+    if ((a < 0 && b > 0) || (a > 0 && b < 0)) {
+      const t = a / (a - b);
+      kept.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]);
+    }
+  });
+  const tops = [...kept, ...inner.filter((point) => under(point) >= bottom)];
+  const top = tops.map((point): Point3 => [point[0], Math.max(bottom, under(point)), point[1]]);
   if (!top.some((point) => point[1] > bottom)) return null;
-  const floor = tops.slice(0, 4).map(([x, z]): Point3 => [x, bottom, z]);
+  const floor = kept.map(([x, z]): Point3 => [x, bottom, z]);
   return [...floor, ...top];
 }

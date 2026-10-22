@@ -2,15 +2,17 @@
  * @file Tests for doors (engine/sim/doors.ts; WP 13.16) on a floor: a door opens away from whoever uses it, from
  * either side, and closes; a locked one says so and stays shut; a crate in the leaf's way holds it until it goes; a
  * faced strike bursts it open three times as fast and unlocks it, an unfaced one does nothing, the second breaks it
- * into a falling slab with splinters, and a shot breaks it at once; a garage door slides up its way and down, never
- * struck open; a level's door openings each get a door, hung in their middle.
+ * into a falling slab with splinters, and a shot breaks it at once; a garage door slides up its way and down, or tilts
+ * up and over to lie flat under its head and back, never struck open; a level's door openings each get a door, hung in
+ * their middle, but for those the leaf does not fit (a garage's, a crawlspace's).
  * @see engine/sim/doors.ts
  */
 import { describe, expect, it } from 'vitest';
 import { registry } from '../core/registry';
 import { physicsOf } from '../physics/binding';
 import type { CompiledLevel } from '../world/level/types';
-import { addDoor, addLevelDoors, DOOR_SWING, strikeDoor, useDoor, type DoorComponent, type DoorSpec } from './doors';
+import { Vector3 } from '../core/math';
+import { addDoor, addLevelDoors, DOOR_SWING, DOOR_TILT, strikeDoor, useDoor, type DoorComponent, type DoorSpec } from './doors'; // prettier-ignore
 import type { UsableSpec } from './interact';
 import { removeProp, spawnProp, type ScenePropComponents } from './props';
 import { defineScene } from './scene';
@@ -104,19 +106,34 @@ describe('doors', () => {
     expect([door().door.angle, door().sceneProp.y]).toEqual([0, expect.closeTo(1.1, 3)]);
   });
 
-  it('hangs a door in the middle of each door opening of a level, from its west or north end', () => {
-    const opening = (axis: 'x' | 'z', center: [number, number, number]) => ({ kind: 'door', axis, width: 1, bottom: center[1], center }); // prettier-ignore
-    const level = { openings: [opening('x', [2, 0, 3]), { kind: 'window', axis: 'x', width: 1, bottom: 0.9, center: [4, 0.9, 0] }, opening('z', [5, 0.5, 1])] } as unknown as CompiledLevel; // prettier-ignore
+  it('tilts an up-and-over door about its top edge to lie flat under its head, and back, never struck open', () => {
+    const { session, world, door } = doorScene('tilt', { prop: 'prop:garageDoor', hinge: [0, 0, 3], tilt: true });
+    strikeDoor(world, 1, [1.3, 1, 2]);
+    expect(door().door.struck).toBe(0);
+    useDoor(world, 1, [1.3, 0, 2]);
+    steps(session, 90); // a quarter turn at 1.2 rad/s
+    const flat = physicsOf(world).readBody(door().sceneProp.body);
+    expect([door().door.angle, ...[flat.position.x, flat.position.y, flat.position.z].map((v) => +v.toFixed(3))]).toEqual([DOOR_TILT, 1.3, 2.2, 1.9]); // prettier-ignore
+    expect(Math.abs(new Vector3(0, 1, 0).applyQuaternion(flat.rotation).z)).toBeCloseTo(1, 6); // its face up: lying flat
+    useDoor(world, 1, [1.3, 0, 2]);
+    steps(session, 90);
+    expect([door().door.angle, +door().sceneProp.y.toFixed(3)]).toEqual([0, 1.1]);
+  });
+
+  it('hangs a door in the middle of each door opening of a level it fits, from its west or north end', () => {
+    const opening = (axis: 'x' | 'z', center: [number, number, number], width = 1, high = 2.1) => ({ kind: 'door', axis, width, bottom: center[1], top: center[1] + high, center }); // prettier-ignore
+    const window = { kind: 'window', axis: 'x', width: 1, bottom: 0.9, top: 2.1, center: [4, 0.9, 0] };
+    const level = { openings: [opening('x', [2, 0, 3]), window, opening('x', [8, 0, 3], 2.75), opening('z', [5, 0.5, 1]), opening('x', [2, -3, 9], 1, 1.4)] } as unknown as CompiledLevel; // prettier-ignore
     const scene = defineScene('doors-test:level', {
       physics: true,
       setup: (w) => void addLevelDoors(w, level, { at: [10, 0, 20], turn: 0 }),
     });
     const session = createSession(scene, { seed: 1 });
     session.step({});
-    const doors = [1, 2].map((id) => (session.world.get(id) as unknown as Door).door);
+    const doors = session.world.query('door').map((e) => (e as unknown as Door).door);
     expect(doors.map(({ hinge, yaw }) => [hinge.map((v) => +v.toFixed(6)), +yaw.toFixed(6)])).toEqual([
       [[11.55, 0, 23], 0], // 5 cm in from the west end: a 0.9 m leaf in a 1 m opening
-      [[15, 0.5, 20.55], +(-Math.PI / 2).toFixed(6)],
+      [[15, 0.5, 20.55], +(-Math.PI / 2).toFixed(6)], // the garage's 2.75 m and the crawlspace's 1.4 m are left out
     ]);
   });
 });

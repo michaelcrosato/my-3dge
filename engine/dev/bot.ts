@@ -7,7 +7,8 @@
  *
  * - **Navigation** (`Bot`): toward its goal down the level's flow field (engine/world/nav.ts, to the goal's nearest
  *   open tile) or a site's (engine/dev/botNav.ts), the last `near` metres straight at it, as one of `headings`
- *   directions (few, so its intents change seldom); there within `reach` (on a site, and 1 m of its height).
+ *   directions (few, so its intents change seldom); there within `reach` (on a site, and 1 m of its height). A closed
+ *   door its way runs into it opens as a player does (`runBot` presses use: `closedDoorAhead`, WP 13.18).
  * - **Stuck, measured along the wanted direction**: each step, how far the feet went along the way it asked for, or up
  *   (a ladder). Under `progress` m/s while it asks to move, the held time grows (else it falls at twice the pace):
  *   pressed against a wall, a body jitters back and forth faster than "not moving" allows, so only the way it wants
@@ -21,8 +22,7 @@
  *   `component.field`, true on some entity) or at the budget of `steps` (`timeout`). The report: the status, the steps,
  *   the goals reached, where the player ended, the hash, the events by type and, every `trace` steps, a sample (120
  *   at most: the tick, the feet, the move asked, the goal).
- * - **Sweeps** (`sweepBot`): the run from a fresh session of the scene per seed (`1-20`, `5` for 1 to 5, `3,7,9`):
- *   one row for the scene, its seeds' runs inside.
+ * - **Sweeps** (`sweepBot`): a run from a fresh session of the scene per seed (`1-20`, `5`, `3,7,9`), in one row.
  *
  * Invariants: the bot holds no sim state (its own lives between steps, outside the hash); given the same scene, seed
  * and plan it plays the same steps. Carried from `my-3d2dge:src/emberdeep/93-autopilot.js` (the virtual input, the
@@ -50,7 +50,7 @@ import type { World } from '../sim/world';
 import { getLevel } from '../world/level/level';
 import type { CompiledLevel } from '../world/level/types';
 import { getSite, type Site } from '../world/site';
-import { levelBotNav, siteBotNav, tourStream, type BotNav, type BotPoint, type BotWay } from './botNav';
+import { closedDoorAhead, levelBotNav, siteBotNav, tourStream, type BotNav, type BotPoint, type BotWay } from './botNav'; // prettier-ignore
 
 /** How the bot moves and when it gives up: `new Bot(level, options)` and every run take them. */
 export const BOT_FIELDS = defineSchema({
@@ -197,6 +197,7 @@ export class Bot {
 
 /** The world as the bot reads it: the session's, or the inspector's read-only view of it. */
 export type BotWorld = Pick<World, 'seed' | 'tick' | 'dt' | 'hash'> & {
+  get(id: number): object | undefined;
   query(...names: string[]): readonly object[];
   readonly events: { trace(): readonly TraceRecord[] };
 };
@@ -250,10 +251,14 @@ export interface BotReport {
 }
 
 /** The actor `id`'s component (the first player's when absent), or a coded error naming the fix. */
-function actorFeet(world: BotWorld, id: number | undefined): Required<Omit<BotPoint, 'mode'>> & Pick<BotPoint, 'mode'> {
+function actorFeet(
+  world: BotWorld,
+  id: number | undefined,
+): Required<Omit<BotPoint, 'mode'>> & Pick<BotPoint, 'mode'> & { id: number } {
+  // prettier-ignore
   const actors = world.query('actor') as { id: number; actor: { player: boolean; x: number; y: number; z: number }; motion?: { mode?: string } }[]; // prettier-ignore
   const found = actors.find((e) => (id === undefined ? e.actor.player : e.id === id));
-  if (found) return { x: found.actor.x, y: found.actor.y, z: found.actor.z, mode: found.motion?.mode };
+  if (found) return { id: found.id, x: found.actor.x, y: found.actor.y, z: found.actor.z, mode: found.motion?.mode };
   const problem = id === undefined ? 'the scene has no player actor' : `${show(id)} is no live actor`;
   throw codeError('SIM_NO_ACTOR', { what: 'the bot', problem });
 }
@@ -294,6 +299,7 @@ export function runBot(run: BotRun, level: CompiledLevel | Site, plan: BotPlan =
     let intents = bot.next(feet, world.dt);
     while (bot.status === 'arrived' && ++reached < goals.length)
       intents = bot.goTo(goals[reached]).next(feet, world.dt);
+    if (bot.status === 'going' && closedDoorAhead(world, feet.id)) intents = { ...intents, b: [...(intents.b ?? []), 'interact'] }; // prettier-ignore
     if (bot.status !== 'going') {
       status = bot.status === 'arrived' ? 'arrived' : 'stuck';
       break;

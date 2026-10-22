@@ -1,6 +1,7 @@
 /**
  * @file Unit tests for engine/gfx/stageSite.ts (T1; WP 13.15) on the fixture site (fixtures/levels/storeys/site.ts):
- * each structure drawn in a group at its place and turn, its level's meshes inside; the terrain with the cut left out,
+ * each structure drawn in its level entry's looks, in a group at its place and turn, its level's meshes inside; the
+ * terrain with the cut left out,
  * its chunk holding the cut at its finest level only; in a classic view the storeys above the player's and the roof
  * indoors hidden in the structure the player stands in, the others whole, nothing hidden in another camera or with
  * the player outside; the cutaways made once a player stands, their twins registered with the warm-up; a ride faded
@@ -11,7 +12,8 @@ import { BoxGeometry, Mesh, MeshBasicMaterial } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { defineFixtureSite } from '../../fixtures/levels/storeys/site';
 import { createRegistry } from '../core/registry';
-import { toWorld } from '../world/site';
+import { defineLevel } from '../world/level/level';
+import { defineSite, getSite, toWorld } from '../world/site';
 import { makePose } from './cameras/pose';
 import { createStageSite } from './stageSite';
 import { createTerrainMeshes } from './terrain';
@@ -26,6 +28,21 @@ const hall = (() => {
 const pose = makePose({ position: [14, 30, 30], pitch: -0.8 });
 
 describe('a site drawn', () => {
+  it('draws each structure in its level entry’s looks: its recipes, its swaps and its rooms’ floors', () => {
+    const registry = createRegistry();
+    defineFixtureSite(registry);
+    const shed = registry.get('level', 'level:fixture-shed') as unknown as { text: string };
+    const wall = { shape: 'block', materials: ['material:siding', 'material:paint'], castShadow: true, receiveShadow: true }; // prettier-ignore
+    defineLevel('level:fixture-sided', { text: shed.text, recipes: { wall } }, registry);
+    defineSite('site:sided', { structures: [{ level: 'level:fixture-house', at: [0, 0, 0] }, { level: 'level:fixture-sided', at: [20, 0, 0] }] }, registry); // prettier-ignore
+    const named = { get: (id: string) => Object.assign(new MeshBasicMaterial(), { name: id }) };
+    const drawn = createStageSite(getSite('site:sided', registry), { materials: named, registry });
+    const used = (s: (typeof drawn.structures)[number]) => s.meshes.root.children.flatMap((child) => [(child as Mesh).material].flat().map((m) => (m as MeshBasicMaterial).name)); // prettier-ignore
+    expect(used(drawn.structures[1])).toContain('material:siding');
+    expect(used(drawn.structures[0])).not.toContain('material:siding'); // the house keeps the engine's walls
+    drawn.dispose();
+  });
+
   it('stands each structure’s meshes in a group at its place, turned as its bodies are', () => {
     const drawn = createStageSite(site, { materials });
     const [a, b] = drawn.structures;
@@ -40,7 +57,7 @@ describe('a site drawn', () => {
     const whole = createTerrainMeshes(site.terrain!, { materials });
     const triangles = (mesh: Mesh) => mesh.geometry.getIndex()!.count / 3;
     expect(drawn.terrain!.meshes.length).toBe(1); // 32 × 32 cells: one chunk, held at its finest level
-    expect(triangles(whole.meshes[0]) - triangles(drawn.terrain!.meshes[0])).toBe(48 * 2); // the cellar's 48 cells
+    expect(triangles(whole.meshes[0]) - triangles(drawn.terrain!.meshes[0])).toBe((48 + 12) * 2); // the house's 48 cells and the shed's 12
     whole.dispose();
     drawn.dispose();
   });
