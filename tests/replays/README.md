@@ -102,3 +102,9 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   player's animator phase differs. All four again at the third round, when a planted stride's steps grew shorter as
   the move turns sideways (`GAIT.sideStride`, 35% straight across, by the square of the move's sideways share): with
   it left out all four gave the goldens above, and in their final states only the player's animator phase differs.
+- playground-site's goldens were re-recorded (`--update`, Node ×3 and Chromium ×3 agreeing) with WP 13.19's melee
+  (ADR-0025 amendment 24): its two strikes on the living room's door were instant, and are door kicks now, each landing
+  0.83 s after its press and 1.41 s long, so its second press moved 180 steps after the first (a look toward the burst
+  leaf before it: the kick's cone is 30°), every input after it 140 steps later and the run 140 steps longer (780);
+  the site also gained melee and the ring's dummies (hashed). The story is the same, event for event
+  (labs/playground/scenes/site.test.ts). playground-melee is new with that WP: the ring's story (scenes/ring.test.ts).

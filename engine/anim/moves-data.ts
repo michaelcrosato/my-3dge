@@ -5,7 +5,8 @@
  * hop, crouch, twist }` and `spin`; how long each phase lasts: `time { wind, active, recover, hold }`; when it can
  * connect: `hitAt`; whether a held weapon leaves a ribbon: `trail`; whether the lunge moves the character:
  * `rootMotion`. The engine's 24 moves are my-3d2dge's `E.MOVES`, written in these fields; `LEGACY_FIELDS` is Appendix
- * C's conversion table, old field by old field, and `fromLegacy` applies it (moves-data.test.ts converts all 24).
+ * C's conversion table, old field by old field, and `fromLegacy` applies it (moves-data.test.ts converts all 24). The
+ * engine adds the door kick (`ADDED_MOVES`: `move:breach`, WP 13.19).
  *
  * Invariants:
  * - Angles turn toward the right hand when positive (authoring.ts `turnRight`); on the `vertical` plane, upward.
@@ -173,6 +174,16 @@ export const ENGINE_MOVES: Readonly<Record<string, MoveSpec>> = {
   'move:claw': { arc: [1.2, -1], height: [0.0625, -0.25], reach: [0.4375, 0.4375], body: { lunge: 0.1125, lean: 0.4 }, trail: false, time: { wind: 0.12, active: 0.08, recover: 0.24 } },
 };
 
+/**
+ * The moves the engine adds to the port's (registered with them): the door kick (WP 13.19), a front kick with the sole
+ * at the lock's height, its hit 0.83 s in, where Mesh2Motion's `Kick_Breach` lands its strike (its 1.83 s with the
+ * step back the body does not need).
+ */
+// prettier-ignore
+export const ADDED_MOVES: Readonly<Record<string, MoveSpec>> = {
+  'move:breach': { limb: 'footR', arc: [0.05, 0], kickHeight: [0.6, 0.85], reach: [0.4375, 0.5], body: { lean: -0.3, lunge: 0, crouch: 0 }, hitAt: 0.5, time: { wind: 0.75, active: 0.16, recover: 0.5 } },
+};
+
 /** A move as a body is told it: the move (an id, or a spec of its own) and where it is, a phase and a share of it. */
 export interface MoveInput {
   /** The move: an id (`move:slash`, or just `slash`), a `Move`, or a spec. */
@@ -205,7 +216,7 @@ export function moveKind(registry: Registry): void {
     defineWith: "defineMove('<id>', { arc: [a0, a1], reach: [r0, r1], time: { wind, active, recover } })",
     check: (entry) => moveProblems(entry as Move),
   });
-  for (const [id, spec] of Object.entries(ENGINE_MOVES)) registry.def('move', id, spec as Record<string, unknown>);
+  for (const [id, spec] of Object.entries({ ...ENGINE_MOVES, ...ADDED_MOVES })) registry.def('move', id, spec as Record<string, unknown>); // prettier-ignore
 }
 moveKind(sharedRegistry);
 

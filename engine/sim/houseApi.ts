@@ -16,7 +16,7 @@
  */
 
 // Use (WP 13.16): the system `interact` (a player's use of the thing in reach and in view, with its prompt; carrying
-// and throwing a light prop; a melee strike), the kinds `usable` and `strikable`, and the body-to-entity lookup.
+// and throwing a light prop), the kinds `usable` and `strikable`, and the body-to-entity lookup.
 export { addInteraction } from './interact';
 export { defineUsable } from './interact';
 export { defineStrikable } from './interact';
@@ -56,3 +56,8 @@ export { switchGroup } from './switches';
 export { flipSwitch } from './switches';
 export type { SwitchSpec } from './switches';
 export type { SwitchComponent } from './switches';
+
+// Strikes (WP 13.19): a strikable entry by entity (the move a melee plays on it: a door's kick), and what takes one.
+export type { StrikeEntry } from './interact';
+export { strikeEntry } from './interact';
+export { takesStrike } from './interact';

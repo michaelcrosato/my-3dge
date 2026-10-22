@@ -12,6 +12,8 @@
  *   `preciseHits` characters, so a blade that passes a target between two steps strikes it. A step's quad joins its
  *   two segments straight, so a swing's arc is cut to its chord: 4 cm short at a 1.3 m tip turning 0.5 rad a step.
  * - **Walls** (`physicsWalls`): the wall test projectiles take, a ball cast through the physics world.
+ * - **Fans** (`fanHits`): what a melee strike reaches (WP 13.19): level rays across its cone through the physics world,
+ *   the first body each meets, so a wall hides what stands behind it.
  *
  * Invariants: the tests are exact geometry (a sector against a disc, a segment against triangles), so a target
  * touched only at an edge is still hit; results are ids in ascending order, whatever order the hash keeps; queries
@@ -228,4 +230,49 @@ export function physicsWalls(physics: Physics, groups: readonly GroupName[] = ['
       normal: [hit.normal.x, hit.normal.y, hit.normal.z],
     };
   };
+}
+
+/** A fan of rays (`fanHits`): `reach` long (m) from the feet's axis, `rays` across `cone` (rad), at each of `heights`. */
+export interface Fan {
+  readonly reach: number;
+  readonly cone: number;
+  readonly rays: number;
+  /** Over the feet (m). */
+  readonly heights: readonly number[];
+}
+
+/** A body a fan's ray met: its id, how far from the axis along the ground (m), and the point (world, m). */
+export interface FanHit {
+  readonly body: number;
+  readonly distance: number;
+  readonly point: readonly [number, number, number];
+}
+
+/**
+ * What a strike in reach meets (WP 13.19's melee): a fan of level rays from the axis over `feet`, `fan.rays` spread
+ * evenly across `fan.cone` about `yaw` at each height, each stopping at the first body it meets (`groups`, the body
+ * `exclude` aside), so a wall hides what stands behind it. Each body once, at its nearest, nearest first (ties to the
+ * lower id). Queries see the bodies as of the last physics step.
+ */
+export function fanHits(
+  physics: Physics,
+  feet: Vec3Like,
+  yaw: number,
+  fan: Fan,
+  options: { groups?: readonly GroupName[]; exclude?: number } = {},
+): FanHit[] {
+  const [x, y, z] = xyz(feet, 'fanHits(physics, feet)');
+  check(fan.reach > 0 && fan.cone >= 0 && Number.isInteger(fan.rays) && fan.rays >= 1, 'fanHits(…, fan)', fan, 'a reach above 0, a cone of 0 rad or more and 1 ray or more'); // prettier-ignore
+  const nearest = new Map<number, FanHit>();
+  const ray = { maxDistance: fan.reach, ...(options.groups ? { groups: options.groups } : {}), ...(options.exclude !== undefined ? { exclude: options.exclude } : {}) }; // prettier-ignore
+  for (const height of fan.heights) {
+    for (let i = 0; i < fan.rays; i++) {
+      const turn = yaw + (fan.rays === 1 ? 0 : fan.cone * (i / (fan.rays - 1) - 0.5));
+      const hit = physics.raycast([x, y + height, z], [Math.sin(turn), 0, Math.cos(turn)], ray);
+      if (!hit) continue;
+      const known = nearest.get(hit.body);
+      if (!known || hit.distance < known.distance) nearest.set(hit.body, { body: hit.body, distance: hit.distance, point: [hit.point.x, hit.point.y, hit.point.z] }); // prettier-ignore
+    }
+  }
+  return [...nearest.values()].sort((a, b) => a.distance - b.distance || a.body - b.body);
 }

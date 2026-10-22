@@ -45,7 +45,7 @@ import { MOVEMENT_STATES } from '../../engine/anim/locomotion/matrix';
 import { TRAVERSAL_STATES } from '../../engine/anim/traversal/matrix';
 import { animCheckBody, type AnimCheckName } from '../../engine/anim/check';
 import { rateDrift, RUN_POINTS, runPoints, STATE_MATRIX, type MatrixRun, type MatrixState } from '../../engine/anim/stateMatrix'; // prettier-ignore
-import { ENGINE_MOVES } from '../../engine/anim/moves-data';
+import { ADDED_MOVES, ENGINE_MOVES } from '../../engine/anim/moves-data';
 import { POSES, STANCES, type PoseName, type StanceName, type Weapon } from '../../engine/anim/poses';
 import { Reactions } from '../../engine/anim/reactions';
 import { SAMPLE_STATES } from '../../engine/anim/states';
@@ -152,7 +152,7 @@ export function humanoidStates(build?: string): Record<string, MatrixState> {
     states[`pose:${pose}`] = { states: { pose }, seconds: pose === 'die' ? 2.2 : 1 };
   for (const stance of Object.keys(STANCES) as StanceName[])
     states[`stance:${stance}`] = { states: { stance, velocity: WALK }, seconds: 1 };
-  for (const id of Object.keys(ENGINE_MOVES)) states[id] = attack(id);
+  for (const id of Object.keys({ ...ENGINE_MOVES, ...ADDED_MOVES })) states[id] = attack(id);
   states['reaction:flinch'] = reaction(0.8, (r, f) => r.hit(facingTurn(LEFT, f), f, 2), [
     0.3,
     (r, f) => r.hit(facingTurn(BEHIND, f), f, 3),

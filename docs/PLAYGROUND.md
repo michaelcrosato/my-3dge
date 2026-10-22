@@ -263,7 +263,7 @@ planted so that feet and hands stay where they touch (WP 13.10, WP 13.11, WP 8.8
 | Jump, fall, landings | rise, apex and fall poses by vertical speed; the soft and the hard landing (Mesh2Motion's three-point landing) by landing speed (until WP 8.8's contacts call the clip in, the procedural body's right hand flat on the floor in the hardest: ADR-0025 amendment 11) |
 | Mantle, mantle hang | the hands on the sim's contact points, the body over (Quaternius's climb warped to the height); a fence's top under one hand at a sprint; Mesh2Motion's ledge hang (until WP 8.8's contacts call the clips in, the procedural body: the hands hooked over the lip, the feet up the face and over it, the hang under the hands, every limb off the wall: ADR-0025 amendment 11) |
 | Wall-climb, ladder, zipline, skydive | hand over hand with the feet pushing; the ladder cycle locked to the vertical speed; both hands on the cable; the skydive's spread pose and its dive |
-| Door kick, melee | Mesh2Motion's `Kick_Breach`, its hit at the strike; the engine's 12 fist and kick moves |
+| Door kick, melee | Mesh2Motion's `Kick_Breach`, its hit at the strike; the engine's 12 fist and kick moves (until WP 8.8's contacts call the clips in, the procedural door kick, `move:breach`, its hit at the clip's strike, 0.83 s in: ADR-0025 amendment 24) |
 | Holding and aiming | the weapon lowered at a sprint; the support hand on the grip; aim offsets by pitch and yaw; the head and eyes toward the aim (ahead of WP 13.20's weapons, the gun carried as the view says, down the sights through the right eye: ADR-0025 amendment 11) |
 
 The bounds, over every course (§9.1): a planted foot drifts at most 5 cm per contact (the anim QA's limit, ADR-0009

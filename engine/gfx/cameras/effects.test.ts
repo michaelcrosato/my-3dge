@@ -2,7 +2,8 @@
  * @file Unit tests for the camera effects (engine/gfx/cameras/effects.ts): Apex's lens from its slider; the duck's share
  * and the eye on the shooter model; at rest nothing moves the pose; the sprint lowers the eye 0.15 m and rolls into a
  * turn up to 2°; a boosted slide widens the lens ×1.1 and rolls toward a slide across the view up to 15°; a landing
- * dips the view by its speed and springs back, a jump kicks it up, a hard landing shakes the screen; the sights zoom
+ * dips the view by its speed and springs back, a jump kicks it up, a hard landing shakes the screen, and so does a
+ * melee hit, kicking the view back once (the component `melee`'s `hitAt`, read by `cameraPlayer`); the sights zoom
  * to 55° at a 70° lens in 0.25 s; the bob dips once each 0.4 s at a run; a weapon's kick; each camera takes its share.
  * @see engine/gfx/cameras/effects.ts
  */
@@ -89,6 +90,24 @@ describe('the camera effects', () => {
     let highest = 0;
     for (let k = 0; k < 30; k++) highest = Math.max(highest, effects.frame(1 / 60, { yaw: 0 }).pitch);
     expect(highest).toBeGreaterThan(EFFECTS.punch.jump * 0.8);
+  });
+
+  it('kick the view back and shake the screen once when a melee hit lands', () => {
+    const effects = createCameraEffects();
+    run(effects, player(), 0.1);
+    effects.step(player({ struck: 40 }));
+    const first = effects.frame(1 / 60, { yaw: 0 });
+    expect(first.shake).toBeCloseTo(EFFECTS.shake.hit, 9);
+    let highest = first.pitch;
+    for (let k = 0; k < 30; k++) {
+      effects.step(player({ struck: 40 })); // the same hit: no second kick
+      const frame = effects.frame(1 / 60, { yaw: 0 });
+      expect(frame.shake).toBe(0);
+      highest = Math.max(highest, frame.pitch);
+    }
+    expect(highest).toBeGreaterThan(EFFECTS.punch.hit * 0.8);
+    const entity = { id: 1, actor: { vx: 0, vy: 0, vz: 0, grounded: true }, melee: { hitAt: 12 } };
+    expect([cameraPlayer(entity)?.struck, cameraPlayer({ ...entity, melee: { hitAt: -1 } })?.struck]).toEqual([12, undefined]); // prettier-ignore
   });
 
   it('zoom to the sights in 0.25 s, bob once each 0.4 s at a run, and take a weapon’s kick', () => {

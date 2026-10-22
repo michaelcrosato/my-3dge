@@ -4,8 +4,8 @@
  * prompt: what the crosshair's ray strikes when the step aims (beside a leaf, nothing), else the nearest in front, of
  * the things that can be used now (a sliding door hides no switch); using a door opens it away from the player and
  * closes it, a crate is carried and thrown along the view, through a pane it breaks, even held against it; a use takes
- * its press from the rides; a strike bursts a door open, then breaks it, and a lamp before it takes none; `freeze`
- * stops no door; the run gives the same hashes every time, and a capture mid-swing continues exactly.
+ * its press from the rides; a lamp takes no strike (melee's own: engine/sim/melee.test.ts); `freeze` stops no door; the
+ * run gives the same hashes every time, and a capture mid-swing continues exactly.
  * @see engine/sim/interact.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -15,7 +15,7 @@ import { createCharacter } from '../physics/character';
 import { spawnActor, type ActorComponents } from './actors';
 import { addBreakables } from './breakables';
 import { addDoor, DOOR_SWING, type DoorComponent } from './doors';
-import { addInteraction, THROW_SPEED, type InteractorComponent } from './interact';
+import { addInteraction, takesStrike, THROW_SPEED, type InteractorComponent } from './interact';
 import { spawnProp, type ScenePropComponents } from './props';
 import { defineScene } from './scene';
 import { addLadder } from './rides';
@@ -63,7 +63,7 @@ describe('use', () => {
     expect(ofType(session, 1).interactor.target).toBe(-1);
   });
 
-  it('counts only what can be used now: a sliding door hides no switch; a lamp before a door takes no strike', () => {
+  it('counts only what can be used now: a sliding door hides no switch; a lamp takes no strike', () => {
     const room = (name: string, more: (w: World) => void) => defineScene(`interact-test:${name}`, { physics: true, setup(w) { physicsOf(w).addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size: [20, 1, 20] }, position: [0, -0.5, 0] }] }); spawnActor(w, { at: [0, 0, 0], character: createCharacter({ movement: 'movement:apex' }) }); more(w); addInteraction(w); } }); // prettier-ignore
     const garage = createSession(room('garage', (w) => {
       const door = addDoor(w, { prop: 'prop:garageDoor', hinge: [-1.3, 0, 1.5], slide: [0, 2.2, 0] }); // 2: 1.5 m ahead
@@ -77,8 +77,7 @@ describe('use', () => {
       addDoor(w, { hinge: [-0.45, 0, 1.3] }); // 3
     }), { seed: 1 }); // prettier-ignore
     hall.step({});
-    hall.step({ b: ['melee'] });
-    expect(hall.world.events.trace().filter((e) => e.type === 'strike').map((e) => e.payload)).toEqual([{ id: 1, target: 3 }]); // prettier-ignore
+    expect([takesStrike(hall.world, 2), takesStrike(hall.world, 3)]).toEqual([false, true]);
   });
 
   it('opens a door away from the user and closes it (a body in its way: engine/sim/doors.test.ts)', () => {
@@ -123,18 +122,6 @@ describe('use', () => {
     };
     expect(press(true)).toEqual(['ground', -DOOR_SWING]); // the use took it
     expect(press(false)).toEqual(['ladder', 0]); // with nothing to use, the press takes the ladder
-  });
-
-  it('strikes a door open at the first blow and off its hinges at the second', () => {
-    const session = createSession(yard, { seed: 1 });
-    session.step({});
-    session.step({ b: ['melee'] });
-    expect([ofType(session, 2).door.struck, ofType(session, 2).door.target]).toEqual([1, -DOOR_SWING]);
-    for (let i = 0; i < 30; i++) session.step({});
-    expect(ofType(session, 2).door.angle).toBe(-DOOR_SWING); // burst open in half a second
-    session.step({ b: ['melee'] }); // the leaf now north-west, still in front
-    expect(ofType(session, 2).door.broken).toBe(true);
-    expect(physicsOf(session.world).readBody(ofType(session, 2).sceneProp.body).type).toBe('dynamic');
   });
 
   it('throws a crate held against a pane through it: the throw’s own step breaks it', () => {

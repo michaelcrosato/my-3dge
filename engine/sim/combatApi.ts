@@ -116,3 +116,16 @@ export type { DamageEvent } from './damage';
 export type { DamageEvents } from './damage';
 export { damage } from './damage';
 export { requestHitStop } from './damage';
+
+// Melee (WP 13.19): Apex's punch, kicks and the door kick, a lunge to the target in reach, one hit a swing landing
+// at its moment with its damage and hit-stop; the fan of rays that finds what a strike reaches.
+export { MELEE } from './melee';
+export { MELEE_MOVES } from './melee';
+export { MELEE_FIELDS } from './melee';
+export type { MeleeState } from './melee';
+export type { MeleeReach } from './melee';
+export { addMelee } from './melee';
+export { meleeTargets } from './melee';
+export type { Fan } from './hits';
+export type { FanHit } from './hits';
+export { fanHits } from './hits';

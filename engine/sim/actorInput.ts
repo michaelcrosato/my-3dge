@@ -4,7 +4,8 @@
  * its presses from the edges of the buttons it held, `actor.held`); `motionInput(actor, wants, controls)` is what an
  * actor on a movement model (engine/physics/movement/) takes of them: the sprint, walk and crouch buttons as a player's
  * controls (`input.sprint`, `input.crouch`) say, the use press (unless a use took it, `used`: engine/sim/interact.ts),
- * the view, the keys' frame and what it faces (the aim's point, else the view).
+ * the view, the keys' frame and what it faces (the aim's point, else the view), and whether a melee swings (no mantle
+ * then: engine/sim/melee.ts).
  *
  * Invariants: pure but for an AI actor's own button edges, which `intentsOf` keeps in its component.
  *
@@ -32,8 +33,17 @@ export interface Controls {
   readonly toggleCrouch: boolean;
 }
 
-/** The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it faces. */ // prettier-ignore
-export function motionInput(actor: ActorComponent, wants: Intents, controls: Controls, used = false): CharacterInput {
+/**
+ * The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it
+ * faces; `used`, a use took the step's press (no ride); `swinging`, a melee swings (no mantle: engine/sim/melee.ts).
+ */
+export function motionInput(
+  actor: ActorComponent,
+  wants: Intents,
+  controls: Controls,
+  used = false,
+  swinging = false,
+): CharacterInput {
   const [aimX, , aimZ] = wants.aim ?? [];
   const aimed = aimX !== undefined && Math.hypot(aimX - actor.x, aimZ! - actor.z) > 0.05;
   const face = aimed ? Math.atan2(aimX - actor.x, aimZ! - actor.z) : wants.look?.[0];
@@ -50,5 +60,6 @@ export function motionInput(actor: ActorComponent, wants: Intents, controls: Con
     ...(wants.look ? { view: wants.look[0], pitch: wants.look[1] } : {}),
     ...(frame !== undefined ? { frame } : {}),
     ...(face !== undefined ? { face } : {}),
+    ...(swinging ? { swinging } : {}),
   };
 }

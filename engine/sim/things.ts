@@ -1,9 +1,10 @@
 /**
- * @file Things in a scene (PLAN.md WP 10.4; docs/PLAYGROUND.md §7.2, §7.3): `spawnThing(w, kind, at, yaw?)` stands a
- * thing (engine/world/things.ts) as its kind's prop on its base at `at`, kinematic, its entity holding the component
- * `thing` (its track running through its body's centre). A strike on it (engine/sim/interact.ts `strikeEntity`: a melee
- * hit, a shot, a blast) is a hit, `strikeThing`: a point, a blast all it has; its kind's hooks are called with the
- * world and the entity (`hit` on every hit, `down` when it goes down or breaks), and the events `thingHit`
+ * @file Things in a scene (PLAN.md WP 10.4; docs/PLAYGROUND.md §7.2, §7.3): `spawnThing(w, kind, at, yaw?,
+ * components?)` stands a thing (engine/world/things.ts) as its kind's prop on its base at `at`, kinematic, its entity
+ * holding the component `thing` (its track running through its body's centre) and any others the scene gives it. A
+ * strike on it (engine/sim/interact.ts `strikeEntity`: a melee hit, a shot, a blast) is a hit, `strikeThing`: a point,
+ * a blast all it has; its kind's hooks are called with the world and the entity (`hit` on every hit, `down` when it
+ * goes down or breaks), and the events `thingHit`
  * `{ id, thing, outcome, hp, from }` and `thingDown` `{ id, thing, outcome }` go out for the view and the HUD. The
  * system `things` (phase `anim`, added with the first thing) stands back up the things whose `rise` is over (the hook
  * `up`, the event `thingUp` `{ id, thing }`) and drives each moving one's body to where its track has it at the step's
@@ -40,18 +41,22 @@ type ThingEntity = ScenePropComponents & { id: number; thing: Thing };
 /** What a hook of `kind` is told about `entity` (engine/world/things.ts `ThingTouch`). */
 const touchOf = (w: World, e: ThingEntity, kind: ThingKind, outcome: ThingOutcome | 'up', amount: number, from: readonly [number, number, number]) => ({ thing: e.thing, kind, world: w, entity: e.id, from: [from[0], from[1], from[2]] as [number, number, number], outcome, amount }); // prettier-ignore
 
-/** Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop; returns its entity. */
+/**
+ * Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop, with any further
+ * `components` a scene gives it (a dummy's spring: labs/playground/cast/dummies.ts); returns its entity.
+ */
 export function spawnThing<C extends object, E extends EventMap>(
   world: World<C, E>,
   kind: string,
   at: readonly [number, number, number],
   yaw = 0,
+  components: Readonly<Record<string, object>> = {},
 ): number {
   const w = world as unknown as World;
   const entry = getThing(kind);
   const centre: [number, number, number] = [at[0], at[1] + propCentre(getProp(entry.prop)), at[2]];
   const thing = thingState(entry, centre);
-  const id = spawnProp(w, { prop: entry.prop, at: [at[0], at[1], at[2]], yaw }, { as: 'kinematic', components: { thing } }); // prettier-ignore
+  const id = spawnProp(w, { prop: entry.prop, at: [at[0], at[1], at[2]], yaw }, { as: 'kinematic', components: { ...components, thing } }); // prettier-ignore
   if (!w.systems.has('things')) w.systems.add('things', stepThings, { phase: 'anim' });
   return id;
 }

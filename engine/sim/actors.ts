@@ -320,7 +320,7 @@ function moveActors(w: World, intents: Intents): void {
       jump: held(wants, 'jump'),
       jumpPressed: pressed(wants, 'jump'),
       dashPressed: pressed(wants, 'dash'),
-      ...(motion ? motionInput(actor, wants, controls, (e as { interactor?: { usedAt: number } }).interactor?.usedAt === w.tick) : {}), // prettier-ignore
+      ...(motion ? motionInput(actor, wants, controls, (e as { interactor?: { usedAt: number } }).interactor?.usedAt === w.tick, ((e as { melee?: { move: string } }).melee?.move ?? '') !== '') : {}), // prettier-ignore
     };
     const character = motion ? tuneCharacter(actor.character, tuning) : actor.character;
     const step = stepCharacter(physics, actor.body, character, actor, input, { dt: w.dt, gravity, worldGravity, oneWay, rides }, motion); // prettier-ignore

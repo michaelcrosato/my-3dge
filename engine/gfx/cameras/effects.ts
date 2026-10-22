@@ -11,12 +11,13 @@
  * - the sprint lowers the eye `sprintDrop` and rolls up to `sprintRoll` into a turn of `sprintTurn` rad/s or faster;
  * - a boosted slide (its boost not yet taken back) widens the lens ×`slideFov` and rolls up to `slideRoll` toward a
  *   slide across the view;
- * - a jump kicks the view up, a landing down by its speed, a mantle's grab down a little (`punch`, a damped spring);
+ * - a jump kicks the view up, a landing down by its speed, a mantle's grab down a little, a melee hit back (`punch`, a
+ *   damped spring: the step it landed, `melee.hitAt`, WP 13.19);
  * - the bob, one dip each `bob.period` at a run on the ground, a sway every two: the eye's, and its phase and share for
  *   the weapon (WP 13.12);
  * - aiming down sights zooms to the weapon's lens (Apex's rifles: 55° at a 70° lens) in `ads.time`, as `zoom`;
- * - a landing faster than `shake.from` shakes the screen (`frame.shake`, by the camera's share of the punch: the rig's
- *   `shake()`, which the view adds to engine/gfx/fx/shake.ts);
+ * - a landing faster than `shake.from` shakes the screen, and so does a melee hit (`shake.hit`): `frame.shake`, by the
+ *   camera's share of the punch (the rig's `shake()`, which the view adds to engine/gfx/fx/shake.ts);
  * - `kick(pitch, yaw)`, a weapon's recoil (WP 13.20's firearms, through the rig's `kick`), on the punch's spring.
  * The drop, the rolls and the lens ease with a time constant of `ease`, so no effect cuts. `apexFov(h)` is the lens
  * Apex's slider makes (`h` horizontal degrees at 4:3), in the vertical degrees three.js takes.
@@ -51,13 +52,13 @@ export const EFFECTS = Object.freeze({
   slideRoll: 15 * DEG,
   ease: 0.12,
   /** The spring (Hz, damping ratio); the kicks' peaks (rad): a landing's per m/s over `from`, at most `max`. */
-  punch: Object.freeze({ frequency: 2.5, damping: 0.6, land: 0.4 * DEG, from: 3, max: 5 * DEG, jump: 1 * DEG, grab: 1.5 * DEG }), // prettier-ignore
+  punch: Object.freeze({ frequency: 2.5, damping: 0.6, land: 0.4 * DEG, from: 3, max: 5 * DEG, jump: 1 * DEG, grab: 1.5 * DEG, hit: 1.5 * DEG }), // prettier-ignore
   /** A dip each `period` s at `run` m/s or faster: `height` down, `side` across. */
   bob: Object.freeze({ period: 0.4, height: 0.012, side: 0.006, run: 5 }),
   /** The sights' lens (`fov` degrees at a lens of `at`) and the time to raise them. */
   ads: Object.freeze({ fov: 55, at: 70, time: 0.25 }),
-  /** Metres of screen shake per m/s of a landing over `from`. */
-  shake: Object.freeze({ from: 10, per: 0.004 }),
+  /** Metres of screen shake per m/s of a landing over `from`, and a melee hit's (ours). */
+  shake: Object.freeze({ from: 10, per: 0.004, hit: 0.02 }),
 });
 
 /** The eye's height over the feet on the shooter model, m: Apex's, standing and crouched. */
@@ -78,6 +79,8 @@ export interface CameraPlayer {
   readonly boosted: boolean;
   /** It aims down sights. */
   readonly aiming: boolean;
+  /** The step its last melee hit landed (`melee.hitAt`; −1 or absent: none). */
+  readonly struck?: number;
 }
 
 /** How much of each effect a camera takes, 0 to 1 (see the file comment). */
@@ -143,14 +146,16 @@ export function cameraPlayer(entity: EntityData, aiming = false): CameraPlayer |
   const velocity: Vec3 = [actor.vx ?? 0, actor.vy ?? 0, actor.vz ?? 0];
   const grounded = actor.grounded === true;
   const motion = entity.motion as Readonly<Record<string, unknown>> | undefined;
+  const hitAt = (entity.melee as { hitAt?: number } | undefined)?.hitAt;
+  const struck = hitAt !== undefined && hitAt >= 0 ? { struck: hitAt } : {};
   if (!motion) {
     const mode = grounded ? 'ground' : 'air';
-    return { velocity, grounded, mode, sprinting: false, sliding: false, boosted: false, aiming };
+    return { velocity, grounded, mode, sprinting: false, sliding: false, boosted: false, aiming, ...struck };
   }
   const eye = CAMERA_EYE.stand + (CAMERA_EYE.crouch - CAMERA_EYE.stand) * crouchShare(motion);
   const sliding = motion.sliding === true;
   const boosted = sliding && Number(motion.slideBoost) > 0;
-  return { velocity, grounded, eye, mode: String(motion.mode), sprinting: motion.sprinting === true, sliding, boosted, aiming }; // prettier-ignore
+  return { velocity, grounded, eye, mode: String(motion.mode), sprinting: motion.sprinting === true, sliding, boosted, aiming, ...struck }; // prettier-ignore
 }
 
 /** The effects' state (see the file comment). */
@@ -190,6 +195,10 @@ export function createCameraEffects(): CameraEffects {
         shake += EFFECTS.shake.per * Math.max(0, speed - EFFECTS.shake.from);
       } else if (!next.grounded && was.grounded && next.velocity[1] > 1) kick(punch.jump);
       if (next.mode === 'mantle' && was.mode !== 'mantle') kick(-punch.grab);
+      if (next.struck !== undefined && next.struck !== was.struck) {
+        kick(punch.hit); // a melee hit jolts the view back
+        shake += EFFECTS.shake.hit;
+      }
     },
     frame(dt, view) {
       const k = 1 - Math.exp(-dt / EFFECTS.ease);

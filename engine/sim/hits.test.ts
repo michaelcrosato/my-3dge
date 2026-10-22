@@ -5,7 +5,8 @@
  * exact test on all of them, ids ascending, with a measured slash; a weapon sweep strikes a capsule between its two
  * segments however fast it swung, misses one it passes over, and agrees with a dense sampling of the swept quad on
  * 400 random sweeps; `sweepHits` turns `Attack.sweep`'s quads into hits; `physicsWalls` stops a 1,000 m/s bolt on a
- * 2 cm wall (a ball cast, and a ray for a radius of 0).
+ * 2 cm wall (a ball cast, and a ray for a radius of 0); a fan meets the bodies in its reach and cone, nearest first,
+ * each once, none through a wall.
  */
 import { describe, expect, it } from 'vitest';
 import { inArc, measureMove, type HitShape } from '../anim/moves';
@@ -15,7 +16,7 @@ import { Rng } from '../core/rng';
 import { createPhysics } from '../physics/world';
 import { PROJECTILE, stepProjectiles, type HurtCapsule, type HurtSet } from '../world/projectiles';
 import { SpatialHash } from '../world/spatial';
-import { coneHits, inCone, physicsWalls, sweepHits, sweepTouches } from './hits';
+import { coneHits, fanHits, inCone, physicsWalls, sweepHits, sweepTouches } from './hits';
 
 const DT = 1 / 60;
 /** A slash's shape, as `measureMove` gives one: 1.1 m out, 1.2 rad either side, from 0.6 to 1.4 m up. */
@@ -203,6 +204,26 @@ describe('physicsWalls', () => {
       expect([bolt.state, bolt.z]).toEqual(['wall', expect.closeTo(4.99 - radius, 4)]);
     }
     expect(physicsWalls(physics, ['crowd'])({ x: 0, y: 1, z: 0 }, { x: 0, y: 0, z: 10 }, 0)).toBeNull();
+    physics.dispose();
+  });
+});
+
+describe('fans', () => {
+  it('meet the bodies in reach across their cone, nearest first, each once, none through a wall', () => {
+    const physics = createPhysics();
+    const post = (x: number, z: number) => physics.addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size: [0.2, 2, 0.2] }, position: [x, 1, z] }] }); // prettier-ignore
+    const [near, far, wide, hidden] = [post(0, 0.8), post(0.3, 1.3), post(0.9, 0.9), post(-0.3, 1.4)];
+    physics.addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size: [0.3, 2, 0.05] }, position: [-0.3, 1, 1.1] }] }); // prettier-ignore
+    physics.step({ dt: DT, settings: { get: () => 9.81 } }); // queries see bodies from the step after they came
+    const fan = { reach: 1.52, cone: Math.PI / 6, rays: 5, heights: [0.4, 1.4] };
+    const hits = fanHits(physics, [0, 0, 0], 0, fan);
+    expect(hits.map((h) => h.body)).toEqual([near, expect.any(Number), far]); // the wall before the hidden post
+    expect(hits.map((h) => h.body)).not.toContain(hidden);
+    expect(hits.map((h) => h.body)).not.toContain(wide); // 45° off
+    expect(hits[0]).toMatchObject({ distance: expect.closeTo(0.7, 3), point: [expect.any(Number), 0.4, expect.closeTo(0.7, 3)] }); // prettier-ignore
+    expect(fanHits(physics, [0, 0, 0], Math.PI / 4, { ...fan, cone: 0, rays: 1 }).map((h) => h.body)).toEqual([wide]);
+    expect(fanHits(physics, [0, 0, 0], 0, { ...fan, reach: 0.6 })).toEqual([]);
+    expect(() => fanHits(physics, [0, 0, 0], 0, { ...fan, rays: 0 })).toThrow(/SIM_BAD_ARGUMENT/);
     physics.dispose();
   });
 });

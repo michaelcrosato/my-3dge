@@ -5,11 +5,11 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 
 ## Next: stage G12 of Phase 13, alive (ADR-0025)
 
-- Gate G11 passed (PR #27, 2026-10-22; its row in PLAN.md §14). First the upgrades that qualified, each its own WP
-  and commit: U-1 Vitest 4 (2026-10-22); upload-artifact v5 (2026-10-24) and checkout v6 (2026-11-20) when they do.
-- G12 runs on `claude/pensive-cray-9pa1n6` from the updated main (PLAN.md §11.1), in Phase 13's table order: 13.27
-  done (both follow cameras keep every bound indoors), then 10.4, 13.19, 13.20, 10.2, 10.1, 13.21, 13.22, 11.1, 11.2,
-  11.5, 13.23, 11.3, 13.24, 8.8, 10.8. Then G13, the tech demo.
+- Gate G11 passed (PR #27, 2026-10-22; its row in PLAN.md §14). U-1 Vitest 4 is in (4eb7b89); upload-artifact v5
+  (2026-10-24) and checkout v6 (2026-11-20) between stages, when they qualify.
+- G12 runs on `claude/pensive-cray-9pa1n6` from the updated main (PLAN.md §11.1), in Phase 13's table order: 13.27,
+  10.4 and 13.19 done (Apex's melee, the door kick, the ring's dummies), then 13.20, 10.2, 10.1, 13.21, 13.22, 11.1,
+  11.2, 11.5, 13.23, 11.3, 13.24, 8.8, 10.8. Then G13, the tech demo.
 - The owner's: the Quaternius GLBs (WP 8.8), model access for WP 12.2's live evals (`node x esc` when reached). Their
   go-ahead (2026-10-22): a bot may play with infinite health and ammo to get through content faster and more surely.
 

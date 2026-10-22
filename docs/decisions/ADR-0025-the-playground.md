@@ -1235,3 +1235,43 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   Done-when's bound in patterns.test.ts: every shot of every pattern, 60 m/s (1 m a step), stopped on the 4 cm post
   across its way, never past it.
 - **Beyond its Owns**: engine/sim/{things,kitsApi,combatApi}.ts and their tests, engine/sim-api.ts.
+
+## Amendment 24 (2026-10-22, WP 13.19): melee and the door kick
+
+- **The door kick on the procedural body, not the clip**: the WP and docs/PLAYGROUND.md §5.1 name Mesh2Motion's
+  `Kick_Breach`, its hit at the strike, but the player is the procedural humanoid and the library's clips wait for WP
+  8.8's contacts (amendments 10 and 11); a clip layer on him would also load the library into the page. Built instead:
+  the engine's door kick, `move:breach` (engine/anim/moves-data.ts `ADDED_MOVES`: a front kick, the sole at the lock's
+  height), timed on the clip: its hit 0.83 s in, where `Kick_Breach` lands its strike (engine/anim/clip/library.ts
+  `strikeTime`; its 1.83 s hold a step back the body does not need: the move is 1.41 s). Its own lunge is 0: at the
+  port's kicks' 0.025 m the planted foot still slid 6.5 cm (the anim QA's 5 cm), and the sim's lunge moves the body.
+  The punch is the engine's cross, the air's kick `move:kick` and the slide's uppercut `move:uppercut`, each drawn out
+  so its hit lands at Apex's 0.35 s (the cross's own clip, Mesh2Motion's `Punch_Cross`, strikes at 0.33 s).
+- **Melee** (engine/sim/melee.ts, the system `melee`): Apex's numbers (§3.2) as `MELEE`: 30 damage to a person (an
+  actor with `health`, engine/sim/damage.ts), a reach of 1.52 m in a 30° cone, the lunge until the hit (0.35 s), the
+  hands back 0.75 s after a swing began, a 0.25 s hit-stop. Ours: the lunge closes to 0.9 of the move's measured reach
+  (engine/anim/moves.ts `measureMove`), its speed toward the target's point set each step (so the model's friction
+  cannot leave it short), 8 m/s at most; one target a swing; the cone is a fan of five rays at three heights (scaled
+  down crouched) through the physics world (engine/sim/hits.ts `fanHits`), so a wall hides what stands behind it; the
+  facing is the step's (its aim, else its look), as the movement model turns him.
+- **Faced** (Apex's door rule; amendment 19's hand-off): the target as the swing began; at the hit the first in reach,
+  faced only when it is that one. A strikable entry may name the move a melee plays on it (`defineStrikable(component,
+  strike, move)`: a door's is the kick); else a slide gives the uppercut, the air the kick, the rest the punch.
+- **No mantle while a swing plays** (engine/physics/movement/mantle.ts): the model's air mantle starts at any ledge
+  the body moves at, and an air kick's lunge climbed the dummy it kicked; `CharacterInput.swinging`, from the actor's
+  `melee`, holds it off.
+- **Seen**: third person through the animator's `states.body` (the arm path, WP 6.1); first person, the kick's leg
+  (amendment 12's) and the punch's fist where the body's goes from its eyes (engine/gfx/viewmodel/rig.ts `punch`); a
+  hit kicks the view back 1.5° and shakes it 2 cm, by each camera's share of the punch (engine/gfx/cameras/effects.ts,
+  `melee.hitAt`).
+- **Sound**: the events `melee` and `strike` (and the dummies' `thingHit`, WP 10.4's), which WP 13.22 voices: the
+  playground has no sound before it, and its coverage test asks a sound of every event the playground emits.
+- **The ring's dummies** (labs/playground/cast/dummies.ts): things (amendment 23) standing as `prop:playground-dummy`,
+  three on the canvas, sprung into their bases (1.4 Hz, damping 0.22, 2.6 rad/s a hit, 0.5 rad at most; the component
+  `sparring`, the system `dummies` driving the body about its base); a hit's points come back at once, so a punch never
+  puts one down, a blast for its 3 s rise. The two that ragdoll and get up are WP 10.2's.
+- **The site's replay** (tests/replays/playground-site.replay.json): its two instant strikes are door kicks now, so its
+  second press moved 180 steps after the first, a look toward the burst leaf before it (the 30° cone), and everything
+  after it 140 steps later; its goldens re-recorded (tests/replays/README.md). The site gains melee and the dummies.
+- **Found by the page**: WP 13.27's shooter camera divided its look-ahead's rates by a frame's dt, and a page's
+  warm-up frame of no time made NaN casts (the playground did not start): fixed in 3bcb765, with a test.

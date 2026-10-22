@@ -439,6 +439,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Combat helpers (WP 6.3)**: hit queries against hurt capsules found through a spatial hash (cones with height windows, weapon sweeps), damage on health and crowd bodies (knockback as momentum, launches, death into the corpse group, the event damage), hit-stop handed to the frame clock's budget, and projectiles with swept tests.
 `PROJECTILE_FIELDS`, `PROJECTILE`, `stepProjectiles`, `capsuleCast`, `inCone`, `coneHits`, `sweepTouches`, `sweepHits`, `physicsWalls`, `HEALTH_FIELDS`, `HEALTH`, `damage`, `requestHitStop`; types `Projectile`, `ProjectileState`, `ProjectileStep`, `ProjectileHit`, `HurtCapsule`, `HurtSet`, `WallTest`, `WallContact`, `Health`, `DamageTarget`, `HitSpec`, `DamageEvent`, `DamageEvents`.
 
+**Melee (WP 13.19)**: Apex's punch, kicks and the door kick, a lunge to the target in reach, one hit a swing landing at its moment with its damage and hit-stop; the fan of rays that finds what a strike reaches.
+`MELEE`, `MELEE_MOVES`, `MELEE_FIELDS`, `addMelee`, `meleeTargets`, `fanHits`; types `MeleeState`, `MeleeReach`, `Fan`, `FanHit`.
+
 **Clips on actors (WP 8.9)**: the clip layer in an actor's animator as sim data, the component clips, stepped at the actor's ground speed and drawn over its body by the view; its events come as `clip`. spawnActor's `body` names the body it is drawn as (body:mannequin).
 `addClips`, `playClip`, `stopClip`, `seekClip`, `locomoteClips`, `clipLayerOf`; types `ClipsSpec`, `PuppetComponent`.
 
@@ -460,7 +463,7 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Sites (WP 13.15)**: levels standing on a terrain, each placed and turned in quarter turns, the terrain cut under them; the queries over all of it, the bodies, the ladders and the navigation over every storey and the terrain.
 `defineSite`, `getSite`, `makeSite`, `SITE_FIELDS`, `toWorld`, `toLocal`, `siteFloorBelow`, `siteSurfaceBelow`, `siteStructureAt`, `siteSolidAt`, `siteClearSight`, `siteRescueGrid`, `createSiteNav`, `addSiteBodies`, `addSiteLadders`; types `Site`, `SiteSpec`, `SiteStructure`, `StructureSpec`, `SiteRescueGrid`, `SiteNav`, `SiteNavOptions`.
 
-**Use (WP 13.16)**: the system `interact` (a player's use of the thing in reach and in view, with its prompt; carrying and throwing a light prop; a melee strike), the kinds `usable` and `strikable`, and the body-to-entity lookup.
+**Use (WP 13.16)**: the system `interact` (a player's use of the thing in reach and in view, with its prompt; carrying and throwing a light prop), the kinds `usable` and `strikable`, and the body-to-entity lookup.
 `addInteraction`, `defineUsable`, `defineStrikable`, `strikeEntity`, `USE_REACH`, `CARRY_MASS`, `THROW_SPEED`, `propOfBody`; types `UsableSpec`, `InteractorComponent`, `StrikeForce`, `SpawnPropOptions`, `PropHealthComponent`, `PropLightComponent`.
 
 **Doors (WP 13.16)**: hung on a hinge or sliding, opened away from the user, locked, blocked, burst open and broken.
@@ -471,6 +474,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 
 **Switches (WP 13.16)**: a room's lights and the garage door, as sim state the view reads.
 `addSwitch`, `switchGroup`, `flipSwitch`; types `SwitchSpec`, `SwitchComponent`.
+
+**Strikes (WP 13.19)**: a strikable entry by entity (the move a melee plays on it: a door's kick), and what takes one.
+`strikeEntry`, `takesStrike`; types `StrikeEntry`.
 
 **Things (WP 10.4)**: what can be hit, as a range's targets and a ring's dummies: the kind `thing` (its prop, hit points, rise, track and hooks), a thing's state (hits, down and up, its place on its track), and things in a scene (spawned as their prop, struck as hits, stood back up and driven along their tracks by the system `things`).
 `defineThing`, `getThing`, `thingState`, `hitThing`, `stepThing`, `thingAt`, `THING_FIELDS`, `THING_KIND_FIELDS`, `spawnThing`, `strikeThing`; types `Thing`, `ThingKind`, `ThingSpec`, `ThingTouch`, `ThingHit`, `ThingOutcome`, `ThingStanding`.

@@ -1,5 +1,5 @@
 /**
- * @file Use (PLAN.md WP 13.16; docs/PLAYGROUND.md §7.1): what a player's `interact` press uses and `melee` strikes.
+ * @file Use (PLAN.md WP 13.16; docs/PLAYGROUND.md §7.1): what a player's `interact` press uses, and what a strike does.
  * `addInteraction(w)` (a scene's setup, once) adds the system `interact` (phase `intents`, before the actors move and
  * before the doors, the panes and the switches, phase `anim`; the dev action `freeze` stops none of them). Each step
  * it finds, for every player actor, the usable thing in reach (`USE_REACH`, 2 m from its eye) and in view: along its
@@ -14,13 +14,14 @@
  * its own `use` has a `prompt`, or when a player can carry it (dynamic, at most `CARRY_MASS`). Its `use` hook gets the
  * world, the entity and the user. A carried prop's body is driven 0.8 m in front of the eye each step (it still
  * collides, and drops when held back past the reach and 1.5 m); the next use throws it along the view at `THROW_SPEED`.
- * `melee` strikes what is in reach and in view and takes a strike (`strikeEntity`: a door bursts open, then breaks; a
- * breakable prop takes a point of damage; a dynamic one is knocked; a lamp or a switch takes none), the WP 13.19 kick's
- * hit before its move.
+ * A strike (`strikeEntity`: a melee hit, engine/sim/melee.ts; a shot; a blast) lands on what takes one, the kind
+ * `strikable` by component (`defineStrikable(component, strike, move?)`: a door bursts open, then breaks; a breakable
+ * prop takes a point of damage; a thing a point), else a dynamic prop is knocked; a lamp or a switch takes none. The
+ * entry may name the move a melee plays on it (a door's kick: `strikeEntry`).
  *
  * A use takes its press: `interactor.usedAt` is the step, and the actors' input leaves it out of the rides'
  * (engine/sim/actorInput.ts), so using a door beside a zipline does not ride it. Events: `use` `{ id, target }`,
- * `pickup`, `throw` and `strike` (the same).
+ * `pickup` and `throw` (the same).
  *
  * Invariants: everything is in components (the interactor, the props', the doors'); candidates in id order, the
  * nearest first among them, ties to the lower id; the queries read the physics world as of the last step; a body's prop
@@ -30,7 +31,7 @@
 import type { EventMap } from '../core/events';
 import { Vector3 } from '../core/math';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
-import { held, pressed, type Intents } from '../input/intents';
+import { pressed, type Intents } from '../input/intents';
 import { physicsOf } from '../physics/binding';
 import { getProp, type Prop } from '../world/props/prop';
 import type { ActorComponents } from './actors';
@@ -80,8 +81,15 @@ export function defineInteractKinds(registry: Registry = sharedRegistry): void {
   });
   registry.defineKind('strikable', {
     description: 'How an entity holding a component takes a strike (doors, breakables, WP 13.16).',
-    fields: { strike: { type: 'function', default: () => {}, description: '(w, id, from, faced, force) => void.' } },
-    defineWith: "defineStrikable('<component>', (w, id, from, faced, force) => { … })",
+    fields: {
+      strike: { type: 'function', default: () => {}, description: '(w, id, from, faced, force) => void.' },
+      move: {
+        type: 'string',
+        default: '',
+        description: 'The move a melee plays on it (a door’s kick); "": the usual.',
+      },
+    },
+    defineWith: "defineStrikable('<component>', (w, id, from, faced, force) => { … }, 'move:<id>')",
   });
   const int = (description: string) => ({ type: 'integer', default: -1, minimum: -1, description }) as const;
   const fields = {
@@ -233,14 +241,34 @@ export type StrikeForce = 'melee' | 'shot' | 'blast';
 /** How an entity holding a component takes a strike (`defineStrikable`). */
 type Strike = (w: World, id: number, from: readonly [number, number, number], faced: boolean, force: StrikeForce) => void; // prettier-ignore
 
+/** A `strikable` entry: how an entity holding its component (`id`) takes a strike, and the move a melee plays on it. */
+export interface StrikeEntry {
+  readonly id: string;
+  readonly strike: Strike;
+  readonly move: string;
+}
+
 /** The `strikable` entry of a component `e` holds, or undefined. */
-function strikeOf(e: Entity): { id: string; strike: Strike } | undefined {
-  const entries = sharedRegistry.list('strikable') as unknown as { id: string; strike: Strike }[];
+function strikeOf(e: Entity): StrikeEntry | undefined {
+  const entries = sharedRegistry.list('strikable') as unknown as StrikeEntry[];
   return entries.find((entry) => (e as unknown as Record<string, unknown>)[entry.id] !== undefined);
 }
 
-/** Whether `e` takes a strike: a strikable component, health, or a dynamic body to knock. */
-const strikable = (e: Entity) => !!strikeOf(e) || !!e.propHealth || getProp(e.sceneProp.prop).body.type === 'dynamic';
+/** The `strikable` entry of a component the entity `id` holds (a door's), or undefined. */
+export function strikeEntry<C extends object, E extends EventMap>(
+  world: World<C, E>,
+  id: number,
+): StrikeEntry | undefined {
+  const e = (world as unknown as World).get(id) as unknown as Entity | undefined;
+  return e ? strikeOf(e) : undefined;
+}
+
+/** Whether the prop entity `id` takes a strike: a strikable component, health, or a dynamic body to knock. */
+export function takesStrike<C extends object, E extends EventMap>(world: World<C, E>, id: number): boolean {
+  const e = (world as unknown as World).get(id) as unknown as Entity | undefined;
+  if (!e?.sceneProp) return false;
+  return !!strikeOf(e) || !!e.propHealth || getProp(e.sceneProp.prop).body.type === 'dynamic';
+}
 
 /**
  * Strikes `target` from `from` (m), its striker facing it or not (`faced`), with `force`: the entry of a component it
@@ -290,18 +318,14 @@ function interact(w: World, intents: Intents): void {
       const after = interactor.holding >= 0 ? 'Throw' : w.has(target) ? promptOf(w, usable, target, actor.id) : null;
       [interactor.target, interactor.prompt] = after === null ? [-1, ''] : [target, after]; // what the HUD shows now
     }
-    if (pressed(intents, 'melee') && !held(intents, 'interact')) {
-      const struck = findTarget(w, actor, intents, strikable);
-      if (struck >= 0) {
-        strikeEntity(w, struck, [actor.actor.x, actor.actor.y + 1, actor.actor.z]);
-        w.emit('strike', { id: actor.id, target: struck });
-      }
-    }
   }
 }
 
-/** Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock. */ // prettier-ignore
-export function defineStrikable(component: string, strike: Strike): void {
+/**
+ * Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the
+ * default knock; `move`, the move a melee plays on it (a door's kick, `move:breach`), when not the usual.
+ */
+export function defineStrikable(component: string, strike: Strike, move = ''): void {
   defineInteractKinds();
-  sharedRegistry.def('strikable', component, { strike });
+  sharedRegistry.def('strikable', component, { strike, move });
 }

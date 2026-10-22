@@ -3,8 +3,8 @@
  * stand low in the arms' frame with the forearms coming up from below it, the shoulders under and behind the eye
  * whatever the look; the sprint pumps them with the gait's phase, the slide spreads them, the air raises them; they sway
  * behind a turn of the look and come back, and dip with the weapon bob; a hand held on a contact is drawn on the
- * contact's ray, and one held out of the frame at its edge; a kick shows its leg; and `armsInputOf` reads the hands a
- * traversal holds, a gun and a kick off the body.
+ * contact's ray, and one held out of the frame at its edge; a punch throws its fist out where the body's goes and a
+ * kick shows its leg; and `armsInputOf` reads the hands a traversal holds, a gun, a punch and a kick off the body.
  */
 import { describe, expect, it } from 'vitest';
 import { Animator } from '../../anim/character';
@@ -116,7 +116,20 @@ describe('the arms rig', () => {
     expect(posed(REST).shown).not.toContain('thighR');
   });
 
-  it('reads the hands a traversal holds, a carried gun and a kick off the body', () => {
+  it('throws a punch’s fist out where the body’s goes from its eyes, the other at the ready', () => {
+    const ahead = new Vector3(...poseForward(camera)).multiplyScalar(0.55).add(new Vector3(0, -0.2, 0));
+    const rig = posed({ ...REST, punch: { grips: [null, ahead], weight: 1 } });
+    const [left, right] = rig.hands.map((hand) => view(hand));
+    expect(right[2]).toBeGreaterThan(ARMS.ready[2] + 0.08); // out past the ready fist, as far as the arm reaches
+    expect(right[0]).toBeLessThan(ARMS.ready[0]); // toward the middle
+    expect(left[2]).toBeCloseTo(ARMS.ready[2], 3);
+    expect(inFrame(rig.hands[1])).toBe(true);
+    const half = view(posed({ ...REST, punch: { grips: [null, ahead], weight: 0.5 } }).hands[1]);
+    expect(half[2]).toBeGreaterThan(ARMS.ready[2]);
+    expect(half[2]).toBeLessThan(right[2]);
+  });
+
+  it('reads the hands a traversal holds, a carried gun, a punch and a kick off the body', () => {
     const animator = new Animator({ build: 'build:adult', clock: 1, weapon: 'gun' });
     new FootPlant().attach(animator);
     const plant = new TraversalPlant().attach(animator);
@@ -137,5 +150,11 @@ describe('the arms rig', () => {
     expect(carried.gun?.weight).toBe(1);
     Object.assign(free.body.state.arm, { kick: 1, weight: 0.6 });
     expect(armsInputOf(free, null, { player: null, effects: null, aspect: 1 }).kick?.weight).toBe(0.6);
+    expect(armsInputOf(free, null, { player: null, effects: null, aspect: 1 }).punch).toBeNull(); // a kick: no fist
+    const boxer = new Animator({ build: 'build:adult', clock: 1 });
+    for (let k = 0; k < 12; k++) boxer.update({ position: new Vector3(), body: { move: 'move:cross', phase: 'active', u: k / 11 } }); // prettier-ignore
+    const thrown = armsInputOf(boxer, null, { player: null, effects: null, aspect: 1 }).punch;
+    expect([thrown?.grips[0], thrown?.weight]).toEqual([null, 1]); // the cross: the right fist
+    expect(thrown?.grips[1]?.z).toBeGreaterThan(0.4); // out in front of the eyes (the body faces +Z)
   });
 });

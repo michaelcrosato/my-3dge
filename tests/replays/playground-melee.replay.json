@@ -1,0 +1,83 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Melee (WP 13.19), at the ring: the player kicks in the shed’s door, the first kick bursting it open and the second breaking it off its hinges, then on the ring’s canvas punches the middle dummy twice and the west one once, kicks the east one from a jump and uppercuts the middle one from a slide, each dummy rocking away from the blow and springing back.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "playground:site-ring",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 640,
+  "inputs": [
+    [
+      0,
+      {
+        "args": { "at": [67.5, 0, 20.1], "speed": 0, "yaw": 3.141593 },
+        "cam": 3.141593,
+        "dev": "place",
+        "look": [3.141593, 0]
+      }
+    ],
+    [20, { "b": ["melee"] }],
+    [21, { "b": null }],
+    [115, { "cam": -2.65, "look": [-2.65, 0] }],
+    [120, { "b": ["melee"] }],
+    [121, { "b": null }],
+    [
+      230,
+      {
+        "args": { "at": [66, 1, 6.2], "speed": 0, "yaw": 3.141593 },
+        "cam": 3.141593,
+        "dev": "place",
+        "look": [3.141593, 0]
+      }
+    ],
+    [240, { "b": ["melee"] }],
+    [241, { "b": null }],
+    [300, { "b": ["melee"] }],
+    [301, { "b": null }],
+    [350, { "cam": -1.9, "look": [-1.9, 0] }],
+    [360, { "b": ["melee"] }],
+    [361, { "b": null }],
+    [
+      420,
+      { "args": { "at": [66.3, 1, 5.6], "speed": 0, "yaw": 2.03 }, "cam": 2.03, "dev": "place", "look": [2.03, 0] }
+    ],
+    [425, { "b": ["jump"] }],
+    [426, { "b": null }],
+    [448, { "b": ["melee"] }],
+    [449, { "b": null }],
+    [
+      520,
+      {
+        "args": { "at": [66, 1, 8.3], "speed": 6, "yaw": 3.141593 },
+        "b": ["sprint"],
+        "cam": 3.141593,
+        "dev": "place",
+        "look": [3.141593, 0],
+        "move": [0, -1]
+      }
+    ],
+    [522, { "b": ["sprint", "crouch"] }],
+    [524, { "b": ["sprint", "crouch", "melee"] }],
+    [525, { "b": ["sprint", "crouch"] }],
+    [570, { "b": null, "move": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "272d60e4576d7530",
+      "60": "4aae458afc2aa643",
+      "120": "93a66c9fc95cd31a",
+      "180": "fbd530ddd98c0bd3",
+      "240": "392b1cc07a89a83b",
+      "300": "9a92e2d550ecb7d7",
+      "360": "e25d9d69abf33a76",
+      "420": "9c7195beec2dd90b",
+      "480": "9affeecb8cde9d6b",
+      "540": "e87c871437d111bc",
+      "600": "a90a1dd2ab4ded1e",
+      "640": "a9ba0db6e82dc1e7"
+    }
+  }
+}

@@ -41,6 +41,7 @@ game agent's manual.
 - `addLevelDoors` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door in each door opening of `level` it fits (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
 - `addLevelLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders `level`'s ladder glyphs stand (engine/world/traverse.ts's `levelLadders`); returns their entities.
 - `addLevelWindows` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Stands the panes of `level`'s window openings (see the file comment) and returns their entities.
+- `addMelee` (function from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): Adds the system `melee` to `w` (once): see the file comment.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `addProp` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a dynamic body of one `shape` (a hull too: a rock), of `PROP_MATERIAL` unless `spec` says otherwise; its id.
 - `addSensor` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a body whose one collider is a sensor of `shape`: it blocks nothing and detects bodies.
@@ -376,7 +377,7 @@ game agent's manual.
 - `defineSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): Registers a site on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
 - `defineSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`.
 - `defineSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): Defines a song on `registry` (the shared one by default) and returns it.
-- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock.
+- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock; `move`, the move a melee plays on it (a door's kick, `move:breach`), when not the usual.
 - `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
 - `defineTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Registers a terrain on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
 - `defineTexture` (function from [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)): Defines a texture generator on `registry` (the shared one by default) and returns it.
@@ -419,6 +420,9 @@ game agent's manual.
 - `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
 - `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
+- `Fan` (interface from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): A fan of rays (`fanHits`): `reach` long (m) from the feet's axis, `rays` across `cone` (rad), at each of `heights`.
+- `FanHit` (interface from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): A body a fan's ray met: its id, how far from the axis along the ground (m), and the point (world, m).
+- `fanHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): What a strike in reach meets (WP 13.19's melee): a fan of level rays from the axis over `feet`, `fan.rays` spread evenly across `fan.cone` about `yaw` at each height, each stopping at the first body it meets (`groups`, the body `exclude` aside), so a wall hides what stands behind it.
 - `FeelInspector` (interface from [`engine/dev/feel/panel.ts`](../engine/dev/feel/panel.ts)): What the panel calls on the inspector (`window.__engine`).
 - `FeelOptions` (interface from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): How `measureFeel` runs: the sim's rate, the gravity a character falls under unless its settings name one.
 - `FeelPanel` (type from [`engine/dev/feel/panel.ts`](../engine/dev/feel/panel.ts)): The feel panel: what `createFeelPanel` returns.
@@ -658,6 +662,12 @@ game agent's manual.
 - `measureFeel` (function from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `measureMove` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Measures where `move`'s strike point (the blade's tip, the fist, the foot's sole) goes through its hit window, on a spare body of `options.build` holding `options.weapon` (`build:chibi` with a sword by default): the hit cone and height window to test targets against (`inHitShape`).
 - `MeasureResult` (interface from [`engine/dev/feel/run.ts`](../engine/dev/feel/run.ts)): One measure's verdict.
+- `MELEE` (const from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): Apex's melee (docs/PLAYGROUND.md §3.2): damage, reach (m) and cone (rad), the lunge, the hands back and the stop (s).
+- `MELEE_FIELDS` (const from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): The component `melee`'s fields (see the file comment).
+- `MELEE_MOVES` (const from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): The move of each melee but a target's own: the punch, the kick in the air, the uppercut from a slide.
+- `MeleeReach` (interface from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): What a melee reached: the entity, and the point its ray met (m).
+- `MeleeState` (interface from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): A player's swing (`MELEE_FIELDS` says what each field means).
+- `meleeTargets` (function from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): What the player actor `id` reaches with a melee now, facing `yaw` (rad; his own by default), nearest first (see the file comment): each entity once, a prop that takes a strike or an actor with health, behind no wall.
 - `memoryBackend` (function from [`engine/app/store.ts`](../engine/app/store.ts)): A backend in memory: what Node, refused storage and the isolated modes write to.
 - `Menu` (interface from [`engine/ui/menu.ts`](../engine/ui/menu.ts)): The menu (see the file comment).
 - `MenuItem` (type from [`engine/ui/menu.ts`](../engine/ui/menu.ts)): One menu item: its label, or `{ label, id, disabled }` (an `id` is sent when picked).
@@ -985,7 +995,7 @@ game agent's manual.
 - `spawnProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Stands a prop in the scene, `spawnProp(w, { prop: 'prop:<id>', at: [x, y, z], yaw })`: its base at `at` (m), turned `yaw` about +Y (rad).
 - `SpawnPropOptions` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): How `spawnProp` stands a prop beyond its placement (WP 13.16): a spawn inside a step or a setup joins the world at its end, so a door's or a switch's own component comes with it here.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
-- `spawnThing` (function from [`engine/sim/things.ts`](../engine/sim/things.ts)): Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop; returns its entity.
+- `spawnThing` (function from [`engine/sim/things.ts`](../engine/sim/things.ts)): Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop, with any further `components` a scene gives it (a dummy's spring: labs/playground/cast/dummies.ts); returns its entity.
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `SQUASH` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The squash spring (my-3d2dge's numbers): its pull and damping per second, and its bound either way.
 - `squashScale` (function from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The root scale of a squash: 1 + `squash` tall, 1 / √(1 + `squash`) wide and deep, so the volume stays.
@@ -1018,6 +1028,8 @@ game agent's manual.
 - `StrikeBody` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of a body.
 - `strikeDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A strike on `id` from `from`: the first bursts it open, the second breaks it; a shot or a blast breaks it at once.
 - `strikeEntity` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Strikes `target` from `from` (m), its striker facing it or not (`faced`), with `force`: the entry of a component it holds answers (a door's rule: engine/sim/doors.ts; a breakable's damage: breakables.ts), else a dynamic prop is knocked (its `hit` hook).
+- `strikeEntry` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The `strikable` entry of a component the entity `id` holds (a door's), or undefined.
+- `StrikeEntry` (interface from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): A `strikable` entry: how an entity holding its component (`id`) takes a strike, and the move a melee plays on it.
 - `StrikeForce` (type from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): What strikes: a melee hit, a shot or a blast (a door bursts open at a hit, breaks at a shot or a blast).
 - `strikePart` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): The part of a body that strikes in `move`: the right foot, the left fist, a held weapon's blade, or the right fist.
 - `strikeSegment` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Where `part` spans on a body's pose now, world metres, into `base` and `tip`: a sword from near the grip to its tip (another weapon strikes as the right fist), a forearm from the elbow to the wrist, the right shin from the knee to the sole.
@@ -1039,6 +1051,7 @@ game agent's manual.
 - `SYSTEM_ACTIONS` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The system layer: action → codes.
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
 - `TAIL` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A tail from the back of the pelvis, holding its curve back and up (chosen here: the source had none).
+- `takesStrike` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Whether the prop entity `id` takes a strike: a strikable component, health, or a dynamic body to knock.
 - `takeToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Asks for a token for `id` at sim time `time` (s): true when it holds one now.
 - `Telegraph` (type from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A `telegraph` entry: see the file comment.
 - `TELEGRAPH_SHAPES` (const from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The shapes a telegraph has.
@@ -1191,6 +1204,7 @@ game agent's manual.
 - `addLevelDoors` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door in each door opening of `level` it fits (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
 - `addLevelLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders `level`'s ladder glyphs stand (engine/world/traverse.ts's `levelLadders`); returns their entities.
 - `addLevelWindows` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Stands the panes of `level`'s window openings (see the file comment) and returns their entities.
+- `addMelee` (function from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): Adds the system `melee` to `w` (once): see the file comment.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `addProp` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a dynamic body of one `shape` (a hull too: a rock), of `PROP_MATERIAL` unless `spec` says otherwise; its id.
 - `addSensor` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a body whose one collider is a sensor of `shape`: it blocks nothing and detects bodies.
@@ -1390,7 +1404,7 @@ game agent's manual.
 - `defineSetBuild` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Registers build `id` with the proportions clip set `setId`'s clips were captured on (retarget.ts `restBuild` of its first source's rest body, or `source`'s), once, and returns it: `build:mannequin` from `clipset:quaternius` is the build engine/gfx/puppets/bodies/mannequin.ts draws, which the sim's animator needs before the view's body exists.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
 - `defineSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): Registers a site on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
-- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock.
+- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock; `move`, the move a melee plays on it (a door's kick, `move:breach`), when not the usual.
 - `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
 - `defineTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Registers a terrain on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
 - `defineThing` (function from [`engine/world/things.ts`](../engine/world/things.ts)): Defines a kind of thing on `registry` (the shared one by default) and returns it.
@@ -1412,6 +1426,9 @@ game agent's manual.
 - `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
 - `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
+- `Fan` (interface from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): A fan of rays (`fanHits`): `reach` long (m) from the feet's axis, `rays` across `cone` (rad), at each of `heights`.
+- `FanHit` (interface from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): A body a fan's ray met: its id, how far from the axis along the ground (m), and the point (world, m).
+- `fanHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): What a strike in reach meets (WP 13.19's melee): a fan of level rays from the axis over `feet`, `fan.rays` spread evenly across `fan.cone` about `yaw` at each height, each stopping at the first body it meets (`groups`, the body `exclude` aside), so a wall hides what stands behind it.
 - `FeelOptions` (interface from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): How `measureFeel` runs: the sim's rate, the gravity a character falls under unless its settings name one.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
@@ -1562,6 +1579,12 @@ game agent's manual.
 - `MatrixState` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): A state the matrix holds: the body states told every step, or a script, for so many seconds.
 - `measureFeel` (function from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `measureMove` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Measures where `move`'s strike point (the blade's tip, the fist, the foot's sole) goes through its hit window, on a spare body of `options.build` holding `options.weapon` (`build:chibi` with a sword by default): the hit cone and height window to test targets against (`inHitShape`).
+- `MELEE` (const from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): Apex's melee (docs/PLAYGROUND.md §3.2): damage, reach (m) and cone (rad), the lunge, the hands back and the stop (s).
+- `MELEE_FIELDS` (const from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): The component `melee`'s fields (see the file comment).
+- `MELEE_MOVES` (const from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): The move of each melee but a target's own: the punch, the kick in the air, the uppercut from a slide.
+- `MeleeReach` (interface from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): What a melee reached: the entity, and the point its ray met (m).
+- `MeleeState` (interface from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): A player's swing (`MELEE_FIELDS` says what each field means).
+- `meleeTargets` (function from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): What the player actor `id` reaches with a melee now, facing `yaw` (rad; his own by default), nearest first (see the file comment): each entity once, a prop that takes a strike or an actor with health, behind no wall.
 - `MeshDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
 - `mirrorClip` (function from [`engine/anim/clip/mirror.ts`](../engine/anim/clip/mirror.ts)): The same clip on the other side, named `<clip>_Mirror` (see the file comment).
 - `MODEL_FIELDS` (const from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers (see the file comment): what `character.movement` holds.
@@ -1769,7 +1792,7 @@ game agent's manual.
 - `spawnProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Stands a prop in the scene, `spawnProp(w, { prop: 'prop:<id>', at: [x, y, z], yaw })`: its base at `at` (m), turned `yaw` about +Y (rad).
 - `SpawnPropOptions` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): How `spawnProp` stands a prop beyond its placement (WP 13.16): a spawn inside a step or a setup joins the world at its end, so a door's or a switch's own component comes with it here.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
-- `spawnThing` (function from [`engine/sim/things.ts`](../engine/sim/things.ts)): Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop; returns its entity.
+- `spawnThing` (function from [`engine/sim/things.ts`](../engine/sim/things.ts)): Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop, with any further `components` a scene gives it (a dummy's spring: labs/playground/cast/dummies.ts); returns its entity.
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `SQUASH` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The squash spring (my-3d2dge's numbers): its pull and damping per second, and its bound either way.
 - `squashScale` (function from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The root scale of a squash: 1 + `squash` tall, 1 / √(1 + `squash`) wide and deep, so the volume stays.
@@ -1796,6 +1819,8 @@ game agent's manual.
 - `StrikeBody` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of a body.
 - `strikeDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A strike on `id` from `from`: the first bursts it open, the second breaks it; a shot or a blast breaks it at once.
 - `strikeEntity` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Strikes `target` from `from` (m), its striker facing it or not (`faced`), with `force`: the entry of a component it holds answers (a door's rule: engine/sim/doors.ts; a breakable's damage: breakables.ts), else a dynamic prop is knocked (its `hit` hook).
+- `strikeEntry` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The `strikable` entry of a component the entity `id` holds (a door's), or undefined.
+- `StrikeEntry` (interface from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): A `strikable` entry: how an entity holding its component (`id`) takes a strike, and the move a melee plays on it.
 - `StrikeForce` (type from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): What strikes: a melee hit, a shot or a blast (a door bursts open at a hit, breaks at a shot or a blast).
 - `strikePart` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): The part of a body that strikes in `move`: the right foot, the left fist, a held weapon's blade, or the right fist.
 - `strikeSegment` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Where `part` spans on a body's pose now, world metres, into `base` and `tip`: a sword from near the grip to its tip (another weapon strikes as the right fist), a forearm from the elbow to the wrist, the right shin from the knee to the sole.
@@ -1813,6 +1838,7 @@ game agent's manual.
 - `SwitchSpec` (interface from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): What `addSwitch` takes (see the file comment).
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
 - `TAIL` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A tail from the back of the pelvis, holding its curve back and up (chosen here: the source had none).
+- `takesStrike` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Whether the prop entity `id` takes a strike: a strikable component, health, or a dynamic body to knock.
 - `takeToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Asks for a token for `id` at sim time `time` (s): true when it holds one now.
 - `Telegraph` (type from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A `telegraph` entry: see the file comment.
 - `TELEGRAPH_SHAPES` (const from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The shapes a telegraph has.
@@ -2611,6 +2637,7 @@ For the agents who maintain the engine.
 
 ### [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)
 
+- `ADDED_MOVES` (const): The moves the engine adds to the port's (registered with them): the door kick (WP 13.19), a front kick with the sole at the lock's height, its hit 0.83 s in, where Mesh2Motion's `Kick_Breach` lands its strike (its 1.83 s with the step back the body does not need).
 - `defineMove` (function): Defines a move on `registry` (the shared one by default) and returns it; absent fields keep a plain strike's values.
 - `ENGINE_MOVES` (const): The engine's moves: my-3d2dge's `E.MOVES` through `fromLegacy` (moves-data.test.ts proves each), lengths in metres.
 - `fromLegacy` (function): A legacy `E.MOVES` spec in the new fields (Appendix C, `LEGACY_FIELDS`); defaults are written out only when needed.
@@ -5678,7 +5705,7 @@ For the agents who maintain the engine.
 
 - `Controls` (interface): A player's controls (the settings `input.sprint` and `input.crouch`): a held sprint, a toggled crouch.
 - `intentsOf` (function): The intents an actor acts on this step: the step's for a player, else its AI's (with presses from `b`'s edges).
-- `motionInput` (function): The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it faces.
+- `motionInput` (function): The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it faces; `used`, a use took the step's press (no ride); `swinging`, a melee swings (no mantle: engine/sim/melee.ts).
 
 ### [`engine/sim/actors.ts`](../engine/sim/actors.ts)
 
@@ -5719,6 +5746,7 @@ For the agents who maintain the engine.
 ### [`engine/sim/combatApi.ts`](../engine/sim/combatApi.ts)
 
 - `addAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds a queued agent's body now (`updateCrowd` does it through the queue), its feet at `x`, `y`, `z`, moving at `vx`, `vy`, `vz`; returns its id.
+- `addMelee` (function from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): Adds the system `melee` to `w` (once): see the file comment.
 - `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `airTime` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): How long (s) a body thrown up at `up` m/s flies under `gravity` (m/s², above 0) until it comes down to `rise` metres above where it left (below for a drop): the later root of `rise = up·t − gravity·t²/2`.
 - `APPROACH_RING` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): `approachRing`'s defaults: the prototype's walker (3 units either side, back at half speed, round at 0.4).
@@ -5751,6 +5779,9 @@ For the agents who maintain the engine.
 - `DamageEvents` (type from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The events this module emits, for a world's event map: `World<Components, DamageEvents & MyEvents>`.
 - `DamageTarget` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): What a hit lands on: the entity (named in the events), its health and its crowd body, either optional.
 - `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
+- `Fan` (interface from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): A fan of rays (`fanHits`): `reach` long (m) from the feet's axis, `rays` across `cone` (rad), at each of `heights`.
+- `FanHit` (interface from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): A body a fan's ray met: its id, how far from the axis along the ground (m), and the point (world, m).
+- `fanHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): What a strike in reach meets (WP 13.19's melee): a fan of level rays from the axis over `feet`, `fan.rays` spread evenly across `fan.cone` about `yaw` at each height, each stopping at the first body it meets (`groups`, the body `exclude` aside), so a wall hides what stands behind it.
 - `FOLLOW` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): `followFlow`'s defaults: straight within 4 m in a clear line (emberdeep's 64 units), full speed to the target.
 - `followFlow` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way to walk from `from` to `to` along `field` (a flow field toward the target's tile): straight at `to` within `near` metres when the grid has a clear line for a body (`NavGrid.lineOfSight`), else the field's look-ahead direction (`FlowField.direction`), else, where the field has no way (beyond its reach, or arrived at the goal tile's centre), straight at `to`, as the prototype does.
 - `FollowOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): How `followFlow` steers.
@@ -5773,6 +5804,12 @@ For the agents who maintain the engine.
 - `killAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Kills an agent: its body joins the group `corpse` (the world and props still stop it; the crowd walks through it) with `CROWD_MATERIAL.corpseFriction`, and a flyer falls.
 - `knockback` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds `velocity` (m/s) to an agent or corpse in the world, the same for every mass, waking it.
 - `launch` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Throws an agent or corpse up: its upward speed becomes at least `up` (m/s) and its speed across the ground is multiplied by `carry` (1; the prototype's kill launch: 1.3).
+- `MELEE` (const from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): Apex's melee (docs/PLAYGROUND.md §3.2): damage, reach (m) and cone (rad), the lunge, the hands back and the stop (s).
+- `MELEE_FIELDS` (const from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): The component `melee`'s fields (see the file comment).
+- `MELEE_MOVES` (const from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): The move of each melee but a target's own: the punch, the kick in the air, the uppercut from a slide.
+- `MeleeReach` (interface from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): What a melee reached: the entity, and the point its ray met (m).
+- `MeleeState` (interface from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): A player's swing (`MELEE_FIELDS` says what each field means).
+- `meleeTargets` (function from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): What the player actor `id` reaches with a melee now, facing `yaw` (rad; his own by default), nearest first (see the file comment): each entity once, a prop that takes a strike or an actor with health, behind no wall.
 - `nearMiss` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` stands outside telegraph `t` but within its `near` metres (scaled).
 - `physicsWalls` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
 - `PointLike` (type from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A point: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`, metres.
@@ -5878,6 +5915,9 @@ For the agents who maintain the engine.
 ### [`engine/sim/hits.ts`](../engine/sim/hits.ts)
 
 - `coneHits` (function): The targets in the hit cone (`inCone`), by id, ascending: those the hash holds near enough, then the exact test.
+- `Fan` (interface): A fan of rays (`fanHits`): `reach` long (m) from the feet's axis, `rays` across `cone` (rad), at each of `heights`.
+- `FanHit` (interface): A body a fan's ray met: its id, how far from the axis along the ground (m), and the point (world, m).
+- `fanHits` (function): What a strike in reach meets (WP 13.19's melee): a fan of level rays from the axis over `feet`, `fan.rays` spread evenly across `fan.cone` about `yaw` at each height, each stopping at the first body it meets (`groups`, the body `exclude` aside), so a wall hides what stands behind it.
 - `inCone` (function): Whether `target` is in the hit cone of `shape` (scaled by `size`) from the feet `from`, facing `yaw` (forward is (sin yaw, 0, cos yaw)): its footprint (a disc of its radius) meets the ground sector the strike reaches, and its height overlaps the strike's height window above the feet.
 - `physicsWalls` (function): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
 - `sweepHits` (function): The targets the swept quad touches (`sweepTouches`), by id, ascending.
@@ -5896,7 +5936,7 @@ For the agents who maintain the engine.
 - `breakProp` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Breaks the prop `id` (see the file comment), its pieces knocked away from `from`.
 - `CARRY_MASS` (const from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The heaviest prop a player carries (kg): a chair, a box, a crate.
 - `damageProp` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Takes `amount` hit points from the breakable prop `id` (none from one without health); breaks it at 0.
-- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock.
+- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock; `move`, the move a melee plays on it (a door's kick, `move:breach`), when not the usual.
 - `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
 - `DOOR_SWING` (const from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A door's swing open (rad): a quarter turn and a little more.
 - `DoorComponent` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): The component `door`.
@@ -5910,10 +5950,13 @@ For the agents who maintain the engine.
 - `strikeBody` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): A bolt's or a shot's strike on `body` from `from`: the prop or door it is, struck; a dynamic one knocked.
 - `strikeDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A strike on `id` from `from`: the first bursts it open, the second breaks it; a shot or a blast breaks it at once.
 - `strikeEntity` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Strikes `target` from `from` (m), its striker facing it or not (`faced`), with `force`: the entry of a component it holds answers (a door's rule: engine/sim/doors.ts; a breakable's damage: breakables.ts), else a dynamic prop is knocked (its `hit` hook).
+- `strikeEntry` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The `strikable` entry of a component the entity `id` holds (a door's), or undefined.
+- `StrikeEntry` (interface from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): A `strikable` entry: how an entity holding its component (`id`) takes a strike, and the move a melee plays on it.
 - `StrikeForce` (type from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): What strikes: a melee hit, a shot or a blast (a door bursts open at a hit, breaks at a shot or a blast).
 - `SwitchComponent` (interface from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): The component `switch`.
 - `switchGroup` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Turns light group `group` on or off, and its switches with it.
 - `SwitchSpec` (interface from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): What `addSwitch` takes (see the file comment).
+- `takesStrike` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Whether the prop entity `id` takes a strike: a strikable component, health, or a dynamic body to knock.
 - `THROW_SPEED` (const from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): How fast a carried prop leaves when it is thrown (m/s).
 - `UsableSpec` (interface from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): How an entity holding a component is used: what the HUD says (null: not now) and what using it does.
 - `USE_REACH` (const from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): How far from the eye a thing is in reach (m).
@@ -5925,11 +5968,14 @@ For the agents who maintain the engine.
 - `BODILESS` (const): How near a bodiless thing (a switch on a wall) the crosshair's ray must pass to be on it (m).
 - `CARRY_MASS` (const): The heaviest prop a player carries (kg): a chair, a box, a crate.
 - `defineInteractKinds` (function): Declares the kinds `usable` and `strikable` and the component `interactor` on `registry` (once).
-- `defineStrikable` (function): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock.
+- `defineStrikable` (function): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock; `move`, the move a melee plays on it (a door's kick, `move:breach`), when not the usual.
 - `defineUsable` (function): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
 - `InteractorComponent` (interface): The component `interactor`: what a player would use, its prompt, what it carries, and when it last used.
 - `strikeEntity` (function): Strikes `target` from `from` (m), its striker facing it or not (`faced`), with `force`: the entry of a component it holds answers (a door's rule: engine/sim/doors.ts; a breakable's damage: breakables.ts), else a dynamic prop is knocked (its `hit` hook).
+- `strikeEntry` (function): The `strikable` entry of a component the entity `id` holds (a door's), or undefined.
+- `StrikeEntry` (interface): A `strikable` entry: how an entity holding its component (`id`) takes a strike, and the move a melee plays on it.
 - `StrikeForce` (type): What strikes: a melee hit, a shot or a blast (a door bursts open at a hit, breaks at a shot or a blast).
+- `takesStrike` (function): Whether the prop entity `id` takes a strike: a strikable component, health, or a dynamic body to knock.
 - `THROW_SPEED` (const): How fast a carried prop leaves when it is thrown (m/s).
 - `UsableSpec` (interface): How an entity holding a component is used: what the HUD says (null: not now) and what using it does.
 - `USE_REACH` (const): How far from the eye a thing is in reach (m).
@@ -5960,7 +6006,7 @@ For the agents who maintain the engine.
 - `SHOT_EMITTER` (const from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): An emitter with every field at its default: one shot forward at 20 m/s every half second, from the first step.
 - `SHOT_EMITTER_FIELDS` (const from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): A shot emitter's fields, for a scene's component: `defineComponent('turret', { fields: SHOT_EMITTER_FIELDS })`.
 - `ShotEmitter` (interface from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): An emitter: its pattern, its shots' numbers and its timing (`SHOT_EMITTER_FIELDS` says what each means).
-- `spawnThing` (function from [`engine/sim/things.ts`](../engine/sim/things.ts)): Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop; returns its entity.
+- `spawnThing` (function from [`engine/sim/things.ts`](../engine/sim/things.ts)): Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop, with any further `components` a scene gives it (a dummy's spring: labs/playground/cast/dummies.ts); returns its entity.
 - `stepThing` (function from [`engine/world/things.ts`](../engine/world/things.ts)): Moves `thing` on to `time` (s), a step of `dt` seconds: one down for its kind's `rise` stands back up, its hit points whole (returns true then); one standing slides along its track at its kind's speed, turning back at each end.
 - `stepVolleys` (function from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): Moves an emitter's clock on by `dt` seconds, its target within range or not (`near`), and returns how many volleys it looses now (see the file comment): 0 or more, at most `MOST_VOLLEYS`.
 - `strikeThing` (function from [`engine/sim/things.ts`](../engine/sim/things.ts)): Hits the thing `id` for `amount` points from `from` (m) at the world's time (see the file comment): returns what the hit did, or null (no thing there, or one that is down).
@@ -5984,6 +6030,16 @@ For the agents who maintain the engine.
 - `addSiteBodies` (function): Adds a site's bodies (its terrain, cut, then each structure's) and returns their ids in that order.
 - `addTerrainBody` (function): Adds a terrain's body (one fixed body: its heightfield, or with `cut` cells, one triangle mesh of the rest) and returns the body's id.
 - `LEVEL_FRICTION` (const): The level's friction: the prototype's hall.
+
+### [`engine/sim/melee.ts`](../engine/sim/melee.ts)
+
+- `addMelee` (function): Adds the system `melee` to `w` (once): see the file comment.
+- `MELEE` (const): Apex's melee (docs/PLAYGROUND.md §3.2): damage, reach (m) and cone (rad), the lunge, the hands back and the stop (s).
+- `MELEE_FIELDS` (const): The component `melee`'s fields (see the file comment).
+- `MELEE_MOVES` (const): The move of each melee but a target's own: the punch, the kick in the air, the uppercut from a slide.
+- `MeleeReach` (interface): What a melee reached: the entity, and the point its ray met (m).
+- `MeleeState` (interface): A player's swing (`MELEE_FIELDS` says what each field means).
+- `meleeTargets` (function): What the player actor `id` reaches with a melee now, facing `yaw` (rad; his own by default), nearest first (see the file comment): each entity once, a prop that takes a strike or an actor with health, behind no wall.
 
 ### [`engine/sim/movementApi.ts`](../engine/sim/movementApi.ts)
 
@@ -6212,7 +6268,7 @@ For the agents who maintain the engine.
 
 ### [`engine/sim/things.ts`](../engine/sim/things.ts)
 
-- `spawnThing` (function): Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop; returns its entity.
+- `spawnThing` (function): Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop, with any further `components` a scene gives it (a dummy's spring: labs/playground/cast/dummies.ts); returns its entity.
 - `strikeThing` (function): Hits the thing `id` for `amount` points from `from` (m) at the world's time (see the file comment): returns what the hit did, or null (no thing there, or one that is down).
 
 ### [`engine/sim/world.ts`](../engine/sim/world.ts)
@@ -7092,6 +7148,16 @@ For the agents who maintain the engine.
 
 - `PLAYER` (const): `body:player`, registered with the shared registry once this module loads.
 - `PLAYER_BODY` (const): The player's body (see the file comment).
+
+### [`labs/playground/cast/dummies.ts`](../labs/playground/cast/dummies.ts)
+
+- `DUMMY_KIND` (const): The ring's dummies' kind (see the file comment).
+- `RING_DUMMIES` (const): Where the ring's dummies stand (m, on its canvas 1 m up) and face: three across its north half, toward its steps.
+- `Sparring` (interface): A dummy's lean and swing (`SPARRING_FIELDS`).
+- `SPARRING_FIELDS` (const): The component `sparring`'s fields: the lean (rad: its head toward +X and +Z), its swing (rad/s) and its turn.
+- `SPRING` (const): A sparring dummy's spring: its frequency (Hz) and damping ratio, a hit's swing (rad/s) and the most it leans (rad).
+- `standDummies` (function): Stands the ring's dummies (`RING_DUMMIES`): their entities, in order.
+- `standDummy` (function): Stands a sparring dummy on its base at `at` (m), facing `yaw` (rad): its entity.
 
 ### [`labs/playground/cast/player.ts`](../labs/playground/cast/player.ts)
 

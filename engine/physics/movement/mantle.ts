@@ -5,7 +5,8 @@
  *
  * - `tryMantle`: on the ground holding jump (`mantle.auto`, 2.03 m: Apex's auto mantle), or in the air moving at a
  *   wall (the push, else the velocity: no forward needed; `mantle.reach`), the move and the view within
- *   `mantle.angle` of facing it, `mantle.cooldown` after the last. A ledge no higher than `mantle.low` over the feet
+ *   `mantle.angle` of facing it, `mantle.cooldown` after the last, and no melee swinging (`swinging`: a lunge in the
+ *   air strikes what it lunges at, WP 13.19). A ledge no higher than `mantle.low` over the feet
  *   is only pulled over; else the grab (`mantle.grab`: to the wall and up past the lip), then the pull
  *   (`mantle.pull`: across onto the top and down onto it). Only the crouched hull fits: it mantles crouched.
  * - The grab: letting go of forward hangs from the ledge when the lip stands `mantle.hang` over the ground below (the
@@ -125,7 +126,7 @@ export function tryMantle(
   at: MantleTry,
 ): boolean {
   const m = character.movement!;
-  if (motion.mantleCool > 0 || (at.grounded && !at.jump)) return false;
+  if (input.swinging || motion.mantleCool > 0 || (at.grounded && !at.jump)) return false;
   const dir = headingOf(at.wish, at.grounded ? null : at.h);
   const wall = dir && room.wall(dir, m.mantle.probe);
   if (!dir || !wall) return false;

@@ -216,6 +216,8 @@ export interface CharacterInput {
   pitch?: number;
   /** The shooter model's: the use button went down this tick (a zipline or a ladder in reach takes it). */
   usePressed?: boolean;
+  /** The shooter model's: a melee swings (engine/sim/melee.ts): no mantle starts, so a lunge in the air strikes. */
+  swinging?: boolean;
 }
 
 /** What `stepCharacter` needs beside the character: the step length, the gravities and the one-way platforms. */
