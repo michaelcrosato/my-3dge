@@ -429,7 +429,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`actions.ts`](../engine/dev/actions.ts): `__engine.actions` and `__engine.bot` (PLAN.md §8.3, WP 5.6; doctrine: Agent-operable): the developer's tools on the inspector, registered from this file as `inspectorMember` entries (engine/dev/members.ts), so a page (`x eval "__engine.actions.run('travel', { at: [3, 0, 5] })"`) and `createHeadless` reach the same calls.
   - Exports: `ActionRow`
   - Tests: [`engine/dev/actions.test.ts`](../engine/dev/actions.test.ts)
-- [`bot.ts`](../engine/dev/bot.ts): The bot (PLAN.md WP 5.6, §5.6, I-38; doctrines: Agent-operable, Reproducible): plays a scene's player through intents, as a virtual device would, so a test or an agent gets play longer and more varied than a scripted replay (soak runs, navigation smoke over many levels).
+- [`bot.ts`](../engine/dev/bot.ts): The bot (PLAN.md WP 5.6, §5.6, I-38; doctrines: Agent-operable, Reproducible): plays a scene's player through intents, as a virtual device would, for play longer and more varied than a scripted replay (soaks, navigation smoke).
   - Exports: `Bot`, `BOT_FIELDS`, `BotOptions`, `BotPlan`, `BotReport`, `BotRun`, `BotSample`, `BotStatus`, `BotWorld`, `runBot`
   - Tests: [`engine/dev/bot.test.ts`](../engine/dev/bot.test.ts)
 - [`botNav.ts`](../engine/dev/botNav.ts): What the bot navigates by (PLAN.md WP 5.6, WP 13.15): a level's grid (`levelBotNav`, engine/world/nav.ts) or a site's graph over its terrain and every structure's storeys (`siteBotNav`, engine/world/siteNav.ts), behind one face, so the bot (engine/dev/bot.ts) walks a site's yard, doorways, stairs and ladders as it walks a level.
@@ -602,7 +602,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `CAMERA_3D`, `CAMERA_CODES`, `CameraSpec`, `CameraType`, `describeCamera`, `FOLLOW_CAMERAS`, `formatCameraCode`, `FreeSpec`, `OrbitSpec`, `parseCameraCode`, `VIEW_LABELS`, `VIEW_NAMES`, `ViewName`, `ViewSpec`
   - Tests: [`engine/gfx/cameras/codes.test.ts`](../engine/gfx/cameras/codes.test.ts)
 - [`collide.ts`](../engine/gfx/cameras/collide.ts): Camera collision (PLAN.md WP 13.8, docs/PLAYGROUND.md §4; doctrine: Common ground): what keeps every follow camera (the chase, the shoulder, the platformer's) out of the level, as Unreal's spring arm and Cinemachine's deoccluder do.
-  - Exports: `ArmFrame`, `CameraBall`, `carry`, `COLLIDE_PULL`, `COLLIDE_RADIUS`, `COLLIDE_RETURN`, `COLLIDE_SKIN`, `COLLIDE_STUCK`, `COLLIDE_TELEPORT`, `easeArm`, `follow`, `moveCamera`, `QueryGroups`, `reach`, `slide`, `sweep`, `Walls`
+  - Exports: `ArmFrame`, `CameraBall`, `carry`, `COLLIDE_PULL`, `COLLIDE_RADIUS`, `COLLIDE_RETURN`, `COLLIDE_SKIN`, `COLLIDE_STUCK`, `COLLIDE_TELEPORT`, `easeArm`, `follow`, `moveCamera`, `QueryGroups`, `reach`, `slide`, `sweep`, `TRAIL_KEEP`, `TRAIL_LENGTH`, `TRAIL_STEP`, `Walls`
   - Tests: [`engine/gfx/cameras/collide.test.ts`](../engine/gfx/cameras/collide.test.ts)
 - [`define.ts`](../engine/gfx/cameras/define.ts): A game's own cameras (PLAN.md WP 13.8; doctrine: Common ground: a camera is a function of input and time): the registry kind `camera`.
   - Exports: `CAMERA_FIELDS`, `CAMERA_NAMES`, `cameraEntry`, `CameraKindSpec`, `defineCamera`, `GAME_CAMERA_CODES`, `madeCamera`
@@ -641,7 +641,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `CAMERA_SETTING_FIELDS`, `CAMERA_SETTINGS`, `CameraRig`, `createCameraRig`, `RigBlend`, `RigInput`, `rigOptions`, `RigOptions`
   - Tests: [`engine/gfx/cameras/rig.test.ts`](../engine/gfx/cameras/rig.test.ts)
 - [`shoulder.ts`](../engine/gfx/cameras/shoulder.ts): The shooter's camera (PLAN.md WP 13.8, docs/PLAYGROUND.md §4; doctrine: Common ground): over the shoulder, as third-person shooters frame it.
-  - Exports: `createShoulderCamera`, `describeShoulder`, `formatShoulderCode`, `parseShoulderCode`, `SHOULDER`, `SHOULDER_EFFECTS`, `SHOULDER_LIMITS`, `SHOULDER_TURN_SPEED`, `ShoulderInput`, `ShoulderOptions`, `shoulderPose`, `shoulderSpec`, `ShoulderSpec`, `shoulderState`, `ShoulderState`, `stepShoulder`
+  - Exports: `createShoulderCamera`, `describeShoulder`, `formatShoulderCode`, `parseShoulderCode`, `SHOULDER`, `SHOULDER_EFFECTS`, `SHOULDER_LIMITS`, `SHOULDER_ROOM`, `SHOULDER_TURN_SPEED`, `ShoulderInput`, `ShoulderOptions`, `shoulderPose`, `shoulderSpec`, `ShoulderSpec`, `shoulderState`, `ShoulderState`, `stepShoulder`
   - Tests: [`engine/gfx/cameras/shoulder.test.ts`](../engine/gfx/cameras/shoulder.test.ts)
 
 ## engine/gfx/fx

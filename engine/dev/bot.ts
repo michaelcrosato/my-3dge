@@ -1,15 +1,15 @@
 /**
  * @file The bot (PLAN.md WP 5.6, §5.6, I-38; doctrines: Agent-operable, Reproducible): plays a scene's player through
- * intents, as a virtual device would, so a test or an agent gets play longer and more varied than a scripted replay
- * (soak runs, navigation smoke over many levels). It is sim-side: it reads the world and writes intents through the
- * session's step, so its play is recorded and replays as anyone's does; its own sums run under the sim's math
- * (engine/core/simMath.ts), so a run gives the same intents in Node and in a page.
+ * intents, as a virtual device would, for play longer and more varied than a scripted replay (soaks, navigation smoke).
+ * It is sim-side: it reads the world and writes intents through the session's step, so its play is recorded and
+ * replays as anyone's does; its own sums run under the sim's math (engine/core/simMath.ts), alike in Node and a page.
  *
  * - **Navigation** (`Bot`): toward its goal down the level's flow field (engine/world/nav.ts, to the goal's nearest
  *   open tile) or a site's (engine/dev/botNav.ts), the last `near` metres straight at it, as one of `headings`
  *   directions (few, so its intents change seldom); there within `reach` (on a site, and 1 m of its height). A closed
  *   door its way runs into it opens as a player does (`runBot` presses use: `closedDoorAhead`, WP 13.18). On a site
  *   it walks round the scene's props, and held by one its way does not know (a door left open), finds it again.
+ *   With `look` its view turns the way it walks (`LOOK_TURN`), its keys' frame (`cam`) the heading.
  * - **Stuck, measured along the wanted direction**: each step, how far the feet went along the way it asked for, or up
  *   (a ladder). Under `progress` m/s while it asks to move, the held time grows (else it falls at twice the pace):
  *   pressed against a wall, a body jitters back and forth faster than "not moving" allows, so only the way it wants
@@ -43,6 +43,7 @@ import { codeError } from '../core/log';
 import { defineSchema, parse, show, type SpecOf } from '../core/schema';
 import { withSimMath } from '../core/simMath';
 import type { Intents } from '../input/intents';
+import { turnToward } from '../physics/movement/steer';
 import type { World } from '../sim/world';
 import type { CompiledLevel } from '../world/level/types';
 import type { Site } from '../world/site';
@@ -86,6 +87,11 @@ const JUMP_STEPS = 12;
 const MAX_SAMPLES = 120;
 /** How near its floor (m) a falling body pushes again: never on the way down, where a push mantles back up a ledge. */
 const LANDING = 0.25;
+/**
+ * How fast its view turns the way it walks with `look` (rad/s), as a mouse would: a body's own `movement.turnRate`,
+ * 720°/s, so it faces as it would facing its heading; its keys keep the heading's frame (`cam`), so it walks as then.
+ */
+const LOOK_TURN = 4 * Math.PI;
 /** How long a push it walks toward a drop (the shooter model's stick curve makes it 1.6 m/s). */
 const DROP_PUSH = 0.2;
 /** On a site, held this long (s) it finds its way again, round the props as they stand, at most once in `every` steps. */
@@ -111,6 +117,8 @@ export class Bot {
   #side = 1;
   #move: [number, number] | null = null;
   #look: [number, number] | null = null;
+  /** The heading its keys are pressed toward, the `cam` it sends with its look. */
+  #cam = 0;
   #drops = 0;
   #jump = 0;
   #best = Infinity;
@@ -197,7 +205,7 @@ export class Bot {
     if (this.#heldAll > this.options.stuck) return this.#end('stuck', 'held');
     // Mantling it keeps the push it went in with (back or a crouch would let go); on a ladder whose way goes down it
     // lets go (crouch); falling, it pushes nowhere till it lands, rather than catching a ladder or a ledge again.
-    if (at.mode === 'mantle' && this.#move) return { move: this.#move, ...(this.#look ? { look: this.#look } : {}) };
+    if (at.mode === 'mantle' && this.#move) return { move: this.#move, ...(this.#look ? { look: this.#look, cam: this.#cam } : {}) }; // prettier-ignore
     if (at.mode === 'ladder' && (this.#field?.rise?.(at) ?? 0) < -UP_REACH) return { b: ['crouch'] };
     if (at.mode === 'air' && this.#jump <= 0 && fell > 0 && (this.#field?.over?.(at) ?? 0) > LANDING) return {};
     let angle = Math.atan2(wx, wz);
@@ -206,7 +214,10 @@ export class Bot {
     // Standing at a drop (a ladder's top, a hatch) it steps gently and takes hold of the ladder (below); crouched it cannot.
     const drop = at.mode === 'ground' && at.stance !== 'crouch' && (this.#field?.rise?.(at) ?? 0) < -UP_REACH;
     const move = (this.#move = this.#heading(angle, drop ? DROP_PUSH : 1));
-    if (this.options.look) this.#look = [Math.atan2(move[0], move[1]), 0];
+    if (this.options.look) {
+      this.#cam = Math.atan2(move[0], move[1]);
+      this.#look = [this.#look ? turnToward(this.#look[0], this.#cam, LOOK_TURN * dt) : this.#cam, 0];
+    }
     const b = this.#field?.crouch?.(at) ? ['crouch'] : [];
     // At a drop (a ladder's top) it takes hold of the ladder from there as a player does (use, every other step).
     if (drop && this.#drops++ % 2 === 0) b.push('interact');
@@ -214,7 +225,7 @@ export class Bot {
       this.#jump--;
       b.push('jump');
     }
-    const look = this.#look ? { look: this.#look } : {};
+    const look = this.#look ? { look: this.#look, cam: this.#cam } : {};
     return b.length ? { move, b, ...look } : { move, ...look };
   }
 

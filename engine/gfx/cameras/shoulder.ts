@@ -7,20 +7,26 @@
  * constant of `SHOULDER.lag` real seconds and never more than `SHOULDER.trail` behind it; the shoulder point stands
  * `SHOULDER.right` to its right (to the left once swapped: `side` −1) and `SHOULDER.up` above it, and the camera
  * `SHOULDER.back` behind that along the view, looking along the view (`yaw`, `pitch`), so the screen's centre is
- * where the hero aims and he stands left of it; room for an arm shorter than `SHOULDER.close` behind his eye draws the
- * shoulder point in to the eye by its share across and the share squared up (eased by `SHOULDER.draw`), so a camera
- * backed against a wall still sees him. `input.look` and `input.turn` turn the view, or `input.view` sets it
+ * where the hero aims and he stands left of it; an arm shorter than `SHOULDER.close` draws the shoulder point in to
+ * him by its share and down toward his chest (`SHOULDER.chest` over his feet), so a camera backed against a wall
+ * still has his chest in the picture. `input.look` and `input.turn` turn the view, or `input.view` sets it
  * (the sim's look, when no device turns the camera); `input.swap` swaps the shoulder, eased over `SHOULDER.swap`
  * seconds; `input.aim` (0 to 1, how far the sights are raised: engine/gfx/cameras/effects.ts) pulls the arm in to
  * `SHOULDER.aim`. The lens is `input.lens` (the player's field of view, engine/gfx/cameras/rig.ts), else its own.
  *
- * Walls (engine/gfx/cameras/collide.ts): the ball is swept from the eye to the pivot's lag, then to the shoulder
- * point; the camera moves on as `moveCamera` moves it (carried with the arm, then toward the arm's end as far as a
- * sweep back from the shoulder point clears, in at up to `COLLIDE_PULL`, out eased), so it moves at a pace (two cuts
- * left, collide.ts's) and never stands in a wall.
+ * Walls (engine/gfx/cameras/collide.ts, their fixed bodies: a door swings through it): the ball is swept from the eye
+ * to the pivot's lag, then to the shoulder point; the camera stands on the arm, back along the view from the shoulder
+ * point, never past the first wall (`reach`), so it is never stranded behind one (WP 13.27: a camera that kept its
+ * own place lost the player at every door). The arm reads the room it will need before the view turns into it: no
+ * longer than the room toward each side (`SHOULDER_ROOM.sides`) plus what it comes in while a turn of the view at
+ * `SHOULDER_ROOM.turn` takes it there, it comes in at up to `COLLIDE_PULL` m/s and goes out eased over
+ * `COLLIDE_RETURN`, so a turn in a room meets a short arm, not a wall; only a wall that crosses the arm faster than
+ * that (a door's jamb as he steps past it) takes it in at once. Put elsewhere (the shoulder point moved further than
+ * `COLLIDE_TELEPORT`), it stands at once where it reads.
  *
  * Invariants: with `queries` and the eye at least `COLLIDE_RADIUS` from every wall, the camera's ball never ends
- * inside one (shoulder.test.ts); the pitch stays within `SHOULDER_LIMITS.pitch`. Pure: each step returns a new state.
+ * inside one (shoulder.test.ts); the pitch stays within `SHOULDER_LIMITS.pitch`; the arm's casts read `SHOULDER_ROOM`'s
+ * 13 directions a frame. Pure: each step returns a new state.
  *
  * Codes: `cam3=shoulder[,<yaw>,<pitch>,<distance>[,<side>]]` (degrees, metres; side 1 right, −1 left); a bare one
  * looks where the camera before it looked.
@@ -34,7 +40,7 @@
  */
 import { MathUtils } from '../../core/math';
 import { codeDegrees, codeNumber, followCamera, readCode, type CodePart, type FollowCamera } from './chase';
-import { carry, COLLIDE_PULL, COLLIDE_TELEPORT, follow, moveCamera, reach, sweep, type CameraBall, type Walls } from './collide'; // prettier-ignore
+import { COLLIDE_PULL, COLLIDE_RETURN, COLLIDE_TELEPORT, follow, reach, sweep, type Walls } from './collide';
 import type { EffectWeights } from './effects';
 import { approach, makePose, poseForward, poseRight, rangeProblems, refuse, wrapAngle, type CameraInput, type CameraPose, type Vec3 } from './pose'; // prettier-ignore
 
@@ -50,10 +56,15 @@ export const SHOULDER = Object.freeze({
   lag: 1 / 20,
   trail: 0.5,
   swap: 0.12,
-  close: 1.2,
-  draw: 0.1,
+  close: 1.6,
+  chest: 1.2,
   lens: 73.74,
 });
+/**
+ * The room the arm reads (see the file comment): the fastest turn of the view it is ready for, rad/s (a body's own
+ * 720°/s, `movement.turnRate`), and the directions it reads either side of straight back, rad.
+ */
+export const SHOULDER_ROOM = Object.freeze({ turn: 4 * Math.PI, sides: [0, 1, 2, 3, 4, 6, 8].map((k) => (k * Math.PI) / 8) }); // prettier-ignore
 /** The range of the pitch (rad) and of the arm (m). */
 export const SHOULDER_LIMITS = Object.freeze({ pitch: [-1.4, 1.4] as const, distance: [0.5, 20] as const });
 /** Turn rates at full `input.turn`, rad/s: `[right, up]`. */
@@ -99,10 +110,12 @@ export interface ShoulderState {
   readonly pivot: Vec3 | null;
   /** The shoulder point after the walls, m. */
   readonly shoulder: Vec3 | null;
-  /** How far out the shoulder point stands, 0 (at the eye) to 1: a short arm draws it in. */
+  /** How far out and up the shoulder point stands, 0 (in at his chest) to 1: a short arm draws it in. */
   readonly near: number;
-  /** The camera after the walls (collide.ts's `moveCamera`); null until the first follow. */
-  readonly ball: CameraBall | null;
+  /** The arm now, m: the camera's distance back from the shoulder point; null until the first follow. */
+  readonly arm: number | null;
+  /** The camera, m: on the arm; null until the first follow. */
+  readonly at: Vec3 | null;
 }
 
 /** Options for a shoulder camera: its code's data, the lens, and the camera before it. */
@@ -126,7 +139,8 @@ export function shoulderState(options: ShoulderOptions = {}): ShoulderState {
     pivot: null,
     shoulder: null,
     near: 1,
-    ball: null,
+    arm: null,
+    at: null,
   };
   refuse('the shoulder camera', [
     ...rangeProblems({
@@ -140,11 +154,15 @@ export function shoulderState(options: ShoulderOptions = {}): ShoulderState {
   return { ...state, pitch: MathUtils.clamp(state.pitch, ...SHOULDER_LIMITS.pitch) };
 }
 
-/** The shoulder point for a pivot, a view heading and a side shown: right of and above the pivot (`near` of it). */
-const shoulderOf = (pivot: Vec3, yaw: number, shown: number, near = 1): Vec3 => {
+/**
+ * The shoulder point for a pivot, a view heading and a side shown: right of and above the pivot, `near` of the way
+ * out from his chest (at height `chest`) to there; at the pivot's height above it when no chest is given.
+ */
+const shoulderOf = (pivot: Vec3, yaw: number, shown: number, near = 1, chest = pivot[1]): Vec3 => {
   const right = poseRight({ yaw });
   const across = SHOULDER.right * shown * near;
-  return [pivot[0] + right[0] * across, pivot[1] + SHOULDER.up * near * near, pivot[2] + right[2] * across];
+  const up = chest + (pivot[1] + SHOULDER.up - chest) * near;
+  return [pivot[0] + right[0] * across, up, pivot[2] + right[2] * across];
 };
 
 /** Steps a shoulder camera by one rendered frame (see the file comment). */
@@ -169,23 +187,32 @@ export function stepShoulder(state: ShoulderState, input: ShoulderInput, dt: num
   if (!pivot) return { ...state, yaw, pitch, side, shown, fov: input.lens ?? state.fov };
   const held = eye ? sweep(input, eye, pivot) : pivot; // the walls stop the lag; it follows on as it would
   const [fx, fy, fz] = poseForward({ yaw, pitch });
-  const room = MathUtils.clamp(reach(input, held, [-fx, -fy, -fz], want) / SHOULDER.close, 0, 1);
   const jumped = !state.shoulder || Math.hypot(...held.map((v, i) => v - state.shoulder![i])) > COLLIDE_TELEPORT;
-  const near = jumped ? room : state.near + (room - state.near) * (1 - Math.exp(-dt / SHOULDER.draw));
+  const near = state.arm === null || jumped ? 1 : MathUtils.clamp(state.arm / SHOULDER.close, 0, 1);
+  const chest = (f ? f[1] : held[1] - SHOULDER.height) + SHOULDER.chest;
   const step = (state.pivot ? Math.hypot(...pivot.map((v, i) => v - state.pivot![i])) : Infinity) + COLLIDE_PULL * dt; // prettier-ignore
-  const shoulder = follow(input, state.shoulder, held, shoulderOf(held, yaw, shown, near), step);
-  const end: Vec3 = [shoulder[0] - fx * want, shoulder[1] - fy * want, shoulder[2] - fz * want];
-  const before = state.ball && state.shoulder ? { base: state.shoulder, yaw: state.yaw, pitch: state.pitch } : null;
-  const carried = before && state.ball ? carry(state.ball.at, before, { base: shoulder, yaw, pitch }) : end;
-  const ball = moveCamera(input, state.ball, shoulder, carried, end, dt);
-  return { ...state, yaw, pitch, side, shown, fov: input.lens ?? state.fov, pivot, shoulder, near, ball };
+  const shoulder = follow(input, state.shoulder, held, shoulderOf(held, yaw, shown, near, chest), step);
+  // the room the arm will need: back, and each side as far as the view could turn before the arm, coming in, got there
+  let room = want;
+  for (const turn of SHOULDER_ROOM.sides) {
+    for (const sign of turn === 0 ? [1] : [1, -1]) {
+      const [gx, gy, gz] = poseForward({ yaw: yaw + sign * turn, pitch });
+      room = Math.min(room, reach(input, shoulder, [-gx, -gy, -gz], want) + (COLLIDE_PULL * turn) / SHOULDER_ROOM.turn);
+    }
+  }
+  const clear = reach(input, shoulder, [-fx, -fy, -fz], want);
+  const last = state.arm === null || jumped ? room : state.arm;
+  const paced = last > room ? Math.max(room, last - COLLIDE_PULL * dt) : last + (room - last) * (1 - Math.exp(-dt / COLLIDE_RETURN)); // prettier-ignore
+  const arm = Math.min(paced, clear); // never past a wall
+  const at: Vec3 = [shoulder[0] - fx * arm, shoulder[1] - fy * arm, shoulder[2] - fz * arm];
+  return { ...state, yaw, pitch, side, shown, fov: input.lens ?? state.fov, pivot, shoulder, near, arm, at };
 }
 
 /** The shoulder camera's pose: where its ball stands (the arm back from the shoulder point), looking along the view. */
 export function shoulderPose(state: ShoulderState): CameraPose {
   const at = state.shoulder ?? shoulderOf([0, SHOULDER.height, 0], state.yaw, state.shown);
   const f = poseForward(state);
-  const position: Vec3 = state.ball?.at ?? [at[0] - f[0] * state.distance, at[1] - f[1] * state.distance, at[2] - f[2] * state.distance]; // prettier-ignore
+  const position: Vec3 = state.at ?? [at[0] - f[0] * state.distance, at[1] - f[1] * state.distance, at[2] - f[2] * state.distance]; // prettier-ignore
   const ahead = (at[0] - position[0]) * f[0] + (at[1] - position[1]) * f[1] + (at[2] - position[2]) * f[2];
   return makePose({
     position,

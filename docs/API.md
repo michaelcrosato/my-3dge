@@ -3632,6 +3632,9 @@ For the agents who maintain the engine.
 - `reach` (function): How far a ball of `COLLIDE_RADIUS` gets from `from` along the unit `dir`, up to `max`: `COLLIDE_SKIN` short of a hit.
 - `slide` (function): Where a ball of `COLLIDE_RADIUS` gets from `from` toward `to`, sliding along up to three surfaces it meets: it stops `COLLIDE_SKIN` short of each and moves on along it; a ball already within the skin of one is first lifted off it.
 - `sweep` (function): Where a ball of `COLLIDE_RADIUS` gets from `from` toward `to`: `to`, or twice the skin short of the first surface.
+- `TRAIL_KEEP` (const): The nearest to the base a trail's point a camera heads for stands, m: it never closes in on the player so.
+- `TRAIL_LENGTH` (const): How much of its base's way a camera's trail keeps, m.
+- `TRAIL_STEP` (const): How far apart the points of a camera's trail of its base stand, m.
 - `Walls` (interface): The walls a camera keeps out of: the sim's queries, the groups that stop it and a body it passes through.
 
 ### [`engine/gfx/cameras/define.ts`](../engine/gfx/cameras/define.ts)
@@ -3850,6 +3853,7 @@ For the agents who maintain the engine.
 - `SHOULDER` (const): The rig's numbers (see the file comment): metres and real seconds; `lens` its own lens, degrees (Apex's 90 at 4:3).
 - `SHOULDER_EFFECTS` (const): The effects it takes (engine/gfx/cameras/effects.ts): the lens, the sights, half the roll and the punch.
 - `SHOULDER_LIMITS` (const): The range of the pitch (rad) and of the arm (m).
+- `SHOULDER_ROOM` (const): The room the arm reads (see the file comment): the fastest turn of the view it is ready for, rad/s (a body's own 720°/s, `movement.turnRate`), and the directions it reads either side of straight back, rad.
 - `SHOULDER_TURN_SPEED` (const): Turn rates at full `input.turn`, rad/s: `[right, up]`.
 - `ShoulderInput` (interface): A shoulder camera's input: the devices', the hero's eye and the walls.
 - `ShoulderOptions` (interface): Options for a shoulder camera: its code's data, the lens, and the camera before it.
