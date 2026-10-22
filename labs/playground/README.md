@@ -7,8 +7,9 @@ in the engine is shown. It grows in four stages, each ending at a gate: the gym 
 north end moving by Apex Legends' numbers (its run and sprint, air strafing, jump fatigue, the lurch, the fall
 stun, the crouch and the slide, the mantle, the wall-climb and the superglide, on its hull), its ladder, zipline,
 redeploy balloon and launchers, five camera modes and two looks, cel-shaded and pixel art; the hill, the block's
-ground as terrain (WP 10.5); the lot, a house of four storeys and a shed on a terrain (WP 13.15); and the cottage, its door,
-windows, light switch and chairs to use (WP 13.16). Every claim below
+ground as terrain (WP 10.5); and the block (WP 13.18): the house of four storeys with its garage, the yards, the street,
+the gym in its place, the hill, the range and the ring on one site, furnished and lit, its doors, windows, switches and
+chairs to use (WP 13.16). Every claim below
 is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here that does not exist fails
 it.
 
@@ -28,8 +29,8 @@ it.
 
 A link can open any of them: `labs/playground/?cam3=first&post.look=look:playground-pixel` is first person in the
 pixel look, and `labs/playground/?replay=playground-gym` plays the recorded run (`?replay=playground-moves` the moves,
-`?replay=playground-rides` the rides, `?replay=playground-interact` the cottage's door, light and window), then hands
-you the controls.
+`?replay=playground-rides` the rides, `?replay=playground-site` the house's doors, lights, windows and garage), then
+hands you the controls.
 
 ## The demo index
 
@@ -41,8 +42,7 @@ test (`tests/unit/playground-readme.test.ts`) fails when a scene of `labs/playgr
 |---|---|---|
 | `labs/playground/scenes/gym.ts` | The gym (`playground:gym`): every feature at the height, slope or gap its sign shows, the player moving by Apex's model (`node x sim labs/playground/scenes/gym --feel` prints its numbers), its golden replays the same in Node and in the page while it renders, in either look, with no pipeline built after the warm-up: the gym's run over its features, its moves (`tests/replays/playground-moves.replay.json`: the sprint held and kept by a press, a tired hop, the walk, the crouch-walk, a lurch, an air strafe, the bunny hop's cost, a slide and a slide-jump), its climbs (`tests/replays/playground-climb.replay.json`) and its rides (`tests/replays/playground-rides.replay.json`: up the tower's ladder and over its top, down its zipline, the jump pad, the balloon's line up 90 m, the glide, the dive and the landing). | `node x replay tests/replays/playground-gym.replay.json tests/replays/playground-moves.replay.json tests/replays/playground-rides.replay.json --browser page` |
 | `labs/playground/scenes/hill.ts` | The hill (`playground:hill`): the block's ground as terrain (`terrain:block`, 96 × 96 m, rolling 0.6 m), the hill rising to 10 m in its east quarter in slopes up to 29°, turf over rock where it is steepest (`labs/playground/ground.ts`); the player runs, slides and falls on its slopes with his feet planted (`labs/playground/courses/hill.ts`), and its replay (`tests/replays/terrain-hill.replay.json`: up the flank, across it, down it in a slide gaining speed, back up) gives its goldens in Node and in the page while it renders. | `node x replay tests/replays/terrain-hill.replay.json --browser page` |
-| `labs/playground/scenes/lot.ts` | The lot (`playground:lot`, a site: `engine/world/site.ts`): the storey house (a cellar; the hall and the kitchen; the bedroom and the study; an attic under a gable, up a ladder through a hatch) and a shed turned a quarter, on a 32 × 32 m terrain cut over the cellar (`labs/playground/levels/lot.ts`). The bot reaches every room from the yard and back, and over its tour of them all no camera stands in a wall; isometric and top-down hide what stands above the player's storey and the roof indoors, and the HUD names the room. WP 13.18's site takes its place. | `npm run test -- labs/playground/scenes/lot.test.ts` and `npm run e2e -- tests/e2e/playground-cameras.spec.ts` |
-| `labs/playground/scenes/interact.ts` | The cottage (`playground:interact`, `labs/playground/levels/cottage.ts`): what a player uses in a house (`docs/PLAYGROUND.md` §7.1). Its front door swings open away from the player and shut at a use, bursts open at a strike and breaks off its hinges at the second; a switch inside it turns the kitchen's lamp off and on; a chair thrown through a window breaks its pane. Its replay (`tests/replays/playground-interact.replay.json`) plays all of it and gives its goldens in Node and in the page while it renders. WP 13.18's house takes its place. | `node x replay tests/replays/playground-interact.replay.json --browser page` |
+| `labs/playground/scenes/site.ts` | The block (`playground:site`, the player in the front yard, and a scene per area: `playground:site-house`, `playground:site-backyard`, `playground:site-street`, `playground:site-gym`, `playground:site-hill`, `playground:site-range` and `playground:site-ring`; `docs/PLAYGROUND.md` §2): one site (`site:block`, `labs/playground/levels/site.ts`), 96 × 113 m of terrain rising to the hill on its east edge, and on it the house of four storeys (`labs/playground/levels/house.ts`: a basement with its crawlspace, a ground floor with the garage and its deck, an upper floor, an attic under a gable up a ladder through a hatch), the yards with the shed and the tree house, the street, the gym as built, the lookout on the hill, the range and the ring, furnished and lit (`labs/playground/furnish.ts`). The bot reaches every room and area from the front yard and back, and over its tour of the house no camera stands in a wall; isometric and top-down hide what stands above the player's storey and the roof indoors, and the HUD names the room; its replay (`tests/replays/playground-site.replay.json`: the front door used, a light turned off and on, a chair thrown through a window, the garage door on its switch, a door burst open and broken) gives its goldens in Node and in the page while it renders. | `node x replay tests/replays/playground-site.replay.json --browser page` and `npm run e2e -- tests/e2e/playground-cameras.spec.ts` |
 
 ## The gym
 
@@ -156,13 +156,20 @@ the mantle boost, its setting `movement.mantle.boost` on), `labs/playground/cour
 the speed-ups to the top speed, jumping on, jumping off keeping the speed or at 11.3 m/s, a crouch's drop, three
 catches a jump), `labs/playground/courses/ladder.ts` (run into it and up it, over its top; down it from the top; a jump
 off; a crouch letting go), `labs/playground/courses/launcher.ts` (the pad's 6.5 m, the trampoline's 2 m and its bounce
-from a fall) and `labs/playground/courses/skydive.ts` (up the balloon's line, the glide, the dive, the landing pose at
-30 m, no stun); on the hill, `labs/playground/courses/hill.ts` (up its flank, down it sprinting and sliding). Each
-starts with the gym's dev action `place`
+from a fall), `labs/playground/courses/skydive.ts` (up the balloon's line, the glide, the dive, the landing pose at
+30 m, no stun), `labs/playground/courses/gaps.ts` (the lane of gaps: running across 3 m, sprinting across 5 m,
+slide-jumping across 7 m, a superglide over a platform and the 5 m gap), `labs/playground/courses/steps.ts` (up the
+stairs at the run's speed, up the 45° slope, refused by the 51° one), `labs/playground/courses/crouch.ts` (the duck
+down, up at once, crouch spam never down), `labs/playground/courses/landing.ts` (falls of 6, 14 and 25 m: the stun by
+the impact) and `labs/playground/courses/climbAgain.ts` (a climb caught again only 3.25 m lower); on the hill,
+`labs/playground/courses/hill.ts` (up its flank, down it sprinting and sliding). Each starts with the gym's dev action
+`place`
 (`{ at, yaw, speed }`) and checks the bounds of `labs/playground/courses/bounds.ts` too, each run's: the body's and
 every camera's. `node x feel labs/playground` runs them all headless, `--course slide-flat` one, each into
 `out/feel/<lab>-<name>/report.json`. A bound its WP has yet to meet is watched, reported and never failing a course
-(none now: the feet's slide was, until WP 13.10 planted them). Every camera keeps §4's bounds on every course, and
+(none on the gym's courses: the feet's slide was, until WP 13.10 planted them; the house's soak,
+`labs/playground/scenes/site-soak.test.ts`, the bot's tour of every room run again as a course, watches the shooter's
+and the platformer's for WP 13.27, judging only that no camera stands in a wall). Every camera keeps §4's bounds on every course, and
 `labs/playground/courses/cameras.ts` blends through the five modes while the player runs a square by the north wall.
 
 The feel panel (F, or `?playground.feel=on`) puts a slider on every `movement.*` setting, live; Copy as profile shows

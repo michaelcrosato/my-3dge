@@ -1,0 +1,89 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "The house on the block (WP 13.18): the player uses the front door from the porch, which swings open into the hall, walks in and turns the hall's light off at its switch and on again; two strikes burst the living room's door open and break it off its hinges; in the dining room it picks a chair up and throws it through the north window, whose pane breaks; in the garage the switch on its east wall raises the up-and-over door.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "playground:site-house",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 640,
+  "inputs": [
+    [
+      0,
+      {
+        "args": { "at": [51.5, 0, 61.1], "speed": 0, "yaw": 3.141593 },
+        "cam": 3.141593,
+        "dev": "place",
+        "look": [3.141593, 0]
+      }
+    ],
+    [10, { "b": ["interact"] }],
+    [11, { "b": null }],
+    [60, { "move": [0, -1] }],
+    [92, { "move": null }],
+    [110, { "aim": [52.4, 1.2, 59.75], "look": [0.526, -0.18] }],
+    [112, { "b": ["interact"] }],
+    [113, { "b": null }],
+    [160, { "b": ["interact"] }],
+    [161, { "b": null }],
+    [
+      190,
+      {
+        "aim": null,
+        "args": { "at": [53.6, 0, 58.5], "speed": 0, "yaw": 1.570796 },
+        "cam": 1.570796,
+        "dev": "place",
+        "look": [1.570796, 0]
+      }
+    ],
+    [230, { "b": ["melee"] }],
+    [231, { "b": null }],
+    [270, { "b": ["melee"] }],
+    [271, { "b": null }],
+    [
+      330,
+      {
+        "aim": [56.6, 0.45, 50.3],
+        "args": { "at": [56, 0, 49.8], "speed": 0, "yaw": 0.876 },
+        "cam": 0.876,
+        "dev": "place",
+        "look": [0.876, -0.7]
+      }
+    ],
+    [335, { "b": ["interact"] }],
+    [336, { "b": null }],
+    [340, { "aim": null, "cam": 3.141593, "look": [3.141593, 0] }],
+    [380, { "b": ["interact"], "look": [3.141593, 0.12] }],
+    [381, { "b": null }],
+    [
+      450,
+      {
+        "aim": [65.75, 1.2, 57.2],
+        "args": { "at": [64.6, 0, 57.2], "speed": 0, "yaw": 1.570796 },
+        "cam": 1.570796,
+        "dev": "place",
+        "look": [1.570796, -0.25]
+      }
+    ],
+    [460, { "b": ["interact"] }],
+    [461, { "b": null }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "37a9357b7f9b27c6",
+      "60": "7ae89c7d86eac765",
+      "120": "fae89dd134067179",
+      "180": "ef383adeca26822a",
+      "240": "4065c426547f833b",
+      "300": "3d735ea66d1d38f4",
+      "360": "083ce79b713d3955",
+      "420": "60e25536f37e4ebc",
+      "480": "6d0e013b48c7e4a7",
+      "540": "48a49478e3ceeea1",
+      "600": "bc17153bc8ec2f3b",
+      "640": "80447274d714a28e"
+    }
+  }
+}

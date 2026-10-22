@@ -296,8 +296,19 @@ function gapLane(): GymFeature[] {
 /** The spawn: the tile `@` marks, at the north end of the gym, its centre (m). */
 export const GYM_SPAWN = [20.25, 0, 3.25] as const;
 
-/** Paints the features onto the floor inside the perimeter and returns the level's text. */
-function gymText(): string {
+/**
+ * The gym's gates on the site (labs/playground/levels/site.ts), each a gap in its perimeter wall in level metres: north
+ * to the range, east to the backyard and to the street; each clear of every course's runs. The gym's own scene keeps
+ * its wall whole (`GYM_TEXT`), so nothing runs out of it into the void.
+ */
+export const GYM_GATES: readonly GymRect[] = [
+  { char: '.', x: 30, z: 0, w: 3, d: 0.5 },
+  { char: '.', x: 40.5, z: 20, w: 0.5, d: 3 },
+  { char: '.', x: 40.5, z: 76, w: 0.5, d: 3 },
+];
+
+/** Paints the features onto the floor inside the perimeter, and its gates when asked, and returns the level's text. */
+function gymText(gates = false): string {
   const [cols, rows] = [GYM_SIZE.width / GYM_TILE + 2, GYM_SIZE.length / GYM_TILE + 2];
   const map = Array.from({ length: rows }, (_, r) =>
     Array.from({ length: cols }, (_, c): string =>
@@ -312,11 +323,18 @@ function gymText(): string {
     }
   }
   map[GYM_SPAWN[2] / GYM_TILE - 0.5][GYM_SPAWN[0] / GYM_TILE - 0.5] = '@';
+  for (const { char, x, z, w, d } of gates ? GYM_GATES : []) {
+    for (let r = z / GYM_TILE; r < (z + d) / GYM_TILE; r++) for (let c = x / GYM_TILE; c < (x + w) / GYM_TILE; c++) map[r][c] = char; // prettier-ignore
+  }
   const description =
-    'The gym (docs/PLAYGROUND.md §2.3): 40 × 100 m of calibrated features at 0.5 m tiles, inside a 3 m wall: mantle ' +
-    'walls, fences, climb walls, slide ramps, steps, slope tests, a tower and a lane of gaps, each with its sign.';
+    'The gym (docs/PLAYGROUND.md §2.3): 40 × 100 m of calibrated features at 0.5 m tiles, inside a 3 m wall' +
+    `${gates ? ' with three gates' : ''}: mantle walls, fences, climb walls, slide ramps, steps, slope tests, a tower ` +
+    'and a lane of gaps, each with its sign.';
   return `---\ndescription: ${description}\ntile: ${GYM_TILE}\n---\n${map.map((row) => row.join('')).join('\n')}\n`;
 }
 
 /** The gym's level text (format 1), drawn from `GYM_FEATURES`. */
 export const GYM_TEXT = gymText();
+
+/** The same with its gates open (`GYM_GATES`): the gym as it stands on the site. */
+export const GYM_SITE_TEXT = gymText(true);

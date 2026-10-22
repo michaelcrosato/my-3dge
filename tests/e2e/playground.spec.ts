@@ -3,7 +3,9 @@
  * 1. the gym opens on WebGPU in the shooter camera and the cel look, its HUD names them and the keys, and the signs of
  *    the features near the player show while the far ones hide;
  * 2. T cycles the five camera modes and P switches the two looks, live, while the player runs, building 0 pipelines
- *    after the warm-up;
+ *    after the warm-up: in the gym, on the hill, and on the site from each of its areas' spawns (WP 13.18: the site's
+ *    scenes are one block, each placing the player at an area's spawn, so one page placing it at each stands for
+ *    them all);
  * 3. the gym's replay keeps its goldens in the page while it renders through every camera mode and both looks;
  * 4. the player, `body:player` on `build:adult` (WP 13.2), is what the ID pass sees from every camera but first person
  *    in both looks, its accent showing on it in each (`accentOnPlayer`: the isometric and top-down cameras draw it 11
@@ -15,8 +17,8 @@
  *    clock's frames (`harness.tick`);
  * 7. the feel panel (`?playground.feel=on`, WP 13.4) tunes the run live: its run slider set, the player runs that fast
  *    (holstered, ×1.15), and Copy as profile shows a `defineMovement` call holding the new number;
- * 8. the HUD names what the player would use with the key that uses it (WP 13.16): nothing 3 m from the cottage's front
- *    door, `E: Open` before it, `E: Close` once it is used.
+ * 8. the HUD names what the player would use with the key that uses it (WP 13.16): nothing on the front yard's path, 14 m
+ *    from the house's front door (WP 13.18), `E: Open` on the porch before it, `E: Close` once it is used.
  *
  * Invariants: the page is read through `[data-ui]` elements, the menu's links and `__engine` only; the sim is stepped
  * with `__engine.step`, then frames are drawn (`__engine.render`), so the HUD and the signs show what the run holds.
@@ -24,6 +26,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
+import { SITE_AREAS, type SiteArea } from '../../labs/playground/levels/site';
+import { areaStart } from '../../labs/playground/scenes/site';
 import { PLAYGROUND_CAMERAS, PLAYGROUND_LOOKS } from '../../labs/playground/views';
 import { expect, test } from './fixtures';
 
@@ -96,12 +100,47 @@ function blackIn(parts: Pixels): number {
   return black;
 }
 
+/**
+ * How long a page may take to warm up (ms): the gym's and the hill's, and the site's, which warms 85 pipelines over
+ * its view's two cameras in about 215 s on SwiftShader (WP 13.18).
+ */
+const [READY, SITE_READY] = [120_000, 420_000];
+
 /** Opens the playground at `query` and waits for it. */
 async function open(page: Page, harness: { ready(o: { timeout: number }): Promise<unknown> }, query = '') {
   await page.goto(`labs/playground/${query}`);
-  await harness.ready({ timeout: 120_000 });
+  await harness.ready({ timeout: query.includes('scene=site') ? SITE_READY : READY });
   await call(page, 'pause');
   await call(page, 'render', 2);
+}
+
+/**
+ * Presses T through the five camera modes in the look on screen, the other and the first again, P between them, the
+ * player running a few steps in each.
+ */
+async function throughEveryView(page: Page): Promise<void> {
+  const name = (id: string) => id.replace('look:playground-', '');
+  const first = (await hud(page)).mode.includes(`Look: ${name(PLAYGROUND_LOOKS[0])}`);
+  const [a, b] = first ? PLAYGROUND_LOOKS : [PLAYGROUND_LOOKS[1], PLAYGROUND_LOOKS[0]];
+  for (const look of [a, b, a]) {
+    expect((await hud(page)).mode).toContain(`Look: ${name(look)}`);
+    for (const mode of [...PLAYGROUND_CAMERAS.slice(1), PLAYGROUND_CAMERAS[0]]) {
+      await page.keyboard.press('KeyT');
+      expect((await call<{ code: string }>(page, 'camera.get')).code.split(',')[0]).toBe(mode.code);
+      await call(page, 'step', 6, { move: [-0.6, 0.8] });
+      await call(page, 'render', 2);
+      expect((await hud(page)).mode).toBe(`Camera: ${mode.name} · Look: ${name(look)}`);
+    }
+    await page.keyboard.press('KeyP');
+    await call(page, 'render', 2);
+  }
+}
+
+/** That the page built no pipeline after its warm-ups and raised no advice. */
+async function expectWarm(page: Page, harness: { advice(): unknown[] }): Promise<void> {
+  expect((await call<{ pipelinesAfterWarmUp: number }>(page, 'stats')).pipelinesAfterWarmUp).toBe(0);
+  expect(await adviceCodes(page)).not.toContain('GFX_COLD_PIPELINE');
+  expect(harness.advice()).toEqual([]);
 }
 
 test.describe('the playground', () => {
@@ -128,22 +167,22 @@ test.describe('the playground', () => {
     harness,
   }) => {
     await open(page, harness);
-    const name = (id: string) => id.replace('look:playground-', '');
-    for (const look of [PLAYGROUND_LOOKS[0], PLAYGROUND_LOOKS[1], PLAYGROUND_LOOKS[0]]) {
-      expect((await hud(page)).mode).toContain(`Look: ${name(look)}`);
-      for (const mode of [...PLAYGROUND_CAMERAS.slice(1), PLAYGROUND_CAMERAS[0]]) {
-        await page.keyboard.press('KeyT');
-        expect((await call<{ code: string }>(page, 'camera.get')).code.split(',')[0]).toBe(mode.code);
-        await call(page, 'step', 6, { move: [-0.6, 0.8] });
-        await call(page, 'render', 2);
-        expect((await hud(page)).mode).toBe(`Camera: ${mode.name} · Look: ${name(look)}`);
-      }
-      await page.keyboard.press('KeyP');
-      await call(page, 'render', 2);
+    await throughEveryView(page);
+    await expectWarm(page, harness);
+  });
+
+  test('does the same on the hill, and on the site from each area’s spawn (WP 13.18)', async ({ page, harness }) => {
+    test.setTimeout(1_500_000);
+    await open(page, harness, '?scene=hill');
+    await throughEveryView(page);
+    await expectWarm(page, harness);
+    await open(page, harness, '?scene=site');
+    for (const area of Object.keys(SITE_AREAS) as SiteArea[]) {
+      await call(page, 'actions.run', 'place', { at: areaStart(area), speed: 0, yaw: SITE_AREAS[area].yaw });
+      await throughEveryView(page);
+      expect((await hud(page)).room, area).toMatch(/^(Room: |Indoors|Outdoors)/);
     }
-    expect((await call<{ pipelinesAfterWarmUp: number }>(page, 'stats')).pipelinesAfterWarmUp).toBe(0);
-    expect(await adviceCodes(page)).not.toContain('GFX_COLD_PIPELINE');
-    expect(harness.advice()).toEqual([]);
+    await expectWarm(page, harness);
   });
 
   test('keeps the gym replay’s goldens while it renders through every camera mode and both looks', async ({
@@ -199,13 +238,14 @@ test.describe('the playground', () => {
     expect(harness.advice()).toEqual([]);
   });
 
-  test('names what the player would use, with its key: the cottage’s front door, to open, then to close', async ({
+  test('names what the player would use, with its key: the house’s front door, to open, then to close', async ({
     page,
     harness,
   }) => {
-    await open(page, harness, '?scene=interact');
-    expect((await hud(page)).use || '').toBe(''); // 3 m south of the door: nothing in reach
-    await call(page, 'actions.run', 'place', { at: [10, 0.01, 11.3], speed: 0, yaw: Math.PI }); // just above the lot (5 mm high there)
+    test.setTimeout(900_000);
+    await open(page, harness, '?scene=site');
+    expect((await hud(page)).use || '').toBe(''); // on the front yard's path, 14 m south of the door: nothing in reach
+    await call(page, 'actions.run', 'place', { at: [51.5, 0.01, 61], speed: 0, yaw: Math.PI }); // on the porch, facing the door
     await call(page, 'step', 2, { look: [Math.PI, 0] });
     await call(page, 'render', 2);
     expect((await hud(page)).use).toBe('E: Open');
@@ -222,12 +262,15 @@ test.describe('the playground', () => {
     await open(page, harness, '?playground.menu=on');
     const links = (section: string) =>
       page.locator(`#playground-menu [data-menu=${section}] a`).evaluateAll((all) => all.map((a) => a.textContent));
-    // Every scene module (the gym, the default, first) and every playground replay, as the page finds them.
-    const scenes = readdirSync(join(import.meta.dirname, '../../labs/playground/scenes')).filter((file) => /^[a-z]+\.ts$/.test(file)); // prettier-ignore
+    // Every scene its modules export (the gym, the default, first) and every playground replay, as the page finds them.
+    const dir = join(import.meta.dirname, '../../labs/playground/scenes');
+    const modules = readdirSync(dir).filter((file) => /^[a-z]+\.ts$/.test(file));
+    const exported = (await Promise.all(modules.map((file) => import(join(dir, file))))).flatMap((module) => Object.values(module as Record<string, { kind?: string; id?: string }>)); // prettier-ignore
+    const scenes = [...new Set(exported.filter((value) => value?.kind === 'scene').map((scene) => scene.id!.replace(/^playground:/, '')))]; // prettier-ignore
     const replays = readdirSync(join(import.meta.dirname, '../replays')).filter((file) =>
       file.startsWith('playground-'),
     );
-    expect(await links('scenes')).toEqual(['gym', ...scenes.map((file) => file.replace('.ts', '')).filter((name) => name !== 'gym').sort()]); // prettier-ignore
+    expect(await links('scenes')).toEqual(['gym', ...scenes.filter((name) => name !== 'gym').sort()]);
     expect(await links('cameras')).toEqual(PLAYGROUND_CAMERAS.map((mode) => mode.name));
     expect(await links('looks')).toEqual(['cel', 'pixel']);
     expect(await links('replays')).toEqual(replays.map((file) => file.replace(/^playground-|\.replay\.json$/g, '')).sort()); // prettier-ignore

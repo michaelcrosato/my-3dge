@@ -16,7 +16,8 @@
  * settings.
  *
  * Each drawn frame (`onFrame`) it shows the gym's signs (labs/playground/levels/gym.ts) as labels over their features,
- * those within `SIGN_RANGE` of the player, and the HUD: the camera mode and the look in use, the room the player is in
+ * in the gym's own scene and where the gym stands on the site (labs/playground/levels/site.ts), those within
+ * `SIGN_RANGE` of the player, and the HUD: the camera mode and the look in use, the room the player is in
  * on a scene's site (`whereLine`, a room's data: PLAN.md WP 13.15), what using the thing in reach does, with the key
  * that uses it on the device used last (its `interactor`'s prompt, WP 13.16), and the keys of the map in use as its
  * prompts give them (`keysLine`). It reads the run and never changes it.
@@ -37,6 +38,7 @@ import { keysLine, playgroundMap } from './controls';
 import { mountFeelPanel } from './feel';
 import './ground';
 import { GYM_FEATURES, GYM_TEXT } from './levels/gym';
+import { SITE, SITE_STRUCTURES } from './levels/site';
 import { createPlaygroundMenu, type MenuEntry } from './menu';
 import { gym } from './scenes/gym';
 import { LOOK_KEY, PLAYGROUND_LOOKS, cameraMode, nextCamera, nextLook, swapShoulder, turnView } from './views';
@@ -59,9 +61,10 @@ function exported(modules: Record<string, Record<string, unknown>>, kind: string
 // player is drawn as body:player (labs/playground/bodies/player.ts)
 import.meta.glob(['./looks/*.ts', '!./looks/*.test.ts', './bodies/*.ts', '!./bodies/*.test.ts'], { eager: true });
 
-/** Every playground scene module, imported now so each registers its scene; the gym comes first, the default. */
+/** Every playground scene module, imported now so each registers its scene; the gym first, the default, the rest by id. */
 const modules = import.meta.glob<Record<string, unknown>>(['./scenes/*.ts', '!./scenes/*.test.ts'], { eager: true });
-const sceneEntries = exported({ gym: { gym }, ...modules }, 'scene');
+const [first, ...rest] = exported({ gym: { gym }, ...modules }, 'scene');
+const sceneEntries = [first, ...rest.sort((a, b) => (a.id < b.id ? -1 : 1))];
 
 /** The playground's replays, by name (`playground-gym`), as text loaded on demand. */
 const replays = Object.fromEntries(
@@ -90,8 +93,13 @@ interface CameraMember {
 /** The started engine; null until `createEngine` resolves (its first frames are drawn before that). */
 let engine: Engine | null = null;
 
-/** The gym's signs, made on the first frame the gym draws; empty in other scenes. */
+/** The gym's signs, made on the first frame the gym draws; empty in scenes without it. */
 let signs: { label: Label; at: readonly number[] }[] = [];
+
+/** Where the gym's level stands in `scene`: at the origin in its own, at its place on the site; null elsewhere. */
+function gymAt(scene: EngineFrame['scene']): readonly number[] | null {
+  return scene.id === gym.id ? [0, 0, 0] : scene.site === `site:${SITE.name}` ? SITE_STRUCTURES.gym.at : null;
+}
 
 /** The camera mode and look on screen, for the HUD. */
 let showing = { camera: '', look: search.get('post.look') ?? '' };
@@ -117,11 +125,13 @@ const camera = () => (engine?.inspector?.camera as CameraMember | undefined) ?? 
 function showFrame({ world, scene }: EngineFrame): void {
   const ui = engine?.ui;
   if (!ui) return;
-  if (scene.id === gym.id && signs.length === 0) {
-    signs = GYM_FEATURES.map((feature) => ({
-      label: ui.label(feature.label, { at: feature.sign, id: `sign:${feature.id}` }),
-      at: feature.sign,
-    }));
+  const origin = signs.length === 0 ? gymAt(scene) : null;
+  if (origin) {
+    signs = GYM_FEATURES.map((feature) => {
+      const [x, y, z] = feature.sign;
+      const at = [x + origin[0], y + origin[1], z + origin[2]] as const;
+      return { label: ui.label(feature.label, { at, id: `sign:${feature.id}` }), at };
+    });
   }
   const players = world.query('actor') as unknown as PlayerEntity[];
   const entity = players.find((one) => one.actor.player);

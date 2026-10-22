@@ -279,7 +279,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`headless.ts`](../engine/app/headless.ts): The engine without a page (PLAN.md §8.3, §6.9, WPs 1.6 and 2.7; doctrine: Verifiable): `createHeadless({ scene, seed, settings, view })` starts a scene as a recorded session (engine/sim/scene.ts) and returns its inspector, the same object a page publishes as `window.__engine` minus a renderer: `render` and `shot` throw `DEV_NO_RENDERER`.
   - Exports: `AppHostOptions`, `AppRun`, `createAppHost`, `createHeadless`, `Drawing`, `Headless`, `HEADLESS_CODES`, `headlessHost`, `HeadlessOptions`
   - Tests: [`engine/app/headless.test.ts`](../engine/app/headless.test.ts)
-- [`look.ts`](../engine/app/look.ts): The page's look (PLAN.md WP 7.8, §6.7, ADR-0008 amendment 10): what `createEngine` (engine/app/engine.ts) does before every warm-up, frame and shot, so the look the view setting `post.look` names (engine/gfx/post/looks.ts) reaches the whole picture and not only the post chain's filters (engine/gfx/post/chain.ts): - **its sky:** the stage's lights show the look's sky, or the stage's own for `''` (engine/gfx/stageSky.ts), with the quality tier's shadow budget (engine/gfx/quality.ts); - **its material style:** the page's style set (engine/gfx/materials/styles.ts), which the chain switches, joins the warm-up the first time a look asks for a style other than the set's own, so every warm-up from then on compiles the drawn meshes in every style; and while it is joined, meshes shown since the last frame (a crowd entering, a stand-in) are re-pointed to the style drawn now.
+- [`look.ts`](../engine/app/look.ts): The page's look (PLAN.md WP 7.8, §6.7, ADR-0008 amendment 10): what `createEngine` (engine/app/engine.ts) does before every warm-up, frame and shot, so the look the view setting `post.look` names (engine/gfx/post/looks.ts) reaches the whole picture and not only the post chain's filters (engine/gfx/post/chain.ts): - **its sky:** the stage's lights show the look's sky, or the stage's own for `''` (engine/gfx/stageSky.ts), with the quality tier's shadow budget (engine/gfx/quality.ts); - **its material style:** the page's style set (engine/gfx/materials/styles.ts), which the chain switches, joins the warm-up the first time a look asks for a style other than the set's own, so every warm-up from then on compiles the drawn meshes in the set's own style and in each style a look has asked for; and while it is joined, meshes shown since the last frame (a crowd entering, a stand-in) are re-pointed to the style drawn now.
   - Exports: `createPageLook`, `PageLook`, `PageLookOptions`
   - Tests: [`engine/app/look.test.ts`](../engine/app/look.test.ts), [`tests/e2e/box-look.spec.ts`](../tests/e2e/box-look.spec.ts)
 - [`loop.ts`](../engine/app/loop.ts): The frame loop (PLAN.md §6.4, WP 2.7; doctrine: Reproducible): fixed sim steps plus interpolation, once per animation frame.
@@ -430,11 +430,14 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `ActionRow`
   - Tests: [`engine/dev/actions.test.ts`](../engine/dev/actions.test.ts)
 - [`bot.ts`](../engine/dev/bot.ts): The bot (PLAN.md WP 5.6, §5.6, I-38; doctrines: Agent-operable, Reproducible): plays a scene's player through intents, as a virtual device would, so a test or an agent gets play longer and more varied than a scripted replay (soak runs, navigation smoke over many levels).
-  - Exports: `Bot`, `BOT_FIELDS`, `BotOptions`, `BotPlan`, `BotReport`, `BotRow`, `BotRun`, `BotSample`, `BotStatus`, `BotWorld`, `parseSeeds`, `runBot`, `sweepBot`, `SweepOptions`
+  - Exports: `Bot`, `BOT_FIELDS`, `BotOptions`, `BotPlan`, `BotReport`, `BotRun`, `BotSample`, `BotStatus`, `BotWorld`, `runBot`
   - Tests: [`engine/dev/bot.test.ts`](../engine/dev/bot.test.ts)
 - [`botNav.ts`](../engine/dev/botNav.ts): What the bot navigates by (PLAN.md WP 5.6, WP 13.15): a level's grid (`levelBotNav`, engine/world/nav.ts) or a site's graph over its terrain and every structure's storeys (`siteBotNav`, engine/world/siteNav.ts), behind one face, so the bot (engine/dev/bot.ts) walks a site's yard, doorways, stairs and ladders as it walks a level.
-  - Exports: `BotNav`, `BotPoint`, `BotWay`, `closedDoorAhead`, `levelBotNav`, `siteBotNav`, `tourStream`
+  - Exports: `BotNav`, `BotPoint`, `BotWay`, `closedDoorAhead`, `levelBotNav`, `propObstacles`, `siteBotNav`, `tourStream`
   - Tests: [`engine/dev/botNav.test.ts`](../engine/dev/botNav.test.ts)
+- [`botSweep.ts`](../engine/dev/botSweep.ts): The bot's seed sweep (PLAN.md WP 5.6, I-38): `sweepBot(scene, seeds, plan)` plays the bot's run (engine/dev/bot.ts `runBot`) from a fresh session of the scene per seed (`1-20`, `5` for 1 to 5, `3,7,9`: `parseSeeds`), and gives one row for the scene, its seeds' runs inside and their sums: how many arrived, stuck, stopped or ran out, and the most steps a run took.
+  - Exports: `BotRow`, `parseSeeds`, `sweepBot`, `SweepOptions`
+  - Tests: [`engine/dev/bot.test.ts`](../engine/dev/bot.test.ts)
 - [`gallery.ts`](../engine/dev/gallery.ts): The gallery (PLAN.md WP 7.7): every registered entry of a kind with a `gallery` field (engine/core/gallery.ts) filmed as a few frames, so a kind's twenty entries are reviewed on one contact sheet rather than twenty shots.
   - Exports: `burstLife`, `fitCamera`, `GALLERY_CODES`, `GALLERY_ELEVATION`, `GALLERY_FOV`, `GALLERY_STAGING`, `GalleryFrame`, `galleryFrames`, `galleryKindsOf`, `galleryProblem`, `galleryRoute`, `GalleryRoute`, `galleryStart`
   - Tests: [`engine/dev/gallery.test.ts`](../engine/dev/gallery.test.ts)
@@ -782,7 +785,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createOutline`, `Outline`, `OUTLINE_CODES`, `OUTLINE_MODES`, `OutlineMode`, `OutlineOptions`, `OutlineShells`
   - Tests: [`engine/gfx/materials/outline.test.ts`](../engine/gfx/materials/outline.test.ts), [`tests/e2e/materials-v2.spec.ts`](../tests/e2e/materials-v2.spec.ts)
 - [`styles.ts`](../engine/gfx/materials/styles.ts): Material styles (PLAN.md WP 7.2, §6.7; doctrine: Common ground outside, Quality under the hood inside): the same material data (engine/gfx/materials/material.ts) drawn four ways.
-  - Exports: `checkStyle`, `compileStyled`, `createStyleSet`, `FlatStyleLighting`, `MATERIAL_STYLES`, `MaterialStyle`, `MeshFlatStyleNodeMaterial`, `STYLE_CODES`, `STYLE_WARMUP_IDS`, `StyleSet`, `StyleSetOptions`
+  - Exports: `checkStyle`, `compileStyled`, `createStyleSet`, `FlatStyleLighting`, `MATERIAL_STYLES`, `MaterialStyle`, `MeshFlatStyleNodeMaterial`, `STYLE_CODES`, `STYLE_WARMUP_IDS`, `StyleSet`, `StyleSetOptions`, `StyleWarmup`
   - Tests: [`engine/gfx/materials/styles.test.ts`](../engine/gfx/materials/styles.test.ts), [`tests/e2e/materials-v2.spec.ts`](../tests/e2e/materials-v2.spec.ts)
 - [`toon.ts`](../engine/gfx/materials/toon.ts): Toon shading (PLAN.md WP 7.2, §5.8; doctrine: Quality under the hood): the `toon` material style.
   - Exports: `BandedToonLighting`, `bandsOf`, `createToonUniforms`, `gradientToonMaterial`, `MeshBandedToonNodeMaterial`, `TOON_BANDS`, `TOON_LOOK`, `toonGradientMap`, `ToonLook`, `ToonUniforms`
@@ -1281,10 +1284,13 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `defineSite`, `getSite`, `makeSite`, `quarterTurn`, `QuarterTurns`, `Site`, `SITE_FIELDS`, `SiteEntry`, `siteProblems`, `SiteSpec`, `SiteStructure`, `StructureSpec`, `toLocal`, `toWorld`, `turnVector`, `worldRect`
   - Tests: [`engine/world/site.test.ts`](../engine/world/site.test.ts)
 - [`siteNav.ts`](../engine/world/siteNav.ts): Navigation over a site (PLAN.md WP 13.15; docs/PLAYGROUND.md §6.3): one graph over a grid per walkable surface, for the bot and the neighbours.
-  - Exports: `createSiteNav`, `CROUCH_COST`, `SiteNav`, `SiteNavGrid`, `SiteNavOptions`
+  - Exports: `createSiteNav`, `CROUCH_COST`, `NavBlock`, `SiteNav`, `SiteNavGrid`, `SiteNavOptions`
   - Tests: [`engine/world/siteNav.test.ts`](../engine/world/siteNav.test.ts)
+- [`siteNavClear.ts`](../engine/world/siteNavClear.ts): Where on a tile a site's navigation walks a body (PLAN.md WP 13.15, WP 13.18; engine/world/siteNav.ts): its clear point.
+  - Exports: `CLEAR_SAMPLES`, `ClearGraph`, `clearOffset`, `ClearOptions`, `clearPoints`
+  - Tests: [`engine/world/siteNavClear.test.ts`](../engine/world/siteNavClear.test.ts)
 - [`siteNavGrids.ts`](../engine/world/siteNavGrids.ts): The grids a site's navigation walks (PLAN.md WP 13.15; engine/world/siteNav.ts).
-  - Exports: `siteTerrainSurface`, `storeyCeilings`, `storeyLinks`, `storeySurface`, `tileHighs`
+  - Exports: `blockedSurface`, `CURB`, `NavBlock`, `siteTerrainSurface`, `storeyCeilings`, `storeyLinks`, `storeySurface`, `tileHighs`
   - Tests: [`engine/world/siteNav.test.ts`](../engine/world/siteNav.test.ts), [`engine/world/siteNavGrids.test.ts`](../engine/world/siteNavGrids.test.ts)
 - [`siteQueries.ts`](../engine/world/siteQueries.ts): Queries over a site (PLAN.md WP 13.15; docs/PLAYGROUND.md §6.3), in world metres: the terrain where it is not cut and every structure, each asked in its own frame (engine/world/site.ts's `toLocal`).
   - Exports: `siteClearSight`, `siteFloorBelow`, `siteRescueGrid`, `SiteRescueGrid`, `siteSolidAt`, `siteStructureAt`, `siteSurfaceBelow`
@@ -1533,6 +1539,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`feel.ts`](../labs/playground/feel.ts): The playground's feel panel (docs/PLAYGROUND.md §3.4, PLAN.md WP 13.4): the engine's panel (engine/dev/feel/ panel.ts: sliders over the `movement.*` and `cam.*` settings, live, Copy as profile, Save the replay) on the page, shown and hidden with F (`FEEL_KEY`), or open from the start with the view setting `playground.feel=on` (read when the page opens).
   - Exports: `FEEL_KEY`, `feelOpens`, `mountFeelPanel`, `PLAYGROUND_FEEL_SETTINGS`
   - Tests: [`labs/playground/feel.test.ts`](../labs/playground/feel.test.ts)
+- [`furnish.ts`](../labs/playground/furnish.ts): Where the block's things stand (docs/PLAYGROUND.md §2, PLAN.md WP 13.18), as data the site's scenes read (labs/playground/scenes/site.ts): in each room of the house, its lamp hung from the ceiling and its switch on the wall by its door (`HOUSE_LIGHTS`), the lamp's light group the room's (`room:<name>`); the furniture, room by room (`HOUSE_FURNITURE`), in the house's own metres and storeys (labs/playground/levels/house.ts); the garage door's two switches; and outside (`OUTDOORS`, world metres): the patio, the backyard, the front yard's fence, hedge and mailbox, the street's lamps, hydrant, parked car and bus stop, the range's targets and the ring's ropes; the zipline from the tree house to the garage's deck, the lookout's down to the backyard, the hill's balloon and the backyard's trampoline (`SITE_RIDES`).
+  - Exports: `GARAGE_SWITCHES`, `HOUSE_FURNITURE`, `HOUSE_LIGHTS`, `OUTDOORS`, `Outside`, `Placed`, `RoomLight`, `SITE_RIDES`
+  - Tests: [`labs/playground/scenes/site.test.ts`](../labs/playground/scenes/site.test.ts)
 - [`ground.ts`](../labs/playground/ground.ts): The playground's ground materials (docs/PLAYGROUND.md §2.2, PLAN.md WP 10.5): the hill's turf (`material:playground-grass`, the engine's grass texture) and its rock (`material:playground-rock`, the dirt texture in greys: gravel and stone), the layers its terrain names (labs/playground/scenes/hill.ts) for the splat to mix by slope (engine/gfx/terrainSplat.ts).
   - Exports: `PLAYGROUND_GROUND`
   - Tests: [`labs/playground/scenes/hill.test.ts`](../labs/playground/scenes/hill.test.ts)
@@ -1572,11 +1581,20 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`climb.ts`](../labs/playground/courses/climb.ts): The climb course, `course:playground-climb` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.6): the player, empty-handed, sprints at each of the gym's climb walls and jumps 2.6 m short of its face, holding forward.
   - Exports: `BOUNCE_RUNS`, `CLIMB_RUNS`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`climbAgain.ts`](../labs/playground/courses/climbAgain.ts): The climb-again course, `course:playground-climb-again` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.18): the player, empty-handed, sprints at the gym's 6 m climb wall and jumps 2.6 m short of its face, holding forward, as the climb course's neutral bounce does; climbing, it lets go (pulling back two ticks), then pushes at the wall again as it falls.
+  - Exports: `CLIMB_AGAIN_START`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`crawl.ts`](../labs/playground/courses/crawl.ts): The crawl course, `course:playground-crawl` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.5): the player, empty-handed, crouch-walks into the crawl tunnel (1.4 m clear, 8 m long), lets crouch go inside and goes on crouched under the roof, standing up and running once out; then slides under the bar (1.3 m up) from a sprint.
   - Exports: `CRAWL_STARTS`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`crouch.ts`](../labs/playground/courses/crouch.ts): The crouch course, `course:playground-crouch` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.18): the player, empty-handed and standing on the open floor east of the slope tests, crouches and holds it, stands up, then spams crouch, pressing it for 0.3 s at a time with 0.15 s between.
+  - Exports: `CROUCH_START`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`fences.ts`](../labs/playground/courses/fences.ts): The fences course, `course:playground-fences` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.6): the player, empty-handed, sprints at each of the gym's fences (half a metre thick) from 1.5 m short of its face, pressing and holding jump once within the ledge probe of it: Apex has no vault, so a fence is mantled over.
   - Exports: `FENCE_RUNS`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`gaps.ts`](../labs/playground/courses/gaps.ts): The gaps course, `course:playground-gaps` (docs/PLAYGROUND.md §2.3 and §3.2, PLAN.md WP 13.18): the jump's reach on the gym's lane of gaps, its platforms 1.5 m up and 3 m long.
+  - Exports: `GAP_RUNS`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`hang.ts`](../labs/playground/courses/hang.ts): The hang course, `course:playground-hang` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.6): the mantle hang.
   - Exports: `HANG_STARTS`
@@ -1588,6 +1606,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`ladder.ts`](../labs/playground/courses/ladder.ts): The ladder course, `course:playground-ladder` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.7): the tower's ladder, up its north face to its 6 m top.
   - Exports: `LADDER_STARTS`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`landing.ts`](../labs/playground/courses/landing.ts): The landing course, `course:playground-landing` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.18): the player, empty-handed, is placed in the air over the gym's open south floor, running east, and falls 6, 14 and 25 m: under the 7.62 m a fall keeps its speed from, between it and the 20.32 m the stun is full from, and past that.
+  - Exports: `LANDING_RUNS`, `landingOf`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`launcher.ts`](../labs/playground/courses/launcher.ts): The launcher course, `course:playground-launcher` (docs/PLAYGROUND.md §2.3, PLAN.md WP 13.7): the gym's jump pad and trampoline (labs/playground/levels/gym.ts).
   - Exports: `LAUNCHER_STARTS`
@@ -1607,6 +1628,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`slideRamps.ts`](../labs/playground/courses/slideRamps.ts): The slide ramps course, `course:playground-slide-ramps` (docs/PLAYGROUND.md §3.2, PLAN.md WP 13.5): the player, empty-handed, is put on the deck of each slide ramp (5°, 10°, 20° and 30°, 12 m long) at a holstered sprint's 7.59 m/s, crouching, so it slides off the deck, down the ramp and out across the run-out; then at the 30° ramp's foot, sliding up it.
   - Exports: `SLIDE_RAMPS`, `SLIDE_UPHILL`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
+- [`steps.ts`](../labs/playground/courses/steps.ts): The steps-and-slopes course, `course:playground-steps` (docs/PLAYGROUND.md §2.3 and §3.2, PLAN.md WP 13.18): the player, empty-handed, runs south up the gym's stairs (four 0.25 m risers, each step 1 m deep, to 1 m), up the slope test at 45°, just inside the walkable limit of 45.57°, to its deck 4 m up, and at the one at 51°, past it, which it never stands on.
+  - Exports: `STEP_RUNS`
+  - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
 - [`strip.ts`](../labs/playground/courses/strip.ts): The strip course, `course:playground-strip` (docs/PLAYGROUND.md §2.3 and §3.2, PLAN.md WP 13.4): the player, empty-handed (holstered: every speed ×1.15), placed at the strip's north end, runs south from standing for 1.5 s, sprints on a press (the sticky sprint keeps it), then lets go and stops; its numbers against §3.2's, then the bounds (labs/playground/courses/bounds.ts).
   - Exports: `STRIP_START`
   - Tests: [`labs/playground/courses/courses.test.ts`](../labs/playground/courses/courses.test.ts)
@@ -1619,15 +1643,22 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## labs/playground/levels
 
-- [`cottage.ts`](../labs/playground/levels/cottage.ts): The cottage (PLAN.md WP 13.16; docs/PLAYGROUND.md §7.1), which labs/playground/scenes/interact.ts stands on its lot: one room written as a storey, 6 × 5 m on 0.5 m tiles under a flat roof, the kitchen, behind a front door in the south wall, with a window beside the door and another in the east wall: the openings the scene hangs its door in and stands its panes in.
-  - Exports: `COTTAGE`, `COTTAGE_ROOMS`
-  - Tests: [`labs/playground/scenes/interact.test.ts`](../labs/playground/scenes/interact.test.ts)
 - [`gym.ts`](../labs/playground/levels/gym.ts): The gym (docs/PLAYGROUND.md §2.3, PLAN.md WP 13.1): the playground's calibrated features, as data, and the level they make.
-  - Exports: `GYM_BALLOON`, `GYM_CRAWL`, `GYM_FEATURES`, `GYM_LAUNCHERS`, `GYM_PROPS`, `GYM_SIZE`, `GYM_SPAWN`, `GYM_TEXT`, `GYM_TILE`, `GYM_ZIPLINE`, `GymFeature`, `GymKind`, `GymRect`
+  - Exports: `GYM_BALLOON`, `GYM_CRAWL`, `GYM_FEATURES`, `GYM_GATES`, `GYM_LAUNCHERS`, `GYM_PROPS`, `GYM_SITE_TEXT`, `GYM_SIZE`, `GYM_SPAWN`, `GYM_TEXT`, `GYM_TILE`, `GYM_ZIPLINE`, `GymFeature`, `GymKind`, `GymRect`
   - Tests: [`labs/playground/scenes/gym.test.ts`](../labs/playground/scenes/gym.test.ts)
-- [`lot.ts`](../labs/playground/levels/lot.ts): The lot's levels (PLAN.md WP 13.15; docs/PLAYGROUND.md §6.3), which labs/playground/scenes/lot.ts stands on its terrain: `LOT_HOUSE`, a house written as storeys (a cellar, a ground floor with the hall and the kitchen, an upper floor with the bedroom and the study, an attic under a gable), and `LOT_SHED`, a shed under a flat roof.
-  - Exports: `LOT_HOUSE`, `LOT_ROOMS`, `LOT_SHED`
-  - Tests: [`labs/playground/scenes/lot.test.ts`](../labs/playground/scenes/lot.test.ts)
+- [`house.ts`](../labs/playground/levels/house.ts): The house (docs/PLAYGROUND.md §2.1, PLAN.md WP 13.18): a level written as storeys (format 2) on 0.25 m tiles, painted from rectangles (labs/playground/levels/plan.ts), its map 22 × 19 m from the site's (44, 44): the patio along its back (north, the backyard's side), the house 16 × 12 m (x 0 to 16, z 4 to 16 of the map), the garage 6 × 8 m on its east side, its apron, and the porch along its front (south, the street's side).
+  - Exports: `HOUSE_MAP`, `HOUSE_MARKERS`, `HOUSE_RECTS`, `HOUSE_ROOMS`, `HOUSE_TEXT`, `HOUSE_TILE`
+- [`plan.ts`](../labs/playground/levels/plan.ts): Storey plans (PLAN.md WP 13.18): how the playground writes its buildings as storeys (level format 2, engine/world/level/parse.ts) from rectangles in metres, not character by character.
+  - Exports: `levelText`, `Plan`, `Rect`, `StoreyBlock`
+- [`site.ts`](../labs/playground/levels/site.ts): The block (docs/PLAYGROUND.md §2, PLAN.md WP 13.18): the playground's one site, `site:block`, 96 × 113 m of terrain (`terrain:site`: the hill's ground, labs/playground/scenes/hill.ts, flattened under the yards, the range and the street) and the structures standing on it, in world metres (+X east, +Z south): - the range along the north edge (z 0 to 12, x 0 to 60): its shelter at x 2 to 6, its backstop at x 58; the ring east of it (x 60 to 72); - the gym as built (WP 13.1 to 13.7), 41 × 101 m from (0, 12), its wall open by three gates (`GYM_GATES`): the §2 sketch's 36 × 70 m strip could not hold it, so the block runs 17 m further south than §2's 96 m (amendment 20); - the backyard (x 41 to 72, z 12 to 44): the tree house, the shed; the house (labs/playground/levels/house.ts) with its garage, patio and porch at (44, 44); the front yard (z 63 to 83) with its path and the driveway; - the street (z 83 to 95, x 41 to 96), from the gym's east gate to the block's east edge; the hill (x 72 to 96), rising to 10 m over the east edge's middle, the lookout on its top.
+  - Exports: `SITE`, `SITE_AREAS`, `SITE_SIZE`, `SITE_STRUCTURES`, `SiteArea`
+  - Tests: [`labs/playground/scenes/site.test.ts`](../labs/playground/scenes/site.test.ts)
+- [`street.ts`](../labs/playground/levels/street.ts): The site's paving (docs/PLAYGROUND.md §2.2, PLAN.md WP 13.18): levels of one storey on 0.5 m tiles that labs/playground/levels/site.ts lays on the block, each drawn in its own surface (their entries' recipes): - **The street** (`level:street`): 55 × 12 m, a road 8 m wide in asphalt, its dashed middle line in paint, between two sidewalks 2 m wide in concrete, 0.15 m up (`,`, the playground's sidewalk glyph: the curb a step).
+  - Exports: `CURB`, `DRIVEWAY_TEXT`, `PATH_TEXT`, `PAVING_TILE`, `STREET`, `STREET_TEXT`
+  - Tests: [`labs/playground/scenes/site.test.ts`](../labs/playground/scenes/site.test.ts)
+- [`yard.ts`](../labs/playground/levels/yard.ts): The site's small buildings (docs/PLAYGROUND.md §2.2, PLAN.md WP 13.18), each a level written as storeys on 0.5 m tiles (labs/playground/levels/plan.ts), which labs/playground/levels/site.ts stands on the block: - **The shed** (`level:shed`): 3 × 4 m and 2.5 m high under a flat roof bodies stand on, a door and a window.
+  - Exports: `BACKSTOP_TEXT`, `DECK_HEIGHT`, `LOOKOUT_TEXT`, `RING_TEXT`, `SHED_TEXT`, `SHELTER_TEXT`, `TREEHOUSE_TEXT`, `YARD_TILE`
+  - Tests: [`labs/playground/scenes/site.test.ts`](../labs/playground/scenes/site.test.ts)
 
 ## labs/playground/looks
 
@@ -1638,6 +1669,15 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `look`
   - Tests: [`labs/playground/looks/looks.test.ts`](../labs/playground/looks/looks.test.ts)
 
+## labs/playground/props
+
+- [`house.ts`](../labs/playground/props/house.ts): The house's furniture (docs/PLAYGROUND.md §2.1, PLAN.md WP 13.18), the playground's own props, each built of the geometry kit's boxes, frustums and limbs in the engine's materials (a part's `tint` its colour), most of them fixed in place; labs/playground/furnish.ts says where each stands.
+  - Exports: `fixed`, `HOUSE_PROPS`, `part`
+  - Tests: [`labs/playground/scenes/site.test.ts`](../labs/playground/scenes/site.test.ts)
+- [`outdoors.ts`](../labs/playground/props/outdoors.ts): The block's outdoor props (docs/PLAYGROUND.md §2.2, PLAN.md WP 13.18), the playground's own, built as the house's are (labs/playground/props/house.ts): the patio's grill; the backyard's swing set (no body: walk through it) and the dog's kennel; the front yard's picket fence (a 2 m section, 0.9 m: vault it), hedge (a 4 m run, 1.2 m) and mailbox; trees and rocks for the hill and the yards; the street's lamp (its light the group `street`, which switches at dusk: WP 13.23), its hydrant, and its bus stop's roof (a slab 2.4 m up to mantle onto), posts and back; the range's targets; the ring's ropes.
+  - Exports: `OUTDOOR_PROPS`
+  - Tests: [`labs/playground/scenes/site.test.ts`](../labs/playground/scenes/site.test.ts)
+
 ## labs/playground/scenes
 
 - [`gym.ts`](../labs/playground/scenes/gym.ts): The gym, `playground:gym` (docs/PLAYGROUND.md §2.3, PLAN.md WP 13.1): the playground's first scene, the calibrated features of labs/playground/levels/gym.ts as a physics level, and the player (labs/playground/cast/ player.ts) at the spawn `@` at its north end, facing the features to the south.
@@ -1646,12 +1686,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`hill.ts`](../labs/playground/scenes/hill.ts): The hill, `playground:hill` (docs/PLAYGROUND.md §2.2, PLAN.md WP 10.5): the block's ground as terrain, before WP 13.18 stands the site's levels on it: 96 × 96 m on a 1 m grid, rolling 0.6 m, and in the east the hill (x 72 to 96) rising to 10 m over the east edge's middle in slopes up to 29° (10° to 30° over most of its flank: slides gain speed down it), turf over rock where it is steepest; the player at its foot facing up it, east.
   - Exports: `default`, `hill`, `HILL`, `HILL_START`
   - Tests: [`labs/playground/scenes/hill.test.ts`](../labs/playground/scenes/hill.test.ts)
-- [`interact.ts`](../labs/playground/scenes/interact.ts): The interact scene, `playground:interact` (PLAN.md WP 13.16; docs/PLAYGROUND.md §7.1): the cottage of labs/playground/levels/cottage.ts on a 20 × 20 m lot, with what a player uses in a house: its front door on its hinge (`addLevelDoors`), panes in its windows (`addLevelWindows`), the kitchen's lamp and its switch inside the door, and a crate and two chairs in the yard; the player in the yard south of the door, facing it.
-  - Exports: `default`, `interact`, `INTERACT`, `INTERACT_START`
-  - Tests: [`labs/playground/scenes/interact.test.ts`](../labs/playground/scenes/interact.test.ts)
-- [`lot.ts`](../labs/playground/scenes/lot.ts): The lot, `playground:lot` (PLAN.md WP 13.15; docs/PLAYGROUND.md §6.3): a site, the house and the shed of labs/playground/levels/lot.ts standing on a 32 × 32 m terrain, the house's map at (10, 12), the shed's at (24, 6) turned a quarter, the ground flattened round each and cut under the house's cellar; the player in the yard south-west of the house, facing north.
-  - Exports: `default`, `lot`, `LOT`, `LOT_START`
-  - Tests: [`labs/playground/scenes/lot.test.ts`](../labs/playground/scenes/lot.test.ts)
+- [`site.ts`](../labs/playground/scenes/site.ts): The block's scenes (docs/PLAYGROUND.md §2, PLAN.md WP 13.18): `playground:site`, the whole block with the player in the front yard, and a scene per area (`playground:site-<area>`: the house, the backyard, the street, the gym, the hill, the range, the ring), the same block with the player at that area's spawn (`SITE_AREAS`, labs/playground/levels/site.ts).
+  - Exports: `areaStart`, `backyard`, `default`, `house`, `range`, `ring`, `site`, `SITE_SCENES`, `siteGym`, `siteHill`, `street`
+  - Tests: [`labs/playground/scenes/site.test.ts`](../labs/playground/scenes/site.test.ts)
 
 ## tests/e2e
 

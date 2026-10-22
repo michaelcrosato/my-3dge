@@ -3300,25 +3300,29 @@ For the agents who maintain the engine.
 - `BotOptions` (type): What `new Bot` takes: each field of `BOT_FIELDS`, optional.
 - `BotPlan` (interface): What a run plays (see the file comment), with the bot's options.
 - `BotReport` (interface): What a run did.
-- `BotRow` (interface): One row of the bot's report: a scene, its seeds' runs and their sums.
 - `BotRun` (interface): What the bot plays: a world to read and a recorded step.
 - `BotSample` (interface): One sample of a run's trace.
 - `BotStatus` (type): Where a bot stands with its goal.
 - `BotWorld` (type): The world as the bot reads it: the session's, or the inspector's read-only view of it.
-- `parseSeeds` (function): Seeds as a sweep takes them: `1-20`, `5` (1 to 5), `3,7,9`, a count or a list; 1 to 500 whole numbers from 0.
 - `runBot` (function): Plays `run` with the bot over `level` or a site (see the file comment) and reports what happened.
-- `sweepBot` (function): Plays `plan` from a fresh session of `scene` per seed (see the file comment): one row for the scene.
-- `SweepOptions` (interface): How a sweep starts each run: the scene's settings over its own, its registry and its level.
 
 ### [`engine/dev/botNav.ts`](../engine/dev/botNav.ts)
 
 - `BotNav` (interface): What the bot navigates by (see the file comment).
-- `BotPoint` (type): A point the bot reads: on the ground (x, z), its height where a site has storeys, and what the body does there (the shooter model's mode: `ladder`, `air`…).
-- `BotWay` (interface): The way to one goal: the walking distance from a point (Infinity where none leads), the unit way to walk, and whether to crouch there (under a low ceiling, or for the next step: a site's attic; never on a level's grid).
+- `BotPoint` (type): A point the bot reads: on the ground (x, z), its height where a site has storeys, and what the body does there (the shooter model's mode, `ladder`, `air`…, and stance, `stand` or `crouch`).
+- `BotWay` (interface): The way to one goal: the walking distance from a point (Infinity where none leads), the unit way to walk, and whether to crouch there (under a low ceiling, or for one a little way along it: a site's attic, a crawlspace's door; never on a level's grid).
 - `closedDoorAhead` (function): Whether `actor`'s interactor (engine/sim/interact.ts) is on a closed door it can open: one shut, not locked, not broken and on no switch (engine/sim/doors.ts).
 - `levelBotNav` (function): A level's grid as the bot reads it, a step climbing at most `climb` metres.
-- `siteBotNav` (function): A site's graph as the bot reads it (see the file comment), a step climbing at most `climb` metres.
+- `propObstacles` (function): What the bot walks round on a site (WP 13.18): every prop's body as the world holds it now, but a hinged door's: shut, nothing (it stands in its doorway, which the bot opens: engine/dev/bot.ts), open, its leaf where it swings to.
+- `siteBotNav` (function): A site's graph as the bot reads it (see the file comment), a step climbing at most `climb` metres, `blocked` closed.
 - `tourStream` (const): The bot's own stream for a run's tour: `derive(seed, 'bot')`, never the world's.
+
+### [`engine/dev/botSweep.ts`](../engine/dev/botSweep.ts)
+
+- `BotRow` (interface): One row of the bot's report: a scene, its seeds' runs and their sums.
+- `parseSeeds` (function): Seeds as a sweep takes them: `1-20`, `5` (1 to 5), `3,7,9`, a count or a list; 1 to 500 whole numbers from 0.
+- `sweepBot` (function): Plays `plan` from a fresh session of `scene` per seed (see the file comment): one row for the scene.
+- `SweepOptions` (interface): How a sweep starts each run: the scene's settings over its own, its registry and its level.
 
 ### [`engine/dev/feel/anim.ts`](../engine/dev/feel/anim.ts)
 
@@ -4244,6 +4248,7 @@ For the agents who maintain the engine.
 - `STYLE_WARMUP_IDS` (const): The warm-up entries' ids: one per style, then the one that puts every material back; after every other entry.
 - `StyleSet` (interface): A page's materials in every style (see the file comment).
 - `StyleSetOptions` (interface): How `createStyleSet` makes a set.
+- `StyleWarmup` (interface): A style set's part in a warm-up (`attach`): the styles it warms, more added later, all undone by `dispose()`.
 
 ### [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)
 
@@ -6349,12 +6354,24 @@ For the agents who maintain the engine.
 
 - `createSiteNav` (function): Builds `site`'s navigation (see the file comment).
 - `CROUCH_COST` (const): How many times its length a step costs where a body must crouch to take it (a crouch-walk's pace against a run).
+- `NavBlock` (interface from [`engine/world/siteNavGrids.ts`](../engine/world/siteNavGrids.ts)): A box of the world (m) a body cannot walk through: a prop's body, a door's leaf where it opens to.
 - `SiteNav` (interface): A site's navigation (see the file comment).
 - `SiteNavGrid` (interface): One of a site's grids: the terrain's or a structure's storey's, and its first node's number.
 - `SiteNavOptions` (interface): How `createSiteNav` builds: the climb limit (m), the steepest ground (m a metre), and the body it walks (m; the shooter's hull, `LEVEL_BODY`, by default, the largest the engine ships): its radius, the clear height a step needs (crouched, with a margin) and the height it stands (a step lower costs `CROUCH_COST` times its length, crouched).
 
+### [`engine/world/siteNavClear.ts`](../engine/world/siteNavClear.ts)
+
+- `CLEAR_SAMPLES` (const): How finely `clearOffset` samples a tile for its clear point: samples a metre (every 5 cm).
+- `ClearGraph` (interface): What `clearPoints` reads of a site's graph: its grids, each one's tiles open in its own surface, its links.
+- `clearOffset` (function): `tile`'s clear point on `grid` as an offset from its centre (m; see the file comment); `own` is each tile's openness in its own grid, before the blocks closed any.
+- `ClearOptions` (interface): What `clearOffset` keeps clear of (see the file comment).
+- `clearPoints` (function): Every node's clear point on a site's graph (engine/world/siteNav.ts), each found once: a function giving a node's on its floor (m).
+
 ### [`engine/world/siteNavGrids.ts`](../engine/world/siteNavGrids.ts)
 
+- `blockedSurface` (function): `surface` with every tile closed that a block stands on: one whose middle is within a body's `radius` of its footprint (so a gap between two blocks narrower than the body closes) and in sight of it, no closed tile between (a bookshelf by a wall closes none of the tiles behind it), rising more than 5 cm over the tile's floor and lower than a standing body's top over it (a rug or a roof over a sidewalk closes none).
+- `CURB` (const): The most a step across a ramp's side climbs or drops (m): a flight is walked along its rise, from its foot and top.
+- `NavBlock` (interface): A box of the world (m) a body cannot walk through: a prop's body, a door's leaf where it opens to.
 - `siteTerrainSurface` (function): The terrain's cells as a surface, closed where the terrain is cut and over every structure's footprint (see the file comment).
 - `storeyCeilings` (function): What is above each tile of storey `k` (m, in the structure's frame; see the file comment); Infinity under the sky.
 - `storeyLinks` (function): The pairs of a structure's local tiles a body passes between storeys k and k + 1: flights' tops and ladders.
@@ -6814,13 +6831,25 @@ For the agents who maintain the engine.
 - `BOUNCE_RUNS` (const): Each bounce off the 6 m wall: its zone, where it starts (z), its speed (m/s), and when it jumps and jumps off.
 - `CLIMB_RUNS` (const): Each climb: its wall's height (m) and the x of its middle; each starts at z 19.4, 2.6 m short of the faces.
 
+### [`labs/playground/courses/climbAgain.ts`](../labs/playground/courses/climbAgain.ts)
+
+- `CLIMB_AGAIN_START` (const): Where it starts: 2.6 m short of the 6 m wall's face, at its middle.
+
 ### [`labs/playground/courses/crawl.ts`](../labs/playground/courses/crawl.ts)
 
 - `CRAWL_STARTS` (const): Where the tunnel run starts (4 m north of the tunnel, in its middle) and where the bar's does (facing south).
 
+### [`labs/playground/courses/crouch.ts`](../labs/playground/courses/crouch.ts)
+
+- `CROUCH_START` (const): Where it stands: the open floor east of the slope tests.
+
 ### [`labs/playground/courses/fences.ts`](../labs/playground/courses/fences.ts)
 
 - `FENCE_RUNS` (const): Each run: its fence's height (m) and the x of its middle; each starts at z 14.5, 1.5 m short of the faces.
+
+### [`labs/playground/courses/gaps.ts`](../labs/playground/courses/gaps.ts)
+
+- `GAP_RUNS` (const): The course's runs, north to south along the lane (see the file comment).
 
 ### [`labs/playground/courses/hang.ts`](../labs/playground/courses/hang.ts)
 
@@ -6833,6 +6862,11 @@ For the agents who maintain the engine.
 ### [`labs/playground/courses/ladder.ts`](../labs/playground/courses/ladder.ts)
 
 - `LADDER_STARTS` (const): Where the runs start: on the floor 3 m north of the ladder, and on the tower's top half a metre in from it.
+
+### [`labs/playground/courses/landing.ts`](../labs/playground/courses/landing.ts)
+
+- `LANDING_RUNS` (const): Each fall: its height (m) and the row of the south floor it runs along (z), from x 2.
+- `landingOf` (function): The tick a fall from `height` lands in, its impact speed (m/s), and the share of speed its stun leaves.
 
 ### [`labs/playground/courses/launcher.ts`](../labs/playground/courses/launcher.ts)
 
@@ -6859,6 +6893,10 @@ For the agents who maintain the engine.
 - `SLIDE_RAMPS` (const): The runs: each ramp's slope (°), its lane's middle (x), its deck's height (m) and how long the slide lasts (s).
 - `SLIDE_UPHILL` (const): Where the uphill run starts: the 30° ramp's run-out, 6 m south of its foot, facing north.
 
+### [`labs/playground/courses/steps.ts`](../labs/playground/courses/steps.ts)
+
+- `STEP_RUNS` (const): Each run: its name, its start 4 m north of the feature's foot (z 60), and the height it stands at (m).
+
 ### [`labs/playground/courses/strip.ts`](../labs/playground/courses/strip.ts)
 
 - `STRIP_START` (const): Where the strip starts: its north end, on the lane west of the features, facing south.
@@ -6878,22 +6916,30 @@ For the agents who maintain the engine.
 - `mountFeelPanel` (function): Mounts the panel on `document` over `inspector`: open when the query asks, F toggling it.
 - `PLAYGROUND_FEEL_SETTINGS` (const): The playground's feel setting: whether the panel shows when the page opens.
 
+### [`labs/playground/furnish.ts`](../labs/playground/furnish.ts)
+
+- `GARAGE_SWITCHES` (const): The garage door's switches, in the house's metres: inside on its east wall, and outside beside it.
+- `HOUSE_FURNITURE` (const): The house's furniture, room by room (see the file comment).
+- `HOUSE_LIGHTS` (const): Each room's lamp and switch (see the file comment); the crawlspace has neither, the attic's lamp hangs from its ridge.
+- `OUTDOORS` (const): The outdoor things (see the file comment).
+- `Outside` (type): One thing outside: its prop, where its base stands (x, y, z, world metres) and its yaw.
+- `Placed` (type): One thing in the house: its prop, where it stands (x, z, in the house's metres), its yaw and its storey.
+- `RoomLight` (interface): A room's lamp (where it hangs, x and z) and switch (x, z and the way it faces), in the house's metres.
+- `SITE_RIDES` (const): The block's rides (engine/world/traverse.ts's specs), but the lookout's, which stands on the hill's height.
+
 ### [`labs/playground/ground.ts`](../labs/playground/ground.ts)
 
 - `PLAYGROUND_GROUND` (const): The ground's materials: the hill's turf, then its rock.
-
-### [`labs/playground/levels/cottage.ts`](../labs/playground/levels/cottage.ts)
-
-- `COTTAGE` (const): The cottage, written as a storey (see the file comment).
-- `COTTAGE_ROOMS` (const): The cottage's rooms by marker character.
 
 ### [`labs/playground/levels/gym.ts`](../labs/playground/levels/gym.ts)
 
 - `GYM_BALLOON` (const): The redeploy balloon: a vertical line from the floor up to the balloon (docs/PLAYGROUND.md §2.2's stands 60 m up on the hill; the gym's 90 m, so a course glides, then dives to 35 m/s, before the landing pose takes over at 30 m).
 - `GYM_CRAWL` (const): The crawl (m): a tunnel `clear` high inside, `long` and `wide`, its walls `wall` high with the roof slab (`slab` thick) laid on them, and a bar whose underside is `bar` up, on two posts `post` high.
 - `GYM_FEATURES` (const): The features, north to south (see the file comment and docs/PLAYGROUND.md §2.3).
+- `GYM_GATES` (const): The gym's gates on the site (labs/playground/levels/site.ts), each a gap in its perimeter wall in level metres: north to the range, east to the backyard and to the street; each clear of every course's runs.
 - `GYM_LAUNCHERS` (const): The launchers and the heights they throw to (m): a jump pad flush with the floor, and a trampoline whose mat stands 0.5 m up against the tower's west face, so a walk off the tower's top drops onto it from 5.5 m.
 - `GYM_PROPS` (const): The crawl's slab and bar: fixed boxes the gym stands on its walls and posts (the level's blocks start at the floor).
+- `GYM_SITE_TEXT` (const): The same with its gates open (`GYM_GATES`): the gym as it stands on the site.
 - `GYM_SIZE` (const): The gym's floor (m): west to east and north to south, inside its perimeter wall.
 - `GYM_SPAWN` (const): The spawn: the tile `@` marks, at the north end of the gym, its centre (m).
 - `GYM_TEXT` (const): The gym's level text (format 1), drawn from `GYM_FEATURES`.
@@ -6903,11 +6949,49 @@ For the agents who maintain the engine.
 - `GymKind` (type): What a feature measures (docs/PLAYGROUND.md §2.3).
 - `GymRect` (interface): A rectangle of a feature in level metres (0, 0 is the perimeter's north-west corner), on whole tiles, of `char`.
 
-### [`labs/playground/levels/lot.ts`](../labs/playground/levels/lot.ts)
+### [`labs/playground/levels/house.ts`](../labs/playground/levels/house.ts)
 
-- `LOT_HOUSE` (const): The lot's house, written as storeys (see the file comment).
-- `LOT_ROOMS` (const): The house's rooms by marker character.
-- `LOT_SHED` (const): The lot's shed (see the file comment).
+- `HOUSE_MAP` (const): Its map's size (m): the patio, the house and the garage, and the porch.
+- `HOUSE_MARKERS` (const): The house's rooms by marker character.
+- `HOUSE_RECTS` (const): The house itself, the garage, the porch and the patio, in the map's metres.
+- `HOUSE_ROOMS` (const): Each room's floor (presentation only): tiles where it is wet, carpet where it is soft, wood, else concrete.
+- `HOUSE_TEXT` (const): The house's level text (see the file comment).
+- `HOUSE_TILE` (const): The house's tile (m).
+
+### [`labs/playground/levels/plan.ts`](../labs/playground/levels/plan.ts)
+
+- `levelText` (function): A level's text from its front matter (`description`, `tile`) and its storeys, bottom first (see the file comment).
+- `Plan` (class): One storey's map, painted in rectangles (see the file comment).
+- `Rect` (type): A rectangle of a plan, [x0, z0, x1, z1] (m).
+- `StoreyBlock` (interface): One storey's block: its keys (`storey`, `base`, `height`, a roof's) and its plan.
+
+### [`labs/playground/levels/site.ts`](../labs/playground/levels/site.ts)
+
+- `SITE` (const): The block, made.
+- `SITE_AREAS` (const): Each area's spawn (see the file comment): where the player stands and faces (rad; 0 is +Z, south).
+- `SITE_SIZE` (const): The block's size (m): its width, west to east, and its depth, north to south.
+- `SITE_STRUCTURES` (const): Each structure on the block, by name: its level and where its map's north-west corner stands.
+- `SiteArea` (type): The areas' names.
+
+### [`labs/playground/levels/street.ts`](../labs/playground/levels/street.ts)
+
+- `CURB` (const): The sidewalk's height over the road (m): its curb a step.
+- `DRIVEWAY_TEXT` (const): The driveway's level text.
+- `PATH_TEXT` (const): The front path's level text.
+- `PAVING_TILE` (const): The paving's tile (m).
+- `STREET` (const): The street's size and its road's edges, north to south, in its own metres.
+- `STREET_TEXT` (const): The street's level text (see the file comment).
+
+### [`labs/playground/levels/yard.ts`](../labs/playground/levels/yard.ts)
+
+- `BACKSTOP_TEXT` (const): The backstop (see the file comment): format 1, the engine's 3 m wall, 2 m thick.
+- `DECK_HEIGHT` (const): How high each deck stands over the ground it is on (m).
+- `LOOKOUT_TEXT` (const): The lookout's level text: the tree house's deck, lower, on the hilltop.
+- `RING_TEXT` (const): The ring (see the file comment): format 1, its heights the engine's gallery (1 m) and stairs.
+- `SHED_TEXT` (const): The shed (see the file comment).
+- `SHELTER_TEXT` (const): The range's shelter (see the file comment).
+- `TREEHOUSE_TEXT` (const): The tree house's level text (see the file comment).
+- `YARD_TILE` (const): The yard's tile (m).
 
 ### [`labs/playground/looks/cel.ts`](../labs/playground/looks/cel.ts)
 
@@ -6929,6 +7013,16 @@ For the agents who maintain the engine.
 - `PLAYGROUND_MENU_SETTINGS` (const): The menu's view setting (see the file comment).
 - `PlaygroundMenuOptions` (interface): What the menu lists.
 
+### [`labs/playground/props/house.ts`](../labs/playground/props/house.ts)
+
+- `fixed` (const): A fixed box body of `size` (m).
+- `HOUSE_PROPS` (const): The furniture, by id (see the file comment).
+- `part` (function): A box part `name`, `size` (m) in `material`, its base's middle at `at` (m), in `tint`.
+
+### [`labs/playground/props/outdoors.ts`](../labs/playground/props/outdoors.ts)
+
+- `OUTDOOR_PROPS` (const): The outdoor props, by id (see the file comment).
+
 ### [`labs/playground/scenes/gym.ts`](../labs/playground/scenes/gym.ts)
 
 - `default` (default): The gym, `playground:gym` (docs/PLAYGROUND.md §2.3, PLAN.md WP 13.1): the playground's first scene, the calibrated features of labs/playground/levels/gym.ts as a physics level, and the player (labs/playground/cast/ player.ts) at the spawn `@` at its north end, facing the features to the south.
@@ -6944,19 +7038,19 @@ For the agents who maintain the engine.
 - `HILL` (const): The block's ground, made: the hill is its east quarter.
 - `HILL_START` (const): Where the player starts: at the hill's foot on its west edge's middle, on the ground.
 
-### [`labs/playground/scenes/interact.ts`](../labs/playground/scenes/interact.ts)
+### [`labs/playground/scenes/site.ts`](../labs/playground/scenes/site.ts)
 
-- `default` (default): The interact scene, `playground:interact` (PLAN.md WP 13.16; docs/PLAYGROUND.md §7.1): the cottage of labs/playground/levels/cottage.ts on a 20 × 20 m lot, with what a player uses in a house: its front door on its hinge (`addLevelDoors`), panes in its windows (`addLevelWindows`), the kitchen's lamp and its switch inside the door, and a crate and two chairs in the yard; the player in the yard south of the door, facing it.
-- `interact` (const): The interact scene (see the file comment).
-- `INTERACT` (const): The lot, made.
-- `INTERACT_START` (const): Where the player starts: in the yard, three metres south of the front door.
-
-### [`labs/playground/scenes/lot.ts`](../labs/playground/scenes/lot.ts)
-
-- `default` (default): The lot, `playground:lot` (PLAN.md WP 13.15; docs/PLAYGROUND.md §6.3): a site, the house and the shed of labs/playground/levels/lot.ts standing on a 32 × 32 m terrain, the house's map at (10, 12), the shed's at (24, 6) turned a quarter, the ground flattened round each and cut under the house's cellar; the player in the yard south-west of the house, facing north.
-- `lot` (const): The lot: its site, and the player in the yard facing north, toward the house.
-- `LOT` (const): The lot, made.
-- `LOT_START` (const): Where the player starts: in the yard south-west of the house, on the ground.
+- `areaStart` (function): Where `area`'s spawn stands: its point, on the highest floor at or under it.
+- `backyard` (const): The block, the player in the backyard.
+- `default` (default): The block's scenes (docs/PLAYGROUND.md §2, PLAN.md WP 13.18): `playground:site`, the whole block with the player in the front yard, and a scene per area (`playground:site-<area>`: the house, the backyard, the street, the gym, the hill, the range, the ring), the same block with the player at that area's spawn (`SITE_AREAS`, labs/playground/levels/site.ts).
+- `house` (const): The block, the player in the hall.
+- `range` (const): The block, the player behind the range's counter.
+- `ring` (const): The block, the player at the ring's steps.
+- `site` (const): The block, the player in the front yard: `playground:site`, the site's own scene.
+- `SITE_SCENES` (const): The block's scenes by area: the front yard's is `playground:site`, every other `playground:site-<area>`.
+- `siteGym` (const): The block, the player at the gym's spawn.
+- `siteHill` (const): The block, the player at the hill's foot.
+- `street` (const): The block, the player on the street's sidewalk.
 
 ### [`labs/playground/views.ts`](../labs/playground/views.ts)
 
@@ -8167,7 +8261,7 @@ For the agents who maintain the engine.
 - `PageEngine` (type): `window.__engine` as the tools call it in a page.
 - `pageRuntime` (function): `x replay --browser page`'s runtime: each replay in its scene's page (`labPageOf`), opened on the replay's own scene (`scenePath`, since a page draws one scene and plays only its replays), drawn after every step.
 - `readSignals` (function): Reads `window.__engine`'s signal in `tab`; undefined before the page publishes one.
-- `READY_MS` (const): How long a page may take to signal ready or an error, ms.
+- `READY_MS` (const): How long a page may take to signal ready or an error, ms: the playground's site (PLAN.md WP 13.18) warms 85 pipelines over its view's two cameras in about 215 s on this container's SwiftShader.
 - `replayBrowser` (function): Chromium with its own Vite server for `x replay --browser`: tests/pages/replay.html (`window.__replay`) under the swap `swap` names, or the scenes' own pages (`pageRuntime`).
 - `scenePath` (function): The path of the page that draws a replay's scene: `labs/box/` and `box:spinners` give `labs/box/?scene=spinners`.
 - `Signals` (interface): A page's ready-or-error signal (PLAN.md §8.3), read once.
