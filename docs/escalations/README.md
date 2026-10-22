@@ -13,11 +13,13 @@ Made without an answer after the deadline: keep or reverse each, then `node x es
 
 None.
 
-## Open (0)
+## Open (1)
 
 Waiting for an answer until the deadline; then the agent decides and records the call.
 
-None.
+| Record                                                              | Principle  | Raised               | Question                                                                                                                                                                                                                                                                                                                                                                                                                          | Deadline             | Recommended                                                                                                                                                                            |
+| ------------------------------------------------------------------- | ---------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [ESC-0002](ESC-0002-wp-13-27-the-shooter-camera-cannot-keep-the.md) | Verifiable | 2026-10-22T15:14:04Z | WP 13.27: the shooter camera cannot keep the player's chest in the picture in every frame of the house's soak, as docs/PLAYGROUND.md §4 asks. In 538 of the tour's 5,127 frames there is less than 0.6 m behind his chest along his view (his back to a wall just after turning away from it), and no camera that looks along his aim and stays out of the walls can frame him there. How should the shooter's indoor bound read? | 2026-10-22T15:29:04Z | Judge the shooter's bounds only on frames that leave room for its frame (0.6 m behind the chest along the view, out of the walls), and report the unframable frames' count beside them |
 
 ## Answered (0)
 
