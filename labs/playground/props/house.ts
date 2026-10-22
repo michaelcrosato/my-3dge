@@ -70,7 +70,7 @@ export const HOUSE_PROPS = {
   },
   'prop:playground-stove': {
     description: 'A stove, 0.7 × 0.6 m and 0.9 m high, four rings on its top: fixed.',
-    parts: [part('body', [0.7, 0.88, 0.6], PAINT, [0, 0, 0], '#d9d6cf'), part('top', [0.7, 0.02, 0.6], IRON, [0, 0.88, 0]), ...[[-0.17, -0.14], [0.17, -0.14], [-0.17, 0.14], [0.17, 0.14]].map(([x, z], i) => ({ name: `ring${i + 1}`, geometry: 'geometry:ring', params: { innerRadius: 0.05, outerRadius: 0.09, height: 0.01, radialSegments: 16 }, material: PAINT, tint: '#2b2b2b', position: [x, 0.9, z] }))], // prettier-ignore
+    parts: [part('body', [0.7, 0.88, 0.6], PAINT, [0, 0, 0], '#d9d6cf'), part('top', [0.7, 0.02, 0.6], PAINT, [0, 0.88, 0], '#2e2e2e'), ...[[-0.17, -0.14], [0.17, -0.14], [-0.17, 0.14], [0.17, 0.14]].map(([x, z], i) => ({ name: `ring${i + 1}`, geometry: 'geometry:ring', params: { innerRadius: 0.05, outerRadius: 0.09, height: 0.01, radialSegments: 16 }, material: PAINT, tint: '#8a8a8a', position: [x, 0.9, z] }))], // prettier-ignore
     body: fixed([0.7, 0.9, 0.6]),
   },
   'prop:playground-bath': {
