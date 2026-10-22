@@ -1,11 +1,12 @@
 /**
  * @file The house's furniture (docs/PLAYGROUND.md §2.1, PLAN.md WP 13.18), the playground's own props, each built of
- * the geometry kit's boxes, frustums and limbs in the engine's materials (a part's `tint` its colour), most of them
- * fixed in place; labs/playground/furnish.ts says where each stands. The living room's sofa, television, fireplace
- * (its fire flickering) and rug; the kitchen's fridge and stove; the bathrooms' bath, toilet and basin; the bedrooms'
- * beds and the bunk bed (a body 1.7 m high to mantle onto); the study's desk and bookshelf; the basement's workbench,
- * shelves, washer and boiler; the garage's car; and boxes to carry and throw (3 kg). The tables, chairs, benches,
- * crates and barrels are the engine's (engine/world/props/).
+ * the geometry kit's boxes, frustums and limbs in the engine's materials (a part's `tint` multiplies its material's
+ * colour: paint's and cloth's white show it as it is, iron's dark grey and glow's amber darken and warm it), most of
+ * them fixed in place; labs/playground/furnish.ts says where each stands. The living room's sofa, television,
+ * fireplace (its fire flickering) and rug; the kitchen's fridge and stove; the bathrooms' bath, toilet and basin; the
+ * bedrooms' beds and the bunk bed (a body 1.7 m high to mantle onto); the study's desk and bookshelf; the basement's
+ * workbench, shelves, washer and boiler; the garage's car; and boxes to carry and throw (3 kg). The tables, chairs,
+ * benches, crates and barrels are the engine's (engine/world/props/).
  *
  * Game code, sim-side: it imports only engine/sim-api.ts and the playground's own files.
  *
@@ -41,7 +42,7 @@ export const HOUSE_PROPS = {
   },
   'prop:playground-tv': {
     description: 'A television, its screen 1.1 m wide, on a low stand 1.2 m long: fixed.',
-    parts: [part('stand', [1.2, 0.5, 0.4], WOOD, [0, 0, 0], '#6b4a30'), part('screen', [1.1, 0.65, 0.05], PAINT, [0, 0.55, 0], '#1d2126'), part('picture', [1.02, 0.57, 0.01], GLOW, [0, 0.59, 0.028], '#5d7d9e')], // prettier-ignore
+    parts: [part('stand', [1.2, 0.5, 0.4], WOOD, [0, 0, 0], '#6b4a30'), part('screen', [1.1, 0.65, 0.05], PAINT, [0, 0.5, 0], '#1d2126'), part('picture', [1.02, 0.57, 0.01], PAINT, [0, 0.54, 0.028], '#5d7d9e')], // prettier-ignore
     body: fixed([1.2, 1.2, 0.4]),
   },
   'prop:playground-fireplace': {
@@ -69,12 +70,12 @@ export const HOUSE_PROPS = {
   },
   'prop:playground-stove': {
     description: 'A stove, 0.7 × 0.6 m and 0.9 m high, four rings on its top: fixed.',
-    parts: [part('body', [0.7, 0.88, 0.6], PAINT, [0, 0, 0], '#d9d6cf'), part('top', [0.7, 0.02, 0.6], IRON, [0, 0.88, 0])], // prettier-ignore
+    parts: [part('body', [0.7, 0.88, 0.6], PAINT, [0, 0, 0], '#d9d6cf'), part('top', [0.7, 0.02, 0.6], IRON, [0, 0.88, 0]), ...[[-0.17, -0.14], [0.17, -0.14], [-0.17, 0.14], [0.17, 0.14]].map(([x, z], i) => ({ name: `ring${i + 1}`, geometry: 'geometry:ring', params: { innerRadius: 0.05, outerRadius: 0.09, height: 0.01, radialSegments: 16 }, material: PAINT, tint: '#2b2b2b', position: [x, 0.9, z] }))], // prettier-ignore
     body: fixed([0.7, 0.9, 0.6]),
   },
   'prop:playground-bath': {
     description: 'A bath, 1.7 × 0.75 m and 0.55 m high: fixed.',
-    parts: [part('tub', [1.7, 0.55, 0.75], PAINT, [0, 0, 0], '#f2f1ec'), part('water', [1.55, 0.01, 0.6], GLOW, [0, 0.5, 0], '#a8c8d8')], // prettier-ignore
+    parts: [part('tub', [1.7, 0.5, 0.75], PAINT, [0, 0, 0], '#f2f1ec'), ...[-1, 1].flatMap((k) => [part(`rim${k}z`, [1.7, 0.05, 0.075], PAINT, [0, 0.5, k * 0.3375], '#f2f1ec'), part(`rim${k}x`, [0.075, 0.05, 0.6], PAINT, [k * 0.8125, 0.5, 0], '#f2f1ec')]), part('water', [1.55, 0.01, 0.6], PAINT, [0, 0.5, 0], '#7fa8c0')], // prettier-ignore
     body: fixed([1.7, 0.55, 0.75]),
   },
   'prop:playground-toilet': {
@@ -98,7 +99,7 @@ export const HOUSE_PROPS = {
     body: fixed([1, 1.7, 2]),
   },
   'prop:playground-desk': {
-    description: 'A desk, 1.2 × 0.6 m and 0.75 m high, on two drawer stands: fixed.',
+    description: 'A desk, 1.2 × 0.6 m and 0.75 m high, on a drawer stand and a side panel: fixed.',
     parts: [part('top', [1.2, 0.04, 0.6], WOOD, [0, 0.71, 0], '#8b6240'), part('drawers', [0.4, 0.71, 0.55], WOOD, [-0.38, 0, 0], '#7a5434'), part('leg', [0.05, 0.71, 0.55], WOOD, [0.55, 0, 0], '#7a5434')], // prettier-ignore
     body: fixed([1.2, 0.75, 0.6]),
   },
@@ -123,13 +124,13 @@ export const HOUSE_PROPS = {
     body: fixed([0.6, 0.85, 0.6]),
   },
   'prop:playground-boiler': {
-    description: 'The boiler, an iron drum 0.8 m across and 1.8 m high: fixed.',
-    parts: [{ name: 'drum', geometry: 'geometry:frustum', params: { radiusBottom: 0.4, radiusTop: 0.4, height: 1.8, radialSegments: 16, smooth: true }, material: IRON, tint: '#9aa0a8' }], // prettier-ignore
+    description: 'The boiler, a drum painted grey, 0.8 m across and 1.8 m high: fixed.',
+    parts: [{ name: 'drum', geometry: 'geometry:frustum', params: { radiusBottom: 0.4, radiusTop: 0.4, height: 1.8, radialSegments: 16, smooth: true }, material: PAINT, tint: '#9aa0a8' }], // prettier-ignore
     body: { type: 'fixed', shape: 'cylinder', radius: 0.4, height: 1.8 },
   },
   'prop:playground-car': {
     description: 'A car, 4.2 × 1.8 m and 1.45 m high, until vehicles arrive (docs/PLAYGROUND.md §11): fixed.',
-    parts: [part('body', [1.8, 0.7, 4.2], PAINT, [0, 0.25, 0], '#a83a32'), part('cabin', [1.6, 0.5, 2.2], PAINT, [0, 0.95, -0.2], '#a83a32'), part('glass', [1.62, 0.36, 2], GLOW, [0, 1.02, -0.2], '#9fb7c7'), ...[[-0.8, -1.35], [0.8, -1.35], [-0.8, 1.35], [0.8, 1.35]].map(([x, z], i) => ({ name: `wheel${i + 1}`, geometry: 'geometry:frustum', params: { radiusBottom: 0.32, radiusTop: 0.32, height: 0.22, radialSegments: 14, smooth: true }, material: IRON, tint: '#2a2a2a', position: [x - Math.sign(x) * 0.11, 0.32, z], rotation: [0, 0, Math.PI / 2] }))], // prettier-ignore
+    parts: [part('body', [1.8, 0.7, 4.2], PAINT, [0, 0.25, 0], '#a83a32'), part('cabin', [1.6, 0.5, 2.2], PAINT, [0, 0.95, -0.2], '#a83a32'), part('glass', [1.62, 0.36, 2], PAINT, [0, 1.02, -0.2], '#9fb7c7'), ...[[-0.8, -1.35], [0.8, -1.35], [-0.8, 1.35], [0.8, 1.35]].map(([x, z], i) => ({ name: `wheel${i + 1}`, geometry: 'geometry:frustum', params: { radiusBottom: 0.32, radiusTop: 0.32, height: 0.22, radialSegments: 14, smooth: true }, material: IRON, tint: '#2a2a2a', position: [x - Math.sign(x) * 0.11, 0.32, z], rotation: [0, 0, -Math.sign(x) * (Math.PI / 2)] }))], // prettier-ignore
     body: fixed([1.8, 1.45, 4.2]),
   },
   'prop:playground-box': {

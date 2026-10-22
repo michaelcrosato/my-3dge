@@ -1679,7 +1679,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## labs/playground/props
 
-- [`house.ts`](../labs/playground/props/house.ts): The house's furniture (docs/PLAYGROUND.md §2.1, PLAN.md WP 13.18), the playground's own props, each built of the geometry kit's boxes, frustums and limbs in the engine's materials (a part's `tint` its colour), most of them fixed in place; labs/playground/furnish.ts says where each stands.
+- [`house.ts`](../labs/playground/props/house.ts): The house's furniture (docs/PLAYGROUND.md §2.1, PLAN.md WP 13.18), the playground's own props, each built of the geometry kit's boxes, frustums and limbs in the engine's materials (a part's `tint` multiplies its material's colour: paint's and cloth's white show it as it is, iron's dark grey and glow's amber darken and warm it), most of them fixed in place; labs/playground/furnish.ts says where each stands.
   - Exports: `fixed`, `HOUSE_PROPS`, `part`
   - Tests: [`labs/playground/scenes/site.test.ts`](../labs/playground/scenes/site.test.ts)
 - [`outdoors.ts`](../labs/playground/props/outdoors.ts): The block's outdoor props (docs/PLAYGROUND.md §2.2, PLAN.md WP 13.18), the playground's own, built as the house's are (labs/playground/props/house.ts): the patio's grill; the backyard's swing set (no body: walk through it) and the dog's kennel; the front yard's picket fence (a 2 m section, 0.9 m: vault it), hedge (a 4 m run, 1.2 m) and mailbox; trees and rocks for the hill and the yards; the street's lamp (always on: no light group yet, WP 13.23 gives the street's its group to switch at dusk), its hydrant, and its bus stop's roof (a slab 2.4 m up to mantle onto), posts and back; the range's targets; the ring's ropes.
