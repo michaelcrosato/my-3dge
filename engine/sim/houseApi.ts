@@ -10,7 +10,7 @@
  * name is documented where it is declared.
  *
  * @example
- * // labs/playground/scenes/interact.ts
+ * // labs/playground/scenes/site.ts
  * // import { addDoor, addInteraction, addSwitch } from '../../../engine/sim-api';
  * @see engine/sim-api.ts
  */

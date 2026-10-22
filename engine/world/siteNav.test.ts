@@ -2,14 +2,17 @@
  * @file Unit tests for engine/world/siteNav.ts (T1; WP 13.15) on the fixture site (fixtures/levels/storeys/site.ts): a
  * grid for the terrain and each storey, linked by the flights, the ladder and the doorways; the node under a body (a
  * flight's to its top, the rim beside a hatch, the terrain outside); a way from the yard to every room and back, the
- * attic's crouched; a stairwell walked in its middle; how far the next step rises and the feet stand over the floor.
+ * attic's crouched; a stairwell walked in its middle; how far the next step rises and the feet stand over the floor;
+ * and a crouch a way ahead of a low ceiling (WP 13.18).
  * @see engine/world/siteNav.ts
  */
 import { describe, expect, it } from 'vitest';
 import { defineFixtureSite } from '../../fixtures/levels/storeys/site';
 import { createRegistry } from '../core/registry';
-import { toWorld } from './site';
+import { defineLevel } from './level/level';
+import { defineSite, getSite, toWorld } from './site';
 import { createSiteNav } from './siteNav';
+import { defineTerrain } from './terrain';
 
 const site = defineFixtureSite(createRegistry());
 const nav = createSiteNav(site, { climb: 0.5 });
@@ -51,14 +54,32 @@ describe('a site’s navigation', () => {
       expect([room.name, nav.crouch(there, ...room.at)]).toEqual([room.name, room.name === 'attic']);
     }
     const way = nav.findPath(YARD, ROOMS.find((room) => room.name === 'cellar')!.at)!;
-    expect(way.at(-1)!.toArray()).toEqual([10.75 + 0.1964, -3, 12.75 + 0.1964].map((v) => expect.closeTo(v, 9)));
+    // The cellar's corner: the hull's centre 0.45 m off both walls, the first 5 cm sample past its radius and margin.
+    expect(way.at(-1)!.toArray()).toEqual([10.75 + 0.2, -3, 12.75 + 0.2].map((v) => expect.closeTo(v, 9)));
     const flight = nav.nodeAt(...world(6.75, -1.5, 3.25)); // the cellar's flight, its west column by the railing
-    expect([nav.center(flight).x, nav.clearAt(flight).x]).toEqual([16.75, expect.closeTo(16.9464, 9)]);
+    expect([nav.center(flight).x, nav.clearAt(flight).x]).toEqual([16.75, expect.closeTo(16.95, 9)]);
   });
 
   it('tells how far the next step rises and the feet stand over their floor', () => {
     const cellar = nav.flowField(ROOMS.find((room) => room.name === 'cellar')!.at);
     expect(nav.rise(cellar, ...world(6.75, -1.5, 3.25))).toBeCloseTo(-3 / 7, 9); // down the flight a tile
     expect(nav.over(...world(2, 1, 2))).toBe(1);
+  });
+
+  it('tells to crouch a way ahead of a low ceiling, as far ahead as asked, within its grid', () => {
+    const registry = createRegistry();
+    defineTerrain('terrain:hall', { size: [16, 8] }, registry);
+    // A corridor 1 m wide on 1 m tiles, its east half under a ceiling 1.4 m up (the low ceiling `_`).
+    const text = '---\nstorey: ground\nbase: 0\nheight: 2.7\n---\n##########\n#....____#\n##########\n';
+    defineLevel('level:hall', { text, file: 'hall.txt' }, registry);
+    defineSite(
+      'site:hall',
+      { terrain: 'terrain:hall', structures: [{ level: 'level:hall', at: [2, 0, 2] }] },
+      registry,
+    );
+    const hall = createSiteNav(getSite('site:hall', registry), { climb: 0.5 });
+    const east = hall.flowField([10.5, 0, 3.5]); // the corridor's east end, under the low ceiling
+    const at = [4.5, 0, 3.5] as const; // 2 m west of where it begins
+    expect([hall.crouch(east, ...at), hall.crouch(east, ...at, 1), hall.crouch(east, ...at, 2.2)]).toEqual([false, false, true]); // prettier-ignore
   });
 });

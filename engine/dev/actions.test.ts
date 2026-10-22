@@ -25,7 +25,8 @@ import type { World } from '../sim/world';
 import { defineLevel, getLevel } from '../world/level/level';
 import { siteFloorBelow } from '../world/siteQueries';
 import type { ActionRow } from './actions';
-import type { BotReport, BotRow } from './bot';
+import type { BotReport } from './bot';
+import type { BotRow } from './botSweep';
 
 defineLevel('level:dev-yard', {
   text: ['############', ...Array.from({ length: 10 }, (_, i) => (i === 1 ? '#.@........#' : '#..........#')), '############', ''].join('\n'), // prettier-ignore

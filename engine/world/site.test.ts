@@ -62,10 +62,11 @@ describe('makeSite', () => {
     }
   });
 
-  it('cuts a one-storey level’s whole map, where a structure names a rectangle, and nothing under a storey of void', () => {
+  it('cuts a one-storey level’s whole map, where a structure names a rectangle, and nothing under a post or a void', () => {
     const registry = createRegistry();
     defineLevel('level:hut', { text: '#####\n#...#\n#####\n', file: 'hut.txt' }, registry);
-    const deck = ['---', 'storey: posts', 'base: 0', 'height: 2', '---', '~~~', '~~~', '---', 'storey: deck', 'base: 2.3', 'height: 2', '---', '...', '...'].join('\n'); // prettier-ignore
+    // A deck on a post half a metre square: the post's floor covers no cell whole, so it cuts none.
+    const deck = ['---', 'tile: 0.5', '---', '---', 'storey: posts', 'base: 0', 'height: 2', '---', '~~~~~~', '~#~~~~', '~~~~~~', '~~~~~~', '---', 'storey: deck', 'base: 2.3', 'height: 2', '---', '......', '......', '......', '......'].join('\n'); // prettier-ignore
     defineLevel('level:deck', { text: deck, file: 'deck.txt' }, registry);
     defineTerrain('terrain:field', { size: [16, 16] }, registry);
     const cells = (site: ReturnType<typeof makeSite>) => [...(site.cut?.keys() ?? [])].filter((i) => site.cut![i]).map((i) => [i % 16, Math.floor(i / 16)]); // prettier-ignore

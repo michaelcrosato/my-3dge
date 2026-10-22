@@ -4,11 +4,13 @@
  * `storeySurface`: a structure's storey turned with its structure into the world's orientation (a quarter turn keeps
  * a grid square to the axes), its floors at the structure's height, its steps the storey's own
  * (engine/world/level/walk.ts) where a body `height` metres tall fits under what is above the higher of a step's two
- * floors (each tile's highest, `tileHighs`: a flight's at its upper edge, where a body crossing it stands). `storeyCeilings`
+ * floors (each tile's highest, `tileHighs`: a flight's at its upper edge, where a body crossing it stands), and across a
+ * ramp's side (a flight's) only within a curb (`CURB`): a flight is walked along its rise. `storeyCeilings`
  * gives what is above each tile: its head, the slab of the next storey floored over it, the roof's underside, as
  * validation reads headroom (engine/world/level/validate.ts). `storeyLinks` gives the pairs of
  * tiles a body passes between two storeys: a flight's top edge to the floor above it, and a ladder's tile to the open
- * floor beside it on the storey above (as validation links them).
+ * floor beside it on the storey above (as validation links them). `blockedSurface` closes the tiles boxes stand on
+ * (a scene's props, which no level knows: WP 13.18).
  *
  * Invariants: pure functions of the site; a structure's tiles are its own, row-major in its own frame, its heights in
  * its frame too (storeyView's floors) until `storeySurface` lifts them to the structure's height.
@@ -27,6 +29,9 @@ import { canStep as levelStep } from './level/walk';
 import type { NavSurface } from './nav';
 import { toLocal, type Site, type SiteStructure } from './site';
 import { terrainNavSurface } from './terrainNav';
+
+/** The most a step across a ramp's side climbs or drops (m): a flight is walked along its rise, from its foot and top. */
+export const CURB = 0.1;
 
 /** The terrain's cells as a surface, closed where the terrain is cut and over every structure's footprint (see the file comment). */ // prettier-ignore
 export function siteTerrainSurface(site: Site, grade?: number): NavSurface | null {
@@ -83,6 +88,13 @@ export function storeySurface(
   const view = storeyView(s.level, k);
   const ceilings = storeyCeilings(s.level, k);
   const highs = tileHighs(view);
+  // Each local tile's ramp (a flight among them), and whether a step (dc, dr) from or onto it crosses its side.
+  const rampOf = new Int16Array(view.cols * view.rows).fill(-1);
+  view.ramps.forEach(({ tiles: [c0, r0, c1, r1] }, i) => {
+    for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) rampOf[r * view.cols + c] = i;
+  });
+  const across = (i: number, dc: number, dr: number) =>
+    rampOf[i] >= 0 && (['east', 'west'].includes(view.ramps[rampOf[i]].rises) ? dr !== 0 : dc !== 0);
   const t = view.tile;
   const [x0, z0] = [s.footprint[0], s.footprint[1]];
   const [cols, rows] = s.turn % 2 ? [view.rows, view.cols] : [view.cols, view.rows];
@@ -123,6 +135,9 @@ export function storeySurface(
       const [ldc, ldr] = turned(dc, dr);
       if (!levelStep(view, lc, lr, ldc, ldr, climb)) return false;
       const [from, cols] = [lr * view.cols + lc, view.cols];
+      const to = from + ldr * cols + ldc;
+      const side = rampOf[from] !== rampOf[to] && (across(from, ldc, ldr) || across(to, ldc, ldr));
+      if (side && Math.abs(view.floor[from] - view.floor[to]) > CURB) return false;
       const low = (i: number) => ceilings[i] - Math.max(highs[from], highs[i]) < height;
       return !(low(from + ldr * cols + ldc) || (ldc && ldr && (low(from + ldc) || low(from + ldr * cols))));
     },
@@ -160,4 +175,54 @@ export function storeyLinks(level: CompiledLevel, k: number): [number, number][]
     }
   });
   return links;
+}
+
+/** A box of the world (m) a body cannot walk through: a prop's body, a door's leaf where it opens to. */
+export interface NavBlock {
+  readonly min: readonly [number, number, number];
+  readonly max: readonly [number, number, number];
+}
+
+/**
+ * `surface` with every tile closed that a block stands on: one whose middle is within a body's `radius` of its
+ * footprint (so a gap between two blocks narrower than the body closes) and in sight of it, no closed tile between
+ * (a bookshelf by a wall closes none of the tiles behind it), rising more than 5 cm over the tile's floor and lower than
+ * a standing body's top over it (a rug or a roof over a sidewalk closes none).
+ */
+export function blockedSurface<S extends NavSurface>(
+  surface: S,
+  blocks: readonly NavBlock[],
+  stand: number,
+  radius: number,
+): S {
+  // prettier-ignore
+  if (!blocks.length) return surface;
+  const { cols, rows, tile } = surface;
+  const [ox, oz] = surface.origin ?? [0, 0];
+  const closed = new Uint8Array(cols * rows);
+  /** Whether tile (c, r)'s middle sees the footprint's nearest point: no closed tile on the way, its own and the end's aside. */ // prettier-ignore
+  const inSight = (c: number, r: number, min: NavBlock['min'], max: NavBlock['max']) => {
+    const [x, z] = [ox + (c + 0.5) * tile, oz + (r + 0.5) * tile];
+    const [qx, qz] = [Math.min(Math.max(x, min[0]), max[0]), Math.min(Math.max(z, min[2]), max[2])];
+    const samples = Math.ceil((3 * Math.hypot(qx - x, qz - z)) / tile);
+    for (let k = 1; k < samples; k++) {
+      const [sc, sr] = [Math.floor((x + ((qx - x) * k) / samples - ox) / tile), Math.floor((z + ((qz - z) * k) / samples - oz) / tile)]; // prettier-ignore
+      if (sc >= 0 && sr >= 0 && sc < cols && sr < rows && !surface.walkable[sr * cols + sc]) return false;
+    }
+    return true;
+  };
+  for (const { min, max } of blocks) {
+    // The tiles whose middles lie within `radius` of the footprint: [min − radius, max + radius] on each axis.
+    const [c0, c1] = [Math.max(0, Math.ceil((min[0] - radius - ox) / tile - 0.5)), Math.min(cols - 1, Math.floor((max[0] + radius - ox) / tile - 0.5))]; // prettier-ignore
+    const [r0, r1] = [Math.max(0, Math.ceil((min[2] - radius - oz) / tile - 0.5)), Math.min(rows - 1, Math.floor((max[2] + radius - oz) / tile - 0.5))]; // prettier-ignore
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) {
+        const floor = surface.floor[r * cols + c];
+        if (max[1] > floor + 0.05 && min[1] < floor + stand && inSight(c, r, min, max)) closed[r * cols + c] = 1;
+      }
+    }
+  }
+  const walkable = Array.from(surface.walkable, (open, i) => open && !closed[i]);
+  const canStep: NavSurface['canStep'] = (c, r, dc, dr, up) => surface.canStep(c, r, dc, dr, up) && walkable[r * cols + c] && walkable[(r + dr) * cols + c + dc]; // prettier-ignore
+  return { ...surface, walkable, canStep };
 }

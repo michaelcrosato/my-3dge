@@ -153,14 +153,14 @@ function findTarget(w: World, actor: Entity, wants: Intents, accept: (e: Entity)
   const facing = new Vector3(Math.sin(actor.actor.yaw), 0, Math.cos(actor.actor.yaw));
   let [best, score] = [-1, Infinity];
   for (const e of w.query('sceneProp') as unknown as Entity[]) {
-    if (!accept(e)) continue;
+    // Where it is first, then whether it can be used: a house holds hundreds of props, few of them in reach.
     const at = new Vector3(e.sceneProp.x, e.sceneProp.y, e.sceneProp.z);
     const to = at.clone().sub(eye);
     if (to.length() > USE_REACH + radiusOf(getProp(e.sceneProp.prop))) continue;
     const flat = new Vector3(to.x, 0, to.z);
     const distance = flat.length();
     if (distance > 1e-6 && flat.divideScalar(distance).dot(facing) < FRONT) continue;
-    if (to.length() < score && clear(w, eye, at, e.sceneProp.body)) [best, score] = [e.id, to.length()];
+    if (to.length() < score && accept(e) && clear(w, eye, at, e.sceneProp.body)) [best, score] = [e.id, to.length()];
   }
   return best;
 }

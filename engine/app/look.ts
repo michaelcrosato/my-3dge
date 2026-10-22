@@ -6,15 +6,17 @@
  *   quality tier's shadow budget (engine/gfx/quality.ts);
  * - **its material style:** the page's style set (engine/gfx/materials/styles.ts), which the chain switches, joins the
  *   warm-up the first time a look asks for a style other than the set's own, so every warm-up from then on compiles
- *   the drawn meshes in every style; and while it is joined, meshes shown since the last frame (a crowd entering, a
- *   stand-in) are re-pointed to the style drawn now.
+ *   the drawn meshes in the set's own style and in each style a look has asked for; and while it is joined, meshes
+ *   shown since the last frame (a crowd entering, a stand-in) are re-pointed to the style drawn now.
  *
- * Why the style set joins the warm-up on demand: compiling every style multiplies the pipelines a warm-up builds by
- * the styles (four), which every page would pay at start and at every later warm-up, though most never leave the
- * scene's own style. Joining adds the set's warm-up entries and key part, which changes the shader key, so the
- * renderer warms up again before the first frame in the new style, never stalling one; from then on, switching styles
- * re-points materials already compiled and builds nothing. A page opened with a styled look (`?post.look=…`) joins
- * before its first warm-up.
+ * Why the style set joins the warm-up on demand, and only with the styles asked for: compiling a style multiplies
+ * the pipelines a warm-up builds, which every page would pay at start and at every later warm-up, though most never
+ * leave the scene's own style and a game's looks share one or two (the playground's both draw toon: on its site,
+ * WP 13.18, the other two styles cost about 130 of its 330 s warm-up on SwiftShader). Joining, or a look asking for a
+ * style not yet warmed, adds the set's warm-up entries and key part, which changes the shader key, so the renderer
+ * warms up again before the first frame in the new style, never stalling one; from then on, switching between styles
+ * asked for re-points materials already compiled and builds nothing. A page opened with a styled look
+ * (`?post.look=…`) joins before its first warm-up.
  *
  * Invariants: presentation only: it reads view settings and writes the stage's lights and materials, never the sim;
  * everything it changes before a frame either builds nothing or changes the warm-up's key, so the renderer warms up
@@ -56,7 +58,7 @@ export interface PageLook {
 export function createPageLook(options: PageLookOptions): PageLook {
   const { post, styles, warmup } = options;
   const own = styles.style;
-  let joined: { dispose(): void } | null = null;
+  let joined: ReturnType<StyleSet['attach']> | null = null;
   return {
     get styled() {
       return joined !== null;
@@ -65,7 +67,10 @@ export function createPageLook(options: PageLookOptions): PageLook {
       const look = post.look;
       stage.sky.show(look.sky);
       stage.sky.budget(options.quality());
-      if (!joined && look.style && look.style !== own) joined = styles.attach(warmup, stage.scene);
+      if (look.style && look.style !== own && !joined?.styles.includes(look.style)) {
+        if (joined) joined.add(look.style);
+        else joined = styles.attach(warmup, stage.scene, [own, look.style]);
+      }
       if (joined) styles.apply(stage.scene);
       return view;
     },

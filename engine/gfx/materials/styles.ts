@@ -17,12 +17,12 @@
  *
  * The warm-up (engine/gfx/warmup.ts): a pipeline depends on the mesh as much as on its material (its attributes,
  * its instancing; r182 even compiles a shader per instanced mesh of 1,000 slots or fewer, as the level's walls are),
- * so probes of each material cannot stand in for the meshes. `attach(warmup, scene)` registers one entry per style,
- * after every other entry (`STYLE_WARMUP_IDS`, `~styles/<style>`), each of which points every mesh the warm-up then
- * draws (the visible ones and those it made drawable) at its style, and a last one (`~styles~`) that puts every
- * material back before the warm frame: each warm-up compiles the scene once per style, so switching styles later
- * builds no pipeline (tests/e2e/materials-v2.spec.ts). The compiled ids go into the shader key, so a material
- * compiled since re-warms before it draws.
+ * so probes of each material cannot stand in for the meshes. `attach(warmup, scene, styles)` registers one entry per
+ * style it is given (every style by default), after every other entry (`STYLE_WARMUP_IDS`, `~styles/<style>`), each
+ * of which points every mesh the warm-up then draws (the visible ones and those it made drawable) at its style, and a
+ * last one (`~styles~`) that puts every material back before the warm frame: each warm-up compiles the scene once per
+ * style, so switching between them builds no pipeline (tests/e2e/materials-v2.spec.ts). `add(style)` warms one more:
+ * its entry's id, as the compiled ids, goes into the shader key, so the renderer warms up again before a frame draws.
  *
  * Invariants: one material per entry and style; reads entries' fields, never their ids' text; every material it
  * compiles carries `userData.material` (the entry's id) and `userData.style`; a warm-up leaves every material as it
@@ -176,9 +176,18 @@ export interface StyleSet {
   setStyle(style: MaterialStyle, root?: Object3D): number;
   /** Re-points every visible mesh under `root` to the current style; returns how many materials changed. */
   apply(root: Object3D): number;
-  /** Warms every style of what `scene` draws, with `warmup` (see the file comment); `dispose()` undoes it. */
-  attach(warmup: Warmup, scene: Object3D): { dispose(): void };
+  /** Warms `styles` (every one by default) of what `scene` draws, with `warmup` (see the file comment). */
+  attach(warmup: Warmup, scene: Object3D, styles?: readonly MaterialStyle[]): StyleWarmup;
   /** Frees every material it made, and detaches. */
+  dispose(): void;
+}
+
+/** A style set's part in a warm-up (`attach`): the styles it warms, more added later, all undone by `dispose()`. */
+export interface StyleWarmup {
+  /** The styles it warms, in `MATERIAL_STYLES`' order. */
+  readonly styles: readonly MaterialStyle[];
+  /** Warms `style` too, from the next warm-up on (nothing when it already does). Throws `GFX_UNKNOWN_STYLE`. */
+  add(style: MaterialStyle): void;
   dispose(): void;
 }
 
@@ -276,7 +285,7 @@ export function createStyleSet(options: StyleSetOptions = {}): StyleSet {
     apply(root) {
       return repoint(root, (mesh, material) => worn(mesh, restyled(material, current)));
     },
-    attach(warmup, scene) {
+    attach(warmup, scene, styles = MATERIAL_STYLES) {
       // What each mesh drew with before the warm-up swapped it, put back by the last entry.
       const kept = new Map<Mesh, Material[]>();
       const keep = () => {
@@ -287,40 +296,45 @@ export function createStyleSet(options: StyleSetOptions = {}): StyleSet {
           kept.set(mesh, Array.isArray(mesh.material) ? [...mesh.material] : [mesh.material]);
         });
       };
-      const entries = MATERIAL_STYLES.map((style, i) =>
-        warmup.register(STYLE_WARMUP_IDS[i], {
-          objects: () => {
-            keep();
-            for (const [mesh, materials] of kept) {
-              const next = materials.map((material) => worn(mesh, restyled(material, style)));
-              mesh.material = Array.isArray(mesh.material) ? next : next[0];
-            }
-            return [];
-          },
-        }),
-      );
-      entries.push(
-        warmup.register(STYLE_WARMUP_IDS[MATERIAL_STYLES.length], {
-          objects: () => {
-            for (const [mesh, materials] of kept)
-              mesh.material = Array.isArray(mesh.material) ? materials : materials[0];
-            kept.clear();
-            return [];
-          },
-        }),
-      );
-      const part = warmup.keyPart('styles', () => set.ids.join(','));
-      const undo = () => {
-        for (const entry of entries) entry.dispose();
-        part.dispose();
-      };
-      detach.push(undo);
-      return {
+      const warmed = new Map<MaterialStyle, { dispose(): void }>();
+      const attached: StyleWarmup = {
+        get styles() {
+          return MATERIAL_STYLES.filter((style) => warmed.has(style));
+        },
+        add(style) {
+          if (warmed.has(checkStyle(style)) || !detach.includes(undo)) return;
+          const entry = warmup.register(STYLE_WARMUP_IDS[MATERIAL_STYLES.indexOf(style)], {
+            objects: () => {
+              keep();
+              for (const [mesh, materials] of kept) {
+                const next = materials.map((material) => worn(mesh, restyled(material, style)));
+                mesh.material = Array.isArray(mesh.material) ? next : next[0];
+              }
+              return [];
+            },
+          });
+          warmed.set(style, entry);
+        },
         dispose() {
           const at = detach.indexOf(undo);
           if (at >= 0) detach.splice(at, 1)[0]();
         },
       };
+      const undo = () => {
+        for (const entry of [...warmed.values(), restore, part]) entry.dispose();
+        warmed.clear();
+      };
+      detach.push(undo);
+      for (const style of styles) attached.add(style);
+      const restore = warmup.register(STYLE_WARMUP_IDS[MATERIAL_STYLES.length], {
+        objects: () => {
+          for (const [mesh, materials] of kept) mesh.material = Array.isArray(mesh.material) ? materials : materials[0];
+          kept.clear();
+          return [];
+        },
+      });
+      const part = warmup.keyPart('styles', () => set.ids.join(','));
+      return attached;
     },
     dispose() {
       for (const undo of detach.splice(0)) undo();

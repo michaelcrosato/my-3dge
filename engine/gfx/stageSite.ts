@@ -16,7 +16,7 @@
  * every structure's meshes, the cutaways' twins and the terrain's levels; `dispose` frees what it made.
  *
  * @example
- * // const drawn = createStageSite(getSite('site:lot'), { materials, registry });
+ * // const drawn = createStageSite(getSite('site:block'), { materials, registry });
  * // scene.add(drawn.root);
  * // each frame, once a player stands: drawn.follow(); drawn.update(camera.pose(), player.feet, { fade, view });
  * @see engine/gfx/stageSite.test.ts

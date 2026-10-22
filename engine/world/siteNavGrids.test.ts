@@ -2,8 +2,10 @@
  * @file Unit tests for engine/world/siteNavGrids.ts (T1; WP 13.15) on the fixture house (fixtures/levels/storeys/):
  * a flight's tile stands highest at its upper edge; what is above a tile (the slab of the storey floored over it, a
  * door's head, the roof's underside, nothing over the stairwell); the links between storeys (a flight's top, the
- * ladder through the attic's hatch); the terrain closed under the footprints and the cut; and a storey's steps need
- * the body's height clear (none off the cellar flight's top under the ground floor's slab).
+ * ladder through the attic's hatch); the terrain closed under the footprints and the cut; a storey's steps need the
+ * body's height clear (none off the cellar flight's top under the ground floor's slab) and walk a flight along its
+ * rise (off its foot, never its side); and a block closes the tiles within a body's radius of it, but none behind a
+ * wall (WP 13.18).
  * @see engine/world/siteNavGrids.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -11,7 +13,14 @@ import { defineFixtureSite } from '../../fixtures/levels/storeys/site';
 import { createRegistry } from '../core/registry';
 import { roofUnder } from './level/roofs';
 import { storeyView } from './level/storeys';
-import { siteTerrainSurface, storeyCeilings, storeyLinks, storeySurface, tileHighs } from './siteNavGrids';
+import {
+  blockedSurface,
+  siteTerrainSurface,
+  storeyCeilings,
+  storeyLinks,
+  storeySurface,
+  tileHighs,
+} from './siteNavGrids';
 
 const site = defineFixtureSite(createRegistry());
 const [house] = site.structures;
@@ -54,9 +63,20 @@ describe('the site’s grids', () => {
     expect([at(14.5, 15.5), at(26.5, 4.5), at(5.5, 20.5)]).toEqual([false, false, true]);
   });
 
-  it('step a storey only where the body’s height is clear: never off the cellar flight’s top under the slab', () => {
+  it('step a storey only where the body’s height is clear, and a flight along its rise: off its foot, never its side', () => {
     const surface = storeySurface(house, 0, 1.24);
     const west = (r: number) => surface.canStep(13, r, -1, 0, 0.5); // off the flight's side onto the cellar's floor
-    expect([west(3), west(4), west(8), west(9)]).toEqual([false, false, true, true]);
+    // Its top under the slab, and its side anywhere: each of its rows stands more than a curb (0.1 m) over the floor.
+    expect([west(3), west(4), west(8), west(9)]).toEqual([false, false, false, false]);
+    expect([surface.canStep(13, 9, 0, 1, 0.5), surface.canStep(13, 10, 0, -1, 0.5)]).toEqual([true, true]); // its foot
+  });
+
+  it('close the tiles a block stands near, within a body’s radius, but none behind a wall', () => {
+    // A row of 0.25 m tiles, x 0 to 1.5, a wall at the fourth (x 0.75 to 1); a 0.2 m box against its east face.
+    const walkable = [true, true, true, false, true, true];
+    const surface = { cols: 6, rows: 1, tile: 0.25, walkable, floor: walkable.map(() => 0), canStep: () => true };
+    const blocked = blockedSurface(surface, [{ min: [1, 0, 0], max: [1.2, 1, 0.25] }], 1.88, 0.41);
+    // The third's middle stands 0.375 m from the box, within the radius, but the wall is between: it stays open.
+    expect(blocked.walkable).toEqual([true, true, true, false, false, false]);
   });
 });

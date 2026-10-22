@@ -359,6 +359,22 @@ describe('a level written as storeys (fixtures/levels/storeys/house.txt, WP 13.1
     meshes.dispose();
   });
 
+  it('keeps a storey’s floor whose every piece is its rooms’ own out of the root, hidden, its part in place (WP 13.18)', () => {
+    // prettier-ignore
+    const meshes = createLevelMeshes(house, { materials: materials(), rooms: { attic: 'material:planks' } });
+    const names = meshes.parts.map((part) => part.name.replace('level:house/', ''));
+    const floor = meshes.parts[names.indexOf('attic/floor')];
+    expect([names.indexOf('attic/floor'), names.includes('attic/floor:attic')]).toEqual([12, true]); // one part a descriptor
+    expect([floor.mesh.geometry.index?.count, floor.mesh.parent, floor.mesh.visible]).toEqual([0, null, false]); // no draw call
+    const empty: string[] = [];
+    meshes.root.traverse((object) => void ((object as InstancedMesh).geometry?.index?.count === 0 && empty.push(object.name))); // prettier-ignore
+    expect(empty).toEqual([]);
+    const entries = new Map<string, () => readonly Object3D[]>();
+    meshes.register({ register: (id: string, entry: { objects(): readonly Object3D[] }) => (entries.set(id, entry.objects), { dispose() {} }) }); // prettier-ignore
+    expect(entries.get('level:house')!()).not.toContain(floor.mesh);
+    meshes.dispose();
+  });
+
   it("stands each storey's walls on its floor and up to the next, the attic's under the gable, and the roof over all", () => {
     const meshes = createLevelMeshes(house, { materials: materials() });
     const box = (name: string) => new Box3().setFromObject(meshes.parts.find((part) => part.name === `level:house/${name}`)!.mesh); // prettier-ignore

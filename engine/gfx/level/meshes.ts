@@ -132,7 +132,9 @@ const holdsTile = (pieces: readonly TileRect[], col: number, row: number) =>
  * parts, `ceiling` (its slab's underside and void edges, slabs.ts), `heads` (the wall over its openings and low
  * ceilings) and `frames` (round its doors and windows, openings.ts); the floors of the rooms `options.rooms` gives a
  * material of their own; and the roofs (roofs.ts). They come after every descriptor's mesh, so `parts[i]` is still the
- * i-th descriptor's, storey by storey, for the stage's runs (engine/gfx/stage.ts).
+ * i-th descriptor's, storey by storey, for the stage's runs (engine/gfx/stage.ts). A part with nothing to draw (a
+ * storey's floor whose every piece its rooms' own floors took) keeps its place in `parts`, hidden and out of the root,
+ * since an empty mesh in the scene is drawn with no vertices (WP 13.18: Dawn warns of a draw with an index count of 0).
  */
 export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOptions): LevelMeshes {
   const recipes = { ...LEVEL_RECIPES, ...options.recipes };
@@ -171,7 +173,8 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
     mesh.castShadow = shape.castShadow;
     mesh.receiveShadow = shape.receiveShadow;
     Object.assign(mesh.userData, { level: level.name, recipe, glyphs: [...glyphs], ...(storey === undefined ? {} : { storey }) }); // prettier-ignore
-    root.add(mesh);
+    if (drawsNothing(mesh.geometry)) mesh.visible = false;
+    else root.add(mesh);
     const [bottom, top] = heights;
     const part: LevelMeshPart = { name: mesh.name, recipe, shape: shape.shape, glyphs, mesh, cells, bottom, top, cut, castShadow: shape.castShadow }; // prettier-ignore
     return storey === undefined ? part : { ...part, storey };
@@ -218,7 +221,7 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
       return parts.reduce((sum, { mesh, castShadow }) => sum + meshDrawCalls(mesh, castShadow, shadowMaps), 0);
     },
     register(warmup, id = root.name) {
-      const entry = warmup.register(id, { objects: () => parts.map((part) => part.mesh) });
+      const entry = warmup.register(id, { objects: () => parts.filter((part) => part.mesh.parent === root).map((part) => part.mesh) }); // prettier-ignore
       const registration = {
         dispose() {
           registrations.delete(registration);
@@ -234,6 +237,11 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
       root.removeFromParent();
     },
   };
+}
+
+/** Whether `geometry` has no vertex to draw: no index, or no position, to draw. */
+function drawsNothing(geometry: BufferGeometry): boolean {
+  return (geometry.index ? geometry.index.count : (geometry.getAttribute('position')?.count ?? 0)) === 0;
 }
 
 /**

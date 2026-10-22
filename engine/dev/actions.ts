@@ -29,7 +29,8 @@ import type { Field, Schema } from '../core/schema';
 import { changesSim, listDevActions } from '../sim/devActions';
 import { getLevel } from '../world/level/level';
 import { getSite } from '../world/site';
-import { runBot, sweepBot, type BotPlan } from './bot';
+import { runBot, type BotPlan } from './bot';
+import { sweepBot } from './botSweep';
 import { defineMember } from './members';
 
 /** One dev action as `actions.list()` shows it. */

@@ -135,7 +135,7 @@ export interface Registry {
   has(kind: string, id: string): boolean;
   /** The kind's entries, sorted by id. */
   list(kind: string): Entry[];
-  /** The declared kinds, sorted. */
+  /** The declared kinds, sorted (a frozen list, the same one until a kind is declared). */
   kinds(): string[];
   /** Every kind; one kind's fields and ids; or one entry's values. */
   describe(): KindsDescription;
@@ -159,6 +159,8 @@ const KIND_KEYS = ['description', 'fields', 'fallback', 'check', 'defineWith'];
 export function createRegistry(options: { log?: Log } = {}): Registry {
   const log = options.log ?? sharedLog;
   const kinds = new Map<string, KindState>();
+  /** The kinds' names, sorted, frozen; null until asked after a kind is declared. */
+  let sorted: readonly string[] | null = null;
   /** The advice values of each missing id read so far, so a typo read every frame computes its suggestion once. */
   const standIns = new Map<string, Record<string, string>>();
 
@@ -230,6 +232,7 @@ export function createRegistry(options: { log?: Log } = {}): Registry {
         if (Object.hasOwn(spec.fields, reserved)) throw bad(`"${reserved}" is added to every entry; rename that field`);
       }
       kinds.set(kind, { spec: spec as KindSpec, entries: new Map() });
+      sorted = null;
       return {
         name: kind,
         def: (id, entrySpec) => registry.def(kind, id, entrySpec as Record<string, unknown>) as Entry<S>,
@@ -282,7 +285,8 @@ export function createRegistry(options: { log?: Log } = {}): Registry {
     },
 
     kinds() {
-      return [...kinds.keys()].sort(byText);
+      // Kept sorted until the next kind: asked on every prop and every setting lookup, a sort each time adds up.
+      return (sorted ??= Object.freeze([...kinds.keys()].sort(byText))) as string[];
     },
 
     describe,

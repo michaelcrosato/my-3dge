@@ -16,7 +16,8 @@ import { playReplay } from '../sim/replay';
 import { defineScene } from '../sim/scene';
 import { createSession } from '../sim/session';
 import { compileLevel } from '../world/level/compile';
-import { Bot, parseSeeds, runBot, sweepBot, type BotReport } from './bot';
+import { Bot, runBot, type BotReport } from './bot';
+import { parseSeeds, sweepBot } from './botSweep';
 
 /** The maze: one-metre corridors from the spawn `@` (north-west) to the far corner, round four walls. */
 const MAZE_TEXT = `
@@ -163,6 +164,8 @@ describe('the bot itself', () => {
     expect(bot.next({ x: 7.4, z: 5.4 }, 1 / 60)).toEqual({});
     expect([bot.status, bot.reason]).toEqual(['arrived', null]);
     expect(new Bot(MAZE).next({ x: 1.5, z: 1.5 }, 1 / 60)).toEqual({}); // idle: no goal
+    // With `look`, it turns the view the way it walks, as a player's mouse would: east is yaw π/2.
+    expect(new Bot(MAZE, { look: true }).goTo(GOAL).next({ x: 1.5, z: 1.5 }, 1 / 60)).toEqual({ move: [1, 0], look: [Math.PI / 2, 0] }); // prettier-ignore
   });
 
   it('sidesteps when held along the way it wants, then jumps and tries the other side', () => {

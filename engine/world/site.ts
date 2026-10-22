@@ -6,8 +6,8 @@
  * each footprint to that height (`flatten` metres of margin), and cut where a structure has a floor of its own on or
  * under it (the floored tiles of its ground floor and of a storey below it, a basement; a one-storey level's whole map)
  * and the rectangles it names in `cuts` (window wells), so the cutaway can show what is below, nobody walks on ground
- * over a basement, and no ground shows through a floor at its height (WP 13.18). Stand a structure's floors on whole
- * cells of the terrain, so the cut is exact: a cell is cut when its middle is under one.
+ * over a basement, and no ground shows through a floor at its height (WP 13.18). A cell is cut when such floors cover it
+ * whole, so stand a structure's floors on whole cells of the terrain: the cut is exact there.
  *
  * Queries over all of it, in world metres (engine/world/siteQueries.ts): the highest surface under a point, its tag,
  * the structure, storey and room a point is in, whether a point is in a solid, and a clear sight line. `toLocal` and
@@ -173,19 +173,30 @@ function cutRects(s: SiteStructure): (readonly [number, number, number, number])
   return [...tiles, ...s.cuts];
 }
 
-/** The terrain's cells a cut covers (their centres inside one of the structures' cut rectangles), or null. */
+/**
+ * The terrain's cells the structures' cuts cover whole, or null: a cell is cut when the cuts, together, hold each of
+ * its four quarters' middles, so a deck's posts or a ladder's foot, a tile or two across, leave the ground under them.
+ */
 function cutCells(terrain: Terrain, structures: readonly SiteStructure[]): Uint8Array | null {
   const { cols, rows, cell, origin } = terrain;
-  const cut = new Uint8Array(cols * rows);
-  let any = false;
+  const [across, down, half] = [2 * cols, 2 * rows, cell / 2];
+  const held = new Uint8Array(across * down); // each cell's quarters, two by two
   for (const s of structures) {
     for (const rect of cutRects(s)) {
       const [x0, z0, x1, z1] = worldRect(s, rect);
-      const [c0, c1] = [Math.ceil((x0 - origin[0]) / cell - 0.5), Math.floor((x1 - origin[0]) / cell - 0.5)];
-      const [r0, r1] = [Math.ceil((z0 - origin[2]) / cell - 0.5), Math.floor((z1 - origin[2]) / cell - 0.5)];
-      for (let r = Math.max(0, r0); r <= Math.min(rows - 1, r1); r++) {
-        for (let c = Math.max(0, c0); c <= Math.min(cols - 1, c1); c++) [cut[r * cols + c], any] = [1, true];
+      const [q0, q1] = [Math.ceil((x0 - origin[0]) / half - 0.5), Math.floor((x1 - origin[0]) / half - 0.5)];
+      const [p0, p1] = [Math.ceil((z0 - origin[2]) / half - 0.5), Math.floor((z1 - origin[2]) / half - 0.5)];
+      for (let p = Math.max(0, p0); p <= Math.min(down - 1, p1); p++) {
+        for (let q = Math.max(0, q0); q <= Math.min(across - 1, q1); q++) held[p * across + q] = 1;
       }
+    }
+  }
+  const cut = new Uint8Array(cols * rows);
+  let any = false;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const at = 2 * r * across + 2 * c;
+      if (held[at] && held[at + 1] && held[at + across] && held[at + across + 1]) [cut[r * cols + c], any] = [1, true];
     }
   }
   return any ? cut : null;

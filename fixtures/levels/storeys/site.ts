@@ -2,7 +2,7 @@
  * @file The storey fixtures as a site (PLAN.md WP 13.15), for the engine's site tests (Node only: it reads the
  * fixtures' files): `defineFixtureSite(registry)` defines the fixtures' room markers (glyphs.ts), the house and the
  * shed as levels, a 32 × 32 m terrain lot and `site:fixture-lot`, the house's map at (10, 0, 12) and the shed's at
- * (24, 0, 6) turned a quarter, as labs/playground/scenes/lot.ts stands its copies; it returns the site made.
+ * (24, 0, 6) turned a quarter (as the playground's lot stood them until its block, WP 13.18); it returns the site made.
  *
  * @example
  * import { createRegistry } from '../../../engine/core/registry';
