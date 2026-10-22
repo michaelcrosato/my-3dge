@@ -13,11 +13,13 @@
  * `index.html`) and every `labs/<name>/index.html`; test pages never ship (`harness.html` throws on purpose). In a game
  * made from the engine (engine-lock.json at its root, ADR-0024) the box is the worked example: served, never built. A page
  * ships only what it imports, never a `fetch()` of a repository path (§6.3). Nothing here needs the network, a
- * browser, the source checkouts or an `x` command: Vercel's build and Vitest both read this file.
+ * browser, the source checkouts or an `x` command: Vercel's build and Vitest both read this file. The reference to
+ * `vitest/config`, which adds `test` to Vite's config type, is kept in the declaration tsc -b emits (`preserve`), so
+ * the tests' project, which sees this file through it, knows `config.test` (Vitest 4's main types no longer add it).
  *
  * @see tools/lib/vite.test.ts
  */
-/// <reference types="vitest/config" />
+/// <reference types="vitest/config" preserve="true" />
 import { existsSync, globSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { dirname, join } from 'node:path';

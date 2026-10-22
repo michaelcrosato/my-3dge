@@ -379,7 +379,7 @@ Each fact below was measured in this cloud container, the platform development t
 | stdlib's math (`@stdlib/math-base-special-sin`, `-cos`, `-pow`…) | 0.3.0 (2024-07-28) | `0.3.1` (2026-02-08), *internals* | A patch of the 0.3 line. Pure-JS fdlibm ports, the same in every runtime (below); about 250,000 downloads a week | None yet |
 | TypeScript | 5.9.3 (2025-09-30) | `5.9.3` | The newest 5.x | 6.0 (2026-03-23) on 2027-03-23 |
 | Vite | 7.1.9 (2025-10-03) | `7.3.7` (2026-10-06) | The newest 7.x | 8.0.0 (2026-03-12) on 2027-03-12 |
-| Vitest | 3.2.4 (2025-06-17) | `3.2.7` (2026-07-06) | The newest 3.x | 4.0.0 (2025-10-22) on 2026-10-22 |
+| Vitest | 4.0.0 (2025-10-22) | `4.1.12` (2026-10-15) | The newest 4.x (U-1) | 5.0.0 (2026-09-03) on 2027-09-03 |
 | `@playwright/test` | 1.56.0 (2025-10-06) | `1.64.1` (2026-10-14) | The newest 1.x. It drives the container's Chromium 141 (below) | None yet |
 | ESLint, `@eslint/js` | 9.37.0 (2025-10-03) | `9.39.5` (2026-07-10) | The newest 9.x | 10.0.0 (2026-02-06) on 2027-02-06 |
 | `typescript-eslint` | 8.46.0 (2025-10-06) | `8.71.1` (2026-10-05) | The newest 8.x; its peer range admits TypeScript 5.9 | None yet |
@@ -1102,7 +1102,7 @@ h.step(600, script); h.hash(); h.trace(); h.state();
 |---|---|---|
 | Language and types | TypeScript 5.9.3, strict; `module: esnext`, `moduleResolution: bundler`, `verbatimModuleSyntax`, `erasableSyntaxOnly`, `skipLibCheck` (for speed; §4.7) | `npm run typecheck` |
 | Dev server and build | Vite 7.3.7: multi-page (the build takes `index.html` and `labs/*/index.html`; `tests/pages/*.html` are served in development only), TypeScript served with source maps | `npm run dev`, `npm run build` |
-| Unit tests (T1) | Vitest 3.2.7, Node environment, `*.test.ts` beside the code; the JSON reporter writes `out/test/report.json` | `npm test` |
+| Unit tests (T1) | Vitest 4.1.12, Node environment, `*.test.ts` beside the code; the JSON reporter writes `out/test/report.json` | `npm test` |
 | Browser tests (T2) | Playwright Test 1.64.1, one project (`webgpu`), the platform's Chromium through `launchOptions.executablePath`, Vite as the `webServer`; the JSON reporter writes `out/e2e/report.json` | `npm run e2e` |
 | Lint | ESLint 9.39.5 with `typescript-eslint` 8.71.1 (its recommended rules, without type information, so T0 stays fast), `eslint-plugin-jsdoc` 61.7.1, `globals` 16.5.0 | `npm run lint` |
 | Format | Prettier 3.9.9, print width 120 | `npm run format` |
@@ -4417,7 +4417,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 13.25 | The front end | I | todo | | |
 | 13.26 | The tour and the hand-over | B | todo | | |
 | **G13** | **Gate: the tech demo** | | todo | | |
-| U-1 | Vitest 4 (from 2026-10-22) | T | todo | | |
+| U-1 | Vitest 4 (from 2026-10-22) | T | done | U1COMMIT (#28) | Vitest 3.2.7 → 4.1.12 (2026-10-15), the newest of the 4.x line, which qualified on 2026-10-22 (`node x deps --qualify`); `node x deps --update --dry-run` found nothing else to adopt, so the record's `measured` day is 2026-10-22. The T1 suites pass unchanged: 4,309 tests in 421 files, as on Vitest 3 (336.6 s against 335.1 s); `vitest related --run` (T1's selection, tools/lib/tiers.ts) and `vitest.mjs run` (`x new`'s check) run as before. One change: vite.config.ts's `/// <reference types="vitest/config" />` is marked `preserve="true"`, since tsc -b's declaration of it is what the tests' project sees and TypeScript drops an unmarked reference from declarations; Vitest 3's main types had added `test` to Vite's config type, Vitest 4's leave it to `vitest/config` (tests/setup/harnesses.test.ts and tools/lib/vite.test.ts read `config.test`). tools/deps.json records `assertion-error` 2.0.1 under `typesDeps` (only @types/chai pulls it in now that chai 6 does not). Checked against the 4.0 migration guide: the config's explicit `exclude` keeps Vitest 3's list (4.0 narrowed the default), the `dot` and `json` reporters are unchanged, `maxWorkers` was already top-level, no test passes options as its third argument, and the four `afterEach(() => vi.restoreAllMocks())` return a value Vitest 4 ignores (only a before-hook's returned function is a cleanup). Call: Vitest 5.0 (2026-09-03) is not taken through rule 3: it does not work the same way (`clearMocks` on by default, unawaited `resolves` and `rejects` fail, `toThrow('')` matches any message); it qualifies on 2027-09-03. Not verified: T2 (no spec imports Vitest) and the full run's `x new --test-all`, main's full run after the merge. |
 | U-2 | The lint majors (from 2027-01-01 to 2027-02-06) | T | todo | | |
 | U-3 | three r183 (from 2027-02-18, or when it measures better) | R | todo | | |
 | U-4 | Vite 8 and TypeScript 6 (from 2027-03-12 and 2027-03-23) | T | todo | | |
