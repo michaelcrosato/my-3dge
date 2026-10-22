@@ -224,8 +224,10 @@ export function stepShoulder(state: ShoulderState, input: ShoulderInput, dt: num
   // and back along its own way: from where the shoulder point and the pitch are going (by his velocity where it is
   // known: the shoulder point follows it a lag behind), as far ahead as the arm, coming in at a share of its pace,
   // would take to be there (a drop off a ledge, down a hatch, a jamb as he steps past it, a look going up)
-  const itself = state.shoulder ? [0, 1, 2].map((i) => (shoulder[i] - state.shoulder![i]) / dt) : null;
-  const went: Vec3 | null = state.shoulder && !jumped ? ((input.player?.velocity ?? itself) as Vec3) : null;
+  // (a frame of no time, a page's warm-up or a paused one, reads no way: its rates would divide by 0)
+  const timed = dt > 1e-9;
+  const itself = state.shoulder && timed ? [0, 1, 2].map((i) => (shoulder[i] - state.shoulder![i]) / dt) : null;
+  const went: Vec3 | null = state.shoulder && !jumped && timed ? ((input.player?.velocity ?? itself) as Vec3) : null;
   if (went) {
     const bend = state.went ? went.map((v, i) => (v - state.went![i]) / dt) : [0, 0, 0];
     const most = Math.min(1, SHOULDER_ROOM.fall / Math.max(Math.hypot(...bend), 1e-9));
