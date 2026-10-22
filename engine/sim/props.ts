@@ -102,6 +102,8 @@ export interface SpawnPropOptions {
   group?: string;
   /** More components its entity holds from the start (a door's `door`, a switch's `switch`). */
   components?: Readonly<Record<string, object>>;
+  /** Its body knocked away from `from` as it is made (a broken prop's pieces: engine/physics/bodies.ts's `knock`). */
+  knock?: PropKnock & { from: readonly [number, number, number] };
 }
 
 /** Declares the component `sceneProp` on `registry` (once). */
@@ -158,6 +160,7 @@ export function spawnProp<C extends object, E extends EventMap>(
   const spec = propBody({ ...placement, prop }, undefined, options.as);
   const { position, rotation } = spec ?? propPose({ ...placement, prop });
   const body = spec ? physicsOf(w).addBody(spec) : -1;
+  if (options.knock && body >= 0) knock(physicsOf(w), body, [...options.knock.from], options.knock);
   if (spec && !w.systems.has('props.readback')) w.systems.add('props.readback', readProps, { phase: 'readback' });
   const [x, y, z] = position;
   const health = entry.health > 0 ? { propHealth: { hp: entry.health } } : {};

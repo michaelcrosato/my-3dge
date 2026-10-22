@@ -41,7 +41,7 @@
 import RAPIER from '@dimforge/rapier3d-simd-compat';
 import { codeError } from '../core/log';
 import { copyValue, defineSchema, freezeValue, isPlainObject, show } from '../core/schema';
-import { bodyId, handleOf } from './capture';
+import { bodyId, liveBody } from './capture';
 import { groupBits } from './groups';
 import { check, vec, type Vec3Like } from './queries';
 import { rapierOf, type Physics } from './world';
@@ -158,7 +158,7 @@ export interface CrowdStepper {
 function bodyOf(physics: Physics, agent: CrowdAgent, where: string): RAPIER.RigidBody | null {
   check(isPlainObject(agent), where, agent, 'a crowd agent (CROWD_AGENT_FIELDS)');
   if (agent.state === 'queued' || agent.state === 'gone' || agent.body < 0) return null;
-  const found = rapierOf(physics).bodies.get(handleOf(agent.body));
+  const found = liveBody(rapierOf(physics), agent.body);
   if (found) return found;
   throw codeError('PHYSICS_NO_BODY', { id: show(agent.body), why: ': remove agents with removeAgent, not removeBody' });
 }

@@ -3,15 +3,17 @@
  * component `propHealth`) and the windows their panes make. `damageProp(w, id, amount, from)` takes hit points; at 0
  * `breakProp` breaks it: the event its look names goes out for the view's effects (its `breaks.shards`: `glass`,
  * `splinters`; `shatter` when it names none) with `{ id, prop, position, ground }` (`ground`: its base, where debris
- * lands), its pieces (its `breaks.into`, `breaks.pieces` of them) stand where it was, knocked away from `from`, and it
- * goes, body and all: a window's pane leaves its opening open, to vault or climb through.
+ * lands), its pieces (its `breaks.into`, `breaks.pieces` of them) stand where it was, their bodies knocked away from
+ * `from` as they are made (inside a step their entities join at its end), and it goes, body and all: a window's pane
+ * leaves its opening open, to vault or climb through.
  *
- * `addLevelWindows(w, level, place?)` stands panes (`prop:pane`, 0.5 m each) across each window opening of a level
- * written as storeys, from its sill, in the wall's middle (in a site's structure: `place`). The system `breakables`
- * (phase `ai`, added with the first pane) breaks a pane a prop flying at it would strike this step (faster than
- * `BREAK_SPEED`, its own shape cast along its move), before the physics step, so a thrown crate goes through.
- * A strike (engine/sim/interact.ts) takes a point; `strikeBody(w, body, from, force)` is a bolt's or a shot's on a
- * body: the prop or door it is (the body-to-entity lookup, `propOfBody`) is struck, a dynamic one knocked.
+ * `addLevelWindows(w, level, place?)` stands panes (`prop:pane`, 0.5 × 1.2 m) across each window opening of a level
+ * written as storeys, from its sill, in the wall's middle (in a site's structure: `place`): the default window glyph's
+ * opening, 1.2 m high, takes them exactly, and another sill, head or width leaves gaps. The system `breakables` (phase
+ * `anim`, added with the first pane, after the step's throws) breaks every pane a prop flying faster than
+ * `BREAK_SPEED` would strike this step (its own shape cast along its move), before the physics step, so a thrown crate
+ * goes through. A strike (engine/sim/interact.ts) takes a point; `strikeBody(w, body, from, force)` is a bolt's or a
+ * shot's on a body: the prop or door it is (the body-to-entity lookup, `propOfBody`) is struck, a dynamic one knocked.
  *
  * Invariants: everything is in components and bodies; panes and props in id order; no random stream (pieces stand in
  * a fixed fan round the break).
@@ -24,7 +26,7 @@ import type { CompiledLevel } from '../world/level/types';
 import { getProp, propCentre } from '../world/props/prop';
 import { toWorld, type QuarterTurns } from '../world/site';
 import { defineStrikable, strikeEntity } from './interact';
-import { hitProp, propOfBody, removeProp, spawnProp, type ScenePropComponents } from './props';
+import { propOfBody, removeProp, spawnProp, type ScenePropComponents } from './props';
 import type { World } from './world';
 
 /** How fast a prop must fly to break a pane it strikes (m/s): a throw, never a nudge. */
@@ -52,8 +54,12 @@ export function breakProp<C extends object, E extends EventMap>(
   removeProp(w, id);
   for (let k = 0; k < prop.breaks.pieces && prop.breaks.into; k++) {
     const a = (k / prop.breaks.pieces) * 2 * Math.PI; // a fixed fan round the break
-    const piece = spawnProp(w, { prop: prop.breaks.into, at: [x + 0.2 * Math.sin(a), y, z + 0.2 * Math.cos(a)], yaw: a }); // prettier-ignore
-    hitProp(w, piece, [from[0], from[1], from[2]], { speed: 2, up: 1 });
+    const at = [x + 0.2 * Math.sin(a), y, z + 0.2 * Math.cos(a)] as const;
+    spawnProp(
+      w,
+      { prop: prop.breaks.into, at, yaw: a },
+      { knock: { from: [from[0], from[1], from[2]], speed: 2, up: 1 } },
+    ); // its body knocked at once: the entity joins at the step's end
   }
 }
 
@@ -99,7 +105,7 @@ function breakPanes(w: World): void {
   const physics = physicsOf(w);
   const gravity = w.settings.get('physics.gravity') as number;
   for (const e of w.query('sceneProp') as unknown as Entity[]) {
-    if (e.sceneProp.body < 0 || e.propHealth) continue;
+    if (e.sceneProp.body < 0) continue;
     const { position, rotation, velocity, type } = physics.readBody(e.sceneProp.body);
     if (type !== 'dynamic' || velocity.length() < BREAK_SPEED) continue;
     const move = velocity
@@ -140,14 +146,14 @@ export function addLevelWindows<C extends object, E extends EventMap>(
       ids.push(spawnProp(w, { prop: 'prop:pane', at: [x, opening.bottom + (place?.at[1] ?? 0), z], yaw }));
     }
   }
-  if (ids.length && !w.systems.has('breakables')) w.systems.add('breakables', breakPanes, { phase: 'ai' });
+  if (ids.length && !w.systems.has('breakables')) w.systems.add('breakables', breakPanes, { phase: 'anim' });
   return ids;
 }
 
 /** Adds the system `breakables` to `w` (once), for panes a scene stands itself. */
 export function addBreakables<C extends object, E extends EventMap>(world: World<C, E>): void {
   const w = world as unknown as World;
-  if (!w.systems.has('breakables')) w.systems.add('breakables', breakPanes, { phase: 'ai' });
+  if (!w.systems.has('breakables')) w.systems.add('breakables', breakPanes, { phase: 'anim' });
 }
 
 defineStrikable('propHealth', (w, id, from) => damageProp(w, id, 1, from)); // a strike, a shot or a blast: a point

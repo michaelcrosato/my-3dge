@@ -2,16 +2,17 @@
  * @file Doors (PLAN.md WP 13.16; docs/PLAYGROUND.md §7.1): `addDoor(w, spec)` hangs a door, a kinematic prop (the
  * library's `prop:door` by default) on a hinge: the leaf's foot at its hinged edge stands at `hinge` (m) and, closed,
  * its width runs from there along +X turned `yaw` about +Y, its faces ±Z. The component `door` holds its state. The
- * system `doors` (phase `ai`, after `interact`) swings each toward its target at its speed, unless a body (an actor, a
- * prop) stands where the leaf would go: it waits there. Using one (engine/sim/interact.ts) opens it away from the user,
- * a quarter turn and a little more (`swing`, 1.65 rad), or closes it; a locked one says so and stays shut.
+ * system `doors` (phase `anim`, after the step's uses) swings each toward its target at its speed, unless a body (an
+ * actor, a prop) stands where the leaf would go: it waits there. Using one (engine/sim/interact.ts) opens it away from
+ * the user, a quarter turn and a little more (`swing`, 1.65 rad), or closes it; a locked one says so and stays shut.
  *
  * Strikes (`strikeDoor`, a melee hit while the striker faces it, Apex's rule): the first bursts it open away from the
  * striker, three times as fast, unlocking it; the second breaks it off its hinges: the leaf's body turns dynamic,
- * knocked away, and the event its prop's `breaks.shards` names goes out (`splinters`: engine/sim/breakables.ts). A shot or a blast (`force`) breaks it at once. A sliding door
- * (`slide: [dx, dy, dz]`, the garage's: up 2.2 m) moves along that offset instead, opened and closed by its switch
- * (engine/sim/switches.ts), never struck open. `addLevelDoors(w, level, place?)` hangs one in the middle of each door
- * opening of a level written as storeys (in a site's structure: `place`, its `at` and quarter turns).
+ * knocked away, and the event its prop's `breaks.shards` names goes out (`splinters`: engine/sim/breakables.ts). A
+ * shot or a blast (`force`) breaks it at once. A sliding door (`slide: [dx, dy, dz]`, the garage's: up 2.2 m) moves
+ * along that offset instead, opened and closed by its switch (engine/sim/switches.ts), never struck open.
+ * `addLevelDoors(w, level, place?)` hangs `prop:door` (0.9 m) in the middle of each door opening of a level written as
+ * storeys (in a site's structure: `place`, its `at` and quarter turns): 5 cm a side in the door glyph's 1 m.
  *
  * Events: `door` `{ id, open, locked }`, `splinters` `{ id, prop, position, ground }`.
  * Invariants: a leaf's pose is a pure function of its hinge, yaw and angle (or its offset and amount), driven exactly
@@ -107,7 +108,7 @@ export function addDoor<C extends object, E extends EventMap>(world: World<C, E>
   const { position } = leafPose(door, prop, 0); // the leaf's centre: its base half its height under it, turned `yaw`
   const base = position.setY(position.y - getProp(prop).body.size[1] / 2);
   const id = spawnProp(w, { prop, at: [base.x, base.y, base.z], yaw: door.yaw }, { as: 'kinematic', components: { door } }); // prettier-ignore
-  if (!w.systems.has('doors')) w.systems.add('doors', swingDoors, { phase: 'ai' });
+  if (!w.systems.has('doors')) w.systems.add('doors', swingDoors, { phase: 'anim' });
   return id;
 }
 

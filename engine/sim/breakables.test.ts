@@ -1,9 +1,10 @@
 /**
  * @file Tests for breakables (engine/sim/breakables.ts; WP 13.16) on a floor: a prop with health takes hit points and
- * breaks at 0, with the event its look names, its body gone and its pieces knocked away from the blow; a prop without
- * health takes none; a bolt's strike breaks a pane into glass, knocks a crate and breaks a door; a crate thrown at a
- * pane breaks it and flies on through, one only nudged at it stops against it; a level's window openings get a pane
- * every half metre, standing on the sill, turned with the wall.
+ * breaks at 0, with the event its look names, its body gone and its pieces knocked away from the blow, between steps
+ * and by a rule inside one; a prop without health takes none; a bolt's strike breaks a pane into glass, knocks a crate
+ * and breaks a door; a crate thrown at a pane breaks it and flies on through, as does a vase with health of its own,
+ * and one only nudged at it stops against it; a level's window openings get a pane every half metre, standing on the
+ * sill, turned with the wall.
  * @see engine/sim/breakables.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -20,6 +21,7 @@ import type { World } from './world';
 const box = (size: number) => ({ geometry: 'geometry:box', params: { width: size, height: size, depth: size }, material: 'material:crate' }); // prettier-ignore
 defineProp('prop:breakables-test-urn', { parts: [box(0.4)], body: { type: 'dynamic', shape: 'box', size: [0.4, 0.4, 0.4] }, health: 2, breaks: { into: 'prop:breakables-test-chip', pieces: 3 } }); // prettier-ignore
 defineProp('prop:breakables-test-chip', { parts: [box(0.1)], body: { type: 'dynamic', shape: 'box', size: [0.1, 0.1, 0.1] } }); // prettier-ignore
+defineProp('prop:breakables-test-vase', { parts: [box(0.3)], body: { type: 'dynamic', shape: 'box', size: [0.3, 0.3, 0.3] }, health: 3 }); // prettier-ignore
 
 type Entity = ScenePropComponents & { door?: DoorComponent };
 
@@ -56,6 +58,16 @@ describe('breakables', () => {
     expect(world.has(crate)).toBe(true); // no health: no damage
   });
 
+  it('breaks a prop by a rule inside a step, its pieces knocked as their bodies are made', () => {
+    const { session, physics, of } = yard('rule', (w) => {
+      spawnProp(w, { prop: 'prop:breakables-test-urn', at: [0, 0, 0], yaw: 0 }); // 1
+      w.systems.add('test.hammer', (sw) => void (sw.tick === 3 && damageProp(sw, 1, 2, [-2, 0.2, 0])), { phase: 'rules' }); // prettier-ignore
+    });
+    for (let i = 0; i < 4; i++) session.step({});
+    expect(session.world.has(1)).toBe(false);
+    expect([2, 3, 4].every((id) => physics.readBody(of(id).sceneProp.body).velocity.x > 0)).toBe(true); // away from the west
+  });
+
   it('breaks a pane at a bolt’s strike into glass, knocks a crate and breaks a door', () => {
     const { session, world, physics, of } = yard('bolts', (w) => {
       spawnProp(w, { prop: 'prop:pane', at: [0, 0.9, 2], yaw: 0 }); // 1
@@ -72,10 +84,10 @@ describe('breakables', () => {
   });
 
   it('breaks a pane a thrown crate would strike, which flies on through; one nudged at it stops against it', () => {
-    const throwAt = (name: string, speed: number) => {
+    const throwAt = (name: string, speed: number, prop = 'prop:crate') => {
       const run = yard(name, (w) => {
         spawnProp(w, { prop: 'prop:pane', at: [0, 0.5, 3], yaw: 0 }); // 1: across +Z, 0.5 to 1.7 m up
-        spawnProp(w, { prop: 'prop:crate', at: [0, 0.6, 0], yaw: 0 }); // 2
+        spawnProp(w, { prop, at: [0, 0.6, 0], yaw: 0 }); // 2
         addBreakables(w);
       });
       run.physics.setBody(run.of(2).sceneProp.body, { velocity: [0, 1.5, speed] });
@@ -83,6 +95,7 @@ describe('breakables', () => {
       return [run.world.has(1), +(run.of(2).sceneProp.z > 3.4)];
     };
     expect(throwAt('thrown', 8)).toEqual([false, 1]); // broken, the crate beyond it
+    expect(throwAt('vase', 8, 'prop:breakables-test-vase')).toEqual([false, 1]); // its own health no matter
     expect(throwAt('nudged', 2.5)).toEqual([true, 0]);
   });
 

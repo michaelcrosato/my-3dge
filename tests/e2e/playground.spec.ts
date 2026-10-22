@@ -9,17 +9,19 @@
  *    in both looks, its accent showing on it in each (`accentOnPlayer`: the isometric and top-down cameras draw it 11
  *    to 15 px tall), the sky's dome and backdrop left out as background, and the MRT reads the sky as the background
  *    too (the parts view is black where the ID pass finds nothing), so no outline inks the dome's edges;
- * 5. the menu for humans (`?playground.menu=on`) lists the scene, the five cameras, the two looks and the replays;
+ * 5. the menu for humans (`?playground.menu=on`) lists every scene, the five cameras, the two looks and every replay;
  * 6. the keyboard reaches the player through the playground's action map (WP 13.3): W runs and Shift sprints, the
  *    shooter model's gaits read off the player's `motion`, the page's frame loop sampling the keys on the virtual
  *    clock's frames (`harness.tick`);
  * 7. the feel panel (`?playground.feel=on`, WP 13.4) tunes the run live: its run slider set, the player runs that fast
- *    (holstered, ×1.15), and Copy as profile shows a `defineMovement` call holding the new number.
+ *    (holstered, ×1.15), and Copy as profile shows a `defineMovement` call holding the new number;
+ * 8. the HUD names what the player would use with the key that uses it (WP 13.16): nothing 3 m from the cottage's front
+ *    door, `E: Open` before it, `E: Close` once it is used.
  *
  * Invariants: the page is read through `[data-ui]` elements, the menu's links and `__engine` only; the sim is stepped
  * with `__engine.step`, then frames are drawn (`__engine.render`), so the HUD and the signs show what the run holds.
  */
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { PLAYGROUND_CAMERAS, PLAYGROUND_LOOKS } from '../../labs/playground/views';
@@ -197,17 +199,38 @@ test.describe('the playground', () => {
     expect(harness.advice()).toEqual([]);
   });
 
-  test('shows the menu for humans when asked: the scene, five cameras, two looks and the replays', async ({
+  test('names what the player would use, with its key: the cottage’s front door, to open, then to close', async ({
+    page,
+    harness,
+  }) => {
+    await open(page, harness, '?scene=interact');
+    expect((await hud(page)).use || '').toBe(''); // 3 m south of the door: nothing in reach
+    await call(page, 'act', 'place', { at: [10, 0, 11.3], speed: 0, yaw: Math.PI });
+    await call(page, 'step', 2, { look: [Math.PI, 0] });
+    await call(page, 'render', 2);
+    expect((await hud(page)).use).toBe('E: Open');
+    await call(page, 'step', 1, { look: [Math.PI, 0], b: ['interact'] });
+    await call(page, 'render', 2);
+    expect((await hud(page)).use).toBe('E: Close');
+    expect(harness.advice()).toEqual([]);
+  });
+
+  test('shows the menu for humans when asked: every scene, five cameras, two looks and every replay', async ({
     page,
     harness,
   }) => {
     await open(page, harness, '?playground.menu=on');
     const links = (section: string) =>
       page.locator(`#playground-menu [data-menu=${section}] a`).evaluateAll((all) => all.map((a) => a.textContent));
-    expect(await links('scenes')).toEqual(['gym']);
+    // Every scene module (the gym, the default, first) and every playground replay, as the page finds them.
+    const scenes = readdirSync(join(import.meta.dirname, '../../labs/playground/scenes')).filter((file) => /^[a-z]+\.ts$/.test(file)); // prettier-ignore
+    const replays = readdirSync(join(import.meta.dirname, '../replays')).filter((file) =>
+      file.startsWith('playground-'),
+    );
+    expect(await links('scenes')).toEqual(['gym', ...scenes.map((file) => file.replace('.ts', '')).filter((name) => name !== 'gym').sort()]); // prettier-ignore
     expect(await links('cameras')).toEqual(PLAYGROUND_CAMERAS.map((mode) => mode.name));
     expect(await links('looks')).toEqual(['cel', 'pixel']);
-    expect(await links('replays')).toEqual(['climb', 'gym', 'moves', 'rides']);
+    expect(await links('replays')).toEqual(replays.map((file) => file.replace(/^playground-|\.replay\.json$/g, '')).sort()); // prettier-ignore
     expect(await page.locator('#playground-menu [data-menu=controls] tr').count()).toBeGreaterThanOrEqual(8);
     await page.keyboard.press('KeyM');
     expect(await page.locator('#playground-menu').isHidden()).toBe(true);

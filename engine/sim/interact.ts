@@ -1,25 +1,30 @@
 /**
  * @file Use (PLAN.md WP 13.16; docs/PLAYGROUND.md §7.1): what a player's `interact` press uses and `melee` strikes.
- * `addInteraction(w)` (a scene's setup, once) adds the system `interact` (phase `ai`, before the actors move). Each
- * step it finds, for every player actor, the usable thing in reach (`USE_REACH`, 2 m from its eye) and in view: along
- * its crosshair when the step has a `look` and an `aim` (first person and the shooter: from the eye toward the aim's
- * point), else the nearest within 60° of where it faces; a wall or a door between hides one. It keeps that thing and
- * its prompt in the actor's `interactor` component, which the page shows with the binding of the device used last.
+ * `addInteraction(w)` (a scene's setup, once) adds the system `interact` (phase `intents`, before the actors move and
+ * before the doors, the panes and the switches, phase `anim`; the dev action `freeze` stops none of them). Each step
+ * it finds, for every player actor, the usable thing in reach (`USE_REACH`, 2 m from its eye) and in view: along its
+ * crosshair when the step has a `look` and an `aim` (first person and the shooter), the first body the eye's ray toward
+ * the aim strikes, or a bodiless thing (a switch) it passes within `BODILESS` of before that; else the nearest within
+ * 60° of where it faces, a wall, a door or a pane between hiding one. Only what can be used now counts (a sliding door
+ * hides no switch). It keeps that thing and its prompt in the actor's `interactor` component, which the page shows with
+ * the binding of the device used last.
  *
  * Usable things are asked of their entries, never their ids: `defineUsable(component, { prompt, use })` says how an
  * entity holding that component is used (a door: engine/sim/doors.ts; a switch: switches.ts), and a prop is usable when
  * its own `use` has a `prompt`, or when a player can carry it (dynamic, at most `CARRY_MASS`). Its `use` hook gets the
  * world, the entity and the user. A carried prop's body is driven 0.8 m in front of the eye each step (it still
  * collides, and drops when held back past the reach and 1.5 m); the next use throws it along the view at `THROW_SPEED`.
- * `melee` strikes what is in reach and in view (`strikeEntity`: a door bursts open, then breaks; a breakable prop takes
- * a point of damage; a dynamic one is knocked), the WP 13.19 kick's hit before its move.
+ * `melee` strikes what is in reach and in view and takes a strike (`strikeEntity`: a door bursts open, then breaks; a
+ * breakable prop takes a point of damage; a dynamic one is knocked; a lamp or a switch takes none), the WP 13.19 kick's
+ * hit before its move.
  *
  * A use takes its press: `interactor.usedAt` is the step, and the actors' input leaves it out of the rides'
  * (engine/sim/actorInput.ts), so using a door beside a zipline does not ride it. Events: `use` `{ id, target }`,
  * `pickup`, `throw` and `strike` (the same).
  *
  * Invariants: everything is in components (the interactor, the props', the doors'); candidates in id order, the
- * nearest first among them, ties to the lower id; the queries read the physics world as of the last step.
+ * nearest first among them, ties to the lower id; the queries read the physics world as of the last step; a body's prop
+ * is found by a scan of the props (`propOfBody`), never an index kept beside them.
  * @see engine/sim/interact.test.ts
  */
 import type { EventMap } from '../core/events';
@@ -29,7 +34,7 @@ import { held, pressed, type Intents } from '../input/intents';
 import { physicsOf } from '../physics/binding';
 import { getProp, type Prop } from '../world/props/prop';
 import type { ActorComponents } from './actors';
-import { hitProp, type ScenePropComponents } from './props';
+import { hitProp, propOfBody, type ScenePropComponents } from './props';
 import { defineComponent } from './state';
 import type { World } from './world';
 
@@ -43,8 +48,10 @@ export const THROW_SPEED = 8;
 const EYE = { stand: 1.52, crouch: 0.81 } as const;
 /** How far in front of the eye a carried prop is held (m), and how much farther than the reach it may lag before it drops. */
 const HOLD = { ahead: 0.8, slip: 1.5 } as const;
-/** The cosine of the widest angle from where a player faces that is "in front" (60°). */
-const FRONT = Math.cos(Math.PI / 3);
+/** The cosine of the widest angle from where a player faces that is "in front" (60°), written out: no Math at import. */
+const FRONT = 0.5;
+/** How near a bodiless thing (a switch on a wall) the crosshair's ray must pass to be on it (m). */
+export const BODILESS = 0.15;
 
 /** How an entity holding a component is used: what the HUD says (null: not now) and what using it does. */
 export interface UsableSpec {
@@ -60,7 +67,7 @@ export interface InteractorComponent {
   usedAt: number;
 }
 
-/** Declares the kind `usable` and the component `interactor` on `registry` (once). */
+/** Declares the kinds `usable` and `strikable` and the component `interactor` on `registry` (once). */
 export function defineInteractKinds(registry: Registry = sharedRegistry): void {
   if (registry.kinds().includes('usable')) return;
   registry.defineKind('usable', {
@@ -70,6 +77,11 @@ export function defineInteractKinds(registry: Registry = sharedRegistry): void {
       use: { type: 'function', default: () => {}, description: '(w, id, user) => void: what using it does.' },
     },
     defineWith: "defineUsable('<component>', { prompt(w, id, user), use(w, id, user) })",
+  });
+  registry.defineKind('strikable', {
+    description: 'How an entity holding a component takes a strike (doors, breakables, WP 13.16).',
+    fields: { strike: { type: 'function', default: () => {}, description: '(w, id, from, faced, force) => void.' } },
+    defineWith: "defineStrikable('<component>', (w, id, from, faced, force) => { … })",
   });
   const int = (description: string) => ({ type: 'integer', default: -1, minimum: -1, description }) as const;
   const fields = {
@@ -82,10 +94,10 @@ export function defineInteractKinds(registry: Registry = sharedRegistry): void {
 }
 defineInteractKinds();
 
-/** Says how an entity holding `component` is used (see the file comment). */
-export function defineUsable(component: string, spec: UsableSpec, registry: Registry = sharedRegistry): void {
-  defineInteractKinds(registry);
-  registry.def('usable', component, spec as unknown as Record<string, unknown>);
+/** Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads. */
+export function defineUsable(component: string, spec: UsableSpec): void {
+  defineInteractKinds();
+  sharedRegistry.def('usable', component, spec as unknown as Record<string, unknown>);
 }
 
 type Entity = ActorComponents & ScenePropComponents & { id: number; interactor?: InteractorComponent };
@@ -93,7 +105,7 @@ type Entity = ActorComponents & ScenePropComponents & { id: number; interactor?:
 /** Adds the system `interact` to `w` (once): see the file comment. */
 export function addInteraction<C extends object, E extends EventMap>(world: World<C, E>): void {
   const w = world as unknown as World;
-  if (!w.systems.has('interact')) w.systems.add('interact', interact, { phase: 'ai' });
+  if (!w.systems.has('interact')) w.systems.add('interact', interact, { phase: 'intents' });
 }
 
 /** A prop's mass (kg) as its body weighs it; 0 without a dynamic body. */
@@ -131,34 +143,42 @@ function clear(w: World, eye: Vector3, at: Vector3, body: number): boolean {
   return !hit || hit.distance >= far - 0.05;
 }
 
-/** The thing `actor` would use or strike (see the file comment), with its kind; −1 for none. */
+/** The thing `actor` would use or strike, of those `accept` takes (see the file comment); −1 for none. */
 function findTarget(w: World, actor: Entity, wants: Intents, accept: (e: Entity) => boolean): number {
   const { x, y, z } = actor.actor;
   const crouched = (actor as { motion?: { stance?: string } }).motion?.stance === 'crouch';
   const eye = new Vector3(x, y + (crouched ? EYE.crouch : EYE.stand), z);
   const aim = wants.look && wants.aim ? new Vector3(...wants.aim).sub(eye) : null;
-  const ray = aim && aim.lengthSq() > 1e-6 ? aim.normalize() : null;
-  const yaw = actor.actor.yaw;
-  const facing = new Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+  if (aim && aim.lengthSq() > 1e-6) return alongRay(w, eye, aim.normalize(), accept);
+  const facing = new Vector3(Math.sin(actor.actor.yaw), 0, Math.cos(actor.actor.yaw));
   let [best, score] = [-1, Infinity];
   for (const e of w.query('sceneProp') as unknown as Entity[]) {
-    if (e.id === actor.id || !accept(e)) continue;
+    if (!accept(e)) continue;
     const at = new Vector3(e.sceneProp.x, e.sceneProp.y, e.sceneProp.z);
     const to = at.clone().sub(eye);
     if (to.length() > USE_REACH + radiusOf(getProp(e.sceneProp.prop))) continue;
-    let rank: number;
-    if (ray) {
-      const along = to.dot(ray);
-      const off = to.clone().sub(ray.clone().multiplyScalar(along)).length();
-      if (along <= 0 || along > USE_REACH || off > radiusOf(getProp(e.sceneProp.prop))) continue;
-      rank = along;
-    } else {
-      const flat = new Vector3(to.x, 0, to.z);
-      const distance = flat.length();
-      if (distance > 1e-6 && flat.divideScalar(distance).dot(facing) < FRONT) continue;
-      rank = to.length();
-    }
-    if (rank < score && clear(w, eye, at, e.sceneProp.body)) [best, score] = [e.id, rank];
+    const flat = new Vector3(to.x, 0, to.z);
+    const distance = flat.length();
+    if (distance > 1e-6 && flat.divideScalar(distance).dot(facing) < FRONT) continue;
+    if (to.length() < score && clear(w, eye, at, e.sceneProp.body)) [best, score] = [e.id, to.length()];
+  }
+  return best;
+}
+
+/**
+ * Along the crosshair's `ray` from `eye`: the prop whose body the ray strikes first within reach, or a bodiless one it
+ * passes within BODILESS of before that (a switch on that wall's face counts: 5 cm of grace), when `accept` takes it.
+ */
+function alongRay(w: World, eye: Vector3, ray: Vector3, accept: (e: Entity) => boolean): number {
+  const hit = physicsOf(w).raycast(eye, ray, { groups: ['world', 'prop'], maxDistance: USE_REACH });
+  const struck = hit ? propOfBody(w, hit.body) : -1;
+  let [best, score] = [-1, hit ? hit.distance + 0.05 : USE_REACH];
+  if (struck >= 0 && accept(w.get(struck) as unknown as Entity)) [best, score] = [struck, hit!.distance];
+  for (const e of w.query('sceneProp') as unknown as Entity[]) {
+    if (e.sceneProp.body >= 0 || !accept(e)) continue;
+    const to = new Vector3(e.sceneProp.x, e.sceneProp.y, e.sceneProp.z).sub(eye);
+    const along = to.dot(ray);
+    if (along > 0 && along < score && to.addScaledVector(ray, -along).length() <= BODILESS) [best, score] = [e.id, along]; // prettier-ignore
   }
   return best;
 }
@@ -213,6 +233,15 @@ export type StrikeForce = 'melee' | 'shot' | 'blast';
 /** How an entity holding a component takes a strike (`defineStrikable`). */
 type Strike = (w: World, id: number, from: readonly [number, number, number], faced: boolean, force: StrikeForce) => void; // prettier-ignore
 
+/** The `strikable` entry of a component `e` holds, or undefined. */
+function strikeOf(e: Entity): { id: string; strike: Strike } | undefined {
+  const entries = sharedRegistry.list('strikable') as unknown as { id: string; strike: Strike }[];
+  return entries.find((entry) => (e as unknown as Record<string, unknown>)[entry.id] !== undefined);
+}
+
+/** Whether `e` takes a strike: a strikable component, health, or a dynamic body to knock. */
+const strikable = (e: Entity) => !!strikeOf(e) || !!e.propHealth || getProp(e.sceneProp.prop).body.type === 'dynamic';
+
 /**
  * Strikes `target` from `from` (m), its striker facing it or not (`faced`), with `force`: the entry of a component it
  * holds answers (a door's rule: engine/sim/doors.ts; a breakable's damage: breakables.ts), else a dynamic prop is
@@ -229,10 +258,8 @@ export function strikeEntity<C extends object, E extends EventMap>(
   const w = world as unknown as World;
   const e = w.get(target) as unknown as Entity | undefined;
   if (!e?.sceneProp) return;
-  const entries = sharedRegistry.kinds().includes('strikable') ? (sharedRegistry.list('strikable') as unknown as { id: string; strike: Strike }[]) : []; // prettier-ignore
-  for (const entry of entries) {
-    if ((e as unknown as Record<string, unknown>)[entry.id] !== undefined) return entry.strike(w, target, from, faced, force); // prettier-ignore
-  }
+  const entry = strikeOf(e);
+  if (entry) return entry.strike(w, target, from, faced, force);
   hitProp(w, target, [from[0], from[1], from[2]]);
 }
 
@@ -249,7 +276,11 @@ function interact(w: World, intents: Intents): void {
       [interactor.target, interactor.prompt] = [interactor.holding, interactor.holding >= 0 ? 'Throw' : ''];
       continue;
     }
-    const target = findTarget(w, actor, intents, (e) => usableOf(w, e) !== null);
+    const usableNow = (e: Entity) => {
+      const usable = usableOf(w, e);
+      return usable !== null && promptOf(w, usable, e.id, actor.id) !== null;
+    };
+    const target = findTarget(w, actor, intents, usableNow);
     const usable = target >= 0 ? usableOf(w, w.get(target) as unknown as Entity) : null;
     const prompt = usable ? promptOf(w, usable, target, actor.id) : null;
     [interactor.target, interactor.prompt] = prompt === null ? [-1, ''] : [target, prompt];
@@ -260,7 +291,7 @@ function interact(w: World, intents: Intents): void {
       [interactor.target, interactor.prompt] = after === null ? [-1, ''] : [target, after]; // what the HUD shows now
     }
     if (pressed(intents, 'melee') && !held(intents, 'interact')) {
-      const struck = findTarget(w, actor, intents, () => true);
+      const struck = findTarget(w, actor, intents, strikable);
       if (struck >= 0) {
         strikeEntity(w, struck, [actor.actor.x, actor.actor.y + 1, actor.actor.z]);
         w.emit('strike', { id: actor.id, target: struck });
@@ -269,14 +300,8 @@ function interact(w: World, intents: Intents): void {
   }
 }
 
-/** Says how an entity holding `component` takes a strike (doors, breakables): before the default knock. */
-export function defineStrikable(component: string, strike: Strike, registry: Registry = sharedRegistry): void {
-  if (!registry.kinds().includes('strikable')) {
-    registry.defineKind('strikable', {
-      description: 'How an entity holding a component takes a strike (doors, breakables, WP 13.16).',
-      fields: { strike: { type: 'function', default: () => {}, description: '(w, id, from, faced, force) => void.' } },
-      defineWith: "defineStrikable('<component>', (w, id, from, faced, force) => { … })",
-    });
-  }
-  registry.def('strikable', component, { strike });
+/** Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock. */ // prettier-ignore
+export function defineStrikable(component: string, strike: Strike): void {
+  defineInteractKinds();
+  sharedRegistry.def('strikable', component, { strike });
 }

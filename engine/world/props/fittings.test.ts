@@ -1,7 +1,7 @@
 /**
  * @file Unit tests for the house's fittings (engine/world/props/fittings.ts; WP 13.16), in Node: every registry gets
  * the four, filled; the pane breaks at a hit into glass, its body a thin fixed slab standing on its sill; the switch
- * and the lamp have no body, the lamp's bulb is its one lit part and its light tagged `lamp`; the garage door is
+ * and the lamp have no body, the lamp's shade is its one lit part and its light tagged `lamp`; the garage door is
  * kinematic, the sim sliding it; none is knocked by a hit.
  * @see engine/world/props/fittings.ts
  */
@@ -26,9 +26,9 @@ describe('the house’s fittings', () => {
     expect(PROPS.every((prop) => prop.description.length > 0)).toBe(true);
   });
 
-  it('lights the lamp’s bulb while it is on, its light tagged lamp; no other fitting is lit', () => {
+  it('lights the lamp’s shade while it is on, its light tagged lamp; no other fitting is lit', () => {
     const lit = PROPS.flatMap((prop) => prop.parts.filter((part) => part.lit).map((part) => `${prop.id}/${part.name}`));
-    expect(lit).toEqual(['prop:lamp/bulb']);
+    expect(lit).toEqual(['prop:lamp/shade']);
     expect(PROPS.filter((prop) => prop.light.tag !== '').map((prop) => [prop.id, prop.light.tag])).toEqual([['prop:lamp', 'lamp']]); // prettier-ignore
   });
 

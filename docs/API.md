@@ -371,12 +371,12 @@ game agent's manual.
 - `defineSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): Registers a site on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
 - `defineSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`.
 - `defineSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): Defines a song on `registry` (the shared one by default) and returns it.
-- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables): before the default knock.
+- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock.
 - `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
 - `defineTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Registers a terrain on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
 - `defineTexture` (function from [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)): Defines a texture generator on `registry` (the shared one by default) and returns it.
 - `defineTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): Registers a touch layout (on the shared registry by default).
-- `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment).
+- `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
 - `DEGREES_PER_COUNT` (const from [`engine/input/look.ts`](../engine/input/look.ts)): One mouse count at sensitivity 1, degrees: Source's and Apex's `m_yaw` and `m_pitch`.
 - `DevActionSpec` (interface from [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)): How a dev action is written: `defineDevAction(name, spec)`.
 - `DeviceKind` (type from [`engine/input/codes.ts`](../engine/input/codes.ts)): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
@@ -1344,10 +1344,10 @@ game agent's manual.
 - `defineSetBuild` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Registers build `id` with the proportions clip set `setId`'s clips were captured on (retarget.ts `restBuild` of its first source's rest body, or `source`'s), once, and returns it: `build:mannequin` from `clipset:quaternius` is the build engine/gfx/puppets/bodies/mannequin.ts draws, which the sim's animator needs before the view's body exists.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
 - `defineSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): Registers a site on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
-- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables): before the default knock.
+- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock.
 - `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
 - `defineTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Registers a terrain on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
-- `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment).
+- `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
 - `DevActionSpec` (interface from [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)): How a dev action is written: `defineDevAction(name, spec)`.
 - `DOOR_SWING` (const from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A door's swing open (rad): a quarter turn and a little more.
 - `DoorComponent` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): The component `door`.
@@ -5597,8 +5597,8 @@ For the agents who maintain the engine.
 - `breakProp` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Breaks the prop `id` (see the file comment), its pieces knocked away from `from`.
 - `CARRY_MASS` (const from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The heaviest prop a player carries (kg): a chair, a box, a crate.
 - `damageProp` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Takes `amount` hit points from the breakable prop `id` (none from one without health); breaks it at 0.
-- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables): before the default knock.
-- `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment).
+- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock.
+- `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
 - `DOOR_SWING` (const from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A door's swing open (rad): a quarter turn and a little more.
 - `DoorComponent` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): The component `door`.
 - `DoorSpec` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): What `addDoor` takes (see the file comment).
@@ -5623,10 +5623,11 @@ For the agents who maintain the engine.
 ### [`engine/sim/interact.ts`](../engine/sim/interact.ts)
 
 - `addInteraction` (function): Adds the system `interact` to `w` (once): see the file comment.
+- `BODILESS` (const): How near a bodiless thing (a switch on a wall) the crosshair's ray must pass to be on it (m).
 - `CARRY_MASS` (const): The heaviest prop a player carries (kg): a chair, a box, a crate.
-- `defineInteractKinds` (function): Declares the kind `usable` and the component `interactor` on `registry` (once).
-- `defineStrikable` (function): Says how an entity holding `component` takes a strike (doors, breakables): before the default knock.
-- `defineUsable` (function): Says how an entity holding `component` is used (see the file comment).
+- `defineInteractKinds` (function): Declares the kinds `usable` and `strikable` and the component `interactor` on `registry` (once).
+- `defineStrikable` (function): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock.
+- `defineUsable` (function): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
 - `InteractorComponent` (interface): The component `interactor`: what a player would use, its prompt, what it carries, and when it last used.
 - `strikeEntity` (function): Strikes `target` from `from` (m), its striker facing it or not (`faced`), with `force`: the entry of a component it holds answers (a door's rule: engine/sim/doors.ts; a breakable's damage: breakables.ts), else a dynamic prop is knocked (its `hit` hook).
 - `StrikeForce` (type): What strikes: a melee hit, a shot or a blast (a door bursts open at a hit, breaks at a shot or a blast).

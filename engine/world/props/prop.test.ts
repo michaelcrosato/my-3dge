@@ -25,7 +25,7 @@ describe('the prop kind', () => {
     const reg = createRegistry();
     const crate = getProp('prop:crate', reg);
     expect(reg.describe('prop').ids).toEqual([...Object.keys(BUILT_IN_PROPS), ...Object.keys(LIBRARY_PROPS), ...Object.keys(FITTING_PROPS)].sort()); // prettier-ignore
-    // The catalog's four, the library's eight (WP 10.3) and the house's fittings (WP 13.16).
+    // The catalog's four, the library's nine (WP 10.3; its chair, WP 13.16) and the house's fittings (WP 13.16).
     expect(reg.describe('prop').ids).toEqual(['prop:banner', 'prop:barrel', 'prop:bench', 'prop:brazier', 'prop:chair', 'prop:chest', 'prop:crate', 'prop:door', 'prop:garageDoor', 'prop:lamp', 'prop:lantern', 'prop:pane', 'prop:pillar', 'prop:sconce', 'prop:statue', 'prop:switch', 'prop:table']); // prettier-ignore
     const { type, shape, size, density, friction, restitution, linearDamping, angularDamping } = crate.body;
     expect({ type, shape, size }).toEqual({ type: 'dynamic', shape: 'box', size: [0.75, 0.75, 0.75] });

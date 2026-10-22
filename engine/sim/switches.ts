@@ -4,9 +4,10 @@
  * it switches, a light group (every prop spawned with that `group`: a room's lamps, `spawnProp(…, { group })`) or a
  * door (a sliding one: the garage's, engine/sim/doors.ts). Using it (engine/sim/interact.ts) turns it over: the
  * group's props go on or off (their `propLight.on`, which the view reads: their `lit` parts and lights), the door
- * opens or closes. The system `switches` (phase `ai`, added with the first switch) holds each group at its switch's
- * state, so the lamps a scene's setup spawns, and any spawned later, follow it. `switchGroup(w, group, on)` sets a
- * group and its switches from a rule (the streetlights at dusk, WP 13.23).
+ * opens or closes, and every switch of its group with it (two switches on a stairway's lights). The system `switches`
+ * (phase `anim`, added with the first switch) holds each group at its switches' state, so the lamps a scene's setup
+ * spawns follow it, and one spawned later from the step after it joins. `switchGroup(w, group, on)` sets a group and
+ * its switches from a rule (the streetlights at dusk, WP 13.23).
  *
  * Events: `switch` `{ id, on, group, door }`.
  * Invariants: a switch and its group hold the same state from the step after it is made; everything is in
@@ -58,7 +59,7 @@ export function addSwitch<C extends object, E extends EventMap>(world: World<C, 
   const state = { on: spec.on ?? true, group: spec.group ?? '', door: spec.door ?? -1 };
   const id = spawnProp(w, { prop: spec.prop ?? 'prop:switch', at: spec.at, yaw: spec.yaw ?? 0 }, { components: { switch: state } }); // prettier-ignore
   if (spec.group) setGroup(w, spec.group, state.on);
-  if (!w.systems.has('switches')) w.systems.add('switches', holdGroups, { phase: 'ai' });
+  if (!w.systems.has('switches')) w.systems.add('switches', holdGroups, { phase: 'anim' });
   return id;
 }
 
@@ -89,8 +90,9 @@ export function switchGroup<C extends object, E extends EventMap>(
 export function flipSwitch<C extends object, E extends EventMap>(world: World<C, E>, id: number): void {
   const w = world as unknown as World;
   const state = (w.get(id) as unknown as Entity).switch!;
-  state.on = !state.on;
-  if (state.group) setGroup(w, state.group, state.on);
+  if (state.group)
+    switchGroup(w, state.group, !state.on); // its group's switches, this one among them
+  else state.on = !state.on;
   if (state.door >= 0) {
     const { sceneProp } = w.get(state.door) as unknown as Entity;
     useDoor(w, state.door, [sceneProp.x, sceneProp.y, sceneProp.z]);

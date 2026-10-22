@@ -1,7 +1,7 @@
 /**
  * @file Tests for switches (engine/sim/switches.ts; WP 13.16): a switch turns its group's lamps off and on, and its
- * prompt with them, leaving another room's; one made off starts its lamps off; a rule sets a group; a switch for the
- * garage door opens and closes it.
+ * prompt with them, leaving another room's; one made off starts its lamps off; a rule sets a group; two switches on one
+ * group turn together; a switch for the garage door opens and closes it.
  * @see engine/sim/switches.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -54,6 +54,23 @@ describe('switches', () => {
     expect(lit()).toEqual([false, false, true]);
     switchGroup(world, 'room:hall', false); // the streetlights' rule at dawn, say
     expect(lit()).toEqual([false, false, false]);
+  });
+
+  it('turns a group’s other switches with it: two on one stair’s lights read the same', () => {
+    const scene = defineScene('switches-test:stairs', {
+      physics: true,
+      setup(w) {
+        spawnProp(w, { prop: 'prop:lamp', at: [0, 5, 0], yaw: 0 }, { group: 'room:stairs' }); // 1
+        addSwitch(w, { at: [1, 1.2, 0], group: 'room:stairs' }); // 2: at the foot
+        addSwitch(w, { at: [1, 4.2, 0], group: 'room:stairs' }); // 3: at the top
+      },
+    });
+    const session = createSession(scene, { seed: 1 });
+    session.step({});
+    flipSwitch(session.world, 2);
+    for (let i = 0; i < 3; i++) session.step({});
+    const lit = (session.world.get(1) as unknown as Entity).propLight!.on;
+    expect([lit, usable().prompt(session.world, 2, -1), usable().prompt(session.world, 3, -1)]).toEqual([false, 'Lights on', 'Lights on']); // prettier-ignore
   });
 
   it('opens and closes the garage door it is wired to', () => {
