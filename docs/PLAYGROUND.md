@@ -25,51 +25,55 @@ the command when another server holds 5173.
 
 ## 2. The site
 
-One block, 96 × 96 m, in level coordinates (metres, +Y up, +X east, +Z south: row 0 of a map is its north edge,
-PLAN.md §6.3). Outdoors is terrain; the house, the shed, the tree house and the gym are levels standing on it (a site,
-§6.3).
+One block, 96 × 113 m, in level coordinates (metres, +Y up, +X east, +Z south: row 0 of a map is its north edge,
+PLAN.md §6.3). Outdoors is terrain; the house, the shed, the tree house, the lookout, the range's shelter and backstop,
+the ring, the paving and the gym are levels standing on it (a site, §6.3: labs/playground/levels/site.ts, WP 13.18).
+The gym as built (§2.3) is 41 × 101 m, so it runs the block's west side from z 12 to 113, and the block 17 m further
+south than its first sketch's 96 m (ADR-0025 amendment 20).
 
 ```
- x: 0                 36                                   72          96
+ x: 0                   41                                 72          96
  z=0  +-----------------------------------------------+-----------+
       | THE RANGE: lanes, targets at 10, 25 and 50 m   | THE RING  |  THE
- z=12 +------------------+----------------------------+-----------+  HILL:
-      | THE GYM:         | THE BACKYARD: patio, shed, tree house, |  terrain
-      | the calibrated   | zipline, trampoline, swing set, dog    |  rising
-      | features of      +----------------------------------------+  to 10 m,
-      | §2.3             | THE HOUSE 16 x 12 m (basement, ground, |  slopes
-      |                  | upper floor, attic, roof); the garage  |  of 10 to
-      |                  | 6 x 8 m and its roof deck; the porch   |  30 deg,
-      |                  +----------------------------------------+  trees,
-      |                  | THE FRONT YARD: lawn, path, fence,     |  the
- z=82 +------------------+ hedge, mailbox, driveway               |  lookout
-      | THE STREET: sidewalks, two lanes, streetlights, bus stop, |  and its
- z=96 | a parked car, the neighbours                              |  zipline
-      +-----------------------------------------------------------+
+ z=12 +--------------------+--------------------------+-----------+  HILL:
+      | THE GYM:           | THE BACKYARD: patio, shed, tree house, |  terrain
+      | the calibrated     | zipline, trampoline, swing set, dog    |  rising
+      | features of §2.3,  +----------------------------------------+  to 10 m,
+      | 41 x 101 m, its    | THE HOUSE 16 x 12 m (basement, ground, |  slopes
+      | wall open by three | upper floor, attic, roof); the garage  |  of 10 to
+      | gates: north to    | 6 x 8 m and its roof deck; the porch   |  30 deg,
+      | the range, east to +----------------------------------------+  trees,
+      | the backyard and   | THE FRONT YARD: lawn, path, fence,     |  the
+      | to the street      | hedge, mailbox, driveway               |  lookout
+ z=83 |                    +----------------------------------------+  and its
+      |                    | THE STREET: sidewalks, two lanes,      |  zipline
+ z=95 |                    | streetlights, bus stop, a parked car   |
+      |                    +----------------------------------------+
+z=113 +--------------------+
 ```
 
 ### 2.1 The house
 
 Footprint 16 × 12 m (x 44 to 60, z 48 to 60), a garage 6 × 8 m on its east side, a porch on the street side and a
-deck on the backyard side. Its level is in format 2 (§6) with 0.25 m tiles, so walls are 0.25 m thick and doors 1 m
+patio on the backyard side. Its level is in format 2 (§6) with 0.25 m tiles, so walls are 0.25 m thick and doors 1 m
 wide. Floors are 0.3 m slabs.
 
 | Storey | Floor | Clear height | Rooms and features |
 |---|---|---|---|
-| Basement | −3.0 m | 2.7 m | workshop, laundry and boiler room, storage (shelves, crates); a crawlspace 1.4 m high under the deck (the crouched hull, 1.19 m, fits; the standing one does not), crouch and slide only, to the bulkhead doors in the backyard; the stairs up; a light switch at the stairs |
-| Ground floor | 0.0 m | 2.7 m | the front door onto the porch; the hall, with stairs up and down; the living room (sofa, TV, fireplace, rug); the dining room; the kitchen, with an island to vault; a bathroom; the back door onto the deck; the door into the garage; windows on every side |
+| Basement | −3.0 m | 2.7 m | workshop, laundry and boiler room, storage (shelves, crates); a crawlspace 1.4 m high under the patio (the crouched hull, 1.19 m, fits; the standing one does not), crouch and slide only (no lamp: its own light is WP 13.23's), to the bulkhead, an open railed flight up into the backyard; the stairs up; a light switch at the stairs |
+| Ground floor | 0.0 m | 2.7 m | the front door onto the porch; the hall, with stairs up and down; the living room (sofa, TV, fireplace, rug); the dining room; the kitchen, with an island to vault; a bathroom; the back door onto the patio; the door into the garage; windows on every side |
 | Upper floor | 3.0 m | 2.7 m | the landing over the stairwell, with a railing; two bedrooms (a bunk bed to mantle onto); the study; a bathroom; a door onto the garage's roof deck; a door onto the porch roof; the attic hatch and its ladder |
 | Attic | 6.0 m | 0 at the eaves to 4.2 m at the ridge | crouch at the edges, stand in the middle; a roof window out |
 | Roof | gable, 35°, ridge 10.2 m, east to west | walkable slopes | the chimney to mantle onto; the porch roof (3.0 m); the garage's deck (3.0 m, a 1.0 m railing) |
-| Garage | 0.0 m | 3.0 m | the roll-up door on its switch; a car (a prop until vehicles arrive, §11); shelves and a workbench |
+| Garage | 0.0 m | 2.7 m | the up-and-over door (2.75 × 2.3 m) on its two switches; a car (a prop until vehicles arrive, §11); shelves and a workbench |
 
 ### 2.2 Outside
 
-- **The front yard** (z 62 to 82): lawn, the path to the porch, a picket fence 0.9 m high (vault it), a hedge 1.2 m
+- **The front yard** (z 63 to 83): lawn, the path to the porch, a picket fence 0.9 m high (vault it), a hedge 1.2 m
   high, the mailbox, a tree, the driveway to the garage.
-- **The street** (z 82 to 96): sidewalks 2 m wide, a two-lane road 8 m wide with curbs, four streetlights (on at dusk,
+- **The street** (z 83 to 95, x 41 to 96): sidewalks 2 m wide, a two-lane road 8 m wide with curbs, four streetlights (on at dusk,
   §8.2), a bus stop (mantle onto its roof), a hydrant, a parked car, the neighbours (§7.4).
-- **The backyard** (z 12 to 44): lawn and a patio (table, chairs, a grill); the shed (3 × 4 m, 2.5 m high, a flat roof);
+- **The backyard** (z 12 to 44, x 41 to 72): lawn and a patio (table, chairs, a grill); the shed (3 × 4 m, 2.5 m high, a flat roof);
   the tree house (a platform 4 m up, its ladder, and a zipline to the garage's deck); the trampoline (a launcher); a swing
   set; the dog's kennel.
 - **The hill** (x 72 to 96): terrain rising to 10 m in slopes of 10° to 30° (slides gain speed down them), trees and
@@ -81,11 +85,11 @@ wide. Floors are 0.3 m slabs.
 
 ### 2.3 The gym
 
-The west strip (x 0 to 36, z 12 to 82): calibrated features, each with a sign showing its number, so the owner reads
-what a feature tests, most with a course `node x feel` runs (§9.1; the gaps and the steps and slopes wait for WP 13.18,
-which also measures there §3.2's crouch timing, landing stun and climbing again, unit-tested only so far). In Stage 1
-it is a format-1 level of its own,
-its heights given by the playground's own glyphs; from WP 13.18 it stands in its place on the site.
+The west side (x 0 to 41, z 12 to 113): calibrated features, each with a sign showing its number, so the owner reads
+what a feature tests, each with a course `node x feel` runs (§9.1; WP 13.18 added the gaps', the steps' and slopes',
+and §3.2's crouch timing, landing stun and climbing again). It is a format-1 level, its heights given by the
+playground's own glyphs: a scene of its own (`playground:gym`, its wall whole) and, from WP 13.18, in its place on the
+site (its wall open by three gates).
 
 | Feature | Sizes | What it measures |
 |---|---|---|
@@ -96,7 +100,7 @@ its heights given by the playground's own glyphs; from WP 13.18 it stands in its
 | Crawl | a tunnel 1.4 m clear and 8 m long; a bar 1.3 m up (the crouched hull, 1.19 m, fits under both; the standing one, 1.83 m, under neither) | crouching and sliding under |
 | Gaps | 2 to 9 m between platforms 1.5 m up | the jump's reach: running, sprinting, slide-jumping, superglided |
 | Climb walls | 3, 4, 5, 6 and 6.9 m high, and 7.2 m (just past the reach) | the wall-climb's reach, topping out into a mantle; wall-bounces |
-| Stairs and slopes | risers 0.10, 0.15, 0.20 and 0.25 m; ramps at the slope limit and above it | steps and slopes |
+| Stairs and slopes | a stair of 0.25 m risers, each step 1 m deep, to 1 m; ramps at the slope limit (45°) and above it (51°) | steps and slopes |
 | The tower | 6 m, a ladder up its north face, a zipline 40 m long from a pole on its top down to the south wall | ladders, ziplines, the drop, the mantle hang at its top |
 | Launchers | a jump pad (6.5 m) in the open, and a trampoline (2 m, bouncing 0.9 of a fall's speed back) against the tower's west face | launch heights |
 | The balloon | a redeploy balloon's line, 90 m up (the hill's stands 60 m up: the gym's leaves room for a glide and a dive before the landing pose) | the vertical zipline, the skydive |
@@ -292,7 +296,9 @@ compiles to the same data and hash.
 - **Storeys:** a file holds several maps of the same size, each a storey with its base height and its clear height,
   read top to bottom of the file as bottom to top of the building; a base may be below 0 (a basement).
 - **Glyphs:** the legend gains void (no floor: a stairwell, a double height, the outside), doors, windows, railings,
-  stairs from one storey to the next, ladders, roof areas (gable, hip or flat, with a pitch) and room markers.
+  stairs from one storey to the next, a low ceiling and room markers; ladders climb from one storey to the next.
+- **Roofs:** the top storey's block gives its roof, gable, hip or flat, with a pitch, a ridge and eaves (a tile holds
+  one glyph, so a roof drawn in glyphs could not also say what stands under it: ADR-0025 amendment 15).
 - **Colliders:** walls per storey, slabs with their openings, stair hulls and roofs, all fixed bodies in `world`.
 - **Queries in 3D:** `floorBelow(level, x, y, z)`, and the storey, the room and the surface at a point. The 2D queries
   stay for single-storey levels.
@@ -309,8 +315,8 @@ reverb (§8.1), its light group (§8.2), its name on the HUD, and the cutaway's 
 ### 6.3 Sites
 
 A scene stands any number of levels on its terrain (WP 13.15): each placed at an offset and a turn of 90°, the terrain
-cut under it (basements and window wells; Rapier 0.21's heightfield has no holes, so the terrain is cut into
-triangle-mesh chunks there). `floorBelow`, `surfaceAt`, sight lines and the lost-body rescue answer over all of them;
+cut under it (basements and window wells; Rapier 0.21's heightfield has no holes, so a cut terrain is one triangle mesh
+of its other cells: ADR-0025 amendment 18). `floorBelow`, `surfaceAt`, sight lines and the lost-body rescue answer over all of them;
 navigation is a grid per storey and over the terrain, linked through stairs, ladders and doorways; the cutaway hides
 what is above the player's storey, and the roof when indoors.
 

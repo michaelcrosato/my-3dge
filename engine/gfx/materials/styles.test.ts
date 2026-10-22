@@ -158,6 +158,32 @@ describe('style sets', () => {
     expect(entries.size + parts.size).toBe(0);
   });
 
+  it('warm only the styles they are given, and one more added later, before putting every material back (WP 13.18)', () => {
+    const registry = registryWithMaterials();
+    const library = createMaterialLibrary({ registry });
+    const styles = createStyleSet({ library, registry });
+    const scene = new Group();
+    const mesh = new Mesh(new BoxGeometry(), styles.get('material:test-metal'));
+    scene.add(mesh);
+    const { warmup, entries } = fakeWarmup();
+    const attached = styles.attach(warmup, scene, ['toon', 'lambert']);
+    expect([attached.styles, [...entries.keys()].sort()]).toEqual([['lambert', 'toon'], ['~styles/lambert', '~styles/toon', '~styles~']]); // prettier-ignore
+    attached.add('toon');
+    attached.add('pbr');
+    expect([attached.styles, [...entries.keys()].sort()]).toEqual([['lambert', 'toon', 'pbr'], ['~styles/lambert', '~styles/pbr', '~styles/toon', '~styles~']]); // prettier-ignore
+    const seen: Material[] = [];
+    for (const id of [...entries.keys()].sort()) {
+      entries.get(id)!();
+      seen.push(mesh.material as Material);
+    }
+    const each = ['lambert', 'pbr', 'toon', 'lambert'].map((style) => styles.get('material:test-metal', style as 'toon')); // prettier-ignore
+    expect(seen).toEqual(each);
+    expect(() => attached.add('sepia' as 'toon')).toThrow(/GFX_UNKNOWN_STYLE|no material style/);
+    attached.dispose();
+    attached.add('flat');
+    expect(entries.size).toBe(0); // added nothing once detached
+  });
+
   it('wrap what they give a mesh that draws its materials its own way, live and in the warm-up (WP 13.12)', () => {
     const registry = registryWithMaterials();
     const library = createMaterialLibrary({ registry });

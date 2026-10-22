@@ -29,16 +29,25 @@ game agent's manual.
 - `addAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds a queued agent's body now (`updateCrowd` does it through the queue), its feet at `x`, `y`, `z`, moving at `vx`, `vy`, `vz`; returns its id.
 - `addBall` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a ball prop; returns its id.
 - `addBox` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a box prop, sized as BoxGeometry (full width, height, depth); returns its id.
+- `addBreakables` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Adds the system `breakables` to `w` (once), for panes a scene stands itself.
 - `addCapsule` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a capsule prop, standing up (`height` is its straight middle, as CapsuleGeometry's); returns its id.
 - `addClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Gives the live animated actor `id` the component `clips` (`clipsFor`); an actor spawned in the same step takes them from `spawnActor`'s `clips`.
 - `addCylinder` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a cylinder prop, standing up (a barrel); returns its id.
+- `addDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door (see the file comment) and returns its entity.
+- `addInteraction` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Adds the system `interact` to `w` (once): see the file comment.
 - `addLadder` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a ladder (see the file comment); returns its entity.
 - `addLauncher` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a jump pad or a trampoline (see the file comment); returns its entity.
-- `addLevelBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id.
+- `addLevelBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id; `place` stands it at a site's place, its map's north-west corner at `at`, turned `turn` quarter turns about +Y.
+- `addLevelDoors` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door in each door opening of `level` it fits (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
 - `addLevelLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders `level`'s ladder glyphs stand (engine/world/traverse.ts's `levelLadders`); returns their entities.
+- `addLevelWindows` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Stands the panes of `level`'s window openings (see the file comment) and returns their entities.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `addProp` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a dynamic body of one `shape` (a hull too: a rock), of `PROP_MATERIAL` unless `spec` says otherwise; its id.
 - `addSensor` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a body whose one collider is a sensor of `shape`: it blocks nothing and detects bodies.
+- `addSiteBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a site's bodies (its terrain, cut, then each structure's) and returns their ids in that order.
+- `addSiteLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders of every structure of `site` (engine/world/site.ts), in the world; returns their entities.
+- `addSwitch` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Puts a switch on a wall (see the file comment) and returns its entity.
+- `addTerrainBody` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a terrain's body (one fixed body: its heightfield, or with `cut` cells, one triangle mesh of the rest) and returns the body's id.
 - `addZipline` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a zipline and its poles (see the file comment); returns its entity.
 - `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
@@ -155,6 +164,9 @@ game agent's manual.
 - `BoxCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An axis-aligned box collider (Rapier's cuboid: half extents `(max − min)/2`, centred at `(min + max)/2`).
 - `boxGeometry` (function from [`engine/gfx/geometry/box.ts`](../engine/gfx/geometry/box.ts)): A box standing on the ground, UVs in metres (see the file comment).
 - `BoxOptions` (interface from [`engine/gfx/geometry/box.ts`](../engine/gfx/geometry/box.ts)): A box's size in metres.
+- `BREAK_SPEED` (const from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): How fast a prop must fly to break a pane it strikes (m/s): a throw, never a nudge.
+- `breakDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Breaks `id` off its hinges (see the file comment), knocked away from `from`.
+- `breakProp` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Breaks the prop `id` (see the file comment), its pieces knocked away from `from`.
 - `BUFFER_STEPS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): How long a press stays buffered by default, in steps: 9, the prototype's 0.15 s at 60 Hz.
 - `buffered` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed within the last `steps` steps (its press step counts as 0) and not consumed since.
 - `Build` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): A `build` entry: one body's proportions, in metres before `size`.
@@ -179,6 +191,7 @@ game agent's manual.
 - `CAPE` (const from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
 - `CapeOptions` (interface from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): What a cape is made of: its edges' chain options, `width` metres apart at the top, and `CAPE`'s flare and flutter.
 - `capsuleCast` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Where a ball of `radius` moving from `from` by `delta` (m) first touches `target`: the share of the move, 0 to 1 (0 when it touches already), or −1 when it never does.
+- `CARRY_MASS` (const from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The heaviest prop a player carries (kg): a chair, a box, a crate.
 - `cellHash` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A seeded value in [0, 1) for the integer point (x, y), with `salt` telling apart uses of one seed (a stone's tone, its crack).
 - `Chain` (class from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): One verlet strand.
 - `CHAIN` (const from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): The chains' shared tuning.
@@ -280,10 +293,12 @@ game agent's manual.
 - `createPuppetBatches` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Makes instanced puppet batches (see the file comment).
 - `createScriptedGamepad` (function from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
 - `createShoulderCamera` (function from [`engine/gfx/cameras/shoulder.ts`](../engine/gfx/cameras/shoulder.ts)): A shoulder camera: over the hero's shoulder (`input.eye`), turned by the devices, in front of the walls.
+- `createSiteNav` (function from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): Builds `site`'s navigation (see the file comment).
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Puts a sky on `scene`: the light pool lit from `level`'s light spots (phases from `rng`, a visual stream), the sun, the dome, the backdrop and the atmosphere; shows `sky:daylight` until `set` names another preset.
 - `createStore` (function from [`engine/app/store.ts`](../engine/app/store.ts)): Makes a store (see the file comment).
 - `createStyleSet` (function from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): Makes a style set (see the file comment).
+- `createTerrainMeshes` (function from [`engine/gfx/terrain.ts`](../engine/gfx/terrain.ts)): Draws `terrain` (see the file comment).
 - `createViewCamera` (function from [`engine/gfx/cameras/presets.ts`](../engine/gfx/cameras/presets.ts)): A classic view as a `Camera` (`options.view` names it; codes.ts's `VIEW_LABELS` has the names in words).
 - `createVirtualDevice` (function from [`engine/input/devices/virtual.ts`](../engine/input/devices/virtual.ts)): Makes a virtual device, holding nothing.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
@@ -315,7 +330,7 @@ game agent's manual.
 - `Cutaway` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): A level's cutaway (see the file comment).
 - `CutawayReport` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): How many of each cutting part's pieces are cut, after an `update`, and what the fade took out of the picture.
 - `CutTarget` (interface from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): What the cutaway decides over: the pieces of one part, how they cut, and their heights (m).
-- `CutWhen` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars).
+- `CutWhen` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars); `'either'`, both (a house's walls: a wall with rooms on both sides faces no one way out, so one between the camera and the player is cut too).
 - `CylinderCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An upright cylinder collider (Rapier's cylinder, three.js's CylinderGeometry): one per tile, at its centre.
 - `DaisDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A dais: an octagonal frustum (faces toward the axes and the diagonals) standing on a block of a dais glyph's tiles.
 - `damage` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Lands a hit on `target`: takes `hit.amount` from its health, and on its crowd body (in the scene's physics world) adds the knockback away from `hit.from`, the launch, and when the hit kills, the switch to the corpse group and the kill launch; asks for `hit.stop` of hit-stop; emits `damage` and returns the event.
@@ -323,6 +338,7 @@ game agent's manual.
 - `DamageEvent` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The event `damage`: a hit landed.
 - `DamageEvents` (type from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The events this module emits, for a world's event map: `World<Components, DamageEvents & MyEvents>`.
 - `DamageOptions` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): How a damage number is shown.
+- `damageProp` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Takes `amount` hit points from the breakable prop `id` (none from one without health); breaks it at 0.
 - `DamageTarget` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): What a hit lands on: the entity (named in the events), its health and its crowd body, either optional.
 - `decodePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
@@ -352,17 +368,24 @@ game agent's manual.
 - `defineSetBuild` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Registers build `id` with the proportions clip set `setId`'s clips were captured on (retarget.ts `restBuild` of its first source's rest body, or `source`'s), once, and returns it: `build:mannequin` from `clipset:quaternius` is the build engine/gfx/puppets/bodies/mannequin.ts draws, which the sim's animator needs before the view's body exists.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
 - `defineSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): Defines an effect on `registry` (the shared one by default) and returns it.
+- `defineSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): Registers a site on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
 - `defineSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`.
 - `defineSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): Defines a song on `registry` (the shared one by default) and returns it.
+- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock.
 - `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
+- `defineTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Registers a terrain on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
 - `defineTexture` (function from [`engine/gfx/textures/texture.ts`](../engine/gfx/textures/texture.ts)): Defines a texture generator on `registry` (the shared one by default) and returns it.
 - `defineTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): Registers a touch layout (on the shared registry by default).
+- `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
 - `DEGREES_PER_COUNT` (const from [`engine/input/look.ts`](../engine/input/look.ts)): One mouse count at sensitivity 1, degrees: Source's and Apex's `m_yaw` and `m_pitch`.
 - `DevActionSpec` (interface from [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)): How a dev action is written: `defineDevAction(name, spec)`.
 - `DeviceKind` (type from [`engine/input/codes.ts`](../engine/input/codes.ts)): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
 - `Dialog` (interface from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): The dialog box (see the file comment).
 - `DialogOptions` (interface from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): How a dialog box is made.
 - `DialogPlace` (type from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): Where the dialog box stands.
+- `DOOR_SWING` (const from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A door's swing open (rad): a quarter turn and a little more.
+- `DoorComponent` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): The component `door`.
+- `DoorSpec` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): What `addDoor` takes (see the file comment).
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
 - `driveMover` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Drives a mover's body toward its pose at `sim.time` (the end of the step being run): `driveMover(physics, m, w)`.
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
@@ -400,6 +423,7 @@ game agent's manual.
 - `FilterSpec` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Part of a chain: some filters, each with some of its fields (a look's `filters`, the setting `post.filters`).
 - `FLICKER` (const from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): A flame's flicker at time `t` (s): about 0.77 to 1.03, the 2D hall's (my-3d2dge's `FLICKER`).
 - `FLIP_AXES` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): What a flip turns about, in the body's frame: the top of the body goes forward, back, left, right; or it spins left.
+- `flipSwitch` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Turns switch `id` over: its group on or off, its door open or shut.
 - `Floater` (class from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater: its state, its pose.
 - `FLOATER` (const from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's tuning: the source's numbers, lengths ÷ 16 in metres, and the bank's.
 - `FLOATER_BODY` (const from [`engine/gfx/puppets/bodies/floater.ts`](../engine/gfx/puppets/bodies/floater.ts)): The wisp (see the file comment).
@@ -407,6 +431,7 @@ game agent's manual.
 - `FloaterOptions` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is made from.
 - `FloaterPose` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater's pose: the core's world matrix and the motes' world positions.
 - `FloaterState` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's state: what `step` eases and `pose` reads, plain numbers.
+- `floorBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The height (m) of the highest surface at or under (x, y, z): a storey's floor (flat, a ramp, a flight, a dais, under a solid too), the top of a solid standing there (a low wall, a railing, a wall, the head over a door, a window or a low ceiling, even with no floor above it), a roof's top, or the ground slab under the level; null where nothing is (outside the ground slab).
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): the highest flat floor, ramp or dais there; 0 outside the map.
 - `FloorMossOptions` (interface from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): How moss creeps in from the foot of the blocks.
 - `FloorRuneOptions` (interface from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): The rune circle laid on each dais; sizes in metres.
@@ -460,8 +485,10 @@ game agent's manual.
 - `getMovement` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): The movement profile `id`.
 - `getProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): The prop `id` of `registry` (the shared one by default); a missing id gives `prop:crate`, with a warning.
 - `getSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
+- `getSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): The site `id` of `registry` (the shared one by default), made afresh: its name is the id without `site:`.
 - `getSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): The song `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
 - `getTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The telegraph `id` of `registry` (the shared one by default); a missing id gives `telegraph:arc`, with a warning.
+- `getTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The terrain `id` of `registry` (the shared one by default), made afresh: its name is the id without `terrain:`.
 - `getTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): The touch layout `id`.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
@@ -521,6 +548,7 @@ game agent's manual.
 - `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
 - `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
 - `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
+- `InteractorComponent` (interface from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The component `interactor`: what a player would use, its prompt, what it carries, and when it last used.
 - `isCode` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): Whether `code` is one a binding may name.
 - `jointMatrix` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world matrix of `joint` in `world`.
 - `JointName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A joint's name.
@@ -549,6 +577,7 @@ game agent's manual.
 - `LegacyMove` (interface from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A my-3d2dge `E.MOVES` spec, as its fields were written (units of 1/16 m, Appendix C).
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
 - `LEVEL_FORMAT` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level.
+- `LEVEL_FORMAT_2` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level written as storeys (WP 13.13).
 - `LEVEL_RECIPES` (const from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): The engine's recipes, by the name a glyph's `mesh` gives.
 - `LevelCell` (interface from [`engine/gfx/level/cells.ts`](../engine/gfx/level/cells.ts)): One piece of a block mesh: its tiles, its centre on the ground (m), its size across (m), and the way it faces out ([x, z], length 1).
 - `LevelCut` (interface from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): How the cutaway cuts a recipe's pieces: to a twin `height` metres tall, `when` the view needs it.
@@ -556,7 +585,7 @@ game agent's manual.
 - `LevelFloorOptions` (interface from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): What a level's floor is baked from; every part may be left out.
 - `levelFloorTexture` (function from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): A texture generator for `level`'s whole floor: its base texture with moss at the walls' feet, rune circles on the daises and contact shadows along every block's foot (see the file comment).
 - `LevelGlyph` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
-- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order.
+- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order; in a level written as storeys, each storey's (bottom first), from its floor up to the top of the wall it leans on, the floor of the storey above.
 - `LevelMeshes` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): A level's meshes (see the file comment).
 - `LevelMeshesOptions` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): What `createLevelMeshes` needs: where materials come from, and optionally more recipes and a log.
 - `LevelMeshPart` (interface from [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)): One level mesh: its descriptor's recipe and glyphs, the mesh, and for an instanced shape one cell per instance.
@@ -595,6 +624,8 @@ game agent's manual.
 - `lyingOf` (function from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body whose chest turned by `chest` (a world rotation) lies: face up when the chest's front looks up.
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
 - `makePose` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): A checked, frozen pose: `fields` over `POSE_DEFAULTS`.
+- `makeSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): Makes `spec`'s site, named `name`, from the levels and the terrain `registry` holds (see the file comment).
+- `makeTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Makes `spec`'s terrain, named `name` (see the file comment); throws `CORE_BAD_SPEC` naming its problems.
 - `MANNEQUIN_SLOTS` (const from [`engine/gfx/puppets/bodies/mannequin.ts`](../engine/gfx/puppets/bodies/mannequin.ts)): The source model's two materials: the body, and its joint rings.
 - `mannequinBody` (function from [`engine/gfx/puppets/bodies/mannequin.ts`](../engine/gfx/puppets/bodies/mannequin.ts)): `body` (a set's measured figure) as a body for `build`, the rest body `R`'s own (see the file comment).
 - `MannequinData` (interface from [`engine/gfx/puppets/bodies/mannequin.ts`](../engine/gfx/puppets/bodies/mannequin.ts)): A set's `body`, as the importer measured it (mm).
@@ -652,10 +683,13 @@ game agent's manual.
 - `NAV_GRID_FIELDS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): The options of `new NavGrid(level, options)`.
 - `NavGrid` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): The walkable grid of a compiled level, and the searches over it (see the file comment).
 - `NavGridOptions` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
+- `NavSource` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid is built from: a compiled level, or a surface.
+- `NavSurface` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid walks besides a compiled level: `cols` × `rows` tiles `tile` metres wide from `origin` ([x, z], [0, 0] by default), which are `walkable`, each one's `floor` (m), and whether a body on tile (col, row) steps to (col + dc, row + dr) climbing at most `climb` metres on the way.
 - `NEAREST_RINGS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
 - `nearMiss` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` stands outside telegraph `t` but within its `near` metres (scaled).
 - `normalizedLens` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): `clip` with every angle of every key folded to (−180°, 180°], for reading (see the file comment).
 - `onFloor` (function from [`engine/input/aim.ts`](../engine/input/aim.ts)): Where `ray` meets the level plane at height `y` ahead of its start, or null (level with it, or pointing away).
+- `OpeningDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A door or a window: a filled rectangle of an opening glyph's tiles in a wall.
 - `Outline` (interface from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): An outline: its material and the shells it gives (see the file comment).
 - `OUTLINE_MODES` (const from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): How a shell's vertices are pushed: along their normals, or away from the part's centre.
 - `OutlineMode` (type from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): An outline mode (see `OUTLINE_MODES`).
@@ -690,7 +724,7 @@ game agent's manual.
 - `PillarOptions` (interface from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's footprint and height in metres.
 - `PillarPart` (interface from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): One part of a pillar: a square slab `width` across, from height `from` to `to` (m).
 - `pillarParts` (function from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's parts, bottom to top (see the file comment).
-- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was.
+- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was, or ducked with `crouch`, its hull crouched from its next step on and kept so until it has headroom, for a place no standing hull fits (a crawlspace).
 - `planCutaway` (function from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): For each target, for each cell: whether `pose`, looking at `focus`, cuts it.
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `playClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `clip` (`SET/Clip`, or bare) on actor `id`, fading in over what plays (the layer's `play`).
@@ -732,11 +766,14 @@ game agent's manual.
 - `PropBody` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): A prop's body, as `physics.addBody` takes it (engine/physics/world.ts's `BodySpec`).
 - `propCentre` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): The height of a prop's centre above its base (m): its body's origin, half its shape's height; 0 without a body.
 - `PropDefinition` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): What `defineProp` takes: any field, and of its objects (body, light, place, each part and its flame) any key.
+- `PropHealthComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `propHealth` (WP 13.16): the hit points a breakable prop has left, spawned only on one with health.
 - `PropKnock` (interface from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): How hard a knock is, as engine/physics/bodies.ts's `knock` takes it.
 - `PropLight` (interface from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): A prop's light this frame, in world space, as three.js's `PointLight` takes it.
+- `PropLightComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `propLight` (WP 13.16): a switchable prop's state, spawned only on one given a group or off.
 - `PropMeshes` (interface from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): The props of a scene, drawn: see the file comment.
 - `PropMeshesOptions` (interface from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): What `createPropMeshes` takes.
-- `PropMeshPose` (interface from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): A prop's pose: its centre (its body's origin) and its turn.
+- `PropMeshPose` (interface from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): A prop's pose: its centre (its body's origin) and its turn, and whether it is on (a switched lamp; true).
+- `propOfBody` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): The entity whose prop `body` is (a `sceneProp`'s), or −1: the body-to-entity lookup uses and hits read (WP 13.16).
 - `PropPart` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): One part of a `prop` entry, filled: see `PROP_PART_FIELDS`.
 - `PropPlacement` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): A prop placed: `{ prop: 'prop:<id>', at: [x, y, z], yaw }`, its base at `at` (m) and its turn `yaw` about +Y (rad), as `spawnProp` takes it and `levelProps` gives it.
 - `propPose` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): Where `placement` is drawn while no body moves it: the prop's centre and turn.
@@ -778,15 +815,15 @@ game agent's manual.
 - `releaseToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Gives `id`'s token back (its attack ended, or was broken off): true when it held one.
 - `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body.
 - `removeAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Removes an agent's body now (`updateCrowd` does it for `leaving` agents and old corpses): it is `gone`.
-- `removeProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Removes a prop: its entity and its body.
+- `removeProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Removes a prop: its entity and its body, its component's `body` −1 at once (inside a step the entity stays to its end).
 - `renderSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect as mono samples (engine/audio/dsp/render.ts): one variant, its layers mixed in.
 - `renderSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One pass of the song as mono samples (engine/audio/dsp/render.ts): at least the pass's length, so passes played back to back every `songTiming(song).seconds` keep time, plus the last notes' tails; silence when no track plays at the intensity asked for.
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
 - `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
 - `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
 - `requestHitStop` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Asks the frame clock for a hit-stop of `seconds` (real seconds, before its budget): kept until the run's host takes it after the step (`takeHitStop`), the longest of the step winning.
-- `RescueLevel` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
-- `rescueLost` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
+- `RescueLevel` (interface from [`engine/physics/rescue.ts`](../engine/physics/rescue.ts)): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
+- `rescueLost` (function from [`engine/physics/rescue.ts`](../engine/physics/rescue.ts)): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
 - `RESERVED_CODES` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Codes no action map binds: the pause buttons, and keys the browser or the system keeps.
 - `resolveMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `move` names, with `over` laid on it (`time` and `body` field by field): an id (a bare name gets the `move:` prefix), a `Move` entry, or a spec, parsed once and frozen.
 - `RestBody` (type from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): A body's rest measurements (mm and degrees), measured by the importer from the library's own clips: `H0`, the standing pelvis height (the unit of `hips` and `root`); `Pr`, `Cr` and `Hr`, the rest frames of the pelvis, chest and head (`[forward, right, up]` axes); the four `spine` bones from the pelvis to the neck, and `spineW`, how much of the pelvis-to-chest turn each takes (the library's own), as `neckW` is the neck's share of the chest-to-head turn; `cv`, each collarbone from its pivot to the shoulder; and the segments' lengths (`up`, `fore`, `thigh`, `shin`…).
@@ -812,7 +849,11 @@ game agent's manual.
 - `ringGeometry` (function from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring lying on the ground (see the file comment).
 - `RingOptions` (interface from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring's radii and height in metres, and its tessellation.
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
+- `RoofDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A roof over a storey (its block's `roof` key): its shape, footprint and heights.
+- `roomAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The room at (x, y, z): the room of the tile under it on `storeyBelow`'s storey (a hall's stairs are the hall's to their top), or null (outside every room, on a roof, or a level without rooms).
+- `RoomDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A room: the floor a room marker's tile reaches inside walls and doors (docs/PLAYGROUND.md §6.2).
 - `RoomName` (type from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): A preset's name.
+- `roomReverb` (function from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): The preset for a level's room (WP 13.15: rooms as data for sound): by its volume, its `area` (m², the room descriptor's) times `height` (m, its storey's clear height): `small` under 30 m³, `room` under 200 m³, `hall` past.
 - `ROOMS` (const from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): The room presets, from no reverb to a cave.
 - `RoomSpec` (interface from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): A room's reverb, as numbers.
 - `roundedBoxGeometry` (function from [`engine/gfx/geometry/roundedBox.ts`](../engine/gfx/geometry/roundedBox.ts)): A rounded box standing on the ground (see the file comment).
@@ -829,6 +870,8 @@ game agent's manual.
 - `SayOptions` (interface from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): What one `say` shows.
 - `ScaledLook` (interface from [`engine/input/look.ts`](../engine/input/look.ts)): What the camera takes (engine/gfx/cameras/pose.ts `CameraInput`): look `[right, up]` in rad, turn as rates.
 - `scaleLook` (function from [`engine/input/look.ts`](../engine/input/look.ts)): What the camera takes from `raw` under `options`, aiming down sights or not (see the file comment).
+- `ScatterRule` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How `scatterTerrain` places (see its comment).
+- `scatterTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Stateless placement (shardfall's decor): each cell holds one place with the chance `density`, jittered inside it, turned and sized, by hashes of the terrain's seed, the rule's `salt` and the cell, never a stream; so a cell's place never depends on another's, and the same rule gives the same places.
 - `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
 - `SCENE_PROP_FIELDS` (const from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `sceneProp`'s fields.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
@@ -877,6 +920,19 @@ game agent's manual.
 - `SightOptions` (interface from [`engine/world/ai.ts`](../engine/world/ai.ts)): How `canSee` looks.
 - `SimRng` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
 - `SimSettings` (interface from [`engine/core/settings.ts`](../engine/core/settings.ts)): What sim-side code reads settings through (`w.settings` in a scene): no view settings, no writes.
+- `Site` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A made site (see the file comment).
+- `SITE_FIELDS` (const from [`engine/world/site.ts`](../engine/world/site.ts)): The fields of a `site` entry (see the file comment).
+- `siteClearSight` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): Whether the straight line from `from` to `to` (m) meets nothing solid, sampled every `step` metres and at both ends.
+- `siteFloorBelow` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The height (m) of the highest surface at or under (x, y, z) on the site; null where nothing is.
+- `SiteNav` (interface from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): A site's navigation (see the file comment).
+- `SiteNavOptions` (interface from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): How `createSiteNav` builds: the climb limit (m), the steepest ground (m a metre), and the body it walks (m; the shooter's hull, `LEVEL_BODY`, by default, the largest the engine ships): its radius, the clear height a step needs (crouched, with a margin) and the height it stands (a step lower costs `CROUCH_COST` times its length, crouched).
+- `siteRescueGrid` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The site's rescue grid, `tile` metres a tile, over its terrain and its structures (see the file comment).
+- `SiteRescueGrid` (interface from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The lost-body rescue's grid (engine/physics/rescue.ts's `RescueLevel`): see the file comment.
+- `siteSolidAt` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): Whether (x, y, z) is in something solid on the site (see the file comment).
+- `SiteSpec` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): What `defineSite` takes.
+- `SiteStructure` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A structure placed: its level, in its own frame, and where it stands (see the file comment).
+- `siteStructureAt` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): Where (x, y, z) is in a structure: the first whose box holds it, its storey there and its room; null outside them.
+- `siteSurfaceBelow` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The surface tag of `siteFloorBelow`'s surface at (x, y, z): '' where nothing is.
 - `Skeleton` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A humanoid skeleton made from a build: rest offsets, bone lengths, leaf tips and sockets, in metres.
 - `Sky` (interface from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): A sky on a scene; see the file comment.
 - `SkyEntry` (type from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): A `sky` entry.
@@ -903,6 +959,7 @@ game agent's manual.
 - `spawnActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
 - `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
 - `spawnProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Stands a prop in the scene, `spawnProp(w, { prop: 'prop:<id>', at: [x, y, z], yaw })`: its base at `at` (m), turned `yaw` about +Y (rad).
+- `SpawnPropOptions` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): How `spawnProp` stands a prop beyond its placement (WP 13.16): a spawn inside a step or a setup joins the world at its end, so a door's or a switch's own component comes with it here.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `SQUASH` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The squash spring (my-3d2dge's numbers): its pull and damping per second, and its bound either way.
@@ -924,20 +981,33 @@ game agent's manual.
 - `StoreBackend` (interface from [`engine/app/store.ts`](../engine/app/store.ts)): Where a store writes: the Web Storage calls it uses (`localStorage` is one).
 - `StoreMode` (type from [`engine/app/store.ts`](../engine/app/store.ts)): One of `STORE_MODES`: whose play a store keeps.
 - `StoreOptions` (interface from [`engine/app/store.ts`](../engine/app/store.ts)): How a store is made (see the file comment).
+- `storeyAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The storey a height is in (an index into `level.storeys`): the highest whose floor slab's underside is at or below `y`; 0 below them all, and in a format-1 level, which is one storey.
+- `storeyBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The storey of the surface `floorBelow` finds at (x, y, z), an index into `level.storeys` (0 in a format-1 level): a flight's tiles are the storey they rise from, all the way to their top, where `storeyAt` already reads the next; −1 on a roof, on the ground slab, or over nothing.
+- `StoreyDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One storey of a format-2 level (WP 13.13): its heights and its own grids and descriptors, heights absolute.
+- `storeyView` (function from [`engine/world/level/storeys.ts`](../engine/world/level/storeys.ts)): Storey `index` of `level` read as a format-1 level: its grids, ramps, daises, meshes, colliders, spawns and lights, with `base`, `fullTop` and its roof for the height queries (heights.ts), so navigation, drawing and ladders read any storey as they read a level.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
 - `StrikeAnimator` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of an animator: its body, which the sim poses only with `preciseHits`.
+- `strikeBody` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): A bolt's or a shot's strike on `body` from `from`: the prop or door it is, struck; a dynamic one knocked.
 - `StrikeBody` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of a body.
+- `strikeDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A strike on `id` from `from`: the first bursts it open, the second breaks it; a shot or a blast breaks it at once.
+- `strikeEntity` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Strikes `target` from `from` (m), its striker facing it or not (`faced`), with `force`: the entry of a component it holds answers (a door's rule: engine/sim/doors.ts; a breakable's damage: breakables.ts), else a dynamic prop is knocked (its `hit` hook).
+- `StrikeForce` (type from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): What strikes: a melee hit, a shot or a blast (a door bursts open at a hit, breaks at a shot or a blast).
 - `strikePart` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): The part of a body that strikes in `move`: the right foot, the left fist, a held weapon's blade, or the right fist.
 - `strikeSegment` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Where `part` spans on a body's pose now, world metres, into `base` and `tip`: a sword from near the grip to its tip (another weapon strikes as the right fist), a forearm from the elbow to the wrist, the right shin from the knee to the sole.
 - `strikeTime` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): When `clip`'s strike lands, seconds from its start, decoded on rest body `R` (see the file comment).
+- `StructureSpec` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A structure as a site's spec places it.
 - `StyleSet` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): A page's materials in every style (see the file comment).
 - `StyleSetOptions` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): How `createStyleSet` makes a set.
 - `STYLIZE_KINDS` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): The painterly and print styles.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
+- `surfaceBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag of `floorBelow`'s surface at (x, y, z): '' on the ground slab or where nothing is.
 - `Sweep` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
 - `sweepHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets the swept quad touches (`sweepTouches`), by id, ascending.
 - `sweepTouches` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
+- `SwitchComponent` (interface from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): The component `switch`.
+- `switchGroup` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Turns light group `group` on or off, and its switches with it.
+- `SwitchSpec` (interface from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): What `addSwitch` takes (see the file comment).
 - `SYSTEM_ACTIONS` (const from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The system layer: action → codes.
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
 - `TAIL` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A tail from the back of the pelvis, holding its curve back and up (chosen here: the source had none).
@@ -948,6 +1018,24 @@ game agent's manual.
 - `telegraphGap` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): How far a body at `point` (its feet, metres) with `radius` stands outside telegraph `t` placed at `place`, minus the radius: between its heights, the signed distance to its shape on the floor (below 0 inside); above or below them, the distance to the extruded shape.
 - `TelegraphPlace` (interface from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A telegraph where it stands: plain data, as a component or a frame's list holds it.
 - `TelegraphSpec` (type from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): What `defineTelegraph` takes: any field.
+- `Terrain` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A made terrain: its grid, its heights and what the queries and the drawing read (see the file comment).
+- `TERRAIN_FIELDS` (const from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The fields of a `terrain` entry (see the file comment).
+- `TerrainEntry` (type from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A `terrain` entry: its spec.
+- `TerrainFlat` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A footprint a terrain flattens.
+- `terrainGrade` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How steep the ground is at (x, z): metres risen a metre along its slope (1 is 45°); null outside the grid.
+- `terrainGradient` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How the ground rises at (x, z), as metres a metre east and south: its triangle's; null outside the grid.
+- `terrainHeight` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The ground's height (m) at (x, z): the collider's surface (see the file comment); null outside the grid.
+- `TerrainHill` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A dome added to a terrain.
+- `TerrainMeshes` (interface from [`engine/gfx/terrain.ts`](../engine/gfx/terrain.ts)): A terrain's meshes (see the file comment).
+- `TerrainMeshesOptions` (interface from [`engine/gfx/terrain.ts`](../engine/gfx/terrain.ts)): What `createTerrainMeshes` needs: where materials come from.
+- `terrainNavGrid` (function from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): A navigation grid over `terrain`'s cells (see the file comment).
+- `TerrainNavOptions` (interface from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): What `terrainNavGrid` takes: a grid's options, and the steepest ground it walks (m a metre; 1 by default).
+- `terrainNavSurface` (function from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): The walkable surface of `terrain`'s cells (see the file comment).
+- `terrainNormal` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The ground's upward unit normal at (x, z): its triangle's; null outside the grid.
+- `TerrainPlace` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A place `scatterTerrain` picks: on the ground, a turn about +Y (rad) and a size factor.
+- `terrainProblems` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The problems with a terrain spec's shape (beyond its fields' types); none when it makes a terrain.
+- `TerrainSpec` (type from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): What `defineTerrain` and `makeTerrain` take: each field of `TERRAIN_FIELDS` (`size` required).
+- `terrainSurface` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The surface tag underfoot at (x, z): `steepSurface` where it is steep, else `surface`; '' outside the grid.
 - `Texel` (interface from [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)): One texel as a generator writes it.
 - `TextureBake` (interface from [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)): A baked texture: its source, its maps and its hash.
 - `TextureContext` (interface from [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)): What `create` is given: the parameters (defaults filled), the seed, and the size the texture bakes at.
@@ -955,6 +1043,7 @@ game agent's manual.
 - `TextureLook` (type from [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)): How a texture is magnified: `pixel` keeps texels crisp (nearest), `smooth` blends them (linear).
 - `TextureRef` (type from [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)): A texture by id, or by id with its seed, parameters and size.
 - `TextureSpec` (interface from [`engine/gfx/textures/types.ts`](../engine/gfx/textures/types.ts)): A generator: its parameters, the size and look it bakes at, and the function that writes its texels.
+- `THROW_SPEED` (const from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): How fast a carried prop leaves when it is thrown (m/s).
 - `tileAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The tile under (x, z) metres, or null outside the map.
 - `tileNoise` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): Value noise in [0, 1] over a texture of `size` texels, repeating exactly every `size`: lattice values from `cellHash`, blended with smoothstep, `cells` lattice cells across on each axis (stretched when they differ), summed over octaves and divided by the total weight.
 - `TileRect` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A rectangle of tiles, inclusive: `[col0, row0, col1, row1]`.
@@ -964,6 +1053,7 @@ game agent's manual.
 - `TimelinePhase` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): One phase of a timeline.
 - `TimelineState` (type from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A timeline's state: the phase index (−1 when idle) and the seconds into that phase.
 - `tipPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
+- `toLocal` (function from [`engine/world/site.ts`](../engine/world/site.ts)): A structure's own (x, z) from world (wx, wz): `toWorld` undone.
 - `TOON_LOOK` (const from [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)): The default look: three bands (shadow, base, lit) and shardfall's rim.
 - `ToonLook` (interface from [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)): A toon look: how many bands of light, and how strong the rim is (0 for none).
 - `ToonUniforms` (interface from [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)): A toon look as uniforms: set `.value` (or `set`) and every material reading them follows, building nothing.
@@ -974,6 +1064,7 @@ game agent's manual.
 - `TouchLayout` (type from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): A touch layout entry.
 - `TouchLayoutSpec` (interface from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): How a touch layout is written.
 - `TouchSetting` (type from [`engine/input/devices/touch.ts`](../engine/input/devices/touch.ts)): The `touch` setting: touch mode as detected (`auto`), or forced `on` or `off`.
+- `toWorld` (function from [`engine/world/site.ts`](../engine/world/site.ts)): World (x, z) from a structure's own (lx, lz): turned `turn` quarter turns, then moved to `at`.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
 - `TRAIL_TINTS` (const from [`engine/gfx/fx/ribbons.ts`](../engine/gfx/fx/ribbons.ts)): The tints of the Stress test's trails: the hero's blade and the monsters' claws.
 - `TrailName` (type from [`engine/anim/states.ts`](../engine/anim/states.ts)): A part that leaves a trail.
@@ -999,6 +1090,9 @@ game agent's manual.
 - `updateCrowd` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): The crowd's step, after the physics step (the phase `readback`), over every agent in id order: reads each body back (feet, velocity, `grounded`); brakes grounded corpses and removes those `corpseTime` old, then the oldest beyond `corpseCap`; removes `leaving` agents; adds the bodies of up to `spawnLimit` queued agents.
 - `updateInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Records one step's intents in `buffer` (changed in place, and returned): call it once per step, with the world's `tick`, before reading `released`, `buffered` or `repeated`.
 - `updateTrigger` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Brings `trigger.inside` up to date with its sensor and returns the bodies that entered and left, in id order.
+- `UsableSpec` (interface from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): How an entity holding a component is used: what the HUD says (null: not now) and what using it does.
+- `USE_REACH` (const from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): How far from the eye a thing is in reach (m).
+- `useDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Opens `id` away from `from` (m), or closes it; a locked door stays.
 - `validateClip` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Warns about poses that parse but play badly (see the file comment), in key order.
 - `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
 - `Vec3Like` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A vector: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`.
@@ -1044,16 +1138,25 @@ game agent's manual.
 - `addAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds a queued agent's body now (`updateCrowd` does it through the queue), its feet at `x`, `y`, `z`, moving at `vx`, `vy`, `vz`; returns its id.
 - `addBall` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a ball prop; returns its id.
 - `addBox` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a box prop, sized as BoxGeometry (full width, height, depth); returns its id.
+- `addBreakables` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Adds the system `breakables` to `w` (once), for panes a scene stands itself.
 - `addCapsule` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a capsule prop, standing up (`height` is its straight middle, as CapsuleGeometry's); returns its id.
 - `addClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Gives the live animated actor `id` the component `clips` (`clipsFor`); an actor spawned in the same step takes them from `spawnActor`'s `clips`.
 - `addCylinder` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a cylinder prop, standing up (a barrel); returns its id.
+- `addDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door (see the file comment) and returns its entity.
+- `addInteraction` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Adds the system `interact` to `w` (once): see the file comment.
 - `addLadder` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a ladder (see the file comment); returns its entity.
 - `addLauncher` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a jump pad or a trampoline (see the file comment); returns its entity.
-- `addLevelBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id.
+- `addLevelBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id; `place` stands it at a site's place, its map's north-west corner at `at`, turned `turn` quarter turns about +Y.
+- `addLevelDoors` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door in each door opening of `level` it fits (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
 - `addLevelLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders `level`'s ladder glyphs stand (engine/world/traverse.ts's `levelLadders`); returns their entities.
+- `addLevelWindows` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Stands the panes of `level`'s window openings (see the file comment) and returns their entities.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `addProp` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a dynamic body of one `shape` (a hull too: a rock), of `PROP_MATERIAL` unless `spec` says otherwise; its id.
 - `addSensor` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a body whose one collider is a sensor of `shape`: it blocks nothing and detects bodies.
+- `addSiteBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a site's bodies (its terrain, cut, then each structure's) and returns their ids in that order.
+- `addSiteLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders of every structure of `site` (engine/world/site.ts), in the world; returns their entities.
+- `addSwitch` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Puts a switch on a wall (see the file comment) and returns its entity.
+- `addTerrainBody` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a terrain's body (one fixed body: its heightfield, or with `cut` cells, one triangle mesh of the rest) and returns the body's id.
 - `addZipline` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a zipline and its poles (see the file comment); returns its entity.
 - `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
@@ -1128,6 +1231,9 @@ game agent's manual.
 - `BoneMask` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): How much of a blend or layer reaches each joint (0–1, in `JOINTS` order) and the root's channels.
 - `Box3` (re-export from `three/webgpu`): three.js's axis-aligned box.
 - `BoxCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): An axis-aligned box collider (Rapier's cuboid: half extents `(max − min)/2`, centred at `(min + max)/2`).
+- `BREAK_SPEED` (const from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): How fast a prop must fly to break a pane it strikes (m/s): a throw, never a nudge.
+- `breakDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Breaks `id` off its hinges (see the file comment), knocked away from `from`.
+- `breakProp` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Breaks the prop `id` (see the file comment), its pieces knocked away from `from`.
 - `BUFFER_STEPS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): How long a press stays buffered by default, in steps: 9, the prototype's 0.15 s at 60 Hz.
 - `buffered` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed within the last `steps` steps (its press step counts as 0) and not consumed since.
 - `Build` (type from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): A `build` entry: one body's proportions, in metres before `size`.
@@ -1137,6 +1243,7 @@ game agent's manual.
 - `CAPE` (const from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): A cape from the backs of the shoulders (`inset` in, `drop` down, `gap` off the back), the source's numbers.
 - `CapeOptions` (interface from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): What a cape is made of: its edges' chain options, `width` metres apart at the top, and `CAPE`'s flare and flutter.
 - `capsuleCast` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Where a ball of `radius` moving from `from` by `delta` (m) first touches `target`: the share of the move, 0 to 1 (0 when it touches already), or −1 when it never does.
+- `CARRY_MASS` (const from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The heaviest prop a player carries (kg): a chair, a box, a crate.
 - `Chain` (class from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): One verlet strand.
 - `CHAIN` (const from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): The chains' shared tuning.
 - `ChainOptions` (interface from [`engine/anim/chain.ts`](../engine/anim/chain.ts)): What a chain is made of: `n` points (2 or more, the anchor first) `seg` metres apart, and its tuning.
@@ -1195,6 +1302,7 @@ game agent's manual.
 - `createCharacter` (function from [`engine/physics/character.ts`](../engine/physics/character.ts)): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
 - `createFootPlantState` (function from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): A new, unlocked `FootPlantState`.
 - `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
+- `createSiteNav` (function from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): Builds `site`'s navigation (see the file comment).
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
 - `CROWD_AGENT` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): An agent with every field at its default: queued, a walker's capsule at the origin.
@@ -1217,6 +1325,7 @@ game agent's manual.
 - `damage` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Lands a hit on `target`: takes `hit.amount` from its health, and on its crowd body (in the scene's physics world) adds the knockback away from `hit.from`, the launch, and when the hit kills, the switch to the corpse group and the kill launch; asks for `hit.stop` of hit-stop; emits `damage` and returns the event.
 - `DamageEvent` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The event `damage`: a hit landed.
 - `DamageEvents` (type from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The events this module emits, for a world's event map: `World<Components, DamageEvents & MyEvents>`.
+- `damageProp` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Takes `amount` hit points from the breakable prop `id` (none from one without health); breaks it at 0.
 - `DamageTarget` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): What a hit lands on: the entity (named in the events), its health and its crowd body, either optional.
 - `decodePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
@@ -1234,8 +1343,15 @@ game agent's manual.
 - `defineScene` (function from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): Registers a scene on `registry` (the shared one by default) and returns it.
 - `defineSetBuild` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): Registers build `id` with the proportions clip set `setId`'s clips were captured on (retarget.ts `restBuild` of its first source's rest body, or `source`'s), once, and returns it: `build:mannequin` from `clipset:quaternius` is the build engine/gfx/puppets/bodies/mannequin.ts draws, which the sim's animator needs before the view's body exists.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
+- `defineSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): Registers a site on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
+- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock.
 - `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
+- `defineTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Registers a terrain on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
+- `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
 - `DevActionSpec` (interface from [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)): How a dev action is written: `defineDevAction(name, spec)`.
+- `DOOR_SWING` (const from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A door's swing open (rad): a quarter turn and a little more.
+- `DoorComponent` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): The component `door`.
+- `DoorSpec` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): What `addDoor` takes (see the file comment).
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
 - `driveMover` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Drives a mover's body toward its pose at `sim.time` (the end of the step being run): `driveMover(physics, m, w)`.
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
@@ -1251,12 +1367,14 @@ game agent's manual.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
 - `FLIP_AXES` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): What a flip turns about, in the body's frame: the top of the body goes forward, back, left, right; or it spins left.
+- `flipSwitch` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Turns switch `id` over: its group on or off, its door open or shut.
 - `Floater` (class from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater: its state, its pose.
 - `FLOATER` (const from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's tuning: the source's numbers, lengths ÷ 16 in metres, and the bank's.
 - `FloaterInput` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is told each step; every field is optional.
 - `FloaterOptions` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): What a floater is made from.
 - `FloaterPose` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): A floater's pose: the core's world matrix and the motes' world positions.
 - `FloaterState` (interface from [`engine/anim/floater.ts`](../engine/anim/floater.ts)): The floater's state: what `step` eases and `pose` reads, plain numbers.
+- `floorBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The height (m) of the highest surface at or under (x, y, z): a storey's floor (flat, a ramp, a flight, a dais, under a solid too), the top of a solid standing there (a low wall, a railing, a wall, the head over a door, a window or a low ceiling, even with no floor above it), a roof's top, or the ground slab under the level; null where nothing is (outside the ground slab).
 - `floorHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The walkable surface's height (m) at (x, z): the highest flat floor, ramp or dais there; 0 outside the map.
 - `FlowField` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): Every tile's walking distance to a goal set: walk downhill to get there.
 - `FlowOptions` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `flowField` takes.
@@ -1282,7 +1400,9 @@ game agent's manual.
 - `getMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`, naming the closest) and gives `move:slash`.
 - `getMovement` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): The movement profile `id`.
 - `getProp` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): The prop `id` of `registry` (the shared one by default); a missing id gives `prop:crate`, with a warning.
+- `getSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): The site `id` of `registry` (the shared one by default), made afresh: its name is the id without `site:`.
 - `getTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The telegraph `id` of `registry` (the shared one by default); a missing id gives `telegraph:arc`, with a warning.
+- `getTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The terrain `id` of `registry` (the shared one by default), made afresh: its name is the id without `terrain:`.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `Ground` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): The ground under a point: its height, its normal and the body it belongs to.
@@ -1328,6 +1448,7 @@ game agent's manual.
 - `INTENT_KEYS` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): The built-in keys, in the order a normalized object holds them, each with what it means.
 - `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
 - `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
+- `InteractorComponent` (interface from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The component `interactor`: what a player would use, its prompt, what it carries, and when it last used.
 - `jointMatrix` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world matrix of `joint` in `world`.
 - `JointName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A joint's name.
 - `jointPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of `joint` (a name or an index) in `world`.
@@ -1353,9 +1474,10 @@ game agent's manual.
 - `LegacyMove` (interface from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A my-3d2dge `E.MOVES` spec, as its fields were written (units of 1/16 m, Appendix C).
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
 - `LEVEL_FORMAT` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level.
+- `LEVEL_FORMAT_2` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level written as storeys (WP 13.13).
 - `LevelEntry` (type from [`engine/world/level/level.ts`](../engine/world/level/level.ts)): A `level` entry: a level's text and where it came from.
 - `LevelGlyph` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
-- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order.
+- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order; in a level written as storeys, each storey's (bottom first), from its floor up to the top of the wall it leans on, the floor of the storey above.
 - `LevelProblem` (interface from [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
 - `levelProps` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): The placements `level` makes for the props of `registry` (the shared one by default); see the file comment.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
@@ -1375,6 +1497,8 @@ game agent's manual.
 - `Lying` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body lies: on its back (`up`) or on its face (`down`).
 - `lyingOf` (function from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body whose chest turned by `chest` (a world rotation) lies: face up when the chest's front looks up.
 - `makeAdditive` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The additive layer that turns `reference` into `pose`: each joint's reference⁻¹ × pose, the root's position difference, rotation difference and scale ratio, written into `out`.
+- `makeSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): Makes `spec`'s site, named `name`, from the levels and the terrain `registry` holds (see the file comment).
+- `makeTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Makes `spec`'s terrain, named `name` (see the file comment); throws `CORE_BAD_SPEC` naming its problems.
 - `MaskName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A preset bone mask's name.
 - `MASKS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The preset bone masks.
 - `MathUtils` (re-export from `three/webgpu`): three.js's scalar helpers: `clamp`, `lerp`, `damp`, `smoothstep`, `degToRad`, `euclideanModulo` and more.
@@ -1411,9 +1535,12 @@ game agent's manual.
 - `NAV_GRID_FIELDS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): The options of `new NavGrid(level, options)`.
 - `NavGrid` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): The walkable grid of a compiled level, and the searches over it (see the file comment).
 - `NavGridOptions` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
+- `NavSource` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid is built from: a compiled level, or a surface.
+- `NavSurface` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid walks besides a compiled level: `cols` × `rows` tiles `tile` metres wide from `origin` ([x, z], [0, 0] by default), which are `walkable`, each one's `floor` (m), and whether a body on tile (col, row) steps to (col + dc, row + dr) climbing at most `climb` metres on the way.
 - `NEAREST_RINGS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
 - `nearMiss` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` stands outside telegraph `t` but within its `near` metres (scaled).
 - `normalizedLens` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): `clip` with every angle of every key folded to (−180°, 180°], for reading (see the file comment).
+- `OpeningDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A door or a window: a filled rectangle of an opening glyph's tiles in a wall.
 - `OverlapOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): An overlap's options.
 - `parseClip` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Reads a clip of format 1 or 2 from its text (`//` comment lines allowed) or an object, which is not changed: the result is a copy, its keys sorted by time and `dur` filled in.
 - `parseClipSet` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Reads a set of clips (a set file's text or object): its header, then every clip by `parseClip`.
@@ -1423,7 +1550,7 @@ game agent's manual.
 - `PHYSICS_SETTINGS` (const from [`engine/physics/params.ts`](../engine/physics/params.ts)): The physics settings, path → field; `defineSettings(PHYSICS_SETTINGS, registry)` declares them on another registry.
 - `physicsOf` (function from [`engine/physics/binding.ts`](../engine/physics/binding.ts)): The physics world of a sim world: its bodies and queries.
 - `physicsWalls` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
-- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was.
+- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was, or ducked with `crouch`, its hull crouched from its next step on and kept so until it has headroom, for a place no standing hull fits (a crawlspace).
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `playClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `clip` (`SET/Clip`, or bare) on actor `id`, fading in over what plays (the layer's `play`).
 - `POINT_INDEX` (const from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Each point's position in `POSE_POINTS`.
@@ -1451,7 +1578,10 @@ game agent's manual.
 - `PropBody` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): A prop's body, as `physics.addBody` takes it (engine/physics/world.ts's `BodySpec`).
 - `propCentre` (function from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): The height of a prop's centre above its base (m): its body's origin, half its shape's height; 0 without a body.
 - `PropDefinition` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): What `defineProp` takes: any field, and of its objects (body, light, place, each part and its flame) any key.
+- `PropHealthComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `propHealth` (WP 13.16): the hit points a breakable prop has left, spawned only on one with health.
 - `PropKnock` (interface from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): How hard a knock is, as engine/physics/bodies.ts's `knock` takes it.
+- `PropLightComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `propLight` (WP 13.16): a switchable prop's state, spawned only on one given a group or off.
+- `propOfBody` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): The entity whose prop `body` is (a `sceneProp`'s), or −1: the body-to-entity lookup uses and hits read (WP 13.16).
 - `PropPart` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): One part of a `prop` entry, filled: see `PROP_PART_FIELDS`.
 - `PropPlacement` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): A prop placed: `{ prop: 'prop:<id>', at: [x, y, z], yaw }`, its base at `at` (m) and its turn `yaw` about +Y (rad), as `spawnProp` takes it and `levelProps` gives it.
 - `propPose` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): Where `placement` is drawn while no body moves it: the prop's centre and turn.
@@ -1482,13 +1612,13 @@ game agent's manual.
 - `releaseToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Gives `id`'s token back (its attack ended, or was broken off): true when it held one.
 - `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body.
 - `removeAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Removes an agent's body now (`updateCrowd` does it for `leaving` agents and old corpses): it is `gone`.
-- `removeProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Removes a prop: its entity and its body.
+- `removeProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Removes a prop: its entity and its body, its component's `body` −1 at once (inside a step the entity stays to its end).
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
 - `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
 - `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
 - `requestHitStop` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Asks the frame clock for a hit-stop of `seconds` (real seconds, before its budget): kept until the run's host takes it after the step (`takeHitStop`), the longest of the step winning.
-- `RescueLevel` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
-- `rescueLost` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
+- `RescueLevel` (interface from [`engine/physics/rescue.ts`](../engine/physics/rescue.ts)): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
+- `rescueLost` (function from [`engine/physics/rescue.ts`](../engine/physics/rescue.ts)): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
 - `resolveMove` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): The move `move` names, with `over` laid on it (`time` and `body` field by field): an id (a bare name gets the `move:` prefix), a `Move` entry, or a spec, parsed once and frozen.
 - `RestBody` (type from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): A body's rest measurements (mm and degrees), measured by the importer from the library's own clips: `H0`, the standing pelvis height (the unit of `hips` and `root`); `Pr`, `Cr` and `Hr`, the rest frames of the pelvis, chest and head (`[forward, right, up]` axes); the four `spine` bones from the pelvis to the neck, and `spineW`, how much of the pelvis-to-chest turn each takes (the library's own), as `neckW` is the neck's share of the chest-to-head turn; `cv`, each collarbone from its pivot to the shoulder; and the segments' lengths (`up`, `fore`, `thigh`, `shin`…).
 - `restBuild` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The proportions of rest body `R` as a build's fields (metres, size 1): the mannequin's, for the quaternius set.
@@ -1504,11 +1634,16 @@ game agent's manual.
 - `ridesOf` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing.
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
+- `RoofDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A roof over a storey (its block's `roof` key): its shape, footprint and heights.
+- `roomAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The room at (x, y, z): the room of the tile under it on `storeyBelow`'s storey (a hall's stairs are the hall's to their top), or null (outside every room, on a roof, or a level without rooms).
+- `RoomDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A room: the floor a room marker's tile reaches inside walls and doors (docs/PLAYGROUND.md §6.2).
 - `runOverWalk` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Whether the run, not the walk, keeps pace with `groundSpeed` (m/s): above √(w·r) × 1.15, or × 0.87 while the run is `running`.
 - `SAMPLE_STATES` (const from [`engine/anim/states.ts`](../engine/anim/states.ts)): Named body states, my-3d2dge's `CHAR_STATES` in metres (moving along +Z); the wind-up, the strike and the follow-through are a slash told as `body` (WP 6.1, as `moveAt` names it).
 - `sampleBaked` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): Samples `baked` at `t` seconds: its 23 local rotations into `rotations` (slerped between frames, as three.js's mixer does) and its pelvis into `hips` (lerped).
 - `samplePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): The 36 body points at time `t` on rest body `R`, written into `out` (a new Float32Array, as the source's, unless given; pass a Float64Array for full precision).
 - `SampleState` (interface from [`engine/anim/states.ts`](../engine/anim/states.ts)): A named body state and how long it is held, seconds: a body stepped through it shows it.
+- `ScatterRule` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How `scatterTerrain` places (see its comment).
+- `scatterTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Stateless placement (shardfall's decor): each cell holds one place with the chance `density`, jittered inside it, turned and sized, by hashes of the terrain's seed, the rule's `salt` and the cell, never a stream; so a cell's place never depends on another's, and the same rule gives the same places.
 - `Scene` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A defined scene: its spec with defaults filled, plus `id` and `kind`.
 - `SCENE_PROP_FIELDS` (const from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `sceneProp`'s fields.
 - `SceneAction` (type from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A dev action of a scene: runs between steps inside `w.run`, with plain-data `args`; recorded in replays.
@@ -1540,6 +1675,19 @@ game agent's manual.
 - `SightOptions` (interface from [`engine/world/ai.ts`](../engine/world/ai.ts)): How `canSee` looks.
 - `SimRng` (interface from [`engine/sim/world.ts`](../engine/sim/world.ts)): Sim RNG streams: `rng('ai')`, and `rng.entity(id, 'anim')` for an entity's own (dropped when it despawns).
 - `SimSettings` (interface from [`engine/core/settings.ts`](../engine/core/settings.ts)): What sim-side code reads settings through (`w.settings` in a scene): no view settings, no writes.
+- `Site` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A made site (see the file comment).
+- `SITE_FIELDS` (const from [`engine/world/site.ts`](../engine/world/site.ts)): The fields of a `site` entry (see the file comment).
+- `siteClearSight` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): Whether the straight line from `from` to `to` (m) meets nothing solid, sampled every `step` metres and at both ends.
+- `siteFloorBelow` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The height (m) of the highest surface at or under (x, y, z) on the site; null where nothing is.
+- `SiteNav` (interface from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): A site's navigation (see the file comment).
+- `SiteNavOptions` (interface from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): How `createSiteNav` builds: the climb limit (m), the steepest ground (m a metre), and the body it walks (m; the shooter's hull, `LEVEL_BODY`, by default, the largest the engine ships): its radius, the clear height a step needs (crouched, with a margin) and the height it stands (a step lower costs `CROUCH_COST` times its length, crouched).
+- `siteRescueGrid` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The site's rescue grid, `tile` metres a tile, over its terrain and its structures (see the file comment).
+- `SiteRescueGrid` (interface from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The lost-body rescue's grid (engine/physics/rescue.ts's `RescueLevel`): see the file comment.
+- `siteSolidAt` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): Whether (x, y, z) is in something solid on the site (see the file comment).
+- `SiteSpec` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): What `defineSite` takes.
+- `SiteStructure` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A structure placed: its level, in its own frame, and where it stands (see the file comment).
+- `siteStructureAt` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): Where (x, y, z) is in a structure: the first whose box holds it, its storey there and its room; null outside them.
+- `siteSurfaceBelow` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The surface tag of `siteFloorBelow`'s surface at (x, y, z): '' where nothing is.
 - `Skeleton` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A humanoid skeleton made from a build: rest offsets, bone lengths, leaf tips and sockets, in metres.
 - `SlotName` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A slot's name.
 - `SLOTS` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The stack's slots, in order, with what fills each.
@@ -1554,6 +1702,7 @@ game agent's manual.
 - `spawnActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
 - `SpawnPoint` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A spawn point: a tile's centre, on its floor.
 - `spawnProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Stands a prop in the scene, `spawnProp(w, { prop: 'prop:<id>', at: [x, y, z], yaw })`: its base at `at` (m), turned `yaw` about +Y (rad).
+- `SpawnPropOptions` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): How `spawnProp` stands a prop beyond its placement (WP 13.16): a spawn inside a step or a setup joins the world at its end, so a door's or a switch's own component comes with it here.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `SQUASH` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The squash spring (my-3d2dge's numbers): its pull and damping per second, and its bound either way.
@@ -1569,17 +1718,30 @@ game agent's manual.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
 - `stepReactions` (function from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): Steps reactions `state` one tick of `dt` s, in place; returns what the phase playing tells the body.
 - `stopClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Fades out the clip on top of actor `id` over `fade` seconds (its `out`), with what it covers.
+- `storeyAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The storey a height is in (an index into `level.storeys`): the highest whose floor slab's underside is at or below `y`; 0 below them all, and in a format-1 level, which is one storey.
+- `storeyBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The storey of the surface `floorBelow` finds at (x, y, z), an index into `level.storeys` (0 in a format-1 level): a flight's tiles are the storey they rise from, all the way to their top, where `storeyAt` already reads the next; −1 on a roof, on the ground slab, or over nothing.
+- `StoreyDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One storey of a format-2 level (WP 13.13): its heights and its own grids and descriptors, heights absolute.
+- `storeyView` (function from [`engine/world/level/storeys.ts`](../engine/world/level/storeys.ts)): Storey `index` of `level` read as a format-1 level: its grids, ramps, daises, meshes, colliders, spawns and lights, with `base`, `fullTop` and its roof for the height queries (heights.ts), so navigation, drawing and ladders read any storey as they read a level.
 - `STRIKE` (const from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Strike-time sampling (shardfall's `clips.rs:478-550`): the rate, and the blade's reach in standing hip heights.
 - `StrikeAnimator` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of an animator: its body, which the sim poses only with `preciseHits`.
+- `strikeBody` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): A bolt's or a shot's strike on `body` from `from`: the prop or door it is, struck; a dynamic one knocked.
 - `StrikeBody` (type from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): What `strikeSegment` reads of a body.
+- `strikeDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A strike on `id` from `from`: the first bursts it open, the second breaks it; a shot or a blast breaks it at once.
+- `strikeEntity` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Strikes `target` from `from` (m), its striker facing it or not (`faced`), with `force`: the entry of a component it holds answers (a door's rule: engine/sim/doors.ts; a breakable's damage: breakables.ts), else a dynamic prop is knocked (its `hit` hook).
+- `StrikeForce` (type from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): What strikes: a melee hit, a shot or a blast (a door bursts open at a hit, breaks at a shot or a blast).
 - `strikePart` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): The part of a body that strikes in `move`: the right foot, the left fist, a held weapon's blade, or the right fist.
 - `strikeSegment` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Where `part` spans on a body's pose now, world metres, into `base` and `tip`: a sword from near the grip to its tip (another weapon strikes as the right fist), a forearm from the elbow to the wrist, the right shin from the knee to the sole.
 - `strikeTime` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): When `clip`'s strike lands, seconds from its start, decoded on rest body `R` (see the file comment).
+- `StructureSpec` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A structure as a site's spec places it.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
+- `surfaceBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag of `floorBelow`'s surface at (x, y, z): '' on the ground slab or where nothing is.
 - `Sweep` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
 - `sweepHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets the swept quad touches (`sweepTouches`), by id, ascending.
 - `sweepTouches` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
 - `swingTwist` (function from [`engine/core/math.ts`](../engine/core/math.ts)): Splits the rotation `q` into a twist about the unit vector `axis` and a swing about an axis perpendicular to it, with `q = swing · twist` (twist applied first): a joint's roll and its bend.
+- `SwitchComponent` (interface from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): The component `switch`.
+- `switchGroup` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Turns light group `group` on or off, and its switches with it.
+- `SwitchSpec` (interface from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): What `addSwitch` takes (see the file comment).
 - `SystemFn` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A system: called once per step with the world and the step's intents.
 - `TAIL` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): A tail from the back of the pelvis, holding its curve back and up (chosen here: the source had none).
 - `takeToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Asks for a token for `id` at sim time `time` (s): true when it holds one now.
@@ -1589,6 +1751,23 @@ game agent's manual.
 - `telegraphGap` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): How far a body at `point` (its feet, metres) with `radius` stands outside telegraph `t` placed at `place`, minus the radius: between its heights, the signed distance to its shape on the floor (below 0 inside); above or below them, the distance to the extruded shape.
 - `TelegraphPlace` (interface from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): A telegraph where it stands: plain data, as a component or a frame's list holds it.
 - `TelegraphSpec` (type from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): What `defineTelegraph` takes: any field.
+- `Terrain` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A made terrain: its grid, its heights and what the queries and the drawing read (see the file comment).
+- `TERRAIN_FIELDS` (const from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The fields of a `terrain` entry (see the file comment).
+- `TerrainEntry` (type from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A `terrain` entry: its spec.
+- `TerrainFlat` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A footprint a terrain flattens.
+- `terrainGrade` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How steep the ground is at (x, z): metres risen a metre along its slope (1 is 45°); null outside the grid.
+- `terrainGradient` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How the ground rises at (x, z), as metres a metre east and south: its triangle's; null outside the grid.
+- `terrainHeight` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The ground's height (m) at (x, z): the collider's surface (see the file comment); null outside the grid.
+- `TerrainHill` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A dome added to a terrain.
+- `terrainNavGrid` (function from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): A navigation grid over `terrain`'s cells (see the file comment).
+- `TerrainNavOptions` (interface from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): What `terrainNavGrid` takes: a grid's options, and the steepest ground it walks (m a metre; 1 by default).
+- `terrainNavSurface` (function from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): The walkable surface of `terrain`'s cells (see the file comment).
+- `terrainNormal` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The ground's upward unit normal at (x, z): its triangle's; null outside the grid.
+- `TerrainPlace` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A place `scatterTerrain` picks: on the ground, a turn about +Y (rad) and a size factor.
+- `terrainProblems` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The problems with a terrain spec's shape (beyond its fields' types); none when it makes a terrain.
+- `TerrainSpec` (type from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): What `defineTerrain` and `makeTerrain` take: each field of `TERRAIN_FIELDS` (`size` required).
+- `terrainSurface` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The surface tag underfoot at (x, z): `steepSurface` where it is steep, else `surface`; '' outside the grid.
+- `THROW_SPEED` (const from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): How fast a carried prop leaves when it is thrown (m/s).
 - `tileAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The tile under (x, z) metres, or null outside the map.
 - `TileRect` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A rectangle of tiles, inclusive: `[col0, row0, col1, row1]`.
 - `Timeline` (class from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): Phases played in order, one fixed step at a time.
@@ -1597,7 +1776,9 @@ game agent's manual.
 - `TimelinePhase` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): One phase of a timeline.
 - `TimelineState` (type from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A timeline's state: the phase index (−1 when idle) and the seconds into that phase.
 - `tipPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
+- `toLocal` (function from [`engine/world/site.ts`](../engine/world/site.ts)): A structure's own (x, z) from world (wx, wz): `toWorld` undone.
 - `topHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The top (m) of whatever stands at (x, z): a wall's top over its tiles, a brazier's within its radius, the floor elsewhere; 0 outside the map.
+- `toWorld` (function from [`engine/world/site.ts`](../engine/world/site.ts)): World (x, z) from a structure's own (lx, lz): turned `turn` quarter turns, then moved to `at`.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
 - `TrailName` (type from [`engine/anim/states.ts`](../engine/anim/states.ts)): A part that leaves a trail.
 - `TRAILS` (const from [`engine/anim/states.ts`](../engine/anim/states.ts)): The parts that leave a trail, each with the span its ribbon covers.
@@ -1613,6 +1794,9 @@ game agent's manual.
 - `updateCrowd` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): The crowd's step, after the physics step (the phase `readback`), over every agent in id order: reads each body back (feet, velocity, `grounded`); brakes grounded corpses and removes those `corpseTime` old, then the oldest beyond `corpseCap`; removes `leaving` agents; adds the bodies of up to `spawnLimit` queued agents.
 - `updateInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Records one step's intents in `buffer` (changed in place, and returned): call it once per step, with the world's `tick`, before reading `released`, `buffered` or `repeated`.
 - `updateTrigger` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Brings `trigger.inside` up to date with its sensor and returns the bodies that entered and left, in id order.
+- `UsableSpec` (interface from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): How an entity holding a component is used: what the HUD says (null: not now) and what using it does.
+- `USE_REACH` (const from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): How far from the eye a thing is in reach (m).
+- `useDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Opens `id` away from `from` (m), or closes it; a locked door stays.
 - `validateClip` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Warns about poses that parse but play badly (see the file comment), in key order.
 - `validateLevel` (function from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
 - `Vec3Like` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A vector: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`.
@@ -2674,6 +2858,7 @@ For the agents who maintain the engine.
 
 ### [`engine/app/view.ts`](../engine/app/view.ts)
 
+- `ADVANCE_FRAME` (const): A frame `advance` moves the camera on by, real seconds: a 60 Hz page's.
 - `CameraInfo` (interface): What `camera.get()` and `camera.set(code)` return: the camera as a code, in words, and its pose.
 - `createRunView` (function): Builds the view of a run (see the file comment).
 - `DEFAULT_CAMERA` (const): The camera code a view starts with when none is given.
@@ -2866,6 +3051,7 @@ For the agents who maintain the engine.
 - `impulseResponse` (function): The room's stereo impulse response at `rate` samples per second, or null when it has no reverb.
 - `REVERB_CODES` (const): The codes the rooms raise, with their fixes.
 - `RoomName` (type): A preset's name.
+- `roomReverb` (function): The preset for a level's room (WP 13.15: rooms as data for sound): by its volume, its `area` (m², the room descriptor's) times `height` (m, its storey's clear height): `small` under 30 m³, `room` under 200 m³, `hall` past.
 - `ROOMS` (const): The room presets, from no reverb to a cave.
 - `roomSpec` (function): The numbers of `room`, a preset's name or a spec; throws `AUDIO_BAD_ROOM` for an unknown name or a bad value.
 - `RoomSpec` (interface): A room's reverb, as numbers.
@@ -2929,6 +3115,13 @@ For the agents who maintain the engine.
 - `RegistrationInfo` (interface): One registration as a snapshot lists it: its event type, whether it runs once, and its scope's label.
 - `Scope` (interface): Listeners that leave together: `dispose()` removes every one added through this scope or its children.
 - `TraceRecord` (interface): One traced emit.
+
+### [`engine/core/gallery.ts`](../engine/core/gallery.ts)
+
+- `Gallery` (interface): How the gallery shows an entry: its camera, how long it plays (s) and the states it is shown in.
+- `GALLERY_CAMERAS` (const): The camera words a `gallery` field takes besides a camera code.
+- `galleryField` (function): The `gallery` field of a kind's schema, with the kind's own defaults (see the file comment).
+- `galleryKinds` (function): The kinds of `registry` whose schema has the field `gallery`, sorted.
 
 ### [`engine/core/hash.ts`](../engine/core/hash.ts)
 
@@ -3108,15 +3301,55 @@ For the agents who maintain the engine.
 - `BotOptions` (type): What `new Bot` takes: each field of `BOT_FIELDS`, optional.
 - `BotPlan` (interface): What a run plays (see the file comment), with the bot's options.
 - `BotReport` (interface): What a run did.
-- `BotRow` (interface): One row of the bot's report: a scene, its seeds' runs and their sums.
 - `BotRun` (interface): What the bot plays: a world to read and a recorded step.
 - `BotSample` (interface): One sample of a run's trace.
 - `BotStatus` (type): Where a bot stands with its goal.
 - `BotWorld` (type): The world as the bot reads it: the session's, or the inspector's read-only view of it.
+- `runBot` (function): Plays `run` with the bot over `level` or a site (see the file comment) and reports what happened.
+
+### [`engine/dev/botNav.ts`](../engine/dev/botNav.ts)
+
+- `BotNav` (interface): What the bot navigates by (see the file comment).
+- `BotPoint` (type): A point the bot reads: on the ground (x, z), its height where a site has storeys, and what the body does there (the shooter model's mode, `ladder`, `air`…, and stance, `stand` or `crouch`).
+- `BotWay` (interface): The way to one goal: the walking distance from a point (Infinity where none leads), the unit way to walk, and whether to crouch there (under a low ceiling, or for one a little way along it: a site's attic, a crawlspace's door; never on a level's grid).
+- `closedDoorAhead` (function): Whether `actor`'s interactor (engine/sim/interact.ts) is on a closed door it can open: one shut, not locked, not broken and on no switch (engine/sim/doors.ts).
+- `levelBotNav` (function): A level's grid as the bot reads it, a step climbing at most `climb` metres.
+- `propObstacles` (function): What the bot walks round on a site (WP 13.18): every prop's body as the world holds it now, but a hinged door's: shut, nothing (it stands in its doorway, which the bot opens: engine/dev/bot.ts), open, its leaf where it swings to.
+- `siteBotNav` (function): A site's graph as the bot reads it (see the file comment), a step climbing at most `climb` metres, `blocked` closed.
+- `tourStream` (const): The bot's own stream for a run's tour: `derive(seed, 'bot')`, never the world's.
+
+### [`engine/dev/botSweep.ts`](../engine/dev/botSweep.ts)
+
+- `BotRow` (interface): One row of the bot's report: a scene, its seeds' runs and their sums.
 - `parseSeeds` (function): Seeds as a sweep takes them: `1-20`, `5` (1 to 5), `3,7,9`, a count or a list; 1 to 500 whole numbers from 0.
-- `runBot` (function): Plays `run` with the bot over `level` (see the file comment) and reports what happened.
 - `sweepBot` (function): Plays `plan` from a fresh session of `scene` per seed (see the file comment): one row for the scene.
 - `SweepOptions` (interface): How a sweep starts each run: the scene's settings over its own, its registry and its level.
+
+### [`engine/dev/eye.ts`](../engine/dev/eye.ts)
+
+- `asciiOf` (function): `view` as text, a character a cell, and its legend (see the file comment).
+- `EYE_SIZE` (const): The raster's size by default (cells across and down): the page's 16:9 at a tenth of 960 × 540.
+- `EyeCamera` (interface): What the eye reads of a three.js camera as placed: its matrices and its depth's convention.
+- `eyeJson` (function): `view` as plain data (see `EyeJson`).
+- `EyeJson` (interface): The eye's answer as plain data, for `__engine.eye` and `x eye`: the raster as text, its legend and what it sees.
+- `EyeOptions` (interface): How the eye looks: the raster's cells across and down (`EYE_SIZE`), a body to look past, and what the view draws.
+- `EyeOwner` (interface): Who holds a body: its entity, a name for the legend, and whether it is the player or an actor.
+- `EyeThing` (interface): One thing the eye sees: its key (`entity:7`, `level`), its kind, its entity, and the cells it covers.
+- `EyeView` (interface): What a camera sees (see the file comment).
+- `FLOOR_UP` (const): How far up a surface's normal points for the picture to draw it as floor (0.7: the walkable slope's, 45.57°).
+- `look` (function): What `camera`, as placed, sees of the bodies `queries` reach, named by `owners` (see the file comment).
+- `ownersOf` (function): Each body held by an entity's component (its `body`, a whole number), by body id; the first holder wins.
+- `seen` (function): Whether `view` sees `entity` in at least one cell.
+- `WEBGPU_COORDINATES` (const): three.js's `WebGPUCoordinateSystem`, the view's cameras' (engine/gfx/cameras/place.ts): depth from 0 to 1.
+
+### [`engine/dev/eyeFaces.ts`](../engine/dev/eyeFaces.ts)
+
+- `drawnFaces` (function): Indexes what `root` draws (see the file comment).
+- `EyeAttribute` (interface): What `drawnFaces` reads of a three.js buffer attribute: its count and each item's components.
+- `EyeFaces` (interface): The drawn faces (see the file comment).
+- `EyeObject` (interface): What `drawnFaces` reads of a three.js object: `Object3D`, `Mesh` and `InstancedMesh`, as far as it needs.
+- `FACE_CELL` (const): The grid's cube, m: a triangle is listed in every cube its box, `FACE_NEAR` wider, overlaps.
+- `FACE_NEAR` (const): How far from a drawn face a struck point may lie and be on it, m: a collider and its mesh meet within it.
 
 ### [`engine/dev/feel/anim.ts`](../engine/dev/feel/anim.ts)
 
@@ -3178,6 +3411,41 @@ For the agents who maintain the engine.
 - `MeasureResult` (interface): One measure's verdict.
 - `RUN_CODES` (const): The codes this module raises, with their fixes.
 - `runCourse` (function): Plays `course` in a session of its own and judges its measures (see the file comment).
+
+### [`engine/dev/gallery.ts`](../engine/dev/gallery.ts)
+
+- `burstLife` (function): How long an emitter's burst plays in the gallery (s): while every particle of its longest-lived part still lives, its own (with a count or a rate) and each layer's (its `set.life`, else its emitter's), the shortest life of each.
+- `fitCamera` (function): The camera code of a frame's view: a code as written, or a fixed camera (engine/gfx/cameras/fixed.ts) standing at `azimuth` round `bounds` (the subject, as the stage draws it; azimuth from +Z toward +X, as an orbit's), 25° above its middle and looking at it, far enough for its bounding sphere to fill the lens's height with a margin.
+- `GALLERY_CODES` (const): The codes this module raises, with their fixes.
+- `GALLERY_ELEVATION` (const): How far above the subject's horizon a fitted view stands (°).
+- `GALLERY_FOV` (const): A fitted view's lens, degrees: the orbit camera's (engine/gfx/cameras/orbit.ts).
+- `GALLERY_STAGING` (const): The kinds the gallery stages (engine/dev/galleryScene.ts), with how it films each.
+- `GalleryFrame` (interface): One frame of an entry: what the scene stages for it, how long it holds and plays, and where the camera stands.
+- `galleryFrames` (function): The frames of entry `id` of `kind` (see the file comment); the kind must be one the gallery films.
+- `galleryKindsOf` (function): The kinds the gallery films: those whose schema has the `gallery` field and that it stages.
+- `galleryProblem` (function): Whether `kind` and `id` name an entry the gallery films; else the warning's values (see `DEV_GALLERY_UNKNOWN`).
+- `galleryRoute` (function): Reads a deep link (see the file comment): null when `hash` is no gallery link, else the entry it shows, after warning about a wrong kind or id (`DEV_GALLERY_UNKNOWN`), which shows the first instead.
+- `GalleryRoute` (interface): What a deep link names: the kind and the entry to show.
+- `galleryStart` (function): The settings a page opened on `route` starts with: what the scene stages first, its first frame's view settings.
+
+### [`engine/dev/galleryScene.ts`](../engine/dev/galleryScene.ts)
+
+- `FIGURE_STATES` (const): Every name `figureState` knows: walk and run, the sample states, the poses and the stances.
+- `figureState` (function): A figure's state by name: what it is told and how far forward it walks; null for a name it does not know.
+- `GALLERY_AT` (const): Where the subject stands: the middle of an empty stage's ground (engine/gfx/stage.ts: 16 × 16 m from the origin).
+- `GALLERY_SCENE` (const): The gallery scene's id.
+- `galleryScene` (function): Declares the gallery's settings, its component and its scene on `registry`, unless it has them.
+
+### [`engine/dev/galleryShoot.ts`](../engine/dev/galleryShoot.ts)
+
+- `BURST_REACH` (const): The most an emitter's frame takes in, across (m): a burst's 3; an effect spread over an area wider than 1 m (rain, snow, fireflies), a 1.2 m patch of it, so its drops are drops and not specks.
+- `createGalleryDriver` (function): The driver of a page opened on `route` (see the file comment), playing in `run`.
+- `GALLERY_SHOOT_CODES` (const): The codes this module raises, with their fixes.
+- `GalleryDriver` (interface): A deep link's live gallery: called once per drawn frame (see the file comment).
+- `GalleryRun` (interface): The run a driver plays in: its view, and the recorded session it stages through (engine/app/headless.ts).
+- `GalleryShot` (interface): One filmed frame: its label, the tick, the camera, the shot's size, its pixels (base64) and what the ID pass saw.
+- `GalleryView` (interface): The view a gallery films through: the run's stage and its camera (engine/app/view.ts).
+- `subjectBounds` (function): The bounds of what the stage draws for the subject: its props, puppets and stand-ins (the ground left out).
 
 ### [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)
 
@@ -3700,6 +3968,7 @@ For the agents who maintain the engine.
 - `spriteMaterial` (function): The sprites' material: see the file comment.
 - `Sprites` (interface): The sprites of a frame: see the file comment.
 - `SpritesOptions` (interface): What `createSprites` takes.
+- `STREAK` (const): How far a streak reaches per m/s of its speed across the view, seconds: its length is `size + speed × STREAK`.
 
 ### [`engine/gfx/geometry/box.ts`](../engine/gfx/geometry/box.ts)
 
@@ -3836,6 +4105,12 @@ For the agents who maintain the engine.
 - `tread` (function): Writes the level rectangle `[x0, z0, x1, z1]` at height `y`, facing up.
 - `upright` (function): Writes the upright quad over the ground edge `a` → `b` from height `y0` to `y1`.
 
+### [`engine/gfx/level/flights.ts`](../engine/gfx/level/flights.ts)
+
+- `flightGeometry` (function): The flights of `ramps`, standing on their storey's floor at `ground` (m), tiles `tile` metres wide.
+- `RISER` (const): A house stair's riser (m): about 7 inches.
+- `risersOf` (function): How many steps a flight climbs: its rise in `RISER`s, at least one.
+
 ### [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)
 
 - `createLevelMeshes` (function): Draws `level`'s mesh descriptors (see the file comment).
@@ -3845,23 +4120,46 @@ For the agents who maintain the engine.
 - `LevelMeshPart` (interface): One level mesh: its descriptor's recipe and glyphs, the mesh, and for an instanced shape one cell per instance.
 - `meshDrawCalls` (function): The draw calls `mesh` costs a frame: its groups (one with a single material), once in colour and once per shadow map when it casts; none while it is hidden or an instanced mesh with no instances.
 
+### [`engine/gfx/level/openings.ts`](../engine/gfx/level/openings.ts)
+
+- `boxBetween` (function): A box from `[x0, y0, z0]` to `[x1, y1, z1]` (m), UVs in metres.
+- `FRAME` (const): A frame's width round an opening (m).
+- `framesGeometry` (function): The frame round each of `openings` (see the file comment); null when there are none.
+- `headsGeometry` (function): The wall over `storey`'s openings and low ceilings (see the file comment), `roof` its pitched roof when it has one; null when it has none.
+- `POST_GAP` (const): How far apart a railing's posts stand, at most (m).
+- `PROUD` (const): How far a frame stands out of the wall's faces (m), so its faces never share the wall's.
+- `railingGeometry` (function): A railing along each run of `pieces` (tiles `tile` m wide), from `bottom` to `top` (m); null when there are none.
+
 ### [`engine/gfx/level/ramp.ts`](../engine/gfx/level/ramp.ts)
 
 - `rampGeometry` (function): The wedges of `ramps`, standing on the ground at `ground` (m), tiles `tile` metres wide (see the file comment).
 
 ### [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)
 
-- `CutWhen` (type): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars).
+- `CutWhen` (type): When the cutaway cuts a piece: `'facing'`, when the camera stands on the side the piece faces out to (walls); `'blocking'`, when it stands between the camera and what the camera follows (pillars); `'either'`, both (a house's walls: a wall with rooms on both sides faces no one way out, so one between the camera and the player is cut too).
 - `FALLBACK_RECIPE` (const): What a recipe nobody defined draws: grey blocks (`material:default`), casting and receiving shadows.
 - `LEVEL_RECIPES` (const): The engine's recipes, by the name a glyph's `mesh` gives.
 - `LevelCut` (interface): How the cutaway cuts a recipe's pieces: to a twin `height` metres tall, `when` the view needs it.
 - `LevelRecipe` (interface): A level mesh recipe: its shape, materials, shadows and cut.
 - `LevelShape` (type): How a recipe draws its pieces, with what each material slot draws: - `surface`: one welded surface over the pieces at their bottom height, facing up, UVs in metres along X and -Z (one draw call): the floor.
 
+### [`engine/gfx/level/roofs.ts`](../engine/gfx/level/roofs.ts)
+
+- `roofGeometry` (function): The roof's slab (see the file comment): tops in slot 0, undersides and edges in slot 1.
+
+### [`engine/gfx/level/runs.ts`](../engine/gfx/level/runs.ts)
+
+- `levelLooks` (function): The looks the level `id` of `registry` gives its meshes; none for an id it lacks.
+- `LevelLooks` (interface): A level's looks, its entry's presentation fields (engine/world/level/level.ts): swaps, rooms' floors, recipes.
+- `runMeshes` (function): The level's meshes, each run named by its tiles (see the file comment).
+- `RunMeshesOptions` (interface): How `runMeshes` draws: the materials, the level's looks (`LevelLooks`) and where advice goes.
+- `splitRuns` (function): The level with each block descriptor split into one descriptor per run (merged rectangle), surfaces whole, and for each descriptor the run it draws (null for one that was not split).
+
 ### [`engine/gfx/level/shapes.ts`](../engine/gfx/level/shapes.ts)
 
 - `buildShape` (function): Builds `descriptor`'s mesh in `recipe`'s shape, with `materials` (the recipe's, compiled).
 - `BuiltShape` (interface): One descriptor's mesh, its cells (one per instance; none for a single mesh) and its cut.
+- `drawnWith` (function): Each slot's material: `materials` one per slot, a slot past the last taking the last; the first for the whole when there is one, or the geometry has no slots (a surface).
 - `instanced` (function): One instance per cell, standing at the cell's centre.
 - `instanceSlots` (function): The slots of an instanced level mesh of `count` pieces: at least `PAGE_SLOTS`, so it shares its shader.
 - `PartCut` (interface): How the cutaway cuts a part: its recipe's cut, and the geometry of its twin (a new one each call).
@@ -3871,17 +4169,28 @@ For the agents who maintain the engine.
 
 - `slabGeometry` (function): A raised block over `pieces` from `bottom` to `top` (m), tiles `tile` metres wide (see the file comment).
 
+### [`engine/gfx/level/slabs.ts`](../engine/gfx/level/slabs.ts)
+
+- `ceilingGeometry` (function): The underside and void edges of `storey`'s slab (see the file comment), or null when there is nothing to draw.
+
 ### [`engine/gfx/level/stairs.ts`](../engine/gfx/level/stairs.ts)
 
 - `frameOf` (function): A ramp's frame on the ground: the point `s` metres up its run and `w` metres across it (from its left side, seen climbing), so the flight is written once for the four ways a ramp can rise (engine/gfx/level/ramp.ts's wedge too).
 - `runOf` (function): The ramp's run (m), along the way it rises.
-- `stairsGeometry` (function): The flights of `ramps`, standing on the ground at `ground` (m), tiles `tile` metres wide (see the file comment).
+- `stairsGeometry` (function): The flights of `ramps`, standing on the ground at `ground` (m), tiles `tile` metres wide (see the file comment), each in `steps(ramp, tile)` steps (`stepsOf` by default; a storey's flights rise by the riser: engine/gfx/level/flights.ts).
 - `STEP_RUN` (const): The run of one step (m): two steps per metre, as the prototype's two per tile.
+- `StepCount` (type): How many steps a ramp's flight is drawn in.
 - `stepsOf` (function): How many steps a ramp's flight has: its run in `STEP_RUN`s, at least one.
 
 ### [`engine/gfx/level/surface.ts`](../engine/gfx/level/surface.ts)
 
 - `surfaceGeometry` (function): A flat surface at height `y` over every tile of `pieces`, tiles `tile` metres wide (see the file comment).
+
+### [`engine/gfx/level/walls.ts`](../engine/gfx/level/walls.ts)
+
+- `axesOf` (function): A face's UV axes, `u × v` its `normal`: upright, u along it and v up; level, u along X and v along -Z (or +Z facing down); sloped, u level along it and v across it, in its plane.
+- `underRoofGeometry` (function): The rectangles `rects` (m, `[x0, z0, x1, z1]`) from `bottom` up to `roof`'s underside, or null when none clears it.
+- `writeHull` (function): Writes the convex hull of `points` into `writer`, each face with UVs in metres (see the file comment).
 
 ### [`engine/gfx/lights.ts`](../engine/gfx/lights.ts)
 
@@ -3939,6 +4248,10 @@ For the agents who maintain the engine.
 - `MaterialSpec` (type): What `defineMaterial` takes: any of the fields, each with its default.
 - `textureRefOf` (function): A material's `map` filled (null for none).
 
+### [`engine/gfx/materials/nodeCopy.ts`](../engine/gfx/materials/nodeCopy.ts)
+
+- `nodeCopy` (function): A node material drawn as `material` is, with an id of its own (null when three.js has none for it).
+
 ### [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)
 
 - `createOutline` (function): Makes an outline (see the file comment).
@@ -3962,6 +4275,7 @@ For the agents who maintain the engine.
 - `STYLE_WARMUP_IDS` (const): The warm-up entries' ids: one per style, then the one that puts every material back; after every other entry.
 - `StyleSet` (interface): A page's materials in every style (see the file comment).
 - `StyleSetOptions` (interface): How `createStyleSet` makes a set.
+- `StyleWarmup` (interface): A style set's part in a warm-up (`attach`): the styles it warms, more added later, all undone by `dispose()`.
 
 ### [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)
 
@@ -4116,19 +4430,23 @@ For the agents who maintain the engine.
 - `SNAP_FALLBACK_DEPTH` (const): How far ahead a perspective camera snaps when its line of sight never meets the ground, in metres.
 - `snapToBlocks` (function): Moves `camera` to the nearest whole block in its screen plane (see the file comment); returns how to undo it.
 
+### [`engine/gfx/propLooks.ts`](../engine/gfx/propLooks.ts)
+
+- `CRATE_TEXTURE` (const): The crate's face generator: a dark edge, a frame with a nail in each corner, planks across and a brace.
+- `PROP_MATERIALS` (const): The props' materials, by id: `material:crate` (texture:crate, my-3d2dge's `crateTex`, a 0.75 m face per tile), `material:barrelStaves` (texture:staves wrapped exactly once round the twelve-sided barrel, a stave per side), `material:barrelLid`, `material:flame` (unlit white, so tints show), the library's (WP 10.3) `material:iron` and `material:cloth`, and the fittings' (WP 13.16) `material:paint`; their pane is the built-in `material:glass`.
+- `propLooks` (function): Defines the props' texture and materials on `registry`, unless it has them.
+
 ### [`engine/gfx/props.ts`](../engine/gfx/props.ts)
 
 - `buildPropPart` (function): Builds `part`'s geometry (the caller's), with its tops and bottoms a group of their own when it has a `top`.
-- `CRATE_TEXTURE` (const): The crate's face generator: see the file comment.
 - `createPropMeshes` (function): Makes the prop meshes; see the file comment.
 - `FLICKER` (const): A flame's flicker at time `t` (s): about 0.77 to 1.03, the 2D hall's (my-3d2dge's `FLICKER`).
+- `OFF` (const): How bright a prop's `lit` parts are while it is off: a dark bulb, still there.
 - `partMatrix` (function): Where `part` stands in its prop's frame (the base at the origin).
-- `PROP_MATERIALS` (const): The props' materials, by id: `material:crate` (texture:crate, my-3d2dge's `crateTex`, a 0.75 m face per tile), `material:barrelStaves` (texture:staves wrapped exactly once round the twelve-sided barrel, a stave per side), `material:barrelLid` and `material:flame` (unlit white, so tints show).
 - `PropLight` (interface): A prop's light this frame, in world space, as three.js's `PointLight` takes it.
-- `propLooks` (function): Defines the props' texture and materials on `registry`, unless it has them.
 - `PropMeshes` (interface): The props of a scene, drawn: see the file comment.
 - `PropMeshesOptions` (interface): What `createPropMeshes` takes.
-- `PropMeshPose` (interface): A prop's pose: its centre (its body's origin) and its turn.
+- `PropMeshPose` (interface): A prop's pose: its centre (its body's origin) and its turn, and whether it is on (a switched lamp; true).
 - `tongueMatrices` (function): Tongue `k`'s outer flame and core in its part's frame at `t` (s): the 2D hall's dance, in metres.
 
 ### [`engine/gfx/puppets/actorLayers.ts`](../engine/gfx/puppets/actorLayers.ts)
@@ -4351,7 +4669,6 @@ For the agents who maintain the engine.
 - `createStage` (function): Builds a stage (see the file comment).
 - `placeableKinds` (function): The component kinds whose entities stand somewhere: they declare `x` and `z` as numbers in metres.
 - `placeOf` (function): Where `entity` stands, from the first of `kinds` it holds; undefined when it holds none.
-- `splitRuns` (function): The level with each block descriptor split into one descriptor per run (merged rectangle), surfaces whole, and for each descriptor the run it draws (null for one that was not split).
 - `Stage` (interface): A running scene's presentation graph (see the file comment).
 - `StageOptions` (interface): What a stage is made of: the level (none for an empty stage), where materials come from, and its registry.
 - `StandInPlace` (interface): Where a stand-in stands and how it looks, read from its entity's placing component.
@@ -4370,6 +4687,12 @@ For the agents who maintain the engine.
 - `StageFx` (interface): The stage's effects (see the file comment).
 - `StageFxOptions` (interface): What `createStageFx` takes.
 
+### [`engine/gfx/stageGround.ts`](../engine/gfx/stageGround.ts)
+
+- `GROUND_MARGIN` (const): How far the ground reaches beyond the level on every side, m: past what any view frames at zoom 0.5.
+- `groundMesh` (function): The stage's ground round an area of `size` (m, along x and z: see the file comment).
+- `GroundOptions` (interface): Where the ground lies: its area's north-west corner (m), the floor it stands under (m), and a terrain's hole.
+
 ### [`engine/gfx/stageProps.ts`](../engine/gfx/stageProps.ts)
 
 - `createStageProps` (function): Draws the scene's props (see the file comment).
@@ -4384,11 +4707,45 @@ For the agents who maintain the engine.
 - `StageRides` (interface): The rides on a stage (see the file comment).
 - `StageRidesOptions` (interface): What `createStageRides` takes.
 
+### [`engine/gfx/stageSite.ts`](../engine/gfx/stageSite.ts)
+
+- `createStageSite` (function): Draws `site` (see the file comment).
+- `StageSite` (interface): A site as the stage draws it (see the file comment).
+- `StageStructure` (interface): One structure as drawn: its group in the world, its meshes in its own frame, its cutaways.
+
 ### [`engine/gfx/stageSky.ts`](../engine/gfx/stageSky.ts)
 
 - `createStageSky` (function): Makes the stage's lights on `scene` (see the file comment); the stage's own show until a sky is asked for.
 - `StageSky` (interface): The stage's lights (see the file comment).
 - `StageSkyOptions` (interface): What the stage's lights are made from.
+
+### [`engine/gfx/storeyCut.ts`](../engine/gfx/storeyCut.ts)
+
+- `aboveStorey` (function): Whether a thing at (x, y, z) of `level`'s frame stands on a storey above `storey` (≥ 0): the cut hides it too.
+- `createStoreyCut` (function): The cutaway by storey over `meshes` (see the file comment).
+- `cutPlace` (function): Where feet at (x, y, z) of `level`'s own frame stand for the cut: the storey (−1 outside or on a roof), indoors, and `low`, under a low ceiling of that storey.
+- `planStoreys` (function): Which of `pieces` show with the player on `storey` (−1 outside or on a roof), `indoors` or not, under a `low` ceiling or not (see the file comment).
+- `StoreyCut` (interface): A level's cutaway by storey (see the file comment).
+- `StoreyPiece` (interface): What the plan reads of a mesh: its storey (none in a level of one storey), whether it is a roof, or its heads.
+
+### [`engine/gfx/terrain.ts`](../engine/gfx/terrain.ts)
+
+- `CHUNK` (const): A chunk's side, in cells, at most.
+- `chunkGeometry` (function): One level of a chunk: cells `c0`… and `r0`… of `terrain`, `cols` × `rows` of them, taking every `step`-th corner, positions from `middle` (m), with its skirt (see the file comment).
+- `createTerrainMeshes` (function): Draws `terrain` (see the file comment).
+- `levelDistance` (function): How far `camera` stands from a chunk whose middle is `at`, as its level of detail reads it: the distance, from a perspective camera; from an orthographic one, how far a 50° lens stands to frame its height (m).
+- `LOD_DISTANCES` (const): From how far (m) each level shows.
+- `LOD_STEPS` (const): The levels of detail: the corners each takes, every one, every second, every fourth.
+- `SKIRT` (const): How far a chunk's skirt hangs below its edge (m).
+- `TerrainMeshes` (interface): A terrain's meshes (see the file comment).
+- `TerrainMeshesOptions` (interface): What `createTerrainMeshes` needs: where materials come from.
+- `terrainNormals` (function): Every corner's smooth normal: central differences of the heights (one-sided at the edges).
+
+### [`engine/gfx/terrainSplat.ts`](../engine/gfx/terrainSplat.ts)
+
+- `BAND` (const): How far either side of the steep grade (m a metre) the steep layer blends in.
+- `createTerrainSplat` (function): Makes the splat of `terrain`, `layers` the steep and the high layers' materials (see the file comment).
+- `TerrainSplat` (interface): The terrain's splat: its materials (see the file comment).
 
 ### [`engine/gfx/textures/bake.ts`](../engine/gfx/textures/bake.ts)
 
@@ -4422,13 +4779,25 @@ For the agents who maintain the engine.
 - `TextureMaps` (interface): A bake's textures, by the material slot each fills.
 - `toDataTextures` (function): The textures of `bake` for a material's slots (see the file comment).
 
+### [`engine/gfx/textures/generators/asphalt.ts`](../engine/gfx/textures/generators/asphalt.ts)
+
+- `ASPHALT` (const): The asphalt generator's spec.
+
 ### [`engine/gfx/textures/generators/brick.ts`](../engine/gfx/textures/generators/brick.ts)
 
 - `BRICK` (const): The brick generator's spec.
 
+### [`engine/gfx/textures/generators/carpet.ts`](../engine/gfx/textures/generators/carpet.ts)
+
+- `CARPET` (const): The carpet generator's spec.
+
 ### [`engine/gfx/textures/generators/checker.ts`](../engine/gfx/textures/generators/checker.ts)
 
 - `CHECKER` (const): The checker generator's spec.
+
+### [`engine/gfx/textures/generators/concrete.ts`](../engine/gfx/textures/generators/concrete.ts)
+
+- `CONCRETE` (const): The concrete generator's spec.
 
 ### [`engine/gfx/textures/generators/dirt.ts`](../engine/gfx/textures/generators/dirt.ts)
 
@@ -4437,6 +4806,10 @@ For the agents who maintain the engine.
 ### [`engine/gfx/textures/generators/flagstone.ts`](../engine/gfx/textures/generators/flagstone.ts)
 
 - `FLAGSTONE` (const): The flagstone generator's spec.
+
+### [`engine/gfx/textures/generators/glass.ts`](../engine/gfx/textures/generators/glass.ts)
+
+- `GLASS` (const): The glass generator's spec.
 
 ### [`engine/gfx/textures/generators/grass.ts`](../engine/gfx/textures/generators/grass.ts)
 
@@ -4468,6 +4841,14 @@ For the agents who maintain the engine.
 - `RUNES` (const): The rune generator's spec.
 - `RuneTones` (interface): The colours of a rune circle and how brightly its lines glow (its runes and centre glow at 1).
 
+### [`engine/gfx/textures/generators/shingles.ts`](../engine/gfx/textures/generators/shingles.ts)
+
+- `SHINGLES` (const): The shingle generator's spec.
+
+### [`engine/gfx/textures/generators/siding.ts`](../engine/gfx/textures/generators/siding.ts)
+
+- `SIDING` (const): The siding generator's spec.
+
 ### [`engine/gfx/textures/generators/staves.ts`](../engine/gfx/textures/generators/staves.ts)
 
 - `STAVES` (const): The barrel-stave generator's spec.
@@ -4476,10 +4857,22 @@ For the agents who maintain the engine.
 
 - `STONE` (const): The dressed-stone generator's spec.
 
+### [`engine/gfx/textures/generators/tiles.ts`](../engine/gfx/textures/generators/tiles.ts)
+
+- `TILES` (const): The tile generator's spec.
+
+### [`engine/gfx/textures/generators/wallpaper.ts`](../engine/gfx/textures/generators/wallpaper.ts)
+
+- `WALLPAPER` (const): The wallpaper generator's spec.
+
 ### [`engine/gfx/textures/generators/water.ts`](../engine/gfx/textures/generators/water.ts)
 
 - `WATER` (const): The water generator's spec.
 - `wave` (function): A smooth wave of period 1 in [−1, 1], 1 at whole numbers: a smoothstepped triangle, close to cos 2πt.
+
+### [`engine/gfx/textures/generators/wood.ts`](../engine/gfx/textures/generators/wood.ts)
+
+- `WOOD` (const): The wood generator's spec.
 
 ### [`engine/gfx/textures/mips.ts`](../engine/gfx/textures/mips.ts)
 
@@ -4508,7 +4901,7 @@ For the agents who maintain the engine.
 - `sizeProblem` (function): Why `entry` cannot bake at `size` with `params` (a sentence), or '' when it can.
 - `TEXTURE_FIELDS` (const): The fields of a `texture` entry.
 - `TextureEntry` (type): A `texture` entry: one generator.
-- `textureKind` (function): Declares the kind `texture` on `registry`, with the engine's v1 and v2 generators, unless it has it.
+- `textureKind` (function): Declares the kind `texture` on `registry`, with the engine's v1, v2 and v3 generators, unless it has it.
 - `textureParams` (function): The parameters of `entry` with `given` set: every parameter filled; throws `CORE_BAD_SPEC` naming each problem.
 
 ### [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)
@@ -4549,6 +4942,10 @@ For the agents who maintain the engine.
 ### [`engine/gfx/textures/v2.ts`](../engine/gfx/textures/v2.ts)
 
 - `V2_TEXTURES` (const): The v2 generators, by id.
+
+### [`engine/gfx/textures/v3.ts`](../engine/gfx/textures/v3.ts)
+
+- `V3_TEXTURES` (const): The v3 generators, by id.
 
 ### [`engine/gfx/thumbnail.ts`](../engine/gfx/thumbnail.ts)
 
@@ -4861,8 +5258,6 @@ For the agents who maintain the engine.
 - `moverPose` (function): Where a mover is at `time` (s): back and forth along its offset, turning at its spin (shardfall's `amount`).
 - `PROP_MATERIAL` (const): The props' material: a hollow wooden crate's (24 kg at 0.75 m), Coulomb friction, a little bounce, and damping that lets a knocked prop slide and roll to rest.
 - `PropSpec` (interface): A prop as `addProp` takes it: a body's pose, velocities and options, and its material.
-- `RescueLevel` (interface): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
-- `rescueLost` (function): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
 - `sensorHits` (function): The dynamic and kinematic bodies a body's sensors overlapped at the last step, in id order.
 - `SensorSpec` (interface): Where a sensor goes and how it moves.
 - `Trigger` (interface): A trigger: its sensor body and the bodies inside it.
@@ -4876,6 +5271,7 @@ For the agents who maintain the engine.
 - `CAPTURE_CODES` (const): The codes this module raises, with their fixes.
 - `capturePhysics` (function): The world as a capture: Rapier's snapshot, a fresh copy, with the build that took it.
 - `handleOf` (function): The Rapier handle of a body id.
+- `liveBody` (function): The body `id` names, or null: removed, never added, or its slot reused since by a newer body.
 - `PhysicsCapture` (interface): The physics part of a capture: Rapier's snapshot, with the build and version that took it.
 - `physicsState` (function): What the hash covers: per body, in id order, its id, translation, rotation, linear and angular velocity.
 - `rapierBuild` (function): The Rapier build and version a capture records, `'simd-compat 0.21.0'`: snapshots restore only into the same.
@@ -4952,6 +5348,11 @@ For the agents who maintain the engine.
 - `GroupName` (type): A collision group's name.
 - `queryBits` (function): Rapier's interaction groups for a query that hits the groups named (all of them when none are).
 - `touches` (function): Whether colliders of groups `a` and `b` touch.
+
+### [`engine/physics/heightfield.ts`](../engine/physics/heightfield.ts)
+
+- `heightfieldDesc` (function): Rapier's collider description of `shape`, checked (see the file comment); `where` names it in errors.
+- `HeightfieldShape` (interface): A heightfield, for bodies only (see the file comment).
 
 ### [`engine/physics/hull.ts`](../engine/physics/hull.ts)
 
@@ -5136,10 +5537,20 @@ For the agents who maintain the engine.
 - `vec` (function): A vector as Rapier's `{ x, y, z }`, checked.
 - `Vec3Like` (type): A vector: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`.
 
+### [`engine/physics/rescue.ts`](../engine/physics/rescue.ts)
+
+- `RescueLevel` (interface): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
+- `rescueLost` (function): Puts every dynamic body that fell more than `depth` below its tile's floor, or left the level across the ground, on the nearest walkable tile: at its centre, its lowest point 5 cm above the floor, still, turned as it was, so it drops onto the floor.
+
 ### [`engine/physics/room.ts`](../engine/physics/room.ts)
 
 - `fitHull` (function): Gives the body the hull `motion`'s stance has: in the `air` about its middle where hull.ts says, else (and on a path) keeping the feet.
 - `roomOf` (function): The room `character`'s body `body` stands in now (see the file comment).
+
+### [`engine/physics/trimesh.ts`](../engine/physics/trimesh.ts)
+
+- `trimeshDesc` (function): Rapier's collider description of `shape`, checked (see the file comment); `where` names it in errors.
+- `TrimeshShape` (interface): A triangle mesh, for bodies only (see the file comment).
 
 ### [`engine/physics/world.ts`](../engine/physics/world.ts)
 
@@ -5175,6 +5586,12 @@ For the agents who maintain the engine.
 - `seekClip` (function): Puts the clip on top of actor `id` at `t` clip seconds (kept within 0 and its length), its fade done: a frame step is `seekClip(w, id, frame / BAKE_FPS)`.
 - `stopClip` (function): Fades out the clip on top of actor `id` over `fade` seconds (its `out`), with what it covers.
 
+### [`engine/sim/actorInput.ts`](../engine/sim/actorInput.ts)
+
+- `Controls` (interface): A player's controls (the settings `input.sprint` and `input.crouch`): a held sprint, a toggled crouch.
+- `intentsOf` (function): The intents an actor acts on this step: the step's for a player, else its AI's (with presses from `b`'s edges).
+- `motionInput` (function): The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it faces.
+
 ### [`engine/sim/actors.ts`](../engine/sim/actors.ts)
 
 - `ActorComponent` (interface): The component `actor`: an entity the character controller moves.
@@ -5183,10 +5600,19 @@ For the agents who maintain the engine.
 - `AnimatorComponent` (interface): The component `animator`: an actor's character animator as plain data, and what its game code tells its body.
 - `CONTROL_SETTING_FIELDS` (const): How a player's sprint and crouch buttons work, as a shooter's options set them (WP 13.9, docs/PLAYGROUND.md §3.3): recorded settings, since they change how the same presses move him, read by the system `actors` for player actors.
 - `defineActorKinds` (function): Declares the components `actor`, `animator`, `puppet`, `clips` (engine/sim/actorClips.ts), `oneWay`, `reactions` and `secondary` (engine/sim/reactions.ts), the setting `physics.characterGravity` and the controls' `input.sprint` and `input.crouch` on `registry`.
-- `placeActor` (function): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was.
+- `placeActor` (function): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was, or ducked with `crouch`, its hull crouched from its next step on and kept so until it has headroom, for a place no standing hull fits (a crawlspace).
 - `PuppetComponent` (interface): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
 - `removeActor` (function): Removes an actor and its body.
 - `spawnActor` (function): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
+
+### [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)
+
+- `addBreakables` (function): Adds the system `breakables` to `w` (once), for panes a scene stands itself.
+- `addLevelWindows` (function): Stands the panes of `level`'s window openings (see the file comment) and returns their entities.
+- `BREAK_SPEED` (const): How fast a prop must fly to break a pane it strikes (m/s): a throw, never a nudge.
+- `breakProp` (function): Breaks the prop `id` (see the file comment), its pieces knocked away from `from`.
+- `damageProp` (function): Takes `amount` hit points from the breakable prop `id` (none from one without health); breaks it at 0.
+- `strikeBody` (function): A bolt's or a shot's strike on `body` from `from`: the prop or door it is, struck; a dynamic one knocked.
 
 ### [`engine/sim/capture.ts`](../engine/sim/capture.ts)
 
@@ -5236,6 +5662,18 @@ For the agents who maintain the engine.
 - `findDevAction` (function): The dev action `name` on `registry`, or undefined (the kind undeclared there too).
 - `listDevActions` (function): The dev actions on `registry`, by name.
 
+### [`engine/sim/doors.ts`](../engine/sim/doors.ts)
+
+- `addDoor` (function): Hangs a door (see the file comment) and returns its entity.
+- `addLevelDoors` (function): Hangs a door in each door opening of `level` it fits (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
+- `breakDoor` (function): Breaks `id` off its hinges (see the file comment), knocked away from `from`.
+- `DOOR_SWING` (const): A door's swing open (rad): a quarter turn and a little more.
+- `DOOR_TILT` (const): An up-and-over door's turn open (rad): a quarter turn, from upright to flat under its head.
+- `DoorComponent` (interface): The component `door`.
+- `DoorSpec` (interface): What `addDoor` takes (see the file comment).
+- `strikeDoor` (function): A strike on `id` from `from`: the first bursts it open, the second breaks it; a shot or a blast breaks it at once.
+- `useDoor` (function): Opens `id` away from `from` (m), or closes it; a locked door stays.
+
 ### [`engine/sim/entities.ts`](../engine/sim/entities.ts)
 
 - `capturable` (function): The entities copied for a capture: plain data only (`SIM_NOT_DATA`) and no object in two places (`SIM_SHARED_DATA`): a capture copies each place separately, so a shared object would come back as two.
@@ -5267,9 +5705,62 @@ For the agents who maintain the engine.
 - `sweepHits` (function): The targets the swept quad touches (`sweepTouches`), by id, ascending.
 - `sweepTouches` (function): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
 
+### [`engine/sim/houseApi.ts`](../engine/sim/houseApi.ts)
+
+- `addBreakables` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Adds the system `breakables` to `w` (once), for panes a scene stands itself.
+- `addDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door (see the file comment) and returns its entity.
+- `addInteraction` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Adds the system `interact` to `w` (once): see the file comment.
+- `addLevelDoors` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door in each door opening of `level` it fits (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
+- `addLevelWindows` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Stands the panes of `level`'s window openings (see the file comment) and returns their entities.
+- `addSwitch` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Puts a switch on a wall (see the file comment) and returns its entity.
+- `BREAK_SPEED` (const from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): How fast a prop must fly to break a pane it strikes (m/s): a throw, never a nudge.
+- `breakDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Breaks `id` off its hinges (see the file comment), knocked away from `from`.
+- `breakProp` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Breaks the prop `id` (see the file comment), its pieces knocked away from `from`.
+- `CARRY_MASS` (const from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The heaviest prop a player carries (kg): a chair, a box, a crate.
+- `damageProp` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Takes `amount` hit points from the breakable prop `id` (none from one without health); breaks it at 0.
+- `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock.
+- `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
+- `DOOR_SWING` (const from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A door's swing open (rad): a quarter turn and a little more.
+- `DoorComponent` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): The component `door`.
+- `DoorSpec` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): What `addDoor` takes (see the file comment).
+- `flipSwitch` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Turns switch `id` over: its group on or off, its door open or shut.
+- `InteractorComponent` (interface from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The component `interactor`: what a player would use, its prompt, what it carries, and when it last used.
+- `PropHealthComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `propHealth` (WP 13.16): the hit points a breakable prop has left, spawned only on one with health.
+- `PropLightComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `propLight` (WP 13.16): a switchable prop's state, spawned only on one given a group or off.
+- `propOfBody` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): The entity whose prop `body` is (a `sceneProp`'s), or −1: the body-to-entity lookup uses and hits read (WP 13.16).
+- `SpawnPropOptions` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): How `spawnProp` stands a prop beyond its placement (WP 13.16): a spawn inside a step or a setup joins the world at its end, so a door's or a switch's own component comes with it here.
+- `strikeBody` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): A bolt's or a shot's strike on `body` from `from`: the prop or door it is, struck; a dynamic one knocked.
+- `strikeDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A strike on `id` from `from`: the first bursts it open, the second breaks it; a shot or a blast breaks it at once.
+- `strikeEntity` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Strikes `target` from `from` (m), its striker facing it or not (`faced`), with `force`: the entry of a component it holds answers (a door's rule: engine/sim/doors.ts; a breakable's damage: breakables.ts), else a dynamic prop is knocked (its `hit` hook).
+- `StrikeForce` (type from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): What strikes: a melee hit, a shot or a blast (a door bursts open at a hit, breaks at a shot or a blast).
+- `SwitchComponent` (interface from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): The component `switch`.
+- `switchGroup` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Turns light group `group` on or off, and its switches with it.
+- `SwitchSpec` (interface from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): What `addSwitch` takes (see the file comment).
+- `THROW_SPEED` (const from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): How fast a carried prop leaves when it is thrown (m/s).
+- `UsableSpec` (interface from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): How an entity holding a component is used: what the HUD says (null: not now) and what using it does.
+- `USE_REACH` (const from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): How far from the eye a thing is in reach (m).
+- `useDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Opens `id` away from `from` (m), or closes it; a locked door stays.
+
+### [`engine/sim/interact.ts`](../engine/sim/interact.ts)
+
+- `addInteraction` (function): Adds the system `interact` to `w` (once): see the file comment.
+- `BODILESS` (const): How near a bodiless thing (a switch on a wall) the crosshair's ray must pass to be on it (m).
+- `CARRY_MASS` (const): The heaviest prop a player carries (kg): a chair, a box, a crate.
+- `defineInteractKinds` (function): Declares the kinds `usable` and `strikable` and the component `interactor` on `registry` (once).
+- `defineStrikable` (function): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock.
+- `defineUsable` (function): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
+- `InteractorComponent` (interface): The component `interactor`: what a player would use, its prompt, what it carries, and when it last used.
+- `strikeEntity` (function): Strikes `target` from `from` (m), its striker facing it or not (`faced`), with `force`: the entry of a component it holds answers (a door's rule: engine/sim/doors.ts; a breakable's damage: breakables.ts), else a dynamic prop is knocked (its `hit` hook).
+- `StrikeForce` (type): What strikes: a melee hit, a shot or a blast (a door bursts open at a hit, breaks at a shot or a blast).
+- `THROW_SPEED` (const): How fast a carried prop leaves when it is thrown (m/s).
+- `UsableSpec` (interface): How an entity holding a component is used: what the HUD says (null: not now) and what using it does.
+- `USE_REACH` (const): How far from the eye a thing is in reach (m).
+
 ### [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)
 
-- `addLevelBodies` (function): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id.
+- `addLevelBodies` (function): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id; `place` stands it at a site's place, its map's north-west corner at `at`, turned `turn` quarter turns about +Y.
+- `addSiteBodies` (function): Adds a site's bodies (its terrain, cut, then each structure's) and returns their ids in that order.
+- `addTerrainBody` (function): Adds a terrain's body (one fixed body: its heightfield, or with `cut` cells, one triangle mesh of the rest) and returns the body's id.
 - `LEVEL_FRICTION` (const): The level's friction: the prototype's hall.
 
 ### [`engine/sim/movementApi.ts`](../engine/sim/movementApi.ts)
@@ -5282,7 +5773,7 @@ For the agents who maintain the engine.
 - `getMovement` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): The movement profile `id`.
 - `LadderSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A ladder, parsed: every field of `LADDER_FIELDS`, its defaults filled.
 - `LauncherSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A jump pad or a trampoline, parsed: every field of `LAUNCHER_FIELDS`, its defaults filled.
-- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order.
+- `levelLadders` (function from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order; in a level written as storeys, each storey's (bottom first), from its floor up to the top of the wall it leans on, the floor of the storey above.
 - `listMovements` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): Every movement profile, sorted by id.
 - `MODEL_FIELDS` (const from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): The model's numbers (see the file comment): what `character.movement` holds.
 - `MOTION_FIELDS` (const from [`engine/physics/movement/model.ts`](../engine/physics/movement/model.ts)): What a character on the model keeps between ticks: the component `motion`'s fields, hashed and captured.
@@ -5295,7 +5786,7 @@ For the agents who maintain the engine.
 - `movementOverrides` (function from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): The settings `get` reads off their defaults, as overrides (none when every one is at its default).
 - `MovementProfile` (type from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): A movement profile, as the registry holds it.
 - `MovementSpec` (interface from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): How a movement profile is written (`MOVEMENT_FIELDS`).
-- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was.
+- `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was, or ducked with `crouch`, its hull crouched from its next step on and kept so until it has headroom, for a place no standing hull fits (a crawlspace).
 - `RideCable` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A zipline as the model rides it: its cable from `from` to `to` (m); a balloon's top launches a skydive.
 - `RideLadder` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A ladder: the foot of its face (m), its top's height, its normal across the ground (out of the wall), its width.
 - `RideLauncher` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A launcher: the volume the feet set it off in, its top, the velocity it gives, its bounce and whether it keeps the speed across.
@@ -5308,11 +5799,15 @@ For the agents who maintain the engine.
 
 - `definePropKinds` (function): Declares the component `sceneProp` on `registry` (once).
 - `hitProp` (function): Hits the prop `id` from `from` (m): calls its `hit` hook, whose `knock(more)` knocks its body away from `from` with `strength` under `more` (engine/physics/bodies.ts's `knock`: 4.6875 m/s across, 2.5 m/s up, no twist by default).
-- `removeProp` (function): Removes a prop: its entity and its body.
+- `PropHealthComponent` (interface): The component `propHealth` (WP 13.16): the hit points a breakable prop has left, spawned only on one with health.
+- `PropLightComponent` (interface): The component `propLight` (WP 13.16): a switchable prop's state, spawned only on one given a group or off.
+- `propOfBody` (function): The entity whose prop `body` is (a `sceneProp`'s), or −1: the body-to-entity lookup uses and hits read (WP 13.16).
+- `removeProp` (function): Removes a prop: its entity and its body, its component's `body` −1 at once (inside a step the entity stays to its end).
 - `SCENE_PROP_FIELDS` (const): The component `sceneProp`'s fields.
 - `ScenePropComponent` (interface): The component `sceneProp`: a prop standing in a scene.
 - `ScenePropComponents` (type): The components this module reads.
 - `spawnProp` (function): Stands a prop in the scene, `spawnProp(w, { prop: 'prop:<id>', at: [x, y, z], yaw })`: its base at `at` (m), turned `yaw` about +Y (rad).
+- `SpawnPropOptions` (interface): How `spawnProp` stands a prop beyond its placement (WP 13.16): a spawn inside a step or a setup joins the world at its end, so a door's or a switch's own component comes with it here.
 
 ### [`engine/sim/queryView.ts`](../engine/sim/queryView.ts)
 
@@ -5357,6 +5852,7 @@ For the agents who maintain the engine.
 - `addLadder` (function): Places a ladder (see the file comment); returns its entity.
 - `addLauncher` (function): Places a jump pad or a trampoline (see the file comment); returns its entity.
 - `addLevelLadders` (function): Places the ladders `level`'s ladder glyphs stand (engine/world/traverse.ts's `levelLadders`); returns their entities.
+- `addSiteLadders` (function): Places the ladders of every structure of `site` (engine/world/site.ts), in the world; returns their entities.
 - `addZipline` (function): Places a zipline and its poles (see the file comment); returns its entity.
 - `defineRideKinds` (function): Declares the components `zipline`, `ladder` and `launcher` on `registry`, once.
 - `ridesOf` (function): What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing.
@@ -5384,6 +5880,66 @@ For the agents who maintain the engine.
 - `Session` (interface): A started scene that records its inputs from step 0, so `record()` returns it as a replay.
 - `SESSION_CODES` (const): The codes this module raises, with their fixes.
 
+### [`engine/sim/siteApi.ts`](../engine/sim/siteApi.ts)
+
+- `addSiteBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a site's bodies (its terrain, cut, then each structure's) and returns their ids in that order.
+- `addSiteLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders of every structure of `site` (engine/world/site.ts), in the world; returns their entities.
+- `addTerrainBody` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a terrain's body (one fixed body: its heightfield, or with `cut` cells, one triangle mesh of the rest) and returns the body's id.
+- `createSiteNav` (function from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): Builds `site`'s navigation (see the file comment).
+- `defineSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): Registers a site on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
+- `defineTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Registers a terrain on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
+- `floorBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The height (m) of the highest surface at or under (x, y, z): a storey's floor (flat, a ramp, a flight, a dais, under a solid too), the top of a solid standing there (a low wall, a railing, a wall, the head over a door, a window or a low ceiling, even with no floor above it), a roof's top, or the ground slab under the level; null where nothing is (outside the ground slab).
+- `getSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): The site `id` of `registry` (the shared one by default), made afresh: its name is the id without `site:`.
+- `getTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The terrain `id` of `registry` (the shared one by default), made afresh: its name is the id without `terrain:`.
+- `LEVEL_FORMAT_2` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level written as storeys (WP 13.13).
+- `makeSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): Makes `spec`'s site, named `name`, from the levels and the terrain `registry` holds (see the file comment).
+- `makeTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Makes `spec`'s terrain, named `name` (see the file comment); throws `CORE_BAD_SPEC` naming its problems.
+- `NavSource` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid is built from: a compiled level, or a surface.
+- `NavSurface` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid walks besides a compiled level: `cols` × `rows` tiles `tile` metres wide from `origin` ([x, z], [0, 0] by default), which are `walkable`, each one's `floor` (m), and whether a body on tile (col, row) steps to (col + dc, row + dr) climbing at most `climb` metres on the way.
+- `OpeningDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A door or a window: a filled rectangle of an opening glyph's tiles in a wall.
+- `RoofDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A roof over a storey (its block's `roof` key): its shape, footprint and heights.
+- `roomAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The room at (x, y, z): the room of the tile under it on `storeyBelow`'s storey (a hall's stairs are the hall's to their top), or null (outside every room, on a roof, or a level without rooms).
+- `RoomDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A room: the floor a room marker's tile reaches inside walls and doors (docs/PLAYGROUND.md §6.2).
+- `ScatterRule` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How `scatterTerrain` places (see its comment).
+- `scatterTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Stateless placement (shardfall's decor): each cell holds one place with the chance `density`, jittered inside it, turned and sized, by hashes of the terrain's seed, the rule's `salt` and the cell, never a stream; so a cell's place never depends on another's, and the same rule gives the same places.
+- `Site` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A made site (see the file comment).
+- `SITE_FIELDS` (const from [`engine/world/site.ts`](../engine/world/site.ts)): The fields of a `site` entry (see the file comment).
+- `siteClearSight` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): Whether the straight line from `from` to `to` (m) meets nothing solid, sampled every `step` metres and at both ends.
+- `siteFloorBelow` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The height (m) of the highest surface at or under (x, y, z) on the site; null where nothing is.
+- `SiteNav` (interface from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): A site's navigation (see the file comment).
+- `SiteNavOptions` (interface from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): How `createSiteNav` builds: the climb limit (m), the steepest ground (m a metre), and the body it walks (m; the shooter's hull, `LEVEL_BODY`, by default, the largest the engine ships): its radius, the clear height a step needs (crouched, with a margin) and the height it stands (a step lower costs `CROUCH_COST` times its length, crouched).
+- `siteRescueGrid` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The site's rescue grid, `tile` metres a tile, over its terrain and its structures (see the file comment).
+- `SiteRescueGrid` (interface from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The lost-body rescue's grid (engine/physics/rescue.ts's `RescueLevel`): see the file comment.
+- `siteSolidAt` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): Whether (x, y, z) is in something solid on the site (see the file comment).
+- `SiteSpec` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): What `defineSite` takes.
+- `SiteStructure` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A structure placed: its level, in its own frame, and where it stands (see the file comment).
+- `siteStructureAt` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): Where (x, y, z) is in a structure: the first whose box holds it, its storey there and its room; null outside them.
+- `siteSurfaceBelow` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The surface tag of `siteFloorBelow`'s surface at (x, y, z): '' where nothing is.
+- `storeyAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The storey a height is in (an index into `level.storeys`): the highest whose floor slab's underside is at or below `y`; 0 below them all, and in a format-1 level, which is one storey.
+- `storeyBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The storey of the surface `floorBelow` finds at (x, y, z), an index into `level.storeys` (0 in a format-1 level): a flight's tiles are the storey they rise from, all the way to their top, where `storeyAt` already reads the next; −1 on a roof, on the ground slab, or over nothing.
+- `StoreyDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): One storey of a format-2 level (WP 13.13): its heights and its own grids and descriptors, heights absolute.
+- `storeyView` (function from [`engine/world/level/storeys.ts`](../engine/world/level/storeys.ts)): Storey `index` of `level` read as a format-1 level: its grids, ramps, daises, meshes, colliders, spawns and lights, with `base`, `fullTop` and its roof for the height queries (heights.ts), so navigation, drawing and ladders read any storey as they read a level.
+- `StructureSpec` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A structure as a site's spec places it.
+- `surfaceBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag of `floorBelow`'s surface at (x, y, z): '' on the ground slab or where nothing is.
+- `Terrain` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A made terrain: its grid, its heights and what the queries and the drawing read (see the file comment).
+- `TERRAIN_FIELDS` (const from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The fields of a `terrain` entry (see the file comment).
+- `TerrainEntry` (type from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A `terrain` entry: its spec.
+- `TerrainFlat` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A footprint a terrain flattens.
+- `terrainGrade` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How steep the ground is at (x, z): metres risen a metre along its slope (1 is 45°); null outside the grid.
+- `terrainGradient` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): How the ground rises at (x, z), as metres a metre east and south: its triangle's; null outside the grid.
+- `terrainHeight` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The ground's height (m) at (x, z): the collider's surface (see the file comment); null outside the grid.
+- `TerrainHill` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A dome added to a terrain.
+- `terrainNavGrid` (function from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): A navigation grid over `terrain`'s cells (see the file comment).
+- `TerrainNavOptions` (interface from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): What `terrainNavGrid` takes: a grid's options, and the steepest ground it walks (m a metre; 1 by default).
+- `terrainNavSurface` (function from [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)): The walkable surface of `terrain`'s cells (see the file comment).
+- `terrainNormal` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The ground's upward unit normal at (x, z): its triangle's; null outside the grid.
+- `TerrainPlace` (interface from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): A place `scatterTerrain` picks: on the ground, a turn about +Y (rad) and a size factor.
+- `terrainProblems` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The problems with a terrain spec's shape (beyond its fields' types); none when it makes a terrain.
+- `TerrainSpec` (type from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): What `defineTerrain` and `makeTerrain` take: each field of `TERRAIN_FIELDS` (`size` required).
+- `terrainSurface` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The surface tag underfoot at (x, z): `steepSurface` where it is steep, else `surface`; '' outside the grid.
+- `toLocal` (function from [`engine/world/site.ts`](../engine/world/site.ts)): A structure's own (x, z) from world (wx, wz): `toWorld` undone.
+- `toWorld` (function from [`engine/world/site.ts`](../engine/world/site.ts)): World (x, z) from a structure's own (lx, lz): turned `turn` quarter turns, then moved to `at`.
+
 ### [`engine/sim/state.ts`](../engine/sim/state.ts)
 
 - `AnyComponents` (type): The components of an untyped world: any declared kind, by name.
@@ -5407,6 +5963,14 @@ For the agents who maintain the engine.
 - `With` (type): An entity known to hold the components `K` (what `query` returns).
 - `WorldState` (interface): The sim as plain data: what `world.state()` returns and the hash covers.
 - `WorldTrace` (interface): Per-part and per-entity digests, so a mismatch names the part and the entity (PLAN.md §6.5 item 6).
+
+### [`engine/sim/switches.ts`](../engine/sim/switches.ts)
+
+- `addSwitch` (function): Puts a switch on a wall (see the file comment) and returns its entity.
+- `flipSwitch` (function): Turns switch `id` over: its group on or off, its door open or shut.
+- `SwitchComponent` (interface): The component `switch`.
+- `switchGroup` (function): Turns light group `group` on or off, and its switches with it.
+- `SwitchSpec` (interface): What `addSwitch` takes (see the file comment).
 
 ### [`engine/sim/systems.ts`](../engine/sim/systems.ts)
 
@@ -5570,9 +6134,10 @@ For the agents who maintain the engine.
 - `defineGlyph` (function): Defines a glyph on `registry` (the shared one by default) and returns it.
 - `Glyph` (type): A `glyph` entry: what one map character means.
 - `GLYPH_FIELDS` (const): The fields of a `glyph` entry.
-- `glyphKind` (function): Declares the kind `glyph` on `registry`, with the engine's v1 and v2 glyphs, unless it has it.
+- `glyphKind` (function): Declares the kind `glyph` on `registry`, with the engine's v1 to v4 glyphs, unless it has it.
 - `GlyphSpec` (type): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `legendOf` (function): Every glyph of `registry` (the shared one by default), keyed by its character, in id order.
+- `STOREY_FIELDS` (const): The fields only format 2 reads: a format-1 level's legend leaves them out (engine/world/level/compile.ts).
 
 ### [`engine/world/level/grid.ts`](../engine/world/level/grid.ts)
 
@@ -5583,10 +6148,15 @@ For the agents who maintain the engine.
 
 ### [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)
 
+- `floorBelow` (function): The height (m) of the highest surface at or under (x, y, z): a storey's floor (flat, a ramp, a flight, a dais, under a solid too), the top of a solid standing there (a low wall, a railing, a wall, the head over a door, a window or a low ceiling, even with no floor above it), a roof's top, or the ground slab under the level; null where nothing is (outside the ground slab).
 - `floorHeight` (function): The walkable surface's height (m) at (x, z): the highest flat floor, ramp or dais there; 0 outside the map.
-- `HeightSource` (type): What the height queries read: a compiled level, or validate.ts's view of one before it compiles.
+- `HeightSource` (type): What the height queries read: a compiled level, or validate.ts's view of one before it compiles; a storey's view adds its `base` (where its flat floors stand), `fullTop` (where its full glyphs rise to) and its `roofs` (a pitched one clips them).
+- `roomAt` (function): The room at (x, y, z): the room of the tile under it on `storeyBelow`'s storey (a hall's stairs are the hall's to their top), or null (outside every room, on a roof, or a level without rooms).
 - `solidAt` (function): Whether (x, z) is in a solid tile (a wall, a pillar, a low wall, a brazier), or outside the map.
+- `storeyAt` (function): The storey a height is in (an index into `level.storeys`): the highest whose floor slab's underside is at or below `y`; 0 below them all, and in a format-1 level, which is one storey.
+- `storeyBelow` (function): The storey of the surface `floorBelow` finds at (x, y, z), an index into `level.storeys` (0 in a format-1 level): a flight's tiles are the storey they rise from, all the way to their top, where `storeyAt` already reads the next; −1 on a roof, on the ground slab, or over nothing.
 - `surfaceAt` (function): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
+- `surfaceBelow` (function): The surface tag of `floorBelow`'s surface at (x, y, z): '' on the ground slab or where nothing is.
 - `tileAt` (function): The tile under (x, z) metres, or null outside the map.
 - `topHeight` (function): The top (m) of whatever stands at (x, z): a wall's top over its tiles, a brazier's within its radius, the floor elsewhere; 0 outside the map.
 
@@ -5595,6 +6165,7 @@ For the agents who maintain the engine.
 - `V1_GLYPHS` (const): The v1 glyphs by id, as `defineGlyph` specs (the kind's defaults fill the rest).
 - `V2_GLYPHS` (const): The v2 glyphs by id (WP 4.2): the hall's gallery, stairs, dais and brazier.
 - `V3_GLYPHS` (const): The v3 glyphs by id (WP 13.7): the ladder, which engine/world/traverse.ts's `levelLadders` stands.
+- `V4_GLYPHS` (const): The v4 glyphs by id (WP 13.13): what levels written as storeys (format 2) add.
 
 ### [`engine/world/level/level.ts`](../engine/world/level/level.ts)
 
@@ -5605,17 +6176,26 @@ For the agents who maintain the engine.
 
 ### [`engine/world/level/meshes.ts`](../engine/world/level/meshes.ts)
 
-- `levelMeshes` (function): The mesh descriptors: one per recipe, bottom, top, surface and footprint, for every glyph whose mesh is not 'none'.
+- `levelMeshes` (function): The mesh descriptors: one per recipe, bottom, top, surface and footprint, for every glyph whose mesh is not 'none'; with `storey` (a format-2 storey's grid), full glyphs apart from the rest, since they rise to the storey above.
+
+### [`engine/world/level/openings.ts`](../engine/world/level/openings.ts)
+
+- `findOpenings` (function): The openings of a storey's grid and the opening blocks that make none; `storey` gives its index and floor (m).
+- `OpeningProblem` (interface): A block of an opening glyph that makes no opening, and why, for storeys.ts's problems.
+- `sidesOf` (function): The tiles either side of an opening across its wall, the lower x or z first: `[col, row]` each, or null off the map.
 
 ### [`engine/world/level/parse.ts`](../engine/world/level/parse.ts)
 
 - `LevelHeader` (interface): The front matter's values, defaults filled.
-- `ParsedLevel` (interface): A level's text, read: header, map rows (each an array of characters), positions and problems.
-- `parseLevel` (function): Reads a level's text: its front matter, its map rows and their positions, and the problems of the text itself.
+- `ParsedLevel` (interface): A level's text, read: header, map rows (each an array of characters) or storeys, positions and problems.
+- `ParsedStorey` (interface): One storey of a format-2 level, read: its name, keys, map rows and their positions.
+- `parseLevel` (function): Reads a level's text: its front matter, its map rows (or its storeys) and their positions, and the problems of the text itself.
+- `StoreyKeys` (interface): A storey's keys as its block writes them, absent when not given (engine/world/level/storeys.ts reads them).
 
 ### [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)
 
 - `LEVEL_CODES` (const): The level codes, with their fixes (collected into docs/ERRORS.md by `x docs`).
+- `LEVEL_CONTENT_CODES` (const): The content codes: `validateLevel` and `node x qa level` report them; `compileLevel` compiles a level that has them.
 - `LevelCode` (type): A level code.
 - `levelProblem` (function): A problem with `code` at `line`:`column`, its message filled from `values` (which name `at`).
 - `LevelProblem` (interface): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
@@ -5627,6 +6207,25 @@ For the agents who maintain the engine.
 - `mergeRects` (function): Rectangles `[col0, row0, col1, row1]` (inclusive) covering every tile of a cols × rows grid that `inside` accepts.
 - `TileBlock` (interface): A 4-connected block of tiles: its first tile in reading order, its bounding rectangle and its tile count.
 
+### [`engine/world/level/roofs.ts`](../engine/world/level/roofs.ts)
+
+- `makeRoof` (function): A storey block's roof keys (`roof`, `pitch`, `ridge`, `eaves`) made into a roof over `site`.
+- `onRoof` (function): Whether (x, z) is under the roof: in its footprint or over its eaves.
+- `ROOF_SURFACE` (const): The default roof surface tag.
+- `ROOF_THICKNESS` (const): A roof slab's depth, measured straight down (m).
+- `roofColliders` (function): The roof's slab as convex hulls' corners (m): each plane's top and the same corners `thickness` lower.
+- `roofHeight` (function): The roof's top (m) at (x, z), the surface bodies stand on; −Infinity off it.
+- `RoofSite` (interface): Where a storey stands, for its roof: its index, floor, ceiling, floored tiles' bounds (m) and surface tag.
+- `roofUnder` (function): The roof's underside (m) at (x, z): its top less its thickness; −Infinity off it.
+- `wallUnder` (function): The corners of the convex hull of a wall under the roof (m): the rectangle `[x0, z0, x1, z1]` from `bottom` up to the roof's underside (see the file comment), over only the part of it where the underside clears `bottom`, so near the eaves, where the underside falls below the floor, no wall stands into the slab (WP 13.18: it had, up to 0.18 m).
+
+### [`engine/world/level/rooms.ts`](../engine/world/level/rooms.ts)
+
+- `findRooms` (function): The rooms of `storeys` (bottom first), each storey's room index per tile, and the problems; see the file comment.
+- `RoomProblem` (interface): A room problem: where (the storey and tile, in reading order) and why.
+- `roomSides` (function): Each opening with the rooms either side of it filled in from `roomOf` (each storey's room per tile).
+- `RoomSource` (interface): One storey as `findRooms` reads it: its grid, which tiles have a floor, and its floor's height (m).
+
 ### [`engine/world/level/shapes.ts`](../engine/world/level/shapes.ts)
 
 - `daisHeight` (function): A dais's surface height (m) at (x, z), or −Infinity off its base.
@@ -5634,33 +6233,51 @@ For the agents who maintain the engine.
 - `findRamps` (function): The ramps of `grid` and the ramp blocks that make none.
 - `frustumPoints` (function): The corners of a dais's hull (m): its base octagon on the ground (and at its bottom, when above 0) and its top.
 - `octagonRadius` (function): An octagon's "radius" at an offset from its centre: the distance to its nearest face (faces toward the axes and the diagonals).
+- `outside` (function): The tiles just outside side `side` of `rect`, inside a `cols` × `rows` map.
 - `rampHeight` (function): A ramp's surface height (m) at (x, z), on tiles `tile` metres wide; held to its edges' heights past them.
 - `ShapeProblem` (interface): A block of a ramp or dais glyph that makes no ramp or dais, and why, for validate.ts.
+- `SIDES` (const): The four sides, in the order messages list them.
 - `wedgePoints` (function): The corners of a ramp's hull (m): its rectangle on the ground, and over each corner its height there when above 0.
+
+### [`engine/world/level/storeys.ts`](../engine/world/level/storeys.ts)
+
+- `CheckedStorey` (interface): One storey, checked: its numbers, its grid and what stands in it, ramps and daises measured from its floor.
+- `CheckedStoreys` (interface): A format-2 level, checked: its storeys and rooms, or the structural problems that stop it.
+- `checkStoreys` (function): The structural problems of a level written as storeys, and its checked storeys and rooms when it has none.
+- `LOWEST_SLAB` (const): The floor slab under the lowest storey (m).
+- `storeyView` (function): Storey `index` of `level` read as a format-1 level: its grids, ramps, daises, meshes, colliders, spawns and lights, with `base`, `fullTop` and its roof for the height queries (heights.ts), so navigation, drawing and ladders read any storey as they read a level.
 
 ### [`engine/world/level/types.ts`](../engine/world/level/types.ts)
 
 - `BoxCollider` (interface): An axis-aligned box collider (Rapier's cuboid: half extents `(max − min)/2`, centred at `(min + max)/2`).
 - `ColliderDescriptor` (type): A collider descriptor: a merged box, a hull or a cylinder, by `shape`.
+- `ColliderPart` (type): What a format-2 collider holds up beyond its glyph (absent on a glyph's own): `'slab'` a storey's floor (its glyph `''`), `'head'` the wall over an opening or a low ceiling, `'roof'` a roof's slab (its glyph `''`).
 - `CompiledLevel` (interface): A compiled level: the map, its legend, per-tile grids and descriptors; see the file comment.
 - `CylinderCollider` (interface): An upright cylinder collider (Rapier's cylinder, three.js's CylinderGeometry): one per tile, at its centre.
 - `DaisDescriptor` (interface): A dais: an octagonal frustum (faces toward the axes and the diagonals) standing on a block of a dais glyph's tiles.
 - `GroundDescriptor` (interface): The slab under the whole level: the ground's collider, one tile wider than the map all round, 1 m deep.
 - `HullCollider` (interface): A convex hull collider (Rapier's convex hull of its points): a ramp's wedge or a dais's frustum, from the ground.
 - `LEVEL_FORMAT` (const): The format tag of a compiled level.
+- `LEVEL_FORMAT_2` (const): The format tag of a compiled level written as storeys (WP 13.13).
 - `LevelGlyph` (interface): One glyph as the level used it: the `glyph` entry's fields (engine/world/level/glyph.ts) and its id.
 - `LightSpot` (interface): A light spot: a tile's centre, `lightHeight` above its top.
 - `MeshDescriptor` (interface): What the level meshes (WP 2.4) build for one recipe at one height: the tiles, merged and as pieces.
+- `OpeningDescriptor` (interface): A door or a window: a filled rectangle of an opening glyph's tiles in a wall.
 - `Point3` (type): A point in metres: `[x, y, z]`.
 - `RampDescriptor` (interface): A ramp: a filled rectangle of a ramp glyph's tiles (stairs) whose floor rises in a straight slope from `bottom` along the side opposite `rises` to `top` along `rises`, the side whose neighbours stand at its top (a gallery).
+- `RoofDescriptor` (interface): A roof over a storey (its block's `roof` key): its shape, footprint and heights.
+- `RoomDescriptor` (interface): A room: the floor a room marker's tile reaches inside walls and doors (docs/PLAYGROUND.md §6.2).
 - `Side` (type): A compass side of a block: north is −Z (row 0's edge), south +Z, west −X, east +X.
 - `SpawnPoint` (interface): A spawn point: a tile's centre, on its floor.
+- `StoreyDescriptor` (interface): One storey of a format-2 level (WP 13.13): its heights and its own grids and descriptors, heights absolute.
 - `TileRect` (type): A rectangle of tiles, inclusive: `[col0, row0, col1, row1]`.
 
 ### [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)
 
 - `CheckedLevel` (interface): A level read against its legend: the parsed text, the glyph of every tile, its slopes, and the structural problems.
 - `checkLevel` (function): The structural problems of a level's text: the text's own, unknown characters and bad footprint blocks.
+- `FLIGHT_LIMIT` (const): The steepest flight of stairs bodies walk (°): the shooter model's walkable slope, 45.57°, rounded down.
+- `LEVEL_BODY` (const): The body format 2's content checks measure against (m): the shooter model's hull (`movement:apex`, 16 Source units in radius: 0.8128 m across; 1.8288 m tall standing, 1.19 crouched), the largest the engine ships.
 - `LevelSource` (interface): Where a level comes from, for messages, and the legend to read it with.
 - `NAV_CLIMB` (const): The default climb limit between neighbouring tiles' floors (m): the prototype's `CLIMB`, 3.5 units.
 - `validateLevel` (function): Every problem of a level's text, structural and content (see the file comment), in a fixed order; `[]` when it is fine.
@@ -5669,8 +6286,10 @@ For the agents who maintain the engine.
 
 - `canStep` (function): Whether a body walks from the centre of tile (col, row) to the centre of tile (col + dc, row + dr), climbing at most `climb` metres between samples.
 - `STEP_SAMPLES` (const): How many points along a step `canStep` samples the floor at.
+- `StoreyArea` (interface): An area over a level's storeys: its first tile (`[storey, col, row]`, storey by storey, in reading order) and size.
 - `WalkArea` (interface): An area of tiles that reach each other both ways: its first tile in reading order and its tile count.
 - `walkAreas` (function): The areas of `level`'s walkable tiles under the climb limit, and the area index of every tile (−1 if unwalkable).
+- `walkStoreys` (function): The areas of the walkable tiles of `storeys` (each storey's height source, one grid size), walking the 4 neighbours within a storey under the climb limit and each of `links` (pairs of tiles, each `storey · cols · rows + index`) both ways; and the area of every tile, so indexed (−1 if unwalkable).
 
 ### [`engine/world/nav.ts`](../engine/world/nav.ts)
 
@@ -5682,6 +6301,8 @@ For the agents who maintain the engine.
 - `NAV_GRID_FIELDS` (const): The options of `new NavGrid(level, options)`.
 - `NavGrid` (class): The walkable grid of a compiled level, and the searches over it (see the file comment).
 - `NavGridOptions` (type): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
+- `NavSource` (type): What a grid is built from: a compiled level, or a surface.
+- `NavSurface` (interface): What a grid walks besides a compiled level: `cols` × `rows` tiles `tile` metres wide from `origin` ([x, z], [0, 0] by default), which are `walkable`, each one's `floor` (m), and whether a body on tile (col, row) steps to (col + dc, row + dr) climbing at most `climb` metres on the way.
 - `NEAREST_RINGS` (const): How many rings of tiles `nearestOpen` searches round a blocked point (shardfall's 5).
 
 ### [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)
@@ -5704,6 +6325,14 @@ For the agents who maintain the engine.
 ### [`engine/world/props/catalog.ts`](../engine/world/props/catalog.ts)
 
 - `BUILT_IN_PROPS` (const): The engine's props, by id.
+
+### [`engine/world/props/fittings.ts`](../engine/world/props/fittings.ts)
+
+- `FITTING_PROPS` (const): The house's fittings, by id.
+
+### [`engine/world/props/library.ts`](../engine/world/props/library.ts)
+
+- `LIBRARY_PROPS` (const): The props library's props, by id.
 
 ### [`engine/world/props/place.ts`](../engine/world/props/place.ts)
 
@@ -5729,6 +6358,63 @@ For the agents who maintain the engine.
 - `PropKnock` (interface): How hard a knock is, as engine/physics/bodies.ts's `knock` takes it.
 - `PropPart` (type): One part of a `prop` entry, filled: see `PROP_PART_FIELDS`.
 - `PropTouch` (interface): What a hook is given: the prop, its body, where the touch comes from, and the means to answer it.
+
+### [`engine/world/site.ts`](../engine/world/site.ts)
+
+- `defineSite` (function): Registers a site on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
+- `getSite` (function): The site `id` of `registry` (the shared one by default), made afresh: its name is the id without `site:`.
+- `makeSite` (function): Makes `spec`'s site, named `name`, from the levels and the terrain `registry` holds (see the file comment).
+- `quarterTurn` (function): The rotation of `turn` quarter turns about +Y, as [x, y, z, w].
+- `QuarterTurns` (type): A quarter turn's count, 0 to 3.
+- `Site` (interface): A made site (see the file comment).
+- `SITE_FIELDS` (const): The fields of a `site` entry (see the file comment).
+- `SiteEntry` (type): A `site` entry.
+- `siteProblems` (function): The problems with a site spec's shape; none when it makes a site.
+- `SiteSpec` (interface): What `defineSite` takes.
+- `SiteStructure` (interface): A structure placed: its level, in its own frame, and where it stands (see the file comment).
+- `StructureSpec` (interface): A structure as a site's spec places it.
+- `toLocal` (function): A structure's own (x, z) from world (wx, wz): `toWorld` undone.
+- `toWorld` (function): World (x, z) from a structure's own (lx, lz): turned `turn` quarter turns, then moved to `at`.
+- `turnVector` (function): A direction (x, z) turned `turn` quarter turns about +Y, as `toWorld` turns a structure's; never −0 (state holds it).
+- `worldRect` (function): A local rectangle [x0, z0, x1, z1] (m) of structure `s` as a world rectangle.
+
+### [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)
+
+- `createSiteNav` (function): Builds `site`'s navigation (see the file comment).
+- `CROUCH_COST` (const): How many times its length a step costs where a body must crouch to take it (a crouch-walk's pace against a run).
+- `NavBlock` (interface from [`engine/world/siteNavGrids.ts`](../engine/world/siteNavGrids.ts)): A box of the world (m) a body cannot walk through: a prop's body, a door's leaf where it opens to.
+- `SiteNav` (interface): A site's navigation (see the file comment).
+- `SiteNavGrid` (interface): One of a site's grids: the terrain's or a structure's storey's, and its first node's number.
+- `SiteNavOptions` (interface): How `createSiteNav` builds: the climb limit (m), the steepest ground (m a metre), and the body it walks (m; the shooter's hull, `LEVEL_BODY`, by default, the largest the engine ships): its radius, the clear height a step needs (crouched, with a margin) and the height it stands (a step lower costs `CROUCH_COST` times its length, crouched).
+
+### [`engine/world/siteNavClear.ts`](../engine/world/siteNavClear.ts)
+
+- `CLEAR_SAMPLES` (const): How finely `clearOffset` samples a tile for its clear point: samples a metre (every 5 cm).
+- `ClearGraph` (interface): What `clearPoints` reads of a site's graph: its grids, each one's tiles open in its own surface, its links.
+- `clearOffset` (function): `tile`'s clear point on `grid` as an offset from its centre (m; see the file comment); `own` is each tile's openness in its own grid, before the blocks closed any.
+- `ClearOptions` (interface): What `clearOffset` keeps clear of (see the file comment).
+- `clearPoints` (function): Every node's clear point on a site's graph (engine/world/siteNav.ts), each found once: a function giving a node's on its floor (m).
+
+### [`engine/world/siteNavGrids.ts`](../engine/world/siteNavGrids.ts)
+
+- `blockedSurface` (function): `surface` with every tile closed that a block stands on: one whose middle is within a body's `radius` of its footprint (so a gap between two blocks narrower than the body closes) and in sight of it, no closed tile between (a bookshelf by a wall closes none of the tiles behind it), rising more than 5 cm over the tile's floor and lower than a standing body's top over it (a rug or a roof over a sidewalk closes none).
+- `CURB` (const): The most a step across a ramp's side climbs or drops (m): a flight is walked along its rise, from its foot and top.
+- `NavBlock` (interface): A box of the world (m) a body cannot walk through: a prop's body, a door's leaf where it opens to.
+- `siteTerrainSurface` (function): The terrain's cells as a surface, closed where the terrain is cut and over every structure's footprint (see the file comment).
+- `storeyCeilings` (function): What is above each tile of storey `k` (m, in the structure's frame; see the file comment); Infinity under the sky.
+- `storeyLinks` (function): The pairs of a structure's local tiles a body passes between storeys k and k + 1: flights' tops and ladders.
+- `storeySurface` (function): Storey `k` of structure `s` as a surface in the world's orientation (see the file comment), with each tile's ceiling at the structure's height: a step needs `height` metres clear over the higher of its two floors under the ceiling it goes to (storeyCeilings's), and a diagonal under its corners' too.
+- `tileHighs` (function): Each tile's highest floor (m): a ramp's or a flight's at its high edge, where a body crossing it may stand.
+
+### [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)
+
+- `siteClearSight` (function): Whether the straight line from `from` to `to` (m) meets nothing solid, sampled every `step` metres and at both ends.
+- `siteFloorBelow` (function): The height (m) of the highest surface at or under (x, y, z) on the site; null where nothing is.
+- `siteRescueGrid` (function): The site's rescue grid, `tile` metres a tile, over its terrain and its structures (see the file comment).
+- `SiteRescueGrid` (interface): The lost-body rescue's grid (engine/physics/rescue.ts's `RescueLevel`): see the file comment.
+- `siteSolidAt` (function): Whether (x, y, z) is in something solid on the site (see the file comment).
+- `siteStructureAt` (function): Where (x, y, z) is in a structure: the first whose box holds it, its storey there and its room; null outside them.
+- `siteSurfaceBelow` (function): The surface tag of `siteFloorBelow`'s surface at (x, y, z): '' where nothing is.
 
 ### [`engine/world/spatial.ts`](../engine/world/spatial.ts)
 
@@ -5772,6 +6458,37 @@ For the agents who maintain the engine.
 - `TelegraphPlace` (interface): A telegraph where it stands: plain data, as a component or a frame's list holds it.
 - `TelegraphSpec` (type): What `defineTelegraph` takes: any field.
 
+### [`engine/world/terrain.ts`](../engine/world/terrain.ts)
+
+- `defineTerrain` (function): Registers a terrain on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
+- `getTerrain` (function): The terrain `id` of `registry` (the shared one by default), made afresh: its name is the id without `terrain:`.
+- `makeTerrain` (function): Makes `spec`'s terrain, named `name` (see the file comment); throws `CORE_BAD_SPEC` naming its problems.
+- `ScatterRule` (interface): How `scatterTerrain` places (see its comment).
+- `scatterTerrain` (function): Stateless placement (shardfall's decor): each cell holds one place with the chance `density`, jittered inside it, turned and sized, by hashes of the terrain's seed, the rule's `salt` and the cell, never a stream; so a cell's place never depends on another's, and the same rule gives the same places.
+- `Terrain` (interface): A made terrain: its grid, its heights and what the queries and the drawing read (see the file comment).
+- `TERRAIN_FIELDS` (const): The fields of a `terrain` entry (see the file comment).
+- `TerrainEntry` (type): A `terrain` entry: its spec.
+- `TerrainFlat` (interface): A footprint a terrain flattens.
+- `terrainGrade` (function): How steep the ground is at (x, z): metres risen a metre along its slope (1 is 45°); null outside the grid.
+- `terrainGradient` (function): How the ground rises at (x, z), as metres a metre east and south: its triangle's; null outside the grid.
+- `terrainHeight` (function): The ground's height (m) at (x, z): the collider's surface (see the file comment); null outside the grid.
+- `TerrainHill` (interface): A dome added to a terrain.
+- `terrainNormal` (function): The ground's upward unit normal at (x, z): its triangle's; null outside the grid.
+- `TerrainPlace` (interface): A place `scatterTerrain` picks: on the ground, a turn about +Y (rad) and a size factor.
+- `terrainProblems` (function): The problems with a terrain spec's shape (beyond its fields' types); none when it makes a terrain.
+- `TerrainSpec` (type): What `defineTerrain` and `makeTerrain` take: each field of `TERRAIN_FIELDS` (`size` required).
+- `terrainSurface` (function): The surface tag underfoot at (x, z): `steepSurface` where it is steep, else `surface`; '' outside the grid.
+
+### [`engine/world/terrainNav.ts`](../engine/world/terrainNav.ts)
+
+- `terrainNavGrid` (function): A navigation grid over `terrain`'s cells (see the file comment).
+- `TerrainNavOptions` (interface): What `terrainNavGrid` takes: a grid's options, and the steepest ground it walks (m a metre; 1 by default).
+- `terrainNavSurface` (function): The walkable surface of `terrain`'s cells (see the file comment).
+
+### [`engine/world/tileHeap.ts`](../engine/world/tileHeap.ts)
+
+- `TileHeap` (class): An indexed binary min-heap of tiles keyed by `keys[tile]`, ties to the lower tile; pushing a held tile re-sorts it.
+
 ### [`engine/world/traverse.ts`](../engine/world/traverse.ts)
 
 - `LADDER_DEPTH` (const): How far a ladder's rungs stand off the wall it leans on (m).
@@ -5780,7 +6497,7 @@ For the agents who maintain the engine.
 - `LAUNCHER_FIELDS` (const): A launcher's fields (see the file comment).
 - `LauncherSpec` (type): A jump pad or a trampoline, parsed: every field of `LAUNCHER_FIELDS`, its defaults filled.
 - `launcherVolume` (function): A launcher's volume: from its top's corner a little below it to `reach` above, `[min, max]` (m).
-- `levelLadders` (function): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order.
+- `levelLadders` (function): The ladders `level`'s ladder glyphs stand (see the file comment), in reading order; in a level written as storeys, each storey's (bottom first), from its floor up to the top of the wall it leans on, the floor of the storey above.
 - `parseTraverse` (function): `spec` parsed and checked as a `kind` (see `traverseProblems`); throws `CORE_BAD_SPEC` naming each problem.
 - `TRAVERSE_FIELDS` (const): The kinds of traversal, by their fields.
 - `traverseProblems` (function): The problems of a spec of `kind` beyond its fields (its fields' own are `parse`'s): sizes, lengths, directions.
@@ -6142,13 +6859,25 @@ For the agents who maintain the engine.
 - `BOUNCE_RUNS` (const): Each bounce off the 6 m wall: its zone, where it starts (z), its speed (m/s), and when it jumps and jumps off.
 - `CLIMB_RUNS` (const): Each climb: its wall's height (m) and the x of its middle; each starts at z 19.4, 2.6 m short of the faces.
 
+### [`labs/playground/courses/climbAgain.ts`](../labs/playground/courses/climbAgain.ts)
+
+- `CLIMB_AGAIN_START` (const): Where it starts: 2.6 m short of the 6 m wall's face, at its middle.
+
 ### [`labs/playground/courses/crawl.ts`](../labs/playground/courses/crawl.ts)
 
 - `CRAWL_STARTS` (const): Where the tunnel run starts (4 m north of the tunnel, in its middle) and where the bar's does (facing south).
 
+### [`labs/playground/courses/crouch.ts`](../labs/playground/courses/crouch.ts)
+
+- `CROUCH_START` (const): Where it stands: the open floor east of the slope tests.
+
 ### [`labs/playground/courses/fences.ts`](../labs/playground/courses/fences.ts)
 
 - `FENCE_RUNS` (const): Each run: its fence's height (m) and the x of its middle; each starts at z 14.5, 1.5 m short of the faces.
+
+### [`labs/playground/courses/gaps.ts`](../labs/playground/courses/gaps.ts)
+
+- `GAP_RUNS` (const): The course's runs, north to south along the lane (see the file comment).
 
 ### [`labs/playground/courses/hang.ts`](../labs/playground/courses/hang.ts)
 
@@ -6161,6 +6890,11 @@ For the agents who maintain the engine.
 ### [`labs/playground/courses/ladder.ts`](../labs/playground/courses/ladder.ts)
 
 - `LADDER_STARTS` (const): Where the runs start: on the floor 3 m north of the ladder, and on the tower's top half a metre in from it.
+
+### [`labs/playground/courses/landing.ts`](../labs/playground/courses/landing.ts)
+
+- `LANDING_RUNS` (const): Each fall: its height (m) and the row of the south floor it runs along (z), from x 2.
+- `landingOf` (function): The tick a fall from `height` lands in, its impact speed (m/s), and the share of speed its stun leaves.
 
 ### [`labs/playground/courses/launcher.ts`](../labs/playground/courses/launcher.ts)
 
@@ -6187,6 +6921,10 @@ For the agents who maintain the engine.
 - `SLIDE_RAMPS` (const): The runs: each ramp's slope (°), its lane's middle (x), its deck's height (m) and how long the slide lasts (s).
 - `SLIDE_UPHILL` (const): Where the uphill run starts: the 30° ramp's run-out, 6 m south of its foot, facing north.
 
+### [`labs/playground/courses/steps.ts`](../labs/playground/courses/steps.ts)
+
+- `STEP_RUNS` (const): Each run: its name, its start 4 m north of the feature's foot (z 60), and the height it stands at (m).
+
 ### [`labs/playground/courses/strip.ts`](../labs/playground/courses/strip.ts)
 
 - `STRIP_START` (const): Where the strip starts: its north end, on the lane west of the features, facing south.
@@ -6206,13 +6944,30 @@ For the agents who maintain the engine.
 - `mountFeelPanel` (function): Mounts the panel on `document` over `inspector`: open when the query asks, F toggling it.
 - `PLAYGROUND_FEEL_SETTINGS` (const): The playground's feel setting: whether the panel shows when the page opens.
 
+### [`labs/playground/furnish.ts`](../labs/playground/furnish.ts)
+
+- `GARAGE_SWITCHES` (const): The garage door's switches, in the house's metres: inside on its east wall, and outside beside it.
+- `HOUSE_FURNITURE` (const): The house's furniture, room by room (see the file comment).
+- `HOUSE_LIGHTS` (const): Each room's lamp and switch (see the file comment); the crawlspace has neither, the attic's lamp hangs from its ridge.
+- `OUTDOORS` (const): The outdoor things (see the file comment).
+- `Outside` (type): One thing outside: its prop, where its base stands (x, y, z, world metres) and its yaw.
+- `Placed` (type): One thing in the house: its prop, where it stands (x, z, in the house's metres), its yaw and its storey.
+- `RoomLight` (interface): A room's lamp (where it hangs, x and z) and switch (x, z and the way it faces), in the house's metres.
+- `SITE_RIDES` (const): The block's rides (engine/world/traverse.ts's specs), but the lookout's, which stands on the hill's height.
+
+### [`labs/playground/ground.ts`](../labs/playground/ground.ts)
+
+- `PLAYGROUND_GROUND` (const): The ground's materials: the hill's turf, then its rock.
+
 ### [`labs/playground/levels/gym.ts`](../labs/playground/levels/gym.ts)
 
 - `GYM_BALLOON` (const): The redeploy balloon: a vertical line from the floor up to the balloon (docs/PLAYGROUND.md §2.2's stands 60 m up on the hill; the gym's 90 m, so a course glides, then dives to 35 m/s, before the landing pose takes over at 30 m).
 - `GYM_CRAWL` (const): The crawl (m): a tunnel `clear` high inside, `long` and `wide`, its walls `wall` high with the roof slab (`slab` thick) laid on them, and a bar whose underside is `bar` up, on two posts `post` high.
 - `GYM_FEATURES` (const): The features, north to south (see the file comment and docs/PLAYGROUND.md §2.3).
+- `GYM_GATES` (const): The gym's gates on the site (labs/playground/levels/site.ts), each a gap in its perimeter wall in level metres: north to the range, east to the backyard and to the street; each clear of every course's runs.
 - `GYM_LAUNCHERS` (const): The launchers and the heights they throw to (m): a jump pad flush with the floor, and a trampoline whose mat stands 0.5 m up against the tower's west face, so a walk off the tower's top drops onto it from 5.5 m.
 - `GYM_PROPS` (const): The crawl's slab and bar: fixed boxes the gym stands on its walls and posts (the level's blocks start at the floor).
+- `GYM_SITE_TEXT` (const): The same with its gates open (`GYM_GATES`): the gym as it stands on the site.
 - `GYM_SIZE` (const): The gym's floor (m): west to east and north to south, inside its perimeter wall.
 - `GYM_SPAWN` (const): The spawn: the tile `@` marks, at the north end of the gym, its centre (m).
 - `GYM_TEXT` (const): The gym's level text (format 1), drawn from `GYM_FEATURES`.
@@ -6221,6 +6976,50 @@ For the agents who maintain the engine.
 - `GymFeature` (interface): A calibrated feature of the gym.
 - `GymKind` (type): What a feature measures (docs/PLAYGROUND.md §2.3).
 - `GymRect` (interface): A rectangle of a feature in level metres (0, 0 is the perimeter's north-west corner), on whole tiles, of `char`.
+
+### [`labs/playground/levels/house.ts`](../labs/playground/levels/house.ts)
+
+- `HOUSE_MAP` (const): Its map's size (m): the patio, the house and the garage, and the porch.
+- `HOUSE_MARKERS` (const): The house's rooms by marker character.
+- `HOUSE_RECTS` (const): The house itself, the garage, the porch and the patio, in the map's metres.
+- `HOUSE_ROOMS` (const): Each room's floor (presentation only): tiles where it is wet, carpet where it is soft, wood, else concrete.
+- `HOUSE_TEXT` (const): The house's level text (see the file comment).
+- `HOUSE_TILE` (const): The house's tile (m).
+
+### [`labs/playground/levels/plan.ts`](../labs/playground/levels/plan.ts)
+
+- `levelText` (function): A level's text from its front matter (`description`, `tile`) and its storeys, bottom first (see the file comment).
+- `Plan` (class): One storey's map, painted in rectangles (see the file comment).
+- `Rect` (type): A rectangle of a plan, [x0, z0, x1, z1] (m).
+- `StoreyBlock` (interface): One storey's block: its keys (`storey`, `base`, `height`, a roof's) and its plan.
+
+### [`labs/playground/levels/site.ts`](../labs/playground/levels/site.ts)
+
+- `SITE` (const): The block, made.
+- `SITE_AREAS` (const): Each area's spawn (see the file comment): where the player stands and faces (rad; 0 is +Z, south).
+- `SITE_SIZE` (const): The block's size (m): its width, west to east, and its depth, north to south.
+- `SITE_STRUCTURES` (const): Each structure on the block, by name: its level and where its map's north-west corner stands.
+- `SiteArea` (type): The areas' names.
+
+### [`labs/playground/levels/street.ts`](../labs/playground/levels/street.ts)
+
+- `CURB` (const): The sidewalk's height over the road (m): its curb a step.
+- `DRIVEWAY_TEXT` (const): The driveway's level text.
+- `PATH_TEXT` (const): The front path's level text.
+- `PAVING_TILE` (const): The paving's tile (m).
+- `STREET` (const): The street's size and its road's edges, north to south, in its own metres.
+- `STREET_TEXT` (const): The street's level text (see the file comment).
+
+### [`labs/playground/levels/yard.ts`](../labs/playground/levels/yard.ts)
+
+- `BACKSTOP_TEXT` (const): The backstop (see the file comment): format 1, the engine's 3 m wall, 2 m thick.
+- `DECK_HEIGHT` (const): How high each deck stands over the ground it is on (m).
+- `LOOKOUT_TEXT` (const): The lookout's level text: the tree house's deck, lower, on the hilltop.
+- `RING_TEXT` (const): The ring (see the file comment): format 1, its heights the engine's gallery (1 m) and stairs.
+- `SHED_TEXT` (const): The shed (see the file comment).
+- `SHELTER_TEXT` (const): The range's shelter (see the file comment).
+- `TREEHOUSE_TEXT` (const): The tree house's level text (see the file comment).
+- `YARD_TILE` (const): The yard's tile (m).
 
 ### [`labs/playground/looks/cel.ts`](../labs/playground/looks/cel.ts)
 
@@ -6242,6 +7041,16 @@ For the agents who maintain the engine.
 - `PLAYGROUND_MENU_SETTINGS` (const): The menu's view setting (see the file comment).
 - `PlaygroundMenuOptions` (interface): What the menu lists.
 
+### [`labs/playground/props/house.ts`](../labs/playground/props/house.ts)
+
+- `fixed` (const): A fixed box body of `size` (m).
+- `HOUSE_PROPS` (const): The furniture, by id (see the file comment).
+- `part` (function): A box part `name`, `size` (m) in `material`, its base's middle at `at` (m), in `tint`.
+
+### [`labs/playground/props/outdoors.ts`](../labs/playground/props/outdoors.ts)
+
+- `OUTDOOR_PROPS` (const): The outdoor props, by id (see the file comment).
+
 ### [`labs/playground/scenes/gym.ts`](../labs/playground/scenes/gym.ts)
 
 - `default` (default): The gym, `playground:gym` (docs/PLAYGROUND.md §2.3, PLAN.md WP 13.1): the playground's first scene, the calibrated features of labs/playground/levels/gym.ts as a physics level, and the player (labs/playground/cast/ player.ts) at the spawn `@` at its north end, facing the features to the south.
@@ -6249,6 +7058,29 @@ For the agents who maintain the engine.
 - `GYM` (const): The gym, compiled: its colliders for the physics, its tiles and spawn for the scene.
 - `GYM_SETTINGS` (const): The gym's settings: each reachable through `x set`, URL parameters and `__engine.set`.
 - `GYM_START` (const): Where the player starts: the spawn `@` the gym's map marks.
+
+### [`labs/playground/scenes/hill.ts`](../labs/playground/scenes/hill.ts)
+
+- `default` (default): The hill, `playground:hill` (docs/PLAYGROUND.md §2.2, PLAN.md WP 10.5): the block's ground as terrain, before WP 13.18 stands the site's levels on it: 96 × 96 m on a 1 m grid, rolling 0.6 m, and in the east the hill (x 72 to 96) rising to 10 m over the east edge's middle in slopes up to 29° (10° to 30° over most of its flank: slides gain speed down it), turf over rock where it is steepest; the player at its foot facing up it, east.
+- `hill` (const): The hill: its terrain, and the player at its foot facing up it.
+- `HILL` (const): The block's ground, made: the hill is its east quarter.
+- `HILL_START` (const): Where the player starts: at the hill's foot on its west edge's middle, on the ground.
+
+### [`labs/playground/scenes/site.ts`](../labs/playground/scenes/site.ts)
+
+- `areaStart` (function): Where `area`'s spawn stands: its point, on the highest floor at or under it.
+- `backyard` (const): The block, the player in the backyard.
+- `default` (default): The block's scenes (docs/PLAYGROUND.md §2, PLAN.md WP 13.18): `playground:site`, the whole block with the player in the front yard, and a scene per area (`playground:site-<area>`: the house, the backyard, the street, the gym, the hill, the range, the ring), the same block with the player at that area's spawn (`SITE_AREAS`, labs/playground/levels/site.ts).
+- `HEAD_HEIGHT` (const): How high over his feet a standing player's head reaches, m: where that is solid, he is put ducked.
+- `house` (const): The block, the player in the hall.
+- `range` (const): The block, the player behind the range's counter.
+- `ring` (const): The block, the player at the ring's steps.
+- `roomPlace` (function): Where the `place` action puts the player in one of a structure's rooms: at its marker, on its floor, ducked where a standing player's head would be in something solid (the crawlspace's 1.4 m ceiling).
+- `site` (const): The block, the player in the front yard: `playground:site`, the site's own scene.
+- `SITE_SCENES` (const): The block's scenes by area: the front yard's is `playground:site`, every other `playground:site-<area>`.
+- `siteGym` (const): The block, the player at the gym's spawn.
+- `siteHill` (const): The block, the player at the hill's foot.
+- `street` (const): The block, the player on the street's sidewalk.
 
 ### [`labs/playground/views.ts`](../labs/playground/views.ts)
 
@@ -6407,7 +7239,7 @@ For the agents who maintain the engine.
 ### [`tests/pages/props.ts`](../tests/pages/props.ts)
 
 - `Knocked` (interface): What `knock` reports at one tick.
-- `SCENE` (const): The props the page places itself, beside the level's.
+- `SCENE` (const): The props the page places itself, beside the level's: the catalog's barrel and pillar, then the library's (WP 10.3), the tall ones along the north wall, the sconce on its face, the others in front, then the fittings (WP 13.16): a pane standing on the floor, the switch on the north wall's face, the lamp hanging over the middle and the garage door along the east wall, facing the camera; all clear of the crate's slide east and of what the south wall hides from the camera (a metre and more north of it).
 - `Seen` (type): What the ID pass sees of one batch.
 - `Shown` (interface): What `show` reports.
 - `YARD` (const): The yard: 12 × 7 m, walled; a crate's spawn point (`c`) and a brazier stand (`t`).
@@ -6917,6 +7749,16 @@ For the agents who maintain the engine.
 
 - `default` (default): Evaluates JavaScript in the page `x inspect` keeps open, and prints its value as JSON (PLAN.md §8.1, WP 2.7): `node x eval "__engine.hash()"`.
 
+### [`tools/cmd/eye.ts`](../tools/cmd/eye.ts)
+
+- `default` (default): `node x eye <scene>` (PLAN.md WP 12.3, §5.8): the agent eye in Node, no GPU.
+- `EYE_FRAMES` (const): The frames the camera is moved on by before the eye looks: a second of a page's, so a follow camera has swung out.
+- `EYE_PRINT` (const): The printed picture's size at most: 56 × 16 characters, the page's 16:9 in a terminal's tall characters.
+- `printOf` (function): `map` (the eye's picture, a character a cell) shrunk to at most `size` for a terminal: each printed character stands for the cells under it, the player's `@` if any, else the thing most of them show, else a wall over a floor.
+- `seenText` (function): What the summary says it sees: the first `SUMMARY_THINGS` things (`thingText`), then how many more.
+- `SUMMARY_THINGS` (const): How many things the summary names, most cells first; `eye.json` lists them all.
+- `thingText` (function): One thing seen, as the summary names it: the player, the level, or its kind and entity; its share, or its cells.
+
 ### [`tools/cmd/feel.ts`](../tools/cmd/feel.ts)
 
 - `courseName` (const): A course's name in its lab: its id without `course:<lab>-`.
@@ -6938,6 +7780,20 @@ For the agents who maintain the engine.
 - `sameSources` (const): Whether the working tree's sources are commit `sha`'s: no tracked change, no untracked file git does not ignore.
 - `SHOT` (const): The shot a film takes: the pixels, the ID pass and the thumbnail, without the look metrics.
 - `simSteps` (const): `n` sim steps with what the virtual device holds.
+
+### [`tools/cmd/gallery.ts`](../tools/cmd/gallery.ts)
+
+- `BURST_SHOWN` (const): The least share an emitter covers in its fullest frame, about 8 pixels of 240 × 135: a burst thins to its last specks, and a sky effect run from the floor (snow, which no floor stops) falls out of sight at once.
+- `default` (default): Contact sheets from the gallery (PLAN.md WP 7.7, §8.5): `node x gallery <kind> [id]` films every entry of a kind with a `gallery` field (engine/core/gallery.ts), or the one named, in a page's gallery: it opens `<page>#gallery/<kind>/<id>` as `x shot` opens a page (Vite, Chromium on WebGPU, the virtual clock, seed 1), calls `__engine.gallery.shoot` for each entry (engine/dev/galleryShoot.ts: each frame staged, its camera fitted, shot), and lays the frames out on x film's contact sheet (tools/lib/filmSheet.ts), each labelled: an entry a row, or eight entries a row when each has one frame.
+- `emptyFrames` (function): The frames of `entry` that show too little: each of a still subject's below `SHOWN`; a burst's all of them when its fullest is below `BURST_SHOWN`.
+- `Filmed` (interface): An entry's filmed frames, as `gallery.shoot` returns them; `burst` for an emitter's.
+- `PAGE` (const): The page the gallery films unless `--page` says: every lab's entries registered.
+- `readSize` (function): Reads `--size WxH`; throws `UsageError`.
+- `seenShare` (function): What a shot's ID pass sees of its subject: the share of the frame besides the stage's ground (stage.ts).
+- `sheetFrames` (function): The sheet's frames: every entry's in order, labelled, with its pixels.
+- `SHOWN` (const): The least share of a frame a still subject covers in each of its frames: about 65 pixels of 240 × 135.
+- `shows` (const): Whether a shot shows its subject: its ID pass sees at least `SHOWN` of it.
+- `SIZE` (const): The shots' size unless `--size` says: 16:9, wide enough for a 30-letter label.
 
 ### [`tools/cmd/help.ts`](../tools/cmd/help.ts)
 
@@ -7445,7 +8301,7 @@ For the agents who maintain the engine.
 - `PageEngine` (type): `window.__engine` as the tools call it in a page.
 - `pageRuntime` (function): `x replay --browser page`'s runtime: each replay in its scene's page (`labPageOf`), opened on the replay's own scene (`scenePath`, since a page draws one scene and plays only its replays), drawn after every step.
 - `readSignals` (function): Reads `window.__engine`'s signal in `tab`; undefined before the page publishes one.
-- `READY_MS` (const): How long a page may take to signal ready or an error, ms.
+- `READY_MS` (const): How long a page may take to signal ready or an error, ms: the playground's site (PLAN.md WP 13.18) warms 85 pipelines over its view's two cameras in about 215 s on this container's SwiftShader.
 - `replayBrowser` (function): Chromium with its own Vite server for `x replay --browser`: tests/pages/replay.html (`window.__replay`) under the swap `swap` names, or the scenes' own pages (`pageRuntime`).
 - `scenePath` (function): The path of the page that draws a replay's scene: `labs/box/` and `box:spinners` give `labs/box/?scene=spinners`.
 - `Signals` (interface): A page's ready-or-error signal (PLAN.md §8.3), read once.
@@ -7642,9 +8498,9 @@ For the agents who maintain the engine.
 
 ### [`tools/qa/level.ts`](../tools/qa/level.ts)
 
-- `default` (default): The `level` QA family (PLAN.md §8.6, WP 2.2, I-29): `node x qa level` validates every level file, the box's (`labs/box/levels/*.txt`, ids `level:<name>`) and the fixtures' (`fixtures/levels/*.txt`, ids `level:fixtures/<name>`; the seeded errors under `fixtures/levels/broken/` are the unit tests' business and are skipped), and runs in T1 through `runQa` (tools/qa/level.test.ts).
-- `LEVEL_DIRS` (const): Where level files live, and the id prefix of each place's levels.
-- `LevelFile` (interface): One level file: its QA id and its path from the repository root.
+- `default` (default): The `level` QA family (PLAN.md §8.6, WP 2.2, WP 13.13, I-29): `node x qa level` validates every level file, the box's (`labs/box/levels/*.txt`, ids `level:<name>`), the fixtures' (`fixtures/levels/*.txt`, ids `level:fixtures/<name>`; the seeded errors under `fixtures/levels/broken/` are the unit tests' business and are skipped) and the storey fixtures' (`fixtures/levels/storeys/*.txt`, ids `level:fixtures/storeys/<name>`, read with their room markers), and runs in T1 through `runQa` (tools/qa/level.test.ts).
+- `LEVEL_DIRS` (const): Where level files live, the id prefix of each place's levels, and the glyphs they need beyond the engine's.
+- `LevelFile` (interface): One level file: its QA id, its path from the repository root, and the registry holding its legend.
 - `levelFiles` (function): Every level file under `root`, in `LEVEL_DIRS` order, then by name.
 
 ### [`tools/qa/tex.ts`](../tools/qa/tex.ts)

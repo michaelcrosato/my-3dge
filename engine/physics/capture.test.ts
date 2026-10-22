@@ -1,6 +1,7 @@
 /**
  * @file Tests for the physics part of the sim's state (engine/physics/capture.ts), through a sim world that has the
- * physics world as its hook: body ids round-trip through handles; 40 bodies falling into a walled pit give the same
+ * physics world as its hook: body ids round-trip through handles, and a removed body's id never names the newer body
+ * its slot holds (WP 13.16: a broken pane's slot taken by a shard); 40 bodies falling into a walled pit give the same
  * hashes every run; a capture taken mid-run, with bodies resting on bodies, restores (in place, into a new world, and
  * from its text) and continues with the uninterrupted run's hashes; every hashed field of a body counts; a capture from
  * another Rapier, or with bad bytes, is refused before anything changes.
@@ -80,6 +81,18 @@ describe('body ids', () => {
   it('round-trip through Rapier handles: slot plus generation · 2³²', () => {
     expect([bodyId(0), bodyId(5e-324), handleOf(1)]).toEqual([0, 1, 5e-324]);
     for (const id of [0, 7, 4294967295, 4294967296, 4294967296 * 3 + 12]) expect(bodyId(handleOf(id))).toBe(id);
+  });
+
+  it('never name the newer body a removed one’s slot holds', () => {
+    const physics = createPhysics();
+    const ball = { type: 'dynamic', colliders: [{ shape: { type: 'ball', radius: 0.1 } }] } as const;
+    const [gone, kept] = [physics.addBody(ball), physics.addBody(ball)];
+    physics.removeBody(gone);
+    const reused = physics.addBody({ ...ball, position: [0, 5, 0] }); // slot 0 again, generation 1
+    expect([gone, kept, reused, physics.hasBody(gone), physics.hasBody(reused)]).toEqual([0, 1, 4294967296, false, true]); // prettier-ignore
+    expect(() => physics.readBody(gone)).toThrow(/PHYSICS_NO_BODY/);
+    expect(() => physics.raycast([0, 0, 0], [0, 1, 0], { exclude: gone })).toThrow(/exclude/);
+    physics.dispose();
   });
 });
 

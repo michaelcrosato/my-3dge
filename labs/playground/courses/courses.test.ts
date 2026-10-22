@@ -1,10 +1,12 @@
 /**
  * @file Unit tests for the playground's feel courses (labs/playground/courses/): each runs on the gym from starts on
- * its open floor (the slide ramps' on their decks, the rides' on the tower's top where they say so), checks the
+ * its open floor (the slide ramps' on their decks, the gaps' on the lane's platforms, the landings' over the floor,
+ * the rides' on the tower's top where they say so), checks the
  * bounds (labs/playground/courses/bounds.ts) besides its own numbers, a run's under its label, and passes, every
  * number within its tolerance: the run `node x feel labs/playground` makes (tools/cmd/feel.test.ts runs it through
  * the command). The bounds take four numbers for each
- * camera, three for first person, and watch a camera's where a course names the WP that will make it pass.
+ * camera, three for first person, and watch a camera's where a course names the WP that will make it pass. The hill's
+ * course runs on the hill's terrain (WP 10.5).
  * @see labs/playground/courses/strip.ts
  * @see labs/playground/courses/jumps.ts
  * @see labs/playground/courses/air.ts
@@ -15,12 +17,17 @@
  * @see labs/playground/courses/mantle.ts
  * @see labs/playground/courses/fences.ts
  * @see labs/playground/courses/climb.ts
+ * @see labs/playground/courses/climbAgain.ts
  * @see labs/playground/courses/hang.ts
  * @see labs/playground/courses/superglide.ts
  * @see labs/playground/courses/zipline.ts
  * @see labs/playground/courses/ladder.ts
  * @see labs/playground/courses/launcher.ts
  * @see labs/playground/courses/skydive.ts
+ * @see labs/playground/courses/gaps.ts
+ * @see labs/playground/courses/steps.ts
+ * @see labs/playground/courses/crouch.ts
+ * @see labs/playground/courses/landing.ts
  * @see labs/playground/courses/cameras.ts
  * @see labs/playground/courses/camera-walls.ts
  * @see labs/playground/courses/bounds.ts
@@ -34,22 +41,28 @@ import { bodyBounds, cameraBounds } from './bounds';
 import { CAMERA_WALLS } from './camera-walls';
 import { CAMERAS_START } from './cameras';
 import { BOUNCE_RUNS, CLIMB_RUNS } from './climb';
+import { CLIMB_AGAIN_START } from './climbAgain';
 import { CRAWL_STARTS } from './crawl';
+import { CROUCH_START } from './crouch';
 import { FENCE_RUNS } from './fences';
+import { GAP_RUNS } from './gaps';
 import { HANG_STARTS } from './hang';
+import './hill';
 import { JUMPS_START } from './jumps';
 import { LADDER_STARTS } from './ladder';
+import { LANDING_RUNS } from './landing';
 import { LAUNCHER_STARTS } from './launcher';
 import { MANTLE_RUNS } from './mantle';
 import { SLIDE_FLAT_START } from './slideFlat';
 import { SLIDE_JUMPS } from './slideJump';
 import { SLIDE_RAMPS, SLIDE_UPHILL } from './slideRamps';
+import { STEP_RUNS } from './steps';
 import { STRIP_START } from './strip';
 import { SKYDIVE_START } from './skydive';
 import { GLIDE_START } from './superglide';
 import { ZIPLINE_STARTS } from './zipline';
 
-/** Each course's starts on the gym's floor, where nothing stands. */
+/** Each course's starts on the gym's floor, where nothing stands; the gaps' on the lane's platforms, or its floor. */
 const STARTS: Readonly<Record<string, readonly (readonly [number, number, number])[]>> = {
   strip: [STRIP_START],
   jumps: [JUMPS_START],
@@ -61,6 +74,11 @@ const STARTS: Readonly<Record<string, readonly (readonly [number, number, number
   mantle: MANTLE_RUNS.map(([, x]) => [x, 0, 8.5] as const),
   fences: FENCE_RUNS.map(([, x]) => [x, 0, 14.5] as const),
   climb: [...CLIMB_RUNS.map(([, x]) => [x, 0, 19.4] as const), ...BOUNCE_RUNS.map(([, z]) => [19, 0, z] as const)],
+  'climb-again': [CLIMB_AGAIN_START],
+  gaps: GAP_RUNS.map(({ at }) => at),
+  steps: STEP_RUNS.map(([, at]) => at),
+  crouch: [CROUCH_START],
+  landing: LANDING_RUNS.map(([, z]) => [2, 0, z] as const), // the floor it falls to
   hang: [HANG_STARTS.high, HANG_STARTS.low],
   superglide: [GLIDE_START],
   'mantle-boost': [GLIDE_START],
@@ -85,9 +103,9 @@ describe('the playground’s courses', () => {
     expect(run.filter((m) => m.watch)).toHaveLength(4); // the shooter's four, the others judged
   });
 
-  it('start each run on open floor, and each ramp’s on its deck', () => {
+  it('start each run on open floor or a gap’s platform, and each ramp’s on its deck', () => {
     for (const [name, starts] of Object.entries(STARTS)) {
-      for (const [x, , z] of starts) expect(topHeight(GYM, x, z), name).toBe(0); // nothing stands there
+      for (const [x, y, z] of starts) expect(topHeight(GYM, x, z), name).toBe(name === 'gaps' ? y : 0); // nothing else stands there
     }
     for (const [degrees, x, deck] of SLIDE_RAMPS) expect(topHeight(GYM, x, 30.5), `${degrees}°`).toBeCloseTo(deck, 6);
     for (const [x, y, z] of ON_THE_TOWER) expect([topHeight(GYM, x, z), y]).toEqual([6, 6]);
@@ -102,4 +120,12 @@ describe('the playground’s courses', () => {
       expect(result.pass).toBe(true);
     });
   }
+
+  it('hill: keeps every number within its tolerance, on the hill’s terrain', () => {
+    const course = getCourse('course:playground-hill');
+    expect(course.scene).toBe('playground:hill');
+    const result = runCourse(course);
+    expect(result.results.filter((r) => !r.pass)).toEqual([]);
+    expect(result.pass).toBe(true);
+  });
 });

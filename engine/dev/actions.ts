@@ -28,7 +28,9 @@ import { codeError } from '../core/log';
 import type { Field, Schema } from '../core/schema';
 import { changesSim, listDevActions } from '../sim/devActions';
 import { getLevel } from '../world/level/level';
-import { runBot, sweepBot, type BotPlan } from './bot';
+import { getSite } from '../world/site';
+import { runBot, type BotPlan } from './bot';
+import { sweepBot } from './botSweep';
 import { defineMember } from './members';
 
 /** One dev action as `actions.list()` shows it. */
@@ -82,14 +84,14 @@ defineMember('bot', {
       type: 'object',
       default: {},
       description:
-        "What it plays (engine/dev/bot.ts BotPlan): to ([{ x, z }]), tour, back, until ('component.field'), steps, trace, actor, its options, and seeds for a sweep.",
+        "What it plays (engine/dev/bot.ts BotPlan): to ([{ x, z }], and y on a site: a goal a storey up is not one under it), tour, back, until ('component.field'), steps, trace, actor, its options, and seeds for a sweep.",
     },
   },
   impl(h, plan: BotPlan & { seeds?: unknown }) {
     const { seeds, ...rest } = plan;
     const { scene } = h.session;
-    if (!scene.level) throw codeError('SIM_BAD_ARGUMENT', { where: '__engine.bot()', value: scene.id, expected: 'a scene with a level for the bot to read (defineScene({ level }))' }); // prettier-ignore
-    const level = getLevel(scene.level, h.registry);
+    if (!scene.level && !scene.site) throw codeError('SIM_BAD_ARGUMENT', { where: '__engine.bot()', value: scene.id, expected: 'a scene with a level or a site for the bot to read (defineScene({ level }))' }); // prettier-ignore
+    const level = scene.site ? getSite(scene.site, h.registry) : getLevel(scene.level!, h.registry);
     if (seeds !== undefined) {
       const settings = h.session.settings.values({ view: false });
       return sweepBot(scene, seeds, rest, { registry: h.registry, settings, level });

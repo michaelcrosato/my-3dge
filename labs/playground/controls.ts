@@ -3,9 +3,10 @@
  * Apex Legends' default bindings where the browser allows them. W A S D or the arrows move, Space jumps, Left Shift
  * sprints (a press keeps the sprint while the player moves on; the setting `input.sprint` makes it hold only), Left Alt
  * walks (ours: Apex walks only aiming down sights), C crouches (held; `input.crouch` toggles it), not Apex's Left
- * Ctrl, since Ctrl with W closes the browser's tab and no page can stop it; E uses (a zipline, a ladder), V kicks, the
- * left and right buttons fire and raise the sights, R reloads and 3 holsters; T switches the camera mode, X swaps the
- * shooter's shoulder, and in isometric Q and E turn the view, so there G uses. A pad's left stick moves, its right
+ * Ctrl, since Ctrl with W closes the browser's tab and no page can stop it; E uses (a door, a switch, a chair to carry
+ * and throw, a zipline, a ladder), V strikes (the kick's hit before its move, WP 13.19), the left and right buttons
+ * fire and raise the sights, R reloads and 3 holsters; T switches the camera mode, X swaps the shooter's shoulder, and
+ * in isometric Q and E turn the view, so there G uses. A pad's left stick moves, its right
  * stick looks, A jumps, B crouches, X uses, a click of the left stick sprints and of the right one kicks, the
  * triggers fire and aim, View switches the camera, the d-pad's left swaps the shoulder and its right turns isometric.
  *
@@ -17,9 +18,9 @@
  * page hears them (`onView`, labs/playground/main.ts). The page keeps P, F and M for itself (`reserved`).
  *
  * Invariants: data only; the buttons the intents carry are the actions the shooter model reads (`jump`, `sprint`,
- * `walk`, `crouch`, `interact`, engine/sim/actors.ts), and `aim`, which raises the sights (the camera's zoom), plus
- * `melee`, `fire`, `reload` and `holster`, bound for WP 13.19 and 13.20. The pad's reload and holster (Apex's X and Y
- * held) wait for a held binding with those WPs (ADR-0025 amendment 9).
+ * `walk`, `crouch`, `interact`, engine/sim/actors.ts; `melee`, the strike, engine/sim/interact.ts), and `aim`, which
+ * raises the sights (the camera's zoom), plus `fire`, `reload` and `holster`, bound for WP 13.20. The pad's reload
+ * and holster (Apex's X and Y held) wait for a held binding with those WPs (ADR-0025 amendment 9).
  *
  * Game code, a page's: it imports only the engine's public API (engine/index.ts) and the playground's files.
  *
@@ -47,7 +48,8 @@ export const PLAYGROUND_ACTIONS: Readonly<Record<string, string>> = {
   sprint: 'Sprint: hold, or press once to keep it',
   walk: 'Walk',
   crouch: 'Crouch: hold',
-  interact: 'Use: a zipline or a ladder',
+  interact: 'Use: a door, a switch, a chair to carry and throw, a zipline, a ladder',
+  melee: 'Strike: a door bursts open, then breaks; a prop is knocked',
   aim: 'Aim down sights',
 };
 
@@ -128,7 +130,8 @@ export function keysLine(input: Pick<Input, 'prompt' | 'bindings' | 'lastDevice'
   const pad = input.lastDevice === 'gamepad';
   const move = pad ? 'L Stick' : ['forward', 'left', 'back', 'right'].map(key).join('');
   const lines = [`${move}: move`, ...['jump', 'sprint', 'walk', 'crouch'].map((action) => `${key(action)}: ${action}`)];
-  lines.push(`${key('interact')}: use`, pad ? 'R Stick: look' : lock ? 'Click: mouse look' : 'Mouse: aim');
+  lines.push(`${key('interact')}: use`, `${key('melee')}: strike`);
+  lines.push(pad ? 'R Stick: look' : lock ? 'Click: mouse look' : 'Mouse: aim');
   lines.push(`${key('camera')}: camera`);
   if (view.includes('shoulder')) lines.push(`${key('shoulder')}: shoulder`);
   if (view.includes('turnLeft')) lines.push(`${key('turnLeft')} ${key('turnRight')}: turn`);

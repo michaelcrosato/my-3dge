@@ -1,12 +1,14 @@
 /**
- * @file Unit tests for engine/app/look.ts (T1, PLAN.md WP 7.8): before each frame the page's look shows the look's sky
- * on the stage with the quality budget; the style set joins the warm-up once, at the first look whose style is not
- * the set's own, and from then on re-points what shows to the style drawn; a look in the set's own style, or none,
- * never joins it; the view comes back as it was given.
+ * @file Unit tests for engine/app/look.ts (T1, PLAN.md WP 7.8, WP 13.18): before each frame the page's look shows the
+ * look's sky on the stage with the quality budget; the style set joins the warm-up once, at the first look whose style
+ * is not the set's own, with that style and its own, adds each later look's new style, and from then on re-points
+ * what shows to the style drawn; a look in the set's own style, or none, never joins it; the view comes back as it
+ * was given.
  * @see engine/app/look.ts
  */
 import { Scene } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
+import type { MaterialStyle } from '../gfx/materials/styles';
 import type { LookEntry } from '../gfx/post/looks';
 import type { Warmup } from '../gfx/warmup';
 import { createPageLook } from './look';
@@ -15,9 +17,14 @@ import { createPageLook } from './look';
 function fakes(start: Partial<LookEntry>) {
   const calls: string[] = [];
   let look = { sky: '', style: '', ...start } as LookEntry;
+  const warmed: MaterialStyle[] = [];
   const styles = {
     style: 'lambert' as const,
-    attach: () => (calls.push('attach'), { dispose: () => calls.push('detach') }),
+    attach: (_warmup: Warmup, _scene: unknown, asked: readonly MaterialStyle[] = []) => {
+      calls.push(`attach ${asked.join(',')}`);
+      warmed.push(...asked);
+      return { styles: warmed, add: (style: MaterialStyle) => void (calls.push(`add ${style}`), warmed.push(style)), dispose: () => calls.push('detach') }; // prettier-ignore
+    },
     apply: () => (calls.push('apply'), 0),
   };
   const stage = {
@@ -57,11 +64,21 @@ describe('the page look', () => {
     use({ style: 'toon', sky: 'sky:hall' });
     calls.length = 0;
     page.sync(stage, { scene: stage.scene });
-    expect(calls).toEqual(['show sky:hall', 'budget 1', 'attach', 'apply']);
+    expect(calls).toEqual(['show sky:hall', 'budget 1', 'attach lambert,toon', 'apply']);
     use({});
     calls.length = 0;
     page.sync(stage, { scene: stage.scene });
     expect(calls).toEqual(['show ', 'budget 1', 'apply']); // joined for good: new meshes still follow the style
     expect(page.styled).toBe(true);
+  });
+
+  it("adds a later look's style once, and none a look already warmed asks for", () => {
+    const { calls, page, stage, use } = fakes({ style: 'toon' });
+    page.sync(stage, { scene: stage.scene });
+    for (const style of ['pbr', 'toon', 'lambert', 'pbr'] as const) {
+      use({ style });
+      page.sync(stage, { scene: stage.scene });
+    }
+    expect(calls.filter((call) => /^(attach|add)/.test(call))).toEqual(['attach lambert,toon', 'add pbr']);
   });
 });

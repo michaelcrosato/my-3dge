@@ -3,7 +3,10 @@
  * as a committed image. `shot(gfx, view, options)` draws the view the way the frame does (`view.draw`, a post pass,
  * or `render()`), into an RGBA8 render target instead of the canvas: the target is set as the renderer's output
  * target, so the scene goes through the same internal target, pipelines and output pass (tone mapping, colour space)
- * as the frame, and a shot at the drawing buffer's size (the default) matches the canvas pixel for pixel. It then
+ * as the frame, and a shot at the drawing buffer's size (the default) matches the canvas pixel for pixel. A shot of
+ * another `size` through a post pass draws it with the renderer at that size (`atSize`, put back after): r182's
+ * screen coordinates follow the drawing buffer while an output target is set, so the chain drawn at the canvas's size
+ * into a smaller target would show only its top-left corner, and every filter sizes itself as at a canvas. It then
  * draws the ID pass (engine/gfx/idpass.ts) into a second target with no samples, reads both back with
  * `readRenderTargetPixelsAsync`, and returns what was asked: the pixels, the ID pass (`visible`, `unseen`), the look
  * metrics and their notes (engine/gfx/lookMetrics.ts), the 48 × 27 text thumbnail with its object map
@@ -160,6 +163,22 @@ function targetsOf(renderer: WebGPURenderer, width: number, height: number) {
   return targets;
 }
 
+/**
+ * Sets the renderer's drawing buffer to `width` × `height` for `draw` when it is another, and puts it back: the size a
+ * post pass is drawn at (see the file comment). The pixel ratio stays; the canvas's CSS size is never touched.
+ */
+function atSize(renderer: WebGPURenderer, width: number, height: number, draw: () => void): void {
+  const [buffer, kept] = [renderer.getDrawingBufferSize(new Vector2()), renderer.getSize(new Vector2())];
+  if (buffer.x === width && buffer.y === height) return draw();
+  const ratio = renderer.getPixelRatio();
+  renderer.setSize(width / ratio, height / ratio, false);
+  try {
+    draw();
+  } finally {
+    renderer.setSize(kept.x, kept.y, false);
+  }
+}
+
 /** Sets a perspective camera's aspect to `width / height` when a size was asked; returns how to put it back. */
 function fitCamera(view: WarmupView, size: ShotOptions['size']): () => void {
   const camera = view.camera as PerspectiveCamera;
@@ -196,7 +215,8 @@ export async function shot(gfx: ShotGfx, view: WarmupView, options: ShotOptions 
     renderer.setOutputRenderTarget(targets.colour);
     try {
       advanceFrame(renderer);
-      (view.draw ?? (() => renderer.render(scene, camera)))();
+      if (view.draw) atSize(renderer, width, height, view.draw);
+      else renderer.render(scene, camera);
     } finally {
       // r182's output pass leaves the output target set as the render target: the next frame would draw into it.
       renderer.setOutputRenderTarget(output);

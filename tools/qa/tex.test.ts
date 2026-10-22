@@ -72,13 +72,23 @@ function faulty() {
   return reg;
 }
 
+/**
+ * How long the tests that bake every engine texture may take (ms): about 26 s alone on this container since WP 13.17's
+ * nine generators, past Vitest's 30 s default under a full run's load. A budget, not a check (ADR-0022).
+ */
+const BAKES_ALL = 120_000;
+
 describe('the tex QA family', () => {
-  it("passes the engine's textures against their baseline", async () => {
-    const result = await runQa(ROOT, 'tex');
-    expect(result.failures).toEqual([]);
-    expect(result.warnings).toEqual([]);
-    expect(await family.run({ root: ROOT, only: ['texture:'] })).toEqual([]);
-  });
+  it(
+    "passes the engine's textures against their baseline",
+    async () => {
+      const result = await runQa(ROOT, 'tex');
+      expect(result.failures).toEqual([]);
+      expect(result.warnings).toEqual([]);
+      expect(await family.run({ root: ROOT, only: ['texture:'] })).toEqual([]);
+    },
+    BAKES_ALL,
+  );
 
   it('reports each fault once per texture and metric, valued by the worst bake', () => {
     const violations = checkTextures(faulty()).filter(
@@ -102,28 +112,32 @@ describe('the tex QA family', () => {
     expect(checkTextures(faulty(), ['texture:hot']).map((v) => v.metric)).toEqual(['range']);
   });
 
-  it("checks the textures a prop's materials name, as they bake them, under the prop's id", async () => {
-    const reg = faulty();
-    expect(checkPropTextures(reg)).toEqual([]);
-    defineMaterial('material:rampy', { map: { texture: 'texture:ramp', size: [16, 16] } }, reg);
-    defineProp('prop:sign', { parts: [{ material: 'material:rampy', top: 'material:nowhere' }] }, reg);
-    const violations = checkPropTextures(reg);
-    expect(violations.map((v) => [v.id, v.metric])).toEqual([
-      ['prop:sign', 'reference'],
-      ['prop:sign', 'seamDelta'],
-      ['prop:sign', 'period'],
-    ]);
-    expect(violations[0].message).toMatch(
-      /^part mesh's material:nowhere is not defined, so it draws as material:default/,
-    );
-    // Baked at the material's 16 × 16 and twice it (the generator's own size would bake 32 and 64): the worst, 32.
-    expect(violations[1].message).toMatch(
-      /^part mesh's material:rampy \(texture:ramp\), seed 1 at 32 × 32: map\.r differs/,
-    );
-    expect(checkPropTextures(reg, ['prop:crate'])).toEqual([]);
-    const result = await runQa(ROOT, 'tex', ['prop:']);
-    expect([result.failures, result.violations]).toEqual([[], 0]);
-  });
+  it(
+    "checks the textures a prop's materials name, as they bake them, under the prop's id",
+    async () => {
+      const reg = faulty();
+      expect(checkPropTextures(reg)).toEqual([]);
+      defineMaterial('material:rampy', { map: { texture: 'texture:ramp', size: [16, 16] } }, reg);
+      defineProp('prop:sign', { parts: [{ material: 'material:rampy', top: 'material:nowhere' }] }, reg);
+      const violations = checkPropTextures(reg);
+      expect(violations.map((v) => [v.id, v.metric])).toEqual([
+        ['prop:sign', 'reference'],
+        ['prop:sign', 'seamDelta'],
+        ['prop:sign', 'period'],
+      ]);
+      expect(violations[0].message).toMatch(
+        /^part mesh's material:nowhere is not defined, so it draws as material:default/,
+      );
+      // Baked at the material's 16 × 16 and twice it (the generator's own size would bake 32 and 64): the worst, 32.
+      expect(violations[1].message).toMatch(
+        /^part mesh's material:rampy \(texture:ramp\), seed 1 at 32 × 32: map\.r differs/,
+      );
+      expect(checkPropTextures(reg, ['prop:crate'])).toEqual([]);
+      const result = await runQa(ROOT, 'tex', ['prop:']);
+      expect([result.failures, result.violations]).toEqual([[], 0]);
+    },
+    BAKES_ALL,
+  );
 
   it("finds a game's texture modules and honours --only", async () => {
     const root = repository({

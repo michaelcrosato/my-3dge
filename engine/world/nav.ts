@@ -9,7 +9,8 @@
  * floors differ (one-way ledges). A diagonal also needs both ways round its corner, so no route cuts a corner past a
  * wall or up a ledge. The climb limit is data: the crowd's `NAV_CLIMB` by default, or a hero's jump reach from the
  * feel meter (`measureFeel(hero).reach`, engine/sim/feelCourse.ts), since `world` never imports `physics`. Queries take
- * metres on the ground (x east, z south) and answer with tiles (row-major indices) or points.
+ * metres on the ground (x east, z south) and answer with tiles (row-major indices) or points. A grid may also walk a
+ * `NavSurface`, tiles of its own from an `origin`, open and stepped as it says: the terrain's (engine/world/terrainNav.ts).
  *
  * Invariants: navigation is derived data, a pure function of the level and the options: never saved, and rebuilt the
  * same (after a restore, in another runtime); the field cache only saves work. Ties go to the lower tile index. The
@@ -36,6 +37,7 @@ import { defineSchema, parse, type SpecOf } from '../core/schema';
 import type { CompiledLevel } from './level/types';
 import { NAV_CLIMB } from './level/validate';
 import { canStep as levelStep } from './level/walk';
+import { TileHeap } from './tileHeap';
 
 /** The 8 neighbours, as [columns east, rows south]: east, west, south, north, then the diagonals (bit k of a step). */
 // prettier-ignore
@@ -66,70 +68,35 @@ export interface FlowOptions {
   reach?: number;
 }
 
-/** Bit k of a tile's steps for each (columns, rows) offset, at (rows + 1)·3 + columns + 1; −1 for no offset. */
-const DIRECTION_OF = [7, 3, 5, 1, -1, 0, 6, 2, 4];
-
-/** An indexed binary min-heap of tiles keyed by `keys[tile]`, ties to the lower tile; pushing a held tile re-sorts it. */
-class TileHeap {
-  readonly #heap: Int32Array;
-  readonly #at: Int32Array;
-  #keys: Float64Array = new Float64Array(0);
-  size = 0; // how many tiles it holds
-
-  constructor(tiles: number) {
-    [this.#heap, this.#at] = [new Int32Array(tiles), new Int32Array(tiles).fill(-1)];
-  }
-
-  /** Empties it and keys it by `keys`. */
-  start(keys: Float64Array): void {
-    for (let k = 0; k < this.size; k++) this.#at[this.#heap[k]] = -1;
-    this.size = 0;
-    this.#keys = keys;
-  }
-
-  /** Adds `tile`, or moves it up after its key dropped. */
-  push(tile: number): void {
-    const heap = this.#heap;
-    let k = this.#at[tile] < 0 ? this.size++ : this.#at[tile];
-    for (let parent = (k - 1) >> 1; k > 0 && this.#less(tile, heap[parent]); k = parent, parent = (k - 1) >> 1) {
-      heap[k] = heap[parent];
-      this.#at[heap[k]] = k;
-    }
-    heap[k] = tile;
-    this.#at[tile] = k;
-  }
-
-  /** Removes and returns the tile with the least key. */
-  pop(): number {
-    const heap = this.#heap;
-    const top = heap[0];
-    const last = heap[--this.size];
-    this.#at[top] = -1;
-    if (this.size === 0) return top;
-    let k = 0;
-    for (let child = 1; child < this.size; k = child, child = 2 * k + 1) {
-      if (child + 1 < this.size && this.#less(heap[child + 1], heap[child])) child++;
-      if (!this.#less(heap[child], last)) break;
-      heap[k] = heap[child];
-      this.#at[heap[k]] = k;
-    }
-    heap[k] = last;
-    this.#at[last] = k;
-    return top;
-  }
-
-  #less(a: number, b: number): boolean {
-    return this.#keys[a] < this.#keys[b] || (this.#keys[a] === this.#keys[b] && a < b);
-  }
-}
-
-/** The walkable grid of a compiled level, and the searches over it (see the file comment). */
-export class NavGrid {
-  /** The level it was built from, its size in tiles and its tile (m). */
-  readonly level: CompiledLevel;
+/**
+ * What a grid walks besides a compiled level: `cols` × `rows` tiles `tile` metres wide from `origin` ([x, z], [0, 0] by
+ * default), which are `walkable`, each one's `floor` (m), and whether a body on tile (col, row) steps to (col + dc,
+ * row + dr) climbing at most `climb` metres on the way.
+ */
+export interface NavSurface {
   readonly cols: number;
   readonly rows: number;
   readonly tile: number;
+  readonly origin?: readonly [number, number];
+  readonly walkable: ArrayLike<boolean>;
+  readonly floor: ArrayLike<number>;
+  canStep(col: number, row: number, dc: number, dr: number, climb: number): boolean;
+}
+
+/** What a grid is built from: a compiled level, or a surface. */
+export type NavSource = CompiledLevel | NavSurface;
+
+/** Bit k of a tile's steps for each (columns, rows) offset, at (rows + 1)·3 + columns + 1; −1 for no offset. */
+const DIRECTION_OF = [7, 3, 5, 1, -1, 0, 6, 2, 4];
+
+/** The walkable grid of a compiled level, and the searches over it (see the file comment). */
+export class NavGrid {
+  /** The level (or surface) it was built from, its size in tiles, its tile (m) and its north-west corner [x, z] (m). */
+  readonly level: NavSource;
+  readonly cols: number;
+  readonly rows: number;
+  readonly tile: number;
+  readonly origin: readonly [number, number];
   /** The climb limit and the bodies' radius (m). */
   readonly climb: number;
   readonly radius: number;
@@ -148,7 +115,7 @@ export class NavGrid {
   readonly #prev: Int32Array;
 
   /** Builds the grid of `level`: its open tiles and their steps under the climb limit. */
-  constructor(level: CompiledLevel, options: NavGridOptions = {}) {
+  constructor(level: NavSource, options: NavGridOptions = {}) {
     const where = 'new NavGrid(level, options)';
     const { climb, radius, fields } = parse(NAV_GRID_FIELDS, options, where);
     if (radius >= level.tile / 2) {
@@ -158,6 +125,11 @@ export class NavGrid {
     const { cols, rows, tile } = level;
     const n = cols * rows;
     [this.level, this.cols, this.rows, this.tile, this.climb, this.radius] = [level, cols, rows, tile, climb, radius];
+    const surface = 'canStep' in level ? level : null;
+    this.origin = surface?.origin ?? [0, 0];
+    const stepOk = surface
+      ? (c: number, r: number, dc: number, dr: number) => surface.canStep(c, r, dc, dr, climb)
+      : (c: number, r: number, dc: number, dr: number) => levelStep(level as CompiledLevel, c, r, dc, dr, climb);
     [this.#capacity, this.#heap, this.#prev] = [fields, new TileHeap(n), new Int32Array(n)];
     [this.#cost, this.#score] = [new Float64Array(n), new Float64Array(n)];
     const open = (this.open = Uint8Array.from(level.walkable, (walkable) => (walkable ? 1 : 0)));
@@ -171,22 +143,23 @@ export class NavGrid {
       [this.#length[k], this.#offset[k]] = [dc && dr ? tile * Math.SQRT2 : tile, dr * cols + dc];
       for (let i = 0; i < n; i++) {
         if (!open[i] || (k >= 4 && !round(i, dc, dr))) continue;
-        if (levelStep(level, i % cols, Math.floor(i / cols), dc, dr, climb)) steps[i] |= 1 << k;
+        if (stepOk(i % cols, Math.floor(i / cols), dc, dr)) steps[i] |= 1 << k;
       }
     }
   }
 
   /** The tile under (x, z) metres, or −1 off the map. */
   cellAt(x: number, z: number): number {
-    const col = Math.floor(x / this.tile);
-    const row = Math.floor(z / this.tile);
+    const col = Math.floor((x - this.origin[0]) / this.tile);
+    const row = Math.floor((z - this.origin[1]) / this.tile);
     return col >= 0 && row >= 0 && col < this.cols && row < this.rows ? row * this.cols + col : -1;
   }
 
   /** The tile's centre on its floor (m). */
   center(cell: number, out = new Vector3()): Vector3 {
     const col = cell % this.cols;
-    return out.set((col + 0.5) * this.tile, this.level.floor[cell], ((cell - col) / this.cols + 0.5) * this.tile);
+    const [ox, oz] = this.origin;
+    return out.set((col + 0.5) * this.tile + ox, this.level.floor[cell], ((cell - col) / this.cols + 0.5) * this.tile + oz); // prettier-ignore
   }
 
   /**
@@ -196,11 +169,12 @@ export class NavGrid {
   nearestOpen(x: number, z: number): number {
     const here = this.cellAt(x, z);
     if (here >= 0 && this.open[here]) return here;
-    const [col, row, rings] = [Math.floor(x / this.tile), Math.floor(z / this.tile), NEAREST_RINGS];
+    const [ox, oz] = this.origin;
+    const [col, row, rings] = [Math.floor((x - ox) / this.tile), Math.floor((z - oz) / this.tile), NEAREST_RINGS];
     let [best, low] = [-1, Infinity];
     for (let r = Math.max(0, row - rings); r <= Math.min(this.rows - 1, row + rings); r++) {
       for (let c = Math.max(0, col - rings); c <= Math.min(this.cols - 1, col + rings); c++) {
-        const [dx, dz] = [(c + 0.5) * this.tile - x, (r + 0.5) * this.tile - z];
+        const [dx, dz] = [(c + 0.5) * this.tile + ox - x, (r + 0.5) * this.tile + oz - z];
         if (this.open[r * this.cols + c] && dx * dx + dz * dz < low)
           [best, low] = [r * this.cols + c, dx * dx + dz * dz];
       }
@@ -230,13 +204,14 @@ export class NavGrid {
    * from its own, so a body passes a gallery's face only from above.
    */
   lineOfSight(ax: number, az: number, bx: number, bz: number): boolean {
-    const [dx, dz, r, t] = [bx - ax, bz - az, this.radius, this.tile];
-    const n = Math.ceil(Math.sqrt(dx * dx + dz * dz) / Math.max(Math.min(t / 2, 2 * r), t / 8));
-    let [col, row] = [Math.floor(ax / t), Math.floor(az / t)];
     if (!this.open[this.cellAt(ax, az)]) return false;
+    const [x0, z0] = [ax - this.origin[0], az - this.origin[1]]; // from the grid's corner
+    const [dx, dz, r, t] = [bx - this.origin[0] - x0, bz - this.origin[1] - z0, this.radius, this.tile];
+    const n = Math.ceil(Math.sqrt(dx * dx + dz * dz) / Math.max(Math.min(t / 2, 2 * r), t / 8));
+    let [col, row] = [Math.floor(x0 / t), Math.floor(z0 / t)];
     for (let s = 0; s <= n; s++) {
-      const x = n ? ax + (dx * s) / n : ax;
-      const z = n ? az + (dz * s) / n : az;
+      const x = n ? x0 + (dx * s) / n : x0;
+      const z = n ? z0 + (dz * s) / n : z0;
       const c = Math.floor(x / t);
       if (!this.#step(col, row, c, Math.floor(z / t))) return false;
       col = c;

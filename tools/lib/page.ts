@@ -22,8 +22,11 @@ import type { HashedView, Runtime } from '../cmd/sim';
 import { browserRuntime, launchBrowser, preparePage, VIEWPORT, type PageWatch } from './browser';
 import { startVite } from './vite';
 
-/** How long a page may take to signal ready or an error, ms. */
-export const READY_MS = 60_000;
+/**
+ * How long a page may take to signal ready or an error, ms: the playground's site (PLAN.md WP 13.18) warms 85
+ * pipelines over its view's two cameras in about 215 s on this container's SwiftShader.
+ */
+export const READY_MS = 300_000;
 
 /** `window.__engine` as the tools call it in a page. */
 export type PageEngine = Record<string, (...args: unknown[]) => unknown> & { scene: { dump(options: object): string } };

@@ -14,23 +14,23 @@
  *
  * The camera is a rig (engine/gfx/cameras/rig.ts: a code's camera, blends, the view effects, the settings `cam.*`) that
  * follows the player (WP 3.10): the first player actor's feet as the frame draws them, else the level's middle; so does
- * the stage's sky (engine/gfx/stageSky.ts, flickering at the frames' time, WP 7.8), and the level entry's material
- * swaps (`materials`) reach the stage. The rig also gets the sim's read-only `QueryView` in a physics scene (the follow
+ * the stage's sky (engine/gfx/stageSky.ts, flickering at the frames' time, WP 7.8), and the level entry's looks (its
+ * swaps, rooms' floors and recipes: `levelLooks`) reach the stage. The rig also gets the sim's read-only `QueryView` in a physics scene (the follow
  * cameras keep out of the walls), the player's eye (the shooter model's height, else his head socket) and what he does
  * each step (`cameraPlayer`); first person draws his arms by their own lens and hides his body, its shadow kept
  * (engine/gfx/viewmodel/, WP 13.12; `cameraInfo().culled`, `.arms`); hard landings shake the screen. Following a
- * player, the level's cutaway runs (engine/gfx/cutaway.ts); `aim(rule, devices)` is his aim from the camera drawn last
- * (WP 13.9, engine/input/aim.ts: the centre's ray through the sim's queries, his body skipped, or the pointer's onto
- * his floor), which the page's input records. `restarted()` after the run starts again (a new seed, a replay) or its
- * world changes between steps (a restore, a dev action) reads the entities afresh: the stand-ins and bolts snap to
- * them, so no dump, shot or frame shows the places they had before. The effects forget what ran only for a new world,
- * read from its first event; the same world keeps its trace read (history, never restored), so no event plays twice.
+ * player, the cutaways run (the stage's `frame`); `aim(rule, devices)` is his aim from the camera drawn last (WP 13.9,
+ * engine/input/aim.ts: the centre's ray through the sim's queries, his body skipped, or the pointer's onto his floor),
+ * which the page's input records. `restarted()` after the run starts again (a new seed, a replay) or its world changes
+ * between steps (a restore, a dev action) reads the entities afresh: the stand-ins and bolts snap to them, so no dump,
+ * shot or frame shows the places they had before. The effects forget what ran only for a new world, read from its first
+ * event; the same world keeps its trace read (history, never restored), so no event plays twice.
  *
  * The level comes from the scene's `level` id (engine/world/level/level.ts), registered before the view starts
- * (`APP_NO_LEVEL`). Cameras are view state: switching one (`setCamera(code)`, `__engine.camera.set`; with `{ blend:
- * true }`, the page's live switch, it blends) never reaches the sim. Invariants: presentation only (doctrine: WebGPU
- * only): it reads the run and never writes it (the `QueryView` has no way in); one stage per view and one three.js
- * camera per projection, so switching makes no new object.
+ * (`APP_NO_LEVEL`), the terrain from its `terrain` id (WP 10.5), the site from its `site` id (WP 13.15). Cameras are
+ * view state: switching one (`setCamera(code)`, `__engine.camera.set`; with `{ blend: true }`, the page's live switch,
+ * it blends) or moving it on by frames headless (`advance`) never reaches the sim. Invariants: presentation only: it
+ * reads the run, never writes it (the `QueryView` has no way in); one stage per view, one camera per projection.
  *
  * @example
  * // const view = createRunView({ run: () => session, registry, materials: createMaterialLibrary() });
@@ -49,13 +49,16 @@ import type { MaterialLibrary } from '../gfx/materials/library';
 import type { FrameView } from '../gfx/renderer';
 import { aimPoint, type AimDevices, type AimRule } from '../input/aim';
 import { dumpScene, type DumpOptions } from '../gfx/sceneDump';
+import { levelLooks } from '../gfx/level/runs';
 import { createStage, type Stage } from '../gfx/stage';
 import type { FirstPersonParts } from '../gfx/viewmodel/body';
 import { armsLens } from '../gfx/viewmodel/lens';
 import { queryViewOf, type QueryView } from '../sim/queryView';
 import type { Session } from '../sim/session';
 import type { EntityData } from '../sim/state';
-import { getLevel, type LevelEntry } from '../world/level/level';
+import { getLevel } from '../world/level/level';
+import { getSite } from '../world/site';
+import { getTerrain } from '../world/terrain';
 
 /** The codes this module raises, with their fixes. */
 export const VIEW_CODES = defineCodes('app', {
@@ -74,6 +77,9 @@ export const DEFAULT_CAMERA = 'cam=iso';
 
 /** The aspect a view frames for when nothing draws it (headless): 16:9, the e2e viewport's. */
 export const HEADLESS_ASPECT = 16 / 9;
+
+/** A frame `advance` moves the camera on by, real seconds: a 60 Hz page's. */
+export const ADVANCE_FRAME = 1 / 60;
 
 /** What `camera.get()` and `camera.set(code)` return: the camera as a code, in words, and its pose. */
 export interface CameraInfo {
@@ -131,8 +137,12 @@ export interface RunView {
   aim(rule: AimRule, devices?: AimDevices): Vec3 | undefined;
   /** Switches to the camera `code` names, from the current one (blending with `blend`); returns it. Throws for a bad code. */
   setCamera(code: string, options?: { blend?: boolean }): CameraInfo;
+  /** Moves the camera on by `frames` frames of `ADVANCE_FRAME`, drawing nothing, as a page's frames move it; returns it. */
+  advance(frames: number): CameraInfo;
   /** The stage as text (engine/gfx/sceneDump.ts). */
   dump(options?: DumpOptions): string;
+  /** The sim's read-only queries, or undefined without physics: what the agent eye casts through (WP 12.3). */
+  queries(): QueryView | undefined;
   /** Frees the stage. */
   dispose(): void;
 }
@@ -153,10 +163,11 @@ export function createRunView(options: RunViewOptions): RunView {
     throw codeError('APP_NO_LEVEL', { scene: scene.id, level: scene.level });
   }
   const level = scene.level === undefined ? null : getLevel(scene.level, registry);
-  const entry = scene.level === undefined ? null : (registry.get('level', scene.level) as LevelEntry);
-  const levelMaterials = (entry?.materials ?? {}) as Readonly<Record<string, string>>; // strings: the kind checks
+  const looks = scene.level === undefined ? {} : levelLooks(registry, scene.level);
+  const terrain = scene.terrain === undefined ? null : getTerrain(scene.terrain, registry);
+  const site = scene.site === undefined ? null : getSite(scene.site, registry);
   const fxRng = (...keys: readonly (string | number)[]) => options.run().world.fxRng(...keys);
-  const stage = createStage({ level, materials: options.materials, registry, log: options.log, fxRng, levelMaterials });
+  const stage = createStage({ level, terrain, site, materials: options.materials, registry, log: options.log, fxRng, ...looks }); // prettier-ignore
   /**
    * Turns the effects on or off by the view setting `gfx.effects` (a registry without it: on), before they read;
    * returns whether that changed them.
@@ -237,7 +248,7 @@ export function createRunView(options: RunViewOptions): RunView {
     parts = stage.actors.firstPerson(first);
     const player = stage.actors.player();
     const fade = (rig.camera as { fade?: boolean }).fade === true; // a camera that may stand behind a wall
-    if (player) stage.cutaway?.update(pose, player.feet, { fade });
+    if (player) stage.frame(pose, player.feet, { fade, view: rig.camera.type === 'view' });
     return pose;
   };
   const info = (): CameraInfo => ({
@@ -293,6 +304,7 @@ export function createRunView(options: RunViewOptions): RunView {
       return { scene: stage.scene, camera: drawn, alpha: frame.alpha };
     },
     cameraInfo: info,
+    queries,
     aim(rule, devices = {}) {
       if (!stage.actors.player()) return undefined;
       const { follow: feet, eye, queries: walls } = follow();
@@ -305,6 +317,11 @@ export function createRunView(options: RunViewOptions): RunView {
     setCamera(code, setOptions = {}) {
       rig.set(code, { blend: setOptions.blend === true });
       drawn = pair.place(move(undefined, 0), aspect);
+      drawCrowd();
+      return info();
+    },
+    advance(frames) {
+      for (let i = 0; i < frames; i++) drawn = pair.place(move(undefined, ADVANCE_FRAME), aspect);
       drawCrowd();
       return info();
     },

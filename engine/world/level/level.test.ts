@@ -68,6 +68,15 @@ describe('defineLevel and getLevel', () => {
     ]);
   });
 
+  it('keeps its own recipes, none by default, and refuses one that is not a recipe', () => {
+    const reg = createRegistry();
+    expect(defineLevel('level:plain', { text: ROOM }, reg).recipes).toEqual({});
+    const wall = { shape: 'block', materials: ['material:siding', 'material:paint'], castShadow: true, receiveShadow: true }; // prettier-ignore
+    expect(defineLevel('level:sided', { text: ROOM, recipes: { wall } }, reg).recipes).toEqual({ wall });
+    const error = errorOf(() => defineLevel('level:bad', { text: ROOM, recipes: { wall: { shape: 'block', materials: [] } } }, reg)); // prettier-ignore
+    expect([error.code, error.message]).toEqual(['CORE_BAD_SPEC', expect.stringContaining('recipes["wall"] must be')]);
+  });
+
   it('names the closest ids for a missing one', () => {
     const reg = createRegistry();
     defineLevel('level:room', { text: '#\n' }, reg);

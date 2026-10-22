@@ -9,7 +9,7 @@
  * the scene, its replay and the budget's run.
  */
 import { describe, expect, it } from 'vitest';
-import { rescueLost, type RescueLevel } from './bodies';
+import { rescueLost, type RescueLevel } from './rescue';
 import { handleOf } from './capture';
 import {
   addAgent,

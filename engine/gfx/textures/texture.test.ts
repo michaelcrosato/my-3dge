@@ -1,6 +1,6 @@
 /**
  * @file Unit tests for the generator registry (engine/gfx/textures/texture.ts): a registry gets the kind with the
- * six v1 generators and the seven v2 ones, listed by id; `defineTexture` stores a generator and refuses parameters
+ * six v1 generators, the seven v2 ones and the nine v3 ones (the building materials), listed by id; `defineTexture` stores a generator and refuses parameters
  * without a description or default, a size that does not tile and duplicate ids; parameters are filled and checked
  * by their schema; sizes are checked against the tile with `GFX_TEXTURE_SIZE`, naming a size that fits.
  * @see engine/gfx/textures/texture.ts
@@ -22,23 +22,32 @@ const stripes = {
 } as const;
 
 describe('the texture kind', () => {
-  it('comes with the v1 and v2 generators', () => {
+  it('comes with the v1, v2 and v3 generators', () => {
     const reg = createRegistry();
     getTexture('texture:brick', reg);
     expect(reg.list('texture').map((entry) => entry.id)).toEqual([
+      'texture:asphalt',
       'texture:brick',
+      'texture:carpet',
       'texture:checker',
+      'texture:concrete',
       'texture:dirt',
       'texture:flagstone',
+      'texture:glass',
       'texture:grass',
       'texture:metal',
       'texture:moss',
       'texture:planks',
       'texture:plaster',
       'texture:runes',
+      'texture:shingles',
+      'texture:siding',
       'texture:staves',
       'texture:stone',
+      'texture:tiles',
+      'texture:wallpaper',
       'texture:water',
+      'texture:wood',
     ]);
     expect(reg.describe('texture').fields.map((field) => field.key)).toEqual([
       'description',

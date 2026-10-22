@@ -29,6 +29,7 @@
  */
 import { codeError } from '../core/log';
 import { defineSchema, parse, type EntryOf } from '../core/schema';
+import { storeyView } from './level/storeys';
 import type { CompiledLevel } from './level/types';
 
 /** How far a ladder's rungs stand off the wall it leans on (m). */
@@ -135,8 +136,16 @@ const SIDES = [
   [-1, 0],
 ] as const;
 
-/** The ladders `level`'s ladder glyphs stand (see the file comment), in reading order. */
+/**
+ * The ladders `level`'s ladder glyphs stand (see the file comment), in reading order; in a level written as storeys,
+ * each storey's (bottom first), from its floor up to the top of the wall it leans on, the floor of the storey above.
+ */
 export function levelLadders(level: CompiledLevel): LadderSpec[] {
+  return level.storeys ? level.storeys.flatMap((_, k) => storeyLadders(storeyView(level, k))) : storeyLadders(level);
+}
+
+/** The ladders of one storey (a format-1 level, or a storey's view), in reading order. */
+function storeyLadders(level: CompiledLevel): LadderSpec[] {
   const { cols, rows, tile } = level;
   const ladderAt = (c: number, r: number) => c >= 0 && r >= 0 && c < cols && r < rows && level.legend[level.tiles[r * cols + c]]?.ladder === true; // prettier-ignore
   const wallOf = (c: number, r: number): [number, number] | null => {

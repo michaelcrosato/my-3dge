@@ -1,14 +1,15 @@
 /**
  * @file The engine in a page (PLAN.md §6.4, §6.9, §8.3, WP 2.7): `createEngine({ canvas, scenes, levels })` registers
- * the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay` and
- * settings by path), starts the scene as a recorded run with its view (engine/app/headless.ts, engine/app/view.ts),
- * publishes the run's inspector as `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts)
- * and the post-processing chain every frame and shot is drawn through (engine/gfx/post/chain.ts: the view settings
- * `post.look`, `post.filters` and `post.show`; the look's sky and style, engine/app/look.ts), warms up every pipeline
- * the view needs through both cameras (perspective and orthographic), draws the first frame, then runs the frame loop
- * (engine/app/loop.ts): the devices sampled into intents (engine/input/input.ts; `__engine.input` drives the same
- * session), fixed steps from the clock, the view drawn at the clock's alpha; the map follows the camera, the look the
- * view settings `input.*`, the aim the view, and a click takes the pointer lock where the map's mouse looks (WP 13.9).
+ * the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay`,
+ * settings by path, a gallery link `#gallery/<kind>/<id>` with its driver, engine/dev/galleryShoot.ts), starts the
+ * scene as a recorded run with its view (engine/app/headless.ts, engine/app/view.ts), publishes the run's inspector
+ * as `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts) and the post-processing chain
+ * every frame and shot is drawn through (engine/gfx/post/chain.ts: the view settings `post.look`, `post.filters` and
+ * `post.show`; the look's sky and style, engine/app/look.ts), warms up every pipeline the view needs through both
+ * cameras (perspective and orthographic), draws the first frame, then runs the frame loop (engine/app/loop.ts): the
+ * devices sampled into intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from
+ * the clock, the view drawn at the clock's alpha; the map follows the camera, the look the view settings `input.*`,
+ * the aim the view, and a click takes the pointer lock where the map's mouse looks (WP 13.9).
  *
  * Ready or error (§8.3): `__engine.ready` turns true once the first frame is done on the GPU, never after a startup
  * error; every failure is one record in `__engine.errors` (the log's), shown as page text by the error overlay
@@ -28,8 +29,7 @@
  * (engine/gfx/quality.ts) and, in touch mode, the loop's 60 fps cap; the menu button pauses, then calls `onMenu`.
  *
  * Invariants: rendering never writes the sim (doctrine: WebGPU only): the loop steps the session only with intents and
- * recorded settings; cameras and view settings never reach the hash. Nothing reads a wall clock: time comes from the
- * animation frames' timestamps.
+ * recorded settings; cameras and view settings never reach the hash; time comes from the frames, never a wall clock.
  *
  * @example
  * // labs/box/main.ts
@@ -50,6 +50,7 @@ import {
 } from '../core/log';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
 import type { Settings } from '../core/settings';
+import { createGalleryDriver, type GalleryDriver } from '../dev/galleryShoot';
 import { createOverlay } from '../dev/overlay';
 import { createMaterialLibrary } from '../gfx/materials/library';
 import { createStyleSet } from '../gfx/materials/styles';
@@ -114,6 +115,8 @@ export interface EngineOptions {
   replays?: Readonly<Record<string, () => Promise<string>>>;
   /** The query to read (`location.search`). */
   search?: string;
+  /** The hash to read (`location.hash`): a gallery deep link, `#gallery/<kind>/<id>` (engine/app/routes.ts). */
+  hash?: string;
   /** Where scenes, levels, components, settings and materials are declared (the shared registry). */
   registry?: Registry;
   /** Where errors and advice go (the shared log). */
@@ -267,7 +270,12 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   const viewNow = () => parts.run!.view!;
   const settingsNow = currentSettings(() => parts.run!);
   const chrome = createChrome(document);
-  const { drawing, frame, settle, warmBoth } = createPageDrawing(parts, { chrome, settings: settingsNow, onFrame: options.onFrame }); // prettier-ignore
+  let gallery: GalleryDriver | null = null; // a gallery deep link's, fitting its camera and bursting its emitter
+  const onFrame = (shown: EngineFrame) => {
+    gallery?.frame(shown.dt);
+    options.onFrame?.(shown);
+  };
+  const { drawing, frame, settle, warmBoth } = createPageDrawing(parts, { chrome, settings: settingsNow, onFrame }); // prettier-ignore
   let warming: Promise<void> | null = null;
   let asked: Asked | null = null;
   let materials: ReturnType<typeof createMaterialLibrary> | null = null;
@@ -278,7 +286,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
       if (!registry.has('level', id)) defineLevel(id, level, registry);
     }
     const search = options.search ?? location.search;
-    routes = parseRoutes(search, { scenes: options.scenes, registry });
+    routes = parseRoutes(search, { scenes: options.scenes, registry, hash: options.hash ?? location.hash, log });
     if (routes.replay !== undefined) {
       asked = await readReplay(routes.replay, options.replays);
       const scene = asked.playback?.replay.scene;
@@ -290,6 +298,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     materials = createMaterialLibrary({ registry });
     const { scene, seed, settings, cam } = routes;
     parts.run = createAppHost({ scene, seed, settings, cam, registry, log, drawing, materials });
+    if (routes.gallery) gallery = createGalleryDriver(routes.gallery, () => parts.run!, registry);
   } catch (error) {
     fail(error);
     return engine;

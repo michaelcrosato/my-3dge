@@ -7,8 +7,8 @@
  * A problem's `message` is `[CODE] <file>:<line>:<column>: <what is wrong>: <the fix>`, the form editors and agents
  * jump to. Lines count the whole file from 1, front matter included; columns count characters (code points) from 1.
  *
- * Invariants: `LEVEL_UNREACHABLE_SPAWN` and `LEVEL_UNREACHABLE_AREA` are content checks (`validateLevel`, the QA
- * family); every other code is structural, and `compileLevel` refuses a level that has one.
+ * Invariants: the codes of `LEVEL_CONTENT_CODES` are content checks (`validateLevel`, the QA family); every other code
+ * is structural, and `compileLevel` refuses a level that has one.
  *
  * @example
  * const p = levelProblem('LEVEL_EMPTY', { at: 'room.txt:4:1' }, 4, 1);
@@ -63,6 +63,62 @@ export const LEVEL_CODES = defineCodes('level', {
     fix: 'open a gap to it, or fill it with a solid glyph (#) if nobody should stand there',
     doc: 'Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`, once per cut-off area without a spawn, at its first tile in reading order.',
   },
+  LEVEL_BAD_STOREY: {
+    template: '{at}: {problem}',
+    fix: 'write each storey as a block between two lines holding only --- before its map, bottom storey first: storey (a name), base (its floor, m) and height (its clear height, m), each base above the ceiling of the storey below; the top storey may add roof (gable, hip or flat), pitch (°), ridge (x or z), eaves (m) and roofSurface; every map the size of the first',
+    doc: 'Raised by `validateLevel` and `compileLevel` (engine/world/level/parse.ts, storeys.ts) for a storey block that is never closed, names no storey, has an unknown, repeated or bad key, lacks its base or height, does not rise above the storey below (the gap is its floor slab), repeats a name, or whose map is not the size of the first storey’s.',
+  },
+  LEVEL_NEEDS_STOREY: {
+    template: '{at}: {char} ({glyph}) {why}, which only a storey has',
+    fix: 'write the map as a storey (format 2): a block before it between two lines holding only ---, with storey: ground, base: 0 and height: 2.7',
+    doc: 'Raised by `validateLevel` and `compileLevel` (engine/world/level/validate.ts) for a format-1 map (no storey blocks) using a glyph that needs a storey: void, a door, a window, a low ceiling, a room marker or a flight of stairs.',
+  },
+  LEVEL_BAD_FLIGHT: {
+    template: '{at}: this {char} block {why}',
+    fix: 'draw {glyph} as a filled rectangle on the lower storey with exactly one side against floor of the storey above, and void (~) over all of it on the storey above: it rises toward that side, to that floor',
+    doc: 'Raised by `validateLevel` and `compileLevel` (engine/world/level/storeys.ts) for a flight of stairs between storeys that is not a filled rectangle, stands on the top storey, has no void over it on the storey above, or meets that storey’s floor on no side or on several.',
+  },
+  LEVEL_BAD_OPENING: {
+    template: '{at}: this {char} block {why}',
+    fix: 'draw each {kind} as a filled rectangle in a wall, one wall thick, with the wall (a full-height solid glyph, #) at both of its ends',
+    doc: 'Raised by `validateLevel` and `compileLevel` (engine/world/level/openings.ts) for a door or a window that is not a filled rectangle, or has no wall at both ends of its longer side, so the way through it is not clear.',
+  },
+  LEVEL_BAD_ROOM: {
+    template: '{at}: {why}',
+    fix: 'give each room one marker, each room a name of its own, and close each room off from the next with walls and doors',
+    doc: 'Raised by `validateLevel` and `compileLevel` (engine/world/level/rooms.ts) for a room marker on a tile with no floor, two markers of one room, two rooms named alike, or two rooms whose markers share one floor.',
+  },
+  LEVEL_BAD_ROOF: {
+    template: '{at}: {why}',
+    fix: 'give the roof to the top storey only, with a pitch for gable and hip (roof: gable, pitch: 35), and a map holding floor under it',
+    doc: 'Raised by `validateLevel` and `compileLevel` (engine/world/level/storeys.ts) for a roof on a storey below the top one, a gable or hip without a pitch, a ridge on a roof that is not a gable, roof keys on a storey with no roof, or a storey with no floor to stand it on.',
+  },
+  LEVEL_NARROW_DOOR: {
+    template: '{at}: the door is {width} m wide, narrower than a body ({body} m across)',
+    fix: 'widen it to at least {need} tiles along its wall',
+    doc: 'Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`: bodies cannot pass a door no wider than the largest standard body (the shooter model’s hull, 0.8128 m).',
+  },
+  LEVEL_LOW_HEADROOM: {
+    template:
+      '{at}: {count} walkable, the lowest {headroom} m under what is above, where a crouched body needs {body} m',
+    fix: 'raise what is above (the storey’s height, the low ceiling’s head, the storey above), or make the tiles solid if nobody should stand there',
+    doc: 'Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`, once per storey, at its first such tile in reading order: a crouched body (the shooter model’s, 1.19 m) does not fit there.',
+  },
+  LEVEL_STEEP_FLIGHT: {
+    template: '{at}: the flight rises {rise} m over {run} m, {angle}°, steeper than bodies walk ({limit}°)',
+    fix: 'lengthen it to at least {need} tiles along its rise',
+    doc: 'Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`, for a flight of stairs between storeys steeper than the shooter model’s walkable slope (45°).',
+  },
+  LEVEL_UNREACHABLE_ROOM: {
+    template: '{at}: the room {room} ({count}) is cut off from the main floor ({main})',
+    fix: 'give it a door, a flight of stairs or a ladder to the rest',
+    doc: 'Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa level`, not by `compileLevel`: bodies cannot walk from the main floor (the largest area, over every storey, through flights and ladders) into the room and back.',
+  },
+  LEVEL_NO_STOREY: {
+    template: '{level} has {count}; there is no storey {index}',
+    fix: 'ask for a storey from 0 (the lowest) to {last}: level.storeys lists them',
+    doc: 'Thrown by `storeyView` (engine/world/level/storeys.ts) for an index the level has no storey at; a format-1 level has one, 0.',
+  },
   LEVEL_INVALID: {
     template: '{where} has {count}: {list}',
     fix: 'fix each at the line and column it names (validateLevel(text) lists them; node x qa level checks every level file)',
@@ -72,6 +128,16 @@ export const LEVEL_CODES = defineCodes('level', {
 
 /** A level code. */
 export type LevelCode = keyof typeof LEVEL_CODES;
+
+/** The content codes: `validateLevel` and `node x qa level` report them; `compileLevel` compiles a level that has them. */
+export const LEVEL_CONTENT_CODES: readonly LevelCode[] = [
+  'LEVEL_UNREACHABLE_SPAWN',
+  'LEVEL_UNREACHABLE_AREA',
+  'LEVEL_UNREACHABLE_ROOM',
+  'LEVEL_NARROW_DOOR',
+  'LEVEL_LOW_HEADROOM',
+  'LEVEL_STEEP_FLIGHT',
+];
 
 /** One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix. */
 export interface LevelProblem {

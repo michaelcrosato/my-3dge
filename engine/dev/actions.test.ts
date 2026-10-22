@@ -3,9 +3,11 @@
  * (engine/dev/actions.ts) in a yard: a player with health, a walker its AI drives and a crowd agent. Each of the
  * engine's five does what it says and is recorded so that a replay makes it again to the same hash; a scene's own
  * action wins; arguments are checked before anything changes; a throw leaves nothing, settings included;
- * `__engine.actions` lists and runs them and `__engine.bot` plays the player, through the recorded step or a sweep.
+ * `__engine.actions` lists and runs them and `__engine.bot` plays the player, through the recorded step or a sweep,
+ * on a site too.
  */
 import { describe, expect, it } from 'vitest';
+import { defineFixtureSite } from '../../fixtures/levels/storeys/site';
 import { createHeadless, headlessHost } from '../app/headless';
 import { createRegistry } from '../core/registry';
 import { CROWD_AGENT, CROWD_AGENT_FIELDS, setVelocity, updateCrowd, type CrowdAgent } from '../physics/crowd';
@@ -14,15 +16,17 @@ import { physicsOf } from '../physics/binding';
 import { spawnActor, type ActorComponent } from '../sim/actors';
 import { damage, HEALTH, HEALTH_FIELDS, type Health } from '../sim/damage';
 import { defineDevAction, findDevAction } from '../sim/devActions';
-import { addLevelBodies } from '../sim/levelBodies';
+import { addLevelBodies, addSiteBodies } from '../sim/levelBodies';
 import { playReplay } from '../sim/replay';
 import { defineScene } from '../sim/scene';
 import { createSession } from '../sim/session';
 import { defineComponent } from '../sim/state';
 import type { World } from '../sim/world';
 import { defineLevel, getLevel } from '../world/level/level';
+import { siteFloorBelow } from '../world/siteQueries';
 import type { ActionRow } from './actions';
-import type { BotReport, BotRow } from './bot';
+import type { BotReport } from './bot';
+import type { BotRow } from './botSweep';
 
 defineLevel('level:dev-yard', {
   text: ['############', ...Array.from({ length: 10 }, (_, i) => (i === 1 ? '#.@........#' : '#..........#')), '############', ''].join('\n'), // prettier-ignore
@@ -233,5 +237,21 @@ describe('__engine.actions and __engine.bot', () => {
     const row = bot({ to: [{ x: 9.5, z: 2.5 }], seeds: '1-2' }) as BotRow;
     expect([row.scene, row.seeds, row.arrived]).toEqual(['dev-test:yard', [1, 2], 2]);
     expect(engine.info().tick).toBe(tick);
+  });
+
+  it('play the player on a site: a goal named with its height, reached through the front door (WP 13.15)', async () => {
+    const site = defineFixtureSite();
+    const lot = defineScene('dev-test:lot', {
+      site: 'site:fixture-lot',
+      physics: true,
+      setup(w) {
+        addSiteBodies(physicsOf(w), site);
+        spawnActor(w, { at: [6, siteFloorBelow(site, 6, 10, 20)!, 20], character: createCharacter({ speed: 5 }) });
+      },
+    });
+    const engine = await createHeadless({ scene: lot });
+    const bot = engine.bot as (plan?: unknown) => BotReport;
+    const report = bot({ to: [{ x: 10.75, y: 0, z: 12.75 }], back: true, steps: 3600 }); // the hall's marker
+    expect([report.status, report.reached]).toEqual(['arrived', 2]);
   });
 });

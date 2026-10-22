@@ -5,7 +5,9 @@
  * step, so a falling crate's component is its body's pose at every step; `hitProp` calls the prop's hook, whose knock
  * throws a crate more than 0.25 m away from the hit with the caller's strength, leaves a fixed pillar, and runs a
  * game's own hook; a capture taken while the crate flies restores and continues to the same hashes; `removeProp`
- * removes body and entity; an id that is no prop is refused, naming the call.
+ * removes body and entity; an id that is no prop is refused, naming the call. WP 13.16's options: a body of another
+ * type, a switchable prop's light, components from the start; a prop with health holds its hit points, the others
+ * nothing more; a body names its prop.
  * @see engine/sim/props.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -13,8 +15,9 @@ import { deserialize, serialize, type Canonical } from '../core/hash';
 import { physicsOf } from '../physics/binding';
 import { defineProp, type PropTouch } from '../world/props/prop';
 import type { WorldCapture } from './capture';
-import { hitProp, removeProp, spawnProp, type ScenePropComponents } from './props';
+import { hitProp, propOfBody, removeProp, spawnProp, type ScenePropComponents } from './props';
 import { defineScene, startScene } from './scene';
+import { defineComponent } from './state';
 import type { World } from './world';
 
 /** The yard: a 40 × 40 m floor; a crate at (2, 0, 3) turned 0.4 rad, a pillar at (6, 0, 8), a fire at (0, 0.75, 0). */
@@ -30,6 +33,9 @@ defineScene('propsYard', {
     spawnProp(w, { prop: 'prop:brazier', at: [0, 0.75, 0], yaw: 0 });
   },
 });
+
+/** A component a test gives a prop from its spawn. */
+defineComponent('propsTestTag', { description: 'A name a test gives a prop.', fields: { name: { type: 'string', default: '', description: 'The name.' } } }); // prettier-ignore
 
 /** A scene with no physics: a fire alone. */
 defineScene('propsHearth', {
@@ -141,6 +147,23 @@ describe('props in a scene', () => {
     expect(world.hash()).toBe(hashes[0]);
     for (let i = 0; i < 30; i++) world.step({});
     expect(world.hash()).toBe(hashes[1]);
+  });
+
+  it('takes a body of another type, a light and components from the start; health holds its hit points', () => {
+    const scene = defineScene('propsOptions', {
+      physics: true,
+      setup(w) {
+        spawnProp(w, { prop: 'prop:crate', at: [0, 0, 0], yaw: 0 }, { as: 'kinematic', components: { propsTestTag: { name: 'held' } } }); // prettier-ignore
+        spawnProp(w, { prop: 'prop:lamp', at: [2, 2.6, 0], yaw: 0 }, { on: false, group: 'room:hall' });
+        spawnProp(w, { prop: 'prop:pane', at: [4, 0.9, 0], yaw: 0 });
+      },
+    });
+    const { world } = startScene(scene);
+    const [crate, lamp, pane] = [1, 2, 3].map((id) => world.get(id) as unknown as Record<string, unknown> & ScenePropComponents); // prettier-ignore
+    expect(physicsOf(world).readBody(crate.sceneProp.body).type).toBe('kinematic');
+    expect([crate.propsTestTag, crate.propLight, crate.propHealth]).toEqual([{ name: 'held' }, undefined, undefined]);
+    expect([lamp.propLight, pane.propHealth]).toEqual([{ on: false, group: 'room:hall' }, { hp: 1 }]);
+    expect([propOfBody(world, pane.sceneProp.body), propOfBody(world, -1), propOfBody(world, 999)]).toEqual([3, -1, -1]); // prettier-ignore
   });
 
   it('removeProp removes body and entity; an id that is no prop is refused', () => {

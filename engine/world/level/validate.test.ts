@@ -1,16 +1,17 @@
 /**
  * @file Unit tests for engine/world/level/validate.ts and problems.ts (T1): every seeded error in
- * fixtures/levels/broken/, and in the inline levels of bad stairs and daises, is caught at its line and column, with
- * nothing else reported; every level code is seeded somewhere; the good fixtures validate clean; the messages name
- * the fix in the level's terms; spawns on tiles nobody walks on, the climb limit and one-way drops off a gallery
- * decide reachability.
+ * fixtures/levels/broken/, and in the inline levels of bad stairs, daises and storeys (WP 13.13), is caught at its line
+ * and column, with nothing else reported; every level code is seeded somewhere; the good fixtures validate clean; the
+ * messages name the fix in the level's terms; spawns on tiles nobody walks on, the climb limit and one-way drops off a
+ * gallery decide reachability, and in storeys flights and ladders link the floors.
  * @see engine/world/level/validate.ts
  * @see engine/world/level/problems.ts
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { createRegistry } from '../../core/registry';
+import { defineStoreyFixtureGlyphs } from '../../../fixtures/levels/storeys/glyphs';
+import { createRegistry, type Registry } from '../../core/registry';
 import { defineGlyph } from './glyph';
 import { LEVEL_CODES } from './problems';
 import { checkLevel, NAV_CLIMB, validateLevel } from './validate';
@@ -56,7 +57,15 @@ const SEEDED: Record<string, [string, number, number][]> = {
  * The v2 shapes' seeded errors (WP 4.2), written here because fixtures/levels/broken/ is WP 2.2's: each level's text,
  * and its errors: code, line, column. In bad-ramp, the stairs at 2:2 rise to the gallery north of them, and are fine.
  */
-const INLINE: Record<string, { text: string; seeded: [string, number, number][] }> = {
+/** A registry with the storey fixtures' room markers and a duct: floor under a ceiling 1 m up (too low to crouch). */
+const ROOMS: Registry = createRegistry();
+defineStoreyFixtureGlyphs(ROOMS);
+defineGlyph('glyph:test-duct', { char: 'd', description: 'A duct 1 m high.', mesh: 'floor', head: 1 }, ROOMS);
+
+/** A storey's block and map, as format 2 writes them. */
+const storey = (keys: string, ...map: string[]) => ['---', ...keys.split('; '), '---', ...map];
+
+const INLINE: Record<string, { text: string; seeded: [string, number, number][]; registry?: Registry }> = {
   'bad-ramp': {
     text: [
       '############',
@@ -93,6 +102,91 @@ const INLINE: Record<string, { text: string; seeded: [string, number, number][] 
       ['LEVEL_BAD_DAIS', 5, 3],
     ],
   },
+  'bad-storey-block': {
+    // a height that is no number at 4:9; a block naming no storey at 9:1
+    text: [...storey('storey: ground; base: 0; height: tall', '###', '#.#', '###'), ...storey('base: 3; height: 2.7', '###', '#.#', '###')].join('\n'), // prettier-ignore
+    seeded: [
+      ['LEVEL_BAD_STOREY', 4, 9],
+      ['LEVEL_BAD_STOREY', 9, 1],
+    ],
+  },
+  'bad-storey': {
+    // the second storey at 9:1: named twice, its map 5 wide, no height
+    text: [...storey('storey: ground; base: 0; height: 2.7', '####', '#..#', '####'), ...storey('storey: ground; base: 3', '#####', '#...#', '#####')].join('\n'), // prettier-ignore
+    seeded: [
+      ['LEVEL_BAD_STOREY', 9, 1],
+      ['LEVEL_BAD_STOREY', 9, 1],
+      ['LEVEL_BAD_STOREY', 9, 1],
+    ],
+  },
+  'bad-base': {
+    // the ground floor at 9:1 stands on the cellar's ceiling, with no slab between
+    text: [...storey('storey: cellar; base: -3; height: 3', '####', '#..#', '####'), ...storey('storey: ground; base: 0; height: 2.7', '####', '#..#', '####')].join('\n'), // prettier-ignore
+    seeded: [['LEVEL_BAD_STOREY', 9, 1]],
+  },
+  'needs-storey': {
+    text: ['#####', '#+~.#', '#####'].join('\n'), // a door and void in a map with no storey
+    seeded: [
+      ['LEVEL_NEEDS_STOREY', 2, 2],
+      ['LEVEL_NEEDS_STOREY', 2, 3],
+    ],
+  },
+  'bad-flight': {
+    // an L of stairs at 7:2; stairs with floor over them at 7:9; stairs on the top storey at 21:5
+    text: [
+      ...storey('storey: ground; base: 0; height: 2.7', '##########', '#<<.....<#', '#<<.....<#', '#<......<#', '#.......<#', '##########'), // prettier-ignore
+      ...storey('storey: upper; base: 3; height: 2.7', '##########', '#~~......#', '#~~......#', '#~.......#', '#...<....#', '##########'), // prettier-ignore
+    ].join('\n'),
+    seeded: [
+      ['LEVEL_BAD_FLIGHT', 7, 2],
+      ['LEVEL_BAD_FLIGHT', 7, 9],
+      ['LEVEL_BAD_FLIGHT', 21, 5],
+    ],
+  },
+  'bad-opening': {
+    // a door that is no filled rectangle at 10:3, a window with floor at its ends at 8:4
+    text: storey('storey: ground; base: 0; height: 2.7', '#######', '#.....#', '#..:..#', '#.....#', '##++###', '##+####', '#######').join('\n'), // prettier-ignore
+    seeded: [
+      ['LEVEL_BAD_OPENING', 10, 3],
+      ['LEVEL_BAD_OPENING', 8, 4],
+    ],
+  },
+  'bad-room': {
+    // the kitchen marked twice at 7:9; the hall named on two storeys at 16:2; the cellar and the study on one floor at 16:6
+    text: [...storey('storey: ground; base: 0; height: 2.7', '###########', '#h..#k..k##', '#...#....##', '###########'), ...storey('storey: upper; base: 3; height: 2.7', '###########', '#h..#c.s..#', '#...#.....#', '###########')].join('\n'), // prettier-ignore
+    registry: ROOMS,
+    seeded: [
+      ['LEVEL_BAD_ROOM', 7, 9],
+      ['LEVEL_BAD_ROOM', 16, 2],
+      ['LEVEL_BAD_ROOM', 16, 6],
+    ],
+  },
+  'bad-roof': {
+    // a roof on the ground floor at 1:1; at 10:1 a hip with no pitch and a ridge it does not take
+    text: [...storey('storey: ground; base: 0; height: 2.7; roof: flat', '###', '#.#', '###'), ...storey('storey: top; base: 3; roof: hip; ridge: z', '###', '#.#', '###')].join('\n'), // prettier-ignore
+    seeded: [
+      ['LEVEL_BAD_ROOF', 1, 1],
+      ['LEVEL_BAD_ROOF', 10, 1],
+      ['LEVEL_BAD_ROOF', 10, 1],
+    ],
+  },
+  'storey-content': {
+    // the kitchen walled off at 19:2; a door half a metre wide at 10:5; a duct 1 m high at 11:2; stairs 3 m up a metre at 10:6
+    text: [
+      '---',
+      'tile: 0.5',
+      '---',
+      ...storey('storey: ground; base: 0; height: 2.7', '##########', '#h..+<<###', '#dd.#<<###', '##########'),
+      ...storey('storey: upper; base: 3; height: 2.7', '##########', '#k.##~~..#', '#..##~~..#', '##########'),
+    ].join('\n'),
+    registry: ROOMS,
+    seeded: [
+      ['LEVEL_UNREACHABLE_ROOM', 19, 2],
+      ['LEVEL_NARROW_DOOR', 10, 5],
+      ['LEVEL_LOW_HEADROOM', 11, 2],
+      ['LEVEL_STEEP_FLIGHT', 10, 6],
+    ],
+  },
 };
 
 describe('validateLevel', () => {
@@ -105,14 +199,32 @@ describe('validateLevel', () => {
   });
 
   it.each(Object.keys(INLINE))('catches every seeded error of %s, and nothing else', (name) => {
-    const { text, seeded } = INLINE[name];
-    expect(validateLevel(text, { file: `${name}.txt` }).map((p) => [p.code, p.line, p.column])).toEqual(seeded);
+    const { text, seeded, registry } = INLINE[name];
+    const found = validateLevel(text, { file: `${name}.txt`, registry });
+    expect(found.map((p) => [p.code, p.line, p.column])).toEqual(seeded);
   });
 
-  it('has every level code seeded in a broken fixture or inline (LEVEL_INVALID is compile’s wrapper)', () => {
+  it('has every level code seeded in a broken fixture or inline (storeyView throws LEVEL_NO_STOREY; LEVEL_INVALID is compile’s wrapper)', () => {
     const lists = [...Object.values(SEEDED), ...Object.values(INLINE).map((inline) => inline.seeded)];
     const seeded = new Set(lists.flatMap((list) => list.map(([code]) => code)));
-    expect(Object.keys(LEVEL_CODES).filter((code) => !seeded.has(code))).toEqual(['LEVEL_INVALID']);
+    expect(Object.keys(LEVEL_CODES).filter((code) => !seeded.has(code))).toEqual(['LEVEL_NO_STOREY', 'LEVEL_INVALID']);
+  });
+
+  it("names a storey's problems in its own terms", () => {
+    const message = (name: string, i = 0) => validateLevel(INLINE[name].text, { file: `${name}.txt`, registry: INLINE[name].registry })[i].message; // prettier-ignore
+    expect(message('bad-base')).toContain('its base, 0 m, is not above the ceiling of the storey below (cellar: 0 m)');
+    expect(message('needs-storey')).toBe(
+      '[LEVEL_NEEDS_STOREY] needs-storey.txt:2:2: + (glyph:door) is a door, which only a storey has: write the map as a storey (format 2): a block before it between two lines holding only ---, with storey: ground, base: 0 and height: 2.7',
+    );
+    expect(message('bad-flight', 1)).toContain('has floor over it on the storey above (column 9, row 2 of its map)');
+    expect(message('bad-opening', 1)).toContain('has no wall at both of its ends (north and south)');
+    expect(message('bad-room', 2)).toContain('the rooms cellar and study share one floor');
+    expect(message('storey-content', 0)).toContain(
+      'the room kitchen (4 tiles) is cut off from the main floor (15 tiles)',
+    );
+    expect(message('storey-content', 1)).toContain('the door is 0.5 m wide, narrower than a body (0.8128 m across): widen it to at least 2 tiles'); // prettier-ignore
+    expect(message('storey-content', 2)).toContain('2 tiles walkable, the lowest 1 m under what is above, where a crouched body needs 1.19 m'); // prettier-ignore
+    expect(message('storey-content', 3)).toContain('the flight rises 3 m over 1 m, 71.6°, steeper than bodies walk (45°): lengthen it to at least 6 tiles'); // prettier-ignore
   });
 
   it.each(readdirSync(DIR).filter((file) => file.endsWith('.txt')))('finds nothing wrong with %s', (file) => {
@@ -122,7 +234,7 @@ describe('validateLevel', () => {
   it('names the fix in the level’s own terms', () => {
     const messages = (file: string) => validateLevel(read(file), { file }).map((p) => p.message);
     expect(messages('broken/unknown-glyph.txt')[1]).toBe(
-      `[LEVEL_UNKNOWN_GLYPH] broken/unknown-glyph.txt:6:4: "p" is not in the legend (1 tile): write one of the legend's characters instead (did you mean "P"?) (the legend: # . 1 2 3 4 5 6 7 8 9 = @ P ^ o t w |), or define it before compiling: defineGlyph('glyph:<name>', { char: 'p', description: '…' })`,
+      `[LEVEL_UNKNOWN_GLYPH] broken/unknown-glyph.txt:6:4: "p" is not in the legend (1 tile): write one of the legend's characters instead (did you mean "P"?) (the legend: ! # + . 1 2 3 4 5 6 7 8 9 : < = @ P ^ _ o t w | ~), or define it before compiling: defineGlyph('glyph:<name>', { char: 'p', description: '…' })`,
     );
     expect(messages('broken/unknown-glyph.txt')[2]).toContain('a tab is not in the legend');
     expect(validateLevel("#'#\n")[0].message).toContain(`defineGlyph('glyph:<name>', { char: "'", description: '…' })`);

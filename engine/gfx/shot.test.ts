@@ -4,7 +4,15 @@
  * stub renderer: the frame drawn through the output target, every target and the camera put back, the ID pass's
  * clear colour restored, the size checked. The GPU half is proven by tests/e2e/shot.spec.ts.
  */
-import { BoxGeometry, Mesh, MeshBasicNodeMaterial, PerspectiveCamera, Scene, type RenderTarget } from 'three/webgpu';
+import {
+  BoxGeometry,
+  Mesh,
+  MeshBasicNodeMaterial,
+  PerspectiveCamera,
+  Scene,
+  Vector2,
+  type RenderTarget,
+} from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { rowBytes, shot, shotForJson, stripRowPadding, toBase64, type ShotGfx } from './shot';
 
@@ -76,9 +84,16 @@ function stubGfx(width: number, height: number) {
   let renderTarget: RenderTarget | null = null;
   let output: RenderTarget | null = null;
   let clear: [number, number] = [0x123456, 1];
+  const size = { width, height }; // the canvas's, at a pixel ratio of 1
   const renderer = {
     autoClear: false,
-    getDrawingBufferSize: (target: { set(x: number, y: number): unknown }) => target.set(width, height),
+    getDrawingBufferSize: (target: { set(x: number, y: number): unknown }) => target.set(size.width, size.height),
+    getSize: (target: { set(x: number, y: number): unknown }) => target.set(size.width, size.height),
+    getPixelRatio: () => 1,
+    setSize: (w: number, h: number) => {
+      calls.push(`setSize ${w}×${h}`);
+      [size.width, size.height] = [w, h];
+    },
     getOutputRenderTarget: () => output,
     setOutputRenderTarget: (target: RenderTarget | null) => void (output = target),
     getRenderTarget: () => renderTarget,
@@ -132,18 +147,21 @@ describe('shot, on a stub renderer', () => {
     expect(result.pixels).toBeUndefined();
   });
 
-  it('shoots at another size with the camera fitted to it and put back, and checks the size', async () => {
+  it('shoots at another size, its post pass drawn at that size and the camera fitted, both put back', async () => {
     const { gfx, calls } = stubGfx(48, 27);
-    let aspect = 0;
-    const draw = () => void (aspect = camera.aspect);
+    let [aspect, buffer] = [0, ''];
+    const draw = () => {
+      aspect = camera.aspect;
+      buffer = `${gfx.renderer.getDrawingBufferSize(new Vector2()).toArray().join('×')}`;
+    };
     const result = await shot(
       gfx,
       { scene, camera, draw },
       { size: { width: 30, height: 10 }, ids: false, pixels: true },
     );
-    expect(aspect).toBe(3);
+    expect([aspect, buffer]).toEqual([3, '30×10']); // the chain at the shot's size: its screen coordinates span it
     expect(camera.aspect).toBe(2);
-    expect(calls).toEqual(['read Shot.colour 30×10']);
+    expect(calls).toEqual(['setSize 30×10', 'setSize 48×27', 'read Shot.colour 30×10']);
     expect(result.pixels!.length).toBe(30 * 10 * 4);
     expect(result.ids).toBeUndefined();
     await expect(shot(gfx, { scene, camera }, { size: { width: 0, height: 10 } })).rejects.toMatchObject({

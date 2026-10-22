@@ -35,7 +35,7 @@ import RAPIER from '@dimforge/rapier3d-simd-compat';
 import { codeError, defineCodes } from '../core/log';
 import { Quaternion, Vector3 } from '../core/math';
 import { show } from '../core/schema';
-import { bodyId, handleOf } from './capture';
+import { bodyId, liveBody } from './capture';
 import { queryBits, type GroupName } from './groups';
 
 /** The codes this module raises, with their fixes. */
@@ -255,7 +255,7 @@ function filter(world: RAPIER.World, options: QueryOptions, where: string, group
   let body: RAPIER.RigidBody | undefined;
   if (exclude !== undefined) {
     check(Number.isInteger(exclude) && exclude >= 0, `${where}({ exclude })`, exclude, 'a body id');
-    body = world.bodies.get(handleOf(exclude)) ?? undefined;
+    body = liveBody(world, exclude) ?? undefined;
     check(body !== undefined, `${where}({ exclude })`, exclude, 'the id of a body in this world');
   }
   return [FLAGS, queryBits(options.groups ?? groups), undefined, body] as const;

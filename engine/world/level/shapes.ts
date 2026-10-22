@@ -41,13 +41,13 @@ export interface ShapeProblem {
 }
 
 /** The four sides, in the order messages list them. */
-const SIDES: readonly Side[] = ['north', 'south', 'west', 'east'];
+export const SIDES: readonly Side[] = ['north', 'south', 'west', 'east'];
 
 /** `x` held between `low` and `high`. */
 const clamp = (x: number, low: number, high: number) => Math.min(high, Math.max(low, x));
 
 /** The tiles just outside side `side` of `rect`, inside a `cols` × `rows` map. */
-function outside(rect: TileRect, side: Side, cols: number, rows: number): [number, number][] {
+export function outside(rect: TileRect, side: Side, cols: number, rows: number): [number, number][] {
   const [c0, r0, c1, r1] = rect;
   const line: [number, number][] = [];
   if (side === 'north' || side === 'south') {

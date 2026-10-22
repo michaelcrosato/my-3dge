@@ -115,7 +115,7 @@ function stumpGeometry(width: number, height: number, stump: number): BufferGeom
  * Each slot's material: `materials` one per slot, a slot past the last taking the last; the first for the whole
  * when there is one, or the geometry has no slots (a surface).
  */
-function drawnWith(geometry: BufferGeometry, materials: readonly Material[]): Material | Material[] {
+export function drawnWith(geometry: BufferGeometry, materials: readonly Material[]): Material | Material[] {
   if (materials.length === 1 || !geometry.groups.length) {
     geometry.clearGroups();
     return materials[0];

@@ -134,7 +134,7 @@ describe('the emitter kind', () => {
     const reg = createRegistry();
     const sparks = getEmitter('emitter:sparks', reg);
     expect(reg.describe('emitter').ids).toEqual(Object.keys(BUILT_IN_EMITTERS).sort());
-    expect(reg.describe('emitter').ids).toHaveLength(24);
+    expect(reg.describe('emitter').ids).toHaveLength(27); // the house's breaks (WP 13.16): glass, splinters, shatter
     expect(sparks).toMatchObject({ stretch: true, lands: true, bounce: 0.35, additive: true, count: 16 });
     expect(sparks.ring.radius).toEqual([0, 0]);
     expect(Object.isFrozen(sparks.layers)).toBe(true);
@@ -181,6 +181,9 @@ describe('the emitter kind', () => {
       shot: 'emitter:shot',
       destroyed: 'emitter:destroyed',
       land: 'emitter:land',
+      glass: 'emitter:glass',
+      splinters: 'emitter:splinters',
+      shatter: 'emitter:shatter',
     });
     expect(getEmitter('emitter:explosion', reg).ring).toMatchObject({ radius: [0.19, 1.6], life: 0.4 });
   });

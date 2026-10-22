@@ -13,7 +13,7 @@
 import { Vector3 } from '../core/math';
 import type { Character, StepOptions } from './character';
 import { feetOf } from './characterBody';
-import { handleOf } from './capture';
+import { liveBody } from './capture';
 import { sink, type CharacterMove } from './move';
 import { rapierOf, type Physics } from './world';
 
@@ -39,7 +39,7 @@ export function carried(
   move: (carry: Vector3) => CharacterMove,
 ): CharacterMove {
   const world = rapierOf(physics);
-  const rigid = floor >= 0 ? world.bodies.get(handleOf(floor)) : null;
+  const rigid = liveBody(world, floor);
   if (!rigid?.isKinematic()) return move(new Vector3());
   const [linear, angular, com] = [rigid.linvel(), rigid.angvel(), rigid.worldCom()];
   const carry = new Vector3(linear.x, linear.y, linear.z).multiplyScalar(options.dt);

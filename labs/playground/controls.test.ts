@@ -50,7 +50,7 @@ describe('the playground’s action maps', () => {
         camera: ['KeyT', 'PadSelect'],
       });
     }
-    expect(Object.keys(PLAYGROUND_ACTIONS)).toEqual(['jump', 'sprint', 'walk', 'crouch', 'interact', 'aim']);
+    expect(Object.keys(PLAYGROUND_ACTIONS)).toEqual(['jump', 'sprint', 'walk', 'crouch', 'interact', 'melee', 'aim']);
   });
 
   it('give each mode its rule: the view and the centre where the eyes aim, the pointer where the views look down', () => {
@@ -77,16 +77,16 @@ describe('the playground’s action maps', () => {
 
   it('show the map in use on the HUD and in the menu, as rebound and on a pad', () => {
     const shooter = createInput({ map: PLAYGROUND_MAPS.shooter });
-    expect(keysLine(shooter)).toMatch(/^WASD: move · Space: jump · .*Shift: sprint · .*: use · Click: mouse look · T: camera · X: shoulder · P: look · F: feel · M: menu$/); // prettier-ignore
+    expect(keysLine(shooter)).toMatch(/^WASD: move · Space: jump · .*Shift: sprint · .*: use · V: strike · Click: mouse look · T: camera · X: shoulder · P: look · F: feel · M: menu$/); // prettier-ignore
     shooter.bindings.rebind('camera', 'KeyY');
     expect(keysLine(shooter)).toContain('Y: camera');
     const iso = createInput({ map: PLAYGROUND_MAPS.isometric });
-    expect(keysLine(iso)).toContain('G: use · Mouse: aim · T: camera · Q E: turn');
+    expect(keysLine(iso)).toContain('G: use · V: strike · Mouse: aim · T: camera · Q E: turn');
     const pad = { prompt: () => 'A', bindings: iso.bindings, lastDevice: 'gamepad' as const };
     expect(keysLine(pad)).toMatch(/^L Stick: move · .*R Stick: look/);
     const rows = (id: string) => Object.fromEntries(controlRows(undefined, id).map(([what, keys]) => [what, keys]));
     expect(rows(PLAYGROUND_MAPS.shooter)).toMatchObject({ 'Swap the shoulder': 'X', 'Camera mode': 'T' });
-    expect(rows(PLAYGROUND_MAPS.isometric)).toMatchObject({ 'Use: a zipline or a ladder': 'G', Aim: 'The pointer, onto the floor', 'Turn the view left': 'Q', 'Turn the view right': 'E' }); // prettier-ignore
+    expect(rows(PLAYGROUND_MAPS.isometric)).toMatchObject({ 'Use: a door, a switch, a chair to carry and throw, a zipline, a ladder': 'G', Aim: 'The pointer, onto the floor', 'Turn the view left': 'Q', 'Turn the view right': 'E' }); // prettier-ignore
     expect(rows(PLAYGROUND_MAPS.first)['Swap the shoulder']).toBeUndefined();
   });
 });

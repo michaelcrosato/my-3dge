@@ -46,6 +46,7 @@ import {
   stepCrowdBody,
   stepProjectiles,
   stepReactions,
+  strikeBody,
   takeToken,
   type AnimatorInput,
   type CrowdAgent,
@@ -334,8 +335,10 @@ export function flyShots(w: FightWorld): void {
     const shot = shots[contact.shot];
     const at: [number, number, number] = [contact.x, contact.y, contact.z];
     const from = [contact.x - shot.vx * w.dt, contact.y, contact.z - shot.vz * w.dt];
-    if (contact.target < 0) w.emit('hit', { position: at, size: 0.5 });
-    else if (shot.team === 'hero') {
+    if (contact.target < 0) {
+      w.emit('hit', { position: at, size: 0.5 });
+      if (contact.body >= 0) strikeBody(w, contact.body, [from[0], from[1], from[2]], 'shot'); // a prop it struck
+    } else if (shot.team === 'hero') {
       const { damage, knockback: push } = { damage: shot.damage, knockback: HERO_FIGHT.bolt.knockback };
       strikeFoe(w, contact.target, { damage, knockback: push, big: false }, from);
     } else hurtHero(w, shot.damage, from, shot.source);

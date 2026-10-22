@@ -7,8 +7,10 @@
  * `capture(entities, dt)` after each sim step keeps each prop's last two poses (centre and turn) and returns the ids
  * it draws; `draw(alpha)` draws each `alpha` of the way from the one before to the last (the centre along the line,
  * the turn the shorter way round), at presentation time (the steps captured, `alpha` of a step on), on which the
- * flames dance; each prop is drawn under its entity id, so its flames keep their own phase. `lights()` lists this
- * frame's light spots in world space (the brazier's torch), for the light pool (WP 7.1).
+ * flames dance; each prop is drawn under its entity id, so its flames keep their own phase, and on or off as its
+ * `propLight` says (a lamp its switch turned off: WP 13.16); `hide(test, key)` leaves out those on a storey the cut
+ * takes off (engine/gfx/storeyCut.ts), lights and all, and says when its key changed. `lights()` lists this frame's
+ * light spots in world space (the brazier's torch, the lamps that are on), for the light pool (WP 7.1).
  *
  * The prop meshes are made when the first prop arrives, with a batch for every registered prop, and added to the
  * stage's scene then: a stage with no prop has none, and its scene graph is the one it had before props. `register`
@@ -46,11 +48,12 @@ interface Pose {
   q: [number, number, number, number];
 }
 
-/** What the module keeps of one prop. */
+/** What the module keeps of one prop: its poses, and whether it is on (its `propLight`'s; true without one). */
 interface Held {
   prop: string;
   before: Pose;
   after: Pose;
+  on: boolean;
 }
 
 /** Props drawn on the stage (see the file comment). */
@@ -61,8 +64,14 @@ export interface StageProps {
   readonly props: ReadonlyMap<number, string>;
   /** Reads the props after a sim step of `dt` s (keeps the pose before for `draw`); returns the ids it draws. */
   capture(entities: Iterable<EntityData>, dt?: number): Set<number>;
-  /** Draws every prop `alpha` (0 to 1) of the way from its pose a step ago to its last. */
+  /** Draws every prop `alpha` (0 to 1) of the way from its pose a step ago to its last, but those `hide` leaves out. */
   draw(alpha: number): void;
+  /**
+   * From the next draw, leaves out the props whose centre `test` says is hidden (a storey the cut takes off); null:
+   * none. `key` names what it hides ('' nothing): true when it differs from the last call's, so a draw made this frame
+   * is out of date (the stage draws them again only then).
+   */
+  hide(test: ((x: number, y: number, z: number) => boolean) | null, key?: string): boolean;
   /** The light spots of the last frame's props, in world space. */
   lights(): PropLight[];
   /** Registers the prop meshes with `warmup`, now or when they are made, and their presence in the shader key. */
@@ -89,6 +98,9 @@ export function createStageProps(options: StagePropsOptions): StageProps {
   const [a, b, at] = [new Quaternion(), new Quaternion(), new Vector3()];
   let meshes: PropMeshes | null = null;
   let [time, step] = [0, 1 / 60];
+  let hidden: ((x: number, y: number, z: number) => boolean) | null = null;
+  /** What `hidden` hides, as its last `hide` named it. */
+  let hiddenKey = '';
 
   /** The prop meshes, made now if they are not yet, and registered with every warm-up so far. */
   function made(): PropMeshes {
@@ -114,7 +126,8 @@ export function createStageProps(options: StagePropsOptions): StageProps {
         seen.add(entity.id);
         const last = held.get(entity.id);
         const prop = data.prop as string;
-        held.set(entity.id, { prop, before: last && last.prop === prop ? last.after : pose, after: pose });
+        const on = (entity.propLight as { on?: unknown } | undefined)?.on !== false;
+        held.set(entity.id, { prop, before: last && last.prop === prop ? last.after : pose, after: pose, on });
         ids.set(entity.id, prop);
       }
       for (const id of [...held.keys()]) {
@@ -129,13 +142,19 @@ export function createStageProps(options: StagePropsOptions): StageProps {
       if (!meshes) return;
       const k = Math.min(1, Math.max(0, alpha));
       meshes.begin(time - step + k * step);
-      for (const [id, { prop, before, after }] of held) {
+      for (const [id, { prop, before, after, on }] of held) {
         const [p0, p1] = [before.p, after.p];
         at.set(p0[0] + (p1[0] - p0[0]) * k, p0[1] + (p1[1] - p0[1]) * k, p0[2] + (p1[2] - p0[2]) * k);
+        if (hidden?.(at.x, at.y, at.z)) continue;
         a.fromArray(before.q).slerp(b.fromArray(after.q), k);
-        meshes.add(prop, { position: at, rotation: a }, id);
+        meshes.add(prop, { position: at, rotation: a, on }, id);
       }
       meshes.end();
+    },
+    hide(test, key = '') {
+      const changed = key !== hiddenKey;
+      [hidden, hiddenKey] = [test, key];
+      return changed;
     },
     lights: () => meshes?.lights() ?? [],
     register(warmup) {

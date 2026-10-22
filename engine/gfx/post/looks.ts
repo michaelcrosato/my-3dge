@@ -30,6 +30,7 @@
  * @see engine/gfx/post/looks.test.ts
  * @see tests/e2e/post.spec.ts
  */
+import { galleryField } from '../../core/gallery';
 import { registry as sharedRegistry, type Entry, type Registry } from '../../core/registry';
 import type { EntryOf, Schema } from '../../core/schema';
 import { MATERIAL_STYLES } from '../materials/styles';
@@ -79,6 +80,7 @@ export const LOOK_FIELDS = {
     description: 'The filter chain: each filter it names, with its scope and numbers; the rest are off.',
     properties: FILTER_FIELDS,
   },
+  gallery: galleryField({ camera: 'cam=iso' }),
 } as const satisfies Schema;
 
 /** A `look` entry. */

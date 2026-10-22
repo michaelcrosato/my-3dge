@@ -19,10 +19,10 @@ export const MAGENTA = [255, 40, 220] as const;
 export const LABEL = 14;
 
 /** The 3 × 5 font: each glyph's five rows of three bits (the left pixel highest), as three base-36 digits. */
-const GLYPHS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ#.:-/=?,%()@_+><\'"';
+const GLYPHS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ#.:-/=?,%()@_+><\'"°';
 const FONT =
   'odr8t3mw7mofi4po27o33mmqohbogf8odl9qbabl7yo13o10bcbi5pn133myi3xeg7iy5l7x8kql9g8kzl9pb66n0yi27i22i65hwthw2mnbiv1' +
-  '0020sw0cg3ok2t4mma00kgbp429djo8o300715cdhw45t740hs0';
+  '0020sw0cg3ok2t4mma00kgbp429djo8o300715cdhw45t740hs08e8';
 
 /** A contact sheet, or any RGBA image: its size and its pixels, row-major. */
 export interface Sheet {
@@ -75,7 +75,7 @@ export function contactSheet(frames: readonly FilmFrame[], options: SheetOptions
     const label = (row: number, text: string, colour: readonly number[] = INK) =>
       drawText(sheet, [x0, y0 + row * cell + h + 2], text, colour, x0 + w);
     blit(frame, x0, y0);
-    label(0, `${options.base ? 'A ' : ''}frame ${frame.n}, tick ${frame.tick}`);
+    label(0, `${options.base ? 'A ' : ''}${frame.label ?? `frame ${frame.n}, tick ${frame.tick}`}`);
     const [b, d] = [options.base?.[i], options.diffs?.[i]];
     if (b) blit(b, x0, y0 + cell);
     if (b) label(1, `B frame ${b.n}, tick ${b.tick}`);

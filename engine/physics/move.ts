@@ -38,7 +38,7 @@
  */
 import RAPIER from '@dimforge/rapier3d-simd-compat';
 import { Vector3 } from '../core/math';
-import { bodyId, handleOf } from './capture';
+import { bodyId, handleOf, liveBody } from './capture';
 import { dropGroups } from './groups';
 import type { Character } from './character';
 import { check, vec, type Vec3Like } from './queries';
@@ -101,7 +101,7 @@ function controllerOf(world: RAPIER.World, offset: number): RAPIER.KinematicChar
 
 /** The Rapier body of a character, with its capsule (its first collider); throws `PHYSICS_BAD_ARGUMENT`. */
 export function partsOf(world: RAPIER.World, body: number, where: string) {
-  const rigid = Number.isInteger(body) && body >= 0 ? world.bodies.get(handleOf(body)) : null;
+  const rigid = liveBody(world, body);
   const collider = rigid?.isKinematic() && rigid.numColliders() > 0 ? rigid.collider(0) : null;
   const capsule = collider?.shapeType() === RAPIER.ShapeType.Capsule;
   check(capsule, where, body, 'a character’s body id (addCharacter)');
@@ -263,7 +263,7 @@ export function oneWayFilter(world: RAPIER.World, oneWay: ReadonlySet<number> | 
   if (!oneWay?.size) return undefined;
   const tops = new Map<number, number>();
   for (const id of oneWay) {
-    const platform = world.bodies.get(handleOf(id));
+    const platform = liveBody(world, id);
     for (let i = 0; i < (platform?.numColliders() ?? 0); i++) {
       const collider = platform!.collider(i);
       const half = collider.shapeType() === RAPIER.ShapeType.Cuboid ? (collider.halfExtents()?.y ?? 0) : 0;

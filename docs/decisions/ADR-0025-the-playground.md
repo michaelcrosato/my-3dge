@@ -749,3 +749,426 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   (tests/e2e/ui.spec.ts: the menu's pick recorded as the scene's dev action).
 - **Pages are strings**: the source wrapped a page to the box's width in its pixel font; here each string is a page and
   CSS wraps it. The box's and the playground's own menus stay theirs until a WP needs the widget's.
+
+## Amendment 15 (2026-10-21, WP 13.13): storeys, the level format and its colliders
+
+- **The text** (engine/world/level/parse.ts): a map per storey, bottom first, each after a fenced block of its own
+  holding `storey` (its name), `base` (its floor, m) and `height` (its clear height, m); the level's front matter, when
+  it has one, comes first. Every map is the size of the first, and each base stands above the ceiling of the storey
+  below: the gap is that storey's floor slab (0.3 m under the lowest). A format-1 file, with no storey block, is one
+  storey on 0 and compiles to the same data and hash as before: the glyph fields only storeys read (`void`, `full`,
+  `opening`, `head`, `room`) are left out of a format-1 level's legend, and the wall's and the pillar's descriptions,
+  which a compiled legend holds, kept their words (fixtures/levels/*.txt and the hall keep their goldens).
+- **Heights** (storeys.ts): a storey's glyphs stand on its base; a `full` glyph (the v1 wall and pillar) rises to the
+  floor of the storey above, so `#` is a storey's wall; a slab lies under every tile but void ones; a head (a door's
+  2.1 m, a window's, the low ceiling's 1.4 m) is a solid from it up to the full top. A flight of stairs (`<`) rises
+  from its floor to the floor of the storey above, toward the one side that floor meets it, with void over it there.
+- **Roofs are the top storey's keys, not glyphs** (the plan said "roof areas" among the glyphs): a tile holds one
+  glyph, so a roof drawn as glyphs could not also say what stands under it (an attic's floor, its gable walls, a
+  chimney). `roof` (gable, hip, flat), `pitch`, `ridge` (a gable's; a hip's runs along the longer side) and `eaves`
+  over the bounds of the storey's floored tiles; a pitched roof's eaves stand on the storey's ceiling, or its floor
+  when it gives no height (an attic, as the house's); its slab is 0.2 m deep and walked on; the walls under it rise to
+  its underside as convex hulls (roofs.ts). One roof a level, on its top storey; the porch roof and the garage's deck
+  are floor of the upper storey. PLAN.md WP 13.13 and docs/PLAYGROUND.md §6.1 say so.
+- **The v4 glyphs** (legend.ts): void `~`, door `+`, window `:`, railing `!`, flight `<`, low ceiling `_`, picked
+  clear of the gym's letters; they draw with the existing recipes (floor, wall, low wall, stairs) until WP 13.14 draws
+  openings, heads, railings and roofs. Rooms are a game's: the engine names no room marker; a glyph with `room` marks
+  one, and its room is the floor its tile reaches inside walls and openings (rooms.ts). The storey fixtures' markers
+  are fixtures/levels/storeys/glyphs.ts's, which `node x qa level` reads them with.
+- **The compiled level** (`my3dge-level/2`): its per-tile and drawn fields are its ground storey's (the one on 0, else
+  the lowest), so a reader of one storey reads the ground floor; `bounds`, `ground` (under the lowest slab),
+  `colliders`, `spawns` and `lights` cover every storey, each holding its `storey`; `storeys`, `rooms`, `openings` and
+  `roofs` beside them. `storeyView(level, k)` reads any storey as a format-1 level (its `base`, `fullTop` and roof
+  for the height queries), so navigation, drawing and ladders read it unchanged; `levelLadders` stands each storey's.
+- **In 3D** (heights.ts): `floorBelow(level, x, y, z)` is the highest surface at or under a point (a floor, a ramp, a
+  flight, a dais, a solid's top, a head's top even with no floor over it, a roof, the ground slab), `surfaceBelow` its
+  tag; `storeyAt(level, y)` reads a storey by height alone, `storeyBelow` by that surface (a flight's tiles are the
+  storey they rise from up to their top, a roof none), and `roomAt` reads `storeyBelow`'s storey, so a hall's stairs
+  are the hall's all the way up.
+- **Validation** measures against the shooter model's hull, the largest the engine ships (`LEVEL_BODY`: 0.8128 m
+  across, 1.19 m crouched), and flights against its walkable slope rounded down, 45°: `LEVEL_NARROW_DOOR`,
+  `LEVEL_LOW_HEADROOM`, `LEVEL_STEEP_FLIGHT`, `LEVEL_UNREACHABLE_ROOM`, over the storeys walked as one graph (walk.ts's
+  `walkStoreys`: a flight's top and a ladder link the floors). Structural: `LEVEL_BAD_STOREY`, `LEVEL_NEEDS_STOREY` (a
+  storey's glyph in a format-1 map), `LEVEL_BAD_FLIGHT`, `LEVEL_BAD_OPENING`, `LEVEL_BAD_ROOM`, `LEVEL_BAD_ROOF`.
+- **Beyond Owns**: engine/world/level/shapes.ts (exports `outside` and `SIDES` for the flights), meshes.ts (full
+  glyphs grouped apart in a storey), engine/world/traverse.ts (ladders per storey), engine/sim/levelBodies.test.ts
+  (the controller up the flights and on the roofs), tools/qa/level.ts (the storey fixtures, the content codes),
+  engine/world/level/problems.ts (the new codes), engine/sim-api.ts and engine/sim/siteApi.ts (the queries,
+  `storeyView`, the types: the review moved them to the site's part of the API), fixtures/levels/storeys/.
+- **From the review**: the house's landings were reached through one 0.5 m tile between the north wall and the
+  railing's end, narrower than the hull, so each flight is a tile shorter (seven tiles, 40.6°, walkable under 45.57°)
+  and each landing two tiles deep; storeys/annex.txt holds a wall one storey high with a door and a window under
+  void, whose heads' tops bodies stand on. Left for WP 13.18's house: a railing collides over its whole tile while it
+  is drawn as a 6 cm rail down its middle, and a door's frames narrow its drawn opening by 7 cm a side; near the eaves
+  `wallUnder` stands a wall up to 0.18 m over the roof's true underside, inside the roof's slab.
+
+## Amendment 16 (2026-10-21, WP 13.14): storeys drawn
+
+- **Each storey from its view** (engine/gfx/level/meshes.ts): a level written as storeys draws each storey's
+  descriptors through `storeyView`, bottom first, named `level:<name>/<storey>/<recipe>` with `userData.storey`, then
+  each storey's own parts (`ceiling`, `heads`, `frames`), the rooms' own floors and the roof, after every descriptor's
+  mesh, so the stage's runs still index the descriptors' (engine/gfx/stage.ts splits each storey's).
+- **The parts**: `ceiling` (slabs.ts) is a slab's underside, the ceiling of the storey below (none under the lowest),
+  and its edges where floor meets void or the map's edge; `heads` (openings.ts) the wall over each door, window and low
+  ceiling, from its head up, as the colliders; `frames` two jambs and a head of planks round each opening, a window's
+  sill too, flush with the wall (a frame proud of a wall at the map's edge stood outside the level's bounds); railings
+  are posts at most 1 m apart and two rails; flights climb by a 0.18 m riser (flights.ts: stairs.ts takes the count,
+  `StepCount`, since two steps a metre made a storey's flight 0.375 m risers); a pitched roof's walls are the hulls of
+  their merged runs clipped to its underside (walls.ts, three's `ConvexHull`), and the roof its planes' tops,
+  undersides and edges (roofs.ts), UVs in metres in each face's own plane (`axesOf`).
+- **The v4 railing and flight** draw with recipes of their own (`railing`, `flight`); their compiled glyph changed, so
+  the storey fixtures' goldens were re-recorded (WP 13.13's, never in a replay). New recipes `ceiling`, `heads`,
+  `frames` and `roof` name what no glyph does, overridable by a game as any recipe (`recipes`), their materials the
+  engine's until WP 13.17's building materials.
+- **Rooms' floors**: a level entry's `rooms` (`{ kitchen: 'material:tiles' }`, presentation only, as `materials`)
+  draws each named room's floor tiles in a mesh of their own; the view passes it to the stage (`levelRooms`).
+- **Bounds and budgets**: a format-2 level's bounds reach over its roof's eaves; `x qa geo`'s draw-call and vertex
+  budgets count per storey (20 calls and 32 vertices a tile a storey: the house draws in 59 calls with one shadow map,
+  four storeys) and it compiles each place's levels with its glyphs.
+- **Both looks**: the playground's cel and pixel looks both draw materials in the toon style, their filters post passes
+  over the frame; tests/e2e/level-meshes.spec.ts draws the house in the lambert and toon styles with every style warmed,
+  building nothing after the warm-up, and tells its parts apart in the ID pass from outside, storey by storey with
+  what stands above hidden, and from the cellar. The cutaway by storey is WP 13.15's.
+- **Beyond Owns**: engine/gfx/level/stairs.ts (the step count), shapes.ts (exports `drawnWith`), engine/gfx/stage.ts
+  (runs per storey, the ground under the lowest slab, `levelRooms`), engine/app/view.ts and engine/world/level/level.ts
+  (the entry's `rooms`), engine/world/level/{legend,compile,types}.ts (the recipes, the bounds), tools/qa/geo.ts,
+  tests/pages/level-meshes.ts.
+
+## Amendment 17 (2026-10-21, WP 10.5): terrain
+
+- **A heightfield, not terraced tiles** (engine/world/terrain.ts): shardfall's terrain is terraced tiles with side
+  faces in triangle-mesh chunks; the playground's hill needs smooth slopes of 10° to 30° (docs/PLAYGROUND.md §2.2), so
+  heights stand at a grid's corners and Rapier's heightfield is the collider (engine/physics/heightfield.ts, its
+  internal edges fixed: a box sliding over a flat field's seams stays within 5 mm). Shardfall's fbm (5 octaves,
+  lacunarity 2.03), ridge term, terraces and flattened footprints carry over as the spec's fields; smooth domes
+  (`hills`) are new, to shape a designed rise; a footprint blends as `h·w + flat·(1 − w)`, exact at both ends. Its
+  stateless placement is `scatterTerrain` (hashes of the seed, a salt and the cell).
+- **The split, measured on 0.21**: the heightfield takes its heights column by column (`nrows` along z), centred on
+  the collider, each cell split from its north-east corner to its south-west one. `terrainHeight` interpolates the same
+  triangles and the finest drawn level is wound on them, so queries, collider and picture agree: probed from 1 km up
+  (a float32 ray) within 2e-4 m, normals within 5e-7.
+- **Navigation over a surface** (engine/world/terrainNav.ts): `NavGrid` takes a `NavSurface` (tiles from an `origin`,
+  which are walkable, their floors, a step test) besides a compiled level; a level's origin is 0 and its arithmetic
+  unchanged (x − 0 is x), so no golden moved. A terrain's cell is open up to a grade of 1 (45°); its heap moved to
+  engine/world/tileHeap.ts (nav.ts at its line cap). On a heightfield a terrace's riser is a cell's slope, so the grade,
+  not the climb, closes a high one.
+- **The drawing** (engine/gfx/terrain.ts): chunks of 32 cells, each three's `LOD` of every corner, every second and
+  every fourth from 0, 48 and 96 m, with 2 m skirts against cracks; normals of the full grid at every level, so the
+  light holds as levels switch. An orthographic camera stands 60 m back (engine/gfx/cameras/presets.ts), so a chunk
+  picks its level for one by what it frames (`levelDistance`: as far as a 50° lens stands to frame its height), and the
+  ground under the player is the finest in every camera.
+- **The splat** (engine/gfx/terrainSplat.ts): a node material copy of the ground layer's material in each style
+  (through the style set's `userData.restyle`; the copier is shared with the viewmodel, engine/gfx/materials/
+  nodeCopy.ts) whose colour mixes the steep layer in by the fragment's world normal (from the terrain's `steep` grade,
+  0.7: 35°) and the high one by its height, the edges wavering by fractal noise. A game names the layers' materials:
+  `material:default` alone by default (WP 13.17's building materials may give the engine turf and rock).
+- **Scenes**: a scene's `terrain` names its terrain; the view draws it (engine/app/view.ts, engine/gfx/stage.ts: with no
+  level, the stage's plane at its origin's height and the sun fitted to its area, reaching its far corner) and the
+  scene's setup stands its body (`addTerrainBody`, engine/sim/levelBodies.ts), as with a level. The names game code
+  takes are in engine/sim/siteApi.ts (sim-api.ts at its cap), WP 13.15's sites to follow there.
+- **The playground's hill** (labs/playground/scenes/hill.ts): `terrain:block`, the whole block's ground (96 × 96 m,
+  rolling 0.6 m) with the hill a 10 m dome of radius 30 m over the east edge's middle (slopes up to 28.9°, 10° to 30° on
+  most of its flank), in the playground's turf and rock (labs/playground/ground.ts); `playground:hill` takes the gym's
+  settings and `place`. A first strip of only the hill (x 72 to 96) let the replay's slide carry the player off its west
+  edge into nothing: the block's ground holds him, and is what WP 13.18's site stands on. The course `hill` (25
+  measures: the feet planted, no pops, every camera's bounds) passes; tests/replays/terrain-hill.replay.json (up the
+  flank, across it, down it in a slide gaining from 6.1 to 10.2 m/s, back up) gives one golden set in Node ×3 and
+  Chromium ×3.
+- **Measured, the controller's own**: up a 20° hillside its feet stay 0 to 7 cm over the slope (its capsule's
+  r (1 / cos θ − 1) and its skin); running down a 23° stretch at 6 m/s its across-then-down move hops it up to 13 cm off
+  the slope and back (engine/sim/levelBodies.test.ts holds both bounds). The feet's plant reads the ground under each
+  foot, so the course's planted feet pass.
+- **Beyond Owns**: engine/world/{terrainNav,tileHeap,nav}.ts, engine/gfx/{terrainSplat,stage,stageSky}.ts,
+  engine/gfx/materials/nodeCopy.ts and engine/gfx/viewmodel/material.ts (the copier), engine/gfx/level/runs.ts (split
+  from the stage at its cap), engine/physics/world.ts (the shape), engine/sim/{levelBodies,scene,siteApi}.ts,
+  engine/sim-api.ts, engine/index.ts, engine/app/view.ts, labs/playground/{ground,main}.ts, its scene and course,
+  tests/e2e/terrain.spec.ts.
+
+## Amendment 18 (2026-10-21, WP 13.15): sites
+
+- **A site** (engine/world/site.ts): `defineSite(id, { terrain, structures })` stands levels on a terrain, each with its
+  map's north-west corner at `at` (its storey on 0 at `at`'s height) and turned `turn` quarter turns about +Y. Points
+  cross between a structure's frame and the world by swapping and negating (`toWorld`, `toLocal`), with no
+  trigonometry, so Node and Chromium agree to the bit; `turnVector` never gives −0, since a ladder's normal is state and
+  a capture as text would turn −0 into 0. The terrain is flattened round each footprint (`flatten`, 4 m) and cut, a flag
+  per cell, under a storey below the ground floor and the rectangles a structure names (`cuts`: window wells).
+- **The cut terrain is one triangle mesh, not chunks** (engine/physics/trimesh.ts; `addTerrainBody(physics, terrain,
+  cut)`): docs/PLAYGROUND.md §6.3 planned triangle-mesh chunks where a cut is. One mesh of every uncut cell, split as
+  the heightfield splits them, with Rapier's internal edges fixed (`FIX_INTERNAL_EDGES`: a box slides over its seams
+  within 5 mm) has no seam between a heightfield and a chunk for a body to catch on, where neither collider knows the
+  other's edges, and stays small (the lot's 32 × 32 cells: 2,048 triangles less the cut). Probed over the fixture site
+  it stands where `siteFloorBelow` says within 1 mm, and a capture of a ball rolling down a mesh restores exactly. The
+  drawn terrain leaves the cut cells out, the chunk holding them at its finest level only (engine/gfx/terrain.ts).
+- **Queries over all of it** (engine/world/siteQueries.ts): `siteFloorBelow`, `siteSurfaceBelow`, `siteStructureAt`
+  (the storey by the surface under the point, `storeyBelow`, else by height; the room), `siteSolidAt` (a head only
+  where its solid stands), `siteClearSight` (sampled every 0.1 m) and `siteRescueGrid` (1 m tiles from an origin, the
+  cellar's floor where the ground is cut; `rescueLost` reads a grid's `origin`).
+- **Bodies in their places**: `addLevelBodies(physics, level, { at, turn })` stands a structure's one fixed body turned
+  in its place; `addSiteBodies` stands the terrain, then each structure, in that order (insertion order is identity);
+  `addSiteLadders` carries each structure's ladders' feet, tops and normals into the world.
+- **Navigation over storeys and terrain** (engine/world/siteNav.ts, siteNavGrids.ts): a `NavSurface` for the terrain
+  and each storey, linked through flights (each column), ladders (through the hatch) and doorways. A step needs the
+  crouched hull and 5 cm under the ceiling over the higher floor of its two tiles, read at each tile's four inset
+  corners, so a flight's edge counts; a tile under less than the standing hull (`LEVEL_BODY.standing`, 1.8288 m) and
+  5 cm costs 2.5 times its length, crouched, and `crouch` says when, never across a link (crouching on a ladder lets
+  go). A way walks each tile's clear point, moved off the sides it has no step through as far as the hull's radius and
+  4 cm need, so the 0.81 m hull walks a stairwell of two 0.5 m tiles in its middle. `nodeAt` takes the highest floor at
+  or under the feet within the climb, or, more than a step below them, an open tile beside it within a step of their
+  height (a body on a hatch's rim, its centre over the hole). The neighbours (WP 13.21) take the same graph; ai.ts is
+  unchanged.
+- **The bot on a site** (engine/dev/botNav.ts, bot.ts): `siteBotNav(site, climb)` gives it ways with `crouch`, `rise`
+  and `over`. A goal is reached only within 1 m of its height, so a room above is not reached from under its marker; a
+  climb counts as getting on; on a ladder whose way goes down it crouches to let go, and while it falls it pushes
+  nowhere, so it lands rather than catching the ladder again. `__engine.bot` reads a scene's site.
+- **The cutaway by storey** (engine/gfx/storeyCut.ts; the stage's `frame`): in the classic views (the camera type
+  `view`: isometric and top-down) every storey above the player's, and the roof while the player is indoors (in a
+  room, or under the roof's footprint, as in a shed with no room marked: `cutPlace`, reading the floor up to 10 cm over
+  the feet, since a resting body's feet sink a hair into it), are hidden by `visible`, the cutaway's twins with their
+  parts, so no frame builds a pipeline. The site's structures are drawn in groups at their places and turns
+  (engine/gfx/stageSite.ts, `site:<name>/<index>`), each with its cutaway and its cut by storey run in its own frame:
+  the structure the player is in is cut, the others stay whole. The occluder fade for third person indoors is the
+  existing cutaway's, per structure. Round a terrain the stage's ground is a frame, the terrain filling its own area
+  (engine/gfx/stageGround.ts): its plane at the origin's height hid the cellar under the cut from above.
+- **Rooms as data**: a light names its room (`room:<name>`, its light group: its tile's, else the first beside it,
+  north, east, south, west, as a sconce in a wall); `roomReverb(room, height)` picks `small`, `room` or `hall` by volume
+  (30 and 200 m³) for WP 13.22 to play; the playground's HUD names the room the player is in (`Room: kitchen`,
+  `Indoors`, `Outdoors`).
+- **The lot** (labs/playground/levels/lot.ts, scenes/lot.ts): the fixture house and shed in the playground's room
+  glyphs on a 32 × 32 m terrain, the house at (10, 0, 12), the shed turned a quarter at (24, 0, 6); the fixture site
+  (fixtures/levels/storeys/site.ts) stands the same for the engine's tests. The house's ladder moved from its outer wall
+  under a one-tile hatch, which the hull could not climb through, to the study's west wall under a 1.5 m hatch (the
+  house's golden re-recorded: f3b1585415bee4a1). The bot reaches each of the six rooms from the yard and back, and
+  tours them all in 1,398 steps.
+- **The soak**: a course of the tour's own intents is judged on no camera inside a wall (0 frames in all five cameras),
+  the Done-when; the cameras' other bounds are watched for WP 13.18's house, whose rooms are roomier: the shooter loses
+  sight of the player 931 of 1,398 frames and the platformer 255, and first person and the platformer jump 0.42 m and
+  0.52 m in one frame.
+- **From the review** (the verifier passed it, with notes, all taken): the rides fade once, in the world's frame (each
+  structure's cutaway had read their world boxes against its local lines, so a ride off the camera's line could hide);
+  a point on an edge two structures share is the east or south one's, as a tile's edge is (`siteStructureAt`, the
+  stage's `where`); `turnVector` gives no −0 whatever comes in; `__engine.bot`'s help names a site goal's height, and
+  a test plays it on the fixture site; a test holds the lot's copies to the storey fixtures, markers aside; WP 13.18's
+  entry carries the watched camera bounds and amendment 15's leftovers.
+- **Beyond Owns**: engine/world/{siteQueries,siteNav,siteNavGrids}.ts,
+  engine/world/level/{heights,compile,types,validate}.ts, engine/physics/{trimesh,world,bodies}.ts,
+  engine/sim/{rides,siteApi}.ts, engine/gfx/{stageSite,storeyCut,stageGround,stage,terrain}.ts, engine/app/view.ts,
+  engine/dev/{bot,botNav,actions}.ts, engine/audio/runtime/reverb.ts, engine/index.ts,
+  fixtures/levels/storeys/{site.ts,house.txt}, labs/playground/{levels/lot.ts,scenes/lot.ts,main.ts,README.md},
+  tests/e2e/playground-cameras.spec.ts, tools/eslint/layers.ts (the bot's rule holds its navigation beside it, sim-side
+  too). engine/world/nav.ts and engine/gfx/cutaway.ts, which the WP extends, needed no change: the site's graph is
+  NavGrids over NavSurfaces, and the cut by storey a module of its own.
+
+## Amendment 19 (2026-10-21, WP 13.16): doors, windows, switches and pickups
+
+- **Use** (engine/sim/interact.ts, the system `interact`, phase `intents`): for each player, the thing in reach (2 m
+  from the eye, plus half the thing's size) and in view: along the crosshair when the step has a `look` and an `aim`
+  (first person and the shooter), the first body the eye's ray toward the aim strikes, or a bodiless thing (a switch)
+  it passes within 0.15 m of before that; else the nearest within 60° of where it faces, a wall, a door or a pane
+  between hiding it (a ray through the group `world`). What can be used is asked of the entries, never the ids: the
+  kind `usable`, keyed by component (a door's, a switch's), then a prop's own `use` with a `prompt`, then carrying, for
+  a dynamic prop of 25 kg or less; only what can be used now counts, so a sliding door hides no switch. The prompt
+  sits in the player's `interactor` component, as it stands after the step's use, and the playground's HUD shows it
+  with the key that uses it on the device used last (playground.spec.ts reads it: `E: Open`, then `E: Close`).
+- **The phases**: the use reads the step's intents in `intents`, before the actors move; the doors, the panes and the
+  switches run in `anim`, after it, so a throw is cast in its own step and the dev action `freeze`, which skips `ai`,
+  stops none of them (a kinematic leaf left undriven would spin on at its last velocity).
+- **A use takes its press**: `interactor.usedAt` is the step, and the actors' input leaves that press out of the
+  rides' (engine/sim/actorInput.ts), so using a door beside a zipline does not ride it.
+- **Carrying and throwing**: the carried prop's body is driven by velocity toward 0.8 m before the eye (at most
+  12 m/s, its turn held), so it still collides; held back past the reach and 1.5 m, it drops; the next use throws it
+  along the view at 8 m/s.
+- **The strike before the kick**: `melee` strikes what is in reach and in view with the use's reach and cone, not
+  §3.2's punch (1.52 m in a 30° cone), which WP 13.19 brings with the kick's move. Only what takes a strike counts: a
+  component of the kind `strikable` (a door's rule, a breakable's point of damage), health, or a dynamic body to knock,
+  so a lamp hanging before a door takes none.
+- **Doors** (engine/sim/doors.ts): kinematic props (the prop kind gains `kinematic`, `spawnProp`'s `as` makes one),
+  driven by velocity to the pose their hinge, turn and angle give (`driveBody`). A use opens one away from the user, a
+  quarter turn and more (1.65 rad) at 2.6 rad/s, and closes it; a locked one says `Locked`. A kinematic body pushes
+  whatever it meets, so the leaf's next pose is tested first against actors and props (`overlap`) and it waits there.
+  Apex's rule: a strike while the striker faces it bursts it open three times as fast and unlocks it, the second
+  breaks it off its hinges, a dynamic slab knocked away with `splinters`; a shot or a blast breaks it at once. A
+  sliding door (the garage's) moves along an offset, opened by its switch, never struck. `addLevelDoors` hangs
+  `prop:door` in each door opening of a level, centred (5 cm a side in a 1 m doorway); its 0.9 m leaf and the pane's
+  0.5 × 1.2 m fit the default glyphs' openings, and another width, sill or head leaves gaps (the file comments say so).
+- **Windows and breaking** (engine/sim/breakables.ts): `prop:pane`, 0.5 × 1.2 m and a 2 cm fixed slab with 1 hit
+  point, stood every half metre across a window opening from its sill, in the wall's middle (`addLevelWindows`). A
+  fixed pane would stop a thrown chair: the physics step resolves the contact before any rule sees it. So the system
+  `breakables` breaks, before the physics step, every pane a prop flying faster than 4 m/s would strike in it: the
+  prop's own shape cast along the step's move (gravity's pull in it), again past each pane it breaks (up to four), and
+  the chair flies on through; a thrown prop with health of its own breaks one too. `breakProp` sends the event its look
+  names (`breaks.shards`: `glass`, `splinters`; else `shatter`) with `{ id, prop, position, ground }`, stands its pieces
+  (`breaks.into`) in a fixed fan with no random stream, their bodies knocked away as they are made (`spawnProp`'s
+  `knock`: inside a step an entity joins only at its end, so a hit through it would find none), and removes it. The view's emitters answer those types: glass falls and glints and lands
+  nowhere (a sill is no floor), splinters and debris land on `ground`.
+- **Switches** (engine/sim/switches.ts): the component `switch` (on, its light group, or its door); flipping one turns
+  its group's other switches with it (a stair's two). Lamps a scene's setup spawns join the world at the setup's end,
+  after the switch, so the system `switches` holds each group at its switches' state every step, a lamp spawned later
+  from the step after it joins; `switchGroup` (a rule: the streetlights at dusk) sets a group and its switches. The
+  view reads `propLight.on` (engine/gfx/stageProps.ts, props.ts): a prop that is off draws its `lit` parts at a quarter
+  of their tint and gives no light. The lamp's lit part is its shade, glowing: a bulb under a shade showed from below
+  only, never in the isometric and top-down cameras.
+- **The hash kept**: `sceneProp` is unchanged; a prop with health gains `propHealth`, a switchable one `propLight`,
+  and nothing else does, so every earlier replay keeps its goldens.
+- **`damage` stays the crowd's**: the plan's Owns has WP 13.16 extend engine/sim/damage.ts for props with health. A
+  prop's hit points are its own component instead (`damageProp`), since `damage` writes a target's `hitAt` and `hitBy`
+  and drives a crowd body; bolts and shots reach props through `strikeBody` (a body to its prop by `propOfBody`): the
+  box's `fight.shots` calls it for each body its bolts strike, and with no prop in the fight its goldens hold.
+- **A removed body's id names nothing** (engine/physics/capture.ts `liveBody`): Rapier finds a body by its slot alone,
+  so once a removed body's slot was reused, `hasBody` said the old id lived and `readBody` read the newcomer (a broken
+  pane's slot taken by a shard). Every lookup of a stored id (the world's, the bodies', the queries' `exclude`, a
+  character's floor and platform, a crowd agent's) now checks the generation too; lookups of a query's own hits keep
+  Rapier's. `removeProp` clears its component's body, since its entity stays to the step's end.
+- **The body-to-entity lookup is a scan** (`propOfBody`), not the index the Build names: a use or a hit asks a few
+  times a step, and an index would be state beside the components, to keep in step with spawns, breaks and restores.
+- **The API**: the house's names are in engine/sim/houseApi.ts, re-exported whole by engine/sim-api.ts, and generic
+  over the world's events (`World<C, E>`), as `damage` is, so a world with its own event map (the box's) calls them.
+  `defineUsable` and `defineStrikable` write to the shared registry the system reads, and take no other.
+  engine/gfx/props.ts, at its cap, gave its texture and materials to engine/gfx/propLooks.ts.
+- **The playground**: the library gains the chair (6 kg), what the owner's playtest throws; the cottage
+  (labs/playground/levels/cottage.ts, scenes/interact.ts) holds a door, two windows, the kitchen's lamp and switch and
+  chairs to throw, and its replay (tests/replays/playground-interact.replay.json) opens the door, switches the light
+  off and on, closes the door, bursts it open and breaks it, and throws a chair through a pane. The house's doors,
+  windows, lamps by room (`room:<name>`, amendment 18's light groups), the garage and its door (whose storey must hold
+  the door's 2.2 m slide up) and the bot through closed doors are WP 13.18's; doors, glass and switches have no
+  sounds until WP 13.22.
+- **From the review** (the verifier failed it on three counts, all fixed, and listed open issues, taken): the props
+  page's lamp showed no bulb from above (now the glowing shade); the playground's menu spec still listed the gym alone,
+  stale since WP 10.5's hill (now every scene and replay file); a prop breaking into pieces inside a step threw (now
+  its pieces are knocked through their bodies). Taken from the open issues: what cannot be used now no longer hides what
+  can; only what takes a strike is struck; a group's switches turn together; the phases above; a thrown prop with
+  health breaks panes; the crosshair's ray picks what it strikes; `FRONT` written as 0.5, no Math at import; the stale
+  test titles and file comments; the HUD's prompt read by the page spec. Left: the scan above, and the fixed pane and
+  leaf sizes, documented.
+
+## Amendment 20 (2026-10-22, WP 13.18): the site
+
+- **The block** (labs/playground/levels/site.ts): one site, `site:block`, 96 × 113 m, on the hill scene's ground
+  flattened under the range, the yards and the street. The gym as built (41 × 101 m, WP 13.1 to 13.7) could not stand
+  in §2's 36 × 70 m strip, so the block runs 17 m further south than §2's 96 m, and docs/PLAYGROUND.md §2's sketch and
+  ranges say so; the gym stands at (0, 12), its wall open by three gates (`GYM_GATES`, `GYM_SITE_TEXT`), while its own
+  scene keeps the wall whole. The house (format 2, 0.25 m tiles), the shed, the tree house and the lookout, the range's
+  shelter and backstop, the ring and the paving are levels painted from rectangles (labs/playground/levels/plan.ts);
+  their looks (siding, wallpaper, shingles, a brick chimney, each room's floor) are their entries'. Each area has a
+  spawn (`SITE_AREAS`) and a scene (`playground:site` the front yard's, `playground:site-<area>` the others'), each
+  `defineScene` call written out with its id, since the tools find a scene by its module's text (tools/lib/scenes.ts).
+- **The house as built** against §2.1: a patio on the backyard side, not a deck, the crawlspace under it; the garage's
+  door an up-and-over door on its switches (a tilt, e981a49), 2.3 m high under the ground storey's 2.7 m; a level door hangs
+  only in an opening its leaf fits. The study's bookshelf stands off its door: with the leaf open the two sealed it.
+- **The lot and the cottage give way** (amendments 18 and 19): labs/playground/levels/{lot,cottage}.ts,
+  scenes/{lot,interact}.ts and the interact replay are gone (their inspector glyphs also clashed with the house's). The
+  site's replay (tests/replays/playground-site.replay.json, 640 steps, 12 goldens; Node ×3, Chromium ×3 and the page ×3
+  agreeing) opens the front door, turns the hall's light off and on, bursts the living room's door open and breaks it,
+  throws a chair through the dining room's north window and raises the garage's door; labs/playground/scenes/site.test.ts
+  checks its story event by event and the HUD's prompts. WP 13.16's Verify plays it now.
+- **The bot on the site** (engine/world/siteNav.ts, siteNavClear.ts, siteNavGrids.ts; engine/dev/bot.ts, botNav.ts):
+  a tile's clear point is sampled every 5 cm within the hull's keep (its radius and 4 cm), the nearest point that far
+  from what the body cannot walk into: a closed tile of its own grid, a side's floor more than a climb away, a ladder's
+  foot, a prop's own box (not the margin the graph closes round it); the tiles links cross into count open. The way
+  looks ahead up to three nodes past clear points already reached or, in the body's own grid, behind it. A drop off a
+  step higher than a climb costs its height, and a flight's side is crossed only within a 10 cm curb, so a way never
+  jumps off a flight's side; a block closes no tile through a closed one (a bookshelf's margin closed the attic's
+  ladder through the landing's wall). The bot ducks 2.2 m ahead of a low ceiling, pushes gently at a drop and presses
+  use there (a ladder's top takes hold by use), keeps its push through a mantle, pushes nowhere falling until 0.25 m
+  over its floor, reads a ladder's rise over the next three nodes, and turns the view the way it walks when asked
+  (`look`, as a player's mouse would). Left: a way along a ladder's face can take hold of it (the lot's attic run).
+- **Measured**: the bot reaches every room of the four storeys and every area from the front yard's spawn and back
+  (labs/playground/scenes/site-{downstairs,upstairs,areas}.test.ts), and tours the 17 rooms and back in about 5,100
+  steps (site-soak.test.ts).
+- **The cameras' watched bounds** (amendment 18): over the tour, run again as a course with the bot's view, no camera
+  stands inside a wall (0 frames in all five), and first person, isometric and top-down keep all their bounds. The
+  shooter loses the player in about 7% of the frames, its arm pulled in at the house's walls, and a door swinging into
+  its ball cuts it once (3.45 m in a frame); the platformer loses the player in most, its short arm's view along it
+  missing the chest indoors (the playground gives it no sim look). Judging them takes the follow cameras reworked for
+  rooms, a WP of its own: WP 13.27 (stage G12), for which the soak watches them.
+- **The warm-up asks for fewer styles** (engine/gfx/materials/styles.ts `attach(warmup, scene, styles)` and `add`,
+  engine/app/look.ts): a page's style set warms its own style and each a look asks for, not all four: the playground's
+  looks both draw toon. The site's page warmed 113 pipelines in 333 s before, 85 in 214 s after, on SwiftShader; the
+  tools wait 300 s for a page (tools/lib/page.ts `READY_MS`), the site's specs 420 s. Open: the view's second camera's
+  compile passes take about 45 s each, every pipeline already built (render objects rebuilt per camera).
+- **A mesh with nothing to draw** (Dawn warned of a draw with an index count of 0 in the site's page): a storey's floor
+  whose every piece its rooms' own floors took (the attic's) keeps its place in the level meshes' `parts`, hidden and
+  out of the root and the warm-up (engine/gfx/level/meshes.ts).
+- **The gym's courses from gate G10** (labs/playground/courses/{gaps,steps,crouch,landing,climbAgain}.ts): the gaps'
+  (running across 3 m, sprinting across 5 m, slide-jumping across 7 m, and a superglide over the platform it mantled
+  onto and the 5 m gap: the lane has no wall before a gap, so the 9 m gap's superglide is its flight's 10.0 m, not a
+  run), on the contested 0.1 s hop window, since a place lands the player and a 3 m platform leaves no room for a 1 s
+  run-up; the stairs climbed at the run's speed, the 45° slope walked to its deck and the 51° one refused; the duck's
+  25 ticks of 16 ms after the press's own, getting up in the release's tick, crouch spam never down; the stun from 6,
+  14 and 25 m and the run again a second on; a climb caught again only once the feet are 0.48 m up, 3.25 m under the
+  cutoff. §2.3's stairs row says what the gym has, one stair of 0.25 m risers (the 0.10 to 0.20 m ones were never
+  built, and §3.2's steps run to 0.56 m).
+- **The page**: the gym's signs show where the gym stands on the site; the menu lists the site's scenes after the gym,
+  by id. playground.spec.ts cycles the five cameras and both looks on the hill and, on one site page, from each area's
+  spawn: the site's scenes are one block, each placing the player at an area's spawn, so one page placing it at each
+  stands for them all.
+- **Smaller calls**: `registry.kinds()` keeps its sorted list until a kind is declared (every prop and setting lookup
+  asks); `findTarget` asks where a prop is before whether it can be used (a house holds hundreds); the terrain is cut
+  where structures' floors cover a cell whole (its four quarters' middles), so a deck's posts and a ladder's foot leave
+  the ground under them; `sweepBot` moved to engine/dev/botSweep.ts, bot.ts at its cap; the hydrant's cap a 2 cm limb
+  (the view refuses a limb of no length; labs/playground/props/props.test.ts builds every part).
+- **The review's fix** (the site's cutaway test failed in the crawlspace): the playground's `place` takes `crouch`,
+  leaving the player ducked from the next step (no standing hull fits under the crawlspace's 1.4 m), and `roomPlace`
+  (labs/playground/scenes/site.ts) puts him at a room's marker, ducked where a standing head would be in something
+  solid; the crawlspace's marker stays against its walls (moving it changes the level's head colliders, merged by
+  glyph, and so the replay's physics), a ducked body nudged 5 cm off them. In a classic view the cut by storey now
+  also lifts the player's own storey's heads under a low ceiling (engine/gfx/storeyCut.ts: `cutPlace`'s `low`; the
+  door heads go with it, one mesh), and hides the props standing on a storey it cuts off (`aboveStorey`, the site's
+  `hides`, engine/gfx/stageProps.ts `hide`): an attic's chest no longer hangs over the hall. The house's walls cut
+  `either` (a new rule beside `facing` and `blocking`, engine/gfx/level/recipes.ts: facing the camera, or between it and
+  the player), since a wall with rooms or open storey on both sides faces no one way out, and its partitions
+  `blocking`. Measured in Node by WP 12.3's eye (amendment 21): every camera sees the player in all 17 rooms, the shed
+  and the front yard, first person the room past his body. The crawlspace has no lamp or switch: its light is WP
+  13.23's.
+- **The gate's review** (G11): `placeActor` takes `{ crouch }` (engine/sim/actors.ts; the playground's `place` passes
+  it on instead of setting the motion itself) and refuses a place where the level stands over the feet lower than the
+  hull's top, up its axis, with `SIM_BAD_ARGUMENT` and its fix (a place with headroom, or `crouch`): a standing hull
+  put under a 1.4 m slab sank 0.45 m through the floor and stuck there, with no word. Only a ceiling counts, not a wall
+  the hull touches (the camera-walls course puts the player against one), and a one-way platform lets it up through.
+  The stage draws the props again in a frame only when the cut moved (engine/gfx/stageProps.ts `hide(test, key)` says
+  so; the site's `cutKey`), not in every frame as the review's fix had it.
+
+## Amendment 21 (2026-10-22, WP 12.3): the agent eye
+
+- **What it casts** (engine/dev/eye.ts): a ray from the view's camera through each cell's centre, the camera
+  unprojected as the frame projects (its inverse projection, then its world matrix, so a classic view's height boost,
+  engine/gfx/cameras/boost.ts, is in the ray; WebGPU's depth runs 0 to 1), cast at the read-only queries
+  (engine/sim/queryView.ts) up to the far plane. The plan's "raster built from physics shapes" is these casts: the
+  shapes are the queries'. A body an entity's component holds (`body`, the first holder in id order) is that entity's:
+  the player, an actor, a prop by its id, else the component's name. Any other body is the level's.
+- **What the frame draws** (engine/dev/eyeFaces.ts): the physics world keeps bodies where the frame draws nothing (a
+  storey cut away, a wall the cutaway cut down, a roof, a prop on a cut storey, a collider's air round a chair's
+  legs), so a hit counts only where a drawn face lies within 2 cm of it and shows to the ray (`drawnFaces`: every
+  visible mesh's and drawn instance's triangles in world space, in a grid of 1 m cubes; a material's culled side does
+  not show, as the ID pass draws it); elsewhere the ray goes on past it, up to 16 casts (`MARCHES`). A merged mesh's
+  box would not do: a storey's door heads span the storey, their box round the floor above. An actor's body counts
+  wherever it is, standing for his puppet, which the GPU skins.
+- **First person** looks from inside the player's capsule, so the eye leaves the player's body out; its frame draws the
+  arms, which have no body, and the agreement spec asks it only about the level there.
+- **Headless frames** (`camera.advance(n)`, engine/app/viewMembers.ts and view.ts `advance`; not `follow`, which names a
+  camera): headless runs no frames, so a view's camera stays where a dev action found the player and a follow camera's
+  ball stays at its arm's base; `advance` moves it on by n frames of 1/60 s, drawing nothing and never stepping (view
+  state only, never recorded), as a page's frames would. `x eye` moves the camera on by a second of them first.
+- **The picture**: `@` the player, `#` a wall, `.` a floor (a face within about 45° of up, `FLOOR_UP`), a letter per
+  kind (upper case for actors), and its legend. `__engine.eye` and `x eye` look at 96 × 54 cells by default (16:9, as
+  the page); `x eye` answers at that size (its summary, `eye.txt` and `eye.json`) and prints the picture shrunk to 56 ×
+  16 (`printOf`: a terminal's characters are about twice as tall as wide; a printed character shows the player's `@` if
+  any cell under it does, else the thing most of them show, else a wall over a floor), naming six things at most.
+- **Where it runs**: the member `__engine.eye` reads the view's camera, its scene and its queries (`RunView.queries()`,
+  engine/app/view.ts: the QueryView the view already held for its cameras), so a page and a headless run with its view
+  (`createHeadless({ view: true })`, which imports the member) both have it; `node x eye <scene>` is the second. The
+  layer rule keeps three.js out of engine/dev: the eye's camera and objects are structural types, its math core/math's,
+  and WebGPU's coordinate system its value (2001), which the unit test checks against three.js's.
+- **Measured**: the trigger's question, in Node (labs/playground/scenes/site-eye.test.ts): with the player at each of
+  the house's 17 rooms (ducked in the crawlspace), the shed and the front yard, every camera but first person sees him,
+  first person the room past his body (finding WP 13.18's crawlspace, props and wall cuts, amendment 20's fix);
+  tests/e2e/eye.spec.ts, the box's room-hero and hall-props, the hero at his spawn and walked two ways, 22 cameras
+  (each classic view in both projections, the 3D cameras, the follow cameras and first person) and two each round that
+  must not see him (`AWAY`: a fixed camera behind him looking away, the top-down view zoomed in 6 m east of him): the
+  eye and the ID pass agree on 280 of 282 cases (99.3%; the Done-when's bound is 95%), the 12 that must not see him
+  unseen in both answers; both misses a follow camera still inside the hero's capsule two frames after a switch (from
+  inside an actor's body the eye sees only him; his puppet, slimmer, may not fill the frame). The spec steps once
+  before it looks: a scene's bodies join the queries at the first physics step. In the box a wall or the pillar
+  between a camera and the hero is no negative case: the cutaway cuts it, in the frame and so for the eye.
+- **Beyond its Owns**: engine/app/{view,headless,viewMembers}.ts and their tests (the members `eye` and
+  `camera.advance`), tests/e2e/box-members.spec.ts (every member in the page), the tests beside each file, the house
+  test, docs/GAME-GUIDE.md's command row and the stress-box skill's quick loop.

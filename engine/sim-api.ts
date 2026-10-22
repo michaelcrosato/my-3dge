@@ -10,9 +10,10 @@
  * Invariants: a flat list of `export … from` lines, one name per line, grouped by area, and append-only: each WP adds
  * its public names at the end of their area, so parallel lanes merge cleanly (§11.3). The Animation area lives in
  * engine/anim/api.ts, re-exported here whole so this file stays under its line cap (ADR-0020 amendment 8): append
- * animation names there; Phase 13's movement areas likewise in engine/sim/movementApi.ts (ADR-0025 amendment 7). Only sim-side modules are re-exported (ESLint's layer rule for this file). Each name is
- * documented where it is declared, and `x docs --check` fails a public export without its doc comment. Game code
- * reaches three.js only through these re-exports.
+ * animation names there; Phase 13's movement areas likewise in engine/sim/movementApi.ts (ADR-0025 amendment 7), its
+ * sites' in engine/sim/siteApi.ts and its house's in engine/sim/houseApi.ts (amendment 19). Only sim-side modules are
+ * re-exported (ESLint's layer rule for this file). Each name is documented where it is declared, and `x docs --check`
+ * fails a public export without its doc comment. Game code reaches three.js only through these re-exports.
  *
  * @example
  * // fixtures/scenes/kernel/index.ts
@@ -239,10 +240,11 @@ export { sensorHits } from './physics/bodies';
 export { TRIGGER_FIELDS } from './physics/bodies';
 export type { Trigger } from './physics/bodies';
 export { updateTrigger } from './physics/bodies';
-export { rescueLost } from './physics/bodies';
-export type { RescueLevel } from './physics/bodies';
+export { rescueLost } from './physics/rescue';
+export type { RescueLevel } from './physics/rescue';
 // Props as data (WP 4.5): the registry kind `prop` (meshes by geometry and material id, a body, a light spot, where a
-// level places it, the hit and use hooks), the engine's crate, barrel, brazier fire and pillar, and their placement.
+// level places it, the hit and use hooks), the engine's crate, barrel, brazier fire and pillar, the library's sconce,
+// banner, chest, door, table, bench, statue and lantern (WP 10.3), and their placement.
 export { defineProp } from './world/props/prop';
 export { getProp } from './world/props/prop';
 export { propCentre } from './world/props/prop';
@@ -385,3 +387,11 @@ export type { PuppetComponent } from './sim/actors';
 // Movement (Phase 13): movement profiles and the shooter model, its live tuning and placing (the feel kit), and the
 // rides; listed in engine/sim/movementApi.ts, re-exported whole so this file stays under its line cap.
 export * from './sim/movementApi';
+
+// Storeys and sites (Phase 13): levels written as storeys and their 3D queries, terrain, its queries, its body and
+// its navigation; listed in engine/sim/siteApi.ts, re-exported whole so this file stays under its line cap.
+export * from './sim/siteApi';
+
+// The house (Phase 13): using things, carrying and throwing, doors, windows and breakables, switches; listed in
+// engine/sim/houseApi.ts, re-exported whole so this file stays under its line cap.
+export * from './sim/houseApi';

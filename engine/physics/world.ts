@@ -11,9 +11,10 @@
  * Bodies are plain data in, ids out: `addBody({ type, position, rotation, velocity, angularVelocity, colliders, group,
  * … })` returns the body's id (engine/physics/capture.ts), `readBody(id)` copies its pose and velocities into three.js
  * math classes, and `setBody`, `applyImpulse` and `removeBody` change it. Shapes and vectors are those of
- * engine/physics/queries.ts, and a collider may also be a convex hull of points (`{ type: 'hull', points }`: a ramp's wedge,
- * a dais's frustum); colliders take their group from the body (`prop` for dynamic bodies, `world` otherwise)
- * unless they name one (engine/physics/groups.ts). Densities are in kg/m³ (1,000, water, by default).
+ * engine/physics/queries.ts, and a collider may also be a convex hull of points (`{ type: 'hull', points }`: a ramp's
+ * wedge, a dais's frustum), a heightfield or a triangle mesh (terrain: heightfield.ts, trimesh.ts); colliders take
+ * their group from the body (`prop` for dynamic bodies, `world` otherwise) unless they name one
+ * (engine/physics/groups.ts). Densities are in kg/m³ (1,000, water, by default).
  *
  * Stepping: `step(sim)` sets the step length to the sim's `dt` and gravity to the `physics.gravity` setting
  * (engine/physics/params.ts), then steps Rapier once. The sim runs it as the system `physics`, in the phase of the
@@ -45,12 +46,14 @@ import {
   bodyId,
   bodyIds,
   capturePhysics,
-  handleOf,
+  liveBody,
   physicsState,
   restorePhysics,
   type PhysicsCapture,
 } from './capture';
 import { groupBits, type GroupName } from './groups';
+import { heightfieldDesc, type HeightfieldShape } from './heightfield';
+import { trimeshDesc, type TrimeshShape } from './trimesh';
 import { INTEGRATION_PARAMETERS } from './params';
 import {
   check,
@@ -89,8 +92,8 @@ export type BodyType = 'dynamic' | 'fixed' | 'kinematic';
 
 /** One collider of a body: a shape where the body puts it, and its material. */
 export interface ColliderSpec {
-  /** A query shape, or a convex hull of points (bodies only). */
-  shape: Shape | HullShape;
+  /** A query shape, or a convex hull of points, a heightfield or a triangle mesh (bodies only: heightfield.ts, trimesh.ts). */
+  shape: Shape | HullShape | HeightfieldShape | TrimeshShape;
   /** Where it sits on the body (the body's origin by default). */
   position?: Vec3Like;
   rotation?: QuatLike;
@@ -232,8 +235,10 @@ function pin(world: RAPIER.World): void {
   });
 }
 
-/** A Rapier collider description of a shape: a hull from its points, the others from their sizes. */
-function shapeDesc(shape: Shape | HullShape, where: string): RAPIER.ColliderDesc {
+/** A Rapier collider description of a shape: a hull from its points, a heightfield from its heights, the others from their sizes. */
+function shapeDesc(shape: Shape | HullShape | HeightfieldShape | TrimeshShape, where: string): RAPIER.ColliderDesc {
+  if ((shape as { type?: unknown } | undefined)?.type === 'heightfield') return heightfieldDesc(shape as HeightfieldShape, where); // prettier-ignore
+  if ((shape as { type?: unknown } | undefined)?.type === 'trimesh') return trimeshDesc(shape as TrimeshShape, where);
   if ((shape as { type?: unknown } | undefined)?.type === 'hull') {
     const hull = RAPIER.ColliderDesc.convexHull(hullPoints(shape as HullShape, where));
     check(hull !== null, `${where}.points`, (shape as HullShape).points, 'points Rapier can wrap in a hull');
@@ -265,7 +270,7 @@ export function createPhysics(): Physics {
   let world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
   pin(world);
   const body = (id: number): RAPIER.RigidBody => {
-    const found = Number.isInteger(id) && id >= 0 ? world.bodies.get(handleOf(id)) : null;
+    const found = liveBody(world, id);
     if (found) return found;
     const why = Number.isInteger(id) && id >= 0 ? ': it was removed, or never added' : ': ids are whole numbers from 0';
     throw codeError('PHYSICS_NO_BODY', { id: show(id), why });
@@ -300,7 +305,7 @@ export function createPhysics(): Physics {
       return bodyId(made.handle);
     },
     removeBody: (id) => world.removeRigidBody(body(id)),
-    hasBody: (id) => Number.isInteger(id) && id >= 0 && world.bodies.contains(handleOf(id)),
+    hasBody: (id) => liveBody(world, id) !== null,
     bodies: () => bodyIds(world),
     readBody(id) {
       const b = body(id);

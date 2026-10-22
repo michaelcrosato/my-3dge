@@ -5,7 +5,7 @@
  * `ridesOf` gives them in id order with each launcher's volume and top; a player on the shooter model uses the
  * zipline by the step's intents (`interact`) and rides it, the same hash on every run, and a capture taken mid-ride
  * restores (from text too) and rides on with the uninterrupted run's hashes; a launcher sets it off with the event
- * `launch`.
+ * `launch`; a site's ladders stand where its structures do, turned with them.
  * @see engine/sim/rides.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -14,15 +14,16 @@ import { createRegistry } from '../core/registry';
 import { createCharacter } from '../physics/character';
 import { physicsOf } from '../physics/binding';
 import { compileLevel } from '../world/level/compile';
+import { defineLevel } from '../world/level/level';
+import { defineSite, getSite } from '../world/site';
 import { defineActorKinds, spawnActor, type ActorComponents } from './actors';
 import type { WorldCapture } from './capture';
-import { addLauncher, addLevelLadders, addZipline, ridesOf } from './rides';
+import { addLauncher, addLevelLadders, addSiteLadders, addZipline, ridesOf } from './rides';
 import { defineScene, startScene } from './scene';
 
 /** A level with a ladder up its north wall. */
-const LEVEL = compileLevel('---\ndescription: A yard with a ladder.\ntile: 0.5\n---\n#####\n#@|.#\n#...#\n#####\n', {
-  file: 'yard.txt',
-});
+const YARD = '---\ndescription: A yard with a ladder.\ntile: 0.5\n---\n#####\n#@|.#\n#...#\n#####\n';
+const LEVEL = compileLevel(YARD, { file: 'yard.txt' });
 
 /** A registry with a scene `yard`: a 60 × 60 m floor, a player on `movement:apex` under a zipline, a balloon, a pad. */
 function yard(rides = true) {
@@ -75,6 +76,18 @@ describe('rides', () => {
     const ids = [...rides.cables, ...rides.launchers, ...rides.ladders].map((ride) => ride.id);
     expect(ids).toEqual([...ids].sort((a, b) => a - b));
     expect(world.get(rides.cables[0].id)).toMatchObject({ zipline: { feet: [0, 0], poles: true } }); // its poles on the ground
+  });
+
+  it('stand a site’s ladders where its structures stand, turned with them (WP 13.15)', () => {
+    const registry = createRegistry();
+    defineActorKinds(registry);
+    defineLevel('level:yard', { text: YARD, file: 'yard.txt' }, registry);
+    defineSite('site:yard', { structures: [{ level: 'level:yard', at: [10, 2, 4], turn: 1 }] }, registry);
+    defineScene('yard-site', { physics: true, setup: (w) => void addSiteLadders(w, getSite('site:yard', registry)) }, registry); // prettier-ignore
+    const { world } = startScene('yard-site', { registry });
+    // In its own frame (1.25, 0, 0.6), off the north wall and facing south; a quarter turned, off the west wall, east.
+    const [ladder] = ridesOf(world)!.ladders;
+    expect([ladder.foot, ladder.top, ladder.normal, ladder.width]).toEqual([[10.6, 2, 2.75], 5, [1, 0], 0.5]);
   });
 
   it('are ridden by a player through the step’s intents, the same hash every run, and on after a restore', () => {

@@ -10,6 +10,10 @@
  * Light and view: a hemisphere light and one shadow-casting directional light (one shadow map), and a camera above
  * the level's south edge looking at its middle, so the whole of a 16 × 12 m room is in view.
  *
+ * Storeys (WP 13.14): the page defines the storey fixtures' room markers (fixtures/levels/storeys/glyphs.ts) on its
+ * registry, so `show` draws fixtures/levels/storeys/*.txt too; `style(name)` restyles what it shows (a style set over
+ * the page's library, attached to the warm-up on first use, engine/gfx/materials/styles.ts) and draws a frame.
+ *
  * Invariants: `ready` turns true once the renderer has drawn the empty scene, never after an error; a failure to start
  * is one record in `__engine.errors`, shown as page text; `show` replaces the level shown before.
  *
@@ -19,8 +23,12 @@ import * as THREE from 'three/webgpu';
 import { createSettings } from '../../engine/core/settings';
 import { createLevelMeshes, type LevelMeshes } from '../../engine/gfx/level/meshes';
 import { createMaterialLibrary } from '../../engine/gfx/materials/library';
+import { createStyleSet, type MaterialStyle, type StyleSet } from '../../engine/gfx/materials/styles';
 import { createRenderer, type FrameReport, type FrameView, type Gfx, type GfxError } from '../../engine/gfx/renderer';
 import { compileLevel } from '../../engine/world/level/compile';
+import { defineStoreyFixtureGlyphs } from '../../fixtures/levels/storeys/glyphs';
+
+defineStoreyFixtureGlyphs();
 
 /** One structured error record, as `window.__engine.errors` holds them (PLAN.md §8.3). */
 interface ErrorRecord {
@@ -98,6 +106,7 @@ async function start(): Promise<void> {
   const library = createMaterialLibrary();
   let shown: LevelMeshes | null = null;
   let registration: { dispose(): void } | null = null;
+  let styles: StyleSet | null = null;
 
   const page = {
     gfx,
@@ -110,6 +119,16 @@ async function start(): Promise<void> {
     },
     /** Draws a frame now; resolves once the GPU has finished it. */
     settle: () => settle(gfx, view),
+    /** Draws what is shown in `style`, warming every style up first the first time; reports the frame. */
+    async style(style: MaterialStyle): Promise<FrameReport> {
+      if (!styles) {
+        styles = createStyleSet({ library });
+        styles.attach(gfx.warmup, scene);
+        await gfx.warmup.run(view);
+      }
+      styles.setStyle(style, scene);
+      return settle(gfx, view);
+    },
     /** Shows the level `text` (from `file`) in place of the last one, warms up and draws; see the file comment. */
     async show(text: string, file: string): Promise<Shown> {
       registration?.dispose();

@@ -51,12 +51,15 @@ function piecesOf(grid: TileGrid, glyph: Glyph): TileRect[] {
 /** The height a glyph's pieces stand on: the ground under a box or hull collider, else its floor. */
 const bottomOf = (glyph: Glyph) => (glyph.collider === 'box' || glyph.collider === 'hull' ? 0 : glyph.floor);
 
-/** The mesh descriptors: one per recipe, bottom, top, surface and footprint, for every glyph whose mesh is not 'none'. */
-export function levelMeshes(grid: TileGrid): MeshDescriptor[] {
+/**
+ * The mesh descriptors: one per recipe, bottom, top, surface and footprint, for every glyph whose mesh is not 'none';
+ * with `storey` (a format-2 storey's grid), full glyphs apart from the rest, since they rise to the storey above.
+ */
+export function levelMeshes(grid: TileGrid, storey = false): MeshDescriptor[] {
   const groups = new Map<string, Glyph[]>();
   for (const glyph of glyphsOf(grid)) {
     if (glyph.mesh === 'none') continue;
-    const key = JSON.stringify([glyph.mesh, bottomOf(glyph), glyph.top, glyph.surface, glyph.footprint]);
+    const key = JSON.stringify([glyph.mesh, bottomOf(glyph), glyph.top, glyph.surface, glyph.footprint, ...(storey ? [glyph.full] : [])]); // prettier-ignore
     groups.set(key, [...(groups.get(key) ?? []), glyph]);
   }
   const ordered = [...groups.values()].sort((a, b) => {

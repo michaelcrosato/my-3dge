@@ -148,7 +148,9 @@ Every command prints its verdict first, about 20 lines at most, and writes `out/
 | `node x sim labs/game/scenes/play.ts [--steps n] [--seed s] [--set k=v] [--feel]` | Runs a scene in Node: its hash, events, entities; `--feel` measures the player |
 | `node x replay labs/game/replays [--browser sim] [--update] [--bisect]` | Checks replays' goldens; `--update` records them; `--bisect` finds where two runs part |
 | `node x shot labs/game [--cam code] [--set k=v] [--png]`    | Renders the page on WebGPU: coverage, visible objects, a text thumbnail; an image only with `--png` |
+| `node x eye labs/game/scenes/play.ts [--cam code] [--steps n]` | What a camera sees of the bodies, in Node with no GPU: a text picture and its legend (`__engine.eye()` in a page) |
 | `node x film labs/game --steps "…" [--compare ref]`         | Films scripted play as a contact sheet; `--compare` names the objects whose pixels changed |
+| `node x gallery <kind> [id] --page labs/game [--look id]`   | Films every prop, material, emitter, look, body or move as a labelled contact sheet; `#gallery/<kind>/<id>` opens one on any page |
 | `node x inspect --page labs/game`, then `node x eval "<js>"`, `node x dump`, `node x set <key> <value>` | A live headless page to question: the HUD through DOM queries, `__engine` |
 | `node x perf labs/game [--scene id]`                        | Performance as counters (ms per step and frame, draw calls), never frames per second |
 | `node x describe [kind [id]]`                               | The registries: every kind's fields and entries (materials, moves, looks, sounds…) |
@@ -277,7 +279,7 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Bodies and props (WP 4.1)**: props of one shape in the prototype's material, torque impulses and the knock; movers, kinematic bodies whose pose is a function of time, carrying riders; sensors and triggers; the lost-body rescue.
 `PROP_MATERIAL`, `addProp`, `addBox`, `addBall`, `addCapsule`, `addCylinder`, `applyTorqueImpulse`, `knock`, `MOVER_FIELDS`, `MOVER`, `moverPose`, `driveBody`, `driveMover`, `addSensor`, `sensorHits`, `TRIGGER_FIELDS`, `updateTrigger`, `rescueLost`; types `PropSpec`, `KnockOptions`, `Mover`, `SensorSpec`, `Trigger`, `RescueLevel`.
 
-**Props as data (WP 4.5)**: the registry kind `prop` (meshes by geometry and material id, a body, a light spot, where a level places it, the hit and use hooks), the engine's crate, barrel, brazier fire and pillar, and their placement.
+**Props as data (WP 4.5)**: the registry kind `prop` (meshes by geometry and material id, a body, a light spot, where a level places it, the hit and use hooks), the engine's crate, barrel, brazier fire and pillar, the library's sconce, banner, chest, door, table, bench, statue and lantern (WP 10.3), and their placement.
 `defineProp`, `getProp`, `propCentre`, `levelProps`, `propBody`, `propPose`; types `Prop`, `PropDefinition`, `PropPart`, `PropTouch`, `PropKnock`, `PropPlacement`, `PropBody`, `PropPose`.
 
 **Props in a scene (WP 4.6)**: spawnProp stands a prop in a running scene (its body, and an entity with the component sceneProp whose pose is read back after each step, which the view draws as the prop); hitProp calls its hit hook with the means to knock it; removeProp.
@@ -310,6 +312,27 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Rides (WP 13.7)**: ziplines, ladders and launchers as world data (engine/world/traverse.ts), placed in a scene (engine/sim/rides.ts) and ridden by the shooter model (engine/physics/movement/ride.ts, ladder.ts): a zipline and the poles under its anchors, the redeploy balloon's line and its skydive, a ladder (or every ladder a level's ladder glyph `|` stands), a jump pad or a trampoline. Use is the button `interact`; the look's pitch picks a vertical zipline's way and a skydive's dive.
 `addZipline`, `addLadder`, `addLauncher`, `addLevelLadders`, `ridesOf`, `levelLadders`; types `ZiplineSpec`, `LadderSpec`, `LauncherSpec`, `Rides`, `RideCable`, `RideLadder`, `RideLauncher`.
 
+**Storeys (WP 13.13)**: format 2, levels written as storeys, read a storey at a time or in 3D: the highest surface at or under a point, its storey (by height, or by that surface) and its room.
+`LEVEL_FORMAT_2`, `storeyView`, `floorBelow`, `surfaceBelow`, `storeyAt`, `storeyBelow`, `roomAt`; types `StoreyDescriptor`, `RoomDescriptor`, `OpeningDescriptor`, `RoofDescriptor`.
+
+**Terrain (WP 10.5)**: the registry kind `terrain`, a seeded heightfield, its queries, its body and its navigation.
+`defineTerrain`, `getTerrain`, `makeTerrain`, `terrainProblems`, `TERRAIN_FIELDS`, `terrainHeight`, `terrainGradient`, `terrainNormal`, `terrainGrade`, `terrainSurface`, `scatterTerrain`, `addTerrainBody`, `terrainNavGrid`, `terrainNavSurface`; types `Terrain`, `TerrainSpec`, `TerrainEntry`, `TerrainHill`, `TerrainFlat`, `ScatterRule`, `TerrainPlace`, `TerrainNavOptions`, `NavSurface`, `NavSource`.
+
+**Sites (WP 13.15)**: levels standing on a terrain, each placed and turned in quarter turns, the terrain cut under them; the queries over all of it, the bodies, the ladders and the navigation over every storey and the terrain.
+`defineSite`, `getSite`, `makeSite`, `SITE_FIELDS`, `toWorld`, `toLocal`, `siteFloorBelow`, `siteSurfaceBelow`, `siteStructureAt`, `siteSolidAt`, `siteClearSight`, `siteRescueGrid`, `createSiteNav`, `addSiteBodies`, `addSiteLadders`; types `Site`, `SiteSpec`, `SiteStructure`, `StructureSpec`, `SiteRescueGrid`, `SiteNav`, `SiteNavOptions`.
+
+**Use (WP 13.16)**: the system `interact` (a player's use of the thing in reach and in view, with its prompt; carrying and throwing a light prop; a melee strike), the kinds `usable` and `strikable`, and the body-to-entity lookup.
+`addInteraction`, `defineUsable`, `defineStrikable`, `strikeEntity`, `USE_REACH`, `CARRY_MASS`, `THROW_SPEED`, `propOfBody`; types `UsableSpec`, `InteractorComponent`, `StrikeForce`, `SpawnPropOptions`, `PropHealthComponent`, `PropLightComponent`.
+
+**Doors (WP 13.16)**: hung on a hinge or sliding, opened away from the user, locked, blocked, burst open and broken.
+`addDoor`, `addLevelDoors`, `useDoor`, `strikeDoor`, `breakDoor`, `DOOR_SWING`; types `DoorSpec`, `DoorComponent`.
+
+**Windows and breakables (WP 13.16)**: props with health and their breaking, a level's window panes, a bolt's strike.
+`addLevelWindows`, `addBreakables`, `damageProp`, `breakProp`, `strikeBody`, `BREAK_SPEED`.
+
+**Switches (WP 13.16)**: a room's lights and the garage door, as sim state the view reads.
+`addSwitch`, `switchGroup`, `flipSwitch`; types `SwitchSpec`, `SwitchComponent`.
+
 Pages only, from engine/index.ts:
 
 **Headless**: the engine without a page, and its inspector (window.__engine in a page).
@@ -325,13 +348,13 @@ Pages only, from engine/index.ts:
 `aimPoint`, `screenRay`, `onFloor`, `AIM_RULES`, `AIM_RANGE`, `STICK_REACH`, `lookOptions`, `scaleLook`, `LOOK_SETTING_FIELDS`, `LOOK_SETTINGS`, `DEGREES_PER_COUNT`; types `AimRule`, `AimPose`, `AimView`, `AimDevices`, `AimRay`, `LookOptions`, `RawLook`, `ScaledLook`.
 
 **Geometry kit and level meshes (WP 2.4)**: shapes standing on the ground with UVs in metres, the geometry registry (props and levels name geometry by id), their QA measures, and a compiled level drawn as meshes.
-`boxGeometry`, `roundedBoxGeometry`, `limbGeometry`, `rampGeometry`, `frustumGeometry`, `pillarGeometry`, `pillarParts`, `ringGeometry`, `sidesThenTops`, `mergeGeometries`, `defineGeometry`, `getGeometry`, `buildGeometry`, `inspectGeometry`, `createLevelMeshes`, `LEVEL_RECIPES`; types `BoxOptions`, `RoundedBoxOptions`, `LimbOptions`, `RampOptions`, `FrustumOptions`, `PillarOptions`, `PillarPart`, `RingOptions`, `GeometryEntry`, `GeometrySpec`, `GeometryRef`, `GeometryReport`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `LevelCell`, `LevelRecipe`, `LevelShape`.
+`boxGeometry`, `roundedBoxGeometry`, `limbGeometry`, `rampGeometry`, `frustumGeometry`, `pillarGeometry`, `pillarParts`, `ringGeometry`, `sidesThenTops`, `mergeGeometries`, `defineGeometry`, `getGeometry`, `buildGeometry`, `inspectGeometry`, `createLevelMeshes`, `LEVEL_RECIPES`, `createTerrainMeshes`; types `BoxOptions`, `RoundedBoxOptions`, `LimbOptions`, `RampOptions`, `FrustumOptions`, `PillarOptions`, `PillarPart`, `RingOptions`, `GeometryEntry`, `GeometrySpec`, `GeometryRef`, `GeometryReport`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `LevelCell`, `LevelRecipe`, `LevelShape`, `TerrainMeshes`, `TerrainMeshesOptions`.
 
 **Sound data (WP 9.2)**: effects and songs as registry entries (voices, layers, variants; tracker-notation tracks), rendered offline by the DSP core into reproducible samples.
 `defineSfx`, `getSfx`, `renderSfx`, `sfxVoices`, `defineSong`, `getSong`, `renderSong`, `songVoices`, `songTiming`; types `Sfx`, `SfxSpec`, `SfxLayer`, `SfxBus`, `SfxRenderOptions`, `Song`, `SongSpec`, `SongTrack`, `SongTiming`, `SongRenderOptions`, `Voice`, `SoundDef`.
 
 **The audio runtime (WP 9.3)**: a page's sound through Web Audio, started by the first gesture: buses with ducking and voice limits, sounds placed in 3D and occluded through the QueryView, room reverb, and music in intensity layers that change on the beat and the bar line.
-`createAudio`, `BUS_VOLUMES`, `ROOMS`, `VOICE_LIMITS`; types `Audio`, `AudioOptions`, `AudioState`, `AudioInfo`, `PlayOptions`, `Sound`, `ListenerPose`, `GestureTarget`, `AudioBus`, `MixerInfo`, `MusicChange`, `MusicPosition`, `Quantize`, `RoomName`, `RoomSpec`, `VoiceLimits`.
+`createAudio`, `BUS_VOLUMES`, `ROOMS`, `roomReverb`, `VOICE_LIMITS`; types `Audio`, `AudioOptions`, `AudioState`, `AudioInfo`, `PlayOptions`, `Sound`, `ListenerPose`, `GestureTarget`, `AudioBus`, `MixerInfo`, `MusicChange`, `MusicPosition`, `Quantize`, `RoomName`, `RoomSpec`, `VoiceLimits`.
 
 **The engine in a page (WP 2.7)**: createEngine reads the routes, starts the scene with its view, publishes window.__engine, warms up and runs the frame loop; createHeadless({ view: true }) builds the same view in Node.
 `createEngine`, `parseRoutes`, `routeQuery`; types `Engine`, `EngineOptions`, `Routes`, `CameraInfo`, `PlayResult`, `PlayIntoOptions`, `ViewChange`.

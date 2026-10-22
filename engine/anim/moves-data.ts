@@ -29,6 +29,7 @@
  */
 import { codeError } from '../core/log';
 import { ease } from '../core/math';
+import { galleryField } from '../core/gallery';
 import { registry as sharedRegistry, type Entry, type Registry } from '../core/registry';
 import { freezeValue, parse, type Schema, type SpecOf } from '../core/schema';
 
@@ -118,6 +119,7 @@ export const MOVE_FIELDS = {
     default: 'visual',
     description: 'The lunge as body motion only, or as root motion that moves the character forward.',
   },
+  gallery: galleryField(),
 } as const satisfies Schema;
 
 /** A `move` entry: one named strike. */

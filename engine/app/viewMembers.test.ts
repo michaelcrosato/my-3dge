@@ -2,9 +2,9 @@
  * @file Every inspector member, headless (T1, PLAN.md §8.3, WP 2.7's Done-when: "every inspector member is tested in
  * the browser and headless, and help() matches the API"): one call per member `help()` lists, on the box room with
  * its view, each checked for what it gives headless; a member nobody wrote a call for fails the test, so a new member
- * arrives with its check. tests/e2e/box.spec.ts calls the same members in the page.
+ * arrives with its check. tests/e2e/box-members.spec.ts calls the same members in the page.
  * @see engine/app/viewMembers.ts
- * @see tests/e2e/box.spec.ts
+ * @see tests/e2e/box-members.spec.ts
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -41,6 +41,7 @@ const CALLS: Record<string, Call> = {
     expect(() => call('bot', { to: [{ x: 1.5, z: 1.5 }] })).toThrow('[SIM_NO_ACTOR] the bot has no actor to work on'),
   'camera.get()': (_e, call) => expect(call('camera.get')).toMatchObject({ code: 'cam=iso' }),
   'camera.set()': (_e, call) => expect(call('camera.set', 'cam=brawler')).toMatchObject({ code: 'cam=brawler' }),
+  'camera.advance()': (_e, call) => expect(call('camera.advance', 2)).toMatchObject({ code: 'cam=iso' }),
   'capture()': (e, call) => {
     const capture = e.capture();
     const at = call('scene.dump', { filter: 'pathMover#1' });
@@ -53,10 +54,17 @@ const CALLS: Record<string, Call> = {
   'describe()': (e) => expect(e.describe('setting', 'box.room.speed')).toMatchObject({ id: 'box.room.speed' }),
   'entities()': (e) => expect(e.entities('pathMover').map((entity) => entity.id)).toEqual([1, 2, 3]),
   errors: (e) => expect(e.errors).toEqual([]),
+  'eye()': (_e, call) => expect(() => call('eye')).toThrow(/SIM_BAD_ARGUMENT.*without physics/), // the room has none: engine/dev/eye.test.ts looks through the hero's
   'feel()': (_e, call) => expect(() => call('feel')).toThrow(`[SIM_BAD_ARGUMENT] feel(id) got undefined: ${NO_ACTOR}`),
   'get()': (e) => expect(e.get(1)).toMatchObject({ id: 1, pathMover: { x: 3.5, z: 4.5 } }),
   'hash()': (e) => expect(e.hash()).toMatch(/^[0-9a-f]{16}$/),
   'help()': (e) => expect(e.help('scene.dump')).toContain('options'),
+  'gallery.frames()': (_e, call) => expect(call('gallery.frames', 'prop', 'prop:crate')).toHaveLength(4),
+  'gallery.list()': (_e, call) => {
+    expect(call('gallery.list')).toContainEqual({ kind: 'prop', count: expect.any(Number) });
+    expect(call('gallery.list', 'body')).toContain('body:humanoid');
+  },
+  'gallery.shoot()': (_e, call) => expect(() => call('gallery.shoot', 'prop', 'prop:crate')).toThrow(/DEV_NO_RENDERER/),
   'info()': (e) => expect(e.info()).toMatchObject({ scene: 'box:room', headless: true, runtime: 'node' }),
   'input.axis()': (_e, call) => expect(call('input.axis', 'move', [0, 1])).toMatchObject({ axes: { move: [0, 1] } }),
   'input.hold()': (_e, call) => expect(JSON.stringify(call('input.hold', 'jump'))).toContain('jump'),

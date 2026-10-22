@@ -45,7 +45,7 @@ import { codeError } from '../core/log';
 import { Vector3 } from '../core/math';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
 import { defineSettings } from '../core/settings';
-import { held, normalizeIntents, pressed, type Intents } from '../input/intents';
+import { held, pressed, type Intents } from '../input/intents';
 import {
   addCharacter,
   bodyAt,
@@ -60,11 +60,13 @@ import {
   type CharacterState,
 } from '../physics/character';
 import { matchHull } from '../physics/hull';
+import { hullFor } from '../physics/movement/crouch';
 import { createMotionState, MOTION_FIELDS, type MotionState } from '../physics/movement/model';
 import { MOVEMENT_SETTINGS, movementOverrides, tuneCharacter } from '../physics/movement/settings';
 import { physicsOf } from '../physics/binding';
-import type { Vec3Like } from '../physics/queries';
+import { vec, type Vec3Like } from '../physics/queries';
 import { clipsFor, defineClipKinds, type ClipsSpec } from './actorClips';
+import { intentsOf, motionInput } from './actorInput';
 import { defineActionKinds, stepActorActions } from './actorActions';
 import { defineReactionKinds, stepReactions, type ReactionComponents } from './reactions';
 import { defineRideKinds, ridesOf } from './rides';
@@ -251,21 +253,45 @@ export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): 
 /**
  * Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing
  * `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the
- * shooter model its motion state starts again, holstered as it was. For a scene's dev actions: a feel course places
- * its player where it measures (engine/dev/feel/course.ts).
+ * shooter model its motion state starts again, holstered as it was, or ducked with `crouch`, its hull crouched from its
+ * next step on and kept so until it has headroom, for a place no standing hull fits (a crawlspace). A place where the
+ * level (the queries' as of the last step, one-way platforms aside) stands over its feet lower than its hull's top, up
+ * its axis, throws `SIM_BAD_ARGUMENT` before it moves anything: the body would sink through the floor. For a scene's dev actions: a feel
+ * course places its player where it measures (engine/dev/feel/course.ts).
  */
-export function placeActor<C extends object>(world: World<C>, id: number, at: Vec3Like, yaw?: number): void {
+export function placeActor<C extends object>(
+  world: World<C>,
+  id: number,
+  at: Vec3Like,
+  yaw?: number,
+  options: { crouch?: boolean } = {},
+): void {
   const w = world as unknown as World;
   const e = w.get(id) as Partial<ActorComponents> | undefined;
   if (!e?.actor) throw codeError('SIM_BAD_ARGUMENT', { where: 'placeActor(w, id)', value: String(id), expected: 'an actor’s id' }); // prettier-ignore
   const { actor, motion } = e;
+  if (options.crouch && !motion) throw codeError('SIM_BAD_ARGUMENT', { where: 'placeActor(options.crouch)', value: `true for actor ${id}, on no movement model`, expected: 'no crouch: only an actor on a movement model (its component motion) crouches' }); // prettier-ignore
   const physics = physicsOf(w);
-  matchHull(physics, actor.body, actor.character, actor.character.capsule.height, { air: false, tuck: false });
-  physics.setBody(actor.body, { position: bodyAt(actor.character, at, 'placeActor(at)'), velocity: [0, 0, 0] });
+  const { offset, capsule } = actor.character;
+  const centre = bodyAt(actor.character, at, 'placeActor(at)'); // the standing hull's, its feet just over `at`
+  const middle = motion && options.crouch ? hullFor(actor.character, { ...motion, stance: 'crouch' }) : capsule.height; // prettier-ignore
+  const up = { maxDistance: middle + capsule.radius, exclude: actor.body, groups: 'world' } as const;
+  const ceiling = physics.raycast([centre[0], centre[1] - capsule.height / 2, centre[2]], [0, 1, 0], up); // up its axis
+  if (ceiling && !oneWayOf(w).has(ceiling.body)) {
+    const given = vec(at, 'placeActor(at)');
+    const place = [given.x, given.y, given.z].map((v) => Math.round(v * 100) / 100).join(', ');
+    const [over, tall] = [(offset + capsule.radius + ceiling.distance).toFixed(2), (middle + 2 * capsule.radius).toFixed(2)]; // prettier-ignore
+    throw codeError('SIM_BAD_ARGUMENT', { where: 'placeActor(at)', value: `[${place}], where a ceiling ${over} m over its feet cuts its ${options.crouch ? 'crouched' : 'standing'} hull, ${tall} m tall (it would sink through the floor)`, expected: motion && !options.crouch ? 'a place with headroom, or { crouch: true } under a low ceiling' : 'a place with headroom' }); // prettier-ignore
+  }
+  matchHull(physics, actor.body, actor.character, capsule.height, { air: false, tuck: false });
+  physics.setBody(actor.body, { position: centre, velocity: [0, 0, 0] });
   const { x, y, z } = feetOf(physics, actor.body, actor.character);
   Object.assign(actor, createCharacterState(), { yaw: yaw ?? actor.yaw, x, y, z });
-  if (motion) Object.assign(motion, createMotionState(), { holstered: motion.holstered });
+  if (motion) Object.assign(motion, createMotionState(), { holstered: motion.holstered }, options.crouch ? { stance: 'crouch', duck: 'ducked' } : {}); // prettier-ignore
 }
+
+/** The bodies of the one-way platforms (the component `oneWay`). */
+const oneWayOf = (w: World) => new Set((w.query('oneWay') as unknown as ActorComponents[]).map((e) => e.oneWay.body));
 
 /** Removes an actor and its body. */
 export function removeActor<C extends object>(world: World<C>, id: number): void {
@@ -277,48 +303,12 @@ export function removeActor<C extends object>(world: World<C>, id: number): void
   w.despawn(id);
 }
 
-/** The intents an actor acts on this step: the step's for a player, else its AI's (with presses from `b`'s edges). */
-function intentsOf(actor: ActorComponent, intents: Intents): Intents {
-  if (actor.player) return intents;
-  const own = normalizeIntents(actor.intents, normalizeIntents({ b: actor.held }));
-  const { p: _pressed, ...rest } = actor.intents;
-  [actor.held, actor.intents] = [[...(own.b ?? [])], rest];
-  return own;
-}
-
-/** A player's controls (the settings `input.sprint` and `input.crouch`): a held sprint, a toggled crouch. */
-interface Controls {
-  readonly holdSprint: boolean;
-  readonly toggleCrouch: boolean;
-}
-
-/** The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it faces. */ // prettier-ignore
-function motionInput(actor: ActorComponent, wants: Intents, controls: Controls): CharacterInput {
-  const [aimX, , aimZ] = wants.aim ?? [];
-  const aimed = aimX !== undefined && Math.hypot(aimX - actor.x, aimZ! - actor.z) > 0.05;
-  const face = aimed ? Math.atan2(aimX - actor.x, aimZ! - actor.z) : wants.look?.[0];
-  const frame = wants.cam ?? wants.look?.[0];
-  const toggle = actor.player && controls.toggleCrouch;
-  return {
-    sprint: held(wants, 'sprint'),
-    sprintPressed: pressed(wants, 'sprint'),
-    ...(actor.player && controls.holdSprint ? { sprintHold: true } : {}),
-    walk: held(wants, 'walk'),
-    crouch: !toggle && held(wants, 'crouch'),
-    crouchToggle: pressed(wants, 'crouchToggle') || (toggle && pressed(wants, 'crouch')),
-    usePressed: pressed(wants, 'interact'),
-    ...(wants.look ? { view: wants.look[0], pitch: wants.look[1] } : {}),
-    ...(frame !== undefined ? { frame } : {}),
-    ...(face !== undefined ? { face } : {}),
-  };
-}
-
 /** The system `actors`: every actor's tick, in id order. */
 function moveActors(w: World, intents: Intents): void {
   const physics = physicsOf(w);
   const gravity = w.settings.get('physics.characterGravity') as number;
   const worldGravity = w.settings.get('physics.gravity') as number;
-  const oneWay = new Set((w.query('oneWay') as unknown as ActorComponents[]).map((e) => e.oneWay.body));
+  const oneWay = oneWayOf(w);
   const tuning = movementOverrides((path) => w.settings.get(path));
   const rides = ridesOf(w);
   const controls = { holdSprint: w.settings.get('input.sprint') === 'hold', toggleCrouch: w.settings.get('input.crouch') === 'toggle' }; // prettier-ignore
@@ -330,7 +320,7 @@ function moveActors(w: World, intents: Intents): void {
       jump: held(wants, 'jump'),
       jumpPressed: pressed(wants, 'jump'),
       dashPressed: pressed(wants, 'dash'),
-      ...(motion ? motionInput(actor, wants, controls) : {}),
+      ...(motion ? motionInput(actor, wants, controls, (e as { interactor?: { usedAt: number } }).interactor?.usedAt === w.tick) : {}), // prettier-ignore
     };
     const character = motion ? tuneCharacter(actor.character, tuning) : actor.character;
     const step = stepCharacter(physics, actor.body, character, actor, input, { dt: w.dt, gravity, worldGravity, oneWay, rides }, motion); // prettier-ignore

@@ -127,6 +127,7 @@ export function segmentHitsBox(a: Vec3, b: Vec3, min: Vec3, max: Vec3): boolean 
  *   cell's box, widened by `CUT_MARGIN` all round (so a capital's overhang counts). An orthographic camera looks from
  *   its plane, back along its view; a perspective one from its position. The test runs in the picture's space,
  *   heights scaled by the pose's `boost` (engine/gfx/cameras/boost.ts), so it is what the frame shows.
+ * - `'either'` (a house's walls): when either cuts it.
  */
 export function planCutaway(targets: readonly CutTarget[], pose: CameraPose, focus: Vec3): boolean[][] {
   const ortho = pose.projection === 'orthographic';
@@ -149,7 +150,8 @@ export function planCutaway(targets: readonly CutTarget[], pose: CameraPose, foc
   };
   return targets.map(({ when, cells, bottom, top }) =>
     cells.map((cell) => {
-      if (when === 'facing') return facing(cell);
+      if (when !== 'blocking' && facing(cell)) return true;
+      if (when === 'facing') return false;
       const [cx, , cz] = cell.centre;
       const [hx, hz] = [cell.size[0] / 2 + CUT_MARGIN, cell.size[1] / 2 + CUT_MARGIN];
       const min: Vec3 = [cx - hx, bottom * k, cz - hz];

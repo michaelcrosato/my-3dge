@@ -62,10 +62,18 @@ export function frameOf(ramp: RampDescriptor, tile: number): { at: (s: number, w
   }
 }
 
-/** Writes one flight into `writers`. */
-function flight(writers: ReturnType<typeof slotted>, ramp: RampDescriptor, tile: number, ground: number): void {
+/** How many steps a ramp's flight is drawn in. */
+export type StepCount = (ramp: RampDescriptor, tile: number) => number;
+
+/** Writes one flight of `n` steps into `writers`. */
+function flight(
+  writers: ReturnType<typeof slotted>,
+  ramp: RampDescriptor,
+  tile: number,
+  ground: number,
+  n: number,
+): void {
   const { at, width } = frameOf(ramp, tile);
-  const n = stepsOf(ramp, tile);
   const run = runOf(ramp, tile);
   const s = (k: number) => (run * k) / n;
   const h = (k: number) => ramp.bottom + ((ramp.top - ramp.bottom) * (k + 0.5)) / n;
@@ -100,9 +108,17 @@ function flight(writers: ReturnType<typeof slotted>, ramp: RampDescriptor, tile:
   }
 }
 
-/** The flights of `ramps`, standing on the ground at `ground` (m), tiles `tile` metres wide (see the file comment). */
-export function stairsGeometry(tile: number, ramps: readonly RampDescriptor[], ground: number): BufferGeometry {
+/**
+ * The flights of `ramps`, standing on the ground at `ground` (m), tiles `tile` metres wide (see the file comment), each
+ * in `steps(ramp, tile)` steps (`stepsOf` by default; a storey's flights rise by the riser: engine/gfx/level/flights.ts).
+ */
+export function stairsGeometry(
+  tile: number,
+  ramps: readonly RampDescriptor[],
+  ground: number,
+  steps: StepCount = stepsOf,
+): BufferGeometry {
   const writers = slotted();
-  for (const ramp of ramps) flight(writers, ramp, tile, ground);
+  for (const ramp of ramps) flight(writers, ramp, tile, ground, steps(ramp, tile));
   return writers.build();
 }

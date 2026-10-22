@@ -5,7 +5,7 @@
  * A room's `decay` is its RT60, the seconds its tail takes to fall 60 dB; `predelay` the silence before the tail;
  * `damping` the cutoff of the one-pole lowpass the tail goes through (soft or large rooms sound darker); `wet` the
  * level the mixer sends into it (engine/audio/runtime/mixer.ts). `ROOMS` holds the presets; a game passes its own
- * numbers where a name goes.
+ * numbers where a name goes, and `roomReverb` picks one for a level's room by its volume.
  *
  * Invariants: `impulseResponse` is a pure function of the room, the rate and the seed: seeded white noise per channel
  * (the stream `derive(seed, 'reverb', channel)`, so left and right are uncorrelated and the image is wide), lowpassed,
@@ -18,6 +18,7 @@
  * const [left, right] = impulseResponse('hall', 48000) ?? [];
  * left.length; // 106,800: 0.025 s of predelay and 2.2 s of tail at 48 kHz
  * impulseResponse('none', 48000); // null
+ * [roomReverb({ area: 4 }, 2.7), roomReverb({ area: 18 }, 2.7), roomReverb({ area: 300 }, 6)]; // ['small', 'room', 'hall']
  * @see engine/audio/runtime/reverb.test.ts
  */
 import { codeError, defineCodes, didYouMean } from '../../core/log';
@@ -83,6 +84,15 @@ export function roomSpec(room: RoomName | RoomSpec): RoomSpec {
     }
   }
   return room;
+}
+
+/**
+ * The preset for a level's room (WP 13.15: rooms as data for sound): by its volume, its `area` (m², the room
+ * descriptor's) times `height` (m, its storey's clear height): `small` under 30 m³, `room` under 200 m³, `hall` past.
+ */
+export function roomReverb(room: { readonly area: number }, height: number): RoomName {
+  const volume = room.area * height;
+  return volume < 30 ? 'small' : volume < 200 ? 'room' : 'hall';
 }
 
 /** The room's stereo impulse response at `rate` samples per second, or null when it has no reverb. */

@@ -11,7 +11,7 @@
  * - **Corpses**: `killAgent` moves an agent to the group `corpse`; `updateCrowd` brakes it and removes it on time.
  * - **Readback**: `updateCrowd`, after the physics step, copies feet and velocity and decides `grounded`.
  * - **Wake and sleep**: still bodies sleep (Rapier 0.21: after about half a second, measured); `setVelocity` keeps
- *   a sleeping agent asleep while it wants to stay still. The lost-body rescue is `rescueLost` (physics/bodies.ts).
+ *   a sleeping agent asleep while it wants to stay still. The lost-body rescue is `rescueLost` (physics/rescue.ts).
  *
  * Invariants: no state beside Rapier's and the agents' (a restore continues exactly); bodies enter Rapier in list
  * order; agents not in the world (`queued`, `gone`) are left alone: the calls return false.
@@ -41,7 +41,7 @@
 import RAPIER from '@dimforge/rapier3d-simd-compat';
 import { codeError } from '../core/log';
 import { copyValue, defineSchema, freezeValue, isPlainObject, show } from '../core/schema';
-import { bodyId, handleOf } from './capture';
+import { bodyId, liveBody } from './capture';
 import { groupBits } from './groups';
 import { check, vec, type Vec3Like } from './queries';
 import { rapierOf, type Physics } from './world';
@@ -158,7 +158,7 @@ export interface CrowdStepper {
 function bodyOf(physics: Physics, agent: CrowdAgent, where: string): RAPIER.RigidBody | null {
   check(isPlainObject(agent), where, agent, 'a crowd agent (CROWD_AGENT_FIELDS)');
   if (agent.state === 'queued' || agent.state === 'gone' || agent.body < 0) return null;
-  const found = rapierOf(physics).bodies.get(handleOf(agent.body));
+  const found = liveBody(rapierOf(physics), agent.body);
   if (found) return found;
   throw codeError('PHYSICS_NO_BODY', { id: show(agent.body), why: ': remove agents with removeAgent, not removeBody' });
 }

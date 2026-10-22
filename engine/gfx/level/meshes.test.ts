@@ -30,6 +30,7 @@ import { inspectGeometry } from '../geometry/inspect';
 import { instancePath, PAGE_SLOTS } from '../instancing';
 import { createMaterialLibrary } from '../materials/library';
 import type { Warmup } from '../warmup';
+import { defineStoreyFixtureGlyphs } from '../../../fixtures/levels/storeys/glyphs';
 import { createLevelMeshes, type LevelMeshes } from './meshes';
 import { LEVEL_RECIPES } from './recipes';
 
@@ -244,7 +245,8 @@ describe('the recipes', () => {
       ['level:garden/hedge', 'instanced', 'block'],
       ['level:garden/wall', 'instanced', 'block'],
     ]);
-    const known = 'brazier, dais, floor, gallery, lowWall, pillar, ramp, stairs, wall';
+    const known =
+      'brazier, ceiling, dais, flight, floor, frames, gallery, heads, lowWall, pillar, railing, ramp, roof, stairs, wall';
     expect(printed).toEqual([
       expect.stringMatching(/^\[GFX_LEVEL_RECIPE\] level garden uses the mesh recipe arch, which no level recipe/),
       expect.stringContaining(`level garden uses the mesh recipe hedge, which no level recipe defines`),
@@ -313,5 +315,75 @@ describe('the warm-up and dispose', () => {
     expect(entries.size).toBe(0);
     expect(disposed).toEqual(meshes.parts.map((part) => part.name));
     expect(meshes.root.parent).toBeNull();
+  });
+});
+
+describe('a level written as storeys (fixtures/levels/storeys/house.txt, WP 13.14)', () => {
+  const registry = createRegistry();
+  defineStoreyFixtureGlyphs(registry);
+  const house = compileLevel(readFileSync(join(DIR, 'storeys', 'house.txt'), 'utf8'), { file: 'house.txt', registry });
+
+  it("draws each storey's descriptors, then its ceiling, heads and frames, the rooms' own floors and the roof", () => {
+    const meshes = createLevelMeshes(house, { materials: materials(), rooms: { kitchen: 'material:planks' } });
+    const names = meshes.parts.map((part) => part.name.replace('level:house/', ''));
+    expect(names).toEqual([
+      'cellar/flight',
+      'cellar/floor',
+      'cellar/wall',
+      'ground/flight',
+      'ground/floor',
+      'ground/railing',
+      'ground/wall',
+      'ground/wall#2',
+      'upper/floor',
+      'upper/railing',
+      'upper/wall',
+      'upper/wall#2',
+      'attic/floor',
+      'attic/wall',
+      'cellar/ceiling',
+      'ground/ceiling',
+      'ground/heads',
+      'ground/frames',
+      'upper/ceiling',
+      'upper/heads',
+      'upper/frames',
+      'attic/ceiling',
+      'ground/floor:kitchen',
+      'attic/roof',
+    ]);
+    expect(meshes.parts.map((part) => part.storey)).toEqual([0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 0, 1, 1, 1, 2, 2, 2, 3, 1, 3]); // prettier-ignore
+    for (const part of meshes.parts) expect(part.mesh.userData.storey).toBe(part.storey);
+    expect((meshes.parts[22].mesh.material as Material).name).toBe('material:planks');
+    expect(meshes.drawCalls(1)).toBeLessThanOrEqual(20 * house.storeys!.length);
+    meshes.dispose();
+  });
+
+  it('keeps a storey’s floor whose every piece is its rooms’ own out of the root, hidden, its part in place (WP 13.18)', () => {
+    // prettier-ignore
+    const meshes = createLevelMeshes(house, { materials: materials(), rooms: { attic: 'material:planks' } });
+    const names = meshes.parts.map((part) => part.name.replace('level:house/', ''));
+    const floor = meshes.parts[names.indexOf('attic/floor')];
+    expect([names.indexOf('attic/floor'), names.includes('attic/floor:attic')]).toEqual([12, true]); // one part a descriptor
+    expect([floor.mesh.geometry.index?.count, floor.mesh.parent, floor.mesh.visible]).toEqual([0, null, false]); // no draw call
+    const empty: string[] = [];
+    meshes.root.traverse((object) => void ((object as InstancedMesh).geometry?.index?.count === 0 && empty.push(object.name))); // prettier-ignore
+    expect(empty).toEqual([]);
+    const entries = new Map<string, () => readonly Object3D[]>();
+    meshes.register({ register: (id: string, entry: { objects(): readonly Object3D[] }) => (entries.set(id, entry.objects), { dispose() {} }) }); // prettier-ignore
+    expect(entries.get('level:house')!()).not.toContain(floor.mesh);
+    meshes.dispose();
+  });
+
+  it("stands each storey's walls on its floor and up to the next, the attic's under the gable, and the roof over all", () => {
+    const meshes = createLevelMeshes(house, { materials: materials() });
+    const box = (name: string) => new Box3().setFromObject(meshes.parts.find((part) => part.name === `level:house/${name}`)!.mesh); // prettier-ignore
+    expect([box('ground/wall#2').min.y, box('ground/wall#2').max.y]).toEqual([0, 3]);
+    expect([box('upper/wall#2').min.y, box('upper/wall#2').max.y]).toEqual([3, 6]);
+    const attic = box('attic/wall');
+    expect(attic.max.y).toBeCloseTo(house.roofs![0].peak - house.roofs![0].thickness, 5);
+    const roof = box('attic/roof');
+    expect([roof.min.x, roof.max.x, roof.max.y]).toEqual([-0.5, 8.5, expect.closeTo(house.roofs![0].peak, 5)]);
+    meshes.dispose();
   });
 });

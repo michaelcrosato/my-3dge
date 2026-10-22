@@ -11,7 +11,9 @@
  * - **Event effects**, answering event types: shardfall's event bursts (hit, explosion, slain, slam, block, shot,
  *   destroyed, land), with the 2D engine's star, debris, shockwave ring and camera shake (`hitFx` and `explosion`:
  *   1.5 to 3 units of shake, 0.0125 m a unit as the Stress test's camera moved). An event's `size` scales them: an
- *   explosion's radius, a body's size (engine/gfx/fx/effects.ts).
+ *   explosion's radius, a body's size (engine/gfx/fx/effects.ts). The house's breaks (WP 13.16, engine/sim/
+ *   breakables.ts): `glass` (a pane's shards fall and glint, landing nowhere: a window's sill is no floor),
+ *   `splinters` (a door's) and `shatter`, landing on the floor the event names (`ground`).
  * The 2D engine's `text` particles are the overlay's damage numbers (engine/ui, WP 6.5), never particles here.
  *
  * Carried from `shardfall:crates/pav_view/src/fx.rs:13-229` (`preset`), `:264-276` (`light`'s flicker and pulse:
@@ -243,6 +245,41 @@ const EVENTS = {
     description: 'A hard landing: a puff of dust at the feet.',
     events: ['land'],
     layers: [{ emitter: 'emitter:dust', count: 12, set: { spread: 2 } }],
+  },
+  'emitter:glass': {
+    description: 'A pane breaking: pale shards falling and fading, and twinkles where it stood.',
+    events: ['glass'],
+    layers: [
+      {
+        emitter: 'emitter:bits',
+        count: 26,
+        set: {
+          ...{ area: [0.25, 0.6, 0.05], velocity: [0, 1.5, 0], spread: 3, gravity: 9.8, life: [0.4, 0.7] },
+          ...{ size: [0.05, 0.03], color: ['#e6f4fb', '#9cc3d6'], lands: false },
+        },
+      },
+      { emitter: 'emitter:glints', count: 8, set: { area: [0.25, 0.6, 0.1] } },
+    ],
+  },
+  'emitter:splinters': {
+    description: 'Wood breaking: splinters and chips thrown out, bouncing on the floor, and a puff of dust.',
+    ...{ events: ['splinters'], shake: 0.02 },
+    layers: [
+      {
+        emitter: 'emitter:bits',
+        count: 18,
+        set: { area: [0.4, 0.9, 0.1], size: [0.07, 0.05], color: ['#a8794a', '#5c3b22'] },
+      },
+      { emitter: 'emitter:dust', count: 10, set: { area: [0.4, 0.8, 0.2], spread: 1.2 } },
+    ],
+  },
+  'emitter:shatter': {
+    description: 'Something breaking: debris bouncing on the floor and a puff of dust.',
+    events: ['shatter'],
+    layers: [
+      { emitter: 'emitter:bits', count: 12 },
+      { emitter: 'emitter:dust', count: 8, set: { spread: 1.5 } },
+    ],
   },
 } satisfies Record<string, EmitterSpec>;
 

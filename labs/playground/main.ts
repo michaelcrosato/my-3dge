@@ -16,11 +16,15 @@
  * settings.
  *
  * Each drawn frame (`onFrame`) it shows the gym's signs (labs/playground/levels/gym.ts) as labels over their features,
- * those within `SIGN_RANGE` of the player, and the HUD: the camera mode and the look in use, and the keys of the map in
- * use as its prompts give them (`keysLine`). It reads the run and never changes it.
+ * in the gym's own scene and where the gym stands on the site (labs/playground/levels/site.ts), those within
+ * `SIGN_RANGE` of the player, and the HUD: the camera mode and the look in use, the room the player is in
+ * on a scene's site (`whereLine`, a room's data: PLAN.md WP 13.15), what using the thing in reach does, with the key
+ * that uses it on the device used last (its `interactor`'s prompt, WP 13.16), and the keys of the map in use as its
+ * prompts give them (`keysLine`). It reads the run and never changes it.
  *
  * The gym's text is computed from its features, so the page registers the text the scene compiles (`GYM_TEXT`), as the
- * starter game registers its arena's; a level written as a file would come in as `?raw` text, as the box's do.
+ * starter game registers its arena's; a level written as a file would come in as `?raw` text, as the box's do. The
+ * ground's materials (labs/playground/ground.ts) register when it loads: the hill's terrain draws in them.
  *
  * Game code: it imports only the engine's public API (engine/index.ts) and the playground's own files.
  *
@@ -29,10 +33,12 @@
  * `node x shot labs/playground --scene gym --cam iso` reports what it draws.
  */
 /// <reference types="vite/client" />
-import { createEngine, type Engine, type EngineFrame, type Label } from '../../engine';
+import { createEngine, getSite, siteStructureAt, type Engine, type EngineFrame, type Label, type Site } from '../../engine'; // prettier-ignore
 import { keysLine, playgroundMap } from './controls';
 import { mountFeelPanel } from './feel';
+import './ground';
 import { GYM_FEATURES, GYM_TEXT } from './levels/gym';
+import { SITE, SITE_STRUCTURES } from './levels/site';
 import { createPlaygroundMenu, type MenuEntry } from './menu';
 import { gym } from './scenes/gym';
 import { LOOK_KEY, PLAYGROUND_LOOKS, cameraMode, nextCamera, nextLook, swapShoulder, turnView } from './views';
@@ -55,9 +61,10 @@ function exported(modules: Record<string, Record<string, unknown>>, kind: string
 // player is drawn as body:player (labs/playground/bodies/player.ts)
 import.meta.glob(['./looks/*.ts', '!./looks/*.test.ts', './bodies/*.ts', '!./bodies/*.test.ts'], { eager: true });
 
-/** Every playground scene module, imported now so each registers its scene; the gym comes first, the default. */
+/** Every playground scene module, imported now so each registers its scene; the gym first, the default, the rest by id. */
 const modules = import.meta.glob<Record<string, unknown>>(['./scenes/*.ts', '!./scenes/*.test.ts'], { eager: true });
-const sceneEntries = exported({ gym: { gym }, ...modules }, 'scene');
+const [first, ...rest] = exported({ gym: { gym }, ...modules }, 'scene');
+const sceneEntries = [first, ...rest.sort((a, b) => (a.id < b.id ? -1 : 1))];
 
 /** The playground's replays, by name (`playground-gym`), as text loaded on demand. */
 const replays = Object.fromEntries(
@@ -86,11 +93,30 @@ interface CameraMember {
 /** The started engine; null until `createEngine` resolves (its first frames are drawn before that). */
 let engine: Engine | null = null;
 
-/** The gym's signs, made on the first frame the gym draws; empty in other scenes. */
+/** The gym's signs, made on the first frame the gym draws; empty in scenes without it. */
 let signs: { label: Label; at: readonly number[] }[] = [];
+
+/** Where the gym's level stands in `scene`: at the origin in its own, at its place on the site; null elsewhere. */
+function gymAt(scene: EngineFrame['scene']): readonly number[] | null {
+  return scene.id === gym.id ? [0, 0, 0] : scene.site === `site:${SITE.name}` ? SITE_STRUCTURES.gym.at : null;
+}
 
 /** The camera mode and look on screen, for the HUD. */
 let showing = { camera: '', look: search.get('post.look') ?? '' };
+
+/** The running scene's site, made once a scene (its id and the site, or null without one). */
+let placed: { scene: string; site: Site | null } = { scene: '', site: null };
+
+/** Where the player is on the scene's site, for the HUD: the room's name, indoors, or outdoors; null without a site. */
+function whereLine(scene: EngineFrame['scene'], at: { x: number; y: number; z: number }): string | null {
+  if (placed.scene !== scene.id) placed = { scene: scene.id, site: scene.site ? getSite(scene.site) : null };
+  if (!placed.site) return null;
+  const found = siteStructureAt(placed.site, at.x, at.y + 0.1, at.z); // 10 cm up: resting feet sink a hair into a floor
+  return found?.room ? `Room: ${found.room.name}` : found ? 'Indoors' : 'Outdoors';
+}
+
+/** The player's entity as the HUD reads it: where it is, and what it would use (engine/sim/interact.ts). */
+type PlayerEntity = { actor: { player: boolean; x: number; y: number; z: number }; interactor?: { prompt: string } };
 
 /** The inspector's camera member; null before the engine starts. */
 const camera = () => (engine?.inspector?.camera as CameraMember | undefined) ?? null;
@@ -99,21 +125,28 @@ const camera = () => (engine?.inspector?.camera as CameraMember | undefined) ?? 
 function showFrame({ world, scene }: EngineFrame): void {
   const ui = engine?.ui;
   if (!ui) return;
-  if (scene.id === gym.id && signs.length === 0) {
-    signs = GYM_FEATURES.map((feature) => ({
-      label: ui.label(feature.label, { at: feature.sign, id: `sign:${feature.id}` }),
-      at: feature.sign,
-    }));
+  const origin = signs.length === 0 ? gymAt(scene) : null;
+  if (origin) {
+    signs = GYM_FEATURES.map((feature) => {
+      const [x, y, z] = feature.sign;
+      const at = [x + origin[0], y + origin[1], z + origin[2]] as const;
+      return { label: ui.label(feature.label, { at, id: `sign:${feature.id}` }), at };
+    });
   }
-  const players = world.query('actor') as unknown as { actor: { player: boolean; x: number; z: number } }[];
-  const player = players.find((entity) => entity.actor.player)?.actor;
+  const players = world.query('actor') as unknown as PlayerEntity[];
+  const entity = players.find((one) => one.actor.player);
+  const player = entity?.actor;
   for (const sign of signs) {
     sign.label.visible = !player || Math.hypot(sign.at[0] - player.x, sign.at[2] - player.z) <= SIGN_RANGE;
   }
   if (!showing.camera) showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? 'custom' };
   const look = showing.look.replace(/^look:playground-/, '');
   ui.hud('mode', `Camera: ${showing.camera} · Look: ${look}`, { at: 'top-right' });
-  if (engine?.input) ui.hud('keys', keysLine(engine.input), { at: 'bottom', keys: true });
+  ui.hud('room', player ? whereLine(scene, player) : null, { at: 'top-left' });
+  if (!engine?.input) return;
+  const use = entity?.interactor?.prompt;
+  ui.hud('use', use ? `${engine.input.prompt('interact')}: ${use}` : null, { at: 'bottom', keys: true });
+  ui.hud('keys', keysLine(engine.input), { at: 'bottom', keys: true });
 }
 
 /** A view action of the map in use (labs/playground/controls.ts): the camera's switch, the shoulder, a view's turn. */

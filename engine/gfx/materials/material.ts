@@ -29,6 +29,7 @@
  * @see engine/gfx/materials/material.test.ts
  */
 import { hex } from '../../core/color';
+import { galleryField } from '../../core/gallery';
 import { registry as sharedRegistry, type Entry, type Registry } from '../../core/registry';
 import { isPlainObject, type Schema, type SpecOf } from '../../core/schema';
 import { textureSampler, type TextureRef } from '../textures/bake';
@@ -107,6 +108,7 @@ export const MATERIAL_FIELDS = {
     default: true,
     description: 'Whether it writes depth (off for some transparent layers).',
   },
+  gallery: galleryField(),
 } as const satisfies Schema;
 
 /** A `material` entry. */

@@ -1,8 +1,10 @@
 /**
- * @file The props page's module (tests/pages/props.html, PLAN.md WP 4.5): the engine's four props in a walled yard
- * on the engine's renderer, standing in Rapier, drawn by engine/gfx/props.ts. The crate stands on a spawn point a
- * glyph of the page's marks (`c`, spawn `crate`) and the brazier's fire on the level's brazier stand (`t`, its light
- * spot `torch`), both placed by `levelProps`; the barrel and the pillar come from the page's own data (`SCENE`).
+ * @file The props page's module (tests/pages/props.html, PLAN.md WP 4.5): the engine's props in a walled yard on the
+ * engine's renderer, standing in Rapier, drawn by engine/gfx/props.ts. The crate stands on a spawn point a glyph of
+ * the page's marks (`c`, spawn `crate`) and the brazier's fire on the level's brazier stand (`t`, its light spot
+ * `torch`), both placed by `levelProps`; the barrel, the pillar, the library's nine (WP 10.3, its chair WP 13.16's)
+ * and the house's fittings (WP 13.16: the pane, the switch, the lamp and the garage door) come from the page's own
+ * data (`SCENE`).
  * Every prop with a body gets `propBody`'s in the physics world, beside the level's (`addLevelBodies`), and each frame
  * draws every prop at its body's pose (`readBody`) or, for the fire, at `propPose`'s; one point light follows the
  * fire's light spot. A perspective camera looks down into the yard from over its south wall.
@@ -54,10 +56,29 @@ export const YARD = [
   '############',
 ].join('\n');
 
-/** The props the page places itself, beside the level's. */
+/**
+ * The props the page places itself, beside the level's: the catalog's barrel and pillar, then the library's (WP 10.3),
+ * the tall ones along the north wall, the sconce on its face, the others in front, then the fittings (WP 13.16): a
+ * pane standing on the floor, the switch on the north wall's face, the lamp hanging over the middle and the garage
+ * door along the east wall, facing the camera; all clear of the crate's slide east and of what the south wall hides
+ * from the camera (a metre and more north of it).
+ */
 export const SCENE: PropPlacement[] = [
   { prop: 'prop:barrel', at: [2.5, 0, 4.5], yaw: 0 },
   { prop: 'prop:pillar', at: [10, 0, 1.5], yaw: 0.3 },
+  { prop: 'prop:door', at: [2, 0, 1.3], yaw: 0 },
+  { prop: 'prop:sconce', at: [4.6, 1.3, 1], yaw: 0 },
+  { prop: 'prop:statue', at: [6.6, 0, 1.6], yaw: 0 },
+  { prop: 'prop:banner', at: [8.4, 0, 1.3], yaw: 0 },
+  { prop: 'prop:table', at: [6.4, 0, 3.9], yaw: 0 },
+  { prop: 'prop:bench', at: [9, 0, 2.6], yaw: 0 },
+  { prop: 'prop:chest', at: [10.2, 0, 3.6], yaw: -0.3 },
+  { prop: 'prop:lantern', at: [4.6, 0, 3.6], yaw: 0 },
+  { prop: 'prop:chair', at: [1.6, 0, 3.2], yaw: 0.4 },
+  { prop: 'prop:pane', at: [7.6, 0, 2.4], yaw: 0 },
+  { prop: 'prop:switch', at: [3.4, 1.2, 1], yaw: 0 },
+  { prop: 'prop:lamp', at: [5.5, 2.4, 2.4], yaw: 0 },
+  { prop: 'prop:garageDoor', at: [10.9, 0, 3.4], yaw: -Math.PI / 2 },
 ];
 
 /** What the ID pass sees of one batch. */
@@ -72,6 +93,7 @@ export interface Shown {
   /** What the level meshes and the props count for themselves, with one shadow map. */
   counted: number;
   seen: Seen[];
+  /** The objects it cannot see, each `<name> (<reason>)`. */
   unseen: string[];
   placements: PropPlacement[];
   lights: PropLight[];
@@ -203,7 +225,7 @@ async function start(): Promise<void> {
     const result = await shot(gfx, view, { metrics: false, thumbnail: false });
     const pass = result.ids!;
     const seen = pass.visible.map(({ name, px, centre, bbox }) => ({ name, px, centre, bbox }));
-    return { seen, unseen: pass.unseen.map((entry) => entry.name) };
+    return { seen, unseen: pass.unseen.map((entry) => `${entry.name} (${entry.reason})`) };
   };
 
   const page = {

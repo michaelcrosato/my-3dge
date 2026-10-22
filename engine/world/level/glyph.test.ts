@@ -23,10 +23,12 @@ function errorOf(fn: () => unknown): EngineError {
   throw new Error('expected an EngineError');
 }
 
-describe('the v1 to v3 legend', () => {
+describe('the v1 to v4 legend', () => {
   it('is on the shared registry and on any registry the level code touches', () => {
     expect([...legendOf(shared).keys()].sort()).toEqual([
+      '!',
       '#',
+      '+',
       '.',
       '1',
       '2',
@@ -37,16 +39,35 @@ describe('the v1 to v3 legend', () => {
       '7',
       '8',
       '9',
+      ':',
+      '<',
       '=',
       '@',
       'P',
       '^',
+      '_',
       'o',
       't',
       'w',
       '|',
+      '~',
     ]);
-    expect(legendOf(createRegistry()).size).toBe(19);
+    expect(legendOf(createRegistry()).size).toBe(25);
+  });
+
+  it("gives v4's storey glyphs docs/PLAYGROUND.md §2.1's numbers, and the wall and the pillar full height", () => {
+    const legend = legendOf(createRegistry());
+    const pick = (char: string) => {
+      const g = legend.get(char)!;
+      return [g.id, g.void, g.opening, g.head, g.top, g.solid, g.collider, g.floorShape, g.nav.walkable];
+    };
+    expect(pick('~')).toEqual(['glyph:void', true, 'none', 0, 0, false, 'none', 'flat', false]);
+    expect(pick('+')).toEqual(['glyph:door', false, 'door', 2.1, 0, false, 'none', 'flat', true]);
+    expect(pick(':')).toEqual(['glyph:window', false, 'window', 2.1, 0.9, true, 'box', 'flat', false]);
+    expect(pick('!')).toEqual(['glyph:railing', false, 'none', 0, 1, true, 'box', 'flat', false]);
+    expect(pick('<')).toEqual(['glyph:flight', false, 'none', 0, 0, false, 'hull', 'flight', true]);
+    expect(pick('_')).toEqual(['glyph:lowCeiling', false, 'none', 1.4, 0, false, 'none', 'flat', true]);
+    expect([legend.get('#')!.full, legend.get('P')!.full, legend.get('w')!.full]).toEqual([true, true, false]);
   });
 
   it("uses Appendix C's heights, in metres", () => {
@@ -130,7 +151,7 @@ describe('defineGlyph', () => {
     );
     expect(problems({ char: 'x', floorShape: 'dais', top: 1 })).toContain('a dais needs an edge above 0');
     expect(problems({ char: 'x', top: 1, collider: 'hull' })).toContain(
-      "a hull collider follows the floor's slope: give it floorShape: 'ramp' or 'dais'",
+      "a hull collider follows the floor's slope: give it floorShape: 'ramp', 'dais' or 'flight'",
     );
     expect(problems({ char: 'x', top: 1, collider: 'cylinder' })).toContain(
       'a cylinder collider needs a radius above 0',
@@ -139,6 +160,25 @@ describe('defineGlyph', () => {
       'a cylinder collider stands from floor to top: give it a top above its floor',
     );
     expect(errorOf(() => defineGlyph('glyph:bad', { char: '#' }, createRegistry())).code).toBe('CORE_BAD_SPEC');
+  });
+
+  it("refuses each malformed storey glyph (WP 13.13's fields), naming the problem", () => {
+    const problems = (spec: GlyphSpec) => errorOf(() => defineGlyph('glyph:bad', spec, createRegistry())).message;
+    expect(problems({ char: 'x', void: true })).toContain('a void tile has no floor: make it solid: false, nav: { walkable: false }'); // prettier-ignore
+    expect(problems({ char: 'x', full: true })).toContain("full fills its storey with its box: make it solid: true with collider: 'box'"); // prettier-ignore
+    expect(problems({ char: 'x', opening: 'door' })).toContain('a door is walked through under its head');
+    expect(problems({ char: 'x', opening: 'window', head: 2 })).toContain('a window is solid to its sill (top) and open up to its head'); // prettier-ignore
+    expect(problems({ char: 'x', solid: true, collider: 'box', top: 2, head: 1.5, nav: { walkable: false } })).toContain('head 1.5 is not above what stands on its tiles (2 m)'); // prettier-ignore
+    expect(problems({ char: 'x', room: 'hall', solid: true, nav: { walkable: false } })).toContain("a room marker stands on the room's floor"); // prettier-ignore
+    expect(problems({ char: 'x', room: 'the hall' })).toContain('room "the hall" must be a word');
+    for (const fine of [
+      { char: 'x', opening: 'door', head: 2 },
+      { char: 'x', opening: 'window', solid: true, collider: 'box', top: 1, head: 2, nav: { walkable: false } },
+      { char: 'x', floorShape: 'flight', collider: 'hull' },
+      { char: 'x', room: 'hall', mesh: 'floor' },
+    ] as GlyphSpec[]) {
+      expect(defineGlyph('glyph:fine', fine, createRegistry()).id).toBe('glyph:fine');
+    }
   });
 
   it('refuses an id defined twice', () => {
