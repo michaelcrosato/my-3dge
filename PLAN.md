@@ -1614,7 +1614,8 @@ Playground: G9 → 13.1 → {13.2, 13.3, 13.8} ; 13.3 → 13.4 → {13.5, 13.7} 
           {13.6, 13.7, 13.10} → 13.11 ; {13.8, 13.11} → 13.12 ⇒ G10 ;
           G9 → 13.13 → 13.14 ; {13.14, 10.5, 13.8} → 13.15 ; {10.3, 13.13, 13.9} → 13.16 ; G9 → 13.17 ;
           {13.15, 13.16, 13.17, 13.6, 13.7} → 13.18 ⇒ G11 ;
-          {13.16, 13.11, 10.4} → 13.19 ; {10.4, 13.9, 13.12} → 13.20 ; {13.15, 10.4, 10.2, 10.1, 13.2} → 13.21 ;
+          {13.8, 13.18} → 13.27 ; {13.16, 13.11, 10.4} → 13.19 ; {10.4, 13.9, 13.12} → 13.20 ;
+          {13.15, 10.4, 10.2, 10.1, 13.2} → 13.21 ;
           {13.15, 13.16, 13.6} → 13.22 ; {11.5, 13.15, 13.16} → 13.23 ; {13.8, 13.17, 13.23} → 13.24 ⇒ G12 ;
           {10.6, 10.9, 13.9, 13.20} → 13.25 → 13.26 ⇒ G13
 Upgrades (each when it qualifies or measures better, between stages): U-1 Vitest 4 ; U-2 the lint majors ; U-3 three r183 ;
@@ -3531,7 +3532,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 |---|---|---|
 | Feel: the gym | 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9, 13.10, 13.11, 13.12, 5.6, 10.6, 10.9 | **G10** |
 | The house | 13.13, 13.14, 10.5, 13.15, 10.3, 13.16, 13.17, 7.7, 13.18, 12.3 | **G11** |
-| Alive | 10.4, 13.19, 13.20, 10.2, 10.1, 13.21, 13.22, 11.1, 11.2, 11.5, 13.23, 11.3, 13.24, 8.8, 10.8 | **G12** |
+| Alive | 13.27, 10.4, 13.19, 13.20, 10.2, 10.1, 13.21, 13.22, 11.1, 11.2, 11.5, 13.23, 11.3, 13.24, 8.8, 10.8 | **G12** |
 | The tech demo | 13.25, 7.5, 11.4, 12.1, 12.2, 7.6, 13.26 | **G13** |
 
 **Rules for the playground** (the box's rules, §9.0, hold too):
@@ -3734,7 +3735,7 @@ The stress test had no sound. The engine's sound data and synth design come over
   - `damage` for props with health; bolts and shots knock props.
   - *Built (ADR-0025 amendment 19): engine/sim/damage.ts stays the crowd's; a prop's hit points are its own component, which engine/sim/breakables.ts takes (`damageProp`, `strikeBody`).*
 - **Done when:** fixture tests for each; a replay opens, kicks in and breaks a door, breaks a window, throws a prop and switches a light, golden in Node and in the page.
-- **Verify:** `npm test -- engine/sim && node x replay tests/replays/playground-interact.replay.json --browser page`
+- **Verify:** `npm test -- engine/sim && node x replay tests/replays/playground-site.replay.json --browser page` (the cottage's replay until WP 13.18, the site's since: ADR-0025 amendment 20)
 
 #### WP-13.17 Building materials
 - **Owns:** `engine/gfx/textures/generators/{wood,tiles,carpet,wallpaper,shingles,asphalt,concrete,siding,glass}.ts`, `engine/gfx/textures/v3.ts`, extends `engine/gfx/materials/builtins.ts`
@@ -3749,6 +3750,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Needs:** WP 13.15, WP 13.16, WP 13.17, WP 13.6, WP 13.7
 - **Size:** L
 - **Build:** the site of docs/PLAYGROUND.md §2: the house's storeys and rooms, the garage and its deck, the yards, the street, the gym in its final place, the hill, the range and the ring; furnished; lit; spawn points per area; `playground:site` and a scene per area; the README's demo index. *From gate G10: the gym's courses for its gaps (the jump's reach running, sprinting, slide-jumping and superglided) and its steps and slopes, and §3.2's crouch timing, landing stun and climbing again measured on it (unit-tested only so far: engine/physics/movement/).* *From WP 13.15 (ADR-0025 amendment 18): the lot's soak judges only that no camera stands in a wall and watches the cameras' other bounds for this house: in the lot's 2.5 to 3 m rooms the shooter loses the player in 931 of the tour's 1,398 frames, the platformer in 255, and first person and the platformer jump 0.42 and 0.52 m in a frame; judge them here. Amendment 15's leftovers too: a railing collides over its whole tile though drawn as a 6 cm rail, a door's frames narrow its drawn opening 7 cm a side, and `wallUnder` stands a wall up to 0.18 m over a roof's underside near the eaves. The lot (labs/playground/scenes/lot.ts) and its copies of the storey fixtures give way to this site.* *From WP 13.16 (amendment 19): hang the house's doors (`addLevelDoors`) and stand its panes (`addLevelWindows`), a lamp and a switch per room (its light group `room:<name>`), the garage door on its switch in a storey tall enough for its 2.2 m slide up, chairs and boxes to carry; the bot opens a closed door on its way (it uses one in front, as a player does); the cottage (labs/playground/scenes/interact.ts) gives way to the house.*
+  - *Built (ADR-0025 amendment 20): the block 96 × 113 m, the gym as built not fitting §2's strip; the lot and the cottage retired, the site's replay in their place; the bot's clear points and look-ahead for the house's doorways, flights and ladders; the shooter's and the platformer's bounds indoors to WP 13.27; the style set warms only the styles looks ask for; the gym's courses for its gaps, steps and slopes, the crouch, the stun and climbing again.*
 - **Done when:** the bot reaches every room and area from the spawn; every scene renders in the five cameras and both looks with 0 pipelines after warm-up; the site's replays give their goldens in Node and in the page.
 - **Verify:** `node x replay tests/replays/playground-site*.replay.json --browser page && npm run e2e -- tests/e2e/playground.spec.ts`
 
@@ -3802,7 +3804,15 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Done when:** look metrics and thumbnails per look and camera; the shimmer metric (pixels changed by a sub-pixel orthographic pan) is 0 in the pixel look; visual-reviewer verdicts pass.
 - **Verify:** `npm test -- engine/gfx/post engine/gfx/materials && npm run e2e -- tests/e2e/post.spec.ts tests/e2e/playground-cameras.spec.ts`
 
-**Gate G12, Alive:** melee, the door kick and both firearms work in every camera, golden in Node and in the page; the neighbours, the dog and the dummies react; every event has its sound; day and night in both looks; GPU features each with its downgrade playable and the hash unchanged; hands and feet within §5's bounds with the re-imported clips.
+#### WP-13.27 Follow cameras indoors
+- **Owns:** extends `engine/gfx/cameras/{shoulder,follow,collide}.ts`, `labs/playground/scenes/site-soak.test.ts`
+- **Needs:** WP 13.8, WP 13.18
+- **Size:** M
+- **Build** (docs/PLAYGROUND.md §4; ADR-0025 amendment 20): the shooter and the platformer in the house's rooms. Over the house's soak the shooter loses the player in about 7% of the tour's frames, its arm pulled in at the walls, and a door swinging into its ball cuts it (3.45 m in a frame); the platformer loses the player in most, its short arm's view along it missing the chest. Keep the player in view in a room (an arm that rises or swings round as it shortens, the occluder fade for what stands between), never cut by a moving prop, and judge both cameras' bounds over the soak.
+- **Done when:** the house's soak judges every camera's bounds, none watched; the gym's courses keep theirs.
+- **Verify:** `npm test -- labs/playground/scenes/site-soak engine/gfx/cameras && node x feel labs/playground`
+
+**Gate G12, Alive:** the shooter and the platformer keep the player in view indoors (WP 13.27); melee, the door kick and both firearms work in every camera, golden in Node and in the page; the neighbours, the dog and the dummies react; every event has its sound; day and night in both looks; GPU features each with its downgrade playable and the hash unchanged; hands and feet within §5's bounds with the re-imported clips.
 
 #### WP-13.25 The front end
 - **Owns:** `labs/playground/ui/`, extends `labs/playground/main.ts`, `tests/e2e/playground.spec.ts`
@@ -4401,6 +4411,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | 13.22 | The playground's sound | X | todo | | |
 | 13.23 | Light and time | R | todo | | |
 | 13.24 | The two looks, finished | R | todo | | |
+| 13.27 | Follow cameras indoors | R | todo | | Added at WP 13.18 (ADR-0025 amendment 20): the house's soak watches the shooter's and the platformer's bounds for it. |
 | **G12** | **Gate: alive** | | todo | | |
 | 13.25 | The front end | I | todo | | |
 | 13.26 | The tour and the hand-over | B | todo | | |

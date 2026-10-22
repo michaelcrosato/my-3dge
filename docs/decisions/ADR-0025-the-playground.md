@@ -1039,3 +1039,70 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   health breaks panes; the crosshair's ray picks what it strikes; `FRONT` written as 0.5, no Math at import; the stale
   test titles and file comments; the HUD's prompt read by the page spec. Left: the scan above, and the fixed pane and
   leaf sizes, documented.
+
+## Amendment 20 (2026-10-22, WP 13.18): the site
+
+- **The block** (labs/playground/levels/site.ts): one site, `site:block`, 96 × 113 m, on the hill scene's ground
+  flattened under the range, the yards and the street. The gym as built (41 × 101 m, WP 13.1 to 13.7) could not stand
+  in §2's 36 × 70 m strip, so the block runs 17 m further south than §2's 96 m, and docs/PLAYGROUND.md §2's sketch and
+  ranges say so; the gym stands at (0, 12), its wall open by three gates (`GYM_GATES`, `GYM_SITE_TEXT`), while its own
+  scene keeps the wall whole. The house (format 2, 0.25 m tiles), the shed, the tree house and the lookout, the range's
+  shelter and backstop, the ring and the paving are levels painted from rectangles (labs/playground/levels/plan.ts);
+  their looks (siding, wallpaper, shingles, a brick chimney, each room's floor) are their entries'. Each area has a
+  spawn (`SITE_AREAS`) and a scene (`playground:site` the front yard's, `playground:site-<area>` the others'), each
+  `defineScene` call written out with its id, since the tools find a scene by its module's text (tools/lib/scenes.ts).
+- **The house as built** against §2.1: a patio on the backyard side, not a deck, the crawlspace under it; the garage's
+  door an up-and-over door on its switches (a tilt, e981a49), its storey 3 m for the door's travel; a level door hangs
+  only in an opening its leaf fits. The study's bookshelf stands off its door: with the leaf open the two sealed it.
+- **The lot and the cottage give way** (amendments 18 and 19): labs/playground/levels/{lot,cottage}.ts,
+  scenes/{lot,interact}.ts and the interact replay are gone (their inspector glyphs also clashed with the house's). The
+  site's replay (tests/replays/playground-site.replay.json, 640 steps, 12 goldens; Node ×3, Chromium ×3 and the page ×3
+  agreeing) opens the front door, turns the hall's light off and on, bursts the living room's door open and breaks it,
+  throws a chair through the dining room's north window and raises the garage's door; labs/playground/scenes/site.test.ts
+  checks its story event by event and the HUD's prompts. WP 13.16's Verify plays it now.
+- **The bot on the site** (engine/world/siteNav.ts, siteNavClear.ts, siteNavGrids.ts; engine/dev/bot.ts, botNav.ts):
+  a tile's clear point is sampled every 5 cm within the hull's keep (its radius and 4 cm), the nearest point that far
+  from what the body cannot walk into: a closed tile of its own grid, a side's floor more than a climb away, a ladder's
+  foot, a prop's own box (not the margin the graph closes round it); the tiles links cross into count open. The way
+  looks ahead up to three nodes past clear points already reached or, in the body's own grid, behind it. A drop off a
+  step higher than a climb costs its height, and a flight's side is crossed only within a 10 cm curb, so a way never
+  jumps off a flight's side; a block closes no tile through a closed one (a bookshelf's margin closed the attic's
+  ladder through the landing's wall). The bot ducks 2.2 m ahead of a low ceiling, pushes gently at a drop and presses
+  use there (a ladder's top takes hold by use), keeps its push through a mantle, pushes nowhere falling until 0.25 m
+  over its floor, reads a ladder's rise over the next three nodes, and turns the view the way it walks when asked
+  (`look`, as a player's mouse would). Left: a way along a ladder's face can take hold of it (the lot's attic run).
+- **Measured**: the bot reaches every room of the four storeys and every area from the front yard's spawn and back
+  (labs/playground/scenes/site-{downstairs,upstairs,areas}.test.ts), and tours the 17 rooms and back in about 5,100
+  steps (site-soak.test.ts).
+- **The cameras' watched bounds** (amendment 18): over the tour, run again as a course with the bot's view, no camera
+  stands inside a wall (0 frames in all five), and first person, isometric and top-down keep all their bounds. The
+  shooter loses the player in about 7% of the frames, its arm pulled in at the house's walls, and a door swinging into
+  its ball cuts it once (3.45 m in a frame); the platformer loses the player in most, its short arm's view along it
+  missing the chest indoors (the playground gives it no sim look). Judging them takes the follow cameras reworked for
+  rooms, a WP of its own: WP 13.27 (stage G12), for which the soak watches them.
+- **The warm-up asks for fewer styles** (engine/gfx/materials/styles.ts `attach(warmup, scene, styles)` and `add`,
+  engine/app/look.ts): a page's style set warms its own style and each a look asks for, not all four: the playground's
+  looks both draw toon. The site's page warmed 113 pipelines in 333 s before, 85 in 214 s after, on SwiftShader; the
+  tools wait 300 s for a page (tools/lib/page.ts `READY_MS`), the site's specs 420 s. Open: the view's second camera's
+  compile passes take about 45 s each, every pipeline already built (render objects rebuilt per camera).
+- **A mesh with nothing to draw** (Dawn warned of a draw with an index count of 0 in the site's page): a storey's floor
+  whose every piece its rooms' own floors took (the attic's) keeps its place in the level meshes' `parts`, hidden and
+  out of the root and the warm-up (engine/gfx/level/meshes.ts).
+- **The gym's courses from gate G10** (labs/playground/courses/{gaps,steps,crouch,landing,climbAgain}.ts): the gaps'
+  (running across 3 m, sprinting across 5 m, slide-jumping across 7 m, and a superglide over the platform it mantled
+  onto and the 5 m gap: the lane has no wall before a gap, so the 9 m gap's superglide is its flight's 10.0 m, not a
+  run), on the contested 0.1 s hop window, since a place lands the player and a 3 m platform leaves no room for a 1 s
+  run-up; the stairs climbed at the run's speed, the 45° slope walked to its deck and the 51° one refused; the duck's
+  25 ticks of 16 ms after the press's own, getting up in the release's tick, crouch spam never down; the stun from 6,
+  14 and 25 m and the run again a second on; a climb caught again only once the feet are 0.48 m up, 3.25 m under the
+  cutoff. §2.3's stairs row says what the gym has, one stair of 0.25 m risers (the 0.10 to 0.20 m ones were never
+  built, and §3.2's steps run to 0.56 m).
+- **The page**: the gym's signs show where the gym stands on the site; the menu lists the site's scenes after the gym,
+  by id. playground.spec.ts cycles the five cameras and both looks on the hill and, on one site page, from each area's
+  spawn: the site's scenes are one block, each placing the player at an area's spawn, so one page placing it at each
+  stands for them all.
+- **Smaller calls**: `registry.kinds()` keeps its sorted list until a kind is declared (every prop and setting lookup
+  asks); `findTarget` asks where a prop is before whether it can be used (a house holds hundreds); the terrain is cut
+  where structures' floors cover a cell whole (its four quarters' middles), so a deck's posts and a ladder's foot leave
+  the ground under them; `sweepBot` moved to engine/dev/botSweep.ts, bot.ts at its cap; the hydrant's cap a 2 cm limb
+  (the view refuses a limb of no length; labs/playground/props/props.test.ts builds every part).
