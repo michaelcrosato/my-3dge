@@ -4,7 +4,8 @@
  * pose loads; `Layers`, what the view lays on the animator (its reactions, its actions, its secondary motion and their
  * chain meshes, the foot plant, the traversal plant and the hold, the last three ending the `post` slot), made again
  * by `layersFor` when what they are made for changes (`layersKey`: reactions, actions, the secondary look, or the clip
- * layer actions ride), and taken off with their meshes freed by `dropLayers`.
+ * layer actions ride; or the animator, made again when the weapon changes, the new hold following the old's draw),
+ * and taken off with their meshes freed by `dropLayers`.
  *
  * Invariants: presentation only; one set of layers per actor; the foot plant, the traversal plant and the hold are
  * always there, in that order, after any other post layer.
@@ -60,7 +61,10 @@ export interface Held {
   traversal: TraversalPose;
   /** Its look as the view shows it (`look`), eased once a step. */
   look: LookPose;
-  /** The weapon it has out (engine/gfx/weapons.ts `weaponOut`), drawn in its hand while its hold holds a gun; or null. */
+  /**
+   * The weapon it has out (engine/gfx/weapons.ts `weaponOut`), or the last one it had (null: none yet): drawn in its
+   * hand while its hold holds a gun, so a gun holstered stays there as the hands lower it (`HoldPlant.drawn`).
+   */
   carry: WeaponKind | null;
 }
 
@@ -129,7 +133,7 @@ export function layersFor(
       secondary && wanted ? createChainMeshes(secondary, { material, color: wanted.color, name: `actor#${id}` }) : null;
     const plant = new FootPlant({ name: 'view:footPlant' }).attach(animator);
     const traversal = new TraversalPlant({ name: 'view:traversal' }).attach(animator);
-    const hold = Object.assign(new HoldPlant({ name: 'view:hold' }).attach(animator), { contacts: traversal });
+    const hold = Object.assign(new HoldPlant({ name: 'view:hold' }).follow(own?.hold).attach(animator), { contacts: traversal }); // prettier-ignore
     own = { animator, key, reactions, actions, clips, secondary, chains, plant, traversal, hold };
     layers.set(id, own);
   }

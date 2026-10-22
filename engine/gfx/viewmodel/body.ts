@@ -142,6 +142,20 @@ export function createViewmodel(
   }
   const [barrel, kickTurn, axis] = [new Vector3(), new Quaternion(), new Vector3(1, 0, 0)];
   let [shots, kick, muzzle] = [0, 0, null as Vector3 | null];
+  /**
+   * Hides every gun but `shown`, each a point at the body's root (scale 0): a box round the body (`Box3.setFromObject`,
+   * the scene dump's) counts hidden children, and a gun left where it was last drawn, or at the origin, would widen it.
+   */
+  const hideGuns = (shown?: Mesh) => {
+    for (const mesh of guns.values()) {
+      mesh.visible = mesh === shown;
+      if (mesh === shown) continue;
+      mesh.position.copy(body.skeleton.bones[0].position);
+      mesh.scale.setScalar(0);
+      mesh.updateMatrixWorld(true);
+    }
+  };
+  hideGuns();
   /** Shows the gun the body holds in the arms' right hand for `frame` (see the file comment); hides the others. */
   const holdGun = (frame: ViewmodelFrame, animated: Animated) => {
     const fired = frame.player?.shots ?? 0;
@@ -149,9 +163,10 @@ export function createViewmodel(
     shots = fired;
     const { hold, gun } = animated;
     const shown = gun && hold?.holding && rig.shown.includes('handR') ? guns.get(gun.id) : undefined;
-    for (const mesh of guns.values()) mesh.visible = mesh === shown;
+    hideGuns(shown);
     muzzle = null;
     if (!shown || !gun || !hold) return;
+    shown.scale.setScalar(1);
     const b = hold.barrel;
     const held = hold.look;
     const [yaw, pitch] = [Math.atan2(b.x, b.z), Math.asin(MathUtils.clamp(b.y, -1, 1))];
@@ -211,7 +226,7 @@ export function createViewmodel(
       if (!frame || !animated) {
         fold([]);
         arms.visible = false;
-        for (const gun of guns.values()) gun.visible = false;
+        hideGuns();
         muzzle = null;
         return { hidden: [], arms: [] };
       }

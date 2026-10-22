@@ -6,10 +6,10 @@
  * none for a miss, the tracer gone after its life and the latest holes kept; off, the trace read and nothing played.
  * The actors' puppets carry the gun out in the right hand while the hold holds one, its muzzle where the shots leave,
  * and first person draws it in the arms instead (engine/gfx/viewmodel/body.ts), the stage's props leaving it out and
- * the shots leaving its muzzle as the arms' lens draws it.
+ * the shots leaving its muzzle as the arms' lens draws it; holstered, it stays in the hand as the hands lower it.
  * @see engine/gfx/weapons.ts
  */
-import { BufferAttribute, Vector3 } from 'three/webgpu';
+import { Box3, BufferAttribute, Vector3 } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { Animator } from '../anim/character';
 import { socketPosition } from '../anim/fk';
@@ -142,12 +142,14 @@ describe('the firearms drawn', () => {
     expect(drawn.z).toBeGreaterThan(eye[2]); // ahead of it, as he faces
     actors.firstPerson(null);
     expect([actors.carried().has(1), actors.muzzle(1)!.distanceTo(muzzlePoint(PISTOL, gun))]).toEqual([true, 0]);
-    world.step({});
-    actors.capture(world.query('actor'), world.dt); // holstered: no gun in the hand
-    (world.get(1) as unknown as { weapons: { slot: number } }).weapons.slot = -1;
-    actors.capture(world.query('actor'), world.dt);
-    actors.draw(1);
-    expect([actors.carried().size, actors.muzzle(1)]).toEqual([0, null]);
+    const box = new Box3().setFromObject(actors.puppets.get(1)!.mesh, true); // the scene dump's size: hidden children count
+    expect(box.min.y).toBeGreaterThan(-0.05); // its soles, 2.4 cm down: the hidden guns a point at its root (a pistol at the origin reached -8.5 cm)
+    const player = world.get(1) as unknown as { weapons: { slot: number }; animator: { weapon: string } };
+    [player.weapons.slot, player.animator.weapon] = [-1, 'none']; // holstered, as the sim's system writes it
+    const held = () => (world.step({}), actors.capture(world.query('actor'), world.dt), actors.draw(1), actors.carried().has(1)); // prettier-ignore
+    expect(held()).toBe(true); // still in the hand as the hands lower it
+    for (let k = 0; k < 15; k++) held();
+    expect([actors.carried().size, actors.muzzle(1)]).toEqual([0, null]); // gone 0.25 s on
     actors.dispose();
   });
 });

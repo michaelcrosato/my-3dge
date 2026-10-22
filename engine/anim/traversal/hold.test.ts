@@ -3,7 +3,9 @@
  * look; a gun aimed down the sights points its muzzle within §5.1's 2° of the aim at every pitch and at headings off
  * the body's (the aim offsets), the support hand on its foregrip, the right eye on its sight line; held low and ready
  * otherwise, still aimed at a run, lowered and turned across the body at a sprint, its foregrip still in hand; a
- * traversal holding the hands lowers it; and without a look or a gun the body is left as it was.
+ * traversal holding the hands lowers it; and without a look or a gun the body is left as it was. WP 13.20: a gun drawn
+ * comes into the hands over `HOLD.draw` and leaves them as it is holstered, with no jump of the grip, the hold made
+ * again with a body's new animator following the old one's draw; a body that starts with a gun holds it at once.
  */
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../../core/math';
@@ -75,6 +77,37 @@ describe('holding and aiming', () => {
     const plain = held(null, 'none');
     expect(jointPosition(busy.animator.body.world, 'handR').distanceTo(jointPosition(plain.animator.body.world, 'handR'))).toBeLessThan(1e-9); // prettier-ignore
     expect(jointPosition(free.animator.body.world, 'handR').distanceTo(jointPosition(plain.animator.body.world, 'handR'))).toBeGreaterThan(0.05); // prettier-ignore
+  });
+
+  it('brings the hands onto a gun drawn over HOLD.draw and off one holstered, the grip never jumping (WP 13.20)', () => {
+    expect(held(null, 'gun', 0, 0, 1).hold.drawn).toBe(1); // a body that starts with one holds it at once
+    /** A body made again with `weapon` (as the view's pool makes it when the weapon changes), its hold following `from`'s. */
+    const again = (from: { animator: Animator; hold: HoldPlant }, weapon: 'none' | 'gun') => {
+      const animator = new Animator({ build: 'build:adult', weapon, clock: from.animator.body.state.clock });
+      return { animator, hold: new HoldPlant().follow(from.hold).attach(animator) };
+    };
+    /** `n` steps of `body`: its hold's draw and how far the grip moved in each. */
+    const steps = (body: { animator: Animator; hold: HoldPlant }, n: number) =>
+      Array.from({ length: n }, () => {
+        const before = socketPosition(body.animator.body.skeleton, body.animator.body.world, 'weaponR');
+        body.animator.update({ position: new Vector3(), velocity: new Vector3() });
+        const after = socketPosition(body.animator.body.skeleton, body.animator.body.world, 'weaponR');
+        return { drawn: body.hold.drawn, holding: body.hold.holding, moved: after.distanceTo(before) };
+      });
+    const bare = held(null, 'none', 0, 0, 10);
+    expect([bare.hold.drawn, bare.hold.holding]).toEqual([0, false]);
+    const drawing = steps(again(bare, 'gun'), 20);
+    const per = 1 / 60 / HOLD.draw; // of the way a step
+    expect(drawing[0].drawn).toBeCloseTo(per, 9);
+    expect(drawing.findIndex((s) => s.drawn === 1)).toBe(Math.ceil(1 / per - 1e-9) - 1); // 0.25 s in
+    expect(drawing.every((s) => s.holding)).toBe(true);
+    expect(Math.max(...drawing.slice(1).map((s) => s.moved))).toBeLessThan(0.08); // eased: never a jump
+    const armed = again(bare, 'gun');
+    steps(armed, 20);
+    const holstering = steps(again(armed, 'none'), 20);
+    expect(holstering[0].drawn).toBeCloseTo(1 - per, 9);
+    expect([holstering.at(-1)!.drawn, holstering.at(-1)!.holding]).toEqual([0, false]); // gone from the hands
+    expect(Math.max(...holstering.slice(1).map((s) => s.moved))).toBeLessThan(0.08);
   });
 
   it('leaves the body as it was without a look or a gun', () => {

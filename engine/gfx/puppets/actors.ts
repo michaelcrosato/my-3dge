@@ -224,7 +224,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
         }
         const look = (last?.look ?? new LookPose()).update(looks.get(entity.id) ?? null, dt);
         const before = last ? last.after : place;
-        const carry = weaponOut(entity, registry);
+        const carry = weaponOut(entity, registry) ?? last?.carry ?? null; // holstered, in the hand while the hold lowers it
         held.set(entity.id, { before, after: place, player, data, clips, puppet, reactions, actions, secondary, motion, shown, traversal, look, carry }); // prettier-ignore
         if (puppet) drawn.add(entity.id);
       }

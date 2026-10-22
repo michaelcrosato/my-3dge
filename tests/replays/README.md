@@ -112,4 +112,6 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   with WP 13.20's firearms (ADR-0025 amendment 25): the site's player carries the pistol and the rifle, holstered (the
   component `weapons`, hashed), and the range's targets are things (the components `thing` and `popup`, hashed) where
   fixed props stood. Neither run draws a gun or fires a shot: their inputs are as they were, and their stories the
-  same, event for event (labs/playground/scenes/site.test.ts, ring.test.ts).
+  same, event for event (labs/playground/scenes/site.test.ts, ring.test.ts). playground-range is new with that WP:
+  the range's story (labs/playground/weapons/range.test.ts), its inputs written from a scripted run that aimed each
+  shot at its target's plate as the sim had it.

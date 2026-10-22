@@ -1317,3 +1317,18 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **The site's player is armed**: every site scene's player carries the pistol and the rifle, holstered, and the site
   adds the system `weapons` and the range's targets, so the site's and the ring's replays (playground-site,
   playground-melee) took new goldens, their stories unchanged; the gym's scenes stay unarmed.
+- **The draw eases** (engine/anim/traversal/hold.ts `drawn`, `HOLD.draw` 0.25 s, ours): found by the range's course,
+  whose draw popped the hands 0.59 m in a step (the anim QA's 9/16 m). The view makes an actor's animator again when
+  its weapon changes (the weapon is part of the humanoid's make, engine/anim/character.ts `AnimatorPool`), so a new
+  hold snapped onto the gun; now the hands come onto a gun drawn and leave one holstered over 0.25 s by the body's
+  clock, and a hold made again follows the old one's draw (`follow`), in the page and in the feel kit alike. A body
+  that starts with a gun holds it at once, so the states' sheets and the anim QA pose as they did.
+- **§5.1's muzzle as a course measure** (amendment 11's hand-off): the feel kit's metric `muzzle`, the farthest the gun
+  hand's barrel line (the right hand's +Z, which the hold lays on the barrel) points from the aim while the sights are
+  fully up, past any bound for a span that never aims; the range's course (labs/playground/courses/range.ts: both
+  guns down their sights, the looks glided to as a mouse turns them, rounds and bursts fired) judges it against 2°.
+- **The range's replay** (tests/replays/playground-range.replay.json, written from a scripted run that aims each shot
+  at its target's plate as the sim has it): each kind of target down, the hip's third round and a burst's last into
+  the backstop, a reload and the holster; its story is labs/playground/weapons/range.test.ts. Writing it found the
+  first recoil numbers too steep (a rifle burst climbing 4° in seven rounds, over the 3 m backstop): the guns' kicks
+  were halved (the pistol 0.9° a shot, the rifle 0.5° falling to 0.2°).

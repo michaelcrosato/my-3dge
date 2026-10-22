@@ -1,0 +1,27 @@
+/**
+ * @file Unit tests for the thing `thing:{{name}}` ({{id}}.ts): struck for its hit points it goes down (or breaks, with
+ * no rise), its hits counted, and takes no hit while down; it stands again, whole, after its rise; standing, it slides
+ * along its track at its speed.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { hitThing, stepThing, thingAt, thingState } from '../../../engine/sim-api';
+import { {{name}} } from './{{name}}';
+
+describe('thing:{{name}}', () => {
+  it('goes down at its hits, stands again after its rise, and slides along its track while it stands', () => {
+    const thing = thingState({{name}}, [0, 1, 5]);
+    let outcome = '';
+    for (let k = 0; k < {{name}}.hp; k++) outcome = hitThing(thing, {{name}}, 1, k * 0.1)?.outcome ?? '';
+    expect([outcome, thing.hits]).toEqual([{{name}}.rise < 0 ? 'broken' : 'down', {{name}}.hp]);
+    expect(hitThing(thing, {{name}}, 1, 1)).toBe(null); // down: no hit
+    if ({{name}}.rise < 0) return;
+    expect(stepThing(thing, {{name}}, thing.downAt + {{name}}.rise + 1e-6, 1 / 60)).toBe(true);
+    expect([thing.state, thing.hp]).toEqual(['up', {{name}}.hp]);
+    const from = thingAt(thing, {{name}});
+    // half a second on: it slid at its speed, or to its track's end
+    for (let k = 0; k < 30; k++) stepThing(thing, {{name}}, 10 + k / 60, 1 / 60);
+    const moved = Math.hypot(...thingAt(thing, {{name}}).map((v, i) => v - from[i]));
+    expect(moved).toBeCloseTo(Math.min({{name}}.speed * 0.5, Math.hypot(...{{name}}.track)), 2);
+  });
+});

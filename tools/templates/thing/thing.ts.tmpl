@@ -1,0 +1,22 @@
+/**
+ * @file The thing `thing:{{name}}`: what it is (replace this text; `x docs` puts the first sentence in INDEX). It
+ * starts as a range's pop-up target on a track: the crate it stands as goes down at its second hit, stands again 2 s
+ * later, and slides 2 m east and back at 1 m/s while it stands.
+ *
+ * Invariants: its fields are the kind's (`node x describe thing`), in metres and seconds; a scene stands it with
+ * `spawnThing`, and a melee hit or a shot takes a point from it, a blast all it has.
+ *
+ * @example
+ * {{name}}.rise; // 2
+ * @see {{id}}.test.ts
+ */
+import { defineThing } from '../../../engine/sim-api';
+
+/** The thing `thing:{{name}}`: replace this sentence with what it is. */
+export const {{name}} = defineThing('thing:{{name}}', {
+  prop: 'prop:crate',
+  hp: 2,
+  rise: 2,
+  track: [2, 0, 0],
+  speed: 1,
+});

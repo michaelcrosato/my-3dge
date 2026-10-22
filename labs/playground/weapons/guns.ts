@@ -66,7 +66,7 @@ export const PISTOL = defineWeapon('weapon:playground-pistol', {
   damage: 18,
   range: 80,
   spread: { hip: 1.2, move: 0.8, ads: 0.1 },
-  recoil: [[1.4, 0.15]],
+  recoil: [[0.9, 0.1]],
   settle: 0.3,
   magazine: 10,
   reload: { tactical: 1.25, empty: 1.25 },
@@ -84,7 +84,7 @@ export const RIFLE = defineWeapon('weapon:playground-rifle', {
   damage: 14,
   range: 120,
   spread: { hip: 2.4, move: 1.4, ads: 0.15 },
-  recoil: [[0.9, 0], [0.8, 0.1], [0.7, 0.2], [0.6, 0.25], [0.5, 0.2], [0.45, 0], [0.4, -0.2], [0.4, -0.3], [0.35, -0.15]], // prettier-ignore
+  recoil: [[0.5, 0], [0.45, 0.05], [0.4, 0.1], [0.35, 0.15], [0.3, 0.1], [0.3, 0], [0.25, -0.1], [0.25, -0.15], [0.2, -0.05]], // prettier-ignore
   settle: 0.3,
   magazine: 18,
   reload: { tactical: 2.4, empty: 3.2 },

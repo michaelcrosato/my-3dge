@@ -18,7 +18,10 @@
  * 7. the feel panel (`?playground.feel=on`, WP 13.4) tunes the run live: its run slider set, the player runs that fast
  *    (holstered, ×1.15), and Copy as profile shows a `defineMovement` call holding the new number;
  * 8. the HUD names what the player would use with the key that uses it (WP 13.16): nothing on the front yard's path, 14 m
- *    from the house's front door (WP 13.18), `E: Open` on the porch before it, `E: Close` once it is used.
+ *    from the house's front door (WP 13.18), `E: Open` on the porch before it, `E: Close` once it is used;
+ * 9. the range's replay (WP 13.20: the pistol and the rifle drawn and fired, the targets down and up again) keeps its
+ *    goldens while it renders through every camera mode and both looks, the guns drawn in the hands and in first
+ *    person's arms, the tracers, flashes, impacts and holes, with 0 pipelines after the warm-up; the HUD counts it.
  *
  * Invariants: the page is read through `[data-ui]` elements, the menu's links and `__engine` only; the sim is stepped
  * with `__engine.step`, then frames are drawn (`__engine.render`), so the HUD and the signs show what the run holds.
@@ -34,8 +37,9 @@ import { expect, test } from './fixtures';
 /** The page's engine, inside `evaluate`. */
 declare const __engine: Record<string, unknown> & { [name: string]: (...args: unknown[]) => unknown };
 
-/** The gym's replay. */
+/** The gym's replay, and the range's (WP 13.20). */
 const GYM = readFileSync(join(import.meta.dirname, '../replays/playground-gym.replay.json'), 'utf8');
+const RANGE = readFileSync(join(import.meta.dirname, '../replays/playground-range.replay.json'), 'utf8');
 
 /** Calls the `__engine` member at `path` (`camera.get`) with `args`. */
 function call<T = unknown>(page: Page, path: string, ...args: unknown[]): Promise<T> {
@@ -200,6 +204,26 @@ test.describe('the playground', () => {
     expect((await call<{ pipelinesAfterWarmUp: number }>(page, 'stats')).pipelinesAfterWarmUp).toBe(0);
     expect(await adviceCodes(page)).not.toContain('GFX_COLD_PIPELINE');
     expect(harness.advice()).toEqual([]);
+  });
+
+  test('plays the range in every camera and both looks: its goldens kept, the HUD counting, 0 pipelines after the warm-up', async ({
+    page,
+    harness,
+  }) => {
+    test.setTimeout(1_500_000);
+    await open(page, harness, '?scene=site-range');
+    const views: [number, { cam?: string; set?: Record<string, string> }][] = [
+      ...PLAYGROUND_CAMERAS.map((mode, i): [number, { cam: string }] => [20 + i * 160, { cam: mode.code }]), // the shooter first
+      [100, { set: { 'post.look': PLAYGROUND_LOOKS[1] } }],
+      [420, { set: { 'post.look': PLAYGROUND_LOOKS[0] } }],
+    ];
+    views.sort(([a], [b]) => a - b);
+    const run = await call<{ hashes: Record<string, string> }>(page, 'replay', RANGE, { views });
+    const goldens = (JSON.parse(RANGE) as { hashes: Record<string, Record<string, string>> }).hashes['linux-x64'];
+    expect(run.hashes).toEqual(goldens);
+    await call(page, 'render', 2);
+    expect((await hud(page)).weapon).toBe('Holstered: 1 2 draw · Hits 10 of 20 (50%)'); // half its rounds struck
+    await expectWarm(page, harness);
   });
 
   test('draws the player, body:player on build:adult, where the ID pass sees it from every camera but first person', async ({

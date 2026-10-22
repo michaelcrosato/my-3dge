@@ -1,0 +1,11 @@
+{
+  "describe": "A thing: what can be hit, as data (the prop it stands as, its hit points, how long it stays down, its track and speed), with a unit test that strikes it down, sees it stand again after its rise and slides it along its track (PLAN.md WP 10.4).",
+  "id": "the module's path, labs/<lab>/things/<name> (its id is thing:<name>; a scene stands it with spawnThing): labs/box/things/popper",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/things|tools/templates/thing)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/thing/sampleThing",
+  "files": {
+    "thing.ts.tmpl": "{{id}}.ts",
+    "thing.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}

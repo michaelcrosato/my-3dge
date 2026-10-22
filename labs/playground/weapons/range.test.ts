@@ -4,10 +4,18 @@
  * carries the pistol and the rifle holstered, draws the pistol with 1 and, down its sights, puts the 10 m target of
  * the middle lane down with one shot, the hit counted: the target falls back away from the bench and pops up again
  * 2.5 s later; a mover slides across its lane at 1 m/s and turns back at its end; the HUD's line names the weapon out,
- * its rounds, the hits and the accuracy, and the crosshair shows only while the screen's centre aims a weapon.
+ * its rounds, the hits and the accuracy, and the crosshair shows only while the screen's centre aims a weapon. Its
+ * replay (tests/replays/playground-range.replay.json) plays the range's story in order: the pistol drawn, each lane's
+ * 10 m pop-up put down down the sights, the middle lane's 25 m one and the mover behind it from the hip and a round
+ * into the backstop; the rifle drawn, a burst at the north lane's 25 m pop-up, the outer movers each downed by a led
+ * round; a reload; a burst down the middle through the pop-ups standing again and into the backstop; holstered, half
+ * of its 20 rounds hits, and every target up again at its end.
  * @see labs/playground/weapons/range.ts
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { playReplay } from '../../../engine/sim/replay';
 import { createSession, type Session } from '../../../engine/sim/session';
 import type { WeaponsState } from '../../../engine/sim/weapons';
 import '../bodies/player';
@@ -68,6 +76,49 @@ describe('the range', () => {
     expect(mover.sceneProp.z - z0).toBeCloseTo(1, 1);
     for (let k = 0; k < 90; k++) session.step({}); // to its end at 2 m, and half a metre back
     expect(mover.sceneProp.z - z0).toBeCloseTo(1.5, 1);
+  }, 120_000);
+
+  it("plays its replay's story in order: every kind of target down, the backstop struck, all up again", () => {
+    const replay = JSON.parse(readFileSync(join(process.cwd(), 'tests/replays/playground-range.replay.json'), 'utf8'));
+    const { session } = playReplay(replay);
+    const { world } = session;
+    const targets = world.query('popup') as unknown as Target[];
+    const lanes = ['north', 'middle', 'south'];
+    const named = (id: number) => {
+      const t = targets.find((each) => each.id === id)!;
+      return `${lanes[Math.round((t.thing.z0 - 3) / 3 + (t.thing.thing === MOVER.id ? 1 / 3 : 0))]} ${t.thing.x0 - 4} m`;
+    };
+    const story = world.events
+      .trace()
+      .filter((e) => ['draw', 'holster', 'reload', 'thingDown', 'gunshot'].includes(e.type))
+      .flatMap((e) => {
+        const p = e.payload as { weapon?: string; id: number; body?: number; target?: number };
+        if (e.type === 'thingDown') return [`down: ${named(p.id)}`];
+        if (e.type === 'gunshot') return p.target! < 0 && p.body! >= 0 ? ['the backstop'] : [];
+        return [`${e.type} ${p.weapon === PISTOL.id ? 'pistol' : 'rifle'}`];
+      });
+    expect(story).toEqual([
+      'draw pistol',
+      'down: north 10 m', // down the sights
+      'down: middle 10 m',
+      'down: south 10 m',
+      'down: middle 25 m', // from the hip
+      'down: middle 50 m', // the mover behind it
+      'the backstop',
+      'draw rifle',
+      'down: north 25 m', // the rest of the burst climbing high, past the backstop's end
+      'down: north 50 m', // a led round at each outer mover
+      'down: south 50 m',
+      'reload rifle',
+      'down: middle 10 m', // the last burst: the pop-up standing in its way
+      'down: middle 25 m',
+      'the backstop',
+      'the backstop',
+      'the backstop',
+      'holster rifle',
+    ]);
+    expect([weapons(session).shots, weapons(session).hits]).toEqual([20, 10]); // half its rounds struck
+    for (const t of targets) expect([t.thing.state, t.popup.tilt], named(t.id)).toEqual(['up', 0]);
   }, 120_000);
 
   it('shows the weapon out, its rounds, the hits and the accuracy, and the crosshair only while the centre aims one', () => {

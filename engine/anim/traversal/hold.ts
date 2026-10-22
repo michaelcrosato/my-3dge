@@ -15,7 +15,8 @@
  * - a traversal holding the hands (`busy`: `TraversalPose.weight`), or the traversal plant's hands on a contact
  *   (`contacts`: a hard landing's hand), lowers the hold as far as they hold them, and the head turns half as far.
  * The look comes eased (`LookPose`, stepped once a sim step by whoever draws the body), so the sights take `HOLD.raise`
- * to come up and a look fades as it goes.
+ * to come up and a look fades as it goes; a gun drawn comes into the hands over `HOLD.draw` by the body's clock, and
+ * leaves them as it is holstered (`drawn`; a body that starts with one holds it at once).
  *
  * Invariants: presentation only: it writes the pose and runs FK, never the sim's state; without a look and without a
  * gun it leaves the body as it was.
@@ -87,6 +88,7 @@ export const HOLD = {
   reach: 0.92, // …to stay within this share of its reach, the arm and the grip; the gun comes in past that)
   runSpeed: [1.17, 1.24], // the gait's speed share (of the build's `speedRef`, at most 1.25) over which a run turns into a sprint
   raise: 0.2, // seconds the sights take to come up or down, and a look to come or go
+  draw: 0.25, // seconds the hands take to come onto a gun drawn, and to leave one holstered
 } as const;
 
 const v = Array.from({ length: 8 }, () => new Vector3());
@@ -121,9 +123,22 @@ export class HoldPlant implements AnimLayer {
   holding = false;
   /** How far the last pose raised the sights, 0 to 1: first person centres them (WP 13.20). */
   aimed = 0;
+  /** How far the hands are on the gun, 0 to 1, eased over `HOLD.draw` as one is drawn and holstered (WP 13.20). */
+  drawn = 0;
+  /** The body's clock at the last pose: how far `drawn` moves; NaN before the first. */
+  #clock = Number.NaN;
 
   constructor(options: { name?: string } = {}) {
     this.name = options.name ?? 'hold';
+  }
+
+  /**
+   * Takes up `previous`'s draw (`drawn` and its clock), when one body's hold is made again: the view makes an actor's
+   * animator again when its weapon changes (engine/anim/character.ts `AnimatorPool`), so the hands ease on as they were.
+   */
+  follow(previous: HoldPlant | undefined): this {
+    if (previous) [this.drawn, this.#clock] = [previous.drawn, previous.#clock];
+    return this;
   }
 
   /** Adds it at the end of `animator`'s `post` slot: attach it after the traversal plant. */
@@ -139,12 +154,19 @@ export class HoldPlant implements AnimLayer {
     const look = this.look;
     const hands = this.contacts ? Math.max(this.contacts.limbs[0].weight, this.contacts.limbs[1].weight) : 0;
     const free = 1 - MathUtils.clamp(Math.max(this.busy, hands), 0, 1);
-    const gun = (this.carry ?? body.weapon) === 'gun' && free > 0;
+    const wants = (this.carry ?? body.weapon) === 'gun';
+    const clock = body.state.clock;
+    const first = Number.isNaN(this.#clock) || clock < this.#clock; // the first pose, or a body started again: as it is
+    const eased = first ? (wants ? 1 : 0) : this.drawn + ((wants ? 1 : -1) * (clock - this.#clock)) / HOLD.draw;
+    this.drawn = eased > 1 - 1e-9 ? 1 : eased < 1e-9 ? 0 : eased; // whole at the draw's time, the steps' sum aside
+    this.#clock = clock;
+    const gun = this.drawn > 0 && free > 0;
     [this.holding, this.aimed] = [gun, 0];
+    const hold = free * this.drawn; // how far the hands are on the gun
     const offset = look ? MathUtils.clamp(angleTo(body.yaw, look.yaw), -HOLD.yaw, HOLD.yaw) * look.weight : 0; // the aim's heading off the body's
     if (gun && offset !== 0) {
       // the chest turned toward the aim's heading, so both hands keep the gun as it swings
-      const turn = q[1].setFromAxisAngle(v[0].set(0, 1, 0), offset * HOLD.twist * free);
+      const turn = q[1].setFromAxisAngle(v[0].set(0, 1, 0), offset * HOLD.twist * hold);
       const parent = jointRotation(world, 'spine2', q[2]).invert();
       pose.setRotation('chest', parent.multiply(turn.multiply(jointRotation(world, 'chest', q[0]))));
       forwardKinematics(skeleton, pose, world);
@@ -194,8 +216,8 @@ export class HoldPlant implements AnimLayer {
       grip.add(toward);
       fore.add(toward);
     }
-    // each hand swung about its shoulder from where the body has it to the gun as far as it is free, then solved
-    const k = MathUtils.smoothstep(free, 0, 1);
+    // each hand swung about its shoulder from where the body has it to the gun as far as it is free and drawn, then solved
+    const k = MathUtils.smoothstep(hold, 0, 1);
     const [gripR, gripL] = [swingGrip(animator, 'R', grip, k, held[0]), swingGrip(animator, 'L', fore, k, held[1])];
     const relaxed = q[1].copy(jointRotation(world, 'handR', q[1]));
     const [poleR, poleL] = [elbow(pose, 'R', poles[0]), elbow(pose, 'L', poles[1])]; // the elbows down and out

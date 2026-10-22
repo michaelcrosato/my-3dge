@@ -7267,9 +7267,10 @@ For the agents who maintain the engine.
 ### [`labs/playground/courses/bounds.ts`](../labs/playground/courses/bounds.ts)
 
 - `bodyBounds` (function): The body's bounds, from step `from` (see `BoundsSpan`).
-- `BOUNDS` (const): §4's and §5.1's bounds: the camera's move (m) and turn (rad) in a frame, a sole's slide (m), a point's pop (m), a held hand's gap (m).
+- `BOUNDS` (const): §4's and §5.1's bounds: the camera's move (m) and turn (rad) in a frame, a sole's slide (m), a point's pop (m), a held hand's gap (m), the muzzle off the aim (rad).
 - `BoundsSpan` (interface): Where a run of bounds reads: from step `from` to `to` (the course's end when absent), its names after `label`.
 - `cameraBounds` (function): Every camera's bounds, from step `from` (see the file comment and `BoundsSpan`).
+- `muzzleBound` (function): §5.1's muzzle bound, from step `from`: the gun hand's barrel line within 2° of the aim while the sights are up.
 
 ### [`labs/playground/courses/camera-walls.ts`](../labs/playground/courses/camera-walls.ts)
 
