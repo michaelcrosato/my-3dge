@@ -256,7 +256,7 @@ export function spawnActor<C extends object>(world: World<C>, spec: ActorSpec): 
  * shooter model its motion state starts again, holstered as it was, or ducked with `crouch`, its hull crouched from its
  * next step on and kept so until it has headroom, for a place no standing hull fits (a crawlspace). A place where the
  * level (the queries' as of the last step, one-way platforms aside) stands over its feet lower than its hull's top, up
- * its axis, throws `SIM_BAD_ARGUMENT`: the body would sink through the floor. For a scene's dev actions: a feel
+ * its axis, throws `SIM_BAD_ARGUMENT` before it moves anything: the body would sink through the floor. For a scene's dev actions: a feel
  * course places its player where it measures (engine/dev/feel/course.ts).
  */
 export function placeActor<C extends object>(
@@ -272,19 +272,22 @@ export function placeActor<C extends object>(
   const { actor, motion } = e;
   if (options.crouch && !motion) throw codeError('SIM_BAD_ARGUMENT', { where: 'placeActor(options.crouch)', value: `true for actor ${id}, on no movement model`, expected: 'no crouch: only an actor on a movement model (its component motion) crouches' }); // prettier-ignore
   const physics = physicsOf(w);
-  matchHull(physics, actor.body, actor.character, actor.character.capsule.height, { air: false, tuck: false });
-  physics.setBody(actor.body, { position: bodyAt(actor.character, at, 'placeActor(at)'), velocity: [0, 0, 0] });
+  const { offset, capsule } = actor.character;
+  const centre = bodyAt(actor.character, at, 'placeActor(at)'); // the standing hull's, its feet just over `at`
+  const middle = motion && options.crouch ? hullFor(actor.character, { ...motion, stance: 'crouch' }) : capsule.height; // prettier-ignore
+  const up = { maxDistance: middle + capsule.radius, exclude: actor.body, groups: 'world' } as const;
+  const ceiling = physics.raycast([centre[0], centre[1] - capsule.height / 2, centre[2]], [0, 1, 0], up); // up its axis
+  if (ceiling && !oneWayOf(w).has(ceiling.body)) {
+    const given = vec(at, 'placeActor(at)');
+    const place = [given.x, given.y, given.z].map((v) => Math.round(v * 100) / 100).join(', ');
+    const [over, tall] = [(offset + capsule.radius + ceiling.distance).toFixed(2), (middle + 2 * capsule.radius).toFixed(2)]; // prettier-ignore
+    throw codeError('SIM_BAD_ARGUMENT', { where: 'placeActor(at)', value: `[${place}], where a ceiling ${over} m over its feet cuts its ${options.crouch ? 'crouched' : 'standing'} hull, ${tall} m tall (it would sink through the floor)`, expected: motion && !options.crouch ? 'a place with headroom, or { crouch: true } under a low ceiling' : 'a place with headroom' }); // prettier-ignore
+  }
+  matchHull(physics, actor.body, actor.character, capsule.height, { air: false, tuck: false });
+  physics.setBody(actor.body, { position: centre, velocity: [0, 0, 0] });
   const { x, y, z } = feetOf(physics, actor.body, actor.character);
   Object.assign(actor, createCharacterState(), { yaw: yaw ?? actor.yaw, x, y, z });
   if (motion) Object.assign(motion, createMotionState(), { holstered: motion.holstered }, options.crouch ? { stance: 'crouch', duck: 'ducked' } : {}); // prettier-ignore
-  const { offset, capsule } = actor.character;
-  const middle = motion ? hullFor(actor.character, motion) : capsule.height; // its stance's, kept from its feet
-  const up = { maxDistance: middle + capsule.radius, exclude: actor.body, groups: 'world' } as const;
-  const ceiling = physics.raycast([x, y + offset + capsule.radius, z], [0, 1, 0], up); // up its axis to its top
-  if (!ceiling || oneWayOf(w).has(ceiling.body)) return; // a one-way platform lets it up through
-  const given = vec(at, 'placeActor(at)');
-  const [place, over, tall] = [[given.x, given.y, given.z].map((v) => Math.round(v * 100) / 100).join(', '), (offset + capsule.radius + ceiling.distance).toFixed(2), (middle + 2 * capsule.radius).toFixed(2)]; // prettier-ignore
-  throw codeError('SIM_BAD_ARGUMENT', { where: 'placeActor(at)', value: `[${place}], where a ceiling ${over} m over its feet cuts its ${options.crouch ? 'crouched' : 'standing'} hull, ${tall} m tall (it would sink through the floor)`, expected: motion && !options.crouch ? 'a place with headroom, or { crouch: true } under a low ceiling' : 'a place with headroom' }); // prettier-ignore
 }
 
 /** The bodies of the one-way platforms (the component `oneWay`). */

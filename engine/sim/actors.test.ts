@@ -258,6 +258,8 @@ describe('actors on the shooter model', () => {
     const [player, ai] = actors(world);
     expect(() => placeActor(world, player.id, [0, 0, 0])).toThrow(/SIM_BAD_ARGUMENT.*placeActor\(at\) got \[0, 0, 0\], where a ceiling 1\.39 m over its feet cuts its standing hull, 1\.83 m tall.*\{ crouch: true \}/); // prettier-ignore
     expect(() => placeActor(world, ai.id, [0, 0, 0], 0, { crouch: true })).toThrow(/only an actor on a movement model/);
+    world.step({});
+    expect([player.actor.x, ai.actor.x]).toEqual([expect.closeTo(10, 2), expect.closeTo(10, 2)]); // refused: left standing
     placeActor(world, player.id, [0, 0, 0], Math.PI / 2, { crouch: true });
     for (let i = 0; i < 30; i++) world.step({});
     expect(player.motion).toMatchObject({ duck: 'ducked', stance: 'crouch' }); // kept down: no headroom

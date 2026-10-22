@@ -12806,14 +12806,14 @@ function Lq(e, t, n, s, o = {}) {
   if (!i?.actor) throw j("SIM_BAD_ARGUMENT", { where: "placeActor(w, id)", value: String(t), expected: "an actor’s id" });
   const { actor: a, motion: c } = i;
   if (o.crouch && !c) throw j("SIM_BAD_ARGUMENT", { where: "placeActor(options.crouch)", value: `true for actor ${t}, on no movement model`, expected: "no crouch: only an actor on a movement model (its component motion) crouches" });
-  const l = Fe(r);
-  B_(l, a.body, a.character, a.character.capsule.height, { air: !1, tuck: !1 }), l.setBody(a.body, { position: z_(a.character, n, "placeActor(at)"), velocity: [0, 0, 0] });
-  const { x: u, y: d, z: h } = as(l, a.body, a.character);
-  Object.assign(a, iw(), { yaw: s ?? a.yaw, x: u, y: d, z: h }), c && Object.assign(c, tw(), { holstered: c.holstered }, o.crouch ? { stance: "crouch", duck: "ducked" } : {});
-  const { offset: f, capsule: p } = a.character, m = c ? C_(a.character, c) : p.height, g = { maxDistance: m + p.radius, exclude: a.body, groups: "world" }, y = l.raycast([u, d + f + p.radius, h], [0, 1, 0], g);
-  if (!y || k$(r).has(y.body)) return;
-  const w = ze(n, "placeActor(at)"), [v, b, x] = [[w.x, w.y, w.z].map((k) => Math.round(k * 100) / 100).join(", "), (f + p.radius + y.distance).toFixed(2), (m + 2 * p.radius).toFixed(2)];
-  throw j("SIM_BAD_ARGUMENT", { where: "placeActor(at)", value: `[${v}], where a ceiling ${b} m over its feet cuts its ${o.crouch ? "crouched" : "standing"} hull, ${x} m tall (it would sink through the floor)`, expected: c && !o.crouch ? "a place with headroom, or { crouch: true } under a low ceiling" : "a place with headroom" });
+  const l = Fe(r), { offset: u, capsule: d } = a.character, h = z_(a.character, n, "placeActor(at)"), f = c && o.crouch ? C_(a.character, { ...c, stance: "crouch" }) : d.height, p = { maxDistance: f + d.radius, exclude: a.body, groups: "world" }, m = l.raycast([h[0], h[1] - d.height / 2, h[2]], [0, 1, 0], p);
+  if (m && !k$(r).has(m.body)) {
+    const v = ze(n, "placeActor(at)"), b = [v.x, v.y, v.z].map((M) => Math.round(M * 100) / 100).join(", "), [x, k] = [(u + d.radius + m.distance).toFixed(2), (f + 2 * d.radius).toFixed(2)];
+    throw j("SIM_BAD_ARGUMENT", { where: "placeActor(at)", value: `[${b}], where a ceiling ${x} m over its feet cuts its ${o.crouch ? "crouched" : "standing"} hull, ${k} m tall (it would sink through the floor)`, expected: c && !o.crouch ? "a place with headroom, or { crouch: true } under a low ceiling" : "a place with headroom" });
+  }
+  B_(l, a.body, a.character, d.height, { air: !1, tuck: !1 }), l.setBody(a.body, { position: h, velocity: [0, 0, 0] });
+  const { x: g, y, z: w } = as(l, a.body, a.character);
+  Object.assign(a, iw(), { yaw: s ?? a.yaw, x: g, y, z: w }), c && Object.assign(c, tw(), { holstered: c.holstered }, o.crouch ? { stance: "crouch", duck: "ducked" } : {});
 }
 const k$ = (e) => new Set(e.query("oneWay").map((t) => t.oneWay.body));
 function Nq(e, t) {
