@@ -1275,3 +1275,45 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   after it 140 steps later; its goldens re-recorded (tests/replays/README.md). The site gains melee and the dummies.
 - **Found by the page**: WP 13.27's shooter camera divided its look-ahead's rates by a frame's dt, and a page's
   warm-up frame of no time made NaN casts (the playground did not start): fixed in 3bcb765, with a test.
+
+## Amendment 25 (2026-10-22, WP 13.20): firearms
+
+- **The kind `weapon` in engine/world/weapons.ts**, not engine/sim/weapons.ts (the WP's Owns): the view draws a gun
+  from its kind (its prop, its muzzle, its sights' lens), and the layer rule keeps engine/gfx from the sim's values.
+  The sim's half (the component `weapons`, the system `weapons`) is engine/sim/weapons.ts.
+- **Hitscan from the eye or the chest**: with a look (first person, the shooter) a shot leaves the eye (Apex's 1.52 m,
+  0.81 m crouched: engine/sim/interact.ts `EYE`) toward the step's aim, the crosshair's point; without one, level from
+  the chest (1.3 m) toward the pointer's point on his floor (isometric, top-down) or where he faces (the platformer).
+  It is the physics world's raycast through the level, props, people and crowds, his own body aside. The cone is drawn
+  from his stream `weapon`, uniform over its disc; the hip's and the move's half-angles ease to the sights' as they
+  come up (`spreadOf`). Aiming down the sights walks (Apex walks only then), on foot or in the air.
+- **Recoil once**: the burst's kick (each shot's step of the weapon's `recoil`, [up, right] degrees, the last
+  repeating, gone `settle` seconds after the last shot) turns the shots in the sim, so spread and recoil follow the
+  weapon's data in Node. The view climbs with it (the effects' `recoil`, rising in 0.03 s, settling in 0.15 s), so
+  the picture's centre is where the shots go, and the rig's `aimPose` leaves it out of the aim's ray, so the page's
+  recorded aim does not carry it into the sim a second time. The rig's spring `kick` stays for a game's own kicks.
+- **Drawing, holstering, reloading**: 1 and 2 draw the pistol and the rifle, `swap` the other, 3 holsters (and draws
+  again), the trigger draws a holstered one; each takes the weapon's `draw`. Holstered he runs Apex's ×1.15 (the
+  shooter model's `motion.holstered`, which only the spawn set before). A reload is `reload.tactical`, from empty
+  `reload.empty`; the magazine's last round brings it on, and an empty trigger clicks (`dry`). A melee swing holds the
+  trigger until the hands are back (`MELEE.back`, 0.75 s).
+- **The pad's held bindings** (engine/input/codes.ts `Hold:<code>`, `HOLD_TIME` 0.3 s, ours): Apex's X held reloads
+  and Y held holsters, a tap of X uses and of Y swaps; the input holds a code back while a held binding waits on it,
+  so a tap presses its plain action on release and a hold never does (engine/input/input.ts). Amendment 9's hand-off.
+- **The gun drawn**: in third person its prop, drawn by the stage's props (`carry`) at the right hand's grip with +Z
+  along the hold's barrel (amendment 11's) and +Y as near up as that leaves. In first person a mesh per weapon of its
+  prop's parts as one geometry, coloured by their tints (`gunGeometry`), in the arms' vertex-coloured material by their
+  lens, so first person adds no material; its barrel the body's turned from the body's look onto the camera's, the
+  arms' grips taken from the right eye as the sights come up, so they line up on the picture's centre, and a shot
+  kicks it 3 cm back and 0.05 rad up (`GUN_KICK`). Shots leave the muzzle as it is drawn: a tracer (50 ms), a flash
+  of sparks, and where a shot struck the impact's star and sparks and a hole facing the surface (the latest 64 kept).
+- **Sound**: the events `gunshot`, `draw`, `holster`, `reload` and `dry`, which WP 13.22 voices, as amendment 24's.
+- **The guns** (labs/playground/weapons/guns.ts): props of parts (no body) and Apex's season 3 rate, damage, magazine
+  and reloads of the P2020 and the R-301; their cones, recoil patterns, sights' times and draws are ours.
+- **The range's targets** (labs/playground/weapons/range.ts): things (amendment 23) instead of WP 13.18's fixed props:
+  pop-ups at 10 and 25 m, movers sliding 2 m across their lane at 1 m/s at 50 m; one hit puts one down, falling back
+  about its base (the component `popup`, the system `poppers`), up again 2.5 s later. The HUD shows the weapon out, its
+  rounds and the range's count, hits of shots, and the crosshair while the screen's centre aims one.
+- **The site's player is armed**: every site scene's player carries the pistol and the rifle, holstered, and the site
+  adds the system `weapons` and the range's targets, so the site's and the ring's replays (playground-site,
+  playground-melee) took new goldens, their stories unchanged; the gym's scenes stay unarmed.

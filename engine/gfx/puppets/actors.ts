@@ -12,8 +12,8 @@
  * and eye (the head socket, engine/gfx/cameras/first.ts's `eyePoint`), which the cameras follow (engine/app/view.ts).
  * `firstPerson(frame)` draws the player for a first-person camera's frame (engine/gfx/viewmodel/body.ts, WP 13.12:
  * his body hidden, its shadow kept, his arms posed against it by a lens of their own), or whole for null. `trails()` is
- * each puppet's trail as its last pose sampled it (WP 6.7, oldest first), which the stage's effects draw as ribbons. A
- * puppet is `actor#<id>` with `userData.entity`; the player's `userData.protagonist`, "the hero" to engine/gfx/idpass.ts.
+ * each puppet's trail as its last pose sampled it (WP 6.7, oldest first), which the stage's effects draw as ribbons.
+ * WP 13.20: the weapon an actor has out stands in its right hand while its hold holds a gun (`carried`, `muzzle`).
  *
  * WP 6.2 in the box (WP 7.8): an actor's `reactions` (engine/sim/reactions.ts) are a `Reactions` layer on its puppet's
  * animator, loaded at every pose (its flinch bends its spine; a body down on its face is drawn so), its `actions` (WP
@@ -64,6 +64,7 @@ import { RUNG } from '../stageRides';
 import type { Warmup } from '../warmup';
 import { createViewmodel, type FirstPersonParts, type Viewmodel, type ViewmodelFrame } from '../viewmodel/body';
 import { createViewmodelLook } from '../viewmodel/material';
+import { gunPose, muzzlePoint, weaponOut, type HeldGun } from '../weapons';
 import { dropLayers, layersFor, type Held, type Layers, type Place } from './actorLayers';
 import { compileBody } from './compile';
 import { createPuppet, puppetMaterials, type Puppet, type PuppetMaterials } from './draw';
@@ -87,7 +88,7 @@ export interface PlayerView {
 export interface ActorPuppets {
   /** Every puppet, under one group. */
   readonly root: Group;
-  /** The puppets, by entity id. */
+  /** The puppets, by entity id: each `actor#<id>` with `userData.entity`; the player's `userData.protagonist`, "the hero" to engine/gfx/idpass.ts. */ // prettier-ignore
   readonly puppets: ReadonlyMap<number, Puppet>;
   /**
    * Reads the actors after a sim step (the sim's step `dt`, s) and the sim's read-only `queries`, whose ground the feet
@@ -106,6 +107,13 @@ export interface ActorPuppets {
   layers(): ReadonlyMap<number, { readonly reactions: Reactions | null; readonly secondary: Secondary | null }>;
   /** Points actor `id`'s head, and its gun, along `look` from the next draw (the page gives the player's); null: none. */
   look(id: number, look: Look | null): void;
+  /**
+   * The guns in the actors' hands as the last draw put them (engine/gfx/weapons.ts `weaponOut`, `gunPose`), by entity
+   * id, but the one first person draws in its arms: what the stage's props draw.
+   */
+  carried(): ReadonlyMap<number, HeldGun>;
+  /** Where actor `id`'s shots leave its gun now (world, m; first person's as its lens draws it), or null: none in hand. */
+  muzzle(id: number): Vector3 | null;
   /** Draws the player for a first-person camera's `frame`, or whole with null (see the file comment). */
   firstPerson(frame: ViewmodelFrame | null): FirstPersonParts;
   /** Registers the puppets with `warmup`, and their builds with its shader key. */
@@ -145,6 +153,9 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
   /** First person's look, and each player puppet's arms (engine/gfx/viewmodel/), kept with it as a spare. */
   const look = createViewmodelLook();
   const viewmodels = new Map<Puppet, Viewmodel>();
+  /** The guns the last draw put in the hands, by entity id, and the one first person drew last: whose, and its muzzle. */
+  const guns = new Map<number, HeldGun>();
+  let firstGun: { id: number; muzzle: Vector3 } | null = null;
 
   /** Puppets no actor wears now, by the build and body they were made for (see the file comment). */
   const spares = new Map<string, Puppet[]>();
@@ -174,7 +185,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
   /** Gives the player's `puppet` its first-person arms, once (see the file comment). */
   const armsFor = (puppet: Puppet) => {
     if (!viewmodels.has(puppet))
-      viewmodels.set(puppet, createViewmodel(puppet, { materials: options.materials, look }));
+      viewmodels.set(puppet, createViewmodel(puppet, { materials: options.materials, look, registry }));
   };
 
   return {
@@ -213,7 +224,8 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
         }
         const look = (last?.look ?? new LookPose()).update(looks.get(entity.id) ?? null, dt);
         const before = last ? last.after : place;
-        held.set(entity.id, { before, after: place, player, data, clips, puppet, reactions, actions, secondary, motion, shown, traversal, look }); // prettier-ignore
+        const carry = weaponOut(entity, registry);
+        held.set(entity.id, { before, after: place, player, data, clips, puppet, reactions, actions, secondary, motion, shown, traversal, look, carry }); // prettier-ignore
         if (puppet) drawn.add(entity.id);
       }
       for (const id of [...held.keys()]) if (!seen.has(id)) held.delete(id);
@@ -237,6 +249,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
     draw(alpha) {
       const k = Math.min(1, Math.max(0, alpha));
       [shown, posedPlayer] = [null, null];
+      guns.clear();
       for (const [id, actor] of [...held].sort(([p], [q]) => p - q)) {
         const { before: a, after: b, player, data, clips, puppet } = actor;
         at.set(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k, a.z + (b.z - a.z) * k);
@@ -265,6 +278,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
           trails.set(id, animator.trail);
           const { skeleton, world } = animator.body;
           posed = { skeleton, world, eye: eyePoint(skeleton, world) };
+          if (actor.carry && own.hold.holding) guns.set(id, { kind: actor.carry, ...gunPose(skeleton, world, own.hold.barrel) }); // prettier-ignore
           if (player && !shown) posedPlayer = { id, animator, own };
         }
         if (player && !shown) shown = { id, feet, posed };
@@ -276,15 +290,24 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
       if (look) looks.set(id, look);
       else looks.delete(id);
     },
+    carried: () => (firstGun ? new Map([...guns].filter(([id]) => id !== firstGun!.id)) : guns),
+    muzzle(id) {
+      if (firstGun?.id === id) return firstGun.muzzle;
+      const gun = guns.get(id);
+      return gun ? muzzlePoint(gun.kind, gun) : null;
+    },
     trails: () => trails,
     layers: () => layers,
     hasPlayer: () => players > 0,
     firstPerson(frame) {
       let parts: FirstPersonParts = { hidden: [], arms: [] };
+      firstGun = null;
       for (const [id, puppet] of puppets) {
         const mine = frame && posedPlayer?.id === id ? posedPlayer : null;
-        const out = viewmodels.get(puppet)?.update(mine && frame, mine && { animator: mine.animator, contacts: mine.own.traversal }); // prettier-ignore
+        const viewmodel = viewmodels.get(puppet);
+        const out = viewmodel?.update(mine && frame, mine && { animator: mine.animator, contacts: mine.own.traversal, hold: mine.own.hold, gun: held.get(id)?.carry ?? null }); // prettier-ignore
         if (mine && out) parts = out;
+        if (mine && viewmodel?.muzzle) firstGun = { id, muzzle: viewmodel.muzzle };
       }
       return parts;
     },
@@ -292,7 +315,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
       const chains = () => [...layers.values()].flatMap((own) => own.chains?.meshes ?? []);
       const registrations = [
         warmup.register('stage:actors', {
-          objects: () => [...[...puppets.values()].flatMap((puppet) => [puppet.mesh, ...(viewmodels.has(puppet) ? [viewmodels.get(puppet)!.arms] : [])]), ...chains()], // prettier-ignore
+          objects: () => [...[...puppets.values()].flatMap((puppet) => [puppet.mesh, ...(viewmodels.has(puppet) ? [viewmodels.get(puppet)!.arms, ...viewmodels.get(puppet)!.guns.values()] : [])]), ...chains()], // prettier-ignore
         }),
         warmup.keyPart('stage:actors', () => {
           const bodies = [...puppets.values()].map((puppet) => {
@@ -317,7 +340,8 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
       spares.clear();
       held.clear();
       trails.clear();
-      [shown, posedPlayer] = [null, null];
+      guns.clear();
+      [shown, posedPlayer, firstGun] = [null, null, null];
     },
   };
 }

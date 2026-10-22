@@ -176,6 +176,14 @@ export function propOfBody<C extends object, E extends EventMap>(world: World<C,
   return props.find((e) => e.sceneProp.body === body)?.id ?? -1;
 }
 
+/** The entity whose body is `body` (a body id; −1 for none): a prop's (`propOfBody`), else an actor's; −1 for neither. */
+export function entityOfBody<C extends object, E extends EventMap>(world: World<C, E>, body: number): number {
+  const prop = propOfBody(world, body);
+  if (prop >= 0 || body < 0) return prop;
+  const actors = (world as unknown as World).query('actor') as unknown as { id: number; actor: { body: number } }[];
+  return actors.find((e) => e.actor.body === body)?.id ?? -1;
+}
+
 /** Removes a prop: its entity and its body, its component's `body` −1 at once (inside a step the entity stays to its end). Throws `SIM_BAD_ARGUMENT` for an id that is no prop. */ // prettier-ignore
 export function removeProp<C extends object, E extends EventMap>(world: World<C, E>, id: number): void {
   const w = world as unknown as World;

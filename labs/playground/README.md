@@ -9,7 +9,8 @@ stun, the crouch and the slide, the mantle, the wall-climb and the superglide, o
 redeploy balloon and launchers, five camera modes and two looks, cel-shaded and pixel art; the hill, the block's
 ground as terrain (WP 10.5); and the block (WP 13.18): the house of four storeys with its garage, the yards, the street,
 the gym in its place, the hill, the range and the ring on one site, furnished and lit, its doors, windows, switches and
-chairs to use (WP 13.16). Every claim below
+chairs to use (WP 13.16), its ring's dummies to strike (WP 13.19) and the pistol and the rifle the player carries, with
+the range's pop-up and moving targets to shoot (WP 13.20). Every claim below
 is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here that does not exist fails
 it.
 
@@ -25,7 +26,10 @@ it.
    switch, picks up a chair or a crate and throws it, catches a zipline in reach (Space in the air catches one
    unasked) or takes hold of a ladder (running into one does too). V strikes, Apex's melee: a punch with a lunge at
    what is in reach, a kick in the air, an uppercut from a slide; a door takes the door kick, the first bursting it
-   open, the second breaking it; the ring's dummies rock away from each blow and spring back.
+   open, the second breaking it; the ring's dummies rock away from each blow and spring back. On the site he carries a
+   pistol and a rifle, holstered: 1 and 2 draw them (the left button draws one too), the left button fires, the right
+   raises the sights, R reloads and 3 holsters again (on a pad, Y swaps them and X and Y held reload and holster); the
+   HUD counts the range's hits and the accuracy.
 3. T steps through the five cameras (X swaps the shooter's shoulder, Q and E turn isometric), P switches between the
    cel and the pixel look, M shows and hides the menu.
 

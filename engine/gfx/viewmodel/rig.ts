@@ -7,7 +7,8 @@
  * up at rest, pumping with the gait's phase in a sprint, out for balance in a slide, raised in the air; a little bob on
  * the view effects' weapon bob (engine/gfx/cameras/effects.ts), a breath, and a sway behind the look's turn. A hand the
  * body holds on a contact (a ledge in a mantle, the wall in a climb, a rung, the cable, the floor) goes where the body's
- * is, as far as it holds it, and a carried gun where the body holds it from its eyes; then every hand is kept on the
+ * is, as far as it holds it, and a carried gun where the body holds it from its eyes (from its right eye as far as its
+ * sights are up, so they line up on the picture's centre: the hold's `aimed`, WP 13.20); then every hand is kept on the
  * arms' frame (lens.ts `intoArmsFrame`) and drawn along its ray within the arm's reach (the arms are drawn at their own
  * depth anyway, so only the ray shows). A punch throws its fist where the body's goes from its eyes (WP 13.19), and a
  * kick shows its leg: the body's right leg as it kicks, under the rig's hips. `armsInputOf` reads what the rig needs
@@ -39,6 +40,7 @@ import { handTo } from '../../anim/ik';
 import { Pose } from '../../anim/pose';
 import { createSkeleton, JOINTS, PARENTS, socketIndex, type JointName, type Skeleton } from '../../anim/skeleton';
 import type { Build } from '../../anim/builds';
+import type { HoldPlant } from '../../anim/traversal/hold';
 import type { TraversalPlant } from '../../anim/traversal/plant';
 import { angDiff, MathUtils, Quaternion, Vector3 } from '../../core/math';
 import type { CameraPlayer, EffectsFrame } from '../cameras/effects';
@@ -254,11 +256,12 @@ export class ArmsRig {
   }
 }
 
-/** What the rig reads off the player's `animator` (its traversal plant `contacts`), with the frame's camera inputs. */
+/** What the rig reads off the player's `animator` (its traversal plant `contacts`, its `hold`), with the frame's camera inputs. */ // prettier-ignore
 export function armsInputOf(
   animator: Animator,
   contacts: TraversalPlant | null,
   frame: Pick<ArmsInput, 'player' | 'effects' | 'aspect' | 'fov'>,
+  hold: Pick<HoldPlant, 'aimed'> | null = null,
 ): ArmsInput {
   const body = animator.body;
   const { skeleton, world, state } = body;
@@ -270,7 +273,7 @@ export function armsInputOf(
   const kicking = state.arm.kick === 1 && state.arm.weight > 0;
   const kick = kicking ? { local: FIRST_KICK.map((joint) => body.pose.getRotation(joint)), weight: state.arm.weight } : null; // prettier-ignore
   const busy = Math.max(contacts?.pose?.weight ?? 0, limbs?.[0].weight ?? 0, limbs?.[1].weight ?? 0);
-  const eyes = new Vector3(...eyePoint(skeleton, world));
+  const eyes = new Vector3(...eyePoint(skeleton, world)).lerp(socketPosition(skeleton, world, 'eyeR'), hold?.aimed ?? 0); // prettier-ignore
   const grips = [socketPosition(skeleton, world, 'weaponL').sub(eyes), socketPosition(skeleton, world, 'weaponR').sub(eyes)] as const; // prettier-ignore
   const gun = body.weapon === 'gun' && busy < 1 ? { grips, weight: 1 - MathUtils.clamp(busy, 0, 1) } : null;
   const striking = state.arm.weight > 0 && state.arm.kick !== 1 ? state.arm.hand : 0; // −1 the left, 1 the right, 2 both

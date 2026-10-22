@@ -30,7 +30,7 @@
  * // createPlaygroundMenu(document, { scenes, replays: Object.keys(replays), scene });
  * // document.querySelector('#playground-menu a[href*="cam3=first"]')?.textContent; // 'first'
  */
-import { codeLabel, getActionMap, readKeyboardLayout } from '../../engine';
+import { codeLabel, deviceOf, getActionMap, readKeyboardLayout } from '../../engine';
 import { defineSettings } from '../../engine/sim-api';
 import { FEEL_KEY } from './feel';
 import { PLAYGROUND_ACTIONS, PLAYGROUND_MAPS, playgroundMap } from './controls';
@@ -103,8 +103,8 @@ const VIEW_ROWS: Readonly<Record<string, string>> = {
 export function controlRows(layout?: ReadonlyMap<string, string>, id: string = PLAYGROUND_MAPS.shooter): [string, string, string][] { // prettier-ignore
   const map = getActionMap(id);
   const label = (code: string) => codeLabel(code, { layout }).replace(/^[LR] (?=Shift)/, '');
-  const keys = (codes: readonly string[]) => [...new Set(codes.filter((c) => !c.startsWith('Pad')).map(label))];
-  const pad = (codes: readonly string[]) => [...new Set(codes.filter((c) => c.startsWith('Pad')).map(label))];
+  const keys = (codes: readonly string[]) => [...new Set(codes.filter((c) => deviceOf(c) !== 'gamepad').map(label))];
+  const pad = (codes: readonly string[]) => [...new Set(codes.filter((c) => deviceOf(c) === 'gamepad').map(label))];
   const row = (words: string, action: string): [string, string, string] => {
     const codes = map.actions[action] ?? [];
     return [words, keys(codes).join(' / '), pad(codes).join(' / ')];

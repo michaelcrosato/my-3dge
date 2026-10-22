@@ -3,10 +3,11 @@
  * (labs/playground/scenes/site.ts): in each room of the house, its lamp hung from the ceiling and its switch on the
  * wall by its door (`HOUSE_LIGHTS`), the lamp's light group the room's (`room:<name>`); the furniture, room by room
  * (`HOUSE_FURNITURE`), in the house's own metres and storeys (labs/playground/levels/house.ts); the garage door's two
- * switches; and outside (`OUTDOORS`, world metres): the patio, the backyard, the front yard's fence, hedge and
- * mailbox, the street's lamps, hydrant, parked car and bus stop, the range's targets and the ring's ropes; the
- * zipline from the tree house to the garage's deck, the lookout's down to the backyard, the hill's balloon and the
- * backyard's trampoline (`SITE_RIDES`). A thing's yaw turns its +Z face (a prop's front) about +Y.
+ * switches; and outside (`OUTDOORS`, world metres): the patio, the backyard, the front yard's fence, hedge and mailbox,
+ * the street's lamps, hydrant, parked car and bus stop and the ring's ropes (the range's targets are things:
+ * labs/playground/weapons/range.ts); the zipline from the tree house to the garage's deck, the lookout's down to the
+ * backyard, the hill's balloon and the backyard's trampoline (`SITE_RIDES`). A thing's yaw turns its +Z face (a prop's
+ * front) about +Y.
  *
  * Game code, sim-side: data, importing nothing from the engine.
  *
@@ -143,8 +144,6 @@ export const OUTDOORS: readonly Outside[] = [
   ['prop:playground-busstopPost', 83.4, 0.15, 94.6, 0],
   ['prop:playground-busstopBack', 82, 0.15, 94.8, 0],
   ['prop:bench', 82, 0.15, 94.3, N],
-  // the range: three lanes' targets at 10, 25 and 50 m from the bench (x 4), facing it
-  ...[3, 6, 9].flatMap((z) => [14, 29, 54].map((x): Outside => ['prop:playground-target', x, 0, z, W])),
   // the ring's ropes on its canvas (1 m up, x 63 to 69, z 3 to 9), but its south side, where its steps come up
   ...[1.5, 1.9, 2.3].flatMap((y): Outside[] => [['prop:playground-rope', 66, y, 3.1, 0], ['prop:playground-rope', 63.1, y, 6, E], ['prop:playground-rope', 68.9, y, 6, E]]), // prettier-ignore
 ];

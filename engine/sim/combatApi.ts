@@ -129,3 +129,17 @@ export { meleeTargets } from './melee';
 export type { Fan } from './hits';
 export type { FanHit } from './hits';
 export { fanHits } from './hits';
+
+// Firearms (WP 13.20): the kind `weapon`, a player's weapons drawn and holstered, hip fire and the sights, hitscan
+// shots with spread and a climbing recoil, reloads.
+export { WEAPON_FIELDS } from '../world/weapons';
+export type { WeaponKind } from '../world/weapons';
+export type { WeaponSpec } from '../world/weapons';
+export { defineWeapon } from '../world/weapons';
+export { getWeapon } from '../world/weapons';
+export { recoilStep } from '../world/weapons';
+export { spreadOf } from '../world/weapons';
+export { WEAPONS_FIELDS } from './weapons';
+export type { WeaponsState } from './weapons';
+export { weaponsFor } from './weapons';
+export { addWeapons } from './weapons';

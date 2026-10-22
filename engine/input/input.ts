@@ -3,8 +3,7 @@
  * gamepads, touch, the virtual device) turned into one step's intents through bindings (engine/input/bindings.ts).
  * The frame loop calls `sample(camera, now)` once per rendered frame, before the clock hands out steps, and gives the
  * result to the frame's first step (its later steps get it without `p`, PLAN.md §6.4); the session records it, so
- * touch play replays like any other (WP 3.12: every action also binds `touch:<action>`, and the touch stick adds to
- * the move axes before `fromCamera` clamps them to length 1).
+ * touch play replays like any other (WP 3.12, `sample`).
  *
  * What a sample holds: `b`, the map's actions held, sorted; `p`, those pressed since the last sample (a code that went
  * down, so a tap shorter than a frame still presses); `move`, the map's four move actions as `[right − left, forward −
@@ -17,6 +16,7 @@
  * pointer lock and the right stick, scaled by the view settings `input.*`, engine/input/look.ts; the wheel; a map that
  * aims with the pointer keeps the stick for aiming). `prompt(action)` labels a binding on the device used last;
  * `use(map)` switches the map live (one per camera mode, WP 13.9), what is held read through it from the next sample.
+ * A code a held binding waits on (WP 13.20) is held back as it goes down, until it is a tap or a hold (`sample`).
  *
  * Clearing: a page blur, the page going hidden and `clear()` let go of every held code and drop pending presses, so
  * nothing stays held after alt-tab; a gamepad that disconnects lets go of its own. `listen(device)` waits for the next
@@ -42,7 +42,7 @@ import type { Log } from '../core/log';
 import type { Registry } from '../core/registry';
 import { SYSTEM_ACTIONS } from './actionMaps';
 import { createBindings, pickLabel, type Bindings, type BindingsStorage } from './bindings';
-import { deviceOf, PAD_BUTTONS, touchCode, type DeviceKind, type InputSink } from './codes';
+import { deviceOf, heldBase, HOLD_TIME, holdCode, PAD_BUTTONS, touchCode, type DeviceKind, type InputSink } from './codes'; // prettier-ignore
 import { createGamepadDevice, type GamepadDevice, type GamepadSource } from './devices/gamepad';
 import { attachKeyboard } from './devices/keyboard';
 import type { AimDevices, AimRule } from './aim';
@@ -113,7 +113,14 @@ export interface Input {
   readonly touch: TouchDevice | undefined;
   /** The device used last: prompts follow it. */
   readonly lastDevice: DeviceKind;
-  /** One frame's intents (unnormalized) at the frame's timestamp `now` (ms): see the file comment. */
+  /**
+   * One frame's intents (unnormalized) at the frame's timestamp `now` (ms): see the file comment. Every action also
+   * binds `touch:<action>` (WP 3.12), and the touch stick adds to the move axes before `fromCamera` clamps them to
+   * length 1. A code a held binding waits on (engine/input/codes.ts `Hold:<code>`, WP 13.20) is held back as it goes
+   * down: let go before `HOLD_TIME`, it taps (its plain actions pressed at the next sample, never held); kept down, its
+   * held binding's actions press and hold until it goes up, and its plain ones never see it. The time is `now`, or a
+   * 60 Hz frame a sample without one; such a code is digital, its analog strength unread.
+   */
   sample(camera?: CameraLike, now?: number): Record<string, unknown>;
   /** Whether `action` (either layer) was held at the last sample. */
   held(action: string): boolean;
@@ -155,17 +162,24 @@ export function createInput(options: InputOptions = {}): Input {
   let pressedNow = new Set<string>();
   let strengths = new Map<string, number>();
   let listening: { family: 'keyboard' | 'gamepad'; resolve: (code: string | null) => void } | null = null;
-  let table = { of: bindings, version: -1, codes: new Map<string, readonly string[]>(), bound: new Set<string>() };
+  let table = { of: bindings, version: -1, codes: new Map<string, readonly string[]>(), bound: new Set<string>(), holds: new Set<string>() }; // prettier-ignore
 
   const codesOf = (action: string): readonly string[] => {
     if (table.of !== bindings || table.version !== bindings.version) {
       const codes = new Map<string, readonly string[]>();
       for (const [name, own] of Object.entries(SYSTEM_ACTIONS)) codes.set(name, [...own, touchCode(name)]);
       for (const name of bindings.actions()) codes.set(name, [...bindings.codes(name), touchCode(name)]);
-      table = { of: bindings, version: bindings.version, codes, bound: new Set([...codes.values()].flat()) };
+      const holds = new Set([...codes.values()].flat().flatMap((code) => heldBase(code) ?? []));
+      table = { of: bindings, version: bindings.version, codes, bound: new Set([...[...codes.values()].flat(), ...holds]), holds }; // prettier-ignore
     }
     return table.codes.get(action) ?? [];
   };
+  /** The codes held back for a held binding (see the file comment): each, and when its wait began (NaN: next sample). */
+  const waiting = new Map<string, number>();
+  /** Samples taken: the held bindings' clock without `now`. */
+  let samples = 0;
+  /** Whether a held binding waits on `code`. */
+  const gated = (code: string) => (codesOf(''), table.holds.has(code));
   /** The view actions told as their codes went down since the last sample, which tells only the others (virtual). */
   const told = new Set<string>();
   /** Tells `onView` of each view action of the map that `code` is bound to: every press (auto-repeat never comes). */
@@ -191,16 +205,24 @@ export function createInput(options: InputOptions = {}): Input {
       if (listening?.family === family && (family === 'keyboard' || PAD_BUTTONS.includes(code as never))) {
         return hear(code);
       }
+      if (gated(code)) {
+        if (!waiting.has(code) && !down.has(holdCode(code))) waiting.set(code, Number.NaN); // a tap or a hold: wait
+        return;
+      }
       down.add(code);
       taps.add(code);
       values.set(code, 1);
       tell(code);
     },
     release(code) {
-      down.delete(code);
-      values.delete(code);
+      if (waiting.delete(code)) taps.add(code); // let go before the hold: a tap of its plain binding
+      for (const each of [code, holdCode(code)]) {
+        down.delete(each);
+        values.delete(each);
+      }
     },
     analog(code, value) {
+      if (gated(code)) return; // digital while a held binding waits on it
       if (value > 0) values.set(code, value);
       else values.delete(code);
     },
@@ -224,6 +246,7 @@ export function createInput(options: InputOptions = {}): Input {
     down.clear();
     taps.clear();
     values.clear();
+    waiting.clear();
     heldNow = new Set();
     pressedNow = new Set();
     strengths = new Map();
@@ -267,6 +290,19 @@ export function createInput(options: InputOptions = {}): Input {
       pads.poll();
       touch?.frame(now ?? Number.NaN);
       if (virtual.touched) last = 'virtual';
+      samples++;
+      const clock = now !== undefined && Number.isFinite(now) ? now / 1000 : samples / 60;
+      for (const [code, since] of waiting) {
+        const start = Number.isNaN(since) ? clock : since; // its wait starts at the first sample that sees it
+        waiting.set(code, start);
+        if (clock - start < HOLD_TIME - 1e-9) continue;
+        waiting.delete(code); // kept down: its held binding presses, held until it goes up
+        const hold = holdCode(code);
+        down.add(hold);
+        taps.add(hold);
+        values.set(hold, 1);
+        tell(hold);
+      }
       const own = virtual.take();
       const nextHeld = new Set<string>();
       const nextPressed = new Set<string>();

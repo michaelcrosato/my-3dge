@@ -7,10 +7,11 @@
  * up-and-over door on its two switches, a lamp and a switch in each room (its light group `room:<name>`), its
  * furniture, the shed's door and pane; the outdoor things (labs/playground/furnish.ts), trees and rocks on the hill by
  * seed; the gym's own props and rides at its place; the block's ziplines, balloon and trampoline; use
- * (`addInteraction`) and melee (`addMelee`, WP 13.19); last, the ring's sparring dummies
- * (labs/playground/cast/dummies.ts). They take the gym's settings (`playground.gym.*`) and its dev action `place`, so
- * a course or a replay places the player as the gym's do; `roomPlace` says where it puts him in a room, ducked under
- * a low ceiling.
+ * (`addInteraction`), melee (`addMelee`, WP 13.19) and firearms (`addWeapons`, WP 13.20: the player carries the pistol
+ * and the rifle, holstered, labs/playground/weapons/guns.ts); the range's pop-up and moving targets
+ * (labs/playground/weapons/range.ts); last, the ring's sparring dummies (labs/playground/cast/dummies.ts). They take
+ * the gym's settings (`playground.gym.*`) and its dev action `place`, so a course or a replay places the player as the
+ * gym's do; `roomPlace` says where it puts him in a room, ducked under a low ceiling.
  *
  * The site is data (`site:block`): the view draws it from the scene's `site` (engine/gfx/stageSite.ts), each building
  * in its level's own looks, the terrain in the playground's ground materials.
@@ -23,7 +24,7 @@
  * SITE_SCENES.house.id; // 'playground:site-house'
  * @see labs/playground/scenes/site.test.ts
  */
-import { addDoor, addInteraction, addLauncher, addLevelDoors, addLevelWindows, addMelee, addSiteBodies, addSiteLadders, addSwitch, addZipline, defineScene, physicsOf, scatterTerrain, siteFloorBelow, siteSolidAt, spawnProp, terrainHeight, toWorld, type World } from '../../../engine/sim-api'; // prettier-ignore
+import { addDoor, addInteraction, addLauncher, addLevelDoors, addLevelWindows, addMelee, addSiteBodies, addSiteLadders, addSwitch, addWeapons, addZipline, defineScene, physicsOf, scatterTerrain, siteFloorBelow, siteSolidAt, spawnProp, terrainHeight, toWorld, type World } from '../../../engine/sim-api'; // prettier-ignore
 import { standDummies } from '../cast/dummies';
 import { spawnPlayer } from '../cast/player';
 import { GARAGE_SWITCHES, HOUSE_FURNITURE, HOUSE_LIGHTS, OUTDOORS, SITE_RIDES } from '../furnish';
@@ -32,6 +33,8 @@ import { SITE, SITE_AREAS, SITE_STRUCTURES, type SiteArea } from '../levels/site
 import { DECK_HEIGHT } from '../levels/yard';
 import '../props/house';
 import '../props/outdoors';
+import { PLAYGROUND_WEAPONS } from '../weapons/guns';
+import { standRange } from '../weapons/range';
 import { gym } from './gym';
 
 /** A structure of the block by its name in `SITE_STRUCTURES`. */
@@ -146,12 +149,14 @@ function siteSpec(area: SiteArea) {
       addSiteBodies(physicsOf(w), SITE);
       const speed = w.settings.get<number>('playground.gym.speed');
       const jump = w.settings.get<number>('playground.gym.jump');
-      spawnPlayer(w, areaStart(area), SITE_AREAS[area].yaw, { speed, jump }); // first: the player is entity 1
+      spawnPlayer(w, areaStart(area), SITE_AREAS[area].yaw, { speed, jump }, PLAYGROUND_WEAPONS); // first: entity 1
       addSiteLadders(w, SITE);
       furnishHouse(w);
       furnishOutdoors(w);
       addInteraction(w);
       addMelee(w);
+      addWeapons(w);
+      standRange(w);
       standDummies(w); // last: the ring's sparring dummies
     },
     actions: { place: gym.actions.place },

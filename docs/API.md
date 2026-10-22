@@ -49,6 +49,7 @@ game agent's manual.
 - `addSiteLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders of every structure of `site` (engine/world/site.ts), in the world; returns their entities.
 - `addSwitch` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Puts a switch on a wall (see the file comment) and returns its entity.
 - `addTerrainBody` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a terrain's body (one fixed body: its heightfield, or with `cut` cells, one triangle mesh of the rest) and returns the body's id.
+- `addWeapons` (function from [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)): Adds the system `weapons` to `w` (once): see the file comment.
 - `addZipline` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a zipline and its poles (see the file comment); returns its entity.
 - `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
@@ -240,7 +241,7 @@ game agent's manual.
 - `ClipStepInput` (interface from [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)): What `step` reads.
 - `clipText` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): The text an agent reads and edits: the clip's header on one line, then each key as three short lines.
 - `ClipWarning` (interface from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): One warning about a clip: the code, the key (from 1) and its time, the field, and the sentence naming the fix.
-- `codeLabel` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): What a prompt shows for `code`: `W`, `Space`, `LMB`, `A` / `Cross`, `L Stick Up`.
+- `codeLabel` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): What a prompt shows for `code`: `W`, `Space`, `LMB`, `A` / `Cross`, `L Stick Up`, `Hold X`.
 - `ColliderDescriptor` (type from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A collider descriptor: a merged box, a hull or a cylinder, by `shape`.
 - `ColliderSpec` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): One collider of a body: a shape where the body puts it, and its material.
 - `COLLISION_GROUPS` (const from [`engine/physics/groups.ts`](../engine/physics/groups.ts)): The collision groups: each one's membership bit and the groups it touches.
@@ -384,9 +385,11 @@ game agent's manual.
 - `defineThing` (function from [`engine/world/things.ts`](../engine/world/things.ts)): Defines a kind of thing on `registry` (the shared one by default) and returns it.
 - `defineTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): Registers a touch layout (on the shared registry by default).
 - `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
+- `defineWeapon` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): Defines a weapon on `registry` (the shared one by default) and returns it.
 - `DEGREES_PER_COUNT` (const from [`engine/input/look.ts`](../engine/input/look.ts)): One mouse count at sensitivity 1, degrees: Source's and Apex's `m_yaw` and `m_pitch`.
 - `DevActionSpec` (interface from [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)): How a dev action is written: `defineDevAction(name, spec)`.
 - `DeviceKind` (type from [`engine/input/codes.ts`](../engine/input/codes.ts)): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
+- `deviceOf` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The device a code belongs to.
 - `Dialog` (interface from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): The dialog box (see the file comment).
 - `DialogOptions` (interface from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): How a dialog box is made.
 - `DialogPlace` (type from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): Where the dialog box stands.
@@ -416,6 +419,7 @@ game agent's manual.
 - `EngineOptions` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): How a page starts the engine.
 - `EngineStats` (interface from [`engine/dev/stats.ts`](../engine/dev/stats.ts)): What `__engine.stats()` returns: means in milliseconds, then the renderer's counts (null when not measured).
 - `Entity` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity: its id and the components it holds, by kind name (`e.position`).
+- `entityOfBody` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): The entity whose body is `body` (a body id; −1 for none): a prop's (`propOfBody`), else an actor's; −1 for neither.
 - `EntitySummary` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): One entity as `entities()` lists it: its id and the components it holds.
 - `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
 - `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
@@ -503,6 +507,7 @@ game agent's manual.
 - `getTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The terrain `id` of `registry` (the shared one by default), made afresh: its name is the id without `terrain:`.
 - `getThing` (function from [`engine/world/things.ts`](../engine/world/things.ts)): The kind of thing `id` of `registry` (the shared one by default); a missing id gives `thing:target`, with a warning.
 - `getTouchLayout` (function from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): The touch layout `id`.
+- `getWeapon` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The weapon `id` of `registry` (the shared one by default); a missing id gives `weapon:gun`, with a warning.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `Ground` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): The ground under a point: its height, its normal and the body it belongs to.
@@ -525,12 +530,16 @@ game agent's manual.
 - `hears` (function from [`engine/world/awareness.ts`](../engine/world/awareness.ts)): Whether an agent at `ears` of `hearing` hears `noise` (see `earshot`).
 - `HeartsOptions` (interface from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): How `createHearts` makes a row of hearts.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
+- `heldBase` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The code a held binding waits on (`Hold:PadWest` → `PadWest`), or null for any other code.
 - `hipRatio` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The hip-height ratio of `skeleton` to the rest body `baked` was measured on (their standing hip joints): the clip's places scale by it on that skeleton (the hip joints, the feet's goals, the travel).
 - `Hit` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What a raycast or shape cast struck.
 - `hitProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Hits the prop `id` from `from` (m): calls its `hit` hook, whose `knock(more)` knocks its body away from `from` with `strength` under `more` (engine/physics/bodies.ts's `knock`: 4.6875 m/s across, 2.5 m/s up, no twist by default).
 - `HitShape` (interface from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Where a strike can connect, around its body, which faces +Z standing at the origin: metres and radians.
 - `HitSpec` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A hit as the rules decided it.
 - `hitThing` (function from [`engine/world/things.ts`](../engine/world/things.ts)): Hits `thing` for `amount` points at `time` (s): counts it and takes the points; at 0 it goes down (`down`), or breaks (`broken`) when its kind never rises.
+- `HOLD_PREFIX` (const from [`engine/input/codes.ts`](../engine/input/codes.ts)): The prefix of a held binding: `Hold:PadWest` is X kept down `HOLD_TIME` (see the file comment).
+- `HOLD_TIME` (const from [`engine/input/codes.ts`](../engine/input/codes.ts)): How long a held binding's code stays down before its action presses, s (ours); let go sooner, it is a tap.
+- `holdCode` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The held binding of `code`: `holdCode('PadWest')` is `Hold:PadWest`.
 - `holdsToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Whether `id` holds a token: one of the oldest `cap` grants.
 - `hop` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The launch velocity (m/s) that carries a body thrown up at `up` m/s from `from` to land on `to` under `gravity` (m/s²): `up` vertically and the ground distance over `airTime` across, so a jumper hops onto a crate as well as across the floor.
 - `HOP` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): The prototype slime's jumps: `up` (m/s) for a hop of at most `reach` metres, `pounce` (m/s) for its lower, flatter leap at a target.
@@ -838,6 +847,7 @@ game agent's manual.
 - `readCameraCode` (function from [`engine/gfx/cameras/place.ts`](../engine/gfx/cameras/place.ts)): Reads any camera's code: a follow camera's (`cam3=chase…`, `cam3=first…`, `cam3=rail…`, `cam3=shoulder…`, `cam3=follow…`) by its module, a game camera's (`defineCamera`) as its name and code, every other by `parseCameraCode`.
 - `readKeyboardLayout` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The page's keyboard layout (`navigator.keyboard.getLayoutMap()`, Chromium), or undefined where it is missing.
 - `RebindResult` (type from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): What `rebind` did: the action's codes now, or why it refused and which action holds the code.
+- `recoilStep` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The kick of shot `n` of a burst (0: the first), [up, right] degrees: its recoil step, the last repeating.
 - `recolor` (function from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): `compiled` with its slots' colours replaced by `palette`'s (hex), the pieces shared.
 - `released` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` went up on the buffer's step (a tap shorter than a step included).
 - `releaseToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Gives `id`'s token back (its attack ended, or was broken off): true when it held one.
@@ -997,6 +1007,7 @@ game agent's manual.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `spawnThing` (function from [`engine/sim/things.ts`](../engine/sim/things.ts)): Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop, with any further `components` a scene gives it (a dummy's spring: labs/playground/cast/dummies.ts); returns its entity.
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
+- `spreadOf` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The cone a shot strays in now (half-angle, deg): the hip's (and the move's, `moving`) toward the sights' by `aim`, 0 to 1.
 - `SQUASH` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The squash spring (my-3d2dge's numbers): its pull and damping per second, and its bound either way.
 - `squashScale` (function from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The root scale of a squash: 1 + `squash` tall, 1 / √(1 + `squash`) wide and deep, so the volume stays.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
@@ -1161,7 +1172,13 @@ game agent's manual.
 - `WallContact` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall a shot struck: the share of its move where it touched, the body (−1: none) and the surface's normal.
 - `WallTest` (type from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall test: the first wall a ball of `radius` meets moving from `from` by `delta` (m), or null.
 - `Weapon` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A weapon's name.
+- `WEAPON_FIELDS` (const from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): A `weapon` kind's fields (see the file comment).
+- `WeaponKind` (type from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): A `weapon` entry (see the file comment).
 - `WEAPONS` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): What the right hand holds, by the direction its blade rests in: `[forward, right, up]`, normalised when used.
+- `WEAPONS_FIELDS` (const from [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)): The component `weapons`' fields (see the file comment).
+- `weaponsFor` (function from [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)): A player's weapons component carrying `slots` (weapon ids), each magazine full, holstered unless `drawn`.
+- `WeaponSpec` (type from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): What `defineWeapon` takes: any of the kind's fields (`spread` and `reload` field by field), the rest at their defaults.
+- `WeaponsState` (interface from [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)): A player's weapons (`WEAPONS_FIELDS` says what each field means).
 - `WeightInfo` (interface from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): What drives a weight and how it eases.
 - `WeightRates` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A weight's easing rates, per second: `[rising, falling]`.
 - `Widget` (interface from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): A widget made by this module: its element, an update and its removal.
@@ -1212,6 +1229,7 @@ game agent's manual.
 - `addSiteLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders of every structure of `site` (engine/world/site.ts), in the world; returns their entities.
 - `addSwitch` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Puts a switch on a wall (see the file comment) and returns its entity.
 - `addTerrainBody` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a terrain's body (one fixed body: its heightfield, or with `cut` cells, one triangle mesh of the rest) and returns the body's id.
+- `addWeapons` (function from [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)): Adds the system `weapons` to `w` (once): see the file comment.
 - `addZipline` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a zipline and its poles (see the file comment); returns its entity.
 - `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
@@ -1409,6 +1427,7 @@ game agent's manual.
 - `defineTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Registers a terrain on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
 - `defineThing` (function from [`engine/world/things.ts`](../engine/world/things.ts)): Defines a kind of thing on `registry` (the shared one by default) and returns it.
 - `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
+- `defineWeapon` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): Defines a weapon on `registry` (the shared one by default) and returns it.
 - `DevActionSpec` (interface from [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)): How a dev action is written: `defineDevAction(name, spec)`.
 - `direction` (function from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): The unit direction of a heading (rad, 0 along +Z) and a rise above the ground (rad).
 - `DOOR_SWING` (const from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A door's swing open (rad): a quarter turn and a little more.
@@ -1423,6 +1442,7 @@ game agent's manual.
 - `EFFECTORS` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): The effectors a beat may pull, in channel order.
 - `emptyClipState` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): An empty clip layer's state: nothing plays.
 - `Entity` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity: its id and the components it holds, by kind name (`e.position`).
+- `entityOfBody` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): The entity whose body is `body` (a body id; −1 for none): a prop's (`propOfBody`), else an actor's; −1 for neither.
 - `Entry` (type from [`engine/core/registry.ts`](../engine/core/registry.ts)): A registry entry: the parsed spec plus its `id` and `kind`.
 - `Euler` (re-export from `three/webgpu`): three.js's Euler angles (radians, an axis order).
 - `EventMap` (type from [`engine/core/events.ts`](../engine/core/events.ts)): Event type → payload type.
@@ -1470,6 +1490,7 @@ game agent's manual.
 - `getTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The telegraph `id` of `registry` (the shared one by default); a missing id gives `telegraph:arc`, with a warning.
 - `getTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): The terrain `id` of `registry` (the shared one by default), made afresh: its name is the id without `terrain:`.
 - `getThing` (function from [`engine/world/things.ts`](../engine/world/things.ts)): The kind of thing `id` of `registry` (the shared one by default); a missing id gives `thing:target`, with a warning.
+- `getWeapon` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The weapon `id` of `registry` (the shared one by default); a missing id gives `weapon:gun`, with a warning.
 - `Glyph` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): A `glyph` entry: what one map character means.
 - `GlyphSpec` (type from [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)): What `defineGlyph` takes: `char`, and any other field (`nav` may give one flag, the other keeping its default).
 - `Ground` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): The ground under a point: its height, its normal and the body it belongs to.
@@ -1690,6 +1711,7 @@ game agent's manual.
 - `REACTIONS` (const from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): The reactions' timelines: each phase's name, seconds and body states.
 - `ReactionState` (interface from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): Reactions as plain data.
 - `reactTo` (function from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): Runs `act` on entity `id`'s reactions (the component `reactions`, added at rest when it has none) and saves them back; returns the component.
+- `recoilStep` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The kick of shot `n` of a burst (0: the first), [up, right] degrees: its recoil step, the last repeating.
 - `released` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` went up on the buffer's step (a tap shorter than a step included).
 - `releaseToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Gives `id`'s token back (its attack ended, or was broken off): true when it held one.
 - `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body.
@@ -1794,6 +1816,7 @@ game agent's manual.
 - `SpawnSpec` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): What `spawn` takes: components by kind name, each with any of its fields (the rest take their defaults).
 - `spawnThing` (function from [`engine/sim/things.ts`](../engine/sim/things.ts)): Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop, with any further `components` a scene gives it (a dummy's spring: labs/playground/cast/dummies.ts); returns its entity.
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
+- `spreadOf` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The cone a shot strays in now (half-angle, deg): the hip's (and the move's, `moving`) toward the sights' by `aim`, 0 to 1.
 - `SQUASH` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The squash spring (my-3d2dge's numbers): its pull and damping per second, and its bound either way.
 - `squashScale` (function from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The root scale of a squash: 1 + `squash` tall, 1 / √(1 + `squash`) wide and deep, so the volume stays.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
@@ -1914,7 +1937,13 @@ game agent's manual.
 - `WallContact` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall a shot struck: the share of its move where it touched, the body (−1: none) and the surface's normal.
 - `WallTest` (type from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall test: the first wall a ball of `radius` meets moving from `from` by `delta` (m), or null.
 - `Weapon` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A weapon's name.
+- `WEAPON_FIELDS` (const from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): A `weapon` kind's fields (see the file comment).
+- `WeaponKind` (type from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): A `weapon` entry (see the file comment).
 - `WEAPONS` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): What the right hand holds, by the direction its blade rests in: `[forward, right, up]`, normalised when used.
+- `WEAPONS_FIELDS` (const from [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)): The component `weapons`' fields (see the file comment).
+- `weaponsFor` (function from [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)): A player's weapons component carrying `slots` (weapon ids), each magazine full, holstered unless `drawn`.
+- `WeaponSpec` (type from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): What `defineWeapon` takes: any of the kind's fields (`spread` and `reload` field by field), the rest at their defaults.
+- `WeaponsState` (interface from [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)): A player's weapons (`WEAPONS_FIELDS` says what each field means).
 - `WeightInfo` (interface from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): What drives a weight and how it eases.
 - `WeightRates` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A weight's easing rates, per second: `[rising, falling]`.
 - `With` (type from [`engine/sim/state.ts`](../engine/sim/state.ts)): An entity known to hold the components `K` (what `query` returns).
@@ -5076,10 +5105,11 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/viewmodel/body.ts`](../engine/gfx/viewmodel/body.ts)
 
-- `Animated` (interface): What the arms are posed from: the body's animator, posed this frame, and its traversal plant.
+- `Animated` (interface): What the arms are posed from: the body's animator, posed this frame, its traversal plant, its hold and its weapon.
 - `armsBody` (function): `compiled` with its arm and kicking-leg pieces alone (no glow): what the arms draw.
 - `createViewmodel` (function): Gives `puppet` (the player's) its first-person arms and look (see the file comment).
 - `FirstPersonParts` (interface): What a frame hid of the body and showed of the arms.
+- `GUN_KICK` (const): A shot's kick of first person's gun: back along its barrel (m) and up (rad) at once, gone with a time constant (s).
 - `Viewmodel` (interface): First person's player on a puppet (see the file comment).
 - `ViewmodelFrame` (interface): A frame drawn by a first-person camera: its pose, the frame's real seconds and aspect, the player and the effects.
 
@@ -5105,7 +5135,7 @@ For the agents who maintain the engine.
 
 - `ARMS` (const): The rig's numbers (see the file comment): places, metres, seconds.
 - `ArmsInput` (interface): What the rig poses the arms from, beside the camera (see `armsInputOf`).
-- `armsInputOf` (function): What the rig reads off the player's `animator` (its traversal plant `contacts`), with the frame's camera inputs.
+- `armsInputOf` (function): What the rig reads off the player's `animator` (its traversal plant `contacts`, its `hold`), with the frame's camera inputs.
 - `ArmsRig` (class): First person's arms posed against the camera (see the file comment).
 - `HeldHand` (interface): A hand the body holds on something: where its grip is (world), its world rotation, and how much it holds (0 to 1).
 - `vec3Of` (const): The world point of `p` (a `Vector3`) as a `Vec3`.
@@ -5120,6 +5150,19 @@ For the agents who maintain the engine.
 - `WarmupProgress` (interface): Progress, after each step: steps done of the total, and the step just done.
 - `WarmupReport` (interface): What one warm-up did.
 - `WarmupView` (interface): What a warm-up draws: the scene, its camera, how the frame draws it, and every way it draws the scene.
+
+### [`engine/gfx/weapons.ts`](../engine/gfx/weapons.ts)
+
+- `alongBarrel` (function): A turn putting +Z on the unit `barrel` and +Y as near the world's up as that leaves (a level gun when it is level).
+- `createWeaponFx` (function): Makes the shots' effects over `effects` (the view's, for the flashes and the impacts; see the file comment).
+- `gunGeometry` (function): `kind`'s prop as one geometry in its frame (the grip at the origin, +Z along the barrel), positions and normals, each vertex coloured by its part's tint over its material's colour (linear): what first person draws in the arms' vertex-coloured material (see the file comment).
+- `gunPose` (function): Where a gun stands in a posed body's hand: at its grip (`weaponR`), +Z along `barrel` (unit, world), +Y up-most.
+- `HeldGun` (interface): A gun in a hand as the view draws it: its weapon, and where its grip stands and its turn (world).
+- `HOLES` (const): A bullet hole: its size (m), colour and how far off its surface (m); the latest `capacity` stay.
+- `muzzlePoint` (function): Where `kind`'s shots leave a gun standing at `pose` (world, m): its muzzle in its frame.
+- `TRACER` (const): A tracer's look: its life (s), width (m), colour, and how far ahead of where a shot left it starts without a gun.
+- `WeaponFx` (interface): The shots' effects (see the file comment).
+- `weaponOut` (function): The weapon `entity`'s component `weapons` has out (its kind, of `registry`), or null: holstered, or no weapons.
 
 ### [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)
 
@@ -5166,7 +5209,7 @@ For the agents who maintain the engine.
 - `BindingsStorage` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Where bindings are saved: the `localStorage` shape.
 - `CameraInputSample` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): What the camera takes each frame: mouse look `[right, up]` rad, the right stick `[right, up]`, wheel notches.
 - `CameraLike` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A camera as the input reads it (the app's, over its view): its heading, its pitch for the look, and the aim.
-- `codeLabel` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): What a prompt shows for `code`: `W`, `Space`, `LMB`, `A` / `Cross`, `L Stick Up`.
+- `codeLabel` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): What a prompt shows for `code`: `W`, `Space`, `LMB`, `A` / `Cross`, `L Stick Up`, `Hold X`.
 - `connectVirtualDevice` (function from [`engine/input/devices/inspector.ts`](../engine/input/devices/inspector.ts)): Gives `host` (the app's inspector host) the page input's virtual device, so `__engine.input` drives the page.
 - `createBindings` (function from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Makes the bindings of the action map `map` (an id or an entry), loading saved changes from `options.storage`.
 - `createInput` (function from [`engine/input/input.ts`](../engine/input/input.ts)): Makes the page's input.
@@ -5175,8 +5218,13 @@ For the agents who maintain the engine.
 - `defineActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): Registers an action map (on the shared registry by default).
 - `DEGREES_PER_COUNT` (const from [`engine/input/look.ts`](../engine/input/look.ts)): One mouse count at sensitivity 1, degrees: Source's and Apex's `m_yaw` and `m_pitch`.
 - `DeviceKind` (type from [`engine/input/codes.ts`](../engine/input/codes.ts)): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
+- `deviceOf` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The device a code belongs to.
 - `GamepadLike` (interface from [`engine/input/devices/gamepad.ts`](../engine/input/devices/gamepad.ts)): The Gamepad API's `Gamepad`, as far as the device reads it (a test stub gives just this).
 - `getActionMap` (function from [`engine/input/actionMaps.ts`](../engine/input/actionMaps.ts)): The action map `id`.
+- `heldBase` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The code a held binding waits on (`Hold:PadWest` → `PadWest`), or null for any other code.
+- `HOLD_PREFIX` (const from [`engine/input/codes.ts`](../engine/input/codes.ts)): The prefix of a held binding: `Hold:PadWest` is X kept down `HOLD_TIME` (see the file comment).
+- `HOLD_TIME` (const from [`engine/input/codes.ts`](../engine/input/codes.ts)): How long a held binding's code stays down before its action presses, s (ours); let go sooner, it is a tap.
+- `holdCode` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The held binding of `code`: `holdCode('PadWest')` is `Hold:PadWest`.
 - `Input` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): A page's input.
 - `InputOptions` (interface from [`engine/input/input.ts`](../engine/input/input.ts)): How an input is made; in a page every field has its default.
 - `isCode` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): Whether `code` is one a binding may name.
@@ -5212,9 +5260,13 @@ For the agents who maintain the engine.
 
 ### [`engine/input/codes.ts`](../engine/input/codes.ts)
 
-- `codeLabel` (function): What a prompt shows for `code`: `W`, `Space`, `LMB`, `A` / `Cross`, `L Stick Up`.
+- `codeLabel` (function): What a prompt shows for `code`: `W`, `Space`, `LMB`, `A` / `Cross`, `L Stick Up`, `Hold X`.
 - `DeviceKind` (type): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
 - `deviceOf` (function): The device a code belongs to.
+- `heldBase` (function): The code a held binding waits on (`Hold:PadWest` → `PadWest`), or null for any other code.
+- `HOLD_PREFIX` (const): The prefix of a held binding: `Hold:PadWest` is X kept down `HOLD_TIME` (see the file comment).
+- `HOLD_TIME` (const): How long a held binding's code stays down before its action presses, s (ours); let go sooner, it is a tap.
+- `holdCode` (function): The held binding of `code`: `holdCode('PadWest')` is `Hold:PadWest`.
 - `InputSink` (interface): Where the devices write (engine/input/input.ts keeps it): codes going down and up, analog strengths, use.
 - `isCode` (function): Whether `code` is one a binding may name.
 - `LabelOptions` (interface): How labels are made: the keyboard layout's characters by code, and the pad family.
@@ -5705,7 +5757,7 @@ For the agents who maintain the engine.
 
 - `Controls` (interface): A player's controls (the settings `input.sprint` and `input.crouch`): a held sprint, a toggled crouch.
 - `intentsOf` (function): The intents an actor acts on this step: the step's for a player, else its AI's (with presses from `b`'s edges).
-- `motionInput` (function): The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it faces; `used`, a use took the step's press (no ride); `swinging`, a melee swings (no mantle: engine/sim/melee.ts).
+- `motionInput` (function): The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it faces; `used`, a use took the step's press (no ride); `swinging`, a melee swings (no mantle: engine/sim/melee.ts); `aiming`, he aims down a weapon's sights, so walks (Apex walks only then: engine/sim/weapons.ts).
 
 ### [`engine/sim/actors.ts`](../engine/sim/actors.ts)
 
@@ -5747,6 +5799,7 @@ For the agents who maintain the engine.
 
 - `addAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds a queued agent's body now (`updateCrowd` does it through the queue), its feet at `x`, `y`, `z`, moving at `vx`, `vy`, `vz`; returns its id.
 - `addMelee` (function from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): Adds the system `melee` to `w` (once): see the file comment.
+- `addWeapons` (function from [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)): Adds the system `weapons` to `w` (once): see the file comment.
 - `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `airTime` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): How long (s) a body thrown up at `up` m/s flies under `gravity` (m/s², above 0) until it comes down to `rise` metres above where it left (below for a drop): the later root of `rise = up·t − gravity·t²/2`.
 - `APPROACH_RING` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): `approachRing`'s defaults: the prototype's walker (3 units either side, back at half speed, round at 0.4).
@@ -5779,6 +5832,7 @@ For the agents who maintain the engine.
 - `DamageEvents` (type from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The events this module emits, for a world's event map: `World<Components, DamageEvents & MyEvents>`.
 - `DamageTarget` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): What a hit lands on: the entity (named in the events), its health and its crowd body, either optional.
 - `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
+- `defineWeapon` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): Defines a weapon on `registry` (the shared one by default) and returns it.
 - `Fan` (interface from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): A fan of rays (`fanHits`): `reach` long (m) from the feet's axis, `rays` across `cone` (rad), at each of `heights`.
 - `FanHit` (interface from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): A body a fan's ray met: its id, how far from the axis along the ground (m), and the point (world, m).
 - `fanHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): What a strike in reach meets (WP 13.19's melee): a fan of level rays from the axis over `feet`, `fan.rays` spread evenly across `fan.cone` about `yaw` at each height, each stopping at the first body it meets (`groups`, the body `exclude` aside), so a wall hides what stands behind it.
@@ -5786,6 +5840,7 @@ For the agents who maintain the engine.
 - `followFlow` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way to walk from `from` to `to` along `field` (a flow field toward the target's tile): straight at `to` within `near` metres when the grid has a clear line for a body (`NavGrid.lineOfSight`), else the field's look-ahead direction (`FlowField.direction`), else, where the field has no way (beyond its reach, or arrived at the goal tile's centre), straight at `to`, as the prototype does.
 - `FollowOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): How `followFlow` steers.
 - `getTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The telegraph `id` of `registry` (the shared one by default); a missing id gives `telegraph:arc`, with a warning.
+- `getWeapon` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The weapon `id` of `registry` (the shared one by default); a missing id gives `weapon:gun`, with a warning.
 - `Health` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health (`HEALTH_FIELDS` says what each field means).
 - `HEALTH` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Health with every field at its default: 1 hit point, never hit.
 - `HEALTH_FIELDS` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health, for a scene's component: `defineComponent('health', { description, fields: HEALTH_FIELDS })`.
@@ -5819,6 +5874,7 @@ For the agents who maintain the engine.
 - `ProjectileHit` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot's hit this step: a target or a wall, where along the move and where the shot's centre was then.
 - `ProjectileState` (type from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Where a shot is in its flight: see `PROJECTILE_FIELDS.state`.
 - `ProjectileStep` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): How `stepProjectiles` steps.
+- `recoilStep` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The kick of shot `n` of a burst (0: the first), [up, right] degrees: its recoil step, the last repeating.
 - `releaseToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Gives `id`'s token back (its attack ended, or was broken off): true when it held one.
 - `removeAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Removes an agent's body now (`updateCrowd` does it for `leaving` agents and old corpses): it is `gone`.
 - `requestHitStop` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Asks the frame clock for a hit-stop of `seconds` (real seconds, before its budget): kept until the run's host takes it after the step (`takeHitStop`), the longest of the step winning.
@@ -5826,6 +5882,7 @@ For the agents who maintain the engine.
 - `setVelocity` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Moves a living agent's velocity toward `want` by at most `acceleration × dt` this step: across the ground (a flyer: up and down too), keeping the vertical speed gravity and the solver gave it.
 - `SIGHT` (const from [`engine/world/ai.ts`](../engine/world/ai.ts)): `canSee`'s defaults: emberdeep's 150 units of sight and 60 of sense, an eye at 1.5 m on a chest at 1 m.
 - `SightOptions` (interface from [`engine/world/ai.ts`](../engine/world/ai.ts)): How `canSee` looks.
+- `spreadOf` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The cone a shot strays in now (half-angle, deg): the hip's (and the move's, `moving`) toward the sights' by `aim`, 0 to 1.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
@@ -5842,6 +5899,12 @@ For the agents who maintain the engine.
 - `VelocityOptions` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): How `setVelocity` steers.
 - `WallContact` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall a shot struck: the share of its move where it touched, the body (−1: none) and the surface's normal.
 - `WallTest` (type from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall test: the first wall a ball of `radius` meets moving from `from` by `delta` (m), or null.
+- `WEAPON_FIELDS` (const from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): A `weapon` kind's fields (see the file comment).
+- `WeaponKind` (type from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): A `weapon` entry (see the file comment).
+- `WEAPONS_FIELDS` (const from [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)): The component `weapons`' fields (see the file comment).
+- `weaponsFor` (function from [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)): A player's weapons component carrying `slots` (weapon ids), each magazine full, holstered unless `drawn`.
+- `WeaponSpec` (type from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): What `defineWeapon` takes: any of the kind's fields (`spread` and `reload` field by field), the rest at their defaults.
+- `WeaponsState` (interface from [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)): A player's weapons (`WEAPONS_FIELDS` says what each field means).
 
 ### [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)
 
@@ -5941,6 +6004,7 @@ For the agents who maintain the engine.
 - `DOOR_SWING` (const from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A door's swing open (rad): a quarter turn and a little more.
 - `DoorComponent` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): The component `door`.
 - `DoorSpec` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): What `addDoor` takes (see the file comment).
+- `entityOfBody` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): The entity whose body is `body` (a body id; −1 for none): a prop's (`propOfBody`), else an actor's; −1 for neither.
 - `flipSwitch` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Turns switch `id` over: its group on or off, its door open or shut.
 - `InteractorComponent` (interface from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The component `interactor`: what a player would use, its prompt, what it carries, and when it last used.
 - `PropHealthComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `propHealth` (WP 13.16): the hit points a breakable prop has left, spawned only on one with health.
@@ -5970,6 +6034,7 @@ For the agents who maintain the engine.
 - `defineInteractKinds` (function): Declares the kinds `usable` and `strikable` and the component `interactor` on `registry` (once).
 - `defineStrikable` (function): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock; `move`, the move a melee plays on it (a door's kick, `move:breach`), when not the usual.
 - `defineUsable` (function): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
+- `EYE` (const): The eye over the feet, standing and crouched (m): the cameras' (engine/gfx/cameras/effects.ts); a gun aims from it.
 - `InteractorComponent` (interface): The component `interactor`: what a player would use, its prompt, what it carries, and when it last used.
 - `strikeEntity` (function): Strikes `target` from `from` (m), its striker facing it or not (`faced`), with `force`: the entry of a component it holds answers (a door's rule: engine/sim/doors.ts; a breakable's damage: breakables.ts), else a dynamic prop is knocked (its `hit` hook).
 - `strikeEntry` (function): The `strikable` entry of a component the entity `id` holds (a door's), or undefined.
@@ -6076,6 +6141,7 @@ For the agents who maintain the engine.
 ### [`engine/sim/props.ts`](../engine/sim/props.ts)
 
 - `definePropKinds` (function): Declares the component `sceneProp` on `registry` (once).
+- `entityOfBody` (function): The entity whose body is `body` (a body id; −1 for none): a prop's (`propOfBody`), else an actor's; −1 for neither.
 - `hitProp` (function): Hits the prop `id` from `from` (m): calls its `hit` hook, whose `knock(more)` knocks its body away from `from` with `strength` under `more` (engine/physics/bodies.ts's `knock`: 4.6875 m/s across, 2.5 m/s up, no twist by default).
 - `PropHealthComponent` (interface): The component `propHealth` (WP 13.16): the hit points a breakable prop has left, spawned only on one with health.
 - `PropLightComponent` (interface): The component `propLight` (WP 13.16): a switchable prop's state, spawned only on one given a group or off.
@@ -6270,6 +6336,13 @@ For the agents who maintain the engine.
 
 - `spawnThing` (function): Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop, with any further `components` a scene gives it (a dummy's spring: labs/playground/cast/dummies.ts); returns its entity.
 - `strikeThing` (function): Hits the thing `id` for `amount` points from `from` (m) at the world's time (see the file comment): returns what the hit did, or null (no thing there, or one that is down).
+
+### [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)
+
+- `addWeapons` (function): Adds the system `weapons` to `w` (once): see the file comment.
+- `WEAPONS_FIELDS` (const): The component `weapons`' fields (see the file comment).
+- `weaponsFor` (function): A player's weapons component carrying `slots` (weapon ids), each magazine full, holstered unless `drawn`.
+- `WeaponsState` (interface): A player's weapons (`WEAPONS_FIELDS` says what each field means).
 
 ### [`engine/sim/world.ts`](../engine/sim/world.ts)
 
@@ -6836,6 +6909,17 @@ For the agents who maintain the engine.
 - `ZIPLINE_FIELDS` (const): A zipline's fields (see the file comment).
 - `ZiplineSpec` (type): A zipline, parsed: every field of `ZIPLINE_FIELDS`, its defaults filled.
 
+### [`engine/world/weapons.ts`](../engine/world/weapons.ts)
+
+- `defineWeapon` (function): Defines a weapon on `registry` (the shared one by default) and returns it.
+- `getWeapon` (function): The weapon `id` of `registry` (the shared one by default); a missing id gives `weapon:gun`, with a warning.
+- `recoilStep` (function): The kick of shot `n` of a burst (0: the first), [up, right] degrees: its recoil step, the last repeating.
+- `spreadOf` (function): The cone a shot strays in now (half-angle, deg): the hip's (and the move's, `moving`) toward the sights' by `aim`, 0 to 1.
+- `WEAPON_FIELDS` (const): A `weapon` kind's fields (see the file comment).
+- `weaponKind` (function): Declares the kind `weapon` on `registry`, with its default `weapon:gun`, unless it has it.
+- `WeaponKind` (type): A `weapon` entry (see the file comment).
+- `WeaponSpec` (type): What `defineWeapon` takes: any of the kind's fields (`spread` and `reload` field by field), the rest at their defaults.
+
 ### [`eslint.config.js`](../eslint.config.js)
 
 - `configure` (function): Builds the whole config; `switches` defaults to `SWITCHES` (tests turn every switch on).
@@ -7167,7 +7251,7 @@ For the agents who maintain the engine.
 - `PLAYER_LOOK` (const): How the player is drawn: `body:player` on the adult build, empty-handed.
 - `playerCharacter` (function): The player's character: `movement:apex`, its run and its jump's height (a take-off of √(2 g h)) as tuned.
 - `PlayerTuning` (interface): What a scene may tune: the run with a weapon out (m/s) and the jump's height (m).
-- `spawnPlayer` (function): Stands the player in `w` (a scene with physics) at `at`, facing `yaw`: an actor the step's intents move.
+- `spawnPlayer` (function): Stands the player in `w` (a scene with physics) at `at`, facing `yaw`: an actor the step's intents move, carrying `weapons` (ids, in slot order; none by default), holstered.
 
 ### [`labs/playground/controls.ts`](../labs/playground/controls.ts)
 
@@ -7435,6 +7519,30 @@ For the agents who maintain the engine.
 - `PLAYGROUND_LOOKS` (const): The two looks, in the order P switches them; the cel look is the page's default.
 - `swapShoulder` (function): The shooter camera's code `code` over the other shoulder (`cam3=shoulder,<yaw>,<pitch>,<distance>[,-1]`); another code as it is.
 - `turnView` (function): A classic view's code `code` turned round its target by `steps` × 90° (`cam=iso,<turn>,<zoom>`); another code as it is.
+
+### [`labs/playground/weapons/guns.ts`](../labs/playground/weapons/guns.ts)
+
+- `GUN_PROPS` (const): The guns' props (see the file comment): no body, drawn in a hand.
+- `PISTOL` (const): The pistol (see the file comment).
+- `PLAYGROUND_WEAPONS` (const): What the player carries, by slot: the pistol, then the rifle.
+- `RIFLE` (const): The rifle (see the file comment).
+
+### [`labs/playground/weapons/hud.ts`](../labs/playground/weapons/hud.ts)
+
+- `showsCrosshair` (function): Whether the crosshair shows: a camera that aims with its centre, a weapon out, its sights not up.
+- `weaponLine` (function): The HUD's line for the player's weapons (see the file comment); `draw` names the keys that draw them.
+- `WeaponsView` (type): What the line reads of the component `weapons`.
+
+### [`labs/playground/weapons/range.ts`](../labs/playground/weapons/range.ts)
+
+- `FALL` (const): A target's fall: how far it lies back when down (rad), and how fast it falls and pops back up (rad/s).
+- `MOVER` (const): The moving targets: as the pop-ups, sliding 2 m across their lane at 1 m/s while they stand.
+- `POPPER` (const): The pop-up targets: a hit puts one down, up again 2.5 s later.
+- `Popup` (interface): A target's fall (`POPUP_FIELDS`).
+- `POPUP_FIELDS` (const): The component `popup`'s fields: how far the target has fallen back, and its turn as it was stood.
+- `RANGE_TARGETS` (const): Where the range's targets stand (m) and of which kind: down each lane, facing the bench (−X).
+- `standRange` (function): Stands the range's targets (`RANGE_TARGETS`): their entities, in order.
+- `standTarget` (function): Stands a range target of `kind` (its id) on its base at `at` (m), facing `yaw`: its entity.
 
 ### [`playwright.config.ts`](../playwright.config.ts)
 

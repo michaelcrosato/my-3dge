@@ -41,7 +41,7 @@ import type { ActorComponents } from './actors';
 import { damage, requestHitStop, type Health } from './damage';
 import { fanHits } from './hits';
 import { strikeEntity, strikeEntry, takesStrike, type InteractorComponent } from './interact';
-import { propOfBody, type ScenePropComponents } from './props';
+import { entityOfBody, propOfBody, type ScenePropComponents } from './props';
 import { defineComponent } from './state';
 import type { World } from './world';
 
@@ -131,12 +131,6 @@ function placeOf(t: Target): [number, number, number] {
   return t.actor ? [t.actor.x, t.actor.y, t.actor.z] : [t.sceneProp!.x, t.sceneProp!.y, t.sceneProp!.z];
 }
 
-/** The actor entity whose body is `body`, or −1. */
-function actorOfBody(w: World, body: number): number {
-  for (const e of w.query('actor') as unknown as Player[]) if (e.actor.body === body) return e.id;
-  return -1;
-}
-
 /** What a melee reached: the entity, and the point its ray met (m). */
 export interface MeleeReach {
   readonly id: number;
@@ -161,7 +155,7 @@ export function meleeTargets<C extends object, E extends EventMap>(
   const found: MeleeReach[] = [];
   for (const hit of fanHits(physicsOf(w), [x, y, z], yaw ?? e.actor.yaw, fan, { exclude: body })) {
     const prop = propOfBody(w, hit.body);
-    const other = prop >= 0 ? prop : actorOfBody(w, hit.body);
+    const other = entityOfBody(w, hit.body);
     if (other < 0 || found.some((f) => f.id === other)) continue;
     const health = (w.get(other) as unknown as Target).health;
     if (prop >= 0 ? takesStrike(w, prop) : !!health && health.hp > 0) found.push({ id: other, point: hit.point });

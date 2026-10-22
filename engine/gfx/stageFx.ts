@@ -15,7 +15,9 @@
  * - **Trails**: every actor's trail as its puppet's last pose sampled it (engine/gfx/puppets/actors.ts `trails`), as a
  *   ribbon in the blade's tint (engine/gfx/fx/ribbons.ts `TRAIL_TINTS`), while its strike sweeps.
  * - **Events**: `frame` feeds the sim world's event trace (`world.events.trace()`, read without listening): every
- *   emitter answering an event's type bursts where its payload says (`hit`, `slain`, `shot`, `slam`…).
+ *   emitter answering an event's type bursts where its payload says (`hit`, `slain`, `shot`, `slam`…), and each
+ *   `gunshot` draws its tracer, flash, impact and hole (engine/gfx/weapons.ts `createWeaponFx`, `shots`), from the
+ *   shooter's muzzle as `muzzle(id)` finds it (the stage's puppets' carried gun).
  *
  * The view setting `gfx.effects` (true) turns them on and off; off, they draw nothing and draw no random number, and
  * claim no bolt, so bolts draw as their stand-ins, which the ID pass names (§6.7: a view setting never hides a
@@ -36,7 +38,7 @@
  * // fx.capture(entities); fx.draw(0.5); fx.frame(dt, camera, world.events.trace());
  * @see engine/gfx/stageFx.test.ts
  */
-import type { Camera } from 'three/webgpu';
+import type { Camera, Vector3 } from 'three/webgpu';
 import type { TrailSample } from '../anim/character';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
 import type { Rng } from '../core/rng';
@@ -47,6 +49,7 @@ import type { TelegraphPlace } from '../world/telegraphs';
 import { createEffects, type Effects } from './fx/effects';
 import { TRAIL_TINTS } from './fx/ribbons';
 import type { Warmup } from './warmup';
+import { createWeaponFx, type WeaponFx } from './weapons';
 
 /** The view setting that turns the stage's effects on and off. */
 export const STAGE_FX_SETTINGS = defineSettings({
@@ -92,12 +95,16 @@ export interface StageFxOptions {
   fxRng?: (...keys: readonly (string | number)[]) => Rng;
   /** The actors' trails, by entity id (the stage's puppets'). */
   trails?: () => ReadonlyMap<number, readonly TrailSample[]>;
+  /** Where actor `id`'s carried gun's muzzle is now (the stage's puppets'), or null. */
+  muzzle?: (id: number) => Vector3 | null;
 }
 
 /** The stage's effects (see the file comment). */
 export interface StageFx {
   /** The effects (engine/gfx/fx/effects.ts): its `root` is under the stage's scene, its `shake` moves the camera. */
   readonly effects: Effects;
+  /** The shots' tracers and holes (engine/gfx/weapons.ts), under the effects' root. */
+  readonly shots: WeaponFx;
   /** The component kinds it reads: the bolts' and the telegraphs'. */
   readonly kinds: readonly string[];
   /** Reads the entities after a sim step; returns the ids it draws as bolts (no stand-in for them): none while off. */
@@ -117,12 +124,15 @@ export interface StageFx {
 export function createStageFx(options: StageFxOptions = {}): StageFx {
   const registry = options.registry ?? sharedRegistry;
   const effects = createEffects({ registry, ...(options.fxRng ? { fxRng: options.fxRng } : {}) });
+  const shots = createWeaponFx({ effects });
+  effects.root.add(shots.root);
   const { bolts: boltKinds, telegraphs: telegraphKinds } = fxKinds(registry);
   const bolts = new Map<number, { before: [number, number, number]; after: [number, number, number] }>();
   const shown: [number, number, number][] = [];
   let places: TelegraphPlace[] = [];
   return {
     effects,
+    shots,
     kinds: [...boltKinds, ...telegraphKinds],
     capture(entities) {
       const flying = new Set<number>();
@@ -156,21 +166,29 @@ export function createStageFx(options: StageFxOptions = {}): StageFx {
     },
     frame(dt, camera, trace) {
       effects.feed(trace);
+      shots.feed(trace, options.muzzle ?? (() => null), effects.enabled); // off, read but not played
+      shots.root.visible = effects.enabled;
+      shots.frame(dt);
       for (const at of shown) effects.bolt(at);
       for (const place of places) effects.telegraph(place);
       for (const trail of options.trails?.().values() ?? [])
         if (trail.length > 1) effects.trail(trail, TRAIL_TINTS.blade);
       effects.frame(dt, camera);
     },
-    register: (warmup) => effects.register(warmup),
+    register(warmup) {
+      const both = [effects.register(warmup), shots.register(warmup)];
+      return { dispose: () => both.forEach((registration) => registration.dispose()) };
+    },
     reset() {
       effects.reset();
+      shots.reset();
       bolts.clear();
       shown.length = 0;
       places = [];
     },
     dispose() {
       effects.dispose();
+      shots.dispose();
       bolts.clear();
     },
   };

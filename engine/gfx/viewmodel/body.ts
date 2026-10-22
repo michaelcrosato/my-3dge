@@ -12,7 +12,11 @@
  *   whole; the rig poses the arms against the camera from the body's animator and its traversal plant (`armsInputOf`),
  *   the arms draw the parts it shows (the others folded to a point), and the look takes the frame's lens;
  * - otherwise (null): the body drawn as it is (0), the arms hidden.
- * It returns the joints the body hid and the ones the arms show.
+ * It returns the joints the body hid and the ones the arms show. A gun the body holds (`animated.gun`, its weapon out,
+ * WP 13.20) shows in the arms' right hand: a mesh per weapon with a prop (engine/gfx/weapons.ts `gunGeometry`), in the
+ * arms' material, at the rig's grip, its barrel the body's turned from the body's look onto the camera's, kicked back
+ * and up a little at each shot (`GUN_KICK`, the player's `shots`); `muzzle` is where its lens draws the muzzle, which
+ * the shots' tracers leave from.
  *
  * Invariants: presentation only; the body's attribute changes only when what it hides does (an upload, never a
  * pipeline); the arms exist from the start, so the warm-up builds their pipeline (the actors register them), and a
@@ -32,15 +36,21 @@
  * viewmodel.update(null, null).hidden; // []: not first person, the body whole
  * @see engine/gfx/viewmodel/body.test.ts
  */
-import { BufferAttribute, Mesh, type Material } from 'three/webgpu';
+import { BufferAttribute, Mesh, Quaternion, Vector3, type Material } from 'three/webgpu';
 import type { Animator } from '../../anim/character';
 import { JOINTS, type JointName } from '../../anim/skeleton';
+import type { HoldPlant } from '../../anim/traversal/hold';
 import type { TraversalPlant } from '../../anim/traversal/plant';
+import { angDiff, MathUtils } from '../../core/math';
+import { registry as sharedRegistry, type Registry } from '../../core/registry';
+import { weaponKind, type WeaponKind } from '../../world/weapons';
 import type { CameraPlayer, EffectsFrame } from '../cameras/effects';
 import { FIRST_ARMS, FIRST_KICK, firstBodyCull } from '../cameras/first';
 import type { CameraPose } from '../cameras/pose';
 import type { CompiledBody } from '../puppets/compile';
 import { puppetGeometry, type Puppet, type PuppetMaterials } from '../puppets/draw';
+import { alongBarrel, gunGeometry, muzzlePoint } from '../weapons';
+import { drawnPoint } from './lens';
 import type { ViewmodelLook } from './material';
 import { armsInputOf, ArmsRig } from './rig';
 
@@ -63,11 +73,18 @@ export interface FirstPersonParts {
   readonly arms: readonly JointName[];
 }
 
-/** What the arms are posed from: the body's animator, posed this frame, and its traversal plant. */
+/** What the arms are posed from: the body's animator, posed this frame, its traversal plant, its hold and its weapon. */
 export interface Animated {
   readonly animator: Animator;
   readonly contacts: TraversalPlant | null;
+  /** Its hold (engine/anim/traversal/hold.ts): whether it holds the gun, its barrel and how far its sights are up. */
+  readonly hold?: HoldPlant | null;
+  /** The weapon it has out, which the arms' right hand holds while the hold does; null or absent: none. */
+  readonly gun?: WeaponKind | null;
 }
+
+/** A shot's kick of first person's gun: back along its barrel (m) and up (rad) at once, gone with a time constant (s). */ // prettier-ignore
+export const GUN_KICK = Object.freeze({ back: 0.03, lift: 0.05, time: 0.06 });
 
 /** The pieces' bones the arms draw. */
 const ARMS_BONES = new Set([...FIRST_ARMS, ...FIRST_KICK].map((joint) => JOINTS.indexOf(joint)));
@@ -81,6 +98,10 @@ export function armsBody(compiled: CompiledBody): CompiledBody {
 export interface Viewmodel {
   /** The arms' mesh. */
   readonly arms: Mesh;
+  /** First person's guns, by weapon id: one shows while the body holds it (see the file comment). */
+  readonly guns: ReadonlyMap<string, Mesh>;
+  /** Where the last first-person frame drew the gun's muzzle (world, m, by the arms' lens), or null: no gun shown. */
+  readonly muzzle: Vector3 | null;
   /** The arms' rig: their pose and shown parts after the last first-person frame. */
   readonly rig: ArmsRig;
   /** Draws the body and the arms for `frame` (null: not first person), posed from the body's `animated` (see the file comment). */ // prettier-ignore
@@ -91,9 +112,10 @@ export interface Viewmodel {
 /** Gives `puppet` (the player's) its first-person arms and look (see the file comment). */
 export function createViewmodel(
   puppet: Puppet,
-  options: { materials: PuppetMaterials; look: ViewmodelLook },
+  options: { materials: PuppetMaterials; look: ViewmodelLook; registry?: Registry },
 ): Viewmodel {
   const { look } = options;
+  const registry = options.registry ?? sharedRegistry;
   const body = puppet.mesh;
   const compiled = armsBody(puppet.compiled);
   const geometry = puppetGeometry(compiled);
@@ -107,6 +129,41 @@ export function createViewmodel(
   Object.assign(arms, { name: `${body.name}/arms`, castShadow: false, receiveShadow: true, frustumCulled: false, visible: false }); // prettier-ignore
   arms.userData = { ...body.userData, viewmodel: 'arms', restyle: (material: Material) => look.arms(material) };
   body.add(arms);
+  weaponKind(registry);
+  const guns = new Map<string, Mesh>();
+  for (const { id } of registry.list('weapon')) {
+    const gunShape = gunGeometry(registry.get('weapon', id) as unknown as WeaponKind, registry);
+    if (!gunShape) continue;
+    const gun = new Mesh(gunShape, materials[0]);
+    Object.assign(gun, { name: `${body.name}/gun`, castShadow: false, receiveShadow: true, frustumCulled: false, visible: false }); // prettier-ignore
+    gun.userData = { ...arms.userData, viewmodel: 'gun', weapon: id };
+    body.add(gun);
+    guns.set(id, gun);
+  }
+  const [barrel, kickTurn, axis] = [new Vector3(), new Quaternion(), new Vector3(1, 0, 0)];
+  let [shots, kick, muzzle] = [0, 0, null as Vector3 | null];
+  /** Shows the gun the body holds in the arms' right hand for `frame` (see the file comment); hides the others. */
+  const holdGun = (frame: ViewmodelFrame, animated: Animated) => {
+    const fired = frame.player?.shots ?? 0;
+    kick = (fired > shots ? 1 : kick) * Math.exp(-frame.dt / GUN_KICK.time);
+    shots = fired;
+    const { hold, gun } = animated;
+    const shown = gun && hold?.holding && rig.shown.includes('handR') ? guns.get(gun.id) : undefined;
+    for (const mesh of guns.values()) mesh.visible = mesh === shown;
+    muzzle = null;
+    if (!shown || !gun || !hold) return;
+    const b = hold.barrel;
+    const held = hold.look;
+    const [yaw, pitch] = [Math.atan2(b.x, b.z), Math.asin(MathUtils.clamp(b.y, -1, 1))];
+    const turn = held ? [angDiff(held.yaw, yaw) * held.weight, pitch - held.pitch * held.weight] : [0, 0]; // off the body's look
+    const [y, p] = [frame.pose.yaw + turn[0], frame.pose.pitch + turn[1]];
+    barrel.set(Math.sin(y) * Math.cos(p), Math.sin(p), Math.cos(y) * Math.cos(p));
+    shown.position.copy(rig.hands[1]).addScaledVector(barrel, -GUN_KICK.back * kick);
+    alongBarrel(barrel, shown.quaternion).multiply(kickTurn.setFromAxisAngle(axis, -GUN_KICK.lift * kick));
+    shown.updateMatrixWorld(true);
+    const at = muzzlePoint(gun, { position: shown.position, rotation: shown.quaternion });
+    muzzle = new Vector3(...drawnPoint(frame.pose, [at.x, at.y, at.z], frame.fov));
+  };
   const marks = body.geometry.getAttribute('viewmodel') as BufferAttribute;
   const bodyBones = body.geometry.getAttribute('skinIndex');
   let folded = '';
@@ -145,20 +202,31 @@ export function createViewmodel(
   };
   return {
     arms,
+    guns,
+    get muzzle() {
+      return muzzle;
+    },
     rig,
     update(frame, animated) {
       if (!frame || !animated) {
         fold([]);
         arms.visible = false;
+        for (const gun of guns.values()) gun.visible = false;
+        muzzle = null;
         return { hidden: [], arms: [] };
       }
       const { player, effects, aspect, fov } = frame;
       look.frame(frame.pose, fov);
-      rig.update(frame.pose, armsInputOf(animated.animator, animated.contacts, { player, effects, aspect, fov }), frame.dt); // prettier-ignore
+      rig.update(frame.pose, armsInputOf(animated.animator, animated.contacts, { player, effects, aspect, fov }, animated.hold), frame.dt); // prettier-ignore
       pose();
+      holdGun(frame, animated);
       const { entity, component, protagonist } = body.userData; // as the actor wearing the body now
       Object.assign(arms, { name: `${body.name}/arms`, visible: true });
       Object.assign(arms.userData, { entity, component, protagonist });
+      for (const gun of guns.values()) {
+        gun.name = `${body.name}/gun`;
+        Object.assign(gun.userData, { entity, component, protagonist });
+      }
       const { skeleton, world } = animated.animator.body;
       const hidden = firstBodyCull(skeleton, world, frame.pose.position, frame.fullBody === true);
       fold(hidden);
@@ -167,6 +235,10 @@ export function createViewmodel(
     dispose() {
       geometry.dispose();
       arms.removeFromParent();
+      for (const gun of guns.values()) {
+        gun.geometry.dispose();
+        gun.removeFromParent();
+      }
       fold([]);
     },
   };

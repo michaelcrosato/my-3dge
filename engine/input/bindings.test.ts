@@ -1,6 +1,6 @@
 /**
  * @file Unit tests for the codes, action maps and bindings of engine/input/ (T1, WP 3.3): codes and their labels per
- * device and pad family; the presets are valid, conflict-free and keep the system layer's reserved codes; a bad map
+ * device and pad family, held bindings (WP 13.20) of a key or a button; the presets are valid, conflict-free and keep the system layer's reserved codes; a bad map
  * names every problem (WP 13.9: its view actions and aim rule too); rebinding refuses reserved codes and conflicts (naming the holder), replaces one device family
  * or one code, and survives a reload through storage; a bad saved file loads what it can, with advice.
  * @see engine/input/codes.ts
@@ -37,6 +37,9 @@ describe('codes', () => {
       'gamepad',
     ]);
     expect(PAD_BUTTONS.length).toBe(17);
+    const held = ['Hold:PadWest', 'Hold:KeyR', 'Hold:MouseRight'];
+    expect([held.every(isCode), ['Hold:WheelUp', 'Hold:PadLeftStickUp', 'Hold:', 'Hold:Hold:KeyR'].some(isCode)]).toEqual([true, false]); // prettier-ignore
+    expect([held.map(deviceOf), codeLabel('Hold:PadWest', { pad: 'playstation' })]).toEqual([['gamepad', 'keyboard', 'mouse'], 'Hold Square']); // prettier-ignore
   });
 
   it('labels keys by layout when known, and pad buttons by family', () => {

@@ -27,6 +27,7 @@ import { TraversalPlant } from '../../anim/traversal/plant';
 import type { TraversalPose } from '../../anim/traversal/pose';
 import { Secondary } from '../../anim/secondary';
 import type { SecondaryComponent } from '../../sim/reactions';
+import type { WeaponKind } from '../../world/weapons';
 import { createChainMeshes, type ChainMeshes } from './chains';
 import type { Puppet, PuppetMaterials } from './draw';
 
@@ -59,6 +60,8 @@ export interface Held {
   traversal: TraversalPose;
   /** Its look as the view shows it (`look`), eased once a step. */
   look: LookPose;
+  /** The weapon it has out (engine/gfx/weapons.ts `weaponOut`), drawn in its hand while its hold holds a gun; or null. */
+  carry: WeaponKind | null;
 }
 
 /** The view's own layers on one actor's puppet animator: its reactions, its secondary motion and their meshes. */

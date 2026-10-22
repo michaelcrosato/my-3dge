@@ -2,7 +2,8 @@
  * @file Unit tests for the camera rig (engine/gfx/cameras/rig.ts): a switch cuts unless it asks for a blend; a blend
  * starts at the old camera's picture, is halfway at half its time, ends at the new one's and says what it moved; a view's
  * turn swings round its target; the effects reach the camera that takes them, mixed through a blend (a hard landing's
- * shake, a weapon's kick, by each camera's punch share); the options from
+ * shake, a weapon's kick, by each camera's punch share; a burst's climb in the pose drawn, never in the aim's); the
+ * options from
  * the view settings `cam.*` give first person and the shooter the player's lens and the views whole zoom steps.
  * @see engine/gfx/cameras/rig.ts
  */
@@ -100,6 +101,18 @@ describe('the camera rig', () => {
     expect(lifts[0]).toBeGreaterThan(0.02); // the punch's spring, up
     expect(lifts[1]).toBeCloseTo(lifts[0] * SHOULDER_EFFECTS.punch, 3);
     expect(lifts[2]).toBe(0);
+  });
+
+  it('climbs first person’s view with a burst’s kick, and leaves it out of the pose the aim leaves along', () => {
+    const still: CameraPlayer = { velocity: [0, 0, 0], grounded: true, mode: 'ground', sprinting: false, sliding: false, boosted: false, aiming: false }; // prettier-ignore
+    const eye = { follow: [0, 0, 0] as const, eye: [0, 1.524, 0] as const };
+    const rig = createCameraRig('cam3=first');
+    rig.step(still);
+    const level = rig.update(eye, 1 / 60).pitch;
+    expect(rig.aimPose()).toBe(rig.pose()); // nothing climbed: the same pose
+    rig.step({ ...still, recoil: [0.05, 0] });
+    for (let k = 0; k < 30; k++) rig.update(eye, 1 / 60);
+    expect([rig.pose().pitch - level, rig.aimPose().pitch - level]).toEqual([expect.closeTo(0.05, 6), expect.closeTo(0, 9)]); // prettier-ignore
   });
 
   it('takes its options from the view settings: the player’s lens, the blend, whole zoom steps', () => {

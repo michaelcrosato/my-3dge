@@ -117,6 +117,10 @@ export class HoldPlant implements AnimLayer {
   /** Where the last pose aimed the gun's barrel (world, unit), and where it put the left hand on it, when it held one. */ // prettier-ignore
   readonly barrel = new Vector3();
   readonly support = new Vector3();
+  /** Whether the last pose held a gun (its hands free enough): the view draws one in the hand (WP 13.20). */
+  holding = false;
+  /** How far the last pose raised the sights, 0 to 1: first person centres them (WP 13.20). */
+  aimed = 0;
 
   constructor(options: { name?: string } = {}) {
     this.name = options.name ?? 'hold';
@@ -136,6 +140,7 @@ export class HoldPlant implements AnimLayer {
     const hands = this.contacts ? Math.max(this.contacts.limbs[0].weight, this.contacts.limbs[1].weight) : 0;
     const free = 1 - MathUtils.clamp(Math.max(this.busy, hands), 0, 1);
     const gun = (this.carry ?? body.weapon) === 'gun' && free > 0;
+    [this.holding, this.aimed] = [gun, 0];
     const offset = look ? MathUtils.clamp(angleTo(body.yaw, look.yaw), -HOLD.yaw, HOLD.yaw) * look.weight : 0; // the aim's heading off the body's
     if (gun && offset !== 0) {
       // the chest turned toward the aim's heading, so both hands keep the gun as it swings
@@ -158,6 +163,7 @@ export class HoldPlant implements AnimLayer {
     const heading = body.yaw;
     const sprint = MathUtils.smoothstep(body.state.weights.speed, HOLD.runSpeed[0], HOLD.runSpeed[1]);
     const aiming = MathUtils.smoothstep(look?.raised ?? 0, 0, 1) * (1 - sprint);
+    this.aimed = aiming;
     const yaw = heading + offset;
     const pitch = (look?.pitch ?? 0) * (look?.weight ?? 0);
     const lowered = MathUtils.lerp(pitch - HOLD.ready, -HOLD.sprint[0], sprint);

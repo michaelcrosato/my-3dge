@@ -71,3 +71,11 @@ export { DEGREES_PER_COUNT } from './look';
 export type { LookOptions } from './look';
 export type { RawLook } from './look';
 export type { ScaledLook } from './look';
+
+// Held bindings (WP 13.20): a key or a button kept down for an action of its own (Apex's pad reload on X held), and
+// the device a code is of.
+export { holdCode } from './codes';
+export { heldBase } from './codes';
+export { HOLD_PREFIX } from './codes';
+export { HOLD_TIME } from './codes';
+export { deviceOf } from './codes';

@@ -4,8 +4,8 @@
  * its presses from the edges of the buttons it held, `actor.held`); `motionInput(actor, wants, controls)` is what an
  * actor on a movement model (engine/physics/movement/) takes of them: the sprint, walk and crouch buttons as a player's
  * controls (`input.sprint`, `input.crouch`) say, the use press (unless a use took it, `used`: engine/sim/interact.ts),
- * the view, the keys' frame and what it faces (the aim's point, else the view), and whether a melee swings (no mantle
- * then: engine/sim/melee.ts).
+ * the view, the keys' frame and what it faces (the aim's point, else the view), whether a melee swings (no mantle
+ * then: engine/sim/melee.ts) and whether he aims down a weapon's sights (a walk then: engine/sim/weapons.ts).
  *
  * Invariants: pure but for an AI actor's own button edges, which `intentsOf` keeps in its component.
  *
@@ -35,7 +35,8 @@ export interface Controls {
 
 /**
  * The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it
- * faces; `used`, a use took the step's press (no ride); `swinging`, a melee swings (no mantle: engine/sim/melee.ts).
+ * faces; `used`, a use took the step's press (no ride); `swinging`, a melee swings (no mantle: engine/sim/melee.ts);
+ * `aiming`, he aims down a weapon's sights, so walks (Apex walks only then: engine/sim/weapons.ts).
  */
 export function motionInput(
   actor: ActorComponent,
@@ -43,6 +44,7 @@ export function motionInput(
   controls: Controls,
   used = false,
   swinging = false,
+  aiming = false,
 ): CharacterInput {
   const [aimX, , aimZ] = wants.aim ?? [];
   const aimed = aimX !== undefined && Math.hypot(aimX - actor.x, aimZ! - actor.z) > 0.05;
@@ -53,7 +55,7 @@ export function motionInput(
     sprint: held(wants, 'sprint'),
     sprintPressed: pressed(wants, 'sprint'),
     ...(actor.player && controls.holdSprint ? { sprintHold: true } : {}),
-    walk: held(wants, 'walk'),
+    walk: held(wants, 'walk') || aiming,
     crouch: !toggle && held(wants, 'crouch'),
     crouchToggle: pressed(wants, 'crouchToggle') || (toggle && pressed(wants, 'crouch')),
     usePressed: pressed(wants, 'interact') && !used, // a use took the press (engine/sim/interact.ts): no ride

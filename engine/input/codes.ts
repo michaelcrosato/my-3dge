@@ -13,8 +13,13 @@
  * Touch buttons (WP 3.12) write `touch:<action>` (`touchCode`): every action binds its own implicitly, so no map
  * lists one and no player rebinds one; a button names its action with `data-action` (engine/input/devices/touch.ts).
  *
+ * Held bindings (WP 13.20, Apex's pad: X held reloads, Y held holsters): `Hold:<code>` (`holdCode`) is a key, mouse
+ * button or pad button kept down `HOLD_TIME`; let go sooner, the code is a tap of its plain binding (engine/input/
+ * input.ts holds the plain one back until it knows which). It labels as `Hold X` and belongs to its code's device.
+ *
  * Invariants: `isCode` accepts exactly the codes above, touch codes aside; `deviceOf` is `gamepad` for `Pad…`, `mouse`
- * for `Mouse…` and `Wheel…`, `touch` for `touch:…`, `keyboard` otherwise; `PAD_BUTTONS[i]` is standard button i.
+ * for `Mouse…` and `Wheel…`, `touch` for `touch:…`, `keyboard` otherwise (a held binding its code's); `PAD_BUTTONS[i]`
+ * is standard button i.
  *
  * Carried from `my-3d2dge:src/emberdeep/61-controls.js:28-116` (`bindingCode`, `PAD_LABELS`, `codeLabel`), with
  * position names for the pad and labels per pad family.
@@ -25,6 +30,7 @@
  * codeLabel('KeyW', { layout: new Map([['KeyW', 'z']]) }); // 'Z': the key AZERTY puts there
  * codeLabel('PadSouth', { pad: padStyle('DualSense Wireless Controller (STANDARD GAMEPAD Vendor: 054c)') }); // 'Cross'
  * isCode('KeyW') && !isCode('w'); // true: bindings name physical keys
+ * codeLabel(holdCode('PadWest')); // 'Hold X': Apex's reload on a pad
  * @see engine/input/bindings.test.ts
  */
 
@@ -94,9 +100,31 @@ const KEY =
 /** Every non-keyboard code. */
 const OTHER: ReadonlySet<string> = new Set([...PAD_BUTTONS, ...PAD_STICKS, ...MOUSE_BUTTONS, ...WHEEL_CODES]);
 
+/** The prefix of a held binding: `Hold:PadWest` is X kept down `HOLD_TIME` (see the file comment). */
+export const HOLD_PREFIX = 'Hold:';
+
+/** How long a held binding's code stays down before its action presses, s (ours); let go sooner, it is a tap. */
+export const HOLD_TIME = 0.3;
+
+/** The held binding of `code`: `holdCode('PadWest')` is `Hold:PadWest`. */
+export function holdCode(code: string): string {
+  return `${HOLD_PREFIX}${code}`;
+}
+
+/** The code a held binding waits on (`Hold:PadWest` → `PadWest`), or null for any other code. */
+export function heldBase(code: string): string | null {
+  return code.startsWith(HOLD_PREFIX) ? code.slice(HOLD_PREFIX.length) : null;
+}
+
+/** The digital codes a held binding may wait on: keys, mouse buttons and pad buttons, never a notch or a stick. */
+const HOLDABLE: ReadonlySet<string> = new Set<string>([...PAD_BUTTONS, ...MOUSE_BUTTONS]);
+
 /** Whether `code` is one a binding may name. */
 export function isCode(code: unknown): code is string {
-  return typeof code === 'string' && (OTHER.has(code) || KEY.test(code));
+  if (typeof code !== 'string') return false;
+  const base = heldBase(code);
+  if (base !== null) return HOLDABLE.has(base) || KEY.test(base);
+  return OTHER.has(code) || KEY.test(code);
 }
 
 /** The prefix of the codes touch buttons write: `touch:jump` is the jump button (`touchCode`). */
@@ -109,6 +137,8 @@ export function touchCode(action: string): string {
 
 /** The device a code belongs to. */
 export function deviceOf(code: string): Exclude<DeviceKind, 'virtual'> {
+  const base = heldBase(code);
+  if (base !== null) return deviceOf(base);
   if (code.startsWith(TOUCH_PREFIX)) return 'touch';
   if (code.startsWith('Pad')) return 'gamepad';
   return code.startsWith('Mouse') || code.startsWith('Wheel') ? 'mouse' : 'keyboard';
@@ -155,8 +185,10 @@ export interface LabelOptions {
   pad?: PadStyle;
 }
 
-/** What a prompt shows for `code`: `W`, `Space`, `LMB`, `A` / `Cross`, `L Stick Up`. */
+/** What a prompt shows for `code`: `W`, `Space`, `LMB`, `A` / `Cross`, `L Stick Up`, `Hold X`. */
 export function codeLabel(code: string, options: LabelOptions = {}): string {
+  const base = heldBase(code);
+  if (base !== null) return `Hold ${codeLabel(base, options)}`;
   const button = PAD_BUTTONS.indexOf(code as (typeof PAD_BUTTONS)[number]);
   if (button >= 0) return PAD_LABELS[options.pad ?? 'xbox'][button];
   const stick = /^Pad(Left|Right)Stick(Up|Down|Left|Right)$/.exec(code);

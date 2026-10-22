@@ -57,7 +57,9 @@ export { flipSwitch } from './switches';
 export type { SwitchSpec } from './switches';
 export type { SwitchComponent } from './switches';
 
-// Strikes (WP 13.19): a strikable entry by entity (the move a melee plays on it: a door's kick), and what takes one.
+// Strikes (WP 13.19): a strikable entry by entity (the move a melee plays on it: a door's kick), what takes one, and
+// whose a body is (a prop's or an actor's, WP 13.20).
 export type { StrikeEntry } from './interact';
 export { strikeEntry } from './interact';
 export { takesStrike } from './interact';
+export { entityOfBody } from './props';

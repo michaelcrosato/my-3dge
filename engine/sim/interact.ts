@@ -45,8 +45,8 @@ export const USE_REACH = 2;
 export const CARRY_MASS = 25;
 /** How fast a carried prop leaves when it is thrown (m/s). */
 export const THROW_SPEED = 8;
-/** The eye over the feet, standing and crouched (m): the cameras' (engine/gfx/cameras/effects.ts). */
-const EYE = { stand: 1.52, crouch: 0.81 } as const;
+/** The eye over the feet, standing and crouched (m): the cameras' (engine/gfx/cameras/effects.ts); a gun aims from it. */
+export const EYE = { stand: 1.52, crouch: 0.81 } as const;
 /** How far in front of the eye a carried prop is held (m), and how much farther than the reach it may lag before it drops. */
 const HOLD = { ahead: 0.8, slip: 1.5 } as const;
 /** The cosine of the widest angle from where a player faces that is "in front" (60°), written out: no Math at import. */

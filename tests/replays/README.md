@@ -108,3 +108,8 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   leaf before it: the kick's cone is 30°), every input after it 140 steps later and the run 140 steps longer (780);
   the site also gained melee and the ring's dummies (hashed). The story is the same, event for event
   (labs/playground/scenes/site.test.ts). playground-melee is new with that WP: the ring's story (scenes/ring.test.ts).
+- playground-site's and playground-melee's goldens were re-recorded (`--update`, Node ×3 and Chromium ×3 agreeing)
+  with WP 13.20's firearms (ADR-0025 amendment 25): the site's player carries the pistol and the rifle, holstered (the
+  component `weapons`, hashed), and the range's targets are things (the components `thing` and `popup`, hashed) where
+  fixed props stood. Neither run draws a gun or fires a shot: their inputs are as they were, and their stories the
+  same, event for event (labs/playground/scenes/site.test.ts, ring.test.ts).

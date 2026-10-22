@@ -5,6 +5,7 @@
  * where the browser allows, and each mode's own rules: the view sent and the centre aimed in first person and the
  * shooter, the platformer facing its move, isometric and top-down aiming with the pointer, Q and E turning isometric
  * (so G uses there). `playgroundMap` picks a camera's map, the HUD's line and the menu's rows follow the map in use.
+ * WP 13.20: the firearms' keys (1, 2, R, 3) and the pad's, Y to swap and X and Y held to reload and holster.
  * @see labs/playground/controls.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -47,10 +48,16 @@ describe('the playground’s action maps', () => {
         melee: ['KeyV', 'PadRightStick'],
         fire: ['MouseLeft', 'PadRightTrigger'],
         aim: ['MouseRight', 'PadLeftTrigger'],
+        reload: ['KeyR', 'Hold:PadWest'], // X held; a tap of X uses
+        weapon1: ['Digit1'],
+        weapon2: ['Digit2'],
+        swap: ['PadNorth'],
+        holster: ['Digit3', 'Hold:PadNorth'], // Y held; a tap of Y swaps
         camera: ['KeyT', 'PadSelect'],
       });
+      expect(map.actions.interact, id).toContain('PadWest');
     }
-    expect(Object.keys(PLAYGROUND_ACTIONS)).toEqual(['jump', 'sprint', 'walk', 'crouch', 'interact', 'melee', 'aim']);
+    expect(Object.keys(PLAYGROUND_ACTIONS)).toEqual(['jump', 'sprint', 'walk', 'crouch', 'interact', 'melee', 'fire', 'aim', 'reload', 'weapon1', 'weapon2', 'swap', 'holster']); // prettier-ignore
   });
 
   it('give each mode its rule: the view and the centre where the eyes aim, the pointer where the views look down', () => {
@@ -77,16 +84,18 @@ describe('the playground’s action maps', () => {
 
   it('show the map in use on the HUD and in the menu, as rebound and on a pad', () => {
     const shooter = createInput({ map: PLAYGROUND_MAPS.shooter });
-    expect(keysLine(shooter)).toMatch(/^WASD: move · Space: jump · .*Shift: sprint · .*: use · V: strike · Click: mouse look · T: camera · X: shoulder · P: look · F: feel · M: menu$/); // prettier-ignore
+    expect(keysLine(shooter)).toMatch(/^WASD: move · Space: jump · .*Shift: sprint · .*: use · V: strike · 1 2: guns · R: reload · Click: mouse look · T: camera · X: shoulder · P: look · F: feel · M: menu$/); // prettier-ignore
     shooter.bindings.rebind('camera', 'KeyY');
     expect(keysLine(shooter)).toContain('Y: camera');
     const iso = createInput({ map: PLAYGROUND_MAPS.isometric });
-    expect(keysLine(iso)).toContain('G: use · V: strike · Mouse: aim · T: camera · Q E: turn');
+    expect(keysLine(iso)).toContain('G: use · V: strike · 1 2: guns · R: reload · Mouse: aim · T: camera · Q E: turn');
     const pad = { prompt: () => 'A', bindings: iso.bindings, lastDevice: 'gamepad' as const };
     expect(keysLine(pad)).toMatch(/^L Stick: move · .*R Stick: look/);
     const rows = (id: string) => Object.fromEntries(controlRows(undefined, id).map(([what, keys]) => [what, keys]));
     expect(rows(PLAYGROUND_MAPS.shooter)).toMatchObject({ 'Swap the shoulder': 'X', 'Camera mode': 'T' });
     expect(rows(PLAYGROUND_MAPS.isometric)).toMatchObject({ 'Use: a door, a switch, a chair to carry and throw, a zipline, a ladder': 'G', Aim: 'The pointer, onto the floor', 'Turn the view left': 'Q', 'Turn the view right': 'E' }); // prettier-ignore
     expect(rows(PLAYGROUND_MAPS.first)['Swap the shoulder']).toBeUndefined();
+    const held = Object.fromEntries(controlRows(undefined, PLAYGROUND_MAPS.shooter).map(([what, keys, pad]) => [what, [keys, pad]])); // prettier-ignore
+    expect([held.Reload, held['Holster, or draw again'], held['Swap weapons']]).toEqual([['R', 'Hold X'], ['3', 'Hold Y'], ['', 'Y']]); // prettier-ignore
   });
 });

@@ -5,7 +5,8 @@
  * pads are bound by code, the move actions and the system layer stay out of the buttons, blur and a hidden page let go,
  * prompts follow the last device used, `listen` captures a code for rebinding, and the virtual device merges in; WP
  * 13.9: the map switches live, view actions are heard at once and never sent, the aim follows the map's rule from the
- * free pointer and the right stick, and the camera's look is scaled by the look settings.
+ * free pointer and the right stick, and the camera's look is scaled by the look settings; WP 13.20: a code a held
+ * binding waits on is a tap of its plain binding when let go sooner, and kept down presses and holds the held one.
  * @see engine/input/input.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -244,6 +245,28 @@ describe('createInput', () => {
     expect(heard).toHaveLength(5);
     input.use('actionMap:a');
     expect(input.bindings).toBe(first); // the same bindings, rebinds and all
+  });
+
+  it('waits on a code a held binding names: a tap is its plain binding, kept down its held one (WP 13.20)', () => {
+    const registry = createRegistry();
+    const actions = { ...PRESETS['actionMap:thirdPerson'].actions, reload: ['KeyR', 'Hold:KeyE', 'Hold:PadLeftShoulder'] }; // prettier-ignore
+    defineActionMap('actionMap:held', { actions }, registry);
+    const { input, down, up, slots } = page({ map: 'actionMap:held', registry });
+    down('KeyE');
+    expect(input.sample(undefined, 1000)).toEqual({}); // not yet a use: it may become a reload
+    up('KeyE');
+    expect(input.sample(undefined, 1100)).toEqual({ p: ['interact'] }); // let go sooner: a tap, pressed, never held
+    down('KeyE');
+    const held = [1200, 1300, 1499, 1500, 1600].map((now) => input.sample(undefined, now));
+    expect(held).toEqual([{}, {}, {}, { b: ['reload'], p: ['reload'] }, { b: ['reload'] }]); // 0.3 s from the first sample
+    up('KeyE');
+    expect([input.sample(undefined, 1700), input.held('interact')]).toEqual([{}, false]); // gone, and never a use
+    expect(input.prompt('reload')).toBe('R');
+    const pad = createScriptedGamepad(`${'1 hold=LeftShoulder\n'.repeat(19)}1`); // 19 frames held, no time given
+    slots[0] = pad.gamepad as GamepadLike;
+    const frames = Array.from({ length: 20 }, () => (pad.next(), input.sample()));
+    expect([frames[17], frames[18], frames[19]]).toEqual([{}, { b: ['reload'], p: ['reload'] }, {}]); // 18 frames at 60 Hz
+    expect(input.prompt('reload')).toBe('Hold LB');
   });
 
   it('aims by the map’s rule from the free pointer and the right stick, and leaves the stick to the aim', () => {

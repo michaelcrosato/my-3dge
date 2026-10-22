@@ -442,6 +442,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Melee (WP 13.19)**: Apex's punch, kicks and the door kick, a lunge to the target in reach, one hit a swing landing at its moment with its damage and hit-stop; the fan of rays that finds what a strike reaches.
 `MELEE`, `MELEE_MOVES`, `MELEE_FIELDS`, `addMelee`, `meleeTargets`, `fanHits`; types `MeleeState`, `MeleeReach`, `Fan`, `FanHit`.
 
+**Firearms (WP 13.20)**: the kind `weapon`, a player's weapons drawn and holstered, hip fire and the sights, hitscan shots with spread and a climbing recoil, reloads.
+`WEAPON_FIELDS`, `defineWeapon`, `getWeapon`, `recoilStep`, `spreadOf`, `WEAPONS_FIELDS`, `weaponsFor`, `addWeapons`; types `WeaponKind`, `WeaponSpec`, `WeaponsState`.
+
 **Clips on actors (WP 8.9)**: the clip layer in an actor's animator as sim data, the component clips, stepped at the actor's ground speed and drawn over its body by the view; its events come as `clip`. spawnActor's `body` names the body it is drawn as (body:mannequin).
 `addClips`, `playClip`, `stopClip`, `seekClip`, `locomoteClips`, `clipLayerOf`; types `ClipsSpec`, `PuppetComponent`.
 
@@ -475,8 +478,8 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Switches (WP 13.16)**: a room's lights and the garage door, as sim state the view reads.
 `addSwitch`, `switchGroup`, `flipSwitch`; types `SwitchSpec`, `SwitchComponent`.
 
-**Strikes (WP 13.19)**: a strikable entry by entity (the move a melee plays on it: a door's kick), and what takes one.
-`strikeEntry`, `takesStrike`; types `StrikeEntry`.
+**Strikes (WP 13.19)**: a strikable entry by entity (the move a melee plays on it: a door's kick), what takes one, and whose a body is (a prop's or an actor's, WP 13.20).
+`strikeEntry`, `takesStrike`, `entityOfBody`; types `StrikeEntry`.
 
 **Things (WP 10.4)**: what can be hit, as a range's targets and a ring's dummies: the kind `thing` (its prop, hit points, rise, track and hooks), a thing's state (hits, down and up, its place on its track), and things in a scene (spawned as their prop, struck as hits, stood back up and driven along their tracks by the system `things`).
 `defineThing`, `getThing`, `thingState`, `hitThing`, `stepThing`, `thingAt`, `THING_FIELDS`, `THING_KIND_FIELDS`, `spawnThing`, `strikeThing`; types `Thing`, `ThingKind`, `ThingSpec`, `ThingTouch`, `ThingHit`, `ThingOutcome`, `ThingStanding`.
@@ -500,6 +503,9 @@ For the page (the browser side), not for code that runs in the sim:
 
 **Aiming and look (WP 13.9)**: the point the intents' aim carries by a map's rule, and the look settings input.*.
 `aimPoint`, `screenRay`, `onFloor`, `AIM_RULES`, `AIM_RANGE`, `STICK_REACH`, `lookOptions`, `scaleLook`, `LOOK_SETTING_FIELDS`, `LOOK_SETTINGS`, `DEGREES_PER_COUNT`; types `AimRule`, `AimPose`, `AimView`, `AimDevices`, `AimRay`, `LookOptions`, `RawLook`, `ScaledLook`.
+
+**Held bindings (WP 13.20)**: a key or a button kept down for an action of its own (Apex's pad reload on X held), and the device a code is of.
+`holdCode`, `heldBase`, `HOLD_PREFIX`, `HOLD_TIME`, `deviceOf`.
 
 **Geometry kit and level meshes (WP 2.4)**: shapes standing on the ground with UVs in metres, the geometry registry (props and levels name geometry by id), their QA measures, and a compiled level drawn as meshes.
 `boxGeometry`, `roundedBoxGeometry`, `limbGeometry`, `rampGeometry`, `frustumGeometry`, `pillarGeometry`, `pillarParts`, `ringGeometry`, `sidesThenTops`, `mergeGeometries`, `defineGeometry`, `getGeometry`, `buildGeometry`, `inspectGeometry`, `createLevelMeshes`, `LEVEL_RECIPES`, `createTerrainMeshes`; types `BoxOptions`, `RoundedBoxOptions`, `LimbOptions`, `RampOptions`, `FrustumOptions`, `PillarOptions`, `PillarPart`, `RingOptions`, `GeometryEntry`, `GeometrySpec`, `GeometryRef`, `GeometryReport`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `LevelCell`, `LevelRecipe`, `LevelShape`, `TerrainMeshes`, `TerrainMeshesOptions`.

@@ -207,7 +207,8 @@ isometric G uses, since Q and E turn the view. A click takes the pointer lock in
 gives it back). The look settings `input.sensitivity` (Apex's units: 0.022° a count times it, 5 by default),
 `input.adsSensitivity`, `input.invert` and the stick's three are view settings; the sprint and the crouch hold or
 toggle by the recorded settings `input.sprint` and `input.crouch`. The camera keys are the maps' view actions, rebound
-like the others and never sent to the sim. The pad's reload and holster wait for a held binding (WP 13.19, WP 13.20).
+like the others and never sent to the sim. The pad's reload and holster are held bindings (WP 13.20: X and Y kept
+down 0.3 s; a tap of X uses and of Y swaps the weapons, as in Apex), and 1 and 2 draw the pistol and the rifle.
 
 ### 3.4 Feel beyond the numbers
 
@@ -340,6 +341,12 @@ A pistol and a rifle (the kind `weapon`, WP 13.20), built from parts: hip fire a
 the sim's raycasts, spread and a recoil pattern as data, reloading, holstering (holstered runs faster, as in Apex),
 impacts with decals, particles and sounds, tracers. The range's targets pop up and move; the HUD keeps hits and
 accuracy. Every camera aims, isometric and top-down with the pointer.
+
+As built (WP 13.20, ADR-0025 amendment 25): the player carries both, holstered, everywhere on the site. A shot leaves
+the eye toward the crosshair's point in first person and the shooter, and level from the chest toward the pointer in
+isometric and top-down (where he faces in the platformer); the burst's climb turns the shots and the view, so the
+crosshair stays where they go. The range's pop-ups (10 and 25 m) fall back at a hit and stand 2.5 s later; its 50 m
+targets slide 2 m across their lanes.
 
 ### 7.3 Melee and the ring
 
