@@ -16,10 +16,9 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 
 - Phases 0–9 are done (PR #2–#11); Phase 13's G10 (#22, #26) and G11 (#27) are merged. The playground (`npm run
   dev`, /labs/playground/?scene=site) has Apex's movement, rides, five cameras, planted locomotion, traversal, first
-  person, and the block: a house of four storeys, yards, a street, the gym, a hill, a range and a ring, lit, with
-  the cut by storey, doors, windows, switches and pickups, the gallery (`node x gallery`) and the agent eye (`node x
-  eye`): ADR-0025 amendments 15–21. Games: lean/ (ADR-0024, docs/HANDOFF.md).
-- CI (ADR-0023): merges wait on the quick gate; main's full run after each. Vercel is paused: ignore its statuses.
+  person, and the block: a house of four storeys, yards, a street, the gym, a hill, a range and a ring, lit, cut by
+  storey, with doors, windows, switches and pickups; `node x gallery` and `node x eye` (ADR-0025 amendments 15–21).
+  Games: lean/ (ADR-0024). CI (ADR-0023): the quick gate, then main's full run. Vercel is paused: ignore it.
 
 ## What waits, by design
 
@@ -34,7 +33,8 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 ## Open issues
 
 - Owner: in random play the shooter's camera loses the chest in 4–5% of frames, against or over a wall (not courses).
-- Owner, for the G11 playtest (its checklist is in PR #27): amendment 20's calls (the block 113 m deep for the gym as
-  built; the slide-jump under a 0.1 s hop window; §2.3's risers dropped; an up-and-over garage door); G10's items.
-- The bot presses use at every drop (in the house only ladders' tops); under load a full `npm test` can exit 1 on
-  Vitest's worker RPC timeouts with every test passed (the house's soak takes 40–100 s).
+- Owner, for the G11 playtest (its checklist is in PR #27): amendment 20's calls (the block 113 m deep for the gym;
+  the slide-jump's 0.1 s hop window; §2.3's risers dropped; an up-and-over garage door); G10's items (PR #26).
+- The quick gate took 6 min 48 s at G11, over its 5 min (CI_BUDGET): the house's T1 tests (the eye's tour, the soak,
+  the bot's tours: 195 of 949 file-seconds) go to the long runs or get cheaper, with WP 13.27. Under load `npm test`
+  can exit 1 on Vitest's RPC timeouts with every test passed. The bot presses use at every drop.
