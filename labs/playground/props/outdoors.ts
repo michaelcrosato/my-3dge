@@ -91,7 +91,7 @@ export const OUTDOOR_PROPS = {
   },
   'prop:playground-target': {
     description: 'A target for the range: a plate 0.6 m across, ringed, on its stand, its middle 1.3 m up. Fixed.',
-    parts: [part('stand', [0.08, 1, 0.08], IRON, [0, 0, 0]), { name: 'plate', geometry: 'geometry:ring', params: { innerRadius: 0, outerRadius: 0.3, height: 0.03, radialSegments: 20 }, material: PAINT, tint: '#f2f0ea', position: [0, 1.3, 0], rotation: [Math.PI / 2, 0, 0] }, { name: 'ring', geometry: 'geometry:ring', params: { innerRadius: 0.17, outerRadius: 0.21, height: 0.034, radialSegments: 20 }, material: PAINT, tint: '#c0392b', position: [0, 1.3, 0.002], rotation: [Math.PI / 2, 0, 0] }, { name: 'bull', geometry: 'geometry:ring', params: { innerRadius: 0, outerRadius: 0.1, height: 0.034, radialSegments: 16 }, material: PAINT, tint: '#c0392b', position: [0, 1.3, 0.002], rotation: [Math.PI / 2, 0, 0] }], // prettier-ignore
+    parts: [part('stand', [0.08, 1, 0.08], IRON, [0, 0, 0]), { name: 'plate', geometry: 'geometry:ring', params: { innerRadius: 0, outerRadius: 0.3, height: 0.03, radialSegments: 20 }, material: PAINT, tint: '#f2f0ea', position: [0, 1.3, 0], rotation: [Math.PI / 2, 0, 0] }, { name: 'ring', geometry: 'geometry:ring', params: { innerRadius: 0.17, outerRadius: 0.21, height: 0.034, radialSegments: 16 }, material: PAINT, tint: '#c0392b', position: [0, 1.3, 0.002], rotation: [Math.PI / 2, 0, 0] }, { name: 'bull', geometry: 'geometry:ring', params: { innerRadius: 0, outerRadius: 0.1, height: 0.034, radialSegments: 16 }, material: PAINT, tint: '#c0392b', position: [0, 1.3, 0.002], rotation: [Math.PI / 2, 0, 0] }], // prettier-ignore
     body: fixed([0.6, 1.6, 0.1]),
   },
   'prop:playground-rope': {
