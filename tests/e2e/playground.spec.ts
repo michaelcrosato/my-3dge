@@ -205,7 +205,7 @@ test.describe('the playground', () => {
   }) => {
     await open(page, harness, '?scene=interact');
     expect((await hud(page)).use || '').toBe(''); // 3 m south of the door: nothing in reach
-    await call(page, 'act', 'place', { at: [10, 0, 11.3], speed: 0, yaw: Math.PI });
+    await call(page, 'actions.run', 'place', { at: [10, 0.01, 11.3], speed: 0, yaw: Math.PI }); // just above the lot (5 mm high there)
     await call(page, 'step', 2, { look: [Math.PI, 0] });
     await call(page, 'render', 2);
     expect((await hud(page)).use).toBe('E: Open');
