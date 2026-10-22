@@ -54,6 +54,7 @@ test.describe('the box’s inspector', () => {
       out.help = e.help('replay').startsWith('replay(text');
       out['camera.get'] = e.camera.get().code;
       out['camera.set'] = e.camera.set('cam=topdown').code;
+      out['camera.follow'] = e.camera.follow(2).code;
       out['scene.dump'] = e.scene.dump({ filter: 'pillar' }).includes('level:room/pillar InstancedMesh');
       out.pause = e.pause();
       out.resume = e.resume();
@@ -91,6 +92,9 @@ test.describe('the box’s inspector', () => {
       out['gallery.list'] = e.gallery.list().some((row: { kind: string }) => row.kind === 'prop');
       out['gallery.frames'] = e.gallery.frames('prop', 'prop:crate').length; // its turntable's four
       out['gallery.shoot'] = await Promise.resolve().then(() => e.gallery.shoot('prop', 'prop:crate')).catch((error: Error) => error.message.split(':')[0]); // prettier-ignore
+      out.eye = await Promise.resolve()
+        .then(() => e.eye())
+        .catch((error: Error) => error.message.split(':')[0]); // the room has no physics
       out['tune.settings'] = e.tune.settings().some((row: { path: string }) => row.path === 'movement.gaits.sprint');
       out['tune.profile'] = e.tune.profile().startsWith('defineMovement("movement:playtest", {');
       out.render = (await e.render(1)).drawn;
@@ -110,6 +114,7 @@ test.describe('the box’s inspector', () => {
       help: true,
       'camera.get': 'cam=iso',
       'camera.set': 'cam=topdown',
+      'camera.follow': 'cam=topdown',
       'scene.dump': true,
       pause: undefined,
       resume: undefined,
@@ -137,6 +142,7 @@ test.describe('the box’s inspector', () => {
       'gallery.list': true,
       'gallery.frames': 4,
       'gallery.shoot': '[DEV_GALLERY_CLOSED] gallery.shoot films the gallery scene, but the page shows box', // box:room
+      eye: '[SIM_BAD_ARGUMENT] __engine.eye() got a scene without physics',
       'tune.settings': true, // the feel panel's rows: every number of the shooter model, even with no actor on it
       'tune.profile': true,
       render: true,

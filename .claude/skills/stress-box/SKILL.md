@@ -71,6 +71,8 @@ labs/box/README.md, "Adding a prop", has the steps; labs/box/scenes/hall-props.t
 - `node x set box.room.speed 3` (validates, prints the URL, applies to a running `x inspect`)
 - `node x sim labs/box/scenes/room.ts --steps 600 --set box.room.speed=3` (hash, events, a replay of the run)
 - `node x shot labs/box --scene room --cam iso` (ID pass, look metrics; `--png`, `--marks`, `--thumb <case>`)
+- `node x eye labs/box/scenes/room-hero.ts --cam cam=topdown` (what the camera sees of the bodies, in Node, no GPU: a
+  text picture with its legend; `__engine.eye()` in the page)
 - `node x replay tests/replays/box-1-room.replay.json --browser page` (goldens while the page renders; `--state` or
   `--until n` writes the state the run reaches to out/replay/<name>/state.json)
 - `node x inspect --scene room`, then `node x eval "<js>"`, `node x dump --step 60`, `node x shot …` (reuses it),

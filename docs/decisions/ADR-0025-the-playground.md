@@ -1119,3 +1119,44 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   `blocking`. Measured in Node by WP 12.3's eye (amendment 21): every camera sees the player in all 17 rooms, the shed
   and the front yard, first person the room past his body. The crawlspace has no lamp or switch: its light is WP
   13.23's.
+
+## Amendment 21 (2026-10-22, WP 12.3): the agent eye
+
+- **What it casts** (engine/dev/eye.ts): a ray from the view's camera through each cell's centre, the camera
+  unprojected as the frame projects (its inverse projection, then its world matrix, so a classic view's height boost,
+  engine/gfx/cameras/boost.ts, is in the ray; WebGPU's depth runs 0 to 1), cast at the read-only queries
+  (engine/sim/queryView.ts) up to the far plane. The plan's "raster built from physics shapes" is these casts: the
+  shapes are the queries'. A body an entity's component holds (`body`, the first holder in id order) is that entity's:
+  the player, an actor, a prop by its id, else the component's name. Any other body is the level's.
+- **What the frame draws** (engine/dev/eyeFaces.ts): the physics world keeps bodies where the frame draws nothing (a
+  storey cut away, a wall the cutaway cut down, a roof, a prop on a cut storey, a collider's air round a chair's
+  legs), so a hit counts only where a drawn face lies within 2 cm of it and shows to the ray (`drawnFaces`: every
+  visible mesh's and drawn instance's triangles in world space, in a grid of 1 m cubes; a material's culled side does
+  not show, as the ID pass draws it); elsewhere the ray goes on past it, up to 16 casts (`MARCHES`). A merged mesh's
+  box would not do: a storey's door heads span the storey, their box round the floor above. An actor's body counts
+  wherever it is, standing for his puppet, which the GPU skins.
+- **First person** looks from inside the player's capsule, so the eye leaves the player's body out; its frame draws the
+  arms, which have no body, and the agreement spec asks it only about the level there.
+- **Headless frames** (`camera.follow(n)`, engine/app/viewMembers.ts and view.ts `follow`): headless runs no frames,
+  so a view's camera stays where a dev action found the player and a follow camera's ball stays at its arm's base;
+  `follow` moves it on by n frames of 1/60 s, drawing nothing and never stepping (view state only, never recorded), as
+  a page's frames would. `x eye` moves the camera on by a second of them before it looks.
+- **The picture**: `@` the player, `#` a wall, `.` a floor (a face within about 45° of up, `FLOOR_UP`), a letter per
+  kind (upper case for actors), and its legend. `__engine.eye` looks at 96 × 54 cells by default (16:9, as the page);
+  `x eye` prints 56 × 16 (a terminal's characters are about twice as tall as wide) and names six things at most.
+- **Where it runs**: the member `__engine.eye` reads the view's camera, its scene and its queries (`RunView.queries()`,
+  engine/app/view.ts: the QueryView the view already held for its cameras), so a page and a headless run with its view
+  (`createHeadless({ view: true })`, which imports the member) both have it; `node x eye <scene>` is the second. The
+  layer rule keeps three.js out of engine/dev: the eye's camera and objects are structural types, its math core/math's,
+  and WebGPU's coordinate system its value (2001), which the unit test checks against three.js's.
+- **Measured**: the trigger's question, in Node (labs/playground/scenes/site-eye.test.ts): with the player at each of
+  the house's 17 rooms (ducked in the crawlspace), the shed and the front yard, every camera but first person sees him,
+  first person the room past his body (finding WP 13.18's crawlspace, props and wall cuts, amendment 20's fix);
+  tests/e2e/eye.spec.ts, the box's room-hero and hall-props, the hero at his spawn and walked two ways, 22 cameras
+  (each classic view in both projections, the 3D cameras, the follow cameras and first person): the eye and the ID pass
+  agree on 256 of 258 cases (99.2%; the Done-when's bound is 95%), both misses a follow camera still inside the hero's
+  capsule two frames after a switch (from inside an actor's body the eye sees only him; his puppet, slimmer, may not
+  fill the frame). The spec steps once before it looks: a scene's bodies join the queries at the first physics step.
+- **Beyond its Owns**: engine/app/{view,headless,viewMembers}.ts and their tests (the members `eye` and
+  `camera.follow`), tests/e2e/box-members.spec.ts (every member in the page), the tests beside each file, the house
+  test, docs/GAME-GUIDE.md's command row and the stress-box skill's quick loop.

@@ -2861,6 +2861,7 @@ For the agents who maintain the engine.
 - `CameraInfo` (interface): What `camera.get()` and `camera.set(code)` return: the camera as a code, in words, and its pose.
 - `createRunView` (function): Builds the view of a run (see the file comment).
 - `DEFAULT_CAMERA` (const): The camera code a view starts with when none is given.
+- `FOLLOW_FRAME` (const): A frame `follow` moves the camera by, real seconds: a 60 Hz page's.
 - `HEADLESS_ASPECT` (const): The aspect a view frames for when nothing draws it (headless): 16:9, the e2e viewport's.
 - `RunView` (interface): The view of a run (see the file comment).
 - `RunViewOptions` (interface): What a view is made from.
@@ -3323,6 +3324,32 @@ For the agents who maintain the engine.
 - `parseSeeds` (function): Seeds as a sweep takes them: `1-20`, `5` (1 to 5), `3,7,9`, a count or a list; 1 to 500 whole numbers from 0.
 - `sweepBot` (function): Plays `plan` from a fresh session of `scene` per seed (see the file comment): one row for the scene.
 - `SweepOptions` (interface): How a sweep starts each run: the scene's settings over its own, its registry and its level.
+
+### [`engine/dev/eye.ts`](../engine/dev/eye.ts)
+
+- `asciiOf` (function): `view` as text, a character a cell, and its legend (see the file comment).
+- `EYE_SIZE` (const): The raster's size by default (cells across and down): the page's 16:9 at a tenth of 960 × 540.
+- `EyeCamera` (interface): What the eye reads of a three.js camera as placed: its matrices and its depth's convention.
+- `eyeJson` (function): `view` as plain data (see `EyeJson`).
+- `EyeJson` (interface): The eye's answer as plain data, for `__engine.eye` and `x eye`: the raster as text, its legend and what it sees.
+- `EyeOptions` (interface): How the eye looks: the raster's cells across and down (`EYE_SIZE`), a body to look past, and what the view draws.
+- `EyeOwner` (interface): Who holds a body: its entity, a name for the legend, and whether it is the player or an actor.
+- `EyeThing` (interface): One thing the eye sees: its key (`entity:7`, `level`), its kind, its entity, and the cells it covers.
+- `EyeView` (interface): What a camera sees (see the file comment).
+- `FLOOR_UP` (const): How far up a surface's normal points for the picture to draw it as floor (0.7: the walkable slope's, 45.57°).
+- `look` (function): What `camera`, as placed, sees of the bodies `queries` reach, named by `owners` (see the file comment).
+- `ownersOf` (function): Each body held by an entity's component (its `body`, a whole number), by body id; the first holder wins.
+- `seen` (function): Whether `view` sees `entity` in at least one cell.
+- `WEBGPU_COORDINATES` (const): three.js's `WebGPUCoordinateSystem`, the view's cameras' (engine/gfx/cameras/place.ts): depth from 0 to 1.
+
+### [`engine/dev/eyeFaces.ts`](../engine/dev/eyeFaces.ts)
+
+- `drawnFaces` (function): Indexes what `root` draws (see the file comment).
+- `EyeAttribute` (interface): What `drawnFaces` reads of a three.js buffer attribute: its count and each item's components.
+- `EyeFaces` (interface): The drawn faces (see the file comment).
+- `EyeObject` (interface): What `drawnFaces` reads of a three.js object: `Object3D`, `Mesh` and `InstancedMesh`, as far as it needs.
+- `FACE_CELL` (const): The grid's cube, m: a triangle is listed in every cube its box, `FACE_NEAR` wider, overlaps.
+- `FACE_NEAR` (const): How far from a drawn face a struck point may lie and be on it, m: a collider and its mesh meet within it.
 
 ### [`engine/dev/feel/anim.ts`](../engine/dev/feel/anim.ts)
 
@@ -7721,6 +7748,15 @@ For the agents who maintain the engine.
 ### [`tools/cmd/eval.ts`](../tools/cmd/eval.ts)
 
 - `default` (default): Evaluates JavaScript in the page `x inspect` keeps open, and prints its value as JSON (PLAN.md §8.1, WP 2.7): `node x eval "__engine.hash()"`.
+
+### [`tools/cmd/eye.ts`](../tools/cmd/eye.ts)
+
+- `default` (default): `node x eye <scene>` (PLAN.md WP 12.3, §5.8): the agent eye in Node, no GPU.
+- `EYE_FRAMES` (const): The frames the camera is moved on by before the eye looks: a second of a page's, so a follow camera has swung out.
+- `EYE_PRINT` (const): The picture's size by default: 56 × 16 characters, the page's 16:9 in a terminal's tall characters.
+- `seenText` (function): What the summary says it sees: the first `SUMMARY_THINGS` things (`thingText`), then how many more.
+- `SUMMARY_THINGS` (const): How many things the summary names, most cells first; `eye.json` lists them all.
+- `thingText` (function): One thing seen, as the summary names it: the player, the level, or its kind and entity; its share, or its cells.
 
 ### [`tools/cmd/feel.ts`](../tools/cmd/feel.ts)
 

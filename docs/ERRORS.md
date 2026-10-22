@@ -283,13 +283,13 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `headlessHost was given {value}, not a headless engine`
 - Fix: pass the object createHeadless resolved to
-- Registered in: [`engine/app/headless.ts` line 69](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 70](../engine/app/headless.ts)
 
 ### APP_OTHER_SCENE
 
 - Message: `this engine draws {shown}, so it cannot start {scene}`
 - Fix: play {scene} in its own page (labs/<name>/?scene=<name>), or headless: createHeadless({ scene: '{scene}' })
-- Registered in: [`engine/app/headless.ts` line 73](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 74](../engine/app/headless.ts)
 
 ### APP_PLAY_SETTING
 

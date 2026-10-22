@@ -41,6 +41,7 @@ const CALLS: Record<string, Call> = {
     expect(() => call('bot', { to: [{ x: 1.5, z: 1.5 }] })).toThrow('[SIM_NO_ACTOR] the bot has no actor to work on'),
   'camera.get()': (_e, call) => expect(call('camera.get')).toMatchObject({ code: 'cam=iso' }),
   'camera.set()': (_e, call) => expect(call('camera.set', 'cam=brawler')).toMatchObject({ code: 'cam=brawler' }),
+  'camera.follow()': (_e, call) => expect(call('camera.follow', 2)).toMatchObject({ code: 'cam=iso' }),
   'capture()': (e, call) => {
     const capture = e.capture();
     const at = call('scene.dump', { filter: 'pathMover#1' });
@@ -53,6 +54,7 @@ const CALLS: Record<string, Call> = {
   'describe()': (e) => expect(e.describe('setting', 'box.room.speed')).toMatchObject({ id: 'box.room.speed' }),
   'entities()': (e) => expect(e.entities('pathMover').map((entity) => entity.id)).toEqual([1, 2, 3]),
   errors: (e) => expect(e.errors).toEqual([]),
+  'eye()': (_e, call) => expect(() => call('eye')).toThrow(/SIM_BAD_ARGUMENT.*without physics/), // the room has none: engine/dev/eye.test.ts looks through the hero's
   'feel()': (_e, call) => expect(() => call('feel')).toThrow(`[SIM_BAD_ARGUMENT] feel(id) got undefined: ${NO_ACTOR}`),
   'get()': (e) => expect(e.get(1)).toMatchObject({ id: 1, pathMover: { x: 3.5, z: 4.5 } }),
   'hash()': (e) => expect(e.hash()).toMatch(/^[0-9a-f]{16}$/),

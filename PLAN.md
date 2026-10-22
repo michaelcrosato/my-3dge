@@ -3510,6 +3510,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Size:** S
 - **Trigger:** image review costs more than it gives, and the ID pass cannot answer the question in Node (§9.1). Fired 2026-10-17 by the playground (ADR-0025): whether the player is in view from each camera in every room, asked in Node.
 - **Build:** a coarse visibility raster in Node, built from physics shapes and camera poses. It answers "is X visible from camera C" and draws ASCII thumbnails with a legend, with no GPU (after Pavilion Lite's `ascii`, §5.8).
+  - *Built (ADR-0025 amendment 21): a ray a cell from the view's camera as placed, at the physics queries, a hit counted only where the frame draws a face there (an actor's body always), so the cutaways and the cut storeys are the frame's; first person past the player's body; `__engine.eye` in the page and headless, `camera.follow` for headless frames, and `node x eye <scene>`; in Node, every camera but first person sees the player in all 17 of the house's rooms (labs/playground/scenes/site-eye.test.ts); against the ID pass on the box's 22 cameras, 256 of 258 cases agree (tests/e2e/eye.spec.ts).*
 - **Done when:** its answers agree with the ID pass on the box's cameras for at least 95% of cases.
 - **Verify:** `npm test -- engine/dev/eye && npm run e2e -- tests/e2e/eye.spec.ts`
 

@@ -1,6 +1,6 @@
 /**
  * @file The view's inspector members (PLAN.md §8.3, WP 2.7): `ready`, `render`, `shot`, `camera.get`, `camera.set`,
- * `scene.dump` and `replay`, registered from here as entries of the registry kind `inspectorMember`
+ * `camera.follow`, `scene.dump` and `replay`, registered from here as entries of the registry kind `inspectorMember`
  * (engine/dev/members.ts), so `window.__engine` in a page and `createHeadless` in Node list the same members.
  * Headless, `render` and `shot` throw `DEV_NO_RENDERER` (they need a GPU); `camera` and `scene.dump` need the
  * scene's view (`createHeadless({ view: true })`, else `APP_NO_VIEW`); `ready` and `replay` work everywhere.
@@ -90,6 +90,12 @@ defineMember('camera.set', {
     options: { type: 'object', default: {}, description: '{ blend }: true blends into it (the view setting cam.blend’s seconds) instead of cutting.' }, // prettier-ignore
   },
   impl: (h, code: string, options: { blend?: boolean }) => viewOf(h, 'camera.set').setCamera(code, options),
+});
+
+defineMember('camera.follow', {
+  help: "Moves the camera on by n frames of 1/60 s, drawing nothing and never stepping, as a page's frames move it: headless, where no frames run, it catches up with a player a dev action moved and a follow camera swings out; view only, never recorded; returns camera.get().", // prettier-ignore
+  args: { n: { type: 'integer', default: 60, minimum: 1, maximum: 600, description: 'How many frames.' } },
+  impl: (h, n: number) => viewOf(h, 'camera.follow').follow(n),
 });
 
 defineMember('scene.dump', {

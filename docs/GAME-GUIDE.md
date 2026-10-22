@@ -148,6 +148,7 @@ Every command prints its verdict first, about 20 lines at most, and writes `out/
 | `node x sim labs/game/scenes/play.ts [--steps n] [--seed s] [--set k=v] [--feel]` | Runs a scene in Node: its hash, events, entities; `--feel` measures the player |
 | `node x replay labs/game/replays [--browser sim] [--update] [--bisect]` | Checks replays' goldens; `--update` records them; `--bisect` finds where two runs part |
 | `node x shot labs/game [--cam code] [--set k=v] [--png]`    | Renders the page on WebGPU: coverage, visible objects, a text thumbnail; an image only with `--png` |
+| `node x eye labs/game/scenes/play.ts [--cam code] [--steps n]` | What a camera sees of the bodies, in Node with no GPU: a text picture and its legend (`__engine.eye()` in a page) |
 | `node x film labs/game --steps "…" [--compare ref]`         | Films scripted play as a contact sheet; `--compare` names the objects whose pixels changed |
 | `node x gallery <kind> [id] --page labs/game [--look id]`   | Films every prop, material, emitter, look, body or move as a labelled contact sheet; `#gallery/<kind>/<id>` opens one on any page |
 | `node x inspect --page labs/game`, then `node x eval "<js>"`, `node x dump`, `node x set <key> <value>` | A live headless page to question: the HUD through DOM queries, `__engine` |

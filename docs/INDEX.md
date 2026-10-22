@@ -295,9 +295,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createStore`, `memoryBackend`, `Store`, `STORE_CODES`, `STORE_FORMAT`, `STORE_MODES`, `StoreBackend`, `StoreMode`, `StoreOptions`
   - Tests: [`engine/app/store.test.ts`](../engine/app/store.test.ts)
 - [`view.ts`](../engine/app/view.ts): The view of a run (PLAN.md §6.4's `view.update`, §8.3, WP 2.7): what a running scene looks like, built without a GPU, so a page draws it and `createHeadless({ view: true })` dumps it in Node.
-  - Exports: `CameraInfo`, `createRunView`, `DEFAULT_CAMERA`, `HEADLESS_ASPECT`, `RunView`, `RunViewOptions`, `VIEW_CODES`, `ViewFrame`
+  - Exports: `CameraInfo`, `createRunView`, `DEFAULT_CAMERA`, `FOLLOW_FRAME`, `HEADLESS_ASPECT`, `RunView`, `RunViewOptions`, `VIEW_CODES`, `ViewFrame`
   - Tests: [`engine/app/view.test.ts`](../engine/app/view.test.ts)
-- [`viewMembers.ts`](../engine/app/viewMembers.ts): The view's inspector members (PLAN.md §8.3, WP 2.7): `ready`, `render`, `shot`, `camera.get`, `camera.set`, `scene.dump` and `replay`, registered from here as entries of the registry kind `inspectorMember` (engine/dev/members.ts), so `window.__engine` in a page and `createHeadless` in Node list the same members.
+- [`viewMembers.ts`](../engine/app/viewMembers.ts): The view's inspector members (PLAN.md §8.3, WP 2.7): `ready`, `render`, `shot`, `camera.get`, `camera.set`, `camera.follow`, `scene.dump` and `replay`, registered from here as entries of the registry kind `inspectorMember` (engine/dev/members.ts), so `window.__engine` in a page and `createHeadless` in Node list the same members.
   - Exports: `AppHost`
   - Tests: [`engine/app/viewMembers.test.ts`](../engine/app/viewMembers.test.ts)
 
@@ -438,6 +438,12 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`botSweep.ts`](../engine/dev/botSweep.ts): The bot's seed sweep (PLAN.md WP 5.6, I-38): `sweepBot(scene, seeds, plan)` plays the bot's run (engine/dev/bot.ts `runBot`) from a fresh session of the scene per seed (`1-20`, `5` for 1 to 5, `3,7,9`: `parseSeeds`), and gives one row for the scene, its seeds' runs inside and their sums: how many arrived, stuck, stopped or ran out, and the most steps a run took.
   - Exports: `BotRow`, `parseSeeds`, `sweepBot`, `SweepOptions`
   - Tests: [`engine/dev/bot.test.ts`](../engine/dev/bot.test.ts)
+- [`eye.ts`](../engine/dev/eye.ts): The agent eye (PLAN.md WP 12.3, §5.8; doctrine: Verifiable without a display): what a camera sees, worked out from the physics shapes with no GPU, so an agent asks "is X in view from camera C" in Node.
+  - Exports: `asciiOf`, `EYE_SIZE`, `EyeCamera`, `eyeJson`, `EyeJson`, `EyeOptions`, `EyeOwner`, `EyeThing`, `EyeView`, `FLOOR_UP`, `look`, `ownersOf`, `seen`, `WEBGPU_COORDINATES`
+  - Tests: [`engine/dev/eye.test.ts`](../engine/dev/eye.test.ts)
+- [`eyeFaces.ts`](../engine/dev/eyeFaces.ts): What the frame draws, as the agent eye asks it (PLAN.md WP 12.3; engine/dev/eye.ts): `drawnFaces(root)` indexes every triangle the view's scene draws (each visible mesh's, each drawn instance's, in world space; the sky's, `userData.background`, left out, and a skinned mesh's, whose shape the GPU poses) in a grid of `FACE_CELL` cubes, and `faceAt(point, dir)` says whether one lies within `FACE_NEAR` of a point a ray struck and shows its face to that ray: that face's normal, turned against the ray, else null.
+  - Exports: `drawnFaces`, `EyeAttribute`, `EyeFaces`, `EyeObject`, `FACE_CELL`, `FACE_NEAR`
+  - Tests: [`engine/dev/eyeFaces.test.ts`](../engine/dev/eyeFaces.test.ts)
 - [`gallery.ts`](../engine/dev/gallery.ts): The gallery (PLAN.md WP 7.7): every registered entry of a kind with a `gallery` field (engine/core/gallery.ts) filmed as a few frames, so a kind's twenty entries are reviewed on one contact sheet rather than twenty shots.
   - Exports: `burstLife`, `fitCamera`, `GALLERY_CODES`, `GALLERY_ELEVATION`, `GALLERY_FOV`, `GALLERY_STAGING`, `GalleryFrame`, `galleryFrames`, `galleryKindsOf`, `galleryProblem`, `galleryRoute`, `GalleryRoute`, `galleryStart`
   - Tests: [`engine/dev/gallery.test.ts`](../engine/dev/gallery.test.ts)
@@ -1940,6 +1946,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`eval.ts`](../tools/cmd/eval.ts): Evaluates JavaScript in the page `x inspect` keeps open, and prints its value as JSON (PLAN.md §8.1, WP 2.7): `node x eval "__engine.hash()"`.
   - Exports: `default`
   - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
+- [`eye.ts`](../tools/cmd/eye.ts): `node x eye <scene>` (PLAN.md WP 12.3, §5.8): the agent eye in Node, no GPU.
+  - Exports: `default`, `EYE_FRAMES`, `EYE_PRINT`, `seenText`, `SUMMARY_THINGS`, `thingText`
+  - Tests: [`tools/cmd/eye.test.ts`](../tools/cmd/eye.test.ts)
 - [`feel.ts`](../tools/cmd/feel.ts): `node x feel <lab> [--course <name,…|all>]` (PLAN.md WP 13.4, docs/PLAYGROUND.md §9.1): runs a lab's feel courses headless and judges every number against its reference and tolerance (engine/dev/feel/run.ts).
   - Exports: `courseName`, `default`, `labOf`, `missText`, `toleranceText`
   - Tests: [`tools/cmd/feel.test.ts`](../tools/cmd/feel.test.ts)
