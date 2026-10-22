@@ -62,6 +62,7 @@ import type { AppHost } from './viewMembers';
 import './animMember';
 import './feelMember';
 import './viewMembers';
+import '../dev/galleryShoot'; // the gallery's members: __engine.gallery in a page and headless alike
 
 /** The codes this module raises, with their fixes. */
 export const HEADLESS_CODES = defineCodes('app', {

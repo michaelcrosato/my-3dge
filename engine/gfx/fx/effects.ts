@@ -51,11 +51,11 @@ import {
   type Emitter,
   type FxLight,
 } from './emitters';
-import { ParticlePool, type BurstOptions, type ParticleStats } from './particles';
+import { ParticlePool, type BurstOptions, type ParticleStats, type ParticleView } from './particles';
 import { createRibbons, type TrailSampleLike } from './ribbons';
 import { eventOptions, eventPosition, type FxEventPayload } from './payload';
 import { ScreenShake } from './shake';
-import { createSprites } from './sprites';
+import { createSprites, STREAK } from './sprites';
 
 /** The pools' sizes: see the file comment. */
 export const FX_BUDGET = { particles: 4096, glows: 1024, decals: 1024, ribbons: 32, boltLights: 4 } as const;
@@ -120,6 +120,11 @@ export interface Effects {
   /** This frame's draw calls: one per used page of sprites and decals, one for the ribbons. */
   drawCalls(): number;
   stats(): FxStats;
+  /**
+   * The box round every live particle, each its size (a streak its length, sprites.ts) out from its middle (m); null
+   * when none lives: what a camera frames an effect by (the gallery's emitters, engine/dev/galleryShoot.ts).
+   */
+  bounds(): { min: [number, number, number]; max: [number, number, number] } | null;
   /** Registers every pool with the warm-up (`fx:sprites`, `fx:decals`, `fx:ribbons`); dispose to stop. */
   register(warmup: Pick<Warmup, 'register'>): { dispose(): void };
   /** Forgets everything running (particles, rings, emitters, shake, the trace read): the view's run started again. */
@@ -158,6 +163,7 @@ export function createEffects(options: EffectsOptions = {}): Effects {
   const streams = new RngStreams(1);
   const fxRng = options.fxRng ?? ((...keys) => streams.stream(...keys));
   const pool = new ParticlePool(FX_BUDGET.particles);
+  const reading = {} as ParticleView; // the particle `bounds` reads
   const sprites = createSprites({ capacity: FX_BUDGET.particles + FX_BUDGET.glows });
   const decals = createDecals({ capacity: FX_BUDGET.decals });
   const ribbons = createRibbons({ capacity: FX_BUDGET.ribbons });
@@ -338,6 +344,19 @@ export function createEffects(options: EffectsOptions = {}): Effects {
     },
     lights: () => frameLights.map((light) => ({ ...light, position: [...light.position] })),
     drawCalls: () => sprites.batch.drawCalls() + decals.batch.drawCalls() + (ribbons.count > 0 ? 1 : 0),
+    bounds() {
+      if (!pool.count) return null;
+      const [min, max]: [number, number, number][] = [
+        [Infinity, Infinity, Infinity],
+        [-Infinity, -Infinity, -Infinity],
+      ];
+      for (let i = 0; i < pool.count; i++) {
+        const { x, y, z, vx, vy, vz, size, stretch } = pool.read(i, reading);
+        const r = size + (stretch ? Math.hypot(vx, vy, vz) * STREAK : 0); // a streak's reach (sprites.ts)
+        [x, y, z].forEach((v, k) => ([min[k], max[k]] = [Math.min(min[k], v - r), Math.max(max[k], v + r)]));
+      }
+      return { min, max };
+    },
     stats: () => ({
       particles: pool.stats(),
       sprites: sprites.batch.count,

@@ -149,6 +149,7 @@ Every command prints its verdict first, about 20 lines at most, and writes `out/
 | `node x replay labs/game/replays [--browser sim] [--update] [--bisect]` | Checks replays' goldens; `--update` records them; `--bisect` finds where two runs part |
 | `node x shot labs/game [--cam code] [--set k=v] [--png]`    | Renders the page on WebGPU: coverage, visible objects, a text thumbnail; an image only with `--png` |
 | `node x film labs/game --steps "…" [--compare ref]`         | Films scripted play as a contact sheet; `--compare` names the objects whose pixels changed |
+| `node x gallery <kind> [id] --page labs/game [--look id]`   | Films every prop, material, emitter, look, body or move as a labelled contact sheet; `#gallery/<kind>/<id>` opens one on any page |
 | `node x inspect --page labs/game`, then `node x eval "<js>"`, `node x dump`, `node x set <key> <value>` | A live headless page to question: the HUD through DOM queries, `__engine` |
 | `node x perf labs/game [--scene id]`                        | Performance as counters (ms per step and frame, draw calls), never frames per second |
 | `node x describe [kind [id]]`                               | The registries: every kind's fields and entries (materials, moves, looks, sounds…) |

@@ -3115,6 +3115,13 @@ For the agents who maintain the engine.
 - `Scope` (interface): Listeners that leave together: `dispose()` removes every one added through this scope or its children.
 - `TraceRecord` (interface): One traced emit.
 
+### [`engine/core/gallery.ts`](../engine/core/gallery.ts)
+
+- `Gallery` (interface): How the gallery shows an entry: its camera, how long it plays (s) and the states it is shown in.
+- `GALLERY_CAMERAS` (const): The camera words a `gallery` field takes besides a camera code.
+- `galleryField` (function): The `gallery` field of a kind's schema, with the kind's own defaults (see the file comment).
+- `galleryKinds` (function): The kinds of `registry` whose schema has the field `gallery`, sorted.
+
 ### [`engine/core/hash.ts`](../engine/core/hash.ts)
 
 - `Canonical` (type): A value the canonical form holds; see the file comment.
@@ -3372,6 +3379,41 @@ For the agents who maintain the engine.
 - `MeasureResult` (interface): One measure's verdict.
 - `RUN_CODES` (const): The codes this module raises, with their fixes.
 - `runCourse` (function): Plays `course` in a session of its own and judges its measures (see the file comment).
+
+### [`engine/dev/gallery.ts`](../engine/dev/gallery.ts)
+
+- `burstLife` (function): How long an emitter's burst plays in the gallery (s): while every particle of its longest-lived part still lives, its own (with a count or a rate) and each layer's (its `set.life`, else its emitter's), the shortest life of each.
+- `fitCamera` (function): The camera code of a frame's view: a code as written, or a fixed camera (engine/gfx/cameras/fixed.ts) standing at `azimuth` round `bounds` (the subject, as the stage draws it; azimuth from +Z toward +X, as an orbit's), 25° above its middle and looking at it, far enough for its bounding sphere to fill the lens's height with a margin.
+- `GALLERY_CODES` (const): The codes this module raises, with their fixes.
+- `GALLERY_ELEVATION` (const): How far above the subject's horizon a fitted view stands (°).
+- `GALLERY_FOV` (const): A fitted view's lens, degrees: the orbit camera's (engine/gfx/cameras/orbit.ts).
+- `GALLERY_STAGING` (const): The kinds the gallery stages (engine/dev/galleryScene.ts), with how it films each.
+- `GalleryFrame` (interface): One frame of an entry: what the scene stages for it, how long it holds and plays, and where the camera stands.
+- `galleryFrames` (function): The frames of entry `id` of `kind` (see the file comment); the kind must be one the gallery films.
+- `galleryKindsOf` (function): The kinds the gallery films: those whose schema has the `gallery` field and that it stages.
+- `galleryProblem` (function): Whether `kind` and `id` name an entry the gallery films; else the warning's values (see `DEV_GALLERY_UNKNOWN`).
+- `galleryRoute` (function): Reads a deep link (see the file comment): null when `hash` is no gallery link, else the entry it shows, after warning about a wrong kind or id (`DEV_GALLERY_UNKNOWN`), which shows the first instead.
+- `GalleryRoute` (interface): What a deep link names: the kind and the entry to show.
+- `galleryStart` (function): The settings a page opened on `route` starts with: what the scene stages first, its first frame's view settings.
+
+### [`engine/dev/galleryScene.ts`](../engine/dev/galleryScene.ts)
+
+- `FIGURE_STATES` (const): Every name `figureState` knows: walk and run, the sample states, the poses and the stances.
+- `figureState` (function): A figure's state by name: what it is told and how far forward it walks; null for a name it does not know.
+- `GALLERY_AT` (const): Where the subject stands: the middle of an empty stage's ground (engine/gfx/stage.ts: 16 × 16 m from the origin).
+- `GALLERY_SCENE` (const): The gallery scene's id.
+- `galleryScene` (function): Declares the gallery's settings, its component and its scene on `registry`, unless it has them.
+
+### [`engine/dev/galleryShoot.ts`](../engine/dev/galleryShoot.ts)
+
+- `BURST_REACH` (const): The most an emitter's frame takes in, across (m): a burst's 3; an effect spread over an area wider than 1 m (rain, snow, fireflies), a 1.2 m patch of it, so its drops are drops and not specks.
+- `createGalleryDriver` (function): The driver of a page opened on `route` (see the file comment), playing in `run`.
+- `GALLERY_SHOOT_CODES` (const): The codes this module raises, with their fixes.
+- `GalleryDriver` (interface): A deep link's live gallery: called once per drawn frame (see the file comment).
+- `GalleryRun` (interface): The run a driver plays in: its view, and the recorded session it stages through (engine/app/headless.ts).
+- `GalleryShot` (interface): One filmed frame: its label, the tick, the camera, the shot's size, its pixels (base64) and what the ID pass saw.
+- `GalleryView` (interface): The view a gallery films through: the run's stage and its camera (engine/app/view.ts).
+- `subjectBounds` (function): The bounds of what the stage draws for the subject: its props, puppets and stand-ins (the ground left out).
 
 ### [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)
 
@@ -3894,6 +3936,7 @@ For the agents who maintain the engine.
 - `spriteMaterial` (function): The sprites' material: see the file comment.
 - `Sprites` (interface): The sprites of a frame: see the file comment.
 - `SpritesOptions` (interface): What `createSprites` takes.
+- `STREAK` (const): How far a streak reaches per m/s of its speed across the view, seconds: its length is `size + speed × STREAK`.
 
 ### [`engine/gfx/geometry/box.ts`](../engine/gfx/geometry/box.ts)
 
@@ -7598,6 +7641,20 @@ For the agents who maintain the engine.
 - `sameSources` (const): Whether the working tree's sources are commit `sha`'s: no tracked change, no untracked file git does not ignore.
 - `SHOT` (const): The shot a film takes: the pixels, the ID pass and the thumbnail, without the look metrics.
 - `simSteps` (const): `n` sim steps with what the virtual device holds.
+
+### [`tools/cmd/gallery.ts`](../tools/cmd/gallery.ts)
+
+- `BURST_SHOWN` (const): The least share an emitter covers in its fullest frame, about 8 pixels of 240 × 135: a burst thins to its last specks, and a sky effect run from the floor (snow, which no floor stops) falls out of sight at once.
+- `default` (default): Contact sheets from the gallery (PLAN.md WP 7.7, §8.5): `node x gallery <kind> [id]` films every entry of a kind with a `gallery` field (engine/core/gallery.ts), or the one named, in a page's gallery: it opens `<page>#gallery/<kind>/<id>` as `x shot` opens a page (Vite, Chromium on WebGPU, the virtual clock, seed 1), calls `__engine.gallery.shoot` for each entry (engine/dev/galleryShoot.ts: each frame staged, its camera fitted, shot), and lays the frames out on x film's contact sheet (tools/lib/filmSheet.ts), each labelled: an entry a row, or eight entries a row when each has one frame.
+- `emptyFrames` (function): The frames of `entry` that show too little: each of a still subject's below `SHOWN`; a burst's all of them when its fullest is below `BURST_SHOWN`.
+- `Filmed` (interface): An entry's filmed frames, as `gallery.shoot` returns them; `burst` for an emitter's.
+- `PAGE` (const): The page the gallery films unless `--page` says: every lab's entries registered.
+- `readSize` (function): Reads `--size WxH`; throws `UsageError`.
+- `seenShare` (function): What a shot's ID pass sees of its subject: the share of the frame besides the stage's ground (stage.ts).
+- `sheetFrames` (function): The sheet's frames: every entry's in order, labelled, with its pixels.
+- `SHOWN` (const): The least share of a frame a still subject covers in each of its frames: about 65 pixels of 240 × 135.
+- `shows` (const): Whether a shot shows its subject: its ID pass sees at least `SHOWN` of it.
+- `SIZE` (const): The shots' size unless `--size` says: 16:9, wide enough for a 30-letter label.
 
 ### [`tools/cmd/help.ts`](../tools/cmd/help.ts)
 

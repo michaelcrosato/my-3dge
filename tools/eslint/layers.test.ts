@@ -195,6 +195,12 @@ const CASES: Case[] = [
     "export { NavGrid } from '../world/nav';",
   ),
   layer(
+    'dev/galleryScene.ts, the gallery’s scene, imports only the sim-side layers',
+    'engine/dev/galleryScene.ts',
+    "export { galleryFrames } from './gallery';",
+    "export { spawnProp } from '../sim/props';",
+  ),
+  layer(
     'app imports every layer, but three.js only through gfx',
     'engine/app/engine.ts',
     "export { WebGPURenderer } from 'three/webgpu';",

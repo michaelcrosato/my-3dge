@@ -239,7 +239,7 @@ Raised once per word by the animator (engine/anim/character.ts `step`, through `
 
 - Message: `the URL parameter {key}={value} {problem}`
 - Fix: {fix}
-- Registered in: [`engine/app/routes.ts` line 37](../engine/app/routes.ts)
+- Registered in: [`engine/app/routes.ts` line 42](../engine/app/routes.ts)
 
 ### APP_BAD_STORE
 
@@ -253,13 +253,13 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `a frame threw, so the loop stopped: {message}`
 - Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
-- Registered in: [`engine/app/engine.ts` line 88](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 89](../engine/app/engine.ts)
 
 ### APP_NO_FRAME
 
 - Message: `no frame was drawn in {tries} tries: the warm-up never finished`
 - Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 96](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 97](../engine/app/engine.ts)
 
 ### APP_NO_LEVEL
 
@@ -271,7 +271,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `the page has no replay {name}`
 - Fix: use one of: {names}
-- Registered in: [`engine/app/engine.ts` line 92](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 93](../engine/app/engine.ts)
 
 ### APP_NO_VIEW
 
@@ -283,13 +283,13 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `headlessHost was given {value}, not a headless engine`
 - Fix: pass the object createHeadless resolved to
-- Registered in: [`engine/app/headless.ts` line 68](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 69](../engine/app/headless.ts)
 
 ### APP_OTHER_SCENE
 
 - Message: `this engine draws {shown}, so it cannot start {scene}`
 - Fix: play {scene} in its own page (labs/<name>/?scene=<name>), or headless: createHeadless({ scene: '{scene}' })
-- Registered in: [`engine/app/headless.ts` line 72](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 73](../engine/app/headless.ts)
 
 ### APP_PLAY_SETTING
 
@@ -301,7 +301,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 84](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 85](../engine/app/engine.ts)
 
 ### APP_STORE_BLOCKED
 
@@ -607,6 +607,22 @@ Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when
 - Fix: run a scene that spawns a player actor (spawnActor with player: true), or measure another course
 - Registered in: [`engine/dev/feel/run.ts` line 43](../engine/dev/feel/run.ts)
 
+### DEV_GALLERY_CLOSED
+
+- Message: `gallery.{member} films the gallery scene, but the page shows {scene}`
+- Fix: open the page on the gallery: add #gallery/<kind>/<id> to its URL (engine/dev/gallery.ts)
+- Registered in: [`engine/dev/galleryShoot.ts` line 38](../engine/dev/galleryShoot.ts)
+
+Thrown by `gallery.shoot` (engine/dev/galleryShoot.ts) on a page showing another scene than dev:gallery: only the gallery scene stages entries.
+
+### DEV_GALLERY_UNKNOWN
+
+- Message: `the gallery has no {what} {name}{suggestion}{instead}`
+- Fix: use one of: {names}
+- Registered in: [`engine/dev/gallery.ts` line 42](../engine/dev/gallery.ts)
+
+Warned for a deep link (`#gallery/<kind>/<id>`, engine/dev/gallery.ts `galleryRoute`) naming a kind with no gallery or an entry its kind lacks; thrown by the gallery members for the same names. The message lists the valid names.
+
 ### DEV_NO_METER
 
 - Message: `__engine.stats() has no meter to read on this host ({runtime})`
@@ -679,7 +695,7 @@ Raised by the geometry kit (engine/gfx/geometry/) when a builder gets sizes it c
 
 - Message: `a shot must be at least 1 × 1 whole pixels, not {width} × {height}`
 - Fix: pass size: { width, height } in whole pixels of at least 1, or leave it out to shoot at the drawing buffer's size
-- Registered in: [`engine/gfx/shot.ts` line 41](../engine/gfx/shot.ts)
+- Registered in: [`engine/gfx/shot.ts` line 44](../engine/gfx/shot.ts)
 
 ### GFX_COLD_PIPELINE
 

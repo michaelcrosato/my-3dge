@@ -11,6 +11,9 @@
  * - every other key is a setting, by its path, with its value as `x set` types it (`?box.room.speed=3`,
  *   `?gfx.resolution=full`): the settings schema checks each (engine/core/settings.ts), so `x set`, URL parameters
  *   and `__engine.set` reach the same settings the same way. `routeQuery` writes a query back.
+ * - the hash (`hash`, `location.hash`): a gallery deep link, `#gallery/<kind>/<id>` (WP 7.7, engine/dev/gallery.ts),
+ *   starts the gallery's scene (`dev:gallery`) on that entry on any page, whatever its scenes, a wrong name warning
+ *   with the valid ones (`DEV_GALLERY_UNKNOWN`); `gallery` names the entry.
  *
  * Invariants: an unknown key is an error naming the closest (a setting path or a route), like an unknown flag; a
  * malformed value is an error naming the fix (`APP_BAD_ROUTE`, `CORE_BAD_SETTING`, `GFX_BAD_CAMERA_CODE`); a query
@@ -26,10 +29,12 @@
  * routeQuery({ scene: 'room', settings: { 'time.scale': 0.5 } }); // '?scene=room&time.scale=0.5'
  * @see engine/app/routes.test.ts
  */
-import { codeError, defineCodes, didYouMean } from '../core/log';
+import { codeError, defineCodes, didYouMean, log as sharedLog, type Log } from '../core/log';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
 import { createSettings, type SettingValue } from '../core/settings';
 import { readCameraCode } from '../gfx/cameras/place';
+import { galleryRoute, galleryStart, type GalleryRoute } from '../dev/gallery';
+import { GALLERY_SCENE } from '../dev/galleryScene';
 import { getScene } from '../sim/scene';
 
 /** The codes this module raises, with their fixes. */
@@ -54,6 +59,8 @@ export interface Routes {
   replay?: string;
   /** Settings by path, typed. */
   settings: Record<string, SettingValue>;
+  /** The gallery's entry a deep link (`#gallery/<kind>/<id>`) opens, when it asked for one. */
+  gallery?: GalleryRoute;
 }
 
 /** What the routes are checked against: the page's scenes and the registry that declares them and the settings. */
@@ -61,6 +68,10 @@ export interface RouteOptions {
   /** The page's scene ids; the first is the default. */
   scenes: readonly string[];
   registry?: Registry;
+  /** The page's hash (`location.hash`): a gallery deep link opens the gallery's scene on its entry. */
+  hash?: string;
+  /** Where a deep link's wrong names are warned about (the shared log). */
+  log?: Log;
 }
 
 /** Throws `APP_BAD_ROUTE`. */
@@ -91,7 +102,8 @@ export function parseRoutes(search: string, options: RouteOptions): Routes {
     if (all.length > 1) bad(key, all.join(','), 'is given more than once', `give ${key} once`);
     return all[0] ?? null;
   };
-  const scene = sceneOf(one('scene'), options.scenes, registry);
+  const gallery = options.hash ? galleryRoute(options.hash, registry, options.log ?? sharedLog) : null;
+  const scene = gallery ? GALLERY_SCENE : sceneOf(one('scene'), options.scenes, registry);
   const seedText = one('seed');
   if (seedText !== null && !/^(0|[1-9]\d*)$/.test(seedText)) {
     bad('seed', seedText, 'is not a whole number from 0', 'write a seed as digits: ?seed=3');
@@ -117,7 +129,8 @@ export function parseRoutes(search: string, options: RouteOptions): Routes {
   for (const path of new Set([...params.keys()].filter((key) => !(ROUTE_KEYS as readonly string[]).includes(key)))) {
     settings[path] = store.get(path);
   }
-  return { scene, seed, ...(code ? { cam: code } : {}), ...(replay ? { replay } : {}), settings };
+  if (gallery) Object.assign(settings, galleryStart(gallery, registry));
+  return { scene, seed, ...(code ? { cam: code } : {}), ...(replay ? { replay } : {}), settings, ...(gallery ? { gallery } : {}) }; // prettier-ignore
 }
 
 /** A query for these routes: `?scene=room&cam=iso&time.scale=0.5` (keys in this order, settings last). */

@@ -28,6 +28,7 @@ export const PLAYER_BODY: BodySpec = {
     'The playground player: a teal jacket with an orange yoke, charcoal cargo trousers with knee pads and a belt, boots, gloves, short hair and a pack.',
   limbRadius: 0.055,
   torsoRadius: 0.205,
+  build: 'build:adult',
   slots: {
     skin: '#e3b48f',
     hair: '#2b1d16',

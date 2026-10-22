@@ -57,6 +57,12 @@ const CALLS: Record<string, Call> = {
   'get()': (e) => expect(e.get(1)).toMatchObject({ id: 1, pathMover: { x: 3.5, z: 4.5 } }),
   'hash()': (e) => expect(e.hash()).toMatch(/^[0-9a-f]{16}$/),
   'help()': (e) => expect(e.help('scene.dump')).toContain('options'),
+  'gallery.frames()': (_e, call) => expect(call('gallery.frames', 'prop', 'prop:crate')).toHaveLength(4),
+  'gallery.list()': (_e, call) => {
+    expect(call('gallery.list')).toContainEqual({ kind: 'prop', count: expect.any(Number) });
+    expect(call('gallery.list', 'body')).toContain('body:humanoid');
+  },
+  'gallery.shoot()': (_e, call) => expect(() => call('gallery.shoot', 'prop', 'prop:crate')).toThrow(/DEV_NO_RENDERER/),
   'info()': (e) => expect(e.info()).toMatchObject({ scene: 'box:room', headless: true, runtime: 'node' }),
   'input.axis()': (_e, call) => expect(call('input.axis', 'move', [0, 1])).toMatchObject({ axes: { move: [0, 1] } }),
   'input.hold()': (_e, call) => expect(JSON.stringify(call('input.hold', 'jump'))).toContain('jump'),

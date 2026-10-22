@@ -117,6 +117,7 @@ export function mannequinBody(body: MannequinData, R: RestBody, build: Build): B
     description: `The mannequin the library was measured on, ${(body.height / 1000).toFixed(2)} m: amber limbs, purple joint rings.`, // prettier-ignore
     slots: { ...MANNEQUIN_SLOTS },
     parts,
+    build: 'build:mannequin',
   };
 }
 

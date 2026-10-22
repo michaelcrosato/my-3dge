@@ -41,6 +41,7 @@
 import { JOINTS, SOCKETS } from '../../anim/skeleton';
 import { hex } from '../../core/color';
 import { didYouMean } from '../../core/log';
+import { galleryField, type Gallery } from '../../core/gallery';
 import { registry as sharedRegistry, type Entry, type Registry } from '../../core/registry';
 import type { Schema } from '../../core/schema';
 import { HUMANOID_BODY } from './bodies/humanoid';
@@ -106,6 +107,12 @@ export const BODY_FIELDS = {
   builds: { type: 'object', default: {}, description: 'By build id: the limbRadius and torsoRadius it changes.' },
   material: { type: 'string', default: 'material:puppet', description: 'The material of every part but eyes.' },
   glowMaterial: { type: 'string', default: 'material:puppetGlow', description: 'The unlit material of eyes.' },
+  build: {
+    type: 'string',
+    default: '',
+    description: "The build it is made for, which the gallery draws it on (engine/dev/galleryScene.ts); '' for any.",
+  },
+  gallery: galleryField({ states: ['idle', 'walk', 'run', 'guard', 'cast', 'kneel', 'hurt', 'knockedDown'] }),
 } as const satisfies Schema;
 
 /** A `body` entry: the parsed spec, its parts typed. */
@@ -127,6 +134,8 @@ export interface BodySpec {
   builds?: Readonly<Record<string, { limbRadius?: number; torsoRadius?: number }>>;
   material?: string;
   glowMaterial?: string;
+  build?: string;
+  gallery?: Gallery;
 }
 
 /** The names a point may give: the joints and the sockets. */

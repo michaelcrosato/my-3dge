@@ -3,8 +3,9 @@
  * (tests/pages/fxScene.ts) steps to the same hashes with effects on, off, and turned off half way, while the effects
  * play its events, draw its telegraphs, bolts and trail and run its brazier; events burst the emitters answering them
  * (the sim's trace read once, without listening); a running emitter keeps its rate across frames and its light
- * flickers; the budgets hold under a flood (pools never grow, the excess counted, at most 7 draw calls); every pool is
- * registered with the warm-up, all its pages made before it.
+ * flickers; the box live particles fill grows as they spread (`bounds`); the budgets hold under a flood (pools never
+ * grow, the excess counted, at most 7 draw calls); every pool is registered with the warm-up, all its pages made
+ * before it.
  * @see engine/gfx/fx/effects.ts
  */
 import { PerspectiveCamera, type Object3D } from 'three/webgpu';
@@ -109,6 +110,19 @@ describe('events', () => {
     expect(fx.event('hit', {}), 'no position: nothing').toBe(0);
     expect(fx.event('hit', { x: 1, z: 2, size: 2 })).toBe(34); // twice the sparks, and two stars twice the size
     expect(fx.stats().events).toBe(2);
+  });
+
+  it('say the box their particles fill, each its size out, as they spread; none before a burst', () => {
+    const fx = createEffects({ registry: createRegistry() });
+    expect(fx.bounds()).toBeNull();
+    fx.burst('emitter:sparks', [2, 1, 3]);
+    const born = fx.bounds()!;
+    [2, 1, 3].forEach((v, k) => expect([born.min[k] <= v, born.max[k] >= v]).toEqual([true, true]));
+    for (let k = 0; k < 15; k++) fx.frame(1 / 60, new PerspectiveCamera());
+    const spread = fx.bounds()!;
+    expect(spread.max[1] - spread.min[1]).toBeGreaterThan(born.max[1] - born.min[1]); // a quarter second on: wider
+    fx.reset();
+    expect(fx.bounds()).toBeNull();
   });
 
   it("play the sim's trace once, by its numbers", () => {

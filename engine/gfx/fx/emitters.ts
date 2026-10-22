@@ -32,6 +32,7 @@
  * @see engine/gfx/fx/emitters.test.ts
  */
 import { toLinear } from '../../core/color';
+import { galleryField } from '../../core/gallery';
 import { registry as sharedRegistry, type Entry, type Registry } from '../../core/registry';
 import type { Schema } from '../../core/schema';
 import { BUILT_IN_EMITTERS } from './presets';
@@ -155,6 +156,7 @@ export const EMITTER_FIELDS = {
     description: 'The light it gives while it runs.',
     properties: LIGHT_FIELDS,
   },
+  gallery: galleryField(),
 } as const satisfies Schema;
 
 /** The particle fields as an emitter entry holds them. */

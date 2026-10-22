@@ -23,6 +23,8 @@ import type { Finding } from './report';
 export interface FilmFrame {
   n: number;
   tick: number;
+  /** What the sheet labels it, instead of its number and tick (a gallery frame's entry and view). */
+  label?: string;
   width: number;
   height: number;
   rgba: Uint8Array;

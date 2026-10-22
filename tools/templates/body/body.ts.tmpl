@@ -32,4 +32,6 @@ export const {{name}} = defineBody('body:{{name}}', {
     ['limb', 'forearmL', 'handL', [0.95, 'limb'], [0.85, 'limb'], 'skin'],
     ['eye', 'eyeL', [0.12, 'head'], 'eye'],
   ],
+  build: 'build:heroic', // the build it is made for: node x gallery draws it on it
+  gallery: { camera: 'front', duration: 0, states: ['idle', 'walk', 'run', 'kneel'] }, // a frame a state
 });

@@ -43,6 +43,9 @@ import { attribute, dot, float, max, pow, uv, vec3 } from 'three/tsl';
 import { createInstancedBatch, PAGE_SLOTS, type InstancedBatch } from '../instancing';
 import type { ParticlePool, ParticleView } from './particles';
 
+/** How far a streak reaches per m/s of its speed across the view, seconds: its length is `size + speed × STREAK`. */
+export const STREAK = 0.03;
+
 /** What `createSprites` takes. */
 export interface SpritesOptions {
   /** The most sprites a frame: particles and glows (pages of 1,024 slots). */
@@ -169,7 +172,7 @@ export function createSprites(options: SpritesOptions): Sprites {
               .copy(right)
               .multiplyScalar(dx)
               .addScaledVector(up, dy)
-              .multiplyScalar(p.size + speed * 0.03);
+              .multiplyScalar(p.size + speed * STREAK);
             across
               .copy(right)
               .multiplyScalar(-dy)

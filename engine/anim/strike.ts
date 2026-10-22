@@ -148,13 +148,19 @@ export function createArmState(): ArmState {
   return { weight: 0, phase: 0, move: 0, ...path, ...shape };
 }
 
-/** Each move's key, made once: its fields hashed (core/hash.ts `hashValue`), 52 bits, the same in Node and Chromium. */
+/**
+ * Each move's key, made once: its fields hashed (core/hash.ts `hashValue`), 52 bits, the same in Node and Chromium;
+ * all but `gallery`, how the gallery films it (engine/core/gallery.ts), which never moves the body or the sim.
+ */
 const keys = new WeakMap<Move, number>();
 
 /** `m`'s key: equal for moves with equal fields, and (to 52 bits) different for any other (`ArmState.move`). */
 function moveKey(m: Move): number {
   let key = keys.get(m);
-  if (key === undefined) keys.set(m, (key = Number.parseInt(hashValue(m).slice(3), 16) || 1));
+  if (key === undefined) {
+    const { gallery: _gallery, ...motion } = m;
+    keys.set(m, (key = Number.parseInt(hashValue(motion).slice(3), 16) || 1));
+  }
   return key;
 }
 

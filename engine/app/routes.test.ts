@@ -2,14 +2,15 @@
  * @file Unit tests for engine/app/routes.ts (T1, PLAN.md §6.1, WP 2.7): `?scene` by id or by the name after its colon
  * (the page's first scene by default), `?seed`, `?cam` and `?cam3` as camera codes, `?replay`, and every other key
  * as a setting typed by the schema; every malformed or unknown key is an error naming the fix, and `routeQuery`
- * writes a query back that reads the same.
+ * writes a query back that reads the same; a gallery deep link opens the gallery's scene on its entry, on any page.
  * @see engine/app/routes.ts
  */
 import { describe, expect, it } from 'vitest';
 import { EngineError } from '../core/log';
-import { createRegistry } from '../core/registry';
+import { createRegistry, registry as sharedRegistry } from '../core/registry';
 import { defineSettings } from '../core/settings';
 import { defineScene } from '../sim/scene';
+import '../world/props/prop';
 import { parseRoutes, routeQuery } from './routes';
 
 /** A registry with two scenes and two settings. */
@@ -74,6 +75,15 @@ describe('parseRoutes', () => {
     expect(read('?demo.sped=2')).toMatch(/CORE_BAD_SETTING.*demo\.speed/);
     expect(read('?demo.speed=99')).toMatch(/CORE_BAD_SETTING.*maximum 10/);
     expect(codeOf(() => parseRoutes('', { scenes: [], registry }))).toMatch(/APP_BAD_ROUTE/);
+  });
+});
+
+describe('a gallery deep link', () => {
+  it('opens the gallery’s scene on its entry, on any page whatever its scenes; another hash is none', () => {
+    const routes = parseRoutes('?seed=2', { scenes: [], registry: sharedRegistry, hash: '#gallery/prop/prop:crate' });
+    expect([routes.scene, routes.seed, routes.gallery]).toEqual(['dev:gallery', 2, { kind: 'prop', id: 'prop:crate' }]);
+    expect(routes.settings).toEqual({ 'gallery.kind': 'prop', 'gallery.subject': 'prop:crate', 'gallery.state': '' });
+    expect(parseRoutes('?scene=hall', { scenes, registry: pageRegistry(), hash: '#top' }).scene).toBe('box:hall');
   });
 });
 

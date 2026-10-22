@@ -248,6 +248,15 @@ const LAYERS: Layer[] = [
     patterns: [RAPIER],
   },
   {
+    name: 'dev/galleryScene.ts',
+    files: ['engine/dev/galleryScene.ts'],
+    may: 'the sim-side layers (core, sim, physics, anim, world, input/intents, audio/dsp)',
+    fix: "the gallery's scene is sim-side: it stages from sim data, and engine/dev/gallery.ts films it",
+    never: ['gfx', 'ui', 'app', 'dev', DEVICES, AUDIO_RUNTIME],
+    notBeside: ['[^/]+'],
+    patterns: [RAPIER],
+  },
+  {
     name: 'app',
     files: ['engine/app/**'],
     may: 'every layer',

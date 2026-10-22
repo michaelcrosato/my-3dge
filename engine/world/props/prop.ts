@@ -34,6 +34,7 @@
  * getProp('prop:crate', reg).body.type; // 'dynamic': the engine's props come with the kind
  * @see engine/world/props/prop.test.ts
  */
+import { galleryField } from '../../core/gallery';
 import { registry as sharedRegistry, type Entry, type Registry } from '../../core/registry';
 import type { EntryOf, Schema } from '../../core/schema';
 import type { Point3 } from '../level/types';
@@ -225,6 +226,7 @@ export const PROP_FIELDS = {
     default: (touch: PropTouch): void => void touch,
     description: 'What using it does (the interact button): (touch) => void. Nothing by default.',
   },
+  gallery: galleryField({ camera: 'turntable' }),
 } as const satisfies Schema;
 
 /** How hard a knock is, as engine/physics/bodies.ts's `knock` takes it. */
