@@ -319,6 +319,18 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Sites (WP 13.15)**: levels standing on a terrain, each placed and turned in quarter turns, the terrain cut under them; the queries over all of it, the bodies, the ladders and the navigation over every storey and the terrain.
 `defineSite`, `getSite`, `makeSite`, `SITE_FIELDS`, `toWorld`, `toLocal`, `siteFloorBelow`, `siteSurfaceBelow`, `siteStructureAt`, `siteSolidAt`, `siteClearSight`, `siteRescueGrid`, `createSiteNav`, `addSiteBodies`, `addSiteLadders`; types `Site`, `SiteSpec`, `SiteStructure`, `StructureSpec`, `SiteRescueGrid`, `SiteNav`, `SiteNavOptions`.
 
+**Use (WP 13.16)**: the system `interact` (a player's use of the thing in reach and in view, with its prompt; carrying and throwing a light prop; a melee strike), the kinds `usable` and `strikable`, and the body-to-entity lookup.
+`addInteraction`, `defineUsable`, `defineStrikable`, `strikeEntity`, `USE_REACH`, `CARRY_MASS`, `THROW_SPEED`, `propOfBody`; types `UsableSpec`, `InteractorComponent`, `StrikeForce`, `SpawnPropOptions`, `PropHealthComponent`, `PropLightComponent`.
+
+**Doors (WP 13.16)**: hung on a hinge or sliding, opened away from the user, locked, blocked, burst open and broken.
+`addDoor`, `addLevelDoors`, `useDoor`, `strikeDoor`, `breakDoor`, `DOOR_SWING`; types `DoorSpec`, `DoorComponent`.
+
+**Windows and breakables (WP 13.16)**: props with health and their breaking, a level's window panes, a bolt's strike.
+`addLevelWindows`, `addBreakables`, `damageProp`, `breakProp`, `strikeBody`, `BREAK_SPEED`.
+
+**Switches (WP 13.16)**: a room's lights and the garage door, as sim state the view reads.
+`addSwitch`, `switchGroup`, `flipSwitch`; types `SwitchSpec`, `SwitchComponent`.
+
 Pages only, from engine/index.ts:
 
 **Headless**: the engine without a page, and its inspector (window.__engine in a page).

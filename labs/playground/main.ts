@@ -17,8 +17,9 @@
  *
  * Each drawn frame (`onFrame`) it shows the gym's signs (labs/playground/levels/gym.ts) as labels over their features,
  * those within `SIGN_RANGE` of the player, and the HUD: the camera mode and the look in use, the room the player is in
- * on a scene's site (`whereLine`, a room's data: PLAN.md WP 13.15), and the keys of the map in use as its prompts give
- * them (`keysLine`). It reads the run and never changes it.
+ * on a scene's site (`whereLine`, a room's data: PLAN.md WP 13.15), what using the thing in reach does, with the key
+ * that uses it on the device used last (its `interactor`'s prompt, WP 13.16), and the keys of the map in use as its
+ * prompts give them (`keysLine`). It reads the run and never changes it.
  *
  * The gym's text is computed from its features, so the page registers the text the scene compiles (`GYM_TEXT`), as the
  * starter game registers its arena's; a level written as a file would come in as `?raw` text, as the box's do. The
@@ -106,6 +107,9 @@ function whereLine(scene: EngineFrame['scene'], at: { x: number; y: number; z: n
   return found?.room ? `Room: ${found.room.name}` : found ? 'Indoors' : 'Outdoors';
 }
 
+/** The player's entity as the HUD reads it: where it is, and what it would use (engine/sim/interact.ts). */
+type PlayerEntity = { actor: { player: boolean; x: number; y: number; z: number }; interactor?: { prompt: string } };
+
 /** The inspector's camera member; null before the engine starts. */
 const camera = () => (engine?.inspector?.camera as CameraMember | undefined) ?? null;
 
@@ -119,8 +123,9 @@ function showFrame({ world, scene }: EngineFrame): void {
       at: feature.sign,
     }));
   }
-  const players = world.query('actor') as unknown as { actor: { player: boolean; x: number; y: number; z: number } }[];
-  const player = players.find((entity) => entity.actor.player)?.actor;
+  const players = world.query('actor') as unknown as PlayerEntity[];
+  const entity = players.find((one) => one.actor.player);
+  const player = entity?.actor;
   for (const sign of signs) {
     sign.label.visible = !player || Math.hypot(sign.at[0] - player.x, sign.at[2] - player.z) <= SIGN_RANGE;
   }
@@ -128,7 +133,10 @@ function showFrame({ world, scene }: EngineFrame): void {
   const look = showing.look.replace(/^look:playground-/, '');
   ui.hud('mode', `Camera: ${showing.camera} · Look: ${look}`, { at: 'top-right' });
   ui.hud('room', player ? whereLine(scene, player) : null, { at: 'top-left' });
-  if (engine?.input) ui.hud('keys', keysLine(engine.input), { at: 'bottom', keys: true });
+  if (!engine?.input) return;
+  const use = entity?.interactor?.prompt;
+  ui.hud('use', use ? `${engine.input.prompt('interact')}: ${use}` : null, { at: 'bottom', keys: true });
+  ui.hud('keys', keysLine(engine.input), { at: 'bottom', keys: true });
 }
 
 /** A view action of the map in use (labs/playground/controls.ts): the camera's switch, the shoulder, a view's turn. */

@@ -957,3 +957,63 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   tests/e2e/playground-cameras.spec.ts, tools/eslint/layers.ts (the bot's rule holds its navigation beside it, sim-side
   too). engine/world/nav.ts and engine/gfx/cutaway.ts, which the WP extends, needed no change: the site's graph is
   NavGrids over NavSurfaces, and the cut by storey a module of its own.
+
+## Amendment 19 (2026-10-21, WP 13.16): doors, windows, switches and pickups
+
+- **Use** (engine/sim/interact.ts, the system `interact`, phase `ai`): for each player, the thing in reach (2 m from the
+  eye, plus half the thing's size) and in view: along the crosshair when the step has a `look` and an `aim` (first
+  person and the shooter), else the nearest within 60° of where it faces; a wall, a door or a pane between hides it
+  (a ray through the group `world`). What can be used is asked of the entries, never the ids: the kind `usable`, keyed
+  by component (a door's, a switch's), then a prop's own `use` with a `prompt`, then carrying, for a dynamic prop of
+  25 kg or less. The prompt sits in the player's `interactor` component, as it stands after the step's use, and the
+  playground's HUD shows it with the key that uses it on the device used last.
+- **A use takes its press**: `interactor.usedAt` is the step, and the actors' input leaves that press out of the
+  rides' (engine/sim/actorInput.ts), so using a door beside a zipline does not ride it.
+- **Carrying and throwing**: the carried prop's body is driven by velocity toward 0.8 m before the eye (at most
+  12 m/s, its turn held), so it still collides; held back past the reach and 1.5 m, it drops; the next use throws it
+  along the view at 8 m/s.
+- **The strike before the kick**: `melee` strikes what is in reach and in view with the use's reach and cone, not
+  §3.2's punch (1.52 m in a 30° cone), which WP 13.19 brings with the kick's move. The kind `strikable`, keyed by
+  component, answers: a door's rule, a breakable's point of damage; else a dynamic prop is knocked.
+- **Doors** (engine/sim/doors.ts): kinematic props (the prop kind gains `kinematic`, `spawnProp`'s `as` makes one),
+  driven by velocity to the pose their hinge, turn and angle give (`driveBody`). A use opens one away from the user, a
+  quarter turn and more (1.65 rad) at 2.6 rad/s, and closes it; a locked one says `Locked`. A kinematic body pushes
+  whatever it meets, so the leaf's next pose is tested first against actors and props (`overlap`) and it waits there.
+  Apex's rule: a strike while the striker faces it bursts it open three times as fast and unlocks it, the second
+  breaks it off its hinges, a dynamic slab knocked away with `splinters`; a shot or a blast breaks it at once. A
+  sliding door (the garage's) moves along an offset, opened by its switch, never struck. `addLevelDoors` hangs
+  `prop:door` in each door opening of a level, centred (5 cm a side in a 1 m doorway).
+- **Windows and breaking** (engine/sim/breakables.ts): `prop:pane`, 0.5 × 1.2 m and a 2 cm fixed slab with 1 hit
+  point, stood every half metre across a window opening from its sill, in the wall's middle (`addLevelWindows`). A
+  fixed pane would stop a thrown chair: the physics step resolves the contact before any rule sees it. So the system
+  `breakables` breaks, before the physics step, every pane a prop flying faster than 4 m/s would strike in it: the
+  prop's own shape cast along the step's move (gravity's pull in it), again past each pane it breaks (up to four), and
+  the chair flies on through. `breakProp` sends the event its look names (`breaks.shards`: `glass`, `splinters`; else
+  `shatter`) with `{ id, prop, position, ground }`, stands its pieces (`breaks.into`) in a fixed fan with no random
+  stream, knocked away, and removes it. The view's emitters answer those types: glass falls and glints and lands
+  nowhere (a sill is no floor), splinters and debris land on `ground`.
+- **Switches** (engine/sim/switches.ts): the component `switch` (on, its light group, or its door). Lamps a scene's
+  setup spawns join the world at the setup's end, after the switch, so the system `switches` holds each group at its
+  switch's state every step, a lamp spawned later included; `switchGroup` (a rule: the streetlights at dusk) sets a
+  group and its switches. The view reads `propLight.on` (engine/gfx/stageProps.ts, props.ts): a prop that is off
+  draws its `lit` parts at a quarter of their tint and gives no light.
+- **The hash kept**: `sceneProp` is unchanged; a prop with health gains `propHealth`, a switchable one `propLight`,
+  and nothing else does, so every earlier replay keeps its goldens.
+- **`damage` stays the crowd's**: the plan's Owns has WP 13.16 extend engine/sim/damage.ts for props with health. A
+  prop's hit points are its own component instead (`damageProp`), since `damage` writes a target's `hitAt` and `hitBy`
+  and drives a crowd body; bolts and shots reach props through `strikeBody` (a body to its prop by `propOfBody`): the
+  box's `fight.shots` calls it for each body its bolts strike, and with no prop in the fight its goldens hold.
+- **A removed body's id names nothing** (engine/physics/capture.ts `liveBody`): Rapier finds a body by its slot alone,
+  so once a removed body's slot was reused, `hasBody` said the old id lived and `readBody` read the newcomer (a broken
+  pane's slot taken by a shard). The world's lookups of stored ids now check the generation too, and `removeProp`
+  clears its component's body, since its entity stays to the step's end.
+- **The API**: the house's names are in engine/sim/houseApi.ts, re-exported whole by engine/sim-api.ts, and generic
+  over the world's events (`World<C, E>`), as `damage` is, so a world with its own event map (the box's) calls them.
+  engine/gfx/props.ts, at its cap, gave its texture and materials to engine/gfx/propLooks.ts.
+- **The playground**: the library gains the chair (6 kg), what the owner's playtest throws; the cottage
+  (labs/playground/levels/cottage.ts, scenes/interact.ts) holds a door, two windows, the kitchen's lamp and switch and
+  chairs to throw, and its replay (tests/replays/playground-interact.replay.json) opens the door, switches the light
+  off and on, closes the door, bursts it open and breaks it, and throws a chair through a pane. The house's doors,
+  windows, lamps by room (`room:<name>`, amendment 18's light groups), the garage and its door (whose storey must hold
+  the door's 2.2 m slide up) and the bot through closed doors are WP 13.18's; doors, glass and switches have no
+  sounds until WP 13.22.

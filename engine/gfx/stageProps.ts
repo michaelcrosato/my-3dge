@@ -7,8 +7,9 @@
  * `capture(entities, dt)` after each sim step keeps each prop's last two poses (centre and turn) and returns the ids
  * it draws; `draw(alpha)` draws each `alpha` of the way from the one before to the last (the centre along the line,
  * the turn the shorter way round), at presentation time (the steps captured, `alpha` of a step on), on which the
- * flames dance; each prop is drawn under its entity id, so its flames keep their own phase. `lights()` lists this
- * frame's light spots in world space (the brazier's torch), for the light pool (WP 7.1).
+ * flames dance; each prop is drawn under its entity id, so its flames keep their own phase, and on or off as its
+ * `propLight` says (a lamp its switch turned off: WP 13.16). `lights()` lists this frame's light spots in world space
+ * (the brazier's torch, the lamps that are on), for the light pool (WP 7.1).
  *
  * The prop meshes are made when the first prop arrives, with a batch for every registered prop, and added to the
  * stage's scene then: a stage with no prop has none, and its scene graph is the one it had before props. `register`
@@ -46,11 +47,12 @@ interface Pose {
   q: [number, number, number, number];
 }
 
-/** What the module keeps of one prop. */
+/** What the module keeps of one prop: its poses, and whether it is on (its `propLight`'s; true without one). */
 interface Held {
   prop: string;
   before: Pose;
   after: Pose;
+  on: boolean;
 }
 
 /** Props drawn on the stage (see the file comment). */
@@ -114,7 +116,8 @@ export function createStageProps(options: StagePropsOptions): StageProps {
         seen.add(entity.id);
         const last = held.get(entity.id);
         const prop = data.prop as string;
-        held.set(entity.id, { prop, before: last && last.prop === prop ? last.after : pose, after: pose });
+        const on = (entity.propLight as { on?: unknown } | undefined)?.on !== false;
+        held.set(entity.id, { prop, before: last && last.prop === prop ? last.after : pose, after: pose, on });
         ids.set(entity.id, prop);
       }
       for (const id of [...held.keys()]) {
@@ -129,11 +132,11 @@ export function createStageProps(options: StagePropsOptions): StageProps {
       if (!meshes) return;
       const k = Math.min(1, Math.max(0, alpha));
       meshes.begin(time - step + k * step);
-      for (const [id, { prop, before, after }] of held) {
+      for (const [id, { prop, before, after, on }] of held) {
         const [p0, p1] = [before.p, after.p];
         at.set(p0[0] + (p1[0] - p0[0]) * k, p0[1] + (p1[1] - p0[1]) * k, p0[2] + (p1[2] - p0[2]) * k);
         a.fromArray(before.q).slerp(b.fromArray(after.q), k);
-        meshes.add(prop, { position: at, rotation: a }, id);
+        meshes.add(prop, { position: at, rotation: a, on }, id);
       }
       meshes.end();
     },

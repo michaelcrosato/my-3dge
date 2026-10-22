@@ -3,8 +3,8 @@
  * its cap, WP 13.16): `intentsOf(actor, intents)` is the step's intents for a player, else its AI's (`actor.intents`,
  * its presses from the edges of the buttons it held, `actor.held`); `motionInput(actor, wants, controls)` is what an
  * actor on a movement model (engine/physics/movement/) takes of them: the sprint, walk and crouch buttons as a player's
- * controls (`input.sprint`, `input.crouch`) say, the use press, the view, the keys' frame and what it faces (the aim's
- * point, else the view).
+ * controls (`input.sprint`, `input.crouch`) say, the use press (unless a use took it, `used`: engine/sim/interact.ts),
+ * the view, the keys' frame and what it faces (the aim's point, else the view).
  *
  * Invariants: pure but for an AI actor's own button edges, which `intentsOf` keeps in its component.
  *
@@ -33,7 +33,7 @@ export interface Controls {
 }
 
 /** The shooter model's input from `wants`: the sprint, walk and crouch buttons, the view, the keys' frame and what it faces. */ // prettier-ignore
-export function motionInput(actor: ActorComponent, wants: Intents, controls: Controls): CharacterInput {
+export function motionInput(actor: ActorComponent, wants: Intents, controls: Controls, used = false): CharacterInput {
   const [aimX, , aimZ] = wants.aim ?? [];
   const aimed = aimX !== undefined && Math.hypot(aimX - actor.x, aimZ! - actor.z) > 0.05;
   const face = aimed ? Math.atan2(aimX - actor.x, aimZ! - actor.z) : wants.look?.[0];
@@ -46,7 +46,7 @@ export function motionInput(actor: ActorComponent, wants: Intents, controls: Con
     walk: held(wants, 'walk'),
     crouch: !toggle && held(wants, 'crouch'),
     crouchToggle: pressed(wants, 'crouchToggle') || (toggle && pressed(wants, 'crouch')),
-    usePressed: pressed(wants, 'interact'),
+    usePressed: pressed(wants, 'interact') && !used, // a use took the press (engine/sim/interact.ts): no ride
     ...(wants.look ? { view: wants.look[0], pitch: wants.look[1] } : {}),
     ...(frame !== undefined ? { frame } : {}),
     ...(face !== undefined ? { face } : {}),

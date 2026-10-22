@@ -53,7 +53,7 @@ export type PropCollider = {
 
 /** A prop's body, as `physics.addBody` takes it (engine/physics/world.ts's `BodySpec`). */
 export interface PropBody {
-  type: 'dynamic' | 'fixed';
+  type: 'dynamic' | 'fixed' | 'kinematic';
   /** Its centre (m). */
   position: [number, number, number];
   /** `[x, y, z, w]`. */
@@ -105,10 +105,18 @@ export function propPose(placement: PropPlacement, registry: Registry = sharedRe
   return poseOf(getProp(placement.prop, registry), placement);
 }
 
-/** The body `physics.addBody` takes for `placement`, or `null` when its prop has none; see the file comment. */
-export function propBody(placement: PropPlacement, registry: Registry = sharedRegistry): PropBody | null {
+/**
+ * The body `physics.addBody` takes for `placement`, or `null` when its prop has none; see the file comment. `as` gives
+ * it another type: a broken door's leaf falls (`'dynamic'`), a carried prop's body is the same body.
+ */
+export function propBody(
+  placement: PropPlacement,
+  registry: Registry = sharedRegistry,
+  as?: PropBody['type'],
+): PropBody | null {
   const prop = getProp(placement.prop, registry);
-  const { type, shape, size, radius, height, density, friction, restitution } = prop.body;
+  const { shape, size, radius, height, density, friction, restitution } = prop.body;
+  const type = prop.body.type === 'none' ? 'none' : (as ?? prop.body.type);
   if (type === 'none') return null;
   const collider: PropCollider['shape'] =
     shape === 'box'

@@ -1145,7 +1145,7 @@ Raised by bodies and queries (engine/physics/world.ts, engine/physics/queries.ts
 
 - Message: `the physics part of a capture {problem}`
 - Fix: restore what capture() returned (or its serialize/deserialize round trip), unchanged, with the engine's own Rapier build and version: snapshots are version-locked, so a capture taken with another Rapier restores only there
-- Registered in: [`engine/physics/capture.ts` line 35](../engine/physics/capture.ts)
+- Registered in: [`engine/physics/capture.ts` line 36](../engine/physics/capture.ts)
 
 ### PHYSICS_NO_BODY
 

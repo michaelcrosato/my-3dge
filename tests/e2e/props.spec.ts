@@ -1,9 +1,9 @@
 /**
  * @file T2 for props as data (PLAN.md WP 4.5) on the props page (tests/pages/props.html): the engine's props, in a
  * yard on the engine's renderer and standing in Rapier, each render with ID-pass coverage above 0 (Done-when 2; the
- * library's eight, WP 10.3's, every part): the crate on its spawn point and the brazier's fire on the level's stand,
- * both placed by the level, the barrel, the pillar and the library from the page's data; the lights of the fire, the
- * sconce and the lantern. The frame builds no pipeline after the warm-up and costs what the meshes count. A
+ * library's nine, WP 10.3's, and the house's fittings, WP 13.16's, every part): the crate on its spawn point and the
+ * brazier's fire on the level's stand, both placed by the level, the barrel, the pillar, the library and the fittings
+ * from the page's data; the lights of the fire, the sconce, the lantern and the lamp. The frame builds no pipeline after the warm-up and costs what the meshes count. A
  * knocked crate's mesh follows its body (Done-when 3): at rest, in flight and after it lands, its batch's matrix is
  * its body's pose with the base half a crate below, and the ID pass sees it where the body's centre projects, more
  * than 0.25 m and many pixels from where it stood.
@@ -12,6 +12,7 @@
  * device's (engine/gfx/pipelines.ts); no advice is raised.
  */
 import type { Page } from '@playwright/test';
+import { FITTING_PROPS } from '../../engine/world/props/fittings';
 import { LIBRARY_PROPS } from '../../engine/world/props/library';
 import type { Knocked, Shown } from '../pages/props';
 import { expect, test } from './fixtures';
@@ -28,8 +29,8 @@ const PAGE = 'tests/pages/props.html';
 const BATCHES = ['prop:barrel/mesh', 'prop:brazier/flames', 'prop:crate/mesh', 'prop:pillar/mesh'].map(
   (name) => `${name}/page0`,
 );
-/** The library's (WP 10.3): a batch a part. */
-const LIBRARY = Object.entries(LIBRARY_PROPS).flatMap(([id, spec]) => spec.parts.map((part) => `${id}/${part.name}/page0`)); // prettier-ignore
+/** The library's (WP 10.3) and the fittings' (WP 13.16): a batch a part. */
+const LIBRARY = Object.entries({ ...LIBRARY_PROPS, ...FITTING_PROPS }).flatMap(([id, spec]) => spec.parts.map((part) => `${id}/${part.name}/page0`)); // prettier-ignore
 
 /** Calls `show` on the page. */
 const show = (page: Page) => page.evaluate(() => (window as unknown as PropsWindow).__propsPage.show());
@@ -54,21 +55,22 @@ test('every prop renders with ID-pass coverage above 0, placed by the level or t
     { prop: 'prop:pillar', at: [10, 0, 1.5], yaw: 0.3 },
   ]);
   const library = shown.placements.slice(4).map((place) => place.prop); // the page's order: the tall ones first
-  expect(library).toEqual(['prop:door', 'prop:sconce', 'prop:statue', 'prop:banner', 'prop:table', 'prop:bench', 'prop:chest', 'prop:lantern']); // prettier-ignore
-  expect([...library].sort()).toEqual(Object.keys(LIBRARY_PROPS).sort());
+  expect(library).toEqual(['prop:door', 'prop:sconce', 'prop:statue', 'prop:banner', 'prop:table', 'prop:bench', 'prop:chest', 'prop:lantern', 'prop:chair', 'prop:pane', 'prop:switch', 'prop:lamp', 'prop:garageDoor']); // prettier-ignore
+  expect([...library].sort()).toEqual([...Object.keys(LIBRARY_PROPS), ...Object.keys(FITTING_PROPS)].sort());
   const seen = new Map(shown.seen.map((entry) => [entry.name, entry.px]));
   expect(shown.unseen.filter((name) => name.startsWith('prop:'))).toEqual([]);
   expect([...seen.keys()].sort()).toEqual([...BATCHES, ...LIBRARY].sort());
   for (const name of BATCHES) expect(seen.get(name) ?? 0, `${name} in the ID pass`).toBeGreaterThan(50);
   for (const name of LIBRARY) expect(seen.get(name) ?? 0, `${name} in the ID pass`).toBeGreaterThan(0);
   // The fire's torch shines a metre up, where the level's light spot is, flickering about its 30; the sconce's from
-  // its torch's head, the lantern's from inside its panes, where it settled.
-  expect(shown.lights.map((light) => [light.prop, light.tag])).toEqual([['prop:brazier', 'torch'], ['prop:sconce', 'sconce'], ['prop:lantern', 'lantern']]); // prettier-ignore
+  // its torch's head, the lantern's from inside its panes, where it settled; the lamp's from its bulb.
+  expect(shown.lights.map((light) => [light.prop, light.tag])).toEqual([['prop:brazier', 'torch'], ['prop:sconce', 'sconce'], ['prop:lantern', 'lantern'], ['prop:lamp', 'lamp']]); // prettier-ignore
   expect(shown.lights[0]).toMatchObject({ prop: 'prop:brazier', tag: 'torch', position: [8.5, 1, 4.5] });
   expect(shown.lights[0].intensity).toBeGreaterThan(30 * 0.77);
   expect(shown.lights[0].intensity).toBeLessThan(30 * 1.03);
   expect(shown.lights[1].position.map((v) => +v.toFixed(3))).toEqual([4.6, 1.8, 1.225]);
   expect(shown.lights[2].position.map((v) => +v.toFixed(2))).toEqual([4.6, 0.13, 3.6]);
+  expect(shown.lights[3].position.map((v) => +v.toFixed(3))).toEqual([5.5, 1.85, 2.4]); // the lamp's, at its bulb
   expect((await harness.readFrame()).blank).toBe(false);
 });
 

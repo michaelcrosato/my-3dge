@@ -3,7 +3,8 @@
  * and pass the tex checks; every prop part gets a batch; a prop's mesh is drawn where its pose puts it, the body's
  * centre `propCentre` above the base, turned with it; the barrel's lids are a draw group of their own; the fire's
  * tongues dance on time and on a phase drawn from the visual stream, the same for equal streams; the lights stand
- * where the prop's light spot is and flicker; the warm-up sees every batch, later ones included.
+ * where the prop's light spot is and flicker; a prop that is off draws its lit parts dimmed and gives no light; the
+ * warm-up sees every batch, later ones included.
  * @see engine/gfx/props.ts
  * @see tests/e2e/props.spec.ts
  */
@@ -15,7 +16,7 @@ import { checkTextures } from '../../tools/qa/tex';
 import { defineProp, type Prop } from '../world/props/prop';
 import { createMaterialLibrary } from './materials/library';
 import { bakeTexture } from './textures/bake';
-import { createPropMeshes, FLICKER, type PropMeshesOptions } from './props';
+import { createPropMeshes, FLICKER, OFF, type PropMeshesOptions } from './props';
 
 /** Prop meshes over a fresh registry, with its material library. */
 function meshes(options: Partial<PropMeshesOptions> = {}) {
@@ -45,6 +46,8 @@ describe('the props drawn', () => {
       'material:flame',
       'material:iron',
       'material:cloth',
+      'material:pane',
+      'material:paint',
     ]) {
       // prettier-ignore
       expect(registry.has('material', id), id).toBe(true);
@@ -60,10 +63,12 @@ describe('the props drawn', () => {
 
   it('makes a batch per prop part and draws a prop where its body is, its base propCentre below', () => {
     const { props, registry } = meshes();
-    // One a part of every prop, in id order: the catalog's (WP 4.5) among the library's (WP 10.3).
+    // One a part of every prop, in id order: the catalog's (WP 4.5) among the library's (WP 10.3; its chair, WP 13.16,
+    // a seat, two sides and a back) and the fittings' (WP 13.16: the pane's glass, the switch's plate and rocker, the
+    // lamp's cord, shade and bulb, the garage door's panels and three seams).
     const parts = (registry.list('prop') as unknown as Prop[]).flatMap((prop) => prop.parts.map((part) => `${prop.id}/${part.name}`)); // prettier-ignore
     expect(props.batches().map((batch) => batch.name)).toEqual(parts);
-    expect(parts.length).toBe(41);
+    expect(parts.length).toBe(55);
     expect(parts.filter((name) => /^prop:(barrel|brazier|crate|pillar)\//.test(name))).toEqual(['prop:barrel/mesh', 'prop:brazier/flames', 'prop:crate/mesh', 'prop:pillar/mesh']); // prettier-ignore
     const position = new Vector3(2, 1.1, -3);
     const rotation = new Quaternion().setFromAxisAngle(new Vector3(1, 2, 0.5).normalize(), 0.8);
@@ -122,6 +127,22 @@ describe('the props drawn', () => {
     expect(light.intensity).toBeGreaterThan(30 * 0.77);
     expect(light.intensity).toBeLessThan(30 * 1.03);
     expect(draw(1.5, 7).lights[0].intensity).not.toBe(light.intensity);
+  });
+
+  it('draws a prop that is off with its lit parts dimmed and no light: a lamp its switch turned off', () => {
+    const { props } = meshes();
+    const tints: number[][] = [];
+    const bulb = props.batches().find((batch) => batch.name === 'prop:lamp/bulb')!;
+    const add = bulb.add.bind(bulb);
+    bulb.add = (matrix, color, offset) => (tints.push((color as Color).toArray()), add(matrix, color, offset));
+    const lights = [true, false].map((on) => {
+      props.begin(0);
+      props.add('prop:lamp', { position: [0, 2.6, 0], on });
+      props.end();
+      return props.lights().map((light) => light.tag);
+    });
+    expect(lights).toEqual([['lamp'], []]);
+    expect(tints[1].map((v, k) => v / tints[0][k])).toEqual([OFF, OFF, OFF].map((v) => expect.closeTo(v, 6)));
   });
 
   it("flickers as the 2D hall's flames do", () => {

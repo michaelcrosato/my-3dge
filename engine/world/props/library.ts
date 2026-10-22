@@ -1,5 +1,5 @@
 /**
- * @file The props library (PLAN.md WP 10.3; fired by the playground, ADR-0025): eight props beyond the catalog's
+ * @file The props library (PLAN.md WP 10.3; fired by the playground, ADR-0025): nine props beyond the catalog's
  * crate, barrel, fire and pillar (engine/world/props/catalog.ts), as plain `prop` specs the kind registers with them
  * (engine/world/props/prop.ts). Each is built from the geometry kit's shapes (engine/gfx/geometry/builtins.ts) in the
  * engine's materials and the props' own (`material:iron`, `material:cloth`: engine/gfx/props.ts).
@@ -8,24 +8,27 @@
  *   burning torch and its flickering light (the tag `sconce`); no body. A scene places it on a wall's face.
  * - **The banner**: a red cloth on a crossbar, a 2.6 m oak pole on a stone foot; fixed.
  * - **The chest**: planks bound in iron, a rounded lid and a lock plate, 0.9 m wide, 40 kg: it slides when knocked.
- * - **The door**: a plank door, 0.9 × 2.05 m and 4.5 cm thick, iron straps and a ring pull on its +Z face; fixed where
- *   it stands (WP 13.16 hangs doors on their hinges in a level's openings).
+ * - **The door**: a plank door, 0.9 × 2.05 m and 4.5 cm thick, iron straps and a ring pull on its +Z face; kinematic,
+ *   it stands where it is placed until engine/sim/doors.ts swings it on its hinge (WP 13.16), and breaks into splinters.
  * - **The table**: a trestle table, 1.6 × 0.9 m and 0.75 m high, 30 kg: it slides and tips.
  * - **The bench**: a plank bench, 1.4 m long and 0.45 m high, on two slab legs, 15 kg.
  * - **The statue**: a robed stone figure, 2.2 m high on its plinth; fixed.
  * - **The lantern**: an iron lantern with glowing panes, a cap and a carrying ring, 2 kg, its light flickering inside
  *   (the tag `lantern`).
+ * - **The chair**: a plank chair, its seat on two slab sides and a back, 6 kg: what a player picks up and throws
+ *   (WP 13.16).
  *
  * Each with a body stands on spawn points of its name (`chest`, `table`, …: `levelProps`, engine/world/props/place.ts).
- * The hooks are the kind's: a hit knocks the dynamic ones (the chest, the table, the bench, the lantern) and leaves
- * the fixed; using one does nothing until WP 13.16 gives doors, lids and switches their uses.
+ * The hooks are the kind's: a hit knocks the dynamic ones (the chest, the table, the bench, the lantern, the chair) and
+ * leaves the rest; using one does nothing: the sim gives doors their use (engine/sim/doors.ts, WP 13.16), and a player
+ * carries the light ones (engine/sim/interact.ts).
  *
  * Invariants: plain data (the kind's fields only), ids `prop:<name>`; every part of a prop with a body stands on its
  * base or above it, its lowest point the base (`x qa geo` checks it); sizes in metres, masses through `density`.
  *
  * @example
  * LIBRARY_PROPS['prop:table'].body.size; // [1.6, 0.75, 0.9]
- * Object.keys(LIBRARY_PROPS).length; // 8
+ * Object.keys(LIBRARY_PROPS).length; // 9
  * @see engine/world/props/library.test.ts
  */
 import type { PropDefinition } from './prop';
@@ -89,7 +92,8 @@ export const LIBRARY_PROPS = {
       ...[0.25, 0.95, 1.7].map((y, i) => ({ name: `strap${i + 1}`, geometry: 'geometry:box', params: { width: 0.84, height: 0.06, depth: 0.01 }, material: 'material:iron', position: [0, y, 0.0275] })), // prettier-ignore
       { name: 'pull', geometry: 'geometry:ring', params: { innerRadius: 0.035, outerRadius: 0.05, height: 0.012, radialSegments: 12 }, material: 'material:iron', position: [0.34, 1, 0.0225], rotation: [QUARTER, 0, 0] }, // prettier-ignore
     ],
-    body: { type: 'fixed', shape: 'box', size: [0.9, 2.05, 0.045] },
+    body: { type: 'kinematic', shape: 'box', size: [0.9, 2.05, 0.045] },
+    breaks: { shards: 'splinters' },
   },
   'prop:table': {
     description: 'A trestle table of planks, 1.6 × 0.9 m and 0.75 m high, its top on two slab legs. 30 kg.',
@@ -136,5 +140,16 @@ export const LIBRARY_PROPS = {
     body: { type: 'dynamic', shape: 'box', size: [0.2, 0.4, 0.2], density: 125 },
     light: { tag: 'lantern', color: '#ffd9a0', intensity: 3, distance: 6, decay: 1, position: [0, 0.13, 0], flicker: true }, // prettier-ignore
     place: { spawn: 'lantern' },
+  },
+  'prop:chair': {
+    description: 'A plank chair, 0.44 m wide and 0.9 m high at its back, its seat 0.45 m up on two slab sides. 6 kg.',
+    parts: [
+      { name: 'seat', geometry: 'geometry:box', params: { width: 0.44, height: 0.04, depth: 0.42 }, material: 'material:planks', position: [0, 0.41, 0] }, // prettier-ignore
+      { name: 'sideWest', geometry: 'geometry:box', params: { width: 0.04, height: 0.41, depth: 0.38 }, material: 'material:planks', position: [-0.18, 0, 0] }, // prettier-ignore
+      { name: 'sideEast', geometry: 'geometry:box', params: { width: 0.04, height: 0.41, depth: 0.38 }, material: 'material:planks', position: [0.18, 0, 0] }, // prettier-ignore
+      { name: 'back', geometry: 'geometry:box', params: { width: 0.44, height: 0.45, depth: 0.04 }, material: 'material:planks', position: [0, 0.45, -0.19] }, // prettier-ignore
+    ],
+    body: { type: 'dynamic', shape: 'box', size: [0.44, 0.9, 0.44], density: 34 },
+    place: { spawn: 'chair' },
   },
 } as const satisfies Record<string, PropDefinition>;

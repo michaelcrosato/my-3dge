@@ -5,7 +5,8 @@
  * - **Body ids.** A Rapier handle is a float64 whose bits hold the body's slot (low 32 bits) and the slot's generation
  *   (high 32 bits), so the first body's handle is 5e-324. The engine names a body by `slot + generation · 2³²`, a
  *   whole number (0, 1, 2…, a reused slot 4294967296 and up), computed from the handle and back, so it needs no
- *   table and survives a restore.
+ *   table and survives a restore. Rapier finds a body by its slot alone, so `liveBody` looks a stored id up: a slot
+ *   reused since holds another body, which a removed body's id never names.
  * - **The hash** (`physicsState`): every body's id, translation, rotation, linear velocity and angular velocity, in id
  *   order, as one `Float64Array` (14 numbers a body). Rapier stores them as float32, so they convert exactly. The
  *   snapshot bytes are never hashed: at 5,000 bodies they are 5.7 MB (§4.7).
@@ -67,6 +68,12 @@ export function handleOf(id: number): number {
   bits.setUint32(0, id % TWO_32, true);
   bits.setUint32(4, Math.floor(id / TWO_32), true);
   return bits.getFloat64(0, true);
+}
+
+/** The body `id` names, or null: removed, never added, or its slot reused since by a newer body. */
+export function liveBody(world: RAPIER.World, id: number): RAPIER.RigidBody | null {
+  const found = Number.isInteger(id) && id >= 0 ? world.bodies.get(handleOf(id)) : null;
+  return found && bodyId(found.handle) === id ? found : null;
 }
 
 /** Every body's id, in id order. */

@@ -46,7 +46,7 @@ import {
   bodyId,
   bodyIds,
   capturePhysics,
-  handleOf,
+  liveBody,
   physicsState,
   restorePhysics,
   type PhysicsCapture,
@@ -270,7 +270,7 @@ export function createPhysics(): Physics {
   let world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
   pin(world);
   const body = (id: number): RAPIER.RigidBody => {
-    const found = Number.isInteger(id) && id >= 0 ? world.bodies.get(handleOf(id)) : null;
+    const found = liveBody(world, id);
     if (found) return found;
     const why = Number.isInteger(id) && id >= 0 ? ': it was removed, or never added' : ': ids are whole numbers from 0';
     throw codeError('PHYSICS_NO_BODY', { id: show(id), why });
@@ -305,7 +305,7 @@ export function createPhysics(): Physics {
       return bodyId(made.handle);
     },
     removeBody: (id) => world.removeRigidBody(body(id)),
-    hasBody: (id) => Number.isInteger(id) && id >= 0 && world.bodies.contains(handleOf(id)),
+    hasBody: (id) => liveBody(world, id) !== null,
     bodies: () => bodyIds(world),
     readBody(id) {
       const b = body(id);

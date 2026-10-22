@@ -1,8 +1,9 @@
 /**
  * @file Unit tests for props on the stage (engine/gfx/stageProps.ts, PLAN.md WP 4.6 core proposal), in Node: a
  * stage with no prop makes no prop meshes and keeps its scene graph; the first prop makes them, a batch for every
- * prop, under the stage's scene; each prop is drawn where its pose puts it, `alpha` of the way from its pose a step
- * before (the centre along the line, the turn slerped), and a prop that leaves is no longer drawn; the warm-up sees
+ * prop, under the stage's scene, a lamp its switch turned off giving no light; each prop is drawn where its pose puts
+ * it, `alpha` of the way from its pose a step before (the centre along the line, the turn slerped), and a prop that
+ * leaves is no longer drawn; the warm-up sees
  * the batches made after it was registered, and the shader key says when props arrive; the stage draws a `sceneProp`
  * entity as its prop, never as a stand-in.
  * @see engine/gfx/stageProps.ts
@@ -74,6 +75,9 @@ describe('props on the stage', () => {
     const flames = props.meshes!.batches().find((batch) => batch.name === 'prop:brazier/flames')!;
     expect(flames.count).toBe(6); // three tongues, each a flame round a core
     expect(props.lights().map((light) => light.tag)).toEqual(['torch']);
+    const lamp = (on: boolean) => ({ ...entity(6, 'prop:lamp', [4, 2.6, 0]), propLight: { on, group: 'room:a' } }) as EntityData; // prettier-ignore
+    const lit = (on: boolean) => (props.capture([lamp(on)]), props.draw(1), props.lights().map((light) => light.tag));
+    expect([lit(true), lit(false)]).toEqual([['lamp'], []]); // its switch turned it off: no light (WP 13.16)
     props.dispose();
     expect(scene.children).toEqual([]);
   });

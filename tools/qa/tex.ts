@@ -40,7 +40,7 @@ import { mipChain } from '../../engine/gfx/textures/mips';
 import { measureSeam, mipProblems, periodMismatch, rangeProblems, SEAM_LIMIT } from '../../engine/gfx/textures/seams';
 import { textureKind, type TextureEntry } from '../../engine/gfx/textures/texture';
 import { materialKind, textureRefOf, type MapRef } from '../../engine/gfx/materials/material';
-import { propLooks } from '../../engine/gfx/props';
+import { propLooks } from '../../engine/gfx/propLooks';
 import { propKind, type Prop } from '../../engine/world/props/prop';
 import { drawText, type Sheet } from '../lib/filmSheet';
 import type { QaFamily, QaViolation } from '../cmd/qa';

@@ -7,7 +7,8 @@ in the engine is shown. It grows in four stages, each ending at a gate: the gym 
 north end moving by Apex Legends' numbers (its run and sprint, air strafing, jump fatigue, the lurch, the fall
 stun, the crouch and the slide, the mantle, the wall-climb and the superglide, on its hull), its ladder, zipline,
 redeploy balloon and launchers, five camera modes and two looks, cel-shaded and pixel art; the hill, the block's
-ground as terrain (WP 10.5); and the lot, a house of four storeys and a shed on a terrain (WP 13.15). Every claim below
+ground as terrain (WP 10.5); the lot, a house of four storeys and a shed on a terrain (WP 13.15); and the cottage, its door,
+windows, light switch and chairs to use (WP 13.16). Every claim below
 is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here that does not exist fails
 it.
 
@@ -19,14 +20,16 @@ it.
 2. Click the game to look around with the mouse (Esc lets go of it); in isometric and top-down the pointer aims
    instead. WASD or the arrows move, Space jumps, Shift sprints (hold it, or press it once), Left Alt walks and C
    crouches while held (not Apex's Left Ctrl: Ctrl with W closes the browser's tab); C at a sprint slides, and Space
-   out of a slide slide-jumps. E uses (G in isometric): it catches a zipline in reach (Space in the air catches one
-   unasked) or takes hold of a ladder (running into one does too).
+   out of a slide slide-jumps. E uses (G in isometric) what the HUD names: it opens or closes a door, flips a light
+   switch, picks up a chair or a crate and throws it, catches a zipline in reach (Space in the air catches one
+   unasked) or takes hold of a ladder (running into one does too). V strikes: a door bursts open, then breaks.
 3. T steps through the five cameras (X swaps the shooter's shoulder, Q and E turn isometric), P switches between the
    cel and the pixel look, M shows and hides the menu.
 
 A link can open any of them: `labs/playground/?cam3=first&post.look=look:playground-pixel` is first person in the
 pixel look, and `labs/playground/?replay=playground-gym` plays the recorded run (`?replay=playground-moves` the moves,
-`?replay=playground-rides` the rides), then hands you the controls.
+`?replay=playground-rides` the rides, `?replay=playground-interact` the cottage's door, light and window), then hands
+you the controls.
 
 ## The demo index
 
@@ -39,6 +42,7 @@ test (`tests/unit/playground-readme.test.ts`) fails when a scene of `labs/playgr
 | `labs/playground/scenes/gym.ts` | The gym (`playground:gym`): every feature at the height, slope or gap its sign shows, the player moving by Apex's model (`node x sim labs/playground/scenes/gym --feel` prints its numbers), its golden replays the same in Node and in the page while it renders, in either look, with no pipeline built after the warm-up: the gym's run over its features, its moves (`tests/replays/playground-moves.replay.json`: the sprint held and kept by a press, a tired hop, the walk, the crouch-walk, a lurch, an air strafe, the bunny hop's cost, a slide and a slide-jump), its climbs (`tests/replays/playground-climb.replay.json`) and its rides (`tests/replays/playground-rides.replay.json`: up the tower's ladder and over its top, down its zipline, the jump pad, the balloon's line up 90 m, the glide, the dive and the landing). | `node x replay tests/replays/playground-gym.replay.json tests/replays/playground-moves.replay.json tests/replays/playground-rides.replay.json --browser page` |
 | `labs/playground/scenes/hill.ts` | The hill (`playground:hill`): the block's ground as terrain (`terrain:block`, 96 × 96 m, rolling 0.6 m), the hill rising to 10 m in its east quarter in slopes up to 29°, turf over rock where it is steepest (`labs/playground/ground.ts`); the player runs, slides and falls on its slopes with his feet planted (`labs/playground/courses/hill.ts`), and its replay (`tests/replays/terrain-hill.replay.json`: up the flank, across it, down it in a slide gaining speed, back up) gives its goldens in Node and in the page while it renders. | `node x replay tests/replays/terrain-hill.replay.json --browser page` |
 | `labs/playground/scenes/lot.ts` | The lot (`playground:lot`, a site: `engine/world/site.ts`): the storey house (a cellar; the hall and the kitchen; the bedroom and the study; an attic under a gable, up a ladder through a hatch) and a shed turned a quarter, on a 32 × 32 m terrain cut over the cellar (`labs/playground/levels/lot.ts`). The bot reaches every room from the yard and back, and over its tour of them all no camera stands in a wall; isometric and top-down hide what stands above the player's storey and the roof indoors, and the HUD names the room. WP 13.18's site takes its place. | `npm run test -- labs/playground/scenes/lot.test.ts` and `npm run e2e -- tests/e2e/playground-cameras.spec.ts` |
+| `labs/playground/scenes/interact.ts` | The cottage (`playground:interact`, `labs/playground/levels/cottage.ts`): what a player uses in a house (`docs/PLAYGROUND.md` §7.1). Its front door swings open away from the player and shut at a use, bursts open at a strike and breaks off its hinges at the second; a switch inside it turns the kitchen's lamp off and on; a chair thrown through a window breaks its pane. Its replay (`tests/replays/playground-interact.replay.json`) plays all of it and gives its goldens in Node and in the page while it renders. WP 13.18's house takes its place. | `node x replay tests/replays/playground-interact.replay.json --browser page` |
 
 ## The gym
 

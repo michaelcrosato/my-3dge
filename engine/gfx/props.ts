@@ -13,8 +13,9 @@
  *   own phase, drawn once per `key` (an entity id) from the visual streams (`fxRng`: never hashed).
  * - **Lights.** `lights()` lists the light spots of this frame's props in world space, flickering (`FLICKER`) when
  *   the prop's light does: what the light pool (WP 7.1) places its lights at.
- * - **Looks.** The props' texture and materials (`PROP_MATERIALS`) are defined on the shared registry when the module
- *   loads, and on another when a prop mesh set is made over it (`propLooks`).
+ * - **Looks.** The props' texture and materials (engine/gfx/propLooks.ts) are defined on the registry a prop mesh set
+ *   is made over. A prop the sim turned off (a lamp's switch: `on` false in its pose) draws its `lit` parts dimmed
+ *   (`OFF`) and gives no light.
  * - **Post-processing.** The root is tagged an object (`setPart`, engine/gfx/post/mrt.ts), in one outline group.
  *
  * Carried from `my-3d2dge:src/stress-world/30-crowd.js:293-329` (`crateTex`, `barrelTex`'s lids, `drawProps`: every
@@ -45,105 +46,13 @@ import { buildGeometry } from './geometry/geometry';
 import { sidesThenTops } from './geometry/groups';
 import { createInstancedBatch, type InstancedBatch } from './instancing';
 import type { MaterialLibrary } from './materials/library';
-import { defineMaterial } from './materials/material';
 import { setPart } from './post/mrt';
-import { defineTexture, textureKind } from './textures/texture';
-import { palette, wrapIndex } from './textures/tile';
-import { textureSpec } from './textures/types';
+import { propLooks } from './propLooks';
 import type { Warmup } from './warmup';
 
 /** A flame's flicker at time `t` (s): about 0.77 to 1.03, the 2D hall's (my-3d2dge's `FLICKER`). */
 export const FLICKER = (t: number): number =>
   0.9 + Math.sin(t * 13) * 0.05 + Math.sin(t * 29) * 0.04 + Math.sin(t * 7.3) * 0.04;
-
-/** The crate's face generator: see the file comment. */
-export const CRATE_TEXTURE = textureSpec({
-  description:
-    "A crate's face: a dark edge, a frame with a nail in each corner, planks across between, and a diagonal brace.",
-  params: {
-    side: { type: 'integer', default: 12, minimum: 8, maximum: 256, unit: 'texels', description: 'One face.' },
-    planks: {
-      type: 'array',
-      items: { type: 'string' },
-      default: ['#9d6a3f', '#8f5f37', '#a87547'],
-      description: 'The plank tones, hex, bottom up.',
-    },
-    frame: { type: 'string', default: '#6e4528', description: 'The frame, hex.' },
-    line: { type: 'string', default: '#4a2e1c', description: 'The edge and the gaps between planks, hex.' },
-    brace: { type: 'string', default: '#c08a55', description: 'The brace, hex.' },
-    nail: { type: 'string', default: '#2e2420', description: 'The nails, hex.' },
-  },
-  size: [12, 12],
-  tile: ({ side }) => [side, side],
-  create({ params }) {
-    const planks = palette(params.planks, 'texture:crate planks');
-    const [frame, line, brace, nail] = palette([params.frame, params.line, params.brace, params.nail], 'texture:crate');
-    const n = params.side;
-    return (tx, ty, texel) => {
-      const [x, y] = [wrapIndex(tx, n), wrapIndex(ty, n)];
-      const edge = (v: number, d: number) => v === d || v === n - 1 - d;
-      let [color, height, roughness] = [planks[Math.floor((y - 2) / 3) % planks.length], 0.7, 0.8];
-      if (edge(x, 0) || edge(y, 0)) [color, height, roughness] = [line, 0.2, 0.9];
-      else if (edge(x, 1) && edge(y, 1)) [color, height, roughness] = [nail, 0.9, 0.4];
-      else if (edge(x, 1) || edge(y, 1)) [color, height] = [frame, 1];
-      else if (x === y) [color, height] = [brace, 1];
-      else if (x === y + 1) [color, height] = [frame, 1];
-      else if ((y - 2) % 3 === 2) [color, height, roughness] = [line, 0.2, 0.9];
-      texel.color[0] = color[0];
-      texel.color[1] = color[1];
-      texel.color[2] = color[2];
-      texel.height = height;
-      texel.roughness = roughness;
-    };
-  },
-});
-
-/** Round the barrel's twelve sides (m): `geometry:frustum` measures its side's u along them. */
-const BARREL_ROUND = 24 * 0.375 * Math.sin(Math.PI / 12);
-
-/**
- * The props' materials, by id: `material:crate` (texture:crate, my-3d2dge's `crateTex`, a 0.75 m face per tile),
- * `material:barrelStaves` (texture:staves wrapped exactly once round the twelve-sided barrel, a stave per side),
- * `material:barrelLid`, `material:flame` (unlit white, so tints show), and the library's (WP 10.3) `material:iron`
- * and `material:cloth`.
- */
-export const PROP_MATERIALS: Readonly<Record<string, Record<string, unknown>>> = {
-  'material:crate': {
-    description: "A crate's faces: framed planks, a brace and nails (texture:crate), one face every 0.75 m.",
-    map: 'texture:crate',
-    roughness: 0.8,
-  },
-  'material:barrelStaves': {
-    description: "A barrel's side: texture:staves wrapped once round prop:barrel's 12 sides, a stave per side.",
-    map: { texture: 'texture:staves', repeat: [1 / BARREL_ROUND, 1 / 0.875] },
-    roughness: 0.75,
-  },
-  'material:barrelLid': { description: "A barrel's lids: plain dark oak.", color: '#7a5030', roughness: 0.8 },
-  'material:flame': {
-    description: 'Flames, unlit white, so each tongue shows its tint: what prop parts with flame tongues use.',
-    unlit: true,
-  },
-  'material:iron': {
-    description: 'Dark wrought iron (texture:metal): the library props’ straps, bands, brackets and lanterns.',
-    map: 'texture:metal',
-    color: '#5a5e66',
-    roughness: 0.55,
-    metalness: 0.6,
-  },
-  'material:cloth': {
-    description: 'Woven cloth, white so a part’s tint is its dye: banners and hems.',
-    roughness: 0.95,
-  },
-};
-
-/** Defines the props' texture and materials on `registry`, unless it has them. */
-export function propLooks(registry: Registry): void {
-  textureKind(registry);
-  if (registry.has('texture', 'texture:crate')) return;
-  defineTexture('texture:crate', CRATE_TEXTURE, registry);
-  for (const [id, spec] of Object.entries(PROP_MATERIALS)) defineMaterial(id, spec, registry);
-}
-propLooks(sharedRegistry);
 
 /** Builds `part`'s geometry (the caller's), with its tops and bottoms a group of their own when it has a `top`. */
 export function buildPropPart(part: PropPart, registry: Registry = sharedRegistry): BufferGeometry {
@@ -176,11 +85,15 @@ export function tongueMatrices(t: number, k: number, flame: PropPart['flame'], o
   core.compose(at.set(x + sway * 0.3, 0, z), lean, scale.set(0.55, h * 0.65, 0.55));
 }
 
-/** A prop's pose: its centre (its body's origin) and its turn. */
+/** A prop's pose: its centre (its body's origin) and its turn, and whether it is on (a switched lamp; true). */
 export interface PropMeshPose {
   position: Readonly<{ x: number; y: number; z: number }> | readonly [number, number, number];
   rotation?: Readonly<{ x: number; y: number; z: number; w: number }> | readonly [number, number, number, number];
+  on?: boolean;
 }
+
+/** How bright a prop's `lit` parts are while it is off: a dark bulb, still there. */
+export const OFF = 0.25;
 
 /** A prop's light this frame, in world space, as three.js's `PointLight` takes it. */
 export interface PropLight {
@@ -238,6 +151,8 @@ interface PartDraw {
   local: Matrix4;
   tint: Color;
   core: Color;
+  /** The tint while its prop is off: dimmed when the part is `lit`. */
+  off: Color;
 }
 
 /** Makes the prop meshes; see the file comment. */
@@ -276,7 +191,9 @@ export function createPropMeshes(options: PropMeshesOptions): PropMeshes {
     root.add(batch.root);
     for (const [warmup, held] of warmups) held.push(batch.register(warmup));
     const local = new Matrix4().makeTranslation(0, -propCentre(prop), 0).multiply(partMatrix(part));
-    return { part, batch, geometry, local, tint: new Color(part.tint), core: new Color(part.flame.core) };
+    const tint = new Color(part.tint);
+    const off = part.lit ? tint.clone().multiplyScalar(OFF) : tint;
+    return { part, batch, geometry, local, tint, core: new Color(part.flame.core), off };
   }
 
   /** The draw of prop `id` (the fallback's for a missing id), its batches made on first use. */
@@ -311,7 +228,7 @@ export function createPropMeshes(options: PropMeshesOptions): PropMeshes {
         for (const { batch } of draw.parts) batch.begin();
       }
     },
-    add(id, { position, rotation }, key) {
+    add(id, { position, rotation, on = true }, key) {
       const draw = drawOf(id);
       const { prop } = draw;
       const name = key ?? draw.drawn;
@@ -322,10 +239,10 @@ export function createPropMeshes(options: PropMeshesOptions): PropMeshes {
       else if (Array.isArray(rotation)) turn.fromArray(rotation);
       else turn.copy(rotation as Quaternion);
       pose.compose(place, turn, ONE);
-      for (const { part, batch, local, tint, core: coreTint } of draw.parts) {
+      for (const { part, batch, local, tint, core: coreTint, off } of draw.parts) {
         world.multiplyMatrices(pose, local);
         if (!part.flame.tongues) {
-          batch.add(world.elements, tint);
+          batch.add(world.elements, on ? tint : off);
           continue;
         }
         const t = time + phaseOf(prop.id, name);
@@ -336,7 +253,7 @@ export function createPropMeshes(options: PropMeshesOptions): PropMeshes {
         }
       }
       const spot = prop.light;
-      if (!spot.tag) return;
+      if (!spot.tag || !on) return;
       toCentre.makeTranslation(0, -propCentre(prop), 0).premultiply(pose);
       const [x, y, z] = light.fromArray(spot.position).applyMatrix4(toCentre).toArray();
       const glow = spot.flicker ? FLICKER(time + phaseOf(prop.id, name)) : 1;

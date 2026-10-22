@@ -40,7 +40,7 @@ import RAPIER from '@dimforge/rapier3d-simd-compat';
 import { codeError } from '../core/log';
 import { Quaternion, Vector3 } from '../core/math';
 import { copyValue, defineSchema, freezeValue, isPlainObject, show } from '../core/schema';
-import { bodyId, handleOf } from './capture';
+import { bodyId, liveBody } from './capture';
 import type { GroupName } from './groups';
 import { check, quat, vec, type HullShape, type QuatLike, type Shape, type Vec3Like } from './queries';
 import { rapierOf, type BodySpec, type Physics } from './world';
@@ -70,7 +70,7 @@ export interface PropSpec extends Omit<BodySpec, 'type' | 'colliders'> {
 
 /** The Rapier body of `id`, or throws `PHYSICS_NO_BODY`. */
 function rigid(physics: Physics, id: number): RAPIER.RigidBody {
-  const found = Number.isInteger(id) && id >= 0 ? rapierOf(physics).bodies.get(handleOf(id)) : null;
+  const found = liveBody(rapierOf(physics), id);
   if (found) return found;
   const why = Number.isInteger(id) && id >= 0 ? ': it was removed, or never added' : ': ids are whole numbers from 0';
   throw codeError('PHYSICS_NO_BODY', { id: show(id), why });

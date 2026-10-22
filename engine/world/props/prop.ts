@@ -3,8 +3,12 @@
  * in a level, as data: the meshes it is drawn with (geometry and material by id, §6.1: `world` names them, `gfx`
  * builds them, engine/gfx/props.ts), its body (a shape and a material for the physics world), an optional light
  * spot, where a level places it, and its interaction hooks. The engine's props are the crate, the barrel, the
- * brazier's fire and the pillar (engine/world/props/catalog.ts) and the library's sconce, banner, chest, door, table,
- * bench, statue and lantern (library.ts, WP 10.3); a game adds its own with `defineProp` (`x new prop`).
+ * brazier's fire and the pillar (engine/world/props/catalog.ts), the library's sconce, banner, chest, door, table,
+ * bench, statue, lantern and chair (library.ts, WP 10.3, the chair WP 13.16's) and the house's fittings, the pane,
+ * the switch, the lamp and the garage door (fittings.ts, WP 13.16); a game adds its own with `defineProp`
+ * (`x new prop`). WP 13.16's fields: a `kinematic` body the sim drives, `health` and what breaking leaves (`breaks`),
+ * a `prompt` for its own `use`, and parts `lit` only while the prop is on; a hook's touch also names the world, the
+ * entity and its user.
  *
  * A prop's frame: its base, where it stands, is the origin, +Y up, and its parts stand on it as the geometry kit's
  * shapes stand on the ground. Its body's shape stands on the base too, so the body's origin, the prop's centre, is
@@ -34,6 +38,7 @@ import { registry as sharedRegistry, type Entry, type Registry } from '../../cor
 import type { EntryOf, Schema } from '../../core/schema';
 import type { Point3 } from '../level/types';
 import { BUILT_IN_PROPS } from './catalog';
+import { FITTING_PROPS } from './fittings';
 import { LIBRARY_PROPS } from './library';
 
 /** A vector field in metres (or `unit`), three numbers. */
@@ -84,6 +89,12 @@ export const PROP_PART_FIELDS = {
   position: vec3([0, 0, 0], "Where its origin stands in the prop's frame (the base at 0, +Y up)."),
   rotation: vec3([0, 0, 0], 'Its turn in the prop’s frame, Euler angles about X, Y then Z.', 'rad'),
   shadow: { type: 'boolean', default: true, description: 'Whether it casts shadows (every part receives them).' },
+  lit: {
+    type: 'boolean',
+    default: false,
+    description:
+      'Drawn only while its prop is on: a lamp’s bulb, which its switch turns off with its light (WP 13.16).',
+  },
   flame: {
     type: 'object',
     default: defaultsOf(FLAME_FIELDS),
@@ -100,10 +111,10 @@ export const PROP_SHAPES = ['box', 'cylinder', 'ball', 'capsule'] as const;
 const BODY_FIELDS = {
   type: {
     type: 'string',
-    enum: ['none', 'fixed', 'dynamic'],
+    enum: ['none', 'fixed', 'dynamic', 'kinematic'],
     default: 'none',
     description:
-      "'dynamic' falls, slides and is knocked; 'fixed' stands where it is placed and blocks; 'none' has none.",
+      "'dynamic' falls, slides and is knocked; 'fixed' stands where it is placed and blocks; 'kinematic' moves only as the sim drives it (a door on its hinge, WP 13.16); 'none' has none.",
   },
   shape: { type: 'string', enum: PROP_SHAPES, default: 'box', description: 'Its shape.' },
   size: vec3([1, 1, 1], "A box's width, height and depth."),
@@ -131,6 +142,17 @@ const LIGHT_FIELDS = {
   decay: { type: 'number', default: 2, minimum: 0, description: 'How it dims with distance (2: physically).' },
   position: vec3([0, 0, 0], "Where it shines from, in the prop's frame."),
   flicker: { type: 'boolean', default: false, description: "Whether it flickers as a flame does (gfx's FLICKER)." },
+} as const satisfies Schema;
+
+/** The fields of what breaking a prop leaves (WP 13.16). */
+const BREAK_FIELDS = {
+  into: { type: 'string', default: '', description: "The prop its pieces are ('prop:<id>', dynamic); '' none." },
+  pieces: { type: 'integer', default: 0, minimum: 0, maximum: 16, description: 'How many pieces it leaves.' },
+  shards: {
+    type: 'string',
+    default: '',
+    description: "The event it breaks with, its look ('glass', 'splinters'); '' shatter.",
+  },
 } as const satisfies Schema;
 
 /** The fields of where a level places a prop. */
@@ -174,6 +196,23 @@ export const PROP_FIELDS = {
     description: 'Where a level places it (levelProps): on spawn points by name, or under light spots by tag.',
     properties: PLACE_FIELDS,
   },
+  health: {
+    type: 'number',
+    default: 0,
+    minimum: 0,
+    description: 'Its hit points (WP 13.16): damage takes them, and at 0 it breaks; 0: it never breaks.',
+  },
+  breaks: {
+    type: 'object',
+    default: defaultsOf(BREAK_FIELDS),
+    description: "What breaking leaves: { into (the pieces' prop), pieces, shards (the event it breaks with) }.",
+    properties: BREAK_FIELDS,
+  },
+  prompt: {
+    type: 'string',
+    default: '',
+    description: "What the HUD says using it does ('Read'), when its own `use` answers; '' for none.",
+  },
   hit: {
     type: 'function',
     default: (touch: PropTouch): void => {
@@ -203,6 +242,11 @@ export interface PropTouch {
   readonly prop: Prop;
   /** Its body in the physics world, or −1. */
   readonly body: number;
+  /** The sim's world it stands in (a `World`: unknown here, as world code never imports the sim), when there is one. */
+  readonly world?: unknown;
+  /** Its entity in that world, and the entity touching it (an actor using it; −1 for a blast). */
+  readonly entity?: number;
+  readonly user?: number;
   /** Where the touch comes from (m): the swing's, the blast's or the user's position. */
   readonly from: Point3;
   /** Knocks it away from `from`: the caller passes engine/physics/bodies.ts's `knock` on its body. */
@@ -272,10 +316,13 @@ function propProblems(prop: Prop): string[] {
   }
   vector(light.position, 'light.position');
   colour(light.color, 'light.color');
+  const { into, shards } = prop.breaks;
+  if (into && !into.startsWith('prop:')) problems.push(`breaks.into "${into}" names no prop: write 'prop:<id>'`);
   for (const [key, word] of [
     ['place.spawn', place.spawn],
     ['place.light', place.light],
     ['light.tag', light.tag],
+    ['breaks.shards', shards],
   ]) {
     if (word && !WORD.test(word)) problems.push(`${key} "${word}" must be a word (letters, digits, _ and -)`);
   }
@@ -293,8 +340,8 @@ export function propKind(registry: Registry): void {
     defineWith: "defineProp('<id>', { parts: [{ geometry: '…', material: '…' }], body: { type: 'dynamic', … } })",
     check: (entry) => propProblems(entry as unknown as Prop),
   });
-  for (const [id, spec] of Object.entries({ ...BUILT_IN_PROPS, ...LIBRARY_PROPS }))
-    registry.def('prop', id, { ...spec });
+  const engine = { ...BUILT_IN_PROPS, ...LIBRARY_PROPS, ...FITTING_PROPS };
+  for (const [id, spec] of Object.entries(engine)) registry.def('prop', id, { ...spec });
 }
 propKind(sharedRegistry);
 
