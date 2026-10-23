@@ -6,10 +6,11 @@
  * none for a miss, the tracer gone after its life and the latest holes kept; off, the trace read and nothing played.
  * The actors' puppets carry the gun out in the right hand while the hold holds one, its muzzle where the shots leave,
  * and first person draws it in the arms instead (engine/gfx/viewmodel/body.ts), the stage's props leaving it out and
- * the shots leaving its muzzle as the arms' lens draws it; holstered, it stays in the hand as the hands lower it.
+ * the shots leaving its muzzle as the arms' lens draws it; holstered, it stays in the hand as the hands lower it; a
+ * weapon defined after first person made its guns shows in the arms too.
  * @see engine/gfx/weapons.ts
  */
-import { Box3, BufferAttribute, Vector3 } from 'three/webgpu';
+import { Box3, BufferAttribute, Matrix4, Quaternion, Vector3, type InstancedMesh } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { Animator } from '../anim/character';
 import { socketPosition } from '../anim/fk';
@@ -97,17 +98,35 @@ describe('the firearms drawn', () => {
   });
 
   it('plays each gunshot once: a tracer from the muzzle, a hole where it struck, none for a miss', () => {
-    const bursts: string[] = [];
-    const shots = createWeaponFx({ effects: { burst: (id: string) => (bursts.push(id), true) } as never });
+    const bursts: [string, number[]][] = [];
+    const burst = (id: string, at: Vector3) => (bursts.push([id, at.toArray()]), true);
+    const shots = createWeaponFx({ effects: { burst } as never });
     const hit = { seq: 1, type: 'gunshot', payload: { id: 1, from: [0, 1.5, 0], to: [0, 1.5, 10], normal: [0, 0, -1] } }; // prettier-ignore
     const miss = { seq: 2, type: 'gunshot', payload: { id: 2, from: [0, 1.5, 0], to: [0, 1.5, 100], normal: null } };
     const muzzle = new Vector3(0.2, 1.3, 0.4);
     expect(shots.feed([hit, miss], (id) => (id === 1 ? muzzle : null))).toBe(2);
     expect(shots.stats()).toEqual({ tracers: 2, holes: 1 });
-    expect(bursts).toEqual(['emitter:sparks', 'emitter:impact', 'emitter:sparks', 'emitter:sparks']); // the flash, the impact, the flash
+    const ahead = [0, 1.5, TRACER.ahead]; // no gun: ahead of where it left, along the shot
+    expect(bursts).toEqual([
+      ['emitter:sparks', [0.2, 1.3, 0.4]],
+      ['emitter:impact', [0, 1.5, 10]],
+      ['emitter:sparks', [0, 1.5, 10]],
+      ['emitter:sparks', ahead],
+    ]); // the flash, the impact, the flash // prettier-ignore
     expect(shots.feed([hit, miss], () => null)).toBe(0); // read: never twice
     shots.frame(TRACER.life / 2);
     expect(shots.stats().tracers).toBe(2);
+    const page = shots.root.children.find((child) => child.name === 'weapons:tracers/page0') as InstancedMesh;
+    const drawn = [0, 1].map((i) => {
+      const [at, turn, size, matrix] = [new Vector3(), new Quaternion(), new Vector3(), new Matrix4()];
+      page.getMatrixAt(i, matrix);
+      matrix.decompose(at, turn, size);
+      return { from: at, to: at.clone().add(new Vector3(0, 0, size.z).applyQuaternion(turn)) };
+    });
+    expect(apart(drawn[0].from, muzzle) + apart(drawn[0].to, new Vector3(0, 1.5, 10))).toBeLessThan(1e-5); // the muzzle on
+    expect(apart(drawn[1].from, new Vector3(...ahead)) + apart(drawn[1].to, new Vector3(0, 1.5, 100))).toBeLessThan(
+      1e-4,
+    );
     shots.frame(TRACER.life);
     expect(shots.stats()).toEqual({ tracers: 0, holes: 1 }); // the tracers gone, the hole kept
     const many = Array.from({ length: HOLES.capacity + 5 }, (_, k) => ({ ...hit, seq: 3 + k }));
@@ -144,12 +163,18 @@ describe('the firearms drawn', () => {
     expect([actors.carried().has(1), actors.muzzle(1)!.distanceTo(muzzlePoint(PISTOL, gun))]).toEqual([true, 0]);
     const box = new Box3().setFromObject(actors.puppets.get(1)!.mesh, true); // the scene dump's size: hidden children count
     expect(box.min.y).toBeGreaterThan(-0.05); // its soles, 2.4 cm down: the hidden guns a point at its root (a pistol at the origin reached -8.5 cm)
-    const player = world.get(1) as unknown as { weapons: { slot: number }; animator: { weapon: string } };
+    const player = world.get(1) as unknown as { weapons: { slots: string[]; slot: number }; animator: { weapon: string } }; // prettier-ignore
     [player.weapons.slot, player.animator.weapon] = [-1, 'none']; // holstered, as the sim's system writes it
     const held = () => (world.step({}), actors.capture(world.query('actor'), world.dt), actors.draw(1), actors.carried().has(1)); // prettier-ignore
     expect(held()).toBe(true); // still in the hand as the hands lower it
     for (let k = 0; k < 15; k++) held();
     expect([actors.carried().size, actors.muzzle(1)]).toEqual([0, null]); // gone 0.25 s on
+    const late = defineWeapon('weapon:test-late', { prop: 'prop:test-pistol' }); // after first person made its guns
+    [player.weapons.slots, player.weapons.slot, player.animator.weapon] = [[late.id], 0, 'gun'];
+    for (let k = 0; k < 30; k++) held();
+    actors.firstPerson(frame);
+    const now = actors.puppets.get(1)!.mesh.children.filter((child) => child.userData.viewmodel === 'gun' && child.visible); // prettier-ignore
+    expect(now.map((mesh) => mesh.userData.weapon)).toEqual([late.id]); // made the first time the body holds it
     actors.dispose();
   });
 });

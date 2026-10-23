@@ -6437,6 +6437,7 @@ For the agents who maintain the engine.
 ### [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)
 
 - `addWeapons` (function): Adds the system `weapons` to `w` (once): see the file comment.
+- `CHEST` (const): How high a shot leaves the chest without a look (m over the feet; crouched): isometric's, top-down's, the platformer's.
 - `WEAPONS_FIELDS` (const): The component `weapons`' fields (see the file comment).
 - `weaponsFor` (function): A player's weapons component carrying `slots` (weapon ids), each magazine full, holstered unless `drawn`.
 - `WeaponsState` (interface): A player's weapons (`WEAPONS_FIELDS` says what each field means).

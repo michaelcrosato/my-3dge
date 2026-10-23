@@ -54,6 +54,7 @@ import { createStage, type Stage } from '../gfx/stage';
 import type { FirstPersonParts } from '../gfx/viewmodel/body';
 import { armsLens } from '../gfx/viewmodel/lens';
 import { queryViewOf, type QueryView } from '../sim/queryView';
+import { CHEST } from '../sim/weapons';
 import type { Session } from '../sim/session';
 import type { EntityData } from '../sim/state';
 import { getLevel } from '../world/level/level';
@@ -315,7 +316,9 @@ export function createRunView(options: RunViewOptions): RunView {
       const skip = body >= 0 ? { exclude: body } : {};
       const cast = (origin: Vec3, direction: Vec3, max: number) =>
         walls?.raycast(origin, direction, { maxDistance: max, ...skip })?.distance ?? null;
-      return aimPoint(rule, { pose: { ...rig.aimPose(), ...lens }, aspect, feet, eye, ...devices, cast }); // the climb aside: the sim adds it
+      const motion = (options.run().world.get(stage.actors.player()!.id) as { motion?: { stance?: string } } | undefined)?.motion; // prettier-ignore
+      const height = motion?.stance === 'crouch' ? CHEST.crouch : CHEST.stand; // where a level shot leaves
+      return aimPoint(rule, { pose: { ...rig.aimPose(), ...lens }, aspect, feet, eye, height, ...devices, cast }); // the climb aside: the sim adds it
     },
     setCamera(code, setOptions = {}) {
       rig.set(code, { blend: setOptions.blend === true });

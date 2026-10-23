@@ -14,9 +14,10 @@
  * - otherwise (null): the body drawn as it is (0), the arms hidden.
  * It returns the joints the body hid and the ones the arms show. A gun the body holds (`animated.gun`, its weapon out,
  * WP 13.20) shows in the arms' right hand: a mesh per weapon with a prop (engine/gfx/weapons.ts `gunGeometry`), in the
- * arms' material, at the rig's grip, its barrel the body's turned from the body's look onto the camera's, kicked back
- * and up a little at each shot (`GUN_KICK`, the player's `shots`); `muzzle` is where its lens draws the muzzle, which
- * the shots' tracers leave from.
+ * arms' material, made for each weapon defined when the viewmodel is (so the warm-up builds them) and for one defined
+ * later the first time the body holds it, at the rig's grip, its barrel the body's turned from the body's look onto the
+ * camera's, kicked back and up a little at each shot (`GUN_KICK`, the player's `shots`); `muzzle` is where its lens
+ * draws the muzzle, which the shots' tracers leave from.
  *
  * Invariants: presentation only; the body's attribute changes only when what it hides does (an upload, never a
  * pipeline); the arms exist from the start, so the warm-up builds their pipeline (the actors register them), and a
@@ -130,16 +131,21 @@ export function createViewmodel(
   arms.userData = { ...body.userData, viewmodel: 'arms', restyle: (material: Material) => look.arms(material) };
   body.add(arms);
   weaponKind(registry);
-  const guns = new Map<string, Mesh>();
-  for (const { id } of registry.list('weapon')) {
-    const gunShape = gunGeometry(registry.get('weapon', id) as unknown as WeaponKind, registry);
-    if (!gunShape) continue;
+  const [guns, bare] = [new Map<string, Mesh>(), new Set<string>()];
+  /** First person's gun for `kind`, made the first time it is asked (null: the weapon has no prop to draw). */
+  const gunFor = (kind: WeaponKind): Mesh | null => {
+    if (guns.has(kind.id) || bare.has(kind.id)) return guns.get(kind.id) ?? null;
+    const gunShape = gunGeometry(kind, registry);
+    if (!gunShape) return (bare.add(kind.id), null);
     const gun = new Mesh(gunShape, materials[0]);
     Object.assign(gun, { name: `${body.name}/gun`, castShadow: false, receiveShadow: true, frustumCulled: false, visible: false }); // prettier-ignore
-    gun.userData = { ...arms.userData, viewmodel: 'gun', weapon: id };
+    gun.userData = { ...arms.userData, viewmodel: 'gun', weapon: kind.id };
     body.add(gun);
-    guns.set(id, gun);
-  }
+    guns.set(kind.id, gun);
+    return gun;
+  };
+  // the weapons defined now, so the warm-up builds them
+  for (const { id } of registry.list('weapon')) gunFor(registry.get('weapon', id) as unknown as WeaponKind);
   const [barrel, kickTurn, axis] = [new Vector3(), new Quaternion(), new Vector3(1, 0, 0)];
   let [shots, kick, muzzle] = [0, 0, null as Vector3 | null];
   /**
@@ -162,7 +168,7 @@ export function createViewmodel(
     kick = (fired > shots ? 1 : kick) * Math.exp(-frame.dt / GUN_KICK.time);
     shots = fired;
     const { hold, gun } = animated;
-    const shown = gun && hold?.holding && rig.shown.includes('handR') ? guns.get(gun.id) : undefined;
+    const shown = (gun && hold?.holding && rig.shown.includes('handR') && gunFor(gun)) || undefined;
     hideGuns(shown);
     muzzle = null;
     if (!shown || !gun || !hold) return;

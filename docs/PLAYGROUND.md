@@ -343,10 +343,10 @@ impacts with decals, particles and sounds, tracers. The range's targets pop up a
 accuracy. Every camera aims, isometric and top-down with the pointer.
 
 As built (WP 13.20, ADR-0025 amendment 25): the player carries both, holstered, everywhere on the site. A shot leaves
-the eye toward the crosshair's point in first person and the shooter, and level from the chest toward the pointer in
-isometric and top-down (where he faces in the platformer); the burst's climb turns the shots and the view, so the
-crosshair stays where they go. The range's pop-ups (10 and 25 m) fall back at a hit and stand 2.5 s later; its 50 m
-targets slide 2 m across their lanes.
+the eye toward the crosshair's point in first person and the shooter, and level from the chest toward what the
+pointer is over in isometric and top-down (where he faces in the platformer); the burst's climb turns the shots and
+the view, so the crosshair stays where they go, and falls away after the burst. The range's pop-ups (10 and 25 m)
+fall back at a hit and stand 2.5 s later; its 50 m targets slide 2 m across their lanes.
 
 ### 7.3 Melee and the ring
 

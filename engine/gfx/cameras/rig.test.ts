@@ -2,7 +2,8 @@
  * @file Unit tests for the camera rig (engine/gfx/cameras/rig.ts): a switch cuts unless it asks for a blend; a blend
  * starts at the old camera's picture, is halfway at half its time, ends at the new one's and says what it moved; a view's
  * turn swings round its target; the effects reach the camera that takes them, mixed through a blend (a hard landing's
- * shake, a weapon's kick, by each camera's punch share; a burst's climb in the pose drawn, never in the aim's); the
+ * shake, a weapon's kick, by each camera's punch share; a burst's whole climb in the pose drawn by the cameras that
+ * aim with their centre, never in the aim's); the
  * options from
  * the view settings `cam.*` give first person and the shooter the player's lens and the views whole zoom steps.
  * @see engine/gfx/cameras/rig.ts
@@ -103,16 +104,24 @@ describe('the camera rig', () => {
     expect(lifts[2]).toBe(0);
   });
 
-  it('climbs first person’s view with a burst’s kick, and leaves it out of the pose the aim leaves along', () => {
+  it('climbs the view of each camera that aims with its centre by a burst’s whole kick, never the aim’s pose', () => {
     const still: CameraPlayer = { velocity: [0, 0, 0], grounded: true, mode: 'ground', sprinting: false, sliding: false, boosted: false, aiming: false }; // prettier-ignore
     const eye = { follow: [0, 0, 0] as const, eye: [0, 1.524, 0] as const };
-    const rig = createCameraRig('cam3=first');
-    rig.step(still);
-    const level = rig.update(eye, 1 / 60).pitch;
-    expect(rig.aimPose()).toBe(rig.pose()); // nothing climbed: the same pose
-    rig.step({ ...still, recoil: [0.05, 0] });
-    for (let k = 0; k < 30; k++) rig.update(eye, 1 / 60);
-    expect([rig.pose().pitch - level, rig.aimPose().pitch - level]).toEqual([expect.closeTo(0.05, 6), expect.closeTo(0, 9)]); // prettier-ignore
+    for (const [code, climb] of [
+      ['cam3=first', 0.05],
+      ['cam3=shoulder', 0.05],
+      ['cam3=follow', 0],
+    ] as const) {
+      const rig = createCameraRig(code);
+      rig.step(still);
+      for (let k = 0; k < 30; k++) rig.update(eye, 1 / 60);
+      const level = rig.update(eye, 1 / 60).pitch;
+      expect(rig.aimPose()).toBe(rig.pose()); // nothing climbed: the same pose
+      rig.step({ ...still, recoil: [0.05, 0] });
+      rig.update(eye, 1 / 60);
+      const [drawn, aimed] = [rig.pose().pitch - level, rig.aimPose().pitch - level];
+      expect([code, drawn - aimed, aimed]).toEqual([code, expect.closeTo(climb, 6), expect.closeTo(0, 6)]); // the shots go where the centre is
+    }
   });
 
   it('takes its options from the view settings: the player’s lens, the blend, whole zoom steps', () => {

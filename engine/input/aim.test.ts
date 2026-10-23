@@ -1,8 +1,9 @@
 /**
  * @file Unit tests for engine/input/aim.ts (T1, WP 13.9): the ray through a point of the picture for a perspective and
  * an orthographic pose, with the boost's stretch undone; where a ray meets a floor; and the aim by each rule: the
- * centre's ray to what it meets beyond the player's eye, the pointer onto his floor, a right stick's push along it
- * (twin sticks, ahead of the pointer), and nothing for `none` or without a player.
+ * centre's ray to what it meets beyond the player's eye, the pointer onto his floor or as high over it as a level shot
+ * leaves, a right stick's push along it (twin sticks, ahead of the pointer), and nothing for `none` or without a
+ * player.
  * @see engine/input/aim.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -59,9 +60,12 @@ describe('aimPoint', () => {
     close(aimPoint('centre', view), [0, 1.8, AIM_RANGE - 3.8]); // no world to cast into
   });
 
-  it('aims the pointer onto his floor, a pushed stick ahead of it along the picture, and nothing at rest', () => {
+  it('aims the pointer at his floor or a shot’s height above, a stick ahead of him, and nothing at rest', () => {
     const view = { pose: top, aspect: 1, feet: [2, 0.5, 3] as Vec3 };
     close(aimPoint('pointer', { ...view, pointer: [0, 0.5] }), [0, 0.5, 5]); // up the picture, on his floor
+    const slant = { ...view, pose: { ...top, pitch: -Math.PI / 4 }, pointer: [0, 0] as const }; // 45° down along +Z
+    close(aimPoint('pointer', slant), [0, 0.5, 9.5]);
+    close(aimPoint('pointer', { ...slant, height: 1.3 }), [0, 1.8, 8.2]); // met where a level shot runs: what is there
     close(aimPoint('pointer', { ...view, pointer: [0, 0.5], stick: [0, 0.3] }), [2, 0.5, 3 + STICK_REACH]); // stick first
     close(aimPoint('pointer', { ...view, stick: [1, 0] }), [2 - STICK_REACH, 0.5, 3]); // the picture's right: −X here
     expect(aimPoint('pointer', view)).toBeUndefined();

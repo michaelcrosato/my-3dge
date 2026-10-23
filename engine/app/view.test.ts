@@ -15,7 +15,8 @@
  * the stage's sky, once shown, follows the frames: its pool's lights picked near the focus, flickering as they go.
  * WP 13.8: on the playground's shooter model first person stands at its eye height, a live switch blends (its first
  * frame the old camera's, halfway far from both) and a plain one cuts; the gym's rides are drawn (WP 13.7). WP 13.9:
- * the aim from the camera drawn last, the centre's ray past the player's own body and the pointer onto his floor.
+ * the aim from the camera drawn last, the centre's ray past the player's own body and the pointer at his chest's
+ * height, where a level shot runs.
  * @see engine/app/view.ts
  */
 import { readFileSync } from 'node:fs';
@@ -27,6 +28,7 @@ import { poseTarget, type CameraPose } from '../gfx/cameras/pose';
 import { VIEW_LIFT } from '../gfx/cameras/presets';
 import { createRegistry, registry } from '../core/registry';
 import { defineScene } from '../sim/scene';
+import { CHEST } from '../sim/weapons';
 import { defineComponent } from '../sim/state';
 import { defineLevel } from '../world/level/level';
 import { PROJECTILE, PROJECTILE_FIELDS } from '../world/projectiles';
@@ -322,7 +324,7 @@ describe('createHeadless({ view: true })', () => {
     expect(drawn.every((name) => /^(zipline|ladder|launcher)#\d+$/.test(name))).toBe(true);
   });
 
-  it('aims from the camera drawn last: the centre’s ray past the player’s own body, the pointer onto his floor', async () => {
+  it('aims from the camera drawn last: the centre’s ray past his own body, the pointer at his chest’s height', async () => {
     if (!registry.has('level', 'level:gym')) defineLevel('level:gym', { text: GYM_TEXT, file: 'labs/playground/levels/gym.ts' }); // prettier-ignore
     const engine = await createHeadless({ scene: 'playground:gym', view: true, cam: 'cam3=first' });
     const view = (headlessHost(engine) as AppHost).view!;
@@ -342,8 +344,9 @@ describe('createHeadless({ view: true })', () => {
     const top = view.cameraInfo().pose; // straight down, north (−Z) up the picture
     const half = top.frustumSize / 2 / top.zoom;
     const at = (pointer: [number, number]) => view.aim('pointer', { pointer })!;
-    at([0, 0]).forEach((v, i) => expect(v).toBeCloseTo([top.position[0], actor.y, top.position[2]][i], 6)); // his floor
-    at([0, 1]).forEach((v, i) => expect(v).toBeCloseTo([top.position[0], actor.y, top.position[2] - half][i], 6));
+    const chest = actor.y + CHEST.stand; // where a level shot runs: the pointer over a body aims at it
+    at([0, 0]).forEach((v, i) => expect(v).toBeCloseTo([top.position[0], chest, top.position[2]][i], 6));
+    at([0, 1]).forEach((v, i) => expect(v).toBeCloseTo([top.position[0], chest, top.position[2] - half][i], 6));
     expect(view.aim('pointer')).toBeUndefined(); // no pointer over the picture, no stick
   });
 });

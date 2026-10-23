@@ -2,9 +2,10 @@
  * @file Aiming (PLAN.md WP 13.9, docs/PLAYGROUND.md §4; doctrine: Reproducible): the point a player aims at, which the
  * intents' `aim` carries, by the rule an action map names (`aimWith`, engine/input/actionMaps.ts): `centre`, the screen
  * centre's ray to what it meets (first person and the shooter: the body aims at that point); `pointer`, the pointer's
- * ray onto the player's floor (isometric and top-down), or, on a pad, the right stick pushed from the player along the
- * floor (twin sticks); `none`, no aim. The page works the point out each frame from the camera it drew and records it
- * with the step's other intents, so the sim reads only the point, and live play replays without a camera.
+ * ray onto the level plane a level shot leaves at (`height` above the player's feet: isometric and top-down), or, on a
+ * pad, the right stick pushed from the player along the floor (twin sticks); `none`, no aim. The page works the point
+ * out each frame from the camera it drew and records it with the step's other intents, so the sim reads only the
+ * point, and live play replays without a camera.
  *
  * `screenRay(pose, at, aspect)` is the ray through the point `at` of the picture (`[x, y]` from −1 to 1, +y up:
  * three.js's normalized device coordinates) for a perspective or orthographic pose, the boost's stretch of heights
@@ -82,6 +83,11 @@ export interface AimView {
   readonly pointer?: readonly [number, number];
   /** The right stick `[right, up]` after its deadzone, −1 to 1: it aims in the pointer's rule when pushed. */
   readonly stick?: readonly [number, number];
+  /**
+   * How far above the feet the pointer's ray is met, m (0): the height a level shot leaves at (the chest's), so the
+   * pointer over a body aims at it rather than at the floor beyond it.
+   */
+  readonly height?: number;
   /** How far along a ray it meets the world, up to `max` m, or null (the app's raycast, the player's body skipped). */
   readonly cast?: (origin: Vec3, direction: Vec3, max: number) => number | null;
 }
@@ -144,5 +150,5 @@ export function aimPoint(rule: AimRule, view: AimView): Vec3 | undefined {
     const [dx, dz] = fromCamera(pose.yaw, [x / length, y / length]); // the screen's right and up, laid on the floor
     return [feet[0] + dx * STICK_REACH, feet[1], feet[2] + dz * STICK_REACH];
   }
-  return view.pointer ? (onFloor(screenRay(pose, view.pointer, aspect), feet[1]) ?? undefined) : undefined;
+  return view.pointer ? (onFloor(screenRay(pose, view.pointer, aspect), feet[1] + (view.height ?? 0)) ?? undefined) : undefined; // prettier-ignore
 }

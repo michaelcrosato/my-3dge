@@ -16,7 +16,7 @@
  * - the bob, one dip each `bob.period` at a run on the ground, a sway every two: the eye's, and its phase and share for
  *   the weapon (WP 13.12);
  * - aiming down sights zooms to the weapon's lens in `ads.time` (its `zoom`, WP 13.20; Apex's rifles' 55° without);
- * - a burst's climb (`weapons.kick`, WP 13.20) tilts the view as `recoil`, eased: the centre is where the shots go;
+ * - a burst's climb (`weapons.kick`, WP 13.20) tilts the view as `recoil`, as the sim has it, by the aim's share;
  * - a landing faster than `shake.from` shakes the screen, and so does a melee hit (`shake.hit`): `frame.shake`, by the
  *   camera's share of the punch (the rig's `shake()`, which the view adds to engine/gfx/fx/shake.ts);
  * - `kick(pitch, yaw)`, a game's own kick of the view (through the rig's `kick`), on the punch's spring.
@@ -61,8 +61,6 @@ export const EFFECTS = Object.freeze({
   ads: Object.freeze({ fov: 55, at: 70, time: 0.25 }),
   /** Metres of screen shake per m/s of a landing over `from`, and a melee hit's (ours). */
   shake: Object.freeze({ from: 10, per: 0.004, hit: 0.02 }),
-  /** The burst's climb: s to rise to the weapon's kick, and to settle back as it goes. */
-  recoil: Object.freeze({ rise: 0.03, settle: 0.15 }),
 });
 
 /** The eye's height over the feet on the shooter model, m: Apex's, standing and crouched. */
@@ -128,8 +126,8 @@ export interface EffectsFrame {
   readonly pitch: number;
   readonly yaw: number;
   /**
-   * The burst's climb, rad (+ up, + left): the player's `recoil`, rising in `EFFECTS.recoil.rise` and settling in
-   * `.settle` (time constants); the rig's `aimPose` leaves it out, so the aim's ray is not turned by it again.
+   * The burst's climb, rad (+ up, + left): the player's `recoil`, the sim's kick as it is (no easing: the next shot
+   * goes where the centre is); the rig's `aimPose` leaves it out, so the aim's ray is not turned by it again.
    */
   readonly recoil: readonly [number, number];
   /** How far the sights are raised, 0 to 1, and their zoom (× three.js's `zoom`). */
@@ -249,11 +247,7 @@ export function createCameraEffects(): CameraEffects {
       const shaken = shake;
       shake = 0;
       const raise = MathUtils.smoothstep(aim, 0, 1);
-      for (const i of [0, 1]) {
-        const want = p?.recoil?.[i] ?? 0;
-        const time = Math.abs(want) > Math.abs(recoil[i]) ? EFFECTS.recoil.rise : EFFECTS.recoil.settle;
-        recoil[i] += (want - recoil[i]) * (dt > 0 ? 1 - Math.exp(-dt / time) : 0);
-      }
+      [recoil[0], recoil[1]] = [p?.recoil?.[0] ?? 0, p?.recoil?.[1] ?? 0]; // the sim's kick: it rises and falls itself
       const zoomed = zoomOf(p?.zoom ?? ads.fov);
       return {
         drop,
@@ -289,7 +283,12 @@ export function applyEffects(pose: CameraPose, frame: EffectsFrame, weights: Eff
   const drop = frame.drop * weights.eye;
   const [across, up] = [frame.bob[0] * weights.bob, frame.bob[1] * weights.bob];
   const [lift, turn] = frame.recoil;
-  const [pitch, yaw, roll] = [(frame.pitch + lift) * weights.punch, (frame.yaw + turn) * weights.punch, frame.roll * weights.roll]; // prettier-ignore
+  // the climb by the aim's share: the cameras that aim with their centre take it whole, so it is where shots go
+  const [pitch, yaw, roll] = [
+    frame.pitch * weights.punch + lift * weights.aim,
+    frame.yaw * weights.punch + turn * weights.aim,
+    frame.roll * weights.roll,
+  ];
   const fov = 1 + (frame.fov - 1) * weights.fov;
   const zoom = 1 + (frame.zoom - 1) * weights.aim;
   if ([drop, across, up, pitch, yaw, roll, fov - 1, zoom - 1].every(still)) return pose;

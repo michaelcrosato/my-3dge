@@ -121,3 +121,7 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   `ragdolls` and `partners`. No run strikes them: their inputs are as they were, and their stories the same, event for
   event (labs/playground/scenes/site.test.ts, ring.test.ts, labs/playground/weapons/range.test.ts). ragdoll-falls and
   ragdoll-strike are new with that WP: the box's ragdolls (labs/box/scenes/ragdoll.test.ts).
+- playground-range's goldens were re-recorded (`--update`, Node ×3 and Chromium ×3 agreeing) at WP 13.20's review
+  (ADR-0025 amendment 25): a burst's kick falls away after it (`recover`) instead of vanishing, and the kick and the
+  cone turn a shot in its aim's own frame. Its inputs are as they were, and its story the same, event for event, the
+  same 10 of its 20 rounds striking (labs/playground/weapons/range.test.ts); the site's and the ring's fire no shot.

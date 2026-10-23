@@ -3,7 +3,7 @@
  * targets stand down its three lanes facing the bench, pop-ups at 10 and 25 m and movers at 50 m; the site's player
  * carries the pistol and the rifle holstered, draws the pistol with 1 and, down its sights, puts the 10 m target of
  * the middle lane down with one shot, the hit counted: the target falls back away from the bench and pops up again
- * 2.5 s later; a mover slides across its lane at 1 m/s and turns back at its end; the HUD's line names the weapon out,
+ * 2.5 s later; in isometric the pointer over that target aims at it, so a level shot from the chest puts it down; a mover slides across its lane at 1 m/s and turns back at its end; the HUD's line names the weapon out,
  * its rounds, the hits and the accuracy, and the crosshair shows only while the screen's centre aims a weapon. Its
  * replay (tests/replays/playground-range.replay.json) plays the range's story in order: the pistol drawn, each lane's
  * 10 m pop-up put down down the sights, the middle lane's 25 m one and the mover behind it from the hip and a round
@@ -15,9 +15,13 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { Vector3 } from 'three/webgpu';
+import { createCameraPair } from '../../../engine/gfx/cameras/place';
+import { createCameraRig } from '../../../engine/gfx/cameras/rig';
+import { aimPoint } from '../../../engine/input/aim';
 import { playReplay } from '../../../engine/sim/replay';
 import { createSession, type Session } from '../../../engine/sim/session';
-import type { WeaponsState } from '../../../engine/sim/weapons';
+import { CHEST, type WeaponsState } from '../../../engine/sim/weapons';
 import '../bodies/player';
 import { SITE_SCENES } from '../scenes/site';
 import { PISTOL, PLAYGROUND_WEAPONS, RIFLE } from './guns';
@@ -66,6 +70,21 @@ describe('the range', () => {
     for (let k = 0; k < 150; k++) session.step(steady); // 2.5 s after the shot, and its rise
     expect([middle.thing.state, middle.popup.tilt]).toEqual(['up', 0]);
     expect(Math.abs(middle.sceneProp.x - 14)).toBeLessThan(1e-3); // upright on its base again
+  }, 120_000);
+
+  it('aims isometric’s pointer over a plate at it, met at the chest’s height: a level shot puts it down', () => {
+    const { session, targets } = range();
+    session.step({ b: ['weapon1'] });
+    for (let k = 0; k < 30; k++) session.step({});
+    const { x, y, z } = (session.world.get(1) as unknown as { actor: { x: number; y: number; z: number } }).actor;
+    const rig = createCameraRig('cam=iso');
+    for (let k = 0; k < 120; k++) rig.update({ follow: [x, y, z], eye: [x, y + 1.52, z] }, 1 / 60);
+    const plate = new Vector3(14, 1.3, 6).project(createCameraPair().place(rig.pose(), 16 / 9)); // lane 2's 10 m one
+    const view = { pose: rig.aimPose(), aspect: 16 / 9, feet: [x, y, z] as const, pointer: [plate.x, plate.y] as const }; // prettier-ignore
+    expect(aimPoint('pointer', { ...view, height: CHEST.stand })!.map((v) => Math.round(v * 1e3) / 1e3)).toEqual([14, 1.3, 6]); // prettier-ignore
+    session.step({ aim: aimPoint('pointer', { ...view, height: CHEST.stand }), b: ['fire'] }); // no look: level, from the chest
+    const middle = targets().find((t) => t.thing.x0 === 14 && t.thing.z0 === 6)!;
+    expect([middle.thing.state, weapons(session).hits]).toEqual(['down', 1]);
   }, 120_000);
 
   it('slides a mover 2 m across its lane at 1 m/s, turning back at its end', () => {

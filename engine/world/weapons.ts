@@ -4,7 +4,8 @@
  * fires on while the trigger is held (`auto`), the damage a shot takes from a person and how far it reaches, the cone
  * its shots stray in (`spread`: from the hip, more on the move, little down the sights), its recoil (`recoil`: a
  * kick a shot, [up, right] degrees, the burst's aim climbing by their sum, the last repeating; `settle` seconds after
- * the last shot it is gone), its magazine and its two reloads (a tactical one, and one from empty), its sights' lens
+ * the last shot the burst ends and its kick falls away, `recover` its time constant), its magazine and its two
+ * reloads (a tactical one, and one from empty), its sights' lens
  * (`zoom`, at Apex's 70° field) and how fast they come up, how long it takes to draw and put away, where its shots
  * leave it (`muzzle`, in its frame) and the prop it is drawn as (`prop`: its parts in its frame, +Z along the barrel
  * from the grip, +Y up, so `node x gallery prop` shows it). engine/sim/weapons.ts fires them, engine/gfx/weapons.ts
@@ -37,7 +38,8 @@ export const WEAPON_FIELDS = defineSchema({
   range: num(100, 1, 'm', 'How far its shots reach.'),
   spread: { type: 'object', description: 'The cone its shots stray in, half-angles (deg).', default: { hip: 2, move: 1.5, ads: 0.15 }, properties: { hip: num(2, 0, 'deg', 'From the hip.'), move: num(1.5, 0, 'deg', 'Added on the move.'), ads: num(0.15, 0, 'deg', 'Down the sights.') } }, // prettier-ignore
   recoil: { type: 'array', items: { type: 'array', items: { type: 'number' } }, default: [[0.5, 0]], unit: 'deg', description: "Each shot's kick in a burst, [up, right]; the last repeats." }, // prettier-ignore
-  settle: num(0.3, 0, 's', 'How long after its last shot a burst ends, its kick gone.'),
+  settle: num(0.3, 0, 's', 'How long after its last shot a burst ends and its kick begins to fall away.'),
+  recover: num(0.15, 0, 's', 'The time constant its kick falls away in once its burst ends (0: at once).'),
   magazine: { type: 'integer', default: 12, minimum: 1, description: 'Rounds a magazine holds.' },
   reload: { type: 'object', description: 'How long a reload takes (s).', default: { tactical: 1.25, empty: 1.5 }, properties: { tactical: num(1.25, 0, 's', 'With rounds left.'), empty: num(1.5, 0, 's', 'From empty.') } }, // prettier-ignore
   zoom: num(60, 1, 'deg', "The sights' lens at a 70° field of view (Apex's): how far aiming down them zooms."),

@@ -5,8 +5,9 @@
  * dips the view by its speed and springs back, a jump kicks it up, a hard landing shakes the screen, and so does a
  * melee hit, kicking the view back once (the component `melee`'s `hitAt`, read by `cameraPlayer`); the sights zoom
  * to 55° at a 70° lens in 0.25 s; the bob dips once each 0.4 s at a run; a weapon's kick; each camera takes its share.
- * WP 13.20: a burst's kick climbs the view and settles back as it goes, the sights zoom to the weapon's own lens, and
- * with weapons only one out aims (`cameraPlayer` reading the component `weapons`).
+ * WP 13.20: a burst's kick climbs the view as the sim has it, whole in the cameras that aim with their centre and not
+ * at all in the others, the sights zoom to the weapon's own lens, and with weapons only one out aims (`cameraPlayer`
+ * reading the component `weapons`).
  * @see engine/gfx/cameras/effects.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -22,7 +23,9 @@ import {
   NO_EFFECTS,
   type CameraPlayer,
 } from './effects';
+import { FOLLOW_EFFECTS } from './follow';
 import { makePose } from './pose';
+import { SHOULDER_EFFECTS } from './shoulder';
 
 const DEG = Math.PI / 180;
 
@@ -129,19 +132,18 @@ describe('the camera effects', () => {
     expect([kicked.pitch > 0, kicked.yaw > 0]).toEqual([true, true]);
   });
 
-  it('climb with a burst’s kick and settle back as it goes, and zoom to the weapon’s own sights (WP 13.20)', () => {
+  it('climb with a burst’s kick as the sim has it, by the aim’s share, and zoom to the weapon’s own sights (WP 13.20)', () => {
     const effects = createCameraEffects();
     run(effects, player(), 0.1);
-    const climbed = run(effects, player({ recoil: [2 * DEG, -0.5 * DEG] }), 10 * EFFECTS.recoil.rise);
-    const risen = 1 - Math.exp(-10); // ten time constants
-    expect(climbed.recoil.map((r) => r / DEG)).toEqual([expect.closeTo(2 * risen, 9), expect.closeTo(-0.5 * risen, 9)]); // prettier-ignore
+    const climbed = run(effects, player({ recoil: [2 * DEG, -0.5 * DEG] }), 1 / 60);
+    expect(climbed.recoil.map((r) => r / DEG)).toEqual([expect.closeTo(2, 9), expect.closeTo(-0.5, 9)]); // as it is
     const pose = makePose({ position: [0, 1.5, 0], fov: 74 });
-    expect(applyEffects(pose, climbed, FIRST_EFFECTS).pitch).toBeCloseTo(
-      pose.pitch + climbed.pitch + climbed.recoil[0],
-      9,
-    );
-    const settled = run(effects, player(), EFFECTS.recoil.settle); // one time constant: e⁻¹ of it left
-    expect(settled.recoil[0]).toBeCloseTo(climbed.recoil[0] * Math.exp(-1), 9);
+    const drawn = (weights: typeof FIRST_EFFECTS) => applyEffects(pose, climbed, weights).pitch - pose.pitch;
+    expect(drawn(FIRST_EFFECTS)).toBeCloseTo(climbed.pitch + climbed.recoil[0], 9);
+    expect(drawn(SHOULDER_EFFECTS)).toBeCloseTo(climbed.pitch * SHOULDER_EFFECTS.punch + climbed.recoil[0], 9); // the climb whole
+    expect(drawn(FOLLOW_EFFECTS)).toBeCloseTo(climbed.pitch * FOLLOW_EFFECTS.punch, 9); // no centre aims: no climb
+    const settled = run(effects, player(), 1 / 60);
+    expect(settled.recoil).toEqual([0, 0]); // the sim's kick gone, the climb gone
     const aimed = run(createCameraEffects(), player({ aiming: true, zoom: 30 }), EFFECTS.ads.time);
     expect(aimed.zoom).toBeCloseTo(Math.tan(35 * DEG) / Math.tan(15 * DEG), 9);
     const entity = { id: 1, actor: { vx: 0, vy: 0, vz: 0, grounded: true }, weapons: { slots: ['weapon:gun'], slot: 0, kick: [1.5, 0.5], shots: 3 } }; // prettier-ignore

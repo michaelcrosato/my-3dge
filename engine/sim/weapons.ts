@@ -13,14 +13,16 @@
  *   last bringing the reload on; an empty one clicks (`dry`) and reloads. A shot is hitscan (the physics world's
  *   raycast, `range` long, his own body aside): from his eye toward the step's `aim` when it has a `look` (first
  *   person and the shooter: the crosshair's point), else along the look; without a look, level from his chest toward
- *   the aim (isometric's and top-down's pointer) or where he faces; turned by the burst's kick so far and a spread
- *   (`spreadOf`) drawn from his stream `weapon`. What it meets takes it: a person `damage` (engine/sim/damage.ts), a
+ *   the aim (isometric's and top-down's pointer) or where he faces; turned in the aim's own frame (so a cone stays
+ *   round at any pitch) by the burst's kick so far and a spread (`spreadOf`) drawn from his stream `weapon`. What it
+ *   meets takes it: a person `damage` (engine/sim/damage.ts), a
  *   prop a strike (interact.ts `strikeEntity`, `shot`: a thing a point, a door broken, a pane a point, a dynamic prop
  *   knocked). `shots` and `hits` (a thing standing, a person alive) keep the range's count.
  * - **Reloading** (`reload`, the magazine not full; or at its last round): `reload.tactical` seconds, `reload.empty`
  *   from empty, no shot meanwhile; drawing another or holstering cancels it.
  * - **The kick**: each shot adds its recoil step (`recoilStep`) to `weapons.kick`, degrees up and right, so a burst
- *   climbs; `settle` seconds after the last shot it is gone. The view tilts the camera by it.
+ *   climbs; `settle` seconds after the last shot the burst ends and the kick falls away (`recover`, a time constant).
+ *   The view tilts the camera by it as it is, so the picture's centre is where the next shot goes.
  *
  * Events: `gunshot` `{ id, weapon, from, to, normal, body, target, hit }` (a miss: `normal` null, `body` and `target`
  * −1, `to` the shot's end), `draw`, `holster`, `reload` and `dry` `{ id, weapon }`.
@@ -57,7 +59,7 @@ export const WEAPONS_FIELDS = defineSchema({
   slot: { type: 'integer', default: -1, minimum: -1, description: 'The slot out (−1: holstered).' },
   last: { type: 'integer', default: 0, minimum: 0, description: 'The slot drawn last: what `holster` draws again.' },
   mags: { type: 'array', items: { type: 'number' }, default: [], description: 'Rounds in each slot’s magazine.' },
-  ready: { type: 'number', default: 0, unit: 's', description: 'When the weapon out is ready to fire: drawn, or back from a swing.' }, // prettier-ignore
+  ready: { type: 'number', default: 0, unit: 's', description: 'When the weapon out is ready to fire: its draw done (a swing holds the trigger apart: MELEE.back).' }, // prettier-ignore
   next: { type: 'number', default: 0, unit: 's', description: 'When its rate lets it fire again.' },
   reload: { type: 'number', default: -1, unit: 's', description: 'When the reload under way ends (−1: none).' },
   burst: { type: 'integer', default: 0, minimum: 0, description: 'Shots in the burst under way.' },
@@ -111,8 +113,12 @@ type Player = ActorComponents & {
 
 /** The groups a shot meets: the level, props, people and crowds. */
 const SHOT_GROUPS: readonly GroupName[] = ['world', 'prop', 'actor', 'crowd', 'flyer'];
-/** How high a shot leaves the chest without a look (m over the feet; crouched): isometric's, top-down's, the platformer's. */ // prettier-ignore
-const CHEST = { stand: 1.3, crouch: 0.75 } as const;
+/**
+ * How high a shot leaves the chest without a look (m over the feet; crouched): isometric's, top-down's, the
+ * platformer's. The view meets the pointer's ray at this height (engine/app/view.ts), so the pointer over a body aims
+ * at it.
+ */
+export const CHEST = { stand: 1.3, crouch: 0.75 } as const;
 /** The moves he may fire in: on foot and in the air (his hands are on a ledge, a wall, a rung or the cable otherwise). */
 const FIRING = new Set(['ground', 'air']);
 
@@ -149,6 +155,18 @@ function aimOf(e: Player, intents: Intents): { from: [number, number, number]; y
   return { from, yaw: toward ? Math.atan2(ax - x, az! - z) : yaw, pitch: 0 };
 }
 
+/**
+ * The way `up` rad above and `right` rad to the right of the aim (`yaw`, `pitch`) goes, turned in the aim's own frame
+ * (its forward, his right, and the up across them), so a cone of offsets stays round at any pitch.
+ */
+function turned(yaw: number, pitch: number, up: number, right: number): [number, number, number] {
+  const [sy, cy, sp, cp] = [Math.sin(yaw), Math.cos(yaw), Math.sin(pitch), Math.cos(pitch)];
+  const [f, r, u] = [[sy * cp, sp, cy * cp], [-cy, 0, sy], [-sy * sp, cp, -cy * sp]]; // prettier-ignore
+  const t = Math.hypot(up, right);
+  const [c, k] = t < 1e-12 ? [1, 0] : [Math.cos(t), Math.sin(t) / t];
+  return [0, 1, 2].map((i) => f[i] * c + (u[i] * up + r[i] * right) * k) as [number, number, number];
+}
+
 /** Fires one shot of `kind` from `e` (see the file comment). */
 function shoot(w: World, e: Player, kind: WeaponKind, intents: Intents): void {
   const W = e.weapons;
@@ -156,10 +174,7 @@ function shoot(w: World, e: Player, kind: WeaponKind, intents: Intents): void {
   const spread = spreadOf(kind, W.aim, Math.hypot(e.actor.vx, e.actor.vz) > 0.5);
   const rng = w.rng.entity(e.id, 'weapon');
   const [turn, out] = [rng.next() * 2 * Math.PI, spread * Math.sqrt(rng.next())];
-  const up = (W.kick[0] + out * Math.sin(turn)) * DEG;
-  const right = (W.kick[1] + out * Math.cos(turn)) * DEG;
-  const [y2, p2] = [yaw - right, Math.max(-1.55, Math.min(1.55, pitch + up))];
-  const dir: [number, number, number] = [Math.sin(y2) * Math.cos(p2), Math.sin(p2), Math.cos(y2) * Math.cos(p2)];
+  const dir = turned(yaw, pitch, (W.kick[0] + out * Math.sin(turn)) * DEG, (W.kick[1] + out * Math.cos(turn)) * DEG);
   const step = recoilStep(kind, W.burst);
   [W.kick, W.burst, W.shot, W.shots] = [[W.kick[0] + step[0], W.kick[1] + step[1]], W.burst + 1, w.time, W.shots + 1];
   W.mags[W.slot] -= 1;
@@ -197,7 +212,11 @@ function stepOne(w: World, e: Player, intents: Intents): void {
   if (W.reload >= 0 && w.time >= W.reload - 1e-9) [W.mags[W.slot], W.reload] = [kind.magazine, -1];
   const up = held(intents, 'aim') && FIRING.has(e.motion?.mode ?? 'ground');
   W.aim = Math.max(0, Math.min(1, W.aim + (up ? 1 : -1) * (kind.sights > 0 ? w.dt / kind.sights : 1)));
-  if (W.shot >= 0 && w.time - W.shot > kind.settle + 1e-9) [W.burst, W.kick] = [0, [0, 0]];
+  if (W.shot >= 0 && w.time - W.shot > kind.settle + 1e-9) {
+    const fall = kind.recover > 0 ? Math.exp(-w.dt / kind.recover) : 0; // the burst over: its kick falls away
+    const kick: [number, number] = [W.kick[0] * fall, W.kick[1] * fall];
+    [W.burst, W.kick] = [0, Math.hypot(kick[0], kick[1]) < 1e-4 ? [0, 0] : kick];
+  }
   if (pressed(intents, 'reload') && W.reload < 0 && W.mags[W.slot] < kind.magazine) reload(w, e, kind);
   const trigger = kind.auto ? held(intents, 'fire') : pressed(intents, 'fire');
   if (!trigger || W.reload >= 0 || w.time < W.ready - 1e-9 || !FIRING.has(e.motion?.mode ?? 'ground')) return;

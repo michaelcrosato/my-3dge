@@ -1,10 +1,12 @@
 /**
  * @file Tests for firearms (engine/sim/weapons.ts; WP 13.20) on a floor, the player at the origin facing +Z, a target
- * 10 m ahead and a wall 30 m ahead: drawn and holstered, holstered running faster, the body carrying the gun; a
- * pistol fires once a press at its rate, a round a shot, hitting what its crosshair points at, and reloads (tactical,
- * and longer from empty, its last round bringing it on, an empty one clicking); a rifle fires on while held at its
- * rate, its burst climbing by its recoil and settling after; shots stray within their cone (narrow down the sights,
- * where he walks); without a look a shot goes level from the chest toward the pointer; a person loses the weapon's
+ * 10 m ahead and a wall 30 m ahead: drawn and holstered, holstered running 1.15 times as fast, the body carrying the
+ * gun; a pistol fires once a press at its rate, a round a shot, hitting what its crosshair points at, and reloads
+ * (tactical, and longer from empty, its last round bringing it on, an empty one clicking and reloading); a rifle
+ * fires on while held at its
+ * rate, its burst climbing by its recoil (its second shot to his right) and its kick falling away after; shots stray
+ * within their cone (wider on the move, narrow down the sights, where he walks); without a look a shot goes level
+ * from the chest toward the pointer, or where he faces without an aim either; a person loses the weapon's
  * damage and a door breaks; a melee swing holds the weapon; the same hashes every run, and a capture mid-burst goes on
  * exactly.
  * @see engine/sim/weapons.ts
@@ -88,6 +90,14 @@ describe('firearms', () => {
     session.step({ ...ahead, b: ['swap'] });
     expect(of(session).weapons.slot).toBe(0);
     expect(events(session.world, 'draw').map((e) => (e as { weapon: string }).weapon)).toEqual(['weapon:test-pistol', 'weapon:test-rifle', 'weapon:test-rifle', 'weapon:test-pistol']); // prettier-ignore
+    const speed = (drawn: boolean) => {
+      const run = createSession(both, { seed: 1 });
+      steps(run, 10);
+      if (drawn) run.step({ ...ahead, b: ['weapon1'] });
+      steps(run, 60, { ...ahead, move: [0, 1] }); // at his full run, short of the target
+      return Math.hypot(of(run).actor.vx, of(run).actor.vz);
+    };
+    expect(speed(false) / speed(true)).toBeCloseTo(1.15, 6); // holstered, every gait ×1.15 (Apex's)
   });
 
   it('fire a pistol once a press at its rate, a round a shot, hitting what the crosshair points at', () => {
@@ -125,6 +135,17 @@ describe('firearms', () => {
     expect(of(session).weapons.mags[0]).toBe(2); // a tactical reload takes 1 s
     steps(session, 2, { ...ahead, b: [] });
     expect([of(session).weapons.mags[0], session.world.time - started > 1]).toEqual([3, true]);
+    for (let k = 0; k < 3; k++) {
+      session.step({ ...ahead, b: ['fire'] });
+      steps(session, 14, { ...ahead, b: [] });
+    }
+    session.step({ ...ahead, b: ['weapon2'] }); // drawn away mid-reload, and back: still empty
+    steps(session, 40, { ...ahead, b: [] });
+    session.step({ ...ahead, b: ['weapon1'] });
+    steps(session, 20, { ...ahead, b: [] });
+    const reloads = events(session.world, 'reload').length;
+    session.step({ ...ahead, b: ['fire'] });
+    expect([shots(session.world).length, events(session.world, 'dry').length, events(session.world, 'reload').length - reloads]).toEqual([7, 1, 1]); // prettier-ignore
   });
 
   it('fire a rifle on while held at its rate, the burst climbing by its recoil, settled after', () => {
@@ -137,8 +158,15 @@ describe('firearms', () => {
     const { kick } = of(session).weapons;
     expect(kick[0]).toBeCloseTo(0.5 + 0.75 * 9, 9); // the first step, then the last repeating
     expect(kick[1]).toBeCloseTo(0.25 - 0.25 * 9, 9);
-    steps(session, 30, { ...ahead, b: [] });
-    expect([of(session).weapons.kick, of(session).weapons.burst]).toEqual([[0, 0], 0]);
+    const [dx, , dz] = [0, 1, 2].map((i) => burst[1].to[i] - burst[1].from[i]);
+    expect(dx / dz).toBeCloseTo(-Math.tan(0.25 * (Math.PI / 180)), 6); // the second shot 0.25° to his right, −X facing +Z
+    steps(session, 18, { ...ahead, b: [] });
+    expect(of(session).weapons.burst).toBe(0); // the burst over 0.3 s after its last shot
+    const falling = of(session).weapons.kick[0];
+    expect(falling).toBeGreaterThan(0); // its kick falling away, not gone at once
+    expect(falling).toBeLessThan(kick[0]);
+    steps(session, 120, { ...ahead, b: [] });
+    expect(of(session).weapons.kick).toEqual([0, 0]); // gone within two seconds
   });
 
   it('stray within their cone, by the stream: wide from the hip and on the move, narrow down the sights, where he walks', () => {
@@ -156,18 +184,27 @@ describe('firearms', () => {
     expect(Math.max(...hip)).toBeGreaterThan(2);
     const sights = offs({ ...ahead, b: ['fire', 'aim'] }, 60).slice(10); // the sights up after 0.2 s
     expect(Math.max(...sights)).toBeLessThanOrEqual(0.25 + 1e-6);
+    const moving = offs({ ...ahead, move: [1, 0], b: ['fire'] }, 90).slice(30); // strafing at a run: the move's cone too
+    expect(Math.max(...moving)).toBeLessThanOrEqual(3 + 2 + 1e-6);
+    expect(Math.max(...moving)).toBeGreaterThan(3.5);
     const session = armed(spray);
     steps(session, 60, { ...ahead, move: [0, 1], b: ['aim'] });
     expect([of(session).motion.gait, Math.hypot(of(session).actor.vx, of(session).actor.vz)]).toEqual(['walk', expect.closeTo(2.2035, 2)]); // prettier-ignore
     expect(offs({ ...ahead, b: ['fire'] }, 30)).toEqual(offs({ ...ahead, b: ['fire'] }, 30)); // the same stream, the same shots
   });
 
-  it('go level from the chest toward the pointer without a look', () => {
+  it('go level from the chest where he faces without a look or an aim, or toward the pointer with one', () => {
     const session = armed(both);
-    session.step({ aim: [3, 0, 10], b: ['fire'] }); // isometric's pointer on the floor
-    const [shot] = shots(session.world);
-    expect([shot.from[1], shot.to[1]]).toEqual([expect.closeTo(1.3, 3), expect.closeTo(1.3, 3)]);
-    expect(Math.atan2(shot.to[0] - shot.from[0], shot.to[2] - shot.from[2])).toBeCloseTo(Math.atan2(3, 10), 6);
+    const level = (s: Gunshot) => [s.from[1], s.to[1], Math.atan2(s.to[0] - s.from[0], s.to[2] - s.from[2])];
+    session.step({ b: ['fire'] }); // the platformer: no look, no aim
+    expect([...level(shots(session.world)[0]), shots(session.world)[0].target]).toEqual([expect.closeTo(1.3, 3), expect.closeTo(1.3, 3), expect.closeTo(0, 6), 2]); // prettier-ignore
+    steps(session, 120, { b: [] }); // its kick gone
+    session.step({ aim: [3, 1.3, 10], b: ['fire'] }); // isometric's pointer, met at the chest's height
+    expect(level(shots(session.world)[1])).toEqual([expect.closeTo(1.3, 3), expect.closeTo(1.3, 3), expect.closeTo(Math.atan2(3, 10), 6)]); // prettier-ignore
+    steps(session, 120, { aim: [3, 1.3, 10], b: [] }); // turned to it
+    session.step({ b: ['fire'] }); // and where he faces now
+    const { yaw } = of(session).actor as unknown as { yaw: number };
+    expect([yaw, level(shots(session.world)[2])[2]]).toEqual([expect.closeTo(Math.atan2(3, 10), 2), expect.closeTo(yaw, 6)]); // prettier-ignore
   });
 
   it('take their damage from a person and break a door at once', () => {

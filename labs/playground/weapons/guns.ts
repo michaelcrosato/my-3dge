@@ -35,11 +35,13 @@ export const GUN_PROPS: Readonly<Record<string, PropDefinition>> = {
   'prop:playground-pistol': {
     description: 'A pistol, 21 cm long: its grip under the origin, its slide along +Z above the hand. No body.',
     parts: [
-      box('grip', [0.032, 0.105, 0.045], PAINT, [0, -0.085, -0.012], '#262626', [0.2, 0, 0]), // raked back below the hand
+      box('grip', [0.032, 0.105, 0.045], PAINT, [0, -0.083, -0.012], '#262626', [0.2, 0, 0]), // raked back below the hand
       box('frame', [0.03, 0.025, 0.17], PAINT, [0, 0.015, 0.06], '#262626'),
       box('slide', [0.028, 0.032, 0.19], IRON, [0, 0.04, 0.062]),
       box('sights', [0.022, 0.007, 0.012], IRON, [0, 0.072, -0.018]),
       box('guard', [0.008, 0.008, 0.05], PAINT, [0, -0.012, 0.04], '#262626'),
+      box('guardFront', [0.008, 0.027, 0.008], PAINT, [0, -0.012, 0.061], '#262626'), // closing the loop up to the frame
+      box('trigger', [0.006, 0.013, 0.005], PAINT, [0, 0.002, 0.04], '#262626'),
     ],
     body: { type: 'none' },
   },
@@ -51,7 +53,7 @@ export const GUN_PROPS: Readonly<Record<string, PropDefinition>> = {
       box('stock', [0.036, 0.085, 0.25], PAINT, [0, -0.04, -0.225], '#262626'),
       box('handguard', [0.05, 0.055, 0.26], PAINT, [0, 0.003, 0.37], '#2e2f31'),
       barrel('barrel', 0.011, 0.14, [0, 0.03, 0.5]),
-      box('magazine', [0.03, 0.13, 0.065], IRON, [0, -0.13, 0.12], undefined, [-0.22, 0, 0]), // its foot forward
+      box('magazine', [0.03, 0.13, 0.065], IRON, [0, -0.122, 0.12], undefined, [-0.22, 0, 0]), // its foot forward
       box('sight', [0.03, 0.028, 0.12], IRON, [0, 0.065, 0.03]),
     ],
     body: { type: 'none' },
